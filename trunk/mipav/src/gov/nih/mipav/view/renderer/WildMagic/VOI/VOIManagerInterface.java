@@ -1218,7 +1218,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         } else if ( command.equals("AddLeftRightMarkers") ) {
         	mouse3D = true;
         } else if ( command.equals("buildWormLattice") ) {
-        	new JDialogLattice( getActiveImage() );
+        	new JDialogLattice( getActiveImage(), this );
         } else if ( command.equals("straightenLattice") ) {
         	if ( lattice != null )
         	{
@@ -1230,6 +1230,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     }
 	VOIVector lattice = null;
+	public void setLattice( VOIVector lattice )
+	{
+		this.lattice = lattice;
+	}
 
     @Override
     public void addedCurve(VOIEvent added) {

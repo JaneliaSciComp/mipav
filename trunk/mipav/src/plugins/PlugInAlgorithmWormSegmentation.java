@@ -96,6 +96,7 @@ public class PlugInAlgorithmWormSegmentation extends PlugInAlgorithmWormStraight
     
     public void runAlgorithm()
 	{
+    	wormImage.calcMinMax();
     	int dimX = wormImage.getExtents().length > 0 ? wormImage.getExtents()[0] : 1;
     	int dimY = wormImage.getExtents().length > 1 ? wormImage.getExtents()[1] : 1;
     	int dimZ = wormImage.getExtents().length > 2 ? wormImage.getExtents()[2] : 1; 
@@ -109,6 +110,9 @@ public class PlugInAlgorithmWormSegmentation extends PlugInAlgorithmWormStraight
     	short id = (short) wormImage.getVOIs().getUniqueID();
 		VOI axisVOI = new VOI(id, "mainAxis_" + id, VOI.POLYLINE, (float)Math.random() );
 		ellipsoidFit( wormImage, axisVOI, dataPoints );
+		
+//		findLeftRightMarkers(wormImage, (float) wormImage.getMax());
+//		return;
 		
 		// find the left right markers based on the threshold values and clustering...
 		findLeftRightMarkers(wormImage, min, max);
@@ -4161,6 +4165,7 @@ public class PlugInAlgorithmWormSegmentation extends PlugInAlgorithmWormStraight
     	int totalCount = dimX * dimY * dimZ;
     	int count_2P = (int) (0.02 * totalCount);
     	int count_995P = (int) (0.995 * totalCount);
+    	int count_999P = (int) (0.999 * totalCount);
     	int count_99P = (int) (0.990 * totalCount);
     	
     	// Sort the Histogram bins:
@@ -4195,7 +4200,7 @@ public class PlugInAlgorithmWormSegmentation extends PlugInAlgorithmWormStraight
     			max_head = keyArray[i];
     			maxHeadFound = true;
     		}
-    		if ( !maxLRFound && (runningCount >= count_995P) )
+    		if ( !maxLRFound && (runningCount >= count_999P) )
     		{
     			max_LR = keyArray[i];
     			maxLRFound = true;
@@ -4230,6 +4235,7 @@ public class PlugInAlgorithmWormSegmentation extends PlugInAlgorithmWormStraight
     			}
     		}
     	}
+//    	new ViewJFrameImage( result );
 //    	return result;
     	return null;
     }	
@@ -4291,39 +4297,39 @@ public class PlugInAlgorithmWormSegmentation extends PlugInAlgorithmWormStraight
     		return;
     	}
     	image.resetVOIs();
-    	short id = (short) image.getVOIs().getUniqueID();
-    	for ( int i = 0; i < left_right_markers.size(); i++ )
-    	{
-    		Vector3f pt = left_right_markers.elementAt(i);    	        
-    		VOI marker = new VOI(id++, "marker_" + i, VOI.POINT, (float)Math.random() );
-    		marker.importPoint(pt);
-    		marker.setColor( Color.yellow );
-    		marker.getCurves().elementAt(0).update( new ColorRGBA(1, 1, 0, 1));
-    		image.registerVOI(marker);
-    	}
-		String voiDir = image.getImageDirectory() + JDialogBase.makeImageName( image.getImageName(), "") + File.separator;
-        File voiFileDir = new File(voiDir);
-        if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
-        } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
-        } else { // voiFileDir does not exist
-            voiFileDir.mkdir();
-        }
-		voiDir = image.getImageDirectory() + JDialogBase.makeImageName( image.getImageName(), "") + File.separator +
-    			"left_right_markers" + File.separator;
-        voiFileDir = new File(voiDir);
-        if (voiFileDir.exists() && voiFileDir.isDirectory()) {
-        	String[] list = voiFileDir.list();
-        	for ( int i = 0; i < list.length; i++ )
-        	{
-//        		System.err.println( list[i] );
-        		File lrFile = new File( voiDir + list[i] );
-        		lrFile.delete();
-        	}
-        } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {
-        } else { // voiFileDir does not exist
-            voiFileDir.mkdir();
-        }
-    	saveAllVOIsTo( voiDir, image );
+//    	short id = (short) image.getVOIs().getUniqueID();
+//    	for ( int i = 0; i < left_right_markers.size(); i++ )
+//    	{
+//    		Vector3f pt = left_right_markers.elementAt(i);    	        
+//    		VOI marker = new VOI(id++, "marker_" + i, VOI.POINT, (float)Math.random() );
+//    		marker.importPoint(pt);
+//    		marker.setColor( Color.yellow );
+//    		marker.getCurves().elementAt(0).update( new ColorRGBA(1, 1, 0, 1));
+//    		image.registerVOI(marker);
+//    	}
+//		String voiDir = image.getImageDirectory() + JDialogBase.makeImageName( image.getImageName(), "") + File.separator;
+//        File voiFileDir = new File(voiDir);
+//        if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+//        } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+//        } else { // voiFileDir does not exist
+//            voiFileDir.mkdir();
+//        }
+//		voiDir = image.getImageDirectory() + JDialogBase.makeImageName( image.getImageName(), "") + File.separator +
+//    			"left_right_markers" + File.separator;
+//        voiFileDir = new File(voiDir);
+//        if (voiFileDir.exists() && voiFileDir.isDirectory()) {
+//        	String[] list = voiFileDir.list();
+//        	for ( int i = 0; i < list.length; i++ )
+//        	{
+////        		System.err.println( list[i] );
+//        		File lrFile = new File( voiDir + list[i] );
+//        		lrFile.delete();
+//        	}
+//        } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {
+//        } else { // voiFileDir does not exist
+//            voiFileDir.mkdir();
+//        }
+//    	saveAllVOIsTo( voiDir, image );
     	
     	for ( int i = 0; i < left_right_markers.size(); i++ )
     	{
@@ -4337,8 +4343,8 @@ public class PlugInAlgorithmWormSegmentation extends PlugInAlgorithmWormStraight
     		newTextVOI.getCurves().add(textVOI);
     		image.registerVOI(newTextVOI);
     	}
-		voiDir = image.getImageDirectory() + JDialogBase.makeImageName( image.getImageName(), "") + File.separator;
-        voiFileDir = new File(voiDir);
+		String voiDir = image.getImageDirectory() + JDialogBase.makeImageName( image.getImageName(), "") + File.separator;
+        File voiFileDir = new File(voiDir);
         if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
         } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
         } else { // voiFileDir does not exist
@@ -4588,6 +4594,150 @@ public class PlugInAlgorithmWormSegmentation extends PlugInAlgorithmWormStraight
     		table[row+i][column2] = temp;
     	}
     }
+	
+	private void findLeftRightMarkers( ModelImage image, float minValue )
+	{
+    	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+    	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+    	int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;  
+
+    	int length = dimX * dimY * dimZ;
+
+		Vector<BitSet> lrMasks = new Vector<BitSet>();
+		Vector<VOIContour> lrPoints = new Vector<VOIContour>();
+		while( (lrMasks.size() < 25) && (minValue >= max_LR) )
+		{
+			System.err.println( lrMasks.size() + "  " + minValue );
+			BitSet visited = new BitSet(length);
+			for ( int z = 0; z < dimZ; z++ )
+			{
+				for ( int y = 0; y < dimY; y++ )
+				{
+					for ( int x = 0; x < dimX; x++ )
+					{
+						int index = z * dimX * dimY + y * dimX + x;
+						float value = image.getFloat(x, y, z);
+						if ( (value >= minValue) && !visited.get(index) )
+						{
+							BitSet mask = new BitSet(length);
+							VOIContour maskPoints = new VOIContour(false);
+
+							Vector<Vector3f> seedList = new Vector<Vector3f>();
+							Vector3f seed = new Vector3f(x,y,z);    		
+							visited.set(index);
+							maskPoints.add(seed);
+							seedList.add(seed);
+
+							fill( image, minValue, seedList, visited, mask, maskPoints );
+							if ( mask.cardinality() > 1 )
+							{								
+//								Box3f box = ContBox3f.ContOrientedBox(maskPoints.size(), maskPoints);
+//								if ( (box.Extent[0] > 1) && (box.Extent[1] > 1) && (box.Extent[2] > 1) )
+								{
+									lrMasks.add(mask);
+//									lrBoxes.add( box );
+									lrPoints.add(maskPoints);
+								}
+							}
+						}
+					}
+				}
+			}
+			for ( int i = lrMasks.size() - 1; i >=0; i-- )
+			{
+				int intersectCount = 0;
+				for ( int j = i-1; j >= 0; j-- )
+				{
+					if ( lrMasks.elementAt(i).intersects( lrMasks.elementAt(j) ) )
+					{
+						intersectCount++;
+					}
+				}
+//				if ( intersectCount == 1 )
+				{
+					for ( int j = i-1; j >= 0; j-- )
+					{
+						if ( lrMasks.elementAt(i).intersects( lrMasks.elementAt(j) ) )
+						{
+							lrMasks.elementAt(j).or(lrMasks.elementAt(i) );
+							lrMasks.remove(i);
+
+							lrPoints.elementAt(j).addAll( lrPoints.elementAt(i) );
+							lrPoints.remove(i);
+							break;
+						}
+					}
+				}
+			}
+//			if ( lrMasks.size() == 0 )
+			{
+				minValue *= 0.95f;
+			}
+		}
+		
+		
+		BitSet finalHMask = new BitSet(length);
+		BitSet finalMask = new BitSet(length);
+		System.err.println( lrMasks.size() );
+		image.resetVOIs();
+    	short id = (short) image.getVOIs().getUniqueID();
+		for ( int i = 0; i < lrMasks.size(); i++ )
+		{
+			VOIContour maskPoints = lrPoints.elementAt(i);
+			Box3f box = ContBox3f.ContOrientedBox(maskPoints.size(), maskPoints);
+			System.err.println( box.Extent[0] + "  " + box.Extent[1] + "  " + box.Extent[2] );	
+			
+    		VOI marker = new VOI(id++, "marker_" + i, VOI.POINT, (float)Math.random() );
+    		marker.importPoint(box.Center);
+    		marker.setColor( Color.yellow );
+    		marker.getCurves().elementAt(0).update( new ColorRGBA(1, 1, 0, 1));
+    		image.registerVOI(marker);
+    		
+    		if ( (box.Extent[0] < 50) && (box.Extent[1] < 50) && (box.Extent[2] < 50) )
+    		{
+    			finalMask.or( lrMasks.elementAt(i) );
+    		}
+    		else
+    		{
+    			finalHMask.or( lrMasks.elementAt(i) );
+    		}
+		}
+		if ( finalHMask.cardinality() > 0 )
+		{
+			int index = finalHMask.nextSetBit(0);
+			int x = index % dimX;
+			index -= x;
+			index /= dimX;
+			
+			int y = index % dimY;
+			index -= y;
+			index /= dimY;
+			
+			int z = index;
+			
+			BitSet visited = new BitSet(length);
+			BitSet mask = new BitSet(length);
+			VOIContour maskPoints = new VOIContour(false);
+
+			Vector<Vector3f> seedList = new Vector<Vector3f>();
+			Vector3f seed = new Vector3f(x,y,z);    		
+			visited.set(index);
+			maskPoints.add(seed);
+			seedList.add(seed);
+
+			fill( image, 0.90f * minValue, seedList, visited, mask, maskPoints );
+			
+			
+			image.setMask(finalHMask);
+			new ViewJFrameImage((ModelImage)image.clone());
+			
+		}
+		
+		
+		image.setMask(finalMask);
+		new ViewJFrameImage((ModelImage)image.clone());
+	}
+	
 }
 
 

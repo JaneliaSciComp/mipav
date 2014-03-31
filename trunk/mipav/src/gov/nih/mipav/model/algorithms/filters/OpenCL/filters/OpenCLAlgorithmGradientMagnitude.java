@@ -887,7 +887,7 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 	public void gradientMagnitudeSep3D( int time )
 	{
 		initCL(m_iDeviceType, null);				
-		int nBuffers = 5;
+		int nBuffers = 7;
 		int elementCount = width * height * depth * color;	
 		long memoryUsed = getMaxMemoryUsed( nBuffers, elementCount, sigmas );	
 		long maxAllocSize = OpenCLAlgorithmBase.getLong(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
