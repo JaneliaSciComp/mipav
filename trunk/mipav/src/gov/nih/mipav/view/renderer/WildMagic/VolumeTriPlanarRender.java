@@ -318,14 +318,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							
 							if ( maxValue != -Float.MAX_VALUE )
 							{						
-								short id = (short) m_kVolumeImageA.GetImage().getVOIs().getUniqueID();
-								VOI marker = new VOI(id, "marker_" + id, VOI.POINT, (float)Math.random() );
-								marker.importPoint(maxPt);
-								marker.setColor( Color.yellow );
-								marker.getCurves().elementAt(0).update( new ColorRGBA(1, 1, 0, 1));
-								m_kVolumeImageA.GetImage().registerVOI(marker);
+//								short id = (short) m_kVolumeImageA.GetImage().getVOIs().getUniqueID();
+//								VOI marker = new VOI(id, "marker_" + id, VOI.POINT, (float)Math.random() );
+//								marker.importPoint(maxPt);
+//								marker.setColor( Color.yellow );
+//								marker.getCurves().elementAt(0).update( new ColorRGBA(1, 1, 0, 1));
+//								m_kVolumeImageA.GetImage().registerVOI(marker);
 								
-								id = (short) m_kVolumeImageA.GetImage().getVOIs().getUniqueID();
+								short id = (short) m_kVolumeImageA.GetImage().getVOIs().getUniqueID();
 					    		int colorID = 0;
 					    		VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
 					    		VOIText textVOI = new VOIText( );

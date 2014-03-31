@@ -2,27 +2,20 @@ package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.WindowEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.BitSet;
 import java.util.Vector;
 
-import javax.swing.BorderFactory;
-import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
@@ -34,25 +27,23 @@ import gov.nih.mipav.model.algorithms.AlgorithmArcLength;
 import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
 import gov.nih.mipav.model.algorithms.AlgorithmBSpline;
 import gov.nih.mipav.model.file.FileVOI;
-import gov.nih.mipav.model.provenance.ProvenanceRecorder;
-import gov.nih.mipav.model.scripting.ScriptRecorder;
-import gov.nih.mipav.model.scripting.actions.ActionSaveAllVOIs;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
+import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewImageFileFilter;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.ViewVOIVector;
-import gov.nih.mipav.view.components.PanelManager;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 
 public class JDialogLattice extends JDialogBase {
 
@@ -64,10 +55,13 @@ public class JDialogLattice extends JDialogBase {
 	private int numPairs = 0;
 	private Vector3f[] left_right_markers;
 	private JButton saveButton;
+	private VOIVector fullLattice = null;
+	private VOIManagerInterface parent;
 	
-	public JDialogLattice( ModelImage image )
+	public JDialogLattice( ModelImage image, VOIManagerInterface parent )
 	{
 		this.image = image;
+		this.parent = parent;
 		init();
 		setVisible(true);
 	}
@@ -78,6 +72,10 @@ public class JDialogLattice extends JDialogBase {
 
 		if (command.equals("OK")) {
 			setVariables();
+			if ( fullLattice != null )
+			{
+				parent.setLattice(fullLattice);
+			}
 			this.windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 		} else if (command.equals("Cancel")) {
 			this.windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
@@ -201,19 +199,8 @@ public class JDialogLattice extends JDialogBase {
     		}
     	}    	
     	if ( count > 0 )
-    	{
-    		VOIVector VOIs = image.getVOIs();
-//    		VOIVector VOIs = image.getVOIsCopy();
-//    		for ( int i = VOIs.size()-1; i >= 0; i-- )
-//    		{
-//    			VOI currentVOI = VOIs.elementAt(i);
-//    			if ( currentVOI.getCurveType() == VOI.POLYLINE )
-//    			{
-//    				VOIs.remove(currentVOI);
-//    			}
-//    		}
-    		
-    		
+    	{   		
+    		fullLattice = new VOIVector();
     		if ( lattice == null )
     		{
     			short id = (short) image.getVOIs().getUniqueID();
@@ -241,6 +228,7 @@ public class JDialogLattice extends JDialogBase {
     		if ( leftSide.size() > 1 )
     		{
     			image.registerVOI(lattice);
+    			fullLattice.add(lattice);
     		}
 			lattice.setColor( new Color( 0, 0, 255) );
 			lattice.getCurves().elementAt(0).update( new ColorRGBA(0,0,1,1));
@@ -263,12 +251,12 @@ public class JDialogLattice extends JDialogBase {
 					mainAxis.update( new ColorRGBA(0,1,0,1));
 				}
 				image.registerVOI( marker );
+    			fullLattice.add(lattice);
 			}
-//			parent.restoreVOIs(VOIs);
     	}
     }
 	
-	private void init()
+	private void init( )
 	{
 		setResizable(true);
 		setForeground(Color.black);
@@ -282,10 +270,10 @@ public class JDialogLattice extends JDialogBase {
 		GuiBuilder gui = new GuiBuilder(this);
 		
 		numPoints = 0;
-		VOIVector VOIs = image.getVOIs();
-		for ( int i = 0; i < VOIs.size(); i++ )
+		VOIVector markers = image.getVOIs();
+		for ( int i = 0; i < markers.size(); i++ )
 		{
-			VOI currentVOI = VOIs.elementAt(i);
+			VOI currentVOI = markers.elementAt(i);
 			if ( currentVOI.getCurveType() == VOI.ANNOTATION )
 			{
 				numPoints++;
@@ -296,9 +284,9 @@ public class JDialogLattice extends JDialogBase {
 			return;
 		}
 		left_right_markers = new Vector3f[numPoints];
-		for ( int i = 0; i < VOIs.size(); i++ )
+		for ( int i = 0; i < markers.size(); i++ )
 		{
-			VOI currentVOI = VOIs.elementAt(i);
+			VOI currentVOI = markers.elementAt(i);
 			if ( currentVOI.getCurveType() == VOI.ANNOTATION )
 			{
 				VOIText textVOI = (VOIText) currentVOI.getCurves().elementAt(0);
@@ -415,8 +403,8 @@ public class JDialogLattice extends JDialogBase {
 		{
 			rightLength += rightPositions.elementAt(i).distance( rightPositions.elementAt(i-1) );
 		}
-		System.err.println( centerPositions.size() + " " + leftPositions.size() + " " + rightPositions.size() );
-		System.err.println( centerLength + " " + leftLength + " " + rightLength );
+//		System.err.println( centerPositions.size() + " " + leftPositions.size() + " " + rightPositions.size() );
+//		System.err.println( centerLength + " " + leftLength + " " + rightLength );
 
 		Vector3f rightDir = Vector3f.sub( rightPositions.elementAt(0), leftPositions.elementAt(0) );		
 		float diameter = rightDir.normalize();
@@ -448,18 +436,26 @@ public class JDialogLattice extends JDialogBase {
 			upDir.normalize();
 			upVectors.add(upDir);
 		}
+		
 
+		int extent = 0;
 		short sID = (short)(image.getVOIs().getUniqueID());
 		VOI samplingPlanes = new VOI(sID, "samplingPlanes");
+		Vector<Float> samplingDiameters = new Vector<Float>();
 		for ( int i = 0; i < centerPositions.size(); i++ )
 		{
 	        Vector3f rkEye = centerPositions.elementAt(i);
 	        Vector3f rkRVector = rightVectors.elementAt(i);
 	        Vector3f rkUVector = upVectors.elementAt(i);
 	        Vector3f rkDVector = centerTangents.elementAt(i);
-	        diameter = wormDiameters.elementAt(i);
+	        diameter = wormDiameters.elementAt(i) + 20;
 	        float width = diameter / 2f;
-	        float height = diameter / 3.0f;
+	        float height = width; //diameter / 3.0f;
+	        samplingDiameters.add(width);
+	        if ( width > extent )
+	        {
+	        	extent = (int) Math.ceil(width);
+	        }
 	        
 	        Matrix4f mat = new Matrix4f(
 	                                     rkRVector.X,
@@ -489,8 +485,10 @@ public class JDialogLattice extends JDialogBase {
 	        Vector4f[] output = new Vector4f[4];
 	        for ( int j = 0; j < 4; j++ )
 	        {
-	        	corners[j].X *= width;
-	        	corners[j].Y *= height;
+	        	corners[j].X *= extent;
+	        	corners[j].Y *= extent;
+//	        	corners[j].X *= width;
+//	        	corners[j].Y *= height;
 	        	output[j] =  mat.multLeft( corners[j] );
 //	        	System.err.println( corners[j] + "    =>    " + output[j] );
 	        }
@@ -503,7 +501,8 @@ public class JDialogLattice extends JDialogBase {
 			kBox.update( new ColorRGBA(0,0,1,1) );			
 			samplingPlanes.importCurve(kBox);
 		}
-		image.registerVOI(samplingPlanes);
+//		image.registerVOI(samplingPlanes);
+		straighten(image, samplingPlanes, samplingDiameters, extent, false, false );
 	}
 
     public static void smoothCurve( ModelImage image, VOIContour curve, float stepSize, 
@@ -605,7 +604,7 @@ public class JDialogLattice extends JDialogBase {
 		Vector3f currentPoint = new Vector3f( positions.elementAt(0) );
 		Vector3f currentTangent = new Vector3f( tangents.elementAt(0) );
 
-		System.err.println( positions.size() );
+//		System.err.println( positions.size() );
 		//		System.err.println( 0 + " " + positions.elementAt(0) );
 		for ( int i = 1; i < positions.size(); i++ )
 		{
@@ -632,7 +631,7 @@ public class JDialogLattice extends JDialogBase {
 				distance = nextPoint.distance(currentPoint);
 			}
 		}
-		System.err.println( positions.size() );
+//		System.err.println( positions.size() );
     }
     
     public static Vector3f getPosition( Vector<Vector3f> points, float t, float totalLength )
@@ -655,5 +654,64 @@ public class JDialogLattice extends JDialogBase {
     		distance += currentDistance;
     	}  		
     	return points.lastElement();
+    }
+    
+    public static void straighten( ModelImage image, VOI samplingPlanes, Vector<Float> samplingDiameters, int diameter,
+    		boolean fillData, boolean displayMask )
+    {
+		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+		int colorFactor = image.isColorImage() ? 4 : 1;
+		int[] resultExtents = new int[]{diameter, diameter, samplingPlanes.getCurves().size()};
+		float[][] values = new float[resultExtents[2]][resultExtents[0] * resultExtents[1] * colorFactor]; 
+
+		BitSet duplicateMask = new BitSet( dimX * dimY * dimZ );
+
+		ModelImage resultImage = new ModelImage(image.getType(), resultExtents, image.getImageName() + "_straigntened");
+		JDialogBase.updateFileInfo( image, resultImage );
+		resultImage.setResolutions( new float[]{1,1,1});
+		Vector3f lpsOrigin = new Vector3f();
+		for( int i = 0; i < samplingPlanes.getCurves().size(); i++ )
+		{
+			float diameterInterp = samplingDiameters.elementAt(i);
+			VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i);
+	        Vector3f[] corners = new Vector3f[4];
+	        for ( int j = 0; j < 4; j++ )
+	        {
+	        	corners[j] = kBox.elementAt(j);
+	        }
+			if ( fillData && (i > 0) )
+			{
+				System.arraycopy(values[i-1], 0, values[i], 0, values[i].length);
+			}
+			try {
+				image.exportDiagonal( duplicateMask, 0, i, resultExtents, corners, diameterInterp, !fillData, values[i], true);
+
+				if ( i == 0 )
+				{
+					MipavCoordinateSystems.fileToScanner( corners[0], lpsOrigin, image );
+				}
+
+				resultImage.importData(i*values[i].length, values[i], false);
+			} catch(IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		if ( displayMask )
+		{
+			ModelImage duplicateMaskImage = new ModelImage( ModelStorageBase.BOOLEAN, image.getExtents(), image.getImageName() + "_mask" );
+			try {
+				duplicateMaskImage.importData( 0, duplicateMask, true );
+				new ViewJFrameImage(duplicateMaskImage);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		resultImage.calcMinMax();
+		resultImage.setImageName( image.getImageName() + "_straightened_isotropic" );
+		new ViewJFrameImage(resultImage);  	
     }
 }

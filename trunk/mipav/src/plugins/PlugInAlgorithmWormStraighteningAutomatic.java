@@ -14,6 +14,7 @@ import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIPoint;
+import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -22,6 +23,7 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import java.awt.event.ActionListener;
 import java.awt.event.WindowListener;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -40,9 +42,11 @@ import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Line3f;
 import WildMagic.LibFoundation.Mathematics.Mathf;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibFoundation.Mathematics.Plane3f;
 import WildMagic.LibFoundation.Mathematics.Segment3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Mathematics.Vector4f;
 
 
 public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWormStraightening
@@ -99,6 +103,7 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 	private boolean displayMask = false;
 	private boolean saveTransform = false;
 	private String transformFileName = null;
+	private String latticeFileName = null;
 
 
 	private double minAngle10 = (Math.PI/18f);
@@ -112,7 +117,7 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 
 	private double minAngle90 = (Math.PI/2f);
 
-	public PlugInAlgorithmWormStraighteningAutomatic(ModelImage wormImage)
+	public PlugInAlgorithmWormStraighteningAutomatic(ModelImage wormImage )
 	{
 		this(wormImage, 1.0f);
 	}
@@ -263,7 +268,78 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 
 	public void runAlgorithm()
 	{
-		if ( transformFileName != null )
+		if ( latticeFileName != null )
+		{
+			loadAllVOIsFrom( latticeFileName, false );	
+			VOIVector lattice = wormImage.getVOIsCopy();
+
+			Vector<VOIBase> kVectors = wormImage.getVOIs().VOIAt(0).getCurves();
+			if ( kVectors.size() != 2 )
+			{
+				MipavUtil.displayError("Incorrect Lattice found." );
+				return;
+			}
+			VOIContour left = (VOIContour) kVectors.elementAt(0);
+			VOIContour right = (VOIContour) kVectors.elementAt(1);
+			if ( left.size() != right.size() )
+			{
+				MipavUtil.displayError("Lattice must have equal length sides." );
+				return;				
+			}
+			float[] xPoints = new float[left.size()];
+			float[] yPoints = new float[left.size()];
+			float[] zPoints = new float[left.size()];
+			for ( int i = 0; i < left.size(); i++ )
+			{
+				Vector3f temp = Vector3f.add( left.elementAt(i), right.elementAt(i) );
+				temp.scale(0.5f);
+				xPoints[i] = temp.X;
+				yPoints[i] = temp.Y;
+				zPoints[i] = temp.Z;
+			}
+			interpolatePointsTangents( xPoints, yPoints, zPoints, false );
+			VOIVector centerLine = wormImage.getVOIsCopy();
+			
+
+			for ( int i = 0; i < left.size(); i++ )
+			{
+				Vector3f temp = left.elementAt(i);
+				xPoints[i] = temp.X;
+				yPoints[i] = temp.Y;
+				zPoints[i] = temp.Z;
+			}
+			interpolatePointsTangents( xPoints, yPoints, zPoints, false );
+			VOIVector leftLine = wormImage.getVOIsCopy();
+			
+			
+			for ( int i = 0; i < left.size(); i++ )
+			{
+				Vector3f temp = right.elementAt(i);
+				xPoints[i] = temp.X;
+				yPoints[i] = temp.Y;
+				zPoints[i] = temp.Z;
+			}
+			interpolatePointsTangents( xPoints, yPoints, zPoints, false );
+			VOIVector rightLine = wormImage.getVOIsCopy();
+			
+			wormImage.restoreVOIs(lattice);
+			for ( int i = 0; i < centerLine.size(); i++ )
+			{
+				wormImage.registerVOI( centerLine.elementAt(i) );
+			}
+			for ( int i = 0; i < leftLine.size(); i++ )
+			{
+				wormImage.registerVOI( leftLine.elementAt(i) );
+			}
+			for ( int i = 0; i < rightLine.size(); i++ )
+			{
+				wormImage.registerVOI( rightLine.elementAt(i) );
+			}
+			
+			new ViewJFrameImage(wormImage);
+//			extractPlaneSlices( positions, tangents, left, right );
+		}
+		else if ( transformFileName != null )
 		{
 			extractPlaneSlices(transformFileName);
 		}
@@ -293,7 +369,7 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 				zPoints[i] = temp.Z;
 			}
 
-			interpolatePointsTangents( xPoints, yPoints, zPoints );
+			interpolatePointsTangents( xPoints, yPoints, zPoints, true );
 			extractPlaneSlices();
 		}
 
@@ -329,6 +405,11 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 	public void setTransformFile( String file )
 	{
 		transformFileName = new String(file);
+	}
+
+	public void setLatticeFile( String file )
+	{
+		latticeFileName = new String(file);
 	}
 
 
@@ -2103,7 +2184,7 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 	}
 
 
-	private void interpolatePointsTangents(float[] xPoints, float[] yPoints, float[] zPoints)
+	private void interpolatePointsTangents(float[] xPoints, float[] yPoints, float[] zPoints, boolean save)
 	{
 		float totalArcLength = 0;
 		// 1. Translate points into resolution space:
@@ -2300,7 +2381,10 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 			kNormal = tanVector;
 		}
 
-		saveVOI("originalCurve", wormImage.getImageDirectory(), wormImage, originalCurve);
+		if ( save )
+		{
+			saveVOI( JDialogBase.makeImageName( wormImage.getImageName(), "_straightenCurve" ), wormImage.getImageDirectory(), wormImage, originalCurve);
+		}
 
 		//register new b-spline voi
 		wormImage.resetVOIs();
@@ -3636,6 +3720,356 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 		}
 		return newBox;
 	}
+	
+	
+    /**
+     * This method loads all VOIs to the active image from a given directory.
+     * @param voiDir the directory to load voi's from
+     * @param quietMode if true indicates that warnings should not be displayed.
+     */
+    private void loadAllVOIsFrom(final String voiDir, boolean quietMode) {
+
+        int i, j;
+        VOI[] VOIs;
+        FileVOI fileVOI;
+        try {
+
+            // if voiDir does not exist, then return
+            // if voiDir exists, then get list of voi's from directory (*.voi)
+            final File voiFileDir = new File(voiDir);
+            final Vector<String> filenames = new Vector<String>();
+            final Vector<Boolean> isLabel = new Vector<Boolean>();
+
+            if (voiFileDir.exists() && voiFileDir.isDirectory()) {
+
+                // get list of files
+                final File[] files = voiFileDir.listFiles();
+
+                for (final File element : files) {
+
+                    if (element.getName().endsWith(".voi") || element.getName().endsWith(".xml")) {
+                        filenames.add(element.getName());
+                        isLabel.add(false);
+                    } else if (element.getName().endsWith(".lbl")) {
+                        filenames.add(element.getName());
+                        isLabel.add(true);
+                    }
+                }
+            } else { // voiFileDir either doesn't exist, or isn't a directory
+
+                if ( !quietMode) {
+                    MipavUtil.displayError("No VOIs are found in directory: " + voiDir);
+                }
+
+                return;
+            }
+
+            // open each voi array, then register voi array to this image
+            for (i = 0; i < filenames.size(); i++) {
+
+                fileVOI = new FileVOI( (filenames.elementAt(i)), voiDir, wormImage);
+
+                VOIs = fileVOI.readVOI(isLabel.get(i));
+
+                for (j = 0; j < VOIs.length; j++)
+                {
+                    wormImage.registerVOI(VOIs[j]);
+                }
+            }
+
+            // when everything's done, notify the image listeners
+            wormImage.notifyImageDisplayListeners();
+
+        } catch (final Exception error) {
+
+            if ( !quietMode) {
+                MipavUtil.displayError("Error loading all VOIs from " + voiDir + ": " + error);
+            }
+        }
+
+    } // end loadAllVOIsFrom()
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+	public static void interpolateLattice( ModelImage image, VOI lattice )
+	{
+		// Assume image is isotropic (square voxels).
+		if ( lattice.getCurves().size() != 2 )
+		{
+			return;
+		}
+		VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
+		VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
+		if ( left.size() != right.size() )
+		{
+			return;
+		}
+		
+		VOIContour center = new VOIContour(false);
+		for ( int i = 0; i < left.size(); i++ )
+		{
+			Vector3f centerPt = Vector3f.add(left.elementAt(i), right.elementAt(i) );
+			centerPt.scale(0.5f);
+			center.add(centerPt);
+		}
+
+		Vector<Vector3f> centerPositions = new Vector<Vector3f>();
+		Vector<Vector3f> centerTangents = new Vector<Vector3f>();
+		smoothCurve( image, center, 1, centerPositions, centerTangents );
+
+		Vector<Vector3f> leftPositions = new Vector<Vector3f>();
+		Vector<Vector3f> leftTangents = new Vector<Vector3f>();
+		smoothCurve( image, left, 1, leftPositions, leftTangents );
+
+		Vector<Vector3f> rightPositions = new Vector<Vector3f>();
+		Vector<Vector3f> rightTangents = new Vector<Vector3f>();
+		smoothCurve( image, right, 1, rightPositions, rightTangents );
+
+		Vector<Float> wormDiameters = new Vector<Float>();
+		Vector<Vector3f> rightVectors = new Vector<Vector3f>();
+		Vector<Vector3f> upVectors = new Vector<Vector3f>();
+		for ( int i = 0; i < centerPositions.size(); i++ )
+		{
+			Vector3f rightDir = Vector3f.sub( rightPositions.elementAt(i), leftPositions.elementAt(i) );
+			float diameter = rightDir.normalize();
+			wormDiameters.add(diameter);
+			rightVectors.add(rightDir);
+			
+			centerTangents.elementAt(i).normalize();
+			Vector3f upDir = Vector3f.cross( rightDir, centerTangents.elementAt(i) );
+			upDir.normalize();
+			upVectors.add(upDir);
+		}
+		
+		Vector<Matrix4f> samplingPlaneMatrices = new Vector<Matrix4f>();
+		for ( int i = 0; i < centerPositions.size(); i++ )
+		{
+	        Vector3f rkEye = centerPositions.elementAt(i);
+	        Vector3f rkRVector = rightVectors.elementAt(i);
+	        Vector3f rkUVector = upVectors.elementAt(i);
+	        Vector3f rkDVector = centerTangents.elementAt(i);
+	        float diameter = wormDiameters.elementAt(i)/2f;
+	        float height = diameter / 3.0f;
+	        
+	        Matrix4f mat = new Matrix4f(
+	                                     rkRVector.X,
+	                                     rkUVector.X,
+	                                     rkDVector.X,
+	                                     diameter, // 0.0f,
+	                                     rkRVector.Y,
+	                                     rkUVector.Y,
+	                                     rkDVector.Y,
+	                                     height, // 0.0f,
+	                                     rkRVector.Z,
+	                                     rkUVector.Z,
+	                                     rkDVector.Z,
+	                                     0.0f,
+	                                     -rkRVector.dot(rkEye),
+	                                     -rkUVector.dot(rkEye),
+	                                     -rkDVector.dot(rkEye),
+	                                     1.0f );
+			samplingPlaneMatrices.add(mat);
+		}
+		
+		Vector4f[] corners = new Vector4f[4];
+		corners[0] = new Vector4f(-1,-1, 0, 1);
+		corners[1] = new Vector4f( 1,-1, 0, 1);
+		corners[2] = new Vector4f( 1, 1, 0, 1);
+		corners[3] = new Vector4f(-1, 1, 0, 1);
+
+        Vector3f rkEye = new Vector3f( 10, 10, 10 );
+        Vector3f rkRVector = new Vector3f( 1, 0, 0 );
+        Vector3f rkUVector = new Vector3f( 0, 1, 0 );
+        Vector3f rkDVector = new Vector3f( 0, 0, -1 );
+        float diameter = 300;
+        float height = diameter / 3.0f;
+        Matrix4f mat = new Matrix4f(
+                                     rkRVector.X,
+                                     rkUVector.X,
+                                     rkDVector.X,
+                                     diameter, // 0.0f,
+                                     rkRVector.Y,
+                                     rkUVector.Y,
+                                     rkDVector.Y,
+                                     height, // 0.0f,
+                                     rkRVector.Z,
+                                     rkUVector.Z,
+                                     rkDVector.Z,
+                                     0.0f,
+                                     -rkRVector.dot(rkEye),
+                                     -rkUVector.dot(rkEye),
+                                     -rkDVector.dot(rkEye),
+                                     1.0f );
+		for ( int i = 0; i < 4; i++ )
+		{
+			System.err.println( corners[i] + "    =>    " + mat.mult( corners[i] ) );
+		}
+				
+	}
+
+    public static void smoothCurve( ModelImage image, VOIContour curve, float stepSize, 
+    		Vector<Vector3f> curvePositions, Vector<Vector3f> curveTangents )
+    {
+
+		short sID = (short)(image.getVOIs().getUniqueID());
+		VOI originalPoints = new VOI(sID, "originalPoints", VOI.POINT, .5f );
+		originalPoints.setCurveType( VOI.POINT );
+		
+		// 1. Calculate totalArcLength:
+    	float totalArcLength = 0;
+		float[] xPoints = new float[curve.size()];
+		float[] yPoints = new float[curve.size()];
+		float[] zPoints = new float[curve.size()];
+		for ( int i = 0; i < curve.size(); i++ )
+		{
+			if ( i > 0 )
+			{
+				totalArcLength += curve.elementAt(i).distance( curve.elementAt(i-1) );
+			}
+			xPoints[i] = curve.elementAt(i).X;
+			yPoints[i] = curve.elementAt(i).Y;
+			zPoints[i] = curve.elementAt(i).Z;
+			originalPoints.importPoint( new Vector3f( xPoints[i], yPoints[i], zPoints[i] ) );
+		}		
+
+		// 2 Smooth points:
+		AlgorithmArcLength arcLength = new AlgorithmArcLength(xPoints, yPoints, zPoints);
+		float totalL = arcLength.getTotalArcLength();
+		int interpolationPts = (int)((totalL + 5) / stepSize);
+
+		AlgorithmBSmooth smoothAlgo = new AlgorithmBSmooth(image, originalPoints, interpolationPts, true);
+		smoothAlgo.run();
+		//this is the result b-spline curve
+		VOI resultVOI = smoothAlgo.getResultVOI();
+		Vector<VOIBase> contours = resultVOI.getCurves();
+		int nPoints = contours.size();
+		float[] xSmoothedPoints = new float[nPoints+5];
+		float[] ySmoothedPoints = new float[nPoints+5];
+		float[] zSmoothedPoints = new float[nPoints+5];
+
+		//		System.err.println( nPoints );
+
+		Vector3f point = ((VOIPoint)contours.get(0)).exportPoint();
+		xSmoothedPoints[0] = point.X;
+		ySmoothedPoints[0] = point.Y;
+		zSmoothedPoints[0] = point.Z;
+
+		xSmoothedPoints[1] = point.X;
+		ySmoothedPoints[1] = point.Y;
+		zSmoothedPoints[1] = point.Z;
+
+		Vector<Vector3f> contour = new Vector<Vector3f>();
+		for (int i = 0; i < nPoints; i++) {
+			point = ((VOIPoint)contours.get(i)).exportPoint();
+			contour.add(new Vector3f(point));
+			xSmoothedPoints[i + 2] = point.X;
+			ySmoothedPoints[i + 2] = point.Y;
+			zSmoothedPoints[i + 2] = point.Z;  
+		}
+
+		point = ((VOIPoint)contours.get(nPoints-1)).exportPoint();
+		xSmoothedPoints[nPoints + 2] = point.X;
+		ySmoothedPoints[nPoints + 2] = point.Y;
+		zSmoothedPoints[nPoints + 2] = point.Z;
+
+		xSmoothedPoints[nPoints + 3] = point.X;
+		ySmoothedPoints[nPoints + 3] = point.Y;
+		zSmoothedPoints[nPoints + 3] = point.Z;
+
+		xSmoothedPoints[nPoints + 4] = point.X;
+		ySmoothedPoints[nPoints + 4] = point.Y;
+		zSmoothedPoints[nPoints + 4] = point.Z;
+
+
+
+		//alg to get tangent vector
+		AlgorithmBSpline bSplineAlgo = smoothAlgo.getbSplineAlgo();
+
+		Vector<Vector3f> positions = new Vector<Vector3f>();
+		Vector<Vector3f> tangents = new Vector<Vector3f>();
+		for ( int i = 0; i < nPoints+1; i++ )
+		{
+			float floatIndex = i+2;
+			positions.add( bSplineAlgo.bSplineJetXYZ(0, floatIndex, xSmoothedPoints, ySmoothedPoints, zSmoothedPoints) );
+			tangents.add(bSplineAlgo.bSplineJetXYZ(1, floatIndex, xSmoothedPoints, ySmoothedPoints, zSmoothedPoints) );
+		}
+
+		bSplineAlgo = null;
+		xSmoothedPoints = null;
+		ySmoothedPoints = null;
+		zSmoothedPoints = null;
+
+		// 3 Interpolate points, tangents so evenly spaced:
+		curvePositions.add( new Vector3f( positions.elementAt(0) ));
+		curveTangents.add( new Vector3f( tangents.elementAt(0) ));
+
+		Vector3f currentPoint = new Vector3f( positions.elementAt(0) );
+		Vector3f currentTangent = new Vector3f( tangents.elementAt(0) );
+
+		//		System.err.println( positions.size() );
+		//		System.err.println( 0 + " " + positions.elementAt(0) );
+		for ( int i = 1; i < positions.size(); i++ )
+		{
+			Vector3f nextPoint  = new Vector3f( positions.elementAt(i) );
+			Vector3f nextTangent  = new Vector3f( tangents.elementAt(i) );
+			Vector3f direction = Vector3f.sub(nextPoint, currentPoint);
+			direction.normalize();
+			direction.scale(stepSize);
+
+			float distance = nextPoint.distance(currentPoint);
+			while ( distance >= stepSize )
+			{
+				Vector3f newPoint = Vector3f.add(currentPoint, direction );
+				float interpFactor = newPoint.distance(currentPoint) / nextPoint.distance(currentPoint);
+
+				Vector3f tangent1 = Vector3f.scale( 1 - interpFactor, currentTangent );
+				Vector3f tangent2 = Vector3f.scale(     interpFactor, nextTangent );
+				Vector3f newTangent = Vector3f.add( tangent1, tangent2 );
+
+				curvePositions.add( new Vector3f(newPoint));
+				curveTangents.add( new Vector3f(newTangent));
+				currentPoint.copy(newPoint);
+				currentTangent.copy(newTangent);
+				distance = nextPoint.distance(currentPoint);
+			}
+		}
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 }
 
 
