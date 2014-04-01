@@ -5,15 +5,20 @@
 import gov.nih.mipav.model.algorithms.AlgorithmConvolver;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.GenerateGaussian;
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
 	
 
 
 
+import gov.nih.mipav.model.structures.TransMatrix;
+
 	import java.io.IOException;
 import java.util.Vector;
 
 import WildMagic.LibFoundation.Mathematics.Vector3d;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJProgressBar;
 	
 	
@@ -22,6 +27,22 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	 *
 	 * @version  0.1 March 19, 2014
 	 * @author   William Gandler
+	 * 
+	 * This a a port of itkN4MRIBiasFieldCorrectionImageFilter.txx from the itk package.  Here is the original itk header:
+	 * Program:   Advanced Normalization Tools
+  Module:    $RCSfile: itkN4MRIBiasFieldCorrectionImageFilter.txx,v $
+  Language:  C++
+  Date:      $Date: 2009/06/09 16:22:05 $
+  Version:   $Revision: 1.6 $
+
+  Copyright (c) ConsortiumOfANTS. All rights reserved.
+  See accompanying COPYING.txt or
+ http://sourceforge.net/projects/advants/files/ANTS/ANTSCopyright.txt for details.
+
+     This software is distributed WITHOUT ANY WARRANTY; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.  See the above copyright notices for more information.
+
 	 */
 	public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 	
@@ -43,11 +64,23 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	    
 	    private double imageMax;
 	    
+	    private int nDims;
+	    
 	    private int numberOfHistogramBins = 200;
+	    
+	    private double logBiasFieldControlPointLattice[][] = null;
 	    
 	    private double WeinerFilterNoise = 0.01;
 	    
 	    private double biasFieldFullWidthAtHalfMaximum = 0.15;
+	    
+	    private int splineOrder[];
+	    
+	    private int numberOfFittingLevels[];
+	    
+	    private int originalNumberOfControlPoints[];
+	    
+	    private int numberOfControlPoints[];
 	    
 	    private double sigmoidNormalizedAlpha = 0.0;
 	    
@@ -55,9 +88,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	    
 	    private int maximumNumberOfLevels = 1;
 	    
-	    private int maximumNumberOfIterationsArray[] = new int[maximumNumberOfLevels];
-	    
-	    private int maximumNumberOfIterations = 50;
+	    private int maximumNumberOfIterations[];
 	    
 	    private double convergenceThreshold = 0.001;
 	    
@@ -65,9 +96,19 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	    
 	    private float origin[];
 	    
+	    private float resolutions[];
+	    
 	    private int xDim;
 	    
 	    private int sliceSize;
+	    
+	    private float maskOrigin[];
+	    
+	    private int maskIndex[];
+	    
+	    private int maskLargest[];
+	    
+	    private int maskExtents[];
 	
 	    //~ Constructors ---------------------------------------------------------------------------------------------------
 	
@@ -111,8 +152,11 @@ import gov.nih.mipav.view.ViewJProgressBar;
      * Starts the program.
      */
     public void runAlgorithm() {
-        int nDims;
         int i;
+        int x;
+        int y;
+        int z;
+        int d;
         double buffer[];
         double logFilter[];
         double logUncorrected[];
@@ -122,6 +166,12 @@ import gov.nih.mipav.view.ViewJProgressBar;
         double newLogBiasField[];
         int currentLevel;
         int elapsedIterations = 0;
+        int smallestX;
+        int smallestY;
+        int smallestZ;
+        int largestX;
+        int largestY;
+        int largestZ;
         double currentConvergenceMeasurement = Double.MAX_VALUE;
 
         if (srcImage == null) {
@@ -136,8 +186,9 @@ import gov.nih.mipav.view.ViewJProgressBar;
         long startTime = System.nanoTime();
         fireProgressStateChanged(0, srcImage.getImageName(), "N4 MRI Bias Field Correction Filter on image ...");
         
-        for (i = 0; i < maximumNumberOfLevels; i++) {
-        	maximumNumberOfIterationsArray[i] = maximumNumberOfIterations;
+        maximumNumberOfIterations = new int[1];
+        for (i = 0; i < maximumNumberOfIterations.length; i++) {
+        	maximumNumberOfIterations[i] = 50;
         }
         
         if (destImage == null) {
@@ -150,7 +201,22 @@ import gov.nih.mipav.view.ViewJProgressBar;
         srcImage.calcMinMax();
         imageMax = srcImage.getMax();
         origin = srcImage.getOrigin();
+        resolutions = srcImage.getFileInfo()[0].getResolutions();
         nDims = srcImage.getNDims();
+        numberOfFittingLevels = new int[nDims];
+        for (i = 0; i < nDims; i++) {
+        	numberOfFittingLevels[i] = 1;
+        }
+        numberOfControlPoints = new int[nDims];
+        originalNumberOfControlPoints = new int[nDims];
+        for (i = 0; i < nDims; i++) {
+        	numberOfControlPoints[i] = 4;
+        	originalNumberOfControlPoints[i] = 4;
+        }
+        splineOrder = new int[nDims];
+        for (i = 0; i < nDims; i++) {
+        	splineOrder[i] = 3;
+        }
         xDim = srcImage.getExtents()[0];
         length = srcImage.getExtents()[0];
         for (i = 1; i < nDims; i++) {
@@ -186,6 +252,58 @@ import gov.nih.mipav.view.ViewJProgressBar;
             }
         }
         
+        smallestX = Integer.MAX_VALUE;
+    	smallestY = Integer.MAX_VALUE;
+    	smallestZ = Integer.MAX_VALUE;
+    	largestX = Integer.MIN_VALUE;
+    	largestY = Integer.MIN_VALUE;
+    	largestZ = Integer.MIN_VALUE;
+    	maskIndex = new int[nDims];
+    	maskLargest = new int[nDims];
+    	maskExtents = new int[nDims];
+    	maskOrigin = new float[nDims];
+	    for (i = 0; i < length; i++)	{
+		    if (mask.get(i) || ((confidence != null) && (confidence[i] > 0.0))) {
+		        x = (i % sliceSize) % xDim;
+		        y = (i % sliceSize) / xDim;
+		        z = i/sliceSize; 
+		        if (x < smallestX) {
+		        	smallestX = x;
+		        }
+		        if (x > largestX) {
+		        	largestX = x;
+		        }
+		        if (y < smallestY) {
+		        	smallestY = y;
+		        }
+		        if (y > largestY) {
+		        	largestY = y;
+		        }
+		        if (z < smallestZ) {
+		        	smallestZ = z;
+		        }
+		        if (z > largestZ) {
+		        	largestZ = z;
+		        }
+		    }
+	    }
+	    maskIndex[0] = smallestX;
+	    maskIndex[1] = smallestY;
+	    if (nDims > 2) {
+	    	maskIndex[2] = smallestZ;
+	    }
+	    maskLargest[0] = largestX;
+	    maskLargest[1] = largestY;
+	    if (nDims > 2) {
+	    	maskLargest[2] = largestZ;
+	    }
+	    for (i = 0; i < nDims; i++) {
+	    	maskExtents[i] = maskLargest[i] - maskIndex[i] + 1;
+	    }
+	    for (i = 0; i < nDims; i++) {
+	    	maskOrigin[i] = origin[i] + resolutions[i] * maskIndex[i];
+	    }
+        
         // Calculate the log of the input image
         // Set NaNs, infinities, and negatives to zero
         for (i = 0; i < length; i++) {
@@ -202,10 +320,22 @@ import gov.nih.mipav.view.ViewJProgressBar;
         logBiasField = new double[length];
         
         subtracter1 = new double[length];
+        // Iterate until convergence or iterative exhaustion
+        int maximumNumberOfLevels = 1;
+        for (d = 0; d < numberOfFittingLevels.length; d++) {
+        	if (numberOfFittingLevels[d] > maximumNumberOfLevels) {
+        		maximumNumberOfLevels = numberOfFittingLevels[d];
+        	}
+        }
+        if (maximumNumberOfIterations.length != maximumNumberOfLevels) {
+        	MipavUtil.displayError("Number of iteration levels is not equal to the max number of levels");
+        	setCompleted(false);
+        	return;
+        }
         for (currentLevel = 0; currentLevel < maximumNumberOfLevels; currentLevel++) {
             elapsedIterations = 0;
             currentConvergenceMeasurement = Double.MAX_VALUE;
-            while ((elapsedIterations++ < maximumNumberOfIterationsArray[currentLevel]) &&
+            while ((elapsedIterations++ < maximumNumberOfIterations[currentLevel]) &&
             	   (currentConvergenceMeasurement > convergenceThreshold)) {
                 // Sharpen the current estimate of the uncorrected image
             	logSharpened = sharpen(logUncorrected);
@@ -226,10 +356,17 @@ import gov.nih.mipav.view.ViewJProgressBar;
             		}
             	}
             } // while ((elapsedIterations++ < maximumNumberOfIterationsArray[currentLevel]) &&
+            generateData();
         } // for (currentLevel = 0; currentLevel < maximumNumberOfLevels; currentLevel++)
         
         setCompleted(true);
         //System.out.println("Time consumed GB: " + (System.nanoTime()-startTime));
+    }
+    
+    private void generateData() {
+      // Calculate the appropriate epsilon value
+      int maximumNumberOfSpans = 0;
+      
     }
     
     private double[]sharpen(double[] unsharpened) {
@@ -457,8 +594,11 @@ import gov.nih.mipav.view.ViewJProgressBar;
     	double maxAbsValue;
     	double minAbsValue;
     	int i;
+    	int j;
+    	int d;
     	double pixel;
-    	double direction[][] = new double[3][3];
+    	double direction[][] = new double[nDims][nDims];
+    	double dirLength;
     	Vector<Vector3d> pointLocation = new Vector<Vector3d>();
     	Vector<Double> pointData = new Vector<Double>();
     	int index;
@@ -471,6 +611,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
     	double alpha;
     	double beta;
     	Vector<Double> weights = new Vector<Double>();
+    	float parametricOrigin[];
     	// Calculate min/max for sigmoid weighting.  Calculate mean for offsetting
     	// bias field calculations since B-spline algorithm biases the result to zero.
     	maxAbsValue = -Double.MAX_VALUE;
@@ -495,9 +636,9 @@ import gov.nih.mipav.view.ViewJProgressBar;
     	// row direction = direction cosines of first axis = [m_Direction[0][0], m_Direction[0][1], m_Direction[0][2]]
     	// column direction = direction cosines of second axis = [m_Direction[1][0], m_Direction[1][1], m_Direction[1][2]]
     	// slice direction = direction cosines of third axis = [m_Direction[2][0], m_Direction[2][1], m_Direction[2][2]]
-    	direction[0][0] = 1.0;
-    	direction[1][1] = 1.0;
-    	direction[2][2] = 1.0;
+    	for (i = 0; i < nDims; i++) {
+    		direction[i][i] = 1;
+    	}
     	index = 0;
     	for (i = 0; i < length; i++) {
     		if (entireImage || mask.get(i) || ((confidence != null) && (confidence[i] > 0.0))) {
@@ -522,6 +663,32 @@ import gov.nih.mipav.view.ViewJProgressBar;
     			index++;
     		}
     	}
+    	if ( (srcImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
+                || (srcImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
+            for (i = 0; i < nDims; i++) {
+            	dirLength = 0;
+                for (j = 0; j < nDims; j++) {
+                    direction[i][j] = srcImage.getMatrix().get(i, j);
+                    dirLength += (direction[i][j] * direction[i][j]);
+                }
+                dirLength = Math.sqrt(dirLength);
+                for (j = 0; j < nDims; j++) {
+                	direction[i][j] = direction[i][j]/dirLength;
+                }
+            } // for (i = 0; i < nDims; i++)
+    	}
+        for (i = 0; i < nDims; i++) {
+        	numberOfFittingLevels[i] = 1;
+        }
+        for (d = 0; d < nDims; d++) {
+            if (logBiasFieldControlPointLattice == null) {
+            	numberOfControlPoints[d] = originalNumberOfControlPoints[d];
+            }
+            else {
+            	numberOfControlPoints[d] = logBiasFieldControlPointLattice[d].length;
+            }
+        }
+        
     	return smoothField;
     }
     
