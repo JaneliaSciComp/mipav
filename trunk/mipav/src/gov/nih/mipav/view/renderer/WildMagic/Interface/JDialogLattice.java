@@ -51,6 +51,7 @@ public class JDialogLattice extends JDialogBase {
 	private JTextField[][] pairFields;
 	private JPanel okCancelPanel;    
 	private VOI lattice = null;
+	private Vector<VOI> markerList = null;
 	private int numPoints = 0;
 	private int numPairs = 0;
 	private Vector3f[] left_right_markers;
@@ -108,7 +109,7 @@ public class JDialogLattice extends JDialogBase {
         }
 
         if (fileName != null) {
-            voiDir = new String(directory + fileName + File.separator);                          
+            voiDir = new String(directory + fileName + File.separator);   
             
             VOIVector backUpVOIs = image.getVOIsCopy();
 
@@ -151,6 +152,12 @@ public class JDialogLattice extends JDialogBase {
             final File voiFileDir = new File(voiDir);
 
             if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+            	String[] list = voiFileDir.list();
+            	for ( int i = 0; i < list.length; i++ )
+            	{
+            		File lrFile = new File( voiDir + list[i] );
+            		lrFile.delete();
+            	}
             } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
             } else { // voiFileDir does not exist
                 voiFileDir.mkdir();
@@ -200,7 +207,14 @@ public class JDialogLattice extends JDialogBase {
     	}    	
     	if ( count > 0 )
     	{   		
-    		fullLattice = new VOIVector();
+    		if ( fullLattice == null )
+    		{
+    			fullLattice = new VOIVector();
+    		}
+    		else
+    		{
+    			fullLattice.clear();
+    		}
     		if ( lattice == null )
     		{
     			short id = (short) image.getVOIs().getUniqueID();
@@ -209,6 +223,10 @@ public class JDialogLattice extends JDialogBase {
     			VOIContour rightSide = new VOIContour( false );
     			lattice.getCurves().add(leftSide);		
     			lattice.getCurves().add(rightSide);
+    		}
+    		else
+    		{
+    			image.unregisterVOI(lattice);
     		}
     		VOIContour leftSide = (VOIContour) lattice.getCurves().elementAt(0);
     		VOIContour rightSide = (VOIContour) lattice.getCurves().elementAt(1);
@@ -225,34 +243,48 @@ public class JDialogLattice extends JDialogBase {
     			rightSide.add( left_right_markers[ pairs[i][1] ] );
     		}
     		
-    		if ( leftSide.size() > 1 )
+    		if ( leftSide.size() > 0 )
     		{
     			image.registerVOI(lattice);
     			fullLattice.add(lattice);
+    			
+    			lattice.setColor( new Color( 0, 0, 255) );
+    			lattice.getCurves().elementAt(0).update( new ColorRGBA(0,0,1,1));
+    			lattice.getCurves().elementAt(1).update( new ColorRGBA(0,0,1,1));
+    			lattice.getCurves().elementAt(0).setClosed(false);
+    			lattice.getCurves().elementAt(1).setClosed(false);
+    			
+    			if ( markerList == null )
+    			{
+    				markerList = new Vector<VOI>();
+    			}
+    			else
+    			{
+    				for ( int j = 0; j < markerList.size(); j++ )
+    				{
+    					image.unregisterVOI(markerList.elementAt(j) );
+    				}
+    				markerList.clear();
+    			}
+    			for ( int j = 0; j < leftSide.size(); j++ )
+    			{
+    				short id = (short) image.getVOIs().getUniqueID();
+    				VOI marker = new VOI(id, "pair_" + j, VOI.POLYLINE, (float)Math.random() );
+    				VOIContour mainAxis = new VOIContour(false); 		    		    		
+    				mainAxis.add( leftSide.elementAt(j) );
+    				mainAxis.add( rightSide.elementAt(j) );
+    				marker.getCurves().add(mainAxis);
+    				marker.setColor( new Color( 255, 255, 0) );
+    				mainAxis.update( new ColorRGBA(1,1,0,1));
+    				if ( j == 0 )
+    				{
+    					marker.setColor( new Color( 0, 255, 0) );
+    					mainAxis.update( new ColorRGBA(0,1,0,1));
+    				}
+    				image.registerVOI( marker );
+    				markerList.add(marker);
+    			}
     		}
-			lattice.setColor( new Color( 0, 0, 255) );
-			lattice.getCurves().elementAt(0).update( new ColorRGBA(0,0,1,1));
-			lattice.getCurves().elementAt(1).update( new ColorRGBA(0,0,1,1));
-			lattice.getCurves().elementAt(0).setClosed(false);
-			lattice.getCurves().elementAt(1).setClosed(false);
-			for ( int j = 0; j < leftSide.size(); j++ )
-			{
-				short id = (short) image.getVOIs().getUniqueID();
-				VOI marker = new VOI(id, "pair_" + j, VOI.POLYLINE, (float)Math.random() );
-				VOIContour mainAxis = new VOIContour(false); 		    		    		
-				mainAxis.add( leftSide.elementAt(j) );
-				mainAxis.add( rightSide.elementAt(j) );
-				marker.getCurves().add(mainAxis);
-				marker.setColor( new Color( 255, 255, 0) );
-				mainAxis.update( new ColorRGBA(1,1,0,1));
-				if ( j == 0 )
-				{
-					marker.setColor( new Color( 0, 255, 0) );
-					mainAxis.update( new ColorRGBA(0,1,0,1));
-				}
-				image.registerVOI( marker );
-    			fullLattice.add(lattice);
-			}
     	}
     }
 	
@@ -364,6 +396,7 @@ public class JDialogLattice extends JDialogBase {
 		VOIContour center = new VOIContour(false);
 		for ( int i = 0; i < left.size(); i++ )
 		{
+//			System.err.println( "left-right distance " + left.elementAt(i).distance(right.elementAt(i) ) );
 			Vector3f centerPt = Vector3f.add(left.elementAt(i), right.elementAt(i) );
 			centerPt.scale(0.5f);
 			center.add(centerPt);
@@ -417,6 +450,7 @@ public class JDialogLattice extends JDialogBase {
 		upVectors.add(upDir);
 		
 		float distance = 0;
+		int extent = 0;
 		for ( int i = 1; i < centerPositions.size(); i++ )
 		{
 			distance += centerPositions.elementAt(i).distance( centerPositions.elementAt(i-1) );
@@ -424,10 +458,14 @@ public class JDialogLattice extends JDialogBase {
 			Vector3f leftPt = getPosition( leftPositions, t, leftLength );
 			Vector3f rightPt = getPosition( rightPositions, t, rightLength );
 			
-
-
 			rightDir = Vector3f.sub( rightPt, leftPt );		
 			diameter = rightDir.normalize();
+			diameter += 20;
+			diameter /= 2f;
+			if ( diameter > extent )
+			{
+				extent = (int) Math.ceil(diameter);
+			}
 			wormDiameters.add(diameter);
 			rightVectors.add(rightDir);
 			
@@ -438,24 +476,14 @@ public class JDialogLattice extends JDialogBase {
 		}
 		
 
-		int extent = 0;
 		short sID = (short)(image.getVOIs().getUniqueID());
 		VOI samplingPlanes = new VOI(sID, "samplingPlanes");
-		Vector<Float> samplingDiameters = new Vector<Float>();
 		for ( int i = 0; i < centerPositions.size(); i++ )
 		{
 	        Vector3f rkEye = centerPositions.elementAt(i);
 	        Vector3f rkRVector = rightVectors.elementAt(i);
 	        Vector3f rkUVector = upVectors.elementAt(i);
 	        Vector3f rkDVector = centerTangents.elementAt(i);
-	        diameter = wormDiameters.elementAt(i) + 20;
-	        float width = diameter / 2f;
-	        float height = width; //diameter / 3.0f;
-	        samplingDiameters.add(width);
-	        if ( width > extent )
-	        {
-	        	extent = (int) Math.ceil(width);
-	        }
 	        
 	        Matrix4f mat = new Matrix4f(
 	                                     rkRVector.X,
@@ -487,11 +515,11 @@ public class JDialogLattice extends JDialogBase {
 	        {
 	        	corners[j].X *= extent;
 	        	corners[j].Y *= extent;
-//	        	corners[j].X *= width;
-//	        	corners[j].Y *= height;
 	        	output[j] =  mat.multLeft( corners[j] );
-//	        	System.err.println( corners[j] + "    =>    " + output[j] );
 	        }
+//	        Vector3f p0 = new Vector3f(corners[0].X, corners[0].Y, corners[0].Z);
+//	        Vector3f p1 = new Vector3f(corners[1].X, corners[1].Y, corners[1].Z);
+//        	System.err.println( "Corners " + p0.distance(p1) );
 	        
 			VOIContour kBox = new VOIContour(true);
 			for ( int j = 0; j < 4; j++ )
@@ -502,7 +530,7 @@ public class JDialogLattice extends JDialogBase {
 			samplingPlanes.importCurve(kBox);
 		}
 //		image.registerVOI(samplingPlanes);
-		straighten(image, samplingPlanes, samplingDiameters, extent, false, false );
+		straighten(image, samplingPlanes, wormDiameters, extent, false, false );
 	}
 
     public static void smoothCurve( ModelImage image, VOIContour curve, float stepSize, 
