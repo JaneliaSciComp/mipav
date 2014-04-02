@@ -5,8 +5,10 @@
 import gov.nih.mipav.model.algorithms.AlgorithmConvolver;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.GenerateGaussian;
+import gov.nih.mipav.model.structures.CoxDeBoorBSplineKernelFunction;
 import gov.nih.mipav.model.structures.ModelImage;
 	
+
 
 
 
@@ -48,6 +50,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
 		private int nDims;
 		private int splineOrder[];
 		private int numberOfControlPoints[];
+		private CoxDeBoorBSplineKernelFunction kernel[];
 	
 		/**
 	     * Constructor which sets the source and destination images
@@ -69,8 +72,10 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	        	splineOrder[i] = 3;
 	        }
 	        numberOfControlPoints = new int[nDims];
+	        kernel = new CoxDeBoorBSplineKernelFunction[nDims];
 	        for (i = 0; i < nDims; i++) {
 	        	numberOfControlPoints[i] = splineOrder[i] + 1;
+	        	kernel[i] = new CoxDeBoorBSplineKernelFunction(splineOrder[i]);
 	        }
 	    }
 	    
