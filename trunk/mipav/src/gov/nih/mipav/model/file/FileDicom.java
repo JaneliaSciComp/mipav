@@ -1595,17 +1595,101 @@ public class FileDicom extends FileDicomBase {
         // System.out.println("pixel _pad = "+ pixelPad);
 
         float slope = (float) fileInfo.getRescaleSlope();
-        final float intercept = (float) fileInfo.getRescaleIntercept();
+        float intercept = (float) fileInfo.getRescaleIntercept();
         if (slope == 0) {
             slope = 1;
         }
 
-        // System.out.println(" slope = " + slope + " intercept = " + intercept);
-        // Why is this here? It overwrites the slope and intercept.
-        // if (fileInfo.getModality() == FileInfoBase.MAGNETIC_RESONANCE) {
-        // slope = 1;
-        // intercept = 0;
-        // }
+        if (fileInfo.getModality() == FileInfoBase.MAGNETIC_RESONANCE) {
+        	// From Dan Konigsbach:
+      
+        	// Rescale is an operation that is performed as part of DICOM's pixel
+        	// processing for some types of images.  Rescale operates on stored pixel
+        	// values, which are the pixel numbers that you get directly from an
+        	// uncompressed DICOM image, or that you get out of the decompressor for
+        	// a compressed DICOM image.when decompressing the image).
+
+        	// Rescale is designed for modalities where the pixel values are
+        	// meaningful measurements, not just arbitrary numbers, e.g.:
+        	//      Hounsfield units for CT,
+        	//      Optical Density of CR,
+        	//      Becquerels/milliliter, counts, or one of many other types of
+        	// values for PET
+        	//      (the list could go on)
+
+        	// These measurement units are not necessarily the most convenient or
+        	// efficient for a modality to work with or store in the DICOM image.
+        	// Instead, the modality uses the Rescale values to show how to convert
+        	// from stored pixel values to meaningful units.  Rescale is a linear
+        	// transformation:
+        	// If:
+        	//      x     is the stored pixel value
+        	//      m     is the value of Rescale Slope (0028,1053)
+        	//      b     is the value of Rescale Intercept (0028,1052)
+        	//      y     is the rescaled, meaningful value
+
+        	// then
+        	//      y = (m * x) + b
+
+        	// If there is a rescale, then Window Width and Window Level are
+        	// specified in rescaled units.  This means that you first apply rescale
+        	// to the pixel value, then window/level.
+        	
+        	// The MR SOP class does not allow images to have a Rescale Slope or
+        	// Rescale Intercept, since MR pixels values don't correspond to some
+        	// specific physical measurement.  But...
+
+        	// When you lossy-compress an image, you often need to scale the pixels.
+        	// The official "right" way to do handle this is to make a compensating
+        	// adjustment to the Window Width and Window Level, but some prefer to
+        	// keep the Window Width and Level the same in the compressed and
+        	// uncompressed image.  Instead, we put the the adjustment in the
+        	// Rescale.  Legal?  No.  Done?  Yes.
+        	
+        	// Some more notes:
+
+        	// Rescale is a linear operation.  If that's doesn't do the job, an
+        	// image can contain a pixel lookup table, called a Modality LUT,
+            // instead.  An image can have a rescale, a modality LUT, or neither.  It
+            // can't have both.  The DICOM module that holds either the Rescale or
+            // Modality LUT is itself called the Modlaity LUT Module.
+
+            // For the X-Ray IODs, the rules get more complicated.  For them,
+            // trust nothing in this message.
+
+            // You think these image have lossy compression.  Here's how to be
+            // sure:
+            // The Transfer Syntax will tell you if the image is currently
+            // compressed.
+            // Lossy Image Compression (0028,2110) will tell you if the image has
+        	// ever been lossy-compressed.
+        	
+        	// Sorry if I wasn't clear.  I didn't mean to suggest that rescale is
+        	// creating a pseudo-compressed image.  Rather, I meant to say that some
+        	// folks add a rescale to MR images when doing (actual) compressing so
+        	// that the compressed image uses the same window width and level as the
+        	// uncompressed image.
+
+        	// So, must you use rescale in MR?
+
+        	// If you're creating an uncompressed MR image, I suggest that you play
+        	// by the rules and don't use rescale.
+
+        	// If you're compressing an MR image, and if you need to scale the pixel
+        	// values to get decent compression, it's between you and your conscience
+        	// whether to add rescale or to modify the window width and level.
+
+        	// If you're trying to view an MR image and it has both rescale and
+        	// window values (or a display LUT), then the window (or LUT) values are
+        	// based on the rescale - you have to apply the rescale before you apply
+        	// the window.  (Alternatively, you can just say that the message is
+        	// illegal and complain, but I'd suggest leniency here.)
+        	
+        	if (!lossy) {
+                slope = 1;
+                intercept = 0;
+        	}
+        } // if (fileInfo.getModality() == FileInfoBase.MAGNETIC_RESONANCE)
 
         boolean setOneMinMax = false;
         for (final short element : buffer) {
@@ -1628,7 +1712,7 @@ public class FileDicom extends FileDicomBase {
         fileInfo.setMin(min);
         fileInfo.setMax(max);
 
-        //System.out.println("min = " + min + " max = " + max);
+        // System.out.println("min = " + min + " max = " + max);
       
         if ((fileInfo.getPixelPadValue() != null) && ((pixelPad <= min) || (pixelPad >= max))) {
 
@@ -1666,6 +1750,7 @@ public class FileDicom extends FileDicomBase {
             }
             if (minVal < 0) {
                 fileInfo.setDataType(ModelStorageBase.SHORT);
+                fileInfo.displayType = ModelStorageBase.SHORT;
             }
         }
     }
