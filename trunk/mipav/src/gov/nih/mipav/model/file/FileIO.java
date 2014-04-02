@@ -1272,6 +1272,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 }
 
                 imageFile.setFileInfo(curFileInfo);
+                
 
                 // Read the image
                 if (image.getType() == ModelStorageBase.FLOAT) {
@@ -1286,10 +1287,13 @@ nList:      for (int i = 0; i < nListImages; i++) {
                     imageFile.readImage(bufferInt, curFileInfo.getDataType(), start);
                 } else {
                     imageFile.readImage(bufferShort, curFileInfo.getDataType(), start);
-                    if ((!haveChangedType) && (refFileInfo.getDataType() != originalDataType)) {
+                    if ((!haveChangedType) && (curFileInfo.getDataType() != originalDataType)) {
                         haveChangedType = true;
-                        image.setType(refFileInfo.displayType);
-                        image.reallocate(refFileInfo.displayType);
+                        image.setType(curFileInfo.displayType);
+                        for(int j=0; j<image.getFileInfo().length; j++) {
+                            image.setFileInfo(curFileInfo, j);
+                        }
+                        image.reallocate(curFileInfo.displayType);
                     }
                 }
                 if ( !isEnhanced4D) {
