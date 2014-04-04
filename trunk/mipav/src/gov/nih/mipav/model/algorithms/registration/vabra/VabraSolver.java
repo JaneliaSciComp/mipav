@@ -55,7 +55,38 @@ public class VabraSolver {
 		//else 
 		//optimizer = new VabraOptimizer(imgSubTarPairs, directionsOptmizationWeight, defFieldUpdateMode); 
 		grid=null;
-		readConfigFile(configFile);
+		if (configFile != null) {
+		    readConfigFile(configFile);
+		}
+		else {
+			downSampleFactor = new ArrayList<Integer>();
+			downSampleFactor.add(4);
+			downSampleFactor.add(2);
+			downSampleFactor.add(1);
+			resolutionSwitchPoints = new ArrayList<Integer>();
+			resolutionSwitchPoints.add(4);
+			resolutionSwitchPoints.add(9);
+			resolutionSwitchPoints.add(0,0);
+			gridSpacingX = new ArrayList<Integer>();
+			gridSpacingX.add(3);
+			gridSpacingX.add(4);
+			gridSpacingX.add(5);
+			gridSpacingX.add(6);
+			gridSpacingX.add(7);
+			gridSpacingX.add(8);
+			gridSpacingX.add(9);
+			gridSpacingX.add(10);
+			gridSpacingX.add(12);
+			gridSpacingX.add(16);
+			gridSpacingX.add(20);
+			gridSpacingX.add(26);
+			gridSpacingY = (ArrayList<Integer>)gridSpacingX.clone();
+			gridSpacingZ = (ArrayList<Integer>)gridSpacingX.clone();
+			if(downSampleFactor.size()!=resolutionSwitchPoints.size())
+			{
+				System.out.format("The number of switch points(%d) should be one less than the number of resolutions(%d)\n",(int)resolutionSwitchPoints.size()-1,(int)downSampleFactor.size());
+			}
+		}
 	}
 
 	//	configFile is an XML based file with program options
