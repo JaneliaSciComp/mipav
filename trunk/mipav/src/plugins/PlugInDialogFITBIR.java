@@ -6,6 +6,7 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileInfoNIFTI;
 import gov.nih.mipav.model.file.FileUtility;
@@ -26,12 +27,16 @@ import gov.nih.mipav.view.ViewTableModel;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.components.WidgetFactory;
 
-import gov.nih.tbi.commons.model.RepeatableType;
+import gov.nih.tbi.commons.model.DataType;
+import gov.nih.tbi.commons.model.RequiredType;
+import gov.nih.tbi.commons.model.StatusType;
 import gov.nih.tbi.dictionary.model.DictionaryRestServiceModel.DataStructureList;
+import gov.nih.tbi.dictionary.model.hibernate.DataElement;
 import gov.nih.tbi.dictionary.model.hibernate.DataStructure;
 import gov.nih.tbi.dictionary.model.hibernate.MapElement;
 import gov.nih.tbi.dictionary.model.hibernate.RepeatableGroup;
 import gov.nih.tbi.dictionary.model.hibernate.ValueRange;
+import gov.nih.tbi.repository.model.SubmissionType;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -74,11 +79,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
 import java.util.regex.Matcher;
@@ -127,20 +129,19 @@ import com.sun.jimi.core.Jimi;
 import com.sun.jimi.core.JimiException;
 
 
-public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements ActionListener, ChangeListener,
-        ItemListener, TreeSelectionListener, MouseListener, PreviewImageContainer {
+public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements ActionListener, ChangeListener, ItemListener, TreeSelectionListener, MouseListener,
+        PreviewImageContainer {
     private static final long serialVersionUID = -5516621806537554154L;
 
     private WidgetFactory.ScrollTextArea logOutputArea;
 
     private JScrollPane listPane;
 
-    private JTable sourceTable;
+    private JTable structTable;
 
     private JLabel outputDirLabel;
 
-    private JButton addSourceButton, loadCSVButton, finishButton, removeSourceButton, completeDataElementsButton,
-            outputDirButton;
+    private JButton addStructButton, loadCSVButton, finishButton, removeStructButton, editDataElementsButton, outputDirButton;
 
     private JPanel outputDirPanel;
 
@@ -150,28 +151,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
     private JTextField outputDirTextField;
 
-    private ViewTableModel sourceTableModel;
+    private ViewTableModel structTableModel;
 
     private String outputDirBase;
 
     private String csvFileDir;
 
-    /**
-     * List of info data that is to be written out in xml...it is linked to same order as the table *
-     */
-    private final ArrayList<LinkedHashMap<String, String>> infoList = new ArrayList<LinkedHashMap<String, String>>();
-
-    /** this is an arraylist of selected DataStruct Objects * */
-    private ArrayList<DataStruct> dataStructures = null;
-
-    /** Buffered writer for writing to CSV file */
-    protected BufferedWriter bw;
-
-    protected FileWriter fw;
-
     private Hashtable<String, String> csvStructRowData;
-
-    private Hashtable<String, Integer> csvStructRecordCounters;
 
     private static final String CSV_OUTPUT_DELIM = ",";
 
@@ -183,34 +169,35 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
     private final ArrayList<Boolean> multifiles = new ArrayList<Boolean>();
 
-    private final ArrayList<TreeMap<JLabel, JComponent>> labelsAndCompsList = new ArrayList<TreeMap<JLabel, JComponent>>();
+    private final ArrayList<FormStructureData> fsDataList = new ArrayList<FormStructureData>();
 
-    private ArrayList<JLabel> errors;
+    private ArrayList<DataElementValue> errors;
 
-    private int fix = 1;
+    private int fixErrors = FIX_ERRORS_LATER;
 
-    /** DOCUMENT ME! */
+    private static final int FIX_ERRORS_NOW = 0;
+
+    private static final int FIX_ERRORS_LATER = 1;
+
+    private static final int FIX_ERRORS_CANCEL = -1;
+
     private final int origBrightness = 0;
 
     private JLabel current, current2;
 
     private JSlider brightnessSlider, contrastSlider;
 
-    /** DOCUMENT ME! */
     private NumberFormat nfc;
 
-    /** DOCUMENT ME! */
     private final float origContrast = 1;
 
     private JPanel brightnessContrastPanel;
 
     private ViewJComponentPreviewImage previewImg;
 
-    /** DOCUMENT ME! */
-    private float contrast = 1;
+    private float previewImgContrast = 1;
 
-    /** DOCUMENT ME! */
-    private int brightness = 0;
+    private int previewImgBrightness = 0;
 
     /** Dev data dictionary server. */
     @SuppressWarnings("unused")
@@ -259,8 +246,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
     private static final String ddRequestBase = "/portal/ws/ddt/dictionary/FormStructure";
 
-    private static final String ddStructListRequest = ddRequestBase
-            + "/Published/list?page=1&pageSize=100000&ascending=false&sort=shortName";
+    private static final String ddStructListRequest = ddRequestBase + "/Published/list?page=1&pageSize=100000&ascending=false&sort=shortName";
 
     private List<DataStructure> dataStructureList;
 
@@ -276,24 +262,21 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      * Indicates how to resolve conflicts between csv and image header values. 0 = no choice made/ask always, 1 = csv, 2
      * = image
      */
-    private int resolveConflictsUsing = 0;
+    private int resolveConflictsUsing = RESOLVE_CONFLICT_ASK;
 
-    private static final String pluginVersion = "0.14";
+    private static final int RESOLVE_CONFLICT_ASK = 0;
 
-    private static final String STRUCT_STATUS_ARCHIVED = "ARCHIVED";
+    private static final int RESOLVE_CONFLICT_CSV = 1;
 
-    @SuppressWarnings("unused")
-    private static final String STRUCT_STATUS_PUBLISHED = "PUBLISHED";
+    private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String STRUCT_TYPE_IMAGING = "Imaging";
-
-    private static final String FILE_ELEMENT_TYPE = "File";
-
-    private static final String DATE_ELEMENT_TYPE = "Date or Date & Time";
+    private static final String pluginVersion = "0.15";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
     private static final String GUID_ELEMENT_NAME = "GUID";
+
+    private static final String IMG_IMAGE_INFO_GROUP = "Image Information";
 
     private static final String IMG_FILE_ELEMENT_NAME = "ImgFile";
 
@@ -309,11 +292,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
     private static final String SITE_NAME_ELEMENT_NAME = "SiteName";
 
-    private static final String[] PDBP_ALLOWED_SITE_NAMES = {"Brigham and Women's", "Columbia University",
-            "Emory University", "Johns Hopkins University", "Pennsylvania State University (Hershey)",
-            "Pacific Northwest National Laboratory", "University of Alabama (Birmingham)",
-            "University of Pennsylvania", "University of Florida (Gainesville)", "University of Washington",
-            "UT-Southwestern Medical Center",};
+    private static final String[] PDBP_ALLOWED_SITE_NAMES = {"Brigham and Women's", "Columbia University", "Emory University", "Johns Hopkins University",
+            "Pennsylvania State University (Hershey)", "Pacific Northwest National Laboratory", "University of Alabama (Birmingham)",
+            "University of Pennsylvania", "University of Florida (Gainesville)", "University of Washington", "UT-Southwestern Medical Center",};
 
     private static final String[] allowedGuidPrefixes = new String[] {"TBI", "PD"};
 
@@ -324,31 +305,26 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      */
     public static final String PRIVACY_NOTICE = "BRICS is a collaborative environment with privacy rules that pertain to the collection\n"
             + "and display of imaging data. Before accessing and using BRICS, please ensure that you\n"
-            + "familiarize yourself with our privacy rules, available through the BRICS Rules of Behavior\n"
-            + "document and supporting documentation.\n"
-            + "\n"
-            + "Collection of this information is authorized under 42 U.S.C. 241, 242, 248, 281(a)(b)(1)(P)\n"
+            + "familiarize yourself with our privacy rules, available through the BRICS Rules of Behavior\n" + "document and supporting documentation.\n"
+            + "\n" + "Collection of this information is authorized under 42 U.S.C. 241, 242, 248, 281(a)(b)(1)(P)\n"
             + "and 44 U.S.C. 3101. The primary use of this information is to facilitate medical research.\n"
             + "This information may be disclosed to researchers for research purposes, and to system \n"
-            + "administrators for evaluation and data normalization.\n"
-            + "\n"
+            + "administrators for evaluation and data normalization.\n" + "\n"
             + "Rules governing submission of this information are based on the data sharing rules defined in\n"
             + "the Notice of Grant Award (NOGA). If you do not have a grant defining data sharing requirements,\n"
             + "data submission is voluntary. Data entered into BRICS will be used solely for scientific and\n"
-            + "research purposes. Significant system update information may be posted on\n"
-            + "the BRICS site as required.";
+            + "research purposes. Significant system update information may be posted on\n" + "the BRICS site as required.";
 
     public PlugInDialogFITBIR() {
         super(false);
 
-        final int response = JOptionPane.showConfirmDialog(this, PlugInDialogFITBIR.PRIVACY_NOTICE,
-                "Image Submission Package Creation Tool", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        final int response = JOptionPane.showConfirmDialog(this, PlugInDialogFITBIR.PRIVACY_NOTICE, "Image Submission Package Creation Tool",
+                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
         if (response == JOptionPane.YES_OPTION) {
             outputDirBase = Preferences.getProperty(Preferences.PREF_BRICS_PLUGIN_OUTPUT_DIR);
             if (outputDirBase == null) {
-                outputDirBase = System.getProperty("user.home") + File.separator + "mipav" + File.separator
-                        + "BRICS_Imaging_Submission" + File.separator;
+                outputDirBase = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "BRICS_Imaging_Submission" + File.separator;
                 Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_OUTPUT_DIR, outputDirBase);
             }
 
@@ -382,15 +358,15 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
         // System.err.println("size : " + this.getSize());
 
-        if (command.equalsIgnoreCase("AddSource")) {
+        if (command.equalsIgnoreCase("AddStruct")) {
 
             new ChooseDataStructDialog(this);
 
-            removeSourceButton.setEnabled(sourceTableModel.getRowCount() > 0);
-            completeDataElementsButton.setEnabled(sourceTableModel.getRowCount() > 0);
-            listPane.setBorder(buildTitledBorder(sourceTableModel.getRowCount() + " Form Structure(s) "));
+            removeStructButton.setEnabled(structTableModel.getRowCount() > 0);
+            editDataElementsButton.setEnabled(structTableModel.getRowCount() > 0);
+            listPane.setBorder(buildTitledBorder(structTableModel.getRowCount() + " Form Structure(s) "));
 
-        } else if (command.equalsIgnoreCase("loadCSV")) {
+        } else if (command.equalsIgnoreCase("LoadCSV")) {
             final JFileChooser chooser = new JFileChooser();
             chooser.setCurrentDirectory(new File(csvFileDir));
             chooser.setDialogTitle("Choose CSV file");
@@ -403,51 +379,49 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 csvFileDir = chooser.getSelectedFile().getAbsolutePath() + File.separator;
                 Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_CSV_DIR, csvFileDir);
             }
-        } else if (command.equalsIgnoreCase("RemoveSource")) {
-            final int selected = sourceTable.getSelectedRow();
-            final String key = (String) sourceTable.getValueAt(selected, 0);
-            sourceTableModel.removeRow(selected);
+        } else if (command.equalsIgnoreCase("RemoveStruct")) {
+            final int selected = structTable.getSelectedRow();
+            structTableModel.removeRow(selected);
             previewImages.remove(selected);
             imageFiles.remove(selected);
             multifiles.remove(selected);
-            infoList.remove(selected);
+            fsDataList.remove(selected);
 
             previewPanel.removeAll();
             previewPanel.repaint();
 
-            if (sourceTable.getRowCount() >= 1) {
+            if (structTable.getRowCount() >= 1) {
 
                 if (selected == 0) {
-                    sourceTable.setRowSelectionInterval(0, 0);
+                    structTable.setRowSelectionInterval(0, 0);
                 } else {
-                    sourceTable.setRowSelectionInterval(selected - 1, selected - 1);
+                    structTable.setRowSelectionInterval(selected - 1, selected - 1);
                 }
 
-                if (previewImages.get(sourceTable.getSelectedRow()) != null) {
-                    previewPanel.add(previewImages.get(sourceTable.getSelectedRow()));
-                    previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
+                if (previewImages.get(structTable.getSelectedRow()) != null) {
+                    previewPanel.add(previewImages.get(structTable.getSelectedRow()));
+                    previewImages.get(structTable.getSelectedRow()).setSliceBrightness(previewImgBrightness, previewImgContrast);
                     previewPanel.validate();
                     previewPanel.repaint();
                 }
             }
 
-            removeSourceButton.setEnabled(sourceTableModel.getRowCount() > 0);
-            completeDataElementsButton.setEnabled(sourceTableModel.getRowCount() > 0);
-            if (sourceTableModel.getRowCount() > 0) {
+            removeStructButton.setEnabled(structTableModel.getRowCount() > 0);
+            editDataElementsButton.setEnabled(structTableModel.getRowCount() > 0);
+            if (structTableModel.getRowCount() > 0) {
                 enableDisableFinishButton();
 
-                if (selected >= sourceTableModel.getRowCount()) {
-                    sourceTable.setRowSelectionInterval(sourceTableModel.getRowCount() - 1,
-                            sourceTableModel.getRowCount() - 1);
+                if (selected >= structTableModel.getRowCount()) {
+                    structTable.setRowSelectionInterval(structTableModel.getRowCount() - 1, structTableModel.getRowCount() - 1);
                 } else {
-                    sourceTable.setRowSelectionInterval(selected, selected);
+                    structTable.setRowSelectionInterval(selected, selected);
                 }
 
             } else {
                 finishButton.setEnabled(false);
 
             }
-            listPane.setBorder(buildTitledBorder(sourceTableModel.getRowCount() + " Form Structure(s) "));
+            listPane.setBorder(buildTitledBorder(structTableModel.getRowCount() + " Form Structure(s) "));
         } else if (command.equalsIgnoreCase("HelpWeb")) {
 
             MipavUtil.showWebHelp("Image_submission_plug-in");
@@ -475,8 +449,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         return null;
                     }
                 };
-                final int response = JOptionPane.showConfirmDialog(this, "Done adding image datasets?",
-                        "Done adding image datasets?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                final int response = JOptionPane.showConfirmDialog(this, "Done adding image datasets?", "Done adding image datasets?",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
                 // we're now letting the fields be enforced by the validation
                 // tool
@@ -496,10 +470,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 // }
 
                 // instead, just require that the GUIDs are filled in
-                final int numRows = sourceTableModel.getRowCount();
+                final int numRows = structTableModel.getRowCount();
                 int validGuids = 1;
                 for (int i = 0; i < numRows; i++) {
-                    final String struct = (String) sourceTableModel.getValueAt(i, 0);
+                    final String struct = (String) structTableModel.getValueAt(i, 0);
                     if (struct.endsWith("_UNKNOWNGUID")) {
                         validGuids = -1;
                         break;
@@ -522,22 +496,22 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         return;
                     }
 
-                    removeSourceButton.setEnabled(false);
+                    removeStructButton.setEnabled(false);
                     finishButton.setEnabled(false);
                     outputDirButton.setEnabled(false);
-                    addSourceButton.setEnabled(false);
-                    completeDataElementsButton.setEnabled(false);
+                    addStructButton.setEnabled(false);
+                    editDataElementsButton.setEnabled(false);
                     loadCSVButton.setEnabled(false);
 
                     worker.execute();
                 }
             }
-        } else if (command.equalsIgnoreCase("completeDataElements")) {
+        } else if (command.equalsIgnoreCase("EditDataElements")) {
 
-            final String dsName = (String) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 0);
+            final String dsName = (String) structTableModel.getValueAt(structTable.getSelectedRow(), 0);
             new InfoDialog(this, dsName, true, true, null);
 
-        } else if (command.equalsIgnoreCase("outputDirBrowse")) {
+        } else if (command.equalsIgnoreCase("OutputDirBrowse")) {
             final JFileChooser chooser = new JFileChooser(outputDirBase);
 
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -618,8 +592,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 // TODO: when we add repeatable group support, this will need to
                 // be processed
                 if (csvFieldNames[i].equalsIgnoreCase(recordIndicatorColumn)) {
-                    // skip the record field, since it doesn't map to a data
-                    // element
+                    // skip the record field, since it doesn't map to a data element
                     continue;
                 }
 
@@ -669,20 +642,20 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         final Object source = e.getSource();
 
         if (source == brightnessSlider) {
-            brightness = brightnessSlider.getValue();
-            current.setText(String.valueOf(brightness));
+            previewImgBrightness = brightnessSlider.getValue();
+            current.setText(String.valueOf(previewImgBrightness));
 
             // Change only the brightness and contrast of the current slice
             if (previewImg != null) {
-                previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
+                previewImages.get(structTable.getSelectedRow()).setSliceBrightness(previewImgBrightness, previewImgContrast);
             }
         } else if (source == contrastSlider) {
-            contrast = (float) Math.pow(10.0, contrastSlider.getValue() / 200.0);
-            current2.setText(String.valueOf(nfc.format(contrast)));
+            previewImgContrast = (float) Math.pow(10.0, contrastSlider.getValue() / 200.0);
+            current2.setText(String.valueOf(nfc.format(previewImgContrast)));
 
             // Change only the brightness and contrast of the current slice
             if (previewImg != null) {
-                previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
+                previewImages.get(structTable.getSelectedRow()).setSliceBrightness(previewImgBrightness, previewImgContrast);
             }
         }
     }
@@ -695,7 +668,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     private void init() {
         setTitle("Image Submission Package Creation Tool v" + pluginVersion);
         addWindowListener(this);
-        dataStructures = new ArrayList<DataStruct>();
+        // dataStructures = new ArrayList<DataStruct>();
 
         final JPanel topPanel = new JPanel(new GridBagLayout());
         final GridBagConstraints gbc2 = new GridBagConstraints();
@@ -733,7 +706,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         gbc2.weightx = 1;
         gbc2.weighty = 1;
         gbc2.gridheight = 2;
-        topPanel.add(buildSourcePanel(), gbc2);
+        topPanel.add(buildStructuePanel(), gbc2);
 
         final JMenuBar menuBar = new JMenuBar();
         final JMenu menu = new JMenu("Help");
@@ -789,8 +762,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         outputDirTextField.setEditable(false);
         outputDirTextField.setToolTipText(outputDirBase);
         outputDirTextField.setText(outputDirBase);
-        outputDirButton = WidgetFactory.buildTextButton("Browse", "Choose Output Directory for Validation Tool files",
-                "outputDirBrowse", this);
+        outputDirButton = WidgetFactory.buildTextButton("Browse", "Choose Output Directory for Validation Tool files", "OutputDirBrowse", this);
         outputDirButton.setPreferredSize(MipavUtil.defaultButtonSize);
         outputDirPanel.add(outputDirLabel);
         outputDirPanel.add(outputDirTextField);
@@ -813,23 +785,23 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
     }
 
-    private JScrollPane buildSourcePanel() {
-        sourceTableModel = new ViewTableModel();
-        sourceTableModel.addColumn("Form Structure Name");
-        sourceTableModel.addColumn("Completed?");
+    private JScrollPane buildStructuePanel() {
+        structTableModel = new ViewTableModel();
+        structTableModel.addColumn("Form Structure Name");
+        structTableModel.addColumn("Completed?");
 
-        sourceTable = new JTable(sourceTableModel);
-        sourceTable.addMouseListener(this);
-        sourceTable.setPreferredScrollableViewportSize(new Dimension(650, 300));
-        sourceTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        structTable = new JTable(structTableModel);
+        structTable.addMouseListener(this);
+        structTable.setPreferredScrollableViewportSize(new Dimension(650, 300));
+        structTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        sourceTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-        sourceTable.getColumn("Completed?").setMinWidth(100);
-        sourceTable.getColumn("Completed?").setMaxWidth(100);
+        structTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        structTable.getColumn("Completed?").setMinWidth(100);
+        structTable.getColumn("Completed?").setMaxWidth(100);
 
-        sourceTable.getColumn("Completed?").setCellRenderer(new MyRightCellRenderer());
+        structTable.getColumn("Completed?").setCellRenderer(new MyRightCellRenderer());
 
-        listPane = WidgetFactory.buildScrollPane(sourceTable);
+        listPane = WidgetFactory.buildScrollPane(structTable);
         listPane.setBorder(buildTitledBorder(0 + " Form Structure(s) "));
 
         return listPane;
@@ -870,19 +842,16 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
             // Resample image size based on percent inputted
             final AlgorithmTransform transformer = new AlgorithmTransform(origImage, percentSizer, 1,
-                    (float) (origImage.getResolutions(0)[0] / (percentage * .01)),
-                    (float) (origImage.getResolutions(0)[1] / (percentage * .01)), (int) (origImage.getExtents()[0]
-                            * percentage * .01), (int) (origImage.getExtents()[1] * percentage * .01),
-                    origImage.getUnitsOfMeasure(), false, true, false, true, origImage.getImageCentermm(false));
+                    (float) (origImage.getResolutions(0)[0] / (percentage * .01)), (float) (origImage.getResolutions(0)[1] / (percentage * .01)),
+                    (int) (origImage.getExtents()[0] * percentage * .01), (int) (origImage.getExtents()[1] * percentage * .01), origImage.getUnitsOfMeasure(),
+                    false, true, false, true, origImage.getImageCentermm(false));
             transformer.runAlgorithm();
             thumbnailImage = transformer.getTransformedImage();
             thumbnailImage.calcMinMax();
             // convert this image to color image if it is not
             if ( !thumbnailImage.isColorImage()) {
-                final ModelImage newRGB = new ModelImage(ModelStorageBase.ARGB, thumbnailImage.getExtents(),
-                        thumbnailImage.getImageName());
-                final AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(thumbnailImage, thumbnailImage,
-                        thumbnailImage, newRGB, true, true, 255.0f, true);
+                final ModelImage newRGB = new ModelImage(ModelStorageBase.ARGB, thumbnailImage.getExtents(), thumbnailImage.getImageName());
+                final AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(thumbnailImage, thumbnailImage, thumbnailImage, newRGB, true, true, 255.0f, true);
                 mathAlgo.run();
                 thumbnailImage.disposeLocal();
                 thumbnailImage = null;
@@ -903,8 +872,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
             try {
                 // Make algorithm
-                lightGen = new LightboxGenerator(origImage, startSlice, endSlice, percentage, rows, columns,
-                        rBorderVal, gBorderVal, bBorderVal, false, borderThick);
+                lightGen = new LightboxGenerator(origImage, startSlice, endSlice, percentage, rows, columns, rBorderVal, gBorderVal, bBorderVal, false,
+                        borderThick);
                 lightGen.run();
                 thumbnailImage = lightGen.getImage();
                 thumbnailImage.calcMinMax();
@@ -928,8 +897,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             if (middleVol > 0) {
                 middleVol = middleVol - 1; // 0 based
             }
-            final AlgorithmSubset subsetAlgo = new AlgorithmSubset(origImage, timeImage, AlgorithmSubset.REMOVE_T,
-                    middleVol);
+            final AlgorithmSubset subsetAlgo = new AlgorithmSubset(origImage, timeImage, AlgorithmSubset.REMOVE_T, middleVol);
             subsetAlgo.run();
 
             numSlices = timeImage.getExtents()[2];
@@ -945,8 +913,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             }
             try {
                 // Make algorithm
-                lightGen = new LightboxGenerator(timeImage, startSlice, endSlice, percentage, rows, columns,
-                        rBorderVal, gBorderVal, bBorderVal, false, borderThick);
+                lightGen = new LightboxGenerator(timeImage, startSlice, endSlice, percentage, rows, columns, rBorderVal, gBorderVal, bBorderVal, false,
+                        borderThick);
                 lightGen.run();
                 thumbnailImage = lightGen.getImage();
                 thumbnailImage.calcMinMax();
@@ -972,26 +940,25 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             outputDirFile.mkdirs();
         }
 
-        final int numDataStructs = sourceTableModel.getRowCount();
+        final int numDataStructs = structTableModel.getRowCount();
 
         // for each data structure chosen by the user, create a place to put
         // rows of csv data
         csvStructRowData = new Hashtable<String, String>();
-        csvStructRecordCounters = new Hashtable<String, Integer>();
         for (int i = 0; i < numDataStructs; i++) {
-            final String tableName = (String) sourceTableModel.getValueAt(i, 0);
+            final String tableName = (String) structTableModel.getValueAt(i, 0);
             // format: "structname_PREFIXGUID"
             final String lowerName = getStructFromString(tableName).toLowerCase();
             if ( !csvStructRowData.containsKey(lowerName)) {
-                DataStruct structInfo = null;
-                for (final DataStruct struct : dataStructures) {
-                    if (struct.getName().equalsIgnoreCase(lowerName)) {
-                        structInfo = struct;
+                DataStructure dsInfo = null;
+                for (final FormStructureData fs : fsDataList) {
+                    if (fs.getStructInfo().getShortName().toLowerCase().equals(lowerName)) {
+                        dsInfo = fs.getStructInfo();
+                        break;
                     }
                 }
 
                 String n = lowerName;
-                final String v = structInfo.getVersion().replaceFirst("^0", "");
 
                 final char c1 = n.charAt(n.length() - 1);
                 if (Character.isDigit(c1)) {
@@ -1005,20 +972,21 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 // # commas at end = # fields in struct - 2 (for name & version)
                 // + 1 (record column)
                 String cStr = "";
-                for (int j = 0; j < structInfo.size() - 1; j++) {
+                for (int j = 0; j < dsInfo.getSize() - 1; j++) {
                     cStr += CSV_OUTPUT_DELIM;
                 }
 
                 String elementHeader = recordIndicatorColumn;
-                for (int j = 0; j < structInfo.size(); j++) {
-                    final DataElement de = structInfo.get(j);
-                    elementHeader += CSV_OUTPUT_DELIM + de.getGroup() + "." + de.getName();
+                for (final RepeatableGroup g : dsInfo.getRepeatableGroups()) {
+                    for (final MapElement elem : g.getDataElements()) {
+                        final DataElement de = elem.getDataElement();
+                        elementHeader += CSV_OUTPUT_DELIM + g.getName() + "." + de.getName();
+                    }
                 }
 
-                String structHeader = n + CSV_OUTPUT_DELIM + v + cStr + "\n";
+                String structHeader = dsInfo.getShortName() + CSV_OUTPUT_DELIM + dsInfo.getVersion() + cStr + "\n";
                 structHeader += elementHeader + "\n";
                 csvStructRowData.put(lowerName, structHeader);
-                csvStructRecordCounters.put(lowerName, 1);
             }
         }
 
@@ -1029,7 +997,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
         for (int i = 0; i < numDataStructs; i++) {
             int collisionCounter = 1;
-            final String name = (String) sourceTableModel.getValueAt(i, 0);
+            final String name = (String) structTableModel.getValueAt(i, 0);
 
             final String guid = getGuidFromString(name);
 
@@ -1047,8 +1015,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                 final FileIO fileIO = new FileIO();
                 fileIO.setQuiet(true);
-                final ModelImage origImage = fileIO.readImage(imageFile.getName(), imageFile.getParent()
-                        + File.separator, multifiles.get(i), null);
+                final ModelImage origImage = fileIO.readImage(imageFile.getName(), imageFile.getParent() + File.separator, multifiles.get(i), null);
 
                 final List<String> origFiles = FileUtility.getFileNameList(origImage);
 
@@ -1085,8 +1052,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     makeZipFile(zipFilePath, origFiles);
                 } catch (final IOException ioe) {
                     ioe.printStackTrace();
-                    MipavUtil.displayError("Unable to write original image dataset files to ZIP package:\n"
-                            + ioe.getMessage());
+                    MipavUtil.displayError("Unable to write original image dataset files to ZIP package:\n" + ioe.getMessage());
                     continue;
                 }
 
@@ -1101,24 +1067,14 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     continue;
                 }
 
-                DataStruct curStruct = null;
-                for (final DataStruct ds : dataStructures) {
-                    if (ds.getName().equalsIgnoreCase(dsName)) {
-                        curStruct = ds;
-                        break;
-                    }
-                }
-
                 // TODO: add support for not hardcoding the record column to
                 // enable repeating groups
 
-                final String newRow = getCSVDataRow(outputDirBase, outputFileNameBase, curStruct, imageFile, origImage,
-                        i, hashCode);
+                final String newRow = getCSVDataRow(outputDirBase, outputFileNameBase, fsDataList.get(i), imageFile, origImage, i, hashCode);
                 if ( !newRow.equals("")) {
                     final String lowerName = dsName.toLowerCase();
                     String data = csvStructRowData.get(lowerName);
-                    data += csvStructRecordCounters.get(lowerName) + CSV_OUTPUT_DELIM + newRow + "\n";
-                    csvStructRecordCounters.put(lowerName, csvStructRecordCounters.get(lowerName) + 1);
+                    data += recordIndicatorValue + CSV_OUTPUT_DELIM + newRow + "\n";
                     csvStructRowData.put(lowerName, data);
                 }
 
@@ -1140,65 +1096,61 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 // image_thumbnail_file, just copy them over to submission
                 // package
 
-                LinkedHashMap<String, String> infoMap = infoList.get(i);
-                Set<String> keySet = infoMap.keySet();
-                Iterator<String> iter = keySet.iterator();
-                String key;
+                final FormStructureData fsData = fsDataList.get(i);
+
                 String value;
                 File f;
                 String csvDir = "";
                 String copyFromImageFilePath = "";
                 String copyToImageFilePath = "";
                 String copyToImageThumbnailPath = "";
-                while (iter.hasNext()) {
-                    key = iter.next();
-                    value = infoMap.get(key);
-                    if (key.equalsIgnoreCase("image_file")) {
 
-                        value = value.replace("\\", File.separator);
-                        value = value.replace("/", File.separator);
-                        f = new File(value);
-                        if ( !f.exists()) {
-                            // must be a relative path based on csv file
-                            if (csvFile != null) {
-                                csvDir = csvFile.getParentFile().getAbsolutePath() + File.separator;
+                for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
+                    for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
+                        for (final DataElementValue deVal : repeat.getDataElements()) {
+                            value = deVal.getValue();
+                            if (deVal.getName().equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
+                                value = value.replace("\\", File.separator);
+                                value = value.replace("/", File.separator);
+                                f = new File(value);
+                                if ( !f.exists()) {
+                                    // must be a relative path based on csv file
+                                    if (csvFile != null) {
+                                        csvDir = csvFile.getParentFile().getAbsolutePath() + File.separator;
+                                    }
+                                    f = new File(csvDir + value);
+                                    if (f.exists()) {
+                                        copyFromImageFilePath = csvDir + value;
+                                        copyToImageFilePath = value;
+                                    }
+                                } else {
+                                    copyFromImageFilePath = value;
+                                    copyToImageFilePath = value.substring(value.lastIndexOf(File.separator) + 1, value.length());
+                                }
+                            } else if (deVal.getName().equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
+                                value = value.replace("\\", File.separator);
+                                value = value.replace("/", File.separator);
+                                f = new File(value);
+                                if ( !f.exists()) {
+                                    // must be a relative path based on csv file
+                                    if (csvFile != null) {
+                                        csvDir = csvFile.getParentFile().getAbsolutePath() + File.separator;
+                                    }
+                                    f = new File(csvDir + value);
+                                    if (f.exists()) {
+                                        copyToImageThumbnailPath = value;
+                                    }
+                                } else {
+                                    copyToImageThumbnailPath = value.substring(value.lastIndexOf(File.separator) + 1, value.length());
+                                }
                             }
-                            f = new File(csvDir + value);
-                            if (f.exists()) {
-                                copyFromImageFilePath = csvDir + value;
-                                copyToImageFilePath = value;
-                            }
-                        } else {
-                            copyFromImageFilePath = value;
-                            copyToImageFilePath = value
-                                    .substring(value.lastIndexOf(File.separator) + 1, value.length());
-                        }
-
-                    } else if (key.equalsIgnoreCase("image_thumbnail_file")) {
-
-                        value = value.replace("\\", File.separator);
-                        value = value.replace("/", File.separator);
-                        f = new File(value);
-                        if ( !f.exists()) {
-                            // must be a relative path based on csv file
-                            if (csvFile != null) {
-                                csvDir = csvFile.getParentFile().getAbsolutePath() + File.separator;
-                            }
-                            f = new File(csvDir + value);
-                            if (f.exists()) {
-                                copyToImageThumbnailPath = value;
-                            }
-                        } else {
-                            copyToImageThumbnailPath = value.substring(value.lastIndexOf(File.separator) + 1,
-                                    value.length());
                         }
                     }
                 }
 
                 if (copyToImageFilePath.contains(File.separator)) {
                     // make directories
-                    final String dir = outputDirBase + File.separator
-                            + copyToImageFilePath.substring(0, copyToImageFilePath.lastIndexOf(File.separator));
+                    final String dir = outputDirBase + File.separator + copyToImageFilePath.substring(0, copyToImageFilePath.lastIndexOf(File.separator));
                     final File f1 = new File(dir);
                     f1.mkdirs();
 
@@ -1241,10 +1193,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                 if (copyToImageThumbnailPath.contains(File.separator)) {
                     // make directories
-                    final String dir = outputDirBase
-                            + File.separator
-                            + copyToImageThumbnailPath.substring(0,
-                                    copyToImageThumbnailPath.lastIndexOf(File.separator));
+                    final String dir = outputDirBase + File.separator
+                            + copyToImageThumbnailPath.substring(0, copyToImageThumbnailPath.lastIndexOf(File.separator));
                     final File f1 = new File(dir);
                     f1.mkdirs();
 
@@ -1297,34 +1247,25 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             for (int k = 0; k < files.size(); k++) {
                                 f = files.get(k);
 
-                                File destFile = new File(outputDirBase + outputFileNameBase + File.separator
-                                        + f.getName());
+                                File destFile = new File(outputDirBase + outputFileNameBase + File.separator + f.getName());
                                 // check for collision
                                 if (destFile.exists()) {
                                     // collision!
                                     String prefix = f.getName().substring(0, f.getName().lastIndexOf("."));
-                                    String suffix = f.getName().substring(f.getName().lastIndexOf(".") + 1,
-                                            f.getName().length());
-                                    destFile = new File(outputDirBase + outputFileNameBase + File.separator + prefix
-                                            + "_" + collisionCounter + "." + suffix);
+                                    String suffix = f.getName().substring(f.getName().lastIndexOf(".") + 1, f.getName().length());
+                                    destFile = new File(outputDirBase + outputFileNameBase + File.separator + prefix + "_" + collisionCounter + "." + suffix);
 
-                                    infoMap = infoList.get(i);
-
-                                    keySet = infoMap.keySet();
-                                    iter = keySet.iterator();
-
-                                    while (iter.hasNext()) {
-                                        key = iter.next();
-                                        value = infoMap.get(key);
-                                        if (value.equals(f.getAbsolutePath())) {
-                                            prefix = value.substring(0, value.lastIndexOf("."));
-                                            suffix = value.substring(value.lastIndexOf(".") + 1, value.length());
-                                            infoMap.put(key, prefix + "_" + collisionCounter + "." + suffix
-                                                    + "_collision");
-                                            break;
-
+                                    for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
+                                        for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
+                                            for (final DataElementValue deVal : repeat.getDataElements()) {
+                                                value = deVal.getValue();
+                                                if (value.equals(f.getAbsolutePath())) {
+                                                    prefix = value.substring(0, value.lastIndexOf("."));
+                                                    suffix = value.substring(value.lastIndexOf(".") + 1, value.length());
+                                                    deVal.setValue(prefix + "_" + collisionCounter + "." + suffix + "_collision");
+                                                }
+                                            }
                                         }
-
                                     }
 
                                     collisionCounter++;
@@ -1352,22 +1293,12 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     }
                 }
 
-                DataStruct curStruct = null;
-                for (final DataStruct ds : dataStructures) {
-                    if (ds.getName().equalsIgnoreCase(dsName)) {
-                        curStruct = ds;
-                        break;
-                    }
-                }
-
                 // may need to have hashcode field fixed
-                final String newRow = getCSVDataRow(outputDirBase, outputFileNameBase, curStruct, imageFile, null, i,
-                        ",");
+                final String newRow = getCSVDataRow(outputDirBase, outputFileNameBase, fsDataList.get(i), imageFile, null, i, ",");
                 if ( !newRow.equals("")) {
                     final String lowerName = dsName.toLowerCase();
                     String data = csvStructRowData.get(lowerName);
-                    data += csvStructRecordCounters.get(lowerName) + CSV_OUTPUT_DELIM + newRow + "\n";
-                    csvStructRecordCounters.put(lowerName, csvStructRecordCounters.get(lowerName) + 1);
+                    data += recordIndicatorValue + CSV_OUTPUT_DELIM + newRow + "\n";
                     csvStructRowData.put(lowerName, data);
                 }
 
@@ -1376,6 +1307,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         }
 
         // write out the built up CSV data for each struct
+        FileWriter fw = null;
+        BufferedWriter bw = null;
         try {
             for (final String lowerName : csvStructRowData.keySet()) {
                 final String csvFileName = lowerName + "_output_" + System.currentTimeMillis() + ".csv";
@@ -1400,7 +1333,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             printlnToLog("Unable to write CSV output file(s).");
         } finally {
             try {
-                bw.close();
+                if (bw != null) {
+                    bw.close();
+                }
             } catch (final Exception e) {
                 // Do nothing
             }
@@ -1439,83 +1374,63 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      * @param imageFile
      * @param origImage
      */
-    private final String getCSVDataRow(final String outputDirBase, final String outputFileNameBase,
-            final DataStruct ds, final File imageFile, final ModelImage origImage, final int counter,
-            final String hashCode) {
+    private final String getCSVDataRow(final String outputDirBase, final String outputFileNameBase, final FormStructureData fsData, final File imageFile,
+            final ModelImage origImage, final int counter, final String hashCode) {
         String csvRow = new String();
 
-        if (ds == null) {
+        if (fsData == null) {
             return csvRow;
         }
 
-        final LinkedHashMap<String, String> infoMap = infoList.get(counter);
-
-        for (int k = 0; k < ds.size(); k++) {
-
-            final Object o1 = ds.get(k);
-            if (o1 instanceof DataElement) {
-                // data element
-                final DataElement de = (DataElement) o1;
-                final String name = de.getName();
-                String value = "";
-                String v;
-                if (imageFile != null) {
-                    if (name.equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
-                        value = outputFileNameBase + ".zip";
-                    } else if (name.equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
-                        value = outputFileNameBase + ".jpg";
-                    } else if (name.equalsIgnoreCase(IMG_HASH_CODE_ELEMENT_NAME)) {
-                        value = hashCode;
+        for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
+            for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
+                for (final DataElementValue deVal : repeat.getDataElements()) {
+                    final String deName = deVal.getName();
+                    String value = "";
+                    final String v;
+                    if (imageFile != null) {
+                        if (deName.equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
+                            value = outputFileNameBase + ".zip";
+                        } else if (deName.equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
+                            value = outputFileNameBase + ".jpg";
+                        } else if (deName.equalsIgnoreCase(IMG_HASH_CODE_ELEMENT_NAME)) {
+                            value = hashCode;
+                        } else {
+                            value = deVal.getValue();
+                        }
                     } else {
-                        // need to get appropriate value
-                        for (final String key : infoMap.keySet()) {
-                            if (key.equalsIgnoreCase(name)) {
-                                v = infoMap.get(key);
-                                value = v;
-                                break;
-                            }
+                        value = deVal.getValue();
+                    }
+
+                    // should we be outputting all fields? - if not, need to not
+                    // include element name in header
+
+                    // if ( !value.trim().equalsIgnoreCase("")) {
+                    final File f = new File(value);
+                    if (f.isFile() || value.endsWith("_collision")) {
+                        if (value.endsWith("_collision")) {
+                            value = value.substring(0, value.indexOf("_collision"));
+                            final String filename = value.substring(value.lastIndexOf(File.separator) + 1, value.length());
+                            value = outputFileNameBase + File.separator + filename;
+                        } else {
+                            final String filename = f.getName();
+                            value = outputFileNameBase + File.separator + filename;
                         }
                     }
-                } else {
-                    // need to get appropriate value
-                    for (final String key : infoMap.keySet()) {
-                        if (key.equalsIgnoreCase(name)) {
-                            v = infoMap.get(key);
-                            value = v;
-                            break;
-                        }
+
+                    // escape commas in values - if there's a comma, put quotes
+                    // around the value and double up any existing
+                    // quotes
+                    if (value.contains(",")) {
+                        value = "\"" + value.replaceAll("\"", "\"\"") + "\"";
                     }
-                }
 
-                // should we be outputting all fields? - if not, need to not
-                // include element name in header
-
-                // if ( !value.trim().equalsIgnoreCase("")) {
-                final File f = new File(value);
-                if (f.isFile() || value.endsWith("_collision")) {
-                    if (value.endsWith("_collision")) {
-                        value = value.substring(0, value.indexOf("_collision"));
-                        final String filename = value.substring(value.lastIndexOf(File.separator) + 1, value.length());
-                        value = outputFileNameBase + File.separator + filename;
+                    if (csvRow.length() == 0) {
+                        csvRow = value;
                     } else {
-                        final String filename = f.getName();
-                        value = outputFileNameBase + File.separator + filename;
+                        csvRow += CSV_OUTPUT_DELIM + value;
                     }
                 }
-
-                // escape commas in values - if there's a comma, put quotes
-                // around the value and double up any existing
-                // quotes
-                if (value.contains(",")) {
-                    value = "\"" + value.replaceAll("\"", "\"\"") + "\"";
-                }
-
-                if (k == 0) {
-                    csvRow = value;
-                } else {
-                    csvRow += CSV_OUTPUT_DELIM + value;
-                }
-                // }
             }
         }
 
@@ -1618,20 +1533,20 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.BOTH;
 
-        addSourceButton = new JButton("Add Form Structure");
-        addSourceButton.setToolTipText("Add Form Structure");
-        addSourceButton.addActionListener(this);
-        addSourceButton.setActionCommand("AddSource");
+        addStructButton = new JButton("Add Form Structure");
+        addStructButton.setToolTipText("Add Form Structure");
+        addStructButton.addActionListener(this);
+        addStructButton.setActionCommand("AddStruct");
 
         loadCSVButton = new JButton("Load CSV File");
         loadCSVButton.setToolTipText("Load CSV File");
         loadCSVButton.addActionListener(this);
-        loadCSVButton.setActionCommand("loadCSV");
+        loadCSVButton.setActionCommand("LoadCSV");
 
-        removeSourceButton = new JButton("Remove Form Structure");
-        removeSourceButton.setToolTipText("Remove the selected Form Structure");
-        removeSourceButton.addActionListener(this);
-        removeSourceButton.setActionCommand("RemoveSource");
+        removeStructButton = new JButton("Remove Form Structure");
+        removeStructButton.setToolTipText("Remove the selected Form Structure");
+        removeStructButton.addActionListener(this);
+        removeStructButton.setActionCommand("RemoveStruct");
 
         finishButton = new JButton("Generate Files");
         finishButton.setToolTipText("Generate Files");
@@ -1643,30 +1558,30 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         // helpButton.addActionListener(this);
         // helpButton.setActionCommand("Help");
 
-        completeDataElementsButton = new JButton("Edit Data Elements");
-        completeDataElementsButton.setToolTipText("Edit data elements for selected Form Structure");
-        completeDataElementsButton.addActionListener(this);
-        completeDataElementsButton.setActionCommand("completeDataElements");
+        editDataElementsButton = new JButton("Edit Data Elements");
+        editDataElementsButton.setToolTipText("Edit data elements for selected Form Structure");
+        editDataElementsButton.addActionListener(this);
+        editDataElementsButton.setActionCommand("EditDataElements");
 
-        addSourceButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        removeSourceButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        addStructButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        removeStructButton.setPreferredSize(MipavUtil.defaultButtonSize);
         finishButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        completeDataElementsButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        editDataElementsButton.setPreferredSize(MipavUtil.defaultButtonSize);
 
-        addSourceButton.setEnabled(false);
+        addStructButton.setEnabled(false);
         loadCSVButton.setEnabled(false);
-        removeSourceButton.setEnabled(false);
-        completeDataElementsButton.setEnabled(false);
+        removeStructButton.setEnabled(false);
+        editDataElementsButton.setEnabled(false);
         finishButton.setEnabled(false);
 
         gbc.gridx = 0;
         buttonPanel1.add(loadCSVButton, gbc);
         gbc.gridx = 1;
-        buttonPanel1.add(addSourceButton, gbc);
+        buttonPanel1.add(addStructButton, gbc);
         gbc.gridx = 2;
-        buttonPanel1.add(removeSourceButton, gbc);
+        buttonPanel1.add(removeStructButton, gbc);
         gbc.gridx = 3;
-        buttonPanel1.add(completeDataElementsButton, gbc);
+        buttonPanel1.add(editDataElementsButton, gbc);
         gbc.gridx = 4;
         buttonPanel1.add(finishButton, gbc);
         // gbc.gridx = 5;
@@ -1741,15 +1656,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 colorMappedA.G = (imageBufferA[index + 2] + m_akOffset[0].G) * m_afNormColor[0];
                 colorMappedA.B = (imageBufferA[index + 3] + m_akOffset[0].B) * m_afNormColor[0];
 
-                pixValue = 0xff000000 | ((int) (colorMappedA.R) << 16) | ((int) (colorMappedA.G) << 8)
-                        | ((int) (colorMappedA.B));
+                pixValue = 0xff000000 | ((int) (colorMappedA.R) << 16) | ((int) (colorMappedA.G) << 8) | ((int) (colorMappedA.B));
 
                 paintBuffer[ind4] = pixValue;
             }
         }
 
-        final MemoryImageSource memImageA = new MemoryImageSource(image.getExtents()[0], image.getExtents()[1],
-                paintBuffer, 0, image.getExtents()[0]);
+        final MemoryImageSource memImageA = new MemoryImageSource(image.getExtents()[0], image.getExtents()[1], paintBuffer, 0, image.getExtents()[0]);
 
         final int extIndex = options.getFileName().indexOf(".");
         final String prefix = options.getFileName().substring(0, extIndex); // Used
@@ -1781,30 +1694,30 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     public void mouseClicked(final MouseEvent e) {
         final Component c = e.getComponent();
         if (c instanceof JTable) {
-            if (sourceTable.getSelectedRow() == -1) {
-                completeDataElementsButton.setEnabled(false);
-                removeSourceButton.setEnabled(false);
+            if (structTable.getSelectedRow() == -1) {
+                editDataElementsButton.setEnabled(false);
+                removeStructButton.setEnabled(false);
                 return;
             } else {
                 if ( !isFinished) {
-                    completeDataElementsButton.setEnabled(true);
-                    removeSourceButton.setEnabled(true);
+                    editDataElementsButton.setEnabled(true);
+                    removeStructButton.setEnabled(true);
                 }
             }
 
             previewPanel.removeAll();
             previewPanel.repaint();
 
-            if (previewImages.get(sourceTable.getSelectedRow()) != null) {
-                previewPanel.add(previewImages.get(sourceTable.getSelectedRow()));
-                previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
+            if (previewImages.get(structTable.getSelectedRow()) != null) {
+                previewPanel.add(previewImages.get(structTable.getSelectedRow()));
+                previewImages.get(structTable.getSelectedRow()).setSliceBrightness(previewImgBrightness, previewImgContrast);
                 previewPanel.validate();
                 previewPanel.repaint();
             }
 
             if (e.getClickCount() == 2) {
                 if ( !isFinished) {
-                    final String dsName = (String) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 0);
+                    final String dsName = (String) structTableModel.getValueAt(structTable.getSelectedRow(), 0);
                     new InfoDialog(this, dsName, true, true, null);
                 }
             }
@@ -1826,8 +1739,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     public boolean contains(final File f) {
         boolean contains = false;
 
-        for (int i = 0; i < sourceTableModel.getRowCount(); i++) {
-            final File f1 = (File) sourceTableModel.getValueAt(i, 0);
+        for (int i = 0; i < structTableModel.getRowCount(); i++) {
+            final File f1 = (File) structTableModel.getValueAt(i, 0);
             if (f1.getAbsolutePath().equalsIgnoreCase(f.getAbsolutePath())) {
                 contains = true;
                 break;
@@ -1847,7 +1760,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         // }
         // }
 
-        if (sourceTableModel.getRowCount() == 0) {
+        if (structTableModel.getRowCount() == 0) {
             finishButton.setEnabled(false);
         } else {
             // changed to always enabled if some data added
@@ -1917,8 +1830,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         sliderPanel.add(maximum, gbc);
         sliderPanel.setBorder(buildTitledBorder("Level"));
 
-        contrastSlider = new JSlider(SwingConstants.HORIZONTAL, -200, 200, (int) (Math.round(86.85889638 * Math
-                .log(origContrast))));
+        contrastSlider = new JSlider(SwingConstants.HORIZONTAL, -200, 200, (int) (Math.round(86.85889638 * Math.log(origContrast))));
 
         contrastSlider.setMajorTickSpacing(80);
         contrastSlider.setPaintTicks(true);
@@ -2008,8 +1920,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             try {
                 prop.load(in);
             } catch (final IOException e) {
-                Preferences.debug("Unable to load BRICS preferences file: " + configFileName + "\n",
-                        Preferences.DEBUG_MINOR);
+                Preferences.debug("Unable to load BRICS preferences file: " + configFileName + "\n", Preferences.DEBUG_MINOR);
                 e.printStackTrace();
             }
             // use pre-set, hardcoded values as defaults if properties are not
@@ -2453,8 +2364,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     System.err.println("Value not found. DE:\t" + comp.getName() + "\t" + value);
                 }
             } else {
-                System.err.println("Unrecognized component type (" + comp.getName() + "):\t"
-                        + comp.getClass().getName());
+                System.err.println("Unrecognized component type (" + comp.getName() + "):\t" + comp.getClass().getName());
             }
         }
     }
@@ -2645,6 +2555,14 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         return false;
     }
 
+    private static final boolean isMainImagingFileElement(final String groupName, final String deName) {
+        if (groupName.equalsIgnoreCase(IMG_IMAGE_INFO_GROUP) && deName.equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
+            return true;
+        }
+
+        return false;
+    }
+
     /**
      * Returns whether the given structure name indicates that it is an imaging structure that should be processed
      * specially (mainly, this means that the plugin looks for the Imaging file DE to pull out header info).
@@ -2685,15 +2603,11 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      * 
      */
     private class MyRightCellRenderer extends DefaultTableCellRenderer {
-
-        /**
-		 * 
-		 */
         private static final long serialVersionUID = -7905716122046419275L;
 
         @Override
-        public Component getTableCellRendererComponent(final JTable table, final Object value,
-                final boolean isSelected, final boolean hasFocus, final int row, final int column) {
+        public Component getTableCellRendererComponent(final JTable table, final Object value, final boolean isSelected, final boolean hasFocus, final int row,
+                final int column) {
             final Component comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             setHorizontalAlignment(SwingConstants.CENTER);
 
@@ -2709,9 +2623,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     }
 
     private class ChooseDataStructDialog extends JDialog implements ActionListener {
-        /**
-		 * 
-		 */
         private static final long serialVersionUID = 4199199899439094828L;
 
         private final PlugInDialogFITBIR owner;
@@ -2720,20 +2631,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         private ViewTableModel structsModel;
 
         private JTable structsTable;
-
-        /*
-         * private QName qName = null;
-         * 
-         * private QName qStatus = null;
-         * 
-         * private QName qDataType = null;
-         * 
-         * private QName qDescription = null;
-         * 
-         * private QName qParentDataStructure = null;
-         * 
-         * private QName qVersion = null;
-         */
 
         private final ArrayList<String> descAL = new ArrayList<String>();
 
@@ -2750,23 +2647,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
             this.owner = owner;
 
-            /*
-             * qName = new QName(publishedDataStructs.getNamespace().getNamespaceURI(), "short_name");
-             * System.out.println(qName.toString()); qStatus = new
-             * QName(publishedDataStructs.getNamespace().getNamespaceURI(), "status"); qDataType = new
-             * QName(publishedDataStructs.getNamespace().getNamespaceURI(), "type"); qDescription = new
-             * QName(publishedDataStructs.getNamespace().getNamespaceURI(), "desc"); qParentDataStructure = new
-             * QName(publishedDataStructs.getNamespace().getNamespaceURI(), "parent"); qVersion = new
-             * QName(publishedDataStructs.getNamespace().getNamespaceURI(), "version");
-             */
-
             init();
 
         }
 
-        /**
-         * init
-         */
         private void init() {
             setTitle("Choose Form Structure");
             final int numColumns = 4;
@@ -2811,11 +2695,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 final String shortname = ds.getShortName();
                 final String version = ds.getVersion().toString();
                 final String status = ds.getStatus().toString();
-                final String type = ds.getFileType().getType();
 
-                if (type.equalsIgnoreCase(STRUCT_TYPE_IMAGING)) {
+                if (ds.getFileType().equals(SubmissionType.IMAGING)) {
                     // only include non-archived structures
-                    if ( !status.equalsIgnoreCase(STRUCT_STATUS_ARCHIVED)) {
+                    if ( !ds.getStatus().equals(StatusType.ARCHIVED)) {
                         descAL.add(desc);
                         shortNameAL.add(shortname);
                         versionAL.add(version);
@@ -2829,21 +2712,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 MipavUtil.displayWarning("No Imaging structures were found in the data dictionary.");
                 return;
             }
-
-            // old way of using web service
-            /*
-             * final Iterator<OMElement> iter2 = publishedDataStructs.getChildElements(); while (iter2.hasNext()) {
-             * final OMElement e = iter2.next();
-             * 
-             * if (e.getLocalName().equalsIgnoreCase("data_structure")) { final String shortname =
-             * e.getAttributeValue(qName); final String version = e.getAttributeValue(qVersion); // This can also be
-             * obtained using the last // two // characters of short name final String status =
-             * e.getAttributeValue(qStatus); final String dataType = e.getAttributeValue(qDataType); final String desc =
-             * e.getAttributeValue(qDescription); final String parent = e.getAttributeValue(qParentDataStructure); if
-             * (dataType.equalsIgnoreCase("Imaging")) {
-             * 
-             * descAL.add(desc); shortNameAL.add(shortname); versionAL.add(version); statusAL.add(status); } } }
-             */
 
             // before sorting, remove structs that are not the most current
             for (int i = 0; i < shortNameAL.size(); i++) {
@@ -2935,7 +2803,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             buildOKButton();
             buildCancelButton();
             OKButton.setText("Add");
-            OKButton.setActionCommand("ok4");
+            OKButton.setActionCommand("ChooseStructOK");
             OKButton.addActionListener(this);
             OKPanel.add(OKButton);
 
@@ -2958,7 +2826,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         @Override
         public void actionPerformed(final ActionEvent e) {
             final String command = e.getActionCommand();
-            if (command.equalsIgnoreCase("ok4")) {
+            if (command.equalsIgnoreCase("ChooseStructOK")) {
                 final int selectedRow = structsTable.getSelectedRow();
                 if (selectedRow != -1) {
                     this.dispose();
@@ -2979,7 +2847,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
             }
         }
-
     }
 
     /**
@@ -3009,9 +2876,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
         private String dataStructureName;
 
-        private TreeMap<JLabel, JComponent> labelsAndComps;
-
-        private Set<RepeatableGroup> groups;
+        private FormStructureData fsData;
 
         private final ArrayList<File> allOtherFiles = new ArrayList<File>();
 
@@ -3023,9 +2888,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
         private final String[] csvParams;
 
-        private final String[] unchangableElements = new String[] {IMG_HASH_CODE_ELEMENT_NAME, "ImgDimensionTyp",
-                "ImgDim1ExtentVal", "ImgDim2ExtentVal", "ImgDim3ExtentVal", "ImgDim4ExtentVal", "ImgDim5ExtentVal",
-                IMG_FILE_ELEMENT_NAME, IMG_PREVIEW_ELEMENT_NAME};
+        private final String[] unchangableElements = new String[] {IMG_HASH_CODE_ELEMENT_NAME, "ImgDimensionTyp", "ImgDim1ExtentVal", "ImgDim2ExtentVal",
+                "ImgDim3ExtentVal", "ImgDim4ExtentVal", "ImgDim5ExtentVal", IMG_FILE_ELEMENT_NAME, IMG_PREVIEW_ELEMENT_NAME};
 
         private String currFile;
 
@@ -3042,8 +2906,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
          * @param file
          * @param launchedFromCompletedState
          */
-        public InfoDialog(final PlugInDialogFITBIR owner, final String name, final boolean launchedFromInProcessState,
-                final boolean setInitialVisible, final String[] csvParams) {
+        public InfoDialog(final PlugInDialogFITBIR owner, final String name, final boolean launchedFromInProcessState, final boolean setInitialVisible,
+                final String[] csvParams) {
 
             super(owner, true);
 
@@ -3059,19 +2923,17 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 } else {
                     this.dataStructureName = name.substring(0, name.lastIndexOf("_"));
                 }
-
             } else {
                 previewImages.add(null);
                 imageFiles.add(null);
                 multifiles.add(new Boolean(false));
-                infoList.add(null);
+                fsDataList.add(null);
                 allOtherFilesAL.add(null);
                 this.dataStructureName = name;
             }
 
             final JPanel panel = new JPanel(new GridBagLayout());
-            tabScrollPane = new JScrollPane(panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            tabScrollPane = new JScrollPane(panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
             // tabScrollPane.setPreferredSize(new Dimension(660, 500));
             tabbedPane.addTab(dataStructureName, tabScrollPane);
@@ -3085,9 +2947,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             init();
         }
 
-        /**
-         * init
-         */
         private void init() {
 
             setTitle("Edit Data Elements");
@@ -3104,71 +2963,51 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             }
 
             try {
-                final String n = dataStructure.getShortName();
-                final String s = dataStructure.getShortName();
-                final String d = dataStructure.getDescription();
-                final String v = dataStructure.getVersion().toString();
-                final String t = dataStructure.getFileType().getType();
-
-                final DataStruct dataStruct = new DataStruct(n, s, d, v, t);
-                boolean found = false;
-                for (int i = 0; i < dataStructures.size(); i++) {
-                    final String sn = dataStructures.get(i).getShortname();
-                    if (s.equalsIgnoreCase(sn)) {
-                        found = true;
-                    }
-                }
-                if ( !found) {
-                    dataStructures.add(dataStruct);
-                }
-
                 if (launchedFromInProcessState) {
-                    final int selectedRow = sourceTable.getSelectedRow();
-                    final LinkedHashMap<String, String> infoMap = infoList.get(selectedRow);
+                    final int selectedRow = structTable.getSelectedRow();
 
-                    labelsAndComps = labelsAndCompsList.get(selectedRow);
+                    fsData = fsDataList.get(selectedRow);
 
-                    // parse(dataStructElement, dataStruct, dataStructureName,
-                    // labelsAndComps);
+                    // parse_new(dataStructure, fsData);
 
-                    parse_new(dataStructure, dataStruct, dataStructureName, labelsAndComps);
+                    parseForInitLabelsAndComponents(fsData);
 
-                    parseForInitLabelsAndComponents(dataStruct, labelsAndComps);
-
-                    populateFieldsFromInProcessState(labelsAndComps, infoMap);
-
+                    // TODO not needed?
+                    // populateFieldsFromInProcessState(fsData);
                 } else {
+                    fsData = new FormStructureData(dataStructure);
 
-                    labelsAndComps = new TreeMap<JLabel, JComponent>(new JLabelComparator());
+                    parse_new(dataStructure, fsData);
 
-                    // parse(dataStructElement, dataStruct, dataStructureName,
-                    // labelsAndComps);
+                    parseForInitLabelsAndComponents(fsData);
 
-                    parse_new(dataStructure, dataStruct, dataStructureName, labelsAndComps);
-
-                    parseForInitLabelsAndComponents(dataStruct, labelsAndComps);
-
-                    labelsAndCompsList.add(labelsAndComps);
+                    // fsDataList.add(fsData);
 
                     if ( !setInitialVisible) {
                         // convert any dates found into proper ISO format
                         for (int i = 0; i < csvParams.length; i++) {
                             // check value not empty and check type of field for date
                             final String deName = csvFieldNames[i];
-                            String deType = null;
-                            for (final DataElement de : dataStruct) {
-                                if (deName.equalsIgnoreCase(de.getName())) {
-                                    deType = de.getType();
+
+                            DataElement de = null;
+                            for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
+                                for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
+                                    for (final DataElementValue deVal : repeat.getDataElements()) {
+                                        if (deVal.getName().equalsIgnoreCase(deName)) {
+                                            de = deVal.getDataElementInfo();
+                                            break;
+                                        }
+                                    }
                                 }
                             }
-                            if ( !csvParams[i].trim().equals("") && deType != null
-                                    && deType.equalsIgnoreCase(DATE_ELEMENT_TYPE)) {
+
+                            if ( !csvParams[i].trim().equals("") && de.getType().equals(DataType.DATE)) {
                                 csvParams[i] = convertDateToISOFormat(csvParams[i]);
                             }
                         }
 
                         // this means it was launched via the csv file
-                        populateFieldsFromCSV(labelsAndComps, csvParams);
+                        populateFieldsFromCSV(fsData, csvParams);
                     }
 
                 }
@@ -3185,9 +3024,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             buildOKButton();
             buildCancelButton();
             OKButton.setText("Save");
-            OKButton.setActionCommand("ok3");
+            OKButton.setActionCommand("StructDialogOK");
             OKButton.addActionListener(this);
-            cancelButton.setActionCommand("cancel3");
+            cancelButton.setActionCommand("StructDialogCancel");
             cancelButton.addActionListener(this);
             OKPanel.add(OKButton);
             OKPanel.add(cancelButton);
@@ -3230,197 +3069,205 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             if (setInitialVisible) {
                 setVisible(true);
             }
-
         }
 
-        private void populateFieldsFromCSV(final TreeMap<JLabel, JComponent> labelsAndComps, final String[] csvParams) {
-            if (isImagingStructure(dataStructureName)) {
-                // TODO: handle the record column when we add support for
-                // repeating groups in a form record
+        private void populateFieldsFromCSV(final FormStructureData fsData, final String[] csvParams) {
+            // if (isImagingStructure(dataStructureName)) {
+            // // TODO: handle the record column when we add support for
+            // // repeating groups in a form record
+            //
+            // // first check to see if image_file was supplied in the csv
+            // int imageFileIndex = -1;
+            // for (int i = 0; i < csvFieldNames.length; i++) {
+            // if (csvFieldNames[i].trim().equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
+            // imageFileIndex = i;
+            // break;
+            // }
+            // }
 
-                // first check to see if image_file was supplied in the csv
-                int imageFileIndex = -1;
-                for (int i = 0; i < csvFieldNames.length; i++) {
-                    if (csvFieldNames[i].trim().equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
-                        imageFileIndex = i;
-                        break;
-                    }
-                }
+            // TODO: new CSV handling:
+            // for the first row of the record
+            // for each column
+            // get group for that column field (repeat 0)
+            // get element for the column field in the repeat group
+            // set the element value/UI
+            // check for conflicts and resolve as chosen by user
 
-                if (imageFileIndex != -1 && !csvParams[imageFileIndex].equals("")) {
-
-                    // if image_file is in zip format....first unzip it
-                    // temporarily
-
-                    final String imageFile = csvParams[imageFileIndex];
-                    ModelImage srcImage = null;
-
-                    srcImage = readImgFromCSV(csvFile.getParentFile().getAbsolutePath(), imageFile);
-
-                    if (srcImage != null) {
-
-                        // final String labelName =
-                        // command.substring(command.indexOf("_") + 1,
-                        // command.length());
-
-                        final Set<JLabel> keySet = labelsAndComps.keySet();
-                        final Iterator<JLabel> iter = keySet.iterator();
-                        while (iter.hasNext()) {
-                            final JLabel l = iter.next();
-                            if (l.getName().equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
-                                final JTextField tf = (JTextField) labelsAndComps.get(l);
-                                tf.setText(imageFile);
-                                tf.setEnabled(false);
-                            }
-                        }
-
-                        // need to determine if there are any entries in cvs
-                        // that has things like image extents or
-                        // resolutions
-                        // that are different than the ones determined by
-                        // header....if there are, then prompt a warning
-
-                        final int response = determineImageHeaderDescrepencies(srcImage);
-
-                        if (response == 1) {
-                            populateFields(labelsAndComps, srcImage);
-
-                            String key;
-                            String value;
-                            for (int i = 0; i < csvFieldNames.length; i++) {
-
-                                key = csvFieldNames[i];
-                                value = csvParams[i];
-                                if ( !key.equals(IMG_FILE_ELEMENT_NAME)) {
-                                    final Set<JLabel> keySet2 = labelsAndComps.keySet();
-                                    final Iterator<JLabel> iter2 = keySet2.iterator();
-                                    // System.out.println();
-                                    while (iter2.hasNext()) {
-                                        final JLabel l = iter2.next();
-                                        final Component comp = labelsAndComps.get(l);
-                                        final String name = comp.getName();
-                                        // System.out.println("--- " + name);
-                                        if (name.equalsIgnoreCase(key) && value != "" && !value.equals("")) {
-                                            if (comp instanceof JTextField) {
-                                                final JTextField t = (JTextField) comp;
-                                                t.setText(value);
-
-                                            } else if (comp instanceof JComboBox) {
-                                                final JComboBox c = (JComboBox) comp;
-
-                                                boolean isOther = true;
-
-                                                for (int k = 0; k < c.getItemCount(); k++) {
-                                                    final String item = (String) c.getItemAt(k);
-                                                    if (value.equalsIgnoreCase(item)) {
-                                                        c.setSelectedIndex(k);
-                                                        isOther = false;
-                                                    }
-                                                }
-
-                                                if (isOther) {
-                                                    specify = value;
-                                                    c.setSelectedItem(VALUE_OTHER_SPECIFY);
-                                                }
-                                            }
-                                            // break;
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            String key;
-                            String value;
-                            for (int i = 0; i < csvFieldNames.length; i++) {
-                                key = csvFieldNames[i];
-                                value = csvParams[i];
-                                if ( !key.equals(IMG_FILE_ELEMENT_NAME)) {
-                                    final Set<JLabel> keySet2 = labelsAndComps.keySet();
-                                    final Iterator<JLabel> iter2 = keySet2.iterator();
-                                    // System.out.println();
-                                    while (iter2.hasNext()) {
-                                        final JLabel l = iter2.next();
-                                        final Component comp = labelsAndComps.get(l);
-                                        final String name = comp.getName();
-                                        // System.out.println("--- " + name);
-                                        if (name.equalsIgnoreCase(key) && value != null && !value.equals("")) {
-                                            if (comp instanceof JTextField) {
-                                                final JTextField t = (JTextField) comp;
-                                                t.setText(value);
-
-                                            } else if (comp instanceof JComboBox) {
-                                                final JComboBox c = (JComboBox) comp;
-
-                                                boolean isOther = true;
-                                                for (int k = 0; k < c.getItemCount(); k++) {
-                                                    final String item = (String) c.getItemAt(k);
-                                                    if (value.equalsIgnoreCase(item)) {
-                                                        c.setSelectedIndex(k);
-                                                        isOther = false;
-                                                    }
-                                                }
-
-                                                if (isOther) {
-                                                    specify = value;
-                                                    c.setSelectedItem(VALUE_OTHER_SPECIFY);
-                                                }
-                                            }
-                                            // break;
-                                        }
-                                    }
-                                }
-                            }
-                            populateFields(labelsAndComps, srcImage);
-
-                        }
-
-                        srcImage.disposeLocal();
-                        srcImage = null;
-                    }
-                }
-            } else {
-                // this means its not an imaging data structure
-
-                String key;
-                String value;
-                for (int i = 0; i < csvFieldNames.length; i++) {
-
-                    key = csvFieldNames[i];
-                    value = csvParams[i];
-
-                    final Set<JLabel> keySet2 = labelsAndComps.keySet();
-                    final Iterator<JLabel> iter2 = keySet2.iterator();
-                    // System.out.println();
-                    while (iter2.hasNext()) {
-                        final JLabel l = iter2.next();
-                        final Component comp = labelsAndComps.get(l);
-                        final String name = comp.getName();
-                        // System.out.println("--- " + name);
-                        if (name.equalsIgnoreCase(key)) {
-                            if (comp instanceof JTextField) {
-                                final JTextField t = (JTextField) comp;
-                                t.setText(value);
-
-                            } else if (comp instanceof JComboBox) {
-                                final JComboBox c = (JComboBox) comp;
-                                boolean isOther = true;
-                                for (int k = 0; k < c.getItemCount(); k++) {
-                                    final String item = (String) c.getItemAt(k);
-                                    if (value.equalsIgnoreCase(item)) {
-                                        c.setSelectedIndex(k);
-                                        isOther = false;
-                                    }
-                                }
-                                if (isOther) {
-                                    specify = value;
-                                    c.setSelectedItem(VALUE_OTHER_SPECIFY);
-                                }
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
+            // if (imageFileIndex != -1 && !csvParams[imageFileIndex].equals("")) {
+            //
+            // // if image_file is in zip format....first unzip it
+            // // temporarily
+            //
+            // final String imageFile = csvParams[imageFileIndex];
+            // ModelImage srcImage = null;
+            //
+            // srcImage = readImgFromCSV(csvFile.getParentFile().getAbsolutePath(), imageFile);
+            //
+            // if (srcImage != null) {
+            //
+            // // final String labelName =
+            // // command.substring(command.indexOf("_") + 1,
+            // // command.length());
+            //
+            // for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
+            // for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
+            // for (final DataElementValue deVal : repeat.getDataElements()) {
+            // if (deVal.getName().equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
+            // final JTextField tf = (JTextField) deVal.getComp();
+            // tf.setText(imageFile);
+            // tf.setEnabled(false);
+            // }
+            // }
+            // }
+            // }
+            //
+            // // need to determine if there are any entries in cvs
+            // // that has things like image extents or
+            // // resolutions
+            // // that are different than the ones determined by
+            // // header....if there are, then prompt a warning
+            //
+            // final int response = determineImageHeaderDescrepencies(srcImage);
+            //
+            // if (response == RESOLVE_CONFLICT_CSV) {
+            // populateFields(fsData, srcImage);
+            //
+            // String key;
+            // String value;
+            // for (int i = 0; i < csvFieldNames.length; i++) {
+            //
+            // key = csvFieldNames[i];
+            // value = csvParams[i];
+            // if ( !key.equals(IMG_FILE_ELEMENT_NAME)) {
+            // final Set<JLabel> keySet2 = labelsAndComps.keySet();
+            // final Iterator<JLabel> iter2 = keySet2.iterator();
+            // // System.out.println();
+            // while (iter2.hasNext()) {
+            // final JLabel l = iter2.next();
+            // final Component comp = labelsAndComps.get(l);
+            // final String name = comp.getName();
+            // // System.out.println("--- " + name);
+            // if (name.equalsIgnoreCase(key) && value != "" && !value.equals("")) {
+            // if (comp instanceof JTextField) {
+            // final JTextField t = (JTextField) comp;
+            // t.setText(value);
+            //
+            // } else if (comp instanceof JComboBox) {
+            // final JComboBox c = (JComboBox) comp;
+            //
+            // boolean isOther = true;
+            //
+            // for (int k = 0; k < c.getItemCount(); k++) {
+            // final String item = (String) c.getItemAt(k);
+            // if (value.equalsIgnoreCase(item)) {
+            // c.setSelectedIndex(k);
+            // isOther = false;
+            // }
+            // }
+            //
+            // if (isOther) {
+            // specify = value;
+            // c.setSelectedItem(VALUE_OTHER_SPECIFY);
+            // }
+            // }
+            // // break;
+            // }
+            // }
+            // }
+            // }
+            // } else {
+            // String key;
+            // String value;
+            // for (int i = 0; i < csvFieldNames.length; i++) {
+            // key = csvFieldNames[i];
+            // value = csvParams[i];
+            // if ( !key.equals(IMG_FILE_ELEMENT_NAME)) {
+            // final Set<JLabel> keySet2 = labelsAndComps.keySet();
+            // final Iterator<JLabel> iter2 = keySet2.iterator();
+            // // System.out.println();
+            // while (iter2.hasNext()) {
+            // final JLabel l = iter2.next();
+            // final Component comp = labelsAndComps.get(l);
+            // final String name = comp.getName();
+            // // System.out.println("--- " + name);
+            // if (name.equalsIgnoreCase(key) && value != null && !value.equals("")) {
+            // if (comp instanceof JTextField) {
+            // final JTextField t = (JTextField) comp;
+            // t.setText(value);
+            //
+            // } else if (comp instanceof JComboBox) {
+            // final JComboBox c = (JComboBox) comp;
+            //
+            // boolean isOther = true;
+            // for (int k = 0; k < c.getItemCount(); k++) {
+            // final String item = (String) c.getItemAt(k);
+            // if (value.equalsIgnoreCase(item)) {
+            // c.setSelectedIndex(k);
+            // isOther = false;
+            // }
+            // }
+            //
+            // if (isOther) {
+            // specify = value;
+            // c.setSelectedItem(VALUE_OTHER_SPECIFY);
+            // }
+            // }
+            // // break;
+            // }
+            // }
+            // }
+            // }
+            // populateFields(fsData, srcImage);
+            //
+            // }
+            //
+            // srcImage.disposeLocal();
+            // srcImage = null;
+            // }
+            // }
+            // } else {
+            // // this means its not an imaging data structure
+            //
+            // String key;
+            // String value;
+            // for (int i = 0; i < csvFieldNames.length; i++) {
+            //
+            // key = csvFieldNames[i];
+            // value = csvParams[i];
+            //
+            // final Set<JLabel> keySet2 = labelsAndComps.keySet();
+            // final Iterator<JLabel> iter2 = keySet2.iterator();
+            // // System.out.println();
+            // while (iter2.hasNext()) {
+            // final JLabel l = iter2.next();
+            // final Component comp = labelsAndComps.get(l);
+            // final String name = comp.getName();
+            // // System.out.println("--- " + name);
+            // if (name.equalsIgnoreCase(key)) {
+            // if (comp instanceof JTextField) {
+            // final JTextField t = (JTextField) comp;
+            // t.setText(value);
+            //
+            // } else if (comp instanceof JComboBox) {
+            // final JComboBox c = (JComboBox) comp;
+            // boolean isOther = true;
+            // for (int k = 0; k < c.getItemCount(); k++) {
+            // final String item = (String) c.getItemAt(k);
+            // if (value.equalsIgnoreCase(item)) {
+            // c.setSelectedIndex(k);
+            // isOther = false;
+            // }
+            // }
+            // if (isOther) {
+            // specify = value;
+            // c.setSelectedItem(VALUE_OTHER_SPECIFY);
+            // }
+            // }
+            // break;
+            // }
+            // }
+            // }
+            // }
 
             // need to validate and then close window
             ArrayList<String> errs;
@@ -3437,13 +3284,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             }
 
             if (validFile) {
-                complete(labelsAndComps, dataStructureName, isComplete);
+                complete(fsData, isComplete);
             } else {
                 if ( !launchedFromInProcessState) {
                     previewImages.remove(previewImages.size() - 1);
                     imageFiles.remove(imageFiles.size() - 1);
                     multifiles.remove(multifiles.size() - 1);
-                    infoList.remove(infoList.size() - 1);
+                    fsDataList.remove(fsDataList.size() - 1);
                     allOtherFilesAL.remove(allOtherFilesAL.size() - 1);
                     if (addedPreviewImage) {
                         previewPanel.removeAll();
@@ -3454,7 +3301,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
             enableDisableFinishButton();
             dispose();
-
         }
 
         private ModelImage readImgFromCSV(final String parentDir, final String imageFile) {
@@ -3466,15 +3312,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             validFile = true;
 
             try {
-
                 if (imageFile.endsWith(".zip")) {
 
                     String destName = imageFile.replace("/", File.separator);
                     destName = destName.replace("\\", File.separator);
                     destName = destName.substring(destName.lastIndexOf(File.separator) + 1, destName.lastIndexOf("."));
                     // String destDirName =
-                    final String tempDir = parentDir + File.separator + destName + "_temp_"
-                            + System.currentTimeMillis();
+                    final String tempDir = parentDir + File.separator + destName + "_temp_" + System.currentTimeMillis();
                     tempDirs.add(tempDir);
                     final File imageZipFile = new File(parentDir + File.separator + imageFile);
                     String fileName = "";
@@ -3561,15 +3405,15 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 addedPreviewImage = true;
 
                 if (launchedFromInProcessState) {
-                    final int selectedRow = sourceTable.getSelectedRow();
+                    final int selectedRow = structTable.getSelectedRow();
                     previewImages.set(selectedRow, previewImg);
-                    previewImages.get(selectedRow).setSliceBrightness(brightness, contrast);
+                    previewImages.get(selectedRow).setSliceBrightness(previewImgBrightness, previewImgContrast);
                     imageFiles.set(selectedRow, file);
                     multifiles.set(selectedRow, new Boolean(isMultifile));
                 } else {
                     final int size = previewImages.size();
                     previewImages.set(size - 1, previewImg);
-                    previewImages.get(size - 1).setSliceBrightness(brightness, contrast);
+                    previewImages.get(size - 1).setSliceBrightness(previewImgBrightness, previewImgContrast);
                     imageFiles.set(size - 1, file);
                     multifiles.set(size - 1, new Boolean(isMultifile));
                 }
@@ -3590,13 +3434,12 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             return srcImage;
         }
 
-        private void parseForInitLabelsAndComponents(final DataStruct ds2,
-                final TreeMap<JLabel, JComponent> labelsAndComps) {
+        private void parseForInitLabelsAndComponents(final FormStructureData fsData) {
             JPanel mainPanel = null;
             JScrollPane sp;
             for (int i = 0; i < tabbedPane.getTabCount(); i++) {
                 final String title = tabbedPane.getTitleAt(i);
-                if (title.toLowerCase().startsWith(ds2.getShortname().toLowerCase())) {
+                if (title.toLowerCase().startsWith(fsData.getStructInfo().getShortName().toLowerCase())) {
                     sp = (JScrollPane) (tabbedPane.getComponentAt(i));
                     mainPanel = (JPanel) (sp.getViewport().getComponent(0));
                 }
@@ -3608,352 +3451,338 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             gbc2.gridy = 0;
             gbc2.insets = new Insets(2, 5, 2, 5);
 
-            final TreeMap<String, JPanel> groupPanels = new TreeMap<String, JPanel>();
-            for (final RepeatableGroup g : groups) {
-                final JPanel p = new JPanel(new GridBagLayout());
-                p.setBorder(buildTitledBorder(g.getName()));
-                groupPanels.put(g.getName(), p);
+            for (final RepeatableGroup g : fsData.getStructInfo().getRepeatableGroups()) {
+                final JPanel groupPanel = new JPanel(new GridBagLayout());
+                groupPanel.setBorder(buildTitledBorder(g.getName()));
 
                 // System.err.println(g.toString());
 
-                gbc2.gridy = g.getPosition(); // group position is 0-based (unlike data element position)
-                mainPanel.add(p, gbc2);
-            }
-
-            final Set<JLabel> keySet = labelsAndComps.keySet();
-            final Iterator<JLabel> iter = keySet.iterator();
-            while (iter.hasNext()) {
-                final JLabel l = iter.next();
-                final JComponent t = labelsAndComps.get(l);
-                final String labelName = l.getName();
-
-                // gbc.gridy = 0;
-                if ( (fix == 0 && errors.contains(l)) || fix == 1 || fix == -1 /* hit cancel, same as fix later */) {
-                    for (int k = 0; k < ds2.size(); k++) {
-                        final Object o1 = ds2.get(k);
-                        if (o1 instanceof DataElement) {
-                            final DataElement de = (DataElement) o1;
-                            final JPanel curPanel = groupPanels.get(de.getGroup());
-
-                            if (l.getName().equalsIgnoreCase(de.getName())) {
-                                final JPanel elementPanel = new JPanel(new GridBagLayout());
-                                final GridBagConstraints egbc = new GridBagConstraints();
-                                egbc.insets = new Insets(2, 5, 2, 5);
-                                egbc.fill = GridBagConstraints.HORIZONTAL;
-                                egbc.anchor = GridBagConstraints.EAST;
-                                egbc.weightx = 0;
-                                // elementPanel.add(l, egbc);
-
-                                egbc.weightx = 1;
-                                egbc.gridy = 0;
-                                egbc.gridx = 0;
-                                egbc.anchor = GridBagConstraints.WEST;
-
-                                if (de.getType().equalsIgnoreCase(FILE_ELEMENT_TYPE)) {
-                                    elementPanel.add(t, egbc);
-                                    egbc.gridx++;
-                                    final JButton browseButton = new JButton("Browse");
-                                    browseButton.addActionListener(this);
-                                    browseButton.setActionCommand("browse_" + labelName);
-                                    elementPanel.add(browseButton, egbc);
-
-                                } else {
-                                    egbc.gridwidth = 2;
-                                    elementPanel.add(t, egbc);
-                                    if (t instanceof JComboBox) {
-
-                                        egbc.gridy++;
-                                        // ds2.add(de.getPosition(), "");
-                                        final JTextField spec = new JTextField();
-                                        elementPanel.add(spec, egbc);
-                                        spec.setVisible(false);
-                                        ((JComboBox) t).addActionListener(new ActionListener() {
-                                            @Override
-                                            public void actionPerformed(final ActionEvent e) {
-                                                if ( ((JComboBox) t).getSelectedItem().equals(VALUE_OTHER_SPECIFY)) {
-                                                    spec.setVisible(true);
-                                                    spec.setText(specify);
-                                                    specify = "";
-                                                    pack();
-                                                    validate();
-                                                    repaint();
-                                                } else {
-                                                    spec.setVisible(false);
-                                                    pack();
-                                                    validate();
-                                                    repaint();
-                                                }
-                                            }
-                                        });
-                                        specs.put((JComboBox) t, spec);
-                                    }
-                                }
-
-                                // gbc.gridy++;
-                                gbc.insets = new Insets(2, 5, 2, 5);
-                                gbc.fill = GridBagConstraints.HORIZONTAL;
-                                gbc.anchor = GridBagConstraints.NORTHWEST;
-                                gbc.weightx = 0;
-                                gbc.gridx = 0;
-                                gbc.gridy = de.getPosition() - 1; // data element position is 1-based
-                                curPanel.add(l, gbc);
-                                gbc.gridx = 1;
-                                gbc.anchor = GridBagConstraints.NORTHEAST;
-                                gbc.weightx = 1;
-                                curPanel.add(elementPanel, gbc);
-
-                                // gridYCounter = gridYCounter + 1;
-                                // gbc.gridy = gridYCounter;
-                                gbc.gridx = 0;
-                                gbc.gridwidth = 1;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            for (final RepeatableGroup g : groups) {
                 final GridBagConstraints egbc = new GridBagConstraints();
                 egbc.insets = new Insets(2, 5, 2, 5);
                 egbc.fill = GridBagConstraints.HORIZONTAL;
                 egbc.weightx = 1;
                 egbc.gridx = 0;
                 egbc.anchor = GridBagConstraints.WEST;
+                egbc.gridy = 0;
 
-                // TODO: repeatable groups GUI
-                final JPanel curPanel = groupPanels.get(g.getName());
-                egbc.gridy = g.getSize();
-                if ( (g.getType() == RepeatableType.LESSTHAN || g.getType() == RepeatableType.EXACTLY)
-                        && g.getThreshold() == 0) {
-                    // curPanel.add(new JLabel("Optional, without limit"), egbc);
-                } else {
-                    // curPanel.add(new JLabel(g.getType().name() + " " + g.getThreshold()), egbc);
+                final JLabel repeatLabel = new JLabel(g.getType() + " " + g.getThreshold());
+                repeatLabel.setFont(serif12);
+                groupPanel.add(repeatLabel, egbc);
+                egbc.gridy++;
+
+                // TODO: add UI for adding a new repeat (if constraints allow it)
+
+                for (final GroupRepeat repeat : fsData.getAllGroupRepeats(g.getName())) {
+                    final JPanel repeatPanel = buildGroupRepeatPanel(repeat);
+                    repeatPanel.setBorder(buildTitledBorder("Repeat number " + (repeat.getRepeatNumber() + 1)));
+
+                    if (repeatPanel.getComponentCount() > 0) {
+                        groupPanel.add(repeatPanel, egbc);
+                        egbc.gridy++;
+                    }
                 }
+
+                if (groupPanel.getComponentCount() > 1) {
+                    gbc2.gridy = g.getPosition(); // group position is 0-based (unlike data element position)
+                    mainPanel.add(groupPanel, gbc2);
+                }
+
             }
         }
 
-        /**
-         * parses the OMElement
-         * 
-         * @param ds
-         */
-        private void parse_new(final DataStructure dataStructure, final DataStruct ds2, final String shortname,
-                final TreeMap<JLabel, JComponent> labelsAndComps) {
-            final List<DataStructure> bdsToGet = new Vector<DataStructure>();
-            bdsToGet.add(dataStructure);
+        private JPanel buildGroupRepeatPanel(final GroupRepeat repeat) {
+            final JPanel repeatPanel = new JPanel(new GridBagLayout());
 
-            final WebClient client = WebClient.create(ddServerURL + ddRequestBase + "/" + dataStructure.getShortName()
-                    + "/" + dataStructure.getVersion());
-            final DataStructure ds = client.accept("text/xml").get(DataStructure.class);
-            Set<MapElement> dataElements = null;
-            dataElements = ds.getDataElements();
-            groups = ds.getRepeatableGroups();
+            final GridBagConstraints gbc = new GridBagConstraints();
+            gbc.insets = new Insets(2, 5, 2, 5);
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.weightx = 1;
+            gbc.gridx = 0;
+            gbc.anchor = GridBagConstraints.WEST;
 
-            final Iterator<MapElement> iter = dataElements.iterator();
-            while (iter.hasNext()) {
-                final MapElement dataElement = iter.next();
+            for (final DataElementValue deVal : repeat.getDataElements()) {
+                if ( (fixErrors == FIX_ERRORS_NOW && errors.contains(deVal)) || fixErrors == FIX_ERRORS_LATER || fixErrors == FIX_ERRORS_CANCEL) {
+                    final JPanel elementPanel = new JPanel(new GridBagLayout());
+                    final GridBagConstraints egbc = new GridBagConstraints();
+                    egbc.insets = new Insets(2, 5, 2, 5);
+                    egbc.fill = GridBagConstraints.HORIZONTAL;
+                    egbc.anchor = GridBagConstraints.EAST;
+                    egbc.weightx = 0;
+                    // elementPanel.add(l, egbc);
 
-                final String n = dataElement.getName();
+                    egbc.weightx = 1;
+                    egbc.gridy = 0;
+                    egbc.gridx = 0;
+                    egbc.anchor = GridBagConstraints.WEST;
 
-                final String title = dataElement.getTitle();
+                    final DataElement deInfo = deVal.getDataElementInfo();
 
-                final String d = dataElement.getDescription();
+                    if (deInfo.getType().equals(DataType.FILE)) {
+                        elementPanel.add(deVal.getComp(), egbc);
+                        egbc.gridx++;
+                        final JButton browseButton = new JButton("Browse");
+                        browseButton.addActionListener(this);
+                        browseButton.setActionCommand("browse_-_" + repeat.getGroupInfo().getName() + "_-_" + repeat.getRepeatNumber() + "_-_"
+                                + deInfo.getName());
+                        elementPanel.add(browseButton, egbc);
+                    } else {
+                        egbc.gridwidth = 2;
+                        elementPanel.add(deVal.getComp(), egbc);
 
-                final String sh = dataElement.getShortDescription();
-
-                final String notes = dataElement.getNotes();
-
-                final String t = dataElement.getType().getValue();
-
-                String s = "";
-                if (dataElement.getSize() != null) {
-                    s = dataElement.getSize().toString();
-                }
-
-                // final String r = dataElement.getRequired();
-                final String r = dataElement.getRequiredType().toString();
-
-                // final String v = dataElement.getValueRange();
-                final Set<ValueRange> valueRangeSet = dataElement.getValueRangeList();
-                String v = "";
-                for (final ValueRange valueRange : valueRangeSet) {
-                    if (valueRange != null) {
-                        if (v.equals("")) {
-                            v += valueRange.getValueRange();
-                        } else {
-                            v += "; " + valueRange.getValueRange();
+                        if (deVal.getComp() instanceof JComboBox) {
+                            egbc.gridy++;
+                            final JTextField otherSpecifyField = new JTextField();
+                            elementPanel.add(otherSpecifyField, egbc);
+                            otherSpecifyField.setVisible(false);
+                            ((JComboBox) deVal.getComp()).addActionListener(new ActionListener() {
+                                @Override
+                                public void actionPerformed(final ActionEvent e) {
+                                    if ( ((JComboBox) deVal.getComp()).getSelectedItem().equals(VALUE_OTHER_SPECIFY)) {
+                                        otherSpecifyField.setVisible(true);
+                                        otherSpecifyField.setText(specify);
+                                        specify = "";
+                                        pack();
+                                        validate();
+                                        repaint();
+                                    } else {
+                                        otherSpecifyField.setVisible(false);
+                                        pack();
+                                        validate();
+                                        repaint();
+                                    }
+                                }
+                            });
+                            specs.put((JComboBox) deVal.getComp(), otherSpecifyField);
                         }
                     }
+
+                    // gbc.gridy++;
+                    gbc.insets = new Insets(2, 5, 2, 5);
+                    gbc.fill = GridBagConstraints.HORIZONTAL;
+                    gbc.anchor = GridBagConstraints.NORTHWEST;
+                    gbc.weightx = 0;
+                    gbc.gridx = 0;
+                    gbc.gridy = deVal.getPosition() - 1; // data element position is 1-based
+                    // gbc.gridy++;
+                    repeatPanel.add(deVal.getLabel(), gbc);
+                    gbc.gridx = 1;
+                    gbc.anchor = GridBagConstraints.NORTHEAST;
+                    gbc.weightx = 1;
+                    repeatPanel.add(elementPanel, gbc);
+
+                    // gridYCounter = gridYCounter + 1;
+                    // gbc.gridy = gridYCounter;
+                    gbc.gridx = 0;
+                    gbc.gridwidth = 1;
                 }
+            }
 
-                // final String c = dataElement.getRequiredCondition();
-                final String c = "";
+            return repeatPanel;
+        }
 
-                final String guide = dataElement.getGuidelines();
-                final String g = dataElement.getRepeatableGroup().getName();
-                final int p = dataElement.getPosition().intValue();
+        private void parse_new(final DataStructure dataStructure, final FormStructureData fsData) {
+            // TODO: not needed?
+            // final List<DataStructure> bdsToGet = new Vector<DataStructure>();
+            // bdsToGet.add(dataStructure);
+            //
+            // final WebClient client = WebClient.create(ddServerURL + ddRequestBase + "/" +
+            // dataStructure.getShortName()
+            // + "/" + dataStructure.getVersion());
+            // final DataStructure ds = client.accept("text/xml").get(DataStructure.class);
 
-                final String parentDataStruct = ds2.getName();
-                final String parentDataStructShortName = ds2.getShortname();
-                final DataElement de = new DataElement(n, title, d, sh, notes, t, s, r, v, c, guide, g, p,
-                        parentDataStruct, parentDataStructShortName);
-                ds2.add(de);
+            // setup the group bins in the form data
+            for (final RepeatableGroup g : dataStructure.getRepeatableGroups()) {
+                final GroupRepeat repeat = new GroupRepeat(g, fsData, 0);
 
-                JLabel l;
-                /*
-                 * if (sh == null || sh.equalsIgnoreCase("")) { l = new JLabel(n); } else { l = new JLabel(sh); }
-                 */
-                // switched to always use the name for now with description as
-                // tooltip (sh was badly truncated for many demo elements)
-                // if (sh != null && !sh.equals("")) {
-                // l = new JLabel(sh);
-                // } else {
-                // l = new JLabel(n);
-                // }
+                for (final MapElement de : g.getDataElements()) {
+                    final DataElementValue newDeVal = new DataElementValue(repeat, de);
 
-                l = new JLabel(title);
-                // l = new JLabel("<html>" + WordUtils.wrap(title, 50, "<br/>", false) + "</html>");
-                l.setFont(MipavUtil.font12);
-                l.setName(n);
-
-                String tooltip = "<html><p><b>Name:</b> " + dataElement.getName() + "<br/>";
-                tooltip += "<b>Required?:</b> " + dataElement.getRequiredType().getValue() + "<br/>";
-                tooltip += "<b>Description:</b><br/>" + WordUtils.wrap(d, 80, "<br/>", false);
-                tooltip += "</p></html>";
-                l.setToolTipText(tooltip);
-
-                /*
-                 * System.out.println("^^^ " + n); System.out.println("^^^-- " + sh); System.out.println("^^^--" + t);
-                 * System.out.println("^^^--" + s); System.out.println("^^^--" + v); System.out.println();
-                 */
-                // System.out.println("^^^ " + n);
-                // System.out.println("^^^ " + r);
-                // System.out.println("^^^ " + c);
-                // System.out.println();
-                // if valuerange is enumeration, create a combo box...otherwise
-                // create a textfield
-
-                // special handling of SiteName for PDBP, where they want to use a set of permissible values with the
-                // free-form DE
-                if (isPDBPImagingStructure(dataStructure.getShortName()) && n.equalsIgnoreCase(SITE_NAME_ELEMENT_NAME)) {
-                    final JComboBox cb = new JComboBox();
-                    cb.setName(n);
-                    cb.setFont(MipavUtil.font12);
-                    final String[] items = PDBP_ALLOWED_SITE_NAMES;
-                    cb.addItem("");
-                    for (final String element : items) {
-                        final String item = element.trim();
-                        cb.addItem(item);
-                    }
-                    cb.addItemListener(this);
-                    if (r.equalsIgnoreCase("Required")) {
-                        l.setForeground(Color.red);
-                    }/*
-                      * else if(r.equalsIgnoreCase("Conditional")) { l.setForeground(Color.blue); }
-                      */
-                    // if (cb.getPreferredSize().width >
-                    // tabScrollPane.getPreferredSize().width - 100) {
-                    // cb.setPreferredSize(new
-                    // Dimension(tabScrollPane.getPreferredSize().width - 100,
-                    // cb.getPreferredSize().height));
+                    JLabel l;
+                    /*
+                     * if (de.getShortDescription() == null || de.getShortDescription().equalsIgnoreCase("")) { l = new
+                     * JLabel(de.getName()); } else { l = new JLabel(de.getShortDescription()); }
+                     */
+                    // switched to always use the name for now with description as
+                    // tooltip (de.getShortDescription() was badly truncated for many demo elements)
+                    // if (de.getShortDescription() != null && !de.getShortDescription().equals("")) {
+                    // l = new JLabel(de.getShortDescription());
+                    // } else {
+                    // l = new JLabel(de.getName());
                     // }
 
-                    tooltip = "<html>";
-                    // TODO: removed because the guidelines for NINDS CDEs included from all diseases were put into the
-                    // field (which made them not very useful)
-                    // if (guide != null) {
-                    // tooltip += "<p><b>Guidelines & Instructions:</b> " + WordUtils.wrap(guide, 80, "<br/>", false)
-                    // + "</p>";
-                    // }
-                    if (notes != null) {
-                        tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(notes, 80, "<br/>", false) + "</p>";
-                    }
-                    tooltip += "</html>";
-                    cb.setToolTipText(tooltip);
-                    labelsAndComps.put(l, cb);
-                } else if (v != null && v.contains(";") && t != null && !t.equalsIgnoreCase(DATE_ELEMENT_TYPE)) {
-                    final JComboBox cb = new JComboBox();
-                    cb.setName(n);
-                    cb.setFont(MipavUtil.font12);
-                    final String[] items = v.split(";");
-                    cb.addItem("");
-                    for (final String element : items) {
-                        final String item = element.trim();
-                        cb.addItem(item);
-                    }
-                    cb.addItemListener(this);
-                    if (r.equalsIgnoreCase("Required")) {
-                        l.setForeground(Color.red);
-                    }/*
-                      * else if(r.equalsIgnoreCase("Conditional")) { l.setForeground(Color.blue); }
-                      */
-                    // if (cb.getPreferredSize().width >
-                    // tabScrollPane.getPreferredSize().width - 100) {
-                    // cb.setPreferredSize(new
-                    // Dimension(tabScrollPane.getPreferredSize().width - 100,
-                    // cb.getPreferredSize().height));
-                    // }
+                    l = new JLabel(de.getTitle());
+                    // l = new JLabel("<html>" + WordUtils.wrap(de.getTitle(), 50, "<br/>", false) + "</html>");
+                    l.setFont(MipavUtil.font12);
+                    l.setName(de.getName());
 
-                    tooltip = "<html>";
-                    // TODO: removed because the guidelines for NINDS CDEs included from all diseases were put into the
-                    // field (which made them not very useful)
-                    // if (guide != null) {
-                    // tooltip += "<p><b>Guidelines & Instructions:</b> " + WordUtils.wrap(guide, 80, "<br/>", false)
-                    // + "</p>";
-                    // }
-                    if (notes != null) {
-                        tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(notes, 80, "<br/>", false) + "</p>";
-                    }
-                    tooltip += "</html>";
-                    cb.setToolTipText(tooltip);
-                    labelsAndComps.put(l, cb);
-                } else {
-                    final JTextField tf = new JTextField(20);
-                    tf.setName(n);
-                    tf.setFont(MipavUtil.font12);
-
-                    tf.addMouseListener(new ContextMenuMouseListener());
-
-                    tooltip = "<html><b>Type:</b> " + t;
-                    if (t.equalsIgnoreCase("String")) {
-                        tooltip += " (" + s + ")";
-                    }
-                    if (v != null && !v.trim().equalsIgnoreCase("")) {
-                        tooltip += ".  Value range: " + v;
-                    }
-                    // TODO: removed because the guidelines for NINDS CDEs included from all diseases were put into the
-                    // field (which made them not very useful)
-                    // if (guide != null) {
-                    // tooltip += "<p><b>Guidelines & Instructions:</b><br/>"
-                    // + WordUtils.wrap(guide, 80, "<br/>", false) + "</p>";
-                    // }
-                    if (notes != null) {
-                        tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(notes, 80, "<br/>", false) + "</p>";
-                    }
-                    tooltip += "</html>";
-                    tf.setToolTipText(tooltip);
-                    tf.addFocusListener(this);
-
-                    disableUnchangableFields(n, tf);
-
-                    if (n.equalsIgnoreCase(IMG_HASH_CODE_ELEMENT_NAME)) {
-                        tf.setText("Automatically generated from selected image files.");
-                    } else if (n.equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
-                        tf.setText("Automatically generated from selected image files.");
-                    }
-
-                    if (r.equalsIgnoreCase("Required")) {
-                        l.setForeground(Color.red);
-                    }
+                    String tooltip = "<html><p><b>Name:</b> " + de.getName() + "<br/>";
+                    tooltip += "<b>Required?:</b> " + de.getRequiredType().getValue() + "<br/>";
+                    tooltip += "<b>Description:</b><br/>" + WordUtils.wrap(de.getDescription(), 80, "<br/>", false);
+                    tooltip += "</p></html>";
+                    l.setToolTipText(tooltip);
 
                     /*
-                     * else if(r.equalsIgnoreCase("Conditional")) { l.setForeground(Color.blue); }
+                     * System.out.println("^^^ " + de.getName()); System.out.println("^^^-- " +
+                     * de.getShortDescription()); System.out.println("^^^--" + de.getType().getValue());
+                     * System.out.println("^^^--" + de.getSize().toString()); System.out.println("^^^--" +
+                     * de.getValueRangeList().toString()); System.out.println();
                      */
+                    // System.out.println("^^^ " + de.getName());
+                    // System.out.println("^^^ " + de.getRequiredType().toString());
+                    // System.out.println("^^^ " + de.getRequiredCondition());
+                    // System.out.println();
+                    // if valuerange is enumeration, create a combo box...otherwise
+                    // create a textfield
 
-                    labelsAndComps.put(l, tf);
+                    // special handling of SiteName for PDBP, where they want to use a set of permissible values with
+                    // the
+                    // free-form DE
+                    if (isPDBPImagingStructure(dataStructure.getShortName()) && de.getName().equalsIgnoreCase(SITE_NAME_ELEMENT_NAME)) {
+                        final JComboBox cb = new JComboBox();
+                        cb.setName(de.getName());
+                        cb.setFont(MipavUtil.font12);
+                        final String[] items = PDBP_ALLOWED_SITE_NAMES;
+                        cb.addItem("");
+                        for (final String element : items) {
+                            final String item = element.trim();
+                            cb.addItem(item);
+                        }
+                        cb.addItemListener(this);
+                        if (de.getRequiredType().equals(RequiredType.REQUIRED)) {
+                            l.setForeground(Color.red);
+                        }/*
+                          * else if(de.getRequiredType().equals(RequiredType.CONDITIONAL_REQUIRED)) {
+                          * l.setForeground(Color.blue); }
+                          */
+                        // if (cb.getPreferredSize().width >
+                        // tabScrollPane.getPreferredSize().width - 100) {
+                        // cb.setPreferredSize(new
+                        // Dimension(tabScrollPane.getPreferredSize().width - 100,
+                        // cb.getPreferredSize().height));
+                        // }
+
+                        tooltip = "<html>";
+                        // TODO: removed because the guidelines for NINDS CDEs included from all diseases were put into
+                        // the
+                        // field (which made them not very useful)
+                        // if (de.getGuidelines() != null) {
+                        // tooltip += "<p><b>Guidelines & Instructions:</b> " + WordUtils.wrap(de.getGuidelines(), 80,
+                        // "<br/>", false)
+                        // + "</p>";
+                        // }
+                        if (de.getNotes() != null) {
+                            tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(de.getNotes(), 80, "<br/>", false) + "</p>";
+                        }
+                        tooltip += "</html>";
+                        cb.setToolTipText(tooltip);
+
+                        newDeVal.setLabel(l);
+                        newDeVal.setComp(cb);
+                    } else if (de.getValueRangeList() != null && de.getValueRangeList().size() > 0 && de.getType() != null
+                            && !de.getType().equals(DataType.DATE)) {
+                        final JComboBox cb = new JComboBox();
+                        cb.setName(de.getName());
+                        cb.setFont(MipavUtil.font12);
+
+                        cb.addItem("");
+                        for (final ValueRange val : de.getValueRangeList()) {
+                            cb.addItem(val.getValueRange());
+                        }
+                        cb.addItemListener(this);
+
+                        if (de.getRequiredType().equals(RequiredType.REQUIRED)) {
+                            l.setForeground(Color.red);
+                        }/*
+                          * else if(de.getRequiredType().equals(RequiredType.CONDITIONAL_REQUIRED)) {
+                          * l.setForeground(Color.blue); }
+                          */
+                        // if (cb.getPreferredSize().width >
+                        // tabScrollPane.getPreferredSize().width - 100) {
+                        // cb.setPreferredSize(new
+                        // Dimension(tabScrollPane.getPreferredSize().width - 100,
+                        // cb.getPreferredSize().height));
+                        // }
+
+                        tooltip = "<html>";
+                        // TODO: removed because the guidelines for NINDS CDEs included from all diseases were put into
+                        // the
+                        // field (which made them not very useful)
+                        // if (de.getGuidelines() != null) {
+                        // tooltip += "<p><b>Guidelines & Instructions:</b> " + WordUtils.wrap(de.getGuidelines(), 80,
+                        // "<br/>", false)
+                        // + "</p>";
+                        // }
+                        if (de.getNotes() != null) {
+                            tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(de.getNotes(), 80, "<br/>", false) + "</p>";
+                        }
+                        tooltip += "</html>";
+                        cb.setToolTipText(tooltip);
+
+                        newDeVal.setLabel(l);
+                        newDeVal.setComp(cb);
+                    } else {
+                        final JTextField tf = new JTextField(20);
+                        tf.setName(de.getName());
+                        tf.setFont(MipavUtil.font12);
+
+                        tf.addMouseListener(new ContextMenuMouseListener());
+
+                        tooltip = "<html><p><b>Type:</b> " + de.getType().getValue();
+                        if (de.getType().equals(DataType.ALPHANUMERIC) && de.getSize() != null) {
+                            tooltip += " (" + de.getSize() + ")";
+                        }
+                        tooltip += "</p>";
+
+                        if (de.getType().equals(DataType.NUMERIC) || de.getType().equals(DataType.ALPHANUMERIC)) {
+                            tooltip += "<p>";
+                            if (de.getMinimumValue() != null && de.getMinimumValue().floatValue() > 0) {
+                                tooltip += "<b>Min:</b> " + de.getMinimumValue();
+                            }
+                            if (de.getMaximumValue() != null && de.getMaximumValue().floatValue() > 0) {
+                                tooltip += "<b>Max:</b> " + de.getMaximumValue();
+                            }
+                            tooltip += "</p>";
+                        }
+
+                        // TODO: removed because the guidelines for NINDS CDEs included from all diseases were put into
+                        // the
+                        // field (which made them not very useful)
+                        // if (de.getGuidelines() != null) {
+                        // tooltip += "<p><b>Guidelines & Instructions:</b><br/>"
+                        // + WordUtils.wrap(de.getGuidelines(), 80, "<br/>", false) + "</p>";
+                        // }
+                        if (de.getNotes() != null && !de.getNotes().trim().equals("")) {
+                            tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(de.getNotes(), 80, "<br/>", false) + "</p>";
+                        }
+                        tooltip += "</html>";
+                        tf.setToolTipText(tooltip);
+                        tf.addFocusListener(this);
+
+                        disableUnchangableFields(de.getName(), tf);
+
+                        if (de.getName().equalsIgnoreCase(IMG_HASH_CODE_ELEMENT_NAME)) {
+                            tf.setText("Automatically generated from selected image files.");
+                        } else if (de.getName().equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
+                            tf.setText("Automatically generated from selected image files.");
+                        }
+
+                        if (de.getRequiredType().equals(RequiredType.REQUIRED)) {
+                            l.setForeground(Color.red);
+                        }
+                        /*
+                         * else if(de.getRequiredType().equals(RequiredType.CONDITIONAL_REQUIRED)) {
+                         * l.setForeground(Color.blue); }
+                         */
+
+                        newDeVal.setLabel(l);
+                        newDeVal.setComp(tf);
+                    }
+
+                    repeat.addDataElement(newDeVal);
                 }
-                // }
+
+                fsData.addGroup(g.getName());
+                fsData.addGroupRepeat(g.getName(), repeat);
             }
         }
 
@@ -3965,58 +3794,57 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             }
         }
 
-        /**
-         * populates dialog from completed state
-         */
-        public void populateFieldsFromInProcessState(final TreeMap<JLabel, JComponent> labelsAndComps,
-                final LinkedHashMap<String, String> infoMap2) {
-            if (infoMap2 != null) {
-                final Set<String> keySet = infoMap2.keySet();
-                final Iterator<String> iter = keySet.iterator();
-                String key;
-                String value;
-                while (iter.hasNext()) {
-                    key = iter.next();
-                    value = infoMap2.get(key);
-                    /*
-                     * if(!value.equals("")) { System.out.println(" * " + key + " * " + value); }
-                     */
-                    final Set<JLabel> keySet2 = labelsAndComps.keySet();
-                    final Iterator<JLabel> iter2 = keySet2.iterator();
-                    // System.out.println();
-                    while (iter2.hasNext()) {
-                        final JLabel l = iter2.next();
-                        final Component comp = labelsAndComps.get(l);
-                        final String name = comp.getName();
-                        // System.out.println("--- " + name);
-                        if (name.equalsIgnoreCase(key)) {
-                            if (comp instanceof JTextField) {
-                                final JTextField t = (JTextField) comp;
-                                t.setText(value);
-
-                            } else if (comp instanceof JComboBox) {
-                                final JComboBox c = (JComboBox) comp;
-                                boolean isOther = true;
-
-                                for (int k = 0; k < c.getItemCount(); k++) {
-                                    final String item = (String) c.getItemAt(k);
-                                    if (value.equalsIgnoreCase(item)) {
-                                        c.setSelectedIndex(k);
-                                        isOther = false;
-                                    }
-                                }
-
-                                if (isOther) {
-                                    specify = value;
-                                    c.setSelectedItem(VALUE_OTHER_SPECIFY);
-                                }
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+        // /**
+        // * populates dialog from completed state
+        // */
+        // public void populateFieldsFromInProcessState(final FormStructureData fsData) {
+        // if (fsData != null) {
+        // final Set<String> keySet = infoMap2.keySet();
+        // final Iterator<String> iter = keySet.iterator();
+        // String key;
+        // String value;
+        // while (iter.hasNext()) {
+        // key = iter.next();
+        // value = infoMap2.get(key);
+        //
+        // /*
+        // * if(!value.equals("")) { System.out.println(" * " + key + " * " + value); }
+        // */
+        //
+        // for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
+        // for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
+        // for (final DataElementValue deVal : repeat.getDataElements()) {
+        // final JComponent comp = deVal.getComp();
+        // final String name = deVal.getName();
+        // if (name.equalsIgnoreCase(key)) {
+        // if (comp instanceof JTextField) {
+        // final JTextField t = (JTextField) comp;
+        // t.setText(value);
+        // } else if (comp instanceof JComboBox) {
+        // final JComboBox c = (JComboBox) comp;
+        // boolean isOther = true;
+        //
+        // for (int k = 0; k < c.getItemCount(); k++) {
+        // final String item = (String) c.getItemAt(k);
+        // if (value.equalsIgnoreCase(item)) {
+        // c.setSelectedIndex(k);
+        // isOther = false;
+        // }
+        // }
+        //
+        // if (isOther) {
+        // specify = value;
+        // c.setSelectedItem(VALUE_OTHER_SPECIFY);
+        // }
+        // }
+        // break;
+        // }
+        // }
+        // }
+        // }
+        // }
+        // }
+        // }
 
         // TODO: hardcoded element handling
         public int determineImageHeaderDescrepencies(final ModelImage img) {
@@ -4079,71 +3907,61 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(exts[4]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim1UoMVal")
-                            && FileInfoBase.getUnitsOfMeasureStr(units[0]) != null) {
-                        if ( !csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[0]))) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim1UoMVal") && Unit.getUnitFromLegacyNum(units[0]) != null) {
+                        if ( !csvParams[i].trim().equals(Unit.getUnitFromLegacyNum(units[0]).toString())) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
-                            headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[0]));
+                            headerList.add(Unit.getUnitFromLegacyNum(units[0]).toString());
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim2UoMVal")
-                            && FileInfoBase.getUnitsOfMeasureStr(units[1]) != null) {
-                        if ( !csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[1]))) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim2UoMVal") && Unit.getUnitFromLegacyNum(units[1]) != null) {
+                        if ( !csvParams[i].trim().equals(Unit.getUnitFromLegacyNum(units[1]).toString())) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
-                            headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[1]));
+                            headerList.add(Unit.getUnitFromLegacyNum(units[1]).toString());
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim3UoMVal")
-                            && FileInfoBase.getUnitsOfMeasureStr(units[2]) != null) {
-                        if ( !csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[2]))) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim3UoMVal") && Unit.getUnitFromLegacyNum(units[2]) != null) {
+                        if ( !csvParams[i].trim().equals(Unit.getUnitFromLegacyNum(units[2]).toString())) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
-                            headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[2]));
+                            headerList.add(Unit.getUnitFromLegacyNum(units[2]).toString());
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim4UoMVal")
-                            && FileInfoBase.getUnitsOfMeasureStr(units[3]) != null) {
-                        if ( !csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[3]))) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim4UoMVal") && Unit.getUnitFromLegacyNum(units[3]) != null) {
+                        if ( !csvParams[i].trim().equals(Unit.getUnitFromLegacyNum(units[3]).toString())) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
-                            headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[3]));
+                            headerList.add(Unit.getUnitFromLegacyNum(units[3]).toString());
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim5UoMVal")
-                            && FileInfoBase.getUnitsOfMeasureStr(units[4]) != null) {
-                        if ( !csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[4]))) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim5UoMVal") && Unit.getUnitFromLegacyNum(units[4]) != null) {
+                        if ( !csvParams[i].trim().equals(Unit.getUnitFromLegacyNum(units[4]).toString())) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
-                            headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[4]));
+                            headerList.add(Unit.getUnitFromLegacyNum(units[4]).toString());
                         }
                     } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim1ResolVal") && String.valueOf(res[0]) != null) {
-                        // TODO: does not handle differences like 1.0 vs 1 well
                         if ( ! (Float.parseFloat(csvParams[i].trim()) == res[0])) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(res[0]));
                         }
                     } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim2ResolVal") && String.valueOf(res[1]) != null) {
-                        // TODO: does not handle differences like 1.0 vs 1 well
                         if ( ! (Float.parseFloat(csvParams[i].trim()) == res[1])) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(res[1]));
                         }
                     } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim3ResolVal") && String.valueOf(res[2]) != null) {
-                        // TODO: does not handle differences like 1.0 vs 1 well
                         if ( ! (Float.parseFloat(csvParams[i].trim()) == res[2])) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(res[2]));
                         }
                     } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim4ResolVal") && String.valueOf(res[3]) != null) {
-                        // TODO: does not handle differences like 1.0 vs 1 well
                         if ( ! (Float.parseFloat(csvParams[i].trim()) == res[3])) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(res[3]));
                         }
                     } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim5ResolVal") && String.valueOf(res[4]) != null) {
-                        // TODO: does not handle differences like 1.0 vs 1 well
                         if ( ! (Float.parseFloat(csvParams[i].trim()) == res[4])) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
@@ -4155,9 +3973,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             csvPList.add(csvParams[i]);
                             headerList.add(convertModalityToBRICS(modalityString));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgSliceThicknessVal")
-                            && String.valueOf(sliceThickness) != null) {
-                        // TODO: does not handle differences like 1.0 vs 1 well
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgSliceThicknessVal") && String.valueOf(sliceThickness) != null) {
                         if ( ! (Float.parseFloat(csvParams[i].trim()) == sliceThickness)) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
@@ -4176,8 +3992,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                         final String ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010"));
                         final String siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
-                        final String visitDate = convertDateToISOFormat((String) (fileInfoDicom.getTagTable()
-                                .getValue("0008,0020")));
+                        final String visitDate = convertDateToISOFormat((String) (fileInfoDicom.getTagTable().getValue("0008,0020")));
                         final String visitTime = (String) (fileInfoDicom.getTagTable().getValue("0008,0030"));
                         final String sliceOversample = (String) (fileInfoDicom.getTagTable().getValue("0018,0093"));
                         final String gap = (String) (fileInfoDicom.getTagTable().getValue("0018,0088"));
@@ -4200,8 +4015,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                 headerList.add(ageInMonths);
                             }
                         } else if (csvFieldNames[i].equalsIgnoreCase("AgeYrs") && ageVal != null) {
-                            final String ageInYears = String
-                                    .valueOf(Integer.valueOf(convertDicomAgeToBRICS(ageVal)) / 12);
+                            final String ageInYears = String.valueOf(Integer.valueOf(convertDicomAgeToBRICS(ageVal)) / 12);
                             if ( !csvParams[i].trim().equals(ageInYears)) {
                                 csvFList.add(csvFieldNames[i]);
                                 csvPList.add(csvParams[i]);
@@ -4219,15 +4033,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                 csvPList.add(csvParams[i]);
                                 headerList.add(siteName);
                             }
-                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgStdyDateTime")
-                                && ( !visitDate.equals("") || !visitTime.equals(""))) {
+                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgStdyDateTime") && ( !visitDate.equals("") || !visitTime.equals(""))) {
                             if ( !csvParams[i].trim().equals(convertDateTimeToISOFormat(visitDate, visitTime))) {
                                 csvFList.add(csvFieldNames[i]);
                                 csvPList.add(csvParams[i]);
                                 headerList.add(convertDateTimeToISOFormat(visitDate, visitTime));
                             }
-                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgSliceOverSampVal")
-                                && !sliceOversample.equals("")) {
+                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgSliceOverSampVal") && !sliceOversample.equals("")) {
                             if ( ! (Float.parseFloat(csvParams[i].trim()) == (Float.parseFloat(sliceOversample)))) {
                                 csvFList.add(csvFieldNames[i]);
                                 csvPList.add(csvParams[i]);
@@ -4257,8 +4069,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                 csvPList.add(csvParams[i]);
                                 headerList.add(convertManufNameToBRICS(manufacturer));
                             }
-                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgScannerSftwrVrsnNum")
-                                && softwareVersion != null) {
+                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgScannerSftwrVrsnNum") && softwareVersion != null) {
                             if ( !csvParams[i].trim().equals(softwareVersion)) {
                                 csvFList.add(csvFieldNames[i]);
                                 csvPList.add(csvParams[i]);
@@ -4288,8 +4099,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                             final String echoTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0081"));
                             final String repetitionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0080"));
-                            final String magnaticFieldStrength = (String) (fileInfoDicom.getTagTable()
-                                    .getValue("0018,0087"));
+                            final String magnaticFieldStrength = (String) (fileInfoDicom.getTagTable().getValue("0018,0087"));
                             final String flipAngle = (String) (fileInfoDicom.getTagTable().getValue("0018,1314"));
 
                             final String mriT1T2Name = (String) (fileInfoDicom.getTagTable().getValue("0018,0024"));
@@ -4390,15 +4200,14 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             }
 
             if (csvFList.size() > 0) {
-                if (resolveConflictsUsing == 0) {
+                if (resolveConflictsUsing == RESOLVE_CONFLICT_ASK) {
                     String message = "Certain image info in the csv do not match with info obtained from header : \n";
                     for (int i = 0; i < csvFList.size(); i++) {
                         final String fieldName = csvFList.get(i);
                         final String param = csvPList.get(i);
                         final String headerInfo = headerList.get(i);
 
-                        message = message + fieldName + " : " + "      csv:" + param + "     header:" + headerInfo
-                                + "\n";
+                        message = message + fieldName + " : " + "      csv:" + param + "     header:" + headerInfo + "\n";
 
                     }
                     // message = message +
@@ -4412,8 +4221,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     // I'd like to create a merge option using the selected
                     // button as the dominating input - Sara
 
-                    final int response = JOptionPane.showConfirmDialog(null, content, "", JOptionPane.YES_NO_OPTION,
-                            JOptionPane.WARNING_MESSAGE);
+                    final int response = JOptionPane.showConfirmDialog(null, content, "", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
                     // Object[] options = {"ok button text"};
                     // int response = JOptionPane.showOptionDialog(null,
@@ -4425,27 +4233,27 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                     if (response == JOptionPane.YES_OPTION) {
                         if (checkbox.isSelected()) {
-                            resolveConflictsUsing = 1;
+                            resolveConflictsUsing = RESOLVE_CONFLICT_CSV;
                         }
-                        return 1;
+                        return RESOLVE_CONFLICT_CSV;
                     } else {
                         if (checkbox.isSelected()) {
-                            resolveConflictsUsing = 2;
+                            resolveConflictsUsing = RESOLVE_CONFLICT_IMG;
                         }
-                        return 2;
+                        return RESOLVE_CONFLICT_IMG;
                     }
                 } else {
                     return resolveConflictsUsing;
                 }
             } else {
-                return 0;
+                return RESOLVE_CONFLICT_ASK;
             }
         }
 
         /**
          * prepopulates some of the fields with info from image header
          */
-        public void populateFields(final TreeMap<JLabel, JComponent> labelsAndComps, final ModelImage img) {
+        public void populateFields(final FormStructureData fsData, final ModelImage img) {
             final float[] res = img.getResolutions(0);
             final int[] units = img.getUnitsOfMeasure();
             final int exts[] = img.getExtents();
@@ -4475,183 +4283,182 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             final int orient = img.getFileInfo(0).getImageOrientation();
             final String orientation = FileInfoBase.getImageOrientationStr(orient);
 
-            final Set<JLabel> keySet = labelsAndComps.keySet();
-            final Iterator<JLabel> iter = keySet.iterator();
-            while (iter.hasNext()) {
-                final JLabel label = iter.next();
-                final String l = label.getName();
-                final JComponent comp = labelsAndComps.get(label);
+            for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
+                for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
+                    for (final DataElementValue deVal : repeat.getDataElements()) {
+                        final String deName = deVal.getName();
+                        final JComponent comp = deVal.getComp();
 
-                if (l.equalsIgnoreCase("ImgDimensionTyp")) {
-                    setElementComponentValue(comp, exts.length + "D");
-                } else if (l.equalsIgnoreCase("ImgDim1ExtentVal")) {
-                    setElementComponentValue(comp, String.valueOf(exts[0]));
-                } else if (l.equalsIgnoreCase("ImgDim2ExtentVal")) {
-                    setElementComponentValue(comp, String.valueOf(exts[1]));
-                } else if (l.equalsIgnoreCase("ImgDim3ExtentVal")) {
-                    if (img.getNDims() > 2) {
-                        setElementComponentValue(comp, String.valueOf(exts[2]));
-                    }
-                } else if (l.equalsIgnoreCase("ImgDim4ExtentVal")) {
-                    if (img.getNDims() > 3) {
-                        setElementComponentValue(comp, String.valueOf(exts[3]));
-                    }
-                } else if (l.equalsIgnoreCase("ImgDim5ExtentVal")) {
-                    // for now...nothing
-                } else if (l.equalsIgnoreCase("ImgDim1UoMVal")) {
-                    setElementComponentValue(comp, FileInfoBase.getUnitsOfMeasureStr(units[0]));
-                } else if (l.equalsIgnoreCase("ImgDim2UoMVal")) {
-                    setElementComponentValue(comp, FileInfoBase.getUnitsOfMeasureStr(units[1]));
-                } else if (l.equalsIgnoreCase("ImgDim3UoMVal")) {
-                    if (img.getNDims() > 2) {
-                        setElementComponentValue(comp, FileInfoBase.getUnitsOfMeasureStr(units[2]));
-                    }
-                } else if (l.equalsIgnoreCase("ImgDim4UoMVal")) {
-                    if (img.getNDims() > 3) {
-                        setElementComponentValue(comp, FileInfoBase.getUnitsOfMeasureStr(units[3]));
-                    }
-                } else if (l.equalsIgnoreCase("ImgDim5UoMVal")) {
-                    // for now...nothing
-                } else if (l.equalsIgnoreCase("ImgDim1ResolVal")) {
-                    setElementComponentValue(comp, String.valueOf(res[0]));
-                } else if (l.equalsIgnoreCase("ImgDim2ResolVal")) {
-                    setElementComponentValue(comp, String.valueOf(res[1]));
-                } else if (l.equalsIgnoreCase("ImgDim3ResolVal")) {
-                    if (img.getNDims() > 2) {
-                        setElementComponentValue(comp, String.valueOf(res[2]));
-                    }
-                } else if (l.equalsIgnoreCase("ImgDim4ResolVal")) {
-                    if (img.getNDims() > 3) {
-                        setElementComponentValue(comp, String.valueOf(res[3]));
-                    }
-                } else if (l.equalsIgnoreCase("ImgDim5ResolVal")) {
-                    // for now...nothing
-                } else if (l.equalsIgnoreCase("ImgModltyTyp")) {
-                    setElementComponentValue(comp, convertModalityToBRICS(modalityString));
-                } else if (l.equalsIgnoreCase("ImgFileFormatTyp")) {
-                    setElementComponentValue(comp, fileFormatString);
-                } else if (l.equalsIgnoreCase("ImgSliceThicknessVal")) {
-                    String thicknessStr = "";
-                    if (sliceThickness > 0) {
-                        thicknessStr = String.valueOf(sliceThickness);
-                    }
-                    setElementComponentValue(comp, thicknessStr);
-                } else if (l.equalsIgnoreCase("ImgSliceOrientTyp")) {
-                    setElementComponentValue(comp, orientation);
-                }
-
-                if (fileFormatString.equalsIgnoreCase("dicom")) {
-                    final FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
-
-                    final String ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010"));
-                    final String siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
-                    final String visitDate = (String) (fileInfoDicom.getTagTable().getValue("0008,0020"));
-                    final String visitTime = (String) (fileInfoDicom.getTagTable().getValue("0008,0030"));
-                    final String sliceOversample = (String) (fileInfoDicom.getTagTable().getValue("0018,0093"));
-                    final String gap = (String) (fileInfoDicom.getTagTable().getValue("0018,0088"));
-                    final String bodyPart = (String) (fileInfoDicom.getTagTable().getValue("0018,0015"));
-
-                    final String fieldOfView = (String) (fileInfoDicom.getTagTable().getValue("0018,1100"));
-                    final String manufacturer = (String) (fileInfoDicom.getTagTable().getValue("0008,0070"));
-                    final String softwareVersion = (String) (fileInfoDicom.getTagTable().getValue("0018,1020"));
-                    final String patientPosition = (String) (fileInfoDicom.getTagTable().getValue("0018,5100"));
-
-                    final String scannerModel = (String) (fileInfoDicom.getTagTable().getValue("0008,1090"));
-                    final String bandwidth = (String) (fileInfoDicom.getTagTable().getValue("0018,0095"));
-
-                    final String patientName = (String) (fileInfoDicom.getTagTable().getValue("0010,0010"));
-                    final String patientID = (String) (fileInfoDicom.getTagTable().getValue("0010,0020"));
-
-                    if (l.equalsIgnoreCase("AgeVal") && ageVal != null && !ageVal.equals("")) {
-                        final String ageInMonths = convertDicomAgeToBRICS(ageVal);
-                        setElementComponentValue(comp, ageInMonths);
-                    } else if (l.equalsIgnoreCase("AgeYrs") && ageVal != null && !ageVal.equals("")) {
-                        final String ageInYears = String.valueOf(Integer.valueOf(convertDicomAgeToBRICS(ageVal)) / 12);
-                        setElementComponentValue(comp, ageInYears);
-                    } else if (l.equalsIgnoreCase("SiteName")) {
-                        setElementComponentValue(comp, siteName);
-                    } else if (l.equalsIgnoreCase("VisitDate")) {
-                        setElementComponentValue(comp, convertDateToISOFormat(visitDate));
-                    } else if (l.equalsIgnoreCase("ImgAntmicSite")) {
-                        setElementComponentValue(comp, bodyPart);
-                    } else if (l.equalsIgnoreCase("ImgStdyDateTime")) {
-                        setElementComponentValue(comp, convertDateTimeToISOFormat(visitDate, visitTime));
-                    } else if (l.equalsIgnoreCase("ImgSliceOverSampVal")) {
-                        setElementComponentValue(comp, sliceOversample);
-                    } else if (l.equalsIgnoreCase("ImgGapBetwnSlicesMeasr")) {
-                        setElementComponentValue(comp, gap);
-                    } else if (l.equalsIgnoreCase("ImgFOVMeasrDescTxt")) {
-                        setElementComponentValue(comp, fieldOfView);
-                    } else if (l.equalsIgnoreCase("ImgScannerManufName")) {
-                        setElementComponentValue(comp, convertManufNameToBRICS(manufacturer));
-                    } else if (l.equalsIgnoreCase("ImgScannerSftwrVrsnNum")) {
-                        setElementComponentValue(comp, softwareVersion);
-                    } else if (l.equalsIgnoreCase("ImgHeadPostnTxt")) {
-                        setElementComponentValue(comp, patientPosition);
-                    } else if (l.equalsIgnoreCase("ImgScannerModelName")) {
-                        setElementComponentValue(comp, convertModelNameToBRICS(scannerModel));
-                    } else if (l.equalsIgnoreCase("ImgBandwidthVal")) {
-                        setElementComponentValue(comp, bandwidth);
-                    } else if (l.equalsIgnoreCase("GUID")) {
-                        if (isGuid(patientID)) {
-                            setElementComponentValue(comp, patientID);
-                        } else if (isGuid(patientName)) {
-                            setElementComponentValue(comp, patientName);
+                        if (deName.equalsIgnoreCase("ImgDimensionTyp")) {
+                            setElementComponentValue(comp, exts.length + "D");
+                        } else if (deName.equalsIgnoreCase("ImgDim1ExtentVal")) {
+                            setElementComponentValue(comp, String.valueOf(exts[0]));
+                        } else if (deName.equalsIgnoreCase("ImgDim2ExtentVal")) {
+                            setElementComponentValue(comp, String.valueOf(exts[1]));
+                        } else if (deName.equalsIgnoreCase("ImgDim3ExtentVal")) {
+                            if (img.getNDims() > 2) {
+                                setElementComponentValue(comp, String.valueOf(exts[2]));
+                            }
+                        } else if (deName.equalsIgnoreCase("ImgDim4ExtentVal")) {
+                            if (img.getNDims() > 3) {
+                                setElementComponentValue(comp, String.valueOf(exts[3]));
+                            }
+                        } else if (deName.equalsIgnoreCase("ImgDim5ExtentVal")) {
+                            // for now...nothing
+                        } else if (deName.equalsIgnoreCase("ImgDim1UoMVal")) {
+                            setElementComponentValue(comp, Unit.getUnitFromLegacyNum(units[0]).toString());
+                        } else if (deName.equalsIgnoreCase("ImgDim2UoMVal")) {
+                            setElementComponentValue(comp, Unit.getUnitFromLegacyNum(units[1]).toString());
+                        } else if (deName.equalsIgnoreCase("ImgDim3UoMVal")) {
+                            if (img.getNDims() > 2) {
+                                setElementComponentValue(comp, Unit.getUnitFromLegacyNum(units[2]).toString());
+                            }
+                        } else if (deName.equalsIgnoreCase("ImgDim4UoMVal")) {
+                            if (img.getNDims() > 3) {
+                                setElementComponentValue(comp, Unit.getUnitFromLegacyNum(units[3]).toString());
+                            }
+                        } else if (deName.equalsIgnoreCase("ImgDim5UoMVal")) {
+                            // for now...nothing
+                        } else if (deName.equalsIgnoreCase("ImgDim1ResolVal")) {
+                            setElementComponentValue(comp, String.valueOf(res[0]));
+                        } else if (deName.equalsIgnoreCase("ImgDim2ResolVal")) {
+                            setElementComponentValue(comp, String.valueOf(res[1]));
+                        } else if (deName.equalsIgnoreCase("ImgDim3ResolVal")) {
+                            if (img.getNDims() > 2) {
+                                setElementComponentValue(comp, String.valueOf(res[2]));
+                            }
+                        } else if (deName.equalsIgnoreCase("ImgDim4ResolVal")) {
+                            if (img.getNDims() > 3) {
+                                setElementComponentValue(comp, String.valueOf(res[3]));
+                            }
+                        } else if (deName.equalsIgnoreCase("ImgDim5ResolVal")) {
+                            // for now...nothing
+                        } else if (deName.equalsIgnoreCase("ImgModltyTyp")) {
+                            setElementComponentValue(comp, convertModalityToBRICS(modalityString));
+                        } else if (deName.equalsIgnoreCase("ImgFileFormatTyp")) {
+                            setElementComponentValue(comp, fileFormatString);
+                        } else if (deName.equalsIgnoreCase("ImgSliceThicknessVal")) {
+                            String thicknessStr = "";
+                            if (sliceThickness > 0) {
+                                thicknessStr = String.valueOf(sliceThickness);
+                            }
+                            setElementComponentValue(comp, thicknessStr);
+                        } else if (deName.equalsIgnoreCase("ImgSliceOrientTyp")) {
+                            setElementComponentValue(comp, orientation);
                         }
-                    }
 
-                    if (modalityString.equalsIgnoreCase("magnetic resonance")) {
-                        final String echoTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0081"));
-                        final String repetitionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0080"));
-                        final String magnaticFieldStrength = (String) (fileInfoDicom.getTagTable()
-                                .getValue("0018,0087"));
-                        final String flipAngle = (String) (fileInfoDicom.getTagTable().getValue("0018,1314"));
+                        if (fileFormatString.equalsIgnoreCase("dicom")) {
+                            final FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
 
-                        final String mriT1T2Name = (String) (fileInfoDicom.getTagTable().getValue("0018,0024"));
-                        final String inversionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0082"));
-                        final String echoTrainMeas = (String) (fileInfoDicom.getTagTable().getValue("0018,0091"));
-                        final String phaseEncode = (String) (fileInfoDicom.getTagTable().getValue("0018,1312"));
-                        final String numAverages = (String) (fileInfoDicom.getTagTable().getValue("0018,0083"));
-                        final String receiveCoilName = (String) (fileInfoDicom.getTagTable().getValue("0018,1250"));
+                            final String ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010"));
+                            final String siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
+                            final String visitDate = (String) (fileInfoDicom.getTagTable().getValue("0008,0020"));
+                            final String visitTime = (String) (fileInfoDicom.getTagTable().getValue("0008,0030"));
+                            final String sliceOversample = (String) (fileInfoDicom.getTagTable().getValue("0018,0093"));
+                            final String gap = (String) (fileInfoDicom.getTagTable().getValue("0018,0088"));
+                            final String bodyPart = (String) (fileInfoDicom.getTagTable().getValue("0018,0015"));
 
-                        if (l.equalsIgnoreCase("ImgEchoDur")) {
-                            setElementComponentValue(comp, echoTime);
-                        } else if (l.equalsIgnoreCase("ImgRepetitionGapVal")) {
-                            setElementComponentValue(comp, repetitionTime);
-                        } else if (l.equalsIgnoreCase("ImgScannerStrgthVal")) {
-                            setElementComponentValue(comp, convertMagFieldStrengthToBRICS(magnaticFieldStrength));
-                        } else if (l.equalsIgnoreCase("ImgMRIT1T2SeqName")) {
-                            setElementComponentValue(comp, mriT1T2Name);
-                        } else if (l.equalsIgnoreCase("ImgSignalAvgNum")) {
-                            setElementComponentValue(comp, numAverages);
-                        } else if (l.equalsIgnoreCase("ImgFlipAngleMeasr")) {
-                            setElementComponentValue(comp, flipAngle);
-                        } else if (l.equalsIgnoreCase("ImgEchoTrainLngthMeasr")) {
-                            setElementComponentValue(comp, echoTrainMeas);
-                        } else if (l.equalsIgnoreCase("ImgInversionTime")) {
-                            setElementComponentValue(comp, inversionTime);
-                        } else if (l.equalsIgnoreCase("ImgRFCoilName")) {
-                            setElementComponentValue(comp, receiveCoilName);
-                        } else if (l.equalsIgnoreCase("ImgPhasEncdeDirctTxt")) {
-                            setElementComponentValue(comp, phaseEncode);
+                            final String fieldOfView = (String) (fileInfoDicom.getTagTable().getValue("0018,1100"));
+                            final String manufacturer = (String) (fileInfoDicom.getTagTable().getValue("0008,0070"));
+                            final String softwareVersion = (String) (fileInfoDicom.getTagTable().getValue("0018,1020"));
+                            final String patientPosition = (String) (fileInfoDicom.getTagTable().getValue("0018,5100"));
+
+                            final String scannerModel = (String) (fileInfoDicom.getTagTable().getValue("0008,1090"));
+                            final String bandwidth = (String) (fileInfoDicom.getTagTable().getValue("0018,0095"));
+
+                            final String patientName = (String) (fileInfoDicom.getTagTable().getValue("0010,0010"));
+                            final String patientID = (String) (fileInfoDicom.getTagTable().getValue("0010,0020"));
+
+                            if (deName.equalsIgnoreCase("AgeVal") && ageVal != null && !ageVal.equals("")) {
+                                final String ageInMonths = convertDicomAgeToBRICS(ageVal);
+                                setElementComponentValue(comp, ageInMonths);
+                            } else if (deName.equalsIgnoreCase("AgeYrs") && ageVal != null && !ageVal.equals("")) {
+                                final String ageInYears = String.valueOf(Integer.valueOf(convertDicomAgeToBRICS(ageVal)) / 12);
+                                setElementComponentValue(comp, ageInYears);
+                            } else if (deName.equalsIgnoreCase("SiteName")) {
+                                setElementComponentValue(comp, siteName);
+                            } else if (deName.equalsIgnoreCase("VisitDate")) {
+                                setElementComponentValue(comp, convertDateToISOFormat(visitDate));
+                            } else if (deName.equalsIgnoreCase("ImgAntmicSite")) {
+                                setElementComponentValue(comp, bodyPart);
+                            } else if (deName.equalsIgnoreCase("ImgStdyDateTime")) {
+                                setElementComponentValue(comp, convertDateTimeToISOFormat(visitDate, visitTime));
+                            } else if (deName.equalsIgnoreCase("ImgSliceOverSampVal")) {
+                                setElementComponentValue(comp, sliceOversample);
+                            } else if (deName.equalsIgnoreCase("ImgGapBetwnSlicesMeasr")) {
+                                setElementComponentValue(comp, gap);
+                            } else if (deName.equalsIgnoreCase("ImgFOVMeasrDescTxt")) {
+                                setElementComponentValue(comp, fieldOfView);
+                            } else if (deName.equalsIgnoreCase("ImgScannerManufName")) {
+                                setElementComponentValue(comp, convertManufNameToBRICS(manufacturer));
+                            } else if (deName.equalsIgnoreCase("ImgScannerSftwrVrsnNum")) {
+                                setElementComponentValue(comp, softwareVersion);
+                            } else if (deName.equalsIgnoreCase("ImgHeadPostnTxt")) {
+                                setElementComponentValue(comp, patientPosition);
+                            } else if (deName.equalsIgnoreCase("ImgScannerModelName")) {
+                                setElementComponentValue(comp, convertModelNameToBRICS(scannerModel));
+                            } else if (deName.equalsIgnoreCase("ImgBandwidthVal")) {
+                                setElementComponentValue(comp, bandwidth);
+                            } else if (deName.equalsIgnoreCase("GUID")) {
+                                if (isGuid(patientID)) {
+                                    setElementComponentValue(comp, patientID);
+                                } else if (isGuid(patientName)) {
+                                    setElementComponentValue(comp, patientName);
+                                }
+                            }
+
+                            if (modalityString.equalsIgnoreCase("magnetic resonance")) {
+                                final String echoTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0081"));
+                                final String repetitionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0080"));
+                                final String magnaticFieldStrength = (String) (fileInfoDicom.getTagTable().getValue("0018,0087"));
+                                final String flipAngle = (String) (fileInfoDicom.getTagTable().getValue("0018,1314"));
+
+                                final String mriT1T2Name = (String) (fileInfoDicom.getTagTable().getValue("0018,0024"));
+                                final String inversionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0082"));
+                                final String echoTrainMeas = (String) (fileInfoDicom.getTagTable().getValue("0018,0091"));
+                                final String phaseEncode = (String) (fileInfoDicom.getTagTable().getValue("0018,1312"));
+                                final String numAverages = (String) (fileInfoDicom.getTagTable().getValue("0018,0083"));
+                                final String receiveCoilName = (String) (fileInfoDicom.getTagTable().getValue("0018,1250"));
+
+                                if (deName.equalsIgnoreCase("ImgEchoDur")) {
+                                    setElementComponentValue(comp, echoTime);
+                                } else if (deName.equalsIgnoreCase("ImgRepetitionGapVal")) {
+                                    setElementComponentValue(comp, repetitionTime);
+                                } else if (deName.equalsIgnoreCase("ImgScannerStrgthVal")) {
+                                    setElementComponentValue(comp, convertMagFieldStrengthToBRICS(magnaticFieldStrength));
+                                } else if (deName.equalsIgnoreCase("ImgMRIT1T2SeqName")) {
+                                    setElementComponentValue(comp, mriT1T2Name);
+                                } else if (deName.equalsIgnoreCase("ImgSignalAvgNum")) {
+                                    setElementComponentValue(comp, numAverages);
+                                } else if (deName.equalsIgnoreCase("ImgFlipAngleMeasr")) {
+                                    setElementComponentValue(comp, flipAngle);
+                                } else if (deName.equalsIgnoreCase("ImgEchoTrainLngthMeasr")) {
+                                    setElementComponentValue(comp, echoTrainMeas);
+                                } else if (deName.equalsIgnoreCase("ImgInversionTime")) {
+                                    setElementComponentValue(comp, inversionTime);
+                                } else if (deName.equalsIgnoreCase("ImgRFCoilName")) {
+                                    setElementComponentValue(comp, receiveCoilName);
+                                } else if (deName.equalsIgnoreCase("ImgPhasEncdeDirctTxt")) {
+                                    setElementComponentValue(comp, phaseEncode);
+                                }
+                            }
+                        } else if (fileFormatString.equalsIgnoreCase("nifti")) {
+                            // Description = Philips Medical Systems Achieva 3.2.1 (from .nii T1 of Dr. Vaillancourt's)
+                            final FileInfoNIFTI fileInfoNifti = (FileInfoNIFTI) img.getFileInfo(0);
+                            final String description = fileInfoNifti.getDescription();
+
+                            final String manuf = convertNiftiDescToBRICSManuf(description);
+                            final String model = convertNiftiDescToBRICSModel(description);
+                            final String scannerVer = convertNiftiDescToBRICSVer(description);
+
+                            if (deName.equalsIgnoreCase("ImgScannerManufName")) {
+                                setElementComponentValue(comp, manuf);
+                            } else if (deName.equalsIgnoreCase("ImgScannerModelName")) {
+                                setElementComponentValue(comp, model);
+                            } else if (deName.equalsIgnoreCase("ImgScannerSftwrVrsnNum")) {
+                                setElementComponentValue(comp, scannerVer);
+                            }
                         }
-                    }
-                } else if (fileFormatString.equalsIgnoreCase("nifti")) {
-                    // Description = Philips Medical Systems Achieva 3.2.1 (from .nii T1 of Dr. Vaillancourt's)
-                    final FileInfoNIFTI fileInfoNifti = (FileInfoNIFTI) img.getFileInfo(0);
-                    final String description = fileInfoNifti.getDescription();
-
-                    final String manuf = convertNiftiDescToBRICSManuf(description);
-                    final String model = convertNiftiDescToBRICSModel(description);
-                    final String scannerVer = convertNiftiDescToBRICSVer(description);
-
-                    if (l.equalsIgnoreCase("ImgScannerManufName")) {
-                        setElementComponentValue(comp, manuf);
-                        // label.setForeground(Color.red);
-                    } else if (l.equalsIgnoreCase("ImgScannerModelName")) {
-                        setElementComponentValue(comp, model);
-                    } else if (l.equalsIgnoreCase("ImgScannerSftwrVrsnNum")) {
-                        setElementComponentValue(comp, scannerVer);
                     }
                 }
             }
@@ -4662,21 +4469,20 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
          * 
          * @param labelsAndComps
          */
-        public void clearFields(final TreeMap<JLabel, JComponent> labelsAndComps) {
-            final Set<JLabel> keySet = labelsAndComps.keySet();
-            final Iterator<JLabel> iter = keySet.iterator();
-            while (iter.hasNext()) {
-                final JLabel label = iter.next();
-                final String l = label.getName();
-                final JComponent comp = labelsAndComps.get(label);
-                if ( !l.equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
-                    try {
-                        ((JTextField) comp).setText(null);
-                    } catch (final ClassCastException e) {
-                        try {
-                            ((JComboBox) comp).setSelectedItem(null);
-                        } catch (final ClassCastException f) {
+        public void clearFields(final FormStructureData fsData) {
+            for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
+                for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
+                    for (final DataElementValue deVal : repeat.getDataElements()) {
+                        if ( !deVal.getName().equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
+                            try {
+                                ((JTextField) deVal.getComp()).setText(null);
+                            } catch (final ClassCastException e) {
+                                try {
+                                    ((JComboBox) deVal.getComp()).setSelectedItem(null);
+                                } catch (final ClassCastException f) {
 
+                                }
+                            }
                         }
                     }
                 }
@@ -4691,7 +4497,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             final String command = e.getActionCommand();
             ArrayList<String> errs;
             final StringBuffer errors = new StringBuffer();
-            if (command.equalsIgnoreCase("ok3")) {
+            if (command.equalsIgnoreCase("StructDialogOK")) {
                 errs = validateFields();
                 boolean isComplete = true;
                 if (errs.size() != 0) {
@@ -4699,26 +4505,26 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         errors.append(" - " + errs.get(i) + "\n");
                     }
                     final Object[] options = {"Fix now", "Fix later"};
-                    fix = JOptionPane.showOptionDialog(null, errors.toString(), "Warning", JOptionPane.DEFAULT_OPTION,
-                            JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+                    fixErrors = JOptionPane.showOptionDialog(null, errors.toString(), "Warning", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null,
+                            options, options[0]);
                     // MipavUtil.displayWarning(errors.toString());
                     isComplete = false;
                 }
 
-                complete(labelsAndComps, dataStructureName, isComplete);
+                complete(fsData, isComplete);
                 enableDisableFinishButton();
                 dispose();
 
-                if (fix == 0 && errs.size() != 0) {
+                if (fixErrors == FIX_ERRORS_NOW && errs.size() != 0) {
                     fixErrors();
                 }
 
-            } else if (command.equalsIgnoreCase("cancel3")) {
+            } else if (command.equalsIgnoreCase("StructDialogCancel")) {
                 if ( !launchedFromInProcessState) {
                     previewImages.remove(previewImages.size() - 1);
                     imageFiles.remove(imageFiles.size() - 1);
                     multifiles.remove(multifiles.size() - 1);
-                    infoList.remove(infoList.size() - 1);
+                    fsDataList.remove(fsDataList.size() - 1);
                     allOtherFilesAL.remove(allOtherFilesAL.size() - 1);
                     if (addedPreviewImage) {
                         previewPanel.removeAll();
@@ -4728,12 +4534,19 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 enableDisableFinishButton();
                 dispose();
             } else if (command.startsWith("browse_")) {
+                // changed format of command to browse_-_GROUPNAME_-_REPNUM_-_DENAME from browse_DENAME
                 if (currFile == null) {
                     currFile = "";
                 }
+
+                final String[] commandSplit = command.split("_-_");
+                final String groupName = commandSplit[1];
+                final int repeatNum = Integer.parseInt(commandSplit[2]);
+                final String deName = commandSplit[3];
+
                 boolean isMultiFile = false;
                 // System.out.println(dataStructureName);
-                if (isImagingStructure(dataStructureName)) {
+                if (isImagingStructure(dataStructureName) && isMainImagingFileElement(groupName, deName)) {
                     final ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
                     fileChooser.setMulti(ViewUserInterface.getReference().getLastStackFlag());
 
@@ -4794,8 +4607,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         } else {
                             final FileIO fileIO = new FileIO();
                             fileIO.setQuiet(true);
-                            srcImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultiFile,
-                                    null);
+                            srcImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultiFile, null);
 
                             final int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
 
@@ -4814,16 +4626,16 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             addedPreviewImage = true;
 
                             if (launchedFromInProcessState) {
-                                final int selectedRow = sourceTable.getSelectedRow();
+                                final int selectedRow = structTable.getSelectedRow();
                                 previewImages.set(selectedRow, previewImg);
-                                previewImages.get(selectedRow).setSliceBrightness(brightness, contrast);
+                                previewImages.get(selectedRow).setSliceBrightness(previewImgBrightness, previewImgContrast);
                                 imageFiles.set(selectedRow, file);
                                 multifiles.set(selectedRow, new Boolean(isMultiFile));
 
                             } else {
                                 final int size = previewImages.size();
                                 previewImages.set(size - 1, previewImg);
-                                previewImages.get(size - 1).setSliceBrightness(brightness, contrast);
+                                previewImages.get(size - 1).setSliceBrightness(previewImgBrightness, previewImgContrast);
                                 imageFiles.set(size - 1, file);
                                 multifiles.set(size - 1, new Boolean(isMultiFile));
                             }
@@ -4833,35 +4645,28 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         }
 
                         if (srcImage != null) {
-
-                            final String labelName = command.substring(command.indexOf("_") + 1, command.length());
-
                             String tempName = currFile;
-                            final Set<JLabel> keySet = labelsAndComps.keySet();
-                            final Iterator<JLabel> iter = keySet.iterator();
-                            while (iter.hasNext()) {
-                                final JLabel l = iter.next();
-                                // TODO: hardcoded element handling
-                                if (l.getName().equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
-                                    final JTextField tf = (JTextField) labelsAndComps.get(l);
+
+                            for (final DataElementValue deVal : fsData.getGroupRepeat(groupName, repeatNum).getDataElements()) {
+                                final String curDeName = deVal.getName();
+                                if (curDeName.equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
+                                    final JTextField tf = (JTextField) deVal.getComp();
                                     tf.setText("Automatically generated from selected image files.");
-                                } else if (l.getName().equalsIgnoreCase(labelName)) {
-                                    final JTextField tf = (JTextField) labelsAndComps.get(l);
+                                } else if (curDeName.equalsIgnoreCase(deName)) {
+                                    final JTextField tf = (JTextField) deVal.getComp();
                                     tf.setText(file.getName());
                                     tempName = file.getName();
                                     tf.setEnabled(false);
                                 }
-
                             }
 
                             if ( !currFile.equals(tempName) && !currFile.equals("")) {
-                                clearFields(labelsAndComps);
+                                clearFields(fsData);
                             }
-                            populateFields(labelsAndComps, srcImage);
+                            populateFields(fsData, srcImage);
 
                             srcImage.disposeLocal();
                             srcImage = null;
-
                         }
                     }
                 } else {
@@ -4869,37 +4674,28 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     chooser.setDialogTitle("Choose file");
                     final int returnValue = chooser.showOpenDialog(this);
                     if (returnValue == JFileChooser.APPROVE_OPTION) {
-
-                        final String labelName = command.substring(command.indexOf("_") + 1, command.length());
-
                         final File file = chooser.getSelectedFile();
 
-                        final Set<JLabel> keySet = labelsAndComps.keySet();
-                        final Iterator<JLabel> iter = keySet.iterator();
-                        while (iter.hasNext()) {
-                            final JLabel l = iter.next();
-                            if (l.getName().equalsIgnoreCase(labelName)) {
-                                final JTextField tf = (JTextField) labelsAndComps.get(l);
+                        for (final DataElementValue deVal : fsData.getGroupRepeat(groupName, repeatNum).getDataElements()) {
+                            if (deVal.getName().equalsIgnoreCase(deName)) {
+                                final JTextField tf = (JTextField) deVal.getComp();
                                 tf.setText(file.getAbsolutePath());
                                 tf.setEnabled(false);
                                 break;
                             }
                         }
-
                     }
                 }
-
             }
-
         }
 
         /**
          * Creates new dialog containing only fields that contained errors
          */
         private void fixErrors() {
-            final String dsName = (String) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 0);
+            final String dsName = (String) structTableModel.getValueAt(structTable.getSelectedRow(), 0);
             new InfoDialog(owner, dsName, true, true, null);
-            fix = 1;
+            fixErrors = FIX_ERRORS_LATER;
         }
 
         /**
@@ -4910,378 +4706,76 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         public ArrayList<String> validateFields() {
             final ArrayList<String> errs = new ArrayList<String>();
 
-            for (int k = 0; k < dataStructures.size(); k++) {
-                final String sName = dataStructures.get(k).getShortname();
-
-                if (dataStructureName.equalsIgnoreCase(sName)) {
-                    parseDataStructForValidation(dataStructures.get(k), errs, labelsAndComps);
-                }
-            }
+            parseDataStructForValidation(fsData, errs);
 
             return errs;
-
-        }
-
-        public boolean isNumber(final String exp) {
-            try {
-                Double.parseDouble(exp);
-            } catch (final NumberFormatException e) {
-                return false;
-            }
-
-            return true;
-        }
-
-        public double getNumber(final String exp) {
-            return Double.parseDouble(exp);
-        }
-
-        public boolean evaluateStringExpression(String op1, final String oper, String op2) {
-            if (op1.startsWith("'")) {
-                op1 = op1.substring(1, op1.length() - 1);
-            }
-
-            if (op2.startsWith("'")) {
-                op2 = op2.substring(1, op2.length() - 1);
-            }
-
-            // need to special case for MRI
-            /*
-             * if(op1.equalsIgnoreCase("Magnetic Resonance")) { op1 = "MRI"; }
-             */
-
-            if (oper.equals("=")) {
-                if (op1.equals(op2)) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } else if (oper.equals("!=")) {
-                if ( !op1.equals(op2)) {
-                    return true;
-                } else {
-                    return false;
-                }
-
-            }
-
-            return false;
-        }
-
-        public boolean evaluateNumberExpression(final String op1, final String oper, final String op2) {
-            final double d1 = getNumber(op1);
-            final double d2 = getNumber(op2);
-            if (oper.equals("=")) {
-                if (d1 == d2) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } else if (oper.equals("<")) {
-                if (d1 < d2) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } else if (oper.equals(">")) {
-                if (d1 > d2) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } else if (oper.equals("!=")) {
-                if (d1 != d2) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } else if (oper.equals("<=")) {
-                if (d1 <= d2) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } else if (oper.equals(">=")) {
-                if (d1 >= d2) {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-
-            return false;
-        }
-
-        public boolean testCondition(final String[] tokens) {
-            String value = "";
-            String key;
-            for (int i = 0; i < tokens.length; i++) {
-                final String token = tokens[i];
-                if (token.startsWith("#")) {
-                    // get the corresponding value from this component
-                    // and replace
-                    final String name = token.substring(1, token.length());
-                    final Set<JLabel> keySet = labelsAndComps.keySet();
-                    final Iterator<JLabel> iter = keySet.iterator();
-                    while (iter.hasNext()) {
-                        final JLabel label = iter.next();
-                        final JComponent comp = labelsAndComps.get(label);
-                        key = label.getName();
-
-                        if (comp instanceof JTextField) {
-                            value = ((JTextField) comp).getText().trim();
-                        } else if (comp instanceof JComboBox) {
-                            value = (String) ( ((JComboBox) comp).getSelectedItem());
-                        }
-                        if (key.equalsIgnoreCase(name)) {
-                            tokens[i] = value;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            boolean testCondition = false;
-            String intersect = "";
-            for (int i = 0; i < tokens.length;) {
-                boolean t = false;
-                final String op1 = tokens[i];
-                final String oper = tokens[i + 1];
-                final String op2 = tokens[i + 2];
-
-                if (isNumber(op1)) {
-                    t = evaluateNumberExpression(op1, oper, op2);
-
-                } else {
-                    t = evaluateStringExpression(op1, oper, op2);
-
-                }
-
-                if (intersect.equals("")) {
-                    testCondition = t;
-                } else {
-                    if (intersect.equalsIgnoreCase("AND")) {
-                        if (testCondition && t) {
-                            testCondition = true;
-                        } else {
-                            testCondition = false;
-                        }
-                    } else if (intersect.equalsIgnoreCase("OR")) {
-                        if (testCondition || t) {
-                            testCondition = true;
-                        } else {
-                            testCondition = false;
-                        }
-                    }
-                }
-
-                if (i + 3 < tokens.length) {
-                    intersect = tokens[i + 3];
-                }
-
-                i = i + 4;
-
-            }
-
-            return testCondition;
         }
 
         /**
          * validates fields
-         * 
-         * @param ds2
-         * @param imageFile
-         * @param errs
          */
-        public void parseDataStructForValidation(final DataStruct ds2, final ArrayList<String> errs,
-                final TreeMap<JLabel, JComponent> labelsAndComps) {
-
-            errors = new ArrayList<JLabel>();
+        public void parseDataStructForValidation(final FormStructureData fsData, final ArrayList<String> errs) {
+            errors = new ArrayList<DataElementValue>();
             String value = "";
-            String key = "";
-            String labelText = "";
-            String required = "";
-            String valuerange = "";
-            String type = "";
-            String size = "";
-            boolean found = false;
-            String condition = "";
-            JLabel label = null;
-            for (int k = 0; k < ds2.size(); k++) {
-                final Object o1 = ds2.get(k);
-                if (o1 instanceof DataElement) {
-                    // data element
-                    final DataElement de = (DataElement) o1;
-                    final String name = de.getName();
+            final String key = "";
+            RequiredType required = null;
+            DataType type = null;
 
-                    // need to get appropriat value
-                    final Set<JLabel> keySet = labelsAndComps.keySet();
-                    final Iterator<JLabel> iter = keySet.iterator();
-                    while (iter.hasNext()) {
-                        label = iter.next();
-                        final JComponent comp = labelsAndComps.get(label);
-                        key = label.getName();
-                        labelText = label.getText();
-                        if (comp instanceof JTextField) {
-                            value = ((JTextField) comp).getText().trim();
-                        } else if (comp instanceof JComboBox) {
-                            value = (String) ( ((JComboBox) comp).getSelectedItem());
-                        }
-                        if (key.equalsIgnoreCase(name)) {
-                            found = true;
-                            break;
-                        }
-                    }
+            for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
+                for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
+                    for (final DataElementValue deVal : repeat.getDataElements()) {
+                        final DataElement deInfo = deVal.getDataElementInfo();
 
-                    if (found) {
+                        final JComponent deComp = deVal.getComp();
+                        if (deComp instanceof JTextField) {
+                            value = ((JTextField) deComp).getText().trim();
+                        } else if (deComp instanceof JComboBox) {
+                            value = (String) ( ((JComboBox) deComp).getSelectedItem());
+                        }
+
                         // now we need to validate
-                        required = de.getRequired();
-                        type = de.getType();
-                        size = de.getSize();
+                        required = deVal.getRequiredType();
+                        type = deInfo.getType();
 
-                        valuerange = de.getValuerange();
-
-                        if (required.equalsIgnoreCase("Required")) {
+                        if (required.equals(RequiredType.REQUIRED)) {
                             if (value.trim().equalsIgnoreCase("")) {
-                                errs.add(labelText + " is a required field");
-                                errors.add(label);
+                                errs.add(deInfo.getTitle() + " is a required field");
+                                errors.add(deVal);
                             } else {
                                 if (key.equalsIgnoreCase(GUID_ELEMENT_NAME)) {
                                     if ( !isGuid(value.trim())) {
-                                        errs.add(labelText + " must begin with a valid GUID prefix");
-                                        errors.add(label);
+                                        errs.add(deInfo.getTitle() + " must begin with a valid GUID prefix");
+                                        errors.add(deVal);
                                     }
                                 }
                             }
                         }
-                        if (required.equalsIgnoreCase("Conditional")) {
 
-                            condition = de.getCondition();
-
-                            condition = condition.replaceAll("<=", " <= ");
-                            condition = condition.replaceAll(">=", " >= ");
-                            condition = condition.replaceAll("!=", " != ");
-                            condition = condition.replaceAll("AND", " AND ");
-                            condition = condition.replaceAll("OR", " OR ");
-
-                            final String[] tokens = condition.split("\\s+");
-                            String s2 = "";
-                            for (int i = 0; i < tokens.length; i++) {
-                                String token = tokens[i];
-                                if ( !token.equals("<=") && !token.equals(">=") && !token.equals("!=")) {
-                                    token = token.replaceAll("=", " = ");
-
-                                }
-                                s2 = s2 + token + " ";
-
-                            }
-
-                            final String[] tokens2 = s2.split("\\s+");
-
-                            final boolean test = testCondition(tokens2);
-
-                            if (test == true) {
-                                label.setForeground(Color.red);
-                            } else {
-                                label.setForeground(Color.black);
-                            }
-                            if (test == true && value.trim().equals("")) {
-                                errs.add(labelText + " is a required field");
-                                errors.add(label);
-                            }
-
-                        }
-
-                        if (type.equalsIgnoreCase("Integer")) {
-                            if ( !value.trim().equalsIgnoreCase("")) {
-                                try {
-                                    final int intValue = Integer.valueOf(value.trim()).intValue();
-                                    if (valuerange != null && valuerange.contains("+")) {
-                                        // test int if its in valuerange
-                                        final int min = Integer.valueOf(
-                                                valuerange.substring(0, valuerange.indexOf("+")).trim()).intValue();
-                                        // I think that 0 should be included in
-                                        // allowed range
-                                        // if (min == 0) {
-                                        // if (intValue <= min) {
-                                        // errs.add(labelText +
-                                        // " must be greater than 0");
-                                        // }
-                                        // } else {
-                                        if (intValue < min) {
-                                            errs.add(labelText + " must be greater than or equal to " + min);
-                                            errors.add(label);
-                                        }
-                                        // }
-
-                                    } else if (valuerange != null && valuerange.contains(" to ")) {
-                                        final int min = Integer.valueOf(
-                                                valuerange.substring(0, valuerange.indexOf(" to ")).trim()).intValue();
-                                        final int max = Integer.valueOf(
-                                                valuerange.substring(valuerange.indexOf(" to ") + 4,
-                                                        valuerange.length()).trim()).intValue();
-                                        if (intValue < min || intValue > max) {
-                                            errs.add(labelText + " must be in the range of " + min + " to " + max);
-                                            errors.add(label);
-                                        }
-                                    }
-                                } catch (final NumberFormatException e) {
-                                    errs.add(labelText + " must be an Integer");
-                                    errors.add(label);
-                                }
-                            }
-                        }
-                        if (type.equalsIgnoreCase("Float")) {
+                        if (type.equals(DataType.NUMERIC)) {
                             if ( !value.trim().equalsIgnoreCase("")) {
                                 try {
                                     final float floatValue = Float.valueOf(value.trim()).floatValue();
-                                    if (valuerange != null && valuerange.contains("+")) {
-                                        // test int if its in valuerange
-                                        final float min = Float.valueOf(
-                                                valuerange.substring(0, valuerange.indexOf("+")).trim()).floatValue();
-                                        // I think that 0 should be included in
-                                        // allowed range
-                                        // if (min == 0) {
-                                        // if (floatValue <= min) {
-                                        // errs.add(labelText +
-                                        // " must be greater than 0");
-                                        // }
-                                        // } else {
-                                        if (floatValue < min) {
-                                            errs.add(labelText + " must be greater than or equal to " + min);
-                                            errors.add(label);
-                                        }
-                                        // }
-                                    } else if (valuerange != null && valuerange.contains(" to ")) {
-                                        final float min = Float.valueOf(
-                                                valuerange.substring(0, valuerange.indexOf(" to ")).trim())
-                                                .floatValue();
-                                        final float max = Float.valueOf(
-                                                valuerange.substring(valuerange.indexOf(" to ") + 4,
-                                                        valuerange.length()).trim()).floatValue();
-                                        if (floatValue < min || floatValue > max) {
-                                            errs.add(labelText + " must be in the range of " + min + " to " + max);
-                                            errors.add(label);
-                                        }
+                                    if (deInfo.getMinimumValue() != null && floatValue < deInfo.getMinimumValue().floatValue()) {
+                                        errs.add(deInfo.getTitle() + " must be in the range of " + deInfo.getMinimumValue().floatValue() + " to "
+                                                + deInfo.getMaximumValue().floatValue());
+                                        errors.add(deVal);
+                                    } else if (deInfo.getMaximumValue() != null && floatValue > deInfo.getMaximumValue().floatValue()) {
+                                        errs.add(deInfo.getTitle() + " must be in the range of " + deInfo.getMinimumValue().floatValue() + " to "
+                                                + deInfo.getMaximumValue().floatValue());
+                                        errors.add(deVal);
                                     }
-
                                 } catch (final NumberFormatException e) {
-                                    errs.add(labelText + " must be an Float");
-                                    errors.add(label);
+                                    errs.add(deInfo.getTitle() + " must be a number");
+                                    errors.add(deVal);
                                 }
                             }
                         }
-                        if ( !size.equalsIgnoreCase("") && !size.equalsIgnoreCase("0")) {
-                            final int intValue = Integer.valueOf(size.trim()).intValue();
-                            if ( !value.trim().equalsIgnoreCase("")) {
-                                if (value.length() > intValue) {
-                                    errs.add(labelText + " must not exceed " + intValue + " in length");
-                                    errors.add(label);
-                                }
+                        if (type.equals(DataType.ALPHANUMERIC)) {
+                            if (deInfo.getSize() != null && deInfo.getSize() > 0 && value.length() > deInfo.getSize()) {
+                                errs.add(deInfo.getTitle() + " must not exceed " + deInfo.getSize() + " in length");
+                                errors.add(deVal);
                             }
-
                         }
-                        found = false;
                     }
                 }
             }
@@ -5290,41 +4784,44 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         /**
          * called after validation is done
          */
-        public void complete(final TreeMap<JLabel, JComponent> labelsAndComps, final String dataStructShortname,
-                final boolean isComplete) {
+        public void complete(final FormStructureData fsData, final boolean isComplete) {
             // System.out.println("in complete");
-            final LinkedHashMap<String, String> infoMap = new LinkedHashMap<String, String>();
             String value = "";
-            final Set<JLabel> keySet = labelsAndComps.keySet();
-            final Iterator<JLabel> iter = keySet.iterator();
-            while (iter.hasNext()) {
-                final JLabel label = iter.next();
-                final JComponent comp = labelsAndComps.get(label);
-                // TODO: hardcoded element handling
-                if (label.getName().equalsIgnoreCase(GUID_ELEMENT_NAME)) {
-                    guid = ((JTextField) comp).getText().trim();
-                }
-                final String key = label.getName();
-                if (comp instanceof JTextField) {
-                    value = ((JTextField) comp).getText().trim();
-                    // ok...all files will go into the allOtherFiles AL
 
-                    final File f = new File(value);
-                    if (f.isFile()) {
-                        allOtherFiles.add(f);
-                    }
+            for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
+                for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
+                    for (final DataElementValue deVal : repeat.getDataElements()) {
+                        final JLabel label = deVal.getLabel();
+                        final JComponent comp = deVal.getComp();
 
-                } else if (comp instanceof JComboBox) {
-                    value = (String) ( ((JComboBox) comp).getSelectedItem());
-                    if (value.equalsIgnoreCase(VALUE_OTHER_SPECIFY)) {
-                        value = specs.get(comp).getText().trim();
+                        if (label.getName().equalsIgnoreCase(GUID_ELEMENT_NAME)) {
+                            guid = ((JTextField) comp).getText().trim();
+                        }
+
+                        if (comp instanceof JTextField) {
+                            value = ((JTextField) comp).getText().trim();
+                            // ok...all files will go into the allOtherFiles AL
+
+                            final File f = new File(value);
+                            if (f.isFile()) {
+                                allOtherFiles.add(f);
+                            }
+
+                        } else if (comp instanceof JComboBox) {
+                            value = (String) ( ((JComboBox) comp).getSelectedItem());
+                            if (value.equalsIgnoreCase(VALUE_OTHER_SPECIFY)) {
+                                value = specs.get(comp).getText().trim();
+                            }
+                        }
+
+                        /*
+                         * if(!value.equals("")) { System.out.println("the key is " + key);
+                         * System.out.println("the value is " + value); }
+                         */
+
+                        deVal.setValue(value);
                     }
                 }
-                /*
-                 * if(!value.equals("")) { System.out.println("the key is " + key); System.out.println("the value is " +
-                 * value); }
-                 */
-                infoMap.put(key, value);
             }
 
             // boolean guidKnown = true;
@@ -5335,22 +4832,22 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             String name = "";
 
             if (guid != null && !guid.trim().equalsIgnoreCase("")) {
-                name = dataStructShortname + "_" + guid;
+                name = fsData.getStructInfo().getShortName() + "_" + guid;
             } else {
-                name = dataStructShortname + "_UNKNOWNGUID";
+                name = fsData.getStructInfo().getShortName() + "_UNKNOWNGUID";
             }
 
             if (launchedFromInProcessState) {
-                final int selectedRow = sourceTable.getSelectedRow();
+                final int selectedRow = structTable.getSelectedRow();
 
-                sourceTableModel.setValueAt(name, selectedRow, 0);
+                structTableModel.setValueAt(name, selectedRow, 0);
                 if (isComplete) {
-                    sourceTableModel.setValueAt("Yes", selectedRow, 1);
+                    structTableModel.setValueAt("Yes", selectedRow, 1);
                 } else {
-                    sourceTableModel.setValueAt("No", selectedRow, 1);
+                    structTableModel.setValueAt("No", selectedRow, 1);
                 }
 
-                infoList.set(selectedRow, infoMap);
+                fsDataList.set(selectedRow, fsData);
 
                 allOtherFilesAL.set(selectedRow, allOtherFiles);
 
@@ -5360,8 +4857,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     previewPanel.repaint();
                 }
 
-                infoList.set(infoList.size() - 1, infoMap);
-                // infoTable.put(k, infoMap);
+                fsDataList.set(fsDataList.size() - 1, fsData);
                 final Vector<String> rowData = new Vector<String>();
                 rowData.add(name);
                 if (isComplete) {
@@ -5369,9 +4865,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 } else {
                     rowData.add("No");
                 }
-                sourceTableModel.addRow(rowData);
-                sourceTable.setRowSelectionInterval(sourceTableModel.getRowCount() - 1,
-                        sourceTableModel.getRowCount() - 1);
+                structTableModel.addRow(rowData);
+                structTable.setRowSelectionInterval(structTableModel.getRowCount() - 1, structTableModel.getRowCount() - 1);
 
                 allOtherFilesAL.set(allOtherFilesAL.size() - 1, allOtherFiles);
             }
@@ -5400,22 +4895,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         @Override
         public void windowOpened(final WindowEvent e) {}
 
-        /**
-         * This inner class is used to sort the list by instance number
-         */
-        private class JLabelComparator implements Comparator<JLabel> {
-            @Override
-            public int compare(final JLabel lA, final JLabel lB) {
-                final String aText = lA.getName();
-                final String bText = lB.getName();
-                return aText.compareTo(bText);
-            }
-        }
-
         @Override
         public void itemStateChanged(final ItemEvent e) {
             validateFields();
-
         }
 
         @Override
@@ -5426,183 +4908,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             validateFields();
         }
 
-    }
-
-    /**
-     * represents the DataStructure of the xml
-     */
-    public class DataStruct extends Vector<DataElement> {
-        /**
-		 * 
-		 */
-        private static final long serialVersionUID = -2562266763497985432L;
-
-        private final String name;
-
-        private String shortname;
-
-        private String desc;
-
-        private final String version;
-
-        private String type;
-
-        public DataStruct(final String name, final String version) {
-            super();
-            this.name = name;
-            this.version = version;
-        }
-
-        public DataStruct(final String name, final String shortname, final String desc, final String version,
-                final String type) {
-            super();
-            this.name = name;
-            this.shortname = shortname;
-            this.desc = desc;
-            this.version = version;
-            this.shortname = shortname;
-            this.type = type;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getVersion() {
-            return version;
-        }
-
-        public String getShortname() {
-            return shortname;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public String getDesc() {
-            return desc;
-        }
-
-    }
-
-    /**
-     * represents the DataElement of the XML
-     * 
-     * @author pandyan
-     * 
-     */
-    public class DataElement {
-        private final String name;
-
-        private final String title;
-
-        private final String desc;
-
-        private final String shortDesc;
-
-        private final String notes;
-
-        private final String type;
-
-        private final String size;
-
-        private final String required;
-
-        private final String valuerange;
-
-        private final String condition;
-
-        private final String guidelines;
-
-        private final String group;
-
-        private final int position;
-
-        private final String parentDataStruct;
-
-        private final String parentDataStructShortname;
-
-        public DataElement(final String name, final String title, final String desc, final String shortDesc,
-                final String notes, final String type, final String size, final String required,
-                final String valuerange, final String condition, final String guidelines, final String group,
-                final int position, final String parentDataStruct, final String parentDataStructShortname) {
-            this.name = name;
-            this.title = title;
-            this.desc = desc;
-            this.shortDesc = shortDesc;
-            this.notes = notes;
-            this.type = type;
-            this.size = size;
-            this.required = required;
-            this.valuerange = valuerange;
-            this.condition = condition;
-            this.guidelines = guidelines;
-            this.group = group;
-            this.position = position;
-            this.parentDataStruct = parentDataStruct;
-            this.parentDataStructShortname = parentDataStructShortname;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getTitle() {
-            return title;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public String getSize() {
-            return size;
-        }
-
-        public String getCondition() {
-            return condition;
-        }
-
-        public String getRequired() {
-            return required;
-        }
-
-        public String getValuerange() {
-            return valuerange;
-        }
-
-        public String getDesc() {
-            return desc;
-        }
-
-        public String getShortDesc() {
-            return shortDesc;
-        }
-
-        public String getGuidelines() {
-            return guidelines;
-        }
-
-        public String getNotes() {
-            return notes;
-        }
-
-        public String getGroup() {
-            return group;
-        }
-
-        public int getPosition() {
-            return position;
-        }
-
-        public String getParentDataStruct() {
-            return parentDataStruct;
-        }
-
-        public String getParentDataStructShortname() {
-            return parentDataStructShortname;
-        }
     }
 
     /**
@@ -5624,8 +4929,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         public void run() {
 
             try {
-                progressBar = new ViewJProgressBar("BRICS", "Connecting to BRICS data dictionary web service...", 0,
-                        100, true);
+                progressBar = new ViewJProgressBar("BRICS", "Connecting to BRICS data dictionary web service...", 0, 100, true);
                 progressBar.setVisible(true);
                 progressBar.updateValue(20);
                 progressCancelButton = progressBar.getCancelButton();
@@ -5646,7 +4950,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 progressBar.dispose();
                 printlnToLog("Successful connection to BRICS data dictionary web service");
 
-                addSourceButton.setEnabled(true);
+                addStructButton.setEnabled(true);
                 loadCSVButton.setEnabled(true);
             } catch (final Exception e) {
                 e.printStackTrace();
@@ -5677,22 +4981,37 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     public class DataElementValue {
         private GroupRepeat deGroup;
 
+        private JLabel deLabel;
+
         private JComponent deComp;
 
         private DataElement deInfo;
 
         private String deValue;
 
-        public DataElementValue(final GroupRepeat group, final JComponent comp, final DataElement info, final String val) {
+        private int dePosition;
+
+        private RequiredType deRequiredType;
+
+        public DataElementValue(final GroupRepeat group, final JLabel label, final JComponent comp, final MapElement info, final String val) {
             deGroup = group;
+            deLabel = label;
             deComp = comp;
-            deInfo = info;
+            deInfo = info.getDataElement();
+            dePosition = info.getPosition();
+            deRequiredType = info.getRequiredType();
             deValue = val;
         }
 
-        public DataElementValue(final GroupRepeat group, final DataElement info) {
+        public DataElementValue(final GroupRepeat group, final MapElement info) {
             deGroup = group;
-            deInfo = info;
+            deInfo = info.getDataElement();
+            dePosition = info.getPosition();
+            deRequiredType = info.getRequiredType();
+        }
+
+        public String getGroupName() {
+            return deGroup.getGroupInfo().getName();
         }
 
         public GroupRepeat getGroup() {
@@ -5703,6 +5022,14 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             this.deGroup = deGroup;
         }
 
+        public JLabel getLabel() {
+            return deLabel;
+        }
+
+        public void setLabel(final JLabel deLabel) {
+            this.deLabel = deLabel;
+        }
+
         public JComponent getComp() {
             return deComp;
         }
@@ -5711,12 +5038,32 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             this.deComp = deComp;
         }
 
+        public String getName() {
+            return deInfo.getName();
+        }
+
         public DataElement getDataElementInfo() {
             return deInfo;
         }
 
         public void setDataElementInfo(final DataElement deInfo) {
             this.deInfo = deInfo;
+        }
+
+        public int getPosition() {
+            return dePosition;
+        }
+
+        public void setPosition(final int dePosition) {
+            this.dePosition = dePosition;
+        }
+
+        public RequiredType getRequiredType() {
+            return deRequiredType;
+        }
+
+        public void setRequiredType(final RequiredType deRequiredType) {
+            this.deRequiredType = deRequiredType;
         }
 
         public String getValue() {
@@ -5737,8 +5084,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
         private int repeatNumber;
 
-        public GroupRepeat(final RepeatableGroup groupInfo, final FormStructureData parentStruct,
-                final Vector<DataElementValue> dataElements, final int repeatNumber) {
+        public GroupRepeat(final RepeatableGroup groupInfo, final FormStructureData parentStruct, final Vector<DataElementValue> dataElements,
+                final int repeatNumber) {
             this.groupInfo = groupInfo;
             this.parentStruct = parentStruct;
             this.dataElements = dataElements;
@@ -5790,11 +5137,11 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     }
 
     public class FormStructureData {
-        private DataStruct structInfo;
+        private DataStructure structInfo;
 
         private final Hashtable<String, Vector<GroupRepeat>> groupTable;
 
-        public FormStructureData(final DataStruct structInfo) {
+        public FormStructureData(final DataStructure structInfo) {
             this.structInfo = structInfo;
             groupTable = new Hashtable<String, Vector<GroupRepeat>>();
         }
@@ -5804,7 +5151,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         }
 
         public void addGroupRepeat(final String groupName, final GroupRepeat repeat) {
-            repeat.setRepeatNumber(groupTable.get(groupName).size() + 1);
+            repeat.setRepeatNumber(groupTable.get(groupName).size());
             groupTable.get(groupName).add(repeat);
         }
 
@@ -5815,11 +5162,23 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             }
         }
 
-        public DataStruct getStructInfo() {
+        public Vector<GroupRepeat> getAllGroupRepeats(final String groupName) {
+            return groupTable.get(groupName);
+        }
+
+        public GroupRepeat getCurrentGroupRepeat(final String groupName) {
+            return groupTable.get(groupName).lastElement();
+        }
+
+        public GroupRepeat getGroupRepeat(final String groupName, final int groupNum) {
+            return groupTable.get(groupName).get(groupNum);
+        }
+
+        public DataStructure getStructInfo() {
             return structInfo;
         }
 
-        public void setStructInfo(final DataStruct structInfo) {
+        public void setStructInfo(final DataStructure structInfo) {
             this.structInfo = structInfo;
         }
     }
