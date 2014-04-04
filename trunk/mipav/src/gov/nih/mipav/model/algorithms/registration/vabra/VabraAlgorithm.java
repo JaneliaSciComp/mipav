@@ -44,14 +44,17 @@ public class VabraAlgorithm  {
             Preferences.debug("Unable to open " + "config.xml"
                     + ".  Make sure it is in the same directory as MipavMain.class\n", Preferences.DEBUG_MINOR);
 
-            return null;
         }
         File config = null;
-		try {
-			config = new File(fileURL.toURI());
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
-		}		
+        
+        if (fileURL != null) {
+			try {
+				config = new File(fileURL.toURI());
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
+			}
+        }
+        
 		float robustMaxT = 0.000f;
 		float robustMinT = 0.000f;
 		int numBins = 64;
