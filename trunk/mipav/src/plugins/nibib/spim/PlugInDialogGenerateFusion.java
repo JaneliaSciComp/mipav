@@ -60,7 +60,7 @@ import nibib.spim.PlugInAlgorithmGenerateFusion.SampleMode;
 /**
  * Class for performing image fusion based on reference image and transformation matrix.  Option to output geometric/arithmetic mean.
  * 
- * @version  October 29, 2013
+ * @version  April 4, 2014
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -2187,13 +2187,23 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     	        MipavUtil.displayError("Invalid matrix file.");
     	        return false;
     	    }
+    	    transformFileDir = transformFileLocText.getText();
+    	    baseFileDir = baseFileLocText.getText();
 	    } // if (!(registerOne || registerAll))
 	    else {
 	        mtxFileDirectory = mtxFileDirectoryText.getText();
+	        transformFileDir = transformFileLocText.getText();
+	        if ((transformFileDir == null) || (transformFileDir.length() == 0)) {
+	           transformFileDir = mtxFileDirectory + File.separatorChar + "SPIMB";
+	           transformFileLocText.setText(transformFileDir);
+	        }
+		    baseFileDir = baseFileLocText.getText();
+		    if ((baseFileDir == null) || (baseFileDir.length() == 0)) {
+		    	baseFileDir = mtxFileDirectory + File.separatorChar + "SPIMA";
+		    	baseFileLocText.setText(baseFileDir);
+		    }
 	    }
 	    
-	    transformFileDir = transformFileLocText.getText();
-	    baseFileDir = baseFileLocText.getText();
 	    baseImage = baseImageText.getText();
 	    
 	    mode = (SampleMode) modeOption.getSelectedItem();
