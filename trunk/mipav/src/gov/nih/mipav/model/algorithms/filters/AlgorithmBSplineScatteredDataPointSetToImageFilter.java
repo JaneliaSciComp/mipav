@@ -5,9 +5,11 @@
 import gov.nih.mipav.model.algorithms.AlgorithmConvolver;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.GenerateGaussian;
+import gov.nih.mipav.model.structures.BSplineKernelFunction;
 import gov.nih.mipav.model.structures.CoxDeBoorBSplineKernelFunction;
 import gov.nih.mipav.model.structures.ModelImage;
 	
+
 
 
 
@@ -51,6 +53,19 @@ import gov.nih.mipav.view.ViewJProgressBar;
 		private int splineOrder[];
 		private int numberOfControlPoints[];
 		private CoxDeBoorBSplineKernelFunction kernel[];
+		private BSplineKernelFunction kernelOrder0;
+		private BSplineKernelFunction kernelOrder1;
+		private BSplineKernelFunction kernelOrder2;
+		private BSplineKernelFunction kernelOrder3;
+		private int closeDimension[];
+		private boolean doMultiLevel;
+		private boolean generateOutputImage;
+		private int numberOfLevels[];
+		private int maximumNumberOfLevels;
+		private boolean constructPhiLattice;
+		ModelImage phiLattice;
+		private boolean constructPsiLattice;
+		ModelImage psiLattice;
 	
 		/**
 	     * Constructor which sets the source and destination images
@@ -77,6 +92,25 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	        	numberOfControlPoints[i] = splineOrder[i] + 1;
 	        	kernel[i] = new CoxDeBoorBSplineKernelFunction(splineOrder[i]);
 	        }
+	        kernelOrder0 = new BSplineKernelFunction(0);
+	        kernelOrder1 = new BSplineKernelFunction(1);
+	        kernelOrder2 = new BSplineKernelFunction(2);
+	        kernelOrder3 = new BSplineKernelFunction(3);
+	        closeDimension = new int[nDims];
+	        for (i = 0; i < nDims; i++) {
+	        	closeDimension[i] = 0;
+	        }
+	        doMultiLevel = false;
+	        generateOutputImage = true;
+	        numberOfLevels = new int[nDims];
+	        for (i = 0; i < nDims; i++) {
+	        	numberOfLevels[i] = 1;
+	        }
+	        maximumNumberOfLevels = 1;
+	        constructPhiLattice = false;
+	        phiLattice = null;
+	        constructPsiLattice = true;
+	        psiLattice = null;
 	    }
 	    
 	  //~ Methods --------------------------------------------------------------------------------------------------------
