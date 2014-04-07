@@ -762,6 +762,7 @@ implements ListSelectionListener, ChangeListener {
 		}
 		else	
 		{
+			tracksAdded[0] = new VOIBaseVector();
 			int xMin = 0, xMax = m_iDimX, yMin = 0, yMax = m_iDimY, zMin = 0, zMax = m_iDimZ;
 			for ( int z = zMin; z < zMax; z++ )
 			{
@@ -795,7 +796,7 @@ implements ListSelectionListener, ChangeListener {
 		int count = 0;
 		for ( int i = 0; i < tracksAdded.length; i++ )
 		{
-			if ( tracksAdded[i].size() > 0 )
+			if ((tracksAdded[i] != null) &&( tracksAdded[i].size() > 0 ))
 			{
 				for ( int j = 0; j < tracksAdded[i].size(); j++ )
 				{
