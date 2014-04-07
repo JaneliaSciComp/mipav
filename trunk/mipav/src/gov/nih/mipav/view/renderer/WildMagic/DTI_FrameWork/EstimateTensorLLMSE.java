@@ -1,5 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
+import java.util.Arrays;
+
 import gov.nih.mipav.model.file.DTIParameters;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
@@ -96,10 +98,14 @@ public class EstimateTensorLLMSE {
 
 		int Ngrad = 0;
 		int Nb0 = 0; 
+		double bvaluesSort[] = bvalues.clone();
+		Arrays.sort(bvaluesSort);
+		double bvaluesAbsMax = Math.max(Math.abs(bvaluesSort[0]), Math.abs(bvalues[bvaluesSort.length - 1]));
+		double bvaluesThreshold = bvaluesAbsMax/250.0;
 		for(int i=0;i<bvalues.length;i++) {
-			if(bvalues[i]==0)
+			if(Math.abs(bvalues[i]) < bvaluesThreshold)
 				Nb0++;
-			if(bvalues[i]>0 && grads[i][0]<90)
+			if(bvalues[i]>= bvaluesThreshold && grads[i][0]<90)
 				Ngrad++;
 		}
 
@@ -118,12 +124,12 @@ public class EstimateTensorLLMSE {
 		Ngrad = 0;
 		Nb0 = 0; 
 		for(int i=0;i<bvalues.length;i++) {
-			if(bvalues[i]==0) {
+			if(Math.abs(bvalues[i]) < bvaluesThreshold) {
 				bvalList[Nb0]=i;
 				Nb0++;
 			}
 
-			if(bvalues[i]>0 && grads[i][0]<90) {
+			if(bvalues[i]>= bvaluesThreshold && grads[i][0]<90) {
 				gradList[Ngrad]=i;
 				double norm = Math.sqrt(grads[i][0]*grads[i][0]+
 						grads[i][1]*grads[i][1]+
