@@ -111,6 +111,29 @@
 	    	}
 	    	return poly1.add(poly2);
 	    }
+	    
+	    public double[][] getShapeFunctionsInZeroToOneInterval() {
+	    	int i, j;
+	        int order = splineOrder + 1;
+	        int numberOfPieces = order;
+	        double shapeFunctions[][] = new double[numberOfPieces][order];
+	        double knots[] = new double[2 * order];
+	        
+	        for (i = 0; i < knots.length; i++) {
+	            knots[i] = (double)(-splineOrder + i);	
+	        }
+	    	
+	        for (i = 0; i < numberOfPieces; i++) {
+	        	RealPolynomial poly = generatePoly(order, knots, i, order - 1);
+	    	    double coeff[] = poly.getCoefficients();
+	    	    for (j = 0; j < coeff.length; j++) {
+	    	    	shapeFunctions[i][j] = coeff[j];
+	    	    }	
+	        }
+	    	  
+	    	return shapeFunctions;
+
+	    }
 
 	    
 }
