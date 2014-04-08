@@ -68,7 +68,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	    
 	    private int numberOfHistogramBins = 200;
 	    
-	    private double logBiasFieldControlPointLattice[][] = null;
+	    private ModelImage logBiasFieldControlPointLattice = null;
 	    
 	    private double WeinerFilterNoise = 0.01;
 	    
@@ -611,7 +611,8 @@ import gov.nih.mipav.view.ViewJProgressBar;
     	double alpha;
     	double beta;
     	Vector<Double> weights = new Vector<Double>();
-    	float parametricOrigin[];
+    	AlgorithmBSplineScatteredDataPointSetToImageFilter bspliner;
+    	// Use maskOrigin for parametricOrigin
     	// Calculate min/max for sigmoid weighting.  Calculate mean for offsetting
     	// bias field calculations since B-spline algorithm biases the result to zero.
     	maxAbsValue = -Double.MAX_VALUE;
@@ -663,8 +664,8 @@ import gov.nih.mipav.view.ViewJProgressBar;
     			index++;
     		}
     	}
-    	if ( (srcImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
-                || (srcImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
+    	//if ( (srcImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
+               // || (srcImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
             for (i = 0; i < nDims; i++) {
             	dirLength = 0;
                 for (j = 0; j < nDims; j++) {
@@ -676,7 +677,8 @@ import gov.nih.mipav.view.ViewJProgressBar;
                 	direction[i][j] = direction[i][j]/dirLength;
                 }
             } // for (i = 0; i < nDims; i++)
-    	}
+    	//}
+    	bspliner = new AlgorithmBSplineScatteredDataPointSetToImageFilter(nDims);
         for (i = 0; i < nDims; i++) {
         	numberOfFittingLevels[i] = 1;
         }
@@ -685,9 +687,16 @@ import gov.nih.mipav.view.ViewJProgressBar;
             	numberOfControlPoints[d] = originalNumberOfControlPoints[d];
             }
             else {
-            	numberOfControlPoints[d] = logBiasFieldControlPointLattice[d].length;
+            	numberOfControlPoints[d] = logBiasFieldControlPointLattice.getExtents()[d];
             }
         }
+        bspliner.setOrigin(maskOrigin);
+        bspliner.setResolutions(resolutions);
+        bspliner.setExtents(maskExtents);
+        bspliner.setDirection(direction);
+        bspliner.setGenerateOutputImage(false);
+        bspliner.setNumberOfLevels(numberOfFittingLevels);
+        bspliner.setSplineOrder(splineOrder);
         
     	return smoothField;
     }
