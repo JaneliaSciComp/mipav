@@ -105,9 +105,8 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 		if(command.equals("Undo") || command.equals("Redo"))
 			undo();
 		else if(command.equals("Save")){
-			if(saveSkelBox.isSelected())
-				seg.save(saveVOIBox.isSelected());
-			seg.saveAsSWC();
+
+			seg.save(saveVOIBox.isSelected(), saveSkelBox.isSelected());
 		}
 		else if(command.equals("End")){
 			frame.getComponentImage().removeMouseListener(this);
