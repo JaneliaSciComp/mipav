@@ -697,6 +697,10 @@ import gov.nih.mipav.view.ViewJProgressBar;
         bspliner.setGenerateOutputImage(false);
         bspliner.setNumberOfLevels(numberOfFittingLevels);
         bspliner.setSplineOrder(splineOrder);
+        bspliner.setNumberOfControlPoints(numberOfControlPoints);
+        bspliner.setPointData(pointData);
+        bspliner.setPointLocation(pointLocation);
+        bspliner.setPointWeights(weights);
         
     	return smoothField;
     }
