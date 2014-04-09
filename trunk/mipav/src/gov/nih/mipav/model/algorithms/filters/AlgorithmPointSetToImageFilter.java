@@ -57,6 +57,8 @@ import gov.nih.mipav.view.ViewJProgressBar;
 		protected double direction[][];
 		protected double insideValue;
 		protected double outsideValue;
+		protected Vector<Double> pointData;
+		protected Vector<Vector3d> pointLocation;
 		
 		/**
 	     * Constructor which sets the source and destination images
@@ -85,7 +87,9 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	        	direction[i][i] = 1.0;
 	        }
 	        insideValue = 1.0;
-	        outsideValue = 0.0; 
+	        outsideValue = 0.0;
+	        pointData = new Vector<Double>();
+	        pointLocation = new Vector<Vector3d>();
 	    }
 	    
 	  //~ Methods --------------------------------------------------------------------------------------------------------
@@ -123,6 +127,20 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	        		this.direction[i][j] = direction[i][j];
 	        	}
 	        }
+	    }
+	    
+	    public void setPointData(Vector<Double> pointData) {
+	    	this.pointData.clear();
+	    	for (int i = 0; i < pointData.size(); i++) {
+	    		this.pointData.add(pointData.get(i));
+	    	}
+	    }
+	    
+	    public void setPointLocation(Vector<Vector3d> pointLocation) {
+	    	this.pointLocation.clear();
+	    	for (int i = 0; i < pointLocation.size(); i++) {
+	    		this.pointLocation.add(pointLocation.get(i));
+	    	}
 	    }
 
 	    /**
