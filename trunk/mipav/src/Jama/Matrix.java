@@ -472,6 +472,18 @@ public class Matrix implements Cloneable, java.io.Serializable {
       }
       return X;
    }
+   
+   /** Reverse order of rows */
+   public Matrix flipud() {
+	   Matrix X = new Matrix(m, n);
+	   double C[][] = X.getArray();
+	   for (int i = 0; i < m; i++) {
+	       for (int j = 0; j < n; j++) {
+	    	   C[m-1-i][j] = A[i][j];
+	       }
+	   }
+	   return X;
+   }
 
    /** One norm
    @return    maximum column sum.
