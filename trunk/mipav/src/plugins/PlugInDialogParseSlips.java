@@ -144,8 +144,12 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 		concatCSVFile = new File(reportName + "_complete.csv");
 		try {
 			if(csvFile.exists()){
-				if(delRB.isSelected()) csvFile.delete();
-				csv = new FileWriter(csvFile, true);
+				if(delRB.isSelected()) {
+					csvFile.delete();
+					csv = new FileWriter(csvFile, true);
+					initCSV();
+				}
+				else csv = new FileWriter(csvFile, true);
 			}
 			else{
 				csv = new FileWriter(csvFile, true);
@@ -335,10 +339,12 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 		header += "Collect Date 1,Collect Date 2,";
 		header += "GUID 1,GUID 2,";
 		header += "Gender 1,Gender 2,";
-		header += "Side ID 1,Site ID 2\n";
+		header += "Side ID 1,Site ID 2,";
+		header += "Age 1,Age 2\n";
 		
 		try {
 			csv.append(header);
+			csv.flush();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
