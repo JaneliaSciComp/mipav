@@ -115,17 +115,17 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 		String export = new String();
 		
 		//Container check: Yes, I know it's bad
-		reportString[8] = reportString[8].replace("DNA", "Whole Blood");
-		reportString[8] = reportString[8].replace("RNA", "Whole Blood");
-		if(! (slipString[1].equalsIgnoreCase(reportString[8])
-				|| slipString[1].toLowerCase().contains(reportString[8].toLowerCase())
-				|| reportString[8].toLowerCase().contains(slipString[1].toLowerCase())
-				)) export+=reportString[8] + "," + slipString[1] + ",";
+		reportString[9] = reportString[9].replace("DNA", "Whole Blood");
+		reportString[9] = reportString[9].replace("RNA", "Whole Blood");
+		if(! (slipString[1].equalsIgnoreCase(reportString[9])
+				|| slipString[1].toLowerCase().contains(reportString[9].toLowerCase())
+				|| reportString[9].toLowerCase().contains(slipString[1].toLowerCase())
+				)) export+=reportString[9] + "," + slipString[1] + ",";
 		else export += ",,";
 		//Date Check
-		if(!slipString[3].equals(reportString[7].trim())) {
+		if(!slipString[3].equals(reportString[8].trim())) {
 			//System.out.println(reportString[7] + " " + slipString[3]);
-			export+=reportString[7] + "," + slipString[3] + ",";
+			export+=reportString[8] + "," + slipString[3] + ",";
 		}
 		else export += ",,";
 		//GUID Check
@@ -140,6 +140,10 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 				|| reportString[0].toLowerCase().contains(slipString[7].toLowerCase())
 				)) export+=reportString[0] + "," + slipString[7] + ",";
 		else export += ",,";
+		if(!slipString[8].equals(reportString[5])){
+			export+=reportString[5] + "," + slipString[8];
+		}
+		else export += ",,";
 
 		if(! (export.split(",").length == 0)){
 			try {
@@ -153,23 +157,23 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 	}
 	
 	private String[] organizeInput(String[] input){
-		String[] organized = new String[8];
+		String[] organized = new String[9];
 		String[] tempArray;
 		String tempStr;
 		//System.out.println(makeString(input));
 		organized[0] = input[0].trim(); //PID
 		organized[1] = input[7].trim() + "/" + input[11].trim(); //Specimen
 		
-		tempStr = input[14].trim();
+		tempStr = input[15].trim();
 		while(tempStr.endsWith("0") || tempStr.endsWith(".")){
 			tempStr = tempStr.substring(0, tempStr.length()-1);
 		}
 		
 		organized[2] = tempStr + " " + input[15].trim(); //Volume
-		if(input[16] == "null")
+		if(input[17] == "null")
 			organized[3] = "null";
 		else{
-			organized[3] = input[16].trim().split(" ")[0];
+			organized[3] = input[17].trim().split(" ")[0];
 			tempArray = organized[3].split("-");
 			tempStr = tempArray[0];
 			if(tempArray[1].startsWith("0"))
@@ -185,7 +189,7 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 		if(input[17] == "null")
 			organized[4] = "null";
 		else{
-			organized[4] = input[17].trim().split(" ")[0];
+			organized[4] = input[18].trim().split(" ")[0];
 			tempArray = organized[4].split("-");
 			tempStr = tempArray[0];
 			if(tempArray[1].startsWith("0"))
@@ -200,7 +204,8 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 		
 		organized[5] = input[6].trim(); //GUID
 		organized[6] = input[5].trim(); //Gender
-		organized[7] = input[13].trim(); //Site
+		organized[7] = input[14].trim(); //Site
+		organized[8] = input[13].trim();
 		
 		return organized;
 	}
@@ -237,11 +242,11 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 		int ind = 0;
 		while(cnt<20){
 			ind = line.indexOf(",");
-			if(ind > 0){
+			if(ind > 0)
 				output[cnt] = line.substring(0, ind).trim();
-				cnt++;
-			}
 			else if (ind == -1) break;
+			else output[cnt] = "null";
+			cnt++;
 			line = line.substring(ind+1);
 		}
 		String[] realout = new String[cnt];
@@ -270,8 +275,10 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 					//System.out.println(line);
 					lineArray = parseLine2(line);
 					if(lineArray.length != 0){
-						PID = lineArray[9];
-						if(reportID.contains(PID)){
+						PID = lineArray[10];
+						if(PID == "null")
+							continue;
+						else if(reportID.contains(PID)){
 							csv.append(PID + ",duplicated\n");
 						}
 						else{
@@ -310,9 +317,10 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 				}
 			}
 			catch(ArrayIndexOutOfBoundsException e){
-			MipavUtil.displayError("Exception in Coriell   File. Check line " 
-					+ String.valueOf(cnt) + " of file for any errors.");
-			failed = true;
+				e.printStackTrace();
+				MipavUtil.displayError("Exception in Coriell   File. Check line " 
+						+ String.valueOf(cnt) + " of file for any errors.");
+				failed = true;
 			}
 			finally {
 				input.close();
