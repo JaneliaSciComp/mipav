@@ -16,9 +16,11 @@ import gov.nih.mipav.model.structures.ModelImage;
 
 
 
+
 	import java.io.IOException;
 import java.util.Vector;
 
+import Jama.Matrix;
 import WildMagic.LibFoundation.Mathematics.Vector3d;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJProgressBar;
@@ -67,9 +69,9 @@ import gov.nih.mipav.view.ViewJProgressBar;
 		ModelImage phiLattice;
 		private boolean constructPsiLattice;
 		ModelImage psiLattice;
-		private double[] inputPointdData[];
-		private double[] outputPointData[];
-		private double[] pointWeights[];
+		private double[] inputPointdData;
+		private double[] outputPointData;
+		private Vector<Double> pointWeights;
 		private boolean usePointWeights;
 		// Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
@@ -91,6 +93,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
 		private double epsilon = 2.2204460e-16;
 		private double splineEpsilon;
 		private boolean isFittingComplete;
+		private Matrix[] refinedLatticeCoefficients;
 	
 		/**
 	     * Constructor which sets the source and destination images
@@ -139,8 +142,10 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	        psiLattice = null;
 	        // Create inputPointData[] and outputPointData[]
 	        usePointWeights = false;
+	        pointWeights = new Vector<Double>();
 	        splineEpsilon = epsilon;
 	        isFittingComplete = false;
+	        refinedLatticeCoefficients = new Matrix[nDims];
 	    }
 	    
 	  //~ Methods --------------------------------------------------------------------------------------------------------
@@ -182,63 +187,63 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	    }
 	    
 	    public void setSplineOrder(int sOrder) {
-	    	for (int i = 0; i < nDims; i++) {
+	    	int i, j, k;
+	    	for (i = 0; i < nDims; i++) {
 	    		this.splineOrder[i] = sOrder;
 	    	}
 	    	setSplineOrder(splineOrder);
-	    	for (int i = 0; i < nDims; i++ ) {
+	    	for (i = 0; i < nDims; i++ ) {
 	            if (splineOrder[i] == 0 ) {
 	                MipavUtil.displayError("The spline order in each dimension must be greater than 0");
 	                return;
 	            }
 	            kernel[i] = new CoxDeBoorBSplineKernelFunction(splineOrder[i]);
 	            if (doMultiLevel) {
-	                double C[][] = kernel[i].getShapeFunctionsInZeroToOneInterval();	
+	                double C[][] = kernel[i].getShapeFunctionsInZeroToOneInterval();
+	                double R[][] = new double[C.length][C[0].length];
+	                double S[][] = new double[C.length][C[0].length];
+	                for (j = 0; j < C.length; j++) {
+	                	for (k = 0; k < C[0].length; k++) {
+	                		R[j][k] = C[j][k];
+	                		S[j][k] = C[j][k];
+	                	}
+	                }
+	                for (j = 0; j < C[0].length; j++) {
+	                	double c = Math.pow(2.0, C[0].length - j - 1.0);
+	                	
+	                	for (k = 0; k < C.length; k++) {
+	                		R[k][j] *= c;
+	                	}
+	                }
+	                Matrix RMat = new Matrix(R);
+	                RMat = RMat.transpose();
+	                RMat = RMat.flipud();
+	                Matrix SMat = new Matrix(S);
+	                SMat = SMat.transpose();
+	                SMat = SMat.flipud();
+	                Matrix QMat = RMat.solve(SMat);
+	                refinedLatticeCoefficients[i] = QMat.extract(2,  SMat.getColumnDimension());
 	            } // if (doMultiLevel)
-	    	} // for (int i = 0; i < nDims; i++)
-
-	       
-	        /*if( this->m_DoMultilevel )
-	          {
-	          typename KernelType::MatrixType C;
-	          C = this->m_Kernel[i]->GetShapeFunctionsInZeroToOneInterval();
-
-	          vnl_matrix<RealType> R;
-	          vnl_matrix<RealType> S;
-	          R.set_size( C.rows(), C.cols() );
-	          S.set_size( C.rows(), C.cols() );
-	          for( unsigned int j = 0; j < C.rows(); j++ )
-	            {
-	            for( unsigned int k = 0; k < C.cols(); k++ )
-	              {
-	              R(j, k) = S(j, k) = static_cast<RealType>( C(j, k) );
-	              }
-	            }
-	          for( unsigned int j = 0; j < C.cols(); j++ )
-	            {
-	            RealType c = vcl_pow( static_cast<RealType>( 2.0 ),
-	              static_cast<RealType>( C.cols() ) - j - 1 );
-
-	            for( unsigned int k = 0; k < C.rows(); k++ )
-	              {
-	              R(k, j) *= c;
-	              }
-	            }
-	          R = R.transpose();
-	          R.flipud();
-	          S = S.transpose();
-	          S.flipud();
-
-	          this->m_RefinedLatticeCoefficients[i] =
-	            ( vnl_svd<RealType>( R ).solve( S ) ).extract( 2, S.cols() );
-	          }
-	        }*/
-
+	    	} // for (i = 0; i < nDims; i++)
 	    }
 	    
 	    public void setSplineOrder(int[] splineOrder) {
 	    	for (int i = 0; i < nDims; i++) {
 	    		this.splineOrder[i] = splineOrder[i];
+	    	}
+	    }
+	    
+	    public void setNumberOfControlPoints(int[] numberOfControlPoints) {
+	    	for (int i = 0; i < nDims; i++) {
+	    		this.numberOfControlPoints[i] = numberOfControlPoints[i];
+	    	}
+	    }
+	    
+	    public void setPointWeights(Vector<Double> pointWeights) {
+	    	usePointWeights = true;
+	    	this.pointWeights.clear();
+	    	for (int i = 0; i < pointWeights.size(); i++) {
+	    		this.pointWeights.add(pointWeights.get(i));
 	    	}
 	    }
 
