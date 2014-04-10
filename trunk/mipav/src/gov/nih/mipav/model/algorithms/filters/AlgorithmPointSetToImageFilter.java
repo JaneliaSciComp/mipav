@@ -5,6 +5,7 @@
 import gov.nih.mipav.model.algorithms.AlgorithmConvolver;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.GenerateGaussian;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.BSplineKernelFunction;
 import gov.nih.mipav.model.structures.CoxDeBoorBSplineKernelFunction;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -15,10 +16,13 @@ import gov.nih.mipav.model.structures.ModelImage;
 
 
 
+import gov.nih.mipav.model.structures.ModelStorageBase;
+
 	import java.io.IOException;
 import java.util.Vector;
 
 import WildMagic.LibFoundation.Mathematics.Vector3d;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJProgressBar;
 	
 	
@@ -59,6 +63,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
 		protected double outsideValue;
 		protected Vector<Double> pointData;
 		protected Vector<Vector3d> pointLocation;
+		protected ModelImage outputImage;
 		
 		/**
 	     * Constructor which sets the source and destination images
@@ -141,6 +146,23 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	    	for (int i = 0; i < pointLocation.size(); i++) {
 	    		this.pointLocation.add(pointLocation.get(i));
 	    	}
+	    }
+	    
+	    public void generateData() {
+	    	outputImage = new ModelImage(ModelStorageBase.DOUBLE, extents, "outputImage");
+	    	if (outputImage.getFileInfo() != null) {
+	    		FileInfoBase[] fileInfo = outputImage.getFileInfo();
+	    		for (int i = 0; i < fileInfo.length; i++) {
+	    			fileInfo[i].setOrigin(origin);
+	    			fileInfo[i].setResolutions(resolutions);
+	    		}
+	    	}
+	    	for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    outputImage.getMatrix().set(i, j, (float)direction[i][j]);
+                }
+            }
+	    	return;
 	    }
 
 	    /**
