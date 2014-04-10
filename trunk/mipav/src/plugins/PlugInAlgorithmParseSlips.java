@@ -169,7 +169,7 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 			tempStr = tempStr.substring(0, tempStr.length()-1);
 		}
 		
-		organized[2] = tempStr + " " + input[15].trim(); //Volume
+		organized[2] = tempStr + " " + input[16].trim(); //Volume
 		if(input[17] == "null")
 			organized[3] = "null";
 		else{
