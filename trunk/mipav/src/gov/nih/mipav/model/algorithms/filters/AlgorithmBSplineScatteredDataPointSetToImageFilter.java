@@ -17,6 +17,8 @@ import gov.nih.mipav.model.structures.ModelImage;
 
 
 
+import gov.nih.mipav.model.structures.ModelStorageBase;
+
 	import java.io.IOException;
 import java.util.Vector;
 
@@ -69,8 +71,8 @@ import gov.nih.mipav.view.ViewJProgressBar;
 		ModelImage phiLattice;
 		private boolean constructPsiLattice;
 		ModelImage psiLattice;
-		private double[] inputPointdData;
-		private double[] outputPointData;
+		private Vector<Double> inputPointData;
+		private Vector<Double> outputPointData;
 		private Vector<Double> pointWeights;
 		private boolean usePointWeights;
 		// Machine epsilon is the smallest positive epsilon such that
@@ -91,9 +93,13 @@ import gov.nih.mipav.view.ViewJProgressBar;
         //     }
         // } // while(true)
 		private double epsilon = 2.2204460e-16;
-		private double splineEpsilon;
+		private double BSplineEpsilon;
 		private boolean isFittingComplete;
 		private Matrix[] refinedLatticeCoefficients;
+		private int currentLevel;
+		private int[] currentNumberOfControlPoints;
+		private ModelImage omegaLatticePerThread;
+		private ModelImage deltaLatticePerThread;
 	
 		/**
 	     * Constructor which sets the source and destination images
@@ -140,10 +146,11 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	        phiLattice = null;
 	        constructPsiLattice = true;
 	        psiLattice = null;
-	        // Create inputPointData[] and outputPointData[]
+	        inputPointData = new Vector<Double>();
+	        outputPointData = new Vector<Double>();
 	        usePointWeights = false;
 	        pointWeights = new Vector<Double>();
-	        splineEpsilon = epsilon;
+	        BSplineEpsilon = epsilon;
 	        isFittingComplete = false;
 	        refinedLatticeCoefficients = new Matrix[nDims];
 	    }
@@ -245,6 +252,134 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	    	for (int i = 0; i < pointWeights.size(); i++) {
 	    		this.pointWeights.add(pointWeights.get(i));
 	    	}
+	    }
+	    
+	    public void generateData() {
+	    	super.generateData();
+	    	// Perform some error checking on the input
+	    	if (pointData.size() != pointLocation.size()) {
+	    		MipavUtil.displayError("pointData and pointLocation must have the same size");
+	    		return;
+	    	}
+	    	if (usePointWeights  && (pointWeights.size() != pointData.size())) {
+	    		MipavUtil.displayError("pointsWeights and pointData must have the same size");
+	    		return;
+	    	}
+	    	for (int i = 0; i < nDims; i++) {
+	    		if (numberOfControlPoints[i] < splineOrder[i] + 1){
+	    			MipavUtil.displayError("The number of control points must be greater than the spline order");
+	    			return;
+	    		}
+	    	}
+	    	
+	    	// Calculate the appropriate epsilon value.
+	    	int maximumNumberOfSpans = 0;
+	    	for (int d = 0; d < nDims; d++) {
+	    		int numberOfSpans = numberOfControlPoints[d] - splineOrder[d];
+	    		numberOfSpans <<= (numberOfLevels[d] - 1);
+	    		if (numberOfSpans > maximumNumberOfSpans) {
+	    			maximumNumberOfSpans = numberOfSpans;
+	    		}
+	    	}
+	    	BSplineEpsilon = 100.0 * epsilon;
+	    	while ((double)maximumNumberOfSpans == ((double)maximumNumberOfSpans - BSplineEpsilon)) {
+	    	    BSplineEpsilon *= 10.0;	
+	    	}
+	    	
+	    	inputPointData.clear();
+	    	outputPointData.clear();
+	    	if (!usePointWeights) {
+	    		pointWeights.clear();
+	    	}
+	    	for (int i = 0; i < pointData.size(); i++) {
+	    	    if (!usePointWeights) {	
+	    	    	pointWeights.add(1.0);
+	    	    }
+	    	    inputPointData.add(pointData.get(i));
+	    	    outputPointData.add(pointData.get(i));
+	    	}
+	    	currentLevel = 0;
+	    	currentNumberOfControlPoints = numberOfControlPoints.clone();
+	    	beforeThreadedGenerateData();
+	    	threadedGenerateData();
+	    	afterThreadedGenerateData();
+	    	updatePointSet();
+	    	
+	    }
+	    
+	    public void beforeThreadedGenerateData() {
+	        if (!isFittingComplete) {
+	        	int size[] = new int[nDims];
+	        	for (int i = 0; i < nDims; i++) {
+	        		if (closeDimension[i] != 0) {
+	        			size[i] = currentNumberOfControlPoints[i] - splineOrder[i];
+	        		}
+	        		else {
+	        			size[i] = currentNumberOfControlPoints[i];
+	        		}
+	        	}
+	        	omegaLatticePerThread = new ModelImage(ModelStorageBase.DOUBLE, size, "omegaLatticePerThread");
+	        	deltaLatticePerThread = new ModelImage(ModelStorageBase.DOUBLE, size, "deltaLatticePerThread");
+	        } // if (!isFittingComplete)
+	    }
+	    
+	    public void threadedGenerateData() {
+	    	if (!isFittingComplete) {
+	    		threadedGenerateDataForFitting();
+	    	}
+	    	else {
+	    		threadedGenerateDataForReconstruction();
+	    	}
+	    	
+	    }
+	    
+	    public void threadedGenerateDataForFitting() {
+	        int size[] = new int[nDims];
+	        for (int i = 0; i < nDims; i++) {
+	            size[i] = splineOrder[i] + 1;	
+	        }
+	        ModelImage neighborhoodWeightImage = new ModelImage(ModelStorageBase.DOUBLE, size, "neighborhoodWeightImage");
+	        double p[] = new double[nDims];
+	        double r[] = new double[nDims];
+	        for (int i = 0; i < nDims; i++) {
+	        	r[i] = (double)(currentNumberOfControlPoints[i] - splineOrder[i])/((size[i] - 1.0) * resolutions[i]);
+	        }
+	        
+	        for (int n = 0; n < pointLocation.size(); n++) {
+	        	double point[] = new double[nDims];
+	        	point[0] = pointLocation.get(n).X;
+	        	point[1] = pointLocation.get(n).Y;
+	        	if (nDims > 2) {
+	        	    point[2] = pointLocation.get(n).Z;
+	        	}
+	        	for (int i = 0; i < nDims; i++) {
+	        	    int totalNumberOfSpans = currentNumberOfControlPoints[i] - splineOrder[i];
+	        	    
+	        	    p[i] = (point[i] - origin[i]) * r[i];
+	        	    if (Math.abs(p[i] - totalNumberOfSpans) <= BSplineEpsilon) {
+	        	    	p[i] = (double)(totalNumberOfSpans) - BSplineEpsilon;
+	        	    }
+	        	    if (p[i] >= totalNumberOfSpans) {
+	        	    	MipavUtil.displayError("The reparameterized point component p["+i+"] =" + p[i] + 
+	        	    			" is outside the corresponding parametric domain of [0, " + totalNumberOfSpans + "].");
+	        	    	return;
+	        	    }
+	        	} // for (int i = 0; i < nDims; i++)
+	        	
+	        	double w2sum = 0.0;
+	        } // for (int n = 0; n < pointLocation.size(); n++)
+	    }
+	    
+	    public void threadedGenerateDataForReconstruction() {
+	    	
+	    }
+	    
+	    public void afterThreadedGenerateData() {
+	    	
+	    }
+	    
+	    public void updatePointSet() {
+	    	
 	    }
 
 	    /**
