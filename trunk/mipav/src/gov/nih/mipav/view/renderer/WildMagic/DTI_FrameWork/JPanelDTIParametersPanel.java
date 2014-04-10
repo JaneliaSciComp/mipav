@@ -431,7 +431,7 @@ implements ListSelectionListener, ChangeListener {
 
 	/** Constructs the Fiber Bundle Tracts from the dtiImage and the
 	 * eigenImage parameters. The fiber bundles are output to a file
-	 * sepecified by the user.
+	 * specified by the user.
 	 * @param dtiImage Diffusion Tensor Image.
 	 * @param eigenImage EigenVector Image.
 	 */
@@ -1166,7 +1166,7 @@ implements ListSelectionListener, ChangeListener {
 		m_kDisplaySlider.addChangeListener(this);
 		m_kDisplaySlider.setVisible(true);
 
-		m_kSliderLabel = new JLabel("Display Glphs every step: ");
+		m_kSliderLabel = new JLabel("Display Glyphs every step: ");
 		m_kSliderLabel.setFont(MipavUtil.font12B);
 		m_kSliderLabel.setForeground(Color.black);
 
