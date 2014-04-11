@@ -1,11 +1,16 @@
 package gov.nih.mipav.plugins;
 
 
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Dialog;
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.FileNotFoundException;
 
 import javax.swing.WindowConstants;
@@ -80,6 +85,7 @@ public class JDialogStandalonePlugin extends JDialogBase implements WindowListen
      * 
      * @param event Event that triggered this function.
      */
+    @Override
     public void windowClosing(final WindowEvent event) {
         cancelFlag = true;
 
@@ -93,7 +99,7 @@ public class JDialogStandalonePlugin extends JDialogBase implements WindowListen
      * 
      * @return True if we should exit the program when the window is closed.
      */
-    protected static final boolean isExitRequired() {
+    public static final boolean isExitRequired() {
         return ViewUserInterface.getReference() != null && !ViewUserInterface.getReference().isAppFrameVisible()
                 && ViewUserInterface.getReference().isPlugInFrameVisible();
     }
@@ -117,8 +123,7 @@ public class JDialogStandalonePlugin extends JDialogBase implements WindowListen
             // no setIconImage() for JDialog in Java 1.5 API
             // setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
         } catch (final FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
-                    + ">.  Check that this file is available.\n");
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage() + ">.  Check that this file is available.\n");
         }
     }
 
@@ -127,6 +132,7 @@ public class JDialogStandalonePlugin extends JDialogBase implements WindowListen
      * 
      * @param event the window event.
      */
+    @Override
     public void windowActivated(final WindowEvent event) {}
 
     /**
@@ -134,6 +140,7 @@ public class JDialogStandalonePlugin extends JDialogBase implements WindowListen
      * 
      * @param event the window event.
      */
+    @Override
     public void windowDeactivated(final WindowEvent event) {}
 
     /**
@@ -141,6 +148,7 @@ public class JDialogStandalonePlugin extends JDialogBase implements WindowListen
      * 
      * @param event the window event.
      */
+    @Override
     public void windowOpened(final WindowEvent event) {}
 
     /**
@@ -148,6 +156,7 @@ public class JDialogStandalonePlugin extends JDialogBase implements WindowListen
      * 
      * @param event the window event.
      */
+    @Override
     public void windowClosed(final WindowEvent event) {}
 
     /**
@@ -155,6 +164,7 @@ public class JDialogStandalonePlugin extends JDialogBase implements WindowListen
      * 
      * @param event the window event.
      */
+    @Override
     public void windowIconified(final WindowEvent event) {}
 
     /**
@@ -162,6 +172,7 @@ public class JDialogStandalonePlugin extends JDialogBase implements WindowListen
      * 
      * @param event the window event.
      */
+    @Override
     public void windowDeiconified(final WindowEvent event) {}
 
     /**
@@ -169,6 +180,7 @@ public class JDialogStandalonePlugin extends JDialogBase implements WindowListen
      * 
      * @param event The action event.
      */
+    @Override
     public void actionPerformed(final ActionEvent event) {
         super.actionPerformed(event);
     }
