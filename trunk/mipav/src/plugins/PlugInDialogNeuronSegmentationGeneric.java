@@ -287,6 +287,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         } else {
         	dispose();
         }
+
 	}
 	
 	/**
