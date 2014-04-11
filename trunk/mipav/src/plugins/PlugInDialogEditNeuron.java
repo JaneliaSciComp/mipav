@@ -12,16 +12,18 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Vector;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -36,10 +38,8 @@ import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIBaseVector;
 import gov.nih.mipav.model.structures.VOIPoint;
-import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 import gov.nih.mipav.view.JFrameHistogram;
-import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJComponentEditImage;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -140,6 +140,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		populateImages(new File(directory));
 		initEditor();
+		openImage();
 	}
 	
 	public void actionPerformed(ActionEvent event){
@@ -175,8 +176,13 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         		openImage();
         		subVolumeFrame.setLocation(loc);
         	} else {
-        		dispose();
-        		subVolumeFrame.dispose();
+        		if (isExitRequired()) {
+    	            System.exit(0);
+    	            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+    	        } else {
+    	        	dispose();
+    	        	subVolumeFrame.dispose();
+    	        }
         	}
 		} else if(command.equals("Prev")){
 			if(currentSlice > 0 ){
@@ -188,6 +194,26 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         		openImage();
         		subVolumeFrame.setLocation(loc);
 			}
+		}
+		else if(command.equals("Reset")){
+			subVolume.unregisterAllVOIs();
+			readSWC();
+		} else if(command.equals("LUT")){
+			openHisto();
+		} else if(command.equals("Save")){
+			try{
+				saveNewSWC();
+			} catch(IOException e){
+				e.printStackTrace();
+			}
+		} else if(command.equals("End")){
+			if (isExitRequired()) {
+	            System.exit(0);
+	            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+	        } else {
+	        	dispose();
+	        	subVolumeFrame.dispose();
+	        }
 		}
 	}
 	
@@ -231,8 +257,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			}
 		}
 		
-		Point pt0 = new Point(x0, y0);
-		Point pt1 = new Point(x1, y1);
+		//Point pt0 = new Point(x0, y0);
+		//Point pt1 = new Point(x1, y1);
 		
 		//LinePath path = new LinePath(pt0, pt1, pts);
 		//paths.add(path);
@@ -246,11 +272,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 		fileChooser.addActionListener(this);
 		fileChooser.showOpenDialog(this);
-	}
-	
-	private void closeImage(){
-		histoFrame.disposeLocal();
-		subVolumeFrame.dispose();
 	}
 	
 	private void init(){
@@ -302,8 +323,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	
 	private void initEditor(){
 		
-		System.out.println("start");
-		
 		getContentPane().removeAll();
 		
 		FileIO imReader = new FileIO();
@@ -351,9 +370,9 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		PanelManager manage = new PanelManager();
 		manage.add(labelPanel);
 		manage.addOnNextLine(centerPanel);
-		getContentPane().add(manage.getPanel(), BorderLayout.CENTER);
 		
-		JPanel boxPanel = new JPanel(/*new GridLayout(1,2)*/);
+		
+		JPanel boxPanel = new JPanel(new GridLayout(1,2));
         boxPanel.setForeground(Color.black);
         
         JButton prevButton = new JButton("Prev");
@@ -366,7 +385,34 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         nextButton.addActionListener(this);
         boxPanel.add(nextButton);
         
-        getContentPane().add(boxPanel, BorderLayout.SOUTH);
+        manage.addOnNextLine(boxPanel);
+        getContentPane().add(manage.getPanel(), BorderLayout.CENTER);
+        
+        JPanel buttonPanel = new JPanel(new GridLayout(0,4));
+        buttonPanel.setForeground(Color.black);
+        
+        JButton resetButton = new JButton("Reset");
+        resetButton.setFont(serif12);
+        resetButton.addActionListener(this);
+        buttonPanel.add(resetButton);
+        
+        JButton saveButton = new JButton("Save");
+        saveButton.setFont(serif12);
+        saveButton.addActionListener(this);
+        buttonPanel.add(saveButton);
+        
+        JButton lutButton = new JButton("LUT");
+        lutButton.setFont(serif12);
+        lutButton.addActionListener(this);
+        buttonPanel.add(lutButton);
+        
+        JButton endButton = new JButton("End");
+        endButton.setFont(serif12);
+        endButton.addActionListener(this);
+        buttonPanel.add(endButton);
+        
+        
+        getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         
         pack();
         setVisible(true);
@@ -389,10 +435,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		int[] sliceBuffer = new int[length];
 		
 		//Reset certain things here;
-		mask = new BitSet(length*depth);
-		controlPts = new VOI((short) 0, "Control Points", VOI.POINT, 0);
-		paths = new LineList();
-		links = new Linking();
 		
 		
 		FileIO imReader = new FileIO();
@@ -454,19 +496,14 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			subVolume.importData(0, imBuffer, true);
 			subVolumeFrame = new ViewJFrameImage(subVolume, lut);
 			subVolumeFrame.setSlice(currentSlice - lowerBound);
+			subVolumeFrame.setVisible(true);
 		
 		} catch(IOException e){
 			e.printStackTrace();
 		}
 
 		readSWC();
-		
-		subVolumeFrame.getComponentImage().setPaintMask(mask);
-		subVolumeFrame.getComponentImage().addMouseListener(this);
-		subVolumeFrame.getComponentImage().addMouseMotionListener(this);
-		subVolumeFrame.getControls().getTools().setOpacity(1.0f);
-		subVolumeFrame.getControls().getTools().setPaintColor(Color.WHITE);
-		subVolumeFrame.updateImages();
+
 		
 		/**
 		 * Useful for if you choose to implement an image list to jump around in the image
@@ -497,6 +534,11 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	
 	private void readSWC(){
 
+		mask = new BitSet(length*depth);
+		controlPts = new VOI((short) 0, "Control Points", VOI.POINT, 0);
+		paths = new LineList();
+		links = new Linking();
+		
 		ArrayList<String[]> points = null;
 		String[] lineArray;
 		try {
@@ -511,7 +553,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			}
 			input.close();
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return;
 		} catch (IOException io){
@@ -555,25 +596,35 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			p1 = new Point(x1, y1);
 			
 			e0 = links.get(p0);
-			if(e0 == null){
+			e1 = links.get(p1);
+			
+			/*if(e0 == null){
 				e0 = new LinkElement(p0, p1);
 				links.add(e0);
 			} else{
 				e0.addLinkTo(p1);
 			}
 			
-			e1 = links.get(p1);
 			if(e1 == null){
 				e1 = new LinkElement(p1, p0);
 				links.add(e1);
 			} else{
 				e1.addLinkTo(p0);
+			}*/
+			
+			if(e0 == null){
+				e0 = new LinkElement(p0);
 			}
+			if(e1 == null){
+				e1 = new LinkElement(p1);
+			}
+			e0.addLinkTo(e1);
+			
 			
 			paths.add(p0, p1);
 			
 			for(int k=0;k<depth;k++){
-				VOIPoint voi = new VOIPoint(3, new Vector3f(x0,y0,k));
+				VOIPoint voi = new VOIPoint(VOI.POINT, new Vector3f(x0,y0,k));
 				voi.setLabel("");
 				controlPts.importCurve(voi);
 				//controlPts.importPoint(new Vector3f(x0,y0,k));
@@ -592,7 +643,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		origin = new Point(x0,y0);
 		for(int k=0;k<depth;k++){
-			VOIPoint voi = new VOIPoint(3, new Vector3f(x0,y0,k));
+			VOIPoint voi = new VOIPoint(VOI.POINT, new Vector3f(x0,y0,k));
 			voi.setLabel("");
 			controlPts.importCurve(voi);
 			//controlPts.importPoint(new Vector3f(x0,y0,k));
@@ -601,6 +652,13 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		subVolume.getVOIs().add(controlPts);
 		subVolume.notifyImageDisplayListeners(null, true, 0, -1);
+		
+		subVolumeFrame.getComponentImage().setPaintMask(mask);
+		subVolumeFrame.getComponentImage().addMouseListener(this);
+		subVolumeFrame.getComponentImage().addMouseMotionListener(this);
+		subVolumeFrame.getControls().getTools().setOpacity(1.0f);
+		subVolumeFrame.getControls().getTools().setPaintColor(Color.WHITE);
+		subVolumeFrame.updateImages();
 		
 		/*LinePath path;
 		ArrayList<Point> list;
@@ -621,8 +679,87 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 	}
 	
-	private void saveNewSWC(){
+	private void saveNewSWC() throws IOException{
 		
+		File currentSWC = swcList.get(currentSlice);
+		File newSWC = new File(currentSWC.getParent() + File.separator + "test.swc");
+		FileWriter writer = new FileWriter(newSWC);
+		
+		int line = 1;
+		LinkElement start = links.get(origin);
+		Point pt = start.pt;
+		int[] parts = new int[7];
+		//String[] parts = new String[7];
+		parts[0] = line;
+		parts[1] = 2;
+		parts[2] = pt.x;
+		parts[3] = height - pt.y;
+		parts[4] = 0;
+		parts[5] = 1;
+		parts[6] = -1;
+		
+		String outString = String.valueOf(parts[0]) + " ";
+		outString += String.valueOf(parts[1]) + " ";
+		outString += String.valueOf(parts[2]) + ".0 ";
+		outString += String.valueOf(parts[3]) + ".0 ";
+		outString += String.valueOf(parts[4]) + ".0 ";
+		outString += String.valueOf(parts[5]) + ".0 ";
+		outString += String.valueOf(parts[6]) + "\n";
+		
+		writer.append(outString);
+		
+		ArrayDeque<Integer> parentLine = new ArrayDeque<Integer>();
+		ArrayDeque<LinkElement> parentPt = new ArrayDeque<LinkElement>();
+		
+		HashSet<LinkElement> visited = new HashSet<LinkElement>();
+		visited.add(start);
+		LinkElement next;
+		
+		ArrayList<LinkElement> linkedTo = start.linked;
+		for(int i=0;i<linkedTo.size();i++){
+			next = linkedTo.get(i);
+			parentLine.addFirst(line);
+			parentPt.addFirst(next);
+			visited.add(next);
+		}
+		
+		while(parentPt.peek() != null){
+			line++;
+			start = parentPt.pollFirst();
+			pt = start.pt;
+			linkedTo = start.linked;
+			parts[0] = line;
+			if(linkedTo.size() == 1)
+				parts[1] = 6;
+			else parts[1] = 5;
+			parts[2] = pt.x;
+			parts[3] = height - pt.y;
+			parts[4] = 0;
+			parts[5] = 1;
+			parts[6] = parentLine.pollFirst();
+			
+			outString = String.valueOf(parts[0]) + " ";
+			outString += String.valueOf(parts[1]) + " ";
+			outString += String.valueOf(parts[2]) + ".0 ";
+			outString += String.valueOf(parts[3]) + ".0 ";
+			outString += String.valueOf(parts[4]) + ".0 ";
+			outString += String.valueOf(parts[5]) + ".0 ";
+			outString += String.valueOf(parts[6]) + "\n";
+			
+			writer.append(outString);
+			
+			for(int i=0;i<linkedTo.size();i++){
+				next = linkedTo.get(i);
+				if(visited.add(next)){
+					parentLine.addFirst(line);
+					parentPt.addFirst(next);
+				}
+			}
+			
+			System.out.println(" ");
+		}
+		
+		writer.close();
 	}
 	
 	private void populateImages(File dir){
@@ -686,7 +823,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		int numClicks = e.getClickCount();
 		int button = e.getButton();
 		
-		if(numClicks < 2 || button != MouseEvent.BUTTON1)
+		if(numClicks != 2 || button != MouseEvent.BUTTON1)
 			return;
 		
 		float zoomX = subVolumeFrame.getComponentImage().getZoomX();
@@ -696,7 +833,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		
 		if(addRB.isSelected()){
-			System.out.println("Double left click on: (" + x + ", " + y + ")");
 			
 			int ind = -1;
 			
@@ -719,12 +855,12 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			}
 			
 			if(ind == -1) return;
-			System.out.println("Searching for: (" + x + ", " + y + ")");
+
 			LinePath onPath = paths.findPath(new Point(x, y));
 			if(onPath == null)
 				System.out.println("Did not find path");
 			else{
-				links.addNode(new Point(x, y), onPath.pt1, onPath.pt2);
+				links.addNode(new Point(x, y), onPath);
 			}
 			
 		} else if (deleteRB.isSelected()){
@@ -741,14 +877,14 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 					VOIBase basevoi = vec.get(index);
 					pts.remove(basevoi);
 				}
-			}
+			} else return;
 			
 			VOIPoint ptVOI = (VOIPoint) activeVOI;
 			Vector3f ptVec = ptVOI.exportPoint();
 			Point coord = new Point((int)ptVec.X, (int)ptVec.Y);
 			if(coord.equals(origin)){
 				LinkElement elem = links.get(origin);
-				origin = elem.linkedTo.get(0);
+				origin = elem.linked.get(0).pt;
 			}
 				
 			links.removeNode(coord);
@@ -807,12 +943,12 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	@Override
 	public void mouseReleased(MouseEvent e) {
 
-		
+		ptClicked = false;
 		//update position of the control points in the line structures if the mouse was dragged
 		//which implies the VOI was moved (also need to check if the VOI was selected);
 		if(dragged){
 			dragged = false;
-			ptClicked = false;
+			
 			Vector3f ptVec = ((VOIPoint)lastActive).exportPoint();
 			int x = (int) ptVec.X;
 			int y = (int) ptVec.Y;
@@ -820,7 +956,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			if(toChange.equals(origin))
 				origin = new Point(x,y);
 			
-			System.out.println("VOI was dragged");
 			//update positions
 			/*float zoomX = subVolumeFrame.getComponentImage().getZoomX();
 			float zoomY = subVolumeFrame.getComponentImage().getZoomY();
@@ -829,11 +964,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			
 			//We know that the drag happened on a VOI, so now update all links and lines
 			
-			int ox = toChange.x;
-			int oy = toChange.y;
-			
-			System.out.printf("From (%d, %d) to (%d, %d)\n", ox, oy, x, y);
-			
 			links.moveNode(toChange, new Point(x,y));
 			
 			lastActive = null;
@@ -841,6 +971,10 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		}
 		
 		controlPts.setAllActive(false);
+		subVolume.notifyImageDisplayListeners();
+		subVolumeFrame.updateImages();
+		
+		
 	}
 
 	@Override
@@ -852,9 +986,14 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	public void mouseExited(MouseEvent e) {
 		
 	}
-	
+
 	private class Linking extends ArrayList<LinkElement>{
 		
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -7735099954298324932L;
+
 		private Linking(){
 			super();
 		}
@@ -867,16 +1006,13 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 					return e;
 				}
 			}
-			/*Iterator<LinkElement> iter = this.iterator();
-			while(iter.hasNext()){
-				LinkElement e = iter.next();
-				if(p == e.pt)
-					return e;
-			}*/
+
 			return null;
 		}
 		
-		private void addNode(Point node, Point to, Point from){
+		/*private void addNode(Point node, LinePath path){
+			Point to = path.pt1;
+			Point from = path.pt2;
 			LinkElement eTo = get(to);
 			LinkElement eFrom = get(from);
 			
@@ -892,18 +1028,46 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			paths.add(to, node);
 			paths.add(node, from);
 			
+			
 			for(int k=0;k<depth;k++){
-				Vector3f vecPt = new Vector3f(node.x, node.y, k);
-				controlPts.importPoint(vecPt);
+				VOIPoint voi = new VOIPoint(VOI.POINT, new Vector3f(node.x,node.y,k));
+				voi.setLabel("");
+				controlPts.importCurve(voi);
+				//controlPts.importPoint(new Vector3f(x0,y0,k));
 			}
 			
 			subVolume.notifyImageDisplayListeners();
 			
 			System.out.println("Node added on: (" + node.x + ", " + node.y + ")");
 
+		}*/
+		
+		private void addNode(Point node, LinePath path){
+			Point to = path.pt1;
+			Point from = path.pt2;
+			LinkElement eTo = get(to);
+			LinkElement eFrom = get(from);
+			LinkElement newLink = new LinkElement(node);
+			
+			eTo.removeLinkTo(eFrom);
+			eTo.addLinkTo(newLink);
+			eFrom.addLinkTo(newLink);
+			//add(newLink);
+			
+			paths.remove(to, from);
+			paths.add(to, node);
+			paths.add(node, from);
+			
+			for(int k=0;k<depth;k++){
+				VOIPoint voi = new VOIPoint(VOI.POINT, new Vector3f(node.x,node.y,k));
+				voi.setLabel("");
+				controlPts.importCurve(voi);
+			}
+			
+			subVolume.notifyImageDisplayListeners();
 		}
 		
-		private void moveNode(Point from, Point to){
+		/*private void moveNode(Point from, Point to){
 			LinkElement node = get(from);
 			node.pt = to;
 			ArrayList<Point> list = node.linkedTo;
@@ -935,9 +1099,35 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			
 			subVolume.notifyImageDisplayListeners();
 			subVolumeFrame.updateImages();
+		}*/
+		
+		private void moveNode(Point from, Point to){
+			LinkElement node = get(from);
+			node.pt = to;
+			ArrayList<LinkElement> list = node.linked;
+			for(int i=0;i<list.size();i++){
+				paths.remove(from, list.get(i).pt);
+			}
+			for(int i=0;i<list.size();i++){
+				paths.add(to, list.get(i).pt);
+			}
+			
+			int slice = subVolumeFrame.getComponentImage().getSlice();
+			
+			Vector<VOIBase> vec = controlPts.getSliceCurves(slice);
+			int index = vec.indexOf(lastActive);
+			int dx = to.x - from.x;
+			int dy = to.y - from.y;
+			for(int k=0;k<depth;k++){
+				if(k == slice) continue;
+				vec = controlPts.getSliceCurves(k);
+				VOIPoint basevoi = (VOIPoint)vec.get(index);
+				basevoi.moveVOIPoint(dx, dy, 0, width, height, depth);
+			}
+			
 		}
 		
-		private void removeNode(Point node){
+		/*private void removeNode(Point node){
 			LinkElement e1, e2;
 			LinkElement eNode = get(node);
 			ArrayList<Point> pts = eNode.linkedTo;
@@ -957,6 +1147,31 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			}
 			
 			remove(eNode);
+		}*/
+		
+		private void removeNode(Point node){
+			LinkElement e1, e2;
+			LinkElement eNode = get(node);
+			ArrayList<LinkElement> pts = eNode.linked;
+			int size = pts.size();
+			e1 = pts.get(0);
+			e1.removeLinkTo(eNode);
+			paths.remove(node, e1.pt);
+			
+			
+			for(int i=1; i<size;i++){
+				e2 = pts.get(0);
+				e2.removeLinkTo(eNode);
+				paths.remove(node, e2.pt);
+				e2.addLinkTo(e1);
+				//e1.addLinkTo(e2);
+				paths.add(e1.pt, e2.pt);
+				e1 = e2;
+				
+			}
+			
+			remove(eNode);
+			
 		}
 		
 	}
@@ -965,26 +1180,49 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		private Point pt;
 		
-		private ArrayList<Point> linkedTo;
+		//private ArrayList<Point> linkedTo;
 		
-		private LinkElement(Point node, Point to){
+		private ArrayList<LinkElement> linked;
+		
+		/*private LinkElement(Point node, Point to){
 			pt = node;
 			linkedTo = new ArrayList<Point>();
 			linkedTo.add(to);
+		}*/
+		
+		private LinkElement(Point node){
+			pt = node;
+			linked = new ArrayList<LinkElement>();
+			links.add(this);
 		}
 		
-		private void addLinkTo(Point to){
+		private void addLinkTo(LinkElement to){
+			linked.add(to);
+			to.linked.add(this);
+		}
+		
+		private void removeLinkTo(LinkElement to){
+			linked.remove(to);
+			to.linked.remove(this);
+		}
+		
+		/*private void addLinkTo(Point to){
 			linkedTo.add(to);
-		}
+		}*/
 		
-		private void removeLinkTo(Point to){
+		/*private void removeLinkTo(Point to){
 			linkedTo.remove(to);
-		}
+		}*/
 		
 	}
 	
 	private class LineList extends ArrayList<LinePath>{
 		
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 6977450762745726017L;
+
 		private LineList(){
 			super();
 		}

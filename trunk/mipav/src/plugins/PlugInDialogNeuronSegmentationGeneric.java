@@ -133,6 +133,8 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	
 	private int width;
 	
+	private JCheckBox editBox;
+	
 	public PlugInDialogNeuronSegmentationGeneric(){
 		super();
 		images = new ArrayList<File>();
@@ -281,12 +283,23 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		seg = null;
 		skeleton = null;
 		
-		if (isExitRequired()) {
-            System.exit(0);
-            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
-        } else {
-        	dispose();
-        }
+		if(editBox.isSelected()){
+			File dir = new File(dirText.getText());
+			if(dir.isDirectory()){
+				new PlugInDialogEditNeuron(dirText.getText());
+			} else {
+				new PlugInDialogEditNeuron(dir.getParent());
+			}
+			dispose();
+			
+		} else{
+			if (isExitRequired()) {
+	            System.exit(0);
+	            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+	        } else {
+	        	dispose();
+	        }
+		}
 
 	}
 	
@@ -608,6 +621,11 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         imageBox.setFont(serif12);
         imageBox.addItemListener(this);
         optionsPanel.add(imageBox);
+        
+        editBox = new JCheckBox("Open Editor at end");
+        editBox.setFont(serif12);
+        editBox.setSelected(true);
+        optionsPanel.add(editBox);
         
         JPanel boxPanel = new JPanel(new GridLayout(1,2));
         boxPanel.setForeground(Color.black);
