@@ -134,6 +134,24 @@
 	    	return shapeFunctions;
 
 	    }
+	    
+	    public double evaluate(double u) {
+	    	double absValue = Math.abs(u);
+	    	int which;
+	    	if ((splineOrder % 2) == 0) {
+	    		which = (int)(absValue + 0.5);
+	    	}
+	    	else {
+	    		which = (int)(absValue);
+	    	}
+	    	if (which < BSplineShapeFunctions.length) {
+	    		RealPolynomial poly = new RealPolynomial(BSplineShapeFunctions[which]);
+	    		return poly.evaluate(absValue);
+	    	}
+	    	else {
+	    		return 0.0;
+	    	}
+	    }
 
 	    
 }
