@@ -98,8 +98,8 @@ import gov.nih.mipav.view.ViewJProgressBar;
 		private Matrix[] refinedLatticeCoefficients;
 		private int currentLevel;
 		private int[] currentNumberOfControlPoints;
-		private ModelImage omegaLatticePerThread;
-		private ModelImage deltaLatticePerThread;
+		private double[] omegaLattice;
+		private double[] deltaLattice;
 	
 		/**
 	     * Constructor which sets the source and destination images
@@ -307,8 +307,9 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	    	
 	    }
 	    
-	    public void beforeThreadedGenerateData() {
+	    private void beforeThreadedGenerateData() {
 	        if (!isFittingComplete) {
+	        	int latticeSize = 1;
 	        	int size[] = new int[nDims];
 	        	for (int i = 0; i < nDims; i++) {
 	        		if (closeDimension[i] != 0) {
@@ -317,13 +318,14 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	        		else {
 	        			size[i] = currentNumberOfControlPoints[i];
 	        		}
+	        		latticeSize *= size[i];
 	        	}
-	        	omegaLatticePerThread = new ModelImage(ModelStorageBase.DOUBLE, size, "omegaLatticePerThread");
-	        	deltaLatticePerThread = new ModelImage(ModelStorageBase.DOUBLE, size, "deltaLatticePerThread");
+	        	omegaLattice = new double[latticeSize];
+	        	deltaLattice = new double[latticeSize];
 	        } // if (!isFittingComplete)
 	    }
 	    
-	    public void threadedGenerateData() {
+	    private void threadedGenerateData() {
 	    	if (!isFittingComplete) {
 	    		threadedGenerateDataForFitting();
 	    	}
@@ -333,12 +335,15 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	    	
 	    }
 	    
-	    public void threadedGenerateDataForFitting() {
+	    private void threadedGenerateDataForFitting() {
 	        int size[] = new int[nDims];
+	        int neighborhoodWeightArrayLength = 1;
 	        for (int i = 0; i < nDims; i++) {
-	            size[i] = splineOrder[i] + 1;	
+	            size[i] = splineOrder[i] + 1;
+	            neighborhoodWeightArrayLength *= size[i];
 	        }
-	        ModelImage neighborhoodWeightImage = new ModelImage(ModelStorageBase.DOUBLE, size, "neighborhoodWeightImage");
+	        int neighborhoodWeightArraySliceSize = size[0]*size[1];
+	        double neighborhoodWeightArray[] = new double[neighborhoodWeightArrayLength];
 	        double p[] = new double[nDims];
 	        double r[] = new double[nDims];
 	        for (int i = 0; i < nDims; i++) {
@@ -366,19 +371,137 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	        	    }
 	        	} // for (int i = 0; i < nDims; i++)
 	        	
-	        	double w2sum = 0.0;
+	        	double w2Sum = 0.0;
+	        	int idx[] = new int[nDims];
+	        	for (int itw = 0; itw < neighborhoodWeightArrayLength; itw++) {
+	        	    double B = 1.0;
+	        	    idx[0] = itw % size[0];
+	        	    idx[1] = (itw % neighborhoodWeightArraySliceSize) / size[0];
+	        	    if (nDims > 2) {
+	        	    	idx[2] = itw / neighborhoodWeightArraySliceSize;
+	        	    }
+	        	    for (int i = 0; i < nDims; i++) {
+	        	        double u  = (p[i] - (int)p[i] - idx[i]) + 0.5*(splineOrder[i] - 1);
+	        	        switch (splineOrder[i]) {
+	        	        case 0:
+	        	        	B *= kernelOrder0.evaluate(u);
+	        	        	break;
+	        	        case 1:
+	        	        	B *= kernelOrder1.evaluate(u);
+	        	        	break;
+	        	        case 2:
+	        	        	B *= kernelOrder2.evaluate(u);
+	        	        	break;
+	        	        case 3:
+	        	        	B *= kernelOrder3.evaluate(u);
+	        	        	break;
+	        	        default:
+	        	        	B *= kernel[i].evaluate(u);
+	        	        } // switch (splineOrder[i)
+	        	    } // for (int i = 0; i < nDims; i++)
+	        	    neighborhoodWeightArray[itw] = B;
+	        	    w2Sum += B * B;
+	        	} // for (int itw = 0; itw < neighborhoodWeightArrayLength; itw++)
+	        	
+	        	for (int itw = 0; itw < neighborhoodWeightArrayLength; itw++) {
+	        		idx[0] = itw % size[0];
+	        	    idx[1] = (itw % neighborhoodWeightArraySliceSize) / size[0];
+	        	    if (nDims > 2) {
+	        	    	idx[2] = itw / neighborhoodWeightArraySliceSize;
+	        	    }
+	        	    for (int i = 0; i < nDims; i++) {
+	        	        idx[i] += (int)(p[i]);
+	        	        if (closeDimension[i] != 0) {
+	        	        	idx[i] %= size[i];
+	        	        }
+	        	    } // for (int i = 0; i < nDims; i++)
+	        	    double wc = pointWeights.get(n);
+	        	    double t = neighborhoodWeightArray[itw];
+	        	    omegaLattice[itw] = omegaLattice[itw] + wc * t * t;
+	        	    double data = inputPointData.get(n);
+	        	    data *= (t * t * t * wc / w2Sum);
+	        	    deltaLattice[itw] = deltaLattice[itw] + data;
+	        	} // for (int itw = 0; itw < neighborhoodWeightArrayLength; itw++)
 	        } // for (int n = 0; n < pointLocation.size(); n++)
 	    }
 	    
-	    public void threadedGenerateDataForReconstruction() {
+	    private void threadedGenerateDataForReconstruction() {
+	        double collapsedPhiLattices[][] = new double[nDims + 1][];
+	        int collapsedPhiLatticeIndex[][] = new int[nDims+1][];
+	        for (int i = 0; i <= nDims; i++) {
+	            int size = 1;
+	            if (i == 0) {
+	            	collapsedPhiLatticeIndex[i] = new int[1];
+	            	collapsedPhiLatticeIndex[i][0] = 1;
+	            }
+	            else {
+	            	collapsedPhiLatticeIndex[i] = new int[i];
+	            }
+	            for (int j = 0; j < i; j++) {
+	            	size *= phiLattice.getExtents()[j];
+	            	collapsedPhiLatticeIndex[i][j] = phiLattice.getExtents()[j];
+	            }
+	            collapsedPhiLattices[i] = new double[size];
+	        }
+	    }
+	    
+	    private void collapsePhiLattice(double[] lattice, int latticeIndex[], double[] collapsedLattice, int collapsedLatticeIndex[],
+	    		double u, int dimension) {
+	    	int idx[] = new int[3];
+	    	int sliceSize = latticeIndex[0] * latticeIndex[1];
+ 	    	for (int it = 0; it < collapsedLattice.length; it++) {
+	    		if (collapsedLatticeIndex.length == 1) {
+	    			idx[0] = it;
+	    			idx[1] = 0;
+	    			idx[2] = 0;
+	    		}
+	    		else if (collapsedLatticeIndex.length == 2) {
+	    			idx[0] = it % collapsedLatticeIndex[0];
+	    			idx[1] = it / collapsedLatticeIndex[0];
+	    			idx[2] = 0;
+	    		}
+	    		else {
+	    		    idx[0] = it % collapsedLatticeIndex[0];
+        	        idx[1] = (it % sliceSize) / collapsedLatticeIndex[0];
+        	    	idx[2] = it / sliceSize;
+        	    }
+	    		double data;
+	    		data = 0.0;
+	    		for (int i = 0; i < splineOrder[dimension] + 1; i++) {
+	    		    idx[dimension] = (int)(u) + i;
+	    		    double v = u - idx[dimension] + 0.5 *(splineOrder[dimension] - 1);
+	    		    double B = 0.0;
+	    		    switch (splineOrder[dimension]) {
+	    		    case 0:
+	    		    	B = kernelOrder0.evaluate(v);
+	    		    	break;
+	    		    case 1:
+	    		    	B = kernelOrder1.evaluate(v);
+	    		    	break;
+	    		    case 2:
+	    		    	B = kernelOrder2.evaluate(v);
+	    		    	break;
+	    		    case 3:
+	    		    	B = kernelOrder3.evaluate(v);
+	    		    	break;
+	    		    default:
+	    		    	B = kernel[dimension].evaluate(v);
+	    		    }
+	    		    if (closeDimension[dimension] != 0) {
+	    		    	idx[dimension] %= latticeIndex[dimension];
+	    		    }
+	    		    int position = idx[0] + idx[1] * latticeIndex[0] + idx[2] * sliceSize;
+	    		    data += (lattice[position] * B);
+	    		} // for (int i = 0; i < splineOrder[dimension] + 1; i++)
+	    		collapsedLattice[it] = data;
+	    	}
+	    }
+	    
+	    private void afterThreadedGenerateData() {
 	    	
 	    }
 	    
-	    public void afterThreadedGenerateData() {
-	    	
-	    }
-	    
-	    public void updatePointSet() {
+	    private void updatePointSet() {
 	    	
 	    }
 
