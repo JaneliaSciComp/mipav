@@ -73,6 +73,17 @@ import gov.nih.mipav.util.DoubleDouble;
 	      return this;
 	    }
 	    
+	    double evaluate(double x) {
+	    	int n = coeff.length - 1;
+	    	double acc = coeff[n];
+	    	double xn = x;
+	    	while (n > 0) {
+	    		acc += coeff[--n] * xn;
+	    		xn *= x;
+	    	}
+	    	return acc;
+	    }
+	    
 	    public double[] getCoefficients() {
 	    	return coeff;
 	    }
