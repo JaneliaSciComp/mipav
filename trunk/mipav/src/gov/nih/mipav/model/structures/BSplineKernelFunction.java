@@ -38,6 +38,8 @@
 	        this.splineOrder = splineOrder;
 	    }
 	    
+	    
+	    
 	  //~ Methods --------------------------------------------------------------------------------------------------------
 
 	    /**
@@ -45,6 +47,54 @@
 	     */
 	    public void finalize() {
 	        
+	    }
+	    
+	    public double evaluate(double u) {
+	    	double absValue = Math.abs(u);
+	    	double sqrValue;
+	    	switch (splineOrder) {
+	    	    case 0:
+			    	if (absValue < 0.5) {
+			    		return 1.0;
+			    	}
+			    	else if (absValue == 0.5) {
+			    		return 0.5;
+			    	}
+			    	else {
+			    		return 0.0;
+			    	}
+	    	    case 1:
+	    	    	if (absValue < 1.0) {
+	    	    		return (1.0 - absValue);
+	    	    	}
+	    	    	else {
+	    	    		return 0.0;
+	    	    	}
+	    	    case 2:
+	    	    	sqrValue = absValue * absValue;
+	    	    	if (absValue < 0.5) {
+	    	    	    return( 0.75 - sqrValue);	
+	    	    	}
+	    	    	else if (absValue < 1.5) {
+	    	    	    return ((9.0 - 12.0 * absValue + 4.0 * sqrValue) * 0.125);	
+	    	    	}
+	    	    	else {
+	    	    		return 0.0;
+	    	    	}
+	    	    case 3:
+	    	    	sqrValue = absValue * absValue;
+	    	    	if (absValue < 1.0) {
+	    	    		return ((4.0 - 6.0 * sqrValue + 3.0 * sqrValue * absValue)/6.0);
+	    	    	}
+	    	    	else if (absValue < 2.0) {
+	    	    		return ((8.0 - 12.0 * absValue + 6.0 * sqrValue - sqrValue * absValue)/6.0);
+	    	    	}
+	    	    	else {
+	    	    		return 0.0;
+	    	    	}
+		    	default:
+		    		return 0.0;
+	    	}
 	    }
 	    
 }
