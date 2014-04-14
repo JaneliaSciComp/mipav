@@ -224,11 +224,11 @@ public class FileBRUKER extends FileBase {
                         fileInfo.setInversionTime(invTime.doubleValue());
                         prefImageName = "img:invTime:"+invTime.intValue();
                     } catch(NumberFormatException nfe) {
-                        Preferences.debug("Inversion time for "+fileName+" could not be read.", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("Inversion time for "+fileName+" could not be read.\n", Preferences.DEBUG_FILEIO);
                     }
                 } else {
                     raFile.close();
-                    throw new IOException("##$ACQ_slice_sepn_mode has parseString with length = " + parseString.length);
+                    throw new IOException("##$PVM_InversionTime has parseString with length = " + parseString.length);
                 }
 
             }
@@ -541,6 +541,411 @@ public class FileBRUKER extends FileBase {
             		} // if (numFound == numVolumes)
             	} // if (okay)
             } // else if (parseString[0].equalsIgnoreCase("##$PVM_DwEffBval"))
+            else if (parseString[0].equalsIgnoreCase("##$Method")) {
+
+                if (parseString.length == 2) {
+                	String method = null;
+                    if (parseString[1].equalsIgnoreCase("DtiEpi")) {
+                    	method = "Diffusion Tensor Imaging Echo-Planar Imaging";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("SINGLEPULSE")) {
+                    	method = "Single Pulse";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("NSPECT")) {
+                    	method = "Non-localized Spectroscopy";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("PRESS")) {
+                    	method = "Point-Resolved Spectroscopy";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("CSI")) {
+                    	method = "Chemical Shift Imaging";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("FLASH")) {
+                    	method = "Fast Low Angle Shot";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("MSME")) {
+                        method = "Multi Slice Multi Echo";	
+                    }
+                    else if (parseString[1].equalsIgnoreCase("RARE")) {
+                    	method = "Rapid Acquisition with Relaxation Enhancement";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("RAREVTR")) {
+                    	method = "RARE with variable repetition time TR";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("FISP")) {
+                    	method = "Fast Imaging with Steady State Precession";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("MGE")) {
+                    	method = "Multiple Gradient Echo";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("EPI")) {
+                    	method = "Echo-Planar Imaging";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("FAIR_EPI")) {
+                    	method = "Flow-sensitive Alternating IR Echo-Planar Imaging";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("DtiStandard")) {
+                    	method = "Diffusion Tensor Imaging Standard";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("SPIRAL")) {
+                    	method = "SPIRAL";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("GEFC")) {
+                    	method = "Gradient Echo with Flow Compensation";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("FL2D_ANGIO")) {
+                    	method = "FL2D Angiography Method";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("FC2D_ANGIO")) {
+                    	method = "FC2D Angiography Method";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("MDEFT")) {
+                    	method = "Modified Driven-Equilibrium Fourier Transform";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("RfProfile")) {
+                    	method = "Method to measure RF Profiles";
+                    }
+                    else {
+                    	method = parseString[1];
+                    }
+                    fileInfo.setMethod(method);
+                    Preferences.debug("Method = " + method + "\n", Preferences.DEBUG_FILEIO);
+                }
+                else {
+                    raFile.close();
+                    throw new IOException("##$Method has parseString with length = " + parseString.length);
+                }
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_EffSWh")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                        double effectiveSpectralBandwidth = Double.valueOf(parseString[1]).doubleValue();
+                        fileInfo.setEffectiveSpectralBandwidth(effectiveSpectralBandwidth);
+                        Preferences.debug("Effective bandwidth of data sampling \n\tduring the frequency encoding period = " 
+                        		          + effectiveSpectralBandwidth + "\n", Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("Effective spectral bandwidth could not be read.\n", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_EffSWh has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$EchoTime")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                        double echoTime = Double.valueOf(parseString[1]).doubleValue();;
+                        fileInfo.setEchoTime(echoTime);
+                        Preferences.debug("Delay between the effective centre of the excitation pulse"
+                                         + "\n\t(depends on pulse rephasing properties) and "
+                                         + "\n\tthe acquisition of the k-space centre = " 
+                        		          + echoTime + "\n", Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("Echo time could not be read.\n", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$EchoTime has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$NSegments")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                        int numberOfSegments = Integer.valueOf(parseString[1]).intValue();;
+                        fileInfo.setNumberOfSegments(numberOfSegments);
+                        Preferences.debug("Number of segments in k-space = " 
+                        		          + numberOfSegments + "\n", Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("Number of segments could not be read.\n", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$NSegments has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_RepetitionTime")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                        double repetitionTime = Double.valueOf(parseString[1]).doubleValue();;
+                        fileInfo.setRepetitionTime(repetitionTime);
+                        Preferences.debug("Delay between corresponding slices in consecutive volumes = " 
+                        		        + repetitionTime + "\n", Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("Delay between correspolnding slices in consecutive volumes could not be read.\n", 
+                        		           Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_RepetitionTime has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PackDel")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                        double delayBetweenVolumes = Double.valueOf(parseString[1]).doubleValue();;
+                        fileInfo.setDelayBetweenVolumes(delayBetweenVolumes);
+                        Preferences.debug("Delay between consecutive groups of slices (volume) "
+                        		        + "\n\twhen repetitions > 1 = " 
+                        		        + delayBetweenVolumes + "\n", Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("Delay between volumes could not be read.", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PackDel has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_NAverages")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                         int numberOfAverages = Integer.valueOf(parseString[1]).intValue();;
+                        fileInfo.setNumberOfAverages(numberOfAverages);
+                        Preferences.debug("Number of accumulations which are averaged to increase "
+                        		+ "\n\tthe signal-to-noise ratio of the spectra =  " + numberOfAverages + "\n", Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("Number of averages could not be read.", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_NAverages has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_NRepetitions")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                        int numberOfRepetitions = Integer.valueOf(parseString[1]).intValue();;
+                        fileInfo.setNumberOfRepetitions(numberOfRepetitions);
+                        Preferences.debug("Number of repetitions of experiments = " 
+                        		          + numberOfRepetitions + "\n", Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("Number of repetitions could not be read.\n", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_NRepetitions has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_ScanTimeStr")) {
+                if (parseString.length == 4) {
+                	okay = true;
+                	if (parseString[1].equals("(")) {
+	                	Preferences.debug("For PVM_ScanTimeStr parseString[1] == '(' as expected\n", Preferences.DEBUG_FILEIO);
+	                }
+	                else
+	                {
+	                	okay = false;
+	                	Preferences.debug("For PVM_DwBMat parseString[1] unexpectedly == " + parseString[1] + "\n", 
+	                			Preferences.DEBUG_FILEIO);
+	                }
+                	if (okay) {
+	                	try {
+	                	    int stringLength = Integer.valueOf(parseString[2]).intValue();
+	                	    Preferences.debug("String length in PVM_ScanTimeStr = " + stringLength + "\n", Preferences.DEBUG_FILEIO);
+	                	}
+	                	catch(NumberFormatException nfe) {
+	                		okay = false;
+	                		Preferences.debug("String length of PVM_ScanTimeStr could not be read.\n", Preferences.DEBUG_FILEIO);
+	                	}
+                	}
+                	if (okay) {
+	                	if (parseString[3].equals(")")) {
+	                        Preferences.debug("For PVM_ScanTimeStr parseString[3] == ')' as expected\n", Preferences.DEBUG_FILEIO);	
+	                    }
+	                    else {
+	                    	Preferences.debug("For PVM_ScanTimeStr parseString[3] unexpectedly == " + parseString[3] + "\n",
+	                    			Preferences.DEBUG_FILEIO);
+		                	okay = false;	
+	                    }
+                	}
+                    if (okay) {
+                    	lineString = readLine();
+                    	index0 = lineString.indexOf('<');
+                    	index1 = lineString.indexOf('>');
+                    	if ((index0 >= 0) && (index1 > index0)) {
+                    		String scanTime = lineString.substring(index0+1, index1);
+                    		fileInfo.setScanTime(scanTime);
+                    		Preferences.debug("Total duration of the experiment = " + scanTime + "\n", Preferences.DEBUG_FILEIO);
+                    	}
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_ScanTimeStr has parseString with length = " + parseString.length);
+                }
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DeriveGains")) {
+
+                if (parseString.length == 2) {
+                    String deriveGains = null;
+                    if (parseString[1].equalsIgnoreCase("Yes")) {
+                    	deriveGains = "The pulse gains within the sequence are derived from" +
+                                      "\n\tthe global system reference gain. This assumes that" + 
+                                      "\n\tthe auto-adjustment of the reference gain was performed" +
+                                      "\n\tduring the same Study, i.e. by running the Traffic Light" +
+                                      "\n\tor running a localized auto-reference gain adjustment.";
+                    	fileInfo.setDeriveGains(deriveGains);
+                    	Preferences.debug(deriveGains + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    else if (parseString[1].equalsIgnoreCase("No")) {
+                    	deriveGains = "The pulse gains within the sequence are not derived from" +
+                                "\n\tthe global system reference gain.";
+                    	fileInfo.setDeriveGains(deriveGains);
+                    	Preferences.debug(deriveGains + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    else {
+                    	Preferences.debug("##$PVM_DeriveGains unexpectedly has parseString[1] = " + parseString[1] + "\n",
+                    			          Preferences.DEBUG_FILEIO);
+                    }
+                    
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DeriveGains has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DiffPrepMode")) {
+
+                if (parseString.length == 2) {
+                    String diffusionPreparation = null;
+                    String diffusionPrepText = "\n\tThe first version of the DTI module" +
+                            "\n\tprovides two preparation modes SpinEcho and StimulatedEcho. The" +
+                            "\n\tSpinEcho mode sets up a slice selective refocusing 180 deg pulse" +
+                            "\n\tsurrounded by the diffusion gradients. In this mode the total" + 
+                            "\n\tduration of the diffusion module contributes to the minimum" + 
+                            "\n\tpossible echo time (TE). The StimulatedEcho mode sets up a" +
+                            "\n\tmixing period surrounded by two slice selective 90 deg. pulses." +
+                            "\n\tIn this mode, the Diffusion Gradient Separation might be" +
+                            "\n\tmodified without an effect to the minimum echo time, since it" +
+                            "\n\tcontrols the mixing period. Only the Diffusion Gradient" + 
+                            "\n\tDuration affects the minimum echo time. This mode should be" +
+                            "\n\tchosen in any case where the T2 relaxation time is critical" +
+                            "\n\tand/or longer diffusion times are desired. A DoubleSpinEcho" + 
+                            "\n\tmode is in preparation but defaults in the first version of" +
+                            "\n\tthe DTI module to a SpinEcho preparation.";
+                    if (parseString[1].equalsIgnoreCase("SpinEcho")) {
+                    	diffusionPreparation = "The preparation mode is spin echo." + diffusionPrepText;
+                    	fileInfo.setDiffusionPreparation(diffusionPreparation);
+                    	Preferences.debug(diffusionPreparation + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    else if (parseString[1].equalsIgnoreCase("StimulatedEcho")) {
+                    	diffusionPreparation = "The preparation mode is stimulated echo." + diffusionPrepText;
+                    	fileInfo.setDiffusionPreparation(diffusionPreparation);
+                    	Preferences.debug(diffusionPreparation + "\n", Preferences.DEBUG_FILEIO);	
+                    }
+                    else {
+                    	Preferences.debug("##$PVM_DiffPrepMode unexpectedly has parseString[1] = " + parseString[1] + "\n",
+                    			          Preferences.DEBUG_FILEIO);
+                    }
+                    
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DiffPrepMode has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwUsedSliceThick")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                        double usedSliceThickness = Double.valueOf(parseString[1]).doubleValue();;
+                        fileInfo.setUsedSliceThickness(usedSliceThickness);
+                        Preferences.debug("The slice thickness used to calculate the slice grFdients = " + usedSliceThickness + 
+                                          "\n\tFor methods providing a Bandwidth Scaling factor" + 
+                        		          "\n\tdifferent from 100% this value differs from PVM_SliceThick." +
+                        		          "\n", Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("Used slice thickness could not be read.", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DwUsedSliceThick has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwVisiblePars")) {
+
+                if (parseString.length == 2) {
+                    String showAllParameters = null;
+                    if (parseString[1].equalsIgnoreCase("Yes")) {
+                    	showAllParameters = "All parameters controlled by the DTI module are" +
+                                            "\n\tvisible in the method editor.";
+                    	fileInfo.setShowAllParameters(showAllParameters);
+                    	Preferences.debug(showAllParameters + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    else if (parseString[1].equalsIgnoreCase("No")) {
+                    	showAllParameters = "Not all parameters controlled by the DTI module are" +
+                                "\n\tvisible in the method editor.  The Diffusion Output parameter" +
+                    			"\n\tclass is not visible";
+                    	fileInfo.setShowAllParameters(showAllParameters);
+                    	Preferences.debug(showAllParameters + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    else {
+                    	Preferences.debug("##$PVM_DwVisiblePars unexpectedly has parseString[1] = " + parseString[1] + "\n",
+                    			          Preferences.DEBUG_FILEIO);
+                    }
+                    
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DwVisiblePars has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwRfcPulseEnum")) {
+
+                if (parseString.length == 2) {
+                	String rfcPulseType = null;
+                    if ((parseString[1].equalsIgnoreCase("bp"))|| (parseString[1].equalsIgnoreCase("bp32"))) {
+                    	rfcPulseType = "32 point bp pulse used for non-selective refocusing with durations above 0.2 msec";
+                    }
+                    else if ((parseString[1].equalsIgnoreCase("gauss"))|| (parseString[1].equalsIgnoreCase("gauss"))) {
+                    	rfcPulseType = "512 point gauss pulse used for selective refocusing" +
+                        "\n\tlow bandwidth factor with durations above 2 msec";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("hermite")) {
+                    	rfcPulseType = "hermite pulse with selective refocusing" + 
+                        "\n\tmedium bandwidth factor";
+                    }
+                    else if ((parseString[1].equalsIgnoreCase("sinc"))|| (parseString[1].equalsIgnoreCase("sinc"))) {
+                    	rfcPulseType = "3 lobed sinc pulse used for selective refocusing" +
+                        "\n\tmedium bandwidth factor";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("mao")) {
+                    	rfcPulseType = "mao pulse with selective refocusing" +
+                        "\n\thigh bandwidth factor" +
+                        "\n\tGood refocusing profile";
+                    }
+                    else {
+                    	rfcPulseType = parseString[1];
+                    }
+                    fileInfo.setRefocusingPulseType(rfcPulseType);
+                    Preferences.debug("Refocusing pulse type = " + rfcPulseType + "\n", Preferences.DEBUG_FILEIO);
+                }
+                else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DwRFcPulseEnum has parseString with length = " + parseString.length);
+                }
+            }
 
             lineString = readLine();
         } // while (lineString != null)
