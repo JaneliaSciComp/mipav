@@ -18,10 +18,19 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import WildMagic.LibFoundation.Curves.BSplineCurve3f;
+import WildMagic.LibFoundation.Curves.NaturalSpline3;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Ellipsoid3f;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.Mathematics.Vector4f;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.Polyline;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
+import WildMagic.LibGraphics.Surfaces.TubeSurface;
 
 import gov.nih.mipav.model.algorithms.AlgorithmArcLength;
 import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
@@ -379,105 +388,92 @@ public class JDialogLattice extends JDialogBase {
     
 
     
-	public static void interpolateLattice( ModelImage image, VOI lattice )
+	public static TubeSurface interpolateLattice( ModelImage image, VOI lattice, boolean showModel )
 	{
 		// Assume image is isotropic (square voxels).
 		if ( lattice.getCurves().size() != 2 )
 		{
-			return;
+			return null;
 		}
 		VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
 		VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
 		if ( left.size() != right.size() )
 		{
-			return;
+			return null;
 		}
 		
 		VOIContour center = new VOIContour(false);
 		for ( int i = 0; i < left.size(); i++ )
 		{
-//			System.err.println( "left-right distance " + left.elementAt(i).distance(right.elementAt(i) ) );
 			Vector3f centerPt = Vector3f.add(left.elementAt(i), right.elementAt(i) );
 			centerPt.scale(0.5f);
 			center.add(centerPt);
 		}
 
+    	float[] afTimeC = new float[center.size()];
+		NaturalSpline3 centerSpline = smoothCurve(image, center, afTimeC);
+		NaturalSpline3 leftSpline = smoothCurve2(image, left, afTimeC);
+		NaturalSpline3 rightSpline = smoothCurve2(image, right, afTimeC);
+
+		
 		Vector<Vector3f> centerPositions = new Vector<Vector3f>();
 		Vector<Vector3f> centerTangents = new Vector<Vector3f>();
-		smoothCurve( image, center, 1, centerPositions, centerTangents );
-
-		Vector<Vector3f> leftPositions = new Vector<Vector3f>();
-		Vector<Vector3f> leftTangents = new Vector<Vector3f>();
-		smoothCurve( image, left, 1, leftPositions, leftTangents );
-
-		Vector<Vector3f> rightPositions = new Vector<Vector3f>();
-		Vector<Vector3f> rightTangents = new Vector<Vector3f>();
-		smoothCurve( image, right, 1, rightPositions, rightTangents );
-
 		Vector<Float> wormDiameters = new Vector<Float>();
 		Vector<Vector3f> rightVectors = new Vector<Vector3f>();
 		Vector<Vector3f> upVectors = new Vector<Vector3f>();
-
 		
-		float centerLength = 0;
-		for ( int i = 1; i < centerPositions.size(); i++ )
-		{
-			centerLength += centerPositions.elementAt(i).distance( centerPositions.elementAt(i-1) );
-		}
 		
-		float leftLength = 0;
-		for ( int i = 1; i < leftPositions.size(); i++ )
-		{
-			leftLength += leftPositions.elementAt(i).distance( leftPositions.elementAt(i-1) );
-		}
-		
-		float rightLength = 0;
-		for ( int i = 1; i < rightPositions.size(); i++ )
-		{
-			rightLength += rightPositions.elementAt(i).distance( rightPositions.elementAt(i-1) );
-		}
-//		System.err.println( centerPositions.size() + " " + leftPositions.size() + " " + rightPositions.size() );
-//		System.err.println( centerLength + " " + leftLength + " " + rightLength );
-
-		Vector3f rightDir = Vector3f.sub( rightPositions.elementAt(0), leftPositions.elementAt(0) );		
-		float diameter = rightDir.normalize();
-		wormDiameters.add(diameter);
-		rightVectors.add(rightDir);
-		
-		centerTangents.elementAt(0).normalize();
-		Vector3f upDir = Vector3f.cross( rightDir, centerTangents.elementAt(0) );
-		upDir.normalize();
-		upVectors.add(upDir);
-		
+		float length = centerSpline.GetLength(0, 1);
+		int count = 0;
+		float averageDiameter = 0;
 		float distance = 0;
 		int extent = 0;
-		for ( int i = 1; i < centerPositions.size(); i++ )
+		for ( int i = 0; i < length+1; i++ )
 		{
-			distance += centerPositions.elementAt(i).distance( centerPositions.elementAt(i-1) );
-			float t = distance / centerLength;
-			Vector3f leftPt = getPosition( leftPositions, t, leftLength );
-			Vector3f rightPt = getPosition( rightPositions, t, rightLength );
+			float t = (float)i / length;
+			centerPositions.add(centerSpline.GetPosition(t));
+			centerTangents.add( centerSpline.GetFirstDerivative(t) );
+			Vector3f leftPt = leftSpline.GetPosition(t);
+			Vector3f rightPt = rightSpline.GetPosition(t);
 			
-			rightDir = Vector3f.sub( rightPt, leftPt );		
-			diameter = rightDir.normalize();
-			diameter += 20;
+			Vector3f rightDir = Vector3f.sub( rightPt, leftPt );		
+			float diameter = rightDir.normalize();
+			diameter += 10;
 			diameter /= 2f;
 			if ( diameter > extent )
 			{
 				extent = (int) Math.ceil(diameter);
+			}			
+
+	        if ( i > 0 )
+	        {
+	        	distance += centerPositions.elementAt(i).distance( centerPositions.elementAt(i-1) );
+	        }
+			if ( (distance > .25*length) && (distance < .75 *length) )
+			{
+				averageDiameter += diameter;
+				count++;
 			}
 			wormDiameters.add(diameter);
 			rightVectors.add(rightDir);
 			
 			centerTangents.elementAt(i).normalize();
-			upDir = Vector3f.cross( rightDir, centerTangents.elementAt(i) );
+			Vector3f upDir = Vector3f.cross( rightDir, centerTangents.elementAt(i) );
 			upDir.normalize();
 			upVectors.add(upDir);
 		}
+		averageDiameter /= (float)count;
 		
-
+		extent += 20;
+		
+		
+		
+		
+		Vector<Ellipsoid3f> ellipseBounds = new Vector<Ellipsoid3f>();
+		distance = 0;
 		short sID = (short)(image.getVOIs().getUniqueID());
 		VOI samplingPlanes = new VOI(sID, "samplingPlanes");
+		VOI wormContours = new VOI(sID, "wormContours");
 		for ( int i = 0; i < centerPositions.size(); i++ )
 		{
 	        Vector3f rkEye = centerPositions.elementAt(i);
@@ -485,206 +481,126 @@ public class JDialogLattice extends JDialogBase {
 	        Vector3f rkUVector = upVectors.elementAt(i);
 	        Vector3f rkDVector = centerTangents.elementAt(i);
 	        
-	        Matrix4f mat = new Matrix4f(
-	                                     rkRVector.X,
-	                                     rkUVector.X,
-	                                     rkDVector.X,
-	                                     0.0f,
-	                                     rkRVector.Y,
-	                                     rkUVector.Y,
-	                                     rkDVector.Y,
-	                                     0.0f,
-	                                     rkRVector.Z,
-	                                     rkUVector.Z,
-	                                     rkDVector.Z,
-	                                     0.0f,
-	                                     -rkRVector.dot(rkEye),
-	                                     -rkUVector.dot(rkEye),
-	                                     -rkDVector.dot(rkEye),
-	                                     1.0f );
-
-	        mat.inverse();
-
-	        Vector4f[] corners = new Vector4f[4];
-	        corners[0] = new Vector4f(-1,-1, 0, 1);
-	        corners[1] = new Vector4f( 1,-1, 0, 1);
-	        corners[2] = new Vector4f( 1, 1, 0, 1);
-	        corners[3] = new Vector4f(-1, 1, 0, 1);
-	        Vector4f[] output = new Vector4f[4];
+			Vector3f[] output = new Vector3f[4];
+	        Vector3f rightV = Vector3f.scale( extent, rkRVector );
+	        Vector3f upV = Vector3f.scale( extent, rkUVector );
+	        output[0] = Vector3f.add( Vector3f.neg(rightV), Vector3f.neg(upV) );
+	        output[1] = Vector3f.add( rightV, Vector3f.neg(upV) );
+	        output[2] = Vector3f.add( rightV, upV );
+	        output[3] = Vector3f.add( Vector3f.neg(rightV), upV );
 	        for ( int j = 0; j < 4; j++ )
 	        {
-	        	corners[j].X *= extent;
-	        	corners[j].Y *= extent;
-	        	output[j] =  mat.multLeft( corners[j] );
+	        	output[j].add(rkEye);
 	        }
-//	        Vector3f p0 = new Vector3f(corners[0].X, corners[0].Y, corners[0].Z);
-//	        Vector3f p1 = new Vector3f(corners[1].X, corners[1].Y, corners[1].Z);
-//        	System.err.println( "Corners " + p0.distance(p1) );
+	        
+	        if ( i > 0 )
+	        {
+	        	distance += centerPositions.elementAt(i).distance( centerPositions.elementAt(i-1) );
+	        }
+//	        if ( (i%40) == 0 )
+	        {
+		        VOIContour ellipse = new VOIContour(true);
+		        Ellipsoid3f ellipsoid = makeEllipse( rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), averageDiameter, distance, length, ellipse );
+		        ellipseBounds.add( ellipsoid );
+	        	wormContours.importCurve(ellipse);
+	        }
 	        
 			VOIContour kBox = new VOIContour(true);
 			for ( int j = 0; j < 4; j++ )
 			{
 				kBox.addElement( output[j].X, output[j].Y, output[j].Z );
 			}
-			kBox.update( new ColorRGBA(0,0,1,1) );			
-			samplingPlanes.importCurve(kBox);
+//			System.err.println( kBox.elementAt(0).distance( kBox.elementAt(1) ) + " " + kBox.elementAt(2).distance( kBox.elementAt(3) ) );
+//			System.err.println( kBox.elementAt(0).distance( kBox.elementAt(3) ) + " " + kBox.elementAt(1).distance( kBox.elementAt(2) ) );
+			kBox.update( new ColorRGBA(0,0,1,1) );		
+//	        if ( (i%40) == 0 )
+	        {	
+	        	samplingPlanes.importCurve(kBox);
+	        }
 		}
+		VOIContour centerLine = new VOIContour(false);
+		centerLine.addAll( centerPositions );
+		sID = (short)(image.getVOIs().getUniqueID());
+		VOI samplingPoints = new VOI(sID, "samplingPlanes");
+		samplingPoints.getCurves().add(centerLine);
+		image.registerVOI(samplingPoints);
+//		image.registerVOI(wormContours);
 //		image.registerVOI(samplingPlanes);
-		straighten(image, samplingPlanes, wormDiameters, extent, false, false );
+		straighten(image, samplingPlanes, ellipseBounds, extent, false, false );
+		
+		return null; //createTube( image, center, extent);
 	}
 
-    public static void smoothCurve( ModelImage image, VOIContour curve, float stepSize, 
-    		Vector<Vector3f> curvePositions, Vector<Vector3f> curveTangents )
+	public static Ellipsoid3f makeEllipse( Vector3f right, Vector3f up, Vector3f center, float diameterA, float averageDiameter, 
+			float distance, float totalDistance, VOIContour ellipse  )
+	{
+		int numPts = 32;
+		double[] adCos = new double[32];
+		double[] adSin = new double[32];
+		for ( int i = 0; i < numPts; i++ )
+		{
+			adCos[i] = Math.cos( Math.PI * 2.0 * i/numPts );
+			adSin[i] = Math.sin( Math.PI * 2.0 * i/numPts);
+		}
+		float diameterB = (averageDiameter*averageDiameter)/diameterA;
+		if ( (distance < .25*totalDistance) || (distance > .75*totalDistance) )
+		{
+			diameterB = diameterA;
+		}
+		for ( int i = 0; i < numPts; i++ )
+		{
+			Vector3f pos1 = Vector3f.scale((float) (diameterA * adCos[i]), right);
+			Vector3f pos2 = Vector3f.scale((float) (diameterB * adSin[i]), up);
+			Vector3f pos = Vector3f.add(pos1,pos2);
+			pos.add(center);
+			ellipse.addElement( pos );
+		}
+		float[] extents = new float[]{diameterA, diameterB, diameterB };
+		Vector3f[] axes = new Vector3f[]{right, up, Vector3f.cross(right,up) };
+		return new Ellipsoid3f( center, axes, extents );
+	}
+	
+	public static NaturalSpline3 smoothCurve( ModelImage image, VOIContour curve, float[] time )
     {
-
-		short sID = (short)(image.getVOIs().getUniqueID());
-		VOI originalPoints = new VOI(sID, "originalPoints", VOI.POINT, .5f );
-		originalPoints.setCurveType( VOI.POINT );
-		
-		// 1. Calculate totalArcLength:
-    	float totalArcLength = 0;
-		float[] xPoints = new float[curve.size()];
-		float[] yPoints = new float[curve.size()];
-		float[] zPoints = new float[curve.size()];
-		for ( int i = 0; i < curve.size(); i++ )
-		{
-			if ( i > 0 )
-			{
-				totalArcLength += curve.elementAt(i).distance( curve.elementAt(i-1) );
-			}
-			xPoints[i] = curve.elementAt(i).X;
-			yPoints[i] = curve.elementAt(i).Y;
-			zPoints[i] = curve.elementAt(i).Z;
-			originalPoints.importPoint( new Vector3f( xPoints[i], yPoints[i], zPoints[i] ) );
-		}		
-
-		// 2 Smooth points:
-		AlgorithmArcLength arcLength = new AlgorithmArcLength(xPoints, yPoints, zPoints);
-		float totalL = arcLength.getTotalArcLength();
-		int interpolationPts = (int)((totalL + 5) / stepSize);
-
-		AlgorithmBSmooth smoothAlgo = new AlgorithmBSmooth(image, originalPoints, interpolationPts, true);
-		smoothAlgo.run();
-		//this is the result b-spline curve
-		VOI resultVOI = smoothAlgo.getResultVOI();
-		Vector<VOIBase> contours = resultVOI.getCurves();
-		int nPoints = contours.size();
-		float[] xSmoothedPoints = new float[nPoints+5];
-		float[] ySmoothedPoints = new float[nPoints+5];
-		float[] zSmoothedPoints = new float[nPoints+5];
-
-		//		System.err.println( nPoints );
-
-		Vector3f point = ((VOIPoint)contours.get(0)).exportPoint();
-		xSmoothedPoints[0] = point.X;
-		ySmoothedPoints[0] = point.Y;
-		zSmoothedPoints[0] = point.Z;
-
-		xSmoothedPoints[1] = point.X;
-		ySmoothedPoints[1] = point.Y;
-		zSmoothedPoints[1] = point.Z;
-
-		Vector<Vector3f> contour = new Vector<Vector3f>();
-		for (int i = 0; i < nPoints; i++) {
-			point = ((VOIPoint)contours.get(i)).exportPoint();
-			contour.add(new Vector3f(point));
-			xSmoothedPoints[i + 2] = point.X;
-			ySmoothedPoints[i + 2] = point.Y;
-			zSmoothedPoints[i + 2] = point.Z;  
-		}
-
-		point = ((VOIPoint)contours.get(nPoints-1)).exportPoint();
-		xSmoothedPoints[nPoints + 2] = point.X;
-		ySmoothedPoints[nPoints + 2] = point.Y;
-		zSmoothedPoints[nPoints + 2] = point.Z;
-
-		xSmoothedPoints[nPoints + 3] = point.X;
-		ySmoothedPoints[nPoints + 3] = point.Y;
-		zSmoothedPoints[nPoints + 3] = point.Z;
-
-		xSmoothedPoints[nPoints + 4] = point.X;
-		ySmoothedPoints[nPoints + 4] = point.Y;
-		zSmoothedPoints[nPoints + 4] = point.Z;
-
-
-
-		//alg to get tangent vector
-		AlgorithmBSpline bSplineAlgo = smoothAlgo.getbSplineAlgo();
-
-		Vector<Vector3f> positions = new Vector<Vector3f>();
-		Vector<Vector3f> tangents = new Vector<Vector3f>();
-		for ( int i = 0; i < nPoints+1; i++ )
-		{
-			float floatIndex = i+2;
-			positions.add( bSplineAlgo.bSplineJetXYZ(0, floatIndex, xSmoothedPoints, ySmoothedPoints, zSmoothedPoints) );
-			tangents.add(bSplineAlgo.bSplineJetXYZ(1, floatIndex, xSmoothedPoints, ySmoothedPoints, zSmoothedPoints) );
-		}
-
-		bSplineAlgo = null;
-		xSmoothedPoints = null;
-		ySmoothedPoints = null;
-		zSmoothedPoints = null;
-
-		// 3 Interpolate points, tangents so evenly spaced:
-		curvePositions.add( new Vector3f( positions.elementAt(0) ));
-		curveTangents.add( new Vector3f( tangents.elementAt(0) ));
-
-		Vector3f currentPoint = new Vector3f( positions.elementAt(0) );
-		Vector3f currentTangent = new Vector3f( tangents.elementAt(0) );
-
-//		System.err.println( positions.size() );
-		//		System.err.println( 0 + " " + positions.elementAt(0) );
-		for ( int i = 1; i < positions.size(); i++ )
-		{
-			Vector3f nextPoint  = new Vector3f( positions.elementAt(i) );
-			Vector3f nextTangent  = new Vector3f( tangents.elementAt(i) );
-			Vector3f direction = Vector3f.sub(nextPoint, currentPoint);
-			direction.normalize();
-			direction.scale(stepSize);
-
-			float distance = nextPoint.distance(currentPoint);
-			while ( distance >= stepSize )
-			{
-				Vector3f newPoint = Vector3f.add(currentPoint, direction );
-				float interpFactor = newPoint.distance(currentPoint) / nextPoint.distance(currentPoint);
-
-				Vector3f tangent1 = Vector3f.scale( 1 - interpFactor, currentTangent );
-				Vector3f tangent2 = Vector3f.scale(     interpFactor, nextTangent );
-				Vector3f newTangent = Vector3f.add( tangent1, tangent2 );
-
-				curvePositions.add( new Vector3f(newPoint));
-				curveTangents.add( new Vector3f(newTangent));
-				currentPoint.copy(newPoint);
-				currentTangent.copy(newTangent);
-				distance = nextPoint.distance(currentPoint);
-			}
-		}
-//		System.err.println( positions.size() );
-    }
-    
-    public static Vector3f getPosition( Vector<Vector3f> points, float t, float totalLength )
-    {
-    	float distance = 0;
-    	for ( int i = 1; i < points.size(); i++ )
+    	float totalDistance = 0;
+    	for ( int i = 0; i < curve.size()-1; i++ )
     	{
-    		float currentT = distance / totalLength;
-    		float currentDistance = points.elementAt(i).distance( points.elementAt(i-1) );
-    		float nextT = (distance + currentDistance) / totalLength;
-    		if ( (t >= currentT) && (t <= nextT) )
+    		totalDistance += curve.elementAt(i).distance(curve.elementAt(i+1));
+    	}
+    	
+    	Vector3f[] akPoints = new Vector3f[curve.size()];
+    	float distance = 0;
+    	for ( int i = 0; i < curve.size(); i++ )
+    	{
+    		if ( i > 0 )
     		{
-    			float interpFactor = (t - currentT) / currentDistance;
-    			Vector3f posM1 = new Vector3f(points.elementAt(i-1));
-    			posM1.scale( 1 - interpFactor );
-    			Vector3f pos = new Vector3f(points.elementAt(i));
-    			pos.scale( interpFactor );
-    			return posM1.add(pos);
+    			distance += curve.elementAt(i).distance( curve.elementAt(i-1) );
+    			time[i] = distance / totalDistance;
+    			akPoints[i] = new Vector3f(curve.elementAt(i));
     		}
-    		distance += currentDistance;
-    	}  		
-    	return points.lastElement();
+    		else
+    		{    			
+    			time[i] = 0;
+    			akPoints[i] = new Vector3f(curve.elementAt(i));
+    		}
+    	}
+    	
+    	return new NaturalSpline3( NaturalSpline3.BoundaryType.BT_FREE, curve.size()-1, time, akPoints );
+    }
+	
+	public static NaturalSpline3 smoothCurve2( ModelImage image, VOIContour curve, float[] time )
+    {
+    	Vector3f[] akPoints = new Vector3f[curve.size()];
+    	for ( int i = 0; i < curve.size(); i++ )
+    	{
+    		akPoints[i] = new Vector3f(curve.elementAt(i));
+    	}
+    	
+    	return new NaturalSpline3( NaturalSpline3.BoundaryType.BT_FREE, curve.size()-1, time, akPoints );
     }
     
-    public static void straighten( ModelImage image, VOI samplingPlanes, Vector<Float> samplingDiameters, int diameter,
+    public static void straighten( ModelImage image, VOI samplingPlanes, Vector<Ellipsoid3f> ellipseBounds,
+    		int diameter,
     		boolean fillData, boolean displayMask )
     {
 		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
@@ -702,7 +618,7 @@ public class JDialogLattice extends JDialogBase {
 		Vector3f lpsOrigin = new Vector3f();
 		for( int i = 0; i < samplingPlanes.getCurves().size(); i++ )
 		{
-			float diameterInterp = samplingDiameters.elementAt(i);
+//			float diameterInterp = samplingDiameters.elementAt(i);
 			VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i);
 	        Vector3f[] corners = new Vector3f[4];
 	        for ( int j = 0; j < 4; j++ )
@@ -714,7 +630,7 @@ public class JDialogLattice extends JDialogBase {
 				System.arraycopy(values[i-1], 0, values[i], 0, values[i].length);
 			}
 			try {
-				image.exportDiagonal( duplicateMask, 0, i, resultExtents, corners, diameterInterp, !fillData, values[i], true);
+				image.exportDiagonal( duplicateMask, 0, i, resultExtents, corners, ellipseBounds.elementAt(i), !fillData, values[i], true);
 
 				if ( i == 0 )
 				{
@@ -742,4 +658,79 @@ public class JDialogLattice extends JDialogBase {
 		resultImage.setImageName( image.getImageName() + "_straightened_isotropic" );
 		new ViewJFrameImage(resultImage);  	
     }
+    
+    
+	/**
+	 * Generate the tube streamline from the given polyline.
+	 * @param kTract  polyline of the medial path.
+	 * @return  kTube Tube surface generated. 
+	 */
+	public static TubeSurface createTube( ModelImage image, VOIContour kTract, float diameter ) {
+		scale(image, kTract);
+
+		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+		diameter /= Math.max( dimX, Math.max(dimY, dimZ));
+		
+		TubeSurface kTube;
+		int iNumCtrlPoints = kTract.size();
+		Vector3f[] akCtrlPoint = new Vector3f[iNumCtrlPoints];
+		for ( int i = 0; i < iNumCtrlPoints; i++ ) {
+			akCtrlPoint[i] = kTract.elementAt(i);
+		}
+
+		int iDegree = 2;
+		BSplineCurve3f m_pkSpline = new BSplineCurve3f(iNumCtrlPoints,akCtrlPoint,iDegree,
+				false,true);
+
+		Attributes kAttr = new Attributes();
+		kAttr.SetPChannels(3);
+		kAttr.SetNChannels(3);
+		kAttr.SetTChannels(0,3);
+		kAttr.SetCChannels(0,4);
+
+		Vector2f kUVMin = new Vector2f(0.0f,0.0f);
+		Vector2f kUVMax = new Vector2f(1.0f,1.0f);
+		kTube = new TubeSurface(m_pkSpline, diameter, false,Vector3f.UNIT_Z,
+				iNumCtrlPoints,8,kAttr,true,false,kUVMin,kUVMax);
+//		kTube.Local.SetTranslate( m_kTranslate );
+		kTube.SetName( "WormSurface" );
+		return kTube;
+	}
+	
+    public static void scale( ModelImage image, VOIContour kTract )
+    {
+		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+		
+		final float fMaxX = (dimX - 1) * image.getFileInfo(0).getResolutions()[0];
+		final float fMaxY = (dimY - 1) * image.getFileInfo(0).getResolutions()[1];
+		final float fMaxZ = (dimZ - 1) * image.getFileInfo(0).getResolutions()[2];
+
+		float m_fMax = fMaxX;
+		if (fMaxY > m_fMax) {
+			m_fMax = fMaxY;
+		}
+		if (fMaxZ > m_fMax) {
+			m_fMax = fMaxZ;
+		}
+		float m_fX = fMaxX / m_fMax;
+		float m_fY = fMaxY / m_fMax;
+		float m_fZ = fMaxZ / m_fMax;
+    	
+        Vector3f kVolumeScale = new Vector3f(m_fX, m_fY, m_fZ);
+        Vector3f kExtentsScale = new Vector3f(1f/(dimX - 1), 
+                1f/(dimY - 1), 
+                1f/(dimZ - 1)  );
+
+        for ( int i = 0; i < kTract.size(); i++ )
+        {
+            Vector3f kPos = kTract.elementAt(i);
+            kPos.mult(kExtentsScale);
+            kPos.mult(kVolumeScale);
+        }
+    }
+
 }

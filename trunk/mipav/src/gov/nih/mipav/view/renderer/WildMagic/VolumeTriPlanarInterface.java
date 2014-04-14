@@ -46,6 +46,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
@@ -699,6 +700,20 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     	}
     }
 
+    public void addSurface( TriMesh mesh )
+    {
+        if ( mesh != null )
+        {        	
+        	mesh.Local.SetTranslate( raycastRenderWM.getTranslate() );
+        	
+        	TriMesh[] kMeshes = new TriMesh[1];
+        	kMeshes[0] = mesh;
+        	kMeshes[0].SetName(mesh.GetName());
+        	getSurfacePanel().addSurfaces(kMeshes);
+        	getRendererGUI().setDisplaySurfaceCheck(true);
+        }
+    }
+    
     /**
      * Add TriMesh surfaces to the Volume Renderer.
      * 

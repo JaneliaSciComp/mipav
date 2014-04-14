@@ -1222,7 +1222,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         } else if ( command.equals("straightenLattice") ) {
         	if ( lattice != null )
         	{
-        		JDialogLattice.interpolateLattice(getActiveImage(), lattice.elementAt(0));
+        		JDialogLattice.interpolateLattice(getActiveImage(), lattice.elementAt(0), false);
         	}
         } else {
             doVOI(command);

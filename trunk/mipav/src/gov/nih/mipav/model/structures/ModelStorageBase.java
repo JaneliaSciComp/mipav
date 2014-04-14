@@ -2414,6 +2414,218 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
+     * ShowDiagonal samples the ModelImage data along a non-axis aligned plane. The plane may intersect the ModelImage
+     * volume, defined in x,y,z space, along a diagonal direction.
+     * 
+     * <p>
+     * This function steps through the image, using the four transformed points to step through the ModelImage along the
+     * diagonal directions, read the corresonding point in the ModelImage and write the value into the image array. If
+     * bInterpolate is set to true, the ModelImage data for non-interger vertices is interpolated using tri-linear
+     * interpolation. Note: there is one loop for steping though he data, no matter which type of plane this object
+     * represents (XY, XZ, or ZY).
+     * </p>
+     * 
+     * @param tSlice Index into the forth dimension
+     * @param slice Indicates slice of data to be exported
+     * @param extents Image extents in the local coordinate system.
+     * @param verts The rotated non-axis aligned corners of the slice
+     * @param values The array in which to write the data.
+     * @param bInterpolate If true then use interpolation.
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
+     */
+    public final synchronized void exportDiagonal( BitSet duplicateMask, final int tSlice, final int slice, final int[] extents,
+            final Vector3f[] verts, final Ellipsoid3f ellipseBound, boolean bSetZero, final float[] values, final boolean bInterpolate) throws IOException {
+
+        try {
+            setLock(ModelStorageBase.W_LOCKED);
+        } catch (final IOException error) {
+            releaseLock();
+            throw error;
+        }
+
+        final int iBound = extents[0];
+        final int jBound = extents[1];
+
+        /*
+         * Get the loop multiplication factors for indexing into the 1D array with 3 index variables: based on the
+         * coordinate-systems: transformation:
+         */
+        final int iFactor = 1;
+        final int jFactor = dimExtents[0];
+        final int kFactor = dimExtents[0] * dimExtents[1];
+        final int tFactor = dimExtents[0] * dimExtents[1] * dimExtents[2];
+
+        int buffFactor = 1;
+
+        if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                || (bufferType == DataType.ARGB_FLOAT)) {
+            buffFactor = 4;
+        }
+        
+        Vector3f center = new Vector3f();
+        for ( int i = 0; i < verts.length; i++ )
+        {
+        	center.add(verts[i]);
+        }
+        center.scale( 1f/(float)verts.length );
+        
+        /* Calculate the slopes for traversing the data in x,y,z: */
+        float xSlopeX = verts[1].X - verts[0].X;
+        float ySlopeX = verts[1].Y - verts[0].Y;
+        float zSlopeX = verts[1].Z - verts[0].Z;
+
+        float xSlopeY = verts[3].X - verts[0].X;
+        float ySlopeY = verts[3].Y - verts[0].Y;
+        float zSlopeY = verts[3].Z - verts[0].Z;
+
+        float x0 = verts[0].X;
+        float y0 = verts[0].Y;
+        float z0 = verts[0].Z;
+
+        xSlopeX /= (iBound - 1);
+        ySlopeX /= (iBound - 1);
+        zSlopeX /= (iBound - 1);
+
+        xSlopeY /= (jBound - 1);
+        ySlopeY /= (jBound - 1);
+        zSlopeY /= (jBound - 1);
+
+        final boolean exportComplex = (values.length == (2 * iBound * jBound)) ? true : false;
+        double real, imaginary, mag;
+
+        /* loop over the 2D image (values) we're writing into */
+        float x = x0;
+        float y = y0;
+        float z = z0;
+        
+        Vector3f currentPoint = new Vector3f();
+
+        Vector<Integer> maskBits = new Vector<Integer>();
+        for (int j = 0; j < jBound; j++) {
+
+            /* Initialize the first diagonal point(x,y,z): */
+            x = x0;
+            y = y0;
+            z = z0;
+
+            for (int i = 0; i < iBound; i++) {
+                final int iIndex = (int) Math.round(x);
+                final int jIndex = (int) Math.round(y);
+                final int kIndex = (int) Math.round(z);
+
+                /* calculate the ModelImage space index: */
+                final int index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
+
+                currentPoint.set(x, y, z);
+                boolean isInside = ellipseBound.Contains( currentPoint );
+                
+                /* Bounds checking, if out of bounds, set to zero: */
+                if ( (!isInside) ||
+                		( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
+                		|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize))) {
+
+                	if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                			|| (bufferType == DataType.ARGB_FLOAT)) {
+                		values[ ( ( (j * iBound) + i) * 4) + 0] = 0;
+                		values[ ( ( (j * iBound) + i) * 4) + 1] = 0;
+                		values[ ( ( (j * iBound) + i) * 4) + 2] = 0;
+                		values[ ( ( (j * iBound) + i) * 4) + 3] = 0;
+                	}
+                	/* not color: */
+                	else {
+                		values[ (j * iBound) + i] = (float) this.min;
+                	}
+                } else {
+                	if ( (duplicateMask != null) && duplicateMask.get(index) )
+                	{
+                		if ( bSetZero )
+                		{
+                			// set output to zero or min:
+                			if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                					|| (bufferType == DataType.ARGB_FLOAT)) {
+                				values[ ( ( (j * iBound) + i) * 4) + 0] = 0;
+                				values[ ( ( (j * iBound) + i) * 4) + 1] = 0;
+                				values[ ( ( (j * iBound) + i) * 4) + 2] = 0;
+                				values[ ( ( (j * iBound) + i) * 4) + 3] = 0;
+                			}
+                			/* not color: */
+                			else {
+                				values[ (j * iBound) + i] = (float) this.min;
+                			}
+                		}
+                	}                	
+                	else
+                	{
+                		maskBits.add(index);
+                		/* if color: */
+                		if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                				|| (bufferType == DataType.ARGB_FLOAT)) {
+                			values[ ( ( (j * iBound) + i) * 4) + 0] = getFloat( (index * 4) + 0);
+                			values[ ( ( (j * iBound) + i) * 4) + 1] = getFloat( (index * 4) + 1);
+                			values[ ( ( (j * iBound) + i) * 4) + 2] = getFloat( (index * 4) + 2);
+                			values[ ( ( (j * iBound) + i) * 4) + 3] = getFloat( (index * 4) + 3);
+                		}
+                		/* if complex: */
+                		else if (bufferType == DataType.COMPLEX) {
+
+                			if (exportComplex) {
+                				values[ ( ( (j * iBound) + i) * 2) + 0] = getFloat(index * 2);
+                				values[ ( ( (j * iBound) + i) * 2) + 1] = getFloat( (index * 2) + 1);
+                			} else {
+                				real = getFloat(index * 2);
+                				imaginary = getFloat( (index * 2) + 1);
+
+                				if (logMagDisp == true) {
+                					mag = Math.sqrt( (real * real) + (imaginary * imaginary));
+                					values[ (j * iBound) + i] = (float) (0.4342944819 * Math.log( (1.0 + mag)));
+                				} else {
+                					values[ (j * iBound) + i] = (float) Math.sqrt( (real * real) + (imaginary * imaginary));
+                				}
+                			}
+                		}
+                		/* not color: */
+                		else {
+
+                			if (bInterpolate) {
+                				values[ (j * iBound) + i] = getFloatTriLinearBounds(x, y, z);
+                			} else {
+                				values[ (j * iBound) + i] = getFloat(index);
+                			}
+                		}
+                	}
+                }
+
+                /*
+                 * Inner loop: Move to the next diagonal point along the x-direction of the plane, using the xSlopeX,
+                 * ySlopeX and zSlopeX values:
+                 */
+                x = x + xSlopeX;
+                y = y + ySlopeX;
+                z = z + zSlopeX;
+            }
+
+            /*
+             * Outer loop: Move to the next diagonal point along the y-direction of the plane, using the xSlopeY,
+             * ySlopeY and zSlopeY values:
+             */
+            x0 = x0 + xSlopeY;
+            y0 = y0 + ySlopeY;
+            z0 = z0 + zSlopeY;
+        }
+        
+        if ( duplicateMask != null )
+        {
+        	for ( int i = 0; i < maskBits.size(); i++ )
+        	{
+        		duplicateMask.set(maskBits.elementAt(i));
+        	}
+        }
+        maskBits.clear();
+        maskBits = null;
+    }
+
+    /**
      */
     public final synchronized Vector3f findMax( final int tSlice, final int slice,
             final Vector3f[] verts, final float diameter, final boolean bInterpolate) throws IOException {
