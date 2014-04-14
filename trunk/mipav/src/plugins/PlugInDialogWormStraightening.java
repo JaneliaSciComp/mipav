@@ -4,6 +4,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewImageFileFilter;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.components.PanelManager;
@@ -51,10 +52,10 @@ public class PlugInDialogWormStraightening extends JDialogStandalonePlugin
 	/**
 	 *  User-interface components for the automatic path interface.
 	 */
-	private class AutomaticPathUI
+	private class LatticePathUI
 	{		
 		private JTextField wormImageTextField;
-		private JTextField wormLengthTextField, tailDiameterTextField, headDiameterTextField, maxDiameterTextField, pixelSizeTextField;
+		private JTextField latticeFileField, pixelSizeTextField;
 	}
 
 	/**
@@ -84,7 +85,7 @@ public class PlugInDialogWormStraightening extends JDialogStandalonePlugin
 	private JTabbedPane tabbedPane = new JTabbedPane();
 	
 
-    private AutomaticPathUI autopathInterface;
+    private LatticePathUI latticeInterface;
 	private StraightenUI straightenInterface;
 	private TransformUI transformInterface;
 	
@@ -122,7 +123,7 @@ public class PlugInDialogWormStraightening extends JDialogStandalonePlugin
 
                 if ( tabbedPane.getSelectedIndex() == 0 )
                 {
-                	autopathInterface.wormImageTextField.setText(chooser.getSelectedFile().getAbsolutePath());
+                	latticeInterface.wormImageTextField.setText(chooser.getSelectedFile().getAbsolutePath());
                 	ViewUserInterface.getReference().setDefaultDirectory(chooser.getCurrentDirectory().toString() );
                 }
                 else if ( tabbedPane.getSelectedIndex() == 1 )
@@ -139,6 +140,36 @@ public class PlugInDialogWormStraightening extends JDialogStandalonePlugin
     			}
             }
         } 
+		else if ( command.equals("latticeBrowse") )
+		{
+            // get the voi directory
+            String fileName = null;
+            String directory = null;
+            String voiDir = null;
+
+            final JFileChooser chooser = new JFileChooser();
+
+            if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+            } else {
+                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+            }
+
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+            final int returnVal = chooser.showOpenDialog(this);
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                fileName = chooser.getSelectedFile().getName();
+                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
+            }
+
+            if (fileName != null) {
+                voiDir = new String(directory + fileName + File.separator);
+                latticeInterface.latticeFileField.setText(voiDir);
+            }
+		}
 		else if ( command.equals("pointsFileBrowse" ) ) 
 		{
         	JFileChooser chooser = new JFileChooser();
@@ -223,15 +254,10 @@ public class PlugInDialogWormStraightening extends JDialogStandalonePlugin
 		}
 		try {
 			if ( tabbedPane.getSelectedIndex() == 0 )
-			{
-				float wormLength = Float.parseFloat(autopathInterface.wormLengthTextField.getText().trim());
-				float headSize = Float.parseFloat(autopathInterface.headDiameterTextField.getText().trim());
-				float tailSize = Float.parseFloat(autopathInterface.tailDiameterTextField.getText().trim());
-				float maxSize = Float.parseFloat(autopathInterface.maxDiameterTextField.getText().trim());
-				float pixelSize = Float.parseFloat(autopathInterface.pixelSizeTextField.getText().trim());
+			{				
+				float pixelSize = Float.parseFloat(latticeInterface.pixelSizeTextField.getText().trim());
 				PlugInAlgorithmWormStraighteningAutomatic alg = new PlugInAlgorithmWormStraighteningAutomatic(wormImage);
-				alg.setWormLength( wormLength/pixelSize );
-				alg.setDiameter(headSize/pixelSize, tailSize/pixelSize, maxSize/pixelSize);
+				alg.setLatticeFile(latticeInterface.latticeFileField.getText());
 
 				if (isRunInSeparateThread()) {
 
@@ -298,7 +324,7 @@ public class PlugInDialogWormStraightening extends JDialogStandalonePlugin
 		setTitle("Worm Straightening version 1.1");	
         getContentPane().setLayout(new BorderLayout());
         
-        tabbedPane.add( "Automatic Path", initAutomaticPathPanel() );      
+        tabbedPane.add( "Automatic Path", initLatticePanel() );      
         tabbedPane.add( "Straighten", initStraightenPanel() );
         tabbedPane.add( "Apply Transform", initTransformPanel() );
 
@@ -312,54 +338,40 @@ public class PlugInDialogWormStraightening extends JDialogStandalonePlugin
         System.gc();
 	}
 	
-	private JPanel initAutomaticPathPanel()
+	private JPanel initLatticePanel()
 	{
-		autopathInterface = new AutomaticPathUI();
+		latticeInterface = new LatticePathUI();
 		
         final PanelManager paramPanelManager = new PanelManager();
         
         paramPanelManager.add( new JLabel("Worm Image:") );
-        autopathInterface.wormImageTextField = new JTextField(55);
-        autopathInterface.wormImageTextField.setEditable(false);
-        autopathInterface.wormImageTextField.setBackground(Color.white);
-        autopathInterface.wormImageTextField.setBorder(new LineBorder(Color.black));
-        paramPanelManager.add( autopathInterface.wormImageTextField );
+        latticeInterface.wormImageTextField = new JTextField(55);
+        latticeInterface.wormImageTextField.setEditable(false);
+        latticeInterface.wormImageTextField.setBackground(Color.white);
+        latticeInterface.wormImageTextField.setBorder(new LineBorder(Color.black));
+        paramPanelManager.add( latticeInterface.wormImageTextField );
 		JButton wormImageBrowseButton = new JButton("Browse");
 		wormImageBrowseButton.addActionListener(this);
 		wormImageBrowseButton.setActionCommand("wormImageBrowse");	
         paramPanelManager.add( wormImageBrowseButton );
         
 
-        paramPanelManager.addOnNextLine( new JLabel( "Estimate worm length: " ) );
-        autopathInterface.wormLengthTextField = new JTextField( "75", 10 );
-        autopathInterface.wormLengthTextField.setBackground(Color.white);
-        autopathInterface.wormLengthTextField.setBorder(new LineBorder(Color.black));
-        paramPanelManager.add( autopathInterface.wormLengthTextField );
-        
-        
-        paramPanelManager.addOnNextLine(new JLabel("Estimate head diameter:"));
-        autopathInterface.headDiameterTextField = new JTextField( "12", 10 );
-        autopathInterface.headDiameterTextField.setBackground(Color.white);
-        autopathInterface.headDiameterTextField.setBorder(new LineBorder(Color.black));
-        paramPanelManager.add( autopathInterface.headDiameterTextField );
-        
-        paramPanelManager.addOnNextLine(new JLabel("Estimate tail diameter:"));
-        autopathInterface.tailDiameterTextField = new JTextField( "20", 10 );
-        autopathInterface.tailDiameterTextField.setBackground(Color.white);
-        autopathInterface.tailDiameterTextField.setBorder(new LineBorder(Color.black));
-        paramPanelManager.add( autopathInterface.tailDiameterTextField );
-        
-        paramPanelManager.addOnNextLine(new JLabel("Estimate maximum diameter:"));
-        autopathInterface.maxDiameterTextField = new JTextField( "30", 10 );
-        autopathInterface.maxDiameterTextField.setBackground(Color.white);
-        autopathInterface.maxDiameterTextField.setBorder(new LineBorder(Color.black));
-        paramPanelManager.add( autopathInterface.maxDiameterTextField );
-        
+        paramPanelManager.addOnNextLine( new JLabel( "Lattice VOI directory: " ) );
+        latticeInterface.latticeFileField = new JTextField(55);
+        latticeInterface.latticeFileField.setEditable(false);
+        latticeInterface.latticeFileField.setBackground(Color.white);
+        latticeInterface.latticeFileField.setBorder(new LineBorder(Color.black));
+        paramPanelManager.add( latticeInterface.latticeFileField );
+		JButton latticeBrowseButton = new JButton("Browse");
+		latticeBrowseButton.addActionListener(this);
+		latticeBrowseButton.setActionCommand("latticeBrowse");	
+        paramPanelManager.add( latticeBrowseButton );
+                
         paramPanelManager.addOnNextLine(new JLabel("Pixel resolution:"));
-        autopathInterface.pixelSizeTextField = new JTextField( "0.1625", 10 );
-        autopathInterface.pixelSizeTextField.setBackground(Color.white);
-        autopathInterface.pixelSizeTextField.setBorder(new LineBorder(Color.black));
-        paramPanelManager.add( autopathInterface.pixelSizeTextField );
+        latticeInterface.pixelSizeTextField = new JTextField( "0.1625", 10 );
+        latticeInterface.pixelSizeTextField.setBackground(Color.white);
+        latticeInterface.pixelSizeTextField.setBorder(new LineBorder(Color.black));
+        paramPanelManager.add( latticeInterface.pixelSizeTextField );
         paramPanelManager.add( new JLabel("um") );
         
 
