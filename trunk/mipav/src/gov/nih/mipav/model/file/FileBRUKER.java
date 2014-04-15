@@ -366,7 +366,7 @@ public class FileBRUKER extends FileBase {
             					bMatrixVals[i][4] = bMat[i][1][2];
             					bMatrixVals[i][5] = bMat[i][2][2];
             			    }
-            				dtiParams.setbMatrixVals(bMatrixVals);
+            				//dtiParams.setbMatrixVals(bMatrixVals);
             				Preferences.debug("Just did dtiParams.setbMatrixVals(bMatrixVals)\n", Preferences.DEBUG_FILEIO);
             			} // if (bMatOkay)
             		} // if (numFound == numVars)
