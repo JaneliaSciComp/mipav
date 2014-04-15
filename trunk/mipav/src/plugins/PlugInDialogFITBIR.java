@@ -18,7 +18,6 @@ import gov.nih.tbi.commons.model.DataType;
 import gov.nih.tbi.commons.model.RepeatableType;
 import gov.nih.tbi.commons.model.RequiredType;
 import gov.nih.tbi.commons.model.StatusType;
-import gov.nih.tbi.dictionary.model.DictionaryRestServiceModel.DataStructureList;
 import gov.nih.tbi.dictionary.model.hibernate.*;
 import gov.nih.tbi.repository.model.SubmissionType;
 
@@ -65,12 +64,10 @@ import com.sun.jimi.core.JimiException;
  * 
  * TODO: Need to test writing group repeats to CSV.
  * 
- * TODO: Repeatable groups UI design.
- * 
  * TODO: Add non-ImgFile support for selecting multiple files and have them automatically zipped together?
  */
-public class PlugInDialogFITBIR extends JFrame /* JDialogStandalonePlugin */implements ActionListener, ChangeListener, ItemListener, TreeSelectionListener,
-        MouseListener, PreviewImageContainer, WindowListener {
+public class PlugInDialogFITBIR extends JFrame implements ActionListener, ChangeListener, ItemListener, TreeSelectionListener, MouseListener,
+        PreviewImageContainer, WindowListener {
     private static final long serialVersionUID = -5516621806537554154L;
 
     private final Font serif12 = MipavUtil.font12, serif12B = MipavUtil.font12B;
@@ -166,15 +163,29 @@ public class PlugInDialogFITBIR extends JFrame /* JDialogStandalonePlugin */impl
     /** Property for reading the auth server url from the fitbir config file. */
     private static final String authServerURLProp = "authServerURL";
 
+    /** Property for reading the dd authentication user name from the fitbir config file. */
+    private static final String ddAuthUserProp = "ddAuthUser";
+
+    /** Property for reading the dd authentication password from the fitbir config file. */
+    private static final String ddAuthPassProp = "ddAuthPass";
+
+    /**
+     * Property for reading whether to use the (slower) authenticated web service, which allows testing against draft
+     * forms.
+     */
+    private static final String ddUseAuthServiceProp = "ddUseAuthService";
+
     /** Full data dictionary server url */
     private static String ddServerURL = ddProdServer;
 
     /** Full authentication server url */
     private static String authServerURL = authProdServer;
 
-    private static final String ddRequestBase = "/portal/ws/ddt/dictionary/FormStructure";
+    private static String ddAuthUser = "";
 
-    private static final String ddStructListRequest = ddRequestBase + "/Published/list?page=1&pageSize=100000&ascending=false&sort=shortName";
+    private static String ddAuthPass = "";
+
+    private static boolean ddUseAuthService = false;
 
     private List<DataStructure> dataStructureList;
 
@@ -1871,6 +1882,12 @@ public class PlugInDialogFITBIR extends JFrame /* JDialogStandalonePlugin */impl
             System.out.println("authServer:\t" + authServerURL);
             ddServerURL = prop.getProperty(ddServerURLProp, ddServerURL);
             System.out.println("ddServer:\t" + ddServerURL);
+            ddAuthUser = prop.getProperty(ddAuthUserProp, ddAuthUser);
+            System.out.println("ddAuthUser:\t" + ddAuthUser);
+            ddAuthPass = prop.getProperty(ddAuthPassProp, ddAuthPass);
+            System.out.println("ddAuthPass:\t" + ddAuthPass);
+            ddUseAuthService = Boolean.parseBoolean(prop.getProperty(ddUseAuthServiceProp, "" + ddUseAuthService));
+            System.out.println("ddUseAuthService:\t" + ddUseAuthService);
         }
     }
 
@@ -2706,9 +2723,6 @@ public class PlugInDialogFITBIR extends JFrame /* JDialogStandalonePlugin */impl
             final String[] columnNames = {"Name", "Description", "Version", "Status"};
             structsModel = new ViewTableModel();
             structsTable = new JTable(structsModel) {
-                /**
-				 * 
-				 */
                 private static final long serialVersionUID = 3053232611901005303L;
 
                 @Override
@@ -3649,7 +3663,7 @@ public class PlugInDialogFITBIR extends JFrame /* JDialogStandalonePlugin */impl
                     if (de.getMeasuringUnit() != null) {
                         tooltip += "<p><b>Unit of measure:</b> " + de.getMeasuringUnit() + "</p>";
                     }
-                    if (de.getNinds() != null) {
+                    if (de.getNinds() != null && !de.getNinds().getValue().equals("")) {
                         tooltip += "<p><b>NINDS CDE ID:</b> " + de.getNinds().getValue() + "</p>";
                     }
                     if (de.getGuidelines() != null && !de.getGuidelines().trim().equals("")) {
@@ -3685,7 +3699,7 @@ public class PlugInDialogFITBIR extends JFrame /* JDialogStandalonePlugin */impl
                     if (de.getMeasuringUnit() != null) {
                         tooltip += "<p><b>Unit of measure:</b> " + de.getMeasuringUnit() + "</p>";
                     }
-                    if (de.getNinds() != null) {
+                    if (de.getNinds() != null && !de.getNinds().getValue().equals("")) {
                         tooltip += "<p><b>NINDS CDE ID:</b> " + de.getNinds().getValue() + "</p>";
                     }
                     if (de.getGuidelines() != null && !de.getGuidelines().trim().equals("")) {
@@ -3731,7 +3745,7 @@ public class PlugInDialogFITBIR extends JFrame /* JDialogStandalonePlugin */impl
                     if (de.getMeasuringUnit() != null) {
                         tooltip += "<p><b>Unit of measure:</b> " + de.getMeasuringUnit() + "</p>";
                     }
-                    if (de.getNinds() != null) {
+                    if (de.getNinds() != null && !de.getNinds().getValue().equals("")) {
                         tooltip += "<p><b>NINDS CDE ID: </b>" + de.getNinds().getValue() + "</p>";
                     }
                     if (de.getGuidelines() != null && !de.getGuidelines().trim().equals("")) {
@@ -4866,14 +4880,19 @@ public class PlugInDialogFITBIR extends JFrame /* JDialogStandalonePlugin */impl
      * Class that connects to BRICS data dictionary web service (via RESTful API).
      */
     public class RESTThread extends Thread implements ActionListener {
+        private static final String ddAuthBase = "/portal/ws/webstart/dictionary/formStructure/details";
 
-        JButton progressCancelButton;
+        private static final String ddRequestBase = "/portal/ws/ddt/dictionary/FormStructure";
 
-        PlugInDialogFITBIR dial;
+        private static final String ddStructListRequest = ddRequestBase + "/Published/list?page=1&pageSize=100000&ascending=false&sort=shortName";
 
-        RESTThread(final PlugInDialogFITBIR dial) {
+        private JButton progressCancelButton;
+
+        private final PlugInDialogFITBIR parent;
+
+        public RESTThread(final PlugInDialogFITBIR parent) {
             super();
-            this.dial = dial;
+            this.parent = parent;
         }
 
         @Override
@@ -4883,6 +4902,7 @@ public class PlugInDialogFITBIR extends JFrame /* JDialogStandalonePlugin */impl
                 progressBar = new ViewJProgressBar("BRICS", "Connecting to BRICS data dictionary web service...", 0, 100, true);
                 progressBar.setVisible(true);
                 progressBar.updateValue(20);
+                progressBar.setIndeterminate(true);
                 progressCancelButton = progressBar.getCancelButton();
                 progressCancelButton.addActionListener(this);
 
@@ -4890,11 +4910,27 @@ public class PlugInDialogFITBIR extends JFrame /* JDialogStandalonePlugin */impl
                 // otherwise the value set above at initialization is used.
                 readConfig();
 
-                final WebClient client = WebClient.create(ddServerURL + ddStructListRequest);
+                WebClient client;
+                if (ddUseAuthService) {
+                    client = WebClient.create(ddServerURL + ddAuthBase);
+                } else {
+                    client = WebClient.create(ddServerURL + ddStructListRequest);
+                }
+
                 final HTTPConduit conduit = WebClient.getConfig(client).getHttpConduit();
                 conduit.getClient().setReceiveTimeout(0);
-                final DataStructureList dsl = client.accept("text/xml").get(DataStructureList.class);
-                dataStructureList = dsl.getList();
+
+                if ( !ddAuthUser.equals("") && !ddAuthPass.equals("")) {
+                    client.header("userName", ddAuthUser);
+                    client.header("pass", ddAuthPass);
+                }
+
+                dataStructureList = (List<DataStructure>) client.accept("text/xml").getCollection(DataStructure.class);
+
+                // for (final DataStructure ds : dataStructureList) {
+                // System.out.println("FS title:\t" + ds.getTitle() + "\tversion:\t" + ds.getVersion() + "\tpub:\t" +
+                // ds.getStatus());
+                // }
 
                 progressBar.updateValue(80);
 
@@ -4911,7 +4947,7 @@ public class PlugInDialogFITBIR extends JFrame /* JDialogStandalonePlugin */impl
                     progressBar.setVisible(false);
                     progressBar.dispose();
                     MipavUtil.displayError("Error in connecting to web service");
-                    dial.dispose();
+                    parent.dispose();
                     if (JDialogStandalonePlugin.isExitRequired()) {
                         System.exit(0);
                     }
