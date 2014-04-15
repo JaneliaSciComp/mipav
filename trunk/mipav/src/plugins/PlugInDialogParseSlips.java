@@ -143,6 +143,11 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 		csvFile = new File(coriellName + "_comparison.csv");
 		concatCSVFile = new File(reportName + "_complete.csv");
 		try {
+			if(concatCSVFile.exists() && delRB.isSelected()){
+				concatCSVFile.delete();
+			}
+			concatCSV = new FileWriter(concatCSVFile, true);
+			
 			if(csvFile.exists()){
 				if(delRB.isSelected()) {
 					csvFile.delete();
@@ -155,10 +160,7 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 				csv = new FileWriter(csvFile, true);
 				initCSV();
 			}
-			if(concatCSVFile.exists() && delRB.isSelected()){
-				concatCSVFile.delete();
-			}
-			concatCSV = new FileWriter(concatCSVFile, true);
+			
 			parseAlg = new PlugInAlgorithmParseSlips(reportFile, coriellFile, csv, concatCSV);
 			parseAlg.addListener(this);
 			parseAlg.removeHeader(headerCheck.isSelected());
@@ -342,9 +344,12 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 		header += "Side ID 1,Site ID 2,";
 		header += "Age 1,Age 2\n";
 		
+		String concatHeader = "Reported by Site,";
+		concatHeader += ",,,,,,,,,,Reported by Coriell,\n";
 		try {
 			csv.append(header);
 			csv.flush();
+			concatCSV.append(concatHeader);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
