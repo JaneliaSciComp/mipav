@@ -422,15 +422,17 @@ public class JDialogLattice extends JDialogBase {
 		Vector<Vector3f> rightVectors = new Vector<Vector3f>();
 		Vector<Vector3f> upVectors = new Vector<Vector3f>();
 		
-		
 		float length = centerSpline.GetLength(0, 1);
+//		System.err.println( "Centerline length = " + length );
 		int count = 0;
 		float averageDiameter = 0;
 		float distance = 0;
 		int extent = 0;
+		float[] allTimes = new float[(int) (Math.ceil(length)+1)];
 		for ( int i = 0; i < length+1; i++ )
 		{
-			float t = (float)i / length;
+			float t = centerSpline.GetTime(i);
+			allTimes[i] = t;
 			centerPositions.add(centerSpline.GetPosition(t));
 			centerTangents.add( centerSpline.GetFirstDerivative(t) );
 			Vector3f leftPt = leftSpline.GetPosition(t);
@@ -461,12 +463,41 @@ public class JDialogLattice extends JDialogBase {
 			Vector3f upDir = Vector3f.cross( rightDir, centerTangents.elementAt(i) );
 			upDir.normalize();
 			upVectors.add(upDir);
+//			if ( i > 0 )
+//			{
+//				System.err.println( i + "   " + centerPositions.elementAt(i).distance(centerPositions.elementAt(i-1)));
+//			}
 		}
 		averageDiameter /= (float)count;
 		
-		extent += 20;
-		
-		
+		extent += 10;
+
+		int[] latticeSlice = new int[afTimeC.length];
+		float[] closestTimes = new float[afTimeC.length];
+		for ( int i = 0; i < afTimeC.length; i++ )
+		{
+			float minDif = Float.MAX_VALUE;
+			for ( int j = 0; j < allTimes.length; j++ )
+			{
+				float dif = Math.abs(allTimes[j] - afTimeC[i]);
+				if ( dif < minDif )
+				{
+					minDif = dif;
+					latticeSlice[i] = j;
+					closestTimes[i] = allTimes[j];
+				}
+			}
+//			if ( i > 0 )
+//			{
+//				float curveDistance = 0;
+//				for ( int j = latticeSlice[i-1]+1; j <= latticeSlice[i]; j++ )
+//				{
+//					curveDistance += centerSpline.GetPosition(allTimes[j]).distance( centerSpline.GetPosition(allTimes[j-1]) );
+//				}
+//				System.err.println( i + "   " + curveDistance);
+//				System.err.println( i + "   " + (latticeSlice[i] - latticeSlice[i-1]) );
+//			}
+		}
 		
 		
 		Vector<Ellipsoid3f> ellipseBounds = new Vector<Ellipsoid3f>();
@@ -497,7 +528,7 @@ public class JDialogLattice extends JDialogBase {
 	        {
 	        	distance += centerPositions.elementAt(i).distance( centerPositions.elementAt(i-1) );
 	        }
-//	        if ( (i%40) == 0 )
+//	        if ( (i%30) == 0 )
 	        {
 		        VOIContour ellipse = new VOIContour(true);
 		        Ellipsoid3f ellipsoid = makeEllipse( rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), averageDiameter, distance, length, ellipse );
@@ -526,7 +557,17 @@ public class JDialogLattice extends JDialogBase {
 		image.registerVOI(samplingPoints);
 //		image.registerVOI(wormContours);
 //		image.registerVOI(samplingPlanes);
-		straighten(image, samplingPlanes, ellipseBounds, extent, false, false );
+		
+		double avgDiameter = 0;
+		for ( int i = 0; i < wormDiameters.size(); i++ )
+		{
+			avgDiameter += wormDiameters.elementAt(i);
+		}
+		avgDiameter /= (float)wormDiameters.size();
+		avgDiameter /= 2;
+		double volume = Math.PI * (4f/3f) * (length/2f) * avgDiameter * avgDiameter;
+//		System.err.println( "Estimated volume = " + volume );
+		straighten(image, samplingPlanes, ellipseBounds, 2*extent, latticeSlice, false, false );
 		
 		return null; //createTube( image, center, extent);
 	}
@@ -600,7 +641,7 @@ public class JDialogLattice extends JDialogBase {
     }
     
     public static void straighten( ModelImage image, VOI samplingPlanes, Vector<Ellipsoid3f> ellipseBounds,
-    		int diameter,
+    		int diameter, int[] latticeSlice,
     		boolean fillData, boolean displayMask )
     {
 		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
@@ -653,7 +694,56 @@ public class JDialogLattice extends JDialogBase {
 				e.printStackTrace();
 			}
 		}
+		
+		
 
+		short id = (short) image.getVOIs().getUniqueID();
+		VOI lattice = new VOI(id, "lattice", VOI.POLYLINE, (float)Math.random() );
+		VOIContour leftSide = new VOIContour( false );
+		VOIContour rightSide = new VOIContour( false );
+		lattice.getCurves().add(leftSide);		
+		lattice.getCurves().add(rightSide);
+		Vector3f dir = new Vector3f(1,0,0);
+		for ( int i = 0; i < latticeSlice.length; i++ )
+		{
+			Ellipsoid3f ellipsoid = ellipseBounds.elementAt( latticeSlice[i] );
+//			Vector3f center = ellipsoid.Center;
+			float width = ellipsoid.Extent[0];
+//			Vector3f dir = ellipsoid.Axis[0];
+			Vector3f center = new Vector3f(diameter/2,diameter/2,latticeSlice[i]);
+			
+			Vector3f leftPt = Vector3f.scale( -width, dir ); leftPt.add(center);
+			leftSide.add(leftPt);
+			
+			Vector3f rightPt = Vector3f.scale(  width, dir ); rightPt.add(center);
+			rightSide.add(rightPt);
+		}
+
+		resultImage.registerVOI(lattice);
+
+		lattice.setColor( new Color( 0, 0, 255) );
+		lattice.getCurves().elementAt(0).update( new ColorRGBA(0,0,1,1));
+		lattice.getCurves().elementAt(1).update( new ColorRGBA(0,0,1,1));
+		lattice.getCurves().elementAt(0).setClosed(false);
+		lattice.getCurves().elementAt(1).setClosed(false);
+		for ( int j = 0; j < leftSide.size(); j++ )
+		{
+			id = (short) image.getVOIs().getUniqueID();
+			VOI marker = new VOI(id, "pair_" + j, VOI.POLYLINE, (float)Math.random() );
+			VOIContour mainAxis = new VOIContour(false); 		    		    		
+			mainAxis.add( leftSide.elementAt(j) );
+			mainAxis.add( rightSide.elementAt(j) );
+			marker.getCurves().add(mainAxis);
+			marker.setColor( new Color( 255, 255, 0) );
+			mainAxis.update( new ColorRGBA(1,1,0,1));
+			if ( j == 0 )
+			{
+				marker.setColor( new Color( 0, 255, 0) );
+				mainAxis.update( new ColorRGBA(0,1,0,1));
+			}
+			resultImage.registerVOI( marker );
+		}
+			
 		resultImage.calcMinMax();
 		resultImage.setImageName( image.getImageName() + "_straightened_isotropic" );
 		new ViewJFrameImage(resultImage);  	
