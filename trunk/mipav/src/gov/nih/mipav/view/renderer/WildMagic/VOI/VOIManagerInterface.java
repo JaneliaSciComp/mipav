@@ -1213,7 +1213,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             	lattice = new VOIVector();
                 voiDir = new String(directory + fileName + File.separator);
                 loadAllVOIsFrom(voiDir, false, lattice);
-                System.err.println( "Lattice " + lattice.size() );
+//                System.err.println( "Lattice " + lattice.size() );
             }
         } else if ( command.equals("AddLeftRightMarkers") ) {
         	mouse3D = true;
