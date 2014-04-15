@@ -624,7 +624,12 @@ public class FileBRUKER extends FileBase {
                         double effectiveSpectralBandwidth = Double.valueOf(parseString[1]).doubleValue();
                         fileInfo.setEffectiveSpectralBandwidth(effectiveSpectralBandwidth);
                         Preferences.debug("Effective bandwidth of data sampling \n\tduring the frequency encoding period = " 
-                        		          + effectiveSpectralBandwidth + "\n", Preferences.DEBUG_FILEIO);
+                        		          + effectiveSpectralBandwidth + 
+                        		          "\n\tThe optimal bandwidth choice is a" + 
+                                          "\n\ttrade-off between the field strength (to" + 
+                        		          "\n\tdecrease chemical shift artifacts, increase" +
+                                          "\n\tbandwidth), the S/N ratio (decrease bandwidth)" +
+                        		          "\n\tand the minimum possible TE(increase bandwidth).\n", Preferences.DEBUG_FILEIO);
                     } catch(NumberFormatException nfe) {
                         Preferences.debug("Effective spectral bandwidth could not be read.\n", Preferences.DEBUG_FILEIO);
                     }
@@ -641,10 +646,13 @@ public class FileBRUKER extends FileBase {
                     try {
                         double echoTime = Double.valueOf(parseString[1]).doubleValue();;
                         fileInfo.setEchoTime(echoTime);
-                        Preferences.debug("Delay between the effective centre of the excitation pulse"
+                        Preferences.debug("Delay (abbreviation TE) between the effective centre of the excitation pulse"
                                          + "\n\t(depends on pulse rephasing properties) and "
                                          + "\n\tthe acquisition of the k-space centre = " 
-                        		          + echoTime + "\n", Preferences.DEBUG_FILEIO);
+                        		          + echoTime + 
+                        		         "\n\tTE determines the T2 weighting of the spectra. The minimum" +
+                                         "\n\tof TE depends on excitation pulse lengths and the" + 
+                        		         "\n\tduration of spoiler gradients\n", Preferences.DEBUG_FILEIO);
                     } catch(NumberFormatException nfe) {
                         Preferences.debug("Echo time could not be read.\n", Preferences.DEBUG_FILEIO);
                     }
@@ -682,7 +690,7 @@ public class FileBRUKER extends FileBase {
                         Preferences.debug("Delay between corresponding slices in consecutive volumes = " 
                         		        + repetitionTime + "\n", Preferences.DEBUG_FILEIO);
                     } catch(NumberFormatException nfe) {
-                        Preferences.debug("Delay between correspolnding slices in consecutive volumes could not be read.\n", 
+                        Preferences.debug("Delay between corresponding slices in consecutive volumes could not be read.\n", 
                         		           Preferences.DEBUG_FILEIO);
                     }
                 } else {
@@ -945,6 +953,417 @@ public class FileBRUKER extends FileBase {
                     raFile.close();
                     throw new IOException("##$PVM_DwRFcPulseEnum has parseString with length = " + parseString.length);
                 }
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwSliceGradDur")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                        double sliceGradientDuration = Double.valueOf(parseString[1]).doubleValue();;
+                        fileInfo.setSliceGradientDuration(sliceGradientDuration);
+                        Preferences.debug("Slice gradient duration = " + sliceGradientDuration + 
+                                          "\n\tIt is possible to modify this duration within the limits of" +
+                                          "\n\t[min,min+4*risetime]. The minimum is defined by the actual" + 
+                                          "\n\tduration of the RF pulse. With the help of this parameter a" +
+                                          "\n\tcertain duration of the slice gradient plateau between the" +
+                                          "\n\tgradient switching event of the slice gradient and the start" +
+                                          "\n\tof the RF pulse can be specified. By default, the minimum" +
+                                          "\n\tduration is set.\n", Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("Slice gradient duration could not be read.", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DwSliceGradDur has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwSliceGrad")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                        double sliceGradient = Double.valueOf(parseString[1]).doubleValue();;
+                        fileInfo.setSliceGradient(sliceGradient);
+                        Preferences.debug("Slice gradient = "  + sliceGradient + "\n", Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("Slice gradient could not be read.", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DwSliceGrad has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwSliceGradLim")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                        double sliceGradientLimit = Double.valueOf(parseString[1]).doubleValue();;
+                        fileInfo.setSliceGradientLimit(sliceGradientLimit);
+                        Preferences.debug("Slice gradient limit = "  + sliceGradientLimit + "\n", Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("Slice gradient limit could not be read.", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DwSliceGradLim has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_TeDwSliceSpoilGradDur")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                        double TESliceSpoilerGradientsDuration = Double.valueOf(parseString[1]).doubleValue();;
+                        fileInfo.setTESliceSpoilerGradientsDuration(TESliceSpoilerGradientsDuration);
+                        Preferences.debug("Duration of the TE slice spoilers gradient = " + TESliceSpoilerGradientsDuration + "\n" +
+              			      "\tAround the refocusing pulse in spin echo or in the echo periods" +
+            			      "\n\tin stimulated echo preparation.  In stimulated echo the" +
+            			      "\n\tduration of the TM spoiler gradient is fixed to be 3 times" +
+            			      "\n\tthe duration of this TE spoiler duration and the gradient" +
+            			      "\n\tamplitude of the TM spoiler is fixed to the value of the TE" +
+            			      "\n\tspoilers. This should prevent the excitation of unwanted" +
+            			      "\n\tcoherences of the other 3-Pulse signals in the stimulated" +
+            			      "\n\techo preparation mode.\n", Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("TE slice spoiler gradients duration could not be read.", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_TeDwSliceSpoilGradDur has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_TeDwSliceSpoilGrad")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                        double TESliceSpoilerGradientsAmplitude = Double.valueOf(parseString[1]).doubleValue();;
+                        fileInfo.setTESliceSpoilerGradientsAmplitude(TESliceSpoilerGradientsAmplitude);
+                        Preferences.debug("Amplitude of the TE slice spoiler gradients = " + TESliceSpoilerGradientsAmplitude +
+                          "\n\t(expressed in% of max. gradient power)" +
+        			      "\n\tIn stimulated echo the TM slice spolier gradient is fixed" +
+                          "\n\tto the same value\n", Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("TE slice spoiler gradients amplitude could not be read.", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_TeDwSliceSpoilGrad has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_TeDwSliceSpoilGradLim")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                        double TESliceSpoilerGradientsLimit = Double.valueOf(parseString[1]).doubleValue();;
+                        fileInfo.setTESliceSpoilerGradientsLimit(TESliceSpoilerGradientsLimit);
+                        Preferences.debug("TE slice spoiler gradients limit = " + TESliceSpoilerGradientsLimit +
+                          "\n", Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("TE slice spoiler gradients limit could not be read.", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_TeDwSliceSpoilLim has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwGradDur")) {
+            	int arrayLength = 1;
+                if (parseString.length == 4) {
+                	okay = true;
+                	if (parseString[1].equals("(")) {
+	                	Preferences.debug("For PVM_DwGradDur parseString[1] == '(' as expected\n", Preferences.DEBUG_FILEIO);
+	                }
+	                else
+	                {
+	                	okay = false;
+	                	Preferences.debug("For PVM_DwGradDur parseString[1] unexpectedly == " + parseString[1] + "\n", 
+	                			Preferences.DEBUG_FILEIO);
+	                }
+                	if (okay) {
+	                	try {
+	                	    arrayLength = Integer.valueOf(parseString[2]).intValue();
+	                	    Preferences.debug("Array length in PVM_DwGradDur = " + arrayLength + "\n", Preferences.DEBUG_FILEIO);
+	                	}
+	                	catch(NumberFormatException nfe) {
+	                		okay = false;
+	                		Preferences.debug("Array length of PVM_DwGradDur could not be read.\n", Preferences.DEBUG_FILEIO);
+	                	}
+                	}
+                	if (okay) {
+	                	if (parseString[3].equals(")")) {
+	                        Preferences.debug("For PVM_DwGradDur parseString[3] == ')' as expected\n", Preferences.DEBUG_FILEIO);	
+	                    }
+	                    else {
+	                    	Preferences.debug("For PVM_DwGradDur parseString[3] unexpectedly == " + parseString[3] + "\n",
+	                    			Preferences.DEBUG_FILEIO);
+		                	okay = false;	
+	                    }
+                	}
+                    if (okay) {
+                    	double diffusionGradientDuration[] = new double[arrayLength];
+                    	boolean durationOkay = true;
+                    	numFound = 0;
+                		while ((numFound < arrayLength) && (lineString != null) && durationOkay) {
+                			lineString = readLine();
+                			if (lineString != null) {
+                			    parseString = parse(lineString);
+                			    for (i = 0; i < parseString.length && durationOkay; i++) {
+                			    	try {
+                			    	    diffusionGradientDuration[numFound] = Double.valueOf(parseString[i]);
+                			    	}
+                			    	catch(NumberFormatException nfe) {
+                                        Preferences.debug("diffusionGradientDuration[" + numFound + "] could not be read.",
+                                        		Preferences.DEBUG_FILEIO);
+                                        durationOkay = false;
+                                    }
+                			    	if (durationOkay) {
+                			    		numFound++;
+                			    	}
+                			    } // for (i = 0; i < parseString.length && durationOkay; i++) 
+                			} // if (lineString != null)
+                		} // while ((numFound < arrayLength) && (lineString != null) && durationOkay)
+                		if (durationOkay) {
+                			Preferences.debug("Array of duration of gradient pulses of the diffusion experiment:\n",
+                					          Preferences.DEBUG_FILEIO);
+                			for (i = 0; i < arrayLength; i++) {
+                				Preferences.debug("Duration["+i+"] = " + diffusionGradientDuration[i] + "\n",
+                						           Preferences.DEBUG_FILEIO);
+                			}
+                			fileInfo.setDiffusionGradientDuration(diffusionGradientDuration);
+                		}
+                    } // if (okay)
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DwGradDur has parseString with length = " + parseString.length);
+                }
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwGradSep")) {
+            	int arrayLength = 1;
+                if (parseString.length == 4) {
+                	okay = true;
+                	if (parseString[1].equals("(")) {
+	                	Preferences.debug("For PVM_DwGradSep parseString[1] == '(' as expected\n", Preferences.DEBUG_FILEIO);
+	                }
+	                else
+	                {
+	                	okay = false;
+	                	Preferences.debug("For PVM_DwGradSep parseString[1] unexpectedly == " + parseString[1] + "\n", 
+	                			Preferences.DEBUG_FILEIO);
+	                }
+                	if (okay) {
+	                	try {
+	                	    arrayLength = Integer.valueOf(parseString[2]).intValue();
+	                	    Preferences.debug("Array length in PVM_DwGradSep = " + arrayLength + "\n", Preferences.DEBUG_FILEIO);
+	                	}
+	                	catch(NumberFormatException nfe) {
+	                		okay = false;
+	                		Preferences.debug("Array length of PVM_DwGradSep could not be read.\n", Preferences.DEBUG_FILEIO);
+	                	}
+                	}
+                	if (okay) {
+	                	if (parseString[3].equals(")")) {
+	                        Preferences.debug("For PVM_DwGradSep parseString[3] == ')' as expected\n", Preferences.DEBUG_FILEIO);	
+	                    }
+	                    else {
+	                    	Preferences.debug("For PVM_DwGradSep parseString[3] unexpectedly == " + parseString[3] + "\n",
+	                    			Preferences.DEBUG_FILEIO);
+		                	okay = false;	
+	                    }
+                	}
+                    if (okay) {
+                    	double diffusionGradientSeparation[] = new double[arrayLength];
+                    	boolean separationOkay = true;
+                    	numFound = 0;
+                		while ((numFound < arrayLength) && (lineString != null) && separationOkay) {
+                			lineString = readLine();
+                			if (lineString != null) {
+                			    parseString = parse(lineString);
+                			    for (i = 0; i < parseString.length && separationOkay; i++) {
+                			    	try {
+                			    	    diffusionGradientSeparation[numFound] = Double.valueOf(parseString[i]);
+                			    	}
+                			    	catch(NumberFormatException nfe) {
+                                        Preferences.debug("diffusionGradientSeparation[" + numFound + "] could not be read.",
+                                        		Preferences.DEBUG_FILEIO);
+                                        separationOkay = false;
+                                    }
+                			    	if (separationOkay) {
+                			    		numFound++;
+                			    	}
+                			    } // for (i = 0; i < parseString.length && separationOkay; i++) 
+                			} // if (lineString != null)
+                		} // while ((numFound < arrayLength) && (lineString != null) && separationOkay)
+                		if (separationOkay) {
+                			Preferences.debug("Array of separation of gradient pulses of the diffusion experiment:\n",
+                					          Preferences.DEBUG_FILEIO);
+                			for (i = 0; i < arrayLength; i++) {
+                				Preferences.debug("Separation["+i+"] = " + diffusionGradientSeparation[i] + "\n",
+                						           Preferences.DEBUG_FILEIO);
+                			}
+                			fileInfo.setDiffusionGradientSeparation(diffusionGradientSeparation);
+                		}
+                    } // if (okay)
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DwGradSep has parseString with length = " + parseString.length);
+                }
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwDirectScale")) {
+
+                if (parseString.length == 2) {
+                    String directScaledSwitching = null;
+                    if (parseString[1].equalsIgnoreCase("Yes")) {
+                    	directScaledSwitching = "Direct scaled switching is allowed." +
+                                                "\n\tthe diffusion gradients are not effected" + 
+                    			                "\n\tby gradient rotations performed to establish" +
+                                                "\n\toblique slices. For this reason the norm" +
+                    			                "\n\t(i.e. amount) of the diffusion direction vector" +
+                    			                "\n\tis not limited to 1.0 which allows stronger" +
+                    			                "\n\tb-values at given gradient durations." +
+                    	                        "\n\tDirect Scaled Switching carries a potential" +
+                    			                "\n\trisk of overheating the gradient coils.";
+                    	fileInfo.setDirectScaledSwitching(directScaledSwitching);
+                    	Preferences.debug(directScaledSwitching + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    else if (parseString[1].equalsIgnoreCase("No")) {
+                    	directScaledSwitching = "Direct scaled switching is not allowed (the default)" +
+                                                "\n\tThe norm (i.e. amount) of the diffusion gradient" +
+                    			                "\n\tdirection is limited to 1.0 at the expense of the" +
+                                                "\n\tefficiency of diffusion weighting for a given echo" +
+                                                "\n\ttime.";
+                    	fileInfo.setDirectScaledSwitching(directScaledSwitching);
+                    	Preferences.debug(directScaledSwitching + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    else {
+                    	Preferences.debug("##$PVM_DwDirectScale unexpectedly has parseString[1] = " + parseString[1] + "\n",
+                    			          Preferences.DEBUG_FILEIO);
+                    }
+                    
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DwDirectScale has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwMeasMode")) {
+
+                if (parseString.length == 2) {
+                	String diffusionMeasurementMode = null;
+                    if (parseString[1].equalsIgnoreCase("DW_Tensor")) {
+                        diffusionMeasurementMode = "Diffusion measurement mode = DW_Tensor" + 
+                                                    "\n\tIn this mode the Number of Diffusion" +
+                                                   "\n\tDirections must be greater or equal to 6, the" +
+                                                   "\n\tNumber of A0 Images must be at least 1. A default" +
+                                                   "\n\tinitialization of diffusion directions is" +
+                                                   "\n\tperformed: cyclic permutation of (1|+/-0.5|0)." +
+                        		                   "\n\tThis mode is intended to set up complete tensor" +
+                                                   "\n\tmeasurements. For this purpose the diffusion" +
+                        		                   "\n\tdirections must be non-collinear (this is not" +
+                                                   "\n\tchecked for!)";	
+                    }
+                    else if (parseString[1].equalsIgnoreCase("DW_MultishotTrace")) {
+                    	diffusionMeasurementMode = "Diffusion measurement mode = DW_MultishotTrace" +
+                                                   "\n\tIn this mode the Number of" +
+                                                   "\n\tDiffusion Directions is fixed to 3 and the Number" +
+                    			                   "\n\tof A0 Images must be at least 1. A default" +
+                                                   "\n\tinitialization of diffusion directions is" +
+                    			                   "\n\tperformed: (1|1|-0.5), (1|-0.5|1), (-0.5|1|1)." +
+                    			                   "\n\tThis mode is intended to estimate the trace of" +
+                    			                   "\n\tthe diffusion tensor. For this purpose the" +
+                    			                   "\n\tdiffusion directions must be perpendicular to" +
+                    			                   "\n\teach other (this is not checked for!)";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("DW_Contrast")) {
+                    	diffusionMeasurementMode = "Diffusion measurement mode = DW_Contrast" +
+                                                   "\n\tIn this mode there is no constraint" +
+                                                   "\n\ton Number of Diffusion Directions and Number of" +
+                    			                   "\n\tA0 Images.  This mode is intended to setup" +
+                                                   "\n\tdiffusion experiments for mono exponential fitting." +
+                                                   "\n\tIt is still possible to setup different diffusion" +
+                                                   "\n\tdirections to get a direction averaging effect in" +
+                                                   "\n\tthe mono exponential fitting as a function of the" +
+                                                   "\n\teffective bvalues (trace of b-matrix.";
+                    }
+                    else {
+                    	diffusionMeasurementMode = parseString[1];
+                    }
+                    fileInfo.setDiffusionMeasurementMode(diffusionMeasurementMode);
+                    Preferences.debug(diffusionMeasurementMode + "\n", Preferences.DEBUG_FILEIO);
+                }
+                else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DwMeasMode has parseString with length = " + parseString.length);
+                }
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwNDiffDir")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                         int numberOfDiffusionDirections = Integer.valueOf(parseString[1]).intValue();;
+                        fileInfo.setNumberOfDiffusionDirections(numberOfDiffusionDirections);
+                        Preferences.debug("Number of different directions of the diffusion gradients =  " + 
+                                           numberOfDiffusionDirections + "\n", Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("Number of diffusion directions could not be read.", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DwNDiffDir has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwNDiffExpEach")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                         int diffusionExperimentsPerDirection = Integer.valueOf(parseString[1]).intValue();;
+                        fileInfo.setDiffusionExperimentsPerDirection(diffusionExperimentsPerDirection);
+                        Preferences.debug("Number of diffusion experiments sequentially performed in each" + 
+                                "\n\tspecified direction:\t " + diffusionExperimentsPerDirection +
+                                "\n\tEach diffusion experiment is characterized by a certain" +
+                                "\n\tdiffusion gradient strength. The diffusion gradient strength" +
+                                "\n\tis varied during the execution of the diffusion loop.\n", Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("Diffusion experiments per direction could not be read.", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DwNDiffExpEach has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwAoImages")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                        int numberOfA0Images = Integer.valueOf(parseString[1]).intValue();;
+                        fileInfo.setNumberOfA0Images(numberOfA0Images);
+                        Preferences.debug("Number of A0 images = " + numberOfA0Images +
+              			      "\n\tNumber of Images performed without diffusion gradients." +
+            			      "\n\tIn experiments with a large number of high b-values (e.g." +
+                              "\n\thigh number of diffusion directions and 1 b-value per" +
+            			      "\n\tdirection) the A0 reference point might be underestimated" +
+                              "\n\tif set to 1.\n", Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("Number of A0 images could not be read.", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DwA0Images has parseString with length = " + parseString.length);
+                }
+
             }
 
             lineString = readLine();
