@@ -52,7 +52,7 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 				slipString = slipLines.remove(index);
 				compare(reportString, slipString);
 				try {
-					concatCSV.append(makeString(reportString) + makeString(slipString) + "\n");
+					concatCSV.append(makeSiteString(reportString) + makeString(slipString) + "\n");
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -213,9 +213,26 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 	private String makeString(String[] array){
 		String cont = new String();
 		for(int i=0; i<array.length; i++){
-			cont += array[i] + ",";
+			if(array[i].equals("null")){
+				cont += ",";
+			}
+			else
+				cont += array[i] + ",";
 		}
 		//cont += "\n";
+		return cont;
+	}
+	
+	private String makeSiteString(String[] array){
+		String cont = new String();
+		int len = array.length;
+		for(int i=0;i<11;i++){
+			if(i>=len || array[i].equals("null"))
+				cont += ",";
+			else
+				cont += array[i] + ",";	
+		}
+		
 		return cont;
 	}
 	
