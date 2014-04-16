@@ -29,7 +29,16 @@ public class MipavExceptionHandler implements Thread.UncaughtExceptionHandler {
         final String description = getStackTrace(e);
         final BugType bugType = BugType.AUTOMATIC_ERROR_REPORTING;
 
-        ReportBugBuilder.sendReportWeb(summary, name, email, version, os, urgency, description, bugType, new ArrayList<String>(), new ArrayList<String>());
+        final String workingDir = System.getProperty("user.dir");
+        final String jreDir = System.getProperty("java.home");
+
+        // if the jre dir is under the working dir, mipav is probably running off an install instead of dev environment
+        if (jreDir.startsWith(workingDir)) {
+            ReportBugBuilder.sendReportWeb(summary, name, email, version, os, urgency, description, bugType, new ArrayList<String>(), new ArrayList<String>());
+        } else {
+            // TODO: may not detect when running via JWS (since it's not running of the mipav-installed jre)
+            System.err.println(ReportBugBuilder.compileReport(summary, name, email, version, os, urgency, description));
+        }
 
         // also output to console
         e.printStackTrace();
