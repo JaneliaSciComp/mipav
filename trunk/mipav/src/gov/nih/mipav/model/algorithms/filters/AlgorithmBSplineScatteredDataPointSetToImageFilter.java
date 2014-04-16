@@ -305,6 +305,20 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	    	afterThreadedGenerateData();
 	    	updatePointSet();
 	    	
+	    	if (doMultiLevel) {
+	    		psiLattice = new ModelImage(ModelStorageBase.DOUBLE, phiLattice.getExtents(), "psiLattice");
+	    	} // if (doMultiLevel)
+	    	
+	    	for (currentLevel = 1; currentLevel < maximumNumberOfLevels; currentLevel++) {
+	    	   int psiLength = 1;
+	    	   for (int i = 0; i < nDims; i++) {
+	    		   psiLength *= psiLattice.getExtents()[i];
+	    	   }
+	    	   for (int itpsi = 0; itpsi < psiLength; itpsi++) {
+	    		   psiLattice.set(itpsi, phiLattice.getDouble(itpsi) + psiLattice.getDouble(itpsi));
+	    	   }
+	    	   refineControlPointLattice();
+	    	} // for (currentLevel = 1; currentLevel < maximumNumberOfLevels; currentLevel++)
 	    }
 	    
 	    private void beforeThreadedGenerateData() {
@@ -428,8 +442,10 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	    private void threadedGenerateDataForReconstruction() {
 	        double collapsedPhiLattices[][] = new double[nDims + 1][];
 	        int collapsedPhiLatticeIndex[][] = new int[nDims+1][];
+	        int size = 1;
+	        int it;
 	        for (int i = 0; i <= nDims; i++) {
-	            int size = 1;
+	            size = 1;
 	            if (i == 0) {
 	            	collapsedPhiLatticeIndex[i] = new int[1];
 	            	collapsedPhiLatticeIndex[i][0] = 1;
@@ -442,6 +458,74 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	            	collapsedPhiLatticeIndex[i][j] = phiLattice.getExtents()[j];
 	            }
 	            collapsedPhiLattices[i] = new double[size];
+	        }
+	        try {
+	        	phiLattice.exportData(0, size, collapsedPhiLattices[nDims]);
+	        }
+	        catch(IOException e) {
+	        	MipavUtil.displayError("IOException on phiLattice.exportData");
+	        	return;
+	        }
+	        int totalNumberOfSpans[] = new int[nDims];
+	        for (int i = 0; i <  nDims; i++) {
+	        	if (closeDimension[i] != 0) {
+	        		totalNumberOfSpans[i] = phiLattice.getExtents()[i];
+	        	}
+	        	else {
+	        	    totalNumberOfSpans[i] = phiLattice.getExtents()[i] - splineOrder[i];
+	        	}
+	        } // for (int i = 0; i < nDims; i++)
+	        double U[] = new double[nDims];
+	        double currentU[] = new double[nDims];
+	        for (int i = 0; i < nDims; i++) {
+	        	currentU[i] = -1;
+	        }
+	        
+	        double outputBuffer[] = new double[extentsLength];
+	        try {
+	        	outputImage.exportData(0, extentsLength, outputBuffer);
+	        }
+	        catch(IOException e) {
+	        	MipavUtil.displayError("IOException on outputImage.exportData");
+	        	return;
+	        }
+	        int idx[] = new int[nDims];
+	        for (it = 0; it < extentsLength; it++) {
+	            idx[0] = it % extents[0];
+	            idx[1] = (it % extentsSlice) / extents[0];
+	            if (nDims > 2) {
+	            	idx[2] = it / extentsSlice;
+	            }
+	            for (int i = 0; i < nDims; i++) {
+	                U[i] = ((double)(totalNumberOfSpans[i] * (idx[i] /* - startIndex[i] */)))/(double)(extents[i] - 1);
+	                if (Math.abs(U[i] - totalNumberOfSpans[i]) <= BSplineEpsilon) {
+	                	U[i] = totalNumberOfSpans[i] - BSplineEpsilon;
+	                }
+	                if (U[i] >= totalNumberOfSpans[i]) {
+	                	MipavUtil.displayError("The collapse point component " + U[i] + 
+	                			" is outside the corresponding parametric domain of [0, " + totalNumberOfSpans[i] +
+	                			"].");
+	                	return;
+	                }
+	            } // for (int i = 0; i < nDims; i++)
+	            for (int i = nDims - 1; i >= 0; i--) {
+	                if (U[i] != currentU[i]) {
+	                	for (int j = i; j >= 0; j--) {
+	                		collapsePhiLattice(collapsedPhiLattices[j+1],collapsedPhiLatticeIndex[j+1], collapsedPhiLattices[j],
+	                				collapsedPhiLatticeIndex[j], U[j], j);
+	                		currentU[j] = U[j];
+	                	}
+	                	break;
+	                }
+	            } // for (int i = nDims - 1; i >= 0; i--)
+	            outputBuffer[it] = collapsedPhiLattices[0][0];
+	        } // for (it = 0; it < extentsLength; it++)
+	        try {
+	        	outputImage.importData(0, outputBuffer, true);
+	        }
+	        catch(IOException e) {
+	        	MipavUtil.displayError("IOException on outputImage.importData");
+	        	return;
 	        }
 	    }
 	    
@@ -498,11 +582,136 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	    }
 	    
 	    private void afterThreadedGenerateData() {
-	    	
+	      if (!isFittingComplete) {
+	          // Accumulate all the delta lattice and omega lattice values to
+	    	  // calculate the final phi lattice.
+	    	  // Not necessary if only 1 thread was used
+	    	  
+	    	  // Generate the control point lattice
+	    	  int size[] = new int[nDims];
+	    	  int latticeLength = 1;
+	    	  for (int i = 0; i < nDims; i++) {
+	    		  if (closeDimension[i] != 0) {
+	    			  size[i] = currentNumberOfControlPoints[i] - splineOrder[i];
+	    		  }
+	    		  else {
+	    			  size[i] = currentNumberOfControlPoints[i];
+	    		  }
+	    		  latticeLength *= size[i];
+	    	  } // for (int i = 0; i < nDims; i++)
+	    	  double latticeBuffer[] = new double[latticeLength];
+	    	  for (int itp = 0; itp < latticeLength; itp++) {
+	    		  double P = 0;
+	    		  if (omegaLattice[itp] != 0) {
+	    			  P = deltaLattice[itp] / omegaLattice[itp];
+	    			  if ((Double.isNaN(P)) || (Double.isInfinite(P))) {
+	    				  P = 0;
+	    			  }
+	    			  latticeBuffer[itp] = P;
+	    		  }
+	    	  }
+	    	  phiLattice = new ModelImage(ModelStorageBase.DOUBLE, size, "phiLattice");
+	    	  try {
+	    		  phiLattice.importData(0, latticeBuffer, true);
+	    	  }
+	    	  catch (IOException e) {
+	    		  MipavUtil.displayError("IOException on phiLattice.importData");
+	    		  return;
+	    	  }
+	      } // if (!isFittingComplete)
 	    }
 	    
 	    private void updatePointSet() {
-	    	
+	    	double collapsedPhiLattices[][] = new double[nDims + 1][];
+	        int collapsedPhiLatticeIndex[][] = new int[nDims+1][];
+	        int size = 1;
+	        for (int i = 0; i <= nDims; i++) {
+	            size = 1;
+	            if (i == 0) {
+	            	collapsedPhiLatticeIndex[i] = new int[1];
+	            	collapsedPhiLatticeIndex[i][0] = 1;
+	            }
+	            else {
+	            	collapsedPhiLatticeIndex[i] = new int[i];
+	            }
+	            for (int j = 0; j < i; j++) {
+	            	size *= phiLattice.getExtents()[j];
+	            	collapsedPhiLatticeIndex[i][j] = phiLattice.getExtents()[j];
+	            }
+	            collapsedPhiLattices[i] = new double[size];
+	        }
+	        try {
+	        	phiLattice.exportData(0, size, collapsedPhiLattices[nDims]);
+	        }
+	        catch(IOException e) {
+	        	MipavUtil.displayError("IOException on phiLattice.exportData");
+	        	return;
+	        }
+	        int totalNumberOfSpans[] = new int[nDims];
+	        for (int i = 0; i <  nDims; i++) {
+	        	if (closeDimension[i] != 0) {
+	        		totalNumberOfSpans[i] = phiLattice.getExtents()[i];
+	        	}
+	        	else {
+	        	    totalNumberOfSpans[i] = phiLattice.getExtents()[i] - splineOrder[i];
+	        	}
+	        } // for (int i = 0; i < nDims; i++)
+	        double U[] = new double[nDims];
+	        double currentU[] = new double[nDims];
+	        for (int i = 0; i < nDims; i++) {
+	        	currentU[i] = -1;
+	        }
+	        
+	        for (int itin = 0; itin < inputPointData.size(); itin++) {
+	        	double point[] = new double[nDims];
+	        	point[0] = pointLocation.get(itin).X;
+	        	point[1] = pointLocation.get(itin).Y;
+	            if (nDims > 2) {
+	            	point[2] = pointLocation.get(itin).Z;
+	            }
+	            for (int i = 0; i < nDims; i++) {
+	            	U[i] = totalNumberOfSpans[i] * (point[i] - origin[i])/((extents[i] - 1) * resolutions[i]);
+	            	if (Math.abs(U[i] - totalNumberOfSpans[i]) <= BSplineEpsilon) {
+	            		U[i] = totalNumberOfSpans[i] - BSplineEpsilon;
+	            	}
+	            	if (U[i] >= totalNumberOfSpans[i]) {
+	                	MipavUtil.displayError("The collapse point component " + U[i] + 
+	                			" is outside the corresponding parametric domain of [0, " + totalNumberOfSpans[i] +
+	                			"].");
+	                	return;
+	                }
+	            } // for (int i = 0; i < nDims; i++)
+	            for (int i = nDims - 1; i >= 0; i--) {
+	                if (U[i] != currentU[i]) {
+	                	for (int j = i; j >= 0; j--) {
+	                		collapsePhiLattice(collapsedPhiLattices[j+1],collapsedPhiLatticeIndex[j+1], collapsedPhiLattices[j],
+	                				collapsedPhiLatticeIndex[j], U[j], j);
+	                		currentU[j] = U[j];
+	                	}
+	                	break;
+	                }
+	            } // for (int i = nDims - 1; i >= 0; i--)
+	            outputPointData.insertElementAt(collapsedPhiLattices[0][0], itin);
+	        } // for (int itin = 0; itin < inputPointData.size(); itin++) 
+	        	
+	    }
+	    
+	    private void refineControlPointLattice() {
+	        int[] numberOfNewControlPoints = currentNumberOfControlPoints.clone();
+	        for (int i = 0; i < nDims; i++) {
+	            if (currentLevel < numberOfLevels[i])	{
+	            	numberOfNewControlPoints[i] = 2 * numberOfNewControlPoints[i] - splineOrder[i];
+	            }
+	        } // for (int i = 0; i < nDims; i++)
+	        int size[] = new int[nDims];
+	        for (int i = 0; i < nDims; i++) {
+	        	if (closeDimension[i] != 0) {
+	        		size[i] = numberOfNewControlPoints[i] - splineOrder[i];
+	        	}
+	        	else {
+	        		size[i] = numberOfNewControlPoints[i];                                                          
+	        	}
+	        } // for (int i = 0; i < nDims; i++)
 	    }
 
 	    /**
