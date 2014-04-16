@@ -64,6 +64,8 @@ import gov.nih.mipav.view.ViewJProgressBar;
 		protected Vector<Double> pointData;
 		protected Vector<Vector3d> pointLocation;
 		protected ModelImage outputImage;
+		protected int extentsLength;
+		protected int extentsSlice;
 		
 		/**
 	     * Constructor which sets the source and destination images
@@ -121,9 +123,12 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	    }
 	    
 	    public void setExtents(int[] extents) {
+	    	extentsLength = 1;
 	    	for (int i = 0; i < nDims; i++) {
 	    		this.extents[i] = extents[i];
+	    		extentsLength *= extents[i];
 	    	}
+	    	extentsSlice = extents[0] * extents[1];
 	    }
 	    
 	    public void setDirection(double[][] direction) {
