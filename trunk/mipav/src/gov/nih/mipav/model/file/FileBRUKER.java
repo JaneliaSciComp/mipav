@@ -366,8 +366,9 @@ public class FileBRUKER extends FileBase {
             					bMatrixVals[i][4] = bMat[i][1][2];
             					bMatrixVals[i][5] = bMat[i][2][2];
             			    }
+            				// The bMatrix is in (r, p, s) read, phase, slice coordinates.
             				//dtiParams.setbMatrixVals(bMatrixVals);
-            				Preferences.debug("Just did dtiParams.setbMatrixVals(bMatrixVals)\n", Preferences.DEBUG_FILEIO);
+            				//Preferences.debug("Just did dtiParams.setbMatrixVals(bMatrixVals)\n", Preferences.DEBUG_FILEIO);
             			} // if (bMatOkay)
             		} // if (numFound == numVars)
             	} // if (okay)
@@ -464,6 +465,7 @@ public class FileBRUKER extends FileBase {
             				if (dtiParams == null) {
             					dtiParams = new DTIParameters(numVolumes);
             				}
+            				// gradients is in x, y, z coordinates
             				dtiParams.setGradients(gradients);
             				Preferences.debug("Just did dtiParams.setGradients(gradients)\n", Preferences.DEBUG_FILEIO);
             			} // if (gradientsOkay)
