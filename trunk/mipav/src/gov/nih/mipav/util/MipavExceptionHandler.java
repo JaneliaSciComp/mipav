@@ -30,6 +30,9 @@ public class MipavExceptionHandler implements Thread.UncaughtExceptionHandler {
         final BugType bugType = BugType.AUTOMATIC_ERROR_REPORTING;
 
         ReportBugBuilder.sendReportWeb(summary, name, email, version, os, urgency, description, bugType, new ArrayList<String>(), new ArrayList<String>());
+
+        // also output to console
+        e.printStackTrace();
     }
 
     public static String getStackTrace(final Throwable e) {
