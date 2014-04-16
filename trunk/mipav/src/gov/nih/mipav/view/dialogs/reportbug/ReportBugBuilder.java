@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs.reportbug;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogCaptureScreen;
@@ -12,14 +13,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.net.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Enumeration;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -235,6 +234,8 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener {
         final String sunDesktop = System.getProperties().getProperty("sun.desktop");
         final String fileSeparator = System.getProperties().getProperty("file.separator");
 
+        final String userName = System.getProperties().getProperty("user.name");
+
         final Date dateHolder = new Date();
         final DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
         final String date = dateFormat.format(dateHolder);
@@ -301,6 +302,35 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener {
         reportStr += "sun.desktop = " + sunDesktop;
         reportStr += "\n";
         reportStr += "file.separator = " + fileSeparator;
+        reportStr += "\n";
+        reportStr += "user.name = " + userName;
+        reportStr += "\n";
+        reportStr += "\n";
+        reportStr += "ip addresses =\t";
+        try {
+            final Enumeration e = NetworkInterface.getNetworkInterfaces();
+            while (e.hasMoreElements()) {
+                final NetworkInterface n = (NetworkInterface) e.nextElement();
+                final Enumeration ee = n.getInetAddresses();
+                while (ee.hasMoreElements()) {
+                    final InetAddress i = (InetAddress) ee.nextElement();
+                    if ( !i.isLoopbackAddress() && !i.isSiteLocalAddress() && !i.isAnyLocalAddress()) {
+                        reportStr += i.getHostName() + " - " + i.getHostAddress() + "\n\t\t";
+                    }
+                }
+            }
+        } catch (final SocketException e) {
+            // do nothing
+        }
+        reportStr += "\n";
+        int i = 0;
+        final Enumeration<String> images = ViewUserInterface.getReference().getRegisteredImageNames();
+        while (images.hasMoreElements()) {
+            final String imgName = images.nextElement();
+            reportStr += "open image [" + i + "] = " + imgName;
+            reportStr += "\n";
+            i++;
+        }
 
         return reportStr;
     }
