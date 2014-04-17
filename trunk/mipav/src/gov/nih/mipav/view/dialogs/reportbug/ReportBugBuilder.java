@@ -219,8 +219,10 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener {
         final String osName = System.getProperties().getProperty("os.name");
         final String osVersion = System.getProperties().getProperty("os.version");
         final String javaVersion = System.getProperties().getProperty("java.version");
+        final String javaCompiler = System.getProperties().getProperty("java.compiler");
         final String javaVendor = System.getProperties().getProperty("java.vendor");
         final String javaVendorUrl = System.getProperties().getProperty("java.vendor.url");
+        final String javaClassLoader = ClassLoader.getSystemClassLoader().getClass().getName();
         final String javaRuntimeName = System.getProperties().getProperty("java.runtime.name");
         final String javaRuntimeVersion = System.getProperties().getProperty("java.runtime.version");
         final String javaVmName = System.getProperties().getProperty("java.vm.name");
@@ -233,6 +235,8 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener {
         final String sunCpu = System.getProperties().getProperty("sun.cpu.endian");
         final String sunDesktop = System.getProperties().getProperty("sun.desktop");
         final String fileSeparator = System.getProperties().getProperty("file.separator");
+        final String javaClassPath = System.getProperties().getProperty("java.class.path").replaceAll(";", "\n\t\t\t");
+        final String javaLibraryPath = System.getProperties().getProperty("java.library.path").replaceAll(";", "\n\t\t\t");
 
         final String userName = System.getProperties().getProperty("user.name");
 
@@ -275,9 +279,13 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener {
         reportStr += "\n";
         reportStr += "java.version = " + javaVersion;
         reportStr += "\n";
+        reportStr += "java.compiler = " + javaCompiler;
+        reportStr += "\n";
         reportStr += "java.vendor = " + javaVendor;
         reportStr += "\n";
         reportStr += "java.vendorUrl = " + javaVendorUrl;
+        reportStr += "\n";
+        reportStr += "java class loader = " + javaClassLoader;
         reportStr += "\n";
         reportStr += "java.runtime.name = " + javaRuntimeName;
         reportStr += "\n";
@@ -304,6 +312,12 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener {
         reportStr += "file.separator = " + fileSeparator;
         reportStr += "\n";
         reportStr += "user.name = " + userName;
+        reportStr += "\n";
+        reportStr += "\n";
+        reportStr += "java.class.path =\t" + javaClassPath;
+        reportStr += "\n";
+        reportStr += "\n";
+        reportStr += "java.library.path =\t" + javaLibraryPath;
         reportStr += "\n";
         reportStr += "\n";
         reportStr += "ip addresses =\t";

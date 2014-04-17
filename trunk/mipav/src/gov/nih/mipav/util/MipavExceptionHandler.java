@@ -31,12 +31,14 @@ public class MipavExceptionHandler implements Thread.UncaughtExceptionHandler {
 
         final String workingDir = System.getProperty("user.dir");
         final String jreDir = System.getProperty("java.home");
+        final String[] javaClassPath = System.getProperties().getProperty("java.class.path").split(";");
 
         // if the jre dir is under the working dir, mipav is probably running off an install instead of dev environment
-        if (jreDir.startsWith(workingDir)) {
+        // JWS appears to set the classpath to only point to deploy.jar in the JRE, so we use that to detect JWS
+        // execution
+        if (jreDir.startsWith(workingDir) || javaClassPath.length == 1) {
             ReportBugBuilder.sendReportWeb(summary, name, email, version, os, urgency, description, bugType, new ArrayList<String>(), new ArrayList<String>());
         } else {
-            // TODO: may not detect when running via JWS (since it's not running of the mipav-installed jre)
             System.err.println(ReportBugBuilder.compileReport(summary, name, email, version, os, urgency, description));
         }
 
