@@ -84,6 +84,8 @@ public class FileInfoBRUKER extends FileInfoBase {
     private int diffusionExperimentsPerDirection = -1;
     
     private int numberOfA0Images = -1;
+    
+    private String patientPosition = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -281,6 +283,10 @@ public class FileInfoBRUKER extends FileInfoBase {
                           "\n\thigh number of diffusion directions and 1 b-value per" +
         			      "\n\tdirection) the A0 reference point might be underestimated" +
                           "\n\tif set to 1.\n");
+        }
+        
+        if (patientPosition != null) {
+        	dialog.append("Patient position = " + patientPosition + "\n");
         }
     }
 
@@ -553,5 +559,9 @@ public class FileInfoBRUKER extends FileInfoBase {
      */
     public void setNumberOfA0Images(int numberOfA0Images) {
         this.numberOfA0Images = numberOfA0Images;	
+    }
+    
+    public void setPatientPosition(String patientPosition) {
+    	this.patientPosition = patientPosition;
     }
 }
