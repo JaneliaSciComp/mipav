@@ -8,11 +8,14 @@ import gov.nih.mipav.view.Preferences;
 import java.io.*;
 import java.util.ArrayList;
 
+import Jama.Matrix;
+
 
 /**
- * Reads a BRUKER file by first reading in the d3proc header file, second the reco header file, third the acqp file int the 
- * same directory or up one or two two parent directories, and finally the 2dseq binary file.Paravision uses a subject patient
-   coordinate system (L->R, P->A, F->H), with X = L->R, Y = P->A, and Z = F->H.  This is different from the DICOM R->L, A->P, F->H.
+ * Reads a BRUKER file by first reading in the d3proc header file, second the reco header file, third the acqp file in the 
+ * same directory or up one or two two parent directories, then the method file,l and finally the 2dseq binary file.
+ * Paravision uses a subject patient coordinate system (L->R, P->A, F->H), with X = L->R, Y = P->A, and Z = F->H.  
+ * This is different from the DICOM R->L, A->P, F->H.
    Paravision also has a (r, p, s) read, phase, slice coordinate system.  ND is the total number of diffusion experiments.
    The B Matrix (PVM_DwBMat)(implemented as symmetric 3x3  matrix array of size ND) is calculated for each diffusion experiment
    in the imaging coordinate system (r,p,s).  
@@ -73,6 +76,26 @@ import java.util.ArrayList;
    ACQ_grad_matrix[1][2][0] = -0,5; 2nd slice, slice, Gx
    ACQ_grad_matrix[1][2][1] = 0.866; 2nd slice, slice, Gy
    ACQ_grad_matrix[1][2][2] = 0; 2nd slice, slice, Gz
+   
+   [x, y, z] = [r, p, s] * [ACQ_grad_matrix]
+   Let A = ACQ_grad_matrix
+   
+   [x]              [r]
+   [y] = ATranspose [p]
+   [z]              [s]
+   
+                            
+   [x] [x][y][z] =  ATranspose [r] [r][p][s] A
+   [y]                         [p]
+   [z]                         [s]
+   
+   so the to the BMatrix expressed in terms of xyz is ATranspose B A
+   
+   [x] [y] [z] [x] = [r][p][s] A ATranspose [r]
+               [y]                          [p]
+               [z]                          [s]
+   For orthonormal matrices ATranspose = AInverse, so the trace of the B
+   matrix is the same for both x,y,z and r,p,s coordinates.
  */
 
 public class FileBRUKER extends FileBase {
@@ -338,7 +361,7 @@ public class FileBRUKER extends FileBase {
 	                }
 	                if (okay) {
 	                    if (parseString[5].equals(")")) {
-	                        Preferences.debug("For PVM_DwMat parseString[5] == ')' as expected\n", Preferences.DEBUG_FILEIO);	
+	                        Preferences.debug("For PVM_DwBMat parseString[5] == ')' as expected\n", Preferences.DEBUG_FILEIO);	
 	                    }
 	                    else {
 	                    	Preferences.debug("For PVM_DwBMat parseString[5] unexpectedly == " + parseString[5] + "\n",
@@ -418,6 +441,17 @@ public class FileBRUKER extends FileBase {
             				if (dtiParams == null) {
             					dtiParams = new DTIParameters(numVolumes);
             				}
+            				// The bMatrix is in (r, p, s) read, phase, slice coordinates.
+            				// Change to a bMatrix in (x, y, z) coordinates.
+            				double acqGradMat[][][] = fileInfo.getAcqGradMat();
+            				if (acqGradMat != null) {
+            					for (i = 0; i < numVolumes; i++) {
+            						Matrix A = new Matrix(acqGradMat[i]);
+            						Matrix AT = A.transpose();
+            						Matrix B = new Matrix(bMat[i]);
+            						bMat[i] = (AT.times(B).times(A)).getArray();
+            					}
+            				}
             				bMatrixVals = new double[numVolumes][6];
             				for (i = 0; i < numVolumes; i++) {
             					bMatrixVals[i][0] = bMat[i][0][0];
@@ -427,9 +461,8 @@ public class FileBRUKER extends FileBase {
             					bMatrixVals[i][4] = bMat[i][1][2];
             					bMatrixVals[i][5] = bMat[i][2][2];
             			    }
-            				// The bMatrix is in (r, p, s) read, phase, slice coordinates.
-            				//dtiParams.setbMatrixVals(bMatrixVals);
-            				//Preferences.debug("Just did dtiParams.setbMatrixVals(bMatrixVals)\n", Preferences.DEBUG_FILEIO);
+            				dtiParams.setbMatrixVals(bMatrixVals);
+            				Preferences.debug("Just did dtiParams.setbMatrixVals(bMatrixVals)\n", Preferences.DEBUG_FILEIO);
             			} // if (bMatOkay)
             		} // if (numFound == numVars)
             	} // if (okay)
@@ -1542,47 +1575,47 @@ public class FileBRUKER extends FileBase {
 	                if (okay) {
 		                if (parseString[2].endsWith(",")) {
 		                    numSlices = Integer.valueOf(parseString[2].substring(0,parseString[2].length()-1));
-		                    Preferences.debug("For PVM_DwBMat numVolumes = " + numVolumes + "\n", Preferences.DEBUG_FILEIO);
+		                    Preferences.debug("For ACQ_grad_matrix numSlices = " + numSlices + "\n", Preferences.DEBUG_FILEIO);
 		                }
 		                else {
-		                	Preferences.debug("For PVM_DwBMat parseString[2] unexpectedly == " + parseString[2] + "\n",
+		                	Preferences.debug("For ACQ_grad_matrix parseString[2] unexpectedly == " + parseString[2] + "\n",
 		                			Preferences.DEBUG_FILEIO);
 		                	okay = false;
 		                }
 	                }
 	                if (okay) {
 		                if (parseString[3].equals("3,")) {
-		                    Preferences.debug("For PVM_DwBMat parseString[3] equals '3,', as expected\n", Preferences.DEBUG_FILEIO);			
+		                    Preferences.debug("For ACQ_grad_matrix parseString[3] equals '3,', as expected\n", Preferences.DEBUG_FILEIO);			
 		                }
 		                else {
-		                	Preferences.debug("For PVM_DwBMat parseString[3] unexpectedly == " + parseString[3] + "\n",
+		                	Preferences.debug("For ACQ_grad_matrix parseString[3] unexpectedly == " + parseString[3] + "\n",
 		                			          Preferences.DEBUG_FILEIO);
 		                	okay = false;
 		                }
 	                }
 	                if (okay) {
 	                	if (parseString[4].equals("3")) {
-		                    Preferences.debug("For PVM_DwBMat parseString[4] equals 3, as expected\n", Preferences.DEBUG_FILEIO);			
+		                    Preferences.debug("For ACQ_grad_matrix parseString[4] equals 3, as expected\n", Preferences.DEBUG_FILEIO);			
 		                }
 		                else {
-		                	Preferences.debug("For PVM_DwBMat parseString[4] unexpectedly == " + parseString[4] + "\n",
+		                	Preferences.debug("For ACQ_grad_matrix parseString[4] unexpectedly == " + parseString[4] + "\n",
 		                			          Preferences.DEBUG_FILEIO);
 		                	okay = false;
 		                }	
 	                }
 	                if (okay) {
 	                    if (parseString[5].equals(")")) {
-	                        Preferences.debug("For PVM_DwMat parseString[5] == ')' as expected\n", Preferences.DEBUG_FILEIO);	
+	                        Preferences.debug("For ACQ_grad_matrix parseString[5] == ')' as expected\n", Preferences.DEBUG_FILEIO);	
 	                    }
 	                    else {
-	                    	Preferences.debug("For PVM_DwBMat parseString[5] unexpectedly == " + parseString[5] + "\n",
+	                    	Preferences.debug("For ACQ_grad_matrix parseString[5] unexpectedly == " + parseString[5] + "\n",
 	                    			Preferences.DEBUG_FILEIO);
 		                	okay = false;	
 	                    }
 	                }
             	}
             	else {
-            		Preferences.debug("For PVM_DwBMat parseString.length unexpectedly == " + parseString.length + "\n",
+            		Preferences.debug("For ACQ_grad_matrix parseString.length unexpectedly == " + parseString.length + "\n",
             				          Preferences.DEBUG_FILEIO);
             		okay = false;
             	}
@@ -1633,12 +1666,10 @@ public class FileBRUKER extends FileBase {
             		if (numFound == numVars) {
             			
             			if (gradMatOkay) {
-            				if (dtiParams == null) {
-            					dtiParams = new DTIParameters(numVolumes);
-            				}
             				
+            				fileInfo.setAcqGradMat(gradMat);
             				Preferences.debug("Just read in ACQ_grad_mat\n", Preferences.DEBUG_FILEIO);
-            			} // if (bMatOkay)
+            			} // if (gradMatOkay)
             		} // if (numFound == numVars)
             	} // if (okay)
             } // else if (parseString[0].equalsIgnoreCase("##$ACQ_grad_matrix"))
