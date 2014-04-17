@@ -61,6 +61,8 @@ import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 
+import Jama.Matrix;
+
 
 /**
 * <hr>
@@ -3308,6 +3310,9 @@ import javax.swing.table.DefaultTableModel;
             double bMatrixVals[][] = null;
             double gradients[][] = null;
             double bValues[] = null;
+            int numSlices = 1;
+            double gradMat[][][] = null;
+            boolean gradMatOkay;
                    
             if (srcTableModel.getRowCount()>0){
                 int rowCount = srcTableModel.getRowCount();
@@ -3323,6 +3328,134 @@ import javax.swing.table.DefaultTableModel;
                 textBvalGradFile.setText(gradientFilePath);
                 final RandomAccessFile raFile = new RandomAccessFile(file, "r");
                 if (gradientFilePath.contains("method")) {
+                	int index = gradientFilePath.indexOf("method");
+                	String acqpFilePath = gradientFilePath.substring(0, index) + "acqp";
+                	File acqpFile = new File(acqpFilePath);
+                	if (acqpFile.exists()) {
+                	    RandomAccessFile acqpRaFile = new RandomAccessFile(acqpFile, "r");
+                	    acqpRaFile.seek(0);
+                    	lineString = readLine(acqpRaFile, foundEOF);
+
+                        while (lineString != null) {
+                            parseString = parse(lineString);
+                            if (parseString[0].equalsIgnoreCase("##$ACQ_grad_matrix")) {
+                            	okay = true;
+                            	if (parseString.length == 6) {
+                	                if (parseString[1].equals("(")) {
+                	                	Preferences.debug("For ACQ_grad_matrix parseString[1] == '(' as expected\n", Preferences.DEBUG_FILEIO);
+                	                }
+                	                else
+                	                {
+                	                	Preferences.debug("For ACQ_grad_matrix parseString[1] unexpectedly == " + parseString[1] + "\n", 
+                	                			Preferences.DEBUG_FILEIO);
+                	                	okay = false;
+                	                }
+                	                if (okay) {
+                		                if (parseString[2].endsWith(",")) {
+                		                    numSlices = Integer.valueOf(parseString[2].substring(0,parseString[2].length()-1));
+                		                    Preferences.debug("For ACQ_grad_matrix numSlices = " + numSlices + "\n", Preferences.DEBUG_FILEIO);
+                		                }
+                		                else {
+                		                	Preferences.debug("For ACQ_grad_matrix parseString[2] unexpectedly == " + parseString[2] + "\n",
+                		                			Preferences.DEBUG_FILEIO);
+                		                	okay = false;
+                		                }
+                	                }
+                	                if (okay) {
+                		                if (parseString[3].equals("3,")) {
+                		                    Preferences.debug("For ACQ_grad_matrix parseString[3] equals '3,', as expected\n", Preferences.DEBUG_FILEIO);			
+                		                }
+                		                else {
+                		                	Preferences.debug("For ACQ_grad_matrix parseString[3] unexpectedly == " + parseString[3] + "\n",
+                		                			          Preferences.DEBUG_FILEIO);
+                		                	okay = false;
+                		                }
+                	                }
+                	                if (okay) {
+                	                	if (parseString[4].equals("3")) {
+                		                    Preferences.debug("For ACQ_grad_matrixc parseString[4] equals 3, as expected\n", Preferences.DEBUG_FILEIO);			
+                		                }
+                		                else {
+                		                	Preferences.debug("For ACQ_grad_matrix parseString[4] unexpectedly == " + parseString[4] + "\n",
+                		                			          Preferences.DEBUG_FILEIO);
+                		                	okay = false;
+                		                }	
+                	                }
+                	                if (okay) {
+                	                    if (parseString[5].equals(")")) {
+                	                        Preferences.debug("For ACQ_grad_matrix parseString[5] == ')' as expected\n", Preferences.DEBUG_FILEIO);	
+                	                    }
+                	                    else {
+                	                    	Preferences.debug("For ACQ_grad_matrix parseString[5] unexpectedly == " + parseString[5] + "\n",
+                	                    			Preferences.DEBUG_FILEIO);
+                		                	okay = false;	
+                	                    }
+                	                }
+                            	}
+                            	else {
+                            		Preferences.debug("For ACQ_grad_matrix parseString.length unexpectedly == " + parseString.length + "\n",
+                            				          Preferences.DEBUG_FILEIO);
+                            		okay = false;
+                            	}
+                            	if (okay) {
+                                    numVars = 9 * numSlices;
+                            		numFound = 0;
+                            		gradMat = new double[numSlices][3][3];
+                            		index0 = 0;
+                            		index1 = 0;
+                            		index2 = 0;
+                            		gradMatOkay = true;
+                            		while ((numFound < numVars) && (lineString != null) && gradMatOkay) {
+                            			lineString = readLine(acqpRaFile, foundEOF);
+                            			if (lineString != null) {
+                            			    parseString = parse(lineString);
+                            			    for (i = 0; i < parseString.length && gradMatOkay; i++) {
+                            			    	try {
+                            			    	    gradMat[index0][index1][index2] = Double.valueOf(parseString[i]);
+                            			    	}
+                            			    	catch(NumberFormatException nfe) {
+                                                    Preferences.debug("gradMat[" + index0 + "][" + index1 + "][" + index2 + "] could not be read.",
+                                                    		Preferences.DEBUG_FILEIO);
+                                                    gradMatOkay = false;
+                                                }
+                            			    	if (gradMatOkay) {
+                            			    		numFound++;
+                            			    		if (index2 < 2) {
+                            			    			index2++;
+                            			    		}
+                            			    		else if (index1 < 2) {
+                            			    			index2 = 0;
+                            			    			index1++;
+                            			    		}
+                            			    		else {
+                            			    			index2 = 0;
+                            			    			index1 = 0;
+                            			    			index0++;
+                            			    		}
+                            			    	}
+                            			    }
+                            			} // if (lineString != null)
+                            			else {
+                            				Preferences.debug("For PVM_ACQ_grad_mat lineString == null while numFound == " + numFound + 
+                            						           " and numVars = " + numVars + "\n", Preferences.DEBUG_FILEIO);
+                            				gradMatOkay = false;
+                            			}
+                            		} // while ((numFound < numVars) && (lineString != null) && gradMatOkay)
+                            		if (numFound == numVars) {
+                            			
+                            			if (gradMatOkay) {
+                            				
+                            				
+                            			} // if (gradMatOkay)
+                            		} // if (numFound == numVars)
+                            	} // if (okay)
+                            } // if (parseString[0].equalsIgnoreCase("##$ACQ_grad_matrix"))
+                            
+                            lineString = readLine(acqpRaFile, foundEOF);
+                        } // while (lineString != null)
+                        acqpRaFile.close();
+                        foundEOF[0] = false;
+                	} // if (acqpFile.exists())
                 	raFile.seek(0);
                 	lineString = readLine(raFile, foundEOF);
 
@@ -3330,6 +3463,7 @@ import javax.swing.table.DefaultTableModel;
                         parseString = parse(lineString);
 
                         if (parseString[0].equalsIgnoreCase("##$PVM_DwBMat")) {
+                        	// PVM_DwBMAT is in r, p, s coordinates not x, y, z coordinates.
                         	okay = true;
                         	if (parseString.length == 6) {
             	                if (parseString[1].equals("(")) {
@@ -3374,7 +3508,7 @@ import javax.swing.table.DefaultTableModel;
             	                }
             	                if (okay) {
             	                    if (parseString[5].equals(")")) {
-            	                        Preferences.debug("For PVM_DwMat parseString[5] == ')' as expected\n", Preferences.DEBUG_FILEIO);	
+            	                        Preferences.debug("For PVM_DwBMat parseString[5] == ')' as expected\n", Preferences.DEBUG_FILEIO);	
             	                    }
             	                    else {
             	                    	Preferences.debug("For PVM_DwBMat parseString[5] unexpectedly == " + parseString[5] + "\n",
@@ -3451,6 +3585,16 @@ import javax.swing.table.DefaultTableModel;
                         			    }
                         			} // for (i = 0; i < numVolumes && bMatOkay; i++)
                         			if (bMatOkay) {
+                        				// The bMatrix is in (r, p, s) read, phase, slice coordinates.
+                        				// Change to a bMatrix in (x, y, z) coordinates
+                        				if (gradMat != null) {
+                        					for (i = 0; i < numVolumes; i++) {
+                        						Matrix A = new Matrix(gradMat[i]);
+                        						Matrix AT = A.transpose();
+                        						Matrix B = new Matrix(bMat[i]);
+                        						bMat[i] = (AT.times(B).times(A)).getArray();
+                        					}
+                        				}
                         				bMatrixVals = new double[numVolumes][6];
                         				for (i = 0; i < numVolumes; i++) {
                         					bMatrixVals[i][0] = bMat[i][0][0];
@@ -3465,6 +3609,7 @@ import javax.swing.table.DefaultTableModel;
                         	} // if (okay)
                         } // else if (parseString[0].equalsIgnoreCase("##$PVM_DwBMat"))
                         else if (parseString[0].equalsIgnoreCase("##$PVM_DwGradVec")) {
+                        	// DwGradVec is in x,y,z coordinates.
                         	okay = true;
                         	if (parseString.length == 5) {
             	                if (parseString[1].equals("(")) {
