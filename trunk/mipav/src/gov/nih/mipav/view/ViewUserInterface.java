@@ -6,139 +6,47 @@ import gov.nih.mipav.plugins.PlugInFile;
 import gov.nih.mipav.plugins.PlugInFileTransfer;
 import gov.nih.mipav.plugins.PlugInGeneric;
 import gov.nih.mipav.util.ThreadUtil;
+
 import gov.nih.mipav.model.algorithms.OpenCLAlgorithmBase;
 import gov.nih.mipav.model.dicomcomm.DICOM_Receiver;
-import gov.nih.mipav.model.file.FileDataProvenance;
-import gov.nih.mipav.model.file.FileDicom;
-import gov.nih.mipav.model.file.FileDicomKey;
-import gov.nih.mipav.model.file.FileDicomTag;
-import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.file.FileInfoDicom;
-import gov.nih.mipav.model.file.FileInfoImageXML;
-import gov.nih.mipav.model.file.FileUtility;
-import gov.nih.mipav.model.file.FileVOI;
-import gov.nih.mipav.model.file.RawImageInfo;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.provenance.ProvenanceHolder;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.provenance.actions.ActionStartMipav;
 import gov.nih.mipav.model.provenance.actions.ActionStopMipav;
-import gov.nih.mipav.model.scripting.ScriptRecorder;
-import gov.nih.mipav.model.scripting.ScriptRecordingListener;
-import gov.nih.mipav.model.scripting.ScriptRunner;
-import gov.nih.mipav.model.scripting.ScriptableActionLoader;
-import gov.nih.mipav.model.scripting.VariableTable;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.actions.ActionCollectGarbage;
 import gov.nih.mipav.model.scripting.actions.ActionCreateBlankImage;
 import gov.nih.mipav.model.scripting.actions.ActionSaveBase;
-import gov.nih.mipav.model.structures.CustomHashtable;
-import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelImageToImageJConversion;
-import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.model.structures.ReminderThread;
-import gov.nih.mipav.model.structures.TransMatrix;
-import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.model.structures.VOIBase;
+import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.Argument.InstanceArgument;
 import gov.nih.mipav.view.Argument.StaticArgument;
-import gov.nih.mipav.view.dialogs.ActionDiscovery;
-import gov.nih.mipav.view.dialogs.JDialogAnonymizeDirectory;
-import gov.nih.mipav.view.dialogs.JDialogDTICreateListFile;
-import gov.nih.mipav.view.dialogs.JDialogDTIEstimateTensor;
-import gov.nih.mipav.view.dialogs.JDialogDataProvenance;
-import gov.nih.mipav.view.dialogs.JDialogDicomDir;
-import gov.nih.mipav.view.dialogs.JDialogDicomTagMultiEditor;
-import gov.nih.mipav.view.dialogs.JDialogDicomTagSelector;
-import gov.nih.mipav.view.dialogs.JDialogFilterChoice;
-import gov.nih.mipav.view.dialogs.JDialogInstallPlugin;
-import gov.nih.mipav.view.dialogs.JDialogKMeans;
-import gov.nih.mipav.view.dialogs.JDialogLoadLeica;
-import gov.nih.mipav.view.dialogs.JDialogLogSlopeMapping;
-import gov.nih.mipav.view.dialogs.JDialogMemoryAllocation;
-import gov.nih.mipav.view.dialogs.JDialogMipavOptions;
-import gov.nih.mipav.view.dialogs.JDialogRawIO;
-import gov.nih.mipav.view.dialogs.JDialogRunScriptController;
-import gov.nih.mipav.view.dialogs.JDialogScriptRecorder;
-import gov.nih.mipav.view.dialogs.JDialogShortcutEditor;
-import gov.nih.mipav.view.dialogs.JDialogSpectralClustering;
-import gov.nih.mipav.view.dialogs.JDialogText;
-import gov.nih.mipav.view.dialogs.JDialogTimeFitting;
-import gov.nih.mipav.view.dialogs.JDialogTreT1;
-import gov.nih.mipav.view.dialogs.JDialogTreT2;
-import gov.nih.mipav.view.dialogs.JDialogUninstallPlugin;
+import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.dialogs.reportbug.ReportBugBuilder;
 import gov.nih.mipav.view.graphVisualization.JDialogHyperGraph;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIColorDisplay;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIPipeline;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.JPanelDTIVisualization;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
+
 import ij.process.ImageProcessor;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Frame;
-import java.awt.GraphicsEnvironment;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.HeadlessException;
-import java.awt.Insets;
-import java.awt.LayoutManager;
-import java.awt.Rectangle;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.awt.event.*;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.*;
 import java.util.List;
-import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.JToolBar;
-import javax.swing.KeyStroke;
-import javax.swing.TransferHandler;
-import javax.swing.WindowConstants;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -154,8 +62,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  * @author Justin Senseney
  * @author Matthew McAuliffe, Ph.D.
  */
-public class ViewUserInterface implements ActionListener, WindowListener, KeyListener, ScriptRecordingListener,
-        CommandLineParser {
+public class ViewUserInterface implements ActionListener, WindowListener, KeyListener, ScriptRecordingListener, CommandLineParser {
 
     // ~ Static fields/initializers ------------------------------------------------------------------
 
@@ -231,13 +138,13 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** Vector to hold clipped VOIs (multiple). */
     private Vector<VOIBase> copyVOIList = new Vector<VOIBase>();
-    
+
     /** Vector to hold VOI names (multiple). */
-    private Vector<String> copyVOINameList = new Vector<String>();
+    private final Vector<String> copyVOINameList = new Vector<String>();
 
     /** Class/resource loader for plugins that are in jars */
     private JarClassLoader jarClassLoader;
-    
+
     /** String holding the command line arguments for data provenance usage. */
     private String cmdLineArguments = new String();
 
@@ -434,8 +341,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         final URL fileURL = getClass().getClassLoader().getResource(filename);
 
         if (fileURL == null) {
-            Preferences.debug("Unable to open " + filename
-                    + ".  Make sure it is in the same directory as MipavMain.class\n", Preferences.DEBUG_MINOR);
+            Preferences.debug("Unable to open " + filename + ".  Make sure it is in the same directory as MipavMain.class\n", Preferences.DEBUG_MINOR);
             MipavUtil.displayError(filename + " not found.\nTurn on debugging output for more information.");
 
             return;
@@ -511,8 +417,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         aboutJavaDialog.append("Java vendor.url:    " + System.getProperties().getProperty("java.vendor.url") + "\n");
         aboutJavaDialog.append("Java class loader:  " + ClassLoader.getSystemClassLoader() + "\n");
         aboutJavaDialog.append("Java home:          " + System.getProperties().getProperty("java.home") + "\n");
-        aboutJavaDialog
-                .append("Java class version: " + System.getProperties().getProperty("java.class.version") + "\n");
+        aboutJavaDialog.append("Java class version: " + System.getProperties().getProperty("java.class.version") + "\n");
         aboutJavaDialog.append("Java class path:    " + "\n" + javaClassPath + "\n");
         aboutJavaDialog.append("OS name:            " + System.getProperties().getProperty("os.name") + "\n");
         aboutJavaDialog.append("OS arch:            " + System.getProperties().getProperty("os.arch") + "\n");
@@ -677,15 +582,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         MipavUtil.displayInfo(plugInName + " does not support the reading of images.");
                     }
                 } else {
-                    MipavUtil.displayError("PlugIn " + plugInName
-                            + " claims to be an File PlugIn, but does not implement PlugInFile.");
+                    MipavUtil.displayError("PlugIn " + plugInName + " claims to be an File PlugIn, but does not implement PlugInFile.");
                 }
             } catch (final UnsupportedClassVersionError ucve) {
-                Preferences
-                        .debug("Unable to load plugin: "
-                                + plugInName
-                                + " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n",
-                                Preferences.DEBUG_MINOR);
+                Preferences.debug("Unable to load plugin: " + plugInName
+                        + " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n", Preferences.DEBUG_MINOR);
                 ucve.printStackTrace();
             }
         } else if (command.startsWith("PlugInFileWrite")) {
@@ -705,15 +606,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         MipavUtil.displayInfo(plugInName + " does not support the writing of images.");
                     }
                 } else {
-                    MipavUtil.displayError("PlugIn " + plugInName
-                            + " claims to be an File PlugIn, but does not implement PlugInFile.");
+                    MipavUtil.displayError("PlugIn " + plugInName + " claims to be an File PlugIn, but does not implement PlugInFile.");
                 }
             } catch (final UnsupportedClassVersionError ucve) {
-                Preferences
-                        .debug("Unable to load plugin: "
-                                + plugInName
-                                + " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n",
-                                Preferences.DEBUG_MINOR);
+                Preferences.debug("Unable to load plugin: " + plugInName
+                        + " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n", Preferences.DEBUG_MINOR);
                 ucve.printStackTrace();
             }
         } else if (command.startsWith("PlugInFileTransfer")) {
@@ -727,15 +624,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 if (thePlugIn instanceof PlugInFileTransfer) {
                     ((PlugInFileTransfer) thePlugIn).transferFiles();
                 } else {
-                    MipavUtil.displayError("PlugIn " + plugInName
-                            + " claims to be an File Transfer PlugIn, but does not implement PlugInFileTransfer.");
+                    MipavUtil.displayError("PlugIn " + plugInName + " claims to be an File Transfer PlugIn, but does not implement PlugInFileTransfer.");
                 }
             } catch (final UnsupportedClassVersionError ucve) {
-                Preferences
-                        .debug("Unable to load plugin: "
-                                + plugInName
-                                + " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n",
-                                Preferences.DEBUG_MINOR);
+                Preferences.debug("Unable to load plugin: " + plugInName
+                        + " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n", Preferences.DEBUG_MINOR);
                 ucve.printStackTrace();
             }
         } else if (command.startsWith("PlugInFile")) {
@@ -755,41 +648,32 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         options[0] = read;
                         options[1] = "Write image";
                         final String title = "Select plugin type";
-                        final String message = "This plugin can both read and write images.  "
-                                + "Which action should the plugin perform?";
-                        final int opt = JOptionPane.showOptionDialog(mainFrame, message, title,
-                                JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, read);
+                        final String message = "This plugin can both read and write images.  " + "Which action should the plugin perform?";
+                        final int opt = JOptionPane.showOptionDialog(mainFrame, message, title, JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
+                                null, options, read);
                         if (opt == 0) {
-                            final ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileRead"
-                                    + plugInNameRecall);
+                            final ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileRead" + plugInNameRecall);
                             this.actionPerformed(e);
                         } else if (opt == 1) {
-                            final ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileWrite"
-                                    + plugInNameRecall);
+                            final ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileWrite" + plugInNameRecall);
                             this.actionPerformed(e);
                         }
 
                     } else if ( ((PlugInFile) thePlugIn).canReadImages()) {
-                        final ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileRead"
-                                + plugInNameRecall);
+                        final ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileRead" + plugInNameRecall);
                         this.actionPerformed(e);
                     } else if ( ((PlugInFile) thePlugIn).canWriteImages()) {
-                        final ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileWrite"
-                                + plugInNameRecall);
+                        final ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileWrite" + plugInNameRecall);
                         this.actionPerformed(e);
                     } else {
                         MipavUtil.displayInfo(plugInName + " is a PlugInFile that neither writes nor reads images.");
                     }
                 } else {
-                    MipavUtil.displayError("PlugIn " + plugInName
-                            + " claims to be an File PlugIn, but does not implement PlugInFile.");
+                    MipavUtil.displayError("PlugIn " + plugInName + " claims to be an File PlugIn, but does not implement PlugInFile.");
                 }
             } catch (final UnsupportedClassVersionError ucve) {
-                Preferences
-                        .debug("Unable to load plugin: "
-                                + plugInName
-                                + " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n",
-                                Preferences.DEBUG_MINOR);
+                Preferences.debug("Unable to load plugin: " + plugInName
+                        + " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n", Preferences.DEBUG_MINOR);
                 ucve.printStackTrace();
             }
         } else if (command.startsWith("PlugInGeneric")) {
@@ -807,11 +691,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     MipavUtil.displayError("Plugin " + plugInName + " is not a generic plugin.");
                 }
             } catch (final UnsupportedClassVersionError ucve) {
-                Preferences
-                        .debug("Unable to load plugin: "
-                                + plugInName
-                                + " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n",
-                                Preferences.DEBUG_MINOR);
+                Preferences.debug("Unable to load plugin: " + plugInName
+                        + " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n", Preferences.DEBUG_MINOR);
                 ucve.printStackTrace();
             }
         } else if (command.startsWith("PlugInImageJ")) {
@@ -825,8 +706,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 thePlugInClass = Class.forName(plugInName);
 
                 for (final Class c : thePlugInClass.getInterfaces()) {
-                    if ( (c.equals(ij.plugin.PlugIn.class))
-                            || (thePlugInClass.getSuperclass().equals(ij.plugin.frame.PlugInFrame.class))) {
+                    if ( (c.equals(ij.plugin.PlugIn.class)) || (thePlugInClass.getSuperclass().equals(ij.plugin.frame.PlugInFrame.class))) {
                         thePlugInInstance = generatePlugin(plugInName, source, command);
                         final String args = "";
                         ((ij.plugin.PlugIn) thePlugInInstance).run(args);
@@ -899,8 +779,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     }
                 }
 
-                final String userPluginsDir = System.getProperty("user.home") + File.separator + "mipav"
-                        + File.separator + "plugins" + File.separator;
+                final String userPluginsDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins" + File.separator;
                 final com.sun.tools.javac.Main javac = new com.sun.tools.javac.Main();
 
                 final Vector<String> v = new Vector<String>();
@@ -944,8 +823,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                             if (comp instanceof JMenuItem) {
                                                 final String menuItemName = ((JMenuItem) subComp).getName();
                                                 if (menuItemName.equals(name)) {
-                                                    final ActionEvent e = new ActionEvent( (subComp), 0,
-                                                            ((JMenuItem) subComp).getActionCommand());
+                                                    final ActionEvent e = new ActionEvent( (subComp), 0, ((JMenuItem) subComp).getActionCommand());
                                                     this.actionPerformed(e);
                                                     return;
                                                 } else {
@@ -953,8 +831,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                                     if (name.startsWith("PlugIn")) {
                                                         name = name.substring(6, name.length());
                                                         if (menuItemName.equals(name)) {
-                                                            final ActionEvent e = new ActionEvent( (subComp), 0,
-                                                                    ((JMenuItem) subComp).getActionCommand());
+                                                            final ActionEvent e = new ActionEvent( (subComp), 0, ((JMenuItem) subComp).getActionCommand());
                                                             this.actionPerformed(e);
                                                             return;
                                                         }
@@ -1190,8 +1067,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                         final FileInfoDicom fileInfo = (FileInfoDicom) readDicom.getFileInfo();
                         final Hashtable<FileDicomKey, FileDicomTag> tagList = fileInfo.getTagTable().getTagList();
-                        final JDialogDicomTagSelector tagSelector = new JDialogDicomTagMultiEditor(tagList, null, true,
-                                file, fileInfo);
+                        final JDialogDicomTagSelector tagSelector = new JDialogDicomTagMultiEditor(tagList, null, true, file, fileInfo);
                         tagSelector.setParentDialog(tagSelector);
                         tagSelector.setVisible(true);
                     }
@@ -1248,8 +1124,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         try {
             messageFrame.setIconImage(MipavUtil.getIconImage("output_16x16.gif"));
         } catch (final FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
-                    + ">.  Check that this file is available.\n");
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage() + ">.  Check that this file is available.\n");
         }
 
         final int frameHeight = messageFrame.getSize().height;
@@ -1269,8 +1144,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @return the new plugin menu
      */
     public JMenu buildPlugInsMenu(final ActionListener al) {
-        final String userPlugins = System.getProperty("user.home") + File.separator + "mipav" + File.separator
-                + "plugins" + File.separator;
+        final String userPlugins = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins" + File.separator;
 
         final JMenu menu = menuBuilder.makeMenu("Plugins", 'P', false, new JComponent[] {});
 
@@ -1341,7 +1215,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     try {
                         plugin = Class.forName(name);
                     } catch (final ClassNotFoundException e1) {
-                        e1.printStackTrace();
+                        System.err.println(e1.getMessage());
+                        // e1.printStackTrace();
                     } catch (final Exception e2) {
                         e2.printStackTrace();
                     } catch (final Error e3) {
@@ -1362,8 +1237,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                             if (entryName.indexOf('.') != -1) {
                                 final String quickEntrySub = entryName.substring(entryName.lastIndexOf('.'));
                                 if ( !entry.isDirectory() && quickEntrySub.equals(CLASS_EXT)) {
-                                    final String className = entryName.substring(0, entryName.length() - 6).replace(
-                                            File.separatorChar, '.');
+                                    final String className = entryName.substring(0, entryName.length() - 6).replace(File.separatorChar, '.');
 
                                     if (entryName.startsWith("PlugIn") && entryName.contains(".class")) {
                                         pluginName = className.substring(6);
@@ -1378,8 +1252,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                             e3.printStackTrace();
                                         }
 
-                                        addPluginToMenu(plugin, pluginName, className, currentMenu, al,
-                                                allFile.getAbsolutePath());
+                                        addPluginToMenu(plugin, pluginName, className, currentMenu, al, allFile.getAbsolutePath());
                                     }
                                 }
                             }
@@ -1419,8 +1292,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         return menu;
     }
 
-    private void addPluginToMenu(final Class<?> plugin, final String pluginName, final String name, JMenu currentMenu,
-            final ActionListener al, final String jarContainer) {
+    private void addPluginToMenu(final Class<?> plugin, final String pluginName, final String name, JMenu currentMenu, final ActionListener al,
+            final String jarContainer) {
         Field catField = null, scriptField = null;
         final String catName = "CATEGORY";
         final String scriptName = "SCRIPT_PREFIX";
@@ -1497,8 +1370,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 interName = "PlugInImageJ";
             }
 
-            final JMenuItem pluginMenuItem = ViewMenuBuilder.buildMenuItem(pluginName, interName + pluginName, 0, al,
-                    null, false);
+            final JMenuItem pluginMenuItem = ViewMenuBuilder.buildMenuItem(pluginName, interName + pluginName, 0, al, null, false);
             pluginMenuItem.setName(pluginName);
             pluginMenuItem.addMouseListener(ViewJPopupPlugin.getReference());
             if ( (al instanceof ViewUserInterface && interName.equals("PlugInAlgorithm"))) {
@@ -1527,8 +1399,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
             if (source instanceof JMenuItem) {
                 final Container parent = ((JMenuItem) source).getParent();
-                if ( ((JMenuItem) source).getToolTipText() != null
-                        && ((JMenuItem) source).getToolTipText().contains(".jar")) {
+                if ( ((JMenuItem) source).getToolTipText() != null && ((JMenuItem) source).getToolTipText().contains(".jar")) {
                     final URL[] url = new URL[] {new URL("jar:file:" + ((JMenuItem) source).getToolTipText() + "!/")}; // should
                                                                                                                        // really
                                                                                                                        // be
@@ -1647,8 +1518,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         while (e.hasMoreElements()) {
 
             try {
-                this.getFrameContainingImage(e.nextElement()).getControls()
-                        .setRecording(recorderStatus == ScriptRecorder.RECORDING);
+                this.getFrameContainingImage(e.nextElement()).getControls().setRecording(recorderStatus == ScriptRecorder.RECORDING);
             } catch (final NullPointerException ex) {
                 // do nothing
             }
@@ -1842,9 +1712,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     public Vector<VOIBase> getCopyVOIs() {
         return this.copyVOIList;
     }
-    
+
     public Vector<String> getCopyVOINames() {
-    	return this.copyVOINameList;
+        return this.copyVOINameList;
     }
 
     /**
@@ -1961,10 +1831,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     public JarClassLoader getJarClassLoader() {
-		return jarClassLoader;
-	}
+        return jarClassLoader;
+    }
 
-	/**
+    /**
      * Returns the last script file used from the preferences.
      * 
      * @return LastScript
@@ -2272,8 +2142,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         // initMacintoshJDKversionCheck();
 
         initCreateMessageBar();
-        initSetTitles("Medical Image Processing, Analysis & Visualization (MIPAV) - v" + MipavUtil.getVersion(),
-                "MIPAV: ");
+        initSetTitles("Medical Image Processing, Analysis & Visualization (MIPAV) - v" + MipavUtil.getVersion(), "MIPAV: ");
         initDicomReceiver();
 
         mainFrame.pack();
@@ -2563,10 +2432,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
             // MipavUtil.displayError("There was a problem with the " +
             // "supplied name.\n" );
-            Preferences.debug(
-                    "Illegal Argument Exception in " + "ViewJFrameRegisteredImages when clicking on Delete. "
-                            + "Somehow the Image list sent an incorrect name to " + "the image image hashtable.  \n"
-                            + iae.getMessage() + "\n", 1);
+            Preferences.debug("Illegal Argument Exception in " + "ViewJFrameRegisteredImages when clicking on Delete. "
+                    + "Somehow the Image list sent an incorrect name to " + "the image image hashtable.  \n" + iae.getMessage() + "\n", 1);
             // System.out.println("Bad argument.");
         }
     }
@@ -2635,8 +2502,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                             // MipavUtil.displayError("There was a problem with the supplied name.\n" );
                             Preferences.debug("Illegal Argument Exception in " + "ViewUserInterface.openImageFrame(). "
-                                    + "Somehow the Image list sent an incorrect name to "
-                                    + "the image image hashtable. " + "\n", 1);
+                                    + "Somehow the Image list sent an incorrect name to " + "the image image hashtable. " + "\n", 1);
                             Preferences.debug("Bad argument.");
                         }
                     }
@@ -2707,10 +2573,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             } catch (final IllegalArgumentException iae) {
 
                 // MipavUtil.displayError("There was a problem with the supplied name.\n" );
-                Preferences
-                        .debug("Illegal Argument Exception in " + "ViewUserInterface.openImageFrame(). "
-                                + "Somehow the Image list sent an incorrect name to " + "the image image hashtable. "
-                                + "\n", 1);
+                Preferences.debug("Illegal Argument Exception in " + "ViewUserInterface.openImageFrame(). "
+                        + "Somehow the Image list sent an incorrect name to " + "the image image hashtable. " + "\n", 1);
                 Preferences.debug("Bad argument.");
             }
         }
@@ -2771,10 +2635,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                 // MipavUtil.displayError("There was a problem with the
                 // supplied name.\n" );
-                Preferences
-                        .debug("Illegal Argument Exception in " + "ViewUserInterface.openImageFrame(). "
-                                + "Somehow the Image list sent an incorrect name to " + "the image image hashtable. "
-                                + "\n", 1);
+                Preferences.debug("Illegal Argument Exception in " + "ViewUserInterface.openImageFrame(). "
+                        + "Somehow the Image list sent an incorrect name to " + "the image image hashtable. " + "\n", 1);
                 Preferences.debug("Bad argument.", Preferences.DEBUG_MINOR);
             }
         }
@@ -2837,8 +2699,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     printUsageAndExit();
                 }
             } else if (StaticArgument.getArgument(args[0], true) == null) {
-                MipavUtil
-                        .displayError("To open files starting with \"-\", use the \"-i\" option.\nSee the usage message for more information.");
+                MipavUtil.displayError("To open files starting with \"-\", use the \"-i\" option.\nSee the usage message for more information.");
                 printUsageAndExit();
             }
 
@@ -2945,8 +2806,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                     System.out.println("user.dir is " + System.getProperty("user.dir"));
                                     try {
                                         System.out.println("File(\".\") is " + new File(".").getCanonicalPath());
-                                        checkFile = new File(new File(".").getCanonicalPath() + File.separator
-                                                + imgName);
+                                        checkFile = new File(new File(".").getCanonicalPath() + File.separator + imgName);
                                         if (checkFile.exists()) {
                                             setDefaultDirectory(new File(".").getCanonicalPath());
                                         } else {
@@ -2980,8 +2840,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                     checkFile = new File(userDefaultDir + File.separator + imgName);
                                     if (checkFile.exists()) {
                                         setDefaultDirectory(userDefaultDir);
-                                        imageList.add(new OpenFileInfo(userDefaultDir + File.separator + dir, name,
-                                                isMulti));
+                                        imageList.add(new OpenFileInfo(userDefaultDir + File.separator + dir, name, isMulti));
                                     } else {
                                         checkFile = new File(imgName);
                                         if (checkFile.exists()) {
@@ -2998,8 +2857,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                         imageList.add(new OpenFileInfo(dir, name, isMulti));
                                     } else { // try current directory
                                         try {
-                                            checkFile = new File(new File(".").getCanonicalPath() + File.separator
-                                                    + imgName);
+                                            checkFile = new File(new File(".").getCanonicalPath() + File.separator + imgName);
                                             if (checkFile.exists()) {
                                                 setDefaultDirectory(new File(".").getCanonicalPath());
                                             } else {
@@ -3062,18 +2920,16 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                     case SavedImageName:
                         String varValue = args[ ++i];
-                        Preferences
-                                .debug("cmd var:\tDefining parameter variable value from -o arg "
-                                        + ActionSaveBase.SAVE_FILE_NAME + " -> " + varValue + "\n",
-                                        Preferences.DEBUG_SCRIPTING);
+                        Preferences.debug(
+                                "cmd var:\tDefining parameter variable value from -o arg " + ActionSaveBase.SAVE_FILE_NAME + " -> " + varValue + "\n",
+                                Preferences.DEBUG_SCRIPTING);
                         VariableTable.getReference().storeVariable(ActionSaveBase.SAVE_FILE_NAME, varValue);
                         break;
 
                     case ScriptVariable:
                         final String varName = args[ ++i];
                         varValue = args[ ++i];
-                        Preferences.debug("cmd var:\tDefining parameter variable value " + varName + " -> " + varValue
-                                + "\n", Preferences.DEBUG_SCRIPTING);
+                        Preferences.debug("cmd var:\tDefining parameter variable value " + varName + " -> " + varValue + "\n", Preferences.DEBUG_SCRIPTING);
                         VariableTable.getReference().storeVariable(varName, varValue);
                         break;
 
@@ -3102,10 +2958,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                                 ((PlugInGeneric) thePlugIn).run();
                             } else {
-                                MipavUtil
-                                        .displayError("Plugin "
-                                                + plugInName
-                                                + " must implement the PlugInGeneric interface in order to be run from the command line.");
+                                MipavUtil.displayError("Plugin " + plugInName
+                                        + " must implement the PlugInGeneric interface in order to be run from the command line.");
                             }
                         } catch (final ClassNotFoundException e) {
                             MipavUtil.displayError("PlugIn not found: " + plugInName);
@@ -3424,11 +3278,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
     }
 
-    public void setJarClassLoader(JarClassLoader jarClassLoader) {
-		this.jarClassLoader = jarClassLoader;
-	}
+    public void setJarClassLoader(final JarClassLoader jarClassLoader) {
+        this.jarClassLoader = jarClassLoader;
+    }
 
-	/**
+    /**
      * Sets last used script files in preferences.
      * 
      * @param script Script to set the LastScript to.
@@ -3585,8 +3439,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         final URL fileURL = getClass().getClassLoader().getResource(filename);
 
         if (fileURL == null) {
-            Preferences.debug("Unable to open " + filename
-                    + ".  Make sure it is in the same directory as MipavMain.class\n", Preferences.DEBUG_MINOR);
+            Preferences.debug("Unable to open " + filename + ".  Make sure it is in the same directory as MipavMain.class\n", Preferences.DEBUG_MINOR);
             MipavUtil.displayError(filename + " not found.\nTurn on debugging output for more information.");
 
             return;
@@ -3837,8 +3690,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     public void windowClosing(final WindowEvent event) {
         Toolkit.getDefaultToolkit().beep();
 
-        final int reply = JOptionPane.showConfirmDialog(mainFrame, "Do you really want to exit?", "MIPAV - Exit",
-                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        final int reply = JOptionPane.showConfirmDialog(mainFrame, "Do you really want to exit?", "MIPAV - Exit", JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
 
         if (reply == JOptionPane.YES_OPTION) {
 
@@ -3872,8 +3725,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     // MipavUtil.displayError("There was a problem with the
                     // supplied name.\n" );
                     Preferences.debug("Illegal Argument Exception in " + "ViewUserInterface.windowClosing(). "
-                            + "Somehow the Image list sent an incorrect name to " + "the image image hashtable. "
-                            + "\n", 1);
+                            + "Somehow the Image list sent an incorrect name to " + "the image image hashtable. " + "\n", 1);
                     Preferences.debug("Bad argument.", Preferences.DEBUG_MINOR);
                 }
             }
@@ -3985,8 +3837,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             String provenanceFilename = Preferences.getProperty(Preferences.PREF_DATA_PROVENANCE_FILENAME);
 
             if (provenanceFilename == null) {
-                provenanceFilename = System.getProperty("user.home") + File.separator + "mipav" + File.separator
-                        + "dataprovenance.xmp";
+                provenanceFilename = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "dataprovenance.xmp";
                 Preferences.setProperty(Preferences.PREF_DATA_PROVENANCE_FILENAME, provenanceFilename);
             }
 
@@ -4206,10 +4057,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             final String javaVersion = System.getProperty("java.version");
 
             if ( (javaVersion.indexOf("1.4") == -1) && (javaVersion.indexOf("1.5") == -1)) {
-                final int answer = JOptionPane
-                        .showConfirmDialog(null, "Does this machine have at least Java 1.4 installed on it?",
-                                "Installed Java Virtual Machine check", JOptionPane.YES_NO_OPTION,
-                                JOptionPane.QUESTION_MESSAGE);
+                final int answer = JOptionPane.showConfirmDialog(null, "Does this machine have at least Java 1.4 installed on it?",
+                        "Installed Java Virtual Machine check", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
                 if (answer == JOptionPane.YES_OPTION) {
                     final FileReader reader = new FileReader(plistFile);
@@ -4282,34 +4131,27 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                         bwriter.close();
 
-                        MipavUtil.displayInfo("Java 1.4.1 was detected, and the Startup file was \n"
-                                + " modified to use it.\n" + "You may continue to run MIPAV, but in order to take \n"
-                                + "advantage of Java 1.4, you will need to restart.");
-                        Preferences.debug("Java 1.4.1 was detected, and the Startup file was \n"
-                                + " modified to use it.\n" + "You may continue to run MIPAV, but in order to take \n"
-                                + "advantage of Java 1.4, you will need to restart." + "\n");
+                        MipavUtil.displayInfo("Java 1.4.1 was detected, and the Startup file was \n" + " modified to use it.\n"
+                                + "You may continue to run MIPAV, but in order to take \n" + "advantage of Java 1.4, you will need to restart.");
+                        Preferences.debug("Java 1.4.1 was detected, and the Startup file was \n" + " modified to use it.\n"
+                                + "You may continue to run MIPAV, but in order to take \n" + "advantage of Java 1.4, you will need to restart." + "\n");
                     }
                 } else { // answered "NO" to the question if it has 1.4 installed.
                     MipavUtil.displayWarning("This computer doesn't appear to have Java 1.4 installed.\n"
-                            + "MIPAV needs at least Java 1.4.1 to work correctly, \n"
-                            + "so some functions may be disabled.");
-                    Preferences.debug("This computer doesn't appear to have Java 1.4 installed.\n"
-                            + "MIPAV needs Java 1.4.1 to work correctly, \n" + "so some functions may be disabled."
-                            + "\n");
+                            + "MIPAV needs at least Java 1.4.1 to work correctly, \n" + "so some functions may be disabled.");
+                    Preferences.debug("This computer doesn't appear to have Java 1.4 installed.\n" + "MIPAV needs Java 1.4.1 to work correctly, \n"
+                            + "so some functions may be disabled." + "\n");
                 }
             }
         } catch (final FileNotFoundException ffe) {
-            Preferences.debug("MemoryAllocation could not open a file, and caused an "
-                    + "IOException in ViewUserInterface.\nThe exception message was:\n" + ffe.getLocalizedMessage()
-                    + "\n");
+            Preferences.debug("MemoryAllocation could not open a file, and caused an " + "IOException in ViewUserInterface.\nThe exception message was:\n"
+                    + ffe.getLocalizedMessage() + "\n");
         } catch (final IOException ioe) {
-            Preferences.debug("MemoryAllocation could not open a file, and caused an "
-                    + "IOException in ViewUserInterface.\nThe exception message was:\n" + ioe.getLocalizedMessage()
-                    + "\n");
+            Preferences.debug("MemoryAllocation could not open a file, and caused an " + "IOException in ViewUserInterface.\nThe exception message was:\n"
+                    + ioe.getLocalizedMessage() + "\n");
         } catch (final NullPointerException npe) {
-            Preferences.debug("ViewUserInterface: A null pointer exception " + "was caught while "
-                    + "trying to check the java version being used " + "by an Info.plist file.  The exception message "
-                    + "was:\n" + npe.getLocalizedMessage() + "\n");
+            Preferences.debug("ViewUserInterface: A null pointer exception " + "was caught while " + "trying to check the java version being used "
+                    + "by an Info.plist file.  The exception message " + "was:\n" + npe.getLocalizedMessage() + "\n");
         } catch (final HeadlessException he) {
 
             // what else can be done? Currently MIPAV will die without a head.
@@ -4373,8 +4215,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         try {
             mainFrame.setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
         } catch (final FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
-                    + ">.  Check that this file is available.\n");
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage() + ">.  Check that this file is available.\n");
         }
 
         mainFrame.getContentPane().setLayout(prefLayout);
@@ -4455,8 +4296,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 exceptions = new File(Preferences.getProperty(Preferences.PREF_LOG_FILENAME));
             }
 
-            LogStdStreams.initializeErrorLogging(exceptions.getAbsolutePath(), "\n" + "Mipav Log: " + new Date()
-                    + "\n\n", true, true);
+            LogStdStreams.initializeErrorLogging(exceptions.getAbsolutePath(), "\n" + "Mipav Log: " + new Date() + "\n\n", true, true);
         }
 
         initPrefsTrim();
@@ -4471,8 +4311,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * 
      * @see #printUsageAndExit()
      */
-    protected void runCmdLine(final String scriptFile, final Vector<OpenFileInfo> imageList,
-            final Vector<Vector<String>> voiList) {
+    protected void runCmdLine(final String scriptFile, final Vector<OpenFileInfo> imageList, final Vector<Vector<String>> voiList) {
         final ViewOpenFileUI fileOpener = new ViewOpenFileUI(false);
         final Vector<String> imageNames = new Vector<String>();
 
@@ -4555,14 +4394,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             if ( !Preferences.getProperty(Preferences.PREF_STARTING_HEAP_SIZE).equals(mems[0])
                     || !Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE).equals(mems[1])) {
                 if ( !MipavUtil.getForceQuiet()) {
-                    MipavUtil.displayWarning("Heap size settings in the " + "environment startup file do not match \n"
-                            + "those in the Preferences file.\n" + "Memory Allocation will display so you can "
-                            + "ensure this is correct.");
+                    MipavUtil.displayWarning("Heap size settings in the " + "environment startup file do not match \n" + "those in the Preferences file.\n"
+                            + "Memory Allocation will display so you can " + "ensure this is correct.");
                     new JDialogMemoryAllocation(this, true);
                 } else {
-                    MipavUtil.displayError("Heap size settings in the " + "environment startup file do not match \n"
-                            + "those in the Preferences file.\n" + "Memory Allocation will display so you can "
-                            + "ensure this is correct.");
+                    MipavUtil.displayError("Heap size settings in the " + "environment startup file do not match \n" + "those in the Preferences file.\n"
+                            + "Memory Allocation will display so you can " + "ensure this is correct.");
                 }
 
             }
@@ -4634,8 +4471,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             } else if (e.getActionCommand().equals("No")) {
                 Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
             }
-            Preferences.setProperty(Preferences.PREF_ASK_DICOM_RECEIVER, Boolean.valueOf( !checkBox.isSelected())
-                    .toString());
+            Preferences.setProperty(Preferences.PREF_ASK_DICOM_RECEIVER, Boolean.valueOf( !checkBox.isSelected()).toString());
 
             dialog.dispose();
         }
@@ -4689,8 +4525,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             b.append("-" + c.getArgument()).append("\t").append(c.getHelp()).append("\n");
         }
         b.append("Examples:").append("\n");
-        b.append("> mipav imageFileName").append("\n").append("> mipav -i imageFileName -s scriptFileName -hide")
-                .append("\n");
+        b.append("> mipav imageFileName").append("\n").append("> mipav -i imageFileName -s scriptFileName -hide").append("\n");
         b.append("> mipav -s scriptFileName -i imageFileName1 -v voiName1 -v voiName2 -i imageFileName2 -v voiName3 -inputDir defaultImageDirectoryPath -outputDir outputImageDirectoryPath");
         b.append("\n");
         return b.toString();
@@ -4712,8 +4547,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     @SuppressWarnings("unchecked")
     public static Vector<Class<ActionDiscovery>> getDiscoverableActionList() {
-        return getDiscoverableActionList(ViewUserInterface.class.getProtectionDomain().getCodeSource().getLocation()
-                .getPath());
+        return getDiscoverableActionList(ViewUserInterface.class.getProtectionDomain().getCodeSource().getLocation().getPath());
     }
 
     @SuppressWarnings("unchecked")
@@ -4948,22 +4782,18 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         ViewUserInterface.setProvidedUserDefaultDir(true);
                         ViewUserInterface.setUserDefaultDir(args[ ++i]);
 
-                        if (ViewUserInterface.getUserDefaultDir() == null
-                                || ViewUserInterface.getUserDefaultDir().trim().equals("")) {
+                        if (ViewUserInterface.getUserDefaultDir() == null || ViewUserInterface.getUserDefaultDir().trim().equals("")) {
                             Preferences.debug("In argument -" + c + ", " + "directory is null");
                             ViewUserInterface.printUsageAndExit(c);
                         } else {
                             // check that there is a trailng slash at the end of the defaultDir...if not, add one
-                            if ( ! (ViewUserInterface.getUserDefaultDir().charAt(
-                                    ViewUserInterface.getUserDefaultDir().length() - 1) == File.separatorChar)) {
-                                ViewUserInterface.setUserDefaultDir(ViewUserInterface.getUserDefaultDir()
-                                        + File.separator);
+                            if ( ! (ViewUserInterface.getUserDefaultDir().charAt(ViewUserInterface.getUserDefaultDir().length() - 1) == File.separatorChar)) {
+                                ViewUserInterface.setUserDefaultDir(ViewUserInterface.getUserDefaultDir() + File.separator);
                             }
                             // now check if this is a valid path
                             final File checkDefaultDir = new File(ViewUserInterface.getUserDefaultDir());
                             if ( !checkDefaultDir.exists()) {
-                                Preferences.debug("In argument -" + c + ", " + ViewUserInterface.getUserDefaultDir()
-                                        + " does not exist");
+                                Preferences.debug("In argument -" + c + ", " + ViewUserInterface.getUserDefaultDir() + " does not exist");
                                 ViewUserInterface.printUsageAndExit(c);
                             }
                         }
@@ -4973,22 +4803,19 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         ViewUserInterface.setProvidedOutputDir(true);
                         ViewUserInterface.setOutputDir(args[ ++i]);
 
-                        if (ViewUserInterface.getOutputDir() == null
-                                || ViewUserInterface.getOutputDir().trim().equals("")) {
+                        if (ViewUserInterface.getOutputDir() == null || ViewUserInterface.getOutputDir().trim().equals("")) {
                             ViewUserInterface.setProvidedOutputDir(false);
                             ViewUserInterface.printUsageAndExit(c);
                         } else {
                             // check that there is a trailng slash at the end of the defaultDir...if not, add one
-                            if ( ! (ViewUserInterface.getOutputDir().charAt(
-                                    ViewUserInterface.getOutputDir().length() - 1) == File.separatorChar)) {
+                            if ( ! (ViewUserInterface.getOutputDir().charAt(ViewUserInterface.getOutputDir().length() - 1) == File.separatorChar)) {
                                 ViewUserInterface.setOutputDir(ViewUserInterface.getOutputDir() + File.separator);
                             }
                             // now check if this is a valid path
                             final File checkOutputDir = new File(ViewUserInterface.getOutputDir());
                             if ( !checkOutputDir.exists()) {
                                 ViewUserInterface.setProvidedOutputDir(false);
-                                Preferences.debug("In argument -" + c + ", " + ViewUserInterface.getOutputDir()
-                                        + " does not exist");
+                                Preferences.debug("In argument -" + c + ", " + ViewUserInterface.getOutputDir() + " does not exist");
                                 ViewUserInterface.printUsageAndExit();
                             }
                         }
@@ -5000,15 +4827,13 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         if (f.exists() && f.isDirectory() && f.canRead()) {
                             ViewUserInterface.setSecondaryPluginsDir(f);
                         } else {
-                            Preferences.debug("In argument -" + c + ", " + secPluginsDir
-                                    + " is not a valid readable directory", Preferences.DEBUG_MINOR);
+                            Preferences.debug("In argument -" + c + ", " + secPluginsDir + " is not a valid readable directory", Preferences.DEBUG_MINOR);
                             ViewUserInterface.printUsageAndExit(c);
                         }
                         break;
 
                     case HomeDir:
-                        Preferences
-                                .debug("HomeDir command is not currently usable, is only System.getProperty(\"user.home\")");
+                        Preferences.debug("HomeDir command is not currently usable, is only System.getProperty(\"user.home\")");
                         break;
 
                     case PreferencesDir:
@@ -5018,8 +4843,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         if (f.exists() && f.isDirectory() && f.canRead() && f.canWrite()) {
                             Preferences.setPreferencesFileDirectory(prefDir);
                         } else {
-                            Preferences.debug("In argument -" + c + ", " + prefDir
-                                    + " is not a writable existing directory.", Preferences.DEBUG_MINOR);
+                            Preferences.debug("In argument -" + c + ", " + prefDir + " is not a writable existing directory.", Preferences.DEBUG_MINOR);
                             ViewUserInterface.printUsageAndExit(c);
                         }
                         break;
@@ -5033,8 +4857,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         if ( !f.exists() || (f.canRead() && f.canWrite())) {
                             Preferences.setPreferencesFileName(prefName);
                         } else {
-                            Preferences.debug("In argument -" + c + ", " + prefName
-                                    + " is not in a readable and/or writable location.", Preferences.DEBUG_MINOR);
+                            Preferences.debug("In argument -" + c + ", " + prefName + " is not in a readable and/or writable location.",
+                                    Preferences.DEBUG_MINOR);
                             ViewUserInterface.printUsageAndExit(c);
                         }
                         break;
