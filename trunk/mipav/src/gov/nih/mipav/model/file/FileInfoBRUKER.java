@@ -86,6 +86,8 @@ public class FileInfoBRUKER extends FileInfoBase {
     private int numberOfA0Images = -1;
     
     private String patientPosition = null;
+    
+    private double acqGradMat[][][] = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -561,7 +563,27 @@ public class FileInfoBRUKER extends FileInfoBase {
         this.numberOfA0Images = numberOfA0Images;	
     }
     
+    /**
+     * 
+     * @param patientPosition
+     */
     public void setPatientPosition(String patientPosition) {
     	this.patientPosition = patientPosition;
+    }
+    
+    /**
+     * 
+     * @param acqGradMat
+     */
+    public void setAcqGradMat(double[][][] acqGradMat) {
+        this.acqGradMat = acqGradMat;	
+    }
+    
+    /**
+     * 
+     * @return
+     */
+    public double[][][] getAcqGradMat() {
+    	return acqGradMat;
     }
 }
