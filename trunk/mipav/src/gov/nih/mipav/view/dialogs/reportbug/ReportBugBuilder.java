@@ -1,6 +1,12 @@
 package gov.nih.mipav.view.dialogs.reportbug;
 
 
+import gov.nih.mipav.model.file.FileBase;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileTypeTable;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
@@ -338,13 +344,62 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener {
         }
         reportStr += "\n";
         int i = 0;
-        final Enumeration<String> images = ViewUserInterface.getReference().getRegisteredImageNames();
+        final Enumeration<ModelImage> images = ViewUserInterface.getReference().getRegisteredImages();
         while (images.hasMoreElements()) {
-            final String imgName = images.nextElement();
-            reportStr += "open image [" + i + "] = " + imgName;
+            final ModelImage img = images.nextElement();
+            final FileInfoBase fInfo = img.getFileInfo(0);
+            reportStr += "open image [" + i + "] = \n";
+            reportStr += "\t" + "Modality: ";
+            reportStr += FileInfoBase.getModalityStr(fInfo.getModality()) + "\n";
+            reportStr += "\t" + "File suffix: " + fInfo.getFileSuffix() + "\n";
+            reportStr += "\t" + "File format: ";
+            reportStr += FileTypeTable.getFileTypeInfo(fInfo.getFileFormat()).getDescription() + "\n";
+            reportStr += "\t" + "Data type: ";
+            reportStr += ModelStorageBase.getBufferTypeStr(fInfo.getDataType()) + "\n";
+            reportStr += "\t" + "Offset: " + fInfo.getOffset() + "\n";
+            reportStr += "\t" + "Endianess: ";
+            if (fInfo.getEndianess() == FileBase.LITTLE_ENDIAN) {
+                reportStr += "LITTLE_ENDIAN\n";
+            } else {
+                reportStr += "BIG_ENDIAN\n";
+            }
+
+            reportStr += "\t" + "Extents: ";
+            for (final int element : fInfo.getExtents()) {
+                reportStr += element + " ";
+            }
+
+            reportStr += "\n\tResolutions: ";
+            for (final float element : fInfo.getResolutions()) {
+                reportStr += element + " ";
+            }
+
+            reportStr += "\n\tUnits of measure: ";
+            for (final int element : fInfo.getUnitsOfMeasure()) {
+                reportStr += FileInfoBase.Unit.getUnitFromLegacyNum(element) + " ";
+            }
+
+            reportStr += "\n\tImage orientation: ";
+            reportStr += FileInfoBase.getImageOrientationStr(fInfo.getImageOrientation());
+
+            reportStr += "\n\tAxis orientations: ";
+            for (final int element : fInfo.getAxisOrientation()) {
+                reportStr += FileInfoBase.getAxisOrientationStr(element) + " ";
+            }
+
+            reportStr += "\n\tImage origin locations: ";
+            for (final float element : fInfo.getOrigin()) {
+                reportStr += element + " ";
+            }
+
+            reportStr += "\n\tMin: " + fInfo.getMin() + "\tMax: " + fInfo.getMax() + "\n";
+
+            reportStr += "\n";
             reportStr += "\n";
             i++;
         }
+
+        // TODO: output recent algorithm history/provenance?
 
         return reportStr;
     }
@@ -491,11 +546,14 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener {
         setTitle("Report a Bug");
 
         final BugType[] bugTypes = BugType.values();
-        final String[] bugTypeStrList = new String[bugTypes.length];
+        final ArrayList<String> bugTypeStrList = new ArrayList<String>();
         for (int i = 0; i < bugTypes.length; i++) {
-            bugTypeStrList[i] = bugTypes[i].description;
+            // don't include the auto-error reporting as an option
+            if (bugTypes[i] != BugType.AUTOMATIC_ERROR_REPORTING) {
+                bugTypeStrList.add(bugTypes[i].description);
+            }
         }
-        bugTypeComboBox = ref.buildComboBox("Bug type", bugTypeStrList);
+        bugTypeComboBox = ref.buildComboBox("Bug type", bugTypeStrList.toArray());
 
         final JLabel summaryInstructions = new JLabel("Title");
         summaryInstructions.setFont(MipavUtil.font12);
