@@ -6,8 +6,10 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.WindowEvent;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.BitSet;
 import java.util.Vector;
@@ -401,7 +403,6 @@ public class JDialogLattice extends JDialogBase {
 		{
 			return null;
 		}
-		
 		VOIContour center = new VOIContour(false);
 		for ( int i = 0; i < left.size(); i++ )
 		{
@@ -423,13 +424,11 @@ public class JDialogLattice extends JDialogBase {
 		Vector<Vector3f> upVectors = new Vector<Vector3f>();
 		
 		float length = centerSpline.GetLength(0, 1);
-//		System.err.println( "Centerline length = " + length );
-		int count = 0;
-		float averageDiameter = 0;
-		float distance = 0;
 		int extent = 0;
-		float[] allTimes = new float[(int) (Math.ceil(length)+1)];
-		for ( int i = 0; i < length+1; i++ )
+		float[] allTimes = new float[(int) (Math.ceil(length))];
+		float minCurve = Float.MAX_VALUE;
+		float maxCurve = -Float.MAX_VALUE;
+		for ( int i = 0; i < length; i++ )
 		{
 			float t = centerSpline.GetTime(i);
 			allTimes[i] = t;
@@ -440,22 +439,12 @@ public class JDialogLattice extends JDialogBase {
 			
 			Vector3f rightDir = Vector3f.sub( rightPt, leftPt );		
 			float diameter = rightDir.normalize();
-			diameter += 10;
 			diameter /= 2f;
+			diameter += 6;
 			if ( diameter > extent )
 			{
 				extent = (int) Math.ceil(diameter);
 			}			
-
-	        if ( i > 0 )
-	        {
-	        	distance += centerPositions.elementAt(i).distance( centerPositions.elementAt(i-1) );
-	        }
-			if ( (distance > .25*length) && (distance < .75 *length) )
-			{
-				averageDiameter += diameter;
-				count++;
-			}
 			wormDiameters.add(diameter);
 			rightVectors.add(rightDir);
 			
@@ -467,13 +456,23 @@ public class JDialogLattice extends JDialogBase {
 //			{
 //				System.err.println( i + "   " + centerPositions.elementAt(i).distance(centerPositions.elementAt(i-1)));
 //			}
-		}
-		averageDiameter /= (float)count;
-		
+			float curve = centerSpline.GetSecondDerivative(t).length();
+        	if ( curve < minCurve )
+        	{
+        		minCurve = curve;
+        	}
+        	if ( curve > maxCurve )
+        	{
+        		maxCurve = curve;
+        	}
+
+		}		
 		extent += 10;
 
 		int[] latticeSlice = new int[afTimeC.length];
 		float[] closestTimes = new float[afTimeC.length];
+		float[] leftDistances = new float[afTimeC.length];
+		float[] rightDistances = new float[afTimeC.length];
 		for ( int i = 0; i < afTimeC.length; i++ )
 		{
 			float minDif = Float.MAX_VALUE;
@@ -487,21 +486,39 @@ public class JDialogLattice extends JDialogBase {
 					closestTimes[i] = allTimes[j];
 				}
 			}
-//			if ( i > 0 )
-//			{
-//				float curveDistance = 0;
-//				for ( int j = latticeSlice[i-1]+1; j <= latticeSlice[i]; j++ )
-//				{
-//					curveDistance += centerSpline.GetPosition(allTimes[j]).distance( centerSpline.GetPosition(allTimes[j-1]) );
-//				}
+			leftDistances[i] = 0;
+			rightDistances[i] = 0;
+			if ( i > 0 )
+			{
+				float curveDistance = 0;
+				for ( int j = latticeSlice[i-1]+1; j <= latticeSlice[i]; j++ )
+				{
+					curveDistance += centerSpline.GetPosition(allTimes[j]).distance( centerSpline.GetPosition(allTimes[j-1]) );
+				}
 //				System.err.println( i + "   " + curveDistance);
 //				System.err.println( i + "   " + (latticeSlice[i] - latticeSlice[i-1]) );
-//			}
+
+
+				curveDistance = 0;
+				for ( int j = latticeSlice[i-1]+1; j <= latticeSlice[i]; j++ )
+				{
+					curveDistance += leftSpline.GetPosition(allTimes[j]).distance( leftSpline.GetPosition(allTimes[j-1]) );
+				}
+				leftDistances[i] = curveDistance;
+
+				curveDistance = 0;
+				for ( int j = latticeSlice[i-1]+1; j <= latticeSlice[i]; j++ )
+				{
+					curveDistance += rightSpline.GetPosition(allTimes[j]).distance( rightSpline.GetPosition(allTimes[j-1]) );
+				}
+				rightDistances[i] = curveDistance;
+			}
 		}
-		
+
+		saveLatticeStatistics(image, length, left, right, leftDistances, rightDistances, "_before");
 		
 		Vector<Ellipsoid3f> ellipseBounds = new Vector<Ellipsoid3f>();
-		distance = 0;
+		float distance = 0;
 		short sID = (short)(image.getVOIs().getUniqueID());
 		VOI samplingPlanes = new VOI(sID, "samplingPlanes");
 		VOI wormContours = new VOI(sID, "wormContours");
@@ -528,10 +545,13 @@ public class JDialogLattice extends JDialogBase {
 	        {
 	        	distance += centerPositions.elementAt(i).distance( centerPositions.elementAt(i-1) );
 	        }
-//	        if ( (i%30) == 0 )
+	        if ( (showModel && ((i%30) == 0)) || !showModel )
 	        {
+	        	float curve = centerSpline.GetSecondDerivative(allTimes[i]).length();
+	        	float scale = (curve - minCurve)/(maxCurve - minCurve);
 		        VOIContour ellipse = new VOIContour(true);
-		        Ellipsoid3f ellipsoid = makeEllipse( rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), averageDiameter, distance, length, ellipse );
+//		        Ellipsoid3f ellipsoid = makeEllipse( rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), averageDiameter, distance, length, ellipse );
+		        Ellipsoid3f ellipsoid = makeEllipse( rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), scale, ellipse );
 		        ellipseBounds.add( ellipsoid );
 	        	wormContours.importCurve(ellipse);
 	        }
@@ -555,19 +575,14 @@ public class JDialogLattice extends JDialogBase {
 		VOI samplingPoints = new VOI(sID, "samplingPlanes");
 		samplingPoints.getCurves().add(centerLine);
 		image.registerVOI(samplingPoints);
-//		image.registerVOI(wormContours);
-//		image.registerVOI(samplingPlanes);
-		
-		double avgDiameter = 0;
-		for ( int i = 0; i < wormDiameters.size(); i++ )
+		if ( showModel )
 		{
-			avgDiameter += wormDiameters.elementAt(i);
+			image.registerVOI(wormContours);
 		}
-		avgDiameter /= (float)wormDiameters.size();
-		avgDiameter /= 2;
-		double volume = Math.PI * (4f/3f) * (length/2f) * avgDiameter * avgDiameter;
-//		System.err.println( "Estimated volume = " + volume );
-		straighten(image, samplingPlanes, ellipseBounds, 2*extent, latticeSlice, false, false );
+		if ( !showModel )
+		{
+			straighten(image, samplingPlanes, ellipseBounds, 2*extent, latticeSlice, false, false );
+		}
 		
 		return null; //createTube( image, center, extent);
 	}
@@ -588,6 +603,30 @@ public class JDialogLattice extends JDialogBase {
 		{
 			diameterB = diameterA;
 		}
+		for ( int i = 0; i < numPts; i++ )
+		{
+			Vector3f pos1 = Vector3f.scale((float) (diameterA * adCos[i]), right);
+			Vector3f pos2 = Vector3f.scale((float) (diameterB * adSin[i]), up);
+			Vector3f pos = Vector3f.add(pos1,pos2);
+			pos.add(center);
+			ellipse.addElement( pos );
+		}
+		float[] extents = new float[]{diameterA, diameterB, diameterB };
+		Vector3f[] axes = new Vector3f[]{right, up, Vector3f.cross(right,up) };
+		return new Ellipsoid3f( center, axes, extents );
+	}
+
+	public static Ellipsoid3f makeEllipse( Vector3f right, Vector3f up, Vector3f center, float diameterA, float scale, VOIContour ellipse  )
+	{
+		int numPts = 32;
+		double[] adCos = new double[32];
+		double[] adSin = new double[32];
+		for ( int i = 0; i < numPts; i++ )
+		{
+			adCos[i] = Math.cos( Math.PI * 2.0 * i/numPts );
+			adSin[i] = Math.sin( Math.PI * 2.0 * i/numPts);
+		}
+		float diameterB = diameterA/2f + (1-scale) * diameterA/2f;
 		for ( int i = 0; i < numPts; i++ )
 		{
 			Vector3f pos1 = Vector3f.scale((float) (diameterA * adCos[i]), right);
@@ -653,7 +692,12 @@ public class JDialogLattice extends JDialogBase {
 
 		BitSet duplicateMask = new BitSet( dimX * dimY * dimZ );
 
-		ModelImage resultImage = new ModelImage(image.getType(), resultExtents, image.getImageName() + "_straigntened");
+    	String imageName = image.getImageName();
+    	if ( imageName.contains("_clone") )
+    	{
+    		imageName.replaceAll("_clone", "" );
+    	}
+		ModelImage resultImage = new ModelImage(image.getType(), resultExtents, imageName + "_straigntened");
 		JDialogBase.updateFileInfo( image, resultImage );
 		resultImage.setResolutions( new float[]{1,1,1});
 		Vector3f lpsOrigin = new Vector3f();
@@ -686,7 +730,7 @@ public class JDialogLattice extends JDialogBase {
 
 		if ( displayMask )
 		{
-			ModelImage duplicateMaskImage = new ModelImage( ModelStorageBase.BOOLEAN, image.getExtents(), image.getImageName() + "_mask" );
+			ModelImage duplicateMaskImage = new ModelImage( ModelStorageBase.BOOLEAN, image.getExtents(), imageName + "_mask" );
 			try {
 				duplicateMaskImage.importData( 0, duplicateMask, true );
 				new ViewJFrameImage(duplicateMaskImage);
@@ -695,8 +739,9 @@ public class JDialogLattice extends JDialogBase {
 			}
 		}
 		
-		
 
+		float[] leftDistances = new float[latticeSlice.length];
+		float[] rightDistances = new float[latticeSlice.length];
 		short id = (short) image.getVOIs().getUniqueID();
 		VOI lattice = new VOI(id, "lattice", VOI.POLYLINE, (float)Math.random() );
 		VOIContour leftSide = new VOIContour( false );
@@ -708,7 +753,7 @@ public class JDialogLattice extends JDialogBase {
 		{
 			Ellipsoid3f ellipsoid = ellipseBounds.elementAt( latticeSlice[i] );
 //			Vector3f center = ellipsoid.Center;
-			float width = ellipsoid.Extent[0];
+			float width = ellipsoid.Extent[0] - 6;
 //			Vector3f dir = ellipsoid.Axis[0];
 			Vector3f center = new Vector3f(diameter/2,diameter/2,latticeSlice[i]);
 			
@@ -717,6 +762,14 @@ public class JDialogLattice extends JDialogBase {
 			
 			Vector3f rightPt = Vector3f.scale(  width, dir ); rightPt.add(center);
 			rightSide.add(rightPt);
+
+			leftDistances[i] = 0;
+			rightDistances[i] = 0;
+			if ( i > 0 )
+			{
+				leftDistances[i] = leftSide.elementAt(i).distance(leftSide.elementAt(i-1) );
+				rightDistances[i] = rightSide.elementAt(i).distance(rightSide.elementAt(i-1) );
+			}
 		}
 
 		resultImage.registerVOI(lattice);
@@ -743,9 +796,11 @@ public class JDialogLattice extends JDialogBase {
 			}
 			resultImage.registerVOI( marker );
 		}
-			
+
+		saveLatticeStatistics(image, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");
+		
+		
 		resultImage.calcMinMax();
-		resultImage.setImageName( image.getImageName() + "_straightened_isotropic" );
 		new ViewJFrameImage(resultImage);  	
     }
     
@@ -820,6 +875,78 @@ public class JDialogLattice extends JDialogBase {
             Vector3f kPos = kTract.elementAt(i);
             kPos.mult(kExtentsScale);
             kPos.mult(kVolumeScale);
+        }
+    }
+    
+    public static void saveLatticeStatistics( ModelImage image, float length, VOIContour left, VOIContour right, 
+    		float[] leftPairs, float[] rightPairs, String postFix )
+    {
+    	String imageName = image.getImageName();
+    	if ( imageName.contains("_clone") )
+    	{
+    		imageName = imageName.replaceAll("_clone", "" );
+    	}
+		String voiDir = image.getImageDirectory() + JDialogBase.makeImageName( imageName, "") + File.separator;
+        File voiFileDir = new File(voiDir);
+        if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+        } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+        } else { // voiFileDir does not exist
+            voiFileDir.mkdir();
+        }
+		voiDir = image.getImageDirectory() + JDialogBase.makeImageName( imageName, "") + File.separator +
+    			"statistics" + File.separator;
+        voiFileDir = new File(voiDir);
+        if (voiFileDir.exists() && voiFileDir.isDirectory()) {
+//        	String[] list = voiFileDir.list();
+//        	for ( int i = 0; i < list.length; i++ )
+//        	{
+//        		File lrFile = new File( voiDir + list[i] );
+//        		lrFile.delete();
+//        	}
+        } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {
+        } else { // voiFileDir does not exist
+            voiFileDir.mkdir();
+        }
+
+        File file = new File(voiDir + "LatticeInfo" + postFix + ".txt");
+        if ( file.exists() )
+        {
+        	file.delete();
+        	file = new File(voiDir + "LatticeInfo" + postFix + ".txt");
+        }
+
+
+        try {
+
+        	FileWriter fw = new FileWriter(file);
+        	BufferedWriter bw = new BufferedWriter(fw);
+        	bw.write( "Total Curve Length:" + "\t" + length + "\n" );
+            bw.newLine();
+//        	bw.write( "Diameter" + "\t" + "Left" + "\t"  + "Right" + "\t" + "\n" );
+        	for ( int i = 0; i < leftPairs.length; i++ )
+        	{
+        		bw.write(i + "\t" + left.elementAt(i).distance(right.elementAt(i)) + "\t" + leftPairs[i] + "\t" + rightPairs[i] + "\n");
+        				
+        	}
+//        	for ( int i = 0; i < leftPairs.length; i++ )
+//        	{
+//        		bw.write( "Left" + i + "->" + "Right" + i + "\t" + left.elementAt(i).distance(right.elementAt(i)) + "\n" );
+//        	}
+//            bw.newLine();
+//        	for ( int i = 1; i < leftPairs.length; i++ )
+//        	{
+//        		bw.write( "Left" + (i-1) + "->" + "Left" + i + "\t" + leftPairs[i] + "\n" );
+//        	}
+//            bw.newLine();
+//        	for ( int i = 1; i < leftPairs.length; i++ )
+//        	{
+//        		bw.write( "Right" + (i-1) + "->" + "Right" + i + "\t" + rightPairs[i] + "\n" );
+//        	}
+            bw.newLine();
+        	bw.close();
+        } catch (final Exception e) {
+        	System.err.println("CAUGHT EXCEPTION WITHIN writeXML() of FileVOI");
+        	e.printStackTrace();
         }
     }
 

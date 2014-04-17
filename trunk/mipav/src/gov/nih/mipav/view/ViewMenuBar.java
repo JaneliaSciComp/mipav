@@ -945,6 +945,8 @@ public class ViewMenuBar {
                                                 false),
                                 		menuBuilder.buildMenuItem("Open Lattice", "OpenLattice", 0, null,
                                                         false),
+                                        menuBuilder.buildMenuItem("Show Curve Models", "showStraightenLattice", 0, null,
+                                                        false),
                                         menuBuilder.buildMenuItem("Apply Lattice Straightening", "straightenLattice", 0, null,
                                                         false)
                                         		}
