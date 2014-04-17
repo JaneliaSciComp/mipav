@@ -409,7 +409,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         String javaLibraryPath = System.getProperties().getProperty("java.library.path");
         javaLibraryPath = javaLibraryPath.replace(';', '\n');
 
-        aboutJavaDialog = new JDialogText(mainFrame, "About System"); // Title
+        aboutJavaDialog = new JDialogText(mainFrame, "Java virtual machine information"); // Title
 
         aboutJavaDialog.append("Java version:       " + System.getProperties().getProperty("java.version") + "\n");
         aboutJavaDialog.append("Java compiler:      " + System.getProperties().getProperty("java.compiler") + "\n");
