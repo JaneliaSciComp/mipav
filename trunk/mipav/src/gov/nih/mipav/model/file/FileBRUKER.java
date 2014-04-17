@@ -11,7 +11,68 @@ import java.util.ArrayList;
 
 /**
  * Reads a BRUKER file by first reading in the d3proc header file, second the reco header file, third the acqp file int the 
- * same directory or up one or two two parent directories, and finally the 2dseq binary file.
+ * same directory or up one or two two parent directories, and finally the 2dseq binary file.Paravision uses a subject patient
+   coordinate system (L->R, P->A, F->H), with X = L->R, Y = P->A, and Z = F->H.  This is different from the DICOM R->L, A->P, F->H.
+   Paravision also has a (r, p, s) read, phase, slice coordinate system.  ND is the total number of diffusion experiments.
+   The B Matrix (PVM_DwBMat)(implemented as symmetric 3x3  matrix array of size ND) is calculated for each diffusion experiment
+   in the imaging coordinate system (r,p,s).  
+   Diffusion Gradient Vector (PVM_DwGradVec) - Parameter of dimension ND X 3 specifying the diffusion gradient amplitudes
+   in the x,y,z coordinate system.
+   Eff. B Value (PVM_DwEffBval) - The trace of the b-matrix (is implemented as an array of size ND.
+   
+   ACQ_patient_pos - defines the patient position inside the magnet. According to
+   the defined patient position. ACQ_patient_pos may have the values:
+   Head_Supine - negates Gx and Gz.
+   Head_Prone - negates Gy and Gz.
+   Head_Left - negates Gz. Gx and Gy are exchanged.
+   Head_Right - negates Gx, Gy and Gz. Gx and Gy are exchanged.
+   Foot_Supine - all gradients remain unchanged.
+   Foot_Prone - negates Gx and Gy.
+   Foot_Left - negates Gy. Gx and Gy are exchanged.
+   Foot_Right - negates Gx. Gx and Gy are exchanged.
+
+   ACQ_slice_sepn_mode - defines the slice separation mode of a multi slice
+   experiment. It can be either Contiguous, Equidistant, Var_Parallel or
+   Var_Angle. In case of Contiguous, Equidistant and Var_Parallel, the
+   parameter ACQ_grad_matrix has only one item in the slice dimension, since
+   these slice orientations produce parallel slices. In case of Var_Angle,
+   ACQ_grad_matrix has to have NSLICES items in the slice dimension to define
+   the orientation for each slice separately.
+   NSLICES - defines the number of slices of a multi slice experiment.
+   ACQ_grad_matrix[ ][3][3] - is a three dimensional array describing the slice orientation
+   of the images to be measured.
+   For ACQ_grad_matrix[i][j][k]
+   i = 0, ..., NSLICES - 1 specifies the slice index during the acquisition,
+   j = 0, 1, 2 specifies the read-, phase- and slice gradients,
+   k = 0, 1, 2 specifies the x, y and z components of the slice direction independent
+   of the patient position.
+   The gradient matrix of each slice is orthonormal, which means that the read-,
+   phase- and slice-gradient vectors are normalized to 1.0 and that they are
+   orthogonal to each other.
+   The following Example shows a two slice experiment with slice orientation
+   Cor_Sag_oblique with ACQ_slice_sepn_mode Var_Angle with 0o for the
+   first slice and 30o for the second slice.
+   Example: Cor_Sag_oblique
+   ACQ_slice_sepn_mode = Var_Angle
+   NSLICES = 2, (0 and 30 degree orientation)
+   ACQ_grad_matrix[0][0][0] = 1; 1st slice, read, Gx
+   ACQ_grad_matrix[0][0][1] = 0; 1st slice, read, Gy
+   ACQ_grad_matrix[0][0][2] = 0; 1st slice, read, Gz
+   ACQ_grad_matrix[0][1][0] = 0; 1st slice, phase, Gx
+   ACQ_grad_matrix[0][1][1] = 0; 1st slice, phase, Gy
+   ACQ_grad_matrix[0][1][2] = 1; 1st slice, phase, Gz
+   ACQ_grad_matrix[0][2][0] = 0; 1st slice, slice, Gx
+   ACQ_grad_matrix[0][2][1] = 1; 1st slice, slice, Gy
+   ACQ_grad_matrix[0][2][2] = 0; 1st slice, slice, Gz
+   ACQ_grad_matrix[1][0][0] = 0.866; 2nd slice, read, Gx
+   ACQ_grad_matrix[1][0][1] = 0.5; 2nd slice, read, Gy
+   ACQ_grad_matrix[1][0][2] = 0; 2nd slice, read, Gz
+   ACQ_grad_matrix[1][1][0] = 0; 2nd slice, phase, Gx
+   ACQ_grad_matrix[1][1][1] = 0; 2nd slice, phase, Gy
+   ACQ_grad_matrix[1][1][2] = 1; 2nd slice, phase, Gz
+   ACQ_grad_matrix[1][2][0] = -0,5; 2nd slice, slice, Gx
+   ACQ_grad_matrix[1][2][1] = 0.866; 2nd slice, slice, Gy
+   ACQ_grad_matrix[1][2][2] = 0; 2nd slice, slice, Gz
  */
 
 public class FileBRUKER extends FileBase {
@@ -465,7 +526,6 @@ public class FileBRUKER extends FileBase {
             				if (dtiParams == null) {
             					dtiParams = new DTIParameters(numVolumes);
             				}
-            				// gradients is in x, y, z coordinates
             				dtiParams.setGradients(gradients);
             				Preferences.debug("Just did dtiParams.setGradients(gradients)\n", Preferences.DEBUG_FILEIO);
             			} // if (gradientsOkay)
@@ -1390,6 +1450,17 @@ public class FileBRUKER extends FileBase {
         int[] imageExtents;
         int xDim;
         int yDim;
+        boolean okay;
+        int i;
+        int numSlices = 1;
+        int numVars;
+        int numFound;
+        double gradMat[][][] = null;
+        int index0;
+        int index1;
+        int index2;
+        boolean gradMatOkay;
+        String patientPosition = null;
         file = new File(fileDir + fileName);
         raFile = new RandomAccessFile(file, "r");
         lineString = readLine();
@@ -1446,7 +1517,131 @@ public class FileBRUKER extends FileBase {
                     raFile.close();
                     throw new IOException("##$NR has parseString with length = " + parseString.length);
                 }	
-            }
+            } else if (parseString[0].equalsIgnoreCase("##$ACQ_patient_pos")) {
+            	if (parseString.length == 2) {
+            		patientPosition = parseString[1];
+            		Preferences.debug("Patient position = " + patientPosition + "\n", Preferences.DEBUG_FILEIO);
+            		fileInfo.setPatientPosition(patientPosition);
+            	}
+            	else {
+            		raFile.close();
+            		throw new IOException("##$ACQ_patient_pos has parseString with length = " + parseString.length);
+            	}
+            } else if (parseString[0].equalsIgnoreCase("##$ACQ_grad_matrix")) {
+            	okay = true;
+            	if (parseString.length == 6) {
+	                if (parseString[1].equals("(")) {
+	                	Preferences.debug("For ACQ_grad_matrix parseString[1] == '(' as expected\n", Preferences.DEBUG_FILEIO);
+	                }
+	                else
+	                {
+	                	Preferences.debug("For ACQ_grad_matrix parseString[1] unexpectedly == " + parseString[1] + "\n", 
+	                			Preferences.DEBUG_FILEIO);
+	                	okay = false;
+	                }
+	                if (okay) {
+		                if (parseString[2].endsWith(",")) {
+		                    numSlices = Integer.valueOf(parseString[2].substring(0,parseString[2].length()-1));
+		                    Preferences.debug("For PVM_DwBMat numVolumes = " + numVolumes + "\n", Preferences.DEBUG_FILEIO);
+		                }
+		                else {
+		                	Preferences.debug("For PVM_DwBMat parseString[2] unexpectedly == " + parseString[2] + "\n",
+		                			Preferences.DEBUG_FILEIO);
+		                	okay = false;
+		                }
+	                }
+	                if (okay) {
+		                if (parseString[3].equals("3,")) {
+		                    Preferences.debug("For PVM_DwBMat parseString[3] equals '3,', as expected\n", Preferences.DEBUG_FILEIO);			
+		                }
+		                else {
+		                	Preferences.debug("For PVM_DwBMat parseString[3] unexpectedly == " + parseString[3] + "\n",
+		                			          Preferences.DEBUG_FILEIO);
+		                	okay = false;
+		                }
+	                }
+	                if (okay) {
+	                	if (parseString[4].equals("3")) {
+		                    Preferences.debug("For PVM_DwBMat parseString[4] equals 3, as expected\n", Preferences.DEBUG_FILEIO);			
+		                }
+		                else {
+		                	Preferences.debug("For PVM_DwBMat parseString[4] unexpectedly == " + parseString[4] + "\n",
+		                			          Preferences.DEBUG_FILEIO);
+		                	okay = false;
+		                }	
+	                }
+	                if (okay) {
+	                    if (parseString[5].equals(")")) {
+	                        Preferences.debug("For PVM_DwMat parseString[5] == ')' as expected\n", Preferences.DEBUG_FILEIO);	
+	                    }
+	                    else {
+	                    	Preferences.debug("For PVM_DwBMat parseString[5] unexpectedly == " + parseString[5] + "\n",
+	                    			Preferences.DEBUG_FILEIO);
+		                	okay = false;	
+	                    }
+	                }
+            	}
+            	else {
+            		Preferences.debug("For PVM_DwBMat parseString.length unexpectedly == " + parseString.length + "\n",
+            				          Preferences.DEBUG_FILEIO);
+            		okay = false;
+            	}
+            	if (okay) {
+                    numVars = 9 * numSlices;
+            		numFound = 0;
+            		gradMat = new double[numSlices][3][3];
+            		index0 = 0;
+            		index1 = 0;
+            		index2 = 0;
+            		gradMatOkay = true;
+            		while ((numFound < numVars) && (lineString != null) && gradMatOkay) {
+            			lineString = readLine();
+            			if (lineString != null) {
+            			    parseString = parse(lineString);
+            			    for (i = 0; i < parseString.length && gradMatOkay; i++) {
+            			    	try {
+            			    	    gradMat[index0][index1][index2] = Double.valueOf(parseString[i]);
+            			    	}
+            			    	catch(NumberFormatException nfe) {
+                                    Preferences.debug("gradMat[" + index0 + "][" + index1 + "][" + index2 + "] could not be read.",
+                                    		Preferences.DEBUG_FILEIO);
+                                    gradMatOkay = false;
+                                }
+            			    	if (gradMatOkay) {
+            			    		numFound++;
+            			    		if (index2 < 2) {
+            			    			index2++;
+            			    		}
+            			    		else if (index1 < 2) {
+            			    			index2 = 0;
+            			    			index1++;
+            			    		}
+            			    		else {
+            			    			index2 = 0;
+            			    			index1 = 0;
+            			    			index0++;
+            			    		}
+            			    	}
+            			    }
+            			} // if (lineString != null)
+            			else {
+            				Preferences.debug("For PVM_ACQ_grad_mat lineString == null while numFound == " + numFound + 
+            						           " and numVars = " + numVars + "\n", Preferences.DEBUG_FILEIO);
+            				gradMatOkay = false;
+            			}
+            		} // while ((numFound < numVars) && (lineString != null) && gradMatOkay)
+            		if (numFound == numVars) {
+            			
+            			if (gradMatOkay) {
+            				if (dtiParams == null) {
+            					dtiParams = new DTIParameters(numVolumes);
+            				}
+            				
+            				Preferences.debug("Just read in ACQ_grad_mat\n", Preferences.DEBUG_FILEIO);
+            			} // if (bMatOkay)
+            		} // if (numFound == numVars)
+            	} // if (okay)
+            } // else if (parseString[0].equalsIgnoreCase("##$ACQ_grad_matrix"))
 
             lineString = readLine();
         } // while (lineString != null)
