@@ -1219,6 +1219,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         	mouse3D = true;
         } else if ( command.equals("buildWormLattice") ) {
         	new JDialogLattice( getActiveImage(), this );
+        } else if ( command.equals("showStraightenLattice") ) {
+        	if ( lattice != null )
+        	{
+        		JDialogLattice.interpolateLattice(getActiveImage(), lattice.elementAt(0), true);
+        	}
         } else if ( command.equals("straightenLattice") ) {
         	if ( lattice != null )
         	{
