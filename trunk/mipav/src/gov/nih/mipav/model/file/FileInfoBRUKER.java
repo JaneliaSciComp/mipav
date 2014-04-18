@@ -88,6 +88,22 @@ public class FileInfoBRUKER extends FileInfoBase {
     private String patientPosition = null;
     
     private double acqGradMat[][][] = null;
+    
+    private int numberOfObjects = -1;
+    
+    private String diffusionGradientSwitchingScheme = null;
+    
+    private double maximumPossibleBValue = Double.NaN;
+    
+    private int[] BValuesPerDirection = null;
+    
+    private double[] diffusionGradientAmplitude = null;
+    
+    private int totalNumberOfDiffusionExperiments = -1;
+    
+    private double diffusionModuleDuration = Double.NaN;
+    
+    private double diffusionModuleEchoDelay = Double.NaN;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -116,6 +132,10 @@ public class FileInfoBRUKER extends FileInfoBase {
         displayPrimaryInfo(dialog, matrix);
         dialog.append("\n\n                Other information\n\n");
 
+        if (patientPosition != null) {
+        	dialog.append("Patient position = " + patientPosition + "\n");
+        }
+        
         if (sliceSeparationMode != null) {
             dialog.append("Slice separation mode:\t" + sliceSeparationMode + "\n");
         }
@@ -165,11 +185,15 @@ public class FileInfoBRUKER extends FileInfoBase {
                           "\n\twhen repetitions > 1:\t " + delayBetweenVolumes + "\n");
         }
         
+        if (numberOfObjects != -1) {
+        	dialog.append("Number of objects = " + numberOfObjects + "\n");
+        }
+        
         if (numberOfAverages != -1) {
         	dialog.append("Number of accumulations which are averaged to increase\n\tthe signal-to-noise ratio of the spectra:\t " +
                 numberOfAverages + "\n");
         }
-        
+                
         if (numberOfRepetitions != -1) {
         	dialog.append("Number of repetitions of experiments:\t " + numberOfRepetitions + "\n");
         }
@@ -246,14 +270,14 @@ public class FileInfoBRUKER extends FileInfoBase {
         if (diffusionGradientDuration != null) {
         	dialog.append("Array of duration of gradient pulses of the diffusion experiment:\n");
         	for (int i = 0; i < diffusionGradientDuration.length; i++) {
-        	    dialog.append("Duration["+i+"]:\t " + diffusionGradientDuration[i] + "\n");	
+        	    dialog.append("\tDuration["+i+"]:\t " + diffusionGradientDuration[i] + "\n");	
         	}
         }
         
         if (diffusionGradientSeparation != null) {
         	dialog.append("Array of separation of gradient pulses of the diffusion experiment:\n");
         	for (int i = 0; i < diffusionGradientSeparation.length; i++) {
-        	    dialog.append("Separation["+i+"]:\t " + diffusionGradientSeparation[i] + "\n");	
+        	    dialog.append("\tSeparation["+i+"]:\t " + diffusionGradientSeparation[i] + "\n");	
         	}
         }
         
@@ -279,7 +303,7 @@ public class FileInfoBRUKER extends FileInfoBase {
         }
         
         if (numberOfA0Images != -1) {
-        	dialog.append("Number of A0 images = " + numberOfA0Images +
+        	dialog.append("Number of A0 images:\t " + numberOfA0Images +
         			      "\n\tNumber of Images performed without diffusion gradients." +
         			      "\n\tIn experiments with a large number of high b-values (e.g." +
                           "\n\thigh number of diffusion directions and 1 b-value per" +
@@ -287,9 +311,41 @@ public class FileInfoBRUKER extends FileInfoBase {
                           "\n\tif set to 1.\n");
         }
         
-        if (patientPosition != null) {
-        	dialog.append("Patient position = " + patientPosition + "\n");
+        if (diffusionGradientSwitchingScheme != null) {
+        	dialog.append("Diffusion gradient switching scheme:\t " + diffusionGradientSwitchingScheme + "\n");
         }
+        
+        if (!Double.isNaN(maximumPossibleBValue)) {
+        	dialog.append("Maximum possible b-value:\t " + maximumPossibleBValue + "\n");
+        }
+        
+        if (BValuesPerDirection != null) {
+        	dialog.append("Array of B values per direction:\n");
+        	for (int i = 0; i < BValuesPerDirection.length; i++) {
+        	    dialog.append("\tB values per direction["+i+"]:\t " + BValuesPerDirection[i] + "\n");	
+        	}
+        }
+        
+        if (diffusionGradientAmplitude != null) {
+        	dialog.append("Array of diffusion gradient amplitude (% of maximum gradient power)\n" +
+                          "\tfor each gradient direction:\n");
+        	for (int i = 0; i < diffusionGradientAmplitude.length; i++) {
+        		dialog.append("\tDiffusion gradient amplitude["+i+"]:\t " + diffusionGradientAmplitude[i] + "\n");
+        	}
+        }
+        
+        if (totalNumberOfDiffusionExperiments != -1) {
+        	dialog.append("Total number of diffusion experiments:\t" + totalNumberOfDiffusionExperiments + "\n");
+        }
+        
+        if (!Double.isNaN(diffusionModuleDuration)) {
+        	dialog.append("Total duration of the DTI module:\t" + diffusionModuleDuration + "\n");
+        }
+        
+        if (!Double.isNaN(diffusionModuleEchoDelay)) {
+        	dialog.append("Contribution of the DTI module to the echo time:\t" + diffusionModuleEchoDelay + "\n");
+        }
+        
     }
 
     /**
@@ -585,5 +641,69 @@ public class FileInfoBRUKER extends FileInfoBase {
      */
     public double[][][] getAcqGradMat() {
     	return acqGradMat;
+    }
+    
+    /**
+     * 
+     * @param numberOfObjects
+     */
+    public void setNumberOfObjects(int numberOfObjects) {
+    	this.numberOfObjects = numberOfObjects;
+    }
+    
+    /**
+     * 
+     * @param diffusionGradientSwitchingScheme
+     */
+    public void setDiffusionGradientSwitchingScheme(String diffusionGradientSwitchingScheme) {
+    	this.diffusionGradientSwitchingScheme = diffusionGradientSwitchingScheme;
+    }
+    
+    /**
+     * 
+     * @param maximumPossibleBValue
+     */
+    public void setMaximumPossibleBValue(double maximumPossibleBValue) {
+    	this.maximumPossibleBValue = maximumPossibleBValue;
+    }
+    
+    /**
+     * 
+     * @param BValuesPerDirection
+     */
+    public void setBValuesPerDirection(int[] BValuesPerDirection) {
+    	this.BValuesPerDirection = BValuesPerDirection;
+    }
+    
+    /**
+     * 
+     * @param diffusionGradientAmplitude
+     */
+    public void setDiffusionGradientAmplitude(double[] diffusionGradientAmplitude) {
+    	this.diffusionGradientAmplitude = diffusionGradientAmplitude;
+    }
+    
+    /**
+     * 
+     * @param totalNumberOfDiffusionExperiments
+     */
+    public void setTotalNumberOfDiffusionExperiments(int totalNumberOfDiffusionExperiments) {
+    	this.totalNumberOfDiffusionExperiments = totalNumberOfDiffusionExperiments;
+    }
+    
+    /**
+     * 
+     * @param diffusionModuleDuration
+     */
+    public void setDiffusionModuleDuration(double diffusionModuleDuration) {
+    	this.diffusionModuleDuration = diffusionModuleDuration;
+    }
+    
+    /**
+     * 
+     * @param diffusionModuleEchoDelay
+     */
+    public void setDiffusionModuleEchoDelay(double diffusionModuleEchoDelay) {
+    	this.diffusionModuleEchoDelay = diffusionModuleEchoDelay;
     }
 }
