@@ -4873,7 +4873,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public void focusLost(final FocusEvent e) {
             validateFields();
         }
-
     }
 
     /**
@@ -4925,7 +4924,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     client.header("pass", ddAuthPass);
                 }
 
+                final long startTime = System.currentTimeMillis();
                 dataStructureList = (List<DataStructure>) client.accept("text/xml").getCollection(DataStructure.class);
+                final long endTime = System.currentTimeMillis();
+
+                System.out.println("Webservice request (sec):\t" + ( (endTime - startTime) / 1000));
 
                 // for (final DataStructure ds : dataStructureList) {
                 // System.out.println("FS title:\t" + ds.getTitle() + "\tversion:\t" + ds.getVersion() + "\tpub:\t" +
