@@ -1215,7 +1215,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     try {
                         plugin = Class.forName(name);
                     } catch (final ClassNotFoundException e1) {
-                        System.err.println(e1.getMessage());
+                        System.err.println("Unable to find class file(s) for plugin: " + e1.getMessage());
                         // e1.printStackTrace();
                     } catch (final Exception e2) {
                         e2.printStackTrace();
