@@ -34,6 +34,11 @@ import Jama.Matrix;
    Foot_Left - negates Gy. Gx and Gy are exchanged.
    Foot_Right - negates Gx. Gx and Gy are exchanged.
 
+   Look at O05_GeoEditor Figure 5.1.  The description of gradient interchanges and negations together with the figure
+   show that the x, y, and z must be remaining constant independent of patient position.  Therefore, once you have
+   x, y, z directly from PVM_DwGradVec or use ACQ_grad_matrix to convert PVM_DwBMat from r,p,s to x,y,z, there is no
+   need to consider ACQ_patient_pos.
+
    ACQ_slice_sepn_mode - defines the slice separation mode of a multi slice
    experiment. It can be either Contiguous, Equidistant, Var_Parallel or
    Var_Angle. In case of Contiguous, Equidistant and Var_Parallel, the
@@ -649,14 +654,26 @@ public class FileBRUKER extends FileBase {
                     else if (parseString[1].equalsIgnoreCase("NSPECT")) {
                     	method = "Non-localized Spectroscopy";
                     }
+                    else if (parseString[1].equalsIgnoreCase("POSITION")) {
+                    	method = "POSITION";
+                    }
                     else if (parseString[1].equalsIgnoreCase("PRESS")) {
                     	method = "Point-Resolved Spectroscopy";
+                    }
+                    else if (parseString[1].equals("STEAM")) {
+                    	method = "Stimulated Echo Acquisition Mode";
+                    }
+                    else if (parseString[1].equals("ISIS")) {
+                    	method = "ISIS";
                     }
                     else if (parseString[1].equalsIgnoreCase("CSI")) {
                     	method = "Chemical Shift Imaging";
                     }
                     else if (parseString[1].equalsIgnoreCase("FLASH")) {
                     	method = "Fast Low Angle Shot";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("IntragateFLASH")) {
+                        method = "IntraGateFLASH";	
                     }
                     else if (parseString[1].equalsIgnoreCase("MSME")) {
                         method = "Multi Slice Multi Echo";	
@@ -666,6 +683,9 @@ public class FileBRUKER extends FileBase {
                     }
                     else if (parseString[1].equalsIgnoreCase("RAREVTR")) {
                     	method = "RARE with variable repetition time TR";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("RAREst")) {
+                        method = "RARE with short echo time";	
                     }
                     else if (parseString[1].equalsIgnoreCase("FISP")) {
                     	method = "Fast Imaging with Steady State Precession";
@@ -682,11 +702,17 @@ public class FileBRUKER extends FileBase {
                     else if (parseString[1].equalsIgnoreCase("DtiStandard")) {
                     	method = "Diffusion Tensor Imaging Standard";
                     }
+                    else if (parseString[1].equalsIgnoreCase("DtiSpiral")) {
+                    	method = "Diffusion Tensor Imaging Spiral";
+                    }
                     else if (parseString[1].equalsIgnoreCase("SPIRAL")) {
                     	method = "SPIRAL";
                     }
                     else if (parseString[1].equalsIgnoreCase("GEFC")) {
                     	method = "Gradient Echo with Flow Compensation";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("FLOWMAP")) {
+                    	method = "FLOWMAP";
                     }
                     else if (parseString[1].equalsIgnoreCase("FL2D_ANGIO")) {
                     	method = "FL2D Angiography Method";
@@ -699,6 +725,30 @@ public class FileBRUKER extends FileBase {
                     }
                     else if (parseString[1].equalsIgnoreCase("RfProfile")) {
                     	method = "Method to measure RF Profiles";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("UTE")) {
+                    	method = "Ultrashort TE";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("UTE3D")) {
+                    	method = "Ultrashort TE 3D";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("ZTE")) {
+                    	method = "Zero TE";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("Fastmap")) {
+                    	method = "Fast Map";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("FieldMap")) {
+                    	method = "Field Map";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("T2S EPI")) {
+                    	method = "T2S EPI for rapid measurement of the effective relaxation time T2*";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("T1_EPI")) {
+                    	method = "T1_EPI for rapid measurement of the effective relaxation time T1";
+                    }
+                    else if (parseString[1].equalsIgnoreCase("T2_EPI")) {
+                    	method = "T2_EPI for rapid measurement of the relaxation time T2";
                     }
                     else {
                     	method = parseString[1];
@@ -1021,7 +1071,7 @@ public class FileBRUKER extends FileBase {
                     if ((parseString[1].equalsIgnoreCase("bp"))|| (parseString[1].equalsIgnoreCase("bp32"))) {
                     	rfcPulseType = "32 point bp pulse used for non-selective refocusing with durations above 0.2 msec";
                     }
-                    else if ((parseString[1].equalsIgnoreCase("gauss"))|| (parseString[1].equalsIgnoreCase("gauss"))) {
+                    else if ((parseString[1].equalsIgnoreCase("gauss"))|| (parseString[1].equalsIgnoreCase("gauss512"))) {
                     	rfcPulseType = "512 point gauss pulse used for selective refocusing" +
                         "\n\tlow bandwidth factor with durations above 2 msec";
                     }
@@ -1029,7 +1079,7 @@ public class FileBRUKER extends FileBase {
                     	rfcPulseType = "hermite pulse with selective refocusing" + 
                         "\n\tmedium bandwidth factor";
                     }
-                    else if ((parseString[1].equalsIgnoreCase("sinc"))|| (parseString[1].equalsIgnoreCase("sinc"))) {
+                    else if ((parseString[1].equalsIgnoreCase("sinc"))|| (parseString[1].equalsIgnoreCase("sinc3"))) {
                     	rfcPulseType = "3 lobed sinc pulse used for selective refocusing" +
                         "\n\tmedium bandwidth factor";
                     }
@@ -1230,7 +1280,7 @@ public class FileBRUKER extends FileBase {
                 			Preferences.debug("Array of duration of gradient pulses of the diffusion experiment:\n",
                 					          Preferences.DEBUG_FILEIO);
                 			for (i = 0; i < arrayLength; i++) {
-                				Preferences.debug("Duration["+i+"] = " + diffusionGradientDuration[i] + "\n",
+                				Preferences.debug("\tDuration["+i+"] = " + diffusionGradientDuration[i] + "\n",
                 						           Preferences.DEBUG_FILEIO);
                 			}
                 			fileInfo.setDiffusionGradientDuration(diffusionGradientDuration);
@@ -1301,7 +1351,7 @@ public class FileBRUKER extends FileBase {
                 			Preferences.debug("Array of separation of gradient pulses of the diffusion experiment:\n",
                 					          Preferences.DEBUG_FILEIO);
                 			for (i = 0; i < arrayLength; i++) {
-                				Preferences.debug("Separation["+i+"] = " + diffusionGradientSeparation[i] + "\n",
+                				Preferences.debug("\tSeparation["+i+"] = " + diffusionGradientSeparation[i] + "\n",
                 						           Preferences.DEBUG_FILEIO);
                 			}
                 			fileInfo.setDiffusionGradientSeparation(diffusionGradientSeparation);
@@ -1460,6 +1510,236 @@ public class FileBRUKER extends FileBase {
                 }
 
             }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwDgSwitch")) {
+            	if (parseString.length == 2) {
+            	    String diffusionGradientSwitchingScheme = null;  
+            	    if (parseString[1].equalsIgnoreCase("MonopolarDw")) {
+            	    	diffusionGradientSwitchingScheme = "Monopolar gradients";
+            	    }
+            	    else {
+            	    	diffusionGradientSwitchingScheme = parseString[1];
+            	    }
+            	    Preferences.debug("Diffusion gradient switching scheme = " + diffusionGradientSwitchingScheme + "\n");
+            	    fileInfo.setDiffusionGradientSwitchingScheme(diffusionGradientSwitchingScheme);
+            	} else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DwDgSwitch has parseString with length = " + parseString.length);
+                }
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwMaxBval")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                        double maximumPossibleBValue = Double.valueOf(parseString[1]).doubleValue();;
+                        fileInfo.setMaximumPossibleBValue(maximumPossibleBValue);
+                        Preferences.debug("Maximum possible b-value = "  + maximumPossibleBValue + "\n", Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("Maximum possible b-value could not be read.", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DwMaxBval has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwBvalEach")) {
+            	int arrayLength = 1;
+                if (parseString.length == 4) {
+                	okay = true;
+                	if (parseString[1].equals("(")) {
+	                	Preferences.debug("For PVM_DwBvalEach parseString[1] == '(' as expected\n", Preferences.DEBUG_FILEIO);
+	                }
+	                else
+	                {
+	                	okay = false;
+	                	Preferences.debug("For PVM_DwBvalEach" + " parseString[1] unexpectedly == " + parseString[1] + "\n", 
+	                			Preferences.DEBUG_FILEIO);
+	                }
+                	if (okay) {
+	                	try {
+	                	    arrayLength = Integer.valueOf(parseString[2]).intValue();
+	                	    Preferences.debug("Array length in PVM_DwBvalEach = " + arrayLength + "\n", Preferences.DEBUG_FILEIO);
+	                	}
+	                	catch(NumberFormatException nfe) {
+	                		okay = false;
+	                		Preferences.debug("Array length of PVM_DwBvalEach could not be read.\n", Preferences.DEBUG_FILEIO);
+	                	}
+                	}
+                	if (okay) {
+	                	if (parseString[3].equals(")")) {
+	                        Preferences.debug("For PVM_DwBvalEach parseString[3] == ')' as expected\n", Preferences.DEBUG_FILEIO);	
+	                    }
+	                    else {
+	                    	Preferences.debug("For PVM_DwBvalEach parseString[3] unexpectedly == " + parseString[3] + "\n",
+	                    			Preferences.DEBUG_FILEIO);
+		                	okay = false;	
+	                    }
+                	}
+                    if (okay) {
+                    	int BValuesPerDirection[] = new int[arrayLength];
+                    	boolean BValuesOkay = true;
+                    	numFound = 0;
+                		while ((numFound < arrayLength) && (lineString != null) && BValuesOkay) {
+                			lineString = readLine();
+                			if (lineString != null) {
+                			    parseString = parse(lineString);
+                			    for (i = 0; i < parseString.length && BValuesOkay; i++) {
+                			    	try {
+                			    	    BValuesPerDirection[numFound] = Integer.valueOf(parseString[i]);
+                			    	}
+                			    	catch(NumberFormatException nfe) {
+                                        Preferences.debug("BValuesPerDirection[" + numFound + "] could not be read.",
+                                        		Preferences.DEBUG_FILEIO);
+                                        BValuesOkay = false;
+                                    }
+                			    	if (BValuesOkay) {
+                			    		numFound++;
+                			    	}
+                			    } // for (i = 0; i < parseString.length && BValuesOkay; i++) 
+                			} // if (lineString != null)
+                		} // while ((numFound < arrayLength) && (lineString != null) && BValuesOkay)
+                		if (BValuesOkay) {
+                			Preferences.debug("Array of B values per direction:\n",
+                					          Preferences.DEBUG_FILEIO);
+                			for (i = 0; i < arrayLength; i++) {
+                				Preferences.debug("\tB values per direction["+i+"] = " + BValuesPerDirection[i] + "\n",
+                						           Preferences.DEBUG_FILEIO);
+                			}
+                			fileInfo.setBValuesPerDirection(BValuesPerDirection);
+                		}
+                    } // if (okay)
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DwBvalEach has parseString with length = " + parseString.length);
+                }
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwGradAmp")) {
+            	int arrayLength = 1;
+                if (parseString.length == 4) {
+                	okay = true;
+                	if (parseString[1].equals("(")) {
+	                	Preferences.debug("For PVM_DwGradAmp parseString[1] == '(' as expected\n", Preferences.DEBUG_FILEIO);
+	                }
+	                else
+	                {
+	                	okay = false;
+	                	Preferences.debug("For PVM_DwGradAmp" + " parseString[1] unexpectedly == " + parseString[1] + "\n", 
+	                			Preferences.DEBUG_FILEIO);
+	                }
+                	if (okay) {
+	                	try {
+	                	    arrayLength = Integer.valueOf(parseString[2]).intValue();
+	                	    Preferences.debug("Array length in PVM_DwGradAmp = " + arrayLength + "\n", Preferences.DEBUG_FILEIO);
+	                	}
+	                	catch(NumberFormatException nfe) {
+	                		okay = false;
+	                		Preferences.debug("Array length of PVM_DwGradAmp could not be read.\n", Preferences.DEBUG_FILEIO);
+	                	}
+                	}
+                	if (okay) {
+	                	if (parseString[3].equals(")")) {
+	                        Preferences.debug("For PVM_DwGradAmp parseString[3] == ')' as expected\n", Preferences.DEBUG_FILEIO);	
+	                    }
+	                    else {
+	                    	Preferences.debug("For PVM_DwGradAmp parseString[3] unexpectedly == " + parseString[3] + "\n",
+	                    			Preferences.DEBUG_FILEIO);
+		                	okay = false;	
+	                    }
+                	}
+                    if (okay) {
+                    	double diffusionGradientAmplitude[] = new double[arrayLength];
+                    	boolean gradOkay = true;
+                    	numFound = 0;
+                		while ((numFound < arrayLength) && (lineString != null) && gradOkay) {
+                			lineString = readLine();
+                			if (lineString != null) {
+                			    parseString = parse(lineString);
+                			    for (i = 0; i < parseString.length && gradOkay; i++) {
+                			    	try {
+                			    	    diffusionGradientAmplitude[numFound] = Double.valueOf(parseString[i]);
+                			    	}
+                			    	catch(NumberFormatException nfe) {
+                                        Preferences.debug("diffusionGradientAmplitude[" + numFound + "] could not be read.",
+                                        		Preferences.DEBUG_FILEIO);
+                                        gradOkay = false;
+                                    }
+                			    	if (gradOkay) {
+                			    		numFound++;
+                			    	}
+                			    } // for (i = 0; i < parseString.length && gradOkay; i++) 
+                			} // if (lineString != null)
+                		} // while ((numFound < arrayLength) && (lineString != null) && gradOkay)
+                		if (gradOkay) {
+                			Preferences.debug("Array of diffusion gradient amplitude (% of maximum gradient power)\n +"
+                					+ "\tfor each gradient direction:\n",
+                					          Preferences.DEBUG_FILEIO);
+                			for (i = 0; i < arrayLength; i++) {
+                				Preferences.debug("\tDiffusion gradient amplitude["+i+"] = " + diffusionGradientAmplitude[i] + "\n",
+                						           Preferences.DEBUG_FILEIO);
+                			}
+                			fileInfo.setDiffusionGradientAmplitude(diffusionGradientAmplitude);
+                		}
+                    } // if (okay)
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DwGradAmp has parseString with length = " + parseString.length);
+                }
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwNDiffExp")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                        int totalNumberOfDiffusionExperiments = Integer.valueOf(parseString[1]).intValue();;
+                        fileInfo.setTotalNumberOfDiffusionExperiments(totalNumberOfDiffusionExperiments);
+                        Preferences.debug("Total number of diffusion experiments = " 
+                        		          + totalNumberOfDiffusionExperiments + "\n", Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("Total number of diffusion experiments could not be read.\n", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DwNDiffExp has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwModDur")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                        double diffusionModuleDuration = Double.valueOf(parseString[1]).doubleValue();;
+                        fileInfo.setDiffusionModuleDuration(diffusionModuleDuration);
+                        Preferences.debug("Total duration of the DTI module = "  + diffusionModuleDuration + "\n",
+                        		Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("Diffusion module duration could not be read.", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DwModDur has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwModEchDel")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                        double diffusionModuleEchoDelay = Double.valueOf(parseString[1]).doubleValue();;
+                        fileInfo.setDiffusionModuleEchoDelay(diffusionModuleEchoDelay);
+                        Preferences.debug("Contribution of the DTI module to the echo time = "  + diffusionModuleEchoDelay + "\n",
+                        		Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("Diffusion module echo delay could not be read.", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_DwModEchDel has parseString with length = " + parseString.length);
+                }
+
+            }
 
             lineString = readLine();
         } // while (lineString != null)
@@ -1478,8 +1758,8 @@ public class FileBRUKER extends FileBase {
         String sliceSeparationMode = null;
         float sliceSeparation = -1.0f;
         float sliceThickness;
-        int ni = -1;
-        int nr = -1;
+        int numberOfObjects = -1;
+        int numberOfRepetitions = -1;
         int[] imageExtents;
         int xDim;
         int yDim;
@@ -1538,14 +1818,15 @@ public class FileBRUKER extends FileBase {
                 }
             } else if (parseString[0].equalsIgnoreCase("##$NI")) {
             	if (parseString.length == 2) {
-                    ni = Integer.valueOf(parseString[1]).intValue();
+                    numberOfObjects = Integer.valueOf(parseString[1]).intValue();
+                    fileInfo.setNumberOfObjects(numberOfObjects);
                 } else {
                     raFile.close();
                     throw new IOException("##$NI has parseString with length = " + parseString.length);
                 }
             } else if (parseString[0].equalsIgnoreCase("##$NR")) {
             	if (parseString.length == 2) {
-                    nr = Integer.valueOf(parseString[1]).intValue();
+                    numberOfRepetitions = Integer.valueOf(parseString[1]).intValue();
                 } else {
                     raFile.close();
                     throw new IOException("##$NR has parseString with length = " + parseString.length);
@@ -1688,16 +1969,16 @@ public class FileBRUKER extends FileBase {
             fileInfo.setHaveZResol(true);
         }
         
-        if ((ni > 1) && (nr > 1)) {
+        if ((numberOfObjects > 1) && (numberOfRepetitions > 1)) {
         	imageExtents = fileInfo.getExtents();
-        	if ((imageExtents.length == 3) && ((ni * nr) == imageExtents[2])) {
+        	if ((imageExtents.length == 3) && ((numberOfObjects * numberOfRepetitions) == imageExtents[2])) {
         	    xDim = imageExtents[0];
         	    yDim = imageExtents[1];
         	    imageExtents = new int[4];
         	    imageExtents[0] = xDim;
         	    imageExtents[1] = yDim;
-        	    imageExtents[2] = ni;
-        	    imageExtents[3] = nr;
+        	    imageExtents[2] = numberOfObjects;
+        	    imageExtents[3] = numberOfRepetitions;
         	    fileInfo.setExtents(imageExtents);
         	}
         }
