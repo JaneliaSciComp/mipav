@@ -1740,6 +1740,141 @@ public class FileBRUKER extends FileBase {
                 }
 
             }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_EncUseMultiRec")) {
+            	 if (parseString.length == 2) {
+                     String useMultipleReceivers = null;
+                     if (parseString[1].equalsIgnoreCase("Yes")) {
+                         useMultipleReceivers = "Acquisition on multiple channels.";
+                     	fileInfo.setUseMultipleReceivers(useMultipleReceivers);
+                     	Preferences.debug(useMultipleReceivers + "\n", Preferences.DEBUG_FILEIO);
+                     }
+                     else if (parseString[1].equalsIgnoreCase("No")) {
+                     	useMultipleReceivers = "Acquisition on a single channel";
+                     	fileInfo.setUseMultipleReceivers(useMultipleReceivers);
+                     	Preferences.debug(useMultipleReceivers + "\n", Preferences.DEBUG_FILEIO);
+                     }
+                     else {
+                     	Preferences.debug("##$PVM_EncUseMultiRec unexpectedly has parseString[1] = " + parseString[1] + "\n",
+                     			          Preferences.DEBUG_FILEIO);
+                     }
+                     
+                 } else {
+                     raFile.close();
+                     throw new IOException("##$PVM_EncUseMultiRec has parseString with length = " + parseString.length);
+                 }	
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_EncActReceivers")) {
+            	int arrayLength = 1;
+            	String activeReceivers[] = null;
+                if (parseString.length == 4) {
+                	okay = true;
+                	if (parseString[1].equals("(")) {
+	                	Preferences.debug("For PVM_EncActReceivers parseString[1] == '(' as expected\n", Preferences.DEBUG_FILEIO);
+	                }
+	                else
+	                {
+	                	okay = false;
+	                	Preferences.debug("For PVM_EncActReceivers" + " parseString[1] unexpectedly == " + parseString[1] + "\n", 
+	                			Preferences.DEBUG_FILEIO);
+	                }
+                	if (okay) {
+	                	try {
+	                	    arrayLength = Integer.valueOf(parseString[2]).intValue();
+	                	    Preferences.debug("Array length in PVM_EncActReceivers = " + arrayLength + "\n", Preferences.DEBUG_FILEIO);
+	                	}
+	                	catch(NumberFormatException nfe) {
+	                		okay = false;
+	                		Preferences.debug("Array length of PVM_EncActReceivers could not be read.\n", Preferences.DEBUG_FILEIO);
+	                	}
+                	}
+                	if (okay) {
+	                	if (parseString[3].equals(")")) {
+	                        Preferences.debug("For PVM_EncActReceivers parseString[3] == ')' as expected\n", Preferences.DEBUG_FILEIO);	
+	                    }
+	                    else {
+	                    	Preferences.debug("For PVM_EncActReceivers parseString[3] unexpectedly == " + parseString[3] + "\n",
+	                    			Preferences.DEBUG_FILEIO);
+		                	okay = false;	
+	                    }
+                	}
+                    if (okay) {
+                    	activeReceivers = new String[arrayLength];
+                    	numFound = 0;
+                		while ((numFound < arrayLength) && (lineString != null)) {
+                			lineString = readLine();
+                			if (lineString != null) {
+                			    parseString = parse(lineString);
+                			    for (i = 0; i < parseString.length; i++) {
+                			    	    activeReceivers[numFound] = parseString[i];
+                			    		numFound++;
+                			    } // for (i = 0; i < parseString.length; i++) 
+                			} // if (lineString != null)
+                		} // while ((numFound < arrayLength) && (lineString != null))
+                		if (numFound == arrayLength) {
+                			Preferences.debug("Array of On/Off parameters to activate/deactivate the data acquisition\n\t"
+                					+ "on selected channels:\n",
+                					          Preferences.DEBUG_FILEIO);
+                			for (i = 0; i < arrayLength; i++) {
+                				Preferences.debug("\tChannel["+i+"] = " + activeReceivers[i] + "\n",
+                						           Preferences.DEBUG_FILEIO);
+                			}
+                			fileInfo.setActiveReceivers(activeReceivers);
+                		}
+                    } // if (okay)
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_EncActReceivers has parseString with length = " + parseString.length);
+                }
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_EncZfRead")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                        double zeroFillFactorRead = Double.valueOf(parseString[1]).doubleValue();;
+                        fileInfo.setZeroFillFactorRead(zeroFillFactorRead);
+                        Preferences.debug("The acquisition matrix in Read direction(PVM_EncMatrix[0]) will be\n\t" +
+                        "reduced by this factor:\t"  + zeroFillFactorRead + "\n",
+                        		Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("Zero fill factor read could not be read.", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_EncZfRead has parseString with length = " + parseString.length);
+                }
+
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_EncPpiAccel1")) {
+
+                if (parseString.length == 2) {
+
+                    try {
+                        int PPIAcceleration = Integer.valueOf(parseString[1]).intValue();;
+                        fileInfo.setPPIAcceleration(PPIAcceleration);
+                        Preferences.debug("Integer defining the acceleration by means of partially parallel \n\t"
+                        		+ "imaging (PPI) = " + PPIAcceleration  + 
+                        		"\n\tThis parameter introduces an undersampling of the k-space,\n\t"
+                        		+ "i.e., it removes a periodic pattern of steps from the encoding scheme.\n\t"
+                        		+ "The maximum value of PPI Acceleration is given by the number of active\n\t"
+                        	    + "channels.  Parallel acceleration preserves the resolution of the image\n\t"
+                        		+ "but reduces the SNR by at least the square root of PVM_EncPpiAccel1.\n\t"
+                        	    + "The basic principle of parallel acquisition makes use of multiple\n\t"
+                        		+ "receiver coil elements having different spatial coil sensitivity\n\t"
+                        	    + "profiles in order to reduce time-consuming phase encoding steps. To\n\t"
+                        	    + "take full advantage of this principle it is essential to place the\n\t"
+                        	    + "phase encoding direction along the direction where the coil\n\t"
+                        	    + "sensitivities of the single coil elements differ most.\n",
+                        		Preferences.DEBUG_FILEIO);
+                    } catch(NumberFormatException nfe) {
+                        Preferences.debug("PPI Acceleration could not be read.", Preferences.DEBUG_FILEIO);
+                    }
+                } else {
+                    raFile.close();
+                    throw new IOException("##$PVM_EncPpiAccel1 has parseString with length = " + parseString.length);
+                }
+
+            }
 
             lineString = readLine();
         } // while (lineString != null)
