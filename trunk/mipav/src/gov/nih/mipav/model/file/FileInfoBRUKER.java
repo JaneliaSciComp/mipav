@@ -104,6 +104,14 @@ public class FileInfoBRUKER extends FileInfoBase {
     private double diffusionModuleDuration = Double.NaN;
     
     private double diffusionModuleEchoDelay = Double.NaN;
+    
+    private String useMultipleReceivers = null;
+    
+    private String activeReceivers[] = null;
+    
+    private double zeroFillFactorRead = Double.NaN;
+    
+    private int PPIAcceleration = -1;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -344,6 +352,39 @@ public class FileInfoBRUKER extends FileInfoBase {
         
         if (!Double.isNaN(diffusionModuleEchoDelay)) {
         	dialog.append("Contribution of the DTI module to the echo time:\t" + diffusionModuleEchoDelay + "\n");
+        }
+        
+        if (useMultipleReceivers!= null) {
+        	dialog.append(useMultipleReceivers + "\n");
+        }
+        
+        if (activeReceivers != null) {
+        	dialog.append("Array of On/Off parameters to activate/deactivate the data acquisition\n\t"
+					+ "on selected channels:\n");
+        	for (int i = 0; i < activeReceivers.length; i++) {
+        		dialog.append("\tChannel["+i+"]:\t " + activeReceivers[i] + "\n");
+        	}
+        }
+        
+        if (!Double.isNaN(zeroFillFactorRead)) {
+        	dialog.append("The acquisition matrix in Read direction(PVM_EncMatrix[0]) will be\n\t" +
+                        "reduced by this factor:\t"  + zeroFillFactorRead + "\n");
+        }
+        
+        if (PPIAcceleration != -1) {
+        	dialog.append("Integer defining the acceleration by means of partially parallel \n\t"
+                        		+ "imaging (PPI) = " + PPIAcceleration  + 
+                        		"\n\tThis parameter introduces an undersampling of the k-space,\n\t"
+                        		+ "i.e., it removes a periodic pattern of steps from the encoding scheme.\n\t"
+                        		+ "The maximum value of PPI Acceleration is given by the number of active\n\t"
+                        	    + "channels.  Parallel acceleration preserves the resolution of the image\n\t"
+                        		+ "but reduces the SNR by at least the square root of PVM_EncPpiAccel1.\n\t"
+                        	    + "The basic principle of parallel acquisition makes use of multiple\n\t"
+                        		+ "receiver coil elements having different spatial coil sensitivity\n\t"
+                        	    + "profiles in order to reduce time-consuming phase encoding steps. To\n\t"
+                        	    + "take full advantage of this principle it is essential to place the\n\t"
+                        	    + "phase encoding direction along the direction where the coil\n\t"
+                        	    + "sensitivities of the single coil elements differ most.\n");
         }
         
     }
@@ -705,5 +746,37 @@ public class FileInfoBRUKER extends FileInfoBase {
      */
     public void setDiffusionModuleEchoDelay(double diffusionModuleEchoDelay) {
     	this.diffusionModuleEchoDelay = diffusionModuleEchoDelay;
+    }
+    
+    /**
+     * 
+     * @param useMultipleReceivers
+     */
+    public void setUseMultipleReceivers(String useMultipleReceivers) {
+    	this.useMultipleReceivers = useMultipleReceivers;
+    }
+    
+    /**
+     * 
+     * @param activeReceivers
+     */
+    public void setActiveReceivers(String[] activeReceivers) {
+    	this.activeReceivers = activeReceivers;
+    }
+    
+    /**
+     * 
+     * @param zeroFillFactorRead
+     */
+    public void setZeroFillFactorRead(double zeroFillFactorRead) {
+    	this.zeroFillFactorRead = zeroFillFactorRead;
+    }
+    
+    /**\
+     * 
+     * @param PPIAcceleration
+     */
+    public void setPPIAcceleration(int PPIAcceleration) {
+    	this.PPIAcceleration = PPIAcceleration;
     }
 }
