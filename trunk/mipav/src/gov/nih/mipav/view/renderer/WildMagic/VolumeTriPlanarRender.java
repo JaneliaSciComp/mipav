@@ -5,6 +5,8 @@ import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
+import gov.nih.mipav.view.CustomUIBuilder;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.renderer.WildMagic.Navigation.NavigationBehavior;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageCrop;
@@ -26,6 +28,7 @@ import java.util.Vector;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
+import javax.swing.KeyStroke;
 
 import WildMagic.LibFoundation.Distance.DistanceVector3Segment3;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
@@ -198,13 +201,23 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				m_kParent.showPreviousVOI();
 				break;
 			}
+	        // look for shortcuts now
+
+//	        String command = null;
+//	        final KeyStroke ks = KeyStroke.getKeyStrokeForEvent(e);
+//	        command = Preferences.getShortcutCommand(ks);
+//	        if (command.equals(CustomUIBuilder.PARAM_VOI_DELETE.getActionCommand()) )
+//	        {
+//	        	System.err.println( "Delete Selected VOI" );
+//	        } 
 		}
 		return;
 	}
 
 	public void mousePressed(MouseEvent e) {
 		super.mousePressed(e);
-		if (e.isControlDown() && m_kParent.is3DMouseEnabled()) {
+		if (e.isControlDown() && (m_kParent.is3DMouseEnabled() || m_kParent.is3DSelectionEnabled())) {
+			m_kParent.clear3DSelection();
 			m_iXPick = e.getX();
 			m_iYPick = e.getY();
 			m_bPickPending = true;
@@ -222,6 +235,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		if ( m_kParent != null ) {
 			m_kParent.setCameraParameters();
 			m_kParent.setObjectParameters();
+		}
+		if (e.isControlDown() && m_kParent.is3DSelectionEnabled()) {
+			m_iXPick = e.getX();
+			m_iYPick = e.getY();
+			m_bPickPending = true;
 		}
 	}
 
@@ -261,7 +279,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 					GetHeight(),kPos,kDir))
 			{
 				m_bPickPending = false;
-				if ( m_kParent.is3DMouseEnabled() )
+				if ( m_kParent.is3DMouseEnabled() || m_kParent.is3DSelectionEnabled() )
 				{
 					m_kPicker.Execute(m_kVolumeRayCast.GetScene(),kPos,kDir,0.0f,
 							Float.MAX_VALUE);
@@ -296,15 +314,16 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							firstIntersectionPoint.copy(pickedPoints[0]);
 							secondIntersectionPoint.copy(pickedPoints[1]);
 							
-							
 							float maxValue = -Float.MAX_VALUE;
 							Vector3f maxPt = new Vector3f();
+//							Vector3f maxPtT = null;
 							
 							Vector3f p0 = new Vector3f(firstIntersectionPoint);
 							Vector3f p1 = new Vector3f(secondIntersectionPoint);
 							Vector3f step = Vector3f.sub(p1, p0);
 							float numSteps = step.length() + 1;
 							step.normalize();
+							ColorRGBA accumulativeColor = new ColorRGBA();
 							for ( int i = 0; i < numSteps; i++ )
 							{
 								p0.add(step);
@@ -314,28 +333,47 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 									maxValue = value;
 									maxPt.copy(p0);
 								}
+//								ColorRGBA color = m_kVolumeImageA.GetTransferedValue(p0.X, p0.Y, p0.Z);
+//								float r = (1 - color.A) * accumulativeColor.R + (color.A) * color.R;  
+//								float g = (1 - color.A) * accumulativeColor.G + (color.A) * color.G;  
+//								float b = (1 - color.A) * accumulativeColor.B + (color.A) * color.B;  
+//								float a = (1 - color.A) * accumulativeColor.A + (color.A) * color.A;  
+//								accumulativeColor.Set(r, g, b, a);
+//								if ( (r >= 255) || (g >= 255) || (b >= 255) || (a >= 255) )
+//								{
+//									if ( maxPtT == null )
+//									{
+//										maxPtT = new Vector3f(p0);
+//									}
+//								}
 							}
+//							if ( maxPtT == null )
+//							{
+//								maxPtT = new Vector3f(maxPt);
+//							}
 							
 							if ( maxValue != -Float.MAX_VALUE )
 							{						
-//								short id = (short) m_kVolumeImageA.GetImage().getVOIs().getUniqueID();
-//								VOI marker = new VOI(id, "marker_" + id, VOI.POINT, (float)Math.random() );
-//								marker.importPoint(maxPt);
-//								marker.setColor( Color.yellow );
-//								marker.getCurves().elementAt(0).update( new ColorRGBA(1, 1, 0, 1));
-//								m_kVolumeImageA.GetImage().registerVOI(marker);
+//								System.err.println( maxPt );
+//								System.err.println( maxPtT );
+//								maxPt.copy(maxPtT);
 								
-								short id = (short) m_kVolumeImageA.GetImage().getVOIs().getUniqueID();
-					    		int colorID = 0;
-					    		VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
-					    		VOIText textVOI = new VOIText( );
-					    		textVOI.add( maxPt );
-					    		textVOI.add( Vector3f.add( new Vector3f(2,0,0), maxPt) );
-					    		textVOI.setText("LR_" + id);
-					    		newTextVOI.getCurves().add(textVOI);
-					    		m_kVolumeImageA.GetImage().registerVOI(newTextVOI);
-					    		
-//					    		m_kParent.addLeftRightMarkers( marker, newTextVOI );
+								if ( m_kParent.is3DSelectionEnabled() )
+								{
+									m_kParent.modifyLattice( firstIntersectionPoint, secondIntersectionPoint, maxPt );
+								}
+								else
+								{
+									short id = (short) m_kVolumeImageA.GetImage().getVOIs().getUniqueID();
+									int colorID = 0;
+									VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
+									VOIText textVOI = new VOIText( );
+									textVOI.add( maxPt );
+									textVOI.add( Vector3f.add( new Vector3f(2,0,0), maxPt) );
+									textVOI.setText("LR_" + id);
+									newTextVOI.getCurves().add(textVOI);
+									m_kParent.addLeftRightMarker( newTextVOI );
+								}
 							}
 						}
 					}
