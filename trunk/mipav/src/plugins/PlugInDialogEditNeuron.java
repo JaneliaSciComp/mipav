@@ -19,6 +19,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashSet;
+import java.util.PriorityQueue;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -52,78 +53,137 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 */
 	private static final long serialVersionUID = 2685558849611300514L;
 	
-	private ArrayList<File> images;
+	/**
+	 * Slice in the subvolume that is considered the "center"
+	 * which means which slice is editable
+	 */
+	private int activeSlice;
+
+	private JRadioButton addRB;
 	
-	private ArrayList<File> swcList;
-	
-	private int[] imBuffer;
-	
-	private ModelImage subVolume;
-	
-	private ViewJFrameImage subVolumeFrame;
-	
-	private JFrameHistogram histoFrame;
-	
-	private JTextField dirText;
-	
-	private JFileChooser fileChooser;
-	
-	private int currentSlice;
-	
-	private int prevSlice;
-	
-	private int sliceRange;
-	
-	private int numImages;
-	
-	private int width;
-	
-	private int height;
-	
-	private int length;
-	
-	private int[] extents;
-	
-	private int type;
-	
-	private JLabel sliceLabel;
-	
+	/**
+	 * The active slice's actual depth is displayed here
+	 */
 	private JLabel centerLabel;
 	
-	private ModelLUT lut;
-	
-	private LineList paths;
-	
-	private Linking links;
-	
-	private BitSet mask;
-	
+	/**
+	 * VOI containing the points to edit the neuron traces
+	 */
 	private VOI controlPts;
 	
-	private int depth;
-	
-	private boolean dragged;
-	
-	private boolean ptClicked;
-	
-	private Point toChange;
-	
-	private JRadioButton addRB;
+	/**
+	 * The active slice's actual depth
+	 */
+	private int currentSlice;
 	
 	private JRadioButton deleteRB;
 	
+	/**
+	 * Depth of the current subvolume
+	 */
+	private int depth;
+	
+	private JTextField dirText;
+	
+	/**
+	 * Whether or not a VOI is being dragged
+	 */
+	private boolean dragged;
+	
+	private JFileChooser fileChooser;
+	
+	private int height;
+	
+	private ArrayList<File> images;
+	
+	private int[] imBuffer;
+	
+	/**
+	 * Used to keep track of which node to delete
+	 */
 	private VOIBase lastActive;
 	
+	private int length;
+	
+	private ArrayList<NeuronLength> lengthList;
+	
+	/**
+	 * List to keep track of which nodes are connected 
+	 * in the active slice
+	 */
+	private Linking links;
+	
+	private ModelLUT lut;
+	
+	/**
+	 * Neuron traces are overlayed on the subvolume
+	 */
+	private BitSet mask;
+	
+	private int numImages;
+	
+	/**
+	 * Keeps track of the original start of the neuron
+	 */
 	private Point origin;
 	
-	private int activeSlice;
+	/**
+	 * Keeps track of the paths in the active slice so
+	 * that they can be quickly moved/deleted/split
+	 */
+	private LineList paths;
 	
+	/**
+	 * Which slice was the previous active slice. Should only
+	 * be a difference of 1, but if an image list is implemented
+	 * later, could be differet
+	 */
+	private int prevSlice;
+	
+	/**
+	 * Whether or not a VOI was the target of the click
+	 */
+	private boolean ptClicked;
+	
+	/**
+	 * The active slice within the subvolume is displayed here
+	 */
+	private JLabel sliceLabel;
+	
+	private int sliceRange;
+	
+	/**
+	 * Part of the 3D image to display on screen
+	 */
+	private ModelImage subVolume;
+	
+	/**
+	 * The associated frame for the subvolume image
+	 */
+	private ViewJFrameImage subVolumeFrame;
+	
+	private ArrayList<File> swcList;
+	
+	/**
+	 * Which node we are changing when a move action occurs
+	 */
+	private Point toChange;
+	
+	private int type;
+	
+	private int width;
+
+	/**
+	 * Primary constructor. Initializes a dialog to ask the user
+	 * for a directory to use
+	 */
 	public PlugInDialogEditNeuron(){
 		super();
 		
 		images = new ArrayList<File>();
 		swcList = new ArrayList<File>();
 		
+		//Right now it's not changeable, but can be if needed
 		sliceRange = 5;
 		currentSlice = 0;
 		prevSlice = 0;
@@ -132,6 +192,13 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 	}
 	
+	/**
+	 * Secondary constructor used for when the neuron segmentation has
+	 * ended and the user wishes to open up the editor immediately at the 
+	 * conclusion of the first round of edits.
+	 * @param directory the directory where images are (which accompanying 
+	 * SWC file)
+	 */
 	public PlugInDialogEditNeuron(String directory){
 		super();
 		
@@ -184,8 +251,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
     	            System.exit(0);
     	            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
     	        } else {
+    	        	subVolumeFrame.close();
     	        	dispose();
-    	        	subVolumeFrame.dispose();
     	        }
         	}
 		} else if(command.equals("Prev")){
@@ -227,6 +294,16 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		}
 	}
 	
+	/**
+	 * Bresenham line algorithm used to draw the paths between two points.
+	 * Uses the points taken from the SWC files to draw the paths in the 
+	 * mask to overlay on the subvolume image. 
+	 * @param x0
+	 * @param y0
+	 * @param x1
+	 * @param y1
+	 * @param z
+	 */
 	private void bresenham(int x0, int y0, int x1, int y1, int z){
 		int dx = Math.abs(x1-x0);
 		int dy = Math.abs(y1-y0);
@@ -259,7 +336,16 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		}
 	}
 	
-	private ArrayList<Point> bresenham2(Point p0, Point p1){
+	/**
+	 * Bresenham line algorithm used to draw the paths between two points.
+	 * This version is used with the subclasses to keep track of which
+	 * lines are displayed in the active slice to make it easier to add
+	 * nodes between points
+	 * @param p0
+	 * @param p1
+	 * @return
+	 */
+	private ArrayList<Point> bresenham(Point p0, Point p1){
 		
 		int x0 = p0.x;
 		int x1 = p1.x;
@@ -286,8 +372,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			i = x0 + y0*width;
 			
 			mask.set(i+activeSlice*length);
-			
-			
+
 			if(x0 == x1 && y0 == y1) break;
 			e2 = 2*err;
 			if(e2 > -dy){
@@ -300,15 +385,13 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			}
 		}
 		
-		//Point pt0 = new Point(x0, y0);
-		//Point pt1 = new Point(x1, y1);
-		
-		//LinePath path = new LinePath(pt0, pt1, pts);
-		//paths.add(path);
-		
 		return pts;
 	}
 	
+	/**
+	 * Opens the file chooser dialog to provide a directory in which
+	 * to look for the images and SWC files
+	 */
 	private void chooseDir(){
 		String dirText = Preferences.getImageDirectory();
 		fileChooser = new JFileChooser(dirText);
@@ -317,6 +400,10 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		fileChooser.showOpenDialog(this);
 	}
 	
+	/**
+	 * Used with the primary constructor to allow the user to choose the
+	 * directory where the images and SWC files are
+	 */
 	private void init(){
 		setForeground(Color.black);
         setTitle("Neuron Segmentation: Edit SWC");
@@ -364,17 +451,20 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         System.gc();
 	}
 	
+	/**
+	 * The main dialog of this plugin, used to control the editor portions
+	 * which include adding/deleting nodes.
+	 */
 	private void initEditor(){
 		
 		getContentPane().removeAll();
 		
 		FileIO imReader = new FileIO();
 		ModelImage sliceIm = imReader.readImage(images.get(0).getAbsolutePath());
-		extents = sliceIm.getExtents();
+		int []extents = sliceIm.getExtents();
 		width = extents[0];
 		height = extents[1];
 		length = width*height;
-		type = sliceIm.getType();
 		sliceIm.disposeLocal();
 		
 		JPanel radioPanel = new JPanel();
@@ -465,10 +555,15 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	
 	private void openHisto(){
 		ViewJComponentEditImage comp = subVolumeFrame.getComponentImage();
-		histoFrame = new JFrameHistogram(parentFrame, subVolume, null, comp.getLUTa(), null);
+		JFrameHistogram histoFrame = new JFrameHistogram(parentFrame, subVolume, null, comp.getLUTa(), null);
 		histoFrame.histogramLUT(true, true);
 	}
 	
+	/**
+	 * Opens up the new subvolume. To keep read times for the images low, it will
+	 * only load images as necessary. It will use previous portions of the images
+	 * as you go up and down the stack.
+	 */
 	private void openImage(){
 		
 		int lowerBound = Math.max(0, currentSlice - sliceRange);
@@ -490,6 +585,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 					sliceIm = imReader.readImage(images.get(i+lowerBound).getAbsolutePath());
 					sliceIm.exportData(0, length, sliceBuffer);
 					System.arraycopy(sliceBuffer, 0, imBuffer, i*length, length);
+					type = sliceIm.getType();
 					sliceIm.disposeLocal();
 				}
 			} else if(currentSlice < prevSlice){//Going backwards
@@ -543,6 +639,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			subVolumeFrame.setSlice(activeSlice);
 			subVolumeFrame.setVisible(true);
 			subVolumeFrame.addWindowListener(this);
+			
+				
 		
 		} catch(IOException e){
 			e.printStackTrace();
@@ -584,6 +682,18 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 	}
 	
+	/**
+	 * Unlike the openImage method, the SWC files take far less time to read 
+	 * so you can just read them all every single time. This also takes care
+	 * of when some SWCs change due to editing, so that will show up in later 
+	 * subvolumes. 
+	 * 
+	 * Reads the SWC file and draws the lines on the displayed paint mask. 
+	 * Point VOIs are also used to control the editing. 
+	 * @param lowerBound
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
 	private void readSWC(int lowerBound) throws FileNotFoundException, IOException{
 		
 		mask = new BitSet(length*depth);
@@ -612,7 +722,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			String num;
 			LinkElement e0, e1;
 			
-			//for(int i=1;i<points.size();i++){
 			for(int i=points.size()-1;i>0;i--){
 				lineArray = points.get(i);
 				num = lineArray[2];
@@ -654,7 +763,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 					e0.addLinkTo(e1);
 					
 					
-					paths.add2(p0, p1);
+					paths.add(p0, p1);
 					
 					VOIPoint voi = new VOIPoint(VOI.POINT, new Vector3f(x0,y0,activeSlice));
 					voi.setLabel("");
@@ -692,6 +801,11 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 	}
 	
+	/**
+	 * Saves the new neuron trace into the old SWC file while moving the
+	 * old file into a new file denoted by "_old". 
+	 * @throws IOException
+	 */
 	private void saveNewSWC() throws IOException{
 		
 		File currentSWC = swcList.get(currentSlice);
@@ -723,9 +837,22 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			e.printStackTrace();
 			return;
 		}
-		
 		int line = 1;
 		LinkElement start = links.get(origin);
+		String lengthHeader = "# Coordinates are for endpoints of projections\n"
+				+ "# Distances are to branch point of this projection's order\n";
+		lengthList = new ArrayList<NeuronLength>();
+		if(links.size()==2){
+			LinkElement e = links.get(0) == start ? links.get(1) : start;
+			writer.append(lengthHeader);
+			writePoint(new NeuronLength(e.pt, e.pt.distance(start.pt)), writer);
+		} else if(links.size() > 2){
+			LinkElement e = start.linked.get(0);
+			writer.append(lengthHeader);
+			NeuronLength nl = calcLengths(e, start, e.pt.distance(start.pt), writer);
+			writePoint(nl, writer);
+		}
+		
 		Point pt = start.pt;
 		int[] parts = new int[7];
 		//String[] parts = new String[7];
@@ -770,6 +897,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			parts[0] = line;
 			if(linkedTo.size() == 1)
 				parts[1] = 6;
+			else if(linkedTo.size() == 2)
+				parts[1] = 7;
 			else parts[1] = 5;
 			parts[2] = pt.x;
 			parts[3] = height - pt.y;
@@ -795,11 +924,72 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				}
 			}
 			
-			System.out.println(" ");
+			//System.out.println(" ");
 		}
 		
 		writer.close();
 	}
+	
+	private NeuronLength calcLengths(LinkElement e, LinkElement prev, double length, FileWriter writer) throws IOException{
+		LinkElement l;
+		if(e.linked.size()==1){
+			//l = e.linked.get(0);
+			//return length + e.pt.distance(l.pt);
+			return new NeuronLength(e.pt, length);
+		} else if(e.linked.size()==2){
+			l = e.linked.get(0) == prev ? e.linked.get(1) : e.linked.get(0);
+			return calcLengths(l, e, length + e.pt.distance(l.pt), writer);
+		} else {
+			ArrayList<LinkElement> list = e.copyList();
+			list.remove(prev);
+			PriorityQueue<NeuronLength> pq = new PriorityQueue<NeuronLength>();
+			for(int i=0;i<list.size();i++){
+				l = list.get(i);
+				pq.add(calcLengths(l, e, e.pt.distance(l.pt), writer));
+			}
+			//All but last element should be set to whatever was returned
+			//Largest element (tail of the queue) added to input length
+			for(int i=0;i<list.size()-1;i++){
+				NeuronLength d = pq.poll();
+				//lengthList.add(d);
+				writePoint(d, writer);
+			}
+			NeuronLength d = pq.poll(); //Should be greatest distance;
+			d.length += length;
+			return d;
+		}
+	}
+	
+	private void calcOrder(NeuronLength end){
+		LinkElement e = links.get(end.endPt);
+		LinkElement l = e.linked.get(0);
+		
+	}
+	
+	private void writePoint(NeuronLength n, FileWriter writer) throws IOException{
+		Point pt = n.endPt;
+		double length = n.length;
+		int o = n.order;
+		String value = String.format("Length: %4.1f", length);
+		String coord = String.format("# (%d, %d) ", pt.x, height - pt.y);
+		String order = "";
+		//String order = String.format("Branch order: %d ", o);
+		String outString = coord + order + value + "\n";
+		writer.append(outString);
+				
+	}
+	
+	/**
+	 * Method used to determine which files in the chosen
+	 * directory to add, which are then added to the
+	 * list <code>images</code>. A filename filter is used
+	 * to choose images with filetype tif or lsm. This 
+	 * method also works recursively to add candidate images
+	 * in folder within the main directory.
+	 * 
+	 * @param dir the directory to search through for files
+	 * @return true if the list is non-empty
+	 */
 	
 	private void populateImages(File dir){
 		
@@ -856,6 +1046,11 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 	}
 
+	/**
+	 * Checks for double clicks of the left mouse. If a double click
+	 * is detected, a node is either added or deleted from the editable
+	 * neuron trace (depending on which radio button is selected).
+	 */
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		
@@ -899,7 +1094,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			if(onPath == null)
 				System.out.println("Did not find path");
 			else{
-				links.addNode2(new Point(x, y), onPath);
+				links.addNode(new Point(x, y), onPath);
 			}
 			
 		} else if (deleteRB.isSelected()){
@@ -919,7 +1114,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				origin = elem.linked.get(0).pt;
 			}
 				
-			links.removeNode2(coord);
+			links.removeNode(coord);
 
 			lastActive = null;
 			
@@ -933,6 +1128,12 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 	}
 
+	/**
+	 * The precursor to a drag movement involves a button
+	 * press, so check to see if a VOI was clicked. If not,
+	 * the any following move or delete actions will not
+	 * occur. 
+	 */
 	@Override
 	public void mousePressed(MouseEvent e) {
 
@@ -956,6 +1157,11 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		}
 	}
 
+	/**
+	 * Once the mouse is released, check to see if it was preceeded
+	 * by a drag event, in which case you need to move whichever node
+	 * was just dragged to another spot.
+	 */
 	@Override
 	public void mouseReleased(MouseEvent e) {
 
@@ -974,7 +1180,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			
 			//We know that the drag happened on a VOI, so now update all links and lines
 			
-			links.moveNode2(toChange, new Point(x,y));
+			links.moveNode(toChange, new Point(x,y));
 			
 			lastActive = null;
 			toChange = null;
@@ -1008,6 +1214,42 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		}
 	}
 
+	private class NeuronLength implements Comparable<NeuronLength>{
+		
+		private Point endPt;
+		
+		private double length;
+		
+		private int order;
+		
+		private NeuronLength(Point pt, double l){
+			endPt = pt;
+			length = l;
+		}
+
+		@Override
+		public int compareTo(NeuronLength o) {
+			double l0 = this.length;
+			double l1 = o.length;
+			if(l0 > l1)
+				return 1;
+			else if(l0 < l1)
+				return -1;
+			else
+				return 0;
+		}
+
+		
+	}
+	
+	/**
+	 * A subclass used to keep track of which nodes are connected. Used when
+	 * adding/deleting nodes in order to maintain continuous connections between
+	 * nodes. Also used when saving the new SWC file in order to properly link
+	 * lines in the file.
+	 * @author wangvg
+	 *
+	 */
 	private class Linking extends ArrayList<LinkElement>{
 		
 		/**
@@ -1019,6 +1261,12 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			super();
 		}
 		
+		/**
+		 * Gets an element from the list based on
+		 * its point instead of reference
+		 * @param p
+		 * @return
+		 */
 		private LinkElement get(Point p){
 			
 			for(int i=0;i<size();i++){
@@ -1031,7 +1279,15 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			return null;
 		}
 		
-		/*private void addNode(Point node, LinePath path){
+		/**
+		 * Adds a node at the given point which lies on
+		 * the given path. Breaks the previous line into
+		 * two parts and adds the VOI to control the new
+		 * lines.
+		 * @param node
+		 * @param path
+		 */
+		private void addNode(Point node, LinePath path){
 			Point to = path.pt1;
 			Point from = path.pt2;
 			LinkElement eTo = get(to);
@@ -1041,22 +1297,26 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			eTo.removeLinkTo(eFrom);
 			eTo.addLinkTo(newLink);
 			eFrom.addLinkTo(newLink);
-			//add(newLink);
 			
 			paths.remove(to, from);
 			paths.add(to, node);
 			paths.add(node, from);
 			
-			for(int k=0;k<depth;k++){
-				VOIPoint voi = new VOIPoint(VOI.POINT, new Vector3f(node.x,node.y,k));
-				voi.setLabel("");
-				controlPts.importCurve(voi);
-			}
+			VOIPoint voi = new VOIPoint(VOI.POINT, new Vector3f(node.x,node.y,activeSlice));
+			voi.setLabel("");
+			controlPts.importCurve(voi);
 			
 			subVolume.notifyImageDisplayListeners();
-		}*/
+		}
 		
-		/*private void moveNode(Point from, Point to){
+		/**
+		 * The move node is implemented as simply breaking
+		 * the old connection, moving the node, and reconnecting
+		 * the nodes at the new location.
+		 * @param from
+		 * @param to
+		 */
+		private void moveNode(Point from, Point to){
 			LinkElement node = get(from);
 			node.pt = to;
 			ArrayList<LinkElement> list = node.linked;
@@ -1067,22 +1327,16 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				paths.add(to, list.get(i).pt);
 			}
 			
-			int slice = subVolumeFrame.getComponentImage().getSlice();
-			
-			Vector<VOIBase> vec = controlPts.getSliceCurves(slice);
-			int index = vec.indexOf(lastActive);
-			int dx = to.x - from.x;
-			int dy = to.y - from.y;
-			for(int k=0;k<depth;k++){
-				if(k == slice) continue;
-				vec = controlPts.getSliceCurves(k);
-				VOIPoint basevoi = (VOIPoint)vec.get(index);
-				basevoi.moveVOIPoint(dx, dy, 0, width, height, depth);
-			}
-			
-		}*/
+		}
 	
-		/*private void removeNode(Point node){
+		/**
+		 * Removes the node in question. It then uses the links
+		 * provided to attempt to reconnect the nodes. This is not
+		 * optimized and may result in strange behavior possibly
+		 * occuring if deleting a node with 3+ connections
+		 * @param node
+		 */
+		private void removeNode(Point node){
 			LinkElement e1, e2;
 			LinkElement eNode = get(node);
 			ArrayList<LinkElement> pts = eNode.linked;
@@ -1091,84 +1345,27 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			e1.removeLinkTo(eNode);
 			paths.remove(node, e1.pt);
 			
-			
 			for(int i=1; i<size;i++){
 				e2 = pts.get(0);
 				e2.removeLinkTo(eNode);
 				paths.remove(node, e2.pt);
 				e2.addLinkTo(e1);
-				//e1.addLinkTo(e2);
 				paths.add(e1.pt, e2.pt);
 				e1 = e2;
 				
-			}
-			
-			remove(eNode);
-			
-		}*/
-		
-		private void addNode2(Point node, LinePath path){
-			Point to = path.pt1;
-			Point from = path.pt2;
-			LinkElement eTo = get(to);
-			LinkElement eFrom = get(from);
-			LinkElement newLink = new LinkElement(node);
-			
-			eTo.removeLinkTo(eFrom);
-			eTo.addLinkTo(newLink);
-			eFrom.addLinkTo(newLink);
-			//add(newLink);
-			
-			paths.remove2(to, from);
-			paths.add2(to, node);
-			paths.add2(node, from);
-			
-			VOIPoint voi = new VOIPoint(VOI.POINT, new Vector3f(node.x,node.y,activeSlice));
-			voi.setLabel("");
-			controlPts.importCurve(voi);
-			
-			subVolume.notifyImageDisplayListeners();
-		}
-		
-		private void moveNode2(Point from, Point to){
-			LinkElement node = get(from);
-			node.pt = to;
-			ArrayList<LinkElement> list = node.linked;
-			for(int i=0;i<list.size();i++){
-				paths.remove2(from, list.get(i).pt);
-			}
-			for(int i=0;i<list.size();i++){
-				paths.add2(to, list.get(i).pt);
-			}
-			
-		}
-	
-		private void removeNode2(Point node){
-			LinkElement e1, e2;
-			LinkElement eNode = get(node);
-			ArrayList<LinkElement> pts = eNode.linked;
-			int size = pts.size();
-			e1 = pts.get(0);
-			e1.removeLinkTo(eNode);
-			paths.remove2(node, e1.pt);
-			
-			for(int i=1; i<size;i++){
-				e2 = pts.get(0);
-				e2.removeLinkTo(eNode);
-				paths.remove2(node, e2.pt);
-				e2.addLinkTo(e1);
-				//e1.addLinkTo(e2);
-				paths.add2(e1.pt, e2.pt);
-				e1 = e2;
-				
-			}
-			
-			remove(eNode);
-			
+			}	
+			remove(eNode);	
 		}
 		
 	}
 	
+	/**
+	 * Subclass which is basically just an implementation of a multi-
+	 * linked list. Keeps track of an individual node and which other 
+	 * nodes it is connected to. 
+	 * @author wangvg
+	 *
+	 */
 	private class LinkElement{
 		
 		private Point pt;
@@ -1186,6 +1383,12 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			to.linked.add(this);
 		}
 		
+		private ArrayList<LinkElement> copyList(){
+			ArrayList<LinkElement> list = new ArrayList<LinkElement>();
+			list.addAll(linked);
+			return list;
+		}
+		
 		private void removeLinkTo(LinkElement to){
 			linked.remove(to);
 			to.linked.remove(this);
@@ -1193,6 +1396,18 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 	}
 	
+	/**
+	 * Subclass list used to keep track of which lines are displayed
+	 * in the active slice. This is mainly used to find the endpoints
+	 * of the line when a node is added on a line so that connections
+	 * can be properly updated.
+	 * 
+	 * Implements an ArrayList, but adds a couple of methods that are
+	 * specific to finding elements based on coordinates rather than
+	 * pointers to objects.
+	 * @author wangvg
+	 *
+	 */
 	private class LineList extends ArrayList<LinePath>{
 		
 		/**
@@ -1204,39 +1419,24 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			super();
 		}
 		
-		/*private void add(Point p1, Point p2){
-			ArrayList<Point> list = bresenham(p1, p2);
-			this.add(new LinePath(p1, p2, list));
-		}*/
-		
-		/*private void remove(Point p1, Point p2){
-			Iterator<LinePath> iter = this.iterator();
-			while(iter.hasNext()){
-				LinePath p = iter.next();
-				if((p1.equals(p.pt1) && p2.equals(p.pt2)) || 
-						(p2.equals(p.pt1) && p1.equals(p.pt2))){
-					ArrayList<Point> pts = p.pts;
-					Point pt;
-					int index;
-					for(int i=0;i<pts.size();i++){
-						pt = pts.get(i);
-						index = pt.x + pt.y*width;
-						for(int k=0;k<depth;k++){
-							mask.set(index + k*length, false);
-						}
-					}
-					remove(p);
-					return;
-				}
-			}
-		}*/
-		
-		private void add2(Point p1, Point p2){
-			ArrayList<Point> list = bresenham2(p1,p2);
+		/**
+		 * Add a new line to the list/mask based on the
+		 * two endpoints.
+		 * @param p1
+		 * @param p2
+		 */
+		private void add(Point p1, Point p2){
+			ArrayList<Point> list = bresenham(p1,p2);
 			this.add(new LinePath(p1, p2, list));
 		}
 		
-		private void remove2(Point p1, Point p2){
+		/**
+		 * Remove the line that has these two endpoints from
+		 * the list
+		 * @param p1
+		 * @param p2
+		 */
+		private void remove(Point p1, Point p2){
 			for(int i=0;i<size();i++){
 				LinePath p = get(i);
 				if((p1.equals(p.pt1) && p2.equals(p.pt2)) || 
@@ -1255,6 +1455,13 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			}
 		}
 		
+		/**
+		 * Finds the path (and thus the endpoints) that
+		 * contains the given point. Basically searches 
+		 * through each LinePath list to find this point.
+		 * @param pt
+		 * @return
+		 */
 		private LinePath findPath(Point pt){
 			for(int i=0;i<this.size();i++){
 				LinePath path = this.get(i);
@@ -1267,6 +1474,13 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 	}
 	
+	/**
+	 * Subclass, mostly used as a container. Keeps track of 
+	 * the endpoints and which points are assigned to the
+	 * endpoints (as determined by Bresenham's Line Algorithm.
+	 * @author wangvg
+	 *
+	 */
 	private class LinePath{
 		
 		private Point pt1;
@@ -1286,171 +1500,5 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		}
 		
 	}
-	
-	/*private void readSWC(){
-
-	mask = new BitSet(length*depth);
-	controlPts = new VOI((short) 0, "Control Points", VOI.POINT, 0);
-	paths = new LineList();
-	links = new Linking();
-	
-	ArrayList<String[]> points = null;
-	String[] lineArray;
-	try {
-		BufferedReader input =  new BufferedReader(new FileReader(swcList.get(currentSlice)));
-		String line = null; 
-		points = new ArrayList<String[]>();
-		while (( line = input.readLine()) != null){
-			if(line.startsWith("#"))
-				continue;
-			lineArray = line.split(" ");
-			points.add(lineArray);
-		}
-		input.close();
-	} catch (FileNotFoundException e) {
-		e.printStackTrace();
-		return;
-	} catch (IOException io){
-		io.printStackTrace();
-		return;
-	}
-
-	int linkedTo;
-	int x0, x1, y0, y1;
-	Point p0, p1;
-	String num;
-	LinkElement e0, e1;
-	
-	//for(int i=1;i<points.size();i++){
-	for(int i=points.size()-1;i>0;i--){
-		lineArray = points.get(i);
-		num = lineArray[2];
-		num = num.substring(0, num.indexOf("."));
-		x0 = Integer.parseInt(num);
-		num = lineArray[3];
-		num = num.substring(0, num.indexOf("."));
-		y0 = height - Integer.parseInt(num);
-		
-		p0 = new Point(x0, y0);
-		
-		//Make the various line VOIs
-		linkedTo = Integer.parseInt(lineArray[6]);
-		if(linkedTo == -1){
-			//This is the end
-			//Should never reach this though, as we 
-			//never check the first element
-		}
-		lineArray = points.get(linkedTo - 1);
-		num = lineArray[2];
-		num = num.substring(0, num.indexOf("."));
-		x1 = Integer.parseInt(num);
-		num = lineArray[3];
-		num = num.substring(0, num.indexOf("."));
-		y1 = height - Integer.parseInt(num);
-		
-		p1 = new Point(x1, y1);
-		
-		e0 = links.get(p0);
-		e1 = links.get(p1);
-		
-		if(e0 == null){
-			e0 = new LinkElement(p0);
-		}
-		if(e1 == null){
-			e1 = new LinkElement(p1);
-		}
-		e0.addLinkTo(e1);
-		
-		
-		paths.add(p0, p1);
-		
-		for(int k=0;k<depth;k++){
-			VOIPoint voi = new VOIPoint(VOI.POINT, new Vector3f(x0,y0,k));
-			voi.setLabel("");
-			controlPts.importCurve(voi);
-			//controlPts.importPoint(new Vector3f(x0,y0,k));
-		}
-		
-		//System.out.println(x0 + ", " + y0 + " " + x1 + ", " + y1);
-	}
-	
-	lineArray = points.get(0);
-	num = lineArray[2];
-	num = num.substring(0, num.indexOf("."));
-	x0 = Integer.parseInt(num);
-	num = lineArray[3];
-	num = num.substring(0, num.indexOf("."));
-	y0 = height - Integer.parseInt(num);
-	
-	origin = new Point(x0,y0);
-	for(int k=0;k<depth;k++){
-		VOIPoint voi = new VOIPoint(VOI.POINT, new Vector3f(x0,y0,k));
-		voi.setLabel("");
-		controlPts.importCurve(voi);
-		//controlPts.importPoint(new Vector3f(x0,y0,k));
-	}
-	
-	
-	subVolume.getVOIs().add(controlPts);
-	subVolume.notifyImageDisplayListeners(null, true, 0, -1);
-	
-	subVolumeFrame.getComponentImage().setPaintMask(mask);
-	subVolumeFrame.getComponentImage().addMouseListener(this);
-	subVolumeFrame.getComponentImage().addMouseMotionListener(this);
-	subVolumeFrame.getControls().getTools().setOpacity(1.0f);
-	subVolumeFrame.getControls().getTools().setPaintColor(Color.WHITE);
-	subVolumeFrame.updateImages();
-	
-}*/
-	
-	
-	/*private ArrayList<Point> bresenham(Point p0, Point p1){
-		return bresenham(p0.x, p0.y, p1.x, p1.y);
-	}
-	
-	private ArrayList<Point> bresenham(int x0, int y0, int x1, int y1){
-		
-		ArrayList<Point> pts = new ArrayList<Point>();
-		int dx = Math.abs(x1-x0);
-		int dy = Math.abs(y1-y0);
-		int sx, sy;
-		int err, e2;
-		if(x0 < x1)
-			sx = 1;
-		else sx = -1;
-		if(y0 < y1)
-			sy = 1;
-		else sy = -1;
-		err = dx - dy;
-		
-		int i;
-		
-		while(true){
-			pts.add(new Point(x0, y0));
-			i = x0 + y0*width;
-			for(int k=0;k<depth;k++){
-				mask.set(i+k*length);
-			}
-			
-			if(x0 == x1 && y0 == y1) break;
-			e2 = 2*err;
-			if(e2 > -dy){
-				err -= dy;
-				x0 += sx;
-			}
-			if(e2 < dx){
-				err += dx;
-				y0 += sy;
-			}
-		}
-		
-		//Point pt0 = new Point(x0, y0);
-		//Point pt1 = new Point(x1, y1);
-		
-		//LinePath path = new LinePath(pt0, pt1, pts);
-		//paths.add(path);
-		
-		return pts;
-	}*/
 	
 }
