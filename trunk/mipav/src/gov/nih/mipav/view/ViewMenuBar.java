@@ -940,13 +940,15 @@ public class ViewMenuBar {
                                         		{
                         		        menuBuilder.buildMenuItem("Open Left Right Markers", "OpenLeftRightMarkers", 0, null,
                                                 false),
-                        		        menuBuilder.buildCheckBoxMenuItem("Add Markers", "AddLeftRightMarkers", false),
+                                        menuBuilder.buildCheckBoxMenuItem("Add Markers", "AddLeftRightMarkers", false),
                                         menuBuilder.buildMenuItem("Create New Lattice", "buildWormLattice", 0, null,
                                                 false),
                                 		menuBuilder.buildMenuItem("Open Lattice", "OpenLattice", 0, null,
                                                         false),
-                                        menuBuilder.buildMenuItem("Show Curve Models", "showStraightenLattice", 0, null,
-                                                        false),
+                                        menuBuilder.buildCheckBoxMenuItem("Edit Lattice", "EditLattice", false),
+                                        menuBuilder.buildMenuItem("Save Lattice", "SaveLattice", 0, null,
+                                                false),
+//                                        menuBuilder.buildCheckBoxMenuItem("Show Model", "showStraightenLattice", false),
                                         menuBuilder.buildMenuItem("Apply Lattice Straightening", "straightenLattice", 0, null,
                                                         false)
                                         		}

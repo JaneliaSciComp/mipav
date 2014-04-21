@@ -92,14 +92,22 @@ public class JDialogLattice extends JDialogBase {
 		} else if (command.equals("Cancel")) {
 			this.windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 		} else if ( source == saveButton ) {
-			saveLattice();
+			saveLattice( image, lattice );
 		} else {
 			setVariables();
 		}
     }
     
-    private void saveLattice()
+    public static void saveLattice( ModelImage image, VOI lattice )
     {
+    	if (lattice == null)
+    	{
+    		return;
+    	}
+    	if ( lattice.getCurves().elementAt(0).size() <= 0 )
+    	{
+    		return;
+    	}
         final JFileChooser chooser = new JFileChooser();
 
         if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
@@ -156,7 +164,7 @@ public class JDialogLattice extends JDialogBase {
 
     }
     
-    private void saveAllVOIsTo(final String voiDir, ModelImage image) {
+    private static void saveAllVOIsTo(final String voiDir, ModelImage image) {
         try {
             ViewVOIVector VOIs = image.getVOIs();
 
@@ -386,9 +394,72 @@ public class JDialogLattice extends JDialogBase {
     }
     
     
-    
+    public static VOIVector getCurves( ModelImage image, VOI lattice )
+    {
+		// Assume image is isotropic (square voxels).
+		if ( lattice.getCurves().size() != 2 )
+		{
+			return null;
+		}
+		VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
+		VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
+		if ( left.size() != right.size() )
+		{
+			return null;
+		}
+		VOIContour center = new VOIContour(false);
+		for ( int i = 0; i < left.size(); i++ )
+		{
+			Vector3f centerPt = Vector3f.add(left.elementAt(i), right.elementAt(i) );
+			centerPt.scale(0.5f);
+			center.add(centerPt);
+		}
+
+    	float[] afTimeC = new float[center.size()];
+		NaturalSpline3 centerSpline = smoothCurve(image, center, afTimeC);
+		NaturalSpline3 leftSpline = smoothCurve2(image, left, afTimeC);
+		NaturalSpline3 rightSpline = smoothCurve2(image, right, afTimeC);
+
+
+		VOIContour centerPositions = new VOIContour(false);
+		VOIContour leftPositions = new VOIContour(false);
+		VOIContour rightPositions = new VOIContour(false);
+		
+		float length = centerSpline.GetLength(0, 1);
+		for ( int i = 0; i < length; i++ )
+		{
+			float t = centerSpline.GetTime(i);
+			centerPositions.add(centerSpline.GetPosition(t));
+			leftPositions.add(leftSpline.GetPosition(t));
+			rightPositions.add(rightSpline.GetPosition(t));
+		}
+		short sID = (short)(image.getVOIs().getUniqueID());
+		VOI centerLine = new VOI(sID, "center line");
+		centerLine.getCurves().add(centerPositions);
+		centerLine.setColor( Color.red );
+		centerPositions.update( new ColorRGBA(1,0,0,1));
+
+		sID++;
+		VOI leftLine = new VOI(sID, "left line");
+		leftLine.getCurves().add(leftPositions);
+		leftLine.setColor( Color.magenta );
+		leftPositions.update( new ColorRGBA(1,0,1,1));
+
+		sID++;
+		VOI rightLine = new VOI(sID, "right line");
+		rightLine.getCurves().add(rightPositions);
+		rightLine.setColor( Color.green );
+		rightPositions.update( new ColorRGBA(0,1,0,1));
+		
+		VOIVector latticeLines = new VOIVector();
+    	latticeLines.add(centerLine);
+    	latticeLines.add(leftLine);
+    	latticeLines.add(rightLine);
+    	return latticeLines;
+    }
     
 
+    
     
 	public static TubeSurface interpolateLattice( ModelImage image, VOI lattice, boolean showModel )
 	{

@@ -943,6 +943,33 @@ public class VolumeImage implements Serializable {
 		return m_kRGBT;
 	}
 
+	public ColorRGBA GetTransferedValue( float x, float y, float z )
+	{
+		float value = m_kImage.getFloatTriLinearBounds(x, y, z);
+		float min = (float) m_kImage.getMin();
+		float max = (float) m_kImage.getMax();
+		float diff = max - min;
+		byte index = 0;
+		if ( (diff > 1) && (diff <= 255) )
+		{
+			index = (byte)(((value - min)/diff) * diff);
+		}
+		else
+		{
+			index = (byte)(((value - min)/diff) * 255);
+		}
+		if ( (index >= 0) && (index < 255) && (m_kColorMap != null) && (m_kColorMap.GetData() != null) )
+		{
+			byte r = m_kColorMap.GetData()[index * 4 + 0];
+			byte g = m_kColorMap.GetData()[index * 4 + 1];
+			byte b = m_kColorMap.GetData()[index * 4 + 2];
+			byte a = m_kColorMap.GetData()[index * 4 + 3];
+			return new ColorRGBA(r, g, b, a);
+		}
+		return new ColorRGBA(0,0,0,0);
+	}
+	
+	
 	/**
 	 * The ModelImage Volume max-scale factor.
 	 * @return Volume max-scale factor.

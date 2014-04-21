@@ -1392,9 +1392,22 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
     }
     
+    public void clear3DSelection()
+    {
+    	if ( m_kVOIInterface != null )
+    	{
+    		m_kVOIInterface.clear3DSelection();
+    	}
+    }
+    
     public boolean is3DMouseEnabled()
     {
     	return m_kVOIInterface == null ? false : m_kVOIInterface.is3DMouseEnabled();
+    }
+    
+    public boolean is3DSelectionEnabled()
+    {
+    	return m_kVOIInterface == null ? false : m_kVOIInterface.is3DSelectionEnabled();
     }
     
     public void set3DMouseEnabled( boolean enabled )
@@ -1403,6 +1416,30 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     	{
     		m_kVOIInterface.set3DMouseEnabled(enabled);
     	}
+    }
+    
+    public void modifyLattice( Vector3f startPt, Vector3f endPt, Vector3f pt )
+    {
+    	if ( m_kVOIInterface != null )
+    	{
+    		m_kVOIInterface.modifyLattice(startPt, endPt, pt);
+    	}    	
+    }
+    
+    public void addLeftRightMarker( VOI textVOI )
+    {
+    	if ( m_kVOIInterface != null )
+    	{
+    		m_kVOIInterface.addLeftRightMarker(textVOI);
+    	}    	
+    }
+    
+    public void addInsertionPoint( Vector3f startPt, Vector3f endPt, Vector3f maxPt )
+    {
+    	if ( m_kVOIInterface != null )
+    	{
+    		m_kVOIInterface.addInsertionPoint( startPt, endPt, maxPt );
+    	}    	
     }
 
 
