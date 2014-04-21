@@ -326,7 +326,9 @@ import Jama.Matrix;
 
         private boolean checkSiemens;
 
+        private JRadioButton gradientButton;
         
+        private JRadioButton BMatrixButton;
 
 
         
@@ -704,6 +706,8 @@ import Jama.Matrix;
                                 textDWIDataimage.setText(m_kDWIImage.getImageDirectory()+m_kDWIImage.getImageFileName());
                                 textDWIDataimage.setEnabled(false);
                                 openDWIButton.setEnabled(false);
+                                gradientButton.setEnabled(false);
+                                BMatrixButton.setEnabled(false);
                                 t2OpenPanel.setBorder(highlightTitledBorder("Use Structural Image as Reference Space (optional)"));
                                 t2FileLabel.setEnabled(true);
                                 textT2image.setEnabled(true);
@@ -722,6 +726,8 @@ import Jama.Matrix;
                                     textDWIDataimage.setText(m_kDWIImage.getImageDirectory()+m_kDWIImage.getImageFileName());
                                     textDWIDataimage.setEnabled(false);
                                     openDWIButton.setEnabled(false);
+                                    gradientButton.setEnabled(false);
+                                    BMatrixButton.setEnabled(false);
                                     t2OpenPanel.setBorder(highlightTitledBorder("Use Structural Image as Reference Space (optional)"));
                                     t2FileLabel.setEnabled(true);
                                     textT2image.setEnabled(true);
@@ -733,6 +739,8 @@ import Jama.Matrix;
                                     m_kDWIImage = null;   
                                     openDWIButton.setEnabled(true);
                                     textDWIDataimage.setEnabled(true);
+                                    gradientButton.setEnabled(true);
+                                    BMatrixButton.setEnabled(true);
                                 }
                             }
                             else{
@@ -743,6 +751,8 @@ import Jama.Matrix;
                                 textDWIDataimage.setEnabled(true);
                                 textDWIDataimage.setBackground(Color.WHITE);
                                 openDWIButton.setEnabled(true); 
+                                gradientButton.setEnabled(true);
+                                BMatrixButton.setEnabled(true);
                                 DWIOpenPanel.setBorder(highlightTitledBorder("Upload DWI Image"));
                                 t2OpenPanel.setBorder(buildTitledBorder("Use Structural Image as Reference Space (optional)"));
                                 t2FileLabel.setEnabled(false);
@@ -757,6 +767,8 @@ import Jama.Matrix;
                         textDWIDataimage.setEnabled(true);
                         textDWIDataimage.setBackground(Color.WHITE);
                         openDWIButton.setEnabled(true); 
+                        gradientButton.setEnabled(true);
+                        BMatrixButton.setEnabled(true);
                      }
 
                 }
@@ -764,6 +776,8 @@ import Jama.Matrix;
                     textDWIDataimage.setEnabled(true);
                     textDWIDataimage.setBackground(Color.WHITE);
                     openDWIButton.setEnabled(true); 
+                    gradientButton.setEnabled(true);
+                    BMatrixButton.setEnabled(true);
                     //pipeline.nextButton.setEnabled(false);
                 }
                 
@@ -782,6 +796,8 @@ import Jama.Matrix;
                     activeDWIButton.setEnabled(false);
                     textDWIDataimage.setEnabled(false);
                     openDWIButton.setEnabled(false);
+                    gradientButton.setEnabled(false);
+                    BMatrixButton.setEnabled(false);
                     t2OpenPanel.setBorder(highlightTitledBorder("Use Structural Image as Reference Space (optional)"));
                     t2FileLabel.setEnabled(true);
                     textT2image.setEnabled(true);
@@ -1073,6 +1089,24 @@ import Jama.Matrix;
             gbc.fill = GridBagConstraints.NONE;
             DWIOpenPanel.add(openDWIButton,gbc);
             
+            ButtonGroup choice = new ButtonGroup();
+            gradientButton = new JRadioButton("Use BValue/Gradient if available");
+            choice.add(gradientButton);
+            gradientButton.setSelected(true);
+            gradientButton.setEnabled(true);
+            gbc.gridx = 0;
+            gbc.gridy = 3;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            DWIOpenPanel.add(gradientButton, gbc);
+            
+            BMatrixButton = new JRadioButton("Use B-Matrix if available");
+            choice.add(BMatrixButton);
+            BMatrixButton.setSelected(false);
+            BMatrixButton.setEnabled(true);
+            gbc.gridx = 1;
+            gbc.gridy = 3;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            DWIOpenPanel.add(BMatrixButton, gbc);
            
             gbc2.gridx = 0;
             gbc2.gridy = 0;
@@ -1280,7 +1314,8 @@ import Jama.Matrix;
                         srcTableModel.addRow(rowData);
                     }
                     
-                    if (dtiparams.getbMatrixVals() != null){ 
+                    if ((dtiparams.getbMatrixVals() != null) && ((BMatrixButton.isSelected()) || 
+                    		(dtiparams.getbValues() == null) || (dtiparams.getGradients() == null))) { 
                         isBmatFile = true;
                         java.lang.Object[] newColIdentifiers = {"Volume","bxx","bxy", "bxz", "byy", "byz", "bzz"};
                         srcTableModel.setColumnIdentifiers(newColIdentifiers);
