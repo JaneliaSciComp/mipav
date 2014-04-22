@@ -99,6 +99,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	 * Displayed list of images that can be used to jump to
 	 * other images
 	 */
+	@SuppressWarnings("rawtypes")
 	private JList list;
 	
 	private JDialog listDialog;
@@ -430,6 +431,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	 * in the list
 	 */
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void initList(){
 		
 		listDialog = new JDialog();
@@ -940,19 +942,25 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		else if(source == listDialog){
 			imageBox.setSelected(false);
 		}
-		else{
+		else if(source == this){
 			cancelFlag = true;
-			if(seg == null){
-				if (isExitRequired()) {
-		            System.exit(0);
-		            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
-		        } else {
-		        	dispose();
-		        	if(listDialog != null) 
-		        		listDialog.dispose();
-		        }
+			if (isExitRequired()) {
+				System.exit(0);
+				ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+			} else {
+				dispose();
+				if(listDialog != null) 
+					listDialog.dispose();
+				if (frame != null) frame.close();
+				if (listDialog != null) listDialog.dispose();
+		    	images.clear();
+		    	srcImage.disposeLocal();
+				seg.finalize();
+				seg = null;
+				skeleton = null;
 			}
-			else finalize();
+
+
 		}
         
     }
