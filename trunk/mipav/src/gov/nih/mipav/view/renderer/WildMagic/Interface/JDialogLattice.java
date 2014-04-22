@@ -30,7 +30,9 @@ import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.Mathematics.Vector4f;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 import WildMagic.LibGraphics.Surfaces.TubeSurface;
 
@@ -40,6 +42,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmBSpline;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
@@ -598,7 +601,6 @@ public class JDialogLattice extends JDialogBase {
 	        Vector3f rkEye = centerPositions.elementAt(i);
 	        Vector3f rkRVector = rightVectors.elementAt(i);
 	        Vector3f rkUVector = upVectors.elementAt(i);
-	        Vector3f rkDVector = centerTangents.elementAt(i);
 	        
 			Vector3f[] output = new Vector3f[4];
 	        Vector3f rightV = Vector3f.scale( extent, rkRVector );
@@ -654,7 +656,148 @@ public class JDialogLattice extends JDialogBase {
 		{
 			straighten(image, samplingPlanes, ellipseBounds, 2*extent, latticeSlice, false, false );
 		}
+		float scale = 15;
+		int numPts = 12;
+		double[] adCos = new double[numPts];
+		double[] adSin = new double[numPts];
+		for ( int i = 0; i < numPts; i++ )
+		{
+			adCos[i] = Math.cos( Math.PI * 2.0 * i/numPts );
+			adSin[i] = Math.sin( Math.PI * 2.0 * i/numPts);
+		}
 		
+		Attributes attributes = new Attributes();
+		attributes.SetPChannels(3);
+		attributes.SetNChannels(3);
+		attributes.SetCChannels(0,3);
+		VertexBuffer vBuffer = new VertexBuffer( attributes, centerPositions.size() * numPts + 2 );
+		IndexBuffer iBuffer = new IndexBuffer( vBuffer.GetVertexQuantity() * 6 );
+		int vCount = 0;
+		int nCount = 0;
+		int cCount = 0;
+		int iCount = 0;
+		for ( int i = 0; i < centerPositions.size(); i++ )
+		{
+			Vector3f rkEye = centerPositions.elementAt(i);
+			Vector3f rkRVector = rightVectors.elementAt(i);
+			Vector3f rkUVector = upVectors.elementAt(i);
+	        Vector3f rkDVector = centerTangents.elementAt(i);
+			if ( i == 0 )
+			{
+				vBuffer.SetPosition3(vCount++, rkEye);
+				vBuffer.SetNormal3(nCount++, Vector3f.neg(rkDVector) );
+				
+				for ( int j = 0; j < numPts; j++ )
+				{
+					Vector3f pos1 = Vector3f.scale((float) (scale * adCos[j]), rkRVector);
+					Vector3f pos2 = Vector3f.scale((float) (scale * adSin[j]), rkUVector);
+					Vector3f pos = Vector3f.add(pos1,pos2);
+					pos.add(rkEye);
+					Vector3f normal = Vector3f.sub( pos, rkEye );
+					normal.normalize();
+					vBuffer.SetPosition3(vCount++, pos);
+					vBuffer.SetNormal3(nCount++, normal );
+					
+					if ( j < (numPts-1) )
+					{
+						iBuffer.GetData()[iCount++] = vCount - 1;
+						iBuffer.GetData()[iCount++] = vCount;
+						iBuffer.GetData()[iCount++] = 0;
+						
+						iBuffer.GetData()[iCount++] = vCount;
+						iBuffer.GetData()[iCount++] = vCount - 1;
+						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
+
+						iBuffer.GetData()[iCount++] = vCount;
+						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
+						iBuffer.GetData()[iCount++] = vCount + numPts;
+					}
+					else
+					{
+						iBuffer.GetData()[iCount++] = vCount - 1;
+						iBuffer.GetData()[iCount++] = vCount - numPts;
+						iBuffer.GetData()[iCount++] = 0;
+						
+						iBuffer.GetData()[iCount++] = vCount - numPts;
+						iBuffer.GetData()[iCount++] = vCount - 1;
+						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
+
+						iBuffer.GetData()[iCount++] = vCount - numPts;
+						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
+						iBuffer.GetData()[iCount++] = vCount;
+					}
+				}
+			}
+			else if ( i == (centerPositions.size() - 1) )
+			{				
+				int centerIndex = vBuffer.GetVertexQuantity() - 1;
+				for ( int j = 0; j < numPts; j++ )
+				{
+					Vector3f pos1 = Vector3f.scale((float) (scale * adCos[j]), rkRVector);
+					Vector3f pos2 = Vector3f.scale((float) (scale * adSin[j]), rkUVector);
+					Vector3f pos = Vector3f.add(pos1,pos2);
+					pos.add(rkEye);
+					Vector3f normal = Vector3f.sub( pos, rkEye );
+					normal.normalize();
+					vBuffer.SetPosition3(vCount++, pos);
+					vBuffer.SetNormal3(nCount++, normal );
+					
+					if ( j < (numPts-1) )
+					{
+						iBuffer.GetData()[iCount++] = vCount;
+						iBuffer.GetData()[iCount++] = vCount - 1;
+						iBuffer.GetData()[iCount++] = centerIndex;
+					}
+					else
+					{
+						iBuffer.GetData()[iCount++] = vCount - numPts;
+						iBuffer.GetData()[iCount++] = vCount - 1;
+						iBuffer.GetData()[iCount++] = centerIndex;
+					}
+				}
+
+				vBuffer.SetPosition3(vCount++, rkEye);
+				vBuffer.SetNormal3(nCount++, rkDVector );
+			}
+			else
+			{				
+				for ( int j = 0; j < numPts; j++ )
+				{
+					Vector3f pos1 = Vector3f.scale((float) (scale * adCos[j]), rkRVector);
+					Vector3f pos2 = Vector3f.scale((float) (scale * adSin[j]), rkUVector);
+					Vector3f pos = Vector3f.add(pos1,pos2);
+					pos.add(rkEye);
+					Vector3f normal = Vector3f.sub( pos, rkEye );
+					normal.normalize();
+					vBuffer.SetPosition3(vCount++, pos);
+					vBuffer.SetNormal3(nCount++, normal );
+					
+					if ( j < (numPts-1) )
+					{
+						iBuffer.GetData()[iCount++] = vCount;
+						iBuffer.GetData()[iCount++] = vCount - 1;
+						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
+
+						iBuffer.GetData()[iCount++] = vCount;
+						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
+						iBuffer.GetData()[iCount++] = vCount + numPts;
+					}
+					else
+					{
+						iBuffer.GetData()[iCount++] = vCount - numPts;
+						iBuffer.GetData()[iCount++] = vCount - 1;
+						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
+
+						iBuffer.GetData()[iCount++] = vCount - numPts;
+						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
+						iBuffer.GetData()[iCount++] = vCount;
+					}
+				}
+			}
+		}
+		
+		saveMesh( image, new TriMesh(vBuffer, iBuffer, false), true );
+
 		return null; //createTube( image, center, extent);
 	}
 
@@ -1019,6 +1162,113 @@ public class JDialogLattice extends JDialogBase {
         	System.err.println("CAUGHT EXCEPTION WITHIN writeXML() of FileVOI");
         	e.printStackTrace();
         }
+    }
+    
+    private static void saveMesh( ModelImage image, TriMesh mesh, final boolean flip ) 
+	{
+    	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+    	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+    	int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;   
+    	
+        TransMatrix dicomMatrix = null;
+        TransMatrix inverseDicomMatrix = null;
+        // double[][] inverseDicomArray = null;
+        float[] coord;
+        float[] tCoord;
+
+		int iVQuantity = mesh.VBuffer.GetVertexQuantity();
+
+    	float[] res = image.getResolutions(0);
+        float[] startLocation = image.getFileInfo()[0].getOrigin();
+        int[] direction = MipavCoordinateSystems.getModelDirections(image);
+        
+        Vector3f[] transformedPositions = new Vector3f[iVQuantity];
+        if ( image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL) )
+        {
+
+            // Get the DICOM transform that describes the transformation from
+            // axial to this image orientation
+            dicomMatrix = image.getMatrix();
+            inverseDicomMatrix = new TransMatrix(image.getMatrix());
+            inverseDicomMatrix.Inverse();
+            // inverseDicomArray = inverseDicomMatrix.getMatrix();
+            // inverseDicomMatrix = null;
+            coord = new float[3];
+            tCoord = new float[3];
+
+            for ( int i = 0; i < iVQuantity; i++)
+            {
+            	Vector3f pos = mesh.VBuffer.GetPosition3(i);
+            	
+                // Change the voxel coordinate into millimeter space
+                coord[0] = pos.X * res[0];
+                coord[1] = pos.Y * res[1];
+                coord[2] = pos.Z * res[2];
+
+                // Convert the point to axial millimeter DICOM space
+                dicomMatrix.transform(coord, tCoord);
+
+                // Add in the DICOM origin
+                pos.X = startLocation[0] + tCoord[0];
+                pos.Y = startLocation[1] + tCoord[1];
+                pos.Z = startLocation[2] + tCoord[2];
+                transformedPositions[i] = pos;
+            }
+        }
+        else
+        {
+            for ( int i = 0; i < iVQuantity; i++ )
+            {
+            	Vector3f pos = mesh.VBuffer.GetPosition3(i);
+            	pos.X = (pos.X * res[0] * direction[0]) + startLocation[0];
+            	pos.Y = (pos.Y * res[1] * direction[1]) + startLocation[1];
+            	pos.Z = (pos.Z * res[2] * direction[2]) + startLocation[2];
+            	transformedPositions[i] = pos;
+            }
+        }
+
+
+        float[] box = new float[3];
+        box[0] = (dimX - 1) * res[0];
+        box[1] = (dimY - 1) * res[1];
+        box[2] = (dimZ - 1) * res[2];
+        
+        
+
+    	String imageName = image.getImageName();
+    	if ( imageName.contains("_clone") )
+    	{
+    		imageName = imageName.replaceAll("_clone", "" );
+    	}
+		String voiDir = image.getImageDirectory() + JDialogBase.makeImageName( imageName, "") + File.separator;
+        File voiFileDir = new File(voiDir);
+        if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+        } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+        } else { // voiFileDir does not exist
+            voiFileDir.mkdir();
+        }
+		voiDir = image.getImageDirectory() + JDialogBase.makeImageName( imageName, "") + File.separator +
+    			"worm_model" + File.separator;
+        voiFileDir = new File(voiDir);
+        if (voiFileDir.exists() && voiFileDir.isDirectory()) {
+//        	String[] list = voiFileDir.list();
+//        	for ( int i = 0; i < list.length; i++ )
+//        	{
+////        		System.err.println( list[i] );
+//        		File meshFile = new File( voiDir + list[i] );
+//        		meshFile.delete();
+//        	}
+        } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {
+        } else { // voiFileDir does not exist
+            voiFileDir.mkdir();
+        }
+        
+        String kName = voiDir + "worm_surface.xml";
+        
+        TriMesh kMesh = new TriMesh( new VertexBuffer(transformedPositions), new IndexBuffer(mesh.IBuffer), false);
+        try {
+			FileSurface_WM.save(kName, kMesh, 0, kMesh.VBuffer, flip, direction, startLocation, box, inverseDicomMatrix);
+		} catch (IOException e) {}
     }
 
 }
