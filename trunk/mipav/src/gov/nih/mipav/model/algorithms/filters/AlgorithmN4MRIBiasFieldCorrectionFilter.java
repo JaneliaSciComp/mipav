@@ -703,6 +703,29 @@ import gov.nih.mipav.view.ViewJProgressBar;
         bspliner.setPointWeights(weights);
         bspliner.generateData();
         
+        // Add the bias field control points to the current estimate
+        if (logBiasFieldControlPointLattice == null) {
+        	logBiasFieldControlPointLattice = bspliner.getPhiLattice();
+        }
+        else {
+        	int maskLength = 1;
+        	for (i = 0; i < nDims; i++) {
+                maskLength *= maskExtents[i];
+        	}
+        	for (i = 0; i < maskLength; i++) {
+        		logBiasFieldControlPointLattice.set(i, logBiasFieldControlPointLattice.getDouble(i) + 
+        				                               bspliner.getPhiLattice().getDouble(i));
+        	}
+        }
+        
+        AlgorithmBSplineControlPointImageFilter reconstructer = new AlgorithmBSplineControlPointImageFilter(nDims);
+        reconstructer.setInput(logBiasFieldControlPointLattice);
+        reconstructer.setOrigin(origin);
+        reconstructer.setResolutions(resolutions);
+        reconstructer.setDirection(direction);
+        reconstructer.setExtents(maskExtents);
+        reconstructer.generateData();
+        
     	return smoothField;
     }
     
