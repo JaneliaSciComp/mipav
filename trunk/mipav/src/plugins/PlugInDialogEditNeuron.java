@@ -19,6 +19,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.PriorityQueue;
 
 import javax.swing.ButtonGroup;
@@ -104,8 +105,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	private VOIBase lastActive;
 	
 	private int length;
-	
-	private ArrayList<NeuronLength> lengthList;
 	
 	/**
 	 * List to keep track of which nodes are connected 
@@ -829,7 +828,9 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			BufferedReader input =  new BufferedReader(new FileReader(oldSWC));
 			String line = null; 
 			while (( line = input.readLine()) != null){
-				if(line.startsWith("#"))
+				if(line.startsWith("#") && !(line.startsWith("# Coordinates")
+						|| line.startsWith("# Distances") 
+						|| line.startsWith("# (")))
 					writer.append(line + "\n");
 			}
 			input.close();
@@ -841,7 +842,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		LinkElement start = links.get(origin);
 		String lengthHeader = "# Coordinates are for endpoints of projections\n"
 				+ "# Distances are to branch point of this projection's order\n";
-		lengthList = new ArrayList<NeuronLength>();
 		if(links.size()==2){
 			LinkElement e = links.get(0) == start ? links.get(1) : start;
 			writer.append(lengthHeader);
@@ -849,8 +849,10 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		} else if(links.size() > 2){
 			LinkElement e = start.linked.get(0);
 			writer.append(lengthHeader);
-			NeuronLength nl = calcLengths(e, start, e.pt.distance(start.pt), writer);
-			writePoint(nl, writer);
+			PriorityQueue<NeuronLength> pq = calcLengths(e, start, e.pt.distance(start.pt));
+			NeuronLength nl;
+			while((nl = pq.poll()) != null)
+				writePoint(nl, writer);
 		}
 		
 		Point pt = start.pt;
@@ -930,50 +932,57 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		writer.close();
 	}
 	
-	private NeuronLength calcLengths(LinkElement e, LinkElement prev, double length, FileWriter writer) throws IOException{
+	private PriorityQueue<NeuronLength> calcLengths(LinkElement e, LinkElement prev, double length) throws IOException{
 		LinkElement l;
+		PriorityQueue<NeuronLength> nList = new PriorityQueue<NeuronLength>();
+		NeuronLength nl;
 		if(e.linked.size()==1){
 			//l = e.linked.get(0);
 			//return length + e.pt.distance(l.pt);
-			return new NeuronLength(e.pt, length);
+			nl = new NeuronLength(e.pt, length);
+			nList.add(nl);
+			return nList;
 		} else if(e.linked.size()==2){
 			l = e.linked.get(0) == prev ? e.linked.get(1) : e.linked.get(0);
-			return calcLengths(l, e, length + e.pt.distance(l.pt), writer);
+			return calcLengths(l, e, length + e.pt.distance(l.pt));
 		} else {
 			ArrayList<LinkElement> list = e.copyList();
+			PriorityQueue<NeuronLength> result = new PriorityQueue<NeuronLength>();
+			ArrayList<PriorityQueue<NeuronLength>> listQ = new ArrayList<PriorityQueue<NeuronLength>>();
 			list.remove(prev);
 			PriorityQueue<NeuronLength> pq = new PriorityQueue<NeuronLength>();
 			for(int i=0;i<list.size();i++){
 				l = list.get(i);
-				pq.add(calcLengths(l, e, e.pt.distance(l.pt), writer));
+				result = calcLengths(l, e, e.pt.distance(l.pt));
+				nList.addAll(result);
+				listQ.add(result);
+				pq.add(result.peek());
 			}
-			//All but last element should be set to whatever was returned
-			//Largest element (tail of the queue) added to input length
-			for(int i=0;i<list.size()-1;i++){
-				NeuronLength d = pq.poll();
-				//lengthList.add(d);
-				writePoint(d, writer);
+			nl = pq.peek();
+			nl.length += length;
+			for(int i=0;i<list.size();i++){
+				PriorityQueue<NeuronLength> temp = listQ.get(i);
+				if(!temp.contains(nl)){
+					Iterator<NeuronLength> iter = temp.iterator();
+					while(iter.hasNext()){
+						NeuronLength n = iter.next();
+						n.order++;
+					}
+				}
 			}
-			NeuronLength d = pq.poll(); //Should be greatest distance;
-			d.length += length;
-			return d;
+			
+			return nList;
 		}
-	}
-	
-	private void calcOrder(NeuronLength end){
-		LinkElement e = links.get(end.endPt);
-		LinkElement l = e.linked.get(0);
-		
 	}
 	
 	private void writePoint(NeuronLength n, FileWriter writer) throws IOException{
 		Point pt = n.endPt;
 		double length = n.length;
 		int o = n.order;
-		String value = String.format("Length: %4.1f", length);
 		String coord = String.format("# (%d, %d) ", pt.x, height - pt.y);
-		String order = "";
-		//String order = String.format("Branch order: %d ", o);
+		//String order = "";
+		String order = String.format("Branch order: %d ", o);
+		String value = String.format("Length: %4.1f", length);
 		String outString = coord + order + value + "\n";
 		writer.append(outString);
 				
@@ -1225,16 +1234,20 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		private NeuronLength(Point pt, double l){
 			endPt = pt;
 			length = l;
+			order = 1;
 		}
 
 		@Override
+		/**
+		 * Flipped ordering so that highest priority is highest length
+		 */
 		public int compareTo(NeuronLength o) {
 			double l0 = this.length;
 			double l1 = o.length;
 			if(l0 > l1)
-				return 1;
-			else if(l0 < l1)
 				return -1;
+			else if(l0 < l1)
+				return 1;
 			else
 				return 0;
 		}

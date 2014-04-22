@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.HashSet;
 import java.util.Iterator;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -80,6 +81,8 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	private int[] imBuffer;
 	
 	private int length;
+	
+	private int neuronArea;
 
 	/**
 	 * The polygonal area as determined by the convex hull VOI
@@ -584,7 +587,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		
 		probImage = (ModelImage) destImage.clone();
 		AlgorithmChangeType change = new AlgorithmChangeType(probImage, ModelImage.UBYTE,
-				probImage.getMin(), probImage.getMax(), 0, 255, false);
+				probImage.getMin(), probImage.getMax(), 0, 255,  false);
 		change.run();
 		
 		fireProgressStateChanged(50);
@@ -602,11 +605,12 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
         
         AlgorithmThresholdDual nThresh = new AlgorithmThresholdDual(destImage, threshold, 1, 1, true, false);
         nThresh.run();
+        
+        segImage = (ModelImage) destImage.clone();
+        
         largestObject();
         
         fireProgressStateChanged(75);
-        
-        segImage = (ModelImage) destImage.clone();
         
         AlgorithmMorphology2D skeletonize = new AlgorithmMorphology2D(destImage, AlgorithmMorphology2D.CONNECTED4,
         		1.0f, AlgorithmMorphology2D.SKELETONIZE, 0, 0, 0, 0, true);
@@ -882,11 +886,14 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		String areaStr = "# Polygonal Area: " + String.valueOf(polyArea) + "\n";
 		String centroidStr = "# Centroid: (" + String.valueOf(centroidPts[0]) + ", "
 				+ String.valueOf(centroidPts[1]) + ")\n";
+		String noteStr = "# NOTE: Y-coordinates are flipped in image space.\n"
+				+ "# Image Y-coordinate = Image Height - SWC Y-coordinate\n";
 		
 		try {
 			swcOut = new FileWriter(swcDir);
 			swcOut.append(areaStr);
 			swcOut.append(centroidStr);
+			swcOut.append(noteStr);
 			swcOut.flush();
 		} catch (IOException e) {
 			MipavUtil.displayError("Unable to export to SWC file");
@@ -1174,6 +1181,43 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		return output;
 		
 	}*/
+	
+	private void calcArea(){
+		
+		ModelImage areaIm = (ModelImage)segImage.clone();
+		
+		AlgorithmMorphology2D nObj = new AlgorithmMorphology2D(areaIm, AlgorithmMorphology2D.CONNECTED4,
+        		1.0f, AlgorithmMorphology2D.ID_OBJECTS, 0, 0, 0, 0, true);
+        nObj.setMinMax(1, length);
+        nObj.run();
+        
+        int[] buffer = new int[length];
+        
+        try {
+			areaIm.exportData(0, length, buffer);
+		} catch (IOException e) {
+			MipavUtil.displayError("Image locked");
+			e.printStackTrace();
+		}
+        
+        HashSet<Integer> areaList = new HashSet<Integer>();
+        int value;
+        
+        for(int i=skeleton.nextSetBit(0);i>0;i=skeleton.nextSetBit(i+1)){
+        	value = buffer[i];
+        	if(value != 0)
+        		areaList.add(value);
+        }
+        
+        
+        neuronArea = 0;
+		for(int i=0;i<length;i++){
+			value = buffer[i];
+			if(value != 0 && areaList.contains(value)){
+				neuronArea++;
+			}
+		}
+	}
 	
 	/**
 	 * Method to find any ends of branches. All the true bits in the skeleton
