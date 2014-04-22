@@ -15,6 +15,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -24,14 +25,19 @@ import java.util.PriorityQueue;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JSpinner;
 import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.border.EmptyBorder;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.VOI;
@@ -40,6 +46,7 @@ import gov.nih.mipav.model.structures.VOIBaseVector;
 import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 import gov.nih.mipav.view.JFrameHistogram;
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJComponentEditImage;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -78,6 +85,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	private int currentSlice;
 	
 	private JRadioButton deleteRB;
+	
+	private JCheckBox deleteBox;
 	
 	/**
 	 * Depth of the current subvolume
@@ -144,12 +153,16 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 */
 	private boolean ptClicked;
 	
+	private JCheckBox saveBox;
+	
 	/**
 	 * The active slice within the subvolume is displayed here
 	 */
 	private JLabel sliceLabel;
 	
 	private int sliceRange;
+	
+	private JSpinner rangeField;
 	
 	/**
 	 * Part of the 3D image to display on screen
@@ -183,7 +196,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		swcList = new ArrayList<File>();
 		
 		//Right now it's not changeable, but can be if needed
-		sliceRange = 5;
+		//sliceRange = 5;
 		currentSlice = 0;
 		prevSlice = 0;
 		
@@ -204,13 +217,15 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		images = new ArrayList<File>();
 		swcList = new ArrayList<File>();
 		
-		sliceRange = 5;
+		//sliceRange = 5;
 		currentSlice = 0;
 		prevSlice = 0;
 		
-		populateImages(new File(directory));
+		Preferences.setImageDirectory(new File(directory));
+		init();
+		/*populateImages(new File(directory));
 		initEditor();
-		openImage();
+		openImage();*/
 	}
 	
 	public void actionPerformed(ActionEvent event){
@@ -231,6 +246,16 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		}
 		else if(command.equals("Choose")) chooseDir();
 		else if(command.equals("OK")){
+			try{
+				rangeField.commitEdit();
+				sliceRange = (int)rangeField.getValue();
+			} catch (NumberFormatException e){
+				MipavUtil.displayError("Range is not an integer");
+				return;
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			populateImages(new File(dirText.getText()));
 			initEditor();
         	openImage();	
@@ -290,6 +315,32 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	        	subVolumeFrame.close();
 	        	dispose();
 	        }
+		} else if(command.equals("Zoom In")){
+			float zX = subVolumeFrame.getComponentImage().getZoomX();
+			float zY = subVolumeFrame.getComponentImage().getZoomY();
+			if(zX <= 1){
+				zX *= 2f;
+				zY *= 2f;
+			} else {
+				zX += 1f;
+				zY += 1f;
+			}
+			subVolumeFrame.getComponentImage().setZoom(zX, zY);
+			subVolumeFrame.updateFrame(zX, zY);
+			subVolumeFrame.updateImages();
+		} else if(command.equals("Zoom Out")){
+			float zX = subVolumeFrame.getComponentImage().getZoomX();
+			float zY = subVolumeFrame.getComponentImage().getZoomY();
+			if(zX <= 1){
+				zX *= 0.5f;
+				zY *= 0.5;
+			} else {
+				zX -= 1f;
+				zY -= 1f;
+			}
+			subVolumeFrame.getComponentImage().setZoom(zX, zY);
+			subVolumeFrame.updateFrame(zX, zY);
+			subVolumeFrame.updateImages();
 		}
 	}
 	
@@ -388,6 +439,60 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	}
 	
 	/**
+	 * Recursive function to traverse the entire linked list as a means
+	 * for assigning branch tips a length and order. At each branch point, 
+	 * the longest branch is allowed to continue while the shorter branch
+	 * no longer is accounted for and thus has its order incremented. The
+	 * increment occurs through the entire shorter branch, which requires
+	 * an update of all child branches. 
+	 * @param e
+	 * @param prev
+	 * @param length
+	 * @return
+	 * @throws IOException
+	 */
+	private PriorityQueue<NeuronLength> calcLengths(LinkElement e, LinkElement prev, double length) throws IOException{
+		LinkElement l;
+		PriorityQueue<NeuronLength> nList = new PriorityQueue<NeuronLength>();
+		NeuronLength nl;
+		if(e.linked.size()==1){
+			nl = new NeuronLength(e.pt, length);
+			nList.add(nl);
+			return nList;
+		} else if(e.linked.size()==2){
+			l = e.linked.get(0) == prev ? e.linked.get(1) : e.linked.get(0);
+			return calcLengths(l, e, length + e.pt.distance(l.pt));
+		} else {
+			ArrayList<LinkElement> list = e.copyList();
+			PriorityQueue<NeuronLength> result = new PriorityQueue<NeuronLength>();
+			ArrayList<PriorityQueue<NeuronLength>> listQ = new ArrayList<PriorityQueue<NeuronLength>>();
+			list.remove(prev);
+			PriorityQueue<NeuronLength> pq = new PriorityQueue<NeuronLength>();
+			for(int i=0;i<list.size();i++){
+				l = list.get(i);
+				result = calcLengths(l, e, e.pt.distance(l.pt));
+				nList.addAll(result);
+				listQ.add(result);
+				pq.add(result.peek());
+			}
+			nl = pq.peek();
+			nl.length += length;
+			for(int i=0;i<list.size();i++){
+				PriorityQueue<NeuronLength> temp = listQ.get(i);
+				if(!temp.contains(nl)){
+					Iterator<NeuronLength> iter = temp.iterator();
+					while(iter.hasNext()){
+						NeuronLength n = iter.next();
+						n.order++;
+					}
+				}
+			}
+			
+			return nList;
+		}
+	}
+
+	/**
 	 * Opens the file chooser dialog to provide a directory in which
 	 * to look for the images and SWC files
 	 */
@@ -433,7 +538,21 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         dirButton.addActionListener(this);
         choosePanel.add(dirButton);
         
-        getContentPane().add(choosePanel, BorderLayout.CENTER);
+        JPanel rangePanel = new JPanel();
+        rangePanel.setForeground(Color.black);
+        
+        JLabel rangeLabel = new JLabel("Slice Range: +/-");
+        rangeLabel.setFont(serif12);
+        rangePanel.add(rangeLabel);
+        
+        rangeField = new JSpinner(new SpinnerNumberModel(5, 1, 10, 1));
+        rangeField.setFont(serif12);
+        rangePanel.add(rangeField);
+        
+        PanelManager manage = new PanelManager();
+        manage.add(choosePanel);
+        manage.addOnNextLine(rangePanel);
+        getContentPane().add(manage.getPanel(), BorderLayout.CENTER);
 
         JPanel OKCancelPanel = new JPanel();
 
@@ -466,6 +585,22 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		length = width*height;
 		sliceIm.disposeLocal();
 		
+		JPanel descPanel = new JPanel();
+		descPanel.setForeground(Color.black);
+		descPanel.setBorder(buildTitledBorder("Editor Instructions"));
+		
+		String descStr = "<html><b>Choose add or delete. When adding nodes to the <br>"
+				+ "trace, double click on a section between two connected<br>"
+				+ "nodes. When deleting nodes, double click on a node to<br>"
+				+ "remove it as a control point. To edit a node's location,<br>"
+				+ "drag the node to a new location. The trace will update<br>"
+				+ "once you release the mouse button.</b></html>";
+		JLabel descLabel = new JLabel(descStr);
+		descLabel.setFont(serif12);
+		descPanel.add(descLabel);
+		
+		getContentPane().add(descPanel, BorderLayout.NORTH);
+		
 		JPanel radioPanel = new JPanel();
         radioPanel.setForeground(Color.black);
         
@@ -482,30 +617,54 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         group.add(deleteRB);
         radioPanel.add(addRB);
         radioPanel.add(deleteRB);
-        getContentPane().add(radioPanel, BorderLayout.NORTH);
         
 		JPanel labelPanel = new JPanel();
 		labelPanel.setForeground(Color.black);
 		
 		sliceLabel = new JLabel("Centered Slice: 0");
 		sliceLabel.setFont(serif12);
+		sliceLabel.setBorder(new EmptyBorder(0,5,0,5));
 		labelPanel.add(sliceLabel);
 		
 		
-		JPanel centerPanel = new JPanel();
-		centerPanel.setForeground(Color.black);
+		//JPanel centerPanel = new JPanel();
+		//centerPanel.setForeground(Color.black);
 		
 		centerLabel = new JLabel("Center Depth: 0");
 		centerLabel.setFont(serif12);
-		centerPanel.add(centerLabel);
+		centerLabel.setBorder(new EmptyBorder(0,5,0,5));
+		labelPanel.add(centerLabel);
 		
 		PanelManager manage = new PanelManager();
-		manage.add(labelPanel);
-		manage.addOnNextLine(centerPanel);
+		manage.add(radioPanel);
+		manage.addOnNextLine(labelPanel);
+		//manage.add(centerPanel);
 		
+		JPanel optionPanel = new JPanel(new GridLayout(0,3));
+		optionPanel.setForeground(Color.black);
+		optionPanel.setBorder(buildTitledBorder("Options"));
 		
-		JPanel boxPanel = new JPanel(new GridLayout(1,2));
+		saveBox = new JCheckBox("Save trace as image");
+		saveBox.setFont(serif12);
+		optionPanel.add(saveBox);
+		
+		deleteBox = new JCheckBox("Delete old SWC");
+		deleteBox.setFont(serif12);
+		optionPanel.add(deleteBox);
+		manage.addOnNextLine(optionPanel);
+		
+		JPanel boxPanel = new JPanel(new GridLayout(1,4));
         boxPanel.setForeground(Color.black);
+        
+        JButton zoomIn = new JButton("Zoom In");
+        zoomIn.setFont(serif12);
+        zoomIn.addActionListener(this);
+        boxPanel.add(zoomIn);
+        
+        JButton zoomOut = new JButton("Zoom Out");
+        zoomOut.setFont(serif12);
+        zoomOut.addActionListener(this);
+        boxPanel.add(zoomOut);
         
         JButton prevButton = new JButton("Prev");
         prevButton.setFont(serif12);
@@ -568,11 +727,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		int lowerBound = Math.max(0, currentSlice - sliceRange);
 		int upperBound = Math.min(numImages - 1, currentSlice + sliceRange);
 		depth = upperBound - lowerBound + 1;
-		//int sliceDiff = currentSlice - prevSlice;
 		int[] sliceBuffer = new int[length];
-		
-		//Reset certain things here;
-		
 		
 		FileIO imReader = new FileIO();
 		ModelImage sliceIm = null;
@@ -590,10 +745,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			} else if(currentSlice < prevSlice){//Going backwards
 				int[] tempBuffer = new int[length*depth];
 				int prevLBound = Math.max(0, prevSlice - sliceRange);
-				//int prevUBound = Math.min(numImages - 1, prevSlice + sliceRange);
 				int copyDepth = upperBound - prevLBound + 1 ;
 				int lBoundDiff = prevLBound - lowerBound;
-				//int uBoundDiff = prevUBound - upperBound;
 				System.arraycopy(imBuffer, 0, tempBuffer, lBoundDiff*length, copyDepth*length);
 				if(lBoundDiff != 0){
 					sliceIm = imReader.readImage(images.get(lowerBound).getAbsolutePath());
@@ -695,6 +848,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 */
 	private void readSWC(int lowerBound) throws FileNotFoundException, IOException{
 		
+		//Reset things regarding the mask/control points here
 		mask = new BitSet(length*depth);
 		controlPts = new VOI((short) 0, "Control Points", VOI.POINT, 0);
 		paths = new LineList();
@@ -704,7 +858,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		String[] lineArray;
 		
 		for(int k=0;k<depth;k++){
-			BufferedReader input =  new BufferedReader(new FileReader(swcList.get(k + lowerBound)));
+			BufferedReader input = new BufferedReader(new FileReader(swcList.get(k + lowerBound)));
 			String line = null; 
 			points = new ArrayList<String[]>();
 			while (( line = input.readLine()) != null){
@@ -732,11 +886,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				
 				//Make the various line VOIs
 				linkedTo = Integer.parseInt(lineArray[6]);
-				if(linkedTo == -1){
-					//This is the end
-					//Should never reach this though, as we 
-					//never check the first element
-				}
+
 				lineArray = points.get(linkedTo - 1);
 				num = lineArray[2];
 				num = num.substring(0, num.indexOf("."));
@@ -767,7 +917,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 					VOIPoint voi = new VOIPoint(VOI.POINT, new Vector3f(x0,y0,activeSlice));
 					voi.setLabel("");
 					controlPts.importCurve(voi);
-					//controlPts.importPoint(new Vector3f(x0,y0,k));
 				}
 			}
 			
@@ -785,7 +934,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				voi.setLabel("");
 				controlPts.importCurve(voi);
 			}
-				//controlPts.importPoint(new Vector3f(x0,y0,k));
 		}
 		
 		subVolume.getVOIs().add(controlPts);
@@ -795,7 +943,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		subVolumeFrame.getComponentImage().addMouseListener(this);
 		subVolumeFrame.getComponentImage().addMouseMotionListener(this);
 		subVolumeFrame.getControls().getTools().setOpacity(1.0f);
-		subVolumeFrame.getControls().getTools().setPaintColor(Color.WHITE);
+		subVolumeFrame.getControls().getTools().setPaintColor(Color.GREEN);
 		subVolumeFrame.updateImages();
 		
 	}
@@ -807,37 +955,66 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 */
 	private void saveNewSWC() throws IOException{
 		
+		int counter = 0;
 		File currentSWC = swcList.get(currentSlice);
-		String saveName = currentSWC.getPath();
-		String name = currentSWC.getName();
-		String parent = currentSWC.getParent();
-		int splitAt = name.lastIndexOf(".");
-		String fileName = name.substring(0, splitAt) + "_old";
-		String fileExt = name.substring(splitAt + 1, name.length());
-		String newName = fileName + "." + fileExt;
-		File oldSWC = new File(parent + File.separator + newName);
-		if(oldSWC.exists()){
-			oldSWC.delete();
-		}
-		currentSWC.renameTo(oldSWC);
-		currentSWC = new File(saveName);
 		
-		FileWriter writer = new FileWriter(currentSWC);
+		
+		String header = "";
 		
 		try {
-			BufferedReader input =  new BufferedReader(new FileReader(oldSWC));
+			BufferedReader input =  new BufferedReader(new FileReader(currentSWC));
 			String line = null; 
 			while (( line = input.readLine()) != null){
 				if(line.startsWith("#") && !(line.startsWith("# Coordinates")
 						|| line.startsWith("# Distances") 
 						|| line.startsWith("# (")))
-					writer.append(line + "\n");
+					header += line + "\n";
 			}
 			input.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			return;
 		}
+		
+		String saveName = currentSWC.getPath();
+		String name = currentSWC.getName();
+		String parent = currentSWC.getParent();
+		
+		if(deleteBox.isSelected()){
+			currentSWC.delete();
+		} else{
+			//Rename old files by appending .# to them
+			//Higher number means more recent
+			File oldSWC;
+			do{
+				String newName = name + "." + counter;
+				oldSWC = new File(parent + File.separator + newName);
+				counter++;
+			}while(oldSWC.exists());
+			
+			currentSWC.renameTo(oldSWC);
+		}
+		currentSWC = new File(saveName);
+		FileWriter writer = new FileWriter(currentSWC);
+		writer.append(header);
+		
+		if(saveBox.isSelected()){
+			BitSet tempMask = new BitSet(length);
+			for(int i=mask.nextSetBit(activeSlice*length); i>=0 && i<(activeSlice+1)*length; i = mask.nextSetBit(i+1)){
+				tempMask.set(i-activeSlice*length);
+			}
+			
+			ModelImage trace = new ModelImage(ModelImage.BOOLEAN, new int[]{width, height}, "Skel");
+			trace.importData(0, tempMask, true);
+			File current = images.get(currentSlice);
+			name = current.getName();
+			int splitAt = name.lastIndexOf(".");
+			String fileName = name.substring(0, splitAt) + "_trace";
+			
+			trace.saveImage(parent + File.separator, fileName, FileUtility.TIFF, true);
+			trace.disposeLocal();
+		}
+		
 		int line = 1;
 		LinkElement start = links.get(origin);
 		String lengthHeader = "# Coordinates are for endpoints of projections\n"
@@ -925,54 +1102,9 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 					parentPt.addFirst(next);
 				}
 			}
-			
-			//System.out.println(" ");
 		}
 		
 		writer.close();
-	}
-	
-	private PriorityQueue<NeuronLength> calcLengths(LinkElement e, LinkElement prev, double length) throws IOException{
-		LinkElement l;
-		PriorityQueue<NeuronLength> nList = new PriorityQueue<NeuronLength>();
-		NeuronLength nl;
-		if(e.linked.size()==1){
-			//l = e.linked.get(0);
-			//return length + e.pt.distance(l.pt);
-			nl = new NeuronLength(e.pt, length);
-			nList.add(nl);
-			return nList;
-		} else if(e.linked.size()==2){
-			l = e.linked.get(0) == prev ? e.linked.get(1) : e.linked.get(0);
-			return calcLengths(l, e, length + e.pt.distance(l.pt));
-		} else {
-			ArrayList<LinkElement> list = e.copyList();
-			PriorityQueue<NeuronLength> result = new PriorityQueue<NeuronLength>();
-			ArrayList<PriorityQueue<NeuronLength>> listQ = new ArrayList<PriorityQueue<NeuronLength>>();
-			list.remove(prev);
-			PriorityQueue<NeuronLength> pq = new PriorityQueue<NeuronLength>();
-			for(int i=0;i<list.size();i++){
-				l = list.get(i);
-				result = calcLengths(l, e, e.pt.distance(l.pt));
-				nList.addAll(result);
-				listQ.add(result);
-				pq.add(result.peek());
-			}
-			nl = pq.peek();
-			nl.length += length;
-			for(int i=0;i<list.size();i++){
-				PriorityQueue<NeuronLength> temp = listQ.get(i);
-				if(!temp.contains(nl)){
-					Iterator<NeuronLength> iter = temp.iterator();
-					while(iter.hasNext()){
-						NeuronLength n = iter.next();
-						n.order++;
-					}
-				}
-			}
-			
-			return nList;
-		}
 	}
 	
 	private void writePoint(NeuronLength n, FileWriter writer) throws IOException{
@@ -1222,39 +1354,152 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	        }
 		}
 	}
-
-	private class NeuronLength implements Comparable<NeuronLength>{
+	
+	/**
+	 * Subclass list used to keep track of which lines are displayed
+	 * in the active slice. This is mainly used to find the endpoints
+	 * of the line when a node is added on a line so that connections
+	 * can be properly updated.
+	 * 
+	 * Implements an ArrayList, but adds a couple of methods that are
+	 * specific to finding elements based on coordinates rather than
+	 * pointers to objects.
+	 * @author wangvg
+	 *
+	 */
+	private class LineList extends ArrayList<LinePath>{
 		
-		private Point endPt;
-		
-		private double length;
-		
-		private int order;
-		
-		private NeuronLength(Point pt, double l){
-			endPt = pt;
-			length = l;
-			order = 1;
-		}
-
-		@Override
 		/**
-		 * Flipped ordering so that highest priority is highest length
+		 * 
 		 */
-		public int compareTo(NeuronLength o) {
-			double l0 = this.length;
-			double l1 = o.length;
-			if(l0 > l1)
-				return -1;
-			else if(l0 < l1)
-				return 1;
-			else
-				return 0;
+		private static final long serialVersionUID = 6977450762745726017L;
+	
+		private LineList(){
+			super();
 		}
+		
+		/**
+		 * Add a new line to the list/mask based on the
+		 * two endpoints.
+		 * @param p1
+		 * @param p2
+		 */
+		private void add(Point p1, Point p2){
+			ArrayList<Point> list = bresenham(p1,p2);
+			this.add(new LinePath(p1, p2, list));
+		}
+		
+		/**
+		 * Remove the line that has these two endpoints from
+		 * the list
+		 * @param p1
+		 * @param p2
+		 */
+		private void remove(Point p1, Point p2){
+			for(int i=0;i<size();i++){
+				LinePath p = get(i);
+				if((p1.equals(p.pt1) && p2.equals(p.pt2)) || 
+						(p2.equals(p.pt1) && p1.equals(p.pt2))){
+					ArrayList<Point> pts = p.pts;
+					Point pt;
+					int index;
+					for(int j=0;j<pts.size();j++){
+						pt = pts.get(j);
+						index = pt.x + pt.y*width;
+						mask.set(index + activeSlice*length, false);
+					}
+					remove(p);
+					return;
+				}
+			}
+		}
+		
+		/**
+		 * Finds the path (and thus the endpoints) that
+		 * contains the given point. Basically searches 
+		 * through each LinePath list to find this point.
+		 * @param pt
+		 * @return
+		 */
+		private LinePath findPath(Point pt){
+			for(int i=0;i<this.size();i++){
+				LinePath path = this.get(i);
+				if(path.contains(pt)){
+					return path;
+				}
+			}
+			return null;
+		}
+		
+	}
 
+
+	/**
+	 * Subclass, mostly used as a container. Keeps track of 
+	 * the endpoints and which points are assigned to the
+	 * endpoints (as determined by Bresenham's Line Algorithm.
+	 * @author wangvg
+	 *
+	 */
+	private class LinePath{
+		
+		private Point pt1;
+		
+		private Point pt2;
+		
+		private ArrayList<Point> pts;
+		
+		private LinePath(Point p1, Point p2, ArrayList<Point> list){
+			pt1 = p1;
+			pt2 = p2;
+			pts = list;
+		}
+		
+		private boolean contains(Point pt){
+			return pts.contains(pt);
+		}
+		
+	}
+
+
+	/**
+	 * Subclass which is basically just an implementation of a multi-
+	 * linked list. Keeps track of an individual node and which other 
+	 * nodes it is connected to. 
+	 * @author wangvg
+	 *
+	 */
+	private class LinkElement{
+		
+		private Point pt;
+		
+		private ArrayList<LinkElement> linked;
+		
+		private LinkElement(Point node){
+			pt = node;
+			linked = new ArrayList<LinkElement>();
+			links.add(this);
+		}
+		
+		private void addLinkTo(LinkElement to){
+			linked.add(to);
+			to.linked.add(this);
+		}
+		
+		private ArrayList<LinkElement> copyList(){
+			ArrayList<LinkElement> list = new ArrayList<LinkElement>();
+			list.addAll(linked);
+			return list;
+		}
+		
+		private void removeLinkTo(LinkElement to){
+			linked.remove(to);
+			to.linked.remove(this);
+		}
 		
 	}
 	
+
 	/**
 	 * A subclass used to keep track of which nodes are connected. Used when
 	 * adding/deleting nodes in order to maintain continuous connections between
@@ -1373,145 +1618,47 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	}
 	
 	/**
-	 * Subclass which is basically just an implementation of a multi-
-	 * linked list. Keeps track of an individual node and which other 
-	 * nodes it is connected to. 
-	 * @author wangvg
-	 *
-	 */
-	private class LinkElement{
-		
-		private Point pt;
-		
-		private ArrayList<LinkElement> linked;
-		
-		private LinkElement(Point node){
-			pt = node;
-			linked = new ArrayList<LinkElement>();
-			links.add(this);
-		}
-		
-		private void addLinkTo(LinkElement to){
-			linked.add(to);
-			to.linked.add(this);
-		}
-		
-		private ArrayList<LinkElement> copyList(){
-			ArrayList<LinkElement> list = new ArrayList<LinkElement>();
-			list.addAll(linked);
-			return list;
-		}
-		
-		private void removeLinkTo(LinkElement to){
-			linked.remove(to);
-			to.linked.remove(this);
-		}
-		
-	}
-	
-	/**
-	 * Subclass list used to keep track of which lines are displayed
-	 * in the active slice. This is mainly used to find the endpoints
-	 * of the line when a node is added on a line so that connections
-	 * can be properly updated.
+	 * Subclass used mostly just to keep track of higher order
+	 * branches in the neuron. The longest branch is considered
+	 * the first order branch, with branches coming off this 
+	 * branch considered second order, etc.
 	 * 
-	 * Implements an ArrayList, but adds a couple of methods that are
-	 * specific to finding elements based on coordinates rather than
-	 * pointers to objects.
+	 * The comparator is flipped from natural ordering so that 
+	 * elements in a Priority Queue are in descending order
 	 * @author wangvg
 	 *
 	 */
-	private class LineList extends ArrayList<LinePath>{
+	private class NeuronLength implements Comparable<NeuronLength>{
 		
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 6977450762745726017L;
+		private Point endPt;
+		
+		private double length;
+		
+		private int order;
+		
+		private NeuronLength(Point pt, double l){
+			endPt = pt;
+			length = l;
+			order = 1;
+		}
 
-		private LineList(){
-			super();
-		}
-		
+		@Override
 		/**
-		 * Add a new line to the list/mask based on the
-		 * two endpoints.
-		 * @param p1
-		 * @param p2
+		 * Flipped ordering so that highest priority is highest length
 		 */
-		private void add(Point p1, Point p2){
-			ArrayList<Point> list = bresenham(p1,p2);
-			this.add(new LinePath(p1, p2, list));
+		public int compareTo(NeuronLength o) {
+			double l0 = this.length;
+			double l1 = o.length;
+			if(l0 > l1)
+				return -1;
+			else if(l0 < l1)
+				return 1;
+			else
+				return 0;
 		}
-		
-		/**
-		 * Remove the line that has these two endpoints from
-		 * the list
-		 * @param p1
-		 * @param p2
-		 */
-		private void remove(Point p1, Point p2){
-			for(int i=0;i<size();i++){
-				LinePath p = get(i);
-				if((p1.equals(p.pt1) && p2.equals(p.pt2)) || 
-						(p2.equals(p.pt1) && p1.equals(p.pt2))){
-					ArrayList<Point> pts = p.pts;
-					Point pt;
-					int index;
-					for(int j=0;j<pts.size();j++){
-						pt = pts.get(j);
-						index = pt.x + pt.y*width;
-						mask.set(index + activeSlice*length, false);
-					}
-					remove(p);
-					return;
-				}
-			}
-		}
-		
-		/**
-		 * Finds the path (and thus the endpoints) that
-		 * contains the given point. Basically searches 
-		 * through each LinePath list to find this point.
-		 * @param pt
-		 * @return
-		 */
-		private LinePath findPath(Point pt){
-			for(int i=0;i<this.size();i++){
-				LinePath path = this.get(i);
-				if(path.contains(pt)){
-					return path;
-				}
-			}
-			return null;
-		}
+
 		
 	}
 	
-	/**
-	 * Subclass, mostly used as a container. Keeps track of 
-	 * the endpoints and which points are assigned to the
-	 * endpoints (as determined by Bresenham's Line Algorithm.
-	 * @author wangvg
-	 *
-	 */
-	private class LinePath{
-		
-		private Point pt1;
-		
-		private Point pt2;
-		
-		private ArrayList<Point> pts;
-		
-		private LinePath(Point p1, Point p2, ArrayList<Point> list){
-			pt1 = p1;
-			pt2 = p2;
-			pts = list;
-		}
-		
-		private boolean contains(Point pt){
-			return pts.contains(pt);
-		}
-		
-	}
 	
 }
