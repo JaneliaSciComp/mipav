@@ -1,28 +1,18 @@
 	package gov.nih.mipav.model.algorithms.filters;
 	
 	
-	import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmConvolver;
-import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.algorithms.GenerateGaussian;
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.BSplineKernelFunction;
 import gov.nih.mipav.model.structures.CoxDeBoorBSplineKernelFunction;
 import gov.nih.mipav.model.structures.ModelImage;
-	
-
-
-
-
-
-
 import gov.nih.mipav.model.structures.ModelStorageBase;
 
-	import java.io.IOException;
-import java.util.Vector;
+import java.io.IOException;
 
-import WildMagic.LibFoundation.Mathematics.Vector3d;
+import Jama.Matrix;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.ViewJProgressBar;
+import gov.nih.mipav.view.Preferences;
 	
 	
 	/**
@@ -87,18 +77,8 @@ import gov.nih.mipav.view.ViewJProgressBar;
 		private int extentsLength;
 		private int extentsSlice;
 		private ModelImage outputImage = null;
-	
-		/**
-	     * Constructor which sets the source and destination images
-	     *
-	     * @param  destImg   the destination image
-	     * @param  srcImg    the source image
-	     * @param  confidenceImage
-	     * @param  maskFlag  the mask flag
-	     */
-	    public AlgorithmBSplineControlPointImageFilter(ModelImage destImg, ModelImage srcImg) {
-	        super(destImg, srcImg);
-	    }
+		private ModelImage psiLattice = null;
+		private Matrix[] refinedLatticeCoefficients = null;
 	    
 	    public AlgorithmBSplineControlPointImageFilter(int nDims) {
 	    	this.nDims = nDims;
@@ -138,12 +118,64 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	        	closeDimension[i] = 0;
 	        }
 	        BSplineEpsilon = epsilon;
+	        refinedLatticeCoefficients = new Matrix[nDims];
 	    }
 	    
 	  //~ Methods --------------------------------------------------------------------------------------------------------
 	    
+	    /**
+	     * Prepares this class for destruction.
+	     */
+	    public void finalize() {
+	    	int i;
+	    	splineOrder = null;
+	    	extents = null;
+	        origin = null;
+	        resolutions = null;
+	        if (direction != null) {
+	        	for (i = 0; i < direction.length; i++) {
+	        		direction[i] = null;
+	        	}
+	        	direction = null;
+	        }
+	    	numberOfControlPoints = null;
+	    	if (kernel != null) {
+		        for (i = 0; i < kernel.length; i++) {
+		            kernel[i].finalize();	
+		        }
+		        kernel = null;
+	    	}
+	    	kernelOrder0 = null;
+	        kernelOrder1 = null;
+	        kernelOrder2 = null;
+	        kernelOrder3 = null;
+	    	closeDimension = null;
+	    	numberOfLevels = null;
+	    	inputImage = null;
+	    	outputImage = null;
+	    	psiLattice = null;
+	    	if (refinedLatticeCoefficients != null) {
+	    		for (i = 0; i < refinedLatticeCoefficients.length; i++) {
+	    			refinedLatticeCoefficients[i] = null;
+	    		}
+	    	}
+	        super.finalize();
+	    }
+	    
 	    public void setInput(ModelImage inputImage) {
 	    	this.inputImage = inputImage;
+	    }
+	    
+	    public double[] getOutputBuffer() {
+	    	double outputBuffer[] = new double[extentsLength];
+	    	try {
+	    		outputImage.exportData(0, extentsLength, outputBuffer);
+	    	}
+	    	catch(IOException e) {
+	    		MipavUtil.displayError("IOException on outputImage.exportData");
+	    		return null;
+	    	}
+	    	return outputBuffer;
 	    }
 	    
 	    public void setOrigin(float[] origin) {
@@ -220,16 +252,420 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	    }
 	    
 	    private void threadedGenerateData() {
-	    	
+	    	double collapsedPhiLattices[][] = new double[nDims + 1][];
+	        int collapsedPhiLatticeIndex[][] = new int[nDims+1][];
+	        int size = 1;
+	        int it;
+	        for (int i = 0; i <= nDims; i++) {
+	            size = 1;
+	            if (i == 0) {
+	            	collapsedPhiLatticeIndex[i] = new int[1];
+	            	collapsedPhiLatticeIndex[i][0] = 1;
+	            }
+	            else {
+	            	collapsedPhiLatticeIndex[i] = new int[i];
+	            }
+	            for (int j = 0; j < i; j++) {
+	            	size *= inputImage.getExtents()[j];
+	            	collapsedPhiLatticeIndex[i][j] = inputImage.getExtents()[j];
+	            }
+	            collapsedPhiLattices[i] = new double[size];
+	        }
+	        try {
+	        	inputImage.exportData(0, size, collapsedPhiLattices[nDims]);
+	        }
+	        catch(IOException e) {
+	        	MipavUtil.displayError("IOException on inputImage.exportData");
+	        	return;
+	        }
+	        int totalNumberOfSpans[] = new int[nDims];
+	        for (int i = 0; i <  nDims; i++) {
+	        	if (closeDimension[i] != 0) {
+	        		totalNumberOfSpans[i] = inputImage.getExtents()[i];
+	        	}
+	        	else {
+	        	    totalNumberOfSpans[i] = inputImage.getExtents()[i] - splineOrder[i];
+	        	}
+	        } // for (int i = 0; i < nDims; i++)
+	        double U[] = new double[nDims];
+	        double currentU[] = new double[nDims];
+	        for (int i = 0; i < nDims; i++) {
+	        	currentU[i] = -1;
+	        }
+	        
+	        double outputBuffer[] = new double[extentsLength];
+	        try {
+	        	outputImage.exportData(0, extentsLength, outputBuffer);
+	        }
+	        catch(IOException e) {
+	        	MipavUtil.displayError("IOException on outputImage.exportData");
+	        	return;
+	        }
+	        int idx[] = new int[nDims];
+	        for (it = 0; it < extentsLength; it++) {
+	            idx[0] = it % extents[0];
+	            idx[1] = (it % extentsSlice) / extents[0];
+	            if (nDims > 2) {
+	            	idx[2] = it / extentsSlice;
+	            }
+	            for (int i = 0; i < nDims; i++) {
+	                U[i] = ((double)(totalNumberOfSpans[i] * (idx[i] /* - startIndex[i] */)))/(double)(extents[i] - 1);
+	                if (Math.abs(U[i] - totalNumberOfSpans[i]) <= BSplineEpsilon) {
+	                	U[i] = totalNumberOfSpans[i] - BSplineEpsilon;
+	                }
+	                if (U[i] >= totalNumberOfSpans[i]) {
+	                	MipavUtil.displayError("The collapse point component " + U[i] + 
+	                			" is outside the corresponding parametric domain of [0, " + totalNumberOfSpans[i] +
+	                			"].");
+	                	return;
+	                }
+	            } // for (int i = 0; i < nDims; i++)
+	            for (int i = nDims - 1; i >= 0; i--) {
+	                if (U[i] != currentU[i]) {
+	                	for (int j = i; j >= 0; j--) {
+	                		collapsePhiLattice(collapsedPhiLattices[j+1],collapsedPhiLatticeIndex[j+1], collapsedPhiLattices[j],
+	                				collapsedPhiLatticeIndex[j], U[j], j);
+	                		currentU[j] = U[j];
+	                	}
+	                	break;
+	                }
+	            } // for (int i = nDims - 1; i >= 0; i--)
+	            outputBuffer[it] = collapsedPhiLattices[0][0];
+	        } // for (it = 0; it < extentsLength; it++)
+	        try {
+	        	outputImage.importData(0, outputBuffer, true);
+	        }
+	        catch(IOException e) {
+	        	MipavUtil.displayError("IOException on outputImage.importData");
+	        	return;
+	        }
 	    }
-
-	    /**
-	     * Prepares this class for destruction.
-	     */
-	    public void finalize() {
-	        destImage = null;
-	        srcImage = null;
-	        super.finalize();
+	    
+	    private void collapsePhiLattice(double[] lattice, int latticeIndex[], double[] collapsedLattice, int collapsedLatticeIndex[],
+	    		double u, int dimension) {
+	    	int idx[] = new int[3];
+	    	int sliceSize = 0;
+	    	if (latticeIndex.length >= 2) {
+	    	    sliceSize = latticeIndex[0] * latticeIndex[1];
+	        }
+ 	    	for (int it = 0; it < collapsedLattice.length; it++) {
+	    		if (collapsedLatticeIndex.length == 1) {
+	    			idx[0] = it;
+	    			idx[1] = 0;
+	    			idx[2] = 0;
+	    		}
+	    		else if (collapsedLatticeIndex.length == 2) {
+	    			idx[0] = it % collapsedLatticeIndex[0];
+	    			idx[1] = it / collapsedLatticeIndex[0];
+	    			idx[2] = 0;
+	    		}
+	    		else {
+	    		    idx[0] = it % collapsedLatticeIndex[0];
+        	        idx[1] = (it % sliceSize) / collapsedLatticeIndex[0];
+        	    	idx[2] = it / sliceSize;
+        	    }
+	    		double data;
+	    		data = 0.0;
+	    		for (int i = 0; i < splineOrder[dimension] + 1; i++) {
+	    		    idx[dimension] = (int)(u) + i;
+	    		    double v = u - idx[dimension] + 0.5 *(splineOrder[dimension] - 1);
+	    		    double B = 0.0;
+	    		    switch (splineOrder[dimension]) {
+	    		    case 0:
+	    		    	B = kernelOrder0.evaluate(v);
+	    		    	break;
+	    		    case 1:
+	    		    	B = kernelOrder1.evaluate(v);
+	    		    	break;
+	    		    case 2:
+	    		    	B = kernelOrder2.evaluate(v);
+	    		    	break;
+	    		    case 3:
+	    		    	B = kernelOrder3.evaluate(v);
+	    		    	break;
+	    		    default:
+	    		    	B = kernel[dimension].evaluate(v);
+	    		    }
+	    		    if (closeDimension[dimension] != 0) {
+	    		    	idx[dimension] %= latticeIndex[dimension];
+	    		    }
+	    		    int position = idx[0] + idx[1] * latticeIndex[0] + idx[2] * sliceSize;
+	    		    data += (lattice[position] * B);
+	    		} // for (int i = 0; i < splineOrder[dimension] + 1; i++)
+	    		collapsedLattice[it] = data;
+	    	}
+	    }
+	    
+	    private void setNumberOfLevels(int[] levels) {
+	    	numberOfLevels = levels;
+	    	maximumNumberOfLevels = 1;
+	    	for (int i = 0; i < nDims; i++) {
+	    		if (numberOfLevels[i] == 0) {
+	    			MipavUtil.displayError("The number of levels in each dimension must be greater than 0");
+	    			return;
+	    		}
+	    		if (numberOfLevels[i] > maximumNumberOfLevels) {
+	    			maximumNumberOfLevels = numberOfLevels[i];
+	    		}
+	    	}
+	    	Preferences.debug("Setting numberOfLevels array to:\n", Preferences.DEBUG_ALGORITHM);
+	    	for (int i = 0; i < nDims; i++) {
+	    		Preferences.debug("numberOfLevels["+i+"] = " + numberOfLevels[i] + "\n", Preferences.DEBUG_ALGORITHM);
+	    	}
+	    	Preferences.debug("Setting maximumNumberOfLevels to " + maximumNumberOfLevels + "\n", Preferences.DEBUG_ALGORITHM);
+	    	
+	    	if (maximumNumberOfLevels > 1) {
+	    		doMultiLevel = true;
+	    	}
+	    	else {
+	    		doMultiLevel = false;
+	    	}
+	    	setSplineOrder(splineOrder);
+	    }
+	    
+	    public void setSplineOrder(int[] order) {
+	    	Preferences.debug("Setting splineOrder array to:\n", Preferences.DEBUG_ALGORITHM);
+	    	for (int i = 0; i < nDims; i++) {
+	    		Preferences.debug("splineOrder["+i+"] = " + splineOrder[i] + "\n", Preferences.DEBUG_ALGORITHM);
+	    	}
+	    	splineOrder = order;
+	    	for (int i = 0; i < nDims; i++ ) {
+	            if (splineOrder[i] == 0 ) {
+	                MipavUtil.displayError("The spline order in each dimension must be greater than 0");
+	                return;
+	            }
+	            kernel[i] = new CoxDeBoorBSplineKernelFunction(splineOrder[i]);
+	            if (doMultiLevel) {
+	                double C[][] = kernel[i].getShapeFunctionsInZeroToOneInterval();
+	                double R[][] = new double[C.length][C[0].length];
+	                double S[][] = new double[C.length][C[0].length];
+	                for (int j = 0; j < C.length; j++) {
+	                	for (int k = 0; k < C[0].length; k++) {
+	                		R[j][k] = C[j][k];
+	                		S[j][k] = C[j][k];
+	                	}
+	                }
+	                for (int j = 0; j < C[0].length; j++) {
+	                	double c = Math.pow(2.0, C[0].length - j - 1.0);
+	                	
+	                	for (int k = 0; k < C.length; k++) {
+	                		R[k][j] *= c;
+	                	}
+	                }
+	                Matrix RMat = new Matrix(R);
+	                RMat = RMat.transpose();
+	                RMat = RMat.flipud();
+	                Matrix SMat = new Matrix(S);
+	                SMat = SMat.transpose();
+	                SMat = SMat.flipud();
+	                Matrix QMat = RMat.solve(SMat);
+	                refinedLatticeCoefficients[i] = QMat.extract(2,  SMat.getColumnDimension());
+	            } // if (doMultiLevel)
+	    	} // for (i = 0; i < nDims; i++)
+	    }
+	    
+	    public ModelImage refineControlPointLattice(int[] numberOfLevels) {
+	    	setNumberOfLevels(numberOfLevels);
+	    	psiLattice = (ModelImage)inputImage.clone("psiLattice");
+	    	if (psiLattice.getFileInfo() != null) {
+	    		FileInfoBase[] fileInfo = psiLattice.getFileInfo();
+	    		for (int i = 0; i < fileInfo.length; i++) {
+	    			fileInfo[i].setOrigin(origin);
+	    			fileInfo[i].setResolutions(resolutions);
+	    		}
+	    	}
+	    	for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    psiLattice.getMatrix().set(i, j, (float)direction[i][j]);
+                }
+            }
+	    	
+	    	for (int m = 1; m < maximumNumberOfLevels; m++) {
+	    		int[] numberOfNewControlPoints = new int[nDims];
+	    		for (int i = 0; i < nDims; i++) {
+	    			numberOfNewControlPoints[i] = psiLattice.getExtents()[i];
+	    		}
+	    		for (int i = 0; i < nDims; i++) {
+	    			if (m < numberOfLevels[i]) {
+	    				numberOfNewControlPoints[i] = 2 * numberOfNewControlPoints[i] - splineOrder[i];
+	    			}
+	    		}
+	    		int size[] = new int[nDims];
+	    		int sizeLength = 1;
+	    		for (int i = 0; i < nDims; i++) {
+	    			if (closeDimension[i] != 0) {
+	    				size[i] = numberOfNewControlPoints[i] - splineOrder[i];
+	    			}
+	    			else {
+	    				size[i] = numberOfNewControlPoints[i];
+	    			}
+	    			sizeLength *= size[i];
+	    		}
+	    		int sliceSize = size[0] * size[1];
+	    		
+	    		double refinedLattice[] = new double[sizeLength];
+	    		int idx[] = new int[nDims];
+	    		int idxPsi[] = new int[nDims];
+	    		int tmp[] = new int[nDims];
+	    		int tmpPsi[] = new int[nDims];
+	    		int off[] = new int[nDims];
+	    		int offPsi[] = new int[nDims];
+	    		int sizePsi[] = new int[nDims];
+	    		int size2[] = new int[nDims];
+	    		for (int i = 0; i < nDims; i++) {
+	    			size2[i]= 2;
+	    		}
+	    		int sliceSize2 = size2[0] * size2[1];
+	    		int N = 1;
+	    		for (int i = 0; i < nDims; i++) {
+	    			N *= (splineOrder[i] + 1);
+	    			sizePsi[i] = splineOrder[i] + 1;
+	    		}
+	    		int sizePsiSlice = sizePsi[0] * sizePsi[1];
+	    		int it = 0;
+	    		while (it < sizeLength) {
+	    			idx[0] = it % size[0];
+	    			idx[1] = (it % sliceSize)/size[0];
+	    			if (nDims > 2) {
+	    				idx[2] = it / sliceSize;
+	    			}
+	    			for (int i = 0; i < nDims; i++) {
+	    				if (m < numberOfLevels[i]) {
+	    					idxPsi[i] = (int)(0.5 * idx[i]);
+	    				}
+	    				else {
+	    					idxPsi[i] = idx[i];
+	    				}
+	    			}
+	    			int iStop;
+	    			if (nDims == 2) {
+	    				iStop = 4;
+	    			}
+	    			else {
+	    				iStop = 8;
+	    			}
+	    			for (int i = 0; i < iStop; i++) {
+	    			 	double sum = 0.0;
+	    			 	double val;
+	    			 	off[0] = i % size[0];
+	    			 	off[1] = (i % sliceSize2) / size[0];
+	    			 	if (nDims > 2) {
+	    			 		off[2] = i / sliceSize2;
+	    			 	}
+	    			 	
+	    			 	boolean outOfBoundary = false;
+	    			 	for (int j = 0; j < nDims; j++) {
+	    			 	    tmp[j] = idx[j] + off[j];
+	    			 	    if ((tmp[j] >= numberOfNewControlPoints[j]) && (closeDimension[j] == 0)) {
+	    			 	    	outOfBoundary = true;
+	    			 	    	break;
+	    			 	    }
+	    			 	    if (closeDimension[j] != 0) {
+	    			 	    	tmp[j] %= size[j];
+	    			 	    }
+	    			 	} // for (int j = 0; j < nDims; j++)
+	    			 	if (outOfBoundary) {
+	    			 		continue;
+	    			 	}
+	    			 	for (int j = 0; j < N; j++) {
+	    			 	    offPsi[0] = j % sizePsi[0];
+	    			 	    offPsi[1] = (j % sizePsiSlice) / sizePsi[0];
+	    			 	    if (nDims > 2) {
+	    			 	    	offPsi[2] = j / sizePsiSlice;
+	    			 	    }
+	    			 	    
+	    			 	    boolean outOfBoundary2 = false;
+	    			 	    for (int k = 0; k < nDims; k++) {
+	    			 	    	tmpPsi[k] = idxPsi[k] + offPsi[k];
+	    			 	    	if ((tmpPsi[k] >= inputImage.getExtents()[k]) && (closeDimension[k] == 0)) {
+	    			 	    		outOfBoundary2 = true;
+	    			 	    		break;
+	    			 	    	}
+	    			 	    	if (closeDimension[k] != 0) {
+	    			 	    		tmpPsi[k] %= psiLattice.getExtents()[k];
+	    			 	    	}
+	    			 	    } // for (int k = 0; k < nDims; k++)
+	    			 	    if (outOfBoundary2) {
+	    			 	    	continue;
+	    			 	    } 
+	    			 	    double coeff = 1.0;
+	    			 	    for (int k = 0; k < nDims; k++) {
+	    			 	    	coeff *= refinedLatticeCoefficients[k].get(off[k], offPsi[k]);
+	    			 	    }
+	    			 	    if (nDims == 2) {
+	    			 	        val = psiLattice.getDouble(tmpPsi[0], tmpPsi[1]);
+	    			 	    }
+	    			 	    else {
+	    			 	    	val = psiLattice.getDouble(tmpPsi[0], tmpPsi[1], tmpPsi[2]);
+	    			 	    }
+	    			 	    val *= coeff;
+	    			 	    sum += val;
+	    			 	} // for (int j = 0; j < N; j++)
+	    			 	if (nDims == 2) {
+	    			 	    refinedLattice[tmp[0] + tmp[1] * size[0]] = sum;
+	    			 	}
+	    			 	else {
+	    			 		refinedLattice[tmp[0] + tmp[1] * size[1] + tmp[2] * sliceSize] = sum; 
+	    			 	}
+	    			} // for (int i = 0; i < iStop; i++)
+	    			
+	    		    boolean isEvenIndex = false;
+	    		    while (!isEvenIndex && (it < sizeLength)) {
+	    			    it++;
+	    			    idx[0] = it % size[0];
+		    			idx[1] = (it % sliceSize)/size[0];
+		    			if (nDims > 2) {
+		    				idx[2] = it / sliceSize;
+		    			}
+		    			isEvenIndex = true;
+		    			for (int i = 0; i < nDims; i++) {
+		    				if ((idx[i] % 2) != 0) {
+		    					isEvenIndex = false;
+		    				}
+		    			}
+	    		    } // while (!isEvenIndex && (it < sizeLength))
+	    		} // while (it < sizeLength)
+	    		try {
+	    			psiLattice.importData(0, refinedLattice, true);
+	    		}
+	    		catch (IOException e) {
+	    			MipavUtil.displayError("IOException on psiLattice.importData(0, refinedLattice, true)");
+	    			return null;
+	    		}
+	    	} // for (m = 1; m < maximumNumberOfLevels; m++)
+	    	
+	    	// Specify the pose parameters of the control point lattice
+	    	float localResolutions[] = new float[nDims];
+	    	double localOrigin[] = new double[nDims];
+	    	for (int i = 0; i < nDims; i++) {
+	    		double domain = resolutions[i] * (extents[i] - 1);
+	    		int totalNumberOfSpans = psiLattice.getExtents()[i];
+	    		if (closeDimension[i] == 0) {
+	    			totalNumberOfSpans -= splineOrder[i];
+	    		}
+	    		localResolutions[i] = (float)(domain / (double)totalNumberOfSpans);
+	    		localOrigin[i] = -0.5 * localResolutions[i] * (splineOrder[i] - 1);
+	    	} // for (int i = 0; i < nDims; i++)
+	    	float localOrigin2[] = new float[nDims];
+	    	for (int i = 0; i <nDims; i++) {
+	    		for (int j = 0; j < nDims; j++) {
+	    			localOrigin2[i] += (float)(direction[i][j] * localOrigin[j]);
+	    		}
+	    	}
+	    	
+	    	if (psiLattice.getFileInfo() != null) {
+	    		FileInfoBase[] fileInfo = psiLattice.getFileInfo();
+	    		for (int i = 0; i < fileInfo.length; i++) {
+	    			fileInfo[i].setOrigin(localOrigin2);
+	    			fileInfo[i].setResolutions(localResolutions);
+	    		}
+	    	}
+	    	for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    psiLattice.getMatrix().set(i, j, (float)direction[i][j]);
+                }
+            }
+	        return psiLattice;	
 	    }
 
 	    /**
