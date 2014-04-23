@@ -883,16 +883,21 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		
 		String swcDir = srcImage.getImageDirectory() + File.separator + "Branch_Images" + File.separator;
 		swcDir += srcImage.getImageName().concat("_branches.swc");
-		String areaStr = "# Polygonal Area: " + String.valueOf(polyArea) + "\n";
-		String centroidStr = "# Centroid: (" + String.valueOf(centroidPts[0]) + ", "
-				+ String.valueOf(centroidPts[1]) + ")\n";
-		String noteStr = "# NOTE: Y-coordinates are flipped in image space.\n"
+		//String areaStr = "# Polygonal Area: " + String.valueOf(polyArea) + "\n";
+		//String centroidStr = "# Centroid: (" + String.valueOf(centroidPts[0]) + ", "
+		//		+ String.valueOf(centroidPts[1]) + ")\n";
+		String noteStr = 
+				  "############################################################################\n"
+				+ "#                        START OF SWC COORDINATES                          #\n"
+				+ "############################################################################\n"
+				+ "# NOTE: The above coordinates are in image space coordinates\n"
+				+ "# Y-coordinates for SWC format are inverted in image space.\n"
 				+ "# Image Y-coordinate = Image Height - SWC Y-coordinate\n";
 		
 		try {
 			swcOut = new FileWriter(swcDir);
-			swcOut.append(areaStr);
-			swcOut.append(centroidStr);
+			//swcOut.append(areaStr);
+			//swcOut.append(centroidStr);
 			swcOut.append(noteStr);
 			swcOut.flush();
 		} catch (IOException e) {
