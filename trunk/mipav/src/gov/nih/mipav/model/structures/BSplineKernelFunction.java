@@ -42,12 +42,7 @@
 	    
 	  //~ Methods --------------------------------------------------------------------------------------------------------
 
-	    /**
-	     * Prepares this class for destruction.
-	     */
-	    public void finalize() {
-	        
-	    }
+	    
 	    
 	    public double evaluate(double u) {
 	    	double absValue = Math.abs(u);
