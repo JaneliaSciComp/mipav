@@ -43,6 +43,7 @@ import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIBaseVector;
+import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 import gov.nih.mipav.view.JFrameHistogram;
@@ -99,7 +100,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 * Whether or not a VOI is being dragged
 	 */
 	private boolean dragged;
-	
+
 	private JFileChooser fileChooser;
 	
 	private int height;
@@ -184,6 +185,18 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	private int type;
 	
 	private int width;
+	
+	/**********************************************/
+		
+	private JRadioButton editPolyRB;
+	
+	private JRadioButton editTraceRB;
+	
+	private VOI polyVOI;
+	
+	private Point progenitorPt;
+	
+	private Point splitPt;
 
 	/**
 	 * Primary constructor. Initializes a dialog to ask the user
@@ -248,7 +261,12 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		else if(command.equals("OK")){
 			try{
 				rangeField.commitEdit();
-				sliceRange = (int)rangeField.getValue();
+				Object val = rangeField.getValue();
+				if(val instanceof Integer){
+					sliceRange = (Integer)rangeField.getValue();
+				} else {
+					throw new NumberFormatException();
+				}
 			} catch (NumberFormatException e){
 				MipavUtil.displayError("Range is not an integer");
 				return;
@@ -341,6 +359,14 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			subVolumeFrame.getComponentImage().setZoom(zX, zY);
 			subVolumeFrame.updateFrame(zX, zY);
 			subVolumeFrame.updateImages();
+		} else if(command.equals("Edit Trace")){
+			addRB.setEnabled(true);
+			deleteRB.setEnabled(true);
+			//Remove polygon, replace with control points
+		} else if(command.equals("Edit Polygon")){
+			addRB.setEnabled(false);
+			deleteRB.setEnabled(false);
+			//Remove control points, replace with polygon
 		}
 	}
 	
@@ -618,6 +644,25 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         radioPanel.add(addRB);
         radioPanel.add(deleteRB);
         
+        JPanel editPanel = new JPanel();
+        editPanel.setForeground(Color.black);
+        
+        editTraceRB = new JRadioButton("Edit Trace");
+        editTraceRB.setFont(serif12);
+        editTraceRB.setSelected(true);
+        editTraceRB.addActionListener(this);
+        
+        editPolyRB = new JRadioButton("Edit Polygon");
+        editPolyRB.setFont(serif12);;
+        editPolyRB.addActionListener(this);
+        
+        ButtonGroup editGroup = new ButtonGroup();
+        
+        editGroup.add(editTraceRB);
+        editGroup.add(editPolyRB);
+        editPanel.add(editTraceRB);
+        editPanel.add(editPolyRB);
+        
 		JPanel labelPanel = new JPanel();
 		labelPanel.setForeground(Color.black);
 		
@@ -637,6 +682,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		PanelManager manage = new PanelManager();
 		manage.add(radioPanel);
+		manage.addOnNextLine(editPanel);
 		manage.addOnNextLine(labelPanel);
 		//manage.add(centerPanel);
 		
@@ -1118,6 +1164,30 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		String outString = coord + order + value + "\n";
 		writer.append(outString);
 				
+	}
+	
+	private void polygonArea(){
+		
+		ArrayList<Point> tipPts = new ArrayList<Point>();
+		polyVOI = new VOI((short)1, "Polygon Area", VOI.CONTOUR, -1);
+		for(int i=0;i<links.size();i++){
+			LinkElement l = links.get(i);
+			if(l.linked.size() == 1){
+				tipPts.add(l.pt);
+			}
+		}
+		
+		Vector3f[] tipVec = new Vector3f[tipPts.size()];
+		for(int i=0;i<tipPts.size();i++){
+			Point pt = tipPts.get(i);
+			tipVec[i] = new Vector3f(pt.x, pt.y, activeSlice);
+		}
+		VOIContour curve = new VOIContour(true);
+		curve.importPoints(tipVec);
+		curve.convexHull();
+		
+		polyVOI.importCurve(curve);
+		
 	}
 	
 	/**
