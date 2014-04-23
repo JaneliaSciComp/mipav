@@ -1,32 +1,14 @@
 	package gov.nih.mipav.model.algorithms.filters;
 	
-	
-	import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmConvolver;
-import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.algorithms.GenerateGaussian;
 import gov.nih.mipav.model.structures.BSplineKernelFunction;
 import gov.nih.mipav.model.structures.CoxDeBoorBSplineKernelFunction;
 import gov.nih.mipav.model.structures.ModelImage;
-	
-
-
-
-
-
-
-
-
 import gov.nih.mipav.model.structures.ModelStorageBase;
-
-	import java.io.IOException;
+import java.io.IOException;
 import java.util.Vector;
-
 import Jama.Matrix;
-import WildMagic.LibFoundation.Mathematics.Vector3d;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewJProgressBar;
 	
 	
 	/**
@@ -68,9 +50,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
 		private boolean generateOutputImage;
 		private int numberOfLevels[];
 		private int maximumNumberOfLevels;
-		private boolean constructPhiLattice;
 		ModelImage phiLattice;
-		private boolean constructPsiLattice;
 		ModelImage psiLattice;
 		private Vector<Double> inputPointData;
 		private Vector<Double> outputPointData;
@@ -101,18 +81,6 @@ import gov.nih.mipav.view.ViewJProgressBar;
 		private int[] currentNumberOfControlPoints;
 		private double[] omegaLattice;
 		private double[] deltaLattice;
-	
-		/**
-	     * Constructor which sets the source and destination images
-	     *
-	     * @param  destImg   the destination image
-	     * @param  srcImg    the source image
-	     * @param  confidenceImage
-	     * @param  maskFlag  the mask flag
-	     */
-	    public AlgorithmBSplineScatteredDataPointSetToImageFilter(ModelImage destImg, ModelImage srcImg) {
-	        super(destImg, srcImg);
-	    }
 	    
 	    public AlgorithmBSplineScatteredDataPointSetToImageFilter(int nDims) {
 	        super(nDims);
@@ -143,9 +111,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	        }
 	        maximumNumberOfLevels = 1;
 	        // itk only needs data type and extents to construct an image, but MIPAV needs extents[] as well.
-	        constructPhiLattice = false;
 	        phiLattice = null;
-	        constructPsiLattice = true;
 	        psiLattice = null;
 	        inputPointData = new Vector<Double>();
 	        outputPointData = new Vector<Double>();
@@ -162,8 +128,42 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	     * Prepares this class for destruction.
 	     */
 	    public void finalize() {
-	        destImage = null;
-	        srcImage = null;
+	    	int i;
+	    	splineOrder = null;
+	    	numberOfControlPoints = null;
+	    	if (kernel != null) {
+		        for (i = 0; i < kernel.length; i++) {
+		            kernel[i].finalize();	
+		        }
+		        kernel = null;
+	    	}
+	    	kernelOrder0 = null;
+	        kernelOrder1 = null;
+	        kernelOrder2 = null;
+	        kernelOrder3 = null;
+	    	closeDimension = null;
+	    	numberOfLevels = null;
+	    	phiLattice = null;
+	    	if (psiLattice != null) {
+	    		psiLattice.disposeLocal();
+	    		psiLattice = null;
+	    	}
+	    	if (inputPointData != null) {
+	    	    inputPointData.clear();
+	    	    inputPointData = null;
+	        }
+	    	if (outputPointData != null) {
+	    		outputPointData.clear();
+	    		outputPointData = null;
+	    	}
+	    	if (pointWeights != null) {
+	    		pointWeights.clear();
+	    		pointWeights = null;
+	    	}
+	    	refinedLatticeCoefficients = null;
+	    	currentNumberOfControlPoints = null;
+	    	omegaLattice = null;
+	    	deltaLattice = null;
 	        super.finalize();
 	    }
 	    
