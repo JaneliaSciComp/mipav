@@ -1,29 +1,12 @@
 	package gov.nih.mipav.model.algorithms.filters;
 	
 	
-	import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmConvolver;
-import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.algorithms.GenerateGaussian;
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.structures.BSplineKernelFunction;
-import gov.nih.mipav.model.structures.CoxDeBoorBSplineKernelFunction;
 import gov.nih.mipav.model.structures.ModelImage;
-	
-
-
-
-
-
-
 import gov.nih.mipav.model.structures.ModelStorageBase;
-
-	import java.io.IOException;
 import java.util.Vector;
-
 import WildMagic.LibFoundation.Mathematics.Vector3d;
-import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewJProgressBar;
 	
 	
 	/**
@@ -66,18 +49,6 @@ import gov.nih.mipav.view.ViewJProgressBar;
 		protected ModelImage outputImage;
 		protected int extentsLength;
 		protected int extentsSlice;
-		
-		/**
-	     * Constructor which sets the source and destination images
-	     *
-	     * @param  destImg   the destination image
-	     * @param  srcImg    the source image
-	     * @param  confidenceImage
-	     * @param  maskFlag  the mask flag
-	     */
-	    public AlgorithmPointSetToImageFilter(ModelImage destImg, ModelImage srcImg) {
-	        super(destImg, srcImg);
-	    }
 	    
 	    public AlgorithmPointSetToImageFilter(int nDims) {
 	    	int i;
@@ -105,8 +76,25 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	     * Prepares this class for destruction.
 	     */
 	    public void finalize() {
-	        destImage = null;
-	        srcImage = null;
+	    	int i;
+	        extents = null;
+	        origin = null;
+	        resolutions = null;
+	        if (direction != null) {
+	        	for (i = 0; i < direction.length; i++) {
+	        		direction[i] = null;
+	        	}
+	        	direction = null;
+	        }
+	        if (pointData != null) {
+	        	pointData.clear();
+	        	pointData = null;
+	        }
+	        if (pointLocation != null) {
+	        	pointLocation.clear();
+	        	pointLocation = null;
+	        }
+	        outputImage = null;
 	        super.finalize();
 	    }
 	    
