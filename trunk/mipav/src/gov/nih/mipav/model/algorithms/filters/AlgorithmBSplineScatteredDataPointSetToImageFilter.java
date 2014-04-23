@@ -592,7 +592,10 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	    private void collapsePhiLattice(double[] lattice, int latticeIndex[], double[] collapsedLattice, int collapsedLatticeIndex[],
 	    		double u, int dimension) {
 	    	int idx[] = new int[3];
-	    	int sliceSize = latticeIndex[0] * latticeIndex[1];
+	    	int sliceSize = 0;
+	    	if (latticeIndex.length >= 2) {
+	    	    sliceSize = latticeIndex[0] * latticeIndex[1];
+	        }
  	    	for (int it = 0; it < collapsedLattice.length; it++) {
 	    		if (collapsedLatticeIndex.length == 1) {
 	    			idx[0] = it;
