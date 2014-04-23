@@ -46,7 +46,13 @@
 	     * Prepares this class for destruction.
 	     */
 	    public void finalize() {
-	        
+	        if (BSplineShapeFunctions != null) {
+	        	int i;
+	        	for (i = 0; i < BSplineShapeFunctions.length; i++) {
+	        		BSplineShapeFunctions[i] = null;
+	        	}
+	        	BSplineShapeFunctions = null;
+	        }
 	    }
 	    
 	    private void generateBSplineShapeFunctions(int order) {
