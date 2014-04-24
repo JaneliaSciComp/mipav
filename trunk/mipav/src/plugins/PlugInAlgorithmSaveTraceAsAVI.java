@@ -39,7 +39,7 @@ public class PlugInAlgorithmSaveTraceAsAVI extends AlgorithmBase {
 		traceList = files;
 		slicesPerSecond = freq;
 		isSWC = swc;
-		name = name;
+		name = aviName;
 	}
 	
 	@Override
@@ -174,8 +174,13 @@ public class PlugInAlgorithmSaveTraceAsAVI extends AlgorithmBase {
 				height = Integer.valueOf(parts[2]);
 			}
 		}
-
+		
 		input.close();
+		
+		if(width == 0 || height == 0){
+			MipavUtil.displayError("File is missing width and/or heigh information");
+			throw new IOException();
+		}
 
 		length = width*height;
 		int[] extents = new int[]{width, height, depth};
