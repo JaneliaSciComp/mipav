@@ -218,6 +218,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	private JComboBox resUnits;
 	
 	private double resolution = 0.211;
+	
+	private JCheckBox aviBox;
 
 	/**
 	 * Primary constructor. Initializes a dialog to ask the user
@@ -309,13 +311,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         		openImage();
         		subVolumeFrame.setLocation(loc);
         	} else {
-        		if (isExitRequired()) {
-    	            System.exit(0);
-    	            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
-    	        } else {
-    	        	subVolumeFrame.close();
-    	        	dispose();
-    	        }
+        		actionPerformed(new ActionEvent(this, 0, "End"));
         	}
 		} else if(command.equals("Prev")){
 			if(currentSlice > 0 ){
@@ -346,13 +342,23 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				e.printStackTrace();
 			}
 		} else if(command.equals("End")){
-			if (isExitRequired()) {
-	            System.exit(0);
-	            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
-	        } else {
-	        	subVolumeFrame.close();
-	        	dispose();
-	        }
+			if(aviBox.isSelected()){
+				String dir = dirText.getText();
+				if(!dir.endsWith(File.separator))
+					dir += File.separator;
+				dir += "Branch_Images" + File.separator;
+				new PlugInDialogSaveTraceAsAVI(dir);
+				subVolumeFrame.close();
+				dispose();
+			} else{
+				if (isExitRequired()) {
+		            System.exit(0);
+		            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+		        } else {
+		        	subVolumeFrame.close();
+		        	dispose();
+		        }
+			}
 		} else if(command.equals("Zoom In")){
 			float zX = subVolumeFrame.getComponentImage().getZoomX();
 			float zY = subVolumeFrame.getComponentImage().getZoomY();
@@ -811,6 +817,11 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		deleteBox = new JCheckBox("Delete old SWC");
 		deleteBox.setFont(serif12);
 		optionPanel.add(deleteBox);
+		
+		aviBox = new JCheckBox("Save AVI");
+		aviBox.setFont(serif12);
+		optionPanel.add(aviBox);
+		
 		manage.addOnNextLine(optionPanel);
 		
 		JPanel boxPanel = new JPanel(new GridLayout(1,4));
@@ -1239,8 +1250,10 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		double[] areaResults = calcPolyArea();
 		header += String.format("# Polygonal Area: %5.2f %s\n", areaResults[2], (String)resUnits.getSelectedItem());
 		header += String.format("# Centroid: (%4.2f,%4.2f)\n", areaResults[0], areaResults[1]);
-		header += String.format("# Progenitor Point (%d,%d)\n", progenitorPt.x, progenitorPt.y);
-		header += String.format("# Split Point (%d,%d)\n", splitPt.x, splitPt.y);
+		if(progenitorPt != null)
+			header += String.format("# Progenitor Point (%d,%d)\n", progenitorPt.x, progenitorPt.y);
+		if(splitPt != null)
+			header += String.format("# Split Point (%d,%d)\n", splitPt.x, splitPt.y);
 		
 		VOIBase base = polyVOI.getCurves().get(0);
 		
@@ -1299,13 +1312,15 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				writePoint(nl, writer);
 		}
 		
+		String dimStr = String.format("# Width %d\n# Height %d\n", width, height);
 		String noteStr = 
-				  "############################################################################\n"
-				+ "#                        START OF SWC COORDINATES                          #\n"
-				+ "############################################################################\n"
+				  "########################################################\n"
+				+ "#              START OF SWC COORDINATES                #\n"
+				+ "########################################################\n"
 				+ "# NOTE: The above coordinates are in image space coordinates\n"
 				+ "# Y-coordinates for SWC format are inverted in image space.\n"
 				+ "# Image Y-coordinate = Image Height - SWC Y-coordinate\n";
+		writer.append(dimStr);
 		writer.append(noteStr);
 		
 		Point pt = start.pt;
