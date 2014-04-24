@@ -1,26 +1,19 @@
 package gov.nih.mipav.model.algorithms.filters;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmConvolver;
-import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.algorithms.GenerateGaussian;
-import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
-
-import gov.nih.mipav.model.structures.TransMatrix;
 
 import java.io.IOException;
 import java.util.Vector;
 
 import WildMagic.LibFoundation.Mathematics.Vector3d;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJProgressBar;
 
 /**
  * 
  * 
- * @version 0.1 March 19, 2014
+ * @version 0.1 April 24, 2014
  * @author William Gandler
  * 
  *         This a a port of itkN4MRIBiasFieldCorrectionImageFilter.txx from the
@@ -54,11 +47,6 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 
 	private double confidence[] = null;
 
-	/* Assigned to srcImage if replace image, assigned to destImage if new image */
-	private ModelImage targetImage = null;
-
-	private double imageMax;
-
 	private int nDims;
 
 	private int numberOfHistogramBins = 200;
@@ -71,17 +59,13 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 
 	private int splineOrder[];
 
-	private int numberOfFittingLevels[];
+	private int originalNumberOfFittingLevels[];
 
 	private int originalNumberOfControlPoints[];
-
-	private int numberOfControlPoints[];
 
 	private double sigmoidNormalizedAlpha = 0.0;
 
 	private double sigmoidNormalizedBeta = 0.5;
-
-	private int maximumNumberOfLevels = 1;
 
 	private int maximumNumberOfIterations[];
 
@@ -149,6 +133,17 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		destImage = null;
 		srcImage = null;
 		confidenceImage = null;
+		confidence = null;
+		splineOrder = null;
+		originalNumberOfFittingLevels = null;
+		originalNumberOfControlPoints = null;
+		maximumNumberOfIterations = null;
+		origin = null;
+		resolutions = null;
+		maskOrigin = null;
+		maskIndex = null;
+		maskLargest = null;
+		maskExtents = null;
 		super.finalize();
 	}
 
@@ -157,6 +152,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 	 */
 	public void runAlgorithm() {
 		int i;
+		int j;
 		int x;
 		int y;
 		int z;
@@ -177,6 +173,8 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		int largestY;
 		int largestZ;
 		double currentConvergenceMeasurement = Double.MAX_VALUE;
+		double dirLength;
+		double direction[][];
 
 		if (srcImage == null) {
 			displayError("Source Image is null");
@@ -185,7 +183,6 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 			return;
 		}
 
-		long startTime = System.nanoTime();
 		fireProgressStateChanged(0, srcImage.getImageName(),
 				"N4 MRI Bias Field Correction Filter on image ...");
 
@@ -194,25 +191,16 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 			maximumNumberOfIterations[i] = 50;
 		}
 
-		if (destImage == null) {
-			targetImage = srcImage;
-		} else {
-			targetImage = destImage;
-		}
-
 		srcImage.calcMinMax();
-		imageMax = srcImage.getMax();
 		origin = srcImage.getOrigin();
 		resolutions = srcImage.getFileInfo()[0].getResolutions();
 		nDims = srcImage.getNDims();
-		numberOfFittingLevels = new int[nDims];
+		originalNumberOfFittingLevels = new int[nDims];
 		for (i = 0; i < nDims; i++) {
-			numberOfFittingLevels[i] = 1;
+			originalNumberOfFittingLevels[i] = 1;
 		}
-		numberOfControlPoints = new int[nDims];
 		originalNumberOfControlPoints = new int[nDims];
 		for (i = 0; i < nDims; i++) {
-			numberOfControlPoints[i] = 4;
 			originalNumberOfControlPoints[i] = 4;
 		}
 		splineOrder = new int[nDims];
@@ -268,7 +256,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		maskOrigin = new float[nDims];
 		for (i = 0; i < length; i++) {
 			if (mask.get(i) || ((confidence != null) && (confidence[i] > 0.0))) {
-				x = (i % sliceSize) % xDim;
+				x = i % xDim;
 				y = (i % sliceSize) / xDim;
 				z = i / sliceSize;
 				if (x < smallestX) {
@@ -307,11 +295,24 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		for (i = 0; i < nDims; i++) {
 			maskOrigin[i] = origin[i] + resolutions[i] * maskIndex[i];
 		}
+		
+		direction = new double[nDims][nDims];
+		for (i = 0; i < nDims; i++) {
+        	dirLength = 0;
+            for (j = 0; j < nDims; j++) {
+                direction[i][j] = srcImage.getMatrix().get(i, j);
+                dirLength += (direction[i][j] * direction[i][j]);
+            }
+            dirLength = Math.sqrt(dirLength);
+            for (j = 0; j < nDims; j++) {
+            	direction[i][j] = direction[i][j]/dirLength;
+            }
+        } // for (i = 0; i < nDims; i++)
 
 		// Calculate the log of the input image
 		// Set NaNs, infinities, and negatives to zero
 		for (i = 0; i < length; i++) {
-			if (entireImage || mask.get(i)
+			if (entireImage || (mask.get(i) && (confidence == null))
 					|| ((confidence != null) && (confidence[i] > 0.0))) {
 				logFilter[i] = Math.log(buffer[i]);
 				if ((Double.isNaN(logFilter[i]))
@@ -329,9 +330,9 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		subtracter1 = new double[length];
 		// Iterate until convergence or iterative exhaustion
 		int maximumNumberOfLevels = 1;
-		for (d = 0; d < numberOfFittingLevels.length; d++) {
-			if (numberOfFittingLevels[d] > maximumNumberOfLevels) {
-				maximumNumberOfLevels = numberOfFittingLevels[d];
+		for (d = 0; d < originalNumberOfFittingLevels.length; d++) {
+			if (originalNumberOfFittingLevels[d] > maximumNumberOfLevels) {
+				maximumNumberOfLevels = originalNumberOfFittingLevels[d];
 			}
 		}
 		if (maximumNumberOfIterations.length != maximumNumberOfLevels) {
@@ -348,7 +349,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 				// Sharpen the current estimate of the uncorrected image
 				logSharpened = sharpen(logUncorrected);
 				for (i = 0; i < length; i++) {
-					if (entireImage || mask.get(i)
+					if (entireImage || (mask.get(i) && (confidence == null))
 							|| ((confidence != null) && (confidence[i] > 0.0))) {
 						subtracter1[i] = logUncorrected[i] - logSharpened[i];
 					}
@@ -361,7 +362,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 						logBiasField, newLogBiasField);
 				logBiasField = newLogBiasField;
 				for (i = 0; i < length; i++) {
-					if (entireImage || mask.get(i)
+					if (entireImage || (mask.get(i) && (confidence == null))
 							|| ((confidence != null) && (confidence[i] > 0.0))) {
 						logUncorrected[i] = logFilter[i] - logBiasField[i];
 					}
@@ -372,6 +373,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		    reconstructer.setInput(logBiasFieldControlPointLattice);
 		    reconstructer.setOrigin(origin);
 		    reconstructer.setResolutions(resolutions);
+		    reconstructer.setDirection(direction);
 		    reconstructer.setExtents(srcImage.getExtents());
 		    reconstructer.generateData();
 		    int numberOfLevels[] = new int[nDims];
@@ -379,23 +381,31 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		    	numberOfLevels[i] = 1;
 		    }
 		    for (d = 0; d < nDims; d++) {
-		    	if ((numberOfFittingLevels[d] + 1 >= currentLevel) && (currentLevel != maximumNumberOfLevels - 1)) {
+		    	if ((originalNumberOfFittingLevels[d] + 1 >= currentLevel) && (currentLevel != maximumNumberOfLevels - 1)) {
 		    		numberOfLevels[d] = 2;
 		    	}
 		    } //for (d = 0; d < nDims; d++)
 		    logBiasFieldControlPointLattice = reconstructer.refineControlPointLattice(numberOfLevels);
+		    reconstructer.finalize();
+		    reconstructer = null;
 		} // for (currentLevel = 0; currentLevel < maximumNumberOfLevels;
 			// currentLevel++)
 		
 		double expFilter[] = new double[logBiasField.length];
 		for (i = 0; i < expFilter.length; i++) {
-			expFilter[i] = Math.exp(logBiasField[i]);
+			if (entireImage || (mask.get(i) && (confidence == null))
+					|| ((confidence != null) && (confidence[i] > 0.0))) {
+			    expFilter[i] = Math.exp(logBiasField[i]);
+			}
 		}
 		
 		// Divide the input image by the bias field to get the final image
 		double outputBuffer[] = new double[buffer.length];
 		for (i = 0; i < buffer.length; i++) {
+			if (entireImage || (mask.get(i) && (confidence == null))
+					|| ((confidence != null) && (confidence[i] > 0.0))) {
 			outputBuffer[i] = buffer[i]/expFilter[i];
+			}
 		}
 		
 		if (destImage != null) {
@@ -420,17 +430,15 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		}
 
 		setCompleted(true);
-		// System.out.println("Time consumed GB: " +
-		// (System.nanoTime()-startTime));
+		return;
 	}
 
 	private double[] sharpen(double[] unsharpened) {
 		double sharpened[] = new double[unsharpened.length];
-		// Build the histogram for the uncorrected image. Store copy
-		// in a vnl_vector to utilize utilize vnl FFT routines. Note that
-		// variables
-		// in real space are denoted by a single uppercase letter whereas their
-		// frequency counterparts are indicated by a trailing lowercase 'f'.
+		// Build the histogram for the uncorrected image.
+		// Note that variables in real space are denoted by a single
+		// upper case letter whereas their frequency counterparts are
+		// indicated by a trailing lower case 'f'.
 		double binMaximum = -Double.MAX_VALUE;
 		double binMinimum = Double.MAX_VALUE;
 		double pixel;
@@ -473,7 +481,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		double correctedPixel;
 
 		for (i = 0; i < length; i++) {
-			if (entireImage || mask.get(i)
+			if (entireImage || (mask.get(i) && (confidence == null))
 					|| ((confidence != null) && (confidence[i] > 0.0))) {
 				pixel = unsharpened[i];
 				if (pixel > binMaximum) {
@@ -492,7 +500,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		// applicable)
 		// using a triangular parzen windowing scheme
 		for (i = 0; i < length; i++) {
-			if (entireImage || mask.get(i)
+			if (entireImage || (mask.get(i) && (confidence == null))
 					|| ((confidence != null) && (confidence[i] > 0.0))) {
 				pixel = unsharpened[i];
 				cidx = (pixel - binMinimum) / histogramSlope;
@@ -509,7 +517,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 				// (confidence[i] > 0.0)))
 		} // for (i = 0; i < length; i++)
 
-		// Determine information about thne intensity histogram and zero-pad
+		// Determine information about the intensity histogram and zero-pad
 		// histogram to a power of 2.
 
 		exponent = Math.ceil(Math.log(numberOfHistogramBins) / Math.log(2.0)) + 1.0;
@@ -568,11 +576,10 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 			denom1 = cR * FfR[n] - cI * FfI[n] + WeinerFilterNoise;
 			denom2 = cR * FfI[n] + cI * FfR[n];
 			denom = denom1 * denom1 + denom2 * denom2;
-			GfR[n] = (cR * cR + cR * FfR[n] + cR * WeinerFilterNoise + cI * cI
+			GfR[n] = (cR * cR * FfR[n] + cR * WeinerFilterNoise + cI * cI
 					* FfR[n])
 					/ denom;
-			GfI[n] = (-cR * cR * FfI[n] - cR * cI * FfR[n] + cR * cI + cI
-					* FfR[n] - cI * cI * FfI[n] + cI * WeinerFilterNoise)
+			GfI[n] = (-cR * cR * FfI[n] - cI * cI * FfI[n] + cI * WeinerFilterNoise)
 					/ denom;
 		}
 		UfR = new double[paddedHistogramSize];
@@ -654,7 +661,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 
 		// Sharpen the image with the new mapping, E(u|v)
 		for (i = 0; i < length; i++) {
-			if (entireImage || mask.get(i)
+			if (entireImage || (mask.get(i) && (confidence == null))
 					|| ((confidence != null) && (confidence[i] > 0.0))) {
 				cidx = (unsharpened[i] - binMinimum) / histogramSlope;
 				idx = (int) Math.floor(cidx);
@@ -701,7 +708,8 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
     	minAbsValue = Double.MAX_VALUE;
     	if (sigmoidNormalizedAlpha > 0.0) {
 	    	for (i = 0; i < length; i++) {
-	    		if (entireImage || mask.get(i) || ((confidence != null) && (confidence[i] > 0.0))) {
+	    		if (entireImage || (mask.get(i) && (confidence == null))
+	    				||  ((confidence != null) && (confidence[i] > 0.0))) {
 	    			pixel = Math.abs(fieldEstimate[i]);
 	    			if (pixel > maxAbsValue) {
 	    				maxAbsValue = pixel;
@@ -724,8 +732,9 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
     	}
     	index = 0;
     	for (i = 0; i < length; i++) {
-    		if (entireImage || mask.get(i) || ((confidence != null) && (confidence[i] > 0.0))) {
-    			x = (i % sliceSize) % xDim;
+    		if (entireImage || (mask.get(i) && (confidence == null)) || 
+    				((confidence != null) && (confidence[i] > 0.0))) {
+    			x = i  % xDim;
     			y = (i % sliceSize) / xDim;
     			z = i/sliceSize;
     			// Remember direction cosine matrix has been set to identity
@@ -761,6 +770,8 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
             } // for (i = 0; i < nDims; i++)
     	//}
     	bspliner = new AlgorithmBSplineScatteredDataPointSetToImageFilter(nDims);
+    	int numberOfFittingLevels[] = new int[nDims];
+    	int numberOfControlPoints[] = new int[nDims];
         for (i = 0; i < nDims; i++) {
         	numberOfFittingLevels[i] = 1;
         }
@@ -774,7 +785,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
         }
         bspliner.setOrigin(maskOrigin);
         bspliner.setResolutions(resolutions);
-        bspliner.setExtents(maskExtents);
+        bspliner.setExtents(srcImage.getExtents());
         bspliner.setDirection(direction);
         bspliner.setGenerateOutputImage(false);
         bspliner.setNumberOfLevels(numberOfFittingLevels);
@@ -790,11 +801,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
         	logBiasFieldControlPointLattice = bspliner.getPhiLattice();
         }
         else {
-        	int maskLength = 1;
-        	for (i = 0; i < nDims; i++) {
-                maskLength *= maskExtents[i];
-        	}
-        	for (i = 0; i < maskLength; i++) {
+        	for (i = 0; i < length; i++) {
         		logBiasFieldControlPointLattice.set(i, logBiasFieldControlPointLattice.getDouble(i) + 
         				                               bspliner.getPhiLattice().getDouble(i));
         	}
@@ -807,7 +814,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
         reconstructer.setOrigin(origin);
         reconstructer.setResolutions(resolutions);
         reconstructer.setDirection(direction);
-        reconstructer.setExtents(maskExtents);
+        reconstructer.setExtents(srcImage.getExtents());
         reconstructer.generateData();
         
         smoothField = reconstructer.getOutputBuffer();
@@ -822,7 +829,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		int i;
 		double subtracter[] = new double[fieldEstimate1.length];
 		for (i = 0; i < length; i++) {
-			if (entireImage || mask.get(i)
+			if (entireImage || (mask.get(i) && (confidence == null))
 					|| ((confidence != null) && (confidence[i] > 0.0))) {
 				subtracter[i] = fieldEstimate1[i] - fieldEstimate2[i];
 			}
@@ -834,7 +841,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		double N = 0.0;
 
 		for (i = 0; i < length; i++) {
-			if (entireImage || mask.get(i)
+			if (entireImage || (mask.get(i) && (confidence == null))
 					|| ((confidence != null) && (confidence[i] > 0.0))) {
 				double pixel = Math.exp(subtracter[i]);
 				N += 1.0;
