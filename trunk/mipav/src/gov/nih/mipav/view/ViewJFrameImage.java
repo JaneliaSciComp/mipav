@@ -2708,18 +2708,20 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
 
         // Get all imageA frames
-        final Vector<ViewImageUpdateInterface> frameListA = imageA.getImageFrameVector();
+        if (imageA != null) {
+            final Vector<ViewImageUpdateInterface> frameListA = imageA.getImageFrameVector();
 
-        if (frameListA != null) {
+            if (frameListA != null) {
 
-            for (int i = 0; i < frameListA.size(); i++) {
+                for (int i = 0; i < frameListA.size(); i++) {
 
-                if (frameListA.elementAt(i) instanceof ViewJFrameBase) {
+                    if (frameListA.elementAt(i) instanceof ViewJFrameBase) {
 
-                    if ( ((ViewJFrameBase) frameListA.elementAt(i)) != this && ! ((ViewJFrameBase) frameListA.elementAt(i)).isClosing) {
-                        ((ViewJFrameBase) frameListA.elementAt(i)).setVisible(false);
-                        ((ViewJFrameBase) frameListA.elementAt(i)).close();
-                        i--;
+                        if ( ((ViewJFrameBase) frameListA.elementAt(i)) != this && ! ((ViewJFrameBase) frameListA.elementAt(i)).isClosing) {
+                            ((ViewJFrameBase) frameListA.elementAt(i)).setVisible(false);
+                            ((ViewJFrameBase) frameListA.elementAt(i)).close();
+                            i--;
+                        }
                     }
                 }
             }
