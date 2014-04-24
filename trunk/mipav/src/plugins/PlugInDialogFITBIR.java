@@ -18,6 +18,7 @@ import gov.nih.tbi.commons.model.DataType;
 import gov.nih.tbi.commons.model.RepeatableType;
 import gov.nih.tbi.commons.model.RequiredType;
 import gov.nih.tbi.commons.model.StatusType;
+import gov.nih.tbi.dictionary.model.DictionaryRestServiceModel.DataStructureList;
 import gov.nih.tbi.dictionary.model.hibernate.*;
 import gov.nih.tbi.repository.model.SubmissionType;
 
@@ -254,6 +255,27 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             + "data submission is voluntary. Data entered into BRICS will be used solely for scientific and\n"
             + "research purposes. Significant system update information may be posted on\n" + "the BRICS site as required.";
 
+    private static final Comparator dataElementCompare = new Comparator<DataElementValue>() {
+        @Override
+        public int compare(final DataElementValue o1, final DataElementValue o2) {
+            return new Integer(o1.getPosition()).compareTo(new Integer(o2.getPosition()));
+        }
+    };
+
+    private static final Comparator mapElementCompare = new Comparator<MapElement>() {
+        @Override
+        public int compare(final MapElement o1, final MapElement o2) {
+            return new Integer(o1.getPosition()).compareTo(new Integer(o2.getPosition()));
+        }
+    };
+
+    private static final Comparator groupCompare = new Comparator<RepeatableGroup>() {
+        @Override
+        public int compare(final RepeatableGroup o1, final RepeatableGroup o2) {
+            return new Integer(o1.getPosition()).compareTo(new Integer(o2.getPosition()));
+        }
+    };
+
     public PlugInDialogFITBIR() {
         super();
 
@@ -371,7 +393,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 final javax.swing.SwingWorker<Object, Object> worker = new javax.swing.SwingWorker<Object, Object>() {
                     @Override
                     public Object doInBackground() {
-                        createSubmissionFiles();
+                        try {
+                            createSubmissionFiles();
+                        } catch (final Throwable e) {
+                            e.printStackTrace();
+                        }
 
                         // need to fix this so it actually works
                         if (isFinished) {
@@ -561,9 +587,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     csvParams.remove(recordFieldIndex);
                     recordList.get(recordList.size() - 1).add(csvParams);
                 }
-
-                new InfoDialog(this, dsName, false, false, recordList);
             }
+
+            for (final ArrayList<ArrayList<String>> record : recordList) {
+                new InfoDialog(this, dsName, false, false, record);
+            }
+
             fis.close();
         } catch (final Exception e) {
             e.printStackTrace();
@@ -913,18 +942,33 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     n = n.substring(0, n.length() - 1);
                 }
 
-                // # commas at end = # fields in struct - 2 (for name & version)
-                // + 1 (record column)
+                // # commas at end = # fields in struct - 2 (for name & version) + 1 (record column)
                 String cStr = "";
-                for (int j = 0; j < dsInfo.getSize() - 1; j++) {
+                int numFields = 0;
+                for (final RepeatableGroup g : dsInfo.getRepeatableGroups()) {
+                    numFields += g.getSize();
+                }
+                for (int j = 0; j < numFields - 1; j++) {
                     cStr += CSV_OUTPUT_DELIM;
                 }
 
+                // make sure the ordering respects the proper positions of the groups/elements
+                final ArrayList<RepeatableGroup> orderedGroupList = new ArrayList(dsInfo.getRepeatableGroups());
+                Collections.sort(orderedGroupList, groupCompare);
+
+                final ArrayList<ArrayList<MapElement>> orderedElementListsByGroup = new ArrayList<ArrayList<MapElement>>();
+                for (final RepeatableGroup g : orderedGroupList) {
+                    final ArrayList<MapElement> elemList = new ArrayList(g.getDataElements());
+                    Collections.sort(elemList, mapElementCompare);
+                    orderedElementListsByGroup.add(elemList);
+                }
+
                 String elementHeader = recordIndicatorColumn;
-                for (final RepeatableGroup g : dsInfo.getRepeatableGroups()) {
-                    for (final MapElement elem : g.getDataElements()) {
-                        final DataElement de = elem.getDataElement();
-                        elementHeader += CSV_OUTPUT_DELIM + g.getName() + "." + de.getName();
+                for (int groupNum = 0; groupNum < orderedElementListsByGroup.size(); groupNum++) {
+                    final RepeatableGroup g = orderedGroupList.get(groupNum);
+                    final ArrayList<MapElement> deList = orderedElementListsByGroup.get(groupNum);
+                    for (int deNum = 0; deNum < deList.size(); deNum++) {
+                        elementHeader += CSV_OUTPUT_DELIM + g.getName() + "." + deList.get(deNum).getName();
                     }
                 }
 
@@ -1344,10 +1388,16 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             return csvRow;
         }
 
-        for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
+        final ArrayList<RepeatableGroup> orderedGroupList = new ArrayList(fsData.getStructInfo().getRepeatableGroups());
+        Collections.sort(orderedGroupList, groupCompare);
+
+        for (final RepeatableGroup group : orderedGroupList) {
             if (fsData.isGroupRepeatSet(group.getName(), repeatNum)) {
                 final GroupRepeat repeat = fsData.getGroupRepeat(group.getName(), repeatNum);
-                for (final DataElementValue deVal : repeat.getDataElements()) {
+                final Vector<DataElementValue> deList = repeat.getDataElements();
+                Collections.sort(deList, dataElementCompare);
+
+                for (final DataElementValue deVal : deList) {
                     final String deName = deVal.getName();
                     String value = "";
                     if (imageFile != null) {
@@ -1389,8 +1439,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     }
                 }
             } else {
-                for (int i = 0; i < group.getSize() - 1; i++) {
-                    csvRow += CSV_OUTPUT_DELIM;
+                for (int i = 0; i < group.getSize(); i++) {
+                    if (group.getPosition() != 0 || i != 0) {
+                        csvRow += CSV_OUTPUT_DELIM;
+                    }
                 }
             }
         }
@@ -2577,6 +2629,18 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         return false;
     }
 
+    private static final String[] splitFieldString(final String deNameAndGroup) {
+        return deNameAndGroup.split("\\.");
+    }
+
+    private static final String getFieldGroup(final String deNameAndGroup) {
+        return splitFieldString(deNameAndGroup)[0];
+    }
+
+    private static final String getFieldName(final String deNameAndGroup) {
+        return splitFieldString(deNameAndGroup)[1];
+    }
+
     private static final String removeRedundantDiseaseInfo(final String field) {
         final ArrayList<String> diseaseStrings = new ArrayList<String>();
         final ArrayList<String> fieldStrings = new ArrayList<String>();
@@ -2946,7 +3010,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         private final boolean setInitialVisible;
 
-        private final ArrayList<ArrayList<ArrayList<String>>> recordList;
+        private final ArrayList<ArrayList<String>> record;
 
         private final String[] unchangableElements = new String[] {IMG_HASH_CODE_ELEMENT_NAME, "ImgDimensionTyp", "ImgDim1ExtentVal", "ImgDim2ExtentVal",
                 "ImgDim3ExtentVal", "ImgDim4ExtentVal", "ImgDim5ExtentVal", IMG_FILE_ELEMENT_NAME, IMG_PREVIEW_ELEMENT_NAME};
@@ -2956,13 +3020,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         private boolean validFile;
 
         public InfoDialog(final PlugInDialogFITBIR owner, final String name, final boolean launchedFromInProcessState, final boolean setInitialVisible,
-                final ArrayList<ArrayList<ArrayList<String>>> recordList) {
+                final ArrayList<ArrayList<String>> record) {
             super(owner, true);
 
             this.owner = owner;
             this.launchedFromInProcessState = launchedFromInProcessState;
             this.setInitialVisible = setInitialVisible;
-            this.recordList = recordList;
+            this.record = record;
 
             if (launchedFromInProcessState) {
                 if (containsGuid(name)) {
@@ -3016,14 +3080,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 } else {
                     fsData = new FormStructureData(dataStructure);
 
-                    parseDataStructure(dataStructure, fsData);
+                    parseDataStructure(dataStructure, fsData, record);
 
                     parseForInitLabelsAndComponents(fsData);
 
                     if ( !setInitialVisible) {
                         // convert any dates found into proper ISO format
                         for (int i = 0; i < csvFieldNames.size(); i++) {
-                            final String[] deGroupAndName = csvFieldNames.get(i).split("\\.");
+                            final String[] deGroupAndName = splitFieldString(csvFieldNames.get(i));
 
                             DataElement de = null;
                             for (final GroupRepeat repeat : fsData.getAllGroupRepeats(deGroupAndName[0])) {
@@ -3035,18 +3099,16 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 }
                             }
 
-                            for (final ArrayList<ArrayList<String>> record : recordList) {
-                                for (final ArrayList<String> values : record) {
-                                    // check value not empty and check type of field for date
-                                    if ( !values.get(i).trim().equals("") && de.getType().equals(DataType.DATE)) {
-                                        values.set(i, convertDateToISOFormat(values.get(i)));
-                                    }
+                            for (final ArrayList<String> values : record) {
+                                // check value not empty and check type of field for date
+                                if ( !values.get(i).trim().equals("") && de.getType().equals(DataType.DATE)) {
+                                    values.set(i, convertDateToISOFormat(values.get(i)));
                                 }
                             }
                         }
 
                         // this means it was launched via the csv file
-                        populateFieldsFromCSV(fsData, recordList);
+                        populateFieldsFromCSV(fsData, record);
                     }
                 }
             } catch (final Exception e) {
@@ -3111,12 +3173,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
         }
 
-        private void populateFieldsFromCSV(final FormStructureData fsData, final ArrayList<ArrayList<ArrayList<String>>> recordList) {
+        private void populateFieldsFromCSV(final FormStructureData fsData, final ArrayList<ArrayList<String>> record) {
             if (isImagingStructure(dataStructureName)) {
                 // first check to see if main image file was supplied in the csv
                 int imageFileIndex = -1;
                 for (int i = 0; i < csvFieldNames.size(); i++) {
-                    final String[] deGroupAndName = csvFieldNames.get(i).trim().split("\\.");
+                    final String[] deGroupAndName = splitFieldString(csvFieldNames.get(i).trim());
 
                     if (isMainImagingFileElement(deGroupAndName[0], deGroupAndName[1])) {
                         imageFileIndex = i;
@@ -3124,164 +3186,127 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     }
                 }
 
-                for (final ArrayList<ArrayList<String>> record : recordList) {
-                    for (int curRepeatNum = 0; curRepeatNum < record.size(); curRepeatNum++) {
-                        final ArrayList<String> repeatValues = record.get(curRepeatNum);
+                for (int curRepeatNum = 0; curRepeatNum < record.size(); curRepeatNum++) {
+                    final ArrayList<String> repeatValues = record.get(curRepeatNum);
 
-                        // if no image file index, or no image file value in this repeat, move to next repeat
-                        if (imageFileIndex == -1 || repeatValues.get(imageFileIndex).trim().equals("")) {
-                            // TODO: what if there's a Imaging* structure without Imaging Information.ImgFile?
-                            continue;
-                        } else {
+                    ModelImage srcImage = null;
 
-                            // if image_file is in zip format....first unzip it temporarily
-                            final String imageFile = repeatValues.get(imageFileIndex);
-                            ModelImage srcImage = null;
+                    // if image file set in this repeat, read in the image
+                    if (imageFileIndex != -1 && !repeatValues.get(imageFileIndex).trim().equals("")) {
+                        // if image_file is in zip format....first unzip it temporarily
+                        final String imageFile = repeatValues.get(imageFileIndex);
 
-                            srcImage = readImgFromCSV(csvFile.getParentFile().getAbsolutePath(), imageFile);
+                        srcImage = readImgFromCSV(csvFile.getParentFile().getAbsolutePath(), imageFile);
 
-                            if (srcImage != null) {
-                                for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
-                                    if (group.getName().equalsIgnoreCase(IMG_IMAGE_INFO_GROUP)) {
-                                        final GroupRepeat repeat = fsData.getGroupRepeat(group.getName(), curRepeatNum);
-                                        for (final DataElementValue deVal : repeat.getDataElements()) {
-                                            if (isMainImagingFileElement(group.getName(), deVal.getName())) {
-                                                final JTextField tf = (JTextField) deVal.getComp();
-                                                tf.setText(imageFile);
-                                                tf.setEnabled(false);
-                                            }
+                        if (srcImage != null) {
+                            for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
+                                if (group.getName().equalsIgnoreCase(IMG_IMAGE_INFO_GROUP)) {
+                                    final GroupRepeat repeat = fsData.getGroupRepeat(group.getName(), curRepeatNum);
+                                    for (final DataElementValue deVal : repeat.getDataElements()) {
+                                        if (isMainImagingFileElement(group.getName(), deVal.getName())) {
+                                            final JTextField tf = (JTextField) deVal.getComp();
+                                            tf.setText(imageFile);
+                                            tf.setEnabled(false);
                                         }
                                     }
                                 }
+                            }
 
-                                // need to determine if there are any entries in csv
-                                // that has things like image extents or resolutions
-                                // that are different than the ones determined by
-                                // header....if there are, then prompt a warning
+                            // need to determine if there are any entries in csv that has things like image extents
+                            // or resolutions that are different than the ones determined by header....if there are,
+                            // then prompt a warning
 
-                                final int response = determineImageHeaderDescrepencies(srcImage, repeatValues);
+                            resolveConflictsUsing = determineImageHeaderDescrepencies(srcImage, repeatValues);
+                        }
+                    }
 
-                                if (response == RESOLVE_CONFLICT_CSV) {
-                                    populateFields(fsData, srcImage);
+                    if (resolveConflictsUsing == RESOLVE_CONFLICT_CSV && srcImage != null) {
+                        populateFields(fsData, srcImage);
+                    }
 
-                                    for (int i = 0; i < csvFieldNames.size(); i++) {
-                                        final String[] deGroupAndName = csvFieldNames.get(i).trim().split("\\.");
-                                        final String value = repeatValues.get(i);
-                                        if (i != imageFileIndex && !value.equals("")) {
-                                            final GroupRepeat curRepeat = fsData.getGroupRepeat(deGroupAndName[0], curRepeatNum);
-                                            for (final DataElementValue deVal : curRepeat.getDataElements()) {
-                                                final JComponent comp = deVal.getComp();
-                                                if (deVal.getName().equalsIgnoreCase(deGroupAndName[1])) {
-                                                    if (comp instanceof JTextField) {
-                                                        final JTextField t = (JTextField) comp;
-                                                        t.setText(value);
-                                                    } else if (comp instanceof JComboBox) {
-                                                        final JComboBox combo = (JComboBox) comp;
+                    for (int i = 0; i < csvFieldNames.size(); i++) {
+                        final String[] deGroupAndName = splitFieldString(csvFieldNames.get(i).trim());
+                        final String value = repeatValues.get(i).trim();
+                        if (i != imageFileIndex && !value.equals("")) {
+                            final GroupRepeat curRepeat = fsData.getGroupRepeat(deGroupAndName[0], curRepeatNum);
+                            for (final DataElementValue deVal : curRepeat.getDataElements()) {
+                                final JComponent comp = deVal.getComp();
+                                if (deVal.getName().equalsIgnoreCase(deGroupAndName[1])) {
+                                    if (comp instanceof JTextField) {
+                                        final JTextField t = (JTextField) comp;
+                                        t.setText(value);
+                                    } else if (comp instanceof JComboBox) {
+                                        final JComboBox combo = (JComboBox) comp;
 
-                                                        boolean isOther = true;
+                                        boolean isOther = true;
 
-                                                        for (int k = 0; k < combo.getItemCount(); k++) {
-                                                            final String item = (String) combo.getItemAt(k);
-                                                            if (value.equalsIgnoreCase(item)) {
-                                                                combo.setSelectedIndex(k);
-                                                                isOther = false;
-                                                            }
-                                                        }
-
-                                                        if (isOther) {
-                                                            deVal.getOtherSpecifyField().setText(value);
-                                                            combo.setSelectedItem(VALUE_OTHER_SPECIFY);
-                                                        }
-                                                    }
-                                                }
+                                        for (int k = 0; k < combo.getItemCount(); k++) {
+                                            final String item = (String) combo.getItemAt(k);
+                                            if (value.equalsIgnoreCase(item)) {
+                                                combo.setSelectedIndex(k);
+                                                isOther = false;
                                             }
                                         }
-                                    }
-                                } else {
-                                    for (int i = 0; i < csvFieldNames.size(); i++) {
-                                        final String[] deGroupAndName = csvFieldNames.get(i).trim().split("\\.");
-                                        final String value = repeatValues.get(i);
-                                        if (i != imageFileIndex && !value.equals("")) {
-                                            final GroupRepeat curRepeat = fsData.getGroupRepeat(deGroupAndName[0], curRepeatNum);
-                                            for (final DataElementValue deVal : curRepeat.getDataElements()) {
-                                                final JComponent comp = deVal.getComp();
-                                                if (deVal.getName().equalsIgnoreCase(deGroupAndName[1])) {
-                                                    if (comp instanceof JTextField) {
-                                                        final JTextField t = (JTextField) comp;
-                                                        t.setText(value);
-                                                    } else if (comp instanceof JComboBox) {
-                                                        final JComboBox combo = (JComboBox) comp;
 
-                                                        boolean isOther = true;
-
-                                                        for (int k = 0; k < combo.getItemCount(); k++) {
-                                                            final String item = (String) combo.getItemAt(k);
-                                                            if (value.equalsIgnoreCase(item)) {
-                                                                combo.setSelectedIndex(k);
-                                                                isOther = false;
-                                                            }
-                                                        }
-
-                                                        if (isOther) {
-                                                            deVal.getOtherSpecifyField().setText(value);
-                                                            combo.setSelectedItem(VALUE_OTHER_SPECIFY);
-                                                        }
-                                                    }
-
-                                                    // found the DE, move to next column in CSV values
-                                                    break;
-                                                }
-                                            }
+                                        if (isOther) {
+                                            deVal.getOtherSpecifyField().setText(value);
+                                            combo.setSelectedItem(VALUE_OTHER_SPECIFY);
                                         }
                                     }
-                                    populateFields(fsData, srcImage);
+
+                                    // found the DE, move to next column in CSV values
+                                    break;
                                 }
-
-                                srcImage.disposeLocal();
-                                srcImage = null;
                             }
                         }
+                    }
+
+                    if ( (resolveConflictsUsing == RESOLVE_CONFLICT_ASK || resolveConflictsUsing == RESOLVE_CONFLICT_IMG) && srcImage != null) {
+                        populateFields(fsData, srcImage);
+                    }
+
+                    // if the image was read in, clean it up
+                    if (srcImage != null) {
+                        srcImage.disposeLocal();
+                        srcImage = null;
                     }
                 }
             } else {
                 // this means its not an imaging data structure
+                for (int curRepeatNum = 0; curRepeatNum < record.size(); curRepeatNum++) {
+                    final ArrayList<String> repeatValues = record.get(curRepeatNum);
+                    for (int i = 0; i < csvFieldNames.size(); i++) {
+                        final String[] deGroupAndName = splitFieldString(csvFieldNames.get(i).trim());
+                        final String value = repeatValues.get(i).trim();
+                        if ( !value.equals("")) {
+                            final GroupRepeat curRepeat = fsData.getGroupRepeat(deGroupAndName[0], curRepeatNum);
+                            for (final DataElementValue deVal : curRepeat.getDataElements()) {
+                                final JComponent comp = deVal.getComp();
+                                if (deVal.getName().equalsIgnoreCase(deGroupAndName[1])) {
+                                    if (comp instanceof JTextField) {
+                                        final JTextField t = (JTextField) comp;
+                                        t.setText(value);
+                                    } else if (comp instanceof JComboBox) {
+                                        final JComboBox combo = (JComboBox) comp;
 
-                for (final ArrayList<ArrayList<String>> record : recordList) {
-                    for (int curRepeatNum = 0; curRepeatNum < record.size(); curRepeatNum++) {
-                        final ArrayList<String> repeatValues = record.get(curRepeatNum);
-                        for (int i = 0; i < csvFieldNames.size(); i++) {
-                            final String[] deGroupAndName = csvFieldNames.get(i).trim().split("\\.");
-                            final String value = repeatValues.get(i).trim();
-                            if ( !value.equals("")) {
-                                final GroupRepeat curRepeat = fsData.getGroupRepeat(deGroupAndName[0], curRepeatNum);
-                                for (final DataElementValue deVal : curRepeat.getDataElements()) {
-                                    final JComponent comp = deVal.getComp();
-                                    if (deVal.getName().equalsIgnoreCase(deGroupAndName[1])) {
-                                        if (comp instanceof JTextField) {
-                                            final JTextField t = (JTextField) comp;
-                                            t.setText(value);
-                                        } else if (comp instanceof JComboBox) {
-                                            final JComboBox combo = (JComboBox) comp;
+                                        boolean isOther = true;
 
-                                            boolean isOther = true;
-
-                                            for (int k = 0; k < combo.getItemCount(); k++) {
-                                                final String item = (String) combo.getItemAt(k);
-                                                if (value.equalsIgnoreCase(item)) {
-                                                    combo.setSelectedIndex(k);
-                                                    isOther = false;
-                                                }
-                                            }
-
-                                            if (isOther) {
-                                                deVal.getOtherSpecifyField().setText(value);
-                                                combo.setSelectedItem(VALUE_OTHER_SPECIFY);
+                                        for (int k = 0; k < combo.getItemCount(); k++) {
+                                            final String item = (String) combo.getItemAt(k);
+                                            if (value.equalsIgnoreCase(item)) {
+                                                combo.setSelectedIndex(k);
+                                                isOther = false;
                                             }
                                         }
 
-                                        // found the DE, move to next column in CSV values
-                                        break;
+                                        if (isOther) {
+                                            deVal.getOtherSpecifyField().setText(value);
+                                            combo.setSelectedItem(VALUE_OTHER_SPECIFY);
+                                        }
                                     }
+
+                                    // found the DE, move to next column in CSV values
+                                    break;
                                 }
                             }
                         }
@@ -3602,14 +3627,37 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             return repeatPanel;
         }
 
-        private void parseDataStructure(final DataStructure dataStructure, final FormStructureData fsData) {
+        private void parseDataStructure(final DataStructure dataStructure, final FormStructureData fsData, final ArrayList<ArrayList<String>> record) {
             // setup the group bins in the form data
             for (final RepeatableGroup g : dataStructure.getRepeatableGroups()) {
                 // if the group repeats an exact number of times, create them now
                 // otherwise, start with just one (threshold of 0 ==> optional)
-                int numRepeats = 1;
+                int numRepeats = 0;
                 if (g.getType().equals(RepeatableType.EXACTLY) && g.getThreshold() > 0) {
                     numRepeats = g.getThreshold();
+                } else if (record != null) {
+                    // check the row values to see how many repeats
+                    for (final ArrayList<String> row : record) {
+                        boolean foundValue = false;
+                        for (int i = 0; i < row.size(); i++) {
+                            if (getFieldGroup(csvFieldNames.get(i)).equalsIgnoreCase(g.getName())) {
+                                if ( !row.get(i).equals("")) {
+                                    foundValue = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        // found something in this row for this group
+                        if (foundValue) {
+                            numRepeats++;
+                        }
+                    }
+                }
+
+                // if no values or threshold of 0, build at least one repeat
+                if (numRepeats == 0) {
+                    numRepeats = 1;
                 }
 
                 fsData.addGroup(g.getName());
@@ -4925,7 +4973,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
 
                 final long startTime = System.currentTimeMillis();
-                dataStructureList = (List<DataStructure>) client.accept("text/xml").getCollection(DataStructure.class);
+                if (ddUseAuthService) {
+                    dataStructureList = (List<DataStructure>) client.accept("text/xml").getCollection(DataStructure.class);
+                } else {
+                    final DataStructureList dsl = client.accept("text/xml").get(DataStructureList.class);
+                    dataStructureList = dsl.getList();
+                }
                 final long endTime = System.currentTimeMillis();
 
                 System.out.println("Webservice request (sec):\t" + ( (endTime - startTime) / 1000));
