@@ -886,10 +886,11 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		//String areaStr = "# Polygonal Area: " + String.valueOf(polyArea) + "\n";
 		//String centroidStr = "# Centroid: (" + String.valueOf(centroidPts[0]) + ", "
 		//		+ String.valueOf(centroidPts[1]) + ")\n";
+		String dimStr = String.format("# Width %d\n# Height %d\n", width, height);
 		String noteStr = 
-				  "############################################################################\n"
-				+ "#                        START OF SWC COORDINATES                          #\n"
-				+ "############################################################################\n"
+				  "########################################################\n"
+				+ "#              START OF SWC COORDINATES                #\n"
+				+ "########################################################\n"
 				+ "# NOTE: The above coordinates are in image space coordinates\n"
 				+ "# Y-coordinates for SWC format are inverted in image space.\n"
 				+ "# Image Y-coordinate = Image Height - SWC Y-coordinate\n";
@@ -898,6 +899,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			swcOut = new FileWriter(swcDir);
 			//swcOut.append(areaStr);
 			//swcOut.append(centroidStr);
+			swcOut.append(dimStr);
 			swcOut.append(noteStr);
 			swcOut.flush();
 		} catch (IOException e) {
