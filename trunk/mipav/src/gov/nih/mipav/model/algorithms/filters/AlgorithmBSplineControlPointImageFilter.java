@@ -35,6 +35,12 @@ import gov.nih.mipav.view.Preferences;
      This software is distributed WITHOUT ANY WARRANTY; without even
      the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
      PURPOSE.  See the above copyright notices for more information.
+     
+     The original code was contributed in the Insight Journal paper:
+     "N-D C^k B-Spline Scattered Data Approximation"
+     by Nicholas J. Tustison, James C. Gee
+     http://hdl.handle.net/1926/140
+     http://www.insight-journal.org/browse/publication/57
 
 	 */
 	public class AlgorithmBSplineControlPointImageFilter extends AlgorithmBase {
@@ -474,8 +480,8 @@ import gov.nih.mipav.view.Preferences;
 	    			fileInfo[i].setResolutions(resolutions);
 	    		}
 	    	}
-	    	for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
+	    	for (int i = 0; i < nDims; i++) {
+                for (int j = 0; j < nDims; j++) {
                     psiLattice.getMatrix().set(i, j, (float)direction[i][j]);
                 }
             }
@@ -537,18 +543,11 @@ import gov.nih.mipav.view.Preferences;
 	    					idxPsi[i] = idx[i];
 	    				}
 	    			}
-	    			int iStop;
-	    			if (nDims == 2) {
-	    				iStop = 4;
-	    			}
-	    			else {
-	    				iStop = 8;
-	    			}
-	    			for (int i = 0; i < iStop; i++) {
+	    			for (int i = 0; i < 2 << (nDims - 1); i++) {
 	    			 	double sum = 0.0;
 	    			 	double val;
-	    			 	off[0] = i % size[0];
-	    			 	off[1] = (i % sliceSize2) / size[0];
+	    			 	off[0] = i % size2[0];
+	    			 	off[1] = (i % sliceSize2) / size2[0];
 	    			 	if (nDims > 2) {
 	    			 		off[2] = i / sliceSize2;
 	    			 	}
@@ -605,9 +604,9 @@ import gov.nih.mipav.view.Preferences;
 	    			 	    refinedLattice[tmp[0] + tmp[1] * size[0]] = sum;
 	    			 	}
 	    			 	else {
-	    			 		refinedLattice[tmp[0] + tmp[1] * size[1] + tmp[2] * sliceSize] = sum; 
+	    			 		refinedLattice[tmp[0] + tmp[1] * size[0] + tmp[2] * sliceSize] = sum; 
 	    			 	}
-	    			} // for (int i = 0; i < iStop; i++)
+	    			} // for (int i = 0; i < 2 << (nDims - 1); i++)
 	    			
 	    		    boolean isEvenIndex = false;
 	    		    while (!isEvenIndex && (it < sizeLength)) {
@@ -660,8 +659,8 @@ import gov.nih.mipav.view.Preferences;
 	    			fileInfo[i].setResolutions(localResolutions);
 	    		}
 	    	}
-	    	for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
+	    	for (int i = 0; i < nDims; i++) {
+                for (int j = 0; j < nDims; j++) {
                     psiLattice.getMatrix().set(i, j, (float)direction[i][j]);
                 }
             }
