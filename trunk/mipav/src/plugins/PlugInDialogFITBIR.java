@@ -2992,6 +2992,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         private final Hashtable<RepeatableGroup, JPanel> groupPanelTable = new Hashtable<RepeatableGroup, JPanel>();
 
+        private final Hashtable<RepeatableGroup, JButton> groupRemoveButtonTable = new Hashtable<RepeatableGroup, JButton>();
+
         private String guid = "";
 
         private boolean launchedFromInProcessState = false;
@@ -3487,9 +3489,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
             for (final RepeatableGroup g : fsData.getStructInfo().getRepeatableGroups()) {
                 final JPanel groupPanel = new JPanel(new GridBagLayout());
-                groupPanel.setBorder(JDialogBase.buildTitledBorder(g.getName()));
-
-                // System.err.println(g.toString());
 
                 final GridBagConstraints egbc = new GridBagConstraints();
                 egbc.insets = new Insets(2, 5, 2, 5);
@@ -3498,46 +3497,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 egbc.gridx = 0;
                 egbc.anchor = GridBagConstraints.WEST;
                 egbc.gridy = 0;
-
-                final JPanel repeatControlPanel = new JPanel(new GridBagLayout());
-                final GridBagConstraints gbc2 = new GridBagConstraints();
-                gbc2.insets = new Insets(2, 5, 2, 5);
-                gbc2.fill = GridBagConstraints.HORIZONTAL;
-                gbc2.weightx = 1;
-                gbc2.gridx = 0;
-                gbc2.anchor = GridBagConstraints.WEST;
-                gbc2.gridy = 0;
-
-                JLabel repeatLabel;
-                final JButton addRepeatButton = new JButton("Add repeat");
-                addRepeatButton.setActionCommand("AddRepeat_-_" + g.getName());
-                addRepeatButton.addActionListener(this);
-                if (g.getThreshold() == 0) {
-                    repeatLabel = new JLabel("Optional group");
-                } else {
-                    switch (g.getType()) {
-                        case MORETHAN:
-                            repeatLabel = new JLabel("At least " + g.getThreshold() + " repeat(s) required");
-                            break;
-                        case LESSTHAN:
-                            repeatLabel = new JLabel("Less than " + g.getThreshold() + " repeat(s) allowed");
-                            break;
-                        case EXACTLY:
-                            repeatLabel = new JLabel("Exactly " + g.getThreshold() + " repeat(s) allowed");
-                            addRepeatButton.setEnabled(false);
-                            break;
-                        default:
-                            repeatLabel = new JLabel(g.getType() + " " + g.getThreshold());
-                    }
-                }
-                repeatLabel.setFont(serif12);
-                repeatControlPanel.add(repeatLabel, gbc2);
-
-                gbc2.gridx++;
-                repeatControlPanel.add(addRepeatButton, gbc2);
-
-                groupPanel.add(repeatControlPanel, egbc);
-                egbc.gridy++;
 
                 for (final GroupRepeat repeat : fsData.getAllGroupRepeats(g.getName())) {
                     final JPanel repeatPanel = buildGroupRepeatPanel(repeat);
@@ -3549,13 +3508,72 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     }
                 }
 
-                if (groupPanel.getComponentCount() > 1) {
+                final JPanel groupPanelWithControls = new JPanel(new BorderLayout());
+                groupPanelWithControls.setBorder(JDialogBase.buildTitledBorder(g.getName()));
+                groupPanelWithControls.add(groupPanel, BorderLayout.NORTH);
+                groupPanelWithControls.add(buildRepeatControlPanel(g), BorderLayout.SOUTH);
+
+                if (groupPanel.getComponentCount() > 0) {
                     gbc.gridy = g.getPosition(); // group position is 0-based (unlike data element position)
-                    dsMainPanel.add(groupPanel, gbc);
+                    dsMainPanel.add(groupPanelWithControls, gbc);
                     groupPanelTable.put(g, groupPanel);
                 }
-
             }
+        }
+
+        private JPanel buildRepeatControlPanel(final RepeatableGroup group) {
+            final JPanel repeatControlPanel = new JPanel(new GridBagLayout());
+            final GridBagConstraints gbc = new GridBagConstraints();
+            gbc.insets = new Insets(2, 5, 2, 5);
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.weightx = 1;
+            gbc.gridx = 0;
+            gbc.anchor = GridBagConstraints.WEST;
+            gbc.gridy = 0;
+
+            JLabel repeatLabel;
+            final JButton addRepeatButton = new JButton("Add repeat");
+            addRepeatButton.setActionCommand("AddRepeat_-_" + group.getName());
+            addRepeatButton.addActionListener(this);
+            final JButton removeRepeatButton = new JButton("Remove repeat");
+            removeRepeatButton.setActionCommand("RemoveRepeat_-_" + group.getName());
+            removeRepeatButton.addActionListener(this);
+            groupRemoveButtonTable.put(group, removeRepeatButton);
+            if (group.getThreshold() == 0) {
+                repeatLabel = new JLabel("Optional group");
+            } else {
+                switch (group.getType()) {
+                    case MORETHAN:
+                        repeatLabel = new JLabel("At least " + group.getThreshold() + " repeat(s) required");
+                        if (fsData.getNumGroupRepeats(group.getName()) == 1) {
+                            removeRepeatButton.setEnabled(false);
+                        }
+                        break;
+                    case LESSTHAN:
+                        repeatLabel = new JLabel("Less than " + group.getThreshold() + " repeat(s) allowed");
+                        if (fsData.getNumGroupRepeats(group.getName()) == 1) {
+                            removeRepeatButton.setEnabled(false);
+                        }
+                        break;
+                    case EXACTLY:
+                        repeatLabel = new JLabel("Exactly " + group.getThreshold() + " repeat(s) allowed");
+                        addRepeatButton.setEnabled(false);
+                        removeRepeatButton.setEnabled(false);
+                        break;
+                    default:
+                        repeatLabel = new JLabel(group.getType() + " " + group.getThreshold());
+                }
+            }
+            repeatLabel.setFont(serif12);
+            repeatControlPanel.add(repeatLabel, gbc);
+
+            gbc.gridx++;
+            repeatControlPanel.add(addRepeatButton, gbc);
+
+            gbc.gridx++;
+            repeatControlPanel.add(removeRepeatButton, gbc);
+
+            return repeatControlPanel;
         }
 
         private JPanel buildGroupRepeatPanel(final GroupRepeat repeat) {
@@ -4687,7 +4705,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 egbc.weightx = 1;
                 egbc.gridx = 0;
                 egbc.anchor = GridBagConstraints.WEST;
-                egbc.gridy = newRepeat.getRepeatNumber() + 1; // +2 because of repeat controls
+                egbc.gridy = newRepeat.getRepeatNumber();
 
                 final JPanel groupPanel = groupPanelTable.get(lastRepeat.getGroupInfo());
                 final JPanel repeatPanel = buildGroupRepeatPanel(newRepeat);
@@ -4700,6 +4718,42 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     parentWindow.pack();
                     parentWindow.validate();
                     parentWindow.repaint();
+                }
+
+                // if more than one repeat, enable removal
+                if (fsData.getNumGroupRepeats(groupName) > 1) {
+                    // TODO: also check against repeat type/threshold
+                    groupRemoveButtonTable.get(lastRepeat.getGroupInfo()).setEnabled(true);
+                }
+            } else if (command.startsWith("RemoveRepeat_-_")) {
+                final String[] commandSplit = command.split("_-_");
+                final String groupName = commandSplit[1];
+
+                final int response = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove the last repeat?", "Remove repeat?",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+
+                if (response == JOptionPane.YES_OPTION) {
+                    final GroupRepeat lastRepeat = fsData.getCurrentGroupRepeat(groupName);
+
+                    final JPanel groupPanel = groupPanelTable.get(lastRepeat.getGroupInfo());
+
+                    groupPanel.remove(lastRepeat.getRepeatNumber());
+
+                    fsData.removeLastGroupRepeat(groupName);
+
+                    final Window parentWindow = SwingUtilities.getWindowAncestor(groupPanel);
+                    // don't force the re-packing if the window hasn't been shown/created yet
+                    if (parentWindow != null) {
+                        parentWindow.pack();
+                        parentWindow.validate();
+                        parentWindow.repaint();
+                    }
+                }
+
+                // don't allow removal of the last repeat
+                if (fsData.getNumGroupRepeats(groupName) == 1) {
+                    // TODO: also check against repeat type/threshold
+                    ((JButton) e.getSource()).setEnabled(false);
                 }
             }
         }
