@@ -150,8 +150,8 @@ import WildMagic.LibFoundation.Mathematics.Vector3d;
 	    			fileInfo[i].setResolutions(resolutions);
 	    		}
 	    	}
-	    	for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
+	    	for (int i = 0; i < nDims; i++) {
+                for (int j = 0; j < nDims; j++) {
                     outputImage.getMatrix().set(i, j, (float)direction[i][j]);
                 }
             }
