@@ -219,6 +219,7 @@
                 <attribute name="Built-By" value="${user.name}"/>
                 <attribute name="Main-Class" value="${project.main}"/>
                 <attribute name="Permissions" value="all-permissions"/>
+                <attribute name="Application-Name" value="${project.name.upper}"/>
             </manifest>
             <fileset dir="${dir.dest}"/>
         </jar>
