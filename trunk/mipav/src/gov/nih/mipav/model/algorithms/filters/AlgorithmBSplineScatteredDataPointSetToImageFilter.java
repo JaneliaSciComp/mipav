@@ -33,7 +33,11 @@ import gov.nih.mipav.view.Preferences;
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
-
+     The original code was contributed in the Insight Journal paper:
+     "N-D C^k B-Spline Scattered Data Approximation"
+     by Nicholas J. Tustison, James C. Gee
+     http://hdl.handle.net/1926/140
+     http://www.insight-journal.org/browse/publication/57
   
 	 */
 	public class AlgorithmBSplineScatteredDataPointSetToImageFilter extends AlgorithmPointSetToImageFilter {
@@ -175,20 +179,30 @@ import gov.nih.mipav.view.Preferences;
 	    	return phiLattice;
 	    }
 	    
-	    public void setNumberOfLevels(int nLevels) {
+	    public void setNumberOfLevels(int levels) {
 	    	for (int i = 0; i < nDims; i++) {
-	    		this.numberOfLevels[i] = nLevels;
+	    		this.numberOfLevels[i] = levels;
 	    	}
 	    	setNumberOfLevels(numberOfLevels);
 	    }
 	    
-	    public void setNumberOfLevels(int[] numberOfLevels) {
+	    public void setNumberOfLevels(int[] levels) {
+	    	numberOfLevels = levels;
+	    	maximumNumberOfLevels = 1;
 	    	for (int i = 0; i < nDims; i++) {
-	    		this.numberOfLevels[i] = numberOfLevels[i];
+	    		if (numberOfLevels[i] == 0) {
+	    			MipavUtil.displayError("The number of levels in each dimension must be greater than 0");
+	    			return;
+	    		}
 	    		if (numberOfLevels[i] > maximumNumberOfLevels) {
 	    			maximumNumberOfLevels = numberOfLevels[i];
 	    		}
 	    	}
+	    	Preferences.debug("Setting numberOfLevels array to:\n");
+	    	for (int i = 0; i < nDims; i++) {
+	    		Preferences.debug("numberOfLevels["+i+"] = " + numberOfLevels[i] + "\n", Preferences.DEBUG_ALGORITHM);
+	    	}
+	    	Preferences.debug("Setting maximumNumberOfLevels to " + maximumNumberOfLevels + "\n", Preferences.DEBUG_ALGORITHM);
 	    	if (maximumNumberOfLevels > 1) {
     			doMultiLevel = true;
     		}
@@ -198,12 +212,13 @@ import gov.nih.mipav.view.Preferences;
 	    	setSplineOrder(splineOrder);
 	    }
 	    
-	    public void setSplineOrder(int sOrder) {
+	    public void setSplineOrder(int[] order) {
 	    	int i, j, k;
+	    	splineOrder = order;
+	    	Preferences.debug("Setting splineOrder array to order array:\n", Preferences.DEBUG_ALGORITHM);
 	    	for (i = 0; i < nDims; i++) {
-	    		this.splineOrder[i] = sOrder;
+	    		Preferences.debug("splineOrder["+i+"] = " + order[i] + "\n", Preferences.DEBUG_ALGORITHM);
 	    	}
-	    	setSplineOrder(splineOrder);
 	    	for (i = 0; i < nDims; i++ ) {
 	            if (splineOrder[i] == 0 ) {
 	                MipavUtil.displayError("The spline order in each dimension must be greater than 0");
@@ -239,10 +254,11 @@ import gov.nih.mipav.view.Preferences;
 	    	} // for (i = 0; i < nDims; i++)
 	    }
 	    
-	    public void setSplineOrder(int[] splineOrder) {
+	    public void setSplineOrder(int order) {
 	    	for (int i = 0; i < nDims; i++) {
-	    		this.splineOrder[i] = splineOrder[i];
+	    		this.splineOrder[i] = order;
 	    	}
+	    	setSplineOrder(splineOrder);
 	    }
 	    
 	    public void setNumberOfControlPoints(int[] numberOfControlPoints) {
@@ -251,11 +267,11 @@ import gov.nih.mipav.view.Preferences;
 	    	}
 	    }
 	    
-	    public void setPointWeights(Vector<Double> pointWeights) {
+	    public void setPointWeights(Vector<Double> weights) {
 	    	usePointWeights = true;
 	    	this.pointWeights.clear();
 	    	for (int i = 0; i < pointWeights.size(); i++) {
-	    		this.pointWeights.add(pointWeights.get(i));
+	    		this.pointWeights.add(weights.get(i));
 	    	}
 	    }
 	    
@@ -421,7 +437,7 @@ import gov.nih.mipav.view.Preferences;
 	        double p[] = new double[nDims];
 	        double r[] = new double[nDims];
 	        for (int i = 0; i < nDims; i++) {
-	        	r[i] = (double)(currentNumberOfControlPoints[i] - splineOrder[i])/((size[i] - 1.0) * resolutions[i]);
+	        	r[i] = (double)(currentNumberOfControlPoints[i] - splineOrder[i])/((extents[i] - 1.0) * resolutions[i]);
 	        }
 	        
 	        for (int n = 0; n < pointLocation.size(); n++) {
@@ -813,14 +829,7 @@ import gov.nih.mipav.view.Preferences;
 	                	idxPsi[i] = idx[i];
 	                }
 	            } // for (int i = 0; i < nDims; i++)
-	            int iStop;
-	            if (nDims == 2) {
-	            	iStop = 4;
-	            }
-	            else {
-	            	iStop = 8;
-	            }
-	            for (int i = 0; i < iStop; i++) {
+	            for (int i = 0; i < 2 << (nDims - 1); i++) {
 	                double sum = 0.0;
 	                double val = 0.0;
 	                off[0] = i % size2[0];
@@ -881,7 +890,7 @@ import gov.nih.mipav.view.Preferences;
 	                else {
 	                	refinedLattice[tmp[0] + size[0] * tmp[1] + sliceSize * tmp[2]] = sum;
 	                }
-	            } // for (int i = 0; i < iStop; i++)
+	            } // for (int i = 0; i < 2 << (nDims - 1); i++)
 	            
 	            boolean isEvenIndex = false;
 	            while (!isEvenIndex && it < sizeLength) {
