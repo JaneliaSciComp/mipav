@@ -84,7 +84,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	private VOI controlPts;
 	
 	/**
-	 * The active slice's actual depth
+	 * The active slice's actual depth in the full volume
 	 */
 	private int currentSlice;
 	
@@ -215,11 +215,27 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	
 	private JTextField xResField;
 	
+	@SuppressWarnings("rawtypes")
 	private JComboBox resUnits;
 	
+	/**
+	 * Default resolution right now, in um
+	 */
 	private double resolution = 0.211;
 	
 	private JCheckBox aviBox;
+	
+	private JRadioButton primaryRB;
+	
+	//private JRadioButton junctionRB;
+	
+	private VOIPoint primaryVOI;
+	
+	//private VOIPoint junctionVOI;
+	
+	private Point primaryPt;
+	
+	//private Point junctionPt;
 
 	/**
 	 * Primary constructor. Initializes a dialog to ask the user
@@ -252,16 +268,12 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		images = new ArrayList<File>();
 		swcList = new ArrayList<File>();
-		
-		//sliceRange = 5;
+
 		currentSlice = 0;
 		prevSlice = 0;
 		
 		Preferences.setImageDirectory(new File(directory));
 		init();
-		/*populateImages(new File(directory));
-		initEditor();
-		openImage();*/
 	}
 	
 	public void actionPerformed(ActionEvent event){
@@ -395,6 +407,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			progenitorRB.setEnabled(true);
 			splitRB.setEnabled(true);
 			originRB.setEnabled(true);
+			primaryRB.setEnabled(true);
 			//Remove polygon, replace with control points
 		} else if(command.equals("Edit Polygon")){
 			if(polyVOI.getSize() == 0)
@@ -408,6 +421,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			progenitorRB.setEnabled(false);
 			splitRB.setEnabled(false);
 			originRB.setEnabled(false);
+			primaryRB.setEnabled(false);
 			//Remove control points, replace with polygon
 		}
 	}
@@ -523,18 +537,20 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		LinkElement l;
 		PriorityQueue<NeuronLength> nList = new PriorityQueue<NeuronLength>();
 		NeuronLength nl;
-		if(e.linked.size()==1){
+		
+		if(e.linked.size()==1 && prev != null){
 			nl = new NeuronLength(e.pt, length);
 			nList.add(nl);
 			return nList;
-		} else if(e.linked.size()==2){
+		} else if(e.linked.size()==2 && prev != null){
 			l = e.linked.get(0) == prev ? e.linked.get(1) : e.linked.get(0);
 			return calcLengths(l, e, length + e.pt.distance(l.pt));
 		} else {
 			ArrayList<LinkElement> list = e.copyList();
 			PriorityQueue<NeuronLength> result = new PriorityQueue<NeuronLength>();
 			ArrayList<PriorityQueue<NeuronLength>> listQ = new ArrayList<PriorityQueue<NeuronLength>>();
-			list.remove(prev);
+			if(prev != null)
+				list.remove(prev);
 			PriorityQueue<NeuronLength> pq = new PriorityQueue<NeuronLength>();
 			for(int i=0;i<list.size();i++){
 				l = list.get(i);
@@ -544,6 +560,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				pq.add(result.peek());
 			}
 			nl = pq.peek();
+
 			nl.length += length;
 			for(int i=0;i<list.size();i++){
 				PriorityQueue<NeuronLength> temp = listQ.get(i);
@@ -596,6 +613,21 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 		fileChooser.addActionListener(this);
 		fileChooser.showOpenDialog(this);
+	}
+	
+	private boolean dfsOrigin(LinkElement e, LinkElement prev){
+		if(e.pt.equals(origin))
+			return true;
+		
+		ArrayList<LinkElement> list = e.copyList();
+		list.remove(prev);
+		if(list.size() > 0){
+			for(int i=0;i<list.size();i++){
+				if(dfsOrigin(list.get(i), e))
+					return true;
+			}
+		}
+		return false;
 	}
 	
 	/**
@@ -667,9 +699,13 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 * The main dialog of this plugin, used to control the editor portions
 	 * which include adding/deleting nodes.
 	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void initEditor(){
 		
 		getContentPane().removeAll();
+		
+		PanelManager manage = new PanelManager();
+		ButtonGroup group = new ButtonGroup();
 		
 		FileIO imReader = new FileIO();
 		ModelImage sliceIm = imReader.readImage(images.get(0).getAbsolutePath());
@@ -695,66 +731,96 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		getContentPane().add(descPanel, BorderLayout.NORTH);
 		
-		JPanel radioPanel = new JPanel();
-        radioPanel.setForeground(Color.black);
-        radioPanel.setBorder(buildTitledBorder("Node Editor"));
         
-        addRB = new JRadioButton("Add");
-        addRB.setFont(serif12);
-        addRB.setSelected(true);
-        
-        deleteRB = new JRadioButton("Delete");
-        deleteRB.setFont(serif12);
-        
-        JPanel labelRBPanel = new JPanel();
-        labelRBPanel.setForeground(Color.black);
-        labelRBPanel.setBorder(buildTitledBorder("Label Editor"));
-        
-        progenitorRB = new JRadioButton("Label Progenitor");
-        progenitorRB.setFont(serif12);
-        
-        splitRB = new JRadioButton("Label Split Point");
-        splitRB.setFont(serif12);
-        
-        originRB = new JRadioButton("Label Origin");
-        originRB.setFont(serif12);
-        
-        ButtonGroup group = new ButtonGroup();
-        
-        group.add(addRB);
-        group.add(deleteRB);
-        group.add(progenitorRB);
-        group.add(splitRB);
-        group.add(originRB);
-        radioPanel.add(addRB);
-        radioPanel.add(deleteRB);
-        labelRBPanel.add(progenitorRB);
-        labelRBPanel.add(splitRB);
-        labelRBPanel.add(originRB);
-        
-        JPanel editPanel = new JPanel();
+        JPanel editPanel = new JPanel(new GridLayout(0,2));
         editPanel.setForeground(Color.black);
+        editPanel.setBorder(buildTitledBorder("Editor Mode"));
         
-        editTraceRB = new JRadioButton("Edit Trace");
+        editTraceRB = new JRadioButton("Edit Neuron Trace");
         editTraceRB.setFont(serif12);
+        editTraceRB.setActionCommand("Edit Trace");
         editTraceRB.setSelected(true);
         editTraceRB.addActionListener(this);
         
-        editPolyRB = new JRadioButton("Edit Polygon");
-        editPolyRB.setFont(serif12);;
+        editPolyRB = new JRadioButton("Edit Polygon Area");
+        editPolyRB.setFont(serif12);
+        editPolyRB.setActionCommand("Edit Polygon");
         editPolyRB.addActionListener(this);
-        
+
+		manage.add(editPanel);
+		
         ButtonGroup editGroup = new ButtonGroup();
         
         editGroup.add(editTraceRB);
         editGroup.add(editPolyRB);
         editPanel.add(editTraceRB);
         editPanel.add(editPolyRB);
+		
+		JPanel radioPanel = new JPanel(new GridLayout(0,2));
+        radioPanel.setForeground(Color.black);
+        radioPanel.setBorder(buildTitledBorder("Node Editor"));
+        
+        addRB = new JRadioButton("Add Node");
+        addRB.setFont(serif12);
+        addRB.setSelected(true);
+        radioPanel.add(addRB);
+        group.add(addRB);
+        
+        deleteRB = new JRadioButton("Delete Node");
+        deleteRB.setFont(serif12);
+        radioPanel.add(deleteRB);
+        group.add(deleteRB);
+        
+        manage.addOnNextLine(radioPanel);
+        
+        //JPanel labelRBPanel = new JPanel();
+        JPanel labelRBPanel = new JPanel(new GridLayout(0,2));
+        labelRBPanel.setForeground(Color.black);
+        labelRBPanel.setBorder(buildTitledBorder("Label Editor"));
+        
+        progenitorRB = new JRadioButton("Label Progenitor (P)");
+        progenitorRB.setFont(serif12);
+        labelRBPanel.add(progenitorRB);
+        group.add(progenitorRB);
+        
+        splitRB = new JRadioButton("Label Split Point (S)");
+        splitRB.setFont(serif12);
+        labelRBPanel.add(splitRB);
+        group.add(splitRB);
+        
+        originRB = new JRadioButton("Label Origin (O)");
+        originRB.setFont(serif12);
+        labelRBPanel.add(originRB);
+        group.add(originRB);
+        
+        //JPanel extraPanel = new JPanel();
+        //extraPanel.setForeground(Color.black);
+        
+        primaryRB = new JRadioButton("Label Primary Branch (1)");
+        primaryRB.setFont(serif12);
+        //extraPanel.add(primaryRB);
+        labelRBPanel.add(primaryRB);
+        group.add(primaryRB);
+        
+        /*junctionRB = new JRadioButton("Label Progenitor Junction (J)");
+        junctionRB.setFont(serif12);
+        //extraPanel.add(junctionRB);
+        labelRBPanel.add(junctionRB);
+        group.add(junctionRB);*/
+
+        /*PanelManager subManager = new PanelManager();
+        subManager.add(labelRBPanel);
+        subManager.addOnNextLine(extraPanel);
+        JPanel subPanel = subManager.getPanel();
+        subPanel.setBorder(buildTitledBorder("Label options"));*/
+        
+		//manage.addOnNextLine(subPanel);
+        manage.addOnNextLine(labelRBPanel);
         
 		JPanel labelPanel = new JPanel();
 		labelPanel.setForeground(Color.black);
 		
-		sliceLabel = new JLabel("Centered Slice: 0");
+		sliceLabel = new JLabel("Active Slice: 0");
 		sliceLabel.setFont(serif12);
 		sliceLabel.setBorder(new EmptyBorder(0,5,0,5));
 		labelPanel.add(sliceLabel);
@@ -767,6 +833,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		centerLabel.setFont(serif12);
 		centerLabel.setBorder(new EmptyBorder(0,5,0,5));
 		labelPanel.add(centerLabel);
+
+		manage.addOnNextLine(labelPanel);
 		
 		JPanel resPanel = new JPanel();
         resPanel.setForeground(Color.black);
@@ -798,11 +866,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         resUnits.setSelectedItem("um");
         resPanel.add(resUnits);
 		
-		PanelManager manage = new PanelManager();
-		manage.add(radioPanel);
-		manage.addOnNextLine(labelRBPanel);
-		manage.addOnNextLine(editPanel);
-		manage.addOnNextLine(labelPanel);
 		manage.addOnNextLine(resPanel);
 		//manage.add(centerPanel);
 		
@@ -848,6 +911,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         boxPanel.add(nextButton);
         
         manage.addOnNextLine(boxPanel);
+        
         getContentPane().add(manage.getPanel(), BorderLayout.CENTER);
         
         JPanel buttonPanel = new JPanel(new GridLayout(0,4));
@@ -976,6 +1040,9 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		editTraceRB.setSelected(true);
+		actionPerformed(new ActionEvent(this, 0, "Edit Trace"));
 
 		
 		/**
@@ -1026,6 +1093,12 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		links = new Linking();
 		progenitorPt = null;
 		splitPt = null;
+		primaryPt = null;
+		//junctionPt = null;
+		progenitorVOI = null;
+		splitVOI = null;
+		primaryVOI = null;
+		//junctionVOI = null;
 		polyVOI = new VOI((short)1, "Polygon Area", VOI.CONTOUR, -1);
 		
 		ArrayList<String[]> points = null;
@@ -1066,7 +1139,27 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 						Point pt = new Point(xs, ys);
 						polyPt.add(pt);
 						continue;
-					}
+					} else if(line.startsWith("# Primary")){
+						line = line.substring(line.indexOf("(") + 1);
+						int ind = line.indexOf(",");
+						int xs = Integer.valueOf(line.substring(0, ind));
+						line = line.substring(ind+1);
+						ind = line.indexOf(")");
+						int ys = Integer.valueOf(line.substring(0, ind));
+						Point pt = new Point(xs, ys);
+						primaryPt = pt;
+						continue;
+					} /*else if(line.startsWith("# Junction")){
+						line = line.substring(line.indexOf("(") + 1);
+						int ind = line.indexOf(",");
+						int xs = Integer.valueOf(line.substring(0, ind));
+						line = line.substring(ind+1);
+						ind = line.indexOf(")");
+						int ys = Integer.valueOf(line.substring(0, ind));
+						Point pt = new Point(xs, ys);
+						junctionPt = pt;
+						continue;
+					}*/
 				}
 				if(line.startsWith("#"))
 					continue;
@@ -1083,7 +1176,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				}
 				VOIContour curve = new VOIContour(true);
 				curve.importPoints(tipVec);
-				//curve.convexHull();
 				
 				polyVOI.importCurve(curve);
 			}
@@ -1158,22 +1250,26 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			}
 		}
 		
-		if(splitPt != null && progenitorPt != null){
-			VOIBaseVector base = controlPts.getCurves();
-			VOIPoint ptVOI;
-			Vector3f ptVec;
-			for(int i=0;i<base.size();i++){
-				ptVOI = (VOIPoint)base.get(i);
-				ptVec = ptVOI.exportPoint();
-				Point checkPt = new Point((int)ptVec.X, (int)ptVec.Y);
-				if(splitPt.equals(checkPt)){
-					splitVOI = ptVOI;
-					splitVOI.setLabel("S");
-				} else if(progenitorPt.equals(checkPt)) {
-					progenitorVOI = ptVOI;
-					progenitorVOI.setLabel("P");
-				}
-			}
+		VOIBaseVector base = controlPts.getCurves();
+		VOIPoint ptVOI;
+		Vector3f ptVec;
+		for(int i=0;i<base.size();i++){
+			ptVOI = (VOIPoint)base.get(i);
+			ptVec = ptVOI.exportPoint();
+			Point checkPt = new Point((int)ptVec.X, (int)ptVec.Y);
+			if(splitPt != null && splitPt.equals(checkPt)){
+				splitVOI = ptVOI;
+				splitVOI.setLabel("S");
+			} else if(progenitorPt != null && progenitorPt.equals(checkPt)) {
+				progenitorVOI = ptVOI;
+				progenitorVOI.setLabel("P");
+			} else if(primaryPt != null && primaryPt.equals(checkPt)){
+				primaryVOI = ptVOI;
+				primaryVOI.setLabel("1");
+			} /*else if(junctionPt != null && junctionPt.equals(checkPt)){
+				junctionVOI = ptVOI;
+				junctionVOI.setLabel("J");
+			}*/
 		}
 		
 		subVolume.getVOIs().add(controlPts);
@@ -1202,30 +1298,15 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			return;
 		}
 		
+		if(originVOI == null){
+			MipavUtil.displayError("No origin is set. Please choose an origin point.");
+			return;
+		}
+		
 		int counter = 0;
 		File currentSWC = swcList.get(currentSlice);
 		
 		String header = "";
-		
-		/*try {
-			BufferedReader input =  new BufferedReader(new FileReader(currentSWC));
-			String line = null; 
-			while (( line = input.readLine()) != null){
-				if(line.startsWith("#") && !(line.startsWith("# Coordinates")
-						|| line.startsWith("# Distances") 
-						|| line.startsWith("# (")
-						|| line.startsWith("# Progenitor")
-						|| line.startsWith("# Poly Pt")
-						|| line.startsWith("# Split")
-						|| line.startsWith("# Polygonal Area")
-						|| line.startsWith("# Centroid")))
-					header += line + "\n";
-			}
-			input.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			return;
-		}*/
 		
 		String saveName = currentSWC.getPath();
 		String name = currentSWC.getName();
@@ -1247,13 +1328,22 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		}
 		currentSWC = new File(saveName);
 		FileWriter writer = new FileWriter(currentSWC);
+		
+		if(polyVOI.getSize() == 0)
+			polygonDisplay();
+		
 		double[] areaResults = calcPolyArea();
 		header += String.format("# Polygonal Area: %5.2f %s\n", areaResults[2], (String)resUnits.getSelectedItem());
 		header += String.format("# Centroid: (%4.2f,%4.2f)\n", areaResults[0], areaResults[1]);
+		header += String.format("# Origin (%d,%d)\n", origin.x, origin.y);
 		if(progenitorPt != null)
 			header += String.format("# Progenitor Point (%d,%d)\n", progenitorPt.x, progenitorPt.y);
 		if(splitPt != null)
 			header += String.format("# Split Point (%d,%d)\n", splitPt.x, splitPt.y);
+		if(primaryPt != null)
+			header += String.format("# Primary Branch Point (%d,%d)\n", primaryPt.x, primaryPt.y);
+		/*if(junctionPt != null)
+			header += String.format("# Junction Point (%d,%d)\n", junctionPt.x, junctionPt.y);*/
 		
 		VOIBase base = polyVOI.getCurves().get(0);
 		
@@ -1289,28 +1379,49 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		LinkElement start = links.get(origin);
 		String lengthHeader = "# Coordinates are for endpoints of projections\n"
 				+ "# Distances are to branch point of this projection's order\n";
-		if(links.size()==2){
+		/*if(links.size()==2){
 			LinkElement e = links.get(0) == start ? links.get(1) : start;
 			writer.append(lengthHeader);
 			writePoint(new NeuronLength(e.pt, e.pt.distance(start.pt)), writer);
-		} else if(links.size() > 2){
-			PriorityQueue<NeuronLength> pq = new PriorityQueue<NeuronLength>();
-			writer.append(lengthHeader);
-			if(splitPt != null){
-				LinkElement split = links.get(splitPt);
+		} else if(links.size() > 2){*/
+		PriorityQueue<NeuronLength> pq = new PriorityQueue<NeuronLength>();
+		writer.append(lengthHeader);
+		if(splitPt != null){
+			LinkElement split = links.get(splitPt);
+			LinkElement toOrigin = null;
+			ArrayList<LinkElement> list = split.linked;
+			for(int i=0;i<list.size();i++){
+				LinkElement next = list.get(i);
+				if(dfsOrigin(next, split)){
+					toOrigin = next;
+				}
+			}
+			//Find lenghts towards the origin: 
+			writer.append("# Lengths towards origin\n");
+			pq.addAll(calcLengths(toOrigin, split, toOrigin.pt.distance(split.pt)));
+			NeuronLength nl;
+			while((nl = pq.poll()) != null)
+				writePoint(nl, writer);
+			writer.append("# Lengths towards progenitor\n");
+			pq.clear();
+			pq.addAll(calcLengths(split, toOrigin, 0));
+			while((nl = pq.poll()) != null)
+				writePoint(nl, writer);
+			/*LinkElement split = links.get(splitPt);
 				LinkElement e = split.linked.get(0);
 				pq.addAll(calcLengths(e, split, e.pt.distance(split.pt)));
 				e = split.linked.get(1);
-				pq.addAll(calcLengths(e, split, e.pt.distance(split.pt)));
-			} else{
-				LinkElement e = start.linked.get(0);
-				pq = calcLengths(e, start, e.pt.distance(start.pt));
-			}
-			
+				pq.addAll(calcLengths(e, split, e.pt.distance(split.pt)));*/
+		} else{
+			//LinkElement e = start.linked.get(0);
+			pq = calcLengths(start, null, 0);
 			NeuronLength nl;
 			while((nl = pq.poll()) != null)
 				writePoint(nl, writer);
 		}
+			
+			
+		//}
 		
 		String dimStr = String.format("# Width %d\n# Height %d\n", width, height);
 		String noteStr = 
@@ -1325,7 +1436,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		Point pt = start.pt;
 		int[] parts = new int[7];
-		//String[] parts = new String[7];
+
 		parts[0] = line;
 		parts[1] = 2;
 		parts[2] = pt.x;
@@ -1596,12 +1707,34 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			
 			subVolume.notifyImageDisplayListeners();
 
-		} else if(progenitorRB.isSelected() || splitRB.isSelected() || originRB.isSelected()){
+		} else if(progenitorRB.isSelected() || splitRB.isSelected() || originRB.isSelected()
+				|| primaryRB.isSelected() /*|| junctionRB.isSelected()*/){
 			VOIBase activeVOI = lastActive;
 			if(activeVOI == null) return;
 			VOIPoint ptVOI = (VOIPoint) activeVOI;
 			Vector3f ptVec = ptVOI.exportPoint();
 			Point pt = new Point((int)ptVec.X, (int)ptVec.Y);
+			if(activeVOI == progenitorVOI){
+				progenitorVOI.setLabel("");
+				progenitorVOI = null;
+				progenitorPt = null;
+			} else if(activeVOI == splitVOI){
+				splitVOI.setLabel("");
+				splitVOI = null;
+				splitPt = null;
+			} else if(activeVOI == originVOI){
+				originVOI.setLabel("");
+				originVOI = null;
+				origin = null;
+			} else if(activeVOI == primaryVOI){
+				primaryVOI.setLabel("");
+				primaryVOI = null;
+				primaryPt = null;
+			} /*else if(activeVOI == junctionVOI){
+				junctionVOI.setLabel("");
+				junctionVOI = null;
+				junctionPt = null;
+			}*/
 			if(progenitorRB.isSelected()){
 				if(progenitorVOI != null)
 					progenitorVOI.setLabel("");
@@ -1620,7 +1753,20 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				origin = pt;
 				originVOI = ptVOI;
 				originVOI.setLabel("O");
-			}
+			} else if(primaryRB.isSelected()){
+				if(primaryVOI != null)
+					primaryVOI.setLabel("");
+				primaryPt = pt;
+				primaryVOI = ptVOI;
+				primaryVOI.setLabel("1");
+			} /*else if(junctionRB.isSelected()){
+				if(junctionVOI!= null)
+					junctionVOI.setLabel("");
+				junctionPt = pt;
+				junctionVOI = ptVOI;
+				junctionVOI.setLabel("J");
+			}*/
+			
 			subVolume.notifyImageDisplayListeners();
 		} 
 		
@@ -2019,9 +2165,25 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		@Override
 		/**
 		 * Flipped ordering so that highest priority is highest length
+		 * 
+		 * Right now, progenitor/origin has highest priority in finding length
+		 * This has since been changed to what is seen below.
+		 * 
+		 * Changed so labeled primary branch has highest priority, with the
+		 * progenitor haveing second highest priority
 		 */
 		public int compareTo(NeuronLength o) {
 			
+			//Make primary branch highest priority
+			if(primaryPt != null){
+				if(endPt.equals(primaryPt))
+					return -1;
+				else if(o.endPt.equals(primaryPt))
+					return 1;
+			}
+			//Progenitor branch has second highest priority
+			//Origin branch has the same prioirty, however with the
+			//split point, only one will occur in any given search
 			if(progenitorPt != null){
 				if(endPt.equals(progenitorPt)
 						|| endPt.equals(origin))
@@ -2030,7 +2192,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 						|| o.endPt.equals(origin))
 					return 1;
 			}
-			
+			//Longest branch (in the absense of the above) has
+			//the third highest priority
 			double l0 = this.length;
 			double l1 = o.length;
 			if(l0 > l1)

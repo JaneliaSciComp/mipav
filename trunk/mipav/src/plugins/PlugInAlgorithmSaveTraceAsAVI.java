@@ -178,7 +178,7 @@ public class PlugInAlgorithmSaveTraceAsAVI extends AlgorithmBase {
 		input.close();
 		
 		if(width == 0 || height == 0){
-			MipavUtil.displayError("File is missing width and/or heigh information");
+			MipavUtil.displayError("File is missing width and/or height information");
 			throw new IOException();
 		}
 

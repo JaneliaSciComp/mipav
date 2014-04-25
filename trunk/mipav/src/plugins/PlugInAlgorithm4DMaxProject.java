@@ -32,9 +32,9 @@ public class PlugInAlgorithm4DMaxProject extends AlgorithmBase {
 		int[] projBuffer = new int[extents[0]*extents[1]];
 		//int[] locBuffer = new int[extents[0]*extents[1]*extents[3]];
 		//int[] volBuffer = new int[extents[0]*extents[1]*extents[2]];
-		ModelImage projection;
+		ModelImage projection = null;
 		ModelImage volume = new ModelImage(srcImage.getDataType(), extents3, "Extracted Volume");
-		ModelImage dest = new ModelImage(srcImage.getDataType(), new int[] {extents[0], extents[1]}, "Z_Projection");
+		//ModelImage dest = new ModelImage(srcImage.getDataType(), new int[] {extents[0], extents[1]}, "Z_Projection");
 		//locationImage = new ModelImage(ModelImage.UBYTE, destImage.getExtents(), "Z location");
 		AlgorithmSubset extract;
 		AlgorithmMaximumIntensityProjection project;
@@ -60,14 +60,14 @@ public class PlugInAlgorithm4DMaxProject extends AlgorithmBase {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}*/
-			project = new AlgorithmMaximumIntensityProjection(volume, 0, extents[2]-1, extents[2]-1,
+			project = new AlgorithmMaximumIntensityProjection(volume, 0, extents[2]-1, extents[2],
 					volume.getMin(), volume.getMax(), true, false, AlgorithmMaximumIntensityProjection.Z_PROJECTION);
 			project.run();
 			projection = project.getResultImage().get(0);
 			
-			slice = new AlgorithmExtractSlices(projection, dest, slices);
+			/*slice = new AlgorithmExtractSlices(projection, dest, slices);
 			slice.run();
-			projection.disposeLocal();
+			projection.disposeLocal();*/
 			
 			if(save){
 				/*FileInfoBase sInfo = dest.getFileInfo(0);
@@ -81,10 +81,10 @@ public class PlugInAlgorithm4DMaxProject extends AlgorithmBase {
 				if(!dirFile.exists())
 					dirFile.mkdir();
 				String fileName = srcImage.getImageName() + "_MIP_T=" + String.format("%03d", i);
-				dest.saveImage(directory, fileName, FileUtility.TIFF, false, false);
+				projection.saveImage(directory, fileName, FileUtility.TIFF, false, false);
 			}
 			try {
-				dest.exportData(0, extents[0]*extents[1], projBuffer);
+				projection.exportData(0, extents[0]*extents[1], projBuffer);
 				for(int j=0;j<extents[0]*extents[1];j++){
 					dstBuffer[j+i*extents[0]*extents[1]] = projBuffer[j];
 					/*for(int k=0;k<extents[2];k++){
@@ -97,6 +97,7 @@ public class PlugInAlgorithm4DMaxProject extends AlgorithmBase {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+//			}
 		}
 		
 		try {
@@ -107,7 +108,8 @@ public class PlugInAlgorithm4DMaxProject extends AlgorithmBase {
 			e.printStackTrace();
 		}
 		
-		dest.disposeLocal();
+		//dest.disposeLocal();
+		projection.disposeLocal();
 		volume.disposeLocal();
 		
 		setCompleted(true);
