@@ -270,7 +270,7 @@ import gov.nih.mipav.view.Preferences;
 	    public void setPointWeights(Vector<Double> weights) {
 	    	usePointWeights = true;
 	    	this.pointWeights.clear();
-	    	for (int i = 0; i < pointWeights.size(); i++) {
+	    	for (int i = 0; i < weights.size(); i++) {
 	    		this.pointWeights.add(weights.get(i));
 	    	}
 	    }
@@ -283,6 +283,8 @@ import gov.nih.mipav.view.Preferences;
 	    		return;
 	    	}
 	    	if (usePointWeights  && (pointWeights.size() != pointData.size())) {
+	    		System.err.println("pointWeights.size() = " + pointWeights.size());
+	    		System.err.println("pointData.size() = " + pointData.size());
 	    		MipavUtil.displayError("pointsWeights and pointData must have the same size");
 	    		return;
 	    	}
