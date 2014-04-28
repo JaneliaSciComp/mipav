@@ -324,6 +324,10 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 				MipavUtil.displayError("Exception in Report File. Check line " 
 						+ String.valueOf(cnt) + " of file for any errors.");
 				failed = true;
+			}catch(NullPointerException e){
+				MipavUtil.displayError("Line " + String.valueOf(cnt) + " is "
+						+ "incomplete in Report file. Please check line for missing information");
+				failed = true;
 			}
 			finally {
 				input.close();
@@ -357,8 +361,8 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 			}
 			catch(NullPointerException n){
 				n.printStackTrace();
-				MipavUtil.displayError("Exception in reading line " + String.valueOf(cnt) + 
-						" in the Coriell report. Please check line for any errors");
+				MipavUtil.displayError("Line " + String.valueOf(cnt) + " is "
+						+ "incomplete in Coriell file. Please check line for missing information");
 				failed = true;
 			}
 			finally {
