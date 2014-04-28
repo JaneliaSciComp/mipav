@@ -350,7 +350,8 @@ public class ViewMenuBar {
                 menuBuilder.makeMenu("Shading correction", false, new JMenuItem[] {
                         // Of 3 shading correction methods only entropy minimization works on color
                         menuBuilder.buildMenuItem("Entropy minimization", "entropyMin", 0, null, false),
-                        menuBuilder.buildMenuItem("Inhomogeneity N3 correction", "N3Correction", 0, null, false)}),
+                        menuBuilder.buildMenuItem("Inhomogeneity N3 correction", "N3Correction", 0, null, false),
+                        menuBuilder.buildMenuItem("Inhomogeneity N4 correction", "N4Correction", 0, null, false)}),
                 // menuBuilder.buildMenuItem("MRI combined info", "MRICorrection", 0, null, false)}),
                 menuBuilder.makeMenu("SNR", false, new JMenuItem[] {
                 		menuBuilder.buildMenuItem("Any two images", "ANY2SNR", 0, null, false),
