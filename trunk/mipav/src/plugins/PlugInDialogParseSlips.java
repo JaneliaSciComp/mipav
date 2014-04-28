@@ -235,11 +235,11 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
         coriellButton.addActionListener(this);
         coriellPanel.add(coriellButton);
         
-        delRB = new JRadioButton("Delete to Old Files");
+        delRB = new JRadioButton("Delete Old Files");
         delRB.setFont(serif12);
         delRB.setActionCommand("delete");
         
-        appRB = new JRadioButton("Append Old Files");
+        appRB = new JRadioButton("Append to Old Files");
         appRB.setFont(serif12);
         appRB.setActionCommand("append");
         appRB.setSelected(true);

@@ -174,31 +174,43 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 			organized[3] = "null";
 		else{
 			organized[3] = input[17].trim().split(" ")[0];
-			tempArray = organized[3].split("-");
-			tempStr = tempArray[0];
-			if(tempArray[1].startsWith("0"))
-				tempArray[0] = tempArray[1].replace("0", "");
-			else tempArray[0] = tempArray[1];
-			if(tempArray[2].startsWith("0"))
-				tempArray[1] = tempArray[2].replace("0", "");
-			else tempArray[1] = tempArray[2];
-			tempArray[2] = tempStr;
+			if(organized[3].contains("-") || organized[3].contains("/")){
+				if(organized[3].contains("-"))
+					tempArray = organized[3].split("-");
+				else tempArray = organized[3].split("/");
+				tempStr = tempArray[0];
+				if(tempArray[1].startsWith("0"))
+					tempArray[0] = tempArray[1].replace("0", "");
+				else tempArray[0] = tempArray[1];
+				if(tempArray[2].startsWith("0"))
+					tempArray[1] = tempArray[2].replace("0", "");
+				else tempArray[1] = tempArray[2];
+				tempArray[2] = tempStr;
+			} else {
+				tempArray = new String[]{"0", "0", "0"};
+			}
 			organized[3] = tempArray[0] + "/" + tempArray[1] + "/" + tempArray[2];
 		}//Collection Date
 		
-		if(input[17] == "null")
+		if(input[18] == "null")
 			organized[4] = "null";
 		else{
 			organized[4] = input[18].trim().split(" ")[0];
-			tempArray = organized[4].split("-");
-			tempStr = tempArray[0];
-			if(tempArray[1].startsWith("0"))
-				tempArray[0] = tempArray[1].replace("0", "");
-			else tempArray[0] = tempArray[1];
-			if(tempArray[2].startsWith("0"))
-				tempArray[1] = tempArray[2].replace("0", "");
-			else tempArray[1] = tempArray[2];
-			tempArray[2] = tempStr;
+			if(organized[3].contains("-") || organized[3].contains("/")){
+				if(organized[3].contains("-"))
+					tempArray = organized[3].split("-");
+				else tempArray = organized[3].split("/");
+				tempStr = tempArray[0];
+				if(tempArray[1].startsWith("0"))
+					tempArray[0] = tempArray[1].replace("0", "");
+				else tempArray[0] = tempArray[1];
+				if(tempArray[2].startsWith("0"))
+					tempArray[1] = tempArray[2].replace("0", "");
+				else tempArray[1] = tempArray[2];
+				tempArray[2] = tempStr;
+			} else {
+				tempArray = new String[]{"00", "00", "00"};
+			}
 			organized[4] = tempArray[0] + "/" + tempArray[1] + "/" + tempArray[2];
 		}//Date Received
 		
@@ -240,8 +252,12 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 		String[] output = new String[20];
 		int cnt = 0;
 		int ind = 0;
+		String delimiter;
+		if(line.contains(";"))
+			delimiter = ";";
+		else delimiter = ",";
 		while(cnt<20){
-			ind = line.indexOf(";");
+			ind = line.indexOf(delimiter);
 			if(ind > 0)
 				output[cnt] = line.substring(0, ind).trim();
 			else if (ind == -1) break;
@@ -342,7 +358,7 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 			catch(NullPointerException n){
 				n.printStackTrace();
 				MipavUtil.displayError("Exception in reading line " + String.valueOf(cnt) + 
-						" in the original report. Please check line for any errors");
+						" in the Coriell report. Please check line for any errors");
 				failed = true;
 			}
 			finally {
