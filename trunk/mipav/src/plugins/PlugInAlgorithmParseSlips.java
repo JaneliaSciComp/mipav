@@ -156,7 +156,7 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 		}
 	}
 	
-	private String[] organizeInput(String[] input){
+	private String[] organizeInput(String[] input) throws NullPointerException{
 		String[] organized = new String[9];
 		String[] tempArray;
 		String tempStr;
@@ -335,8 +335,14 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 			}
 			catch(ArrayIndexOutOfBoundsException e){
 				e.printStackTrace();
-				MipavUtil.displayError("Exception in Coriell   File. Check line " 
+				MipavUtil.displayError("Exception in Coriell File. Check line " 
 						+ String.valueOf(cnt) + " of file for any errors.");
+				failed = true;
+			}
+			catch(NullPointerException n){
+				n.printStackTrace();
+				MipavUtil.displayError("Exception in reading line " + String.valueOf(cnt) + 
+						" in the original report. Please check line for any errors");
 				failed = true;
 			}
 			finally {
