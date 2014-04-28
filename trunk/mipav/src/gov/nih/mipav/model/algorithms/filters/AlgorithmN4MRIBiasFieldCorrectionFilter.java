@@ -9,6 +9,7 @@ import java.util.Vector;
 import WildMagic.LibFoundation.Mathematics.Vector3d;
 import WildMagic.LibFoundation.Mathematics.Vector4d;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJProgressBar;
 
 /**
@@ -36,6 +37,8 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 
 	// ~ Instance fields
 	// ------------------------------------------------------------------------------------------------
+	
+	private ModelImage fieldImage = null;
 
 	/**
 	 * Flag, if true, indicates that the whole image should be processed. If
@@ -54,7 +57,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 
 	private ModelImage logBiasFieldControlPointLattice = null;
 
-	private double WeinerFilterNoise = 0.01;
+	private double WienerFilterNoise = 0.01;
 
 	private double biasFieldFullWidthAtHalfMaximum = 0.15;
 
@@ -67,6 +70,8 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 	private double sigmoidNormalizedAlpha = 0.0;
 
 	private double sigmoidNormalizedBeta = 0.5;
+	
+	private int maximumIterations = 50;
 
 	private int maximumNumberOfIterations[];
 
@@ -96,32 +101,30 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 	// ---------------------------------------------------------------------------------------------------
 
 	/**
-	 * Creates a new AlgorithmN4MRIBiasFieldCorrectionFilter.
-	 * 
-	 * @param srcImg
-	 *            DOCUMENT ME!
-	 * @param maskFlag
-	 *            DOCUMENT ME!
-	 */
-	public AlgorithmN4MRIBiasFieldCorrectionFilter(ModelImage srcImg,
-			boolean maskFlag) {
-		this(null, srcImg, null, maskFlag);
-	}
-
-	/**
 	 * Constructor which sets the source and destination images
 	 * 
 	 * @param destImg
 	 *            the destination image
+	 * @param fieldImage
 	 * @param srcImg
 	 *            the source image
+	 * @maximumIterations
+	 * @convergenceThreshold
+	 * @biasFieldFullWidthAtHalfMaximum
+	 * @WienerFilterNoise
 	 * @param confidenceImage
 	 * @param maskFlag
 	 *            the mask flag
 	 */
-	public AlgorithmN4MRIBiasFieldCorrectionFilter(ModelImage destImg,
-			ModelImage srcImg, ModelImage confidenceImage, boolean maskFlag) {
+	public AlgorithmN4MRIBiasFieldCorrectionFilter(ModelImage destImg, ModelImage fieldImage,
+			ModelImage srcImg, int maximumIterations, double convergenceThreshold, double biasFieldFullWidthAtHalfMaximum,
+			double WienerFilterNoise, ModelImage confidenceImage, boolean maskFlag) {
 		super(destImg, srcImg);
+		this.fieldImage = fieldImage;
+		this.maximumIterations = maximumIterations;
+		this.convergenceThreshold = convergenceThreshold;
+		this.biasFieldFullWidthAtHalfMaximum = biasFieldFullWidthAtHalfMaximum;
+		this.WienerFilterNoise = WienerFilterNoise;
 		this.confidenceImage = confidenceImage;
 		entireImage = maskFlag;
 	}
@@ -191,10 +194,17 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 
 		fireProgressStateChanged(0, srcImage.getImageName(),
 				"N4 MRI Bias Field Correction Filter on image ...");
+		
+		mask = null;
+
+        if (entireImage == false) {
+            mask = srcImage.generateVOIMask();
+        }
+
 
 		maximumNumberOfIterations = new int[1];
 		for (i = 0; i < maximumNumberOfIterations.length; i++) {
-			maximumNumberOfIterations[i] = 50;
+			maximumNumberOfIterations[i] = maximumIterations;
 		}
 
 		srcImage.calcMinMax();
@@ -267,7 +277,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		maskExtents = new int[nDims];
 		maskOrigin = new float[nDims];
 		for (i = 0; i < length; i++) {
-			if (mask.get(i) || ((confidence != null) && (confidence[i] > 0.0))) {
+			if (entireImage || mask.get(i) || ((confidence != null) && (confidence[i] > 0.0))) {
 				x = i % xDim;
 				y = (i % sliceSize) / xDim;
 				z = (i % xyzSize)/ sliceSize;
@@ -385,10 +395,12 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 				newLogBiasField = updateBiasFieldEstimate(subtracter1);
 				currentConvergenceMeasurement = calculateConvergenceMeasurement(
 						logBiasField, newLogBiasField);
-				logBiasField = newLogBiasField;
+				Preferences.debug("currentConvergenceMeasurement = " + currentConvergenceMeasurement + "\n",
+						Preferences.DEBUG_ALGORITHM);
 				for (i = 0; i < length; i++) {
 					if (entireImage || (mask.get(i) && (confidence == null))
 							|| ((confidence != null) && (confidence[i] > 0.0))) {
+						logBiasField[i] = newLogBiasField[i];
 						logUncorrected[i] = logFilter[i] - logBiasField[i];
 					}
 				}
@@ -431,6 +443,17 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 					|| ((confidence != null) && (confidence[i] > 0.0))) {
 			outputBuffer[i] = buffer[i]/expFilter[i];
 			}
+		}
+		
+		if (fieldImage != null) {
+			try {
+				fieldImage.importData(0, expFilter, true);
+			}
+			catch (IOException e) {
+				MipavUtil.displayError("IOException on fieldImage.importData(0, expFilter, true)");
+				setCompleted(false);
+				return;
+			}	
 		}
 		
 		if (destImage != null) {
@@ -588,23 +611,23 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		fft.finalize();
 		fft = null;
 
-		// Create the Weiner deconvolution filter
+		// Create the Wiener deconvolution filter
 		GfR = new double[paddedHistogramSize];
 		GfI = new double[paddedHistogramSize];
 		for (n = 0; n < paddedHistogramSize; n++) {
 			cR = FfR[n];
 			cI = -FfI[n];
-			// (cR + jcI)/(cR*FfR[n] - cI*FfI[n] + WeinerFilterNoise +
+			// (cR + jcI)/(cR*FfR[n] - cI*FfI[n] + WienerFilterNoise +
 			// j(cR*FfI[n] + cI*FfR[n])
 			// Multiply numerator and denominator by complex conjugate of
 			// denominator
-			denom1 = cR * FfR[n] - cI * FfI[n] + WeinerFilterNoise;
+			denom1 = cR * FfR[n] - cI * FfI[n] + WienerFilterNoise;
 			denom2 = cR * FfI[n] + cI * FfR[n];
 			denom = denom1 * denom1 + denom2 * denom2;
-			GfR[n] = (cR * cR * FfR[n] + cR * WeinerFilterNoise + cI * cI
+			GfR[n] = (cR * cR * FfR[n] + cR * WienerFilterNoise + cI * cI
 					* FfR[n])
 					/ denom;
-			GfI[n] = (-cR * cR * FfI[n] - cI * cI * FfI[n] + cI * WeinerFilterNoise)
+			GfI[n] = (-cR * cR * FfI[n] - cI * cI * FfI[n] + cI * WienerFilterNoise)
 					/ denom;
 		}
 		UfR = new double[paddedHistogramSize];
