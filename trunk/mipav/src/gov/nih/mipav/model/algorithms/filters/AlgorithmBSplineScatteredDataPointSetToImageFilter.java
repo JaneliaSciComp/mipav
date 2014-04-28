@@ -14,7 +14,7 @@ import gov.nih.mipav.view.Preferences;
 	/**
 	 
 	 *
-	 * @version  0.1 April 1, 2014
+	 * @version  0.1 April 28, 2014
 	 * @author   William Gandler
 	 * 
 	  * This a a port of itkBSplineScatteredDataPointSetToImageFilter.hxx from the itk package.  Here is the original itk header
@@ -433,6 +433,10 @@ import gov.nih.mipav.view.Preferences;
 	            neighborhoodWeightArrayLength *= size[i];
 	        }
 	        int neighborhoodWeightArraySliceSize = size[0]*size[1];
+	        int xyzNeighborhoodWeightArray = neighborhoodWeightArraySliceSize;
+	        if (nDims > 2) {
+	        	xyzNeighborhoodWeightArray *= size[2];
+	        }
 	        double neighborhoodWeightArray[] = new double[neighborhoodWeightArrayLength];
 	        double p[] = new double[nDims];
 	        double r[] = new double[nDims];
@@ -446,6 +450,9 @@ import gov.nih.mipav.view.Preferences;
 	        	point[1] = pointLocation.get(n).Y;
 	        	if (nDims > 2) {
 	        	    point[2] = pointLocation.get(n).Z;
+	        	    if (nDims > 3) {
+	        	    	point[3] = pointLocation.get(n).W;
+	        	    }
 	        	}
 	        	for (int i = 0; i < nDims; i++) {
 	        	    int totalNumberOfSpans = currentNumberOfControlPoints[i] - splineOrder[i];
@@ -468,7 +475,10 @@ import gov.nih.mipav.view.Preferences;
 	        	    idx[0] = itw % size[0];
 	        	    idx[1] = (itw % neighborhoodWeightArraySliceSize) / size[0];
 	        	    if (nDims > 2) {
-	        	    	idx[2] = itw / neighborhoodWeightArraySliceSize;
+	        	    	idx[2] = (itw  % xyzNeighborhoodWeightArray) / neighborhoodWeightArraySliceSize;
+	        	    	if (nDims > 3) {
+	        	    		idx[3] = itw / xyzNeighborhoodWeightArray;
+	        	    	}
 	        	    }
 	        	    for (int i = 0; i < nDims; i++) {
 	        	        double u  = (p[i] - (int)p[i] - idx[i]) + 0.5*(splineOrder[i] - 1);
@@ -497,7 +507,10 @@ import gov.nih.mipav.view.Preferences;
 	        		idx[0] = itw % size[0];
 	        	    idx[1] = (itw % neighborhoodWeightArraySliceSize) / size[0];
 	        	    if (nDims > 2) {
-	        	    	idx[2] = itw / neighborhoodWeightArraySliceSize;
+	        	    	idx[2] = (itw % xyzNeighborhoodWeightArray) / neighborhoodWeightArraySliceSize;
+	        	    	if (nDims > 3) {
+	        	    		idx[3] = itw / xyzNeighborhoodWeightArray;
+	        	    	}
 	        	    }
 	        	    for (int i = 0; i < nDims; i++) {
 	        	        idx[i] += (int)(p[i]);
@@ -570,7 +583,10 @@ import gov.nih.mipav.view.Preferences;
 	            idx[0] = it % extents[0];
 	            idx[1] = (it % extentsSlice) / extents[0];
 	            if (nDims > 2) {
-	            	idx[2] = it / extentsSlice;
+	            	idx[2] = (it % xyzExtents) / extentsSlice;
+	            	if (nDims > 3) {
+	            		idx[3] = it / xyzExtents;
+	            	}
 	            }
 	            for (int i = 0; i < nDims; i++) {
 	                U[i] = ((double)(totalNumberOfSpans[i] * (idx[i] /* - startIndex[i] */)))/(double)(extents[i] - 1);
@@ -607,27 +623,40 @@ import gov.nih.mipav.view.Preferences;
 	    
 	    private void collapsePhiLattice(double[] lattice, int latticeIndex[], double[] collapsedLattice, int collapsedLatticeIndex[],
 	    		double u, int dimension) {
-	    	int idx[] = new int[3];
+	    	int idx[] = new int[4];
 	    	int sliceSize = 0;
+	    	int xyzSize = 0;
 	    	if (latticeIndex.length >= 2) {
 	    	    sliceSize = latticeIndex[0] * latticeIndex[1];
+	    	    if (latticeIndex.length >= 3) {
+	    	    	xyzSize = sliceSize * latticeIndex[2];
+	    	    }
 	        }
  	    	for (int it = 0; it < collapsedLattice.length; it++) {
 	    		if (collapsedLatticeIndex.length == 1) {
 	    			idx[0] = it;
 	    			idx[1] = 0;
 	    			idx[2] = 0;
+	    			idx[3] = 0;
 	    		}
 	    		else if (collapsedLatticeIndex.length == 2) {
 	    			idx[0] = it % collapsedLatticeIndex[0];
 	    			idx[1] = it / collapsedLatticeIndex[0];
 	    			idx[2] = 0;
+	    			idx[3] = 0;
 	    		}
-	    		else {
+	    		else if (collapsedLatticeIndex.length == 3) {
 	    		    idx[0] = it % collapsedLatticeIndex[0];
         	        idx[1] = (it % sliceSize) / collapsedLatticeIndex[0];
-        	    	idx[2] = it / sliceSize;
+        	    	idx[2] = (it % xyzSize)/ sliceSize;
+        	    	idx[3] = 0;
         	    }
+	    		else {
+	    			idx[0] = it % collapsedLatticeIndex[0];
+        	        idx[1] = (it % sliceSize) / collapsedLatticeIndex[0];
+        	    	idx[2] = (it % xyzSize)/ sliceSize;
+        	    	idx[3] = it / xyzSize;	
+	    		}
 	    		double data;
 	    		data = 0.0;
 	    		for (int i = 0; i < splineOrder[dimension] + 1; i++) {
@@ -653,7 +682,7 @@ import gov.nih.mipav.view.Preferences;
 	    		    if (closeDimension[dimension] != 0) {
 	    		    	idx[dimension] %= latticeIndex[dimension];
 	    		    }
-	    		    int position = idx[0] + idx[1] * latticeIndex[0] + idx[2] * sliceSize;
+	    		    int position = idx[0] + idx[1] * latticeIndex[0] + idx[2] * sliceSize + idx[3] * xyzSize;
 	    		    data += (lattice[position] * B);
 	    		} // for (int i = 0; i < splineOrder[dimension] + 1; i++)
 	    		collapsedLattice[it] = data;
@@ -747,6 +776,9 @@ import gov.nih.mipav.view.Preferences;
 	        	point[1] = pointLocation.get(itin).Y;
 	            if (nDims > 2) {
 	            	point[2] = pointLocation.get(itin).Z;
+	            	if (nDims > 3) {
+	            		point[3] = pointLocation.get(itin).W;
+	            	}
 	            }
 	            for (int i = 0; i < nDims; i++) {
 	            	U[i] = totalNumberOfSpans[i] * (point[i] - origin[i])/((extents[i] - 1) * resolutions[i]);
@@ -794,6 +826,10 @@ import gov.nih.mipav.view.Preferences;
 	        	sizeLength *= size[i];
 	        } // for (int i = 0; i < nDims; i++)
 	        int sliceSize = size[0] * size[1];
+	        int xyzSize = sliceSize;
+	        if (nDims > 2) {
+	        	xyzSize = sliceSize * size[2];
+	        }
 	        double[] refinedLattice = new double[sizeLength];
 	        int sizePsi[] = new int[nDims];
 	        int size2[] = new int[nDims];
@@ -801,12 +837,20 @@ import gov.nih.mipav.view.Preferences;
 	        	size2[i] = 2;
 	        }
 	        int size2Slice = size2[0] * size[1];
+	        int xyzSize2 = size2Slice;
+	        if (nDims > 2) {
+	        	xyzSize2 = size2Slice * size2[2];
+	        }
 	        int N = 1;
 	        for (int i = 0; i < nDims; i++) {
 	        	N *= (splineOrder[i] + 1);
 	        	sizePsi[i] = splineOrder[i] + 1;
 	        }
 	        int sizePsiSlice = sizePsi[0] * sizePsi[1];
+	        int xyzSizePsi = sizePsiSlice;
+	        if (nDims > 2) {
+	        	xyzSizePsi = sizePsiSlice * sizePsi[2];
+	        }
 	        
 	        int idx[] = new int[nDims];
 	        int idxPsi[] = new int[nDims];
@@ -819,7 +863,10 @@ import gov.nih.mipav.view.Preferences;
 	            idx[0] = it % size[0];
 	            idx[1] = (it % sliceSize)/size[0];
 	            if (nDims > 2) {
-	            	idx[2] = it / sliceSize;
+	            	idx[2] = (it % xyzSize)/ sliceSize;
+	            	if (nDims > 3) {
+	            		idx[3] = it / xyzSize;
+	            	}
 	            }
 	            for (int i = 0; i < nDims; i++) {
 	                if (currentLevel < numberOfLevels[i]) {
@@ -835,7 +882,10 @@ import gov.nih.mipav.view.Preferences;
 	                off[0] = i % size2[0];
 	                off[1] = (i % size2Slice)/size2[0];
 	                if (nDims > 2) {
-	                	off[2] = i /size2Slice;
+	                	off[2] = (i % xyzSize2) /size2Slice;
+	                	if (nDims > 3) {
+	                		off[3] = i / xyzSize2;
+	                	}
 	                }
 	                boolean outOfBoundary = false;
 	                for (int j = 0; j < nDims; j++) {
@@ -855,7 +905,10 @@ import gov.nih.mipav.view.Preferences;
 	                    offPsi[0] = j % sizePsi[0];
 	                    offPsi[1] = (j % sizePsiSlice)/sizePsi[0];
 	                    if (nDims > 2) {
-	                    	offPsi[2] = j / sizePsiSlice;
+	                    	offPsi[2] = (j % xyzSizePsi) / sizePsiSlice;
+	                    	if (nDims > 3) {
+	                    		offPsi[3] = j / xyzSizePsi;
+	                    	}
 	                    }
 	                    boolean isOutOfBoundary = false;
 	                    for (int k = 0; k < nDims; k++) {
@@ -878,8 +931,11 @@ import gov.nih.mipav.view.Preferences;
 	                    if (nDims == 2) {
 	                        val = psiLattice.getDouble(tmpPsi[0], tmpPsi[1]);
 	                    }
-	                    else {
+	                    else if (nDims == 3) {
 	                    	val = psiLattice.getDouble(tmpPsi[0], tmpPsi[1], tmpPsi[2]);
+	                    }
+	                    else {
+	                    	val = psiLattice.getDouble(tmpPsi[0], tmpPsi[1], tmpPsi[2], tmpPsi[3]);
 	                    }
 	                    val *= coeff;
 	                    sum += val;
@@ -887,8 +943,11 @@ import gov.nih.mipav.view.Preferences;
 	                if (nDims == 2) {
 	                    refinedLattice[tmp[0] + size[0]*tmp[1]] = sum;
 	                }
-	                else {
+	                else if (nDims == 3) {
 	                	refinedLattice[tmp[0] + size[0] * tmp[1] + sliceSize * tmp[2]] = sum;
+	                }
+	                else {
+	                	refinedLattice[tmp[0] + size[0] * tmp[1] + sliceSize * tmp[2] + xyzSize * tmp[3]] = sum;
 	                }
 	            } // for (int i = 0; i < 2 << (nDims - 1); i++)
 	            
@@ -898,7 +957,10 @@ import gov.nih.mipav.view.Preferences;
 	            	idx[0] = it % size[0];
 	 	            idx[1] = (it % sliceSize)/size[0];
 	 	            if (nDims > 2) {
-	 	            	idx[2] = it / sliceSize;
+	 	            	idx[2] = (it % xyzSize) / sliceSize;
+	 	            	if (nDims > 3) {
+	 	            		idx[3] = it / xyzSize;
+	 	            	}
 	 	            }
 	 	            isEvenIndex = true;
 	 	            for (int i = 0; i < nDims; i++) {
@@ -934,8 +996,8 @@ import gov.nih.mipav.view.Preferences;
 	    		localOrigin[i] = (float)(-0.5 * localResolutions[i] * (splineOrder[i] - 1));
 	    	}
 	    	float localOrigin2[] = new float[nDims];
-	    	for (int i = 0; i < nDims; i++) {
-	    		for (int j = 0; j < nDims; j++) {
+	    	for (int i = 0; i < Math.min(nDims,3); i++) {
+	    		for (int j = 0; j < Math.min(nDims,3); j++) {
 	    			localOrigin2[i] += (direction[i][j] * localOrigin[j]);
 	    		}
 	    	}
@@ -950,8 +1012,8 @@ import gov.nih.mipav.view.Preferences;
 	    		phiLattice.getFileInfo(i).setResolutions(localResolutions);
 	    	}
 	    	
-	    	for (int i = 0; i < nDims; i++) {
-                for (int j = 0; j < nDims; j++) {
+	    	for (int i = 0; i < Math.min(nDims,3); i++) {
+                for (int j = 0; j < Math.min(nDims,3); j++) {
                     phiLattice.getMatrix().set(i, j, (float)direction[i][j]);
                 }
             }
