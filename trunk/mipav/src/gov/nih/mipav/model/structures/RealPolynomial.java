@@ -5,7 +5,7 @@ import gov.nih.mipav.util.DoubleDouble;
 	/**
 	 
 	 *
-	 * @version  0.1 April 2, 2014
+	 * @version  0.1 April 28, 2014
 	 * @author   William Gandler
 	 * 
 	 * This a a port of vnl_real_polynomial.h and vnl_real_polynomial.cxx.
@@ -61,6 +61,7 @@ import gov.nih.mipav.util.DoubleDouble;
 	    	  d = d2;
 	      }
 	      double sum[] = new double[d+1];
+	      // Coefficients are stored such that coeff[i] is coefficient on x^(d-i)
 	      for (int i = 0; i <= d; i++) {
 	    	  if (i <= d1) {
 	    		  sum[d-i] += coeff[d1 - i];
@@ -92,7 +93,7 @@ import gov.nih.mipav.util.DoubleDouble;
 	     * Prepares this class for destruction.
 	     */
 	    public void finalize() {
-	        
+	        coeff = null;    
 	    }
 	    
 	   
