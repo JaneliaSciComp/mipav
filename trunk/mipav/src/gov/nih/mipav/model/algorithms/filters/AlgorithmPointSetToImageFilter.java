@@ -5,8 +5,11 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+
 import java.util.Vector;
+
 import WildMagic.LibFoundation.Mathematics.Vector3d;
+import WildMagic.LibFoundation.Mathematics.Vector4d;
 	
 	
 	/**
@@ -45,10 +48,11 @@ import WildMagic.LibFoundation.Mathematics.Vector3d;
 		protected double insideValue;
 		protected double outsideValue;
 		protected Vector<Double> pointData;
-		protected Vector<Vector3d> pointLocation;
+		protected Vector<Vector4d> pointLocation;
 		protected ModelImage outputImage;
 		protected int extentsLength;
 		protected int extentsSlice;
+		protected int xyzExtents;
 	    
 	    public AlgorithmPointSetToImageFilter(int nDims) {
 	    	int i;
@@ -60,14 +64,14 @@ import WildMagic.LibFoundation.Mathematics.Vector3d;
 	        for (i = 0; i < nDims; i++) {
 	        	resolutions[i] = 1.0f;
 	        }
-	        direction = new double[nDims][nDims];
-	        for (i = 0; i < nDims; i++) {
+	        direction = new double[Math.min(nDims,3)][Math.min(nDims,3)];
+	        for (i = 0; i < Math.min(nDims,3); i++) {
 	        	direction[i][i] = 1.0;
 	        }
 	        insideValue = 1.0;
 	        outsideValue = 0.0;
 	        pointData = new Vector<Double>();
-	        pointLocation = new Vector<Vector3d>();
+	        pointLocation = new Vector<Vector4d>();
 	    }
 	    
 	  //~ Methods --------------------------------------------------------------------------------------------------------
@@ -117,11 +121,15 @@ import WildMagic.LibFoundation.Mathematics.Vector3d;
 	    		extentsLength *= extents[i];
 	    	}
 	    	extentsSlice = extents[0] * extents[1];
+	    	xyzExtents = extentsSlice;
+	    	if (nDims > 2) {
+	    		xyzExtents *= extents[2];
+	    	}
 	    }
 	    
 	    public void setDirection(double[][] direction) {
-	        for (int i = 0; i < nDims; i++) {
-	        	for (int j = 0; j < nDims; j++) {
+	        for (int i = 0; i < Math.min(nDims,3); i++) {
+	        	for (int j = 0; j < Math.min(nDims,3); j++) {
 	        		this.direction[i][j] = direction[i][j];
 	        	}
 	        }
@@ -134,7 +142,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3d;
 	    	}
 	    }
 	    
-	    public void setPointLocation(Vector<Vector3d> pointLocation) {
+	    public void setPointLocation(Vector<Vector4d> pointLocation) {
 	    	this.pointLocation.clear();
 	    	for (int i = 0; i < pointLocation.size(); i++) {
 	    		this.pointLocation.add(pointLocation.get(i));
@@ -150,8 +158,8 @@ import WildMagic.LibFoundation.Mathematics.Vector3d;
 	    			fileInfo[i].setResolutions(resolutions);
 	    		}
 	    	}
-	    	for (int i = 0; i < nDims; i++) {
-                for (int j = 0; j < nDims; j++) {
+	    	for (int i = 0; i < Math.min(nDims,3); i++) {
+                for (int j = 0; j < Math.min(nDims,3); j++) {
                     outputImage.getMatrix().set(i, j, (float)direction[i][j]);
                 }
             }
