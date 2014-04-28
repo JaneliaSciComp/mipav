@@ -1,4 +1,6 @@
 	package gov.nih.mipav.model.structures;
+
+import gov.nih.mipav.view.MipavUtil;
 	
 	
 	
@@ -25,7 +27,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
-
+    This class encapsulates BSpline kernel for density estimation or nonparametric regression.
   
 	 */
 	public class BSplineKernelFunction  {
@@ -88,6 +90,7 @@
 	    	    		return 0.0;
 	    	    	}
 		    	default:
+		    		MipavUtil.displayError("Evaluate not implemented for splineOrder = " + splineOrder);
 		    		return 0.0;
 	    	}
 	    }
