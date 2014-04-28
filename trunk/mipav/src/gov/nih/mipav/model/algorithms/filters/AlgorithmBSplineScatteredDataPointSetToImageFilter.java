@@ -1001,6 +1001,9 @@ import gov.nih.mipav.view.Preferences;
 	    			localOrigin2[i] += (direction[i][j] * localOrigin[j]);
 	    		}
 	    	}
+	    	if (nDims > 3) {
+	    		localOrigin2[3] = localOrigin[3];
+	    	}
 	    	
 	    	for (int i = 0; i < nDims; i++) {
 	    		localOrigin2[i] += origin[i];
