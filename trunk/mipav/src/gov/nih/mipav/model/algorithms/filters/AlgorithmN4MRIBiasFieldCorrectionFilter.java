@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Vector;
 
 import WildMagic.LibFoundation.Mathematics.Vector3d;
+import WildMagic.LibFoundation.Mathematics.Vector4d;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJProgressBar;
 
@@ -80,6 +81,8 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 	private int xDim;
 
 	private int sliceSize;
+	
+	private int xyzSize;
 
 	private float maskOrigin[];
 
@@ -156,6 +159,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		int x;
 		int y;
 		int z;
+		int t;
 		int d;
 		double buffer[];
 		double logFilter[];
@@ -169,9 +173,11 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		int smallestX;
 		int smallestY;
 		int smallestZ;
+		int smallestT;
 		int largestX;
 		int largestY;
 		int largestZ;
+		int largestT;
 		double currentConvergenceMeasurement = Double.MAX_VALUE;
 		double dirLength;
 		double direction[][];
@@ -213,6 +219,10 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 			length *= srcImage.getExtents()[i];
 		}
 		sliceSize = srcImage.getExtents()[0] * srcImage.getExtents()[1];
+		xyzSize = sliceSize;
+		if (nDims > 2) {
+			xyzSize *= srcImage.getExtents()[2];
+		}
 		buffer = new double[length];
 		logFilter = new double[length];
 		logUncorrected = new double[length];
@@ -247,9 +257,11 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		smallestX = Integer.MAX_VALUE;
 		smallestY = Integer.MAX_VALUE;
 		smallestZ = Integer.MAX_VALUE;
+		smallestT = Integer.MAX_VALUE;
 		largestX = Integer.MIN_VALUE;
 		largestY = Integer.MIN_VALUE;
 		largestZ = Integer.MIN_VALUE;
+		largestT = Integer.MIN_VALUE;
 		maskIndex = new int[nDims];
 		maskLargest = new int[nDims];
 		maskExtents = new int[nDims];
@@ -258,7 +270,8 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 			if (mask.get(i) || ((confidence != null) && (confidence[i] > 0.0))) {
 				x = i % xDim;
 				y = (i % sliceSize) / xDim;
-				z = i / sliceSize;
+				z = (i % xyzSize)/ sliceSize;
+				t = i / xyzSize;
 				if (x < smallestX) {
 					smallestX = x;
 				}
@@ -277,17 +290,29 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 				if (z > largestZ) {
 					largestZ = z;
 				}
+				if (t < smallestT) {
+					smallestT = t;
+				}
+				if (t > largestT) {
+					largestT = t;
+				}
 			}
 		}
 		maskIndex[0] = smallestX;
 		maskIndex[1] = smallestY;
 		if (nDims > 2) {
 			maskIndex[2] = smallestZ;
+			if (nDims > 3) {
+				maskIndex[3] = smallestT;
+			}
 		}
 		maskLargest[0] = largestX;
 		maskLargest[1] = largestY;
 		if (nDims > 2) {
 			maskLargest[2] = largestZ;
+			if (nDims > 3) {
+				maskLargest[3] = largestT;
+			}
 		}
 		for (i = 0; i < nDims; i++) {
 			maskExtents[i] = maskLargest[i] - maskIndex[i] + 1;
@@ -296,18 +321,18 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 			maskOrigin[i] = origin[i] + resolutions[i] * maskIndex[i];
 		}
 		
-		direction = new double[nDims][nDims];
-		for (i = 0; i < nDims; i++) {
+		direction = new double[Math.min(nDims,3)][Math.min(nDims,3)];
+		for (i = 0; i < Math.min(nDims,3); i++) {
         	dirLength = 0;
-            for (j = 0; j < nDims; j++) {
+            for (j = 0; j < Math.min(nDims,3); j++) {
                 direction[i][j] = srcImage.getMatrix().get(i, j);
                 dirLength += (direction[i][j] * direction[i][j]);
             }
             dirLength = Math.sqrt(dirLength);
-            for (j = 0; j < nDims; j++) {
+            for (j = 0; j < Math.min(nDims,3); j++) {
             	direction[i][j] = direction[i][j]/dirLength;
             }
-        } // for (i = 0; i < nDims; i++)
+        } // for (i = 0; i < Math.min(nDims,3); i++)
 
 		// Calculate the log of the input image
 		// Set NaNs, infinities, and negatives to zero
@@ -688,13 +713,14 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
     	double pixel;
     	double direction[][] = new double[nDims][nDims];
     	double dirLength;
-    	Vector<Vector3d> pointLocation = new Vector<Vector3d>();
+    	Vector<Vector4d> pointLocation = new Vector<Vector4d>();
     	Vector<Double> pointData = new Vector<Double>();
     	int index;
     	int x;
     	int y;
     	int z;
-    	Vector3d point;
+    	int t;
+    	Vector4d point;
     	double confidenceWeight;
     	double sigmoidWeight;
     	double alpha;
@@ -727,7 +753,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
     	// row direction = direction cosines of first axis = [m_Direction[0][0], m_Direction[0][1], m_Direction[0][2]]
     	// column direction = direction cosines of second axis = [m_Direction[1][0], m_Direction[1][1], m_Direction[1][2]]
     	// slice direction = direction cosines of third axis = [m_Direction[2][0], m_Direction[2][1], m_Direction[2][2]]
-    	for (i = 0; i < nDims; i++) {
+    	for (i = 0; i < Math.min(nDims,3); i++) {
     		direction[i][i] = 1;
     	}
     	index = 0;
@@ -736,9 +762,10 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
     				((confidence != null) && (confidence[i] > 0.0))) {
     			x = i  % xDim;
     			y = (i % sliceSize) / xDim;
-    			z = i/sliceSize;
+    			z = (i % xyzSize)/sliceSize;
+    			t = i / xyzSize;
     			// Remember direction cosine matrix has been set to identity
-    			point = new Vector3d(x + origin[0], y + origin[1], z + origin[2]);
+    			point = new Vector4d(x + origin[0], y + origin[1], z + origin[2], t + origin[3]);
     			pointData.add(index, fieldEstimate[i]);
     			pointLocation.add(index, point);
     			confidenceWeight = 1.0;
@@ -757,17 +784,17 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
     	}
     	//if ( (srcImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
                // || (srcImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
-            for (i = 0; i < nDims; i++) {
+            for (i = 0; i < Math.min(nDims,3); i++) {
             	dirLength = 0;
-                for (j = 0; j < nDims; j++) {
+                for (j = 0; j < Math.min(nDims,3); j++) {
                     direction[i][j] = srcImage.getMatrix().get(i, j);
                     dirLength += (direction[i][j] * direction[i][j]);
                 }
                 dirLength = Math.sqrt(dirLength);
-                for (j = 0; j < nDims; j++) {
+                for (j = 0; j < Math.min(nDims,3); j++) {
                 	direction[i][j] = direction[i][j]/dirLength;
                 }
-            } // for (i = 0; i < nDims; i++)
+            } // for (i = 0; i < Math.min(nDims,3); i++)
     	//}
     	bspliner = new AlgorithmBSplineScatteredDataPointSetToImageFilter(nDims);
     	int numberOfFittingLevels[] = new int[nDims];
