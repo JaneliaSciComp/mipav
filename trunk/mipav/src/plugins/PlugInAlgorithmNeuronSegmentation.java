@@ -44,7 +44,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	 * neuron structure to the SWC file. 
 	 */
 	
-	private ArrayList<Integer> branchPts;
+	//private ArrayList<Integer> branchPts;
 	
 	/**
 	 * Coordinates of the growth cone centroid, first 
@@ -440,9 +440,9 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		super.finalize();
 	}
 	
-	public ArrayList<Integer> getBranchPts(){
-		return branchPts;
-	}
+	//public ArrayList<Integer> getBranchPts(){
+	//	return branchPts;
+	//}
 	
 	public float[] getCentroid(){
 		return centroidPts;
@@ -660,9 +660,13 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		
 		saveAsSWC(); 
 		
-		ModelImage skelImage = new ModelImage(ModelImage.BOOLEAN, extents, srcImage.getImageName().concat("_branches"));
+		ModelImage skelImage = new ModelImage(ModelImage.USHORT, extents, srcImage.getImageName().concat("_branches"));
+		int[] skelBuffer = new int[length];
+		for(int i=skeleton.nextSetBit(0);i>0;i=skeleton.nextSetBit(i+1)){
+			skelBuffer[i] = 255;
+		}
 		try {
-			skelImage.importData(0, skeleton, true);
+			skelImage.importData(0, skelBuffer, true);
 		} catch (IOException e1) {
 			MipavUtil.displayError("Image locked");
 			e1.printStackTrace();
@@ -1575,7 +1579,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			MipavUtil.displayError("Unable to write to SWC file");
 			return;
 		}
-		System.out.printf("%d " + typeStr + " %d.0 %d.0 0.0 1.0 %d\n", line, x, y, connected);
+		//System.out.printf("%d " + typeStr + " %d.0 %d.0 0.0 1.0 %d\n", line, x, y, connected);
 	}
 	
 	/**

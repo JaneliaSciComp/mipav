@@ -72,6 +72,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	private int activeSlice;
 
 	private JRadioButton addRB;
+
+	private JCheckBox aviBox;
 	
 	/**
 	 * The active slice's actual depth is displayed here
@@ -100,9 +102,18 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	private JTextField dirText;
 	
 	/**
-	 * Whether or not a VOI is being dragged
+	 * Whether or not a VOI is being dragged so we 
+	 * know when to adjust lines
 	 */
 	private boolean dragged;
+		
+	/**
+	 * These two buttons choose whether the editor displays
+	 * the polygon or the control points
+	 */
+	private JRadioButton editPolyRB;
+
+	private JRadioButton editTraceRB;
 
 	private JFileChooser fileChooser;
 	
@@ -125,6 +136,10 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 */
 	private Linking links;
 	
+	/**
+	 * Store LUT so it is the same between images in the
+	 * series
+	 */
 	private ModelLUT lut;
 	
 	/**
@@ -139,12 +154,18 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 */
 	private Point origin;
 	
+	private JRadioButton originRB;
+
+	private VOIPoint originVOI;
+
 	/**
 	 * Keeps track of the paths in the active slice so
 	 * that they can be quickly moved/deleted/split
 	 */
 	private LineList paths;
 	
+	private VOI polyVOI;
+
 	/**
 	 * Which slice was the previous active slice. Should only
 	 * be a difference of 1, but if an image list is implemented
@@ -152,6 +173,26 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 */
 	private int prevSlice;
 	
+	/**
+	 * Keeps track of which VOI has been force labeled as the
+	 * primary branch tip
+	 */
+	private Point primaryPt;
+
+	private JRadioButton primaryRB;
+
+	private VOIPoint primaryVOI;
+
+	/**
+	 * Keeps track of which VOI has been force labeled as the
+	 * progenitor axon tip
+	 */
+	private Point progenitorPt;
+
+	private JRadioButton progenitorRB;
+
+	private VOIPoint progenitorVOI;
+
 	/**
 	 * Whether or not a VOI was the target of the click
 	 */
@@ -166,8 +207,26 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	
 	private int sliceRange;
 	
+	/**
+	 * Keeps track of which VOI is considered the split point 
+	 * between the growth cone and the axon
+	 */
+	private JRadioButton splitRB;
+
+	private Point splitPt;
+
+	private VOIPoint splitVOI;
+
 	private JSpinner rangeField;
 	
+	/**
+	 * Default resolution right now, in um
+	 */
+	private double resolution = 0.211;
+
+	@SuppressWarnings("rawtypes")
+	private JComboBox resUnits;
+
 	/**
 	 * Part of the 3D image to display on screen
 	 */
@@ -185,58 +244,12 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 */
 	private Point toChange;
 	
-	private int type;
-	
 	private int width;
-	
-	/**********************************************/
-		
-	private JRadioButton editPolyRB;
-	
-	private JRadioButton editTraceRB;
-	
-	private JRadioButton progenitorRB;
-	
-	private JRadioButton splitRB;
-	
-	private VOI polyVOI;
-	
-	private Point progenitorPt;
-	
-	private Point splitPt;
-	
-	private VOIPoint splitVOI;
-	
-	private VOIPoint progenitorVOI;
-	
-	private VOIPoint originVOI;
-	
-	private JRadioButton originRB;
 	
 	private JTextField xResField;
 	
-	@SuppressWarnings("rawtypes")
-	private JComboBox resUnits;
+	/*******************************************************/
 	
-	/**
-	 * Default resolution right now, in um
-	 */
-	private double resolution = 0.211;
-	
-	private JCheckBox aviBox;
-	
-	private JRadioButton primaryRB;
-	
-	//private JRadioButton junctionRB;
-	
-	private VOIPoint primaryVOI;
-	
-	//private VOIPoint junctionVOI;
-	
-	private Point primaryPt;
-	
-	//private Point junctionPt;
-
 	/**
 	 * Primary constructor. Initializes a dialog to ask the user
 	 * for a directory to use
@@ -247,8 +260,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		images = new ArrayList<File>();
 		swcList = new ArrayList<File>();
 		
-		//Right now it's not changeable, but can be if needed
-		//sliceRange = 5;
 		currentSlice = 0;
 		prevSlice = 0;
 		
@@ -260,8 +271,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 * Secondary constructor used for when the neuron segmentation has
 	 * ended and the user wishes to open up the editor immediately at the 
 	 * conclusion of the first round of edits.
-	 * @param directory the directory where images are (which accompanying 
-	 * SWC file)
+	 * @param directory the directory where images are (with accompanying 
+	 * SWC files)
 	 */
 	public PlugInDialogEditNeuron(String directory){
 		super();
@@ -398,6 +409,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			subVolumeFrame.updateFrame(zX, zY);
 			subVolumeFrame.updateImages();
 		} else if(command.equals("Edit Trace")){
+			//Remove polygon, replace with control points
 			subVolume.unregisterAllVOIs();
 			subVolume.registerVOI(controlPts);
 			subVolume.notifyImageDisplayListeners();
@@ -408,8 +420,9 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			splitRB.setEnabled(true);
 			originRB.setEnabled(true);
 			primaryRB.setEnabled(true);
-			//Remove polygon, replace with control points
+			
 		} else if(command.equals("Edit Polygon")){
+			//Remove control points, replace with polygon
 			if(polyVOI.getSize() == 0)
 				polygonDisplay();
 			subVolume.unregisterAllVOIs();
@@ -422,7 +435,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			splitRB.setEnabled(false);
 			originRB.setEnabled(false);
 			primaryRB.setEnabled(false);
-			//Remove control points, replace with polygon
 		}
 	}
 	
@@ -527,6 +539,10 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 * no longer is accounted for and thus has its order incremented. The
 	 * increment occurs through the entire shorter branch, which requires
 	 * an update of all child branches. 
+	 * 
+	 * The exception is in the case of branches labeled as progenitor or
+	 * primary. The primary branch will always take priority, with the
+	 * progrenitor taking second priority.
 	 * @param e
 	 * @param prev
 	 * @param length
@@ -576,7 +592,14 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			return nList;
 		}
 	}
-	
+
+	/**
+	 * Takes the polygonal area that has been edited to determine both
+	 * the centroid and the area of the polygonal region.
+	 * 
+	 * @return centroid and area in an array. Element 0 is x coordinate,
+	 * Element 1 is y coordinate, and Element 2 is the area.
+	 */
 	private double[] calcPolyArea(){
 		
 		double[] output = new double[3];
@@ -597,7 +620,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		output[0] = (double)sumX/(double)area;
 		output[1] = (double)sumY/(double)area;
-		output[2] = area*Math.pow(resolution, 2);
+		output[2] = (double)area*Math.pow(resolution, 2);
 		
 		return output;
 		
@@ -615,6 +638,13 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		fileChooser.showOpenDialog(this);
 	}
 	
+	/**
+	 * Depth-first search for the origin (from the split point) using
+	 * a recursive implementation.   
+	 * @param e
+	 * @param prev
+	 * @return
+	 */
 	private boolean dfsOrigin(LinkElement e, LinkElement prev){
 		if(e.pt.equals(origin))
 			return true;
@@ -773,7 +803,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         
         manage.addOnNextLine(radioPanel);
         
-        //JPanel labelRBPanel = new JPanel();
         JPanel labelRBPanel = new JPanel(new GridLayout(0,2));
         labelRBPanel.setForeground(Color.black);
         labelRBPanel.setBorder(buildTitledBorder("Label Editor"));
@@ -793,28 +822,11 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         labelRBPanel.add(originRB);
         group.add(originRB);
         
-        //JPanel extraPanel = new JPanel();
-        //extraPanel.setForeground(Color.black);
-        
         primaryRB = new JRadioButton("Label Primary Branch (1)");
         primaryRB.setFont(serif12);
-        //extraPanel.add(primaryRB);
         labelRBPanel.add(primaryRB);
         group.add(primaryRB);
-        
-        /*junctionRB = new JRadioButton("Label Progenitor Junction (J)");
-        junctionRB.setFont(serif12);
-        //extraPanel.add(junctionRB);
-        labelRBPanel.add(junctionRB);
-        group.add(junctionRB);*/
 
-        /*PanelManager subManager = new PanelManager();
-        subManager.add(labelRBPanel);
-        subManager.addOnNextLine(extraPanel);
-        JPanel subPanel = subManager.getPanel();
-        subPanel.setBorder(buildTitledBorder("Label options"));*/
-        
-		//manage.addOnNextLine(subPanel);
         manage.addOnNextLine(labelRBPanel);
         
 		JPanel labelPanel = new JPanel();
@@ -824,10 +836,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		sliceLabel.setFont(serif12);
 		sliceLabel.setBorder(new EmptyBorder(0,5,0,5));
 		labelPanel.add(sliceLabel);
-		
-		
-		//JPanel centerPanel = new JPanel();
-		//centerPanel.setForeground(Color.black);
 		
 		centerLabel = new JLabel("Center Depth: 0");
 		centerLabel.setFont(serif12);
@@ -867,7 +875,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         resPanel.add(resUnits);
 		
 		manage.addOnNextLine(resPanel);
-		//manage.add(centerPanel);
 		
 		JPanel optionPanel = new JPanel(new GridLayout(0,3));
 		optionPanel.setForeground(Color.black);
@@ -968,6 +975,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		ModelImage sliceIm = null;
 		
 		try{
+			int type = ModelImage.USHORT;
 			if(currentSlice == prevSlice){//Initial case
 				imBuffer = new int[length*depth];
 				for(int i=0;i<depth;i++){
@@ -1094,11 +1102,9 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		progenitorPt = null;
 		splitPt = null;
 		primaryPt = null;
-		//junctionPt = null;
 		progenitorVOI = null;
 		splitVOI = null;
 		primaryVOI = null;
-		//junctionVOI = null;
 		polyVOI = new VOI((short)1, "Polygon Area", VOI.CONTOUR, -1);
 		
 		ArrayList<String[]> points = null;
@@ -1110,6 +1116,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			String line = null; 
 			points = new ArrayList<String[]>();
 			while (( line = input.readLine()) != null){
+				//Only need to recall information if we are reading
+				//the active slice
 				if(k==activeSlice){
 					if(line.startsWith("# Progenitor")){
 						line = line.substring(line.indexOf("(") + 1);
@@ -1149,17 +1157,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 						Point pt = new Point(xs, ys);
 						primaryPt = pt;
 						continue;
-					} /*else if(line.startsWith("# Junction")){
-						line = line.substring(line.indexOf("(") + 1);
-						int ind = line.indexOf(",");
-						int xs = Integer.valueOf(line.substring(0, ind));
-						line = line.substring(ind+1);
-						ind = line.indexOf(")");
-						int ys = Integer.valueOf(line.substring(0, ind));
-						Point pt = new Point(xs, ys);
-						junctionPt = pt;
-						continue;
-					}*/
+					} 
 				}
 				if(line.startsWith("#"))
 					continue;
@@ -1266,10 +1264,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			} else if(primaryPt != null && primaryPt.equals(checkPt)){
 				primaryVOI = ptVOI;
 				primaryVOI.setLabel("1");
-			} /*else if(junctionPt != null && junctionPt.equals(checkPt)){
-				junctionVOI = ptVOI;
-				junctionVOI.setLabel("J");
-			}*/
+			}
 		}
 		
 		subVolume.getVOIs().add(controlPts);
@@ -1286,7 +1281,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	
 	/**
 	 * Saves the new neuron trace into the old SWC file while moving the
-	 * old file into a new file denoted by "_old". 
+	 * old file into a new file by adding a number to the end of the file
+	 * (after the extension). Larger numbers indicate newer files. 
 	 * @throws IOException
 	 */
 	private void saveNewSWC() throws IOException{
@@ -1332,7 +1328,14 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		if(polyVOI.getSize() == 0)
 			polygonDisplay();
 		
+		//Write out any pertinent information that can be used
+		//if opened later
 		double[] areaResults = calcPolyArea();
+		header +=
+				  "########################################################\n"
+				+ "#                Landmark Coordinates                  #\n"
+				+ "########################################################\n";
+				
 		header += String.format("# Polygonal Area: %5.2f %s\n", areaResults[2], (String)resUnits.getSelectedItem());
 		header += String.format("# Centroid: (%4.2f,%4.2f)\n", areaResults[0], areaResults[1]);
 		header += String.format("# Origin (%d,%d)\n", origin.x, origin.y);
@@ -1342,8 +1345,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			header += String.format("# Split Point (%d,%d)\n", splitPt.x, splitPt.y);
 		if(primaryPt != null)
 			header += String.format("# Primary Branch Point (%d,%d)\n", primaryPt.x, primaryPt.y);
-		/*if(junctionPt != null)
-			header += String.format("# Junction Point (%d,%d)\n", junctionPt.x, junctionPt.y);*/
 		
 		VOIBase base = polyVOI.getCurves().get(0);
 		
@@ -1358,14 +1359,15 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		writer.append(header);
 
+		//Save out the trace as an image, 255 is pixel value of output
 		if(saveBox.isSelected()){
-			BitSet tempMask = new BitSet(length);
+			int[] buffer = new int[length];
 			for(int i=mask.nextSetBit(activeSlice*length); i>=0 && i<(activeSlice+1)*length; i = mask.nextSetBit(i+1)){
-				tempMask.set(i-activeSlice*length);
+				buffer[i-activeSlice*length] = 255;
 			}
 			
-			ModelImage trace = new ModelImage(ModelImage.BOOLEAN, new int[]{width, height}, "Skel");
-			trace.importData(0, tempMask, true);
+			ModelImage trace = new ModelImage(ModelImage.USHORT, new int[]{width, height}, "Skel");
+			trace.importData(0, buffer, true);
 			File current = images.get(currentSlice);
 			name = current.getName();
 			int splitAt = name.lastIndexOf(".");
@@ -1377,55 +1379,60 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		int line = 1;
 		LinkElement start = links.get(origin);
-		String lengthHeader = "# Coordinates are for endpoints of projections\n"
+		String lengthHeader = "\n# Coordinates are for endpoints of projections\n"
 				+ "# Distances are to branch point of this projection's order\n";
-		/*if(links.size()==2){
-			LinkElement e = links.get(0) == start ? links.get(1) : start;
-			writer.append(lengthHeader);
-			writePoint(new NeuronLength(e.pt, e.pt.distance(start.pt)), writer);
-		} else if(links.size() > 2){*/
+		
 		PriorityQueue<NeuronLength> pq = new PriorityQueue<NeuronLength>();
 		writer.append(lengthHeader);
 		if(splitPt != null){
+			double longestLength = 0;
 			LinkElement split = links.get(splitPt);
 			LinkElement toOrigin = null;
 			ArrayList<LinkElement> list = split.linked;
+
+			//Starting from the split point, use
+			//a DFS on each link to see which one goes
+			//towards the origin so you can separate 
+			//the two lengths
 			for(int i=0;i<list.size();i++){
 				LinkElement next = list.get(i);
 				if(dfsOrigin(next, split)){
 					toOrigin = next;
 				}
 			}
-			//Find lenghts towards the origin: 
-			writer.append("# Lengths towards origin\n");
+			//Find lengths towards the origin:
+					 
+			writer.append("\n########################################################\n"
+					+ "#               Lengths towards origin                 #\n"
+					+ "########################################################\n");
 			pq.addAll(calcLengths(toOrigin, split, toOrigin.pt.distance(split.pt)));
 			NeuronLength nl;
+			nl = pq.peek();
+			longestLength += nl.length;
 			while((nl = pq.poll()) != null)
 				writePoint(nl, writer);
-			writer.append("# Lengths towards progenitor\n");
+			writer.append("\n########################################################\n"
+					+ "#             Lengths towards progenitor               #\n"
+					+ "########################################################\n");
 			pq.clear();
 			pq.addAll(calcLengths(split, toOrigin, 0));
+			nl = pq.peek();
+			longestLength += nl.length;
 			while((nl = pq.poll()) != null)
 				writePoint(nl, writer);
-			/*LinkElement split = links.get(splitPt);
-				LinkElement e = split.linked.get(0);
-				pq.addAll(calcLengths(e, split, e.pt.distance(split.pt)));
-				e = split.linked.get(1);
-				pq.addAll(calcLengths(e, split, e.pt.distance(split.pt)));*/
+			String lengthStr = String.format("%4.2f %s", longestLength*resolution, (String)resUnits.getSelectedItem());
+			writer.append("\n# Origin to Primary length: " + lengthStr + "\n");
+			
 		} else{
-			//LinkElement e = start.linked.get(0);
 			pq = calcLengths(start, null, 0);
 			NeuronLength nl;
 			while((nl = pq.poll()) != null)
 				writePoint(nl, writer);
 		}
-			
-			
-		//}
 		
 		String dimStr = String.format("# Width %d\n# Height %d\n", width, height);
 		String noteStr = 
-				  "########################################################\n"
+				"\n########################################################\n"
 				+ "#              START OF SWC COORDINATES                #\n"
 				+ "########################################################\n"
 				+ "# NOTE: The above coordinates are in image space coordinates\n"
@@ -1434,6 +1441,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		writer.append(dimStr);
 		writer.append(noteStr);
 		
+		//Read the origin point and write all necessary information
 		Point pt = start.pt;
 		int[] parts = new int[7];
 
@@ -1470,6 +1478,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			visited.add(next);
 		}
 		
+		//Traverse linked list and write each point out
 		while(parentPt.peek() != null){
 			line++;
 			start = parentPt.pollFirst();
@@ -1513,15 +1522,25 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		Point pt = n.endPt;
 		double length = resolution * n.length;
 		int o = n.order;
+		String p = "";
+		if(progenitorPt != null && pt.equals(progenitorPt))
+			p = "(Progenitor)";
+		else if(primaryPt != null && pt.equals(primaryPt))
+			p = "(Primary)";
+		else if(splitPt != null && pt.equals(origin))
+			p = "(Origin)";
 		String coord = String.format("# (%d, %d) ", pt.x, pt.y);
-		//String order = "";
 		String order = String.format("Branch order: %d ", o);
-		String value = String.format("Length: %4.2f %s", length, (String)resUnits.getSelectedItem());
-		String outString = coord + order + value + "\n";
+		String value = String.format("Length: %4.2f %s ", length, (String)resUnits.getSelectedItem());
+		String outString = coord + order + value + p + "\n";
 		writer.append(outString);
 				
 	}
 	
+	/**
+	 * Finds which links only have one, and thus are tips, 
+	 * which are used to draw the polygonal area
+	 */
 	private void polygonDisplay(){
 		
 		ArrayList<Point> polyPt = new ArrayList<Point>();
@@ -1532,7 +1551,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				polyPt.add(l.pt);
 			}
 		}
-		
 		
 		Vector3f[] tipVec = new Vector3f[polyPt.size()];
 		for(int i=0;i<polyPt.size();i++){
@@ -1641,33 +1659,48 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		if(addRB.isSelected()){
 			
-			int ind = -1;
+			int dx, dy;
+			int maxDistSqr = Integer.MIN_VALUE;
+			int ind;
+			int outX = -1;
+			int outY = -1;
 			
+			//Search for closest point on line in 5x5 box
+			//to attach the node to
 			if(mask.get(x + y*width)){
-				ind = 0;
+				outX = x;
+				outY = y;
 			}
 			else{
-				for(int ny = y-1;ny<=y+1;ny++){
+				for(int ny = y-2;ny<=y+2;ny++){
 					if(ny < 0 || ny >= height) continue;
-					for(int nx = x-1;nx<=x+1;nx++){
+					for(int nx = x-2;nx<=x+2;nx++){
 						if(nx < 0 || nx >= width) continue;
 						ind = nx + ny*width;
-						if(mask.get(ind)){ 
-							x = nx;
+						if(mask.get(ind)){
+							dx = x - nx;
+							dx *= dx;
+							dy = y - ny;
+							dy *= dy;
+							int dSqr = dx + dy;
+							if(dSqr > maxDistSqr){
+								outX = nx;
+								outY = ny;
+								maxDistSqr = dSqr;
+							}
+							/*x = nx;
 							y = ny;
-							break;
+							break;*/
 						}
 					}
 				}
 			}
 			
-			if(ind == -1) return;
+			if(outX == -1 || outY == -1) return;
 
-			LinePath onPath = paths.findPath(new Point(x, y));
-			if(onPath == null)
-				System.out.println("Did not find path");
-			else{
-				Point pt = new Point(x,y);
+			LinePath onPath = paths.findPath(new Point(outX, outY));
+			if(onPath != null){
+				Point pt = new Point(outX,outY);
 				links.addNode(pt, onPath);
 			}
 
@@ -1704,16 +1737,16 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			links.removeNode(coord);
 
 			lastActive = null;
-			
-			subVolume.notifyImageDisplayListeners();
 
 		} else if(progenitorRB.isSelected() || splitRB.isSelected() || originRB.isSelected()
-				|| primaryRB.isSelected() /*|| junctionRB.isSelected()*/){
+				|| primaryRB.isSelected()){
 			VOIBase activeVOI = lastActive;
 			if(activeVOI == null) return;
 			VOIPoint ptVOI = (VOIPoint) activeVOI;
 			Vector3f ptVec = ptVOI.exportPoint();
 			Point pt = new Point((int)ptVec.X, (int)ptVec.Y);
+			
+			//If this VOI already has a label, remove it
 			if(activeVOI == progenitorVOI){
 				progenitorVOI.setLabel("");
 				progenitorVOI = null;
@@ -1730,11 +1763,9 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				primaryVOI.setLabel("");
 				primaryVOI = null;
 				primaryPt = null;
-			} /*else if(activeVOI == junctionVOI){
-				junctionVOI.setLabel("");
-				junctionVOI = null;
-				junctionPt = null;
-			}*/
+			}
+			
+			//Add correct label and set the correct variables
 			if(progenitorRB.isSelected()){
 				if(progenitorVOI != null)
 					progenitorVOI.setLabel("");
@@ -1759,13 +1790,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				primaryPt = pt;
 				primaryVOI = ptVOI;
 				primaryVOI.setLabel("1");
-			} /*else if(junctionRB.isSelected()){
-				if(junctionVOI!= null)
-					junctionVOI.setLabel("");
-				junctionPt = pt;
-				junctionVOI = ptVOI;
-				junctionVOI.setLabel("J");
-			}*/
+			}
 			
 			subVolume.notifyImageDisplayListeners();
 		} 
@@ -1779,7 +1804,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	/**
 	 * The precursor to a drag movement involves a button
 	 * press, so check to see if a VOI was clicked. If not,
-	 * the any following move or delete actions will not
+	 * then any following move or delete actions will not
 	 * occur. 
 	 */
 	@Override
@@ -1957,7 +1982,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	/**
 	 * Subclass, mostly used as a container. Keeps track of 
 	 * the endpoints and which points are assigned to the
-	 * endpoints (as determined by Bresenham's Line Algorithm.
+	 * endpoints (as determined by Bresenham's Line Algorithm).
 	 * @author wangvg
 	 *
 	 */
@@ -2133,6 +2158,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				
 			}	
 			remove(eNode);	
+			
+			subVolume.notifyImageDisplayListeners();
 		}
 		
 	}
@@ -2165,9 +2192,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		@Override
 		/**
 		 * Flipped ordering so that highest priority is highest length
-		 * 
-		 * Right now, progenitor/origin has highest priority in finding length
-		 * This has since been changed to what is seen below.
 		 * 
 		 * Changed so labeled primary branch has highest priority, with the
 		 * progenitor haveing second highest priority
