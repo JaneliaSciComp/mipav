@@ -1232,11 +1232,11 @@ public class JDialogLattice extends JDialogBase {
             voiFileDir.mkdir();
         }
 
-        File file = new File(voiDir + "LatticeInfo" + postFix + ".xls");
+        File file = new File(voiDir + "LatticeInfo" + postFix + ".csv");
         if ( file.exists() )
         {
         	file.delete();
-        	file = new File(voiDir + "LatticeInfo" + postFix + ".xls");
+        	file = new File(voiDir + "LatticeInfo" + postFix + ".csv");
         }
 
 
@@ -1244,27 +1244,13 @@ public class JDialogLattice extends JDialogBase {
 
         	FileWriter fw = new FileWriter(file);
         	BufferedWriter bw = new BufferedWriter(fw);
-        	bw.write( "Total Length:\t" +  length + "\n" );
+        	bw.write( "Total Length:," +  length + "\n" );
             bw.newLine();
-//        	bw.write( "Diameter" + "\t" + "Left" + "\t"  + "Right" + "\t" + "\n" );
+        	bw.write( "pair" + "," + "diameter" + ","  + "left distance" + "," + "right distance" + "\n" );
         	for ( int i = 0; i < leftPairs.length; i++ )
         	{
-        		bw.write(i + "\t" + VoxelSize * left.elementAt(i).distance(right.elementAt(i)) + "\t" + VoxelSize * leftPairs[i] + "\t" + VoxelSize * rightPairs[i] + "\n");
+        		bw.write(i + "," + VoxelSize * left.elementAt(i).distance(right.elementAt(i)) + "," + VoxelSize * leftPairs[i] + "," + VoxelSize * rightPairs[i] + "\n");
         	}
-//        	for ( int i = 0; i < leftPairs.length; i++ )
-//        	{
-//        		bw.write( "Left" + i + "->" + "Right" + i + "\t" + left.elementAt(i).distance(right.elementAt(i)) + "\n" );
-//        	}
-//            bw.newLine();
-//        	for ( int i = 1; i < leftPairs.length; i++ )
-//        	{
-//        		bw.write( "Left" + (i-1) + "->" + "Left" + i + "\t" + leftPairs[i] + "\n" );
-//        	}
-//            bw.newLine();
-//        	for ( int i = 1; i < leftPairs.length; i++ )
-//        	{
-//        		bw.write( "Right" + (i-1) + "->" + "Right" + i + "\t" + rightPairs[i] + "\n" );
-//        	}
             bw.newLine();
         	bw.close();
         } catch (final Exception e) {
