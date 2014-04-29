@@ -196,10 +196,10 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 			organized[4] = "null";
 		else{
 			organized[4] = input[18].trim().split(" ")[0];
-			if(organized[3].contains("-") || organized[3].contains("/")){
-				if(organized[3].contains("-"))
-					tempArray = organized[3].split("-");
-				else tempArray = organized[3].split("/");
+			if(organized[4].contains("-") || organized[4].contains("/")){
+				if(organized[4].contains("-"))
+					tempArray = organized[4].split("-");
+				else tempArray = organized[4].split("/");
 				tempStr = tempArray[0];
 				if(tempArray[1].startsWith("0"))
 					tempArray[0] = tempArray[1].replace("0", "");
@@ -209,7 +209,7 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 				else tempArray[1] = tempArray[2];
 				tempArray[2] = tempStr;
 			} else {
-				tempArray = new String[]{"00", "00", "00"};
+				tempArray = new String[]{"0", "0", "0"};
 			}
 			organized[4] = tempArray[0] + "/" + tempArray[1] + "/" + tempArray[2];
 		}//Date Received

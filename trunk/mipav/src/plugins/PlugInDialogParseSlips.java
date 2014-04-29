@@ -22,6 +22,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.components.PanelManager;
 
@@ -45,8 +46,6 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 	private JFileChooser fileChooser;
 	
 	private String whichFile;
-	
-	private String baseDir;
 	
 	private JRadioButton delRB;
 	
@@ -80,7 +79,7 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 		else if(command.equals("ApproveSelection") && whichFile.equals("Report")){
 			if(fileChooser.getSelectedFile().exists()){
 				reportField.setText(fileChooser.getSelectedFile().toString());
-				baseDir = reportField.getText();
+				Preferences.setImageDirectory(fileChooser.getSelectedFile());
 			}
 			else
 				MipavUtil.displayError("This file does not exists");
@@ -88,7 +87,8 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 		else if(command.equals("ApproveSelection") && whichFile.equals("Coriell")){
 			if(fileChooser.getSelectedFile().exists()){
 				coriellField.setText(fileChooser.getSelectedFile().toString());
-				baseDir = coriellField.getText();
+				Preferences.setImageDirectory(fileChooser.getSelectedFile());
+				//baseDir = coriellField.getText();
 			}
 			else
 				MipavUtil.displayError("This file does not exists");
@@ -96,7 +96,8 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 		else if(command.equals("ApproveSelection") && whichFile.equals("Catalog")){
 			if(fileChooser.getSelectedFile().exists()){
 				catalogField.setText(fileChooser.getSelectedFile().toString());
-				baseDir = catalogField.getText();
+				Preferences.setImageDirectory(fileChooser.getSelectedFile());
+				//baseDir = catalogField.getText();
 			}
 			else 
 				MipavUtil.displayError("This file does not exists");
@@ -360,7 +361,7 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 		
 		whichFile = command;
 		FileNameExtensionFilter csvFilter = new FileNameExtensionFilter("CSV file", "csv");
-		fileChooser = new JFileChooser(baseDir);
+		fileChooser = new JFileChooser(Preferences.getImageDirectory());
 		fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 		fileChooser.addActionListener(this);
 		fileChooser.addChoosableFileFilter( csvFilter);
