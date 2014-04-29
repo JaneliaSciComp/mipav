@@ -96,6 +96,8 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 	private int maskLargest[];
 
 	private int maskExtents[];
+	
+	private boolean selfTest = false;
 
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
@@ -245,6 +247,12 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 			fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
 			srcImage.releaseLock();
 
+			return;
+		}
+		
+		if (selfTest) {
+			selfTest();
+			setCompleted(true);
 			return;
 		}
 
@@ -397,10 +405,10 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 						logBiasField, newLogBiasField);
 				Preferences.debug("currentConvergenceMeasurement = " + currentConvergenceMeasurement + "\n",
 						Preferences.DEBUG_ALGORITHM);
+				logBiasField = newLogBiasField;
 				for (i = 0; i < length; i++) {
 					if (entireImage || (mask.get(i) && (confidence == null))
 							|| ((confidence != null) && (confidence[i] > 0.0))) {
-						logBiasField[i] = newLogBiasField[i];
 						logUncorrected[i] = logFilter[i] - logBiasField[i];
 					}
 				}
@@ -847,11 +855,17 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
         bspliner.generateData();
         
         // Add the bias field control points to the current estimate
+        int latticeExtents[] = null;
+        int latticeExtentsLength = 1;
         if (logBiasFieldControlPointLattice == null) {
         	logBiasFieldControlPointLattice = bspliner.getPhiLattice();
+        	latticeExtents = logBiasFieldControlPointLattice.getExtents();
+        	for (i = 0; i < latticeExtents.length; i++) {
+        		latticeExtentsLength *= latticeExtents[i];
+        	}
         }
         else {
-        	for (i = 0; i < length; i++) {
+        	for (i = 0; i < latticeExtentsLength; i++) {
         		logBiasFieldControlPointLattice.set(i, logBiasFieldControlPointLattice.getDouble(i) + 
         				                               bspliner.getPhiLattice().getDouble(i));
         	}
@@ -905,5 +919,24 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		}
 		sigma = Math.sqrt(sigma / (N - 1.0));
 		return (sigma / mu);
+	}
+	
+	private void selfTest() {
+	  // Create an image where the illumination doubles across x
+	  double outputBuffer[] = new double[sliceSize];
+	  for (int y = 0; y < destImage.getExtents()[1]; y++) {
+		  for (int x = 0; x < destImage.getExtents()[0]; x++) {
+			  int i = x + y * destImage.getExtents()[0];
+			  outputBuffer[i] = 100 * (1.0 + (double)x/(double)(destImage.getExtents()[0]));  
+		  }
+	  }
+	  
+	  try {
+		  destImage.importData(0, outputBuffer, true);
+	  }
+	  catch (IOException e) {
+		  MipavUtil.displayError("IOException on destImage.importData(0, outputBuffer, true");
+	  }
+	  return;
 	}
 }
