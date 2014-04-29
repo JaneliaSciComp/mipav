@@ -33,6 +33,7 @@ import javax.swing.event.ChangeListener;
  * 
  */
 public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInterface, ChangeListener {
+    private static final long serialVersionUID = 8406327135505127177L;
 
     private static String title = "TRE T2 Mapper";
 
@@ -162,6 +163,8 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
 
     private JTabbedPane algoPane;
 
+    private int previousTabIndex = 0;
+
     private JPanel paramPanel;
 
     private JPanel conventionalPanel;
@@ -219,15 +222,26 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         }
     }
 
-    private boolean setVariables() {
-
-        // general variables
+    private boolean setMethodVariables() {
         Nfa_phase0 = (int) Double.valueOf(nfaPhase0Text.getText()).doubleValue();
         Nfa_phase180 = (int) Double.valueOf(nfaPhase180Text.getText()).doubleValue();
         performConventionalModelling = doConventionalT2Button.isSelected();
         performApproxModelling = doApproximateT2Button.isSelected();
         performFullModelling = doFullT2Button.isSelected();
         includeB1Map = doB1MapBox.isSelected();
+
+        // do some checking
+        if (Nfa_phase0 + Nfa_phase180 + 1 > wList.length) {
+            MipavUtil.displayWarning("Please open all nessesary images first: At least 2 SSFP Images + 1 T1 Map");
+            return false;
+        }
+
+        if (performApproxModelling == true || performFullModelling == true) {
+            if (Nfa_phase0 + Nfa_phase180 < 3) {
+                MipavUtil.displayWarning("T2 calculations require at least three SSFP images (2 at each RF phase increment).");
+                return false;
+            }
+        }
 
         if (processType.getSelection() == null) {
             MipavUtil.displayInfo("Please select a processing method");
@@ -247,19 +261,6 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
             performApproxModelling = false;
         }
 
-        // do some checking
-        if (Nfa_phase0 + Nfa_phase180 + 1 > wList.length) {
-            MipavUtil.displayWarning("Please import all nessesary images first: At least 2 SSFP Images + 1 T1 Map");
-            return false;
-        }
-
-        if (performApproxModelling == true || performFullModelling == true) {
-            if (Nfa_phase0 + Nfa_phase180 < 3) {
-                MipavUtil.displayWarning("T2 calculations require at least three SSFP images (2 at each RF phase increment).");
-                return false;
-            }
-        }
-
         if (performConventionalModelling) {
             if (Nfa_phase0 >= 1) {
                 performConventionalWith180Phase = false;
@@ -273,7 +274,10 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
             performConventionalWith0Phase = false;
         }
 
-        // specifics variables
+        return true;
+    }
+
+    private boolean setParamVariables() {
         maxT2 = Double.valueOf(maxT2Text.getText()).doubleValue();
         maxM0 = Double.valueOf(maxM0Text.getText()).doubleValue();
         calculateT2 = doT2Box.isSelected();
@@ -283,6 +287,10 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         }
         invertT2toR2 = showR2Box.isSelected();
 
+        return true;
+    }
+
+    private boolean setModelingVariables() {
         if ( !performConventionalModelling || performConventionalWith0Phase) {
             for (int i = 0; i < Nfa_phase0; i++) {
                 ssfpImageIndex_phase0[i] = phaseImageList[i].getSelectedIndex();
@@ -304,14 +312,32 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
             b1ImageIndex = preCalcB1MapBox.getSelectedIndex();
         }
 
-        geScanner = isGEScannerButton.isSelected();
-        siemensScanner = isSiemensButton.isSelected();
+        if (isGEScannerButton != null && isSiemensButton != null) {
+            geScanner = isGEScannerButton.isSelected();
+            siemensScanner = isSiemensButton.isSelected();
 
-        if (geScanner == true) {
-            siemensScanner = false;
+            if (geScanner == true) {
+                siemensScanner = false;
+            }
+            if (siemensScanner == true) {
+                geScanner = false;
+            }
         }
-        if (siemensScanner == true) {
-            geScanner = false;
+
+        return true;
+    }
+
+    private boolean setVariables() {
+        if ( !setMethodVariables()) {
+            return false;
+        }
+
+        if ( !setParamVariables()) {
+            return false;
+        }
+
+        if ( !setModelingVariables()) {
+            return false;
         }
 
         return true;
@@ -792,7 +818,9 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         doFullT2Button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent arg0) {
-                showB0Box.getParent().setVisible(doFullT2Button.isSelected());
+                if (showB0Box != null) {
+                    showB0Box.getParent().setVisible(doFullT2Button.isSelected());
+                }
             }
         });
 
@@ -800,7 +828,9 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         doB1MapBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent arg0) {
-                preCalcB1MapBox.getParent().setVisible(doB1MapBox.isSelected());
+                if (preCalcB1MapBox != null) {
+                    preCalcB1MapBox.getParent().setVisible(doB1MapBox.isSelected());
+                }
             }
         });
 
@@ -955,7 +985,16 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
     @Override
     public void stateChanged(final ChangeEvent e) {
         final Object source = e.getSource();
+
         if (source == algoPane) {
+            if (previousTabIndex == 0) {
+                setMethodVariables();
+            } else if (previousTabIndex == 1) {
+                setParamVariables();
+            } else {
+                setModelingVariables();
+            }
+
             if (algoPane.getSelectedComponent() == paramPanel) {
                 paramPanel = buildParamPanel();
                 algoPane.setComponentAt(algoPane.getSelectedIndex(), paramPanel);
@@ -966,6 +1005,8 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
                 advancedPanel = buildAdvancedPanel();
                 algoPane.setComponentAt(algoPane.getSelectedIndex(), advancedPanel);
             }
+
+            previousTabIndex = algoPane.getSelectedIndex();
         }
     }
 }
