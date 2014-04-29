@@ -951,7 +951,9 @@ public class ViewMenuBar {
                                                 false),
 //                                        menuBuilder.buildCheckBoxMenuItem("Show Model", "showStraightenLattice", false),
                                         menuBuilder.buildMenuItem("Apply Lattice Straightening", "straightenLattice", 0, null,
-                                                        false)
+                                        		false),
+                                        menuBuilder.buildMenuItem("Default Voxel Size", "voxelSize", 0, null,
+                                        		false)
                                         		}
                                 ),
                                 ViewMenuBar.separator,

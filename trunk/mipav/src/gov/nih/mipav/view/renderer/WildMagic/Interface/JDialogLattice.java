@@ -15,6 +15,7 @@ import java.util.BitSet;
 import java.util.Vector;
 
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -22,10 +23,14 @@ import javax.swing.JTextField;
 
 import WildMagic.LibFoundation.Curves.BSplineCurve3f;
 import WildMagic.LibFoundation.Curves.NaturalSpline3;
+import WildMagic.LibFoundation.Intersection.IntrSegment3Triangle3f;
+import WildMagic.LibFoundation.Intersection.IntrTriangle3Triangle3f;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Ellipsoid3f;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
+import WildMagic.LibFoundation.Mathematics.Segment3f;
+import WildMagic.LibFoundation.Mathematics.Triangle3f;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.Mathematics.Vector4f;
@@ -49,6 +54,7 @@ import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
+import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -61,6 +67,7 @@ import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 
 public class JDialogLattice extends JDialogBase {
 
+	public static float VoxelSize = 0.1625f;
 	private ModelImage image;    
 	private JTextField[][] pairFields;
 	private JPanel okCancelPanel;    
@@ -656,147 +663,180 @@ public class JDialogLattice extends JDialogBase {
 		{
 			straighten(image, samplingPlanes, ellipseBounds, 2*extent, latticeSlice, false, false );
 		}
-		float scale = 15;
-		int numPts = 12;
-		double[] adCos = new double[numPts];
-		double[] adSin = new double[numPts];
-		for ( int i = 0; i < numPts; i++ )
-		{
-			adCos[i] = Math.cos( Math.PI * 2.0 * i/numPts );
-			adSin[i] = Math.sin( Math.PI * 2.0 * i/numPts);
-		}
-		
-		Attributes attributes = new Attributes();
-		attributes.SetPChannels(3);
-		attributes.SetNChannels(3);
-		attributes.SetCChannels(0,3);
-		VertexBuffer vBuffer = new VertexBuffer( attributes, centerPositions.size() * numPts + 2 );
-		IndexBuffer iBuffer = new IndexBuffer( vBuffer.GetVertexQuantity() * 6 );
-		int vCount = 0;
-		int nCount = 0;
-		int cCount = 0;
-		int iCount = 0;
-		for ( int i = 0; i < centerPositions.size(); i++ )
-		{
-			Vector3f rkEye = centerPositions.elementAt(i);
-			Vector3f rkRVector = rightVectors.elementAt(i);
-			Vector3f rkUVector = upVectors.elementAt(i);
-	        Vector3f rkDVector = centerTangents.elementAt(i);
-			if ( i == 0 )
-			{
-				vBuffer.SetPosition3(vCount++, rkEye);
-				vBuffer.SetNormal3(nCount++, Vector3f.neg(rkDVector) );
-				
-				for ( int j = 0; j < numPts; j++ )
-				{
-					Vector3f pos1 = Vector3f.scale((float) (scale * adCos[j]), rkRVector);
-					Vector3f pos2 = Vector3f.scale((float) (scale * adSin[j]), rkUVector);
-					Vector3f pos = Vector3f.add(pos1,pos2);
-					pos.add(rkEye);
-					Vector3f normal = Vector3f.sub( pos, rkEye );
-					normal.normalize();
-					vBuffer.SetPosition3(vCount++, pos);
-					vBuffer.SetNormal3(nCount++, normal );
-					
-					if ( j < (numPts-1) )
-					{
-						iBuffer.GetData()[iCount++] = vCount - 1;
-						iBuffer.GetData()[iCount++] = vCount;
-						iBuffer.GetData()[iCount++] = 0;
-						
-						iBuffer.GetData()[iCount++] = vCount;
-						iBuffer.GetData()[iCount++] = vCount - 1;
-						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
-
-						iBuffer.GetData()[iCount++] = vCount;
-						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
-						iBuffer.GetData()[iCount++] = vCount + numPts;
-					}
-					else
-					{
-						iBuffer.GetData()[iCount++] = vCount - 1;
-						iBuffer.GetData()[iCount++] = vCount - numPts;
-						iBuffer.GetData()[iCount++] = 0;
-						
-						iBuffer.GetData()[iCount++] = vCount - numPts;
-						iBuffer.GetData()[iCount++] = vCount - 1;
-						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
-
-						iBuffer.GetData()[iCount++] = vCount - numPts;
-						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
-						iBuffer.GetData()[iCount++] = vCount;
-					}
-				}
-			}
-			else if ( i == (centerPositions.size() - 1) )
-			{				
-				int centerIndex = vBuffer.GetVertexQuantity() - 1;
-				for ( int j = 0; j < numPts; j++ )
-				{
-					Vector3f pos1 = Vector3f.scale((float) (scale * adCos[j]), rkRVector);
-					Vector3f pos2 = Vector3f.scale((float) (scale * adSin[j]), rkUVector);
-					Vector3f pos = Vector3f.add(pos1,pos2);
-					pos.add(rkEye);
-					Vector3f normal = Vector3f.sub( pos, rkEye );
-					normal.normalize();
-					vBuffer.SetPosition3(vCount++, pos);
-					vBuffer.SetNormal3(nCount++, normal );
-					
-					if ( j < (numPts-1) )
-					{
-						iBuffer.GetData()[iCount++] = vCount;
-						iBuffer.GetData()[iCount++] = vCount - 1;
-						iBuffer.GetData()[iCount++] = centerIndex;
-					}
-					else
-					{
-						iBuffer.GetData()[iCount++] = vCount - numPts;
-						iBuffer.GetData()[iCount++] = vCount - 1;
-						iBuffer.GetData()[iCount++] = centerIndex;
-					}
-				}
-
-				vBuffer.SetPosition3(vCount++, rkEye);
-				vBuffer.SetNormal3(nCount++, rkDVector );
-			}
-			else
-			{				
-				for ( int j = 0; j < numPts; j++ )
-				{
-					Vector3f pos1 = Vector3f.scale((float) (scale * adCos[j]), rkRVector);
-					Vector3f pos2 = Vector3f.scale((float) (scale * adSin[j]), rkUVector);
-					Vector3f pos = Vector3f.add(pos1,pos2);
-					pos.add(rkEye);
-					Vector3f normal = Vector3f.sub( pos, rkEye );
-					normal.normalize();
-					vBuffer.SetPosition3(vCount++, pos);
-					vBuffer.SetNormal3(nCount++, normal );
-					
-					if ( j < (numPts-1) )
-					{
-						iBuffer.GetData()[iCount++] = vCount;
-						iBuffer.GetData()[iCount++] = vCount - 1;
-						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
-
-						iBuffer.GetData()[iCount++] = vCount;
-						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
-						iBuffer.GetData()[iCount++] = vCount + numPts;
-					}
-					else
-					{
-						iBuffer.GetData()[iCount++] = vCount - numPts;
-						iBuffer.GetData()[iCount++] = vCount - 1;
-						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
-
-						iBuffer.GetData()[iCount++] = vCount - numPts;
-						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
-						iBuffer.GetData()[iCount++] = vCount;
-					}
-				}
-			}
-		}
-		
-		saveMesh( image, new TriMesh(vBuffer, iBuffer, false), true );
+//		float scale = 1;
+//		int numPts = 6;
+//		double[] adCos = new double[numPts];
+//		double[] adSin = new double[numPts];
+//		for ( int i = 0; i < numPts; i++ )
+//		{
+//			adCos[i] = Math.cos( Math.PI * 2.0 * i/numPts );
+//			adSin[i] = Math.sin( Math.PI * 2.0 * i/numPts);
+//		}
+//		
+//		int numSlices = left.size();
+//		Attributes attributes = new Attributes();
+//		attributes.SetPChannels(3);
+//		attributes.SetNChannels(3);
+//		attributes.SetCChannels(0,3);
+//		VertexBuffer vBuffer = new VertexBuffer( attributes, numSlices * numPts + 2 );
+//		IndexBuffer iBuffer = new IndexBuffer( vBuffer.GetVertexQuantity() * 6 );
+//		int vCount = 0;
+//		int nCount = 0;
+//		int cCount = 0;
+//		int iCount = 0;
+//		for ( int i = 0; i < numSlices; i++ )
+//		{
+//			int index = latticeSlice[i];
+//			
+//			
+//			Vector3f rkEye = centerPositions.elementAt(index);
+//			Vector3f rkRVector = rightVectors.elementAt(index);
+//			Vector3f rkUVector = upVectors.elementAt(index);
+//	        Vector3f rkDVector = centerTangents.elementAt(index);
+//			if ( i == 0 )
+//			{
+//				vBuffer.SetPosition3(vCount++, rkEye);
+//				vBuffer.SetNormal3(nCount++, Vector3f.neg(rkDVector) );
+//				
+//				for ( int j = 0; j < numPts; j++ )
+//				{
+//					Vector3f pos1 = Vector3f.scale((float) (scale * adCos[j]), rkRVector);
+//					Vector3f pos2 = Vector3f.scale((float) (scale * adSin[j]), rkUVector);
+//					Vector3f pos = Vector3f.add(pos1,pos2);
+//					pos.add(rkEye);
+//					Vector3f normal = Vector3f.sub( pos, rkEye );
+//					normal.normalize();
+//					vBuffer.SetPosition3(vCount++, pos);
+//					vBuffer.SetNormal3(nCount++, normal );
+//					
+//					if ( j < (numPts-1) )
+//					{
+//						iBuffer.GetData()[iCount++] = vCount - 1;
+//						iBuffer.GetData()[iCount++] = vCount;
+//						iBuffer.GetData()[iCount++] = 0;
+//						
+//						iBuffer.GetData()[iCount++] = vCount;
+//						iBuffer.GetData()[iCount++] = vCount - 1;
+//						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
+//
+//						iBuffer.GetData()[iCount++] = vCount;
+//						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
+//						iBuffer.GetData()[iCount++] = vCount + numPts;
+//					}
+//					else
+//					{
+//						iBuffer.GetData()[iCount++] = vCount - 1;
+//						iBuffer.GetData()[iCount++] = vCount - numPts;
+//						iBuffer.GetData()[iCount++] = 0;
+//						
+//						iBuffer.GetData()[iCount++] = vCount - numPts;
+//						iBuffer.GetData()[iCount++] = vCount - 1;
+//						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
+//
+//						iBuffer.GetData()[iCount++] = vCount - numPts;
+//						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
+//						iBuffer.GetData()[iCount++] = vCount;
+//					}
+//				}
+//			}
+//			else if ( i == (numSlices - 1) )
+//			{				
+//				int centerIndex = vBuffer.GetVertexQuantity() - 1;
+//				for ( int j = 0; j < numPts; j++ )
+//				{
+//					Vector3f pos1 = Vector3f.scale((float) (scale * adCos[j]), rkRVector);
+//					Vector3f pos2 = Vector3f.scale((float) (scale * adSin[j]), rkUVector);
+//					Vector3f pos = Vector3f.add(pos1,pos2);
+//					pos.add(rkEye);
+//					Vector3f normal = Vector3f.sub( pos, rkEye );
+//					normal.normalize();
+//					vBuffer.SetPosition3(vCount++, pos);
+//					vBuffer.SetNormal3(nCount++, normal );
+//					
+//					if ( j < (numPts-1) )
+//					{
+//						iBuffer.GetData()[iCount++] = vCount;
+//						iBuffer.GetData()[iCount++] = vCount - 1;
+//						iBuffer.GetData()[iCount++] = centerIndex;
+//					}
+//					else
+//					{
+//						iBuffer.GetData()[iCount++] = vCount - numPts;
+//						iBuffer.GetData()[iCount++] = vCount - 1;
+//						iBuffer.GetData()[iCount++] = centerIndex;
+//					}
+//				}
+//
+//				vBuffer.SetPosition3(vCount++, rkEye);
+//				vBuffer.SetNormal3(nCount++, rkDVector );
+//			}
+//			else
+//			{				
+//				for ( int j = 0; j < numPts; j++ )
+//				{
+//					Vector3f pos1 = Vector3f.scale((float) (scale * adCos[j]), rkRVector);
+//					Vector3f pos2 = Vector3f.scale((float) (scale * adSin[j]), rkUVector);
+//					Vector3f pos = Vector3f.add(pos1,pos2);
+//					pos.add(rkEye);
+//					Vector3f normal = Vector3f.sub( pos, rkEye );
+//					normal.normalize();
+//					vBuffer.SetPosition3(vCount++, pos);
+//					vBuffer.SetNormal3(nCount++, normal );
+//					
+//					if ( j < (numPts-1) )
+//					{
+//						iBuffer.GetData()[iCount++] = vCount;
+//						iBuffer.GetData()[iCount++] = vCount - 1;
+//						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
+//
+//						iBuffer.GetData()[iCount++] = vCount;
+//						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
+//						iBuffer.GetData()[iCount++] = vCount + numPts;
+//					}
+//					else
+//					{
+//						iBuffer.GetData()[iCount++] = vCount - numPts;
+//						iBuffer.GetData()[iCount++] = vCount - 1;
+//						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
+//
+//						iBuffer.GetData()[iCount++] = vCount - numPts;
+//						iBuffer.GetData()[iCount++] = vCount - 1 + numPts;
+//						iBuffer.GetData()[iCount++] = vCount;
+//					}
+//				}
+//			}
+//		}
+//		TriMesh mesh = new TriMesh(vBuffer, iBuffer, false);
+//		
+//		boolean[] intersected = new boolean[vBuffer.GetVertexQuantity()];
+//		for ( int i = 0; i < vBuffer.GetVertexQuantity(); i++ )
+//		{
+//			intersected[i] = false;
+//			if ( (i == 0) || (i == (vBuffer.GetVertexQuantity() - 1)) )
+//			{
+//				intersected[i] = true;
+//			}
+//		}
+//		int growCount = 25;
+//		int test = 25;
+//		while ( test > 10 )
+//		{
+//			growCount = 0;
+//			for ( int i = 1; i < vBuffer.GetVertexQuantity() - 1; i++ )
+//			{
+////				if ( !intersected[i] )
+//				{
+//					Vector3f currentPos = mesh.VBuffer.GetPosition3(i);
+//					Vector3f normal = mesh.VBuffer.GetNormal3(i);
+//					normal.scale(2);
+//					currentPos.add(normal);					
+//					mesh.VBuffer.SetPosition3(i, currentPos);
+//				}
+//			}
+//			testIntersections( mesh, intersected );
+//			test--;
+//		}
+//		saveMesh( image, mesh, true );
 
 		return null; //createTube( image, center, extent);
 	}
@@ -903,17 +943,27 @@ public class JDialogLattice extends JDialogBase {
 		int colorFactor = image.isColorImage() ? 4 : 1;
 		int[] resultExtents = new int[]{diameter, diameter, samplingPlanes.getCurves().size()};
 		float[][] values = new float[resultExtents[2]][resultExtents[0] * resultExtents[1] * colorFactor]; 
+		float[][] dataOrigin = new float[resultExtents[2]][resultExtents[0] * resultExtents[1] * 4]; 
 
 		BitSet duplicateMask = new BitSet( dimX * dimY * dimZ );
 
     	String imageName = image.getImageName();
     	if ( imageName.contains("_clone") )
     	{
-    		imageName.replaceAll("_clone", "" );
+    		imageName = imageName.replaceAll("_clone", "" );
     	}
-		ModelImage resultImage = new ModelImage(image.getType(), resultExtents, imageName + "_straigntened");
+		ModelImage resultImage = new ModelImage(image.getType(), resultExtents, imageName + "_straight.xml");
 		JDialogBase.updateFileInfo( image, resultImage );
 		resultImage.setResolutions( new float[]{1,1,1});
+		
+		ModelImage straightToOrigin = new ModelImage( ModelStorageBase.ARGB_FLOAT, resultExtents, imageName + "_toOriginal.xml");
+		JDialogBase.updateFileInfo( image, straightToOrigin );
+		straightToOrigin.setResolutions( new float[]{1,1,1});
+		for ( int i = 0; i < straightToOrigin.getDataSize(); i++ )
+		{
+			straightToOrigin.set(i, 0);
+		}
+		
 		Vector3f lpsOrigin = new Vector3f();
 		for( int i = 0; i < samplingPlanes.getCurves().size(); i++ )
 		{
@@ -929,7 +979,7 @@ public class JDialogLattice extends JDialogBase {
 				System.arraycopy(values[i-1], 0, values[i], 0, values[i].length);
 			}
 			try {
-				image.exportDiagonal( duplicateMask, 0, i, resultExtents, corners, ellipseBounds.elementAt(i), !fillData, values[i], true);
+				image.exportDiagonal( duplicateMask, 0, i, resultExtents, corners, ellipseBounds.elementAt(i), !fillData, values[i], true, dataOrigin[i]);
 
 				if ( i == 0 )
 				{
@@ -937,6 +987,7 @@ public class JDialogLattice extends JDialogBase {
 				}
 
 				resultImage.importData(i*values[i].length, values[i], false);
+				straightToOrigin.importData(i*dataOrigin[i].length, dataOrigin[i], false);
 			} catch(IOException e) {
 				e.printStackTrace();
 			}
@@ -1016,6 +1067,65 @@ public class JDialogLattice extends JDialogBase {
 		
 		resultImage.calcMinMax();
 		new ViewJFrameImage(resultImage);  	
+
+		saveTransformImage(imageName, resultImage);
+		
+		saveTransformImage(imageName, straightToOrigin);
+		ModelImage originToStraight = computeOriginToStraight(image, straightToOrigin);
+		saveTransformImage(imageName, originToStraight);
+
+//		testTransform( resultImage, straightToOrigin, image.getExtents() );
+//		testTransform( image, originToStraight, resultImage.getExtents() );
+    }
+    
+    private static void testTransform( ModelImage original, ModelImage transform, int[] outputExtents )
+    {
+    	ModelImage output = new ModelImage( original.getType(), outputExtents, original.getImageName() + "_test_transformed" );
+
+		
+    	int dimX = transform.getExtents().length > 0 ? transform.getExtents()[0] : 1;
+    	int dimY = transform.getExtents().length > 1 ? transform.getExtents()[1] : 1;
+    	int dimZ = transform.getExtents().length > 2 ? transform.getExtents()[2] : 1;
+    	DataType bufferType = original.getDataType();
+    	
+    	for ( int z = 0; z < dimZ; z++ )
+    	{
+    		for ( int y = 0; y < dimY; y++ )
+    		{
+    			for ( int x = 0; x < dimX; x++ )
+    			{
+    				float a = transform.getFloatC(x, y, z, 0);
+    				if ( a == 1 )
+    				{
+    					int inputIndex = z * dimX * dimY + y * dimX + x;
+    					int outputX = Math.round(transform.getFloat( (inputIndex * 4) + 1));
+    					int outputY = Math.round(transform.getFloat( (inputIndex * 4) + 2));
+    					int outputZ = Math.round(transform.getFloat( (inputIndex * 4) + 3));
+    					
+    					int outputIndex = outputZ * outputExtents[0] * outputExtents[1] + outputY * outputExtents[0] + outputX;
+                		/* if color: */
+                		if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                				|| (bufferType == DataType.ARGB_FLOAT)) {
+                			output.set( (outputIndex * 4) + 0, original.getFloat( (inputIndex * 4) + 0));
+                			output.set( (outputIndex * 4) + 1, original.getFloat( (inputIndex * 4) + 1));
+                			output.set( (outputIndex * 4) + 2, original.getFloat( (inputIndex * 4) + 2));
+                			output.set( (outputIndex * 4) + 3, original.getFloat( (inputIndex * 4) + 3));
+                		}
+                		/* not color: */
+                		else {
+                			output.set( outputIndex, original.getFloat(inputIndex));
+                		}
+    				}
+    			}
+    		}
+    	}
+
+    	output.calcMinMax();
+    	original.calcMinMax();
+    	transform.calcMinMax();
+    	new ViewJFrameImage(output);
+    	new ViewJFrameImage(original);
+    	new ViewJFrameImage(transform);
     }
     
     
@@ -1122,11 +1232,11 @@ public class JDialogLattice extends JDialogBase {
             voiFileDir.mkdir();
         }
 
-        File file = new File(voiDir + "LatticeInfo" + postFix + ".txt");
+        File file = new File(voiDir + "LatticeInfo" + postFix + ".xls");
         if ( file.exists() )
         {
         	file.delete();
-        	file = new File(voiDir + "LatticeInfo" + postFix + ".txt");
+        	file = new File(voiDir + "LatticeInfo" + postFix + ".xls");
         }
 
 
@@ -1134,13 +1244,12 @@ public class JDialogLattice extends JDialogBase {
 
         	FileWriter fw = new FileWriter(file);
         	BufferedWriter bw = new BufferedWriter(fw);
-        	bw.write( "Total Curve Length:" + "\t" + length + "\n" );
+        	bw.write( "Total Length:\t" +  length + "\n" );
             bw.newLine();
 //        	bw.write( "Diameter" + "\t" + "Left" + "\t"  + "Right" + "\t" + "\n" );
         	for ( int i = 0; i < leftPairs.length; i++ )
         	{
-        		bw.write(i + "\t" + left.elementAt(i).distance(right.elementAt(i)) + "\t" + leftPairs[i] + "\t" + rightPairs[i] + "\n");
-        				
+        		bw.write(i + "\t" + VoxelSize * left.elementAt(i).distance(right.elementAt(i)) + "\t" + VoxelSize * leftPairs[i] + "\t" + VoxelSize * rightPairs[i] + "\n");
         	}
 //        	for ( int i = 0; i < leftPairs.length; i++ )
 //        	{
@@ -1270,5 +1379,234 @@ public class JDialogLattice extends JDialogBase {
 			FileSurface_WM.save(kName, kMesh, 0, kMesh.VBuffer, flip, direction, startLocation, box, inverseDicomMatrix);
 		} catch (IOException e) {}
     }
+    
+    private static void saveTransformImage( String imageName, ModelImage image  ) 
+	{
+		String voiDir = image.getImageDirectory() + JDialogBase.makeImageName( imageName, "") + File.separator;
+        File voiFileDir = new File(voiDir);
+        if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+        } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+        } else { // voiFileDir does not exist
+            voiFileDir.mkdir();
+        }
+		voiDir = image.getImageDirectory() + JDialogBase.makeImageName( imageName, "") + File.separator +
+    			"output_images" + File.separator;
+        voiFileDir = new File(voiDir);
+        if (voiFileDir.exists() && voiFileDir.isDirectory()) {
+        } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {
+        } else { // voiFileDir does not exist
+            voiFileDir.mkdir();
+        }
+        
+        File file = new File(voiDir + imageName);
+        if ( file.exists() )
+        {
+        	file.delete();
+        }
+//        System.err.println( voiDir );
+//        System.err.println( image.getImageName() + ".xml" );
+        ModelImage.saveImage( image, image.getImageName() + ".xml", voiDir );
+    }
+    
 
+    private static void testIntersections( final TriMesh mesh, boolean[] intersected )
+    {
+    	// Compute intersections with the model-space triangles.
+    	int iTQuantity = mesh.GetTriangleQuantity();
+		Triangle3f kTriangle0 = new Triangle3f();
+		Triangle3f kTriangle1 = new Triangle3f();
+		IntrTriangle3Triangle3f kIntr = new IntrTriangle3Triangle3f();
+		int[] aiTris = new int[3];
+		int[] indices = new int[6];
+		for (int i = 0; i < iTQuantity; i++)
+		{
+			if (!mesh.GetTriangle(i,aiTris) )
+			{
+				continue;
+			}
+
+			int iV0 = aiTris[0]; 
+			int iV1 = aiTris[1];
+			int iV2 = aiTris[2];
+			if ( intersected[iV0] || intersected[iV1] || intersected[iV2] )
+			{
+				continue;
+			}
+			indices[0] = iV0;
+			indices[1] = iV1;
+			indices[2] = iV2;
+
+			mesh.VBuffer.GetPosition3(iV0, kTriangle0.V[0]);
+			mesh.VBuffer.GetPosition3(iV1, kTriangle0.V[1]);
+			mesh.VBuffer.GetPosition3(iV2, kTriangle0.V[2]);
+			
+			kIntr.Triangle0 = kTriangle0;
+			
+
+			for (int j = 0; j < iTQuantity; j++)
+			{
+				if ( i == j )
+				{
+					continue;
+				}
+				if (!mesh.GetTriangle(j,aiTris) )
+				{
+					continue;
+				}
+
+				int jV0 = aiTris[0]; 
+				int jV1 = aiTris[1];
+				int jV2 = aiTris[2];
+				if ( intersected[jV0] || intersected[jV1] || intersected[jV2] )
+				{
+					continue;
+				}
+				indices[3] = jV0;
+				indices[4] = jV1;
+				indices[5] = jV2;
+
+				mesh.VBuffer.GetPosition3(jV0, kTriangle1.V[0]);
+				mesh.VBuffer.GetPosition3(jV1, kTriangle1.V[1]);
+				mesh.VBuffer.GetPosition3(jV2, kTriangle1.V[2]);
+
+				boolean adjacentTris = false;
+				for ( int p0 = 0; p0 < indices.length; p0++ )
+				{
+					for ( int p1 = p0 + 1; p1 < indices.length; p1++ )
+					{
+						if ( indices[p0] == indices[p1] )
+						{
+							adjacentTris = true;
+							break;
+						}
+					}
+					if ( adjacentTris )
+					{
+						break;
+					}
+				}
+				if ( adjacentTris )
+				{
+					continue;
+				}
+
+				kIntr.Triangle1 = kTriangle1;
+				
+				if ( kIntr.Test() )
+				{
+					intersected[iV0] = true;
+					intersected[iV1] = true;
+					intersected[iV2] = true;
+					
+					intersected[jV0] = true;
+					intersected[jV1] = true;
+					intersected[jV2] = true;
+					break;
+				}
+			}
+		}
+		
+		int count = 0;
+		for ( int i = 0; i < intersected.length; i++ )
+		{
+			if ( intersected[i] )
+			{
+				count++;
+			}
+		}
+		System.err.println( "testIntersections " + count + " " + iTQuantity );
+    }
+    
+    /**
+     * Tests if the line segment determined by the two input end-points intersects the mesh.
+     * @param kP0 end-point of the line segment.
+     * @param kP1 end-point of the line segment.
+     * @return true if the line segment intersects the mesh.
+     */
+    private static boolean testIntersections( final TriMesh mesh, final Vector3f kP0, final Vector3f kP1 )
+    {
+    	// Compute intersections with the model-space triangles.
+    	int iTQuantity = mesh.GetTriangleQuantity();
+    	// Compute intersections with the model-space triangles.
+		Triangle3f kTriangle = new Triangle3f();
+		IntrSegment3Triangle3f kIntr = new IntrSegment3Triangle3f();
+		Segment3f kSegment = new Segment3f(kP0, kP1);
+		kIntr.Segment = kSegment;
+		
+		int iV0, iV1, iV2;
+		int[] aiTris = new int[3];
+    	for (int i = 0; i < iTQuantity; i++)
+    	{
+    		if (!mesh.GetTriangle(i,aiTris) )
+    		{
+    			continue;
+    		}
+
+    		iV0 = aiTris[0]; 
+    		iV1 = aiTris[1];
+    		iV2 = aiTris[2];
+
+    		mesh.VBuffer.GetPosition3(iV0, kTriangle.V[0]);
+    		mesh.VBuffer.GetPosition3(iV1, kTriangle.V[1]);
+    		mesh.VBuffer.GetPosition3(iV2, kTriangle.V[2]);
+
+    		kIntr.Triangle = kTriangle;
+    		if ( kIntr.Test() )
+    		{
+    			kIntr.Find();
+    			if ( kIntr.GetSegmentParameter() > 0 )
+    			{
+    				return true;
+    			}
+    		}
+    	}
+    	return false;
+    }
+    
+    private static ModelImage computeOriginToStraight( ModelImage originalImage, ModelImage straightToOrigin )
+    {
+    	String imageName = originalImage.getImageName();
+    	if ( imageName.contains("_clone") )
+    	{
+    		imageName = imageName.replaceAll("_clone", "" );
+    	}
+    	ModelImage originToStraight = new ModelImage( ModelStorageBase.ARGB_FLOAT, originalImage.getExtents(),  imageName + "_toStraight.xml");
+		JDialogBase.updateFileInfo( originalImage, originToStraight );
+		originToStraight.setResolutions( new float[]{1,1,1});
+		for ( int i = 0; i < originToStraight.getDataSize(); i++ )
+		{
+			originToStraight.set(i, 0);
+		}
+		
+    	int dimX = straightToOrigin.getExtents().length > 0 ? straightToOrigin.getExtents()[0] : 1;
+    	int dimY = straightToOrigin.getExtents().length > 1 ? straightToOrigin.getExtents()[1] : 1;
+    	int dimZ = straightToOrigin.getExtents().length > 2 ? straightToOrigin.getExtents()[2] : 1;
+    	
+    	int[] outputExtents = originalImage.getExtents();
+    	
+    	for ( int z = 0; z < dimZ; z++ )
+    	{
+    		for ( int y = 0; y < dimY; y++ )
+    		{
+    			for ( int x = 0; x < dimX; x++ )
+    			{
+    				float a = straightToOrigin.getFloatC(x, y, z, 0);
+    				if ( a == 1 )
+    				{
+    					int inputIndex = z * dimX * dimY + y * dimX + x;
+    					int outputX = Math.round(straightToOrigin.getFloat( (inputIndex * 4) + 1));
+    					int outputY = Math.round(straightToOrigin.getFloat( (inputIndex * 4) + 2));
+    					int outputZ = Math.round(straightToOrigin.getFloat( (inputIndex * 4) + 3));
+
+    					int outputIndex = outputZ * outputExtents[0] * outputExtents[1] + outputY * outputExtents[0] + outputX;
+    					originToStraight.set( (outputIndex * 4) + 0, 1);
+    					originToStraight.set( (outputIndex * 4) + 1, x);
+    					originToStraight.set( (outputIndex * 4) + 2, y);
+    					originToStraight.set( (outputIndex * 4) + 3, z);
+    				}
+    			}
+    		}
+    	}
+    	return originToStraight;
+    }
 }

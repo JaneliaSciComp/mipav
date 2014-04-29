@@ -2435,7 +2435,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @throws IOException Throws an error when there is a locking or bounds error.
      */
     public final synchronized void exportDiagonal( BitSet duplicateMask, final int tSlice, final int slice, final int[] extents,
-            final Vector3f[] verts, final Ellipsoid3f ellipseBound, boolean bSetZero, final float[] values, final boolean bInterpolate) throws IOException {
+            final Vector3f[] verts, final Ellipsoid3f ellipseBound, boolean bSetZero, final float[] values, final boolean bInterpolate, float[] dataOrigin) throws IOException {
 
         try {
             setLock(ModelStorageBase.W_LOCKED);
@@ -2555,7 +2555,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 			}
                 		}
                 	}                	
-                	else
+//                	else
                 	{
                 		maskBits.add(index);
                 		/* if color: */
@@ -2593,6 +2593,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 				values[ (j * iBound) + i] = getFloat(index);
                 			}
                 		}
+                		dataOrigin[ ( ( (j * iBound) + i) * 4) + 0] = 1;
+                		dataOrigin[ ( ( (j * iBound) + i) * 4) + 1] = x;
+                		dataOrigin[ ( ( (j * iBound) + i) * 4) + 2] = y;
+                		dataOrigin[ ( ( (j * iBound) + i) * 4) + 3] = z;
                 	}
                 }
 

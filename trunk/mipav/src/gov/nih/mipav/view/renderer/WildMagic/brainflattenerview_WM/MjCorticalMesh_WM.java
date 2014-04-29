@@ -530,8 +530,10 @@ public class MjCorticalMesh_WM {
             int iV1 = m_akEdge[i].V[1];
             Vector2f kV0 = m_akPlane[iV0];
             Vector2f kV1 = m_akPlane[iV1];
-            kEdge.Origin.copy(kV0);
+            kEdge.Center = Vector2f.add(kV0, kV1);
+            kEdge.Center.scale(0.5f);
             kEdge.Direction.copy( kV1 ).sub( kV0 );
+            kEdge.Extent = kEdge.Direction.normalize() / 2f;
 
             /* compute intersection of ray and segment */
             Vector2f[] akP = new Vector2f[]{ new Vector2f(), new Vector2f() };
@@ -746,9 +748,7 @@ public class MjCorticalMesh_WM {
 
             Vector2f kV0 = m_akPlane[iV0];
             Vector2f kV1 = m_akPlane[iV1];
-            Segment2f kEdge = new Segment2f();
-            kEdge.Origin.copy(kV0);
-            kEdge.Direction.copy( kV1 ).sub( kV0 );
+            Segment2f kEdge = new Segment2f(kV0, kV1);
 
             /* compute intersection of ray and segment */
             int iCount = IntrRay2Segment2f.FindIntersection(kLongitude, kEdge, afT);
@@ -1343,8 +1343,10 @@ public class MjCorticalMesh_WM {
             int i0, i1;
 
             for (i0 = 2, i1 = 0; i1 < 3; i0 = i1++) {
-                kSeg.Origin.copy(akVertex[i0]);
+                kSeg.Center = Vector2f.add(akVertex[i1], akVertex[i0]);
+                kSeg.Center.scale(0.5f);
                 kSeg.Direction.copy( akVertex[i1] ).sub( akVertex[i0] );
+                kSeg.Extent = kSeg.Direction.normalize() / 2f;
 
                 float[] afT = new float[2]; /* T[0] = ray, T[1] = segment */
                 int iQuantity = IntrRay2Segment2f.FindIntersection(kRay, kSeg, afT);

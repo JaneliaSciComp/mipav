@@ -94,6 +94,7 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.Polygon;
 import java.awt.event.ActionEvent;
@@ -116,11 +117,14 @@ import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.event.EventListenerList;
@@ -1247,18 +1251,66 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         	{
         		JDialogLattice.interpolateLattice(getActiveImage(), lattice.elementAt(0), false);
         	}
+        } else if ( command.equals("voxelSize") ) {
+        	setVoxelSize();
+        } else if ( command.equals("OKVoxelSize") ) {
+        	try {
+        		float value = Float.valueOf(defaultVoxelSize.getText());
+        		if ( value > 0 )
+        		{
+        			JDialogLattice.VoxelSize = Float.valueOf(defaultVoxelSize.getText());
+        			updateVoxelSize.setVisible(false);
+        			updateVoxelSize.dispose();
+        		}
+        		else
+        		{
+        			MipavUtil.displayError( "Enter a voxel size > 0" );
+        			defaultVoxelSize.requestFocus();
+        		}
+        	}
+        	catch ( java.lang.NumberFormatException e )
+        	{
+        		MipavUtil.displayError( "Enter a number > 0" );
+        		defaultVoxelSize.requestFocus();
+        	}
         } else {
             doVOI(command);
         }
 
     }
     
-    VOIVector latticeLines;
-    VOIVector lattice = null;
+    private VOIVector latticeLines;
+    private VOIVector lattice = null;
 	public void setLattice( VOIVector lattice )
 	{
 		this.lattice = lattice;
 	}
+    
+	private JTextField defaultVoxelSize;
+	private JDialog updateVoxelSize;
+	private void setVoxelSize()
+    {
+    	JButton OK = new JButton( "OK" );
+    	OK.setActionCommand("OKVoxelSize");
+    	OK.addActionListener(this);
+    	defaultVoxelSize = new JTextField( "" + JDialogLattice.VoxelSize );
+    	defaultVoxelSize.addActionListener(this);
+    	JPanel panel = new JPanel( new GridLayout(1, 3) );
+    	panel.add( new JLabel( "Current Voxel Size" ) );
+    	panel.add( defaultVoxelSize );
+    	panel.add( new JLabel("um") );
+
+    	updateVoxelSize = new JDialog();
+    	updateVoxelSize.getContentPane().setLayout(new BorderLayout());
+    	updateVoxelSize.setModalityType( JDialog.ModalityType.APPLICATION_MODAL);    	
+    	updateVoxelSize.getContentPane().add( panel, BorderLayout.NORTH );
+    	updateVoxelSize.getContentPane().add( OK, BorderLayout.SOUTH );
+    	updateVoxelSize.pack();
+    	updateVoxelSize.setResizable(false);
+
+        MipavUtil.centerOnScreen(updateVoxelSize);
+    	updateVoxelSize.setVisible(true);
+    }
 	
 	private void updateLattice( boolean rebuild )
 	{
@@ -1266,7 +1318,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 		VOIContour right = (VOIContour) lattice.elementAt(0).getCurves().elementAt(1);
 		if ( rebuild )
 		{
-			System.err.println( "new pt added" );
+//			System.err.println( "new pt added" );
 			for ( int i = lattice.size() - 1; i > 0; i-- )
 			{
 				VOI marker = lattice.remove(i);
@@ -3332,7 +3384,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     	{
     		leftRightMarkers.add(textVOI);
     		textVOI.setActive(true);
-    		mouseSelection3D = true;
+//    		mouseSelection3D = true;
     		ModelImage kActive = getActiveImage();
     		if ( kActive != null )
     		{
