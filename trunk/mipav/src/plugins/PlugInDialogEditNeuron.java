@@ -250,6 +250,10 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	
 	/*******************************************************/
 	
+	private FileWriter statsCSV;
+	
+	private JCheckBox csvBox;
+	
 	/**
 	 * Primary constructor. Initializes a dialog to ask the user
 	 * for a directory to use
@@ -295,7 +299,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         	Preferences.setImageDirectory(fileChooser.getSelectedFile());
         }
 		else if(command.equals("Cancel")){
-			
 			if (isExitRequired()) {
 	            System.exit(0);
 	            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
@@ -305,6 +308,12 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		}
 		else if(command.equals("Choose")) chooseDir();
 		else if(command.equals("OK")){
+			File directory = new File(dirText.getText());
+			if(!directory.exists() || directory.isFile()){
+				MipavUtil.displayError("Input file is not a directory. Please"
+						+ " select a directory");
+				return;
+			}
 			try{
 				rangeField.commitEdit();
 				Object val = rangeField.getValue();
@@ -317,11 +326,14 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				MipavUtil.displayError("Range is not an integer");
 				return;
 			} catch (ParseException e) {
+				MipavUtil.displayError("Could not read range value");
 				e.printStackTrace();
 			}
-			populateImages(new File(dirText.getText()));
-			initEditor();
-        	openImage();	
+			if(populateImages(directory)){
+				initEditor();
+	        	openImage();	
+			} else 
+				MipavUtil.displayError("No compatible SWC files were found");
 		}
 		else if(command.equals("Next")){
 			prevSlice = currentSlice;
@@ -351,9 +363,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			subVolume.unregisterAllVOIs();
 			try {
 				readSWC(Math.max(0, currentSlice - sliceRange));
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
 			} catch (IOException e) {
+				MipavUtil.displayError("Could not read SWC file(s)");
 				e.printStackTrace();
 			}
 		} else if(command.equals("LUT")){
@@ -365,6 +376,13 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				e.printStackTrace();
 			}
 		} else if(command.equals("End")){
+			try {
+				statsCSV.close();
+			} catch (IOException e1) {
+				MipavUtil.displayError("Could not close CSV output");
+				e1.printStackTrace();
+				return;
+			}
 			if(aviBox.isSelected()){
 				String dir = dirText.getText();
 				if(!dir.endsWith(File.separator))
@@ -374,6 +392,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				subVolumeFrame.close();
 				dispose();
 			} else{
+				
 				if (isExitRequired()) {
 		            System.exit(0);
 		            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
@@ -436,7 +455,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			originRB.setEnabled(false);
 			primaryRB.setEnabled(false);
 		}
-	}
+	}	
 	
 	/**
 	 * Bresenham line algorithm used to draw the paths between two points.
@@ -705,9 +724,17 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         rangeField.setFont(serif12);
         rangePanel.add(rangeField);
         
+        JPanel csvPanel = new JPanel();
+        csvPanel.setForeground(Color.black);
+        
+        csvBox = new JCheckBox("Delete previous stats CSV");
+        csvBox.setFont(serif12);
+        csvPanel.add(csvBox);
+        
         PanelManager manage = new PanelManager();
         manage.add(choosePanel);
         manage.addOnNextLine(rangePanel);
+        manage.addOnNextLine(csvPanel);
         getContentPane().add(manage.getPanel(), BorderLayout.CENTER);
 
         JPanel OKCancelPanel = new JPanel();
@@ -745,6 +772,24 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		length = width*height;
 		sliceIm.disposeLocal();
 		
+		String parentPath = swcList.get(0).getParent();
+		parentPath += File.separator + "neuron_stats.csv";
+		File statFile = new File(parentPath);
+		String csvHeader = "";
+		if(!statFile.exists() || csvBox.isSelected()){
+			csvHeader = "Image,Progenitor.x,Progenitor.y,Split.x,Split.y,Centroid.x,Centroid.y,Polygonal Area,"
+					+ "Split to Origin Length, Split to Primary Length,Longest Length,"
+					+ "Total Branch Length,Total Higher Order Branch Length,Max Branch Order\n";
+		}
+		try {
+			statsCSV = new FileWriter(statFile, !csvBox.isSelected());
+			statsCSV.append(csvHeader);
+		} catch (IOException e) {
+			MipavUtil.displayError("Cannot open CSV file for editing");
+			e.printStackTrace();
+		}
+		
+		
 		JPanel descPanel = new JPanel();
 		descPanel.setForeground(Color.black);
 		descPanel.setBorder(buildTitledBorder("Editor Instructions"));
@@ -761,7 +806,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		getContentPane().add(descPanel, BorderLayout.NORTH);
 		
-        
         JPanel editPanel = new JPanel(new GridLayout(0,2));
         editPanel.setForeground(Color.black);
         editPanel.setBorder(buildTitledBorder("Editor Mode"));
@@ -1035,19 +1079,12 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			subVolumeFrame.setVisible(true);
 			subVolumeFrame.addWindowListener(this);
 			
-				
-		
-		} catch(IOException e){
-			e.printStackTrace();
-		}
-
-		try {
 			readSWC(lowerBound);
-		} catch (FileNotFoundException e) {
+			
+		} catch(IOException e){
+			MipavUtil.displayError("Could not read SWC file(s)");
 			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		} 
 		
 		editTraceRB.setSelected(true);
 		actionPerformed(new ActionEvent(this, 0, "Edit Trace"));
@@ -1092,7 +1129,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
-	private void readSWC(int lowerBound) throws FileNotFoundException, IOException{
+	private void readSWC(int lowerBound) throws IOException{
 		
 		//Reset things regarding the mask/control points here
 		mask = new BitSet(length*depth);
@@ -1303,6 +1340,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		File currentSWC = swcList.get(currentSlice);
 		
 		String header = "";
+		String csvOut = images.get(currentSlice).getName() + ",";
 		
 		String saveName = currentSWC.getPath();
 		String name = currentSWC.getName();
@@ -1339,12 +1377,18 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		header += String.format("# Polygonal Area: %5.2f %s\n", areaResults[2], (String)resUnits.getSelectedItem());
 		header += String.format("# Centroid: (%4.2f,%4.2f)\n", areaResults[0], areaResults[1]);
 		header += String.format("# Origin (%d,%d)\n", origin.x, origin.y);
-		if(progenitorPt != null)
+		if(progenitorPt != null){
 			header += String.format("# Progenitor Point (%d,%d)\n", progenitorPt.x, progenitorPt.y);
-		if(splitPt != null)
+			csvOut += progenitorPt.x + "," + progenitorPt.y + ",";
+		} else csvOut += ",,";
+		if(splitPt != null){
 			header += String.format("# Split Point (%d,%d)\n", splitPt.x, splitPt.y);
+			csvOut += splitPt.x + "," + splitPt.y + ",";
+		} else csvOut += ",,";
 		if(primaryPt != null)
 			header += String.format("# Primary Branch Point (%d,%d)\n", primaryPt.x, primaryPt.y);
+		
+		csvOut += areaResults[0] + "," + areaResults[1] + "," + areaResults[2] + ",";
 		
 		VOIBase base = polyVOI.getCurves().get(0);
 		
@@ -1379,8 +1423,12 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		int line = 1;
 		LinkElement start = links.get(origin);
-		String lengthHeader = "\n# Coordinates are for endpoints of projections\n"
+		String lengthHeader = "#\n# Coordinates are for endpoints of projections\n"
 				+ "# Distances are to branch point of this projection's order\n";
+		
+		int maxOrder = 0;
+		float totalLength = 0f;
+		float orderLength = 0f;
 		
 		PriorityQueue<NeuronLength> pq = new PriorityQueue<NeuronLength>();
 		writer.append(lengthHeader);
@@ -1401,38 +1449,81 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				}
 			}
 			//Find lengths towards the origin:
+			
 					 
-			writer.append("\n########################################################\n"
+			writer.append("#\n########################################################\n"
 					+ "#               Lengths towards origin                 #\n"
 					+ "########################################################\n");
 			pq.addAll(calcLengths(toOrigin, split, toOrigin.pt.distance(split.pt)));
 			NeuronLength nl;
 			nl = pq.peek();
 			longestLength += nl.length;
-			while((nl = pq.poll()) != null)
+			csvOut += longestLength*resolution + ",";
+			while((nl = pq.poll()) != null){
+				if(nl.order > maxOrder)
+					maxOrder = nl.order;
+				if(nl.order >= 2)
+					orderLength += nl.length;
+				totalLength += nl.length;
 				writePoint(nl, writer);
-			writer.append("\n########################################################\n"
+			}
+			writer.append("#\n########################################################\n"
 					+ "#             Lengths towards progenitor               #\n"
 					+ "########################################################\n");
 			pq.clear();
 			pq.addAll(calcLengths(split, toOrigin, 0));
 			nl = pq.peek();
 			longestLength += nl.length;
-			while((nl = pq.poll()) != null)
+			csvOut += nl.length*resolution + "," + longestLength*resolution + ",";
+			while((nl = pq.poll()) != null){
+				if(nl.order > maxOrder)
+					maxOrder = nl.order;
+				if(nl.order >= 2)
+					orderLength += nl.length;
+				totalLength += nl.length;
 				writePoint(nl, writer);
+			}
+			
+			totalLength *= resolution;
+			orderLength *= resolution;
+			csvOut += totalLength + "," + orderLength + ",";
+			csvOut += maxOrder + ",\n";
 			String lengthStr = String.format("%4.2f %s", longestLength*resolution, (String)resUnits.getSelectedItem());
-			writer.append("\n# Origin to Primary length: " + lengthStr + "\n");
+			writer.append("#\n# Origin to Primary length: " + lengthStr + "\n");
+			String totalStr = String.format("%4.2f %s", totalLength, (String)resUnits.getSelectedItem());
+			writer.append("# Total branch length: " + totalStr + "\n");
+			String orderStr = String.format("%4.2f %s", orderLength, (String)resUnits.getSelectedItem());
+			writer.append("# Total higher order branch length: " + orderStr + "\n");
 			
 		} else{
 			pq = calcLengths(start, null, 0);
 			NeuronLength nl;
-			while((nl = pq.poll()) != null)
+			nl = pq.peek();
+			csvOut += ",," + nl.length*resolution + ",";
+			while((nl = pq.poll()) != null){
+				if(nl.order > maxOrder)
+					maxOrder = nl.order;
+				if(nl.order >= 2)
+					orderLength += nl.length;
+				totalLength += nl.length;
 				writePoint(nl, writer);
+			}
+			totalLength *= resolution;
+			orderLength *= resolution;
+			csvOut += totalLength + "," + orderLength + ",";
+			csvOut += maxOrder + ",\n";
+			
+			String totalStr = String.format("%4.2f %s", totalLength, (String)resUnits.getSelectedItem());
+			writer.append("#\n# Total branch length: " + totalStr + "\n");
+			String orderStr = String.format("%4.2f %s", orderLength, (String)resUnits.getSelectedItem());
+			writer.append("# Total higher order branch length: " + orderStr + "\n");
 		}
+		
+		statsCSV.append(csvOut);
 		
 		String dimStr = String.format("# Width %d\n# Height %d\n", width, height);
 		String noteStr = 
-				"\n########################################################\n"
+				"#\n########################################################\n"
 				+ "#              START OF SWC COORDINATES                #\n"
 				+ "########################################################\n"
 				+ "# NOTE: The above coordinates are in image space coordinates\n"
@@ -1577,7 +1668,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 * @return true if the list is non-empty
 	 */
 	
-	private void populateImages(File dir){
+	private boolean populateImages(File dir){
 		
 		File skelName;
 		String stripped;
@@ -1616,6 +1707,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			populateImages(directories[i]);
 		}
 		numImages = images.size();
+		
+		return numImages > 0;
 	}
 
 	@Override
@@ -1659,6 +1752,10 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		if(addRB.isSelected()){
 			
+			if(lastActive != null){
+				lastActive = null;
+				return;
+			}
 			int dx, dy;
 			int maxDistSqr = Integer.MIN_VALUE;
 			int ind;
@@ -1891,6 +1988,12 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	
 	public void windowClosing(WindowEvent e){
 		if(e.getSource() == subVolumeFrame){
+			try {
+				statsCSV.close();
+			} catch (IOException e1) {
+				MipavUtil.displayError("Could not close CSV output");
+				e1.printStackTrace();
+			}
 			if (isExitRequired()) {
 	            System.exit(0);
 	            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));

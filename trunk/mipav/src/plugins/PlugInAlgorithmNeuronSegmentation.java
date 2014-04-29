@@ -642,10 +642,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	 * skeleton image then has its own subfolder to save the VOIs, 
 	 * labeled "Endpoints", "Centroid", and "Polygonal Area."
 	 * 
-	 * As of 2/27/14, the VOIs are no longer saved, as they don't necessarily
-	 * serve a purpose.
-	 * 
-	 * As of 2/28/14, VOIs can be saved, an option was added to the dialog
+	 * VOIs can be saved, an option was added to the dialog
 	 * that allows for the toggling
 	 */
 	
