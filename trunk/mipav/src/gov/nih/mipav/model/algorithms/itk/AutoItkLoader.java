@@ -9,15 +9,7 @@ import gov.nih.mipav.view.dialogs.JDialogItkFilter;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -74,8 +66,7 @@ public class AutoItkLoader implements ActionListener {
     /**
      * for each integer returned by getType(), what sequence matches itk i/o types. X says no match (complex numbers.)
      */
-    private static final String[] MODELIMAGE_TYPE_TABLE = {"B", "SC", "UC", "SS", "US", "SI", "SL", "F", "D", "UC",
-            "US", "F", "X", "X", "UI"};
+    private static final String[] MODELIMAGE_TYPE_TABLE = {"B", "SC", "UC", "SS", "US", "SI", "SL", "F", "D", "UC", "US", "F", "X", "X", "UI"};
 
     public static String getItkModelImageString(final int model_image_type) {
         if (model_image_type < 0 || model_image_type >= AutoItkLoader.MODELIMAGE_TYPE_TABLE.length) {
@@ -103,13 +94,14 @@ public class AutoItkLoader implements ActionListener {
     }
 
     // invoke a config dialog or filter dialog, via menu item. Eclipse wants @Overide on this....
+    @Override
     public void actionPerformed(final ActionEvent action_evt) {
         final String name = action_evt.getActionCommand();
         if (name.equals("ConfigJar")) {
             if (m_FilterList != null) {
                 // make config dialog.
-                final boolean do_set = ItkFilterSelectorDialog.showDialog(m_Frame, m_Frame,
-                        "Choose filters to appear:", "Complete ITK Filter List", m_FilterList);
+                final boolean do_set = ItkFilterSelectorDialog.showDialog(m_Frame, m_Frame, "Choose filters to appear:", "Complete ITK Filter List",
+                        m_FilterList);
                 // System.out.println("Do set " + do_set);
                 if (do_set) {
                     setMenu();
@@ -338,7 +330,7 @@ public class AutoItkLoader implements ActionListener {
             final String class_path = System.getProperty(class_path_key);
             // System.out.println(class_path);
 
-            for (final String fn : class_path.split(";")) {
+            for (final String fn : class_path.split(File.pathSeparator)) {
                 if (fn.endsWith("InsightToolkit.jar")) {
                     jar_filename = fn;
                     Preferences.debug("\nFound itk jar: " + jar_filename + "\n", Preferences.DEBUG_FILEIO);
@@ -354,8 +346,7 @@ public class AutoItkLoader implements ActionListener {
         } catch (final FileNotFoundException fnfe) {
             Preferences.debug("AutoITK: listFromJar can't find jar on class path\n", Preferences.DEBUG_FILEIO);
         } catch (final IOException io_exception) {
-            Preferences.debug("AutoITK: listFromJar can't read jar: " + io_exception.toString() + "\n",
-            		Preferences.DEBUG_FILEIO);
+            Preferences.debug("AutoITK: listFromJar can't read jar: " + io_exception.toString() + "\n", Preferences.DEBUG_FILEIO);
         }
 
         if (jf_manifest == null || jf == null) {
@@ -469,8 +460,8 @@ public class AutoItkLoader implements ActionListener {
     private List<FilterRecordItk> listFromFile() {
         List<?> in_list = null;
         ObjectInputStream in = null;
-        final String list_ser_file = m_ItkJarFilename == null ? LIST_SERIALIZE_FILE : new File(new File(
-                m_ItkJarFilename).getParent(), LIST_SERIALIZE_FILE).getPath();
+        final String list_ser_file = m_ItkJarFilename == null ? LIST_SERIALIZE_FILE : new File(new File(m_ItkJarFilename).getParent(), LIST_SERIALIZE_FILE)
+                .getPath();
         try {
             in = new ObjectInputStream(new BufferedInputStream(new FileInputStream(list_ser_file)));
             in_list = (ArrayList<?>) in.readObject();
@@ -521,8 +512,8 @@ public class AutoItkLoader implements ActionListener {
 
         boolean ret = true;
         ObjectOutputStream out = null;
-        final String list_ser_file = m_ItkJarFilename == null ? LIST_SERIALIZE_FILE : new File(new File(
-                m_ItkJarFilename).getParent(), LIST_SERIALIZE_FILE).getPath();
+        final String list_ser_file = m_ItkJarFilename == null ? LIST_SERIALIZE_FILE : new File(new File(m_ItkJarFilename).getParent(), LIST_SERIALIZE_FILE)
+                .getPath();
         try {
             out = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(list_ser_file)));
 
@@ -677,8 +668,7 @@ public class AutoItkLoader implements ActionListener {
             Preferences.debug("AutoITK: Method invoke access problem, " + m.getName() + "\n", Preferences.DEBUG_FILEIO);
             return null;
         } catch (final InvocationTargetException ite) {
-            Preferences.debug("AutoITK: Method invoke " + m.getName() + ", threw an exception." + "\n",
-            		Preferences.DEBUG_FILEIO);
+            Preferences.debug("AutoITK: Method invoke " + m.getName() + ", threw an exception." + "\n", Preferences.DEBUG_FILEIO);
             return null;
         } catch (final IllegalArgumentException iae) {
             Preferences.debug("AutoITK: Method invoke " + m.getName() + ", " + iae + "\n", Preferences.DEBUG_FILEIO);
