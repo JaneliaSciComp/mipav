@@ -4,8 +4,11 @@ import gov.nih.mipav.model.structures.BSplineKernelFunction;
 import gov.nih.mipav.model.structures.CoxDeBoorBSplineKernelFunction;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+
 import java.io.IOException;
 import java.util.Vector;
+
+import WildMagic.LibFoundation.Mathematics.Vector4d;
 import Jama.Matrix;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -58,6 +61,8 @@ import gov.nih.mipav.view.Preferences;
 		ModelImage psiLattice;
 		private Vector<Double> inputPointData;
 		private Vector<Double> outputPointData;
+		private Vector<Vector4d> inputPointLocation;
+		private Vector<Vector4d> outputPointLocation;
 		private Vector<Double> pointWeights;
 		private boolean usePointWeights;
 		// Machine epsilon is the smallest positive epsilon such that
@@ -119,6 +124,9 @@ import gov.nih.mipav.view.Preferences;
 	        psiLattice = null;
 	        inputPointData = new Vector<Double>();
 	        outputPointData = new Vector<Double>();
+	        inputPointLocation = new Vector<Vector4d>();
+	        outputPointLocation = new Vector<Vector4d>();
+	        
 	        usePointWeights = false;
 	        pointWeights = new Vector<Double>();
 	        BSplineEpsilon = epsilon;
@@ -159,6 +167,14 @@ import gov.nih.mipav.view.Preferences;
 	    	if (outputPointData != null) {
 	    		outputPointData.clear();
 	    		outputPointData = null;
+	    	}
+	    	if (inputPointLocation != null) {
+	    		inputPointLocation.clear();
+	    		inputPointLocation = null;
+	    	}
+	    	if (outputPointLocation != null) {
+	    		outputPointLocation.clear();
+	    		outputPointLocation = null;
 	    	}
 	    	if (pointWeights != null) {
 	    		pointWeights.clear();
@@ -311,6 +327,8 @@ import gov.nih.mipav.view.Preferences;
 	    	
 	    	inputPointData.clear();
 	    	outputPointData.clear();
+	    	inputPointLocation.clear();
+	    	outputPointLocation.clear();
 	    	if (!usePointWeights) {
 	    		pointWeights.clear();
 	    	}
@@ -320,6 +338,8 @@ import gov.nih.mipav.view.Preferences;
 	    	    }
 	    	    inputPointData.add(pointData.get(i));
 	    	    outputPointData.add(pointData.get(i));
+	    	    inputPointLocation.add(pointLocation.get(i));
+	    	    outputPointLocation.add(pointLocation.get(i));
 	    	}
 	    	currentLevel = 0;
 	    	currentNumberOfControlPoints = numberOfControlPoints.clone();
@@ -356,19 +376,15 @@ import gov.nih.mipav.view.Preferences;
 	    	   double totalWeight = 0.0;
 	    	   
 	    	   int itin = 0;
-	    	   int inputPointDataLength = inputPointData.size();
-	    	   while (itin < inputPointDataLength) {
-	    		    inputPointData.insertElementAt(inputPointData.get(itin) - outputPointData.get(itin), itin); 
-	    		    
+	    	   while (itin < inputPointData.size()) {
+	    		    inputPointData.set(itin,inputPointData.get(itin) - outputPointData.get(itin)); 
     		    	double weight = pointWeights.get(itin);
     		    	averageDifference += Math.abs(inputPointData.get(itin) - outputPointData.get(itin)) * weight;
     		    	totalWeight += weight;
 	    		    
 	    		    itin++;
-	    	   } // while (itin < inputPointLength)
-	    	   while (inputPointData.size() > inputPointDataLength) {
-	    		   inputPointData.remove(inputPointData.size()-1);
-	    	   }
+	    	   } // while (itin < inputPointData.size())
+	    	   
 	    	   if (totalWeight > 0) {
 	    		   Preferences.debug("The average weighted difference norm of the point set is " +
 	    	                         (averageDifference/totalWeight) + "\n", Preferences.DEBUG_ALGORITHM);
@@ -778,12 +794,12 @@ import gov.nih.mipav.view.Preferences;
 	        
 	        for (int itin = 0; itin < inputPointData.size(); itin++) {
 	        	double point[] = new double[nDims];
-	        	point[0] = pointLocation.get(itin).X;
-	        	point[1] = pointLocation.get(itin).Y;
+	        	point[0] = inputPointLocation.get(itin).X;
+	        	point[1] = inputPointLocation.get(itin).Y;
 	            if (nDims > 2) {
-	            	point[2] = pointLocation.get(itin).Z;
+	            	point[2] = inputPointLocation.get(itin).Z;
 	            	if (nDims > 3) {
-	            		point[3] = pointLocation.get(itin).W;
+	            		point[3] = inputPointLocation.get(itin).W;
 	            	}
 	            }
 	            for (int i = 0; i < nDims; i++) {
@@ -808,7 +824,7 @@ import gov.nih.mipav.view.Preferences;
 	                	break;
 	                }
 	            } // for (int i = nDims - 1; i >= 0; i--)
-	            outputPointData.insertElementAt(collapsedPhiLattices[0][0], itin);
+	            outputPointData.set(itin,collapsedPhiLattices[0][0]);
 	        } // for (int itin = 0; itin < inputPointData.size(); itin++) 
 	        	
 	    }
