@@ -870,6 +870,21 @@ public class JDialogLattice extends JDialogBase {
 		return new Ellipsoid3f( center, axes, extents );
 	}
 
+	public static void makeEllipse( Vector3f right, Vector3f up, Vector3f center, float diameter, VOIContour ellipse  )
+	{
+		int numPts = 12;
+		for ( int i = 0; i < numPts; i++ )
+		{
+			double c = Math.cos( Math.PI * 2.0 * i/numPts );
+			double s = Math.sin( Math.PI * 2.0 * i/numPts);
+			Vector3f pos1 = Vector3f.scale((float) (diameter * c), right);
+			Vector3f pos2 = Vector3f.scale((float) (diameter * s), up);
+			Vector3f pos = Vector3f.add(pos1,pos2);
+			pos.add(center);
+			ellipse.addElement( pos );
+		}
+	}
+
 	public static Ellipsoid3f makeEllipse( Vector3f right, Vector3f up, Vector3f center, float diameterA, float scale, VOIContour ellipse  )
 	{
 		int numPts = 32;
@@ -1244,7 +1259,7 @@ public class JDialogLattice extends JDialogBase {
 
         	FileWriter fw = new FileWriter(file);
         	BufferedWriter bw = new BufferedWriter(fw);
-        	bw.write( "Total Length:," +  length + "\n" );
+        	bw.write( "Total Length:," +  VoxelSize * length + "\n" );
             bw.newLine();
         	bw.write( "pair" + "," + "diameter" + ","  + "left distance" + "," + "right distance" + "\n" );
         	for ( int i = 0; i < leftPairs.length; i++ )

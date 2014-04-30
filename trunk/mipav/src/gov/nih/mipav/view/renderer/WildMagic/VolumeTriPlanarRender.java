@@ -32,6 +32,7 @@ import javax.swing.KeyStroke;
 
 import WildMagic.LibFoundation.Distance.DistanceVector3Segment3;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Line3f;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibFoundation.Mathematics.Segment3f;
@@ -41,6 +42,7 @@ import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
+import WildMagic.LibGraphics.SceneGraph.Transformation;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 
 import com.jogamp.opengl.util.Animator;
@@ -183,33 +185,35 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	 * @param e the key event.
 	 */
 	public void keyPressed(KeyEvent e) {
+		if ( m_kParent.is3DSelectionEnabled() )
+		{
+			Transformation world = m_kVolumeRayCast.getMesh().World;
+			switch(e.getKeyCode()) {
+			case KeyEvent.VK_UP:
+				m_kVolumeRayCast.GetScene().UpdateGS();
+				m_kParent.moveSelectedPoint( world.InvertVector(m_spkCamera.GetUVector()) );
+				break;
+			case KeyEvent.VK_DOWN:
+				m_kVolumeRayCast.GetScene().UpdateGS();
+				m_kParent.moveSelectedPoint( world.InvertVector(m_spkCamera.GetUVector()).neg() );
+				break;
+			case KeyEvent.VK_RIGHT:
+				m_kVolumeRayCast.GetScene().UpdateGS();
+				m_kParent.moveSelectedPoint( world.InvertVector(m_spkCamera.GetRVector()) );
+				break;
+			case KeyEvent.VK_LEFT:
+				m_kVolumeRayCast.GetScene().UpdateGS();
+				m_kParent.moveSelectedPoint( world.InvertVector(m_spkCamera.GetRVector()).neg() );
+				break;
+			}
+			return;
+		}
+		
 		super.keyPressed(e);
 		if ( m_kParent != null )
 		{
 			m_kParent.setCameraParameters();
 			m_kParent.setObjectParameters();
-
-			char ucKey = e.getKeyChar();
-			switch (ucKey) {
-			case 'a':
-				m_kParent.openVOIs();
-				break;
-			case 'l':
-				m_kParent.showNextVOI();
-				break;
-			case 'L':
-				m_kParent.showPreviousVOI();
-				break;
-			}
-	        // look for shortcuts now
-
-//	        String command = null;
-//	        final KeyStroke ks = KeyStroke.getKeyStrokeForEvent(e);
-//	        command = Preferences.getShortcutCommand(ks);
-//	        if (command.equals(CustomUIBuilder.PARAM_VOI_DELETE.getActionCommand()) )
-//	        {
-//	        	System.err.println( "Delete Selected VOI" );
-//	        } 
 		}
 		return;
 	}
@@ -277,7 +281,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		{
 			if (m_spkCamera.GetPickRay(m_iXPick,m_iYPick,GetWidth(),
 					GetHeight(),kPos,kDir))
-			{
+			{				
 				m_bPickPending = false;
 				if ( m_kParent.is3DMouseEnabled() || m_kParent.is3DSelectionEnabled() )
 				{
