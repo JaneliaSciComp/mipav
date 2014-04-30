@@ -356,7 +356,8 @@ import gov.nih.mipav.view.Preferences;
 	    	   double totalWeight = 0.0;
 	    	   
 	    	   int itin = 0;
-	    	   while (itin < inputPointData.size()) {
+	    	   int inputPointDataLength = inputPointData.size();
+	    	   while (itin < inputPointDataLength) {
 	    		    inputPointData.insertElementAt(inputPointData.get(itin) - outputPointData.get(itin), itin); 
 	    		    
     		    	double weight = pointWeights.get(itin);
@@ -364,7 +365,10 @@ import gov.nih.mipav.view.Preferences;
     		    	totalWeight += weight;
 	    		    
 	    		    itin++;
-	    	   } // while (itin < inputPointData.size())
+	    	   } // while (itin < inputPointLength)
+	    	   while (inputPointData.size() > inputPointDataLength) {
+	    		   inputPointData.remove(inputPointData.size()-1);
+	    	   }
 	    	   if (totalWeight > 0) {
 	    		   Preferences.debug("The average weighted difference norm of the point set is " +
 	    	                         (averageDifference/totalWeight) + "\n", Preferences.DEBUG_ALGORITHM);
