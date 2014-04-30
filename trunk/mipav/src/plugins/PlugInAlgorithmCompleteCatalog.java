@@ -5,6 +5,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Vector;
 
 
@@ -55,10 +58,13 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
             }
             csv.flush();
             csv.close();
+            
+            uniqueSample();
         } catch (final IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+        
         setCompleted(true);
 
     }
@@ -163,4 +169,102 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
             ex.printStackTrace();
         }
     }
+    
+    private void uniqueSample() throws IOException{
+    	
+        LinkedHashSet<String> siteSet = new LinkedHashSet<String>();
+        LinkedHashSet<String> visitSet = new LinkedHashSet<String>();
+        LinkedHashSet<String> specSet = new LinkedHashSet<String>();
+        LinkedHashSet<String> lineSet = new LinkedHashSet<String>();
+    	
+    	final BufferedReader input = new BufferedReader(new FileReader(catalogFile));
+    	String outFilename = catalogFile.getName();
+    	outFilename = outFilename.substring(0, outFilename.lastIndexOf("."));
+    	outFilename += "_unique.csv";
+    	outFilename = catalogFile.getParent() + File.separator + outFilename;
+    	File outFile = new File(outFilename);
+    	FileWriter uniqueCSV = new FileWriter(outFile);
+    	
+    	String uniqueHeader = "Site,Visit,Specimen,# of Unique Samples\n";
+    	uniqueCSV.append(uniqueHeader);
+    	for(int i=0;i<remove;i++){
+    		input.readLine();
+    	}
+    	
+    	String line = null;
+    	while ( (line = input.readLine()) != null) {
+    		String[] lineArray = parseLine2(line);
+    		if(lineArray.length == 0)
+    			continue;
+    		String siteStr = lineArray[0].trim();
+    		String GUIDStr = lineArray[2].trim();
+    		String visitStr = lineArray[6].trim();
+    		String specStr = lineArray[9].trim();
+    		String setStr = siteStr + ";" + GUIDStr + ";" + visitStr + ";" + specStr;
+    		
+    		siteSet.add(siteStr);
+    		visitSet.add(visitStr);
+    		specSet.add(specStr);
+    		lineSet.add(setStr);
+    	}
+    	int siteSize = siteSet.size();
+    	int visitSize = visitSet.size();
+    	int specSize = specSet.size();
+    	int combinations = siteSize*visitSize*specSize;
+    	int[] counter = new int[combinations];
+    	ArrayList<String> siteList = new ArrayList<String>(siteSet);
+    	ArrayList<String> visitList = new ArrayList<String>(visitSet);
+    	ArrayList<String> specList = new ArrayList<String>(specSet);
+    	
+    	Iterator<String> iter = lineSet.iterator();
+    	while(iter.hasNext()){
+    		String lineStr = iter.next();
+    		//System.out.println(lineStr);
+    		String[] lineSplit = lineStr.split(";");
+    		int siteInd = siteList.indexOf(lineSplit[0]);
+    		int visitInd = visitList.indexOf(lineSplit[2]);
+    		int specInd = specList.indexOf(lineSplit[3]);
+    		int comboInd = siteInd + visitInd*siteSize + specInd*siteSize*visitSize;
+    		counter[comboInd]++;
+    	}
+    	
+    	for(int i=0;i<specSize;i++){
+    		String spec = specList.get(i);
+    		for(int j=0;j<visitSize;j++){
+    			String visit = visitList.get(j);
+    			for(int k=0;k<siteSize;k++){
+    				String site = siteList.get(k);
+    				int index = k + j*siteSize + i*siteSize*visitSize;
+    				String output = String.format("%s,%s,%s,%d\n", site, visit, spec, counter[index]);
+    				uniqueCSV.write(output);
+    				//Write output
+    			}
+    		}
+    	}
+    	
+    	uniqueCSV.close();
+    	input.close();
+    	//ArrayList<String> lineList = new ArrayList<String>(lineSet);
+    }
+    
+	private String[] parseLine2(String line){
+		String[] output = new String[20];
+		int cnt = 0;
+		int ind = 0;
+		while(cnt<20){
+			ind = line.indexOf(",");
+			if(ind > 0)
+				output[cnt] = line.substring(0, ind).trim();
+			else if (ind == -1) break;
+			else output[cnt] = "null";
+			cnt++;
+			line = line.substring(ind+1);
+		}
+		String[] realout = new String[cnt];
+		for(int i=0;i<cnt;i++){
+			realout[i] = output[i];
+		}
+		
+		return realout;
+	}
 }
