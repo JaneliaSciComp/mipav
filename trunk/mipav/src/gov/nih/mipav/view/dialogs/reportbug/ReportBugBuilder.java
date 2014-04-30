@@ -241,8 +241,8 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener {
         final String sunCpu = System.getProperties().getProperty("sun.cpu.endian");
         final String sunDesktop = System.getProperties().getProperty("sun.desktop");
         final String fileSeparator = System.getProperties().getProperty("file.separator");
-        final String javaClassPath = System.getProperties().getProperty("java.class.path").replaceAll(";", "\n\t\t\t");
-        final String javaLibraryPath = System.getProperties().getProperty("java.library.path").replaceAll(";", "\n\t\t\t");
+        final String javaClassPath = System.getProperties().getProperty("java.class.path").replaceAll(File.pathSeparator, "\n\t\t\t");
+        final String javaLibraryPath = System.getProperties().getProperty("java.library.path").replaceAll(File.pathSeparator, "\n\t\t\t");
 
         final String userName = System.getProperties().getProperty("user.name");
 
