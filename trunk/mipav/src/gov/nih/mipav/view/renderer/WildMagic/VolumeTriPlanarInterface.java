@@ -1441,6 +1441,14 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     		m_kVOIInterface.addInsertionPoint( startPt, endPt, maxPt );
     	}    	
     }
+    
+    public void moveSelectedPoint( Vector3f direction )
+    {
+    	if ( m_kVOIInterface != null )
+    	{
+    		m_kVOIInterface.moveSelectedPoint( direction );
+    	}    	    	
+    }
 
 
     @Override

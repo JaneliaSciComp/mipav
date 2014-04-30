@@ -1278,7 +1278,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
 
     }
-    
+
+    private VOI showSelectedVOI = null;
+    private VOIContour[] showSelected = null;
     private VOIVector latticeLines;
     private VOIVector lattice = null;
 	public void setLattice( VOIVector lattice )
@@ -1366,6 +1368,60 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         for ( int i = 0; i < latticeLines.size(); i++ )
         {
         	getActiveImage().registerVOI( latticeLines.elementAt(i) );
+        }
+        
+        if ( picked != null )
+        {
+        	if ( showSelectedVOI == null )
+        	{
+				short id = (short) getActiveImage().getVOIs().getUniqueID();
+				showSelectedVOI = new VOI(id, "showSelected", VOI.POLYLINE, (float)Math.random() );
+				getActiveImage().registerVOI(showSelectedVOI);
+        	}
+        	if ( showSelected == null )
+        	{
+        		showSelected = new VOIContour[3];
+        		showSelected[0] = new VOIContour(true);
+        		JDialogLattice.makeEllipse( Vector3f.UNIT_X, Vector3f.UNIT_Y, picked, 4, showSelected[0] );
+        		showSelectedVOI.getCurves().add(showSelected[0]);
+        		showSelected[0].update( new ColorRGBA(0,1,1,1));
+        		
+
+        		showSelected[1] = new VOIContour(true);
+        		JDialogLattice.makeEllipse( Vector3f.UNIT_Z, Vector3f.UNIT_Y, picked, 4, showSelected[1] );
+        		showSelectedVOI.getCurves().add(showSelected[1]);
+        		showSelected[1].update( new ColorRGBA(0,1,1,1));
+        		
+
+        		showSelected[2] = new VOIContour(true);
+        		JDialogLattice.makeEllipse( Vector3f.UNIT_Z, Vector3f.UNIT_X, picked, 4, showSelected[2] );
+        		showSelectedVOI.getCurves().add(showSelected[2]);
+        		showSelected[2].update( new ColorRGBA(0,1,1,1));
+        		
+    			showSelectedVOI.setColor( new Color( 0, 255, 255) );
+        	}
+        	else
+        	{
+        		for (int i = 0; i < showSelected.length; i++ )
+        		{
+        			Vector3f center = new Vector3f();
+        			for ( int j = 0; j < showSelected[i].size(); j++ )
+        			{
+        				center.add(showSelected[i].elementAt(j) );
+        			}
+        			center.scale(1f/(float)showSelected[i].size());
+        			Vector3f diff = Vector3f.sub( picked, center );
+        			for ( int j = 0; j < showSelected[i].size(); j++ )
+        			{
+        				showSelected[i].elementAt(j).add( diff );
+        			}
+        		}
+    			showSelectedVOI.update();
+        	}
+			if ( getActiveImage().isRegistered( showSelectedVOI ) == -1 )
+			{
+				getActiveImage().registerVOI(showSelectedVOI);
+			}
         }
         
         if ( rebuild )
@@ -2236,6 +2292,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     public void clear3DSelection()
     {
     	picked = null;
+    	if ( showSelected != null )
+    	{
+    		getActiveImage().unregisterVOI(showSelectedVOI);
+    	}
     }
     
     public boolean is3DMouseEnabled()
@@ -3194,7 +3254,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     	}
     	if ( picked != null )
     	{
-    		picked.copy(pt);
+//    		picked.copy(pt);
         	updateLattice(false);
         	return;
     	}
@@ -3220,14 +3280,27 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     	}
 		if ( (picked != null) && (minDist <= 12) )
 		{
-    		picked.copy(pt);
+//    		picked.copy(pt);
         	updateLattice(false);
         	return;
 		}
     	
     	addInsertionPoint(startPt, endPt, pt );
     }
-    
+
+    public void moveSelectedPoint( Vector3f direction )
+    {
+    	if ( lattice == null )
+    	{
+    		return;
+    	}
+    	if ( picked != null )
+    	{
+    		picked.add(direction);
+        	updateLattice(false);
+        	return;
+    	}    	
+    }
 
     public void addInsertionPoint( Vector3f startPt, Vector3f endPt, Vector3f maxPt )
     {
