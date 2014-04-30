@@ -15,13 +15,11 @@ import gov.nih.mipav.view.Preferences.InterpolateDisplay;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.*;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.Vector;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
@@ -136,7 +134,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     private JTextField frameRateField;
 
     private JCheckBox histoForceUBYTE;
-    
+
     /** DOCUMENT ME! */
     private JComboBox imageChooser;
 
@@ -204,11 +202,11 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     private JCheckBox showLineVOIAngleBox;
 
     private JCheckBox continuousVOIBox;
-    
+
     private ButtonGroup VOIGroup;
 
     private JRadioButton saveVOILPSButton;
-    
+
     private JRadioButton saveVOIVoxelButton;
 
     /** DOCUMENT ME! */
@@ -234,31 +232,31 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
     /** DOCUMENT ME! */
     private Color voiDrawColor, intensityLabelColor, intensityLabelBackgroundColor;
-    
-    /** Check boxes for whether right and left mouse clicks produce default actions. */
-	private JCheckBox doIntensityOnLeftBox, doWinLevOnRightBox;
-	
-	private ButtonGroup WindowLevelGroup;
-	
-	private JRadioButton relativeWindowLevelButton;
-	
-	private JRadioButton absoluteWindowLevelButton;
-	
-	/** opens images in tiled format **/
-	private JCheckBox openImagesInTiledFormatBox;
 
-	/** Gives user choices for displaying complex images. */
-    private JPanel displayImagePanel;
+    /** Check boxes for whether right and left mouse clicks produce default actions. */
+    private JCheckBox doIntensityOnLeftBox, doWinLevOnRightBox;
+
+    private ButtonGroup WindowLevelGroup;
+
+    private JRadioButton relativeWindowLevelButton;
+
+    private JRadioButton absoluteWindowLevelButton;
+
+    /** opens images in tiled format **/
+    private JCheckBox openImagesInTiledFormatBox;
+
+    /** Gives user choices for displaying complex images. */
+    private final JPanel displayImagePanel;
 
     /** The available choices for displaying the numerical values of complex data */
     private JComboBox complexDisplayChoices;
-    
+
     /** Available choices for displaying brightness/color display correlations for pixel values. */
     private JComboBox defaultDisplayChoices;
 
     /** The check box to indicate whether images are displayed using the log of their magnitude */
     private JCheckBox displayLogMag;
-    
+
     /** border size for active image color **/
     private JComboBox activeImageColorBorderSize;
 
@@ -267,15 +265,15 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
     /** Available options for image interpolation */
     private JComboBox interpolateDisplayChoices;
-    
+
     /** Button used to reset all preferences to default state. */
     private JButton resetButton;
 
-	/** Whether to auto-display lut associated with file. */
+    /** Whether to auto-display lut associated with file. */
     private JCheckBox displayLUT;
 
     /** Look and feel choices. */
-	private JComboBox lfDisplayChoices;
+    private JComboBox lfDisplayChoices;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -299,7 +297,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         userInterface = ViewUserInterface.getReference();
 
-        setTitle(userInterface.getAppTitle().replace(':', ' ') + "Options");
+        setTitle(userInterface.getAppTitle().replace(':', ' ') + " options");
 
         displayPanel = new JPanel();
         displayUserInterfacePanel = new JPanel();
@@ -324,7 +322,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         makeWindowLevelOptions(gbc, gbl);
         makeLFOptions(gbc, gbl);
         makeFontOptions(gbc, gbl);
-        
+
         displayImagePanel.setLayout(gbl);
         displayImagePanel.setBorder(buildTitledBorder("Image"));
         makeDefaultLoadImageOptions(gbc, gbl);
@@ -334,7 +332,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         makeInterpolateImageOptions(gbc, gbl);
         makeHistogramImageOptions(gbc, gbl);
         makeUbyteHistoOptions(gbc, gbl);
-        /** add in new checkbox here*/
+        /** add in new checkbox here */
 
         displayColorPanel.setLayout(gbl);
         displayColorPanel.setBorder(buildTitledBorder("Color\\VOI"));
@@ -343,7 +341,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         makeVOILineAngleOptions(gbc, gbl);
         makeCrosshairOptions(gbc, gbl);
         makeActiveColorOptions(gbc, gbl);
-        makeActiveColorBorderSizeOptions(gbc,gbl);
+        makeActiveColorBorderSizeOptions(gbc, gbl);
         makeIntensityLabelColorOptions(gbc, gbl);
         makeVOIDrawColorOptions(gbc, gbl);
         makeVOIColorOptions(gbc, gbl);
@@ -358,7 +356,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         // makeSaveDefaultsOptions(gbc, gbl);
         makeSaveHdrImgOptions(gbc, gbl);
         makeSaveMncOptions(gbc, gbl);
-        //makeSaveXMLOnHDRSaveOptions(gbc, gbl);
+        // makeSaveXMLOnHDRSaveOptions(gbc, gbl);
         makeSaveXMLThumbnailOptions(gbc, gbl);
         makeFrameRateOptions(gbc, gbl);
         makeFlipNIFTIReadOptions(gbc, gbl);
@@ -418,6 +416,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * 
      * @param event Event that triggered this function.
      */
+    @Override
     public void actionPerformed(final ActionEvent event) {
         final String command = event.getActionCommand();
 
@@ -445,9 +444,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                 String shortName = provenanceFilename;
 
                 if (provenanceFilename.length() > 24) {
-                    shortName = ".."
-                            + provenanceFilename.substring(provenanceFilename.length() - 22, provenanceFilename
-                                    .length());
+                    shortName = ".." + provenanceFilename.substring(provenanceFilename.length() - 22, provenanceFilename.length());
                 }
 
                 provenanceFileButton.setText(shortName);
@@ -461,37 +458,42 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         } else if (command.equalsIgnoreCase("intensityLabelColor")) {
 
             colorChooser = new ViewJColorChooser(null, "Pick label color", new ActionListener() { // OKAY listener
+                        @Override
                         public void actionPerformed(final ActionEvent ae) {
                             intensityLabelColor = colorChooser.getColor();
                             intensityLabelColorButton.setBackground(intensityLabelColor);
                         }
                     }, new ActionListener() { // CANCEL listener
+                        @Override
                         public void actionPerformed(final ActionEvent a) {}
                     });
         } else if (command.equalsIgnoreCase("intensityLabelBackground")) {
             colorChooser = new ViewJColorChooser(null, "Pick label background color", new ActionListener() { // OKAY
                         // listener
+                        @Override
                         public void actionPerformed(final ActionEvent ae) {
                             intensityLabelBackgroundColor = colorChooser.getColor();
                             intensityLabelBackgroundButton.setBackground(intensityLabelBackgroundColor);
                         }
                     }, new ActionListener() { // CANCEL listener
+                        @Override
                         public void actionPerformed(final ActionEvent a) {}
                     });
         } else if (command.equalsIgnoreCase(Preferences.PREF_VOI_DRAW_COLOR)) {
             colorChooser = new ViewJColorChooser(null, "Pick Active Color", new ActionListener() { // OKAY listener
+                        @Override
                         public void actionPerformed(final ActionEvent ae) {
                             voiDrawColor = colorChooser.getColor();
                             voiDrawButton.setBackground(voiDrawColor);
                         }
                     }, new ActionListener() { // CANCEL listener
+                        @Override
                         public void actionPerformed(final ActionEvent a) {}
                     });
 
         } else if (command.equalsIgnoreCase("choosefilter")) {
-            final String filterString = (String) JOptionPane.showInputDialog(this, null, "Choose file filter",
-                    JOptionPane.OK_CANCEL_OPTION, null, ViewImageFileFilter.getDescriptions(), ViewImageFileFilter
-                            .getDescription(fileFilter));
+            final String filterString = (String) JOptionPane.showInputDialog(this, null, "Choose file filter", JOptionPane.OK_CANCEL_OPTION, null,
+                    ViewImageFileFilter.getDescriptions(), ViewImageFileFilter.getDescription(fileFilter));
 
             if (filterString != null) {
                 fileFilter = ViewImageFileFilter.getFilterIndex(filterString);
@@ -505,41 +507,36 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         } else if (command.equalsIgnoreCase("close")) { // close box
             dispose();
         } else if (command.equalsIgnoreCase("apply")) {
-            String beforeComplexDisplayChoice = Preferences.getProperty(Preferences.PREF_COMPLEX_DISPLAY);
-            boolean beforeDoLogMagChoice = Preferences.is(Preferences.PREF_LOGMAG_DISPLAY);
-            
+            final String beforeComplexDisplayChoice = Preferences.getProperty(Preferences.PREF_COMPLEX_DISPLAY);
+            final boolean beforeDoLogMagChoice = Preferences.is(Preferences.PREF_LOGMAG_DISPLAY);
+
             // "apply" sets all the preferences in the dialog and then makes itself unset-able global preferences
-            Preferences.setDebugLevels(new boolean[] {debugMinorBox.isSelected(), debugAlgorithmBox.isSelected(),
-                    debugFileIOBox.isSelected(), debugCommsBox.isSelected(), debugScriptingBox.isSelected()});
+            Preferences.setDebugLevels(new boolean[] {debugMinorBox.isSelected(), debugAlgorithmBox.isSelected(), debugFileIOBox.isSelected(),
+                    debugCommsBox.isSelected(), debugScriptingBox.isSelected()});
 
             Preferences.setProperty(Preferences.PREF_SHOW_OUTPUT, String.valueOf(showOutputWindow.isSelected()));
-            Preferences.setProperty(Preferences.PREF_MULTI_THREADING_ENABLED, String
-                    .valueOf(multiThreadingEnabledCheckBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_MULTI_THREADING_ENABLED, String.valueOf(multiThreadingEnabledCheckBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_SHOW_INTENSITY_ON_LEFT_CLICK, String.valueOf(doIntensityOnLeftBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_SHOW_WINLEV_ON_RIGHT_CLICK, String.valueOf(doWinLevOnRightBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_RELATIVE_WINDOW_LEVEL, String.valueOf(relativeWindowLevelButton.isSelected()));
-            Preferences.setProperty(Preferences.PREF_GPU_COMP_ENABLED, String.valueOf(gpuCompEnabledCheckBox
-                    .isSelected()));
-            Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, String.valueOf(dicomReceiverOnStart
-                    .isSelected()));
+            Preferences.setProperty(Preferences.PREF_GPU_COMP_ENABLED, String.valueOf(gpuCompEnabledCheckBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, String.valueOf(dicomReceiverOnStart.isSelected()));
 
             Preferences.setProperty(Preferences.PREF_SHOW_SPLASH, String.valueOf(displaySplash.isSelected()));
             Preferences.setProperty(Preferences.PREF_OPEN_IMAGES_IN_TILED_FORMAT, String.valueOf(openImagesInTiledFormatBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_SHOW_LINE_ANGLE, String.valueOf(showLineVOIAngleBox.isSelected()));
 
-            Preferences.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR, MipavUtil
-                    .makeColorString(preferredActiveColor));
-            Preferences.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR_BORDERSIZE, (String)activeImageColorBorderSize.getSelectedItem());
-            Preferences.setProperty(Preferences.PREF_CROSSHAIR_CURSOR, crosshairNames[crosshairChoices
-                    .getSelectedIndex()]);    
-            Preferences.setProperty(Preferences.PREF_SHOW_UI_LF, lfDisplayChoices.getSelectedItem());     
-            Preferences.setProperty(Preferences.PREF_DEFAULT_DISPLAY, ((DefaultDisplay)defaultDisplayChoices.getSelectedItem()).name());
-            Preferences.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ((ComplexDisplay)complexDisplayChoices.getSelectedItem()).name());
+            Preferences.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR, MipavUtil.makeColorString(preferredActiveColor));
+            Preferences.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR_BORDERSIZE, activeImageColorBorderSize.getSelectedItem());
+            Preferences.setProperty(Preferences.PREF_CROSSHAIR_CURSOR, crosshairNames[crosshairChoices.getSelectedIndex()]);
+            Preferences.setProperty(Preferences.PREF_SHOW_UI_LF, lfDisplayChoices.getSelectedItem());
+            Preferences.setProperty(Preferences.PREF_DEFAULT_DISPLAY, ((DefaultDisplay) defaultDisplayChoices.getSelectedItem()).name());
+            Preferences.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ((ComplexDisplay) complexDisplayChoices.getSelectedItem()).name());
             Preferences.setProperty(Preferences.PREF_LOGMAG_DISPLAY, String.valueOf(displayLogMag.isSelected()));
             Preferences.setProperty(Preferences.PREF_FILE_LUT_DISPLAY, String.valueOf(displayLUT.isSelected()));
-            Preferences.setProperty(Preferences.PREF_INTERPOLATE_MODE, ((InterpolateDisplay)interpolateDisplayChoices.getSelectedItem()).name());
+            Preferences.setProperty(Preferences.PREF_INTERPOLATE_MODE, ((InterpolateDisplay) interpolateDisplayChoices.getSelectedItem()).name());
             Preferences.setProperty(Preferences.PREF_HISTOGRAM_DISPLAY, String.valueOf(displayHistogram.isSelected()));
-            
+
             // check to see if provenance should be turned on (if it was off)
             if (Preferences.is(Preferences.PREF_DATA_PROVENANCE) != provenanceCheckBox.isSelected()) {
                 if (provenanceCheckBox.isSelected()) {
@@ -550,27 +547,18 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             }
 
             Preferences.setProperty(Preferences.PREF_DATA_PROVENANCE, String.valueOf(provenanceCheckBox.isSelected()));
-            Preferences.setProperty(Preferences.PREF_IMAGE_LEVEL_DATA_PROVENANCE, String
-                    .valueOf(provenanceImageCheckBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_IMAGE_LEVEL_DATA_PROVENANCE, String.valueOf(provenanceImageCheckBox.isSelected()));
 
-            Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE, String.valueOf(comboBoxSaveImgMethod
-                    .getSelectedIndex() == 1));
-            Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_IMG_AS_INTERFILE, String.valueOf(comboBoxSaveImgMethod
-                    .getSelectedIndex() == 2));
-            Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_IMG_AS_NIFTI, String.valueOf(comboBoxSaveImgMethod
-                    .getSelectedIndex() == 3));
-            Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC1, String.valueOf(comboBoxSaveMncMethod
-                    .getSelectedIndex() == 1));
-            Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC2, String.valueOf(comboBoxSaveMncMethod
-                    .getSelectedIndex() == 2));
+            Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE, String.valueOf(comboBoxSaveImgMethod.getSelectedIndex() == 1));
+            Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_IMG_AS_INTERFILE, String.valueOf(comboBoxSaveImgMethod.getSelectedIndex() == 2));
+            Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_IMG_AS_NIFTI, String.valueOf(comboBoxSaveImgMethod.getSelectedIndex() == 3));
+            Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC1, String.valueOf(comboBoxSaveMncMethod.getSelectedIndex() == 1));
+            Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC2, String.valueOf(comboBoxSaveMncMethod.getSelectedIndex() == 2));
             Preferences.setProperty(Preferences.PREF_SAVE_ALL_ON_SAVE, String.valueOf(saveAllCheckBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_SAVE_DEFAULTS, String.valueOf(saveDefaultsCheckBox.isSelected()));
-            Preferences.setProperty(Preferences.PREF_SAVE_PROMPT_OVERWRITE, String.valueOf(savePromptOverwriteBox
-                    .isSelected()));
-            Preferences.setProperty(Preferences.PREF_SAVE_XML_THUMBNAIL, String.valueOf(saveThumbnailCheckBox
-                    .isSelected()));
-            Preferences.setProperty(Preferences.PREF_FLIP_NIFTI_READ, String
-                    .valueOf(flipNIFTIReadCheckBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_SAVE_PROMPT_OVERWRITE, String.valueOf(savePromptOverwriteBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_SAVE_XML_THUMBNAIL, String.valueOf(saveThumbnailCheckBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_FLIP_NIFTI_READ, String.valueOf(flipNIFTIReadCheckBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_FILENAME_FILTER, String.valueOf(fileFilter));
             if (fileTempDirField.getText().length() > 0) {
                 Preferences.setFileTempDir(fileTempDirField.getText());
@@ -578,17 +566,12 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
             Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(checkOnFrameClose.isSelected()));
             Preferences.setProperty(Preferences.PREF_LAX_CHECK, String.valueOf(performLaxCheck.isSelected()));
-            Preferences.setProperty(Preferences.PREF_VOI_START_COLOR, String
-                    .valueOf(voiColorChoices.getSelectedIndex()));
-            Preferences.setProperty(Preferences.PREF_INTENSITY_LABEL_COLOR, MipavUtil
-                    .makeColorString(intensityLabelColor));
-            Preferences.setProperty(Preferences.PREF_INTENSITY_LABEL_BACKGROUND_COLOR, MipavUtil
-                    .makeColorString(intensityLabelBackgroundColor));
+            Preferences.setProperty(Preferences.PREF_VOI_START_COLOR, String.valueOf(voiColorChoices.getSelectedIndex()));
+            Preferences.setProperty(Preferences.PREF_INTENSITY_LABEL_COLOR, MipavUtil.makeColorString(intensityLabelColor));
+            Preferences.setProperty(Preferences.PREF_INTENSITY_LABEL_BACKGROUND_COLOR, MipavUtil.makeColorString(intensityLabelBackgroundColor));
             Preferences.setProperty(Preferences.PREF_VOI_DRAW_COLOR, MipavUtil.makeColorString(voiDrawColor));
-            Preferences.setProperty(Preferences.PREF_VOI_POINT_DRAW_TYPE, String.valueOf(pointVOIChoices
-                    .getSelectedIndex()));
-            Preferences.setProperty(Preferences.PREF_CONTINUOUS_VOI_CONTOUR, String.valueOf(continuousVOIBox
-                    .isSelected()));
+            Preferences.setProperty(Preferences.PREF_VOI_POINT_DRAW_TYPE, String.valueOf(pointVOIChoices.getSelectedIndex()));
+            Preferences.setProperty(Preferences.PREF_CONTINUOUS_VOI_CONTOUR, String.valueOf(continuousVOIBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_VOI_LPS_SAVE, String.valueOf(saveVOILPSButton.isSelected()));
             Preferences.setProperty(Preferences.PREF_MENU_FONT, fontNames[fontChooser.getSelectedIndex()]);
             Preferences.setProperty(Preferences.PREF_MENU_FONT_SIZE, fontSizeField.getText());
@@ -668,7 +651,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                 }
             }
 
-            if (!enableLoggingBox.isSelected()) {
+            if ( !enableLoggingBox.isSelected()) {
                 Preferences.setProperty(Preferences.PREF_LOGGING_ENABLED, "false");
                 LogStdStreams.turnOffLogging();
                 Preferences.debug("Turned off logging");
@@ -686,8 +669,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             }
 
             if (dicomCatcher != null) {
-                Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, String.valueOf(dicomCatcher
-                        .isSelected()));
+                Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, String.valueOf(dicomCatcher.isSelected()));
             }
 
             // OKButton.setEnabled(false); // doesn't act correctly when open and then new image frame is added.
@@ -701,29 +683,26 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
                     // have all images get the new color out of preferences
                     try {
-                        ((ViewJFrameImage) userInterface.getImageFrameVector().elementAt(i)).getComponentImage()
-                                .setHighlightColor(preferredActiveColor);
+                        ((ViewJFrameImage) userInterface.getImageFrameVector().elementAt(i)).getComponentImage().setHighlightColor(preferredActiveColor);
 
                         preferredCrosshair = Preferences.getProperty(Preferences.PREF_CROSSHAIR_CURSOR);
 
                         if (preferredCrosshair.equalsIgnoreCase("default")) {
-                            ((ViewJFrameImage) userInterface.getImageFrameVector().elementAt(i)).getComponentImage()
-                                    .setCrosshairCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
+                            ((ViewJFrameImage) userInterface.getImageFrameVector().elementAt(i)).getComponentImage().setCrosshairCursor(
+                                    new Cursor(Cursor.CROSSHAIR_CURSOR));
                         } else {
 
                             try {
                                 final Toolkit toolkit = Toolkit.getDefaultToolkit();
-                                ((ViewJFrameImage) userInterface.getImageFrameVector().elementAt(i))
-                                        .getComponentImage().setCrosshairCursor(
-                                                toolkit.createCustomCursor(MipavUtil.getIcon(preferredCrosshair)
-                                                        .getImage(), new Point(12, 12), preferredCrosshair));
+                                ((ViewJFrameImage) userInterface.getImageFrameVector().elementAt(i)).getComponentImage().setCrosshairCursor(
+                                        toolkit.createCustomCursor(MipavUtil.getIcon(preferredCrosshair).getImage(), new Point(12, 12), preferredCrosshair));
                             } catch (final NullPointerException noIcon) {
 
                                 // specfied icon cannot be found. Instead, we set default:
-                                ((ViewJFrameImage) userInterface.getImageFrameVector().elementAt(i))
-                                        .getComponentImage().setCrosshairCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
-                                Preferences.debug("JDialogMipavOptions: Crosshair icon \"" + preferredCrosshair
-                                        + "\" cannot be found.  " + "Instead, using default crosshair pointer.\n", 2);
+                                ((ViewJFrameImage) userInterface.getImageFrameVector().elementAt(i)).getComponentImage().setCrosshairCursor(
+                                        new Cursor(Cursor.CROSSHAIR_CURSOR));
+                                Preferences.debug("JDialogMipavOptions: Crosshair icon \"" + preferredCrosshair + "\" cannot be found.  "
+                                        + "Instead, using default crosshair pointer.\n", 2);
                             }
                         }
 
@@ -734,7 +713,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                 while (names.hasMoreElements()) {
 
                     // get the ModelImage
-                    final ModelImage img = userInterface.getRegisteredImageByName((String) names.nextElement());
+                    final ModelImage img = userInterface.getRegisteredImageByName(names.nextElement());
 
                     if (img == null) {
                         continue;
@@ -747,10 +726,10 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                     }
                 } // end while loop
             }
-            
+
             // set changes which affect image display
             reloadComplexImages(beforeComplexDisplayChoice, beforeDoLogMagChoice);
-            
+
             // set changes which affect GUI display
             if (userInterface != null) {
                 userInterface.updateMultiCoreUsage();
@@ -761,11 +740,13 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             cancelButton.setText("Close");
         } else if (command.equalsIgnoreCase("active color")) {
             colorChooser = new ViewJColorChooser(null, "Pick Active Color", new ActionListener() { // OKAY listener
+                        @Override
                         public void actionPerformed(final ActionEvent ae) {
                             preferredActiveColor = colorChooser.getColor();
                             activeColor.setBackground(preferredActiveColor);
                         }
                     }, new ActionListener() { // CANCEL listener
+                        @Override
                         public void actionPerformed(final ActionEvent a) {}
                     });
         } else if (command.equals("ChooseLog")) {
@@ -801,17 +782,18 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                 logFileButton.setEnabled(false);
             }
         } else if (command.equals("Help")) {
-            //MipavUtil.showHelp("10247");
+            // MipavUtil.showHelp("10247");
             MipavUtil.showWebHelp("Customizing_MIPAV");
         } else if (command.equals("Reset defaults")) {
-        	final int reply = JOptionPane.showConfirmDialog(this, "Are you sure you want to reset all MIPAV preferences to their default?  This action cannot be undone.", 
-        			"Reset MIPAV preferences", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-        	if (reply == JOptionPane.YES_OPTION) {
-        		Preferences.resetToDefaults();
-        		// close the dialog, since that's easier than resetting everything
-        		dispose();
-        		ViewUserInterface.getReference().options();
-        	}
+            final int reply = JOptionPane.showConfirmDialog(this,
+                    "Are you sure you want to reset all MIPAV preferences to their default?  This action cannot be undone.", "Reset MIPAV preferences",
+                    JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            if (reply == JOptionPane.YES_OPTION) {
+                Preferences.resetToDefaults();
+                // close the dialog, since that's easier than resetting everything
+                dispose();
+                ViewUserInterface.getReference().options();
+            }
         } else if (command.equals("fileTempDirBrowse")) {
             final JFileChooser chooser = new JFileChooser();
             if (Preferences.getFileTempDir() != null) {
@@ -828,7 +810,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             final JDialogEditUserDefinedFileTypes editUserDefDialog = new JDialogEditUserDefinedFileTypes();
             MipavUtil.centerInComponent(this, editUserDefDialog);
         } else if (command.equals("GPU Info")) {
-        	OpenCLInfo.main(null);
+            OpenCLInfo.main(null);
         } else {
             super.actionPerformed(event);
         }
@@ -842,8 +824,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * log checkbox are truly connected.
      */
     /*
-     * public void includeImageSettingsBoxGG() { // if the user interface isn't already avail, ignore if (userInterface ==
-     * null || userInterface.getImageFrameVector().size() == 0) { return; } // image specific variables
+     * public void includeImageSettingsBoxGG() { // if the user interface isn't already avail, ignore if (userInterface
+     * == null || userInterface.getImageFrameVector().size() == 0) { return; } // image specific variables
      * localChangesPanel = new JPanel(); localChangesPanel.setBorder(buildTitledBorder("Image Settings")); // panel gets
      * a grid layout GridBagLayout gbl = new GridBagLayout(); GridBagConstraints gbc = new GridBagConstraints();
      * gbc.anchor = GridBagConstraints.WEST; localChangesPanel.setLayout(gbl); imageChooser = new JComboBox();
@@ -856,26 +838,27 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      */
 
     /**
-     * Evaluates whether the user preferences which control complex image loading have changed in a way that requires reloading of all complex images
+     * Evaluates whether the user preferences which control complex image loading have changed in a way that requires
+     * reloading of all complex images
      */
-    private void reloadComplexImages(String beforeComplexDisplayChoice, boolean beforeDoLogMagChoice) {
+    private void reloadComplexImages(final String beforeComplexDisplayChoice, final boolean beforeDoLogMagChoice) {
         boolean complexRefreshReq = false;
-        if(beforeComplexDisplayChoice != null && Preferences.getProperty(Preferences.PREF_COMPLEX_DISPLAY) != null) {
-            if(!beforeComplexDisplayChoice.equals(Preferences.getProperty(Preferences.PREF_COMPLEX_DISPLAY))) {
+        if (beforeComplexDisplayChoice != null && Preferences.getProperty(Preferences.PREF_COMPLEX_DISPLAY) != null) {
+            if ( !beforeComplexDisplayChoice.equals(Preferences.getProperty(Preferences.PREF_COMPLEX_DISPLAY))) {
                 Preferences.debug("\nSince complex display type has been changed, complex images must be reinitalized.\n", Preferences.DEBUG_MINOR);
                 complexRefreshReq = true;
             }
         }
-        if(beforeDoLogMagChoice != Preferences.is(Preferences.PREF_LOGMAG_DISPLAY)) { 
+        if (beforeDoLogMagChoice != Preferences.is(Preferences.PREF_LOGMAG_DISPLAY)) {
             Preferences.debug("\nSince logmag display preference has changed, complex images must be reinitalized.\n", Preferences.DEBUG_MINOR);
             complexRefreshReq = true;
         }
-        
-        if(complexRefreshReq && userInterface != null) {
-            for(Enumeration<ModelImage> e = userInterface.getRegisteredImages(); e.hasMoreElements();) {
-                ModelImage m = e.nextElement();
-                if(m.isComplexImage()) {
-                    Preferences.debug("Reloading "+m.getImageName()+"\n", Preferences.DEBUG_MINOR);
+
+        if (complexRefreshReq && userInterface != null) {
+            for (final Enumeration<ModelImage> e = userInterface.getRegisteredImages(); e.hasMoreElements();) {
+                final ModelImage m = e.nextElement();
+                if (m.isComplexImage()) {
+                    Preferences.debug("Reloading " + m.getImageName() + "\n", Preferences.DEBUG_MINOR);
                     m.notifyImageExtentsListeners();
                 }
             }
@@ -903,6 +886,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * 
      * @param e DOCUMENT ME!
      */
+    @Override
     public void itemStateChanged(final ItemEvent e) {
 
         if (e.getSource().equals(fontChooser)) {
@@ -917,6 +901,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * 
      * @param e DOCUMENT ME!
      */
+    @Override
     public void keyPressed(final KeyEvent e) {}
 
     /**
@@ -924,6 +909,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * 
      * @param e DOCUMENT ME!
      */
+    @Override
     public void keyReleased(final KeyEvent e) {
 
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -951,6 +937,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * 
      * @param e DOCUMENT ME!
      */
+    @Override
     public void keyTyped(final KeyEvent e) {}
 
     /**
@@ -982,7 +969,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(l1, gbc);
-        displayColorPanel.add(l1,gbc);
+        displayColorPanel.add(l1, gbc);
 
         activeColor = new JButton();
         activeColor.setActionCommand("active color");
@@ -992,13 +979,11 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(activeColor, gbc);
-        displayColorPanel.add(activeColor,gbc);
-
+        displayColorPanel.add(activeColor, gbc);
 
         // preset the choices.
         if (Preferences.getProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR) == null) {
-            Preferences.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR, MipavUtil
-                    .makeColorString(ViewJComponentEditImage.ACTIVE_IMAGE_COLOR));
+            Preferences.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR, MipavUtil.makeColorString(ViewJComponentEditImage.ACTIVE_IMAGE_COLOR));
             activeColor.setBackground(ViewJComponentEditImage.ACTIVE_IMAGE_COLOR);
             preferredActiveColor = ViewJComponentEditImage.ACTIVE_IMAGE_COLOR;
         } else {
@@ -1006,9 +991,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             activeColor.setBackground(preferredActiveColor);
         }
     }
-    
-    
-    
+
     protected void makeActiveColorBorderSizeOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
         final JLabel l1 = new JLabel("Active image border color size:");
         l1.setFont(MipavUtil.font12);
@@ -1017,24 +1000,22 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(l1, gbc);
-        displayColorPanel.add(l1,gbc);
+        displayColorPanel.add(l1, gbc);
 
-        
-        String[] borderSizes = {"1", "2", "3", "4", "5"};
+        final String[] borderSizes = {"1", "2", "3", "4", "5"};
         activeImageColorBorderSize = new JComboBox(borderSizes);
         gbc.insets = new Insets(0, 0, 0, 0);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(activeImageColorBorderSize, gbc);
-        displayColorPanel.add(activeImageColorBorderSize,gbc);
-
+        displayColorPanel.add(activeImageColorBorderSize, gbc);
 
         // preset the choices.
         if (Preferences.getProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR_BORDERSIZE) == null) {
-        	activeImageColorBorderSize.setSelectedIndex(0);
+            activeImageColorBorderSize.setSelectedIndex(0);
         } else {
-        	String preferredSize = Preferences.getProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR_BORDERSIZE);
-        	activeImageColorBorderSize.setSelectedItem(preferredSize);
+            final String preferredSize = Preferences.getProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR_BORDERSIZE);
+            activeImageColorBorderSize.setSelectedItem(preferredSize);
         }
     }
 
@@ -1058,7 +1039,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         buildCancelButton();
         cancelButton.setText("Cancel");
         cancelButton.setActionCommand("close");
-        
+
         applyClosePanel.add(cancelButton);
         applyClosePanel.add(buildResetDefaultsButton());
         applyClosePanel.add(buildHelpButton());
@@ -1087,76 +1068,76 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         // preset the choices.
         checkOnFrameClose.setSelected(Preferences.is(Preferences.PREF_CLOSE_FRAME_CHECK));
     }
-    
+
     /**
      * Makes option for look and feel
      */
     protected void makeLFOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
-    	String noChoice = "None";
-    	String lf = Preferences.getProperty(Preferences.PREF_SHOW_UI_LF);
-    	int defaultChoice = 0;
-    	
-    	LookAndFeelInfo[] looks = UIManager.getInstalledLookAndFeels();
-    	    	
-    	String[] looksString = new String[looks.length+1];
-    	looksString[0] = noChoice;
-    	for(int i=0; i<looks.length; i++) {
-    		if(lf != null && lf.equals(looks[i].getClassName())) {
-    			defaultChoice = i+1;
-    		}
-    		looksString[i+1] = looks[i].getClassName();
-    		System.out.println(looks[i].getClassName());
-    	}
-    	
-    	final JLabel l1 = new JLabel("MIPAV look and feel: ");
-    	l1.setFont(MipavUtil.font12);
-    	l1.setForeground(Color.black);
-    	gbc.insets = new Insets(0, 0, 0, 5);
-    	gbc.gridwidth = 1;
-    	gbc.anchor = GridBagConstraints.WEST;
-    	displayUserInterfacePanel.add(l1, gbc);
-    	
-    	lfDisplayChoices = new JComboBox(looksString);
-    	lfDisplayChoices.setSelectedIndex(defaultChoice);
-    	lfDisplayChoices.setFont(MipavUtil.font12);
-    	
-    	gbc.insets = new Insets(0, 0, 5, 0);
-    	gbc.gridwidth = GridBagConstraints.REMAINDER;
-    	gbc.anchor = GridBagConstraints.WEST;
-    	displayUserInterfacePanel.add(lfDisplayChoices, gbc);
+        final String noChoice = "None";
+        final String lf = Preferences.getProperty(Preferences.PREF_SHOW_UI_LF);
+        int defaultChoice = 0;
+
+        final LookAndFeelInfo[] looks = UIManager.getInstalledLookAndFeels();
+
+        final String[] looksString = new String[looks.length + 1];
+        looksString[0] = noChoice;
+        for (int i = 0; i < looks.length; i++) {
+            if (lf != null && lf.equals(looks[i].getClassName())) {
+                defaultChoice = i + 1;
+            }
+            looksString[i + 1] = looks[i].getClassName();
+            System.out.println(looks[i].getClassName());
+        }
+
+        final JLabel l1 = new JLabel("MIPAV look and feel: ");
+        l1.setFont(MipavUtil.font12);
+        l1.setForeground(Color.black);
+        gbc.insets = new Insets(0, 0, 0, 5);
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        displayUserInterfacePanel.add(l1, gbc);
+
+        lfDisplayChoices = new JComboBox(looksString);
+        lfDisplayChoices.setSelectedIndex(defaultChoice);
+        lfDisplayChoices.setFont(MipavUtil.font12);
+
+        gbc.insets = new Insets(0, 0, 5, 0);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.WEST;
+        displayUserInterfacePanel.add(lfDisplayChoices, gbc);
     }
-    
+
     /**
      * Makes the options for displaying how images should be displayed on default.
      */
     protected void makeDefaultLoadImageOptions(final GridBagConstraints gbc2, final GridBagLayout gbl) {
-    	final JLabel l1 = new JLabel("Initial image display settings: ");
-    	l1.setFont(MipavUtil.font12);
+        final JLabel l1 = new JLabel("Initial image display settings: ");
+        l1.setFont(MipavUtil.font12);
         l1.setForeground(Color.black);
         gbc2.insets = new Insets(0, 0, 0, 5);
         gbc2.gridwidth = 1;
         gbc2.anchor = GridBagConstraints.WEST;
         displayImagePanel.add(l1, gbc2);
-        
+
         // remove the 'Default' item since it's just for reading old pref files back in
-        ArrayList<DefaultDisplay> vals = new ArrayList<DefaultDisplay>();
-        for (DefaultDisplay val : DefaultDisplay.values()) {
-            if (!val.equals(DefaultDisplay.Default)) {
+        final ArrayList<DefaultDisplay> vals = new ArrayList<DefaultDisplay>();
+        for (final DefaultDisplay val : DefaultDisplay.values()) {
+            if ( !val.equals(DefaultDisplay.Default)) {
                 vals.add(val);
             }
         }
         defaultDisplayChoices = new JComboBox(vals.toArray());
         defaultDisplayChoices.setFont(MipavUtil.font12);
-        
+
         gbc2.insets = new Insets(0, 0, 5, 0);
         gbc2.gridwidth = GridBagConstraints.REMAINDER;
         gbc2.anchor = GridBagConstraints.WEST;
         displayImagePanel.add(defaultDisplayChoices, gbc2);
-        
-        //preset the choices.
-    	defaultDisplayChoices.setSelectedItem(Preferences.getDefaultDisplay());
+
+        // preset the choices.
+        defaultDisplayChoices.setSelectedItem(Preferences.getDefaultDisplay());
     }
-    
+
     /**
      * Makes the options for displaying complex image information
      * 
@@ -1179,7 +1160,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc2.gridwidth = GridBagConstraints.REMAINDER;
         gbc2.anchor = GridBagConstraints.WEST;
         displayImagePanel.add(complexDisplayChoices, gbc2);
-        
+
         ComplexDisplay defaultChoice = ComplexDisplay.MAGNITUDE;
         // preset the choices.
         if (Preferences.getProperty(Preferences.PREF_COMPLEX_DISPLAY) == null) {
@@ -1188,124 +1169,123 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             defaultChoice = ComplexDisplay.valueOf(Preferences.getProperty(Preferences.PREF_COMPLEX_DISPLAY));
         }
 
-        if(defaultChoice != null) {
+        if (defaultChoice != null) {
             complexDisplayChoices.setSelectedItem(defaultChoice);
         }
     }
-    
+
     /**
      * Makes checkbox for whether to display image using lut that is modality or image specific.
      */
     protected void makeLUTImageOptions(final GridBagConstraints gbc2, final GridBagLayout gbl) {
-    	displayLUT = new JCheckBox("Display image using stored LUT");
-    	displayLUT.setFont(MipavUtil.font12);
-    	displayLUT.setForeground(Color.black);
-    	displayLUT.addActionListener(this);
-    	gbc2.insets = new Insets(0, 0, 0, 0);
+        displayLUT = new JCheckBox("Display image using stored LUT");
+        displayLUT.setFont(MipavUtil.font12);
+        displayLUT.setForeground(Color.black);
+        displayLUT.addActionListener(this);
+        gbc2.insets = new Insets(0, 0, 0, 0);
         gbc2.gridwidth = GridBagConstraints.REMAINDER;
         gbc2.anchor = GridBagConstraints.WEST;
         displayImagePanel.add(displayLUT, gbc2);
-        
-        if(Preferences.getProperty(Preferences.PREF_FILE_LUT_DISPLAY) == null) {
+
+        if (Preferences.getProperty(Preferences.PREF_FILE_LUT_DISPLAY) == null) {
             Preferences.setProperty(Preferences.PREF_FILE_LUT_DISPLAY, Boolean.valueOf(true).toString());
         } else {
-        	displayLUT.setSelected(Preferences.is(Preferences.PREF_FILE_LUT_DISPLAY));
+            displayLUT.setSelected(Preferences.is(Preferences.PREF_FILE_LUT_DISPLAY));
         }
     }
-    
+
     /**
      * Makes checkbox for whether to display the log of image magnitude on user's screen
      */
-     protected void makeLogMagImageOptions(final GridBagConstraints gbc2, final GridBagLayout gbl) {
-     
-         displayLogMag = new JCheckBox("Display log magnitude of complex images");
-         displayLogMag.setFont(MipavUtil.font12);
-         displayLogMag.setForeground(Color.black);
-         displayLogMag.addActionListener(this);
-         gbc2.insets = new Insets(0, 0, 0, 0);
-         gbc2.gridwidth = GridBagConstraints.REMAINDER;
-         gbc2.anchor = GridBagConstraints.WEST;
-         displayImagePanel.add(displayLogMag, gbc2);
-         
-         if(Preferences.getProperty(Preferences.PREF_LOGMAG_DISPLAY) == null) {
-             Preferences.setProperty(Preferences.PREF_LOGMAG_DISPLAY, Boolean.valueOf(false).toString());
-         } else {
-             displayLogMag.setSelected(Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
-         }
-     }
-     
-     /**
-      * Makes checkbox for whether to display the image with interpolation on user's screen
-      */
-      protected void makeInterpolateImageOptions(final GridBagConstraints gbc2, final GridBagLayout gbl) {
-      
-          final JLabel l1 = new JLabel("Interpolate images using:");
-          l1.setFont(MipavUtil.font12);
-          l1.setForeground(Color.black);
-          gbc2.insets = new Insets(0, 0, 0, 5);
-          gbc2.gridwidth = 1;
-          gbc2.anchor = GridBagConstraints.WEST;
-          displayImagePanel.add(l1, gbc2);
-          
-          interpolateDisplayChoices = new JComboBox(InterpolateDisplay.values());
-          interpolateDisplayChoices.setFont(MipavUtil.font12);
-          
-          gbc2.insets = new Insets(0, 0, 0, 0);
-          gbc2.gridwidth = GridBagConstraints.REMAINDER;
-          gbc2.anchor = GridBagConstraints.WEST;
-          displayImagePanel.add(interpolateDisplayChoices, gbc2);
-          
-          InterpolateDisplay defaultChoice = InterpolateDisplay.NEAREST;
-          // preset the choices.
-          if (Preferences.getProperty(Preferences.PREF_INTERPOLATE_MODE) == null) {
-              Preferences.setProperty(Preferences.PREF_INTERPOLATE_MODE, InterpolateDisplay.NEAREST.name());
-          } else {
-              defaultChoice = InterpolateDisplay.valueOf(Preferences.getProperty(Preferences.PREF_INTERPOLATE_MODE));
-          }
+    protected void makeLogMagImageOptions(final GridBagConstraints gbc2, final GridBagLayout gbl) {
 
-          if(defaultChoice != null) {
-              interpolateDisplayChoices.setSelectedItem(defaultChoice);
-          }
-      }
-      
-      /**
-       * Makes checkbox for whether to update image in real-time as histogram luts are changed
-       */
-       protected void makeHistogramImageOptions(final GridBagConstraints gbc2, final GridBagLayout gbl) {
-       
-           displayHistogram = new JCheckBox("Change image in real-time based on histogram changes");
-           displayHistogram.setFont(MipavUtil.font12);
-           displayHistogram.setForeground(Color.black);
-           displayHistogram.addActionListener(this);
-           gbc2.insets = new Insets(0, 0, 0, 0);
-           gbc2.gridwidth = GridBagConstraints.REMAINDER;
-           gbc2.anchor = GridBagConstraints.WEST;
-           displayImagePanel.add(displayHistogram, gbc2);
-           
-           if(Preferences.getProperty(Preferences.PREF_HISTOGRAM_DISPLAY) == null) {
-               Preferences.setProperty(Preferences.PREF_HISTOGRAM_DISPLAY, Boolean.valueOf(true).toString());
-           } else {
-               displayHistogram.setSelected(Preferences.is(Preferences.PREF_HISTOGRAM_DISPLAY));
-           }
-       }
-       
-       
-    protected void makeUbyteHistoOptions(final GridBagConstraints gbc2, final GridBagLayout gbl){
-    	
-    	histoForceUBYTE = new JCheckBox("Force saved/loaded unsigned byte transfer functions to absolute point");
-    	histoForceUBYTE.setFont(serif12);
-    	histoForceUBYTE.setForeground(Color.black);
-    	
-    	gbc2.insets = new Insets(0, 0, 0, 0);
+        displayLogMag = new JCheckBox("Display log magnitude of complex images");
+        displayLogMag.setFont(MipavUtil.font12);
+        displayLogMag.setForeground(Color.black);
+        displayLogMag.addActionListener(this);
+        gbc2.insets = new Insets(0, 0, 0, 0);
+        gbc2.gridwidth = GridBagConstraints.REMAINDER;
+        gbc2.anchor = GridBagConstraints.WEST;
+        displayImagePanel.add(displayLogMag, gbc2);
+
+        if (Preferences.getProperty(Preferences.PREF_LOGMAG_DISPLAY) == null) {
+            Preferences.setProperty(Preferences.PREF_LOGMAG_DISPLAY, Boolean.valueOf(false).toString());
+        } else {
+            displayLogMag.setSelected(Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
+        }
+    }
+
+    /**
+     * Makes checkbox for whether to display the image with interpolation on user's screen
+     */
+    protected void makeInterpolateImageOptions(final GridBagConstraints gbc2, final GridBagLayout gbl) {
+
+        final JLabel l1 = new JLabel("Interpolate images using:");
+        l1.setFont(MipavUtil.font12);
+        l1.setForeground(Color.black);
+        gbc2.insets = new Insets(0, 0, 0, 5);
+        gbc2.gridwidth = 1;
+        gbc2.anchor = GridBagConstraints.WEST;
+        displayImagePanel.add(l1, gbc2);
+
+        interpolateDisplayChoices = new JComboBox(InterpolateDisplay.values());
+        interpolateDisplayChoices.setFont(MipavUtil.font12);
+
+        gbc2.insets = new Insets(0, 0, 0, 0);
+        gbc2.gridwidth = GridBagConstraints.REMAINDER;
+        gbc2.anchor = GridBagConstraints.WEST;
+        displayImagePanel.add(interpolateDisplayChoices, gbc2);
+
+        InterpolateDisplay defaultChoice = InterpolateDisplay.NEAREST;
+        // preset the choices.
+        if (Preferences.getProperty(Preferences.PREF_INTERPOLATE_MODE) == null) {
+            Preferences.setProperty(Preferences.PREF_INTERPOLATE_MODE, InterpolateDisplay.NEAREST.name());
+        } else {
+            defaultChoice = InterpolateDisplay.valueOf(Preferences.getProperty(Preferences.PREF_INTERPOLATE_MODE));
+        }
+
+        if (defaultChoice != null) {
+            interpolateDisplayChoices.setSelectedItem(defaultChoice);
+        }
+    }
+
+    /**
+     * Makes checkbox for whether to update image in real-time as histogram luts are changed
+     */
+    protected void makeHistogramImageOptions(final GridBagConstraints gbc2, final GridBagLayout gbl) {
+
+        displayHistogram = new JCheckBox("Change image in real-time based on histogram changes");
+        displayHistogram.setFont(MipavUtil.font12);
+        displayHistogram.setForeground(Color.black);
+        displayHistogram.addActionListener(this);
+        gbc2.insets = new Insets(0, 0, 0, 0);
+        gbc2.gridwidth = GridBagConstraints.REMAINDER;
+        gbc2.anchor = GridBagConstraints.WEST;
+        displayImagePanel.add(displayHistogram, gbc2);
+
+        if (Preferences.getProperty(Preferences.PREF_HISTOGRAM_DISPLAY) == null) {
+            Preferences.setProperty(Preferences.PREF_HISTOGRAM_DISPLAY, Boolean.valueOf(true).toString());
+        } else {
+            displayHistogram.setSelected(Preferences.is(Preferences.PREF_HISTOGRAM_DISPLAY));
+        }
+    }
+
+    protected void makeUbyteHistoOptions(final GridBagConstraints gbc2, final GridBagLayout gbl) {
+
+        histoForceUBYTE = new JCheckBox("Force saved/loaded unsigned byte transfer functions to absolute point");
+        histoForceUBYTE.setFont(serif12);
+        histoForceUBYTE.setForeground(Color.black);
+
+        gbc2.insets = new Insets(0, 0, 0, 0);
         gbc2.gridwidth = GridBagConstraints.REMAINDER;
         gbc2.anchor = GridBagConstraints.WEST;
         displayImagePanel.add(histoForceUBYTE, gbc2);
-        
-        if(Preferences.is(Preferences.PREF_FORCE_HISTO_UBYTE)){
-        	histoForceUBYTE.setSelected(true);
+
+        if (Preferences.is(Preferences.PREF_FORCE_HISTO_UBYTE)) {
+            histoForceUBYTE.setSelected(true);
         }
     }
-    
+
     /**
      * Makes the options for crosshair display.
      * 
@@ -1515,8 +1495,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         fileMiscPanel.add(fileTempDirBrowseButton);
     }
 
-    
-    
     /**
      * DOCUMENT ME!
      * 
@@ -1590,9 +1568,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         // gbc.fill = GridBagConstraints;
         displayUserInterfacePanel.add(fontPanel, gbc);
     }
-    
-    
-    
+
     /**
      * Makes options for how user interface will react when the left or right mouse buttons are clicked.
      * 
@@ -1602,17 +1578,15 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     protected void makeMouseClickOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
 
         boolean doLeft = true, doRight = true;
-        
-        
 
         if (Preferences.getProperty(Preferences.PREF_SHOW_INTENSITY_ON_LEFT_CLICK) != null) {
             doLeft = Preferences.is(Preferences.PREF_SHOW_INTENSITY_ON_LEFT_CLICK);
         }
-        
+
         if (Preferences.getProperty(Preferences.PREF_SHOW_WINLEV_ON_RIGHT_CLICK) != null) {
             doRight = Preferences.is(Preferences.PREF_SHOW_WINLEV_ON_RIGHT_CLICK);
         }
-        
+
         doIntensityOnLeftBox = new JCheckBox("Display position and intensity on left mouse click");
         doIntensityOnLeftBox.setFont(MipavUtil.font12);
         doIntensityOnLeftBox.setForeground(Color.black);
@@ -1623,7 +1597,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(doIntensityOnLeftBox, gbc);
         displayUserInterfacePanel.add(doIntensityOnLeftBox);
-        
+
         doWinLevOnRightBox = new JCheckBox("Adjust window/level on right mouse click");
         doWinLevOnRightBox.setFont(MipavUtil.font12);
         doWinLevOnRightBox.setForeground(Color.black);
@@ -1634,29 +1608,26 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(doWinLevOnRightBox, gbc);
         displayUserInterfacePanel.add(doWinLevOnRightBox);
-        
-        
-        
-        
+
     }
-    
+
     protected void makeWindowLevelOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
         WindowLevelGroup = new ButtonGroup();
-        relativeWindowLevelButton = new JRadioButton("Window/level adjusted relative to current transfer function values", 
+        relativeWindowLevelButton = new JRadioButton("Window/level adjusted relative to current transfer function values",
                 Preferences.is(Preferences.PREF_RELATIVE_WINDOW_LEVEL));
         relativeWindowLevelButton.setFont(MipavUtil.font12);
         relativeWindowLevelButton.setForeground(Color.black);
         relativeWindowLevelButton.addActionListener(this);
         relativeWindowLevelButton.setToolTipText("If selected, window/level will be adjusted relative to the current transfer function.");
         WindowLevelGroup.add(relativeWindowLevelButton);
-        
+
         gbc.insets = new Insets(0, 0, 0, 0);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(relativeWindowLevelButton, gbc);
         displayUserInterfacePanel.add(relativeWindowLevelButton);
-        
-        absoluteWindowLevelButton = new JRadioButton("Window/level adusted to absolute image position values", 
+
+        absoluteWindowLevelButton = new JRadioButton("Window/level adusted to absolute image position values",
                 !Preferences.is(Preferences.PREF_RELATIVE_WINDOW_LEVEL));
         absoluteWindowLevelButton.setFont(MipavUtil.font12);
         absoluteWindowLevelButton.setForeground(Color.black);
@@ -1730,8 +1701,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      */
     protected void makeLoggingOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
         final boolean loggingOn = Preferences.is(Preferences.PREF_LOGGING_ENABLED);
-        
-        
+
         enableLoggingBox = new JCheckBox("Log errors to:", loggingOn);
         enableLoggingBox.setFont(MipavUtil.font12);
         enableLoggingBox.setForeground(Color.black);
@@ -1740,26 +1710,25 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc.anchor = GridBagConstraints.NORTHWEST;
         otherPanel.add(enableLoggingBox, gbc);
         enableLoggingBox.addActionListener(this);
-        
+
         logFilename = Preferences.getProperty(Preferences.PREF_LOG_FILENAME);
-        
+
         try {
-			BufferedWriter out = new BufferedWriter(new FileWriter("logFilename"));
-			out.write("");
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-        
+            final BufferedWriter out = new BufferedWriter(new FileWriter("logFilename"));
+            out.write("");
+        } catch (final FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (final IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
         String shortName = "exceptions.txt";
 
         if (logFilename.length() > 24) {
             shortName = ".." + logFilename.substring(logFilename.length() - 22, logFilename.length());
         }
-        
 
         logFileButton = new JButton(shortName);
         logFileButton.setEnabled(true);
@@ -1770,15 +1739,14 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc.anchor = GridBagConstraints.WEST;
         logFileButton.setEnabled(loggingOn);
         logFileButton.addActionListener(this);
-        logFileButton.setActionCommand("ChooseLog");      
-
+        logFileButton.setActionCommand("ChooseLog");
 
         otherPanel.add(logFileButton, gbc);
-        
-        if(ViewUserInterface.getExceptions() != null) {
+
+        if (ViewUserInterface.getExceptions() != null) {
             ViewUserInterface.getExceptions().deleteOnExit();
         }
-        
+
     }
 
     /**
@@ -1806,16 +1774,14 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         provenanceFilename = Preferences.getProperty(Preferences.PREF_DATA_PROVENANCE_FILENAME);
         if (provenanceFilename == null) {
-            provenanceFilename = System.getProperty("user.home") + File.separator + "mipav" + File.separator
-                    + "dataprovenance.xmp";
+            provenanceFilename = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "dataprovenance.xmp";
             Preferences.setProperty(Preferences.PREF_DATA_PROVENANCE_FILENAME, provenanceFilename);
         }
 
         String shortName = provenanceFilename;
 
         if (provenanceFilename.length() > 24) {
-            shortName = ".."
-                    + provenanceFilename.substring(provenanceFilename.length() - 22, provenanceFilename.length());
+            shortName = ".." + provenanceFilename.substring(provenanceFilename.length() - 22, provenanceFilename.length());
         }
 
         provenanceFileButton = new JButton(shortName);
@@ -1833,8 +1799,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         provenanceImageCheckBox.setFont(MipavUtil.font12);
         provenanceImageCheckBox.setForeground(Color.black);
         provenanceImageCheckBox.addActionListener(this);
-        provenanceImageCheckBox
-                .setToolTipText("Data provenance per image (eg saving file_test.jpg will create file_test.xmp");
+        provenanceImageCheckBox.setToolTipText("Data provenance per image (eg saving file_test.jpg will create file_test.xmp");
         gbc.insets = new Insets(0, 0, 0, 0);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.NORTHWEST;
@@ -1854,21 +1819,21 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      */
     protected void makeNumericsOnly(final JTextField txt) {
         txt.addKeyListener(new KeyAdapter() { // make the field
-                    public void keyTyped(final KeyEvent evt) { // not accept letters
+            @Override
+            public void keyTyped(final KeyEvent evt) { // not accept letters
 
-                        final char ch = evt.getKeyChar();
+                final char ch = evt.getKeyChar();
 
-                        if ( ( (ch < '0') || (ch > '9'))
-                                && ( (ch != KeyEvent.VK_DELETE) && (ch != KeyEvent.VK_BACK_SPACE)
-                                        && (ch != KeyEvent.VK_DECIMAL) && (ch != KeyEvent.VK_PERIOD))) {
+                if ( ( (ch < '0') || (ch > '9'))
+                        && ( (ch != KeyEvent.VK_DELETE) && (ch != KeyEvent.VK_BACK_SPACE) && (ch != KeyEvent.VK_DECIMAL) && (ch != KeyEvent.VK_PERIOD))) {
 
-                            // if is the case that ch is outside the bounds of a number
-                            // AND it is the case that ch is neither a BS or a DE, then
-                            // key is not a digit or a deletion char or a decimal point
-                            evt.consume();
-                        }
-                    }
-                });
+                    // if is the case that ch is outside the bounds of a number
+                    // AND it is the case that ch is neither a BS or a DE, then
+                    // key is not a digit or a deletion char or a decimal point
+                    evt.consume();
+                }
+            }
+        });
     } // end makeNumericsOnly
 
     /**
@@ -1995,8 +1960,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     }
 
     protected void makeMultiThreadingEnabledOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
-        multiThreadingEnabledCheckBox = new JCheckBox("Multi-threading enabled (" + ThreadUtil.getAvailableCores()
-                + " cores)");
+        multiThreadingEnabledCheckBox = new JCheckBox("Multi-threading enabled (" + ThreadUtil.getAvailableCores() + " cores)");
         multiThreadingEnabledCheckBox.setFont(MipavUtil.font12);
         multiThreadingEnabledCheckBox.setForeground(Color.black);
         multiThreadingEnabledCheckBox.addActionListener(this);
@@ -2007,13 +1971,12 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         otherPanel.add(multiThreadingEnabledCheckBox);
 
         // preset the choices.
-        multiThreadingEnabledCheckBox.setSelected(Preferences.isMultiThreadingEnabled()  &&
-        		(ThreadUtil.getAvailableCores() > 1));
+        multiThreadingEnabledCheckBox.setSelected(Preferences.isMultiThreadingEnabled() && (ThreadUtil.getAvailableCores() > 1));
         multiThreadingEnabledCheckBox.setEnabled(ThreadUtil.getAvailableCores() > 1);
     }
 
     protected void makeGpuCompEnabledOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
-        gpuCompEnabledCheckBox = new JCheckBox("GPU computing enabled"); 
+        gpuCompEnabledCheckBox = new JCheckBox("GPU computing enabled");
         gpuCompEnabledCheckBox.setFont(MipavUtil.font12);
         gpuCompEnabledCheckBox.setForeground(Color.black);
         gpuCompEnabledCheckBox.addActionListener(this);
@@ -2026,7 +1989,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         // preset the choices.
         gpuCompEnabledCheckBox.setSelected(Preferences.isGpuCompEnabled() && OpenCLAlgorithmBase.isOCLAvailable());
         gpuCompEnabledCheckBox.setEnabled(OpenCLAlgorithmBase.isOCLAvailable());
-        
 
         gpuInfoButton = new JButton("GPU info");
         gpuInfoButton.setToolTipText(logFilename);
@@ -2141,8 +2103,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         savePromptOverwriteBox.setSelected(Preferences.is(Preferences.PREF_SAVE_PROMPT_OVERWRITE));
     }
 
-  
-
     /**
      * Makes the "Save Thumbnail for XML Files" option line in the globalChangesPanel.
      * 
@@ -2204,8 +2164,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         // preset the choices:
         displaySplash.setSelected(Preferences.is(Preferences.PREF_SHOW_SPLASH));
-        
-        
+
         openImagesInTiledFormatBox = new JCheckBox("Open images in tiled format");
         openImagesInTiledFormatBox.setFont(MipavUtil.font12);
         openImagesInTiledFormatBox.setForeground(Color.black);
@@ -2215,9 +2174,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(openImagesInTiledFormatBox, gbc);
         displayUserInterfacePanel.add(openImagesInTiledFormatBox);
-        
+
         openImagesInTiledFormatBox.setSelected(Preferences.is(Preferences.PREF_OPEN_IMAGES_IN_TILED_FORMAT));
-        
+
     }
 
     /**
@@ -2352,8 +2311,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             intensityLabelBackgroundColor = MipavUtil.extractColor(prefColor);
             intensityLabelBackgroundButton.setBackground(intensityLabelBackgroundColor);
         } else {
-            Preferences.setProperty(Preferences.PREF_INTENSITY_LABEL_BACKGROUND_COLOR, MipavUtil
-                    .makeColorString(Color.black));
+            Preferences.setProperty(Preferences.PREF_INTENSITY_LABEL_BACKGROUND_COLOR, MipavUtil.makeColorString(Color.black));
             intensityLabelBackgroundButton.setBackground(Color.black);
             intensityLabelBackgroundColor = Color.black;
         }
@@ -2433,8 +2391,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         continuousVOIBox.setFont(MipavUtil.font12);
         continuousVOIBox.setForeground(Color.black);
         continuousVOIBox.addActionListener(this);
-        continuousVOIBox
-                .setToolTipText("If selected, new contours can be drawn in the same VOI without holding down the [SHIFT] key");
+        continuousVOIBox.setToolTipText("If selected, new contours can be drawn in the same VOI without holding down the [SHIFT] key");
         gbc.insets = new Insets(0, 0, 0, 0);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.WEST;
@@ -2446,23 +2403,21 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     }
 
     protected void makeVOISaveLPSOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
-    	VOIGroup = new ButtonGroup();
-        saveVOILPSButton = new JRadioButton("Save VOIs in LPS mm. coordinates", 
-        		Preferences.is(Preferences.PREF_VOI_LPS_SAVE));
+        VOIGroup = new ButtonGroup();
+        saveVOILPSButton = new JRadioButton("Save VOIs in LPS mm. coordinates", Preferences.is(Preferences.PREF_VOI_LPS_SAVE));
         saveVOILPSButton.setFont(MipavUtil.font12);
         saveVOILPSButton.setForeground(Color.black);
         saveVOILPSButton.addActionListener(this);
         saveVOILPSButton.setToolTipText("If selected, VOIs will be saved in LPS mm. coordinates.");
         VOIGroup.add(saveVOILPSButton);
-        
+
         gbc.insets = new Insets(0, 0, 0, 0);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(saveVOILPSButton, gbc);
         displayColorPanel.add(saveVOILPSButton);
-        
-        saveVOIVoxelButton = new JRadioButton("Save VOIs in voxel coordinates", 
-        		!Preferences.is(Preferences.PREF_VOI_LPS_SAVE));
+
+        saveVOIVoxelButton = new JRadioButton("Save VOIs in voxel coordinates", !Preferences.is(Preferences.PREF_VOI_LPS_SAVE));
         saveVOIVoxelButton.setFont(MipavUtil.font12);
         saveVOIVoxelButton.setForeground(Color.black);
         saveVOIVoxelButton.addActionListener(this);
@@ -2553,8 +2508,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
          * 
          * @return DOCUMENT ME!
          */
-        public Component getListCellRendererComponent(final JList list, final Object value, final int index,
-                final boolean isSelected, final boolean cellHasFocus) {
+        @Override
+        public Component getListCellRendererComponent(final JList list, final Object value, final int index, final boolean isSelected,
+                final boolean cellHasFocus) {
 
             // Get the selected index. (The index param isn't
             // always valid, so just use the value.)
@@ -2621,8 +2577,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
          * 
          * @return DOCUMENT ME!
          */
-        public Component getListCellRendererComponent(final JList list, final Object value, final int index,
-                final boolean isSelected, final boolean cellHasFocus) {
+        @Override
+        public Component getListCellRendererComponent(final JList list, final Object value, final int index, final boolean isSelected,
+                final boolean cellHasFocus) {
 
             // Get the selected index. (The index param isn't
             // always valid, so just use the value.)
@@ -2676,8 +2633,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
          * 
          * @return DOCUMENT ME!
          */
-        public Component getListCellRendererComponent(final JList list, final Object value, final int index,
-                final boolean isSelected, final boolean cellHasFocus) {
+        @Override
+        public Component getListCellRendererComponent(final JList list, final Object value, final int index, final boolean isSelected,
+                final boolean cellHasFocus) {
             final int selectedIndex = ((Integer) value).intValue();
 
             if (isSelected) {
@@ -2694,11 +2652,11 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             return this;
         }
     }
-    
+
     /**
      * Builds the reset to defaults button. Sets it internally as well return the just-built button.
-     *
-     * @return  JButton reset defaults button
+     * 
+     * @return JButton reset defaults button
      */
     protected JButton buildResetDefaultsButton() {
         resetButton = new JButton("Reset defaults");
