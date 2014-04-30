@@ -55,7 +55,10 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 			for(;i<fileLines.size();i++){
 				output = "";
 				line = fileLines.get(i);
-			
+				/*for(int j=0;j<line.length;j++){
+					System.out.print(line[j] + ",");
+				}
+				System.out.print("\n");*/
 				//New branching statement here to account for Other, specify
 				//and DateTime variables
 				/*if(line[0].contains("DateTime") &&
@@ -77,56 +80,56 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 					output += "time,";
 					csv.append(outputSplit + "\r\n");
 					
-				} else*/ if(line[7].equalsIgnoreCase("Free-Form Entry")
-						&& line[11].contains("Other, specify")){
+				} else*/ if(line[fieldType].equalsIgnoreCase("Free-Form Entry")
+						&& line[permValDesc].contains("Other, specify")){
 					String outputSplit = "";
-					outputSplit += line[0] + ",";
-					output += line[0] + "OtherSplit,";
-					outputSplit += adjustName(line[0]) + ",,,";
+					outputSplit += line[varName] + ",";
+					output += line[varName] + "OtherSplit,";
+					outputSplit += adjustName(line[varName]) + ",,,";
 					output += ",,,";
 					outputSplit += "dropdown,";
 					output += "text,";
-					outputSplit += line[1] + ",";
+					outputSplit += line[title] + ",";
 					output += ",";
 					
-					String entries = parseEntry(line[10], line[11]);
+					String entries = parseEntry(line[permValues], line[permValDesc]);
 					outputSplit += entries + ",";
 					
 					output += ",";
 					outputSplit += ",";
 					output += ",";
-					outputSplit += line[12] + ",";
-					output += line[12] +",";
+					outputSplit += line[measureType] + ",";
+					output += line[measureType] +",";
 					
 					output += ",,,,";
 					
 					int ind = entries.lastIndexOf("|");
 					String last = entries.substring(ind + 2).trim();
 					String value = last.substring(0, last.indexOf(","));
-					output += "[" + adjustName(line[0]) + "] = \"" + value + "\",";
+					output += "[" + adjustName(line[varName]) + "] = \"" + value + "\",";
 					
 					csv.append(outputSplit + "\r\n");
 				}
 				else{
 					//Append original variable name for easier reversal
-					output += line[0] + ",";
+					output += line[varName] + ",";
 					//Appends Variable Name. Form Name and Section Header
 					//are not present in CDE, so skip for now
-					output += adjustName(line[0]) + ",,,";
+					output += adjustName(line[varName]) + ",,,";
 					//Appends the field type
 					output += determineType(line) + ",";
 					//Appends the field label
-					output += line[1] + ",";
+					output += line[title] + ",";
 					//Appends Choices/Calculations
-					if(!line[7].equalsIgnoreCase("Free-Form Entry"))
-						output += parseEntry(line[10], line[11]);
-					else output += ",";
+					if(!line[fieldType].equalsIgnoreCase("Free-Form Entry"))
+						output += parseEntry(line[permValues], line[permValDesc]);
+					else output += ",,";
 					//Appends Field Note
-					output += line[12] + ",";
+					output += line[measureType] + ",";
 					//Appends Text Validation. Also, if it is a date, change 
 					//field note to say YYYY-MM-DD
-					if(line[5].equalsIgnoreCase("Date or Date & Time")){
-						if(line[0].contains("DateTime")){
+					if(line[dataType].equalsIgnoreCase("Date or Date & Time")){
+						if(line[varName].contains("DateTime")){
 							output = output.substring(0, output.length()-1) + "YYYY-MM-DD + HH:MD Military Time,";
 							output += "datetime_ymd,";
 						}
@@ -135,11 +138,11 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 							output += "date_ymd,";
 						}
 					}
-					else if(line[5].equalsIgnoreCase("Numeric Values") && line[7].equalsIgnoreCase("Free-Form Entry"))
+					else if(line[dataType].equalsIgnoreCase("Numeric Values") && line[fieldType].equalsIgnoreCase("Free-Form Entry"))
 						output += "numeric,";
 					else output += ",";
 					//Appends Text Validation min/max
-					output += line[8] + "," + line[9] + ",";
+					output += line[minVal] + "," + line[maxVal] + ",";
 				}
 				//Output to the CSV
 				csv.append(output + "\r\n");
@@ -153,6 +156,7 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 		}
 		catch(Exception e){
 			MipavUtil.displayError("Error during conversion at line: " + String.valueOf(i+2));
+			e.printStackTrace();
 			return;
 		}
 		try {
@@ -195,9 +199,9 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 	 */
 	private String determineType(String[] line){
 		
-		String input = line[7];
-		String size = line[6];
-		String[] desc = line[11].split(";");
+		String input = line[fieldType];
+		String size = line[fieldSize];
+		String[] desc = line[permValDesc].split(";");
 		
 		String output;
 		//There are two types of text entries in REDCap,
@@ -343,7 +347,7 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 		int ind;
 		int check;
 		
-		while(cnt<13){
+		while(cnt<20){
 			ind = -1;
 			check = -1;
 			//Parse through sections with quotations marks
@@ -381,6 +385,17 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 		return realout;
 	}
 	
+	private int varName = -1;
+	private int fieldType = -1;
+	private int title = -1;
+	private int permValues = -1;
+	private int permValDesc = -1;
+	private int measureType = -1;
+	private int dataType = -1;
+	private int minVal = -1;
+	private int maxVal = -1;
+	private int fieldSize = -1;
+	
 	/**
 	 * Initialize the output CSV header
 	 * @return
@@ -389,7 +404,7 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 		String header = "Original Name (Delete before importing into REDCAP),"
 				+ "Variable / Field Name,Form Name,Section Header,Field Type,Field Label," 
 				+ "Choices OR Calculations,"
-				+ "Permissible Values (From NINDS CDE, Delete before importing into REDCAP),"
+				+ "Permissible Values (From NINDS CDE - Delete before importing into REDCAP),"
 				+ "Field Note,Text Validation,Text Validation Min,"
 				+ "Text Validation Max,Identifier?,Branching Logic,Required Field?,"
 				+ "Custom Alignment,Question Number \n";
@@ -422,7 +437,37 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 			Scanner lineScan = scan.useDelimiter("\\r\\n");
 			fileLines = new ArrayList<String[]>();
 			String line;
-			scan.next();
+			String header = lineScan.next();
+			String[] hArray = header.split(",");
+			for(int i=0;i<hArray.length;i++){
+				String hVal = hArray[i].trim();
+				if(hVal.equals("Name"))
+					varName = i;
+				else if(hVal.equals("Title"))
+					title = i;
+				else if(hVal.equals("Size"))
+					fieldSize = i;
+				else if(hVal.equals("Input Restrictions"))
+					fieldType = i;
+				else if(hVal.equals("Permissible Values"))
+					permValues = i;
+				else if(hVal.equals("Permissible Value Descriptions"))
+					permValDesc = i;
+				else if(hVal.equals("Measurement Type"))
+					measureType = i;
+				else if(hVal.equals("Data Type"))
+					dataType = i;
+				else if(hVal.equals("Minimum Value"))
+					minVal = i;
+				else if(hVal.equals("Maximum Value"))
+					maxVal = i;
+			}
+			if(varName == -1 || fieldType == -1 || title == -1 || permValues == -1
+					|| permValDesc == -1 || measureType == -1 || dataType == -1 
+					|| minVal == -1 || maxVal == -1 || fieldSize == -1){
+				MipavUtil.displayError("A header is missing");
+				return true;
+			}
 			while(lineScan.hasNext()){
 				cnt++;
 				line = scan.next();
