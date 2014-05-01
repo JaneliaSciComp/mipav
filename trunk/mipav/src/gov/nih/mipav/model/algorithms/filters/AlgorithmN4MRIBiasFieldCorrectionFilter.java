@@ -804,7 +804,16 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
     			z = (i % xyzSize)/sliceSize;
     			t = i / xyzSize;
     			// Remember direction cosine matrix has been set to identity
-    			point = new Vector4d(x + origin[0], y + origin[1], z + origin[2], t + origin[3]);
+    			float zComp = 0.0f;
+    			float tComp = 0.0f;
+    			if (nDims > 2) {
+    				zComp = z*resolutions[2] + origin[2];
+    				if (nDims > 3) {
+    					tComp = t*resolutions[3] + origin[3];
+    				}
+    			}
+    			point = new Vector4d(x*resolutions[0] + origin[0], y*resolutions[1] + origin[1], 
+    					zComp, tComp);
     			pointData.add(index, fieldEstimate[i]);
     			pointLocation.add(index, point);
     			confidenceWeight = 1.0;
