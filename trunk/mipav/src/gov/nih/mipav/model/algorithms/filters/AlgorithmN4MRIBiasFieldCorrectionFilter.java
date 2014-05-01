@@ -62,8 +62,12 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 	private double biasFieldFullWidthAtHalfMaximum = 0.15;
 
 	private int splineOrder[];
+	
+	private int fittingLevels = 1;
 
 	private int originalNumberOfFittingLevels[];
+	
+	private int controlPoints = 4;
 
 	private int originalNumberOfControlPoints[];
 
@@ -114,19 +118,23 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 	 * @convergenceThreshold
 	 * @biasFieldFullWidthAtHalfMaximum
 	 * @WienerFilterNoise
+	 * @fittingLevels
+	 * @controlPoints
 	 * @param confidenceImage
 	 * @param maskFlag
 	 *            the mask flag
 	 */
 	public AlgorithmN4MRIBiasFieldCorrectionFilter(ModelImage destImg, ModelImage fieldImage,
 			ModelImage srcImg, int maximumIterations, double convergenceThreshold, double biasFieldFullWidthAtHalfMaximum,
-			double WienerFilterNoise, ModelImage confidenceImage, boolean maskFlag) {
+			double WienerFilterNoise, int fittingLevels, int controlPoints, ModelImage confidenceImage, boolean maskFlag) {
 		super(destImg, srcImg);
 		this.fieldImage = fieldImage;
 		this.maximumIterations = maximumIterations;
 		this.convergenceThreshold = convergenceThreshold;
 		this.biasFieldFullWidthAtHalfMaximum = biasFieldFullWidthAtHalfMaximum;
 		this.WienerFilterNoise = WienerFilterNoise;
+		this.fittingLevels = fittingLevels;
+		this.controlPoints = controlPoints;
 		this.confidenceImage = confidenceImage;
 		entireImage = maskFlag;
 	}
@@ -204,7 +212,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
         }
 
 
-		maximumNumberOfIterations = new int[1];
+		maximumNumberOfIterations = new int[fittingLevels];
 		for (i = 0; i < maximumNumberOfIterations.length; i++) {
 			maximumNumberOfIterations[i] = maximumIterations;
 		}
@@ -215,11 +223,11 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		nDims = srcImage.getNDims();
 		originalNumberOfFittingLevels = new int[nDims];
 		for (i = 0; i < nDims; i++) {
-			originalNumberOfFittingLevels[i] = 1;
+			originalNumberOfFittingLevels[i] = fittingLevels;
 		}
 		originalNumberOfControlPoints = new int[nDims];
 		for (i = 0; i < nDims; i++) {
-			originalNumberOfControlPoints[i] = 4;
+			originalNumberOfControlPoints[i] = controlPoints;
 		}
 		splineOrder = new int[nDims];
 		for (i = 0; i < nDims; i++) {
