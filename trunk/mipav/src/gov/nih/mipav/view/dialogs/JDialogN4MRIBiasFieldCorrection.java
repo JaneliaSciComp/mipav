@@ -81,6 +81,10 @@ public class JDialogN4MRIBiasFieldCorrection extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private JLabel labelSignal;
+    
+    private JLabel labelFittingLevels;
+    
+    private JLabel labelControlPoints;
 
     /** DOCUMENT ME! */
     private int maxIter;
@@ -128,6 +132,14 @@ public class JDialogN4MRIBiasFieldCorrection extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private JTextField textSignal;
+    
+    private JTextField textFittingLevels;
+    
+    private JTextField textControlPoints;
+    
+    private int fittingLevels = 1;
+    
+    private int controlPoints = 4;
 
     /** DOCUMENT ME! */
     private float threshold;
@@ -346,6 +358,22 @@ public class JDialogN4MRIBiasFieldCorrection extends JDialogScriptableBase
     public void setNoise(double scale) {
         noise = scale;
     }
+    
+    /**
+     * 
+     * @param fittingLevels
+     */
+    public void setFittingLevels(int fittingLevels) {
+    	this.fittingLevels = fittingLevels;
+    }
+    
+    /**
+     * 
+     * @param controlPoints
+     */
+    public void setControlPoints(int controlPoints) {
+    	this.controlPoints = controlPoints;
+    }
 
     /**
      * Accessor that sets the region flag.
@@ -413,7 +441,7 @@ public class JDialogN4MRIBiasFieldCorrection extends JDialogScriptableBase
 
             // Make algorithm
             N4Algo = new AlgorithmN4MRIBiasFieldCorrectionFilter(resultImage, fieldImage, image, /*threshold,*/ maxIter, endTol,
-                                                 /*fieldDistance, shrink,*/ kernelfwhm, noise, 
+                                                 /*fieldDistance, shrink,*/ kernelfwhm, noise, fittingLevels, controlPoints,
                                                  confidenceImage, regionFlag /*,autoThreshold,
                                                  useScript*/);
 
@@ -477,6 +505,8 @@ public class JDialogN4MRIBiasFieldCorrection extends JDialogScriptableBase
         //setShrink(scriptParameters.getParams().getFloat("subsampling_factor"));
         setKernel(scriptParameters.getParams().getDouble("kernel_fwhm"));
         setNoise(scriptParameters.getParams().getDouble("wiener_noise_filter"));
+        setFittingLevels(scriptParameters.getParams().getInt("fitting_levels"));
+        setControlPoints(scriptParameters.getParams().getInt("control_points"));
         //setAutoFlag(scriptParameters.getParams().getBoolean("do_auto_histo_thresholding"));
         setCreateField(scriptParameters.getParams().getBoolean("do_create_field_image"));
     }
@@ -496,6 +526,8 @@ public class JDialogN4MRIBiasFieldCorrection extends JDialogScriptableBase
         scriptParameters.getParams().put(ParameterFactory.newParameter("subsampling_factor", shrink));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_fwhm", kernelfwhm));
         scriptParameters.getParams().put(ParameterFactory.newParameter("wiener_noise_filter", noise));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("fitting_levels", fittingLevels));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("control_points", controlPoints));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_auto_histo_thresholding", autoThreshold));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_create_field_image", createField));
     }
@@ -583,6 +615,22 @@ public class JDialogN4MRIBiasFieldCorrection extends JDialogScriptableBase
         textNoise = new JTextField(5);
         textNoise.setText("0.01");
         textNoise.setFont(serif12);
+        
+        labelFittingLevels = new JLabel("Fitting levels (1-5)");
+        labelFittingLevels.setForeground(Color.black);
+        labelFittingLevels.setFont(serif12);
+        
+        textFittingLevels = new JTextField(5);
+        textFittingLevels.setText("1");
+        textFittingLevels.setFont(serif12);
+        
+        labelControlPoints = new JLabel("Control points (4-20)");
+        labelControlPoints.setForeground(Color.black);
+        labelControlPoints.setFont(serif12);
+        
+        textControlPoints = new JTextField(5);
+        textControlPoints.setText("4");
+        textControlPoints.setFont(serif12);
 
         JPanel paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setForeground(Color.black);
@@ -652,15 +700,32 @@ public class JDialogN4MRIBiasFieldCorrection extends JDialogScriptableBase
         gbc.fill = GridBagConstraints.HORIZONTAL;
         paramPanel.add(textKernel, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy++;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         paramPanel.add(labelNoise, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 6;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         paramPanel.add(textNoise, gbc);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        paramPanel.add(labelFittingLevels, gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        paramPanel.add(textFittingLevels, gbc);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        paramPanel.add(labelControlPoints, gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        paramPanel.add(textControlPoints, gbc);
 
         ButtonGroup imageVOIGroup = new ButtonGroup();
         wholeImage = new JRadioButton("Whole image", true);
@@ -966,6 +1031,28 @@ public class JDialogN4MRIBiasFieldCorrection extends JDialogScriptableBase
 
             return false;
         }
+        
+        tmpStr = textFittingLevels.getText();
+
+        if (testParameter(tmpStr, 1.0, 5.0)) {
+            fittingLevels = Integer.valueOf(tmpStr).intValue();
+        } else {
+            textFittingLevels.requestFocus();
+            textFittingLevels.selectAll();
+
+            return false;
+        }
+        
+        tmpStr = textControlPoints.getText();
+
+        if (testParameter(tmpStr, 4.0, 20.0)) {
+            controlPoints = Integer.valueOf(tmpStr).intValue();
+        } else {
+            textControlPoints.requestFocus();
+            textControlPoints.selectAll();
+
+            return false;
+        }
 
         if (wholeImage.isSelected()) {
             regionFlag = true;
@@ -1040,6 +1127,8 @@ public class JDialogN4MRIBiasFieldCorrection extends JDialogScriptableBase
             //table.put(new ParameterFloat("subsampling_factor", 4.0f));							
             table.put(new ParameterDouble("kernel_fwhm", 0.15));
             table.put(new ParameterDouble("wiener_noise_filter", 0.01));
+            table.put(new ParameterInt("fitting_levels", 1));
+            table.put(new ParameterInt("control_points", 4));
             //table.put(new ParameterBoolean("do_auto_histo_thresholding", false));
             table.put(new ParameterBoolean("do_create_field_image", false));						
             
