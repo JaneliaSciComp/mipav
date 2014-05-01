@@ -675,6 +675,9 @@ import gov.nih.mipav.view.Preferences;
 		    			}
 	    		    } // while (!isEvenIndex && (it < sizeLength))
 	    		} // while (it < sizeLength)
+	    		psiLattice.disposeLocal();
+	    		psiLattice = null;
+	    		psiLattice = new ModelImage(ModelStorageBase.DOUBLE, size, "psiLattice");
 	    		try {
 	    			psiLattice.importData(0, refinedLattice, true);
 	    		}
