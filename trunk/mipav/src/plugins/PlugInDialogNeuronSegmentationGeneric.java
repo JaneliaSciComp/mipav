@@ -32,6 +32,7 @@ import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
@@ -69,11 +70,6 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	private int changeY;
 	
 	private int counter;
-	
-	/**
-	 * The current image that is open
-	 */
-	private File current;
 	
 	private JRadioButton deleteRB;
 	
@@ -169,9 +165,10 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         	}
         	else{
         		counter = 0;
-        		openImage();
-        		initModifications();
-        		callAlgorithm();
+        		if(openImage()){
+	        		initModifications();
+	        		callAlgorithm();
+        		} else images.clear();
         	}
 		}
 		else if(command.equals("Prev")){
@@ -179,14 +176,15 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         		counter--;
         		Point loc = frame.getLocation();
         		frame.close();
-        		openImage();
-        		frame.setLocation(loc);
-        		callAlgorithm();
-        		if(segFrame != null){
-        			segFrame.close();
-        			segFrame = null;
+        		if(openImage()){
+	        		frame.setLocation(loc);
+	        		callAlgorithm();
+	        		if(segFrame != null){
+	        			segFrame.close();
+	        			segFrame = null;
+	        		}
+	        		segImageBox.setSelected(false);
         		}
-        		segImageBox.setSelected(false);
         	}
 		}
 		else if (command.equals("Next")){
@@ -195,14 +193,15 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         	if(counter < numImages){
         		Point loc = frame.getLocation();
         		frame.close();
-        		openImage();
-        		frame.setLocation(loc);
-        		callAlgorithm();
-        		if(segFrame != null){
-        			segFrame.close();
-        			segFrame = null;
+        		if(openImage()){
+	        		frame.setLocation(loc);
+	        		callAlgorithm();
+	        		if(segFrame != null){
+	        			segFrame.close();
+	        			segFrame = null;
+	        		}
+	        		segImageBox.setSelected(false);
         		}
-        		segImageBox.setSelected(false);
         	}
         	else finalize();
         }
@@ -352,9 +351,13 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	
 	private void chooseDir(){
 		String dirText = Preferences.getImageDirectory();
+		FileNameExtensionFilter csvFilter = new FileNameExtensionFilter("Image files", "tif", "tiff", "lsm");
 		fileChooser = new JFileChooser(dirText);
 		fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 		fileChooser.addActionListener(this);
+		fileChooser.addChoosableFileFilter( csvFilter);
+		fileChooser.setAcceptAllFileFilterUsed(false);
+		fileChooser.setFileFilter(csvFilter);
 		fileChooser.showOpenDialog(this);
 	}
 	
@@ -687,20 +690,26 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		
 	}
 
-	private void openImage() {
+	private boolean openImage() {
 	
 		FileIO imLoader = new FileIO();
 		
 		if(srcImage != null) srcImage.disposeLocal();
 		if(listDialog != null) list.setSelectedIndex(counter);
 		
-		current = images.get(counter);
+		File current = images.get(counter);
 		
 		srcImage = imLoader.readImage(current.toString());
+		if(srcImage == null){
+			MipavUtil.displayError("Could not read file: " + current.toString());
+			return false;
+		}
 		srcImage.setImageName(current.getName(),false);
 		frame = new ViewJFrameImage(srcImage, null, new Dimension(0,300));
 		frame.setVisible(true);
 		listenersOn = false;
+		
+		return true;
 
 	}
 	
@@ -717,7 +726,19 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	 */
 	
 	private boolean populateImages(File dir){
+		
+		if(!dir.exists()){
+			MipavUtil.displayError("Input file/directory does not exist");
+			return false;
+		}
 		if(dir.isFile()){
+			String name = dir.toString();
+			if(!(name.toLowerCase().endsWith(".tif") || name.toLowerCase().endsWith(".tiff")
+						|| name.toLowerCase().endsWith(".lsm")))
+			{
+				MipavUtil.displayError("This is not a proper image file");
+				return false;
+			}
 			images.add(dir);
 			numImages = 1;
 			return true;
@@ -739,6 +760,8 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		dirStr = dirStr.concat("Branch_Images" + File.separator);
 		
 		for(File im : files){
+			if(im == null)
+				continue;
 			if(excludeBox.isSelected()){
 				stripped = im.getName();
 				stripped = stripped.substring(0, stripped.indexOf("."));
