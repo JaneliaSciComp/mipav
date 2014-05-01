@@ -25,20 +25,28 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
 
     private int[] complete;
 
-    private final int remove;
+    //private final int remove;
+    
+    private int GUID;
+    
+    private int site;
+    
+    private int visitID;
+    
+    private int specimen;
 
-    public PlugInAlgorithmCompleteCatalog(final File file, final FileWriter out, final int lines) {
+    public PlugInAlgorithmCompleteCatalog(final File file, final FileWriter out/*,final int lines*/) {
         super();
         catalogFile = file;
         csv = out;
-        remove = lines;
+        //remove = lines;
     }
 
     @Override
     public void runAlgorithm() {
         // TODO Auto-generated method stub
-        complete = new int[5]; // RNA, Plasma, Serum, CSF, Blood
-        final String[] types = {"RNA", "Plasma", "Serum", "CSF", "Blood"};
+        complete = new int[6]; // RNA, Plasma, Serum, CSF, Blood
+        final String[] types = {"RNA", "Plasma", "Serum", "CSF", "Blood", "DNA"};
         String GUID;
         Integer typeNum;
 
@@ -53,7 +61,7 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
 
         try {
             csv.append("Sample Type,Number of Complete Sets\n");
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < 6; i++) {
                 csv.append(types[i] + "," + String.valueOf(complete[i]) + "\n");
             }
             csv.flush();
@@ -131,34 +139,51 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
                 visit = new Vector<String>();
                 type = new Vector<Integer>();
 
-                for (int i = 0; i < remove; i++) {
+                /*for (int i = 0; i < remove; i++) {
                     input.readLine();
+                }*/
+                
+                String header = input.readLine();
+                String[] hArray = parseLine2(header);
+                for(int i=0;i<hArray.length;i++){
+                	String hStr = hArray[i].trim();
+                	if(hStr.equals("Site"))
+                		site = i;
+                	else if(hStr.equals("GUID"))
+                		GUID = i;
+                	else if(hStr.equals("Visit ID"))
+                		visitID = i;
+                	else if(hStr.equals("Site Specimen Type"))
+                		specimen = i;
                 }
+                
 
                 while ( (line = input.readLine()) != null) {
-                    lineArray = line.split(",");
+                    lineArray = parseLine2(line);
                     if (lineArray.length != 0) {
 
-                        typeStr = lineArray[6].trim().toLowerCase();
+                        typeStr = lineArray[specimen].trim().toLowerCase();
 
-                        if (typeStr.equals("rna")) {
+                        if (typeStr.contains("rna")) {
                             typeNum = 0;
-                        } else if (typeStr.equals("plasma")) {
+                        } else if (typeStr.contains("plasma")) {
                             typeNum = 1;
-                        } else if (typeStr.equals("serum")) {
+                        } else if (typeStr.contains("serum")) {
                             typeNum = 2;
-                        } else if (typeStr.equals("csf")) {
+                        } else if (typeStr.contains("cereb")) {
                             typeNum = 3;
-                        } else if (typeStr.equals("blood")) {
+                        } else if (typeStr.contains("blood")) {
                             typeNum = 4;
+                        } else if (typeStr.contains("dna")){
+                        	typeNum = 5;
                         } else {
                             typeNum = -1;
                         }
 
                         if (typeNum != -1) {
                             type.add(new Integer(typeNum));
-                            catalogID.add(lineArray[1].trim());
-                            visit.add(lineArray[2].trim());
+                            catalogID.add(lineArray[GUID].trim());
+                            visit.add(lineArray[visitID].trim());
                         }
                     }
                 }
@@ -176,6 +201,8 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
         LinkedHashSet<String> visitSet = new LinkedHashSet<String>();
         LinkedHashSet<String> specSet = new LinkedHashSet<String>();
         LinkedHashSet<String> lineSet = new LinkedHashSet<String>();
+        
+        final String[] types = {"RNA", "Plasma", "Serum", "CSF", "Blood", "DNA"};
     	
     	final BufferedReader input = new BufferedReader(new FileReader(catalogFile));
     	String outFilename = catalogFile.getName();
@@ -187,24 +214,44 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
     	
     	String uniqueHeader = "Site,Visit,Specimen,# of Unique Samples\n";
     	uniqueCSV.append(uniqueHeader);
-    	for(int i=0;i<remove;i++){
+    	/*for(int i=0;i<remove;i++){
     		input.readLine();
-    	}
+    	}*/
+    	input.readLine();
+    	System.out.printf("%d %d %d %d\n", GUID, site, visitID, specimen);
     	
     	String line = null;
     	while ( (line = input.readLine()) != null) {
     		String[] lineArray = parseLine2(line);
     		if(lineArray.length == 0)
     			continue;
-    		String siteStr = lineArray[0].trim();
-    		String GUIDStr = lineArray[2].trim();
-    		String visitStr = lineArray[6].trim();
-    		String specStr = lineArray[9].trim();
-    		String setStr = siteStr + ";" + GUIDStr + ";" + visitStr + ";" + specStr;
+    		String siteStr = lineArray[site].trim();
+    		String GUIDStr = lineArray[GUID].trim();
+    		String visitStr = lineArray[visitID].trim();
+    		String typeStr = lineArray[specimen].trim().toLowerCase();
+    		int typeNum;
+    		System.out.println(typeStr);
+    		if (typeStr.contains("rna")) {
+                typeNum = 0;
+            } else if (typeStr.contains("plasma")) {
+                typeNum = 1;
+            } else if (typeStr.contains("serum")) {
+                typeNum = 2;
+            } else if (typeStr.contains("cereb")) {
+                typeNum = 3;
+            } else if (typeStr.contains("blood")) {
+                typeNum = 4;
+            } else if (typeStr.contains("dna")){
+            	typeNum = 5;
+            } else {
+                typeNum = -1;
+            }
+    		
+    		String setStr = siteStr + ";" + GUIDStr + ";" + visitStr + ";" + types[typeNum];
     		
     		siteSet.add(siteStr);
     		visitSet.add(visitStr);
-    		specSet.add(specStr);
+    		specSet.add(types[typeNum]);
     		lineSet.add(setStr);
     	}
     	int siteSize = siteSet.size();
@@ -267,4 +314,5 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
 		
 		return realout;
 	}
+	
 }

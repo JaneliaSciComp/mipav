@@ -55,7 +55,7 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 	
 	private JTextField catalogField;
 	
-	private JTextField removeField;
+	//private JTextField removeField;
 	
 	/**
 	 * 
@@ -180,10 +180,10 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 		File catalogFile = new File(catalogField.getText());
 		String catalogFolder = catalogFile.getParent();
 		File catalogCSV = new File(catalogFolder + "/Complete_count.csv");
-		int remove = Integer.parseInt(removeField.getText());
+		//int remove = Integer.parseInt(removeField.getText());
 		try{
 			csv = new FileWriter(catalogCSV);
-			PlugInAlgorithmCompleteCatalog catAlg = new PlugInAlgorithmCompleteCatalog(catalogFile, csv, remove);
+			PlugInAlgorithmCompleteCatalog catAlg = new PlugInAlgorithmCompleteCatalog(catalogFile, csv/*, remove*/);
 			catAlg.addListener(this);
 			catAlg.run();
 		}
@@ -289,7 +289,7 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
         catalogButton.addActionListener(this);
         catalogPanel.add(catalogButton);
         
-        JPanel removePanel = new JPanel();
+        /*JPanel removePanel = new JPanel();
         
         JLabel removeLabel = new JLabel("Remove how many header lines?");
         removeLabel.setBackground(Color.black);
@@ -300,7 +300,7 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
         removeField.setText("2");
         removeField.setFont(serif12);
         removeField.setHorizontalAlignment(JTextField.RIGHT);
-        removePanel.add(removeField);
+        removePanel.add(removeField);*/
         
         JPanel OKCancelPanel2 = new JPanel();
         JButton catalogOK = new JButton("OK");
@@ -316,7 +316,7 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
         
         PanelManager manager2 = new PanelManager();
         manager2.add(catalogPanel);
-        manager2.addOnNextLine(removePanel);
+        //manager2.addOnNextLine(removePanel);
         manager2.addOnNextLine(OKCancelPanel2);
         
         JTabbedPane tabbedPane = new JTabbedPane();
