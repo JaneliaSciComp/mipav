@@ -202,7 +202,7 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
         LinkedHashSet<String> specSet = new LinkedHashSet<String>();
         LinkedHashSet<String> lineSet = new LinkedHashSet<String>();
         
-        final String[] types = {"RNA", "Plasma", "Serum", "CSF", "Blood", "DNA"};
+        final String[] types = {"RNA", "Plasma", "Serum", "CSF", "Blood", "DNA", "Unknown"};
     	
     	final BufferedReader input = new BufferedReader(new FileReader(catalogFile));
     	String outFilename = catalogFile.getName();
@@ -244,7 +244,7 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
             } else if (typeStr.contains("dna")){
             	typeNum = 5;
             } else {
-                typeNum = -1;
+                typeNum = 6;
             }
     		
     		String setStr = siteStr + ";" + GUIDStr + ";" + visitStr + ";" + types[typeNum];
