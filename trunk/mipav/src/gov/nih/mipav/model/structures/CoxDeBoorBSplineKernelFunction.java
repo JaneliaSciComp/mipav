@@ -24,6 +24,26 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
+ *  
+ * This class enscapsulates BSpline kernel for
+ * density estimation or nonparameteric regression.
+ * See documentation for KernelFunctionBase for more details.
+ *
+ * This class is templated over the spline order to cohere with
+ * the previous incarnation of this class. One can change the
+ * order during an instantiation's existence.  Note that
+ * other authors have defined the B-spline order as being the
+ * degree of spline + 1.  In the ITK context (e.g. in this
+ * class), the spline order is equivalent to the degree of
+ * the spline.
+ *
+ * \author Nicholas J. Tustison
+ *
+ * This code was contributed in the Insight Journal paper:
+ * "N-D C^k B-Spline Scattered Data Approximation"
+ * by Nicholas J. Tustison, James C. Gee
+ * http://hdl.handle.net/1926/140
+ * http://www.insight-journal.org/browse/publication/57
  *
 
   
