@@ -1,4 +1,6 @@
 	package gov.nih.mipav.model.structures;
+
+import gov.nih.mipav.view.Preferences;
 	
 	
 	
@@ -9,7 +11,9 @@
 	 * @version  0.1 April 1, 2014
 	 * @author   William Gandler
 	 * 
-	  * This a a port of itkCoxDeBoorBSplineKernelFunction.hxx from the itk package.  Here is the original itk header
+	  * This a a port of itkCoxDeBoorBSplineKernelFunction.hxx, itkCoxDeBoorBSplineKernelFunction.h, and 
+	  * itkCoxDeBoorBSplineKernelFunctionTest.cxx from the itk package.  
+	  * Here is the original itk header
 	  * from the itkCoxDeBoorBSplineKernelFunction.hxx file:
 	  *  Copyright Insight Software Consortium
  *
@@ -52,8 +56,28 @@
 		
 		private int splineOrder;
 		private double[][] BSplineShapeFunctions;
-	
+		// Machine epsilon is the smallest positive epsilon such that
+        // (1.0 + epsilon) != 1.0.
+        // epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
+        // epsilon = 2.2204460e-16
+        // epsilon is called the largest relative spacing
+        //epsilon = 1.0;
+        //neweps = 1.0;
+
+        //while (true) {
+
+        //     if (1.0 == (1.0 + neweps)) {
+        //         break;
+        //     } else {
+        //         epsilon = neweps;
+        //        neweps = neweps / 2.0;
+        //     }
+        // } // while(true)
+		private double epsilon = 2.2204460e-16;
 		
+	    public CoxDeBoorBSplineKernelFunction() {
+	    	
+	    }
 	    
 	    public CoxDeBoorBSplineKernelFunction(int splineOrder) {
 	        this.splineOrder = splineOrder;
@@ -179,6 +203,158 @@
 	    	}
 	    }
 
-	    
+	    public void selfTest() {
+	    	// All 4 self tests passed.
+	    	int i;
+	    	Preferences.debug("Testing CoxDeBoorBSplineKernelFunction\n", Preferences.DEBUG_ALGORITHM);
+	    	int testsPassed = 0;
+	    	
+	    	double trueCoefficientsOrder0[][] = new double[1][1];
+	    	trueCoefficientsOrder0[0][0] = 1.0;
+	    	splineOrder = 0;
+	    	generateBSplineShapeFunctions(splineOrder + 1);
+	    	if (Math.abs(trueCoefficientsOrder0[0][0] - BSplineShapeFunctions[0][0]) > epsilon) {
+	    		Preferences.debug("Failure for splineOrder = 0\n", Preferences.DEBUG_ALGORITHM);
+	    		Preferences.debug("trueCoefficientsOrder0[0][0] = 1.0 BSplineShapeCoefficients[0][0] = " + 
+	    		BSplineShapeFunctions[0][0] + "\n", Preferences.DEBUG_ALGORITHM);
+	    	}
+	    	else {
+	    		Preferences.debug("Self test passed for spline order = 0\n");
+	    		testsPassed++;
+	    	}
+	    	for (i = 0; i < BSplineShapeFunctions.length; i++) {
+        		BSplineShapeFunctions[i] = null;
+        	}
+        	BSplineShapeFunctions = null;
+        	for (i = 0; i < trueCoefficientsOrder0.length; i++) {
+        	    trueCoefficientsOrder0[i] = null;	
+        	}
+        	trueCoefficientsOrder0 = null;
+	    	
+	    	double trueCoefficientsOrder1[][] = new double[1][2];
+	    	trueCoefficientsOrder1[0][0] = -1.0;
+	    	trueCoefficientsOrder1[0][1] = 1.0;
+	    	splineOrder = 1;
+	    	generateBSplineShapeFunctions(splineOrder + 1);
+	    	if ((Math.abs(trueCoefficientsOrder1[0][0] - BSplineShapeFunctions[0][0]) > epsilon) ||
+	    	    (Math.abs(trueCoefficientsOrder1[0][1] - BSplineShapeFunctions[0][1]) > epsilon)){
+	    		Preferences.debug("Failure for splineOrder = 1\n", Preferences.DEBUG_ALGORITHM);
+	    		Preferences.debug("trueCoefficientsOrder1[0][0] = -1.0 BSplineShapeCoefficients[0][0] = " + 
+	    		BSplineShapeFunctions[0][0] + "\n", Preferences.DEBUG_ALGORITHM);
+	    		Preferences.debug("trueCoefficientsOrder1[0][1] = 1.0 BSplineShapeCoefficients[0][1] = " + 
+	    	    		BSplineShapeFunctions[0][1] + "\n", Preferences.DEBUG_ALGORITHM);
+	    	}
+	    	else {
+	    		Preferences.debug("Self test passed for spline order = 1\n");
+	    		testsPassed++;
+	    	}
+	    	for (i = 0; i < BSplineShapeFunctions.length; i++) {
+        		BSplineShapeFunctions[i] = null;
+        	}
+        	BSplineShapeFunctions = null;
+        	for (i = 0; i < trueCoefficientsOrder1.length; i++) {
+        	    trueCoefficientsOrder1[i] = null;	
+        	}
+        	trueCoefficientsOrder1 = null;
+        	
+        	double trueCoefficientsOrder2[][] = new double[2][3];
+        	trueCoefficientsOrder2[0][0] = -1.0;
+        	trueCoefficientsOrder2[0][1] = 0.0;
+        	trueCoefficientsOrder2[0][2] = 0.75;
+        	trueCoefficientsOrder2[1][0] = 0.5;
+        	trueCoefficientsOrder2[1][1] = -1.5;
+        	trueCoefficientsOrder2[1][2] = 1.125;
+        	splineOrder = 2;
+	    	generateBSplineShapeFunctions(splineOrder + 1);
+	    	if ((Math.abs(trueCoefficientsOrder2[0][0] - BSplineShapeFunctions[0][0]) > epsilon) ||
+	    	    (Math.abs(trueCoefficientsOrder2[0][1] - BSplineShapeFunctions[0][1]) > epsilon) ||
+	    	    (Math.abs(trueCoefficientsOrder2[0][2] - BSplineShapeFunctions[0][2]) > epsilon) ||
+	    	    (Math.abs(trueCoefficientsOrder2[1][0] - BSplineShapeFunctions[1][0]) > epsilon) ||
+	    	    (Math.abs(trueCoefficientsOrder2[1][1] - BSplineShapeFunctions[1][1]) > epsilon) ||
+	    	    (Math.abs(trueCoefficientsOrder2[1][2] - BSplineShapeFunctions[1][2]) > epsilon)){
+	    		Preferences.debug("Failure for splineOrder = 2\n", Preferences.DEBUG_ALGORITHM);
+	    		Preferences.debug("trueCoefficientsOrder2[0][0] = -1.0 BSplineShapeCoefficients[0][0] = " + 
+	    		BSplineShapeFunctions[0][0] + "\n", Preferences.DEBUG_ALGORITHM);
+	    		Preferences.debug("trueCoefficientsOrder2[0][1] = 0.0 BSplineShapeCoefficients[0][1] = " + 
+	    	    		BSplineShapeFunctions[0][1] + "\n", Preferences.DEBUG_ALGORITHM);
+	    		Preferences.debug("trueCoefficientsOrder2[0][2] = 0.75 BSplineShapeCoefficients[0][2] = " + 
+	    	    		BSplineShapeFunctions[0][2] + "\n", Preferences.DEBUG_ALGORITHM);
+	    		Preferences.debug("trueCoefficientsOrder2[1][0] = 0.5 BSplineShapeCoefficients[1][0] = " + 
+	    		        BSplineShapeFunctions[1][0] + "\n", Preferences.DEBUG_ALGORITHM);
+	    		Preferences.debug("trueCoefficientsOrder2[1][1] = -1.5 BSplineShapeCoefficients[1][1] = " + 
+	    	    		BSplineShapeFunctions[1][1] + "\n", Preferences.DEBUG_ALGORITHM);
+	    		Preferences.debug("trueCoefficientsOrder2[1][2] = 1.125 BSplineShapeCoefficients[1][2] = " + 
+	    	    		BSplineShapeFunctions[1][2] + "\n", Preferences.DEBUG_ALGORITHM);
+	    	}
+	    	else {
+	    		Preferences.debug("Self test passed for spline order = 2\n");
+	    		testsPassed++;
+	    	}
+	    	for (i = 0; i < BSplineShapeFunctions.length; i++) {
+        		BSplineShapeFunctions[i] = null;
+        	}
+        	BSplineShapeFunctions = null;
+        	for (i = 0; i < trueCoefficientsOrder2.length; i++) {
+        	    trueCoefficientsOrder2[i] = null;	
+        	}
+        	trueCoefficientsOrder2 = null;
+        	
+        	double trueCoefficientsOrder3[][] = new double[2][4];
+        	trueCoefficientsOrder3[0][0] = 0.5;
+        	trueCoefficientsOrder3[0][1] = -1.0;
+        	trueCoefficientsOrder3[0][2] = 0.0;
+        	trueCoefficientsOrder3[0][3] = 2.0/3.0;
+        	trueCoefficientsOrder3[1][0] = -1.0/6.0;
+        	trueCoefficientsOrder3[1][1] = 1.0;
+        	trueCoefficientsOrder3[1][2] = -2.0;
+        	trueCoefficientsOrder3[1][3] = 4.0/3.0;
+        	splineOrder = 3;
+	    	generateBSplineShapeFunctions(splineOrder + 1);
+	    	if ((Math.abs(trueCoefficientsOrder3[0][0] - BSplineShapeFunctions[0][0]) > epsilon) ||
+	    	    (Math.abs(trueCoefficientsOrder3[0][1] - BSplineShapeFunctions[0][1]) > epsilon) ||
+	    	    (Math.abs(trueCoefficientsOrder3[0][2] - BSplineShapeFunctions[0][2]) > epsilon) ||
+	    	    (Math.abs(trueCoefficientsOrder3[0][3] - BSplineShapeFunctions[0][3]) > epsilon) ||
+	    	    (Math.abs(trueCoefficientsOrder3[1][0] - BSplineShapeFunctions[1][0]) > epsilon) ||
+	    	    (Math.abs(trueCoefficientsOrder3[1][1] - BSplineShapeFunctions[1][1]) > epsilon) ||
+	    	    (Math.abs(trueCoefficientsOrder3[1][2] - BSplineShapeFunctions[1][2]) > epsilon) ||
+	    	    (Math.abs(trueCoefficientsOrder3[1][3] - BSplineShapeFunctions[1][3]) > epsilon)){
+	    		Preferences.debug("Failure for splineOrder = 3\n", Preferences.DEBUG_ALGORITHM);
+	    		Preferences.debug("trueCoefficientsOrder3[0][0] = 0.5 BSplineShapeCoefficients[0][0] = " + 
+	    		BSplineShapeFunctions[0][0] + "\n", Preferences.DEBUG_ALGORITHM);
+	    		Preferences.debug("trueCoefficientsOrder3[0][1] = -1.0 BSplineShapeCoefficients[0][1] = " + 
+	    	    		BSplineShapeFunctions[0][1] + "\n", Preferences.DEBUG_ALGORITHM);
+	    		Preferences.debug("trueCoefficientsOrder3[0][2] = 0.0 BSplineShapeCoefficients[0][2] = " + 
+	    	    		BSplineShapeFunctions[0][2] + "\n", Preferences.DEBUG_ALGORITHM);
+	    		Preferences.debug("trueCoefficientsOrder3[0][3] = 2.0/3.0 BSplineShapeCoefficients[0][3] = " + 
+	    	    		BSplineShapeFunctions[0][3] + "\n", Preferences.DEBUG_ALGORITHM);
+	    		Preferences.debug("trueCoefficientsOrder3[1][0] = -1.0/6.0 BSplineShapeCoefficients[1][0] = " + 
+	    		        BSplineShapeFunctions[1][0] + "\n", Preferences.DEBUG_ALGORITHM);
+	    		Preferences.debug("trueCoefficientsOrder3[1][1] = 1.0 BSplineShapeCoefficients[1][1] = " + 
+	    	    		BSplineShapeFunctions[1][1] + "\n", Preferences.DEBUG_ALGORITHM);
+	    		Preferences.debug("trueCoefficientsOrder3[1][2] = -2.0 BSplineShapeCoefficients[1][2] = " + 
+	    	    		BSplineShapeFunctions[1][2] + "\n", Preferences.DEBUG_ALGORITHM);
+	    		Preferences.debug("trueCoefficientsOrder3[1][3] = 4.0/3.0 BSplineShapeCoefficients[1][3] = " + 
+	    	    		BSplineShapeFunctions[1][3] + "\n", Preferences.DEBUG_ALGORITHM);
+	    	}
+	    	else {
+	    		Preferences.debug("Self test passed for spline order = 3\n");
+	    		testsPassed++;
+	    	}
+	    	for (i = 0; i < BSplineShapeFunctions.length; i++) {
+        		BSplineShapeFunctions[i] = null;
+        	}
+        	BSplineShapeFunctions = null;
+        	for (i = 0; i < trueCoefficientsOrder3.length; i++) {
+        	    trueCoefficientsOrder3[i] = null;	
+        	}
+        	trueCoefficientsOrder3 = null;
+
+	    	if (testsPassed == 4) {
+        	    Preferences.debug("All 4 self tests passed\n", Preferences.DEBUG_ALGORITHM);
+	    	}
+	    	else {
+	    		Preferences.debug(testsPassed + " out of 4 self tests passed\n", Preferences.DEBUG_ALGORITHM);
+	    	}
+	    }
 }
 
