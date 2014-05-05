@@ -85,6 +85,16 @@ import gov.nih.mipav.util.DoubleDouble;
 	    	return acc;
 	    }
 	    
+	    public RealPolynomial derivative() {
+	    	double c[] = coeff.clone();
+	    	int d = coeff.length - 1;
+	    	double cd[] = new double[d];
+	    	for (int i = 0; i < d; i++) {
+	    		cd[i] = c[i] * (d - i);
+	    	}
+	    	return new RealPolynomial(cd);
+	    }
+	    
 	    public double[] getCoefficients() {
 	    	return coeff;
 	    }
