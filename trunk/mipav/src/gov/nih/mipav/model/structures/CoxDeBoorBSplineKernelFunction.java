@@ -11,7 +11,7 @@ import gov.nih.mipav.view.Preferences;
 	 * @version  0.1 April 1, 2014
 	 * @author   William Gandler
 	 * 
-	  * This a a port of itkCoxDeBoorBSplineKernelFunction.hxx, itkCoxDeBoorBSplineKernelFunction.h, and 
+	  * This a a port of itkCoxDeBoorBSplineKernelFunction.hxx, itkCoxDeBoorBSplineKernelFunction.h, and
 	  * itkCoxDeBoorBSplineKernelFunctionTest.cxx from the itk package.  
 	  * Here is the original itk header
 	  * from the itkCoxDeBoorBSplineKernelFunction.hxx file:
@@ -29,7 +29,7 @@ import gov.nih.mipav.view.Preferences;
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *  
- * This class enscapsulates BSpline kernel for
+ * This class encapsulates BSpline kernel for
  * density estimation or nonparameteric regression.
  * See documentation for KernelFunctionBase for more details.
  *
@@ -197,6 +197,38 @@ import gov.nih.mipav.view.Preferences;
 	    	if (which < BSplineShapeFunctions.length) {
 	    		RealPolynomial poly = new RealPolynomial(BSplineShapeFunctions[which]);
 	    		return poly.evaluate(absValue);
+	    	}
+	    	else {
+	    		return 0.0;
+	    	}
+	    }
+	    
+	    public double evaluateDerivative(double u) {
+	    	return evaluateNthDerivative(u, 1);
+	    }
+	    
+	    public double evaluateNthDerivative(double u, int n) {
+	    	double absValue = Math.abs(u);
+	    	int which;
+	    	if (splineOrder % 2 == 0) {
+	    		which = (int)(absValue + 0.5);
+	    	}
+	    	else {
+	    		which = (int)absValue;
+	    	}
+	    	
+	    	if (which < BSplineShapeFunctions.length) {
+	    		RealPolynomial polynomial = new RealPolynomial(BSplineShapeFunctions[which]);
+	    		for (int i = 0; i < n; i++) {
+	    			polynomial = new RealPolynomial(polynomial.derivative());
+	    		}
+	    		double der = polynomial.evaluate(absValue);
+	    		if (u < 0.0 && n % 2 != 0) {
+	    			return -der;
+	    		}
+	    		else {
+	    			return der;
+	    		}
 	    	}
 	    	else {
 	    		return 0.0;
