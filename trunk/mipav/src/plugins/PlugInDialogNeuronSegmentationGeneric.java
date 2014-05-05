@@ -14,7 +14,9 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 
 import javax.swing.ButtonGroup;
@@ -22,6 +24,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -36,6 +39,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmMedian;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
@@ -75,6 +79,8 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	
 	private JTextField dirText;
 	
+	private JCheckBox editBox;
+
 	private JCheckBox excludeBox;
 	
 	private int[] extents;
@@ -85,11 +91,15 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	
 	private JCheckBox imageBox;
 	
+	private int[] imBuffer;
+	
 	/**
 	 * List containing the images that need to be segmented 
 	 * during this run through
 	 */
 	private ArrayList<File> images;
+	
+	private int height;
 	
 	/**
 	 * Displayed list of images that can be used to jump to
@@ -103,6 +113,8 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	private boolean listenersOn;
 	
 	private JButton jumpButton;
+
+	private JCheckBox noiseBox;
 
 	private int numImages;
 	
@@ -129,8 +141,6 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	private JButton undoButton;
 	
 	private int width;
-	
-	private JCheckBox editBox;
 	
 	public PlugInDialogNeuronSegmentationGeneric(){
 		super();
@@ -176,6 +186,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         		counter--;
         		Point loc = frame.getLocation();
         		frame.close();
+        		seg.cleanImages();
         		if(openImage()){
 	        		frame.setLocation(loc);
 	        		callAlgorithm();
@@ -193,6 +204,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         	if(counter < numImages){
         		Point loc = frame.getLocation();
         		frame.close();
+        		seg.cleanImages();
         		if(openImage()){
 	        		frame.setLocation(loc);
 	        		callAlgorithm();
@@ -215,7 +227,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         	finalize();
 		}	
 		else if(command.equals("Reset")){
-			sensSlider.setValue(10);
+			sensSlider.setValue(20);
 			changeX = -1;
 			changeY = -1;
 			callAlgorithm();
@@ -254,7 +266,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		
 		frame.getComponentImage().getImageA().resetVOIs();
 		frame.getControls().getTools().setOpacity(1.0f);
-		frame.getControls().getTools().setPaintColor(Color.WHITE);
+		frame.getControls().getTools().setPaintColor(Color.GREEN);
 		
 		frame.setCursor(null);
 		frame.getComponentImage().setPaintMask(skeleton);
@@ -312,12 +324,13 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	
 	protected void callAlgorithm(){
 		
-		extents = srcImage.getExtents();
+		//extents = srcImage.getExtents();
 		if(extents.length > 2){
 			actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "Next"));
 			return;
 		}
-		width = extents[0];
+		//width = extents[0];
+		//height = extents[1];
 		
 		//Run the initial segmentation on start-up so that
 		//it is immediately displayed to the user
@@ -349,15 +362,175 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         setTitle(title);
 	}
 	
+	/**
+	 * Crude filter to get rid of shot noise resulting from the max-projected 
+	 * neuron images. It implements a median filter, but only adjusts pixels
+	 * that are changing over a certain threshold. The median filter is then
+	 * repeated locally around points that were changed until there are no 
+	 * longer any differences greater than the given threshold.
+	 * 
+	 * For 8-bit integer images, the threshold is set to 3, while for 16-bit
+	 * integer images the threshold is 66. This does not work with float and
+	 * double valued images right now.
+	 * 
+	 * This filter runs in place. 
+	 * 
+	 * @param image input image to filter. Is also the result image as this 
+	 * filter places the results back into the original image
+	 */
+	
+	private void filterShotNoise(ModelImage image){
+
+		int dataType = image.getType();
+		int maxDiff;
+		
+		if(dataType == ModelImage.BYTE || dataType == ModelImage.UBYTE)
+			maxDiff = 3;
+		else if(dataType == ModelImage.SHORT || dataType == ModelImage.USHORT)
+			maxDiff = 66;
+		else 
+			return;
+		
+		ModelImage medianImage = (ModelImage) image.clone();
+		AlgorithmMedian median = new AlgorithmMedian(medianImage, 1, 3, AlgorithmMedian.SQUARE_KERNEL,
+				0, AlgorithmMedian.STANDARD, 3, true);
+		median.run();
+		int length = width*height;
+		imBuffer = new int[length];
+		int[] medBuffer = new int[length];
+		int[] outBuffer = new int[length];
+		int diff;
+		
+		
+		try{
+			image.exportData(0, length, imBuffer);
+			medianImage.exportData(0, length, medBuffer);
+		} catch(IOException e){
+			MipavUtil.displayError("Could not export data from original image");
+			e.printStackTrace();
+		}
+		
+		ArrayList<Integer> adjustPts = new ArrayList<Integer>();
+		ArrayList<Integer> addPts = new ArrayList<Integer>();
+		for(int i=0;i<length;i++){
+			diff = Math.abs(imBuffer[i] - medBuffer[i]);
+			if(diff >= maxDiff){
+				//adjustPts.add(i);
+				imBuffer[i] = medBuffer[i];
+				int x = i%width;
+				int y = i/width;
+				for(int nx=x-1;nx<=x+1;nx++){
+					if(nx<0 || nx>=width) continue;
+					for(int ny=y-1;ny<=y+1;ny++){
+						if(ny<0 || ny>=height) continue;
+						int ind = nx+ny*width;
+						if(!adjustPts.contains(ind))
+							adjustPts.add(nx+ny*width);
+					}
+				}
+			}
+		}
+		
+		medBuffer = null;
+		
+		System.arraycopy(imBuffer, 0, outBuffer, 0, length);
+		
+		while(adjustPts.size()>0){
+			int size = adjustPts.size();
+			for(int j = 0;j<size;j++){
+				int i = adjustPts.get(j);
+				int x = i%width;
+				int y = i/width;
+				int kMed = findMedian(i);
+				if(Math.abs(imBuffer[i] - kMed) >= maxDiff){
+					outBuffer[i] = kMed;
+					//adjustPts.add(i);
+					for(int nx=x-1;nx<=x+1;nx++){
+						if(nx<0 || nx>=width) continue;
+						for(int ny=y-1;ny<=y+1;ny++){
+							if(ny<0 || ny>=height) continue;
+							int ind = nx+ny*width;
+							if(!addPts.contains(ind))
+								addPts.add(nx+ny*width);
+						}
+					}
+				}
+			}
+			for(int j = 0;j<size;j++){
+				int i=adjustPts.remove(0);
+				imBuffer[i] = outBuffer[i];
+			}
+			adjustPts.addAll(addPts);
+			addPts.clear();
+		}
+		
+		try {
+			image.importData(0, outBuffer, true);
+		} catch (IOException e) {
+			MipavUtil.displayError("Unable to import filtered image");
+			e.printStackTrace();
+		}
+		
+		medianImage.disposeLocal();
+	}
+	
+	/**
+	 * Lazy implementation of a median finder. Uses the 
+	 * built in quicksort and then finds the middle value
+	 * of the sorted array.
+	 * @param array the array to find the median of
+	 * @return the median value
+	 */
+
+	private int findMedian(int[] array){
+	
+		Arrays.sort(array);
+		int middle = array.length/2;
+		if(array.length%2 == 0){
+			return (array[middle] + array[middle-1])/2;
+		} else {
+			return array[middle];
+		}
+	}
+	
+	/**
+	 * Wrapper method to find the median. Extracts the 
+	 * values around the given index and puts them into
+	 * an array to find the median of.
+	 * @param i find the median of the box centered on this index
+	 * @return the median value
+	 */
+	
+	private int findMedian(int i){
+		int x = i%width;
+		int y = i/width;
+		int kWidth = Math.min(3, 2 + Math.min(x, width-1-x));
+		int kHeight = Math.min(3, 2 + Math.min(y, height-1-y));
+		int[] kArray = new int[kWidth*kHeight];
+		int cnt = 0;
+	
+		for(int nx=x-1;nx<=x+1;nx++){
+			if(nx<0 || nx>=width) continue;
+			for(int ny=y-1;ny<=y+1;ny++){
+				if(ny<0 || ny>=height) continue;
+				kArray[cnt] = imBuffer[nx + ny*width];
+				cnt++;
+			}
+		}
+		int kMed = findMedian(kArray);
+		return kMed;
+	
+	}
+
 	private void chooseDir(){
 		String dirText = Preferences.getImageDirectory();
-		FileNameExtensionFilter csvFilter = new FileNameExtensionFilter("Image files", "tif", "tiff", "lsm");
+		FileNameExtensionFilter imFilter = new FileNameExtensionFilter("TIF/LSM Images", "tif", "tiff", "lsm");
 		fileChooser = new JFileChooser(dirText);
 		fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 		fileChooser.addActionListener(this);
-		fileChooser.addChoosableFileFilter( csvFilter);
+		fileChooser.addChoosableFileFilter(imFilter);
 		fileChooser.setAcceptAllFileFilterUsed(false);
-		fileChooser.setFileFilter(csvFilter);
+		fileChooser.setFileFilter(imFilter);
 		fileChooser.showOpenDialog(this);
 	}
 	
@@ -405,9 +578,17 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         excludeBox.setSelected(true);
         checkPanel.add(excludeBox);
         
+        JPanel noisePanel = new JPanel();
+        noisePanel.setForeground(Color.black);
+        
+        noiseBox = new JCheckBox("Run shot noise filter on images");
+        noiseBox.setFont(serif12);
+        noisePanel.add(noiseBox);
+        
         PanelManager manage = new PanelManager();
         manage.add(choosePanel);
         manage.addOnNextLine(checkPanel);
+        manage.addOnNextLine(noisePanel);
         
         getContentPane().add(manage.getPanel(), BorderLayout.CENTER);
 
@@ -576,7 +757,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         JPanel sliderPanel = new JPanel();
         sliderPanel.setForeground(Color.black);
         
-        sensSlider = new JSlider(JSlider.HORIZONTAL, 0, 30, 10);
+        sensSlider = new JSlider(JSlider.HORIZONTAL, 0, 50, 20);
         sensSlider.addChangeListener(this);
         sensSlider.setMajorTickSpacing(5);
         sensSlider.setMinorTickSpacing(1);
@@ -704,6 +885,16 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 			MipavUtil.displayError("Could not read file: " + current.toString());
 			return false;
 		}
+		
+		extents = srcImage.getExtents();
+		width = extents[0];
+		height = extents[1];
+		
+		
+		if(noiseBox.isSelected()){
+			filterShotNoise(srcImage);
+		}
+		
 		srcImage.setImageName(current.getName(),false);
 		frame = new ViewJFrameImage(srcImage, null, new Dimension(0,300));
 		frame.setVisible(true);
