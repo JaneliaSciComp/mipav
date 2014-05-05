@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.algorithms.filters;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.structures.BSplineKernelFunction;
+import gov.nih.mipav.model.structures.CoxDeBoorBSplineKernelFunction;
 import gov.nih.mipav.model.structures.ModelImage;
 
 import java.io.IOException;
@@ -18,7 +20,8 @@ import gov.nih.mipav.view.ViewJProgressBar;
  * @version 0.1 April 24, 2014
  * @author William Gandler
  * 
- *         This a a port of itkN4MRIBiasFieldCorrectionImageFilter.txx from the
+ *         This a a port of itkN4MRIBiasFieldCorrectionImageFilter.txx and 
+ *         itkCoxDeBoorBSplineKernelFunctionTest2.cxx from the
  *         itk package. Here is the original itk header: Program: Advanced
  *         Normalization Tools Module: $RCSfile:
  *         itkN4MRIBiasFieldCorrectionImageFilter.txx,v $ Language: C++ Date:
@@ -102,6 +105,12 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 	private int maskExtents[];
 	
 	private boolean selfTest = false;
+	
+	private boolean CoxDeBoorBSplineKernelFunctionTest = false;
+	
+	private boolean CoxDeBoorBSplineKernelFunctionTest2 = false;
+	
+	private boolean BSplineKernelFunctionTest = false;
 
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
@@ -199,6 +208,58 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 			displayError("Source Image is null");
 			finalize();
 
+			return;
+		}
+		
+		if (CoxDeBoorBSplineKernelFunctionTest) {
+			CoxDeBoorBSplineKernelFunction CoxDeBoor = new CoxDeBoorBSplineKernelFunction();
+			CoxDeBoor.selfTest();
+			setCompleted(false);
+			return;
+		}
+		
+		if (CoxDeBoorBSplineKernelFunctionTest2) {
+			// All 317 CoxDeBoorBSplineKernelFunction tests passed
+			// In this test we check to see that the derivative is
+			// calculated correctly for spline orders 2 through 10.
+			int testsPassed = 0;
+			int testsFailed = 0;
+			int testsTotal;
+			for (int order = 2; order <= 10; order++) {
+				CoxDeBoorBSplineKernelFunction kernel = new CoxDeBoorBSplineKernelFunction(order);
+				CoxDeBoorBSplineKernelFunction kernelOrderMinus1 = new CoxDeBoorBSplineKernelFunction(order-1);
+				for (double tt = 0.0; tt < (0.5*(order+1)); tt += 0.1) {
+				    double derivative = kernel.evaluateDerivative(tt);
+				    if (Math.abs(derivative - (kernelOrderMinus1.evaluate(tt+0.5)
+				        - kernelOrderMinus1.evaluate(tt - 0.5))) > 1.0E-10) {
+				        Preferences.debug("CoxDeBoorBSplineKernelFunction failed for order = " + order + 
+				        		" tt = " + tt + "\n", Preferences.DEBUG_ALGORITHM);	
+				        testsFailed++;
+				    }
+				    else {
+				    	testsPassed++;
+				    }
+				}
+				kernel.finalize();
+				kernelOrderMinus1.finalize();
+			}
+			testsTotal = testsPassed + testsFailed;
+			if (testsFailed == 0) {
+				Preferences.debug("All " + testsPassed + " CoxDeBoorBSplineKernelFunction tests passed\n",
+						Preferences.DEBUG_ALGORITHM);
+			}
+			else {
+				Preferences.debug(testsPassed + " out of " + testsTotal + " CoxDeBoorBSplineKernelFunction tests passed\n",
+						Preferences.DEBUG_ALGORITHM);
+			}
+			setCompleted(false);
+			return;
+		}
+		
+		if (BSplineKernelFunctionTest) {
+			BSplineKernelFunction BSpline = new BSplineKernelFunction();
+			BSpline.selfTest();
+			setCompleted(false);
 			return;
 		}
 
