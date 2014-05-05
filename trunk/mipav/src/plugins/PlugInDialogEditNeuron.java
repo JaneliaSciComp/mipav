@@ -85,6 +85,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 */
 	private VOI controlPts;
 	
+	private JCheckBox csvBox;
+
 	/**
 	 * The active slice's actual depth in the full volume
 	 */
@@ -227,6 +229,10 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	@SuppressWarnings("rawtypes")
 	private JComboBox resUnits;
 
+	/*******************************************************/
+	
+	private FileWriter statsCSV;
+
 	/**
 	 * Part of the 3D image to display on screen
 	 */
@@ -247,12 +253,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	private int width;
 	
 	private JTextField xResField;
-	
-	/*******************************************************/
-	
-	private FileWriter statsCSV;
-	
-	private JCheckBox csvBox;
 	
 	/**
 	 * Primary constructor. Initializes a dialog to ask the user
@@ -652,7 +652,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	private void chooseDir(){
 		String dirText = Preferences.getImageDirectory();
 		fileChooser = new JFileChooser(dirText);
-		fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		fileChooser.addActionListener(this);
 		fileChooser.showOpenDialog(this);
 	}
@@ -1669,6 +1669,9 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 */
 	
 	private boolean populateImages(File dir){
+		
+		if(!dir.exists() || dir.isFile())
+			return false;
 		
 		File skelName;
 		String stripped;
