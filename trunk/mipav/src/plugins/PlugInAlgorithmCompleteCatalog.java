@@ -1,4 +1,5 @@
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.view.MipavUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -27,13 +28,13 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
 
     //private final int remove;
     
-    private int GUID;
+    private int GUID = -1;
     
-    private int site;
+    private int site = -1;
     
-    private int visitID;
+    private int visitID = -1;
     
-    private int specimen;
+    private int specimen = -1;
 
     public PlugInAlgorithmCompleteCatalog(final File file, final FileWriter out/*,final int lines*/) {
         super();
@@ -47,14 +48,20 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
         // TODO Auto-generated method stub
         complete = new int[6]; // RNA, Plasma, Serum, CSF, Blood
         final String[] types = {"RNA", "Plasma", "Serum", "CSF", "Blood", "DNA"};
-        String GUID;
+        String GUIDStr;
         Integer typeNum;
 
         readCSV();
+        
+        if(site == -1 || GUID == -1 || visitID == -1 || specimen == -1){
+        	MipavUtil.displayError("A header is missing");
+        	return;
+        }
+        
         while (catalogID.size() > 0) {
-            GUID = catalogID.get(0);
+            GUIDStr = catalogID.get(0);
             typeNum = type.get(0);
-            if (compare(GUID, typeNum)) {
+            if (compare(GUIDStr, typeNum)) {
                 complete[typeNum.intValue()]++;
             }
         }
@@ -156,7 +163,6 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
                 	else if(hStr.equals("Site Specimen Type"))
                 		specimen = i;
                 }
-                
 
                 while ( (line = input.readLine()) != null) {
                     lineArray = parseLine2(line);
