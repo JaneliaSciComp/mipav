@@ -110,6 +110,8 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 	
 	private boolean CoxDeBoorBSplineKernelFunctionTest2 = false;
 	
+	private boolean BSplineScatteredDataPointSetToImageFilterTest2 = false;
+	
 	private boolean BSplineKernelFunctionTest = false;
 
 	// ~ Constructors
@@ -252,6 +254,59 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 				Preferences.debug(testsPassed + " out of " + testsTotal + " CoxDeBoorBSplineKernelFunction tests passed\n",
 						Preferences.DEBUG_ALGORITHM);
 			}
+			setCompleted(false);
+			return;
+		}
+		
+		if (BSplineScatteredDataPointSetToImageFilterTest2) {
+			// Sample the helix
+			// Cannot implement test with my code
+			// parametric dimension = 1 and data dimension = 3
+			// so would need nDims = 1 but my code can only do nDims = 2 to nDims = 4
+			// Also would need a Vector<Vector3d> for pointData but my code can only do 
+			// Vector<Double> for pointData
+			double tt;
+			Vector<Vector4d> pointLocation = new Vector<Vector4d>();
+	    	Vector<Vector3d> pointData = new Vector<Vector3d>();
+	    	Vector4d v;
+	    	Vector3d dd;
+	    	nDims = 1;
+	    	float res[] = new float[nDims];
+			for (i = 0; i < nDims; i++) {
+				res[i] = 0.01f;
+			}
+			int extents[] = new int[nDims];
+			for (i = 0; i < nDims; i++) {
+				extents[i] = 101;
+			}
+			float org[] = new float[nDims];
+			for (i = 0; i < nDims; i++) {
+				org[i] = 0.0f;
+			}
+	    	AlgorithmBSplineScatteredDataPointSetToImageFilter filter;
+			for (tt = 0.0, i = 0; tt <= 1.0 + 1.0E-10; tt += 0.05, i++) {
+			    v = new Vector4d(tt, 0.0, 0.0, 0.0);
+			    pointLocation.add(i, v);
+			    dd = new Vector3d(0.25*Math.cos(tt*6.0*Math.PI), 0.25*Math.sin(tt* 6.0 * Math.PI), 4.00*tt);
+			    //pointData.add(i, dd);
+			}
+			
+			// Instantiate the filter and set the parameters
+			filter = new AlgorithmBSplineScatteredDataPointSetToImageFilter(nDims);
+			
+			filter.setExtents(extents);
+			filter.setOrigin(org);
+			filter.setResolutions(res);
+			//filter.setPointData(pointData);
+			filter.setPointLocation(pointLocation);
+			int ncps[] = new int[nDims];
+			for (i = 0; i < nDims; i++) {
+				ncps[i] = 4;
+			}
+			filter.setNumberOfControlPoints(ncps);
+			filter.setNumberOfLevels(5);
+			filter.setGenerateOutputImage(false);
+			filter.generateData();
 			setCompleted(false);
 			return;
 		}
