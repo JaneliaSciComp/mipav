@@ -218,6 +218,11 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		
 	}
 	
+	public void cleanImages(){
+		segImage.disposeLocal();
+		probImage.disposeLocal();
+	}
+	
 	/**
 	 * Method, as called by the accompanying dialog, that deletes branches
 	 * from the skeleton representation of the neuron. From the seed point, 
@@ -572,6 +577,9 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		//See method for details on what it does.
 		
 		ModelImage zImage = (ModelImage)srcImage.clone();
+		
+		//zImage = filterShotNoise(zImage);
+		
 		AlgorithmMean mean = new AlgorithmMean(zImage, 3, true);
 		mean.run();
 		
@@ -920,7 +928,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 				if(nx<0||nx>=width) continue;
 				ind = nx + ny*width;
 				if(skelClone.get(ind)){
-					path.addFirst(new BranchContainer(ind, 1));
+					path.addFirst(new BranchContainer(ind, 1, start));
 					skelClone.flip(ind);
 				}
 			}
@@ -934,6 +942,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			start = current.i;
 			x = start%width;
 			y = start/width;
+			int originated = current.originated;
 			for(int ny=y+1;ny>=y-1;ny--){
 				if(ny<0||ny>=height) continue;
 				for(int nx=x+1;nx>=x-1;nx--){
@@ -958,6 +967,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 				line++;
 				writeInfo(line, start, 0, current.line);
 				current.line = line;
+				originated = start;
 			}
 			//Check if you need to bridge any gaps in cyclic neurons
 			else if(num == 0){
@@ -974,9 +984,9 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 							check = iter.next();
 							if(check.i == ind && check.line != current.line){
 								line++;
-								writeInfo(line, start ,0, check.line);
+								writeInfo(line, current.originated, 0, check.line);
 								line++;
-								writeInfo(line, start, 0, current.line);
+								writeInfo(line, check.originated, 0, current.line);
 								toRemove = check;
 								break loop;
 							}
@@ -986,7 +996,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 				if(toRemove != null) path.remove(toRemove);
 			}
 			while(!pathBuffer.isEmpty()){
-				path.addFirst(new BranchContainer(pathBuffer.get(0), current.line));
+				path.addFirst(new BranchContainer(pathBuffer.get(0), current.line, originated));
 				skelClone.flip(pathBuffer.remove(0));
 			}
 		}
@@ -1190,6 +1200,11 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		
 	}*/
 	
+	/**
+	 * Not in use right now. It is wrong and requires some edits before
+	 * it is useable
+	 */
+	
 	private void calcArea(){
 		
 		ModelImage areaIm = (ModelImage)segImage.clone();
@@ -1216,8 +1231,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
         	if(value != 0)
         		areaList.add(value);
         }
-        
-        
+
         neuronArea = 0;
 		for(int i=0;i<length;i++){
 			value = buffer[i];
@@ -1317,7 +1331,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
         			diffX = x - chooseX;
         			diffY = y - chooseY;
         			dist = (float) Math.sqrt(diffX*diffX + diffY*diffY);
-        			adjusted = (float) imBuffer[i] / dist;
+        			adjusted = (float) (10*imBuffer[i]) / dist;
         			histo[buffer[i]] += adjusted;
         		}
         		else
@@ -1332,7 +1346,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
         	if(histo[i] > histmax) {
         		histmax = histo[i];
         		ind = i;
-        	};
+        	}
         }
         
         //Pick only the pixel which contains
@@ -1681,9 +1695,12 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		
 		private int line;
 		
-		private BranchContainer(int index, int lineNum){
+		private int originated;
+		
+		private BranchContainer(int index, int lineNum, int origin){
 			i = index;
 			line = lineNum;
+			originated = origin;
 		}
 		
 	}
