@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -37,6 +38,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.border.EmptyBorder;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmMedian;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
@@ -254,6 +256,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	
 	private JTextField xResField;
 	
+	private JCheckBox noiseBox;
+	
 	/**
 	 * Primary constructor. Initializes a dialog to ask the user
 	 * for a directory to use
@@ -269,26 +273,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		init();
 		
-	}
-	
-	/**
-	 * Secondary constructor used for when the neuron segmentation has
-	 * ended and the user wishes to open up the editor immediately at the 
-	 * conclusion of the first round of edits.
-	 * @param directory the directory where images are (with accompanying 
-	 * SWC files)
-	 */
-	public PlugInDialogEditNeuron(String directory){
-		super();
-		
-		images = new ArrayList<File>();
-		swcList = new ArrayList<File>();
-
-		currentSlice = 0;
-		prevSlice = 0;
-		
-		Preferences.setImageDirectory(new File(directory));
-		init();
 	}
 	
 	public void actionPerformed(ActionEvent event){
@@ -680,6 +664,159 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	}
 	
 	/**
+	 * Crude filter to get rid of shot noise resulting from the max-projected 
+	 * neuron images. It implements a median filter, but only adjusts pixels
+	 * that are changing over a certain threshold. The median filter is then
+	 * repeated locally around points that were changed until there are no 
+	 * longer any differences greater than the given threshold.
+	 * 
+	 * For 8-bit integer images, the threshold is set to 3, while for 16-bit
+	 * integer images the threshold is 66. This does not work with float and
+	 * double valued images right now.
+	 * 
+	 * This filter runs in place. 
+	 * 
+	 * @param image input image to filter. Is also the result image as this 
+	 * filter places the results back into the original image
+	 */
+	
+	private int[] filterShotNoise(ModelImage image){
+
+		int dataType = image.getType();
+		int maxDiff;
+		
+		if(dataType == ModelImage.BYTE || dataType == ModelImage.UBYTE)
+			maxDiff = 3;
+		else if(dataType == ModelImage.SHORT || dataType == ModelImage.USHORT)
+			maxDiff = 66;
+		else return null;
+		
+		ModelImage medianImage = (ModelImage) image.clone();
+		AlgorithmMedian median = new AlgorithmMedian(medianImage, 1, 3, AlgorithmMedian.SQUARE_KERNEL,
+				0, AlgorithmMedian.STANDARD, 3, true);
+		median.run();
+		int length = width*height;
+		int[] buffer = new int[length];
+		int[] medBuffer = new int[length];
+		int[] outBuffer = new int[length];
+		int diff;
+		
+		
+		try{
+			image.exportData(0, length, buffer);
+			medianImage.exportData(0, length, medBuffer);
+		} catch(IOException e){
+			MipavUtil.displayError("Could not export data from original image");
+			e.printStackTrace();
+		}
+		
+		ArrayList<Integer> adjustPts = new ArrayList<Integer>();
+		ArrayList<Integer> addPts = new ArrayList<Integer>();
+		for(int i=0;i<length;i++){
+			diff = Math.abs(buffer[i] - medBuffer[i]);
+			if(diff >= maxDiff){
+				//adjustPts.add(i);
+				buffer[i] = medBuffer[i];
+				int x = i%width;
+				int y = i/width;
+				for(int nx=x-1;nx<=x+1;nx++){
+					if(nx<0 || nx>=width) continue;
+					for(int ny=y-1;ny<=y+1;ny++){
+						if(ny<0 || ny>=height) continue;
+						int ind = nx+ny*width;
+						if(!adjustPts.contains(ind))
+							adjustPts.add(nx+ny*width);
+					}
+				}
+			}
+		}
+		
+		medBuffer = null;
+		
+		System.arraycopy(buffer, 0, outBuffer, 0, length);
+		
+		while(adjustPts.size()>0){
+			int size = adjustPts.size();
+			for(int j = 0;j<size;j++){
+				int i = adjustPts.get(j);
+				int x = i%width;
+				int y = i/width;
+				int kMed = findMedian(buffer, i);
+				if(Math.abs(buffer[i] - kMed) >= maxDiff){
+					outBuffer[i] = kMed;
+					//adjustPts.add(i);
+					for(int nx=x-1;nx<=x+1;nx++){
+						if(nx<0 || nx>=width) continue;
+						for(int ny=y-1;ny<=y+1;ny++){
+							if(ny<0 || ny>=height) continue;
+							int ind = nx+ny*width;
+							if(!addPts.contains(ind))
+								addPts.add(nx+ny*width);
+						}
+					}
+				}
+			}
+			for(int j = 0;j<size;j++){
+				int i=adjustPts.remove(0);
+				buffer[i] = outBuffer[i];
+			}
+			adjustPts.addAll(addPts);
+			addPts.clear();
+		}
+		
+		medianImage.disposeLocal();
+		return outBuffer;
+	}
+	
+	/**
+	 * Lazy implementation of a median finder. Uses the 
+	 * built in quicksort and then finds the middle value
+	 * of the sorted array.
+	 * @param array the array to find the median of
+	 * @return the median value
+	 */
+
+	private int findMedian(int[] array){
+	
+		Arrays.sort(array);
+		int middle = array.length/2;
+		if(array.length%2 == 0){
+			return (array[middle] + array[middle-1])/2;
+		} else {
+			return array[middle];
+		}
+	}
+	
+	/**
+	 * Wrapper method to find the median. Extracts the 
+	 * values around the given index and puts them into
+	 * an array to find the median of.
+	 * @param i find the median of the box centered on this index
+	 * @return the median value
+	 */
+	
+	private int findMedian(int[] buffer, int i){
+		int x = i%width;
+		int y = i/width;
+		int kWidth = Math.min(3, 2 + Math.min(x, width-1-x));
+		int kHeight = Math.min(3, 2 + Math.min(y, height-1-y));
+		int[] kArray = new int[kWidth*kHeight];
+		int cnt = 0;
+	
+		for(int nx=x-1;nx<=x+1;nx++){
+			if(nx<0 || nx>=width) continue;
+			for(int ny=y-1;ny<=y+1;ny++){
+				if(ny<0 || ny>=height) continue;
+				kArray[cnt] = buffer[nx + ny*width];
+				cnt++;
+			}
+		}
+		int kMed = findMedian(kArray);
+		return kMed;
+	
+	}
+	
+	/**
 	 * Used with the primary constructor to allow the user to choose the
 	 * directory where the images and SWC files are
 	 */
@@ -731,10 +868,18 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         csvBox.setFont(serif12);
         csvPanel.add(csvBox);
         
+        JPanel noisePanel = new JPanel();
+        noisePanel.setForeground(Color.black);
+        
+        noiseBox = new JCheckBox("Apply shot noise filter");
+        noiseBox.setFont(serif12);
+        noisePanel.add(noiseBox);
+        
         PanelManager manage = new PanelManager();
         manage.add(choosePanel);
         manage.addOnNextLine(rangePanel);
         manage.addOnNextLine(csvPanel);
+        manage.addOnNextLine(noisePanel);
         getContentPane().add(manage.getPanel(), BorderLayout.CENTER);
 
         JPanel OKCancelPanel = new JPanel();
@@ -1024,7 +1169,10 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				imBuffer = new int[length*depth];
 				for(int i=0;i<depth;i++){
 					sliceIm = imReader.readImage(images.get(i+lowerBound).getAbsolutePath());
-					sliceIm.exportData(0, length, sliceBuffer);
+					if(noiseBox.isSelected())
+						sliceBuffer = filterShotNoise(sliceIm);
+					else 
+						sliceIm.exportData(0, length, sliceBuffer);
 					System.arraycopy(sliceBuffer, 0, imBuffer, i*length, length);
 					type = sliceIm.getType();
 					sliceIm.disposeLocal();
@@ -1037,7 +1185,10 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				System.arraycopy(imBuffer, 0, tempBuffer, lBoundDiff*length, copyDepth*length);
 				if(lBoundDiff != 0){
 					sliceIm = imReader.readImage(images.get(lowerBound).getAbsolutePath());
-					sliceIm.exportData(0, length, sliceBuffer);
+					if(noiseBox.isSelected())
+						sliceBuffer = filterShotNoise(sliceIm);
+					else 
+						sliceIm.exportData(0, length, sliceBuffer);
 					System.arraycopy(sliceBuffer, 0, tempBuffer, 0, length);
 					sliceIm.disposeLocal();
 				}
@@ -1052,7 +1203,10 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				System.arraycopy(imBuffer, lBoundDiff*length, tempBuffer, 0, copyDepth*length);
 				if(uBoundDiff != 0){
 					sliceIm = imReader.readImage(images.get(upperBound).getAbsolutePath());
-					sliceIm.exportData(0, length, sliceBuffer);
+					if(noiseBox.isSelected())
+						sliceBuffer = filterShotNoise(sliceIm);
+					else 
+						sliceIm.exportData(0, length, sliceBuffer);
 					System.arraycopy(sliceBuffer, 0, tempBuffer, copyDepth*length, length);
 					sliceIm.disposeLocal();
 				}
@@ -1199,7 +1353,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				if(line.startsWith("#"))
 					continue;
 				lineArray = line.split(" ");
-				points.add(lineArray);
+				if(lineArray.length > 0)
+					points.add(lineArray);
 			}
 			input.close();
 			
@@ -1760,14 +1915,14 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				return;
 			}
 			int dx, dy;
-			int maxDistSqr = Integer.MIN_VALUE;
+			int maxDistSqr = Integer.MAX_VALUE;
 			int ind;
 			int outX = -1;
 			int outY = -1;
 			
 			//Search for closest point on line in 5x5 box
 			//to attach the node to
-			if(mask.get(x + y*width)){
+			if(mask.get(x + y*width + activeSlice*length)){
 				outX = x;
 				outY = y;
 			}
@@ -1777,13 +1932,13 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 					for(int nx = x-2;nx<=x+2;nx++){
 						if(nx < 0 || nx >= width) continue;
 						ind = nx + ny*width;
-						if(mask.get(ind)){
+						if(mask.get(ind + activeSlice*length)){
 							dx = x - nx;
 							dx *= dx;
 							dy = y - ny;
 							dy *= dy;
 							int dSqr = dx + dy;
-							if(dSqr > maxDistSqr){
+							if(dSqr < maxDistSqr){
 								outX = nx;
 								outY = ny;
 								maxDistSqr = dSqr;
@@ -1796,13 +1951,15 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				}
 			}
 			
+			System.err.printf("%d %d\n", outX, outY);
+			
 			if(outX == -1 || outY == -1) return;
 
 			LinePath onPath = paths.findPath(new Point(outX, outY));
 			if(onPath != null){
 				Point pt = new Point(outX,outY);
 				links.addNode(pt, onPath);
-			}
+			} else System.err.println("Not on path");
 
 		} else if (deleteRB.isSelected()){
 			//search list of VOIs for this point
