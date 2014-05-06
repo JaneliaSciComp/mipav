@@ -24,7 +24,6 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -117,6 +116,8 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	private JCheckBox noiseBox;
 
 	private int numImages;
+	
+	private JRadioButton offRB;
 	
 	private JCheckBox polygonalBox;
 	
@@ -263,6 +264,9 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	@Override
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 		skeleton = seg.getSkeleton();
+		int[] chosenSpot = seg.getChosenSpot();
+		changeX = chosenSpot[0];
+		changeY = chosenSpot[1];
 		
 		frame.getComponentImage().getImageA().resetVOIs();
 		frame.getControls().getTools().setOpacity(1.0f);
@@ -289,21 +293,19 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		
 		if (frame != null) frame.close();
 		if (listDialog != null) listDialog.dispose();
+		if (segFrame != null) segFrame.close();
     	images.clear();
     	srcImage.disposeLocal();
+    	seg.cleanImages();
 		seg.finalize();
 		seg = null;
 		skeleton = null;
 		
 		if(editBox.isSelected()){
 			File dir = new File(dirText.getText());
-			if(dir.isDirectory()){
-				new PlugInDialogEditNeuron(dirText.getText());
-			} else {
-				new PlugInDialogEditNeuron(dir.getParent());
-			}
+			Preferences.setImageDirectory(dir);
+			new PlugInDialogEditNeuron();
 			dispose();
-			
 		} else{
 			if (isExitRequired()) {
 	            System.exit(0);
@@ -323,14 +325,10 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	 */
 	
 	protected void callAlgorithm(){
-		
-		//extents = srcImage.getExtents();
 		if(extents.length > 2){
 			actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "Next"));
 			return;
 		}
-		//width = extents[0];
-		//height = extents[1];
 		
 		//Run the initial segmentation on start-up so that
 		//it is immediately displayed to the user
@@ -581,7 +579,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         JPanel noisePanel = new JPanel();
         noisePanel.setForeground(Color.black);
         
-        noiseBox = new JCheckBox("Run shot noise filter on images");
+        noiseBox = new JCheckBox("Apply shot noise filter");
         noiseBox.setFont(serif12);
         noisePanel.add(noiseBox);
         
@@ -716,36 +714,45 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         		+ "to modify the branches.<br>"
         		+ "Choose \"Change Location\" to change where the neuron is <br>"
         		+ "believed to be. <br>"
+        		+ "To turn off mouse click actions, select \"No Action\"<br>"
         		+ "Change sensitivity to change original segmentation.<br><br>"
         		+ "<b>NOTE:</b> Changing sensitivity or location resets any <br>"
-        		+ "branches added or deleted previously.</html>";
+        		+ "branches added or deleted previously. Changing sensitity <br>"
+        		+ "may not change initial segmentation.</html>";
         
         JLabel descLabel = new JLabel(desc);
         descLabel.setForeground(Color.black);
         descLabel.setFont(serif12);
         descPanel.add(descLabel);
         
-        JPanel radioPanel = new JPanel();
+        JPanel radioPanel = new JPanel(new GridLayout(2,2));
         radioPanel.setForeground(Color.black);
         
         addRB = new JRadioButton("Add");
         addRB.setFont(serif12);
-        addRB.setSelected(true);
         
         deleteRB = new JRadioButton("Delete");
         deleteRB.setFont(serif12);
 
-        changeRB = new JRadioButton("Change location");
+        changeRB = new JRadioButton("Change Location");
         changeRB.setFont(serif12);
+        
+        offRB = new JRadioButton("No Action");
+        offRB.setFont(serif12);
+        offRB.setSelected(true);
+        
         
         ButtonGroup group = new ButtonGroup();
         
         group.add(addRB);
-        group.add(deleteRB);
         group.add(changeRB);
+        group.add(deleteRB);
+        group.add(offRB);
+        
+        radioPanel.add(offRB);
         radioPanel.add(addRB);
-        radioPanel.add(deleteRB);
         radioPanel.add(changeRB);
+        radioPanel.add(deleteRB);
         
         JPanel titlePanel = new JPanel();
         titlePanel.setForeground(Color.black);
@@ -796,7 +803,6 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 
         saveSkelBox = new JCheckBox("Save branches as TIFF");
         saveSkelBox.setFont(serif12);
-        saveSkelBox.setSelected(true);
         optionsPanel.add(saveSkelBox);
         
         saveVOIBox = new JCheckBox("Save VOIs");
@@ -810,7 +816,6 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         
         editBox = new JCheckBox("Open Editor at end");
         editBox.setFont(serif12);
-        editBox.setSelected(true);
         optionsPanel.add(editBox);
         
         JPanel boxPanel = new JPanel(new GridLayout(1,2));
@@ -825,7 +830,6 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         nextButton.setFont(serif12);
         nextButton.addActionListener(this);
         boxPanel.add(nextButton);
-        
         
         PanelManager manage = new PanelManager();
         manage.add(radioPanel);
@@ -861,14 +865,12 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         endButton.addActionListener(this);
         buttonPanel.add(endButton);
         
-        
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         
         pack();
         setVisible(true);
         setResizable(false);
         System.gc();
-		
 	}
 
 	private boolean openImage() {
@@ -1076,6 +1078,9 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		
+		if(offRB.isSelected())
+			return;
+		
 		float zoomX = frame.getComponentImage().getZoomX();
 		float zoomY = frame.getComponentImage().getZoomY();
 		int x = (int) ((float)e.getX()/zoomX); //- left;
@@ -1151,6 +1156,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	        	dispose();
 	        	if(listDialog != null) 
 	        		listDialog.dispose();
+	        	if(segFrame != null) segFrame.close();
 	        }
 		}
 		else if(source == listDialog){

@@ -167,6 +167,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		width = extents[0];
 		height = extents[1];
 		length = width*height;
+		centroidPts = new float[2];
 		
 		imBuffer = new int[length];
 		
@@ -208,8 +209,16 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		//not need to be repopulated every time
 		BitSet path = add.getShortestPath();
 		for(int i = path.nextSetBit(0); i>=0; i=path.nextSetBit(i+1)){
-			if(tipPts.contains(new Integer(i)))
-				tipPts.remove(new Integer(i));
+			int x = i%width;
+			int y = i/width;
+			for(int ny = y-1;ny<=y+1;ny++){
+				if(ny < 0 || ny >= height) continue;
+				for(int nx = x-1;nx<=x+1;nx++){
+					if(nx < 0 || nx >= width) continue;
+					if(tipPts.contains(new Integer(i)))
+						tipPts.remove(new Integer(i));
+				}
+			}
 		}
 		
 		//Add the new point and recalculate the polygonal area/centroid
@@ -461,6 +470,10 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		return tipPts;
 	}
 	
+	public int[] getChosenSpot(){
+		return new int[]{chooseX, chooseY};
+	}
+	
 	public int getPolyArea(){
 		return polyArea;
 	}
@@ -565,14 +578,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		if(segImage != null){
 			segImage.disposeLocal();
 		}
-		
-		//Store the cost function for the modified 
-		//Dijkstra's method, and convert to UBYTE
-		/*probImage = probabilityMap(srcImage);
-		AlgorithmChangeType change = new AlgorithmChangeType(probImage, DataType.UINTEGER.getLegacyNum(),
-				probImage.getMin(), probImage.getMax(), 0, 255, false);
-		change.run();*/
-		
+
 		//Pre-processing step for segmentation. 
 		//See method for details on what it does.
 		
@@ -592,17 +598,15 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		changeZ.run();
 		//ModelImage sobel = doSobel(zImage);
 		destImage = probabilityMap(zImage);
-		
+
+		//Store the cost function for the modified 
+		//Dijkstra's method, and convert to UBYTE
 		probImage = (ModelImage) destImage.clone();
 		AlgorithmChangeType change = new AlgorithmChangeType(probImage, ModelImage.UBYTE,
 				probImage.getMin(), probImage.getMax(), 0, 255,  false);
 		change.run();
 		
 		fireProgressStateChanged(50);
-		
-		/*AlgorithmImageCalculator calc = new AlgorithmImageCalculator(probImage, sobel, 0, 1, true, "");
-		calc.run();
-		sobel.disposeLocal();*/
 		
 		//Hard segmentation of the filtered image
 		//results in a general structure for the
@@ -635,6 +639,11 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
         
         findTips();
         polygonalArea();
+        
+        if(chooseX == -1 || chooseY == -1){
+        	chooseX = (int) centroidPts[0];
+        	chooseY = (int) centroidPts[1];
+        }
         
         fireProgressStateChanged(100);
         
@@ -876,6 +885,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	public void saveAsSWC(){
 		longestPath(); //determine the endpoints of the longest path
 		polygonalArea(); //Update polygonal area and centroid location
+		findTips(); //Update tip points, hasn't been completely accurate
 		
 		int x,y,ind, num;
 		BitSet skelClone = (BitSet)skeleton.clone();
@@ -1252,9 +1262,9 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	private void findTips(){
 		
 		int x, y, nx, ny, nind, num;
-		float area = 0;
+		/*float area = 0;
 		float sumX = 0;
-		float sumY = 0;
+		float sumY = 0;*/
 		for (int ind = skeleton.nextSetBit(0); ind >= 0; ind = skeleton.nextSetBit(ind+1)) {
 			num=0;
 			x = ind%width;
@@ -1271,15 +1281,15 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			}
 			if(num==1) {
 				tipPts.add(new Integer(ind));
-				sumX += x;
+				/*sumX += x;
 				sumY += y;
-				area++;
+				area++;*/
 			}
 		}
 		
-		centroidPts = new float[2];
+		/*centroidPts = new float[2];
 		centroidPts[0] = sumX/area;
-		centroidPts[1] = sumY/area;
+		centroidPts[1] = sumY/area;*/
 		
 	}
 	
