@@ -264,7 +264,21 @@ import gov.nih.mipav.view.Preferences;
 	                Matrix SMat = new Matrix(S);
 	                SMat = SMat.transpose();
 	                SMat = SMat.flipud();
-	                Matrix QMat = RMat.solve(SMat);
+	                // Original code has vnl_svd<realType>(R).solve(S)
+	                // From vnl_matrix_inverse.h
+	                //: Calculates inverse of a matrix (wrapper around vnl_svd<double>)
+	                //  vnl_matrix_inverse is a wrapper around vnl_svd<double> that allows
+	                //  you to write
+	                //  \code
+	                //  x = vnl_matrix_inverse<double>(A) * b;
+	                //  \endcode
+	                //  This is exactly equivalent to
+	                //  \code
+	                //  x = vnl_svd<double>(A).solve(b);
+	                //  \endcode
+	                //  but is arguably clearer, and also allows for the vnl_matrix_inverse
+	                //  class to be changed to use vnl_qr, say.
+	                Matrix QMat = (RMat.inverse()).times(SMat);
 	                refinedLatticeCoefficients[i] = QMat.extract(2,  SMat.getColumnDimension());
 	            } // if (doMultiLevel)
 	    	} // for (i = 0; i < nDims; i++)
@@ -369,8 +383,10 @@ import gov.nih.mipav.view.Preferences;
 	    	   } // for (int i = 0; i < nDims; i++)
 	    	   
 	    	   Preferences.debug("Current level = " + currentLevel + "\n", Preferences.DEBUG_ALGORITHM);
-	    	   Preferences.debug("Current number of control points = " + currentNumberOfControlPoints + "\n",
-	    			              Preferences.DEBUG_ALGORITHM);
+	    	   for (int i = 0; i < nDims; i++) {
+	    	       Preferences.debug("Current number of control points for dimension " + i + " = " + 
+	    	        currentNumberOfControlPoints[i] + "\n", Preferences.DEBUG_ALGORITHM);
+	    	   }
 	    	   
 	    	   double averageDifference = 0.0;
 	    	   double totalWeight = 0.0;
