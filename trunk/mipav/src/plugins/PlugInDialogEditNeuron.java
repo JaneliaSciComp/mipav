@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -38,7 +37,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.border.EmptyBorder;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmMedian;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmMean;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
@@ -104,12 +103,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	private int depth;
 	
 	private JTextField dirText;
-	
-	/**
-	 * Whether or not a VOI is being dragged so we 
-	 * know when to adjust lines
-	 */
-	private boolean dragged;
 		
 	/**
 	 * These two buttons choose whether the editor displays
@@ -151,6 +144,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 */
 	private BitSet mask;
 	
+	private JCheckBox noiseBox;
+
 	private int numImages;
 	
 	/**
@@ -196,11 +191,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	private JRadioButton progenitorRB;
 
 	private VOIPoint progenitorVOI;
-
-	/**
-	 * Whether or not a VOI was the target of the click
-	 */
-	private boolean ptClicked;
 	
 	private JCheckBox saveBox;
 	
@@ -255,8 +245,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	private int width;
 	
 	private JTextField xResField;
-	
-	private JCheckBox noiseBox;
 	
 	/**
 	 * Primary constructor. Initializes a dialog to ask the user
@@ -323,17 +311,24 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			prevSlice = currentSlice;
 			currentSlice++;
 			lut = subVolumeFrame.getLUTa();
+			float zX = subVolumeFrame.getComponentImage().getZoomX();
+			float zY = subVolumeFrame.getComponentImage().getZoomY();
 			
         	if(currentSlice < numImages){
         		Point loc = subVolumeFrame.getLocation();
         		subVolumeFrame.close();
         		openImage();
         		subVolumeFrame.setLocation(loc);
+        		subVolumeFrame.getComponentImage().setZoom(zX, zY);
+    			subVolumeFrame.updateFrame(zX, zY);
+    			subVolumeFrame.updateImages();
         	} else {
         		actionPerformed(new ActionEvent(this, 0, "End"));
         	}
 		} else if(command.equals("Prev")){
 			if(currentSlice > 0 ){
+				float zX = subVolumeFrame.getComponentImage().getZoomX();
+				float zY = subVolumeFrame.getComponentImage().getZoomY();
 				lut = subVolumeFrame.getLUTa();
 				prevSlice = currentSlice;
 				currentSlice--;
@@ -341,6 +336,9 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         		subVolumeFrame.close();
         		openImage();
         		subVolumeFrame.setLocation(loc);
+        		subVolumeFrame.getComponentImage().setZoom(zX, zY);
+    			subVolumeFrame.updateFrame(zX, zY);
+    			subVolumeFrame.updateImages();
 			}
 		}
 		else if(command.equals("Reset")){
@@ -665,8 +663,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	
 	/**
 	 * Crude filter to get rid of shot noise resulting from the max-projected 
-	 * neuron images. It implements a median filter, but only adjusts pixels
-	 * that are changing over a certain threshold. The median filter is then
+	 * neuron images. It implements a mean filter, but only adjusts pixels
+	 * that are changing over a certain threshold. The mean filter is then
 	 * repeated locally around points that were changed until there are no 
 	 * longer any differences greater than the given threshold.
 	 * 
@@ -680,8 +678,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 * filter places the results back into the original image
 	 */
 	
-	private int[] filterShotNoise(ModelImage image){
-
+	private int[] filterShotNoiseMean(ModelImage image){
 		int dataType = image.getType();
 		int maxDiff;
 		
@@ -691,10 +688,9 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			maxDiff = 66;
 		else return null;
 		
-		ModelImage medianImage = (ModelImage) image.clone();
-		AlgorithmMedian median = new AlgorithmMedian(medianImage, 1, 3, AlgorithmMedian.SQUARE_KERNEL,
-				0, AlgorithmMedian.STANDARD, 3, true);
-		median.run();
+		ModelImage meanImage = (ModelImage) image.clone();
+		AlgorithmMean mean = new AlgorithmMean(meanImage, 3, true);
+		mean.run();
 		int length = width*height;
 		int[] buffer = new int[length];
 		int[] medBuffer = new int[length];
@@ -704,7 +700,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		try{
 			image.exportData(0, length, buffer);
-			medianImage.exportData(0, length, medBuffer);
+			meanImage.exportData(0, length, medBuffer);
 		} catch(IOException e){
 			MipavUtil.displayError("Could not export data from original image");
 			e.printStackTrace();
@@ -741,7 +737,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				int i = adjustPts.get(j);
 				int x = i%width;
 				int y = i/width;
-				int kMed = findMedian(buffer, i);
+				int kMed = findMean(buffer, i);
 				if(Math.abs(buffer[i] - kMed) >= maxDiff){
 					outBuffer[i] = kMed;
 					//adjustPts.add(i);
@@ -764,56 +760,27 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			addPts.clear();
 		}
 		
-		medianImage.disposeLocal();
+		meanImage.disposeLocal();
 		return outBuffer;
 	}
 	
-	/**
-	 * Lazy implementation of a median finder. Uses the 
-	 * built in quicksort and then finds the middle value
-	 * of the sorted array.
-	 * @param array the array to find the median of
-	 * @return the median value
-	 */
-
-	private int findMedian(int[] array){
-	
-		Arrays.sort(array);
-		int middle = array.length/2;
-		if(array.length%2 == 0){
-			return (array[middle] + array[middle-1])/2;
-		} else {
-			return array[middle];
-		}
-	}
-	
-	/**
-	 * Wrapper method to find the median. Extracts the 
-	 * values around the given index and puts them into
-	 * an array to find the median of.
-	 * @param i find the median of the box centered on this index
-	 * @return the median value
-	 */
-	
-	private int findMedian(int[] buffer, int i){
+	private int findMean(int[] buffer, int i){
 		int x = i%width;
 		int y = i/width;
 		int kWidth = Math.min(3, 2 + Math.min(x, width-1-x));
 		int kHeight = Math.min(3, 2 + Math.min(y, height-1-y));
-		int[] kArray = new int[kWidth*kHeight];
-		int cnt = 0;
+		int cnt = kWidth*kHeight;
+		int sum = 0;
 	
 		for(int nx=x-1;nx<=x+1;nx++){
 			if(nx<0 || nx>=width) continue;
 			for(int ny=y-1;ny<=y+1;ny++){
 				if(ny<0 || ny>=height) continue;
-				kArray[cnt] = buffer[nx + ny*width];
-				cnt++;
+				sum += buffer[nx+ny*width];
 			}
 		}
-		int kMed = findMedian(kArray);
-		return kMed;
-	
+		int kMean = (int) ((float)sum / (float)cnt);
+		return kMean;
 	}
 	
 	/**
@@ -1170,7 +1137,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				for(int i=0;i<depth;i++){
 					sliceIm = imReader.readImage(images.get(i+lowerBound).getAbsolutePath());
 					if(noiseBox.isSelected())
-						sliceBuffer = filterShotNoise(sliceIm);
+						sliceBuffer = filterShotNoiseMean(sliceIm);
 					else 
 						sliceIm.exportData(0, length, sliceBuffer);
 					System.arraycopy(sliceBuffer, 0, imBuffer, i*length, length);
@@ -1186,7 +1153,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				if(lBoundDiff != 0){
 					sliceIm = imReader.readImage(images.get(lowerBound).getAbsolutePath());
 					if(noiseBox.isSelected())
-						sliceBuffer = filterShotNoise(sliceIm);
+						sliceBuffer = filterShotNoiseMean(sliceIm);
 					else 
 						sliceIm.exportData(0, length, sliceBuffer);
 					System.arraycopy(sliceBuffer, 0, tempBuffer, 0, length);
@@ -1204,7 +1171,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				if(uBoundDiff != 0){
 					sliceIm = imReader.readImage(images.get(upperBound).getAbsolutePath());
 					if(noiseBox.isSelected())
-						sliceBuffer = filterShotNoise(sliceIm);
+						sliceBuffer = filterShotNoiseMean(sliceIm);
 					else 
 						sliceIm.exportData(0, length, sliceBuffer);
 					System.arraycopy(sliceBuffer, 0, tempBuffer, copyDepth*length, length);
@@ -1677,6 +1644,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		statsCSV.append(csvOut);
 		
 		String dimStr = String.format("# Width %d\n# Height %d\n", width, height);
+		String resStr = "# Resolution " + xResField.getText() + " " + (String)resUnits.getSelectedItem() + "\n";
 		String noteStr = 
 				"#\n########################################################\n"
 				+ "#              START OF SWC COORDINATES                #\n"
@@ -1685,6 +1653,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				+ "# Y-coordinates for SWC format are inverted in image space.\n"
 				+ "# Image Y-coordinate = Image Height - SWC Y-coordinate\n";
 		writer.append(dimStr);
+		writer.append(resStr);
 		writer.append(noteStr);
 		
 		//Read the origin point and write all necessary information
@@ -1874,15 +1843,33 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		if(editPolyRB.isSelected())
 			return;
 		
-		if(ptClicked)
-			dragged = true;
+		//Actively adjust lines as you move the VOI
+		if(lastActive != null){
+			Vector3f ptVec = ((VOIPoint)lastActive).exportPoint();
+			int x = (int) ptVec.X;
+			int y = (int) ptVec.Y;
+			Point pt = new Point(x,y);
+			
+			if(toChange.equals(origin))
+				origin = pt;
+			else if(toChange.equals(progenitorPt))
+				progenitorPt = pt;
+			else if(toChange.equals(splitPt))
+				splitPt = pt;
+			else if(toChange.equals(primaryPt))
+				primaryPt = pt;
+			
+			//We know that the drag happened on a VOI, so now update all links and lines
+			links.moveNode(toChange, pt);
+
+			toChange = pt;
+		}
 			
 	}
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
 
-		
 	}
 
 	/**
@@ -1893,6 +1880,9 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		
+		int thisSlice = subVolumeFrame.getViewableSlice();
+		if(thisSlice != activeSlice)
+			return;
 		if(editPolyRB.isSelected())
 			return;
 		
@@ -1901,19 +1891,19 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		if(numClicks != 2 || button != MouseEvent.BUTTON1)
 			return;
-		
-		float zoomX = subVolumeFrame.getComponentImage().getZoomX();
-		float zoomY = subVolumeFrame.getComponentImage().getZoomY();
-		int x = (int) ((float)e.getX()/zoomX); //- left;
-		int y = (int) ((float)e.getY()/zoomY); //- top;
-		
-		
+
 		if(addRB.isSelected()){
 			
 			if(lastActive != null){
 				lastActive = null;
 				return;
 			}
+
+			float zoomX = subVolumeFrame.getComponentImage().getZoomX();
+			float zoomY = subVolumeFrame.getComponentImage().getZoomY();
+			int x = (int) ((float)e.getX()/zoomX);
+			int y = (int) ((float)e.getY()/zoomY);
+			
 			int dx, dy;
 			int maxDistSqr = Integer.MAX_VALUE;
 			int ind;
@@ -1943,15 +1933,10 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 								outY = ny;
 								maxDistSqr = dSqr;
 							}
-							/*x = nx;
-							y = ny;
-							break;*/
 						}
 					}
 				}
 			}
-			
-			System.err.printf("%d %d\n", outX, outY);
 			
 			if(outX == -1 || outY == -1) return;
 
@@ -1959,15 +1944,14 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			if(onPath != null){
 				Point pt = new Point(outX,outY);
 				links.addNode(pt, onPath);
-			} else System.err.println("Not on path");
+			}
 
 		} else if (deleteRB.isSelected()){
-			//search list of VOIs for this point
+
 			VOIBase activeVOI = lastActive;
 
 			if(activeVOI != null){
 				controlPts.removeCurve(activeVOI);
-				
 			} else return;
 			
 			VOIPoint ptVOI = (VOIPoint) activeVOI;
@@ -1988,7 +1972,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 						break;
 					}
 				}
-				//need to change origin VOI
 			}
 				
 			links.removeNode(coord);
@@ -2053,9 +2036,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		} 
 		
 		controlPts.setAllActive(false);
-		ptClicked = false;
-
-		
 	}
 
 	/**
@@ -2077,13 +2057,13 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			VOIBase current = pts.get(i);
 			if(current.isActive()){
 				activeVOI = current;
+				break;
 			}
 		}
 		
 		lastActive = activeVOI;
 		
 		if(activeVOI != null){
-			ptClicked = true;
 			VOIPoint ptVOI = (VOIPoint) activeVOI;
 			Vector3f vPt = ptVOI.getPosition();
 			toChange = new Point((int)vPt.X, (int)vPt.Y);
@@ -2102,38 +2082,11 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			polyVOI = subVolume.getVOIs().get(0);
 			return;
 		}
-
-		ptClicked = false;
-		//update position of the control points in the line structures if the mouse was dragged
-		//which implies the VOI was moved (also need to check if the VOI was selected);
-		if(dragged){
-			dragged = false;
-			
-			Vector3f ptVec = ((VOIPoint)lastActive).exportPoint();
-			int x = (int) ptVec.X;
-			int y = (int) ptVec.Y;
-			Point pt = new Point(x,y);
-			
-			if(toChange.equals(origin))
-				origin = pt;
-			else if(toChange.equals(progenitorPt))
-				progenitorPt = pt;
-			else if(toChange.equals(splitPt))
-				splitPt = pt;
-			
-			//We know that the drag happened on a VOI, so now update all links and lines
-			
-			links.moveNode(toChange, pt);
-			
-			lastActive = null;
-			toChange = null;
-		}
 		
 		controlPts.setAllActive(false);
 		subVolume.notifyImageDisplayListeners();
 		subVolumeFrame.updateImages();
-		
-		
+
 	}
 
 	@Override
@@ -2382,7 +2335,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		 * @param from
 		 * @param to
 		 */
-		private void moveNode(Point from, Point to){
+		private synchronized void moveNode(Point from, Point to){
 			LinkElement node = get(from);
 			node.pt = to;
 			ArrayList<LinkElement> list = node.linked;
