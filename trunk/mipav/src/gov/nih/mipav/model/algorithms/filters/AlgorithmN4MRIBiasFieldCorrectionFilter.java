@@ -1,10 +1,14 @@
 package gov.nih.mipav.model.algorithms.filters;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.BSplineKernelFunction;
 import gov.nih.mipav.model.structures.CoxDeBoorBSplineKernelFunction;
 import gov.nih.mipav.model.structures.ModelImage;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Vector;
 
@@ -109,6 +113,8 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 	private boolean CoxDeBoorBSplineKernelFunctionTest = false;
 	
 	private boolean CoxDeBoorBSplineKernelFunctionTest2 = false;
+	
+	private boolean BSplineScatteredDataPointSetToImageFilterTest = false;
 	
 	private boolean BSplineScatteredDataPointSetToImageFilterTest2 = false;
 	
@@ -256,6 +262,87 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 			}
 			setCompleted(false);
 			return;
+		}
+		
+		if (BSplineScatteredDataPointSetToImageFilterTest) {
+			FileIO fileIO;
+	        boolean multiFile = false;
+	        ModelImage testImage;
+	        String directory = new String("C:" + File.separatorChar + "N4" + File.separatorChar + "Source" +
+	                                      File.separatorChar + "Input" + File.separatorChar);
+	        String fileName = new String("t81slice_threshold.xml");
+	        try {
+	            fileIO = new FileIO();
+
+	            testImage =  fileIO.readImage(fileName, directory, multiFile, null);
+	        } catch (OutOfMemoryError e) {
+	            MipavUtil.displayError("Out of memory!");
+
+	            return;
+	        }
+	        
+	        // Iterate through the input image which consists of multivalued
+	        // foreground pixels (=nonzero) and background values (=zero).
+	        // The foreground pixels comprise the input point set.
+	        // Extract both the 2-D locations and the pixel values of the points
+	        xDim = testImage.getExtents()[0];
+	        int yDim = testImage.getExtents()[1];
+	        length = xDim * yDim;
+	        buffer = new double[length];
+	        try {
+	        	testImage.exportData(0, length, buffer);
+	        }
+	        catch (IOException e) {
+	        	MipavUtil.displayError("IOException " + e + " on testImage.exportData(0, length, buffer)");
+	        	setCompleted(false);
+	        	return;
+	        }
+	        Vector<Vector4d> pointLocation = new Vector<Vector4d>();
+	    	Vector<Double> pointData = new Vector<Double>();
+	        resolutions = testImage.getResolutions(0);
+	        origin = testImage.getOrigin();
+	        int[] extents = testImage.getExtents();
+	        Vector4d point;
+	        int index = 0;
+	        for (y = 0; y < yDim; y++) {
+	        	for (x = 0; x < xDim; x++) {
+	        	    i = x + y * xDim;
+	        	    if (buffer[i] > 0) {
+	        	    	point = new Vector4d(x*resolutions[0] + origin[0], y*resolutions[1] + origin[1], 0.0, 0.0);
+	        			pointData.add(index, buffer[i]);
+	        			pointLocation.add(index, point);
+	        			index++;
+	        	    }
+	        	}
+	        }
+	        
+	        // Instantiate the B-spline filter and set the desired parameters
+	        nDims = 2;
+	        AlgorithmBSplineScatteredDataPointSetToImageFilter filter;
+            filter = new AlgorithmBSplineScatteredDataPointSetToImageFilter(nDims);
+            filter.setSplineOrder(3);
+            int ncps[] = new int[nDims];
+			for (i = 0; i < nDims; i++) {
+				ncps[i] = 4;
+			}
+			filter.setNumberOfControlPoints(ncps);
+			filter.setNumberOfLevels(3);
+			filter.setOrigin(origin);
+			filter.setResolutions(resolutions);
+			filter.setExtents(extents);
+			filter.setPointData(pointData);
+			filter.setPointLocation(pointLocation);
+			filter.generateData();
+			
+			ModelImage outputImage = filter.getOutputImage();
+			FileWriteOptions opts = new FileWriteOptions(true);
+	        opts.setFileType(FileUtility.XML);
+	        opts.setFileDirectory(directory);
+	        opts.setFileName("t81slice_threshold_corrected.xml");
+	        opts.setOptionsSet(true);
+			fileIO.writeImage(outputImage, opts);
+		    setCompleted(false);
+		    return;
 		}
 		
 		if (BSplineScatteredDataPointSetToImageFilterTest2) {
