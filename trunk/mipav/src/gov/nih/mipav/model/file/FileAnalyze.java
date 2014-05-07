@@ -431,13 +431,32 @@ public class FileAnalyze extends FileBase {
         raFile.seek(148);
         byte description[] = new byte[80];
         raFile.readFully(description);
-        raFile.close();
         String desc = new String(description);
         if ((desc.contains("spm")) || (desc.contains("SPM"))) {
+        	raFile.close();
             return FileUtility.SPM;
         }
 
-        return FileUtility.ANALYZE;
+        // 2 byte data type field
+        raFile.seek(70);
+        byte data[] = new byte[2];
+        raFile.readFully(data);
+        raFile.close();
+        short dataType = FileBase.bytesToShort(bigEndian, 0 , data);
+        if ((dataType == FileInfoSPM.DT_BYTE) || (dataType == FileInfoSPM.DT_UNSIGNED_SHORT) ||
+            (dataType == FileInfoSPM.DT_UNSIGNED_INT)) {
+        	return FileUtility.SPM;
+        }
+        else if ((dataType == FileInfoAnalyze.DT_UNKNOWN) || (dataType == FileInfoAnalyze.DT_BINARY) ||
+        		 (dataType == FileInfoAnalyze.DT_UNSIGNED_CHAR) || (dataType == FileInfoAnalyze.DT_SIGNED_SHORT) ||
+        		 (dataType == FileInfoAnalyze.DT_SIGNED_INT) || (dataType == FileInfoAnalyze.DT_FLOAT) ||
+        		 (dataType == FileInfoAnalyze.DT_COMPLEX) || (dataType == FileInfoAnalyze.DT_DOUBLE) ||
+        		 (dataType == FileInfoAnalyze.DT_RGB) || (dataType == FileInfoAnalyze.DT_ALL)){
+            return FileUtility.ANALYZE;
+        }
+        else {
+        	return FileUtility.UNDEFINED;
+        }
 
     }
 
