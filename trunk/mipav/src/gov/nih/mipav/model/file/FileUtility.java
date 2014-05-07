@@ -901,6 +901,9 @@ public class FileUtility {
                             // unless a SPM2 with extended header size > 348 is present.
                             try {
                                 fileType = FileUtility.isAnalyzeOrSPM(fileHeaderName, fileDir, quiet);
+                                if ((fileType == FileUtility.SPM) || (fileType == FileUtility.ANALYZE)) {
+                                	return fileType;
+                                }
                             } catch (final IOException ex) {}
                             if (fileType == FileUtility.UNDEFINED) {
                                 fileType = FileUtility.SPM;
@@ -981,6 +984,9 @@ public class FileUtility {
                                 // unless a SPM2 with extended header size > 348 is present.
                                 try {
                                     fileType = FileUtility.isAnalyzeOrSPM(fileName, fileDir, quiet);
+                                    if ((fileType == FileUtility.SPM) || (fileType == FileUtility.ANALYZE)) {
+                                    	return fileType;
+                                    }
                                 } catch (final IOException ex) {}
                                 if (fileType == FileUtility.UNDEFINED
                                         && FileSiemensText.isSiemensText(fileDir + fileName)) {
