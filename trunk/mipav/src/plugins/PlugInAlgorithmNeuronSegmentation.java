@@ -13,6 +13,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmMorphology2D;
 import gov.nih.mipav.model.algorithms.AlgorithmThresholdDual;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmMean;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -36,15 +37,6 @@ import gov.nih.mipav.view.MipavUtil;
  */
 
 public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
-	
-	/**
-	 * Coordinates of the branching points in the
-	 * skeleton by using a heuristic to eliminate
-	 * potential intersections. Used to export the
-	 * neuron structure to the SWC file. 
-	 */
-	
-	//private ArrayList<Integer> branchPts;
 	
 	/**
 	 * Coordinates of the growth cone centroid, first 
@@ -317,40 +309,46 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 					}
 				}
 			}
-			if(num>2) { 
-				//If the spawned pixel has 3+ neighbors, you only
-				//need to remove them from the queue
-				for(int i=0;i<num;i++){
-					pixels.remove(pixels.size()-1);
-				}
-			}
-			else if(num==2){
-				//If the spawn pixel only has 2 neighbors, there is
-				//the potential that you might be breaking the parent
-				//branch
+			
+			//Check to see if removing this pixel causes a
+			//discontinuity in the skeleton by checking 
+			//all pixel combinations
+			if(num>2){
 				for(int i=0;i<num;i++){
 					check.add(pixels.remove(pixels.size()-1));
 				}
-				//Check to make sure you aren't breaking the parent branch
-				//by naively determining where the neighbors are in relation
-				//to each other. If they are connected, it is safe to delete
+				int numDiff = 0;
+				for(int i=0;i<num;i++){
+					for(int j=i+1;j<num;j++){
+						int x1 = check.get(i)%width;
+						int y1 = check.get(i)/width;
+						int x2 = check.get(j)%width;
+						int y2 = check.get(j)/width;
+						if((Math.abs(x1-x2)==2 || Math.abs(y1-y2)==2))
+							numDiff++;
+					}
+				}
+				if(numDiff>num-2)
+					skeleton.set(target);
+			} else if(num==2){
+				for(int i=0;i<num;i++){
+					check.add(pixels.remove(pixels.size()-1));
+				}
+				
 				int x1 = check.get(0)%width;
-				int x2 = check.get(1)%width;
 				int y1 = check.get(0)/width;
+				int x2 = check.get(1)%width;
 				int y2 = check.get(1)/width;
 				if((Math.abs(x1-x2)==2 || Math.abs(y1-y2)==2))
-					skeleton.flip(target);
+					skeleton.set(target);
 			}
 			else if(num==0){
 				//Once you have reached the tip, remove it from the
 				//list of branch tips (since it is no longer present)
 				tipPts.remove(new Integer(target));
 			}
-			
-			polygonalArea();
-			
 		}
-
+		polygonalArea();
 	}
 	
 	/**
@@ -454,16 +452,14 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		super.finalize();
 	}
 	
-	//public ArrayList<Integer> getBranchPts(){
-	//	return branchPts;
-	//}
-	
 	public float[] getCentroid(){
 		return centroidPts;
 	}
 	
 	public ModelImage getSegImage(){
-		return (ModelImage) segImage.clone();
+		ModelImage segClone = (ModelImage) segImage.clone();
+		segClone.setImageName(srcImage.getImageName() + "_segmentation");
+		return segClone;
 	}
 	
 	public ArrayList<Integer> getTipPts(){
@@ -581,32 +577,25 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 
 		//Pre-processing step for segmentation. 
 		//See method for details on what it does.
-		
+		filterShotNoiseMean(srcImage);
 		ModelImage zImage = (ModelImage)srcImage.clone();
 		
-		//zImage = filterShotNoise(zImage);
-		
-		AlgorithmMean mean = new AlgorithmMean(zImage, 3, true);
-		mean.run();
-		
 		fireProgressStateChanged(25);
-		
-		//ModelImage zImage = zScoreFilter();
 		
 		AlgorithmChangeType changeZ = new AlgorithmChangeType(zImage, ModelImage.UBYTE,
 				zImage.getMin(), zImage.getMax(), 0, 255, false);
 		changeZ.run();
-		//ModelImage sobel = doSobel(zImage);
 		destImage = probabilityMap(zImage);
 
 		//Store the cost function for the modified 
 		//Dijkstra's method, and convert to UBYTE
 		probImage = (ModelImage) destImage.clone();
+		probImage.setImageName(srcImage.getImageName() + "_entropy");
 		AlgorithmChangeType change = new AlgorithmChangeType(probImage, ModelImage.UBYTE,
 				probImage.getMin(), probImage.getMax(), 0, 255,  false);
 		change.run();
 		
-		fireProgressStateChanged(50);
+		fireProgressStateChanged(45);
 		
 		//Hard segmentation of the filtered image
 		//results in a general structure for the
@@ -618,11 +607,9 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
         AlgorithmThresholdDual nThresh = new AlgorithmThresholdDual(destImage, threshold, 1, 1, true, false);
         nThresh.run();
         
-        segImage = (ModelImage) destImage.clone();
-        
         largestObject();
         
-        fireProgressStateChanged(75);
+        fireProgressStateChanged(90);
         
         AlgorithmMorphology2D skeletonize = new AlgorithmMorphology2D(destImage, AlgorithmMorphology2D.CONNECTED4,
         		1.0f, AlgorithmMorphology2D.SKELETONIZE, 0, 0, 0, 0, true);
@@ -649,7 +636,6 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
         
         destImage.disposeLocal();
         zImage.disposeLocal();
-
 	}
 	
 	/**
@@ -724,146 +710,6 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 
 		skelImage.disposeLocal();
 	}
-	
-	/**
-	 * Method for saving the skeletonized neuron in the SWC format. By
-	 * using the coordinates gathered from the tips and branches as 
-	 * determined by the skeleton, traverse the skeleton and add 
-	 * information to the text file (using writeInfo) whenever you hit
-	 * one of these points.
-	 * 
-	 * Start at one of the two endpoints as determined by the longest
-	 * path in the skeleton.
-	 * 
-	 * Depending on the user's needs, the Z-coordinate and the neuron
-	 * radius may need to be implemented as well, as those are not
-	 * stored and/or easily calculated in this framework.
-	 * 
-	 * As of 2/27/14, this method is no longer used, as a new version
-	 * was written that is more robust and can handle loops
-	 */
-	
-	/*
-	public void saveAsSWC2(){
-		
-		longestPath(); //determine the endpoints of the longest path
-		findBranchPoints(); 
-		
-		int x,y,ind;
-		BitSet skelClone = (BitSet)skeleton.clone();
-		
-		//Used as a stack to follow paths to completion
-		ArrayDeque<Integer> path = new ArrayDeque<Integer>();
-		//Used as a stack to determine which points are connected
-		ArrayDeque<Integer> connection = new ArrayDeque<Integer>();
-		//List of points to add to the stacks after searching
-		ArrayList<Integer> pathBuffer = new ArrayList<Integer>();
-		ArrayList<Integer> branching = new ArrayList<Integer>();
-		
-		int start = tipPts.get(endIndex[0]);
-		int line = 1;
-		boolean trip;
-		
-		String swcDir = srcImage.getImageDirectory() + File.separator + "Branch_Images" + File.separator;
-		swcDir += srcImage.getImageName().concat("_branches.swc");
-		String areaStr = "# Polygonal Area: " + String.valueOf(polyArea) + "\n";
-		String centroidStr = "# Centroid: (" + String.valueOf(centroidPts[0]) + ", "
-				+ String.valueOf(centroidPts[1]) + ")\n";
-		
-		try {
-			swcOut = new FileWriter(swcDir);
-			swcOut.append(areaStr);
-			swcOut.append(centroidStr);
-			swcOut.flush();
-		} catch (IOException e) {
-			MipavUtil.displayError("Unable to export to SWC file");
-			return;
-		}
-
-		//Delete the trail behind you as you traverse the skeleton
-		skelClone.flip(start);
-		
-		//Start seeding traversal with one of the longest path points
-		x = start%width;
-		y = start/width;
-		for(int ny=y+1;ny>=y-1;ny--){
-			if(ny<0||ny>=height) continue;
-			for(int nx=x+1;nx>=x-1;nx--){
-				if(nx<0||nx>=width) continue;
-				ind = nx + ny*width;
-				if(skelClone.get(ind)){
-					path.addFirst(ind);
-					connection.addFirst(1);
-					skelClone.flip(ind);
-				}
-			}
-		}
-		
-		writeInfo(1, tipPts.get(endIndex[0]), -1, -1);
-		
-		while(!path.isEmpty()){
-			trip = false;
-			start = path.pop();
-			x = start%width;
-			y = start/width;
-			for(int ny=y+1;ny>=y-1;ny--){
-				if(ny<0||ny>=height) continue;
-				for(int nx=x+1;nx>=x-1;nx--){
-					if(nx<0||nx>=width || (nx == x && ny == y)) continue;
-					ind = nx + ny*width;
-					if(skelClone.get(ind)){
-						//Reached the end of a branch, don't need to add
-						//anymore points, just write information
-						if(tipPts.contains(ind)){
-							line++;
-							writeInfo(line, ind, 1, connection.pop());
-						}
-						//Reached a branching in the path. Focus should be
-						//on these points, so do not consider other points
-						//to add. Also write out the information
-						else if(branchPts.contains(ind)){
-							if(branchPts.contains(start))
-								connection.addFirst(line);
-							line++;
-							writeInfo(line, ind, 0, connection.pop());
-							//pathBuffer.clear();
-							skelClone.flip(ind);
-							//path.addFirst(ind);
-							trip = true;
-							branching.add(ind);
-							
-						}
-						else
-							pathBuffer.add(ind);
-						//Keep track of where you are connecting to
-						//if(branchPts.contains(start))
-						//	connection.addFirst(line);
-					}
-					//if(trip) break;
-				}
-				//if(trip) break;
-			}
-			//Refill the stack with points to traverse
-			while(!pathBuffer.isEmpty()){
-				if(branchPts.contains(start) || trip)
-					connection.addFirst(line);
-				path.addFirst(pathBuffer.get(0));
-				skelClone.flip(pathBuffer.remove(0));
-			}
-			if(trip){
-				while(!branching.isEmpty())
-					path.addFirst(branching.remove(0));
-			}
-		}
-		
-		try {
-			swcOut.close();
-		} catch (IOException e) {
-			MipavUtil.displayError("Unable to close connection to SWC file");
-			return;
-		}
-		
-	}*/
 	
 	/**
 	 * Redone version, a little more robust. It has fewer problems
@@ -1050,167 +896,6 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	}
 	
 	/**
-	 * Method to determine which points are considered branching points
-	 * (or as considered in the SWC files, forks). Uses multiple criteria
-	 * to choose which points are considered branching points.
-	 * 
-	 * As of 2/27/14 this method is no longer needed as it worked for some
-	 * cases, but failed in a couple of strange cases that could ultimately
-	 * hurt export to SWC
-	 */
-	
-	/*
-	private void findBranchPoints(){
-		int x,y,nx,ny,ind,num;
-		int[] direction = {-1, 1};
-		int[] xdir = {0,-1,1,0};
-		int[] ydir = {-1,0,0,1};
-		
-		ArrayList<Integer> pts = new ArrayList<Integer>();
-		branchPts = new ArrayList<Integer>();
-		ArrayList<Integer> removal = new ArrayList<Integer>();
-		
-		//Search the skeleton for bits with 3+ neighbors, which could
-		//potentially be branching points
-		for(int i=skeleton.nextSetBit(0);i>=0;i=skeleton.nextSetBit(i+1)){
-			x = i%width;
-			y = i/width;
-			num=0;
-			for(nx=x-1;nx<=x+1;nx++){
-				if(nx < 0 || nx >= width) continue;
-				for(ny=y-1;ny<=y+1;ny++){
-					if(ny < 0 || ny >= height) continue;
-					ind = nx + ny*width;
-					if(skeleton.get(ind)) num++;
-				}
-			}
-			if(num>=5) pts.add(i); //4+ neighbors
-			if(num==4) branchPts.add(i); //3 neighbors
-
-		}
-		
-		//Remove any diagonal points from the 4-neighbors
-		for(int i=0;i<pts.size();i++){
-			x = pts.get(i)%width;
-			y = pts.get(i)/width;
-			for(int j : direction){
-				ny = y + j;
-				for(int k : direction){
-					nx = x + k;
-					ind = nx + ny*width;
-					branchPts.remove(new Integer(ind));
-				}
-			}
-		}
-		
-		//If a 3-neighbor point has multiple neighbors, add them
-		//to the removal queue
-		for(int i=0;i<branchPts.size();i++){
-			num=0;
-			x = branchPts.get(i)%width;
-			y = branchPts.get(i)/width;
-			for(int j=0;j<4;j++){
-				nx = x + xdir[j];
-				ny = y + ydir[j];
-				ind = nx + ny*width;
-				if(branchPts.contains(new Integer(ind))) num++;
-			}
-			if(num > 1){
-				for(int j=0;j<4;j++){
-					nx = x + xdir[j];
-					ny = y + ydir[j];
-					ind = nx + ny*width;
-					if(branchPts.contains(new Integer(ind))) 
-						removal.add(new Integer(ind));
-				}
-			}
-		}
-		
-		//Check for a + pattern (not common) in the 4+ neighbor list
-		//Add to the branching points if the pattern occurs
-		for(int i=0;i<pts.size();i++){
-			x = pts.get(i)%width;
-			y = pts.get(i)/width;
-			num=0;
-			for(int j : direction){
-				ny = y + j;
-				for(int k : direction){
-					nx = x + k;
-					ind = nx + ny*width;
-					if(skeleton.get(ind)) num++;
-				}
-			}
-			if (num==4){
-				branchPts.add(pts.get(i));
-			}
-		}
-		
-		//Check for a x pattern (not common) in the 4+ neighbor list
-		//Add to the branching points if the pattern occurs
-		for(int i=0;i<pts.size();i++){
-			num=0;
-			x = pts.get(i)%width;
-			y = pts.get(i)/width;
-			for(int j=0;j<4;j++){
-				nx = x + xdir[j];
-				ny = y + ydir[j];
-				ind = nx + ny*width;
-				if(skeleton.get(ind)) num++;
-			}
-			if (num==4){
-				branchPts.add(pts.get(i));
-			}
-		}
-		
-		//Remove any points marked as not a branch from the
-		//3 neighbor list
-		for(int i=0;i<removal.size();i++){
-			branchPts.remove(removal.get(i));
-		}
-	}*/
-	
-	/*private ModelImage doSobel(ModelImage input){
-		
-		ModelImage output = new ModelImage(ModelImage.UBYTE, extents, input.getImageName() + "_sobelMax");
-		int[] newExtents = {width-2, height-2,2};
-		ModelImage cloned = new ModelImage(ModelImage.DOUBLE, newExtents, "temp");
-		AlgorithmSobel sobel = new AlgorithmSobel(cloned, input, true, 3);
-		sobel.run();
-		int num = (width-2)*(height-2);
-		int max = (int)cloned.getMax();
-		int min = (int)cloned.getMin();
-		max = Math.abs(min) > Math.abs(max) ? min:max;
-		int[] filtered = new int[num*2];
-		int[] outBuffer = new int[length];
-		try {
-			cloned.exportData(0, num*2, filtered);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		int val1, val2;
-		int x, y, ind;
-		for(int i=0;i<num;i++){
-			val1 = Math.abs(filtered[i]);
-			val2 = Math.abs(filtered[i+num]);
-			x = i%(width-2);
-			y = i/(width-2);
-			ind = (x+1) + (y+1) * width;
-			outBuffer[ind] = Math.max(val1, val2)*255/max;
-		}
-		
-		try {
-			output.importData(0, outBuffer, true);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		cloned.disposeLocal();
-		
-		return output;
-		
-	}*/
-	
-	/**
 	 * Not in use right now. It is wrong and requires some edits before
 	 * it is useable
 	 */
@@ -1293,6 +978,117 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		
 	}
 	
+	private void filterShotNoiseMean(ModelImage image){
+		int dataType = image.getType();
+		int maxDiff;
+		
+		if(dataType == ModelImage.BYTE || dataType == ModelImage.UBYTE)
+			maxDiff = 3;
+		else if(dataType == ModelImage.SHORT || dataType == ModelImage.USHORT)
+			maxDiff = 66;
+		else return;
+		
+		ModelImage meanImage = (ModelImage) image.clone();
+		AlgorithmMean mean = new AlgorithmMean(meanImage, 3, true);
+		mean.run();
+		int length = width*height;
+		int[] buffer = new int[length];
+		int[] medBuffer = new int[length];
+		int[] outBuffer = new int[length];
+		int diff;
+		
+		
+		try{
+			image.exportData(0, length, buffer);
+			meanImage.exportData(0, length, medBuffer);
+		} catch(IOException e){
+			MipavUtil.displayError("Could not export data from original image");
+			e.printStackTrace();
+		}
+		
+		ArrayList<Integer> adjustPts = new ArrayList<Integer>();
+		ArrayList<Integer> addPts = new ArrayList<Integer>();
+		for(int i=0;i<length;i++){
+			diff = Math.abs(buffer[i] - medBuffer[i]);
+			if(diff >= maxDiff){
+				//adjustPts.add(i);
+				buffer[i] = medBuffer[i];
+				int x = i%width;
+				int y = i/width;
+				for(int nx=x-1;nx<=x+1;nx++){
+					if(nx<0 || nx>=width) continue;
+					for(int ny=y-1;ny<=y+1;ny++){
+						if(ny<0 || ny>=height) continue;
+						int ind = nx+ny*width;
+						if(!adjustPts.contains(ind))
+							adjustPts.add(nx+ny*width);
+					}
+				}
+			}
+		}
+		
+		medBuffer = null;
+		
+		System.arraycopy(buffer, 0, outBuffer, 0, length);
+		
+		while(adjustPts.size()>0){
+			int size = adjustPts.size();
+			for(int j = 0;j<size;j++){
+				int i = adjustPts.get(j);
+				int x = i%width;
+				int y = i/width;
+				int kMed = findMean(buffer, i);
+				if(Math.abs(buffer[i] - kMed) >= maxDiff){
+					outBuffer[i] = kMed;
+					//adjustPts.add(i);
+					for(int nx=x-1;nx<=x+1;nx++){
+						if(nx<0 || nx>=width) continue;
+						for(int ny=y-1;ny<=y+1;ny++){
+							if(ny<0 || ny>=height) continue;
+							int ind = nx+ny*width;
+							if(!addPts.contains(ind))
+								addPts.add(nx+ny*width);
+						}
+					}
+				}
+			}
+			for(int j = 0;j<size;j++){
+				int i=adjustPts.remove(0);
+				buffer[i] = outBuffer[i];
+			}
+			adjustPts.addAll(addPts);
+			addPts.clear();
+		}
+		
+		meanImage.disposeLocal();
+		try {
+			image.importData(0, outBuffer, true);
+		} catch (IOException e) {
+			MipavUtil.displayError("Unable to import filtered image");
+			e.printStackTrace();
+		}
+		
+	}
+	
+	private int findMean(int[] buffer, int i){
+		int x = i%width;
+		int y = i/width;
+		int kWidth = Math.min(3, 2 + Math.min(x, width-1-x));
+		int kHeight = Math.min(3, 2 + Math.min(y, height-1-y));
+		int cnt = kWidth*kHeight;
+		int sum = 0;
+	
+		for(int nx=x-1;nx<=x+1;nx++){
+			if(nx<0 || nx>=width) continue;
+			for(int ny=y-1;ny<=y+1;ny++){
+				if(ny<0 || ny>=height) continue;
+				sum += buffer[nx+ny*width];
+			}
+		}
+		int kMean = (int) ((float)sum / (float)cnt);
+		return kMean;
+	}
+	
 	/**
 	 * Method as part of segmentation process. It searches
 	 * for the largest object in the initial segmentation
@@ -1311,11 +1107,37 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
         int ind = 0;
         int[] histo; 
 		int[] buffer = new int[length];
-		
-		//Count/distinguish the objects in the image
+        
+		//Close any small holes (less than area of 15 pixels) in segementation
+		//That can cause weird small loops in the skeleton
+        ModelImage inverseImage = (ModelImage) destImage.clone();
+        AlgorithmChangeType invert = new AlgorithmChangeType(inverseImage, ModelImage.BOOLEAN, 0.0, 1.0, 1.0, 0.0, true);
+        invert.run();
+        
+        AlgorithmMorphology2D holes = new AlgorithmMorphology2D(inverseImage, AlgorithmMorphology2D.CONNECTED4,
+        		1.0f, AlgorithmMorphology2D.ID_OBJECTS, 0, 0, 0, 0, true);
+        holes.setMinMax(1, 15);
+        holes.run();
+        
+        AlgorithmThresholdDual holeThresh = new AlgorithmThresholdDual(inverseImage, 
+        		new float[]{1, (float) inverseImage.getMax()}, 1, 1, true, false);
+        holeThresh.run();
+        
+        AlgorithmImageCalculator imCalc = new AlgorithmImageCalculator(destImage, inverseImage, 
+        		AlgorithmImageCalculator.OR, AlgorithmImageCalculator.CLIP, true, "");
+        imCalc.run();
+        
+        inverseImage.disposeLocal();
+        segImage = (ModelImage) destImage.clone();
+        segImage.setImageName(srcImage.getImageName() + "_segstored");
+        //End close small holes
+        
+        fireProgressStateChanged(70);
+        
+        //Count/distinguish the objects in the image
 		AlgorithmMorphology2D nObj = new AlgorithmMorphology2D(destImage, AlgorithmMorphology2D.CONNECTED4,
         		1.0f, AlgorithmMorphology2D.ID_OBJECTS, 0, 0, 0, 0, true);
-        nObj.setMinMax(1, length);
+        nObj.setMinMax(2, length);
         nObj.run();
         
         immax = (int) destImage.getMax();
@@ -1452,9 +1274,6 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 				
 			}
 		}
-		
-		//System.out.printf("%d %d\n", endIndex[0], endIndex[1]);
-		
 	}
 	
 	/**
@@ -1502,7 +1321,6 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		
 	}
 
-	
 	/**
 	 * Method to generate a pixel probability map as part of the 
 	 * pre-processing. Basically the first step in entropy 
@@ -1513,7 +1331,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	 * darker pixels are more likely to be signal.
 	 * 
 	 * This has since been changed to output entropy:
-	 * p*ln(p)
+	 * -p*ln(p)
 	 * instead of just p.
 	 * 
 	 * @param image to transform to probability.
@@ -1526,8 +1344,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		ModelImage outImage;
 		
 		float pmax = 0f;
-		float immax = (float)image.getMax();
-		int bins = 4; //Histogram bins are for 4 pixels
+		int bins = 1; //Histogram bins are for 4 pixels
 		float[] p = new float[256/bins];
 		int[] buffer = new int[length];
 		int[] histo = new int[256/bins];
@@ -1541,10 +1358,9 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			e.printStackTrace();
 		}
 
-		//Normalize the image to UBYTE before
 		//accumulating pixel information
 		for(int i=0;i<length;i++){
-			buffer[i] = (int)((float)buffer[i]*255f/(float)immax);
+			//buffer[i] = (int)((float)buffer[i]*255f/(float)immax);
 			value = buffer[i]/bins;
 			histo[value]++;
 		}
@@ -1600,104 +1416,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			MipavUtil.displayError("Unable to write to SWC file");
 			return;
 		}
-		//System.out.printf("%d " + typeStr + " %d.0 %d.0 0.0 1.0 %d\n", line, x, y, connected);
 	}
-	
-	/**
-	 * Filter for the original image before the probability map. As the name suggests,
-	 * the purpose of the filter is to generate a pseudo-Z-score for each pixel. On the
-	 * first pass of the algorithm, each pixel is assigned a mean and standard deviation
-	 * in a 3x3 square around the pixel, and the overall mean and standard deviation are
-	 * also kept track of. On the second pass, each pixel is then assigned a Z-score
-	 * based on a 2-sample unequal variance test (which doesn't make a ton of sense but
-	 * it seems to work). The effect of the filter is to essentially dilate some edges,
-	 * which helps bring out some of the harder ones to detect.
-	 * 
-	 * However, this is almost equivalent to a 3x3 mean filter, should probably either
-	 * use that instead, or find a better filtering method.
-	 * 
-	 * No longer used (as of 2/26/14) since mean filter is practically the same
-	 * 
-	 * @return the filtered Z-score image.
-	 */
-
-	/*private ModelImage zScoreFilter(){
-		
-		
-		float sum, sumSquared, std, num, mean;
-		float totalMean, totalStd, compStd;
-		int x,y, ind, nx, ny, center;
-		float totalSum = 0;
-		float totalSS = 0;
-		float[] means = new float[length];
-		float[] stdDevs = new float[length];
-		float[] diffImage = new float[length];
-		int[] buffer = new int[length];
-		
-		try {
-			srcImage.exportData(0, length, buffer);
-		} catch (IOException e) {
-			MipavUtil.displayError("Image locked");
-			e.printStackTrace();
-		}
-
-		//First pass: keep track of total mean/std. dev
-		//as well as pixel-by-pixel
-		for(int i=0;i<length;i++){
-			sum=0;
-			sumSquared=0;
-			num=0f;
-			x = i%width;
-			y = i/width;
-			center = buffer[i];
-			totalSum += center;
-			totalSS += center*center;
-			for(int j=-1;j<=1;j++){
-				ny = y+j;
-				if(ny < 0 || ny >= height) continue;
-				for(int k=-1;k<=1;k++){
-					nx = x+k;
-					if(nx < 0 || nx >= width) continue;
-					ind = nx + ny*width;
-					center = buffer[ind];
-					sum +=center;
-					sumSquared += center*center;
-					num++;
-				}
-
-			}
-
-			//Store pixel-by-pixel mean/std.dev
-			mean = sum/num;
-			std = (float)Math.sqrt(sumSquared/num - mean*mean);
-			means[i] = mean;
-			stdDevs[i] = std;
-
-		}
-
-		//Store total mean/std.dev
-		totalMean = totalSum/length;
-		totalStd = (float)Math.sqrt(totalSS/length - totalMean*totalMean);
-		
-		//Compute Z-scores
-		for(int i=0;i<length;i++){
-			compStd = (float) Math.sqrt((8f*stdDevs[i]*stdDevs[i] 
-					+ (float)(length-1)*totalStd*totalStd)
-					/(6f+(float)length));
-			diffImage[i] = (means[i] - totalMean)/(compStd);
-		}
-
-
-		ModelImage outImage = new ModelImage(ModelImage.FLOAT, extents, srcImage.getImageName() + "_std");
-		try {
-			outImage.importData(0, diffImage, true);
-		} catch (IOException e) {
-			MipavUtil.displayError("Image locked");
-			e.printStackTrace();
-		}
-
-		return outImage;
-	}*/
 	
 	private class BranchContainer{
 		
