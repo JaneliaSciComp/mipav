@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.PriorityQueue;
 
 import javax.swing.ButtonGroup;
@@ -34,7 +35,6 @@ import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.border.EmptyBorder;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmMean;
@@ -77,11 +77,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	private JCheckBox aviBox;
 	
 	/**
-	 * The active slice's actual depth is displayed here
-	 */
-	private JLabel centerLabel;
-	
-	/**
 	 * VOI containing the points to edit the neuron traces
 	 */
 	private VOI controlPts;
@@ -119,6 +114,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	private ArrayList<File> images;
 	
 	private int[] imBuffer;
+	
+	private JLabel imName;
 	
 	/**
 	 * Used to keep track of which node to delete
@@ -194,11 +191,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	
 	private JCheckBox saveBox;
 	
-	/**
-	 * The active slice within the subvolume is displayed here
-	 */
-	private JLabel sliceLabel;
-	
 	private int sliceRange;
 	
 	/**
@@ -220,8 +212,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 
 	@SuppressWarnings("rawtypes")
 	private JComboBox resUnits;
-
-	/*******************************************************/
 	
 	private FileWriter statsCSV;
 
@@ -490,14 +480,14 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 * @param p1
 	 * @return
 	 */
-	private ArrayList<Point> bresenham(Point p0, Point p1){
+	private LinkedHashSet<Point> bresenham(Point p0, Point p1){
 		
 		int x0 = p0.x;
 		int x1 = p1.x;
 		int y0 = p0.y;
 		int y1 = p1.y;
 		
-		ArrayList<Point> pts = new ArrayList<Point>();
+		LinkedHashSet<Point> pts = new LinkedHashSet<Point>();
 		int dx = Math.abs(x1-x0);
 		int dy = Math.abs(y1-y0);
 		int sx, sy;
@@ -882,6 +872,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		width = extents[0];
 		height = extents[1];
 		length = width*height;
+		
 		sliceIm.disposeLocal();
 		
 		String parentPath = swcList.get(0).getParent();
@@ -918,6 +909,16 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		getContentPane().add(descPanel, BorderLayout.NORTH);
 		
+		JPanel labelPanel = new JPanel();
+		labelPanel.setForeground(Color.black);
+		labelPanel.setBorder(buildTitledBorder("Current Image"));
+		
+		imName = new JLabel(images.get(0).getName());
+		imName.setFont(serif12B);
+		labelPanel.add(imName);
+
+		manage.add(labelPanel);
+		
         JPanel editPanel = new JPanel(new GridLayout(0,2));
         editPanel.setForeground(Color.black);
         editPanel.setBorder(buildTitledBorder("Editor Mode"));
@@ -933,7 +934,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         editPolyRB.setActionCommand("Edit Polygon");
         editPolyRB.addActionListener(this);
 
-		manage.add(editPanel);
+		manage.addOnNextLine(editPanel);
 		
         ButtonGroup editGroup = new ButtonGroup();
         
@@ -984,21 +985,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         group.add(primaryRB);
 
         manage.addOnNextLine(labelRBPanel);
-        
-		JPanel labelPanel = new JPanel();
-		labelPanel.setForeground(Color.black);
-		
-		sliceLabel = new JLabel("Active Slice: 0");
-		sliceLabel.setFont(serif12);
-		sliceLabel.setBorder(new EmptyBorder(0,5,0,5));
-		labelPanel.add(sliceLabel);
-		
-		centerLabel = new JLabel("Center Depth: 0");
-		centerLabel.setFont(serif12);
-		centerLabel.setBorder(new EmptyBorder(0,5,0,5));
-		labelPanel.add(centerLabel);
-
-		manage.addOnNextLine(labelPanel);
 		
 		JPanel resPanel = new JPanel();
         resPanel.setForeground(Color.black);
@@ -1182,16 +1168,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			
 			activeSlice = currentSlice - lowerBound;
 
-			String label = sliceLabel.getText();
-			String[] parts = label.split(" ");
-			String sliceStr = String.valueOf(currentSlice);
-			parts[2] = String.valueOf(activeSlice);
-			sliceLabel.setText(parts[0] + " " + parts[1] + " " + parts[2]);
-			
-			label = centerLabel.getText();
-			parts = label.split(" ");
-			
-			centerLabel.setText(parts[0] + " " + parts[1] + " " + sliceStr);
+			imName.setText(images.get(activeSlice).getName());
 			
 			subVolume = new ModelImage(type, new int[]{width, height, depth}, "Sub-Volume");
 			subVolume.importData(0, imBuffer, true);
@@ -1880,11 +1857,13 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		
+		if(editPolyRB.isSelected())
+			return;
+		
 		int thisSlice = subVolumeFrame.getViewableSlice();
 		if(thisSlice != activeSlice)
 			return;
-		if(editPolyRB.isSelected())
-			return;
+		
 		
 		int numClicks = e.getClickCount();
 		int button = e.getButton();
@@ -2146,7 +2125,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		 * @param p2
 		 */
 		private void add(Point p1, Point p2){
-			ArrayList<Point> list = bresenham(p1,p2);
+			LinkedHashSet<Point> list = bresenham(p1,p2);
 			this.add(new LinePath(p1, p2, list));
 		}
 		
@@ -2161,18 +2140,30 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				LinePath p = get(i);
 				if((p1.equals(p.pt1) && p2.equals(p.pt2)) || 
 						(p2.equals(p.pt1) && p1.equals(p.pt2))){
-					ArrayList<Point> pts = p.pts;
+					LinkedHashSet<Point> pts = p.pts;
 					Point pt;
 					int index;
-					for(int j=0;j<pts.size();j++){
-						pt = pts.get(j);
+					Iterator<Point> iter = pts.iterator();
+					while(iter.hasNext()){
+						pt = iter.next();
 						index = pt.x + pt.y*width;
-						mask.set(index + activeSlice*length, false);
+						if(!searchOtherPaths(p, pt))
+							mask.set(index + activeSlice*length, false);
 					}
 					remove(p);
 					return;
 				}
 			}
+		}
+		
+		private boolean searchOtherPaths(LinePath path, Point pt){
+			for(int i=0;i<size();i++){
+				if(get(i) == path)
+					continue;
+				if(get(i).contains(pt))
+					return true;
+			}
+			return false;
 		}
 		
 		/**
@@ -2208,9 +2199,9 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		private Point pt2;
 		
-		private ArrayList<Point> pts;
+		private LinkedHashSet<Point> pts;
 		
-		private LinePath(Point p1, Point p2, ArrayList<Point> list){
+		private LinePath(Point p1, Point p2, LinkedHashSet<Point> list){
 			pt1 = p1;
 			pt2 = p2;
 			pts = list;
