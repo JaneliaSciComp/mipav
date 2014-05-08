@@ -138,6 +138,8 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	
 	private float zY = 1;
 	
+	private JCheckBox maskBox;
+	
 	public PlugInDialogNeuronSegmentationGeneric(){
 		super();
 		images = new ArrayList<File>();
@@ -669,6 +671,11 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         editBox.setFont(serif12);
         optionsPanel.add(editBox);
         
+        maskBox = new JCheckBox("Disable trace");
+        maskBox.setFont(serif12);
+        maskBox.addItemListener(this);
+        optionsPanel.add(maskBox);
+        
         JPanel boxPanel = new JPanel(new GridLayout(1,2));
         boxPanel.setForeground(Color.black);
         
@@ -905,6 +912,15 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 				if(listDialog != null)
 					listDialog.setVisible(false);
 			}
+		} else if(source == maskBox){
+			if(maskBox.isSelected()){
+				frame.getControls().getTools().setOpacity(0.0f);
+				frame.updateImages();
+			} else{
+				frame.getControls().getTools().setOpacity(1.0f);
+				frame.getControls().getTools().setPaintColor(Color.GREEN);
+				frame.updateImages();
+			}
 		}
 		
 	}
@@ -918,7 +934,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		
-		if(offRB.isSelected())
+		if(offRB.isSelected() || maskBox.isSelected())
 			return;
 		
 		float zoomX = frame.getComponentImage().getZoomX();
