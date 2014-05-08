@@ -7,6 +7,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Vector;
@@ -205,8 +207,15 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
     	
         LinkedHashSet<String> siteSet = new LinkedHashSet<String>();
         LinkedHashSet<String> visitSet = new LinkedHashSet<String>();
-        LinkedHashSet<String> specSet = new LinkedHashSet<String>();
+        //LinkedHashSet<String> specSet = new LinkedHashSet<String>();
         LinkedHashSet<String> lineSet = new LinkedHashSet<String>();
+        ArrayList<String> specSet = new ArrayList<String>();
+        specSet.add("DNA");
+        specSet.add("RNA");
+        specSet.add("Plasma");
+        specSet.add("Serum");
+        specSet.add("CSF");
+        specSet.add("Blood");
         
         final String[] types = {"RNA", "Plasma", "Serum", "CSF", "Blood", "DNA", "Unknown"};
     	
@@ -218,13 +227,13 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
     	File outFile = new File(outFilename);
     	FileWriter uniqueCSV = new FileWriter(outFile);
     	
-    	String uniqueHeader = "Site,Visit,Specimen,# of Unique Samples\n";
+    	String uniqueHeader = "Visit Type,Study,DNA,RNA,Plasma,Serum,CSF,WB\n";
     	uniqueCSV.append(uniqueHeader);
     	/*for(int i=0;i<remove;i++){
     		input.readLine();
     	}*/
     	input.readLine();
-    	System.out.printf("%d %d %d %d\n", GUID, site, visitID, specimen);
+    	//System.out.printf("%d %d %d %d\n", GUID, site, visitID, specimen);
     	
     	String line = null;
     	while ( (line = input.readLine()) != null) {
@@ -236,7 +245,7 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
     		String visitStr = lineArray[visitID].trim();
     		String typeStr = lineArray[specimen].trim().toLowerCase();
     		int typeNum;
-    		System.out.println(typeStr);
+    		//System.out.println(typeStr);
     		if (typeStr.contains("rna")) {
                 typeNum = 0;
             } else if (typeStr.contains("plasma")) {
@@ -257,7 +266,7 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
     		
     		siteSet.add(siteStr);
     		visitSet.add(visitStr);
-    		specSet.add(types[typeNum]);
+    		//specSet.add(types[typeNum]);
     		lineSet.add(setStr);
     	}
     	int siteSize = siteSet.size();
@@ -267,7 +276,30 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
     	int[] counter = new int[combinations];
     	ArrayList<String> siteList = new ArrayList<String>(siteSet);
     	ArrayList<String> visitList = new ArrayList<String>(visitSet);
-    	ArrayList<String> specList = new ArrayList<String>(specSet);
+    	//ArrayList<String> specList = new ArrayList<String>(specSet);
+    	
+    	Comparator<String> comp = new Comparator<String>(){
+
+			@Override
+			public int compare(String o1, String o2) {
+				if(o1.equals("Baseline"))
+					return -1;
+				else if(o2.equals("Baseline"))
+					return 1;
+				else{
+					String[] s1 = o1.split(" ");
+					String[] s2 = o2.split(" ");
+					int i1 = Integer.valueOf(s1[0]);
+					int i2 = Integer.valueOf(s2[0]);
+					if(i1 < i2)
+						return -1;
+					else return 1;
+				}
+			}
+    	};
+    	
+    	Collections.sort(siteList);
+    	Collections.sort(visitList, comp);
     	
     	Iterator<String> iter = lineSet.iterator();
     	while(iter.hasNext()){
@@ -276,13 +308,25 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
     		String[] lineSplit = lineStr.split(";");
     		int siteInd = siteList.indexOf(lineSplit[0]);
     		int visitInd = visitList.indexOf(lineSplit[2]);
-    		int specInd = specList.indexOf(lineSplit[3]);
+    		int specInd = specSet.indexOf(lineSplit[3]);
     		int comboInd = siteInd + visitInd*siteSize + specInd*siteSize*visitSize;
     		counter[comboInd]++;
     	}
     	
-    	for(int i=0;i<specSize;i++){
-    		String spec = specList.get(i);
+    	for(int i=0;i<visitSize;i++){
+    		for(int j=0;j<siteSize;j++){
+    			String output = visitList.get(i) + "," + siteList.get(j);
+    			for(int k=0;k<specSize;k++){
+    				int index = k + j*siteSize + i*siteSize*visitSize;
+    				output += "," + counter[index];
+    			}
+    			output += "\n";
+    			uniqueCSV.write(output);
+    		}
+    	}
+    	
+    	/*for(int i=0;i<specSize;i++){
+    		String spec = specSet.get(i);
     		for(int j=0;j<visitSize;j++){
     			String visit = visitList.get(j);
     			for(int k=0;k<siteSize;k++){
@@ -293,7 +337,7 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
     				//Write output
     			}
     		}
-    	}
+    	}*/
     	
     	uniqueCSV.close();
     	input.close();
