@@ -55,6 +55,8 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 	
 	private JTextField catalogField;
 	
+	private JTextField inventoryField;
+	
 	//private JTextField removeField;
 	
 	/**
@@ -76,6 +78,8 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 			openDir(coriellField, command);
 		else if(command.equals("Catalog"))
 			openDir(catalogField, command);
+		else if(command.equals("Inventory"))
+			openDir(inventoryField, command);
 		else if(command.equals("ApproveSelection") && whichFile.equals("Report")){
 			if(fileChooser.getSelectedFile().exists()){
 				reportField.setText(fileChooser.getSelectedFile().toString());
@@ -101,13 +105,23 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 			}
 			else 
 				MipavUtil.displayError("This file does not exists");
+		}else if(command.equals("ApproveSelection") && whichFile.equals("Inventory")){
+			if(fileChooser.getSelectedFile().exists()){
+				inventoryField.setText(fileChooser.getSelectedFile().toString());
+				Preferences.setImageDirectory(fileChooser.getSelectedFile());
+				//baseDir = catalogField.getText();
+			}
+			else 
+				MipavUtil.displayError("This file does not exists");
 		}
+		
 		else if(command.equals("OK")){
 			if(new File(reportField.getText()).exists() && new File(coriellField.getText()).exists()){
 				callAlgorithm();
 			}
 		}
-		else if(command.equals("Cancel") || command.equals("CatalogCan")){
+		else if(command.equals("Cancel") || command.equals("CatalogCan") ||
+				command.equals("InventoryCan")){
 			if (isExitRequired()) {
                 System.exit(0);
                 ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
@@ -119,6 +133,11 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 		else if(command.equals("CatalogOK")){
 			if(new File(catalogField.getText()).exists()){
 				callAlgorithm2();
+			}
+		}
+		else if(command.equals("InventoryOK")){
+			if(new File(inventoryField.getText()).exists()){
+				callAlgorithm3();
 			}
 		}
 	}
@@ -190,6 +209,14 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 		catch (IOException e) {
 			MipavUtil.displayError("CSV file is locked");
 		}
+	}
+	
+	protected void callAlgorithm3(){
+		File inventoryFile = new File(inventoryField.getText());
+		PlugInAlgorithmUniqueSamplesCount countAlg = new PlugInAlgorithmUniqueSamplesCount(inventoryFile);
+		countAlg.run();
+		
+		MipavUtil.displayInfo("Output file is in " + inventoryFile.getParent());
 	}
 	
 	private void init(){
@@ -319,13 +346,45 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
         //manager2.addOnNextLine(removePanel);
         manager2.addOnNextLine(OKCancelPanel2);
         
+        JPanel inventoryPanel = new JPanel();
+        
+        inventoryField = new JTextField(30);
+        inventoryField.setText("Inventory Report CSV");
+        inventoryField.setFont(serif12);
+        inventoryPanel.add(inventoryField);
+        
+        JButton inventoryButton = new JButton("Choose Inventory File");
+        inventoryButton.setFont(serif12);
+        inventoryButton.setActionCommand("Inventory");
+        inventoryButton.addActionListener(this);
+        inventoryPanel.add(inventoryButton);
+        
+        JPanel OKCancelPanel3 = new JPanel();
+        JButton inventoryOK = new JButton("OK");
+        inventoryOK.setFont(serif12);
+        inventoryOK.setActionCommand("InventoryOK");
+        inventoryOK.addActionListener(this);
+        OKCancelPanel3.add(inventoryOK);
+        JButton inventoryCan = new JButton("Cancel");
+        inventoryCan.setFont(serif12);
+        inventoryCan.setActionCommand("InventoryCan");
+        inventoryCan.addActionListener(this);
+        OKCancelPanel3.add(inventoryCan);
+        
+        PanelManager manager3 = new PanelManager();
+        manager3.add(inventoryPanel);
+        manager3.addOnNextLine(OKCancelPanel3);
+        
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Coriel Compare", null, manager.getPanel(),
                 "Coriel");
         tabbedPane.setMnemonicAt(0, KeyEvent.VK_1);
         tabbedPane.addTab("Catalog Counting", null, manager2.getPanel(),
                 "Catalog");
-        tabbedPane.setMnemonicAt(0, KeyEvent.VK_2);
+        tabbedPane.setMnemonicAt(1, KeyEvent.VK_2);
+        tabbedPane.addTab("Unique Samples", null, manager3.getPanel(),
+        		"Inventory");
+        tabbedPane.setMnemonicAt(2, KeyEvent.VK_3);
         getContentPane().add(tabbedPane, BorderLayout.CENTER);
         getContentPane().add(new JPanel(), BorderLayout.NORTH);
         getContentPane().add(new JPanel(), BorderLayout.SOUTH);
