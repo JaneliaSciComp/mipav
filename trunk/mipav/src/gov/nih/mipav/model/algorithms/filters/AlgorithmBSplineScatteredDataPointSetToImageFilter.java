@@ -99,9 +99,11 @@ import gov.nih.mipav.view.Preferences;
 	        	splineOrder[i] = 3;
 	        }
 	        numberOfControlPoints = new int[nDims];
+	        currentNumberOfControlPoints = new int[nDims];
 	        kernel = new CoxDeBoorBSplineKernelFunction[nDims];
 	        for (i = 0; i < nDims; i++) {
 	        	numberOfControlPoints[i] = splineOrder[i] + 1;
+	        	currentNumberOfControlPoints[i] = splineOrder[i] + 1;
 	        	kernel[i] = new CoxDeBoorBSplineKernelFunction(splineOrder[i]);
 	        }
 	        kernelOrder0 = new BSplineKernelFunction(0);
@@ -356,7 +358,9 @@ import gov.nih.mipav.view.Preferences;
 	    	    outputPointLocation.add(pointLocation.get(i));
 	    	}
 	    	currentLevel = 0;
-	    	currentNumberOfControlPoints = numberOfControlPoints.clone();
+	    	for (int i = 0; i < nDims; i++) {
+	    	    currentNumberOfControlPoints[i] = numberOfControlPoints[i];
+	    	}
 	    	beforeThreadedGenerateData();
 	    	threadedGenerateData();
 	    	afterThreadedGenerateData();
@@ -874,7 +878,7 @@ import gov.nih.mipav.view.Preferences;
 	        for (int i = 0; i < nDims; i++) {
 	        	size2[i] = 2;
 	        }
-	        int size2Slice = size2[0] * size[1];
+	        int size2Slice = size2[0] * size2[1];
 	        int xyzSize2 = size2Slice;
 	        if (nDims > 2) {
 	        	xyzSize2 = size2Slice * size2[2];
