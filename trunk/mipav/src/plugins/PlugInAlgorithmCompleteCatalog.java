@@ -313,15 +313,17 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
     		counter[comboInd]++;
     	}
     	
-    	for(int i=0;i<visitSize;i++){
-    		for(int j=0;j<siteSize;j++){
-    			String output = visitList.get(i) + "," + siteList.get(j);
+    	for(int i=0;i<siteSize;i++){
+    		for(int j=0;j<visitSize;j++){
+    			String output = visitList.get(j) + "," + siteList.get(i);
     			for(int k=0;k<specSize;k++){
-    				int index = k + j*siteSize + i*siteSize*visitSize;
+    				int index = i + j*siteSize + k*siteSize*visitSize;
     				output += "," + counter[index];
     			}
     			output += "\n";
-    			uniqueCSV.write(output);
+    			boolean zeros = output.endsWith("0,0,0,0,0,0\n");
+    			if(!zeros)
+    				uniqueCSV.write(output);
     		}
     	}
     	
