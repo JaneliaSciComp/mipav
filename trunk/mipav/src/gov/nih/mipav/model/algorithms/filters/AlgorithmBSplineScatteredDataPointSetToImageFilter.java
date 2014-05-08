@@ -61,8 +61,6 @@ import gov.nih.mipav.view.Preferences;
 		ModelImage psiLattice;
 		private Vector<Double> inputPointData;
 		private Vector<Double> outputPointData;
-		private Vector<Vector4d> inputPointLocation;
-		private Vector<Vector4d> outputPointLocation;
 		private Vector<Double> pointWeights;
 		private boolean usePointWeights;
 		// Machine epsilon is the smallest positive epsilon such that
@@ -126,8 +124,6 @@ import gov.nih.mipav.view.Preferences;
 	        psiLattice = null;
 	        inputPointData = new Vector<Double>();
 	        outputPointData = new Vector<Double>();
-	        inputPointLocation = new Vector<Vector4d>();
-	        outputPointLocation = new Vector<Vector4d>();
 	        
 	        usePointWeights = false;
 	        pointWeights = new Vector<Double>();
@@ -169,14 +165,6 @@ import gov.nih.mipav.view.Preferences;
 	    	if (outputPointData != null) {
 	    		outputPointData.clear();
 	    		outputPointData = null;
-	    	}
-	    	if (inputPointLocation != null) {
-	    		inputPointLocation.clear();
-	    		inputPointLocation = null;
-	    	}
-	    	if (outputPointLocation != null) {
-	    		outputPointLocation.clear();
-	    		outputPointLocation = null;
 	    	}
 	    	if (pointWeights != null) {
 	    		pointWeights.clear();
@@ -343,8 +331,6 @@ import gov.nih.mipav.view.Preferences;
 	    	
 	    	inputPointData.clear();
 	    	outputPointData.clear();
-	    	inputPointLocation.clear();
-	    	outputPointLocation.clear();
 	    	if (!usePointWeights) {
 	    		pointWeights.clear();
 	    	}
@@ -354,8 +340,6 @@ import gov.nih.mipav.view.Preferences;
 	    	    }
 	    	    inputPointData.add(pointData.get(i));
 	    	    outputPointData.add(pointData.get(i));
-	    	    inputPointLocation.add(pointLocation.get(i));
-	    	    outputPointLocation.add(pointLocation.get(i));
 	    	}
 	    	currentLevel = 0;
 	    	for (int i = 0; i < nDims; i++) {
@@ -814,12 +798,12 @@ import gov.nih.mipav.view.Preferences;
 	        
 	        for (int itin = 0; itin < inputPointData.size(); itin++) {
 	        	double point[] = new double[nDims];
-	        	point[0] = inputPointLocation.get(itin).X;
-	        	point[1] = inputPointLocation.get(itin).Y;
+	        	point[0] = pointLocation.get(itin).X;
+	        	point[1] = pointLocation.get(itin).Y;
 	            if (nDims > 2) {
-	            	point[2] = inputPointLocation.get(itin).Z;
+	            	point[2] = pointLocation.get(itin).Z;
 	            	if (nDims > 3) {
-	            		point[3] = inputPointLocation.get(itin).W;
+	            		point[3] = pointLocation.get(itin).W;
 	            	}
 	            }
 	            for (int i = 0; i < nDims; i++) {
