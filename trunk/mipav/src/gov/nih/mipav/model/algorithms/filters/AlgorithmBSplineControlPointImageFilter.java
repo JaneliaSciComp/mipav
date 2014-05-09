@@ -324,7 +324,8 @@ import gov.nih.mipav.view.Preferences;
 	            }
 	            for (int i = 0; i < nDims; i++) {
 	                U[i] = ((double)(totalNumberOfSpans[i] * (idx[i] /* - startIndex[i] */)))/(double)(extents[i] - 1);
-	                if (Math.abs(U[i] - totalNumberOfSpans[i]) <= BSplineEpsilon) {
+	                //if (Math.abs(U[i] - totalNumberOfSpans[i]) <= BSplineEpsilon) {
+	                if ((Math.abs(U[i] - totalNumberOfSpans[i]))/totalNumberOfSpans[i] < 1.0E-6) {
 	                	U[i] = totalNumberOfSpans[i] - BSplineEpsilon;
 	                }
 	                if (U[i] >= totalNumberOfSpans[i]) {
