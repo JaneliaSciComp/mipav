@@ -15,7 +15,9 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Comparator;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -36,6 +38,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmExtractSlices;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
@@ -139,6 +142,8 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	private float zY = 1;
 	
 	private JCheckBox maskBox;
+	
+	private ModelImage imStack = null;
 	
 	public PlugInDialogNeuronSegmentationGeneric(){
 		super();
@@ -274,8 +279,8 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	@Override
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 		
-		File current = images.get(counter);
-		srcImage.setImageName(current.getName(),false);
+		//File current = images.get(counter);
+		//srcImage.setImageName(current.getName(),false);
 		frame = new ViewJFrameImage(srcImage, null, new Dimension(0,300));
 		frame.setVisible(true);
 		listenersOn = false;
@@ -314,6 +319,8 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		if (frame != null) frame.close();
 		if (listDialog != null) listDialog.dispose();
 		if (segFrame != null) segFrame.close();
+		if (imStack != null) imStack.disposeLocal();
+		
     	images.clear();
     	srcImage.disposeLocal();
     	seg.cleanImages();
@@ -345,10 +352,10 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	 */
 	
 	protected void callAlgorithm(){
-		if(extents.length > 2){
+		/*if(extents.length > 2){
 			actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "Next"));
 			return;
-		}
+		}*/
 		
 		//Run the initial segmentation on start-up so that
 		//it is immediately displayed to the user
@@ -730,8 +737,15 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         setResizable(false);
         System.gc();
 	}
+	
+	private boolean openImage(){
+		if(imStack == null){
+			return openImageFiles();
+		} else
+			return openImageStack();
+	}
 
-	private boolean openImage() {
+	private boolean openImageFiles() {
 	
 		FileIO imLoader = new FileIO();
 		
@@ -751,6 +765,24 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		
 		return true;
 
+	}
+	
+	private boolean openImageStack(){
+		
+		extents = imStack.getExtents();
+		numImages = extents.length > 2 ? extents[2] : 1;
+		extents = new int[]{extents[0], extents[1]};
+		width = extents[0];
+		
+		String[] slice = new String[]{String.valueOf(counter)};
+
+		srcImage = new ModelImage(imStack.getType(), extents, imStack.getImageName() + "_slice" + counter);
+		
+		AlgorithmExtractSlices extract = new AlgorithmExtractSlices(imStack, srcImage, slice);
+		extract.run();
+		
+		return true;
+		
 	}
 	
 	/**
@@ -779,8 +811,11 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 				MipavUtil.displayError("This is not a proper image file");
 				return false;
 			}
-			images.add(dir);
-			numImages = 1;
+			//images.add(dir);
+			
+			FileIO imReader = new FileIO();
+			imStack = imReader.readImage(name);
+
 			return true;
 		}
 		
@@ -794,6 +829,24 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 			}
 		};
 		File[] files = dir.listFiles(imFilter);
+		Comparator<File> fileComp = new Comparator<File>(){
+
+			@Override
+			public int compare(File o1, File o2) {
+				String s1 = o1.getPath();
+				String s2 = o2.getPath();
+				if(s1.length() > s2.length())
+					return 1;
+				else if(s1.length() < s2.length())
+					return -1;
+				else{
+					return Integer.signum(s1.compareTo(s2));
+				}
+			}
+			
+		};
+		
+		Arrays.sort(files, fileComp);
 		String dirStr = dir.toString();
 		if(!dirStr.endsWith(File.separator))
 			dirStr = dirStr + File.separator;
@@ -946,7 +999,19 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		if(changeRB.isSelected()){
 			changeX = x;
 			changeY = y;
-			callAlgorithm();
+			Point loc = frame.getLocation();
+	    	frame.close();
+    		seg.cleanImages();
+    		
+    		if(openImage()){
+        		frame.setLocation(loc);
+        		callAlgorithm();
+        		if(segFrame != null){
+        			segFrame.close();
+        			segFrame = null;
+        		}
+        		segImageBox.setSelected(false);
+    		}
 		}
 		else {
 			if(addRB.isSelected()) seg.addBranches(i);
@@ -1052,7 +1117,21 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 
 		JSlider source = (JSlider)e.getSource();
 	    if (!source.getValueIsAdjusting()) {
-	    	callAlgorithm();
+	    	
+	    	Point loc = frame.getLocation();
+	    	frame.close();
+    		seg.cleanImages();
+    		
+    		if(openImage()){
+        		frame.setLocation(loc);
+        		callAlgorithm();
+        		if(segFrame != null){
+        			segFrame.close();
+        			segFrame = null;
+        		}
+        		segImageBox.setSelected(false);
+    		}
+	    	
 	        /*float sensitivity = 0.001f * (float)sensSlider.getValue();
 	        if(sensitivity == 0) sensitivity = 1;
 	        seg.setSensitivity(sensitivity);
