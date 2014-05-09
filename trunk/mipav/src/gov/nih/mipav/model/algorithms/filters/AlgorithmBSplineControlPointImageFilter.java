@@ -662,7 +662,7 @@ import gov.nih.mipav.view.Preferences;
 	    			 	if (nDims == 2) {
 	    			 	    refinedLattice[tmp[0] + tmp[1] * size[0]] = sum;
 	    			 	}
-	    			 	else if (nDims == 2) {
+	    			 	else if (nDims == 3) {
 	    			 		refinedLattice[tmp[0] + tmp[1] * size[0] + tmp[2] * sliceSize] = sum; 
 	    			 	}
 	    			 	else {
