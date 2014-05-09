@@ -985,7 +985,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		if(dataType == ModelImage.BYTE || dataType == ModelImage.UBYTE)
 			maxDiff = 3;
 		else if(dataType == ModelImage.SHORT || dataType == ModelImage.USHORT)
-			maxDiff = 66;
+			maxDiff = 600;
 		else return;
 		
 		ModelImage meanImage = (ModelImage) image.clone();

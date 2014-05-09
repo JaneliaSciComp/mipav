@@ -18,7 +18,9 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -38,6 +40,7 @@ import javax.swing.SpinnerNumberModel;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmMean;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmExtractSlices;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
@@ -236,6 +239,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	
 	private JTextField xResField;
 	
+	private ModelImage imStack = null;
+	
 	/**
 	 * Primary constructor. Initializes a dialog to ask the user
 	 * for a directory to use
@@ -271,9 +276,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		else if(command.equals("Choose")) chooseDir();
 		else if(command.equals("OK")){
 			File directory = new File(dirText.getText());
-			if(!directory.exists() || directory.isFile()){
-				MipavUtil.displayError("Input file is not a directory. Please"
-						+ " select a directory");
+			if(!directory.exists()){
+				MipavUtil.displayError("File does not exist");
 				return;
 			}
 			try{
@@ -292,8 +296,10 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				e.printStackTrace();
 			}
 			if(populateImages(directory)){
-				initEditor();
-	        	openImage();	
+				if(initVars()){
+					initEditor();
+		        	openImage();
+				}
 			} else 
 				MipavUtil.displayError("No compatible SWC files were found");
 		}
@@ -362,6 +368,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				dir += "Branch_Images" + File.separator;
 				new PlugInDialogSaveTraceAsAVI(dir);
 				subVolumeFrame.close();
+				if(imStack != null) imStack.disposeLocal();
 				dispose();
 			} else{
 				
@@ -370,6 +377,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 		        } else {
 		        	subVolumeFrame.close();
+		        	if(imStack != null) imStack.disposeLocal();
 		        	dispose();
 		        }
 			}
@@ -624,7 +632,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	private void chooseDir(){
 		String dirText = Preferences.getImageDirectory();
 		fileChooser = new JFileChooser(dirText);
-		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 		fileChooser.addActionListener(this);
 		fileChooser.showOpenDialog(this);
 	}
@@ -675,13 +683,18 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		if(dataType == ModelImage.BYTE || dataType == ModelImage.UBYTE)
 			maxDiff = 3;
 		else if(dataType == ModelImage.SHORT || dataType == ModelImage.USHORT)
-			maxDiff = 66;
+			maxDiff = 600;
 		else return null;
 		
 		ModelImage meanImage = (ModelImage) image.clone();
-		AlgorithmMean mean = new AlgorithmMean(meanImage, 3, true);
+		AlgorithmMean mean;
+		if(imStack == null)
+			mean = new AlgorithmMean(meanImage, 3, true);
+		else
+			mean = new AlgorithmMean(meanImage, 3, true, true);
 		mean.run();
 		int length = width*height;
+		if(imStack != null) length *= numImages;
 		int[] buffer = new int[length];
 		int[] medBuffer = new int[length];
 		int[] outBuffer = new int[length];
@@ -705,13 +718,15 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				buffer[i] = medBuffer[i];
 				int x = i%width;
 				int y = i/width;
+				if(imStack != null) y = y%numImages;
+				int z = imStack == null ? 0 : i/(width*height);
 				for(int nx=x-1;nx<=x+1;nx++){
 					if(nx<0 || nx>=width) continue;
 					for(int ny=y-1;ny<=y+1;ny++){
 						if(ny<0 || ny>=height) continue;
-						int ind = nx+ny*width;
+						int ind = nx+ny*width+z*(width*height);
 						if(!adjustPts.contains(ind))
-							adjustPts.add(nx+ny*width);
+							adjustPts.add(ind);
 					}
 				}
 			}
@@ -727,6 +742,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				int i = adjustPts.get(j);
 				int x = i%width;
 				int y = i/width;
+				if(imStack != null) y = y%numImages;
+				int z = imStack == null ? 0 : i/(width*height);
 				int kMed = findMean(buffer, i);
 				if(Math.abs(buffer[i] - kMed) >= maxDiff){
 					outBuffer[i] = kMed;
@@ -735,9 +752,9 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 						if(nx<0 || nx>=width) continue;
 						for(int ny=y-1;ny<=y+1;ny++){
 							if(ny<0 || ny>=height) continue;
-							int ind = nx+ny*width;
+							int ind = nx+ny*width+z*(width*height);
 							if(!addPts.contains(ind))
-								addPts.add(nx+ny*width);
+								addPts.add(ind);
 						}
 					}
 				}
@@ -757,6 +774,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	private int findMean(int[] buffer, int i){
 		int x = i%width;
 		int y = i/width;
+		if(imStack != null) y = y%numImages;
+		int z = imStack == null ? 0 : i/(width*height);
 		int kWidth = Math.min(3, 2 + Math.min(x, width-1-x));
 		int kHeight = Math.min(3, 2 + Math.min(y, height-1-y));
 		int cnt = kWidth*kHeight;
@@ -766,7 +785,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			if(nx<0 || nx>=width) continue;
 			for(int ny=y-1;ny<=y+1;ny++){
 				if(ny<0 || ny>=height) continue;
-				sum += buffer[nx+ny*width];
+				sum += buffer[nx+ny*width+z*width*height];
 			}
 		}
 		int kMean = (int) ((float)sum / (float)cnt);
@@ -778,6 +797,9 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 * directory where the images and SWC files are
 	 */
 	private void init(){
+		
+		getContentPane().removeAll();
+		
 		setForeground(Color.black);
         setTitle("Neuron Segmentation: Edit SWC");
 
@@ -866,23 +888,28 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		PanelManager manage = new PanelManager();
 		ButtonGroup group = new ButtonGroup();
 		
-		FileIO imReader = new FileIO();
-		ModelImage sliceIm = imReader.readImage(images.get(0).getAbsolutePath());
-		int []extents = sliceIm.getExtents();
-		width = extents[0];
-		height = extents[1];
-		length = width*height;
-		
-		sliceIm.disposeLocal();
-		
 		String parentPath = swcList.get(0).getParent();
 		parentPath += File.separator + "neuron_stats.csv";
 		File statFile = new File(parentPath);
 		String csvHeader = "";
 		if(!statFile.exists() || csvBox.isSelected()){
-			csvHeader = "Image,Progenitor.x,Progenitor.y,Split.x,Split.y,Centroid.x,Centroid.y,Polygonal Area,"
+			/*csvHeader = "Image,Progenitor.x,Progenitor.y,Split.x,Split.y,Centroid.x,Centroid.y,Polygonal Area,"
 					+ "Split to Origin Length, Split to Primary Length,Longest Length,"
-					+ "Total Branch Length,Total Higher Order Branch Length,Max Branch Order\n";
+					+ "Total Branch Length,Total Higher Order Branch Length,Max Branch Order\n";*/
+			csvHeader = "Timepoint,Branch #,Split to Progenitor Length,Split to Origin Length,Polygonal Area,"
+					+ "Order 1 Branch Lengths";
+			for(int i=0;i<50;i++){
+				csvHeader += ",";
+			}
+			csvHeader +="Order 2 Branch Lengths";
+			for(int i=0;i<10;i++){
+				csvHeader += ",";
+			}
+			csvHeader +="Order 3 Branch Lengths";
+			for(int i=0;i<5;i++){
+				csvHeader += ",";
+			}
+			csvHeader += ",\n";
 		}
 		try {
 			statsCSV = new FileWriter(statFile, !csvBox.isSelected());
@@ -913,7 +940,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		labelPanel.setForeground(Color.black);
 		labelPanel.setBorder(buildTitledBorder("Current Image"));
 		
-		imName = new JLabel(images.get(0).getName());
+		imName = new JLabel("Current Image");
 		imName.setFont(serif12B);
 		labelPanel.add(imName);
 
@@ -1089,10 +1116,50 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         
+		//initVars();
+        
         pack();
         setVisible(true);
         System.gc();
 		
+	}
+	
+	private boolean initVars(){
+		
+		if(imStack == null){
+			FileIO imReader = new FileIO();
+			ModelImage sliceIm = imReader.readImage(images.get(0).getAbsolutePath());
+			int[] extents = sliceIm.getExtents();
+			width = extents[0];
+			height = extents[1];
+			length = width*height;
+			
+			sliceIm.disposeLocal();
+		} else {
+			int[] extents = imStack.getExtents();
+			width = extents[0];
+			height = extents[1];
+			numImages = 1;
+			if(extents.length > 2)
+				numImages = extents[2];
+			if(numImages == 1){
+				MipavUtil.displayError("This image is not 3D");
+				imStack = null;
+				return false;
+			}
+			length = width*height;
+			
+			if(noiseBox.isSelected()){
+				int[] buffer = filterShotNoiseMean(imStack);
+				try{
+					imStack.importData(0, buffer, true);
+				} catch(IOException e){
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		return true;
 	}
 	
 	private void openHisto(){
@@ -1101,12 +1168,19 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		histoFrame.histogramLUT(true, true);
 	}
 	
+	private void openImage(){
+		if(imStack == null){
+			openImageFile();
+		} else 
+			openImageStack();
+	}
+	
 	/**
 	 * Opens up the new subvolume. To keep read times for the images low, it will
 	 * only load images as necessary. It will use previous portions of the images
 	 * as you go up and down the stack.
 	 */
-	private void openImage(){
+	private void openImageFile(){
 		
 		int lowerBound = Math.max(0, currentSlice - sliceRange);
 		int upperBound = Math.min(numImages - 1, currentSlice + sliceRange);
@@ -1215,6 +1289,44 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 	}
 	
+	private void openImageStack(){
+		
+		int lowerBound = Math.max(0, currentSlice - sliceRange);
+		int upperBound = Math.min(numImages - 1, currentSlice + sliceRange);
+		depth = upperBound - lowerBound + 1;
+		
+		String[] slices = new String[depth];
+		for(int i=0;i<depth;i++){
+			slices[i] = String.valueOf(lowerBound + i);
+		}
+		
+		if(subVolume != null)
+			subVolume.disposeLocal();
+		
+		subVolume = new ModelImage(ModelImage.USHORT, new int[]{width, height, depth}, "Sub-Volume");
+		
+		AlgorithmExtractSlices extract = new AlgorithmExtractSlices(imStack, subVolume, slices);
+		extract.run();
+		
+		activeSlice = currentSlice - lowerBound;
+
+		imName.setText("Current slice is: " + currentSlice);
+		
+		subVolumeFrame = new ViewJFrameImage(subVolume, lut);
+		subVolumeFrame.setSlice(activeSlice);
+		subVolumeFrame.setVisible(true);
+		subVolumeFrame.addWindowListener(this);
+		
+		try {
+			readSWC(lowerBound);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		editTraceRB.setSelected(true);
+		actionPerformed(new ActionEvent(this, 0, "Edit Trace"));
+	}
+	
 	/**
 	 * Unlike the openImage method, the SWC files take far less time to read 
 	 * so you can just read them all every single time. This also takes care
@@ -1247,6 +1359,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		String[] lineArray;
 		
 		for(int k=0;k<depth;k++){
+			if(k+lowerBound >= swcList.size())
+				continue;
 			BufferedReader input = new BufferedReader(new FileReader(swcList.get(k + lowerBound)));
 			String line = null; 
 			points = new ArrayList<String[]>();
@@ -1387,6 +1501,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		VOIBaseVector base = controlPts.getCurves();
 		VOIPoint ptVOI;
 		Vector3f ptVec;
+		
 		for(int i=0;i<base.size();i++){
 			ptVOI = (VOIPoint)base.get(i);
 			ptVec = ptVOI.exportPoint();
@@ -1478,16 +1593,16 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		header += String.format("# Origin (%d,%d)\n", origin.x, origin.y);
 		if(progenitorPt != null){
 			header += String.format("# Progenitor Point (%d,%d)\n", progenitorPt.x, progenitorPt.y);
-			csvOut += progenitorPt.x + "," + progenitorPt.y + ",";
-		} else csvOut += ",,";
+			//csvOut += progenitorPt.x + "," + progenitorPt.y + ",";
+		} //else csvOut += ",,";
 		if(splitPt != null){
 			header += String.format("# Split Point (%d,%d)\n", splitPt.x, splitPt.y);
-			csvOut += splitPt.x + "," + splitPt.y + ",";
-		} else csvOut += ",,";
+			//csvOut += splitPt.x + "," + splitPt.y + ",";
+		} //else csvOut += ",,";
 		if(primaryPt != null)
 			header += String.format("# Primary Branch Point (%d,%d)\n", primaryPt.x, primaryPt.y);
 		
-		csvOut += areaResults[0] + "," + areaResults[1] + "," + areaResults[2] + ",";
+		//csvOut += areaResults[0] + "," + areaResults[1] + "," + areaResults[2] + ",";
 		
 		VOIBase base = polyVOI.getCurves().get(0);
 		
@@ -1531,6 +1646,11 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		
 		PriorityQueue<NeuronLength> pq = new PriorityQueue<NeuronLength>();
 		writer.append(lengthHeader);
+		ArrayList<Double> order1 = new ArrayList<Double>();
+		ArrayList<Double> order2 = new ArrayList<Double>();
+		ArrayList<Double> order3 = new ArrayList<Double>();
+		double progLength=-1;
+		double origLength=-1;
 		if(splitPt != null){
 			double longestLength = 0;
 			LinkElement split = links.get(splitPt);
@@ -1547,6 +1667,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 					toOrigin = next;
 				}
 			}
+		
 			//Find lengths towards the origin:
 			
 					 
@@ -1556,13 +1677,20 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			pq.addAll(calcLengths(toOrigin, split, toOrigin.pt.distance(split.pt)));
 			NeuronLength nl;
 			nl = pq.peek();
+			origLength = nl.length;
 			longestLength += nl.length;
-			csvOut += longestLength*resolution + ",";
+			//csvOut += longestLength*resolution + ",";
 			while((nl = pq.poll()) != null){
 				if(nl.order > maxOrder)
 					maxOrder = nl.order;
-				if(nl.order >= 2)
+				if(nl.order >= 1)
 					orderLength += nl.length;
+				if(nl.order == 1)
+					order1.add(nl.length);
+				else if(nl.order == 2)
+					order2.add(nl.length);
+				else if(nl.order == 3)
+					order3.add(nl.length);
 				totalLength += nl.length;
 				writePoint(nl, writer);
 			}
@@ -1572,21 +1700,28 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			pq.clear();
 			pq.addAll(calcLengths(split, toOrigin, 0));
 			nl = pq.peek();
+			progLength = nl.length;
 			longestLength += nl.length;
-			csvOut += nl.length*resolution + "," + longestLength*resolution + ",";
+			//csvOut += nl.length*resolution + "," + longestLength*resolution + ",";
 			while((nl = pq.poll()) != null){
 				if(nl.order > maxOrder)
 					maxOrder = nl.order;
-				if(nl.order >= 2)
+				if(nl.order >= 1)
 					orderLength += nl.length;
+				if(nl.order == 1)
+					order1.add(nl.length);
+				else if(nl.order == 2)
+					order2.add(nl.length);
+				else if(nl.order == 3)
+					order3.add(nl.length);
 				totalLength += nl.length;
 				writePoint(nl, writer);
 			}
 			
 			totalLength *= resolution;
 			orderLength *= resolution;
-			csvOut += totalLength + "," + orderLength + ",";
-			csvOut += maxOrder + ",\n";
+			//csvOut += totalLength + "," + orderLength + ",";
+			//csvOut += maxOrder + ",\n";
 			String lengthStr = String.format("%4.2f %s", longestLength*resolution, (String)resUnits.getSelectedItem());
 			writer.append("#\n# Origin to Primary length: " + lengthStr + "\n");
 			String totalStr = String.format("%4.2f %s", totalLength, (String)resUnits.getSelectedItem());
@@ -1598,19 +1733,25 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			pq = calcLengths(start, null, 0);
 			NeuronLength nl;
 			nl = pq.peek();
-			csvOut += ",," + nl.length*resolution + ",";
+			//csvOut += ",," + nl.length*resolution + ",";
 			while((nl = pq.poll()) != null){
 				if(nl.order > maxOrder)
 					maxOrder = nl.order;
-				if(nl.order >= 2)
+				if(nl.order >= 1)
 					orderLength += nl.length;
+				if(nl.order == 1)
+					order1.add(nl.length);
+				else if(nl.order == 2)
+					order2.add(nl.length);
+				else if(nl.order == 3)
+					order3.add(nl.length);
 				totalLength += nl.length;
 				writePoint(nl, writer);
 			}
 			totalLength *= resolution;
 			orderLength *= resolution;
-			csvOut += totalLength + "," + orderLength + ",";
-			csvOut += maxOrder + ",\n";
+			//csvOut += totalLength + "," + orderLength + ",";
+			//csvOut += maxOrder + ",\n";
 			
 			String totalStr = String.format("%4.2f %s", totalLength, (String)resUnits.getSelectedItem());
 			writer.append("#\n# Total branch length: " + totalStr + "\n");
@@ -1618,6 +1759,25 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			writer.append("# Total higher order branch length: " + orderStr + "\n");
 		}
 		
+		csvOut += order1.size() + order2.size() + order3.size() + ",";
+		csvOut += progLength*resolution + "," + origLength*resolution + ",";
+		csvOut += areaResults[2] + ",";
+		for(int i=0;i<50;i++){
+			if(i>=order1.size())
+				csvOut+= ",";
+			else csvOut += order1.get(i)*resolution + ",";
+		}
+		for(int i=0;i<10;i++){
+			if(i>=order2.size())
+				csvOut+= ",";
+			else csvOut += order2.get(i)*resolution + ",";
+		}
+		for(int i=0;i<5;i++){
+			if(i>=order3.size())
+				csvOut+= ",";
+			else csvOut += order3.get(i)*resolution + ",";
+		}
+		csvOut += "\n";
 		statsCSV.append(csvOut);
 		
 		String dimStr = String.format("# Width %d\n# Height %d\n", width, height);
@@ -1771,8 +1931,30 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	
 	private boolean populateImages(File dir){
 		
-		if(!dir.exists() || dir.isFile())
+		if(!dir.exists())
 			return false;
+		if(dir.isFile()){
+			FileIO imReader = new FileIO();
+			imStack = imReader.readImage(dir.getPath());
+			
+			String dirStr = dir.getParent();
+			if(!dirStr.endsWith(File.separator))
+				dirStr = dirStr + File.separator;
+			dirStr = dirStr.concat("Branch_Images" + File.separator);
+			
+			FilenameFilter swcFilter = new FilenameFilter(){
+				public boolean accept(File dir, String name) {
+					return name.toLowerCase().endsWith(".swc");
+				}
+			};
+			
+			File[] files = (new File(dirStr)).listFiles(swcFilter);
+			for(int i=0;i<files.length;i++){
+				swcList.add(files[i]);
+			}
+			
+			return true;
+		}
 		
 		File skelName;
 		String stripped;
@@ -1784,6 +1966,25 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			}
 		};
 		File[] files = dir.listFiles(imFilter);
+		Comparator<File> fileComp = new Comparator<File>(){
+
+			@Override
+			public int compare(File o1, File o2) {
+				String s1 = o1.getPath();
+				String s2 = o2.getPath();
+				if(s1.length() > s2.length())
+					return 1;
+				else if(s1.length() < s2.length())
+					return -1;
+				else{
+					return Integer.signum(s1.compareTo(s2));
+				}
+			}
+			
+		};
+		
+		Arrays.sort(files, fileComp);
+		
 		String dirStr = dir.toString();
 		if(!dirStr.endsWith(File.separator))
 			dirStr = dirStr + File.separator;
@@ -2393,7 +2594,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		private NeuronLength(Point pt, double l){
 			endPt = pt;
 			length = l;
-			order = 1;
+			order = 0;
 		}
 
 		@Override
@@ -2406,12 +2607,12 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		public int compareTo(NeuronLength o) {
 			
 			//Make primary branch highest priority
-			if(primaryPt != null){
+			/*if(primaryPt != null){
 				if(endPt.equals(primaryPt))
 					return -1;
 				else if(o.endPt.equals(primaryPt))
 					return 1;
-			}
+			}*/
 			//Progenitor branch has second highest priority
 			//Origin branch has the same prioirty, however with the
 			//split point, only one will occur in any given search
@@ -2434,7 +2635,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			else
 				return 0;
 		}
-
 		
 	}
 	
