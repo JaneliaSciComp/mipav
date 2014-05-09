@@ -165,6 +165,14 @@ import WildMagic.LibFoundation.Mathematics.Vector4d;
             }
 	    	return;
 	    }
+	    
+	    /**
+	     * 
+	     * @return
+	     */
+	    public ModelImage getOutputImage() {
+	    	return outputImage;
+	    }
 
 	    /**
 	     * Starts the program.
