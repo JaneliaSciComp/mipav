@@ -810,7 +810,8 @@ import gov.nih.mipav.view.Preferences;
 	            }
 	            for (int i = 0; i < nDims; i++) {
 	            	U[i] = totalNumberOfSpans[i] * (point[i] - origin[i])/((extents[i] - 1) * resolutions[i]);
-	            	if (Math.abs(U[i] - totalNumberOfSpans[i]) <= BSplineEpsilon) {
+	            	//if (Math.abs(U[i] - totalNumberOfSpans[i]) <= BSplineEpsilon) {
+	                if ((Math.abs(U[i] - totalNumberOfSpans[i]))/totalNumberOfSpans[i] < 1.0E-6) {
 	            		U[i] = totalNumberOfSpans[i] - BSplineEpsilon;
 	            	}
 	            	if (U[i] >= totalNumberOfSpans[i]) {
