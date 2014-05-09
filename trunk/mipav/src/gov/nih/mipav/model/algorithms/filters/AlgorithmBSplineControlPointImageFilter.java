@@ -305,13 +305,7 @@ import gov.nih.mipav.view.Preferences;
 	        }
 	        
 	        double outputBuffer[] = new double[extentsLength];
-	        try {
-	        	outputImage.exportData(0, extentsLength, outputBuffer);
-	        }
-	        catch(IOException e) {
-	        	MipavUtil.displayError("IOException on outputImage.exportData");
-	        	return;
-	        }
+	        
 	        int idx[] = new int[nDims];
 	        for (it = 0; it < extentsLength; it++) {
 	            idx[0] = it % extents[0];
