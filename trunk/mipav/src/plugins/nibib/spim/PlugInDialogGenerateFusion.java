@@ -25,6 +25,7 @@ This software may NOT be used for diagnostic purposes.
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmMaximumIntensityProjection;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
@@ -60,7 +61,7 @@ import nibib.spim.PlugInAlgorithmGenerateFusion.SampleMode;
 /**
  * Class for performing image fusion based on reference image and transformation matrix.  Option to output geometric/arithmetic mean.
  * 
- * @version  April 4, 2014
+ * @version  May 12, 2014
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -277,6 +278,23 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     private JRadioButton yRadio;
     private JRadioButton zRadio;
     private JTabbedPane tabbedPane;
+    
+    private ButtonGroup baseImageRotation;
+    private JRadioButton noBaseRotationButton;
+    private JRadioButton minusXBaseRotationButton;
+    private JRadioButton plusXBaseRotationButton;
+    private JRadioButton minusYBaseRotationButton;
+    private JRadioButton plusYBaseRotationButton;
+    
+    private ButtonGroup transformImageRotation;
+    private JRadioButton noTransformRotationButton;
+    private JRadioButton minusXTransformRotationButton;
+    private JRadioButton plusXTransformRotationButton;
+    private JRadioButton minusYTransformRotationButton;
+    private JRadioButton plusYTransformRotationButton;
+    
+    private int baseRotation = -1;
+    private int transformRotation = AlgorithmRotate.Y_AXIS_MINUS;
 	
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -378,7 +396,8 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
                                                                                 savePrefusion, prefusionBaseDir, prefusionTransformDir, 
                                                                                 baseAriWeight, transformAriWeight, baseGeoWeight, transformGeoWeight, 
                                                                                 maxAlgo, saveType, doDeconv, deconvIterations, deconvSigmaA,
-                                                                                deconvSigmaB, useDeconvSigmaConversionFactor, deconvDir, deconvShowResults);
+                                                                                deconvSigmaB, useDeconvSigmaConversionFactor, deconvDir, deconvShowResults,
+                                                                                baseRotation, transformRotation);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -520,6 +539,22 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     }
     
     /**
+     * 
+     * @param baseRotation
+     */
+    public void setBaseRotation(int baseRotation) {
+    	this.baseRotation = baseRotation;
+    }
+    
+    /**
+     * 
+     * @param transformRotation
+     */
+    public void setTransformRotation(int transformRotation) {
+    	this.transformRotation = transformRotation;
+    }
+    
+    /**
      * Used in turning your plugin into a script
      */
     protected void setGUIFromParams() {
@@ -565,6 +600,9 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     	
     	baseImage = scriptParameters.getParams().getString("baseImage");
     	
+    	baseRotation = scriptParameters.getParams().getInt("base_rotation");
+    	transformRotation = scriptParameters.getParams().getInt("transform_rotation");
+    	
     	populateFileLists(null);
     	
     } //end setGUIFromParams()
@@ -603,6 +641,9 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         scriptParameters.getParams().put(ParameterFactory.newParameter("spimBFileDir", baseFileDir));
         
         scriptParameters.getParams().put(ParameterFactory.newParameter("baseImageText", baseImageText));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("base_rotation", baseRotation));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("transform_rotation", transformRotation));
     } //end storeParamsFromGUI()
    
     private GridBagConstraints createGBC() {
@@ -623,7 +664,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     private void init() {
         setResizable(true);
         setForeground(Color.black);
-        setTitle("Generate fusion 544f");
+        setTitle("Generate fusion 544g");
         try {
             setIconImage(MipavUtil.getIconImage("divinci.gif"));
         } catch (FileNotFoundException e) {
@@ -1255,6 +1296,108 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         rightPanel.add(deconvPanel, gbc);
         gbc.gridy++;
         
+        gbc = new GridBagConstraints();
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(3, 3, 3, 3);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+
+        JPanel right2Panel = new JPanel(new GridBagLayout());
+        right2Panel.setForeground(Color.black);
+
+        JPanel basePanel = new JPanel(new GridBagLayout());
+        basePanel.setForeground(Color.black);
+        basePanel.setBorder(buildTitledBorder("Base image rotations"));
+        
+        baseImageRotation = new ButtonGroup();
+        noBaseRotationButton = new JRadioButton("No base image rotation", true);
+        noBaseRotationButton.setFont(serif12);
+        noBaseRotationButton.setForeground(Color.black);
+        baseImageRotation.add(noBaseRotationButton);
+        basePanel.add(noBaseRotationButton, gbc);
+        gbc.gridy++;
+        
+        minusXBaseRotationButton = new JRadioButton("-90 degree X axis base image rotation", false);
+        minusXBaseRotationButton.setFont(serif12);
+        minusXBaseRotationButton.setForeground(Color.black);
+        baseImageRotation.add(minusXBaseRotationButton);
+        basePanel.add(minusXBaseRotationButton, gbc);
+        gbc.gridy++;
+        
+        plusXBaseRotationButton = new JRadioButton("+90 degree X axis base image rotation", false);
+        plusXBaseRotationButton.setFont(serif12);
+        plusXBaseRotationButton.setForeground(Color.black);
+        baseImageRotation.add(plusXBaseRotationButton);
+        basePanel.add(plusXBaseRotationButton, gbc);
+        gbc.gridy++;
+        
+        minusYBaseRotationButton = new JRadioButton("-90 degree Y axis base image rotation", false);
+        minusYBaseRotationButton.setFont(serif12);
+        minusYBaseRotationButton.setForeground(Color.black);
+        baseImageRotation.add(minusYBaseRotationButton);
+        basePanel.add(minusYBaseRotationButton, gbc);
+        gbc.gridy++;
+        
+        plusYBaseRotationButton = new JRadioButton("+90 degree Y axis base image rotation", false);
+        plusYBaseRotationButton.setFont(serif12);
+        plusYBaseRotationButton.setForeground(Color.black);
+        baseImageRotation.add(plusYBaseRotationButton);
+        basePanel.add(plusYBaseRotationButton, gbc);
+        gbc.gridy++;
+        
+        JPanel transformImagePanel = new JPanel(new GridBagLayout());
+        transformImagePanel.setForeground(Color.black);
+        transformImagePanel.setBorder(buildTitledBorder("Transform image rotations"));
+        
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        
+        transformImageRotation = new ButtonGroup();
+        noTransformRotationButton = new JRadioButton("No transform image rotation", false);
+        noTransformRotationButton.setFont(serif12);
+        noTransformRotationButton.setForeground(Color.black);
+        transformImageRotation.add(noTransformRotationButton);
+        transformImagePanel.add(noTransformRotationButton, gbc);
+        gbc.gridy++;
+        
+        minusXTransformRotationButton = new JRadioButton("-90 degree X axis transform image rotation", false);
+        minusXTransformRotationButton.setFont(serif12);
+        minusXTransformRotationButton.setForeground(Color.black);
+        transformImageRotation.add(minusXTransformRotationButton);
+        transformImagePanel.add(minusXTransformRotationButton, gbc);
+        gbc.gridy++;
+        
+        plusXTransformRotationButton = new JRadioButton("+90 degree X axis transform image rotation", false);
+        plusXTransformRotationButton.setFont(serif12);
+        plusXTransformRotationButton.setForeground(Color.black);
+        transformImageRotation.add(plusXTransformRotationButton);
+        transformImagePanel.add(plusXTransformRotationButton, gbc);
+        gbc.gridy++;
+        
+        minusYTransformRotationButton = new JRadioButton("-90 degree Y axis transform image rotation", true);
+        minusYTransformRotationButton.setFont(serif12);
+        minusYTransformRotationButton.setForeground(Color.black);
+        transformImageRotation.add(minusYTransformRotationButton);
+        transformImagePanel.add(minusYTransformRotationButton, gbc);
+        gbc.gridy++;
+        
+        plusYTransformRotationButton = new JRadioButton("+90 degree Y axis transform image rotation", false);
+        plusYTransformRotationButton.setFont(serif12);
+        plusYTransformRotationButton.setForeground(Color.black);
+        transformImageRotation.add(plusYTransformRotationButton);
+        transformImagePanel.add(plusYTransformRotationButton, gbc);
+        gbc.gridy++;
+        
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        right2Panel.add(basePanel, gbc);
+        gbc.gridy++;
+        right2Panel.add(transformImagePanel, gbc);
+        
         tabbedPane = new JTabbedPane();
         tabbedPane.setFont(MipavUtil.font12B);
         tabbedPane.addTab("File", leftPanel);
@@ -1262,6 +1405,8 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         tabbedPane.addTab("Options", middlePanel);
         
         tabbedPane.addTab("Decon", rightPanel);
+        
+        tabbedPane.addTab("Image rotations", right2Panel);
 
         getContentPane().add(tabbedPane, BorderLayout.CENTER);
         
@@ -2332,6 +2477,38 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	    	deconvSigmaB[1] = Float.valueOf(deconvSigmaBYText.getText());
 	    	deconvSigmaB[2] = Float.valueOf(deconvSigmaBZText.getText());
 	    	useDeconvSigmaConversionFactor = deconvUseSigmaConversionFactor.isSelected();
+	    }
+	    
+	    if (noBaseRotationButton.isSelected()) {
+	        baseRotation = -1;	
+	    }
+	    else if (minusXBaseRotationButton.isSelected()) {
+	    	baseRotation = AlgorithmRotate.X_AXIS_MINUS;
+	    }
+	    else if (plusXBaseRotationButton.isSelected()) {
+	    	baseRotation = AlgorithmRotate.X_AXIS_PLUS;
+	    }
+	    else if (minusYBaseRotationButton.isSelected()) {
+	    	baseRotation = AlgorithmRotate.Y_AXIS_MINUS;
+	    }
+	    else if (plusYBaseRotationButton.isSelected()) {
+	    	baseRotation = AlgorithmRotate.Y_AXIS_PLUS;
+	    }
+	    
+	    if (noTransformRotationButton.isSelected()) {
+	        transformRotation = -1;	
+	    }
+	    else if (minusXTransformRotationButton.isSelected()) {
+	    	transformRotation = AlgorithmRotate.X_AXIS_MINUS;
+	    }
+	    else if (plusXTransformRotationButton.isSelected()) {
+	    	transformRotation = AlgorithmRotate.X_AXIS_PLUS;
+	    }
+	    else if (minusYTransformRotationButton.isSelected()) {
+	    	transformRotation = AlgorithmRotate.Y_AXIS_MINUS;
+	    }
+	    else if (plusYTransformRotationButton.isSelected()) {
+	    	transformRotation = AlgorithmRotate.Y_AXIS_PLUS;
 	    }
 	    
 		return true;
