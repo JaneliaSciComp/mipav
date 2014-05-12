@@ -199,6 +199,10 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
     private float fineRateZ = 1.0f;
 
     private Semaphore semaphore;
+    
+    private int baseRotation = -1;
+    
+    private int transformRotation = AlgorithmRotate.Y_AXIS_MINUS;
 
     /**
      * Constructor.
@@ -260,6 +264,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
      * @param useDeconvSigmaConversionFactor
      * @param deconvDir
      * @param deconvShowResults
+     * @param baseRotation
+     * @param transformRotation
      */
     public PlugInAlgorithmGenerateFusion(final boolean registerOne, final boolean registerAll, 
     		final float rotateBeginX, final float rotateEndX,
@@ -278,7 +284,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             final double baseGeoWeight, final double transformGeoWeight,
             final AlgorithmMaximumIntensityProjection[] maxAlgo, final String saveType, final boolean doDeconv,
             final int deconvIterations, final float[] deconvSigmaA, final float[] deconvSigmaB,
-            final boolean useDeconvSigmaConversionFactor, final File deconvDir, final boolean deconvShowResults) {
+            final boolean useDeconvSigmaConversionFactor, final File deconvDir, final boolean deconvShowResults,
+            final int baseRotation, final int transformRotation) {
         this.registerOne = registerOne;
         this.registerAll = registerAll;
         this.rotateBeginX = rotateBeginX;
@@ -356,6 +363,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         this.useDeconvSigmaConversionFactor = useDeconvSigmaConversionFactor;
         this.deconvDir = deconvDir;
         this.deconvShowResults = deconvShowResults;
+        this.baseRotation = baseRotation;
+        this.transformRotation = transformRotation;
     }
 
     // ~ Methods
@@ -412,12 +421,25 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             for (int i = 0; i < transformImage.getFileInfo().length; i++) {
                 transformImage.getFileInfo(i).setSliceThickness(transformImage.getResolutions(i)[2]);
             }
-            final AlgorithmRotate rotate = new AlgorithmRotate(transformImage, AlgorithmRotate.Y_AXIS_MINUS);
-            rotate.run(); // transform image replaced
-            ViewUserInterface.getReference().unRegisterImage(transformImage);
-            transformImage.disposeLocal();
-            transformImage = rotate.getDestImage();
-            rotate.finalize();
+            
+            if (baseRotation >= 0) {
+	            final AlgorithmRotate rotate = new AlgorithmRotate(baseImage, baseRotation);
+	            rotate.run(); // transform image replaced
+	            ViewUserInterface.getReference().unRegisterImage(baseImage);
+	            baseImage.disposeLocal();
+	            baseImage = rotate.getDestImage();
+	            rotate.finalize();
+            }
+            
+            if (transformRotation >= 0) {
+	            final AlgorithmRotate rotate = new AlgorithmRotate(transformImage, transformRotation);
+	            rotate.run(); // transform image replaced
+	            ViewUserInterface.getReference().unRegisterImage(transformImage);
+	            transformImage.disposeLocal();
+	            transformImage = rotate.getDestImage();
+	            rotate.finalize();
+            }
+            
             final int cost = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED;
             final int DOF = 12;
             final int interp = AlgorithmTransform.TRILINEAR;
@@ -815,8 +837,14 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             if (doInterImages) {
                 resultImageList.add(baseImage);
             }
+            
+            if (baseRotation >= 0) {
+                baseImage = rotate(baseImage, baseRotation);	
+            }
 
-            transformImage = rotate(transformImage, AlgorithmRotate.Y_AXIS_MINUS);
+            if (transformRotation >= 0) {
+                transformImage = rotate(transformImage, transformRotation);
+            }
 
             // fireProgressStateChanged(10, "Transform", "Performing "+mode.toString());
 
