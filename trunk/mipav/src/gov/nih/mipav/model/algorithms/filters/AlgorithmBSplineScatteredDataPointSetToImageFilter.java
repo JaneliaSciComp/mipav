@@ -547,10 +547,30 @@ import gov.nih.mipav.view.Preferences;
 	        	    } // for (int i = 0; i < nDims; i++)
 	        	    double wc = pointWeights.get(n);
 	        	    double t = neighborhoodWeightArray[itw];
-	        	    omegaLattice[itw] = omegaLattice[itw] + wc * t * t;
+	        	    int index;
+	        	    boolean okay = true;
+	        	    for (int i = 0; i < nDims; i++) {
+	        	    	if ((idx[i] < 0) || (idx[i] >= size[0])) {
+	        	    		okay = false;
+	        	    	}
+	        	    }
+	        	    if (nDims == 2) {
+	        	    	index = idx[0] + idx[1] * size[0];
+	        	    }
+	        	    else if (nDims == 3) {
+	        	    	index = idx[0] + idx[1] * size[0] + idx[2] * neighborhoodWeightArraySliceSize;
+	        	    }
+	        	    else {
+	        	    	index = idx[0] + idx[1] * size[0] + idx[2] * neighborhoodWeightArraySliceSize + idx[3]* xyzNeighborhoodWeightArray;
+	        	    }
+	        	    if (okay) {
+	        	        omegaLattice[index] = omegaLattice[index] + wc * t * t;
+	        	    }
 	        	    double data = inputPointData.get(n);
 	        	    data *= (t * t * t * wc / w2Sum);
-	        	    deltaLattice[itw] = deltaLattice[itw] + data;
+	        	    if (okay) {
+	        	        deltaLattice[index] = deltaLattice[index] + data;
+	        	    }
 	        	} // for (int itw = 0; itw < neighborhoodWeightArrayLength; itw++)
 	        } // for (int n = 0; n < pointLocation.size(); n++)
 	    }
