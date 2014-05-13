@@ -193,7 +193,7 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 			} else {
 				tempArray = new String[]{"0", "0", "0"};
 			}
-			organized[3] = tempArray[0] + "/" + tempArray[1] + "/" + tempArray[2];
+			organized[3] = tempArray[2] + "/" + tempArray[0] + "/" + tempArray[1];
 		}//Collection Date
 		
 		if(input[indecies[10]] == "null")
@@ -215,7 +215,7 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 			} else {
 				tempArray = new String[]{"0", "0", "0"};
 			}
-			organized[4] = tempArray[0] + "/" + tempArray[1] + "/" + tempArray[2];
+			organized[4] = tempArray[2] + "/" + tempArray[0] + "/" + tempArray[1];
 		}//Date Received
 		
 		organized[5] = input[indecies[2]].trim(); //GUID
