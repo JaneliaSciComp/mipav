@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Vector;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
@@ -22,6 +23,7 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 	private FileWriter concatCSV;
 	private boolean removeHeader;
 	private boolean failed;
+	private int[] indecies;
 	
 	public PlugInAlgorithmParseSlips(){
 		super();
@@ -32,6 +34,8 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 		slipFile = slip;
 		this.csv = csv;
 		concatCSV = concat;
+		indecies = new int[11];
+		Arrays.fill(indecies, -1);
 	}
 	
 	@Override
@@ -161,19 +165,19 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 		String[] tempArray;
 		String tempStr;
 		//System.out.println(makeString(input));
-		organized[0] = input[0].trim(); //PID
-		organized[1] = input[7].trim() + "/" + input[11].trim(); //Specimen
+		organized[0] = input[indecies[0]].trim(); //PID
+		organized[1] = input[indecies[3]].trim() + "/" + input[indecies[4]].trim(); //Specimen
 		
-		tempStr = input[15].trim();
+		tempStr = input[indecies[7]].trim();
 		while(tempStr.endsWith("0") || tempStr.endsWith(".")){
 			tempStr = tempStr.substring(0, tempStr.length()-1);
 		}
 		
-		organized[2] = tempStr + " " + input[16].trim(); //Volume
-		if(input[17] == "null")
+		organized[2] = tempStr + " " + input[indecies[8]].trim(); //Volume
+		if(input[indecies[9]] == "null")
 			organized[3] = "null";
 		else{
-			organized[3] = input[17].trim().split(" ")[0];
+			organized[3] = input[indecies[9]].trim().split(" ")[0];
 			if(organized[3].contains("-") || organized[3].contains("/")){
 				if(organized[3].contains("-"))
 					tempArray = organized[3].split("-");
@@ -192,10 +196,10 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 			organized[3] = tempArray[0] + "/" + tempArray[1] + "/" + tempArray[2];
 		}//Collection Date
 		
-		if(input[18] == "null")
+		if(input[indecies[10]] == "null")
 			organized[4] = "null";
 		else{
-			organized[4] = input[18].trim().split(" ")[0];
+			organized[4] = input[indecies[10]].trim().split(" ")[0];
 			if(organized[4].contains("-") || organized[4].contains("/")){
 				if(organized[4].contains("-"))
 					tempArray = organized[4].split("-");
@@ -214,10 +218,10 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 			organized[4] = tempArray[0] + "/" + tempArray[1] + "/" + tempArray[2];
 		}//Date Received
 		
-		organized[5] = input[6].trim(); //GUID
-		organized[6] = input[5].trim(); //Gender
-		organized[7] = input[14].trim(); //Site
-		organized[8] = input[13].trim();
+		organized[5] = input[indecies[2]].trim(); //GUID
+		organized[6] = input[indecies[1]].trim(); //Gender
+		organized[7] = input[indecies[6]].trim(); //Site
+		organized[8] = input[indecies[5]].trim();
 		
 		return organized;
 	}
@@ -248,6 +252,8 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 		return cont;
 	}
 	
+	//Coriell
+	
 	private String[] parseLine(String line){
 		String[] output = new String[20];
 		int cnt = 0;
@@ -268,6 +274,8 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 		
 		return output;
 	}
+	
+	//Report
 	
 	private String[] parseLine2(String line){
 		String[] output = new String[20];
@@ -338,13 +346,50 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 				String line = null; 
 				slipLines = new Vector<String[]>();
 				slipID = new Vector<String>();
-				if (removeHeader) {
+				/*if (removeHeader) {
 					input.readLine(); //Strip header from Coriell file
 					cnt++;
+				}*/
+				String header = input.readLine();
+				System.err.println(header);
+				String[] headerArray = header.split(",");
+				for(int i=0;i<headerArray.length;i++){
+					String col = headerArray[i].trim();
+					if(col.equals("*SampleId"))
+						indecies[0] = i;
+					else if(col.equals("*Gender"))
+						indecies[1] = i;
+					else if(col.equals("*Alias_ID"))
+						indecies[2] = i;
+					else if(col.equals("*Type"))
+						indecies[3] = i;
+					else if(col.equals("*Container_Type"))
+						indecies[4] = i;
+					else if(col.equals("*AgeYrs"))
+						indecies[5] = i;
+					else if(col.equals("*Site_ID"))
+						indecies[6] = i;
+					else if(col.equals("*Volume_Received"))
+						indecies[7] = i;
+					else if(col.equals("*Volume_Received_Units"))
+						indecies[8] = i;
+					else if(col.equals("*Collection_Date"))
+						indecies[9] = i;
+					else if(col.equals("*Received_Date"))
+						indecies[10] = i;
 				}
+				for(int i=0;i<indecies.length;i++){
+					if(indecies[i] == -1){
+						MipavUtil.displayError("A header is missing");
+						System.err.println(i);
+						failed = true;
+						return;
+					}
+				}
+				
 				while (( line = input.readLine()) != null){
 					cnt++;
-					//System.out.println(line);
+					System.out.println(line);
 					line = line.replace("\"", "");
 					lineArray = parseLine(line); //semi-colon delimiter 
 					if(lineArray.length !=0){

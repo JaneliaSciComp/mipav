@@ -51,7 +51,7 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 	
 	private JRadioButton appRB;
 	
-	private JCheckBox headerCheck;
+	//private JCheckBox headerCheck;
 	
 	private JTextField catalogField;
 	
@@ -183,7 +183,7 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 			
 			parseAlg = new PlugInAlgorithmParseSlips(reportFile, coriellFile, csv, concatCSV);
 			parseAlg.addListener(this);
-			parseAlg.removeHeader(headerCheck.isSelected());
+			//parseAlg.removeHeader(headerCheck.isSelected());
 			parseAlg.run();
 			
 		} catch (IOException e) {
@@ -280,10 +280,10 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
         radioPanel.add(appRB);
         radioPanel.add(delRB);
         
-        JPanel checkPanel = new JPanel();
+        /*JPanel checkPanel = new JPanel();
         headerCheck = new JCheckBox("Remove header in Coriell file");
         headerCheck.setSelected(true);
-        checkPanel.add(headerCheck);
+        checkPanel.add(headerCheck);*/
         
         JPanel OKCancelPanel = new JPanel();
 
@@ -298,7 +298,7 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
         manager.addOnNextLine(choosePanel);
         manager.addOnNextLine(coriellPanel);
         manager.addOnNextLine(radioPanel);
-        manager.addOnNextLine(checkPanel);
+        //manager.addOnNextLine(checkPanel);
         manager.addOnNextLine(OKCancelPanel);
         
         //getContentPane().add(manager.getPanel(), BorderLayout.CENTER);
