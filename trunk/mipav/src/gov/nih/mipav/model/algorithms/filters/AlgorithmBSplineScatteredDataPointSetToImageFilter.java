@@ -425,7 +425,6 @@ import gov.nih.mipav.view.Preferences;
 	    
 	    private void beforeThreadedGenerateData() {
 	        if (!isFittingComplete) {
-	        	int latticeSize = 1;
 	        	int size[] = new int[nDims];
 	        	for (int i = 0; i < nDims; i++) {
 	        		if (closeDimension[i] != 0) {
@@ -434,8 +433,6 @@ import gov.nih.mipav.view.Preferences;
 	        		else {
 	        			size[i] = currentNumberOfControlPoints[i];
 	        		}
-	        		latticeSize *= size[i];
-	        		System.out.println("size["+i+"] = " + size[i]);
 	        	}
 	        	if (omegaLattice != null) {
 	        		omegaLattice.disposeLocal();
