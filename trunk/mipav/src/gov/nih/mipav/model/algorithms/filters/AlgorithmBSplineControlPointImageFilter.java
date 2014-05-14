@@ -418,7 +418,7 @@ import gov.nih.mipav.view.Preferences;
 	    	}
 	    }
 	    
-	    private void setNumberOfLevels(int[] levels) {
+	    public void setNumberOfLevels(int[] levels) {
 	    	numberOfLevels = levels;
 	    	maximumNumberOfLevels = 1;
 	    	for (int i = 0; i < nDims; i++) {
