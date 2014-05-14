@@ -172,8 +172,14 @@ import gov.nih.mipav.view.Preferences;
 	    	}
 	    	refinedLatticeCoefficients = null;
 	    	currentNumberOfControlPoints = null;
-	    	omegaLattice = null;
-	    	deltaLattice = null;
+	    	if (omegaLattice != null) {
+	    		omegaLattice.disposeLocal();
+	    		omegaLattice = null;	
+	    	}
+	    	if (deltaLattice != null) { 
+	    		deltaLattice.disposeLocal();
+	    	    deltaLattice = null;
+	    	};
 	        super.finalize();
 	    }
 	    
