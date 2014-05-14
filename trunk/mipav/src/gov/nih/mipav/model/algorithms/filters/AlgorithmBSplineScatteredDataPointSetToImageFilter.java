@@ -550,7 +550,7 @@ import gov.nih.mipav.view.Preferences;
 	        	    int index;
 	        	    boolean okay = true;
 	        	    for (int i = 0; i < nDims; i++) {
-	        	    	if ((idx[i] < 0) || (idx[i] >= size[0])) {
+	        	    	if ((idx[i] < 0) || (idx[i] >= size[i])) {
 	        	    		okay = false;
 	        	    	}
 	        	    }
