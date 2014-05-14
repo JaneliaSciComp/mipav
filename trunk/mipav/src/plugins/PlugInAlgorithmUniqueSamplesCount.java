@@ -94,7 +94,8 @@ public class PlugInAlgorithmUniqueSamplesCount extends AlgorithmBase {
         	String hStr = hArray[i].trim();
         	if(hStr.equals("Site"))
         		site = i;
-        	else if(hStr.equals("Site Tube ID"))
+        	//else if(hStr.equals("Site Tube ID"))
+        	else if(hStr.equals("GUID"))
         		GUID = i;
         	else if(hStr.equals("Visit ID"))
         		visitID = i;
