@@ -7,6 +7,7 @@ import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.BSplineKernelFunction;
 import gov.nih.mipav.model.structures.CoxDeBoorBSplineKernelFunction;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 
 import java.io.File;
 import java.io.IOException;
@@ -117,6 +118,8 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 	private boolean BSplineScatteredDataPointSetToImageFilterTest = false;
 	
 	private boolean BSplineScatteredDataPointSetToImageFilterTest2 = false;
+	
+	private boolean BSplineControlPointImageFilterTest = false;
 	
 	private boolean BSplineKernelFunctionTest = false;
 
@@ -264,7 +267,117 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 			return;
 		}
 		
+		if (BSplineControlPointImageFilterTest) {
+			// BSplineOutput.xml as expected
+			// Problems with BSplineOutput2.xml
+			FileIO fileIO;
+	        boolean multiFile = false;
+	        ModelImage testImage;
+	        String directory = new String("C:" + File.separatorChar + "N4" + File.separatorChar);
+	        String fileName = new String("N4ControlPoints_2D.nii.gz");
+	        //String fileName = new String("N4ControlPoints14by14_2D.xml");
+	        try {
+	            fileIO = new FileIO();
+
+	            testImage =  fileIO.readImage(fileName, directory, multiFile, null);
+	        } catch (OutOfMemoryError e) {
+	            MipavUtil.displayError("Out of memory!");
+
+	            return;
+	        }
+	        
+	        nDims = 2;
+	        origin = new float[nDims];
+	        int extents[] = new int[nDims];
+	        extents[0] = 100;
+	        extents[1] = 100;
+	        resolutions = new float[nDims];
+	        resolutions[0] = 1.0f;
+	        resolutions[1] = 1.0f;
+	        direction = new double[nDims][nDims];
+	        direction[0][0] = 1.0;
+	        direction[1][1] = 1.0;
+	        //int numberOfLevels[] = new int[nDims];
+	        //numberOfLevels[0] = 3;
+	        //numberOfLevels[1] = 3;
+	        
+	        AlgorithmBSplineControlPointImageFilter bspliner = new AlgorithmBSplineControlPointImageFilter(nDims);
+	        bspliner.setInput(testImage);
+	        bspliner.setExtents(extents);
+	        bspliner.setOrigin(origin);
+	        bspliner.setResolutions(resolutions);
+	        bspliner.setDirection(direction);
+	        //bspliner.setNumberOfLevels(numberOfLevels);
+	        
+	        bspliner.generateData();
+	        double outputBuffer[] = bspliner.getOutputBuffer();
+	        ModelImage outputImage = new ModelImage(ModelStorageBase.DOUBLE, extents, "outputImage");
+	        try {
+	        	outputImage.importData(0, outputBuffer, true);
+	        }
+	        catch (IOException e) {
+	        	MipavUtil.displayError("IOException " + e + " on outputImage.importData(0, outputBuffer, true)");
+	        	setCompleted(false);
+	        	return;	
+	        }
+	        FileWriteOptions opts = new FileWriteOptions(true);
+	        opts.setFileType(FileUtility.XML);
+	        opts.setFileDirectory(directory);
+	        opts.setFileName("BSplineOutput.xml");
+	        opts.setOptionsSet(true);
+			fileIO.writeImage(outputImage, opts);
+			outputImage.disposeLocal();
+			outputImage = null;
+			
+			// Test out additional functionality by refining the control point lattice
+			// and seeing if the output is the same.  In this example we double the
+			/// resolution twice as the refinement is doubled at every level.
+			
+			int numberOfRefinementLevels[] = new int[nDims];
+			// numberOfRefinementLevels = 2 works on 7 X 7 N4ControlPoints_2D.nii.gz
+			// numberOfRefinementLevels = 3 does not work on 7 X 7 N4ControlPoints_2D.nii.gz.
+			// numberOfRefinementLevels = 3 does not work on 14 x 14 N4ControlPoints14by14_2D.xml.
+			numberOfRefinementLevels[0] = 3;
+			numberOfRefinementLevels[1] = 3;
+			ModelImage refinedControlPointLattice = bspliner.refineControlPointLattice(numberOfRefinementLevels);
+			bspliner.finalize();
+			bspliner = null;
+			
+			AlgorithmBSplineControlPointImageFilter bspliner2 = new AlgorithmBSplineControlPointImageFilter(nDims);
+	        bspliner2.setInput(refinedControlPointLattice);
+	        bspliner2.setExtents(extents);
+	        bspliner2.setOrigin(origin);		
+	        bspliner2.setResolutions(resolutions);
+	        bspliner2.setDirection(direction);
+	        
+	        bspliner2.generateData();
+	        outputBuffer = bspliner2.getOutputBuffer();
+	        bspliner2.finalize();
+	        bspliner2 = null;
+	        ModelImage outputImage2 = new ModelImage(ModelStorageBase.DOUBLE, extents, "outputImage2");
+	        try {
+	        	outputImage2.importData(0, outputBuffer, true);
+	        }
+	        catch (IOException e) {
+	        	MipavUtil.displayError("IOException " + e + " on outputImage2.importData(0, outputBuffer, true)");
+	        	setCompleted(false);
+	        	return;	
+	        }
+	        opts = new FileWriteOptions(true);
+	        opts.setFileType(FileUtility.XML);
+	        opts.setFileDirectory(directory);
+	        opts.setFileName("BSplineOutput2.xml");
+	        opts.setOptionsSet(true);
+			fileIO.writeImage(outputImage2, opts);
+			outputImage2.disposeLocal();
+			outputImage2 = null;
+		    setCompleted(false);
+		    return;
+		}
+		
 		if (BSplineScatteredDataPointSetToImageFilterTest) {
+			// filter.setNumberOfLevels(10) gives result indicating
+			// the filter is working properly
 			FileIO fileIO;
 	        boolean multiFile = false;
 	        ModelImage testImage;
@@ -326,7 +439,8 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 				ncps[i] = 4;
 			}
 			filter.setNumberOfControlPoints(ncps);
-			filter.setNumberOfLevels(3);
+			//filter.setNumberOfLevels(3);
+			filter.setNumberOfLevels(10);
 			filter.setOrigin(origin);
 			filter.setResolutions(resolutions);
 			filter.setExtents(extents);
