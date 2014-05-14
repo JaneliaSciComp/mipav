@@ -86,8 +86,8 @@ import gov.nih.mipav.view.Preferences;
 		private Matrix[] refinedLatticeCoefficients;
 		private int currentLevel;
 		private int[] currentNumberOfControlPoints;
-		private double[] omegaLattice;
-		private double[] deltaLattice;
+		private ModelImage omegaLattice;
+		private ModelImage deltaLattice;
 	    
 	    public AlgorithmBSplineScatteredDataPointSetToImageFilter(int nDims) {
 	        super(nDims);
@@ -435,9 +435,18 @@ import gov.nih.mipav.view.Preferences;
 	        			size[i] = currentNumberOfControlPoints[i];
 	        		}
 	        		latticeSize *= size[i];
+	        		System.out.println("size["+i+"] = " + size[i]);
 	        	}
-	        	omegaLattice = new double[latticeSize];
-	        	deltaLattice = new double[latticeSize];
+	        	if (omegaLattice != null) {
+	        		omegaLattice.disposeLocal();
+	        		omegaLattice = null;
+	        	}
+	        	omegaLattice = new ModelImage(ModelStorageBase.DOUBLE, size, "omegaLattice");
+	        	if (deltaLattice != null) {
+	        		deltaLattice.disposeLocal();
+	        		deltaLattice = null;
+	        	}
+	        	deltaLattice = new ModelImage(ModelStorageBase.DOUBLE, size, "deltaLattice");
 	        } // if (!isFittingComplete)
 	    }
 	    
@@ -550,26 +559,29 @@ import gov.nih.mipav.view.Preferences;
 	        	    int index;
 	        	    boolean okay = true;
 	        	    for (int i = 0; i < nDims; i++) {
-	        	    	if ((idx[i] < 0) || (idx[i] >= size[i])) {
-	        	    		okay = false;
+	        	    	if ((idx[i] < 0) || (idx[i] >= omegaLattice.getExtents()[i])) {
+	        	    		okay = false; 
 	        	    	}
 	        	    }
 	        	    if (nDims == 2) {
-	        	    	index = idx[0] + idx[1] * size[0];
+	        	    	index = idx[0] + idx[1] * omegaLattice.getExtents()[0];
 	        	    }
 	        	    else if (nDims == 3) {
-	        	    	index = idx[0] + idx[1] * size[0] + idx[2] * neighborhoodWeightArraySliceSize;
+	        	    	index = idx[0] + idx[1] * omegaLattice.getExtents()[0] + 
+	        	    			idx[2] * omegaLattice.getExtents()[0] * omegaLattice.getExtents()[1];
 	        	    }
 	        	    else {
-	        	    	index = idx[0] + idx[1] * size[0] + idx[2] * neighborhoodWeightArraySliceSize + idx[3]* xyzNeighborhoodWeightArray;
+	        	    	index = idx[0] + idx[1] * omegaLattice.getExtents()[0] + 
+	        	    			idx[2] * omegaLattice.getExtents()[0] * omegaLattice.getExtents()[1] +
+	        	    			idx[3] * omegaLattice.getExtents()[0] * omegaLattice.getExtents()[1] * omegaLattice.getExtents()[2];
 	        	    }
 	        	    if (okay) {
-	        	        omegaLattice[index] = omegaLattice[index] + wc * t * t;
+	        	        omegaLattice.set(index, omegaLattice.getDouble(index) + wc * t * t);
 	        	    }
 	        	    double data = inputPointData.get(n);
 	        	    data *= (t * t * t * wc / w2Sum);
 	        	    if (okay) {
-	        	        deltaLattice[index] = deltaLattice[index] + data;
+	        	        deltaLattice.set(index, deltaLattice.getDouble(index) + data);
 	        	    }
 	        	} // for (int itw = 0; itw < neighborhoodWeightArrayLength; itw++)
 	        } // for (int n = 0; n < pointLocation.size(); n++)
@@ -751,8 +763,8 @@ import gov.nih.mipav.view.Preferences;
 	    	  double latticeBuffer[] = new double[latticeLength];
 	    	  for (int itp = 0; itp < latticeLength; itp++) {
 	    		  double P = 0;
-	    		  if (omegaLattice[itp] != 0) {
-	    			  P = deltaLattice[itp] / omegaLattice[itp];
+	    		  if (omegaLattice.getDouble(itp) != 0) {
+	    			  P = deltaLattice.getDouble(itp) / omegaLattice.getDouble(itp);
 	    			  if ((Double.isNaN(P)) || (Double.isInfinite(P))) {
 	    				  P = 0;
 	    			  }
