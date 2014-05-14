@@ -616,7 +616,7 @@ public class JDialogN4MRIBiasFieldCorrection extends JDialogScriptableBase
         textNoise.setText("0.01");
         textNoise.setFont(serif12);
         
-        labelFittingLevels = new JLabel("Fitting levels (1-5)");
+        labelFittingLevels = new JLabel("Fitting levels (1-10)");
         labelFittingLevels.setForeground(Color.black);
         labelFittingLevels.setFont(serif12);
         
@@ -1034,7 +1034,7 @@ public class JDialogN4MRIBiasFieldCorrection extends JDialogScriptableBase
         
         tmpStr = textFittingLevels.getText();
 
-        if (testParameter(tmpStr, 1.0, 5.0)) {
+        if (testParameter(tmpStr, 1.0, 10.0)) {
             fittingLevels = Integer.valueOf(tmpStr).intValue();
         } else {
             textFittingLevels.requestFocus();
