@@ -947,18 +947,9 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		for (n = 0; n < paddedHistogramSize; n++) {
 			cR = FfR[n];
 			cI = -FfI[n];
-			// (cR + jcI)/(cR*FfR[n] - cI*FfI[n] + WienerFilterNoise +
-			// j(cR*FfI[n] + cI*FfR[n])
-			// Multiply numerator and denominator by complex conjugate of
-			// denominator
-			denom1 = cR * FfR[n] - cI * FfI[n] + WienerFilterNoise;
-			denom2 = cR * FfI[n] + cI * FfR[n];
-			denom = denom1 * denom1 + denom2 * denom2;
-			GfR[n] = (cR * cR * FfR[n] + cR * WienerFilterNoise + cI * cI
-					* FfR[n])
-					/ denom;
-			GfI[n] = (-cR * cR * FfI[n] - cI * cI * FfI[n] + cI * WienerFilterNoise)
-					/ denom;
+			denom = FfR[n] * FfR[n] + FfI[n] * FfI[n] + WienerFilterNoise;
+			GfR[n] = cR / denom;
+			GfI[n] = cI / denom;
 		}
 		UfR = new double[paddedHistogramSize];
 		UfI = new double[paddedHistogramSize];
