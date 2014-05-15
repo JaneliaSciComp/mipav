@@ -588,7 +588,7 @@ import gov.nih.mipav.view.Preferences;
 	    					idxPsi[i] = idx[i];
 	    				}
 	    			}
-	    			for (int i = 0; i < 2 << (nDims - 1); i++) {
+	    			for (int i = 0; i < (2 << (nDims - 1)); i++) {
 	    			 	double sum = 0.0;
 	    			 	double val;
 	    			 	off[0] = i % size2[0];
@@ -627,7 +627,9 @@ import gov.nih.mipav.view.Preferences;
 	    			 	    boolean outOfBoundary2 = false;
 	    			 	    for (int k = 0; k < nDims; k++) {
 	    			 	    	tmpPsi[k] = idxPsi[k] + offPsi[k];
-	    			 	    	if ((tmpPsi[k] >= inputImage.getExtents()[k]) && (closeDimension[k] == 0)) {
+	    			 	    	//if ((tmpPsi[k] >= inputImage.getExtents()[k]) && (closeDimension[k] == 0)) {
+	    			 	    	// Error in original code replaced inputImage.getExtents()[k] with psiLattice.getExtents()[k]
+	    			 	    	if ((tmpPsi[k] >= psiLattice.getExtents()[k]) && (closeDimension[k] == 0)) {
 	    			 	    		outOfBoundary2 = true;
 	    			 	    		break;
 	    			 	    	}
@@ -643,13 +645,16 @@ import gov.nih.mipav.view.Preferences;
 	    			 	    	coeff *= refinedLatticeCoefficients[k].get(off[k], offPsi[k]);
 	    			 	    }
 	    			 	    if (nDims == 2) {
-	    			 	        val = psiLattice.getDouble(tmpPsi[0], tmpPsi[1]);
+	    			 	        val = psiLattice.getDouble(tmpPsi[0] + tmpPsi[1] * psiLattice.getExtents()[0]);
 	    			 	    }
 	    			 	    else if (nDims == 3) {
-	    			 	    	val = psiLattice.getDouble(tmpPsi[0], tmpPsi[1], tmpPsi[2]);
+	    			 	    	val = psiLattice.getDouble(tmpPsi[0] + tmpPsi[1] * psiLattice.getExtents()[0] +
+	    			 	    			                   tmpPsi[2] * psiLattice.getExtents()[0] * psiLattice.getExtents()[1]);
 	    			 	    }
 	    			 	    else {
-	    			 	    	val = psiLattice.getDouble(tmpPsi[0], tmpPsi[1], tmpPsi[2], tmpPsi[3]);	
+	    			 	    	val = psiLattice.getDouble(tmpPsi[0] + tmpPsi[1] * psiLattice.getExtents()[0] +
+	 	    			                   tmpPsi[2] * psiLattice.getExtents()[0] * psiLattice.getExtents()[1] +
+	 	    			                   tmpPsi[3] * psiLattice.getExtents()[0] * psiLattice.getExtents()[1] * psiLattice.getExtents()[2]);	
 	    			 	    }
 	    			 	    val *= coeff;
 	    			 	    sum += val;
