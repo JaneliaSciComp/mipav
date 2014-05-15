@@ -268,8 +268,8 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		}
 		
 		if (BSplineControlPointImageFilterTest) {
-			// BSplineOutput.xml as expected
-			// Problems with BSplineOutput2.xml
+			// BSplineOutput.xml and BSplineOutput2.xml as expected
+			// This indicates the filter is working properly.
 			FileIO fileIO;
 	        boolean multiFile = false;
 	        ModelImage testImage;
@@ -334,9 +334,6 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 			/// resolution twice as the refinement is doubled at every level.
 			
 			int numberOfRefinementLevels[] = new int[nDims];
-			// numberOfRefinementLevels = 2 works on 7 X 7 N4ControlPoints_2D.nii.gz
-			// numberOfRefinementLevels = 3 does not work on 7 X 7 N4ControlPoints_2D.nii.gz.
-			// numberOfRefinementLevels = 3 does not work on 14 x 14 N4ControlPoints14by14_2D.xml.
 			numberOfRefinementLevels[0] = 3;
 			numberOfRefinementLevels[1] = 3;
 			ModelImage refinedControlPointLattice = bspliner.refineControlPointLattice(numberOfRefinementLevels);
