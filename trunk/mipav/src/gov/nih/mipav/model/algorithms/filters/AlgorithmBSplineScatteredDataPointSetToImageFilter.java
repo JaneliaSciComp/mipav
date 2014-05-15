@@ -986,14 +986,17 @@ import gov.nih.mipav.view.Preferences;
 	                    	coeff *= refinedLatticeCoefficients[k].get(off[k], offPsi[k]);
 	                    } // for (int k = 0; k < nDims; k++)
 	                    if (nDims == 2) {
-	                        val = psiLattice.getDouble(tmpPsi[0], tmpPsi[1]);
-	                    }
-	                    else if (nDims == 3) {
-	                    	val = psiLattice.getDouble(tmpPsi[0], tmpPsi[1], tmpPsi[2]);
-	                    }
-	                    else {
-	                    	val = psiLattice.getDouble(tmpPsi[0], tmpPsi[1], tmpPsi[2], tmpPsi[3]);
-	                    }
+    			 	        val = psiLattice.getDouble(tmpPsi[0] + tmpPsi[1] * psiLattice.getExtents()[0]);
+    			 	    }
+    			 	    else if (nDims == 3) {
+    			 	    	val = psiLattice.getDouble(tmpPsi[0] + tmpPsi[1] * psiLattice.getExtents()[0] +
+    			 	    			                   tmpPsi[2] * psiLattice.getExtents()[0] * psiLattice.getExtents()[1]);
+    			 	    }
+    			 	    else {
+    			 	    	val = psiLattice.getDouble(tmpPsi[0] + tmpPsi[1] * psiLattice.getExtents()[0] +
+ 	    			                   tmpPsi[2] * psiLattice.getExtents()[0] * psiLattice.getExtents()[1] +
+ 	    			                   tmpPsi[3] * psiLattice.getExtents()[0] * psiLattice.getExtents()[1] * psiLattice.getExtents()[2]);	
+    			 	    }
 	                    val *= coeff;
 	                    sum += val;
 	                } // for (int j = 0; j < N; j++)
