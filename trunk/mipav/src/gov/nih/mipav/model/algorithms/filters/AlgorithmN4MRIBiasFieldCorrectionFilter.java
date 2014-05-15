@@ -843,8 +843,6 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		double GfI[];
 		double cR;
 		double cI;
-		double denom1;
-		double denom2;
 		double denom;
 		double UfR[];
 		double UfI[];
