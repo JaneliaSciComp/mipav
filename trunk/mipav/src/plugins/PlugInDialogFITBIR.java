@@ -14,10 +14,7 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.WidgetFactory;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
-import gov.nih.tbi.commons.model.DataType;
-import gov.nih.tbi.commons.model.RepeatableType;
-import gov.nih.tbi.commons.model.RequiredType;
-import gov.nih.tbi.commons.model.StatusType;
+import gov.nih.tbi.commons.model.*;
 import gov.nih.tbi.dictionary.model.DictionaryRestServiceModel.DataStructureList;
 import gov.nih.tbi.dictionary.model.hibernate.*;
 import gov.nih.tbi.repository.model.SubmissionType;
@@ -61,10 +58,6 @@ import com.sun.jimi.core.JimiException;
  * TODO: Not properly dealing with versions if there are multiple for the same form structure (in reading CSV or pulling
  * struct info from DDT).
  * 
- * TODO: Need to test reading group repeats from CSV.
- * 
- * TODO: Need to test writing group repeats to CSV.
- * 
  * TODO: Add non-ImgFile support for selecting multiple files and have them automatically zipped together?
  */
 public class PlugInDialogFITBIR extends JFrame implements ActionListener, ChangeListener, ItemListener, TreeSelectionListener, MouseListener,
@@ -92,6 +85,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private Hashtable<String, String> csvStructRowData;
 
     private static final String CSV_OUTPUT_DELIM = ",";
+
+    private static final String MULTI_SELECT_VALUE_DELIM = ";";
+
+    private static final int MULTI_SELECT_VISIBLE_ROWS = 5;
 
     private final ArrayList<ViewJComponentPreviewImage> previewImages = new ArrayList<ViewJComponentPreviewImage>();
 
@@ -158,16 +155,19 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     /** File name of server configuration. */
     private static final String configFileName = "brics_config.properties";
 
-    /** Property for reading the dd server url from the fitbir config file. */
+    /** Property for reading the dd environment name from the brics config file. */
+    private static final String ddEnvNameProp = "ddEnvName";
+
+    /** Property for reading the dd server url from the brics config file. */
     private static final String ddServerURLProp = "ddServerURL";
 
-    /** Property for reading the auth server url from the fitbir config file. */
+    /** Property for reading the auth server url from the brics config file. */
     private static final String authServerURLProp = "authServerURL";
 
-    /** Property for reading the dd authentication user name from the fitbir config file. */
+    /** Property for reading the dd authentication user name from the brics config file. */
     private static final String ddAuthUserProp = "ddAuthUser";
 
-    /** Property for reading the dd authentication password from the fitbir config file. */
+    /** Property for reading the dd authentication password from the brics config file. */
     private static final String ddAuthPassProp = "ddAuthPass";
 
     /**
@@ -175,6 +175,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      * forms.
      */
     private static final String ddUseAuthServiceProp = "ddUseAuthService";
+
+    /** DD server environment name (Prod, Demo, Stage, or Dev). */
+    private static String ddEnvName = "Prod";
 
     /** Full data dictionary server url */
     private static String ddServerURL = ddProdServer;
@@ -210,7 +213,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.15";
+    private static final String pluginVersion = "0.16";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -228,7 +231,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final String recordIndicatorValue = "x";
 
-    private static final String PDBP_IMAGING_STRUCTURE_PREFIX = "PDBPImag";
+    private static final String[] PDBP_IMAGING_STRUCTURE_PREFIX_LIST = {"PDBPImag", "PDBP_Imag"};
 
     private static final String SITE_NAME_ELEMENT_NAME = "SiteName";
 
@@ -238,7 +241,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final String[] allowedGuidPrefixes = new String[] {"TBI", "PD"};
 
-    private static final String[] imagingStructurePrefixes = new String[] {"Imag", PDBP_IMAGING_STRUCTURE_PREFIX};
+    private static final String[] imagingStructurePrefixes;
+    static {
+        imagingStructurePrefixes = new String[1 + PDBP_IMAGING_STRUCTURE_PREFIX_LIST.length];
+        imagingStructurePrefixes[0] = "Imag";
+        for (int i = 0; i < PDBP_IMAGING_STRUCTURE_PREFIX_LIST.length; i++) {
+            imagingStructurePrefixes[i + 1] = PDBP_IMAGING_STRUCTURE_PREFIX_LIST[i];
+        }
+    }
 
     /**
      * Text of the privacy notice displayed to the user before the plugin can be used.
@@ -289,6 +299,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         if (csvFileDir == null) {
             csvFileDir = ViewUserInterface.getReference().getDefaultDirectory();
         }
+
+        // try to read the server config from disk, if it is there.
+        // otherwise the value set above at initialization is used.
+        readConfig();
 
         init();
         setVisible(true);
@@ -556,15 +570,35 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
             }
 
+            final String otherThanQuote = " [^\"] ";
+            final String quotedString = String.format(" \" %s* \" ", otherThanQuote);
+            final String csvRegex = String.format("(?x) " + // enable comments, ignore white spaces
+                    CSV_OUTPUT_DELIM + "                         " + // match a comma
+                    "(?=                       " + // start positive look ahead
+                    "  (                       " + // start group 1
+                    "    %s*                   " + // match 'otherThanQuote' zero or more times
+                    "    %s                    " + // match 'quotedString'
+                    "  )*                      " + // end group 1 and repeat it zero or more times
+                    "  %s*                     " + // match 'otherThanQuote'
+                    "  $                       " + // match the end of the string
+                    ")                         ", // stop positive look ahead
+                    otherThanQuote, quotedString, otherThanQuote);
+
             ArrayList<String> csvParams;
             while ( (str = br.readLine()) != null) {
                 str = str.trim();
-                arr = str.split(CSV_OUTPUT_DELIM);
+                arr = str.split(csvRegex, -1);
 
                 csvParams = new ArrayList<String>(csvFieldNamesWithRecord.length);
                 for (int i = 0; i < arr.length; i++) {
-                    csvParams.add(arr[i]);
+                    // if the value was surrounded by quotes because of a comma inside, remove the quotes
+                    if (arr[i].matches("^\".*\"$")) {
+                        csvParams.add(arr[i].substring(1, arr[i].length() - 1));
+                    } else {
+                        csvParams.add(arr[i]);
+                    }
                 }
+
                 // if not enough values, fill out with blanks until we hit the number of fields
                 for (int i = arr.length; i < csvFieldNamesWithRecord.length; i++) {
                     csvParams.add("");
@@ -637,7 +671,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     }
 
     private void init() {
-        setTitle("Image Submission Package Creation Tool v" + pluginVersion);
+        setTitle("Image Submission Package Creation Tool v" + pluginVersion + " (" + ddEnvName + ")");
 
         try {
             setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
@@ -1930,6 +1964,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 e.printStackTrace();
             }
             // use pre-set, hardcoded values as defaults if properties are not found
+            ddEnvName = prop.getProperty(ddEnvNameProp, ddEnvName);
+            System.out.println("ddEnvName:\t" + ddEnvName);
             authServerURL = prop.getProperty(authServerURLProp, authServerURL);
             System.out.println("authServer:\t" + authServerURL);
             ddServerURL = prop.getProperty(ddServerURLProp, ddServerURL);
@@ -2356,6 +2392,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         return "";
     }
 
+    // TODO: new other specify system: if not freeform DE, put the specified value into the deNameWithoutType + "OTH"
+    // DE, which should be next in position in the form structure
     private static final void setElementComponentValue(final DataElementValue deVal, final String value) {
         if (value != null && !value.equals("")) {
             final JComponent comp = deVal.getComp();
@@ -2380,19 +2418,68 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     if (foundOtherInDE) {
                         jc.setSelectedItem(VALUE_OTHER_SPECIFY);
                         deVal.getOtherSpecifyField().setText(value);
+                        System.err.println("Other specify " + deVal.getName());
                     } else {
                         System.err.println("Value not found. DE:\t" + comp.getName() + "\t" + value);
                     }
                 }
+            } else if (comp instanceof JList) {
+                final JList list = (JList) comp;
+                final ListModel listModel = list.getModel();
+
+                boolean found = false;
+                int otherSpecifyIndex = -1;
+                boolean foundOtherInDE = false;
+
+                // values are assumed to never contain semi-colons since that's the delimiter
+                final String[] valueSplit = value.split(MULTI_SELECT_VALUE_DELIM);
+
+                final ArrayList<Integer> selectedIndicies = new ArrayList<Integer>();
+                for (final String val : valueSplit) {
+                    for (int k = 0; k < listModel.getSize(); k++) {
+                        final String item = (String) listModel.getElementAt(k);
+                        if ( !foundOtherInDE && item.equalsIgnoreCase(VALUE_OTHER_SPECIFY)) {
+                            foundOtherInDE = true;
+                            otherSpecifyIndex = k;
+                        }
+
+                        if (item.equalsIgnoreCase(val)) {
+                            selectedIndicies.add(k);
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if ( !found) {
+                        if (foundOtherInDE) {
+                            list.setSelectedIndex(otherSpecifyIndex);
+                            deVal.getOtherSpecifyField().setText(val);
+                            System.err.println("Other specify " + deVal.getName() + "\t" + val);
+                        } else {
+                            System.err.println("Value not found. DE:\t" + comp.getName() + "\t" + val);
+                        }
+                    }
+                }
+
+                final int[] intArray = new int[selectedIndicies.size()];
+                for (int i = 0; i < selectedIndicies.size(); i++) {
+                    intArray[i] = selectedIndicies.get(i);
+                }
+
+                list.setSelectedIndices(intArray);
             } else {
                 System.err.println("Unrecognized component type (" + comp.getName() + "):\t" + comp.getClass().getName());
             }
         }
     }
 
-    private static final boolean isOtherSpecifyField(final JComponent comp) {
-        if (comp instanceof JComboBox) {
-            final JComboBox combo = (JComboBox) comp;
+    /**
+     * Returns whether this field is a legacy other specify field, where the specified value is put in as free form
+     * instead of being a separate DE.
+     */
+    private static final boolean isLegacyOtherSpecifyField(final DataElementValue deVal) {
+        if (deVal.getDataElementInfo().getRestrictions() == InputRestrictions.FREE_FORM && deVal.getComp() instanceof JComboBox) {
+            final JComboBox combo = (JComboBox) deVal.getComp();
             for (int i = 0; i < combo.getItemCount(); i++) {
                 if ( ((String) combo.getItemAt(i)).trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY)) {
                     return true;
@@ -2622,8 +2709,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      * @return True if the structure name starts with the PDBP imaging prefix.
      */
     private static final boolean isPDBPImagingStructure(final String structureName) {
-        if (structureName.toLowerCase().startsWith(PDBP_IMAGING_STRUCTURE_PREFIX.toLowerCase())) {
-            return true;
+        for (final String prefix : PDBP_IMAGING_STRUCTURE_PREFIX_LIST) {
+            if (structureName.toLowerCase().startsWith(prefix.toLowerCase())) {
+                return true;
+            }
         }
 
         return false;
@@ -3175,6 +3264,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
         }
 
+        // TODO: new other specify system: if not freeform DE, put the specified value into the deNameWithoutType +
+        // "OTH"
+        // DE, which should be next in position in the form structure
         private void populateFieldsFromCSV(final FormStructureData fsData, final ArrayList<ArrayList<String>> record) {
             if (isImagingStructure(dataStructureName)) {
                 // first check to see if main image file was supplied in the csv
@@ -3253,7 +3345,52 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                         if (isOther) {
                                             deVal.getOtherSpecifyField().setText(value);
                                             combo.setSelectedItem(VALUE_OTHER_SPECIFY);
+                                            System.err.println("Other specify " + deVal.getName());
                                         }
+                                    } else if (comp instanceof JList) {
+                                        final JList list = (JList) comp;
+                                        final ListModel listModel = list.getModel();
+
+                                        boolean found = false;
+                                        int otherSpecifyIndex = -1;
+                                        boolean foundOtherInDE = false;
+
+                                        // values are assumed to never contain semi-colons since that's the delimiter
+                                        final String[] valueSplit = value.split(MULTI_SELECT_VALUE_DELIM);
+
+                                        final ArrayList<Integer> selectedIndicies = new ArrayList<Integer>();
+                                        for (final String val : valueSplit) {
+                                            for (int k = 0; k < listModel.getSize(); k++) {
+                                                final String item = (String) listModel.getElementAt(k);
+                                                if ( !foundOtherInDE && item.equalsIgnoreCase(VALUE_OTHER_SPECIFY)) {
+                                                    foundOtherInDE = true;
+                                                    otherSpecifyIndex = k;
+                                                }
+
+                                                if (item.equalsIgnoreCase(val)) {
+                                                    selectedIndicies.add(k);
+                                                    found = true;
+                                                    break;
+                                                }
+                                            }
+
+                                            if ( !found) {
+                                                if (foundOtherInDE) {
+                                                    list.setSelectedIndex(otherSpecifyIndex);
+                                                    deVal.getOtherSpecifyField().setText(val);
+                                                    System.err.println("Other specify " + deVal.getName() + "\t" + val);
+                                                } else {
+                                                    System.err.println("Value not found. DE:\t" + comp.getName() + "\t" + val);
+                                                }
+                                            }
+                                        }
+
+                                        final int[] intArray = new int[selectedIndicies.size()];
+                                        for (int k = 0; k < selectedIndicies.size(); k++) {
+                                            intArray[k] = selectedIndicies.get(k);
+                                        }
+
+                                        list.setSelectedIndices(intArray);
                                     }
 
                                     // found the DE, move to next column in CSV values
@@ -3304,7 +3441,52 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                         if (isOther) {
                                             deVal.getOtherSpecifyField().setText(value);
                                             combo.setSelectedItem(VALUE_OTHER_SPECIFY);
+                                            // System.err.println("Other specify " + deVal.getName() + "\t" + value);
                                         }
+                                    } else if (comp instanceof JList) {
+                                        final JList list = (JList) comp;
+                                        final ListModel listModel = list.getModel();
+
+                                        boolean found = false;
+                                        int otherSpecifyIndex = -1;
+                                        boolean foundOtherInDE = false;
+
+                                        // values are assumed to never contain semi-colons since that's the delimiter
+                                        final String[] valueSplit = value.split(MULTI_SELECT_VALUE_DELIM);
+
+                                        final ArrayList<Integer> selectedIndicies = new ArrayList<Integer>();
+                                        for (final String val : valueSplit) {
+                                            for (int k = 0; k < listModel.getSize(); k++) {
+                                                final String item = (String) listModel.getElementAt(k);
+                                                if ( !foundOtherInDE && item.equalsIgnoreCase(VALUE_OTHER_SPECIFY)) {
+                                                    foundOtherInDE = true;
+                                                    otherSpecifyIndex = k;
+                                                }
+
+                                                if (item.equalsIgnoreCase(val)) {
+                                                    selectedIndicies.add(k);
+                                                    found = true;
+                                                    break;
+                                                }
+                                            }
+
+                                            if ( !found) {
+                                                if (foundOtherInDE) {
+                                                    list.setSelectedIndex(otherSpecifyIndex);
+                                                    deVal.getOtherSpecifyField().setText(val);
+                                                    System.err.println("Other specify " + deVal.getName() + "\t" + val);
+                                                } else {
+                                                    System.err.println("Value not found. DE:\t" + comp.getName() + "\t" + val);
+                                                }
+                                            }
+                                        }
+
+                                        final int[] intArray = new int[selectedIndicies.size()];
+                                        for (int k = 0; k < selectedIndicies.size(); k++) {
+                                            intArray[k] = selectedIndicies.get(k);
+                                        }
+
+                                        list.setSelectedIndices(intArray);
                                     }
 
                                     // found the DE, move to next column in CSV values
@@ -3613,9 +3795,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         elementPanel.add(browseButton, egbc);
                     } else {
                         egbc.gridwidth = 2;
-                        elementPanel.add(deVal.getComp(), egbc);
+                        if (deInfo.getRestrictions() == InputRestrictions.MULTIPLE) {
+                            // the stored component is the JList of option. instead, add the scrollpane containing it (a
+                            // viewport is in between)
+                            elementPanel.add(deVal.getComp().getParent().getParent(), egbc);
+                        } else {
+                            elementPanel.add(deVal.getComp(), egbc);
+                        }
 
-                        if (isOtherSpecifyField(deVal.getComp())) {
+                        if (isLegacyOtherSpecifyField(deVal)) {
                             egbc.gridy++;
                             elementPanel.add(deVal.getOtherSpecifyField(), egbc);
                         }
@@ -3747,41 +3935,86 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     newDeVal.setLabel(l);
                     newDeVal.setComp(cb);
                 } else if (de.getValueRangeList() != null && de.getValueRangeList().size() > 0 && de.getType() != null && !de.getType().equals(DataType.DATE)) {
-                    final JComboBox cb = new JComboBox();
-                    cb.setName(de.getName());
-                    cb.setFont(MipavUtil.font12);
+                    if (de.getRestrictions() == InputRestrictions.SINGLE || de.getRestrictions() == InputRestrictions.FREE_FORM) {
+                        final JComboBox cb = new JComboBox();
+                        cb.setName(de.getName());
+                        cb.setFont(MipavUtil.font12);
 
-                    cb.addItem("");
-                    for (final ValueRange val : de.getValueRangeList()) {
-                        cb.addItem(val.getValueRange());
-                    }
-                    cb.addItemListener(this);
+                        cb.addItem("");
+                        for (final ValueRange val : de.getValueRangeList()) {
+                            cb.addItem(val.getValueRange());
+                        }
+                        cb.addItemListener(this);
 
-                    if (de.getRequiredType().equals(RequiredType.REQUIRED)) {
-                        l.setForeground(Color.red);
-                    }
+                        if (de.getRequiredType().equals(RequiredType.REQUIRED)) {
+                            l.setForeground(Color.red);
+                        }
 
-                    tooltip = "<html>";
-                    if (de.getMeasuringUnit() != null) {
-                        tooltip += "<p><b>Unit of measure:</b> " + de.getMeasuringUnit() + "</p>";
-                    }
-                    if (de.getNinds() != null && !de.getNinds().getValue().equals("")) {
-                        tooltip += "<p><b>NINDS CDE ID:</b> " + de.getNinds().getValue() + "</p>";
-                    }
-                    if (de.getGuidelines() != null && !de.getGuidelines().trim().equals("")) {
-                        tooltip += "<p><b>Guidelines & Instructions:</b></br>"
-                                + WordUtils.wrap(removeRedundantDiseaseInfo(de.getGuidelines()), 80, "<br/>", false) + "</p>";
-                    }
-                    if (de.getNotes() != null && !de.getNotes().trim().equals("")) {
-                        tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(de.getNotes()), 80, "<br/>", false) + "</p>";
-                    }
-                    tooltip += "</html>";
-                    if ( !tooltip.equals("<html></html>")) {
-                        cb.setToolTipText(tooltip);
-                    }
+                        tooltip = "<html>";
+                        if (de.getMeasuringUnit() != null) {
+                            tooltip += "<p><b>Unit of measure:</b> " + de.getMeasuringUnit() + "</p>";
+                        }
+                        if (de.getNinds() != null && !de.getNinds().getValue().equals("")) {
+                            tooltip += "<p><b>NINDS CDE ID:</b> " + de.getNinds().getValue() + "</p>";
+                        }
+                        if (de.getGuidelines() != null && !de.getGuidelines().trim().equals("")) {
+                            tooltip += "<p><b>Guidelines & Instructions:</b></br>"
+                                    + WordUtils.wrap(removeRedundantDiseaseInfo(de.getGuidelines()), 80, "<br/>", false) + "</p>";
+                        }
+                        if (de.getNotes() != null && !de.getNotes().trim().equals("")) {
+                            tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(de.getNotes()), 80, "<br/>", false) + "</p>";
+                        }
+                        tooltip += "</html>";
+                        if ( !tooltip.equals("<html></html>")) {
+                            cb.setToolTipText(tooltip);
+                        }
 
-                    newDeVal.setLabel(l);
-                    newDeVal.setComp(cb);
+                        newDeVal.setLabel(l);
+                        newDeVal.setComp(cb);
+                    } else if (de.getRestrictions() == InputRestrictions.MULTIPLE) {
+                        final Object[] valRangeList = de.getValueRangeList().toArray();
+                        final String[] listData = new String[de.getValueRangeList().size()];
+                        for (int i = 0; i < listData.length; i++) {
+                            listData[i] = ((ValueRange) valRangeList[i]).getValueRange();
+                        }
+
+                        final JList list = new JList(listData);
+                        list.setName(de.getName());
+                        list.setFont(MipavUtil.font12);
+                        list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+                        list.setLayoutOrientation(JList.VERTICAL);
+                        list.setVisibleRowCount(MULTI_SELECT_VISIBLE_ROWS);
+
+                        final JScrollPane listScroller = new JScrollPane(list);
+                        listScroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+                        // listScroller.setPreferredSize(new Dimension(250, 80));
+
+                        if (de.getRequiredType().equals(RequiredType.REQUIRED)) {
+                            l.setForeground(Color.red);
+                        }
+
+                        tooltip = "<html>";
+                        if (de.getMeasuringUnit() != null) {
+                            tooltip += "<p><b>Unit of measure:</b> " + de.getMeasuringUnit() + "</p>";
+                        }
+                        if (de.getNinds() != null && !de.getNinds().getValue().equals("")) {
+                            tooltip += "<p><b>NINDS CDE ID:</b> " + de.getNinds().getValue() + "</p>";
+                        }
+                        if (de.getGuidelines() != null && !de.getGuidelines().trim().equals("")) {
+                            tooltip += "<p><b>Guidelines & Instructions:</b></br>"
+                                    + WordUtils.wrap(removeRedundantDiseaseInfo(de.getGuidelines()), 80, "<br/>", false) + "</p>";
+                        }
+                        if (de.getNotes() != null && !de.getNotes().trim().equals("")) {
+                            tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(de.getNotes()), 80, "<br/>", false) + "</p>";
+                        }
+                        tooltip += "</html>";
+                        if ( !tooltip.equals("<html></html>")) {
+                            list.setToolTipText(tooltip);
+                        }
+
+                        newDeVal.setLabel(l);
+                        newDeVal.setComp(list);
+                    }
                 } else {
                     final JTextField tf = new JTextField(20);
                     tf.setName(de.getName());
@@ -4479,14 +4712,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
                     for (final DataElementValue deVal : repeat.getDataElements()) {
                         if ( !deVal.getName().equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
-                            try {
+                            if (deVal.getComp() instanceof JTextField) {
                                 ((JTextField) deVal.getComp()).setText(null);
-                            } catch (final ClassCastException e) {
-                                try {
-                                    ((JComboBox) deVal.getComp()).setSelectedItem(null);
-                                } catch (final ClassCastException f) {
-
-                                }
+                            } else if (deVal.getComp() instanceof JComboBox) {
+                                ((JComboBox) deVal.getComp()).setSelectedItem(null);
+                            } else if (deVal.getComp() instanceof JList) {
+                                ((JList) deVal.getComp()).clearSelection();
                             }
                         }
                     }
@@ -4800,6 +5031,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             value = ((JTextField) deComp).getText().trim();
                         } else if (deComp instanceof JComboBox) {
                             value = (String) ( ((JComboBox) deComp).getSelectedItem());
+                        } else if (deComp instanceof JList) {
+                            value = "";
+                            for (final Object o : ((JList) deComp).getSelectedValuesList()) {
+                                if (value == "") {
+                                    value = (String) o;
+                                } else {
+                                    value += MULTI_SELECT_VALUE_DELIM + (String) o;
+                                }
+                            }
                         }
 
                         // now we need to validate
@@ -4850,6 +5090,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
         }
 
+        // TODO: new other specify system: if not freeform DE, put the specified value into the deNameWithoutType +
+        // "OTH"
+        // DE, which should be next in position in the form structure
         /**
          * called after validation is done
          */
@@ -4879,6 +5122,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             value = (String) ( ((JComboBox) comp).getSelectedItem());
                             if (value.equalsIgnoreCase(VALUE_OTHER_SPECIFY)) {
                                 value = deVal.getOtherSpecifyField().getText().trim();
+                            }
+                        } else if (comp instanceof JList) {
+                            value = "";
+                            for (final Object o : ((JList) comp).getSelectedValuesList()) {
+                                if (value == "") {
+                                    value = (String) o;
+                                } else {
+                                    value += MULTI_SELECT_VALUE_DELIM + (String) o;
+                                }
                             }
                         }
 
@@ -5007,9 +5259,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 progressCancelButton = progressBar.getCancelButton();
                 progressCancelButton.addActionListener(this);
 
-                // try to read the server config from disk, if it is there.
-                // otherwise the value set above at initialization is used.
-                readConfig();
+                // should have already read in the config file (moved from here to be before the GUI init() call)
 
                 WebClient client;
                 if (ddUseAuthService) {
@@ -5137,7 +5387,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public void setComp(final JComponent deComp) {
             this.deComp = deComp;
 
-            if (isOtherSpecifyField(deComp)) {
+            if (isLegacyOtherSpecifyField(this)) {
                 otherSpecifyField = new JTextField();
                 otherSpecifyField.setVisible(false);
                 ((JComboBox) deComp).addActionListener(new OtherSpecifyListener(otherSpecifyField));
