@@ -105,6 +105,8 @@ public class FFTUtility extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private int nspn;
+    
+    private boolean showProgress = true;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -153,6 +155,14 @@ public class FFTUtility extends AlgorithmBase {
         a = null;
         b = null;
         super.finalize();
+    }
+    
+    /**
+     *    
+     * @param showProgress
+     */
+    public void setShowProgress(boolean showProgress) {
+    	this.showProgress = showProgress;
     }
 
     /**
@@ -344,7 +354,9 @@ public class FFTUtility extends AlgorithmBase {
         boolean goBack7 = false;
         boolean goBack8 = false;
 
-        fireProgressStateChanged("FFT", "Performing FFT...");
+        if (showProgress) {
+            fireProgressStateChanged("FFT", "Performing FFT...");
+        }
 
         // DETERMINE THE FACTORS OF n
         m = 0;
