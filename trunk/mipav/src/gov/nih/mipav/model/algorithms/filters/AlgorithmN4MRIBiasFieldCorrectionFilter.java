@@ -22,11 +22,15 @@ import gov.nih.mipav.view.ViewJProgressBar;
 /**
  * 
  * 
- * @version 0.1 April 24, 2014
+ * @version 0.1 May 16, 2014
  * @author William Gandler
  * 
- *         This a a port of itkN4MRIBiasFieldCorrectionImageFilter.txx and 
- *         itkCoxDeBoorBSplineKernelFunctionTest2.cxx from the
+ *         This a a port of itkN4MRIBiasFieldCorrectionImageFilter.txx,
+ *         itkN4MRIBiasFieldCorrectionImageFilter.h, 
+ *         itkCoxDeBoorBSplineKernelFunctionTest2.cxx,
+ *         itkBSplineScatteredDataPointSetToImageFilterTest,
+ *         itkBSplineScatteredDataPointSetToImageFilterTest2,
+ *         and itkBSplineControlPointImageFilterTest from the
  *         itk package. Here is the original itk header: Program: Advanced
  *         Normalization Tools Module: $RCSfile:
  *         itkN4MRIBiasFieldCorrectionImageFilter.txx,v $ Language: C++ Date:
@@ -71,7 +75,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 
 	private int splineOrder[];
 	
-	private int fittingLevels = 1;
+	private int fittingLevels = 4;
 
 	private int originalNumberOfFittingLevels[];
 	
@@ -108,6 +112,10 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 	private int maskLargest[];
 
 	private int maskExtents[];
+	
+	private int latticeExtents[] = null;
+	
+    private int latticeExtentsLength = 1;
 	
 	private boolean selfTest = false;
 	
@@ -1174,15 +1182,15 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
         bspliner.setPointWeights(weights);
         bspliner.generateData();
         
+        latticeExtentsLength = 1;
+        latticeExtents = null;
+        latticeExtents = bspliner.getPhiLattice().getExtents();
+        for (i = 0; i < latticeExtents.length; i++) {
+    		latticeExtentsLength *= latticeExtents[i];
+    	}
         // Add the bias field control points to the current estimate
-        int latticeExtents[] = null;
-        int latticeExtentsLength = 1;
         if (logBiasFieldControlPointLattice == null) {
         	logBiasFieldControlPointLattice = bspliner.getPhiLattice();
-        	latticeExtents = logBiasFieldControlPointLattice.getExtents();
-        	for (i = 0; i < latticeExtents.length; i++) {
-        		latticeExtentsLength *= latticeExtents[i];
-        	}
         }
         else {
         	for (i = 0; i < latticeExtentsLength; i++) {
