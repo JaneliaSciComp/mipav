@@ -917,6 +917,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		// -1 for forward transform
 		fft = new FFTUtility(VfR, VfI, 1, paddedHistogramSize, 1, -1,
 				FFTUtility.FFT);
+		fft.setShowProgress(false);
 		fft.run();
 		fft.finalize();
 		fft = null;
@@ -943,6 +944,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		// -1 for forward transform
 		fft = new FFTUtility(FfR, FfI, 1, paddedHistogramSize, 1, -1,
 				FFTUtility.FFT);
+		fft.setShowProgress(false);
 		fft.run();
 		fft.finalize();
 		fft = null;
@@ -970,6 +972,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		// +1 for backward transform
 		fft = new FFTUtility(UR, UI, 1, paddedHistogramSize, 1, 1,
 				FFTUtility.FFT);
+		fft.setShowProgress(false);		
 		fft.run();
 		fft.finalize();
 		fft = null;
@@ -992,6 +995,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		// -1 for forward transform
 		fft = new FFTUtility(numeratorR, numeratorI, 1, paddedHistogramSize, 1,
 				-1, FFTUtility.FFT);
+		fft.setShowProgress(false);
 		fft.run();
 		fft.finalize();
 		fft = null;
@@ -1003,12 +1007,14 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		// +1 for backward transform
 		fft = new FFTUtility(numeratorR, numeratorI, 1, paddedHistogramSize, 1,
 				1, FFTUtility.FFT);
+		fft.setShowProgress(false);
 		fft.run();
 		fft.finalize();
 		fft = null;
 		// -1 for forward transform
 		fft = new FFTUtility(denominatorR, denominatorI, 1,
 				paddedHistogramSize, 1, -1, FFTUtility.FFT);
+		fft.setShowProgress(false);
 		fft.run();
 		fft.finalize();
 		fft = null;
@@ -1021,6 +1027,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		// +1 for backward transform
 		fft = new FFTUtility(denominatorR, denominatorI, 1,
 				paddedHistogramSize, 1, 1, FFTUtility.FFT);
+		fft.setShowProgress(false);
 		fft.run();
 		fft.finalize();
 		fft = null;
@@ -1197,6 +1204,9 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
         		logBiasFieldControlPointLattice.set(i, logBiasFieldControlPointLattice.getDouble(i) + 
         				                               bspliner.getPhiLattice().getDouble(i));
         	}
+            ModelImage temp = bspliner.getPhiLattice();
+            temp.disposeLocal();
+            temp = null;
         }
         bspliner.finalize();
         bspliner = null;
