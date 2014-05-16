@@ -716,6 +716,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 		}
 		for (currentLevel = 0; currentLevel < maximumNumberOfLevels; currentLevel++) {
 			elapsedIterations = 0;
+			
 			currentConvergenceMeasurement = Double.MAX_VALUE;
 			while ((elapsedIterations++ < maximumNumberOfIterations[currentLevel])
 					&& (currentConvergenceMeasurement > convergenceThreshold)) {
@@ -1179,7 +1180,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
         }
         bspliner.setOrigin(maskOrigin);
         bspliner.setResolutions(resolutions);
-        bspliner.setExtents(srcImage.getExtents());
+        bspliner.setExtents(maskExtents);
         bspliner.setDirection(direction);
         bspliner.setGenerateOutputImage(false);
         bspliner.setNumberOfLevels(numberOfFittingLevels);
