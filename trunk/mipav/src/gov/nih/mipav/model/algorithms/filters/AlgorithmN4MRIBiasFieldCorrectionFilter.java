@@ -719,6 +719,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 			currentConvergenceMeasurement = Double.MAX_VALUE;
 			while ((elapsedIterations++ < maximumNumberOfIterations[currentLevel])
 					&& (currentConvergenceMeasurement > convergenceThreshold)) {
+				fireProgressStateChanged("N4 Level = " + currentLevel + " Iteration = " + elapsedIterations);
 				// Sharpen the current estimate of the uncorrected image
 				logSharpened = sharpen(logUncorrected);
 				for (i = 0; i < length; i++) {
