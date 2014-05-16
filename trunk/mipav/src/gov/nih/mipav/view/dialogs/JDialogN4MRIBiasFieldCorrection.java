@@ -137,7 +137,7 @@ public class JDialogN4MRIBiasFieldCorrection extends JDialogScriptableBase
     
     private JTextField textControlPoints;
     
-    private int fittingLevels = 1;
+    private int fittingLevels = 4;
     
     private int controlPoints = 4;
 
@@ -621,7 +621,7 @@ public class JDialogN4MRIBiasFieldCorrection extends JDialogScriptableBase
         labelFittingLevels.setFont(serif12);
         
         textFittingLevels = new JTextField(5);
-        textFittingLevels.setText("1");
+        textFittingLevels.setText("4");
         textFittingLevels.setFont(serif12);
         
         labelControlPoints = new JLabel("Control points (4-20)");
@@ -1127,7 +1127,7 @@ public class JDialogN4MRIBiasFieldCorrection extends JDialogScriptableBase
             //table.put(new ParameterFloat("subsampling_factor", 4.0f));							
             table.put(new ParameterDouble("kernel_fwhm", 0.15));
             table.put(new ParameterDouble("wiener_noise_filter", 0.01));
-            table.put(new ParameterInt("fitting_levels", 1));
+            table.put(new ParameterInt("fitting_levels", 4));
             table.put(new ParameterInt("control_points", 4));
             //table.put(new ParameterBoolean("do_auto_histo_thresholding", false));
             table.put(new ParameterBoolean("do_create_field_image", false));						
