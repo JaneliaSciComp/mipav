@@ -49,7 +49,11 @@ public class PlugInAlgorithmUniqueSamplesCount extends AlgorithmBase {
 			ind = line.indexOf(",");
 			if(ind > 0)
 				output[cnt] = line.substring(0, ind).trim();
-			else if (ind == -1) break;
+			else if (ind == -1){
+				output[cnt] = line.substring(0, line.length()).trim();
+				cnt++;
+				break;
+			}
 			else output[cnt] = "null";
 			cnt++;
 			line = line.substring(ind+1);
@@ -104,7 +108,14 @@ public class PlugInAlgorithmUniqueSamplesCount extends AlgorithmBase {
         }
         
         if(site == -1 || GUID == -1 || visitID == -1 || specimen == -1){
-        	MipavUtil.displayError("A header is missing");
+        	if(site == -1)
+            	MipavUtil.displayError("Site header is missing");
+        	if(GUID == -1)
+        		MipavUtil.displayError("GUID header is missing");
+        	if(visitID == -1)
+        		MipavUtil.displayError("Visit header is missing");
+        	if(specimen == -1)
+        		MipavUtil.displayError("Specimen header is missing");
         	input.close();
         	return;
         }
