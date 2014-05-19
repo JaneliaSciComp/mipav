@@ -267,7 +267,6 @@ public class FileUtility {
     
     /** Vista file extension .v */
     public static final int VISTA = 76;
-
     
     /** Metaimage files are either
      *  separate .mhd header and .raw image data files or
@@ -278,6 +277,9 @@ public class FileUtility {
     /** Extension: .trk, TrackVis track data */
     public static final int TRACKVIS = 78;
     
+    /** Zeiss ZISRAW (CZI) file format extension .czi */
+    public static final int CZI = 79;
+    
     
 
     private static final String[] fileTypeStr = {"error", "undefined", "afni", "analyze", "analyze multifile", "avi",
@@ -287,7 +289,8 @@ public class FileUtility {
             "medivision", "mgh", "micro cat", "minc", "minc multifile", "mipav", "mrc", "nifti", "nifti multifile", "nrrd",
             "nrrd multifile", "osm", "pcx", "pic", "pict", "png", "psd", "qt", "raw", "raw multifile", "spm", "stk", "surface xml",
             "tga", "tiff", "tiff multifile", "tmg", "voi file", "xbm", "xml", "xml multifile", "xpm", "parrec", "parrec multifile",
-            "spar", "surfaceref xml", "minc hdf", "liff", "bfloat", "siemens text", "zvi", "jp2", "mat", "v", "MetaImage", "trk"};
+            "spar", "surfaceref xml", "minc hdf", "liff", "bfloat", "siemens text", "zvi", "jp2", "mat", "v", "MetaImage", "trk",
+            "czi"};
 
     
 
