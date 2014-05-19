@@ -773,7 +773,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		}
 
 		//Delete the trail behind you as you traverse the skeleton
-		skelClone.flip(start);
+		skelClone.set(start, false);
 		
 		//Start seeding traversal with one of the longest path points
 		x = start%width;
@@ -785,7 +785,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 				ind = nx + ny*width;
 				if(skelClone.get(ind)){
 					path.addFirst(new BranchContainer(ind, 1, start));
-					skelClone.flip(ind);
+					skelClone.set(ind, false);
 				}
 			}
 		}
@@ -795,7 +795,13 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		while(!path.isEmpty()){
 			num = 0;
 			current = path.pop();
-			start = current.i;
+			start = current.i;	
+			if(tipPts.contains(start)){
+				line++;
+				writeInfo(line, start, 1, current.line);
+				num++;
+				continue;
+			}
 			x = start%width;
 			y = start/width;
 			int originated = current.originated;
@@ -805,17 +811,10 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 					if(nx<0||nx>=width || (nx == x && ny == y)) continue;
 					ind = nx + ny*width;
 					if(skelClone.get(ind)){
-						//Reached the end of a branch, don't need to add
-						//anymore points, just write information
-						if(tipPts.contains(ind)){
-							line++;
-							writeInfo(line, ind, 1, current.line);
-						}
-						else{
-							pathBuffer.add(ind);
-							num++;
-						}
+						pathBuffer.add(ind);
+						num++;
 					}
+					
 				}
 			}
 			//Refill the stack with points to traverse
@@ -830,7 +829,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 				Iterator<BranchContainer> iter;
 				BranchContainer check;
 				BranchContainer toRemove = null;
-				loop:for(int ny=y+1;ny>=y-1;ny--){
+				for(int ny=y+1;ny>=y-1;ny--){
 					if(ny<0||ny>=height) continue;
 					for(int nx=x+1;nx>=x-1;nx--){
 						if(nx<0||nx>=width || (nx == x && ny == y)) continue;
@@ -839,12 +838,23 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 						while(iter.hasNext()){
 							check = iter.next();
 							if(check.i == ind && check.line != current.line){
-								line++;
-								writeInfo(line, current.originated, 0, check.line);
-								line++;
-								writeInfo(line, check.originated, 0, current.line);
-								toRemove = check;
-								break loop;
+								int mnum = 0;
+								for(int mx=nx-1;mx<=nx+1;mx++){
+									if(mx<0 || mx>= width) continue;
+									for(int my=ny-1;my<=ny+1;my++){
+										if(my<0 || my>=height) continue;
+										int mind = mx + my*width;
+										if(skelClone.get(mind))
+											mnum++;
+									}
+								}
+								if(mnum == 0){
+									line++;
+									writeInfo(line, current.originated, 0, check.line);
+									line++;
+									writeInfo(line, check.originated, 0, current.line);
+									toRemove = check;
+								}
 							}
 						}
 					}
@@ -853,7 +863,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			}
 			while(!pathBuffer.isEmpty()){
 				path.addFirst(new BranchContainer(pathBuffer.get(0), current.line, originated));
-				skelClone.flip(pathBuffer.remove(0));
+				skelClone.set(pathBuffer.remove(0), false);
 			}
 		}
 		

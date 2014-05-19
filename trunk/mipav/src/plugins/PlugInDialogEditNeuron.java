@@ -1442,13 +1442,15 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			num = num.substring(0, num.indexOf("."));
 			y0 = height - Integer.parseInt(num);
 			
+			VOIBaseVector pts = new VOIBaseVector();
+			
 			if(k == activeSlice){
 				origin = new Point(x0,y0);
 				VOIPoint voi = new VOIPoint(VOI.POINT, new Vector3f(x0,y0,activeSlice));
 				voi.setLabel("O");
 				controlPts.importCurve(voi);
 				
-				VOIBaseVector pts = controlPts.getCurves();
+				pts = controlPts.getCurves();
 				originVOI = (VOIPoint) pts.get(0);
 			}
 			
@@ -1491,11 +1493,27 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 					
 					paths.add(p0, p1);
 					
-					VOIPoint voi = new VOIPoint(VOI.POINT, new Vector3f(x0,y0,activeSlice));
-					voi.setLabel("");
-					controlPts.importCurve(voi);
+					boolean contains = false;
+					for(int m=0;m<pts.size();m++){
+						VOIBase voibase = pts.get(m);
+						if(voibase.contains(x0, y0)){
+							contains = true;
+							break;
+						}
+						
+					}
+					
+					if(!contains){
+						VOIPoint voi = new VOIPoint(VOI.POINT, new Vector3f(x0,y0,activeSlice));
+						voi.setLabel("");
+						pts.add(voi);
+					}
+					
+					
 				}
 			}
+			if(k == activeSlice)
+				controlPts.setCurves(pts);
 		}
 		
 		VOIBaseVector base = controlPts.getCurves();
@@ -1554,7 +1572,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		File currentSWC = swcList.get(currentSlice);
 		
 		String header = "";
-		String csvOut = images.get(currentSlice).getName() + ",";
+		String csvOut = currentSlice + ",";
 		
 		String saveName = currentSWC.getPath();
 		String name = currentSWC.getName();

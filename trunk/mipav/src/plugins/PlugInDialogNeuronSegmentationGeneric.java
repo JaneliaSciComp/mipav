@@ -774,6 +774,11 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		extents = new int[]{extents[0], extents[1]};
 		width = extents[0];
 		
+		if(extents.length < 3){
+			srcImage = imStack;
+			return true;
+		}
+		
 		String[] slice = new String[]{String.valueOf(counter)};
 
 		srcImage = new ModelImage(imStack.getType(), extents, imStack.getImageName() + "_slice" + counter);
