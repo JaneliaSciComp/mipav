@@ -293,6 +293,10 @@ public class FileTypeTable {
         FileTypeTable.FILE_EXT_TABLE.put(".zvi", FileUtility.ZVI);
         FileTypeTable.FILE_EXT_TABLE.put(".ZVI", FileUtility.ZVI);
         
+        FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.CZI, new FileTypeInfo("CZI", ".czi"));
+        FileTypeTable.FILE_EXT_TABLE.put(".czi", FileUtility.CZI);
+        FileTypeTable.FILE_EXT_TABLE.put(".CZI", FileUtility.CZI);
+        
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.MATLAB, new FileTypeInfo("MATLAB", ".mat"));
         FileTypeTable.FILE_EXT_TABLE.put(".mat", FileUtility.MATLAB);
         FileTypeTable.FILE_EXT_TABLE.put(".MAT", FileUtility.MATLAB);
