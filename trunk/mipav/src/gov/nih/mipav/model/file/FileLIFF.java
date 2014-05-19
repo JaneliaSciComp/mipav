@@ -629,7 +629,7 @@ public class FileLIFF extends FileBase {
             else {
                 Preferences.debug("sigBytes field is an unexpected " + sigStr + "\n", Preferences.DEBUG_FILEIO);
                 raFile.close();
-                throw new IOException("sigBytes filed is an unexpected " + sigStr);
+                throw new IOException("sigBytes field is an unexpected " + sigStr);
             }
             
             int versionNumber = getInt(endianess);
