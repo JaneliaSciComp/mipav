@@ -1,17 +1,14 @@
 package gov.nih.mipav.view.dialogs;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
 import java.util.*;
 
 import javax.swing.*;
@@ -109,6 +106,12 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
     private JLabel userDirectoryLabel;
     
     private JTextField userDirectoryText;
+    
+    private JRadioButton twoDButton;
+    
+    private JRadioButton threeDButton;
+    
+    private boolean use3D = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -364,14 +367,19 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
         }
         
         if (DIM == 3) {
-        	coplanar = true;
-
-            for (i = 0; (i < ptA.length) && coplanar; i++) {
-
-                if (ptA[i].Z != ptB[i].Z) {
-                    coplanar = false;
-                }
-            }
+        	if (use3D) {
+        		coplanar = false;
+        	}
+        	else {
+	        	coplanar = true;
+	
+	            for (i = 0; (i < ptA.length) && coplanar; i++) {
+	
+	                if (ptA[i].Z != ptB[i].Z) {
+	                    coplanar = false;
+	                }
+	            }
+        	}
         }
 
         
@@ -517,6 +525,14 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
     public void setMatrixDirectory(String matrixDirectory) {
     	this.matrixDirectory = matrixDirectory;
     }
+    
+    /**
+     * 
+     * @param use3D
+     */
+    public void setUse3D(boolean use3D) {
+    	this.use3D = use3D;
+    }
 
     /**
      * {@inheritDoc}
@@ -529,6 +545,7 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
             DIM = 2;
         } else if (matchImage.getNDims() == 3) {
             DIM = 3;
+            setUse3D(scriptParameters.getParams().getBoolean("use_3D"));
         }
 
         UI = ViewUserInterface.getReference();
@@ -542,6 +559,9 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(matchImage);
         scriptParameters.storeImage(baseImage, "reference_image");
+        if (matchImage.getNDims() == 3) {
+        	scriptParameters.getParams().put(ParameterFactory.newParameter("use_3D", use3D));
+        }
 
         scriptParameters.storeImageInRecorder(getResultImage());
         scriptParameters.getParams().put(ParameterFactory.newParameter("matrix_directory", matrixDirectory));
@@ -620,26 +640,49 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
         userDirectoryText.setEnabled(true);
         
         GridBagConstraints gbc = new GridBagConstraints();
-        Insets insets = new Insets(2, 5, 2, 5);
-        gbc.gridx = 0;
         gbc.gridy = 0;
+        Insets insets = new Insets(2, 5, 2, 5);
+        if (matchImage.getNDims() == 3) {
+        	JLabel choiceLabel = new JLabel("If all corresponding points have equal Z:");
+        	choiceLabel.setForeground(Color.black);
+            choiceLabel.setFont(serif12);
+            choiceLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            gbc.gridx = 0;
+            gbc.weightx = 1;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.insets = insets;
+            outputPanel.add(choiceLabel, gbc);
+            gbc.gridy++;
+            ButtonGroup choiceGroup = new ButtonGroup();
+            threeDButton = new JRadioButton("Use 3D spline", true);
+            threeDButton.setFont(serif12);
+            threeDButton.setForeground(Color.black);
+            choiceGroup.add(threeDButton);
+            outputPanel.add(threeDButton, gbc);
+            gbc.gridy++;
+            twoDButton = new JRadioButton("Use 2D spline", false);
+            twoDButton.setFont(serif12);
+            twoDButton.setForeground(Color.black);
+            choiceGroup.add(twoDButton);
+            outputPanel.add(twoDButton, gbc);
+            gbc.gridy++;
+        } // if (matchImage.getNDims() == 3)
+        gbc.gridx = 0;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = insets;
         outputPanel.add(matrixLabel, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 0;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         outputPanel.add(matrixComboBox, gbc);
+        gbc.gridy++;
         gbc.gridx = 0;
-        gbc.gridy = 1;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         outputPanel.add(userDirectoryLabel, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 1;
         gbc.weightx = 1;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -698,6 +741,10 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
             MipavUtil.displayError("Error! No VOIs were present in the match image");
 
             return false;
+        }
+        
+        if (matchImage.getNDims() == 3) {
+        	use3D = threeDButton.isSelected();
         }
         
         matrixDirectory = (String)matrixComboBox.getSelectedItem();
