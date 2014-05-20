@@ -291,7 +291,10 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		changeY = chosenSpot[1];
 		
 		frame.getComponentImage().getImageA().resetVOIs();
-		frame.getControls().getTools().setOpacity(1.0f);
+		float opacity = 1.0f;
+		if(maskBox.isSelected())
+			opacity = 0.0f;
+		frame.getControls().getTools().setOpacity(opacity);
 		frame.getControls().getTools().setPaintColor(Color.GREEN);
 		
 		frame.setCursor(null);
@@ -678,7 +681,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         editBox.setFont(serif12);
         optionsPanel.add(editBox);
         
-        maskBox = new JCheckBox("Disable trace");
+        maskBox = new JCheckBox("Hide trace");
         maskBox.setFont(serif12);
         maskBox.addItemListener(this);
         optionsPanel.add(maskBox);

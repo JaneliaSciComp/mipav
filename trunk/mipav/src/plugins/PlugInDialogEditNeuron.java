@@ -1,8 +1,11 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -62,7 +65,8 @@ import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.components.PanelManager;
 
 
-public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements MouseListener, MouseMotionListener {
+public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements MouseListener, MouseMotionListener,
+	ItemListener{
 
 	/**
 	 * 
@@ -241,6 +245,10 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	
 	private ModelImage imStack = null;
 	
+	private JCheckBox disableBox;
+	
+	private JCheckBox hideVOIBox;
+	
 	/**
 	 * Primary constructor. Initializes a dialog to ask the user
 	 * for a directory to use
@@ -312,11 +320,12 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			
         	if(currentSlice < numImages){
         		Point loc = subVolumeFrame.getLocation();
+        		Dimension dimSize = subVolumeFrame.getSize();
         		subVolumeFrame.close();
         		openImage();
         		subVolumeFrame.setLocation(loc);
         		subVolumeFrame.getComponentImage().setZoom(zX, zY);
-    			subVolumeFrame.updateFrame(zX, zY);
+        		subVolumeFrame.setSize(dimSize);
     			subVolumeFrame.updateImages();
         	} else {
         		actionPerformed(new ActionEvent(this, 0, "End"));
@@ -329,11 +338,12 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				prevSlice = currentSlice;
 				currentSlice--;
         		Point loc = subVolumeFrame.getLocation();
+        		Dimension dimSize = subVolumeFrame.getSize();
         		subVolumeFrame.close();
         		openImage();
         		subVolumeFrame.setLocation(loc);
         		subVolumeFrame.getComponentImage().setZoom(zX, zY);
-    			subVolumeFrame.updateFrame(zX, zY);
+    			subVolumeFrame.setSize(dimSize);
     			subVolumeFrame.updateImages();
 			}
 		}
@@ -410,8 +420,10 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		} else if(command.equals("Edit Trace")){
 			//Remove polygon, replace with control points
 			subVolume.unregisterAllVOIs();
-			subVolume.registerVOI(controlPts);
-			subVolume.notifyImageDisplayListeners();
+			if(!hideVOIBox.isSelected()){
+				subVolume.registerVOI(controlPts);
+				subVolume.notifyImageDisplayListeners();
+			}
 			
 			addRB.setEnabled(true);
 			deleteRB.setEnabled(true);
@@ -425,8 +437,10 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			if(polyVOI.getSize() == 0)
 				polygonDisplay();
 			subVolume.unregisterAllVOIs();
-			subVolume.registerVOI(polyVOI);
-			subVolume.notifyImageDisplayListeners();
+			if(!hideVOIBox.isSelected()){
+				subVolume.registerVOI(polyVOI);
+				subVolume.notifyImageDisplayListeners();
+			}
 			
 			addRB.setEnabled(false);
 			deleteRB.setEnabled(false);
@@ -1061,6 +1075,16 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		aviBox.setFont(serif12);
 		optionPanel.add(aviBox);
 		
+		disableBox = new JCheckBox("Hide trace");
+		disableBox.setFont(serif12);
+		disableBox.addItemListener(this);
+		optionPanel.add(disableBox);
+		
+		hideVOIBox = new JCheckBox("Hide Points");
+		hideVOIBox.setFont(serif12);
+		hideVOIBox.addItemListener(this);
+		optionPanel.add(hideVOIBox);
+		
 		manage.addOnNextLine(optionPanel);
 		
 		JPanel boxPanel = new JPanel(new GridLayout(1,4));
@@ -1536,13 +1560,19 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			}
 		}
 		
-		subVolume.getVOIs().add(controlPts);
-		subVolume.notifyImageDisplayListeners(null, true, 0, -1);
+		if(!hideVOIBox.isSelected()){
+			subVolume.getVOIs().add(controlPts);
+			subVolume.notifyImageDisplayListeners(null, true, 0, -1);
+		}
 		
 		subVolumeFrame.getComponentImage().setPaintMask(mask);
 		subVolumeFrame.getComponentImage().addMouseListener(this);
 		subVolumeFrame.getComponentImage().addMouseMotionListener(this);
-		subVolumeFrame.getControls().getTools().setOpacity(1.0f);
+		
+		float opacity = 1.0f;
+		if(disableBox.isSelected())
+			opacity = 0.0f;
+		subVolumeFrame.getControls().getTools().setOpacity(opacity);
 		subVolumeFrame.getControls().getTools().setPaintColor(Color.GREEN);
 		subVolumeFrame.updateImages();
 		
@@ -2311,6 +2341,37 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	        } else {
 	        	dispose();
 	        }
+		}
+	}
+	
+	public void itemStateChanged(ItemEvent e){
+		Object source = e.getSource();
+		if(source == disableBox){
+			if(disableBox.isSelected()){
+				subVolumeFrame.getControls().getTools().setOpacity(0.0f);
+				subVolumeFrame.updateImages();
+			} else{
+				subVolumeFrame.getControls().getTools().setOpacity(1.0f);
+				subVolumeFrame.getControls().getTools().setPaintColor(Color.GREEN);
+				subVolumeFrame.updateImages();
+			}
+		}else if(source == hideVOIBox){
+			if(hideVOIBox.isSelected()){
+				if(editTraceRB.isSelected())
+					subVolume.getVOIs().remove(controlPts);
+				else if(editPolyRB.isSelected()){
+					subVolume.getVOIs().remove(polyVOI);
+				}
+				subVolume.notifyImageDisplayListeners(null, true, 0, -1);
+			} else {
+				if(editTraceRB.isSelected() && !subVolume.getVOIs().contains(controlPts)){
+					subVolume.getVOIs().add(controlPts);
+					subVolume.notifyImageDisplayListeners(null, true, 0, -1);
+				} else if(editPolyRB.isSelected() && !subVolume.getVOIs().contains(polyVOI)){
+					subVolume.getVOIs().add(polyVOI);
+					subVolume.notifyImageDisplayListeners(null, true, 0, -1);
+				}
+			}
 		}
 	}
 	
