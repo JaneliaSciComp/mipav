@@ -968,7 +968,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                     dy = y[iRow] - y[iCol];
                     dz = z[iRow] - z[iCol];
                     fT = Math.sqrt((dx * dx) + (dy * dy) + (dz * dz));
-                    L[iRow][iCol] = kernel(fT);
+                    L[iRow][iCol] = fT;
                 }
             } // for (iCol = 0; iCol < N; iCol++)
         } // for (iRow = 0; iRow < N; iRow++)
@@ -1190,7 +1190,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                     dy = mY[iRow] - mY[iCol];
                     dz = mZ[iRow] - mZ[iCol];
                     fT = Math.sqrt((dx * dx) + (dy * dy) + (dz * dz));
-                    A[iRow][iCol] = kernel(fT);
+                    A[iRow][iCol] = fT;
                 }
             } // for (iCol = 0; iCol < N; iCol++)
         } // for (iRow = 0; iRow < N; iRow++)
@@ -1372,7 +1372,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                     dy = y[iRow] - y[iCol];
                     dz = z[iRow] - z[iCol];
                     fT = Math.sqrt((dx * dx) + (dy * dy) + (dz * dz));
-                    L[iRow][iCol] = kernel(fT);
+                    L[iRow][iCol] = fT;
                 }
             } // for (iCol = 0; iCol < N; iCol++)
         } // for (iRow = 0; iRow < N; iRow++)
