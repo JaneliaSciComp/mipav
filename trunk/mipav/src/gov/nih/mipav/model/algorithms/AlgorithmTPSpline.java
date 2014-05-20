@@ -2111,7 +2111,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             dy = y[m] - yTar;
             dz = z[m] - zTar;
             fT = Math.sqrt((dx * dx) + (dy * dy) + (dz * dz));
-            U = kernel(fT);
+            U = fT;
             srcPoints[0] += C[m][0] * U;
             srcPoints[1] += C[m][1] * U;
             srcPoints[2] += C[m][2] * U;
@@ -2139,7 +2139,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             dy = y[m] - yTar;
             dz = z[m] - zTar;
             fT = Math.sqrt((dx * dx) + (dy * dy) + (dz * dz));
-            U = kernel(fT);
+            U = fT;
             srcPoints[0] += C[m][0] * U;
             srcPoints[1] += C[m][1] * U;
             srcPoints[2] += C[m][2] * U;
@@ -2292,7 +2292,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                             dy = y[m] - j;
                             dz = z[m] - i;
                             fT = Math.sqrt((dx * dx) + (dy * dy) + (dz * dz));
-                            U = kernel(fT);
+                            U = fT;
                             result[0] += C[m][0] * U;
                             result[1] += C[m][1] * U;
                             result[2] += C[m][2] * U;
@@ -2424,7 +2424,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                                 dy = y[m] - j;
                                 dz = z[m] - i;
                                 fT = Math.sqrt((dx * dx) + (dy * dy) + (dz * dz));
-                                U = kernel(fT);
+                                U = fT;
                                 result[0] += C[m][0] * U;
                                 result[1] += C[m][1] * U;
                                 result[2] += C[m][2] * U;
@@ -2594,7 +2594,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                                 dy = y[m] - j;
                                 dz = z[m] - i;
                                 fT = Math.sqrt((dx * dx) + (dy * dy) + (dz * dz));
-                                U = kernel(fT);
+                                U = fT;
                                 result[0] += C[m][0] * U;
                                 result[1] += C[m][1] * U;
                                 result[2] += C[m][2] * U;
@@ -2889,7 +2889,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
 	                            dy = y[m] - j;
 	                            dz = z[m] - i;
 	                            fT = Math.sqrt((dx * dx) + (dy * dy) + (dz * dz));
-	                            U = kernel(fT);
+	                            U = fT;
 	                            result[0] += C[m][0] * U;
 	                            result[1] += C[m][1] * U;
 	                            result[2] += C[m][2] * U;
