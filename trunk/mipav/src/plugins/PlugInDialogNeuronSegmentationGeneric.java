@@ -10,6 +10,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileFilter;
@@ -58,7 +59,7 @@ import gov.nih.mipav.view.components.PanelManager;
  *
  */
 public class PlugInDialogNeuronSegmentationGeneric extends
-		JDialogStandalonePlugin implements AlgorithmInterface, ChangeListener, MouseListener {
+		JDialogStandalonePlugin implements AlgorithmInterface, ChangeListener, MouseListener, MouseMotionListener {
 	
 	private static final long serialVersionUID = -829071275308963405L;
 
@@ -145,12 +146,21 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	
 	private ModelImage imStack = null;
 	
+	private Point loc;
+	
+	private Dimension dimSize;
+	
+	private Point intermediatePt;
+	
+	private ArrayList<Point> segmentList;
+	
 	public PlugInDialogNeuronSegmentationGeneric(){
 		super();
 		images = new ArrayList<File>();
 		changeX = -1;
 		changeY = -1;
 		listenersOn = false;
+		segmentList = new ArrayList<Point>();
 		init();
 	}
 	
@@ -189,11 +199,11 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 				zX = frame.getComponentImage().getZoomX();
 				zY = frame.getComponentImage().getZoomY();
         		counter--;
-        		Point loc = frame.getLocation();
+        		loc = frame.getLocation();
+        		dimSize = frame.getSize();
         		frame.close();
         		seg.cleanImages();
         		if(openImage()){
-	        		frame.setLocation(loc);
 	        		callAlgorithm();
 	        		if(segFrame != null){
 	        			segFrame.close();
@@ -209,11 +219,11 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         	if(counter < numImages){
         		zX = frame.getComponentImage().getZoomX();
 				zY = frame.getComponentImage().getZoomY();
-        		Point loc = frame.getLocation();
+        		loc = frame.getLocation();
+        		dimSize = frame.getSize();
         		frame.close();
         		seg.cleanImages();
         		if(openImage()){
-	        		frame.setLocation(loc);
 	        		callAlgorithm();
 	        		if(segFrame != null){
 	        			segFrame.close();
@@ -281,7 +291,14 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		
 		//File current = images.get(counter);
 		//srcImage.setImageName(current.getName(),false);
-		frame = new ViewJFrameImage(srcImage, null, new Dimension(0,300));
+		if(loc == null)
+			frame = new ViewJFrameImage(srcImage, null, new Dimension(0,300));
+		else {
+			frame = new ViewJFrameImage(srcImage);
+			frame.setLocation(loc);
+		}
+		if(dimSize != null)
+			frame.setSize(dimSize);
 		frame.setVisible(true);
 		listenersOn = false;
 		
@@ -303,12 +320,13 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		//Add mouse listener so you can click to add/delete branches
 		if(!listenersOn){
 			frame.getComponentImage().addMouseListener(this);
+			frame.getComponentImage().addMouseMotionListener(this);
 			frame.addWindowListener(this);
 			listenersOn = true;
 		}
 		
 		frame.getComponentImage().setZoom(zX, zY);
-		frame.updateFrame(zX, zY);
+		//frame.updateFrame(zX, zY);
 		frame.updateImages();
 		
 		if(tipBox.isSelected()) seg.displayTips();
@@ -388,6 +406,37 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		String title = "Neuron Segmentation " + String.valueOf(counter+1) + " of "
 				+ String.valueOf(numImages);
         setTitle(title);
+	}
+	
+	private void bresenham(int x0, int y0, int x1, int y1){
+		int dx = Math.abs(x1-x0);
+		int dy = Math.abs(y1-y0);
+		int sx, sy;
+		int err, e2;
+		if(x0 < x1)
+			sx = 1;
+		else sx = -1;
+		if(y0 < y1)
+			sy = 1;
+		else sy = -1;
+		err = dx - dy;
+		
+		while(true){
+			segmentList.add(new Point(x0,y0));
+			int i = x0 + y0*width;
+			skeleton.set(i);
+			//System.err.printf("%d %d\n", x0, y0);
+			if(x0 == x1 && y0 == y1) break;
+			e2 = 2*err;
+			if(e2 > -dy){
+				err -= dy;
+				x0 += sx;
+			}
+			if(e2 < dx){
+				err += dx;
+				y0 += sy;
+			}
+		}
 	}
 
 	private void chooseDir(){
@@ -1043,14 +1092,39 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 
 	@Override
 	public void mousePressed(MouseEvent e) {
-		// Do nothing
+
+		float zoomX = frame.getComponentImage().getZoomX();
+		float zoomY = frame.getComponentImage().getZoomY();
+		int x = (int) ((float)e.getX()/zoomX);
+		int y = (int) ((float)e.getY()/zoomY);
+
+		intermediatePt = new Point(x,y);
 		
+		skeleton = (BitSet)seg.getSkeleton().clone();
+		frame.getComponentImage().setPaintMask(skeleton);
+		frame.updateImages();
+		//segmentList = new ArrayList<Point>();
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		// Do nothing
+		if(!addRB.isSelected() || 
+				segmentList.size() == 0) return;
 		
+		intermediatePt = null;
+		seg.linkNewSegment(segmentList);
+		segmentList.clear();
+		//segmentList = null;
+		skeleton = seg.getSkeleton();
+		frame.getComponentImage().setPaintMask(skeleton);
+		frame.updateImages();
+		
+		if(tipBox.isSelected()) seg.displayTips();
+		if(centroidBox.isSelected()) seg.displayCentroid();
+		if(polygonalBox.isSelected()) seg.displayPolygonal();
+		
+		undoButton.setText("Undo");
 	}
 
 	@Override
@@ -1062,6 +1136,28 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	@Override
 	public void mouseExited(MouseEvent e) {
 		// Do nothing
+		
+	}
+	
+	@Override
+	public void mouseDragged(MouseEvent e) {
+		
+		if(!addRB.isSelected()) return;
+
+		float zoomX = frame.getComponentImage().getZoomX();
+		float zoomY = frame.getComponentImage().getZoomY();
+		int x = (int) ((float)e.getX()/zoomX);
+		int y = (int) ((float)e.getY()/zoomY);
+		
+		//System.out.printf("%d %d\n", x,y);
+		
+		bresenham(intermediatePt.x, intermediatePt.y, x, y);
+		intermediatePt = new Point(x,y);
+	}
+
+	@Override
+	public void mouseMoved(MouseEvent e) {
+		// TODO Auto-generated method stub
 		
 	}
 	

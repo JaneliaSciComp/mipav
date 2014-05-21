@@ -1,3 +1,4 @@
+import java.awt.Point;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -214,6 +215,62 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		}
 		
 		//Add the new point and recalculate the polygonal area/centroid
+		tipPts.add(new Integer(target));
+		polygonalArea();
+		
+	}
+	
+	public void linkNewSegment(ArrayList<Point> segmentList){
+		
+		undoer.update();
+		
+		Point firstPt = segmentList.get(0);
+		int firstInd = firstPt.x + firstPt.y*width;
+		Point lastPt = segmentList.get(segmentList.size()-1);
+		int lastInd = lastPt.x + lastPt.y*width;
+		PlugInAlgorithmDijkstraCode add = new PlugInAlgorithmDijkstraCode(probImage, skeleton, firstInd, 0);
+		add.run();
+		
+		int firstWeight = add.getFinalCost();
+		
+		PlugInAlgorithmDijkstraCode addLast = new PlugInAlgorithmDijkstraCode(probImage, skeleton, lastInd, 0);
+		addLast.run();
+		
+		int lastWeight = addLast.getFinalCost();
+		
+		BitSet path;
+		int target;
+		
+		if(firstWeight <= lastWeight){
+			skeleton = add.getNewSkeleton();
+			path = add.getShortestPath();
+			target = lastInd;
+		} else {
+			skeleton = addLast.getNewSkeleton();
+			path = addLast.getShortestPath();
+			target = firstInd;
+			
+		}
+		for(int i = path.nextSetBit(0); i>=0; i=path.nextSetBit(i+1)){
+			int x = i%width;
+			int y = i/width;
+			for(int ny = y-1;ny<=y+1;ny++){
+				if(ny < 0 || ny >= height) continue;
+				for(int nx = x-1;nx<=x+1;nx++){
+					if(nx < 0 || nx >= width) continue;
+					if(tipPts.contains(new Integer(i)))
+						tipPts.remove(new Integer(i));
+				}
+			}
+		}
+		
+		for(int i=0;i<segmentList.size();i++){
+			Point pt = segmentList.get(i);
+			//System.err.printf("%d %d\n", pt.x, pt.y);
+			int ind = pt.x + pt.y*width;
+			skeleton.set(ind);
+		}
+		
 		tipPts.add(new Integer(target));
 		polygonalArea();
 		
@@ -729,9 +786,11 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	 */
 	
 	public void saveAsSWC(){
+		
+		findTips(); //Update tip points, hasn't been completely accurate
 		longestPath(); //determine the endpoints of the longest path
 		polygonalArea(); //Update polygonal area and centroid location
-		findTips(); //Update tip points, hasn't been completely accurate
+		
 		
 		int x,y,ind, num;
 		BitSet skelClone = (BitSet)skeleton.clone();
@@ -956,6 +1015,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	
 	private void findTips(){
 		
+		tipPts.clear();
 		int x, y, nx, ny, nind, num;
 		/*float area = 0;
 		float sumX = 0;

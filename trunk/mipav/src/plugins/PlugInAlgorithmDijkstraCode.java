@@ -48,6 +48,8 @@ public class PlugInAlgorithmDijkstraCode extends AlgorithmBase {
 	
 	private PriorityQueue<Path> dijkstra;
 	
+	private int finalCost;
+	
 	/**
 	 * The original constructor for the accompanying dialog. Uses
 	 * a <code>ModelImage</code> for the input target image.
@@ -139,6 +141,10 @@ public class PlugInAlgorithmDijkstraCode extends AlgorithmBase {
 		}
 	}
 	
+	public int getFinalCost(){
+		return finalCost;
+	}
+	
 	/**
 	 * Returns a concatenation of the shortest path with the original
 	 * target image, which is useful for the neuron branching dialog.
@@ -224,6 +230,8 @@ public class PlugInAlgorithmDijkstraCode extends AlgorithmBase {
 		}
 		
 		ind = node;
+		finalCost = next.W;
+		
 		
 		shortest.set(source);
 		while(ind != source){
