@@ -5033,11 +5033,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             value = (String) ( ((JComboBox) deComp).getSelectedItem());
                         } else if (deComp instanceof JList) {
                             value = "";
-                            for (final Object o : ((JList) deComp).getSelectedValuesList()) {
+                            final int[] selectedIndicies = ((JList) deComp).getSelectedIndices();
+                            for (final int index : selectedIndicies) {
                                 if (value == "") {
-                                    value = (String) o;
+                                    value = (String) ((JList) deComp).getModel().getElementAt(index);
                                 } else {
-                                    value += MULTI_SELECT_VALUE_DELIM + (String) o;
+                                    value += MULTI_SELECT_VALUE_DELIM + (String) ((JList) deComp).getModel().getElementAt(index);
                                 }
                             }
                         }
@@ -5125,11 +5126,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             }
                         } else if (comp instanceof JList) {
                             value = "";
-                            for (final Object o : ((JList) comp).getSelectedValuesList()) {
+                            final int[] selectedIndicies = ((JList) comp).getSelectedIndices();
+                            for (final int index : selectedIndicies) {
                                 if (value == "") {
-                                    value = (String) o;
+                                    value = (String) ((JList) comp).getModel().getElementAt(index);
                                 } else {
-                                    value += MULTI_SELECT_VALUE_DELIM + (String) o;
+                                    value += MULTI_SELECT_VALUE_DELIM + (String) ((JList) comp).getModel().getElementAt(index);
                                 }
                             }
                         }
