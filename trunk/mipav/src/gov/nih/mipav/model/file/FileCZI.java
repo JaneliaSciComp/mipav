@@ -5,15 +5,15 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 
 import gov.nih.mipav.view.Preferences;
-import java.util.Vector;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Vector;
 
 
 /**
- File written using Zeiss Release Version 1.1 for ZEN 2012
+ * File written using Zeiss Release Version 1.1 for ZEN 2012
  */
 
 public class FileCZI extends FileBase {
@@ -222,23 +222,20 @@ public class FileCZI extends FileBase {
         float startCoordinate[];
         int storedSize[];
         int index;
-        Vector <String> imageDimension[] = new Vector [7]; 
-        Vector <Integer> imageSize[] = new Vector[7];
-        Vector <Float> imageStartCoordinate[] = new Vector[7];
-        Vector <Long> imageDataSize = new Vector<Long>();
-        Vector <Long> imageDataLocation = new Vector<Long>();
+        final Vector<String> imageDimension[] = new Vector[7];
+        final Vector<Integer> imageSize[] = new Vector[7];
+        final Vector<Float> imageStartCoordinate[] = new Vector[7];
+        final Vector<Long> imageDataSize = new Vector<Long>();
+        final Vector<Long> imageDataLocation = new Vector<Long>();
         long subBlockStart;
         long location;
         int j;
         String metaData;
         try {
-<<<<<<< .mine
-        	fileInfo = new FileInfoCZI(fileName, fileDir, FileUtility.CZI); // dummy fileInfo
+            fileInfo = new FileInfoCZI(fileName, fileDir, FileUtility.CZI); // dummy fileInfo
             fileInfo.setEndianess(endianess);
-        	imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
-=======
             imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
->>>>>>> .r12787
+
             file = new File(fileDir + fileName);
             raFile = new RandomAccessFile(file, "r");
 
@@ -362,39 +359,21 @@ public class FileCZI extends FileBase {
                     Preferences.debug("Actual Attachment Directory Segment position = " + position + "\n", Preferences.DEBUG_FILEIO);
                 } // else if (charID.trim().equals("ZISRAWATTDIR"))
                 else if (charID.trim().equals("ZISRAWSUBBLOCK")) {
-<<<<<<< .mine
-                	subBlockStart = raFile.getFilePointer();
-            	    metadataSize = readInt(endianess);
-            	    Preferences.debug("Size of the SubBlock metadata section = " + metadataSize + "\n",
-            	    		Preferences.DEBUG_FILEIO);
-            	    attachmentSize = readInt(endianess);
-            	    Preferences.debug("Size of the SubBlock optional attachment section = " + attachmentSize + "\n",
-            	    		Preferences.DEBUG_FILEIO);
-            	    dataSize = readLong(endianess);
-            	    Preferences.debug("Size of the SubBlock data section = " + dataSize + "\n", Preferences.DEBUG_FILEIO); 
-            	    imageDataSize.add(dataSize);
-            	    schemaType = getString(2);
-            	    if (schemaType.equals("DV")) {
-            	    	Preferences.debug("Directory Entry DV Schema Type = DV as expected\n", Preferences.DEBUG_FILEIO);
-            	    }
-            	    else {
-            	    	Preferences.debug("Directory Entry DV Schema Type = " + schemaType + " instead of the expected DV\n",
-            	    			Preferences.DEBUG_FILEIO);
-            	    	raFile.close();
-=======
+                    subBlockStart = raFile.getFilePointer();
                     metadataSize = readInt(endianess);
                     Preferences.debug("Size of the SubBlock metadata section = " + metadataSize + "\n", Preferences.DEBUG_FILEIO);
                     attachmentSize = readInt(endianess);
                     Preferences.debug("Size of the SubBlock optional attachment section = " + attachmentSize + "\n", Preferences.DEBUG_FILEIO);
                     dataSize = readLong(endianess);
                     Preferences.debug("Size of the SubBlock data section = " + dataSize + "\n", Preferences.DEBUG_FILEIO);
+                    imageDataSize.add(dataSize);
                     schemaType = getString(2);
                     if (schemaType.equals("DV")) {
                         Preferences.debug("Directory Entry DV Schema Type = DV as expected\n", Preferences.DEBUG_FILEIO);
                     } else {
                         Preferences.debug("Directory Entry DV Schema Type = " + schemaType + " instead of the expected DV\n", Preferences.DEBUG_FILEIO);
                         raFile.close();
->>>>>>> .r12787
+
                         throw new IOException("Directory Entry DV Schema Type = " + schemaType + " instead of the expected DV");
                     }
                     pixelType = readInt(endianess);
@@ -427,141 +406,6 @@ public class FileCZI extends FileBase {
                         Preferences.debug("Bgr192ComplexFloat has no corresponding MIPAV data type\n", Preferences.DEBUG_FILEIO);
                         raFile.close();
                         throw new IOException("Bgr192ComplexFloat has no corresponding MIPAV data type");
-<<<<<<< .mine
-            	    }
-            	    else if (pixelType == Gray32) {
-            	    	dataType = ModelStorageBase.INTEGER;
-            	    	Preferences.debug("MIPAV data type = INTEGER\n", Preferences.DEBUG_FILEIO);
-            	    }
-            	    else if (pixelType == Gray64) {
-            	    	dataType = ModelStorageBase.DOUBLE;
-            	    	Preferences.debug("MIPAV data type = DOUBLE\n", Preferences.DEBUG_FILEIO);
-            	    }
-            	    fileInfo.setDataType(dataType);
-            	    filePosition = readLong(endianess);
-            	    Preferences.debug("Seek offset of the referenced SubBlockSegment relative to the first byte of the file = "
-            	    		+ filePosition + "\n", Preferences.DEBUG_FILEIO);
-            	    // Reserved
-            	    filePart = readInt(endianess);
-            	    compression = readInt(endianess);
-            	    if (compression == Uncompressed) {
-            	    	Preferences.debug("Compression = Uncompressed\n", Preferences.DEBUG_FILEIO);
-            	    }
-            	    else if (compression == LZW) {
-            	    	Preferences.debug("Compression = LZW\n", Preferences.DEBUG_FILEIO);
-            	    }
-            	    else if (compression == JpgFile) {
-            	    	Preferences.debug("Compression == JpgFile\n", Preferences.DEBUG_FILEIO);
-            	    }
-            	    else if (compression == JpegXrFile) {
-            	    	Preferences.debug("Compression == JpegXrFile\n", Preferences.DEBUG_FILEIO);
-            	    }
-            	    else if ((compression >= 100) && (compression <= 999)) {
-            	    	Preferences.debug("Compression = Camera specific RAW data\n", Preferences.DEBUG_FILEIO);
-            	    }
-            	    else if (compression >= 1000) {
-            	    	Preferences.debug("Compression = System specific RAW data\n", Preferences.DEBUG_FILEIO);
-            	    }
-            	    else {
-            	    	Preferences.debug("Unrecognized compression\n", Preferences.DEBUG_FILEIO);
-            	    }
-            	    // [INTERNAL} Contains information for automatic image pyramids using SubBlocks of different resolution.
-            	    // Current values are: None = 0, SingleSublock = 1, MultiSubblock = 2.
-            	    pyramidType = raFile.readByte();
-            	    if (pyramidType == 0) {
-            	    	Preferences.debug("PyramidType = None\n", Preferences.DEBUG_FILEIO);
-            	    }
-            	    else if (pyramidType == 1) {
-            	    	Preferences.debug("PyramidType = SingleSubblock\n", Preferences.DEBUG_FILEIO);
-            	    }
-            	    else if (pyramidType == 2) {
-            	    	Preferences.debug("PyramidType = MultiSubblock\n", Preferences.DEBUG_FILEIO);
-            	    }
-            	    else {
-            	    	Preferences.debug("Unrecognized pyramidType = " + pyramidType + "\n", Preferences.DEBUG_FILEIO);
-            	    }
-            	    // Reserved byte spare
-            	    raFile.readByte();
-            	    // Reserved byte[4] spare
-            	    readInt(endianess);
-            	    // Number of entries.  Minimum is 1
-            	    dimensionCount = readInt(endianess);
-            	    if (dimensionCount < 1) {
-            	    	Preferences.debug("dimensionCount = " + dimensionCount + " is less than the legal mininum of 1\n",
-            	    			Preferences.DEBUG_FILEIO);
-            	    	raFile.close();
-            	    	throw new IOException("dimensionCount = " + dimensionCount + " is less than the legal mininum of 1");
-            	    }
-            	    Preferences.debug("dimensionCount = " + dimensionCount + "\n", Preferences.DEBUG_FILEIO);
-            	    dimension = new String[dimensionCount];
-            	    start = new int[dimensionCount];
-            	    size = new int[dimensionCount];
-            	    startCoordinate = new float[dimensionCount];
-            	    storedSize = new int[dimensionCount];
-            	    index = 0;
-            	    for (i = 0; i < dimensionCount; i++) {
-            	    	// Read 20 byte dimension entry
-            	    	dimension[i] = getString(4).trim();
-            	    	Preferences.debug("dimension["+i+"] = " + dimension[i] + "\n", Preferences.DEBUG_FILEIO);
-            	    	// Start position / index.  May be less than 0.
-            	    	start[i] = readInt(endianess);
-            	    	Preferences.debug("Start index["+i+"] = " + start[i] + "\n", Preferences.DEBUG_FILEIO);
-            	    	// Size in units of pixels (logical size).  Must be > 0.
-            	    	size[i] = readInt(endianess);
-            	    	if (size[i] < 1) {
-            	    		Preferences.debug("size["+i+"] = " + size[i] + " is less than the legal minuimum of 1\n",
-            	    				Preferences.DEBUG_FILEIO);
-            	    		raFile.close();
-            	    		throw new IOException("size["+i+"] = " + size[i] + " is less than the legal minuimum of 1");
-            	    	}
-            	    	Preferences.debug("size["+i+"] = " + size[i] + "\n", Preferences.DEBUG_FILEIO);
-            	    	startCoordinate[i] = readFloat(endianess);
-            	    	Preferences.debug("startCoordinate["+i+"] = " + startCoordinate[i] + "\n", Preferences.DEBUG_FILEIO);
-            	    	if (size[i] > 1) {
-            	    	    if (imageDimension[index] == null) {
-            	    	    	imageDimension[index] = new Vector<String>();
-            	    	    }
-            	    	    imageDimension[index].add(dimension[i]);
-            	    	    if (imageSize[index] == null) {
-            	    	    	imageSize[index] = new Vector<Integer>();
-            	    	    }
-            	    	    imageSize[index].add(size[i]);
-            	    	    if (imageStartCoordinate[index] == null) {
-            	    	        imageStartCoordinate[index] = new Vector<Float>();	
-            	    	    }
-            	    	    imageStartCoordinate[index].add(startCoordinate[i]);
-            	    	    index++;
-            	    	}
-            	    	storedSize[i] = readInt(endianess);
-            	    	// Stored size (if sub/supersampling) else 0)
-            	    	if (storedSize[i] == 0) {
-            	    	    Preferences.debug("storedSize["+i+"] = 0 as expected with no sub / supersampling\n", Preferences.DEBUG_FILEIO);
-            	    	}
-            	    	else {
-            	    		Preferences.debug("storedSize["+i+"] = " + storedSize[i] + " with this sub /supersampling\n",
-            	    				Preferences.DEBUG_FILEIO);
-            	    	}
-            	    } // for (i = 0; i < dimensionCount; i++) 
-            	    location = raFile.getFilePointer();
-            	    if ((location - subBlockStart) < 256) {
-            	    	raFile.seek(subBlockStart + 256);
-            	    }
-            	    metaData = getString(metadataSize);
-            	    Preferences.debug("SubBlock Segment metadata:\n", Preferences.DEBUG_FILEIO);
-            	    Preferences.debug(metaData + "\n");
-            	    location = raFile.getFilePointer();
-            	    imageDataLocation.add(location);
-            	    // Skip attachments for now
-            	} // else if (charID.trim().equals("ZISRAWSUBBLOCK"))
-            	position += (allocatedSize + 32);
-            	if (position < fileLength) {
-            	    raFile.seek(position);
-            	    Preferences.debug("location = " + position + "\n", Preferences.DEBUG_FILEIO);
-            	}
-            	else {
-            		readSegment = false;
-            	}
-=======
                     } else if (pixelType == Gray32) {
                         dataType = ModelStorageBase.INTEGER;
                         Preferences.debug("MIPAV data type = INTEGER\n", Preferences.DEBUG_FILEIO);
@@ -569,6 +413,7 @@ public class FileCZI extends FileBase {
                         dataType = ModelStorageBase.DOUBLE;
                         Preferences.debug("MIPAV data type = DOUBLE\n", Preferences.DEBUG_FILEIO);
                     }
+                    fileInfo.setDataType(dataType);
                     filePosition = readLong(endianess);
                     Preferences.debug("Seek offset of the referenced SubBlockSegment relative to the first byte of the file = " + filePosition + "\n",
                             Preferences.DEBUG_FILEIO);
@@ -587,7 +432,90 @@ public class FileCZI extends FileBase {
                         Preferences.debug("Compression = Camera specific RAW data\n", Preferences.DEBUG_FILEIO);
                     } else if (compression >= 1000) {
                         Preferences.debug("Compression = System specific RAW data\n", Preferences.DEBUG_FILEIO);
+                    } else {
+                        Preferences.debug("Unrecognized compression\n", Preferences.DEBUG_FILEIO);
                     }
+                    // [INTERNAL} Contains information for automatic image pyramids using SubBlocks of different
+                    // resolution.
+                    // Current values are: None = 0, SingleSublock = 1, MultiSubblock = 2.
+                    pyramidType = raFile.readByte();
+                    if (pyramidType == 0) {
+                        Preferences.debug("PyramidType = None\n", Preferences.DEBUG_FILEIO);
+                    } else if (pyramidType == 1) {
+                        Preferences.debug("PyramidType = SingleSubblock\n", Preferences.DEBUG_FILEIO);
+                    } else if (pyramidType == 2) {
+                        Preferences.debug("PyramidType = MultiSubblock\n", Preferences.DEBUG_FILEIO);
+                    } else {
+                        Preferences.debug("Unrecognized pyramidType = " + pyramidType + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    // Reserved byte spare
+                    raFile.readByte();
+                    // Reserved byte[4] spare
+                    readInt(endianess);
+                    // Number of entries. Minimum is 1
+                    dimensionCount = readInt(endianess);
+                    if (dimensionCount < 1) {
+                        Preferences.debug("dimensionCount = " + dimensionCount + " is less than the legal mininum of 1\n", Preferences.DEBUG_FILEIO);
+                        raFile.close();
+                        throw new IOException("dimensionCount = " + dimensionCount + " is less than the legal mininum of 1");
+                    }
+                    Preferences.debug("dimensionCount = " + dimensionCount + "\n", Preferences.DEBUG_FILEIO);
+                    dimension = new String[dimensionCount];
+                    start = new int[dimensionCount];
+                    size = new int[dimensionCount];
+                    startCoordinate = new float[dimensionCount];
+                    storedSize = new int[dimensionCount];
+                    index = 0;
+                    for (i = 0; i < dimensionCount; i++) {
+                        // Read 20 byte dimension entry
+                        dimension[i] = getString(4).trim();
+                        Preferences.debug("dimension[" + i + "] = " + dimension[i] + "\n", Preferences.DEBUG_FILEIO);
+                        // Start position / index. May be less than 0.
+                        start[i] = readInt(endianess);
+                        Preferences.debug("Start index[" + i + "] = " + start[i] + "\n", Preferences.DEBUG_FILEIO);
+                        // Size in units of pixels (logical size). Must be > 0.
+                        size[i] = readInt(endianess);
+                        if (size[i] < 1) {
+                            Preferences.debug("size[" + i + "] = " + size[i] + " is less than the legal minuimum of 1\n", Preferences.DEBUG_FILEIO);
+                            raFile.close();
+                            throw new IOException("size[" + i + "] = " + size[i] + " is less than the legal minuimum of 1");
+                        }
+                        Preferences.debug("size[" + i + "] = " + size[i] + "\n", Preferences.DEBUG_FILEIO);
+                        startCoordinate[i] = readFloat(endianess);
+                        Preferences.debug("startCoordinate[" + i + "] = " + startCoordinate[i] + "\n", Preferences.DEBUG_FILEIO);
+                        if (size[i] > 1) {
+                            if (imageDimension[index] == null) {
+                                imageDimension[index] = new Vector<String>();
+                            }
+                            imageDimension[index].add(dimension[i]);
+                            if (imageSize[index] == null) {
+                                imageSize[index] = new Vector<Integer>();
+                            }
+                            imageSize[index].add(size[i]);
+                            if (imageStartCoordinate[index] == null) {
+                                imageStartCoordinate[index] = new Vector<Float>();
+                            }
+                            imageStartCoordinate[index].add(startCoordinate[i]);
+                            index++;
+                        }
+                        storedSize[i] = readInt(endianess);
+                        // Stored size (if sub/supersampling) else 0)
+                        if (storedSize[i] == 0) {
+                            Preferences.debug("storedSize[" + i + "] = 0 as expected with no sub / supersampling\n", Preferences.DEBUG_FILEIO);
+                        } else {
+                            Preferences.debug("storedSize[" + i + "] = " + storedSize[i] + " with this sub /supersampling\n", Preferences.DEBUG_FILEIO);
+                        }
+                    } // for (i = 0; i < dimensionCount; i++)
+                    location = raFile.getFilePointer();
+                    if ( (location - subBlockStart) < 256) {
+                        raFile.seek(subBlockStart + 256);
+                    }
+                    metaData = getString(metadataSize);
+                    Preferences.debug("SubBlock Segment metadata:\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug(metaData + "\n");
+                    location = raFile.getFilePointer();
+                    imageDataLocation.add(location);
+                    // Skip attachments for now
                 } // else if (charID.trim().equals("ZISRAWSUBBLOCK"))
                 position += (allocatedSize + 32);
                 if (position < fileLength) {
@@ -596,59 +524,48 @@ public class FileCZI extends FileBase {
                 } else {
                     readSegment = false;
                 }
->>>>>>> .r12787
             } // while (readSegment)
-            
+
             for (i = 0; imageDimension[i] != null && i < 7; i++) {
-            	for (j = 1; j < imageDimension[i].size(); j++) {
-            	    if (!imageDimension[i].get(0).equals(imageDimension[i].get(j))) {
-            	    	Preferences.debug("imageDimension["+i+"].get(0) = " + imageDimension[i].get(0) + "\n",
-            	    			Preferences.DEBUG_FILEIO);
-            	    	Preferences.debug("imageDimension["+i+"].get("+j+") = " + imageDimension[i].get(j) + "\n",
-            	    			Preferences.DEBUG_FILEIO);
-            	    	raFile.close();
-            	    	throw new IOException("imageDimension["+i+"] had values of " + imageDimension[i].get(0) + 
-            	    			" and " + imageDimension[i].get(j));
-            	    }
-            	}
+                for (j = 1; j < imageDimension[i].size(); j++) {
+                    if ( !imageDimension[i].get(0).equals(imageDimension[i].get(j))) {
+                        Preferences.debug("imageDimension[" + i + "].get(0) = " + imageDimension[i].get(0) + "\n", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("imageDimension[" + i + "].get(" + j + ") = " + imageDimension[i].get(j) + "\n", Preferences.DEBUG_FILEIO);
+                        raFile.close();
+                        throw new IOException("imageDimension[" + i + "] had values of " + imageDimension[i].get(0) + " and " + imageDimension[i].get(j));
+                    }
+                }
             }
-<<<<<<< .mine
-            
+
             for (i = 0; imageSize[i] != null && i < 7; i++) {
-            	for (j = 1; j < imageSize[i].size(); j++) {
-            	    if (imageSize[i].get(0).intValue() != imageSize[i].get(j).intValue()) {
-            	    	Preferences.debug("imageSize["+i+"].get(0).intValue() = " + imageSize[i].get(0).intValue() + "\n",
-            	    			Preferences.DEBUG_FILEIO);
-            	    	Preferences.debug("imageSize["+i+"].get("+j+").intValue() = " + imageSize[i].get(j).intValue() + "\n",
-            	    			Preferences.DEBUG_FILEIO);
-            	    	raFile.close();
-            	    	throw new IOException("imageSize["+i+"] had values of " + imageSize[i].get(0).intValue() + 
-            	    			" and " + imageSize[i].get(j).intValue());
-            	    }
-            	}
+                for (j = 1; j < imageSize[i].size(); j++) {
+                    if (imageSize[i].get(0).intValue() != imageSize[i].get(j).intValue()) {
+                        Preferences.debug("imageSize[" + i + "].get(0).intValue() = " + imageSize[i].get(0).intValue() + "\n", Preferences.DEBUG_FILEIO);
+                        Preferences
+                                .debug("imageSize[" + i + "].get(" + j + ").intValue() = " + imageSize[i].get(j).intValue() + "\n", Preferences.DEBUG_FILEIO);
+                        raFile.close();
+                        throw new IOException("imageSize[" + i + "] had values of " + imageSize[i].get(0).intValue() + " and " + imageSize[i].get(j).intValue());
+                    }
+                }
             }
-            
+
             for (i = 0; imageStartCoordinate[i] != null && i < 7; i++) {
-            	for (j = 1; j < imageStartCoordinate[i].size(); j++) {
-            	    if (imageStartCoordinate[i].get(0).floatValue() != imageStartCoordinate[i].get(j).floatValue()) {
-            	    	Preferences.debug("imageStartCoordinate["+i+"].get(0).floatValue() = " + 
-            	                           imageStartCoordinate[i].get(0).floatValue() + "\n",
-            	    			Preferences.DEBUG_FILEIO);
-            	    	Preferences.debug("imageStartCoordinate["+i+"].get("+j+").floatValue() = " +
-            	    			           imageStartCoordinate[i].get(j).floatValue() + "\n",
-            	    			Preferences.DEBUG_FILEIO);
-            	    	raFile.close();
-            	    	throw new IOException("imageStartCoordinate["+i+"] had values of " + imageStartCoordinate[i].get(0).floatValue() + 
-            	    			" and " + imageStartCoordinate[i].get(j).floatValue());
-            	    }
-            	}
+                for (j = 1; j < imageStartCoordinate[i].size(); j++) {
+                    if (imageStartCoordinate[i].get(0).floatValue() != imageStartCoordinate[i].get(j).floatValue()) {
+                        Preferences.debug("imageStartCoordinate[" + i + "].get(0).floatValue() = " + imageStartCoordinate[i].get(0).floatValue() + "\n",
+                                Preferences.DEBUG_FILEIO);
+                        Preferences.debug(
+                                "imageStartCoordinate[" + i + "].get(" + j + ").floatValue() = " + imageStartCoordinate[i].get(j).floatValue() + "\n",
+                                Preferences.DEBUG_FILEIO);
+                        raFile.close();
+                        throw new IOException("imageStartCoordinate[" + i + "] had values of " + imageStartCoordinate[i].get(0).floatValue() + " and "
+                                + imageStartCoordinate[i].get(j).floatValue());
+                    }
+                }
             }
-        	
-        	image.calcMinMax();
-=======
 
             image.calcMinMax();
->>>>>>> .r12787
+
             fireProgressStateChanged(100);
 
         } catch (final OutOfMemoryError error) {
