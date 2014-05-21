@@ -264,12 +264,34 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			}
 		}
 		
+		BitSet segmentSet = new BitSet(length);
 		for(int i=0;i<segmentList.size();i++){
 			Point pt = segmentList.get(i);
 			//System.err.printf("%d %d\n", pt.x, pt.y);
 			int ind = pt.x + pt.y*width;
-			skeleton.set(ind);
+			segmentSet.set(ind);
 		}
+		
+		ModelImage newSkel = new ModelImage(ModelImage.BOOLEAN, extents, "skeletonize");
+		try {
+			newSkel.importData(0, segmentSet, true);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		AlgorithmMorphology2D skeletonize = new AlgorithmMorphology2D(newSkel, AlgorithmMorphology2D.CONNECTED4,
+        		1.0f, AlgorithmMorphology2D.SKELETONIZE, 0, 0, 0, 0, true);
+		skeletonize.run();
+		
+		try {
+			newSkel.exportData(0, length, segmentSet);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		skeleton.or(segmentSet);
+		newSkel.disposeLocal();
 		
 		tipPts.add(new Integer(target));
 		polygonalArea();
