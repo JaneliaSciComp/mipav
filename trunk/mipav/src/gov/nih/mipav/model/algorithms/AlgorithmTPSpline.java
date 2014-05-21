@@ -503,16 +503,16 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         // Take the inverse of L, store result in L
         L = ((new Matrix(L)).inverse()).getArray();
 
-        V = new double[2][N + 3];
+        V = new double[N + 3][2];
 
-        for (iCol = 0; iCol < N; iCol++) {
-            V[0][iCol] = xTar[iCol];
-            V[1][iCol] = yTar[iCol];
+        for (iRow = 0; iRow < N; iRow++) {
+            V[iRow][0] = xTar[iRow];
+            V[iRow][1] = yTar[iRow];
         }
 
-        for (iCol = N; iCol < (N + 3); iCol++) {
-            V[0][iCol] = 0.0;
-            V[1][iCol] = 0.0;
+        for (iRow = N; iRow < (N + 3); iRow++) {
+            V[iRow][0] = 0.0;
+            V[iRow][1] = 0.0;
         }
 
         // C contains the coefficents of W, a1, ax, and ay
@@ -528,8 +528,8 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         for (iRow = 0; iRow < (N + 3); iRow++) {
 
             for (iCol = 0; iCol < (N + 3); iCol++) {
-                C[iRow][0] += (float) (L[iRow][iCol] * V[0][iCol]);
-                C[iRow][1] += (float) (L[iRow][iCol] * V[1][iCol]);
+                C[iRow][0] += (float) (L[iRow][iCol] * V[iCol][0]);
+                C[iRow][1] += (float) (L[iRow][iCol] * V[iCol][1]);
             }
         }
 
@@ -907,17 +907,17 @@ public class AlgorithmTPSpline extends AlgorithmBase {
 
         // Take the inverse of L, store result in L
         L = ((new Matrix(L)).inverse()).getArray();
+        
+        V = new double[N + 3][2];
 
-        V = new double[2][N + 3];
-
-        for (iCol = 0; iCol < N; iCol++) {
-            V[0][iCol] = xTar[iCol];
-            V[1][iCol] = yTar[iCol];
+        for (iRow = 0; iRow < N; iRow++) {
+            V[iRow][0] = xTar[iRow];
+            V[iRow][1] = yTar[iRow];
         }
 
-        for (iCol = N; iCol < (N + 3); iCol++) {
-            V[0][iCol] = 0.0;
-            V[1][iCol] = 0.0;
+        for (iRow = N; iRow < (N + 3); iRow++) {
+            V[iRow][0] = 0.0;
+            V[iRow][1] = 0.0;
         }
 
         // C contains the coefficents of W, a1, ax, and ay
@@ -933,8 +933,8 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         for (iRow = 0; iRow < (N + 3); iRow++) {
 
             for (iCol = 0; iCol < (N + 3); iCol++) {
-                C[iRow][0] += (float) (L[iRow][iCol] * V[0][iCol]);
-                C[iRow][1] += (float) (L[iRow][iCol] * V[1][iCol]);
+                C[iRow][0] += (float) (L[iRow][iCol] * V[iCol][0]);
+                C[iRow][1] += (float) (L[iRow][iCol] * V[iCol][1]);
             }
         }
 
@@ -997,18 +997,18 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         // Take the inverse of L, store result in L
         L = ((new Matrix(L)).inverse()).getArray();
 
-        V = new double[3][N + 4];
+        V = new double[N + 4][3];
 
-        for (iCol = 0; iCol < N; iCol++) {
-            V[0][iCol] = xTar[iCol];
-            V[1][iCol] = yTar[iCol];
-            V[2][iCol] = zTar[iCol];
+        for (iRow = 0; iRow < N; iRow++) {
+            V[iRow][0] = xTar[iRow];
+            V[iRow][1] = yTar[iRow];
+            V[iRow][2] = zTar[iRow];
         }
 
-        for (iCol = N; iCol < (N + 4); iCol++) {
-            V[0][iCol] = 0.0;
-            V[1][iCol] = 0.0;
-            V[2][iCol] = 0.0;
+        for (iRow = N; iRow < (N + 4); iRow++) {
+            V[iRow][0] = 0.0;
+            V[iRow][1] = 0.0;
+            V[iRow][2] = 0.0;
         }
 
         // C contains the coefficents of W, a1, ax, ay, and az
@@ -1024,9 +1024,9 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         for (iRow = 0; iRow < (N + 4); iRow++) {
 
             for (iCol = 0; iCol < (N + 4); iCol++) {
-                C[iRow][0] += (float) (L[iRow][iCol] * V[0][iCol]);
-                C[iRow][1] += (float) (L[iRow][iCol] * V[1][iCol]);
-                C[iRow][2] += (float) (L[iRow][iCol] * V[2][iCol]);
+                C[iRow][0] += (float) (L[iRow][iCol] * V[iCol][0]);
+                C[iRow][1] += (float) (L[iRow][iCol] * V[iCol][1]);
+                C[iRow][2] += (float) (L[iRow][iCol] * V[iCol][2]);
             }
         }
 
@@ -1400,19 +1400,19 @@ public class AlgorithmTPSpline extends AlgorithmBase {
 
         // Take the inverse of L, store result in L
         L = ((new Matrix(L)).inverse()).getArray();
+        
+        V = new double[N + 4][3];
 
-        V = new double[3][N + 4];
-
-        for (iCol = 0; iCol < N; iCol++) {
-            V[0][iCol] = xTar[iCol];
-            V[1][iCol] = yTar[iCol];
-            V[2][iCol] = zTar[iCol];
+        for (iRow = 0; iRow < N; iRow++) {
+            V[iRow][0] = xTar[iRow];
+            V[iRow][1] = yTar[iRow];
+            V[iRow][2] = zTar[iRow];
         }
 
-        for (iCol = N; iCol < (N + 4); iCol++) {
-            V[0][iCol] = 0.0;
-            V[1][iCol] = 0.0;
-            V[2][iCol] = 0.0;
+        for (iRow = N; iRow < (N + 4); iRow++) {
+            V[iRow][0] = 0.0;
+            V[iRow][1] = 0.0;
+            V[iRow][2] = 0.0;
         }
 
         // C contains the coefficents of W, a1, ax, ay, and az
@@ -1428,9 +1428,9 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         for (iRow = 0; iRow < (N + 4); iRow++) {
 
             for (iCol = 0; iCol < (N + 4); iCol++) {
-                C[iRow][0] += (float) (L[iRow][iCol] * V[0][iCol]);
-                C[iRow][1] += (float) (L[iRow][iCol] * V[1][iCol]);
-                C[iRow][2] += (float) (L[iRow][iCol] * V[2][iCol]);
+                C[iRow][0] += (float) (L[iRow][iCol] * V[iCol][0]);
+                C[iRow][1] += (float) (L[iRow][iCol] * V[iCol][1]);
+                C[iRow][2] += (float) (L[iRow][iCol] * V[iCol][2]);
             }
         }
 
