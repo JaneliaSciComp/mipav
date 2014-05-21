@@ -1266,7 +1266,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			
 			activeSlice = currentSlice - lowerBound;
 
-			imName.setText(images.get(activeSlice).getName());
+			imName.setText(images.get(currentSlice).getName());
 			
 			subVolume = new ModelImage(type, new int[]{width, height, depth}, "Sub-Volume");
 			subVolume.importData(0, imBuffer, true);
