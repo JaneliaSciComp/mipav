@@ -3,7 +3,6 @@ package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-
 import gov.nih.mipav.view.Preferences;
 
 import java.io.File;
@@ -249,6 +248,42 @@ public class FileCZI extends FileBase {
         byte byteBuffer[] = null;
         short shortBuffer[] = null;
         boolean isColor = false;
+        int tagsStart;
+        int tagsEnd;
+        String tags;
+        int focusPositionStart;
+        int focusPositionEnd;
+        String focusPosition;
+        int stageXPositionStart;
+        int stageXPositionEnd;
+        String stageXPosition;
+        int stageYPositionStart;
+        int stageYPositionEnd;
+        String stageYPosition;
+        int acquisitionTimeStart;
+        int acquisitionTimeEnd;
+        String acquisitionTime;
+        int dataSchemaStart;
+        int dataSchemaEnd;
+        String dataSchema;
+        int validBitsPerPixelStart;
+        int validBitsPerPixelEnd;
+        String validBitsPerPixel;
+        int entryCount;
+        String contentFileType;
+        String name;
+        long attachmentSegmentStart;
+        int timeStampSegmentSize;
+        int numberTimeStamps;
+        double timeStamps[];
+        int eventListSegmentSize;
+        int numberEvents;
+        int eventListEntrySize;
+        double eventTimes[];
+        int eventTypes[];
+        int descriptionSize;
+        String eventDescriptions[];
+        int imageSlices = 1;
         
         try {
             fileInfo = new FileInfoCZI(fileName, fileDir, FileUtility.CZI); // dummy fileInfo
@@ -355,6 +390,13 @@ public class FileCZI extends FileBase {
                         Preferences.debug("File header gave Directory Segment position as " + directoryPosition + "\n", Preferences.DEBUG_FILEIO);
                     }
                     Preferences.debug("Actual Directory Segment position = " + position + "\n", Preferences.DEBUG_FILEIO);
+                    entryCount = readInt(endianess);
+                    Preferences.debug("The number of entries = " + entryCount + "\n", Preferences.DEBUG_FILEIO);
+                    // Skip 124 reserved bytes
+                    raFile.seek(position + 128);
+                    // List of entryCount items
+                    // Each item is a copy of the directoryEntry in the referenced subBlock segment
+                    // No need to read this information twice
                 } // else if (charID.trim().equals("ZISRAWDIRECTORY"))
                 else if (charID.trim().equals("ZISRAWMETADATA")) {
                     if (metadataPosition != 0) {
@@ -510,12 +552,178 @@ public class FileCZI extends FileBase {
                         raFile.seek(subBlockStart + 256);
                     }
                     metaData = getString(metadataSize);
-                    Preferences.debug("SubBlock Segment metadata:\n", Preferences.DEBUG_FILEIO);
-                    Preferences.debug(metaData + "\n");
+                    tagsStart = metaData.indexOf("<Tags>");
+                    tagsEnd = metaData.indexOf("</Tags>");
+                    if ((tagsStart >= 0) && (tagsEnd > tagsStart)) {
+                    	tags = metaData.substring(tagsStart, tagsEnd);
+                    	tagsStart = tags.indexOf(">");
+                    	tags = tags.substring(tagsStart+1);
+                    	focusPositionStart = tags.indexOf("<FocusPosition>");
+                    	focusPositionEnd = tags.indexOf("</FocusPosition>");
+                    	if ((focusPositionStart >= 0) && (focusPositionEnd > focusPositionStart)) {
+                    	    focusPosition = tags.substring(focusPositionStart, focusPositionEnd);
+                    	    focusPositionStart = focusPosition.indexOf(">");
+                    	    focusPosition = focusPosition.substring(focusPositionStart+1);
+                    	    Preferences.debug("Focus position in micrometers = " + focusPosition + "\n", Preferences.DEBUG_FILEIO);
+                    	    fileInfo.setFocusPosition(focusPosition);
+                    	} // if ((focusPositionStart >= 0) && (focusPositionEnd > focusPositionStart))
+                    	acquisitionTimeStart = tags.indexOf("<AcquisitionTime>");
+                    	acquisitionTimeEnd = tags.indexOf("</AcquisitionTime>");
+                    	if ((acquisitionTimeStart >= 0) && (acquisitionTimeEnd > acquisitionTimeStart)) {
+                    	    acquisitionTime = tags.substring(acquisitionTimeStart, acquisitionTimeEnd);
+                    	    acquisitionTimeStart = acquisitionTime.indexOf(">");
+                    	    acquisitionTime = acquisitionTime.substring(acquisitionTimeStart + 1);
+                    	    Preferences.debug("Acquisition time = " + acquisitionTime + "\n", Preferences.DEBUG_FILEIO);
+                    	    fileInfo.setAcquisitionTime(acquisitionTime);
+                    	} // if ((acquisitionTimeStart >= 0) && (acquisitionTimeEnd > acquisitionTimeStart))
+                    	stageXPositionStart = tags.indexOf("<StageXPosition>");
+                    	stageXPositionEnd = tags.indexOf("</StageXPosition>");
+                    	if ((stageXPositionStart >= 0) && (stageXPositionEnd > stageXPositionStart)) {
+                    	    stageXPosition = tags.substring(stageXPositionStart, stageXPositionEnd);
+                    	    stageXPositionStart = stageXPosition.indexOf(">");
+                    	    stageXPosition = stageXPosition.substring(stageXPositionStart + 1);
+                    	    Preferences.debug("Stage axis X position in micrometers = " + stageXPosition + "\n", Preferences.DEBUG_FILEIO);
+                    	    fileInfo.setStageXPosition(stageXPosition);
+                    	} // if ((stageXPositionStart >= 0) && (stageXPositionEnd > stageXPositionStart))
+                    	stageYPositionStart = tags.indexOf("<StageYPosition>");
+                    	stageYPositionEnd = tags.indexOf("</StageYPosition>");
+                    	if ((stageYPositionStart >= 0) && (stageYPositionEnd > stageYPositionStart)) {
+                    	    stageYPosition = tags.substring(stageYPositionStart, stageYPositionEnd);
+                    	    stageYPositionStart = stageYPosition.indexOf(">");
+                    	    stageYPosition = stageYPosition.substring(stageYPositionStart + 1);
+                    	    Preferences.debug("Stage axis Y position in micrometers = " + stageYPosition + "\n", Preferences.DEBUG_FILEIO);
+                    	    fileInfo.setStageYPosition(stageYPosition);
+                    	} // if ((stageYPositionStart >= 0) && (stageYPositionEnd > stageYPositionStart))
+                    } // if ((tagsStart >= 0) && (tagsEnd > tagsStart))
+                    dataSchemaStart = metaData.indexOf("<DataSchema>");
+                    dataSchemaEnd = metaData.indexOf("</DataSchema>");
+                    if ((dataSchemaStart >= 0) && (dataSchemaEnd > dataSchemaStart)) {
+                        dataSchema = metaData.substring(dataSchemaStart, dataSchemaEnd);
+                        dataSchemaStart = dataSchema.indexOf(">");
+                        dataSchema = dataSchema.substring(dataSchemaStart);
+                        validBitsPerPixelStart = dataSchema.indexOf("<ValidBitsPerPixel>");
+                        validBitsPerPixelEnd = dataSchema.indexOf("</ValidBitsPerPixel>");
+                        if ((validBitsPerPixelStart >= 0) && (validBitsPerPixelEnd > validBitsPerPixelStart)) {
+                            validBitsPerPixel = dataSchema.substring(validBitsPerPixelStart, validBitsPerPixelEnd);	
+                            validBitsPerPixelStart = validBitsPerPixel.indexOf(">");
+                            validBitsPerPixel = validBitsPerPixel.substring(validBitsPerPixelStart+1);
+                            Preferences.debug("Valid bits per pixel = " + validBitsPerPixel + "\n",Preferences.DEBUG_FILEIO);
+                            fileInfo.setValidBitsPerPixel(validBitsPerPixel);
+                        } // if ((validBitsPerPixelStart >= 0) && (validBitsPerPixelEnd > validBitsPerPixelStart))
+                    } // if ((dataSchemaStart >= 0) && (dataSchemaEnd > dataSchemaStart))
+                    //Preferences.debug("SubBlock Segment metadata:\n", Preferences.DEBUG_FILEIO);
+                    //Preferences.debug(metaData + "\n");
                     location = raFile.getFilePointer();
                     imageDataLocation.add(location);
                     // Skip attachments for now
                 } // else if (charID.trim().equals("ZISRAWSUBBLOCK"))
+                else if (charID.trim().equals("ZISRAWATTACH")) {
+                	attachmentSegmentStart = raFile.getFilePointer();
+                	dataSize = readInt(endianess);
+                	Preferences.debug("Size of the Attachment Segment data section = " + dataSize + "\n", Preferences.DEBUG_FILEIO);
+                	// Skip 12 reserved bytes
+                    byte spare[] = new byte[12];
+                    raFile.read(spare);
+                	// Read AttachEntry A1
+                	schemaType = getString(2);
+                	if (schemaType.equals("A1")) {
+                	    Preferences.debug("SchemaType is A1 as expected\n", Preferences.DEBUG_FILEIO);
+                	    byte reserved[] = new byte[10];
+                	    raFile.read(reserved);
+                	    filePosition = readLong(endianess);
+                	    Preferences.debug("Seek offset relative to the first byte of the file = " + filePosition + "\n");
+                	    // Reserved filePart
+                	    readInt(endianess);
+                	    // Java cannot handle 16 bit GUID
+                	    // Unique ID to be used in strong, fully qualified references
+                	    readLong(endianess);
+                	    readLong(endianess);
+                	    contentFileType = getString(8).trim();
+                	    if (contentFileType.equals("ZIP")) {
+                	    	Preferences.debug("Attachment file is a ZIP compressed stream\n", Preferences.DEBUG_FILEIO);
+                	    }
+                	    else if (contentFileType.equals("ZISRAW")) {
+                	    	Preferences.debug("Attachment file is an embedded ZISRAW file\n", Preferences.DEBUG_FILEIO);
+                	    }
+                	    else if (contentFileType.equals("CZTIMS")) {
+                	    	Preferences.debug("Attachment file is a time stamp list\n", Preferences.DEBUG_FILEIO);
+                	    }
+                	    else if (contentFileType.equals("CZEVL")) {
+                	    	Preferences.debug("Attachment file is an event list\n", Preferences.DEBUG_FILEIO);
+                	    }
+                	    else if (contentFileType.equals("CZLUT")) {
+                	    	Preferences.debug("Attachment file is a lookup table\n", Preferences.DEBUG_FILEIO);
+                	    }
+                	    else if (contentFileType.equals("CZPML")) {
+                	    	Preferences.debug("Attachment file is a Pal molecule list\n", Preferences.DEBUG_FILEIO);
+                	    }
+                	    else {
+                	    	Preferences.debug("Attachment file is " + contentFileType + "\n", Preferences.DEBUG_FILEIO);
+                	    }
+                	    name = readCString();
+                	    Preferences.debug("Name for attachment file = " + name + "\n", Preferences.DEBUG_FILEIO);
+                	    // Go to start of embedded file
+                	    raFile.seek(attachmentSegmentStart + 256);
+                	    if (name.equals("TimeStamps")) {
+                	        timeStampSegmentSize = readInt(endianess);
+                	        Preferences.debug("Time stamp segment size = " + timeStampSegmentSize + "\n", Preferences.DEBUG_FILEIO);
+                	        numberTimeStamps = readInt(endianess);
+                	        Preferences.debug("Number of time stamps in the list = " + numberTimeStamps + "\n");
+                	        timeStamps = new double[numberTimeStamps];
+                	        Preferences.debug("Time stamps in seconds relative to the start time of acquisition:\n",
+                	        		Preferences.DEBUG_FILEIO);
+                	        for (i = 0; i < numberTimeStamps; i++) {
+                	        	timeStamps[i] = readDouble(endianess);
+                	        	Preferences.debug("Time stamp " + i + ":     " + timeStamps[i] + "\n", Preferences.DEBUG_FILEIO);
+                	        }
+                	        fileInfo.setTimeStamps(timeStamps);
+                	    } // if (name.equals("TimeStamps"))
+                	    else if (name.equals("EventList")) {
+                	        eventListSegmentSize = readInt(endianess);	
+                	        Preferences.debug("Event list segment size = " + eventListSegmentSize + "\n", Preferences.DEBUG_FILEIO);
+                	        numberEvents = readInt(endianess);
+                	        Preferences.debug("Number of events = " + numberEvents + "\n", Preferences.DEBUG_FILEIO);
+                	        eventTimes = new double[numberEvents];
+                	        eventTypes = new int[numberEvents];
+                	        eventDescriptions = new String[numberEvents];
+                	        for (i = 0; i < numberEvents; i++) {
+                	        	Preferences.debug("Event " + i + ":\n", Preferences.DEBUG_FILEIO);
+                	            eventListEntrySize = readInt(endianess);
+                	            Preferences.debug("Event list entry size in bytes = " + eventListEntrySize + "\n",
+                	            		Preferences.DEBUG_FILEIO);
+                	            eventTimes[i] = readDouble(endianess);
+                	            Preferences.debug("Time of the event in seconds relative to the start time of the LSM electronic\n",
+                	            Preferences.DEBUG_FILEIO);
+                	            Preferences.debug("module controller program = " + eventTimes[i] + "\n", Preferences.DEBUG_FILEIO);
+                	            eventTypes[i] = readInt(endianess);
+                	            if (eventTypes[i] == 0) {
+                	            	Preferences.debug("Experimental annotation\n", Preferences.DEBUG_FILEIO);
+                	            }
+                	            else if (eventTypes[i] == 1) {
+                	                Preferences.debug("The time interval has changed\n", Preferences.DEBUG_FILEIO);	
+                	            }
+                	            else if (eventTypes[i] == 2) {
+                	            	Preferences.debug("Start of a bleach operation\n", Preferences.DEBUG_FILEIO);
+                	            }
+                	            else if (eventTypes[i] == 3) {
+                	            	Preferences.debug("End of a bleach operation\n", Preferences.DEBUG_FILEIO);
+                	            }
+                	            else if (eventTypes[i] == 4) {
+                	            	Preferences.debug("A trigger signal was detected on the user port of the elctronic module\n",
+                	            			Preferences.DEBUG_FILEIO);
+                	            }
+                	            descriptionSize = readInt(endianess);
+                	            Preferences.debug("Size of the description character array = " + descriptionSize + "\n",
+                	            		Preferences.DEBUG_FILEIO);
+                	            eventDescriptions[i] = readCString();
+                	            Preferences.debug("Description = " + eventDescriptions[i] + "\n", Preferences.DEBUG_FILEIO);
+                	        }
+                	    } // else if (name.equals("EventList"))
+                	} // if (schemaType.equals("A1"))
+                	else {
+                		Preferences.debug("SchemaType is " + schemaType + " instead of the expected A1\n", Preferences.DEBUG_FILEIO);
+                	}
+                }
                 position += (allocatedSize + 32);
                 if (position < fileLength) {
                     raFile.seek(position);
@@ -726,9 +934,11 @@ public class FileCZI extends FileBase {
             Preferences.debug("imageExtents[1] = " + imageExtents[1] + "\n", Preferences.DEBUG_FILEIO);
             if (actualDimensions > 2) {
             	imageExtents[2] = thirdDimension;
+            	imageSlices *= imageExtents[2];
             	 Preferences.debug("imageExtents[2] = " + imageExtents[2] + "\n", Preferences.DEBUG_FILEIO);
             	if (actualDimensions > 3) {
             		imageExtents[3] = fourthDimension;
+            		imageSlices *= imageExtents[3];
             		 Preferences.debug("imageExtents[3] = " + imageExtents[3] + "\n", Preferences.DEBUG_FILEIO);
             	}
             }
@@ -805,6 +1015,10 @@ public class FileCZI extends FileBase {
             raFile.close();
 
             image.calcMinMax();
+            
+            for (i = 0; i < imageSlices; i++) {
+                image.setFileInfo((FileInfoCZI)fileInfo.clone(), i);
+            }
 
             fireProgressStateChanged(100);
 
@@ -820,6 +1034,22 @@ public class FileCZI extends FileBase {
         }
 
         return image;
+    }
+    
+    private String readCString() throws IOException {
+        String cString = "";
+        boolean nullFound = false;
+        byte oneByte[] = new byte[1];
+        while (!nullFound) {
+            raFile.read(oneByte);
+            if (oneByte[0]  == 0) {
+                nullFound = true;
+            }
+            else {
+                cString += new String(oneByte);
+            }
+        } // while (!nullFound)
+        return cString;
     }
 
 }
