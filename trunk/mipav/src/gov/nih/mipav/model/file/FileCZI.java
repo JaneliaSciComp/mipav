@@ -197,7 +197,7 @@ public class FileCZI extends FileBase {
         int metadataSize;
         long dataSize;
         String schemaType;
-        int pixelType;
+        int pixelType = Gray8;
         final String typeString[] = new String[14];
         typeString[0] = new String("Gray8");
         typeString[1] = new String("Gray16");
@@ -227,10 +227,29 @@ public class FileCZI extends FileBase {
         final Vector<Float> imageStartCoordinate[] = new Vector[7];
         final Vector<Long> imageDataSize = new Vector<Long>();
         final Vector<Long> imageDataLocation = new Vector<Long>();
+        Vector<Integer> imageColorStartIndex = new Vector<Integer>();
         long subBlockStart;
         long location;
         int j;
         String metaData;
+        int xIndex = -1;
+        int yIndex = -1;
+        int zIndex = -1;
+        int tIndex = -1;
+        int actualDimensions = 0;
+        int firstDimension = -1;
+        int secondDimension = -1;
+        int thirdDimension = -1;
+        int fourthDimension = -1;
+        int fifthDimension = -1;
+        int bytesSought = 0;
+        int bytesRead = 0;
+        int totalValuesRead = 0;
+        int subBlockValues = 1;
+        byte byteBuffer[] = null;
+        short shortBuffer[] = null;
+        boolean isColor = false;
+        
         try {
             fileInfo = new FileInfoCZI(fileName, fileDir, FileUtility.CZI); // dummy fileInfo
             fileInfo.setEndianess(endianess);
@@ -367,6 +386,7 @@ public class FileCZI extends FileBase {
                     dataSize = readLong(endianess);
                     Preferences.debug("Size of the SubBlock data section = " + dataSize + "\n", Preferences.DEBUG_FILEIO);
                     imageDataSize.add(dataSize);
+                    // Reading Directory Entry DV
                     schemaType = getString(2);
                     if (schemaType.equals("DV")) {
                         Preferences.debug("Directory Entry DV Schema Type = DV as expected\n", Preferences.DEBUG_FILEIO);
@@ -378,42 +398,6 @@ public class FileCZI extends FileBase {
                     }
                     pixelType = readInt(endianess);
                     Preferences.debug("CZI pixelType = " + typeString[pixelType] + "\n", Preferences.DEBUG_FILEIO);
-                    if (pixelType == Gray8) {
-                        dataType = ModelStorageBase.UBYTE;
-                        Preferences.debug("MIPAV data type = UBYTE\n", Preferences.DEBUG_FILEIO);
-                    } else if (pixelType == Gray16) {
-                        dataType = ModelStorageBase.USHORT;
-                        Preferences.debug("MIPAV data type = USHORT\n", Preferences.DEBUG_FILEIO);
-                    } else if (pixelType == Gray32Float) {
-                        dataType = ModelStorageBase.FLOAT;
-                        Preferences.debug("MIPAV data type = FLOAT\n", Preferences.DEBUG_FILEIO);
-                    } else if (pixelType == Bgr24) {
-                        dataType = ModelStorageBase.ARGB;
-                        Preferences.debug("MIPAV data type = ARGB\n", Preferences.DEBUG_FILEIO);
-                    } else if (pixelType == Bgr48) {
-                        dataType = ModelStorageBase.ARGB_USHORT;
-                        Preferences.debug("MIPAV data type = ARGB_USHORT\n", Preferences.DEBUG_FILEIO);
-                    } else if (pixelType == Bgr96Float) {
-                        dataType = ModelStorageBase.ARGB_FLOAT;
-                        Preferences.debug("MIPAV data type = ARGB_FLOAT\n", Preferences.DEBUG_FILEIO);
-                    } else if (pixelType == Bgra32) {
-                        dataType = ModelStorageBase.ARGB;
-                        Preferences.debug("MIPAV data type = ARGB\n", Preferences.DEBUG_FILEIO);
-                    } else if (pixelType == Gray64ComplexFloat) {
-                        dataType = ModelStorageBase.COMPLEX;
-                        Preferences.debug("MIPAV data type = COMPLEX\n", Preferences.DEBUG_FILEIO);
-                    } else if (pixelType == Bgr192ComplexFloat) {
-                        Preferences.debug("Bgr192ComplexFloat has no corresponding MIPAV data type\n", Preferences.DEBUG_FILEIO);
-                        raFile.close();
-                        throw new IOException("Bgr192ComplexFloat has no corresponding MIPAV data type");
-                    } else if (pixelType == Gray32) {
-                        dataType = ModelStorageBase.INTEGER;
-                        Preferences.debug("MIPAV data type = INTEGER\n", Preferences.DEBUG_FILEIO);
-                    } else if (pixelType == Gray64) {
-                        dataType = ModelStorageBase.DOUBLE;
-                        Preferences.debug("MIPAV data type = DOUBLE\n", Preferences.DEBUG_FILEIO);
-                    }
-                    fileInfo.setDataType(dataType);
                     filePosition = readLong(endianess);
                     Preferences.debug("Seek offset of the referenced SubBlockSegment relative to the first byte of the file = " + filePosition + "\n",
                             Preferences.DEBUG_FILEIO);
@@ -481,6 +465,9 @@ public class FileCZI extends FileBase {
                             throw new IOException("size[" + i + "] = " + size[i] + " is less than the legal minuimum of 1");
                         }
                         Preferences.debug("size[" + i + "] = " + size[i] + "\n", Preferences.DEBUG_FILEIO);
+                        if ((dimension[i].equals("C")) && (size[i] == 1)) {
+                        	imageColorStartIndex.add(start[i]);
+                        }
                         startCoordinate[i] = readFloat(endianess);
                         Preferences.debug("startCoordinate[" + i + "] = " + startCoordinate[i] + "\n", Preferences.DEBUG_FILEIO);
                         if (size[i] > 1) {
@@ -488,6 +475,18 @@ public class FileCZI extends FileBase {
                                 imageDimension[index] = new Vector<String>();
                             }
                             imageDimension[index].add(dimension[i]);
+                            if (dimension[i].equals("X")) {
+                            	xIndex = index;
+                            }
+                            else if (dimension[i].equals("Y")) {
+                            	yIndex = index;
+                            }
+                            else if (dimension[i].equals("Z")) {
+                            	zIndex = index;
+                            }
+                            else if (dimension[i].equals("T")) {
+                            	tIndex = index;
+                            }
                             if (imageSize[index] == null) {
                                 imageSize[index] = new Vector<Integer>();
                             }
@@ -563,6 +562,247 @@ public class FileCZI extends FileBase {
                     }
                 }
             }
+            
+            if ((imageColorStartIndex.size() == imageDimension[0].size()) && ((imageColorStartIndex.size() % 3) == 0)) {
+            	isColor = true;
+            	for (i = 0; i < imageColorStartIndex.size(); i += 3) {
+            		if ((imageColorStartIndex.get(i).intValue() != 0) || (imageColorStartIndex.get(i+1).intValue() != 1) ||
+            			(imageColorStartIndex.get(i+2).intValue() != 2)) {
+            			isColor = false;
+            		}
+            	}
+            }
+            
+            if (pixelType == Gray8) {
+            	if (!isColor) {
+                    dataType = ModelStorageBase.UBYTE;
+                    Preferences.debug("MIPAV data type = UBYTE\n", Preferences.DEBUG_FILEIO);
+            	}
+            	else {
+            		dataType = ModelStorageBase.ARGB;
+            		Preferences.debug("MIPAV data type = ARGB\n", Preferences.DEBUG_FILEIO);
+            	}
+            } else if (pixelType == Gray16) {
+            	if (!isColor) {
+                    dataType = ModelStorageBase.USHORT;
+                    Preferences.debug("MIPAV data type = USHORT\n", Preferences.DEBUG_FILEIO);
+            	}
+            	else {
+            		dataType = ModelStorageBase.ARGB_USHORT;
+            		Preferences.debug("MIPAV data type = ARGB_USHORT\n", Preferences.DEBUG_FILEIO);
+            	}
+            } else if (pixelType == Gray32Float) {
+                dataType = ModelStorageBase.FLOAT;
+                Preferences.debug("MIPAV data type = FLOAT\n", Preferences.DEBUG_FILEIO);
+            } else if (pixelType == Bgr24) {
+                dataType = ModelStorageBase.ARGB;
+                Preferences.debug("MIPAV data type = ARGB\n", Preferences.DEBUG_FILEIO);
+            } else if (pixelType == Bgr48) {
+                dataType = ModelStorageBase.ARGB_USHORT;
+                Preferences.debug("MIPAV data type = ARGB_USHORT\n", Preferences.DEBUG_FILEIO);
+            } else if (pixelType == Bgr96Float) {
+                dataType = ModelStorageBase.ARGB_FLOAT;
+                Preferences.debug("MIPAV data type = ARGB_FLOAT\n", Preferences.DEBUG_FILEIO);
+            } else if (pixelType == Bgra32) {
+                dataType = ModelStorageBase.ARGB;
+                Preferences.debug("MIPAV data type = ARGB\n", Preferences.DEBUG_FILEIO);
+            } else if (pixelType == Gray64ComplexFloat) {
+                dataType = ModelStorageBase.COMPLEX;
+                Preferences.debug("MIPAV data type = COMPLEX\n", Preferences.DEBUG_FILEIO);
+            } else if (pixelType == Bgr192ComplexFloat) {
+                Preferences.debug("Bgr192ComplexFloat has no corresponding MIPAV data type\n", Preferences.DEBUG_FILEIO);
+                raFile.close();
+                throw new IOException("Bgr192ComplexFloat has no corresponding MIPAV data type");
+            } else if (pixelType == Gray32) {
+                dataType = ModelStorageBase.INTEGER;
+                Preferences.debug("MIPAV data type = INTEGER\n", Preferences.DEBUG_FILEIO);
+            } else if (pixelType == Gray64) {
+                dataType = ModelStorageBase.DOUBLE;
+                Preferences.debug("MIPAV data type = DOUBLE\n", Preferences.DEBUG_FILEIO);
+            }
+            fileInfo.setDataType(dataType);
+            
+            if (xIndex >= 0) {
+            	actualDimensions++;
+            	firstDimension = imageSize[xIndex].get(0);
+            	subBlockValues *= imageSize[xIndex].get(0);
+            }
+            if (yIndex >= 0) {
+            	actualDimensions++;
+            	if (firstDimension == -1) {
+            		firstDimension = imageSize[yIndex].get(0);
+            	}
+            	else {
+            		secondDimension = imageSize[yIndex].get(0);
+            	}
+            	subBlockValues *= imageSize[yIndex].get(0);
+            }
+            if (zIndex >= 0) {
+            	actualDimensions++;
+            	if (firstDimension == -1) {
+            		firstDimension = imageSize[zIndex].get(0);
+            	}
+            	else if (secondDimension == -1) {
+            	    secondDimension	= imageSize[zIndex].get(0);
+            	}
+            	else {
+            		thirdDimension = imageSize[zIndex].get(0);
+            	}
+            	subBlockValues *= imageSize[zIndex].get(0);
+            }
+            if (tIndex >= 0) {
+            	actualDimensions++;
+            	if (firstDimension == -1) {
+            		firstDimension = imageSize[tIndex].get(0);
+            	}
+            	else if (secondDimension == -1) {
+            		secondDimension = imageSize[tIndex].get(0);
+            	}
+            	else if (thirdDimension == -1) {
+            		thirdDimension = imageSize[tIndex].get(0);
+            	}
+            	else {
+            		fourthDimension = imageSize[tIndex].get(0);
+            	}
+            	subBlockValues *= imageSize[tIndex].get(0);
+            }
+            
+            if (isColor && ((pixelType == Gray8) || (pixelType == Gray16))) {
+                if (imageSize[0].size() > 3) {
+                	actualDimensions++;
+	            	if (firstDimension == -1) {
+	            		firstDimension = imageSize[0].size()/3;
+	            	}
+	            	else if (secondDimension == -1) {
+	            		secondDimension = imageSize[0].size()/3;
+	            	}
+	            	else if (thirdDimension == -1) {
+	            		thirdDimension = imageSize[0].size()/3;
+	            	}
+	            	else if (fourthDimension == -1) {
+	            		fourthDimension = imageSize[0].size()/3;
+	            	}
+	            	else {
+	            		fifthDimension = imageSize[0].size()/3;
+	            		Preferences.debug("Five dimensional ModelImage cannot be handled by MIPAV\n", Preferences.DEBUG_FILEIO);
+	            		raFile.close();
+	                	throw new IOException("Five dimensional ModelImage cannot be handled by MIPAV");
+	            	}	
+                }
+            }
+            else {
+	            if (imageSize[0].size() > 1) {
+	            	actualDimensions++;
+	            	if (firstDimension == -1) {
+	            		firstDimension = imageSize[0].size();
+	            	}
+	            	else if (secondDimension == -1) {
+	            		secondDimension = imageSize[0].size();
+	            	}
+	            	else if (thirdDimension == -1) {
+	            		thirdDimension = imageSize[0].size();
+	            	}
+	            	else if (fourthDimension == -1) {
+	            		fourthDimension = imageSize[0].size();
+	            	}
+	            	else {
+	            		fifthDimension = imageSize[0].size();
+	            		Preferences.debug("Five dimensional ModelImage cannot be handled by MIPAV\n", Preferences.DEBUG_FILEIO);
+	            		raFile.close();
+	                	throw new IOException("Five dimensional ModelImage cannot be handled by MIPAV");
+	            	}
+	            }
+            }
+            
+            if (actualDimensions == 1) {
+            	Preferences.debug("One dimensional ModelImage cannot be handled by MIPAV\n", Preferences.DEBUG_FILEIO);
+            	raFile.close();
+            	throw new IOException("One dimensional ModelImage cannot be handled by MIPAV");
+            }
+            imageExtents = new int[actualDimensions];
+            imageExtents[0] = firstDimension;
+            Preferences.debug("imageExtents[0] = " + imageExtents[0] + "\n", Preferences.DEBUG_FILEIO);
+            imageExtents[1] = secondDimension;
+            Preferences.debug("imageExtents[1] = " + imageExtents[1] + "\n", Preferences.DEBUG_FILEIO);
+            if (actualDimensions > 2) {
+            	imageExtents[2] = thirdDimension;
+            	 Preferences.debug("imageExtents[2] = " + imageExtents[2] + "\n", Preferences.DEBUG_FILEIO);
+            	if (actualDimensions > 3) {
+            		imageExtents[3] = fourthDimension;
+            		 Preferences.debug("imageExtents[3] = " + imageExtents[3] + "\n", Preferences.DEBUG_FILEIO);
+            	}
+            }
+            fileInfo.setExtents(imageExtents);
+            
+            image = new ModelImage(dataType, imageExtents, fileName);
+            
+            if (dataType == ModelStorageBase.UBYTE) {
+            	byteBuffer = new byte[subBlockValues];
+            }
+            else if (dataType == ModelStorageBase.USHORT) {
+            	shortBuffer = new short[subBlockValues];
+            }
+            else if ((pixelType == Gray8) && (dataType == ModelStorageBase.ARGB)) {
+            	byteBuffer = new byte[subBlockValues];
+            }
+            else if ((pixelType == Gray16) && (dataType == ModelStorageBase.ARGB_USHORT)) {
+            	shortBuffer = new short[subBlockValues];
+            }
+            
+            for (i = 0; i < imageDataLocation.size(); i++) {
+            	raFile.seek(imageDataLocation.get(i));
+            	if (dataType == ModelStorageBase.UBYTE) {
+	            	Preferences.debug("bytes sought from file = " + subBlockValues + "\n", Preferences.DEBUG_FILEIO);
+	            	bytesRead = raFile.read(byteBuffer);
+	            	Preferences.debug("bytes read from file = " + bytesRead + "\n", Preferences.DEBUG_FILEIO);
+	            	image.importData(totalValuesRead, byteBuffer, false);
+	            	totalValuesRead += subBlockValues;
+            	} // if (dataType == ModelStorageBase.UBYTE)
+            	else if (dataType == ModelStorageBase.USHORT) {
+            		for (j = 0; j < subBlockValues; j++) {
+            			shortBuffer[j] = readShort(endianess);
+            		}
+            		image.importData(totalValuesRead, shortBuffer, false);
+            		totalValuesRead += subBlockValues;
+            	} // else if (dataType == ModelStorageBase.USHORT)
+            	else if ((pixelType == Gray8) && (dataType == ModelStorageBase.ARGB)) {
+            		Preferences.debug("bytes sought from file = " + subBlockValues + "\n", Preferences.DEBUG_FILEIO);
+	            	bytesRead = raFile.read(byteBuffer);
+	            	Preferences.debug("bytes read from file = " + bytesRead + "\n", Preferences.DEBUG_FILEIO);
+            		if ((i % 3) == 0) {
+            			// Blue channel
+            			image.importRGBData(3, totalValuesRead, byteBuffer, false);
+            		}
+            		else if ((i % 3) == 1) {
+            			// Green channel
+            			image.importRGBData(2, totalValuesRead, byteBuffer, false);
+            		}
+            		else {
+            			// Red channel
+            			image.importRGBData(1, totalValuesRead, byteBuffer, false);
+            			totalValuesRead += 4 * subBlockValues;
+            		}
+            	} // else if ((pixelType == Gray8) && (dataType == ModelStorageBase.ARGB))
+            	else if ((pixelType == Gray16) && (dataType == ModelStorageBase.ARGB_USHORT)) {
+            		for (j = 0; j < subBlockValues; j++) {
+            			shortBuffer[j] = readShort(endianess);
+            		}	
+            		if ((i % 3) == 0) {
+            			// Blue channel
+            			image.importRGBData(3, totalValuesRead, shortBuffer, false);
+            		}
+            		else if ((i % 3) == 1) {
+            			// Green channel
+            			image.importRGBData(2, totalValuesRead, shortBuffer, false);
+            		}
+            		else {
+            			// Red channel
+            			image.importRGBData(1, totalValuesRead, shortBuffer, false);
+            			totalValuesRead += 4 * subBlockValues;
+            		}
+            	} // else if ((pixelType == Gray16) && (dataType == ModelStorageBase.ARGB_USHORT))
+            } // for (i = 0; i < imageDataLocation.size(); i++)
+            raFile.close();
 
             image.calcMinMax();
 
