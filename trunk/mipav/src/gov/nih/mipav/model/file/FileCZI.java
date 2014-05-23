@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.Preferences;
@@ -270,9 +271,8 @@ public class FileCZI extends FileBase {
         int validBitsPerPixelEnd;
         String validBitsPerPixel;
         int entryCount;
-        String contentFileType;
-        String name;
-        long attachmentSegmentStart;
+    	String contentFileType;
+    	String name;
         int timeStampSegmentSize;
         int numberTimeStamps;
         double timeStamps[];
@@ -283,6 +283,73 @@ public class FileCZI extends FileBase {
         int eventTypes[];
         int descriptionSize;
         String eventDescriptions[];
+        float origin[] = new float[4];
+        int lookupTablesSegmentSize;
+        int numberLookupTables;
+        int lookupTableEntrySize;
+        long lookupEntryStartPosition;
+        String identifier;
+        int numberComponents;
+        int componentEntrySize;
+        int componentType;
+        int numberIntensities;
+        int k;
+        short intensity[];
+        int scalingStart;
+        int scalingEnd;
+        String scaling;
+        int itemsStart;
+        int itemsEnd;
+        String items;
+        int distanceXStart;
+        int distanceXEnd;
+        String distanceX;
+        int xUnitStart;
+        int xUnitEnd;
+        String xUnit;
+        int xValueStart;
+        int xValueEnd;
+        String xValue;
+        int distanceYStart;
+        int distanceYEnd;
+        String distanceY;
+        int yUnitStart;
+        int yUnitEnd;
+        String yUnit;
+        int yValueStart;
+        int yValueEnd;
+        String yValue;
+        int distanceZStart;
+        int distanceZEnd;
+        String distanceZ;
+        int zUnitStart;
+        int zUnitEnd;
+        String zUnit;
+        int zValueStart;
+        int zValueEnd;
+        String zValue;
+        int timeZStart;
+        int timeZEnd;
+        String timeZ;
+        int informationStart;
+        int informationEnd;
+        String information;
+        int nameStart;
+        int nameEnd;
+        String imageName;
+        int authorStart;
+        int authorEnd;
+        String author;
+        int userNameStart;
+        int userNameEnd;
+        String userName;
+        int subTypeStart;
+        int subTypeEnd;
+        String subType;
+        int titleStart;
+        int titleEnd;
+        String title;
+        int unitsOfMeasure[] = new int[4];
         int imageSlices = 1;
         
         try {
@@ -409,6 +476,290 @@ public class FileCZI extends FileBase {
                     // Size of the (binary) attachments. NOT USED CURRENTLY
                     Preferences.debug("Currently unused size of binary attachments = " + attachmentSize + "\n", Preferences.DEBUG_FILEIO);
                     xmlData = getString(xmlSize);
+                    scalingStart = xmlData.indexOf("<Scaling>");
+                    scalingEnd = xmlData.indexOf("</Scaling>");
+                    if ((scalingStart >= 0) && (scalingEnd > scalingStart)) {
+                        scaling = xmlData.substring(scalingStart, scalingEnd);
+                        scalingStart = scaling.indexOf(">");
+                        scaling = scaling.substring(scalingStart+1);
+                        itemsStart = scaling.indexOf("<Items>");
+                        itemsEnd = scaling.indexOf("</Items>");
+                        if ((itemsStart >= 0) && (itemsEnd > itemsStart)) {
+                            items = scaling.substring(itemsStart, itemsEnd);
+                            itemsStart = items.indexOf(">");
+                            items = items.substring(itemsStart + 1);
+                            //Preferences.debug("Items:\n", Preferences.DEBUG_FILEIO);
+                            //Preferences.debug(items + "\n", Preferences.DEBUG_FILEIO);
+                            distanceXStart = items.indexOf("<Distance Id=\"X\">");
+                            if (distanceXStart >= 0) {
+                                distanceX = items.substring(distanceXStart);
+                                distanceXEnd = distanceX.indexOf("</Distance>");
+                                distanceXStart = distanceX.indexOf(">");
+                                distanceX = distanceX.substring(distanceXStart+1, distanceXEnd);
+                                xUnitStart = distanceX.indexOf("<DefaultUnitFormat>");
+                                xUnitEnd = distanceX.indexOf("</DefaultUnitFormat>");
+                                if ((xUnitStart >= 0) && (xUnitEnd > xUnitStart)) {
+                                    xUnit = distanceX.substring(xUnitStart,xUnitEnd);
+                                    xUnitStart = xUnit.indexOf(">");
+                                    xUnit = xUnit.substring(xUnitStart+1);
+                                    if (xUnit.equals("m")) {
+                                    	unitsOfMeasure[0] = Unit.METERS.getLegacyNum();
+                                    	Preferences.debug("X units of measure are meters\n");
+                                    }
+                                    else if (xUnit.equals("cm")) {
+                                    	unitsOfMeasure[0] = Unit.CENTIMETERS.getLegacyNum();
+                                    	Preferences.debug("X units of measure are centimeters\n");
+                                    }
+                                    else if (xUnit.equals("mm")) {
+                                    	unitsOfMeasure[0] = Unit.MILLIMETERS.getLegacyNum();
+                                    	Preferences.debug("X units of measure are millimeters\n");
+                                    }
+                                    else if ((xUnit.equals("u")) || (xUnit.equals("um"))) {
+                                    	unitsOfMeasure[0] = Unit.MICROMETERS.getLegacyNum();
+                                    	Preferences.debug("X units of measure are micrometers\n");
+                                    }
+                                    else if (xUnit.equals("nm")) {
+                                    	unitsOfMeasure[0] = Unit.NANOMETERS.getLegacyNum();
+                                    	Preferences.debug("X units of measure are nanometers\n");
+                                    }
+                                    else if ((xUnit.equals("i")) || (xUnit.equals("inch"))) {
+                                    	unitsOfMeasure[0] = Unit.INCHES.getLegacyNum();
+                                    	Preferences.debug("X units of measure are inches\n");
+                                    }
+                                    else if (xUnit.equals("mil")) {
+                                    	unitsOfMeasure[0] = Unit.MILS.getLegacyNum();
+                                    	Preferences.debug("X units of measure are mils (thousandths of an inch)\n");
+                                    }
+                                } // if ((xUnitStart >= 0) && (xUnitEnd > xUnitStart))
+                                else {
+                                	unitsOfMeasure[0] = Unit.METERS.getLegacyNum();
+                                	Preferences.debug("X units of measure are meters\n");	
+                                }
+                                xValueStart = distanceX.indexOf("<Value>");
+                                xValueEnd = distanceX.indexOf("</Value>");
+                                if ((xValueStart >= 0) && (xValueEnd > xValueStart)) {
+                                    xValue = distanceX.substring(xValueStart, xValueEnd);
+                                    xValueStart = xValue.indexOf(">");
+                                    xValue = xValue.substring(xValueStart+1);
+                                    if (Float.valueOf(xValue).floatValue() != 0) {
+                                        imgResols[0] = Float.valueOf(xValue).floatValue();
+                                        Preferences.debug("imgResols[0] = " + imgResols[0] + "\n", Preferences.DEBUG_FILEIO);
+                                    }
+                                } // if ((xValueStart >= 0) && (xValueEnd > xValueStart)) 
+                            } // if (distanceXStart >= 0)
+                            distanceYStart = items.indexOf("<Distance Id=\"Y\">");
+                            if (distanceYStart >= 0) {
+                                distanceY = items.substring(distanceYStart);
+                                distanceYEnd = distanceY.indexOf("</Distance>");
+                                distanceYStart = distanceY.indexOf(">");
+                                distanceY = distanceY.substring(distanceYStart+1, distanceYEnd);
+                                yUnitStart = distanceY.indexOf("<DefaultUnitFormat>");
+                                yUnitEnd = distanceY.indexOf("</DefaultUnitFormat>");
+                                if ((yUnitStart >= 0) && (yUnitEnd > yUnitStart)) {
+                                    yUnit = distanceY.substring(yUnitStart,yUnitEnd);
+                                    yUnitStart = yUnit.indexOf(">");
+                                    yUnit = yUnit.substring(yUnitStart+1);
+                                    if (yUnit.equals("m")) {
+                                    	unitsOfMeasure[1] = Unit.METERS.getLegacyNum();
+                                    	Preferences.debug("Y units of measure are meters\n");
+                                    }
+                                    else if (yUnit.equals("cm")) {
+                                    	unitsOfMeasure[1] = Unit.CENTIMETERS.getLegacyNum();
+                                    	Preferences.debug("Y units of measure are centimeters\n");
+                                    }
+                                    else if (yUnit.equals("mm")) {
+                                    	unitsOfMeasure[1] = Unit.MILLIMETERS.getLegacyNum();
+                                    	Preferences.debug("Y units of measure are millimeters\n");
+                                    }
+                                    else if ((yUnit.equals("u")) || (yUnit.equals("um"))) {
+                                    	unitsOfMeasure[1] = Unit.MICROMETERS.getLegacyNum();
+                                    	Preferences.debug("Y units of measure are micrometers\n");
+                                    }
+                                    else if (yUnit.equals("nm")) {
+                                    	unitsOfMeasure[1] = Unit.NANOMETERS.getLegacyNum();
+                                    	Preferences.debug("Y units of measure are nanometers\n");
+                                    }
+                                    else if ((yUnit.equals("i")) || (yUnit.equals("inch"))) {
+                                    	unitsOfMeasure[1] = Unit.INCHES.getLegacyNum();
+                                    	Preferences.debug("Y units of measure are inches\n");
+                                    }
+                                    else if (yUnit.equals("mil")) {
+                                    	unitsOfMeasure[1] = Unit.MILS.getLegacyNum();
+                                    	Preferences.debug("Y units of measure are mils (thousandths of an inch)\n");
+                                    }
+                                } // if ((yUnitStart >= 0) && (yUnitEnd > yUnitStart))
+                                else {
+                                	unitsOfMeasure[1] = Unit.METERS.getLegacyNum();
+                                	Preferences.debug("Y units of measure are meters\n");	
+                                }
+                                yValueStart = distanceY.indexOf("<Value>");
+                                yValueEnd = distanceY.indexOf("</Value>");
+                                if ((yValueStart >= 0) && (yValueEnd > yValueStart)) {
+                                    yValue = distanceY.substring(yValueStart, yValueEnd);
+                                    yValueStart = yValue.indexOf(">");
+                                    yValue = yValue.substring(yValueStart+1);
+                                    if (Float.valueOf(yValue).floatValue() != 0) {
+                                        imgResols[1] = Float.valueOf(yValue).floatValue();
+                                        Preferences.debug("imgResols[1] = " + imgResols[1] + "\n", Preferences.DEBUG_FILEIO);
+                                    }
+                                } // if ((yValueStart >= 0) && (yValueEnd > yValueStart)) 
+                            } // if (distanceYStart >= 0)
+                            distanceZStart = items.indexOf("<Distance Id=\"Z\">");
+                            if (distanceZStart >= 0) {
+                                distanceZ = items.substring(distanceZStart);
+                                distanceZEnd = distanceZ.indexOf("</Distance>");
+                                distanceZStart = distanceZ.indexOf(">");
+                                distanceZ = distanceZ.substring(distanceZStart+1, distanceZEnd);
+                                zUnitStart = distanceZ.indexOf("<DefaultUnitFormat>");
+                                zUnitEnd = distanceZ.indexOf("</DefaultUnitFormat>");
+                                if ((zUnitStart >= 0) && (zUnitEnd > zUnitStart)) {
+                                    zUnit = distanceZ.substring(zUnitStart,zUnitEnd);
+                                    zUnitStart = zUnit.indexOf(">");
+                                    zUnit = zUnit.substring(zUnitStart+1);
+                                    if (zUnit.equals("m")) {
+                                    	unitsOfMeasure[2] = Unit.METERS.getLegacyNum();
+                                    	Preferences.debug("Z units of measure are meters\n");
+                                    }
+                                    else if (zUnit.equals("cm")) {
+                                    	unitsOfMeasure[2] = Unit.CENTIMETERS.getLegacyNum();
+                                    	Preferences.debug("Z units of measure are centimeters\n");
+                                    }
+                                    else if (zUnit.equals("mm")) {
+                                    	unitsOfMeasure[2] = Unit.MILLIMETERS.getLegacyNum();
+                                    	Preferences.debug("Z units of measure are millimeters\n");
+                                    }
+                                    else if ((zUnit.equals("u")) || (zUnit.equals("um"))) {
+                                    	unitsOfMeasure[2] = Unit.MICROMETERS.getLegacyNum();
+                                    	Preferences.debug("Z units of measure are micrometers\n");
+                                    }
+                                    else if (zUnit.equals("nm")) {
+                                    	unitsOfMeasure[2] = Unit.NANOMETERS.getLegacyNum();
+                                    	Preferences.debug("Z units of measure are nanometers\n");
+                                    }
+                                    else if ((zUnit.equals("i")) || (zUnit.equals("inch"))) {
+                                    	unitsOfMeasure[2] = Unit.INCHES.getLegacyNum();
+                                    	Preferences.debug("Z units of measure are inches\n");
+                                    }
+                                    else if (zUnit.equals("mil")) {
+                                    	unitsOfMeasure[2] = Unit.MILS.getLegacyNum();
+                                    	Preferences.debug("Z units of measure are mils (thousandths of an inch)\n");
+                                    }
+                                } // if ((zUnitStart >= 0) && (zUnitEnd > zUnitStart))
+                                else {
+                                	unitsOfMeasure[2] = Unit.METERS.getLegacyNum();
+                                	Preferences.debug("Z units of measure are meters\n");	
+                                }
+                                zValueStart = distanceZ.indexOf("<Value>");
+                                zValueEnd = distanceZ.indexOf("</Value>");
+                                if ((zValueStart >= 0) && (zValueEnd > zValueStart)) {
+                                    zValue = distanceZ.substring(zValueStart, zValueEnd);
+                                    zValueStart = zValue.indexOf(">");
+                                    zValue = zValue.substring(zValueStart+1);
+                                    if (Float.valueOf(zValue).floatValue() != 0) {
+                                        imgResols[2] = Float.valueOf(zValue).floatValue();
+                                        Preferences.debug("imgResols[2] = " + imgResols[2] + "\n", Preferences.DEBUG_FILEIO);
+                                    }
+                                } // if ((zValueStart >= 0) && (zValueEnd > zValueStart)) 
+                            } // if (distanceZStart >= 0)
+                            timeZStart = items.indexOf("<TimeSpan Id=\"Z\">");
+                            if (timeZStart >= 0) {
+                                timeZ = items.substring(timeZStart);
+                                timeZEnd = timeZ.indexOf("</TimeSpan>");
+                                timeZStart = timeZ.indexOf(">");
+                                timeZ = timeZ.substring(timeZStart+1, timeZEnd);
+                                zUnitStart = timeZ.indexOf("<DefaultUnitFormat>");
+                                zUnitEnd = timeZ.indexOf("</DefaultUnitFormat>");
+                                if ((zUnitStart >= 0) && (zUnitEnd > zUnitStart)) {
+                                    zUnit = timeZ.substring(zUnitStart,zUnitEnd);
+                                    zUnitStart = zUnit.indexOf(">");
+                                    zUnit = zUnit.substring(zUnitStart+1);
+                                    if (zUnit.equals("s")) {
+                                    	unitsOfMeasure[2] = Unit.SECONDS.getLegacyNum();
+                                    	Preferences.debug("Z units of measure are seconds\n");
+                                    }
+                                    else if (zUnit.equals("ms")) {
+                                    	unitsOfMeasure[2] = Unit.MILLISEC.getLegacyNum();
+                                    	Preferences.debug("Z units of measure are milliseconds\n");
+                                    }
+                                    else if (zUnit.equals("us")) {
+                                    	unitsOfMeasure[2] = Unit.MICROSEC.getLegacyNum();
+                                    	Preferences.debug("Z units of measure are microseconds\n");
+                                    }
+                                    else if (zUnit.equals("ns")) {
+                                    	unitsOfMeasure[2] = Unit.NANOSEC.getLegacyNum();
+                                    	Preferences.debug("Z units of measure are nanoseconds\n");
+                                    }
+                                } // if ((zUnitStart >= 0) && (zUnitEnd > zUnitStart))
+                                else {
+                                	unitsOfMeasure[2] = Unit.SECONDS.getLegacyNum();
+                                	Preferences.debug("Z units of measure are seconds\n");
+                                }
+                                zValueStart = timeZ.indexOf("<Value>");
+                                zValueEnd = timeZ.indexOf("</Value>");
+                                if ((zValueStart >= 0) && (zValueEnd > zValueStart)) {
+                                    zValue = timeZ.substring(zValueStart, zValueEnd);
+                                    zValueStart = zValue.indexOf(">");
+                                    zValue = zValue.substring(zValueStart+1);
+                                    if (Float.valueOf(zValue).floatValue() != 0) {
+                                        imgResols[2] = Float.valueOf(zValue).floatValue();
+                                        Preferences.debug("imgResols[2] = " + imgResols[2] + "\n", Preferences.DEBUG_FILEIO);
+                                    }
+                                } // if ((zValueStart >= 0) && (zValueEnd > zValueStart)) 
+                            } // if (timeZStart >= 0)
+                        } // if ((itemsStart >= 0) && (itemsEnd > itemsStart))
+                    } // if ((scalingStart >= 0) && (scalingEnd > scalingStart))
+                    informationStart = xmlData.indexOf("<Information>");
+                    informationEnd = xmlData.indexOf("</Information>");
+                    if ((informationStart >= 0) && (informationEnd > informationStart)) {
+                        information = xmlData.substring(informationStart, informationEnd);
+                        informationStart = information.indexOf(">");
+                        information = information.substring(informationStart+1);
+                        nameStart = information.indexOf("<Name>");
+                        nameEnd = information.indexOf("</Name>");
+                        if ((nameStart >= 0) && (nameEnd > nameStart)) {
+                            imageName = information.substring(nameStart, nameEnd);
+                            nameStart = imageName.indexOf(">");
+                            imageName = imageName.substring(nameStart+1);
+                            Preferences.debug("Image name = " + imageName + "\n", Preferences.DEBUG_FILEIO);
+                            fileInfo.setImageName(imageName);
+                        } // if ((nameStart >= 0) && (nameEnd > nameStart))
+                        authorStart = information.indexOf("<Author>");
+                        authorEnd = information.indexOf("</Author>");
+                        if ((authorStart >= 0) && (authorEnd > authorStart)) {
+                            author = information.substring(authorStart, authorEnd);
+                            authorStart = author.indexOf(">");
+                            author = author.substring(authorStart+1);
+                            Preferences.debug("Author = " + author + "\n", Preferences.DEBUG_FILEIO);
+                            fileInfo.setAuthor(author);
+                        } // if ((authorStart >= 0) && (authorEnd > authorStart))
+                        userNameStart = information.indexOf("<UserName>");
+                        userNameEnd = information.indexOf("</UserName>");
+                        if ((userNameStart >= 0) && (userNameEnd > userNameStart)) {
+                            userName = information.substring(userNameStart, userNameEnd);
+                            userNameStart = userName.indexOf(">");
+                            userName = userName.substring(userNameStart+1);
+                            Preferences.debug("User name = " + userName + "\n", Preferences.DEBUG_FILEIO);
+                            fileInfo.setUserName(userName);
+                        } // if ((userNameStart >= 0) && (userNameEnd > userNameStart))
+                        subTypeStart = information.indexOf("<SubType>");
+                        subTypeEnd = information.indexOf("</SubType>");
+                        if ((subTypeStart >= 0) && (subTypeEnd > subTypeStart)) {
+                            subType = information.substring(subTypeStart,subTypeEnd);
+                            subTypeStart = subType.indexOf(">");
+                            subType = subType.substring(subTypeStart+1);
+                            Preferences.debug("SubType = " + subType + "\n", Preferences.DEBUG_FILEIO);
+                            fileInfo.setSubType(subType);
+                        } // if ((subTypeStart >= 0) && (subTypeEnd > subTypeStart))
+                        titleStart = information.indexOf("<Title>");
+                        titleEnd = information.indexOf("</Title>");
+                        if ((titleStart >= 0) && (titleEnd > titleStart)) {
+                        	title = information.substring(titleStart, titleEnd);
+                        	titleStart = title.indexOf(">");
+                        	title = title.substring(titleStart+1);
+                        	Preferences.debug("Title = " + title + "\n", Preferences.DEBUG_FILEIO);
+                        	fileInfo.setTitle(title);
+                        }
+                    } // if ((informationStart >= 0) && (informationEnd > informationStart))
                     Preferences.debug("XML data: \n", Preferences.DEBUG_FILEIO);
                     Preferences.debug(xmlData + "\n", Preferences.DEBUG_FILEIO);
                 } // else if (charID.trim().equals("ZISRAWMETADATA"))
@@ -418,6 +769,18 @@ public class FileCZI extends FileBase {
                                 Preferences.DEBUG_FILEIO);
                     }
                     Preferences.debug("Actual Attachment Directory Segment position = " + position + "\n", Preferences.DEBUG_FILEIO);
+                    entryCount = readInt(endianess);
+                    Preferences.debug("Number of entries = " + entryCount + "\n", Preferences.DEBUG_FILEIO);
+                    // Already found in individual ZISRAWATTACH
+                    // Skip 252 reserved bytes
+                    /*raFile.seek(position + 256L);
+                    for (i = 0; i < entryCount; i++) {
+                        startAttachmentEntry = raFile.getFilePointer();	
+                        
+                        if (i < entryCount - 1) {
+                        	raFile.seek(startAttachmentEntry + 128L);
+                        }
+                    } // for (i = 0; i < entryCount; i++)*/
                 } // else if (charID.trim().equals("ZISRAWATTDIR"))
                 else if (charID.trim().equals("ZISRAWSUBBLOCK")) {
                     subBlockStart = raFile.getFilePointer();
@@ -618,20 +981,20 @@ public class FileCZI extends FileBase {
                     // Skip attachments for now
                 } // else if (charID.trim().equals("ZISRAWSUBBLOCK"))
                 else if (charID.trim().equals("ZISRAWATTACH")) {
-                	attachmentSegmentStart = raFile.getFilePointer();
                 	dataSize = readInt(endianess);
                 	Preferences.debug("Size of the Attachment Segment data section = " + dataSize + "\n", Preferences.DEBUG_FILEIO);
                 	// Skip 12 reserved bytes
                     byte spare[] = new byte[12];
                     raFile.read(spare);
-                	// Read AttachEntry A1
+                 // Read AttachEntry A1
                 	schemaType = getString(2);
                 	if (schemaType.equals("A1")) {
                 	    Preferences.debug("SchemaType is A1 as expected\n", Preferences.DEBUG_FILEIO);
                 	    byte reserved[] = new byte[10];
                 	    raFile.read(reserved);
                 	    filePosition = readLong(endianess);
-                	    Preferences.debug("Seek offset relative to the first byte of the file = " + filePosition + "\n");
+                	    Preferences.debug("Seek offset relative to the first byte of the file = " +
+                	    filePosition + "\n", Preferences.DEBUG_FILEIO);
                 	    // Reserved filePart
                 	    readInt(endianess);
                 	    // Java cannot handle 16 bit GUID
@@ -663,7 +1026,7 @@ public class FileCZI extends FileBase {
                 	    name = readCString();
                 	    Preferences.debug("Name for attachment file = " + name + "\n", Preferences.DEBUG_FILEIO);
                 	    // Go to start of embedded file
-                	    raFile.seek(attachmentSegmentStart + 256);
+                	    raFile.seek(filePosition + 288L);
                 	    if (name.equals("TimeStamps")) {
                 	        timeStampSegmentSize = readInt(endianess);
                 	        Preferences.debug("Time stamp segment size = " + timeStampSegmentSize + "\n", Preferences.DEBUG_FILEIO);
@@ -719,10 +1082,55 @@ public class FileCZI extends FileBase {
                 	            Preferences.debug("Description = " + eventDescriptions[i] + "\n", Preferences.DEBUG_FILEIO);
                 	        }
                 	    } // else if (name.equals("EventList"))
+                	    else if (name.equals("LookupTables")) {
+                	        lookupTablesSegmentSize = readInt(endianess);
+                	        Preferences.debug("Lookup tables segment size in bytes = " + lookupTablesSegmentSize + "\n",
+                	        		Preferences.DEBUG_FILEIO);
+                	        numberLookupTables = readInt(endianess);
+                	        Preferences.debug("Number of lookup tables = " + numberLookupTables + "\n", Preferences.DEBUG_FILEIO);
+                	        for (i = 0; i < numberLookupTables; i++) {
+                	            // Read LookupTableEntry
+                	        	lookupEntryStartPosition = raFile.getFilePointer();
+                	        	lookupTableEntrySize = readInt(endianess);
+                	        	Preferences.debug("Lookup table entry size not including size field = " +
+                	        	    lookupTableEntrySize + "\n", Preferences.DEBUG_FILEIO);
+                	        	identifier = readCString();
+                	        	Preferences.debug("Lookup table name = " + identifier + "\n", Preferences.DEBUG_FILEIO);
+                	        	raFile.seek(lookupEntryStartPosition + 84);
+                	        	numberComponents = readInt(endianess);
+                	        	Preferences.debug("Number of components in the lookup table = " + numberComponents + "\n",
+                	        			Preferences.DEBUG_FILEIO);
+                	        	for (j = 0; j < numberComponents; j++) {
+                	        	    componentEntrySize = readInt(endianess);
+                	        	    Preferences.debug("Component entry size not including the size field = " +
+                	        	        componentEntrySize + "\n", Preferences.DEBUG_FILEIO);
+                	        	    componentType = readInt(endianess);
+                	        	    if (componentType == -1) {
+                	        	    	Preferences.debug("Component type = all(RGB)\n", Preferences.DEBUG_FILEIO);
+                	        	    }
+                	        	    else if (componentType == 0) {
+                	        	    	Preferences.debug("Component type = red\n", Preferences.DEBUG_FILEIO);
+                	        	    }
+                	        	    else if (componentType == 1) {
+                	        	    	Preferences.debug("Component type = green\n", Preferences.DEBUG_FILEIO);
+                	        	    }
+                	        	    else if (componentType == 2) {
+                	        	    	Preferences.debug("Component type = blue\n", Preferences.DEBUG_FILEIO);
+                	        	    }
+                	        	    numberIntensities = readInt(endianess);
+                	        	    Preferences.debug("Number of intensities = " + numberIntensities + "\n", Preferences.DEBUG_FILEIO);
+                	        	    intensity = new short[numberIntensities];
+                	        	    for (k = 0; k < numberIntensities; k++) {
+                	        	        intensity[k] = readShort(endianess);
+                	        	        Preferences.debug("Intensity["+k+"] = " + intensity[k] + "\n", Preferences.DEBUG_FILEIO);
+                	        	    } // for (k = 0; k < numberIntensities; k++)
+                	        	} // for (j = 0; j < numberComponents; j++)
+                	        } // for (i = 0; i < numberLookupTables; i++) 
+                	    } //  else if (name.equals("LookupTables"))
                 	} // if (schemaType.equals("A1"))
                 	else {
                 		Preferences.debug("SchemaType is " + schemaType + " instead of the expected A1\n", Preferences.DEBUG_FILEIO);
-                	}
+                	}	
                 }
                 position += (allocatedSize + 32);
                 if (position < fileLength) {
@@ -834,14 +1242,17 @@ public class FileCZI extends FileBase {
             	actualDimensions++;
             	firstDimension = imageSize[xIndex].get(0);
             	subBlockValues *= imageSize[xIndex].get(0);
+            	origin[0] = imageStartCoordinate[xIndex].get(0);
             }
             if (yIndex >= 0) {
             	actualDimensions++;
             	if (firstDimension == -1) {
             		firstDimension = imageSize[yIndex].get(0);
+            		origin[0] = imageStartCoordinate[yIndex].get(0);
             	}
             	else {
             		secondDimension = imageSize[yIndex].get(0);
+            		origin[1] = imageStartCoordinate[yIndex].get(0);
             	}
             	subBlockValues *= imageSize[yIndex].get(0);
             }
@@ -849,12 +1260,15 @@ public class FileCZI extends FileBase {
             	actualDimensions++;
             	if (firstDimension == -1) {
             		firstDimension = imageSize[zIndex].get(0);
+            		origin[0] = imageStartCoordinate[zIndex].get(0);
             	}
             	else if (secondDimension == -1) {
             	    secondDimension	= imageSize[zIndex].get(0);
+            	    origin[1] = imageStartCoordinate[zIndex].get(0);
             	}
             	else {
             		thirdDimension = imageSize[zIndex].get(0);
+            		origin[2] = imageStartCoordinate[zIndex].get(0);
             	}
             	subBlockValues *= imageSize[zIndex].get(0);
             }
@@ -862,18 +1276,25 @@ public class FileCZI extends FileBase {
             	actualDimensions++;
             	if (firstDimension == -1) {
             		firstDimension = imageSize[tIndex].get(0);
+            		origin[0] = imageStartCoordinate[tIndex].get(0);
             	}
             	else if (secondDimension == -1) {
             		secondDimension = imageSize[tIndex].get(0);
+            		origin[1] = imageStartCoordinate[tIndex].get(0);
             	}
             	else if (thirdDimension == -1) {
             		thirdDimension = imageSize[tIndex].get(0);
+            		origin[2] = imageStartCoordinate[tIndex].get(0);
             	}
             	else {
             		fourthDimension = imageSize[tIndex].get(0);
+            		origin[3] = imageStartCoordinate[tIndex].get(0);
             	}
             	subBlockValues *= imageSize[tIndex].get(0);
             }
+            fileInfo.setOrigin(origin);
+            fileInfo.setResolutions(imgResols);
+            fileInfo.setUnitsOfMeasure(unitsOfMeasure);
             
             if (isColor && ((pixelType == Gray8) || (pixelType == Gray16))) {
                 if (imageSize[0].size() > 3) {
@@ -973,7 +1394,7 @@ public class FileCZI extends FileBase {
             			shortBuffer[j] = readShort(endianess);
             		}
             		image.importData(totalValuesRead, shortBuffer, false);
-            		totalValuesRead += subBlockValues;
+            		totalValuesRead +=subBlockValues;
             	} // else if (dataType == ModelStorageBase.USHORT)
             	else if ((pixelType == Gray8) && (dataType == ModelStorageBase.ARGB)) {
             		Preferences.debug("bytes sought from file = " + subBlockValues + "\n", Preferences.DEBUG_FILEIO);
