@@ -17,6 +17,11 @@ public class FileInfoCZI extends FileInfoBase {
 	private String stageYPosition = null;
 	private String validBitsPerPixel = null;
 	private double timeStamps[] = null;
+	private String imageName = null;
+	private String author = null;
+	private String userName = null;
+	private String subType = null;
+	private String title = null;
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -44,6 +49,26 @@ public class FileInfoCZI extends FileInfoBase {
         JDialogText dialog = (JDialogText) dlog;
         displayPrimaryInfo(dialog, matrix);
         dialog.append("\n\n                Other information\n\n");
+        
+        if (imageName != null) {
+        	dialog.append("Image name = " + imageName + "\n");
+        }
+        
+        if (author != null) {
+        	dialog.append("Author = " + author + "\n");
+        }
+        
+        if (userName != null) {
+        	dialog.append("User name = " + userName + "\n");
+        }
+        
+        if (subType != null) {
+        	dialog.append("SubType = " + subType + "\n");
+        }
+        
+        if (title != null) {
+        	dialog.append("Title = " + title + "\n");
+        }
         
         if (focusPosition != null) {
         	dialog.append("Focus position in micrometers = " + focusPosition + "\n");
@@ -119,5 +144,45 @@ public class FileInfoCZI extends FileInfoBase {
      */
     public void setTimeStamps(double timeStamps[]) {
     	this.timeStamps = timeStamps;
+    }
+    
+    /**
+     * 
+     * @param imageName
+     */
+    public void setImageName(String imageName) {
+    	this.imageName = imageName;
+    }
+    
+    /**
+     * 
+     * @param author
+     */
+    public void setAuthor(String author) {
+    	this.author = author;
+    }
+    
+    /**
+     * 
+     * @param userName
+     */
+    public void setUserName(String userName) {
+    	this.userName = userName;
+    }
+    
+    /**
+     * 
+     * @param subType
+     */
+    public void setSubType(String subType) {
+    	this.subType = subType;
+    }
+    
+    /**
+     * 
+     * @param title
+     */
+    public void setTitle(String title) {
+    	this.title = title;
     }
 }
