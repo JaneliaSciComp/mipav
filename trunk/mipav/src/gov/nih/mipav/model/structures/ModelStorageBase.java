@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.*;
 
+import WildMagic.LibFoundation.Containment.ContBox3f;
 import WildMagic.LibFoundation.Mathematics.*;
 
 
@@ -2434,8 +2435,648 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * 
      * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void exportDiagonal( BitSet duplicateMask, final int tSlice, final int slice, final int[] extents,
-            final Vector3f[] verts, final Ellipsoid3f ellipseBound, boolean bSetZero, final float[] values, final boolean bInterpolate, float[] dataOrigin) throws IOException {
+    public final synchronized void exportDiagonal( final int tSlice, final int slice, final int[] extents,
+            final Vector3f[] verts, final Ellipsoid3f ellipseBound, final float[] values, final boolean bInterpolate, float[] dataOrigin) throws IOException {
+
+        try {
+            setLock(ModelStorageBase.W_LOCKED);
+        } catch (final IOException error) {
+            releaseLock();
+            throw error;
+        }
+
+        final int iBound = extents[0];
+        final int jBound = extents[1];
+
+        /*
+         * Get the loop multiplication factors for indexing into the 1D array with 3 index variables: based on the
+         * coordinate-systems: transformation:
+         */
+        final int iFactor = 1;
+        final int jFactor = dimExtents[0];
+        final int kFactor = dimExtents[0] * dimExtents[1];
+        final int tFactor = dimExtents[0] * dimExtents[1] * dimExtents[2];
+
+        int buffFactor = 1;
+
+        if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                || (bufferType == DataType.ARGB_FLOAT)) {
+            buffFactor = 4;
+        }
+        
+        Vector3f center = new Vector3f();
+        for ( int i = 0; i < verts.length; i++ )
+        {
+        	center.add(verts[i]);
+        }
+        center.scale( 1f/(float)verts.length );
+        
+        /* Calculate the slopes for traversing the data in x,y,z: */
+        float xSlopeX = verts[1].X - verts[0].X;
+        float ySlopeX = verts[1].Y - verts[0].Y;
+        float zSlopeX = verts[1].Z - verts[0].Z;
+
+        float xSlopeY = verts[3].X - verts[0].X;
+        float ySlopeY = verts[3].Y - verts[0].Y;
+        float zSlopeY = verts[3].Z - verts[0].Z;
+
+        float x0 = verts[0].X;
+        float y0 = verts[0].Y;
+        float z0 = verts[0].Z;
+
+        xSlopeX /= (iBound - 1);
+        ySlopeX /= (iBound - 1);
+        zSlopeX /= (iBound - 1);
+
+        xSlopeY /= (jBound - 1);
+        ySlopeY /= (jBound - 1);
+        zSlopeY /= (jBound - 1);
+
+        /* loop over the 2D image (values) we're writing into */
+        float x = x0;
+        float y = y0;
+        float z = z0;
+        
+        Vector3f currentPoint = new Vector3f();
+
+        for (int j = 0; j < jBound; j++) {
+
+            /* Initialize the first diagonal point(x,y,z): */
+            x = x0;
+            y = y0;
+            z = z0;
+
+            for (int i = 0; i < iBound; i++) {
+                final int iIndex = (int) Math.round(x);
+                final int jIndex = (int) Math.round(y);
+                final int kIndex = (int) Math.round(z);
+
+                /* calculate the ModelImage space index: */
+                final int index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
+
+                currentPoint.set(x, y, z);
+                boolean isInside = ellipseBound.Contains( currentPoint );
+                
+                /* Bounds checking, if out of bounds, set to zero: */
+                if ( (!isInside) ||
+                		( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
+                		|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize))) {
+
+                	if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                			|| (bufferType == DataType.ARGB_FLOAT)) {
+                		values[ ( ( (j * iBound) + i) * 4) + 0] = 0;
+                		values[ ( ( (j * iBound) + i) * 4) + 1] = 0;
+                		values[ ( ( (j * iBound) + i) * 4) + 2] = 0;
+                		values[ ( ( (j * iBound) + i) * 4) + 3] = 0;
+                	}
+                	/* not color: */
+                	else {
+                		values[ (j * iBound) + i] = (float) this.min;
+                	}
+                } else {
+                	/* if color: */
+                	if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                			|| (bufferType == DataType.ARGB_FLOAT)) {
+                		values[ ( ( (j * iBound) + i) * 4) + 0] = getFloat( (index * 4) + 0);
+                		values[ ( ( (j * iBound) + i) * 4) + 1] = getFloat( (index * 4) + 1);
+                		values[ ( ( (j * iBound) + i) * 4) + 2] = getFloat( (index * 4) + 2);
+                		values[ ( ( (j * iBound) + i) * 4) + 3] = getFloat( (index * 4) + 3);
+                	}
+                	/* not color: */
+                	else {
+
+                		if (bInterpolate) {
+                			values[ (j * iBound) + i] = getFloatTriLinearBounds(x, y, z);
+                		} else {
+                			values[ (j * iBound) + i] = getFloat(index);
+                		}
+                	}
+                	dataOrigin[ ( ( (j * iBound) + i) * 4) + 0] = 1;
+                	dataOrigin[ ( ( (j * iBound) + i) * 4) + 1] = x;
+                	dataOrigin[ ( ( (j * iBound) + i) * 4) + 2] = y;
+                	dataOrigin[ ( ( (j * iBound) + i) * 4) + 3] = z;
+                }
+
+                /*
+                 * Inner loop: Move to the next diagonal point along the x-direction of the plane, using the xSlopeX,
+                 * ySlopeX and zSlopeX values:
+                 */
+                x = x + xSlopeX;
+                y = y + ySlopeX;
+                z = z + zSlopeX;
+            }
+
+            /*
+             * Outer loop: Move to the next diagonal point along the y-direction of the plane, using the xSlopeY,
+             * ySlopeY and zSlopeY values:
+             */
+            x0 = x0 + xSlopeY;
+            y0 = y0 + ySlopeY;
+            z0 = z0 + zSlopeY;
+        }
+    }
+    
+    
+    
+
+    public final synchronized void exportDiagonal( ModelImage conflictMask, final int tSlice, final int slice, final int[] extents,
+            final Vector3f[] verts, final Ellipsoid3f ellipseBound, final float diameter, final Box3f boxBound, final float[] values, float[] dataOrigin) throws IOException {
+
+        try {
+            setLock(ModelStorageBase.W_LOCKED);
+        } catch (final IOException error) {
+            releaseLock();
+            throw error;
+        }
+
+        final int iBound = extents[0];
+        final int iBoundHalf = (int) (extents[0]/2f);
+        final int jBound = extents[1];
+        final int jBoundHalf = (int) (extents[1]/2f);
+
+        /*
+         * Get the loop multiplication factors for indexing into the 1D array with 3 index variables: based on the
+         * coordinate-systems: transformation:
+         */
+        final int iFactor = 1;
+        final int jFactor = dimExtents[0];
+        final int kFactor = dimExtents[0] * dimExtents[1];
+        final int tFactor = dimExtents[0] * dimExtents[1] * dimExtents[2];
+
+        int buffFactor = 1;
+
+        if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                || (bufferType == DataType.ARGB_FLOAT)) {
+            buffFactor = 4;
+        }
+        
+        Vector3f center = new Vector3f();
+        for ( int i = 0; i < verts.length; i++ )
+        {
+        	center.add(verts[i]);
+        }
+        center.scale( 1f/(float)verts.length );
+        
+        /* Calculate the slopes for traversing the data in x,y,z: */
+        float xSlopeX = verts[1].X - verts[0].X;
+        float ySlopeX = verts[1].Y - verts[0].Y;
+        float zSlopeX = verts[1].Z - verts[0].Z;
+
+        float xSlopeY = verts[3].X - verts[0].X;
+        float ySlopeY = verts[3].Y - verts[0].Y;
+        float zSlopeY = verts[3].Z - verts[0].Z;
+
+        float x0 = verts[0].X;
+        float y0 = verts[0].Y;
+        float z0 = verts[0].Z;
+
+        xSlopeX /= (iBound - 1);
+        ySlopeX /= (iBound - 1);
+        zSlopeX /= (iBound - 1);
+
+        xSlopeY /= (jBound - 1);
+        ySlopeY /= (jBound - 1);
+        zSlopeY /= (jBound - 1);
+
+        /* loop over the 2D image (values) we're writing into */
+        float x = x0;
+        float y = y0;
+        float z = z0;
+        
+        Vector3f currentPoint = new Vector3f();
+        
+        float outsideVal = (float) (this.min - 100);
+
+        for (int j = 0; j < jBound; j++) {
+
+            /* Initialize the first diagonal point(x,y,z): */
+            x = x0;
+            y = y0;
+            z = z0;
+
+            for (int i = 0; i < iBound; i++) {
+                final int iIndex = (int) Math.round(x);
+                final int jIndex = (int) Math.round(y);
+                final int kIndex = (int) Math.round(z);
+
+                /* calculate the ModelImage space index: */
+                final int index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
+
+                currentPoint.set(x, y, z);
+                boolean isInside = ellipseBound.Contains(currentPoint);
+                if ( !isInside )
+                {
+                	isInside = ContBox3f.InBox( currentPoint, boxBound ) & !conflictMask.getBoolean(index) & (center.distance(currentPoint) < diameter);
+                }
+                                
+                /* Bounds checking, if out of bounds, set to zero: */
+                if ( (!isInside) ||
+                		( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
+                		|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize))) {
+
+                	if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                			|| (bufferType == DataType.ARGB_FLOAT)) {
+                		values[ ( ( (j * iBound) + i) * 4) + 0] = outsideVal;
+                		values[ ( ( (j * iBound) + i) * 4) + 1] = outsideVal;
+                		values[ ( ( (j * iBound) + i) * 4) + 2] = outsideVal;
+                		values[ ( ( (j * iBound) + i) * 4) + 3] = outsideVal;
+                	}
+                	/* not color: */
+                	else {
+                		values[ (j * iBound) + i] = outsideVal;
+                	}
+                } else {
+                	/* if color: */
+                	if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                			|| (bufferType == DataType.ARGB_FLOAT)) {
+                		values[ ( ( (j * iBound) + i) * 4) + 0] = getFloat( (index * 4) + 0);
+                		values[ ( ( (j * iBound) + i) * 4) + 1] = getFloat( (index * 4) + 1);
+                		values[ ( ( (j * iBound) + i) * 4) + 2] = getFloat( (index * 4) + 2);
+                		values[ ( ( (j * iBound) + i) * 4) + 3] = getFloat( (index * 4) + 3);
+                	}
+                	/* not color: */
+                	else {
+                		values[ (j * iBound) + i] = getFloatTriLinearBounds(x, y, z);
+                	}
+                	dataOrigin[ ( ( (j * iBound) + i) * 4) + 0] = 1;
+                	dataOrigin[ ( ( (j * iBound) + i) * 4) + 1] = x;
+                	dataOrigin[ ( ( (j * iBound) + i) * 4) + 2] = y;
+                	dataOrigin[ ( ( (j * iBound) + i) * 4) + 3] = z;
+                }
+
+                /*
+                 * Inner loop: Move to the next diagonal point along the x-direction of the plane, using the xSlopeX,
+                 * ySlopeX and zSlopeX values:
+                 */
+                x = x + xSlopeX;
+                y = y + ySlopeX;
+                z = z + zSlopeX;
+            }
+
+            /*
+             * Outer loop: Move to the next diagonal point along the y-direction of the plane, using the xSlopeY,
+             * ySlopeY and zSlopeY values:
+             */
+            x0 = x0 + xSlopeY;
+            y0 = y0 + ySlopeY;
+            z0 = z0 + zSlopeY;
+        }
+
+        float outsideVal2 = (float) (this.min - 200);
+        
+
+    	if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+    			|| (bufferType == DataType.ARGB_FLOAT)) 
+    	{
+    		for ( int j = 0; j < jBound; j++ )
+    		{
+    			boolean edgeFound = false;
+    			for ( int i = iBoundHalf; i >= 0; i-- )
+    			{
+    				if ( values[ ( ( (j * iBound) + i) * 4) + 0] == outsideVal )
+    				{
+    					edgeFound = true;
+    				}
+    				if ( edgeFound )
+    				{
+                		values[ ( ( (j * iBound) + i) * 4) + 0] = outsideVal2;
+                		values[ ( ( (j * iBound) + i) * 4) + 1] = outsideVal2;
+                		values[ ( ( (j * iBound) + i) * 4) + 2] = outsideVal2;
+                		values[ ( ( (j * iBound) + i) * 4) + 3] = outsideVal2;
+    				}
+    			}
+    			edgeFound = false;
+    			for ( int i = iBoundHalf; i < iBound; i++ )
+    			{
+    				if ( values[ ( ( (j * iBound) + i) * 4) + 0] == outsideVal )
+    				{
+    					edgeFound = true;
+    				}
+    				if ( edgeFound )
+    				{
+                		values[ ( ( (j * iBound) + i) * 4) + 0] = outsideVal2;
+                		values[ ( ( (j * iBound) + i) * 4) + 1] = outsideVal2;
+                		values[ ( ( (j * iBound) + i) * 4) + 2] = outsideVal2;
+                		values[ ( ( (j * iBound) + i) * 4) + 3] = outsideVal2;
+    				}
+    			}
+    		}
+
+    		float outsideVal3 = (float) (this.min - 300);
+    		for ( int i = 0; i < iBound; i++ )
+    		{
+    			boolean edgeFound = false;
+    			for ( int j = jBoundHalf; j >= 0; j-- )
+    			{
+    				if ( values[ ( ( (j * iBound) + i) * 4) + 0] == outsideVal2 )
+    				{
+    					edgeFound = true;
+    				}
+    				if ( edgeFound )
+    				{
+                		values[ ( ( (j * iBound) + i) * 4) + 0] = outsideVal3;
+                		values[ ( ( (j * iBound) + i) * 4) + 1] = outsideVal3;
+                		values[ ( ( (j * iBound) + i) * 4) + 2] = outsideVal3;
+                		values[ ( ( (j * iBound) + i) * 4) + 3] = outsideVal3;
+    				}
+    			}
+    			edgeFound = false;
+    			for ( int j = jBoundHalf; j < jBound; j++ )
+    			{
+    				if ( values[ ( ( (j * iBound) + i) * 4) + 0] == outsideVal2 )
+    				{
+    					edgeFound = true;
+    				}
+    				if ( edgeFound )
+    				{
+                		values[ ( ( (j * iBound) + i) * 4) + 0] = outsideVal3;
+                		values[ ( ( (j * iBound) + i) * 4) + 1] = outsideVal3;
+                		values[ ( ( (j * iBound) + i) * 4) + 2] = outsideVal3;
+                		values[ ( ( (j * iBound) + i) * 4) + 3] = outsideVal3;
+    				}
+    			}
+    		}
+    		for ( int j = 0; j < jBound; j++ )
+    		{
+    			for ( int i = 0; i < iBound; i++ )
+    			{
+    				if ( values[ ( ( (j * iBound) + i) * 4) + 0] == outsideVal3 )
+    				{
+                		values[ ( ( (j * iBound) + i) * 4) + 0] = (float) this.min;
+                		values[ ( ( (j * iBound) + i) * 4) + 1] = (float) this.min;
+                		values[ ( ( (j * iBound) + i) * 4) + 2] = (float) this.min;
+                		values[ ( ( (j * iBound) + i) * 4) + 3] = (float) this.min;
+
+    					dataOrigin[ ( ( (j * iBound) + i) * 4) + 0] = 0;
+    					dataOrigin[ ( ( (j * iBound) + i) * 4) + 1] = 0;
+    					dataOrigin[ ( ( (j * iBound) + i) * 4) + 2] = 0;
+    					dataOrigin[ ( ( (j * iBound) + i) * 4) + 3] = 0;
+    				}
+    			}
+    		}
+    	}
+    	else
+    	{
+    		for ( int j = 0; j < jBound; j++ )
+    		{
+    			boolean edgeFound = false;
+    			for ( int i = iBoundHalf; i >= 0; i-- )
+    			{
+    				if ( values[ (j * iBound) + i] == outsideVal )
+    				{
+    					edgeFound = true;
+    				}
+    				if ( edgeFound )
+    				{
+    					values[ (j * iBound) + i] = outsideVal2;
+    				}
+    			}
+    			edgeFound = false;
+    			for ( int i = iBoundHalf; i < iBound; i++ )
+    			{
+    				if ( values[ (j * iBound) + i] == outsideVal )
+    				{
+    					edgeFound = true;
+    				}
+    				if ( edgeFound )
+    				{
+    					values[ (j * iBound) + i] = outsideVal2;
+    				}
+    			}
+    		}
+
+    		float outsideVal3 = (float) (this.min - 300);
+    		for ( int i = 0; i < iBound; i++ )
+    		{
+    			boolean edgeFound = false;
+    			for ( int j = jBoundHalf; j >= 0; j-- )
+    			{
+    				if ( values[ (j * iBound) + i] == outsideVal2 )
+    				{
+    					edgeFound = true;
+    				}
+    				if ( edgeFound )
+    				{
+    					values[ (j * iBound) + i] = outsideVal3;
+    				}
+    			}
+    			edgeFound = false;
+    			for ( int j = jBoundHalf; j < jBound; j++ )
+    			{
+    				if ( values[ (j * iBound) + i] == outsideVal2 )
+    				{
+    					edgeFound = true;
+    				}
+    				if ( edgeFound )
+    				{
+    					values[ (j * iBound) + i] = outsideVal3;
+    				}
+    			}
+    		}
+    		for ( int j = 0; j < jBound; j++ )
+    		{
+    			for ( int i = 0; i < iBound; i++ )
+    			{
+    				if ( values[ (j * iBound) + i] == outsideVal3 )
+    				{
+    					values[ (j * iBound) + i] = (float) this.min;
+
+    					dataOrigin[ ( ( (j * iBound) + i) * 4) + 0] = 0;
+    					dataOrigin[ ( ( (j * iBound) + i) * 4) + 1] = 0;
+    					dataOrigin[ ( ( (j * iBound) + i) * 4) + 2] = 0;
+    					dataOrigin[ ( ( (j * iBound) + i) * 4) + 3] = 0;
+    				}
+    			}
+    		}
+    	}
+        
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+//    
+//
+//    public final synchronized void exportDiagonal( final int tSlice, final int slice, final int[] extents,
+//            final Vector3f[] verts, final ModelImage sampleMask, int sampleValue, final float[] values, final boolean bInterpolate, float[] dataOrigin) throws IOException {
+//
+//        try {
+//            setLock(ModelStorageBase.W_LOCKED);
+//        } catch (final IOException error) {
+//            releaseLock();
+//            throw error;
+//        }
+//
+//        final int iBound = extents[0];
+//        final int jBound = extents[1];
+//
+//        /*
+//         * Get the loop multiplication factors for indexing into the 1D array with 3 index variables: based on the
+//         * coordinate-systems: transformation:
+//         */
+//        final int iFactor = 1;
+//        final int jFactor = dimExtents[0];
+//        final int kFactor = dimExtents[0] * dimExtents[1];
+//        final int tFactor = dimExtents[0] * dimExtents[1] * dimExtents[2];
+//
+//        int buffFactor = 1;
+//
+//        if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+//                || (bufferType == DataType.ARGB_FLOAT)) {
+//            buffFactor = 4;
+//        }
+//        
+//        Vector3f center = new Vector3f();
+//        for ( int i = 0; i < verts.length; i++ )
+//        {
+//        	center.add(verts[i]);
+//        }
+//        center.scale( 1f/(float)verts.length );
+//        
+//        /* Calculate the slopes for traversing the data in x,y,z: */
+//        float xSlopeX = verts[1].X - verts[0].X;
+//        float ySlopeX = verts[1].Y - verts[0].Y;
+//        float zSlopeX = verts[1].Z - verts[0].Z;
+//
+//        float xSlopeY = verts[3].X - verts[0].X;
+//        float ySlopeY = verts[3].Y - verts[0].Y;
+//        float zSlopeY = verts[3].Z - verts[0].Z;
+//
+//        float x0 = verts[0].X;
+//        float y0 = verts[0].Y;
+//        float z0 = verts[0].Z;
+//
+//        xSlopeX /= (iBound - 1);
+//        ySlopeX /= (iBound - 1);
+//        zSlopeX /= (iBound - 1);
+//
+//        xSlopeY /= (jBound - 1);
+//        ySlopeY /= (jBound - 1);
+//        zSlopeY /= (jBound - 1);
+//
+//        final boolean exportComplex = (values.length == (2 * iBound * jBound)) ? true : false;
+//        double real, imaginary, mag;
+//
+//        /* loop over the 2D image (values) we're writing into */
+//        float x = x0;
+//        float y = y0;
+//        float z = z0;
+//        
+//        Vector3f currentPoint = new Vector3f();
+//
+//        for (int j = 0; j < jBound; j++) {
+//
+//            /* Initialize the first diagonal point(x,y,z): */
+//            x = x0;
+//            y = y0;
+//            z = z0;
+//
+//            for (int i = 0; i < iBound; i++) {
+//                final int iIndex = (int) Math.round(x);
+//                final int jIndex = (int) Math.round(y);
+//                final int kIndex = (int) Math.round(z);
+//
+//                /* calculate the ModelImage space index: */
+//                final int index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
+//
+//                currentPoint.set(x, y, z);
+//                int maskValue = sampleMask.getInt(index);
+//                boolean isInside = (Math.abs(maskValue - sampleValue) < 5);
+//                
+//                /* Bounds checking, if out of bounds, set to zero: */
+//                if ( (!isInside) ||
+//                		( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
+//                		|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize))) {
+//
+//                	if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+//                			|| (bufferType == DataType.ARGB_FLOAT)) {
+//                		values[ ( ( (j * iBound) + i) * 4) + 0] = 0;
+//                		values[ ( ( (j * iBound) + i) * 4) + 1] = 0;
+//                		values[ ( ( (j * iBound) + i) * 4) + 2] = 0;
+//                		values[ ( ( (j * iBound) + i) * 4) + 3] = 0;
+//                	}
+//                	/* not color: */
+//                	else {
+//                		values[ (j * iBound) + i] = (float) this.min;
+//                	}
+//                } else {
+//                	/* if color: */
+//                	if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+//                			|| (bufferType == DataType.ARGB_FLOAT)) {
+//                		values[ ( ( (j * iBound) + i) * 4) + 0] = getFloat( (index * 4) + 0);
+//                		values[ ( ( (j * iBound) + i) * 4) + 1] = getFloat( (index * 4) + 1);
+//                		values[ ( ( (j * iBound) + i) * 4) + 2] = getFloat( (index * 4) + 2);
+//                		values[ ( ( (j * iBound) + i) * 4) + 3] = getFloat( (index * 4) + 3);
+//                	}
+//                	/* if complex: */
+//                	else if (bufferType == DataType.COMPLEX) {
+//
+//                		if (exportComplex) {
+//                			values[ ( ( (j * iBound) + i) * 2) + 0] = getFloat(index * 2);
+//                			values[ ( ( (j * iBound) + i) * 2) + 1] = getFloat( (index * 2) + 1);
+//                		} else {
+//                			real = getFloat(index * 2);
+//                			imaginary = getFloat( (index * 2) + 1);
+//
+//                			if (logMagDisp == true) {
+//                				mag = Math.sqrt( (real * real) + (imaginary * imaginary));
+//                				values[ (j * iBound) + i] = (float) (0.4342944819 * Math.log( (1.0 + mag)));
+//                			} else {
+//                				values[ (j * iBound) + i] = (float) Math.sqrt( (real * real) + (imaginary * imaginary));
+//                			}
+//                		}
+//                	}
+//                	/* not color: */
+//                	else {
+//
+//                		if (bInterpolate) {
+//                			values[ (j * iBound) + i] = getFloatTriLinearBounds(x, y, z);
+//                		} else {
+//                			values[ (j * iBound) + i] = getFloat(index);
+//                		}
+//                	}
+//                	dataOrigin[ ( ( (j * iBound) + i) * 4) + 0] = 1;
+//                	dataOrigin[ ( ( (j * iBound) + i) * 4) + 1] = x;
+//                	dataOrigin[ ( ( (j * iBound) + i) * 4) + 2] = y;
+//                	dataOrigin[ ( ( (j * iBound) + i) * 4) + 3] = z;
+//                }
+//                
+//                /*
+//                 * Inner loop: Move to the next diagonal point along the x-direction of the plane, using the xSlopeX,
+//                 * ySlopeX and zSlopeX values:
+//                 */
+//                x = x + xSlopeX;
+//                y = y + ySlopeX;
+//                z = z + zSlopeX;
+//            }
+//
+//            /*
+//             * Outer loop: Move to the next diagonal point along the y-direction of the plane, using the xSlopeY,
+//             * ySlopeY and zSlopeY values:
+//             */
+//            x0 = x0 + xSlopeY;
+//            y0 = y0 + ySlopeY;
+//            z0 = z0 + zSlopeY;
+//        }
+//    }
+//    
+//
+//    
+    
+    
+    
+    public final synchronized void writeDiagonal( final int tSlice, final int slice, final int[] extents,
+            final Vector3f[] verts, final Ellipsoid3f ellipseBound, final float[] values ) throws IOException {
 
         try {
             setLock(ModelStorageBase.W_LOCKED);
@@ -2500,8 +3141,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
         float z = z0;
         
         Vector3f currentPoint = new Vector3f();
-
-        Vector<Integer> maskBits = new Vector<Integer>();
         for (int j = 0; j < jBound; j++) {
 
             /* Initialize the first diagonal point(x,y,z): */
@@ -2518,85 +3157,29 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 final int index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
 
                 currentPoint.set(x, y, z);
-                boolean isInside = ellipseBound.Contains( currentPoint );
-                
+                boolean isInside = ellipseBound.Contains( currentPoint );             
                 /* Bounds checking, if out of bounds, set to zero: */
                 if ( (!isInside) ||
                 		( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
-                		|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize))) {
-
+                		|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize)))
+                {
+                } else {
+                	/* if color: */
                 	if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
                 			|| (bufferType == DataType.ARGB_FLOAT)) {
-                		values[ ( ( (j * iBound) + i) * 4) + 0] = 0;
-                		values[ ( ( (j * iBound) + i) * 4) + 1] = 0;
-                		values[ ( ( (j * iBound) + i) * 4) + 2] = 0;
-                		values[ ( ( (j * iBound) + i) * 4) + 3] = 0;
+                		set( (index * 4) + 0, values[ ( ( (j * iBound) + i) * 4) + 0]);
+                		set( (index * 4) + 1, values[ ( ( (j * iBound) + i) * 4) + 1]);
+                		set( (index * 4) + 2, values[ ( ( (j * iBound) + i) * 4) + 2]);
+                		set( (index * 4) + 3, values[ ( ( (j * iBound) + i) * 4) + 3]);
                 	}
-                	/* not color: */
                 	else {
-                		values[ (j * iBound) + i] = (float) this.min;
-                	}
-                } else {
-                	if ( (duplicateMask != null) && duplicateMask.get(index) )
-                	{
-                		if ( bSetZero )
-                		{
-                			// set output to zero or min:
-                			if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
-                					|| (bufferType == DataType.ARGB_FLOAT)) {
-                				values[ ( ( (j * iBound) + i) * 4) + 0] = 0;
-                				values[ ( ( (j * iBound) + i) * 4) + 1] = 0;
-                				values[ ( ( (j * iBound) + i) * 4) + 2] = 0;
-                				values[ ( ( (j * iBound) + i) * 4) + 3] = 0;
-                			}
-                			/* not color: */
-                			else {
-                				values[ (j * iBound) + i] = (float) this.min;
-                			}
-                		}
-                	}                	
-//                	else
-                	{
-                		maskBits.add(index);
-                		/* if color: */
-                		if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
-                				|| (bufferType == DataType.ARGB_FLOAT)) {
-                			values[ ( ( (j * iBound) + i) * 4) + 0] = getFloat( (index * 4) + 0);
-                			values[ ( ( (j * iBound) + i) * 4) + 1] = getFloat( (index * 4) + 1);
-                			values[ ( ( (j * iBound) + i) * 4) + 2] = getFloat( (index * 4) + 2);
-                			values[ ( ( (j * iBound) + i) * 4) + 3] = getFloat( (index * 4) + 3);
-                		}
-                		/* if complex: */
-                		else if (bufferType == DataType.COMPLEX) {
 
-                			if (exportComplex) {
-                				values[ ( ( (j * iBound) + i) * 2) + 0] = getFloat(index * 2);
-                				values[ ( ( (j * iBound) + i) * 2) + 1] = getFloat( (index * 2) + 1);
-                			} else {
-                				real = getFloat(index * 2);
-                				imaginary = getFloat( (index * 2) + 1);
-
-                				if (logMagDisp == true) {
-                					mag = Math.sqrt( (real * real) + (imaginary * imaginary));
-                					values[ (j * iBound) + i] = (float) (0.4342944819 * Math.log( (1.0 + mag)));
-                				} else {
-                					values[ (j * iBound) + i] = (float) Math.sqrt( (real * real) + (imaginary * imaginary));
-                				}
-                			}
-                		}
-                		/* not color: */
-                		else {
-
-                			if (bInterpolate) {
-                				values[ (j * iBound) + i] = getFloatTriLinearBounds(x, y, z);
-                			} else {
-                				values[ (j * iBound) + i] = getFloat(index);
-                			}
-                		}
-                		dataOrigin[ ( ( (j * iBound) + i) * 4) + 0] = 1;
-                		dataOrigin[ ( ( (j * iBound) + i) * 4) + 1] = x;
-                		dataOrigin[ ( ( (j * iBound) + i) * 4) + 2] = y;
-                		dataOrigin[ ( ( (j * iBound) + i) * 4) + 3] = z;
+                		set(index, values[ (j * iBound) + i]);
+                		//                			if (bInterpolate) {
+                		//                				values[ (j * iBound) + i] = getFloatTriLinearBounds(x, y, z);
+                		//                			} else {
+                		//                				values[ (j * iBound) + i] = getFloat(index);
+                		//                			}
                 	}
                 }
 
@@ -2617,17 +3200,276 @@ public class ModelStorageBase extends ModelSerialCloneable {
             y0 = y0 + ySlopeY;
             z0 = z0 + zSlopeY;
         }
-        
-        if ( duplicateMask != null )
-        {
-        	for ( int i = 0; i < maskBits.size(); i++ )
-        	{
-        		duplicateMask.set(maskBits.elementAt(i));
-        	}
-        }
-        maskBits.clear();
-        maskBits = null;
     }
+
+    
+    
+//    public final synchronized void writeDiagonal( final int tSlice, final int slice, final int[] extents,
+//            final Vector3f[] verts, final Ellipsoid3f ellipseBound, final float value ) throws IOException {
+//
+//        try {
+//            setLock(ModelStorageBase.W_LOCKED);
+//        } catch (final IOException error) {
+//            releaseLock();
+//            throw error;
+//        }
+//
+//        final int iBound = extents[0];
+//        final int jBound = extents[1];
+//
+//        /*
+//         * Get the loop multiplication factors for indexing into the 1D array with 3 index variables: based on the
+//         * coordinate-systems: transformation:
+//         */
+//        final int iFactor = 1;
+//        final int jFactor = dimExtents[0];
+//        final int kFactor = dimExtents[0] * dimExtents[1];
+//        final int tFactor = dimExtents[0] * dimExtents[1] * dimExtents[2];
+//
+//        int buffFactor = 1;
+//
+//        if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+//                || (bufferType == DataType.ARGB_FLOAT)) {
+//            buffFactor = 4;
+//        }
+//        
+//        Vector3f center = new Vector3f();
+//        for ( int i = 0; i < verts.length; i++ )
+//        {
+//        	center.add(verts[i]);
+//        }
+//        center.scale( 1f/(float)verts.length );
+//        
+//        /* Calculate the slopes for traversing the data in x,y,z: */
+//        float xSlopeX = verts[1].X - verts[0].X;
+//        float ySlopeX = verts[1].Y - verts[0].Y;
+//        float zSlopeX = verts[1].Z - verts[0].Z;
+//
+//        float xSlopeY = verts[3].X - verts[0].X;
+//        float ySlopeY = verts[3].Y - verts[0].Y;
+//        float zSlopeY = verts[3].Z - verts[0].Z;
+//
+//        float x0 = verts[0].X;
+//        float y0 = verts[0].Y;
+//        float z0 = verts[0].Z;
+//
+//        xSlopeX /= (iBound - 1);
+//        ySlopeX /= (iBound - 1);
+//        zSlopeX /= (iBound - 1);
+//
+//        xSlopeY /= (jBound - 1);
+//        ySlopeY /= (jBound - 1);
+//        zSlopeY /= (jBound - 1);
+//        
+//        /* loop over the 2D image (values) we're writing into */
+//        float x = x0;
+//        float y = y0;
+//        float z = z0;
+//        
+//        Vector3f currentPoint = new Vector3f();
+//        for (int j = 0; j < jBound; j++) {
+//
+//            /* Initialize the first diagonal point(x,y,z): */
+//            x = x0;
+//            y = y0;
+//            z = z0;
+//
+//            for (int i = 0; i < iBound; i++) {
+//                int iIndex = (int) Math.floor(x);
+//                int jIndex = (int) Math.floor(y);
+//                int kIndex = (int) Math.floor(z);
+//                /* calculate the ModelImage space index: */
+//                int index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
+//                currentPoint.set(x, y, z);
+//                boolean isInside = ellipseBound.Contains( currentPoint );             
+//                /* Bounds checking, if out of bounds, set to zero: */
+//                if ( (!isInside) ||
+//                		( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
+//                		|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize)))
+//                {
+//                } else {
+//                	if ( getInt(index) == -1 )
+//                	{
+//                		set(index, value);
+//                	}
+//                }
+//                
+//                
+//                
+//                
+//                
+//                iIndex = (int) Math.floor(x);
+//                jIndex = (int) Math.floor(y);
+//                kIndex = (int) Math.ceil(z);
+//                /* calculate the ModelImage space index: */
+//                index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
+//                currentPoint.set(x, y, z);
+//                isInside = ellipseBound.Contains( currentPoint );             
+//                /* Bounds checking, if out of bounds, set to zero: */
+//                if ( (!isInside) ||
+//                		( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
+//                		|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize)))
+//                {
+//                } else {
+//                	if ( getInt(index) == -1 )
+//                	{
+//                		set(index, value);
+//                	}
+//                }
+//                
+//                
+//                
+//                
+//                iIndex = (int) Math.floor(x);
+//                jIndex = (int) Math.ceil(y);
+//                kIndex = (int) Math.floor(z);
+//                /* calculate the ModelImage space index: */
+//                index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
+//                currentPoint.set(x, y, z);
+//                isInside = ellipseBound.Contains( currentPoint );             
+//                /* Bounds checking, if out of bounds, set to zero: */
+//                if ( (!isInside) ||
+//                		( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
+//                		|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize)))
+//                {
+//                } else {
+//                	if ( getInt(index) == -1 )
+//                	{
+//                		set(index, value);
+//                	}
+//                }
+//                
+//                
+//                
+//                
+//                iIndex = (int) Math.floor(x);
+//                jIndex = (int) Math.ceil(y);
+//                kIndex = (int) Math.ceil(z);
+//                /* calculate the ModelImage space index: */
+//                index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
+//                currentPoint.set(x, y, z);
+//                isInside = ellipseBound.Contains( currentPoint );             
+//                /* Bounds checking, if out of bounds, set to zero: */
+//                if ( (!isInside) ||
+//                		( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
+//                		|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize)))
+//                {
+//                } else {
+//                	if ( getInt(index) == -1 )
+//                	{
+//                		set(index, value);
+//                	}
+//                }
+//                
+//                
+//                
+//                
+//                iIndex = (int) Math.ceil(x);
+//                jIndex = (int) Math.floor(y);
+//                kIndex = (int) Math.floor(z);
+//                /* calculate the ModelImage space index: */
+//                index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
+//                currentPoint.set(x, y, z);
+//                isInside = ellipseBound.Contains( currentPoint );             
+//                /* Bounds checking, if out of bounds, set to zero: */
+//                if ( (!isInside) ||
+//                		( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
+//                		|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize)))
+//                {
+//                } else {
+//                	if ( getInt(index) == -1 )
+//                	{
+//                		set(index, value);
+//                	}
+//                }
+//                
+//                
+//                
+//                
+//                iIndex = (int) Math.ceil(x);
+//                jIndex = (int) Math.floor(y);
+//                kIndex = (int) Math.ceil(z);
+//                /* calculate the ModelImage space index: */
+//                index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
+//                currentPoint.set(x, y, z);
+//                isInside = ellipseBound.Contains( currentPoint );             
+//                /* Bounds checking, if out of bounds, set to zero: */
+//                if ( (!isInside) ||
+//                		( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
+//                		|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize)))
+//                {
+//                } else {
+//                	if ( getInt(index) == -1 )
+//                	{
+//                		set(index, value);
+//                	}
+//                }
+//                
+//                
+//                
+//                
+//                iIndex = (int) Math.ceil(x);
+//                jIndex = (int) Math.ceil(y);
+//                kIndex = (int) Math.floor(z);
+//                /* calculate the ModelImage space index: */
+//                index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
+//                currentPoint.set(x, y, z);
+//                isInside = ellipseBound.Contains( currentPoint );             
+//                /* Bounds checking, if out of bounds, set to zero: */
+//                if ( (!isInside) ||
+//                		( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
+//                		|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize)))
+//                {
+//                } else {
+//                	if ( getInt(index) == -1 )
+//                	{
+//                		set(index, value);
+//                	}
+//                }
+//                
+//                
+//                
+//                
+//                iIndex = (int) Math.ceil(x);
+//                jIndex = (int) Math.ceil(y);
+//                kIndex = (int) Math.ceil(z);
+//                /* calculate the ModelImage space index: */
+//                index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
+//                currentPoint.set(x, y, z);
+//                isInside = ellipseBound.Contains( currentPoint );             
+//                /* Bounds checking, if out of bounds, set to zero: */
+//                if ( (!isInside) ||
+//                		( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
+//                		|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize)))
+//                {
+//                } else {
+//                	if ( getInt(index) == -1 )
+//                	{
+//                		set(index, value);
+//                	}
+//                }
+//                
+//                
+//                
+//
+//                /*
+//                 * Inner loop: Move to the next diagonal point along the x-direction of the plane, using the xSlopeX,
+//                 * ySlopeX and zSlopeX values:
+//                 */
+//                x = x + xSlopeX;
+//                y = y + ySlopeX;
+//                z = z + zSlopeX;
+//            }
+//
+//            /*
+//             * Outer loop: Move to the next diagonal point along the y-direction of the plane, using the xSlopeY,
+//             * ySlopeY and zSlopeY values:
+//             */
+//            x0 = x0 + xSlopeY;
+//            y0 = y0 + ySlopeY;
+//            z0 = z0 + zSlopeY;
+//        }
+//    }
 
     /**
      */

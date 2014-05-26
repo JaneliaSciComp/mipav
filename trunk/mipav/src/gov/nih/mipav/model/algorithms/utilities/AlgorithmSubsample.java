@@ -1855,7 +1855,10 @@ public class AlgorithmSubsample extends AlgorithmBase {
         y[0] = 0;
         y[1] = padExtents[1] - extents[1];      
         z[0] = 0;
-        z[1] = padExtents[2] - extents[2];
+        if ( extents.length > 2 )
+        	z[1] = padExtents[2] - extents[2];
+        else
+        	z[1] = 0;
         
         AlgorithmAddMargins algoPad = new AlgorithmAddMargins(kImage, paddedImage, x, y, z);   
         algoPad.setPadValue( new float[]{0,0,0} );

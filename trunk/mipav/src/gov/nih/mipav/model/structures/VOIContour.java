@@ -18,7 +18,9 @@ import java.util.Vector;
 
 import Jama.Matrix;
 import WildMagic.LibFoundation.Approximation.ApprEllipsoidFit3f;
+import WildMagic.LibFoundation.Distance.DistanceVector3Triangle3;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Triangle3f;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
@@ -3228,6 +3230,35 @@ public class VOIContour extends VOIBase {
 		}
 	}
 
+
+    public boolean contains3D( Vector3f pt )
+    {
+    	Vector3f[] kBounds = getImageBoundingBox();
+    	if ( pt.X < kBounds[0].X || pt.X > kBounds[1].X ||
+    			pt.Y < kBounds[0].Y || pt.Y > kBounds[1].Y ||
+    			pt.Z < kBounds[0].Z || pt.Z > kBounds[1].Z   )
+    	{
+    		return false;
+    	}
+
+    	Vector3f center = new Vector3f();
+    	for ( int i = 0; i < size(); i++ )
+    	{
+    		center.add(elementAt(i));
+    	}
+    	center.scale(1f/(float)size());
+    	
+    	for ( int i = 0; i < size(); i++ )
+    	{
+    		Triangle3f tri = new Triangle3f( center, elementAt(i), elementAt((i+1)%size()));
+    		DistanceVector3Triangle3 dist = new DistanceVector3Triangle3( pt, tri );
+    		if ( dist.GetSquared() == 0 )
+    		{
+    			return true;
+    		}
+    	}
+    	return false;
+    }
 
 
 
