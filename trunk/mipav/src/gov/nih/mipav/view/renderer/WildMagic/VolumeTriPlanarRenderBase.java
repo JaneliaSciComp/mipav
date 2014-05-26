@@ -3425,7 +3425,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 				i--;
 			}
 		}
-		for (int i = 0; i < kVOIs.size(); i++) {
+		for (int i = kVOIs.size() - 1; i >=0; i--) {
 			VOI kVOI = kVOIs.get(i);
 			Vector<VOIBase> kCurves = kVOI.getCurves();
 			for (int k = 0; k < kCurves.size(); k++) {

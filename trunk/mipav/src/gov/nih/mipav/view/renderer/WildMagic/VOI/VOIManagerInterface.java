@@ -87,6 +87,7 @@ import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
 import gov.nih.mipav.view.dialogs.JDialogVOIStats;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogLattice;
 import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.*;
+import gov.nih.mipav.view.renderer.WildMagic.Render.LatticeModel;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -1191,7 +1192,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             if (fileName != null) {
             	VOIVector leftRightMarkers = new VOIVector();
                 voiDir = new String(directory + fileName + File.separator);
-                loadAllVOIsFrom(voiDir, false, leftRightMarkers);
+                loadAllVOIsFrom(voiDir, false, leftRightMarkers, true);
                 System.err.println( "Left Right Markers " + leftRightMarkers.size() );
             }
         } else if ( command.equals("OpenLattice") ) {
@@ -1219,16 +1220,15 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             }
 
             if (fileName != null) {
-            	lattice = new VOIVector();
+            	VOIVector lattice = new VOIVector();
                 voiDir = new String(directory + fileName + File.separator);
-                loadAllVOIsFrom(voiDir, false, lattice);
-//                System.err.println( "Lattice " + lattice.size() );
+                loadAllVOIsFrom(voiDir, false, lattice, false);
 
-                latticeLines = JDialogLattice.getCurves(getActiveImage(), lattice.elementAt(0));
-                for ( int i = 0; i < latticeLines.size(); i++ )
+                if ( latticeModel != null )
                 {
-                	getActiveImage().registerVOI( latticeLines.elementAt(i) );
+                	latticeModel.dispose();
                 }
+                latticeModel = new LatticeModel( getActiveImage(), lattice.elementAt(0) );
             }
         } else if ( command.equals("AddLeftRightMarkers") ) {
         	mouse3D = !mouse3D;
@@ -1237,19 +1237,24 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         } else if ( command.equals("buildWormLattice") ) {
         	new JDialogLattice( getActiveImage(), this );
         } else if ( command.equals("SaveLattice") ) {
-        	if ( lattice != null )
+        	if ( latticeModel != null )
         	{
-        		JDialogLattice.saveLattice( getActiveImage(), lattice.elementAt(0) );
+        		latticeModel.saveLattice( );
         	}
         } else if ( command.equals("showStraightenLattice") ) {
-        	if ( lattice != null )
+        	if ( latticeModel != null )
         	{
-        		JDialogLattice.interpolateLattice(getActiveImage(), lattice.elementAt(0), true);
+        		latticeModel.showModel( );
+        	}
+        } else if ( command.equals("straightenLattice2") ) {
+        	if ( latticeModel != null )
+        	{
+        		latticeModel.interpolateLattice( 2 );
         	}
         } else if ( command.equals("straightenLattice") ) {
-        	if ( lattice != null )
+        	if ( latticeModel != null )
         	{
-        		JDialogLattice.interpolateLattice(getActiveImage(), lattice.elementAt(0), false);
+        		latticeModel.interpolateLattice( 0 );
         	}
         } else if ( command.equals("voxelSize") ) {
         	setVoxelSize();
@@ -1279,13 +1284,16 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     }
 
-    private VOI showSelectedVOI = null;
-    private VOIContour[] showSelected = null;
-    private VOIVector latticeLines;
-    private VOIVector lattice = null;
+    private LatticeModel latticeModel;
+    
 	public void setLattice( VOIVector lattice )
 	{
-		this.lattice = lattice;
+		if ( latticeModel != null )
+		{
+			latticeModel.dispose();
+		}
+		getActiveImage().unregisterAllVOIs();
+		latticeModel = new LatticeModel( getActiveImage(), lattice.elementAt(0) );
 	}
     
 	private JTextField defaultVoxelSize;
@@ -1314,122 +1322,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     	updateVoxelSize.setVisible(true);
     }
 	
-	private void updateLattice( boolean rebuild )
-	{
-		VOIContour left = (VOIContour) lattice.elementAt(0).getCurves().elementAt(0);
-		VOIContour right = (VOIContour) lattice.elementAt(0).getCurves().elementAt(1);
-		if ( rebuild )
-		{
-//			System.err.println( "new pt added" );
-			for ( int i = lattice.size() - 1; i > 0; i-- )
-			{
-				VOI marker = lattice.remove(i);
-	        	getActiveImage().unregisterVOI( marker );
-			}
-			for ( int j = 0; j < left.size(); j++ )
-			{
-				short id = (short) getActiveImage().getVOIs().getUniqueID();
-				VOI marker = new VOI(id, "pair_" + j, VOI.POLYLINE, (float)Math.random() );
-				VOIContour mainAxis = new VOIContour(false); 		    		    		
-				mainAxis.add( left.elementAt(j) );
-				mainAxis.add( right.elementAt(j) );
-				marker.getCurves().add(mainAxis);
-				marker.setColor( new Color( 255, 255, 0) );
-				mainAxis.update( new ColorRGBA(1,1,0,1));
-				if ( j == 0 )
-				{
-					marker.setColor( new Color( 0, 255, 0) );
-					mainAxis.update( new ColorRGBA(0,1,0,1));
-				}
-				getActiveImage().registerVOI( marker );
-				lattice.add(marker);
-			}			
-		}
-		else
-		{
-			for ( int i = 1; i < lattice.size(); i++ )
-			{
-				VOI marker = lattice.elementAt(i);
-				marker.getCurves().elementAt(0).elementAt(0).copy( left.elementAt(i-1) );
-				marker.getCurves().elementAt(0).elementAt(1).copy( right.elementAt(i-1) );
-				marker.update();
-			}
-		}
-		left.update();
-		right.update();
-		
-
-
-        for ( int i = 0; i < latticeLines.size(); i++ )
-        {
-        	getActiveImage().unregisterVOI( latticeLines.elementAt(i) );
-        }
-        latticeLines = JDialogLattice.getCurves(getActiveImage(), lattice.elementAt(0));
-        for ( int i = 0; i < latticeLines.size(); i++ )
-        {
-        	getActiveImage().registerVOI( latticeLines.elementAt(i) );
-        }
-        
-        if ( picked != null )
-        {
-        	if ( showSelectedVOI == null )
-        	{
-				short id = (short) getActiveImage().getVOIs().getUniqueID();
-				showSelectedVOI = new VOI(id, "showSelected", VOI.POLYLINE, (float)Math.random() );
-				getActiveImage().registerVOI(showSelectedVOI);
-        	}
-        	if ( showSelected == null )
-        	{
-        		showSelected = new VOIContour[3];
-        		showSelected[0] = new VOIContour(true);
-        		JDialogLattice.makeEllipse( Vector3f.UNIT_X, Vector3f.UNIT_Y, picked, 4, showSelected[0] );
-        		showSelectedVOI.getCurves().add(showSelected[0]);
-        		showSelected[0].update( new ColorRGBA(0,1,1,1));
-        		
-
-        		showSelected[1] = new VOIContour(true);
-        		JDialogLattice.makeEllipse( Vector3f.UNIT_Z, Vector3f.UNIT_Y, picked, 4, showSelected[1] );
-        		showSelectedVOI.getCurves().add(showSelected[1]);
-        		showSelected[1].update( new ColorRGBA(0,1,1,1));
-        		
-
-        		showSelected[2] = new VOIContour(true);
-        		JDialogLattice.makeEllipse( Vector3f.UNIT_Z, Vector3f.UNIT_X, picked, 4, showSelected[2] );
-        		showSelectedVOI.getCurves().add(showSelected[2]);
-        		showSelected[2].update( new ColorRGBA(0,1,1,1));
-        		
-    			showSelectedVOI.setColor( new Color( 0, 255, 255) );
-        	}
-        	else
-        	{
-        		for (int i = 0; i < showSelected.length; i++ )
-        		{
-        			Vector3f center = new Vector3f();
-        			for ( int j = 0; j < showSelected[i].size(); j++ )
-        			{
-        				center.add(showSelected[i].elementAt(j) );
-        			}
-        			center.scale(1f/(float)showSelected[i].size());
-        			Vector3f diff = Vector3f.sub( picked, center );
-        			for ( int j = 0; j < showSelected[i].size(); j++ )
-        			{
-        				showSelected[i].elementAt(j).add( diff );
-        			}
-        		}
-    			showSelectedVOI.update();
-        	}
-			if ( getActiveImage().isRegistered( showSelectedVOI ) == -1 )
-			{
-				getActiveImage().registerVOI(showSelectedVOI);
-			}
-        }
-        
-        if ( rebuild )
-        {
-            updateDisplay();
-        }
-	}
-
     @Override
     public void addedCurve(VOIEvent added) {
         if ( m_kVOIDialog != null )
@@ -2291,10 +2183,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     
     public void clear3DSelection()
     {
-    	picked = null;
-    	if ( showSelected != null )
+    	if ( latticeModel != null )
     	{
-    		getActiveImage().unregisterVOI(showSelectedVOI);
+    		latticeModel.clear3DSelection();
     	}
     }
     
@@ -3183,220 +3074,27 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }        
     }
 
-	private Vector3f picked = null;
     public void modifyLattice( Vector3f startPt, Vector3f endPt, Vector3f pt )
     {
-    	if ( lattice == null )
+    	if ( latticeModel != null )
     	{
-    		return;
+    		latticeModel.modifyLattice(startPt, endPt, pt);
     	}
-    	if ( picked != null )
-    	{
-    		picked.copy(pt);
-        	updateLattice(false);
-        	return;
-    	}
-    	picked = null;
-//    	System.err.println( "Trying pick " + pt );
-    	VOIContour left = (VOIContour) lattice.elementAt(0).getCurves().elementAt(0);
-		VOIContour right = (VOIContour) lattice.elementAt(0).getCurves().elementAt(1);
-    	int closestL = -1;
-		float minDistL = Float.MAX_VALUE;
-    	for ( int i = 0; i < left.size(); i++ )
-    	{
-    		float distance = pt.distance(left.elementAt(i));
-    		if ( distance < minDistL )
-    		{
-    			minDistL = distance;
-    			if ( minDistL <= 12 )
-    			{
-    				closestL = i;
-    			}
-    		}
-    	}
-    	int closestR = -1;
-		float minDistR = Float.MAX_VALUE;
-    	for ( int i = 0; i < right.size(); i++ )
-    	{
-    		float distance = pt.distance(right.elementAt(i));
-    		if ( distance < minDistR )
-    		{
-    			minDistR = distance;
-    			if ( minDistR <= 12 )
-    			{
-    				closestR = i;
-    			}
-    		}
-    	}
-//    	System.err.println( minDistL + " " + minDistR );
-    	if ( (closestL != -1) && (closestR != -1) )
-    	{
-    		if ( minDistL < minDistR )
-    		{
-//    			System.err.println( "Picked Lattice Left " + closestL );
-    			picked = left.elementAt(closestL);
-    		}
-    		else
-    		{
-//    			System.err.println( "Picked Lattice Right " + closestR );
-    			picked = right.elementAt(closestR);
-    		}
-    	}
-    	else if ( closestL != -1 )
-    	{
-//			System.err.println( "Picked Lattice Left " + closestL );
-			picked = left.elementAt(closestL);
-    	}
-    	else if ( closestR != -1 )
-    	{
-//			System.err.println( "Picked Lattice Right " + closestR );
-			picked = right.elementAt(closestR);
-    	}
-    	if ( picked != null )
-    	{
-//    		picked.copy(pt);
-        	updateLattice(false);
-        	return;
-    	}
-    	// look at the vector under the mouse and see which lattice point is closest...
-    	Segment3f mouseVector = new Segment3f( startPt, endPt );
-    	float minDist = Float.MAX_VALUE;
-    	for ( int i = 0; i < left.size(); i++ )
-    	{
-    		DistanceVector3Segment3 dist = new DistanceVector3Segment3( left.elementAt(i), mouseVector );
-    		float distance = dist.Get();
-    		if ( distance < minDist )
-    		{
-    			minDist = distance;
-    			picked = left.elementAt(i);
-    		}
-    		dist = new DistanceVector3Segment3( right.elementAt(i), mouseVector );
-    		distance = dist.Get();
-    		if ( distance < minDist )
-    		{
-    			minDist = distance;
-    			picked = right.elementAt(i);
-    		}
-    	}
-		if ( (picked != null) && (minDist <= 12) )
-		{
-//    		picked.copy(pt);
-        	updateLattice(false);
-        	return;
-		}
-    	
-    	addInsertionPoint(startPt, endPt, pt );
     }
 
     public void moveSelectedPoint( Vector3f direction )
     {
-    	if ( lattice == null )
+    	if ( latticeModel != null )
     	{
-    		return;
+    		latticeModel.moveSelectedPoint(direction);
     	}
-    	if ( picked != null )
-    	{
-    		picked.add(direction);
-        	updateLattice(false);
-        	return;
-    	}    	
     }
 
     public void addInsertionPoint( Vector3f startPt, Vector3f endPt, Vector3f maxPt )
     {
-    	if ( lattice == null )
+    	if ( latticeModel != null )
     	{
-    		return;
-    	}
-    	VOIContour left = (VOIContour) lattice.elementAt(0).getCurves().elementAt(0);
-		VOIContour right = (VOIContour) lattice.elementAt(0).getCurves().elementAt(1);
-    	Segment3f mouseVector = new Segment3f( startPt, endPt );
-    	float minDistL = Float.MAX_VALUE;
-    	int minIndexL = -1;
-    	Vector3f newLeft = null;
-    	for ( int i = 0; i < left.size() -1; i++ )
-    	{
-    		Segment3f leftS = new Segment3f( left.elementAt(i), left.elementAt(i+1) );
-    		DistanceSegment3Segment3 dist = new DistanceSegment3Segment3( mouseVector, leftS );
-    		float distance = dist.Get();
-    		if ( distance < minDistL )
-    		{
-    			minDistL = distance;
-    			if ( minDistL <= 12 )
-    			{
-//    				System.err.println( dist.GetSegment0Parameter() + " " + dist.GetSegment1Parameter() );
-    				minIndexL = i;
-    				newLeft = Vector3f.add( leftS.Center, Vector3f.scale( dist.GetSegment1Parameter(), leftS.Direction ) );
-    				newLeft.copy(maxPt);
-    			}
-    		}
-    	}
-    	float minDistR = Float.MAX_VALUE;
-    	int minIndexR = -1;
-    	Vector3f newRight = null;
-    	for ( int i = 0; i < left.size() -1; i++ )
-    	{
-    		Segment3f rightS = new Segment3f( right.elementAt(i), right.elementAt(i+1) );
-    		DistanceSegment3Segment3 dist = new DistanceSegment3Segment3( mouseVector, rightS );
-    		float distance = dist.Get();
-    		if ( distance < minDistR )
-    		{
-    			minDistR = distance;
-    			if ( minDistR <= 12 )
-    			{
-//    				System.err.println( dist.GetSegment0Parameter() + " " + dist.GetSegment1Parameter() );
-    				minIndexR = i;
-    				newRight = Vector3f.add( rightS.Center, Vector3f.scale( dist.GetSegment1Parameter(), rightS.Direction ) );
-    				newRight.copy(maxPt);
-    			}
-    		}
-    	}
-    	if ( (minIndexL != -1) && (minIndexR != -1) )
-    	{
-    		if ( minDistL < minDistR )
-    		{
-//    			System.err.println( "Add to left " + (minIndexL+1) );
-    			left.add( minIndexL + 1, newLeft );
-    			picked = left.elementAt(minIndexL+1);
-    			newRight = Vector3f.add( right.elementAt(minIndexL), right.elementAt(minIndexL+1) );
-    			newRight.scale(0.5f);
-    			right.add( minIndexL + 1, newRight );
-    			
-            	updateLattice(true);
-    		}
-    		else
-    		{
-//    			System.err.println( "Add to right " + (minIndexR+1) );
-    			right.add( minIndexR + 1, newRight );
-    			picked = right.elementAt(minIndexR+1);
-    			newLeft = Vector3f.add( left.elementAt(minIndexR), left.elementAt(minIndexR+1) );
-    			newLeft.scale(0.5f);
-    			left.add( minIndexR + 1, newLeft );
-    			
-            	updateLattice(true);
-    		}
-    	}
-    	if ( minIndexL != -1 )
-    	{
-//			System.err.println( "Add to left " + (minIndexL+1) );
-			left.add( minIndexL + 1, newLeft );
-			picked = left.elementAt(minIndexL+1);
-			newRight = Vector3f.add( right.elementAt(minIndexL), right.elementAt(minIndexL+1) );
-			newRight.scale(0.5f);
-			right.add( minIndexL + 1, newRight );
-			
-        	updateLattice(true);
-    	}
-    	if ( minIndexR != -1 )
-    	{
-//			System.err.println( "Add to right " + (minIndexR+1) );
-			right.add( minIndexR + 1, newRight );
-			picked = right.elementAt(minIndexR+1);
-			newLeft = Vector3f.add( left.elementAt(minIndexR), left.elementAt(minIndexR+1) );
-			newLeft.scale(0.5f);
-			left.add( minIndexR + 1, newLeft );  
-			
-        	updateLattice(true);
+    		latticeModel.addInsertionPoint(startPt, endPt, maxPt);
     	}
     }
     
@@ -4415,7 +4113,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * @param quietMode if true indicates that warnings should not be displayed.
      */
     private void loadAllVOIsFrom(final String voiDir, boolean quietMode) {
-    	loadAllVOIsFrom(voiDir, quietMode, null);
+    	loadAllVOIsFrom(voiDir, quietMode, null, true);
     }
     
 
@@ -4424,7 +4122,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * @param voiDir the directory to load voi's from
      * @param quietMode if true indicates that warnings should not be displayed.
      */
-    private void loadAllVOIsFrom(final String voiDir, boolean quietMode, VOIVector resultVector) {
+    private void loadAllVOIsFrom(final String voiDir, boolean quietMode, VOIVector resultVector, boolean registerVOIs) {
 
         int i, j;
         VOI[] VOIs;
@@ -4477,7 +4175,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                     if(VOIs[j].getColor() == null) {
                         VOIs[j].setColor(toolbarBuilder.getVOIColorButton().getBackground());
                     }
-                    currentImage.registerVOI(VOIs[j]);
+                    if ( registerVOIs )
+                    {   	
+                    	currentImage.registerVOI(VOIs[j]);
+                    }
                     VOIs[j].addVOIListener(this);
                     advanceVOIUID();
                     
@@ -4489,7 +4190,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             }
             
             // when everything's done, notify the image listeners
-            currentImage.notifyImageDisplayListeners();
+            if ( registerVOIs )
+            {   	
+            	currentImage.notifyImageDisplayListeners();
+            }
 
         } catch (final Exception error) {
 

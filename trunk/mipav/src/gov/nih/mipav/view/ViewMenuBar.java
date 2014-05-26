@@ -949,9 +949,11 @@ public class ViewMenuBar {
                                         menuBuilder.buildCheckBoxMenuItem("Edit Lattice", "EditLattice", false),
                                         menuBuilder.buildMenuItem("Save Lattice", "SaveLattice", 0, null,
                                                 false),
-//                                        menuBuilder.buildCheckBoxMenuItem("Show Model", "showStraightenLattice", false),
-                                        menuBuilder.buildMenuItem("Apply Lattice Straightening", "straightenLattice", 0, null,
-                                        		false),
+                                        menuBuilder.buildCheckBoxMenuItem("Show Model", "showStraightenLattice", false),
+                                        menuBuilder.buildMenuItem("Straighten (version 1)", "straightenLattice", 0, null,
+                                            	false),
+                                        menuBuilder.buildMenuItem("Straighten (version 2)", "straightenLattice2", 0, null,
+                                                false),
                                         menuBuilder.buildMenuItem("Default Voxel Size", "voxelSize", 0, null,
                                         		false)
                                         		}

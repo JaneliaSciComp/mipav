@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic;
 
+import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
@@ -23,6 +24,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.TreeMap;
 import java.util.Vector;
 
 import javax.media.opengl.GLAutoDrawable;
@@ -32,6 +34,7 @@ import javax.swing.KeyStroke;
 
 import WildMagic.LibFoundation.Distance.DistanceVector3Segment3;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Ellipsoid3f;
 import WildMagic.LibFoundation.Mathematics.Line3f;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
@@ -460,16 +463,29 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				i--;
 			}
 		}
-		for ( int i = 0; i < kVOIs.size(); i++ )
-		{
+		for (int i = kVOIs.size() - 1; i >=0; i--) {
 			VOI kVOI = kVOIs.get(i);
-			Vector<VOIBase> kCurves = kVOI.getCurves();
-			for ( int k = 0; k < kCurves.size(); k++ )
+			if ( kVOI.getName().equals("MakeSphere") )
 			{
-				VOIBase kVOI3D = kCurves.get(k);
-				bUpdateVOIs |= drawVOI( kVOI3D, this, m_kVolumeImageA, m_kTranslate );
+				System.err.println( "update 1" + kVOI.getName() );
+				Vector<VOIBase> kCurves = kVOI.getCurves();
+				for (int k = 0; k < kCurves.size(); k++) {
+					Vector3f pt = kCurves.elementAt(k).elementAt(0);
+					addSphere( pt, k );
+				}
+
+				kVOIs.remove(kVOI);
 			}
-		} 
+			else
+			{
+				Vector<VOIBase> kCurves = kVOI.getCurves();
+				for (int k = 0; k < kCurves.size(); k++) {
+					VOIBase kVOI3D = kCurves.get(k);
+					bUpdateVOIs |= drawVOI(kVOI3D, this, m_kVolumeImageA,
+							m_kTranslate);
+				}
+			}
+		}
 		if ( bUpdateVOIs )
 		{
 			UpdateSceneRotation();
@@ -477,6 +493,50 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		}
 	}
 
+	private void addSphere( Vector3f center, int index )
+	{
+		ColorRGBA[] colors = new ColorRGBA[] {
+				new ColorRGBA( 0, 0, 1, 1 ),
+				new ColorRGBA( 0, 1, 0, 1 ),
+				new ColorRGBA( 0, 1, 1, 1 ),
+				new ColorRGBA( 1, 0, 0, 1 ),
+				new ColorRGBA( 1, 0, 1, 1 ),
+				new ColorRGBA( 1, 1, 0, 1 ),
+				new ColorRGBA( 1, 1, 1, 1 )
+		};
+
+		int dimX = m_kVolumeImageA.GetImage().getExtents().length > 0 ? m_kVolumeImageA.GetImage().getExtents()[0] : 1;
+		int dimY = m_kVolumeImageA.GetImage().getExtents().length > 1 ? m_kVolumeImageA.GetImage().getExtents()[1] : 1;
+		int dimZ = m_kVolumeImageA.GetImage().getExtents().length > 2 ? m_kVolumeImageA.GetImage().getExtents()[2] : 1;
+		int max = Math.max( dimX, Math.max(dimY, dimZ) );
+		float scale = 1f/(float)(max - 1);
+		Transformation xfrm = new Transformation();
+		xfrm.SetUniformScale( scale );
+		Attributes attributes = new Attributes();
+		attributes.SetPChannels(3);
+		attributes.SetNChannels(3);
+		attributes.SetCChannels(0,3);
+		StandardMesh std = new StandardMesh(attributes);
+
+		std.SetTransformation ( xfrm );
+		TriMesh sphere = std.Sphere(2);
+		updateSphere( sphere, center.X, center.Y, center.Z, colors[0] );
+		System.err.println( "adding mesh " + index);
+		sphere.SetName( "Sphere_" + index);
+		m_kParent.addSurface( sphere );
+	}
+
+    private static void updateSphere( TriMesh sphere, float x, float y, float z, ColorRGBA c )
+    {
+    	for ( int i = 0; i < sphere.VBuffer.GetVertexQuantity(); i++ )
+    	{
+    		Vector3f p = sphere.VBuffer.GetPosition3(i);
+    		p.add(x,y,z);
+    		sphere.VBuffer.SetPosition3(i, p);
+    		sphere.VBuffer.SetColor4( 0, i, c );
+    	}
+    }
+	
 	/**
 	 * Toggle Navigation mode.
 	 * 
