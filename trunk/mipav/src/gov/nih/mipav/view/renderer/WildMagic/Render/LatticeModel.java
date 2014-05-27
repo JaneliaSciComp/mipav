@@ -1862,8 +1862,8 @@ public class LatticeModel {
         {
         	file.delete();
         }
-        System.err.println( voiDir );
-        System.err.println( image.getImageName() + ".xml" );
+//        System.err.println( voiDir );
+//        System.err.println( image.getImageName() + ".xml" );
         ModelImage.saveImage( image, image.getImageName() + ".xml", voiDir );
     }
     
