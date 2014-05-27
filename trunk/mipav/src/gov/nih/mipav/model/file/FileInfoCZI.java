@@ -22,7 +22,27 @@ public class FileInfoCZI extends FileInfoBase {
 	private String userName = null;
 	private String subType = null;
 	private String title = null;
-	
+	private String creationDate = null;
+	private String description = null;
+	private String thumbnail = null;
+	private String comment = null;
+	private String rating = null;
+	private String keywords = null;
+	private String ID = null;
+	private String displayName = null;
+	private String firstName = null;
+	private String middleName = null;
+	private String lastName = null;
+	private String email = null;
+	private String institution = null;
+	private String experimenterName = null;
+	private String phone = null;
+	private String fax = null;
+	private String address = null;
+	private String city = null;
+	private String country = null;
+	private String state = null;
+		
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -68,6 +88,86 @@ public class FileInfoCZI extends FileInfoBase {
         
         if (title != null) {
         	dialog.append("Title = " + title + "\n");
+        }
+        
+        if (creationDate != null) {
+        	dialog.append("Creation date = " + creationDate + "\n");
+        }
+        
+        if (description != null) {
+        	dialog.append("Description = " + description + "\n");
+        }
+        
+        if (thumbnail != null) {
+        	dialog.append("Thumbnail = " + thumbnail + "\n");
+        }
+        
+        if (comment != null) {
+        	dialog.append("Comment = " + comment + "\n");
+        }
+        
+        if (rating != null) {
+        	dialog.append("Rating = " + rating + "\n");
+        }
+        
+        if (keywords != null) {
+        	dialog.append("Keywords = " + keywords + "\n");
+        }
+        
+        if (ID != null) {
+        	dialog.append("ID = " + ID + "\n");
+        }
+        
+        if (displayName != null) {
+        	dialog.append("Display name = " + displayName + "\n");
+        }
+        
+        if (firstName != null) {
+        	dialog.append("First name = " + firstName + "\n");
+        }
+        
+        if (middleName != null) {
+        	dialog.append("Middle name = " + middleName + "\n");
+        }
+        
+        if (lastName != null) {
+        	dialog.append("Last name = " + lastName + "\n");
+        }
+        
+        if (email != null) {
+        	dialog.append("Email = " + email + "\n");
+        }
+        
+        if (institution != null) {
+        	dialog.append("Institution = " + institution + "\n");
+        }
+        
+        if (experimenterName != null) {
+        	dialog.append("Experimenter name = " + experimenterName + "\n");
+        }
+        
+        if (phone != null) {
+        	dialog.append("Phone = " + phone + "\n");
+        }
+        
+        if (fax != null) {
+        	dialog.append("Fax = " + fax + "\n");
+        }
+        
+        if (address != null) {
+        	dialog.append("Address = " + address + "\n");
+        }
+        
+        if (city != null) {
+        	dialog.append("City = " + city + "\n");
+        }
+        
+        if (state != null) {
+        	dialog.append("State = " + state + "\n");
+        }
+        
+        if (country != null) {
+        	dialog.append("Country = " + country + "\n");
         }
         
         if (focusPosition != null) {
@@ -184,5 +284,165 @@ public class FileInfoCZI extends FileInfoBase {
      */
     public void setTitle(String title) {
     	this.title = title;
+    }
+    
+    /**
+     * 
+     * @param creationDate
+     */
+    public void setCreationDate(String creationDate) {
+    	this.creationDate = creationDate;
+    }
+    
+    /**
+     * 
+     * @param description
+     */
+    public void setDescription(String description) {
+    	this.description = description;
+    }
+    
+    /**
+     * 
+     * @param thumbnail
+     */
+    public void setThumbnail(String thumbnail) {
+    	this.thumbnail = thumbnail;
+    }
+    
+    /**
+     * 
+     * @param comment
+     */
+    public void setComment(String comment) {
+    	this.comment = comment;
+    }
+    
+    /**
+     * 
+     * @param rating
+     */
+    public void setRating(String rating) {
+    	this.rating = rating;
+    }
+    
+    /**
+     * 
+     * @param keywords
+     */
+    public void setKeywords(String keywords) {
+    	this.keywords = keywords;
+    }
+    
+    /**
+     * 
+     * @param ID
+     */
+    public void setID(String ID) {
+    	this.ID = ID;
+    }
+    
+    /**
+     * 
+     * @param displayName
+     */
+    public void setDisplayName(String displayName) {
+    	this.displayName = displayName;
+    }
+    
+    /**
+     * 
+     * @param firstName
+     */
+    public void setFirstName(String firstName) {
+    	this.firstName = firstName;
+    }
+    
+    /**
+     * 
+     * @param middleName
+     */
+    public void setMiddleName(String middleName) {
+    	this.middleName = middleName;
+    }
+    
+    /**
+     * 
+     * @param lastName
+     */
+    public void setLastName(String lastName) {
+    	this.lastName = lastName;
+    }
+    
+    /**
+     * 
+     * @param email
+     */
+    public void setEmail(String email) {
+    	this.email = email;
+    }
+    
+    /**
+     * 
+     * @param institution
+     */
+    public void setInstitution(String institution) {
+    	this.institution = institution;
+    }
+    
+    /**
+     * 
+     * @param experimenterName
+     */
+    public void setExperimenterName(String experimenterName) {
+    	this.experimenterName = experimenterName;
+    }
+    
+    /**
+     * 
+     * @param phone
+     */
+    public void setPhone(String phone) {
+    	this.phone = phone;
+    }
+    
+    /**
+     * 
+     * @param fax
+     */
+    public void setFax(String fax) {
+    	this.fax = fax;
+    }
+    
+    /**
+     * 
+     * @param address
+     */
+    public void setAddress(String address) {
+    	this.address = address;
+    }
+    
+    /**
+     * 
+     * @param city
+     */
+    public void setCity(String city) {
+    	this.city = city;
+    }
+    
+    /**
+     * 
+     * @param state
+     */
+    public void setState(String state) {
+    	this.state = state;
+    }
+    
+    /**
+     * 
+     * @param country
+     */
+    public void setCountry(String country) {
+    	this.country = country;
     }
 }
