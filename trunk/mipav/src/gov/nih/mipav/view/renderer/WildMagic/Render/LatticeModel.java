@@ -46,8 +46,9 @@ import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 public class LatticeModel {
-    
-    private ModelImage image;
+
+    private ModelImage imageA;
+    private ModelImage imageB;
     private VOIVector latticeGrid;    
 
     private VOI lattice = null;
@@ -92,9 +93,10 @@ public class LatticeModel {
 	private VOIContour[] showSelected = null;
 	private int[] latticeSlice;
 	
-	public LatticeModel( ModelImage image, VOI lattice )
+	public LatticeModel( ModelImage imageA, ModelImage imageB, VOI lattice )
 	{
-		this.image = image;
+		this.imageA = imageA;
+		this.imageB = imageB;
 		this.lattice = lattice;
 
 		// Assume image is isotropic (square voxels).
@@ -109,7 +111,7 @@ public class LatticeModel {
 			return;
 		}
 		
-		image.registerVOI(lattice);
+		this.imageA.registerVOI(lattice);
 		updateLattice(true);
 	}
 	
@@ -120,17 +122,17 @@ public class LatticeModel {
 			for ( int i = latticeGrid.size() - 1; i >= 0; i-- )
 			{
 				VOI marker = latticeGrid.remove(i);
-				image.unregisterVOI( marker );
+				imageA.unregisterVOI( marker );
 			}
 		}
-		image.unregisterVOI(lattice);
-		image.unregisterVOI( displayContours );
-		image.unregisterVOI(leftLine);
-		image.unregisterVOI(rightLine);
-		image.unregisterVOI(centerLine);
+		imageA.unregisterVOI(lattice);
+		imageA.unregisterVOI( displayContours );
+		imageA.unregisterVOI(leftLine);
+		imageA.unregisterVOI(rightLine);
+		imageA.unregisterVOI(centerLine);
 		clear3DSelection();
 		
-		image = null;
+		imageA = null;
 		latticeGrid = null;
 		lattice = null;
 		left = null;
@@ -277,7 +279,7 @@ public class LatticeModel {
     	pickedPoint = null;
     	if ( showSelected != null )
     	{
-    		image.unregisterVOI(showSelectedVOI);
+    		imageA.unregisterVOI(showSelectedVOI);
     	}
     }
     
@@ -504,7 +506,7 @@ public class LatticeModel {
 			}
 		}
 
-		saveLatticeStatistics(image, length, left, right, leftDistances, rightDistances, "_before");
+		saveLatticeStatistics(imageA, length, left, right, leftDistances, rightDistances, "_before");
 		
 		
 		
@@ -514,7 +516,7 @@ public class LatticeModel {
 
 		boxBounds = new Vector<Box3f>();
 		ellipseBounds = new Vector<Ellipsoid3f>();
-		short sID = (short)(image.getVOIs().getUniqueID());
+		short sID = (short)(imageA.getVOIs().getUniqueID());
 		samplingPlanes = new VOI(sID, "samplingPlanes");
 		displayContours = new VOI(sID, "wormContours");
 		for ( int i = 0; i < centerPositions.size(); i++ )
@@ -560,11 +562,19 @@ public class LatticeModel {
 		if ( version == 2 )
 		{
 			ModelImage maskImage = generateConflictMasks( );
-			straightImage = straighten(image, samplingPlanes, ellipseBounds, wormDiameters, boxBounds, 2*extent, latticeSlice, maskImage );
+			straightImage = straighten(imageA, samplingPlanes, ellipseBounds, wormDiameters, boxBounds, 2*extent, latticeSlice, maskImage, true );
+			if ( imageB != null )
+			{
+				straighten(imageB, samplingPlanes, ellipseBounds, wormDiameters, boxBounds, 2*extent, latticeSlice, maskImage, false );
+			}
 		}
 		else if ( version == 0 )
 		{
-			straightImage = straighten(image, samplingPlanes, ellipseBounds, 2*extent, latticeSlice );
+			straightImage = straighten(imageA, samplingPlanes, ellipseBounds, 2*extent, latticeSlice, true );
+			if ( imageB != null )
+			{
+				straighten(imageB, samplingPlanes, ellipseBounds, 2*extent, latticeSlice, false );
+			}
 		}
 
 		return straightImage;
@@ -926,8 +936,8 @@ public class LatticeModel {
             
             clear3DSelection();
             
-			image.unregisterAllVOIs();
-			image.registerVOI(lattice);
+			imageA.unregisterAllVOIs();
+			imageA.registerVOI(lattice);
 			lattice.setColor( new Color( 0, 0, 255) );
 			lattice.getCurves().elementAt(0).update( new ColorRGBA(0,0,1,1));
 			lattice.getCurves().elementAt(1).update( new ColorRGBA(0,0,1,1));
@@ -935,7 +945,7 @@ public class LatticeModel {
 			lattice.getCurves().elementAt(1).setClosed(false);
 			for ( int j = 0; j < lattice.getCurves().elementAt(0).size(); j++ )
 			{
-				short id = (short) image.getVOIs().getUniqueID();
+				short id = (short) imageA.getVOIs().getUniqueID();
 				VOI marker = new VOI(id, "pair_" + j, VOI.POLYLINE, (float)Math.random() );
 				VOIContour mainAxis = new VOIContour(false); 		    		    		
 				mainAxis.add( lattice.getCurves().elementAt(0).elementAt(j) );
@@ -948,13 +958,13 @@ public class LatticeModel {
 					marker.setColor( new Color( 0, 255, 0) );
 					mainAxis.update( new ColorRGBA(0,1,0,1));
 				}
-				image.registerVOI( marker );
+				imageA.registerVOI( marker );
 			}
 			
-			saveAllVOIsTo( voiDir, image );    
+			saveAllVOIsTo( voiDir, imageA );    
 
-			image.unregisterAllVOIs();
-			image.registerVOI(lattice);
+			imageA.unregisterAllVOIs();
+			imageA.registerVOI(lattice);
 			updateLattice(true);
         }
 
@@ -1019,15 +1029,15 @@ public class LatticeModel {
 	
     public void showModel( )
 	{
-		if ( (image.isRegistered( displayContours ) == -1) )
+		if ( (imageA.isRegistered( displayContours ) == -1) )
 		{
-			image.registerVOI(displayContours);
-	        image.notifyImageDisplayListeners();
+			imageA.registerVOI(displayContours);
+	        imageA.notifyImageDisplayListeners();
 		}
-		else if ( (image.isRegistered( displayContours ) != -1) )
+		else if ( (imageA.isRegistered( displayContours ) != -1) )
 		{
-			image.unregisterVOI(displayContours);
-	        image.notifyImageDisplayListeners();
+			imageA.unregisterVOI(displayContours);
+	        imageA.notifyImageDisplayListeners();
 		}
 		
 	}
@@ -1075,7 +1085,7 @@ public class LatticeModel {
     }
 	
     public ModelImage straighten( ModelImage image, VOI samplingPlanes, Vector<Ellipsoid3f> ellipseBounds,
-    		int diameter, int[] latticeSlice )
+    		int diameter, int[] latticeSlice, boolean saveStats )
     {
     	
 		int colorFactor = image.isColorImage() ? 4 : 1;
@@ -1182,28 +1192,29 @@ public class LatticeModel {
 			}
 			resultImage.registerVOI( marker );
 		}
-
-		saveLatticeStatistics(image, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");
-		
-		
 		resultImage.calcMinMax();
 		new ViewJFrameImage(resultImage);  	
-
 		saveTransformImage(imageName, resultImage);
-		
-		saveTransformImage(imageName, straightToOrigin);
-		ModelImage originToStraight = computeOriginToStraight(image, straightToOrigin);
-		saveTransformImage(imageName, originToStraight);
 
-//		testTransform( resultImage, straightToOrigin, image.getExtents() );
-//		testTransform( image, originToStraight, resultImage.getExtents() );
+		if ( saveStats )
+		{
+			saveLatticeStatistics(image, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");			
+			saveTransformImage(imageName, straightToOrigin);
+			ModelImage originToStraight = computeOriginToStraight(image, straightToOrigin);
+			saveTransformImage(imageName, originToStraight);
+
+//			testTransform( resultImage, straightToOrigin, image.getExtents() );
+//			testTransform( image, originToStraight, resultImage.getExtents() );
+		}
+		
+		
 		
 		return resultImage;
     }
     
     public ModelImage straighten( ModelImage image, VOI samplingPlanes, 
     		Vector<Ellipsoid3f> ellipseBounds, Vector<Float> diameters, Vector<Box3f> boxBounds,
-    		int diameter, int[] latticeSlice, ModelImage conflictMask )
+    		int diameter, int[] latticeSlice, ModelImage conflictMask, boolean saveStats )
     {
     	
 		int colorFactor = image.isColorImage() ? 4 : 1;
@@ -1311,21 +1322,21 @@ public class LatticeModel {
 			}
 			resultImage.registerVOI( marker );
 		}
-
-		saveLatticeStatistics(image, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");
-		
 		
 		resultImage.calcMinMax();
 		new ViewJFrameImage(resultImage);  	
 
 		saveTransformImage(imageName, resultImage);
-		
-		saveTransformImage(imageName, straightToOrigin);
-		ModelImage originToStraight = computeOriginToStraight(image, straightToOrigin);
-		saveTransformImage(imageName, originToStraight);
+		if ( saveStats )
+		{
+			saveLatticeStatistics(image, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");
+			saveTransformImage(imageName, straightToOrigin);
+			ModelImage originToStraight = computeOriginToStraight(image, straightToOrigin);
+			saveTransformImage(imageName, originToStraight);
 
-//		testTransform( resultImage, straightToOrigin, image.getExtents() );
-//		testTransform( image, originToStraight, resultImage.getExtents() );
+			//		testTransform( resultImage, straightToOrigin, image.getExtents() );
+			//		testTransform( image, originToStraight, resultImage.getExtents() );
+		}
 		
 		return resultImage;
     }
@@ -1380,9 +1391,9 @@ public class LatticeModel {
     
     private ModelImage generateConflictMasks( )
     {    	
-    	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
-    	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
-    	int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+    	int dimX = imageA.getExtents().length > 0 ? imageA.getExtents()[0] : 1;
+    	int dimY = imageA.getExtents().length > 1 ? imageA.getExtents()[1] : 1;
+    	int dimZ = imageA.getExtents().length > 2 ? imageA.getExtents()[2] : 1;
     	
     	BitSet insideMask = new BitSet(dimX*dimY*dimZ);
     	BitSet insideConflictMask  = new BitSet(dimX*dimY*dimZ);
@@ -1483,9 +1494,9 @@ public class LatticeModel {
 			}
 		}
 
-    	ModelImage insideConflictMaskImage = new ModelImage( ModelStorageBase.BOOLEAN, image.getExtents(), "inside_conflict_mask" );
+    	ModelImage insideConflictMaskImage = new ModelImage( ModelStorageBase.BOOLEAN, imageA.getExtents(), "inside_conflict_mask" );
 //    	ModelImage insideMaskImage = new ModelImage( ModelStorageBase.BOOLEAN, image.getExtents(), "inside_mask" );
-    	ModelImage conflictMaskImage = new ModelImage( ModelStorageBase.BOOLEAN, image.getExtents(), "conflict_mask" );
+    	ModelImage conflictMaskImage = new ModelImage( ModelStorageBase.BOOLEAN, imageA.getExtents(), "conflict_mask" );
     	
 //    	conflictMask.andNot(insideMask);
     	
@@ -1588,7 +1599,7 @@ public class LatticeModel {
 //		boxBounds = new Vector<Box3f>();
 //		ellipseBounds = new Vector<Ellipsoid3f>();
 //		ellipseOuterBounds = new Vector<Ellipsoid3f>();
-		sID = (short)(image.getVOIs().getUniqueID());
+		sID = (short)(imageA.getVOIs().getUniqueID());
 //		samplingPlanes = new VOI(sID, "samplingPlanes");
 		displayContours = new VOI(sID, "wormContours");
 		for ( int i = 0; i < centerPositions.size(); i += 30 )
@@ -1646,7 +1657,7 @@ public class LatticeModel {
 		
 		
 		
-		sID = (short)(image.getVOIs().getUniqueID());
+		sID = (short)(imageA.getVOIs().getUniqueID());
 		centerLine = new VOI(sID, "center line");
 		centerLine.getCurves().add(centerPositions);
 		centerLine.setColor( Color.red );
@@ -1665,9 +1676,9 @@ public class LatticeModel {
 		rightPositions.update( new ColorRGBA(0,1,0,1));
 			
 
-		image.registerVOI(leftLine);
-		image.registerVOI(rightLine);
-		image.registerVOI(centerLine);
+		imageA.registerVOI(leftLine);
+		imageA.registerVOI(rightLine);
+		imageA.registerVOI(centerLine);
     }
     
     private void makeEllipse2( Vector3f right, Vector3f up, Vector3f center, float diameterA, float scale, VOIContour ellipse  )
@@ -1851,8 +1862,8 @@ public class LatticeModel {
         {
         	file.delete();
         }
-//        System.err.println( voiDir );
-//        System.err.println( image.getImageName() + ".xml" );
+        System.err.println( voiDir );
+        System.err.println( image.getImageName() + ".xml" );
         ModelImage.saveImage( image, image.getImageName() + ".xml", voiDir );
     }
     
@@ -1974,7 +1985,7 @@ public class LatticeModel {
 				for ( int i = latticeGrid.size() - 1; i >= 0; i-- )
 				{
 					VOI marker = latticeGrid.remove(i);
-					image.unregisterVOI( marker );
+					imageA.unregisterVOI( marker );
 				}
 			}
 			else
@@ -1983,7 +1994,7 @@ public class LatticeModel {
 			}
 			for ( int j = 0; j < left.size(); j++ )
 			{
-				short id = (short) image.getVOIs().getUniqueID();
+				short id = (short) imageA.getVOIs().getUniqueID();
 				VOI marker = new VOI(id, "pair_" + j, VOI.POLYLINE, (float)Math.random() );
 				VOIContour mainAxis = new VOIContour(false); 		    		    		
 				mainAxis.add( left.elementAt(j) );
@@ -1996,7 +2007,7 @@ public class LatticeModel {
 					marker.setColor( new Color( 0, 255, 0) );
 					mainAxis.update( new ColorRGBA(0,1,0,1));
 				}
-				image.registerVOI( marker );
+				imageA.registerVOI( marker );
 				latticeGrid.add(marker);
 			}			
 		}
@@ -2016,39 +2027,39 @@ public class LatticeModel {
 
 		if ( centerLine != null )
 		{
-			image.unregisterVOI( centerLine );
+			imageA.unregisterVOI( centerLine );
 		}
 		if ( rightLine != null )
 		{
-			image.unregisterVOI( rightLine );
+			imageA.unregisterVOI( rightLine );
 		}
 		if ( leftLine != null )
 		{
-			image.unregisterVOI( leftLine );
+			imageA.unregisterVOI( leftLine );
 		}
 		boolean showContours = false;
 		if ( displayContours != null )
 		{
-			showContours = (image.isRegistered( displayContours ) != -1);
+			showContours = (imageA.isRegistered( displayContours ) != -1);
 			if ( showContours )
 			{
-				image.unregisterVOI( displayContours );
+				imageA.unregisterVOI( displayContours );
 			}
 		}
         	
         generateCurves();
 		if ( showContours )
 		{
-			image.registerVOI( displayContours );
+			imageA.registerVOI( displayContours );
 		}
         
         if ( pickedPoint != null )
         {
         	if ( showSelectedVOI == null )
         	{
-				short id = (short) image.getVOIs().getUniqueID();
+				short id = (short) imageA.getVOIs().getUniqueID();
 				showSelectedVOI = new VOI(id, "showSelected", VOI.POLYLINE, (float)Math.random() );
-				image.registerVOI(showSelectedVOI);
+				imageA.registerVOI(showSelectedVOI);
         	}
         	if ( showSelected == null )
         	{
@@ -2090,14 +2101,14 @@ public class LatticeModel {
         		}
     			showSelectedVOI.update();
         	}
-			if ( image.isRegistered( showSelectedVOI ) == -1 )
+			if ( imageA.isRegistered( showSelectedVOI ) == -1 )
 			{
-				image.registerVOI(showSelectedVOI);
+				imageA.registerVOI(showSelectedVOI);
 			}
         }        
         
         // when everything's done, notify the image listeners
-        image.notifyImageDisplayListeners();
+        imageA.notifyImageDisplayListeners();
 	}
     
     
