@@ -1228,7 +1228,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 {
                 	latticeModel.dispose();
                 }
-                latticeModel = new LatticeModel( getActiveImage(), lattice.elementAt(0) );
+                latticeModel = new LatticeModel( m_kImageA, m_kImageB, lattice.elementAt(0) );
             }
         } else if ( command.equals("AddLeftRightMarkers") ) {
         	mouse3D = !mouse3D;
@@ -1293,7 +1293,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 			latticeModel.dispose();
 		}
 		getActiveImage().unregisterAllVOIs();
-		latticeModel = new LatticeModel( getActiveImage(), lattice.elementAt(0) );
+		latticeModel = new LatticeModel( m_kImageA, m_kImageB, lattice.elementAt(0) );
 	}
     
 	private JTextField defaultVoxelSize;
