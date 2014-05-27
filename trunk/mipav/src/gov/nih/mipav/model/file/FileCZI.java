@@ -228,6 +228,8 @@ public class FileCZI extends FileBase {
         final Vector<Long> imageDataSize = new Vector<Long>();
         final Vector<Long> imageDataLocation = new Vector<Long>();
         Vector<Integer> imageColorStartIndex = new Vector<Integer>();
+        Vector<Integer> imageZStartIndex = new Vector<Integer>();
+        Vector<Integer> imageTStartIndex = new Vector<Integer>();
         long subBlockStart;
         long location;
         int j;
@@ -334,6 +336,9 @@ public class FileCZI extends FileBase {
         int informationStart;
         int informationEnd;
         String information;
+        int documentStart;
+        int documentEnd;
+        String document;
         int nameStart;
         int nameEnd;
         String imageName;
@@ -349,8 +354,96 @@ public class FileCZI extends FileBase {
         int titleStart;
         int titleEnd;
         String title;
+        int creationDateStart;
+        int creationDateEnd;
+        String creationDate;
+        int descriptionStart;
+        int descriptionEnd;
+        String description;
+        int thumbnailStart;
+        int thumbnailEnd;
+        String thumbnail;
+        int commentStart;
+        int commentEnd;
+        String comment;
+        int ratingStart;
+        int ratingEnd;
+        String rating;
+        int keywordsStart;
+        int keywordsEnd;
+        String keywords;
+        int userStart;
+        int userEnd;
+        String user;
+        int IDStart;
+        int IDEnd;
+        String ID;
+        int displayNameStart;
+        int displayNameEnd;
+        String displayName;
+        int firstNameStart;
+        int firstNameEnd;
+        String firstName;
+        int middleNameStart;
+        int middleNameEnd;
+        String middleName;
+        int lastNameStart;
+        int lastNameEnd;
+        String lastName;
+        int emailStart;
+        int emailEnd;
+        String email;
+        int institutionStart;
+        int institutionEnd;
+        String institution;
+        int experimenterNameStart;
+        int experimenterNameEnd;
+        String experimenterName;
+        int phoneStart;
+        int phoneEnd;
+        String phone;
+        int faxStart;
+        int faxEnd;
+        String fax;
+        int addressStart;
+        int addressEnd;
+        String address;
+        int cityStart;
+        int cityEnd;
+        String city;
+        int stateStart;
+        int stateEnd;
+        String state;
+        int countryStart;
+        int countryEnd;
+        String country;
+        int imageStart;
+        int imageEnd;
+        String imageString;
+        int sizeXStart;
+        int sizeXEnd;
+        String sizeX;
+        int dimX = -1;
+        int sizeYStart;
+        int sizeYEnd;
+        String sizeY;
+        int dimY = -1;
+        int sizeCStart;
+        int sizeCEnd;
+        String sizeC;
+        int dimC = -1;
+        int sizeZStart;
+        int sizeZEnd;
+        String sizeZ;
+        int dimZ = -1;
+        int sizeTStart;
+        int sizeTEnd;
+        String sizeT;
+        int dimT = -1;
         int unitsOfMeasure[] = new int[4];
         int imageSlices = 1;
+        int zDim;
+        int tDim;
         
         try {
             fileInfo = new FileInfoCZI(fileName, fileDir, FileUtility.CZI); // dummy fileInfo
@@ -714,51 +807,372 @@ public class FileCZI extends FileBase {
                         information = xmlData.substring(informationStart, informationEnd);
                         informationStart = information.indexOf(">");
                         information = information.substring(informationStart+1);
-                        nameStart = information.indexOf("<Name>");
-                        nameEnd = information.indexOf("</Name>");
-                        if ((nameStart >= 0) && (nameEnd > nameStart)) {
-                            imageName = information.substring(nameStart, nameEnd);
-                            nameStart = imageName.indexOf(">");
-                            imageName = imageName.substring(nameStart+1);
-                            Preferences.debug("Image name = " + imageName + "\n", Preferences.DEBUG_FILEIO);
-                            fileInfo.setImageName(imageName);
-                        } // if ((nameStart >= 0) && (nameEnd > nameStart))
-                        authorStart = information.indexOf("<Author>");
-                        authorEnd = information.indexOf("</Author>");
-                        if ((authorStart >= 0) && (authorEnd > authorStart)) {
-                            author = information.substring(authorStart, authorEnd);
-                            authorStart = author.indexOf(">");
-                            author = author.substring(authorStart+1);
-                            Preferences.debug("Author = " + author + "\n", Preferences.DEBUG_FILEIO);
-                            fileInfo.setAuthor(author);
-                        } // if ((authorStart >= 0) && (authorEnd > authorStart))
-                        userNameStart = information.indexOf("<UserName>");
-                        userNameEnd = information.indexOf("</UserName>");
-                        if ((userNameStart >= 0) && (userNameEnd > userNameStart)) {
-                            userName = information.substring(userNameStart, userNameEnd);
-                            userNameStart = userName.indexOf(">");
-                            userName = userName.substring(userNameStart+1);
-                            Preferences.debug("User name = " + userName + "\n", Preferences.DEBUG_FILEIO);
-                            fileInfo.setUserName(userName);
-                        } // if ((userNameStart >= 0) && (userNameEnd > userNameStart))
-                        subTypeStart = information.indexOf("<SubType>");
-                        subTypeEnd = information.indexOf("</SubType>");
-                        if ((subTypeStart >= 0) && (subTypeEnd > subTypeStart)) {
-                            subType = information.substring(subTypeStart,subTypeEnd);
-                            subTypeStart = subType.indexOf(">");
-                            subType = subType.substring(subTypeStart+1);
-                            Preferences.debug("SubType = " + subType + "\n", Preferences.DEBUG_FILEIO);
-                            fileInfo.setSubType(subType);
-                        } // if ((subTypeStart >= 0) && (subTypeEnd > subTypeStart))
-                        titleStart = information.indexOf("<Title>");
-                        titleEnd = information.indexOf("</Title>");
-                        if ((titleStart >= 0) && (titleEnd > titleStart)) {
-                        	title = information.substring(titleStart, titleEnd);
-                        	titleStart = title.indexOf(">");
-                        	title = title.substring(titleStart+1);
-                        	Preferences.debug("Title = " + title + "\n", Preferences.DEBUG_FILEIO);
-                        	fileInfo.setTitle(title);
-                        }
+                        documentStart = information.indexOf("<Document>");
+                        documentEnd = information.indexOf("</Document>");
+                        if ((documentStart >= 0) && (documentEnd > documentStart)) {
+                        	document = information.substring(documentStart, documentEnd);
+                        	documentStart = document.indexOf(">");
+                        	document = document.substring(documentStart + 1);
+	                        nameStart = document.indexOf("<Name>");
+	                        nameEnd = document.indexOf("</Name>");
+	                        if ((nameStart >= 0) && (nameEnd > nameStart)) {
+	                            imageName = document.substring(nameStart, nameEnd);
+	                            nameStart = imageName.indexOf(">");
+	                            imageName = imageName.substring(nameStart+1);
+	                            imageName = imageName.trim();
+	                            Preferences.debug("Image name = " + imageName + "\n", Preferences.DEBUG_FILEIO);
+	                            if (imageName.length() > 0) {
+	                                fileInfo.setImageName(imageName);
+	                            }
+	                        } // if ((nameStart >= 0) && (nameEnd > nameStart))
+	                        authorStart = document.indexOf("<Author>");
+	                        authorEnd = document.indexOf("</Author>");
+	                        if ((authorStart >= 0) && (authorEnd > authorStart)) {
+	                            author = document.substring(authorStart, authorEnd);
+	                            authorStart = author.indexOf(">");
+	                            author = author.substring(authorStart+1);
+	                            author = author.trim();
+	                            Preferences.debug("Author = " + author + "\n", Preferences.DEBUG_FILEIO);
+	                            if (author.length() > 0) {
+	                                fileInfo.setAuthor(author);
+	                            }
+	                        } // if ((authorStart >= 0) && (authorEnd > authorStart))
+	                        userNameStart = document.indexOf("<UserName>");
+	                        userNameEnd = document.indexOf("</UserName>");
+	                        if ((userNameStart >= 0) && (userNameEnd > userNameStart)) {
+	                            userName = document.substring(userNameStart, userNameEnd);
+	                            userNameStart = userName.indexOf(">");
+	                            userName = userName.substring(userNameStart+1);
+	                            userName = userName.trim();
+	                            Preferences.debug("User name = " + userName + "\n", Preferences.DEBUG_FILEIO);
+	                            if (userName.length() > 0) {
+	                                fileInfo.setUserName(userName);
+	                            }
+	                        } // if ((userNameStart >= 0) && (userNameEnd > userNameStart))
+	                        subTypeStart = document.indexOf("<SubType>");
+	                        subTypeEnd = document.indexOf("</SubType>");
+	                        if ((subTypeStart >= 0) && (subTypeEnd > subTypeStart)) {
+	                            subType = document.substring(subTypeStart,subTypeEnd);
+	                            subTypeStart = subType.indexOf(">");
+	                            subType = subType.substring(subTypeStart+1);
+	                            subType = subType.trim();
+	                            Preferences.debug("SubType = " + subType + "\n", Preferences.DEBUG_FILEIO);
+	                            if (subType.length() > 0) {
+	                                fileInfo.setSubType(subType);
+	                            }
+	                        } // if ((subTypeStart >= 0) && (subTypeEnd > subTypeStart))
+	                        titleStart = document.indexOf("<Title>");
+	                        titleEnd = document.indexOf("</Title>");
+	                        if ((titleStart >= 0) && (titleEnd > titleStart)) {
+	                        	title = document.substring(titleStart, titleEnd);
+	                        	titleStart = title.indexOf(">");
+	                        	title = title.substring(titleStart+1);
+	                        	title = title.trim();
+	                        	Preferences.debug("Title = " + title + "\n", Preferences.DEBUG_FILEIO);
+	                        	if (title.length() > 0) {
+	                        	    fileInfo.setTitle(title);
+	                        	}
+	                        } // if ((titleStart >= 0) && (titleEnd > titleStart)) 
+	                        creationDateStart = document.indexOf("<CreationDate>");
+	                        creationDateEnd = document.indexOf("</CreationDate>");
+	                        if ((creationDateStart >= 0) && (creationDateEnd > creationDateStart)) {
+	                            creationDate = document.substring(creationDateStart, creationDateEnd);
+	                            creationDateStart = creationDate.indexOf(">");
+	                            creationDate = creationDate.substring(creationDateStart + 1);
+	                            creationDate = creationDate.trim();
+	                            Preferences.debug("Creation date = " + creationDate + "\n", Preferences.DEBUG_FILEIO);
+	                            if (creationDate.length() > 0) {
+	                                fileInfo.setCreationDate(creationDate);
+	                            }
+	                        } // if ((creationDateStart >= 0) && (creationDateEnd > creationDateStart))
+	                        descriptionStart = document.indexOf("<Description>");
+	                        descriptionEnd = document.indexOf("</Description>");
+	                        if ((descriptionStart >= 0) && (descriptionEnd > descriptionStart)) {
+	                            description = document.substring(descriptionStart, descriptionEnd);
+	                            descriptionStart = description.indexOf(">");
+	                            description = description.substring(descriptionStart+1);
+	                            description = description.trim();
+	                            Preferences.debug("Description = " + description + "\n", Preferences.DEBUG_FILEIO);
+	                            if (description.length() > 0) {
+	                                fileInfo.setDescription(description);
+	                            }
+	                        } // if ((descriptionStart >= 0) && (descriptionEnd > descriptionStart))
+	                        thumbnailStart = document.indexOf("<Thumbnail>");
+	                        thumbnailEnd = document.indexOf("</Thumbnail>");
+	                        if ((thumbnailStart >= 0) && (thumbnailEnd >= thumbnailStart)) {
+	                            thumbnail = document.substring(thumbnailStart, thumbnailEnd);
+	                            thumbnailStart = thumbnail.indexOf(">");
+	                            thumbnail = thumbnail.substring(thumbnailStart + 1);
+	                            thumbnail = thumbnail.trim();
+	                            Preferences.debug("Thumbnail = " + thumbnail + "\n", Preferences.DEBUG_FILEIO);
+	                            if (thumbnail.length() > 0) {
+	                                fileInfo.setThumbnail(thumbnail);
+	                            }
+	                        } // if ((thumbnailStart >= 0) && (thumbnailEnd >= thumbnailStart))
+	                        commentStart = document.indexOf("<Comment>");
+	                        commentEnd = document.indexOf("</Comment>");
+	                        if ((commentStart >= 0) && (commentEnd > commentStart)) {
+	                            comment = document.substring(commentStart, commentEnd);
+	                            commentStart = comment.indexOf(">");
+	                            comment = comment.substring(commentStart + 1);
+	                            comment = comment.trim();
+	                            Preferences.debug("Comment = " + comment + "\n", Preferences.DEBUG_FILEIO);
+	                            if (comment.length() > 0) {
+	                                fileInfo.setComment(comment);
+	                            }
+	                        } // if ((commentStart >= 0) && (commentEnd > commentStart))
+	                        ratingStart = document.indexOf("<Rating>");
+	                        ratingEnd = document.indexOf("</Rating>");
+	                        if ((ratingStart >= 0) && (ratingEnd > ratingStart)) {
+	                            rating = document.substring(ratingStart, ratingEnd);
+	                            ratingStart = rating.indexOf(">");
+	                            rating = rating.substring(ratingStart + 1);
+	                            rating = rating.trim();
+	                            Preferences.debug("Rating = " + rating + "\n", Preferences.DEBUG_FILEIO);
+	                            if (rating.length() > 0) {
+	                                fileInfo.setRating(rating);
+	                            }
+	                        } // if ((ratingStart >= 0) && (ratingEnd > ratingStart))
+	                        keywordsStart = document.indexOf("<Keywords>");
+	                        keywordsEnd = document.indexOf("</Keywords>");
+	                        if ((keywordsStart >= 0) && (keywordsEnd > keywordsStart)) {
+	                            keywords = document.substring(keywordsStart, keywordsEnd);
+	                            keywordsStart = keywords.indexOf(">");
+	                            keywords = keywords.substring(keywordsStart+1);
+	                            keywords = keywords.trim();
+	                            Preferences.debug("Keywords = " + keywords + "\n", Preferences.DEBUG_FILEIO);
+	                            if (keywords.length() > 0) {
+	                                fileInfo.setKeywords(keywords);
+	                            }
+	                        } // if ((keywordsStart >= 0) && (keywordsEnd > keywordsStart)) 
+                        } // if ((documentStart >= 0) && (documentEnd > documentStart))
+                        userStart= information.indexOf("<User>");
+                        userEnd = information.indexOf("</User>");
+                        if ((userStart >= 0) && (userEnd > userStart)) {
+                            user = information.substring(userStart, userEnd);
+                            userStart = user.indexOf(">");
+                            user = user.substring(userStart+1);
+                            IDStart = user.indexOf("<Id>");
+                            IDEnd = user.indexOf("</Id>");
+                            if ((IDStart >= 0) && (IDEnd > IDStart)) {
+                                ID = user.substring(IDStart, IDEnd);
+                                IDStart = ID.indexOf(">");
+                                ID = ID.substring(IDStart+1);
+                                ID = ID.trim();
+                                Preferences.debug("ID = " + ID + "\n", Preferences.DEBUG_FILEIO);
+                                if (ID.length() > 0) {
+                                    fileInfo.setID(ID);	
+                                }
+                            } // if ((IDStart >= 0) && (IDEnd > IDStart))
+                            displayNameStart = user.indexOf("<DisplayName>");
+                            displayNameEnd = user.indexOf("</DisplayName>");
+                            if ((displayNameStart >= 0) && (displayNameEnd > displayNameStart)) {
+                                displayName = user.substring(displayNameStart, displayNameEnd);
+                                displayNameStart = displayName.indexOf(">");
+                                displayName = displayName.substring(displayNameStart+1);
+                                displayName = displayName.trim();
+                                Preferences.debug("Display name = " + displayName + "\n", Preferences.DEBUG_FILEIO);
+                                if (displayName.length() > 0) {
+                                	fileInfo.setDisplayName(displayName);
+                                }
+                            } // if ((displayNameStart >= 0) && (displayNameEnd > displayNameStart))
+                            firstNameStart = user.indexOf("<FirstName>");
+                            firstNameEnd = user.indexOf("</FirstName>");
+                            if ((firstNameStart >= 0) && (firstNameEnd > firstNameStart)) {
+                                firstName = user.substring(firstNameStart, firstNameEnd);
+                                firstNameStart = firstName.indexOf(">");
+                                firstName = firstName.substring(firstNameStart+1);
+                                firstName = firstName.trim();
+                                Preferences.debug("First name = " + firstName + "\n", Preferences.DEBUG_FILEIO);
+                                if (firstName.length() > 0) {
+                                	fileInfo.setFirstName(firstName);
+                                }
+                            } // if ((firstNameStart >= 0) && (firstNameEnd > firstNameStart)) 
+                            middleNameStart = user.indexOf("<MiddleName>");
+                            middleNameEnd = user.indexOf("</MiddleName>");
+                            if ((middleNameStart >= 0) && (middleNameEnd > middleNameStart)) {
+                                middleName = user.substring(middleNameStart, middleNameEnd);
+                                middleNameStart = middleName.indexOf(">");
+                                middleName = middleName.substring(middleNameStart+1);
+                                middleName = middleName.trim();
+                                Preferences.debug("Middle name = " + middleName + "\n", Preferences.DEBUG_FILEIO);
+                                if (middleName.length() > 0) {
+                                	fileInfo.setMiddleName(middleName);
+                                }
+                            } // if ((middleNameStart >= 0) && (middleNameEnd > middleNameStart)) 
+                            lastNameStart = user.indexOf("<LastName>");
+                            lastNameEnd = user.indexOf("</LastName>");
+                            if ((lastNameStart >= 0) && (lastNameEnd > lastNameStart)) {
+                                lastName = user.substring(lastNameStart, lastNameEnd);
+                                lastNameStart = lastName.indexOf(">");
+                                lastName = lastName.substring(lastNameStart+1);
+                                lastName = lastName.trim();
+                                Preferences.debug("Last name = " + lastName + "\n", Preferences.DEBUG_FILEIO);
+                                if (lastName.length() > 0) {
+                                	fileInfo.setLastName(lastName);
+                                }
+                            } // if ((lastNameStart >= 0) && (lastNameEnd > lastNameStart)) 
+                            emailStart = user.indexOf("<Email>");
+                            emailEnd = user.indexOf("</Email>");
+                            if ((emailStart >= 0) && (emailEnd > emailStart)) {
+                                email = user.substring(emailStart, emailEnd);
+                                emailStart = email.indexOf(">");
+                                email = email.substring(emailStart);
+                                email = email.trim();
+                                Preferences.debug("Email = " + email + "\n", Preferences.DEBUG_FILEIO);
+                                if (email.length() > 0) {
+                                	fileInfo.setEmail(email);
+                                }
+                            } // if ((emailStart >= 0) && (emailEnd > emailStart))
+                            institutionStart = user.indexOf("<Institution>");
+                            institutionEnd = user.indexOf("</Institution>");
+                            if ((institutionStart >= 0) && (institutionEnd > institutionStart)) {
+                            	institution = user.substring(institutionStart, institutionEnd);
+                            	institutionStart = institution.indexOf(">");
+                            	institution = institution.substring(institutionStart+1);
+                            	institution = institution.trim();
+                            	Preferences.debug("Institution = " + institution + "\n", Preferences.DEBUG_FILEIO);
+                            	if (institution.length() > 0) {
+                            		fileInfo.setInstitution(institution);
+                            	}
+                            } // if ((institutionStart >= 0) && (institutionEnd > institutionStart)) 
+                            experimenterNameStart = user.indexOf("<UserName>");
+                            experimenterNameEnd = user.indexOf("</UserName>");
+                            if ((experimenterNameStart >= 0) && (experimenterNameEnd > experimenterNameStart)) {
+                                experimenterName = user.substring(experimenterNameStart, experimenterNameEnd);
+                                experimenterNameStart = experimenterName.indexOf(">");
+                                experimenterName = experimenterName.substring(experimenterNameStart+1);
+                                experimenterName = experimenterName.trim();
+                                Preferences.debug("Experimenter name = " + experimenterName + "\n", Preferences.DEBUG_FILEIO);
+                                if (experimenterName.length() > 0) {
+                                	fileInfo.setExperimenterName(experimenterName);
+                                }
+                            } // if ((experimenterNameStart >= 0) && (experimenterNameEnd > experimenterNameStart))
+                            phoneStart = user.indexOf("<Phone>");
+                            phoneEnd = user.indexOf("</Phone>");
+                            if ((phoneStart >= 0) && (phoneEnd > phoneStart)) {
+                                phone = user.substring(phoneStart, phoneEnd);
+                                phoneStart = phone.indexOf(">");
+                                phone = phone.substring(phoneStart+1);
+                                phone = phone.trim();
+                                Preferences.debug("Phone = " + phone + "\n", Preferences.DEBUG_FILEIO);
+                                if (phone.length() > 0) {
+                                	fileInfo.setPhone(phone);
+                                }
+                            } // if ((phoneStart >= 0) && (phoneEnd > phoneStart))
+                            faxStart = user.indexOf("<Fax>");
+                            faxEnd = user.indexOf("</Fax>");
+                            if ((faxStart >= 0) && (faxEnd > faxStart)) {
+                                fax = user.substring(faxStart, faxEnd);
+                                faxStart = fax.indexOf(">");
+                                fax = fax.substring(faxStart+1);
+                                fax = fax.trim();
+                                Preferences.debug("Fax = " + fax + "\n", Preferences.DEBUG_FILEIO);
+                                if (fax.length() > 0) {
+                                	fileInfo.setFax(fax);
+                                }
+                            } // if ((faxStart >= 0) && (faxEnd > faxStart))
+                            addressStart = user.indexOf("<Address>");
+                            addressEnd = user.indexOf("</Address>");
+                            if ((addressStart >= 0) && (addressEnd > addressStart)) {
+                                address = user.substring(addressStart, addressEnd);
+                                addressStart = address.indexOf(">");
+                                address = address.substring(addressStart+1);
+                                address = address.trim();
+                                Preferences.debug("Address = " + address + "\n", Preferences.DEBUG_FILEIO);
+                                if (address.length() > 0) {
+                                	fileInfo.setAddress(address);
+                                }
+                            } // if ((addressStart >= 0) && (addressEnd > addressStart))
+                            cityStart = user.indexOf("<City>");
+                            cityEnd = user.indexOf("</City>");
+                            if ((cityStart >= 0) && (cityEnd > cityStart)) {
+                                city = user.substring(cityStart,cityEnd);
+                                cityStart = city.indexOf(">");
+                                city = city.substring(cityStart+1);
+                                city = city.trim();
+                                Preferences.debug("City = " + city + "\n", Preferences.DEBUG_FILEIO);
+                                if (city.length() > 0) {
+                                	fileInfo.setCity(city);
+                                }
+                            } // if ((cityStart >= 0) && (cityEnd > cityStart)) 
+                            stateStart = user.indexOf("<State>");
+                            stateEnd = user.indexOf("</State>");
+                            if ((stateStart >= 0) && (stateEnd > stateStart)) {
+                                state = user.substring(stateStart, stateEnd);
+                                stateStart = state.indexOf(">");
+                                state = state.substring(stateStart+1);
+                                state = state.trim();
+                                Preferences.debug("State = " + state + "\n", Preferences.DEBUG_FILEIO);
+                                if (state.length() > 0) {
+                                	fileInfo.setState(state);
+                                }
+                            } // if ((stateStart >= 0) && (stateEnd > stateStart))
+                            countryStart = user.indexOf("<Country>");
+                            countryEnd = user.indexOf("</Country>");
+                            if ((countryStart >= 0) && (countryEnd > countryStart)) {
+                                country = user.substring(countryStart, countryEnd);
+                                countryStart = country.indexOf(">");
+                                country = country.substring(countryStart+1);
+                                country = country.trim();
+                                Preferences.debug("Country = " + country + "\n", Preferences.DEBUG_FILEIO);
+                                if (country.length() > 0) {
+                                	fileInfo.setCountry(country);
+                                }
+                            } // if ((countryStart >= 0) && (countryEnd > countryStart))
+                        } // if ((userStart >= 0) && (userEnd > userStart)) 
+                        imageStart = information.indexOf("<Image>");
+                        imageEnd = information.indexOf("</Image>");
+                        if ((imageStart >= 0) && (imageEnd > imageStart)) {
+                            imageString = information.substring(imageStart, imageEnd);	
+                            imageStart = imageString.indexOf(">");
+                            imageString = imageString.substring(imageStart+1);
+                            sizeXStart = imageString.indexOf("<SizeX>");
+                            sizeXEnd = imageString.indexOf("</SizeX>");
+                            if ((sizeXStart >= 0) && (sizeXEnd > sizeXStart)) {
+                            	sizeX = imageString.substring(sizeXStart, sizeXEnd);
+                            	sizeXStart = sizeX.indexOf(">");
+                            	sizeX = sizeX.substring(sizeXStart+1);
+                            	dimX = Integer.valueOf(sizeX).intValue();
+                            	Preferences.debug("dimX from xmlData = " + dimX + "\n", Preferences.DEBUG_FILEIO);
+                            } // if ((sizeXStart >= 0) && (sizeXEnd > sizeXStart))
+                            sizeYStart = imageString.indexOf("<SizeY>");
+                            sizeYEnd = imageString.indexOf("</SizeY>");
+                            if ((sizeYStart >= 0) && (sizeYEnd > sizeYStart)) {
+                            	sizeY = imageString.substring(sizeYStart, sizeYEnd);
+                            	sizeYStart = sizeY.indexOf(">");
+                            	sizeY = sizeY.substring(sizeYStart+1);
+                            	dimY = Integer.valueOf(sizeY).intValue();
+                            	Preferences.debug("dimY from xmlData = " + dimY + "\n", Preferences.DEBUG_FILEIO);
+                            } // if ((sizeYStart >= 0) && (sizeYEnd > sizeYStart))
+                            sizeCStart = imageString.indexOf("<SizeC>");
+                            sizeCEnd = imageString.indexOf("</SizeC>");
+                            if ((sizeCStart >= 0) && (sizeCEnd > sizeCStart)) {
+                            	sizeC = imageString.substring(sizeCStart, sizeCEnd);
+                            	sizeCStart = sizeC.indexOf(">");
+                            	sizeC = sizeC.substring(sizeCStart+1);
+                            	dimC = Integer.valueOf(sizeC).intValue();
+                            	Preferences.debug("dimC from xmlData = " + dimC + "\n", Preferences.DEBUG_FILEIO);
+                            } // if ((sizeCStart >= 0) && (sizeCEnd > sizeCStart))
+                            sizeZStart = imageString.indexOf("<SizeZ>");
+                            sizeZEnd = imageString.indexOf("</SizeZ>");
+                            if ((sizeZStart >= 0) && (sizeZEnd > sizeZStart)) {
+                            	sizeZ = imageString.substring(sizeZStart, sizeZEnd);
+                            	sizeZStart = sizeZ.indexOf(">");
+                            	sizeZ = sizeZ.substring(sizeZStart+1);
+                            	dimZ = Integer.valueOf(sizeZ).intValue();
+                            	Preferences.debug("dimZ from xmlData = " + dimZ + "\n", Preferences.DEBUG_FILEIO);
+                            } // if ((sizeZStart >= 0) && (sizeZEnd > sizeZStart))
+                            sizeTStart = imageString.indexOf("<SizeT>");
+                            sizeTEnd = imageString.indexOf("</SizeT>");
+                            if ((sizeTStart >= 0) && (sizeTEnd > sizeTStart)) {
+                            	sizeT = imageString.substring(sizeTStart, sizeTEnd);
+                            	sizeTStart = sizeT.indexOf(">");
+                            	sizeT = sizeT.substring(sizeTStart+1);
+                            	dimT = Integer.valueOf(sizeT).intValue();
+                            	Preferences.debug("dimT from xmlData = " + dimT + "\n", Preferences.DEBUG_FILEIO);
+                            } // if ((sizeTStart >= 0) && (sizeTEnd > sizeTStart))
+                        } // if ((imageStart >= 0) && (imageEnd > imageStart))
                     } // if ((informationStart >= 0) && (informationEnd > informationStart))
                     Preferences.debug("XML data: \n", Preferences.DEBUG_FILEIO);
                     Preferences.debug(xmlData + "\n", Preferences.DEBUG_FILEIO);
@@ -872,6 +1286,12 @@ public class FileCZI extends FileBase {
                         Preferences.debug("size[" + i + "] = " + size[i] + "\n", Preferences.DEBUG_FILEIO);
                         if ((dimension[i].equals("C")) && (size[i] == 1)) {
                         	imageColorStartIndex.add(start[i]);
+                        }
+                        else if ((dimension[i].equals("Z")) && (size[i] == 1)) {
+                        	imageZStartIndex.add(start[i]);
+                        }
+                        else if ((dimension[i].equals("T")) && (size[i] == 1)) {
+                        	imageTStartIndex.add(start[i]);
                         }
                         startCoordinate[i] = readFloat(endianess);
                         Preferences.debug("startCoordinate[" + i + "] = " + startCoordinate[i] + "\n", Preferences.DEBUG_FILEIO);
@@ -1187,6 +1607,14 @@ public class FileCZI extends FileBase {
             			isColor = false;
             		}
             	}
+            }
+            
+            if (imageZStartIndex.size() == imageDimension[0].size()) {
+            	zDim = imageZStartIndex.get(imageZStartIndex.size() - 1) + 1;
+            }
+            
+            if (imageTStartIndex.size() == imageDimension[0].size()) {
+            	tDim = imageTStartIndex.get(imageTStartIndex.size() - 1) + 1;
             }
             
             if (pixelType == Gray8) {
