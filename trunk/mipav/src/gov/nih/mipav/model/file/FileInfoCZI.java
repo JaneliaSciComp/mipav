@@ -42,6 +42,25 @@ public class FileInfoCZI extends FileInfoBase {
 	private String city = null;
 	private String country = null;
 	private String state = null;
+	// Number of phases
+	private int dimH = -1;
+	// Number of rotation angles (indices
+	private int dimR = -1;
+	// Number of scenes
+	private int dimS = -1;
+	// Number of illumination direction indices
+	private int dimI = -1;
+	// Number of mosaic tiles (regular mosaics only)
+	private int dimM = -1;
+	// Number of acquisition / recording / blocks
+	private int dimB = -1;
+	// Number of views in a multi-view image
+	private int dimV = -1;
+	private String originalScanData = null;
+	private int channelsFound = -1;
+	private String channelID[] = null;
+	private String channelName[] = null;
+	private String acquisitionMode[] = null;
 		
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -196,6 +215,60 @@ public class FileInfoCZI extends FileInfoBase {
         	    dialog.append("Time stamp  " + i + ":     " + timeStamps[i] + "\n");	
         	}
         }
+        
+        if (dimH > 0) {
+        	dialog.append("Number of phases = " + dimH + "\n");
+        }
+        
+        if (dimR > 0) {
+        	dialog.append("Number of rotation angles (indices) = " + dimR + "\n");
+        }
+        
+        if (dimS > 0) {
+        	dialog.append("Number of scenes = " + dimS + "\n");
+        }
+        
+        if (dimI > 0) {
+        	dialog.append("Number of illumination direction indices = " + dimI + "\n");
+        }
+        
+        if (dimM > 0) {
+        	dialog.append("Number of mosaic tiles (regular mosaics only) = " + dimM + "\n");
+        }
+        
+        if (dimB > 0) {
+        	dialog.append("Number of acquisition / recording / blocks = " + dimB + "\n");
+        }
+        
+        if (dimV > 0) {
+        	dialog.append("Number of views in a mult-view image = " + dimV + "\n");
+        }
+        
+        if (originalScanData != null) {
+        	boolean originalScan = Boolean.valueOf(originalScanData).booleanValue();
+        	if (originalScan) {
+        	    dialog.append("The image is the output of a scanning process and has not been modified\n");	
+        	}
+        	else {
+        	    dialog.append("The image is not the original data of a scanning process\n")	;
+        	}
+        }
+        
+        for (i = 0; i < channelsFound; i++) {
+     
+            if ((channelID != null) && (channelID[i] != null)) {
+            	dialog.append("Channel ID = " + channelID[i] + "\n") ;
+            }
+            
+            if ((channelName != null) && (channelName[i] != null)) {
+            	dialog.append("Channel name = " + channelName[i] + "\n");
+            }
+            
+            if ((acquisitionMode != null) && (acquisitionMode[i] != null)) {
+            	dialog.append("Acquisition mode = " + acquisitionMode[i] + "\n");
+            }
+            dialog.append("\n");
+        } // for (i = 0; i < channelsFound; i++)
     }
     
     /**
@@ -444,5 +517,101 @@ public class FileInfoCZI extends FileInfoBase {
      */
     public void setCountry(String country) {
     	this.country = country;
+    }
+    
+    /**
+     * 
+     * @param dimH
+     */
+    public void setDimH(int dimH) {
+    	this.dimH = dimH;
+    }
+    
+    /**
+     * 
+     * @param dimR
+     */
+    public void setDimR(int dimR) {
+    	this.dimR = dimR;
+    }
+    
+    /**
+     * 
+     * @param dimS
+     */
+    public void setDimS(int dimS) {
+    	this.dimS = dimS;
+    }
+    
+    /**
+     * 
+     * @param dimI
+     */
+    public void setDimI(int dimI) {
+    	this.dimI = dimI;
+    }
+    
+    /**
+     * 
+     * @param dimM
+     */
+    public void setDimM(int dimM) {
+    	this.dimM = dimM;
+    }
+    
+    /**
+     * 
+     * @param dimB
+     */
+    public void setDimB(int dimB) {
+    	this.dimB = dimB;
+    }
+    
+    /**
+     * 
+     * @param dimV
+     */
+    public void setDimV(int dimV) {
+    	this.dimV = dimV;
+    }
+    
+    /**
+     * 
+     * @param originalScanData
+     */
+    public void setOriginalScanData(String originalScanData) {
+    	this.originalScanData = originalScanData;
+    }
+    
+    /**
+     * 
+     * @param channelsFound
+     */
+    public void setChannelsFound(int channelsFound) {
+    	this.channelsFound = channelsFound;
+    }
+    
+    /**
+     * 
+     * @param channelID
+     */
+    public void setChannelID(String channelID[]) {
+    	this.channelID = channelID;
+    }
+    
+    /**
+     * 
+     * @param channelName
+     */
+    public void setChannelName(String channelName[]) {
+    	this.channelName = channelName;
+    }
+    
+    /**
+     * 
+     * @param acquisitionMode
+     */
+    public void setAcquisitionMode(String acquisitionMode[]) {
+    	this.acquisitionMode = acquisitionMode;
     }
 }
