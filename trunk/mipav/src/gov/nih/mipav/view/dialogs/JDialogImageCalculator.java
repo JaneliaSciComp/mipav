@@ -485,8 +485,12 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
         scriptParameters.storeInputImage(imageB);
         scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
 
+        
         scriptParameters.getParams().put(ParameterFactory.newParameter("operator_type", opType));
         scriptParameters.getParams().put(ParameterFactory.newParameter("data_type_clip_mode", clipMode));
+        if(adOpString == null && mathAlgo != null && mathAlgo.getAdvFunction() != null && mathAlgo.getAdvFunction().length() > 0) {
+        	adOpString = mathAlgo.getAdvFunction();
+        }
         scriptParameters.getParams().put(ParameterFactory.newParameter("advanced_op_string", adOpString));
     }
 
