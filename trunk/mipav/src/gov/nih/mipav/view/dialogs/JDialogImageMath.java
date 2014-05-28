@@ -685,7 +685,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
         scriptParameters.getParams().put(ParameterFactory.newParameter("real_value", realValue));
         scriptParameters.getParams().put(ParameterFactory.newParameter("imaginary_value", imaginaryValue));
         scriptParameters.getParams().put(ParameterFactory.newParameter("blue_value", blueValue));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("operator_type", opType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("operator_type", opType.getLegacyNum()));
         scriptParameters.getParams().put(ParameterFactory.newParameter("data_type_clip_mode", clipMode));
     }
 
