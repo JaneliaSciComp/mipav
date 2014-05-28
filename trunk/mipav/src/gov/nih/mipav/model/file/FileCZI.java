@@ -250,6 +250,8 @@ public class FileCZI extends FileBase {
         int subBlockValues = 1;
         byte byteBuffer[] = null;
         short shortBuffer[] = null;
+        boolean isColor3 = false;
+        boolean isColor2 = false;
         boolean isColor = false;
         int tagsStart;
         int tagsEnd;
@@ -442,8 +444,8 @@ public class FileCZI extends FileBase {
         int dimT = -1;
         int unitsOfMeasure[] = new int[4];
         int imageSlices = 1;
-        int zDim;
-        int tDim;
+        int zDim = -1;
+        int tDim = -1;
         
         try {
             fileInfo = new FileInfoCZI(fileName, fileDir, FileUtility.CZI); // dummy fileInfo
@@ -1600,14 +1602,25 @@ public class FileCZI extends FileBase {
             }
             
             if ((imageColorStartIndex.size() == imageDimension[0].size()) && ((imageColorStartIndex.size() % 3) == 0)) {
-            	isColor = true;
+            	isColor3 = true;
             	for (i = 0; i < imageColorStartIndex.size(); i += 3) {
             		if ((imageColorStartIndex.get(i).intValue() != 0) || (imageColorStartIndex.get(i+1).intValue() != 1) ||
             			(imageColorStartIndex.get(i+2).intValue() != 2)) {
-            			isColor = false;
+            			isColor3 = false;
             		}
             	}
             }
+            
+            if ((!isColor3) && (imageColorStartIndex.size() == imageDimension[0].size()) && ((imageColorStartIndex.size() % 2) == 0)) {
+            	isColor2 = true;
+            	for (i = 0; i < imageColorStartIndex.size(); i += 2) {
+            		if ((imageColorStartIndex.get(i).intValue() != 0) || (imageColorStartIndex.get(i+1).intValue() != 1)) {
+            			isColor2 = false;
+            		}
+            	}
+            }
+            
+            isColor = isColor2 || isColor3;
             
             if (imageZStartIndex.size() == imageDimension[0].size()) {
             	zDim = imageZStartIndex.get(imageZStartIndex.size() - 1) + 1;
@@ -1724,51 +1737,36 @@ public class FileCZI extends FileBase {
             fileInfo.setResolutions(imgResols);
             fileInfo.setUnitsOfMeasure(unitsOfMeasure);
             
-            if (isColor && ((pixelType == Gray8) || (pixelType == Gray16))) {
-                if (imageSize[0].size() > 3) {
-                	actualDimensions++;
-	            	if (firstDimension == -1) {
-	            		firstDimension = imageSize[0].size()/3;
-	            	}
-	            	else if (secondDimension == -1) {
-	            		secondDimension = imageSize[0].size()/3;
-	            	}
-	            	else if (thirdDimension == -1) {
-	            		thirdDimension = imageSize[0].size()/3;
-	            	}
-	            	else if (fourthDimension == -1) {
-	            		fourthDimension = imageSize[0].size()/3;
-	            	}
-	            	else {
-	            		fifthDimension = imageSize[0].size()/3;
-	            		Preferences.debug("Five dimensional ModelImage cannot be handled by MIPAV\n", Preferences.DEBUG_FILEIO);
-	            		raFile.close();
-	                	throw new IOException("Five dimensional ModelImage cannot be handled by MIPAV");
-	            	}	
-                }
+            if (zDim > 1) {
+            	actualDimensions++;
+            	if (firstDimension == -1) {
+            		firstDimension = zDim;
+            	}
+            	else if (secondDimension == -1) {
+            		secondDimension = zDim;
+            	}
+            	else if (thirdDimension == -1) {
+            		thirdDimension = zDim;
+            	}
+            	else if (fourthDimension == -1) {
+            	    fourthDimension = zDim;	
+            	}
             }
-            else {
-	            if (imageSize[0].size() > 1) {
-	            	actualDimensions++;
-	            	if (firstDimension == -1) {
-	            		firstDimension = imageSize[0].size();
-	            	}
-	            	else if (secondDimension == -1) {
-	            		secondDimension = imageSize[0].size();
-	            	}
-	            	else if (thirdDimension == -1) {
-	            		thirdDimension = imageSize[0].size();
-	            	}
-	            	else if (fourthDimension == -1) {
-	            		fourthDimension = imageSize[0].size();
-	            	}
-	            	else {
-	            		fifthDimension = imageSize[0].size();
-	            		Preferences.debug("Five dimensional ModelImage cannot be handled by MIPAV\n", Preferences.DEBUG_FILEIO);
-	            		raFile.close();
-	                	throw new IOException("Five dimensional ModelImage cannot be handled by MIPAV");
-	            	}
-	            }
+            
+            if (tDim > 1) {
+            	actualDimensions++;
+            	if (firstDimension == -1) {
+            		firstDimension = tDim;
+            	}
+            	else if (secondDimension == -1) {
+            		secondDimension = tDim;
+            	}
+            	else if (thirdDimension == -1) {
+            		thirdDimension = tDim;
+            	}
+            	else if (fourthDimension == -1) {
+            	    fourthDimension = tDim;	
+            	}
             }
             
             if (actualDimensions == 1) {
@@ -1828,37 +1826,63 @@ public class FileCZI extends FileBase {
             		Preferences.debug("bytes sought from file = " + subBlockValues + "\n", Preferences.DEBUG_FILEIO);
 	            	bytesRead = raFile.read(byteBuffer);
 	            	Preferences.debug("bytes read from file = " + bytesRead + "\n", Preferences.DEBUG_FILEIO);
-            		if ((i % 3) == 0) {
-            			// Blue channel
-            			image.importRGBData(3, totalValuesRead, byteBuffer, false);
-            		}
-            		else if ((i % 3) == 1) {
-            			// Green channel
-            			image.importRGBData(2, totalValuesRead, byteBuffer, false);
-            		}
-            		else {
-            			// Red channel
-            			image.importRGBData(1, totalValuesRead, byteBuffer, false);
-            			totalValuesRead += 4 * subBlockValues;
-            		}
+	            	if (isColor3) {
+	            		if ((i % 3) == 0) {
+	            			// Blue channel
+	            			image.importRGBData(3, totalValuesRead, byteBuffer, false);
+	            		}
+	            		else if ((i % 3) == 1) {
+	            			// Green channel
+	            			image.importRGBData(2, totalValuesRead, byteBuffer, false);
+	            		}
+	            		else {
+	            			// Red channel
+	            			image.importRGBData(1, totalValuesRead, byteBuffer, false);
+	            			totalValuesRead += 4 * subBlockValues;
+	            		}
+	            	} // if (isColor3)
+	            	else { // isColor2
+	            	    if ((i % 2) == 0) {
+	            	    	// Blue channel
+	            			image.importRGBData(3, totalValuesRead, byteBuffer, false);	
+	            	    }
+	            	    else {
+	            	    	// Green channel
+	            			image.importRGBData(2, totalValuesRead, byteBuffer, false);	
+	            			totalValuesRead += 4 * subBlockValues;
+	            	    }
+	            	} // else isColor2
             	} // else if ((pixelType == Gray8) && (dataType == ModelStorageBase.ARGB))
             	else if ((pixelType == Gray16) && (dataType == ModelStorageBase.ARGB_USHORT)) {
             		for (j = 0; j < subBlockValues; j++) {
             			shortBuffer[j] = readShort(endianess);
-            		}	
-            		if ((i % 3) == 0) {
-            			// Blue channel
-            			image.importRGBData(3, totalValuesRead, shortBuffer, false);
             		}
-            		else if ((i % 3) == 1) {
-            			// Green channel
-            			image.importRGBData(2, totalValuesRead, shortBuffer, false);
-            		}
-            		else {
-            			// Red channel
-            			image.importRGBData(1, totalValuesRead, shortBuffer, false);
-            			totalValuesRead += 4 * subBlockValues;
-            		}
+            		if (isColor3) {
+	            		if ((i % 3) == 0) {
+	            			// Blue channel
+	            			image.importRGBData(3, totalValuesRead, shortBuffer, false);
+	            		}
+	            		else if ((i % 3) == 1) {
+	            			// Green channel
+	            			image.importRGBData(2, totalValuesRead, shortBuffer, false);
+	            		}
+	            		else {
+	            			// Red channel
+	            			image.importRGBData(1, totalValuesRead, shortBuffer, false);
+	            			totalValuesRead += 4 * subBlockValues;
+	            		}
+            		} // if (isColor3)
+            		else { // isColor2
+            		    if ((i % 2) == 0) {
+            		    	// Blue channel
+	            			image.importRGBData(3, totalValuesRead, shortBuffer, false);	
+            		    }
+            		    else {
+            		    	// Green channel
+	            			image.importRGBData(2, totalValuesRead, shortBuffer, false);
+	            			totalValuesRead += 4 * subBlockValues;
+            		    }
+            		} // else isColor2
             	} // else if ((pixelType == Gray16) && (dataType == ModelStorageBase.ARGB_USHORT))
             } // for (i = 0; i < imageDataLocation.size(); i++)
             raFile.close();
