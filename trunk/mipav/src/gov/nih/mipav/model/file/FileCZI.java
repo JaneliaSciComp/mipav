@@ -442,6 +442,64 @@ public class FileCZI extends FileBase {
         int sizeTEnd;
         String sizeT;
         int dimT = -1;
+        int sizeHStart;
+        int sizeHEnd;
+        String sizeH;
+        int dimH = -1;
+        int sizeRStart;
+        int sizeREnd;
+        String sizeR;
+        int dimR = -1;
+        int sizeSStart;
+        int sizeSEnd;
+        String sizeS;
+        int dimS = -1;
+        int sizeIStart;
+        int sizeIEnd;
+        String sizeI;
+        int dimI = -1;
+        int sizeMStart;
+        int sizeMEnd;
+        String sizeM;
+        int dimM = -1;
+        int sizeBStart;
+        int sizeBEnd;
+        String sizeB;
+        int dimB = -1;
+        int sizeVStart;
+        int sizeVEnd;
+        String sizeV;
+        int dimV = -1;
+        int pixelTypeStart;
+        int pixelTypeEnd;
+        String pixelTypeString;
+        int componentBitCountStart;
+        int componentBitCountEnd;
+        String componentBitCount;
+        int originalScanDataStart;
+        int originalScanDataEnd;
+        String originalScanData;
+        boolean originalScan;
+        int dimensionsStart;
+        int dimensionsEnd;
+        String dimensions;
+        int channelsStart;
+        int channelsEnd;
+        String channels;
+        int channelStart;
+        int channelEnd;
+        String channel;
+        int channelIDStart;
+        int channelIDEnd;
+        int channelsFound = -1;
+        String channelID[] = new String[]{null, null, null, null};
+        boolean firstChannelFind;
+        int channelNameStart = -1;
+        int channelNameEnd = -1;
+        String channelName[] = new String[]{null, null, null, null};
+        int acquisitionModeStart;
+        int acquisitionModeEnd;
+        String acquisitionMode[] = new String[]{null, null, null, null};
         int unitsOfMeasure[] = new int[4];
         int imageSlices = 1;
         int zDim = -1;
@@ -1174,6 +1232,183 @@ public class FileCZI extends FileBase {
                             	dimT = Integer.valueOf(sizeT).intValue();
                             	Preferences.debug("dimT from xmlData = " + dimT + "\n", Preferences.DEBUG_FILEIO);
                             } // if ((sizeTStart >= 0) && (sizeTEnd > sizeTStart))
+                            sizeHStart = imageString.indexOf("<SizeH>");
+                            sizeHEnd = imageString.indexOf("</SizeH>");
+                            if ((sizeHStart >= 0) && (sizeHEnd > sizeHStart)) {
+                            	sizeH = imageString.substring(sizeHStart, sizeHEnd);
+                            	sizeHStart = sizeH.indexOf(">");
+                            	sizeH = sizeH.substring(sizeHStart+1);
+                            	dimH = Integer.valueOf(sizeH).intValue();
+                            	Preferences.debug("Number of phases = " + dimH + "\n", Preferences.DEBUG_FILEIO);
+                            	fileInfo.setDimH(dimH);
+                            } // if ((sizeHStart >= 0) && (sizeHEnd > sizeHStart))
+                            sizeRStart = imageString.indexOf("<SizeR>");
+                            sizeREnd = imageString.indexOf("</SizeR>");
+                            if ((sizeRStart >= 0) && (sizeREnd > sizeRStart)) {
+                            	sizeR = imageString.substring(sizeRStart, sizeREnd);
+                            	sizeRStart = sizeR.indexOf(">");
+                            	sizeR = sizeR.substring(sizeRStart+1);
+                            	dimR = Integer.valueOf(sizeR).intValue();
+                            	Preferences.debug("Number of rotation angles (indices) = " + dimR + "\n", Preferences.DEBUG_FILEIO);
+                            	fileInfo.setDimR(dimR);
+                            } // if ((sizeRStart >= 0) && (sizeREnd > sizeRStart))
+                            sizeSStart = imageString.indexOf("<SizeS>");
+                            sizeSEnd = imageString.indexOf("</SizeS>");
+                            if ((sizeSStart >= 0) && (sizeSEnd > sizeSStart)) {
+                            	sizeS = imageString.substring(sizeSStart, sizeSEnd);
+                            	sizeSStart = sizeS.indexOf(">");
+                            	sizeS = sizeS.substring(sizeSStart+1);
+                            	dimS = Integer.valueOf(sizeS).intValue();
+                            	Preferences.debug("Number of scenes = " + dimS + "\n", Preferences.DEBUG_FILEIO);
+                            	fileInfo.setDimS(dimS);
+                            } // if ((sizeSStart >= 0) && (sizeSEnd > sizeSStart))
+                            sizeIStart = imageString.indexOf("<SizeI>");
+                            sizeIEnd = imageString.indexOf("</SizeI>");
+                            if ((sizeIStart >= 0) && (sizeIEnd > sizeIStart)) {
+                            	sizeI = imageString.substring(sizeIStart, sizeIEnd);
+                            	sizeIStart = sizeI.indexOf(">");
+                            	sizeI = sizeI.substring(sizeIStart+1);
+                            	dimI = Integer.valueOf(sizeI).intValue();
+                            	Preferences.debug("Number of illumination direction indices = " + dimI + "\n", Preferences.DEBUG_FILEIO);
+                            	fileInfo.setDimI(dimI);
+                            } // if ((sizeIStart >= 0) && (sizeIEnd > sizeIStart))
+                            sizeMStart = imageString.indexOf("<SizeM>");
+                            sizeMEnd = imageString.indexOf("</SizeM>");
+                            if ((sizeMStart >= 0) && (sizeMEnd > sizeMStart)) {
+                            	sizeM = imageString.substring(sizeMStart, sizeMEnd);
+                            	sizeMStart = sizeM.indexOf(">");
+                            	sizeM = sizeM.substring(sizeMStart+1);
+                            	dimM = Integer.valueOf(sizeM).intValue();
+                            	Preferences.debug("Number of mosaic tiles (regular mosaics only) = " + dimM + 
+                            			"\n", Preferences.DEBUG_FILEIO);
+                            	fileInfo.setDimM(dimM);
+                            } // if ((sizeMStart >= 0) && (sizeMEnd > sizeMStart))
+                            sizeBStart = imageString.indexOf("<SizeB>");
+                            sizeBEnd = imageString.indexOf("</SizeB>");
+                            if ((sizeBStart >= 0) && (sizeBEnd > sizeBStart)) {
+                            	sizeB = imageString.substring(sizeBStart, sizeBEnd);
+                            	sizeBStart = sizeB.indexOf(">");
+                            	sizeB = sizeB.substring(sizeBStart+1);
+                            	dimB = Integer.valueOf(sizeB).intValue();
+                            	Preferences.debug("Number of acquisition /recording / blocks = " + dimB + 
+                            			"\n", Preferences.DEBUG_FILEIO);
+                            	fileInfo.setDimB(dimB);
+                            } // if ((sizeBStart >= 0) && (sizeBEnd > sizeBStart))
+                            sizeVStart = imageString.indexOf("<SizeV>");
+                            sizeVEnd = imageString.indexOf("</SizeV>");
+                            if ((sizeVStart >= 0) && (sizeVEnd > sizeVStart)) {
+                            	sizeV = imageString.substring(sizeVStart, sizeVEnd);
+                            	sizeVStart = sizeV.indexOf(">");
+                            	sizeV = sizeV.substring(sizeVStart+1);
+                            	dimV = Integer.valueOf(sizeV).intValue();
+                            	Preferences.debug("Number of views in a multi-view image = " + dimV + 
+                            			"\n", Preferences.DEBUG_FILEIO);
+                            	fileInfo.setDimV(dimV);
+                            } // if ((sizeVStart >= 0) && (sizeVEnd > sizeVStart))
+                            pixelTypeStart = imageString.indexOf("<PixelType>");
+                            pixelTypeEnd = imageString.indexOf("</PixelType>");
+                            if ((pixelTypeStart >= 0) && (pixelTypeEnd > pixelTypeStart)) {
+                                pixelTypeString = imageString.substring(pixelTypeStart, pixelTypeEnd);	
+                                pixelTypeStart = pixelTypeString.indexOf(">");
+                                pixelTypeString = pixelTypeString.substring(pixelTypeStart+1);
+                                Preferences.debug("Pixel type = " + pixelTypeString + "\n", Preferences.DEBUG_FILEIO);
+                            } // if ((pixelTypeStart >= 0) && (pixelTypeEnd > pixelTypeStart)) 
+                            componentBitCountStart = imageString.indexOf("<ComponentBitCount>");
+                            componentBitCountEnd = imageString.indexOf("</ComponentBitCount>");
+                            if ((componentBitCountStart >= 0) && (componentBitCountEnd > componentBitCountStart)) {
+	                            componentBitCount = imageString.substring(componentBitCountStart, componentBitCountEnd);
+	                            componentBitCountStart = componentBitCount.indexOf(">");
+	                            componentBitCount = componentBitCount.substring(componentBitCountStart+1);
+	                            Preferences.debug("Component bit count for the entire image = " + componentBitCount + "\n",
+	                            		Preferences.DEBUG_FILEIO);
+                            } // if ((componentBitCountStart >= 0) && (componentBitCountEnd > componentBitCountStart))
+                            originalScanDataStart = imageString.indexOf("<OriginalScanData>");
+                            originalScanDataEnd = imageString.indexOf("</OriginalScanData>");
+                            if ((originalScanDataStart >= 0) && (originalScanDataEnd > originalScanDataStart)) {
+                                originalScanData = imageString.substring(originalScanDataStart, originalScanDataEnd);
+                                originalScanDataStart = originalScanData.indexOf(">");
+                                originalScanData = originalScanData.substring(originalScanDataStart+1);
+                                originalScan = Boolean.valueOf(originalScanData).booleanValue();
+                                if (originalScan) {
+                                	Preferences.debug("The image is the output of a scanning process and has not been modified\n",
+                                			Preferences.DEBUG_FILEIO);
+                                }
+                                else {
+                                	Preferences.debug("The image is not the original data of a scanning process\n",
+                                			Preferences.DEBUG_FILEIO);
+                                }
+                                fileInfo.setOriginalScanData(originalScanData);
+                            } // if ((originalScanDataStart >= 0) && (originalScanDataEnd > originalScanDataStart))
+                            dimensionsStart = imageString.indexOf("<Dimensions>");
+                            dimensionsEnd = imageString.indexOf("</Dimensions>");
+                            if ((dimensionsStart >= 0) && (dimensionsEnd > dimensionsStart)) {
+                                dimensions = imageString.substring(dimensionsStart, dimensionsEnd);
+                                dimensionsStart = dimensions.indexOf(">");
+                                dimensions = dimensions.substring(dimensionsStart+1);
+                                channelsStart = dimensions.indexOf("<Channels>");
+                                channelsEnd = dimensions.indexOf("</Channels>");
+                                if ((channelsStart >= 0) && (channelsEnd > channelsStart)) {
+                                    channels = dimensions.substring(channelsStart, channelsEnd);
+                                    firstChannelFind = true;
+                                    channelsStart = channels.indexOf(">");
+                                    channels = channels.substring(channelsStart+1);
+                                    channelStart = channels.indexOf("<Channel Id=\"Channel:");
+                                    channelEnd = channels.indexOf("</Channel>");
+                                    if (channelStart == -1) {
+                                    	channelStart = channels.indexOf("Channel Id=\"");
+                                    	firstChannelFind = false;
+                                    }
+                                    while ((channelStart >= 0) && (channelEnd > channelStart)) {
+                                    	channelsFound++;
+                                        channel = channels.substring(channelStart, channelEnd);
+                                        if (firstChannelFind) {
+                                            channelIDStart = channel.indexOf(":");
+                                            channelIDEnd = channel.indexOf("\">");
+                                        }
+                                        else {
+                                        	channelIDStart = channel.indexOf("\"");
+                                        	channelIDEnd = channel.indexOf("\"", channelStart+1);
+                                        	channelNameStart = channel.indexOf("Name=\"");
+                                        	channelNameStart = channel.indexOf("\"", channelNameStart+1);
+                                        	channelNameEnd = channel.indexOf("\"", channelNameStart+1);
+                                        }
+                                        if ((channelIDStart >= 0) && (channelIDEnd > channelIDStart)) {
+                                            channelID[channelsFound] = channel.substring(channelIDStart+1, channelIDEnd);
+                                            Preferences.debug("Channel ID = " + channelID[channelsFound] + "\n", Preferences.DEBUG_FILEIO);
+                                        } // if ((channelIDStart >= 0) && (channelIDEnd > channelIDStart))
+                                        if ((channelNameStart >= 0) && (channelNameEnd > channelNameStart)) {
+                                            channelName[channelsFound] = channel.substring(channelNameStart+1, channelNameEnd);
+                                            Preferences.debug("Channel name = " + channelName[channelsFound] + "\n", 
+                                            		Preferences.DEBUG_FILEIO);
+                                        } // if ((channelNameStart >= 0) && (channelNameEnd > channelNameStart))
+                                        acquisitionModeStart = channel.indexOf("<AcquisitionMode>");
+                                        acquisitionModeEnd = channel.indexOf("</AcquisitionMode>");
+                                        if ((acquisitionModeStart >= 0) && (acquisitionModeEnd > acquisitionModeStart)) {
+                                            acquisitionMode[channelsFound] = channel.substring(acquisitionModeStart+1, acquisitionModeEnd);
+                                            acquisitionModeStart = acquisitionMode[channelsFound].indexOf(">");
+                                            acquisitionMode[channelsFound] = 
+                                            		acquisitionMode[channelsFound].substring(acquisitionModeStart+1);
+                                            Preferences.debug("Acquisition mode = " + acquisitionMode[channelsFound] + "\n",
+                                            		Preferences.DEBUG_FILEIO);
+                                        } // if ((acquisitionModeStart >= 0) && (acquisitionModeEnd > acquisitionModeStart))
+                                        channels = channels.substring(channelEnd + 10);
+                                        if (channels == null) {
+                                        	break;
+                                        }
+                                        if (firstChannelFind) {
+                                            channelStart = channels.indexOf("<Channel Id=\"Channel:");
+                                        }
+                                        else {
+                                        	channelStart = channels.indexOf("Channel Id=\"");	
+                                        }
+                                        channelEnd = channels.indexOf("</Channel>");
+                                    } // while ((channelStart >= 0) && (channelEnd > channelStart))
+                                    fileInfo.setChannelsFound(channelsFound+1);
+                                    fileInfo.setChannelID(channelID);
+                                    fileInfo.setChannelName(channelName);
+                                    fileInfo.setAcquisitionMode(acquisitionMode);
+                                } // if ((channelsStart >= 0) && (channelsEnd > channelsStart))
+                            } // if ((dimensionsStart >= 0) && (dimensionsEnd > dimensionsStart))
                         } // if ((imageStart >= 0) && (imageEnd > imageStart))
                     } // if ((informationStart >= 0) && (informationEnd > informationStart))
                     Preferences.debug("XML data: \n", Preferences.DEBUG_FILEIO);
