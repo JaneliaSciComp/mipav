@@ -500,6 +500,41 @@ public class FileCZI extends FileBase {
         int acquisitionModeStart;
         int acquisitionModeEnd;
         String acquisitionMode[] = new String[]{null, null, null, null};
+        int illuminationTypeStart;
+        int illuminationTypeEnd;
+        String illuminationType[] = new String[]{null, null, null, null};
+        int contrastMethodStart;
+        int contrastMethodEnd;
+        String contrastMethod[] = new String[]{null, null, null, null};
+        int illuminationWavelengthStart;
+        int illuminationWavelengthEnd;
+        String illuminationWavelength[] = new String[]{null, null, null, null};
+        int detectionWavelengthStart;
+        int detectionWavelengthEnd;
+        int rangesStart;
+        int rangesEnd;
+        String detectionWavelength[] = new String[]{null, null, null, null};
+        int excitationWavelengthStart;
+        int excitationWavelengthEnd;
+        String excitationWavelength[] = new String[]{null, null, null, null};
+        int emissionWavelengthStart;
+        int emissionWavelengthEnd;
+        String emissionWavelength[] = new String[]{null, null, null, null};
+        int dyeIDStart;
+        int dyeIDEnd;
+        String dyeID[] = new String[]{null, null, null, null};
+        int dyeDatabaseIDStart;
+        int dyeDatabaseIDEnd;
+        String dyeDatabaseID[] = new String[]{null, null, null, null};
+        int pinholeSizeStart;
+        int pinholeSizeEnd;
+        String pinholeSize[] = new String[]{null, null, null, null};
+        int pinholeSizeAiryStart;
+        int pinholeSizeAiryEnd;
+        String pinholeSizeAiry[] = new String[]{null, null, null, null};
+        int pinholeGeometryStart;
+        int pinholeGeometryEnd;
+        String pinholeGeometry[] = new String[]{null, null, null, null};
         int unitsOfMeasure[] = new int[4];
         int imageSlices = 1;
         int zDim = -1;
@@ -1384,13 +1419,107 @@ public class FileCZI extends FileBase {
                                         acquisitionModeStart = channel.indexOf("<AcquisitionMode>");
                                         acquisitionModeEnd = channel.indexOf("</AcquisitionMode>");
                                         if ((acquisitionModeStart >= 0) && (acquisitionModeEnd > acquisitionModeStart)) {
-                                            acquisitionMode[channelsFound] = channel.substring(acquisitionModeStart+1, acquisitionModeEnd);
+                                            acquisitionMode[channelsFound] = channel.substring(acquisitionModeStart, acquisitionModeEnd);
                                             acquisitionModeStart = acquisitionMode[channelsFound].indexOf(">");
                                             acquisitionMode[channelsFound] = 
                                             		acquisitionMode[channelsFound].substring(acquisitionModeStart+1);
                                             Preferences.debug("Acquisition mode = " + acquisitionMode[channelsFound] + "\n",
                                             		Preferences.DEBUG_FILEIO);
                                         } // if ((acquisitionModeStart >= 0) && (acquisitionModeEnd > acquisitionModeStart))
+                                        illuminationTypeStart = channel.indexOf("<IlluminationType>");
+                                        illuminationTypeEnd = channel.indexOf("</IlluminationType>");
+                                        if ((illuminationTypeStart >= 0) && (illuminationTypeEnd > illuminationTypeStart)) {
+                                            illuminationType[channelsFound] = 
+                                            		channel.substring(illuminationTypeStart, illuminationTypeEnd);
+                                            illuminationTypeStart = illuminationType[channelsFound].indexOf(">");
+                                            illuminationType[channelsFound] = 
+                                            		illuminationType[channelsFound].substring(illuminationTypeStart + 1);
+                                            Preferences.debug("Illumination type = " + illuminationType[channelsFound] + "\n",
+                                            		Preferences.DEBUG_FILEIO);
+                                        } // if ((illuminationTypeStart >= 0) && (illuminationTypeEnd > illuminationTypeStart))
+                                        contrastMethodStart = channel.indexOf("<ContrastMethod>");
+                                        contrastMethodEnd = channel.indexOf("</ContrastMethod>");
+                                        if ((contrastMethodStart >= 0) && (contrastMethodEnd > contrastMethodStart)) {
+                                            contrastMethod[channelsFound] =
+                                            		channel.substring(contrastMethodStart, contrastMethodEnd);
+                                            contrastMethodStart = contrastMethod[channelsFound].indexOf(">");
+                                            contrastMethod[channelsFound] = 
+                                            		contrastMethod[channelsFound].substring(contrastMethodStart + 1);
+                                            Preferences.debug("Contrast method = " + contrastMethod[channelsFound] + "\n",
+                                            		Preferences.DEBUG_FILEIO);
+                                        } // if ((contrastMethodStart >= 0) && (contrastMethodEnd > contrastMethodStart))
+                                        illuminationWavelengthStart = channel.indexOf("<IlluminationWavelength>");
+                                        illuminationWavelengthEnd = channel.indexOf("</IlluminationWavelength>");
+                                        if ((illuminationWavelengthStart >= 0) && 
+                                        		(illuminationWavelengthEnd > illuminationWavelengthStart)) {
+                                            illuminationWavelength[channelsFound] =
+                                            		channel.substring(illuminationWavelengthStart, illuminationWavelengthEnd);
+                                            illuminationWavelengthStart = illuminationWavelength[channelsFound].indexOf(">");
+                                            illuminationWavelength[channelsFound] = 
+                                            		illuminationWavelength[channelsFound].substring(illuminationWavelengthStart+1);
+                                            Preferences.debug("Illumination wavelength = " + illuminationWavelength[channelsFound] +
+                                            		"\n", Preferences.DEBUG_FILEIO);		
+                                        } // if ((illuminationWavelengthStart >= 0) && 
+                                        detectionWavelengthStart = channel.indexOf("<DetectionWavelength>");
+                                        detectionWavelengthEnd = channel.indexOf("</DetectionWavelength>");
+                                        if ((detectionWavelengthStart >= 0) && 
+                                        		(detectionWavelengthEnd > detectionWavelengthStart)) {
+                                            detectionWavelength[channelsFound] =
+                                            		channel.substring(detectionWavelengthStart, detectionWavelengthEnd);
+                                            detectionWavelengthStart = detectionWavelength[channelsFound].indexOf(">");
+                                            detectionWavelength[channelsFound] = 
+                                            		detectionWavelength[channelsFound].substring(detectionWavelengthStart+1);
+                                            rangesStart = detectionWavelength[channelsFound].indexOf("<Ranges>");
+                                            rangesEnd = detectionWavelength[channelsFound].indexOf("</Ranges>");
+                                            if ((rangesStart >= 0) && (rangesEnd > rangesStart)) {
+                                            	rangesStart = detectionWavelength[channelsFound].indexOf(">");
+                                            	detectionWavelength[channelsFound] =
+                                            			detectionWavelength[channelsFound].substring(rangesStart+1,rangesEnd);
+                                            }
+                                            Preferences.debug("Detection wavelength = " + detectionWavelength[channelsFound] +
+                                            		"\n", Preferences.DEBUG_FILEIO);		
+                                        } // if ((detectionWavelengthStart >= 0) && 
+                                        excitationWavelengthStart = channel.indexOf("<ExcitationWavelength>");
+                                        excitationWavelengthEnd = channel.indexOf("</ExcitationWavelength>");
+                                        if ((excitationWavelengthStart >= 0) && 
+                                        		(excitationWavelengthEnd > excitationWavelengthStart)) {
+                                            excitationWavelength[channelsFound] =
+                                            		channel.substring(excitationWavelengthStart, excitationWavelengthEnd);
+                                            excitationWavelengthStart = excitationWavelength[channelsFound].indexOf(">");
+                                            excitationWavelength[channelsFound] = 
+                                            		excitationWavelength[channelsFound].substring(excitationWavelengthStart+1);
+                                            Preferences.debug("Excitation wavelength in nanometers = " +
+                                            		excitationWavelength[channelsFound] + "\n", Preferences.DEBUG_FILEIO);		
+                                        } // if ((excitationWavelengthStart >= 0) && 
+                                        emissionWavelengthStart = channel.indexOf("<EmissionWavelength>");
+                                        emissionWavelengthEnd = channel.indexOf("</EmissionWavelength>");
+                                        if ((emissionWavelengthStart >= 0) && 
+                                        		(emissionWavelengthEnd > emissionWavelengthStart)) {
+                                            emissionWavelength[channelsFound] =
+                                            		channel.substring(emissionWavelengthStart, emissionWavelengthEnd);
+                                            emissionWavelengthStart = emissionWavelength[channelsFound].indexOf(">");
+                                            emissionWavelength[channelsFound] = 
+                                            		emissionWavelength[channelsFound].substring(emissionWavelengthStart+1);
+                                            Preferences.debug("Emission wavelength in nanometers = " + 
+                                            		emissionWavelength[channelsFound] + "\n", Preferences.DEBUG_FILEIO);		
+                                        } // if ((emissionWavelengthStart >= 0) && 
+                                        dyeIDStart = channel.indexOf("<DyeId>");
+                                        dyeIDEnd = channel.indexOf("</DyeId>");
+                                        if ((dyeIDStart >= 0) && (dyeIDEnd > dyeIDStart)) {
+	                                        dyeID[channelsFound] = channel.substring(dyeIDStart, dyeIDEnd);
+	                                        dyeIDStart = dyeID[channelsFound].indexOf(">");
+	                                        dyeID[channelsFound] = dyeID[channelsFound].substring(dyeIDStart+1);
+	                                        Preferences.debug("Dye ID = " + dyeID[channelsFound] + "\n", Preferences.DEBUG_FILEIO);
+                                        } // if ((dyeIDStart >= 0) && (dyeIDEnd > dyeIDStart))
+                                        dyeDatabaseIDStart = channel.indexOf("<DyeDatabaseId>");
+                                        dyeDatabaseIDEnd = channel.indexOf("</DyeDatabaseId>");
+                                        if ((dyeDatabaseIDStart >= 0) && (dyeDatabaseIDEnd > dyeDatabaseIDStart)) {
+	                                        dyeDatabaseID[channelsFound] = channel.substring(dyeDatabaseIDStart, dyeDatabaseIDEnd);
+	                                        dyeDatabaseIDStart = dyeDatabaseID[channelsFound].indexOf(">");
+	                                        dyeDatabaseID[channelsFound] = dyeDatabaseID[channelsFound].substring(dyeDatabaseIDStart+1);
+	                                        Preferences.debug("Dye database ID = " + dyeDatabaseID[channelsFound] + "\n",
+	                                        		Preferences.DEBUG_FILEIO);
+                                        } // if ((dyeDatabaseIDStart >= 0) && (dyeDatabaseIDEnd > dyeDatabaseIDStart))
                                         channels = channels.substring(channelEnd + 10);
                                         if (channels == null) {
                                         	break;
@@ -1407,6 +1536,14 @@ public class FileCZI extends FileBase {
                                     fileInfo.setChannelID(channelID);
                                     fileInfo.setChannelName(channelName);
                                     fileInfo.setAcquisitionMode(acquisitionMode);
+                                    fileInfo.setIlluminationType(illuminationType);
+                                    fileInfo.setContrastMethod(contrastMethod);
+                                    fileInfo.setIlluminationWavelength(illuminationWavelength);
+                                    fileInfo.setDetectionWavelength(detectionWavelength);
+                                    fileInfo.setExcitationWavelength(excitationWavelength);
+                                    fileInfo.setEmissionWavelength(emissionWavelength);
+                                    fileInfo.setDyeID(dyeID);
+                                    fileInfo.setDyeDatabaseID(dyeDatabaseID);
                                 } // if ((channelsStart >= 0) && (channelsEnd > channelsStart))
                             } // if ((dimensionsStart >= 0) && (dimensionsEnd > dimensionsStart))
                         } // if ((imageStart >= 0) && (imageEnd > imageStart))
@@ -1865,6 +2002,10 @@ public class FileCZI extends FileBase {
             	tDim = imageTStartIndex.get(imageTStartIndex.size() - 1) + 1;
             }
             
+            for (i = 0; i < imageZStartIndex.size(); i++) {
+            	Preferences.debug("Z = " + imageZStartIndex.get(i) + " T = " + imageTStartIndex.get(i) + "\n", Preferences.DEBUG_FILEIO);
+            }
+            
             if (pixelType == Gray8) {
             	if (!isColor) {
                     dataType = ModelStorageBase.UBYTE;
@@ -1968,6 +2109,7 @@ public class FileCZI extends FileBase {
             	}
             	subBlockValues *= imageSize[tIndex].get(0);
             }
+            Preferences.debug("subBlockValues = " + subBlockValues + "\n", Preferences.DEBUG_FILEIO);
             fileInfo.setOrigin(origin);
             fileInfo.setResolutions(imgResols);
             fileInfo.setUnitsOfMeasure(unitsOfMeasure);
@@ -2041,6 +2183,7 @@ public class FileCZI extends FileBase {
             	shortBuffer = new short[subBlockValues];
             }
             
+            Preferences.debug("imageDataLocation.size() = " + imageDataLocation.size() + "\n", Preferences.DEBUG_FILEIO);
             for (i = 0; i < imageDataLocation.size(); i++) {
             	raFile.seek(imageDataLocation.get(i));
             	if (dataType == ModelStorageBase.UBYTE) {
@@ -2054,6 +2197,8 @@ public class FileCZI extends FileBase {
             		for (j = 0; j < subBlockValues; j++) {
             			shortBuffer[j] = readShort(endianess);
             		}
+            		Preferences.debug("i = " + i + " totalValuesRead before importData = " + totalValuesRead +
+            				"\n", Preferences.DEBUG_FILEIO);
             		image.importData(totalValuesRead, shortBuffer, false);
             		totalValuesRead +=subBlockValues;
             	} // else if (dataType == ModelStorageBase.USHORT)
