@@ -61,6 +61,17 @@ public class FileInfoCZI extends FileInfoBase {
 	private String channelID[] = null;
 	private String channelName[] = null;
 	private String acquisitionMode[] = null;
+	private String illuminationType[] = null;
+	private String contrastMethod[] = null;
+	private String illuminationWavelength[] = null;
+	private String detectionWavelength[] = null;
+	private String excitationWavelength[] = null;
+	private String emissionWavelength[] = null;
+	private String dyeID[] = null;
+	private String dyeDatabaseID[] = null;
+	private String pinholeSize[] = null;
+	private String pinholeSizeAiry[] = null;
+	private String pinholeGeometry[] = null;
 		
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -266,6 +277,50 @@ public class FileInfoCZI extends FileInfoBase {
             
             if ((acquisitionMode != null) && (acquisitionMode[i] != null)) {
             	dialog.append("Acquisition mode = " + acquisitionMode[i] + "\n");
+            }
+            
+            if ((illuminationType != null) && (illuminationType[i] != null)) {
+            	dialog.append("Illumination type = " + illuminationType[i] + "\n");
+            }
+            
+            if ((contrastMethod != null) && (contrastMethod[i] != null)) {
+            	dialog.append("Contrast method = " + contrastMethod[i] + "\n");
+            }
+            
+            if ((illuminationWavelength != null) && (illuminationWavelength[i] != null)) {
+            	dialog.append("Illumination wavelength = " + illuminationWavelength[i] + "\n");
+            }
+            
+            if ((detectionWavelength != null) && (detectionWavelength[i] != null)) {
+            	dialog.append("Detection wavelength = " + detectionWavelength[i] + "\n");
+            }
+            
+            if ((excitationWavelength != null) && (excitationWavelength[i] != null)) {
+            	dialog.append("Excitation wavelength in nanometers = " + excitationWavelength[i] + "\n");
+            }
+            
+            if ((emissionWavelength != null) && (emissionWavelength[i] != null)) {
+            	dialog.append("Emission wavelength in nanometers = " + emissionWavelength[i] + "\n");
+            }
+            
+            if ((dyeID != null) && (dyeID[i] != null)) {
+            	dialog.append("Dye ID = " + dyeID[i] + "\n");
+            }
+            
+            if ((dyeDatabaseID != null) && (dyeDatabaseID[i] != null)) {
+            	dialog.append("Dye database ID = " + dyeDatabaseID[i] + "\n");
+            }
+            
+            if ((pinholeSize != null) && (pinholeSize[i] != null)) {
+                dialog.append("Pinhole size in micrometers = " + pinholeSize[i] + "\n");	
+            }
+            
+            if ((pinholeSizeAiry != null) && (pinholeSizeAiry[i] != null)) {
+                dialog.append("Pinhole size in airy disc units = " + pinholeSizeAiry[i] + "\n");	
+            }
+            
+            if ((pinholeGeometry != null) && (pinholeGeometry[i] != null)) {
+            	dialog.append("Pinhole geometry = " + pinholeGeometry[i] + "\n");
             }
             dialog.append("\n");
         } // for (i = 0; i < channelsFound; i++)
@@ -613,5 +668,93 @@ public class FileInfoCZI extends FileInfoBase {
      */
     public void setAcquisitionMode(String acquisitionMode[]) {
     	this.acquisitionMode = acquisitionMode;
+    }
+    
+    /**
+     * 
+     * @param illuminationType
+     */
+    public void setIlluminationType(String illuminationType[]) {
+    	this.illuminationType = illuminationType;
+    }
+    
+    /**
+     * 
+     * @param contrastMethod
+     */
+    public void setContrastMethod(String contrastMethod[]) {
+    	this.contrastMethod = contrastMethod;
+    }
+    
+    /**
+     * 
+     * @param illuminationWavelength
+     */
+    public void setIlluminationWavelength(String illuminationWavelength[]) {
+    	this.illuminationWavelength = illuminationWavelength;
+    }
+    
+    /**
+     * 
+     * @param detectionWavelength
+     */
+    public void setDetectionWavelength(String detectionWavelength[]) {
+    	this.detectionWavelength = detectionWavelength;
+    }
+    
+    /**
+     * 
+     * @param excitationWavelength
+     */
+    public void setExcitationWavelength(String excitationWavelength[]) {
+    	this.excitationWavelength = excitationWavelength;
+    }
+    
+    /**
+     * 
+     * @param emissionWavelength
+     */
+    public void setEmissionWavelength(String emissionWavelength[]) {
+    	this.emissionWavelength = emissionWavelength;
+    }
+    
+    /**
+     * 
+     * @param dyeID
+     */
+    public void setDyeID(String dyeID[]) {
+    	this.dyeID = dyeID;
+    }
+    
+    /**
+     * 
+     * @param dyeDatabaseID
+     */
+    public void setDyeDatabaseID(String dyeDatabaseID[]) {
+    	this.dyeDatabaseID = dyeDatabaseID;
+    }
+    
+    /**
+     * 
+     * @param pinholeSize
+     */
+    public void setPinholeSize(String pinholeSize[]) {
+    	this.pinholeSize = pinholeSize;
+    }
+    
+    /**
+     * 
+     * @param pinholeSizeAiry
+     */
+    public void setPinholeSizeAiry(String pinholeSizeAiry[]) {
+    	this.pinholeSizeAiry = pinholeSizeAiry;
+    }
+    
+    /**
+     * 
+     * @param pinholeGeometry
+     */
+    public void setPinholeGeometry(String pinholeGeometry[]) {
+    	this.pinholeGeometry = pinholeGeometry;
     }
 }
