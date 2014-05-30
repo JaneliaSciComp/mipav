@@ -249,6 +249,7 @@ public class FileCZI extends FileBase {
         int totalValuesRead = 0;
         int subBlockValues = 1;
         byte byteBuffer[] = null;
+        byte byteBuffer2[] = null;
         short shortBuffer[] = null;
         boolean isColor3 = false;
         boolean isColor2 = false;
@@ -535,10 +536,20 @@ public class FileCZI extends FileBase {
         int pinholeGeometryStart;
         int pinholeGeometryEnd;
         String pinholeGeometry[] = new String[]{null, null, null, null};
+        int displaySettingStart;
+        int displaySettingEnd;
+        String displaySetting;
+        int colorStart;
+        int colorEnd;
+        String color;
         int unitsOfMeasure[] = new int[4];
         int imageSlices = 1;
         int zDim = -1;
         int tDim = -1;
+        // Default color channels are blue, green, read
+        int channelColor[] = new int[]{3,2,1,0};
+        boolean rapidChangeColor = false;
+        boolean slowChangeColor = false;
         
         try {
             fileInfo = new FileInfoCZI(fileName, fileDir, FileUtility.CZI); // dummy fileInfo
@@ -663,6 +674,8 @@ public class FileCZI extends FileBase {
                     attachmentSize = readInt(endianess);
                     // Size of the (binary) attachments. NOT USED CURRENTLY
                     Preferences.debug("Currently unused size of binary attachments = " + attachmentSize + "\n", Preferences.DEBUG_FILEIO);
+                    // Skip spare 248 bytes
+                    raFile.seek(position+256L);
                     xmlData = getString(xmlSize);
                     scalingStart = xmlData.indexOf("<Scaling>");
                     scalingEnd = xmlData.indexOf("</Scaling>");
@@ -1393,6 +1406,7 @@ public class FileCZI extends FileBase {
                                     	channelStart = channels.indexOf("Channel Id=\"");
                                     	firstChannelFind = false;
                                     }
+                                    channelsFound = -1;
                                     while ((channelStart >= 0) && (channelEnd > channelStart)) {
                                     	channelsFound++;
                                         channel = channels.substring(channelStart, channelEnd);
@@ -1520,6 +1534,35 @@ public class FileCZI extends FileBase {
 	                                        Preferences.debug("Dye database ID = " + dyeDatabaseID[channelsFound] + "\n",
 	                                        		Preferences.DEBUG_FILEIO);
                                         } // if ((dyeDatabaseIDStart >= 0) && (dyeDatabaseIDEnd > dyeDatabaseIDStart))
+                                        pinholeSizeStart = channel.indexOf("<PinholeSize>");
+                                        pinholeSizeEnd = channel.indexOf("</PinholeSize>");
+                                        if ((pinholeSizeStart >= 0) && (pinholeSizeEnd > pinholeSizeStart)) {
+                                            pinholeSize[channelsFound] = channel.substring(pinholeSizeStart, pinholeSizeEnd);
+                                            pinholeSizeStart = pinholeSize[channelsFound].indexOf(">");
+                                            pinholeSize[channelsFound] = pinholeSize[channelsFound].substring(pinholeSizeStart+1);
+                                            Preferences.debug("Pinhole size in micrometers = " + pinholeSize[channelsFound] + "\n",
+                                            		Preferences.DEBUG_FILEIO);
+                                        } // if ((pinholeSizeStart >= 0) && (pinholeSizeEnd > pinholeSizeStart))
+                                        pinholeSizeAiryStart = channel.indexOf("<PinholeSizeAiry>");
+                                        pinholeSizeAiryEnd = channel.indexOf("</PinholeSizeAiry>");
+                                        if ((pinholeSizeAiryStart >= 0) && (pinholeSizeAiryEnd > pinholeSizeAiryStart)) {
+                                            pinholeSizeAiry[channelsFound] = channel.substring(pinholeSizeAiryStart, pinholeSizeAiryEnd);
+                                            pinholeSizeAiryStart = pinholeSizeAiry[channelsFound].indexOf(">");
+                                            pinholeSizeAiry[channelsFound] = 
+                                            		pinholeSizeAiry[channelsFound].substring(pinholeSizeAiryStart+1);
+                                            Preferences.debug("Pinhole size in airy disc units = " + pinholeSizeAiry[channelsFound] + "\n",
+                                            		Preferences.DEBUG_FILEIO);
+                                        } // if ((pinholeSizeAiryStart >= 0) && (pinholeSizeAiryEnd > pinholeSizeAiryStart)) 
+                                        pinholeGeometryStart = channel.indexOf("<PinholeGeometry>");
+                                        pinholeGeometryEnd = channel.indexOf("</PinholeGeometry>");
+                                        if ((pinholeGeometryStart >= 0) && (pinholeGeometryEnd > pinholeGeometryStart)) {
+                                            pinholeGeometry[channelsFound] = channel.substring(pinholeGeometryStart, pinholeGeometryEnd);
+                                            pinholeGeometryStart = pinholeGeometry[channelsFound].indexOf(">");
+                                            pinholeGeometry[channelsFound] = 
+                                            		pinholeGeometry[channelsFound].substring(pinholeGeometryStart+1);
+                                            Preferences.debug("Pinhole geometry = " + pinholeGeometry[channelsFound] + "\n",
+                                            		Preferences.DEBUG_FILEIO);
+                                        } // if ((pinholeGeometryStart >= 0) && (pinholeGeometryEnd > pinholeGeometryStart)) 
                                         channels = channels.substring(channelEnd + 10);
                                         if (channels == null) {
                                         	break;
@@ -1544,10 +1587,89 @@ public class FileCZI extends FileBase {
                                     fileInfo.setEmissionWavelength(emissionWavelength);
                                     fileInfo.setDyeID(dyeID);
                                     fileInfo.setDyeDatabaseID(dyeDatabaseID);
+                                    fileInfo.setPinholeSize(pinholeSize);
+                                    fileInfo.setPinholeSizeAiry(pinholeSizeAiry);
+                                    fileInfo.setPinholeGeometry(pinholeGeometry);
                                 } // if ((channelsStart >= 0) && (channelsEnd > channelsStart))
                             } // if ((dimensionsStart >= 0) && (dimensionsEnd > dimensionsStart))
                         } // if ((imageStart >= 0) && (imageEnd > imageStart))
                     } // if ((informationStart >= 0) && (informationEnd > informationStart))
+                    displaySettingStart = xmlData.indexOf("<DisplaySetting>");
+                    displaySettingEnd = xmlData.indexOf("</DisplaySetting>");
+                    if ((displaySettingStart >= 0) && (displaySettingEnd > displaySettingStart)) {
+                        displaySetting = xmlData.substring(displaySettingStart, displaySettingEnd);
+                        displaySettingStart = displaySetting.indexOf(">");
+                        displaySetting = displaySetting.substring(displaySettingStart+1);
+                        channelsStart = displaySetting.indexOf("<Channels>");
+                        channelsEnd = displaySetting.indexOf("</Channels>");
+                        if ((channelsStart >= 0) && (channelsEnd > channelsStart)) {
+                            channels = displaySetting.substring(channelsStart, channelsEnd);
+                            firstChannelFind = true;
+                            channelsStart = channels.indexOf(">");
+                            channels = channels.substring(channelsStart+1);
+                            channelStart = channels.indexOf("<Channel Id=\"Channel:");
+                            channelEnd = channels.indexOf("</Channel>");
+                            if (channelStart == -1) {
+                            	channelStart = channels.indexOf("Channel Id=\"");
+                            	firstChannelFind = false;
+                            }
+                            channelsFound = -1;
+                            while ((channelStart >= 0) && (channelEnd > channelStart)) {
+                            	channelsFound++;
+                                channel = channels.substring(channelStart, channelEnd);
+                                if (firstChannelFind) {
+                                    channelIDStart = channel.indexOf(":");
+                                    channelIDEnd = channel.indexOf("\">");
+                                }
+                                else {
+                                	channelIDStart = channel.indexOf("\"");
+                                	channelIDEnd = channel.indexOf("\"", channelStart+1);
+                                	channelNameStart = channel.indexOf("Name=\"");
+                                	channelNameStart = channel.indexOf("\"", channelNameStart+1);
+                                	channelNameEnd = channel.indexOf("\"", channelNameStart+1);
+                                }
+                                if ((channelIDStart >= 0) && (channelIDEnd > channelIDStart)) {
+                                    channelID[channelsFound] = channel.substring(channelIDStart+1, channelIDEnd);
+                                    Preferences.debug("Channel ID = " + channelID[channelsFound] + "\n", Preferences.DEBUG_FILEIO);
+                                } // if ((channelIDStart >= 0) && (channelIDEnd > channelIDStart))
+                                if ((channelNameStart >= 0) && (channelNameEnd > channelNameStart)) {
+                                    channelName[channelsFound] = channel.substring(channelNameStart+1, channelNameEnd);
+                                    Preferences.debug("Channel name = " + channelName[channelsFound] + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
+                                } // if ((channelNameStart >= 0) && (channelNameEnd > channelNameStart))
+                                colorStart = channel.indexOf("<Color>");
+                                colorEnd = channel.indexOf("</Color>");
+                                if ((colorStart >= 0) && (colorEnd > colorStart)) {
+                                    color = channel.substring(colorStart,colorEnd);
+                                    colorStart = color.indexOf(">");
+                                    color = color.substring(colorStart+1);
+                                    if ((color.equals("#FF0000")) || (color.equals("#FFFF0000"))) {
+                                    	// Red
+                                    	channelColor[channelsFound] = 1;
+                                    }
+                                    else if ((color.equals("#00FF00")) || (color.equals("#FF00FF00"))) {
+                                    	// Green
+                                    	channelColor[channelsFound] = 2;
+                                    }
+                                    else if ((color.equals("#0000FF")) || (color.equals("#FF0000FF"))) {
+                                    	// Blue
+                                    	channelColor[channelsFound] = 3;
+                                    }
+                                } // if ((colorStart >= 0) && (colorEnd > colorStart)) 
+                                channels = channels.substring(channelEnd + 10);
+                                if (channels == null) {
+                                	break;
+                                }
+                                if (firstChannelFind) {
+                                    channelStart = channels.indexOf("<Channel Id=\"Channel:");
+                                }
+                                else {
+                                	channelStart = channels.indexOf("Channel Id=\"");	
+                                }
+                                channelEnd = channels.indexOf("</Channel>");
+                            } // while ((channelStart >= 0) && (channelEnd > channelStart))
+                        } // if ((channelsStart >= 0) && (channelsEnd > channelsStart))
+                    } // if ((displaySettingStart >= 0) && (displaySettingEnd > displaySettingStart))
                     Preferences.debug("XML data: \n", Preferences.DEBUG_FILEIO);
                     Preferences.debug(xmlData + "\n", Preferences.DEBUG_FILEIO);
                 } // else if (charID.trim().equals("ZISRAWMETADATA"))
@@ -1977,19 +2099,63 @@ public class FileCZI extends FileBase {
             
             if ((imageColorStartIndex.size() == imageDimension[0].size()) && ((imageColorStartIndex.size() % 3) == 0)) {
             	isColor3 = true;
+            	rapidChangeColor = true;
             	for (i = 0; i < imageColorStartIndex.size(); i += 3) {
             		if ((imageColorStartIndex.get(i).intValue() != 0) || (imageColorStartIndex.get(i+1).intValue() != 1) ||
             			(imageColorStartIndex.get(i+2).intValue() != 2)) {
             			isColor3 = false;
+            			rapidChangeColor = false;
             		}
             	}
             }
             
             if ((!isColor3) && (imageColorStartIndex.size() == imageDimension[0].size()) && ((imageColorStartIndex.size() % 2) == 0)) {
             	isColor2 = true;
+            	rapidChangeColor = true;
             	for (i = 0; i < imageColorStartIndex.size(); i += 2) {
             		if ((imageColorStartIndex.get(i).intValue() != 0) || (imageColorStartIndex.get(i+1).intValue() != 1)) {
             			isColor2 = false;
+            			rapidChangeColor = false;
+            		}
+            	}
+            }
+            
+            if ((imageColorStartIndex.size() == imageDimension[0].size()) && ((imageColorStartIndex.size() % 3) == 0)) {
+            	isColor3 = true;
+            	slowChangeColor = true;
+            	for (i = 0; i < imageColorStartIndex.size()/3; i++) {
+            		if (imageColorStartIndex.get(i).intValue() != 0) {
+            			isColor3 = false;
+            			slowChangeColor = false;
+            		}
+            	}
+            	for (i = imageColorStartIndex.size()/3; i < 2 * imageColorStartIndex.size()/3; i++) {
+            		if (imageColorStartIndex.get(i).intValue() != 1) {
+            			isColor3 = false;
+            			slowChangeColor = false;
+            		}
+            	}
+            	for (i = 2 * imageColorStartIndex.size()/3; i < imageColorStartIndex.size(); i++) {
+            		if (imageColorStartIndex.get(i).intValue() != 2) {
+            			isColor3 = false;
+            			slowChangeColor = false;
+            		}
+            	}
+            }
+            
+            if ((!isColor3) && (imageColorStartIndex.size() == imageDimension[0].size()) && ((imageColorStartIndex.size() % 2) == 0)) {
+            	isColor2 = true;
+            	slowChangeColor = true;
+            	for (i = 0; i < imageColorStartIndex.size()/2; i++) {
+            		if (imageColorStartIndex.get(i).intValue() != 0) {
+            			isColor2 = false;
+            			slowChangeColor = false;
+            		}
+            	}
+            	for (i = imageColorStartIndex.size()/2; i < imageColorStartIndex.size(); i++) {
+            		if (imageColorStartIndex.get(i).intValue() != 1) {
+            			isColor2 = false;
+            			slowChangeColor = false;
             		}
             	}
             }
@@ -2186,6 +2352,10 @@ public class FileCZI extends FileBase {
             else if ((pixelType == Gray16) && (dataType == ModelStorageBase.ARGB_USHORT)) {
             	shortBuffer = new short[subBlockValues];
             }
+            else if (pixelType == Bgr24) {
+            	byteBuffer = new byte[3 * subBlockValues];
+            	byteBuffer2 = new byte[4 * subBlockValues];
+            }
             
             Preferences.debug("imageDataLocation.size() = " + imageDataLocation.size() + "\n", Preferences.DEBUG_FILEIO);
             for (i = 0; i < imageDataLocation.size(); i++) {
@@ -2210,64 +2380,135 @@ public class FileCZI extends FileBase {
             		Preferences.debug("bytes sought from file = " + subBlockValues + "\n", Preferences.DEBUG_FILEIO);
 	            	bytesRead = raFile.read(byteBuffer);
 	            	Preferences.debug("bytes read from file = " + bytesRead + "\n", Preferences.DEBUG_FILEIO);
-	            	if (isColor3) {
-	            		if ((i % 3) == 0) {
-	            			// Blue channel
-	            			image.importRGBData(3, totalValuesRead, byteBuffer, false);
-	            		}
-	            		else if ((i % 3) == 1) {
-	            			// Green channel
-	            			image.importRGBData(2, totalValuesRead, byteBuffer, false);
-	            		}
-	            		else {
-	            			// Red channel
-	            			image.importRGBData(1, totalValuesRead, byteBuffer, false);
-	            			totalValuesRead += 4 * subBlockValues;
-	            		}
-	            	} // if (isColor3)
-	            	else { // isColor2
-	            	    if ((i % 2) == 0) {
-	            	    	// Blue channel
-	            			image.importRGBData(3, totalValuesRead, byteBuffer, false);	
-	            	    }
-	            	    else {
-	            	    	// Green channel
-	            			image.importRGBData(2, totalValuesRead, byteBuffer, false);	
-	            			totalValuesRead += 4 * subBlockValues;
-	            	    }
-	            	} // else isColor2
+	            	if (rapidChangeColor) {
+		            	if (isColor3) {
+		            		if ((i % 3) == 0) {
+		            			image.importRGBData(channelColor[0], totalValuesRead, byteBuffer, false);
+		            		}
+		            		else if ((i % 3) == 1) {
+		            			image.importRGBData(channelColor[1], totalValuesRead, byteBuffer, false);
+		            		}
+		            		else {
+		            			image.importRGBData(channelColor[2], totalValuesRead, byteBuffer, false);
+		            			totalValuesRead += 4 * subBlockValues;
+		            		}
+		            	} // if (isColor3)
+		            	else { // isColor2
+		            	    if ((i % 2) == 0) {
+		            			image.importRGBData(channelColor[0], totalValuesRead, byteBuffer, false);	
+		            	    }
+		            	    else {
+		            			image.importRGBData(channelColor[1], totalValuesRead, byteBuffer, false);	
+		            			totalValuesRead += 4 * subBlockValues;
+		            	    }
+		            	} // else isColor2
+	            	} // if (rapidChangeColor)
+	            	else if (slowChangeColor) {
+	            	    if (isColor3) {
+	            	    	if (i < imageDataLocation.size()/3) {
+	            	    		image.importRGBData(channelColor[0], totalValuesRead, byteBuffer, false);	
+	            	    	}
+	            	    	else if (i < 2 * imageDataLocation.size()/3) {
+	            	    		image.importRGBData(channelColor[1], totalValuesRead, byteBuffer, false);	
+	            	    	}
+	            	    	else {
+	            	    		image.importRGBData(channelColor[2], totalValuesRead, byteBuffer, false);	
+	            	    	}
+	            	    	if ((i == (imageDataLocation.size()/3 - 1)) || (i == (2 *imageDataLocation.size()/3 - 1))) {
+	            	    		totalValuesRead = 0;
+	            	    	}
+	            	    	else {
+	            	    		totalValuesRead += 4 * subBlockValues;	
+	            	    	}
+	            	    } // if (isColor3)
+	            	    else { // isColor2
+	            	    	if (i < imageDataLocation.size()/2) {
+	            	    		image.importRGBData(channelColor[0], totalValuesRead, byteBuffer, false);	
+	            	    	}
+	            	    	else {
+	            	    		image.importRGBData(channelColor[1], totalValuesRead, byteBuffer, false);	
+	            	    	}
+	            	    	if (i == (imageDataLocation.size()/2 - 1)) {
+	            	    		totalValuesRead = 0;
+	            	    	}
+	            	    	else {
+	            	    		totalValuesRead += 4 * subBlockValues;	
+	            	    	}
+	            	    } // else isColor2
+	            	} // else if (slowChangeColor)
             	} // else if ((pixelType == Gray8) && (dataType == ModelStorageBase.ARGB))
             	else if ((pixelType == Gray16) && (dataType == ModelStorageBase.ARGB_USHORT)) {
             		for (j = 0; j < subBlockValues; j++) {
             			shortBuffer[j] = readShort(endianess);
             		}
-            		if (isColor3) {
-	            		if ((i % 3) == 0) {
-	            			// Blue channel
-	            			image.importRGBData(3, totalValuesRead, shortBuffer, false);
-	            		}
-	            		else if ((i % 3) == 1) {
-	            			// Green channel
-	            			image.importRGBData(2, totalValuesRead, shortBuffer, false);
-	            		}
-	            		else {
-	            			// Red channel
-	            			image.importRGBData(1, totalValuesRead, shortBuffer, false);
-	            			totalValuesRead += 4 * subBlockValues;
-	            		}
-            		} // if (isColor3)
-            		else { // isColor2
-            		    if ((i % 2) == 0) {
-            		    	// Blue channel
-	            			image.importRGBData(3, totalValuesRead, shortBuffer, false);	
-            		    }
-            		    else {
-            		    	// Green channel
-	            			image.importRGBData(2, totalValuesRead, shortBuffer, false);
-	            			totalValuesRead += 4 * subBlockValues;
-            		    }
-            		} // else isColor2
+            		if (rapidChangeColor) {
+	            		if (isColor3) {
+		            		if ((i % 3) == 0) {
+		            			image.importRGBData(channelColor[0], totalValuesRead, shortBuffer, false);
+		            		}
+		            		else if ((i % 3) == 1) {
+		            			image.importRGBData(channelColor[1], totalValuesRead, shortBuffer, false);
+		            		}
+		            		else {
+		            			image.importRGBData(channelColor[2], totalValuesRead, shortBuffer, false);
+		            			totalValuesRead += 4 * subBlockValues;
+		            		}
+	            		} // if (isColor3)
+	            		else { // isColor2
+	            		    if ((i % 2) == 0) {
+		            			image.importRGBData(channelColor[0], totalValuesRead, shortBuffer, false);	
+	            		    }
+	            		    else {
+		            			image.importRGBData(channelColor[1], totalValuesRead, shortBuffer, false);
+		            			totalValuesRead += 4 * subBlockValues;
+	            		    }
+	            		} // else isColor2
+            		} // if (rapidChangeColor)
+            		else if (slowChangeColor) {
+	            	    if (isColor3) {
+	            	    	if (i < imageDataLocation.size()/3) {
+	            	    		image.importRGBData(channelColor[0], totalValuesRead, shortBuffer, false);	
+	            	    	}
+	            	    	else if (i < 2 * imageDataLocation.size()/3) {
+	            	    		image.importRGBData(channelColor[1], totalValuesRead, shortBuffer, false);	
+	            	    	}
+	            	    	else {
+	            	    		image.importRGBData(channelColor[2], totalValuesRead, shortBuffer, false);	
+	            	    	}
+	            	    	if ((i == (imageDataLocation.size()/3 - 1)) || (i == (2 *imageDataLocation.size()/3 - 1))) {
+	            	    		totalValuesRead = 0;
+	            	    	}
+	            	    	else {
+	            	    		totalValuesRead += 4 * subBlockValues;	
+	            	    	}
+	            	    } // if (isColor3)
+	            	    else { // isColor2
+	            	    	if (i < imageDataLocation.size()/2) {
+	            	    		image.importRGBData(channelColor[0], totalValuesRead, shortBuffer, false);	
+	            	    	}
+	            	    	else {
+	            	    		image.importRGBData(channelColor[1], totalValuesRead, shortBuffer, false);	
+	            	    	}
+	            	    	if (i == (imageDataLocation.size()/2 - 1)) {
+	            	    		totalValuesRead = 0;
+	            	    	}
+	            	    	else {
+	            	    		totalValuesRead += 4 * subBlockValues;	
+	            	    	}
+	            	    } // else isColor2
+	            	} // else if (slowChangeColor)
             	} // else if ((pixelType == Gray16) && (dataType == ModelStorageBase.ARGB_USHORT))
+            	else if (pixelType == Bgr24) {
+            		Preferences.debug("bytes sought from file = " + subBlockValues + "\n", Preferences.DEBUG_FILEIO);
+	            	bytesRead = raFile.read(byteBuffer);
+	            	Preferences.debug("bytes read from file = " + bytesRead + "\n", Preferences.DEBUG_FILEIO);
+	            	for (j = 0; j < subBlockValues; j++) {
+	            	    byteBuffer2[4*j] = (byte)255;
+	            	    byteBuffer2[4*j+1] = byteBuffer[3*j+2];
+	            	    byteBuffer2[4*j+2] = byteBuffer[3*j+1];
+	            	    byteBuffer2[4*j+3] = byteBuffer[3*j];
+	            	}
+            	} // else if (pixelType == Bgr24)
             } // for (i = 0; i < imageDataLocation.size(); i++)
             raFile.close();
 
