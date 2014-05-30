@@ -1771,7 +1771,9 @@ public class FileCZI extends FileBase {
                     //Preferences.debug("SubBlock Segment metadata:\n", Preferences.DEBUG_FILEIO);
                     //Preferences.debug(metaData + "\n");
                     location = raFile.getFilePointer();
-                    imageDataLocation.add(location);
+                    if (location + dataSize < raFile.length()) {
+                        imageDataLocation.add(location);
+                    }
                     // Skip attachments for now
                 } // else if (charID.trim().equals("ZISRAWSUBBLOCK"))
                 else if (charID.trim().equals("ZISRAWATTACH")) {
@@ -1994,16 +1996,18 @@ public class FileCZI extends FileBase {
             
             isColor = isColor2 || isColor3;
             
+            // This handles images where the last t slice is missing the last z slices.
+            zDim = 1;
             if (imageZStartIndex.size() == imageDimension[0].size()) {
-            	zDim = imageZStartIndex.get(imageZStartIndex.size() - 1) + 1;
+            	for (i = 0; i < imageZStartIndex.size(); i++) {
+            		if ((imageZStartIndex.get(i) + 1) > zDim) {
+            			zDim = imageZStartIndex.get(i) + 1;
+            		}
+            	}
             }
             
             if (imageTStartIndex.size() == imageDimension[0].size()) {
             	tDim = imageTStartIndex.get(imageTStartIndex.size() - 1) + 1;
-            }
-            
-            for (i = 0; i < imageZStartIndex.size(); i++) {
-            	Preferences.debug("Z = " + imageZStartIndex.get(i) + " T = " + imageTStartIndex.get(i) + "\n", Preferences.DEBUG_FILEIO);
             }
             
             if (pixelType == Gray8) {
@@ -2197,8 +2201,8 @@ public class FileCZI extends FileBase {
             		for (j = 0; j < subBlockValues; j++) {
             			shortBuffer[j] = readShort(endianess);
             		}
-            		Preferences.debug("i = " + i + " totalValuesRead before importData = " + totalValuesRead +
-            				"\n", Preferences.DEBUG_FILEIO);
+            		//Preferences.debug("i = " + i + " totalValuesRead before importData = " + totalValuesRead +
+            				//"\n", Preferences.DEBUG_FILEIO);
             		image.importData(totalValuesRead, shortBuffer, false);
             		totalValuesRead +=subBlockValues;
             	} // else if (dataType == ModelStorageBase.USHORT)
