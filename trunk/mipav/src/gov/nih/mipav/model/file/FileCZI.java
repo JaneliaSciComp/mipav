@@ -225,11 +225,14 @@ public class FileCZI extends FileBase {
         final Vector<String> imageDimension[] = new Vector[7];
         final Vector<Integer> imageSize[] = new Vector[7];
         final Vector<Float> imageStartCoordinate[] = new Vector[7];
+        final Vector<Integer> imageStartIndex[] = new Vector[7];
         final Vector<Long> imageDataSize = new Vector<Long>();
         final Vector<Long> imageDataLocation = new Vector<Long>();
         Vector<Integer> imageColorStartIndex = new Vector<Integer>();
+        Vector<Integer> imageMStartIndex = new Vector<Integer>();
         Vector<Integer> imageZStartIndex = new Vector<Integer>();
         Vector<Integer> imageTStartIndex = new Vector<Integer>();
+        Vector<Integer> imageHStartIndex = new Vector<Integer>();
         long subBlockStart;
         long location;
         int j;
@@ -238,6 +241,7 @@ public class FileCZI extends FileBase {
         int yIndex = -1;
         int zIndex = -1;
         int tIndex = -1;
+        int hIndex = -1;
         int actualDimensions = 0;
         int firstDimension = -1;
         int secondDimension = -1;
@@ -251,6 +255,7 @@ public class FileCZI extends FileBase {
         byte byteBuffer[] = null;
         byte byteBuffer2[] = null;
         short shortBuffer[] = null;
+        boolean isColor4 = false;
         boolean isColor3 = false;
         boolean isColor2 = false;
         boolean isColor = false;
@@ -546,10 +551,14 @@ public class FileCZI extends FileBase {
         int imageSlices = 1;
         int zDim = -1;
         int tDim = -1;
+        int hDim = -1;
         // Default color channels are blue, green, read
         int channelColor[] = new int[]{3,2,1,0};
         boolean rapidChangeColor = false;
         boolean slowChangeColor = false;
+        boolean phaseChangeColor = false;
+        int h;
+        int c;
         
         try {
             fileInfo = new FileInfoCZI(fileName, fileDir, FileUtility.CZI); // dummy fileInfo
@@ -1607,6 +1616,7 @@ public class FileCZI extends FileBase {
                             firstChannelFind = true;
                             channelsStart = channels.indexOf(">");
                             channels = channels.substring(channelsStart+1);
+                            //Preferences.debug("channels = " + channels + "\n", Preferences.DEBUG_FILEIO);
                             channelStart = channels.indexOf("<Channel Id=\"Channel:");
                             channelEnd = channels.indexOf("</Channel>");
                             if (channelStart == -1) {
@@ -1617,6 +1627,7 @@ public class FileCZI extends FileBase {
                             while ((channelStart >= 0) && (channelEnd > channelStart)) {
                             	channelsFound++;
                                 channel = channels.substring(channelStart, channelEnd);
+                                //Preferences.debug("channel = " + channel + "\n", Preferences.DEBUG_FILEIO);
                                 if (firstChannelFind) {
                                     channelIDStart = channel.indexOf(":");
                                     channelIDEnd = channel.indexOf("\">");
@@ -1643,6 +1654,7 @@ public class FileCZI extends FileBase {
                                     color = channel.substring(colorStart,colorEnd);
                                     colorStart = color.indexOf(">");
                                     color = color.substring(colorStart+1);
+                                    //Preferences.debug("color = " + color + "\n", Preferences.DEBUG_FILEIO);
                                     if ((color.equals("#FF0000")) || (color.equals("#FFFF0000"))) {
                                     	// Red
                                     	channelColor[channelsFound] = 1;
@@ -1654,6 +1666,10 @@ public class FileCZI extends FileBase {
                                     else if ((color.equals("#0000FF")) || (color.equals("#FF0000FF"))) {
                                     	// Blue
                                     	channelColor[channelsFound] = 3;
+                                    }
+                                    else if ((color.equals("#FFFF00")) || (color.equals("#FFFFFF00"))) {
+                                    	// Red and green - just do red
+                                    	channelColor[channelsFound] = 1;
                                     }
                                 } // if ((colorStart >= 0) && (colorEnd > colorStart)) 
                                 channels = channels.substring(channelEnd + 10);
@@ -1789,6 +1805,12 @@ public class FileCZI extends FileBase {
                         else if ((dimension[i].equals("T")) && (size[i] == 1)) {
                         	imageTStartIndex.add(start[i]);
                         }
+                        else if ((dimension[i].equals("H")) && (size[i] == 1)) {
+                        	imageHStartIndex.add(start[i]);
+                        }
+                        else if ((dimension[i].equals("M")) && (size[i] == 1)) {
+                        	imageMStartIndex.add(start[i]);
+                        }
                         startCoordinate[i] = readFloat(endianess);
                         Preferences.debug("startCoordinate[" + i + "] = " + startCoordinate[i] + "\n", Preferences.DEBUG_FILEIO);
                         if (size[i] > 1) {
@@ -1808,6 +1830,12 @@ public class FileCZI extends FileBase {
                             else if (dimension[i].equals("T")) {
                             	tIndex = index;
                             }
+                            else if (dimension[i].equals("T")) {
+                            	tIndex = index;
+                            }
+                            else if (dimension[i].equals("H")) {
+                            	hIndex = index;
+                            }
                             if (imageSize[index] == null) {
                                 imageSize[index] = new Vector<Integer>();
                             }
@@ -1816,6 +1844,10 @@ public class FileCZI extends FileBase {
                                 imageStartCoordinate[index] = new Vector<Float>();
                             }
                             imageStartCoordinate[index].add(startCoordinate[i]);
+                            if (imageStartIndex[index] == null) {
+                            	imageStartIndex[index] = new Vector<Integer>();
+                            }
+                            imageStartIndex[index].add(start[i]);
                             index++;
                         }
                         storedSize[i] = readInt(endianess);
@@ -2097,7 +2129,19 @@ public class FileCZI extends FileBase {
                 }
             }
             
-            if ((imageColorStartIndex.size() == imageDimension[0].size()) && ((imageColorStartIndex.size() % 3) == 0)) {
+            if ((imageColorStartIndex.size() == imageDimension[0].size()) && ((imageColorStartIndex.size() % 4) == 0)) {
+            	isColor4 = true;
+            	rapidChangeColor = true;
+            	for (i = 0; i < imageColorStartIndex.size(); i += 4) {
+            		if ((imageColorStartIndex.get(i).intValue() != 0) || (imageColorStartIndex.get(i+1).intValue() != 1) ||
+            			(imageColorStartIndex.get(i+2).intValue() != 2) || (imageColorStartIndex.get(i+1).intValue() != 3)) {
+            			isColor4 = false;
+            			rapidChangeColor = false;
+            		}
+            	}
+            }
+            
+            if ((!isColor4) && (imageColorStartIndex.size() == imageDimension[0].size()) && ((imageColorStartIndex.size() % 3) == 0)) {
             	isColor3 = true;
             	rapidChangeColor = true;
             	for (i = 0; i < imageColorStartIndex.size(); i += 3) {
@@ -2109,7 +2153,8 @@ public class FileCZI extends FileBase {
             	}
             }
             
-            if ((!isColor3) && (imageColorStartIndex.size() == imageDimension[0].size()) && ((imageColorStartIndex.size() % 2) == 0)) {
+            if ((!isColor4) && (!isColor3) && (imageColorStartIndex.size() == imageDimension[0].size()) && 
+            		((imageColorStartIndex.size() % 2) == 0)) {
             	isColor2 = true;
             	rapidChangeColor = true;
             	for (i = 0; i < imageColorStartIndex.size(); i += 2) {
@@ -2120,7 +2165,38 @@ public class FileCZI extends FileBase {
             	}
             }
             
-            if ((imageColorStartIndex.size() == imageDimension[0].size()) && ((imageColorStartIndex.size() % 3) == 0)) {
+            if ((!rapidChangeColor) && (imageColorStartIndex.size() == imageDimension[0].size()) &&
+            		((imageColorStartIndex.size() % 4) == 0)) {
+            	isColor4 = true;
+            	slowChangeColor = true;
+            	for (i = 0; i < imageColorStartIndex.size()/4; i++) {
+            		if (imageColorStartIndex.get(i).intValue() != 0) {
+            			isColor4 = false;
+            			slowChangeColor = false;
+            		}
+            	}
+            	for (i = imageColorStartIndex.size()/4; i < 2 * imageColorStartIndex.size()/4; i++) {
+            		if (imageColorStartIndex.get(i).intValue() != 1) {
+            			isColor4 = false;
+            			slowChangeColor = false;
+            		}
+            	}
+            	for (i = 2 * imageColorStartIndex.size()/4; i < 3 * imageColorStartIndex.size()/4; i++) {
+            		if (imageColorStartIndex.get(i).intValue() != 2) {
+            			isColor4 = false;
+            			slowChangeColor = false;
+            		}
+            	}
+            	for (i = 3 * imageColorStartIndex.size()/4; i < imageColorStartIndex.size(); i++) {
+            		if (imageColorStartIndex.get(i).intValue() != 3) {
+            			isColor4 = false;
+            			slowChangeColor = false;
+            		}
+            	}
+            }
+            
+            if ((!isColor4) && (!rapidChangeColor) && (imageColorStartIndex.size() == imageDimension[0].size()) &&
+            		((imageColorStartIndex.size() % 3) == 0)) {
             	isColor3 = true;
             	slowChangeColor = true;
             	for (i = 0; i < imageColorStartIndex.size()/3; i++) {
@@ -2143,7 +2219,8 @@ public class FileCZI extends FileBase {
             	}
             }
             
-            if ((!isColor3) && (imageColorStartIndex.size() == imageDimension[0].size()) && ((imageColorStartIndex.size() % 2) == 0)) {
+            if ((!rapidChangeColor) && (!isColor4) && (!isColor3) && (imageColorStartIndex.size() == imageDimension[0].size()) &&
+            		((imageColorStartIndex.size() % 2) == 0)) {
             	isColor2 = true;
             	slowChangeColor = true;
             	for (i = 0; i < imageColorStartIndex.size()/2; i++) {
@@ -2161,6 +2238,40 @@ public class FileCZI extends FileBase {
             }
             
             isColor = isColor2 || isColor3;
+            
+            // This handles images where the last t slice is missing the last h slices.
+            hDim = 1;
+            if (imageHStartIndex.size() == imageDimension[0].size()) {
+            	for (i = 0; i < imageHStartIndex.size(); i++) {
+            		if ((imageHStartIndex.get(i) + 1) > hDim) {
+            			hDim = imageHStartIndex.get(i) + 1;
+            		}
+            	}
+            }
+            
+            if ((!rapidChangeColor) && (!slowChangeColor) && (!isColor4) && (!isColor3) &&
+            		(imageColorStartIndex.size() == imageDimension[0].size()) &&
+            		((imageColorStartIndex.size() % 2) == 0) && (hDim > 1)) {
+            	isColor2 = true;
+            	phaseChangeColor = true;
+            	for (i = 0, h = 0, c = 0; i < imageColorStartIndex.size(); i++) {
+            		if (imageColorStartIndex.get(i).intValue() != c) {
+            			isColor2 = false;
+            			slowChangeColor = false;
+            		}
+            		if (h < hDim-1) {
+            			h++;
+            		}
+            		else if ( c == 0) {
+            			h = 0;
+            			c = 1;
+            		}
+            		else {
+            			h = 0;
+            			c = 0;
+            		}
+            	}
+            }
             
             // This handles images where the last t slice is missing the last z slices.
             zDim = 1;
@@ -2243,6 +2354,22 @@ public class FileCZI extends FileBase {
             	}
             	subBlockValues *= imageSize[yIndex].get(0);
             }
+            if (hIndex >= 0) {
+            	actualDimensions++;
+            	if (firstDimension == -1) {
+            		firstDimension = imageSize[hIndex].get(0);
+            		origin[0] = imageStartCoordinate[hIndex].get(0);
+            	}
+            	else if (secondDimension == -1) {
+            	    secondDimension	= imageSize[hIndex].get(0);
+            	    origin[1] = imageStartCoordinate[hIndex].get(0);
+            	}
+            	else {
+            		thirdDimension = imageSize[hIndex].get(0);
+            		origin[2] = imageStartCoordinate[hIndex].get(0);
+            	}
+            	subBlockValues *= imageSize[hIndex].get(0);
+            }
             if (zIndex >= 0) {
             	actualDimensions++;
             	if (firstDimension == -1) {
@@ -2253,9 +2380,13 @@ public class FileCZI extends FileBase {
             	    secondDimension	= imageSize[zIndex].get(0);
             	    origin[1] = imageStartCoordinate[zIndex].get(0);
             	}
-            	else {
+            	else if (thirdDimension == -1){
             		thirdDimension = imageSize[zIndex].get(0);
             		origin[2] = imageStartCoordinate[zIndex].get(0);
+            	}
+            	else {
+            		fourthDimension = imageSize[zIndex].get(0);
+            		origin[3] = imageStartCoordinate[zIndex].get(0);	
             	}
             	subBlockValues *= imageSize[zIndex].get(0);
             }
@@ -2283,6 +2414,22 @@ public class FileCZI extends FileBase {
             fileInfo.setOrigin(origin);
             fileInfo.setResolutions(imgResols);
             fileInfo.setUnitsOfMeasure(unitsOfMeasure);
+            
+            if (hDim > 1) {
+            	actualDimensions++;
+            	if (firstDimension == -1) {
+            		firstDimension = hDim;
+            	}
+            	else if (secondDimension == -1) {
+            		secondDimension = hDim;
+            	}
+            	else if (thirdDimension == -1) {
+            		thirdDimension = hDim;
+            	}
+            	else if (fourthDimension == -1) {
+            	    fourthDimension = hDim;	
+            	}
+            }
             
             if (zDim > 1) {
             	actualDimensions++;
@@ -2314,6 +2461,22 @@ public class FileCZI extends FileBase {
             	else if (fourthDimension == -1) {
             	    fourthDimension = tDim;	
             	}
+            }
+            
+            if (isColor4) {
+            	actualDimensions++;
+            	if (firstDimension == -1) {
+            		firstDimension = 4;
+            	}
+            	else if (secondDimension == -1) {
+            		secondDimension = 4;
+            	}
+            	else if (thirdDimension == -1) {
+            		thirdDimension = 4;
+            	}
+            	else if (fourthDimension == -1) {
+            	    fourthDimension = 4;	
+            	}	
             }
             
             if (actualDimensions == 1) {
@@ -2353,8 +2516,11 @@ public class FileCZI extends FileBase {
             	shortBuffer = new short[subBlockValues];
             }
             else if (pixelType == Bgr24) {
-            	byteBuffer = new byte[3 * subBlockValues];
-            	byteBuffer2 = new byte[4 * subBlockValues];
+            	byteBuffer = new byte[subBlockValues];
+            }
+            else if (pixelType == Bgra32) {
+            	byteBuffer = new byte[4*subBlockValues];
+            	byteBuffer2 = new byte[4*subBlockValues];
             }
             
             Preferences.debug("imageDataLocation.size() = " + imageDataLocation.size() + "\n", Preferences.DEBUG_FILEIO);
@@ -2368,6 +2534,7 @@ public class FileCZI extends FileBase {
 	            	totalValuesRead += subBlockValues;
             	} // if (dataType == ModelStorageBase.UBYTE)
             	else if (dataType == ModelStorageBase.USHORT) {
+            		// Works for slowChangeColor isColor4
             		for (j = 0; j < subBlockValues; j++) {
             			shortBuffer[j] = readShort(endianess);
             		}
@@ -2376,7 +2543,7 @@ public class FileCZI extends FileBase {
             		image.importData(totalValuesRead, shortBuffer, false);
             		totalValuesRead +=subBlockValues;
             	} // else if (dataType == ModelStorageBase.USHORT)
-            	else if ((pixelType == Gray8) && (dataType == ModelStorageBase.ARGB)) {
+            	else if (((pixelType == Gray8) && (dataType == ModelStorageBase.ARGB)) || (pixelType == Bgr24)) {
             		Preferences.debug("bytes sought from file = " + subBlockValues + "\n", Preferences.DEBUG_FILEIO);
 	            	bytesRead = raFile.read(byteBuffer);
 	            	Preferences.debug("bytes read from file = " + bytesRead + "\n", Preferences.DEBUG_FILEIO);
@@ -2436,7 +2603,7 @@ public class FileCZI extends FileBase {
 	            	    	}
 	            	    } // else isColor2
 	            	} // else if (slowChangeColor)
-            	} // else if ((pixelType == Gray8) && (dataType == ModelStorageBase.ARGB))
+            	} // else if (((pixelType == Gray8) && (dataType == ModelStorageBase.ARGB)) || (pixelType == Bgr24))
             	else if ((pixelType == Gray16) && (dataType == ModelStorageBase.ARGB_USHORT)) {
             		for (j = 0; j < subBlockValues; j++) {
             			shortBuffer[j] = readShort(endianess);
@@ -2498,17 +2665,19 @@ public class FileCZI extends FileBase {
 	            	    } // else isColor2
 	            	} // else if (slowChangeColor)
             	} // else if ((pixelType == Gray16) && (dataType == ModelStorageBase.ARGB_USHORT))
-            	else if (pixelType == Bgr24) {
-            		Preferences.debug("bytes sought from file = " + subBlockValues + "\n", Preferences.DEBUG_FILEIO);
+            	else if (pixelType == Bgra32) {
+            		Preferences.debug("bytes sought from file = " + (4*subBlockValues) + "\n", Preferences.DEBUG_FILEIO);
 	            	bytesRead = raFile.read(byteBuffer);
 	            	Preferences.debug("bytes read from file = " + bytesRead + "\n", Preferences.DEBUG_FILEIO);
 	            	for (j = 0; j < subBlockValues; j++) {
-	            	    byteBuffer2[4*j] = (byte)255;
-	            	    byteBuffer2[4*j+1] = byteBuffer[3*j+2];
-	            	    byteBuffer2[4*j+2] = byteBuffer[3*j+1];
-	            	    byteBuffer2[4*j+3] = byteBuffer[3*j];
+	            		byteBuffer2[4*j] = byteBuffer[4*j+3];
+	            		byteBuffer2[4*j+1] = byteBuffer[4*j+2];
+	            		byteBuffer2[4*j+2] = byteBuffer[4*j+1];
+	            		byteBuffer2[4*j+3] = byteBuffer[4*j];
 	            	}
-            	} // else if (pixelType == Bgr24)
+	            	image.importData(totalValuesRead, byteBuffer2, false);
+	            	totalValuesRead += 4*subBlockValues;	
+            	}
             } // for (i = 0; i < imageDataLocation.size(); i++)
             raFile.close();
 
