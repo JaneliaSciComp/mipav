@@ -29,6 +29,8 @@ public class PlugInAlgorithmNeuronalOverlap extends AlgorithmBase{
 	private float greyThreshold = 4.0f;
 	
 	private float greenThreshold = 65.0f;
+	
+	private boolean removeCells;
 
 	public PlugInAlgorithmNeuronalOverlap(ModelImage dapiIm, ModelImage neunIm, int overlapPct){
 		
@@ -65,6 +67,10 @@ public class PlugInAlgorithmNeuronalOverlap extends AlgorithmBase{
 	public void setThresholds(int dapi, int neun){
 		greyThreshold = (float)dapi;
 		greenThreshold = (float)neun;
+	}
+	
+	public void setRemoveCells(boolean remove){
+		removeCells = remove;
 	}
 	
 	@Override
@@ -128,16 +134,32 @@ public class PlugInAlgorithmNeuronalOverlap extends AlgorithmBase{
         		objBuffer[i] = 1;
         }*/
         
-        for(int i=0;i<length;i++){
-        	int value = objBuffer[i];
-        	if(value == 0 || occluded[value-1]){
-        		objBuffer[i] = 0;
-        		if(dapiOriginal.isColorImage()){
-        			for(int k=1;k<4;k++){
-        				dapiBuffer[4*i+k] = 0;
-        			}
-        		} else dapiBuffer[i] = 0;
-        	}
+        //This is where the change in image occurs. removeCell flag should affect this
+        
+        if(removeCells){
+	        for(int i=0;i<length;i++){
+	        	int value = objBuffer[i];
+	        	if(value == 0 || occluded[value-1]){
+	        		objBuffer[i] = 0;
+	        		if(dapiOriginal.isColorImage()){
+	        			for(int k=1;k<4;k++){
+	        				dapiBuffer[4*i+k] = 0;
+	        			}
+	        		} else dapiBuffer[i] = 0;
+	        	}
+	        }
+        } else {
+        	 for(int i=0;i<length;i++){
+ 	        	int value = objBuffer[i];
+ 	        	if(value == 0 || !occluded[value-1]){
+ 	        		objBuffer[i] = 0;
+ 	        		if(dapiOriginal.isColorImage()){
+ 	        			for(int k=1;k<4;k++){
+ 	        				dapiBuffer[4*i+k] = 0;
+ 	        			}
+ 	        		} else dapiBuffer[i] = 0;
+ 	        	}
+ 	        }
         }
         
         destImage = new ModelImage(dapiOriginal.getType(), extents, dapiOriginal.getImageName() + "_removed");
