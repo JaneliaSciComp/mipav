@@ -3,9 +3,11 @@ import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.util.Enumeration;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
@@ -36,6 +38,8 @@ public class PlugInDialogNeuronalOverlap extends JDialogBase implements Algorith
 	private JTextField dapiThreshField;
 	
 	private JTextField neunThreshField;
+	
+	private JRadioButton removeRB;
 	
 	public PlugInDialogNeuronalOverlap(){
 		
@@ -70,7 +74,8 @@ public class PlugInDialogNeuronalOverlap extends JDialogBase implements Algorith
 		if(algorithm.isCompleted()){
 			ModelImage result = algorithm.getDestImage();
 			new ViewJFrameImage(result);
-		} else setVisible(true);
+		} 
+		setVisible(true);
 	}
 	
 	protected void callAlgorithm(){
@@ -122,6 +127,7 @@ public class PlugInDialogNeuronalOverlap extends JDialogBase implements Algorith
 		
 		PlugInAlgorithmNeuronalOverlap alg = new PlugInAlgorithmNeuronalOverlap(dapiImage, neunImage, overlapPct);
 		alg.setThresholds(dapiThresh, neunThresh);
+		alg.setRemoveCells(removeRB.isSelected());
 		alg.addListener(this);
 		if (isRunInSeparateThread()) {
 			if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
@@ -225,10 +231,27 @@ public class PlugInDialogNeuronalOverlap extends JDialogBase implements Algorith
 		neunThreshField.setFont(serif12);
 		neunThreshPanel.add(neunThreshField);
 		
+		JPanel rbPanel = new JPanel();
+		rbPanel.setForeground(Color.black);
+		
+		ButtonGroup group = new ButtonGroup();
+		
+		removeRB = new JRadioButton("Remove cells");
+		removeRB.setFont(serif12);
+		removeRB.setSelected(true);
+		group.add(removeRB);
+		rbPanel.add(removeRB);
+		
+		JRadioButton keepRB = new JRadioButton("Keep cells");
+		keepRB.setFont(serif12);;
+		group.add(keepRB);
+		rbPanel.add(keepRB);
+		
 		manage.add(neunPanel);
 		manage.addOnNextLine(overlapPanel);
 		manage.addOnNextLine(dapiThreshPanel);
 		manage.addOnNextLine(neunThreshPanel);
+		manage.addOnNextLine(rbPanel);
 		
 		getContentPane().add(manage.getPanel(), BorderLayout.CENTER);
 		
