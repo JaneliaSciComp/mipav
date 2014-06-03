@@ -658,7 +658,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 * @param prev
 	 * @return
 	 */
-	private boolean dfsOrigin(LinkElement e, LinkElement prev){
+	/*private boolean dfsOrigin2(LinkElement e, LinkElement prev){
 		if(e.pt.equals(origin))
 			return true;
 		
@@ -670,6 +670,130 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 					return true;
 			}
 		}
+		return false;
+	}*/
+	
+	/**
+	 * Depth-first search for the origin (from the split point) 
+	 * to prevent loops from throwing off the program
+	 * @param e
+	 * @param prev
+	 * @return
+	 */
+	private boolean dfsOrigin(LinkElement e, LinkElement prev){
+		
+		ArrayDeque<LinkElement> stack = new ArrayDeque<LinkElement>();
+		HashSet<LinkElement> visited = new HashSet<LinkElement>();
+		ArrayList<LinkElement> pts = e.linked;
+		visited.add(prev);
+		
+		for(int i=0;i<pts.size();i++){
+			LinkElement ele = pts.get(i);
+			if(visited.contains(ele))
+				continue;
+			if(ele.pt.equals(origin))
+				return true;
+			stack.addFirst(ele);
+			visited.add(ele);
+		}
+		
+		while(!stack.isEmpty()){
+			LinkElement ele = stack.poll();
+			pts = ele.linked;
+			for(int i=0;i<pts.size();i++){
+				LinkElement ele2 = pts.get(i);
+				if(visited.contains(ele2))
+					continue;
+				if(ele2.pt.equals(origin))
+					return true;
+				stack.addFirst(ele2);
+				visited.add(ele2);
+			}
+		}
+
+		return false;
+	}
+	
+	private boolean dfsTarget(LinkElement e, LinkElement prev, ArrayList<LinkElement> targets){
+		
+		ArrayDeque<LinkElement> stack = new ArrayDeque<LinkElement>();
+		HashSet<LinkElement> visited = new HashSet<LinkElement>();
+		ArrayList<LinkElement> pts = e.linked;
+		visited.add(prev);
+		
+		for(int i=0;i<pts.size();i++){
+			LinkElement ele = pts.get(i);
+			if(visited.contains(ele))
+				continue;
+			if(targets.contains(ele))
+				return true;
+			stack.addFirst(ele);
+			visited.add(ele);
+		}
+		
+		while(!stack.isEmpty()){
+			LinkElement ele = stack.poll();
+			pts = ele.linked;
+			for(int i=0;i<pts.size();i++){
+				LinkElement ele2 = pts.get(i);
+				if(visited.contains(ele2))
+					continue;
+				if(targets.contains(ele2))
+					return true;
+				stack.addFirst(ele2);
+				visited.add(ele2);
+			}
+		}
+
+		return false;
+	}
+	
+	/*private boolean dfsTarget(LinkElement e, LinkElement prev, ArrayList<LinkElement> targets){
+
+		ArrayDeque<LinkElement> stack = new ArrayDeque<LinkElement>();
+		
+		ArrayList<LinkElement> pts = e.linked;
+		
+		LinkElement prevEle = e;
+		
+		for(int i=0;i<pts.size();i++){
+			if(pts.get(i) == prev)
+				continue;
+			if(targets.contains(pts.get(i)))
+				return true;
+			stack.addFirst(pts.get(i));
+		}
+		
+		while(!stack.isEmpty()){
+			System.err.println("I'm still going " + stack.size());
+			LinkElement ele = stack.poll();
+			pts = ele.linked;
+			for(int i=0;i<pts.size();i++){
+				if(pts.get(i) == prevEle)
+					continue;
+				if(targets.contains(pts.get(i)))
+					return true;
+				stack.addFirst(pts.get(i));
+			}
+			prevEle = ele;
+		}
+		
+		return false;
+		
+	}*/
+	
+	private boolean isOverlapPoint(LinkElement e){
+		
+		ArrayList<LinkElement> pts = e.linked;
+		
+		for(int i=0;i<pts.size();i++){
+			LinkElement next = pts.get(i);
+			ArrayList<LinkElement> list = e.copyList();
+			list.remove(next);
+			if(dfsTarget(next, e, list))
+				return true;
+		}
+		
 		return false;
 	}
 	
@@ -2121,7 +2245,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			return;
 
 		if(addRB.isSelected()){
-			
 			if(lastActive != null){
 				lastActive = null;
 				return;
@@ -2203,6 +2326,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			}
 				
 			links.removeNode(coord);
+			
+			
 
 			lastActive = null;
 
@@ -2627,26 +2752,166 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		 * @param node
 		 */
 		private void removeNode(Point node){
-			LinkElement e1, e2;
+			LinkElement e1;
 			LinkElement eNode = get(node);
 			ArrayList<LinkElement> pts = eNode.linked;
 			int size = pts.size();
-			e1 = pts.get(0);
-			e1.removeLinkTo(eNode);
-			paths.remove(node, e1.pt);
 			
-			for(int i=1; i<size;i++){
+			//Need to make more robust
+			
+			/*for(int i=1; i<size;i++){
 				e2 = pts.get(0);
 				e2.removeLinkTo(eNode);
 				paths.remove(node, e2.pt);
 				e2.addLinkTo(e1);
 				paths.add(e1.pt, e2.pt);
 				e1 = e2;
+			}	*/
+			Comparator<LinkElement> linkComp = new Comparator<LinkElement>(){
+
+				@Override
+				public int compare(LinkElement o1, LinkElement o2) {
+					int s1 = o1.linked.size();
+					int s2 = o2.linked.size();
+					
+					if(s1 == 1 || s2 == 0)
+						return -1;
+					else if(s2 == 1 || s1 == 0 || s1 == s2)
+						return 1;
+					else if(s1 > s2)
+						return 1;
+					else if(s1 < s2) 
+						return -1;
+					else
+						return 0;
+				}
+			};
+			
+			if(size == 2 || size == 3){
+				//3 is annoying. Need to set certain priorities
+				//Should set highest priority target as 1 (current) link
+				//0 current links should be the lowest priority
+				//Link highest priority targets first
+				//Move to lower priority, try to link to highest priority
+				//Might be applicable to 4+ as well, but would require a bit of work
+				PriorityQueue<LinkElement> linkPriority = new PriorityQueue<LinkElement>(5, linkComp);
+					
+				for(int i=0;i<size;i++){
+					e1 = pts.get(0);
+					e1.removeLinkTo(eNode);
+					paths.remove(node, e1.pt);
+					linkPriority.add(e1);
+				}
+				LinkElement connectTo = linkPriority.poll();
+				while(linkPriority.peek() != null){
+					e1 = linkPriority.poll();
+					e1.addLinkTo(connectTo);
+					paths.add(e1.pt, connectTo.pt);
+				}
+			} else if (size == 4){
+
+				if(isOverlapPoint(eNode)){
+					double[][] angles = new double[4][3];
+					int[] maxAngle = new int[4];
+					Point center = eNode.pt;
+					for(int i=0;i<pts.size();i++){
+						int cnt = 0;
+						e1 = pts.get(i);
+						double angleMax = Double.MIN_VALUE;
+						for(int j=0;j<pts.size();j++){
+							if(i==j) continue;
+							Point to = pts.get(j).pt;
+							double angle = pointAngle(e1.pt, to, center);
+							angles[i][cnt] = angle;
+							if(angle > angleMax){
+								maxAngle[i] = j;
+								angleMax = angle;
+							}
+							cnt++;
+						}
+					}
+					
+					//Figure out if the differences work to create the correct pairs or not
+					boolean disjoint = true;
+					for(int i=0;i<4;i++){
+						int pointer = maxAngle[i];
+						if(i != maxAngle[pointer]){
+							disjoint = false;
+							break;
+						}
+					}
+					
+					if(!disjoint){
+						System.err.println("We have a problem");
+						double[] choices = new double[3];
+						choices[0] = Math.pow(angles[0][0] - 180, 2)
+								+ Math.pow(angles[2][2] - 180, 2);
+						choices[1] = Math.pow(angles[0][2] - 180, 2)
+								+ Math.pow(angles[1][1] - 180, 2);
+						choices[2] = Math.pow(angles[0][1] - 180, 2)
+								+ Math.pow(angles[1][2] - 180, 2);
+						
+						double maxChoice = Math.min(choices[0], Math.min(choices[1], choices[2]));
+						if(maxChoice == choices[0]){
+							maxAngle[0] = 1;
+							maxAngle[2] = 3;
+						} else if(maxChoice == choices[1]){
+							maxAngle[0] = 3;
+							maxAngle[1] = 2;
+						} else {
+							maxAngle[0] = 2;
+							maxAngle[1] = 3;
+						}
+					}
+					e1 = pts.get(0);
+					LinkElement to = pts.get(maxAngle[0]);
+					e1.addLinkTo(to);
+					paths.add(e1.pt, to.pt);
+					int next;
+					if(maxAngle[0] == 1)
+						next = 2;
+					else next = 1;
+
+					e1 = pts.get(next);
+					to = pts.get(maxAngle[next]);
+					e1.addLinkTo(to);
+					paths.add(e1.pt, to.pt);
+					
+
+				} else {
+					//Need to reconnect everything logically, or replace? Not really sure what
+					//to do with his case
+				}
 				
-			}	
+				for(int i=0;i<size;i++){
+					e1 = pts.get(0);
+					e1.removeLinkTo(eNode);
+					paths.remove(node, e1.pt);
+				}
+			} else{
+				//Size is greater than 4, not really sure what to do with this
+			}
+			
 			remove(eNode);	
 			
 			subVolume.notifyImageDisplayListeners();
+		}
+		
+		private double pointAngle(Point pt1, Point pt2, Point center){
+			
+			double angle = 0;
+			
+			Point p1 = new Point(pt1.x - center.x, pt1.y - center.y);
+			Point p2 = new Point(pt2.x - center.x, pt2.y - center.y);
+			
+			double dotProduct = (double)(p1.x*p2.x + p1.y*p2.y);
+			double mag1 = Math.sqrt(p1.x * p1.x + p1.y * p1.y);
+			double mag2 = Math.sqrt(p2.x * p2.x + p2.y * p2.y);
+			
+			angle = Math.acos(dotProduct/(mag1*mag2));
+			angle *= (180d/Math.PI);
+			
+			return angle;
 		}
 		
 	}
