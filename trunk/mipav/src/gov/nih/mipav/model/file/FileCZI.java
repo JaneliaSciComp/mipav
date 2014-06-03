@@ -230,6 +230,7 @@ public class FileCZI extends FileBase {
         final Vector<Long> imageDataLocation = new Vector<Long>();
         Vector<Integer> imageColorStartIndex = new Vector<Integer>();
         Vector<Integer> imageMStartIndex = new Vector<Integer>();
+        Vector<Integer> imageSStartIndex = new Vector<Integer>();
         Vector<Integer> imageZStartIndex = new Vector<Integer>();
         Vector<Integer> imageTStartIndex = new Vector<Integer>();
         Vector<Integer> imageHStartIndex = new Vector<Integer>();
@@ -552,13 +553,39 @@ public class FileCZI extends FileBase {
         int zDim = -1;
         int tDim = -1;
         int hDim = -1;
+        int mDim = -1;
+        int sDim = -1;
         // Default color channels are blue, green, read
         int channelColor[] = new int[]{3,2,1,0};
         boolean rapidChangeColor = false;
         boolean slowChangeColor = false;
-        boolean phaseChangeColor = false;
+        boolean phaseColor2Mosaic = false;
+        short mosaicShortBuffer[] = null;
         int h;
         int c;
+        int m;
+        int x;
+        int y;
+        int z;
+        int s;
+        int mosaicMinX = 0;
+        int mosaicMaxX;
+        int mosaicSizeX = 0;
+        int mosaicMinY = 0;
+        int mosaicMaxY;
+        int mosaicSizeY = 0;
+        int localSizeX;
+        int localSizeY;
+        int localMinX;
+        int localMinY;
+        int sceneMinX = 0;
+        int sceneMaxX;
+        int sceneSizeX = 0;
+        int sceneMinY = 0;
+        int sceneMaxY;
+        int sceneSizeY = 0;
+        boolean zScene = false;
+        short sceneShortBuffer[] = null;
         
         try {
             fileInfo = new FileInfoCZI(fileName, fileDir, FileUtility.CZI); // dummy fileInfo
@@ -1421,7 +1448,7 @@ public class FileCZI extends FileBase {
                                         channel = channels.substring(channelStart, channelEnd);
                                         if (firstChannelFind) {
                                             channelIDStart = channel.indexOf(":");
-                                            channelIDEnd = channel.indexOf("\">");
+                                            channelIDEnd = channel.indexOf("\">"); 
                                         }
                                         else {
                                         	channelIDStart = channel.indexOf("\"");
@@ -1585,8 +1612,9 @@ public class FileCZI extends FileBase {
                                         channelEnd = channels.indexOf("</Channel>");
                                     } // while ((channelStart >= 0) && (channelEnd > channelStart))
                                     fileInfo.setChannelsFound(channelsFound+1);
-                                    fileInfo.setChannelID(channelID);
-                                    fileInfo.setChannelName(channelName);
+                                    // Use clone so not overwritten by channelID and channelName in DisplaySetings
+                                    fileInfo.setChannelID(channelID.clone());
+                                    fileInfo.setChannelName(channelName.clone());
                                     fileInfo.setAcquisitionMode(acquisitionMode);
                                     fileInfo.setIlluminationType(illuminationType);
                                     fileInfo.setContrastMethod(contrastMethod);
@@ -1627,7 +1655,7 @@ public class FileCZI extends FileBase {
                             while ((channelStart >= 0) && (channelEnd > channelStart)) {
                             	channelsFound++;
                                 channel = channels.substring(channelStart, channelEnd);
-                                //Preferences.debug("channel = " + channel + "\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("In DisplaySettings channel = " + channel + "\n", Preferences.DEBUG_FILEIO);
                                 if (firstChannelFind) {
                                     channelIDStart = channel.indexOf(":");
                                     channelIDEnd = channel.indexOf("\">");
@@ -1810,6 +1838,9 @@ public class FileCZI extends FileBase {
                         }
                         else if ((dimension[i].equals("M")) && (size[i] == 1)) {
                         	imageMStartIndex.add(start[i]);
+                        }
+                        else if ((dimension[i].equals("S")) && (size[i] == 1)) {
+                        	imageSStartIndex.add(start[i]);
                         }
                         startCoordinate[i] = readFloat(endianess);
                         Preferences.debug("startCoordinate[" + i + "] = " + startCoordinate[i] + "\n", Preferences.DEBUG_FILEIO);
@@ -2129,7 +2160,38 @@ public class FileCZI extends FileBase {
                 }
             }
             
-            if ((imageColorStartIndex.size() == imageDimension[0].size()) && ((imageColorStartIndex.size() % 4) == 0)) {
+            // This handles images where the last t slice is missing the last h slices.
+            hDim = 1;
+            if (imageHStartIndex.size() == imageDimension[0].size()) {
+            	for (i = 0; i < imageHStartIndex.size(); i++) {
+            		if ((imageHStartIndex.get(i) + 1) > hDim) {
+            			hDim = imageHStartIndex.get(i) + 1;
+            		}
+            	}
+            }
+            
+            // This handles images where the last t slice is missing the last m slices.
+            mDim = 1;
+            if (imageMStartIndex.size() == imageDimension[0].size()) {
+            	for (i = 0; i < imageMStartIndex.size(); i++) {
+            		if ((imageMStartIndex.get(i) + 1) > mDim) {
+            			mDim = imageMStartIndex.get(i) + 1;
+            		}
+            	}
+            }
+            
+           // This handles images where the last t slice is missing the last s slices.
+            sDim = 1;
+            if (imageSStartIndex.size() == imageDimension[0].size()) {
+            	for (i = 0; i < imageSStartIndex.size(); i++) {
+            		if ((imageSStartIndex.get(i) + 1) > sDim) {
+            			sDim = imageSStartIndex.get(i) + 1;
+            		}
+            	}
+            }
+            
+            if ((imageColorStartIndex.size() == imageDimension[0].size()) && ((imageColorStartIndex.size() % 4) == 0) &&
+            		(mDim < 2) && (sDim < 2)) {
             	isColor4 = true;
             	rapidChangeColor = true;
             	for (i = 0; i < imageColorStartIndex.size(); i += 4) {
@@ -2141,7 +2203,8 @@ public class FileCZI extends FileBase {
             	}
             }
             
-            if ((!isColor4) && (imageColorStartIndex.size() == imageDimension[0].size()) && ((imageColorStartIndex.size() % 3) == 0)) {
+            if ((!isColor4) && (imageColorStartIndex.size() == imageDimension[0].size()) && ((imageColorStartIndex.size() % 3) == 0)
+            		&& (mDim < 2) && (sDim < 2)) {
             	isColor3 = true;
             	rapidChangeColor = true;
             	for (i = 0; i < imageColorStartIndex.size(); i += 3) {
@@ -2154,7 +2217,7 @@ public class FileCZI extends FileBase {
             }
             
             if ((!isColor4) && (!isColor3) && (imageColorStartIndex.size() == imageDimension[0].size()) && 
-            		((imageColorStartIndex.size() % 2) == 0)) {
+            		((imageColorStartIndex.size() % 2) == 0) && (mDim < 2) && (sDim < 2)) {
             	isColor2 = true;
             	rapidChangeColor = true;
             	for (i = 0; i < imageColorStartIndex.size(); i += 2) {
@@ -2166,7 +2229,7 @@ public class FileCZI extends FileBase {
             }
             
             if ((!rapidChangeColor) && (imageColorStartIndex.size() == imageDimension[0].size()) &&
-            		((imageColorStartIndex.size() % 4) == 0)) {
+            		((imageColorStartIndex.size() % 4) == 0) && (mDim < 2) && (sDim < 2)) {
             	isColor4 = true;
             	slowChangeColor = true;
             	for (i = 0; i < imageColorStartIndex.size()/4; i++) {
@@ -2196,7 +2259,7 @@ public class FileCZI extends FileBase {
             }
             
             if ((!isColor4) && (!rapidChangeColor) && (imageColorStartIndex.size() == imageDimension[0].size()) &&
-            		((imageColorStartIndex.size() % 3) == 0)) {
+            		((imageColorStartIndex.size() % 3) == 0) && (mDim < 2) && (sDim < 2)) {
             	isColor3 = true;
             	slowChangeColor = true;
             	for (i = 0; i < imageColorStartIndex.size()/3; i++) {
@@ -2220,7 +2283,7 @@ public class FileCZI extends FileBase {
             }
             
             if ((!rapidChangeColor) && (!isColor4) && (!isColor3) && (imageColorStartIndex.size() == imageDimension[0].size()) &&
-            		((imageColorStartIndex.size() % 2) == 0)) {
+            		((imageColorStartIndex.size() % 2) == 0) && (mDim < 2) && (sDim < 2)) {
             	isColor2 = true;
             	slowChangeColor = true;
             	for (i = 0; i < imageColorStartIndex.size()/2; i++) {
@@ -2237,27 +2300,20 @@ public class FileCZI extends FileBase {
             	}
             }
             
-            isColor = isColor2 || isColor3;
-            
-            // This handles images where the last t slice is missing the last h slices.
-            hDim = 1;
-            if (imageHStartIndex.size() == imageDimension[0].size()) {
-            	for (i = 0; i < imageHStartIndex.size(); i++) {
-            		if ((imageHStartIndex.get(i) + 1) > hDim) {
-            			hDim = imageHStartIndex.get(i) + 1;
-            		}
-            	}
-            }
-            
             if ((!rapidChangeColor) && (!slowChangeColor) && (!isColor4) && (!isColor3) &&
             		(imageColorStartIndex.size() == imageDimension[0].size()) &&
-            		((imageColorStartIndex.size() % 2) == 0) && (hDim > 1)) {
-            	isColor2 = true;
-            	phaseChangeColor = true;
-            	for (i = 0, h = 0, c = 0; i < imageColorStartIndex.size(); i++) {
-            		if (imageColorStartIndex.get(i).intValue() != c) {
-            			isColor2 = false;
-            			slowChangeColor = false;
+            		((imageColorStartIndex.size() % 2) == 0) && (mDim > 1)) {
+            	phaseColor2Mosaic = true;
+            	for (i = 0, h = 0, c = 0, m = 0; i < imageColorStartIndex.size(); i++) {
+            		if (imageHStartIndex.size() == imageColorStartIndex.size()) {
+	            		if ((imageHStartIndex.get(i).intValue() != h) || (imageColorStartIndex.get(i).intValue() != c) ||
+	            		    (imageMStartIndex.get(i).intValue() != m)) {
+	            			phaseColor2Mosaic = false;
+	            		}
+            		}
+            		else if ((imageColorStartIndex.get(i).intValue() != c) ||
+    	            		    (imageMStartIndex.get(i).intValue() != m)) {
+    	                phaseColor2Mosaic = false;	
             		}
             		if (h < hDim-1) {
             			h++;
@@ -2269,9 +2325,35 @@ public class FileCZI extends FileBase {
             		else {
             			h = 0;
             			c = 0;
+            			m++;
             		}
             	}
             }
+            
+            isColor = isColor2 || isColor3 || phaseColor2Mosaic;
+            
+            if (phaseColor2Mosaic) {
+                mosaicMinX = Integer.MAX_VALUE;
+                mosaicMaxX = Integer.MIN_VALUE;
+                mosaicMinY = Integer.MAX_VALUE;
+                mosaicMaxY = Integer.MIN_VALUE;
+                for (i = 0; i < imageStartIndex[xIndex].size(); i++) {
+                	if (imageStartIndex[xIndex].get(i).intValue() < mosaicMinX) {
+                		mosaicMinX = imageStartIndex[xIndex].get(i).intValue();
+                	}
+                	if ((imageStartIndex[xIndex].get(i).intValue() + imageSize[xIndex].get(i).intValue() - 1) > mosaicMaxX) {
+                		mosaicMaxX = imageStartIndex[xIndex].get(i).intValue() + imageSize[xIndex].get(i).intValue() - 1;
+                	}
+                	if (imageStartIndex[yIndex].get(i).intValue() < mosaicMinY) {
+                		mosaicMinY = imageStartIndex[yIndex].get(i).intValue();
+                	}
+                	if ((imageStartIndex[yIndex].get(i).intValue() + imageSize[yIndex].get(i).intValue() - 1) > mosaicMaxY) {
+                		mosaicMaxY = imageStartIndex[yIndex].get(i).intValue() + imageSize[yIndex].get(i).intValue() - 1;
+                	}
+                }
+                mosaicSizeX = mosaicMaxX - mosaicMinX + 1;
+                mosaicSizeY = mosaicMaxY - mosaicMinY + 1;
+            } // if (phaseColor2Mosaic)
             
             // This handles images where the last t slice is missing the last z slices.
             zDim = 1;
@@ -2286,6 +2368,48 @@ public class FileCZI extends FileBase {
             if (imageTStartIndex.size() == imageDimension[0].size()) {
             	tDim = imageTStartIndex.get(imageTStartIndex.size() - 1) + 1;
             }
+            
+            if ((!rapidChangeColor) && (!slowChangeColor) && (!isColor4) && (!isColor3) &&
+            		 (sDim > 1) && (zDim > 1)) {
+            	zScene = true;
+            	for (i = 0, z = 0, s = 0; i < imageSStartIndex.size(); i++) {
+            		if ((imageZStartIndex.get(i).intValue() != z) || (imageSStartIndex.get(i).intValue() != s)) {
+            			zScene = false;
+            		}
+            		
+            		if (z < zDim-1) {
+            			z++;
+            		}
+            		
+            		else {
+            			z = 0;
+            			s++;
+            		}
+            	}
+            }
+            
+            if (zScene) {
+                sceneMinX = Integer.MAX_VALUE;
+                sceneMaxX = Integer.MIN_VALUE;
+                sceneMinY = Integer.MAX_VALUE;
+                sceneMaxY = Integer.MIN_VALUE;
+                for (i = 0; i < imageStartIndex[xIndex].size(); i++) {
+                	if (imageStartIndex[xIndex].get(i).intValue() < sceneMinX) {
+                		sceneMinX = imageStartIndex[xIndex].get(i).intValue();
+                	}
+                	if ((imageStartIndex[xIndex].get(i).intValue() + imageSize[xIndex].get(i).intValue() - 1) > sceneMaxX) {
+                		sceneMaxX = imageStartIndex[xIndex].get(i).intValue() + imageSize[xIndex].get(i).intValue() - 1;
+                	}
+                	if (imageStartIndex[yIndex].get(i).intValue() < sceneMinY) {
+                		sceneMinY = imageStartIndex[yIndex].get(i).intValue();
+                	}
+                	if ((imageStartIndex[yIndex].get(i).intValue() + imageSize[yIndex].get(i).intValue() - 1) > sceneMaxY) {
+                		sceneMaxY = imageStartIndex[yIndex].get(i).intValue() + imageSize[yIndex].get(i).intValue() - 1;
+                	}
+                }
+                sceneSizeX = sceneMaxX - sceneMinX + 1;
+                sceneSizeY = sceneMaxY - sceneMinY + 1;
+            } // if (zScene)
             
             if (pixelType == Gray8) {
             	if (!isColor) {
@@ -2338,21 +2462,43 @@ public class FileCZI extends FileBase {
             
             if (xIndex >= 0) {
             	actualDimensions++;
-            	firstDimension = imageSize[xIndex].get(0);
-            	subBlockValues *= imageSize[xIndex].get(0);
+            	if (phaseColor2Mosaic) {
+            		firstDimension = mosaicSizeX;
+            		subBlockValues *= mosaicSizeX;
+            	}
+            	else if (zScene) {
+            		firstDimension = sceneSizeX;
+            		subBlockValues *= sceneSizeX;
+            	}
+            	else {
+            	    firstDimension = imageSize[xIndex].get(0);
+            	    subBlockValues *= imageSize[xIndex].get(0);
+            	}
             	origin[0] = imageStartCoordinate[xIndex].get(0);
             }
             if (yIndex >= 0) {
             	actualDimensions++;
-            	if (firstDimension == -1) {
-            		firstDimension = imageSize[yIndex].get(0);
-            		origin[0] = imageStartCoordinate[yIndex].get(0);
+            	if (phaseColor2Mosaic) {
+            	    secondDimension = mosaicSizeY;
+            	    origin[1] = imageStartCoordinate[yIndex].get(0);
+            	    subBlockValues *= mosaicSizeY;
+            	} // if (phaseColor2Mosaic)
+            	else if (zScene) {
+            		secondDimension = sceneSizeY;
+            		origin[1] = imageStartCoordinate[yIndex].get(0);
+            		subBlockValues *= sceneSizeY;
             	}
             	else {
-            		secondDimension = imageSize[yIndex].get(0);
-            		origin[1] = imageStartCoordinate[yIndex].get(0);
+	            	if (firstDimension == -1) {
+	            		firstDimension = imageSize[yIndex].get(0);
+	            		origin[0] = imageStartCoordinate[yIndex].get(0);
+	            	}
+	            	else {
+	            		secondDimension = imageSize[yIndex].get(0);
+	            		origin[1] = imageStartCoordinate[yIndex].get(0);
+	            	}
+	            	subBlockValues *= imageSize[yIndex].get(0);
             	}
-            	subBlockValues *= imageSize[yIndex].get(0);
             }
             if (hIndex >= 0) {
             	actualDimensions++;
@@ -2507,13 +2653,23 @@ public class FileCZI extends FileBase {
             	byteBuffer = new byte[subBlockValues];
             }
             else if (dataType == ModelStorageBase.USHORT) {
-            	shortBuffer = new short[subBlockValues];
+            	if (zScene) {
+            		sceneShortBuffer = new short[sceneSizeX * sceneSizeY];
+            	}
+            	else {
+            	    shortBuffer = new short[subBlockValues];
+            	}
             }
             else if ((pixelType == Gray8) && (dataType == ModelStorageBase.ARGB)) {
             	byteBuffer = new byte[subBlockValues];
             }
             else if ((pixelType == Gray16) && (dataType == ModelStorageBase.ARGB_USHORT)) {
-            	shortBuffer = new short[subBlockValues];
+            	if (phaseColor2Mosaic) {
+            		mosaicShortBuffer = new short[mosaicSizeX * mosaicSizeY];
+            	}
+            	else {
+            	    shortBuffer = new short[subBlockValues];
+            	}
             }
             else if (pixelType == Bgr24) {
             	byteBuffer = new byte[subBlockValues];
@@ -2524,161 +2680,213 @@ public class FileCZI extends FileBase {
             }
             
             Preferences.debug("imageDataLocation.size() = " + imageDataLocation.size() + "\n", Preferences.DEBUG_FILEIO);
-            for (i = 0; i < imageDataLocation.size(); i++) {
-            	raFile.seek(imageDataLocation.get(i));
-            	if (dataType == ModelStorageBase.UBYTE) {
-	            	Preferences.debug("bytes sought from file = " + subBlockValues + "\n", Preferences.DEBUG_FILEIO);
-	            	bytesRead = raFile.read(byteBuffer);
-	            	Preferences.debug("bytes read from file = " + bytesRead + "\n", Preferences.DEBUG_FILEIO);
-	            	image.importData(totalValuesRead, byteBuffer, false);
-	            	totalValuesRead += subBlockValues;
-            	} // if (dataType == ModelStorageBase.UBYTE)
-            	else if (dataType == ModelStorageBase.USHORT) {
-            		// Works for slowChangeColor isColor4
-            		for (j = 0; j < subBlockValues; j++) {
-            			shortBuffer[j] = readShort(endianess);
-            		}
-            		//Preferences.debug("i = " + i + " totalValuesRead before importData = " + totalValuesRead +
-            				//"\n", Preferences.DEBUG_FILEIO);
-            		image.importData(totalValuesRead, shortBuffer, false);
-            		totalValuesRead +=subBlockValues;
-            	} // else if (dataType == ModelStorageBase.USHORT)
-            	else if (((pixelType == Gray8) && (dataType == ModelStorageBase.ARGB)) || (pixelType == Bgr24)) {
-            		Preferences.debug("bytes sought from file = " + subBlockValues + "\n", Preferences.DEBUG_FILEIO);
-	            	bytesRead = raFile.read(byteBuffer);
-	            	Preferences.debug("bytes read from file = " + bytesRead + "\n", Preferences.DEBUG_FILEIO);
-	            	if (rapidChangeColor) {
-		            	if (isColor3) {
-		            		if ((i % 3) == 0) {
-		            			image.importRGBData(channelColor[0], totalValuesRead, byteBuffer, false);
-		            		}
-		            		else if ((i % 3) == 1) {
-		            			image.importRGBData(channelColor[1], totalValuesRead, byteBuffer, false);
-		            		}
-		            		else {
-		            			image.importRGBData(channelColor[2], totalValuesRead, byteBuffer, false);
-		            			totalValuesRead += 4 * subBlockValues;
-		            		}
-		            	} // if (isColor3)
-		            	else { // isColor2
-		            	    if ((i % 2) == 0) {
-		            			image.importRGBData(channelColor[0], totalValuesRead, byteBuffer, false);	
-		            	    }
-		            	    else {
-		            			image.importRGBData(channelColor[1], totalValuesRead, byteBuffer, false);	
-		            			totalValuesRead += 4 * subBlockValues;
-		            	    }
-		            	} // else isColor2
-	            	} // if (rapidChangeColor)
-	            	else if (slowChangeColor) {
-	            	    if (isColor3) {
-	            	    	if (i < imageDataLocation.size()/3) {
-	            	    		image.importRGBData(channelColor[0], totalValuesRead, byteBuffer, false);	
-	            	    	}
-	            	    	else if (i < 2 * imageDataLocation.size()/3) {
-	            	    		image.importRGBData(channelColor[1], totalValuesRead, byteBuffer, false);	
-	            	    	}
-	            	    	else {
-	            	    		image.importRGBData(channelColor[2], totalValuesRead, byteBuffer, false);	
-	            	    	}
-	            	    	if ((i == (imageDataLocation.size()/3 - 1)) || (i == (2 *imageDataLocation.size()/3 - 1))) {
-	            	    		totalValuesRead = 0;
-	            	    	}
-	            	    	else {
-	            	    		totalValuesRead += 4 * subBlockValues;	
-	            	    	}
-	            	    } // if (isColor3)
-	            	    else { // isColor2
-	            	    	if (i < imageDataLocation.size()/2) {
-	            	    		image.importRGBData(channelColor[0], totalValuesRead, byteBuffer, false);	
-	            	    	}
-	            	    	else {
-	            	    		image.importRGBData(channelColor[1], totalValuesRead, byteBuffer, false);	
-	            	    	}
-	            	    	if (i == (imageDataLocation.size()/2 - 1)) {
-	            	    		totalValuesRead = 0;
-	            	    	}
-	            	    	else {
-	            	    		totalValuesRead += 4 * subBlockValues;	
-	            	    	}
-	            	    } // else isColor2
-	            	} // else if (slowChangeColor)
-            	} // else if (((pixelType == Gray8) && (dataType == ModelStorageBase.ARGB)) || (pixelType == Bgr24))
-            	else if ((pixelType == Gray16) && (dataType == ModelStorageBase.ARGB_USHORT)) {
-            		for (j = 0; j < subBlockValues; j++) {
-            			shortBuffer[j] = readShort(endianess);
-            		}
-            		if (rapidChangeColor) {
-	            		if (isColor3) {
-		            		if ((i % 3) == 0) {
-		            			image.importRGBData(channelColor[0], totalValuesRead, shortBuffer, false);
-		            		}
-		            		else if ((i % 3) == 1) {
-		            			image.importRGBData(channelColor[1], totalValuesRead, shortBuffer, false);
-		            		}
-		            		else {
-		            			image.importRGBData(channelColor[2], totalValuesRead, shortBuffer, false);
-		            			totalValuesRead += 4 * subBlockValues;
-		            		}
-	            		} // if (isColor3)
-	            		else { // isColor2
-	            		    if ((i % 2) == 0) {
-		            			image.importRGBData(channelColor[0], totalValuesRead, shortBuffer, false);	
-	            		    }
-	            		    else {
-		            			image.importRGBData(channelColor[1], totalValuesRead, shortBuffer, false);
-		            			totalValuesRead += 4 * subBlockValues;
-	            		    }
-	            		} // else isColor2
-            		} // if (rapidChangeColor)
-            		else if (slowChangeColor) {
-	            	    if (isColor3) {
-	            	    	if (i < imageDataLocation.size()/3) {
-	            	    		image.importRGBData(channelColor[0], totalValuesRead, shortBuffer, false);	
-	            	    	}
-	            	    	else if (i < 2 * imageDataLocation.size()/3) {
-	            	    		image.importRGBData(channelColor[1], totalValuesRead, shortBuffer, false);	
-	            	    	}
-	            	    	else {
-	            	    		image.importRGBData(channelColor[2], totalValuesRead, shortBuffer, false);	
-	            	    	}
-	            	    	if ((i == (imageDataLocation.size()/3 - 1)) || (i == (2 *imageDataLocation.size()/3 - 1))) {
-	            	    		totalValuesRead = 0;
-	            	    	}
-	            	    	else {
-	            	    		totalValuesRead += 4 * subBlockValues;	
-	            	    	}
-	            	    } // if (isColor3)
-	            	    else { // isColor2
-	            	    	if (i < imageDataLocation.size()/2) {
-	            	    		image.importRGBData(channelColor[0], totalValuesRead, shortBuffer, false);	
-	            	    	}
-	            	    	else {
-	            	    		image.importRGBData(channelColor[1], totalValuesRead, shortBuffer, false);	
-	            	    	}
-	            	    	if (i == (imageDataLocation.size()/2 - 1)) {
-	            	    		totalValuesRead = 0;
-	            	    	}
-	            	    	else {
-	            	    		totalValuesRead += 4 * subBlockValues;	
-	            	    	}
-	            	    } // else isColor2
-	            	} // else if (slowChangeColor)
-            	} // else if ((pixelType == Gray16) && (dataType == ModelStorageBase.ARGB_USHORT))
-            	else if (pixelType == Bgra32) {
-            		Preferences.debug("bytes sought from file = " + (4*subBlockValues) + "\n", Preferences.DEBUG_FILEIO);
-	            	bytesRead = raFile.read(byteBuffer);
-	            	Preferences.debug("bytes read from file = " + bytesRead + "\n", Preferences.DEBUG_FILEIO);
-	            	for (j = 0; j < subBlockValues; j++) {
-	            		byteBuffer2[4*j] = byteBuffer[4*j+3];
-	            		byteBuffer2[4*j+1] = byteBuffer[4*j+2];
-	            		byteBuffer2[4*j+2] = byteBuffer[4*j+1];
-	            		byteBuffer2[4*j+3] = byteBuffer[4*j];
+            if (phaseColor2Mosaic) {
+            	totalValuesRead = 0;
+            	// hDim can be one
+                for (h = 0; h < hDim; h++) {
+                	for (c = 0; c < 2; c++) {
+                		for (m = 0; m < mDim; m++) {
+                			index = m*2*hDim + c*hDim + h;
+                			raFile.seek(imageDataLocation.get(index));
+                			localSizeX = imageSize[xIndex].get(index).intValue(); 
+                			localSizeY = imageSize[yIndex].get(index).intValue();
+                			localMinX = imageStartIndex[xIndex].get(index).intValue();
+                			localMinY = imageStartIndex[yIndex].get(index).intValue();
+                			for (y = 0; y < localSizeY; y++) {
+                				for (x = 0; x < localSizeX; x++) {
+                					mosaicShortBuffer[x + (localMinX - mosaicMinX) + mosaicSizeX * (y + (localMinY - mosaicMinY))] =
+                							readShort(endianess);
+                				} // for (x = 0; x < localSizeX; x++)
+                			} // for (y = 0; y < localSizeY; y++)
+                		} // for (m = 0; m < mDim; m++)
+                		if (c == 0) {
+                		    image.importRGBData(channelColor[0], totalValuesRead, mosaicShortBuffer, false);
+                		}
+                		else {
+                			image.importRGBData(channelColor[1], totalValuesRead, mosaicShortBuffer, false);
+                			totalValuesRead += 4*mosaicSizeX*mosaicSizeY;
+                		}
+                	} // for (c = 0; c < 2; c++)
+                } // for (h = 0; h < hDim; h++) 
+            } // if (phaseColor2Mosaic)
+            else if (zScene) {
+            	totalValuesRead = 0;
+                for (z = 0; z < zDim; z++) {
+            		for (s = 0; s < sDim; s++) {
+            			index = s*zDim + z;
+            			raFile.seek(imageDataLocation.get(index));
+            			localSizeX = imageSize[xIndex].get(index).intValue(); 
+            			localSizeY = imageSize[yIndex].get(index).intValue();
+            			localMinX = imageStartIndex[xIndex].get(index).intValue();
+            			localMinY = imageStartIndex[yIndex].get(index).intValue();
+            			for (y = 0; y < localSizeY; y++) {
+            				for (x = 0; x < localSizeX; x++) {
+            					sceneShortBuffer[x + (localMinX - sceneMinX) + sceneSizeX * (y + (localMinY - sceneMinY))] =
+            							readShort(endianess);
+            				} // for (x = 0; x < localSizeX; x++)
+            			} // for (y = 0; y < localSizeY; y++)
+            		} // for (s = 0; s < sDim; s++)
+            		image.importData(totalValuesRead, sceneShortBuffer, false);
+            		totalValuesRead += sceneSizeX * sceneSizeY;
+                } // for (z = 0; z < zDim; z++) 	
+            } // else if (zScene)
+            else {
+	            for (i = 0; i < imageDataLocation.size(); i++) {
+	            	raFile.seek(imageDataLocation.get(i));
+	            	if (dataType == ModelStorageBase.UBYTE) {
+		            	Preferences.debug("bytes sought from file = " + subBlockValues + "\n", Preferences.DEBUG_FILEIO);
+		            	bytesRead = raFile.read(byteBuffer);
+		            	Preferences.debug("bytes read from file = " + bytesRead + "\n", Preferences.DEBUG_FILEIO);
+		            	image.importData(totalValuesRead, byteBuffer, false);
+		            	totalValuesRead += subBlockValues;
+	            	} // if (dataType == ModelStorageBase.UBYTE)
+	            	else if (dataType == ModelStorageBase.USHORT) {
+	            		// Works for slowChangeColor isColor4
+	            		for (j = 0; j < subBlockValues; j++) {
+	            			shortBuffer[j] = readShort(endianess);
+	            		}
+	            		//Preferences.debug("i = " + i + " totalValuesRead before importData = " + totalValuesRead +
+	            				//"\n", Preferences.DEBUG_FILEIO);
+	            		image.importData(totalValuesRead, shortBuffer, false);
+	            		totalValuesRead +=subBlockValues;
+	            	} // else if (dataType == ModelStorageBase.USHORT)
+	            	else if (((pixelType == Gray8) && (dataType == ModelStorageBase.ARGB)) || (pixelType == Bgr24)) {
+	            		Preferences.debug("bytes sought from file = " + subBlockValues + "\n", Preferences.DEBUG_FILEIO);
+		            	bytesRead = raFile.read(byteBuffer);
+		            	Preferences.debug("bytes read from file = " + bytesRead + "\n", Preferences.DEBUG_FILEIO);
+		            	if (rapidChangeColor) {
+			            	if (isColor3) {
+			            		if ((i % 3) == 0) {
+			            			image.importRGBData(channelColor[0], totalValuesRead, byteBuffer, false);
+			            		}
+			            		else if ((i % 3) == 1) {
+			            			image.importRGBData(channelColor[1], totalValuesRead, byteBuffer, false);
+			            		}
+			            		else {
+			            			image.importRGBData(channelColor[2], totalValuesRead, byteBuffer, false);
+			            			totalValuesRead += 4 * subBlockValues;
+			            		}
+			            	} // if (isColor3)
+			            	else { // isColor2
+			            	    if ((i % 2) == 0) {
+			            			image.importRGBData(channelColor[0], totalValuesRead, byteBuffer, false);	
+			            	    }
+			            	    else {
+			            			image.importRGBData(channelColor[1], totalValuesRead, byteBuffer, false);	
+			            			totalValuesRead += 4 * subBlockValues;
+			            	    }
+			            	} // else isColor2
+		            	} // if (rapidChangeColor)
+		            	else if (slowChangeColor) {
+		            	    if (isColor3) {
+		            	    	if (i < imageDataLocation.size()/3) {
+		            	    		image.importRGBData(channelColor[0], totalValuesRead, byteBuffer, false);	
+		            	    	}
+		            	    	else if (i < 2 * imageDataLocation.size()/3) {
+		            	    		image.importRGBData(channelColor[1], totalValuesRead, byteBuffer, false);	
+		            	    	}
+		            	    	else {
+		            	    		image.importRGBData(channelColor[2], totalValuesRead, byteBuffer, false);	
+		            	    	}
+		            	    	if ((i == (imageDataLocation.size()/3 - 1)) || (i == (2 *imageDataLocation.size()/3 - 1))) {
+		            	    		totalValuesRead = 0;
+		            	    	}
+		            	    	else {
+		            	    		totalValuesRead += 4 * subBlockValues;	
+		            	    	}
+		            	    } // if (isColor3)
+		            	    else { // isColor2
+		            	    	if (i < imageDataLocation.size()/2) {
+		            	    		image.importRGBData(channelColor[0], totalValuesRead, byteBuffer, false);	
+		            	    	}
+		            	    	else {
+		            	    		image.importRGBData(channelColor[1], totalValuesRead, byteBuffer, false);	
+		            	    	}
+		            	    	if (i == (imageDataLocation.size()/2 - 1)) {
+		            	    		totalValuesRead = 0;
+		            	    	}
+		            	    	else {
+		            	    		totalValuesRead += 4 * subBlockValues;	
+		            	    	}
+		            	    } // else isColor2
+		            	} // else if (slowChangeColor)
+	            	} // else if (((pixelType == Gray8) && (dataType == ModelStorageBase.ARGB)) || (pixelType == Bgr24))
+	            	else if ((pixelType == Gray16) && (dataType == ModelStorageBase.ARGB_USHORT)) {
+	            		for (j = 0; j < subBlockValues; j++) {
+	            			shortBuffer[j] = readShort(endianess);
+	            		}
+	            		if (rapidChangeColor) {
+		            		if (isColor3) {
+			            		if ((i % 3) == 0) {
+			            			image.importRGBData(channelColor[0], totalValuesRead, shortBuffer, false);
+			            		}
+			            		else if ((i % 3) == 1) {
+			            			image.importRGBData(channelColor[1], totalValuesRead, shortBuffer, false);
+			            		}
+			            		else {
+			            			image.importRGBData(channelColor[2], totalValuesRead, shortBuffer, false);
+			            			totalValuesRead += 4 * subBlockValues;
+			            		}
+		            		} // if (isColor3)
+		            		else { // isColor2
+		            		    if ((i % 2) == 0) {
+			            			image.importRGBData(channelColor[0], totalValuesRead, shortBuffer, false);	
+		            		    }
+		            		    else {
+			            			image.importRGBData(channelColor[1], totalValuesRead, shortBuffer, false);
+			            			totalValuesRead += 4 * subBlockValues;
+		            		    }
+		            		} // else isColor2
+	            		} // if (rapidChangeColor)
+	            		else if (slowChangeColor) {
+		            	    if (isColor3) {
+		            	    	if (i < imageDataLocation.size()/3) {
+		            	    		image.importRGBData(channelColor[0], totalValuesRead, shortBuffer, false);	
+		            	    	}
+		            	    	else if (i < 2 * imageDataLocation.size()/3) {
+		            	    		image.importRGBData(channelColor[1], totalValuesRead, shortBuffer, false);	
+		            	    	}
+		            	    	else {
+		            	    		image.importRGBData(channelColor[2], totalValuesRead, shortBuffer, false);	
+		            	    	}
+		            	    	if ((i == (imageDataLocation.size()/3 - 1)) || (i == (2 *imageDataLocation.size()/3 - 1))) {
+		            	    		totalValuesRead = 0;
+		            	    	}
+		            	    	else {
+		            	    		totalValuesRead += 4 * subBlockValues;	
+		            	    	}
+		            	    } // if (isColor3)
+		            	    else { // isColor2
+		            	    	if (i < imageDataLocation.size()/2) {
+		            	    		image.importRGBData(channelColor[0], totalValuesRead, shortBuffer, false);	
+		            	    	}
+		            	    	else {
+		            	    		image.importRGBData(channelColor[1], totalValuesRead, shortBuffer, false);	
+		            	    	}
+		            	    	if (i == (imageDataLocation.size()/2 - 1)) {
+		            	    		totalValuesRead = 0;
+		            	    	}
+		            	    	else {
+		            	    		totalValuesRead += 4 * subBlockValues;	
+		            	    	}
+		            	    } // else isColor2
+		            	} // else if (slowChangeColor)
+	            	} // else if ((pixelType == Gray16) && (dataType == ModelStorageBase.ARGB_USHORT))
+	            	else if (pixelType == Bgra32) {
+	            		Preferences.debug("bytes sought from file = " + (4*subBlockValues) + "\n", Preferences.DEBUG_FILEIO);
+		            	bytesRead = raFile.read(byteBuffer);
+		            	Preferences.debug("bytes read from file = " + bytesRead + "\n", Preferences.DEBUG_FILEIO);
+		            	for (j = 0; j < subBlockValues; j++) {
+		            		byteBuffer2[4*j] = byteBuffer[4*j+3];
+		            		byteBuffer2[4*j+1] = byteBuffer[4*j+2];
+		            		byteBuffer2[4*j+2] = byteBuffer[4*j+1];
+		            		byteBuffer2[4*j+3] = byteBuffer[4*j];
+		            	}
+		            	image.importData(totalValuesRead, byteBuffer2, false);
+		            	totalValuesRead += 4*subBlockValues;	
 	            	}
-	            	image.importData(totalValuesRead, byteBuffer2, false);
-	            	totalValuesRead += 4*subBlockValues;	
-            	}
-            } // for (i = 0; i < imageDataLocation.size(); i++)
+	            } // for (i = 0; i < imageDataLocation.size(); i++)
+            } // else 
             raFile.close();
 
             image.calcMinMax();
