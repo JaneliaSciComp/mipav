@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.HashSet;
 import java.util.Iterator;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -75,7 +74,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	
 	private int length;
 	
-	private int neuronArea;
+	//private int neuronArea;
 
 	/**
 	 * The polygonal area as determined by the convex hull VOI
@@ -276,7 +275,6 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		try {
 			newSkel.importData(0, segmentSet, true);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		AlgorithmMorphology2D skeletonize = new AlgorithmMorphology2D(newSkel, AlgorithmMorphology2D.CONNECTED4,
@@ -286,7 +284,6 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		try {
 			newSkel.exportData(0, length, segmentSet);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -805,6 +802,9 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	 * 
 	 * This method can handle stranger structures, especially those
 	 * with loops in them
+	 * 
+	 * However, still needs to be changed to be more robust as it is 
+	 * causing some issues 
 	 */
 	
 	public void saveAsSWC(){
@@ -910,7 +910,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 				Iterator<BranchContainer> iter;
 				BranchContainer check;
 				BranchContainer toRemove = null;
-				for(int ny=y+1;ny>=y-1;ny--){
+				loop:for(int ny=y+1;ny>=y-1;ny--){
 					if(ny<0||ny>=height) continue;
 					for(int nx=x+1;nx>=x-1;nx--){
 						if(nx<0||nx>=width || (nx == x && ny == y)) continue;
@@ -935,6 +935,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 									line++;
 									writeInfo(line, check.originated, 0, current.line);
 									toRemove = check;
+									break loop;
 								}
 							}
 						}
@@ -991,7 +992,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	 * it is useable
 	 */
 	
-	private void calcArea(){
+	/*private void calcArea(){
 		
 		ModelImage areaIm = (ModelImage)segImage.clone();
 		
@@ -1025,7 +1026,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 				neuronArea++;
 			}
 		}
-	}
+	}*/
 	
 	/**
 	 * Method to find any ends of branches. All the true bits in the skeleton
