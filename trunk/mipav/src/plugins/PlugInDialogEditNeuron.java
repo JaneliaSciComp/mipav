@@ -452,6 +452,41 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	}	
 	
 	/**
+	 * Modified DFS to check for if a cycle in the neuron exists, which
+	 * will cause a stack overflow in the neuron length portion
+	 * @return
+	 */
+	private boolean checkCycles(){
+		
+		LinkElement originEle = links.get(origin);
+		ArrayList<LinkElement> list = originEle.linked;
+		HashSet<LinkElement> visited = new HashSet<LinkElement>();
+		ArrayDeque<LinkElement> stack = new ArrayDeque<LinkElement>();
+		ArrayDeque<LinkElement> prevEle = new ArrayDeque<LinkElement>();
+		for(int i=0;i<list.size();i++){
+			prevEle.add(originEle);
+		}
+		
+		stack.addAll(list);
+		visited.addAll(list);
+		
+		while(!stack.isEmpty()){
+			LinkElement e = stack.poll();
+			LinkElement prev = prevEle.poll();
+			list = e.copyList();
+			list.remove(prev);
+			for(LinkElement l : list){
+				if(visited.contains(l))
+					return true;
+				stack.add(l);
+				prevEle.add(e);
+			}
+		}
+		
+		return false;
+	}
+	
+	/**
 	 * Bresenham line algorithm used to draw the paths between two points.
 	 * Uses the points taken from the SWC files to draw the paths in the 
 	 * mask to overlay on the subvolume image. 
@@ -681,12 +716,14 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 * @return
 	 */
 	private boolean dfsOrigin(LinkElement e, LinkElement prev){
+		if(e.pt.equals(origin))
+			return true;
 		
 		ArrayDeque<LinkElement> stack = new ArrayDeque<LinkElement>();
 		HashSet<LinkElement> visited = new HashSet<LinkElement>();
 		ArrayList<LinkElement> pts = e.linked;
 		visited.add(prev);
-		
+
 		for(int i=0;i<pts.size();i++){
 			LinkElement ele = pts.get(i);
 			if(visited.contains(ele))
@@ -1710,6 +1747,12 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 */
 	private void saveNewSWC() throws IOException{
 		
+		if(checkCycles()){
+			MipavUtil.displayError("Loop exists in neuron trace. Remove loop before"
+					+ "saving.");
+			return;
+		}
+		
 		try{
 			resolution = Double.valueOf(xResField.getText());
 		} catch(NumberFormatException n){
@@ -2300,14 +2343,23 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		} else if (deleteRB.isSelected()){
 
 			VOIBase activeVOI = lastActive;
-
-			if(activeVOI != null){
-				controlPts.removeCurve(activeVOI);
-			} else return;
+			
+			if(activeVOI == null)
+				return;
 			
 			VOIPoint ptVOI = (VOIPoint) activeVOI;
+			
 			Vector3f ptVec = ptVOI.exportPoint();
 			Point coord = new Point((int)ptVec.X, (int)ptVec.Y);
+			
+			boolean delete = links.removeNode(coord);
+			
+			if(!delete)
+				return;
+			
+			
+			controlPts.removeCurve(activeVOI);
+			
 			if(coord.equals(origin)){
 				LinkElement elem = links.get(origin);
 				origin = elem.linked.get(0).pt;
@@ -2319,16 +2371,12 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 					if(origin.equals(checkPt)){
 						originVOI = ptVOI;
 						originVOI.setLabel("O");
-						subVolume.notifyImageDisplayListeners();
+						
 						break;
 					}
 				}
 			}
-				
-			links.removeNode(coord);
-			
-			
-
+			subVolume.notifyImageDisplayListeners();
 			lastActive = null;
 
 		} else if(progenitorRB.isSelected() || splitRB.isSelected() || originRB.isSelected()
@@ -2751,11 +2799,14 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		 * occuring if deleting a node with 3+ connections
 		 * @param node
 		 */
-		private void removeNode(Point node){
+		private boolean removeNode(Point node){
+			
 			LinkElement e1;
-			LinkElement eNode = get(node);
+			final LinkElement eNode = get(node);
 			ArrayList<LinkElement> pts = eNode.linked;
 			int size = pts.size();
+			
+			boolean delete = false;
 			
 			//Need to make more robust
 			
@@ -2767,14 +2818,47 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				paths.add(e1.pt, e2.pt);
 				e1 = e2;
 			}	*/
-			Comparator<LinkElement> linkComp = new Comparator<LinkElement>(){
+			
+			if(size == 2){
+				e1 = pts.get(0);
+				LinkElement e2 = pts.get(1);
+				e1.addLinkTo(e2);
+				paths.add(e1.pt, e2.pt);
+				
+				for(int i=0;i<size;i++){
+					e1 = pts.get(0);
+					e1.removeLinkTo(eNode);
+					paths.remove(node, e1.pt);
+				}
+				
+				delete = true;
+			}
+			else if(size == 3){
+				//3 is annoying. Need to set certain priorities
+				//Should set highest priority target as 1 (current) link
+				//0 current links should be the lowest priority
+				//Link highest priority targets first
+				//Move to lower priority, try to link to highest priority
+
+				//Need to add a piece for tolerance so that in the 3 neighbor case,
+				//two nodes that are very close together will have higher priority than
+				//anything else
+				Comparator<LinkElement> linkComp = new Comparator<LinkElement>(){
 
 				@Override
 				public int compare(LinkElement o1, LinkElement o2) {
 					int s1 = o1.linked.size();
 					int s2 = o2.linked.size();
 					
-					if(s1 == 1 || s2 == 0)
+					double dist1 = pointDistance(o1, eNode);
+					double dist2 = pointDistance(o2, eNode);
+					
+					if(s1 > 0 && dist1 < 5 && dist1 < dist2){
+						return -1;
+					}
+					else if(s1 > 0 && dist1 > 5 && dist2 < 5)
+						return 1;
+					else if(s1 == 1 || s2 == 0)
 						return -1;
 					else if(s2 == 1 || s1 == 0 || s1 == s2)
 						return 1;
@@ -2786,14 +2870,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 						return 0;
 				}
 			};
-			
-			if(size == 2 || size == 3){
-				//3 is annoying. Need to set certain priorities
-				//Should set highest priority target as 1 (current) link
-				//0 current links should be the lowest priority
-				//Link highest priority targets first
-				//Move to lower priority, try to link to highest priority
-				//Might be applicable to 4+ as well, but would require a bit of work
 				PriorityQueue<LinkElement> linkPriority = new PriorityQueue<LinkElement>(5, linkComp);
 					
 				for(int i=0;i<size;i++){
@@ -2808,6 +2884,9 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 					e1.addLinkTo(connectTo);
 					paths.add(e1.pt, connectTo.pt);
 				}
+				
+				delete = true;
+
 			} else if (size == 4){
 
 				if(isOverlapPoint(eNode)){
@@ -2863,19 +2942,42 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 							maxAngle[1] = 3;
 						}
 					}
+					
+					//Check here to make sure that the new connections you make
+					//are logical and don't create any discontinuities
+					
 					e1 = pts.get(0);
 					LinkElement to = pts.get(maxAngle[0]);
-					e1.addLinkTo(to);
-					paths.add(e1.pt, to.pt);
 					int next;
 					if(maxAngle[0] == 1)
 						next = 2;
 					else next = 1;
-
+					
+					boolean allConnected = dfsOrigin(e1, to) || dfsOrigin(to, e1);
+					
 					e1 = pts.get(next);
 					to = pts.get(maxAngle[next]);
-					e1.addLinkTo(to);
-					paths.add(e1.pt, to.pt);
+					
+					allConnected &= dfsOrigin(e1, to) || dfsOrigin(to, e1);
+					
+					if(allConnected){
+					
+						e1 = pts.get(0);
+						to = pts.get(maxAngle[0]);
+						e1.addLinkTo(to);
+						paths.add(e1.pt, to.pt);
+						if(maxAngle[0] == 1)
+							next = 2;
+						else next = 1;
+	
+						e1 = pts.get(next);
+						to = pts.get(maxAngle[next]);
+						e1.addLinkTo(to);
+						paths.add(e1.pt, to.pt);
+						
+						delete = true; //maybe, need to check if you create two disjointed sets, but needs to
+						//go before you actually createh links and what not
+					}
 					
 
 				} else {
@@ -2883,18 +2985,23 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 					//to do with his case
 				}
 				
-				for(int i=0;i<size;i++){
-					e1 = pts.get(0);
-					e1.removeLinkTo(eNode);
-					paths.remove(node, e1.pt);
+				if(delete){
+					for(int i=0;i<size;i++){
+						e1 = pts.get(0);
+						e1.removeLinkTo(eNode);
+						paths.remove(node, e1.pt);
+					}
 				}
 			} else{
 				//Size is greater than 4, not really sure what to do with this
 			}
 			
-			remove(eNode);	
+			if(delete)
+				remove(eNode);	
 			
 			subVolume.notifyImageDisplayListeners();
+			
+			return delete;
 		}
 		
 		private double pointAngle(Point pt1, Point pt2, Point center){
@@ -2912,6 +3019,22 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			angle *= (180d/Math.PI);
 			
 			return angle;
+		}
+		
+		private double pointDistance(LinkElement e1, LinkElement e2){
+			
+			Point pt1 = e1.pt;
+			Point pt2 = e2.pt;
+			
+			double dist;
+			double dx = pt1.x - pt2.x;
+			double dy = pt1.y - pt2.y;
+			dx *= dx;
+			dy *= dy;
+			dist = Math.sqrt(dx + dy);
+			
+			return dist;
+			
 		}
 		
 	}
