@@ -1653,15 +1653,6 @@ public class FileCZI extends FileBase {
                                             Preferences.debug("Neutral density filter optical density = " + NDFilter[channelsFound] + "\n",
                                             		Preferences.DEBUG_FILEIO);
                                         } // if ((NDFilterStart >= 0) && (NDFilterEnd > NDFilterStart)) 
-                                        fluorStart = channel.indexOf("<Fluor>");
-                                        fluorEnd = channel.indexOf("</Fluor>");
-                                        if ((fluorStart >= 0) && (fluorEnd > fluorStart)) {
-                                            fluor[channelsFound] = channel.substring(fluorStart, fluorEnd);
-                                            fluorStart = fluor[channelsFound].indexOf(">");
-                                            fluor[channelsFound] = fluor[channelsFound].substring(fluorStart+1);
-                                            Preferences.debug("Fluorophore name = " + fluor[channelsFound] + "\n", 
-                                            		Preferences.DEBUG_FILEIO);
-                                        } // if ((fluorStart >= 0) && (fluorEnd > fluorStart))
                                         pockelCellSettingStart = channel.indexOf("<PockelCellSetting>");
                                         pockelCellSettingEnd = channel.indexOf("</PockelCellSetting>");
                                         if ((pockelCellSettingStart >= 0) && (pockelCellSettingEnd > pockelCellSettingStart)) {
