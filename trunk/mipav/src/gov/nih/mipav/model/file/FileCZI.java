@@ -222,10 +222,10 @@ public class FileCZI extends FileBase {
         float startCoordinate[];
         int storedSize[];
         int index;
-        final Vector<String> imageDimension[] = new Vector[7];
-        final Vector<Integer> imageSize[] = new Vector[7];
-        final Vector<Float> imageStartCoordinate[] = new Vector[7];
-        final Vector<Integer> imageStartIndex[] = new Vector[7];
+        final Vector<String> imageDimension[] = new Vector[8];
+        final Vector<Integer> imageSize[] = new Vector[8];
+        final Vector<Float> imageStartCoordinate[] = new Vector[8];
+        final Vector<Integer> imageStartIndex[] = new Vector[8];
         final Vector<Long> imageDataSize = new Vector<Long>();
         final Vector<Long> imageDataLocation = new Vector<Long>();
         Vector<Integer> imageColorStartIndex = new Vector<Integer>();
@@ -586,6 +586,26 @@ public class FileCZI extends FileBase {
         int sceneSizeY = 0;
         boolean zScene = false;
         short sceneShortBuffer[] = null;
+        int singlePeakStart;
+        int singlePeakEnd;
+        int fluorStart;
+        int fluorEnd;
+        String fluor[] = new String[]{null, null, null, null};
+        int NDFilterStart;
+        int NDFilterEnd;
+        String NDFilter[] = new String[]{null, null, null, null};
+        int pockelCellSettingStart;
+        int pockelCellSettingEnd;
+        String pockelCellSetting[] = new String[]{null, null, null, null};
+        int originalColorStart;
+        int originalColorEnd;
+        String originalColor[] = new String[]{null, null, null, null};
+        int exposureTimeStart;
+        int exposureTimeEnd;
+        String exposureTime[] = new String[]{null, null, null, null};
+        int sectionThicknessStart;
+        int sectionThicknessEnd;
+        String sectionThickness[] = new String[]{null, null, null, null};
         
         try {
             fileInfo = new FileInfoCZI(fileName, fileDir, FileUtility.CZI); // dummy fileInfo
@@ -1507,6 +1527,13 @@ public class FileCZI extends FileBase {
                                             illuminationWavelengthStart = illuminationWavelength[channelsFound].indexOf(">");
                                             illuminationWavelength[channelsFound] = 
                                             		illuminationWavelength[channelsFound].substring(illuminationWavelengthStart+1);
+                                            singlePeakStart = illuminationWavelength[channelsFound].indexOf("<SinglePeak>");
+                                            singlePeakEnd = illuminationWavelength[channelsFound].indexOf("</SinglePeak>");
+                                            if ((singlePeakStart >= 0) && (singlePeakEnd > singlePeakStart)) {
+                                            	singlePeakStart = illuminationWavelength[channelsFound].indexOf(">", singlePeakStart+1);
+                                            	illuminationWavelength[channelsFound] = 
+                                            			illuminationWavelength[channelsFound].substring(singlePeakStart+1, singlePeakEnd);
+                                            }
                                             Preferences.debug("Illumination wavelength = " + illuminationWavelength[channelsFound] +
                                             		"\n", Preferences.DEBUG_FILEIO);		
                                         } // if ((illuminationWavelengthStart >= 0) && 
@@ -1519,6 +1546,13 @@ public class FileCZI extends FileBase {
                                             detectionWavelengthStart = detectionWavelength[channelsFound].indexOf(">");
                                             detectionWavelength[channelsFound] = 
                                             		detectionWavelength[channelsFound].substring(detectionWavelengthStart+1);
+                                            singlePeakStart = detectionWavelength[channelsFound].indexOf("<SinglePeak>");
+                                            singlePeakEnd = detectionWavelength[channelsFound].indexOf("</SinglePeak>");
+                                            if ((singlePeakStart >= 0) && (singlePeakEnd > singlePeakStart)) {
+                                            	singlePeakStart = detectionWavelength[channelsFound].indexOf(">", singlePeakStart+1);
+                                            	detectionWavelength[channelsFound] = 
+                                            			detectionWavelength[channelsFound].substring(singlePeakStart+1, singlePeakEnd);
+                                            }
                                             rangesStart = detectionWavelength[channelsFound].indexOf("<Ranges>");
                                             rangesEnd = detectionWavelength[channelsFound].indexOf("</Ranges>");
                                             if ((rangesStart >= 0) && (rangesEnd > rangesStart)) {
@@ -1598,7 +1632,78 @@ public class FileCZI extends FileBase {
                                             		pinholeGeometry[channelsFound].substring(pinholeGeometryStart+1);
                                             Preferences.debug("Pinhole geometry = " + pinholeGeometry[channelsFound] + "\n",
                                             		Preferences.DEBUG_FILEIO);
-                                        } // if ((pinholeGeometryStart >= 0) && (pinholeGeometryEnd > pinholeGeometryStart)) 
+                                        } // if ((pinholeGeometryStart >= 0) && (pinholeGeometryEnd > pinholeGeometryStart))
+                                        fluorStart = channel.indexOf("<Fluor>");
+                                        fluorEnd = channel.indexOf("</Fluor>");
+                                        if ((fluorStart >= 0) && (fluorEnd > fluorStart)) {
+                                            fluor[channelsFound] = channel.substring(fluorStart, fluorEnd);
+                                            fluorStart = fluor[channelsFound].indexOf(">");
+                                            fluor[channelsFound] = 
+                                            		fluor[channelsFound].substring(fluorStart+1);
+                                            Preferences.debug("Fluorophore name = " + fluor[channelsFound] + "\n",
+                                            		Preferences.DEBUG_FILEIO);
+                                        } // if ((fluorStart >= 0) && (fluorEnd > fluorStart))
+                                        NDFilterStart = channel.indexOf("<NDFilter>");
+                                        NDFilterEnd = channel.indexOf("</NDFilter>");
+                                        if ((NDFilterStart >= 0) && (NDFilterEnd > NDFilterStart)) {
+                                            NDFilter[channelsFound] = channel.substring(NDFilterStart, NDFilterEnd);
+                                            NDFilterStart = NDFilter[channelsFound].indexOf(">");
+                                            NDFilter[channelsFound] = 
+                                            		NDFilter[channelsFound].substring(NDFilterStart+1);
+                                            Preferences.debug("Neutral density filter optical density = " + NDFilter[channelsFound] + "\n",
+                                            		Preferences.DEBUG_FILEIO);
+                                        } // if ((NDFilterStart >= 0) && (NDFilterEnd > NDFilterStart)) 
+                                        fluorStart = channel.indexOf("<Fluor>");
+                                        fluorEnd = channel.indexOf("</Fluor>");
+                                        if ((fluorStart >= 0) && (fluorEnd > fluorStart)) {
+                                            fluor[channelsFound] = channel.substring(fluorStart, fluorEnd);
+                                            fluorStart = fluor[channelsFound].indexOf(">");
+                                            fluor[channelsFound] = fluor[channelsFound].substring(fluorStart+1);
+                                            Preferences.debug("Fluorophore name = " + fluor[channelsFound] + "\n", 
+                                            		Preferences.DEBUG_FILEIO);
+                                        } // if ((fluorStart >= 0) && (fluorEnd > fluorStart))
+                                        pockelCellSettingStart = channel.indexOf("<PockelCellSetting>");
+                                        pockelCellSettingEnd = channel.indexOf("</PockelCellSetting>");
+                                        if ((pockelCellSettingStart >= 0) && (pockelCellSettingEnd > pockelCellSettingStart)) {
+                                            pockelCellSetting[channelsFound] = 
+                                            		channel.substring(pockelCellSettingStart, pockelCellSettingEnd);
+                                            pockelCellSettingStart = pockelCellSetting[channelsFound].indexOf(">");
+                                            pockelCellSetting[channelsFound] = 
+                                            		pockelCellSetting[channelsFound].substring(pockelCellSettingStart+1);
+                                            Preferences.debug("Pockel cell setting = " + pockelCellSetting[channelsFound] + "\n",
+                                            		Preferences.DEBUG_FILEIO);
+                                        } // if ((pockelCellSettingStart >= 0) && (pockelCellSettingEnd > pockelCellSettingStart))
+                                        originalColorStart = channel.indexOf("<Color>");
+                                        originalColorEnd = channel.indexOf("</Color>");
+                                        if ((originalColorStart >= 0) && (originalColorEnd > originalColorStart)) {
+                                            originalColor[channelsFound] = channel.substring(originalColorStart, originalColorEnd);
+                                            originalColorStart = originalColor[channelsFound].indexOf(">");
+                                            originalColor[channelsFound] = 
+                                            		originalColor[channelsFound].substring(originalColorStart+1);
+                                            Preferences.debug("Original color = " + originalColor[channelsFound] + "\n",
+                                            		Preferences.DEBUG_FILEIO);
+                                        } // if ((originalColorStart >= 0) && (originalColorEnd > originalColorStart))
+                                        exposureTimeStart = channel.indexOf("<ExposureTime>");
+                                        exposureTimeEnd = channel.indexOf("</ExposureTime>");
+                                        if ((exposureTimeStart >= 0) && (exposureTimeEnd > exposureTimeStart)) {
+                                            exposureTime[channelsFound] = channel.substring(exposureTimeStart, exposureTimeEnd);
+                                            exposureTimeStart = exposureTime[channelsFound].indexOf(">");
+                                            exposureTime[channelsFound] = 
+                                            		exposureTime[channelsFound].substring(exposureTimeStart+1);
+                                            Preferences.debug("Exposure time in nanoseconds = " + exposureTime[channelsFound] + "\n",
+                                            		Preferences.DEBUG_FILEIO);
+                                        } // if ((exposureTimeStart >= 0) && (exposureTimeEnd > exposureTimeStart))
+                                        sectionThicknessStart = channel.indexOf("<SectionThickness>");
+                                        sectionThicknessEnd = channel.indexOf("</SectionThickness>");
+                                        if ((sectionThicknessStart >= 0) && (sectionThicknessEnd > sectionThicknessStart)) {
+                                            sectionThickness[channelsFound] = 
+                                            		channel.substring(sectionThicknessStart, sectionThicknessEnd);
+                                            sectionThicknessStart = sectionThickness[channelsFound].indexOf(">");
+                                            sectionThickness[channelsFound] = 
+                                            		sectionThickness[channelsFound].substring(sectionThicknessStart+1);
+                                            Preferences.debug("Section thickness in micrometers = " + sectionThickness[channelsFound]
+                                            		+ "\n", Preferences.DEBUG_FILEIO);
+                                        } // if ((sectionThicknessStart >= 0) && (sectionThicknessEnd > sectionThicknessStart))
                                         channels = channels.substring(channelEnd + 10);
                                         if (channels == null) {
                                         	break;
@@ -1627,6 +1732,12 @@ public class FileCZI extends FileBase {
                                     fileInfo.setPinholeSize(pinholeSize);
                                     fileInfo.setPinholeSizeAiry(pinholeSizeAiry);
                                     fileInfo.setPinholeGeometry(pinholeGeometry);
+                                    fileInfo.setFluor(fluor);
+                                    fileInfo.setNDFilter(NDFilter);
+                                    fileInfo.setPockelCellSetting(pockelCellSetting);
+                                    fileInfo.setColor(originalColor);
+                                    fileInfo.setExposureTime(exposureTime);
+                                    fileInfo.setSectionThickness(sectionThickness);
                                 } // if ((channelsStart >= 0) && (channelsEnd > channelsStart))
                             } // if ((dimensionsStart >= 0) && (dimensionsEnd > dimensionsStart))
                         } // if ((imageStart >= 0) && (imageEnd > imageStart))
@@ -1655,10 +1766,13 @@ public class FileCZI extends FileBase {
                             while ((channelStart >= 0) && (channelEnd > channelStart)) {
                             	channelsFound++;
                                 channel = channels.substring(channelStart, channelEnd);
-                                Preferences.debug("In DisplaySettings channel = " + channel + "\n", Preferences.DEBUG_FILEIO);
+                                //Preferences.debug("In DisplaySettings channel = " + channel + "\n", Preferences.DEBUG_FILEIO);
                                 if (firstChannelFind) {
                                     channelIDStart = channel.indexOf(":");
-                                    channelIDEnd = channel.indexOf("\">");
+                                    channelIDEnd = channel.indexOf("\"", channelIDStart+1);
+                                	channelNameStart = channel.indexOf("Name=\"");
+                                	channelNameStart = channel.indexOf("\"", channelNameStart+1);
+                                	channelNameEnd = channel.indexOf("\"", channelNameStart+1);
                                 }
                                 else {
                                 	channelIDStart = channel.indexOf("\"");
@@ -1669,11 +1783,12 @@ public class FileCZI extends FileBase {
                                 }
                                 if ((channelIDStart >= 0) && (channelIDEnd > channelIDStart)) {
                                     channelID[channelsFound] = channel.substring(channelIDStart+1, channelIDEnd);
-                                    Preferences.debug("Channel ID = " + channelID[channelsFound] + "\n", Preferences.DEBUG_FILEIO);
+                                    Preferences.debug("In DisplaySettings Channel ID = " + channelID[channelsFound] + "\n",
+                                    		Preferences.DEBUG_FILEIO);
                                 } // if ((channelIDStart >= 0) && (channelIDEnd > channelIDStart))
                                 if ((channelNameStart >= 0) && (channelNameEnd > channelNameStart)) {
                                     channelName[channelsFound] = channel.substring(channelNameStart+1, channelNameEnd);
-                                    Preferences.debug("Channel name = " + channelName[channelsFound] + "\n", 
+                                    Preferences.debug("In DisplaySettings Channel name = " + channelName[channelsFound] + "\n", 
                                     		Preferences.DEBUG_FILEIO);
                                 } // if ((channelNameStart >= 0) && (channelNameEnd > channelNameStart))
                                 colorStart = channel.indexOf("<Color>");
@@ -2122,7 +2237,7 @@ public class FileCZI extends FileBase {
                 }
             } // while (readSegment)
 
-            for (i = 0; imageDimension[i] != null && i < 7; i++) {
+            for (i = 0; imageDimension[i] != null && i < 8; i++) {
                 for (j = 1; j < imageDimension[i].size(); j++) {
                     if ( !imageDimension[i].get(0).equals(imageDimension[i].get(j))) {
                         Preferences.debug("imageDimension[" + i + "].get(0) = " + imageDimension[i].get(0) + "\n", Preferences.DEBUG_FILEIO);
@@ -2133,7 +2248,7 @@ public class FileCZI extends FileBase {
                 }
             }
 
-            for (i = 0; imageSize[i] != null && i < 7; i++) {
+            for (i = 0; imageSize[i] != null && i < 8; i++) {
                 for (j = 1; j < imageSize[i].size(); j++) {
                     if (imageSize[i].get(0).intValue() != imageSize[i].get(j).intValue()) {
                         Preferences.debug("imageSize[" + i + "].get(0).intValue() = " + imageSize[i].get(0).intValue() + "\n", Preferences.DEBUG_FILEIO);
@@ -2145,7 +2260,7 @@ public class FileCZI extends FileBase {
                 }
             }
 
-            for (i = 0; imageStartCoordinate[i] != null && i < 7; i++) {
+            for (i = 0; imageStartCoordinate[i] != null && i < 8; i++) {
                 for (j = 1; j < imageStartCoordinate[i].size(); j++) {
                     if (imageStartCoordinate[i].get(0).floatValue() != imageStartCoordinate[i].get(j).floatValue()) {
                         Preferences.debug("imageStartCoordinate[" + i + "].get(0).floatValue() = " + imageStartCoordinate[i].get(0).floatValue() + "\n",
