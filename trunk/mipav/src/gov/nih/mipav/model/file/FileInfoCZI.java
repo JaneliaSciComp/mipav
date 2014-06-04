@@ -72,6 +72,12 @@ public class FileInfoCZI extends FileInfoBase {
 	private String pinholeSize[] = null;
 	private String pinholeSizeAiry[] = null;
 	private String pinholeGeometry[] = null;
+	private String fluor[] = null;
+	private String NDFilter[] = null;
+	private String pockelCellSetting[] = null;
+	private String color[] = null;
+	private String exposureTime[] = null;
+	private String sectionThickness[] = null;
 		
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -311,16 +317,40 @@ public class FileInfoCZI extends FileInfoBase {
             	dialog.append("Dye database ID = " + dyeDatabaseID[i] + "\n");
             }
             
-            if ((pinholeSize != null) && (pinholeSize[i] != null)) {
+            if ((pinholeSize != null) && (pinholeSize[i] != null) && (!pinholeSize[i].equals("NaN"))) {
                 dialog.append("Pinhole size in micrometers = " + pinholeSize[i] + "\n");	
             }
             
-            if ((pinholeSizeAiry != null) && (pinholeSizeAiry[i] != null)) {
+            if ((pinholeSizeAiry != null) && (pinholeSizeAiry[i] != null) && (!pinholeSizeAiry[i].equals("NaN"))) {
                 dialog.append("Pinhole size in airy disc units = " + pinholeSizeAiry[i] + "\n");	
             }
             
             if ((pinholeGeometry != null) && (pinholeGeometry[i] != null)) {
             	dialog.append("Pinhole geometry = " + pinholeGeometry[i] + "\n");
+            }
+            
+            if ((fluor != null) && (fluor[i] != null)) {
+            	dialog.append("Fluorophore name = " + fluor[i] + "\n");
+            }
+            
+            if ((NDFilter != null) && (NDFilter[i] != null) && (!NDFilter[i].equals("NaN"))) {
+                dialog.append("Neutral density filter optical density = " + NDFilter[i] + "\n")	;
+            }
+            
+            if ((pockelCellSetting != null) && (pockelCellSetting[i] != null)) {
+            	dialog.append("Pockel cell setting = " + pockelCellSetting[i] + "\n");
+            }
+            
+            if ((color != null) && (color[i] != null)) {
+            	dialog.append("Original color = " + color[i] + "\n");
+            }
+            
+            if ((exposureTime != null) && (exposureTime[i] != null)) {
+            	dialog.append("Exposure time in nanoseconds = " + exposureTime[i] + "\n");
+            }
+            
+            if ((sectionThickness != null) && (sectionThickness[i] != null) && (!sectionThickness[i].equals("NaN"))) {
+            	dialog.append("Section thickness in micrometers = " + sectionThickness[i] + "\n");
             }
             dialog.append("\n");
         } // for (i = 0; i < channelsFound; i++)
@@ -756,5 +786,53 @@ public class FileInfoCZI extends FileInfoBase {
      */
     public void setPinholeGeometry(String pinholeGeometry[]) {
     	this.pinholeGeometry = pinholeGeometry;
+    }
+    
+    /**
+     * 
+     * @param fluor
+     */
+    public void setFluor(String fluor[]) {
+    	this.fluor = fluor;
+    }
+    
+    /**
+     * 
+     * @param NDFilter
+     */
+    public void setNDFilter(String NDFilter[]) {
+    	this.NDFilter = NDFilter;
+    }
+    
+    /**
+     * 
+     * @param pockelCellSetting
+     */
+    public void setPockelCellSetting(String pockelCellSetting[]) {
+    	this.pockelCellSetting = pockelCellSetting;
+    }
+    
+    /**
+     * 
+     * @param color
+     */
+    public void setColor(String color[]) {
+    	this.color = color;
+    }
+    
+    /**
+     * 
+     * @param exposureTime
+     */
+    public void setExposureTime(String exposureTime[]) {
+        this.exposureTime = exposureTime;	
+    }
+    
+    /**
+     * 
+     * @param sectionThickness
+     */
+    public void setSectionThickness(String sectionThickness[]) {
+    	this.sectionThickness = sectionThickness;
     }
 }
