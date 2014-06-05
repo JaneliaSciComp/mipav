@@ -78,6 +78,21 @@ public class FileInfoCZI extends FileInfoBase {
 	private String color[] = null;
 	private String exposureTime[] = null;
 	private String sectionThickness[] = null;
+	private String reflector[] = null;
+	private String condenserContrast[] = null;
+	private String NACondenser[] = null;
+	private String ratio[] = null;
+	private String detectorBinning[] = null;
+	private String detectorGain[] = null;
+	private String detectorDigitalGain[] = null;
+	private String detectorOffset[] = null;
+	private String detectorEMGain[] = null;
+	private String detectorVoltage[] = null;
+	private String detectorReadOutRate[] = null;
+	private String detectorUseBrightnessContrastCorrection[] = null;
+	private String lightSourceWavelength[] = null;
+	private String lightSourceAttenuation[] = null;
+	private String lightSourceIntensity[] = null;
 		
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -351,6 +366,66 @@ public class FileInfoCZI extends FileInfoBase {
             
             if ((sectionThickness != null) && (sectionThickness[i] != null) && (!sectionThickness[i].equals("NaN"))) {
             	dialog.append("Section thickness in micrometers = " + sectionThickness[i] + "\n");
+            }
+            
+            if ((reflector != null) && (reflector[i] != null)) {
+            	dialog.append("Reflector = " + reflector[i] + "\n");
+            }
+            
+            if ((condenserContrast != null) && (condenserContrast[i] != null)) {
+            	dialog.append("Condenser contrast = " + condenserContrast[i] + "\n");
+            }
+            
+            if ((NACondenser != null) && (NACondenser[i] != null) && (!NACondenser[i].equals("NaN"))) {
+            	dialog.append("NA condenser = " + NACondenser[i] + "\n");
+            }
+            
+            if ((ratio != null) && (ratio[i] != null)) {
+            	dialog.append("Ratio between two active channels = " + ratio[i] + "\n");
+            }
+            
+            if ((detectorBinning != null) && (detectorBinning[i] != null)) {
+            	dialog.append("Detector binning = " + detectorBinning[i] + "\n");
+            }
+            
+            if ((detectorGain != null) && (detectorGain[i] != null) && (!detectorGain[i].equals("NaN"))) {
+            	dialog.append("Detector gain = " + detectorGain[i] + "\n");
+            }
+            
+            if ((detectorDigitalGain != null) && (detectorDigitalGain[i] != null) && (!detectorDigitalGain[i].equals("NaN"))) {
+            	dialog.append("Detector digital gain = " + detectorDigitalGain[i] + "\n");
+            }
+            
+            if ((detectorOffset != null) && (detectorOffset[i] != null) && (!detectorOffset[i].equals("NaN"))) {
+            	dialog.append("Detector gain offset = " + detectorOffset[i] + "\n");
+            }
+            
+            if ((detectorEMGain != null) && (detectorEMGain[i] != null) && (!detectorEMGain[i].equals("NaN"))) {
+            	dialog.append("Detector EM gain = " + detectorEMGain[i] + "\n");
+            }
+            
+            if ((detectorVoltage != null) && (detectorVoltage[i] != null) && (!detectorVoltage[i].equals("NaN"))) {
+            	dialog.append("Detector voltage = " + detectorVoltage[i] + "\n");
+            }
+            
+            if ((detectorReadOutRate != null) && (detectorReadOutRate[i] != null) && (!detectorReadOutRate[i].equals("NaN"))) {
+            	dialog.append("Detector read out rate in megahertz = " + detectorGain[i] + "\n");
+            }
+            
+            if ((detectorUseBrightnessContrastCorrection != null) && (detectorUseBrightnessContrastCorrection[i] != null)) {
+            	dialog.append("Detector use brightness contrast correction = " + detectorUseBrightnessContrastCorrection[i] + "\n");
+            }
+            
+            if ((lightSourceWavelength != null) && (lightSourceWavelength[i] != null) && (!lightSourceWavelength[i].equals("NaN"))) {
+            	dialog.append("Light source wavelength in nanometers = " + lightSourceWavelength[i] + "\n");
+            }
+            
+            if ((lightSourceAttenuation != null) && (lightSourceAttenuation[i] != null) && (!lightSourceAttenuation[i].equals("NaN"))) {
+            	dialog.append("Light source attenuation = " + lightSourceAttenuation[i] + "\n");
+            }
+            
+            if ((lightSourceIntensity != null) && (lightSourceIntensity[i] != null) && (!lightSourceIntensity[i].equals("NaN"))) {
+            	dialog.append("Light source intensity = " + lightSourceIntensity[i] + "\n");
             }
             dialog.append("\n");
         } // for (i = 0; i < channelsFound; i++)
@@ -834,5 +909,125 @@ public class FileInfoCZI extends FileInfoBase {
      */
     public void setSectionThickness(String sectionThickness[]) {
     	this.sectionThickness = sectionThickness;
+    }
+    
+    /**
+     * 
+     * @param reflector
+     */
+    public void setReflector(String reflector[]) {
+    	this.reflector = reflector;
+    }
+    
+    /**
+     * 
+     * @param condenserContrast
+     */
+    public void setCondenserContrast(String condenserContrast[]) {
+    	this.condenserContrast = condenserContrast;
+    }
+    
+    /**
+     * 
+     * @param NACondenser
+     */
+    public void setNACondenser(String NACondenser[]) {
+    	this.NACondenser = NACondenser;
+    }
+    
+    /**
+     * 
+     * @param ratio
+     */
+    public void setRatio(String ratio[]) {
+    	this.ratio = ratio;
+    }
+    
+    /**
+     * 
+     * @param detectorBinning
+     */
+    public void setDetectorBinning(String detectorBinning[]) {
+    	this.detectorBinning = detectorBinning;
+    }
+    
+    /**
+     * 
+     * @param detectorGain
+     */
+    public void setDetectorGain(String detectorGain[]) {
+    	this.detectorGain = detectorGain;
+    }
+    
+    /**
+     * 
+     * @param detectorDigitalGain
+     */
+    public void setDetectorDigitalGain(String detectorDigitalGain[]) {
+    	this.detectorDigitalGain = detectorDigitalGain;
+    }
+    
+    /**
+     * 
+     * @param detectorOffset
+     */
+    public void setDetectorOffset(String detectorOffset[]) {
+    	this.detectorOffset = detectorOffset;
+    }
+    
+    /**
+     * 
+     * @param detectorEMGain
+     */
+    public void setDetectorEMGain(String detectorEMGain[]) {
+    	this.detectorEMGain = detectorEMGain;
+    }
+    
+    /**
+     * 
+     * @param detectorVoltage
+     */
+    public void setDetectorVoltage(String detectorVoltage[]) {
+    	this.detectorVoltage = detectorVoltage;
+    }
+    
+    /**
+     * 
+     * @param detectorReadOutRate
+     */
+    public void setDetectorReadOutRate(String detectorReadOutRate[]) {
+    	this.detectorReadOutRate = detectorReadOutRate;
+    }
+    
+    /**
+     * 
+     * @param detectorUseBrightnessContrastCorrection
+     */
+    public void setDetectorUseBrightnessContrastCorrection(String detectorUseBrightnessContrastCorrection[]) {
+    	this.detectorUseBrightnessContrastCorrection = detectorUseBrightnessContrastCorrection;
+    }
+    
+    /**
+     * 
+     * @param lightSourceWavelength
+     */
+    public void setLightSourceWavelength(String lightSourceWavelength[]) {
+    	this.lightSourceWavelength = lightSourceWavelength;
+    }
+    
+    /**
+     * 
+     * @param lightSourceAttenuation
+     */
+    public void setLightSourceAttenuation(String lightSourceAttenuation[]) {
+    	this.lightSourceAttenuation = lightSourceAttenuation;
+    }
+    
+    /**
+     * 
+     * @param lightSourceIntensity
+     */
+    public void setLightSourceIntensity(String lightSourceIntensity[]) {
+    	this.lightSourceIntensity = lightSourceIntensity;
     }
 }
