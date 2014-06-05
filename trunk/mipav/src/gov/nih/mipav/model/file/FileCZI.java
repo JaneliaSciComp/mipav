@@ -606,6 +606,57 @@ public class FileCZI extends FileBase {
         int sectionThicknessStart;
         int sectionThicknessEnd;
         String sectionThickness[] = new String[]{null, null, null, null};
+        int reflectorStart;
+        int reflectorEnd;
+        String reflector[] = new String[]{null, null, null, null};
+        int condenserContrastStart;
+        int condenserContrastEnd;
+        String condenserContrast[] = new String[]{null, null, null, null};
+        int NACondenserStart;
+        int NACondenserEnd;
+        String NACondenser[] = new String[]{null, null, null, null};
+        int ratioStart;
+        int ratioEnd;
+        String ratio[] = new String[]{null, null, null, null};
+        int detectorSettingsStart;
+        int detectorSettingsEnd;
+        String detectorSettings;
+        int detectorBinningStart;
+        int detectorBinningEnd;
+        String detectorBinning[] = new String[]{null, null, null, null};
+        int detectorGainStart;
+        int detectorGainEnd;
+        String detectorGain[] = new String[]{null, null, null, null};
+        int detectorDigitalGainStart;
+        int detectorDigitalGainEnd;
+        String detectorDigitalGain[] = new String[]{null, null, null, null};
+        int detectorOffsetStart;
+        int detectorOffsetEnd;
+        String detectorOffset[] = new String[]{null, null, null, null};
+        int detectorEMGainStart;
+        int detectorEMGainEnd;
+        String detectorEMGain[] = new String[]{null, null, null, null};
+        int detectorVoltageStart;
+        int detectorVoltageEnd;
+        String detectorVoltage[] = new String[]{null, null, null, null};
+        int detectorReadOutRateStart;
+        int detectorReadOutRateEnd;
+        String detectorReadOutRate[] = new String[]{null, null, null, null};
+        int detectorUseBrightnessContrastCorrectionStart;
+        int detectorUseBrightnessContrastCorrectionEnd;
+        String detectorUseBrightnessContrastCorrection[] = new String[]{null, null, null, null};
+        int lightSourceSettingsStart;
+        int lightSourceSettingsEnd;
+        String lightSourceSettings;
+        int lightSourceWavelengthStart;
+        int lightSourceWavelengthEnd;
+        String lightSourceWavelength[] = new String[]{null, null, null, null};
+        int lightSourceAttenuationStart;
+        int lightSourceAttenuationEnd;
+        String lightSourceAttenuation[] = new String[]{null, null, null, null};
+        int lightSourceIntensityStart;
+        int lightSourceIntensityEnd;
+        String lightSourceIntensity[] = new String[]{null, null, null, null};
         
         try {
             fileInfo = new FileInfoCZI(fileName, fileDir, FileUtility.CZI); // dummy fileInfo
@@ -1695,6 +1746,194 @@ public class FileCZI extends FileBase {
                                             Preferences.debug("Section thickness in micrometers = " + sectionThickness[channelsFound]
                                             		+ "\n", Preferences.DEBUG_FILEIO);
                                         } // if ((sectionThicknessStart >= 0) && (sectionThicknessEnd > sectionThicknessStart))
+                                        reflectorStart = channel.indexOf("<Reflector>");
+                                        reflectorEnd = channel.indexOf("</Reflector>");
+                                        if ((reflectorStart >= 0) && (reflectorEnd > reflectorStart)) {
+                                            reflector[channelsFound] = channel.substring(reflectorStart, reflectorEnd);
+                                            reflectorStart = reflector[channelsFound].indexOf(">");
+                                            reflector[channelsFound] = 
+                                            		reflector[channelsFound].substring(reflectorStart+1);
+                                            Preferences.debug("Reflector = " + reflector[channelsFound] + "\n",
+                                            		Preferences.DEBUG_FILEIO);
+                                        } // if ((reflectorStart >= 0) && (reflectorEnd > reflectorStart))
+                                        condenserContrastStart = channel.indexOf("<CondenserContrast>");
+                                        condenserContrastEnd = channel.indexOf("</CondenserContrast>");
+                                        if ((condenserContrastStart >= 0) && (condenserContrastEnd > condenserContrastStart)) {
+                                            condenserContrast[channelsFound] = 
+                                            		channel.substring(condenserContrastStart, condenserContrastEnd);
+                                            condenserContrastStart = condenserContrast[channelsFound].indexOf(">");
+                                            condenserContrast[channelsFound] = 
+                                            		condenserContrast[channelsFound].substring(condenserContrastStart+1);
+                                            Preferences.debug("Condenser contrast = " + condenserContrast[channelsFound] + "\n",
+                                            		Preferences.DEBUG_FILEIO);
+                                        } // if ((condenserContrastStart >= 0) && (condenserContrastEnd > condenserContrastStart))
+                                        NACondenserStart = channel.indexOf("<NACondenser>");
+                                        NACondenserEnd = channel.indexOf("</NACondenser>");
+                                        if ((NACondenserStart >= 0) && (NACondenserEnd > NACondenserStart)) {
+                                            NACondenser[channelsFound] = channel.substring(NACondenserStart, NACondenserEnd);
+                                            NACondenserStart = NACondenser[channelsFound].indexOf(">");
+                                            NACondenser[channelsFound] = 
+                                            		NACondenser[channelsFound].substring(NACondenserStart+1);
+                                            Preferences.debug("NA condenser = " + NACondenser[channelsFound] + "\n",
+                                            		Preferences.DEBUG_FILEIO);
+                                        } // if ((NACondenserStart >= 0) && (NACondenserEnd > NACondenserStart))
+                                        ratioStart = channel.indexOf("<Ratio>");
+                                        ratioEnd = channel.indexOf("</Ratio>");
+                                        if ((ratioStart >= 0) && (ratioEnd > ratioStart)) {
+                                            ratio[channelsFound] = channel.substring(ratioStart, ratioEnd);
+                                            ratioStart = ratio[channelsFound].indexOf(">");
+                                            ratio[channelsFound] = 
+                                            		ratio[channelsFound].substring(ratioStart+1);
+                                            Preferences.debug("Ratio between two active channels = " + ratio[channelsFound] + "\n",
+                                            		Preferences.DEBUG_FILEIO);
+                                        } // if ((ratioStart >= 0) && (ratioEnd > ratioStart))
+                                        detectorSettingsStart = channel.indexOf("<DetectorSettings>");
+                                        detectorSettingsEnd = channel.indexOf("</DetectorSettings>");
+                                        if ((detectorSettingsStart >= 0) && (detectorSettingsEnd > detectorSettingsStart)) {
+                                            detectorSettings = channel.substring(detectorSettingsStart, detectorSettingsEnd);
+                                            detectorSettingsStart = detectorSettings.indexOf(">");
+                                            detectorSettings =  detectorSettings.substring(detectorSettingsStart+1);
+                                            detectorBinningStart = detectorSettings.indexOf("<Binning>");
+                                            detectorBinningEnd = detectorSettings.indexOf("</Binning>");
+                                            if ((detectorBinningStart >= 0) && (detectorBinningEnd > detectorBinningStart)) {
+                                                detectorBinning[channelsFound] = 
+                                                		detectorSettings.substring(detectorBinningStart, detectorBinningEnd);
+                                                detectorBinningStart = detectorBinning[channelsFound].indexOf(">");
+                                                detectorBinning[channelsFound] = 
+                                                		detectorBinning[channelsFound].substring(detectorBinningStart+1);
+                                                Preferences.debug("Detector binning = " + detectorBinning[channelsFound] + "\n",
+                                                		Preferences.DEBUG_FILEIO);
+                                            } // if ((detectorBinningStart >= 0) && (detectorBinningEnd > detectorBinningStart))
+                                            detectorGainStart = detectorSettings.indexOf("<Gain>");
+                                            detectorGainEnd = detectorSettings.indexOf("</Gain>");
+                                            if ((detectorGainStart >= 0) && (detectorGainEnd > detectorGainStart)) {
+                                                detectorGain[channelsFound] = 
+                                                		detectorSettings.substring(detectorGainStart, detectorGainEnd);
+                                                detectorGainStart = detectorGain[channelsFound].indexOf(">");
+                                                detectorGain[channelsFound] = 
+                                                		detectorGain[channelsFound].substring(detectorGainStart+1);
+                                                Preferences.debug("Detector gain = " + detectorGain[channelsFound] + "\n",
+                                                		Preferences.DEBUG_FILEIO);
+                                            } // if ((detectorGainStart >= 0) && (detectorGainEnd > detectorGainStart))
+                                            detectorDigitalGainStart = detectorSettings.indexOf("<DigitalGain>");
+                                            detectorDigitalGainEnd = detectorSettings.indexOf("</DigitalGain>");
+                                            if ((detectorDigitalGainStart >= 0) && (detectorDigitalGainEnd > detectorDigitalGainStart)) {
+                                                detectorDigitalGain[channelsFound] = 
+                                                		detectorSettings.substring(detectorDigitalGainStart, detectorDigitalGainEnd);
+                                                detectorDigitalGainStart = detectorDigitalGain[channelsFound].indexOf(">");
+                                                detectorDigitalGain[channelsFound] = 
+                                                		detectorDigitalGain[channelsFound].substring(detectorDigitalGainStart+1);
+                                                Preferences.debug("Detector digital gain = " + detectorDigitalGain[channelsFound] + "\n",
+                                                		Preferences.DEBUG_FILEIO);
+                                            } // if ((detectorDigitalGainStart >= 0) && (detectorDigitalGainEnd > detectorDigitalGainStart))
+                                            detectorOffsetStart = detectorSettings.indexOf("<Offset>");
+                                            detectorOffsetEnd = detectorSettings.indexOf("</Offset>");
+                                            if ((detectorOffsetStart >= 0) && (detectorOffsetEnd > detectorOffsetStart)) {
+                                                detectorOffset[channelsFound] = 
+                                                		detectorSettings.substring(detectorOffsetStart, detectorOffsetEnd);
+                                                detectorOffsetStart = detectorOffset[channelsFound].indexOf(">");
+                                                detectorOffset[channelsFound] = 
+                                                		detectorOffset[channelsFound].substring(detectorOffsetStart+1);
+                                                Preferences.debug("Detector gain offset = " + detectorOffset[channelsFound] + "\n",
+                                                		Preferences.DEBUG_FILEIO);
+                                            } // if ((detectorOffsetStart >= 0) && (detectorOffsetEnd > detectorOffsetStart))
+                                            detectorEMGainStart = detectorSettings.indexOf("<EMGain>");
+                                            detectorEMGainEnd = detectorSettings.indexOf("</EMGain>");
+                                            if ((detectorEMGainStart >= 0) && (detectorEMGainEnd > detectorEMGainStart)) {
+                                                detectorEMGain[channelsFound] = 
+                                                		detectorSettings.substring(detectorEMGainStart, detectorEMGainEnd);
+                                                detectorEMGainStart = detectorEMGain[channelsFound].indexOf(">");
+                                                detectorEMGain[channelsFound] = 
+                                                		detectorEMGain[channelsFound].substring(detectorEMGainStart+1);
+                                                Preferences.debug("Detector EM gain = " + detectorEMGain[channelsFound] + "\n",
+                                                		Preferences.DEBUG_FILEIO);
+                                            } // if ((detectorEMGainStart >= 0) && (detectorEMGainEnd > detectorEMGainStart))
+                                            detectorVoltageStart = detectorSettings.indexOf("<Voltage>");
+                                            detectorVoltageEnd = detectorSettings.indexOf("</Voltage>");
+                                            if ((detectorVoltageStart >= 0) && (detectorVoltageEnd > detectorVoltageStart)) {
+                                                detectorVoltage[channelsFound] = 
+                                                		detectorSettings.substring(detectorVoltageStart, detectorVoltageEnd);
+                                                detectorVoltageStart = detectorVoltage[channelsFound].indexOf(">");
+                                                detectorVoltage[channelsFound] = 
+                                                		detectorVoltage[channelsFound].substring(detectorVoltageStart+1);
+                                                Preferences.debug("Detector voltage in volts = " + detectorVoltage[channelsFound] + "\n",
+                                                		Preferences.DEBUG_FILEIO);
+                                            } // if ((detectorVoltageStart >= 0) && (detectorVoltageEnd > detectorVoltageStart))
+                                            detectorReadOutRateStart = detectorSettings.indexOf("<ReadOutRate>");
+                                            detectorReadOutRateEnd = detectorSettings.indexOf("</ReadOutRate>");
+                                            if ((detectorReadOutRateStart >= 0) && (detectorReadOutRateEnd > detectorReadOutRateStart)) {
+                                                detectorReadOutRate[channelsFound] = 
+                                                		detectorSettings.substring(detectorReadOutRateStart, detectorReadOutRateEnd);
+                                                detectorReadOutRateStart = detectorReadOutRate[channelsFound].indexOf(">");
+                                                detectorReadOutRate[channelsFound] = 
+                                                		detectorReadOutRate[channelsFound].substring(detectorReadOutRateStart+1);
+                                                Preferences.debug("Detector read out rate in megahertz = " + 
+                                                		detectorReadOutRate[channelsFound] + "\n", Preferences.DEBUG_FILEIO);
+                                            } // if ((detectorReadOutRateStart >= 0) && (detectorReadOutRateEnd > detectorReadOutRateStart))
+                                            detectorUseBrightnessContrastCorrectionStart = 
+                                            		detectorSettings.indexOf("<UseBrightnessContrastCorrection>");
+                                            detectorUseBrightnessContrastCorrectionEnd = 
+                                            		detectorSettings.indexOf("</UseBrightnessContrastCorrection>");
+                                            if ((detectorUseBrightnessContrastCorrectionStart >= 0) &&
+                                            		(detectorUseBrightnessContrastCorrectionEnd > 
+                                            		detectorUseBrightnessContrastCorrectionStart)) {
+                                                detectorUseBrightnessContrastCorrection[channelsFound] = 
+                                                		detectorSettings.substring(detectorUseBrightnessContrastCorrectionStart, 
+                                                				detectorUseBrightnessContrastCorrectionEnd);
+                                                detectorUseBrightnessContrastCorrectionStart = 
+                                                		detectorUseBrightnessContrastCorrection[channelsFound].indexOf(">");
+                                                detectorUseBrightnessContrastCorrection[channelsFound] = 
+                                                    detectorUseBrightnessContrastCorrection[channelsFound].substring(
+                                                    		detectorUseBrightnessContrastCorrectionStart+1);
+                                                Preferences.debug("Detector use brightness contrast correction = " + 
+                                                    detectorUseBrightnessContrastCorrection[channelsFound] + "\n",
+                                                		Preferences.DEBUG_FILEIO);
+                                            } // if ((detectorUseBrightnessContrastCorrectionStart >= 0) && 
+                                        } // if ((detectorSettingsStart >= 0) && (detectorSettingsEnd > detectorSettingsStart))
+                                        lightSourceSettingsStart = channel.indexOf("<LightSourceSettings>");
+                                        lightSourceSettingsEnd = channel.indexOf("</LightSourceSettings>");
+                                        if ((lightSourceSettingsStart >= 0) && (lightSourceSettingsEnd > lightSourceSettingsStart)) {
+                                            lightSourceSettings = channel.substring(lightSourceSettingsStart, lightSourceSettingsEnd);
+                                            lightSourceSettingsStart = lightSourceSettings.indexOf(">");
+                                            lightSourceSettings =  lightSourceSettings.substring(lightSourceSettingsStart+1);
+                                            lightSourceWavelengthStart = lightSourceSettings.indexOf("<Wavelength>");
+                                            lightSourceWavelengthEnd = lightSourceSettings.indexOf("</Wavelength>");
+                                            if ((lightSourceWavelengthStart >= 0) && 
+                                            		(lightSourceWavelengthEnd > lightSourceWavelengthStart)) {
+                                                lightSourceWavelength[channelsFound] = 
+                                                		lightSourceSettings.substring(lightSourceWavelengthStart, lightSourceWavelengthEnd);
+                                                lightSourceWavelengthStart = lightSourceWavelength[channelsFound].indexOf(">");
+                                                lightSourceWavelength[channelsFound] = 
+                                                		lightSourceWavelength[channelsFound].substring(lightSourceWavelengthStart+1);
+                                                Preferences.debug("Light source wavelength in nanometers = " + lightSourceWavelength[channelsFound] +
+                                                		"\n", Preferences.DEBUG_FILEIO);
+                                            } // if ((lightSourceWavelengthStart >= 0) && (lightSourceWavelengthEnd > 
+                                            lightSourceAttenuationStart = lightSourceSettings.indexOf("<Attenuation>");
+                                            lightSourceAttenuationEnd = lightSourceSettings.indexOf("</Attenuation>");
+                                            if ((lightSourceAttenuationStart >= 0) && 
+                                            		(lightSourceAttenuationEnd > lightSourceAttenuationStart)) {
+                                                lightSourceAttenuation[channelsFound] = 
+                                                		lightSourceSettings.substring(
+                                                				lightSourceAttenuationStart, lightSourceAttenuationEnd);
+                                                lightSourceAttenuationStart = lightSourceAttenuation[channelsFound].indexOf(">");
+                                                lightSourceAttenuation[channelsFound] = 
+                                                		lightSourceAttenuation[channelsFound].substring(lightSourceAttenuationStart+1);
+                                                Preferences.debug("Light source attenuation = " + lightSourceAttenuation[channelsFound] +
+                                                		"\n", Preferences.DEBUG_FILEIO);
+                                            } // if ((lightSourceAttenuationStart >= 0) && (lightSourceAttenuationEnd > 
+                                            lightSourceIntensityStart = lightSourceSettings.indexOf("<Intensity>");
+                                            lightSourceIntensityEnd = lightSourceSettings.indexOf("</Intensity>");
+                                            if ((lightSourceIntensityStart >= 0) && 
+                                            		(lightSourceIntensityEnd > lightSourceIntensityStart)) {
+                                                lightSourceIntensity[channelsFound] = 
+                                                		lightSourceSettings.substring(lightSourceIntensityStart, lightSourceIntensityEnd);
+                                                lightSourceIntensityStart = lightSourceIntensity[channelsFound].indexOf(">");
+                                                lightSourceIntensity[channelsFound] = 
+                                                		lightSourceIntensity[channelsFound].substring(lightSourceIntensityStart+1);
+                                                Preferences.debug("Light source intensity = " + lightSourceIntensity[channelsFound] +
+                                                		"\n", Preferences.DEBUG_FILEIO);
+                                            } // if ((lightSourceIntensityStart >= 0) && (lightSourceIntensityEnd > 
+                                        } // if ((lightSourceSettingsStart >= 0) && (lightSourceSettingsEnd > lightSourceSettingsStart))
                                         channels = channels.substring(channelEnd + 10);
                                         if (channels == null) {
                                         	break;
@@ -1729,6 +1968,21 @@ public class FileCZI extends FileBase {
                                     fileInfo.setColor(originalColor);
                                     fileInfo.setExposureTime(exposureTime);
                                     fileInfo.setSectionThickness(sectionThickness);
+                                    fileInfo.setReflector(reflector);
+                                    fileInfo.setCondenserContrast(condenserContrast);
+                                    fileInfo.setNACondenser(NACondenser);
+                                    fileInfo.setRatio(ratio);
+                                    fileInfo.setDetectorBinning(detectorBinning);
+                                    fileInfo.setDetectorGain(detectorGain);
+                                    fileInfo.setDetectorDigitalGain(detectorDigitalGain);
+                                    fileInfo.setDetectorOffset(detectorOffset);
+                                    fileInfo.setDetectorEMGain(detectorEMGain);
+                                    fileInfo.setDetectorVoltage(detectorVoltage);
+                                    fileInfo.setDetectorReadOutRate(detectorReadOutRate);
+                                    fileInfo.setDetectorUseBrightnessContrastCorrection(detectorUseBrightnessContrastCorrection);
+                                    fileInfo.setLightSourceWavelength(lightSourceWavelength);
+                                    fileInfo.setLightSourceAttenuation(lightSourceAttenuation);
+                                    fileInfo.setLightSourceIntensity(lightSourceIntensity);
                                 } // if ((channelsStart >= 0) && (channelsEnd > channelsStart))
                             } // if ((dimensionsStart >= 0) && (dimensionsEnd > dimensionsStart))
                         } // if ((imageStart >= 0) && (imageEnd > imageStart))
