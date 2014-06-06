@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.HashSet;
 import java.util.Iterator;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -905,7 +904,55 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 				//If there is an intersection between the two, then do 
 				//not do the following part where you save everything
 				
-				HashSet<Integer> populated = new HashSet<Integer>();
+				ArrayList<ArrayList<Integer>> lists = new ArrayList<ArrayList<Integer>>();
+				for(int i=0;i<pathBuffer.size();i++){
+					ArrayList<Integer> next = new ArrayList<Integer>();
+					int ni = pathBuffer.get(i);
+					int nx = ni%width;
+					int ny = ni/width;
+					for(int mx=nx-1;mx<=nx+1;mx++){
+						for(int my=ny-1;my<=ny+1;my++){
+							if((mx==nx && my==ny) || (mx==x && my==y)) continue;
+							ind = mx + my*width;
+							if(pathBuffer.contains(ind)) continue;
+							if(skelClone.get(ind)){
+								next.add(ind);
+							}
+						}
+					}
+					lists.add(next);
+				}
+				
+				ArrayList<Integer> toRemove = new ArrayList<Integer>();
+				for(int i=0;i<lists.size();i++){
+					for(int j=i+1;j<lists.size();j++){
+						ArrayList<Integer> l1 = lists.get(i);
+						ArrayList<Integer> l2 = lists.get(j);
+						int i1 = pathBuffer.get(i);
+						int i2 = pathBuffer.get(j);
+						int subset = subsetCheck(l1, l2);
+						if(subset == 0 && !toRemove.contains(i1))
+							toRemove.add(i1);
+						else if(subset == 1 && !toRemove.contains(i1))
+							toRemove.add(i1);
+						else if(subset == 2 && !toRemove.contains(i2))
+							toRemove.add(i2);
+					}
+				}
+				
+				if(toRemove.size() == 0){
+					line++;
+					writeInfo(line, start, 0, current.line);
+					current.line = line;
+					originated = start;
+				} else {
+					for(Integer i : toRemove){
+						pathBuffer.remove(i);
+						skelClone.set(i, false);
+					}
+				}
+				
+				/*HashSet<Integer> populated = new HashSet<Integer>();
 				boolean overlap = false;
 				for(int i=0;i<pathBuffer.size();i++){
 					int ni = pathBuffer.get(i);
@@ -925,15 +972,17 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 							}
 						}
 					}
-				}
+				}*/
+				//Might want to check if one is a subset of the other, in which case THEN
+				//you choose which one to delete
 				
 				//If intersection, do not do this
-				if(!overlap){
+				/*if(!overlap){
 					line++;
 					writeInfo(line, start, 0, current.line);
 					current.line = line;
 					originated = start;
-				}
+				}*/
 			}
 			//Check if you need to bridge any gaps in cyclic neurons
 			else if(num == 0){
@@ -1057,6 +1106,36 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			}
 		}
 	}*/
+	
+	/**
+	 * 0 if equal, -1 if neither is a subset, 1 if first is subset of second,
+	 * 2 if second is subset of first
+	 * @param keep
+	 * @param compare
+	 * @return
+	 */
+	private int subsetCheck(ArrayList<Integer> l1, ArrayList<Integer> l2){
+		
+		if(l1.size() == l2.size()){
+			for(Integer i : l1){
+				if(!l2.contains(i))
+					return -1;
+			}
+			return 0;
+		} else if(l1.size() < l2.size()){
+			for(Integer i : l1){
+				if(!l2.contains(i))
+					return -1;
+			}
+			return 1;
+		} else{
+			for(Integer i : l2){
+				if(!l1.contains(i))
+					return -1;
+			}
+			return 2;
+		}
+	}
 	
 	/**
 	 * Method to find any ends of branches. All the true bits in the skeleton
