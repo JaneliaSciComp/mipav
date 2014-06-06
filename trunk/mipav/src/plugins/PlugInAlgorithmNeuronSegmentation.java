@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.HashSet;
 import java.util.Iterator;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -900,10 +901,39 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			}
 			//Refill the stack with points to traverse
 			if(num >= 2){
-				line++;
-				writeInfo(line, start, 0, current.line);
-				current.line = line;
-				originated = start;
+				//New check would go here? Would go through pathBuffer
+				//If there is an intersection between the two, then do 
+				//not do the following part where you save everything
+				
+				HashSet<Integer> populated = new HashSet<Integer>();
+				boolean overlap = false;
+				for(int i=0;i<pathBuffer.size();i++){
+					int ni = pathBuffer.get(i);
+					int nx = ni%width;
+					int ny = ni/width;
+					loop:for(int mx=nx-1;mx<=nx+1;mx++){
+						for(int my=ny-1;my<=ny+1;my++){
+							if((mx==nx && my==ny) || (mx==x && my==y)) continue;
+							ind = mx + my*width;
+							if(skelClone.get(ind)){
+								if(!populated.add(ind)){
+									pathBuffer.remove(i);
+									overlap = true;
+									i--;
+									break loop;
+								}
+							}
+						}
+					}
+				}
+				
+				//If intersection, do not do this
+				if(!overlap){
+					line++;
+					writeInfo(line, start, 0, current.line);
+					current.line = line;
+					originated = start;
+				}
 			}
 			//Check if you need to bridge any gaps in cyclic neurons
 			else if(num == 0){
