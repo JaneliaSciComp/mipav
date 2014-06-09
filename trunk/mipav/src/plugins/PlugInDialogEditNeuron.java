@@ -2982,11 +2982,10 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 						
 						delete = true; //maybe, need to check if you create two disjointed sets, but needs to
 						//go before you actually createh links and what not
-					} else System.err.println("No logical connection");
+					} 
 					
 
 				} else {
-					System.err.println("Not overlap pt");
 					//Need to reconnect everything logically, or replace? Not really sure what
 					//to do with his case
 				}
