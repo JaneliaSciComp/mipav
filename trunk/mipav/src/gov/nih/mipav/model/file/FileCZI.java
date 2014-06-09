@@ -657,6 +657,44 @@ public class FileCZI extends FileBase {
         int lightSourceIntensityStart;
         int lightSourceIntensityEnd;
         String lightSourceIntensity[] = new String[]{null, null, null, null};
+        boolean channelIDFoundBefore[] = new boolean[4];
+        boolean channelIDsFoundBefore;
+        int lowStart;
+        int lowEnd;
+        String low[] = new String[]{null, null, null, null};
+        int highStart;
+        int highEnd;
+        String high[] = new String[]{null, null, null, null};
+        int gammaStart;
+        int gammaEnd;
+        String gamma[] = new String[]{null, null, null, null};
+        int modeStart;
+        int modeEnd;
+        String mode[] = new String[]{null, null, null, null};
+        int pointsStart;
+        int pointsEnd;
+        String points[] = new String[]{null, null, null, null};
+        int channelDescriptionStart;
+        int channelDescriptionEnd;
+        String channelDescription[] = new String[]{null, null, null, null};
+        int channelWeightStart;
+        int channelWeightEnd;
+        String channelWeight[] = new String[]{null, null, null, null};
+        int instrumentStart;
+        int instrumentEnd;
+        String instrument;
+        int microscopesStart;
+        int microscopesEnd;
+        String microscopes;
+        int microscopeStart;
+        int microscopeEnd;
+        String microscope;
+        int microscopeSystemStart;
+        int microscopeSystemEnd;
+        String microscopeSystem;
+        int microscopeTypeStart;
+        int microscopeTypeEnd;
+        String microscopeType;
         
         try {
             fileInfo = new FileInfoCZI(fileName, fileDir, FileUtility.CZI); // dummy fileInfo
@@ -1336,6 +1374,45 @@ public class FileCZI extends FileBase {
                                 }
                             } // if ((countryStart >= 0) && (countryEnd > countryStart))
                         } // if ((userStart >= 0) && (userEnd > userStart)) 
+                        instrumentStart = information.indexOf("<Instrument>");
+                        instrumentEnd = information.indexOf("</Instrument>");
+                        if ((instrumentStart >= 0) && (instrumentEnd > instrumentStart)) {
+                        	instrument = information.substring(instrumentStart, instrumentEnd);
+                        	instrumentStart = instrument.indexOf(">");
+                        	instrument = instrument.substring(instrumentStart + 1);
+                        	microscopesStart = instrument.indexOf("<Microscopes>");
+                        	microscopesEnd = instrument.indexOf("</Microscopes>");
+                        	if ((microscopesStart  >= 0) && (microscopesEnd > microscopesStart)) {
+                        	    microscopes = instrument.substring(microscopesStart, microscopesEnd);
+                        	    microscopesStart = microscopes.indexOf(">");
+                        	    microscopes = microscopes.substring(microscopesStart+1);
+                        	    microscopeStart = microscopes.indexOf("<Microscope Id=\"Microscope:");
+                            	microscopeEnd = microscopes.indexOf("</Microscope>");
+                            	if ((microscopeStart  >= 0) && (microscopeEnd > microscopeStart)) {
+                            	    microscope = microscopes.substring(microscopeStart, microscopeEnd);
+                            	    microscopeStart = microscope.indexOf(">");
+                            	    microscope = microscope.substring(microscopeStart+1);
+                            	    microscopeSystemStart = microscope.indexOf("<System>");
+                                	microscopeSystemEnd = microscope.indexOf("</System>");
+                                	if ((microscopeSystemStart  >= 0) && (microscopeSystemEnd > microscopeSystemStart)) {
+                                	    microscopeSystem = microscope.substring(microscopeSystemStart, microscopeSystemEnd);
+                                	    microscopeSystemStart = microscopeSystem.indexOf(">");
+                                	    microscopeSystem = microscopeSystem.substring(microscopeSystemStart+1);
+                                	    Preferences.debug("Microscope system = " + microscopeSystem + "\n", Preferences.DEBUG_FILEIO);
+                                	    fileInfo.setMicroscopeSystem(microscopeSystem);
+                                	} // if ((microscopeSystemStart  >= 0) && (microscopeSystemEnd > microscopeSystemStart))
+                                	microscopeTypeStart = microscope.indexOf("<Type>");
+                                	microscopeTypeEnd = microscope.indexOf("</Type>");
+                                	if ((microscopeTypeStart  >= 0) && (microscopeTypeEnd > microscopeTypeStart)) {
+                                	    microscopeType = microscope.substring(microscopeTypeStart, microscopeTypeEnd);
+                                	    microscopeTypeStart = microscopeType.indexOf(">");
+                                	    microscopeType = microscopeType.substring(microscopeTypeStart+1);
+                                	    Preferences.debug("Microscope type = " + microscopeType + "\n", Preferences.DEBUG_FILEIO);
+                                	    fileInfo.setMicroscopeType(microscopeType);
+                                	} // if ((microscopeTypeStart  >= 0) && (microscopeTypeEnd > microscopeTypeStart))
+                            	} // if ((microscopeStart  >= 0) && (microscopeEnd > microscopeStart))
+                        	} // if ((microscopesStart  >= 0) && (microscopesEnd > microscopesStart))
+                        } // if ((instrumentStart >= 0) && (instrumentEnd > instrumentStart))
                         imageStart = information.indexOf("<Image>");
                         imageEnd = information.indexOf("</Image>");
                         if ((imageStart >= 0) && (imageEnd > imageStart)) {
@@ -2030,6 +2107,13 @@ public class FileCZI extends FileBase {
                                     channelID[channelsFound] = channel.substring(channelIDStart+1, channelIDEnd);
                                     Preferences.debug("In DisplaySettings Channel ID = " + channelID[channelsFound] + "\n",
                                     		Preferences.DEBUG_FILEIO);
+                                    if ((fileInfo.getChannelID() != null) && (fileInfo.getChannelID()[channelsFound] != null)  &&
+                                    		fileInfo.getChannelID()[channelsFound].equals(channelID[channelsFound])) {
+                                        channelIDFoundBefore[channelsFound] = true;	
+                                    }
+                                    else {
+                                    	channelIDFoundBefore[channelsFound] = false;
+                                    }
                                 } // if ((channelIDStart >= 0) && (channelIDEnd > channelIDStart))
                                 if ((channelNameStart >= 0) && (channelNameEnd > channelNameStart)) {
                                     channelName[channelsFound] = channel.substring(channelNameStart+1, channelNameEnd);
@@ -2059,7 +2143,69 @@ public class FileCZI extends FileBase {
                                     	// Red and green - just do red
                                     	channelColor[channelsFound] = 1;
                                     }
-                                } // if ((colorStart >= 0) && (colorEnd > colorStart)) 
+                                } // if ((colorStart >= 0) && (colorEnd > colorStart))
+                                lowStart = channel.indexOf("<Low>");
+                                lowEnd = channel.indexOf("</Low>");
+                                if ((lowStart >= 0) && (lowEnd > lowStart)) {
+                                    low[channelsFound] = channel.substring(lowStart,lowEnd);
+                                    lowStart = low[channelsFound].indexOf(">");
+                                    low[channelsFound] = low[channelsFound].substring(lowStart+1);
+                                    Preferences.debug("Normalized low(=black) value of the mapping range = " +
+                                        low[channelsFound] + "\n", Preferences.DEBUG_FILEIO);
+                                } //  if ((lowStart >= 0) && (lowEnd > lowStart))
+                                highStart = channel.indexOf("<High>");
+                                highEnd = channel.indexOf("</High>");
+                                if ((highStart >= 0) && (highEnd > highStart)) {
+                                    high[channelsFound] = channel.substring(highStart,highEnd);
+                                    highStart = high[channelsFound].indexOf(">");
+                                    high[channelsFound] = high[channelsFound].substring(highStart+1);
+                                    Preferences.debug("Normalized high(=white) value of the mapping range = " +
+                                        high[channelsFound] + "\n", Preferences.DEBUG_FILEIO);
+                                } //  if ((highStart >= 0) && (highEnd > highStart))
+                                gammaStart = channel.indexOf("<Gamma>");
+                                gammaEnd = channel.indexOf("</Gamma>");
+                                if ((gammaStart >= 0) && (gammaEnd > gammaStart)) {
+                                    gamma[channelsFound] = channel.substring(gammaStart,gammaEnd);
+                                    gammaStart = gamma[channelsFound].indexOf(">");
+                                    gamma[channelsFound] = gamma[channelsFound].substring(gammaStart+1);
+                                    Preferences.debug("Gamma value to be applied to the mapping range = " +
+                                        gamma[channelsFound] + "\n", Preferences.DEBUG_FILEIO);
+                                } //  if ((gammaStart >= 0) && (gammaEnd > gammaStart))
+                                modeStart = channel.indexOf("<Mode>");
+                                modeEnd = channel.indexOf("</Mode>");
+                                if ((modeStart >= 0) && (modeEnd > modeStart)) {
+                                    mode[channelsFound] = channel.substring(modeStart,modeEnd);
+                                    modeStart = mode[channelsFound].indexOf(">");
+                                    mode[channelsFound] = mode[channelsFound].substring(modeStart+1);
+                                    Preferences.debug("Mode = " + mode[channelsFound] + "\n", Preferences.DEBUG_FILEIO);
+                                } //  if ((modeStart >= 0) && (modeEnd > modeStart))
+                                pointsStart = channel.indexOf("<Points>");
+                                pointsEnd = channel.indexOf("</Points>");
+                                if ((pointsStart >= 0) && (pointsEnd > pointsStart)) {
+                                    points[channelsFound] = channel.substring(pointsStart,pointsEnd);
+                                    pointsStart = points[channelsFound].indexOf(">");
+                                    points[channelsFound] = points[channelsFound].substring(pointsStart+1);
+                                    Preferences.debug("Points = " + points[channelsFound] + "\n", Preferences.DEBUG_FILEIO);
+                                } //  if ((pointsStart >= 0) && (pointsEnd > pointsStart))
+                                channelDescriptionStart = channel.indexOf("<Description>");
+                                channelDescriptionEnd = channel.indexOf("</Description>");
+                                if ((channelDescriptionStart >= 0) && (channelDescriptionEnd > channelDescriptionStart)) {
+                                    channelDescription[channelsFound] = channel.substring(channelDescriptionStart,channelDescriptionEnd);
+                                    channelDescriptionStart = channelDescription[channelsFound].indexOf(">");
+                                    channelDescription[channelsFound] = 
+                                    		channelDescription[channelsFound].substring(channelDescriptionStart+1);
+                                    Preferences.debug("Channel description = " + channelDescription[channelsFound] + "\n", 
+                                    		Preferences.DEBUG_FILEIO);
+                                } //  if ((channelDescriptionStart >= 0) && (channelDescriptionEnd > channelDescriptionStart))
+                                channelWeightStart = channel.indexOf("<ChannelWeight>");
+                                channelWeightEnd = channel.indexOf("</ChannelWeight>");
+                                if ((channelWeightStart >= 0) && (channelWeightEnd > channelWeightStart)) {
+                                    channelWeight[channelsFound] = channel.substring(channelWeightStart,channelWeightEnd);
+                                    channelWeightStart = channelWeight[channelsFound].indexOf(">");
+                                    channelWeight[channelsFound] = channelWeight[channelsFound].substring(channelWeightStart+1);
+                                    Preferences.debug("Channel weight (ratioamong all selected channels) = " +
+                                        channelWeight[channelsFound] + "\n", Preferences.DEBUG_FILEIO);
+                                } //  if ((channelWeightStart >= 0) && (channelWeightEnd > channelWeightStart))
                                 channels = channels.substring(channelEnd + 10);
                                 if (channels == null) {
                                 	break;
@@ -2072,6 +2218,21 @@ public class FileCZI extends FileBase {
                                 }
                                 channelEnd = channels.indexOf("</Channel>");
                             } // while ((channelStart >= 0) && (channelEnd > channelStart))
+                            channelIDsFoundBefore = true;
+                            for (i = 0; i <= channelsFound; i++) {
+                                if (channelIDFoundBefore[i] == false) {
+                                	channelIDsFoundBefore = false;
+                                }
+                            }
+                            if (channelIDsFoundBefore) {
+                            	fileInfo.setLow(low);
+                                fileInfo.setHigh(high);
+                                fileInfo.setGamma(gamma);
+                                fileInfo.setMode(mode);
+                                fileInfo.setPoints(points);
+                                fileInfo.setChannelDescription(channelDescription);
+                                fileInfo.setChannelWeight(channelWeight);
+                            }
                         } // if ((channelsStart >= 0) && (channelsEnd > channelsStart))
                     } // if ((displaySettingStart >= 0) && (displaySettingEnd > displaySettingStart))
                     Preferences.debug("XML data: \n", Preferences.DEBUG_FILEIO);
