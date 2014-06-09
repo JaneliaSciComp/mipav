@@ -1673,10 +1673,9 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 					if(e1 == null){
 						e1 = new LinkElement(p1);
 					}
-					e0.addLinkTo(e1);
 					
-					
-					paths.add(p0, p1);
+					if(e0.addLinkTo(e1))
+						paths.add(p0, p1);
 					
 					boolean contains = false;
 					for(int m=0;m<pts.size();m++){
@@ -2352,6 +2351,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			Vector3f ptVec = ptVOI.exportPoint();
 			Point coord = new Point((int)ptVec.X, (int)ptVec.Y);
 			
+			LinkElement elem = links.get(origin);
+			
 			boolean delete = links.removeNode(coord);
 			
 			if(!delete)
@@ -2361,7 +2362,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			controlPts.removeCurve(activeVOI);
 			
 			if(coord.equals(origin)){
-				LinkElement elem = links.get(origin);
+				
 				origin = elem.linked.get(0).pt;
 				VOIBaseVector base = controlPts.getCurves();
 				for(int i=0;i<base.size();i++){
@@ -2686,9 +2687,13 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			links.add(this);
 		}
 		
-		private void addLinkTo(LinkElement to){
-			linked.add(to);
-			to.linked.add(this);
+		private boolean addLinkTo(LinkElement to){
+			if(!linked.contains(to)){
+				linked.add(to);
+				to.linked.add(this);
+				return true;
+			}
+			return false;
 		}
 		
 		private ArrayList<LinkElement> copyList(){
@@ -2977,10 +2982,11 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 						
 						delete = true; //maybe, need to check if you create two disjointed sets, but needs to
 						//go before you actually createh links and what not
-					}
+					} else System.err.println("No logical connection");
 					
 
 				} else {
+					System.err.println("Not overlap pt");
 					//Need to reconnect everything logically, or replace? Not really sure what
 					//to do with his case
 				}
@@ -2994,6 +3000,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				}
 			} else{
 				//Size is greater than 4, not really sure what to do with this
+				System.err.println("More than 4 neighbors");
 			}
 			
 			if(delete)
