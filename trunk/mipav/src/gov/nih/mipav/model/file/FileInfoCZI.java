@@ -93,6 +93,15 @@ public class FileInfoCZI extends FileInfoBase {
 	private String lightSourceWavelength[] = null;
 	private String lightSourceAttenuation[] = null;
 	private String lightSourceIntensity[] = null;
+	private String low[] = null;
+	private String high[] = null;
+	private String gamma[] = null;
+	private String mode[] = null;
+	private String points[] = null;
+	private String channelDescription[] = null;
+	private String channelWeight[] = null;
+	private String microscopeSystem = null;
+	private String microscopeType = null;
 		
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -286,7 +295,18 @@ public class FileInfoCZI extends FileInfoBase {
         	}
         }
         
+        if (microscopeSystem != null) {
+        	dialog.append("Microscope system = " + microscopeSystem + "\n");
+        }
+        
+        if (microscopeType != null) {
+        	dialog.append("Microscope type = " + microscopeType + "\n");
+        }
+        
         for (i = 0; i < channelsFound; i++) {
+        	if (i == 0) {
+        		dialog.append("\n");
+        	}
      
             if ((channelID != null) && (channelID[i] != null)) {
             	dialog.append("Channel ID = " + channelID[i] + "\n") ;
@@ -382,6 +402,40 @@ public class FileInfoCZI extends FileInfoBase {
             
             if ((ratio != null) && (ratio[i] != null)) {
             	dialog.append("Ratio between two active channels = " + ratio[i] + "\n");
+            }
+            
+            if ((low != null) && (low[i] != null) && (!low[i].equals("NaN"))) {
+            	dialog.append("Normalized low(=black) value of the mapping range = " +low[i] + "\n");
+            }
+            
+            if ((high != null) && (high[i] != null) && (!high[i].equals("NaN"))) {
+            	dialog.append("Normalized high(=white) value of the mapping range = " + high[i] + "\n");
+            }
+            
+            if ((gamma != null) && (gamma[i] != null) && (!gamma[i].equals("NaN"))) {
+            	dialog.append("Gamma value to be applied to the mapping range = " + gamma[i] + "\n");
+            }
+            
+            if ((mode != null) && (mode[i] != null)) {
+            	dialog.append("Mode = " + mode[i] + "\n");
+            }
+            
+            if ((mode != null) && (mode[i] != null)  && ((mode[i].equals("Ramp")) || (mode[i].equals("Spline"))) &&
+            		(points != null) && (points[i] != null)) {
+            	if (mode[i].equals("Ramp")) {
+            	    dialog.append("Ramp mode points = " + points[i] + "\n");
+            	}
+            	else {
+            		dialog.append("Spline mode points = " + points[i] + "\n");	
+            	}
+            }
+            
+            if ((channelDescription != null) && (channelDescription[i] != null)) {
+            	dialog.append("Description = " + channelDescription[i] + "\n");
+            }
+            
+            if ((channelWeight != null) && (channelWeight[i] != null) && (!channelWeight[i].equals("NaN"))) {
+            	dialog.append("Channel weight (ratio among all selected channels) = " + channelWeight[i] + "\n");
             }
             
             if ((detectorBinning != null) && (detectorBinning[i] != null)) {
@@ -761,6 +815,14 @@ public class FileInfoCZI extends FileInfoBase {
     
     /**
      * 
+     * @return
+     */
+    public String[] getChannelID() {
+    	return channelID;
+    }
+    
+    /**
+     * 
      * @param channelName
      */
     public void setChannelName(String channelName[]) {
@@ -1029,5 +1091,77 @@ public class FileInfoCZI extends FileInfoBase {
      */
     public void setLightSourceIntensity(String lightSourceIntensity[]) {
     	this.lightSourceIntensity = lightSourceIntensity;
+    }
+    
+    /**
+     * 
+     * @param low
+     */
+    public void setLow(String low[]) {
+    	this.low = low;
+    }
+    
+    /**
+     * 
+     * @param high
+     */
+    public void setHigh(String high[]) {
+    	this.high = high;
+    }
+    
+    /**
+     * 
+     * @param gamma
+     */
+    public void setGamma(String gamma[]) {
+    	this.gamma = gamma;
+    }
+    
+    /**
+     * 
+     * @param mode
+     */
+    public void setMode(String mode[]) {
+    	this.mode = mode;
+    }
+    
+    /**
+     * 
+     * @param points
+     */
+    public void setPoints(String points[]) {
+    	this.points = points;
+    }
+    
+    /**
+     * 
+     * @param channelDescription
+     */
+    public void setChannelDescription(String channelDescription[]) {
+    	this.channelDescription = channelDescription;
+    }
+    
+    /**
+     * 
+     * @param channelWeight
+     */
+    public void setChannelWeight(String channelWeight[]) {
+    	this.channelWeight = channelWeight;
+    }
+    
+    /**
+     * 
+     * @param microscopeSystem
+     */
+    public void setMicroscopeSystem(String microscopeSystem) {
+    	this.microscopeSystem = microscopeSystem;
+    }
+    
+    /**
+     * 
+     * @param microscopeType
+     */
+    public void setMicroscopeType(String microscopeType) {
+    	this.microscopeType = microscopeType;
     }
 }
