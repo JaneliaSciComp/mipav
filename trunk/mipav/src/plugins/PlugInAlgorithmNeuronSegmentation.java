@@ -899,10 +899,11 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 				}
 			}
 			//Refill the stack with points to traverse
-			if(num >= 2){
-				//New check would go here? Would go through pathBuffer
-				//If there is an intersection between the two, then do 
-				//not do the following part where you save everything
+			if(num == 2){
+
+				//Check every point in the pathBuffer to see if they, in turn,
+				//add new points, and check if these additions are subsets of
+				//one another.
 				
 				ArrayList<ArrayList<Integer>> lists = new ArrayList<ArrayList<Integer>>();
 				for(int i=0;i<pathBuffer.size();i++){
@@ -923,6 +924,8 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 					lists.add(next);
 				}
 				
+				//You don't want to write points that are a subset of another
+				//point that is getting written
 				ArrayList<Integer> toRemove = new ArrayList<Integer>();
 				for(int i=0;i<lists.size();i++){
 					for(int j=i+1;j<lists.size();j++){
@@ -940,6 +943,10 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 					}
 				}
 				
+				//Do not write if there is a subset, instead remove things
+				//from the pathBuffer
+				
+				//Need to adjust this, as some cases you need to write it still
 				if(toRemove.size() == 0){
 					line++;
 					writeInfo(line, start, 0, current.line);
@@ -983,6 +990,12 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 					current.line = line;
 					originated = start;
 				}*/
+			}
+			else if(num > 2){
+				line++;
+				writeInfo(line, start, 0, current.line);
+				current.line = line;
+				originated = start;
 			}
 			//Check if you need to bridge any gaps in cyclic neurons
 			else if(num == 0){
