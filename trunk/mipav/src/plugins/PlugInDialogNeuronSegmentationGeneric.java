@@ -1092,6 +1092,10 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 
 	@Override
 	public void mousePressed(MouseEvent e) {
+		
+		//Need to change so that it is only left click that works
+		if(e.getButton() != MouseEvent.BUTTON1)
+			return;
 
 		float zoomX = frame.getComponentImage().getZoomX();
 		float zoomY = frame.getComponentImage().getZoomY();
