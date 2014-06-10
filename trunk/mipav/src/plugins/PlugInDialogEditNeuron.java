@@ -751,89 +751,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		return false;
 	}
 	
-	private boolean dfsTarget(LinkElement e, LinkElement prev, ArrayList<LinkElement> targets){
-		
-		ArrayDeque<LinkElement> stack = new ArrayDeque<LinkElement>();
-		HashSet<LinkElement> visited = new HashSet<LinkElement>();
-		ArrayList<LinkElement> pts = e.linked;
-		visited.add(prev);
-		
-		for(int i=0;i<pts.size();i++){
-			LinkElement ele = pts.get(i);
-			if(visited.contains(ele))
-				continue;
-			if(targets.contains(ele))
-				return true;
-			stack.addFirst(ele);
-			visited.add(ele);
-		}
-		
-		while(!stack.isEmpty()){
-			LinkElement ele = stack.poll();
-			pts = ele.linked;
-			for(int i=0;i<pts.size();i++){
-				LinkElement ele2 = pts.get(i);
-				if(visited.contains(ele2))
-					continue;
-				if(targets.contains(ele2))
-					return true;
-				stack.addFirst(ele2);
-				visited.add(ele2);
-			}
-		}
-
-		return false;
-	}
-	
-	/*private boolean dfsTarget(LinkElement e, LinkElement prev, ArrayList<LinkElement> targets){
-
-		ArrayDeque<LinkElement> stack = new ArrayDeque<LinkElement>();
-		
-		ArrayList<LinkElement> pts = e.linked;
-		
-		LinkElement prevEle = e;
-		
-		for(int i=0;i<pts.size();i++){
-			if(pts.get(i) == prev)
-				continue;
-			if(targets.contains(pts.get(i)))
-				return true;
-			stack.addFirst(pts.get(i));
-		}
-		
-		while(!stack.isEmpty()){
-			System.err.println("I'm still going " + stack.size());
-			LinkElement ele = stack.poll();
-			pts = ele.linked;
-			for(int i=0;i<pts.size();i++){
-				if(pts.get(i) == prevEle)
-					continue;
-				if(targets.contains(pts.get(i)))
-					return true;
-				stack.addFirst(pts.get(i));
-			}
-			prevEle = ele;
-		}
-		
-		return false;
-		
-	}*/
-	
-	private boolean isOverlapPoint(LinkElement e){
-		
-		ArrayList<LinkElement> pts = e.linked;
-		
-		for(int i=0;i<pts.size();i++){
-			LinkElement next = pts.get(i);
-			ArrayList<LinkElement> list = e.copyList();
-			list.remove(next);
-			if(dfsTarget(next, e, list))
-				return true;
-		}
-		
-		return false;
-	}
-	
 	/**
 	 * Crude filter to get rid of shot noise resulting from the max-projected 
 	 * neuron images. It implements a mean filter, but only adjusts pixels
@@ -2755,7 +2672,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		 * @param node
 		 * @param path
 		 */
-		private void addNode(Point node, LinePath path){
+		private LinkElement addNode(Point node, LinePath path){
 			Point to = path.pt1;
 			Point from = path.pt2;
 			LinkElement eTo = get(to);
@@ -2775,6 +2692,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			controlPts.importCurve(voi);
 			
 			subVolume.notifyImageDisplayListeners();
+			
+			return newLink;
 		}
 		
 		/**
@@ -2813,18 +2732,15 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			
 			boolean delete = false;
 			
-			//Need to make more robust
-			
-			/*for(int i=1; i<size;i++){
-				e2 = pts.get(0);
-				e2.removeLinkTo(eNode);
-				paths.remove(node, e2.pt);
-				e2.addLinkTo(e1);
-				paths.add(e1.pt, e2.pt);
-				e1 = e2;
-			}	*/
-			
-			if(size == 2){
+			//This is a tip pt, just remove it, no new connections
+			if(size == 1){
+				LinkElement e = pts.get(0);
+				eNode.removeLinkTo(e);
+				paths.remove(eNode.pt, e.pt);
+				delete = true;
+			}
+			//Need to remove this point and then reconnect the two neighbors
+			else if(size == 2){
 				e1 = pts.get(0);
 				LinkElement e2 = pts.get(1);
 				e1.addLinkTo(e2);
@@ -2845,44 +2761,48 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				//Link highest priority targets first
 				//Move to lower priority, try to link to highest priority
 
-				//Need to add a piece for tolerance so that in the 3 neighbor case,
-				//two nodes that are very close together will have higher priority than
-				//anything else
+				//Nodes within 5 units of each other have the highest 
+				//priority when deleting, so if two points are close 
+				//together, they will combine
 				Comparator<LinkElement> linkComp = new Comparator<LinkElement>(){
 
-				@Override
-				public int compare(LinkElement o1, LinkElement o2) {
-					int s1 = o1.linked.size();
-					int s2 = o2.linked.size();
-					
-					double dist1 = pointDistance(o1, eNode);
-					double dist2 = pointDistance(o2, eNode);
-					
-					if(s1 > 0 && dist1 < 5 && dist1 < dist2){
-						return -1;
+					@Override
+					public int compare(LinkElement o1, LinkElement o2) {
+						int s1 = o1.linked.size();
+						int s2 = o2.linked.size();
+
+						double dist1 = o1.pt.distance(eNode.pt);
+						double dist2 = o2.pt.distance(eNode.pt);
+
+						if(s1 > 0 && dist1 < 5 && dist1 < dist2){
+							return -1;
+						}
+						else if(s1 > 0 && dist1 > 5 && dist2 < 5)
+							return 1;
+						else if(s1 == 1 || s2 == 0)
+							return -1;
+						else if(s2 == 1 || s1 == 0 || s1 == s2)
+							return 1;
+						else if(s1 > s2)
+							return 1;
+						else if(s1 < s2) 
+							return -1;
+						else
+							return 0;
 					}
-					else if(s1 > 0 && dist1 > 5 && dist2 < 5)
-						return 1;
-					else if(s1 == 1 || s2 == 0)
-						return -1;
-					else if(s2 == 1 || s1 == 0 || s1 == s2)
-						return 1;
-					else if(s1 > s2)
-						return 1;
-					else if(s1 < s2) 
-						return -1;
-					else
-						return 0;
-				}
-			};
+				};
 				PriorityQueue<LinkElement> linkPriority = new PriorityQueue<LinkElement>(5, linkComp);
-					
+				
+				//Remove all the current links to the deleted node
 				for(int i=0;i<size;i++){
 					e1 = pts.get(0);
 					e1.removeLinkTo(eNode);
 					paths.remove(node, e1.pt);
 					linkPriority.add(e1);
 				}
+				
+				//Connect the remaining neighbors to the highest
+				//priority node
 				LinkElement connectTo = linkPriority.poll();
 				while(linkPriority.peek() != null){
 					e1 = linkPriority.poll();
@@ -2892,9 +2812,15 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				
 				delete = true;
 
-			} else if (size == 4){
+			}//4 neighbors is tricky since it could be in a loop or
+			//just two branches at the same origin
+			else if (size == 4){
 
+				//Check to see if this point is a place where two
+				//branches overlap (not really overlap, just check
+				//for if the point is in a cycle)
 				if(isOverlapPoint(eNode)){
+					//Determine angles between each branch
 					double[][] angles = new double[4][3];
 					int[] maxAngle = new int[4];
 					Point center = eNode.pt;
@@ -2902,6 +2828,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 						int cnt = 0;
 						e1 = pts.get(i);
 						double angleMax = Double.MIN_VALUE;
+						//For each branch, also determine which other branch
+						//has the largest angle
 						for(int j=0;j<pts.size();j++){
 							if(i==j) continue;
 							Point to = pts.get(j).pt;
@@ -2925,6 +2853,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 						}
 					}
 					
+					//If the pairings end up with an unconnected node, just go through each
+					//possible case to determine which case is best of those that can exist
 					if(!disjoint){
 						System.err.println("We have a problem");
 						double[] choices = new double[3];
@@ -2949,7 +2879,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 					}
 					
 					//Check here to make sure that the new connections you make
-					//are logical and don't create any discontinuities
+					//are logical and don't create two disjoint sets in the
+					//node graph
 					
 					e1 = pts.get(0);
 					LinkElement to = pts.get(maxAngle[0]);
@@ -2980,14 +2911,82 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 						e1.addLinkTo(to);
 						paths.add(e1.pt, to.pt);
 						
-						delete = true; //maybe, need to check if you create two disjointed sets, but needs to
-						//go before you actually createh links and what not
+						delete = true; 
 					} 
-					
+					//Right now, if it does result in disjoint sets, it won't delete the 
+					//node, but if it does result in disjoint sets, should probably go to
+					//the else case (but not an easy way to do that)
 
 				} else {
 					//Need to reconnect everything logically, or replace? Not really sure what
 					//to do with his case
+					//Maybe split into two different points? <-- Would make most sense, as you
+					//can now recombine them
+					
+					//Add new point right next to the point, rework connections
+					//Should add TOWARDS the origin, so use dfsOrigin
+					
+					LinkElement toOrigin = null;
+					
+					//Figure out which neighbor goes towards the origin
+					for(LinkElement e : pts){
+						if(dfsOrigin(e, eNode)){
+							toOrigin = e;
+							break;
+						}
+					}
+					
+					if(toOrigin == null){
+						MipavUtil.displayError("No origin labeled");
+						return false;
+					}
+					
+					Point p1 = eNode.pt;
+					Point p2 = toOrigin.pt;
+					
+					Point nextPt = null;
+					for(LinePath p : paths){
+						//Get the path that these points are on, then get the
+						//point that is right next to the chosen point
+						if((p1.equals(p.pt1) && p2.equals(p.pt2)) || 
+								(p2.equals(p.pt1) && p1.equals(p.pt2))){
+							LinkedHashSet<Point> linePts = p.pts;
+							Iterator<Point> iter = linePts.iterator();
+							if(iter.next().equals(p1))
+								nextPt = iter.next();
+							else{//Need to go to the next to end
+								nextPt = iter.next();
+								while(iter.hasNext()){
+									Point temp = iter.next();
+									if(!iter.hasNext()){
+										break;
+									}
+									nextPt = temp;
+								}
+							}
+						}
+					}
+					
+					if(nextPt == null){
+						MipavUtil.displayError("Could not find point");
+						return false;
+					}
+					
+					LinkElement toSwitch = shortestEnd(eNode, toOrigin);
+					LinePath onPath = paths.findPath(nextPt);
+					LinkElement newNode = addNode(nextPt, onPath);
+					//Node has been added. Now need to move some stuff around;
+					
+					//Switch the connection from the shortest path to the new
+					//node that was created
+					toSwitch.removeLinkTo(eNode);
+					toSwitch.addLinkTo(newNode);
+					paths.remove(toSwitch.pt, eNode.pt);
+					paths.add(toSwitch.pt, newNode.pt);
+					
+					subVolume.notifyImageDisplayListeners();
+					//Now we have neighboring point to place stuff at
+					
 				}
 				
 				if(delete){
@@ -3010,6 +3009,14 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			return delete;
 		}
 		
+		/**
+		 * Finds the angle between two points connected at the center
+		 * point.
+		 * @param pt1
+		 * @param pt2
+		 * @param center
+		 * @return
+		 */
 		private double pointAngle(Point pt1, Point pt2, Point center){
 			
 			double angle = 0;
@@ -3027,20 +3034,147 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			return angle;
 		}
 		
-		private double pointDistance(LinkElement e1, LinkElement e2){
+		/**
+		 * Used as part of the routine to find whether the point is part
+		 * of a loop. Just does a DFS for the other neighbors, given by
+		 * the list of targets
+		 * @param e
+		 * @param prev
+		 * @param targets
+		 * @return
+		 */
+		private boolean dfsTarget(LinkElement e, LinkElement prev, ArrayList<LinkElement> targets){
 			
-			Point pt1 = e1.pt;
-			Point pt2 = e2.pt;
+			ArrayDeque<LinkElement> stack = new ArrayDeque<LinkElement>();
+			HashSet<LinkElement> visited = new HashSet<LinkElement>();
+			ArrayList<LinkElement> pts = e.linked;
+			visited.add(prev);
 			
-			double dist;
-			double dx = pt1.x - pt2.x;
-			double dy = pt1.y - pt2.y;
-			dx *= dx;
-			dy *= dy;
-			dist = Math.sqrt(dx + dy);
+			for(int i=0;i<pts.size();i++){
+				LinkElement ele = pts.get(i);
+				if(visited.contains(ele))
+					continue;
+				if(targets.contains(ele))
+					return true;
+				stack.addFirst(ele);
+				visited.add(ele);
+			}
 			
-			return dist;
+			while(!stack.isEmpty()){
+				LinkElement ele = stack.poll();
+				pts = ele.linked;
+				for(int i=0;i<pts.size();i++){
+					LinkElement ele2 = pts.get(i);
+					if(visited.contains(ele2))
+						continue;
+					if(targets.contains(ele2))
+						return true;
+					stack.addFirst(ele2);
+					visited.add(ele2);
+				}
+			}
+
+			return false;
+		}
+		
+		/**
+		 * Checks to see if the point is an overlap point.
+		 * In reality, it just checks to see if the point
+		 * is a part of a loop
+		 * @param e
+		 * @return
+		 */
+		private boolean isOverlapPoint(LinkElement e){
 			
+			ArrayList<LinkElement> pts = e.linked;
+			
+			for(int i=0;i<pts.size();i++){
+				LinkElement next = pts.get(i);
+				ArrayList<LinkElement> list = e.copyList();
+				list.remove(next);
+				if(dfsTarget(next, e, list))
+					return true;
+			}
+			
+			return false;
+		}
+		
+		/**
+		 * A modified Djikstra's to find the shortest path to a tip point
+		 * @param e the point in question
+		 * @param toOrigin the direction we know not to take
+		 * @return
+		 */
+		private LinkElement shortestEnd(LinkElement e, LinkElement toOrigin){
+			
+			ArrayList<LinkElement> list = e.copyList();
+			list.remove(toOrigin);
+			
+			LinkElement shortest = null;
+			double shortestDist = Double.MAX_VALUE;
+			
+			for(LinkElement l : list){
+				if(l.linked.size() == 1){
+					return l;
+				}
+				PriorityQueue<PriorityElement> pq = new PriorityQueue<PriorityElement>();
+				HashSet<LinkElement> visited = new HashSet<LinkElement>();
+				visited.add(e);
+				visited.add(l);
+				ArrayList<LinkElement> neighbors = l.copyList();
+				neighbors.remove(e);
+				for(LinkElement ele : neighbors){
+					double dist = ele.pt.distance(e.pt);
+					pq.add(new PriorityElement(ele, dist));
+					visited.add(ele);
+				}
+				while(!pq.isEmpty()){
+					PriorityElement pe = pq.poll();
+					LinkElement le = pe.element;
+					double depth = pe.depth;
+					if(le.linked.size() == 1){
+						if(depth < shortestDist){
+							shortestDist = depth;
+							shortest = l;
+						}
+						break;
+					} else {
+						for(LinkElement ele: le.linked){
+							if(visited.add(ele)){
+								double dist = ele.pt.distance(le.pt);
+								pq.add(new PriorityElement(ele, depth+dist));
+							}
+						}
+					}
+					
+				}
+			}
+			
+			return shortest;
+			
+		}
+		
+		private class PriorityElement implements Comparable<PriorityElement>{
+
+			private LinkElement element;
+			
+			private double depth;
+			
+			private PriorityElement(LinkElement e, double d){
+				element = e;
+				depth = d;
+			}
+
+			@Override
+			public int compareTo(PriorityElement o) {
+				// TODO Auto-generated method stub
+				if(depth > o.depth)
+					return 1;
+				else if(depth < o.depth)
+					return -1;
+				else
+					return 0;
+			}		
 		}
 		
 	}
