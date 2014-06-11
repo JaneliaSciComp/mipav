@@ -739,7 +739,10 @@ public class VolumeImage implements Serializable {
 		if ( m_kHisto != null )
 		{
 			for (final GraphicsImage element : m_kHisto) {
-				element.dispose();
+				if ( element != null )
+				{
+					element.dispose();
+				}
 			}
 			m_kHisto = null;
 		}
@@ -2198,7 +2201,7 @@ public class VolumeImage implements Serializable {
 			m_kNormalMapTarget.SetImage(m_kNormal[m_iTimeSlice]);
 			m_kNormalMapTarget.Reload(true);
 		}
-		if ( m_bHistoInit )
+		if ( m_bHistoInit && (m_kHisto[m_iTimeSlice] != null ))
 		{
 			m_kHistoTarget.SetImage(m_kHisto[m_iTimeSlice]);
 			m_kHistoTarget.Reload(true);
