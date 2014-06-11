@@ -503,7 +503,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 
 		if (m_bTestFrameRate) {
 			Matrix3f kRotate = m_spkScene.Local.GetRotate();
-			kRotate.mult(m_kZRotate);
+			kRotate.mult(m_kYRotate);
 			m_spkScene.Local.SetRotate(kRotate);
 			m_spkScene.UpdateGS();
 			m_kCuller.ComputeVisibleSet(m_spkScene);
