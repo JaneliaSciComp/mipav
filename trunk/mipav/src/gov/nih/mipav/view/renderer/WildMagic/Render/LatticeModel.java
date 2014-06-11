@@ -1,6 +1,5 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
-import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmGaussianBlur;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
@@ -8,7 +7,6 @@ import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
-import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.MipavUtil;
@@ -25,15 +23,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.TreeMap;
 import java.util.Vector;
 
 import javax.swing.JFileChooser;
 
-import WildMagic.LibFoundation.Containment.ContBox3f;
 import WildMagic.LibFoundation.Curves.NaturalSpline3;
 import WildMagic.LibFoundation.Distance.DistanceSegment3Segment3;
 import WildMagic.LibFoundation.Distance.DistanceVector3Segment3;
@@ -987,7 +980,7 @@ public class LatticeModel {
             voiFileDir.mkdir();
         }
 		voiDir = image.getImageDirectory() + JDialogBase.makeImageName( imageName, "") + File.separator +
-    			"statistics_new" + File.separator;
+    			"statistics" + File.separator;
         voiFileDir = new File(voiDir);
         if (voiFileDir.exists() && voiFileDir.isDirectory()) {
 //        	String[] list = voiFileDir.list();
@@ -1291,7 +1284,7 @@ public class LatticeModel {
     		}
     	}
     	int size = dimX*dimY*dimZ;
-    	System.err.println( "Percent used = " + (100f*((float)count/(float)size)) );
+//    	System.err.println( "Percent used = " + (100f*((float)count/(float)size)) );
 		
     	return croppedMask;
     }
@@ -1300,15 +1293,12 @@ public class LatticeModel {
     
 
 
-    public final synchronized void exportDiagonal( ModelImage image, ModelImage model, ModelImage insideConflict, /*TreeMap<Float, Vector<Float>> conflicts, */
+    public void exportDiagonal( ModelImage image, ModelImage model, ModelImage insideConflict, /*TreeMap<Float, Vector<Float>> conflicts, */
     		final int tSlice, final int slice, final int[] extents,
             final Vector3f[] verts, final Ellipsoid3f ellipseBound, final float diameter, final Box3f boxBound, final float value) 
     {
-
         final int iBound = extents[0];
-        final int iBoundHalf = (int) (extents[0]/2f);
         final int jBound = extents[1];
-        final int jBoundHalf = (int) (extents[1]/2f);
 
         int[] dimExtents = image.getExtents();
         
@@ -1518,12 +1508,9 @@ public class LatticeModel {
     public VOIContour growDiagonalX( ModelImage image, ModelImage model, ModelImage insideConflict, final int tSlice, final int slice, final int[] extents,
             final Vector3f[] verts, final Ellipsoid3f ellipseBound, final float diameter, final Box3f boxBound, final float value) 
     {
-
-
         final int iBound = extents[0];
         final int iBoundHalf = (int) (extents[0]/2f);
         final int jBound = extents[1];
-        final int jBoundHalf = (int) (extents[1]/2f);
 
         int[] dimExtents = image.getExtents();
         
@@ -1710,10 +1697,7 @@ public class LatticeModel {
     public VOIContour growDiagonalY( ModelImage image, ModelImage model, ModelImage insideConflict, final int tSlice, final int slice, final int[] extents,
             final Vector3f[] verts, final Ellipsoid3f ellipseBound, final float diameter, final Box3f boxBound, final float value) 
     {
-
-
         final int iBound = extents[0];
-        final int iBoundHalf = (int) (extents[0]/2f);
         final int jBound = extents[1];
         final int jBoundHalf = (int) (extents[1]/2f);
 
@@ -1957,15 +1941,11 @@ public class LatticeModel {
     }
     
     
-    public final synchronized void writeDiagonal( ModelImage image, ModelImage model, final int tSlice, final int slice, final int[] extents,
+    public void writeDiagonal( ModelImage image, ModelImage model, final int tSlice, final int slice, final int[] extents,
             final Vector3f[] verts, final float[] values, float[] dataOrigin) 
     {
-
         final int iBound = extents[0];
-        final int iBoundHalf = (int) (extents[0]/2f);
         final int jBound = extents[1];
-        final int jBoundHalf = (int) (extents[1]/2f);
-
         int[] dimExtents = image.getExtents();
         
         /*
@@ -1983,7 +1963,6 @@ public class LatticeModel {
                 || (image.getType() == ModelStorageBase.ARGB_FLOAT)) {
             buffFactor = 4;
         }
-        float min = (float) image.getMin();
         
         Vector3f center = new Vector3f();
         for ( int i = 0; i < verts.length; i++ )
@@ -2018,9 +1997,6 @@ public class LatticeModel {
         float y = y0;
         float z = z0;
 
-        
-        float outsideVal = (float) (image.getMin() - 100);
-        Vector3f currentPoint = new Vector3f();
         for (int j = 0; j < jBound; j++) {
 
             /* Initialize the first diagonal point(x,y,z): */
@@ -2119,11 +2095,14 @@ public class LatticeModel {
     	{
     		imageName = imageName.replaceAll("_clone", "" );
     	}
-		ModelImage model = new ModelImage(imageA.getType(), imageA.getExtents(), imageName + "_model_4.xml");
+		ModelImage model = new ModelImage(imageA.getType(), imageA.getExtents(), imageName + "_model.xml");
 		JDialogBase.updateFileInfo( imageA, model );		
 		
-		ModelImage insideConflict = new ModelImage(ModelStorageBase.BOOLEAN, imageA.getExtents(), imageName + "_insideMask.xml");
+		ModelImage insideConflict = new ModelImage(ModelStorageBase.BOOLEAN, imageA.getExtents(), imageName + "_insideConflict.xml");
 		JDialogBase.updateFileInfo( imageA, insideConflict );		
+		
+		ModelImage inside = new ModelImage(ModelStorageBase.INTEGER, imageA.getExtents(), imageName + "_insideMask.xml");
+		JDialogBase.updateFileInfo( imageA, inside );		
 		
 		
     	int dimX = imageA.getExtents().length > 0 ? imageA.getExtents()[0] : 1;
@@ -2157,8 +2136,6 @@ public class LatticeModel {
 				maxDiameter = 1.5f*diameters.elementAt(i);
 			}
 		}
-//		straighten(image, resultExtents, imageName, model );
-//		straighten(model, resultExtents, imageName, model );
 
     	for ( int z = 0; z < dimZ; z++ )
     	{
@@ -2174,17 +2151,6 @@ public class LatticeModel {
     		}
     	}
     	
-//    	insideConflict.calcMinMax();
-//		new ViewJFrameImage((ModelImage)insideConflict.clone());
-    	
-//		model.calcMinMax();
-//		new ViewJFrameImage((ModelImage)model.clone());
-
-//		straighten(model, resultExtents, imageName, model, false );
-		
-//		System.err.println( maxDiameter + " " + diameter + "  " + Math.abs(maxDiameter - diameter));
-//		imageA.resetVOIs();
-//		model.resetVOIs();
 		for ( int d = 0; d < 10; d++ )
 		{		
 			Vector<VOIContour> edgesX = new Vector<VOIContour>();
@@ -2221,14 +2187,29 @@ public class LatticeModel {
 			growEdges( model, edgesX );
 			growEdges( model, edgesY );
 		}
-//		imageA.updateVOIs();
-//		imageA.notifyImageDisplayListeners();
 		
-		model.calcMinMax();
-		new ViewJFrameImage((ModelImage)model.clone());
+//		model.calcMinMax();
+//		new ViewJFrameImage((ModelImage)model.clone());
+		
+		
+    	for ( int z = 0; z < dimZ; z++ )
+    	{
+    		for ( int y = 0; y < dimY; y++ )
+    		{
+    			for ( int x = 0; x < dimX; x++ )
+    			{
+    				if ( model.getFloat(x,y,z) != 0 )
+    				{
+    					inside.set(x, y, z, 1);
+    				}
+    			}
+    		}
+    	}
+		saveTransformImage(imageName, inside);
 
 		straighten(imageA, resultExtents, imageName, model, true );
-		straighten(model, resultExtents, imageName, null, false );
+//		straighten(model, resultExtents, imageName, null, false );
+		straighten(inside, resultExtents, imageName, model, false );
 		if ( imageB != null )
 		{
 			straighten(imageB, resultExtents, imageName, model, false );			
@@ -2237,8 +2218,13 @@ public class LatticeModel {
 		return model;
     }
     
-    private ModelImage straighten( ModelImage image, int[] resultExtents, String imageName, ModelImage model, boolean saveStats )
+    private ModelImage straighten( ModelImage image, int[] resultExtents, String baseName, ModelImage model, boolean saveStats )
     {
+    	String imageName = image.getImageName();
+    	if ( imageName.contains("_clone") )
+    	{
+    		imageName = imageName.replaceAll("_clone", "" );
+    	}
 
 		int colorFactor = image.isColorImage() ? 4 : 1;
 		float[][] values = new float[resultExtents[2]][resultExtents[0] * resultExtents[1] * colorFactor]; 
@@ -2338,16 +2324,16 @@ public class LatticeModel {
 		resultImage.calcMinMax();
 		new ViewJFrameImage(resultImage);  	
 
-		saveTransformImage(imageName, resultImage);
+		saveTransformImage(baseName, resultImage);
 		if ( saveStats )
 		{
 			saveLatticeStatistics(image, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");
-			saveTransformImage(imageName, straightToOrigin);
+			saveTransformImage(baseName, straightToOrigin);
 			ModelImage originToStraight = computeOriginToStraight(image, straightToOrigin);
-			saveTransformImage(imageName, originToStraight);
+			saveTransformImage(baseName, originToStraight);
 			
-			ModelImage croppedVolume = computeMissingData(originToStraight);
-			saveTransformImage(imageName, croppedVolume);
+//			ModelImage croppedVolume = computeMissingData(originToStraight);
+//			saveTransformImage(baseName, croppedVolume);
 
 			//		testTransform( resultImage, straightToOrigin, image.getExtents() );
 			//		testTransform( image, originToStraight, resultImage.getExtents() );
@@ -2360,373 +2346,6 @@ public class LatticeModel {
 		return resultImage;
     }
     
-    private void checkConvex( boolean[][] values, int iBound, int jBound, int iBoundHalf, int jBoundHalf, int[][] horizontal, int[][] vertical )
-    {
-    	for ( int j = 0; j < jBound; j++ )
-    	{
-    		for ( int i = iBoundHalf; i >= 0; i-- )
-    		{
-    			if ( !values[i][j] )
-    			{
-    				horizontal[j][0] = i;
-    				break;
-    			}
-    		}
-    		for ( int i = iBoundHalf; i < iBound; i++ )
-    		{
-    			if ( !values[i][j] )
-    			{
-    				horizontal[j][1] = i;
-    				break;
-    			}
-    		}
-    	}
-
-    	for ( int i = 0; i < iBound; i++ )
-    	{
-    		for ( int j = jBoundHalf; j >= 0; j-- )
-    		{
-    			if ( !values[i][j] )
-    			{
-    				vertical[i][0] = j;
-    				break;
-    			}
-    		}
-    		for ( int j = jBoundHalf; j < jBound; j++ )
-    		{
-    			if ( !values[i][j] )
-    			{
-    				vertical[i][1] = j;
-    				break;
-    			}
-    		}
-    	}
-    }
-    
-    
-    private void checkConvex( float[] values, float[] dataOrigin, float min, float outsideVal, int color, int iBound, int jBound, int iBoundHalf, int jBoundHalf )
-    {
-
-        float outsideVal2 = (float) (min - 200);
-        
-
-    	if ( color == 4 ) 
-    	{
-    		for ( int j = 0; j < jBound; j++ )
-    		{
-    			boolean edgeFound = false;
-    			for ( int i = iBoundHalf; i >= 0; i-- )
-    			{
-    				if ( values[ ( ( (j * iBound) + i) * 4) + 0] == outsideVal )
-    				{
-    					edgeFound = true;
-    				}
-    				if ( edgeFound )
-    				{
-                		values[ ( ( (j * iBound) + i) * 4) + 0] = outsideVal2;
-                		values[ ( ( (j * iBound) + i) * 4) + 1] = outsideVal2;
-                		values[ ( ( (j * iBound) + i) * 4) + 2] = outsideVal2;
-                		values[ ( ( (j * iBound) + i) * 4) + 3] = outsideVal2;
-    				}
-    			}
-    			edgeFound = false;
-    			for ( int i = iBoundHalf; i < iBound; i++ )
-    			{
-    				if ( values[ ( ( (j * iBound) + i) * 4) + 0] == outsideVal )
-    				{
-    					edgeFound = true;
-    				}
-    				if ( edgeFound )
-    				{
-                		values[ ( ( (j * iBound) + i) * 4) + 0] = outsideVal2;
-                		values[ ( ( (j * iBound) + i) * 4) + 1] = outsideVal2;
-                		values[ ( ( (j * iBound) + i) * 4) + 2] = outsideVal2;
-                		values[ ( ( (j * iBound) + i) * 4) + 3] = outsideVal2;
-    				}
-    			}
-    		}
-
-    		float outsideVal3 = (float) (min - 300);
-    		for ( int i = 0; i < iBound; i++ )
-    		{
-    			boolean edgeFound = false;
-    			for ( int j = jBoundHalf; j >= 0; j-- )
-    			{
-    				if ( values[ ( ( (j * iBound) + i) * 4) + 0] == outsideVal2 )
-    				{
-    					edgeFound = true;
-    				}
-    				if ( edgeFound )
-    				{
-                		values[ ( ( (j * iBound) + i) * 4) + 0] = outsideVal3;
-                		values[ ( ( (j * iBound) + i) * 4) + 1] = outsideVal3;
-                		values[ ( ( (j * iBound) + i) * 4) + 2] = outsideVal3;
-                		values[ ( ( (j * iBound) + i) * 4) + 3] = outsideVal3;
-    				}
-    			}
-    			edgeFound = false;
-    			for ( int j = jBoundHalf; j < jBound; j++ )
-    			{
-    				if ( values[ ( ( (j * iBound) + i) * 4) + 0] == outsideVal2 )
-    				{
-    					edgeFound = true;
-    				}
-    				if ( edgeFound )
-    				{
-                		values[ ( ( (j * iBound) + i) * 4) + 0] = outsideVal3;
-                		values[ ( ( (j * iBound) + i) * 4) + 1] = outsideVal3;
-                		values[ ( ( (j * iBound) + i) * 4) + 2] = outsideVal3;
-                		values[ ( ( (j * iBound) + i) * 4) + 3] = outsideVal3;
-    				}
-    			}
-    		}
-    		for ( int j = 0; j < jBound; j++ )
-    		{
-    			for ( int i = 0; i < iBound; i++ )
-    			{
-    				if ( values[ ( ( (j * iBound) + i) * 4) + 0] == outsideVal3 )
-    				{
-                		values[ ( ( (j * iBound) + i) * 4) + 0] = (float) min;
-                		values[ ( ( (j * iBound) + i) * 4) + 1] = (float) min;
-                		values[ ( ( (j * iBound) + i) * 4) + 2] = (float) min;
-                		values[ ( ( (j * iBound) + i) * 4) + 3] = (float) min;
-
-    					dataOrigin[ ( ( (j * iBound) + i) * 4) + 0] = 0;
-    					dataOrigin[ ( ( (j * iBound) + i) * 4) + 1] = 0;
-    					dataOrigin[ ( ( (j * iBound) + i) * 4) + 2] = 0;
-    					dataOrigin[ ( ( (j * iBound) + i) * 4) + 3] = 0;
-    				}
-    			}
-    		}
-    	}
-    	else
-    	{
-    		for ( int j = 0; j < jBound; j++ )
-    		{
-    			boolean edgeFound = false;
-    			for ( int i = iBoundHalf; i >= 0; i-- )
-    			{
-    				if ( values[ (j * iBound) + i] == outsideVal )
-    				{
-    					edgeFound = true;
-    				}
-    				if ( edgeFound )
-    				{
-    					values[ (j * iBound) + i] = outsideVal2;
-    				}
-    			}
-    			edgeFound = false;
-    			for ( int i = iBoundHalf; i < iBound; i++ )
-    			{
-    				if ( values[ (j * iBound) + i] == outsideVal )
-    				{
-    					edgeFound = true;
-    				}
-    				if ( edgeFound )
-    				{
-    					values[ (j * iBound) + i] = outsideVal2;
-    				}
-    			}
-    		}
-
-    		float outsideVal3 = (float) (min - 300);
-    		for ( int i = 0; i < iBound; i++ )
-    		{
-    			boolean edgeFound = false;
-    			for ( int j = jBoundHalf; j >= 0; j-- )
-    			{
-    				if ( values[ (j * iBound) + i] == outsideVal2 )
-    				{
-    					edgeFound = true;
-    				}
-    				if ( edgeFound )
-    				{
-    					values[ (j * iBound) + i] = outsideVal3;
-    				}
-    			}
-    			edgeFound = false;
-    			for ( int j = jBoundHalf; j < jBound; j++ )
-    			{
-    				if ( values[ (j * iBound) + i] == outsideVal2 )
-    				{
-    					edgeFound = true;
-    				}
-    				if ( edgeFound )
-    				{
-    					values[ (j * iBound) + i] = outsideVal3;
-    				}
-    			}
-    		}
-    		for ( int j = 0; j < jBound; j++ )
-    		{
-    			for ( int i = 0; i < iBound; i++ )
-    			{
-    				if ( values[ (j * iBound) + i] == outsideVal3 )
-    				{
-    					values[ (j * iBound) + i] = (float) min;
-
-    					dataOrigin[ ( ( (j * iBound) + i) * 4) + 0] = 0;
-    					dataOrigin[ ( ( (j * iBound) + i) * 4) + 1] = 0;
-    					dataOrigin[ ( ( (j * iBound) + i) * 4) + 2] = 0;
-    					dataOrigin[ ( ( (j * iBound) + i) * 4) + 3] = 0;
-    				}
-    			}
-    		}
-    	}
-    	
-    	
-    }
-    
-    
-    
-    
-    
-    
-    private ModelImage generateConflictMasks( )
-    {    	
-    	int dimX = imageA.getExtents().length > 0 ? imageA.getExtents()[0] : 1;
-    	int dimY = imageA.getExtents().length > 1 ? imageA.getExtents()[1] : 1;
-    	int dimZ = imageA.getExtents().length > 2 ? imageA.getExtents()[2] : 1;
-    	
-    	BitSet insideMask = new BitSet(dimX*dimY*dimZ);
-    	BitSet insideConflictMask  = new BitSet(dimX*dimY*dimZ);
-    	BitSet conflictMask  = new BitSet(dimX*dimY*dimZ);
-    	
-    	
-		TreeMap<Vector3f, Vector<Integer>> insideConflict = new TreeMap<Vector3f, Vector<Integer>>();
-		TreeMap<Vector3f, Vector<Integer>> conflict = new TreeMap<Vector3f, Vector<Integer>>();
-    	Vector3f pt = new Vector3f();
-		for ( int e = 0; e < ellipseBounds.size(); e++ )
-		{
-	        Vector3f center = centerPositions.elementAt(e);
-	        float diameter = 1.5f*wormDiameters.elementAt(e);
-	        
-			Vector3f min = new Vector3f();
-			Vector3f max = new Vector3f();
-			boxBounds.elementAt(e).ComputeBounds(min,max);
-			min.X = Math.max(0, Math.min(min.X, dimX-1));
-			min.Y = Math.max(0, Math.min(min.Y, dimY-1));
-			min.Z = Math.max(0, Math.min(min.Z, dimZ-1));
-			
-			max.X = Math.max(0, Math.min(max.X, dimX-1));
-			max.Y = Math.max(0, Math.min(max.Y, dimY-1));
-			max.Z = Math.max(0, Math.min(max.Z, dimZ-1));
-			
-			for ( int z = (int)min.Z; z < (int)(max.Z+1); z++ )
-			{
-				for ( int y = (int)min.Y; y < (int)(max.Y+1); y++ )
-				{
-					for ( int x = (int)min.X; x < (int)(max.X+1); x++ )
-					{
-						pt.set(x, y, z);
-
-    					if ( ContBox3f.InBox(pt,boxBounds.elementAt(e)) )
-//						if ( ContBox3f.InBox(pt,boxBounds.elementAt(e)) && ellipseOuterBounds.elementAt(e).Contains( pt ) )
-    					{
-    						if ( center.distance(pt) < diameter )
-    						{
-    							int index = z*dimY*dimX + y*dimX + x;
-
-    							Vector3f pos = new Vector3f(x,y,z);
-    							if ( conflict.containsKey(pos) )
-    							{
-    								Vector<Integer> list = conflict.get(pos);
-    								if ( !list.contains(e) )
-    								{
-    									for ( int i = 0; i < list.size(); i++ )
-    									{
-    										if ( Math.abs(list.elementAt(i) - e) > 5 )
-    										{
-    											list.add(e);
-    											conflictMask.set(index, true);
-    											break;
-    										}
-    									}
-    								}
-    							}
-    							else
-    							{
-    								Vector<Integer> list = new Vector<Integer>();
-    								list.add(e);
-    								conflict.put(pos, list);    							
-    							}
-
-
-
-    							if ( ellipseBounds.elementAt(e).Contains( pt ) )
-    							{
-    								insideMask.set(index, true);
-    								pos = new Vector3f(x,y,z);
-    								if ( insideConflict.containsKey(pos) )
-    								{
-    									Vector<Integer> list = insideConflict.get(pos);
-    									if ( !list.contains(e) )
-    									{
-    										for ( int i = 0; i < list.size(); i++ )
-    										{
-    											if ( Math.abs(list.elementAt(i) - e) > 5 )
-    											{
-    												list.add(e);
-    												insideConflictMask.set(index, true);
-    												break;
-    											}
-    										}
-    									}
-    								}
-    								else
-    								{
-    									Vector<Integer> list = new Vector<Integer>();
-    									list.add(e);
-    									insideConflict.put(pos, list);    							
-    								}
-    							}
-    						}
-    					}
-					}
-				}
-			}
-		}
-
-    	ModelImage insideConflictMaskImage = new ModelImage( ModelStorageBase.BOOLEAN, imageA.getExtents(), "overlap_mask.xml" );
-		JDialogBase.updateFileInfo( imageA, insideConflictMaskImage );
-		
-//    	ModelImage insideMaskImage = new ModelImage( ModelStorageBase.BOOLEAN, image.getExtents(), "inside_mask" );
-    	ModelImage conflictMaskImage = new ModelImage( ModelStorageBase.BOOLEAN, imageA.getExtents(), "conflict_mask.xml" );
-    	
-//    	conflictMask.andNot(insideMask);
-    	
-//    	System.err.println( insideMask.cardinality() + "   " + conflictMask.cardinality() + "  " + insideConflictMask.cardinality() );
-    	for ( int z = 0; z < dimZ; z++ )
-    	{
-    		for ( int y = 0; y < dimY; y++ )
-    		{
-    			for ( int x = 0; x < dimX; x++ )
-    			{
-    				int index = z*dimY*dimX + y*dimX + x;
-    				insideConflictMaskImage.set(index, insideConflictMask.get(index) );
-//    				insideMaskImage.set(index, insideMask.get(index) );
-    				conflictMaskImage.set(index, conflictMask.get(index) );
-    			}
-    		}
-    	}
-//    	insideConflictMaskImage.calcMinMax();
-//    	new ViewJFrameImage(insideConflictMaskImage);
-//    	insideMaskImage.calcMinMax();
-//    	new ViewJFrameImage(insideMaskImage);
-    	conflictMaskImage.calcMinMax();
-//    	new ViewJFrameImage(conflictMaskImage);
-
-    	String imageName = imageA.getImageName();
-    	if ( imageName.contains("_clone") )
-    	{
-    		imageName = imageName.replaceAll("_clone", "" );
-    	}
-		saveTransformImage(imageName, insideConflictMaskImage);
-
-    	int size = dimX*dimY*dimZ;
-    	System.err.println( "Percent double-sampled = " + (100f*((float)insideConflictMask.cardinality()/(float)size)) );
-    	return conflictMaskImage;
-    }
     
     private void generateCurves( )
     {
@@ -2936,6 +2555,7 @@ public class LatticeModel {
         }
 
     } // end saveAllVOIsTo()
+    
     private void saveMesh( ModelImage image, TriMesh mesh, final boolean flip ) 
 	{
     	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
@@ -3053,7 +2673,7 @@ public class LatticeModel {
             voiFileDir.mkdir();
         }
 		voiDir = image.getImageDirectory() + JDialogBase.makeImageName( imageName, "") + File.separator +
-    			"output_images_new" + File.separator;
+    			"output_images" + File.separator;
         voiFileDir = new File(voiDir);
         if (voiFileDir.exists() && voiFileDir.isDirectory()) {
         } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {
