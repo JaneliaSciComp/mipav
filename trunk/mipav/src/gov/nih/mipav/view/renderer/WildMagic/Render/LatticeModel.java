@@ -1293,7 +1293,7 @@ public class LatticeModel {
     
 
 
-    public void exportDiagonal( ModelImage image, ModelImage model, ModelImage insideConflict, /*TreeMap<Float, Vector<Float>> conflicts, */
+    public void exportDiagonal( ModelImage image, ModelImage model, ModelImage insideConflict,
     		final int tSlice, final int slice, final int[] extents,
             final Vector3f[] verts, final Ellipsoid3f ellipseBound, final float diameter, final Box3f boxBound, final float value) 
     {
@@ -1505,8 +1505,8 @@ public class LatticeModel {
     }
 
 
-    public VOIContour growDiagonalX( ModelImage image, ModelImage model, ModelImage insideConflict, final int tSlice, final int slice, final int[] extents,
-            final Vector3f[] verts, final Ellipsoid3f ellipseBound, final float diameter, final Box3f boxBound, final float value) 
+    public VOIContour growDiagonalX( ModelImage image, ModelImage model, final int tSlice, final int slice, final int[] extents,
+            final Vector3f[] verts, final float value) 
     {
         final int iBound = extents[0];
         final int iBoundHalf = (int) (extents[0]/2f);
@@ -1694,8 +1694,8 @@ public class LatticeModel {
 
 
 
-    public VOIContour growDiagonalY( ModelImage image, ModelImage model, ModelImage insideConflict, final int tSlice, final int slice, final int[] extents,
-            final Vector3f[] verts, final Ellipsoid3f ellipseBound, final float diameter, final Box3f boxBound, final float value) 
+    public VOIContour growDiagonalY( ModelImage image, ModelImage model, final int tSlice, final int slice, final int[] extents,
+            final Vector3f[] verts, final float value) 
     {
         final int iBound = extents[0];
         final int jBound = extents[1];
@@ -2085,7 +2085,7 @@ public class LatticeModel {
     
     
 
-    public ModelImage generateMasks( ModelImage imageA, ModelImage imageB, VOI samplingPlanes, 
+    public void generateMasks( ModelImage imageA, ModelImage imageB, VOI samplingPlanes, 
     		Vector<Ellipsoid3f> ellipseBounds, Vector<Float> diameters, int diameter  )
     {
 		int[] resultExtents = new int[]{diameter, diameter, samplingPlanes.getCurves().size()};
@@ -2150,6 +2150,8 @@ public class LatticeModel {
     			}
     		}
     	}
+    	insideConflict.disposeLocal();
+    	insideConflict = null;
     	
 		for ( int d = 0; d < 10; d++ )
 		{		
@@ -2163,10 +2165,8 @@ public class LatticeModel {
 				{
 					corners[j] = kBox.elementAt(j);
 				}
-				edgesX.add( growDiagonalX( imageA, model, insideConflict, 0, i, resultExtents, corners, 
-						ellipseBounds.elementAt(i), 1.5f*diameters.elementAt(i), boxBounds.elementAt(i), i+1) );
-				edgesY.add( growDiagonalY( imageA, model, insideConflict, 0, i, resultExtents, corners, 
-						ellipseBounds.elementAt(i), 1.5f*diameters.elementAt(i), boxBounds.elementAt(i), i+1) );
+				edgesX.add( growDiagonalX( imageA, model, 0, i, resultExtents, corners, i+1) );
+				edgesY.add( growDiagonalY( imageA, model, 0, i, resultExtents, corners, i+1) );
 //				if ( d == 9 )
 //				{
 //					if ( (i%30) == 0 )
@@ -2214,8 +2214,11 @@ public class LatticeModel {
 		{
 			straighten(imageB, resultExtents, imageName, model, false );			
 		}
+		inside.disposeLocal();
+		inside = null;
+		model.disposeLocal();
+		model = null;
 		
-		return model;
     }
     
     private ModelImage straighten( ModelImage image, int[] resultExtents, String baseName, ModelImage model, boolean saveStats )
@@ -2331,17 +2334,13 @@ public class LatticeModel {
 			saveTransformImage(baseName, straightToOrigin);
 			ModelImage originToStraight = computeOriginToStraight(image, straightToOrigin);
 			saveTransformImage(baseName, originToStraight);
-			
-//			ModelImage croppedVolume = computeMissingData(originToStraight);
-//			saveTransformImage(baseName, croppedVolume);
-
+			originToStraight.disposeLocal();
+			originToStraight = null;
 			//		testTransform( resultImage, straightToOrigin, image.getExtents() );
 			//		testTransform( image, originToStraight, resultImage.getExtents() );
 		}
-		
-		
-//		straightToOrigin.calcMinMax();
-//		new ViewJFrameImage(straightToOrigin);  	
+		straightToOrigin.disposeLocal();
+		straightToOrigin = null;
 		
 		return resultImage;
     }
