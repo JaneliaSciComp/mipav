@@ -46,7 +46,8 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 	private double[] ft;
 	
 	public AlgorithmPhaseCongruency(ModelImage src){
-		srcImage = (ModelImage)src.clone();
+		
+		super(null, (ModelImage)src.clone());
 		
 		int[] extents = srcImage.getExtents();
 		width = extents[0];

@@ -101,6 +101,8 @@ public class JDialogPhaseCongruency extends JDialogBase implements
 			}
 			new ViewJFrameImage(cornerImage);
 		}
+		
+		dispose();
 	}
 	
 	protected void callAlgorithm(){
@@ -141,6 +143,8 @@ public class JDialogPhaseCongruency extends JDialogBase implements
 		} else {
 			alg.run();
 		}
+		
+		setVisible(false);
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
