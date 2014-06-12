@@ -169,7 +169,8 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Entropic", "ENTROPIC", 0, null, false),
                         menuBuilder.buildMenuItem("Brejl-Sonka 3D", "edge3D", 0, null, false),
                         menuBuilder.buildMenuItem("Zero X laplacian", null, 0, null, false),
-                        menuBuilder.buildMenuItem("Zero X non-maximum suppression", "zxsuppression", 0, null, false)}),
+                        menuBuilder.buildMenuItem("Zero X non-maximum suppression", "zxsuppression", 0, null, false),
+                        menuBuilder.buildMenuItem("Phase congruency", "phasecongruency", 0, null, false)}),
                 menuBuilder.buildMenuItem("Extract surface (marching cubes)", "extractSurfaceCubes", 0, null, false),
                 menuBuilder.buildMenuItem("FFT", null, 0, null, false),
                 menuBuilder.makeMenu("Filters (frequency)", false, new JMenuItem[] {
