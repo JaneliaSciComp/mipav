@@ -6,9 +6,12 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmExtractSlicesVolumes;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.RangeType;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 
 import java.awt.*;
@@ -29,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.text.SimpleDateFormat;
 
@@ -42,7 +46,7 @@ import java.text.SimpleDateFormat;
  *           <p>$Logfile: /mipav/src/gov/nih/mipav/view/dialogs/JDialogVOIStats.java $ $Revision: 56 $ $Date: 2/17/06
  *           6:20p $</p>
  */
-public class JDialogVOIStats extends JDialogBase
+public class JDialogVOIStats extends JDialogScriptableBase
         implements ItemListener, ChangeListener, FocusListener, 
         UpdateVOISelectionListener, TreeSelectionListener, AlgorithmInterface {
 
@@ -203,10 +207,41 @@ public class JDialogVOIStats extends JDialogBase
     /** VOI used for whole image processing */
     private VOI wholeImage;
     
+    /** DOCUMENT ME! */
+    private float rangeMaximum = 0f;
+
+    /** DOCUMENT ME! */
+    private float rangeMinimum = 0f;
+    
+    private float rangeMaximumR = 0f;
+    
+    private float rangeMinimumR = 0f;
+    
+    private float rangeMaximumG = 0f;
+    
+    private float rangeMinimumG  = 0f;
+    
+    private float rangeMaximumB = 0f;
+    
+    private float rangeMinimumB = 0f;
+    
     private JPanelPixelExclusionSelector excluder;
+    
+    /** When running as a script, holds the pixel exclusion range. */
+    private RangeType scriptRange;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
+    /**
+     * Empty constructor needed for dynamic instantiation.
+     */
+    public JDialogVOIStats() {
+
+    	
+    	listPanel = new JPanelStatisticsList();
+    	excluder = new JPanelPixelExclusionSelector(listPanel, false);
+    }
+    
     /**
      * Constructor for the JDialogVOIStats.
      *
@@ -745,10 +780,14 @@ public class JDialogVOIStats extends JDialogBase
             }
             
             processListIndex++;
-            if(processListIndex < processList.length && processList[processListIndex].size() > 0) {
+            if(processList != null && processListIndex < processList.length && processList[processListIndex].size() > 0) {
                 callVOIAlgo(processList[processListIndex], AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR, false);
             } else {
                 processListIndex = 0;
+            }
+            
+            if(algorithm.isCompleted()) {
+            	insertScriptLine();
             }
         }
         
@@ -2357,6 +2396,192 @@ public class JDialogVOIStats extends JDialogBase
             }
 
             return this;
+        }
+    }
+
+
+	@Override
+	protected void callAlgorithm() {
+		if(processList != null && processList.length > 0 && processList[0].size() > 0) {
+			callVOIAlgo(processList[0], AlgorithmVOIProps.PROCESS_PER_VOI, isRunInSeparateThread());
+		} else if(processList != null && processList.length > 1 && processList[1].size() > 0) {
+			callVOIAlgo(processList[1], AlgorithmVOIProps.PROCESS_PER_VOI, isRunInSeparateThread());
+		} else {
+			VOIVector wholeImageVec = new VOIVector();
+	        VOI wholeImage = new VOI((short) 0, "wholeImage", VOI.CONTOUR, 0.0f);
+	        int slice = image.getParentFrame().getComponentImage().getSlice();
+	        int xDim = image.getExtents()[0]-2; //TODO: Change to xDim-1 when bug 539 is fixed
+	        int yDim = image.getExtents()[1]-2; //TODO: Change to xDim-1 when bug 539 is fixed
+	        
+            Vector3f orig = new Vector3f(0, 0, slice);
+            Vector3f cornerX = new Vector3f(xDim-2, 0, slice);
+            Vector3f cornerXY = new Vector3f(xDim-2, yDim-2, slice);
+            Vector3f cornerY = new Vector3f(0, yDim-2, slice);
+            Vector<Vector3f> points = new Vector<Vector3f>();
+            points.add(orig);
+            points.add(cornerX);
+            points.add(cornerXY);
+            points.add(cornerY);
+            VOIContour wholeSlice = new VOIContour(true, true, points);
+            wholeImage.importCurve(wholeSlice);
+            wholeSlice.setGroup(wholeImage);
+            wholeSlice.setProcess(true);
+
+	        wholeImageVec.add(wholeImage);
+	        
+	        callVOIAlgo(wholeImageVec, AlgorithmVOIProps.PROCESS_PER_VOI, isRunInSeparateThread());
+		}
+	}
+
+	/**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        setScriptRunning(true);
+        image = scriptParameters.retrieveInputImage();
+
+        ViewUserInterface userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+//        final VOIVector voiVec = image.getVOIs();
+//
+//        if (voiVec.size() < 1) {
+//            this.dispose();
+//
+//            return;
+//        }
+//
+//        for (int i = 0; i < voiVec.size(); i++) {
+//            voiVec.VOIAt(i).setAllActive(true);
+//        }
+
+        JList selectedList = new JList();
+        selectedList.setListData(image.getVOIs());
+
+        // createDialog(userInterface, true);
+
+        String rangeFlag = scriptParameters.getParams().getString("do_use_exclusion_range");
+
+        scriptRange = RangeType.valueOf(rangeFlag);
+        
+        if (scriptRange != RangeType.NO_RANGE) {
+            if (image.isColorImage()) {
+                rangeMinimumR = scriptParameters.getParams().getFloat("exclusion_range_minr");
+                rangeMaximumR = scriptParameters.getParams().getFloat("exclusion_range_maxr");
+                rangeMinimumG = scriptParameters.getParams().getFloat("exclusion_range_ming");
+                rangeMaximumG = scriptParameters.getParams().getFloat("exclusion_range_maxg");
+                rangeMinimumB = scriptParameters.getParams().getFloat("exclusion_range_minb");
+                rangeMaximumB = scriptParameters.getParams().getFloat("exclusion_range_maxb");
+    
+                for (int i = 0; i < selectedList.getModel().getSize(); i++) {
+    
+                    try {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnoreR(rangeMaximumR);
+                    } catch (final NullPointerException noMax) {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnoreR(Float.MAX_VALUE);
+                    }
+    
+                    try {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnoreR(rangeMinimumR);
+                    } catch (final NullPointerException noMax) {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnoreR( -Float.MAX_VALUE);
+                    }
+                    
+                    try {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnoreG(rangeMaximumG);
+                    } catch (final NullPointerException noMax) {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnoreG(Float.MAX_VALUE);
+                    }
+    
+                    try {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnoreG(rangeMinimumG);
+                    } catch (final NullPointerException noMax) {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnoreG( -Float.MAX_VALUE);
+                    }
+                    
+                    try {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnoreB(rangeMaximumB);
+                    } catch (final NullPointerException noMax) {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnoreB(Float.MAX_VALUE);
+                    }
+    
+                    try {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnoreB(rangeMinimumB);
+                    } catch (final NullPointerException noMax) {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnoreB( -Float.MAX_VALUE);
+                    }
+                }    
+            } // if (image.isColorImage())
+            else { // black and white image
+                rangeMinimum = scriptParameters.getParams().getFloat("exclusion_range_min");
+                rangeMaximum = scriptParameters.getParams().getFloat("exclusion_range_max");
+    
+                for (int i = 0; i < selectedList.getModel().getSize(); i++) {
+    
+                    try {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnore(rangeMaximum);
+                    } catch (final NullPointerException noMax) {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnore(Float.MAX_VALUE);
+                    }
+    
+                    try {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnore(rangeMinimum);
+                    } catch (final NullPointerException noMax) {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnore( -Float.MAX_VALUE);
+                    }
+                }
+            } // else black and white image
+        }
+
+        boolean[] toCompute = scriptParameters.getParams().getList("stat_checklist").getAsBooleanArray();
+        for(int i=0; i<toCompute.length; i++) {
+        	toCompute[i] = true;
+        }
+        
+        listPanel.setSelectedList(toCompute);
+
+        doAllVolumes = scriptParameters.getParams().getBoolean("do_all_volumes");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("stat_checklist", listPanel.getSelectedList()));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_all_volumes", doAllVolumes));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_exclusion_range", excluder.getRangeFlag().name()));
+
+        if (excluder.getRangeFlag() != RangeType.NO_RANGE) {
+            if (image.isColorImage()) {
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("exclusion_range_minr", excluder.getLowerBoundR()
+                                .floatValue()));
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("exclusion_range_maxr", excluder.getUpperBoundR()
+                                .floatValue()));    
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("exclusion_range_ming", excluder.getLowerBoundG()
+                                .floatValue()));
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("exclusion_range_maxg", excluder.getUpperBoundG()
+                                .floatValue()));   
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("exclusion_range_minb", excluder.getLowerBoundB()
+                                .floatValue()));
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("exclusion_range_maxb", excluder.getUpperBoundB()
+                                .floatValue()));    
+            }
+            else {
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("exclusion_range_min", excluder.getLowerBound()
+                                .floatValue()));
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("exclusion_range_max", excluder.getUpperBound()
+                                .floatValue()));
+            }
         }
     }
 
