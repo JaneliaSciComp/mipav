@@ -736,14 +736,14 @@ public class JDialogVOIStats extends JDialogScriptableBase
                     }
                     
                     ViewUserInterface UI = ViewUserInterface.getReference();
-                    UI.setDataText("\n -----------------------------------------------------------------------------\n");
-                    UI.setDataText("Image:     " + image.getImageName() + "\n");
+                    Preferences.data("\n -----------------------------------------------------------------------------\n");
+                    Preferences.data("Image:     " + image.getImageName() + "\n");
                     if (image.getNDims() >= 4) {
-                        UI.setDataText("Active volume = " + activeVolume + "\n");
+                    	Preferences.data("Active volume = " + activeVolume + "\n");
                     }
-                    UI.setDataText("VOI  :     " + tempVOI.getName() + "\n");
+                    Preferences.data("VOI  :     " + tempVOI.getName() + "\n");
                     if(processType != AlgorithmVOIProps.PROCESS_PER_VOI) {
-                        UI.setDataText("Contour :     "+tempVOI.getCurves().get(curve).getContourID()+"     Slice: "+tempVOI.getCurves().get(curve).slice()+"\n");
+                    	Preferences.data("Contour :     "+tempVOI.getCurves().get(curve).getContourID()+"     Slice: "+tempVOI.getCurves().get(curve).slice()+"\n");
                     }
                     
                     
@@ -758,16 +758,16 @@ public class JDialogVOIStats extends JDialogScriptableBase
                                 (name.equals("Coefficient of skewness")) || (name.equals("Coefficient of kurtosis")) ||
                                 (name.equals("Median Intensity")) || (name.equals("Mode Intensity")) ||
                                 (name.equals("Mode Count"))) {
-                                UI.setDataText("  "+name+"\tRed\t\t= "+properties.getVOIStatistic(specificName+"Red").toString()+"\n"); 
-                                UI.setDataText("  "+name+"\tGreen\t\t= "+properties.getVOIStatistic(specificName+"Green").toString()+"\n");
-                                UI.setDataText("  "+name+"\tBlue\t\t= "+properties.getVOIStatistic(specificName+"Blue").toString()+"\n");  
+                            	Preferences.data("  "+name+"\tRed\t\t= "+properties.getVOIStatistic(specificName+"Red").toString()+"\n"); 
+                            	Preferences.data("  "+name+"\tGreen\t\t= "+properties.getVOIStatistic(specificName+"Green").toString()+"\n");
+                            	Preferences.data("  "+name+"\tBlue\t\t= "+properties.getVOIStatistic(specificName+"Blue").toString()+"\n");  
                             }
                             else {
-                                UI.setDataText("  "+name+"\t\t= "+properties.getVOIStatistic(specificName).toString()+"\n");    
+                            	Preferences.data("  "+name+"\t\t= "+properties.getVOIStatistic(specificName).toString()+"\n");    
                             }
                         }
                         else { 
-                            UI.setDataText("  "+name+"\t\t= "+properties.getVOIStatistic(specificName).toString()+"\n");
+                        	Preferences.data("  "+name+"\t\t= "+properties.getVOIStatistic(specificName).toString()+"\n");
                         }
                     }
                 }
