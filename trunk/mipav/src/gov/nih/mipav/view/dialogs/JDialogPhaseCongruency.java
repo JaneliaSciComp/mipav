@@ -10,8 +10,10 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -48,6 +50,8 @@ public class JDialogPhaseCongruency extends JDialogBase implements
 	@SuppressWarnings("rawtypes")
 	private JComboBox methodBox;
 	
+	private JDialog helpDialog;
+	
 	private Frame imFrame;
 	
 	public JDialogPhaseCongruency(Frame frame, ModelImage im){
@@ -74,8 +78,13 @@ public class JDialogPhaseCongruency extends JDialogBase implements
 			callAlgorithm();
 		else if(command.equals("Cancel"))
 			dispose();
-		else if(command.equals("Help"))
-			displayHelp();
+		else if(command.equals("Help")){
+			if(helpDialog == null)
+				displayHelp();
+		} else if(command.equals("Close")){
+			helpDialog.dispose();
+			helpDialog = null;
+		}
 	}
 	
 	@Override
@@ -151,137 +160,145 @@ public class JDialogPhaseCongruency extends JDialogBase implements
 	private void init(){
 		setTitle("Phase Congruency");
 		
-		JPanel inputPanel = new JPanel(new BorderLayout());
+		JPanel inputPanel = new JPanel(new GridBagLayout());
 		inputPanel.setForeground(Color.black);
 		inputPanel.setBorder(buildTitledBorder("Input options"));
 		
-		JPanel numbersPanel = new JPanel(new GridBagLayout());
-		numbersPanel.setForeground(Color.black);
-		
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.anchor = GridBagConstraints.WEST;
-		gbc.insets = new Insets(0,0,0,5);
+		gbc.insets = new Insets(5,5,5,5);
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		
+		Dimension leftSize = new Dimension(85, 20);
+		Dimension rightSize = new Dimension(75, 20);
+		
 		JLabel scaleLabel = new JLabel("# Scales");
 		scaleLabel.setFont(serif12); 
-		scaleLabel.setPreferredSize(new Dimension(90, 25));
-		numbersPanel.add(scaleLabel, gbc);
+		scaleLabel.setPreferredSize(leftSize);
+		inputPanel.add(scaleLabel, gbc);
 		
 		gbc.gridx++;
 		
 		fields[0].setText("4");
-		numbersPanel.add(fields[0], gbc);
+		inputPanel.add(fields[0], gbc);
 		
 		gbc.gridx++;
 		
 		JLabel orientLabel = new JLabel("# Orientations");
 		orientLabel.setFont(serif12);
-		orientLabel.setPreferredSize(new Dimension(90, 25));
-		numbersPanel.add(orientLabel, gbc);
+		orientLabel.setPreferredSize(rightSize);
+		inputPanel.add(orientLabel, gbc);
 		
 		gbc.gridx++;
 		
 		fields[1].setText("6");
-		numbersPanel.add(fields[1], gbc);
+		inputPanel.add(fields[1], gbc);
 		
 		gbc.gridx = 0;
 		gbc.gridy++;
 		
 		JLabel waveLabel = new JLabel("Min. wavelength");
 		waveLabel.setFont(serif12);
-		waveLabel.setPreferredSize(new Dimension(90, 25));
-		numbersPanel.add(waveLabel, gbc);
+		waveLabel.setPreferredSize(leftSize);
+		inputPanel.add(waveLabel, gbc);
 		
 		gbc.gridx++;
 		
 		fields[2].setText("3");
-		numbersPanel.add(fields[2], gbc);
+		inputPanel.add(fields[2], gbc);
 		
 		gbc.gridx++;
 		
 		JLabel multLabel = new JLabel("Scaling factor");
 		multLabel.setFont(serif12);
-		multLabel.setPreferredSize(new Dimension(90, 25));
-		numbersPanel.add(multLabel, gbc);
+		multLabel.setPreferredSize(rightSize);
+		inputPanel.add(multLabel, gbc);
 		
 		gbc.gridx++;
 		
 		fields[3].setText("2.1");
-		numbersPanel.add(fields[3], gbc);
+		inputPanel.add(fields[3], gbc);
 		
 		gbc.gridx = 0;
 		gbc.gridy++;
 		
 		JLabel sigmaLabel = new JLabel("Filter sigma");
 		sigmaLabel.setFont(serif12);
-		sigmaLabel.setPreferredSize(new Dimension(90, 25));
-		numbersPanel.add(sigmaLabel, gbc);
+		sigmaLabel.setPreferredSize(leftSize);
+		inputPanel.add(sigmaLabel, gbc);
 		
 		gbc.gridx++;
 		
 		fields[4].setText("0.55");
-		numbersPanel.add(fields[4], gbc);
+		inputPanel.add(fields[4], gbc);
 		
 		gbc.gridx++;
 		
 		JLabel kLabel = new JLabel("k");
 		kLabel.setFont(serif12);
-		kLabel.setPreferredSize(new Dimension(90, 25));
-		numbersPanel.add(kLabel, gbc);
+		kLabel.setPreferredSize(rightSize);
+		inputPanel.add(kLabel, gbc);
 		
 		gbc.gridx++;
 		
 		fields[5].setText("2.0");
-		numbersPanel.add(fields[5], gbc);
+		inputPanel.add(fields[5], gbc);
 		
 		gbc.gridx = 0;
 		gbc.gridy++;
 		
 		JLabel cutoffLabel = new JLabel("Cutoff");
 		cutoffLabel.setFont(serif12);
-		cutoffLabel.setPreferredSize(new Dimension(90, 25));
-		numbersPanel.add(cutoffLabel, gbc);
+		cutoffLabel.setPreferredSize(leftSize);
+		inputPanel.add(cutoffLabel, gbc);
 		
 		gbc.gridx++;
 		
 		fields[6].setText("0.5");
-		numbersPanel.add(fields[6], gbc);
+		inputPanel.add(fields[6], gbc);
 		
 		gbc.gridx++;
 		
 		JLabel gLabel = new JLabel("g");
 		gLabel.setFont(serif12);
-		gLabel.setPreferredSize(new Dimension(90, 25));
-		numbersPanel.add(gLabel, gbc);
+		gLabel.setPreferredSize(rightSize);
+		inputPanel.add(gLabel, gbc);
 		
 		gbc.gridx++;
 		
 		fields[7].setText("10");
-		numbersPanel.add(fields[7], gbc);
-
-		inputPanel.add(numbersPanel);
+		inputPanel.add(fields[7], gbc);
 		
-		JPanel methodPanel = new JPanel();
-		methodPanel.setForeground(Color.black);
+		gbc.gridx = 0;
+		gbc.gridwidth = 2;
+		gbc.gridy++;
 		
-		JLabel methodLabel = new JLabel("Noise Estimation");
+		JLabel methodLabel = new JLabel("Noise Estimation Method");
 		methodLabel.setFont(serif12);
-		methodPanel.add(methodLabel);
+		inputPanel.add(methodLabel, gbc);
+		
+		gbc.gridx = 2;
+		gbc.gridwidth = 1;
 		
 		String[] methods = new String[]{"Median", "Mode", "Value"};
 		
+		DefaultListCellRenderer r = new DefaultListCellRenderer();
+		r.setHorizontalAlignment(DefaultListCellRenderer.CENTER);
+		
 		methodBox = new JComboBox(methods);
+		methodBox.setRenderer(r);
+		methodBox.setPreferredSize(rightSize);
 		methodBox.setFont(serif12);
 		methodBox.setSelectedIndex(0);
 		methodBox.addItemListener(this);
-		methodPanel.add(methodBox);
+		inputPanel.add(methodBox, gbc);
+		
+		gbc.gridx++;
 		
 		fields[8].setText("0");
 		fields[8].setEnabled(false);
-		methodPanel.add(fields[8]);
-		inputPanel.add(methodPanel, BorderLayout.SOUTH);
+		inputPanel.add(fields[8], gbc);
 		
 		getContentPane().add(inputPanel, BorderLayout.NORTH);	
 		
@@ -325,7 +342,10 @@ public class JDialogPhaseCongruency extends JDialogBase implements
 	
 	private void displayHelp(){
 		
-		JDialog helpDialog = new JDialog();
+		helpDialog = new JDialog();
+		helpDialog.setLayout(new BorderLayout());
+		helpDialog.addWindowListener(this);
+		helpDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		helpDialog.setTitle("Phase Congruency Help");
 		
 		String helpText = "<html>"
@@ -355,6 +375,16 @@ public class JDialogPhaseCongruency extends JDialogBase implements
 		textPanel.add(helpLabel);
 		helpDialog.getContentPane().add(textPanel);
 		
+		JPanel closePanel = new JPanel();
+		closePanel.setForeground(Color.black);
+		
+		JButton closeButton = new JButton("Close");
+		closeButton.setFont(serif12);
+		closeButton.addActionListener(this);
+		closePanel.add(closeButton);
+		
+		helpDialog.getContentPane().add(closePanel, BorderLayout.SOUTH);
+		
 		helpDialog.pack();
 		helpDialog.setVisible(true);
 		
@@ -369,7 +399,12 @@ public class JDialogPhaseCongruency extends JDialogBase implements
 				fields[8].setEnabled(true);
 			} else fields[8].setEnabled(false);
 		}
-		
+	}
+	
+	public void windowClosing(WindowEvent e){
+		if(e.getSource() == helpDialog){
+			helpDialog = null;
+		}
 	}
 
 }
