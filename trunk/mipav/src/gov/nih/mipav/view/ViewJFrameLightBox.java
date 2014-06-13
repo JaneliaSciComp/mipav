@@ -43,7 +43,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
     //private static final int DEFAULT_IMAGE_SIZE = 128;
 
     /** DOCUMENT ME! */
-    private static final int DEFAULT_IMAGE_MAX = 256;
+    private static final int DEFAULT_IMAGE_MAX = 512;
 
     /** DOCUMENT ME! */
     private static final int DEFAULT_IMAGE_MIN = 96;
