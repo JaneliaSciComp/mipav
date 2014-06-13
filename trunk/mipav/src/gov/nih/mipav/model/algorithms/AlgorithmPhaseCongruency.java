@@ -4,13 +4,15 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmFFT2;
 import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewUserInterface;
 
 /**
  * Ported from Peter Kovesi's MATLAB code for Phase Congruency
+ * Available from: http://www.csse.uwa.edu.au/~pk/research/matlabfns/PhaseCongruency/phasecong3.m
+ * and: http://www.csse.uwa.edu.au/~pk/research/matlabfns/FrequencyFilt/lowpassfilter.m
+ * in reference to the method lowpassFilter();
  * 
  * % References:
 %
@@ -64,8 +66,6 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 	
 	private int length;
 	
-	private double[] pcSum;
-	
 	private double[] M;
 	
 	private double[] m;
@@ -74,20 +74,28 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 	
 	private double[] ft;
 	
+	private double T;
+	
 	public AlgorithmPhaseCongruency(ModelImage src){
 		
-		//super(null, (ModelImage)src.clone());
 		super(null, src);
 		
 		int[] extents = srcImage.getExtents();
 		width = extents[0];
 		height = extents[1];
 		length = width * height;
-		pcSum = new double[length];
 		M = new double[length];
 		m = new double[length];
 		or = new double[length];
 		ft = new double[length];
+	}
+	
+	public void finalize(){
+		super.finalize();
+		M = null;
+		m = null;
+		or = null;
+		ft = null;
 	}
 	
 	/**% Arguments:
@@ -137,6 +145,7 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 		double[] covx2 = new double[length];
 		double[] covy2 = new double[length];
 		double[] covxy = new double[length];
+		double[] pcSum = new double[length];
 		
 		double[][] PC = new double[norient][length];
 		double[][] energyV = new double[3][length];
@@ -217,11 +226,6 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 		fft = new FFTUtility(imagefftR, imagefftI, 1, height, width, -1, FFTUtility.FFT);
 		fft.run();
 		
-		/*AlgorithmFFT2 fft = new AlgorithmFFT2(srcImage, AlgorithmFFT2.FORWARD, true, false, true, false);
-		fft.run();
-		float[] imagefftR = fft.getRealData();
-		float[] imagefftI = fft.getImaginaryData();*/
-		
 		for(int o = 0;o<norient;o++){
 			double angl = (double)o * Math.PI / (double)norient;
 			double[] spread = new double[length];
@@ -251,21 +255,12 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 					ifftR[i] = imagefftR[i] * filter;
 					ifftI[i] = imagefftI[i] * filter;
 				}
-				/*ModelImage ifftIm = new ModelImage(ModelImage.COMPLEX, srcImage.getExtents(), "IFFT");
-				try {
-					ifftIm.importComplexData(0, ifftR, ifftI, true, true);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}*/
 				
-				fft = new FFTUtility(ifftR, ifftI, width, height, 1, 1, FFTUtility.FFT);
-				fft.run();
+				FFTUtility ifft = new FFTUtility(ifftR, ifftI, width, height, 1, 1, FFTUtility.FFT);
+				ifft.run();
 				
-				fft = new FFTUtility(ifftR, ifftI, 1, height, width, 1, FFTUtility.FFT);
-				fft.run();
-				
-				/*AlgorithmFFT2 ifft = new AlgorithmFFT2(ifftIm, AlgorithmFFT2.INVERSE, true, false, true, true);
-				ifft.run();*/
+				ifft = new FFTUtility(ifftR, ifftI, 1, height, width, 1, FFTUtility.FFT);
+				ifft.run();
 				
 				EOR[o][s] = ifftR;
 				EOI[o][s] = ifftI;
@@ -282,8 +277,6 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 					sumO_ThisOrient[i] += EOI[o][s][i];
 					maxAn[i] = Math.max(maxAn[i], An);
 				}
-				
-				//ifftIm.disposeLocal();
 				
 				if(s == 0){
 					if(noiseMethod == -1){
@@ -307,8 +300,6 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 				}
 			}
 
-			double T = 0;
-
 			if(noiseMethod >=0)
 				T = noiseMethod;
 			else{
@@ -316,6 +307,8 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 				double EstNoiseEnergyMean = totalTau*Math.sqrt(Math.PI/2.0);
 				double EstNoiseEnergySigma = totalTau*Math.sqrt((4.0-Math.PI)/2.0);
 				T = EstNoiseEnergyMean + k*EstNoiseEnergySigma;
+				ViewUserInterface.getReference().getMessageFrame().getData().append(
+						"Estimated noise level for orientation " + String.valueOf(o+1) + ": " + String.valueOf(T) + "\n");
 			}
 			for(int i=0;i<length;i++){
 				Energy[i] = Math.max(Energy[i] - T, 0);
