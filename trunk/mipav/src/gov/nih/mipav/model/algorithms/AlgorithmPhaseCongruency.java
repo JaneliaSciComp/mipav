@@ -5,9 +5,14 @@ import java.util.Arrays;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmFFT2;
+import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.ViewJFrameImage;
 
-/**% References:
+/**
+ * Ported from Peter Kovesi's MATLAB code for Phase Congruency
+ * 
+ * % References:
 %
 %     Peter Kovesi, "Image Features From Phase Congruency". Videre: A
 %     Journal of Computer Vision Research. MIT Press. Volume 1, Number 3,
@@ -71,7 +76,8 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 	
 	public AlgorithmPhaseCongruency(ModelImage src){
 		
-		super(null, (ModelImage)src.clone());
+		//super(null, (ModelImage)src.clone());
+		super(null, src);
 		
 		int[] extents = srcImage.getExtents();
 		width = extents[0];
@@ -135,8 +141,8 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 		double[][] PC = new double[norient][length];
 		double[][] energyV = new double[3][length];
 		
-		float[][][] EOR = new float[norient][nscale][length];
-		float[][][] EOI = new float[norient][nscale][length];
+		double[][][] EOR = new double[norient][nscale][length];
+		double[][][] EOI = new double[norient][nscale][length];
 		
 		double[] radius = new double[length];
 		double[] sintheta = new double[length];
@@ -145,33 +151,25 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 		double[] x = new double[width];
 		double[] y = new double[height];
 		
-		int centerX, centerY;
-		
 		if(width % 2 == 0){
 			for(int i=0;i<width;i++){
 				x[i] = (double)(i - width/2)/(double)width;
 			}
-			centerX = width/2;
 		} else {
 			for(int i=0;i<width;i++){
 				x[i] = (double)(i - (width-1)/2)/(double)(width-1);
 			}
-			centerX = (width - 1)/2;
 		}
 		
 		if(height % 2 == 0){
 			for(int i=0;i<height;i++){
 				y[i] = (double)(i - height/2)/(double)height;
 			}
-			centerY = height/2;
 		} else {
 			for(int i=0;i<height;i++){
 				y[i] = (double)(i - (height-1)/2)/(double)(height-1);
 			}
-			centerY = (height - 1)/2;
 		}
-		
-		int centerPt = centerX + centerY*width;
 		
 		for(int j=0;j<height;j++){
 			int row = j*width;
@@ -184,7 +182,11 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 			}
 		}
 		
-		radius[centerPt] = 1;
+		radius = ifftShift(radius);
+		sintheta = ifftShift(sintheta);
+		costheta = ifftShift(costheta);
+		
+		radius[0] = 1;
 		
 		double[] lp = lowpassFilter(15);
 		
@@ -197,13 +199,28 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 				logGabor[i][j] = lp[j] * Math.exp(-Math.pow(Math.log(radius[j]/fo), 2)) / 
 						(2.0 * Math.pow(Math.log(sigmaOnf), 2));
 			}
-			logGabor[i][centerPt] = 0;
+			logGabor[i][0] = 0;
+		}
+
+		double[] imagefftR = new double[length];
+		double[] imagefftI = new double[length];
+		
+		try {
+			srcImage.exportData(0, length, imagefftR);
+		} catch (IOException e1) {
+			e1.printStackTrace();
 		}
 		
-		AlgorithmFFT2 fft = new AlgorithmFFT2(srcImage, AlgorithmFFT2.FORWARD, true, false, true, false);
+		FFTUtility fft = new FFTUtility(imagefftR, imagefftI, width, height, 1, -1, FFTUtility.FFT);
+		fft.run();
+		
+		fft = new FFTUtility(imagefftR, imagefftI, 1, height, width, -1, FFTUtility.FFT);
+		fft.run();
+		
+		/*AlgorithmFFT2 fft = new AlgorithmFFT2(srcImage, AlgorithmFFT2.FORWARD, true, false, true, false);
 		fft.run();
 		float[] imagefftR = fft.getRealData();
-		float[] imagefftI = fft.getImaginaryData();
+		float[] imagefftI = fft.getImaginaryData();*/
 		
 		for(int o = 0;o<norient;o++){
 			double angl = (double)o * Math.PI / (double)norient;
@@ -227,24 +244,31 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 			Arrays.fill(maxAn, Double.MIN_VALUE);
 			
 			for(int s=0;s<nscale;s++){
-				float[] ifftR = new float[length];
-				float[] ifftI = new float[length];
+				double[] ifftR = new double[length];
+				double[] ifftI = new double[length];
 				for(int i=0;i<length;i++){
 					double filter = logGabor[s][i] * spread[i];
-					ifftR[i] = (float) (imagefftR[i] * filter);
-					ifftI[i] = (float) (imagefftI[i] * filter);
+					ifftR[i] = imagefftR[i] * filter;
+					ifftI[i] = imagefftI[i] * filter;
 				}
-				ModelImage ifftIm = new ModelImage(ModelImage.COMPLEX, srcImage.getExtents(), "IFFT");
+				/*ModelImage ifftIm = new ModelImage(ModelImage.COMPLEX, srcImage.getExtents(), "IFFT");
 				try {
 					ifftIm.importComplexData(0, ifftR, ifftI, true, true);
 				} catch (IOException e) {
 					e.printStackTrace();
-				}
+				}*/
 				
-				AlgorithmFFT2 ifft = new AlgorithmFFT2(ifftIm, AlgorithmFFT2.INVERSE, true, false, true, true);
-				ifft.run();
-				EOR[o][s] = ifft.getRealData();
-				EOI[o][s] = ifft.getImaginaryData();
+				fft = new FFTUtility(ifftR, ifftI, width, height, 1, 1, FFTUtility.FFT);
+				fft.run();
+				
+				fft = new FFTUtility(ifftR, ifftI, 1, height, width, 1, FFTUtility.FFT);
+				fft.run();
+				
+				/*AlgorithmFFT2 ifft = new AlgorithmFFT2(ifftIm, AlgorithmFFT2.INVERSE, true, false, true, true);
+				ifft.run();*/
+				
+				EOR[o][s] = ifftR;
+				EOI[o][s] = ifftI;
 				
 				float iterNum = 99 * (o * nscale + (s+1));
 				progress = iterNum / iterations;
@@ -259,7 +283,7 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 					maxAn[i] = Math.max(maxAn[i], An);
 				}
 				
-				ifftIm.disposeLocal();
+				//ifftIm.disposeLocal();
 				
 				if(s == 0){
 					if(noiseMethod == -1){
@@ -380,7 +404,7 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 			}
 		}
 		
-		return filter;
+		return ifftShift(filter);
 		
 	}
 	
@@ -425,6 +449,26 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 		}
 		
 		return (binWidth*(double)(2*modeInd + 1))/2.0;
+	}
+	
+	private double[] ifftShift(double[] array){
+		
+		double[] shifted = new double[length];
+		int stepY = height/2;
+		int stepX = width/2;
+		for(int j=0;j<height;j++){
+			int nj = j + stepY;
+			nj = nj >= height ? nj - height : nj;
+			int y = j*width;
+			int ny = nj*width;
+			for(int i=0;i<width;i++){
+				int ni = i + stepX;
+				ni = ni >= width ? ni - width : ni;
+				shifted[i + y] = array[ni + ny];
+			}
+		}
+		
+		return shifted;
 	}
 
 
