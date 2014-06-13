@@ -6,7 +6,6 @@ import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
@@ -47,6 +46,10 @@ public class JDialogPhaseCongruency extends JDialogBase implements
 	
 	private JCheckBox cornerBox;
 	
+	private JCheckBox orientationBox;
+	
+	private JCheckBox phaseBox;
+	
 	@SuppressWarnings("rawtypes")
 	private JComboBox methodBox;
 	
@@ -76,8 +79,10 @@ public class JDialogPhaseCongruency extends JDialogBase implements
 		
 		if(command.equals("OK"))
 			callAlgorithm();
-		else if(command.equals("Cancel"))
+		else if(command.equals("Cancel")){
 			dispose();
+			helpDialog.dispose();
+		}
 		else if(command.equals("Help")){
 			if(helpDialog == null)
 				displayHelp();
@@ -105,6 +110,26 @@ public class JDialogPhaseCongruency extends JDialogBase implements
 			ModelImage cornerImage = new ModelImage(ModelImage.DOUBLE, srcImage.getExtents(), name);
 			try {
 				cornerImage.importData(0, alg.getCorners(), true);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			new ViewJFrameImage(cornerImage);
+		}
+		if(orientationBox.isSelected()){
+			String name = srcImage.getImageName() + "_orientation";
+			ModelImage cornerImage = new ModelImage(ModelImage.DOUBLE, srcImage.getExtents(), name);
+			try {
+				cornerImage.importData(0, alg.getOrientations(), true);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			new ViewJFrameImage(cornerImage);
+		}
+		if(phaseBox.isSelected()){
+			String name = srcImage.getImageName() + "_phase";
+			ModelImage cornerImage = new ModelImage(ModelImage.DOUBLE, srcImage.getExtents(), name);
+			try {
+				cornerImage.importData(0, alg.getFeatureType(), true);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -274,7 +299,7 @@ public class JDialogPhaseCongruency extends JDialogBase implements
 		gbc.gridwidth = 2;
 		gbc.gridy++;
 		
-		JLabel methodLabel = new JLabel("Noise Estimation Method");
+		JLabel methodLabel = new JLabel("Noise estimation method");
 		methodLabel.setFont(serif12);
 		inputPanel.add(methodLabel, gbc);
 		
@@ -302,18 +327,39 @@ public class JDialogPhaseCongruency extends JDialogBase implements
 		
 		getContentPane().add(inputPanel, BorderLayout.NORTH);	
 		
-		JPanel outputPanel = new JPanel(new GridLayout(0,2));
+		JPanel outputPanel = new JPanel(new GridBagLayout());
 		outputPanel.setForeground(Color.black);
 		outputPanel.setBorder(buildTitledBorder("Output options"));
+		
+		GridBagConstraints gbc2 = new GridBagConstraints();
+		
+		gbc2.anchor = GridBagConstraints.WEST;
+		gbc2.gridx = 0;
+		gbc2.gridy = 0;
 		
 		edgeBox = new JCheckBox("Edges");
 		edgeBox.setFont(serif12);
 		edgeBox.setSelected(true);
-		outputPanel.add(edgeBox);
+		outputPanel.add(edgeBox, gbc2);
+		
+		gbc2.gridx++;
+		
+		orientationBox = new JCheckBox("Orientation");
+		orientationBox.setFont(serif12);
+		outputPanel.add(orientationBox, gbc2);
+		
+		gbc2.gridx = 0;
+		gbc2.gridy++;
 		
 		cornerBox = new JCheckBox("Corners");
 		cornerBox.setFont(serif12);
-		outputPanel.add(cornerBox);
+		outputPanel.add(cornerBox, gbc2);
+		
+		gbc2.gridx++;
+		
+		phaseBox = new JCheckBox("Phase angle");
+		phaseBox.setFont(serif12);
+		outputPanel.add(phaseBox, gbc2);
 		
 		getContentPane().add(outputPanel);
 		
@@ -365,7 +411,11 @@ public class JDialogPhaseCongruency extends JDialogBase implements
 				+ "below which phase congruency values get penalized.<br>"
 				+ "<b>g:</b> Controls the sharpness of the transition in<br>"
 				+ "the sigmoid function used to weight phase<br>"
-				+ "congruency for frequency spread. <br>";
+				+ "congruency for frequency spread. <br><br>"
+				+ "<b>Noise estimation method</b><br>"
+				+ "<b>Median:</b> Should be used in most cases.<br>"
+				+ "<b>Mode:</b> For noise that follows a Rayleigh distribution.<br>"
+				+ "<b>Value:</b> For when you already know the level of noise.";
 		
 		JPanel textPanel = new JPanel();
 		textPanel.setForeground(Color.black);
