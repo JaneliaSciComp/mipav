@@ -7,6 +7,30 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmFFT2;
 import gov.nih.mipav.model.structures.ModelImage;
 
+/**% References:
+%
+%     Peter Kovesi, "Image Features From Phase Congruency". Videre: A
+%     Journal of Computer Vision Research. MIT Press. Volume 1, Number 3,
+%     Summer 1999 http://mitpress.mit.edu/e-journals/Videre/001/v13.html
+%
+%     Peter Kovesi, "Phase Congruency Detects Corners and
+%     Edges". Proceedings DICTA 2003, Sydney Dec 10-12
+
+% Copyright (c) 1996-2010 Peter Kovesi
+% Centre for Exploration Targeting
+% The University of Western Australia
+% peter.kovesi at uwa edu au
+% 
+% Permission is hereby granted, free of charge, to any person obtaining a copy
+% of this software and associated documentation files (the "Software"), to deal
+% in the Software without restriction, subject to the following conditions:
+% 
+% The above copyright notice and this permission notice shall be included in 
+% all copies or substantial portions of the Software.
+%
+% The Software is provided "as is", without warranty of any kind.
+
+*/
 public class AlgorithmPhaseCongruency extends AlgorithmBase {
 
 	private int nscale;
@@ -60,6 +84,31 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 		ft = new double[length];
 	}
 	
+	/**% Arguments:
+		%              Default values      Description
+		%
+		%    nscale           4    - Number of wavelet scales, try values 3-6
+		%    norient          6    - Number of filter orientations.
+		%    minWaveLength    3    - Wavelength of smallest scale filter.
+		%    mult             2.1  - Scaling factor between successive filters.
+		%    sigmaOnf         0.55 - Ratio of the standard deviation of the Gaussian 
+		%                            describing the log Gabor filter's transfer function 
+		%                            in the frequency domain to the filter center frequency.
+		%    k                2.0  - No of standard deviations of the noise energy beyond
+		%                            the mean at which we set the noise threshold point.
+		%                            You may want to vary this up to a value of 10 or
+		%                            20 for noisy images 
+		%    cutOff           0.5  - The fractional measure of frequency spread
+		%                            below which phase congruency values get penalized.
+		%    g                10   - Controls the sharpness of the transition in
+		%                            the sigmoid function used to weight phase
+		%                            congruency for frequency spread.                        
+		%    noiseMethod      -1   - Parameter specifies method used to determine
+		%                            noise statistics. 
+		%                              -1 use median of smallest scale filter responses
+		%                              -2 use mode of smallest scale filter responses
+		%                               0+ use noiseMethod value as the fixed noise threshold 
+	*/
 	public void setArguments(int _nscale, int _norient, int _minWaveLength, double _mult,
 			double _sigmaOnf, double _k, double _cutOff, int _g, int _noiseMethod){
 		nscale = _nscale;
@@ -192,7 +241,6 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 					e.printStackTrace();
 				}
 				
-				//THIS IS WHERE THE PROBLEMS ARE
 				AlgorithmFFT2 ifft = new AlgorithmFFT2(ifftIm, AlgorithmFFT2.INVERSE, true, false, true, true);
 				ifft.run();
 				EOR[o][s] = ifft.getRealData();
@@ -241,8 +289,8 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 				T = noiseMethod;
 			else{
 				double totalTau = tau * (1.0 - Math.pow(1.0 / mult, nscale)) / (1.0-(1.0/mult));
-				double EstNoiseEnergyMean = totalTau*Math.sqrt(Math.PI/2);
-				double EstNoiseEnergySigma = totalTau*Math.sqrt((4-Math.PI)/2);
+				double EstNoiseEnergyMean = totalTau*Math.sqrt(Math.PI/2.0);
+				double EstNoiseEnergySigma = totalTau*Math.sqrt((4.0-Math.PI)/2.0);
 				T = EstNoiseEnergyMean + k*EstNoiseEnergySigma;
 			}
 			for(int i=0;i<length;i++){
