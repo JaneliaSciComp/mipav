@@ -711,7 +711,7 @@ public class JDialogVOIStats extends JDialogScriptableBase
                     
                     // Save statistics in the header only if image format is XML.
                     if (((image.getFileInfo(0).getFileFormat() == FileUtility.XML) ||
-                            (image.getFileInfo(0).getFileFormat() == FileUtility.XML_MULTIFILE)) && checkboxSaveStats.isSelected()) {
+                            (image.getFileInfo(0).getFileFormat() == FileUtility.XML_MULTIFILE)) && checkboxSaveStats != null && checkboxSaveStats.isSelected()) {
                         for (int j = 0; j < image.getFileInfo().length; j++) { //all imageInfos for image
                             
                             ((FileInfoImageXML)image.getFileInfo(j)).createPSet(pSetDesc);
