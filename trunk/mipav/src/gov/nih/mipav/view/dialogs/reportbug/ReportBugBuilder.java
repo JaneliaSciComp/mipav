@@ -244,6 +244,9 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener {
         final String javaClassPath = System.getProperties().getProperty("java.class.path").replaceAll(File.pathSeparator, "\n\t\t\t");
         final String javaLibraryPath = System.getProperties().getProperty("java.library.path").replaceAll(File.pathSeparator, "\n\t\t\t");
 
+        final long usedMem = MipavUtil.getUsedHeapMemory();
+        final long maxMem = MipavUtil.getMaxHeapMemory();
+
         final String userName = System.getProperties().getProperty("user.name");
 
         final Date dateHolder = new Date();
@@ -318,6 +321,10 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener {
         reportStr += "file.separator = " + fileSeparator;
         reportStr += "\n";
         reportStr += "user.name = " + userName;
+        reportStr += "\n";
+        reportStr += "memory max = " + maxMem;
+        reportStr += "\n";
+        reportStr += "memory used = " + usedMem;
         reportStr += "\n";
         reportStr += "\n";
         reportStr += "java.class.path =\t" + javaClassPath;
