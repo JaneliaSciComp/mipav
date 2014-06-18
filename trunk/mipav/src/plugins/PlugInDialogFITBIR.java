@@ -84,6 +84,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private Hashtable<String, String> csvStructRowData;
 
+    private static final String STRUCT_GUID_SEPERATOR = "_-_";
+
     private static final String CSV_OUTPUT_DELIM = ",";
 
     private static final String MULTI_SELECT_VALUE_DELIM = ";";
@@ -447,11 +449,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 int validGuids = 1;
                 for (int i = 0; i < numRows; i++) {
                     final String struct = (String) structTableModel.getValueAt(i, 0);
-                    if (struct.endsWith("_UNKNOWNGUID")) {
+                    if (struct.endsWith(STRUCT_GUID_SEPERATOR + "UNKNOWNGUID")) {
                         validGuids = -1;
                         break;
                     } else {
-                        final String guidTester = struct.substring(struct.indexOf("_") + 1, struct.length() - 1);
+                        final String guidTester = struct.substring(struct.lastIndexOf(STRUCT_GUID_SEPERATOR) + 3, struct.length() - 1);
                         if ( !isGuid(guidTester)) {
                             validGuids = 0;
                             break;
@@ -2010,7 +2012,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      */
     private static final boolean containsGuid(final String str) {
         for (final String prefix : allowedGuidPrefixes) {
-            if (str.contains("_" + prefix)) {
+            if (str.contains(STRUCT_GUID_SEPERATOR + prefix)) {
                 return true;
             }
         }
@@ -2019,16 +2021,16 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     }
 
     /**
-     * Extracts the form structure name from a string in the format 'structname_BRICSGUID'.
+     * Extracts the form structure name from a string in the format 'structname_-_BRICSGUID'.
      * 
-     * @param str A string in the format 'structname_BRICSGUID'.
+     * @param str A string in the format 'structname_-_BRICSGUID'.
      * @return The form structure name from the given string or null if it could not be found (if no GUID prefix was
      *         found to initiate the parsing).
      */
     private static final String getStructFromString(final String str) {
         for (final String prefix : allowedGuidPrefixes) {
-            if (str.contains("_" + prefix)) {
-                return str.substring(0, str.indexOf("_" + prefix));
+            if (str.contains(STRUCT_GUID_SEPERATOR + prefix)) {
+                return str.substring(0, str.lastIndexOf(STRUCT_GUID_SEPERATOR + prefix));
             }
         }
 
@@ -2036,16 +2038,16 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     }
 
     /**
-     * Extracts the GUID from a string in the format 'structname_BRICSGUID'.
+     * Extracts the GUID from a string in the format 'structname_-_BRICSGUID'.
      * 
-     * @param str A string in the format 'structname_BRICSGUID'.
+     * @param str A string in the format 'structname_-_BRICSGUID'.
      * @return The GUID from the given string or null if it could not be found (if no GUID prefix was found to initiate
      *         the parsing).
      */
     private static final String getGuidFromString(final String str) {
         for (final String prefix : allowedGuidPrefixes) {
-            if (str.contains("_" + prefix)) {
-                return str.substring(str.indexOf("_" + prefix) + 1, str.length());
+            if (str.contains(STRUCT_GUID_SEPERATOR + prefix)) {
+                return str.substring(str.lastIndexOf(STRUCT_GUID_SEPERATOR + prefix) + 3, str.length());
             }
         }
 
@@ -3123,7 +3125,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 if (containsGuid(name)) {
                     this.dataStructureName = getStructFromString(name);
                 } else {
-                    this.dataStructureName = name.substring(0, name.lastIndexOf("_"));
+                    this.dataStructureName = name.substring(0, name.lastIndexOf(STRUCT_GUID_SEPERATOR));
                 }
             } else {
                 previewImages.add(null);
@@ -4106,6 +4108,84 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             final ArrayList<String> csvPList = new ArrayList<String>();
             final ArrayList<String> headerList = new ArrayList<String>();
 
+            String ageVal = null;
+            String siteName = null;
+            String visitDate = null;
+            String visitTime = null;
+            String sliceOversample = null;
+            String gap = null;
+            String bodyPart = null;
+
+            String fieldOfView = null;
+            String manufacturer = null;
+            String softwareVersion = null;
+            String patientPosition = null;
+
+            String scannerModel = null;
+            String bandwidth = null;
+
+            String echoTime = null;
+            String repetitionTime = null;
+            String magnaticFieldStrength = null;
+            String flipAngle = null;
+
+            String mriT1T2Name = null;
+            String inversionTime = null;
+            String echoTrainMeas = null;
+            String phaseEncode = null;
+            String numAverages = null;
+            String receiveCoilName = null;
+
+            String manuf = null;
+            String model = null;
+            String scannerVer = null;
+
+            if (fileFormatString.equalsIgnoreCase("dicom")) {
+                final FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
+
+                ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010"));
+                siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
+                visitDate = convertDateToISOFormat((String) (fileInfoDicom.getTagTable().getValue("0008,0020")));
+                visitTime = (String) (fileInfoDicom.getTagTable().getValue("0008,0030"));
+                sliceOversample = (String) (fileInfoDicom.getTagTable().getValue("0018,0093"));
+                gap = (String) (fileInfoDicom.getTagTable().getValue("0018,0088"));
+                bodyPart = (String) (fileInfoDicom.getTagTable().getValue("0018,0015"));
+
+                fieldOfView = (String) (fileInfoDicom.getTagTable().getValue("0018,1100"));
+                manufacturer = (String) (fileInfoDicom.getTagTable().getValue("0008,0070"));
+                softwareVersion = (String) (fileInfoDicom.getTagTable().getValue("0018,1020"));
+                patientPosition = (String) (fileInfoDicom.getTagTable().getValue("0018,5100"));
+
+                scannerModel = (String) (fileInfoDicom.getTagTable().getValue("0008,1090"));
+                bandwidth = (String) (fileInfoDicom.getTagTable().getValue("0018,0095"));
+
+                System.err.println("0018,0022" + "\t" + (String) fileInfoDicom.getTagTable().getValue("0018,0022"));
+                System.err.println("0018,1040" + "\t" + (String) fileInfoDicom.getTagTable().getValue("0018,1040"));
+
+                if (modalityString.equalsIgnoreCase("magnetic resonance")) {
+                    echoTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0081"));
+                    repetitionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0080"));
+                    magnaticFieldStrength = (String) (fileInfoDicom.getTagTable().getValue("0018,0087"));
+                    flipAngle = (String) (fileInfoDicom.getTagTable().getValue("0018,1314"));
+
+                    mriT1T2Name = (String) (fileInfoDicom.getTagTable().getValue("0018,0024"));
+                    inversionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0082"));
+                    echoTrainMeas = (String) (fileInfoDicom.getTagTable().getValue("0018,0091"));
+                    phaseEncode = (String) (fileInfoDicom.getTagTable().getValue("0018,1312"));
+                    numAverages = (String) (fileInfoDicom.getTagTable().getValue("0018,0083"));
+                    receiveCoilName = (String) (fileInfoDicom.getTagTable().getValue("0018,1250"));
+                }
+            } else if (fileFormatString.equalsIgnoreCase("nifti")) {
+                // Description = Philips Medical Systems Achieva 3.2.1 (from .nii T1 of Dr. Vaillancourt's)
+                final FileInfoNIFTI fileInfoNifti = (FileInfoNIFTI) img.getFileInfo(0);
+
+                final String description = fileInfoNifti.getDescription();
+
+                manuf = convertNiftiDescToBRICSManuf(description);
+                model = convertNiftiDescToBRICSModel(description);
+                scannerVer = convertNiftiDescToBRICSVer(description);
+            }
+
             for (int i = 0; i < csvFieldNames.size(); i++) {
 
                 if ( !repeatValues.get(i).trim().equals("")) {
@@ -4117,7 +4197,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             headerList.add(String.valueOf(nDims));
                         }
                     } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgDim1ExtentVal") && String.valueOf(exts[0]) != null) {
-
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == exts[0])) {
 
                             csvFList.add(csvFieldNames.get(i));
@@ -4229,24 +4308,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     }
 
                     if (fileFormatString.equalsIgnoreCase("dicom")) {
-                        final FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
-
-                        final String ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010"));
-                        final String siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
-                        final String visitDate = convertDateToISOFormat((String) (fileInfoDicom.getTagTable().getValue("0008,0020")));
-                        final String visitTime = (String) (fileInfoDicom.getTagTable().getValue("0008,0030"));
-                        final String sliceOversample = (String) (fileInfoDicom.getTagTable().getValue("0018,0093"));
-                        final String gap = (String) (fileInfoDicom.getTagTable().getValue("0018,0088"));
-                        final String bodyPart = (String) (fileInfoDicom.getTagTable().getValue("0018,0015"));
-
-                        final String fieldOfView = (String) (fileInfoDicom.getTagTable().getValue("0018,1100"));
-                        final String manufacturer = (String) (fileInfoDicom.getTagTable().getValue("0008,0070"));
-                        final String softwareVersion = (String) (fileInfoDicom.getTagTable().getValue("0018,1020"));
-                        final String patientPosition = (String) (fileInfoDicom.getTagTable().getValue("0018,5100"));
-
-                        final String scannerModel = (String) (fileInfoDicom.getTagTable().getValue("0008,1090"));
-                        final String bandwidth = (String) (fileInfoDicom.getTagTable().getValue("0018,0095"));
-
                         if (csvFieldNames.get(i).equalsIgnoreCase("AgeVal") && ageVal != null) {
                             final String ageInMonths = convertDicomAgeToBRICS(ageVal);
 
@@ -4337,19 +4398,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         }
 
                         if (modalityString.equalsIgnoreCase("magnetic resonance")) {
-
-                            final String echoTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0081"));
-                            final String repetitionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0080"));
-                            final String magnaticFieldStrength = (String) (fileInfoDicom.getTagTable().getValue("0018,0087"));
-                            final String flipAngle = (String) (fileInfoDicom.getTagTable().getValue("0018,1314"));
-
-                            final String mriT1T2Name = (String) (fileInfoDicom.getTagTable().getValue("0018,0024"));
-                            final String inversionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0082"));
-                            final String echoTrainMeas = (String) (fileInfoDicom.getTagTable().getValue("0018,0091"));
-                            final String phaseEncode = (String) (fileInfoDicom.getTagTable().getValue("0018,1312"));
-                            final String numAverages = (String) (fileInfoDicom.getTagTable().getValue("0018,0083"));
-                            final String receiveCoilName = (String) (fileInfoDicom.getTagTable().getValue("0018,1250"));
-
                             if (csvFieldNames.get(i).equalsIgnoreCase("ImgEchoDur")) {
                                 if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == (Float.parseFloat(echoTime)))) {
                                     csvFList.add(csvFieldNames.get(i));
@@ -4415,14 +4463,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             }
                         }
                     } else if (fileFormatString.equalsIgnoreCase("nifti")) {
-                        // Description = Philips Medical Systems Achieva 3.2.1 (from .nii T1 of Dr. Vaillancourt's)
-                        final FileInfoNIFTI fileInfoNifti = (FileInfoNIFTI) img.getFileInfo(0);
-                        final String description = fileInfoNifti.getDescription();
-
-                        final String manuf = convertNiftiDescToBRICSManuf(description);
-                        final String model = convertNiftiDescToBRICSModel(description);
-                        final String scannerVer = convertNiftiDescToBRICSVer(description);
-
                         if (csvFieldNames.get(i).equalsIgnoreCase("ImgScannerManufName")) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
@@ -5154,9 +5194,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             String name = "";
 
             if (guid != null && !guid.trim().equalsIgnoreCase("")) {
-                name = fsData.getStructInfo().getShortName() + "_" + guid;
+                name = fsData.getStructInfo().getShortName() + STRUCT_GUID_SEPERATOR + guid;
             } else {
-                name = fsData.getStructInfo().getShortName() + "_UNKNOWNGUID";
+                name = fsData.getStructInfo().getShortName() + STRUCT_GUID_SEPERATOR + "UNKNOWNGUID";
             }
 
             if (launchedFromInProcessState) {
