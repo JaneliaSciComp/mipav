@@ -2251,6 +2251,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      *         the original name.
      */
     private static final String convertManufNameToBRICS(final String manuf) {
+        if (manuf == null || manuf.equals("")) {
+            return manuf;
+        }
+
         final String upperManuf = manuf.toUpperCase();
         if (upperManuf.startsWith("AGFA")) {
             return "Agfa";
@@ -2284,6 +2288,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      *         name.
      */
     private static final String convertModelNameToBRICS(final String model) {
+        if (model == null || model.equals("")) {
+            return model;
+        }
+
         final String upperModel = model.toUpperCase();
         if (upperModel.contains("ACHIEVA")) {
             return "Achieva";
@@ -2419,8 +2427,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 if ( !found) {
                     if (foundOtherInDE) {
                         jc.setSelectedItem(VALUE_OTHER_SPECIFY);
-                        deVal.getOtherSpecifyField().setText(value);
-                        System.err.println("Other specify " + deVal.getName());
+                        // deVal.getOtherSpecifyField().setText(value);
+                        System.err.println("Other specify\t" + deVal.getName() + "\t\t" + value);
                     } else {
                         System.err.println("Value not found. DE:\t" + comp.getName() + "\t" + value);
                     }
@@ -2455,8 +2463,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     if ( !found) {
                         if (foundOtherInDE) {
                             list.setSelectedIndex(otherSpecifyIndex);
-                            deVal.getOtherSpecifyField().setText(val);
-                            System.err.println("Other specify " + deVal.getName() + "\t" + val);
+                            // deVal.getOtherSpecifyField().setText(val);
+                            System.err.println("Other specify\t" + deVal.getName() + "\t\t" + val);
                         } else {
                             System.err.println("Value not found. DE:\t" + comp.getName() + "\t" + val);
                         }
@@ -2914,15 +2922,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 final String version = ds.getVersion().toString();
                 final String status = ds.getStatus().toString();
 
-                if (ds.getFileType().equals(SubmissionType.IMAGING)) {
-                    // only include non-archived structures
-                    if ( !ds.getStatus().equals(StatusType.ARCHIVED)) {
-                        descAL.add(desc);
-                        shortNameAL.add(shortname);
-                        versionAL.add(version);
-                        statusAL.add(status);
-                    }
-                }
+                descAL.add(desc);
+                shortNameAL.add(shortname);
+                versionAL.add(version);
+                statusAL.add(status);
             }
 
             // make sure we found a structure for imaging
@@ -3345,9 +3348,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                         }
 
                                         if (isOther) {
-                                            deVal.getOtherSpecifyField().setText(value);
+                                            // deVal.getOtherSpecifyField().setText(value);
                                             combo.setSelectedItem(VALUE_OTHER_SPECIFY);
-                                            System.err.println("Other specify " + deVal.getName());
+                                            System.err.println("Other specify\t" + deVal.getName() + "\t\t" + value);
                                         }
                                     } else if (comp instanceof JList) {
                                         final JList list = (JList) comp;
@@ -3379,8 +3382,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                             if ( !found) {
                                                 if (foundOtherInDE) {
                                                     list.setSelectedIndex(otherSpecifyIndex);
-                                                    deVal.getOtherSpecifyField().setText(val);
-                                                    System.err.println("Other specify " + deVal.getName() + "\t" + val);
+                                                    // deVal.getOtherSpecifyField().setText(val);
+                                                    System.err.println("Other specify\t" + deVal.getName() + "\t\t" + val);
                                                 } else {
                                                     System.err.println("Value not found. DE:\t" + comp.getName() + "\t" + val);
                                                 }
@@ -3441,9 +3444,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                         }
 
                                         if (isOther) {
-                                            deVal.getOtherSpecifyField().setText(value);
+                                            // deVal.getOtherSpecifyField().setText(value);
                                             combo.setSelectedItem(VALUE_OTHER_SPECIFY);
-                                            // System.err.println("Other specify " + deVal.getName() + "\t" + value);
+                                            // System.err.println("Other specify\t" + deVal.getName() + "\t\t" + value);
                                         }
                                     } else if (comp instanceof JList) {
                                         final JList list = (JList) comp;
@@ -3475,8 +3478,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                             if ( !found) {
                                                 if (foundOtherInDE) {
                                                     list.setSelectedIndex(otherSpecifyIndex);
-                                                    deVal.getOtherSpecifyField().setText(val);
-                                                    System.err.println("Other specify " + deVal.getName() + "\t" + val);
+                                                    // deVal.getOtherSpecifyField().setText(val);
+                                                    System.err.println("Other specify\t" + deVal.getName() + "\t\t" + val);
                                                 } else {
                                                     System.err.println("Value not found. DE:\t" + comp.getName() + "\t" + val);
                                                 }
@@ -5162,7 +5165,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         } else if (comp instanceof JComboBox) {
                             value = (String) ( ((JComboBox) comp).getSelectedItem());
                             if (value.equalsIgnoreCase(VALUE_OTHER_SPECIFY)) {
-                                value = deVal.getOtherSpecifyField().getText().trim();
+                                // value = deVal.getOtherSpecifyField().getText().trim();
                             }
                         } else if (comp instanceof JList) {
                             value = "";
@@ -5271,6 +5274,26 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
     }
 
+    private List<DataStructure> filterDataStructures(final List<DataStructure> fullList) {
+        final List<DataStructure> filteredList = new ArrayList<DataStructure>();
+
+        for (final DataStructure ds : fullList) {
+            if (ds.getShortName().equals("")) {
+                // something is wrong. a shortname is required. this is to work around an apparent stage DDT problem
+                continue;
+            }
+
+            if (ds.getFileType().equals(SubmissionType.IMAGING)) {
+                // only include non-archived structures
+                if ( !ds.getStatus().equals(StatusType.ARCHIVED)) {
+                    filteredList.add(ds);
+                }
+            }
+        }
+
+        return filteredList;
+    }
+
     /**
      * Class that connects to BRICS data dictionary web service (via RESTful API).
      */
@@ -5319,15 +5342,18 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
 
                 final long startTime = System.currentTimeMillis();
+                List<DataStructure> fullList;
                 if (ddUseAuthService) {
-                    dataStructureList = (List<DataStructure>) client.accept("text/xml").getCollection(DataStructure.class);
+                    fullList = (List<DataStructure>) client.accept("text/xml").getCollection(DataStructure.class);
                 } else {
                     final DataStructureList dsl = client.accept("text/xml").get(DataStructureList.class);
-                    dataStructureList = dsl.getList();
+                    fullList = dsl.getList();
                 }
                 final long endTime = System.currentTimeMillis();
 
                 System.out.println("Webservice request (sec):\t" + ( (endTime - startTime) / 1000));
+
+                dataStructureList = filterDataStructures(fullList);
 
                 // for (final DataStructure ds : dataStructureList) {
                 // System.out.println("FS title:\t" + ds.getTitle() + "\tversion:\t" + ds.getVersion() + "\tpub:\t" +
