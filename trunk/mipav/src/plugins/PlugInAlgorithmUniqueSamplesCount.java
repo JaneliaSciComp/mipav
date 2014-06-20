@@ -12,7 +12,13 @@ import java.util.LinkedHashSet;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.view.MipavUtil;
 
-
+/**
+ * Variation of the Complete Catalog algorithm, this instead counts
+ * how many unique samples occur in the file determined by
+ * the study site, visit type, and sample type. 
+ * @author wangvg
+ *
+ */
 public class PlugInAlgorithmUniqueSamplesCount extends AlgorithmBase {
 
 	private File catalogFile;
@@ -32,7 +38,6 @@ public class PlugInAlgorithmUniqueSamplesCount extends AlgorithmBase {
 	
 	@Override
 	public void runAlgorithm() {
-		// TODO Auto-generated method stub
 		try{
 			uniqueSample();
 		} catch(IOException e){
@@ -66,11 +71,16 @@ public class PlugInAlgorithmUniqueSamplesCount extends AlgorithmBase {
 		return realout;
 	}
 	
+	/**
+	 * Main method for counting how many unique samples are occuring in the 
+	 * given file. Uses hashes to prevent duplicates from being added which
+	 * allows for simple counting. 
+	 * @throws IOException
+	 */
 	private void uniqueSample() throws IOException{
     	
         LinkedHashSet<String> siteSet = new LinkedHashSet<String>();
         LinkedHashSet<String> visitSet = new LinkedHashSet<String>();
-        //LinkedHashSet<String> specSet = new LinkedHashSet<String>();
         LinkedHashSet<String> lineSet = new LinkedHashSet<String>();
         ArrayList<String> specSet = new ArrayList<String>();
         specSet.add("DNA");
@@ -88,17 +98,14 @@ public class PlugInAlgorithmUniqueSamplesCount extends AlgorithmBase {
     	outFilename += "_unique.csv";
     	outFilename = catalogFile.getParent() + File.separator + outFilename;
     	File outFile = new File(outFilename);
-    	
-    	/*for(int i=0;i<remove;i++){
-    		input.readLine();
-    	}*/
+ 
+    	//Read header to determine where the information we want is
     	String header = input.readLine();
         String[] hArray = parseLine2(header);
         for(int i=0;i<hArray.length;i++){
         	String hStr = hArray[i].trim();
         	if(hStr.equals("Site"))
         		site = i;
-        	//else if(hStr.equals("Site Tube ID"))
         	else if(hStr.equals("GUID"))
         		GUID = i;
         	else if(hStr.equals("Visit ID"))
@@ -124,11 +131,12 @@ public class PlugInAlgorithmUniqueSamplesCount extends AlgorithmBase {
     	
     	String uniqueHeader = "Visit Type,Study,DNA,RNA,Plasma,Serum,CSF,WB\n";
     	uniqueCSV.append(uniqueHeader);
-    	//System.out.printf("%d %d %d %d\n", GUID, site, visitID, specimen);
     	
     	String line = null;
     	int num = 0;
     	while ( (line = input.readLine()) != null) {
+    		//Read the line from the input CSV and then pull out
+    		//the relevant information
     		String[] lineArray = parseLine2(line);
     		if(lineArray.length == 0)
     			continue;
@@ -138,7 +146,6 @@ public class PlugInAlgorithmUniqueSamplesCount extends AlgorithmBase {
     		String visitStr = lineArray[visitID].trim();
     		String typeStr = lineArray[specimen].trim().toLowerCase();
     		int typeNum;
-    		//System.out.println(typeStr);
     		if (typeStr.contains("rna")) {
                 typeNum = 0;
             } else if (typeStr.contains("plasma")) {
@@ -156,11 +163,12 @@ public class PlugInAlgorithmUniqueSamplesCount extends AlgorithmBase {
                 System.err.println("Unknown");
             }
     		
+    		//Build a string from the various parts of the input line
+    		//so that duplicate entries are not counted
     		String setStr = siteStr + ";" + GUIDStr + ";" + visitStr + ";" + types[typeNum];
     		
     		siteSet.add(siteStr);
     		visitSet.add(visitStr);
-    		//specSet.add(types[typeNum]);
     		lineSet.add(setStr);
     	}
     	System.out.println("Set size: " + lineSet.size());
@@ -172,8 +180,9 @@ public class PlugInAlgorithmUniqueSamplesCount extends AlgorithmBase {
     	int[] counter = new int[combinations];
     	ArrayList<String> siteList = new ArrayList<String>(siteSet);
     	ArrayList<String> visitList = new ArrayList<String>(visitSet);
-    	//ArrayList<String> specList = new ArrayList<String>(specSet);
     	
+    	//Order the output so that the visits are in
+    	//chronological order
     	Comparator<String> comp = new Comparator<String>(){
 
 			@Override
@@ -197,10 +206,12 @@ public class PlugInAlgorithmUniqueSamplesCount extends AlgorithmBase {
     	Collections.sort(siteList);
     	Collections.sort(visitList, comp);
     	
+    	
     	Iterator<String> iter = lineSet.iterator();
+    	//Read out unique lines from the input file and then add
+    	//to the current count for the given site/visit/sample type
     	while(iter.hasNext()){
     		String lineStr = iter.next();
-    		//System.out.println(lineStr);
     		String[] lineSplit = lineStr.split(";");
     		int siteInd = siteList.indexOf(lineSplit[0]);
     		int visitInd = visitList.indexOf(lineSplit[2]);
@@ -209,6 +220,7 @@ public class PlugInAlgorithmUniqueSamplesCount extends AlgorithmBase {
     		counter[comboInd]++;
     	}
     	
+    	//Write out the results to a new CSV
     	for(int i=0;i<siteSize;i++){
     		for(int j=0;j<visitSize;j++){
     			String output = visitList.get(j) + "," + siteList.get(i);

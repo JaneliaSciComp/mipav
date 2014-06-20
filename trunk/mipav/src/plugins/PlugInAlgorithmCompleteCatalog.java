@@ -8,23 +8,54 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Vector;
 
-
+/**
+ * Quick algorithm plugin used to check how many "complete" samples
+ * are present in the provided file. A complete sample only occurs when
+ * all samples from the Baseline visit to the most recent visit are in
+ * the file. For example, if a particular sample ID has samples for 
+ * Baseline, 6 months, 12 months, and 18 months, that constitutes a
+ * complete sample, but if the 6 or 12 month sample was missing, then
+ * it would no longer be a complete set. 
+ * @author wangvg
+ *
+ */
 public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
 
+	/**
+	 * File that you are counting
+	 */
     private final File catalogFile;
 
+    /**
+     * Output CSV to tabulate how many complete samples
+     * exist per sample type
+     */
     private final FileWriter csv;
 
+    /**
+     * List of IDs that are in the file
+     */
     private Vector<String> catalogID;
 
+    /**
+     * List of visits associated with the ID
+     */
     private Vector<String> visit;
 
+    /**
+     * List of sample types associated with the ID
+     */
     private Vector<Integer> type;
 
+    /**
+     * Array to keep track of the number of complete samples
+     */
     private int[] complete;
 
-    //private final int remove;
-    
+    /**
+     * Indecies to determine which columns contain the 
+     * information you are looking for
+     */
     private int GUID = -1;
     
     private int specimen = -1;
@@ -35,12 +66,10 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
         super();
         catalogFile = file;
         csv = out;
-        //remove = lines;
     }
 
     @Override
     public void runAlgorithm() {
-        // TODO Auto-generated method stub
         complete = new int[6]; // RNA, Plasma, Serum, CSF, Blood, DNA
         final String[] types = {"RNA", "Plasma", "Serum", "CSF", "Blood", "DNA"};
         String GUIDStr;
@@ -51,12 +80,15 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
         while (catalogID.size() > 0) {
             GUIDStr = catalogID.get(0);
             typeNum = type.get(0);
+            //Perform the comparison given the ID and sample type
+            //at the top of the stack
             if (compare(GUIDStr, typeNum)) {
                 complete[typeNum.intValue()]++;
             }
         }
 
         try {
+        	//Write out results from the counting to the CSV
             csv.append("Sample Type,Number of Complete Sets\n");
             for (int i = 0; i < 6; i++) {
                 csv.append(types[i] + "," + String.valueOf(complete[i]) + "\n");
@@ -65,7 +97,6 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
             csv.close();
 
         } catch (final IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         
@@ -73,6 +104,13 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
 
     }
 
+    /**
+     * Comparison method to determine if the given GUID and Sample type
+     * constitutes a complete set. 
+     * @param GUID
+     * @param which
+     * @return
+     */
     private boolean compare(final String GUID, final Integer which) {
 
         // First element is not removed already from each vector
@@ -85,6 +123,8 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
         final Vector<String> IDvisit = new Vector<String>();
         IDvisit.add(visit.get(0));
         while (catalogID.contains(GUID)) {
+        	//Search for the other GUIDS that match this GUID
+        	//and sample type
             index = catalogID.indexOf(GUID);
             while ( !type.get(index).equals(which)) {
                 index = catalogID.indexOf(GUID, index + 1);
@@ -105,7 +145,14 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
         }
 
         max = 0;
+        
+        //If only Baseline is present, or even if only
+        //one sample visit is present, it automatically
+        //cannot be a complete set
         if(IDvisit.size()<2) return false;
+        
+        //Determine the timeline of the last visit, so
+        //find the largest number
         for (int i = 0; i < IDvisit.size(); i++) {
             visitType = IDvisit.get(i).split(" ");
             if (visitType.length == 2) {
@@ -115,6 +162,10 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
                 }
             }
         }
+        
+        //Visits are evenly scheduled, so given a certain
+        //number of months, there should be that many visits,
+        //or else there aren't enough samples.
         if(which.equals(new Integer(3)))
         	num = max / 12 + 1;
         else
@@ -122,6 +173,10 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
         return (num == IDvisit.size());
     }
 
+    /**
+     * Read the catalog file and log the relevant information
+     * for comparison and counting.
+     */
     private void readCSV() {
 
         String[] lineArray;
@@ -134,11 +189,9 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
                 catalogID = new Vector<String>();
                 visit = new Vector<String>();
                 type = new Vector<Integer>();
-
-                /*for (int i = 0; i < remove; i++) {
-                    input.readLine();
-                }*/
                 
+                //Read the header to determine which columns
+                //contain the info we want
                 String header = input.readLine();
                 String[] hArray = parseLine2(header);
                 for(int i=0;i<hArray.length;i++){
@@ -157,6 +210,9 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
                 	return;
                 }
 
+                //Read the information and store the sample
+                //type based on the numbers specified at the
+                //beginning
                 while ( (line = input.readLine()) != null) {
                     lineArray = parseLine2(line);
                     if (lineArray.length != 0) {
@@ -194,6 +250,12 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
         }
     }
     
+    /**
+     * Parses the lines from the catalog file. The same as
+     * can be found in the ParseSlips algorithms. 
+     * @param line
+     * @return
+     */
 	private String[] parseLine2(String line){
 		String[] output = new String[20];
 		int cnt = 0;

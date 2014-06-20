@@ -13,16 +13,53 @@ import gov.nih.mipav.view.MipavUtil;
 
 public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 	
+	/**
+	 * Lines from the samples report, contains the entire line
+	 */
 	private Vector<String[]> reportLines;
+	
+	/**
+	 * Lines from the Coriell report, contains the entire line
+	 */
 	private Vector<String[]> slipLines;
+	
+	/**
+	 * IDs from the samples report
+	 */
 	private Vector<String> reportID;
+	
+	/**
+	 * IDs from the Coriell report
+	 */
 	private Vector<String> slipID;
+	
 	private File reportFile;
+	
 	private File slipFile;
+	
+	/**
+	 * Output CSV specifying any differences occuring between
+	 * the samples report and the Coriell report
+	 */
 	private FileWriter csv;
+	
+	/**
+	 * Output CSV that appends the samples report info with the
+	 * Coriell report info
+	 */
 	private FileWriter concatCSV;
-	private boolean removeHeader;
+	
+	/**
+	 * Used to trip break statements or to end the algorithm.
+	 * Kind of messy, but it works.
+	 */
 	private boolean failed;
+	
+	/**
+	 * Indecies of the pertinent columns in the Coriell file because
+	 * for some reason they like to keep changing how the columns are
+	 * organized and it keeps breaking the program
+	 */
 	private int[] indecies;
 	
 	public PlugInAlgorithmParseSlips(){
@@ -40,43 +77,49 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 	
 	@Override
 	public void runAlgorithm() {
-		// TODO Auto-generated method stub
 		int index;
 		String reportIDval;
 		String[] reportString;
 		String[] slipString;
+		
 		readCSV();
+		
 		if (failed) return;
+		
 		for(int i=0;i<reportLines.size();i++){
+			//Go through samples report lines first
 			reportIDval = reportID.get(i);
 			reportString = reportLines.get(i);
+			//Search for corresponding line in the Coriell file
 			if(slipID.contains(reportIDval)){
 				index = slipID.indexOf(reportIDval);
 				slipID.remove(index);
 				slipString = slipLines.remove(index);
+				//Run the comparison
 				compare(reportString, slipString);
 				try {
+					//Put the information together in the concatenated CSV
 					concatCSV.append(makeSiteString(reportString) + makeString(slipString) + "\n");
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			} 
 			else{
+				//If the Sample is not present in the Coriell file, log it
 				try {
 					csv.append(reportIDval.concat(",not in Coriell\n"));
 					concatCSV.append(makeString(reportString) + "\n");
 				} catch (IOException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 			}
 		}
+		//Any samples in the Coriell file that can't be found in the samples report
+		//should also be noted
 		for(int i=0;i<slipLines.size();i++){
 			try {
 				csv.append("," + slipID.get(i) + ",not found in Sample Report\n");
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -86,7 +129,6 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 			concatCSV.flush();
 			concatCSV.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -101,10 +143,6 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 		this.concatCSV = out;
 	}
 	
-	public void removeHeader(boolean remove){
-		removeHeader = remove;
-	}
-	
 	public void setReportFile(File report){
 		this.reportFile = report;
 	}
@@ -113,6 +151,13 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 		this.slipFile = slip;
 	}
 	
+	/**
+	 * Compare the information from the samples report to the organized lines
+	 * from the Coriell file. Any time differences occur, log them in the CSV
+	 * and show the values in both files.
+	 * @param reportString
+	 * @param slipString
+	 */
 	private void compare(String[] reportString, String[] slipString){
 
 		String base = new String(slipString[0] + ",," );
@@ -154,17 +199,22 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 				export = base.concat(export);
 				csv.append(export.concat("\n"));
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
 	}
 	
+	/**
+	 * Organizes the input lines from the Coriell file so only the important
+	 * info is accounted for.
+	 * @param input
+	 * @return
+	 * @throws NullPointerException
+	 */
 	private String[] organizeInput(String[] input) throws NullPointerException{
 		String[] organized = new String[9];
 		String[] tempArray;
 		String tempStr;
-		//System.out.println(makeString(input));
 		organized[0] = input[indecies[0]].trim(); //PID
 		organized[1] = input[indecies[3]].trim() + "/" + input[indecies[4]].trim(); //Specimen
 		
@@ -177,6 +227,8 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 		if(input[indecies[9]] == "null")
 			organized[3] = "null";
 		else{
+			//Need to change up the format of the dates because they are 
+			//formatted really strangely
 			organized[3] = input[indecies[9]].trim().split(" ")[0];
 			if(organized[3].contains("-") || organized[3].contains("/")){
 				if(organized[3].contains("-"))
@@ -221,11 +273,16 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 		organized[5] = input[indecies[2]].trim(); //GUID
 		organized[6] = input[indecies[1]].trim(); //Gender
 		organized[7] = input[indecies[6]].trim(); //Site
-		organized[8] = input[indecies[5]].trim();
+		organized[8] = input[indecies[5]].trim(); //Age
 		
 		return organized;
 	}
 	
+	/**
+	 * Builds the string for the concatenated CSV.
+	 * @param array
+	 * @return
+	 */
 	private String makeString(String[] array){
 		String cont = new String();
 		for(int i=0; i<array.length; i++){
@@ -235,10 +292,17 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 			else
 				cont += array[i] + ",";
 		}
-		//cont += "\n";
 		return cont;
 	}
 	
+	/**
+	 * Used to build the string for output into the 
+	 * concatention CSV. This version limits the
+	 * length of the output array since it tends
+	 * to be inconsistent (when it shouldn't be)
+	 * @param array
+	 * @return
+	 */
 	private String makeSiteString(String[] array){
 		String cont = new String();
 		int len = array.length;
@@ -254,6 +318,13 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 	
 	//Coriell
 	
+	/**
+	 * Parse lines in the Coriell file. Things keep changing between
+	 * semi-colon delimited and comma delimited, so just check for
+	 * both to determine which one to use to split the line
+	 * @param line
+	 * @return
+	 */
 	private String[] parseLine(String line){
 		String[] output = new String[20];
 		int cnt = 0;
@@ -297,6 +368,11 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 		
 		return realout;
 	}
+	
+	/**
+	 * Read both CSV files and pull out the relevant information
+	 * to compare
+	 */
 
 	private void readCSV(){
 		
@@ -311,15 +387,16 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 				reportID = new Vector<String>();
 				String PID;
 				
+				//Read the samples report file
 				while (( line = input.readLine()) != null){
 					cnt++;
-					//System.out.println(line);
 					lineArray = parseLine2(line);
 					if(lineArray.length != 0){
 						PID = lineArray[10];
 						if(PID == "null")
 							continue;
 						else if(reportID.contains(PID)){
+							//Log the ID if it has already appeared once
 							csv.append(PID + ",duplicated\n");
 						}
 						else{
@@ -346,12 +423,10 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 				String line = null; 
 				slipLines = new Vector<String[]>();
 				slipID = new Vector<String>();
-				/*if (removeHeader) {
-					input.readLine(); //Strip header from Coriell file
-					cnt++;
-				}*/
+				
+				//Read the header of the Coriell file to determine which
+				//columns you need to read, and which ones go where
 				String header = input.readLine();
-				System.err.println(header);
 				String[] headerArray = header.split(",");
 				for(int i=0;i<headerArray.length;i++){
 					String col = headerArray[i].trim();
@@ -387,6 +462,7 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 					}
 				}
 				
+				//Delimiter also keeps changing, keep an eye on that
 				while (( line = input.readLine()) != null){
 					cnt++;
 					System.out.println(line);
