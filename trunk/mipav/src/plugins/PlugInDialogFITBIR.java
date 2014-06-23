@@ -219,6 +219,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
+    private static final String VALUE_YES_SPECIFY = "Yes, specify";
+
+    private static final String ELEM_OTHER_SPECIFY_SUFFIX = "OTH";
+
+    private static final String ELEM_YES_SPECIFY_SUFFIX = "ST";
+
     private static final String GUID_ELEMENT_NAME = "GUID";
 
     private static final String IMG_IMAGE_INFO_GROUP = "Image Information";
@@ -956,7 +962,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         csvStructRowData = new Hashtable<String, String>();
         for (int i = 0; i < numDataStructs; i++) {
             final String tableName = (String) structTableModel.getValueAt(i, 0);
-            // format: "structname_PREFIXGUID"
+            // format: "structname_-_PREFIXGUID"
             final String lowerName = getStructFromString(tableName).toLowerCase();
             if ( !csvStructRowData.containsKey(lowerName)) {
                 DataStructure dsInfo = null;
@@ -2415,7 +2421,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 final JComboBox jc = (JComboBox) comp;
                 for (int k = 0; k < jc.getItemCount(); k++) {
                     final String item = (String) jc.getItemAt(k);
-                    if (item.equalsIgnoreCase(VALUE_OTHER_SPECIFY)) {
+                    if (item.equalsIgnoreCase(VALUE_OTHER_SPECIFY) || item.equalsIgnoreCase(VALUE_YES_SPECIFY)) {
                         foundOtherInDE = true;
                     }
 
@@ -2427,7 +2433,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 if ( !found) {
                     if (foundOtherInDE) {
                         jc.setSelectedItem(VALUE_OTHER_SPECIFY);
-                        // deVal.getOtherSpecifyField().setText(value);
+                        if (deVal.getOtherSpecifyField() != null) {
+                            deVal.getOtherSpecifyField().setText(value);
+                        }
                         System.err.println("Other specify\t" + deVal.getName() + "\t\t" + value);
                     } else {
                         System.err.println("Value not found. DE:\t" + comp.getName() + "\t" + value);
@@ -2448,9 +2456,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 for (final String val : valueSplit) {
                     for (int k = 0; k < listModel.getSize(); k++) {
                         final String item = (String) listModel.getElementAt(k);
-                        if ( !foundOtherInDE && item.equalsIgnoreCase(VALUE_OTHER_SPECIFY)) {
+                        if ( !foundOtherInDE && item.equalsIgnoreCase(VALUE_OTHER_SPECIFY) || item.equalsIgnoreCase(VALUE_YES_SPECIFY)) {
                             foundOtherInDE = true;
                             otherSpecifyIndex = k;
+                            selectedIndicies.add(k);
                         }
 
                         if (item.equalsIgnoreCase(val)) {
@@ -2462,8 +2471,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                     if ( !found) {
                         if (foundOtherInDE) {
-                            list.setSelectedIndex(otherSpecifyIndex);
-                            // deVal.getOtherSpecifyField().setText(val);
+                            if (deVal.getOtherSpecifyField() != null) {
+                                deVal.getOtherSpecifyField().setText(val);
+                            }
                             System.err.println("Other specify\t" + deVal.getName() + "\t\t" + val);
                         } else {
                             System.err.println("Value not found. DE:\t" + comp.getName() + "\t" + val);
@@ -2491,10 +2501,50 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         if (deVal.getDataElementInfo().getRestrictions() == InputRestrictions.FREE_FORM && deVal.getComp() instanceof JComboBox) {
             final JComboBox combo = (JComboBox) deVal.getComp();
             for (int i = 0; i < combo.getItemCount(); i++) {
-                if ( ((String) combo.getItemAt(i)).trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY)) {
+                if ( ((String) combo.getItemAt(i)).trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY)
+                        || ((String) combo.getItemAt(i)).trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
                     return true;
                 }
             }
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns whether this field is a new other specify field.
+     */
+    private static final boolean isNewOtherSpecifyField(final DataElementValue deVal) {
+        if (deVal.getDataElementInfo().getRestrictions() == InputRestrictions.SINGLE
+                || deVal.getDataElementInfo().getRestrictions() == InputRestrictions.MULTIPLE) {
+            if (deVal.getComp() instanceof JComboBox) {
+                final JComboBox combo = (JComboBox) deVal.getComp();
+                for (int i = 0; i < combo.getItemCount(); i++) {
+                    if ( ((String) combo.getItemAt(i)).trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY)
+                            || ((String) combo.getItemAt(i)).trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
+                        return true;
+                    }
+                }
+            } else if (deVal.getComp() instanceof JList) {
+                final ListModel listModel = ((JList) deVal.getComp()).getModel();
+                for (int k = 0; k < listModel.getSize(); k++) {
+                    final String item = (String) listModel.getElementAt(k);
+                    if (item.trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY) || item.trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns whether this field is an Other, specify or Yes, specify value entry field (sister field).
+     */
+    private static final boolean isSisterField(final DataElementValue deVal) {
+        if (deVal.getName().endsWith(ELEM_OTHER_SPECIFY_SUFFIX) || deVal.getName().endsWith(ELEM_YES_SPECIFY_SUFFIX)) {
+            return true;
         }
 
         return false;
@@ -3348,7 +3398,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                         }
 
                                         if (isOther) {
-                                            // deVal.getOtherSpecifyField().setText(value);
+                                            if (deVal.getOtherSpecifyField() != null) {
+                                                deVal.getOtherSpecifyField().setText(value);
+                                            }
                                             combo.setSelectedItem(VALUE_OTHER_SPECIFY);
                                             System.err.println("Other specify\t" + deVal.getName() + "\t\t" + value);
                                         }
@@ -3367,9 +3419,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                         for (final String val : valueSplit) {
                                             for (int k = 0; k < listModel.getSize(); k++) {
                                                 final String item = (String) listModel.getElementAt(k);
-                                                if ( !foundOtherInDE && item.equalsIgnoreCase(VALUE_OTHER_SPECIFY)) {
+                                                if ( !foundOtherInDE
+                                                        && (item.equalsIgnoreCase(VALUE_OTHER_SPECIFY) || item.equalsIgnoreCase(VALUE_YES_SPECIFY))) {
                                                     foundOtherInDE = true;
                                                     otherSpecifyIndex = k;
+                                                    selectedIndicies.add(k);
                                                 }
 
                                                 if (item.equalsIgnoreCase(val)) {
@@ -3381,8 +3435,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                                             if ( !found) {
                                                 if (foundOtherInDE) {
-                                                    list.setSelectedIndex(otherSpecifyIndex);
-                                                    // deVal.getOtherSpecifyField().setText(val);
+                                                    if (deVal.getOtherSpecifyField() != null) {
+                                                        deVal.getOtherSpecifyField().setText(val);
+                                                    }
                                                     System.err.println("Other specify\t" + deVal.getName() + "\t\t" + val);
                                                 } else {
                                                     System.err.println("Value not found. DE:\t" + comp.getName() + "\t" + val);
@@ -3444,7 +3499,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                         }
 
                                         if (isOther) {
-                                            // deVal.getOtherSpecifyField().setText(value);
+                                            if (deVal.getOtherSpecifyField() != null) {
+                                                deVal.getOtherSpecifyField().setText(value);
+                                            }
                                             combo.setSelectedItem(VALUE_OTHER_SPECIFY);
                                             // System.err.println("Other specify\t" + deVal.getName() + "\t\t" + value);
                                         }
@@ -3463,9 +3520,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                         for (final String val : valueSplit) {
                                             for (int k = 0; k < listModel.getSize(); k++) {
                                                 final String item = (String) listModel.getElementAt(k);
-                                                if ( !foundOtherInDE && item.equalsIgnoreCase(VALUE_OTHER_SPECIFY)) {
+                                                if ( !foundOtherInDE
+                                                        && (item.equalsIgnoreCase(VALUE_OTHER_SPECIFY) || item.equalsIgnoreCase(VALUE_YES_SPECIFY))) {
                                                     foundOtherInDE = true;
                                                     otherSpecifyIndex = k;
+                                                    selectedIndicies.add(k);
                                                 }
 
                                                 if (item.equalsIgnoreCase(val)) {
@@ -3477,8 +3536,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                                             if ( !found) {
                                                 if (foundOtherInDE) {
-                                                    list.setSelectedIndex(otherSpecifyIndex);
-                                                    // deVal.getOtherSpecifyField().setText(val);
+                                                    if (deVal.getOtherSpecifyField() != null) {
+                                                        deVal.getOtherSpecifyField().setText(val);
+                                                    }
                                                     System.err.println("Other specify\t" + deVal.getName() + "\t\t" + val);
                                                 } else {
                                                     System.err.println("Value not found. DE:\t" + comp.getName() + "\t" + val);
@@ -4080,6 +4140,22 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
 
                 repeat.addDataElement(newDeVal);
+            }
+
+            // now that all DEs are added, find sister elements
+            DataElementValue bigSister = null;
+            for (final DataElementValue deVal : repeat.getDataElements()) {
+                if (isNewOtherSpecifyField(deVal)) {
+                    bigSister = deVal;
+                } else if (bigSister != null && isSisterField(deVal)) {
+                    // assume that they need to be next to each other and the specify field comp is a text field
+                    if (deVal.getPosition() == bigSister.getPosition() + 1 && deVal.getComp() instanceof JTextField) {
+                        bigSister.setOtherSpecifyField((JTextField) deVal.getComp());
+                    }
+                } else {
+                    // didn't find a sister, so reset the saved big sister
+                    bigSister = null;
+                }
             }
 
             return repeat;
@@ -5164,7 +5240,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                         } else if (comp instanceof JComboBox) {
                             value = (String) ( ((JComboBox) comp).getSelectedItem());
-                            if (value.equalsIgnoreCase(VALUE_OTHER_SPECIFY)) {
+                            if (value.equalsIgnoreCase(VALUE_OTHER_SPECIFY) || value.equalsIgnoreCase(VALUE_YES_SPECIFY)) {
                                 // value = deVal.getOtherSpecifyField().getText().trim();
                             }
                         } else if (comp instanceof JList) {
@@ -5466,6 +5542,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             return otherSpecifyField;
         }
 
+        public void setOtherSpecifyField(final JTextField tf) {
+            otherSpecifyField = tf;
+        }
+
         public String getName() {
             return deInfo.getName();
         }
@@ -5632,7 +5712,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
             // sanity check before casts
             if (source instanceof JComboBox) {
-                otherSpecifyField.setVisible( ((JComboBox) source).getSelectedItem().equals(VALUE_OTHER_SPECIFY));
+                otherSpecifyField.setVisible( ((JComboBox) source).getSelectedItem().equals(VALUE_OTHER_SPECIFY)
+                        || ((JComboBox) source).getSelectedItem().equals(VALUE_YES_SPECIFY));
                 final Window parentWindow = SwingUtilities.getWindowAncestor(otherSpecifyField);
                 // don't force the re-packing if the window hasn't been shown/created yet (as in CSV read)
                 if (parentWindow != null) {
