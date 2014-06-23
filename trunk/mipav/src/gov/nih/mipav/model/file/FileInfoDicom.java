@@ -444,7 +444,30 @@ public class FileInfoDicom extends FileInfoBase {
 
             if (orientation == null) {
                 Preferences.debug("Error reading tag 0020, 0037 - null \n", Preferences.DEBUG_FILEIO);
-                return null;
+                orientation = (String) tagTable.getValue("0020,9116");
+                if (orientation != null) {
+                	int index = orientation.indexOf("0020,0037: ImageOrientationPatient");
+                	if (index >= 0) {
+                	    int length = new String("0020,0037: ImageOrientationPatient").length();
+                	    index = index + length;
+                	    orientation = orientation.substring(index);
+                	    if (orientation == null) {
+                	    	return null;
+                	    }
+                	    orientation = orientation.trim();
+                	    if (orientation == null) {
+                	    	return null;
+                	    }
+                	}
+                	else {
+                		Preferences.debug("0020,0037 not found in tag 0020,9116 \n", Preferences.DEBUG_FILEIO);
+                		return null;
+                	}
+                }
+                else {
+                	Preferences.debug("Error reading tag 0020,9116 - null \n", Preferences.DEBUG_FILEIO);
+                    return null;
+                }
             }
 
             index1 = index2 = index3 = index4 = index5 = index6 = notSet;
