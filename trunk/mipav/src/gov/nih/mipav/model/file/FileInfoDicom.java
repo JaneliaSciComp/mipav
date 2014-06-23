@@ -912,8 +912,30 @@ public class FileInfoDicom extends FileInfoBase {
             } else if (tagKey.equals("0018,602E")) {
                 setResolutions(((Double) tag.getValue(false)).floatValue(), 1);
                 setUnitsOfMeasure(Unit.CENTIMETERS, 1);
-            } else if (tagKey.equals("0020,0032")) { // type 2c
-                orientation = ((String) tag.getValue(false)).trim();
+            } else if ((tagKey.equals("0020,0032")) || (tagKey.equals("0020,9113"))) { // type 2c
+            	if (tagKey.equals("0020,9113")) {
+            		orientation = (String) tagTable.getValue("0020,9113");
+            		int index = orientation.indexOf("0020,0032: ImagePositionPatient");
+                	if (index >= 0) {
+                	    int length = new String("0020,0032: ImagePositionPatient").length();
+                	    index = index + length;
+                	    orientation = orientation.substring(index);
+                	    if (orientation == null) {
+                	    	return;
+                	    }
+                	    orientation = orientation.trim();
+                	    if (orientation == null) {
+                	    	return;
+                	    }
+                	}
+                	else {
+                		return;
+                	}
+            	} // if (tagKey.equals("0020,9113"))
+            	else {
+            		orientation = ((String) tag.getValue(false)).trim();
+            	}
+               
                 int index1 = -1, index2 = -1;
                 for (int i = 0; i < orientation.length(); i++) {
     
