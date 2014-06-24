@@ -7,6 +7,20 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
+ * 
+ * 	
+ * Modified code from Aaron Carass's Java implementation of
+ * Philippe Thevenaz's Cubic B-spline Interpolation. Code is
+ * simply wrapped to allow for calls consistent with MIPAV
+ * style as well as allow for 2D images. 
+ * 
+ * B-Spline interpolation.
+ * 
+ * @author Philippe Thevenaz
+ * @author Aaron Carass
+ * 
+ * Jet code is untouched from when the new code was implemented on June 24th, 2014.
+ * 
  * Fourth-order Bspline for 1-3D lines and 2D surface. This class is based on code from
  * Dave Eberly's MAGIC C++ library.
  *
@@ -23,19 +37,10 @@ public class AlgorithmBSpline extends AlgorithmBase {
         { 0.04166666666666667, 0.1666666666666667, 0.25, 0.1666666666666667, -0.1666666666666667 },
         { 0.0, 0.0, 0.0, 0.0, 0.04166666666666667 }
     };
-
-    /** Blending matrix for 3rd degree B spline. */
-    private static double[][] mat3 = {
-        { 0.1666666666666667, -0.5, 0.5, -0.1666666666666667 },
-        { 0.6666666666666667, 0, -1, 0.5 },
-        { 0.1666666666666667, 0.5, 0.5, -0.5 },
-        { 0.0, 0.0, 0.0, 0.1666666666666667 }
-    };
+    
+    private final double DBL_EPSILON = 2.2204460492503131e-16;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
-    private double[][] coeff = null;
 
     /** DOCUMENT ME! */
     private int degree = -1;
@@ -45,15 +50,6 @@ public class AlgorithmBSpline extends AlgorithmBase {
     
     /** DOCUMENT ME! */
     private double[] dt_double = new double[5];
-
-    /** DOCUMENT ME! */
-    private double[] dx = new double[5];
-
-    /** DOCUMENT ME! */
-    private double[] dy = new double[5];
-
-    /** DOCUMENT ME! */
-    private double[] dz = new double[5];
 
     /** DOCUMENT ME! */
     private double[] geoms = new double[5];
@@ -67,47 +63,18 @@ public class AlgorithmBSpline extends AlgorithmBase {
     /** DOCUMENT ME! */
     private double[] geomz = new double[5];
 
-    /** Global variables used for 2D and 3D Bspline. */
-    private double[] inter = null; // new double[xdim*ydim*zdim];
-
     /** DOCUMENT ME! */
-    private double[] interA = null;
-
-    /** DOCUMENT ME! */
-    private double[] interB = null;
-
-    /** DOCUMENT ME! */
-    private double[] interG = null;
-
-    /** DOCUMENT ME! */
-    private double[] interR = null;
-
-    /** DOCUMENT ME! */
-    private double[][] mat = null; // new double[degree+1][degree+1];
-
-    /** DOCUMENT ME! */
-    private int sliceSize;
-
-    /** DOCUMENT ME! */
-    private double[] volume = null;
-
-    /** DOCUMENT ME! */
-    private int xBaseOld = -1;
-
-    /** DOCUMENT ME! */
-    private int xdim, ydim, zdim;
+    private int width, height, depth;
 
     /** DOCUMENT ME! */
     private int xold_tbase = -1;
 
     /** DOCUMENT ME! */
     private int xyold_tbase = -1;
-
-    /** DOCUMENT ME! */
-    private int yBaseOld = -1;
-
-    /** DOCUMENT ME! */
-    private int zBaseOld = -1;
+    
+    private ColorInterpolation colorInter;
+    
+    private double[][][] imData;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -119,6 +86,10 @@ public class AlgorithmBSpline extends AlgorithmBase {
     //~ Methods --------------------------------------------------------------------------------------------------------
     
     /**
+     * This method is out of date, as it provides smoothed interpolation as opposed
+     * to precise interpolation. For precise interpolation, use the analogous method
+     * in AlgorithmBSpline3D instead, as that provides true B-spline interpolation.
+     * 
      * This method can also be used to calculate derivatives of the Bspline.
      *
      * @param   orderDx  derivative order in x direction (n <= 4 )
@@ -128,117 +99,16 @@ public class AlgorithmBSpline extends AlgorithmBase {
      *
      * @return  the Bspline interpolated data point
      */
-    public double bSpline2D(int orderDx, int orderDy, double x, double y) {
-
-        int i, j;
-        int i0, i1, j0, j1;
-        int k0, k1;
-        int l0, l1;
-        int xbase, ybase;
-        double xdiff, ydiff;
-        double result;
-        double sum;
-        int iindex;
-        double matj0i0;
-        int kx, ky;
-
-        // set base indices and compute partial tensor product (if necessary)
-        xbase = (int) x;
-        ybase = (int) y;
-
-        if ((xbase != xBaseOld) || (ybase != yBaseOld)) {
-            xBaseOld = xbase;
-            yBaseOld = ybase;
-            kx = xbase - 1;
-            ky = ybase - 1;
-
-            // compute_geometry_tensor
-            iindex = 0;
-
-            for (i0 = 0; i0 <= degree; i0++) {
-
-                for (i1 = 0; i1 <= degree; i1++) {
-                    sum = 0;
-
-                    for (j0 = 0, k0 = kx; j0 <= degree; j0++, k0++) {
-
-                        // l0 = Math.max(Math.min(k0,xdim - 1),0);
-                        l0 = xdim - 1;
-
-                        if (k0 < l0) {
-                            l0 = k0;
-                        }
-
-                        if (l0 < 0) {
-                            l0 = 0;
-                        }
-
-                        matj0i0 = mat[j0][i0];
-
-                        for (j1 = 0, k1 = ky; j1 <= degree; j1++, k1++) {
-
-                            // l1 = Math.max(Math.min(k1,ydim - 1), 0);
-                            l1 = ydim - 1;
-
-                            if (k1 < l1) {
-                                l1 = k1;
-                            }
-
-                            if (l1 < 0) {
-                                l1 = 0;
-                            }
-
-                            sum += matj0i0 * mat[j1][i1] * volume[(l1 * xdim) + l0];
-                        } // j1
-                    } // j0
-
-                    inter[iindex++] = sum;
-                } // i1
-            } // i0
-        }
-
-        // construct relative offsets from base pixel
-        xdiff = x - xbase;
-        ydiff = y - ybase;
-
-        // compute polynomial terms
-        double temp = 1;
-
-        for (int d = 0; d < orderDx; d++) {
-            dx[d] = 0;
-        }
-
-        for (int d = orderDx; d <= degree; d++) {
-            dx[d] = coeff[orderDx][d] * temp;
-            temp *= xdiff;
-        }
-
-        temp = 1;
-
-        for (int d = 0; d < orderDy; d++) {
-            dy[d] = 0;
-        }
-
-        for (int d = orderDy; d <= degree; d++) {
-            dy[d] = coeff[orderDy][d] * temp;
-            temp *= ydiff;
-        }
-
-        result = 0;
-        iindex = 0;
-
-        for (i = 0; i <= degree; i++) {
-
-            for (j = 0; j <= degree; j++) {
-                result += dx[i] * dy[j] * inter[iindex++];
-            }
-        }
-
-        return result;
-
-    }
     
+    public double bSpline2D(int orderDx, int orderDy, double x, double y){
+		return interpolateBSpline2D(imData, x, y, degree);
+	}
+	
     /**
+     * This method is out of date, as it provides smoothed interpolation as opposed
+     * to precise interpolation. For precise interpolation, use the analogous method
+     * in AlgorithmBSpline3D instead, as that provides true B-spline interpolation.
+     * 
      * This method can also be used to calculate derivatives of the Bspline.
      *
      * @param   orderDx  derivative order in x direction (n <= 4 )
@@ -248,140 +118,17 @@ public class AlgorithmBSpline extends AlgorithmBase {
      *
      * @return  the Bspline interpolated data point
      */
-    public double[] bSpline2DC(int orderDx, int orderDy, double x, double y) {
 
-        int i, j;
-        int i0, i1, j0, j1;
-        int k0, k1;
-        int l0, l1;
-        int xbase, ybase;
-        double xdiff, ydiff;
-        double[] result = new double[4];
-        double sumA, sumR, sumG, sumB;
-        int iindexA, iindexR, iindexG, iindexB;
-        int tmpIndex;
-        double matj0i0;
-        int kx, ky;
-
-        // set base indices and compute partial tensor product (if necessary)
-        xbase = (int) x;
-        ybase = (int) y;
-
-        if ((xbase != xBaseOld) || (ybase != yBaseOld)) {
-            xBaseOld = xbase;
-            yBaseOld = ybase;
-            kx = xbase - 1;
-            ky = ybase - 1;
-
-            // compute_geometry_tensor
-            iindexA = 0;
-            iindexR = 0;
-            iindexG = 0;
-            iindexB = 0;
-
-            for (i0 = 0; i0 <= degree; i0++) {
-
-                for (i1 = 0; i1 <= degree; i1++) {
-                    sumA = 0;
-                    sumR = 0;
-                    sumG = 0;
-                    sumB = 0;
-
-                    for (j0 = 0, k0 = kx; j0 <= degree; j0++, k0++) {
-
-                        // l0 = Math.max(Math.min(k0,xdim - 1), 0);
-                        l0 = xdim - 1;
-
-                        if (k0 < l0) {
-                            l0 = k0;
-                        }
-
-                        if (l0 < 0) {
-                            l0 = 0;
-                        }
-
-                        matj0i0 = mat[j0][i0];
-
-                        for (j1 = 0, k1 = ky; j1 <= degree; j1++, k1++) {
-
-                            // l1 = Math.max(Math.min(k1,ydim - 1), 0);
-                            l1 = ydim - 1;
-
-                            if (k1 < l1) {
-                                l1 = k1;
-                            }
-
-                            if (l1 < 0) {
-                                l1 = 0;
-                            }
-
-                            tmpIndex = 4 * ((l1 * xdim) + l0);
-                            sumA += matj0i0 * mat[j1][i1] * volume[tmpIndex];
-                            sumR += matj0i0 * mat[j1][i1] * volume[tmpIndex + 1];
-                            sumG += matj0i0 * mat[j1][i1] * volume[tmpIndex + 2];
-                            sumB += matj0i0 * mat[j1][i1] * volume[tmpIndex + 3];
-                        } // j1
-                    } // j0
-
-                    interA[iindexA++] = sumA;
-                    interR[iindexR++] = sumR;
-                    interG[iindexG++] = sumG;
-                    interB[iindexB++] = sumB;
-                } // i1
-            } // i0
-        }
-
-        // construct relative offsets from base pixel
-        xdiff = x - xbase;
-        ydiff = y - ybase;
-
-        // compute polynomial terms
-        double temp = 1;
-
-        for (int d = 0; d < orderDx; d++) {
-            dx[d] = 0;
-        }
-
-        for (int d = orderDx; d <= degree; d++) {
-            dx[d] = coeff[orderDx][d] * temp;
-            temp *= xdiff;
-        }
-
-        temp = 1;
-
-        for (int d = 0; d < orderDy; d++) {
-            dy[d] = 0;
-        }
-
-        for (int d = orderDy; d <= degree; d++) {
-            dy[d] = coeff[orderDy][d] * temp;
-            temp *= ydiff;
-        }
-
-        result[0] = 0;
-        result[1] = 0;
-        result[2] = 0;
-        result[3] = 0;
-        iindexA = 0;
-        iindexR = 0;
-        iindexG = 0;
-        iindexB = 0;
-
-        for (i = 0; i <= degree; i++) {
-
-            for (j = 0; j <= degree; j++) {
-                result[0] += dx[i] * dy[j] * interA[iindexA++];
-                result[1] += dx[i] * dy[j] * interR[iindexR++];
-                result[2] += dx[i] * dy[j] * interG[iindexG++];
-                result[3] += dx[i] * dy[j] * interB[iindexB++];
-            }
-        }
-
-        return result;
-
-    }
+	public double[] bSpline2DC(int orderDx, int orderDy, double x, double y){
+		return colorInter.interpolate2D(x, y);
+	}
+	
     
     /**
+     * This method is out of date, as it provides smoothed interpolation as opposed
+     * to precise interpolation. For precise interpolation, use the analogous method
+     * in AlgorithmBSpline3D instead, as that provides true B-spline interpolation.
+     * 
      * 3D graph Bspline for black and white. This method can also be used to calculate derivatives of the Bspline.
      * WARNING - programmer must call setup3DBSpline before using this function!!!
      *
@@ -395,154 +142,15 @@ public class AlgorithmBSpline extends AlgorithmBase {
      * @return  the Bspline interpolated data point
      */
 
-    public double bSpline3D(int orderDx, int orderDy, int orderDz, double x, double y, double z) {
-        int i, j, k;
-        int iindex;
-        int i0, i1, i2, j0, j1, j2, k0, k1, k2, l0, l1, l2;
-
-        int xbase, ybase, zbase;
-        int kx, ky, kz; // optimizers
-        double xdiff, ydiff, zdiff;
-        double result;
-        double sum;
-
-        int yOffset;
-        double matj0i0, matj1i1; // optimizers
-
-        // set base indices and compute partial tensor product (if necessary)
-        xbase = (int) x;
-        ybase = (int) y;
-        zbase = (int) z;
-
-        // do only when int(x, y, or z) changes
-        if ((xbase != xBaseOld) || (ybase != yBaseOld) || (zbase != zBaseOld)) {
-            xBaseOld = xbase;
-            yBaseOld = ybase;
-            zBaseOld = zbase;
-            kz = zbase - 1;
-            ky = ybase - 1;
-            kx = xbase - 1;
-            iindex = 0;
-
-            for (i0 = 0; i0 <= degree; i0++) {
-
-                for (i1 = 0; i1 <= degree; i1++) {
-
-                    for (i2 = 0; i2 <= degree; i2++) {
-                        sum = 0;
-
-                        for (j0 = 0, k0 = kx; j0 <= degree; j0++, k0++) {
-
-                            // l0 = Math.max(Math.min(k0,xdim - 1), 0);
-                            l0 = xdim - 1;
-
-                            if (k0 < l0) {
-                                l0 = k0;
-                            }
-
-                            if (l0 < 0) {
-                                l0 = 0;
-                            }
-
-                            matj0i0 = mat[j0][i0];
-
-                            for (j1 = 0, k1 = ky; j1 <= degree; j1++, k1++) {
-
-                                // l1 = Math.max(Math.min(k1, ydim - 1), 0);
-                                l1 = ydim - 1;
-
-                                if (k1 < l1) {
-                                    l1 = k1;
-                                }
-
-                                if (l1 < 0) {
-                                    l1 = 0;
-                                }
-
-                                matj1i1 = mat[j1][i1] * matj0i0;
-                                yOffset = (xdim * l1) + l0;
-
-                                for (j2 = 0, k2 = kz; j2 <= degree; j2++, k2++) {
-
-                                    // l2 = Math.max(Math.min(k2, zdim - 1), 0);
-                                    l2 = zdim - 1;
-
-                                    if (k2 < l2) {
-                                        l2 = k2;
-                                    }
-
-                                    if (l2 < 0) {
-                                        l2 = 0;
-                                    }
-
-                                    sum += matj1i1 * mat[j2][i2] * volume[yOffset + (l2 * sliceSize)];
-                                } // j2
-                            } // j1
-                        } // j0
-
-                        inter[iindex++] = sum;
-                    } // i2
-                } // i1
-            } // i0
-        }
-
-        // construct relative offsets from base pixel
-        xdiff = x - xbase;
-        ydiff = y - ybase;
-        zdiff = z - zbase;
-
-        // compute polynomial terms
-        double temp = 1;
-        int d;
-
-        for (d = 0; d < orderDx; d++) {
-            dx[d] = 0;
-        }
-
-        for (d = orderDx; d <= degree; d++) {
-            dx[d] = coeff[orderDx][d] * temp;
-            temp *= xdiff;
-        }
-
-        temp = 1;
-
-        for (d = 0; d < orderDy; d++) {
-            dy[d] = 0;
-        }
-
-        for (d = orderDy; d <= degree; d++) {
-            dy[d] = coeff[orderDy][d] * temp;
-            temp *= ydiff;
-        }
-
-        temp = 1;
-
-        for (d = 0; d < orderDz; d++) {
-            dz[d] = 0;
-        }
-
-        for (d = orderDz; d <= degree; d++) {
-            dz[d] = coeff[orderDz][d] * temp;
-            temp *= zdiff;
-        }
-
-        result = 0;
-        iindex = 0;
-
-        for (i = 0; i <= degree; i++) {
-
-            for (j = 0; j <= degree; j++) {
-
-                for (k = 0; k <= degree; k++) {
-                    result += dx[i] * dy[j] * dz[k] * inter[iindex++];
-                }
-            }
-        }
-
-        return result;
-    }
-    
+	public double bSpline3D(int orderDx, int orderDy, int orderDz, double x, double y, double z){
+		return interpolateBSpline(imData, x, y, z, degree);
+	}
+	
     /**
+     * This method is out of date, as it provides smoothed interpolation as opposed
+     * to precise interpolation. For precise interpolation, use the analogous method
+     * in AlgorithmBSpline3D instead, as that provides true B-spline interpolation.
+     * 
      * 3D graph Bspline for color. This method can also be used to calculate derivatives of the Bspline. WARNING -
      * programmer must call setup3DBSpline before using this function!!!
      *
@@ -555,176 +163,10 @@ public class AlgorithmBSpline extends AlgorithmBase {
      *
      * @return  the Bspline interpolated data point
      */
-
-    public double[] bSpline3DC(int orderDx, int orderDy, int orderDz, double x, double y, double z) {
-        int i, j, k;
-        int iindexA, iindexR, iindexG, iindexB;
-        int i0, i1, i2, j0, j1, j2, k0, k1, k2, l0, l1, l2;
-
-        int xbase, ybase, zbase;
-        int kx, ky, kz; // optimizers
-        double xdiff, ydiff, zdiff;
-        double[] result = new double[4];
-        double sumA, sumR, sumG, sumB;
-        int tmpIndex;
-
-        int yOffset;
-        double matj0i0, matj1i1; // optimizers
-
-        // set base indices and compute partial tensor product (if necessary)
-        xbase = (int) x;
-        ybase = (int) y;
-        zbase = (int) z;
-
-        // do only when int(x, y, or z) changes
-        if ((xbase != xBaseOld) || (ybase != yBaseOld) || (zbase != zBaseOld)) {
-            xBaseOld = xbase;
-            yBaseOld = ybase;
-            zBaseOld = zbase;
-            kz = zbase - 1;
-            ky = ybase - 1;
-            kx = xbase - 1;
-            iindexA = 0;
-            iindexR = 0;
-            iindexG = 0;
-            iindexB = 0;
-
-            for (i0 = 0; i0 <= degree; i0++) {
-
-                for (i1 = 0; i1 <= degree; i1++) {
-
-                    for (i2 = 0; i2 <= degree; i2++) {
-                        sumA = 0;
-                        sumR = 0;
-                        sumG = 0;
-                        sumB = 0;
-
-                        for (j0 = 0, k0 = kx; j0 <= degree; j0++, k0++) {
-
-                            // l0 = Math.max(Math.min(k0,xdim - 1), 0);
-                            l0 = xdim - 1;
-
-                            if (k0 < l0) {
-                                l0 = k0;
-                            }
-
-                            if (l0 < 0) {
-                                l0 = 0;
-                            }
-
-                            matj0i0 = mat[j0][i0];
-
-                            for (j1 = 0, k1 = ky; j1 <= degree; j1++, k1++) {
-
-                                // l1 = Math.max(Math.min(k1, ydim - 1), 0);
-                                l1 = ydim - 1;
-
-                                if (k1 < l1) {
-                                    l1 = k1;
-                                }
-
-                                if (l1 < 0) {
-                                    l1 = 0;
-                                }
-
-                                matj1i1 = mat[j1][i1] * matj0i0;
-                                yOffset = (xdim * l1) + l0;
-
-                                for (j2 = 0, k2 = kz; j2 <= degree; j2++, k2++) {
-
-                                    // l2 = Math.max(Math.min(k2, zdim - 1), 0);
-                                    l2 = zdim - 1;
-
-                                    if (k2 < l2) {
-                                        l2 = k2;
-                                    }
-
-                                    if (l2 < 0) {
-                                        l2 = 0;
-                                    }
-
-                                    tmpIndex = 4 * (yOffset + (l2 * sliceSize));
-                                    sumA += matj1i1 * mat[j2][i2] * volume[tmpIndex];
-                                    sumR += matj1i1 * mat[j2][i2] * volume[tmpIndex + 1];
-                                    sumG += matj1i1 * mat[j2][i2] * volume[tmpIndex + 2];
-                                    sumB += matj1i1 * mat[j2][i2] * volume[tmpIndex + 3];
-                                } // j2
-                            } // j1
-                        } // j0
-
-                        interA[iindexA++] = sumA;
-                        interR[iindexR++] = sumR;
-                        interG[iindexG++] = sumG;
-                        interB[iindexB++] = sumB;
-                    } // i2
-                } // i1
-            } // i0
-        }
-
-        // construct relative offsets from base pixel
-        xdiff = x - xbase;
-        ydiff = y - ybase;
-        zdiff = z - zbase;
-
-        // compute polynomial terms
-        double temp = 1;
-        int d;
-
-        for (d = 0; d < orderDx; d++) {
-            dx[d] = 0;
-        }
-
-        for (d = orderDx; d <= degree; d++) {
-            dx[d] = coeff[orderDx][d] * temp;
-            temp *= xdiff;
-        }
-
-        temp = 1;
-
-        for (d = 0; d < orderDy; d++) {
-            dy[d] = 0;
-        }
-
-        for (d = orderDy; d <= degree; d++) {
-            dy[d] = coeff[orderDy][d] * temp;
-            temp *= ydiff;
-        }
-
-        temp = 1;
-
-        for (d = 0; d < orderDz; d++) {
-            dz[d] = 0;
-        }
-
-        for (d = orderDz; d <= degree; d++) {
-            dz[d] = coeff[orderDz][d] * temp;
-            temp *= zdiff;
-        }
-
-        result[0] = 0;
-        result[1] = 0;
-        result[2] = 0;
-        result[3] = 0;
-        iindexA = 0;
-        iindexR = 0;
-        iindexG = 0;
-        iindexB = 0;
-
-        for (i = 0; i <= degree; i++) {
-
-            for (j = 0; j <= degree; j++) {
-
-                for (k = 0; k <= degree; k++) {
-                    result[0] += dx[i] * dy[j] * dz[k] * interA[iindexA++];
-                    result[1] += dx[i] * dy[j] * dz[k] * interR[iindexR++];
-                    result[2] += dx[i] * dy[j] * dz[k] * interG[iindexG++];
-                    result[3] += dx[i] * dy[j] * dz[k] * interB[iindexB++];
-                }
-            }
-        }
-
-        return result;
-    }
+	
+	public double[] bSpline3DC(int orderDx, int orderDy, int orderDz, double x, double y, double z){
+		return colorInter.interpolate(x, y, z);
+	}
 
     /**
      * This method can also be used to calculate derivatives of the Bspline.
@@ -804,6 +246,7 @@ public class AlgorithmBSpline extends AlgorithmBase {
 
     /**
      * This method can also be used to calculate derivatives of the Bspline.
+     * Used for smoothing VOI lines
      *
      * @param   derivOrder  derivative order (n <= 4 )
      * @param   t           float point index along the Bspline indicating point of interest
@@ -884,6 +327,7 @@ public class AlgorithmBSpline extends AlgorithmBase {
 
     /**
      * This method can also be used to calculate derivatives of the Bspline.
+     * Used for smoothing VOI lines
      *
      * @param   derivOrder  derivative order (n <= 4 )
      * @param   t           float point index along the Bspline indicating point of interest
@@ -966,15 +410,6 @@ public class AlgorithmBSpline extends AlgorithmBase {
 
         return (new Vector3f(x, y, z));
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     /**
      * This method can also be used to calculate derivatives of the Bspline.
@@ -1073,14 +508,6 @@ public class AlgorithmBSpline extends AlgorithmBase {
         return (new Vector3d(x, y, z));
     }
     
-    
-    
-    
-    
-    
-    
-    
-
     /**
      * Clean up memeory.
      */
@@ -1090,18 +517,6 @@ public class AlgorithmBSpline extends AlgorithmBase {
         geomy = null;
         geomz = null;
         dt = null;
-        dx = null;
-        dy = null;
-        dz = null;
-
-        volume = null;
-        inter = null;
-        interA = null;
-        interR = null;
-        interG = null;
-        interB = null;
-        mat = null;
-        coeff = null;
 
         super.finalize();
     }
@@ -1112,7 +527,6 @@ public class AlgorithmBSpline extends AlgorithmBase {
     public void resetBspline() {
         xold_tbase = -1;
         xyold_tbase = -1;
-        xBaseOld = -1;
     }
 
     /**
@@ -1120,7 +534,7 @@ public class AlgorithmBSpline extends AlgorithmBase {
      * AlgorithmBase.
      */
     public void runAlgorithm() { }
-
+    
     /**
      * Allocates memory and constructs arrays needed for BSpline.
      *
@@ -1128,40 +542,26 @@ public class AlgorithmBSpline extends AlgorithmBase {
      * @param  extents  vol extents (xDim,yDim)
      * @param  _degree  degree of spline (3 or 4)
      */
-    public void setup2DBSpline(double[] vol, int[] extents, int _degree) {
-        volume = vol;
-        xdim = extents[0];
-        ydim = extents[1];
-        degree = _degree;
-        inter = new double[(degree + 1) * (degree + 1)];
-        coeff = new double[degree + 1][degree + 1];
-        mat = new double[degree + 1][degree + 1];
-
-        // construct array of polynomial coefficients
-        for (int r = 0; r <= degree; r++) {
-
-            for (int c = 0; c < r; c++) {
-                coeff[r][c] = 0;
-            }
-
-            for (int c = r; c <= degree; c++) {
-                coeff[r][c] = 1;
-
-                for (int i = 0; i < r; i++) {
-                    coeff[r][c] *= c - i;
-                }
-            }
-        }
-
-        if (degree == 3) {
-            mat = mat3;
-        } else if (degree == 4) {
-            mat = mat4;
-        }
-
-        return;
-    }
-
+    
+    public void setup2DBSpline(double[] vol, int[] extents, int _degree){
+		width = extents[0];
+		height = extents[1];
+		depth = 1;
+		degree = _degree;
+		imData = new double[width][height][depth];
+		
+		int ind = 0;
+		for(int j=0;j<height;j++){
+			for(int i=0;i<width;i++, ind++){
+				imData[i][j][0] = vol[ind];
+			}
+		}
+		
+		SamplesToCoefficients2D(imData, degree);
+		
+	}
+    
+    
     /**
      * Allocates memory and constructs arrays needed for BSpline.
      *
@@ -1169,85 +569,54 @@ public class AlgorithmBSpline extends AlgorithmBase {
      * @param  extents  vol extents (xDim,yDim)
      * @param  _degree  degree of spline (3 or 4)
      */
-    public void setup2DBSplineC(double[] vol, int[] extents, int _degree) {
-        volume = vol;
-        xdim = extents[0];
-        ydim = extents[1];
-        degree = _degree;
-        interA = new double[(degree + 1) * (degree + 1)];
-        interR = new double[(degree + 1) * (degree + 1)];
-        interG = new double[(degree + 1) * (degree + 1)];
-        interB = new double[(degree + 1) * (degree + 1)];
-        coeff = new double[degree + 1][degree + 1];
-        mat = new double[degree + 1][degree + 1];
+	public void setup2DBSplineC(double[] vol, int[] extents, int _degree){
+		width = extents[0];
+		height = extents[1];
+		depth = 1;
+		degree = _degree;
+		double[][][][] data = new double[4][width][height][depth];
+		
+		int ind = 0;
+		for(int k=0;k<depth;k++){
+			for(int j=0;j<height;j++){
+				for(int i=0;i<width;i++){
+					for(int c=0;c<4;c++,ind++){
+						data[c][i][j][k] = vol[ind];
+					}
+				}
+			}
+		}
+		
+		colorInter = new ColorInterpolation(data);
+		colorInter.setup2D();
+	}
 
-        // construct array of polynomial coefficients
-        for (int r = 0; r <= degree; r++) {
-
-            for (int c = 0; c < r; c++) {
-                coeff[r][c] = 0;
-            }
-
-            for (int c = r; c <= degree; c++) {
-                coeff[r][c] = 1;
-
-                for (int i = 0; i < r; i++) {
-                    coeff[r][c] *= c - i;
-                }
-            }
-        }
-
-        if (degree == 3) {
-            mat = mat3;
-        } else if (degree == 4) {
-            mat = mat4;
-        }
-
-        return;
-    }
-
-    /**
+	/**
      * setup3DBSpline - setup 3D Bspline for black and white. Allocates memory and constructs arrays needed for BSpline
      *
      * @param  vol      volume comprising control points for the Bspline
      * @param  extents  vol extents (xDim,yDim, zDim)
      * @param  _degree  degree of spline (3 or 4)
      */
-    public void setup3DBSpline(double[] vol, int[] extents, int _degree) {
-        volume = vol;
-        xdim = extents[0];
-        ydim = extents[1];
-        zdim = extents[2];
-        sliceSize = xdim * ydim;
-        degree = _degree;
-        inter = new double[(degree + 1) * (degree + 1) * (degree + 1)];
-        coeff = new double[degree + 1][degree + 1];
-        mat = new double[degree + 1][degree + 1];
-
-        // construct array of polynomial coefficients
-        for (int r = 0; r <= degree; r++) {
-
-            for (int c = 0; c < r; c++) {
-                coeff[r][c] = 0;
-            }
-
-            for (int c = r; c <= degree; c++) {
-                coeff[r][c] = 1;
-
-                for (int i = 0; i < r; i++) {
-                    coeff[r][c] *= c - i;
-                }
-            }
-        }
-
-        if (degree == 3) {
-            mat = mat3;
-        } else if (degree == 4) {
-            mat = mat4;
-        }
-
-        return;
-    }
+	public void setup3DBSpline(double[] vol, int[] extents, int _degree){
+		width = extents[0];
+		height = extents[1];
+		depth = extents[2];
+		degree = _degree;
+		imData = new double[width][height][depth];
+		
+		int ind = 0;
+		for(int k=0;k<depth;k++){
+			for(int j=0;j<height;j++){
+				for(int i=0;i<width;i++, ind++){
+					imData[i][j][k] = vol[ind];
+				}
+			}
+		}
+		
+		SamplesToCoefficients(imData, degree);
+	}
+	
 
     /**
      * Allocates memory and constructs arrays needed for BSpline.
@@ -1256,42 +625,875 @@ public class AlgorithmBSpline extends AlgorithmBase {
      * @param  extents  vol extents (xDim,yDim, zDim)
      * @param  _degree  degree of spline (3 or 4)
      */
-    public void setup3DBSplineC(double[] vol, int[] extents, int _degree) {
-        volume = vol;
-        xdim = extents[0];
-        ydim = extents[1];
-        zdim = extents[2];
-        sliceSize = xdim * ydim;
-        degree = _degree;
-        interA = new double[(degree + 1) * (degree + 1) * (degree + 1)];
-        interR = new double[(degree + 1) * (degree + 1) * (degree + 1)];
-        interG = new double[(degree + 1) * (degree + 1) * (degree + 1)];
-        interB = new double[(degree + 1) * (degree + 1) * (degree + 1)];
-        coeff = new double[degree + 1][degree + 1];
-        mat = new double[degree + 1][degree + 1];
+	public void setup3DBSplineC(double[] vol, int[] extents, int _degree){
+		width = extents[0];
+		height = extents[1];
+		depth = extents[2];
+		degree = _degree;
+		double[][][][] data = new double[4][width][height][depth];
+		
+		int ind = 0;
+		for(int k=0;k<depth;k++){
+			for(int j=0;j<height;j++){
+				for(int i=0;i<width;i++){
+					for(int c=0;c<4;c++,ind++){
+						data[c][i][j][k] = vol[ind];
+					}
+				}
+			}
+		}
+		colorInter = new ColorInterpolation(data);
+		colorInter.setup();
+		
+	}
 
-        // construct array of polynomial coefficients
-        for (int r = 0; r <= degree; r++) {
+	/**
+	 * Do the B-Spline Interpolation
+	 *
+	 * @param Bcoeff        B-spline array of coefficients
+	 * @param Width         Width of the image
+	 * @param Height        Height of the image
+	 * @param Depth         Depth of the image
+	 * @param x             x coordinate where to interpolate
+	 * @param y             y coordinate where to interpolate
+	 * @param z             z coordinate where to interpolate
+	 * @param SplineDegree  Degree of the B-Spline
+	 */
+	private double interpolateBSpline(double[][][] image, double x, double y, double z, int SplineDegree) {
+		double xWeight[] = new double[6];
+		double yWeight[] = new double[6];
+		double zWeight[] = new double[6];
+		double interpolated = 0.0;
+		double w, w2, w4, t, t0, t1;
 
-            for (int c = 0; c < r; c++) {
-                coeff[r][c] = 0;
-            }
+		long xIndex[] = new long[6];
+		long yIndex[] = new long[6];
+		long zIndex[] = new long[6];
+		long width2  = 2L * width - 2L;
+		long height2 = 2L * height - 2L;
+		long depth2  = 2L * depth - 2L;
 
-            for (int c = r; c <= degree; c++) {
-                coeff[r][c] = 1;
+		/**
+		 * @param i  Index for x
+		 * @param j  Index for y
+		 * @param k  Index for z
+		 * @param s  Index for Spline degree
+		 */
+		int i, j, k, s;
 
-                for (int i = 0; i < r; i++) {
-                    coeff[r][c] *= c - i;
-                }
-            }
-        }
 
-        if (degree == 3) {
-            mat = mat3;
-        } else if (degree == 4) {
-            mat = mat4;
-        }
+		if ((SplineDegree % 2) == 1) {
+			/**
+			 * Odd Degree
+			 */
+			i = (int) Math.floor(x) - SplineDegree / 2;
+			j = (int) Math.floor(y) - SplineDegree / 2;
+			k = (int) Math.floor(z) - SplineDegree / 2;
+		} else {
+			/**
+			 * Even Degree
+			 */
+			i = (int) Math.floor(x + 0.5) - SplineDegree / 2;
+			j = (int) Math.floor(y + 0.5) - SplineDegree / 2;
+			k = (int) Math.floor(z + 0.5) - SplineDegree / 2;
+		}
 
-        return;
-    }
+
+		for (s = 0; s <= SplineDegree; s++) {
+			xIndex[s] = i++;
+			yIndex[s] = j++;
+			zIndex[s] = k++;
+		}
+
+
+		switch (SplineDegree) {
+			case 2:
+				/* x */
+				w = x - (double)xIndex[1];
+				xWeight[1] = 3.0 / 4.0 - w * w;
+				xWeight[2] = (1.0 / 2.0) * (w - xWeight[1] + 1.0);
+				xWeight[0] = 1.0 - xWeight[1] - xWeight[2];
+
+				/* y */
+				w = y - (double)yIndex[1];
+				yWeight[1] = 3.0 / 4.0 - w * w;
+				yWeight[2] = (1.0 / 2.0) * (w - yWeight[1] + 1.0);
+				yWeight[0] = 1.0 - yWeight[1] - yWeight[2];
+
+				/* z */
+				w = z - (double)zIndex[1];
+				zWeight[1] = 3.0 / 4.0 - w * w;
+				zWeight[2] = (1.0 / 2.0) * (w - zWeight[1] + 1.0);
+				zWeight[0] = 1.0 - yWeight[1] - zWeight[2];
+
+				break;
+
+			case 3:
+				/* x */
+				w = x - (double)xIndex[1];
+				xWeight[3] = (1.0 / 6.0) * w * w * w;
+				xWeight[0] = (1.0 / 6.0) + (1.0 / 2.0) * w * (w - 1.0) - xWeight[3];
+				xWeight[2] = w + xWeight[0] - 2.0 * xWeight[3];
+				xWeight[1] = 1.0 - xWeight[0] - xWeight[2] - xWeight[3];
+
+				/* y */
+				w = y - (double)yIndex[1];
+				yWeight[3] = (1.0 / 6.0) * w * w * w;
+				yWeight[0] = (1.0 / 6.0) + (1.0 / 2.0) * w * (w - 1.0) - yWeight[3];
+				yWeight[2] = w + yWeight[0] - 2.0 * yWeight[3];
+				yWeight[1] = 1.0 - yWeight[0] - yWeight[2] - yWeight[3];
+
+				/* z */
+				w = z - (double)zIndex[1];
+				zWeight[3] = (1.0 / 6.0) * w * w * w;
+				zWeight[0] = (1.0 / 6.0) + (1.0 / 2.0) * w * (w - 1.0) - zWeight[3];
+				zWeight[2] = w + zWeight[0] - 2.0 * zWeight[3];
+				zWeight[1] = 1.0 - zWeight[0] - zWeight[2] - zWeight[3];
+
+				break;
+
+			case 4:
+				/* x */
+				w = x - (double)xIndex[2];
+				w2 = w * w;
+				t = (1.0 / 6.0) * w2;
+				xWeight[0] = 1.0 / 2.0 - w;
+				xWeight[0] *= xWeight[0];
+				xWeight[0] *= (1.0 / 24.0) * xWeight[0];
+				t0 = w * (t - 11.0 / 24.0);
+				t1 = 19.0 / 96.0 + w2 * (1.0 / 4.0 - t);
+				xWeight[1] = t1 + t0;
+				xWeight[3] = t1 - t0;
+				xWeight[4] = xWeight[0] + t0 + (1.0 / 2.0) * w;
+				xWeight[2] = 1.0 - xWeight[0] - xWeight[1] - xWeight[3] - xWeight[4];
+
+				/* y */
+				w = y - (double)yIndex[2];
+				w2 = w * w;
+				t = (1.0 / 6.0) * w2;
+				yWeight[0] = 1.0 / 2.0 - w;
+				yWeight[0] *= yWeight[0];
+				yWeight[0] *= (1.0 / 24.0) * yWeight[0];
+				t0 = w * (t - 11.0 / 24.0);
+				t1 = 19.0 / 96.0 + w2 * (1.0 / 4.0 - t);
+				yWeight[1] = t1 + t0;
+				yWeight[3] = t1 - t0;
+				yWeight[4] = yWeight[0] + t0 + (1.0 / 2.0) * w;
+				yWeight[2] = 1.0 - yWeight[0] - yWeight[1] - yWeight[3] - yWeight[4];
+
+				/* z */
+				w = z - (double)zIndex[2];
+				w2 = w * w;
+				t = (1.0 / 6.0) * w2;
+				zWeight[0] = 1.0 / 2.0 - w;
+				zWeight[0] *= zWeight[0];
+				zWeight[0] *= (1.0 / 24.0) * zWeight[0];
+				t0 = w * (t - 11.0 / 24.0);
+				t1 = 19.0 / 96.0 + w2 * (1.0 / 4.0 - t);
+				zWeight[1] = t1 + t0;
+				zWeight[3] = t1 - t0;
+				zWeight[4] = zWeight[0] + t0 + (1.0 / 2.0) * w;
+				zWeight[2] = 1.0 - zWeight[0] - zWeight[1] - zWeight[3] - zWeight[4];
+
+				break;
+
+			case 5:
+				/* x */
+				w = x - (double)xIndex[2];
+				w2 = w * w;
+				xWeight[5] = (1.0 / 120.0) * w * w2 * w2;
+				w2 -= w;
+				w4 = w2 * w2;
+				w -= 1.0 / 2.0;
+				t = w2 * (w2 - 3.0);
+				xWeight[0] = (1.0 / 24.0) * (1.0 / 5.0 + w2 + w4) - xWeight[5];
+				t0 = (1.0 / 24.0) * (w2 * (w2 - 5.0) + 46.0 / 5.0);
+				t1 = (-1.0 / 12.0) * w * (t + 4.0);
+				xWeight[2] = t0 + t1;
+				xWeight[3] = t0 - t1;
+				t0 = (1.0 / 16.0) * (9.0 / 5.0 - t);
+				t1 = (1.0 / 24.0) * w * (w4 - w2 - 5.0);
+				xWeight[1] = t0 + t1;
+				xWeight[4] = t0 - t1;
+
+				/* y */
+				w = y - (double)yIndex[2];
+				w2 = w * w;
+				yWeight[5] = (1.0 / 120.0) * w * w2 * w2;
+				w2 -= w;
+				w4 = w2 * w2;
+				w -= 1.0 / 2.0;
+				t = w2 * (w2 - 3.0);
+				yWeight[0] = (1.0 / 24.0) * (1.0 / 5.0 + w2 + w4) - yWeight[5];
+				t0 = (1.0 / 24.0) * (w2 * (w2 - 5.0) + 46.0 / 5.0);
+				t1 = (-1.0 / 12.0) * w * (t + 4.0);
+				yWeight[2] = t0 + t1;
+				yWeight[3] = t0 - t1;
+				t0 = (1.0 / 16.0) * (9.0 / 5.0 - t);
+				t1 = (1.0 / 24.0) * w * (w4 - w2 - 5.0);
+				yWeight[1] = t0 + t1;
+				yWeight[4] = t0 - t1;
+
+				/* z */
+				w = z - (double)zIndex[2];
+				w2 = w * w;
+				zWeight[5] = (1.0 / 120.0) * w * w2 * w2;
+				w2 -= w;
+				w4 = w2 * w2;
+				w -= 1.0 / 2.0;
+				t = w2 * (w2 - 3.0);
+				zWeight[0] = (1.0 / 24.0) * (1.0 / 5.0 + w2 + w4) - zWeight[5];
+				t0 = (1.0 / 24.0) * (w2 * (w2 - 5.0) + 46.0 / 5.0);
+				t1 = (-1.0 / 12.0) * w * (t + 4.0);
+				zWeight[2] = t0 + t1;
+				zWeight[3] = t0 - t1;
+				t0 = (1.0 / 16.0) * (9.0 / 5.0 - t);
+				t1 = (1.0 / 24.0) * w * (w4 - w2 - 5.0);
+				zWeight[1] = t0 + t1;
+				zWeight[4] = t0 - t1;
+
+				break;
+
+			default:
+				System.out.println("\n\nInvalid Spline Degree.\n\n");
+				return(0.0f);
+		}
+
+
+		/**
+		 * Boundary Conditions
+		 */
+		if (width == 1) {
+			for (s = 0; s <= SplineDegree; s++) {
+				xIndex[s] = 0;
+			}
+		}
+
+
+		if (height == 1) {
+			for (s = 0; s <= SplineDegree; s++) {
+				yIndex[s] = 0;
+			}
+		}
+
+
+		if (depth == 1) {
+			for (s = 0; s <= SplineDegree; s++) {
+				zIndex[s] = 0;
+			}
+		}
+
+
+		for (s = 0; s <= SplineDegree; s++) {
+			xIndex[s] = (xIndex[s] < 0) ? (-xIndex[s] - width2 * ((-xIndex[s]) / width2)) : (xIndex[s] - width2 * (xIndex[s] / width2));
+
+			if (width <= xIndex[s]) {
+				xIndex[s] = width2 - xIndex[s];
+			}
+
+
+			yIndex[s] = (yIndex[s] < 0) ? (-yIndex[s] - height2 * ((-yIndex[s]) / height2)) : (yIndex[s] - height2 * (yIndex[s] / height2));
+
+			if (height <= yIndex[s]) {
+				yIndex[s] = height2 - yIndex[s];
+			}
+
+
+			zIndex[s] = (zIndex[s] < 0) ? (-zIndex[s] - depth2 * ((-zIndex[s]) / depth2)) : (zIndex[s] - depth2 * (zIndex[s] / depth2));
+
+			if (depth <= zIndex[s]) {
+				zIndex[s] = depth2 - zIndex[s];
+			}
+		}
+
+
+		/**
+		 * At last, perform interpolation.
+		 */
+		interpolated = 0.0;
+
+		for (k = 0; k <= SplineDegree; k++) {
+			t = 0;
+
+			for (j = 0; j <= SplineDegree; j++) {
+				w = 0.0;
+
+				for (i = 0; i <= SplineDegree; i++) {
+					w += ((double) xWeight[i]) * (image[(int) xIndex[i]][(int) yIndex[j]][(int) zIndex[k]]);
+				}
+
+				t += yWeight[j] * w;
+			}
+
+			interpolated += zWeight[k] * t;
+		}
+
+
+
+		return interpolated;
+	}
+	
+	private double interpolateBSpline2D(double[][][] image, double x, double y, int SplineDegree) {
+		double xWeight[] = new double[6];
+		double yWeight[] = new double[6];
+		double interpolated = 0.0;
+		double w, w2, w4, t, t0, t1;
+
+		long xIndex[] = new long[6];
+		long yIndex[] = new long[6];
+		long width2  = 2L * width - 2L;
+		long height2 = 2L * height - 2L;
+
+		/**
+		 * @param i  Index for x
+		 * @param j  Index for y
+		 * @param k  Index for z
+		 * @param s  Index for Spline degree
+		 */
+		int i, j, s;
+
+
+		if ((SplineDegree % 2) == 1) {
+			/**
+			 * Odd Degree
+			 */
+			i = (int) Math.floor(x) - SplineDegree / 2;
+			j = (int) Math.floor(y) - SplineDegree / 2;
+		} else {
+			/**
+			 * Even Degree
+			 */
+			i = (int) Math.floor(x + 0.5) - SplineDegree / 2;
+			j = (int) Math.floor(y + 0.5) - SplineDegree / 2;
+		}
+
+
+		for (s = 0; s <= SplineDegree; s++) {
+			xIndex[s] = i++;
+			yIndex[s] = j++;
+		}
+
+
+		switch (SplineDegree) {
+			case 2:
+				/* x */
+				w = x - (double)xIndex[1];
+				xWeight[1] = 3.0 / 4.0 - w * w;
+				xWeight[2] = (1.0 / 2.0) * (w - xWeight[1] + 1.0);
+				xWeight[0] = 1.0 - xWeight[1] - xWeight[2];
+
+				/* y */
+				w = y - (double)yIndex[1];
+				yWeight[1] = 3.0 / 4.0 - w * w;
+				yWeight[2] = (1.0 / 2.0) * (w - yWeight[1] + 1.0);
+				yWeight[0] = 1.0 - yWeight[1] - yWeight[2];
+
+				break;
+
+			case 3:
+				/* x */
+				w = x - (double)xIndex[1];
+				xWeight[3] = (1.0 / 6.0) * w * w * w;
+				xWeight[0] = (1.0 / 6.0) + (1.0 / 2.0) * w * (w - 1.0) - xWeight[3];
+				xWeight[2] = w + xWeight[0] - 2.0 * xWeight[3];
+				xWeight[1] = 1.0 - xWeight[0] - xWeight[2] - xWeight[3];
+
+				/* y */
+				w = y - (double)yIndex[1];
+				yWeight[3] = (1.0 / 6.0) * w * w * w;
+				yWeight[0] = (1.0 / 6.0) + (1.0 / 2.0) * w * (w - 1.0) - yWeight[3];
+				yWeight[2] = w + yWeight[0] - 2.0 * yWeight[3];
+				yWeight[1] = 1.0 - yWeight[0] - yWeight[2] - yWeight[3];
+
+				break;
+
+			case 4:
+				/* x */
+				w = x - (double)xIndex[2];
+				w2 = w * w;
+				t = (1.0 / 6.0) * w2;
+				xWeight[0] = 1.0 / 2.0 - w;
+				xWeight[0] *= xWeight[0];
+				xWeight[0] *= (1.0 / 24.0) * xWeight[0];
+				t0 = w * (t - 11.0 / 24.0);
+				t1 = 19.0 / 96.0 + w2 * (1.0 / 4.0 - t);
+				xWeight[1] = t1 + t0;
+				xWeight[3] = t1 - t0;
+				xWeight[4] = xWeight[0] + t0 + (1.0 / 2.0) * w;
+				xWeight[2] = 1.0 - xWeight[0] - xWeight[1] - xWeight[3] - xWeight[4];
+
+				/* y */
+				w = y - (double)yIndex[2];
+				w2 = w * w;
+				t = (1.0 / 6.0) * w2;
+				yWeight[0] = 1.0 / 2.0 - w;
+				yWeight[0] *= yWeight[0];
+				yWeight[0] *= (1.0 / 24.0) * yWeight[0];
+				t0 = w * (t - 11.0 / 24.0);
+				t1 = 19.0 / 96.0 + w2 * (1.0 / 4.0 - t);
+				yWeight[1] = t1 + t0;
+				yWeight[3] = t1 - t0;
+				yWeight[4] = yWeight[0] + t0 + (1.0 / 2.0) * w;
+				yWeight[2] = 1.0 - yWeight[0] - yWeight[1] - yWeight[3] - yWeight[4];
+
+				break;
+
+			case 5:
+				/* x */
+				w = x - (double)xIndex[2];
+				w2 = w * w;
+				xWeight[5] = (1.0 / 120.0) * w * w2 * w2;
+				w2 -= w;
+				w4 = w2 * w2;
+				w -= 1.0 / 2.0;
+				t = w2 * (w2 - 3.0);
+				xWeight[0] = (1.0 / 24.0) * (1.0 / 5.0 + w2 + w4) - xWeight[5];
+				t0 = (1.0 / 24.0) * (w2 * (w2 - 5.0) + 46.0 / 5.0);
+				t1 = (-1.0 / 12.0) * w * (t + 4.0);
+				xWeight[2] = t0 + t1;
+				xWeight[3] = t0 - t1;
+				t0 = (1.0 / 16.0) * (9.0 / 5.0 - t);
+				t1 = (1.0 / 24.0) * w * (w4 - w2 - 5.0);
+				xWeight[1] = t0 + t1;
+				xWeight[4] = t0 - t1;
+
+				/* y */
+				w = y - (double)yIndex[2];
+				w2 = w * w;
+				yWeight[5] = (1.0 / 120.0) * w * w2 * w2;
+				w2 -= w;
+				w4 = w2 * w2;
+				w -= 1.0 / 2.0;
+				t = w2 * (w2 - 3.0);
+				yWeight[0] = (1.0 / 24.0) * (1.0 / 5.0 + w2 + w4) - yWeight[5];
+				t0 = (1.0 / 24.0) * (w2 * (w2 - 5.0) + 46.0 / 5.0);
+				t1 = (-1.0 / 12.0) * w * (t + 4.0);
+				yWeight[2] = t0 + t1;
+				yWeight[3] = t0 - t1;
+				t0 = (1.0 / 16.0) * (9.0 / 5.0 - t);
+				t1 = (1.0 / 24.0) * w * (w4 - w2 - 5.0);
+				yWeight[1] = t0 + t1;
+				yWeight[4] = t0 - t1;
+
+				break;
+
+			default:
+				System.out.println("\n\nInvalid Spline Degree.\n\n");
+				return(0.0f);
+		}
+
+
+		/**
+		 * Boundary Conditions
+		 */
+		if (width == 1) {
+			for (s = 0; s <= SplineDegree; s++) {
+				xIndex[s] = 0;
+			}
+		}
+
+
+		if (height == 1) {
+			for (s = 0; s <= SplineDegree; s++) {
+				yIndex[s] = 0;
+			}
+		}
+
+		for (s = 0; s <= SplineDegree; s++) {
+			xIndex[s] = (xIndex[s] < 0) ? (-xIndex[s] - width2 * ((-xIndex[s]) / width2)) : (xIndex[s] - width2 * (xIndex[s] / width2));
+
+			if (width <= xIndex[s]) {
+				xIndex[s] = width2 - xIndex[s];
+			}
+
+
+			yIndex[s] = (yIndex[s] < 0) ? (-yIndex[s] - height2 * ((-yIndex[s]) / height2)) : (yIndex[s] - height2 * (yIndex[s] / height2));
+
+			if (height <= yIndex[s]) {
+				yIndex[s] = height2 - yIndex[s];
+			}
+
+
+		}
+
+
+		/**
+		 * At last, perform interpolation.
+		 */
+		interpolated = 0.0;
+
+		for (j = 0; j <= SplineDegree; j++) {
+			w = 0.0;
+
+			for (i = 0; i <= SplineDegree; i++) {
+				w += ((double) xWeight[i]) * (image[(int) xIndex[i]][(int) yIndex[j]][0]);
+			}
+
+			interpolated += yWeight[j] * w;
+		}
+
+		return interpolated;
+	}
+
+
+	/**
+	 * @param c  Samples
+	 * @param DataLength Number of samples or coefficients
+	 * @param z  Poles
+	 * @param NbPoles  Number of poles
+	 * @param Tolerance  Admissible relative error
+	 */
+	private void ConvertToInterpolationCoefficients(double c[], int DataLength, double z[], int NbPoles, double Tolerance) {
+		double Lambda = 1.0;
+		int n, k;
+
+
+		/**
+		 * Special case required by mirror boundaries.
+		 */
+		if (DataLength == 1) {
+			return;
+		}
+
+
+		/**
+		 * Compute the overall gain
+		 */
+		for (k = 0; k < NbPoles; k++) {
+			Lambda = Lambda * (1.0 - z[k]) * (1.0 - 1.0 / z[k]);
+		}
+
+
+		/**
+		 * Apply the gain
+		 */
+		for (n = 0; n < DataLength; n++) {
+			c[n] *= Lambda;
+		}
+
+
+		/**
+		 * Loop over all poles
+		 */
+		for (k = 0; k < NbPoles; k++) {
+			c[0] = InitialCausalCoefficient(c, DataLength, z[k], Tolerance);
+
+			for (n = 1; n < DataLength; n++) {
+				c[n] += z[k] * c[n - 1];
+			}
+
+
+			c[DataLength - 1] = InitialAntiCausalCoefficient(c, DataLength, z[k]);
+
+			for (n = DataLength - 2; 0 <= n; n--) {
+				c[n] = z[k] * (c[n + 1] - c[n]);
+			}
+		}
+	}
+
+
+	private double InitialCausalCoefficient(double c[], int DataLength, double z, double Tolerance) {
+		double Sum, zn, z2n, iz;
+		int n, Horizon;
+
+		Horizon = DataLength;
+		if (Tolerance > 0.0) {
+			/**
+			 * Java Math.ceil() returns a double, which seems silly.
+			 */
+			Horizon = (int) Math.ceil(Math.log(Tolerance) / Math.log(Math.abs(z)));
+		}
+
+
+		if (Horizon < DataLength) {
+			/**
+			 * Accelerated Loop
+			 */
+			zn = z;
+			Sum = c[0];
+
+			for (n = 1; n < Horizon; n++) {
+				Sum += zn * c[n];
+				zn *= z;
+			}
+
+			return(Sum);
+		} else {
+			/**
+			 * Full Loop
+			 */
+			zn = z;
+			iz = 1.0 / z;
+			z2n = Math.pow(z, (DataLength - 1));
+			Sum = c[0] + z2n * c[DataLength - 1];
+			z2n *= z2n * iz;
+			for (n = 1; n <= DataLength - 2; n++) {
+				Sum += (zn + z2n) * c[n];
+				zn *= z;
+				z2n *= iz;
+			}
+
+			return(Sum / (1.0 - zn * zn));
+		}
+	}
+
+
+	private double InitialAntiCausalCoefficient(double c[], int DataLength, double z) {
+		return((z / (z * z - 1.0)) * (z * c[DataLength - 2] + c[DataLength - 1]));
+	}
+
+
+	private double[] GetRow(int y, int z, double Image[][][], int width){
+		double Line[] = new double[width];
+		int i = 0;
+
+
+		for (i = 0; i < width; i++) {
+			Line[i] = Image[i][y][z];
+		}
+
+		return Line;
+	}
+
+
+	private void PutRow(double Line[], int y, int z, double Image[][][]){
+		int i = 0;
+
+
+		for (i = 0; i < width; i++) {
+			Image[i][y][z] = Line[i];
+		}
+
+		return;
+	}
+
+
+	private double[] GetColumn(int x, int z, double Image[][][]) {
+		double Line[] = new double[height];
+		int j = 0;
+
+
+		for (j = 0; j < height; j++) {
+			Line[j] = Image[x][j][z];
+		}
+
+		return Line;
+	}
+
+
+	private void PutColumn(double Line[], int x, int z, double Image[][][]) {
+		int j = 0;
+
+
+		for (j = 0; j < height; j++) {
+			Image[x][j][z] = Line[j];
+		}
+
+		return;
+	}
+
+
+	private double[] GetVertical(int x, int y, double Image[][][]) {
+		double Line[] = new double[depth];
+		int k = 0;
+
+		for (k = 0; k < depth; k++){
+			Line[k] = Image[x][y][k];
+		}
+
+		return Line;
+	}
+
+
+	private void PutVertical(double Line[], int x, int y, double Image[][][]) {
+		int k = 0;
+
+		for (k = 0; k < depth; k++){
+			Line[k] = Image[x][y][k];
+			Image[x][y][k] = Line[k];
+		}
+
+		return;
+	}
+
+
+	private int SamplesToCoefficients(double Image[][][], int SplineDegree) {
+		double Line[];
+		double Pole[] = new double[2];
+		int NbPoles;
+		int x, y, z;
+
+
+
+		switch (SplineDegree) {
+			case 2:
+				NbPoles = 1;
+				Pole[0] = Math.sqrt(8.0) - 3.0;
+				break;
+
+			case 3:
+				NbPoles = 1;
+				Pole[0] = Math.sqrt(3.0) - 2.0;
+				break;
+
+			case 4:
+				NbPoles = 2;
+				Pole[0] = Math.sqrt(664.0 - Math.sqrt(438976.0)) + Math.sqrt(304.0) - 19.0;
+				Pole[1] = Math.sqrt(664.0 + Math.sqrt(438976.0)) - Math.sqrt(304.0) - 19.0;
+				break;
+
+			case 5:
+				NbPoles = 2;
+				Pole[0] = Math.sqrt(135.0 / 2.0 - Math.sqrt(17745.0 / 4.0)) + Math.sqrt(105.0 / 4.0) - 13.0 / 2.0;
+				Pole[1] = Math.sqrt(135.0 / 2.0 + Math.sqrt(17745.0 / 4.0)) - Math.sqrt(105.0 / 4.0) - 13.0 / 2.0;
+				break;
+
+			default:
+				System.out.print("\n\nInvalid spline degree:" + SplineDegree + "\n\n");
+				return(1);
+		}
+
+
+		/**
+		 * Convert the image samples into interpolation coefficients
+		 * Separable process: X-Axis
+		 */
+		for (z = 0; z < depth; z++){
+			for (y = 0; y < height; y++) {
+				Line = GetRow(y, z, Image, width);
+				ConvertToInterpolationCoefficients(Line, width, Pole, NbPoles, DBL_EPSILON);
+				PutRow(Line, y, z, Image);
+			}
+		}
+
+
+		/**
+		 * Convert the image samples into interpolation coefficients
+		 * Separable process: Y-Axis
+		 */
+		for (z = 0; z < depth; z++){
+			for (x = 0; x < width; x++) {
+				Line = GetColumn(x, z, Image);
+				ConvertToInterpolationCoefficients(Line, height, Pole, NbPoles, DBL_EPSILON);
+				PutColumn(Line, x, z, Image);
+			}
+		}
+
+
+		/**
+		 * Convert the image samples into interpolation coefficients
+		 * Separable process: Z-Axis
+		 */
+		for (y = 0; y < height; y++) {
+			for (x = 0; x < width; x++) {
+				Line = GetVertical(x, y, Image);
+				ConvertToInterpolationCoefficients(Line, depth, Pole, NbPoles, DBL_EPSILON);
+				PutVertical(Line, x, y, Image);
+				
+			}
+		}
+
+		return(0);
+	}
+	
+	private int SamplesToCoefficients2D(double Image[][][], int SplineDegree) {
+		double Line[];
+		double Pole[] = new double[2];
+		int NbPoles;
+		int x, y;
+
+
+
+		switch (SplineDegree) {
+			case 2:
+				NbPoles = 1;
+				Pole[0] = Math.sqrt(8.0) - 3.0;
+				break;
+
+			case 3:
+				NbPoles = 1;
+				Pole[0] = Math.sqrt(3.0) - 2.0;
+				break;
+
+			case 4:
+				NbPoles = 2;
+				Pole[0] = Math.sqrt(664.0 - Math.sqrt(438976.0)) + Math.sqrt(304.0) - 19.0;
+				Pole[1] = Math.sqrt(664.0 + Math.sqrt(438976.0)) - Math.sqrt(304.0) - 19.0;
+				break;
+
+			case 5:
+				NbPoles = 2;
+				Pole[0] = Math.sqrt(135.0 / 2.0 - Math.sqrt(17745.0 / 4.0)) + Math.sqrt(105.0 / 4.0) - 13.0 / 2.0;
+				Pole[1] = Math.sqrt(135.0 / 2.0 + Math.sqrt(17745.0 / 4.0)) - Math.sqrt(105.0 / 4.0) - 13.0 / 2.0;
+				break;
+
+			default:
+				System.out.print("\n\nInvalid spline degree:" + SplineDegree + "\n\n");
+				return(1);
+		}
+
+
+		/**
+		 * Convert the image samples into interpolation coefficients
+		 * Separable process: X-Axis
+		 */
+
+		for (y = 0; y < height; y++) {
+			Line = GetRow(y, 0, Image, width);
+			ConvertToInterpolationCoefficients(Line, width, Pole, NbPoles, DBL_EPSILON);
+			PutRow(Line, y, 0, Image);
+		}
+		
+
+
+		/**
+		 * Convert the image samples into interpolation coefficients
+		 * Separable process: Y-Axis
+		 */
+		for (x = 0; x < width; x++) {
+			Line = GetColumn(x, 0, Image);
+			ConvertToInterpolationCoefficients(Line, height, Pole, NbPoles, DBL_EPSILON);
+			PutColumn(Line, x, 0, Image);
+		}
+
+		return(0);
+	}
+	
+	private class ColorInterpolation { 
+		
+		private double[][][][] colorData;
+		
+		private ColorInterpolation(double[][][][] data){
+			colorData = data;
+		}
+		
+		private void setup(){
+			for(int i=0;i<4;i++){
+				SamplesToCoefficients(colorData[i], degree);
+			}
+		}
+		
+		private void setup2D(){
+			for(int i=0;i<4;i++){
+				SamplesToCoefficients2D(colorData[i], degree);
+			}
+		}
+		
+		private double[] interpolate(double x, double y, double z){
+			double[] value = new double[4];
+			for(int i=0;i<4;i++){
+				value[i] = interpolateBSpline(colorData[i], x, y, z, degree);
+			}
+			return value;
+		}
+		
+		private double[] interpolate2D(double x, double y){
+			double[] value = new double[4];
+			for(int i=0;i<4;i++){
+				value[i] = interpolateBSpline2D(colorData[i], x, y, degree);
+			}
+			return value;
+		}
+	}
+
 }
