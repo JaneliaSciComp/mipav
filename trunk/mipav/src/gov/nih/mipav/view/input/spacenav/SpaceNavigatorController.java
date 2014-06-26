@@ -51,42 +51,47 @@ public class SpaceNavigatorController{
 	private static Controller controller; 
 	
 	static {
-		ControllerEnvironment ce = ControllerEnvironment.getDefaultEnvironment();
-		Controller[] cs = ce.getControllers(); 
-		if (cs.length == 0) { 
-			Preferences.debug("No controllers found", Preferences.DEBUG_MINOR);  
-		} else {
-			Preferences.debug("Num. controllers: " + cs.length, Preferences.DEBUG_MINOR);  
+		try {
+			ControllerEnvironment ce = ControllerEnvironment.getDefaultEnvironment();
+			Controller[] cs = ce.getControllers(); 
+			if (cs.length == 0) { 
+				Preferences.debug("No controllers found", Preferences.DEBUG_MINOR);  
+			} else {
+				Preferences.debug("Num. controllers: " + cs.length, Preferences.DEBUG_MINOR);  
+			}
+			
+			controller = findSpaceNavigator(cs); 
+			if(controller != null) {
+				Preferences.debug("Space Navigator controller: " + controller.getName() + ", " + controller.getType()); 
+			}
+	//		ce.addControllerListener(new ControllerListener() {
+	//			
+	//			@Override
+	//			public void controllerAdded(ControllerEvent arg0) {
+	//				System.out.println("entered controllerAdded");
+	//				ControllerEnvironment ce = ControllerEnvironment.getDefaultEnvironment();
+	//				Controller[] cs = ce.getControllers(); 
+	//				if (cs.length == 0) { 
+	//					Preferences.debug("No controllers found", Preferences.DEBUG_MINOR);  
+	//				} else {
+	//					Preferences.debug("Num. controllers: " + cs.length, Preferences.DEBUG_MINOR);  
+	//				}
+	//				
+	//				controller = findSpaceNavigator(cs); 
+	//				if(controller != null) {
+	//					Preferences.debug("Space Navigator controller: " + controller.getName() + ", " + controller.getType()); 
+	//				}
+	//			}
+	//			
+	//			@Override
+	//			public void controllerRemoved(ControllerEvent arg0) {
+	//				SpaceNavigatorPoller.deregisterAllListeners();
+	//			}
+	//		});
+		} catch(Error e) {
+			e.printStackTrace();
+			System.out.println("TEST DEBUG");
 		}
-		
-		controller = findSpaceNavigator(cs); 
-		if(controller != null) {
-			Preferences.debug("Space Navigator controller: " + controller.getName() + ", " + controller.getType()); 
-		}
-//		ce.addControllerListener(new ControllerListener() {
-//			
-//			@Override
-//			public void controllerAdded(ControllerEvent arg0) {
-//				System.out.println("entered controllerAdded");
-//				ControllerEnvironment ce = ControllerEnvironment.getDefaultEnvironment();
-//				Controller[] cs = ce.getControllers(); 
-//				if (cs.length == 0) { 
-//					Preferences.debug("No controllers found", Preferences.DEBUG_MINOR);  
-//				} else {
-//					Preferences.debug("Num. controllers: " + cs.length, Preferences.DEBUG_MINOR);  
-//				}
-//				
-//				controller = findSpaceNavigator(cs); 
-//				if(controller != null) {
-//					Preferences.debug("Space Navigator controller: " + controller.getName() + ", " + controller.getType()); 
-//				}
-//			}
-//			
-//			@Override
-//			public void controllerRemoved(ControllerEvent arg0) {
-//				SpaceNavigatorPoller.deregisterAllListeners();
-//			}
-//		});
 	}
 	
 	private static final Component[] comps; 
