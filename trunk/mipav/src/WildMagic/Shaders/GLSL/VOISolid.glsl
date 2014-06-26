@@ -1,6 +1,7 @@
 //----------------------------------------------------------------------------
 uniform float UseSlice;
 uniform float Slice;
+uniform float Range;
 
 in float ZVal;
 in vec4 varColor;
@@ -10,7 +11,7 @@ void p_VOISolid ()
 {
     if ( UseSlice == 1.0 )
     {
-        if ( Slice != ZVal )
+        if ( abs(Slice - ZVal) > Range )
         {
             discard;
         }

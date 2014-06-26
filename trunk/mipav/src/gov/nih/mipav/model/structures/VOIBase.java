@@ -172,6 +172,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
     /** Data structure for drawing this contour in the GPU VolumeRenderer */
     protected transient VolumeVOI m_kVolumeVOI;   
+    /** Used to display 3D VOIs in the three orthogonal views of the data in the volume renderer */
+    protected float volumeDisplayRange = 0;
 
     /**
      * Number of pixels in the array used in graphing intensity along the
@@ -2382,6 +2384,16 @@ public abstract class VOIBase extends Vector<Vector3f> {
     public void setSubtype(int subtype) {
 		this.subtype = subtype;
 	}
+
+    public float getVolumeDisplayRange( )
+    {
+    	return volumeDisplayRange;
+    }
+    
+    public void setVolumeDisplayRange( float range )
+    {
+    	volumeDisplayRange = range;
+    }
 
     /**
      * Returns the slice value of the contour on every plane.  If the contour does not exist

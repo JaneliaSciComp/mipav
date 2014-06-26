@@ -722,6 +722,8 @@ public class VolumeVOI extends VolumeObject
 	{
 		m_kVOIShader = new VolumeVOIEffect(false);
 		m_kVOIPreShader = new VolumePreRenderEffect(true, true);
+		m_kVOIShader.SetRange(m_kVOI.getVolumeDisplayRange());
+		
 
 		m_kScene = new Node();
 		m_kCull = new CullState();
@@ -737,6 +739,8 @@ public class VolumeVOI extends VolumeObject
 		m_kVolumeScale = new Vector3f(m_kVolumeImageA.GetScaleX()/(kImageA.getExtents()[0] - 1), 
 				m_kVolumeImageA.GetScaleY()/(kImageA.getExtents()[1] - 1), 
 				m_kVolumeImageA.GetScaleZ()/(kImageA.getExtents()[2] - 1)  );
+//		System.err.println( m_kVolumeScale );
+//		System.err.println( m_kVolumeImageA.GetScaleX() + "  " + m_kVolumeImageA.GetScaleY()  + "  " + m_kVolumeImageA.GetScaleZ() );
 		
         Vector3f kExtentsScale = new Vector3f(1f/(kImageA.getExtents()[0] - 1), 
                 1f/(kImageA.getExtents()[1] - 1), 

@@ -1246,15 +1246,20 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         	{
         		latticeModel.showModel( );
         	}
+        } else if ( command.equals("interpolateModel") ) { 
+        	if ( latticeModel != null )
+        	{
+        		latticeModel.showInterpolatedModel( );
+        	}
         } else if ( command.equals("straightenLattice2") ) {
         	if ( latticeModel != null )
         	{
-        		latticeModel.interpolateLattice( 2 );
+        		latticeModel.interpolateLattice( 2, true );
         	}
         } else if ( command.equals("straightenLattice") ) {
         	if ( latticeModel != null )
         	{
-        		latticeModel.interpolateLattice( 0 );
+        		latticeModel.interpolateLattice( 0, true );
         	}
         } else if ( command.equals("voxelSize") ) {
         	setVoxelSize();
