@@ -2929,6 +2929,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         private final ArrayList<String> statusAL = new ArrayList<String>();
 
+        private final ArrayList<String> diseaseAL = new ArrayList<String>();
+
         private JScrollPane structsScrollPane;
 
         public ChooseDataStructDialog(final PlugInDialogFITBIR owner) {
@@ -2942,8 +2944,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         private void init() {
             setTitle("Choose Form Structure");
-            final int numColumns = 4;
-            final String[] columnNames = {"Name", "Description", "Version", "Status"};
+            final int numColumns = 5;
+            final String[] columnNames = {"Name", "Description", "Version", "Status", "Disease"};
             structsModel = new ViewTableModel();
             structsTable = new JTable(structsModel) {
                 private static final long serialVersionUID = 3053232611901005303L;
@@ -2970,6 +2972,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
             structsTable.getColumn("Name").setMinWidth(150);
             structsTable.getColumn("Description").setMinWidth(300);
+            structsTable.getColumn("Version").setPreferredWidth(20);
+            structsTable.getColumn("Status").setPreferredWidth(40);
 
             // new way of doing web service
             for (final DataStructure ds : dataStructureList) {
@@ -2981,11 +2985,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 final String shortname = ds.getShortName();
                 final String version = ds.getVersion().toString();
                 final String status = ds.getStatus().toString();
+                final String disease = ds.getDiseaseStructureString();
 
                 descAL.add(desc);
                 shortNameAL.add(shortname);
                 versionAL.add(version);
                 statusAL.add(status);
+                diseaseAL.add(disease);
             }
 
             // make sure we found a structure for imaging
@@ -3005,11 +3011,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             descAL.remove(j);
                             versionAL.remove(j);
                             statusAL.remove(j);
+                            diseaseAL.remove(j);
                         } else {
                             shortNameAL.remove(i);
                             descAL.remove(i);
                             versionAL.remove(i);
                             statusAL.remove(i);
+                            diseaseAL.remove(i);
                         }
                     }
                 }
@@ -3063,6 +3071,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         rowData[1] = descAL.get(i);
                         rowData[2] = versionAL.get(i);
                         rowData[3] = statusAL.get(i);
+                        rowData[4] = diseaseAL.get(i);
                         structsModel.addRow(rowData);
 
                         break;
@@ -3096,8 +3105,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
             pack();
 
-            MipavUtil.centerInWindow(owner, this);
             this.setMinimumSize(this.getSize());
+            this.setSize(new Dimension(owner.getSize().width, this.getSize().height));
+            MipavUtil.centerInWindow(owner, this);
 
             setVisible(true);
 
