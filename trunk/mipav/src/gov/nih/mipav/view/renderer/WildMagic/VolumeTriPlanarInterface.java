@@ -620,6 +620,16 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
                 initVOI();
             }
             m_kVOIInterface.getToolBar().setVisible(showVOI);
+            raycastRenderWM.displayVOIs(rendererGUI.getVOICheck().isSelected());
+
+            if (m_akPlaneRender != null) {
+                for (int i = 0; i < 3; i++) {
+
+                    if (m_akPlaneRender[i] != null) {
+                        m_akPlaneRender[i].displayVOIs(rendererGUI.getVOICheck().isSelected());
+                    }
+                }
+            }
         } else if (command.equals("4DToolbar") && m_b4D) {
             insertTab("4D", m_kVolume4DGUI.getMainPanel());
             resizePanel();

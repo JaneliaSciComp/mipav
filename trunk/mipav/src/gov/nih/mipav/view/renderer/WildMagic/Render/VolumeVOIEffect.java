@@ -27,6 +27,7 @@ public class VolumeVOIEffect extends ShaderEffect
 {
     /**  */
     private static final long serialVersionUID = 8243388938991470076L;
+    private float minRange = 0;
 
     public VolumeVOIEffect (boolean bTransparent)
     {
@@ -68,6 +69,7 @@ public class VolumeVOIEffect extends ShaderEffect
     {
         Blend(1);
         SetSlice(false, 0, -1);
+        SetRange(minRange);
     }
 
     public void SetColor( ColorRGB kColor)
@@ -83,6 +85,20 @@ public class VolumeVOIEffect extends ShaderEffect
             pkCProgram.GetUC("Color").GetData()[1] = kColor.G;
             pkCProgram.GetUC("Color").GetData()[2] = kColor.B;
         }
+    }
+
+    public void SetRange( float fRange )
+    {
+    	minRange = fRange;
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram == null )
+        {
+            return;
+        }
+        if ( pkCProgram.GetUC("Range") != null)
+        {
+            pkCProgram.GetUC("Range").GetData()[0] = fRange;
+        }    	
     }
 
     public void SetSlice( boolean bUseSlice, int iWhichSlice, float fSlice )

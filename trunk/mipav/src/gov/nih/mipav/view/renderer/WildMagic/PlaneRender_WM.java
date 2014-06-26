@@ -500,6 +500,7 @@ implements GLEventListener, ScreenCoordinateListener
 				boolean bUpdateSave = kVolumeVOI.needsUpdate();
 
 				//System.err.println( aiAxisOrder[2] + " " + kCenter.Y );
+//				System.err.println( kCenter );
 				//
 				if ( aiAxisOrder[2] == 0 )
 				{
@@ -514,10 +515,6 @@ implements GLEventListener, ScreenCoordinateListener
 					kVolumeVOI.setSlice(true, aiAxisOrder[2], kCenter.Z);
 				}
 				kVolumeVOI.Render( kRenderer, kCuller, false, true );
-				//m_kVolumeVOI.setSlice(true, aiAxisOrder[2], kCenter.Y);
-				//m_kVolumeVOI.Render( kRenderer, kCuller, false, true );
-				//m_kVolumeVOI.setSlice(true, aiAxisOrder[2], kCenter.Z);
-				//m_kVolumeVOI.Render( kRenderer, kCuller, false, true );
 
 				kVolumeVOI.needsUpdate(bUpdateSave);
 				kVolumeVOI.setZCompare(true);

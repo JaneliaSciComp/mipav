@@ -85,12 +85,15 @@ public class LatticeModel {
 
 	private VOI samplingPlanes;
 	private VOI displayContours;    
+	private VOI displayInterpolatedContours;    
 	private Vector3f pickedPoint = null;
 	private VOI showSelectedVOI = null;
 	private VOIContour[] showSelected = null;
 	private int[] latticeSlice;
-	private int DiameterBuffer = 10;
+	private int DiameterBuffer = 0;
 	private int SampleLimit = 10;
+	private	float minRange = .025f;
+
 	
 	public LatticeModel( ModelImage imageA, ModelImage imageB, VOI lattice )
 	{
@@ -454,10 +457,55 @@ public class LatticeModel {
 	}
        
     
+    public void showInterpolatedModel()
+    {
+		boxBounds = new Vector<Box3f>();
+		ellipseBounds = new Vector<Ellipsoid3f>();
+		short sID = (short)(imageA.getVOIs().getUniqueID());
+		samplingPlanes = new VOI(sID, "samplingPlanes");
+		for ( int i = 0; i < centerPositions.size(); i++ )
+		{
+	        Vector3f rkEye = centerPositions.elementAt(i);
+	        Vector3f rkRVector = rightVectors.elementAt(i);
+	        Vector3f rkUVector = upVectors.elementAt(i);
+	        
+			Vector3f[] output = new Vector3f[4];
+	        Vector3f rightV = Vector3f.scale( extent, rkRVector );
+	        Vector3f upV = Vector3f.scale( extent, rkUVector );
+	        output[0] = Vector3f.add( Vector3f.neg(rightV), Vector3f.neg(upV) );
+	        output[1] = Vector3f.add( rightV, Vector3f.neg(upV) );
+	        output[2] = Vector3f.add( rightV, upV );
+	        output[3] = Vector3f.add( Vector3f.neg(rightV), upV );
+	        for ( int j = 0; j < 4; j++ )
+	        {
+	        	output[j].add(rkEye);
+	        }
+			VOIContour kBox = new VOIContour(true);
+			for ( int j = 0; j < 4; j++ )
+			{
+				kBox.addElement( output[j].X, output[j].Y, output[j].Z );
+			}
+			kBox.update( new ColorRGBA(0,0,1,1) );		
+	        {	
+	        	samplingPlanes.importCurve(kBox);
+	        }
+	        
+
+	        float curve = centerSpline.GetSecondDerivative(allTimes[i]).length();
+	        float scale = (curve - minCurve)/(maxCurve - minCurve);
+	        VOIContour ellipse = new VOIContour(true);
+	        Ellipsoid3f ellipsoid = makeEllipse( rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), scale, ellipse );
+	        ellipseBounds.add(ellipsoid);
+	        
+	        
+	        Box3f box = new Box3f( ellipsoid.Center, ellipsoid.Axis, new float[]{extent, extent, 1 } );
+	        boxBounds.add(box);
+		}
+		generateMasks( imageA, imageB, samplingPlanes, ellipseBounds, wormDiameters, 2*extent, false, false  );
+    }
     
     
-    
-    public ModelImage interpolateLattice( int version )
+    public ModelImage interpolateLattice( int version, boolean displayResult )
 	{
 		latticeSlice = new int[afTimeC.length];
 		float[] closestTimes = new float[afTimeC.length];
@@ -517,7 +565,7 @@ public class LatticeModel {
 		ellipseBounds = new Vector<Ellipsoid3f>();
 		short sID = (short)(imageA.getVOIs().getUniqueID());
 		samplingPlanes = new VOI(sID, "samplingPlanes");
-		displayContours = new VOI(sID, "wormContours");
+//		displayContours = new VOI(sID, "wormContours");
 		for ( int i = 0; i < centerPositions.size(); i++ )
 		{
 	        Vector3f rkEye = centerPositions.elementAt(i);
@@ -560,7 +608,7 @@ public class LatticeModel {
 		ModelImage straightImage = null;
 		if ( version == 2 )
 		{
-			generateMasks( imageA, imageB, samplingPlanes, ellipseBounds, wormDiameters, 2*extent  );
+			generateMasks( imageA, imageB, samplingPlanes, ellipseBounds, wormDiameters, 2*extent, true, displayResult  );
 		}
 		else if ( version == 0 )
 		{
@@ -2086,7 +2134,7 @@ public class LatticeModel {
     
 
     public void generateMasks( ModelImage imageA, ModelImage imageB, VOI samplingPlanes, 
-    		Vector<Ellipsoid3f> ellipseBounds, Vector<Float> diameters, int diameter  )
+    		Vector<Ellipsoid3f> ellipseBounds, Vector<Float> diameters, int diameter, boolean straighten, boolean displayResult  )
     {
 		int[] resultExtents = new int[]{diameter, diameter, samplingPlanes.getCurves().size()};
 		
@@ -2152,7 +2200,10 @@ public class LatticeModel {
     	}
     	insideConflict.disposeLocal();
     	insideConflict = null;
-    	
+
+    	short sID = (short)(imageA.getVOIs().getUniqueID());
+    	displayInterpolatedContours = new VOI(sID, "interpolatedContours");
+    	displayInterpolatedContours.setColor( Color.blue );
 		for ( int d = 0; d < 10; d++ )
 		{		
 			Vector<VOIContour> edgesX = new Vector<VOIContour>();
@@ -2167,22 +2218,24 @@ public class LatticeModel {
 				}
 				edgesX.add( growDiagonalX( imageA, model, 0, i, resultExtents, corners, i+1) );
 				edgesY.add( growDiagonalY( imageA, model, 0, i, resultExtents, corners, i+1) );
-//				if ( d == 9 )
-//				{
-//					if ( (i%30) == 0 )
-//					{
-//						VOIContour contour = edgesX.elementAt(i);
-//						VOI temp = new VOI((short)0, "contour" + i, VOI.CONTOUR, (float)Math.abs(Math.random()));
-//						temp.getCurves().add(contour);
-//						model.registerVOI(temp);
-//						
-//
-//						contour = edgesY.elementAt(i);
-//						temp = new VOI((short)0, "contour" + i, VOI.CONTOUR, (float)Math.abs(Math.random()));
-//						temp.getCurves().add(contour);
-//						model.registerVOI(temp);
-//					}
-//				}
+				if ( !straighten )
+				{
+					if ( d == 9 )
+					{
+						if ( (i%30) == 0 )
+						{
+							VOIContour contour = edgesX.elementAt(i);
+							displayInterpolatedContours.getCurves().add(contour);
+							contour.update( new ColorRGBA(0,0,1,1));
+							contour.setVolumeDisplayRange(minRange);
+
+							contour = edgesY.elementAt(i);
+							displayInterpolatedContours.getCurves().add(contour);
+							contour.update( new ColorRGBA(0,0,1,1));
+							contour.setVolumeDisplayRange(minRange);
+						}
+					}
+				}
 			}
 			growEdges( model, edgesX );
 			growEdges( model, edgesY );
@@ -2190,38 +2243,42 @@ public class LatticeModel {
 		
 //		model.calcMinMax();
 //		new ViewJFrameImage((ModelImage)model.clone());
-		
-		
-    	for ( int z = 0; z < dimZ; z++ )
-    	{
-    		for ( int y = 0; y < dimY; y++ )
-    		{
-    			for ( int x = 0; x < dimX; x++ )
-    			{
-    				if ( model.getFloat(x,y,z) != 0 )
-    				{
-    					inside.set(x, y, z, 1);
-    				}
-    			}
-    		}
-    	}
-		saveTransformImage(imageName, inside);
-
-		straighten(imageA, resultExtents, imageName, model, true );
-//		straighten(model, resultExtents, imageName, null, false );
-		straighten(inside, resultExtents, imageName, model, false );
-		if ( imageB != null )
+		if ( !straighten )
 		{
-			straighten(imageB, resultExtents, imageName, model, false );			
+			imageA.registerVOI(displayInterpolatedContours);			
+		}
+		if ( straighten )
+		{
+			for ( int z = 0; z < dimZ; z++ )
+			{
+				for ( int y = 0; y < dimY; y++ )
+				{
+					for ( int x = 0; x < dimX; x++ )
+					{
+						if ( model.getFloat(x,y,z) != 0 )
+						{
+							inside.set(x, y, z, 1);
+						}
+					}
+				}
+			}
+			saveTransformImage(imageName, inside);
+
+			straighten(imageA, resultExtents, imageName, model, true, displayResult );
+			//		straighten(model, resultExtents, imageName, null, false );
+			straighten(inside, resultExtents, imageName, model, false, displayResult );
+			if ( imageB != null )
+			{
+				straighten(imageB, resultExtents, imageName, model, false, displayResult );			
+			}
 		}
 		inside.disposeLocal();
 		inside = null;
 		model.disposeLocal();
 		model = null;
-		
     }
     
-    private ModelImage straighten( ModelImage image, int[] resultExtents, String baseName, ModelImage model, boolean saveStats )
+    private ModelImage straighten( ModelImage image, int[] resultExtents, String baseName, ModelImage model, boolean saveStats, boolean displayResult )
     {
     	String imageName = image.getImageName();
     	if ( imageName.contains("_clone") )
@@ -2325,7 +2382,10 @@ public class LatticeModel {
 		}
 		
 		resultImage.calcMinMax();
-		new ViewJFrameImage(resultImage);  	
+		if ( displayResult )
+		{
+			new ViewJFrameImage(resultImage);
+		}
 
 		saveTransformImage(baseName, resultImage);
 		if ( saveStats )
@@ -2416,8 +2476,6 @@ public class LatticeModel {
 		}
 		extent += 10;
 		
-		
-
 //		boxBounds = new Vector<Box3f>();
 //		ellipseBounds = new Vector<Ellipsoid3f>();
 //		ellipseOuterBounds = new Vector<Ellipsoid3f>();
@@ -2455,8 +2513,9 @@ public class LatticeModel {
 	        float curve = centerSpline.GetSecondDerivative(allTimes[i]).length();
 	        float scale = (curve - minCurve)/(maxCurve - minCurve);
 	        VOIContour ellipse = new VOIContour(true);
+	        ellipse.setVolumeDisplayRange(minRange);
 	        makeEllipse2( rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), scale, ellipse );
-	        displayContours.importCurve(ellipse);
+	        displayContours.getCurves().add(ellipse);
 //	        
 //
 //	        ellipse = new VOIContour(true);
@@ -2484,18 +2543,21 @@ public class LatticeModel {
 		centerLine.getCurves().add(centerPositions);
 		centerLine.setColor( Color.red );
 		centerPositions.update( new ColorRGBA(1,0,0,1));
+//		centerPositions.setVolumeDisplayRange(minRange);
 
 		sID++;
 		leftLine = new VOI(sID, "left line");
 		leftLine.getCurves().add(leftPositions);
 		leftLine.setColor( Color.magenta );
 		leftPositions.update( new ColorRGBA(1,0,1,1));
+//		leftPositions.setVolumeDisplayRange(minRange);
 
 		sID++;
 		rightLine = new VOI(sID, "right line");
 		rightLine.getCurves().add(rightPositions);
 		rightLine.setColor( Color.green );
 		rightPositions.update( new ColorRGBA(0,1,0,1));
+//		rightPositions.setVolumeDisplayRange(minRange);
 			
 
 		imageA.registerVOI(leftLine);
@@ -2933,11 +2995,5 @@ public class LatticeModel {
         // when everything's done, notify the image listeners
         imageA.notifyImageDisplayListeners();
 	}
-    
-    
-    
-    
-    
-    
     
 }
