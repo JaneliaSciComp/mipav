@@ -347,7 +347,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             final JFileChooser chooser = new JFileChooser();
             chooser.setCurrentDirectory(new File(csvFileDir));
             chooser.setDialogTitle("Choose CSV file");
-            chooser.addChoosableFileFilter(new FileNameExtensionFilter("Comma separated value files (.csv)", "csv"));
+            chooser.setFileFilter(new FileNameExtensionFilter("Comma separated value files (.csv)", "csv"));
             final int returnValue = chooser.showOpenDialog(this);
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 csvFile = chooser.getSelectedFile();
@@ -631,9 +631,19 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
             }
 
+            final ViewJProgressBar progressBar = new ViewJProgressBar("Reading CSV file", "Reading CSV file...", 0, 100, false);
+            progressBar.setVisible(true);
+            progressBar.updateValue(5);
+            final int progressInc = 95 / recordList.size();
+            int i = 1;
             for (final ArrayList<ArrayList<String>> record : recordList) {
+                progressBar.setMessage("Reading CSV row " + i + " of " + recordList.size());
                 new InfoDialog(this, dsName, false, false, record);
+                progressBar.updateValue(progressBar.getValue() + progressInc);
+                i++;
             }
+
+            progressBar.dispose();
 
             fis.close();
         } catch (final Exception e) {
@@ -3613,7 +3623,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     // String destDirName =
                     final String tempDir = parentDir + File.separator + destName + "_temp_" + System.currentTimeMillis();
                     tempDirs.add(tempDir);
-                    final File imageZipFile = new File(parentDir + File.separator + imageFile);
+
+                    File imageZipFile = new File(imageFile);
+                    if ( !imageZipFile.isAbsolute()) {
+                        imageZipFile = new File(parentDir + File.separator + imageFile);
+                    }
                     String fileName = "";
                     // try {
                     final FileInputStream fis = new FileInputStream(imageZipFile);
@@ -4203,6 +4217,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             String scannerModel = null;
             String bandwidth = null;
 
+            String scanOptions = null;
+            String flowCompensation = null;
+
+            String patientName = null;
+            String patientID = null;
+
             String echoTime = null;
             String repetitionTime = null;
             String magnaticFieldStrength = null;
@@ -4218,6 +4238,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             String manuf = null;
             String model = null;
             String scannerVer = null;
+
+            String contrastAgent = null;
+            String contrastMethod = null;
+            String contrastTime = null;
+            String contrastDose = null;
+            String contrastRate = null;
+            String contrastUsedInd = null;
 
             if (fileFormatString.equalsIgnoreCase("dicom")) {
                 final FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
@@ -4238,8 +4265,25 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 scannerModel = (String) (fileInfoDicom.getTagTable().getValue("0008,1090"));
                 bandwidth = (String) (fileInfoDicom.getTagTable().getValue("0018,0095"));
 
-                System.err.println("0018,0022" + "\t" + (String) fileInfoDicom.getTagTable().getValue("0018,0022"));
-                System.err.println("0018,1040" + "\t" + (String) fileInfoDicom.getTagTable().getValue("0018,1040"));
+                patientName = (String) (fileInfoDicom.getTagTable().getValue("0010,0010"));
+                patientID = (String) (fileInfoDicom.getTagTable().getValue("0010,0020"));
+
+                contrastAgent = (String) (fileInfoDicom.getTagTable().getValue("0018,0010"));
+                contrastMethod = (String) (fileInfoDicom.getTagTable().getValue("0018,1040"));
+                if (contrastMethod != null && contrastMethod.equalsIgnoreCase("IV")) {
+                    contrastMethod = "Infusion";
+                }
+                contrastTime = (String) (fileInfoDicom.getTagTable().getValue("0018,1042"));
+                if (contrastTime != null && visitDate != null) {
+                    contrastTime = convertDateTimeToISOFormat(visitDate, contrastTime);
+                }
+                contrastDose = (String) (fileInfoDicom.getTagTable().getValue("0018,1044"));
+                contrastRate = (String) (fileInfoDicom.getTagTable().getValue("0018,1046"));
+
+                if (contrastAgent != null && !contrastAgent.equals("") && contrastMethod != null && contrastTime != null && contrastDose != null
+                        && contrastRate != null) {
+                    contrastUsedInd = "Yes";
+                }
 
                 if (modalityString.equalsIgnoreCase("magnetic resonance")) {
                     echoTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0081"));
@@ -4253,6 +4297,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     phaseEncode = (String) (fileInfoDicom.getTagTable().getValue("0018,1312"));
                     numAverages = (String) (fileInfoDicom.getTagTable().getValue("0018,0083"));
                     receiveCoilName = (String) (fileInfoDicom.getTagTable().getValue("0018,1250"));
+
+                    scanOptions = (String) (fileInfoDicom.getTagTable().getValue("0018,0022"));
+                    // FC ==> flow compensation
+                    if (scanOptions != null && scanOptions.contains("FC")) {
+                        flowCompensation = "Yes";
+                    }
                 }
             } else if (fileFormatString.equalsIgnoreCase("nifti")) {
                 // Description = Philips Medical Systems Achieva 3.2.1 (from .nii T1 of Dr. Vaillancourt's)
@@ -4468,11 +4518,55 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 csvPList.add(repeatValues.get(i));
                                 headerList.add(convertModelNameToBRICS(scannerModel));
                             }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgBandwidthVal") && !bandwidth.equals("")) {
-                            if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == (Float.parseFloat(bandwidth)))) {
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("GUID")) {
+                            if (patientID != null && isGuid(patientID)) {
+                                if ( !repeatValues.get(i).trim().equals(patientID)) {
+                                    csvFList.add(csvFieldNames.get(i));
+                                    csvPList.add(repeatValues.get(i));
+                                    headerList.add(patientID);
+                                }
+                            } else if (patientName != null && isGuid(patientName)) {
+                                if ( !repeatValues.get(i).trim().equals(patientID)) {
+                                    csvFList.add(csvFieldNames.get(i));
+                                    csvPList.add(repeatValues.get(i));
+                                    headerList.add(patientID);
+                                }
+                            }
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgContrastAgentUsedInd") && contrastUsedInd != null && !contrastUsedInd.equals("")) {
+                            if ( !repeatValues.get(i).trim().equals(contrastUsedInd)) {
                                 csvFList.add(csvFieldNames.get(i));
                                 csvPList.add(repeatValues.get(i));
-                                headerList.add(bandwidth);
+                                headerList.add(contrastUsedInd);
+                            }
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgContrastAgentName") && contrastAgent != null && !contrastAgent.equals("")) {
+                            if ( !repeatValues.get(i).trim().equals(contrastAgent)) {
+                                csvFList.add(csvFieldNames.get(i));
+                                csvPList.add(repeatValues.get(i));
+                                headerList.add(contrastAgent);
+                            }
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgContrastAgentMethodTyp") && contrastAgent != null && !contrastAgent.equals("")) {
+                            if ( !repeatValues.get(i).trim().equals(contrastAgent)) {
+                                csvFList.add(csvFieldNames.get(i));
+                                csvPList.add(repeatValues.get(i));
+                                headerList.add(contrastAgent);
+                            }
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgContrastAgentInjctnTime") && contrastTime != null && !contrastTime.equals("")) {
+                            if ( !repeatValues.get(i).trim().equals(contrastTime)) {
+                                csvFList.add(csvFieldNames.get(i));
+                                csvPList.add(repeatValues.get(i));
+                                headerList.add(contrastTime);
+                            }
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgContrastAgentDose") && contrastDose != null && !contrastDose.equals("")) {
+                            if ( !repeatValues.get(i).trim().equals(contrastDose)) {
+                                csvFList.add(csvFieldNames.get(i));
+                                csvPList.add(repeatValues.get(i));
+                                headerList.add(contrastDose);
+                            }
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgContrastAgentRate") && contrastRate != null && !contrastRate.equals("")) {
+                            if ( !repeatValues.get(i).trim().equals(contrastRate)) {
+                                csvFList.add(csvFieldNames.get(i));
+                                csvPList.add(repeatValues.get(i));
+                                headerList.add(contrastRate);
                             }
                         }
 
@@ -4538,6 +4632,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     csvFList.add(csvFieldNames.get(i));
                                     csvPList.add(repeatValues.get(i));
                                     headerList.add(receiveCoilName);
+                                }
+                            } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgFlowCompnsatnInd")) {
+                                if ( !repeatValues.get(i).trim().equals(flowCompensation)) {
+                                    csvFList.add(csvFieldNames.get(i));
+                                    csvPList.add(repeatValues.get(i));
+                                    headerList.add(flowCompensation);
                                 }
                             }
                         }
@@ -4636,6 +4736,119 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             final int orient = img.getFileInfo(0).getImageOrientation();
             final String orientation = FileInfoBase.getImageOrientationStr(orient);
 
+            String ageVal = null;
+            String siteName = null;
+            String visitDate = null;
+            String visitTime = null;
+            String sliceOversample = null;
+            String gap = null;
+            String bodyPart = null;
+
+            String fieldOfView = null;
+            String manufacturer = null;
+            String softwareVersion = null;
+            String patientPosition = null;
+
+            String scannerModel = null;
+            String bandwidth = null;
+
+            String scanOptions = null;
+            String flowCompensation = null;
+
+            String patientName = null;
+            String patientID = null;
+
+            String echoTime = null;
+            String repetitionTime = null;
+            String magnaticFieldStrength = null;
+            String flipAngle = null;
+
+            String mriT1T2Name = null;
+            String inversionTime = null;
+            String echoTrainMeas = null;
+            String phaseEncode = null;
+            String numAverages = null;
+            String receiveCoilName = null;
+
+            String manuf = null;
+            String model = null;
+            String scannerVer = null;
+
+            String contrastAgent = null;
+            String contrastMethod = null;
+            String contrastTime = null;
+            String contrastDose = null;
+            String contrastRate = null;
+            String contrastUsedInd = null;
+
+            if (fileFormatString.equalsIgnoreCase("dicom")) {
+                final FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
+
+                ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010"));
+                siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
+                visitDate = (String) (fileInfoDicom.getTagTable().getValue("0008,0020"));
+                visitTime = (String) (fileInfoDicom.getTagTable().getValue("0008,0030"));
+                sliceOversample = (String) (fileInfoDicom.getTagTable().getValue("0018,0093"));
+                gap = (String) (fileInfoDicom.getTagTable().getValue("0018,0088"));
+                bodyPart = (String) (fileInfoDicom.getTagTable().getValue("0018,0015"));
+
+                fieldOfView = (String) (fileInfoDicom.getTagTable().getValue("0018,1100"));
+                manufacturer = (String) (fileInfoDicom.getTagTable().getValue("0008,0070"));
+                softwareVersion = (String) (fileInfoDicom.getTagTable().getValue("0018,1020"));
+                patientPosition = (String) (fileInfoDicom.getTagTable().getValue("0018,5100"));
+
+                scannerModel = (String) (fileInfoDicom.getTagTable().getValue("0008,1090"));
+                bandwidth = (String) (fileInfoDicom.getTagTable().getValue("0018,0095"));
+
+                patientName = (String) (fileInfoDicom.getTagTable().getValue("0010,0010"));
+                patientID = (String) (fileInfoDicom.getTagTable().getValue("0010,0020"));
+
+                contrastAgent = (String) (fileInfoDicom.getTagTable().getValue("0018,0010"));
+                contrastMethod = (String) (fileInfoDicom.getTagTable().getValue("0018,1040"));
+                if (contrastMethod != null && contrastMethod.equalsIgnoreCase("IV")) {
+                    contrastMethod = "Infusion";
+                }
+                contrastTime = (String) (fileInfoDicom.getTagTable().getValue("0018,1042"));
+                if (contrastTime != null && visitDate != null) {
+                    contrastTime = convertDateTimeToISOFormat(visitDate, contrastTime);
+                }
+                contrastDose = (String) (fileInfoDicom.getTagTable().getValue("0018,1044"));
+                contrastRate = (String) (fileInfoDicom.getTagTable().getValue("0018,1046"));
+
+                if (contrastAgent != null && !contrastAgent.equals("") && contrastMethod != null && contrastTime != null && contrastDose != null
+                        && contrastRate != null) {
+                    contrastUsedInd = "Yes";
+                }
+
+                if (modalityString.equalsIgnoreCase("magnetic resonance")) {
+                    echoTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0081"));
+                    repetitionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0080"));
+                    magnaticFieldStrength = (String) (fileInfoDicom.getTagTable().getValue("0018,0087"));
+                    flipAngle = (String) (fileInfoDicom.getTagTable().getValue("0018,1314"));
+
+                    mriT1T2Name = (String) (fileInfoDicom.getTagTable().getValue("0018,0024"));
+                    inversionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0082"));
+                    echoTrainMeas = (String) (fileInfoDicom.getTagTable().getValue("0018,0091"));
+                    phaseEncode = (String) (fileInfoDicom.getTagTable().getValue("0018,1312"));
+                    numAverages = (String) (fileInfoDicom.getTagTable().getValue("0018,0083"));
+                    receiveCoilName = (String) (fileInfoDicom.getTagTable().getValue("0018,1250"));
+
+                    scanOptions = (String) (fileInfoDicom.getTagTable().getValue("0018,0022"));
+                    // FC ==> flow compensation
+                    if (scanOptions != null && scanOptions.contains("FC")) {
+                        flowCompensation = "Yes";
+                    }
+                }
+            } else if (fileFormatString.equalsIgnoreCase("nifti")) {
+                // Description = Philips Medical Systems Achieva 3.2.1 (from .nii T1 of Dr. Vaillancourt's)
+                final FileInfoNIFTI fileInfoNifti = (FileInfoNIFTI) img.getFileInfo(0);
+                final String description = fileInfoNifti.getDescription();
+
+                manuf = convertNiftiDescToBRICSManuf(description);
+                model = convertNiftiDescToBRICSModel(description);
+                scannerVer = convertNiftiDescToBRICSVer(description);
+            }
+
             for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
                 for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
                     for (final DataElementValue deVal : repeat.getDataElements()) {
@@ -4700,27 +4913,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         }
 
                         if (fileFormatString.equalsIgnoreCase("dicom")) {
-                            final FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
-
-                            final String ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010"));
-                            final String siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
-                            final String visitDate = (String) (fileInfoDicom.getTagTable().getValue("0008,0020"));
-                            final String visitTime = (String) (fileInfoDicom.getTagTable().getValue("0008,0030"));
-                            final String sliceOversample = (String) (fileInfoDicom.getTagTable().getValue("0018,0093"));
-                            final String gap = (String) (fileInfoDicom.getTagTable().getValue("0018,0088"));
-                            final String bodyPart = (String) (fileInfoDicom.getTagTable().getValue("0018,0015"));
-
-                            final String fieldOfView = (String) (fileInfoDicom.getTagTable().getValue("0018,1100"));
-                            final String manufacturer = (String) (fileInfoDicom.getTagTable().getValue("0008,0070"));
-                            final String softwareVersion = (String) (fileInfoDicom.getTagTable().getValue("0018,1020"));
-                            final String patientPosition = (String) (fileInfoDicom.getTagTable().getValue("0018,5100"));
-
-                            final String scannerModel = (String) (fileInfoDicom.getTagTable().getValue("0008,1090"));
-                            final String bandwidth = (String) (fileInfoDicom.getTagTable().getValue("0018,0095"));
-
-                            final String patientName = (String) (fileInfoDicom.getTagTable().getValue("0010,0010"));
-                            final String patientID = (String) (fileInfoDicom.getTagTable().getValue("0010,0020"));
-
                             if (deName.equalsIgnoreCase("AgeVal") && ageVal != null && !ageVal.equals("")) {
                                 final String ageInMonths = convertDicomAgeToBRICS(ageVal);
                                 if (Float.parseFloat(ageInMonths) != 0) {
@@ -4762,21 +4954,21 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 } else if (isGuid(patientName)) {
                                     setElementComponentValue(deVal, patientName);
                                 }
+                            } else if (deName.equalsIgnoreCase("ImgContrastAgentUsedInd")) {
+                                setElementComponentValue(deVal, contrastUsedInd);
+                            } else if (deName.equalsIgnoreCase("ImgContrastAgentName")) {
+                                setElementComponentValue(deVal, contrastAgent);
+                            } else if (deName.equalsIgnoreCase("ImgContrastAgentMethodTyp")) {
+                                setElementComponentValue(deVal, contrastMethod);
+                            } else if (deName.equalsIgnoreCase("ImgContrastAgentInjctnTime")) {
+                                setElementComponentValue(deVal, contrastTime);
+                            } else if (deName.equalsIgnoreCase("ImgContrastAgentDose")) {
+                                setElementComponentValue(deVal, contrastDose);
+                            } else if (deName.equalsIgnoreCase("ImgContrastAgentRate")) {
+                                setElementComponentValue(deVal, contrastRate);
                             }
 
                             if (modalityString.equalsIgnoreCase("magnetic resonance")) {
-                                final String echoTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0081"));
-                                final String repetitionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0080"));
-                                final String magnaticFieldStrength = (String) (fileInfoDicom.getTagTable().getValue("0018,0087"));
-                                final String flipAngle = (String) (fileInfoDicom.getTagTable().getValue("0018,1314"));
-
-                                final String mriT1T2Name = (String) (fileInfoDicom.getTagTable().getValue("0018,0024"));
-                                final String inversionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0082"));
-                                final String echoTrainMeas = (String) (fileInfoDicom.getTagTable().getValue("0018,0091"));
-                                final String phaseEncode = (String) (fileInfoDicom.getTagTable().getValue("0018,1312"));
-                                final String numAverages = (String) (fileInfoDicom.getTagTable().getValue("0018,0083"));
-                                final String receiveCoilName = (String) (fileInfoDicom.getTagTable().getValue("0018,1250"));
-
                                 if (deName.equalsIgnoreCase("ImgEchoDur")) {
                                     setElementComponentValue(deVal, echoTime);
                                 } else if (deName.equalsIgnoreCase("ImgRepetitionGapVal")) {
@@ -4797,17 +4989,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     setElementComponentValue(deVal, receiveCoilName);
                                 } else if (deName.equalsIgnoreCase("ImgPhasEncdeDirctTxt")) {
                                     setElementComponentValue(deVal, phaseEncode);
+                                } else if (deName.equalsIgnoreCase("ImgFlowCompnsatnInd")) {
+                                    setElementComponentValue(deVal, flowCompensation);
                                 }
                             }
                         } else if (fileFormatString.equalsIgnoreCase("nifti")) {
-                            // Description = Philips Medical Systems Achieva 3.2.1 (from .nii T1 of Dr. Vaillancourt's)
-                            final FileInfoNIFTI fileInfoNifti = (FileInfoNIFTI) img.getFileInfo(0);
-                            final String description = fileInfoNifti.getDescription();
-
-                            final String manuf = convertNiftiDescToBRICSManuf(description);
-                            final String model = convertNiftiDescToBRICSModel(description);
-                            final String scannerVer = convertNiftiDescToBRICSVer(description);
-
                             if (deName.equalsIgnoreCase("ImgScannerManufName")) {
                                 setElementComponentValue(deVal, manuf);
                             } else if (deName.equalsIgnoreCase("ImgScannerModelName")) {
@@ -4961,6 +5147,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         } else {
                             final FileIO fileIO = new FileIO();
                             fileIO.setQuiet(true);
+
                             srcImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultiFile, null);
 
                             final int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
