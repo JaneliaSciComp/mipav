@@ -3,6 +3,7 @@
 lib/axiom-api-*.jar
 lib/axiom-dom-*.jar
 lib/axiom-impl-*.jar
+lib/commons-io-*.jar
 lib/commons-logging-*.jar
 lib/xstx-asl-*.jar
 lib/axis2-kernel-*.jar
