@@ -42,6 +42,7 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.transport.http.HTTPConduit;
@@ -55,9 +56,6 @@ import com.sun.jimi.core.JimiException;
 
 
 /**
- * TODO: Not properly dealing with versions if there are multiple for the same form structure (in reading CSV or pulling
- * struct info from DDT).
- * 
  * TODO: Add non-ImgFile support for selecting multiple files and have them automatically zipped together?
  */
 public class PlugInDialogFITBIR extends JFrame implements ActionListener, ChangeListener, ItemListener, TreeSelectionListener, MouseListener,
@@ -94,11 +92,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private final ArrayList<ViewJComponentPreviewImage> previewImages = new ArrayList<ViewJComponentPreviewImage>();
 
-    private final ArrayList<File> imageFiles = new ArrayList<File>();
+    private final ArrayList<ImgFileInfo> structRowImgFileInfoList = new ArrayList<ImgFileInfo>();
 
     private final ArrayList<ArrayList<File>> allOtherFilesAL = new ArrayList<ArrayList<File>>();
-
-    private final ArrayList<Boolean> multifiles = new ArrayList<Boolean>();
 
     private final ArrayList<FormStructureData> fsDataList = new ArrayList<FormStructureData>();
 
@@ -215,7 +211,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.16";
+    private static final String pluginVersion = "0.17";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -360,8 +356,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             final int selected = structTable.getSelectedRow();
             structTableModel.removeRow(selected);
             previewImages.remove(selected);
-            imageFiles.remove(selected);
-            multifiles.remove(selected);
+            structRowImgFileInfoList.remove(selected);
             fsDataList.remove(selected);
 
             previewImgPanel.removeAll();
@@ -1030,70 +1025,96 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
         }
 
-        for (final String lowerName : csvStructRowData.keySet()) {
-            System.out.println("**** " + lowerName);
-            System.out.println(csvStructRowData.get(lowerName));
-        }
+        // for (final String lowerName : csvStructRowData.keySet()) {
+        // System.out.println("**** " + lowerName);
+        // System.out.println(csvStructRowData.get(lowerName));
+        // }
 
         for (int i = 0; i < numDataStructs; i++) {
             int collisionCounter = 1;
             final String name = (String) structTableModel.getValueAt(i, 0);
 
             final String guid = getGuidFromString(name);
+            final String dsName = getStructFromString(name);
 
-            final File imageFile = imageFiles.get(i);
+            final ImgFileInfo imgFileInfo = structRowImgFileInfoList.get(i);
+
             String outputFileNameBase;
 
-            if (imageFile != null) {
+            if (isImagingStructure(dsName) && imgFileInfo != null) {
 
                 // this means we are working with the image datastructure
                 printlnToLog("Creating submission file for " + name);
 
-                // TODO: would be best to only open the image once to pull out header info, get file list, and generate
-                // thumbnail
-                printlnToLog("Opening: " + imageFile + ", multifile: " + multifiles.get(i));
+                // printlnToLog("Opening: " + imageFile + ", multifile: " + multifiles.get(i));
 
-                final FileIO fileIO = new FileIO();
-                fileIO.setQuiet(true);
-                final ModelImage origImage = fileIO.readImage(imageFile.getName(), imageFile.getParent() + File.separator, multifiles.get(i), null);
-
-                final List<String> origFiles = FileUtility.getFileNameList(origImage);
-
-                final String dsName = getStructFromString(name);
+                final List<String> origFiles = imgFileInfo.getOrigFiles();
 
                 outputFileNameBase = guid + "_" + dsName + "_" + System.currentTimeMillis();
 
-                final String zipFilePath = outputDirBase + outputFileNameBase + ".zip";
-
                 printlnToLog("Creating thumbnail image:\t" + outputDirBase + outputFileNameBase + ".jpg");
 
-                ModelImage thumbnailImage = createThumbnailImage(origImage);
+                ModelImage thumbnailImage = imgFileInfo.getThumbnailImg();
 
-                final FileWriteOptions opts = new FileWriteOptions(outputFileNameBase + ".jpg", outputDirBase, true);
-                writeThumbnailJIMI(thumbnailImage, opts);
                 if (thumbnailImage != null) {
-                    thumbnailImage.disposeLocal();
-                    thumbnailImage = null;
+                    final FileWriteOptions opts = new FileWriteOptions(outputFileNameBase + ".jpg", outputDirBase, true);
+                    writeThumbnailJIMI(thumbnailImage, opts);
+                    if (thumbnailImage != null) {
+                        thumbnailImage.disposeLocal();
+                        thumbnailImage = null;
+                        imgFileInfo.setThumbnailImg(null);
+                    }
                 }
 
-                try {
-                    printlnToLog("Creating ZIP file:\t" + zipFilePath);
-                    for (final String file : origFiles) {
-                        printlnToLog("Adding file to ZIP:\t" + file);
+                String imageFile = null;
+                if ( (imgFileInfo.getImgFilePath().endsWith(".zip") && new File(imgFileInfo.getImgFilePath()).exists())) {
+                    // the files were already zipped - so don't zip again. copy to output dir
+                    try {
+                        final File zipFile = new File(imgFileInfo.getImgFilePath());
+                        printlnToLog("Copying original image zip file into output directory:\t" + zipFile.getAbsolutePath());
+                        FileUtils.copyFileToDirectory(zipFile, outputDirFile);
+                        // imageFile = outputDirBase + File.separator + zipFile.getName();
+                        imageFile = zipFile.getName();
+                    } catch (final IOException e) {
+                        MipavUtil.displayError("Unable to copy image zip file into output directory");
+                        e.printStackTrace();
                     }
+                } else if (imgFileInfo.getOrigFiles().size() == 1 && new File(imgFileInfo.getOrigFiles().get(0)).exists() && !imgFileInfo.isMultifile()) {
+                    // the image is just one file, so don't zip. copy to output dir
+                    try {
+                        final File zipFile = new File(imgFileInfo.getOrigFiles().get(0));
+                        printlnToLog("Copying original image file into output directory:\t" + zipFile.getAbsolutePath());
+                        FileUtils.copyFileToDirectory(zipFile, outputDirFile);
+                        // imageFile = outputDirBase + File.separator + zipFile.getName();
+                        imageFile = zipFile.getName();
+                    } catch (final IOException e) {
+                        MipavUtil.displayError("Unable to copy original image file into output directory");
+                        e.printStackTrace();
+                    }
+                } else {
+                    // need to create a zip file with the original image files
+                    try {
+                        final String zipFilePath = outputDirBase + outputFileNameBase + ".zip";
+                        printlnToLog("Creating ZIP file:\t" + zipFilePath);
+                        for (final String file : origFiles) {
+                            printlnToLog("Adding file to ZIP:\t" + file);
+                        }
 
-                    makeZipFile(zipFilePath, origFiles);
-                } catch (final IOException ioe) {
-                    ioe.printStackTrace();
-                    MipavUtil.displayError("Unable to write original image dataset files to ZIP package:\n" + ioe.getMessage());
-                    continue;
+                        makeZipFile(zipFilePath, origFiles);
+                        // imageFile = zipFilePath;
+                        imageFile = outputFileNameBase + ".zip";
+                    } catch (final IOException ioe) {
+                        ioe.printStackTrace();
+                        MipavUtil.displayError("Unable to write original image dataset files to ZIP package:\n" + ioe.getMessage());
+                        continue;
+                    }
                 }
 
                 // calculate hash of the zip file and then put it into the image
                 // file hash code CDE (if it exists in the struct)
                 String hashCode = CSV_OUTPUT_DELIM;
                 try {
-                    hashCode = computeFileHash(zipFilePath);
+                    hashCode = computeFileHash(imageFile);
                 } catch (final IOException e) {
                     e.printStackTrace();
                     MipavUtil.displayError("Unable calculate hash code of ZIP file:\n" + e.getMessage());
@@ -1110,7 +1131,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
 
                 for (int curRepeat = 0; curRepeat < maxRepeatNum; curRepeat++) {
-                    final String newRow = getCSVDataRow(outputDirBase, outputFileNameBase, fsData, imageFile, origImage, curRepeat, hashCode);
+                    final String newRow = getCSVDataRow(outputDirBase, outputFileNameBase, fsData, imageFile, curRepeat, hashCode);
                     if ( !newRow.equals("")) {
                         final String lowerName = dsName.toLowerCase();
                         String data = csvStructRowData.get(lowerName);
@@ -1123,17 +1144,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     }
                 }
 
-                origImage.disposeLocal();
-
                 printlnToLog("");
-
             } else {
 
                 // this means that this is another data structure besides image
 
                 printlnToLog("Creating submission file for " + name);
-
-                final String dsName = getStructFromString(name);
 
                 outputFileNameBase = guid + "_" + dsName + "_" + System.currentTimeMillis();
 
@@ -1347,7 +1363,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
 
                 for (int curRepeat = 0; curRepeat < maxRepeatNum; curRepeat++) {
-                    final String newRow = getCSVDataRow(outputDirBase, outputFileNameBase, fsData, imageFile, null, curRepeat, CSV_OUTPUT_DELIM);
+                    final String newRow = getCSVDataRow(outputDirBase, outputFileNameBase, fsData, null, curRepeat, CSV_OUTPUT_DELIM);
                     if ( !newRow.equals("")) {
                         final String lowerName = dsName.toLowerCase();
                         String data = csvStructRowData.get(lowerName);
@@ -1430,10 +1446,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      * @param outputDirBase
      * @param outputFileNameBase
      * @param imageFile
-     * @param origImage
      */
-    private final String getCSVDataRow(final String outputDirBase, final String outputFileNameBase, final FormStructureData fsData, final File imageFile,
-            final ModelImage origImage, final int repeatNum, final String hashCode) {
+    private final String getCSVDataRow(final String outputDirBase, final String outputFileNameBase, final FormStructureData fsData, final String imageFile,
+            final int repeatNum, final String hashCode) {
         String csvRow = new String();
 
         if (fsData == null) {
@@ -1454,7 +1469,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     String value = "";
                     if (imageFile != null) {
                         if (deName.equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
-                            value = outputFileNameBase + ".zip";
+                            // value = outputFileNameBase + ".zip";
+                            value = imageFile;
                         } else if (deName.equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
                             value = outputFileNameBase + ".jpg";
                         } else if (deName.equalsIgnoreCase(IMG_HASH_CODE_ELEMENT_NAME)) {
@@ -1466,17 +1482,17 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         value = deVal.getValue();
                     }
 
-                    final File f = new File(value);
-                    if (f.isFile() || value.endsWith("_collision")) {
-                        if (value.endsWith("_collision")) {
-                            value = value.substring(0, value.indexOf("_collision"));
-                            final String filename = value.substring(value.lastIndexOf(File.separator) + 1, value.length());
-                            value = outputFileNameBase + File.separator + filename;
-                        } else {
-                            final String filename = f.getName();
-                            value = outputFileNameBase + File.separator + filename;
-                        }
-                    }
+                    // final File f = new File(value);
+                    // if (f.isFile() || value.endsWith("_collision")) {
+                    // if (value.endsWith("_collision")) {
+                    // value = value.substring(0, value.indexOf("_collision"));
+                    // final String filename = value.substring(value.lastIndexOf(File.separator) + 1, value.length());
+                    // value = outputFileNameBase + File.separator + filename;
+                    // } else {
+                    // final String filename = f.getName();
+                    // value = outputFileNameBase + File.separator + filename;
+                    // }
+                    // }
 
                     // escape commas in values - if there's a comma, put quotes
                     // around the value and double up any existing quotes
@@ -3202,8 +3218,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
             } else {
                 previewImages.add(null);
-                imageFiles.add(null);
-                multifiles.add(new Boolean(false));
+                structRowImgFileInfoList.add(null);
                 fsDataList.add(null);
                 allOtherFilesAL.add(null);
                 this.dataStructureName = name;
@@ -3601,8 +3616,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             } else {
                 if ( !launchedFromInProcessState) {
                     previewImages.remove(previewImages.size() - 1);
-                    imageFiles.remove(imageFiles.size() - 1);
-                    multifiles.remove(multifiles.size() - 1);
+                    structRowImgFileInfoList.remove(structRowImgFileInfoList.size() - 1);
                     fsDataList.remove(fsDataList.size() - 1);
                     allOtherFilesAL.remove(allOtherFilesAL.size() - 1);
                     if (addedPreviewImage) {
@@ -3623,6 +3637,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             fileIO.setQuiet(true);
             ModelImage srcImage = null;
             validFile = true;
+            File origSrcFile;
 
             try {
                 if (imageFile.endsWith(".zip")) {
@@ -3634,13 +3649,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     final String tempDir = parentDir + File.separator + destName + "_temp_" + System.currentTimeMillis();
                     tempDirs.add(tempDir);
 
-                    File imageZipFile = new File(imageFile);
-                    if ( !imageZipFile.isAbsolute()) {
-                        imageZipFile = new File(parentDir + File.separator + imageFile);
+                    origSrcFile = new File(imageFile);
+                    if ( !origSrcFile.isAbsolute()) {
+                        origSrcFile = new File(parentDir + File.separator + imageFile);
                     }
+
                     String fileName = "";
                     // try {
-                    final FileInputStream fis = new FileInputStream(imageZipFile);
+                    final FileInputStream fis = new FileInputStream(origSrcFile);
                     final ZipInputStream zin = new ZipInputStream(new BufferedInputStream(fis));
                     FileOutputStream fout;
                     ZipEntry entry;
@@ -3697,11 +3713,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 } else {
                     // try to only open as a single file, since it wasn't zipped
                     filePath = parentDir + File.separator + imageFile;
+                    origSrcFile = new File(imageFile);
+                    if ( !origSrcFile.isAbsolute()) {
+                        origSrcFile = new File(parentDir + File.separator + imageFile);
+                    }
+                    filePath = origSrcFile.getAbsolutePath();
                     isMultifile = false;
                 }
 
-                // TODO: would be best to only open the image once to pull out header info, get file list, and generate
-                // thumbnail
                 final File file = new File(filePath);
                 srcImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultifile, null);
 
@@ -3721,18 +3740,21 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                 addedPreviewImage = true;
 
+                // TODO: generate thumbnail image and retain path in ImgFileInfo
+                final ModelImage thumbnailImage = createThumbnailImage(srcImage);
+
                 if (launchedFromInProcessState) {
                     final int selectedRow = structTable.getSelectedRow();
                     previewImages.set(selectedRow, previewImg);
                     previewImages.get(selectedRow).setSliceBrightness(previewImgBrightness, previewImgContrast);
-                    imageFiles.set(selectedRow, file);
-                    multifiles.set(selectedRow, new Boolean(isMultifile));
+                    structRowImgFileInfoList.set(selectedRow, new ImgFileInfo(origSrcFile.getAbsolutePath(), isMultifile,
+                            FileUtility.getFileNameList(srcImage), thumbnailImage));
                 } else {
                     final int size = previewImages.size();
                     previewImages.set(size - 1, previewImg);
                     previewImages.get(size - 1).setSliceBrightness(previewImgBrightness, previewImgContrast);
-                    imageFiles.set(size - 1, file);
-                    multifiles.set(size - 1, new Boolean(isMultifile));
+                    structRowImgFileInfoList.set(size - 1, new ImgFileInfo(origSrcFile.getAbsolutePath(), isMultifile, FileUtility.getFileNameList(srcImage),
+                            thumbnailImage));
                 }
 
                 previewImgPanel.validate();
@@ -5072,8 +5094,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             } else if (command.equalsIgnoreCase("StructDialogCancel")) {
                 if ( !launchedFromInProcessState) {
                     previewImages.remove(previewImages.size() - 1);
-                    imageFiles.remove(imageFiles.size() - 1);
-                    multifiles.remove(multifiles.size() - 1);
+                    structRowImgFileInfoList.remove(structRowImgFileInfoList.size() - 1);
                     fsDataList.remove(fsDataList.size() - 1);
                     allOtherFilesAL.remove(allOtherFilesAL.size() - 1);
                     if (addedPreviewImage) {
@@ -5176,19 +5197,21 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                             addedPreviewImage = true;
 
+                            // TODO: generate thumbnail image and retain path in ImgFileInfo
+                            final ModelImage thumbnailImage = createThumbnailImage(srcImage);
+
                             if (launchedFromInProcessState) {
                                 final int selectedRow = structTable.getSelectedRow();
                                 previewImages.set(selectedRow, previewImg);
                                 previewImages.get(selectedRow).setSliceBrightness(previewImgBrightness, previewImgContrast);
-                                imageFiles.set(selectedRow, file);
-                                multifiles.set(selectedRow, new Boolean(isMultiFile));
-
+                                structRowImgFileInfoList.set(selectedRow,
+                                        new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(srcImage), thumbnailImage));
                             } else {
                                 final int size = previewImages.size();
                                 previewImages.set(size - 1, previewImg);
                                 previewImages.get(size - 1).setSliceBrightness(previewImgBrightness, previewImgContrast);
-                                imageFiles.set(size - 1, file);
-                                multifiles.set(size - 1, new Boolean(isMultiFile));
+                                structRowImgFileInfoList.set(size - 1,
+                                        new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(srcImage), thumbnailImage));
                             }
 
                             previewImgPanel.validate();
@@ -5919,6 +5942,62 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     parentWindow.repaint();
                 }
             }
+        }
+    }
+
+    public class ImgFileInfo {
+        public List<String> origFiles;
+
+        public ModelImage thumbnailImg;
+
+        public boolean isMultifile;
+
+        public String imgFilePath;
+
+        public ImgFileInfo(final String imgFilePath, final boolean isMultifile) {
+            super();
+            this.isMultifile = isMultifile;
+            this.imgFilePath = imgFilePath;
+        }
+
+        public ImgFileInfo(final String imgFilePath, final boolean isMultifile, final List<String> origFiles, final ModelImage thumbnailImg) {
+            super();
+            this.origFiles = origFiles;
+            this.thumbnailImg = thumbnailImg;
+            this.isMultifile = isMultifile;
+            this.imgFilePath = imgFilePath;
+        }
+
+        public List<String> getOrigFiles() {
+            return origFiles;
+        }
+
+        public void setOrigFiles(final List<String> origFiles) {
+            this.origFiles = origFiles;
+        }
+
+        public ModelImage getThumbnailImg() {
+            return thumbnailImg;
+        }
+
+        public void setThumbnailImg(final ModelImage thumbnailImg) {
+            this.thumbnailImg = thumbnailImg;
+        }
+
+        public boolean isMultifile() {
+            return isMultifile;
+        }
+
+        public void setMultifile(final boolean isMultifile) {
+            this.isMultifile = isMultifile;
+        }
+
+        public String getImgFilePath() {
+            return imgFilePath;
+        }
+
+        public void setImgFilePath(final String imgFilePath) {
+            this.imgFilePath = imgFilePath;
         }
     }
 }
