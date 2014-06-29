@@ -1239,7 +1239,8 @@ public class LatticeModel {
 		saveTransformImage(imageName, resultImage);
 
 		if ( saveStats )
-		{
+		{ 
+			
 			saveLatticeStatistics(image, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");			
 			saveTransformImage(imageName, straightToOrigin);
 			ModelImage originToStraight = computeOriginToStraight(image, straightToOrigin);
@@ -2278,7 +2279,7 @@ public class LatticeModel {
 		model = null;
     }
     
-    private ModelImage straighten( ModelImage image, int[] resultExtents, String baseName, ModelImage model, boolean saveStats, boolean displayResult )
+    private void straighten( ModelImage image, int[] resultExtents, String baseName, ModelImage model, boolean saveStats, boolean displayResult )
     {
     	String imageName = image.getImageName();
     	if ( imageName.contains("_clone") )
@@ -2390,6 +2391,10 @@ public class LatticeModel {
 		saveTransformImage(baseName, resultImage);
 		if ( saveStats )
 		{
+			String voiDir = resultImage.getImageDirectory() + JDialogBase.makeImageName( baseName, "") + File.separator +
+	    			"straightened_lattice" + File.separator;
+			saveAllVOIsTo( voiDir, resultImage );  
+			
 			saveLatticeStatistics(image, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");
 			saveTransformImage(baseName, straightToOrigin);
 			ModelImage originToStraight = computeOriginToStraight(image, straightToOrigin);
@@ -2402,7 +2407,11 @@ public class LatticeModel {
 		straightToOrigin.disposeLocal();
 		straightToOrigin = null;
 		
-		return resultImage;
+		if ( !displayResult )
+		{
+			resultImage.disposeLocal();
+			resultImage = null;
+		}
     }
     
     
