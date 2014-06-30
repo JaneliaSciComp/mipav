@@ -278,10 +278,14 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 
 	public void saveImage(float[] data, int time, int zSlice, boolean calcMinMax )
 	{
+		int tOffset = 0;
 		if ( destImage == null )
 		{
+			if (srcImage.getExtents().length > 3) {
+				tOffset = time * srcImage.getExtents()[2]; 
+			}
 			try {
-				srcImage.importData(zSlice * data.length, data, false);
+				srcImage.importData((tOffset + zSlice) * data.length, data, false);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -292,8 +296,11 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 		}
 		else
 		{
+			if (destImage.getExtents().length > 3) {
+				tOffset = time * destImage.getExtents()[2]; 
+			}
 			try {
-				destImage.importData(zSlice * data.length, data, false);
+				destImage.importData((tOffset + zSlice) * data.length, data, false);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
