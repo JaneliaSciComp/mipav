@@ -220,7 +220,7 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 			e1.printStackTrace();
 		}
 		
-		FFTUtility fft = new FFTUtility(imagefftR, imagefftI, width, height, 1, -1, FFTUtility.FFT);
+		FFTUtility fft = new FFTUtility(imagefftR, imagefftI, height, width, 1, -1, FFTUtility.FFT);
 		fft.run();
 		
 		fft = new FFTUtility(imagefftR, imagefftI, 1, height, width, -1, FFTUtility.FFT);
@@ -256,7 +256,7 @@ public class AlgorithmPhaseCongruency extends AlgorithmBase {
 					ifftI[i] = imagefftI[i] * filter;
 				}
 				
-				FFTUtility ifft = new FFTUtility(ifftR, ifftI, width, height, 1, 1, FFTUtility.FFT);
+				FFTUtility ifft = new FFTUtility(ifftR, ifftI, height, width, 1, 1, FFTUtility.FFT);
 				ifft.run();
 				
 				ifft = new FFTUtility(ifftR, ifftI, 1, height, width, 1, FFTUtility.FFT);
