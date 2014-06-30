@@ -1800,6 +1800,7 @@ public class LatticeModel {
         
         VOIContour edgePts = new VOIContour(true);
         Vector3f currentPoint = new Vector3f();
+        Vector3f previousPoint = new Vector3f(-1, -1, -1);
 
         /* loop over the 2D image (values) we're writing into */
         for (int i = iBound - 1; i >= 0; i--) {
@@ -1848,14 +1849,18 @@ public class LatticeModel {
                 	}
                 	if ( Math.abs(currentValue - value) > SampleLimit )
                 	{
-//                        Vector3f edge = new Vector3f(currentPoint);
-//                        if ( !edgePts.contains(edge) )
-//                        {
-//                        	edgePts.add( edge );
-//                        }
+                		if ( prevValue != -1 )
+                		{
+                			Vector3f edge = new Vector3f(previousPoint);
+                			if ( !edgePts.contains(edge) )
+                			{
+                				edgePts.add( edge );
+                			}
+                		}
                 		break;
                 	}
                 	prevValue = currentValue;
+                	previousPoint.copy(currentPoint);
                 }
             }         
         }
@@ -1908,21 +1913,61 @@ public class LatticeModel {
                 	}
                 	if ( Math.abs(currentValue - value) > SampleLimit )
                 	{
-//                        Vector3f edge = new Vector3f(currentPoint);
-//                        if ( !edgePts.contains(edge) )
-//                        {
-//                        	edgePts.add( edge );
-//                        }
+                		if ( prevValue != -1 )
+                		{
+                			Vector3f edge = new Vector3f(previousPoint);
+                			if ( !edgePts.contains(edge) )
+                			{
+                				edgePts.add( edge );
+                			}
+                		}
                 		break;
                 	}
                 	prevValue = currentValue;
+                	previousPoint.copy(currentPoint);
                 }
             }         
         }
         return edgePts;
     }
     
-
+    private void interpolateContour( VOIContour contour )
+    {
+    	int index = 0;
+    	while ( index < contour.size() )
+    	{
+    		Vector3f p1 = contour.elementAt(index);
+    		Vector3f p2 = contour.elementAt((index+1)%contour.size());
+//    		System.err.println( index + " " + (index+1)%contour.size() );
+    		float distance = p1.distance(p2);
+    		if ( distance > 1 )
+    		{
+    			Vector3f dir = Vector3f.sub(p2, p1);
+    			dir.normalize();
+    			int count = (int)distance;
+    			float stepSize = distance / (float)(count+1);
+    			float currentStep = stepSize;
+    			index++;
+    			for ( int i = 0; i < count; i++ )
+    			{
+    				Vector3f newPt = new Vector3f();
+    				newPt.scaleAdd(currentStep, dir, p1);
+    				contour.add( index++, newPt );
+//    				System.err.println( "    adding pt at " + (index-1) + " " + newPt.distance(p1) + " " + newPt.distance(p2) );
+    				currentStep += stepSize;
+    			}
+    		}
+    		else
+    		{
+    			index++;
+    		}
+    	}
+//    	System.err.println(contour.size());
+//    	for ( int i = 0; i < contour.size(); i++ )
+//    	{
+//    		System.err.println( contour.elementAt(i) + " " + contour.elementAt(i).distance( contour.elementAt((i+1)%contour.size() ) )  );
+//    	}
+    }
 
     private void growEdges( ModelImage model, Vector<VOIContour> edgeLists )
     {
@@ -1934,6 +1979,7 @@ public class LatticeModel {
     	{
 			int value = i+1;
 			VOIContour contour = edgeLists.elementAt(i);
+			interpolateContour( contour );
     		for ( int j = 0; j < contour.size(); j++ )
     		{
     			Vector3f pt = contour.elementAt(j);
@@ -1972,10 +2018,10 @@ public class LatticeModel {
                             	{
 									if ( Math.abs(currentValue - value) < SampleLimit )
 									{
-										model.set(x1, y1, z1, (currentValue + value)/2f);
+//										model.set(x1, y1, z1, (currentValue + value)/2f);
 									}
                             	}
-                            	else
+                            	else if ( currentValue == 0 )
                             	{
                             		model.set(x1, y1, z1, value);
                             	}                            		
@@ -2203,6 +2249,12 @@ public class LatticeModel {
     	insideConflict = null;
 
     	short sID = (short)(imageA.getVOIs().getUniqueID());
+    	if ( displayInterpolatedContours != null )
+    	{
+			imageA.unregisterVOI(displayInterpolatedContours);
+			displayInterpolatedContours.dispose();
+			displayInterpolatedContours = null;
+    	}
     	displayInterpolatedContours = new VOI(sID, "interpolatedContours");
     	displayInterpolatedContours.setColor( Color.blue );
 		for ( int d = 0; d < 10; d++ )
@@ -2217,7 +2269,7 @@ public class LatticeModel {
 				{
 					corners[j] = kBox.elementAt(j);
 				}
-				edgesX.add( growDiagonalX( imageA, model, 0, i, resultExtents, corners, i+1) );
+//				edgesX.add( growDiagonalX( imageA, model, 0, i, resultExtents, corners, i+1) );
 				edgesY.add( growDiagonalY( imageA, model, 0, i, resultExtents, corners, i+1) );
 				if ( !straighten )
 				{
@@ -2225,20 +2277,21 @@ public class LatticeModel {
 					{
 						if ( (i%30) == 0 )
 						{
-							VOIContour contour = edgesX.elementAt(i);
-							displayInterpolatedContours.getCurves().add(contour);
-							contour.update( new ColorRGBA(0,0,1,1));
-							contour.setVolumeDisplayRange(minRange);
+//							VOIContour contour = edgesX.elementAt(i);
+//							displayInterpolatedContours.getCurves().add(contour);
+//							contour.update( new ColorRGBA(0,0,1,1));
+//							contour.setVolumeDisplayRange(minRange);
 
-							contour = edgesY.elementAt(i);
+							VOIContour contour = (VOIContour) edgesY.elementAt(i).clone();
+							contour.trimPoints(0.5, true);
 							displayInterpolatedContours.getCurves().add(contour);
-							contour.update( new ColorRGBA(0,0,1,1));
+							contour.update( new ColorRGBA(0,1,0,1));
 							contour.setVolumeDisplayRange(minRange);
 						}
 					}
 				}
 			}
-			growEdges( model, edgesX );
+//			growEdges( model, edgesX );
 			growEdges( model, edgesY );
 		}
 		
@@ -2246,7 +2299,8 @@ public class LatticeModel {
 //		new ViewJFrameImage((ModelImage)model.clone());
 		if ( !straighten )
 		{
-			imageA.registerVOI(displayInterpolatedContours);			
+			imageA.registerVOI(displayInterpolatedContours);	
+	        imageA.notifyImageDisplayListeners();		
 		}
 		if ( straighten )
 		{
