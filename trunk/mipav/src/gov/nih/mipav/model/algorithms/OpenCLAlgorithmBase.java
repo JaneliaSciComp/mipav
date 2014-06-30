@@ -5,8 +5,6 @@ package gov.nih.mipav.model.algorithms;
 import static org.jocl.CL.*;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -18,7 +16,6 @@ import java.util.Vector;
 import javax.media.nativewindow.NativeSurface;
 import javax.media.opengl.GL;
 import javax.media.opengl.GL3;
-import javax.media.opengl.GL3bc;
 import javax.media.opengl.GLContext;
 
 import jogamp.opengl.GLContextImpl;
@@ -30,7 +27,6 @@ import jogamp.opengl.x11.glx.X11GLXContext;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 
 import org.jocl.*;
@@ -54,11 +50,11 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 	
     // The platform, device type and device number that will be used
     private static final int platformIndex = 0;
-    private static final long deviceType = CL_DEVICE_TYPE_ALL;
-    private static final int deviceIndex = 0;
+    //private static final long deviceType = CL_DEVICE_TYPE_ALL;
+    //private static final int deviceIndex = 0;
     
-    private static int m_iMajorVersion;
-	private static int m_iMinorVersion;
+    //private static int m_iMajorVersion;
+	//private static int m_iMinorVersion;
     
 	protected int width, height, depth, time, color;
 
@@ -398,8 +394,6 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
             String minorString = versionNumberString.substring(2, 3);
             int major = Integer.parseInt(majorString);
             int minor = Integer.parseInt(minorString);
-            m_iMajorVersion = major;
-            m_iMinorVersion = minor;
             if (major == 1 && minor < 2)
             {
                // System.err.println(
