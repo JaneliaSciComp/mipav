@@ -46,7 +46,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 	/** derivative buffer in OpenCL for convolving along the z-axis */
 	private cl_mem[] derivativeZ = null;
 
-	/** extends for the gaussian kernels */
+	/** extents for the gaussian kernels */
 	private int[][] kExtents = null;
 
 	/** center positions for the gaussian kernels */
@@ -380,7 +380,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 
 		// Set up the Z convolution kernel and arguments:
 		// During the first blur the convolution result is divided into the original input
-		// the kernel also does the input / blurred step in the algorirhm.
+		// the kernel also does the input / blurred step in the algorithm.
 		kernelName = (color == 1) ? "convolveZDiv" : "convolveZDiv_color";
 		cl_kernel kernelZ_Div = clCreateKernel(program, kernelName, errcode);
 		checkError(errcode[0]);
@@ -413,7 +413,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		// Set up the OpenCL kernels for the second blur and scale:
 		// estimateBuffer *= gaussian_blur( blurBuffer, sigmas )
 		//
-		// Set up the X convolution kernel and arugments:
+		// Set up the X convolution kernel and arguments:
 		kernelName = (color == 1) ? "convolveX" : "convolveX_color";
 		cl_kernel kernelX_2 = clCreateKernel(program, kernelName, errcode);
 		checkError(errcode[0]);
@@ -1275,7 +1275,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		//
 		// Inner blur and divide:
 		//
-		// Set up the X convolution kernel and arugments:
+		// Set up the X convolution kernel and arguments:
 		kernelName = (color == 1) ? "convolveX" : "convolveX_color";
 		cl_kernel kernelX_1B = clCreateKernel(program, kernelName, errcode);
 		checkError(errcode[0]);
@@ -1315,7 +1315,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 
 		// Set up the Z convolution kernel and arguments:
 		// During the first blur the convolution result is divided into the original input
-		// the kernel also does the input / blurred step in the algorirhm.
+		// the kernel also does the input / blurred step in the algorithm.
 		kernelName = (color == 1) ? "convolveZDiv" : "convolveZDiv_color";
 		cl_kernel kernelZ_DivB = clCreateKernel(program, kernelName, errcode);
 		checkError(errcode[0]);
