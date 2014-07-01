@@ -156,8 +156,8 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
     	    	            	wormImageB = fileIO.readImage(fileName, baseFileDir + File.separator, false, null); 
     	    	            }
     	                }
-    	                
-        	    		fileName = baseFileNameText.getText() + includeRange.elementAt(i) + "_lattice_1";
+
+        	    		fileName = baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "lattice_1";
         	    		VOIVector lattice = new VOIVector();
         	    		String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
         	    		loadAllVOIsFrom(voiDir, false, lattice, false);
@@ -204,7 +204,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
     	    	            }
     	                }
     	                
-        	    		fileName = baseFileNameText.getText() + fileCount + "_lattice_1";
+        	    		fileName = baseFileNameText.getText() + "_" + fileCount + File.separator + "lattice_1";
         	    		VOIVector lattice = new VOIVector();
         	    		String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
         	    		loadAllVOIsFrom(voiDir, false, lattice, false);

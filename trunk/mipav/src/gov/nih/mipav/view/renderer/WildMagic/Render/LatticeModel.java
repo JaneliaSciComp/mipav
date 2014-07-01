@@ -1236,18 +1236,18 @@ public class LatticeModel {
 		}
 		resultImage.calcMinMax();
 		new ViewJFrameImage(resultImage);  	
-		saveTransformImage(imageName, resultImage);
+		saveTransformImage(imageName, resultImage, true);
 
 		if ( saveStats )
 		{ 
 			
 			saveLatticeStatistics(image, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");			
-			saveTransformImage(imageName, straightToOrigin);
+			saveTransformImage(imageName, straightToOrigin, false);
 			ModelImage originToStraight = computeOriginToStraight(image, straightToOrigin);
-			saveTransformImage(imageName, originToStraight);
+			saveTransformImage(imageName, originToStraight, false);
 			
 			ModelImage croppedVolume = computeMissingData(originToStraight);
-			saveTransformImage(imageName, croppedVolume);
+			saveTransformImage(imageName, croppedVolume, false);
 
 //			testTransform( resultImage, straightToOrigin, image.getExtents() );
 //			testTransform( image, originToStraight, resultImage.getExtents() );
@@ -2317,14 +2317,14 @@ public class LatticeModel {
 					}
 				}
 			}
-			saveTransformImage(imageName, inside);
+			saveTransformImage(imageName, inside, false);
 
-			straighten(imageA, resultExtents, imageName, model, true, displayResult );
+			straighten(imageA, resultExtents, imageName, model, true, displayResult, true );
 			//		straighten(model, resultExtents, imageName, null, false );
-			straighten(inside, resultExtents, imageName, model, false, displayResult );
+			straighten(inside, resultExtents, imageName, model, false, displayResult, false );
 			if ( imageB != null )
 			{
-				straighten(imageB, resultExtents, imageName, model, false, displayResult );			
+				straighten(imageB, resultExtents, imageName, model, false, displayResult, true );			
 			}
 		}
 		inside.disposeLocal();
@@ -2333,7 +2333,7 @@ public class LatticeModel {
 		model = null;
     }
     
-    private void straighten( ModelImage image, int[] resultExtents, String baseName, ModelImage model, boolean saveStats, boolean displayResult )
+    private void straighten( ModelImage image, int[] resultExtents, String baseName, ModelImage model, boolean saveStats, boolean displayResult, boolean saveAsTif )
     {
     	String imageName = image.getImageName();
     	if ( imageName.contains("_clone") )
@@ -2442,7 +2442,7 @@ public class LatticeModel {
 			new ViewJFrameImage(resultImage);
 		}
 
-		saveTransformImage(baseName, resultImage);
+		saveTransformImage(baseName, resultImage, true);
 		if ( saveStats )
 		{
 			String voiDir = resultImage.getImageDirectory() + JDialogBase.makeImageName( baseName, "") + File.separator +
@@ -2450,9 +2450,9 @@ public class LatticeModel {
 			saveAllVOIsTo( voiDir, resultImage );  
 			
 			saveLatticeStatistics(image, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");
-			saveTransformImage(baseName, straightToOrigin);
+			saveTransformImage(baseName, straightToOrigin, false);
 			ModelImage originToStraight = computeOriginToStraight(image, straightToOrigin);
-			saveTransformImage(baseName, originToStraight);
+			saveTransformImage(baseName, originToStraight, false);
 			originToStraight.disposeLocal();
 			originToStraight = null;
 			//		testTransform( resultImage, straightToOrigin, image.getExtents() );
@@ -2787,7 +2787,7 @@ public class LatticeModel {
 		} catch (IOException e) {}
     }    
     
-    private void saveTransformImage( String imageName, ModelImage image  ) 
+    private void saveTransformImage( String imageName, ModelImage image, boolean saveAsTif  ) 
 	{
 		String voiDir = image.getImageDirectory() + JDialogBase.makeImageName( imageName, "") + File.separator;
         File voiFileDir = new File(voiDir);
@@ -2813,6 +2813,10 @@ public class LatticeModel {
 //        System.err.println( voiDir );
 //        System.err.println( image.getImageName() + ".xml" );
         ModelImage.saveImage( image, image.getImageName() + ".xml", voiDir );
+        if ( saveAsTif )
+        {
+            ModelImage.saveImage( image, image.getImageName() + ".tif", voiDir );        	
+        }
     }
     
     
