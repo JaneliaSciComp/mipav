@@ -24,16 +24,13 @@ __local volatile float* sdata
     if (blockSize >= 512) { if (tid < 256) { sdata[tid] += sdata[tid + 256]; } barrier(CLK_LOCAL_MEM_FENCE); }
     if (blockSize >= 256) { if (tid < 128) { sdata[tid] += sdata[tid + 128]; } barrier(CLK_LOCAL_MEM_FENCE); }
     if (blockSize >= 128) { if (tid <  64) { sdata[tid] += sdata[tid +  64]; } barrier(CLK_LOCAL_MEM_FENCE); }
-    
-    if (tid < 32)
-    {
-        if (blockSize >=  64) { sdata[tid] += sdata[tid + 32]; }
-        if (blockSize >=  32) { sdata[tid] += sdata[tid + 16]; }
-        if (blockSize >=  16) { sdata[tid] += sdata[tid +  8]; }
-        if (blockSize >=   8) { sdata[tid] += sdata[tid +  4]; }
-        if (blockSize >=   4) { sdata[tid] += sdata[tid +  2]; }
-        if (blockSize >=   2) { sdata[tid] += sdata[tid +  1]; }
-    }
+    if (blockSize >= 64) { if (tid <  32) { sdata[tid] += sdata[tid +  32]; } barrier(CLK_LOCAL_MEM_FENCE); }
+    if (blockSize >= 32) { if (tid <  16) { sdata[tid] += sdata[tid +  16]; } barrier(CLK_LOCAL_MEM_FENCE); }
+    if (blockSize >= 16) { if (tid <  8) { sdata[tid] += sdata[tid +  8]; } barrier(CLK_LOCAL_MEM_FENCE); }
+    if (blockSize >= 8) { if (tid <  4) { sdata[tid] += sdata[tid +  4]; } barrier(CLK_LOCAL_MEM_FENCE); }
+    if (blockSize >= 4) { if (tid <  2) { sdata[tid] += sdata[tid +  2]; } barrier(CLK_LOCAL_MEM_FENCE); }
+    if (blockSize >= 2) { if (tid == 0) { sdata[tid] += sdata[tid +  1]; } }
+
     
     // write result for this block to global mem 
     if (tid == 0) output[get_group_id(0)] = sdata[0];
@@ -64,17 +61,13 @@ __local volatile float* sdata
     if (blockSize >= 512) { if (tid < 256) { sdata[tid] = max( sdata[tid], sdata[tid + 256]); } barrier(CLK_LOCAL_MEM_FENCE); }
     if (blockSize >= 256) { if (tid < 128) { sdata[tid] = max( sdata[tid], sdata[tid + 128]); } barrier(CLK_LOCAL_MEM_FENCE); }
     if (blockSize >= 128) { if (tid <  64) { sdata[tid] = max( sdata[tid], sdata[tid +  64]); } barrier(CLK_LOCAL_MEM_FENCE); }
-    
-    if (tid < 32)
-    {
-        if (blockSize >=  64) { sdata[tid] = max( sdata[tid], sdata[tid + 32]); }
-        if (blockSize >=  32) { sdata[tid] = max( sdata[tid], sdata[tid + 16]); }
-        if (blockSize >=  16) { sdata[tid] = max( sdata[tid], sdata[tid +  8]); }
-        if (blockSize >=   8) { sdata[tid] = max( sdata[tid], sdata[tid +  4]); }
-        if (blockSize >=   4) { sdata[tid] = max( sdata[tid], sdata[tid +  2]); }
-        if (blockSize >=   2) { sdata[tid] = max( sdata[tid], sdata[tid +  1]); }
-    }
-    
+    if (blockSize >= 64) { if (tid <  32) { sdata[tid] = max( sdata[tid], sdata[tid +  32]); } barrier(CLK_LOCAL_MEM_FENCE); }
+    if (blockSize >= 32) { if (tid <  16) { sdata[tid] = max( sdata[tid], sdata[tid +  16]); } barrier(CLK_LOCAL_MEM_FENCE); }
+    if (blockSize >= 16) { if (tid <  8) { sdata[tid] = max( sdata[tid], sdata[tid +  8]); } barrier(CLK_LOCAL_MEM_FENCE); }
+    if (blockSize >= 8) { if (tid <  4) { sdata[tid] = max( sdata[tid], sdata[tid +  4]); } barrier(CLK_LOCAL_MEM_FENCE); }
+    if (blockSize >= 4) { if (tid <  2) { sdata[tid] = max( sdata[tid], sdata[tid +  2]); } barrier(CLK_LOCAL_MEM_FENCE); }
+    if (blockSize >= 2) { if (tid == 0) { sdata[tid] = max( sdata[tid], sdata[tid +  1]); } }
+
     // write result for this block to global mem 
     if (tid == 0) output[get_group_id(0)] = sdata[0];
 }
