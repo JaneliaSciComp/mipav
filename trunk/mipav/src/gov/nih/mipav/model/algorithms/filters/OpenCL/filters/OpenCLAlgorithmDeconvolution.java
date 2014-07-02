@@ -1141,7 +1141,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		//
 		// Inner blur and divide:
 		//
-		// Set up the X convolution kernel and arugments:
+		// Set up the X convolution kernel and arguments:
 		String kernelName = (color == 1) ? "convolveX" : "convolveX_color";
 		cl_kernel kernelX_1 = clCreateKernel(program, kernelName, errcode);
 		checkError(errcode[0]);
@@ -1181,7 +1181,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 
 		// Set up the Z convolution kernel and arguments:
 		// During the first blur the convolution result is divided into the original input
-		// the kernel also does the input / blurred step in the algorirhm.
+		// the kernel also does the input / blurred step in the algorithm.
 		kernelName = (color == 1) ? "convolveZDiv" : "convolveZDiv_color";
 		cl_kernel kernelZ_Div = clCreateKernel(program, kernelName, errcode);
 		checkError(errcode[0]);
@@ -1206,7 +1206,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		//
 		// Outer blur and mult:
 		//
-		// Set up the X convolution kernel and arugments:
+		// Set up the X convolution kernel and arguments:
 		kernelName = (color == 1) ? "convolveX" : "convolveX_color";
 		cl_kernel kernelX_2 = clCreateKernel(program, kernelName, errcode);
 		checkError(errcode[0]);
@@ -1338,7 +1338,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		//
 		// Outer blur and mult:
 		//
-		// Set up the X convolution kernel and arugments:
+		// Set up the X convolution kernel and arguments:
 		kernelName = (color == 1) ? "convolveX" : "convolveX_color";
 		cl_kernel kernelX_2B = clCreateKernel(program, kernelName, errcode);
 		checkError(errcode[0]);
