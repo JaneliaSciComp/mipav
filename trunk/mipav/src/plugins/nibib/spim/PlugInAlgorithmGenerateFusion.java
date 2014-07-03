@@ -260,6 +260,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
      * @param maxAlgo can be null if no MIP is supposed to take place
      * @param saveType
      * @param doDeconv
+     * @param deconvolutionMethod
      * @param deconvIterations
      * @param deconvSigmaA
      * @param deconvSigmaB
@@ -285,7 +286,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             final File prefusionTransformDir, final double baseAriWeight, final double transformAriWeight,
             final double baseGeoWeight, final double transformGeoWeight,
             final AlgorithmMaximumIntensityProjection[] maxAlgo, final String saveType, final boolean doDeconv,
-            final int deconvIterations, final float[] deconvSigmaA, final float[] deconvSigmaB,
+            final int deconvolutionMethod, final int deconvIterations, final float[] deconvSigmaA, final float[] deconvSigmaB,
             final boolean useDeconvSigmaConversionFactor, final File deconvDir, final boolean deconvShowResults,
             final int baseRotation, final int transformRotation) {
         this.registerOne = registerOne;
@@ -359,6 +360,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         this.maxAlgo = maxAlgo;
 
         this.doDeconv = doDeconv;
+        this.deconvolutionMethod = deconvolutionMethod;
         this.deconvIterations = deconvIterations;
         this.deconvSigmaA = deconvSigmaA;
         this.deconvSigmaB = deconvSigmaB;
