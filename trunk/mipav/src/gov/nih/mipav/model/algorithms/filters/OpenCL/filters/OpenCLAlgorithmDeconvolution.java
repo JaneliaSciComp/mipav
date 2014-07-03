@@ -73,19 +73,31 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 	
 	/** Maximum number of work items in a work group on OpenCL. */
 	private long maxWorkSize;
+	
+	/** Default case */
+	public static final int JOINT_DECON = 1;
+	
+	/** Average deconvolution is based on the arithmetical mean of the two estimates from A and B separately */
+	public static final int AVERAGE_DECON = 2;
+	
+	/** Multiplication deconvolution is based on the geometrical mean of the two estimates from A and B separately */
+	public static final int MULTIPLICATION_DECON = 3;
+	
+	private int method = JOINT_DECON;
 
 	/**
 	 * New Deconvolution algorithm, applies the deconvolution based on the
 	 * sigma values and iterations to the input image. Overwrites the input image.
 	 * @param srcImg
+	 * @param method
 	 * @param sigmas
 	 * @param maskFlag
 	 * @param iterations
 	 * @param conversion
 	 */
-	public OpenCLAlgorithmDeconvolution(ModelImage srcImg, float[] sigmas, boolean maskFlag, int iterations, boolean conversion)
+	public OpenCLAlgorithmDeconvolution(ModelImage srcImg, int method, float[] sigmas, boolean maskFlag, int iterations, boolean conversion)
 	{
-		this(null, srcImg, sigmas, maskFlag, iterations, conversion);
+		this(null, srcImg, method, sigmas, maskFlag, iterations, conversion);
 	}
 	
 	
@@ -96,15 +108,16 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 	 * sigma values and iterations to the input image. Stores the output in the destImage.
 	 * @param destImg
 	 * @param srcImg
+	 * @param method
 	 * @param sigmas
 	 * @param maskFlag
 	 * @param iterations
 	 * @param conversion
 	 */
-	public OpenCLAlgorithmDeconvolution(ModelImage destImg, ModelImage srcImg, 
+	public OpenCLAlgorithmDeconvolution(ModelImage destImg, ModelImage srcImg, int method,
 			float[] sigmas, boolean maskFlag, int iterations, boolean conversion)
 	{
-		this(destImg, srcImg, sigmas, maskFlag, iterations, conversion, CL.CL_DEVICE_TYPE_GPU);
+		this(destImg, srcImg, method, sigmas, maskFlag, iterations, conversion, CL.CL_DEVICE_TYPE_GPU);
 	}
 	
 	
@@ -114,16 +127,18 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 	 * Enables the user to specify the device type (CL.CL_DEVICE_TYPE_GPU or CL.CL_DEVICE_TYPE_CPU)
 	 * @param destImg
 	 * @param srcImg
+	 * @param method
 	 * @param sigmas
 	 * @param maskFlag
 	 * @param iterations
 	 * @param conversion
 	 * @param deviceType
 	 */
-	public OpenCLAlgorithmDeconvolution(ModelImage destImg, ModelImage srcImg, float[] sigmas, 
+	public OpenCLAlgorithmDeconvolution(ModelImage destImg, ModelImage srcImg, int method, float[] sigmas, 
 			boolean maskFlag, int iterations, boolean conversion, long deviceType) {
 		super(destImg, srcImg, maskFlag, deviceType);
 
+		this.method = method;
 		this.sigmas = sigmas;
 		this.separable = false;
 		this.image25D = false;
@@ -136,34 +151,39 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 	 * sigma values and iterations to the input image. Overwrites the input imageA as output.
 	 * @param srcImgA
 	 * @param srcImgB
+	 * @param method
 	 * @param sigmasA
 	 * @param sigmasB
 	 * @param maskFlag
 	 * @param iterations
 	 * @param conversion
 	 */
-	public OpenCLAlgorithmDeconvolution(ModelImage srcImgA, ModelImage srcImgB, float[] sigmasA, float[] sigmasB,
+	public OpenCLAlgorithmDeconvolution(ModelImage srcImgA, ModelImage srcImgB, int method, float[] sigmasA, float[] sigmasB,
 			boolean maskFlag, int iterations, boolean conversion )
 	{
-		this(null, srcImgA, srcImgB, sigmasA, sigmasB, maskFlag, iterations, conversion);
+		this(null, srcImgA, srcImgB, method, sigmasA, sigmasB, maskFlag, iterations, conversion);
 	}
 
+	
+	
 	/**
 	 * New Dual image Deconvolution algorithm, applies the deconvolution based on the
 	 * sigma values and iterations to the input image. 
 	 * @param destImg
 	 * @param srcImgA
 	 * @param srcImgB
+	 * @param method
 	 * @param sigmasA
 	 * @param sigmasB
 	 * @param maskFlag
 	 * @param iterations
 	 * @param conversion
 	 */
-	public OpenCLAlgorithmDeconvolution(ModelImage destImg, ModelImage srcImgA, ModelImage srcImgB, float[] sigmasA, float[] sigmasB,
+	public OpenCLAlgorithmDeconvolution(ModelImage destImg, ModelImage srcImgA, ModelImage srcImgB, int method, 
+			float[] sigmasA, float[] sigmasB,
 			boolean maskFlag, int iterations, boolean conversion)
 	{
-		this(destImg, srcImgA, srcImgB, sigmasA, sigmasB, maskFlag, iterations, conversion, CL.CL_DEVICE_TYPE_GPU);
+		this(destImg, srcImgA, srcImgB, method, sigmasA, sigmasB, maskFlag, iterations, conversion, CL.CL_DEVICE_TYPE_GPU);
 	}
 	
 	
@@ -174,6 +194,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 	 * @param destImg
 	 * @param srcImgA
 	 * @param srcImgB
+	 * @param method
 	 * @param sigmasA
 	 * @param sigmasB
 	 * @param maskFlag
@@ -182,13 +203,16 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 	 * @param deviceType
 	 */
 	public OpenCLAlgorithmDeconvolution(ModelImage destImg, ModelImage srcImgA, ModelImage srcImgB, 
-			float[] sigmasA, float[] sigmasB, 
+			int method, float[] sigmasA, float[] sigmasB, 
 			boolean maskFlag, int iterations, boolean conversion, long deviceType)
 	{
-		this( destImg, srcImgA, sigmasA, maskFlag, iterations, conversion, deviceType);
+		this( destImg, srcImgA, method, sigmasA, maskFlag, iterations, conversion, deviceType);
 		this.srcImageB = srcImgB;
 		this.sigmasB = sigmasB;
 	}
+	
+	
+
 	/**
 	 * Prepares this class for destruction.
 	 */
@@ -231,7 +255,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 	/**
 	 * Calls Deconvolution for each volume in the time series image.
 	 */
-	private void deconvolution4D( )
+	private void deconvolution4D()
 	{
 		for ( int i = 0; i < time; i++ )
 		{
@@ -243,7 +267,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 	 * Single - Image deconvolution
 	 * @param time
 	 */
-	private void deconvolutionSep3D_2( int time )
+	private void deconvolutionSep3D_2(int time )
 	{
 		// If srcImageB is not null, call the dual-image deconvolution.
 		if ( srcImageB != null )
@@ -562,7 +586,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 	 * Unused, for testing...
 	 * @param time
 	 */
-	private void deconvolutionSep3D_2A( int time )
+	private void deconvolutionSep3D_2A(int time )
 	{
 		if ( srcImageB != null )
 		{
@@ -1021,7 +1045,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 	 * Dual image deconvolution.
 	 * @param time
 	 */
-	private synchronized void deconvolutionSep3D_Dual( int time )
+	private synchronized void deconvolutionSep3D_Dual(int time )
 	{
 //		try {
 			initCL(m_iDeviceType, null);
@@ -1092,6 +1116,15 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 
 		cl_mem estimateBuffer = clCreateBuffer(cl, CL.CL_MEM_READ_WRITE, Sizeof.cl_float * elementCount, null, errcode);
 		checkError(errcode[0]);
+		
+		cl_mem estimateBufferA = null;
+		cl_mem estimateBufferB = null;
+		if ((method == AVERAGE_DECON) || (method == MULTIPLICATION_DECON)) {
+			estimateBufferA = clCreateBuffer(cl, CL.CL_MEM_READ_WRITE, Sizeof.cl_float * elementCount, null, errcode);
+			checkError(errcode[0]);	
+			estimateBufferB = clCreateBuffer(cl, CL.CL_MEM_READ_WRITE, Sizeof.cl_float * elementCount, null, errcode);
+			checkError(errcode[0]);
+		}
 
 		cl_mem blurredBuffer = clCreateBuffer(cl, CL.CL_MEM_READ_WRITE, Sizeof.cl_float * elementCount, null, errcode);
 		checkError(errcode[0]);
@@ -1110,6 +1143,49 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 
 		initReductionKernel( commandQueue, elementCount, estimateBuffer );
 		initScaleKernel( commandQueue, elementCount, estimateBuffer );
+		
+		cl_kernel arithmeticMeanKernel = null;
+		cl_kernel geometricMeanKernel = null;
+		if (method == AVERAGE_DECON) {
+			String arithmeticMeanSource =
+					"__kernel void "+
+							"arithmeticMean(__global float *a,"+
+							"         __global float *b,"+
+							"         __global float *c)"+
+							"{"+
+							"    int gid = get_global_id(0);"+
+							"    c[gid] = 0.5*c[gid]*(a[gid] + b[gid]);"+
+							"}";
+
+			cl_program program = clCreateProgramWithSource(cl, 1, 
+					new String[]{ arithmeticMeanSource }, null, null);
+			clBuildProgram(program, 0, null, "-cl-mad-enable", null, null);
+
+			arithmeticMeanKernel = clCreateKernel(program, "arithmeticMean", null);
+			clSetKernelArg(arithmeticMeanKernel, 0, Sizeof.cl_mem, Pointer.to(estimateBufferA));
+			clSetKernelArg(arithmeticMeanKernel, 1, Sizeof.cl_mem, Pointer.to(estimateBufferB));
+			clSetKernelArg(arithmeticMeanKernel, 2, Sizeof.cl_mem, Pointer.to(estimateBuffer));	
+		} // if (method == AVERAGE_DECON)
+		else if (method == MULTIPLICATION_DECON) {
+			String geometricMeanSource =
+					"__kernel void "+
+							"geometricMean(__global float *a,"+
+							"         __global float *b,"+
+							"         __global float *c)"+
+							"{"+
+							"    int gid = get_global_id(0);"+
+							"    c[gid] = c[gid]*sqrt(a[gid] * b[gid]);"+
+							"}";
+
+			cl_program program = clCreateProgramWithSource(cl, 1, 
+					new String[]{ geometricMeanSource }, null, null);
+			clBuildProgram(program, 0, null, "-cl-mad-enable", null, null);
+
+			geometricMeanKernel = clCreateKernel(program, "geometricMean", null);
+			clSetKernelArg(geometricMeanKernel, 0, Sizeof.cl_mem, Pointer.to(estimateBufferA));
+			clSetKernelArg(geometricMeanKernel, 1, Sizeof.cl_mem, Pointer.to(estimateBufferB));
+			clSetKernelArg(geometricMeanKernel, 2, Sizeof.cl_mem, Pointer.to(estimateBuffer));		
+		} // else if (method == MULTIPLICATION_DECON)
 		
 		//
 		// Create the convolution buffers:    
@@ -1243,27 +1319,52 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		clSetKernelArg(kernelY_2, argY, Sizeof.cl_int, indexP);
 		int sliceArgY_2A = argY;
 		
-		// Set up the Z convolution kernel and results
-		// This is the Z convolution for the second blur, which multiplies the results
-		// back into the estimate image. This kernel does that multiply step.
-		kernelName = (color == 1) ? "convolveZMult" : "convolveZMult_color";
-		cl_kernel kernelZ_Mult = clCreateKernel(program, kernelName, errcode);
-		checkError(errcode[0]);
 		int argZMult = 0;
-		clSetKernelArg(kernelZ_Mult, argZMult++, Sizeof.cl_mem, Pointer.to(blurredBuffer));
-		clSetKernelArg(kernelZ_Mult, argZMult++, Sizeof.cl_mem, Pointer.to(derivativeZ[0]));
-		clSetKernelArg(kernelZ_Mult, argZMult++, Sizeof.cl_mem, Pointer.to(estimateBuffer));
-		clSetKernelArg(kernelZ_Mult, argZMult++, Sizeof.cl_mem, Pointer.to(estimateBuffer));
-		clSetKernelArg(kernelZ_Mult, argZMult++, Sizeof.cl_int4, Pointer.to(new int[]{width, height, depth, 0}));
-		clSetKernelArg(kernelZ_Mult, argZMult++, Sizeof.cl_int, Pointer.to(new int[]{kExtents[0][2]}));
-		clSetKernelArg(kernelZ_Mult, argZMult++, Sizeof.cl_int, Pointer.to(new int[]{kOrigins[0][2]}));
-		if ( color != 1 )
-		{
-			clSetKernelArg(kernelZ_Mult, argZMult++, Sizeof.cl_int4, Pointer.to(colorMask));
-		}
-		clSetKernelArg(kernelZ_Mult, argZMult++, Sizeof.cl_int, Pointer.to(new int[]{clip}));
-		clSetKernelArg(kernelZ_Mult, argZMult, Sizeof.cl_int, indexP);
-		int sliceArgZMultA = argZMult;
+		int argZ = 0;
+		int sliceArgZMultA = 0;
+		int sliceArgZA = 0;
+		cl_kernel kernelZ_Mult = null;
+		cl_kernel kernelZ = null;;
+		if (method == JOINT_DECON) {
+			// Set up the Z convolution kernel and results
+			// This is the Z convolution for the second blur, which multiplies the results
+			// back into the estimate image. This kernel does that multiply step.
+			kernelName = (color == 1) ? "convolveZMult" : "convolveZMult_color";
+			kernelZ_Mult = clCreateKernel(program, kernelName, errcode);
+			checkError(errcode[0]);
+			clSetKernelArg(kernelZ_Mult, argZMult++, Sizeof.cl_mem, Pointer.to(blurredBuffer));
+			clSetKernelArg(kernelZ_Mult, argZMult++, Sizeof.cl_mem, Pointer.to(derivativeZ[0]));
+			clSetKernelArg(kernelZ_Mult, argZMult++, Sizeof.cl_mem, Pointer.to(estimateBuffer));
+			clSetKernelArg(kernelZ_Mult, argZMult++, Sizeof.cl_mem, Pointer.to(estimateBuffer));
+			clSetKernelArg(kernelZ_Mult, argZMult++, Sizeof.cl_int4, Pointer.to(new int[]{width, height, depth, 0}));
+			clSetKernelArg(kernelZ_Mult, argZMult++, Sizeof.cl_int, Pointer.to(new int[]{kExtents[0][2]}));
+			clSetKernelArg(kernelZ_Mult, argZMult++, Sizeof.cl_int, Pointer.to(new int[]{kOrigins[0][2]}));
+			if ( color != 1 )
+			{
+				clSetKernelArg(kernelZ_Mult, argZMult++, Sizeof.cl_int4, Pointer.to(colorMask));
+			}
+			clSetKernelArg(kernelZ_Mult, argZMult++, Sizeof.cl_int, Pointer.to(new int[]{clip}));
+			clSetKernelArg(kernelZ_Mult, argZMult, Sizeof.cl_int, indexP);
+			sliceArgZMultA = argZMult;
+		} // if (method == JOINT_DECON)
+		else { // method == AVERAGE_DECON OR MULTIPLICATION_DECON
+		    kernelName = (color == 1) ? "convolveZ" : "convolveZ_color";
+		    kernelZ = clCreateKernel(program, kernelName, errcode);
+		    checkError(errcode[0]);
+		    clSetKernelArg(kernelZ, argZ++, Sizeof.cl_mem, Pointer.to(blurredBuffer));
+			clSetKernelArg(kernelZ, argZ++, Sizeof.cl_mem, Pointer.to(derivativeZ[0]));
+			clSetKernelArg(kernelZ, argZ++, Sizeof.cl_mem, Pointer.to(estimateBufferA));
+			clSetKernelArg(kernelZ, argZ++, Sizeof.cl_int4, Pointer.to(new int[]{width, height, depth, 0}));
+			clSetKernelArg(kernelZ, argZ++, Sizeof.cl_int, Pointer.to(new int[]{kExtents[0][2]}));
+			clSetKernelArg(kernelZ, argZ++, Sizeof.cl_int, Pointer.to(new int[]{kOrigins[0][2]}));
+			if ( color != 1 )
+			{
+				clSetKernelArg(kernelZ, argZ++, Sizeof.cl_int4, Pointer.to(colorMask));
+			}
+			clSetKernelArg(kernelZ, argZ++, Sizeof.cl_int, Pointer.to(new int[]{clip}));
+			clSetKernelArg(kernelZ, argZ, Sizeof.cl_int, indexP);
+			sliceArgZA = argZ;
+		} // // else method == AVERAGE_DECON OR MULTIPLICATION_DECON
 		
 		
 		
@@ -1375,27 +1476,52 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		clSetKernelArg(kernelY_2B, argY, Sizeof.cl_int, indexP);
 		int sliceArgY_2B = argY;
 		
-		// Set up the Z convolution kernel and results
-		// This is the Z convolution for the second blur, which multiplies the results
-		// back into the estimate image. This kernel does that multiply step.
-		kernelName = (color == 1) ? "convolveZMult" : "convolveZMult_color";
-		cl_kernel kernelZ_MultB = clCreateKernel(program, kernelName, errcode);
-		checkError(errcode[0]);
-		argZMult = 0;
-		clSetKernelArg(kernelZ_MultB, argZMult++, Sizeof.cl_mem, Pointer.to(blurredBuffer));
-		clSetKernelArg(kernelZ_MultB, argZMult++, Sizeof.cl_mem, Pointer.to(derivativeZ[1]));
-		clSetKernelArg(kernelZ_MultB, argZMult++, Sizeof.cl_mem, Pointer.to(estimateBuffer));
-		clSetKernelArg(kernelZ_MultB, argZMult++, Sizeof.cl_mem, Pointer.to(estimateBuffer));
-		clSetKernelArg(kernelZ_MultB, argZMult++, Sizeof.cl_int4, Pointer.to(new int[]{width, height, depth, 0}));
-		clSetKernelArg(kernelZ_MultB, argZMult++, Sizeof.cl_int, Pointer.to(new int[]{kExtents[1][2]}));
-		clSetKernelArg(kernelZ_MultB, argZMult++, Sizeof.cl_int, Pointer.to(new int[]{kOrigins[1][2]}));
-		if ( color != 1 )
-		{
-			clSetKernelArg(kernelZ_MultB, argZMult++, Sizeof.cl_int4, Pointer.to(colorMask));
-		}
-		clSetKernelArg(kernelZ_MultB, argZMult++, Sizeof.cl_int, Pointer.to(new int[]{clip}));
-		clSetKernelArg(kernelZ_MultB, argZMult, Sizeof.cl_int, indexP);
-		int sliceArgZMultB = argZMult;
+		int sliceArgZMultB = 0;
+		int sliceArgZB = 0;
+		cl_kernel kernelZ_MultB = null;
+		cl_kernel kernelZB = null;
+		if (method == JOINT_DECON) {
+			// Set up the Z convolution kernel and results
+			// This is the Z convolution for the second blur, which multiplies the results
+			// back into the estimate image. This kernel does that multiply step.
+			kernelName = (color == 1) ? "convolveZMult" : "convolveZMult_color";
+			kernelZ_MultB = clCreateKernel(program, kernelName, errcode);
+			checkError(errcode[0]);
+			argZMult = 0;
+			clSetKernelArg(kernelZ_MultB, argZMult++, Sizeof.cl_mem, Pointer.to(blurredBuffer));
+			clSetKernelArg(kernelZ_MultB, argZMult++, Sizeof.cl_mem, Pointer.to(derivativeZ[1]));
+			clSetKernelArg(kernelZ_MultB, argZMult++, Sizeof.cl_mem, Pointer.to(estimateBuffer));
+			clSetKernelArg(kernelZ_MultB, argZMult++, Sizeof.cl_mem, Pointer.to(estimateBuffer));
+			clSetKernelArg(kernelZ_MultB, argZMult++, Sizeof.cl_int4, Pointer.to(new int[]{width, height, depth, 0}));
+			clSetKernelArg(kernelZ_MultB, argZMult++, Sizeof.cl_int, Pointer.to(new int[]{kExtents[1][2]}));
+			clSetKernelArg(kernelZ_MultB, argZMult++, Sizeof.cl_int, Pointer.to(new int[]{kOrigins[1][2]}));
+			if ( color != 1 )
+			{
+				clSetKernelArg(kernelZ_MultB, argZMult++, Sizeof.cl_int4, Pointer.to(colorMask));
+			}
+			clSetKernelArg(kernelZ_MultB, argZMult++, Sizeof.cl_int, Pointer.to(new int[]{clip}));
+			clSetKernelArg(kernelZ_MultB, argZMult, Sizeof.cl_int, indexP);
+			sliceArgZMultB = argZMult;
+		} // if (method == JOINT_DECON)
+		else { // method == AVERAGE_DECON OR MULTIPLICATION_DECON
+		    kernelName = (color == 1) ? "convolveZ" : "convolveZ_color";
+		    kernelZB = clCreateKernel(program, kernelName, errcode);
+		    checkError(errcode[0]);
+		    argZ = 0;
+		    clSetKernelArg(kernelZB, argZ++, Sizeof.cl_mem, Pointer.to(blurredBuffer));
+			clSetKernelArg(kernelZB, argZ++, Sizeof.cl_mem, Pointer.to(derivativeZ[0]));
+			clSetKernelArg(kernelZB, argZ++, Sizeof.cl_mem, Pointer.to(estimateBufferB));
+			clSetKernelArg(kernelZB, argZ++, Sizeof.cl_int4, Pointer.to(new int[]{width, height, depth, 0}));
+			clSetKernelArg(kernelZB, argZ++, Sizeof.cl_int, Pointer.to(new int[]{kExtents[0][2]}));
+			clSetKernelArg(kernelZB, argZ++, Sizeof.cl_int, Pointer.to(new int[]{kOrigins[0][2]}));
+			if ( color != 1 )
+			{
+				clSetKernelArg(kernelZB, argZ++, Sizeof.cl_int4, Pointer.to(colorMask));
+			}
+			clSetKernelArg(kernelZB, argZ++, Sizeof.cl_int, Pointer.to(new int[]{clip}));
+			clSetKernelArg(kernelZB, argZ, Sizeof.cl_int, indexP);
+			sliceArgZB = argZ;
+		} // // else method == AVERAGE_DECON OR MULTIPLICATION_DECON
 		
 				
 		// Iterate over the algorithm:
@@ -1445,14 +1571,24 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 				checkError( clEnqueueNDRangeKernel(commandQueue, kernelY_2, 2, null, globalWorkSize, null, 0, null, null) );
 			}
 			
-			//convolve Z and multiply back into the estimate:
-			for ( int i = 0; i < depth; i++ )
-			{
-				index[0] = i;
-				checkError( clSetKernelArg(kernelZ_Mult, sliceArgZMultA, Sizeof.cl_int, indexP) );
-				checkError( clEnqueueNDRangeKernel(commandQueue, kernelZ_Mult, 2, null, globalWorkSize, null, 0, null, null) );
-			}
-			
+			if (method == JOINT_DECON) {
+				//convolve Z and multiply back into the estimate:
+				for ( int i = 0; i < depth; i++ )
+				{
+					index[0] = i;
+					checkError( clSetKernelArg(kernelZ_Mult, sliceArgZMultA, Sizeof.cl_int, indexP) );
+					checkError( clEnqueueNDRangeKernel(commandQueue, kernelZ_Mult, 2, null, globalWorkSize, null, 0, null, null) );
+				}
+			} // if (method == JOINT_DECON)
+			else { // method == AVERAGE_DECON OR MULTIPLICATION_DECON
+				//convolve Z
+				for ( int i = 0; i < depth; i++ )
+				{
+					index[0] = i;
+					checkError( clSetKernelArg(kernelZ, sliceArgZA, Sizeof.cl_int, indexP) );
+					checkError( clEnqueueNDRangeKernel(commandQueue, kernelZ, 2, null, globalWorkSize, null, 0, null, null) );
+				}	
+			} // else method == AVERAGE_DECON OR MULTIPLICATION_DECON
 			
 			
 
@@ -1500,13 +1636,33 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 				checkError( clEnqueueNDRangeKernel(commandQueue, kernelY_2B, 2, null, globalWorkSize, null, 0, null, null) );
 			}
 
-			//convolve Z and multiply back into the estimate:
-			for ( int i = 0; i < depth; i++ )
-			{
-				index[0] = i;
-				checkError( clSetKernelArg(kernelZ_MultB, sliceArgZMultB, Sizeof.cl_int, indexP) );
-				checkError( clEnqueueNDRangeKernel(commandQueue, kernelZ_MultB, 2, null, globalWorkSize, null, 0, null, null) );
-			}
+			if (method == JOINT_DECON) {
+				//convolve Z and multiply back into the estimate:
+				for ( int i = 0; i < depth; i++ )
+				{
+					index[0] = i;
+					checkError( clSetKernelArg(kernelZ_MultB, sliceArgZMultB, Sizeof.cl_int, indexP) );
+					checkError( clEnqueueNDRangeKernel(commandQueue, kernelZ_MultB, 2, null, globalWorkSize, null, 0, null, null) );
+				}
+			} // if (method == JOINT_DECON)
+			else { // method == AVERAGE_DECON OR MULTIPLICATION_DECON
+				//convolve Z
+				for ( int i = 0; i < depth; i++ )
+				{
+					index[0] = i;
+					checkError( clSetKernelArg(kernelZB, sliceArgZB, Sizeof.cl_int, indexP) );
+					checkError( clEnqueueNDRangeKernel(commandQueue, kernelZB, 2, null, globalWorkSize, null, 0, null, null) );
+				}	
+			} // else method == AVERAGE_DECON OR MULTIPLICATION_DECON
+			
+			if (method == AVERAGE_DECON) {
+				long global_work_size[] = new long[]{elementCount};
+				clEnqueueNDRangeKernel(commandQueue, arithmeticMeanKernel, 1, null, global_work_size, null, 0, null, null);	
+			} // if (method == AVERAGE_DECON)
+			else if (method == MULTIPLICATION_DECON) {
+				long global_work_size[] = new long[]{elementCount};
+				clEnqueueNDRangeKernel(commandQueue, geometricMeanKernel, 1, null, global_work_size, null, 0, null, null);		
+			} // else if (method == MULTIPLICATION_DECON)
 
 			// 
 			//  Compute:
@@ -1531,6 +1687,10 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		clReleaseMemObject(estimateBuffer);
 		clReleaseMemObject(blurredBuffer);
 		clReleaseMemObject(tempBuffer);
+		if ((method == AVERAGE_DECON) || (method == MULTIPLICATION_DECON)) {
+			clReleaseMemObject(estimateBufferA);
+			clReleaseMemObject(estimateBufferB);
+		}
 		// release the derivative buffers:
 		clReleaseMemObject(derivativeX[0]);
 		clReleaseMemObject(derivativeY[0]);
@@ -1552,15 +1712,31 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		clReleaseKernel(kernelZ_Div);
 		clReleaseKernel(kernelX_2);
 		clReleaseKernel(kernelY_2);
-		clReleaseKernel(kernelZ_Mult);
+		if (method == JOINT_DECON) {
+		    clReleaseKernel(kernelZ_Mult);
+		}
+		else {
+			clReleaseKernel(kernelZ);
+		}
 		clReleaseKernel(kernelX_1B);
 		clReleaseKernel(kernelY_1B);
 		clReleaseKernel(kernelZ_DivB);
 		clReleaseKernel(kernelX_2B);
 		clReleaseKernel(kernelY_2B);
-		clReleaseKernel(kernelZ_MultB);
+		if (method == JOINT_DECON) {
+		    clReleaseKernel(kernelZ_MultB);
+		}
+		else {
+			clReleaseKernel(kernelZB);
+		}
 		clReleaseKernel(reductionKernel);
 		clReleaseKernel(scaleKernel);
+		if (method == AVERAGE_DECON) {
+			clReleaseKernel(arithmeticMeanKernel);
+		}
+		else if (method == MULTIPLICATION_DECON) {
+			clReleaseKernel(geometricMeanKernel);
+		}
 		clReleaseProgram(program);
 		clReleaseCommandQueue(commandQueue);
 		
@@ -1754,6 +1930,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 
 		clEnqueueNDRangeKernel(commandQueue, multKernel, 1, null, global_work_size, null, 0, null, null);
 	}
+
 
 	/**
 	 * Inializes the reduction kernel to calculate the maximum of the estimateBuffer
