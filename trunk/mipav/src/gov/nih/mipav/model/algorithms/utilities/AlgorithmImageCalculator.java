@@ -3032,7 +3032,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 		rpnString = convertToRPN(tokens);
 		return rpnString;
 
-            }
+    }
 
     /**
      * method that does some initial validation of the expression
@@ -3611,7 +3611,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 						operatorStack.push(token);
 					}else {
 						String peek2 = "";
-        do {
+						do {
 							String pop = operatorStack.pop();
 							rpnString = rpnString + "|" + pop;
 							if(!operatorStack.isEmpty()) {
@@ -3619,11 +3619,12 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 							}
 						}while(!operatorStack.isEmpty() && !peek2.equals("(") || (precedence(token) < precedence(peek2)));
 						operatorStack.push(token);
-            }
+					}
 				}else if(isFunction(token)) {
 					operatorStack.push(token);
 				}else if(token.equals(",")) {
-					if(!operatorStack.isEmpty() && isOperator(operatorStack.peek())) {
+					while(!operatorStack.isEmpty() && operatorStack.peek() != "("
+							&& isOperator(operatorStack.peek())) {
 						String pop = operatorStack.pop();
 						rpnString = rpnString + "|" + pop;
 					}
