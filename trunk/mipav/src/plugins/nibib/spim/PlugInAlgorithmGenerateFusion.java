@@ -203,6 +203,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
     private int baseRotation = -1;
     
     private int transformRotation = AlgorithmRotate.Y_AXIS_MINUS;
+    
+    private int deconvolutionMethod = OpenCLAlgorithmDeconvolution.JOINT_DECON;
 
     /**
      * Constructor.
@@ -1593,7 +1595,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             }
 
             final OpenCLAlgorithmDeconvolution deconvAlgo = new OpenCLAlgorithmDeconvolution(resultImage, imageA,
-                    imageB, deconvSigmaA, deconvSigmaB, true, deconvIterations, useDeconvSigmaConversionFactor);
+                    imageB, deconvolutionMethod, deconvSigmaA, deconvSigmaB, true, deconvIterations, useDeconvSigmaConversionFactor);
             deconvAlgo.setRed(true);
             deconvAlgo.setGreen(true);
             deconvAlgo.setBlue(true);
