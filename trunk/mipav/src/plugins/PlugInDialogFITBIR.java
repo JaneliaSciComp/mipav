@@ -1170,7 +1170,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
                         for (final DataElementValue deVal : repeat.getDataElements()) {
                             value = deVal.getValue();
-                            if (deVal.getName().equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
+                            if (isMainImagingFileElement(deVal)) {
                                 value = value.replace("\\", File.separator);
                                 value = value.replace("/", File.separator);
                                 f = new File(value);
@@ -1468,7 +1468,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     final String deName = deVal.getName();
                     String value = "";
                     if (imageFile != null) {
-                        if (deName.equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
+                        if (isMainImagingFileElement(deVal)) {
                             // value = outputFileNameBase + ".zip";
                             value = imageFile;
                         } else if (deName.equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
@@ -2204,7 +2204,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         } else if (mipavModality.equalsIgnoreCase("Laser Surface Scan")) {
             return "";
         } else if (mipavModality.equalsIgnoreCase("Magnetic Resonance Angiography")) {
-            return "";
+            return "MR Angiography";
         } else if (mipavModality.equalsIgnoreCase("Mammography")) {
             return "";
         } else if (mipavModality.equalsIgnoreCase("Magnetic Resonance")) {
@@ -2513,6 +2513,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
 
                 list.setSelectedIndices(intArray);
+                if (intArray.length > 0) {
+                    list.ensureIndexIsVisible(intArray[0]);
+                }
             } else {
                 System.err.println("Unrecognized component type (" + comp.getName() + "):\t" + comp.getClass().getName());
             }
@@ -2760,6 +2763,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
 
         return false;
+    }
+
+    private static final boolean isMainImagingFileElement(final DataElementValue deVal) {
+        return isMainImagingFileElement(deVal.getGroupName(), deVal.getName());
     }
 
     private static final boolean isMainImagingFileElement(final String groupName, final String deName) {
@@ -3486,6 +3493,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                         }
 
                                         list.setSelectedIndices(intArray);
+                                        if (intArray.length > 0) {
+                                            list.ensureIndexIsVisible(intArray[0]);
+                                        }
                                     }
 
                                     // found the DE, move to next column in CSV values
@@ -3587,6 +3597,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                         }
 
                                         list.setSelectedIndices(intArray);
+                                        if (intArray.length > 0) {
+                                            list.ensureIndexIsVisible(intArray[0]);
+                                        }
                                     }
 
                                     // found the DE, move to next column in CSV values
@@ -4278,6 +4291,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             String contrastRate = null;
             String contrastUsedInd = null;
 
+            String ctKVP = null;
+            String ctMA = null;
+
             if (fileFormatString.equalsIgnoreCase("dicom")) {
                 final FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
 
@@ -4335,6 +4351,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     if (scanOptions != null && scanOptions.contains("FC")) {
                         flowCompensation = "Yes";
                     }
+                } else if (modalityString.equalsIgnoreCase("computed tomography")) {
+                    ctKVP = (String) (fileInfoDicom.getTagTable().getValue("0018,0060"));
+                    ctMA = (String) (fileInfoDicom.getTagTable().getValue("0018,1151"));
                 }
             } else if (fileFormatString.equalsIgnoreCase("nifti")) {
                 // Description = Philips Medical Systems Achieva 3.2.1 (from .nii T1 of Dr. Vaillancourt's)
@@ -4672,6 +4691,20 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     headerList.add(flowCompensation);
                                 }
                             }
+                        } else if (modalityString.equalsIgnoreCase("computed tomography")) {
+                            if (csvFieldNames.get(i).equalsIgnoreCase("ImgCTkVp")) {
+                                if ( !repeatValues.get(i).trim().equals(ctKVP)) {
+                                    csvFList.add(csvFieldNames.get(i));
+                                    csvPList.add(repeatValues.get(i));
+                                    headerList.add(ctKVP);
+                                }
+                            } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgCTmA")) {
+                                if ( !repeatValues.get(i).trim().equals(ctMA)) {
+                                    csvFList.add(csvFieldNames.get(i));
+                                    csvPList.add(repeatValues.get(i));
+                                    headerList.add(ctMA);
+                                }
+                            }
                         }
                     } else if (fileFormatString.equalsIgnoreCase("nifti")) {
                         if (csvFieldNames.get(i).equalsIgnoreCase("ImgScannerManufName")) {
@@ -4813,6 +4846,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             String contrastRate = null;
             String contrastUsedInd = null;
 
+            String ctKVP = null;
+            String ctMA = null;
+
             if (fileFormatString.equalsIgnoreCase("dicom")) {
                 final FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
 
@@ -4870,6 +4906,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     if (scanOptions != null && scanOptions.contains("FC")) {
                         flowCompensation = "Yes";
                     }
+                } else if (modalityString.equalsIgnoreCase("computed tomography")) {
+                    ctKVP = (String) (fileInfoDicom.getTagTable().getValue("0018,0060"));
+                    ctMA = (String) (fileInfoDicom.getTagTable().getValue("0018,1151"));
                 }
             } else if (fileFormatString.equalsIgnoreCase("nifti")) {
                 // Description = Philips Medical Systems Achieva 3.2.1 (from .nii T1 of Dr. Vaillancourt's)
@@ -5024,6 +5063,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 } else if (deName.equalsIgnoreCase("ImgFlowCompnsatnInd")) {
                                     setElementComponentValue(deVal, flowCompensation);
                                 }
+                            } else if (modalityString.equalsIgnoreCase("computed tomography")) {
+                                if (deName.equalsIgnoreCase("ImgCTkVp")) {
+                                    setElementComponentValue(deVal, ctKVP);
+                                } else if (deName.equalsIgnoreCase("ImgCTmA")) {
+                                    setElementComponentValue(deVal, ctMA);
+                                }
                             }
                         } else if (fileFormatString.equalsIgnoreCase("nifti")) {
                             if (deName.equalsIgnoreCase("ImgScannerManufName")) {
@@ -5048,7 +5093,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
                 for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
                     for (final DataElementValue deVal : repeat.getDataElements()) {
-                        if ( !deVal.getName().equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
+                        if ( !isMainImagingFileElement(deVal)) {
                             if (deVal.getComp() instanceof JTextField) {
                                 ((JTextField) deVal.getComp()).setText(null);
                             } else if (deVal.getComp() instanceof JComboBox) {
