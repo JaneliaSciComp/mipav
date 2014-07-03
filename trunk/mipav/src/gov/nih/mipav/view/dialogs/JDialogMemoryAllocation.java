@@ -6,7 +6,10 @@ import gov.nih.mipav.view.GetPath.Purpose;
 import gov.nih.mipav.view.Preferences.OperatingSystem;
 import gov.nih.mipav.view.Preferences.SystemArchitecture;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.io.*;
 import java.util.Vector;
@@ -16,8 +19,8 @@ import javax.swing.*;
 
 /**
  * Dialog to alter memory allocation of the runtime environment. The runtime memory allocation for the InstallAnywhere
- * executable can be found in the LAX file: &quot;<tt>mipav.lax</tt>&quot; or &quot;<tt>iaso.lax</tt>&quot;
- * within most environments or the file &quot;<tt>Info.plist</tt>&quot; in a Darwin/Mac OS 10 environment.
+ * executable can be found in the LAX file: &quot;<tt>mipav.lax</tt>&quot; or &quot;<tt>iaso.lax</tt>&quot; within most
+ * environments or the file &quot;<tt>Info.plist</tt>&quot; in a Darwin/Mac OS 10 environment.
  * 
  * <p>
  * Reads the InstallAnywhere start up file then parses it, line-by-line, to come up with the memory options for the
@@ -149,8 +152,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 errMsg = "\n" + fnfe.getMessage();
             }
 
-            MipavUtil.displayError(filename + " not found!\n" + "Can't find the java run-time startup information."
-                    + errMsg);
+            MipavUtil.displayError(filename + " not found!\n" + "Can't find the java run-time startup information." + errMsg);
 
             return;
         } catch (final IOException ioe) {
@@ -218,8 +220,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 errMsg = "\n" + fnfe.getMessage();
             }
 
-            MipavUtil.displayError(filename + " not found!\n" + "Can't find the java run-time startup information."
-                    + errMsg);
+            MipavUtil.displayError(filename + " not found!\n" + "Can't find the java run-time startup information." + errMsg);
 
             return;
         } catch (final IOException ioe) {
@@ -278,13 +279,20 @@ public class JDialogMemoryAllocation extends JDialogBase {
         String startPath = GetPath.getPath(fName, Purpose.FOR_READING);
 
         if (startPath == null) {
+            fName = System.getProperty("mipav.file.lax");
+            if (fName != null) {
+                Preferences.debug("JDialogMemoryAllocation: Looking for command line lax file: " + fName + "\n");
+                startPath = GetPath.getPath(fName, Purpose.FOR_READING);
+            }
+        }
+
+        if (startPath == null) {
             fName = new String(app + ".app" + File.separator + "Contents" + File.separator + "Info.plist"); // Macintosh!
-            Preferences.debug("JDialogMemoryAllocation: Looking for " + "Info.plist as the startfile: " + startPath
-                    + "\n");
+            Preferences.debug("JDialogMemoryAllocation: Looking for Info.plist as the startfile: " + fName + "\n");
             startPath = GetPath.getPath(fName, Purpose.FOR_READING);
 
             if (startPath == null) {
-                throw new FileNotFoundException("Starting options file cannot " + "be found.  Check path and filename.");
+                throw new FileNotFoundException("Starting options file cannot be found.  Check path and filename.");
             }
         }
 
@@ -365,6 +373,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
      * 
      * @param ae The button's fired action event.
      */
+    @Override
     public void actionPerformed(final ActionEvent ae) {
         final Object source = ae.getSource(); // whatever the user clicked on
 
@@ -424,13 +433,12 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 final OperatingSystem os = OperatingSystem.getOS();
                 final SystemArchitecture arch = SystemArchitecture.getArch();
 
-                String execName = "./" + progName;
-                
+                final String execName = "./" + progName;
+
                 // cannot automatically restart on Mac or Win
                 if (os.equals(OperatingSystem.OS_UNIX)) {
-                    final int response = JOptionPane.showConfirmDialog(this, "Restart " + progName.toUpperCase()
-                            + " to apply memory changes?", "Restart needed", JOptionPane.YES_NO_OPTION,
-                            JOptionPane.INFORMATION_MESSAGE);
+                    final int response = JOptionPane.showConfirmDialog(this, "Restart " + progName.toUpperCase() + " to apply memory changes?",
+                            "Restart needed", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
 
                     if (response == JOptionPane.YES_OPTION) {
 
@@ -438,8 +446,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
                             Runtime.getRuntime().exec(execName);
                             System.exit(0);
                         } catch (final IOException ioe) {
-                            MipavUtil.displayError("Error restarting the application (" + execName
-                                    + ").  Please exit and start " + progName.toUpperCase()
+                            MipavUtil.displayError("Error restarting the application (" + execName + ").  Please exit and start " + progName.toUpperCase()
                                     + " again manually to apply the new settings.");
                             dispose();
 
@@ -447,8 +454,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
                         }
                     }
                 } else {
-                    JOptionPane.showMessageDialog(this, "Settings are being changed.\n"
-                            + "The changes will take effect the next time " + progName.toUpperCase() + " is run.",
+                    JOptionPane.showMessageDialog(this,
+                            "Settings are being changed.\n" + "The changes will take effect the next time " + progName.toUpperCase() + " is run.",
                             "Changing settings", JOptionPane.INFORMATION_MESSAGE);
                 }
 
@@ -456,8 +463,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
                 return;
             } else { // max should be the largest possible value, and in this case was smaller
-                JOptionPane.showMessageDialog(this,
-                        "The initial heap size may be no larger than the maximum heap size!",
+                JOptionPane.showMessageDialog(this, "The initial heap size may be no larger than the maximum heap size!",
                         "Initial heap size is larger than the maximum", JOptionPane.ERROR_MESSAGE);
                 initHeapText.requestFocus();
                 initHeapText.selectAll();
@@ -473,7 +479,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
             maxHeapText.setText(Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE));
             OKButton.doClick();
         } else if (ae.getActionCommand().equals("Help")) {
-            //MipavUtil.showHelp("10091");
+            // MipavUtil.showHelp("10091");
             MipavUtil.showWebHelp("Allocating_Memory_in_MIPAV");
         } else {
             super.actionPerformed(ae);
@@ -489,7 +495,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
      * 
      * @return A JPanel which holds the buttons for user input.
      */
-    public JPanel buildButtons(boolean includePrefs) {
+    public JPanel buildButtons(final boolean includePrefs) {
         JPanel buttonPanel;
 
         if ( !includePrefs) {
@@ -504,8 +510,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
             // usePreferencesButton.setPreferredSize(MipavUtil.defaultButtonSize);
             usePreferencesButton.setFont(serif12B);
 
-            if ( (Preferences.getProperty(Preferences.PREF_STARTING_HEAP_SIZE) == null)
-                    || (Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE) == null)) {
+            if ( (Preferences.getProperty(Preferences.PREF_STARTING_HEAP_SIZE) == null) || (Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE) == null)) {
                 usePreferencesButton.setEnabled(false);
             }
 
@@ -620,16 +625,13 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 if (line.endsWith("M") || line.endsWith("m")) {
                     memorySpec = line.substring(JDialogMemoryAllocation.initHeapLAX.length(), line.length() - 1);
                 } else {
-                    memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(line
-                        .substring(JDialogMemoryAllocation.initHeapLAX.length()));
+                    memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(line.substring(JDialogMemoryAllocation.initHeapLAX.length()));
                 }
                 // initOffset = lineNumber; // hang on to this offset
                 // initHeapText.setText(convertBytesToMBytes(line.substring(initHeapLAX.length())));
             } catch (final NumberFormatException nfe) {
-                MipavUtil.displayError("Cannot convert initial memory value.\n"
-                        + "Substituting for a known acceptable value.");
-                Preferences.debug("JDialogMemoryAllocation: Cannot convert " + " initial memory value.  "
-                        + "Substituting for a known acceptable value.\n", 3);
+                MipavUtil.displayError("Cannot convert initial memory value.\n" + "Substituting for a known acceptable value.");
+                Preferences.debug("JDialogMemoryAllocation: Cannot convert " + " initial memory value.  " + "Substituting for a known acceptable value.\n", 3);
 
                 // initHeapText.setText("10"); // the known acceptable value (1 megabyte)
                 memorySpec = "10";
@@ -646,16 +648,13 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 if (line.endsWith("M") || line.endsWith("m")) {
                     memorySpec = line.substring(JDialogMemoryAllocation.maxHeapLAX.length(), line.length() - 1);
                 } else {
-                    memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(line
-                            .substring(JDialogMemoryAllocation.maxHeapLAX.length()));
+                    memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(line.substring(JDialogMemoryAllocation.maxHeapLAX.length()));
                 }
                 // maxOffset = lineNumber;
                 // maxHeapText.setText(convertBytesToMBytes(line.substring(maxHeapLAX.length())));
             } catch (final NumberFormatException nfe) {
-                MipavUtil.displayError("JDialogMemoryAllocation: Cannot " + " convert maximum memory value.\n"
-                        + "Substituting for a known acceptable value.");
-                Preferences.debug("JDialogMemoryAllocation: Cannot convert " + " maximum memory value.  "
-                        + "Substituting for a known acceptable value.\n", 3);
+                MipavUtil.displayError("JDialogMemoryAllocation: Cannot " + " convert maximum memory value.\n" + "Substituting for a known acceptable value.");
+                Preferences.debug("JDialogMemoryAllocation: Cannot convert " + " maximum memory value.  " + "Substituting for a known acceptable value.\n", 3);
 
                 // maxHeapText.setText("10"); // the known acceptable value (1 megabyte)
                 memorySpec = "10";
@@ -699,8 +698,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
             // "<string>-Xms999m</string>" is a good example of what we see here
 
             // look for ^ms[0-9]*[km$].
-            final String javaOption = line.substring(line.indexOf(JDialogMemoryAllocation.initHeapOption),
-                    line.lastIndexOf("<")).toLowerCase();
+            final String javaOption = line.substring(line.indexOf(JDialogMemoryAllocation.initHeapOption), line.lastIndexOf("<")).toLowerCase();
             // check on ending suffix: "", "k", "m" (bytes, kilobytes, megabytes)
 
             final char sizeDescriptor = javaOption.charAt(javaOption.length() - 1); // descriptor can be "","k","m"
@@ -709,11 +707,10 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
                 switch (sizeDescriptor) {
 
-                    // first 2 chars are heap option ('ms' or 'mx') and
-                    // so memorySpec skips those two chars
+                // first 2 chars are heap option ('ms' or 'mx') and
+                // so memorySpec skips those two chars
                     case 'k':
-                        memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(javaOption.substring(2, javaOption
-                                .length() - 1));
+                        memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(javaOption.substring(2, javaOption.length() - 1));
                         ;
                         break;
 
@@ -727,15 +724,12 @@ public class JDialogMemoryAllocation extends JDialogBase {
                         // number. if it wasn't, the convert will
                         // throw a NumberFormatException and we'll
                         // take care of the problems there.
-                        memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(javaOption.substring(2, javaOption
-                                .length()));
+                        memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(javaOption.substring(2, javaOption.length()));
                         break;
                 }
             } catch (final NumberFormatException nfe) {
-                MipavUtil.displayError("Cannot convert initial memory value.\n"
-                        + "Substituting for a known acceptable value.");
-                Preferences.debug("JDialogMemoryAllocation: Cannot convert " + " initial memory value.  "
-                        + "Substituting for a known acceptable value.\n", 3);
+                MipavUtil.displayError("Cannot convert initial memory value.\n" + "Substituting for a known acceptable value.");
+                Preferences.debug("JDialogMemoryAllocation: Cannot convert " + " initial memory value.  " + "Substituting for a known acceptable value.\n", 3);
                 memorySpec = "10"; // the known acceptable value (1 megabyte)
             }
 
@@ -748,8 +742,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
             // "<string>-Xms999m</string>" is a good example of what we see here
 
             // look for ^ms[0-9]*[km$].
-            final String javaOption = line.substring(line.indexOf(JDialogMemoryAllocation.maxHeapOption),
-                    line.lastIndexOf("<")).toLowerCase();
+            final String javaOption = line.substring(line.indexOf(JDialogMemoryAllocation.maxHeapOption), line.lastIndexOf("<")).toLowerCase();
             // check on ending suffix: "", "k", "m" (bytes, kilobytes, megabytes)
 
             final char sizeDescriptor = javaOption.charAt(javaOption.length() - 1); // descriptor can be "","k","m"
@@ -758,11 +751,10 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
                 switch (sizeDescriptor) {
 
-                    // first 2 chars are heap option ('ms' or 'mx') and
-                    // so memorySpec skips those two chars
+                // first 2 chars are heap option ('ms' or 'mx') and
+                // so memorySpec skips those two chars
                     case 'k':
-                        memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(javaOption.substring(2, javaOption
-                                .length() - 1)); // length-1
+                        memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(javaOption.substring(2, javaOption.length() - 1)); // length-1
                         // is
                         // size
                         // descriptor
@@ -779,15 +771,12 @@ public class JDialogMemoryAllocation extends JDialogBase {
                         // number. if it wasn't, the convert will
                         // throw a NumberFormatException and we'll
                         // take care of the problems there.
-                        memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(javaOption.substring(2, javaOption
-                                .length()));
+                        memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(javaOption.substring(2, javaOption.length()));
                         break;
                 }
             } catch (final NumberFormatException nfe) {
-                MipavUtil.displayError("Cannot convert maximum memory value.\n"
-                        + "Substituting for a known acceptable value.");
-                Preferences.debug("JDialogMemoryAllocation: Cannot convert " + " maximum memory value.  "
-                        + "Substituting for a known acceptable value.\n", 3);
+                MipavUtil.displayError("Cannot convert maximum memory value.\n" + "Substituting for a known acceptable value.");
+                Preferences.debug("JDialogMemoryAllocation: Cannot convert " + " maximum memory value.  " + "Substituting for a known acceptable value.\n", 3);
 
                 // initHeapText.setText("1"); // the known acceptable value (1 megabyte)
                 memorySpec = "10";
@@ -933,11 +922,10 @@ public class JDialogMemoryAllocation extends JDialogBase {
         BufferedReader readFile;
 
         if ( !startupFile.canRead()) {
-            MipavUtil.displayError("Not able to read the InstallAnywhere start-" + "up file: "
-                    + startupFile.getAbsolutePath() + "\n" + "To alter the memory allocation, either "
-                    + "set the permissions or \n" + "contact the system administrator.");
-            Preferences.debug("JDialogMemoryAllocation:Not able to read the " + "InstallAnywhere start-up file: "
-                    + startupFile.getAbsolutePath() + "\n", Preferences.DEBUG_FILEIO);
+            MipavUtil.displayError("Not able to read the InstallAnywhere start-" + "up file: " + startupFile.getAbsolutePath() + "\n"
+                    + "To alter the memory allocation, either " + "set the permissions or \n" + "contact the system administrator.");
+            Preferences.debug("JDialogMemoryAllocation:Not able to read the " + "InstallAnywhere start-up file: " + startupFile.getAbsolutePath() + "\n",
+                    Preferences.DEBUG_FILEIO);
 
             return false; // no point in continuing if we can't do both
         }
@@ -995,9 +983,9 @@ public class JDialogMemoryAllocation extends JDialogBase {
     /**
      * write startup options file which is used during InstallAnywhere to run the executable. The starting options file
      * it writes out is the one which would be native to the system (that is, on Windows or UNIX systems, the startup
-     * file is a LAX file; on the Macintosh OS 10 systems, it is the Info.plist file) as determined when by
-     * {@see getStartupFile} during dialog instantiation. This method writes initHeapText and maxHeapText to the
-     * appropriate start and max values.
+     * file is a LAX file; on the Macintosh OS 10 systems, it is the Info.plist file) as determined when by {@see
+     * getStartupFile} during dialog instantiation. This method writes initHeapText and maxHeapText to the appropriate
+     * start and max values.
      * 
      * @throws IOException DOCUMENT ME!
      */
@@ -1010,13 +998,12 @@ public class JDialogMemoryAllocation extends JDialogBase {
             throw new IOException("Unable to open " + startupFile.getAbsolutePath() + " for writing.");
         }
 
-        //System.out.println(startupFile.toURI());
-        //System.out.println(startupFile.getParentFile().toURI());
+        // System.out.println(startupFile.toURI());
+        // System.out.println(startupFile.getParentFile().toURI());
 
         if ( !startupFile.canWrite()) {
             MipavUtil.displayError("Not allowed to alter the java runtime start up file.\n"
-                    + "To alter the memory allocation, either set the permissions or \n"
-                    + "contact the system administrator.");
+                    + "To alter the memory allocation, either set the permissions or \n" + "contact the system administrator.");
 
             return;
         }
@@ -1024,8 +1011,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
         // make sure we actually got data from the read first!
         if (laxContents == null) {
             MipavUtil.displayError("Problem reading lax file.  Unable to save new contents.\n"
-                    + "To alter the memory allocation, either set the permissions or \n"
-                    + "contact the system administrator.");
+                    + "To alter the memory allocation, either set the permissions or \n" + "contact the system administrator.");
 
             return;
         }
@@ -1043,21 +1029,17 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 if (line.indexOf(JDialogMemoryAllocation.initHeapLAX) != -1) {
 
                     try {
-                        line = JDialogMemoryAllocation.initHeapLAX
-                                + JDialogMemoryAllocation.convertMBytesToBytes(initHeapText.getText());
+                        line = JDialogMemoryAllocation.initHeapLAX + JDialogMemoryAllocation.convertMBytesToBytes(initHeapText.getText());
                     } catch (final NumberFormatException nfe) {
-                        MipavUtil.displayError("JDialogMemoryAllocation: Cannot convert the value.\n"
-                                + "Substituting for a known acceptable value.");
+                        MipavUtil.displayError("JDialogMemoryAllocation: Cannot convert the value.\n" + "Substituting for a known acceptable value.");
                         line = JDialogMemoryAllocation.initHeapLAX + "10"; // the known acceptable value (1 megabyte)
                     }
                 } else if (line.indexOf(JDialogMemoryAllocation.maxHeapLAX) != -1) {
 
                     try {
-                        line = JDialogMemoryAllocation.maxHeapLAX
-                                + JDialogMemoryAllocation.convertMBytesToBytes(maxHeapText.getText());
+                        line = JDialogMemoryAllocation.maxHeapLAX + JDialogMemoryAllocation.convertMBytesToBytes(maxHeapText.getText());
                     } catch (final NumberFormatException nfe) {
-                        MipavUtil.displayError("JDialogMemoryAllocation: Cannot convert the value.\n"
-                                + "Substituting for a known acceptable value.");
+                        MipavUtil.displayError("JDialogMemoryAllocation: Cannot convert the value.\n" + "Substituting for a known acceptable value.");
                         line = JDialogMemoryAllocation.maxHeapLAX + "10"; // the known acceptable value (1 megabyte)
                     }
                 }
