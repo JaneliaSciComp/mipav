@@ -2188,7 +2188,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         } else if (mipavModality.equalsIgnoreCase("Computed Radiography")) {
             return "";
         } else if (mipavModality.equalsIgnoreCase("Computed Tomography")) {
-            return "CT";
+            return "Non-contrast CT";
         } else if (mipavModality.equalsIgnoreCase("Duplex Doppler")) {
             return "";
         } else if (mipavModality.equalsIgnoreCase("Diaphanography")) {
