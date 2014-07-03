@@ -76,6 +76,8 @@ public class JDialogDeconvolution extends JDialogScriptableBase implements Algor
 
     /** gui, sigma value */
     private JTextField[] textGaussZ = new JTextField[2];
+    
+    private int method = OpenCLAlgorithmDeconvolution.JOINT_DECON;
 
 
     /**
@@ -332,13 +334,13 @@ public class JDialogDeconvolution extends JDialogScriptableBase implements Algor
         	JDialogBase.updateFileInfo( image, resultImage );
         	if ( imageB != null )
         	{
-        		blurAlgo = new OpenCLAlgorithmDeconvolution(resultImage, image, imageB, 
+        		blurAlgo = new OpenCLAlgorithmDeconvolution(resultImage, image, imageB,method,
         				sigmas, sigmasB, outputOptionsPanel.isProcessWholeImageSet(), 
         				iterations, conversionFactorCheckbox.isSelected());        		
         	}
         	else
         	{
-        		blurAlgo = new OpenCLAlgorithmDeconvolution(resultImage, image, 
+        		blurAlgo = new OpenCLAlgorithmDeconvolution(resultImage, image, method,
         				sigmas, outputOptionsPanel.isProcessWholeImageSet(), 
         				iterations, conversionFactorCheckbox.isSelected());
         	}
@@ -357,13 +359,13 @@ public class JDialogDeconvolution extends JDialogScriptableBase implements Algor
         	}
         	if ( imageB != null )
         	{
-        		blurAlgo = new OpenCLAlgorithmDeconvolution(image, imageB, sigmas, sigmasB,
+        		blurAlgo = new OpenCLAlgorithmDeconvolution(image, imageB, method, sigmas, sigmasB,
         				outputOptionsPanel.isProcessWholeImageSet(), 
         				iterations, conversionFactorCheckbox.isSelected());        	
         	}
         	else
         	{
-        		blurAlgo = new OpenCLAlgorithmDeconvolution(image, sigmas,
+        		blurAlgo = new OpenCLAlgorithmDeconvolution(image, method, sigmas,
         				outputOptionsPanel.isProcessWholeImageSet(), 
         				iterations, conversionFactorCheckbox.isSelected());
         	}
