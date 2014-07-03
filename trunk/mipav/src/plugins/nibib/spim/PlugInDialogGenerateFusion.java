@@ -24,6 +24,7 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************/
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmDeconvolution;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmMaximumIntensityProjection;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
 import gov.nih.mipav.model.scripting.*;
@@ -61,7 +62,7 @@ import nibib.spim.PlugInAlgorithmGenerateFusion.SampleMode;
 /**
  * Class for performing image fusion based on reference image and transformation matrix.  Option to output geometric/arithmetic mean.
  * 
- * @version  May 12, 2014
+ * @version  July 3, 2014
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -211,6 +212,11 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	private JCheckBox deconvShowResultsCheckbox;
 	/** Panel containing deconvolution parameters. */
 	private JPanel deconvParamPanel;
+	private ButtonGroup deconvolutionGroup;
+	private JRadioButton jointButton;
+	private JRadioButton arithmeticMeanButton;
+	private JRadioButton geometricMeanButton;
+	private int deconvolutionMethod = OpenCLAlgorithmDeconvolution.JOINT_DECON;
 	/** The number of iterations to perform during deconvolution. */
 	private int deconvIterations;
 	/** Text field for the number of deconvolution iterations. */
@@ -395,7 +401,8 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
                                                                                 saveMaxProj, saveGeoMean, geoMeanDir, saveAriMean, ariMeanDir, 
                                                                                 savePrefusion, prefusionBaseDir, prefusionTransformDir, 
                                                                                 baseAriWeight, transformAriWeight, baseGeoWeight, transformGeoWeight, 
-                                                                                maxAlgo, saveType, doDeconv, deconvIterations, deconvSigmaA,
+                                                                                maxAlgo, saveType, doDeconv, 
+                                                                                deconvolutionMethod, deconvIterations, deconvSigmaA,
                                                                                 deconvSigmaB, useDeconvSigmaConversionFactor, deconvDir, deconvShowResults,
                                                                                 baseRotation, transformRotation);
 
@@ -664,7 +671,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     private void init() {
         setResizable(true);
         setForeground(Color.black);
-        setTitle("Generate fusion 544g");
+        setTitle("Generate fusion 544h");
         try {
             setIconImage(MipavUtil.getIconImage("divinci.gif"));
         } catch (FileNotFoundException e) {
@@ -1792,6 +1799,28 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         deconvParamPanel.setVisible(true);
         //deconvParamPanel.setBorder(MipavUtil.buildTitledBorder("Deconvolution options"));
         
+        deconvolutionGroup = new ButtonGroup();
+        jointButton = new JRadioButton("Joint deconvolution", true);
+        jointButton.setFont(serif12);
+        jointButton.setForeground(Color.black);
+        deconvolutionGroup.add(jointButton);
+        deconvParamPanel.add(jointButton, gbc);
+        gbc.gridy++;
+        
+        arithmeticMeanButton = new JRadioButton("Arithmetic mean deconvolution", false);
+        arithmeticMeanButton.setFont(serif12);
+        arithmeticMeanButton.setForeground(Color.black);
+        deconvolutionGroup.add(arithmeticMeanButton);
+        deconvParamPanel.add(arithmeticMeanButton, gbc);
+        gbc.gridy++;
+        
+        geometricMeanButton = new JRadioButton("Geometric mean deconvolution", false);
+        geometricMeanButton.setFont(serif12);
+        geometricMeanButton.setForeground(Color.black);
+        deconvolutionGroup.add(geometricMeanButton);
+        deconvParamPanel.add(geometricMeanButton, gbc);
+        gbc.gridy++;
+        
         deconvShowResultsCheckbox = gui.buildCheckBox("Show deconvolution images", false);
         gbc.gridwidth = 2;
         deconvParamPanel.add(deconvShowResultsCheckbox, gbc);
@@ -2467,6 +2496,16 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	    // deconvolution parameters
 	    if (doDeconv) {
 	    	deconvShowResults = deconvShowResultsCheckbox.isSelected();
+	    	if (jointButton.isSelected()) {
+	    		deconvolutionMethod = OpenCLAlgorithmDeconvolution.JOINT_DECON;
+	    	}
+	    	else if (arithmeticMeanButton.isSelected())
+	    	{
+	    		deconvolutionMethod = OpenCLAlgorithmDeconvolution.AVERAGE_DECON;	
+	    	}
+	    	else {
+	    		deconvolutionMethod = OpenCLAlgorithmDeconvolution.MULTIPLICATION_DECON;
+	    	}
 	    	deconvIterations = Integer.valueOf(deconvIterationsText.getText());
 	    	deconvSigmaA = new float[3];
 	    	deconvSigmaA[0] = Float.valueOf(deconvSigmaAXText.getText());
