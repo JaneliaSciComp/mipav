@@ -26,14 +26,23 @@ public class JDialogLivewire extends JDialogBase{
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Radio button for Gradient magnitude and direction */
     private JRadioButton radioGradient;
 
-    /** DOCUMENT ME! */
+    /** Radio button for Intensity */
     private JRadioButton radioIntensity;
 
-    /** DOCUMENT ME! */
+    /** Radio button for Laplacian medialness */
     private JRadioButton radioMedial;
+
+    /** Radio button for Gradient and Medialness */
+    private JRadioButton radioGradientMed;
+
+    /** Radio button for Gradient and Intensity */
+    private JRadioButton radioGradientInt;
+
+    /** Radio button for Gradient, Medialness and Intensity */
+    private JRadioButton radioGradientAll;
 
     /** DOCUMENT ME! */
     private int selection = 0;
@@ -79,6 +88,12 @@ public class JDialogLivewire extends JDialogBase{
                 selection = RubberbandLivewire.MEDIALNESS;
             } else if (radioIntensity.isSelected()) {
                 selection = RubberbandLivewire.INTENSITY;
+            } else if (radioGradientMed.isSelected()) {
+            	selection = RubberbandLivewire.GRADIENT_MAG_MED;
+            } else if (radioGradientInt.isSelected()) {
+            	selection = RubberbandLivewire.GRADIENT_MAG_INT;
+            } else if (radioGradientAll.isSelected()) {
+            	selection = RubberbandLivewire.GRADIENT_ALL;
             }
 
             dispose();
@@ -113,7 +128,7 @@ public class JDialogLivewire extends JDialogBase{
         
         setTitle("Live wire cost function");
 
-        mainDialogPanel.setLayout(new GridLayout(3, 1));
+        mainDialogPanel.setLayout(new GridLayout(3, 2));
 
         mainDialogPanel.setBorder(buildTitledBorder("Choose cost function for live wire"));
 
@@ -138,6 +153,24 @@ public class JDialogLivewire extends JDialogBase{
         radioIntensity.setFont(serif12);
         group.add(radioIntensity);
         mainDialogPanel.add(radioIntensity);
+        
+        radioGradientMed = new JRadioButton("Gradient and Medialness");
+        radioGradientMed.setForeground(Color.black);
+        radioGradientMed.setFont(serif12);
+        group.add(radioGradientMed);
+        mainDialogPanel.add(radioGradientMed);
+        
+        radioGradientInt = new JRadioButton("Gradient and Intensity");
+        radioGradientInt.setForeground(Color.black);
+        radioGradientInt.setFont(serif12);
+        group.add(radioGradientInt);
+        mainDialogPanel.add(radioGradientInt);
+        
+        radioGradientAll = new JRadioButton("Gradient, Medialness and Intensity");
+        radioGradientAll.setForeground(Color.black);
+        radioGradientAll.setFont(serif12);
+        group.add(radioGradientAll);
+        mainDialogPanel.add(radioGradientAll);
         
         JPanel buttonPanel = new JPanel();
         buildOKButton();
