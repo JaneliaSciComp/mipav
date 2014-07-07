@@ -266,7 +266,8 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase implements AlgorithmIn
         float[] resultBuffer = new float[buffer.length];
 
         for (int i = 0; i < buffer.length; i++) {
-            resultBuffer[i] = AlgorithmConvolver.convolve2DPt(i, extents, buffer, kExtents, GxxData);
+            resultBuffer[i] = AlgorithmConvolver.convolve2DPt(i, extents, buffer, kExtents, GxxData) 
+            		+ AlgorithmConvolver.convolve2DPt(i, extents, buffer, kExtents, GyyData);
         }
 
         computeElapsedTime();
