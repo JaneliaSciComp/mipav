@@ -312,11 +312,11 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 			int progressFrom, int progressTo) {
 	    float[] resultBuffer = new float[xDerivatives.length];
 
-		if(directionNeeded){
+		/*if(directionNeeded){
 			xDerivativeDirections = xDerivatives;
 			yDerivativeDirections = yDerivatives;
 			
-		}
+		}*/
 		int start = calculateValidStartZIndex() * srcImage.getSliceSize() * cFactor;
 		int end = calculateValidEndZIndex() * srcImage.getSliceSize() * cFactor;
 		if(start > 0){
@@ -412,6 +412,11 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 				}
 			}
 		}
+		if(directionNeeded){
+			xDerivativeDirections = xDerivatives;
+			yDerivativeDirections = yDerivatives;
+		}
+		
 		return resultBuffer;
 	}
 
