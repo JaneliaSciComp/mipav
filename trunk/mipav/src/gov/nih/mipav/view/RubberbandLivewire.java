@@ -70,6 +70,15 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
 
     /** DOCUMENT ME! */
     public static int INTENSITY = 3;
+    
+    /** DOCUMENT ME! */
+    public static int GRADIENT_MAG_MED = 4;
+    
+	/** DOCUMENT ME! */
+	public static int GRADIENT_MAG_INT= 5;
+	
+	/** DOCUMENT ME! */
+	public static int GRADIENT_ALL = 6;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -164,7 +173,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
      * necessary global arrays.
      *
      * @param  component  component to add to
-     * @param  selection  GRADIENT_MAG, MEDIALNESS, or INTENSITY
+     * @param  selection  GRADIENT_MAG, MEDIALNESS, INTENSITY, GRADIENT_MAG_MED, GRADIENT_MAG_INT, or GRADIENT_ALL
      */
     public RubberbandLivewire(Component component, int selection) {
         super(component);
@@ -616,9 +625,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
 
                 localCosts = new float[length];
 
-                for (int i = 0; i < localCostsTemp.length; i++) {
-                    localCosts[i] = localCostsTemp[i];
-                }
+                System.arraycopy(localCostsTemp, 0, localCosts, 0, localCostsTemp.length);
 
                 if ( progressBar != null )
                 {
@@ -731,6 +738,23 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                 localCosts = magnitude.getResultBuffer();
                 xDirections = magnitude.getXDerivativeDirections();
                 yDirections = magnitude.getYDerivativeDirections();
+                
+                float sigma;
+                float[] localCostsTemp = new float[length];
+                int i;
+                for (sigma = 0.25f; sigma < 1.75f; sigma = sigma+0.25f) {
+                	AlgorithmGradientMagnitudeSep magnitudeTemp = new AlgorithmGradientMagnitudeSep(mi, new float[] { sigma, sigma }, true, true);
+                	magnitudeTemp.setNormalized(true);
+                	magnitudeTemp.run();
+                	localCostsTemp = magnitudeTemp.getResultBuffer();
+                	for (i = 0; i < length; i++) {
+                		if (localCostsTemp[i] > localCosts[i]) {
+                			localCosts[i] = localCostsTemp[i];
+                		}
+                	}
+                }
+                localCostsTemp = null;
+                
                 if ( progressBar != null )
                 {
                     progressBar.updateValueImmed(65);
@@ -754,7 +778,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                 largeKernel = new BitSet(length);
 
                 float[] colorBuffer = new float[4 * xDim * yDim];
-                colorBuffer = activeSliceBuffer;
+                System.arraycopy(activeSliceBuffer, 0, colorBuffer, 0, 4 * xDim * yDim);
 
                 float[] singleBuffer = new float[xDim * yDim];
 
@@ -926,7 +950,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                 localCosts = new float[length];
 
                 float[] colorBuffer = new float[4 * length];
-                colorBuffer = activeSliceBuffer;
+                System.arraycopy(activeSliceBuffer, 0, colorBuffer, 0, 4 * xDim * yDim);
 
                 float[] singleBuffer = new float[length];
 
