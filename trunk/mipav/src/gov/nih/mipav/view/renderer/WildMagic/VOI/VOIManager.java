@@ -88,6 +88,19 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  */
 public class VOIManager implements ActionListener, KeyListener, MouseListener, MouseMotionListener
 {
+	/** chooses the gradient magnitude cost */
+	public static final int GRADIENT_MAG = 1;
+	/** chooses the medialness cost */
+	public static final int MEDIALNESS = 2;
+	/** chooses the intensity magnitude */
+	public static final int INTENSITY = 3;
+	/** chooses the gradient magnitude and medialness cost functions*/
+	public static final int GRADIENT_MAG_MED = 4;
+	/** chooses the gradient magnitude and intensity based cost functions */
+	public static final int GRADIENT_MAG_INT= 5;
+	/** chooses all the gradient cost functions*/
+	public static final int GRADIENT_ALL = 6;
+	
 	/**
 	 * Binary search tree, modified so it will work with elements that have the same cost. In theory this should not be
 	 * a problem because we have a unique identifier in the parameter <code>position</code>. New nodes of the same cost
@@ -4531,10 +4544,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			} catch (IOException error) {
 				MipavUtil.displayError("Error while trying to retrieve RGB data.");
 			}
-			for ( int i = 0; i < imageBufferActive.length; i++ )
-			{
-				imageBufferActive[i] = (temp[4*i+1] + temp[4*i+2] + temp[4*i+3])/3f;
-			}
+			System.arraycopy(temp, 0, imageBufferActive, 0, length * 4);
 		} else if (m_kLocalImage.isColorImage()) {
 		    imageBufferActive = new float[4 * length]; 
 		    try {
@@ -4557,9 +4567,51 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		{
 			ViewJProgressBar progressBar = new ViewJProgressBar(m_kImageActive.getImageName(),
 					"Livewire: Computing cost function ...", 0, 100, false, this, null);
-			localCosts = RubberbandLivewire.getLocalCosts( m_kLocalImage, m_iLiveWireSelection, 
-					imageBufferActive,
-					xDirections, yDirections, progressBar );
+			float[] localCosts1, localCosts2;
+			switch (m_iLiveWireSelection) {
+			case GRADIENT_MAG:
+			case MEDIALNESS:
+			case INTENSITY:
+				localCosts = RubberbandLivewire.getLocalCosts( m_kLocalImage, m_iLiveWireSelection, 
+						imageBufferActive, xDirections, yDirections, progressBar );
+				break;
+			case GRADIENT_MAG_MED:
+			//calls the combination of Gradient magnitude and medianlines.
+				localCosts1 = RubberbandLivewire.getLocalCosts( m_kLocalImage, GRADIENT_MAG,
+						imageBufferActive, xDirections, yDirections, progressBar);
+				localCosts2 = RubberbandLivewire.getLocalCosts( m_kLocalImage, MEDIALNESS,
+						imageBufferActive, xDirections, yDirections, progressBar);
+				localCosts = new float [localCosts2.length];
+				for (int i=0; i< localCosts2.length; i++) {
+					localCosts[i] = 0.4f * (1 - localCosts1[i]) + 0.4f * localCosts2[i];
+				}
+				break;
+			case GRADIENT_MAG_INT:
+			//calls the combination of Gradient magnitude and intensity gradient
+				localCosts1 = RubberbandLivewire.getLocalCosts( m_kLocalImage, GRADIENT_MAG,
+						imageBufferActive, xDirections, yDirections, progressBar);
+				localCosts2 = RubberbandLivewire.getLocalCosts( m_kLocalImage, INTENSITY,
+						imageBufferActive, xDirections, yDirections, progressBar);
+				localCosts = new float [localCosts2.length];
+				for (int i=0; i< localCosts2.length; i++) {
+					localCosts[i] = 0.4f * (1 - localCosts1[i]) + 0.4f * localCosts2[i];
+				}
+				break;
+			case GRADIENT_ALL:
+			//calls all the gradients
+				localCosts1 = RubberbandLivewire.getLocalCosts( m_kLocalImage, GRADIENT_MAG,
+						imageBufferActive, xDirections, yDirections, progressBar);
+				localCosts2 = RubberbandLivewire.getLocalCosts( m_kLocalImage, MEDIALNESS,
+						imageBufferActive, xDirections, yDirections, progressBar);
+				float[] localCosts3 = RubberbandLivewire.getLocalCosts( m_kLocalImage, INTENSITY,
+						imageBufferActive, xDirections, yDirections, progressBar);
+				localCosts = new float [localCosts2.length];
+				for (int i=0; i< localCosts2.length; i++) {
+					localCosts[i] = 0.4f * (1 - localCosts1[i]) + 0.4f * localCosts2[i];
+					localCosts[i] = 0.6f * (localCosts[i]) + 0.4f * localCosts3[i];//*4 + 1];
+				}
+				break;
+			}
 
 			costGraph = new byte[localCosts.length]; // Graph with arrows from each node to next one
 
