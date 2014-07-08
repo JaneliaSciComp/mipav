@@ -3435,13 +3435,17 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                     for (int i = 0; i < csvFieldNames.size(); i++) {
                         final String[] deGroupAndName = splitFieldString(csvFieldNames.get(i).trim());
-                        final String value = repeatValues.get(i).trim();
+                        String value = repeatValues.get(i).trim();
                         if (i != imageFileIndex && !value.equals("")) {
                             final GroupRepeat curRepeat = fsData.getGroupRepeat(deGroupAndName[0], curRepeatNum);
                             for (final DataElementValue deVal : curRepeat.getDataElements()) {
                                 final JComponent comp = deVal.getComp();
                                 if (deVal.getName().equalsIgnoreCase(deGroupAndName[1])) {
                                     if (comp instanceof JTextField) {
+                                        // if file type, check for relative vs. absolute path
+                                        if (deVal.getDataElementInfo().getType() == DataType.FILE && ! (new File(value).isAbsolute())) {
+                                            value = csvFile.getParentFile().getAbsolutePath() + File.separator + value;
+                                        }
                                         final JTextField t = (JTextField) comp;
                                         t.setText(value);
                                     } else if (comp instanceof JComboBox) {
@@ -3539,13 +3543,17 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     final ArrayList<String> repeatValues = record.get(curRepeatNum);
                     for (int i = 0; i < csvFieldNames.size(); i++) {
                         final String[] deGroupAndName = splitFieldString(csvFieldNames.get(i).trim());
-                        final String value = repeatValues.get(i).trim();
+                        String value = repeatValues.get(i).trim();
                         if ( !value.equals("")) {
                             final GroupRepeat curRepeat = fsData.getGroupRepeat(deGroupAndName[0], curRepeatNum);
                             for (final DataElementValue deVal : curRepeat.getDataElements()) {
                                 final JComponent comp = deVal.getComp();
                                 if (deVal.getName().equalsIgnoreCase(deGroupAndName[1])) {
                                     if (comp instanceof JTextField) {
+                                        // if file type, check for relative vs. absolute path
+                                        if (deVal.getDataElementInfo().getType() == DataType.FILE && ! (new File(value).isAbsolute())) {
+                                            value = csvFile.getParentFile().getAbsolutePath() + File.separator + value;
+                                        }
                                         final JTextField t = (JTextField) comp;
                                         t.setText(value);
                                     } else if (comp instanceof JComboBox) {
