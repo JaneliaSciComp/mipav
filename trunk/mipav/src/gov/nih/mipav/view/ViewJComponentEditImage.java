@@ -5175,10 +5175,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         String areaString;
         String volumeString;
         DecimalFormat df;
-        df = new DecimalFormat();
-        df.setMinimumFractionDigits(4);
-        df.setMaximumFractionDigits(4);
-        df.setGroupingUsed(false);
+        df = new DecimalFormat("0.000000E00");
 
         if (leadString.length() < 25) {
             pad = 25 - leadString.length();
