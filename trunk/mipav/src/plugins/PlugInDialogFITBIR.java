@@ -211,7 +211,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.18";
+    private static final String pluginVersion = "0.19";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
