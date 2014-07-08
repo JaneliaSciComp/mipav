@@ -726,13 +726,13 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         int imgLength;
         int volSize = 1;
         int cf;
-        float buffer[];
+        double buffer[];
         int offset;
         int i;
-        float total[] = null;
-        float mean[] = null;
-        float stdDev[] = null;
-        float diff;
+        double total[] = null;
+        double mean[] = null;
+        double stdDev[] = null;
+        double diff;
         final int paintSize = paintBitmap.size();
 
         zEnd = 1;
@@ -761,15 +761,15 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             return;
         }
 
-        total = new float[cf];
-        mean = new float[cf];
-        stdDev = new float[cf];
+        total = new double[cf];
+        mean = new double[cf];
+        stdDev = new double[cf];
         sliceSize = imageA.getExtents()[0] * imageA.getExtents()[1];
         imgLength = cf * sliceSize;
         if (imageA.getNDims() >= 3) {
             volSize = sliceSize * imageA.getExtents()[2];
         }
-        buffer = new float[imgLength];
+        buffer = new double[imgLength];
         for (t = 0; t < tEnd; t++) {
             for (z = 0; z < zEnd; z++) {
                 offset = t * volSize + z * sliceSize;
@@ -841,10 +841,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 }
             } // for (z = 0; z < zEnd; z++)
         } // for (t = 0; t < tEnd; t++)
-        stdDev[0] = (float) Math.sqrt(stdDev[0] / count);
+        stdDev[0] = Math.sqrt(stdDev[0] / count);
         if (cf == 4) {
-            stdDev[1] = (float) Math.sqrt(stdDev[1] / count);
-            stdDev[2] = (float) Math.sqrt(stdDev[2] / count);
+            stdDev[1] = Math.sqrt(stdDev[1] / count);
+            stdDev[2] = Math.sqrt(stdDev[2] / count);
         }
 
         showRegionInfo(count, total, mean, stdDev, str);
@@ -5150,6 +5150,107 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         "green\t\t" + total[1] + "\t\t" + mean[1] + "\t\t" + stdDev[1] + "\n");
                 frame.getUserInterface().setDataText(
                         "blue\t\t" + total[2] + "\t\t" + mean[2] + "\t\t" + stdDev[2] + "\n");
+            }
+        } catch (final OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("Out of memory: ComponentEditImage.showRegionInfo");
+        }
+    }
+    
+    /**
+     * Display statistics about the grown region.
+     * 
+     * @param count Number of pixels (voxels)
+     * @param total Sum of pixel intensities
+     * @param mean Average pixel intensity
+     * @param stdDev Standard deviation of pixel intensities
+     * @param leadString the string to prepend to message containing region growth statistics
+     */
+    public void showRegionInfo(final int count, final double total[], final double mean[], final double stdDev[],
+            String leadString) {
+        double volume;
+        double area;
+        int pad;
+        int i;
+        String areaString;
+        String volumeString;
+        DecimalFormat df;
+        df = new DecimalFormat();
+        df.setMinimumFractionDigits(4);
+        df.setMaximumFractionDigits(4);
+        df.setGroupingUsed(false);
+
+        if (leadString.length() < 25) {
+            pad = 25 - leadString.length();
+            for (i = 0; i < pad; i++) {
+                leadString = leadString.concat(" ");
+            }
+        }
+
+        try {
+            String str = new String();
+            if (imageActive.getNDims() == 2) {
+                area = count * imageActive.getResolutions(0)[0] * imageActive.getResolutions(0)[1];
+                str = imageActive.getFileInfo(0).getAreaUnitsOfMeasureStr();
+                areaString = df.format(area) + str;
+                if (areaString.length() < 20) {
+                    pad = 20 - areaString.length();
+                    for (i = 0; i < pad; i++) {
+                        areaString = areaString.concat(" ");
+                    }
+                }
+
+                if (leadString != null) {
+                    frame.getUserInterface().setDataText("\n" + leadString + "\tpixels" + "\t\tarea");
+                } else {
+                    frame.getUserInterface().setDataText("\nstatistics              " + "\tpixels" + "\t\tarea");
+                }
+                if (total.length == 1) {
+                    frame.getUserInterface().setDataText(
+                    "\t\ttotal intensity\t\tmean intensity\t\tstandard deviation\n");
+                    frame.getUserInterface().setDataText("\n\t\t" + count + "\t\t" + areaString);
+                } else {
+                    frame.getUserInterface().setDataText("\n\t\t" + count + "\t\t" + areaString + "\n");
+                }
+
+            } else {
+                volume = count * imageActive.getResolutions(0)[0] * imageActive.getResolutions(0)[1]
+                                                                                                  * imageActive.getResolutions(0)[2];
+
+                str = imageActive.getFileInfo(0).getVolumeUnitsOfMeasureStr();
+                volumeString = df.format(volume) + str;
+                if (volumeString.length() < 20) {
+                    pad = 20 - volumeString.length();
+                    for (i = 0; i < pad; i++) {
+                        volumeString = volumeString.concat(" ");
+                    }
+                }
+
+                if (leadString != null) {
+                    frame.getUserInterface().setDataText("\n" + leadString + "\tpixels" + "\t\tvolume");
+                } else {
+                    frame.getUserInterface().setDataText("\nstatistics              " + "\tpixels" + "\t\tvolume");
+                }
+                if (total.length == 1) {
+                    frame.getUserInterface().setDataText(
+                    "\t\ttotal intensity\t\tmean intensity\t\tstandard deviation\n");
+                    frame.getUserInterface().setDataText("\n\t\t" + count + "\t\t" + volumeString);
+                } else {
+                    frame.getUserInterface().setDataText("\n\t\t" + count + "\t\t" + volumeString + "\n");
+                }
+            }
+
+            if (total.length == 1) {
+                frame.getUserInterface().setDataText("\t" + df.format(total[0]) + "\t\t" + df.format(mean[0]) + "\t\t" + 
+                                                df.format(stdDev[0]) + "\n");
+            } else {
+                frame.getUserInterface().setDataText("\t\ttotal intensity\t\tmean intensity\t\tstandard deviation\n");
+                frame.getUserInterface().setDataText(
+                        "red\t\t" + df.format(total[0]) + "\t\t" + df.format(mean[0]) + "\t\t" + df.format(stdDev[0]) + "\n");
+                frame.getUserInterface().setDataText(
+                        "green\t\t" + df.format(total[1]) + "\t\t" + df.format(mean[1]) + "\t\t" + df.format(stdDev[1]) + "\n");
+                frame.getUserInterface().setDataText(
+                        "blue\t\t" + df.format(total[2]) + "\t\t" + df.format(mean[2]) + "\t\t" + df.format(stdDev[2]) + "\n");
             }
         } catch (final OutOfMemoryError error) {
             System.gc();
