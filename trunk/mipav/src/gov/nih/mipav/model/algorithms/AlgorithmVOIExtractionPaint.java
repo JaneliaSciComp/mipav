@@ -285,87 +285,11 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
             } // end of for (x = 0; x < xDim2; x++)
         } // end of for (y = 0; y < yDim2; y++)
 
-        // Find all zero points 4 connected by other zero points to a zero
-        // point on the boundary
         maskN.clear();
         maskE.clear();
         maskS.clear();
         maskW.clear();
         maskAll.clear();
-
-        smallY = 0;
-
-        for (smallX = 0; smallX < xDim; smallX++) {
-            smallPos = smallX + (smallY * xDim);
-            smallPos3D = smallX + (smallY * xDim) + offset;
-
-            if ((!outMask.get(smallPos)) && (srcPaintMask.get(smallPos3D) == false)) {
-                setRegionOutMaskI(smallX, smallY, offset);
-            }
-        } // for (smallX = 0; smallX < xDim; smallX++)
-
-        smallY = yDim - 1;
-
-        for (smallX = 0; smallX < xDim; smallX++) {
-            smallPos = smallX + (smallY * xDim);
-            smallPos3D = smallX + (smallY * xDim) + offset;
-
-            if ((!outMask.get(smallPos)) && (srcPaintMask.get(smallPos3D) == false)) {
-                setRegionOutMaskI(smallX, smallY, offset);
-            }
-        } // for (smallX = 0; smallX < xDim; smallX++)
-
-        smallX = 0;
-
-        for (smallY = 1; smallY < (yDim - 1); smallY++) {
-            smallPos = smallX + (smallY * xDim);
-            smallPos3D = smallX + (smallY * xDim) + offset;
-
-            if ((!outMask.get(smallPos)) && (srcPaintMask.get(smallPos3D) == false)) {
-                setRegionOutMaskI(smallX, smallY, offset);
-            }
-        } // for (smallY = 1; smallY < yDim - 1; smallY++)
-
-        smallX = xDim - 1;
-
-        for (smallY = 1; smallY < (yDim - 1); smallY++) {
-            smallPos = smallX + (smallY * xDim);
-            smallPos3D = smallX + (smallY * xDim) + offset;
-
-            if ((!outMask.get(smallPos)) && (srcPaintMask.get(smallPos3D) == false)) {
-                setRegionOutMaskI(smallX, smallY, (short) 0);
-            }
-        } // for (smallY = 1; smallY < yDim - 1; smallY++)
-
-        // Now find all zero points not 4 connected thru other
-        // zero points to a boundary zero point
-
-        for (y = 0; y < yDim2; y++) {
-
-            for (x = 0; x < xDim2; x++) {
-                smallX = x / 2;
-                smallY = y / 2;
-                smallPos = smallX + (smallY * xDim);
-                smallPos3D = smallX + (smallY * xDim) + offset;
-
-                if ((!outMask.get(smallPos)) && (!mask.get(smallPos)) && (srcPaintMask.get(smallPos3D) == false)) {
-                    // have found a new contour
-                    // Since genContour works on finding a four-connected boundary using
-                    // Papert's turtle algorithm, the routine to grow the region must
-                    // also use four connected neighbors.
-                    // Set mask of all points in 2D region
-
-                    setRegionMaskIFalse(smallX, smallY, offset);
-
-                    // Expand mask points so as to draw boundary properly.
-                    // A pixel point only refers to left upper corner
-                    setRegionMaskAll();
-
-                    paintBorders.add(AlgorithmMorphology2D.genContour(xDim2, yDim2, new Point(x, y), maskAll));
-                    maskAll.clear();
-                }
-            } // for (x = 0; x < xDim2 && !threadStopped; x++)
-        } // for ( y = 0; y < yDim2 && !threadStopped; y++ )
 
         return paintBorders;
     }
@@ -490,95 +414,13 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
                 } // end of for (x = 0; x < xDim2; x++)
             } // end of for (y = 0; y < yDim2; y++)
 
-            // Find all zero points 4 connected by other zero points to a zero
-            // point on the boundary
             maskN.clear();
             maskE.clear();
             maskS.clear();
             maskW.clear();
             maskAll.clear();
 
-            smallY = 0;
-
-            for (smallX = 0; smallX < xDim; smallX++) {
-                smallPos = smallX + (smallY * xDim);
-                smallPos3D = smallX + (smallY * xDim) + offset;
-
-                if ((!outMask.get(smallPos)) && (srcPaintMask.get(smallPos3D) == false)) {
-                    setRegionOutMaskI(smallX, smallY, offset);
-                }
-            } // for (smallX = 0; smallX < xDim; smallX++)
-
-            smallY = yDim - 1;
-
-            for (smallX = 0; smallX < xDim; smallX++) {
-                smallPos = smallX + (smallY * xDim);
-                smallPos3D = smallX + (smallY * xDim) + offset;
-
-                if ((!outMask.get(smallPos)) && (srcPaintMask.get(smallPos3D) == false)) {
-                    setRegionOutMaskI(smallX, smallY, offset);
-                }
-            } // for (smallX = 0; smallX < xDim; smallX++)
-
-            smallX = 0;
-
-            for (smallY = 1; smallY < (yDim - 1); smallY++) {
-                smallPos = smallX + (smallY * xDim);
-                smallPos3D = smallX + (smallY * xDim) + offset;
-
-                if ((!outMask.get(smallPos)) && (srcPaintMask.get(smallPos3D) == false)) {
-                    setRegionOutMaskI(smallX, smallY, offset);
-                }
-            } // for (smallY = 1; smallY < yDim - 1; smallY++)
-
-            smallX = xDim - 1;
-
-            for (smallY = 1; smallY < (yDim - 1); smallY++) {
-                smallPos = smallX + (smallY * xDim);
-                smallPos3D = smallX + (smallY * xDim) + offset;
-
-                if ((!outMask.get(smallPos)) && (srcPaintMask.get(smallPos3D) == false)) {
-                    setRegionOutMaskI(smallX, smallY, (short) 0);
-                }
-            } // for (smallY = 1; smallY < yDim - 1; smallY++)
-
-            // Now find all zero points not 4 connected thru other
-            // zero points to a boundary zero point
-
-            for (y = 0; (y < yDim2) && !threadStopped; y++) {
-
-                for (x = 0; (x < xDim2) && !threadStopped; x++) {
-                    smallX = x / 2;
-                    smallY = y / 2;
-                    smallPos = smallX + (smallY * xDim);
-                    smallPos3D = smallX + (smallY * xDim) + offset;
-
-                    if ((!outMask.get(smallPos)) && (!mask.get(smallPos)) && (srcPaintMask.get(smallPos3D) == false)) {
-                        // have found a new contour
-                        // Since genContour works on finding a four-connected boundary using
-                        // Papert's turtle algorithm, the routine to grow the region must
-                        // also use four connected neighbors.
-                        // Set mask of all points in 2D region
-
-                        setRegionMaskIFalse(smallX, smallY, offset);
-
-                        // Expand mask points so as to draw boundary properly.
-                        // A pixel point only refers to left upper corner
-                        setRegionMaskAll();
-
-                        // Return polygon of contour
-                        Point startPt = new Point(x, y);
-
-                        contourPolygon = AlgorithmMorphology2D.genContour(xDim2, yDim2, startPt, maskAll);
-                        maskAll.clear();
-
-                        // add the polygon to an existing VOI
-                        addedVOI.importPolygon(contourPolygon, z);
-                        ((VOIContour) (addedVOI.getCurves().lastElement())).trimPoints(Preferences.getTrimMask(),
-                                                                                          Preferences.getTrimAdjacient());
-                    }
-                } // for (x = 0; x < xDim2 && !threadStopped; x++)
-            } // for ( y = 0; y < yDim2 && !threadStopped; y++ )
+            
 
             fireProgressStateChanged(Math.round((z + 1) * 100.0f / zDim));
             
