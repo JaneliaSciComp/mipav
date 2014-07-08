@@ -211,7 +211,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.19";
+    private static final String pluginVersion = "0.20";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -2038,6 +2038,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      * @return True if the string starts with one of the BIRCS prefixes (case sensitive).
      */
     private static final boolean isGuid(final String str) {
+        if (str == null || str.equals("")) {
+            return false;
+        }
+
         final String pattern = "^[\\w]+$";
         final Pattern p = Pattern.compile(pattern);
         final Matcher m = p.matcher(str.trim());
