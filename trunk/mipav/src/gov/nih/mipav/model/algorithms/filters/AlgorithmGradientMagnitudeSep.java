@@ -91,7 +91,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 	//~ Methods --------------------------------------------------------------------------------------------------------
 
 	public void beforeExecute() {
-		fireProgressStateChanged(minProgressValue, null, "Calculating gradient magnitude ... ");
+		fireProgressStateChanged(minProgressValue, null, null);//"Calculating gradient magnitude ... ");
 	}
 
 	public void execute() {
