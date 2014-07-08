@@ -2,11 +2,9 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
-
 import java.util.*;
 
 
@@ -22,6 +20,9 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
 
     /** xDim2*yDim2. */
     private int length;
+    
+    /** (xDim2+2)*(yDim2+2) */
+    private int expandedLength;
 
     /** DOCUMENT ME! */
     private BitSet mask = null;
@@ -112,6 +113,8 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
 
     /** extent of z dimension in the in the source image. */
     private int zDim;
+    
+    private BitSet maskExpanded = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -138,6 +141,7 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
         // Must form 4 copies of every xy pixel or algorithm will not properly handle
         // one pixel wide passages into the object
         length = xDim2 * yDim2;
+        expandedLength = (xDim2+2) * (yDim2 + 2);
 
         try {
             mask = new BitSet(smallLength);
@@ -148,6 +152,7 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
             maskW = new BitSet(length);
             mask2 = new BitSet(length);
             maskAll = new BitSet(length);
+            maskExpanded = new BitSet(expandedLength);
             maskList = new int[length][2];
             nextMaskList = new int[length][2];
         } catch (OutOfMemoryError e) {
@@ -186,6 +191,7 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
         // Must form 4 copies of every xy pixel or algorithm will not properly handle
         // one pixel wide passages into the object
         length = xDim2 * yDim2;
+        expandedLength = (xDim2+2) * (yDim2+2);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -200,6 +206,7 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
         outMask = null;
         mask2 = null;
         maskAll = null;
+        maskExpanded = null;
         maskN = null;
         maskE = null;
         maskS = null;
@@ -237,6 +244,9 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
         Vector<Polygon> paintBorders = new Vector<Polygon>();
 
         int offset;
+        int xpos;
+        int ypos;
+        int index;
 
         if (slice < 0) {
             return paintBorders;
@@ -250,6 +260,7 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
         maskW.clear();
         mask2.clear();
         maskAll.clear();
+        maskExpanded.clear();
 
         z = slice;
         offset = z * xDim * yDim;
@@ -275,12 +286,47 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
                     // Expand mask points so as to draw boundary properly.
                     // A pixel point only refers to left upper corner
                     setRegionMaskAll();
+                    
+                    for (ypos = 0; ypos < yDim2; ypos++) {
+                        for (xpos = 0; xpos < xDim2; xpos++) {
+                            index = xpos + ypos * xDim2;
+                            if (maskAll.get(index)) {
+                                if ((xpos == xDim2 - 1) && (ypos == yDim2 - 1)) {
+                                    maskExpanded.set(xpos + 1 + ypos * (xDim2 + 2));  
+                                    maskExpanded.set(xpos + 2 + ypos * (xDim2 + 2));
+                                    maskExpanded.set(xpos + (ypos+1)*(xDim2 + 2));
+                                    maskExpanded.set(xpos + (ypos+2)*(xDim2 + 2));
+                                    maskExpanded.set(xpos + 1 + (ypos+1) * (xDim2 + 2));
+                                    maskExpanded.set(xpos + 2 + (ypos+1) * (xDim2 + 2));    
+                                    maskExpanded.set(xpos + 1 + (ypos+2) * (xDim2 + 2));    
+                                    maskExpanded.set(xpos + 2 + (ypos+2) * (xDim2 + 2)); 
+                                    maskExpanded.set(xpos + ypos * (xDim2 + 2));
+                                }
+                                else if (xpos == xDim2 - 1) {
+                                    maskExpanded.set(xpos + 1 + ypos * (xDim2 + 2));  
+                                    maskExpanded.set(xpos + 2 + ypos * (xDim2 + 2)); 
+                                    maskExpanded.set(xpos + ypos * (xDim2 + 2));
+                                }
+                                else if (ypos == yDim2 - 1) {
+                                    maskExpanded.set(xpos + (ypos+1)*(xDim2 + 2));
+                                    maskExpanded.set(xpos + (ypos+2)*(xDim2 + 2));
+                                    maskExpanded.set(xpos + ypos * (xDim2 + 2));
+                                }
+                                else {
+                                    maskExpanded.set(xpos + ypos * (xDim2 + 2));
+                                }
+                                
+                            }
+                        }
+                    }
+
 
                     // Return polygon of contour
                     Point startPt = new Point(x, y);
-                    paintBorders.add(AlgorithmMorphology2D.genContour(xDim2, yDim2, startPt, maskAll));
+                    paintBorders.add(AlgorithmMorphology2D.genContour(xDim2+2, yDim2+2, startPt, maskExpanded));
 
                     maskAll.clear();
+                    maskExpanded.clear();
                 }
             } // end of for (x = 0; x < xDim2; x++)
         } // end of for (y = 0; y < yDim2; y++)
@@ -290,6 +336,7 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
         maskS.clear();
         maskW.clear();
         maskAll.clear();
+        maskExpanded.clear();
 
         return paintBorders;
     }
@@ -318,6 +365,9 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
         int i;
         Polygon contourPolygon;
         int offset;
+        int xpos;
+        int ypos;
+        int index;
 
         if (srcPaintMask == null) {
             displayError("Source paint mask is null");
@@ -335,6 +385,7 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
             maskW = new BitSet(length);
             mask2 = new BitSet(length);
             maskAll = new BitSet(length);
+            maskExpanded = new BitSet(expandedLength);
             maskList = new int[length][2];
             nextMaskList = new int[length][2];
         } catch (OutOfMemoryError e) {
@@ -374,6 +425,7 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
             maskW.clear();
             mask2.clear();
             maskAll.clear();
+            maskExpanded.clear();
 
             offset = z * xDim * yDim;
 
@@ -398,12 +450,46 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
                         // Expand mask points so as to draw boundary properly.
                         // A pixel point only refers to left upper corner
                         setRegionMaskAll();
+                        
+                        for (ypos = 0; ypos < yDim2; ypos++) {
+                            for (xpos = 0; xpos < xDim2; xpos++) {
+                                index = xpos + ypos * xDim2;
+                                if (maskAll.get(index)) {
+                                    if ((xpos == xDim2 - 1) && (ypos == yDim2 - 1)) {
+                                        maskExpanded.set(xpos + 1 + ypos * (xDim2 + 2));  
+                                        maskExpanded.set(xpos + 2 + ypos * (xDim2 + 2));
+                                        maskExpanded.set(xpos + (ypos+1)*(xDim2 + 2));
+                                        maskExpanded.set(xpos + (ypos+2)*(xDim2 + 2));
+                                        maskExpanded.set(xpos + 1 + (ypos+1) * (xDim2 + 2));
+                                        maskExpanded.set(xpos + 2 + (ypos+1) * (xDim2 + 2));    
+                                        maskExpanded.set(xpos + 1 + (ypos+2) * (xDim2 + 2));    
+                                        maskExpanded.set(xpos + 2 + (ypos+2) * (xDim2 + 2)); 
+                                        maskExpanded.set(xpos + ypos * (xDim2 + 2));
+                                    }
+                                    else if (xpos == xDim2 - 1) {
+                                        maskExpanded.set(xpos + 1 + ypos * (xDim2 + 2));  
+                                        maskExpanded.set(xpos + 2 + ypos * (xDim2 + 2)); 
+                                        maskExpanded.set(xpos + ypos * (xDim2 + 2));
+                                    }
+                                    else if (ypos == yDim2 - 1) {
+                                        maskExpanded.set(xpos + (ypos+1)*(xDim2 + 2));
+                                        maskExpanded.set(xpos + (ypos+2)*(xDim2 + 2));
+                                        maskExpanded.set(xpos + ypos * (xDim2 + 2));
+                                    }
+                                    else {
+                                        maskExpanded.set(xpos + ypos * (xDim2 + 2));
+                                    }
+                                    
+                                }
+                            }
+                        }
 
                         // Return polygon of contour
                         Point startPt = new Point(x, y);
 
-                        contourPolygon = AlgorithmMorphology2D.genContour(xDim2, yDim2, startPt, maskAll);
+                        contourPolygon = AlgorithmMorphology2D.genContour(xDim2+2, yDim2+2, startPt, maskExpanded);
                         maskAll.clear();
+                        maskExpanded.clear();
 
                         // add the polygon to an existing VOI
                         addedVOI.importPolygon(contourPolygon, z);
@@ -419,7 +505,7 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
             maskS.clear();
             maskW.clear();
             maskAll.clear();
-
+            maskExpanded.clear();
             
 
             fireProgressStateChanged(Math.round((z + 1) * 100.0f / zDim));
