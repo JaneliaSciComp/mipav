@@ -101,6 +101,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
         outMask = null;
         mask2 = null;
         maskAll = null;
+        maskExpanded = null;
 
         if (maskList != null) {
 
