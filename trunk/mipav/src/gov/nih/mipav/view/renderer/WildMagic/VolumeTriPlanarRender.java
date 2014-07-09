@@ -8,6 +8,7 @@ import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.CustomUIBuilder;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewMenuBar;
 import gov.nih.mipav.view.renderer.WildMagic.Navigation.NavigationBehavior;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageCrop;
@@ -19,6 +20,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Navigation.NavigationBehavior;
 
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -209,6 +211,18 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				m_kParent.moveSelectedPoint( world.InvertVector(m_spkCamera.GetRVector()).neg() );
 				break;
 			}
+	        // look for shortcuts now
+
+	        String command = null;
+	        final KeyStroke ks = KeyStroke.getKeyStrokeForEvent(e);
+
+	        command = Preferences.getShortcutCommand(ks);
+
+	        // Don't pass the VOI key-commands to the actionPerformed function, this
+	        // will be done by the VOIManager which will also get the KeyEvents.
+	        if ( command != null ) {
+	            m_kParent.actionPerformed(new ActionEvent(ks, 0, command));
+	        }
 			return;
 		}
 		
@@ -243,7 +257,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			m_kParent.setCameraParameters();
 			m_kParent.setObjectParameters();
 		}
-		if (e.isControlDown() && m_kParent.is3DSelectionEnabled()) {
+		if (e.isControlDown() && (m_kParent.is3DMouseEnabled() || m_kParent.is3DSelectionEnabled())) {
 			m_iXPick = e.getX();
 			m_iYPick = e.getY();
 			m_bPickPending = true;
