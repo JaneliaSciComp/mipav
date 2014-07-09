@@ -304,6 +304,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             toolbarBuilder.buildVolumeTriPlanarVOIToolBar( m_kImageA.getNDims(),
                     -1, bGPU, bGPU, kVOIGroup);
         m_kVOIToolbar.setVisible(false);
+        toolbarBuilder.getVOIUndoButton().setEnabled(false);
+        toolbarBuilder.getVOIRedoButton().setEnabled(false);
         m_kPointerButton = toolbarBuilder.getPointerButton();
         m_kVOIManagers = new Vector<VOIManager>();
         Color kColor = toolbarBuilder.getVOIColorButton().getBackground();
@@ -2186,12 +2188,19 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
     }
     
+    private VOI pickedPoint = null;
+    private boolean movingPickedPoint = false;
     public void clear3DSelection()
     {
     	if ( latticeModel != null )
     	{
     		latticeModel.clear3DSelection();
     	}
+    	if ( movingPickedPoint )
+    	{
+            movingPickedPoint = false;
+    	}
+    	pickedPoint = null;
     }
     
     public boolean is3DMouseEnabled()
@@ -2597,11 +2606,12 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         	}
         	System.gc();
         }
-        
         m_kUndoCommands.add( kCommand );
         m_kUndoList.add( getVOIState() );
         m_kRedoCommands.clear();
     	clearList( m_kRedoList, m_kRedoList.size() );
+        toolbarBuilder.getVOIUndoButton().setEnabled(true);
+        toolbarBuilder.getVOIRedoButton().setEnabled(false);
     }
 
     /* (non-Javadoc)
@@ -3083,6 +3093,12 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     {
     	if ( latticeModel != null )
     	{
+    		if ( !movingPickedPoint )
+    		{
+    			movingPickedPoint = true;
+//    			System.err.println("modifyLattice");
+    			saveVOIs("modifyLattice");
+    		}
     		latticeModel.modifyLattice(startPt, endPt, pt);
     	}
     }
@@ -3091,80 +3107,70 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     {
     	if ( latticeModel != null )
     	{
+//    		saveVOIs("moveSelectedPoint");
+    		if ( !movingPickedPoint )
+    		{
+	    		movingPickedPoint = true;
+//	    		System.err.println("moveSelectedPoint");
+	            saveVOIs("moveSelectedPoint");
+    		}
     		latticeModel.moveSelectedPoint(direction);
-    	}
-    }
-
-    public void addInsertionPoint( Vector3f startPt, Vector3f endPt, Vector3f maxPt )
-    {
-    	if ( latticeModel != null )
-    	{
-    		latticeModel.addInsertionPoint(startPt, endPt, maxPt);
     	}
     }
     
 
-    private VOIVector leftRightMarkers = null;
     public void addLeftRightMarker( VOI textVOI )
     {       
-    	if ( leftRightMarkers == null )
+    	if ( pickedPoint != null )
     	{
-    		leftRightMarkers = new VOIVector();
-    	}
-    	if ( mouseSelection3D )
-    	{
-    		VOI closest = null;
-    		boolean foundSelected = false;
-    		for ( int i = 0; i < leftRightMarkers.size(); i++ )
+    		if ( !movingPickedPoint )
     		{
-    			VOI textTemp = leftRightMarkers.elementAt(i);
-    			if ( textTemp.isActive() )
-    			{
-    				foundSelected = true;
-    				closest = textTemp;
-    			}
+    			movingPickedPoint = true;
+//    			System.err.println("moveLeftRightMarker");
+    			saveVOIs("moveLeftRightMarker");
     		}
-    		if ( !foundSelected )
+    		for ( int i = 0; i < pickedPoint.getCurves().elementAt(0).size(); i++ )
     		{
-    			float minDist = Float.MAX_VALUE;
-    			for ( int i = 0; i < leftRightMarkers.size(); i++ )
-    			{
-    				VOI textTemp = leftRightMarkers.elementAt(i);
-    				float distance = textTemp.getCurves().elementAt(0).elementAt(0).distance( textVOI.getCurves().elementAt(0).elementAt(0) );
-    				if ( distance < minDist )
-    				{
-    					minDist = distance;
-    					if ( minDist < 3 )
-    					{
-    						closest = textTemp;
-    					}
-    				}
-    			}
+    			pickedPoint.getCurves().elementAt(0).elementAt(i).copy( textVOI.getCurves().elementAt(0).elementAt(i) );
     		}
-    		if ( closest != null )
-    		{
-//    			System.err.println( "Found " + ((VOIText)closest.getCurves().elementAt(0)).getText() );
-        		for ( int i = 0; i < leftRightMarkers.size(); i++ )
-        		{
-        			leftRightMarkers.elementAt(i).setActive(false);
-        		}
-        		closest.setActive(true);
-        		for ( int i = 0; i < closest.getCurves().elementAt(0).size(); i++ )
-        		{
-        			closest.getCurves().elementAt(0).elementAt(i).copy( textVOI.getCurves().elementAt(0).elementAt(i) );
-        		}
-        		closest.update();
-    		}
+    		pickedPoint.update();
     	}
     	else
     	{
-    		leftRightMarkers.add(textVOI);
-    		textVOI.setActive(true);
-//    		mouseSelection3D = true;
-    		ModelImage kActive = getActiveImage();
-    		if ( kActive != null )
+    		float minDist = Float.MAX_VALUE;
+    		int minIndex = -1;
+    		VOIVector markers = getActiveImage().getVOIs();
+    		for ( int i = 0; i < markers.size(); i++ )
     		{
-    			kActive.registerVOI(textVOI);
+    			VOI currentVOI = markers.elementAt(i);
+    			if ( currentVOI.getCurveType() == VOI.ANNOTATION )
+    			{
+    				VOIText textTemp = (VOIText) currentVOI.getCurves().elementAt(0);
+    				float distance = textTemp.elementAt(0).distance( textVOI.getCurves().elementAt(0).elementAt(0) );
+    				if ( distance < minDist )
+    				{
+    					minDist = distance;
+    					minIndex = i;
+    				}
+    			}
+    		}
+    		if ( minDist < 12 )
+    		{
+//    			System.err.println("selectLeftRightMarker");
+    			pickedPoint = markers.elementAt(minIndex);
+    		}
+    		else
+    		{
+//    			System.err.println( minDist + " " + minIndex );
+//    			System.err.println("addLeftRightMarker");
+    			saveVOIs("addLeftRightMarker");
+    			textVOI.setActive(true);
+    			ModelImage kActive = getActiveImage();
+    			if ( kActive != null )
+    			{
+    				kActive.registerVOI(textVOI);
+    			}
+    			pickedPoint = textVOI;
     		}
     	}
     }
@@ -5122,6 +5128,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         {
             redoVOIs();
         }
+        toolbarBuilder.getVOIUndoButton().setEnabled(true);
+        toolbarBuilder.getVOIRedoButton().setEnabled(!m_kRedoCommands.isEmpty());
     }
 
     private void redoVOIs()
@@ -5132,6 +5140,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
         m_kUndoList.add( getVOIState() );
         setVOIState( m_kRedoList.remove( m_kRedoList.size() - 1) );
+        if ( latticeModel != null )
+        {
+        	latticeModel.redo();
+        }
+        
         if ( imageStatList != null )
         {
             imageStatList.refreshVOIList(getActiveImage().getVOIs());
@@ -5140,6 +5153,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             m_kVOIDialog.updateVOIPanel(m_kCurrentVOIGroup, getActiveImage() );
         }
         updateDisplay();
+        pickedPoint = null;
     }
 
     /**
@@ -6352,6 +6366,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         {
             undoVOIs();
         }
+        toolbarBuilder.getVOIUndoButton().setEnabled(!m_kUndoCommands.isEmpty());
+        toolbarBuilder.getVOIRedoButton().setEnabled(true);
     }
 
     private void undoVOIs()
@@ -6362,6 +6378,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
         m_kRedoList.add( getVOIState() );
         setVOIState( m_kUndoList.remove( m_kUndoList.size() - 1) );
+        if ( latticeModel != null )
+        {
+        	latticeModel.undo();
+        }
+        
         if ( imageStatList != null )
         {
             imageStatList.refreshVOIList(getActiveImage().getVOIs());
@@ -6370,6 +6391,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             m_kVOIDialog.updateVOIPanel(m_kCurrentVOIGroup, getActiveImage() );
         }
         updateDisplay();
+        pickedPoint = null;
     }
 
     /**

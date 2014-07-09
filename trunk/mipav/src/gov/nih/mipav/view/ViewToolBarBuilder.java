@@ -109,6 +109,8 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
     protected ButtonGroup VOIGroup = new ButtonGroup();
 
     protected VOIColorButton voiColorButton = null;
+    protected JButton voiUndoButton = null;
+    protected JButton voiRedoButton = null;
     
     /** Vector to hold all toggle groups for VOI toggle (and custom toggle configurations)*/
     protected Vector<ButtonGroup> bgVector = new Vector<ButtonGroup>();
@@ -1006,8 +1008,10 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
 
         VOIToolBar.add(makeSeparator());
 
-        VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_UNDO));
-        VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_REDO));
+        voiUndoButton = buildButton(CustomUIBuilder.PARAM_VOI_UNDO);
+        VOIToolBar.add(voiUndoButton);
+        voiRedoButton = buildButton(CustomUIBuilder.PARAM_VOI_REDO);
+        VOIToolBar.add(voiRedoButton);
 
         // VOIToolBar.add( buildButton( "deleteVOI", "Delete selected contour", "delete" ) );
         VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_CUT));
@@ -1157,6 +1161,12 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
      */
     public VOIColorButton getVOIColorButton() {
     	return this.voiColorButton;
+    }
+    public JButton getVOIUndoButton() {
+    	return this.voiUndoButton;
+    }
+    public JButton getVOIRedoButton() {
+    	return this.voiRedoButton;
     }
     
     // *******************************************************************

@@ -954,9 +954,7 @@ public class ViewMenuBar {
                                         menuBuilder.buildCheckBoxMenuItem("Show Model", "showStraightenLattice", false),
                                         menuBuilder.buildMenuItem("Show Interpolated Model", "interpolateModel", 0, null,
                                             	false),
-                                        menuBuilder.buildMenuItem("Straighten (version 1)", "straightenLattice", 0, null,
-                                            	false),
-                                        menuBuilder.buildMenuItem("Straighten (version 2)", "straightenLattice2", 0, null,
+                                        menuBuilder.buildMenuItem("Straighten", "straightenLattice2", 0, null,
                                                 false),
                                         menuBuilder.buildMenuItem("Default Voxel Size", "voxelSize", 0, null,
                                         		false)

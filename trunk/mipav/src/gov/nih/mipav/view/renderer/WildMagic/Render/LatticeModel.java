@@ -93,7 +93,9 @@ public class LatticeModel {
 	private int DiameterBuffer = 0;
 	private int SampleLimit = 10;
 	private	float minRange = .025f;
-
+	private boolean movingPickedPoint = false;
+	private boolean showModel = false;
+	private boolean showExtendedModel = false;
 	
 	public LatticeModel( ModelImage imageA, ModelImage imageB, VOI lattice )
 	{
@@ -282,6 +284,17 @@ public class LatticeModel {
     	if ( showSelected != null )
     	{
     		imageA.unregisterVOI(showSelectedVOI);
+    	}
+    	VOIVector vois = imageA.getVOIs();
+    	for ( int i = vois.size() - 1; i >= 0; i-- )
+    	{
+    		VOI voi = vois.elementAt(i);
+    		String name = voi.getName();
+    		if ( name.equals("showSelected") )
+    		{
+//        		System.err.println( "clear3DSelection " + vois.elementAt(i).getName() );
+    			imageA.unregisterVOI(voi);
+    		}
     	}
     }
     
@@ -502,6 +515,7 @@ public class LatticeModel {
 	        boxBounds.add(box);
 		}
 		generateMasks( imageA, imageB, samplingPlanes, ellipseBounds, wormDiameters, 2*extent, false, false  );
+		showExtendedModel = true;
     }
     
     
@@ -852,6 +866,12 @@ public class LatticeModel {
     	{
     		pickedPoint.copy(pt);
         	updateLattice(false);
+    		if ( !movingPickedPoint )
+    		{
+	    		movingPickedPoint = true;
+//	    		System.err.println("moveLeftRightMarker");
+//	            saveVOIs("moveLeftRightMarker");
+    		}
         	return;
     	}
     	pickedPoint = null;
@@ -1075,11 +1095,13 @@ public class LatticeModel {
 		{
 			imageA.registerVOI(displayContours);
 	        imageA.notifyImageDisplayListeners();
+	        showModel = true;
 		}
 		else if ( (imageA.isRegistered( displayContours ) != -1) )
 		{
 			imageA.unregisterVOI(displayContours);
 	        imageA.notifyImageDisplayListeners();
+	        showModel = false;
 		}
 		
 	}
@@ -2498,7 +2520,7 @@ public class LatticeModel {
 		
 		length = centerSpline.GetLength(0, 1);
 		allTimes = new float[(int) (Math.ceil(length))];
-		
+		extent = -1;
 		for ( int i = 0; i < length; i++ )
 		{
 			float t = centerSpline.GetTime(i);
@@ -2925,6 +2947,83 @@ public class LatticeModel {
     	new ViewJFrameImage(output);
     	new ViewJFrameImage(original);
     	new ViewJFrameImage(transform);
+    }
+    
+    
+    public void undo()
+    {
+    	updateLinks();
+    }
+    
+    public void redo()
+    {
+    	updateLinks();
+    }
+    
+    private void updateLinks()
+    {
+		if ( latticeGrid != null )
+		{
+			latticeGrid.clear();
+		}
+		else
+		{
+			latticeGrid = new VOIVector();
+		}
+		
+    	VOIVector vois = imageA.getVOIs();
+    	for ( int i = 0; i < vois.size(); i++ )
+    	{
+    		VOI voi = vois.elementAt(i);
+    		String name = voi.getName();
+//    		System.err.println( vois.elementAt(i).getName() );
+    		if ( name.equals("lattice") )
+    		{
+    			lattice = voi;
+    			left = (VOIContour) lattice.getCurves().elementAt(0);
+    			right = (VOIContour) lattice.getCurves().elementAt(1);    		
+    		}
+    		else if ( name.equals("left line") )
+    		{
+    			leftLine = voi;
+    		}
+    		else if ( name.equals("right line") )
+    		{
+    			rightLine = voi;
+    		}
+    		else if ( name.equals("center line") )
+    		{
+    			centerLine = voi;
+    		}
+    		else if ( name.contains("pair_") )
+    		{
+    			latticeGrid.add(voi);
+    		}
+    		else if ( name.contains("wormContours") )
+    		{
+    			displayContours = voi;
+    		}
+    		else if ( name.contains("interpolatedContours") )
+    		{
+    			displayInterpolatedContours = voi;
+    		}
+    		else if ( name.equals("showSelected") )
+    		{
+    			showSelectedVOI = voi;
+//    			System.err.println("updateLinks showSelected ");
+    		}
+    	}
+    	clear3DSelection();
+    	if ( showSelected != null )
+    	{
+    		for (int i = 0; i < showSelected.length; i++ )
+    		{
+    			showSelected[i].dispose();
+    		}
+    		showSelected = null;
+    	}
+    	showSelectedVOI = null;
+    	updateLattice(true);
     }
     
     private void updateLattice( boolean rebuild )
