@@ -194,6 +194,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Hurst index", "Hurst", 0, null, false),
                         menuBuilder.buildMenuItem("Kernel regression", "kernelRegression", 0, null, false),
                         menuBuilder.buildMenuItem("Laplacian", null, 0, null, false),
+                        menuBuilder.buildMenuItem("Laws texture", "Laws", 0, null, false),
                         menuBuilder.buildMenuItem("Local normalization", null, 0, null, false),
                         menuBuilder.buildMenuItem("Mean", null, 0, null, false),
                         menuBuilder.buildMenuItem("Median", null, 0, null, false),
@@ -1094,6 +1095,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Haralick texture", false);
             menuBuilder.setMenuItemEnabled("Tamura texture", false);
             menuBuilder.setMenuItemEnabled("Hurst index", false);
+            menuBuilder.setMenuItemEnabled("Laws texture", false);
             menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", false);
             menuBuilder.setMenuItemEnabled("Pad slices to power of 2", false);
             menuBuilder.setMenuItemEnabled("Replace blanks with averages", false);
@@ -1362,6 +1364,7 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Haralick texture", true);
         menuBuilder.setMenuItemEnabled("Tamura texture", true);
         menuBuilder.setMenuItemEnabled("Hurst index", true);
+        menuBuilder.setMenuItemEnabled("Laws texture", true);
         menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", true);
         menuBuilder.setMenuItemEnabled("Pad slices to power of 2", true);
         menuBuilder.setMenuItemEnabled("Replace blanks with averages", true);
