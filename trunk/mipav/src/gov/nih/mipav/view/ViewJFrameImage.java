@@ -1542,6 +1542,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogReplaceValue(this, getActiveImage());
         } else if (command.equals("Haralick")) {
             new JDialogHaralickTexture(this, getActiveImage());
+        } else if (command.equals("Laws")) {
+            new JDialogLawsTexture(this, getActiveImage());
         } else if (command.equals("Tamura")) {
             new JDialogTamuraTexture(this, getActiveImage());
         } else if (command.equals("Hurst")) {
