@@ -27,6 +27,9 @@ import java.io.*;
 
 public class AlgorithmLawsTexture extends AlgorithmBase {
 	
+	 /** Red channel. */
+    private static final int RED_OFFSET = 1;
+	
 	/** Level 3 */
 	private static final int L3[] = new int[]{1, 2, 1};
 	
@@ -74,11 +77,21 @@ public class AlgorithmLawsTexture extends AlgorithmBase {
 	/** Size of square window must be 3, 5, or 7 */
 	private int windowSize = 5;
 	
-	public AlgorithmLawsTexture(ModelImage[] destImg, ModelImage srcImg, int windowSize) {
+	private int RGBOffset = RED_OFFSET;
+	
+	/**
+	 * 
+	 * @param destImg
+	 * @param srcImg
+	 * @param windowSize
+	 * @param RGBOffset
+	 */
+	public AlgorithmLawsTexture(ModelImage[] destImg, ModelImage srcImg, int windowSize,
+			int RGBOffset) {
 		super(null, srcImg);
         destImage = destImg;
         this.windowSize = windowSize;
-		
+		this.RGBOffset = RGBOffset;
 	}
 	
 	/**
@@ -135,6 +148,7 @@ public class AlgorithmLawsTexture extends AlgorithmBase {
         int y;
         int z;
         double sourceBuffer[];
+        float floatBuffer[];
         int xStart;
         int xEnd;
         int yStart;
@@ -155,7 +169,6 @@ public class AlgorithmLawsTexture extends AlgorithmBase {
         double energyBuffer[][];
         int finalIndex;
         int energyNum;
-        double sliceBuffer[];
         
         if (windowSize == 3) {
         	originalMaps = 9;
@@ -416,11 +429,21 @@ public class AlgorithmLawsTexture extends AlgorithmBase {
         energyYDim = yEnergyEnd - yStart + 1;
         energySize = energyXDim * energyYDim;
         energyBuffer = new double[finalMaps][energySize];
-        sliceBuffer = new double[sliceSize];
         
         for (z = 0; z < zDim; z++) {
+        	
             try {
-                srcImage.exportData(z*sliceSize, sliceSize, sourceBuffer);
+            	if (srcImage.isColorImage()) {
+                    floatBuffer = new float[sliceSize];
+                    srcImage.exportRGBData(RGBOffset, 4*z*sliceSize, sliceSize, floatBuffer);  
+                    for (i = 0; i < sliceSize; i++) {
+                        sourceBuffer[i] = (double)floatBuffer[i];
+                    }
+                    floatBuffer = null;
+                }
+                else {
+                    srcImage.exportData(z*sliceSize, sliceSize, sourceBuffer);
+                }     
             } catch (IOException error) {
                 MipavUtil.displayError("AlgorithmLawsTexture: IOException on srcImage.exportData(0,sliceSize,sourceBuffer)");
                 setCompleted(false);
@@ -485,14 +508,14 @@ public class AlgorithmLawsTexture extends AlgorithmBase {
             for (k = 0; k < finalMaps; k++) {
                 for (y = 0; y < energyYDim; y++) {
                     for (x = 0; x < energyXDim; x++) {
-                    	sliceBuffer[x + 2*windowHalf + (y + 2 * windowHalf) * xDim] = energyBuffer[k][x + y * energyXDim];
+                    	sourceBuffer[x + 2*windowHalf + (y + 2 * windowHalf) * xDim] = energyBuffer[k][x + y * energyXDim];
                     }
                 } // for (y = 0; y < energyYDim; y++)
                 try {
-                    destImage[k].importData(z*sliceSize, sliceBuffer, false);
+                    destImage[k].importData(z*sliceSize, sourceBuffer, false);
                 } catch (IOException error) {
                     MipavUtil.displayError("AlgorithmLawsTexture: IOException on destImage[" + k +
-                                           "].importData(0,sliceBuffer,false)");
+                                           "].importData(0,sourceBuffer,false)");
                     setCompleted(false);
     
                     return;
