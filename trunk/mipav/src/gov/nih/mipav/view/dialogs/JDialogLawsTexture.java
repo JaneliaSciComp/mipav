@@ -497,7 +497,7 @@ public class JDialogLawsTexture extends JDialogScriptableBase
         sizeGroup.add(threeButton);
         gbcScale.gridy++;
         scalePanel.add(threeButton, gbcScale); 
-        fiveButton = new JRadioButton("5 X 5", false);
+        fiveButton = new JRadioButton("5 X 5", true);
         fiveButton.setFont(serif12);
         fiveButton.setForeground(Color.black);
         sizeGroup.add(fiveButton);
