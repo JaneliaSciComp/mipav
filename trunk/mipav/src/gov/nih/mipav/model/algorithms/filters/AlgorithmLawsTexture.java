@@ -482,7 +482,7 @@ public class AlgorithmLawsTexture extends AlgorithmBase {
                 for (x = xStart; x <= xEnergyEnd; x++) {
                 	index = x + filterXDim * y;
                     for (i = 0, energyNum = 0; i < sqrtOriginalMaps; i++) {
-                    	for (j = i; j <= sqrtOriginalMaps; j++, energyNum++) {
+                    	for (j = i; j < sqrtOriginalMaps; j++, energyNum++) {
                     	    k = i * sqrtOriginalMaps + j;
                     	    sum = 0.0;
                     	    for (n = -windowHalf; n <= windowHalf; n++) {
