@@ -211,7 +211,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.21";
+    private static final String pluginVersion = "0.22";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -4954,7 +4954,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                 ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010", false));
                 // put in to skip erroneous values set in some TRACK-TBI Pilot CT data
-                if (ageVal.equalsIgnoreCase("135Y")) {
+                if (isValueSet(ageVal) && ageVal.equalsIgnoreCase("135Y")) {
                     ageVal = null;
                 }
                 siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
