@@ -1,28 +1,32 @@
 package gov.nih.mipav.view;
 
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
+
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.structures.ModelImage;
 
 import java.awt.*;
-import java.awt.image.*;
+import java.awt.image.FilteredImageSource;
+import java.awt.image.MemoryImageSource;
+
 
 /**
- * Preview image displayed when the user clicks on an image file in the
- * directory tree. For black and white, a default LUT is created. The image is
- * resized if the panel holding it is resized.
- *
- * @author   Neva Cherniavsky
- * @version  1.0
- * @see      ViewImageDirectory
+ * Preview image displayed when the user clicks on an image file in the directory tree. For black and white, a default
+ * LUT is created. The image is resized if the panel holding it is resized.
+ * 
+ * @author Neva Cherniavsky
+ * @version 1.0
+ * @see ViewImageDirectory
  */
 public class ViewJComponentPreviewImage extends ViewJComponentBase {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 5183033960229966439L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private int brightness; // offset ranging from -255 to 255 add to each
@@ -33,7 +37,7 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
                             // by which to multiply each red, green, and blue
 
     /** DOCUMENT ME! */
-    private int imageSize;
+    private final int imageSize;
 
     /** DOCUMENT ME! */
     private int imgHeight;
@@ -54,84 +58,82 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
     private int panelWidth;
 
     /** DOCUMENT ME! */
-    private PreviewImageContainer parent;
+    private final PreviewImageContainer parent;
 
-    /** PatientSlice interfaces with the ModelImage class to render the image
-     * w/LUT changes for this component. Slices are rendered in
-     * FileCoordinates. */
-    private PatientSlice m_kPatientSlice;
+    /**
+     * PatientSlice interfaces with the ModelImage class to render the image w/LUT changes for this component. Slices
+     * are rendered in FileCoordinates.
+     */
+    private final PatientSlice m_kPatientSlice;
 
     /** The model image this preview image is derived from. */
     private ModelImage image;
-    
+
     /** Overlay text to show on the image. */
     private String overlayText = null;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
-     * Creates new preview image from the model image. The extents will only
-     * be 2D. The parent is needed because of the order in which Java calls
-     * methods when a component is resized.
-     *
-     * @param  _image   Model image to create preview image from.
-     * @param  extents  X and Y dimensions of image
-     * @param  _parent  Frame that called this
+     * Creates new preview image from the model image. The extents will only be 2D. The parent is needed because of the
+     * order in which Java calls methods when a component is resized.
+     * 
+     * @param _image Model image to create preview image from.
+     * @param extents X and Y dimensions of image
+     * @param _parent Frame that called this
      */
-    public ViewJComponentPreviewImage(ModelImage _image, int[] extents,
-                                      PreviewImageContainer _parent) {
-        super( extents[0], extents[1], _image);
+    public ViewJComponentPreviewImage(final ModelImage _image, final int[] extents, final PreviewImageContainer _parent) {
+        super(extents[0], extents[1], _image);
         image = _image;
         overlayText = new String(image.getExtents()[0] + " x " + image.getExtents()[1]);
         for (int i = 2; i < image.getExtents().length; i++) {
-        	if (image.getExtents()[i] > 0) {
-        		overlayText += " x " + image.getExtents()[i];
-        	}
+            if (image.getExtents()[i] > 0) {
+                overlayText += " x " + image.getExtents()[i];
+            }
         }
-        
+
         imageSize = extents[0] * extents[1];
 
         paintBuffer = new int[imageSize];
         parent = _parent;
 
         /* create the slice renderer for this orientation: */
-        m_kPatientSlice = new PatientSlice( _image, null, null, null,
-                                            FileInfoBase.UNKNOWN_ORIENT );
+        m_kPatientSlice = new PatientSlice(_image, null, null, null, FileInfoBase.UNKNOWN_ORIENT);
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
-     * Creates the Java image to be displayed from the model image. Makes it
-     * from the appropriate slice.
-     *
-     * @param   slice  Slice of image to create java image from.
-     *
-     * @return  Flag indicating success or failure.
+     * Creates the Java image to be displayed from the model image. Makes it from the appropriate slice.
+     * 
+     * @param slice Slice of image to create java image from.
+     * 
+     * @return Flag indicating success or failure.
      */
-    public boolean createImg(int slice) {
-        m_kPatientSlice.updateSlice( slice );
-        if ( m_kPatientSlice.showUsingOrientation( 0, paintBuffer,
-                                                   null, true,
-                                                   false ) )
-        {
+    public boolean createImg(final int slice) {
+        m_kPatientSlice.updateSlice(slice);
+        if (m_kPatientSlice.showUsingOrientation(0, paintBuffer, null, true, false)) {
             importImage(paintBuffer);
         }
         return true;
     }
 
-
     /**
      * Sets buffers to null.
-     *
-     * @param  gc  Flag indicating if the garbage collector should be called.
+     * 
+     * @param gc Flag indicating if the garbage collector should be called.
      */
-    public void dispose(boolean gc) {
+    @Override
+    public void dispose(final boolean gc) {
         this.disposeLocal();
 
-        image.disposeLocal(gc);
-        image = null;
-        
+        if (image != null) {
+            image.disposeLocal(gc);
+            image = null;
+        }
+
         paintBuffer = null;
         memImage = null;
 
@@ -142,19 +144,19 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
 
     /**
      * Gets the size of the image (width * height).
-     *
-     * @return  the size of the image
+     * 
+     * @return the size of the image
      */
     public int getImageSize() {
         return this.imageSize;
     }
 
     /**
-     * Size set to object size. Need to get real panel size first from the
-     * parent, then reset the image size.
-     *
-     * @return  Dimension with the size
+     * Size set to object size. Need to get real panel size first from the parent, then reset the image size.
+     * 
+     * @return Dimension with the size
      */
+    @Override
     public Dimension getPreferredSize() {
         Dimension size = null;
         size = parent.getPanelSize();
@@ -162,7 +164,7 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
 
         try {
             return new Dimension(imgWidth, imgHeight);
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentBase.getPreferredSize");
 
@@ -171,17 +173,15 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
     }
 
     /**
-     * Creates a Image object form an array of ints that have been formatted
-     * (packed) properly (i.e. aRGB)
-     *
-     * @param data Data (image) to be displayed that has been formatted
-     * (packed) properly (i.e. aRGB)
-     * @param  haveFilter  DOCUMENT ME!
+     * Creates a Image object form an array of ints that have been formatted (packed) properly (i.e. aRGB)
+     * 
+     * @param data Data (image) to be displayed that has been formatted (packed) properly (i.e. aRGB)
+     * @param haveFilter DOCUMENT ME!
      */
-    public void importImage(int[] data, boolean haveFilter) {
+    public void importImage(final int[] data, final boolean haveFilter) {
 
         // If the MemoryImageSource and createImage steps are separated, then
-        // animate displays only the last image.  createImage must be executed
+        // animate displays only the last image. createImage must be executed
         // right after MemoryImageSource
         if (data != null) {
             memImage = null;
@@ -194,7 +194,7 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
                 } else {
                     img = Toolkit.getDefaultToolkit().createImage(memImage);
                 }
-            } catch (OutOfMemoryError error) {
+            } catch (final OutOfMemoryError error) {
                 System.gc();
                 MipavUtil.displayError("Out of memory: ComponentBase.importImage.");
             }
@@ -204,19 +204,20 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
 
     /**
      * Paints the component using the previous set image width and height.
-     *
-     * @param  g  Graphics to draw image in.
+     * 
+     * @param g Graphics to draw image in.
      */
-    public void paintComponent(Graphics g) {
+    @Override
+    public void paintComponent(final Graphics g) {
         g.setClip(getVisibleRect());
         g.drawImage(img, 0, 0, imgWidth, imgHeight, 0, 0, img.getWidth(this), img.getHeight(this), null);
         if (overlayText != null) {
-        	g.setFont(MipavUtil.font10);
-        	g.setColor(Color.white);
-        	FontMetrics fm = g.getFontMetrics();
-        	int x = imgWidth - fm.stringWidth(overlayText) - 5;
-        	int y = fm.getHeight();
-        	g.drawString(overlayText, x, y);
+            g.setFont(MipavUtil.font10);
+            g.setColor(Color.white);
+            final FontMetrics fm = g.getFontMetrics();
+            final int x = imgWidth - fm.stringWidth(overlayText) - 5;
+            final int y = fm.getHeight();
+            g.drawString(overlayText, x, y);
         }
     }
 
@@ -228,48 +229,48 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
     public ModelImage getImageA() {
         return image;
     }
-    
+
     /**
-     * Sets component's image A. 
-     *
-     * @param  image  Image to set to.
+     * Sets component's image A.
+     * 
+     * @param image Image to set to.
      */
-    public void setImageA(ModelImage image) {
+    public void setImageA(final ModelImage image) {
         this.image = image;
         this.m_kPatientSlice.setImageA(image);
     }
-    
+
     /**
      * Sets the size of the image to be painted.
-     *
-     * @param  width   Width of panel where image will be placed.
-     * @param  height  Height of panel where image will be placed.
+     * 
+     * @param width Width of panel where image will be placed.
+     * @param height Height of panel where image will be placed.
      */
-    public void setImgSize(int width, int height) {
+    public void setImgSize(final int width, final int height) {
         this.panelWidth = width - 10;
         this.panelHeight = height - 10;
 
-        int w = img.getWidth(this);
-        int h = img.getHeight(this);
+        final int w = img.getWidth(this);
+        final int h = img.getHeight(this);
 
-        float fracX = (float) panelWidth / w;
+        final float fracX = (float) panelWidth / w;
 
         // find fraction y such that height*y = 200
-        float fracY = (float) panelHeight / h;
+        final float fracY = (float) panelHeight / h;
 
         // min(fractX, fractY) will size image within 400 x 200 rectangle
-        float min = (fracX < fracY) ? fracX : fracY;
+        final float min = (fracX < fracY) ? fracX : fracY;
         imgWidth = Math.round(min * w);
         imgHeight = Math.round(min * h);
     }
 
     /**
      * Method to set the brightness and contrast of the animate slice.
-     *
-     * @param  brightness  int going from -255 to 255
-     * @param  contrast    float scale factor
+     * 
+     * @param brightness int going from -255 to 255
+     * @param contrast float scale factor
      */
-    public void setSliceBrightness(int brightness, float contrast) {
+    public void setSliceBrightness(final int brightness, final float contrast) {
         this.brightness = brightness;
         this.contrast = contrast;
         importImage(paintBuffer, true);
