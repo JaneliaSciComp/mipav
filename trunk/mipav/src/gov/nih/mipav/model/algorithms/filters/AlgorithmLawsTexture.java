@@ -226,7 +226,7 @@ public class AlgorithmLawsTexture extends AlgorithmBase {
         	            destImage[finalIndex++].setImageName(srcImage.getImageName() + "_" + label);
         	        }
         	    } // for (j = 0; j <= 2; j++, index++)
-        	} // for (i = 0; i <= 2; i++)
+        	} // for (i = 0, index = 0, finalIndex = 0; i <= 2; i++)
         } // if (windowSize == 3)
         else if (windowSize == 5) {
         	originalMaps = 25;
@@ -308,7 +308,7 @@ public class AlgorithmLawsTexture extends AlgorithmBase {
         	            destImage[finalIndex++].setImageName(srcImage.getImageName() + "_" + label);
         	        }
         	    } // for (j = 0; j <= 4; j++, index++)
-        	} // for (i = 0; i <= 4; i++)	
+        	} // for (i = 0, index = 0, finalIndex = 0; i <= 4; i++)	
         } // else if (windowSize == 5)
         else { // windowSize == 7
         	originalMaps = 36;
@@ -341,7 +341,7 @@ public class AlgorithmLawsTexture extends AlgorithmBase {
         	    	for (j = 0; j <= 6; j++) {
         	    		rowVal[j] = W7[j];
         	    	}
-        	    	rowString = new String("W5");
+        	    	rowString = new String("W7");
         	    }
         	    else if (i == 4) {
         	    	for (j = 0; j <= 6; j++) {
@@ -401,8 +401,8 @@ public class AlgorithmLawsTexture extends AlgorithmBase {
         	        	label = new String(rowString+colString);
         	            destImage[finalIndex++].setImageName(srcImage.getImageName() + "_" + label);
         	        }
-        	    } // for (j = 0; j <= 6; j++, index++)
-        	} // for (i = 0; i <= 6; i++)		
+        	    } // for (j = 0; j <= 5; j++, index++)
+        	} // for (i = 0, index = 0, finalIndex = 0; i <= 5; i++)		
         } // else windowSize == 7
         
         if (srcImage.getNDims() == 2) {
@@ -445,7 +445,7 @@ public class AlgorithmLawsTexture extends AlgorithmBase {
                     srcImage.exportData(z*sliceSize, sliceSize, sourceBuffer);
                 }     
             } catch (IOException error) {
-                MipavUtil.displayError("AlgorithmLawsTexture: IOException on srcImage.exportData(0,sliceSize,sourceBuffer)");
+                MipavUtil.displayError("AlgorithmLawsTexture: IOException on srcImage.exportData(z*sliceSize,sliceSize,sourceBuffer)");
                 setCompleted(false);
 
                 return;
