@@ -71,6 +71,11 @@ public class JDialogMemoryAllocation extends JDialogBase {
      */
     private static final String maxHeapLAX = "lax.nl.java.option.java.heap.size.max=";
 
+    /**
+     * Instead of setting the init heap to the max, instead use 300M.
+     */
+    private static final String DEFAULT_INIT_HEAP = "300";
+
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
 
@@ -473,9 +478,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
         } else if (source == cancelButton) { // cancel button
             dispose();
         } else if (source == usePreferencesButton) {
-
-            // we are now setting the init to be the same as the Max
-            initHeapText.setText(Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE));
+            // initHeapText.setText(Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE));
+            initHeapText.setText(DEFAULT_INIT_HEAP);
             maxHeapText.setText(Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE));
             OKButton.doClick();
         } else if (ae.getActionCommand().equals("Help")) {
