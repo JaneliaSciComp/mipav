@@ -211,7 +211,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.20";
+    private static final String pluginVersion = "0.21";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -629,6 +629,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             final ViewJProgressBar progressBar = new ViewJProgressBar("Reading CSV file", "Reading CSV file...", 0, 100, false);
             progressBar.setVisible(true);
             progressBar.updateValue(5);
+            final long csvReadStartTime = System.currentTimeMillis();
             final int progressInc = 95 / recordList.size();
             int i = 1;
             for (final ArrayList<ArrayList<String>> record : recordList) {
@@ -637,6 +638,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 progressBar.updateValue(progressBar.getValue() + progressInc);
                 i++;
             }
+            final long csvReadEndTime = System.currentTimeMillis();
+            System.out.println("CSV input read took " + ( (csvReadEndTime - csvReadStartTime) / 1000) + " seconds (" + recordList.size() + " records)");
 
             progressBar.dispose();
 
@@ -2195,12 +2198,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     /**
      * Tries to convert a MIPAV/DICOM modality string to the equivalent BRICS CDE value. Still needs a good bit of
-     * work/addtions/integration with MR sequence type.
+     * work/additions/integration with MR sequence type.
      * 
      * @param mipavModality The MIPAV modality description string.
+     * @param contrastUsed Whether a contrast agent was used in the scan.
      * @return The BRICS ImgModltyTyp CDE value, or an empty string if no matching modality was found.
      */
-    private static final String convertModalityToBRICS(final String mipavModality) {
+    private static final String convertModalityToBRICS(final String mipavModality, final boolean contrastUsed) {
         if (mipavModality.equalsIgnoreCase("Unknown Modality")) {
             return "";
         } else if (mipavModality.equalsIgnoreCase("Biomagnetic Imaging")) {
@@ -2210,7 +2214,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         } else if (mipavModality.equalsIgnoreCase("Computed Radiography")) {
             return "";
         } else if (mipavModality.equalsIgnoreCase("Computed Tomography")) {
-            return "Non-contrast CT";
+            if (contrastUsed) {
+                return "Contrast CT";
+            } else {
+                return "Non-contrast CT";
+            }
         } else if (mipavModality.equalsIgnoreCase("Duplex Doppler")) {
             return "";
         } else if (mipavModality.equalsIgnoreCase("Diaphanography")) {
@@ -2230,7 +2238,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         } else if (mipavModality.equalsIgnoreCase("Mammography")) {
             return "";
         } else if (mipavModality.equalsIgnoreCase("Magnetic Resonance")) {
-            return "MRI";
+            if (contrastUsed) {
+                return "Contrast MRI";
+            } else {
+                return "MRI";
+            }
         } else if (mipavModality.equalsIgnoreCase("Magnetic Resonance Spectroscopy")) {
             return "";
         } else if (mipavModality.equalsIgnoreCase("Nuclear Medicine")) {
@@ -2441,23 +2453,22 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      *         format, return an empty string.
      */
     private static final String convertDicomAgeToBRICS(final String dicomAge) {
-        final String temp = dicomAge.substring(0, dicomAge.length() - 6);
+        final String num = dicomAge.substring(0, dicomAge.length() - 1);
+        final String type = dicomAge.substring(dicomAge.length() - 1, dicomAge.length());
 
-        if (dicomAge.contains("D")) {
-            return Double.toString(Integer.parseInt(temp) / 30.4166666667);
-        } else if (dicomAge.contains("W")) {
-            return Double.toString(Integer.parseInt(temp) / 4.34523809524);
-        } else if (dicomAge.contains("M")) {
-            return temp;
-        } else if (dicomAge.contains("Y")) {
-            return Double.toString(Integer.parseInt(temp) * 12);
+        if (type.equalsIgnoreCase("D")) {
+            return Integer.toString((int) (Integer.parseInt(num) / 30.4166666667));
+        } else if (type.equalsIgnoreCase("W")) {
+            return Integer.toString((int) (Integer.parseInt(num) / 4.34523809524));
+        } else if (type.equalsIgnoreCase("M")) {
+            return Integer.valueOf(num).toString();
+        } else if (type.equalsIgnoreCase("Y")) {
+            return Integer.toString(Integer.parseInt(num) * 12);
         }
 
         return "";
     }
 
-    // TODO: new other specify system: if not freeform DE, put the specified value into the deNameWithoutType + "OTH"
-    // DE, which should be next in position in the form structure
     private static final void setElementComponentValue(final DataElementValue deVal, final String value) {
         if (value != null && !value.equals("")) {
             final JComponent comp = deVal.getComp();
@@ -2595,6 +2606,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      */
     private static final boolean isSisterField(final DataElementValue deVal) {
         if (deVal.getName().endsWith(ELEM_OTHER_SPECIFY_SUFFIX) || deVal.getName().endsWith(ELEM_YES_SPECIFY_SUFFIX)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static final boolean isValueSet(final String val) {
+        if (val != null && !val.trim().equals("")) {
             return true;
         }
 
@@ -3223,8 +3242,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         private final ArrayList<ArrayList<String>> record;
 
-        private final String[] unchangableElements = new String[] {IMG_HASH_CODE_ELEMENT_NAME, "ImgDimensionTyp", "ImgDim1ExtentVal", "ImgDim2ExtentVal",
-                "ImgDim3ExtentVal", "ImgDim4ExtentVal", "ImgDim5ExtentVal", IMG_FILE_ELEMENT_NAME, IMG_PREVIEW_ELEMENT_NAME};
+        private final String[] unchangableElements = new String[] {IMG_HASH_CODE_ELEMENT_NAME, IMG_FILE_ELEMENT_NAME, IMG_PREVIEW_ELEMENT_NAME};
 
         private String currFile;
 
@@ -3383,9 +3401,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
         }
 
-        // TODO: new other specify system: if not freeform DE, put the specified value into the deNameWithoutType +
-        // "OTH"
-        // DE, which should be next in position in the form structure
         private void populateFieldsFromCSV(final FormStructureData fsData, final ArrayList<ArrayList<String>> record) {
             if (isImagingStructure(dataStructureName)) {
                 // first check to see if main image file was supplied in the csv
@@ -3783,7 +3798,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                 addedPreviewImage = true;
 
-                // TODO: generate thumbnail image and retain path in ImgFileInfo
                 final ModelImage thumbnailImage = createThumbnailImage(srcImage);
 
                 if (launchedFromInProcessState) {
@@ -4263,14 +4277,27 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             final int[] units = img.getUnitsOfMeasure();
             final int exts[] = img.getExtents();
             final int nDims = img.getNDims();
-            final int modality = img.getFileInfo(0).getModality();
-            final String modalityString = FileInfoBase.getModalityStr(modality);
+            int modality = img.getFileInfo(0).getModality();
+            String modalityString = FileInfoBase.getModalityStr(modality);
             final float sliceThickness = img.getFileInfo(0).getSliceThickness();
             final int orient = img.getFileInfo(0).getImageOrientation();
             final String orientation = FileInfoBase.getImageOrientationStr(orient);
 
             final int fileFormatInt = img.getFileInfo(0).getFileFormat();
             final String fileFormatString = FileUtility.getFileTypeStr(fileFormatInt);
+
+            // if no modality, try to guess from structure being used
+            if (modality == FileInfoBase.UNKNOWN_MODALITY) {
+                final String upperStructureName = dataStructureName.toUpperCase();
+                if (upperStructureName.endsWith("IMAGINGMR")) {
+                    modality = FileInfoBase.MAGNETIC_RESONANCE;
+                } else if (upperStructureName.endsWith("IMAGINGCT")) {
+                    modality = FileInfoBase.COMPUTED_TOMOGRAPHY;
+                } else if (upperStructureName.endsWith("IMAGINGDIFFUSION")) {
+                    modality = FileInfoBase.MAGNETIC_RESONANCE;
+                }
+                modalityString = FileInfoBase.getModalityStr(modality);
+            }
 
             final ArrayList<String> csvFList = new ArrayList<String>();
             final ArrayList<String> csvPList = new ArrayList<String>();
@@ -4320,6 +4347,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             String contrastDose = null;
             String contrastRate = null;
             String contrastUsedInd = null;
+            boolean contrastUsed = false;
 
             String ctKVP = null;
             String ctMA = null;
@@ -4327,7 +4355,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             if (fileFormatString.equalsIgnoreCase("dicom")) {
                 final FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
 
-                ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010"));
+                ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010", false));
+                // put in to skip erroneous values set in some TRACK-TBI Pilot CT data
+                if (ageVal.equalsIgnoreCase("135Y")) {
+                    ageVal = null;
+                }
                 siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
                 visitDate = convertDateToISOFormat((String) (fileInfoDicom.getTagTable().getValue("0008,0020")));
                 visitTime = (String) (fileInfoDicom.getTagTable().getValue("0008,0030"));
@@ -4348,19 +4380,23 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                 contrastAgent = (String) (fileInfoDicom.getTagTable().getValue("0018,0010"));
                 contrastMethod = (String) (fileInfoDicom.getTagTable().getValue("0018,1040"));
-                if (contrastMethod != null && contrastMethod.equalsIgnoreCase("IV")) {
-                    contrastMethod = "Infusion";
+                if (isValueSet(contrastMethod)) {
+                    // TODO
+                    System.err.println(patientName + "\tContrast route: " + contrastMethod);
+                    if (contrastMethod.equalsIgnoreCase("IV") || contrastMethod.equalsIgnoreCase("Oral & IV")) {
+                        contrastMethod = "Infusion";
+                    }
                 }
                 contrastTime = (String) (fileInfoDicom.getTagTable().getValue("0018,1042"));
-                if (contrastTime != null && visitDate != null) {
+                if (isValueSet(contrastTime) && isValueSet(visitDate)) {
                     contrastTime = convertDateTimeToISOFormat(visitDate, contrastTime);
                 }
                 contrastDose = (String) (fileInfoDicom.getTagTable().getValue("0018,1044"));
                 contrastRate = (String) (fileInfoDicom.getTagTable().getValue("0018,1046"));
 
-                if (contrastAgent != null && !contrastAgent.equals("") && contrastMethod != null && contrastTime != null && contrastDose != null
-                        && contrastRate != null) {
+                if (isValueSet(contrastAgent) || isValueSet(contrastMethod) || isValueSet(contrastTime) || isValueSet(contrastDose) || isValueSet(contrastRate)) {
                     contrastUsedInd = "Yes";
+                    contrastUsed = true;
                 }
 
                 if (modalityString.equalsIgnoreCase("magnetic resonance")) {
@@ -4400,116 +4436,132 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                 if ( !repeatValues.get(i).trim().equals("")) {
                     // TODO: switch to helper method - checkElementDescrepancy
-                    if (csvFieldNames.get(i).equalsIgnoreCase("ImgDimensionTyp")) {
+                    if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDimensionTyp")) {
                         if ( !repeatValues.get(i).trim().equals(String.valueOf(nDims) + "D") && String.valueOf(nDims) != null) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(nDims));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgDim1ExtentVal") && String.valueOf(exts[0]) != null) {
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim1ExtentVal")
+                            && String.valueOf(exts[0]) != null) {
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == exts[0])) {
 
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(exts[0]));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgDim2ExtentVal") && String.valueOf(exts[1]) != null) {
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim2ExtentVal")
+                            && String.valueOf(exts[1]) != null) {
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == exts[1])) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(exts[1]));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgDim3ExtentVal") && String.valueOf(exts[2]) != null) {
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim3ExtentVal")
+                            && String.valueOf(exts[2]) != null) {
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == exts[2])) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(exts[2]));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgDim4ExtentVal") && String.valueOf(exts[3]) != null) {
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim4ExtentVal")
+                            && String.valueOf(exts[3]) != null) {
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == exts[3])) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(exts[3]));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgDim5ExtentVal") && String.valueOf(exts[4]) != null) {
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim5ExtentVal")
+                            && String.valueOf(exts[4]) != null) {
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == exts[4])) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(exts[4]));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgDim1UoMVal") && Unit.getUnitFromLegacyNum(units[0]) != null) {
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim1UoMVal")
+                            && Unit.getUnitFromLegacyNum(units[0]) != null) {
                         if ( !repeatValues.get(i).trim().equals(Unit.getUnitFromLegacyNum(units[0]).toString())) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(Unit.getUnitFromLegacyNum(units[0]).toString());
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgDim2UoMVal") && Unit.getUnitFromLegacyNum(units[1]) != null) {
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim2UoMVal")
+                            && Unit.getUnitFromLegacyNum(units[1]) != null) {
                         if ( !repeatValues.get(i).trim().equals(Unit.getUnitFromLegacyNum(units[1]).toString())) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(Unit.getUnitFromLegacyNum(units[1]).toString());
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgDim3UoMVal") && Unit.getUnitFromLegacyNum(units[2]) != null) {
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim3UoMVal")
+                            && Unit.getUnitFromLegacyNum(units[2]) != null) {
                         if ( !repeatValues.get(i).trim().equals(Unit.getUnitFromLegacyNum(units[2]).toString())) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(Unit.getUnitFromLegacyNum(units[2]).toString());
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgDim4UoMVal") && Unit.getUnitFromLegacyNum(units[3]) != null) {
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim4UoMVal")
+                            && Unit.getUnitFromLegacyNum(units[3]) != null) {
                         if ( !repeatValues.get(i).trim().equals(Unit.getUnitFromLegacyNum(units[3]).toString())) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(Unit.getUnitFromLegacyNum(units[3]).toString());
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgDim5UoMVal") && Unit.getUnitFromLegacyNum(units[4]) != null) {
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim5UoMVal")
+                            && Unit.getUnitFromLegacyNum(units[4]) != null) {
                         if ( !repeatValues.get(i).trim().equals(Unit.getUnitFromLegacyNum(units[4]).toString())) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(Unit.getUnitFromLegacyNum(units[4]).toString());
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgDim1ResolVal") && String.valueOf(res[0]) != null) {
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim1ResolVal")
+                            && String.valueOf(res[0]) != null) {
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == res[0])) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(res[0]));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgDim2ResolVal") && String.valueOf(res[1]) != null) {
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim2ResolVal")
+                            && String.valueOf(res[1]) != null) {
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == res[1])) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(res[1]));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgDim3ResolVal") && String.valueOf(res[2]) != null) {
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim3ResolVal")
+                            && String.valueOf(res[2]) != null) {
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == res[2])) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(res[2]));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgDim4ResolVal") && String.valueOf(res[3]) != null) {
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim4ResolVal")
+                            && String.valueOf(res[3]) != null) {
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == res[3])) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(res[3]));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgDim5ResolVal") && String.valueOf(res[4]) != null) {
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim5ResolVal")
+                            && String.valueOf(res[4]) != null) {
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == res[4])) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(res[4]));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgModltyTyp") && modalityString != null) {
-                        if ( !repeatValues.get(i).trim().equals(convertModalityToBRICS(modalityString))) {
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgModltyTyp") && modalityString != null) {
+                        if ( !repeatValues.get(i).trim().equals(convertModalityToBRICS(modalityString, contrastUsed))) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
-                            headerList.add(convertModalityToBRICS(modalityString));
+                            headerList.add(convertModalityToBRICS(modalityString, contrastUsed));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgSliceThicknessVal") && String.valueOf(sliceThickness) != null) {
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgSliceThicknessVal")
+                            && String.valueOf(sliceThickness) != null) {
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == sliceThickness)) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(sliceThickness));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgSliceOrientTyp") && orientation != null) {
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgSliceOrientTyp") && orientation != null) {
                         if ( !repeatValues.get(i).trim().equals(orientation)) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
@@ -4518,7 +4570,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     }
 
                     if (fileFormatString.equalsIgnoreCase("dicom")) {
-                        if (csvFieldNames.get(i).equalsIgnoreCase("AgeVal") && ageVal != null) {
+                        if (csvFieldNames.get(i).equalsIgnoreCase("Main.AgeVal") && ageVal != null) {
                             final String ageInMonths = convertDicomAgeToBRICS(ageVal);
 
                             if ( !repeatValues.get(i).trim().equals(ageInMonths)) {
@@ -4526,80 +4578,89 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 csvPList.add(repeatValues.get(i));
                                 headerList.add(ageInMonths);
                             }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("AgeYrs") && ageVal != null) {
-                            final String ageInYears = String.valueOf(Float.valueOf(convertDicomAgeToBRICS(ageVal)) / 12);
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Main.AgeYrs") && ageVal != null) {
+                            final String ageInYears = String.valueOf(Integer.valueOf(convertDicomAgeToBRICS(ageVal)) / 12);
                             if ( !repeatValues.get(i).trim().equals(ageInYears)) {
                                 csvFList.add(csvFieldNames.get(i));
                                 csvPList.add(repeatValues.get(i));
                                 headerList.add(ageInYears);
                             }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("visitDate") && !visitDate.equals("")) {
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Main.VisitDate") && !visitDate.equals("")) {
                             if ( !repeatValues.get(i).trim().equals(visitDate)) {
                                 csvFList.add(csvFieldNames.get(i));
                                 csvPList.add(repeatValues.get(i));
                                 headerList.add(visitDate);
                             }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("SiteName") && !siteName.equals("")) {
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Main.SiteName") && !siteName.equals("")) {
                             if ( !repeatValues.get(i).trim().equals(siteName)) {
                                 csvFList.add(csvFieldNames.get(i));
                                 csvPList.add(repeatValues.get(i));
                                 headerList.add(siteName);
                             }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgStdyDateTime") && ( !visitDate.equals("") || !visitTime.equals(""))) {
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgStdyDateTime")
+                                && ( !visitDate.equals("") || !visitTime.equals(""))) {
                             if ( !repeatValues.get(i).trim().equals(convertDateTimeToISOFormat(visitDate, visitTime))) {
                                 csvFList.add(csvFieldNames.get(i));
                                 csvPList.add(repeatValues.get(i));
                                 headerList.add(convertDateTimeToISOFormat(visitDate, visitTime));
                             }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgSliceOverSampVal") && !sliceOversample.equals("")) {
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgSliceOverSampVal")
+                                && !sliceOversample.equals("")) {
                             if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == (Float.parseFloat(sliceOversample)))) {
                                 csvFList.add(csvFieldNames.get(i));
                                 csvPList.add(repeatValues.get(i));
                                 headerList.add(sliceOversample);
                             }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgGapBetwnSlicesMeasr") && !gap.equals("")) {
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgGapBetwnSlicesMeasr") && !gap.equals("")) {
                             if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == (Float.parseFloat(gap)))) {
                                 csvFList.add(csvFieldNames.get(i));
                                 csvPList.add(repeatValues.get(i));
                                 headerList.add(gap);
                             }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgAntmicSite") && !bodyPart.equals("")) {
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgAntmicSite") && !bodyPart.equals("")) {
                             if ( !repeatValues.get(i).trim().equals(bodyPart)) {
                                 csvFList.add(csvFieldNames.get(i));
                                 csvPList.add(repeatValues.get(i));
                                 headerList.add(bodyPart);
                             }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgFOVMeasrDescTxt") && !fieldOfView.equals("")) {
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgFOVMeasrDescTxt")
+                                && !fieldOfView.equals("")) {
                             if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == (Float.parseFloat(fieldOfView)))) {
                                 csvFList.add(csvFieldNames.get(i));
                                 csvPList.add(repeatValues.get(i));
                                 headerList.add(fieldOfView);
                             }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgScannerManufName") && !manufacturer.equals("")) {
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgScannerManufName") && !manufacturer.equals("")) {
                             if ( !convertManufNameToBRICS(manufacturer).equals(repeatValues.get(i).trim())) {
                                 csvFList.add(csvFieldNames.get(i));
                                 csvPList.add(repeatValues.get(i));
                                 headerList.add(convertManufNameToBRICS(manufacturer));
                             }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgScannerSftwrVrsnNum") && softwareVersion != null) {
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgScannerSftwrVrsnNum") && softwareVersion != null) {
                             if ( !repeatValues.get(i).trim().equals(softwareVersion)) {
                                 csvFList.add(csvFieldNames.get(i));
                                 csvPList.add(repeatValues.get(i));
                                 headerList.add(softwareVersion);
                             }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgHeadPostnTxt") && !patientPosition.equals("")) {
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgHeadPostnTxt") && !patientPosition.equals("")) {
                             if ( !repeatValues.get(i).trim().equals(patientPosition)) {
                                 csvFList.add(csvFieldNames.get(i));
                                 csvPList.add(repeatValues.get(i));
                                 headerList.add(patientPosition);
                             }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgScannerModelName") && !scannerModel.equals("")) {
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgScannerModelName") && !scannerModel.equals("")) {
                             if ( !repeatValues.get(i).trim().equals(convertModelNameToBRICS(scannerModel))) {
                                 csvFList.add(csvFieldNames.get(i));
                                 csvPList.add(repeatValues.get(i));
                                 headerList.add(convertModelNameToBRICS(scannerModel));
                             }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("GUID")) {
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgBandwidthVal") && !bandwidth.equals("")) {
+                            if ( !repeatValues.get(i).trim().equals(bandwidth)) {
+                                csvFList.add(csvFieldNames.get(i));
+                                csvPList.add(repeatValues.get(i));
+                                headerList.add(bandwidth);
+                            }
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Main.GUID")) {
                             if (patientID != null && isGuid(patientID)) {
                                 if ( !repeatValues.get(i).trim().equals(patientID)) {
                                     csvFList.add(csvFieldNames.get(i));
@@ -4613,37 +4674,43 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     headerList.add(patientID);
                                 }
                             }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgContrastAgentUsedInd") && contrastUsedInd != null && !contrastUsedInd.equals("")) {
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgContrastAgentUsedInd") && contrastUsedInd != null
+                                && !contrastUsedInd.equals("")) {
                             if ( !repeatValues.get(i).trim().equals(contrastUsedInd)) {
                                 csvFList.add(csvFieldNames.get(i));
                                 csvPList.add(repeatValues.get(i));
                                 headerList.add(contrastUsedInd);
                             }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgContrastAgentName") && contrastAgent != null && !contrastAgent.equals("")) {
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgContrastAgentName") && contrastAgent != null
+                                && !contrastAgent.equals("")) {
                             if ( !repeatValues.get(i).trim().equals(contrastAgent)) {
                                 csvFList.add(csvFieldNames.get(i));
                                 csvPList.add(repeatValues.get(i));
                                 headerList.add(contrastAgent);
                             }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgContrastAgentMethodTyp") && contrastAgent != null && !contrastAgent.equals("")) {
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgContrastAgentMethodTyp") && contrastAgent != null
+                                && !contrastAgent.equals("")) {
                             if ( !repeatValues.get(i).trim().equals(contrastAgent)) {
                                 csvFList.add(csvFieldNames.get(i));
                                 csvPList.add(repeatValues.get(i));
                                 headerList.add(contrastAgent);
                             }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgContrastAgentInjctnTime") && contrastTime != null && !contrastTime.equals("")) {
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgContrastAgentInjctnTime") && contrastTime != null
+                                && !contrastTime.equals("")) {
                             if ( !repeatValues.get(i).trim().equals(contrastTime)) {
                                 csvFList.add(csvFieldNames.get(i));
                                 csvPList.add(repeatValues.get(i));
                                 headerList.add(contrastTime);
                             }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgContrastAgentDose") && contrastDose != null && !contrastDose.equals("")) {
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgContrastAgentDose") && contrastDose != null
+                                && !contrastDose.equals("")) {
                             if ( !repeatValues.get(i).trim().equals(contrastDose)) {
                                 csvFList.add(csvFieldNames.get(i));
                                 csvPList.add(repeatValues.get(i));
                                 headerList.add(contrastDose);
                             }
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgContrastAgentRate") && contrastRate != null && !contrastRate.equals("")) {
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgContrastAgentRate") && contrastRate != null
+                                && !contrastRate.equals("")) {
                             if ( !repeatValues.get(i).trim().equals(contrastRate)) {
                                 csvFList.add(csvFieldNames.get(i));
                                 csvPList.add(repeatValues.get(i));
@@ -4652,13 +4719,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         }
 
                         if (modalityString.equalsIgnoreCase("magnetic resonance")) {
-                            if (csvFieldNames.get(i).equalsIgnoreCase("ImgEchoDur")) {
+                            if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgEchoDur")) {
                                 if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == (Float.parseFloat(echoTime)))) {
                                     csvFList.add(csvFieldNames.get(i));
                                     csvPList.add(repeatValues.get(i));
                                     headerList.add(echoTime);
                                 }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgRepetitionGapVal")) {
+                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgRepetitionGapVal")) {
 
                                 if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == (Float.parseFloat(repetitionTime)))) {
 
@@ -4666,55 +4733,55 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     csvPList.add(repeatValues.get(i));
                                     headerList.add(repetitionTime);
                                 }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgScannerStrgthVal")) {
+                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgScannerStrgthVal")) {
                                 if ( !repeatValues.get(i).trim().equals(convertMagFieldStrengthToBRICS(magnaticFieldStrength))) {
                                     csvFList.add(csvFieldNames.get(i));
                                     csvPList.add(repeatValues.get(i));
                                     headerList.add(convertMagFieldStrengthToBRICS(magnaticFieldStrength));
                                 }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgFlipAngleMeasr")) {
+                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgFlipAngleMeasr")) {
                                 if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == (Float.parseFloat(flipAngle)))) {
                                     csvFList.add(csvFieldNames.get(i));
                                     csvPList.add(repeatValues.get(i));
                                     headerList.add(flipAngle);
                                 }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgMRIT1T2SeqName")) {
+                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgMRIT1T2SeqName")) {
                                 if ( !repeatValues.get(i).trim().equals(mriT1T2Name)) {
                                     csvFList.add(csvFieldNames.get(i));
                                     csvPList.add(repeatValues.get(i));
                                     headerList.add(mriT1T2Name);
                                 }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgInversionTime")) {
+                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgInversionTime")) {
                                 if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == (Float.parseFloat(inversionTime)))) {
                                     csvFList.add(csvFieldNames.get(i));
                                     csvPList.add(repeatValues.get(i));
                                     headerList.add(inversionTime);
                                 }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgEchoTrainLngthMeasr")) {
+                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgEchoTrainLngthMeasr")) {
                                 if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == (Float.parseFloat(echoTrainMeas)))) {
                                     csvFList.add(csvFieldNames.get(i));
                                     csvPList.add(repeatValues.get(i));
                                     headerList.add(echoTrainMeas);
                                 }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgPhasEncdeDirctTxt")) {
+                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgPhasEncdeDirctTxt")) {
                                 if ( !repeatValues.get(i).trim().equals(phaseEncode)) {
                                     csvFList.add(csvFieldNames.get(i));
                                     csvPList.add(repeatValues.get(i));
                                     headerList.add(phaseEncode);
                                 }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgSignalAvgNum")) {
+                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgSignalAvgNum")) {
                                 if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == (Float.parseFloat(numAverages)))) {
                                     csvFList.add(csvFieldNames.get(i));
                                     csvPList.add(repeatValues.get(i));
                                     headerList.add(numAverages);
                                 }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgRFCoilName")) {
+                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance RF Coil.ImgRFCoilName")) {
                                 if ( !repeatValues.get(i).trim().equals(receiveCoilName)) {
                                     csvFList.add(csvFieldNames.get(i));
                                     csvPList.add(repeatValues.get(i));
                                     headerList.add(receiveCoilName);
                                 }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgFlowCompnsatnInd")) {
+                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgFlowCompnsatnInd")) {
                                 if ( !repeatValues.get(i).trim().equals(flowCompensation)) {
                                     csvFList.add(csvFieldNames.get(i));
                                     csvPList.add(repeatValues.get(i));
@@ -4722,13 +4789,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 }
                             }
                         } else if (modalityString.equalsIgnoreCase("computed tomography")) {
-                            if (csvFieldNames.get(i).equalsIgnoreCase("ImgCTkVp")) {
+                            if (csvFieldNames.get(i).equalsIgnoreCase("CT Information.ImgCTkVp")) {
                                 if ( !repeatValues.get(i).trim().equals(ctKVP)) {
                                     csvFList.add(csvFieldNames.get(i));
                                     csvPList.add(repeatValues.get(i));
                                     headerList.add(ctKVP);
                                 }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgCTmA")) {
+                            } else if (csvFieldNames.get(i).equalsIgnoreCase("CT Information.ImgCTmA")) {
                                 if ( !repeatValues.get(i).trim().equals(ctMA)) {
                                     csvFList.add(csvFieldNames.get(i));
                                     csvPList.add(repeatValues.get(i));
@@ -4737,15 +4804,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             }
                         }
                     } else if (fileFormatString.equalsIgnoreCase("nifti")) {
-                        if (csvFieldNames.get(i).equalsIgnoreCase("ImgScannerManufName")) {
+                        if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgScannerManufName")) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(manuf);
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgScannerModelName")) {
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgScannerModelName")) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(model);
-                        } else if (csvFieldNames.get(i).equalsIgnoreCase("ImgScannerSftwrVrsnNum")) {
+                        } else if (csvFieldNames.get(i).equalsIgnoreCase("Image Information.ImgScannerSftwrVrsnNum")) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(scannerVer);
@@ -4877,6 +4944,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             String contrastDose = null;
             String contrastRate = null;
             String contrastUsedInd = null;
+            boolean contrastUsed = false;
 
             String ctKVP = null;
             String ctMA = null;
@@ -4884,7 +4952,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             if (fileFormatString.equalsIgnoreCase("dicom")) {
                 final FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
 
-                ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010"));
+                ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010", false));
+                // put in to skip erroneous values set in some TRACK-TBI Pilot CT data
+                if (ageVal.equalsIgnoreCase("135Y")) {
+                    ageVal = null;
+                }
                 siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
                 visitDate = (String) (fileInfoDicom.getTagTable().getValue("0008,0020"));
                 visitTime = (String) (fileInfoDicom.getTagTable().getValue("0008,0030"));
@@ -4905,19 +4977,23 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                 contrastAgent = (String) (fileInfoDicom.getTagTable().getValue("0018,0010"));
                 contrastMethod = (String) (fileInfoDicom.getTagTable().getValue("0018,1040"));
-                if (contrastMethod != null && contrastMethod.equalsIgnoreCase("IV")) {
-                    contrastMethod = "Infusion";
+                if (isValueSet(contrastMethod)) {
+                    // TODO
+                    System.err.println(patientName + "\tContrast route: " + contrastMethod);
+                    if (contrastMethod.equalsIgnoreCase("IV") || contrastMethod.equalsIgnoreCase("Oral & IV")) {
+                        contrastMethod = "Infusion";
+                    }
                 }
                 contrastTime = (String) (fileInfoDicom.getTagTable().getValue("0018,1042"));
-                if (contrastTime != null && visitDate != null) {
+                if (isValueSet(contrastTime) && isValueSet(visitDate)) {
                     contrastTime = convertDateTimeToISOFormat(visitDate, contrastTime);
                 }
                 contrastDose = (String) (fileInfoDicom.getTagTable().getValue("0018,1044"));
                 contrastRate = (String) (fileInfoDicom.getTagTable().getValue("0018,1046"));
 
-                if (contrastAgent != null && !contrastAgent.equals("") && contrastMethod != null && contrastTime != null && contrastDose != null
-                        && contrastRate != null) {
+                if (isValueSet(contrastAgent) || isValueSet(contrastMethod) || isValueSet(contrastTime) || isValueSet(contrastDose) || isValueSet(contrastRate)) {
                     contrastUsedInd = "Yes";
+                    contrastUsed = true;
                 }
 
                 if (modalityString.equalsIgnoreCase("magnetic resonance")) {
@@ -5002,7 +5078,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         } else if (deName.equalsIgnoreCase("ImgDim5ResolVal")) {
                             // for now...nothing
                         } else if (deName.equalsIgnoreCase("ImgModltyTyp")) {
-                            setElementComponentValue(deVal, convertModalityToBRICS(modalityString));
+                            setElementComponentValue(deVal, convertModalityToBRICS(modalityString, contrastUsed));
                         } else if (deName.equalsIgnoreCase("ImgFileFormatTyp")) {
                             setElementComponentValue(deVal, fileFormatString);
                         } else if (deName.equalsIgnoreCase("ImgSliceThicknessVal")) {
@@ -5022,7 +5098,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     setElementComponentValue(deVal, ageInMonths);
                                 }
                             } else if (deName.equalsIgnoreCase("AgeYrs") && ageVal != null && !ageVal.equals("")) {
-                                final Float ageInMonths = Float.valueOf(convertDicomAgeToBRICS(ageVal));
+                                final Integer ageInMonths = Integer.valueOf(convertDicomAgeToBRICS(ageVal));
                                 if (ageInMonths != 0) {
                                     final String ageInYears = String.valueOf(ageInMonths / 12);
                                     setElementComponentValue(deVal, ageInYears);
@@ -5245,8 +5321,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         final File file = chooser.getSelectedFile();
                         ViewUserInterface.getReference().setDefaultDirectory(file.getParent());
 
-                        // TODO: would be best to only open the image once to pull out header info, get file list, and
-                        // generate thumbnail
                         ModelImage srcImage = null;
                         if (file.getName().endsWith(".zip")) {
                             // if the user selects a zip file containing a dataset, try to open it as if pointed to from
@@ -5274,7 +5348,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                             addedPreviewImage = true;
 
-                            // TODO: generate thumbnail image and retain path in ImgFileInfo
                             final ModelImage thumbnailImage = createThumbnailImage(srcImage);
 
                             if (launchedFromInProcessState) {
@@ -5508,9 +5581,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
         }
 
-        // TODO: new other specify system: if not freeform DE, put the specified value into the deNameWithoutType +
-        // "OTH"
-        // DE, which should be next in position in the form structure
         /**
          * called after validation is done
          */
