@@ -177,12 +177,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
             javaLibraryPath = javaLibraryPath.replace(';', '\n');
             System.out.println("Path: "+javaLibraryPath);
             
-//    		if(SpaceNavigatorController.hasSpaceNavigator())  {
-//    			//if(SpaceNavigatorPoller.getListeners().length == 0) {
-//    				SpaceNavigatorPoller.registerListener(this);
-//    			//}
-//    			checkIfSpaceNavNeedsCalibration();
-//    		}
+    		if(SpaceNavigatorController.hasSpaceNavigator())  {
+    			//if(SpaceNavigatorPoller.getListeners().length == 0) {
+    				SpaceNavigatorPoller.registerListener(this);
+    			//}
+    			checkIfSpaceNavNeedsCalibration();
+    		}
     	} catch (Error e) {
     		e.printStackTrace();
     		Preferences.debug("Unable to load space navigator libraries.  See console output for details.\n", Preferences.DEBUG_MINOR);
