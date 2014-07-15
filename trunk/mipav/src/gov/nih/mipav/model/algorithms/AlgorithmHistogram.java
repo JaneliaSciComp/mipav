@@ -666,6 +666,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
         int cnt = 0;
         double mean;
         double stdDev;
+        double variance;
         double sort[];
         int index = 0;
         double median;
@@ -686,6 +687,14 @@ public class AlgorithmHistogram extends AlgorithmBase {
         float[] intensity = null;
         float[] count = null;
         boolean sameLowHigh;
+        double diff;
+        double diffSquared;
+        double diffCubed = 0.0;
+        double diffFourth = 0.0;
+        double thirdCentralMoment;
+        double fourthCentralMoment;
+        double skewness;
+        double kurtosis;
 
         if (image == null) {
             displayError("Source Image is null");
@@ -832,6 +841,9 @@ public class AlgorithmHistogram extends AlgorithmBase {
             
             fireProgressStateChanged(Math.round((float) (z + 1) / zStop * 100));
         }
+        mean = sum/cnt;
+        stdDev = Math.sqrt((sumSq - (sum*mean))/(cnt - 1));
+        variance = stdDev * stdDev;
         
         sort = new double[cnt];
         for (z = 0; z < zStop; z++) {
@@ -865,11 +877,18 @@ public class AlgorithmHistogram extends AlgorithmBase {
                 if (((entireImage == false) && mask.get(i + (length * z))) || (entireImage == true)) {
                     if ((imgBuffer[i] >= imageMin) && (imgBuffer[i] <= imageMax)) {
                         sort[index++] = imgBuffer[i];
-                        
+                        diff = imgBuffer[i] - mean;
+                        diffSquared = diff * diff;
+                        diffCubed += (diffSquared*diff);
+                        diffFourth += (diffSquared*diffSquared);
                     }
                 }
             }
         }
+        thirdCentralMoment = diffCubed/cnt;
+        fourthCentralMoment = diffFourth/cnt;
+        skewness = thirdCentralMoment/(variance * stdDev);
+        kurtosis = fourthCentralMoment/(variance * variance) - 3.0;
 
         image.releaseLock();
         
@@ -917,10 +936,12 @@ public class AlgorithmHistogram extends AlgorithmBase {
                 UI.setDataText(image.getImageName() + "\n");
             }
         }
-        mean = sum/cnt;
+        
         UI.setDataText("Mean = " + df.format(mean) + "\n");
-        stdDev = Math.sqrt((sumSq - (sum*mean))/(cnt - 1));
         UI.setDataText("Standard deviation = " + df.format(stdDev) + "\n");
+        UI.setDataText("Skewness = " + df.format(skewness) + "\n");
+        UI.setDataText("Kurtosis = " + df.format(kurtosis) + "\n");
+        
         Arrays.sort(sort);
         if (cnt%2 == 1) {
             median = sort[cnt/2] ;   
