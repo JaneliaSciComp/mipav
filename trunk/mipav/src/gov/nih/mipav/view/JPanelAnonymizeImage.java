@@ -1,6 +1,10 @@
 package gov.nih.mipav.view;
 
 
+import java.util.Hashtable;
+import java.util.Set;
+import java.util.Vector;
+
 import gov.nih.mipav.model.file.*;
 
 
@@ -90,9 +94,10 @@ public class JPanelAnonymizeImage extends JPanelChecklist {
             try {
                 FileDicomKey dicomKey = new FileDicomKey(FileInfoDicom.anonymizeTagIDs[i]);
                 String tmpStr = DicomDictionary.getName(dicomKey);
-
+                
                 if (tmpStr != null) {
-                    list[i] = new String(tmpStr); // just uses name
+                	String keyStr = "(" + dicomKey.toString() + ") ";
+                    list[i] = new String(keyStr + tmpStr); // just uses name
                 } else {
                     list[i] = FileInfoDicom.anonymizeTagIDs[i];
                 }
@@ -124,6 +129,18 @@ public class JPanelAnonymizeImage extends JPanelChecklist {
             throw new NullPointerException("JPanelAnonymizeImage: dicomInfo is null.");
         }
 
+        Vector<FileDicomSQItem> seqVec = new Vector<FileDicomSQItem>();
+    	Hashtable<FileDicomKey, FileDicomTag> hash = dicomInfo.getTagTable().getTagList();
+    	Set<FileDicomKey> keys = hash.keySet();
+    	for(FileDicomKey k : keys){
+    		Object obj = hash.get(k).getValue(false);
+    		if(obj instanceof FileDicomSQ){
+    			FileDicomSQ seq = (FileDicomSQ) obj;
+    			Vector<FileDicomSQItem> vec = seq.getSequence();
+    			seqVec.addAll(vec);
+    		}
+    	}
+        
         // turn all visible tags off to begin
         for (int i = 0; i < FileInfoDicom.anonymizeTagIDs.length; i++) {
             setEnabledList(i, false); // visibleList[i] = false;
@@ -134,8 +151,19 @@ public class JPanelAnonymizeImage extends JPanelChecklist {
 
                     // only make a tag visible if it exists in the file info
                     setEnabledList(i, true); // visibleTags[i] = true; // if the tag exists, then let the model of
-                                             // the checkbox be visible.
+                    continue;                         // the checkbox be visible.
                 }
+                
+                
+            	if(seqVec.size() > 0){
+	            	for(FileDicomSQItem d : seqVec){
+	            		if(d.containsTag(FileInfoDicom.anonymizeTagIDs[i])){
+	            			setEnabledList(i, true);
+	            			break;
+	            		}
+	            	}
+            	}
+            	
             } catch (NullPointerException npe) {
                 
                 System.out.println("Tag not found; tag in question is: " + FileInfoDicom.anonymizeTagIDs[i]);

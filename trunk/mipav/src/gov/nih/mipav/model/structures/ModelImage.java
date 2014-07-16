@@ -3,7 +3,6 @@ package gov.nih.mipav.model.structures;
 
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.util.MipavMath;
-
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoBase.UnitType;
@@ -11,7 +10,6 @@ import gov.nih.mipav.model.provenance.*;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
 import gov.nih.mipav.model.scripting.actions.ActionChangeName;
 import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
-
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
@@ -381,6 +379,20 @@ public class ModelImage extends ModelStorageBase {
         }
     }
     
+    public void anonymizeSequenceTags(boolean[] list, Vector<FileDicomSQItem> seqs){
+    	if (getNDims() == 2) { // and if image is a single slice
+            ((FileInfoDicom) fileInfo[0]).anonymizeSequenceTags(list, seqs); // tell the fileInfo to anonymize itself
+            this.setFileInfo(fileInfo[0], 0); // and then make sure (by resetting) the fileInfo in this image is
+            // the same as the sanitised version
+        } else { // and image has more than one slice
+
+            for (int i = 0; i < getExtents()[2]; i++) { // then for all slices in this image,
+                ((FileInfoDicom) fileInfo[i]).anonymizeSequenceTags(list, seqs); // tell the fileInfo of slice i to anonymize itself
+                this.setFileInfo(fileInfo[i], i); // and then make sure (by resetting) the ith fileInfo in this
+                // image is the same as the sanitised version
+            }
+        }
+    }
     
     public void removePrivateTags(FileDicomKey[] keys){
     	if (getNDims() == 2) { // and if image is a single slice
@@ -391,6 +403,21 @@ public class ModelImage extends ModelStorageBase {
 
             for (int i = 0; i < getExtents()[2]; i++) { // then for all slices in this image,
                 ((FileInfoDicom) fileInfo[i]).removePrivateTags(keys); // tell the fileInfo of slice i to anonymize itself
+                this.setFileInfo(fileInfo[i], i); // and then make sure (by resetting) the ith fileInfo in this
+                // image is the same as the sanitised version
+            }
+        }
+    }
+    
+    public final void removePrivateSequenceTags(FileDicomKey[] keys, Vector<FileDicomSQItem> seqs){
+    	if (getNDims() == 2) { // and if image is a single slice
+            ((FileInfoDicom) fileInfo[0]).removePrivateSequenceTags(keys, seqs); // tell the fileInfo to anonymize itself
+            this.setFileInfo(fileInfo[0], 0); // and then make sure (by resetting) the fileInfo in this image is
+            // the same as the sanitised version
+        } else { // and image has more than one slice
+
+            for (int i = 0; i < getExtents()[2]; i++) { // then for all slices in this image,
+                ((FileInfoDicom) fileInfo[i]).removePrivateSequenceTags(keys, seqs); // tell the fileInfo of slice i to anonymize itself
                 this.setFileInfo(fileInfo[i], i); // and then make sure (by resetting) the ith fileInfo in this
                 // image is the same as the sanitised version
             }

@@ -5,7 +5,6 @@ import gov.nih.mipav.model.file.FileDicomTagInfo.NumType;
 import gov.nih.mipav.model.file.FileDicomTagInfo.StringType;
 import gov.nih.mipav.model.file.FileDicomTagInfo.VR;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
@@ -293,12 +292,42 @@ public class FileInfoDicom extends FileInfoBase {
         // this fileInfo is now an expurgated/sanitised version
     }
     
+    public void anonymizeSequenceTags(boolean[] list, Vector<FileDicomSQItem> seqs){
+    	if (list.length != anonymizeTagIDs.length) {
+            throw new IllegalArgumentException("anonymize list not of correct size!");
+        }
+
+        int i;
+
+        for (i = 0; i < anonymizeTagIDs.length; i++) {
+
+        	if (list[i]) {
+        		for(FileDicomSQItem d : seqs){
+        			FileDicomTag tag = d.get(new FileDicomKey(anonymizeTagIDs[i]));
+        			if(tag != null){
+        				String anonValue = generateNewTagValue(anonymizeTagIDs[i], d).toString();
+        				tag.setValue(anonValue);
+        			}
+        		}
+        	}
+        }
+    }
+    
     public final void removePrivateTags(FileDicomKey[] keys){
     	for(int i=0;i<keys.length;i++){
     		if(tagTable.containsTag(keys[i])){
     			tagTable.removeTag(keys[i]);
     		}
     		
+    	}
+    }
+    
+    public final void removePrivateSequenceTags(FileDicomKey[] keys, Vector<FileDicomSQItem> seqs){
+    	for(int i=0;i<keys.length;i++){
+    		FileDicomKey key = keys[i];
+    		for(FileDicomSQItem d : seqs){
+    			d.removeTag(key);
+    		}
     	}
     }
     
