@@ -45,9 +45,11 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
 
     /** DOCUMENT ME! */
     private static final int ANON_TAB = 1;
+    
+    private static final int PRIVATE_TAB = 2;
 
     /** DOCUMENT ME! */
-    private static final int LOG_TAB = 2;
+    private static final int LOG_TAB = 3;
 
     /** DOCUMENT ME! */
     private static final int WRITE = 0;
@@ -165,6 +167,8 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
 
     /** Defines options for WRITE, OVERWRITE, APPEND for the xlat file. */
     private int xlatDestinationUsage;
+    
+    private JPanelAnonymizePrivateTags privateTagsPanel;
 
     
     
@@ -196,6 +200,17 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
         anonPanel.add(checkBoxPanel, BorderLayout.CENTER);
         anonPanel.add(buildNameSuggestionPanel(), BorderLayout.SOUTH);
         everything.insertTab("Tag options", null, anonPanel, "Tag Selection", ANON_TAB);
+        
+        //Find and sort out private tags here
+        //HERE
+        //*************************************
+        
+        //Should have a method to look through all possible files to pull out which
+        //tags might occur
+        
+        //*************************************
+        privateTagsPanel = new JPanelAnonymizePrivateTags();
+        everything.insertTab("Private tag options", null, privateTagsPanel, "Private Tag Selection", PRIVATE_TAB);
 
         everything.insertTab("Logging", null, buildLogPanel(), "Process Log", LOG_TAB);
 
@@ -207,6 +222,12 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
         pack();
         setSize(800, 500); // decent size??
         setVisible(true);
+    }
+    
+    private ArrayList<String> privateKeySearch(String dir){
+    	ArrayList<String> keys = new ArrayList<String>();
+    	
+    	return keys;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

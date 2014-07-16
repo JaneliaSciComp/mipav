@@ -293,6 +293,15 @@ public class FileInfoDicom extends FileInfoBase {
         // this fileInfo is now an expurgated/sanitised version
     }
     
+    public final void removePrivateTags(FileDicomKey[] keys){
+    	for(int i=0;i<keys.length;i++){
+    		if(tagTable.containsTag(keys[i])){
+    			tagTable.removeTag(keys[i]);
+    		}
+    		
+    	}
+    }
+    
     /**
      * Generates a new version of a particular tag that is DICOM compatible 
      * @param key

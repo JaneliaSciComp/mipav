@@ -380,6 +380,22 @@ public class ModelImage extends ModelStorageBase {
             this.setImageName("Anonymous");
         }
     }
+    
+    
+    public void removePrivateTags(FileDicomKey[] keys){
+    	if (getNDims() == 2) { // and if image is a single slice
+            ((FileInfoDicom) fileInfo[0]).removePrivateTags(keys); // tell the fileInfo to anonymize itself
+            this.setFileInfo(fileInfo[0], 0); // and then make sure (by resetting) the fileInfo in this image is
+            // the same as the sanitised version
+        } else { // and image has more than one slice
+
+            for (int i = 0; i < getExtents()[2]; i++) { // then for all slices in this image,
+                ((FileInfoDicom) fileInfo[i]).removePrivateTags(keys); // tell the fileInfo of slice i to anonymize itself
+                this.setFileInfo(fileInfo[i], i); // and then make sure (by resetting) the ith fileInfo in this
+                // image is the same as the sanitised version
+            }
+        }
+    }
 
     /**
      * Calculates the min and max values for the image array.
@@ -3320,7 +3336,6 @@ public class ModelImage extends ModelStorageBase {
         voiVector.addVOI(voi);
         // need to add voi to list object!!!
     }
-    
 
     /**
      * Sets VOI vector for with new VOIs.
