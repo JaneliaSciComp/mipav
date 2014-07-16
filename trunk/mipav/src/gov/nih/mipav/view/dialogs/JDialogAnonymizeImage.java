@@ -36,6 +36,8 @@ public class JDialogAnonymizeImage extends JDialogBase {
 
     /** DOCUMENT ME! */
     private JPanelAnonymizeImage checkboxPanel; //
+    
+    private JPanelAnonymizePrivateTags privateTagsPanel;
 
     /** DOCUMENT ME! */
     private ModelImage image;
@@ -59,6 +61,9 @@ public class JDialogAnonymizeImage extends JDialogBase {
         setTitle("Anonymize sensitive info");
         setForeground(Color.black);
 
+        JTabbedPane tabs = new JTabbedPane();
+        
+        
         // place a check-box list in here
         checkboxPanel = new JPanelAnonymizeImage();
 
@@ -69,9 +74,17 @@ public class JDialogAnonymizeImage extends JDialogBase {
         }
 
         mainDialogPanel.add(checkboxPanel, BorderLayout.CENTER);
-        mainDialogPanel.add(getOKCancelPanel(), BorderLayout.SOUTH); // put the main panel into the center of the
-                                                                     // dialog
-        getContentPane().add(mainDialogPanel);
+        
+        //getContentPane().add(mainDialogPanel);
+        
+        tabs.insertTab("Tag options", null, mainDialogPanel, "Tag Selection", 0);
+        
+        privateTagsPanel = new JPanelAnonymizePrivateTags(img);
+        tabs.insertTab("Private tag options", null, privateTagsPanel, "Private Tag Selection", 1);
+        
+        getContentPane().add(tabs);
+        getContentPane().add(getOKCancelPanel(), BorderLayout.SOUTH);
+        
         setResizable(true); // since locations are hard-coded we are not checking for different sizes. prevent user from
                             // changing
         addWindowListener(this); // check for events
@@ -115,6 +128,12 @@ public class JDialogAnonymizeImage extends JDialogBase {
 
                 if (anonymizeChoice == JOptionPane.YES_OPTION) {
                     image.anonymize(checkboxPanel.getSelectedList(), true); // anonymize the image of sensitive data
+                    
+                    FileDicomKey[] keys = privateTagsPanel.getSelectedKeys();
+                    if(keys != null){
+                    	image.removePrivateTags(keys);
+                    }
+                    
                     setVisible(false); // Hide dialog
                 }
             }
