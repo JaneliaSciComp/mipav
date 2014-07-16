@@ -1,6 +1,8 @@
 package gov.nih.mipav.view;
 
 import gov.nih.mipav.model.file.FileDicomKey;
+import gov.nih.mipav.model.file.FileDicomSQ;
+import gov.nih.mipav.model.file.FileDicomSQItem;
 import gov.nih.mipav.model.file.FileDicomTag;
 import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileInfoDicom;
@@ -177,6 +179,17 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 	
 	public JTree createPrivateKeyTree(ModelImage image){
 		
+		/*FileDicomKey seqKey = new FileDicomKey("0008,1032");
+		FileDicomTag seqTag = ((FileInfoDicom)image.getFileInfo()[0]).getTagTable().get(seqKey);
+		//System.out.println(seqTag.toString());
+		Object obj = seqTag.getValue(false);
+		if(obj instanceof FileDicomSQ){
+			FileDicomSQ sq = (FileDicomSQ) obj;
+			System.out.println("Length" + sq.getDataLength());
+			Vector<FileDicomSQItem> vec = sq.getSequence();
+			System.out.println(vec.size());
+		}*/
+		
 		DefaultMutableTreeNode top = new DefaultMutableTreeNode("Private keys");
 		JTree keyTree = new JTree(top);
 		
@@ -200,7 +213,6 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 					else 
 						groups.get(group).add(k);
 				}else{
-					System.err.println(group);
 					ArrayList<FileDicomKey> keyArray = new ArrayList<FileDicomKey>();
 					keyArray.add(k);
 					groups.put(group, keyArray);
@@ -264,6 +276,10 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 			paths[i] = tree.getPathForRow(i);
 		}
 		checkTree.getSelectionModel().removeSelectionPaths(paths);
+	}
+	
+	private void populateSeqTags(){
+		
 	}
 	
 	// @author Santhosh Kumar T - santhosh@in.fiorano.com 
@@ -544,7 +560,9 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 	}
 	
 	private void test(){
-		ArrayList<Integer> paths = new ArrayList<Integer>();
+		
+		
+		/*ArrayList<Integer> paths = new ArrayList<Integer>();
 		CheckTreeSelectionModel model = checkTree.getSelectionModel();
 		for(int i=1;i<tree.getRowCount();i++){
 			TreePath path = tree.getPathForRow(i);
@@ -553,6 +571,6 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 				System.out.println(i-1);
 			}
 			
-		}
+		}*/
 	}
 }
