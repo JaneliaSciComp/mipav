@@ -1,8 +1,6 @@
 package gov.nih.mipav.view;
 
 import gov.nih.mipav.model.file.FileDicomKey;
-import gov.nih.mipav.model.file.FileDicomSQ;
-import gov.nih.mipav.model.file.FileDicomSQItem;
 import gov.nih.mipav.model.file.FileDicomTag;
 import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileInfoDicom;
@@ -19,14 +17,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.Set;
 import java.util.Stack;
-import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -110,10 +104,6 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
         unCheckButton.setPreferredSize(new Dimension(85, 30));
         unCheckButton.addActionListener(this);
         buttonPanel.add(unCheckButton, BorderLayout.EAST);
-        
-        JButton testButton = new JButton("Test");
-        testButton.addActionListener(this);;
-        buttonPanel.add(testButton, BorderLayout.SOUTH);
 		
 		add(buttonPanel, gbc);
 		
@@ -254,12 +244,6 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		return keyTree;
 	}
 	
-	private <T extends Comparable<? super T>> List<T> asSortedList(Collection<T> c){
-		List<T> list = new ArrayList<T>(c);
-		Collections.sort(list);
-		return list;
-	}
-	
 	private void checkAllPaths(){
 		/*TreePath[] paths = new TreePath[tree.getRowCount()];
 		for(int i=0;i<tree.getRowCount();i++){
@@ -276,10 +260,6 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 			paths[i] = tree.getPathForRow(i);
 		}
 		checkTree.getSelectionModel().removeSelectionPaths(paths);
-	}
-	
-	private void populateSeqTags(){
-		
 	}
 	
 	// @author Santhosh Kumar T - santhosh@in.fiorano.com 
@@ -534,8 +514,6 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 			checkAllPaths();
 		else if(command.equals("privateClear"))
 			removeAllPaths();
-		else if(command.equals("Test"))
-			test();
 		
 	}
 	
@@ -558,19 +536,5 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		
 		return keys;
 	}
-	
-	private void test(){
-		
-		
-		/*ArrayList<Integer> paths = new ArrayList<Integer>();
-		CheckTreeSelectionModel model = checkTree.getSelectionModel();
-		for(int i=1;i<tree.getRowCount();i++){
-			TreePath path = tree.getPathForRow(i);
-			if(model.isPathSelected(path, true)){
-				paths.add(i-1);
-				System.out.println(i-1);
-			}
-			
-		}*/
-	}
+
 }
