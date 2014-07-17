@@ -1,6 +1,7 @@
 package gov.nih.mipav.view;
 
 import gov.nih.mipav.model.file.FileDicomKey;
+import gov.nih.mipav.model.file.FileDicomSQItem;
 import gov.nih.mipav.model.file.FileDicomTag;
 import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileInfoDicom;
@@ -18,9 +19,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.Stack;
+import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -57,7 +61,7 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		add(new JLabel("No private tags"));
 	}
 	
-	public JPanelAnonymizePrivateTags(ModelImage img){
+	public JPanelAnonymizePrivateTags(ModelImage img, Vector<FileDicomSQItem> seqTags){
 		super();
 		
 		setLayout(new GridBagLayout());
@@ -76,42 +80,44 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		scrollPane.setPreferredSize(new Dimension(375, 200));
 		add(scrollPane, BorderLayout.NORTH);
 		*/
-		tree = createPrivateKeyTree(img);
+		tree = createPrivateKeyTree(img, seqTags);
+
 		checkTree = new CheckTreeManager(tree);
 		JScrollPane treeView = new JScrollPane(tree, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		treeView.setViewportView(tree);
 		//treeView.setPreferredSize(new Dimension(300,200));
 		add(treeView, gbc);
-		
+
 		gbc.gridy = 1;
 		gbc.weightx = 0;
 		gbc.weighty = 0;
-		
-		
+
+
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setBorder(new EmptyBorder(0,0,3,0));
 		JButton checkButton = new JButton("Select all");
 		checkButton.setActionCommand("privateAll");
-        checkButton.setFont(MipavUtil.font12B);
-        checkButton.setPreferredSize(new Dimension(85, 30));
-        buttonPanel.add(checkButton, BorderLayout.WEST);
-        checkButton.addActionListener(this);
+		checkButton.setFont(MipavUtil.font12B);
+		checkButton.setPreferredSize(new Dimension(85, 30));
+		buttonPanel.add(checkButton, BorderLayout.WEST);
+		checkButton.addActionListener(this);
 
-        JButton unCheckButton = new JButton("Clear");
-        unCheckButton.setActionCommand("privateClear");
-        unCheckButton.setFont(MipavUtil.font12B);
-        unCheckButton.setPreferredSize(new Dimension(85, 30));
-        unCheckButton.addActionListener(this);
-        buttonPanel.add(unCheckButton, BorderLayout.EAST);
-		
+		JButton unCheckButton = new JButton("Clear");
+		unCheckButton.setActionCommand("privateClear");
+		unCheckButton.setFont(MipavUtil.font12B);
+		unCheckButton.setPreferredSize(new Dimension(85, 30));
+		unCheckButton.addActionListener(this);
+		buttonPanel.add(unCheckButton, BorderLayout.EAST);
+
 		add(buttonPanel, gbc);
-		
+
 		for (int i = 0; i < tree.getRowCount(); i++) {
-	         tree.expandRow(i);
+			tree.expandRow(i);
 		}
-		
+
 		checkAllPaths();
+		
 		
 	}
 	
@@ -167,18 +173,7 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 	
 	
 	
-	public JTree createPrivateKeyTree(ModelImage image){
-		
-		/*FileDicomKey seqKey = new FileDicomKey("0008,1032");
-		FileDicomTag seqTag = ((FileInfoDicom)image.getFileInfo()[0]).getTagTable().get(seqKey);
-		//System.out.println(seqTag.toString());
-		Object obj = seqTag.getValue(false);
-		if(obj instanceof FileDicomSQ){
-			FileDicomSQ sq = (FileDicomSQ) obj;
-			System.out.println("Length" + sq.getDataLength());
-			Vector<FileDicomSQItem> vec = sq.getSequence();
-			System.out.println(vec.size());
-		}*/
+	public JTree createPrivateKeyTree(ModelImage image, Vector<FileDicomSQItem> seqTags){
 		
 		DefaultMutableTreeNode top = new DefaultMutableTreeNode("Private keys");
 		JTree keyTree = new JTree(top);
@@ -186,10 +181,12 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		FileInfoDicom info = (FileInfoDicom) image.getFileInfo(0);
 		FileDicomTagTable table = info.getTagTable();
 		Hashtable<FileDicomKey, FileDicomTag> hash = table.getTagList();
-		Set<FileDicomKey> keys = hash.keySet();
-		//Arrays.sort(keys.toArray());
+		Set<FileDicomKey> keys = new LinkedHashSet<FileDicomKey>( hash.keySet());
+		for(FileDicomSQItem s : seqTags){
+			keys.addAll(s.getTagList().keySet());
+		}
+		
 		keyList = new ArrayList<FileDicomKey>();
-		//Collections.sort(keyList);
 		
 		Hashtable<String, ArrayList<FileDicomKey>> groups = new Hashtable<String, ArrayList<FileDicomKey>>();
 		for(FileDicomKey k : keys){
@@ -200,8 +197,11 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 					String element = k.getElement();
 					if(element.equals("0010"))//Group name
 						groups.get(group).add(0, k);
-					else 
-						groups.get(group).add(k);
+					else{
+						ArrayList<FileDicomKey> keyArray = groups.get(group);
+						if(!keyArray.contains(k))
+							keyArray.add(k);
+					}	
 				}else{
 					ArrayList<FileDicomKey> keyArray = new ArrayList<FileDicomKey>();
 					keyArray.add(k);
@@ -242,6 +242,10 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		//Have tree, need to display to test it out first. DO ON MONDAY
 		
 		return keyTree;
+	}
+	
+	public boolean isEmpty(){
+		return keyList.isEmpty();
 	}
 	
 	private void checkAllPaths(){
