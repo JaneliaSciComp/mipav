@@ -42,6 +42,8 @@ public class JDialogAnonymizeImage extends JDialogBase {
 
     /** DOCUMENT ME! */
     private ModelImage image;
+    
+    private Vector<FileDicomSQItem> seqTags;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -61,29 +63,44 @@ public class JDialogAnonymizeImage extends JDialogBase {
         image = img;
         setTitle("Anonymize sensitive info");
         setForeground(Color.black);
-
-        JTabbedPane tabs = new JTabbedPane();
         
-        
-        // place a check-box list in here
-        checkboxPanel = new JPanelAnonymizeImage();
+        getSequenceTags();
+        privateTagsPanel = new JPanelAnonymizePrivateTags(img, seqTags);
+        if(privateTagsPanel.isEmpty()){
+        	checkboxPanel = new JPanelAnonymizeImage();
 
-        if (img.isDicomImage()) {
-            checkboxPanel.setDicomInfo((FileInfoDicom) img.getFileInfo(0));
-        } else if (img.isMincImage()) {
-            checkboxPanel.setMincInfo((FileInfoMinc) img.getFileInfo(0));
+            if (img.isDicomImage()) {
+                checkboxPanel.setDicomInfo((FileInfoDicom) img.getFileInfo(0));
+            } else if (img.isMincImage()) {
+                checkboxPanel.setMincInfo((FileInfoMinc) img.getFileInfo(0));
+            }
+
+            mainDialogPanel.add(checkboxPanel, BorderLayout.CENTER);
+            getContentPane().add(mainDialogPanel);
+        } else {
+
+	        JTabbedPane tabs = new JTabbedPane();
+	        
+	        // place a check-box list in here
+	        checkboxPanel = new JPanelAnonymizeImage();
+	
+	        if (img.isDicomImage()) {
+	            checkboxPanel.setDicomInfo((FileInfoDicom) img.getFileInfo(0));
+	        } else if (img.isMincImage()) {
+	            checkboxPanel.setMincInfo((FileInfoMinc) img.getFileInfo(0));
+	        }
+	
+	        mainDialogPanel.add(checkboxPanel, BorderLayout.CENTER);
+	        
+	        //getContentPane().add(mainDialogPanel);
+	        
+	        tabs.insertTab("Tag options", null, mainDialogPanel, "Tag Selection", 0);
+	        
+	        
+	        tabs.insertTab("Private tag options", null, privateTagsPanel, "Private Tag Selection", 1);
+	        
+	        getContentPane().add(tabs);
         }
-
-        mainDialogPanel.add(checkboxPanel, BorderLayout.CENTER);
-        
-        //getContentPane().add(mainDialogPanel);
-        
-        tabs.insertTab("Tag options", null, mainDialogPanel, "Tag Selection", 0);
-        
-        privateTagsPanel = new JPanelAnonymizePrivateTags(img);
-        tabs.insertTab("Private tag options", null, privateTagsPanel, "Private Tag Selection", 1);
-        
-        getContentPane().add(tabs);
         getContentPane().add(getOKCancelPanel(), BorderLayout.SOUTH);
         
         setResizable(true); // since locations are hard-coded we are not checking for different sizes. prevent user from
@@ -131,8 +148,6 @@ public class JDialogAnonymizeImage extends JDialogBase {
 
                 if (anonymizeChoice == JOptionPane.YES_OPTION) {
                 	
-                	Vector<FileDicomSQItem> seqTags = getSequenceTags();
-                	
                     image.anonymize(checkboxPanel.getSelectedList(), true); // anonymize the image of sensitive data
                     image.anonymizeSequenceTags(checkboxPanel.getSelectedList(), seqTags);
                     
@@ -175,9 +190,9 @@ public class JDialogAnonymizeImage extends JDialogBase {
         return okCancelPanel;
     }
     
-    private Vector<FileDicomSQItem> getSequenceTags(){
+    private void getSequenceTags(){
     	
-    	Vector<FileDicomSQItem> seqVec = new Vector<FileDicomSQItem>();
+    	seqTags = new Vector<FileDicomSQItem>();
     	FileInfoDicom info = (FileInfoDicom)image.getFileInfo()[0];
     	Hashtable<FileDicomKey, FileDicomTag> hash = info.getTagTable().getTagList();
     	Set<FileDicomKey> keys = hash.keySet();
@@ -186,11 +201,9 @@ public class JDialogAnonymizeImage extends JDialogBase {
     		if(obj instanceof FileDicomSQ){
     			FileDicomSQ seq = (FileDicomSQ) obj;
     			Vector<FileDicomSQItem> vec = seq.getSequence();
-    			seqVec.addAll(vec);
+    			seqTags.addAll(vec);
     		}
     	}
-    	
-    	return seqVec;
     	
     }
 }
