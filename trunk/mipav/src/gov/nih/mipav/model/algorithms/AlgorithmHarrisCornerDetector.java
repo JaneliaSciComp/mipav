@@ -83,9 +83,6 @@ public class AlgorithmHarrisCornerDetector extends AlgorithmBase implements Algo
         int yDim;
         int sliceSize;
         AlgorithmGradientMagnitudeSep gradMagAlgo = null;
-        float xMag[];
-        float yMag[];
-        float sigmaArray[] = new float[2];
         boolean entireImage = true;
         boolean image25D = true;
         int i;
