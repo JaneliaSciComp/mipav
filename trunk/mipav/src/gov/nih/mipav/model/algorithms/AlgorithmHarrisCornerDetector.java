@@ -1,7 +1,5 @@
 package gov.nih.mipav.model.algorithms;
 
-
-import gov.nih.mipav.model.algorithms.filters.AlgorithmGradientMagnitudeSep;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
