@@ -23,6 +23,8 @@ public class AlgorithmHarrisCornerDetector extends AlgorithmBase implements Algo
 	// and the sum of the eigenvalues is Fx2 + Fy2 = lambda1 + lambda2
 	// Harris corner detector = (Fx2*Fy2 - Fxy*Fxy) - k * (Fx2 + Fy2)**2
 	// Harris corner detector = (lambda1 * lambda2) - k (lambda1 + lambda2)**2
+	// Set hcd to 0 if less than threshold.
+	// Set hcd to 0 if its value is less than the value of an 8-connected neighbor.
 	
     private static final int xOp = 1;
     
@@ -117,6 +119,10 @@ public class AlgorithmHarrisCornerDetector extends AlgorithmBase implements Algo
         ModelImage IyIyImage;
         float sum;
         double hcd[];
+        byte c8Max[];
+        int x;
+        int y;
+        int index;
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -268,11 +274,67 @@ public class AlgorithmHarrisCornerDetector extends AlgorithmBase implements Algo
         
         hcd = new double[sliceSize];
         for (i = 0; i < sliceSize; i++) {
-        	sum = Fx2[i] + Fy2[i];
-        	hcd[i] = (Fx2[i]*Fy2[i] - Fxy[i]*Fxy[i]) - k * sum *sum;
-        	if (hcd[i] < pointThreshold) {
-        		hcd[i] = 0;
+        	if (entireImage || mask.get(i)) {
+	        	sum = Fx2[i] + Fy2[i];
+	        	hcd[i] = (Fx2[i]*Fy2[i] - Fxy[i]*Fxy[i]) - k * sum *sum;
+	        	if (hcd[i] < pointThreshold) {
+	        		hcd[i] = 0;
+	        	}
         	}
+        }
+        c8Max = new byte[sliceSize];
+        for (i = 0; i < sliceSize; i++) {
+        	c8Max[i] = 1;
+        }
+        for (y = 0; y < yDim; y++) {
+        	for (x = 0; x < xDim; x++) {
+        		index = x + y * xDim;
+        		if (entireImage || mask.get(index)) {
+        		    if ((x > 1) && (hcd[index] < hcd[index-1])) {
+        		        c8Max[index] = 0;
+        		        continue;
+        		    }
+        		    if ((x < xDim - 1) && (hcd[index] < hcd[index+1])) {
+        		    	c8Max[index] = 0;
+        		    	continue;
+        		    }
+        		    if ((y > 1) && (hcd[index] < hcd[index-xDim])) {
+        		        c8Max[index] = 0;
+        		        continue;
+        		    }
+        		    if ((y < yDim - 1) && (hcd[index] < hcd[index+xDim])) {
+        		    	c8Max[index] = 0;
+        		    	continue;
+        		    }
+        		    if ((x > 1) && (y > 1) && (hcd[index] < hcd[index-xDim-1])) {
+        		    	c8Max[index] = 0;
+        		    	continue;
+        		    }
+        		    if ((x > 1) && (y < yDim - 1) && (hcd[index] < hcd[index+xDim-1])) {
+        		    	c8Max[index] = 0;
+        		    	continue;
+        		    }
+        		    if ((x < xDim -1) && (y > 1) && (hcd[index] < hcd[index-xDim+1])) {
+        		    	c8Max[index] = 0;
+        		    	continue;
+        		    }
+        		    if ((x < xDim-1) && (y < yDim-1) && (hcd[index] < hcd[index+xDim+1])) {
+        		    	c8Max[index] = 0;
+        		    }
+        		}
+        	}
+        }
+        
+        
+        for (y = 0; y < yDim; y++) {
+        	for (x = 0; x < xDim; x++) {
+        		index = x + y * xDim;
+        		if (entireImage || mask.get(index)) {
+        			if (c8Max[index] == 0) {
+        				hcd[index] = 0;
+        			}
+        		}
+            }
         }
         
         try {
