@@ -164,7 +164,6 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Midsagittal line alignment", "Midsagittal", 0, null, false),
                         menuBuilder.buildMenuItem("Talairach transform", "talairachTransform", 0, null, false),}),
                 menuBuilder.buildMenuItem("Convergence field", "CONVERGENCE", 0, null, false),
-                menuBuilder.buildMenuItem("Harris corner detector", "HARRIS", 0, null, false),
                 menuBuilder.makeMenu("Edge detection", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Canny", "CANNY", 0, null, false),
                         menuBuilder.buildMenuItem("Entropic", "ENTROPIC", 0, null, false),
@@ -219,6 +218,7 @@ public class ViewMenuBar {
                 	    menuBuilder.buildMenuItem("Fuzzy minimization", "fuzzyMin", 0, null, false),
                 	    menuBuilder.buildMenuItem("Fuzzy minimization De and Chatterji", "FuzzMinDeAndChatterji", 0, null, false),
                 	    menuBuilder.buildMenuItem("Rule based contrast enhancement","rbcEnhancement", 0, null, false),}),
+                menuBuilder.buildMenuItem("Harris corner detector", "HARRIS", 0, null, false),
                 menuBuilder.makeMenu("Histogram tools", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("2D histogram", "histTwoDim", 0, null, false),
                         menuBuilder.buildMenuItem("Cumulative histogram", "cumHistogram", 0, null, false),
