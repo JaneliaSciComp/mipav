@@ -116,8 +116,7 @@ public class AlgorithmHarrisCornerDetector extends AlgorithmBase implements Algo
         ModelImage IxIyImage;
         ModelImage IyIyImage;
         float sum;
-        double hcd;
-        byte pointMask[];
+        double hcd[];
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -267,20 +266,20 @@ public class AlgorithmHarrisCornerDetector extends AlgorithmBase implements Algo
         IxIyImage.disposeLocal();
         IyIyImage.disposeLocal();
         
-        pointMask = new byte[sliceSize];
+        hcd = new double[sliceSize];
         for (i = 0; i < sliceSize; i++) {
         	sum = Fx2[i] + Fy2[i];
-        	hcd = (Fx2[i]*Fy2[i] - Fxy[i]*Fxy[i]) - k * sum *sum;
-        	if (hcd >= pointThreshold) {
-        		pointMask[i] = 1;
+        	hcd[i] = (Fx2[i]*Fy2[i] - Fxy[i]*Fxy[i]) - k * sum *sum;
+        	if (hcd[i] < pointThreshold) {
+        		hcd[i] = 0;
         	}
         }
         
         try {
-        	destImage.importData(0, pointMask, true);
+        	destImage.importData(0, hcd, true);
         }
         catch(IOException e) {
-        	MipavUtil.displayError("IOException " + e + " on destImage.importData, pointMask true");
+        	MipavUtil.displayError("IOException " + e + " on destImage.importData, hcd, true");
         	setCompleted(false);
         	return;
         }
