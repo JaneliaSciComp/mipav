@@ -205,7 +205,7 @@ public class JDialogHarrisCornerDetector extends JDialogScriptableBase implement
 
         try {
         	
-            resultImage     = new ModelImage(ModelStorageBase.BYTE, image.getExtents(), name);
+            resultImage     = new ModelImage(ModelStorageBase.DOUBLE, image.getExtents(), name);
             if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                 ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
             }
