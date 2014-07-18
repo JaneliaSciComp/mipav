@@ -164,6 +164,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Midsagittal line alignment", "Midsagittal", 0, null, false),
                         menuBuilder.buildMenuItem("Talairach transform", "talairachTransform", 0, null, false),}),
                 menuBuilder.buildMenuItem("Convergence field", "CONVERGENCE", 0, null, false),
+                menuBuilder.buildMenuItem("Harris corner detector", "HARRIS", 0, null, false),
                 menuBuilder.makeMenu("Edge detection", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Canny", "CANNY", 0, null, false),
                         menuBuilder.buildMenuItem("Entropic", "ENTROPIC", 0, null, false),
@@ -1027,6 +1028,8 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Entropy minimization", false);
             menuBuilder.setMenuItemEnabled("Extract surface (marching cubes)", false);
             menuBuilder.setMenuItemEnabled("FFT", false);
+            menuBuilder.setMenuItemEnabled("Canny", false);
+            menuBuilder.setMenuItemEnabled("Harris corner detector", false);
             menuBuilder.setMenuItemEnabled("Filters (wavelet)", false);
             menuBuilder.setMenuItemEnabled("Anisotropic diffusion", false);
             menuBuilder.setMenuItemEnabled("Boundary attenuation", false);
@@ -1142,6 +1145,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Concat Multiple 2D to 3D", false);
             menuBuilder.setMenuItemEnabled("Spatial color compactness", false);
             menuBuilder.setMenuItemEnabled("Canny", false);
+            menuBuilder.setMenuItemEnabled("Harris corner detector", false);
             menuBuilder.setMenuItemEnabled("Entropic", false);
             
             menuBuilder.setMenuItemEnabled("Thinning", false);
@@ -1224,6 +1228,8 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Brain tools", false);
             menuBuilder.setMenuItemEnabled("FFT", false);
             menuBuilder.setMenuItemEnabled("SWI", false);
+            menuBuilder.setMenuItemEnabled("Canny", false);
+            menuBuilder.setMenuItemEnabled("Harris corner detector", false);
             menuBuilder.setMenuItemEnabled("Filters (homomorphic)", false);
             menuBuilder.setMenuItemEnabled("Filters (wavelet)", false);
             menuBuilder.setMenuItemEnabled("Edge extraction by FIRE operators", false);
@@ -1291,6 +1297,7 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Density based clustering", true);
         menuBuilder.setMenuItemEnabled("Edge detection", true);
         menuBuilder.setMenuItemEnabled("Canny", true);
+        menuBuilder.setMenuItemEnabled("Harris corner detector", true);
         menuBuilder.setMenuItemEnabled("Evaluate segmentation", true); // vois
         menuBuilder.setMenuItemEnabled("Entropy minimization", true);
         menuBuilder.setMenuItemEnabled("Extract surface (marching cubes)", true);
