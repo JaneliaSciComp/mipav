@@ -4,10 +4,12 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.util.*;
+
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.tree.*;
@@ -376,7 +378,17 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
                 xlatDestDirectory = chuseDest.getSelectedFile();
                 xlatDestDirText.setText(xlatDestDirectory.getAbsolutePath() + File.separator);
             }
-        } else {
+        } else if (command.equals("LoadProfile")){
+        	ArrayList<String> profiles = getProfiles();
+        	if(profiles.size() > 0) {
+                Object select = JOptionPane.showInputDialog(this, "Choose the profile to load", "Load profile", JOptionPane.INFORMATION_MESSAGE, null, profiles.toArray(), profiles.toArray()[0]);
+                if(select != null) {
+                    loadProfile(select.toString());
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "No available profiles");
+            }
+    	}else {
             super.actionPerformed(ae);
         }
     }
@@ -1303,6 +1315,54 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
 
         keyLog = newKeyLog();
     }
+    
+    private ArrayList<String> getProfiles(){
+    	
+    	ArrayList<String> profiles = new ArrayList<String>();
+    	Properties props = Preferences.getMipavProps();
+    	Set<Object> keys = props.keySet();
+    	for(Object o : keys){
+    		if(o instanceof String){
+    			String s = (String) o;
+    			if(s.startsWith("profileAnonymizeDICOM")){
+    				profiles.add(s.substring(21));
+    			}
+    		}
+    	}
+    	return profiles;
+    }
+    
+    private void loadProfile(String name){
+    	String value = Preferences.getProperty("profileAnonymizeDICOM" + name);
+    	String[] split = value.split(";");
+    	int i;
+    	boolean[] publicList = new boolean[FileInfoDicom.anonymizeTagIDs.length];
+    	for(i=0;i<publicList.length;i++){
+    		if(split[i].equals("t"))
+    			publicList[i] = true;
+    		else publicList[i] = false;
+    	}
+    	checkBoxPanel.setSelectedList(publicList);
+    	
+    	ArrayList<FileDicomKey> keys = new ArrayList<FileDicomKey>();
+    	ArrayList<String> tags = new ArrayList<String>();
+    	ArrayList<Boolean> selectedList = new ArrayList<Boolean>();
+    	
+    	for(;i<split.length;i+=3){
+    			keys.add(new FileDicomKey(split[i]));
+    			tags.add(split[i+1]);
+    			selectedList.add(split[i+2].equals("t"));
+    	}
+    	
+    	
+    	if(keys.size()>0){
+    		boolean[] selected = new boolean[keys.size()];
+    		for(int j=0;j<selected.length;j++){
+    			selected[j] = selectedList.get(j);
+    		}
+    		privateTagsPanel.populateFromProfile(keys, tags, selected);
+    	}
+    }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
@@ -1601,7 +1661,16 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
                 writeToLog(imageFile.getAbsolutePath(), false);
 
                 if (mi != null) {
+                	Vector<FileDicomSQItem> seqTags = getSequenceTags(mi);
                     mi.anonymize(checkBoxPanel.getSelectedList(), doRename);
+                    
+                    mi.anonymizeSequenceTags(checkBoxPanel.getSelectedList(), seqTags);
+                    
+                    FileDicomKey[] keys = privateTagsPanel.getSelectedKeys();
+                    if(keys != null){
+                    	mi.removePrivateTags(keys);
+                    	mi.removePrivateSequenceTags(keys, seqTags);
+                    }
 
                     try {
 
@@ -1730,6 +1799,23 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
             anonymousName = genericName + "_" + Integer.toString(sequence++);
 
             return (anonymousName);
+        }
+        
+        private Vector<FileDicomSQItem> getSequenceTags(ModelImage image){
+        	
+        	Vector<FileDicomSQItem> seqTags = new Vector<FileDicomSQItem>();
+        	FileInfoDicom info = (FileInfoDicom)image.getFileInfo()[0];
+        	Hashtable<FileDicomKey, FileDicomTag> hash = info.getTagTable().getTagList();
+        	Set<FileDicomKey> keys = hash.keySet();
+        	for(FileDicomKey k : keys){
+        		Object obj = hash.get(k).getValue(false);
+        		if(obj instanceof FileDicomSQ){
+        			FileDicomSQ seq = (FileDicomSQ) obj;
+        			Vector<FileDicomSQItem> vec = seq.getSequence();
+        			seqTags.addAll(vec);
+        		}
+        	}
+        	return seqTags;
         }
 
         /* /** generates a random, upto-5 character hexadecimal string.
