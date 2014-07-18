@@ -57,7 +57,7 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 	
 	private ArrayList<FileDicomKey> keyList;
 	
-	private ArrayList<FileDicomTag> tagList;
+	private ArrayList<String> tagList;
 	
 	public JPanelAnonymizePrivateTags(){
 		super();
@@ -75,14 +75,7 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		gbc.weightx = 1.0;
 		gbc.weighty = 1.0;
 		gbc.fill = GridBagConstraints.BOTH;
-		
-		/*createPrivateKeyTree(img);
-		
-		JScrollPane scrollPane = new JScrollPane(scrollPanel, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		scrollPane.setPreferredSize(new Dimension(375, 200));
-		add(scrollPane, BorderLayout.NORTH);
-		*/
+
 		tree = createPrivateKeyTree(img, seqTags);
 
 		checkTree = new CheckTreeManager(tree);
@@ -124,61 +117,92 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		
 	}
 	
-	/*private void createPrivateKeyTree(ModelImage image){
+	public void populateFromProfile(ArrayList<FileDicomKey> keys, ArrayList<String> tags, boolean[] selected){
 		
-		FileInfoDicom info = (FileInfoDicom) image.getFileInfo(0);
-		FileDicomTagTable table = info.getTagTable();
-		Hashtable<FileDicomKey, FileDicomTag> hash = table.getTagList();
-		Set<FileDicomKey> keys = hash.keySet();
-		Hashtable<String, ArrayList<FileDicomKey>> groups = new Hashtable<String, ArrayList<FileDicomKey>>();
-		for(FileDicomKey k : keys){
-			String group = k.getGroup();
-			String last = group.substring(group.length() - 1);
-			int lastNum = Integer.parseInt(last);
-			if(lastNum%2 == 1){
-				if(groups.containsKey(group)){
-					String element = k.getElement();
-					if(element.equals("0010"))//Group name
-						groups.get(group).add(0, k);
-					else 
-						groups.get(group).add(k);
-				}else{
-					System.err.println(group);
-					ArrayList<FileDicomKey> keyList = new ArrayList<FileDicomKey>();
-					keyList.add(k);
-					groups.put(group, keyList);
-				}
+		if(keys.isEmpty())
+			return;
+		
+		keyList = keys;
+		tagList = tags;
+		String prevGroup = "";
+		DefaultMutableTreeNode top = new DefaultMutableTreeNode("Private keys");
+		DefaultMutableTreeNode next = null;
+		ArrayList<Integer> selectedRows = new ArrayList<Integer>();
+		tree = new JTree(top);
+		for(int i=0;i<keys.size();i++){
+			FileDicomKey k = keys.get(i);
+			String t = tags.get(i);
+			if(selected[i])
+				selectedRows.add(i+1);
+			if(k.getGroup().equals(prevGroup)){
+				String title = "(" + k.getElement() + ") " + t;
+				DefaultMutableTreeNode child = new DefaultMutableTreeNode(title);
+				next.add(child);
+			} else {
+				String title = "(" + k.getGroup() +") " + t;
+				if(next != null)
+					top.add(next);
+				next = new DefaultMutableTreeNode(title);
+				prevGroup = k.getGroup();
 			}
 		}
+		top.add(next);
+		checkTree = new CheckTreeManager(tree);
 		
-		Set<String> groupKeys = groups.keySet();
+		removeAll();
+		setLayout(new GridBagLayout());
+		setBorder(JDialogBase.buildTitledBorder("Check the fields to anonymize:"));
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.weightx = 1.0;
+		gbc.weighty = 1.0;
+		gbc.fill = GridBagConstraints.BOTH;
 
-		for(String s : groupKeys){
-			ArrayList<FileDicomKey> key = groups.get(s);
-			FileDicomKey groupNameKey = key.remove(0);
-			FileDicomTag groupNameTag = hash.get(groupNameKey);
-			String nodeTitle = "(" + groupNameKey.getGroup() + ") " 
-					+ groupNameTag.getValue(false);
-			//String groupName = groupNameTag.getName();
-			ArrayList<String> elements = new ArrayList<String>();
-			for(FileDicomKey k: key){
-				String subTitle = "(" + k.getElement() + ") ";
-				FileDicomTag tag = hash.get(k);
-				elements.add(subTitle + tag.getName());
-			}
-			addGroup(nodeTitle, elements);
-			
+		JScrollPane treeView = new JScrollPane(tree, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		treeView.setViewportView(tree);
+		add(treeView, gbc);
+
+		gbc.gridy = 1;
+		gbc.weightx = 0;
+		gbc.weighty = 0;
+
+
+		JPanel buttonPanel = new JPanel();
+		buttonPanel.setBorder(new EmptyBorder(0,0,3,0));
+		JButton checkButton = new JButton("Select all");
+		checkButton.setActionCommand("privateAll");
+		checkButton.setFont(MipavUtil.font12B);
+		checkButton.setPreferredSize(new Dimension(85, 30));
+		buttonPanel.add(checkButton, BorderLayout.WEST);
+		checkButton.addActionListener(this);
+
+		JButton unCheckButton = new JButton("Clear");
+		unCheckButton.setActionCommand("privateClear");
+		unCheckButton.setFont(MipavUtil.font12B);
+		unCheckButton.setPreferredSize(new Dimension(85, 30));
+		unCheckButton.addActionListener(this);
+		buttonPanel.add(unCheckButton, BorderLayout.EAST);
+
+		add(buttonPanel, gbc);
+
+		for (int i = 0; i < tree.getRowCount(); i++) {
+			tree.expandRow(i);
 		}
 		
-		//Have tree, need to display to test it out first. DO ON MONDAY
-
-	}*/
+		TreePath[] paths = new TreePath[selectedRows.size()];
+		for(int i=0;i<selectedRows.size();i++){
+			paths[i] = tree.getPathForRow(selectedRows.get(i));
+		}
+		checkTree.getSelectionModel().addSelectionPaths(paths);
+	}
 	
 	public ArrayList<FileDicomKey> getKeyList(){
 		return keyList;
 	}
 	
-	public ArrayList<FileDicomTag> getTagList(){
+	public ArrayList<String> getTagList(){
 		return tagList;
 	}
 	
@@ -420,7 +444,7 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		}
 		
 		keyList = new ArrayList<FileDicomKey>();
-		tagList = new ArrayList<FileDicomTag>();
+		tagList = new ArrayList<String>();
 		
 		Hashtable<String, ArrayList<FileDicomKey>> groups = new Hashtable<String, ArrayList<FileDicomKey>>();
 		for(FileDicomKey k : keys){
@@ -456,7 +480,7 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 			keyList.add(groupNameKey);
 			Collections.sort(key);
 			FileDicomTag groupNameTag = hash.get(groupNameKey);
-			tagList.add(groupNameTag);
+			tagList.add((String) groupNameTag.getValue(false));
 			//System.out.println(groupNameKey.toString());
 			String nodeTitle = "(" + groupNameKey.getGroup() + ") " 
 					+ groupNameTag.getValue(false);
@@ -468,7 +492,7 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 				//System.err.println(k.toString());
 				String subTitle = "(" + k.getElement() + ") ";
 				FileDicomTag tag = hash.get(k);
-				tagList.add(tag);
+				tagList.add(tag.getName());
 				DefaultMutableTreeNode keyNode = new DefaultMutableTreeNode(subTitle + tag.getName());
 				root.add(keyNode);
 			}
@@ -583,7 +607,7 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 	    } 
 	 
 	    // tells whether all siblings of given path are selected. 
-	    private boolean areSiblingsSelected(TreePath path){ 
+	    private boolean areSiblingsSelected(TreePath path){
 	        TreePath parent = path.getParentPath(); 
 	        if(parent==null) 
 	            return true; 

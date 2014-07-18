@@ -170,7 +170,7 @@ public class JDialogAnonymizeImage extends JDialogBase {
         	if(profiles.size() > 0) {
                 Object select = JOptionPane.showInputDialog(this, "Choose the profile to load", "Load profile", JOptionPane.INFORMATION_MESSAGE, null, profiles.toArray(), profiles.toArray()[0]);
                 if(select != null) {
-                    loadProfiles(select.toString());
+                    loadProfile(select.toString());
                 }
             } else {
                 JOptionPane.showMessageDialog(this, "No available profiles");
@@ -237,7 +237,7 @@ public class JDialogAnonymizeImage extends JDialogBase {
     }
     
     
-    private void loadProfiles(String name){
+    private void loadProfile(String name){
     	String value = Preferences.getProperty("profileAnonymizeDICOM" + name);
     	String[] split = value.split(";");
     	int i;
@@ -285,7 +285,7 @@ public class JDialogAnonymizeImage extends JDialogBase {
     	boolean[] publicKeys = checkboxPanel.getSelectedList();
     	boolean[] privateSelected = privateTagsPanel.getSelectedKeysBool();
     	ArrayList<FileDicomKey> keyList = privateTagsPanel.getKeyList();
-    	ArrayList<FileDicomTag> tagList = privateTagsPanel.getTagList();
+    	ArrayList<String> tagList = privateTagsPanel.getTagList();
     	
     	for(int i=0;i<FileInfoDicom.anonymizeTagIDs.length;i++){
     		if(publicKeys[i])
@@ -295,10 +295,10 @@ public class JDialogAnonymizeImage extends JDialogBase {
     	}
     	for(int i=0;i<privateSelected.length;i++){
     		FileDicomKey k = keyList.get(i);
-    		FileDicomTag t = tagList.get(i);
-    		if(k.getElement().equals("0010"))
-    			hashString.append(k.getKey() + delimiter + t.getValue(false) + delimiter);
-    		else hashString.append(k.getKey() + delimiter + t.getName() + delimiter);
+    		String t = tagList.get(i);
+
+    		hashString.append(k.getKey() + delimiter + t + delimiter);
+    		
     		if(privateSelected[i])
     			hashString.append("t");
     		else hashString.append("f");
