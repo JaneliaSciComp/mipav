@@ -321,7 +321,7 @@ public class JDialogHarrisCornerDetector extends JDialogScriptableBase implement
         labelPointThreshold.setForeground(Color.black);
         labelPointThreshold.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         paramPanel.add(labelPointThreshold, gbc);
 
         textPointThreshold = new JTextField(10);
