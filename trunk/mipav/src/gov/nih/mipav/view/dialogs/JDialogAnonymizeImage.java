@@ -8,7 +8,9 @@ import gov.nih.mipav.view.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
 
@@ -120,6 +122,7 @@ public class JDialogAnonymizeImage extends JDialogBase {
      */
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource(); // whatever the user clicked on
+        String command = event.getActionCommand();
 
         if (source == OKButton) { // if user pressed "expurgate" ...
 
@@ -162,7 +165,33 @@ public class JDialogAnonymizeImage extends JDialogBase {
             }
         } else if (source == cancelButton) {
             dispose();
-        } else {
+        } else if (command.equals("LoadProfile")){
+        	ArrayList<String> profiles = getProfiles();
+        	if(profiles.size() > 0) {
+                Object select = JOptionPane.showInputDialog(this, "Choose the profile to load", "Load profile", JOptionPane.INFORMATION_MESSAGE, null, profiles.toArray(), profiles.toArray()[0]);
+                if(select != null) {
+                    loadProfiles(select.toString());
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "No available profiles");
+            }
+        } else if (command.equals("SaveProfile")){
+        	int doSave = JOptionPane.NO_OPTION;
+            String str = String.valueOf(0);
+            while(doSave == JOptionPane.NO_OPTION) {
+                str = JOptionPane.showInputDialog(this, "Name the profile");
+                if(str != null && str.length() == 0) {
+                    doSave = JOptionPane.NO_OPTION;
+                } else if(Preferences.getProperty("profileAnonymizeDICOM"+str) != null) {
+                    doSave = JOptionPane.showConfirmDialog(this, "Profile "+str+" already exists.  Overwrite?", "Overwrite?", JOptionPane.YES_NO_CANCEL_OPTION);
+                } else {
+                    doSave = JOptionPane.YES_OPTION;
+                }
+            }
+            if(doSave == JOptionPane.YES_OPTION)
+            	saveProfile(str);
+        }
+        else {
             super.actionPerformed(event);
         }
     }
@@ -204,6 +233,79 @@ public class JDialogAnonymizeImage extends JDialogBase {
     			seqTags.addAll(vec);
     		}
     	}
+    	
+    }
+    
+    
+    private void loadProfiles(String name){
+    	String value = Preferences.getProperty("profileAnonymizeDICOM" + name);
+    	String[] split = value.split(";");
+    	int i;
+    	boolean[] publicList = new boolean[FileInfoDicom.anonymizeTagIDs.length];
+    	for(i=0;i<publicList.length;i++){
+    		if(split[i].equals("t"))
+    			publicList[i] = true;
+    		else publicList[i] = false;
+    	}
+    	checkboxPanel.setSelectedList(publicList);
+    	
+    	ArrayList<FileDicomKey> keys = new ArrayList<FileDicomKey>();
+    	for(;i<split.length;i+=3){
+    		if(split[i+2].equals("t")){
+    			String keyString = split[i];
+    			keys.add(new FileDicomKey(keyString));
+    		}
+    	}
+    	if(keys.size()>0)
+    		privateTagsPanel.setSelectedKeys(keys);
+    }
+    
+    private ArrayList<String> getProfiles(){
+    	
+    	ArrayList<String> profiles = new ArrayList<String>();
+    	Properties props = Preferences.getMipavProps();
+    	Set<Object> keys = props.keySet();
+    	for(Object o : keys){
+    		if(o instanceof String){
+    			String s = (String) o;
+    			if(s.startsWith("profileAnonymizeDICOM")){
+    				profiles.add(s.substring(21));
+    			}
+    		}
+    	}
+    	return profiles;
+    }
+    
+    private void saveProfile(String name){
+    	
+    	String profileName = "profileAnonymizeDICOM" + name;
+    	StringBuilder hashString = new StringBuilder();
+    	String delimiter = ";";
+    	
+    	boolean[] publicKeys = checkboxPanel.getSelectedList();
+    	boolean[] privateSelected = privateTagsPanel.getSelectedKeysBool();
+    	ArrayList<FileDicomKey> keyList = privateTagsPanel.getKeyList();
+    	ArrayList<FileDicomTag> tagList = privateTagsPanel.getTagList();
+    	
+    	for(int i=0;i<FileInfoDicom.anonymizeTagIDs.length;i++){
+    		if(publicKeys[i])
+    			hashString.append("t");
+    		else hashString.append("f");
+    		hashString.append(delimiter);
+    	}
+    	for(int i=0;i<privateSelected.length;i++){
+    		FileDicomKey k = keyList.get(i);
+    		FileDicomTag t = tagList.get(i);
+    		if(k.getElement().equals("0010"))
+    			hashString.append(k.getKey() + delimiter + t.getValue(false) + delimiter);
+    		else hashString.append(k.getKey() + delimiter + t.getName() + delimiter);
+    		if(privateSelected[i])
+    			hashString.append("t");
+    		else hashString.append("f");
+    		hashString.append(delimiter);
+    	}
+    	hashString.deleteCharAt(hashString.length()-1);
+    	Preferences.setProperty(profileName, hashString.toString());
     	
     }
 }
