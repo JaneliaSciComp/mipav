@@ -38,10 +38,9 @@ public class AlgorithmNonMaxSuppts extends AlgorithmBase {
 	
 	private int radius;
 	private double threshold;
-	private int row[];
-	private int column[];
 	private double rsubp[] = null;
 	private double csubp[] = null;
+	private boolean subpixel;
 	
 	/**
 	 * 
@@ -51,16 +50,13 @@ public class AlgorithmNonMaxSuppts extends AlgorithmBase {
 	 * @param radius   Radius of the region considered in non-maximal suppression.
 	 *                 Typical values to use might be 1-3 pixels.
 	 * @param threshold
-	 * @param row row coordinates of corner points
-	 * @param column column coordinates
+	 * @param hcd byte buffer containing corner points
 	 */
-	public AlgorithmNonMaxSuppts(ModelImage destImg, ModelImage srcImg, int radius, double threshold,
-			                     int[] row, int[] column) {
+	public AlgorithmNonMaxSuppts(ModelImage destImg, ModelImage srcImg, int radius, double threshold) {
 		super(destImg, srcImg);	
 		this.radius = radius;
 		this.threshold = threshold;
-		this.row = row;
-		this.column = column;
+		subpixel = false;
 	}
 	
 	/**
@@ -71,8 +67,6 @@ public class AlgorithmNonMaxSuppts extends AlgorithmBase {
 	 * @param radius   Radius of the region considered in non-maximal suppression.
 	 *                 Typical values to use might be 1-3 pixels.
 	 * @param threshold
-	 * @param row row coordinates of corner points
-	 * @param column column coordinates
 	 * @param rsubp  Sub-pixel localization of feature points is attempted and returned as as 
 	 *               additional set of floating point coordinates.  Note that you may still want
 	 *               to use the integer valued coordinates to specify centers of correlation
@@ -80,14 +74,13 @@ public class AlgorithmNonMaxSuppts extends AlgorithmBase {
 	 * @param csubp
 	 */
 	public AlgorithmNonMaxSuppts(ModelImage destImg, ModelImage srcImg, int radius, double threshold,
-			                     int[] row, int[] column, double[] rsubp, double[] csubp) {
+			                     double[] rsubp, double[] csubp) {
 		super(destImg, srcImg);	
 		this.radius = radius;
 		this.threshold = threshold;
-		this.row = row;
-		this.column = column;
 		this.rsubp = rsubp;
 		this.csubp = csubp;
+		subpixel = true;
 	}
 
 	 /**
@@ -101,6 +94,76 @@ public class AlgorithmNonMaxSuppts extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
+    	int xDim = srcImage.getExtents()[0];
+    	int yDim = srcImage.getExtents()[1];
+    	int sliceSize = xDim * yDim;
+    	double buffer[] = new double[sliceSize];
+    	int y;
+    	int x;
+    	int ym;
+    	int xm;
+    	double maxVal;
+    	double mx[] = new double[sliceSize];
+    	byte hcd[] = new byte[sliceSize];
+    	int index;
+    	int cornersFound = 0;
+    	try {
+    		srcImage.exportData(0, sliceSize, buffer);
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("IOException " + e + " on srcImage.exportData(0, sliceSize, buffer)");
+    		setCompleted(false);
+    		return;
+    	}
+    	// Extract local maxima by performing a grey scale morphological dilation and then finding 
+    	// points in the corner strength image, the srcImage, that match the dilated image and are 
+    	// also greater than the threshold.
+    	// Gray scale dilate
+    	for (y = 0; y < yDim; y++) {
+    		for (x = 0; x < xDim; x++) {
+    		    maxVal = -Double.MAX_VALUE;
+    		    for (ym = Math.max(0, y-radius); ym <= Math.min(yDim-1, y+radius); ym++) {
+    		    	for (xm = Math.max(0,  x-radius); xm <= Math.min(xDim-1, x+radius); xm++) {
+    		    	    if (buffer[xm + ym * xDim] > maxVal) {
+    		    	    	maxVal = buffer[xm + ym * xDim];
+    		    	    } // if (buffer[xm + ym * xDim] > maxVal)
+    		    	} // for (xm = Math.max(0,  x-radius); xm <= Math.min(xDim-1, x+radius); xm++)
+    		    } // for (ym = Math.max(0, y-radius); ym <= Math.min(yDim-1, y+radius); ym++)
+    		    mx[x + y * xDim] = maxVal;
+    		} // for (x = 0; x < xDim; x++)
+    	} // for (y = 0; y < yDim; y++)
     	
+    	// Excluding points within a radius of the boundary find points where mx == buffer and value >= threshold
+    	for (y = radius; y <= yDim - 1 - radius; y++) {
+    		for (x = radius; x <= xDim - 1 - radius; x++) {
+    			index = x + y * xDim;
+    			if ((buffer[index] == mx[index]) && (buffer[index] >= threshold)) {
+    				hcd[index] = 1;
+    				cornersFound++;
+    			} // if ((buffer[index] == mx[index]) && (buffer[index] >= threshold))
+    		} // for (x = radius; x <= xDim - 1 - radius; x++)
+    	} // for (y = radius; y <= yDim - 1 - radius; y++)
+    	
+    	if (cornersFound == 0) {
+    		MipavUtil.displayWarning("No maxima above threshold found in AlgorithmNonMaxSuppts");
+            setCompleted(true);
+            return;
+    	}
+    	
+    	try {
+        	destImage.importData(0, hcd, true);
+        }
+        catch(IOException e) {
+        	MipavUtil.displayError("IOException " + e + " on destImage.importData(0, hcd, true");
+        	setCompleted(false);
+        	return;
+        }
+    	
+    	if (!subpixel) {
+    		setCompleted(true);
+    		return;
+    	}
+    	
+    	// Compute local maxima to subpixel accuracy
     }
 }
