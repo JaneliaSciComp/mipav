@@ -388,7 +388,22 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
             } else {
                 JOptionPane.showMessageDialog(this, "No available profiles");
             }
-    	}else {
+    	} else if(command.equals("SaveProfile")){
+    		int doSave = JOptionPane.NO_OPTION;
+            String str = String.valueOf(0);
+            while(doSave == JOptionPane.NO_OPTION) {
+                str = JOptionPane.showInputDialog(this, "Name the profile");
+                if(str != null && str.length() == 0) {
+                    doSave = JOptionPane.NO_OPTION;
+                } else if(Preferences.getProperty("profileAnonymizeDICOM"+str) != null) {
+                    doSave = JOptionPane.showConfirmDialog(this, "Profile "+str+" already exists.  Overwrite?", "Overwrite?", JOptionPane.YES_NO_CANCEL_OPTION);
+                } else {
+                    doSave = JOptionPane.YES_OPTION;
+                }
+            }
+            if(doSave == JOptionPane.YES_OPTION)
+            	saveProfile(str);
+    	} else {
             super.actionPerformed(ae);
         }
     }
@@ -1362,6 +1377,39 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
     		}
     		privateTagsPanel.populateFromProfile(keys, tags, selected);
     	}
+    }
+    
+private void saveProfile(String name){
+    	
+    	String profileName = "profileAnonymizeDICOM" + name;
+    	StringBuilder hashString = new StringBuilder();
+    	String delimiter = ";";
+    	
+    	boolean[] publicKeys = checkBoxPanel.getSelectedList();
+    	boolean[] privateSelected = privateTagsPanel.getSelectedKeysBool();
+    	ArrayList<FileDicomKey> keyList = privateTagsPanel.getKeyList();
+    	ArrayList<String> tagList = privateTagsPanel.getTagList();
+    	
+    	for(int i=0;i<FileInfoDicom.anonymizeTagIDs.length;i++){
+    		if(publicKeys[i])
+    			hashString.append("t");
+    		else hashString.append("f");
+    		hashString.append(delimiter);
+    	}
+    	for(int i=0;i<privateSelected.length;i++){
+    		FileDicomKey k = keyList.get(i);
+    		String t = tagList.get(i);
+
+    		hashString.append(k.getKey() + delimiter + t + delimiter);
+    		
+    		if(privateSelected[i])
+    			hashString.append("t");
+    		else hashString.append("f");
+    		hashString.append(delimiter);
+    	}
+    	hashString.deleteCharAt(hashString.length()-1);
+    	Preferences.setProperty(profileName, hashString.toString());
+    	
     }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
