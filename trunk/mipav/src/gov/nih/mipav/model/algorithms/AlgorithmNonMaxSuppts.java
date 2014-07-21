@@ -38,8 +38,8 @@ public class AlgorithmNonMaxSuppts extends AlgorithmBase {
 	
 	private int radius;
 	private double threshold;
-	private double rsubp[] = null;
-	private double csubp[] = null;
+	private double xsubp[] = null;
+	private double ysubp[] = null;
 	private boolean subpixel;
 	
 	/**
@@ -67,19 +67,19 @@ public class AlgorithmNonMaxSuppts extends AlgorithmBase {
 	 * @param radius   Radius of the region considered in non-maximal suppression.
 	 *                 Typical values to use might be 1-3 pixels.
 	 * @param threshold
-	 * @param rsubp  Sub-pixel localization of feature points is attempted and returned as as 
+	 * @param xsubp  Sub-pixel localization of feature points is attempted and returned as as 
 	 *               additional set of floating point coordinates.  Note that you may still want
 	 *               to use the integer valued coordinates to specify centers of correlation
 	 *               windows for feature matching.
-	 * @param csubp
+	 * @param ysubp
 	 */
 	public AlgorithmNonMaxSuppts(ModelImage destImg, ModelImage srcImg, int radius, double threshold,
-			                     double[] rsubp, double[] csubp) {
+			                     double[] xsubp, double[] ysubp) {
 		super(destImg, srcImg);	
 		this.radius = radius;
 		this.threshold = threshold;
-		this.rsubp = rsubp;
-		this.csubp = csubp;
+		this.xsubp = xsubp;
+		this.ysubp = ysubp;
 		subpixel = true;
 	}
 
@@ -97,7 +97,7 @@ public class AlgorithmNonMaxSuppts extends AlgorithmBase {
     	int xDim = srcImage.getExtents()[0];
     	int yDim = srcImage.getExtents()[1];
     	int sliceSize = xDim * yDim;
-    	double buffer[] = new double[sliceSize];
+    	double cim[] = new double[sliceSize];
     	int y;
     	int x;
     	int ym;
@@ -107,11 +107,26 @@ public class AlgorithmNonMaxSuppts extends AlgorithmBase {
     	byte hcd[] = new byte[sliceSize];
     	int index;
     	int cornersFound = 0;
+    	int w;
+    	int indxminus1;
+    	int indxplus1;
+    	int indyminus1;
+    	int indyplus1;
+    	double ax;
+    	double bx;
+    	double cx;
+    	double xshift;
+    	double ay;
+    	double by;
+    	double cy;
+    	double yshift;
+    	int presentCorner;
+    
     	try {
-    		srcImage.exportData(0, sliceSize, buffer);
+    		srcImage.exportData(0, sliceSize, cim);
     	}
     	catch (IOException e) {
-    		MipavUtil.displayError("IOException " + e + " on srcImage.exportData(0, sliceSize, buffer)");
+    		MipavUtil.displayError("IOException " + e + " on srcImage.exportData(0, sliceSize, cim)");
     		setCompleted(false);
     		return;
     	}
@@ -124,9 +139,9 @@ public class AlgorithmNonMaxSuppts extends AlgorithmBase {
     		    maxVal = -Double.MAX_VALUE;
     		    for (ym = Math.max(0, y-radius); ym <= Math.min(yDim-1, y+radius); ym++) {
     		    	for (xm = Math.max(0,  x-radius); xm <= Math.min(xDim-1, x+radius); xm++) {
-    		    	    if (buffer[xm + ym * xDim] > maxVal) {
-    		    	    	maxVal = buffer[xm + ym * xDim];
-    		    	    } // if (buffer[xm + ym * xDim] > maxVal)
+    		    	    if (cim[xm + ym * xDim] > maxVal) {
+    		    	    	maxVal = cim[xm + ym * xDim];
+    		    	    } // if (cim[xm + ym * xDim] > maxVal)
     		    	} // for (xm = Math.max(0,  x-radius); xm <= Math.min(xDim-1, x+radius); xm++)
     		    } // for (ym = Math.max(0, y-radius); ym <= Math.min(yDim-1, y+radius); ym++)
     		    mx[x + y * xDim] = maxVal;
@@ -137,10 +152,10 @@ public class AlgorithmNonMaxSuppts extends AlgorithmBase {
     	for (y = radius; y <= yDim - 1 - radius; y++) {
     		for (x = radius; x <= xDim - 1 - radius; x++) {
     			index = x + y * xDim;
-    			if ((buffer[index] == mx[index]) && (buffer[index] >= threshold)) {
+    			if ((cim[index] == mx[index]) && (cim[index] >= threshold)) {
     				hcd[index] = 1;
     				cornersFound++;
-    			} // if ((buffer[index] == mx[index]) && (buffer[index] >= threshold))
+    			} // if ((cim[index] == mx[index]) && (cim[index] >= threshold))
     		} // for (x = radius; x <= xDim - 1 - radius; x++)
     	} // for (y = radius; y <= yDim - 1 - radius; y++)
     	
@@ -162,8 +177,53 @@ public class AlgorithmNonMaxSuppts extends AlgorithmBase {
     	if (!subpixel) {
     		setCompleted(true);
     		return;
-    	}
+    	} // if (!subpixel)
     	
     	// Compute local maxima to subpixel accuracy
+    	xsubp = new double[cornersFound];
+    	ysubp = new double[cornersFound];
+    	w = 1; // Width that we look out on each side of the feature point
+    	       // to fit a local parabola
+    	presentCorner = 0;
+    	for (y = radius; y <= yDim - 1 - radius; y++) {
+    		for (x = radius; x <= xDim - 1 - radius; x++) {
+    			index = x + y * xDim;
+    			if (hcd[index] == 1) {
+    				// Indices of points left, right, above, and below feature point
+    			    indxminus1 = Math.max(index-w, y*xDim);
+    			    indxplus1 = Math.min(index+w, y*xDim + xDim-1);
+    			    indyminus1 = Math.max(index - w*xDim, x);
+    			    indyplus1 = Math.min(index + w*xDim, (yDim-1)*xDim + x);
+    			    
+    			    // Solve for quadratic across x
+    			    cx = cim[index];
+    			    ax = (cim[indxminus1] + cim[indxplus1])/2.0 - cx;
+    			    bx = ax + cx - cim[indxminus1];
+    			    if (ax != 0.0) {
+    			    	xshift = -w*bx/(2.0*ax); // Maximum of quadratic
+    			    } // if (ax != 0.0)
+    			    else {
+    			    	xshift = 0.0;
+    			    }
+    			    
+    			    // Solve for quadratic down y
+    			    cy = cim[index];
+    			    ay = (cim[indyminus1] + cim[indyplus1])/2.0 - cy;
+    			    by = ay + cy - cim[indyminus1];
+    			    if (ay != 0.0) {
+    			    	yshift = -w*by/(2.0*ay);
+    			    } // if (ay != 0.0)
+    			    else {
+    			    	yshift = 0.0;
+    			    }
+    			    
+    			    xsubp[presentCorner] = x + xshift;
+    			    ysubp[presentCorner++] = y + yshift;
+    			} // if (hcd[index] == 1)
+    		} // for (x = radius; x <= xDim - 1 - radius; x++)
+    	} // for (y = radius; y <= yDim - 1 - radius; y++)
+    	
+    	setCompleted(true);
+    	return;
     }
 }
