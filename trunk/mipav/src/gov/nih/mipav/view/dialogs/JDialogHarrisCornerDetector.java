@@ -35,7 +35,7 @@ public class JDialogHarrisCornerDetector extends JDialogScriptableBase implement
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
     
-    private JTextField textK;
+    private JTextField textRadius;
 
     /** DOCUMENT ME! */
     private JTextField textPointThreshold;
@@ -47,8 +47,9 @@ public class JDialogHarrisCornerDetector extends JDialogScriptableBase implement
     /** DOCUMENT ME! */
     private AlgorithmHarrisCornerDetector HarrisAlgo;
     
-    // Seen values of 0.04, 0.06, and 0.1 used
-    private double k = 0.1;
+    private int radius = 1;   // Radius of the region considered in non-maximal suppression.
+                              // Typical values to use might be 1-3 pixels.
+    //private double k = 0.1;
     
     // No idea what this value should be
     private double pointThreshold = 1.0;
@@ -174,10 +175,10 @@ public class JDialogHarrisCornerDetector extends JDialogScriptableBase implement
     
     /**
      * 
-     * @param k
+     * @param radius
      */
-    public void setK(double k) {
-        this.k = k;
+    public void setRadius(int radius) {
+        this.radius = radius;
     }
 
     /**
@@ -205,13 +206,13 @@ public class JDialogHarrisCornerDetector extends JDialogScriptableBase implement
 
         try {
         	
-            resultImage     = new ModelImage(ModelStorageBase.DOUBLE, image.getExtents(), name);
+            resultImage     = new ModelImage(ModelStorageBase.BYTE, image.getExtents(), name);
             if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                 ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
             }
 
             // Make algorithm
-            HarrisAlgo = new AlgorithmHarrisCornerDetector(resultImage, image, sigma, k, pointThreshold);
+            HarrisAlgo = new AlgorithmHarrisCornerDetector(resultImage, image, sigma, radius, pointThreshold);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -261,7 +262,7 @@ public class JDialogHarrisCornerDetector extends JDialogScriptableBase implement
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
         sigma = scriptParameters.getParams().getFloat("sig");
-        k = scriptParameters.getParams().getDouble("harris_k");
+        radius = scriptParameters.getParams().getInt("rad");
         pointThreshold = scriptParameters.getParams().getDouble("point_threshold");
 
     }
@@ -273,7 +274,7 @@ public class JDialogHarrisCornerDetector extends JDialogScriptableBase implement
         scriptParameters.storeInputImage(image);
         scriptParameters.storeOutputImageParams(resultImage, true);
         scriptParameters.getParams().put(ParameterFactory.newParameter("sig", sigma));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("harris_k", k));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rad", radius));
         scriptParameters.getParams().put(ParameterFactory.newParameter("point_threshold", pointThreshold));
     }
 
@@ -304,18 +305,18 @@ public class JDialogHarrisCornerDetector extends JDialogScriptableBase implement
         gbc.gridx = 1;
         paramPanel.add(textSigma, gbc);
         
-        JLabel labelK = new JLabel("k (0.01 - 0.5)");
-        labelK.setForeground(Color.black);
-        labelK.setFont(serif12);
+        JLabel labelRadius = new JLabel("Non-maximal suppression radius");
+        labelRadius.setForeground(Color.black);
+        labelRadius.setFont(serif12);
         gbc.gridx = 0;
         gbc.gridy = 1;
-        paramPanel.add(labelK, gbc);
+        paramPanel.add(labelRadius, gbc);
 
-        textK = new JTextField(10);
-        textK.setText("0.1");
-        textK.setFont(serif12);
+        textRadius = new JTextField(5);
+        textRadius.setText("1");
+        textRadius.setFont(serif12);
         gbc.gridx = 1;
-        paramPanel.add(textK, gbc);
+        paramPanel.add(textRadius, gbc);
 
         JLabel labelPointThreshold = new JLabel("Point Threshold ");
         labelPointThreshold.setForeground(Color.black);
@@ -368,13 +369,13 @@ public class JDialogHarrisCornerDetector extends JDialogScriptableBase implement
             return false;
         }
         
-        tmpStr = textK.getText();
+        tmpStr = textRadius.getText();
 
-        if (testParameter(tmpStr, 0.001, 0.5)) {
-            k = Double.valueOf(tmpStr).doubleValue();
+        if (testParameter(tmpStr, 1, 7)) {
+            radius = Integer.valueOf(tmpStr).intValue();
         } else {
-            textK.requestFocus();
-            textK.selectAll();
+            textRadius.requestFocus();
+            textRadius.selectAll();
 
             return false;
         }
@@ -445,7 +446,7 @@ public class JDialogHarrisCornerDetector extends JDialogScriptableBase implement
         try {
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterFloat("sig", 1.4f));
-            table.put(new ParameterDouble("harris_k", 0.1));
+            table.put(new ParameterDouble("rad", 1));
             table.put(new ParameterDouble("point_threshold", 1));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
