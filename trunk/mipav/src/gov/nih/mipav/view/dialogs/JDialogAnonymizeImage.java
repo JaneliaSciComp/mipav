@@ -245,8 +245,22 @@ public class JDialogAnonymizeImage extends JDialogBase {
     	for(i=0;i<publicList.length;i++){
     		if(split[i].equals("t"))
     			publicList[i] = true;
-    		else publicList[i] = false;
+    		else if(split[i].equals("f"))
+    			publicList[i] = false;
+    		else {
+    			MipavUtil.displayWarning("Warning: standard anonymized tags may have changed. "
+    					+ "There are fewer fields in profile than expected.");
+    			publicList[i] = false;
+    			break;
+    		}
     	}
+    	
+    	if(split[i].equals("f") || split[i].equals("t")){
+    		MipavUtil.displayWarning("Warning: standard anonymized tags may have changed. "
+    				+ "There are more fields in profile than expected.");
+    	}
+    	while(split[i].equals("f") || split[i].equals("t"))
+    		i++;
     	checkboxPanel.setSelectedList(publicList);
     	
     	ArrayList<FileDicomKey> keys = new ArrayList<FileDicomKey>();

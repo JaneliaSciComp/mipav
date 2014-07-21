@@ -1379,7 +1379,7 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
     	}
     }
     
-private void saveProfile(String name){
+    private void saveProfile(String name){
     	
     	String profileName = "profileAnonymizeDICOM" + name;
     	StringBuilder hashString = new StringBuilder();
