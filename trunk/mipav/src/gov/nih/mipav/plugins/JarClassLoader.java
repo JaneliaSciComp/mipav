@@ -21,24 +21,35 @@ public class JarClassLoader extends URLClassLoader {
 	private HashMap<String, Class> cachedClass;
 	
 	public JarClassLoader(ClassLoader c) throws MalformedURLException {
+		//super(c);
 		this(new URL[]{new URL("jar:file:/Users/justinsenseney/mipav/plugins/testjar.jar!/")}, c);
+		System.out.println("Successfully created jar class loader0");
 		
 	}
+	
+	public JarClassLoader(URL[] urls) {
+		super(urls);
+		init(urls, null, null);
+		System.out.println("Successfully created jar class loader1");
+		//internalClassLoader = new URLClassLoader(urls);
+	}
+	
 	
 	public JarClassLoader(URL[] arg0, ClassLoader arg1, URLStreamHandlerFactory arg2) {
 		super(arg0, arg1, arg2);
 		init(arg0, arg1, arg2);
-		System.out.println("Successfully created jar class loader1");
+		System.out.println("Successfully created jar class loader2");
 	}
 
 	public JarClassLoader(URL[] arg0, ClassLoader arg1) {
 		super(arg0, arg1);
 		init(arg0, arg1, null);
-		System.out.println("Successfully created jar class loader2");
+		System.out.println("Successfully created jar class loader3");
 		
 	}
 	
 	private void init(URL[] arg0, ClassLoader arg1, URLStreamHandlerFactory arg2) {
+		System.out.println("In method 1");
 		if(arg2 != null) {
 			internalClassLoader = new URLClassLoader(arg0, arg1, arg2);
 		} else {
@@ -48,6 +59,7 @@ public class JarClassLoader extends URLClassLoader {
 	}
 
 	public boolean addJarContext(String context) throws MalformedURLException {
+		System.out.println("In method 2");
 		if(isContext(context)) {
 			return true;
 		}
@@ -65,6 +77,7 @@ public class JarClassLoader extends URLClassLoader {
 	}
 	
 	public boolean removeJarContext(String context) {
+		System.out.println("In method 3");
 		URL url = contextStringToURL(context);
 		if(url == null || internalClassLoader == null) {
 			return false;
@@ -96,6 +109,7 @@ public class JarClassLoader extends URLClassLoader {
 	}
 	
 	private URL contextStringToURL(String context) {
+		System.out.println("In method 4");
 		try {
 			URL url = new URL("jar:file:"+context+"!/");
 			return url;
@@ -112,6 +126,7 @@ public class JarClassLoader extends URLClassLoader {
 	}
 	
 	public boolean isContext(String context) throws MalformedURLException {
+		
 		URL url =  contextStringToURL(context);
 		URL[] urlList = internalClassLoader.getURLs();
 		for(int i=0; i<urlList.length; i++) {
@@ -125,7 +140,7 @@ public class JarClassLoader extends URLClassLoader {
 	
 	@Override
 	public URL getResource(String name) {
-		MipavUtil.displayInfo("Successfully calling jar class loader");
+		MipavUtil.displayInfo("Successfully calling jar class loader1");
 		URL url = super.getResource(name);
 		if(url == null && internalClassLoader != null) {
 			if(name.charAt(0) == '/') {
@@ -140,7 +155,7 @@ public class JarClassLoader extends URLClassLoader {
 
 	@Override
 	public InputStream getResourceAsStream(String name) {
-		MipavUtil.displayInfo("Successfully calling jar class loader");
+		MipavUtil.displayInfo("Successfully calling jar class loader2");
 		InputStream is = super.getResourceAsStream(name);
 		if(is == null && internalClassLoader != null) {
 			if(name.charAt(0) == '/') {
@@ -155,7 +170,7 @@ public class JarClassLoader extends URLClassLoader {
 
 	@Override
 	public Enumeration<URL> getResources(String name) throws IOException {
-		MipavUtil.displayInfo("Successfully calling jar class loader");
+		MipavUtil.displayInfo("Successfully calling jar class loader3");
 		Enumeration<URL> e = super.getResources(name);
 		if(e == null && internalClassLoader != null) {
 			if(name.charAt(0) == '/') {
@@ -172,7 +187,7 @@ public class JarClassLoader extends URLClassLoader {
 	protected synchronized Class<?> loadClass(String className, boolean resolveIt)
 			throws ClassNotFoundException {
 		
-		System.out.println("Loading class: "+className);
+		System.out.println("Loading class4: "+className);
 		Class result;
 		byte[] classData;
 		result = (Class)cachedClass.get(className);
@@ -198,7 +213,7 @@ public class JarClassLoader extends URLClassLoader {
 
 	@Override
 	public Class<?> loadClass(String name) throws ClassNotFoundException {
-		MipavUtil.displayInfo("Successfully calling jar class loader");
+		MipavUtil.displayInfo("Successfully calling jar class loader5");
 		Class c = super.loadClass(name);
 		if(c == null && internalClassLoader != null) {
 			if(name.charAt(0) == '/') {
@@ -222,7 +237,7 @@ public class JarClassLoader extends URLClassLoader {
 
 	@Override
 	public URL findResource(String name) {
-		MipavUtil.displayInfo("Successfully calling jar class loader");
+		MipavUtil.displayInfo("Successfully calling jar class loader6");
 		URL url = super.findResource(name);
 		if(url == null && internalClassLoader != null) {
 			if(name.charAt(0) == '/') {
@@ -237,7 +252,7 @@ public class JarClassLoader extends URLClassLoader {
 
 	@Override
 	public Enumeration<URL> findResources(String name) throws IOException {
-		MipavUtil.displayInfo("Successfully calling jar class loader");
+		MipavUtil.displayInfo("Successfully calling jar class loader7");
 		Enumeration<URL> e = super.findResources(name);
 		if(e == null && internalClassLoader != null) {
 			if(name.charAt(0) == '/') {
@@ -252,7 +267,7 @@ public class JarClassLoader extends URLClassLoader {
 
 	@Override
 	public URL[] getURLs() {
-		MipavUtil.displayInfo("Successfully calling jar class loader");
+		MipavUtil.displayInfo("Successfully calling jar class loader8");
 		URL[] beginList = super.getURLs();
 		if(internalClassLoader != null) {
 			URL[] endList = internalClassLoader.getURLs();
@@ -269,11 +284,6 @@ public class JarClassLoader extends URLClassLoader {
 		}
 	}
 
-	public JarClassLoader(URL[] urls) {
-		super(urls);
-		internalClassLoader = new URLClassLoader(urls);
-	}
-	
 	public static URLClassLoader newInstance(URL[] arg0) {
 		return new JarClassLoader(arg0);
 	}
