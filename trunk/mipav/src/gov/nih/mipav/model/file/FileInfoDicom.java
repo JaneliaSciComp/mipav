@@ -315,10 +315,7 @@ public class FileInfoDicom extends FileInfoBase {
     
     public final void removePrivateTags(FileDicomKey[] keys){
     	for(int i=0;i<keys.length;i++){
-    		if(tagTable.containsTag(keys[i])){
-    			tagTable.removeTag(keys[i]);
-    		}
-    		
+    		tagTable.removeTag(keys[i]);
     	}
     }
     

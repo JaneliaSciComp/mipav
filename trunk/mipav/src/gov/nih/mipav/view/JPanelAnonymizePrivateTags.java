@@ -20,7 +20,6 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -349,14 +348,30 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		ArrayDeque<FileDicomKey> keyStack = new ArrayDeque<FileDicomKey>(keys);
 		ArrayList<Integer> selected = new ArrayList<Integer>();
 
+		//Both lists should be sorted already
 		for(int i=0;i<keyList.size();i++){
 			if(keyStack.isEmpty())
 				break;
-			FileDicomKey k = keyList.get(i);
-			if(keyStack.peek().equals(k)){
+			FileDicomKey k = new FileDicomKey(keyList.get(i).getKey()); //Private tags, should convert to regular structure
+			FileDicomKey q = keyStack.peek(); //Keys made from strings
+			while(k.compareTo(q) > 0){
+				keyStack.poll();
+				q = keyStack.peek();
+			}
+			if(k.equals(q)){
+				keyStack.poll();
+				if(!k.getElement().equals("0010"))
+					selected.add(i+1);
+			}
+			/*if(q.equals(k)){
 				keyStack.poll();
 				selected.add(i+1);
-			}
+			} else if(k.compareTo(q) > 0){ //This key from the profile does not exist
+				while(k.compareTo(q) > 0){
+					keyStack.poll();
+					q = keyStack.peek();
+				}
+			}*/
 		}
 		TreePath[] selectedPaths = new TreePath[selected.size()];
 		for(int i=0;i<selected.size();i++){
