@@ -6,11 +6,33 @@ import gov.nih.mipav.view.*;
 import java.io.*;
 
 public class AlgorithmHarrisCornerDetector extends AlgorithmBase implements AlgorithmInterface{
-    
+	
+	// Copyright (c) 2002-2010 Peter Kovesi
+	// Centre for Exploration Targeting
+	// The University of Western Australia
+	// http://www.csse.uwa.edu.au/~pk/research/matlabfns/
+	// 
+	// Permission is hereby granted, free of charge, to any person obtaining a copy
+	// of this software and associated documentation files (the "Software"), to deal
+	// in the Software without restriction, subject to the following conditions:
+	// 
+	// The above copyright notice and this permission notice shall be included in 
+	// all copies or substantial portions of the Software.
+	//
+	// The Software is provided "as is", without warranty of any kind.
+
+	// March    2002 - Original version
+	// December 2002 - Updated comments
+	// August   2005 - Changed so that code calls nonmaxsuppts
+    // August   2010 - Changed to use Farid and Simoncelli's derivative filters
+
+    // Portions of the original code have been ported to Java
     // References: 1.) Feature Extraction & Image Processing for Computer Vision Third Edition
 	// by Mark S. Nixon and Alberto S. Aguado, Section 4.4.1.4 Moravec and Harris detectors,
 	// pp. 188 - 192.
 	// 2.) "A Combined Corner and Edge Detector" by Chris Harris & Mike Stephens, 1988.
+	// 3.) Alison Noble, "Descriptions of Image Surfaces", PhD thesis, Department of Engineering
+	// Oxford University, 1989, p.45.
 	
 	// For the matrix gaussianBlur((Ix*Ix), sigma)   gaussianBlur((Ix*Iy), sigma)
 	//                gaussianBlur((Ix*Iy), sigma)   gaussianBlur((Iy*Iy), sigma)
@@ -19,10 +41,10 @@ public class AlgorithmHarrisCornerDetector extends AlgorithmBase implements Algo
 	//                Fxy         Fy2
 	// the product of the eigenvalues is Fx2*Fy2 - Fxy*Fxy = lambda1 * lambda2
 	// and the sum of the eigenvalues is Fx2 + Fy2 = lambda1 + lambda2
-	// Harris corner detector = (Fx2*Fy2 - Fxy*Fxy) - k * (Fx2 + Fy2)**2
-	// Harris corner detector = (lambda1 * lambda2) - k (lambda1 + lambda2)**2
-	// Set hcd to 0 if less than threshold.
-	// Set hcd to 0 if its value is less than the value of an 8-connected neighbor.
+	// Original Harris corner detector = (Fx2*Fy2 - Fxy*Fxy) - k * (Fx2 + Fy2)**2
+	// Original Harris corner detector = (lambda1 * lambda2) - k (lambda1 + lambda2)**2
+	// Nobel modified corner detector = (Fx2*Fy2 - Fxy*Fxy)/(Fx2 + Fy2 + epsilon)
+	// Set some values to zero with nonmaximum suppression.
 	
     private static final int xOp = 1;
     
@@ -34,10 +56,20 @@ public class AlgorithmHarrisCornerDetector extends AlgorithmBase implements Algo
     
     private static final int yyOp = 5;
     
+    // epsilon = D1MACH(4)
+    // Machine epsilon is the smallest positive epsilon such that
+    // (1.0 + epsilon) != 1.0.
+    // epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
+    // epsilon = 2.2204460e-16
+    // epsilon is called the largest relative spacing
+    private double epsilon = Math.pow(2, -52);
+    
     private float sigma;
     
+    private int radius = 1;   // Radius of the region considered in non-maximal suppression.
+	                          // Typical values to use might be 1-3 pixels.
     // Seen values of 0.04, 0.06, and 0.1 used
-    private double k = 0.1;
+    //private double k = 0.1;
     
     // No idea what this value should be
     private double pointThreshold = 1.0;
@@ -68,15 +100,15 @@ public class AlgorithmHarrisCornerDetector extends AlgorithmBase implements Algo
      *
      * @param  destImg  DOCUMENT ME!
      * @param  srcImg   DOCUMENT ME!
-     * @param  highThreshold
-     * @param  lowThreshold
      * @param  sigma
+     * @param  radius
+     * @param  pointThreshold
      */
-    public AlgorithmHarrisCornerDetector(ModelImage destImg, ModelImage srcImg, float sigma, double k,
+    public AlgorithmHarrisCornerDetector(ModelImage destImg, ModelImage srcImg, float sigma, int radius,
     		double pointThreshold) {
         super(destImg, srcImg);
         this.sigma = sigma; 
-        this.k = k;
+        this.radius = radius;
         this.pointThreshold = pointThreshold;
     }
 
@@ -116,11 +148,9 @@ public class AlgorithmHarrisCornerDetector extends AlgorithmBase implements Algo
         ModelImage IxIyImage;
         ModelImage IyIyImage;
         float sum;
-        double hcd[];
-        byte c8Max[];
-        int x;
-        int y;
-        int index;
+        double cim[];
+        AlgorithmNonMaxSuppts nonMaxAlgo;
+        ModelImage cimImage;
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -270,79 +300,27 @@ public class AlgorithmHarrisCornerDetector extends AlgorithmBase implements Algo
         IxIyImage.disposeLocal();
         IyIyImage.disposeLocal();
         
-        hcd = new double[sliceSize];
+        cim = new double[sliceSize];
         for (i = 0; i < sliceSize; i++) {
         	if (entireImage || mask.get(i)) {
 	        	sum = Fx2[i] + Fy2[i];
-	        	hcd[i] = (Fx2[i]*Fy2[i] - Fxy[i]*Fxy[i]) - k * sum *sum;
-	        	if (hcd[i] < pointThreshold) {
-	        		hcd[i] = 0;
-	        	}
-        	}
-        }
-        c8Max = new byte[sliceSize];
-        for (i = 0; i < sliceSize; i++) {
-        	c8Max[i] = 1;
-        }
-        for (y = 0; y < yDim; y++) {
-        	for (x = 0; x < xDim; x++) {
-        		index = x + y * xDim;
-        		if (entireImage || mask.get(index)) {
-        		    if ((x > 1) && (hcd[index] < hcd[index-1])) {
-        		        c8Max[index] = 0;
-        		        continue;
-        		    }
-        		    if ((x < xDim - 1) && (hcd[index] < hcd[index+1])) {
-        		    	c8Max[index] = 0;
-        		    	continue;
-        		    }
-        		    if ((y > 1) && (hcd[index] < hcd[index-xDim])) {
-        		        c8Max[index] = 0;
-        		        continue;
-        		    }
-        		    if ((y < yDim - 1) && (hcd[index] < hcd[index+xDim])) {
-        		    	c8Max[index] = 0;
-        		    	continue;
-        		    }
-        		    if ((x > 1) && (y > 1) && (hcd[index] < hcd[index-xDim-1])) {
-        		    	c8Max[index] = 0;
-        		    	continue;
-        		    }
-        		    if ((x > 1) && (y < yDim - 1) && (hcd[index] < hcd[index+xDim-1])) {
-        		    	c8Max[index] = 0;
-        		    	continue;
-        		    }
-        		    if ((x < xDim -1) && (y > 1) && (hcd[index] < hcd[index-xDim+1])) {
-        		    	c8Max[index] = 0;
-        		    	continue;
-        		    }
-        		    if ((x < xDim-1) && (y < yDim-1) && (hcd[index] < hcd[index+xDim+1])) {
-        		    	c8Max[index] = 0;
-        		    }
-        		}
+	        	//cim[i] = (Fx2[i]*Fy2[i] - Fxy[i]*Fxy[i]) - k * sum *sum;
+	        	cim[i] = (Fx2[i]*Fy2[i] - Fxy[i]*Fxy[i])/(sum + epsilon);
         	}
         }
         
-        
-        for (y = 0; y < yDim; y++) {
-        	for (x = 0; x < xDim; x++) {
-        		index = x + y * xDim;
-        		if (entireImage || mask.get(index)) {
-        			if (c8Max[index] == 0) {
-        				hcd[index] = 0;
-        			}
-        		}
-            }
-        }
-        
+        cimImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), "cimImage");
         try {
-        	destImage.importData(0, hcd, true);
+        	cimImage.importData(0, cim, true);
         }
         catch(IOException e) {
-        	MipavUtil.displayError("IOException " + e + " on destImage.importData, hcd, true");
+        	MipavUtil.displayError("IOException " + e + " on cimImage.importData(0, cim, true");
         	setCompleted(false);
         	return;
         }
+        
+        nonMaxAlgo = new AlgorithmNonMaxSuppts(destImage, cimImage, radius, pointThreshold);
+        nonMaxAlgo.run();
         
         setCompleted(true);
         return;
