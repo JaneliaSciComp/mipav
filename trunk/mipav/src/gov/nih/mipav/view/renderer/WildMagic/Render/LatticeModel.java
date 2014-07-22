@@ -4,18 +4,15 @@ import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
-import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
-import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.ViewVOIVector;
 import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.renderer.WildMagic.Interface.FileSurface_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogLattice;
 
 import java.awt.Color;
@@ -30,12 +27,10 @@ import javax.swing.JFileChooser;
 import WildMagic.LibFoundation.Curves.NaturalSpline3;
 import WildMagic.LibFoundation.Distance.DistanceSegment3Segment3;
 import WildMagic.LibFoundation.Distance.DistanceVector3Segment3;
-import WildMagic.LibFoundation.Intersection.IntrTriangle3Triangle3f;
 import WildMagic.LibFoundation.Mathematics.Box3f;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Ellipsoid3f;
 import WildMagic.LibFoundation.Mathematics.Segment3f;
-import WildMagic.LibFoundation.Mathematics.Triangle3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
@@ -519,7 +514,7 @@ public class LatticeModel {
     }
     
     
-    public ModelImage interpolateLattice( int version, boolean displayResult )
+    public void interpolateLattice( int version, boolean displayResult )
 	{
 		latticeSlice = new int[afTimeC.length];
 		float[] closestTimes = new float[afTimeC.length];
@@ -618,22 +613,7 @@ public class LatticeModel {
 	        Box3f box = new Box3f( ellipsoid.Center, ellipsoid.Axis, new float[]{extent, extent, 1 } );
 	        boxBounds.add(box);
 		}
-						
-		ModelImage straightImage = null;
-		if ( version == 2 )
-		{
-			generateMasks( imageA, imageB, samplingPlanes, ellipseBounds, wormDiameters, 2*extent, true, displayResult  );
-		}
-		else if ( version == 0 )
-		{
-			straightImage = straighten(imageA, samplingPlanes, ellipseBounds, 2*extent, latticeSlice, true );
-			if ( imageB != null )
-			{
-				straighten(imageB, samplingPlanes, ellipseBounds, 2*extent, latticeSlice, false );
-			}
-		}
-
-		return straightImage;
+		generateMasks( imageA, imageB, samplingPlanes, ellipseBounds, wormDiameters, 2*extent, true, displayResult  );
 	}
     
     
@@ -1148,137 +1128,137 @@ public class LatticeModel {
     	return new NaturalSpline3( NaturalSpline3.BoundaryType.BT_FREE, curve.size()-1, time, akPoints );
     }
 	
-    public ModelImage straighten( ModelImage image, VOI samplingPlanes, Vector<Ellipsoid3f> ellipseBounds,
-    		int diameter, int[] latticeSlice, boolean saveStats )
-    {
-    	
-		int colorFactor = image.isColorImage() ? 4 : 1;
-		int[] resultExtents = new int[]{diameter, diameter, samplingPlanes.getCurves().size()};
-		float[][] values = new float[resultExtents[2]][resultExtents[0] * resultExtents[1] * colorFactor]; 
-		float[][] dataOrigin = new float[resultExtents[2]][resultExtents[0] * resultExtents[1] * 4]; 
-
-    	String imageName = image.getImageName();
-    	if ( imageName.contains("_clone") )
-    	{
-    		imageName = imageName.replaceAll("_clone", "" );
-    	}
-		ModelImage resultImage = new ModelImage(image.getType(), resultExtents, imageName + "_straight.xml");
-		JDialogBase.updateFileInfo( image, resultImage );
-		resultImage.setResolutions( new float[]{1,1,1});
-		
-		ModelImage straightToOrigin = new ModelImage( ModelStorageBase.ARGB_FLOAT, resultExtents, imageName + "_toOriginal.xml");
-		JDialogBase.updateFileInfo( image, straightToOrigin );
-		straightToOrigin.setResolutions( new float[]{1,1,1});
-		for ( int i = 0; i < straightToOrigin.getDataSize(); i++ )
-		{
-			straightToOrigin.set(i, 0);
-		}
-		
-		Vector3f lpsOrigin = new Vector3f();
-		for( int i = 0; i < samplingPlanes.getCurves().size(); i++ )
-		{
-			VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i);
-	        Vector3f[] corners = new Vector3f[4];
-	        for ( int j = 0; j < 4; j++ )
-	        {
-	        	corners[j] = kBox.elementAt(j);
-	        }
-			try {
-				image.exportDiagonal( 0, i, resultExtents, corners, 
-						ellipseBounds.elementAt(i), values[i], true, dataOrigin[i]);
-
-				if ( i == 0 )
-				{
-					MipavCoordinateSystems.fileToScanner( corners[0], lpsOrigin, image );
-				}
-
-				resultImage.importData(i*values[i].length, values[i], false);
-				straightToOrigin.importData(i*dataOrigin[i].length, dataOrigin[i], false);
-			} catch(IOException e) {
-				e.printStackTrace();
-			}
-		}
-		
-
-		float[] leftDistances = new float[latticeSlice.length];
-		float[] rightDistances = new float[latticeSlice.length];
-		short id = (short) image.getVOIs().getUniqueID();
-		VOI lattice = new VOI(id, "lattice", VOI.POLYLINE, (float)Math.random() );
-		VOIContour leftSide = new VOIContour( false );
-		VOIContour rightSide = new VOIContour( false );
-		lattice.getCurves().add(leftSide);		
-		lattice.getCurves().add(rightSide);
-		Vector3f dir = new Vector3f(1,0,0);
-		for ( int i = 0; i < latticeSlice.length; i++ )
-		{
-			Ellipsoid3f ellipsoid = ellipseBounds.elementAt( latticeSlice[i] );
-//			Vector3f center = ellipsoid.Center;
-			float width = ellipsoid.Extent[0] - DiameterBuffer;
-//			Vector3f dir = ellipsoid.Axis[0];
-			Vector3f center = new Vector3f(diameter/2,diameter/2,latticeSlice[i]);
-			
-			Vector3f leftPt = Vector3f.scale( -width, dir ); leftPt.add(center);
-			leftSide.add(leftPt);
-			
-			Vector3f rightPt = Vector3f.scale(  width, dir ); rightPt.add(center);
-			rightSide.add(rightPt);
-
-			leftDistances[i] = 0;
-			rightDistances[i] = 0;
-			if ( i > 0 )
-			{
-				leftDistances[i] = leftSide.elementAt(i).distance(leftSide.elementAt(i-1) );
-				rightDistances[i] = rightSide.elementAt(i).distance(rightSide.elementAt(i-1) );
-			}
-		}
-
-		resultImage.registerVOI(lattice);
-
-		lattice.setColor( new Color( 0, 0, 255) );
-		lattice.getCurves().elementAt(0).update( new ColorRGBA(0,0,1,1));
-		lattice.getCurves().elementAt(1).update( new ColorRGBA(0,0,1,1));
-		lattice.getCurves().elementAt(0).setClosed(false);
-		lattice.getCurves().elementAt(1).setClosed(false);
-		for ( int j = 0; j < leftSide.size(); j++ )
-		{
-			id = (short) image.getVOIs().getUniqueID();
-			VOI marker = new VOI(id, "pair_" + j, VOI.POLYLINE, (float)Math.random() );
-			VOIContour mainAxis = new VOIContour(false); 		    		    		
-			mainAxis.add( leftSide.elementAt(j) );
-			mainAxis.add( rightSide.elementAt(j) );
-			marker.getCurves().add(mainAxis);
-			marker.setColor( new Color( 255, 255, 0) );
-			mainAxis.update( new ColorRGBA(1,1,0,1));
-			if ( j == 0 )
-			{
-				marker.setColor( new Color( 0, 255, 0) );
-				mainAxis.update( new ColorRGBA(0,1,0,1));
-			}
-			resultImage.registerVOI( marker );
-		}
-		resultImage.calcMinMax();
-		new ViewJFrameImage(resultImage);  	
-		saveTransformImage(imageName, resultImage, true);
-
-		if ( saveStats )
-		{ 
-			
-			saveLatticeStatistics(image, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");			
-			saveTransformImage(imageName, straightToOrigin, false);
-			ModelImage originToStraight = computeOriginToStraight(image, straightToOrigin);
-			saveTransformImage(imageName, originToStraight, false);
-			
-			ModelImage croppedVolume = computeMissingData(originToStraight);
-			saveTransformImage(imageName, croppedVolume, false);
-
-//			testTransform( resultImage, straightToOrigin, image.getExtents() );
-//			testTransform( image, originToStraight, resultImage.getExtents() );
-		}
-		
-		
-		
-		return resultImage;
-    }
+//    public ModelImage straighten( ModelImage image, VOI samplingPlanes, Vector<Ellipsoid3f> ellipseBounds,
+//    		int diameter, int[] latticeSlice, boolean saveStats )
+//    {
+//    	
+//		int colorFactor = image.isColorImage() ? 4 : 1;
+//		int[] resultExtents = new int[]{diameter, diameter, samplingPlanes.getCurves().size()};
+//		float[][] values = new float[resultExtents[2]][resultExtents[0] * resultExtents[1] * colorFactor]; 
+//		float[][] dataOrigin = new float[resultExtents[2]][resultExtents[0] * resultExtents[1] * 4]; 
+//
+//    	String imageName = image.getImageName();
+//    	if ( imageName.contains("_clone") )
+//    	{
+//    		imageName = imageName.replaceAll("_clone", "" );
+//    	}
+//		ModelImage resultImage = new ModelImage(image.getType(), resultExtents, imageName + "_straight.xml");
+//		JDialogBase.updateFileInfo( image, resultImage );
+//		resultImage.setResolutions( new float[]{1,1,1});
+//		
+//		ModelImage straightToOrigin = new ModelImage( ModelStorageBase.ARGB_FLOAT, resultExtents, imageName + "_toOriginal.xml");
+//		JDialogBase.updateFileInfo( image, straightToOrigin );
+//		straightToOrigin.setResolutions( new float[]{1,1,1});
+//		for ( int i = 0; i < straightToOrigin.getDataSize(); i++ )
+//		{
+//			straightToOrigin.set(i, 0);
+//		}
+//		
+//		Vector3f lpsOrigin = new Vector3f();
+//		for( int i = 0; i < samplingPlanes.getCurves().size(); i++ )
+//		{
+//			VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i);
+//	        Vector3f[] corners = new Vector3f[4];
+//	        for ( int j = 0; j < 4; j++ )
+//	        {
+//	        	corners[j] = kBox.elementAt(j);
+//	        }
+//			try {
+//				image.exportDiagonal( 0, i, resultExtents, corners, 
+//						ellipseBounds.elementAt(i), values[i], true, dataOrigin[i]);
+//
+//				if ( i == 0 )
+//				{
+//					MipavCoordinateSystems.fileToScanner( corners[0], lpsOrigin, image );
+//				}
+//
+//				resultImage.importData(i*values[i].length, values[i], false);
+//				straightToOrigin.importData(i*dataOrigin[i].length, dataOrigin[i], false);
+//			} catch(IOException e) {
+//				e.printStackTrace();
+//			}
+//		}
+//		
+//
+//		float[] leftDistances = new float[latticeSlice.length];
+//		float[] rightDistances = new float[latticeSlice.length];
+//		short id = (short) image.getVOIs().getUniqueID();
+//		VOI lattice = new VOI(id, "lattice", VOI.POLYLINE, (float)Math.random() );
+//		VOIContour leftSide = new VOIContour( false );
+//		VOIContour rightSide = new VOIContour( false );
+//		lattice.getCurves().add(leftSide);		
+//		lattice.getCurves().add(rightSide);
+//		Vector3f dir = new Vector3f(1,0,0);
+//		for ( int i = 0; i < latticeSlice.length; i++ )
+//		{
+//			Ellipsoid3f ellipsoid = ellipseBounds.elementAt( latticeSlice[i] );
+////			Vector3f center = ellipsoid.Center;
+//			float width = ellipsoid.Extent[0] - DiameterBuffer;
+////			Vector3f dir = ellipsoid.Axis[0];
+//			Vector3f center = new Vector3f(diameter/2,diameter/2,latticeSlice[i]);
+//			
+//			Vector3f leftPt = Vector3f.scale( -width, dir ); leftPt.add(center);
+//			leftSide.add(leftPt);
+//			
+//			Vector3f rightPt = Vector3f.scale(  width, dir ); rightPt.add(center);
+//			rightSide.add(rightPt);
+//
+//			leftDistances[i] = 0;
+//			rightDistances[i] = 0;
+//			if ( i > 0 )
+//			{
+//				leftDistances[i] = leftSide.elementAt(i).distance(leftSide.elementAt(i-1) );
+//				rightDistances[i] = rightSide.elementAt(i).distance(rightSide.elementAt(i-1) );
+//			}
+//		}
+//
+//		resultImage.registerVOI(lattice);
+//
+//		lattice.setColor( new Color( 0, 0, 255) );
+//		lattice.getCurves().elementAt(0).update( new ColorRGBA(0,0,1,1));
+//		lattice.getCurves().elementAt(1).update( new ColorRGBA(0,0,1,1));
+//		lattice.getCurves().elementAt(0).setClosed(false);
+//		lattice.getCurves().elementAt(1).setClosed(false);
+//		for ( int j = 0; j < leftSide.size(); j++ )
+//		{
+//			id = (short) image.getVOIs().getUniqueID();
+//			VOI marker = new VOI(id, "pair_" + j, VOI.POLYLINE, (float)Math.random() );
+//			VOIContour mainAxis = new VOIContour(false); 		    		    		
+//			mainAxis.add( leftSide.elementAt(j) );
+//			mainAxis.add( rightSide.elementAt(j) );
+//			marker.getCurves().add(mainAxis);
+//			marker.setColor( new Color( 255, 255, 0) );
+//			mainAxis.update( new ColorRGBA(1,1,0,1));
+//			if ( j == 0 )
+//			{
+//				marker.setColor( new Color( 0, 255, 0) );
+//				mainAxis.update( new ColorRGBA(0,1,0,1));
+//			}
+//			resultImage.registerVOI( marker );
+//		}
+//		resultImage.calcMinMax();
+//		new ViewJFrameImage(resultImage);  	
+//		saveTransformImage(imageName, resultImage, true);
+//
+//		if ( saveStats )
+//		{ 
+//			
+//			saveLatticeStatistics(image, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");			
+//			saveTransformImage(imageName, straightToOrigin, false);
+//			ModelImage originToStraight = computeOriginToStraight(image, straightToOrigin);
+//			saveTransformImage(imageName, originToStraight, false);
+//			
+//			ModelImage croppedVolume = computeMissingData(originToStraight);
+//			saveTransformImage(imageName, croppedVolume, false);
+//
+////			testTransform( resultImage, straightToOrigin, image.getExtents() );
+////			testTransform( image, originToStraight, resultImage.getExtents() );
+//		}
+//		
+//		
+//		
+//		return resultImage;
+//    }
     
 
     private ModelImage computeOriginToStraight( ModelImage originalImage, ModelImage straightToOrigin )
@@ -1326,40 +1306,40 @@ public class LatticeModel {
     	}
     	return originToStraight;
     }
-    
-    private ModelImage computeMissingData( ModelImage originToStraight )
-    {
-    	
-    	ModelImage croppedMask = new ModelImage( ModelStorageBase.BOOLEAN, originToStraight.getExtents(),  "cropped_mask.xml");
-		JDialogBase.updateFileInfo( originToStraight, croppedMask );	
-		
-    	int dimX = croppedMask.getExtents().length > 0 ? croppedMask.getExtents()[0] : 1;
-    	int dimY = croppedMask.getExtents().length > 1 ? croppedMask.getExtents()[1] : 1;
-    	int dimZ = croppedMask.getExtents().length > 2 ? croppedMask.getExtents()[2] : 1;
-
-    	int count = 0;
-    	for ( int z = 0; z < dimZ; z++ )
-    	{
-    		for ( int y = 0; y < dimY; y++ )
-    		{
-    			for ( int x = 0; x < dimX; x++ )
-    			{
-    				int index = z*dimY*dimX + y*dimX + x;
-    				croppedMask.set(index, false);
-    				if ( originToStraight.getFloat(index * 4) > 0 )
-    				{
-    					croppedMask.set(index,true);
-    					count++;
-    				}
-    			}
-    		}
-    	}
-    	int size = dimX*dimY*dimZ;
-//    	System.err.println( "Percent used = " + (100f*((float)count/(float)size)) );
-		
-    	return croppedMask;
-    }
-    
+//    
+//    private ModelImage computeMissingData( ModelImage originToStraight )
+//    {
+//    	
+//    	ModelImage croppedMask = new ModelImage( ModelStorageBase.BOOLEAN, originToStraight.getExtents(),  "cropped_mask.xml");
+//		JDialogBase.updateFileInfo( originToStraight, croppedMask );	
+//		
+//    	int dimX = croppedMask.getExtents().length > 0 ? croppedMask.getExtents()[0] : 1;
+//    	int dimY = croppedMask.getExtents().length > 1 ? croppedMask.getExtents()[1] : 1;
+//    	int dimZ = croppedMask.getExtents().length > 2 ? croppedMask.getExtents()[2] : 1;
+//
+//    	int count = 0;
+//    	for ( int z = 0; z < dimZ; z++ )
+//    	{
+//    		for ( int y = 0; y < dimY; y++ )
+//    		{
+//    			for ( int x = 0; x < dimX; x++ )
+//    			{
+//    				int index = z*dimY*dimX + y*dimX + x;
+//    				croppedMask.set(index, false);
+//    				if ( originToStraight.getFloat(index * 4) > 0 )
+//    				{
+//    					croppedMask.set(index,true);
+//    					count++;
+//    				}
+//    			}
+//    		}
+//    	}
+//    	int size = dimX*dimY*dimZ;
+////    	System.err.println( "Percent used = " + (100f*((float)count/(float)size)) );
+//		
+//    	return croppedMask;
+//    }
+//    
     
     
 
@@ -2058,7 +2038,7 @@ public class LatticeModel {
     }
     
     
-    public void writeDiagonal( ModelImage image, ModelImage model, final int tSlice, final int slice, final int[] extents,
+    public void writeDiagonal( ModelImage image, ModelImage model, ModelImage overlap, final int tSlice, final int slice, final int[] extents,
             final Vector3f[] verts, final float[] values, float[] dataOrigin) 
     {
         final int iBound = extents[0];
@@ -2166,6 +2146,11 @@ public class LatticeModel {
                     	else {
                     		values[ (j * iBound) + i] = image.getFloatTriLinearBounds(x, y, z);
                     	}
+                    	if ( overlap != null )
+                    	{
+                    		overlap.set(iIndex, jIndex, kIndex, overlap.getFloatTriLinearBounds(x,y,z) + 1 );
+                    	}
+                    	
                     	dataOrigin[ ( ( (j * iBound) + i) * 4) + 0] = 1;
                     	dataOrigin[ ( ( (j * iBound) + i) * 4) + 1] = x;
                     	dataOrigin[ ( ( (j * iBound) + i) * 4) + 2] = y;
@@ -2281,7 +2266,6 @@ public class LatticeModel {
     	displayInterpolatedContours.setColor( Color.blue );
 		for ( int d = 0; d < 10; d++ )
 		{		
-			Vector<VOIContour> edgesX = new Vector<VOIContour>();
 			Vector<VOIContour> edgesY = new Vector<VOIContour>();
 			for ( int i = 0; i < samplingPlanes.getCurves().size(); i++ )
 			{
@@ -2291,7 +2275,6 @@ public class LatticeModel {
 				{
 					corners[j] = kBox.elementAt(j);
 				}
-//				edgesX.add( growDiagonalX( imageA, model, 0, i, resultExtents, corners, i+1) );
 				edgesY.add( growDiagonalY( imageA, model, 0, i, resultExtents, corners, i+1) );
 				if ( !straighten )
 				{
@@ -2299,11 +2282,6 @@ public class LatticeModel {
 					{
 						if ( (i%30) == 0 )
 						{
-//							VOIContour contour = edgesX.elementAt(i);
-//							displayInterpolatedContours.getCurves().add(contour);
-//							contour.update( new ColorRGBA(0,0,1,1));
-//							contour.setVolumeDisplayRange(minRange);
-
 							VOIContour contour = (VOIContour) edgesY.elementAt(i).clone();
 							contour.trimPoints(0.5, true);
 							displayInterpolatedContours.getCurves().add(contour);
@@ -2313,7 +2291,6 @@ public class LatticeModel {
 					}
 				}
 			}
-//			growEdges( model, edgesX );
 			growEdges( model, edgesY );
 		}
 		
@@ -2341,12 +2318,17 @@ public class LatticeModel {
 			}
 			saveTransformImage(imageName, inside, false);
 
-			straighten(imageA, resultExtents, imageName, model, true, displayResult, true );
-			//		straighten(model, resultExtents, imageName, null, false );
-			straighten(inside, resultExtents, imageName, model, false, displayResult, false );
+			ModelImage overlap = new ModelImage( ModelStorageBase.FLOAT, imageA.getExtents(), imageName + "_uncertainty.xml" );
+			JDialogBase.updateFileInfo( imageA, overlap );	
+			
+			straighten(imageA, overlap, resultExtents, imageName, model, true, displayResult, true );
+			
+			straighten(overlap, null, resultExtents, imageName, model, false, displayResult, true );
+			straighten(inside, null, resultExtents, imageName, model, false, displayResult, false );
+			
 			if ( imageB != null )
 			{
-				straighten(imageB, resultExtents, imageName, model, false, displayResult, true );			
+				straighten(imageB, null, resultExtents, imageName, model, false, displayResult, true );			
 			}
 		}
 		inside.disposeLocal();
@@ -2355,7 +2337,7 @@ public class LatticeModel {
 		model = null;
     }
     
-    private void straighten( ModelImage image, int[] resultExtents, String baseName, ModelImage model, boolean saveStats, boolean displayResult, boolean saveAsTif )
+    private void straighten( ModelImage image, ModelImage overlap, int[] resultExtents, String baseName, ModelImage model, boolean saveStats, boolean displayResult, boolean saveAsTif )
     {
     	String imageName = image.getImageName();
     	if ( imageName.contains("_clone") )
@@ -2366,6 +2348,7 @@ public class LatticeModel {
 		int colorFactor = image.isColorImage() ? 4 : 1;
 		float[][] values = new float[resultExtents[2]][resultExtents[0] * resultExtents[1] * colorFactor]; 
 		float[][] dataOrigin = new float[resultExtents[2]][resultExtents[0] * resultExtents[1] * 4]; 
+		
 
 		ModelImage resultImage = new ModelImage(image.getType(), resultExtents, imageName + "_straight.xml");
 		JDialogBase.updateFileInfo( image, resultImage );
@@ -2389,7 +2372,7 @@ public class LatticeModel {
 	        	corners[j] = kBox.elementAt(j);
 	        }
 			try {
-				writeDiagonal( image, model, 0, i, resultExtents, corners, values[i], dataOrigin[i]);
+				writeDiagonal( image, model, overlap, 0, i, resultExtents, corners, values[i], dataOrigin[i]);
 				resultImage.importData(i*values[i].length, values[i], false);
 				straightToOrigin.importData(i*dataOrigin[i].length, dataOrigin[i], false);
 			} catch(IOException e) {
@@ -2397,7 +2380,16 @@ public class LatticeModel {
 			}
 		}
 		
-		
+		if ( overlap != null )
+		{
+			for ( int i = 0; i < overlap.getDataSize(); i++ )
+			{
+				if ( overlap.getFloat(i) < 5 )
+				{
+					overlap.set(i, 0);
+				}
+			}
+		}
 
 		
 
@@ -2464,7 +2456,7 @@ public class LatticeModel {
 			new ViewJFrameImage(resultImage);
 		}
 
-		saveTransformImage(baseName, resultImage, true);
+		saveTransformImage(baseName, resultImage, saveAsTif);
 		if ( saveStats )
 		{
 			String voiDir = resultImage.getImageDirectory() + JDialogBase.makeImageName( baseName, "") + File.separator +
@@ -2702,112 +2694,112 @@ public class LatticeModel {
 
     } // end saveAllVOIsTo()
     
-    private void saveMesh( ModelImage image, TriMesh mesh, final boolean flip ) 
-	{
-    	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
-    	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
-    	int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;   
-    	
-        TransMatrix dicomMatrix = null;
-        TransMatrix inverseDicomMatrix = null;
-        // double[][] inverseDicomArray = null;
-        float[] coord;
-        float[] tCoord;
-
-		int iVQuantity = mesh.VBuffer.GetVertexQuantity();
-
-    	float[] res = image.getResolutions(0);
-        float[] startLocation = image.getFileInfo()[0].getOrigin();
-        int[] direction = MipavCoordinateSystems.getModelDirections(image);
-        
-        Vector3f[] transformedPositions = new Vector3f[iVQuantity];
-        if ( image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL) )
-        {
-
-            // Get the DICOM transform that describes the transformation from
-            // axial to this image orientation
-            dicomMatrix = image.getMatrix();
-            inverseDicomMatrix = new TransMatrix(image.getMatrix());
-            inverseDicomMatrix.Inverse();
-            // inverseDicomArray = inverseDicomMatrix.getMatrix();
-            // inverseDicomMatrix = null;
-            coord = new float[3];
-            tCoord = new float[3];
-
-            for ( int i = 0; i < iVQuantity; i++)
-            {
-            	Vector3f pos = mesh.VBuffer.GetPosition3(i);
-            	
-                // Change the voxel coordinate into millimeter space
-                coord[0] = pos.X * res[0];
-                coord[1] = pos.Y * res[1];
-                coord[2] = pos.Z * res[2];
-
-                // Convert the point to axial millimeter DICOM space
-                dicomMatrix.transform(coord, tCoord);
-
-                // Add in the DICOM origin
-                pos.X = startLocation[0] + tCoord[0];
-                pos.Y = startLocation[1] + tCoord[1];
-                pos.Z = startLocation[2] + tCoord[2];
-                transformedPositions[i] = pos;
-            }
-        }
-        else
-        {
-            for ( int i = 0; i < iVQuantity; i++ )
-            {
-            	Vector3f pos = mesh.VBuffer.GetPosition3(i);
-            	pos.X = (pos.X * res[0] * direction[0]) + startLocation[0];
-            	pos.Y = (pos.Y * res[1] * direction[1]) + startLocation[1];
-            	pos.Z = (pos.Z * res[2] * direction[2]) + startLocation[2];
-            	transformedPositions[i] = pos;
-            }
-        }
-
-
-        float[] box = new float[3];
-        box[0] = (dimX - 1) * res[0];
-        box[1] = (dimY - 1) * res[1];
-        box[2] = (dimZ - 1) * res[2];
-        
-        
-
-    	String imageName = image.getImageName();
-    	if ( imageName.contains("_clone") )
-    	{
-    		imageName = imageName.replaceAll("_clone", "" );
-    	}
-		String voiDir = image.getImageDirectory() + JDialogBase.makeImageName( imageName, "") + File.separator;
-        File voiFileDir = new File(voiDir);
-        if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
-        } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
-        } else { // voiFileDir does not exist
-            voiFileDir.mkdir();
-        }
-		voiDir = image.getImageDirectory() + JDialogBase.makeImageName( imageName, "") + File.separator +
-    			"worm_model" + File.separator;
-        voiFileDir = new File(voiDir);
-        if (voiFileDir.exists() && voiFileDir.isDirectory()) {
-//        	String[] list = voiFileDir.list();
-//        	for ( int i = 0; i < list.length; i++ )
-//        	{
-////        		System.err.println( list[i] );
-//        		File meshFile = new File( voiDir + list[i] );
-//        		meshFile.delete();
-//        	}
-        } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {
-        } else { // voiFileDir does not exist
-            voiFileDir.mkdir();
-        }
-        
-        String kName = voiDir + "worm_surface.xml";
-        
-        TriMesh kMesh = new TriMesh( new VertexBuffer(transformedPositions), new IndexBuffer(mesh.IBuffer), false);
-        try {
-			FileSurface_WM.save(kName, kMesh, 0, kMesh.VBuffer, flip, direction, startLocation, box, inverseDicomMatrix);
-		} catch (IOException e) {}
-    }    
+//    private void saveMesh( ModelImage image, TriMesh mesh, final boolean flip ) 
+//	{
+//    	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+//    	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+//    	int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;   
+//    	
+//        TransMatrix dicomMatrix = null;
+//        TransMatrix inverseDicomMatrix = null;
+//        // double[][] inverseDicomArray = null;
+//        float[] coord;
+//        float[] tCoord;
+//
+//		int iVQuantity = mesh.VBuffer.GetVertexQuantity();
+//
+//    	float[] res = image.getResolutions(0);
+//        float[] startLocation = image.getFileInfo()[0].getOrigin();
+//        int[] direction = MipavCoordinateSystems.getModelDirections(image);
+//        
+//        Vector3f[] transformedPositions = new Vector3f[iVQuantity];
+//        if ( image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL) )
+//        {
+//
+//            // Get the DICOM transform that describes the transformation from
+//            // axial to this image orientation
+//            dicomMatrix = image.getMatrix();
+//            inverseDicomMatrix = new TransMatrix(image.getMatrix());
+//            inverseDicomMatrix.Inverse();
+//            // inverseDicomArray = inverseDicomMatrix.getMatrix();
+//            // inverseDicomMatrix = null;
+//            coord = new float[3];
+//            tCoord = new float[3];
+//
+//            for ( int i = 0; i < iVQuantity; i++)
+//            {
+//            	Vector3f pos = mesh.VBuffer.GetPosition3(i);
+//            	
+//                // Change the voxel coordinate into millimeter space
+//                coord[0] = pos.X * res[0];
+//                coord[1] = pos.Y * res[1];
+//                coord[2] = pos.Z * res[2];
+//
+//                // Convert the point to axial millimeter DICOM space
+//                dicomMatrix.transform(coord, tCoord);
+//
+//                // Add in the DICOM origin
+//                pos.X = startLocation[0] + tCoord[0];
+//                pos.Y = startLocation[1] + tCoord[1];
+//                pos.Z = startLocation[2] + tCoord[2];
+//                transformedPositions[i] = pos;
+//            }
+//        }
+//        else
+//        {
+//            for ( int i = 0; i < iVQuantity; i++ )
+//            {
+//            	Vector3f pos = mesh.VBuffer.GetPosition3(i);
+//            	pos.X = (pos.X * res[0] * direction[0]) + startLocation[0];
+//            	pos.Y = (pos.Y * res[1] * direction[1]) + startLocation[1];
+//            	pos.Z = (pos.Z * res[2] * direction[2]) + startLocation[2];
+//            	transformedPositions[i] = pos;
+//            }
+//        }
+//
+//
+//        float[] box = new float[3];
+//        box[0] = (dimX - 1) * res[0];
+//        box[1] = (dimY - 1) * res[1];
+//        box[2] = (dimZ - 1) * res[2];
+//        
+//        
+//
+//    	String imageName = image.getImageName();
+//    	if ( imageName.contains("_clone") )
+//    	{
+//    		imageName = imageName.replaceAll("_clone", "" );
+//    	}
+//		String voiDir = image.getImageDirectory() + JDialogBase.makeImageName( imageName, "") + File.separator;
+//        File voiFileDir = new File(voiDir);
+//        if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+//        } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+//        } else { // voiFileDir does not exist
+//            voiFileDir.mkdir();
+//        }
+//		voiDir = image.getImageDirectory() + JDialogBase.makeImageName( imageName, "") + File.separator +
+//    			"worm_model" + File.separator;
+//        voiFileDir = new File(voiDir);
+//        if (voiFileDir.exists() && voiFileDir.isDirectory()) {
+////        	String[] list = voiFileDir.list();
+////        	for ( int i = 0; i < list.length; i++ )
+////        	{
+//////        		System.err.println( list[i] );
+////        		File meshFile = new File( voiDir + list[i] );
+////        		meshFile.delete();
+////        	}
+//        } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {
+//        } else { // voiFileDir does not exist
+//            voiFileDir.mkdir();
+//        }
+//        
+//        String kName = voiDir + "worm_surface.xml";
+//        
+//        TriMesh kMesh = new TriMesh( new VertexBuffer(transformedPositions), new IndexBuffer(mesh.IBuffer), false);
+//        try {
+//			FileSurface_WM.save(kName, kMesh, 0, kMesh.VBuffer, flip, direction, startLocation, box, inverseDicomMatrix);
+//		} catch (IOException e) {}
+//    }    
     
     private void saveTransformImage( String imageName, ModelImage image, boolean saveAsTif  ) 
 	{
@@ -2842,61 +2834,61 @@ public class LatticeModel {
     }
     
     
-    private boolean testIntersections( TriMesh mesh  )
-	{
-		int numTriangles = mesh.GetTriangleQuantity();
-		int[] indices = mesh.IBuffer.GetData();
-
-	    for (int i = 0; i < numTriangles; ++i)
-	    {
-	        int v0 = indices[i*3 + 0];
-	        int v1 = indices[i*3 + 1];
-	        int v2 = indices[i*3 + 2];
-	        Vector3f p0 = mesh.VBuffer.GetPosition3( v0 );
-	        Vector3f p1 = mesh.VBuffer.GetPosition3( v1 );
-	        Vector3f p2 = mesh.VBuffer.GetPosition3( v2 );
-	        Triangle3f t0 = new Triangle3f(p0, p1, p2);
-	        
-		    for (int j = i+1; j < numTriangles; ++j)
-		    {
-		        int v10 = indices[j*3 + 0];
-		        int v11 = indices[j*3 + 1];
-		        int v12 = indices[j*3 + 2];
-		        if ( v0 == v10 || v0 == v11 || v0 == v12 ||
-			         v1 == v10 || v1 == v11 || v1 == v12 ||
-			         v2 == v10 || v2 == v11 || v2 == v12 )
-		        {
-		        	continue;
-		        }
-		        
-		        
-		        Vector3f p10 = mesh.VBuffer.GetPosition3( v10 );
-		        Vector3f p11 = mesh.VBuffer.GetPosition3( v11 );
-		        Vector3f p12 = mesh.VBuffer.GetPosition3( v12 );
-		        
-		        if ( p0.isEqual(p10) || p0.isEqual(p11) || p0.isEqual(p12) ||
-			         p1.isEqual(p10) || p1.isEqual(p11) || p1.isEqual(p12) ||
-			         p2.isEqual(p10) || p2.isEqual(p11) || p2.isEqual(p12) )
-		        {
-		        	continue;
-		        }
-		        
-		        
-		        Triangle3f t1 = new Triangle3f(p10, p11, p12);
-		        
-		        IntrTriangle3Triangle3f intersector = new IntrTriangle3Triangle3f( t0, t1 );
-		        if ( intersector.Test() )
-		        {			        
-			        if ( intersector.Find() )
-			        {
-			        	return true;
-			        }
-		        }
-		    }
-	    }
-
-	    return false;
-	}
+//    private boolean testIntersections( TriMesh mesh  )
+//	{
+//		int numTriangles = mesh.GetTriangleQuantity();
+//		int[] indices = mesh.IBuffer.GetData();
+//
+//	    for (int i = 0; i < numTriangles; ++i)
+//	    {
+//	        int v0 = indices[i*3 + 0];
+//	        int v1 = indices[i*3 + 1];
+//	        int v2 = indices[i*3 + 2];
+//	        Vector3f p0 = mesh.VBuffer.GetPosition3( v0 );
+//	        Vector3f p1 = mesh.VBuffer.GetPosition3( v1 );
+//	        Vector3f p2 = mesh.VBuffer.GetPosition3( v2 );
+//	        Triangle3f t0 = new Triangle3f(p0, p1, p2);
+//	        
+//		    for (int j = i+1; j < numTriangles; ++j)
+//		    {
+//		        int v10 = indices[j*3 + 0];
+//		        int v11 = indices[j*3 + 1];
+//		        int v12 = indices[j*3 + 2];
+//		        if ( v0 == v10 || v0 == v11 || v0 == v12 ||
+//			         v1 == v10 || v1 == v11 || v1 == v12 ||
+//			         v2 == v10 || v2 == v11 || v2 == v12 )
+//		        {
+//		        	continue;
+//		        }
+//		        
+//		        
+//		        Vector3f p10 = mesh.VBuffer.GetPosition3( v10 );
+//		        Vector3f p11 = mesh.VBuffer.GetPosition3( v11 );
+//		        Vector3f p12 = mesh.VBuffer.GetPosition3( v12 );
+//		        
+//		        if ( p0.isEqual(p10) || p0.isEqual(p11) || p0.isEqual(p12) ||
+//			         p1.isEqual(p10) || p1.isEqual(p11) || p1.isEqual(p12) ||
+//			         p2.isEqual(p10) || p2.isEqual(p11) || p2.isEqual(p12) )
+//		        {
+//		        	continue;
+//		        }
+//		        
+//		        
+//		        Triangle3f t1 = new Triangle3f(p10, p11, p12);
+//		        
+//		        IntrTriangle3Triangle3f intersector = new IntrTriangle3Triangle3f( t0, t1 );
+//		        if ( intersector.Test() )
+//		        {			        
+//			        if ( intersector.Find() )
+//			        {
+//			        	return true;
+//			        }
+//		        }
+//		    }
+//	    }
+//
+//	    return false;
+//	}
     
     
     private void testTransform( ModelImage original, ModelImage transform, int[] outputExtents )
