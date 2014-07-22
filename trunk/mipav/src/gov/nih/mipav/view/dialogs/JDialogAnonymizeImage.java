@@ -41,6 +41,8 @@ public class JDialogAnonymizeImage extends JDialogBase {
     private JPanelAnonymizeImage checkboxPanel; //
     
     private JPanelAnonymizePrivateTags privateTagsPanel;
+    
+    private JPanelAnonymizePublicTags publicTagsPanel;
 
     /** DOCUMENT ME! */
     private ModelImage image;
@@ -68,48 +70,48 @@ public class JDialogAnonymizeImage extends JDialogBase {
         
         getSequenceTags();
         privateTagsPanel = new JPanelAnonymizePrivateTags(img, seqTags);
+        publicTagsPanel = new JPanelAnonymizePublicTags(img, seqTags);
+
         if(privateTagsPanel.isEmpty()){
-        	checkboxPanel = new JPanelAnonymizeImage();
-
-            if (img.isDicomImage()) {
-                checkboxPanel.setDicomInfo((FileInfoDicom) img.getFileInfo(0));
-            } else if (img.isMincImage()) {
-                checkboxPanel.setMincInfo((FileInfoMinc) img.getFileInfo(0));
-            }
-
-            mainDialogPanel.add(checkboxPanel, BorderLayout.CENTER);
-            getContentPane().add(mainDialogPanel);
-        } else {
-
-	        JTabbedPane tabs = new JTabbedPane();
-	        
-	        // place a check-box list in here
-	        checkboxPanel = new JPanelAnonymizeImage();
-	
-	        if (img.isDicomImage()) {
-	            checkboxPanel.setDicomInfo((FileInfoDicom) img.getFileInfo(0));
-	        } else if (img.isMincImage()) {
-	            checkboxPanel.setMincInfo((FileInfoMinc) img.getFileInfo(0));
-	        }
-	
-	        mainDialogPanel.add(checkboxPanel, BorderLayout.CENTER);
-	        
-	        //getContentPane().add(mainDialogPanel);
-	        
-	        tabs.insertTab("Tag options", null, mainDialogPanel, "Tag Selection", 0);
-	        
-	        
-	        tabs.insertTab("Private tag options", null, privateTagsPanel, "Private Tag Selection", 1);
-	        
-	        getContentPane().add(tabs);
+        	privateTagsPanel.removeAll();
+        	JLabel label = new JLabel("No private tags");
+        	privateTagsPanel.add(label);
         }
+        if(publicTagsPanel.isEmpty()){
+        	publicTagsPanel.removeAll();
+        	JLabel label = new JLabel("No public tags");
+        	publicTagsPanel.add(label);
+        }
+
+        JTabbedPane tabs = new JTabbedPane();
+
+        // place a check-box list in here
+        checkboxPanel = new JPanelAnonymizeImage();
+
+        if (img.isDicomImage()) {
+        	checkboxPanel.setDicomInfo((FileInfoDicom) img.getFileInfo(0));
+        } else if (img.isMincImage()) {
+        	checkboxPanel.setMincInfo((FileInfoMinc) img.getFileInfo(0));
+        }
+
+        mainDialogPanel.add(checkboxPanel, BorderLayout.CENTER);
+
+        //getContentPane().add(mainDialogPanel);
+
+        tabs.insertTab("Supp. 55 tag options", null, mainDialogPanel, "Supp. 55 Tag Selection", 0);
+        tabs.insertTab("Public tag options", null, publicTagsPanel, "Public Tag Selection", 1);
+        tabs.insertTab("Private tag options", null, privateTagsPanel, "Private Tag Selection", 2);
+        //tabs.insertTab("Private tag options", null, privateTagsPanel, "Private Tag Selection", 2);
+
+        getContentPane().add(tabs);
+        
         getContentPane().add(getOKCancelPanel(), BorderLayout.SOUTH);
         
         setResizable(true); // since locations are hard-coded we are not checking for different sizes. prevent user from
                             // changing
         addWindowListener(this); // check for events
         pack();
-        setSize(400, 400);
+        setSize(425, 425);
         setVisible(true); // let someone see the dialog.
     }
 
@@ -264,14 +266,22 @@ public class JDialogAnonymizeImage extends JDialogBase {
     	checkboxPanel.setSelectedList(publicList);
     	
     	ArrayList<FileDicomKey> keys = new ArrayList<FileDicomKey>();
+    	ArrayList<FileDicomKey> publicKeys = new ArrayList<FileDicomKey>();
+    	ArrayList<FileDicomKey> workingList = keys;
     	for(;i<split.length;i+=3){
+    		String group = split[i].substring(0, split[i].indexOf(","));
+    		int groupNum = Integer.valueOf(group, 0x10);
+    		if(groupNum%2==0)
+    			workingList = publicKeys;
     		if(split[i+2].equals("t")){
     			String keyString = split[i];
-    			keys.add(new FileDicomKey(keyString));
+    			workingList.add(new FileDicomKey(keyString));
     		}
     	}
     	if(keys.size()>0)
     		privateTagsPanel.setSelectedKeys(keys);
+    	if(publicKeys.size()>0)
+    		publicTagsPanel.setSelectedKeys(publicKeys);
     }
     
     private ArrayList<String> getProfiles(){
@@ -296,13 +306,16 @@ public class JDialogAnonymizeImage extends JDialogBase {
     	StringBuilder hashString = new StringBuilder();
     	String delimiter = ";";
     	
-    	boolean[] publicKeys = checkboxPanel.getSelectedList();
+    	boolean[] standardKeys = checkboxPanel.getSelectedList();
     	boolean[] privateSelected = privateTagsPanel.getSelectedKeysBool();
+    	boolean[] publicSelected = publicTagsPanel.getSelectedKeysBool();
     	ArrayList<FileDicomKey> keyList = privateTagsPanel.getKeyList();
     	ArrayList<String> tagList = privateTagsPanel.getTagList();
+    	ArrayList<FileDicomKey> publicKeyList = publicTagsPanel.getKeyList();
+    	ArrayList<String> publicTagList = publicTagsPanel.getTagList();
     	
     	for(int i=0;i<FileInfoDicom.anonymizeTagIDs.length;i++){
-    		if(publicKeys[i])
+    		if(standardKeys[i])
     			hashString.append("t");
     		else hashString.append("f");
     		hashString.append(delimiter);
@@ -318,6 +331,19 @@ public class JDialogAnonymizeImage extends JDialogBase {
     		else hashString.append("f");
     		hashString.append(delimiter);
     	}
+    	for(int i=0;i<publicSelected.length;i++){
+    		FileDicomKey k = publicKeyList.get(i);
+    		String t = publicTagList.get(i);
+
+    		hashString.append(k.getKey() + delimiter + t + delimiter);
+    		
+    		if(publicSelected[i])
+    			hashString.append("t");
+    		else hashString.append("f");
+    		hashString.append(delimiter);
+    	}
+    	
+    	
     	hashString.deleteCharAt(hashString.length()-1);
     	Preferences.setProperty(profileName, hashString.toString());
     	
