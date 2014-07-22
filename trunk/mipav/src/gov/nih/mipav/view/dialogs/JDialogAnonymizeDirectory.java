@@ -48,10 +48,12 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
     /** DOCUMENT ME! */
     private static final int ANON_TAB = 1;
     
-    private static final int PRIVATE_TAB = 2;
+    private static final int PUBLIC_TAB = 2;
+    
+    private static final int PRIVATE_TAB = 3;
 
     /** DOCUMENT ME! */
-    private static final int LOG_TAB = 3;
+    private static final int LOG_TAB = 4;
 
     /** DOCUMENT ME! */
     private static final int WRITE = 0;
@@ -201,7 +203,8 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
         checkBoxPanel = new JPanelAnonymizeImage();
         anonPanel.add(checkBoxPanel, BorderLayout.CENTER);
         anonPanel.add(buildNameSuggestionPanel(), BorderLayout.SOUTH);
-        everything.insertTab("Tag options", null, anonPanel, "Tag Selection", ANON_TAB);
+        everything.insertTab("Supp. 55 tag options", null, anonPanel, "Supp. 55 Tag Selection", ANON_TAB);
+        //everything.insertTab("Public tag options", null, anonPanel, "Public Tag Selection", PUBLIC_TAB);
         
         //Find and sort out private tags here
         //HERE
