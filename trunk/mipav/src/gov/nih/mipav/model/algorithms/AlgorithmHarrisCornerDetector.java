@@ -34,6 +34,10 @@ public class AlgorithmHarrisCornerDetector extends AlgorithmBase implements Algo
 	// 3.) Alison Noble, "Descriptions of Image Surfaces", PhD thesis, Department of Engineering
 	// Oxford University, 1989, p.45.
 	
+	// Calculate first derivatives using the 5-tap coefficients given by
+	// Farid and Simoncelli.  For the x derivative first use the prefilter
+	// interpolating coefficents in the y direction and then use the
+	// d1 derivative coefficients in the x direction.
 	// For the matrix gaussianBlur((Ix*Ix), sigma)   gaussianBlur((Ix*Iy), sigma)
 	//                gaussianBlur((Ix*Iy), sigma)   gaussianBlur((Iy*Iy), sigma)
 	// =
@@ -151,6 +155,13 @@ public class AlgorithmHarrisCornerDetector extends AlgorithmBase implements Algo
         double cim[];
         AlgorithmNonMaxSuppts nonMaxAlgo;
         ModelImage cimImage;
+        final int useSimpleDerivatives = 1;
+        final int useFaridAndSimoncelli = 2;
+        int derivativeMethod = useFaridAndSimoncelli;
+        float p[];
+        float d1[];
+        ModelImage IxImage;
+        ModelImage IyImage;
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -161,33 +172,115 @@ public class AlgorithmHarrisCornerDetector extends AlgorithmBase implements Algo
         
         fireProgressStateChanged(srcImage.getImageName(), "Running Harris Corner Detector ...");
         kExtents = new int[2];
-        kExtents[0] = 3;
-        kExtents[1] = 1;
-        GxData = new float[]{-1, 0, 1};
-        convolver = new AlgorithmConvolver(srcImage, GxData, kExtents,entireImage, image25D);
-        convolver.setMinProgressValue(0);
-        convolver.setMaxProgressValue(10);
-        linkProgressToAlgorithm(convolver);
-        convolver.addListener(this);
-        if (!entireImage) {
-            convolver.setMask(mask);
-        }
-        operationType = xOp;
-        convolver.run();
-        
-        kExtents[0] = 1;
-        kExtents[1] = 3;
-        GyData = new float[]{-1, 0, 1};
-        convolver = new AlgorithmConvolver(srcImage, GyData, kExtents,entireImage, image25D);
-        convolver.setMinProgressValue(11);
-        convolver.setMaxProgressValue(20);
-        linkProgressToAlgorithm(convolver);
-        convolver.addListener(this);
-        if (!entireImage) {
-            convolver.setMask(mask);
-        }
-        operationType = yOp;
-        convolver.run();
+        switch (derivativeMethod) {
+        case useSimpleDerivatives:
+	        kExtents[0] = 3;
+	        kExtents[1] = 1;
+	        GxData = new float[]{-1, 0, 1};
+	        convolver = new AlgorithmConvolver(srcImage, GxData, kExtents,entireImage, image25D);
+	        convolver.setMinProgressValue(0);
+	        convolver.setMaxProgressValue(10);
+	        linkProgressToAlgorithm(convolver);
+	        convolver.addListener(this);
+	        if (!entireImage) {
+	            convolver.setMask(mask);
+	        }
+	        operationType = xOp;
+	        convolver.run();
+	        
+	        kExtents[0] = 1;
+	        kExtents[1] = 3;
+	        GyData = new float[]{-1, 0, 1};
+	        convolver = new AlgorithmConvolver(srcImage, GyData, kExtents,entireImage, image25D);
+	        convolver.setMinProgressValue(11);
+	        convolver.setMaxProgressValue(20);
+	        linkProgressToAlgorithm(convolver);
+	        convolver.addListener(this);
+	        if (!entireImage) {
+	            convolver.setMask(mask);
+	        }
+	        operationType = yOp;
+	        convolver.run();
+        break;
+        case useFaridAndSimoncelli:
+        	p = new float[]{0.037659f, 0.249153f, 0.426375f, 0.249153f, 0.037659f};
+        	d1 = new float[]{-0.109604f, -0.276691f, 0.0f, 0.276691f, 0.109604f};
+        	kExtents[0] = 1;
+        	kExtents[1] = 5;
+        	convolver = new AlgorithmConvolver(srcImage, p, kExtents,entireImage, image25D);
+ 	        convolver.setMinProgressValue(0);
+ 	        convolver.setMaxProgressValue(10);
+ 	        linkProgressToAlgorithm(convolver);
+ 	        convolver.addListener(this);
+ 	        if (!entireImage) {
+ 	            convolver.setMask(mask);
+ 	        }
+ 	        operationType = xOp;
+ 	        convolver.run();
+ 	        IxImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), "IxImage");
+ 	        
+ 	        try {
+ 	        	IxImage.importData(0, Ix, true);
+ 	        }
+ 	        catch(IOException e) {
+ 	        	MipavUtil.displayError("IOException " + e + " on IxImage.importData(0, Ix, true");
+ 	        	setCompleted(false);
+ 	        	return;	
+ 	        }
+ 	        
+ 	        kExtents[0] = 5;
+       	    kExtents[1] = 1;
+       	    convolver = new AlgorithmConvolver(IxImage, d1, kExtents,entireImage, image25D);
+	        convolver.setMinProgressValue(11);
+	        convolver.setMaxProgressValue(20);
+	        linkProgressToAlgorithm(convolver);
+	        convolver.addListener(this);
+	        if (!entireImage) {
+	            convolver.setMask(mask);
+	        }
+	        operationType = xOp;
+	        convolver.run();
+	        
+	        kExtents[0] = 5;
+        	kExtents[1] = 1;
+        	convolver = new AlgorithmConvolver(srcImage, p, kExtents,entireImage, image25D);
+ 	        convolver.setMinProgressValue(21);
+ 	        convolver.setMaxProgressValue(30);
+ 	        linkProgressToAlgorithm(convolver);
+ 	        convolver.addListener(this);
+ 	        if (!entireImage) {
+ 	            convolver.setMask(mask);
+ 	        }
+ 	        operationType = yOp;
+ 	        convolver.run();
+ 	        IyImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), "IyImage");
+ 	        
+ 	        try {
+ 	        	IyImage.importData(0, Iy, true);
+ 	        }
+ 	        catch(IOException e) {
+ 	        	MipavUtil.displayError("IOException " + e + " on IyImage.importData(0, Iy, true");
+ 	        	setCompleted(false);
+ 	        	return;	
+ 	        }
+ 	        
+ 	        kExtents[0] = 1;
+       	    kExtents[1] = 5;
+       	    convolver = new AlgorithmConvolver(IyImage, d1, kExtents, entireImage, image25D);
+	        convolver.setMinProgressValue(31);
+	        convolver.setMaxProgressValue(40);
+	        linkProgressToAlgorithm(convolver);
+	        convolver.addListener(this);
+	        if (!entireImage) {
+	            convolver.setMask(mask);
+	        }
+	        operationType = yOp;
+	        convolver.run();
+	        
+	        IxImage.disposeLocal();
+	        IyImage.disposeLocal();
+        break;
+        } // switch(derivativeMethod)
         
         derivOrder[0] = 0;
         derivOrder[1] = 0;
@@ -264,8 +357,8 @@ public class AlgorithmHarrisCornerDetector extends AlgorithmBase implements Algo
         IyIy = null;
         
         convolver = new AlgorithmConvolver(IxIxImage, GData, kExtents,entireImage, image25D);
-        convolver.setMinProgressValue(21);
-        convolver.setMaxProgressValue(30);
+        convolver.setMinProgressValue(41);
+        convolver.setMaxProgressValue(50);
         linkProgressToAlgorithm(convolver);
         convolver.addListener(this);
         if (!entireImage) {
@@ -275,8 +368,8 @@ public class AlgorithmHarrisCornerDetector extends AlgorithmBase implements Algo
         convolver.run();
         
         convolver = new AlgorithmConvolver(IxIyImage, GData, kExtents,entireImage, image25D);
-        convolver.setMinProgressValue(31);
-        convolver.setMaxProgressValue(40);
+        convolver.setMinProgressValue(51);
+        convolver.setMaxProgressValue(60);
         linkProgressToAlgorithm(convolver);
         convolver.addListener(this);
         if (!entireImage) {
@@ -286,8 +379,8 @@ public class AlgorithmHarrisCornerDetector extends AlgorithmBase implements Algo
         convolver.run();
         
         convolver = new AlgorithmConvolver(IyIyImage, GData, kExtents,entireImage, image25D);
-        convolver.setMinProgressValue(41);
-        convolver.setMaxProgressValue(50);
+        convolver.setMinProgressValue(61);
+        convolver.setMaxProgressValue(70);
         linkProgressToAlgorithm(convolver);
         convolver.addListener(this);
         if (!entireImage) {
