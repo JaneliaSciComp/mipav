@@ -281,7 +281,6 @@ public class FileInfoDicom extends FileInfoBase {
         // are neither required to have an entry nor required to exist
         // in the image info.
         for (i = 2; i < anonymizeTagIDs.length; i++) {
-
             // change each of the following tags to (empty)
             // if we are asked to anonymize this info and if the tag exists in the hashtable.
             if ((list[i]) && (tagTable.getValue(anonymizeTagIDs[i]) != null)) {
@@ -306,7 +305,7 @@ public class FileInfoDicom extends FileInfoBase {
         			FileDicomTag tag = d.get(new FileDicomKey(anonymizeTagIDs[i]));
         			if(tag != null){
         				String anonValue = generateNewTagValue(anonymizeTagIDs[i], d).toString();
-        				tag.setValue(anonValue);
+        				d.setValue(anonymizeTagIDs[i], anonValue);
         			}
         		}
         	}
@@ -324,6 +323,28 @@ public class FileInfoDicom extends FileInfoBase {
     		FileDicomKey key = keys[i];
     		for(FileDicomSQItem d : seqs){
     			d.removeTag(key);
+    		}
+    	}
+    }
+    
+    public final void anonymizePublicTags(FileDicomKey[] keys){
+    	for(int i=0;i<keys.length;i++){
+    		FileDicomTag tag = tagTable.get(keys[i]);
+    		if(tag != null){
+    			Object anon = generateNewTagValue(keys[i].getKey());
+	    		tagTable.setValue(keys[i], anon);
+    		}
+    	}
+    }
+    
+    public final void anonymizePublicSequenceTags(FileDicomKey[] keys, Vector<FileDicomSQItem> seqs){
+    	for(int i=0;i<keys.length;i++){
+    		FileDicomKey key = keys[i];
+    		for(FileDicomSQItem d : seqs){
+    			if(d.containsTag(key)){ 
+        			Object anon = generateNewTagValue(key.getKey(), d);
+    				tagTable.setValue(key, anon);
+    			}
     		}
     	}
     }
@@ -368,7 +389,7 @@ public class FileInfoDicom extends FileInfoBase {
                     FileDicomKey origKey;
                     while(origKeyEnum.hasMoreElements()) {
                         origKey = origKeyEnum.nextElement();
-                        itemNew.setValue(origKey, generateNewTagValue(origKey.toString(), itemOrig));
+                        itemNew.setValue(origKey, generateNewTagValue(origKey.getKey(), itemOrig));
                     }
                     sqNew.addItem(itemNew);
                 }
@@ -422,6 +443,24 @@ public class FileInfoDicom extends FileInfoBase {
                     }
                 }
             }
+        }
+        if(vr.getType() instanceof NumType){
+        	int bytes = ((NumType)vr.getType()).getNumBytes();
+        	int num = (int)Math.pow(2, bytes-1);
+        	String numStr = String.valueOf(num);
+        	if(anonStr.length() > numStr.length());
+        		anonStr.setLength(numStr.length());
+        }
+        if(vr == VR.OB){
+        	byte[] bits = anonStr.toString().getBytes();
+        	Byte[] out = new Byte[bits.length];
+        	for(int i=0;i<bits.length;i++){
+        		out[i] = bits[i];
+        	}
+        	return out;
+        }
+        else if(vr == VR.OW){
+        	return anonStr.toString().toCharArray();
         }
         
         return anonStr.toString();

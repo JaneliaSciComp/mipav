@@ -312,7 +312,7 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 			return null;
 		FileDicomKey[] keys = new FileDicomKey[length];
 		for(int i=0;i<length;i++){
-			keys[i] = keyList.get(i);
+			keys[i] = keyList.get(paths.get(i));
 		}
 		
 		return keys;
@@ -484,7 +484,7 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 			keyList.add(groupNameKey);
 			Collections.sort(key);
 			FileDicomTag groupNameTag = hash.get(groupNameKey);
-			tagList.add((String) groupNameTag.getValue(false));
+			tagList.add(groupNameTag.getValue(false).toString());
 			//System.out.println(groupNameKey.toString());
 			String nodeTitle = "(" + groupNameKey.getGroup() + ") " 
 					+ groupNameTag.getValue(false);

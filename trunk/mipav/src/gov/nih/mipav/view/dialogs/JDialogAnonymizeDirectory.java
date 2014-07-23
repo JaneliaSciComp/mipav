@@ -173,6 +173,8 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
     private int xlatDestinationUsage;
     
     private JPanelAnonymizePrivateTags privateTagsPanel;
+    
+    private JPanelAnonymizePublicTags publicTagsPanel;
 
     
     
@@ -214,9 +216,11 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
         //tags might occur
         
         //*************************************
+        publicTagsPanel = new JPanelAnonymizePublicTags();
+        everything.insertTab("Public tag options", null, publicTagsPanel, "Public Tag Selection", PUBLIC_TAB);
         privateTagsPanel = new JPanelAnonymizePrivateTags();
         everything.insertTab("Private tag options", null, privateTagsPanel, "Private Tag Selection", PRIVATE_TAB);
-
+        
         everything.insertTab("Logging", null, buildLogPanel(), "Process Log", LOG_TAB);
 
         mainDialogPanel.add(everything, BorderLayout.CENTER);
@@ -1358,18 +1362,45 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
     	for(i=0;i<publicList.length;i++){
     		if(split[i].equals("t"))
     			publicList[i] = true;
-    		else publicList[i] = false;
+    		else if(split[i].equals("f"))
+    			publicList[i] = false;
+    		else {
+    			MipavUtil.displayWarning("Warning: standard anonymized tags may have changed. "
+    					+ "There are fewer fields in profile than expected.");
+    			publicList[i] = false;
+    			break;
+    		}
     	}
+    	
+    	if(split[i].equals("f") || split[i].equals("t")){
+    		MipavUtil.displayWarning("Warning: standard anonymized tags may have changed. "
+    				+ "There are more fields in profile than expected.");
+    	}
+    	while(split[i].equals("f") || split[i].equals("t"))
+    		i++;
     	checkBoxPanel.setSelectedList(publicList);
     	
     	ArrayList<FileDicomKey> keys = new ArrayList<FileDicomKey>();
     	ArrayList<String> tags = new ArrayList<String>();
     	ArrayList<Boolean> selectedList = new ArrayList<Boolean>();
+    	ArrayList<FileDicomKey> publicKeys = new ArrayList<FileDicomKey>();
+    	ArrayList<String> publicTags = new ArrayList<String>();
+    	ArrayList<Boolean> publicSelected = new ArrayList<Boolean>();
+    	ArrayList<FileDicomKey> workingList = keys;
+    	ArrayList<String> workingTags = tags;
+    	ArrayList<Boolean> workingSelected = selectedList;
     	
     	for(;i<split.length;i+=3){
-    			keys.add(new FileDicomKey(split[i]));
-    			tags.add(split[i+1]);
-    			selectedList.add(split[i+2].equals("t"));
+    		String group = split[i].substring(0, split[i].indexOf(","));
+    		int groupNum = Integer.valueOf(group, 0x10);
+    		if(groupNum%2==0){
+    			workingList = publicKeys;
+    			workingTags = publicTags;
+    			workingSelected = publicSelected;
+    		}
+    		workingList.add(new FileDicomKey(split[i]));
+    		workingTags.add(split[i+1]);
+    		workingSelected.add(split[i+2].equals("t"));
     	}
     	
     	
@@ -1380,6 +1411,13 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
     		}
     		privateTagsPanel.populateFromProfile(keys, tags, selected);
     	}
+    	if(publicKeys.size()>0){
+    		boolean[] selected = new boolean[publicKeys.size()];
+    		for(int j=0;j<selected.length;j++){
+    			selected[j] = publicSelected.get(j);
+    		}
+    		publicTagsPanel.populateFromProfile(publicKeys, publicTags, selected);
+    	}
     }
     
     private void saveProfile(String name){
@@ -1388,13 +1426,16 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
     	StringBuilder hashString = new StringBuilder();
     	String delimiter = ";";
     	
-    	boolean[] publicKeys = checkBoxPanel.getSelectedList();
+    	boolean[] standardKeys = checkBoxPanel.getSelectedList();
     	boolean[] privateSelected = privateTagsPanel.getSelectedKeysBool();
+    	boolean[] publicSelected = publicTagsPanel.getSelectedKeysBool();
     	ArrayList<FileDicomKey> keyList = privateTagsPanel.getKeyList();
     	ArrayList<String> tagList = privateTagsPanel.getTagList();
+    	ArrayList<FileDicomKey> publicKeyList = publicTagsPanel.getKeyList();
+    	ArrayList<String> publicTagList = publicTagsPanel.getTagList();
     	
     	for(int i=0;i<FileInfoDicom.anonymizeTagIDs.length;i++){
-    		if(publicKeys[i])
+    		if(standardKeys[i])
     			hashString.append("t");
     		else hashString.append("f");
     		hashString.append(delimiter);
@@ -1406,6 +1447,17 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
     		hashString.append(k.getKey() + delimiter + t + delimiter);
     		
     		if(privateSelected[i])
+    			hashString.append("t");
+    		else hashString.append("f");
+    		hashString.append(delimiter);
+    	}
+    	for(int i=0;i<publicSelected.length;i++){
+    		FileDicomKey k = publicKeyList.get(i);
+    		String t = publicTagList.get(i);
+
+    		hashString.append(k.getKey() + delimiter + t + delimiter);
+    		
+    		if(publicSelected[i])
     			hashString.append("t");
     		else hashString.append("f");
     		hashString.append(delimiter);
@@ -1721,6 +1773,12 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
                     if(keys != null){
                     	mi.removePrivateTags(keys);
                     	mi.removePrivateSequenceTags(keys, seqTags);
+                    }
+                    
+                    keys = publicTagsPanel.getSelectedKeys();
+                    if(keys != null){
+                    	mi.anonymizePublicTags(keys);
+                    	mi.anonymizePublicSequenceTags(keys, seqTags);
                     }
 
                     try {
