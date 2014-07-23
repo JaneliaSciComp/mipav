@@ -54,7 +54,7 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 	
 	public JPanelAnonymizePublicTags(){
 		super();
-		add(new JLabel("Load profile for private tags"));
+		add(new JLabel("Load profile for public tags"));
 		
 		suppTags = new HashSet<String>();
 		for(int i=0;i<FileInfoDicom.anonymizeTagIDs.length;i++){
@@ -118,6 +118,91 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 		//checkAllPaths();
 	}
 	
+	public void populateFromProfile(ArrayList<FileDicomKey> keys, ArrayList<String> tags, boolean[] selected){
+		
+		//This is from the private tag version, need to fix so that it is public
+		if(keys.isEmpty())
+			return;
+		
+		keyList = keys;
+		tagList = tags;
+		String prevGroup = "";
+		DefaultMutableTreeNode top = new DefaultMutableTreeNode("Public keys");
+		DefaultMutableTreeNode next = null;
+		ArrayList<Integer> selectedRows = new ArrayList<Integer>();
+		tree = new JTree(top);
+		int offset = 1;
+		for(int i=0;i<keys.size();i++){
+			FileDicomKey k = keys.get(i);
+			String t = tags.get(i);
+			if(!k.getGroup().equals(prevGroup)){
+				String title = "Group (" + k.getGroup() +") ";
+				if(next != null)
+					top.add(next);
+				next = new DefaultMutableTreeNode(title);
+				prevGroup = k.getGroup();
+				offset++;
+			}
+
+			String title = "(" + k.getElement() + ") " + t;
+			DefaultMutableTreeNode child = new DefaultMutableTreeNode(title);
+			next.add(child);
+			
+			if(selected[i])
+				selectedRows.add(i+offset);
+		}
+		top.add(next);
+		checkTree = new CheckTreeManager(tree);
+		
+		removeAll();
+		setLayout(new GridBagLayout());
+		setBorder(JDialogBase.buildTitledBorder("Check the fields to anonymize:"));
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.weightx = 1.0;
+		gbc.weighty = 1.0;
+		gbc.fill = GridBagConstraints.BOTH;
+
+		JScrollPane treeView = new JScrollPane(tree, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		treeView.setViewportView(tree);
+		add(treeView, gbc);
+
+		gbc.gridy = 1;
+		gbc.weightx = 0;
+		gbc.weighty = 0;
+
+
+		JPanel buttonPanel = new JPanel();
+		buttonPanel.setBorder(new EmptyBorder(0,0,3,0));
+		JButton checkButton = new JButton("Select all");
+		checkButton.setActionCommand("privateAll");
+		checkButton.setFont(MipavUtil.font12B);
+		checkButton.setPreferredSize(new Dimension(85, 30));
+		buttonPanel.add(checkButton, BorderLayout.WEST);
+		checkButton.addActionListener(this);
+
+		JButton unCheckButton = new JButton("Clear");
+		unCheckButton.setActionCommand("privateClear");
+		unCheckButton.setFont(MipavUtil.font12B);
+		unCheckButton.setPreferredSize(new Dimension(85, 30));
+		unCheckButton.addActionListener(this);
+		buttonPanel.add(unCheckButton, BorderLayout.EAST);
+
+		add(buttonPanel, gbc);
+
+		for (int i = 0; i < tree.getRowCount(); i++) {
+			tree.expandRow(i);
+		}
+		
+		TreePath[] paths = new TreePath[selectedRows.size()];
+		for(int i=0;i<selectedRows.size();i++){
+			paths[i] = tree.getPathForRow(selectedRows.get(i));
+		}
+		checkTree.getSelectionModel().addSelectionPaths(paths);
+	}
+	
 	private JTree createPublicKeyTree(ModelImage image, Vector<FileDicomSQItem> seqTags){
 	
 		DefaultMutableTreeNode top = new DefaultMutableTreeNode("Public keys");
@@ -148,7 +233,8 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 						keyArray.add(k);	
 				}else{
 					ArrayList<FileDicomKey> keyArray = new ArrayList<FileDicomKey>();
-					keyArray.add(k);
+					if(!suppTags.contains(k.getKey()))
+						keyArray.add(k);
 					groups.put(group, keyArray);
 				}
 			}
@@ -231,8 +317,10 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 		int offset = 1;
 		for(int i=1;i<tree.getRowCount();i++){
 			TreePath path = tree.getPathForRow(i);
-			if(path.getPathCount() == 2)
+			if(path.getPathCount() == 2){
 				offset++;
+				continue;
+			}
 			if(model.isPathSelected(path, true)){
 				paths.add(i-offset);
 			}
@@ -242,7 +330,7 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 			return null;
 		FileDicomKey[] keys = new FileDicomKey[length];
 		for(int i=0;i<length;i++){
-			keys[i] = keyList.get(i);
+			keys[i] = keyList.get(paths.get(i));
 		}
 		
 		return keys;

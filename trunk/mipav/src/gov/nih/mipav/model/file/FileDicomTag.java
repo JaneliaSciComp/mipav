@@ -521,8 +521,12 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
             case AT:
                 setValue(value, 4);
                 return;
-            case OW:
             case OB:
+            	setValue(value, ((Byte[]) value).length);
+            	return;
+            case OW:
+            	setValue(value, ((char[]) value).length);
+            	return;
             case UN:
                 setValue(value, ((Object[])value).length);
                 return;

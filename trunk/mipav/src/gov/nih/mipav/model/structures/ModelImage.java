@@ -423,6 +423,36 @@ public class ModelImage extends ModelStorageBase {
             }
         }
     }
+    
+    public void anonymizePublicTags(FileDicomKey[] keys){
+    	if (getNDims() == 2) { // and if image is a single slice
+            ((FileInfoDicom) fileInfo[0]).anonymizePublicTags(keys); // tell the fileInfo to anonymize itself
+            this.setFileInfo(fileInfo[0], 0); // and then make sure (by resetting) the fileInfo in this image is
+            // the same as the sanitised version
+        } else { // and image has more than one slice
+
+            for (int i = 0; i < getExtents()[2]; i++) { // then for all slices in this image,
+                ((FileInfoDicom) fileInfo[i]).anonymizePublicTags(keys); // tell the fileInfo of slice i to anonymize itself
+                this.setFileInfo(fileInfo[i], i); // and then make sure (by resetting) the ith fileInfo in this
+                // image is the same as the sanitised version
+            }
+        }
+    }
+    
+    public final void anonymizePublicSequenceTags(FileDicomKey[] keys, Vector<FileDicomSQItem> seqs){
+    	if (getNDims() == 2) { // and if image is a single slice
+            ((FileInfoDicom) fileInfo[0]).anonymizePublicSequenceTags(keys, seqs); // tell the fileInfo to anonymize itself
+            this.setFileInfo(fileInfo[0], 0); // and then make sure (by resetting) the fileInfo in this image is
+            // the same as the sanitised version
+        } else { // and image has more than one slice
+
+            for (int i = 0; i < getExtents()[2]; i++) { // then for all slices in this image,
+                ((FileInfoDicom) fileInfo[i]).anonymizePublicSequenceTags(keys, seqs); // tell the fileInfo of slice i to anonymize itself
+                this.setFileInfo(fileInfo[i], i); // and then make sure (by resetting) the ith fileInfo in this
+                // image is the same as the sanitised version
+            }
+        }
+    }
 
     /**
      * Calculates the min and max values for the image array.

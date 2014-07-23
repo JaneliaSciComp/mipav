@@ -161,6 +161,11 @@ public class JDialogAnonymizeImage extends JDialogBase {
                     	image.removePrivateTags(keys);
                     	image.removePrivateSequenceTags(keys, seqTags);
                     }
+                    keys = publicTagsPanel.getSelectedKeys();
+                    if(keys != null){
+                    	image.anonymizePublicTags(keys);
+                    	image.anonymizePublicSequenceTags(keys, seqTags);
+                    }
                     
                     setVisible(false); // Hide dialog
                 }
