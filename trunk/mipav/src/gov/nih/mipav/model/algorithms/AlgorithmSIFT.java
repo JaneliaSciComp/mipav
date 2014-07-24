@@ -76,7 +76,10 @@ public class AlgorithmSIFT extends AlgorithmBase implements AlgorithmInterface {
         Vector3f center;
         float fillValue;
         boolean doUpdateOrigin;
-        Vector<float[]> diffPyr = new Vector<float[]>();
+        Vector<float[][]> diffPyr = new Vector<float[][]>();
+        Vector<int[]>extentsPyr = new Vector<int[]>();
+        Vector<double[]>magPyr = new Vector<double[]>();
+        Vector<double[]>orPyr = new Vector<double[]>();
         ModelImage imageA;
         ModelImage imageB;
         int[] derivOrder = new int[2];
@@ -90,8 +93,23 @@ public class AlgorithmSIFT extends AlgorithmBase implements AlgorithmInterface {
         int iExtents[] = new int[2];
         float resArray[] = new float[2];
         int bufSize;
-        float diffBuffer[];
+        float diffBuffer[][];
         int i;
+        int pyramidLevels = 0;
+        byte[][][] minMax = null;
+        int x;
+        int y;
+        float[][][] diffLevels = null;
+        int extentLevels[][] = null;
+        int yl;
+        int xl;
+        int xh;
+        int yh;
+        double maxGrad = -Double.MAX_VALUE;
+        double magBuffer[];
+        double orBuffer[];
+        double diffX;
+        double diffY;
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -176,10 +194,14 @@ public class AlgorithmSIFT extends AlgorithmBase implements AlgorithmInterface {
             iExtents[0] = iXdim;
             iExtents[1] = iYdim;
             bufSize = iXdim * iYdim;
+            magBuffer = new double[bufSize];
+            orBuffer = new double[bufSize];
         	imageA = new ModelImage(ModelStorageBase.FLOAT, iExtents, "imageA");
             imageA.getFileInfo()[0].setResolutions(resArray);
+            imageA.getFileInfo()[0].setUnitsOfMeasure(units);
             imageB = new ModelImage(ModelStorageBase.FLOAT, iExtents, "imageB");
             imageB.getFileInfo()[0].setResolutions(resArray);
+            imageB.getFileInfo()[0].setUnitsOfMeasure(units);
         	convolver = new AlgorithmConvolver(inputImage, GData, kExtents, entireImage, image25D);
             //convolver.setMinProgressValue(0);
             //convolver.setMaxProgressValue(10);
@@ -187,6 +209,19 @@ public class AlgorithmSIFT extends AlgorithmBase implements AlgorithmInterface {
             convolver.addListener(this);
             operationType = aOp;
             convolver.run();
+            
+            for (y = 0; y < iYdim-1; y++) {
+            	for (x = 0; x < iXdim-1; x++) {
+            		i = x + y * iXdim;
+            		diffX = bufferA[i+1] - bufferA[i];
+            		diffY = bufferA[i+xDim] - bufferA[i];
+            		magBuffer[i] = Math.sqrt(diffX*diffX + diffY*diffY);
+            		if (magBuffer[i] > maxGrad) {
+            			maxGrad = magBuffer[i];
+            		}
+            		orBuffer[i] = Math.atan2(diffY, diffX);
+            	}
+            }
             
             try {
             	imageA.importData(0, bufferA, true);
@@ -214,12 +249,17 @@ public class AlgorithmSIFT extends AlgorithmBase implements AlgorithmInterface {
             	return;
             }
             
-            diffBuffer = new float[bufSize];
-            for (i = 0; i < bufSize; i++) {
-            	diffBuffer[i] = bufferA[i] - bufferB[i];
+            diffBuffer = new float[iYdim][iXdim];
+            for (y = 0; y < iYdim; y++) {
+            	for (x = 0; x < iXdim; x++) {
+            	    i = x + y * iXdim;
+            	    diffBuffer[y][x] = bufferA[i] - bufferB[i];
+            	}
             }
             
             diffPyr.add(diffBuffer);
+            extentsPyr.add(iExtents);
+            pyramidLevels++;
             
             oXdim = (int)Math.round(iXdim * factor);
             oYdim = (int)Math.round(iYdim * factor);
@@ -240,6 +280,257 @@ public class AlgorithmSIFT extends AlgorithmBase implements AlgorithmInterface {
             bufferA = null;
             bufferB = null;
         } // while ((iXdim >= 7) && (iYdim > 7))
+        
+        Preferences.debug("The number of pyramid levels = " + pyramidLevels + "\n", Preferences.DEBUG_ALGORITHM);
+        extentLevels = new int[pyramidLevels][];
+        diffLevels =  new float[pyramidLevels][][];
+        minMax = new byte[pyramidLevels][][];
+        for (i = 0; i < pyramidLevels; i++) {
+        	extentLevels[i] = extentsPyr.get(i);
+        	diffLevels[i] = diffPyr.get(i);
+        	minMax[i] = new byte[extentLevels[i][1]][extentLevels[i][0]];
+        }
+        
+        for (i = 0; i < pyramidLevels; i++) {
+        	for (y = 0; y < extentLevels[i][1]; y++) {
+        	     for (x = 0; x < extentLevels[i][0]; x++) {
+        	    	 // Find minima
+        	    	 minMax[i][y][x] = -1;
+        	    	 if ((x > 0) && (diffLevels[i][y][x] > diffLevels[i][y][x-1])) {
+        	    		 minMax[i][y][x] = 0;
+        	    		 continue;
+        	    	 }
+        	    	 if ((x < (extentLevels[i][0]-1)) && (diffLevels[i][y][x] > diffLevels[i][y][x+1])) {
+        	    		 minMax[i][y][x] = 0;
+        	    		 continue;
+        	    	 }
+        	    	 if ((y > 0) && (diffLevels[i][y][x] > diffLevels[i][y-1][x])) {
+        	    		 minMax[i][y][x] = 0;
+        	    		 continue;
+        	    	 }
+        	    	 if ((y < (extentLevels[i][1]-1)) && (diffLevels[i][y][x] > diffLevels[i][y+1][x])) {
+        	    		 minMax[i][y][x] = 0;
+        	    		 continue;
+        	    	 }
+        	    	 if ((x > 0) && (y > 0) && (diffLevels[i][y][x] > diffLevels[i][y-1][x-1])) {
+        	    		 minMax[i][y][x] = 0;
+        	    		 continue;
+        	    	 }
+        	    	 if ((x < (extentLevels[i][0]-1)) && (y > 0) && (diffLevels[i][y][x] > diffLevels[i][y-1][x+1])) {
+        	    		 minMax[i][y][x] = 0;
+        	    		 continue;
+        	    	 }
+        	    	 if ((x > 0) && (y < (extentLevels[i][1]-1)) && (diffLevels[i][y][x] > diffLevels[i][y+1][x-1])) {
+        	    		 minMax[i][y][x] = 0;
+        	    		 continue;
+        	    	 }
+        	    	 if ((x < (extentLevels[i][0]-1)) && (y < (extentLevels[i][1]-1)) && (diffLevels[i][y][x] > diffLevels[i][y+1][x+1])) {
+        	    		 minMax[i][y][x] = 0;
+        	    		 continue;
+        	    	 }
+        	    	 if (i > 0) {
+        	    	     xl = (int)Math.round(1.5*x);
+        	    	     yl = (int)Math.round(1.5*y);
+        	    	     if (diffLevels[i][y][x] > diffLevels[i-1][yl][xl]) {
+        	    	    	 minMax[i][y][x] = 0;
+        	    	    	 continue;
+        	    	     }
+        	    	     if ((xl > 0) && (diffLevels[i][y][x] > diffLevels[i-1][yl][xl-1])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if ((xl < (extentLevels[i-1][0]-1)) && (diffLevels[i][y][x] > diffLevels[i-1][yl][xl+1])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if ((yl > 0) && (diffLevels[i][y][x] > diffLevels[i-1][yl-1][xl])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if ((yl < (extentLevels[i-1][1]-1)) && (diffLevels[i][y][x] > diffLevels[i-1][yl+1][xl])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if ((xl > 0) && (yl > 0) && (diffLevels[i][y][x] > diffLevels[i-1][yl-1][xl-1])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if ((xl < (extentLevels[i-1][0]-1)) && (yl > 0) && (diffLevels[i][y][x] > diffLevels[i-1][yl-1][xl+1])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if ((xl > 0) && (yl < (extentLevels[i-1][1]-1)) && (diffLevels[i][y][x] > diffLevels[i-1][yl+1][xl-1])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if ((xl < (extentLevels[i-1][0]-1)) && (yl < (extentLevels[i-1][1]-1)) &&
+            	    			 (diffLevels[i][y][x] > diffLevels[i-1][yl+1][xl+1])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+        	    	 } // if (i > 0)
+        	    	 if (i < (pyramidLevels-1)) {
+        	    		 xh = (int)Math.round(x/1.5);
+        	    	     yh = (int)Math.round(y/1.5);
+        	    	     if (diffLevels[i][y][x] > diffLevels[i+1][yh][xh]) {
+        	    	    	 minMax[i][y][x] = 0;
+        	    	    	 continue;
+        	    	     }
+        	    	     if ((xh > 0) && (diffLevels[i][y][x] > diffLevels[i+1][yh][xh-1])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if ((xh < (extentLevels[i+1][0]-1)) && (diffLevels[i][y][x] > diffLevels[i+1][yh][xh+1])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if ((yh > 0) && (diffLevels[i][y][x] > diffLevels[i+1][yh-1][xh])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if ((yh < (extentLevels[i+1][1]-1)) && (diffLevels[i][y][x] > diffLevels[i+1][yh+1][xh])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if ((xh > 0) && (yh > 0) && (diffLevels[i][y][x] > diffLevels[i+1][yh-1][xh-1])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if ((xh < (extentLevels[i+1][0]-1)) && (yh > 0) && (diffLevels[i][y][x] > diffLevels[i+1][yh-1][xh+1])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if ((xh > 0) && (yh < (extentLevels[i+1][1]-1)) && (diffLevels[i][y][x] > diffLevels[i+1][yh+1][xh-1])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if ((xh < (extentLevels[i+1][0]-1)) && (yh < (extentLevels[i+1][1]-1)) &&
+            	    			 (diffLevels[i][y][x] > diffLevels[i+1][yh+1][xh+1])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }	 
+        	    	 } // if (i < (pyramidLevels-1))
+        	    	 if (minMax[i][y][x] != -1) {
+        	    	     // Find maxima
+        	    		 minMax[i][y][x] = 1;
+        	    		 if ((x > 0) && (diffLevels[i][y][x] < diffLevels[i][y][x-1])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if ((x < (extentLevels[i][0]-1)) && (diffLevels[i][y][x] < diffLevels[i][y][x+1])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if ((y > 0) && (diffLevels[i][y][x] < diffLevels[i][y-1][x])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if ((y < (extentLevels[i][1]-1)) && (diffLevels[i][y][x] < diffLevels[i][y+1][x])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if ((x > 0) && (y > 0) && (diffLevels[i][y][x] < diffLevels[i][y-1][x-1])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if ((x < (extentLevels[i][0]-1)) && (y > 0) && (diffLevels[i][y][x] < diffLevels[i][y-1][x+1])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if ((x > 0) && (y < (extentLevels[i][1]-1)) && (diffLevels[i][y][x] < diffLevels[i][y+1][x-1])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if ((x < (extentLevels[i][0]-1)) && (y < (extentLevels[i][1]-1)) && (diffLevels[i][y][x] < diffLevels[i][y+1][x+1])) {
+            	    		 minMax[i][y][x] = 0;
+            	    		 continue;
+            	    	 }
+            	    	 if (i > 0) {
+            	    	     xl = (int)Math.round(1.5*x);
+            	    	     yl = (int)Math.round(1.5*y);
+            	    	     if (diffLevels[i][y][x] < diffLevels[i-1][yl][xl]) {
+            	    	    	 minMax[i][y][x] = 0;
+            	    	    	 continue;
+            	    	     }
+            	    	     if ((xl > 0) && (diffLevels[i][y][x] < diffLevels[i-1][yl][xl-1])) {
+                	    		 minMax[i][y][x] = 0;
+                	    		 continue;
+                	    	 }
+                	    	 if ((xl < (extentLevels[i-1][0]-1)) && (diffLevels[i][y][x] < diffLevels[i-1][yl][xl+1])) {
+                	    		 minMax[i][y][x] = 0;
+                	    		 continue;
+                	    	 }
+                	    	 if ((yl > 0) && (diffLevels[i][y][x] < diffLevels[i-1][yl-1][xl])) {
+                	    		 minMax[i][y][x] = 0;
+                	    		 continue;
+                	    	 }
+                	    	 if ((yl < (extentLevels[i-1][1]-1)) && (diffLevels[i][y][x] < diffLevels[i-1][yl+1][xl])) {
+                	    		 minMax[i][y][x] = 0;
+                	    		 continue;
+                	    	 }
+                	    	 if ((xl > 0) && (yl > 0) && (diffLevels[i][y][x] < diffLevels[i-1][yl-1][xl-1])) {
+                	    		 minMax[i][y][x] = 0;
+                	    		 continue;
+                	    	 }
+                	    	 if ((xl < (extentLevels[i-1][0]-1)) && (yl > 0) && (diffLevels[i][y][x] < diffLevels[i-1][yl-1][xl+1])) {
+                	    		 minMax[i][y][x] = 0;
+                	    		 continue;
+                	    	 }
+                	    	 if ((xl > 0) && (yl < (extentLevels[i-1][1]-1)) && (diffLevels[i][y][x] < diffLevels[i-1][yl+1][xl-1])) {
+                	    		 minMax[i][y][x] = 0;
+                	    		 continue;
+                	    	 }
+                	    	 if ((xl < (extentLevels[i-1][0]-1)) && (yl < (extentLevels[i-1][1]-1)) &&
+                	    			 (diffLevels[i][y][x] < diffLevels[i-1][yl+1][xl+1])) {
+                	    		 minMax[i][y][x] = 0;
+                	    		 continue;
+                	    	 }
+            	    	 } // if (i > 0)
+            	    	 if (i < (pyramidLevels-1)) {
+            	    		 xh = (int)Math.round(x/1.5);
+            	    	     yh = (int)Math.round(y/1.5);
+            	    	     if (diffLevels[i][y][x] < diffLevels[i+1][yh][xh]) {
+            	    	    	 minMax[i][y][x] = 0;
+            	    	    	 continue;
+            	    	     }
+            	    	     if ((xh > 0) && (diffLevels[i][y][x] < diffLevels[i+1][yh][xh-1])) {
+                	    		 minMax[i][y][x] = 0;
+                	    		 continue;
+                	    	 }
+                	    	 if ((xh < (extentLevels[i+1][0]-1)) && (diffLevels[i][y][x] < diffLevels[i+1][yh][xh+1])) {
+                	    		 minMax[i][y][x] = 0;
+                	    		 continue;
+                	    	 }
+                	    	 if ((yh > 0) && (diffLevels[i][y][x] < diffLevels[i+1][yh-1][xh])) {
+                	    		 minMax[i][y][x] = 0;
+                	    		 continue;
+                	    	 }
+                	    	 if ((yh < (extentLevels[i+1][1]-1)) && (diffLevels[i][y][x] < diffLevels[i+1][yh+1][xh])) {
+                	    		 minMax[i][y][x] = 0;
+                	    		 continue;
+                	    	 }
+                	    	 if ((xh > 0) && (yh > 0) && (diffLevels[i][y][x] < diffLevels[i+1][yh-1][xh-1])) {
+                	    		 minMax[i][y][x] = 0;
+                	    		 continue;
+                	    	 }
+                	    	 if ((xh < (extentLevels[i+1][0]-1)) && (yh > 0) && (diffLevels[i][y][x] < diffLevels[i+1][yh-1][xh+1])) {
+                	    		 minMax[i][y][x] = 0;
+                	    		 continue;
+                	    	 }
+                	    	 if ((xh > 0) && (yh < (extentLevels[i+1][1]-1)) && (diffLevels[i][y][x] < diffLevels[i+1][yh+1][xh-1])) {
+                	    		 minMax[i][y][x] = 0;
+                	    		 continue;
+                	    	 }
+                	    	 if ((xh < (extentLevels[i+1][0]-1)) && (yh < (extentLevels[i+1][1]-1)) &&
+                	    			 (diffLevels[i][y][x] < diffLevels[i+1][yh+1][xh+1])) {
+                	    		 minMax[i][y][x] = 0;
+                	    		 continue;
+                	    	 }	 
+            	    	 } // if (i < (pyramidLevels-1))
+        	    	 } // if (minMax[i][y][x] != -1)
+        	     } // for (x = 0; x < extentLevels[i][0]; x++)
+        	} // for (y = 0; y < extentLevels[i][1]; y++)
+        } // for (i = 0; i < pyramidLevels; i++)
         
         setCompleted(true);
         return;
