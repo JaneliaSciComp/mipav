@@ -110,6 +110,22 @@ public class AlgorithmSIFT extends AlgorithmBase implements AlgorithmInterface {
         double orBuffer[];
         double diffX;
         double diffY;
+        double thresholdGrad;
+        int xkDim;
+        int ykDim;
+        float GOrData[];
+        int halfWin;
+        double magLevels[][];
+        double orLevels[][];
+        int index;
+        int ym;
+        int xm;
+        double sum;
+        double weight;
+        double weightSum;
+        double orientation;
+        long histoBins[] = new long[36];
+        int binNum;
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -183,6 +199,38 @@ public class AlgorithmSIFT extends AlgorithmBase implements AlgorithmInterface {
         sigmaArray = new float[]{sigma, sigma};
         GenerateGaussian G = new GenerateGaussian(GData, kExtents, sigmaArray, derivOrder);
         G.calc(false);
+        
+        // Calculate Gaussian for orientation histogram
+        sigma = (float)(3.0 * Math.sqrt(2.0));
+        xkDim = Math.round(11 * sigma);
+
+        if ((xkDim % 2) == 0) {
+            xkDim++;
+        }
+
+        if (xkDim < 3) {
+            xkDim = 3;
+        }
+
+        kExtents[0] = xkDim;
+        halfWin = (xkDim - 1)/2;
+
+        ykDim = Math.round(11 * sigma);
+
+        if ((ykDim % 2) == 0) {
+            ykDim++;
+        }
+
+        if (ykDim < 3) {
+            ykDim = 3;
+        }
+
+        kExtents[1] = ykDim;
+
+        GOrData = new float[xkDim * ykDim];
+        sigmaArray = new float[]{sigma, sigma};
+        GenerateGaussian GOr = new GenerateGaussian(GOrData, kExtents, sigmaArray, derivOrder);
+        GOr.calc(false);
         entireImage = true;
         while ((iXdim >= 7) && (iYdim > 7)) {
         	iXres = oXres;
@@ -210,11 +258,21 @@ public class AlgorithmSIFT extends AlgorithmBase implements AlgorithmInterface {
             operationType = aOp;
             convolver.run();
             
-            for (y = 0; y < iYdim-1; y++) {
-            	for (x = 0; x < iXdim-1; x++) {
+            for (y = 0; y < iYdim; y++) {
+            	for (x = 0; x < iXdim; x++) {
             		i = x + y * iXdim;
-            		diffX = bufferA[i+1] - bufferA[i];
-            		diffY = bufferA[i+xDim] - bufferA[i];
+            		if (x < iXdim - 1) {
+            		    diffX = bufferA[i+1] - bufferA[i];
+            		}
+            		else {
+            			diffX = bufferA[i] - bufferA[i-1];
+            		}
+            		if (y < iYdim - 1) {
+            		    diffY = bufferA[i+xDim] - bufferA[i];
+            		}
+            		else {
+            			diffY = bufferA[i] - bufferA[i-xDim];
+            		}
             		magBuffer[i] = Math.sqrt(diffX*diffX + diffY*diffY);
             		if (magBuffer[i] > maxGrad) {
             			maxGrad = magBuffer[i];
@@ -222,6 +280,8 @@ public class AlgorithmSIFT extends AlgorithmBase implements AlgorithmInterface {
             		orBuffer[i] = Math.atan2(diffY, diffX);
             	}
             }
+            magPyr.add(magBuffer);
+            orPyr.add(orBuffer);
             
             try {
             	imageA.importData(0, bufferA, true);
@@ -285,11 +345,17 @@ public class AlgorithmSIFT extends AlgorithmBase implements AlgorithmInterface {
         extentLevels = new int[pyramidLevels][];
         diffLevels =  new float[pyramidLevels][][];
         minMax = new byte[pyramidLevels][][];
+        magLevels = new double[pyramidLevels][];
+        orLevels = new double[pyramidLevels][];
         for (i = 0; i < pyramidLevels; i++) {
         	extentLevels[i] = extentsPyr.get(i);
         	diffLevels[i] = diffPyr.get(i);
         	minMax[i] = new byte[extentLevels[i][1]][extentLevels[i][0]];
+        	magLevels[i] = magPyr.get(i);
+        	orLevels[i] = orPyr.get(i);
         }
+        
+        thresholdGrad = 0.1 * maxGrad;
         
         for (i = 0; i < pyramidLevels; i++) {
         	for (y = 0; y < extentLevels[i][1]; y++) {
@@ -529,6 +595,29 @@ public class AlgorithmSIFT extends AlgorithmBase implements AlgorithmInterface {
             	    	 } // if (i < (pyramidLevels-1))
         	    	 } // if (minMax[i][y][x] != -1)
         	     } // for (x = 0; x < extentLevels[i][0]; x++)
+        	} // for (y = 0; y < extentLevels[i][1]; y++)
+        	
+        	for (y = 0; y < extentLevels[i][1]; y++) {
+       	        for (x = 0; x < extentLevels[i][0]; x++) {
+       	    	    index = x + y * extentLevels[i][0];
+       	    	    sum = 0.0;
+       	    	    weightSum = 0.0;
+       	    	    for (ym = -halfWin; (ym <= halfWin) && ((y + ym) >= 0) && ((y + ym) < extentLevels[i][1]); ym++) {
+       	    	    	for (xm = -halfWin; (xm <= halfWin) && ((x + xm) >= 0) && ((x + xm) < extentLevels[i][0]); xm++) {
+       	    	    		index = (x + xm) + extentLevels[i][0] * (y + ym);
+       	    	    		weight = Math.min(thresholdGrad, magLevels[i][index]) * GOrData[(xm + halfWin) + xkDim * (ym + halfWin)];
+       	    	    		sum += weight * orLevels[i][index];
+       	    	    		weightSum += weight;
+       	    	    	} // for (xm = -halfWin; (xm <= halfWin) && ((x + xm) >= 0) && ((x + xm) < extentLevels[i][0]); xm++) 
+       	    	    } // for (ym = -halfWin; (ym <= halfWin) && ((y + ym) >= 0) && ((y + ym) < extentLevels[i][1]); ym++)
+       	    	    orientation = sum / weightSum;
+       	    	    // orientation goes from -PI to PI
+       	    	    binNum = (int)((orientation + Math.PI)/(Math.PI/18.0));
+       	    	    if (binNum == 36) {
+       	    	    	binNum = 35;
+       	    	    }
+       	    	    histoBins[binNum]++;
+       	        } // for (x = 0; x < extentLevels[i][0]; x++)
         	} // for (y = 0; y < extentLevels[i][1]; y++)
         } // for (i = 0; i < pyramidLevels; i++)
         
