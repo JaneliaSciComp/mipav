@@ -138,6 +138,19 @@ public class AlgorithmSIFT extends AlgorithmBase implements AlgorithmInterface {
         double A[][];
         double h;
         Matrix p;
+        double lambda;
+        int k;
+        int j;
+        Matrix R;
+        double denom;
+        double coeff;
+        double term1;
+        double term2;
+        Matrix matY;
+        double xmax;
+        double fxmax; 
+        double xval;
+        double fx;
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -661,13 +674,13 @@ public class AlgorithmSIFT extends AlgorithmBase implements AlgorithmInterface {
         A = new double[n-1][n-1];
         h = 1.0; // Later multiply back by PI/18.0
         
-        A[0][0] = 2.0*h;
+        A[0][0] = 4.0*h;
         A[0][1] = h;
         A[n-1][n-2] = h;
-        A[n-1][n-1] = 2.0*h;
+        A[n-1][n-1] = 4.0*h;
         for (i = 1; i <= n-2; i++) {
         	A[i][i-1] = h;
-        	A[i][i] = 2.0*h;
+        	A[i][i] = 4.0*h;
         	A[i][i+1] = h;
         }
         p = new Matrix(n-1, 1);
@@ -677,7 +690,70 @@ public class AlgorithmSIFT extends AlgorithmBase implements AlgorithmInterface {
         	p.set(i, 0, 6.0*(histoBins[i+1] - 2.0*histoBins[i] + histoBins[i-1])/h);
         }
         // y = [Ainverse]p
+        // For diagonal elements of A >= 2, D = 2.0*cosh(lambda)
+        // 4 = 2.0*cosh(lambda)
+        // cosh(lambda) = 2.0
+        // acosh(x) = ln(x + sqrt(x*x - 1)) for X >= 1
+        lambda = Math.log(2.0 + Math.sqrt(3.0));
+        // The symmetrical matrix is k by k
+        // R = Ainverse
+        k = n-1;
+        R = new Matrix(k, k);
+        denom = 2.0 * Math.sinh(lambda)*Math.sinh((k + 1.0)*lambda);
+        for (i = 1; i <= k; i++) {
+        	for (j = 1; j <= k; j++) {
+        		coeff = 1.0;
+        		if (((i + j) % 2) == 1) {
+        			coeff = -1.0;
+        		}
+        		term1 = Math.cosh((k + 1 - Math.abs(j - i))* lambda);
+        		term2 = Math.cosh((k + 1 - i - j)* lambda);
+        	    R.set(i-1,j-1,coeff*(term1 - term2)/denom);	
+        	}
+        }
+        matY = R.times(p);
+        // fi(x) = f"(x[i-1])*(-x[i] + x)**3/(6*(-x[i] + x[i-1])) + f"(x[i])*(x - x[i-1])**3/(6*(x[i] - x[i-1]))
+        // + {f(x[i-1])/(x[i] - x[i-1]) - f"(x[i-1])*((x[i] - x[i-1])/6)}*(x[i] - x)
+        // + {f(x[i])/(x[i] - x[i-1]) - f"(xi)*((x[i] - x[i-1])/6)}*(x - x[i-1])
+        // x[i-1] <= x <= x[i]; i = 1, 2, ..., n
         
+        // fi(x) = -f"(x[i-1]) * (-x[i] + x)**3/6 + f"(x[i])*(x - x[i-1])**3/6
+        // + {f(x[i-1] - f"(x[i-1])/6} * (x[i]  - x)
+        // + {f(x[i] - f"(x[i])/6} * (x - x[i-1])
+        xmax = -Double.MAX_VALUE;
+        fxmax = -Double.MAX_VALUE; 
+        for (x = 0; x <= 100; x++) {
+            xval = 0.01*x; // xval goes from 0 to 1
+            fx = matY.get(0, 0)*xval*xval*xval/6.0
+               + (histoBins[0] - matY.get(0,0)/6) * xval;
+            if (fx > fxmax) {
+            	fxmax = fx;
+            	xmax = xval;
+            }
+        }
+        for (x = 100*(n-1); x <= 100*n; x++) {
+        	xval = 0.01*x; // xval goes from n-1 to n
+        	fx = -matY.get(n-1, 0)*(-n+xval)*(-n+xval)*(-n+xval)/6.0
+        	     +(histoBins[n-1] - matY.get(n-1,0)/6.0) * (n - xval);
+        	if (fx > fxmax) {
+            	fxmax = fx;
+            	xmax = xval;
+            }
+        }
+        
+        for (i = 2; i <= n-1; i++) {
+        	for (x = 100*(i-1); x <= 100*i; x++) {
+        		xval = 0.01*x; // xval goes from i-1 to i
+        		fx = -matY.get(i-1, 0)*(-i + xval)*(-i + xval)*(-i + xval)/6.0 + matY.get(i,0)*(xval - i + 1)*(xval-i+1)*(xval-i+1)/6.0
+        		   + (histoBins[i-1] - matY.get(i-1,0)/6.0) * (i - xval)
+        		   + (histoBins[i] - matY.get(i, 0)/6.0) * (xval - i + 1);
+        		if (fx > fxmax) {
+                	fxmax = fx;
+                	xmax = xval;
+                }
+        	}
+        }
+         
         setCompleted(true);
         return;
     }
