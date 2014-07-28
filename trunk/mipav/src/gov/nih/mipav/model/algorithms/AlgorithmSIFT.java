@@ -6,9 +6,17 @@ import gov.nih.mipav.view.*;
 import java.io.*;
 import java.util.Vector;
 
+import Jama.Matrix;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 public class AlgorithmSIFT extends AlgorithmBase implements AlgorithmInterface {
+	
+	// References: 1.) Object Recognition from Local Scale-Invariant Features by David G. Lowe, Proc. of the
+	//                 International Conference on Computer Vision, Corfu, September, 1999.
+	//             2.) Applied Numerical Methods for Engineers and Scientists by Singiresu S. Rao,
+	//                 Prentice Hall, 2002, Section 5.8.4 Cubic Spline, pp. 393-399.
+	//             3.) Analytical inversion of symmetrical tridiagonal matrices by G. Y. Hu and R. F. O'Connell,
+	//                 J. Phys. A: Math. Gen., Vol. 29, 1996, pp. 1511-1513.
 	
 	private static final int aOp = 1;
 	
@@ -126,6 +134,10 @@ public class AlgorithmSIFT extends AlgorithmBase implements AlgorithmInterface {
         double orientation;
         long histoBins[] = new long[36];
         int binNum;
+        int n;
+        double A[][];
+        double h;
+        Matrix p;
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -620,6 +632,51 @@ public class AlgorithmSIFT extends AlgorithmBase implements AlgorithmInterface {
        	        } // for (x = 0; x < extentLevels[i][0]; x++)
         	} // for (y = 0; y < extentLevels[i][1]; y++)
         } // for (i = 0; i < pyramidLevels; i++)
+        
+        // Smooth the 36 bin histogram with cubic splines
+        // Add a zero at each endpoint at x0 and xn where n = 37
+        // Cubic spline with y"(0) = y"(n) = 0 (Natural cubic spline)
+        // hi = xi - xi-1 = PI/18.0 but we shall set h = 1.0 here and later multiply back by PI/18.0
+        // [A]y = p where
+        //       [2(h1 + h2) h2
+        //       [h2         2(h2 + h2) h3
+        //       [           h3         2(h3 + h4)
+        // [A] = [
+        //       [
+        //       [                                            2(hn-2 + hn-1)    hn-1        ]
+        //       [                                            hn-1               2(hn-1 + hn)]
+        
+        //        [f1"]
+        //        [f2"]
+        //  y =   [   ]
+        //        [fn-1"]
+        
+        //      [(f2 - f1)/h2 -   (f1 - f0)/h1      ]
+        //      [(f3 - f2)/h3 -   (f2 - f1)/h2      ]
+        // p = 6[                                   ]
+        //      [                                   ]
+        //      [(fn - fn-1)/hn - (fn-1 - fn-2)/hn-1]
+        
+        n = 37;
+        A = new double[n-1][n-1];
+        h = 1.0; // Later multiply back by PI/18.0
+        
+        A[0][0] = 2.0*h;
+        A[0][1] = h;
+        A[n-1][n-2] = h;
+        A[n-1][n-1] = 2.0*h;
+        for (i = 1; i <= n-2; i++) {
+        	A[i][i-1] = h;
+        	A[i][i] = 2.0*h;
+        	A[i][i+1] = h;
+        }
+        p = new Matrix(n-1, 1);
+        p.set(0, 0, 6.0*(histoBins[1] - 2.0*histoBins[0])/h);
+        p.set(n-1, 0,6.0*(-2.0*histoBins[n-1] + histoBins[n-2])/h);
+        for (i = 1; i <= n-2; i++) {
+        	p.set(i, 0, 6.0*(histoBins[i+1] - 2.0*histoBins[i] + histoBins[i-1])/h);
+        }
+        // y = [Ainverse]p
         
         setCompleted(true);
         return;
