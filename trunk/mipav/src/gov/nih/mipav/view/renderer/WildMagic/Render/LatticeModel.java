@@ -861,6 +861,16 @@ public class LatticeModel {
 		return mesh;
 	}
     
+    public void clearAddLeftRightMarkers()
+    {
+    	imageA.unregisterVOI( leftMarker );
+    	imageA.unregisterVOI( rightMarker );
+    	leftMarker.dispose();
+    	rightMarker.dispose();
+    	leftMarker = null;
+    	rightMarker = null;
+    }
+    
     VOI leftMarker;
     VOI rightMarker;
     public void addLeftRightMarker( Vector3f pt )

@@ -53,6 +53,7 @@ import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJPopupPt;
 import gov.nih.mipav.view.ViewJPopupVOI;
 import gov.nih.mipav.view.ViewJProgressBar;
+import gov.nih.mipav.view.ViewMenuBuilder;
 import gov.nih.mipav.view.ViewOpenVOIUI;
 import gov.nih.mipav.view.ViewOpenPaintUI;
 import gov.nih.mipav.view.ViewToolBarBuilder;
@@ -122,6 +123,7 @@ import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -282,6 +284,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     private boolean mouse3D = false;
     private boolean mouseSelection3D = false;
+    
+    private JMenu voiMenu;
+    private ViewMenuBuilder voiMenuBuilder;
 
     /**
      * Creates a VOIManagerInterface object.
@@ -1233,9 +1238,15 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 latticeModel = new LatticeModel( m_kImageA, m_kImageB, lattice.elementAt(0) );
             }
         } else if ( command.equals("AddLeftRightMarkers") ) {
-        	mouse3D = !mouse3D;
+        	mouse3D = voiMenuBuilder.isMenuItemSelected("Create Lattice");
+        	mouseSelection3D = voiMenuBuilder.isMenuItemSelected("Edit Lattice");
         } else if ( command.equals("EditLattice") ) {
-        	mouseSelection3D = !mouseSelection3D;
+        	mouse3D = voiMenuBuilder.isMenuItemSelected("Create Lattice");
+        	mouseSelection3D = voiMenuBuilder.isMenuItemSelected("Edit Lattice");
+        	if ( latticeModel != null )
+        	{
+        		latticeModel.clearAddLeftRightMarkers();
+        	}
         } else if ( command.equals("buildWormLattice") ) {
         	new JDialogLattice( getActiveImage(), this );
         } else if ( command.equals("SaveLattice") ) {
@@ -2216,6 +2227,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     public void set3DMouseEnabled( boolean enabled )
     {
     	mouse3D = enabled;
+    	voiMenuBuilder.setMenuItemSelected("Create Lattice", mouse3D);
     }
 
     /* (non-Javadoc)
@@ -2814,6 +2826,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      */
     public void setVOI_IDs(int ID, int UID) {}
 
+    public void setVOITools( JMenu voiMenu, ViewMenuBuilder voiMenuBuilder )
+    {
+    	this.voiMenu = voiMenu;
+    	this.voiMenuBuilder = voiMenuBuilder;
+    }
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.VOIHandlerInterface#showColorDialog()
