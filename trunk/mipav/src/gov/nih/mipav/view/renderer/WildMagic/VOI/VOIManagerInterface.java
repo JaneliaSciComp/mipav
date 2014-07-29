@@ -1238,10 +1238,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 latticeModel = new LatticeModel( m_kImageA, m_kImageB, lattice.elementAt(0) );
             }
         } else if ( command.equals("AddLeftRightMarkers") ) {
-        	mouse3D = voiMenuBuilder.isMenuItemSelected("Create Lattice");
+        	mouse3D = voiMenuBuilder.isMenuItemSelected("Add Lattice Points");
         	mouseSelection3D = voiMenuBuilder.isMenuItemSelected("Edit Lattice");
         } else if ( command.equals("EditLattice") ) {
-        	mouse3D = voiMenuBuilder.isMenuItemSelected("Create Lattice");
+        	mouse3D = voiMenuBuilder.isMenuItemSelected("Add Lattice Points");
         	mouseSelection3D = voiMenuBuilder.isMenuItemSelected("Edit Lattice");
         	if ( latticeModel != null )
         	{
@@ -2227,7 +2227,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     public void set3DMouseEnabled( boolean enabled )
     {
     	mouse3D = enabled;
-    	voiMenuBuilder.setMenuItemSelected("Create Lattice", mouse3D);
+    	voiMenuBuilder.setMenuItemSelected("Add Lattice Points", mouse3D);
     }
 
     /* (non-Javadoc)

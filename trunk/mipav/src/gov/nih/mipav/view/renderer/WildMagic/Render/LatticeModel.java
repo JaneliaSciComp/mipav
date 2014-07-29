@@ -312,7 +312,19 @@ public class LatticeModel {
     	{
     		return;
     	}
+
+    	if ( (leftMarker != null) && pickedPoint.equals(leftMarker.getCurves().elementAt(0).elementAt(0) ) )
+    	{
+    		leftMarker.getCurves().elementAt(0).elementAt(0).copy(pt);
+    		leftMarker.update();
+    	}
+    	if ( (rightMarker != null) && pickedPoint.equals(rightMarker.getCurves().elementAt(0).elementAt(0) ) )
+    	{
+    		rightMarker.getCurves().elementAt(0).elementAt(0).copy(pt);
+    		rightMarker.update();
+    	}
     	pickedPoint.copy(pt);
+    	updateLattice(false);
     }
 
 
@@ -926,7 +938,7 @@ public class LatticeModel {
     			rightMarker.update();
     		}
     	}
-    	if ( left.size() == right.size() && left.size() > 1 )
+//    	if ( left.size() == right.size() && left.size() > 1 )
     	{
     		updateLattice(true);
     	}
@@ -3134,6 +3146,8 @@ public class LatticeModel {
 			latticeGrid = new VOIVector();
 		}
 		
+		leftMarker = null;
+		rightMarker = null;
     	VOIVector vois = imageA.getVOIs();
     	for ( int i = 0; i < vois.size(); i++ )
     	{
@@ -3201,7 +3215,7 @@ public class LatticeModel {
     
     private void updateLattice( boolean rebuild )
 	{
-    	if ( (left.size() != right.size()) || (left.size() < 2) )
+    	if ( right.size() == 0 )
     	{
     		return;
     	}
@@ -3220,7 +3234,7 @@ public class LatticeModel {
 			{
 				latticeGrid = new VOIVector();
 			}
-			for ( int j = 0; j < left.size(); j++ )
+			for ( int j = 0; j < Math.min(left.size(), right.size()); j++ )
 			{
 				short id = (short) imageA.getVOIs().getUniqueID();
 				VOI marker = new VOI(id, "pair_" + j, VOI.POLYLINE, (float)Math.random() );
@@ -3274,12 +3288,15 @@ public class LatticeModel {
 				imageA.unregisterVOI( displayContours );
 			}
 		}
-        	
-        generateCurves();
-		if ( showContours )
-		{
-			imageA.registerVOI( displayContours );
-		}
+
+    	if ( (left.size() == right.size()) && (left.size() >= 2) )
+    	{
+    		generateCurves();
+    		if ( showContours )
+    		{
+    			imageA.registerVOI( displayContours );
+    		}
+    	}
         
         if ( pickedPoint != null )
         {
