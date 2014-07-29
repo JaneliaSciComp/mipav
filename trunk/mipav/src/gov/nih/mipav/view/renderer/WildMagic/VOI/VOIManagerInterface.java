@@ -3121,7 +3121,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     public void addLeftRightMarker( VOI textVOI )
     {       
-    	if ( pickedPoint != null )
+    	if ( latticeModel == null )
+    	{
+    		latticeModel = new LatticeModel( m_kImageA, m_kImageB);
+    	}
+    	if ( latticeModel.getPicked() != null )
     	{
     		if ( !movingPickedPoint )
     		{
@@ -3129,50 +3133,71 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 //    			System.err.println("moveLeftRightMarker");
     			saveVOIs("moveLeftRightMarker");
     		}
-    		for ( int i = 0; i < pickedPoint.getCurves().elementAt(0).size(); i++ )
-    		{
-    			pickedPoint.getCurves().elementAt(0).elementAt(i).copy( textVOI.getCurves().elementAt(0).elementAt(i) );
-    		}
-    		pickedPoint.update();
+    		latticeModel.setPicked( textVOI.getCurves().elementAt(0).elementAt(0) );
     	}
     	else
     	{
-    		float minDist = Float.MAX_VALUE;
-    		int minIndex = -1;
-    		VOIVector markers = getActiveImage().getVOIs();
-    		for ( int i = 0; i < markers.size(); i++ )
+    		Vector3f pt = latticeModel.getPicked( textVOI.getCurves().elementAt(0).elementAt(0) );
+    		if ( pt == null )
     		{
-    			VOI currentVOI = markers.elementAt(i);
-    			if ( currentVOI.getCurveType() == VOI.ANNOTATION )
-    			{
-    				VOIText textTemp = (VOIText) currentVOI.getCurves().elementAt(0);
-    				float distance = textTemp.elementAt(0).distance( textVOI.getCurves().elementAt(0).elementAt(0) );
-    				if ( distance < minDist )
-    				{
-    					minDist = distance;
-    					minIndex = i;
-    				}
-    			}
-    		}
-    		if ( minDist < 12 )
-    		{
-//    			System.err.println("selectLeftRightMarker");
-    			pickedPoint = markers.elementAt(minIndex);
-    		}
-    		else
-    		{
-//    			System.err.println( minDist + " " + minIndex );
-//    			System.err.println("addLeftRightMarker");
     			saveVOIs("addLeftRightMarker");
-    			textVOI.setActive(true);
-    			ModelImage kActive = getActiveImage();
-    			if ( kActive != null )
-    			{
-    				kActive.registerVOI(textVOI);
-    			}
-    			pickedPoint = textVOI;
+    			latticeModel.addLeftRightMarker( textVOI.getCurves().elementAt(0).elementAt(0) );
     		}
     	}
+    	
+    	
+//    	if ( pickedPoint != null )
+//    	{
+//    		if ( !movingPickedPoint )
+//    		{
+//    			movingPickedPoint = true;
+////    			System.err.println("moveLeftRightMarker");
+//    			saveVOIs("moveLeftRightMarker");
+//    		}
+//    		for ( int i = 0; i < pickedPoint.getCurves().elementAt(0).size(); i++ )
+//    		{
+//    			pickedPoint.getCurves().elementAt(0).elementAt(i).copy( textVOI.getCurves().elementAt(0).elementAt(i) );
+//    		}
+//    		pickedPoint.update();
+//    	}
+//    	else
+//    	{
+//    		float minDist = Float.MAX_VALUE;
+//    		int minIndex = -1;
+//    		VOIVector markers = getActiveImage().getVOIs();
+//    		for ( int i = 0; i < markers.size(); i++ )
+//    		{
+//    			VOI currentVOI = markers.elementAt(i);
+//    			if ( currentVOI.getCurveType() == VOI.ANNOTATION )
+//    			{
+//    				VOIText textTemp = (VOIText) currentVOI.getCurves().elementAt(0);
+//    				float distance = textTemp.elementAt(0).distance( textVOI.getCurves().elementAt(0).elementAt(0) );
+//    				if ( distance < minDist )
+//    				{
+//    					minDist = distance;
+//    					minIndex = i;
+//    				}
+//    			}
+//    		}
+//    		if ( minDist < 12 )
+//    		{
+////    			System.err.println("selectLeftRightMarker");
+//    			pickedPoint = markers.elementAt(minIndex);
+//    		}
+//    		else
+//    		{
+////    			System.err.println( minDist + " " + minIndex );
+////    			System.err.println("addLeftRightMarker");
+//    			saveVOIs("addLeftRightMarker");
+//    			textVOI.setActive(true);
+//    			ModelImage kActive = getActiveImage();
+//    			if ( kActive != null )
+//    			{
+//    				kActive.registerVOI(textVOI);
+//    			}
+//    			pickedPoint = textVOI;
+//    		}
+//    	}
     }
 
     private void addVOI( ModelImage kImage, VOIBase kNew, boolean bQuickLUT, boolean bUpdate, boolean isFinished )
