@@ -2696,6 +2696,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
                     m_akPlaneRender[i].GetCanvas(), m_akPlaneRender[i], 
                     m_akPlaneRender[i].getOrientation() );
         }
+        m_kVOIInterface.setVOITools( voiMenu, menuObj );
         menuBar.add(voiMenu);
     }
 

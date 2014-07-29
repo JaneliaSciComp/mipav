@@ -40,6 +40,8 @@ public class ViewMenuBuilder {
     
     /** Menu dragging listener */
     private final MenuDragOp op;
+    
+    private ButtonGroup buttonGroup;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -485,6 +487,39 @@ public class ViewMenuBuilder {
         return menuEntry;
     }
 
+    public JRadioButtonMenuItem buildRadioButtonMenuItem(String text, String cmd, boolean selected)
+    {
+    	JRadioButtonMenuItem menuItem = new JRadioButtonMenuItem( text, selected );
+    	menuItem.setActionCommand( cmd );
+    	if ( listener != null )
+    	{
+    		menuItem.addActionListener(listener);
+    	}
+    	if ( buttonGroup != null )
+    	{
+    		buttonGroup.add(menuItem);
+    	}
+        menuItemVector.add(new MipavMenuItem(text, menuItem));
+    	return menuItem;
+    }
+
+    public JRadioButtonMenuItem buildRadioButtonMenuItem(String text, String cmd, boolean selected, ButtonGroup group)
+    {
+    	buttonGroup = group;
+    	JRadioButtonMenuItem menuItem = new JRadioButtonMenuItem( text, selected );
+    	menuItem.setActionCommand( cmd );
+    	if ( listener != null )
+    	{
+    		menuItem.addActionListener(listener);
+    	}
+    	if ( buttonGroup != null )
+    	{
+    		buttonGroup.add(menuItem);
+    	}
+        menuItemVector.add(new MipavMenuItem(text, menuItem));
+    	return menuItem;
+    }
+    
     /**
      * Builds a JCheckBox with the given parameters and adds it to the Vector of menu items.
      * 
@@ -786,23 +821,23 @@ public class ViewMenuBuilder {
     public boolean isMenuItemSelected(String name) {
 
         JMenuItem menuItem = getMenuItem(name);
-        JCheckBoxMenuItem checkItem;
+//        JCheckBoxMenuItem checkItem;
 
         if (menuItem == null) {
             System.err.println("called isSelected on " + name + " which does not exist.");
 
             return false;
         }
-
-        try {
-            checkItem = (JCheckBoxMenuItem) menuItem;
-
-            return ((JCheckBoxMenuItem) checkItem).isSelected();
-        } catch (ClassCastException e) {
-            System.err.println("called isSelected on " + name + " which is not a checkbox.");
-
-            return false;
-        }
+        return menuItem.isSelected();
+//        try {
+//            checkItem = (JCheckBoxMenuItem) menuItem;
+//
+//            return ((JCheckBoxMenuItem) checkItem).isSelected();
+//        } catch (ClassCastException e) {
+//            System.err.println("called isSelected on " + name + " which is not a checkbox.");
+//
+//            return false;
+//        }
     }
 
     /**
