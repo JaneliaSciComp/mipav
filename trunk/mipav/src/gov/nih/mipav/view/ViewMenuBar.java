@@ -943,11 +943,11 @@ public class ViewMenuBar {
                                 menuBuilder.makeMenu("Worm VOI", true,
                                         new JMenuItem[] 
                                         		{
-                        		        menuBuilder.buildMenuItem("Open Left Right Markers", "OpenLeftRightMarkers", 0, null,
-                                                false),
-                                        menuBuilder.buildCheckBoxMenuItem("Add Markers", "AddLeftRightMarkers", false),
-                                        menuBuilder.buildMenuItem("Create New Lattice", "buildWormLattice", 0, null,
-                                                false),
+//                        		        menuBuilder.buildMenuItem("Open Left Right Markers", "OpenLeftRightMarkers", 0, null,
+//                                                false),
+                                        menuBuilder.buildCheckBoxMenuItem("Create Lattice", "AddLeftRightMarkers", false),
+//                                        menuBuilder.buildMenuItem("Create New Lattice", "buildWormLattice", 0, null,
+//                                                false),
                                 		menuBuilder.buildMenuItem("Open Lattice", "OpenLattice", 0, null,
                                                         false),
                                         menuBuilder.buildCheckBoxMenuItem("Edit Lattice", "EditLattice", false),

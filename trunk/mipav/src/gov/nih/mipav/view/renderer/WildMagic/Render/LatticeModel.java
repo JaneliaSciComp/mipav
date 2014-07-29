@@ -92,6 +92,13 @@ public class LatticeModel {
 	private boolean showModel = false;
 	private boolean showExtendedModel = false;
 	
+	public LatticeModel( ModelImage imageA, ModelImage imageB )
+	{
+		this.imageA = imageA;
+		this.imageB = imageB;
+	}
+
+	
 	public LatticeModel( ModelImage imageA, ModelImage imageB, VOI lattice )
 	{
 		this.imageA = imageA;
@@ -293,6 +300,20 @@ public class LatticeModel {
     	}
     }
     
+    public Vector3f getPicked()
+    {
+    	return pickedPoint;
+    }
+
+    
+    public void setPicked( Vector3f pt)
+    {
+    	if ( pickedPoint == null )
+    	{
+    		return;
+    	}
+    	pickedPoint.copy(pt);
+    }
 
 
     public void interpolate( ModelImage srcImage, ModelImage destImage, VOI samplingPlanes, Vector<Ellipsoid3f> ellipseBounds, int diameter )
@@ -840,6 +861,138 @@ public class LatticeModel {
 		return mesh;
 	}
     
+    VOI leftMarker;
+    VOI rightMarker;
+    public void addLeftRightMarker( Vector3f pt )
+    {
+    	if ( lattice == null )
+    	{
+			short id = (short) imageA.getVOIs().getUniqueID();
+			lattice = new VOI(id, "lattice", VOI.POLYLINE, (float)Math.random() );
+    		
+    		left = new VOIContour(false);
+    		right = new VOIContour(false);
+    		lattice.getCurves().add(left);
+    		lattice.getCurves().add(right);
+    		
+    		this.imageA.registerVOI(lattice);
+    	}
+    	if ( left.size() == right.size() )
+    	{
+    		left.add( new Vector3f(pt) );
+    		pickedPoint = left.lastElement();
+//    		System.err.println( pt );
+    		
+    		if ( leftMarker == null )
+    		{
+    			short id = (short) imageA.getVOIs().getUniqueID();
+    			leftMarker = new VOI(id, "leftMarker", VOI.POINT, (float)Math.random() );
+    			this.imageA.registerVOI(leftMarker);
+    			leftMarker.importPoint( pt );
+    		}
+    		else
+    		{
+    			leftMarker.getCurves().elementAt(0).elementAt(0).copy(pt);
+    			leftMarker.update();
+    		}
+    		return;
+    	}
+    	else
+    	{
+    		right.add( new Vector3f(pt) );
+    		pickedPoint = right.lastElement();
+//    		System.err.println( pt );
+    		
+    		if ( rightMarker == null )
+    		{
+    			short id = (short) imageA.getVOIs().getUniqueID();
+    			rightMarker = new VOI(id, "rightMarker", VOI.POINT, (float)Math.random() );
+    			this.imageA.registerVOI(rightMarker);
+        		rightMarker.importPoint( pt );
+    		}
+    		else
+    		{
+    			rightMarker.getCurves().elementAt(0).elementAt(0).copy(pt);
+    			rightMarker.update();
+    		}
+    	}
+    	if ( left.size() == right.size() && left.size() > 1 )
+    	{
+    		updateLattice(true);
+    	}
+    }
+    
+    public Vector3f getPicked( Vector3f pt )
+    {
+    	pickedPoint = null;
+    	if ( left == null )
+    	{
+    		return pickedPoint;
+    	}
+    	int closestL = -1;
+		float minDistL = Float.MAX_VALUE;
+    	for ( int i = 0; i < left.size(); i++ )
+    	{
+    		float distance = pt.distance(left.elementAt(i));
+    		if ( distance < minDistL )
+    		{
+    			minDistL = distance;
+    			if ( minDistL <= 12 )
+    			{
+    				closestL = i;
+    			}
+    		}
+    	}
+    	int closestR = -1;
+		float minDistR = Float.MAX_VALUE;
+		if ( right != null )
+		{
+			for ( int i = 0; i < right.size(); i++ )
+			{
+				float distance = pt.distance(right.elementAt(i));
+				if ( distance < minDistR )
+				{
+					minDistR = distance;
+					if ( minDistR <= 12 )
+					{
+						closestR = i;
+					}
+				}
+			}
+		}
+		
+//    	System.err.println( minDistL + " " + minDistR );
+    	if ( (closestL != -1) && (closestR != -1) )
+    	{
+    		if ( minDistL < minDistR )
+    		{
+//    			System.err.println( "Picked Lattice Left " + closestL );
+    			pickedPoint = left.elementAt(closestL);
+    		}
+    		else
+    		{
+//    			System.err.println( "Picked Lattice Right " + closestR );
+    			pickedPoint = right.elementAt(closestR);
+    		}
+    	}
+    	else if ( closestL != -1 )
+    	{
+//			System.err.println( "Picked Lattice Left " + closestL );
+    		pickedPoint = left.elementAt(closestL);
+    	}
+    	else if ( closestR != -1 )
+    	{
+//			System.err.println( "Picked Lattice Right " + closestR );
+    		pickedPoint = right.elementAt(closestR);
+    	}
+
+    	if ( pickedPoint != null )
+    	{
+        	updateLattice(false);
+    	}
+    	return pickedPoint;
+    }
+    
     public void modifyLattice( Vector3f startPt, Vector3f endPt, Vector3f pt )
     {
     	if ( pickedPoint != null )
@@ -1007,6 +1160,14 @@ public class LatticeModel {
 
 			imageA.unregisterAllVOIs();
 			imageA.registerVOI(lattice);
+			if ( leftMarker != null )
+			{
+				imageA.registerVOI(leftMarker);
+			}
+			if ( rightMarker != null )
+			{
+				imageA.registerVOI(rightMarker);
+			}
 			updateLattice(true);
         }
 
@@ -3004,6 +3165,16 @@ public class LatticeModel {
     			showSelectedVOI = voi;
 //    			System.err.println("updateLinks showSelected ");
     		}
+    		else if ( name.equals("leftMarker") )
+    		{
+    			leftMarker = voi;
+//    			System.err.println("updateLinks showSelected ");
+    		}
+    		else if ( name.equals("rightMarker") )
+    		{
+    			rightMarker = voi;
+//    			System.err.println("updateLinks showSelected ");
+    		}
     	}
     	clear3DSelection();
     	if ( showSelected != null )
@@ -3020,6 +3191,10 @@ public class LatticeModel {
     
     private void updateLattice( boolean rebuild )
 	{
+    	if ( (left.size() != right.size()) || (left.size() < 2) )
+    	{
+    		return;
+    	}
 		if ( rebuild )
 		{
 //			System.err.println( "new pt added" );
