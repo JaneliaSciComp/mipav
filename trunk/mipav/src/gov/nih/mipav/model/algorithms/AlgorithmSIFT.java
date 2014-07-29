@@ -151,6 +151,7 @@ public class AlgorithmSIFT extends AlgorithmBase implements AlgorithmInterface {
         double fxmax; 
         double xval;
         double fx;
+        double orientationMax;
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -646,7 +647,7 @@ public class AlgorithmSIFT extends AlgorithmBase implements AlgorithmInterface {
         	} // for (y = 0; y < extentLevels[i][1]; y++)
         } // for (i = 0; i < pyramidLevels; i++)
         
-        // Smooth the 36 bin histogram with cubic splines
+        // Smooth the 36 bin histogram with cubic splines and find the peak in the smoothed histogram
         // Add a zero at each endpoint at x0 and xn where n = 37
         // Cubic spline with y"(0) = y"(n) = 0 (Natural cubic spline)
         // hi = xi - xi-1 = PI/18.0 but we shall set h = 1.0 here and later multiply back by PI/18.0
@@ -751,6 +752,23 @@ public class AlgorithmSIFT extends AlgorithmBase implements AlgorithmInterface {
                 	fxmax = fx;
                 	xmax = xval;
                 }
+        	}
+        }
+        
+        orientationMax = (xmax - 18)*(Math.PI/18.0);
+        // Change orientations to canonical orientations
+        for (i = 0; i < pyramidLevels; i++) {
+        	for (y = 0; y < extentLevels[i][1]; y++) {
+       	        for (x = 0; x < extentLevels[i][0]; x++) {
+       	    	    index = x + y * extentLevels[i][0];
+       	    	    orLevels[i][index] = orLevels[i][index] - orientationMax;
+       	    	    if (orLevels[i][index] > Math.PI) {
+       	    	    	orLevels[i][index] = orLevels[i][index] - Math.PI;
+       	    	    }
+       	    	    else if (orLevels[i][index] < -Math.PI) {
+       	    	    	orLevels[i][index] = orLevels[i][index] + Math.PI;
+       	    	    }
+       	        }
         	}
         }
          
