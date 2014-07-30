@@ -7,6 +7,7 @@ import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
@@ -23,6 +24,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
@@ -366,7 +368,7 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
         comboBoxOperator.addItem("Minimum");
         comboBoxOperator.addItem("Maximum");
         
-        JPanel srcPanel = new JPanel();
+        JPanel srcPanel = new JPanel(new GridLayout());
         srcTableModel = new ViewTableModel();
         srcTableModel.addColumn("Images");
         srcImagesTable = new JTable(srcTableModel);
@@ -430,7 +432,11 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 2;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
         inputPanel.add(srcPanel, gbc);
+        gbc.weighty = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(5, 5, 15, 5);
         gbc.gridx = 0;
         gbc.gridy = 2;
