@@ -232,10 +232,17 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 					if(!keyArray.contains(k) && !suppTags.contains(k.getKey()))
 						keyArray.add(k);	
 				}else{
-					ArrayList<FileDicomKey> keyArray = new ArrayList<FileDicomKey>();
+					/*ArrayList<FileDicomKey> keyArray = new ArrayList<FileDicomKey>();
 					if(!suppTags.contains(k.getKey()))
 						keyArray.add(k);
-					groups.put(group, keyArray);
+					groups.put(group, keyArray);*/
+					
+					
+					if(!suppTags.contains(k.getKey())){
+						ArrayList<FileDicomKey> keyArray = new ArrayList<FileDicomKey>();
+						keyArray.add(k);
+						groups.put(group, keyArray);
+					}
 				}
 			}
 		}
