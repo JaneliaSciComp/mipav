@@ -2,6 +2,9 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.ScriptRunner;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
@@ -28,7 +31,7 @@ import javax.swing.*;
  * @version  0.9
  * @see      JDialogRemoveSlices
  */
-public class JDialogAnonymizeImage extends JDialogBase {
+public class JDialogAnonymizeImage extends JDialogScriptableBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -48,9 +51,17 @@ public class JDialogAnonymizeImage extends JDialogBase {
     private ModelImage image;
     
     private Vector<FileDicomSQItem> seqTags;
-
+    
+    //Scripting variables
+    
+    private String scriptStringParams;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
+    public JDialogAnonymizeImage(){
+    	super();
+    };
+    
     /**
      * constructor to build a dialog allowing user to find which tags are available to anonymize.
      *
@@ -168,6 +179,10 @@ public class JDialogAnonymizeImage extends JDialogBase {
                     }
                     
                     setVisible(false); // Hide dialog
+                    insertScriptLine();
+                    /*anonImage = (ModelImage)image.clone("Anonymous");
+                    image.getParentFrame().close();
+                    new ViewJFrameImage(anonImage);*/
                 }
             }
         } else if (source == cancelButton) {
@@ -245,7 +260,8 @@ public class JDialogAnonymizeImage extends JDialogBase {
     
     
     private void loadProfile(String name){
-    	String value = Preferences.getProperty("profileAnonymizeDICOM" + name);
+    	String profile = "profileAnonymizeDICOM" + name;
+    	String value = Preferences.getProperty(profile);
     	String[] split = value.split(";");
     	int i;
     	boolean[] publicList = new boolean[FileInfoDicom.anonymizeTagIDs.length];
@@ -307,7 +323,7 @@ public class JDialogAnonymizeImage extends JDialogBase {
     
     private void saveProfile(String name){
     	
-    	String profileName = "profileAnonymizeDICOM" + name;
+    	String profile = "profileAnonymizeDICOM" + name;
     	StringBuilder hashString = new StringBuilder();
     	String delimiter = ";";
     	
@@ -350,7 +366,108 @@ public class JDialogAnonymizeImage extends JDialogBase {
     	
     	
     	hashString.deleteCharAt(hashString.length()-1);
-    	Preferences.setProperty(profileName, hashString.toString());
+    	Preferences.setProperty(profile, hashString.toString());
     	
+    }
+    
+    //Only for scripting
+    
+	@Override
+	protected void callAlgorithm() {
+		
+		String oldName = image.getImageName();
+		
+		getSequenceTags();
+    	String[] split = scriptStringParams.split(";");
+    	int i = 0;
+    	boolean[] publicList = new boolean[FileInfoDicom.anonymizeTagIDs.length];
+    	for(int j = 0;j<publicList.length;j++){
+    		if(split[i].equals(FileInfoDicom.anonymizeTagIDs[j])){
+    			publicList[j] = true;
+    			i++;
+    		}
+    	}
+    	
+    	ArrayList<FileDicomKey> keys = new ArrayList<FileDicomKey>();
+    	ArrayList<FileDicomKey> publicKeys = new ArrayList<FileDicomKey>();
+    	ArrayList<FileDicomKey> workingList = keys;
+    	for(;i<split.length;i++){
+    		String group = split[i].substring(0, split[i].indexOf(","));
+    		int groupNum = Integer.valueOf(group, 0x10);
+    		if(groupNum%2==0)
+    			workingList = publicKeys;
+    		workingList.add(new FileDicomKey(split[i]));
+    	}
+
+		image.anonymize(publicList, true); // anonymize the image of sensitive data
+        image.anonymizeSequenceTags(publicList, seqTags);
+        
+        if(keys.size()>0){
+        	FileDicomKey[] privateKeys = new FileDicomKey[keys.size()];
+        	keys.toArray(privateKeys);
+        	image.removePrivateTags(privateKeys);
+        	image.removePrivateSequenceTags(privateKeys, seqTags);
+        }
+    	if(publicKeys.size()>0){
+    		FileDicomKey[] keysArray = new FileDicomKey[publicKeys.size()];
+    		publicKeys.toArray(keysArray);
+    		image.anonymizePublicTags(keysArray);
+        	image.anonymizePublicSequenceTags(keysArray, seqTags);
+    	}
+    	
+    	ScriptRunner.getReference().getImageTable().changeImageName(oldName, image.getImageName());
+    	
+    	//anonImage = (ModelImage)image.clone("Anonymous");
+	}
+
+	@Override
+	protected void setGUIFromParams() {
+		
+		image = scriptParameters.retrieveInputImage();
+		scriptStringParams = scriptParameters.getParams().getString("keys");
+		
+	}
+
+	@Override
+	protected void storeParamsFromGUI() throws ParserException {
+
+		scriptParameters.storeInputImage(image);
+		
+		StringBuilder hashString = new StringBuilder();
+    	String delimiter = ";";
+    	
+    	boolean[] standardKeys = checkboxPanel.getSelectedList();
+    	boolean[] privateSelected = privateTagsPanel.getSelectedKeysBool();
+    	boolean[] publicSelected = publicTagsPanel.getSelectedKeysBool();
+    	ArrayList<FileDicomKey> keyList = privateTagsPanel.getKeyList();
+    	ArrayList<FileDicomKey> publicKeyList = publicTagsPanel.getKeyList();
+    	
+    	for(int i=0;i<FileInfoDicom.anonymizeTagIDs.length;i++){
+    		if(standardKeys[i])
+    			hashString.append(FileInfoDicom.anonymizeTagIDs[i] + delimiter);
+    	}
+    	for(int i=0;i<privateSelected.length;i++){
+    		FileDicomKey k = keyList.get(i);
+    		
+    		if(privateSelected[i])
+    			hashString.append(k.getKey() + delimiter);
+    	}
+    	for(int i=0;i<publicSelected.length;i++){
+    		FileDicomKey k = publicKeyList.get(i);
+    		
+    		if(publicSelected[i])
+    			hashString.append(k.getKey() + delimiter);
+    	}
+
+    	hashString.deleteCharAt(hashString.length()-1);
+		scriptParameters.getParams().put(ParameterFactory.newString("keys", hashString.toString()));
+		
+	}
+	
+    /**
+     * Perform any actions required after the running of the algorithm is complete.
+     */
+    protected void doPostAlgorithmActions() {
+    	//AlgorithmParameters.storeImageInRunner(anonImage);
     }
 }
