@@ -960,8 +960,18 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 
                 stats.nVox = stats.values.size();
 
-                stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
-                stats.volume = stats.area * fileInfo.getResolutions()[2]; 
+                if (orientation == VOIBase.ZPLANE) {
+                    stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
+                    stats.volume = stats.area * fileInfo.getResolutions()[2]; 
+                }
+                else if (orientation == VOIBase.XPLANE) {
+                	stats.area = stats.nVox * (fileInfo.getResolutions()[1] * fileInfo.getResolutions()[2]);
+                    stats.volume = stats.area * fileInfo.getResolutions()[0]; 	
+                }
+                else {
+                	stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[2]);
+                    stats.volume = stats.area * fileInfo.getResolutions()[1]; 		
+                }
 
                 statProperty.setProperty(VOIStatisticList.quantityDescription + end, nf.format(stats.nVox));
                 statProperty.setProperty(VOIStatisticList.areaDescription + end, nf.format(stats.area));
@@ -995,7 +1005,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 convexStats.values = convexContour.calcIntensity( srcImage, kMinMaxConvex, ignoreMin, ignoreMax, rangeFlag );
                 convexStats.nVox = convexStats.values.size();
 
-                stats.hullArea = convexStats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
+                if (orientation == VOIBase.ZPLANE) {
+                    stats.hullArea = convexStats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
+                }
+                else if (orientation == VOIBase.XPLANE) {
+                	stats.hullArea = convexStats.nVox * (fileInfo.getResolutions()[1] * fileInfo.getResolutions()[2]);	
+                }
+                else {
+                	stats.hullArea = convexStats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[2]);		
+                }
                 stats.solidity = stats.area/stats.hullArea;
                 statProperty.setProperty(VOIStatisticList.solidityDescription + end, nf.format(stats.solidity));
             }
@@ -1244,8 +1262,18 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 
                 stats.nVox = stats.valuesRGB.size();
 
-                stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
-                stats.volume = stats.area * fileInfo.getResolutions()[2]; 
+                if (orientation == VOIBase.ZPLANE) {
+                    stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
+                    stats.volume = stats.area * fileInfo.getResolutions()[2]; 
+                }
+                else if (orientation == VOIBase.XPLANE) {
+                	stats.area = stats.nVox * (fileInfo.getResolutions()[1] * fileInfo.getResolutions()[2]);
+                    stats.volume = stats.area * fileInfo.getResolutions()[0]; 	
+                }
+                else {
+                	stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[2]);
+                    stats.volume = stats.area * fileInfo.getResolutions()[1]; 		
+                } 
 
                 statProperty.setProperty(VOIStatisticList.quantityDescription + end, nf.format(stats.nVox));
                 statProperty.setProperty(VOIStatisticList.areaDescription + end, nf.format(stats.area));
@@ -1282,7 +1310,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 
                 convexStats.nVox = convexStats.valuesRGB.size();
 
-                stats.hullArea = convexStats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
+                if (orientation == VOIBase.ZPLANE) {
+                    stats.hullArea = convexStats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
+                }
+                else if (orientation == VOIBase.XPLANE) {
+                	stats.hullArea = convexStats.nVox * (fileInfo.getResolutions()[1] * fileInfo.getResolutions()[2]);	
+                }
+                else {
+                	stats.hullArea = convexStats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[2]);		
+                }
                 stats.solidity = stats.area/stats.hullArea;
                 statProperty.setProperty(VOIStatisticList.solidityDescription + end, nf.format(stats.solidity));
             }
@@ -1904,6 +1940,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 String unit2DStr, String unit3DStr, float ignoreMin, float ignoreMax )
         {
             ContourStats stats = new ContourStats();
+            int orientation = kVOI.getCurves().get(0).getPlane();
 
             int xDim = srcImage.getExtents().length > 0 ? srcImage.getExtents()[0] : 1;
             int yDim = srcImage.getExtents().length > 1 ? srcImage.getExtents()[1] : 1;
@@ -1943,8 +1980,18 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     statsList[ indexOf( circularityDescription)] ||
                     statsList[ indexOf( solidityDescription)])
             {    
-                stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
-                stats.volume = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1] * fileInfo.getResolutions()[2]);
+            	if (orientation == VOIBase.ZPLANE) {
+                    stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
+                    stats.volume = stats.area * fileInfo.getResolutions()[2]; 
+                }
+                else if (orientation == VOIBase.XPLANE) {
+                	stats.area = stats.nVox * (fileInfo.getResolutions()[1] * fileInfo.getResolutions()[2]);
+                    stats.volume = stats.area * fileInfo.getResolutions()[0]; 	
+                }
+                else {
+                	stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[2]);
+                    stats.volume = stats.area * fileInfo.getResolutions()[1]; 		
+                }
                 
                 statProperty.setProperty(VOIStatisticList.areaDescription, nf.format(stats.area));
                 statProperty.setProperty(VOIStatisticList.volumeDescription, nf.format(stats.volume));
@@ -1991,7 +2038,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 
                 convexStats.nVox = convexMask.cardinality();
 
-                stats.hullArea = convexStats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
+                if (orientation == VOIBase.ZPLANE) {
+                    stats.hullArea = convexStats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
+                }
+                else if (orientation == VOIBase.XPLANE) {
+                	stats.hullArea = convexStats.nVox * (fileInfo.getResolutions()[1] * fileInfo.getResolutions()[2]);	
+                }
+                else {
+                	stats.hullArea = convexStats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[2]);		
+                }
                 stats.solidity = stats.area/stats.hullArea;
                 statProperty.setProperty(VOIStatisticList.solidityDescription, nf.format(stats.solidity));
             }
@@ -2202,6 +2257,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 float ignoreMinG, float ignoreMaxG, float ignoreMinB, float ignoreMaxB)
         {
             ContourStats stats = new ContourStats();
+            int orientation = kVOI.getCurves().get(0).getPlane();
 
             int xDim = srcImage.getExtents().length > 0 ? srcImage.getExtents()[0] : 1;
             int yDim = srcImage.getExtents().length > 1 ? srcImage.getExtents()[1] : 1;
@@ -2247,8 +2303,18 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     statsList[ indexOf( circularityDescription)] ||
                     statsList[ indexOf( solidityDescription)])
             {    
-                stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
-                stats.volume = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1] * fileInfo.getResolutions()[2]);
+            	if (orientation == VOIBase.ZPLANE) {
+                    stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
+                    stats.volume = stats.area * fileInfo.getResolutions()[2]; 
+                }
+                else if (orientation == VOIBase.XPLANE) {
+                	stats.area = stats.nVox * (fileInfo.getResolutions()[1] * fileInfo.getResolutions()[2]);
+                    stats.volume = stats.area * fileInfo.getResolutions()[0]; 	
+                }
+                else {
+                	stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[2]);
+                    stats.volume = stats.area * fileInfo.getResolutions()[1]; 		
+                }
                 
                 statProperty.setProperty(VOIStatisticList.areaDescription, nf.format(stats.area));
                 statProperty.setProperty(VOIStatisticList.volumeDescription, nf.format(stats.volume));
@@ -2300,7 +2366,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 
                 convexStats.nVox = convexMask.cardinality();
 
-                stats.hullArea = convexStats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
+                if (orientation == VOIBase.ZPLANE) {
+                    stats.hullArea = convexStats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
+                }
+                else if (orientation == VOIBase.XPLANE) {
+                	stats.hullArea = convexStats.nVox * (fileInfo.getResolutions()[1] * fileInfo.getResolutions()[2]);	
+                }
+                else {
+                	stats.hullArea = convexStats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[2]);		
+                }
                 stats.solidity = stats.area/stats.hullArea;
                 statProperty.setProperty(VOIStatisticList.solidityDescription, nf.format(stats.solidity));
             }
