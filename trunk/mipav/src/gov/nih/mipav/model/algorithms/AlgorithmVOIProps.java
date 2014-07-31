@@ -753,12 +753,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     ContourStats[] stats = new ContourStats[sortedContoursZ[sortedZ].size()];
                     for (int q = 0; q < sortedContoursZ[sortedZ].size(); q++) {
                         if (srcImage.isColorImage()) {
-                            stats[q] = calcStatsPerContourRGB( fileInfo, sortedContoursZ[sortedZ].elementAt(q), 2, 
+                            stats[q] = calcStatsPerContourRGB( fileInfo, sortedContoursZ[sortedZ].elementAt(q), VOIBase.ZPLANE, 
                                     unit2DStr, unit3DStr, ignoreMinR, ignoreMaxR, ignoreMinG, ignoreMaxG,
                                     ignoreMinB, ignoreMaxB, statProperty, sortedZ, q);    
                         }
                         else {
-                            stats[q] = calcStatsPerContour( fileInfo, sortedContoursZ[sortedZ].elementAt(q), 2, 
+                            stats[q] = calcStatsPerContour( fileInfo, sortedContoursZ[sortedZ].elementAt(q), VOIBase.ZPLANE, 
                                 unit2DStr, unit3DStr, ignoreMin, ignoreMax, statProperty, sortedZ, q);
                         }
                         allStats.add( stats[q] );
@@ -786,12 +786,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     ContourStats[] stats = new ContourStats[sortedContoursX[sortedX].size()];
                     for (int q = 0; q < sortedContoursX[sortedX].size(); q++) {
                         if (srcImage.isColorImage()) {
-                            stats[q] = calcStatsPerContourRGB( fileInfo, sortedContoursX[sortedX].elementAt(q), 0,
+                            stats[q] = calcStatsPerContourRGB( fileInfo, sortedContoursX[sortedX].elementAt(q), VOIBase.XPLANE,
                                     unit2DStr, unit3DStr, ignoreMinR, ignoreMaxR, ignoreMinG, ignoreMaxG,
                                     ignoreMinB, ignoreMaxB, statProperty, sortedX, q);    
                         }
                         else {
-                            stats[q] = calcStatsPerContour( fileInfo, sortedContoursX[sortedX].elementAt(q), 0,
+                            stats[q] = calcStatsPerContour( fileInfo, sortedContoursX[sortedX].elementAt(q), VOIBase.XPLANE,
                                 unit2DStr, unit3DStr, ignoreMin, ignoreMax, statProperty, sortedX, q);
                         }
                         allStats.add( stats[q] );
@@ -819,12 +819,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     ContourStats[] stats = new ContourStats[sortedContoursY[sortedY].size()];
                     for (int q = 0; q < sortedContoursY[sortedY].size(); q++) {
                         if (srcImage.isColorImage()) {
-                            stats[q] = calcStatsPerContourRGB( fileInfo, sortedContoursY[sortedY].elementAt(q), 1,
+                            stats[q] = calcStatsPerContourRGB( fileInfo, sortedContoursY[sortedY].elementAt(q), VOIBase.YPLANE,
                                     unit2DStr, unit3DStr, ignoreMinR, ignoreMaxR, ignoreMinG, ignoreMaxG,
                                     ignoreMinB, ignoreMaxB, statProperty, sortedY, q);    
                         }
                         else {
-                            stats[q] = calcStatsPerContour( fileInfo, sortedContoursY[sortedY].elementAt(q), 1,
+                            stats[q] = calcStatsPerContour( fileInfo, sortedContoursY[sortedY].elementAt(q), VOIBase.YPLANE,
                                 unit2DStr, unit3DStr, ignoreMin, ignoreMax, statProperty, sortedY, q);
                         }
                         allStats.add( stats[q] );
@@ -858,15 +858,16 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             } else if ( processType == PROCESS_PER_CONTOUR ) {
 
                 Vector<VOIBase> contours = calcSelectedVOI.getCurves();
+                int orientation = contours.get(0).getPlane();
                 ContourStats[] stats = new ContourStats[contours.size()];
                 for (int q = 0; q < contours.size(); q++) {
                     if (srcImage.isColorImage()) {
-                        stats[q] = calcStatsPerContourRGB( fileInfo, contours.elementAt(q), -1,
+                        stats[q] = calcStatsPerContourRGB( fileInfo, contours.elementAt(q), orientation,
                                 unit2DStr, unit3DStr, ignoreMinR, ignoreMaxR, 
                                 ignoreMinG, ignoreMaxG, ignoreMinB, ignoreMaxB, statProperty, -1, q);    
                     }
                     else {
-                        stats[q] = calcStatsPerContour( fileInfo, contours.elementAt(q), -1,
+                        stats[q] = calcStatsPerContour( fileInfo, contours.elementAt(q), orientation,
                             unit2DStr, unit3DStr, ignoreMin, ignoreMax, statProperty, -1, q);
                     }
                 }               
@@ -966,11 +967,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 }
                 else if (orientation == VOIBase.XPLANE) {
                 	stats.area = stats.nVox * (fileInfo.getResolutions()[1] * fileInfo.getResolutions()[2]);
-                    stats.volume = stats.area * fileInfo.getResolutions()[0]; 	
+                    stats.volume = stats.area * fileInfo.getResolutions()[0]; 
                 }
                 else {
                 	stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[2]);
-                    stats.volume = stats.area * fileInfo.getResolutions()[1]; 		
+                    stats.volume = stats.area * fileInfo.getResolutions()[1]; 
                 }
 
                 statProperty.setProperty(VOIStatisticList.quantityDescription + end, nf.format(stats.nVox));
@@ -1986,11 +1987,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 }
                 else if (orientation == VOIBase.XPLANE) {
                 	stats.area = stats.nVox * (fileInfo.getResolutions()[1] * fileInfo.getResolutions()[2]);
-                    stats.volume = stats.area * fileInfo.getResolutions()[0]; 	
+                    stats.volume = stats.area * fileInfo.getResolutions()[0]; 
                 }
                 else {
                 	stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[2]);
-                    stats.volume = stats.area * fileInfo.getResolutions()[1]; 		
+                    stats.volume = stats.area * fileInfo.getResolutions()[1]; 
                 }
                 
                 statProperty.setProperty(VOIStatisticList.areaDescription, nf.format(stats.area));
