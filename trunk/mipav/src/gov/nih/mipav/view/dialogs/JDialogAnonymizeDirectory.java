@@ -175,6 +175,8 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
     private JPanelAnonymizePrivateTags privateTagsPanel;
     
     private JPanelAnonymizePublicTags publicTagsPanel;
+    
+    private JCheckBox removeBox;
 
     
     
@@ -223,8 +225,29 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
         
         everything.insertTab("Logging", null, buildLogPanel(), "Process Log", LOG_TAB);
 
-        mainDialogPanel.add(everything, BorderLayout.CENTER);
-        mainDialogPanel.add(buildOKCancelPanel(), BorderLayout.SOUTH); // build OK/Cancel button Panel
+        mainDialogPanel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        
+        mainDialogPanel.add(everything, gbc);
+        
+        gbc.gridy = 1;
+        gbc.weighty = 0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        
+        JPanel boxPanel = new JPanel();
+        removeBox = new JCheckBox("Remove public tag values");
+        removeBox.setFont(serif12);
+        removeBox.setForeground(Color.black);
+        boxPanel.add(removeBox);
+        mainDialogPanel.add(boxPanel, gbc);
+        
+        gbc.gridy = 2;
+        mainDialogPanel.add(buildOKCancelPanel(), gbc); // build OK/Cancel button Panel
 
         getContentPane().add(mainDialogPanel);
 
@@ -1390,7 +1413,7 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
     	ArrayList<String> workingTags = tags;
     	ArrayList<Boolean> workingSelected = selectedList;
     	
-    	for(;i<split.length;i+=3){
+    	for(;i<split.length-1;i+=3){
     		String group = split[i].substring(0, split[i].indexOf(","));
     		int groupNum = Integer.valueOf(group, 0x10);
     		if(groupNum%2==0){
@@ -1418,6 +1441,10 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
     		}
     		publicTagsPanel.populateFromProfile(publicKeys, publicTags, selected);
     	}
+    	String boxChecked = split[i];
+    	if(boxChecked.equals("t"))
+    		removeBox.setSelected(true);
+    	else removeBox.setSelected(true);
     }
     
     private void saveProfile(String name){
@@ -1462,7 +1489,9 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
     		else hashString.append("f");
     		hashString.append(delimiter);
     	}
-    	hashString.deleteCharAt(hashString.length()-1);
+    	if(removeBox.isSelected())
+    		hashString.append("t");
+    	else hashString.append("f");
     	Preferences.setProperty(profileName, hashString.toString());
     	
     }
@@ -1765,9 +1794,9 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
 
                 if (mi != null) {
                 	Vector<FileDicomSQItem> seqTags = getSequenceTags(mi);
-                    mi.anonymize(checkBoxPanel.getSelectedList(), doRename);
+                    mi.anonymize(checkBoxPanel.getSelectedList(), doRename, removeBox.isSelected());
                     
-                    mi.anonymizeSequenceTags(checkBoxPanel.getSelectedList(), seqTags);
+                    mi.anonymizeSequenceTags(checkBoxPanel.getSelectedList(), seqTags, removeBox.isSelected());
                     
                     FileDicomKey[] keys = privateTagsPanel.getSelectedKeys();
                     if(keys != null){
@@ -1777,8 +1806,8 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
                     
                     keys = publicTagsPanel.getSelectedKeys();
                     if(keys != null){
-                    	mi.anonymizePublicTags(keys);
-                    	mi.anonymizePublicSequenceTags(keys, seqTags);
+                    	mi.anonymizePublicTags(keys, removeBox.isSelected());
+                    	mi.anonymizePublicSequenceTags(keys, seqTags, removeBox.isSelected());
                     }
 
                     try {

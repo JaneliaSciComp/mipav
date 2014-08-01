@@ -255,7 +255,7 @@ public class FileInfoDicom extends FileInfoBase {
      *
      * @throws  IllegalArgumentException  DOCUMENT ME!
      */
-    public final void anonymize(boolean[] list) {
+    public final void anonymize(boolean[] list, boolean removeValue) {
 
         if (list.length != anonymizeTagIDs.length) {
             throw new IllegalArgumentException("anonymize list not of correct size!");
@@ -269,7 +269,10 @@ public class FileInfoDicom extends FileInfoBase {
             try {
 
                 if (list[i]) {
-                    String anonValue = generateNewTagValue(anonymizeTagIDs[i]).toString();
+                    String anonValue;
+                    /*if(removeValue)
+                    	anonValue = " ";
+                    else */anonValue = generateNewTagValue(anonymizeTagIDs[i], removeValue).toString();
                     getTagTable().setValue(anonymizeTagIDs[i], anonValue, anonValue.length());
                 }
             } catch (NullPointerException npe) { // an IllegalArgumentException is probably not right here....
@@ -284,14 +287,17 @@ public class FileInfoDicom extends FileInfoBase {
             // change each of the following tags to (empty)
             // if we are asked to anonymize this info and if the tag exists in the hashtable.
             if ((list[i]) && (tagTable.getValue(anonymizeTagIDs[i]) != null)) {
-                String anonValue = generateNewTagValue(anonymizeTagIDs[i]).toString();
+            	String anonValue;
+                /*if(removeValue)
+                	anonValue = " ";
+                else */anonValue = generateNewTagValue(anonymizeTagIDs[i], removeValue).toString();
                 getTagTable().setValue(anonymizeTagIDs[i], anonValue, anonValue.length());
             }
         }
         // this fileInfo is now an expurgated/sanitised version
     }
     
-    public void anonymizeSequenceTags(boolean[] list, Vector<FileDicomSQItem> seqs){
+    public void anonymizeSequenceTags(boolean[] list, Vector<FileDicomSQItem> seqs, boolean removeValue){
     	if (list.length != anonymizeTagIDs.length) {
             throw new IllegalArgumentException("anonymize list not of correct size!");
         }
@@ -304,7 +310,10 @@ public class FileInfoDicom extends FileInfoBase {
         		for(FileDicomSQItem d : seqs){
         			FileDicomTag tag = d.get(new FileDicomKey(anonymizeTagIDs[i]));
         			if(tag != null){
-        				String anonValue = generateNewTagValue(anonymizeTagIDs[i], d).toString();
+        				String anonValue;
+                        /*if(removeValue)
+                        	anonValue = " ";
+                        else */anonValue = generateNewTagValue(anonymizeTagIDs[i], d, removeValue).toString();
         				d.setValue(anonymizeTagIDs[i], anonValue);
         			}
         		}
@@ -327,23 +336,56 @@ public class FileInfoDicom extends FileInfoBase {
     	}
     }
     
-    public final void anonymizePublicTags(FileDicomKey[] keys){
+    public final void anonymizePublicTags(FileDicomKey[] keys, boolean removeValue){
     	for(int i=0;i<keys.length;i++){
     		FileDicomTag tag = tagTable.get(keys[i]);
     		if(tag != null){
-    			Object anon = generateNewTagValue(keys[i].getKey());
-	    		tagTable.setValue(keys[i], anon);
+    			Object anonValue;
+                /*if(removeValue){
+                	anonValue = " ";
+                	VR vr = tag.getType();
+                    if(vr == VR.OB){
+                    	byte[] bits = anonValue.toString().getBytes();
+                    	Byte[] out = new Byte[bits.length];
+                    	for(int j=0;j<bits.length;j++){
+                    		out[j] = bits[j];
+                    	}
+                    	anonValue = out;
+                    }
+                    else if(vr == VR.OW){
+                    	anonValue =  anonValue.toString().toCharArray();
+                    }
+                }
+                else */anonValue = generateNewTagValue(keys[i].getKey(), removeValue);
+	    		tagTable.setValue(keys[i], anonValue);
     		}
     	}
     }
     
-    public final void anonymizePublicSequenceTags(FileDicomKey[] keys, Vector<FileDicomSQItem> seqs){
+    public final void anonymizePublicSequenceTags(FileDicomKey[] keys, Vector<FileDicomSQItem> seqs, boolean removeValue){
     	for(int i=0;i<keys.length;i++){
     		FileDicomKey key = keys[i];
     		for(FileDicomSQItem d : seqs){
     			if(d.containsTag(key)){ 
-        			Object anon = generateNewTagValue(key.getKey(), d);
-    				tagTable.setValue(key, anon);
+    				Object anonValue;
+                    /*if(removeValue){
+                    	anonValue = " ";
+                    	FileDicomTag tag = d.get(key);
+                    	VR vr = tag.getType();
+                        if(vr == VR.OB){
+                        	byte[] bits = anonValue.toString().getBytes();
+                        	Byte[] out = new Byte[bits.length];
+                        	for(int j=0;j<bits.length;j++){
+                        		out[j] = bits[j];
+                        	}
+                        	anonValue = out;
+                        }
+                        else if(vr == VR.OW){
+                        	anonValue =  anonValue.toString().toCharArray();
+                        }
+                    }
+                    else */anonValue = generateNewTagValue(keys[i].getKey(), d, removeValue);
+    				tagTable.setValue(key, anonValue);
     			}
     		}
     	}
@@ -354,8 +396,8 @@ public class FileInfoDicom extends FileInfoBase {
      * @param key
      * @return
      */
-    public Object generateNewTagValue(String key) {
-        return generateNewTagValue(key, getTagTable());
+    public Object generateNewTagValue(String key, boolean remove) {
+        return generateNewTagValue(key, getTagTable(), remove);
     }
     
     /**
@@ -373,10 +415,10 @@ public class FileInfoDicom extends FileInfoBase {
      * @param key
      * @return
      */
-    public static Object generateNewTagValue(String key, FileDicomTagTable tagTable) {
+    public static Object generateNewTagValue(String key, FileDicomTagTable tagTable, boolean remove) {
         FileDicomTag tag = tagTable.get(key);
         if(!tag.getType().equals(VR.SQ)) {
-            return generateNewTagValue(key, tag.getValue(true).toString(), tag.getType());
+            return generateNewTagValue(key, tag.getValue(false).toString(), tag.getType(), remove);
         } else {
             FileDicomSQ sqNew = new FileDicomSQ();
             FileDicomSQ sqOrig = (FileDicomSQ) tag.getValue(false);
@@ -389,7 +431,7 @@ public class FileInfoDicom extends FileInfoBase {
                     FileDicomKey origKey;
                     while(origKeyEnum.hasMoreElements()) {
                         origKey = origKeyEnum.nextElement();
-                        itemNew.setValue(origKey, generateNewTagValue(origKey.getKey(), itemOrig));
+                        itemNew.setValue(origKey, generateNewTagValue(origKey.getKey(), itemOrig, remove));
                     }
                     sqNew.addItem(itemNew);
                 }
@@ -413,7 +455,11 @@ public class FileInfoDicom extends FileInfoBase {
      * @param key
      * @return
      */
-    public static Object generateNewTagValue(String key, String strValue, VR vr) {
+    public static Object generateNewTagValue(String key, String strValue, VR vr){
+    	return generateNewTagValue(key, strValue, vr, false);
+    }
+    
+    public static Object generateNewTagValue(String key, String strValue, VR vr, boolean remove) {
         StringBuilder anonStr = new StringBuilder();
         if(strValue != null) {
             boolean doRandom = false;
@@ -429,8 +475,11 @@ public class FileInfoDicom extends FileInfoBase {
                 } else if(doRandom) {
                     anonStr.append(r.nextInt(10));
                 } else {
-                    if(vr.getType() instanceof NumType || vr.getType().equals(StringType.DATE)) {
-                        anonStr.append("1");
+                    if(vr.getType() instanceof NumType)
+                    	anonStr.append("1"); 
+                    else if(vr.getType().equals(StringType.DATE)) {
+                        if(c > 47 && c < 58)
+                        	anonStr.append("1"); 
                     } else { 
                         switch(vr) {
                         case AT:
@@ -442,6 +491,12 @@ public class FileInfoDicom extends FileInfoBase {
                         }                        
                     }
                 }
+            }
+            if(remove && !key.equals("0008,0018")){
+            	anonStr = anonStr.delete(0, anonStr.length());
+            	if(vr.getType() instanceof NumType)
+            		anonStr.append("0");
+            	else anonStr.append(" ");
             }
         }
         if(vr.getType() instanceof NumType){

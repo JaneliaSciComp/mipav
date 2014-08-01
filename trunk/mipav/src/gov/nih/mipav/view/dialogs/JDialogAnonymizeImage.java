@@ -52,6 +52,8 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
     
     private Vector<FileDicomSQItem> seqTags;
     
+    private JCheckBox removeBox;
+    
     //Scripting variables
     
     private String scriptStringParams;
@@ -113,16 +115,38 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
         tabs.insertTab("Public tag options", null, publicTagsPanel, "Public Tag Selection", 1);
         tabs.insertTab("Private tag options", null, privateTagsPanel, "Private Tag Selection", 2);
         //tabs.insertTab("Private tag options", null, privateTagsPanel, "Private Tag Selection", 2);
-
-        getContentPane().add(tabs);
         
-        getContentPane().add(getOKCancelPanel(), BorderLayout.SOUTH);
+        JPanel mainPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+
+        mainPanel.add(tabs, gbc);
+        
+        gbc.gridy = 1;
+        gbc.weighty = 0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        
+        JPanel boxPanel = new JPanel();
+        removeBox = new JCheckBox("Remove public tag values");
+        removeBox.setFont(serif12);
+        removeBox.setForeground(Color.black);
+        boxPanel.add(removeBox);
+        mainPanel.add(boxPanel, gbc);
+        
+        gbc.gridy = 2;
+        mainPanel.add(getOKCancelPanel(), gbc);
+        
+        getContentPane().add(mainPanel, BorderLayout.CENTER);
         
         setResizable(true); // since locations are hard-coded we are not checking for different sizes. prevent user from
                             // changing
         addWindowListener(this); // check for events
         pack();
-        setSize(425, 425);
+        setSize(425, 825);
         setVisible(true); // let someone see the dialog.
     }
 
@@ -141,7 +165,8 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
 
             int anonymizeChoice;
 
-            if (checkboxPanel.getNumberSelected() == 0) {
+            if (checkboxPanel.getNumberSelected() == 0 &&
+            		privateTagsPanel.isEmpty() && publicTagsPanel.isEmpty()) {
                 MipavUtil.displayError("No fields were selected!  Select a field.");
             } else {
 
@@ -163,9 +188,8 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
                                                                 JOptionPane.QUESTION_MESSAGE);
 
                 if (anonymizeChoice == JOptionPane.YES_OPTION) {
-                	
-                    image.anonymize(checkboxPanel.getSelectedList(), true); // anonymize the image of sensitive data
-                    image.anonymizeSequenceTags(checkboxPanel.getSelectedList(), seqTags);
+                    image.anonymize(checkboxPanel.getSelectedList(), true, removeBox.isSelected()); // anonymize the image of sensitive data
+                    image.anonymizeSequenceTags(checkboxPanel.getSelectedList(), seqTags, removeBox.isSelected());
                     
                     FileDicomKey[] keys = privateTagsPanel.getSelectedKeys();
                     if(keys != null){
@@ -174,8 +198,8 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
                     }
                     keys = publicTagsPanel.getSelectedKeys();
                     if(keys != null){
-                    	image.anonymizePublicTags(keys);
-                    	image.anonymizePublicSequenceTags(keys, seqTags);
+                    	image.anonymizePublicTags(keys, removeBox.isSelected());
+                    	image.anonymizePublicSequenceTags(keys, seqTags, removeBox.isSelected());
                     }
                     
                     setVisible(false); // Hide dialog
@@ -289,7 +313,7 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
     	ArrayList<FileDicomKey> keys = new ArrayList<FileDicomKey>();
     	ArrayList<FileDicomKey> publicKeys = new ArrayList<FileDicomKey>();
     	ArrayList<FileDicomKey> workingList = keys;
-    	for(;i<split.length;i+=3){
+    	for(;i<split.length-1;i+=3){
     		String group = split[i].substring(0, split[i].indexOf(","));
     		int groupNum = Integer.valueOf(group, 0x10);
     		if(groupNum%2==0)
@@ -303,6 +327,10 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
     		privateTagsPanel.setSelectedKeys(keys);
     	if(publicKeys.size()>0)
     		publicTagsPanel.setSelectedKeys(publicKeys);
+    	String boxChecked = split[i];
+    	if(boxChecked.equals("t"))
+    		removeBox.setSelected(true);
+    	else removeBox.setSelected(true);
     }
     
     private ArrayList<String> getProfiles(){
@@ -364,8 +392,11 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
     		hashString.append(delimiter);
     	}
     	
+    	//hashString.deleteCharAt(hashString.length()-1);
     	
-    	hashString.deleteCharAt(hashString.length()-1);
+    	if(removeBox.isSelected())
+    		hashString.append("t");
+    	else hashString.append("f");
     	Preferences.setProperty(profile, hashString.toString());
     	
     }
@@ -399,8 +430,8 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
     		workingList.add(new FileDicomKey(split[i]));
     	}
 
-		image.anonymize(publicList, true); // anonymize the image of sensitive data
-        image.anonymizeSequenceTags(publicList, seqTags);
+		image.anonymize(publicList, true, removeBox.isSelected()); // anonymize the image of sensitive data
+        image.anonymizeSequenceTags(publicList, seqTags, removeBox.isSelected());
         
         if(keys.size()>0){
         	FileDicomKey[] privateKeys = new FileDicomKey[keys.size()];
@@ -411,8 +442,8 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
     	if(publicKeys.size()>0){
     		FileDicomKey[] keysArray = new FileDicomKey[publicKeys.size()];
     		publicKeys.toArray(keysArray);
-    		image.anonymizePublicTags(keysArray);
-        	image.anonymizePublicSequenceTags(keysArray, seqTags);
+    		image.anonymizePublicTags(keysArray, removeBox.isSelected());
+        	image.anonymizePublicSequenceTags(keysArray, seqTags, removeBox.isSelected());
     	}
     	
     	ScriptRunner.getReference().getImageTable().changeImageName(oldName, image.getImageName());
