@@ -79,7 +79,7 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 
 
 		JPanel buttonPanel = new JPanel();
-		buttonPanel.setBorder(new EmptyBorder(0,0,3,0));
+		//buttonPanel.setBorder(new EmptyBorder(0,0,3,0));
 		JButton checkButton = new JButton("Select all");
 		checkButton.setActionCommand("privateAll");
 		checkButton.setFont(MipavUtil.font12B);
@@ -120,12 +120,12 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		for(int i=0;i<keys.size();i++){
 			FileDicomKey k = keys.get(i);
 			String t = tags.get(i);
-			if(selected[i])
-				selectedRows.add(i+1);
 			if(k.getGroup().equals(prevGroup)){
 				String title = "(" + k.getElement() + ") " + t;
 				DefaultMutableTreeNode child = new DefaultMutableTreeNode(title);
 				next.add(child);
+				if(selected[i])
+				selectedRows.add(i+1);
 			} else {
 				String title = "(" + k.getGroup() +") " + t;
 				if(next != null)
@@ -158,7 +158,7 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 
 
 		JPanel buttonPanel = new JPanel();
-		buttonPanel.setBorder(new EmptyBorder(0,0,3,0));
+		//buttonPanel.setBorder(new EmptyBorder(0,0,3,0));
 		JButton checkButton = new JButton("Select all");
 		checkButton.setActionCommand("privateAll");
 		checkButton.setFont(MipavUtil.font12B);
@@ -183,6 +183,7 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		for(int i=0;i<selectedRows.size();i++){
 			paths[i] = tree.getPathForRow(selectedRows.get(i));
 		}
+		removeAllPaths();
 		checkTree.getSelectionModel().addSelectionPaths(paths);
 	}
 	

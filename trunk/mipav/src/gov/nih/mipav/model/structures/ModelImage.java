@@ -323,19 +323,23 @@ public class ModelImage extends ModelStorageBase {
      * 
      * @see FileInfoDicom#anonymize
      */
-    public void anonymize(final boolean[] list, final boolean doRename) {
+    public void anonymize(final boolean[] list, final boolean doRename){
+    	anonymize(list, doRename, false);
+    }
+    
+    public void anonymize(final boolean[] list, final boolean doRename, boolean removeValue) {
         int i;
 
         if (this.isDicomImage()) { // if image is DICOM,
 
             if (getNDims() == 2) { // and if image is a single slice
-                ((FileInfoDicom) fileInfo[0]).anonymize(list); // tell the fileInfo to anonymize itself
+                ((FileInfoDicom) fileInfo[0]).anonymize(list, removeValue); // tell the fileInfo to anonymize itself
                 this.setFileInfo(fileInfo[0], 0); // and then make sure (by resetting) the fileInfo in this image is
                 // the same as the sanitised version
             } else { // and image has more than one slice
 
                 for (i = 0; i < getExtents()[2]; i++) { // then for all slices in this image,
-                    ((FileInfoDicom) fileInfo[i]).anonymize(list); // tell the fileInfo of slice i to anonymize itself
+                    ((FileInfoDicom) fileInfo[i]).anonymize(list, removeValue); // tell the fileInfo of slice i to anonymize itself
                     this.setFileInfo(fileInfo[i], i); // and then make sure (by resetting) the ith fileInfo in this
                     // image is the same as the sanitised version
                 }
@@ -379,15 +383,15 @@ public class ModelImage extends ModelStorageBase {
         }
     }
     
-    public void anonymizeSequenceTags(boolean[] list, Vector<FileDicomSQItem> seqs){
+    public void anonymizeSequenceTags(boolean[] list, Vector<FileDicomSQItem> seqs, boolean removeValue){
     	if (getNDims() == 2) { // and if image is a single slice
-            ((FileInfoDicom) fileInfo[0]).anonymizeSequenceTags(list, seqs); // tell the fileInfo to anonymize itself
+            ((FileInfoDicom) fileInfo[0]).anonymizeSequenceTags(list, seqs, removeValue); // tell the fileInfo to anonymize itself
             this.setFileInfo(fileInfo[0], 0); // and then make sure (by resetting) the fileInfo in this image is
             // the same as the sanitised version
         } else { // and image has more than one slice
 
             for (int i = 0; i < getExtents()[2]; i++) { // then for all slices in this image,
-                ((FileInfoDicom) fileInfo[i]).anonymizeSequenceTags(list, seqs); // tell the fileInfo of slice i to anonymize itself
+                ((FileInfoDicom) fileInfo[i]).anonymizeSequenceTags(list, seqs, removeValue); // tell the fileInfo of slice i to anonymize itself
                 this.setFileInfo(fileInfo[i], i); // and then make sure (by resetting) the ith fileInfo in this
                 // image is the same as the sanitised version
             }
@@ -424,30 +428,30 @@ public class ModelImage extends ModelStorageBase {
         }
     }
     
-    public void anonymizePublicTags(FileDicomKey[] keys){
+    public void anonymizePublicTags(FileDicomKey[] keys, boolean removeValue){
     	if (getNDims() == 2) { // and if image is a single slice
-            ((FileInfoDicom) fileInfo[0]).anonymizePublicTags(keys); // tell the fileInfo to anonymize itself
+            ((FileInfoDicom) fileInfo[0]).anonymizePublicTags(keys, removeValue); // tell the fileInfo to anonymize itself
             this.setFileInfo(fileInfo[0], 0); // and then make sure (by resetting) the fileInfo in this image is
             // the same as the sanitised version
         } else { // and image has more than one slice
 
             for (int i = 0; i < getExtents()[2]; i++) { // then for all slices in this image,
-                ((FileInfoDicom) fileInfo[i]).anonymizePublicTags(keys); // tell the fileInfo of slice i to anonymize itself
+                ((FileInfoDicom) fileInfo[i]).anonymizePublicTags(keys, removeValue); // tell the fileInfo of slice i to anonymize itself
                 this.setFileInfo(fileInfo[i], i); // and then make sure (by resetting) the ith fileInfo in this
                 // image is the same as the sanitised version
             }
         }
     }
     
-    public final void anonymizePublicSequenceTags(FileDicomKey[] keys, Vector<FileDicomSQItem> seqs){
+    public final void anonymizePublicSequenceTags(FileDicomKey[] keys, Vector<FileDicomSQItem> seqs, boolean removeValue){
     	if (getNDims() == 2) { // and if image is a single slice
-            ((FileInfoDicom) fileInfo[0]).anonymizePublicSequenceTags(keys, seqs); // tell the fileInfo to anonymize itself
+            ((FileInfoDicom) fileInfo[0]).anonymizePublicSequenceTags(keys, seqs, removeValue); // tell the fileInfo to anonymize itself
             this.setFileInfo(fileInfo[0], 0); // and then make sure (by resetting) the fileInfo in this image is
             // the same as the sanitised version
         } else { // and image has more than one slice
 
             for (int i = 0; i < getExtents()[2]; i++) { // then for all slices in this image,
-                ((FileInfoDicom) fileInfo[i]).anonymizePublicSequenceTags(keys, seqs); // tell the fileInfo of slice i to anonymize itself
+                ((FileInfoDicom) fileInfo[i]).anonymizePublicSequenceTags(keys, seqs, removeValue); // tell the fileInfo of slice i to anonymize itself
                 this.setFileInfo(fileInfo[i], i); // and then make sure (by resetting) the ith fileInfo in this
                 // image is the same as the sanitised version
             }

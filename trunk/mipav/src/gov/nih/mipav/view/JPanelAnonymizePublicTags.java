@@ -29,6 +29,7 @@ import gov.nih.mipav.model.file.FileDicomSQItem;
 import gov.nih.mipav.model.file.FileDicomTag;
 import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.model.file.PrivateFileDicomKey;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.CheckTreeManager.CheckTreeSelectionModel;
 import gov.nih.mipav.view.dialogs.JDialogBase;
@@ -94,7 +95,7 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 
 
 		JPanel buttonPanel = new JPanel();
-		buttonPanel.setBorder(new EmptyBorder(0,0,3,0));
+		//buttonPanel.setBorder(new EmptyBorder(0,0,3,0));
 		JButton checkButton = new JButton("Select all");
 		checkButton.setActionCommand("publicAll");
 		checkButton.setFont(MipavUtil.font12B);
@@ -134,6 +135,10 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 		int offset = 1;
 		for(int i=0;i<keys.size();i++){
 			FileDicomKey k = keys.get(i);
+			if(k.getKey().equals("0002,0010") ||
+					k.getKey().equals("0018,1310") ||
+					k.getGroup().equals("0028")) //do NOT anonymize Transfer Syntax
+				continue;
 			String t = tags.get(i);
 			if(!k.getGroup().equals(prevGroup)){
 				String title = "Group (" + k.getGroup() +") ";
@@ -175,7 +180,7 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 
 
 		JPanel buttonPanel = new JPanel();
-		buttonPanel.setBorder(new EmptyBorder(0,0,3,0));
+		//buttonPanel.setBorder(new EmptyBorder(0,0,3,0));
 		JButton checkButton = new JButton("Select all");
 		checkButton.setActionCommand("privateAll");
 		checkButton.setFont(MipavUtil.font12B);
@@ -200,6 +205,7 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 		for(int i=0;i<selectedRows.size();i++){
 			paths[i] = tree.getPathForRow(selectedRows.get(i));
 		}
+		removeAllPaths();
 		checkTree.getSelectionModel().addSelectionPaths(paths);
 	}
 	
@@ -224,6 +230,10 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 		//No equivalent element number for group name in public keys, need to do something else for
 		//group titles
 		for(FileDicomKey k : keys){
+			if(k.getKey().equals("0002,0010") ||
+					k.getKey().equals("0018,1310") ||
+					k.getGroup().equals("0028")) //do NOT anonymize Transfer Syntax
+				continue;
 			String group = k.getGroup();
 			int groupNum = k.getGroupNumber();
 			if(groupNum%2 == 0){
@@ -372,11 +382,12 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 				break;
 			FileDicomKey k = keyList.get(i);
 			FileDicomKey q = keyStack.peek(); //Keys made from strings
+			
 			if(!k.getGroup().equals(prevGroup)){
 				prevGroup = k.getGroup();
 				offset++;
 			}
-			while(k.compareTo(q) > 0){
+			while(compare(k,q) > 0){
 				keyStack.poll();
 				q = keyStack.peek();
 			}
@@ -395,6 +406,14 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 		
 	}
 
+	public int compare(FileDicomKey k, FileDicomKey q){
+		int gdiff = k.getGroupNumber() - k.getGroupNumber();
+		int ediff = k.getElementNumber() - q.getElementNumber();
+		if(gdiff != 0)
+			return gdiff;
+		else return ediff;
+	}
+	
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		// TODO Auto-generated method stub

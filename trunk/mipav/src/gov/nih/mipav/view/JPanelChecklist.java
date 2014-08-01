@@ -91,7 +91,13 @@ public abstract class JPanelChecklist extends JPanel implements ActionListener {
      * DOCUMENT ME!
      */
     public void buildLayout() {
-        this.setLayout(new BorderLayout());
+        this.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weighty = 1;
 
         // make the list scroll if there are enough checkboxes
         scrollPane = new JScrollPane(makeCheckContainer(), // checkboxPanel,
@@ -99,8 +105,11 @@ public abstract class JPanelChecklist extends JPanel implements ActionListener {
                                      JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setForeground(Color.white);
         scrollPane.setPreferredSize(new Dimension(175,400));
-        add(scrollPane, BorderLayout.CENTER);
-        add(chkUnchkPanel = makeCheckUncheckPanel(), BorderLayout.SOUTH);
+        add(scrollPane, gbc);
+        
+        gbc.weighty = 0;
+        gbc.gridy = 1;
+        add(chkUnchkPanel = makeCheckUncheckPanel(), gbc);
     }
 
     /**
