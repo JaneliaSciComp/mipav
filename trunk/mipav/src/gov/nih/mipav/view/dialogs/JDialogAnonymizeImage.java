@@ -204,9 +204,10 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
                     
                     setVisible(false); // Hide dialog
                     insertScriptLine();
-                    /*anonImage = (ModelImage)image.clone("Anonymous");
-                    image.getParentFrame().close();
-                    new ViewJFrameImage(anonImage);*/
+
+                    getOwner().dispose();
+                    image.getParentFrame().about();
+
                 }
             }
         } else if (source == cancelButton) {
