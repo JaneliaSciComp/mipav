@@ -2334,11 +2334,13 @@ public class LatticeModel {
                     		overlap.set(iIndex, jIndex, kIndex, overlap.getFloatTriLinearBounds(x,y,z) + 1 );
                     	}
                     	
-                    	dataOrigin[ ( ( (j * iBound) + i) * 4) + 0] = 1;
-                    	dataOrigin[ ( ( (j * iBound) + i) * 4) + 1] = x;
-                    	dataOrigin[ ( ( (j * iBound) + i) * 4) + 2] = y;
-                    	dataOrigin[ ( ( (j * iBound) + i) * 4) + 3] = z;
-                		
+                    	if ( dataOrigin != null )
+                    	{
+                    		dataOrigin[ ( ( (j * iBound) + i) * 4) + 0] = 1;
+                    		dataOrigin[ ( ( (j * iBound) + i) * 4) + 1] = x;
+                    		dataOrigin[ ( ( (j * iBound) + i) * 4) + 2] = y;
+                    		dataOrigin[ ( ( (j * iBound) + i) * 4) + 3] = z;
+                    	}
                 	}
                 }
                 /*
@@ -2501,12 +2503,14 @@ public class LatticeModel {
 			}
 			saveTransformImage(imageName, inside, false);
 
-			ModelImage overlap = new ModelImage( ModelStorageBase.FLOAT, imageA.getExtents(), imageName + "_uncertainty.xml" );
-			JDialogBase.updateFileInfo( imageA, overlap );	
+//			ModelImage overlap = new ModelImage( ModelStorageBase.FLOAT, imageA.getExtents(), imageName + "_uncertainty.xml" );
+//			JDialogBase.updateFileInfo( imageA, overlap );	
+//			straighten(imageA, overlap, resultExtents, imageName, model, true, displayResult, true );
 			
-			straighten(imageA, overlap, resultExtents, imageName, model, true, displayResult, true );
 			
-			straighten(overlap, null, resultExtents, imageName, model, false, displayResult, true );
+			straighten(imageA, null, resultExtents, imageName, model, true, displayResult, true );
+			
+//			straighten(overlap, null, resultExtents, imageName, model, false, displayResult, true );
 			straighten(inside, null, resultExtents, imageName, model, false, displayResult, false );
 			
 			if ( imageB != null )
@@ -2530,19 +2534,25 @@ public class LatticeModel {
 
 		int colorFactor = image.isColorImage() ? 4 : 1;
 		float[][] values = new float[resultExtents[2]][resultExtents[0] * resultExtents[1] * colorFactor]; 
-		float[][] dataOrigin = new float[resultExtents[2]][resultExtents[0] * resultExtents[1] * 4]; 
+		float[][] dataOrigin = null;
 		
 
 		ModelImage resultImage = new ModelImage(image.getType(), resultExtents, imageName + "_straight.xml");
 		JDialogBase.updateFileInfo( image, resultImage );
 		resultImage.setResolutions( new float[]{1,1,1});
 		
-		ModelImage straightToOrigin = new ModelImage( ModelStorageBase.ARGB_FLOAT, resultExtents, imageName + "_toOriginal.xml");
-		JDialogBase.updateFileInfo( image, straightToOrigin );
-		straightToOrigin.setResolutions( new float[]{1,1,1});
-		for ( int i = 0; i < straightToOrigin.getDataSize(); i++ )
+		ModelImage straightToOrigin = null;
+		
+		if ( saveStats )
 		{
-			straightToOrigin.set(i, 0);
+			dataOrigin = new float[resultExtents[2]][resultExtents[0] * resultExtents[1] * 4]; 
+			straightToOrigin =new ModelImage( ModelStorageBase.ARGB_FLOAT, resultExtents, imageName + "_toOriginal.xml");
+			JDialogBase.updateFileInfo( image, straightToOrigin );
+			straightToOrigin.setResolutions( new float[]{1,1,1});
+			for ( int i = 0; i < straightToOrigin.getDataSize(); i++ )
+			{
+				straightToOrigin.set(i, 0);
+			}
 		}
 
 		for( int i = 0; i < samplingPlanes.getCurves().size(); i++ )
@@ -2555,23 +2565,104 @@ public class LatticeModel {
 	        	corners[j] = kBox.elementAt(j);
 	        }
 			try {
-				writeDiagonal( image, model, overlap, 0, i, resultExtents, corners, values[i], dataOrigin[i]);
+				if ( dataOrigin == null )
+				{
+					writeDiagonal( image, model, overlap, 0, i, resultExtents, corners, values[i], null);
+				}
+				else
+				{
+					writeDiagonal( image, model, overlap, 0, i, resultExtents, corners, values[i], dataOrigin[i]);
+				}
 				resultImage.importData(i*values[i].length, values[i], false);
-				straightToOrigin.importData(i*dataOrigin[i].length, dataOrigin[i], false);
+				if ( straightToOrigin != null )
+				{
+					straightToOrigin.importData(i*dataOrigin[i].length, dataOrigin[i], false);
+				}
 			} catch(IOException e) {
 				e.printStackTrace();
 			}
 		}
 		
-		if ( overlap != null )
+		if ( saveStats && (straightToOrigin != null) )
 		{
-			for ( int i = 0; i < overlap.getDataSize(); i++ )
+			ModelImage overlap2 = new ModelImage( ModelStorageBase.ARGB_FLOAT, resultExtents, imageName + "_uncertainty.xml");
+			JDialogBase.updateFileInfo( image, overlap2 );
+			overlap2.setResolutions( new float[]{1,1,1});
+			for ( int z = 0; z < resultExtents[2]; z++ )
 			{
-				if ( overlap.getFloat(i) < 5 )
+				for ( int x = 0; x < resultExtents[0]; x++ )
 				{
-					overlap.set(i, 0);
+					for ( int y = 0; y < resultExtents[1]; y++ )
+					{
+						if ( z + 1 < resultExtents[2] )
+						{
+							Vector3f pos1 = new Vector3f( straightToOrigin.getFloatC(x, y, z+1, 1), 
+									straightToOrigin.getFloatC(x, y, z+1, 2), straightToOrigin.getFloatC(x, y, z+1, 3) );
+							Vector3f pos0 = new Vector3f( straightToOrigin.getFloatC(x, y, z, 1), 
+									straightToOrigin.getFloatC(x, y, z, 2), straightToOrigin.getFloatC(x, y, z, 3) );
+							if ( !pos0.isEqual(Vector3f.ZERO) && !pos1.isEqual(Vector3f.ZERO))
+							{
+								float diff = pos1.distance(pos0);
+								if ( diff > 1.5 )
+								{
+									overlap2.setC(x, y, z, 0, 1);
+									overlap2.setC(x, y, z, 1, 0);
+									overlap2.setC(x, y, z, 2, 0);
+									overlap2.setC(x, y, z, 3, diff - 1);
+								}
+								else if ( diff < .5)
+								{
+									overlap2.setC(x, y, z, 0, 1);
+									overlap2.setC(x, y, z, 1, 1 - diff);
+									overlap2.setC(x, y, z, 2, 0);
+									overlap2.setC(x, y, z, 3, 0);
+								}
+								else
+								{
+									overlap2.setC(x, y, z, 0, 1);
+									overlap2.setC(x, y, z, 1, 0);
+									overlap2.setC(x, y, z, 2, 0);
+									overlap2.setC(x, y, z, 3, 0);									
+								}
+							}
+							else
+							{
+								overlap2.setC(x, y, z, 0, 0);
+								overlap2.setC(x, y, z, 1, 0);
+								overlap2.setC(x, y, z, 2, 0);
+								overlap2.setC(x, y, z, 3, 0);
+							}
+						}
+						else
+						{
+							overlap2.setC(x, y, z, 0, 0);
+							overlap2.setC(x, y, z, 1, 0);
+							overlap2.setC(x, y, z, 2, 0);
+							overlap2.setC(x, y, z, 3, 0);
+						}
+					}
 				}
 			}
+			overlap2.calcMinMax();
+			float maxR = (float) overlap2.getMaxR();
+			float maxB = (float) overlap2.getMaxB();
+			for ( int z = 0; z < resultExtents[2]; z++ )
+			{
+				for ( int x = 0; x < resultExtents[0]; x++ )
+				{
+					for ( int y = 0; y < resultExtents[1]; y++ )
+					{
+						float r = overlap2.getFloatC(x, y, z, 1);
+						overlap2.setC(x, y, z, 1, r/maxR);
+						float b = overlap2.getFloatC(x, y, z, 3);
+						overlap2.setC(x, y, z, 3, b/maxB);
+					}
+				}
+			}
+			
+			saveTransformImage(baseName, overlap2, true);
+			overlap2.disposeLocal();
+			overlap2 = null;
 		}
 
 		
@@ -2654,9 +2745,9 @@ public class LatticeModel {
 			originToStraight = null;
 			//		testTransform( resultImage, straightToOrigin, image.getExtents() );
 			//		testTransform( image, originToStraight, resultImage.getExtents() );
+			straightToOrigin.disposeLocal();
+			straightToOrigin = null;
 		}
-		straightToOrigin.disposeLocal();
-		straightToOrigin = null;
 		
 		if ( !displayResult )
 		{
