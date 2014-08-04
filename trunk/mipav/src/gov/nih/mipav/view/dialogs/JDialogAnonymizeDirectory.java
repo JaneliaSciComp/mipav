@@ -1361,6 +1361,11 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
         keyLog = newKeyLog();
     }
     
+    /**
+     * Searches for all profiles in the MIPAV preferences that
+     * start with profileAnonymizeDICOM. Works for both the
+     * anonymize image dialog and the anonymize directory dialog.
+     */
     private ArrayList<String> getProfiles(){
     	
     	ArrayList<String> profiles = new ArrayList<String>();
@@ -1377,6 +1382,15 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
     	return profiles;
     }
     
+    /**
+     * Parses through the profile in the MIPAV preferences to
+     * determine which Supplement 55 tags are selected, which
+     * public tags exists (and were selected), and which private
+     * tags exist (and were selected). Since for this dialog we do
+     * not go into an image to determine which tags are present, 
+     * whatever was in the profile is displayed. 
+     * @param name
+     */
     private void loadProfile(String name){
     	String value = Preferences.getProperty("profileAnonymizeDICOM" + name);
     	String[] split = value.split(";");
@@ -1447,6 +1461,11 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
     	else removeBox.setSelected(true);
     }
     
+    /**
+     * Saves off a profile into the preferences. This is basically
+     * the exact same as what is seen in the anonymize image version.
+     * @param name
+     */
     private void saveProfile(String name){
     	
     	String profileName = "profileAnonymizeDICOM" + name;
@@ -1798,6 +1817,7 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
                     
                     mi.anonymizeSequenceTags(checkBoxPanel.getSelectedList(), seqTags, removeBox.isSelected());
                     
+                    //Now also anonymize more tags other than the Supplement 55 tags
                     FileDicomKey[] keys = privateTagsPanel.getSelectedKeys();
                     if(keys != null){
                     	mi.removePrivateTags(keys);

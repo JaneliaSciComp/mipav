@@ -266,6 +266,11 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
         return okCancelPanel;
     }
     
+    /**
+     * Method to retrieve the sequence tags from the file info. This will
+     * be used later to check for the other tags when anonymizing/removing
+     * information so that things aren't left in erroneously. 
+     */
     private void getSequenceTags(){
     	
     	seqTags = new Vector<FileDicomSQItem>();
@@ -283,7 +288,13 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
     	
     }
     
-    
+    /**
+     * Parses through the profile in the MIPAV preferences to
+     * determine which tags were selected and set them correctly
+     * in the respective panels. Parsing occurs here while the
+     * actual selection determination is within each panel. 
+     * @param name
+     */
     private void loadProfile(String name){
     	String profile = "profileAnonymizeDICOM" + name;
     	String value = Preferences.getProperty(profile);
@@ -334,6 +345,11 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
     	else removeBox.setSelected(true);
     }
     
+    /**
+     * Searches for all profiles in the MIPAV preferences that
+     * start with profileAnonymizeDICOM. Works for both the
+     * anonymize image dialog and the anonymize directory dialog.
+     */
     private ArrayList<String> getProfiles(){
     	
     	ArrayList<String> profiles = new ArrayList<String>();
@@ -350,6 +366,13 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
     	return profiles;
     }
     
+    /**
+     * Saves off a profile into the preferences. This is basically
+     * the exact same as what is seen in the anonymize directory
+     * version. This is so that the profiles from one image can 
+     * be applied across all images in the directory. 
+     * @param name
+     */
     private void saveProfile(String name){
     	
     	String profile = "profileAnonymizeDICOM" + name;
@@ -364,12 +387,17 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
     	ArrayList<FileDicomKey> publicKeyList = publicTagsPanel.getKeyList();
     	ArrayList<String> publicTagList = publicTagsPanel.getTagList();
     	
+    	//For the supplement 55 tags, just save off "t" or "f" since we
+    	//already know what it corresponds to
     	for(int i=0;i<FileInfoDicom.anonymizeTagIDs.length;i++){
     		if(standardKeys[i])
     			hashString.append("t");
     		else hashString.append("f");
     		hashString.append(delimiter);
     	}
+    	//For other public and private tags, you need to save off
+    	//the key numbers, name of the key, and whether or not
+    	//it was selected
     	for(int i=0;i<privateSelected.length;i++){
     		FileDicomKey k = keyList.get(i);
     		String t = tagList.get(i);
@@ -393,8 +421,6 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
     		hashString.append(delimiter);
     	}
     	
-    	//hashString.deleteCharAt(hashString.length()-1);
-    	
     	if(removeBox.isSelected())
     		hashString.append("t");
     	else hashString.append("f");
@@ -402,7 +428,8 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
     	
     }
     
-    //Only for scripting
+    //Only for scripting, just basically what occurs in action performed, plus
+    //a couple of extra steps to carry out scripting things
     
 	@Override
 	protected void callAlgorithm() {
@@ -460,6 +487,11 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
 		
 	}
 
+	/**
+	 * Stores all the keys that were selected, but in string
+	 * form so that it is easier to pull up later (although
+	 * it is not a pretty sight to see in the recorder)
+	 */
 	@Override
 	protected void storeParamsFromGUI() throws ParserException {
 
@@ -474,6 +506,7 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
     	ArrayList<FileDicomKey> keyList = privateTagsPanel.getKeyList();
     	ArrayList<FileDicomKey> publicKeyList = publicTagsPanel.getKeyList();
     	
+    	//Simply just write all the key strings out to the parameters
     	for(int i=0;i<FileInfoDicom.anonymizeTagIDs.length;i++){
     		if(standardKeys[i])
     			hashString.append(FileInfoDicom.anonymizeTagIDs[i] + delimiter);

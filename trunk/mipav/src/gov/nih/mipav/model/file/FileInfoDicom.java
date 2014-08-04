@@ -297,6 +297,11 @@ public class FileInfoDicom extends FileInfoBase {
         // this fileInfo is now an expurgated/sanitised version
     }
     
+    /**
+     * Method to anonymize the tags found in the DICOM supplement 55 that may appear in
+     * sequence tags. A list of sequence tags should be passed in so that you do not have
+     * to figure out which tags are sequences every time.
+     */
     public void anonymizeSequenceTags(boolean[] list, Vector<FileDicomSQItem> seqs, boolean removeValue){
     	if (list.length != anonymizeTagIDs.length) {
             throw new IllegalArgumentException("anonymize list not of correct size!");
@@ -321,12 +326,22 @@ public class FileInfoDicom extends FileInfoBase {
         }
     }
     
+    
+    /**
+     * Method to remove private tags from the file. No option is given to anonymize the
+     * values. Requires an array of DICOM keys. 
+     */
     public final void removePrivateTags(FileDicomKey[] keys){
     	for(int i=0;i<keys.length;i++){
     		tagTable.removeTag(keys[i]);
     	}
     }
     
+    /**
+     * Method to anonymize private tags that may appear in
+     * sequence tags. A list of sequence tags should be passed in so that you do not have
+     * to figure out which tags are sequences every time.
+     */
     public final void removePrivateSequenceTags(FileDicomKey[] keys, Vector<FileDicomSQItem> seqs){
     	for(int i=0;i<keys.length;i++){
     		FileDicomKey key = keys[i];
@@ -336,32 +351,27 @@ public class FileInfoDicom extends FileInfoBase {
     	}
     }
     
+    /**
+     * Method to anonymize public tags that do not appear in the DICOM Supplement 55. 
+     * Like in the other anonymize methods, you may instead choose to replace the value
+     * with a blank string.
+     */
     public final void anonymizePublicTags(FileDicomKey[] keys, boolean removeValue){
     	for(int i=0;i<keys.length;i++){
     		FileDicomTag tag = tagTable.get(keys[i]);
     		if(tag != null){
     			Object anonValue;
-                /*if(removeValue){
-                	anonValue = " ";
-                	VR vr = tag.getType();
-                    if(vr == VR.OB){
-                    	byte[] bits = anonValue.toString().getBytes();
-                    	Byte[] out = new Byte[bits.length];
-                    	for(int j=0;j<bits.length;j++){
-                    		out[j] = bits[j];
-                    	}
-                    	anonValue = out;
-                    }
-                    else if(vr == VR.OW){
-                    	anonValue =  anonValue.toString().toCharArray();
-                    }
-                }
-                else */anonValue = generateNewTagValue(keys[i].getKey(), removeValue);
+                anonValue = generateNewTagValue(keys[i].getKey(), removeValue);
 	    		tagTable.setValue(keys[i], anonValue);
     		}
     	}
     }
     
+    /**
+     * Method to anonymize public tags not in the DICOM Supplement 55 that may appear in
+     * sequence tags. A list of sequence tags should be passed in so that you do not have
+     * to figure out which tags are sequences every time.
+     */
     public final void anonymizePublicSequenceTags(FileDicomKey[] keys, Vector<FileDicomSQItem> seqs, boolean removeValue){
     	for(int i=0;i<keys.length;i++){
     		FileDicomKey key = keys[i];
@@ -492,6 +502,9 @@ public class FileInfoDicom extends FileInfoBase {
                     }
                 }
             }
+            //Completely remove the value if it isn't the unique ID
+            //or if it is a number (which requires number output), 
+            //chagne the value to zero.
             if(remove && !key.equals("0008,0018")){
             	anonStr = anonStr.delete(0, anonStr.length());
             	if(vr.getType() instanceof NumType)
@@ -499,6 +512,9 @@ public class FileInfoDicom extends FileInfoBase {
             	else anonStr.append(" ");
             }
         }
+        
+        //For some number typices, need to truncate numbers from anonymized value so
+        //that it does not overlow a short/int/long
         if(vr.getType() instanceof NumType){
         	int bytes = ((NumType)vr.getType()).getNumBytes();
         	int num = (int)Math.pow(2, bytes-1);
@@ -506,6 +522,7 @@ public class FileInfoDicom extends FileInfoBase {
         	if(anonStr.length() > numStr.length());
         		anonStr.setLength(numStr.length());
         }
+        //Need to format the output correctly depending on the value's representation
         if(vr == VR.OB){
         	byte[] bits = anonStr.toString().getBytes();
         	Byte[] out = new Byte[bits.length];

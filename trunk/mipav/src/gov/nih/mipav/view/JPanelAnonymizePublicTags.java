@@ -20,7 +20,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
-import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
@@ -29,10 +28,27 @@ import gov.nih.mipav.model.file.FileDicomSQItem;
 import gov.nih.mipav.model.file.FileDicomTag;
 import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileInfoDicom;
-import gov.nih.mipav.model.file.PrivateFileDicomKey;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.CheckTreeManager.CheckTreeSelectionModel;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+
+/**
+ * The panel class used in anonymize image/directory that displays the public
+ * tags in a tree format along with check boxes so that the organization between
+ * groups is apparent. These tags don't show up in the DICOM Supplement 55 so
+ * it is a separate object from that panel. 
+ * 
+ * A lot of the code in here is replicated from the Private tags version (which
+ * was written first), so any key differences are pointed out. If there is
+ * not enough information here, go to the private tags version to look for 
+ * further comments.
+ * 
+ * For information on the tree classes used, see CheckTreeManager (and the URL 
+ * in that file)
+ * @see CheckTreeManager
+ * @author wangvg
+ *
+ */
 
 public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 
@@ -51,7 +67,10 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 	
 	private HashSet<String> suppTags;
 	
-	//Should make some sort of hash/list that holds the Supp. 55 tags so that you don't duplicate them
+	/**
+	 * The default constructor that occurs in the anonymize directory
+	 * dialog before a profile has been loaded to populate the tree
+	 */
 	
 	public JPanelAnonymizePublicTags(){
 		super();
@@ -63,6 +82,12 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 		}
 	}
 	
+	/**
+	 * The constructor used in the anonymize image dialog that will 
+	 * populate the tree and assign the layout based on the file info.
+	 * @param img
+	 * @param seqTags
+	 */
 	public JPanelAnonymizePublicTags(ModelImage img, Vector<FileDicomSQItem> seqTags){
 		super();
 		
@@ -86,16 +111,13 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 		JScrollPane treeView = new JScrollPane(tree, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		treeView.setViewportView(tree);
-		//treeView.setPreferredSize(new Dimension(300,200));
 		add(treeView, gbc);
 
 		gbc.gridy = 1;
 		gbc.weightx = 0;
 		gbc.weighty = 0;
 
-
 		JPanel buttonPanel = new JPanel();
-		//buttonPanel.setBorder(new EmptyBorder(0,0,3,0));
 		JButton checkButton = new JButton("Select all");
 		checkButton.setActionCommand("publicAll");
 		checkButton.setFont(MipavUtil.font12B);
@@ -116,15 +138,28 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 			tree.expandRow(i);
 		}
 
-		//checkAllPaths();
+		//Unlike the private tags version, don't default to every
+		//option checked.
 	}
 	
+	/**
+	 * Method used in the anonymize dialog profile that generates the tree
+	 * structure from key information passed into the class. Required to
+	 * pass in the key string, key name, and whether it was not selected.
+	 * This version differs slightly from the private keys version because
+	 * of the way the tree is structured. 
+	 * @param keys The list of keys to display
+	 * @param tags The list of tags that map the to keys
+	 * @param selected Which keys were selected
+	 */
 	public void populateFromProfile(ArrayList<FileDicomKey> keys, ArrayList<String> tags, boolean[] selected){
 		
-		//This is from the private tag version, need to fix so that it is public
 		if(keys.isEmpty())
 			return;
 		
+		//Build the tree from the input keys
+		//Somewhat similar to the "createPrivateKeyTree" method
+		//so see that for comments
 		keyList = keys;
 		tagList = tags;
 		String prevGroup = "";
@@ -136,9 +171,9 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 		for(int i=0;i<keys.size();i++){
 			FileDicomKey k = keys.get(i);
 			if(k.getKey().equals("0002,0010") ||
-					k.getKey().equals("0018,1310") ||
-					k.getGroup().equals("0028")) //do NOT anonymize Transfer Syntax
-				continue;
+					k.getKey().equals("0018,1310") || //do NOT anonymize Transfer Syntax
+					k.getGroup().equals("0028")) //This group contains a lot of image info
+				continue; //Shouldn't let user remove these tags/groups
 			String t = tags.get(i);
 			if(!k.getGroup().equals(prevGroup)){
 				String title = "Group (" + k.getGroup() +") ";
@@ -159,6 +194,7 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 		top.add(next);
 		checkTree = new CheckTreeManager(tree);
 		
+		//Build the layout
 		removeAll();
 		setLayout(new GridBagLayout());
 		setBorder(JDialogBase.buildTitledBorder("Check the fields to anonymize:"));
@@ -209,6 +245,13 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 		checkTree.getSelectionModel().addSelectionPaths(paths);
 	}
 	
+	/**
+	 * Method to populate the tree structure from the input image 
+	 * and provided sequence tags. 
+	 * @param image
+	 * @param seqTags
+	 * @return
+	 */
 	private JTree createPublicKeyTree(ModelImage image, Vector<FileDicomSQItem> seqTags){
 	
 		DefaultMutableTreeNode top = new DefaultMutableTreeNode("Public keys");
@@ -216,8 +259,11 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 		
 		FileInfoDicom info = (FileInfoDicom) image.getFileInfo(0);
 		FileDicomTagTable table = info.getTagTable();
+		//Place all the keys into a hashset
 		Hashtable<FileDicomKey, FileDicomTag> hash = table.getTagList();
 		Set<FileDicomKey> keys = new LinkedHashSet<FileDicomKey>( hash.keySet());
+		//Add all the tags within a sequence into the hash set (so that any
+				//keys already in the private list aren't added)
 		for(FileDicomSQItem s : seqTags){
 			keys.addAll(s.getTagList().keySet());
 		}
@@ -225,29 +271,28 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 		keyList = new ArrayList<FileDicomKey>();
 		tagList = new ArrayList<String>();
 		
+		//Hash to separate out groups and elements out
+		//Hash keys are the DICOM keys, while the values are lists
+		//containing all the keys in that group
 		Hashtable<String, ArrayList<FileDicomKey>> groups = new Hashtable<String, ArrayList<FileDicomKey>>();
 		
-		//No equivalent element number for group name in public keys, need to do something else for
-		//group titles
+		//No equivalent element number for group name in public keys, so instead
+		//of making the root node include the group name, just use the group
+		//number as there is no easy way to differentiate groups
 		for(FileDicomKey k : keys){
 			if(k.getKey().equals("0002,0010") ||
-					k.getKey().equals("0018,1310") ||
-					k.getGroup().equals("0028")) //do NOT anonymize Transfer Syntax
-				continue;
+					k.getKey().equals("0018,1310") || //do NOT anonymize Transfer Syntax
+					k.getGroup().equals("0028")) //This group contains a lot of image info
+				continue; //Shouldn't let user remove these tags/groups
 			String group = k.getGroup();
 			int groupNum = k.getGroupNumber();
-			if(groupNum%2 == 0){
+			if(groupNum%2 == 0){ //Public tags end in an even number
+				//Only add the public tag if it isn't already in the supplement 55 list
 				if(groups.containsKey(group)){
 					ArrayList<FileDicomKey> keyArray = groups.get(group);
 					if(!keyArray.contains(k) && !suppTags.contains(k.getKey()))
 						keyArray.add(k);	
 				}else{
-					/*ArrayList<FileDicomKey> keyArray = new ArrayList<FileDicomKey>();
-					if(!suppTags.contains(k.getKey()))
-						keyArray.add(k);
-					groups.put(group, keyArray);*/
-					
-					
 					if(!suppTags.contains(k.getKey())){
 						ArrayList<FileDicomKey> keyArray = new ArrayList<FileDicomKey>();
 						keyArray.add(k);
@@ -257,7 +302,8 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 			}
 		}
 		
-		Collections.sort(keyList);
+		//Sort out the lists
+		//Collections.sort(keyList);
 		Set<String> groupKeys = groups.keySet();
 		ArrayList<String> groupList = new ArrayList<String>(groupKeys);
 		Collections.sort(groupList);
@@ -266,14 +312,8 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 			ArrayList<FileDicomKey> key = groups.get(s);			
 			Collections.sort(key);
 			
-			/*FileDicomKey groupNameKey = key.remove(0);
-			keyList.add(groupNameKey);
-			
-			FileDicomTag groupNameTag = hash.get(groupNameKey);
-			tagList.add((String) groupNameTag.getValue(false));
-			String nodeTitle = "(" + groupNameKey.getGroup() + ") " 
-					+ groupNameTag.getValue(false);*/
-			
+			//Add all the elements in the group under one node, but
+			//without a title like in the private keys version
 			String nodeTitle = "Group (" + key.get(0).getGroup() + ")";
 			DefaultMutableTreeNode root = new DefaultMutableTreeNode(nodeTitle);
 			top.add(root);
@@ -298,10 +338,6 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 	}
 	
 	private void checkAllPaths(){
-		/*TreePath[] paths = new TreePath[tree.getRowCount()];
-		for(int i=0;i<tree.getRowCount();i++){
-			paths[i] = tree.getPathForRow(i);
-		}*/
 		TreePath[] root = new TreePath[1];
 		root[0] = tree.getPathForRow(0);
 		checkTree.getSelectionModel().addSelectionPaths(root);
