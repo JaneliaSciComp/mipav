@@ -320,6 +320,8 @@ public class ModelImage extends ModelStorageBase {
 
     /**
      * Anonymize the image by altering the sensitive data of each slice to something generic.
+     * Original version that passes into the new version so that backwards compatibility still
+     * exists.
      * 
      * @see FileInfoDicom#anonymize
      */
@@ -327,6 +329,12 @@ public class ModelImage extends ModelStorageBase {
     	anonymize(list, doRename, false);
     }
     
+    /**
+     * New version of anonymize that allows you to replace the original tag value with a blank
+     * string or zero depending on the data type. To blank out the value, removeValue should be
+     * set to true. 
+     * 
+     */
     public void anonymize(final boolean[] list, final boolean doRename, boolean removeValue) {
         int i;
 
@@ -383,6 +391,14 @@ public class ModelImage extends ModelStorageBase {
         }
     }
     
+    /**
+     * Method to anonymize the tags found in the DICOM supplement 55 that may appear in
+     * sequence tags. A list of sequence tags should be passed in so that you do not have
+     * to figure out which tags are sequences every time.
+     * 
+     * @see FileInfoDicom#anonymizeSequenceTags
+     */
+    
     public void anonymizeSequenceTags(boolean[] list, Vector<FileDicomSQItem> seqs, boolean removeValue){
     	if (getNDims() == 2) { // and if image is a single slice
             ((FileInfoDicom) fileInfo[0]).anonymizeSequenceTags(list, seqs, removeValue); // tell the fileInfo to anonymize itself
@@ -398,6 +414,13 @@ public class ModelImage extends ModelStorageBase {
         }
     }
     
+    /**
+     * Method to remove private tags from the file. No option is given to anonymize the
+     * values. Requires an array of DICOM keys. 
+     * 
+     * @see FileInfoDicom#removePrivateTags
+     */
+    
     public void removePrivateTags(FileDicomKey[] keys){
     	if (getNDims() == 2) { // and if image is a single slice
             ((FileInfoDicom) fileInfo[0]).removePrivateTags(keys); // tell the fileInfo to anonymize itself
@@ -412,7 +435,13 @@ public class ModelImage extends ModelStorageBase {
             }
         }
     }
-    
+    /**
+     * Method to anonymize private tags that may appear in
+     * sequence tags. A list of sequence tags should be passed in so that you do not have
+     * to figure out which tags are sequences every time.
+     * 
+     * @see FileInfoDicom#removePrivateSequenceTags
+     */
     public final void removePrivateSequenceTags(FileDicomKey[] keys, Vector<FileDicomSQItem> seqs){
     	if (getNDims() == 2) { // and if image is a single slice
             ((FileInfoDicom) fileInfo[0]).removePrivateSequenceTags(keys, seqs); // tell the fileInfo to anonymize itself
@@ -428,6 +457,13 @@ public class ModelImage extends ModelStorageBase {
         }
     }
     
+    /**
+     * Method to anonymize public tags that do not appear in the DICOM Supplement 55. 
+     * Like in the other anonymize methods, you may instead choose to replace the value
+     * with a blank string.
+     * 
+     * @see FileInfoDicom#anonymizePublicTags
+     */
     public void anonymizePublicTags(FileDicomKey[] keys, boolean removeValue){
     	if (getNDims() == 2) { // and if image is a single slice
             ((FileInfoDicom) fileInfo[0]).anonymizePublicTags(keys, removeValue); // tell the fileInfo to anonymize itself
@@ -443,6 +479,13 @@ public class ModelImage extends ModelStorageBase {
         }
     }
     
+    /**
+     * Method to anonymize public tags not in the DICOM Supplement 55 that may appear in
+     * sequence tags. A list of sequence tags should be passed in so that you do not have
+     * to figure out which tags are sequences every time.
+     * 
+     * @see FileInfoDicom#anonymizePublicSequenceTags
+     */
     public final void anonymizePublicSequenceTags(FileDicomKey[] keys, Vector<FileDicomSQItem> seqs, boolean removeValue){
     	if (getNDims() == 2) { // and if image is a single slice
             ((FileInfoDicom) fileInfo[0]).anonymizePublicSequenceTags(keys, seqs, removeValue); // tell the fileInfo to anonymize itself

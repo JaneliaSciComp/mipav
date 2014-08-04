@@ -28,9 +28,20 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
-import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+
+/**
+ * The panel class used in anonymize image/directory that displays the private
+ * tags in a tree format along with check boxes so that the organization between
+ * groups is apparent. 
+ * 
+ * For information on the tree classes used, see CheckTreeManager (and the URL 
+ * in that file)
+ * @see CheckTreeManager
+ * @author wangvg
+ *
+ */
 
 public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener {
 
@@ -39,19 +50,44 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 	 */
 	private static final long serialVersionUID = -410753580261870012L;
 	
+	/**
+	 * The checkbox tree version of the tree in the panel. Used
+	 * to actually display the information.
+	 */
 	private CheckTreeManager checkTree;
 	
+	/**
+	 * The tree used to keep track of keys. Used to manipulate 
+	 * the selections. 
+	 */
 	private JTree tree;
 	
+	/**
+	 * The list of private keys in the image
+	 */
 	private ArrayList<FileDicomKey> keyList;
 	
+	/**
+	 * The list of private tags that map to the
+	 * keys in the previous list
+	 */
 	private ArrayList<String> tagList;
 	
+	/**
+	 * The default constructor that occurs in the anonymize directory
+	 * dialog before a profile has been loaded to populate the tree
+	 */
 	public JPanelAnonymizePrivateTags(){
 		super();
 		add(new JLabel("Load profile for private tags"));
 	}
 	
+	/**
+	 * The constructor used in the anonymize image dialog that will 
+	 * populate the tree and assign the layout based on the file info.
+	 * @param img
+	 * @param seqTags
+	 */
 	public JPanelAnonymizePrivateTags(ModelImage img, Vector<FileDicomSQItem> seqTags){
 		super();
 		
@@ -70,7 +106,6 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		JScrollPane treeView = new JScrollPane(tree, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		treeView.setViewportView(tree);
-		//treeView.setPreferredSize(new Dimension(300,200));
 		add(treeView, gbc);
 
 		gbc.gridy = 1;
@@ -79,7 +114,6 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 
 
 		JPanel buttonPanel = new JPanel();
-		//buttonPanel.setBorder(new EmptyBorder(0,0,3,0));
 		JButton checkButton = new JButton("Select all");
 		checkButton.setActionCommand("privateAll");
 		checkButton.setFont(MipavUtil.font12B);
@@ -96,6 +130,8 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 
 		add(buttonPanel, gbc);
 
+		//Make sure the tree is completely expanded and
+		//all selections are checked for private tags
 		for (int i = 0; i < tree.getRowCount(); i++) {
 			tree.expandRow(i);
 		}
@@ -105,11 +141,22 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		
 	}
 	
+	/**
+	 * Method used in the anonymize dialog profile that generates the tree
+	 * structure from key information passed into the class. Required to
+	 * pass in the key string, key name, and whether it was not selected.
+	 * @param keys The list of keys to display
+	 * @param tags The list of tags that map the to keys
+	 * @param selected Which keys were selected
+	 */
 	public void populateFromProfile(ArrayList<FileDicomKey> keys, ArrayList<String> tags, boolean[] selected){
 		
 		if(keys.isEmpty())
 			return;
 		
+		//Build the tree from the input keys
+		//Somewhat similar to the "createPrivateKeyTree" method
+		//so see that for comments
 		keyList = keys;
 		tagList = tags;
 		String prevGroup = "";
@@ -136,6 +183,8 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		}
 		top.add(next);
 		checkTree = new CheckTreeManager(tree);
+		
+		//Build the layout
 		
 		removeAll();
 		setLayout(new GridBagLayout());
@@ -195,110 +244,11 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		return tagList;
 	}
 	
-	/*private void createPrivateKeyTree(ModelImage image){
-		
-		FileInfoDicom info = (FileInfoDicom) image.getFileInfo(0);
-		FileDicomTagTable table = info.getTagTable();
-		Hashtable<FileDicomKey, FileDicomTag> hash = table.getTagList();
-		Set<FileDicomKey> keys = hash.keySet();
-		Hashtable<String, ArrayList<FileDicomKey>> groups = new Hashtable<String, ArrayList<FileDicomKey>>();
-		for(FileDicomKey k : keys){
-			String group = k.getGroup();
-			String last = group.substring(group.length() - 1);
-			int lastNum = Integer.parseInt(last);
-			if(lastNum%2 == 1){
-				if(groups.containsKey(group)){
-					String element = k.getElement();
-					if(element.equals("0010"))//Group name
-						groups.get(group).add(0, k);
-					else 
-						groups.get(group).add(k);
-				}else{
-					System.err.println(group);
-					ArrayList<FileDicomKey> keyList = new ArrayList<FileDicomKey>();
-					keyList.add(k);
-					groups.put(group, keyList);
-				}
-			}
-		}
-		
-		Set<String> groupKeys = groups.keySet();
-	
-		for(String s : groupKeys){
-			ArrayList<FileDicomKey> key = groups.get(s);
-			FileDicomKey groupNameKey = key.remove(0);
-			FileDicomTag groupNameTag = hash.get(groupNameKey);
-			String nodeTitle = "(" + groupNameKey.getGroup() + ") " 
-					+ groupNameTag.getValue(false);
-			//String groupName = groupNameTag.getName();
-			ArrayList<String> elements = new ArrayList<String>();
-			for(FileDicomKey k: key){
-				String subTitle = "(" + k.getElement() + ") ";
-				FileDicomTag tag = hash.get(k);
-				elements.add(subTitle + tag.getName());
-			}
-			addGroup(nodeTitle, elements);
-			
-		}
-		
-		//Have tree, need to display to test it out first. DO ON MONDAY
-	
-	}*/
-	
-	
-	
-	/*private void createPrivateKeyTree(ModelImage image){
-		
-		FileInfoDicom info = (FileInfoDicom) image.getFileInfo(0);
-		FileDicomTagTable table = info.getTagTable();
-		Hashtable<FileDicomKey, FileDicomTag> hash = table.getTagList();
-		Set<FileDicomKey> keys = hash.keySet();
-		Hashtable<String, ArrayList<FileDicomKey>> groups = new Hashtable<String, ArrayList<FileDicomKey>>();
-		for(FileDicomKey k : keys){
-			String group = k.getGroup();
-			String last = group.substring(group.length() - 1);
-			int lastNum = Integer.parseInt(last);
-			if(lastNum%2 == 1){
-				if(groups.containsKey(group)){
-					String element = k.getElement();
-					if(element.equals("0010"))//Group name
-						groups.get(group).add(0, k);
-					else 
-						groups.get(group).add(k);
-				}else{
-					System.err.println(group);
-					ArrayList<FileDicomKey> keyList = new ArrayList<FileDicomKey>();
-					keyList.add(k);
-					groups.put(group, keyList);
-				}
-			}
-		}
-		
-		Set<String> groupKeys = groups.keySet();
-	
-		for(String s : groupKeys){
-			ArrayList<FileDicomKey> key = groups.get(s);
-			FileDicomKey groupNameKey = key.remove(0);
-			FileDicomTag groupNameTag = hash.get(groupNameKey);
-			String nodeTitle = "(" + groupNameKey.getGroup() + ") " 
-					+ groupNameTag.getValue(false);
-			//String groupName = groupNameTag.getName();
-			ArrayList<String> elements = new ArrayList<String>();
-			for(FileDicomKey k: key){
-				String subTitle = "(" + k.getElement() + ") ";
-				FileDicomTag tag = hash.get(k);
-				elements.add(subTitle + tag.getName());
-			}
-			addGroup(nodeTitle, elements);
-			
-		}
-		
-		//Have tree, need to display to test it out first. DO ON MONDAY
-	
-	}*/
-	
-	
-	
+	/**
+	 * Method to retrieve the private keys selected in this
+	 * panel. In none are selected, the method returns null.
+	 * @return
+	 */
 	public FileDicomKey[] getSelectedKeys(){
 		ArrayList<Integer> paths = new ArrayList<Integer>();
 		CheckTreeSelectionModel model = checkTree.getSelectionModel();
@@ -319,6 +269,12 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		return keys;
 	}
 
+	/**
+	 * Alternate method for retrieving private keys that were
+	 * selected. When you already know which private keys are
+	 * in the tree, you only need the booleans to work with.
+	 * @return
+	 */
 	public boolean[] getSelectedKeysBool(){
 		boolean[] selected = new boolean[keyList.size()];
 		CheckTreeSelectionModel model = checkTree.getSelectionModel();
@@ -334,11 +290,19 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		return keyList.isEmpty();
 	}
 
+	/**
+	 * Method used for loading profiles into the panel. Keys
+	 * passed in are compared to the current tree in order
+	 * to select only the ones that are present.
+	 * @param keys
+	 */
 	public void setSelectedKeys(ArrayList<FileDicomKey> keys){
 		ArrayDeque<FileDicomKey> keyStack = new ArrayDeque<FileDicomKey>(keys);
 		ArrayList<Integer> selected = new ArrayList<Integer>();
 
 		//Both lists should be sorted already
+		//Run a sorted comparison to determine which 
+		//keys in the tree need to be selected
 		for(int i=0;i<keyList.size();i++){
 			if(keyStack.isEmpty())
 				break;
@@ -353,16 +317,10 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 				if(!k.getElement().equals("0010"))
 					selected.add(i+1);
 			}
-			/*if(q.equals(k)){
-				keyStack.poll();
-				selected.add(i+1);
-			} else if(k.compareTo(q) > 0){ //This key from the profile does not exist
-				while(k.compareTo(q) > 0){
-					keyStack.poll();
-					q = keyStack.peek();
-				}
-			}*/
+
 		}
+		
+		//Actually select the tree elements
 		TreePath[] selectedPaths = new TreePath[selected.size()];
 		for(int i=0;i<selected.size();i++){
 			selectedPaths[i] = tree.getPathForRow(selected.get(i));
@@ -373,68 +331,27 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		
 	}
 	
+	/**
+	 * Selects all the paths in the tree. Since the tree
+	 * automatically selects all children if the root is
+	 * selected, this just requires you to select the
+	 * root node.
+	 */
 	private void checkAllPaths(){
-		/*TreePath[] paths = new TreePath[tree.getRowCount()];
-		for(int i=0;i<tree.getRowCount();i++){
-			paths[i] = tree.getPathForRow(i);
-		}*/
+
 		TreePath[] root = new TreePath[1];
 		root[0] = tree.getPathForRow(0);
 		checkTree.getSelectionModel().addSelectionPaths(root);
 		
 	}
-	/*private void createPrivateKeyTree(ModelImage image){
 		
-		FileInfoDicom info = (FileInfoDicom) image.getFileInfo(0);
-		FileDicomTagTable table = info.getTagTable();
-		Hashtable<FileDicomKey, FileDicomTag> hash = table.getTagList();
-		Set<FileDicomKey> keys = hash.keySet();
-		Hashtable<String, ArrayList<FileDicomKey>> groups = new Hashtable<String, ArrayList<FileDicomKey>>();
-		for(FileDicomKey k : keys){
-			String group = k.getGroup();
-			String last = group.substring(group.length() - 1);
-			int lastNum = Integer.parseInt(last);
-			if(lastNum%2 == 1){
-				if(groups.containsKey(group)){
-					String element = k.getElement();
-					if(element.equals("0010"))//Group name
-						groups.get(group).add(0, k);
-					else 
-						groups.get(group).add(k);
-				}else{
-					System.err.println(group);
-					ArrayList<FileDicomKey> keyList = new ArrayList<FileDicomKey>();
-					keyList.add(k);
-					groups.put(group, keyList);
-				}
-			}
-		}
-		
-		Set<String> groupKeys = groups.keySet();
-	
-		for(String s : groupKeys){
-			ArrayList<FileDicomKey> key = groups.get(s);
-			FileDicomKey groupNameKey = key.remove(0);
-			FileDicomTag groupNameTag = hash.get(groupNameKey);
-			String nodeTitle = "(" + groupNameKey.getGroup() + ") " 
-					+ groupNameTag.getValue(false);
-			//String groupName = groupNameTag.getName();
-			ArrayList<String> elements = new ArrayList<String>();
-			for(FileDicomKey k: key){
-				String subTitle = "(" + k.getElement() + ") ";
-				FileDicomTag tag = hash.get(k);
-				elements.add(subTitle + tag.getName());
-			}
-			addGroup(nodeTitle, elements);
-			
-		}
-		
-		//Have tree, need to display to test it out first. DO ON MONDAY
-	
-	}*/
-	
-	
-	
+	/**
+	 * Method to populate the tree structure from the input image 
+	 * and provided sequence tags. 
+	 * @param image
+	 * @param seqTags
+	 * @return
+	 */
 	private JTree createPrivateKeyTree(ModelImage image, Vector<FileDicomSQItem> seqTags){
 		
 		DefaultMutableTreeNode top = new DefaultMutableTreeNode("Private keys");
@@ -443,7 +360,10 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		FileInfoDicom info = (FileInfoDicom) image.getFileInfo(0);
 		FileDicomTagTable table = info.getTagTable();
 		Hashtable<FileDicomKey, FileDicomTag> hash = table.getTagList();
+		//Place all the keys into a hashset
 		Set<FileDicomKey> keys = new LinkedHashSet<FileDicomKey>( hash.keySet());
+		//Add all the tags within a sequence into the hash set (so that any
+		//keys already in the private list aren't added)
 		for(FileDicomSQItem s : seqTags){
 			keys.addAll(s.getTagList().keySet());
 		}
@@ -451,21 +371,24 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		keyList = new ArrayList<FileDicomKey>();
 		tagList = new ArrayList<String>();
 		
+		//Hash to separate out groups and elements out
+		//Hash keys are the DICOM keys, while the values are lists
+		//containing all the keys in that group
 		Hashtable<String, ArrayList<FileDicomKey>> groups = new Hashtable<String, ArrayList<FileDicomKey>>();
 		for(FileDicomKey k : keys){
 			String group = k.getGroup();
 			int groupNum = k.getGroupNumber();
-			if(groupNum%2 == 1){
+			if(groupNum%2 == 1){//Private tags end in an odd number
 				if(groups.containsKey(group)){
 					String element = k.getElement();
-					if(element.equals("0010"))//Group name
+					if(element.equals("0010"))//Group name, add to the top of the list
 						groups.get(group).add(0, k);
-					else{
+					else{//Not group name, add to the end of the list
 						ArrayList<FileDicomKey> keyArray = groups.get(group);
 						if(!keyArray.contains(k))
 							keyArray.add(k);
 					}	
-				}else{
+				}else{//This group is not in the hash, make a new list
 					ArrayList<FileDicomKey> keyArray = new ArrayList<FileDicomKey>();
 					keyArray.add(k);
 					groups.put(group, keyArray);
@@ -473,28 +396,28 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 			}
 		}
 		
-		Collections.sort(keyList);
+		//Sort the lists so that they are displayed properly
+		//Collections.sort(keyList); //why is this here? sorting an empty list.
 		Set<String> groupKeys = groups.keySet();
 		ArrayList<String> groupList = new ArrayList<String>(groupKeys);
 		Collections.sort(groupList);
-		//List<String> groupList = asSortedList(groupKeys);
 	
 		for(String s : groupList){
 			ArrayList<FileDicomKey> key = groups.get(s);
-			FileDicomKey groupNameKey = key.remove(0);
+			
+			//First element is group name, display at the root
+			//of the group
+			FileDicomKey groupNameKey = key.remove(0); 
 			keyList.add(groupNameKey);
 			Collections.sort(key);
 			FileDicomTag groupNameTag = hash.get(groupNameKey);
 			tagList.add(groupNameTag.getValue(false).toString());
-			//System.out.println(groupNameKey.toString());
 			String nodeTitle = "(" + groupNameKey.getGroup() + ") " 
 					+ groupNameTag.getValue(false);
-			//String groupName = groupNameTag.getName();
 			DefaultMutableTreeNode root = new DefaultMutableTreeNode(nodeTitle);
 			top.add(root);
-			for(FileDicomKey k: key){
+			for(FileDicomKey k: key){ //Add rest of the elements to the tree
 				keyList.add(k);
-				//System.err.println(k.toString());
 				String subTitle = "(" + k.getElement() + ") ";
 				FileDicomTag tag = hash.get(k);
 				tagList.add(tag.getName());
@@ -503,8 +426,6 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 			}
 			
 		}
-		
-		//Have tree, need to display to test it out first. DO ON MONDAY
 		
 		return keyTree;
 	}
