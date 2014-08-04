@@ -2608,12 +2608,12 @@ public class LatticeModel {
 									overlap2.setC(x, y, z, 0, 1);
 									overlap2.setC(x, y, z, 1, 0);
 									overlap2.setC(x, y, z, 2, 0);
-									overlap2.setC(x, y, z, 3, diff - 1);
+									overlap2.setC(x, y, z, 3, diff - 1.5);
 								}
 								else if ( diff < .5)
 								{
 									overlap2.setC(x, y, z, 0, 1);
-									overlap2.setC(x, y, z, 1, 1 - diff);
+									overlap2.setC(x, y, z, 1, .5 - diff);
 									overlap2.setC(x, y, z, 2, 0);
 									overlap2.setC(x, y, z, 3, 0);
 								}
@@ -2646,6 +2646,7 @@ public class LatticeModel {
 			overlap2.calcMinMax();
 			float maxR = (float) overlap2.getMaxR();
 			float maxB = (float) overlap2.getMaxB();
+//			System.err.println( maxR + " " + maxB );
 			for ( int z = 0; z < resultExtents[2]; z++ )
 			{
 				for ( int x = 0; x < resultExtents[0]; x++ )
