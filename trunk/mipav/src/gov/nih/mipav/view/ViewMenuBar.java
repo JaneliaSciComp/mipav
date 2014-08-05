@@ -229,6 +229,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Histogram slice matching", "histSliceMatch", 0, null, false),
                         menuBuilder.buildMenuItem("Histogram summary", "HistoSummary", 0, null, false),}),
                 menuBuilder.makeMenu("Hough transform", false, new JMenuItem[] {
+                		menuBuilder.buildMenuItem("Cardioid detection", "HoughCardioid", 0, null, false),
                         menuBuilder.buildMenuItem("Circle detection", "HoughCircle", 0, null, false),
                         menuBuilder.buildMenuItem("Ellipse detection", "HoughEllipse", 0, null, false),
                         menuBuilder.buildMenuItem("Hyperbola detection", "HoughHyperbola", 0, null, false),
