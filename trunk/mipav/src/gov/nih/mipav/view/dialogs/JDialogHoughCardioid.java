@@ -293,7 +293,7 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
         theta0Label = new JLabel("Cusp angle (0 - 359.99) ");
         theta0Label.setForeground(Color.black);
         theta0Label.setFont(serif12);
-        theta0Label.setEnabled(true);
+        theta0Label.setEnabled(false);
         gbc6.gridx = 0;
         gbc6.gridy = 3;
         paramPanel.add(theta0Label, gbc6);
@@ -301,7 +301,7 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
         theta0Text = new JTextField(10);
         theta0Text.setText(String.valueOf(180.0));
         theta0Text.setFont(serif12);
-        theta0Text.setEnabled(true);
+        theta0Text.setEnabled(false);
         gbc6.gridx = 1;
         paramPanel.add(theta0Text, gbc6);
         
