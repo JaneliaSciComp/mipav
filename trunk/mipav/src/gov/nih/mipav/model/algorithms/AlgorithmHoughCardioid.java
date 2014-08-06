@@ -20,8 +20,8 @@ import java.io.*;
  *  The default size for rad is min(512, max(image.getExtents()[0], image.getExtents()[1]).
  *  The default number of cardioids is 1. The program generates a Hough transform of the source image using the basic
  *  equation sqrt((x - x0)**2 + (y - y0)**2) = rad*(1 + cos(theta)).
- *  x = (rad/2)*(1 + 2*cos(theta) + cos(2*theta)))
- *  y = (rad/2)*(2*sin(theta) + sin(2*theta))
+ *  x = x0 + (rad/2)*(1 + 2*cos(theta) + cos(2*theta)))
+ *  y = y0 + (rad/2)*(2*sin(theta) + sin(2*theta))
  *  The program finds the cardioids containing the largest number of points.
  *  The program produces a dialog which allows the user to select which cardioids should be drawn.
  *  
@@ -127,7 +127,7 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
 
         int sourceSlice;
 
-        int i, j, k, m, n, c;
+        int i, j, k, m, c;
         int index, indexDest;
         
         int houghSlice;
