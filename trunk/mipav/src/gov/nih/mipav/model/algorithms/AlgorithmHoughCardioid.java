@@ -18,6 +18,10 @@ import java.io.*;
  *  min(512, image.getExtents()[0]).  The default size for y0 is min(512, image.getExtents()[1]).
  *  The default size for rad is min(512, max(image.getExtents()[0], image.getExtents()[1]).
  *  The default number of cardioids is 1. The program generates a Hough transform of the source image using the basic
+ *  In general:
+ *  sqrt((x - x0)**2 + (y - y0)**2) = rad*(1 - cos(theta + theta0))
+ *  x = x0 + rad*cos(theta)*(1 - cos(theta + theta0))
+ *  y = y0 + rad*sin(theta)*(1 - cos(theta + theta0))
  *  For cusp on the left:
  *  sqrt((x - x0)**2 + (y - y0)**2) = rad*(1 + cos(theta)).
  *  x = x0 + (rad/2)*(1 + 2*cos(theta) + cos(2*theta))) = x0 + rad*cos(theta)*(1 + cos(theta))
@@ -86,13 +90,7 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
     
     private ModelImage testImage;
     
-    private boolean leftSelected;
-    
-    private boolean rightSelected;
-    
-    private boolean topSelected;
-    
-    private boolean bottomSelected;
+    private double theta0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -115,14 +113,11 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
      * @param  rad   number of dimension 3 bins in Hough transform space
      * @param  numCardioids number of cardioids to be found
      */
-    public AlgorithmHoughCardioid(ModelImage destImg, ModelImage srcImg, boolean leftSelected, boolean rightSelected,
-    		                      boolean topSelected, boolean bottomSelected, int x0, int y0, 
+    public AlgorithmHoughCardioid(ModelImage destImg, ModelImage srcImg, double theta0,
+    		                      int x0, int y0, 
     		                      int rad, int numCardioids) {
         super(destImg, srcImg);
-        this.leftSelected = leftSelected;
-        this.rightSelected = rightSelected;
-        this.topSelected = topSelected;
-        this.bottomSelected = bottomSelected;
+        this.theta0 = theta0;
         this.x0 = x0;
         this.y0 = y0;
         this.rad = rad;
@@ -176,14 +171,13 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
         double y0Array[];
         double radArray[];
         int countArray[];
-        byte typeArray[];
         boolean selectedCardioid[];
         JDialogHoughCardioidChoice choice;
         byte value = 0;
         int maxCardioidPoints;
         double maxRad;
         int x0y0;
-        int x0y0rad;
+        double theta1 = 7.0 * Math.PI/4.0;
         //double xSum;
         //double xSum2;
         //double xSum3;
@@ -192,11 +186,6 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
         //double ySum3;
         //int radCount;
         double num;
-        int type;
-        final int left = 0;
-        final int right = 1;
-        final int top = 2;
-        final int bottom = 3;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -215,8 +204,7 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
         maxRad = Math.max(xDimSource - 1, yDimSource - 1)/2.0;
 
         x0y0 = x0 * y0;
-        x0y0rad = x0y0 * rad;
-        houghSlice = 4 * x0y0rad;
+        houghSlice = x0y0 * rad;
         srcBuffer = new byte[sourceSlice];
 
         try {
@@ -255,11 +243,13 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
             //xCenter = (xDimSource-1)/2.0;
             //yCenter = (yDimSource-1)/4.0;
             // bottom
-            xCenter = (xDimSource-1)/2.0;
+            //xCenter = (xDimSource-1)/2.0;
+            //yCenter = 3*(yDimSource-1)/4.0;
+            xCenter = 3*(xDimSource-1)/4.0;
             yCenter = 3*(yDimSource-1)/4.0;
-            radius = 20.0;
-            radius2 = 30.0;
-            radius3 = 40.0;
+            radius = 40.0;
+            radius2 = 60.0;
+            radius3 = 80.0;
             //xSum = 0.0;
             //ySum = 0.0;
             //xSum2 = 0.0;
@@ -316,7 +306,7 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
                 index = x + y * xDimSource;
                 srcBuffer[index] = 1;*/
                 // bottom
-                theta = i * Math.PI/10.0;
+                /*theta = i * Math.PI/10.0;
                 x = (int)Math.round(xCenter + radius * (2.0 * Math.cos(theta) - Math.sin(2.0*theta)));
                 y = (int)Math.round(yCenter + radius * (-1.0 + 2.0 * Math.sin(theta) + Math.cos(2.0*theta)));
                 index = x + y * xDimSource;
@@ -327,6 +317,19 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
                 srcBuffer[index] = 1;
                 x = (int)Math.round(xCenter + radius3 * (2.0 * Math.cos(theta) - Math.sin(2.0*theta)));
                 y = (int)Math.round(yCenter + radius3 * (-1.0 + 2.0 * Math.sin(theta) + Math.cos(2.0*theta)));
+                index = x + y * xDimSource;
+                srcBuffer[index] = 1;*/
+                theta = i * Math.PI/10.0;
+                x = (int)Math.round(xCenter + radius * Math.cos(theta)*(1 - Math.cos(theta+ theta1)));
+                y = (int)Math.round(yCenter + radius * Math.sin(theta)*(1 - Math.cos(theta+ theta1)));
+                index = x + y * xDimSource;
+                srcBuffer[index] = 1;
+                x = (int)Math.round(xCenter + radius2 * Math.cos(theta)*(1 - Math.cos(theta+ theta1)));
+                y = (int)Math.round(yCenter + radius2 * Math.sin(theta)*(1 - Math.cos(theta+ theta1)));
+                index = x + y * xDimSource;
+                srcBuffer[index] = 1;
+                x = (int)Math.round(xCenter + radius3 * Math.cos(theta)*(1 - Math.cos(theta+ theta1)));
+                y = (int)Math.round(yCenter + radius3 * Math.sin(theta)*(1 - Math.cos(theta+ theta1)));
                 index = x + y * xDimSource;
                 srcBuffer[index] = 1;
             }
@@ -410,53 +413,40 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
         x0Array = new double[numCardioids];
         y0Array = new double[numCardioids];
         radArray = new double[numCardioids];
-        typeArray = new byte[numCardioids];
         countArray = new int[numCardioids];
         numCardioidsFound = 0;
         
         for (c = 0; c < numCardioids; c++) {
             // Calculate the Hough transform
             fireProgressStateChanged("Calculating Hough cardioid " + String.valueOf(c+1));
-            for (type = 0; type <= 3; type++) {
-            	if (((type == left) && leftSelected) || ((type == right) && rightSelected) ||
-            	    ((type == top) && topSelected) || ((type == bottom) && bottomSelected)) {
-		            for (y = 0; y < yDimSource; y++) {
-		                offset = y * xDimSource;
-		                for (x = 0; x < xDimSource; x++) {
-		                    index = offset + x;
-		                    if (srcBuffer[index] != 0) {
-		                        for (j = 0; j < x0; j++) {
-		                            for (k = 0; k < y0; k++) {
-		                            	theta = Math.atan2(y - d2Array[k], x - d1Array[j]);
-		                                num = Math.sqrt((x - d1Array[j])*(x - d1Array[j]) + (y - d2Array[k])*(y - d2Array[k]));
-		                            	if ((type == left) && (theta != Math.PI) && (theta != -Math.PI)) {
-		                            	    d3 = num/(1.0 + Math.cos(theta));	
-		                            	}
-		                            	else if ((type == right) && (theta != 0.0)) {
-		                            	    d3 = num/(1.0 - Math.cos(theta));	
-		                            	}
-		                            	else if ((type == top) & (theta != -Math.PI/2.0)) {
-		                            		d3 = num/(1.0 + Math.sin(theta));
-		                            	}
-		                            	else if ((type == bottom) & (theta != Math.PI/2.0)) {
-		                            		d3 = num/(1.0 - Math.sin(theta));
-		                            	}
-		                            	else {
-		                            		d3 = Double.MAX_VALUE;
-		                            	}
-		                                if (d3 <= maxRad) {
-		                                    m = (int)Math.round(d3*d3Scale);
-		                                    indexDest = j + k * x0 + m * x0y0 + type * x0y0rad;
-		                                    houghBuffer[indexDest]++;
-		                                    radBuffer[indexDest] += d3;
-		                                }
-		                            } // for (k = 0; k < y0; k++)
-		                        } // for (j = 0; j < x0; j++)
-		                    } // if (srcBuffer[index] != 0)
-		                } // for (x = 0; x < xDimSource; x++)
-		            } // for (y = 0; y < yDimSource; y++)
-            	} // if (((type == left) && leftSelected) || ((type == right) && rightSelected) ||
-            } // for (type = 0; type <= 3; type++)
+           
+            for (y = 0; y < yDimSource; y++) {
+                offset = y * xDimSource;
+                for (x = 0; x < xDimSource; x++) {
+                    index = offset + x;
+                    if (srcBuffer[index] != 0) {
+                        for (j = 0; j < x0; j++) {
+                            for (k = 0; k < y0; k++) {
+                            	theta = Math.atan2(y - d2Array[k], x - d1Array[j]);
+                                num = Math.sqrt((x - d1Array[j])*(x - d1Array[j]) + (y - d2Array[k])*(y - d2Array[k]));
+                            	 if (theta != -theta0) {
+                            	    d3 = num/(1.0 - Math.cos(theta + theta0));	
+                            	}
+                            	else {
+                            		d3 = Double.MAX_VALUE;
+                            	}
+                                if (d3 <= maxRad) {
+                                    m = (int)Math.round(d3*d3Scale);
+                                    indexDest = j + k * x0 + m * x0y0;
+                                    houghBuffer[indexDest]++;
+                                    radBuffer[indexDest] += d3;
+                                }
+                            } // for (k = 0; k < y0; k++)
+                        } // for (j = 0; j < x0; j++)
+                    } // if (srcBuffer[index] != 0)
+                } // for (x = 0; x < xDimSource; x++)
+            } // for (y = 0; y < yDimSource; y++)
+            	
             
             
            
@@ -482,7 +472,6 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
             y0Array[c] = (largestIndex % x0y0)/x0;
             y0Array[c] = y0Array[c] * ((double)(yDimSource - 1))/((double)(y0 - 1));
             radArray[c] = radBuffer[largestIndex]/largestValue;
-            typeArray[c] = (byte)(largestIndex/x0y0rad);
             countArray[c] = largestValue;
             
             if (c < numCardioids - 1) {
@@ -493,47 +482,35 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
                 }
                 // zero all points in the source slice that contributed to this cardioid
                 fireProgressStateChanged("Zeroing source cardioid " + String.valueOf(c+1));
-                for (type = 0; type <= 3; type++) {
-                	if (((type == left) && leftSelected) || ((type == right) && rightSelected) ||
-                    	    ((type == top) && topSelected) || ((type == bottom) && bottomSelected)) {
-		                for (y = 0; y < yDimSource; y++) {
-		                    offset = y * xDimSource;
-		                    for (x = 0; x < xDimSource; x++) {
-		                        index = offset + x;
-		                        if (srcBuffer[index] != 0) {
-		                            for (j = 0; j < x0; j++) {
-		                                for (k = 0; k < y0; k++) {
-		                                	theta = Math.atan2(y - d2Array[k], x - d1Array[j]);
-		                                    num = Math.sqrt((x - d1Array[j])*(x - d1Array[j]) + (y - d2Array[k])*(y - d2Array[k]));
-		                                    if ((type == left) && (theta != Math.PI) && (theta != -Math.PI)) {
-		                                	    d3 = num/(1.0 + Math.cos(theta));	
-		                                	}
-		                                    else if ((type == right) && (theta != 0.0)) {
-			                            	    d3 = num/(1.0 - Math.cos(theta));	
-			                            	}
-		                                    else if ((type == top) & (theta != -Math.PI/2.0)) {
-			                            		d3 = num/(1.0 + Math.sin(theta));
-			                            	}
-		                                    else if ((type == bottom) & (theta != Math.PI/2.0)) {
-			                            		d3 = num/(1.0 - Math.sin(theta));
-			                            	}
-		                                	else {
-		                                		d3 = Double.MAX_VALUE;
-		                                	}
-		                                    if (d3 <= maxRad) {
-		                                        m = (int)Math.round(d3*d3Scale);
-		                                        indexDest = j + k * x0 + m * x0y0 + type * x0y0rad;
-		                                        if (indexDest == largestIndex) {
-		                                            srcBuffer[index] = 0;
-		                                        }
-		                                    }
-		                                } // for (k = 0; k < y0; k++)
-		                            } // for (j = 0; j < x0; j++)
-		                        } // if (srcBuffer[index] != 0)
-		                    } // for (x = 0; x < xDimSource; x++)
-		                } // for (y = 0; y < yDimSource; y++)
-                	} // if (((type == left) && leftSelected) || ((type == right) && rightSelected) ||
-                } // for (type = 0; type <= 3; type++)
+               
+	                for (y = 0; y < yDimSource; y++) {
+	                    offset = y * xDimSource;
+	                    for (x = 0; x < xDimSource; x++) {
+	                        index = offset + x;
+	                        if (srcBuffer[index] != 0) {
+	                            for (j = 0; j < x0; j++) {
+	                                for (k = 0; k < y0; k++) {
+	                                	theta = Math.atan2(y - d2Array[k], x - d1Array[j]);
+	                                    num = Math.sqrt((x - d1Array[j])*(x - d1Array[j]) + (y - d2Array[k])*(y - d2Array[k]));
+	                                    if (theta != -theta0) {
+		                            	    d3 = num/(1.0 - Math.cos(theta + theta0));	
+		                            	}
+	                                	else {
+	                                		d3 = Double.MAX_VALUE;
+	                                	}
+	                                    if (d3 <= maxRad) {
+	                                        m = (int)Math.round(d3*d3Scale);
+	                                        indexDest = j + k * x0 + m * x0y0;
+	                                        if (indexDest == largestIndex) {
+	                                            srcBuffer[index] = 0;
+	                                        }
+	                                    }
+	                                } // for (k = 0; k < y0; k++)
+	                            } // for (j = 0; j < x0; j++)
+	                        } // if (srcBuffer[index] != 0)
+	                    } // for (x = 0; x < xDimSource; x++)
+	                } // for (y = 0; y < yDimSource; y++)
+                	
             } // if (c < numCardioids - 1)
         } // for (c = 0; c < numCardioids; c++)
         
@@ -555,7 +532,7 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
         selectedCardioid = new boolean[numCardioidsFound];
         
         choice = new JDialogHoughCardioidChoice(ViewUserInterface.getReference().getMainFrame(), x0Array,
-                 xDimSource, y0Array, yDimSource, radArray, maxRad, typeArray, countArray, selectedCardioid);
+                 xDimSource, y0Array, yDimSource, radArray, maxRad, countArray, selectedCardioid);
         
         if (!choice.okayPressed() ) {
             setCompleted(false);
@@ -567,30 +544,8 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
             if (selectedCardioid[i]) {
                 for (j = 0; j < maxCardioidPoints; j++) {
                     theta = j * 2.0 * Math.PI/maxCardioidPoints;
-                    if (typeArray[i] == left) {
-	                    x = (int)Math.round(x0Array[i] + (radArray[i]/2.0)*( 1.0 + 2.0*Math.cos(theta) + 
-	                    		Math.cos(2.0*theta)));
-	                    y = (int)Math.round(y0Array[i] + (radArray[i]/2.0)*(2.0*Math.sin(theta) +
-	                    		   Math.sin(2.0*theta)));
-                    }
-                    else if (typeArray[i] == right){ 
-                    	 x = (int)Math.round(x0Array[i] + (radArray[i]/2.0)*( -1.0 + 2.0*Math.cos(theta) - 
- 	                    		Math.cos(2.0*theta)));
- 	                     y = (int)Math.round(y0Array[i] + (radArray[i]/2.0)*(2.0*Math.sin(theta) -
- 	                    		   Math.sin(2.0*theta)));	
-                    }
-                    else if (typeArray[i] == top){
-                    	x = (int)Math.round(x0Array[i] + (radArray[i]/2.0)*(2.0*Math.cos(theta) + 
- 	                    		Math.sin(2.0*theta)));
- 	                     y = (int)Math.round(y0Array[i] + (radArray[i]/2.0)*(1.0 + 2.0*Math.sin(theta) -
- 	                    		   Math.cos(2.0*theta)));		
-                    }
-                    else { // bottom
-                    	x = (int)Math.round(x0Array[i] + (radArray[i]/2.0)*(2.0*Math.cos(theta) - 
- 	                    		Math.sin(2.0*theta)));
- 	                     y = (int)Math.round(y0Array[i] + (radArray[i]/2.0)*(-1.0 + 2.0*Math.sin(theta) +
- 	                    		   Math.cos(2.0*theta)));		
-                    }
+                    x = (int)Math.round(x0Array[i] + radArray[i] * Math.cos(theta)*(1 - Math.cos(theta + theta0)));
+                    y = (int)Math.round(y0Array[i] + radArray[i] * Math.sin(theta)*(1 - Math.cos(theta + theta0)));
                     indexDest = x + y * xDimSource;
                     srcBuffer[indexDest] = value;
                 }
