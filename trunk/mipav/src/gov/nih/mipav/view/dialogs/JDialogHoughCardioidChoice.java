@@ -35,8 +35,6 @@ public class JDialogHoughCardioidChoice extends JDialogBase {
     
     private double maxRad;
     
-    private byte typeArray[];
-    
     private int countArray[];
     
     private boolean selectedCardioid[];
@@ -60,12 +58,11 @@ public class JDialogHoughCardioidChoice extends JDialogBase {
      * @param  yDimSource
      * @param  radArray
      * @param  maxRad
-     * @param  typeArray
      * @param  countArray
      * @param  selectedCardioid
      */
     public JDialogHoughCardioidChoice(Frame theParentFrame, double x0Array[], int xDimSource, double y0Array[], int yDimSource,
-                                  double radArray[], double maxRad, byte typeArray[], int countArray[],
+                                  double radArray[], double maxRad, int countArray[],
                                   boolean selectedCardioid[]) {
         super(theParentFrame, true);
         this.x0Array = x0Array;
@@ -74,7 +71,6 @@ public class JDialogHoughCardioidChoice extends JDialogBase {
         this.yDimSource = yDimSource;
         this.radArray = radArray;
         this.maxRad = maxRad;
-        this.typeArray = typeArray;
         this.countArray = countArray;
         this.selectedCardioid = selectedCardioid;
         numCardioidsFound = selectedCardioid.length;
@@ -150,31 +146,27 @@ public class JDialogHoughCardioidChoice extends JDialogBase {
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(0, 20, 0, 0);
         
-        JLabel typeLabel = new JLabel("Cusp position");
-        typeLabel.setFont(serif12);
-        createPanel.add(typeLabel,gbc);
-        
-        gbc.gridx = 1;
+        gbc.gridx = 0;
         JLabel x0Label = new JLabel("x0(0-"+ String.valueOf(xDimSource-1) + ")");
         x0Label.setFont(serif12);
         createPanel.add(x0Label, gbc);
         
-        gbc.gridx = 2;
+        gbc.gridx = 1;
         JLabel y0Label = new JLabel("y0(0-" + String.valueOf(yDimSource-1) + ")");
         y0Label.setFont(serif12);
         createPanel.add(y0Label, gbc);
         
-        gbc.gridx = 3;
+        gbc.gridx = 2;
         JLabel radLabel = new JLabel("radius(0 - " + String.valueOf(maxRad) + ")");
         radLabel.setFont(serif12);
         createPanel.add(radLabel, gbc);
         
-        gbc.gridx = 4;
+        gbc.gridx = 3;
         JLabel countLabel = new JLabel("Points counted");
         countLabel.setFont(serif12);
         createPanel.add(countLabel, gbc);
         
-        gbc.gridx = 5;
+        gbc.gridx = 4;
         JLabel selectLabel = new JLabel("Select cardioids");
         selectLabel.setFont(serif12);
         createPanel.add(selectLabel, gbc);
@@ -182,42 +174,26 @@ public class JDialogHoughCardioidChoice extends JDialogBase {
         for (i = 0; i < numCardioidsFound; i++) {
             gbc.gridx = 0;
             gbc.gridy++;
-            if (typeArray[i] == 0) {
-            	typeLabelArray[i] = new JLabel("LEFT");
-            }
-            else if (typeArray[i] == 1) {
-            	typeLabelArray[i] = new JLabel("RIGHT");
-            }
-            else if (typeArray[i] == 2) {
-            	typeLabelArray[i] = new JLabel("TOP");
-            }
-            else {
-            	typeLabelArray[i] = new JLabel("BOTTOM");
-            }
-            typeLabelArray[i].setFont(serif12);
-            createPanel.add(typeLabelArray[i],gbc);
-            
-            gbc.gridx = 1;
             x0LabelArray[i] = new JLabel(df.format(x0Array[i]));
             x0LabelArray[i].setFont(serif12);
             createPanel.add(x0LabelArray[i], gbc);
             
-            gbc.gridx = 2;
+            gbc.gridx = 1;
             y0LabelArray[i] = new JLabel(df.format(y0Array[i]));
             y0LabelArray[i].setFont(serif12);
             createPanel.add(y0LabelArray[i], gbc);
             
-            gbc.gridx = 3;
+            gbc.gridx = 2;
             radLabelArray[i] = new JLabel(df.format(radArray[i]));
             radLabelArray[i].setFont(serif12);
             createPanel.add(radLabelArray[i], gbc);
             
-            gbc.gridx = 4;
+            gbc.gridx = 3;
             countLabelArray[i] = new JLabel(String.valueOf(countArray[i]));
             countLabelArray[i].setFont(serif12);
             createPanel.add(countLabelArray[i], gbc);
             
-            gbc.gridx = 5;
+            gbc.gridx = 4;
             selectedArray[i] = new JCheckBox("");
             selectedArray[i].setSelected(false);
             selectedArray[i].setFont(serif12);
