@@ -46,8 +46,8 @@ import java.io.*;
  *  j * (xDim - 1)/(x0 - 1), with j = 0 to x0 - 1.  Calculate the second dimension value d2 = k * (yDim - 1)/(y0 - 1),
  *  with k = 0 to y0 - 1. 
  *  Calculate theta = atan2(y - d2, x - d1).
- *  Calculate d3 = sqrt((x - d1)**2 + (y - d2)**2)/(1 + cos(theta)) if theta != PI and theta != -PI for type = left.
- *  Don't calculate d3 if theta = PI or theta = -PI for type = left.
+ *  Calculate d3 = sqrt((x - d1)**2 + (y - d2)**2)/(1 - cos(theta + theta0)) if theta != -theta0
+ *  Don't calculate d3 if theta = -theta0.
  *  d3 goes from 0 to maxRad = max(xDim-1, yDim-1)/2.0.  s3 is the dimension 3 scaling factor.
  *  s3 * (rad - 1) = maxRad.
  *  s3 = maxRad/(rad - 1)
