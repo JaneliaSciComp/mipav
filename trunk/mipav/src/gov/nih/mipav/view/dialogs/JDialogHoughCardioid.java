@@ -266,7 +266,7 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
         mainLabel.setEnabled(true);
         paramPanel.add(mainLabel, gbc6);
         
-        theta0Label = new JLabel("Cusp angular position theta0");
+        theta0Label = new JLabel("Cusp angular position theta0 (right = 0.0 top = 90.0)");
         theta0Label.setForeground(Color.black);
         theta0Label.setFont(serif12);
         theta0Label.setEnabled(true);
@@ -362,6 +362,10 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
             return false;
         } else {
             theta0 = (Math.PI/180.0)*Double.valueOf(theta0Text.getText()).doubleValue();
+            // Change to range -PI to PI
+            if (theta0 > Math.PI) {
+            	theta0 = theta0 - 2.0 * Math.PI;
+            }
         }
 
 
