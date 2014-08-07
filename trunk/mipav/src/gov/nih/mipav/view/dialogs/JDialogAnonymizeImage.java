@@ -138,6 +138,19 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
         mainPanel.add(boxPanel, gbc);
         
         gbc.gridy = 2;
+        
+        JPanel presetButtonPanel = new JPanel();
+        presetButtonPanel.setForeground(Color.black);
+        
+        JButton presetButton = new JButton("Anonymize from presets");
+        //presetButton.setPreferredSize(new Dimension(150, 35));
+        presetButton.setActionCommand("preset");
+        presetButton.setFont(serif12B);
+        presetButton.addActionListener(this);
+        presetButtonPanel.add(presetButton);
+        mainPanel.add(presetButtonPanel, gbc);
+        
+        gbc.gridy = 3;
         mainPanel.add(getOKCancelPanel(), gbc);
         
         getContentPane().add(mainPanel, BorderLayout.CENTER);
@@ -237,6 +250,8 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
             }
             if(doSave == JOptionPane.YES_OPTION)
             	saveProfile(str);
+        } else if(command.equals("preset")){
+        	new JDialogAnonymizePresets(this, true, image);
         }
         else {
             super.actionPerformed(event);
@@ -535,4 +550,5 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
     protected void doPostAlgorithmActions() {
     	//AlgorithmParameters.storeImageInRunner(anonImage);
     }
+    
 }
