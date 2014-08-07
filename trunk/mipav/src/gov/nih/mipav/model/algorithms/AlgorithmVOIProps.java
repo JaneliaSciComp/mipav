@@ -858,9 +858,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             } else if ( processType == PROCESS_PER_CONTOUR ) {
 
                 Vector<VOIBase> contours = calcSelectedVOI.getCurves();
-                int orientation = contours.get(0).getPlane();
                 ContourStats[] stats = new ContourStats[contours.size()];
                 for (int q = 0; q < contours.size(); q++) {
+                	int orientation = contours.get(q).getPlane();
                     if (srcImage.isColorImage()) {
                         stats[q] = calcStatsPerContourRGB( fileInfo, contours.elementAt(q), orientation,
                                 unit2DStr, unit3DStr, ignoreMinR, ignoreMaxR, 
@@ -1980,7 +1980,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     statsList[ indexOf( areaDescription ) ] ||
                     statsList[ indexOf( circularityDescription)] ||
                     statsList[ indexOf( solidityDescription)])
-            {    
+            { 
             	if (orientation == VOIBase.ZPLANE) {
                     stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
                     stats.volume = stats.area * fileInfo.getResolutions()[2]; 
