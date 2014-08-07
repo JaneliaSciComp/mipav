@@ -8,220 +8,222 @@ import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.Parameter;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.ModelImage;
-
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 
+import java.awt.Color;
+import java.awt.ComponentOrientation;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Frame;
-import java.awt.LayoutManager;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import javax.swing.border.TitledBorder;
 
 
 /**
  * The dialog for the calculation of Tre methods. This dialog is scriptable, but not yet Jistable.
  * 
+ * Tags used for file selection include "ssfp", "ph0", "ph180", "b1map", "t1map". Case insensitive
  * @author senseneyj
  * 
  */
-public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInterface, ChangeListener {
-    private static final long serialVersionUID = 8406327135505127177L;
+public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInterface{
+	private static final long serialVersionUID = 8406327135505127177L;
 
-    private static String title = "TRE T2 Mapper";
+	private static String title = "TRE T2 Mapper";
 
-    private double treTR = 5.00;
+	private double treTR = 5.00;
 
-    private double maxT2 = 1000;
+	private double maxT2 = 1000;
 
-    private double maxM0 = 10000;
+	private double maxM0 = 10000;
 
-    private double[] treFA_phase0;
+	private double[] treFA_phase0;
 
-    private double[] treFA_phase180;
+	private double[] treFA_phase180;
 
-    private int[] ssfpImageIndex_phase0;
+	private int[] ssfpImageIndex_phase0;
 
-    private int[] ssfpImageIndex_phase180;
+	private int[] ssfpImageIndex_phase180;
 
-    private int t1ImageIndex;
+	private int t1ImageIndex;
 
-    private int b1ImageIndex;
+	private int b1ImageIndex;
 
-    private double[] simplexLineValues, simplexResiduals, simplexCentre, reflection, expansion, contraction, shrink;
+	private double[] simplexLineValues, simplexResiduals, simplexCentre, reflection, expansion, contraction, shrink;
 
-    private double[][] simplex;
+	private double[][] simplex;
 
-    private double[] twoPSimplexLineValues, twoPSimplexResiduals, twoPSimplexCentre, twoPReflection, twoPExpansion, twoPContraction, twoPShrink;
+	private double[] twoPSimplexLineValues, twoPSimplexResiduals, twoPSimplexCentre, twoPReflection, twoPExpansion, twoPContraction, twoPShrink;
 
-    private double[][] twoPSimplex;
+	private double[][] twoPSimplex;
 
-    private int[] bestToWorst;
+	private int[] bestToWorst;
 
-    private int Nfa_phase0 = 0;
+	private int Nfa_phase0 = 2;
 
-    private int Nfa_phase180 = 2;
+	private int Nfa_phase180 = 2;
 
-    private boolean calculateT2 = true;
+	private boolean calculateT2 = true;
 
-    private boolean includeB1Map = false;
+	private boolean includeB1Map = false;
 
-    private boolean performConventionalModelling = true;
+	private boolean performConventionalModeling = true;
 
-    private boolean performApproxModelling = false;
+	private boolean performApproxModeling = false;
 
-    private boolean performFullModelling = false;
+	private boolean performFullModeling = false;
 
-    private boolean calculateM0 = true;
+	private boolean calculateM0 = true;
 
-    private boolean invertT2toR2 = false;
+	private boolean invertT2toR2 = false;
 
-    private boolean calculateB0 = false;
+	private boolean calculateB0 = false;
 
-    private boolean performConventionalWith180Phase = true;
+	private boolean performConventionalWith180Phase = true;
 
-    private boolean performConventionalWith0Phase = false;
+	private boolean performConventionalWith0Phase = false;
 
-    private boolean geScanner = true;
+	private boolean geScanner = true;
 
-    private boolean siemensScanner = false;
+	private boolean siemensScanner = false;
 
-    private boolean upperLeftCorner = true;
+	private boolean upperLeftCorner = true;
 
-    private boolean upperRightCorner = false;
+	private boolean upperRightCorner = false;
 
-    private boolean lowerLeftCorner = false;
+	private boolean lowerLeftCorner = false;
 
-    private boolean lowerRightCorner = false;
+	private boolean lowerRightCorner = false;
 
-    private boolean useSmartThresholding = true;
+	private boolean useSmartThresholding = true;
 
-    private boolean useHardThresholding = false;
+	private boolean useHardThresholding = false;
 
-    private final float noiseScale = (float) 1.00;
+	private final float noiseScale = (float) 1.00;
 
-    private final float hardNoiseThreshold = (float) 0.00;
+	private final float hardNoiseThreshold = (float) 0.00;
 
-    private String[] wList;
+	private String[] wList;
 
-    private String[] titles;
+	private AlgorithmTreT2 cAlgo;
 
-    private AlgorithmTreT2 cAlgo;
+	private JComboBox<String> modelingComboBox;
 
-    private JTextField nfaPhase0Text;
+	private ArrayList<JRadioButton> phaseRadios;
 
-    private JTextField nfaPhase180Text;
+	/* Old Code
+	private String[] titles;
 
-    private JRadioButton doConventionalT2Button;
+	private JTextField nfaPhase0Text;
 
-    private JRadioButton doApproximateT2Button;
+	private JTextField nfaPhase180Text;
 
-    private JRadioButton doFullT2Button;
+	private JRadioButton doConventionalT2Button;
 
-    private JCheckBox doB1MapBox;
+	private JRadioButton doApproximateT2Button;
 
-    private ButtonGroup processType;
+	private JRadioButton doFullT2Button;
 
-    private GuiBuilder guiHelp;
+	private JCheckBox doB1MapBox;
 
-    private JTextField maxT2Text;
+	private ButtonGroup processType;
 
-    private JTextField maxM0Text;
+	private GuiBuilder guiHelp;
 
-    private JCheckBox doT2Box;
+	private JTextField maxT2Text;
 
-    private JCheckBox doMoBox;
+	private JTextField maxM0Text;
 
-    private JCheckBox showB0Box;
+	private JCheckBox doT2Box;
 
-    private JCheckBox showR2Box;
+	private JCheckBox doMoBox;
 
-    private JTextField ssfpRepTime;
+	private JCheckBox showB0Box;
 
-    private JComboBox preCalcT1Box;
+	private JCheckBox showR2Box;
 
-    private JComboBox[] phaseImageList;
+	private JTextField ssfpRepTime;
 
-    private JTextField[] phaseFlipAngleList;
+	private JComboBox preCalcT1Box;
 
-    private JComboBox preCalcB1MapBox;
+	private JComboBox[] phaseImageList;
 
-    private JComboBox[] phase180ImageList;
+	private JTextField[] phaseFlipAngleList;
 
-    private JTextField[] phase180FlipAngleList;
+	private JComboBox preCalcB1MapBox;
 
-    private JRadioButton isGEScannerButton;
+	private JComboBox[] phase180ImageList;
 
-    private JRadioButton isSiemensButton;
+	private JTextField[] phase180FlipAngleList;
 
-    private JTabbedPane algoPane;
+	private JRadioButton isGEScannerButton;
 
-    private int previousTabIndex = 0;
+	private JRadioButton isSiemensButton;
 
-    private JPanel paramPanel;
+	private JTabbedPane algoPane;
 
-    private JPanel conventionalPanel;
+	private int previousTabIndex = 0;
 
-    private JPanel advancedPanel;
+	private JPanel paramPanel;
 
-    /**
-     * Empty constructor needed for dynamic instantiation.
-     */
-    public JDialogTreT2() {}
+	private JPanel conventionalPanel;
 
-    /**
-     * Construct the barrel/pin cushion correction dialog.
-     * 
-     * @param theParentFrame Parent frame.
-     * @param im Source image.
-     */
-    public JDialogTreT2(final Frame theParentFrame, final ModelImage im) {
-        super(theParentFrame, false);
-        init();
-    }
+	private JPanel advancedPanel;
+	 */
 
-    @Override
-    public void algorithmPerformed(final AlgorithmBase algorithm) {
-        if (algorithm instanceof AlgorithmTreT2) {
-            Preferences.debug("TreT2: " + algorithm.getElapsedTime());
-        }
+	/**
+	 * Empty constructor needed for dynamic instantiation.
+	 */
+	public JDialogTreT2() {}
 
-        if (algorithm.isCompleted()) {
-            insertScriptLine();
-        }
+	/**
+	 * Construct the barrel/pin cushion correction dialog.
+	 * 
+	 * @param theParentFrame Parent frame.
+	 * @param im Source image.
+	 */
+	public JDialogTreT2(final Frame theParentFrame, final ModelImage im) {
+		super(theParentFrame, false);
+		init();
+	}
 
-        if ( !runningScriptFlag) {
-            if (cAlgo != null) {
-                cAlgo.finalize();
-                cAlgo = null;
-            }
+	@Override
+	public void algorithmPerformed(final AlgorithmBase algorithm) {
+		if (algorithm instanceof AlgorithmTreT2) {
+			Preferences.debug("TreT2: " + algorithm.getElapsedTime());
+		}
 
-            dispose();
-        }
-    }
+		if (algorithm.isCompleted()) {
+			insertScriptLine();
+		}
 
-    @Override
-    public void actionPerformed(final ActionEvent event) {
-        final String command = event.getActionCommand();
+		if ( !runningScriptFlag) {
+			if (cAlgo != null) {
+				cAlgo.finalize();
+				cAlgo = null;
+			}
 
-        if (command.equalsIgnoreCase("OK")) {
-            if (setVariables()) {
-                callAlgorithm();
-            }
-        } else if (command.equals("Cancel")) {
-            cAlgo.interrupt();
-        } else {
-            super.actionPerformed(event);
-        }
-    }
+			dispose();
+		}
+	}
 
+
+
+	/* Old Code
     private boolean setMethodVariables() {
         Nfa_phase0 = (int) Double.valueOf(nfaPhase0Text.getText()).doubleValue();
         Nfa_phase180 = (int) Double.valueOf(nfaPhase180Text.getText()).doubleValue();
@@ -342,281 +344,373 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
 
         return true;
     }
+	 */
 
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    @Override
-    protected void doPostAlgorithmActions() {
+	/**
+	 * Store the result image in the script runner's image table now that the action execution is finished.
+	 */
+	@Override
+	protected void doPostAlgorithmActions() {
 
-        if (cAlgo != null) {
-            if (includeB1Map && cAlgo.getB0ResultStack() != null) {
-                AlgorithmParameters.storeImageInRunner(cAlgo.getB0ResultStack());
-            }
+		if (cAlgo != null) {
+			if (includeB1Map && cAlgo.getB0ResultStack() != null) {
+				AlgorithmParameters.storeImageInRunner(cAlgo.getB0ResultStack());
+			}
 
-            if (calculateM0 && cAlgo.getM0ResultStack() != null) {
-                AlgorithmParameters.storeImageInRunner(cAlgo.getM0ResultStack());
-            }
+			if (calculateM0 && cAlgo.getM0ResultStack() != null) {
+				AlgorithmParameters.storeImageInRunner(cAlgo.getM0ResultStack());
+			}
 
-            if (invertT2toR2 && cAlgo.getR2ResultStack() != null) {
-                AlgorithmParameters.storeImageInRunner(cAlgo.getR2ResultStack());
-            }
+			if (invertT2toR2 && cAlgo.getR2ResultStack() != null) {
+				AlgorithmParameters.storeImageInRunner(cAlgo.getR2ResultStack());
+			}
 
-            if (calculateT2 && cAlgo.getT2ResultStack() != null) {
-                AlgorithmParameters.storeImageInRunner(cAlgo.getT2ResultStack());
-            }
-        }
+			if (calculateT2 && cAlgo.getT2ResultStack() != null) {
+				AlgorithmParameters.storeImageInRunner(cAlgo.getT2ResultStack());
+			}
+		}
 
-        // algorithm was not disposed of during algorithm performed since script is running
-        if (cAlgo != null) {
-            cAlgo.finalize();
-            cAlgo = null;
-        }
+		// algorithm was not disposed of during algorithm performed since script is running
+		if (cAlgo != null) {
+			cAlgo.finalize();
+			cAlgo = null;
+		}
 
-        dispose();
-    }
+		dispose();
+	}
 
-    @Override
-    protected void setGUIFromParams() {
-        treTR = scriptParameters.getParams().getDouble("tre_TR");
-        maxT2 = scriptParameters.getParams().getDouble("max_T2");
-        maxM0 = scriptParameters.getParams().getDouble("max_M0");
+	@Override
+	protected void setGUIFromParams() {
+		treTR = scriptParameters.getParams().getDouble("tre_TR");
+		maxT2 = scriptParameters.getParams().getDouble("max_T2");
+		maxM0 = scriptParameters.getParams().getDouble("max_M0");
 
-        Nfa_phase0 = scriptParameters.getParams().getInt("Nfa_phase_0");
-        Nfa_phase180 = scriptParameters.getParams().getInt("Nfa_phase_180");
+		Nfa_phase0 = scriptParameters.getParams().getInt("Nfa_phase_0");
+		Nfa_phase180 = scriptParameters.getParams().getInt("Nfa_phase_180");
 
-        calculateT2 = scriptParameters.getParams().getBoolean("calculate_T2");
-        includeB1Map = scriptParameters.getParams().getBoolean("include_B1Map");
-        performConventionalModelling = scriptParameters.getParams().getBoolean("perform_Conventional_Modelling");
-        performApproxModelling = scriptParameters.getParams().getBoolean("perform_Approx_Modelling");
-        performFullModelling = scriptParameters.getParams().getBoolean("perform_Full_Modelling");
-        calculateM0 = scriptParameters.getParams().getBoolean("calculate_M0");
-        invertT2toR2 = scriptParameters.getParams().getBoolean("invert_T2toR2");
-        calculateB0 = scriptParameters.getParams().getBoolean("calculate_B0");
-        performConventionalWith180Phase = scriptParameters.getParams().getBoolean("perform_ConventionalWith180Phase");
-        performConventionalWith0Phase = scriptParameters.getParams().getBoolean("perform_ConventionalWith0Phase");
-        geScanner = scriptParameters.getParams().getBoolean("ge_Scanner");
-        siemensScanner = scriptParameters.getParams().getBoolean("siemens_Scanner");
-        upperLeftCorner = scriptParameters.getParams().getBoolean("upper_LeftCorner");
-        upperRightCorner = scriptParameters.getParams().getBoolean("upper_RightCorner");
-        lowerLeftCorner = scriptParameters.getParams().getBoolean("lower_LeftCorner");
-        lowerRightCorner = scriptParameters.getParams().getBoolean("lower_RightCorner");
-        useSmartThresholding = scriptParameters.getParams().getBoolean("use_SmartThresholding");
-        useHardThresholding = scriptParameters.getParams().getBoolean("use_HardThresholding");
+		calculateT2 = scriptParameters.getParams().getBoolean("calculate_T2");
+		includeB1Map = scriptParameters.getParams().getBoolean("include_B1Map");
+		performConventionalModeling = scriptParameters.getParams().getBoolean("perform_Conventional_Modeling");
+		performApproxModeling = scriptParameters.getParams().getBoolean("perform_Approx_Modeling");
+		performFullModeling = scriptParameters.getParams().getBoolean("perform_Full_Modeling");
+		calculateM0 = scriptParameters.getParams().getBoolean("calculate_M0");
+		invertT2toR2 = scriptParameters.getParams().getBoolean("invert_T2toR2");
+		calculateB0 = scriptParameters.getParams().getBoolean("calculate_B0");
+		performConventionalWith180Phase = scriptParameters.getParams().getBoolean("perform_ConventionalWith180Phase");
+		performConventionalWith0Phase = scriptParameters.getParams().getBoolean("perform_ConventionalWith0Phase");
+		geScanner = scriptParameters.getParams().getBoolean("ge_Scanner");
+		siemensScanner = scriptParameters.getParams().getBoolean("siemens_Scanner");
+		upperLeftCorner = scriptParameters.getParams().getBoolean("upper_LeftCorner");
+		upperRightCorner = scriptParameters.getParams().getBoolean("upper_RightCorner");
+		lowerLeftCorner = scriptParameters.getParams().getBoolean("lower_LeftCorner");
+		lowerRightCorner = scriptParameters.getParams().getBoolean("lower_RightCorner");
+		useSmartThresholding = scriptParameters.getParams().getBoolean("use_SmartThresholding");
+		useHardThresholding = scriptParameters.getParams().getBoolean("use_HardThresholding");
 
-        // souble[]
-        treFA_phase0 = scriptParameters.getParams().getList("tre_FA_phase0").getAsDoubleArray();
-        treFA_phase180 = scriptParameters.getParams().getList("tre_FA_phase180").getAsDoubleArray();
-        // int[]
-        ssfpImageIndex_phase0 = scriptParameters.getParams().getList("tre_FA_phase0").getAsIntArray();
-        ssfpImageIndex_phase180 = scriptParameters.getParams().getList("sspf_Image_Index_phase180").getAsIntArray();
+		// souble[]
+		treFA_phase0 = scriptParameters.getParams().getList("tre_FA_phase0").getAsDoubleArray();
+		treFA_phase180 = scriptParameters.getParams().getList("tre_FA_phase180").getAsDoubleArray();
+		// int[]
+		ssfpImageIndex_phase0 = scriptParameters.getParams().getList("tre_FA_phase0").getAsIntArray();
+		ssfpImageIndex_phase180 = scriptParameters.getParams().getList("sspf_Image_Index_phase180").getAsIntArray();
 
-        t1ImageIndex = scriptParameters.getParams().getInt("t1_Image_Index");
-        b1ImageIndex = scriptParameters.getParams().getInt("b1_Image_Index");
-        // double[]
-        simplexLineValues = scriptParameters.getParams().getList("simplex_Line_Values").getAsDoubleArray();
-        simplexResiduals = scriptParameters.getParams().getList("simplex_Residuals").getAsDoubleArray();
-        simplexCentre = scriptParameters.getParams().getList("simplex_Centre").getAsDoubleArray();
-        reflection = scriptParameters.getParams().getList("reflection").getAsDoubleArray();
-        expansion = scriptParameters.getParams().getList("expansion").getAsDoubleArray();
-        contraction = scriptParameters.getParams().getList("contraction").getAsDoubleArray();
-        shrink = scriptParameters.getParams().getList("shrink").getAsDoubleArray();
-        // double[][]
-        final ArrayList<double[]> simplexArr = new ArrayList<double[]>();
+		t1ImageIndex = scriptParameters.getParams().getInt("t1_Image_Index");
+		b1ImageIndex = scriptParameters.getParams().getInt("b1_Image_Index");
+		// double[]
+		simplexLineValues = scriptParameters.getParams().getList("simplex_Line_Values").getAsDoubleArray();
+		simplexResiduals = scriptParameters.getParams().getList("simplex_Residuals").getAsDoubleArray();
+		simplexCentre = scriptParameters.getParams().getList("simplex_Centre").getAsDoubleArray();
+		reflection = scriptParameters.getParams().getList("reflection").getAsDoubleArray();
+		expansion = scriptParameters.getParams().getList("expansion").getAsDoubleArray();
+		contraction = scriptParameters.getParams().getList("contraction").getAsDoubleArray();
+		shrink = scriptParameters.getParams().getList("shrink").getAsDoubleArray();
+		// double[][]
+		final ArrayList<double[]> simplexArr = new ArrayList<double[]>();
 
-        int count = 0;
-        double[] lastDouble = new double[0];
+		int count = 0;
+		double[] lastDouble = new double[0];
 
-        while (scriptParameters.getParams().containsParameter("simplex_" + count)) {
-            lastDouble = scriptParameters.getParams().getList("simplex_" + count++).getAsDoubleArray();
-            simplexArr.add(lastDouble);
-        }
+		while (scriptParameters.getParams().containsParameter("simplex_" + count)) {
+			lastDouble = scriptParameters.getParams().getList("simplex_" + count++).getAsDoubleArray();
+			simplexArr.add(lastDouble);
+		}
 
-        simplex = simplexArr.toArray(new double[0][]);
+		simplex = simplexArr.toArray(new double[0][]);
 
-        // double[]
-        twoPSimplexLineValues = scriptParameters.getParams().getList("two_PSimplex_Line_Values").getAsDoubleArray();
-        twoPSimplexResiduals = scriptParameters.getParams().getList("tre_FA").getAsDoubleArray();
-        twoPSimplexCentre = scriptParameters.getParams().getList("two_PSimplex_Centre").getAsDoubleArray();
-        twoPReflection = scriptParameters.getParams().getList("two_PReflection").getAsDoubleArray();
-        twoPExpansion = scriptParameters.getParams().getList("two_PExpansion").getAsDoubleArray();
-        twoPContraction = scriptParameters.getParams().getList("two_PContraction").getAsDoubleArray();
-        twoPShrink = scriptParameters.getParams().getList("two_PShrink").getAsDoubleArray();
-        // double[][]
-        final ArrayList<double[]> twoPSimplexArr = new ArrayList<double[]>();
+		// double[]
+		twoPSimplexLineValues = scriptParameters.getParams().getList("two_PSimplex_Line_Values").getAsDoubleArray();
+		twoPSimplexResiduals = scriptParameters.getParams().getList("tre_FA").getAsDoubleArray();
+		twoPSimplexCentre = scriptParameters.getParams().getList("two_PSimplex_Centre").getAsDoubleArray();
+		twoPReflection = scriptParameters.getParams().getList("two_PReflection").getAsDoubleArray();
+		twoPExpansion = scriptParameters.getParams().getList("two_PExpansion").getAsDoubleArray();
+		twoPContraction = scriptParameters.getParams().getList("two_PContraction").getAsDoubleArray();
+		twoPShrink = scriptParameters.getParams().getList("two_PShrink").getAsDoubleArray();
+		// double[][]
+		final ArrayList<double[]> twoPSimplexArr = new ArrayList<double[]>();
 
-        count = 0;
-        lastDouble = new double[0];
+		count = 0;
+		lastDouble = new double[0];
 
-        while (scriptParameters.getParams().containsParameter("two_PSimplex_" + count)) {
-            lastDouble = scriptParameters.getParams().getList("two_PSimplex_" + count++).getAsDoubleArray();
-            twoPSimplexArr.add(lastDouble);
-        }
+		while (scriptParameters.getParams().containsParameter("two_PSimplex_" + count)) {
+			lastDouble = scriptParameters.getParams().getList("two_PSimplex_" + count++).getAsDoubleArray();
+			twoPSimplexArr.add(lastDouble);
+		}
 
-        twoPSimplex = twoPSimplexArr.toArray(new double[0][]);
+		twoPSimplex = twoPSimplexArr.toArray(new double[0][]);
 
-        // int[]
-        bestToWorst = scriptParameters.getParams().getList("best_To_Worst").getAsIntArray();
+		// int[]
+		bestToWorst = scriptParameters.getParams().getList("best_To_Worst").getAsIntArray();
 
-        // These are ModelImage names, one finds they are in a useful order
-        final ArrayList<String> wListArr = new ArrayList<String>();
+		// These are ModelImage names, one finds they are in a useful order
+		final ArrayList<String> wListArr = new ArrayList<String>();
 
-        // get the list of possible images
-        final ArrayList<Parameter> parImageArr = new ArrayList<Parameter>();
-        final Parameter[] parTotal = scriptParameters.getParams().getParameters();
-        for (int i = 0; i < parTotal.length; i++) {
-            if (parTotal[i].getType() == Parameter.PARAM_EXTERNAL_IMAGE) {
-                parImageArr.add(parTotal[i]);
-            }
-        }
+		// get the list of possible images
+		final ArrayList<Parameter> parImageArr = new ArrayList<Parameter>();
+		final Parameter[] parTotal = scriptParameters.getParams().getParameters();
+		for (int i = 0; i < parTotal.length; i++) {
+			if (parTotal[i].getType() == Parameter.PARAM_EXTERNAL_IMAGE) {
+				parImageArr.add(parTotal[i]);
+			}
+		}
 
-        ModelImage result = null;
-        // only way of getting number of images without throwing uncatchable NullPointer
-        final int numInputImages = scriptParameters.getParams().getInt("number_of_input_images");
-        for (int imageNum = 0; imageNum < numInputImages; imageNum++) {
-            result = scriptParameters.retrieveImage(parImageArr.get(imageNum).getLabel());
-            wListArr.add(result.getImageName());
-        }
+		ModelImage result = null;
+		// only way of getting number of images without throwing uncatchable NullPointer
+		final int numInputImages = scriptParameters.getParams().getInt("number_of_input_images");
+		for (int imageNum = 0; imageNum < numInputImages; imageNum++) {
+			result = scriptParameters.retrieveImage(parImageArr.get(imageNum).getLabel());
+			wListArr.add(result.getImageName());
+		}
+		
 
-        wList = wListArr.toArray(new String[0]);
-        titles = wListArr.toArray(new String[0]);
-    }
+		wList = wListArr.toArray(new String[0]);
+		//titles = wListArr.toArray(new String[0]);
+	}
 
-    @Override
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.getParams().put(ParameterFactory.newParameter("tre_TR", treTR));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("max_T2", maxT2));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("max_M0", maxM0));
+	@Override
+	protected void storeParamsFromGUI() throws ParserException {
+		scriptParameters.getParams().put(ParameterFactory.newParameter("tre_TR", treTR));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("max_T2", maxT2));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("max_M0", maxM0));
 
-        scriptParameters.getParams().put(ParameterFactory.newParameter("Nfa_phase_0", Nfa_phase0));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("Nfa_phase_180", Nfa_phase180));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("Nfa_phase_0", Nfa_phase0));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("Nfa_phase_180", Nfa_phase180));
 
-        scriptParameters.getParams().put(ParameterFactory.newParameter("calculate_T2", calculateT2));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("include_B1Map", includeB1Map));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_Conventional_Modelling", performConventionalModelling));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_Approx_Modelling", performApproxModelling));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_Full_Modelling", performFullModelling));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("calculate_M0", calculateM0));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("invert_T2toR2", invertT2toR2));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("calculate_B0", calculateB0));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_ConventionalWith180Phase", performConventionalWith180Phase));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_ConventionalWith0Phase", performConventionalWith0Phase));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("ge_Scanner", geScanner));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("siemens_Scanner", siemensScanner));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("upper_LeftCorner", upperLeftCorner));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("upper_RightCorner", upperRightCorner));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("lower_LeftCorner", lowerLeftCorner));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("lower_RightCorner", lowerRightCorner));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("use_SmartThresholding", useSmartThresholding));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("use_HardThresholding", useHardThresholding));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("calculate_T2", calculateT2));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("include_B1Map", includeB1Map));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("perform_Conventional_Modeling", performConventionalModeling));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("perform_Approx_Modeling", performApproxModeling));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("perform_Full_Modeling", performFullModeling));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("calculate_M0", calculateM0));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("invert_T2toR2", invertT2toR2));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("calculate_B0", calculateB0));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("perform_ConventionalWith180Phase", performConventionalWith180Phase));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("perform_ConventionalWith0Phase", performConventionalWith0Phase));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("ge_Scanner", geScanner));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("siemens_Scanner", siemensScanner));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("upper_LeftCorner", upperLeftCorner));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("upper_RightCorner", upperRightCorner));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("lower_LeftCorner", lowerLeftCorner));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("lower_RightCorner", lowerRightCorner));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("use_SmartThresholding", useSmartThresholding));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("use_HardThresholding", useHardThresholding));
 
-        // double[]
-        if (treFA_phase0 != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("tre_FA_phase0", treFA_phase0));
-        }
-        if (treFA_phase180 != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("tre_FA_phase180", treFA_phase180));
-        }
-        // int[]
-        if (ssfpImageIndex_phase0 != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("sspf_Image_Index_phase0", ssfpImageIndex_phase0));
-        }
-        if (ssfpImageIndex_phase180 != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("sspf_Image_Index_phase180", ssfpImageIndex_phase180));
-        }
+		// double[]
+		if (treFA_phase0 != null) {
+			scriptParameters.getParams().put(ParameterFactory.newParameter("tre_FA_phase0", treFA_phase0));
+		}
+		if (treFA_phase180 != null) {
+			scriptParameters.getParams().put(ParameterFactory.newParameter("tre_FA_phase180", treFA_phase180));
+		}
+		// int[]
+		if (ssfpImageIndex_phase0 != null) {
+			scriptParameters.getParams().put(ParameterFactory.newParameter("sspf_Image_Index_phase0", ssfpImageIndex_phase0));
+		}
+		if (ssfpImageIndex_phase180 != null) {
+			scriptParameters.getParams().put(ParameterFactory.newParameter("sspf_Image_Index_phase180", ssfpImageIndex_phase180));
+		}
 
-        scriptParameters.getParams().put(ParameterFactory.newParameter("t1_Image_Index", t1ImageIndex));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("b1_Image_Index", b1ImageIndex));
-        // double[]
-        if (simplexLineValues != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("simplex_Line_Values", simplexLineValues));
-        }
-        if (simplexResiduals != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("simplex_Residuals", simplexResiduals));
-        }
-        if (simplexCentre != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("simplex_Centre", simplexCentre));
-        }
-        if (reflection != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("reflection", reflection));
-        }
-        if (expansion != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("expansion", expansion));
-        }
-        if (contraction != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("contraction", contraction));
-        }
-        if (shrink != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("shrink", shrink));
-        }
-        // double[][], each double[] will need to be stored individually
-        if (simplex != null) {
-            for (int i = 0; i < simplex.length; i++) {
-                scriptParameters.getParams().put(ParameterFactory.newParameter("simplex_" + i, simplex[i]));
-            }
-        }
-        // double[]
-        if (twoPSimplexLineValues != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("two_PSimplex_Line_Values", twoPSimplexLineValues));
-        }
-        if (twoPSimplexResiduals != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("two_PSimplex_Residuals", twoPSimplexResiduals));
-        }
-        if (twoPSimplexCentre != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("two_PSimplex_Centre", twoPSimplexCentre));
-        }
-        if (twoPReflection != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("two_PReflection", twoPReflection));
-        }
-        if (twoPExpansion != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("two_PExpansion", twoPExpansion));
-        }
-        if (twoPContraction != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("two_PContraction", twoPContraction));
-        }
-        if (twoPShrink != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("two_PShrink", twoPShrink));
-        }
-        // double[][], each double[] will need to be stored individually
-        if (twoPSimplex != null) {
-            for (int i = 0; i < twoPSimplex.length; i++) {
-                scriptParameters.getParams().put(ParameterFactory.newParameter("two_PSimplex_" + i, twoPSimplex[i]));
-            }
-        }
-        // int[]
-        if (bestToWorst != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("best_To_Worst", bestToWorst));
-        }
-        // need a count of wList
-        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_input_images", wList.length));
-        // String[], are in fact ModelImage identifiers need to be stored in order, titles is presumed to be identical
-        // for scripting
-        if (wList != null) {
-            for (int i = 0; i < wList.length; i++) {
-                scriptParameters.storeImage(ViewUserInterface.getReference().getRegisteredImageByName(wList[i]), wList[i]);
-            }
-        }
+		scriptParameters.getParams().put(ParameterFactory.newParameter("t1_Image_Index", t1ImageIndex));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("b1_Image_Index", b1ImageIndex));
+		// double[]
+		if (simplexLineValues != null) {
+			scriptParameters.getParams().put(ParameterFactory.newParameter("simplex_Line_Values", simplexLineValues));
+		}
+		if (simplexResiduals != null) {
+			scriptParameters.getParams().put(ParameterFactory.newParameter("simplex_Residuals", simplexResiduals));
+		}
+		if (simplexCentre != null) {
+			scriptParameters.getParams().put(ParameterFactory.newParameter("simplex_Centre", simplexCentre));
+		}
+		if (reflection != null) {
+			scriptParameters.getParams().put(ParameterFactory.newParameter("reflection", reflection));
+		}
+		if (expansion != null) {
+			scriptParameters.getParams().put(ParameterFactory.newParameter("expansion", expansion));
+		}
+		if (contraction != null) {
+			scriptParameters.getParams().put(ParameterFactory.newParameter("contraction", contraction));
+		}
+		if (shrink != null) {
+			scriptParameters.getParams().put(ParameterFactory.newParameter("shrink", shrink));
+		}
+		// double[][], each double[] will need to be stored individually
+		if (simplex != null) {
+			for (int i = 0; i < simplex.length; i++) {
+				scriptParameters.getParams().put(ParameterFactory.newParameter("simplex_" + i, simplex[i]));
+			}
+		}
+		// double[]
+		if (twoPSimplexLineValues != null) {
+			scriptParameters.getParams().put(ParameterFactory.newParameter("two_PSimplex_Line_Values", twoPSimplexLineValues));
+		}
+		if (twoPSimplexResiduals != null) {
+			scriptParameters.getParams().put(ParameterFactory.newParameter("two_PSimplex_Residuals", twoPSimplexResiduals));
+		}
+		if (twoPSimplexCentre != null) {
+			scriptParameters.getParams().put(ParameterFactory.newParameter("two_PSimplex_Centre", twoPSimplexCentre));
+		}
+		if (twoPReflection != null) {
+			scriptParameters.getParams().put(ParameterFactory.newParameter("two_PReflection", twoPReflection));
+		}
+		if (twoPExpansion != null) {
+			scriptParameters.getParams().put(ParameterFactory.newParameter("two_PExpansion", twoPExpansion));
+		}
+		if (twoPContraction != null) {
+			scriptParameters.getParams().put(ParameterFactory.newParameter("two_PContraction", twoPContraction));
+		}
+		if (twoPShrink != null) {
+			scriptParameters.getParams().put(ParameterFactory.newParameter("two_PShrink", twoPShrink));
+		}
+		// double[][], each double[] will need to be stored individually
+		if (twoPSimplex != null) {
+			for (int i = 0; i < twoPSimplex.length; i++) {
+				scriptParameters.getParams().put(ParameterFactory.newParameter("two_PSimplex_" + i, twoPSimplex[i]));
+			}
+		}
+		// int[]
+		if (bestToWorst != null) {
+			scriptParameters.getParams().put(ParameterFactory.newParameter("best_To_Worst", bestToWorst));
+		}
+		// need a count of wList
+		scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_input_images", wList.length));
+		// String[], are in fact ModelImage identifiers need to be stored in order, titles is presumed to be identical
+		// for scripting
+		if (wList != null) {			
+			
+			//incorrect, it simply stores all images open at the time of running
+			for (int i = 0; i < wList.length; i++) {
+				scriptParameters.storeImage(ViewUserInterface.getReference().getRegisteredImageByName(wList[i]), wList[i]);
+			}
+		}
 
-        if (cAlgo != null) {
-            if (includeB1Map && cAlgo.getB0ResultStack() != null) {
-                scriptParameters.storeOutputImageParams(cAlgo.getB0ResultStack(), true);
-            }
+	
+		if (cAlgo != null) {
+			//if (includeB1Map && cAlgo.getB0ResultStack() != null) {
+			if(includeB1Map){
+				scriptParameters.storeOutputImageParams(cAlgo.getB0ResultStack(), true);
+			}
 
-            if (calculateM0 && cAlgo.getM0ResultStack() != null) {
-                scriptParameters.storeOutputImageParams(cAlgo.getM0ResultStack(), true);
-            }
+			//if (calculateM0 && cAlgo.getM0ResultStack() != null) {
+			if(calculateM0){
+				scriptParameters.storeOutputImageParams(cAlgo.getM0ResultStack(), true);
+			}
 
-            if (invertT2toR2 && cAlgo.getR2ResultStack() != null) {
-                scriptParameters.storeOutputImageParams(cAlgo.getR2ResultStack(), true);
-            }
+			//if (invertT2toR2 && cAlgo.getR2ResultStack() != null) {
+			if(invertT2toR2){
+				scriptParameters.storeOutputImageParams(cAlgo.getR2ResultStack(), true);
+			}
 
-            if (calculateT2 && cAlgo.getT2ResultStack() != null) {
-                scriptParameters.storeOutputImageParams(cAlgo.getT2ResultStack(), true);
-            }
-        }
-    }
+			//if (calculateT2 && cAlgo.getT2ResultStack() != null) {
+			if(calculateT2){
+				scriptParameters.storeOutputImageParams(cAlgo.getT2ResultStack(), true);
+			}
+		}
+		
+	}
 
-    private void init() {
+	private void init() {
+		
+		Enumeration<String> imageEnum = ViewUserInterface.getReference().getRegisteredImageNames();
+		ArrayList<String> imageList = new ArrayList<String>();
+		
+		while (imageEnum.hasMoreElements()) {
+			imageList.add(imageEnum.nextElement());
+		}
+		Collections.sort(imageList);
+		wList = new String[imageList.size()];
+		wList = imageList.toArray(wList);
+
+		if (wList == null || wList.length < 3) {
+			MipavUtil.displayWarning("Need at least 2 SSFP images and a pre-computed T1 map to use this algorithm.");
+			return;
+		}
+		
+		JPanel mainPanel = new JPanel();
+		GridBagLayout gridBag = new GridBagLayout();
+		GridBagConstraints cons = new GridBagConstraints();
+		mainPanel.setLayout(gridBag);
+
+
+		//Modeling combo box
+		String[] modelingTypesList = {"Perform Conventional TRE-T2 Modeling",
+				"Perform Approximate Modeling",
+		"Perform Full Modeling"};
+		modelingComboBox = new JComboBox<String>(modelingTypesList);
+		modelingComboBox.setSelectedIndex(0);
+		modelingComboBox.setActionCommand("combo");
+		modelingComboBox.addActionListener(this);
+		mainPanel.add(modelingComboBox);
+
+
+
+		//0 and 180 Radio Buttons
+		phaseRadios = new ArrayList<JRadioButton>();
+		JPanel radioPanel = new JPanel(new FlowLayout());
+		radioPanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
+		mainPanel.add(radioPanel);
+		cons.gridy = 1;
+		gridBag.setConstraints(radioPanel, cons);
+
+		JRadioButton phase0Radio = new JRadioButton("Phase 0");
+		radioPanel.add(phase0Radio);
+		phaseRadios.add(phase0Radio);
+		JRadioButton phase180Radio = new JRadioButton("Phase 180");
+		radioPanel.add(phase180Radio);
+		phaseRadios.add(phase180Radio);
+		phase180Radio.setSelected(true);
+
+		ButtonGroup bg = new ButtonGroup();
+		bg.add(phase0Radio);
+		bg.add(phase180Radio);
+
+
+
+		//OK and Cancel Buttons
+		JPanel buttonPanel = new JPanel(new FlowLayout());
+		buttonPanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
+		mainPanel.add(buttonPanel);
+		cons.gridy = 2;
+		gridBag.setConstraints(buttonPanel, cons);
+
+		JButton OKButton = new JButton("OK");
+		buttonPanel.add(OKButton);
+		OKButton.addActionListener(this);
+		OKButton.setActionCommand("ok");
+		JButton CancelButton = new JButton("Cancel");
+		buttonPanel.add(CancelButton);
+		CancelButton.addActionListener(this);
+		CancelButton.setActionCommand("cancelprimary");
+
+		MipavUtil.centerOnScreen(this);
+		add(mainPanel);
+		setTitle("Select Modeling Type");
+		pack();
+		validate();
+		setVisible(true);
+
+
+		/*Old Code
+
         final JPanel mainPanel = new JPanel();
         final BoxLayout b = new BoxLayout(mainPanel, BoxLayout.Y_AXIS);
         mainPanel.setLayout(b);
@@ -673,138 +767,865 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         setSize(new Dimension(700, 700));
 
         setVisible(true);
-    }
+		 */
+	}
 
-    @Override
-    protected void callAlgorithm() {
-        // Make algorithm
-        cAlgo = new AlgorithmTreT2(this, treFA_phase0, treFA_phase180, ssfpImageIndex_phase0, ssfpImageIndex_phase180, t1ImageIndex, b1ImageIndex,
-                simplexLineValues, simplexResiduals, simplexCentre, reflection, expansion, contraction, shrink, simplex, twoPSimplexLineValues,
-                twoPSimplexResiduals, twoPSimplexCentre, twoPReflection, twoPExpansion, twoPContraction, twoPShrink, twoPSimplex, bestToWorst, wList);
+	@Override
+	public void actionPerformed(final ActionEvent event) {
 
-        // This is very important. Adding this object as a listener allows the algorithm to
-        // notify this object when it has completed of failed. See algorithm performed event.
-        // This is made possible by implementing AlgorithmedPerformed interface
-        cAlgo.addListener(this);
+		String command = event.getActionCommand();
 
-        createProgressBar(title, cAlgo);
-        progressBar.addActionListener(this);
+		//Figures out which modeling type is selected, uses as enumerated data type
+		int comboSelection = modelingComboBox.getSelectedIndex();
 
-        // Hide dialog
-        setVisible(false);
+		//Setting variables for conventional modeling selection
+		if(comboSelection == 0){
+			performConventionalModeling = true;
+			performApproxModeling = false;
+			performFullModeling = false;
 
-        if (isRunInSeparateThread()) {
+			if(phaseRadios.get(0).isSelected()){
+				performConventionalWith0Phase = true;
+				performConventionalWith180Phase = false;
+			}
+			else if(phaseRadios.get(1).isSelected()){
+				performConventionalWith0Phase = false;
+				performConventionalWith180Phase = true;
+			}
+		}
+		//Setting variables for nonconventional modeling selection
+		else{
 
-            // Start the thread as a low priority because we wish to still have user interface work fast.
-            if (cAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                MipavUtil.displayError("A thread is already running on this object");
-            }
-        } else {
+			performConventionalWith0Phase = false;
+			performConventionalWith180Phase = false;
 
-            cAlgo.run();
-        }
-    }
+			if(comboSelection == 1){
+				performConventionalModeling = false;
+				performApproxModeling = true;
+				performFullModeling = false;
+			}
+			else if(comboSelection == 2){
+				performConventionalModeling = false;
+				performApproxModeling = false;
+				performFullModeling = true;
+			}
+		}
 
-    public double getTreTR() {
-        return treTR;
-    }
 
-    public double getMaxT2() {
-        return maxT2;
-    }
+		//Enables/disables radio buttons based on selection
+		if(command.equals("combo")){
 
-    public double getMaxM0() {
-        return maxM0;
-    }
+			for(JRadioButton b: phaseRadios)
+				b.setEnabled(performConventionalModeling);
+		}
+		//Closes this dialog and opens one specific to the the type of modeling requested
+		else if(command.equals("ok")){
 
-    public int getNfa_phase0() {
-        return Nfa_phase0;
-    }
+			dispose();
+			MipavUtil.centerOnScreen(new DialogTwo());
+		}
+		else if(command.equals("cancelprimary")){ //Affects modeling selection panel
+			dispose();
+		}
+		else if(command.equals("cancel")) //Affects loading bar panel
+			cAlgo.interrupt();
+		else{
+			super.actionPerformed(event);
+		}
+	}
 
-    public int getNfa_phase180() {
-        return Nfa_phase180;
-    }
+	//The second window of the conventional dialogue path
+	private class DialogTwo extends JDialog implements ActionListener{
 
-    public boolean isCalculateT2() {
-        return calculateT2;
-    }
+		private JTextField imageCountFieldOne;
+		private JTextField imageCountFieldTwo;
+		private JTextField maxT2Field;
+		private JTextField maxM0Field;
+		private ArrayList<JCheckBox> checkBoxes;// index: 0 use B1, 1 show T2, 2 show M0, 3 show B0, 4 show R2
 
-    public boolean isIncludeB1Map() {
-        return includeB1Map;
-    }
+		//conventional created with either 0 phase or 180 phase. 
+		public DialogTwo(){
+			
+			initUI();
+		}
 
-    public boolean isPerformConventionalModelling() {
-        return performConventionalModelling;
-    }
+		private void initUI(){
 
-    public boolean isPerformApproxModelling() {
-        return performApproxModelling;
-    }
+			JPanel mainPanel = new JPanel();
+			GridBagLayout gridBag = new GridBagLayout();
+			GridBagConstraints cons = new GridBagConstraints();
+			mainPanel.setLayout(gridBag);
+			int gridyCounter = 0;
 
-    public boolean isPerformFullModelling() {
-        return performFullModelling;
-    }
 
-    public boolean isCalculateM0() {
-        return calculateM0;
-    }
+			//Obtains number of images to be used. Only one of 0/180 if conventional, both if nonconventional
+			if(performConventionalModeling){
 
-    public boolean isInvertT2toR2() {
-        return invertT2toR2;
-    }
+				int phase = 0;
+				if(performConventionalWith180Phase)
+					phase = 180;
+				setTitle("Conventional Modeling: " + phase + " phase");
 
-    public boolean isCalculateB0() {
-        return calculateB0;
-    }
 
-    public boolean isPerformConventionalWith180Phase() {
-        return performConventionalWith180Phase;
-    }
+				JLabel lab0 = new JLabel("#SSFP Flip Angles (" + phase + " deg):");
+				cons.gridwidth = 3;
+				cons.ipady = 30;
+				cons.ipadx = 20;
+				gridBag.addLayoutComponent(lab0, cons);
+				mainPanel.add(lab0);
 
-    public boolean isPerformConventionalWith0Phase() {
-        return performConventionalWith0Phase;
-    }
+				JPanel imageFieldPanel = new JPanel();
+				imageFieldPanel.setLayout(new BoxLayout(imageFieldPanel, BoxLayout.Y_AXIS));
 
-    public boolean isGeScanner() {
-        return geScanner;
-    }
+				if(phase == 0)
+					imageCountFieldOne = new JTextField(""+Nfa_phase0, 10);
+				else if(phase == 180)
+					imageCountFieldOne = new JTextField(""+Nfa_phase180, 10);
 
-    public boolean isSiemensScanner() {
-        return siemensScanner;
-    }
+				imageFieldPanel.add(imageCountFieldOne);
+				cons.ipady = 0;
+				cons.gridx = 3;
+				cons.fill = GridBagConstraints.HORIZONTAL;
+				gridBag.addLayoutComponent(imageFieldPanel, cons);
+				mainPanel.add(imageFieldPanel);
+				gridyCounter++;
+			}
+			//For nonconventional
+			else{
 
-    public boolean isUpperLeftCorner() {
-        return upperLeftCorner;
-    }
+				if(performApproxModeling)
+					setTitle("Approximate Modeling");
+				else if(performFullModeling)
+					setTitle("Full Modeling");
 
-    public boolean isUpperRightCorner() {
-        return upperRightCorner;
-    }
+				JLabel lab0 = new JLabel("#SSFP Flip Angles (0 deg):");
+				cons.gridwidth = 3;
+				cons.ipadx = 20;
+				gridBag.addLayoutComponent(lab0, cons);
+				mainPanel.add(lab0);
 
-    public boolean isLowerLeftCorner() {
-        return lowerLeftCorner;
-    }
+				imageCountFieldOne = new JTextField(""+Nfa_phase0, 10);
+				cons.gridx = 3;
+				cons.fill = GridBagConstraints.HORIZONTAL;
+				gridBag.addLayoutComponent(imageCountFieldOne, cons);
+				mainPanel.add(imageCountFieldOne);
+				gridyCounter++;
 
-    public boolean isLowerRightCorner() {
-        return lowerRightCorner;
-    }
+				JLabel lab1 = new JLabel("#SSFP Flip Angles (180 deg):");
+				cons.gridwidth = 3;
+				cons.gridy = gridyCounter;
+				cons.gridx = 0;
+				gridBag.addLayoutComponent(lab1, cons);
+				mainPanel.add(lab1);
 
-    public boolean isUseSmartThresholding() {
-        return useSmartThresholding;
-    }
+				imageCountFieldTwo = new JTextField(""+Nfa_phase180, 10);
+				cons.gridx = 3;
+				cons.fill = GridBagConstraints.HORIZONTAL;
+				gridBag.addLayoutComponent(imageCountFieldTwo, cons);
+				mainPanel.add(imageCountFieldTwo);
+				gridyCounter++;
 
-    public boolean isUseHardThresholding() {
-        return useHardThresholding;
-    }
+				JPanel emptySpacerPanel = new JPanel();
+				cons.gridy = gridyCounter;
+				cons.gridx = 0;
+				cons.ipady = 15;
+				gridBag.addLayoutComponent(emptySpacerPanel, cons);
+				mainPanel.add(emptySpacerPanel);
+				gridyCounter++;
+			}
 
-    public float getNoiseScale() {
-        return noiseScale;
-    }
+			//Obtains maximum T2 value
+			JLabel lab1 = new JLabel("Maximum Allowable T2: ");
+			cons.gridy = gridyCounter;
+			cons.gridx = 0;
+			cons.fill = GridBagConstraints.NONE;
+			cons.ipady = 0;
+			gridBag.addLayoutComponent(lab1, cons);
+			mainPanel.add(lab1);
 
-    public float getHardNoiseThreshold() {
-        return hardNoiseThreshold;
-    }
+			maxT2Field = new JTextField(""+maxT2);
+			cons.gridx = 3;
+			cons.fill = GridBagConstraints.HORIZONTAL;
+			gridBag.addLayoutComponent(maxT2Field, cons);
+			mainPanel.add(maxT2Field);
+			gridyCounter++;
 
+
+			//Obtains maximum M0 value
+			JLabel lab2 = new JLabel("Maximum Allowable M0: ");
+			cons.gridy = gridyCounter;
+			cons.gridx = 0;
+			cons.fill = GridBagConstraints.NONE;
+			gridBag.addLayoutComponent(lab2, cons);
+			mainPanel.add(lab2);
+
+			maxM0Field = new JTextField(""+maxM0);
+			cons.gridx = 3;
+			cons.fill = GridBagConstraints.HORIZONTAL;
+			gridBag.addLayoutComponent(maxM0Field, cons);
+			mainPanel.add(maxM0Field);
+			gridyCounter++;
+
+
+			//Creates panel of check boxes
+			JPanel checkBoxPanel = new JPanel();
+			checkBoxPanel.setLayout(new BoxLayout(checkBoxPanel, BoxLayout.Y_AXIS));
+			TitledBorder tb = BorderFactory.createTitledBorder("Map Settings");
+			tb.setTitleJustification(TitledBorder.CENTER);
+			checkBoxPanel.setBorder(tb);
+
+			cons.gridy = gridyCounter;
+			cons.gridx = 0;
+			cons.gridwidth = 6;
+			cons.ipady = 20;
+			gridBag.addLayoutComponent(checkBoxPanel, cons);
+			mainPanel.add(checkBoxPanel);
+			checkBoxes = new ArrayList<JCheckBox>();
+			checkBoxes.add(new JCheckBox("Use Precalculated B1 Map"));
+			checkBoxes.add(new JCheckBox("Show T2 Map"));
+			checkBoxes.add(new JCheckBox("Show M0 Map"));
+			checkBoxes.add(new JCheckBox("Show B0 Map"));
+			checkBoxes.add(new JCheckBox("Show R2 Map"));
+			for(JCheckBox cb: checkBoxes)
+				checkBoxPanel.add(cb);
+
+			//Default checkboxes set
+			checkBoxes.get(1).setSelected(true);
+			checkBoxes.get(2).setSelected(true);
+			gridyCounter++;
+
+			//OK and Cancel Buttons
+			JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+			mainPanel.add(buttonPanel);
+			cons.gridx = 0;
+			cons.gridy = gridyCounter;
+			cons.gridwidth = 6;
+			gridBag.setConstraints(buttonPanel, cons);
+
+			JButton OKButton = new JButton("OK");
+			buttonPanel.add(OKButton);
+			OKButton.addActionListener(this);
+			OKButton.setActionCommand("ok");
+
+			JButton CancelButton = new JButton("Cancel");
+			buttonPanel.add(CancelButton);
+			CancelButton.addActionListener(this);
+			CancelButton.setActionCommand("cancel");
+
+
+			add(mainPanel);
+			pack();
+			validate();
+			setVisible(true);
+		}
+
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+
+			String command = e.getActionCommand();
+
+			//Confirms valid entries for all fields, then saves information, closes window, and progresses
+			if(command == "ok"){
+
+				try{
+					if(!performConventionalModeling){
+						Nfa_phase0 = Integer.parseInt(imageCountFieldOne.getText());
+						Nfa_phase180 = Integer.parseInt(imageCountFieldTwo.getText());
+					}
+					else if(performConventionalWith180Phase){
+						Nfa_phase180 = Integer.parseInt(imageCountFieldOne.getText());
+						Nfa_phase0 = 0;
+					}
+					else if(performConventionalWith0Phase){
+						Nfa_phase0 = Integer.parseInt(imageCountFieldOne.getText());
+						Nfa_phase180 = 0;
+					}
+
+					maxT2 = Double.parseDouble(maxM0Field.getText());
+					maxM0 = Double.parseDouble(maxT2Field.getText());
+
+					includeB1Map = checkBoxes.get(0).isSelected();
+					calculateT2 = checkBoxes.get(1).isSelected();
+					calculateM0 = checkBoxes.get(2).isSelected();
+					calculateB0 = checkBoxes.get(3).isSelected();
+					invertT2toR2 = checkBoxes.get(4).isSelected();
+
+				}catch(NumberFormatException exc){
+					JOptionPane.showMessageDialog(this, "Check number formatting", "Number Format Exception", JOptionPane.WARNING_MESSAGE);				
+					return;
+				}
+
+
+
+				//Minimum: 2 images for Conventional Modeling, 3 images for Full/Approx Modeling
+				if(performConventionalModeling && Math.max(Nfa_phase0, Nfa_phase180) < 2){
+					JOptionPane.showMessageDialog(this, "Must use at least 2 SSFP Images", "Invalid Entry", JOptionPane.WARNING_MESSAGE);				
+					return;
+				}
+				else if(!performConventionalModeling && Nfa_phase0 + Nfa_phase180 < 3){
+					JOptionPane.showMessageDialog(this, "Must use at least 3 SSFP Images, \n2 at each RF phase increment",
+							"Invalid Entry", JOptionPane.WARNING_MESSAGE);				
+					return;
+				}
+
+
+				//If successful, close this window and open new
+				dispose();
+				MipavUtil.centerOnScreen(new DialogThree());
+			}
+
+			else if(command == "cancel")
+				dispose();
+		}
+
+	}
+
+
+	//This is the final step for all modeling methods
+	private class DialogThree extends JDialog implements ActionListener{
+
+		//Stores image specific information relative to their placements
+		private ArrayList<JComboBox<String>> imageIndexCombos0;
+		private ArrayList<JComboBox<String>> imageIndexCombos180;
+		private ArrayList<JTextField> flipAngleFields0;
+		private ArrayList<JTextField> flipAngleFields180;
+
+		private JTextField SSFPTRField;
+		private JComboBox<String> T1Combo;
+		private JComboBox<String> B1Combo;
+		private JComboBox<String> scannerCombo; // index key -  0: GE, 1: Siemens
+
+		//For determining pre-selected fields
+		private Queue<String> ph0q;
+		private Queue<String> ph180q;
+		private Queue<String> SSFPq;
+
+		public DialogThree(){
+
+			initUI();
+		}
+
+		private void initUI(){
+			imageIndexCombos0 = new ArrayList<JComboBox<String>>();
+			imageIndexCombos180 = new ArrayList<JComboBox<String>>();
+			flipAngleFields0 = new ArrayList<JTextField>();
+			flipAngleFields180 = new ArrayList<JTextField>();
+
+			ph0q = new LinkedList<String>();
+			ph180q = new LinkedList<String>();
+			SSFPq = new LinkedList<String>();
+
+			for(String s: wList)
+				if(s.toLowerCase().contains("ssfp"))
+					SSFPq.add(s);
+
+			while(!SSFPq.isEmpty()){
+				if(SSFPq.peek().toLowerCase().contains("ph0"))
+					ph0q.add(SSFPq.remove());
+				else if(SSFPq.peek().toLowerCase().contains("ph180"))
+					ph180q.add(SSFPq.remove());
+				else
+					SSFPq.remove();
+			}
+
+			JPanel mainPanel = new JPanel();
+			GridBagLayout gridBag = new GridBagLayout();
+			mainPanel.setLayout(gridBag);
+			GridBagConstraints cons = new GridBagConstraints();
+			int gridyCounter = 0;
+
+
+			//Builds scroll pane containing the series of image panels for 0 phase
+			if(performConventionalWith0Phase || !performConventionalModeling){
+				JScrollPane scrollPane0 = buildScrollPane(Nfa_phase0, 0);
+				cons.gridwidth = 2;
+				cons.ipady = 30;
+				cons.fill = GridBagConstraints.HORIZONTAL;
+				gridBag.addLayoutComponent(scrollPane0, cons);
+				mainPanel.add(scrollPane0);
+				gridyCounter++;
+			}
+
+			//Builds scroll pane containing the series of image panels for 180 phase
+			if(performConventionalWith180Phase || !performConventionalModeling){
+				JScrollPane scrollPane180 = buildScrollPane(Nfa_phase180, 180);
+				cons.gridy = gridyCounter;
+				cons.gridwidth = 2;
+				cons.ipady = 30;
+				cons.fill = GridBagConstraints.HORIZONTAL;
+				gridBag.addLayoutComponent(scrollPane180, cons);
+				mainPanel.add(scrollPane180);
+				gridyCounter++;
+			}
+
+
+
+			//Builds text field asking for SSFP Repitition Time
+			JLabel lab0 = new JLabel("SSFP Repitition Time(ms): ");
+			cons.gridwidth = 1;
+			cons.gridy = gridyCounter;
+			cons.ipady = 0;
+			cons.anchor = GridBagConstraints.LINE_START;
+			cons.fill = GridBagConstraints.NONE;
+			gridBag.setConstraints(lab0, cons);
+			mainPanel.add(lab0);
+
+			SSFPTRField = new JTextField(treTR + "");
+			cons.gridx = 1;
+			cons.fill = GridBagConstraints.HORIZONTAL;
+			gridBag.setConstraints(SSFPTRField, cons);
+			mainPanel.add(SSFPTRField);
+			gridyCounter++;
+
+
+			//Builds combo box asking for T1 map image
+			JLabel lab1 = new JLabel ("T1 Map: ");
+			cons.gridx = 0;
+			cons.gridy = gridyCounter;
+			cons.fill = GridBagConstraints.NONE;
+			gridBag.setConstraints(lab1, cons);
+			mainPanel.add(lab1);
+
+			T1Combo = new JComboBox<String>(wList);
+			for(String s: wList)
+				if(s.toLowerCase().contains("t1map")){
+					T1Combo.setSelectedItem(s);
+					break;
+				}
+			cons.gridx = 1;
+			cons.fill = GridBagConstraints.HORIZONTAL;
+			gridBag.setConstraints(T1Combo, cons);
+			mainPanel.add(T1Combo);
+			gridyCounter++;
+
+
+
+			//Builds combo box asking for B1 map image only if B1 was enabled before
+			if(includeB1Map){
+
+				JLabel lab2 = new JLabel ("B1 Map: ");
+				cons.gridx = 0;
+				cons.gridy = gridyCounter;
+				cons.fill = GridBagConstraints.NONE;
+				gridBag.setConstraints(lab2, cons);
+				mainPanel.add(lab2);
+
+				B1Combo = new JComboBox<String>(wList);
+				for(String s: wList)
+					if(s.toLowerCase().contains("b1map")){
+						B1Combo.setSelectedItem(s);
+						break;
+					}
+
+				cons.gridx = 1;
+				cons.fill = GridBagConstraints.HORIZONTAL;
+				gridBag.setConstraints(B1Combo, cons);
+				mainPanel.add(B1Combo);
+				gridyCounter++;
+
+			}
+
+
+
+			//Builds combo box asking for scanner producer, only for Nonconventional
+			if(!performConventionalModeling){
+
+				JLabel scannerLabel = new JLabel("Scan performed on a: ");
+				cons.gridx = 0;
+				cons.gridy = gridyCounter;
+				cons.fill = GridBagConstraints.NONE;
+				gridBag.setConstraints(scannerLabel, cons);
+				mainPanel.add(scannerLabel);
+
+				String[] scannerList = {"GE Scanner", "Siemens Scanner"};
+				scannerCombo = new JComboBox<String>(scannerList);
+				scannerCombo.setSelectedIndex(0);
+				cons.gridx = 1;
+				cons.fill = GridBagConstraints.HORIZONTAL;
+				gridBag.setConstraints(scannerCombo, cons);
+				mainPanel.add(scannerCombo);
+				gridyCounter++;
+			}
+
+			//OK and Cancel Buttons
+			JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+			mainPanel.add(buttonPanel);
+			cons.gridx = 0;
+			cons.gridy = gridyCounter;
+			cons.gridwidth = 2;
+			gridBag.setConstraints(buttonPanel, cons);
+
+			JButton OKButton = new JButton("OK");
+			buttonPanel.add(OKButton);
+			OKButton.addActionListener(this);
+			OKButton.setActionCommand("ok");
+			JButton CancelButton = new JButton("Cancel");
+			buttonPanel.add(CancelButton);
+			CancelButton.addActionListener(this);
+			CancelButton.setActionCommand("cancel");
+
+			add(mainPanel);
+			//setSize(400, 650);
+
+			if(performConventionalModeling)
+				setTitle("Conventional Modeling");
+			else if(performApproxModeling)
+				setTitle("Approximate Modeling");
+			else if(performFullModeling)
+				setTitle("Full Modeling");
+
+			pack();
+			validate();
+			setVisible(true);
+		}
+
+		//Builds a JScrollPane with the specified number of image fields, assigning elements to the appropriate data structures
+		public JScrollPane buildScrollPane(int imageCount, int phase){
+
+			JPanel imagePanel = new JPanel();
+
+			GridBagLayout scrollBag = new GridBagLayout();
+			GridBagConstraints scrollCons = new GridBagConstraints();
+			imagePanel.setLayout(scrollBag);
+
+			JScrollPane scrollPane = new JScrollPane(imagePanel);
+			TitledBorder tb = BorderFactory.createTitledBorder("Phase " + phase + " Images");
+			tb.setTitleJustification(TitledBorder.CENTER);
+			scrollPane.setBorder(tb);
+
+			scrollCons.fill = GridBagConstraints.HORIZONTAL;
+			for(int i = 0; i < imageCount; i++){
+
+				JPanel jp = makeImagePanel(i, phase);
+				scrollCons.gridy = i;
+				scrollBag.setConstraints(jp, scrollCons);
+				imagePanel.add(jp);
+			}
+
+			if(scrollPane.getPreferredSize().height > 150){
+
+				scrollPane.setPreferredSize(new Dimension(getPreferredSize().width, 150));
+				scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+				JScrollBar bar = scrollPane.getVerticalScrollBar();
+				bar.setPreferredSize(new Dimension(20,0));
+			}
+
+			return scrollPane;
+		}
+
+		//Builds a panel that has prompts the user for an image file and its flip angle
+		private JPanel makeImagePanel(int imageID, int phase){
+
+			JPanel panel = new JPanel();
+			panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createTitledBorder("Image "+imageID),
+					"", TitledBorder.LEFT, TitledBorder.BELOW_BOTTOM));
+			GridBagLayout gridBag = new GridBagLayout();
+			panel.setLayout(gridBag);
+			GridBagConstraints cons = new GridBagConstraints();
+
+			if(imageID % 2 == 0)
+				panel.setBackground(Color.WHITE);
+
+			//Left hand labels
+			JLabel lab1 = new JLabel("Image File: ");
+			cons.anchor = GridBagConstraints.WEST;
+			gridBag.addLayoutComponent(lab1, cons);
+			panel.add(lab1);
+
+			JLabel lab2 = new JLabel("Flip Angle: ");
+			cons.gridy = 1;
+			gridBag.addLayoutComponent(lab2, cons);
+			panel.add(lab2);
+
+			//Right hand entry fields
+			JComboBox<String> fileComboBox = new JComboBox<String>(wList);
+			cons.gridx = 1;
+			cons.gridy = 0;
+			cons.fill = GridBagConstraints.HORIZONTAL;
+			gridBag.addLayoutComponent(fileComboBox, cons);
+			panel.add(fileComboBox);
+
+			JTextField FATextField = new JTextField();
+			cons.gridy = 1;
+			gridBag.addLayoutComponent(FATextField, cons);
+			panel.add(FATextField);
+
+
+			/* Adds each ComboBox and TextField to its respective ArrayList, corresponding to its phase
+			 * 
+			 * If the file name contains certain markers including "SSFP", "p0", "p180", "fa", this will fill 
+			 * in fields automatically with both the file name and an extracted flip angle
+			 */
+			if(phase == 0){
+
+				if(!ph0q.isEmpty()){
+
+					String fname = ph0q.remove();
+					fileComboBox.setSelectedItem(fname);
+
+					if(fname.toLowerCase().contains("fa")){
+						String ssfname = fname.toLowerCase().substring(fname.indexOf("fa"));
+						if(ssfname.substring(2).contains("_"))
+							FATextField.setText(ssfname.substring(2, ssfname.indexOf("_")));
+					}
+				}
+
+				imageIndexCombos0.add(fileComboBox);
+				flipAngleFields0.add(FATextField);
+			}
+			else if(phase == 180){
+
+				if(!ph180q.isEmpty()){
+
+					String fname = ph180q.remove();
+					fileComboBox.setSelectedItem(fname);
+
+					if(fname.toLowerCase().contains("fa")){
+						String ssfname = fname.substring(fname.indexOf("fa"));
+						if(ssfname.substring(2).contains("_"))
+							FATextField.setText(ssfname.substring(2, ssfname.indexOf("_")));
+					}
+				}
+
+				imageIndexCombos180.add(fileComboBox);
+				flipAngleFields180.add(FATextField);
+			}
+			return panel;
+		}
+
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+
+			String command = e.getActionCommand();
+
+			if(command == "ok"){
+
+				Set<Integer> dupCheck = new HashSet<Integer>();
+				ssfpImageIndex_phase0 = new int[Nfa_phase0];
+				ssfpImageIndex_phase180 = new int[Nfa_phase180];
+
+				//Collecting indices of image selection
+				if(!performConventionalModeling || performConventionalWith0Phase){
+					for(int i = 0; i < imageIndexCombos0.size(); i++){
+						ssfpImageIndex_phase0[i] = imageIndexCombos0.get(i).getSelectedIndex();
+
+						if(dupCheck.contains(imageIndexCombos0.get(i).getSelectedIndex())){
+							JOptionPane.showMessageDialog(this, "Repeated images", "Repeated images detected", JOptionPane.WARNING_MESSAGE);
+							return;
+						}
+						else
+							dupCheck.add(imageIndexCombos0.get(i).getSelectedIndex());
+					}
+				}
+
+				if(!performConventionalModeling || performConventionalWith180Phase){
+					for(int i = 0; i < imageIndexCombos180.size(); i++){
+						ssfpImageIndex_phase180[i] = imageIndexCombos180.get(i).getSelectedIndex();
+
+						if(dupCheck.contains(imageIndexCombos180.get(i).getSelectedIndex())){
+							JOptionPane.showMessageDialog(this, "Repeated images", "Repeated images detected", JOptionPane.WARNING_MESSAGE);
+							return;
+						}
+						else
+							dupCheck.add(imageIndexCombos180.get(i).getSelectedIndex());
+					}
+				}
+
+				//Parsing flip angle fields, as well as the repitition time field
+				try{
+
+					if(!performConventionalModeling || performConventionalWith0Phase){
+						treFA_phase0 = new double[flipAngleFields0.size()];
+						for(int i = 0; i < flipAngleFields0.size(); i++)
+							treFA_phase0[i] = Double.parseDouble(flipAngleFields0.get(i).getText());
+					}
+
+					if(!performConventionalModeling || performConventionalWith180Phase){
+						treFA_phase180 = new double[flipAngleFields180.size()];
+						for(int i = 0; i < flipAngleFields180.size(); i++)
+							treFA_phase180[i] = Double.parseDouble(flipAngleFields180.get(i).getText());
+					}
+
+					treTR = Double.parseDouble(SSFPTRField.getText());
+				}catch(NumberFormatException exc){
+
+					JOptionPane.showMessageDialog(this, "Check number formatting", "Number Format Exception", JOptionPane.WARNING_MESSAGE);
+					return;
+				}
+
+				//Getting T1 map image index, and possibly B1 if requested
+				t1ImageIndex = T1Combo.getSelectedIndex();
+				if(dupCheck.contains(T1Combo.getSelectedIndex())){
+					JOptionPane.showMessageDialog(this, "Repeated images", "Repeated images Detected", JOptionPane.WARNING_MESSAGE);
+					return;
+				}
+				else
+					dupCheck.add(T1Combo.getSelectedIndex());
+
+				if(includeB1Map){
+					b1ImageIndex = B1Combo.getSelectedIndex();
+					if(dupCheck.contains(B1Combo.getSelectedIndex())){
+						JOptionPane.showMessageDialog(this, "Repeated images", "Repeated images Detected", JOptionPane.WARNING_MESSAGE);
+						return;
+					}
+				}
+
+				dispose();
+				callAlgorithm();
+			}
+			else if(command == "cancel"){
+				dispose();
+			}
+
+		}
+
+	}
+	@Override
+	protected void callAlgorithm() {
+		// Make algorithm
+		
+		String[] ssfpImageNames_phase0 = new String[ssfpImageIndex_phase0.length];
+		String[] ssfpImageNames_phase180 = new String[ssfpImageIndex_phase180.length];
+		String t1ImageName = wList[t1ImageIndex];
+		String b1ImageName = wList[b1ImageIndex];
+		
+		for(int i = 0; i < ssfpImageNames_phase0.length; i++)
+			ssfpImageNames_phase0[i] = wList[ssfpImageIndex_phase0[i]];
+		
+		for(int i = 0; i < ssfpImageNames_phase180.length; i++)
+			ssfpImageNames_phase180[i] = wList[ssfpImageIndex_phase180[i]];
+
+		
+		cAlgo = new AlgorithmTreT2(this, treFA_phase0, treFA_phase180, ssfpImageNames_phase0, ssfpImageNames_phase180, t1ImageName, b1ImageName,
+				simplexLineValues, simplexResiduals, simplexCentre, reflection, expansion, contraction, shrink, simplex, twoPSimplexLineValues,
+				twoPSimplexResiduals, twoPSimplexCentre, twoPReflection, twoPExpansion, twoPContraction, twoPShrink, twoPSimplex, bestToWorst, wList);
+
+		// This is very important. Adding this object as a listener allows the algorithm to
+		// notify this object when it has completed of failed. See algorithm performed event.
+		// This is made possible by implementing AlgorithmedPerformed interface
+		cAlgo.addListener(this);
+
+		createProgressBar(title, cAlgo);
+		progressBar.addActionListener(this);
+
+		// Hide dialog
+		setVisible(false);
+
+		if (isRunInSeparateThread()) {
+
+			// Start the thread as a low priority because we wish to still have user interface work fast.
+			if (cAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+				MipavUtil.displayError("A thread is already running on this object");
+			}
+		} else {
+
+			cAlgo.run();
+		}
+	}
+
+	public double getTreTR() {
+		return treTR;
+	}
+
+	public double getMaxT2() {
+		return maxT2;
+	}
+
+	public double getMaxM0() {
+		return maxM0;
+	}
+
+	public int getNfa_phase0() {
+		return Nfa_phase0;
+	}
+
+	public int getNfa_phase180() {
+		return Nfa_phase180;
+	}
+
+	public boolean isCalculateT2() {
+		return calculateT2;
+	}
+
+	public boolean isIncludeB1Map() {
+		return includeB1Map;
+	}
+
+	public boolean isPerformConventionalModeling() {
+		return performConventionalModeling;
+	}
+
+	public boolean isPerformApproxModeling() {
+		return performApproxModeling;
+	}
+
+	public boolean isPerformFullModeling() {
+		return performFullModeling;
+	}
+
+	public boolean isCalculateM0() {
+		return calculateM0;
+	}
+
+	public boolean isInvertT2toR2() {
+		return invertT2toR2;
+	}
+
+	public boolean isCalculateB0() {
+		return calculateB0;
+	}
+
+	public boolean isPerformConventionalWith180Phase() {
+		return performConventionalWith180Phase;
+	}
+
+	public boolean isPerformConventionalWith0Phase() {
+		return performConventionalWith0Phase;
+	}
+
+	public boolean isGeScanner() {
+		return geScanner;
+	}
+
+	public boolean isSiemensScanner() {
+		return siemensScanner;
+	}
+
+	public boolean isUpperLeftCorner() {
+		return upperLeftCorner;
+	}
+
+	public boolean isUpperRightCorner() {
+		return upperRightCorner;
+	}
+
+	public boolean isLowerLeftCorner() {
+		return lowerLeftCorner;
+	}
+
+	public boolean isLowerRightCorner() {
+		return lowerRightCorner;
+	}
+
+	public boolean isUseSmartThresholding() {
+		return useSmartThresholding;
+	}
+
+	public boolean isUseHardThresholding() {
+		return useHardThresholding;
+	}
+
+	public float getNoiseScale() {
+		return noiseScale;
+	}
+
+	public float getHardNoiseThreshold() {
+		return hardNoiseThreshold;
+	}
+
+	/* Old Code
     public JPanel buildMethodPanel() {
         final JPanel panel = new JPanel();
         final LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
@@ -982,7 +1803,6 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         return panel;
     }
 
-    @Override
     public void stateChanged(final ChangeEvent e) {
         final Object source = e.getSource();
 
@@ -1009,4 +1829,5 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
             previousTabIndex = algoPane.getSelectedIndex();
         }
     }
+	 */
 }
