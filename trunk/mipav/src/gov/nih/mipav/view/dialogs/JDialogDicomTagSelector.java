@@ -277,7 +277,10 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
         tagTableConstraints.insets = new Insets(5, 10, 5, 10);
         tagTableConstraints.anchor = GridBagConstraints.NORTHWEST;
         tagTableConstraints.fill = GridBagConstraints.BOTH;
-        tagTableConstraints.weightx = 1;
+        tagTableConstraints.weightx = 0;
+        JLabel instrLabel = new JLabel("<html>You can also change the value of a DICOM tag by double-clicking its value in this table.<br>Remove your edits by selecting the tag and pressing the Clear button.</html>");
+        tagInformationPanel.add(instrLabel, tagTableConstraints);
+        tagTableConstraints.gridy++;
         
         String[] names = new String[]{"Tag","Name","Value"};
         DefaultTableModel model = new DicomTableModel(names, 0);
