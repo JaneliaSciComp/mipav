@@ -58,6 +58,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.HashSet;
 import java.util.Vector;
 
@@ -75,11 +77,17 @@ public class PlugInDialogWormRegistration extends JDialogStandalonePlugin implem
     private ModelImage prevImageA;     
     private int[] maxExtents;
     private JTextField  baseFileLocText;
+    private JTextField  matrixFileLocText;
+    private JTextField  outputFileLocText;
     private JTextField  baseFileNameText;
     private JTextField rangeFusionText;
     private JPanel okCancelPanel;    
-    private String baseFileDir;
+    private String baseFileDir; 
+    private String matrixFileDir;
+    private String outputFileDir;
     private Vector<Integer> includeRange;
+    private File registrationDir;
+    private File matrixDir;
 
 
     public PlugInDialogWormRegistration()
@@ -157,11 +165,7 @@ public class PlugInDialogWormRegistration extends JDialogStandalonePlugin implem
     			}
     			
     			System.err.println( maxExtents[0] + " " + maxExtents[1] + " " + maxExtents[2] );
-	            File registrationDir = new File(baseFileDir + File.separator + "registration");
-	            if ( !registrationDir.exists() )
-	            {
-	            	registrationDir.mkdir();
-	            }
+    			setupOutputDirectories();
     			boolean first = true;
     			for ( int i = 0; i < includeRange.size(); i++ )
     			{
@@ -177,7 +181,25 @@ public class PlugInDialogWormRegistration extends JDialogStandalonePlugin implem
     	                	wormImageA = null;
     	                }
     	                wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
-    	                register( registrationDir, first );
+    	                
+
+    	                TransMatrix matrix = null;
+    	                String matName = "registration_" + includeRange.elementAt(i) + ".mtx";
+    	                final File matFile = new File( matrixFileDir + File.separator + matName );
+    	                if ( matFile.exists() )
+    	                {
+							try {
+								RandomAccessFile raFile = new RandomAccessFile(matFile, "r");
+								matrix = new TransMatrix(4);
+	    	                	matrix.readMatrix(raFile, false);
+	    	                	raFile.close();
+					        } catch (final IOException error) {
+//					            MipavUtil.displayError("Matrix read error");
+					        	matrix = null;
+					        }
+    	                }
+    	                
+    	                register( registrationDir, first, matrix );
     	                if ( first )
     	                {
     	                	first = false;
@@ -219,15 +241,12 @@ public class PlugInDialogWormRegistration extends JDialogStandalonePlugin implem
     			}
     			
 
+    			System.err.println( maxExtents[0] + " " + maxExtents[1] + " " + maxExtents[2] );
+    			setupOutputDirectories();
+	            
     			fileCount = 0;
     			fileExists = true;
     			boolean first = true;
-    			System.err.println( maxExtents[0] + " " + maxExtents[1] + " " + maxExtents[2] );
-	            File registrationDir = new File(baseFileDir + File.separator + "registration");
-	            if ( !registrationDir.exists() )
-	            {
-	            	registrationDir.mkdir();
-	            }
     			while ( fileExists )
     			{    	    	
     				String fileName = baseFileNameText.getText() + "_" + fileCount + "_straight"  + ".tif";
@@ -241,7 +260,23 @@ public class PlugInDialogWormRegistration extends JDialogStandalonePlugin implem
     	                	wormImageA = null;
     	                }
     	                wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
-    	                register( registrationDir, first );
+
+    	                TransMatrix matrix = null;
+    	                String matName = "registration_" + fileCount + ".mtx";
+    	                final File matFile = new File( matrixFileDir + File.separator + matName );
+    	                if ( matFile.exists() )
+    	                {
+							try {
+								RandomAccessFile raFile = new RandomAccessFile(matFile, "r");
+								matrix = new TransMatrix(4);
+	    	                	matrix.readMatrix(raFile, false);
+	    	                	raFile.close();
+					        } catch (final IOException error) {
+//					            MipavUtil.displayError("Matrix read error");
+					        	matrix = null;
+					        }
+    	                }
+    	                register( registrationDir, first, matrix );
     	                if ( first )
     	                {
     	                	first = false;
@@ -255,6 +290,7 @@ public class PlugInDialogWormRegistration extends JDialogStandalonePlugin implem
     	            }
     			}
     		}
+    		MipavUtil.displayInfo( "Done Batch Registration" );
     	}
         if(wormImageA != null) {
         	wormImageA.disposeLocal();
@@ -271,7 +307,7 @@ public class PlugInDialogWormRegistration extends JDialogStandalonePlugin implem
     {
     	setResizable(true);
     	setForeground(Color.black);
-    	setTitle("Lattice Straighten 1.0");
+    	setTitle("Worm Registration");
     	try {
     		setIconImage(MipavUtil.getIconImage("divinci.gif"));
     	} catch (FileNotFoundException e) {
@@ -297,6 +333,10 @@ public class PlugInDialogWormRegistration extends JDialogStandalonePlugin implem
     	baseFileLocText = gui.buildFileField("Directory containing input images: ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
     	panel.add(baseFileLocText.getParent(), gbc);
     	gbc.gridy++;
+    	
+    	matrixFileLocText = gui.buildFileField("Directory containing transformation matrices: ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
+    	panel.add(matrixFileLocText.getParent(), gbc);
+    	gbc.gridy++;
 
     	baseFileNameText = gui.buildField("Base images name: ", "Decon");
     	panel.add(baseFileNameText.getParent(), gbc);
@@ -308,16 +348,17 @@ public class PlugInDialogWormRegistration extends JDialogStandalonePlugin implem
 
     	getContentPane().add(panel, BorderLayout.NORTH);
 
-    	
-
     	gbc.gridx = 0;
     	gbc.gridy = 0;
     	panel = new JPanel(new GridBagLayout());
     	panel.setBorder(buildTitledBorder("Output Options"));
     	panel.setForeground(Color.black);
+    	outputFileLocText = gui.buildFileField("Save images to: ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
+    	panel.add(outputFileLocText.getParent(), gbc);
+    	gbc.gridy++;
 
     	getContentPane().add(panel, BorderLayout.CENTER);
-
+    	
     	okCancelPanel = gui.buildOKCancelPanel();
     	getContentPane().add(okCancelPanel, BorderLayout.SOUTH);
     	
@@ -340,6 +381,9 @@ public class PlugInDialogWormRegistration extends JDialogStandalonePlugin implem
 	private boolean setVariables()
 	{	    
 	    baseFileDir = baseFileLocText.getText();
+	    matrixFileDir = matrixFileLocText.getText();
+	    outputFileDir = outputFileLocText.getText();
+//	    System.err.println( "matrixFileDir = " + matrixFileDir );
 	    includeRange = new Vector<Integer>();
 	    String rangeFusion = rangeFusionText.getText();
 	    if(rangeFusion != null) {  
@@ -383,7 +427,7 @@ public class PlugInDialogWormRegistration extends JDialogStandalonePlugin implem
 		final float zresA = refImage.getFileInfo(0).getResolutions()[2];
 		if (reg3.isCompleted()) {
 			final TransMatrix finalMatrix = reg3.getTransform();
-
+			saveMatrix( finalMatrix, matchImage );
 
 			final String name = JDialogBase.makeImageName(matchImage.getImageName(), "_register");
 
@@ -417,6 +461,48 @@ public class PlugInDialogWormRegistration extends JDialogStandalonePlugin implem
 
 	}
 	
+	
+	private ModelImage getTransformedImage( ModelImage refImage, ModelImage matchImage, TransMatrix finalMatrix )
+	{
+
+		final int xdimA = refImage.getExtents()[0];
+		final int ydimA = refImage.getExtents()[1];
+		final int zdimA = refImage.getExtents()[2];
+		final float xresA = refImage.getFileInfo(0).getResolutions()[0];
+		final float yresA = refImage.getFileInfo(0).getResolutions()[1];
+		final float zresA = refImage.getFileInfo(0).getResolutions()[2];
+
+
+		final String name = JDialogBase.makeImageName(matchImage.getImageName(), "_register");
+
+		AlgorithmTransform transform = new AlgorithmTransform(matchImage, finalMatrix, 0, xresA, yresA, zresA, xdimA,
+				ydimA, zdimA, true, false, false);
+
+		transform.setUpdateOriginFlag(true);
+		transform.setFillValue((float)matchImage.getMin());
+		transform.run();
+		ModelImage resultImage = transform.getTransformedImage();
+		if ( resultImage != null )
+		{
+			resultImage.calcMinMax();
+			resultImage.setImageName(name);
+
+			resultImage.getMatrixHolder().replaceMatrices(refImage.getMatrixHolder().getMatrices());
+
+			for (int i = 0; i < resultImage.getExtents()[2]; i++) {
+				resultImage.getFileInfo(i).setOrigin(refImage.getFileInfo(i).getOrigin());
+			}
+		}
+
+		transform.finalize();
+		if (transform != null) {
+			transform.disposeLocal();
+			transform = null;
+		}
+		return resultImage;
+
+	}
+	
     private void saveTransformImage( File dir, ModelImage image  ) 
 	{
     	String imageName = image.getImageName();
@@ -434,8 +520,117 @@ public class PlugInDialogWormRegistration extends JDialogStandalonePlugin implem
 		image.setImageName(imageName);
         ModelImage.saveImage( image, imageName + ".tif", voiDir ); 
     }
+
+	
+    private void saveMatrix( TransMatrix matrix, ModelImage image  ) 
+	{
+    	String imageName = image.getImageName();
+    	if ( imageName.contains("_pad") )
+    	{
+    		imageName = imageName.replaceAll("_pad", "" );
+    	}
+    	if ( imageName.contains("_register") )
+    	{
+    		imageName = imageName.replaceAll("_register", "" );
+    	}
+    	if ( imageName.contains("Decon_") )
+    	{
+    		imageName = imageName.replaceAll("Decon_", "" );
+    	}
+    	if ( imageName.contains("Neuron_") )
+    	{
+    		imageName = imageName.replaceAll("Neuron_", "" );
+    	}
+    	if ( imageName.contains("_straight") )
+    	{
+    		imageName = imageName.replaceAll("_straight", "" );
+    	}
+		String matDir = matrixDir.getAbsolutePath() + File.separator;
+		matrix.saveMatrix( matDir + "registration_" + imageName + ".mtx" );
+    }
     
-    private void register( File registrationDir, boolean first )
+    private void setupOutputDirectories()
+    {
+        registrationDir = new File(outputFileDir);
+        if ( !registrationDir.exists() )
+        {
+        	registrationDir.mkdir();
+        }
+        else 
+        {
+        	if ( includeRange != null )
+        	{
+        		String[] list = registrationDir.list();
+        		for ( int i = 0; i < list.length; i++ )
+        		{
+        			for ( int j = 0; j < includeRange.size(); j++ )
+        			{
+        				if ( list[i].contains("_" + includeRange.elementAt(j) + "_straight") )
+        				{
+//        					System.err.println( "Deleting " + list[i] );
+        					File regFile = new File( outputFileDir + File.separator + "registration" + File.separator + list[i] );
+        					regFile.delete();
+        					break;
+        				}
+        			}
+        		}
+        	}
+        	else
+        	{
+        		String[] list = registrationDir.list();
+        		for ( int i = 0; i < list.length; i++ )
+        		{
+//        			System.err.println( "Deleting " + list[i] );
+        			File regFile = new File( outputFileDir + File.separator + "registration" + File.separator + list[i] );
+        			regFile.delete();
+        		}
+        	}
+        }
+        
+        System.err.println( matrixFileDir.equals("") );
+        if ( !matrixFileDir.equals("") )
+        {
+        	return;
+        }
+        matrixDir = new File(baseFileDir + File.separator + "matrix");
+        if ( !matrixDir.exists() )
+        {
+        	matrixDir.mkdir();
+        }
+        else
+        {
+        	if ( includeRange != null )
+        	{
+        		String[] list = matrixDir.list();
+        		for ( int i = 0; i < list.length; i++ )
+        		{
+        			for ( int j = 0; j < includeRange.size(); j++ )
+        			{
+        				if ( list[i].contains("registration_" + includeRange.elementAt(j) ) )
+        				{
+//        					System.err.println( "Deleting " + list[i] );
+        					File regFile = new File( baseFileDir + File.separator + "matrix" + File.separator + list[i] );
+        					regFile.delete();
+        					break;
+        				}
+        			}
+        		}
+        	}
+        	else
+        	{
+        		String[] list = matrixDir.list();
+        		for ( int i = 0; i < list.length; i++ )
+        		{
+        			System.err.println( "Deleting " + list[i] );
+        			File regFile = new File( baseFileDir + File.separator + "matrix" + File.separator + list[i] );
+        			regFile.delete();
+        		}
+        	}
+        }
+    }
+    
+    
+    private void register( File registrationDir, boolean first, TransMatrix matrix )
     {
 		int[] marginX = new int[2];
 		int[] marginY = new int[2];
@@ -468,10 +663,14 @@ public class PlugInDialogWormRegistration extends JDialogStandalonePlugin implem
     		if ( first )
     		{
     			saveTransformImage( registrationDir, destImage );
+		        if(prevImageA != null) {
+		        	prevImageA.disposeLocal();
+		        	prevImageA = null;
+		        }
     			prevImageA = destImage;
     			first = false;
     		}
-    		else
+    		else if ( matrix == null )
     		{
     			AlgorithmRegOAR3D reg = new AlgorithmRegOAR3D(prevImageA, destImage, 1, 6, 0,
     					-5, 5, 1.5f, .6f, -5, 5, 1.5f, .6f, -5, 5, 1.5f, .6f, true, true, true, 
@@ -488,37 +687,80 @@ public class PlugInDialogWormRegistration extends JDialogStandalonePlugin implem
     		        }
     				prevImageA = result;
     			}
+    			reg.finalize();
+    			reg = null;
+
+    			destImage.disposeLocal();
+    			destImage = null;
     		}
-    	}
-    	else
-    	{
-    		if ( first )
+    		else if ( matrix != null )
     		{
-    			saveTransformImage( registrationDir, wormImageA );
-    			prevImageA = wormImageA;
-    			first = false;
-    		}
-    		else if ( prevImageA != null )
-    		{
-    			AlgorithmRegOAR3D reg = new AlgorithmRegOAR3D(prevImageA, wormImageA, 
-    					AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION, 6, 0,
-    					-30, 30, 15, 6, -30, 30, 15, 6, -30, 30, 15, 6, true, true, true, 
-                        false, 2, 3);
-    			reg.setRunningInSeparateThread(false);
-    			reg.run();
-    			ModelImage result = getTransformedImage( reg, prevImageA, wormImageA );
+    			ModelImage result = getTransformedImage( prevImageA, destImage, matrix );
     			if ( result != null )
     			{
     				saveTransformImage( registrationDir, result );
-
     		        if(prevImageA != null) {
     		        	prevImageA.disposeLocal();
     		        	prevImageA = null;
     		        }
     				prevImageA = result;
     			}
-    			reg.finalize();
-    			reg = null;
+
+    			destImage.disposeLocal();
+    			destImage = null;
+    		}
+    		pad.finalize();
+    		pad = null;
+    	}
+    	else
+    	{
+    		if ( first )
+    		{
+    			saveTransformImage( registrationDir, wormImageA );
+		        if(prevImageA != null) {
+		        	prevImageA.disposeLocal();
+		        	prevImageA = null;
+		        }
+    			prevImageA = wormImageA;
+    			first = false;
+    		}
+    		else if ( prevImageA != null )
+    		{
+    			if ( matrix == null )
+    			{
+    				AlgorithmRegOAR3D reg = new AlgorithmRegOAR3D(prevImageA, wormImageA, 
+    						AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION, 6, 0,
+    						-30, 30, 15, 6, -30, 30, 15, 6, -30, 30, 15, 6, true, true, true, 
+    						false, 2, 3);
+    				reg.setRunningInSeparateThread(false);
+    				reg.run();
+    				ModelImage result = getTransformedImage( reg, prevImageA, wormImageA );
+    				if ( result != null )
+    				{
+    					saveTransformImage( registrationDir, result );
+
+    					if(prevImageA != null) {
+    						prevImageA.disposeLocal();
+    						prevImageA = null;
+    					}
+    					prevImageA = result;
+    				}
+    				reg.finalize();
+    				reg = null;
+    			}
+        		else if ( matrix != null )
+        		{
+        			ModelImage result = getTransformedImage( prevImageA, wormImageA, matrix );
+        			if ( result != null )
+        			{
+        				saveTransformImage( registrationDir, result );
+        		        if(prevImageA != null) {
+        		        	prevImageA.disposeLocal();
+        		        	prevImageA = null;
+        		        }
+        				prevImageA = result;
+        			}
+        		}
     		}
     	}
     }
