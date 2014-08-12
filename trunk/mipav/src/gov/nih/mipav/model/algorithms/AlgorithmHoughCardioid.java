@@ -20,6 +20,9 @@ import java.io.*;
  *  The default number of cardioids is 1. The program generates a Hough transform of the source image using the basic
  *  In general:
  *  sqrt((x - x0)**2 + (y - y0)**2) = rad*(1 - cos(theta + theta0))
+ *  ((x-x0)**2 + (y-y0)**2 - rad*((x-x0)*cos*(theta0) - (y-y0)*sin(theta0)) = rad*sqrt((x-x0)**2 + (y-y0)**2)
+ *  dy/dx = (-2*(x-x0) + rad*cos(theta0) + rad*(x-x0)/sqrt((x-x0)**2 + (y-y0)**2))/
+ *          (2*(y-y0) - rad*sin(theta0) - rad*(y-y0)/sqrt((x-x0)**2 + (y-y0)**2))
  *  x = x0 + rad*cos(theta)*(1 - cos(theta + theta0))
  *  y = y0 + rad*sin(theta)*(1 - cos(theta + theta0))
  *  For cusp on the left:
