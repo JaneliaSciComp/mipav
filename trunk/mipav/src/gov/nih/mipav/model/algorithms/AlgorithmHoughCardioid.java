@@ -18,13 +18,25 @@ import java.io.*;
  *  min(512, image.getExtents()[0]).  The default size for y0 is min(512, image.getExtents()[1]).
  *  The default size for rad is min(512, max(image.getExtents()[0], image.getExtents()[1]).
  *  The default number of cardioids is 1. The program generates a Hough transform of the source image using the basic
+ *  equations:
+ *  theta = atan2(y - d2, x - d1).
+ *  Calculate d3 = sqrt((x - d1)**2 + (y - d2)**2)/(1 - cos(theta + theta0)) if theta != -theta0
  *  In general:
  *  sqrt((x - x0)**2 + (y - y0)**2) = rad*(1 - cos(theta + theta0))
  *  ((x-x0)**2 + (y-y0)**2 - rad*((x-x0)*cos*(theta0) - (y-y0)*sin(theta0)) = rad*sqrt((x-x0)**2 + (y-y0)**2)
  *  dy/dx = (-2*(x-x0) + rad*cos(theta0) + rad*(x-x0)/sqrt((x-x0)**2 + (y-y0)**2))/
  *          (2*(y-y0) - rad*sin(theta0) - rad*(y-y0)/sqrt((x-x0)**2 + (y-y0)**2))
  *  x = x0 + rad*cos(theta)*(1 - cos(theta + theta0))
+ *    = x0 + rad(-0.5*cos(theta0) + cos(theta) - 0.5*cos(2*theta + theta0))
  *  y = y0 + rad*sin(theta)*(1 - cos(theta + theta0))
+ *    = y0 + rad*(0.5*sin(theta0) + sin(theta) -0.5*sin(2*theta + theta0))
+ *  dy/dx = dy/dtheta/dx/dtheta = (-cos(2*theta + theta0) + cos(theta))/(sin(2*theta + theta0) - sin(theta))
+ *        = tan((1/2)*(3*theta + theta0))
+ *  All cusp chords are of length 2 * rad.
+ *  The tangents to the endpoints of a cusp chord are perpindicular.
+ *  Every slope value occurs 3 times.
+ *  If 3 points have parallel tangents, the lines from the cusp to these 3 points make equal angles
+ *  of 2*PI/3 at the cusp.
  *  For cusp on the left:
  *  sqrt((x - x0)**2 + (y - y0)**2) = rad*(1 + cos(theta)).
  *  x = x0 + (rad/2)*(1 + 2*cos(theta) + cos(2*theta))) = x0 + rad*cos(theta)*(1 + cos(theta))
