@@ -3,7 +3,6 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
@@ -49,10 +48,6 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
     
     private JTextField y0Text;
     
-    JTextField theta0Text;
-    
-    private double theta0;
-    
     private int rad;
 
     /** DOCUMENT ME! */
@@ -61,6 +56,11 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
     private int numCardioids;
     
     private JTextField numCardioidsText;
+    
+    /** Maximum number of points to take from each side of a point on a curve in determining a tangent */
+    private int sidePointsForTangent;
+    
+    private JTextField sideText;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -196,8 +196,8 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
             resultImage.setImageName(name);
 
             // Make algorithm
-            hAlgo = new AlgorithmHoughCardioid(resultImage, image, theta0,
-            		    x0, y0, rad, numCardioids);
+            hAlgo = new AlgorithmHoughCardioid(resultImage, image,
+            		    x0, y0, rad, numCardioids, sidePointsForTangent);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -234,11 +234,12 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
      */
     private void init() {
         JLabel mainLabel;
-        JLabel theta0Label;
+        JLabel mainLabel2;
         JLabel x0Label;
         JLabel y0Label;
         JLabel radLabel;
         JLabel numCardioidsLabel;
+        JLabel sideLabel;
         int xDim = Math.min(512, image.getExtents()[0]);
         int yDim = Math.min(512, image.getExtents()[1]);
         int rDim = Math.min(512, Math.max(image.getExtents()[0], image.getExtents()[1]));
@@ -260,33 +261,25 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
         gbc6.gridx = 0;
         gbc6.gridy = 0;
         
-        mainLabel = new JLabel("sqrt((x - x0)**2 + (y - y0)**2) = rad*(1 - cos(theta + theta0))");
+        mainLabel = new JLabel("theta = arctan((y-y0)/(x-x0))");
         mainLabel.setForeground(Color.black);
         mainLabel.setFont(serif12);
         mainLabel.setEnabled(true);
         paramPanel.add(mainLabel, gbc6);
         
-        theta0Label = new JLabel("Cusp angular position theta0 (right = 0.0 top = 90.0)");
-        theta0Label.setForeground(Color.black);
-        theta0Label.setFont(serif12);
-        theta0Label.setEnabled(true);
-        gbc6.gridx = 0;
-        gbc6.gridy = 1;
-        paramPanel.add(theta0Label, gbc6);
-
-        theta0Text = new JTextField(10);
-        theta0Text.setText(String.valueOf(0.0));
-        theta0Text.setFont(serif12);
-        theta0Text.setEnabled(true);
-        gbc6.gridx = 1;
-        paramPanel.add(theta0Text, gbc6);
+        mainLabel2 = new JLabel("sqrt((x - x0)**2 + (y - y0)**2) = rad*(1 - cos(theta + theta0))");
+        mainLabel2.setForeground(Color.black);
+        mainLabel2.setFont(serif12);
+        mainLabel2.setEnabled(true);
+        gbc6.gridy++;
+        paramPanel.add(mainLabel2, gbc6);
 
         x0Label = new JLabel("x0 dimension of Hough transform image ");
         x0Label.setForeground(Color.black);
         x0Label.setFont(serif12);
         x0Label.setEnabled(true);
         gbc6.gridx = 0;
-        gbc6.gridy = 2;
+        gbc6.gridy++;
         paramPanel.add(x0Label, gbc6);
 
         x0Text = new JTextField(10);
@@ -301,7 +294,7 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
         y0Label.setFont(serif12);
         y0Label.setEnabled(true);
         gbc6.gridx = 0;
-        gbc6.gridy = 3;
+        gbc6.gridy++;
         paramPanel.add(y0Label, gbc6);
 
         y0Text = new JTextField(10);
@@ -316,7 +309,7 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
         radLabel.setFont(serif12);
         radLabel.setEnabled(true);
         gbc6.gridx = 0;
-        gbc6.gridy = 4;
+        gbc6.gridy++;
         paramPanel.add(radLabel, gbc6);
 
         radText = new JTextField(10);
@@ -331,7 +324,7 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
         numCardioidsLabel.setFont(serif12);
         numCardioidsLabel.setEnabled(true);
         gbc6.gridx = 0;
-        gbc6.gridy = 5;
+        gbc6.gridy++;
         paramPanel.add(numCardioidsLabel, gbc6);
         
         numCardioidsText = new JTextField(3);
@@ -340,6 +333,21 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
         numCardioidsText.setEnabled(true);
         gbc6.gridx = 1;
         paramPanel.add(numCardioidsText, gbc6);
+        
+        sideLabel = new JLabel("Maximum curve points on each side for tangent ");
+        sideLabel.setForeground(Color.black);
+        sideLabel.setFont(serif12);
+        sideLabel.setEnabled(true);
+        gbc6.gridx = 0;
+        gbc6.gridy++;
+        paramPanel.add(sideLabel, gbc6);
+
+        sideText = new JTextField(10);
+        sideText.setText("3");
+        sideText.setFont(serif12);
+        sideText.setEnabled(true);
+        gbc6.gridx = 1;
+        paramPanel.add(sideText, gbc6);
 
         getContentPane().add(paramPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -354,20 +362,6 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
-    	
-    	if (!testParameter(theta0Text.getText(), 0, 359.9999999)) {
-            theta0Text.requestFocus();
-            theta0Text.selectAll();
-
-            return false;
-        } else {
-            theta0 = (Math.PI/180.0)*Double.valueOf(theta0Text.getText()).doubleValue();
-            // Change to range -PI to PI
-            if (theta0 > Math.PI) {
-            	theta0 = theta0 - 2.0 * Math.PI;
-            }
-        }
-
 
         if (!testParameter(x0Text.getText(), 5, 1000000)) {
             x0Text.requestFocus();
@@ -403,6 +397,15 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
             return false;
         } else {
             numCardioids = Integer.valueOf(numCardioidsText.getText()).intValue();
+        }
+        
+        if (!testParameter(sideText.getText(), 1, 10)) {
+            sideText.requestFocus();
+            sideText.selectAll();
+
+            return false;
+        } else {
+            sidePointsForTangent = Integer.valueOf(sideText.getText()).intValue();
         }
 
         return true;
