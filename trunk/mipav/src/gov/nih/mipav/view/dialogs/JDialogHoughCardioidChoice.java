@@ -31,11 +31,9 @@ public class JDialogHoughCardioidChoice extends JDialogBase {
     
     private int yDim;
     
-    private double radArray[];
+    private double a0Array[];
     
-    private double maxRad;
-    
-    private double theta0Array[];
+    private double maxA;
     
     private int countArray[];
     
@@ -58,23 +56,21 @@ public class JDialogHoughCardioidChoice extends JDialogBase {
      * @param  xDim
      * @param  y0Array
      * @param  yDim
-     * @param  radArray
-     * @param  maxRad
-     * @param  theta0Array
+     * @param  a0Array
+     * @param  maxA
      * @param  countArray
      * @param  selectedCardioid
      */
     public JDialogHoughCardioidChoice(Frame theParentFrame, double x0Array[], int xDim, double y0Array[], int yDim,
-                                  double radArray[], double maxRad, double theta0Array[], int countArray[],
+                                  double a0Array[], double maxA, int countArray[],
                                   boolean selectedCardioid[]) {
         super(theParentFrame, true);
         this.x0Array = x0Array;
         this.xDim = xDim;
         this.y0Array = y0Array;
         this.yDim = yDim;
-        this.radArray = radArray;
-        this.maxRad = maxRad;
-        this.theta0Array = theta0Array;
+        this.a0Array = a0Array;
+        this.maxA = maxA;
         this.countArray = countArray;
         this.selectedCardioid = selectedCardioid;
         numCardioidsFound = selectedCardioid.length;
@@ -135,11 +131,9 @@ public class JDialogHoughCardioidChoice extends JDialogBase {
         int i;
         JLabel x0LabelArray[] = new JLabel[numCardioidsFound];
         JLabel y0LabelArray[] = new JLabel[numCardioidsFound];
-        JLabel radLabelArray[] = new JLabel[numCardioidsFound];
-        JLabel theta0LabelArray[] = new JLabel[numCardioidsFound];
+        JLabel a0LabelArray[] = new JLabel[numCardioidsFound];
         JLabel countLabelArray[] = new JLabel[numCardioidsFound];
         selectedArray = new JCheckBox[numCardioidsFound];
-        double theta0;
         setTitle("Hough transform cardioid selection");
   
         JPanel createPanel = new JPanel(new GridBagLayout());
@@ -152,31 +146,26 @@ public class JDialogHoughCardioidChoice extends JDialogBase {
         gbc.insets = new Insets(0, 20, 0, 0);
         
         gbc.gridx = 0;
-        JLabel x0Label = new JLabel("x0(0-"+ String.valueOf(xDim-1) + ")");
+        JLabel x0Label = new JLabel("x(0-"+ String.valueOf(xDim-1) + ")");
         x0Label.setFont(serif12);
         createPanel.add(x0Label, gbc);
         
         gbc.gridx = 1;
-        JLabel y0Label = new JLabel("y0(0-" + String.valueOf(yDim-1) + ")");
+        JLabel y0Label = new JLabel("y(0-" + String.valueOf(yDim-1) + ")");
         y0Label.setFont(serif12);
         createPanel.add(y0Label, gbc);
         
         gbc.gridx = 2;
-        JLabel radLabel = new JLabel("radius(0 - " + String.valueOf(maxRad) + ")");
+        JLabel radLabel = new JLabel("a(0 - " + String.valueOf(maxA) + ")");
         radLabel.setFont(serif12);
         createPanel.add(radLabel, gbc);
         
         gbc.gridx = 3;
-        JLabel theta0Label = new JLabel("theta0(0 - 359.00)");
-        theta0Label.setFont(serif12);
-        createPanel.add(theta0Label, gbc);
-        
-        gbc.gridx = 4;
         JLabel countLabel = new JLabel("Points counted");
         countLabel.setFont(serif12);
         createPanel.add(countLabel, gbc);
         
-        gbc.gridx = 5;
+        gbc.gridx = 4;
         JLabel selectLabel = new JLabel("Select cardioids");
         selectLabel.setFont(serif12);
         createPanel.add(selectLabel, gbc);
@@ -194,26 +183,16 @@ public class JDialogHoughCardioidChoice extends JDialogBase {
             createPanel.add(y0LabelArray[i], gbc);
             
             gbc.gridx = 2;
-            radLabelArray[i] = new JLabel(df.format(radArray[i]));
-            radLabelArray[i].setFont(serif12);
-            createPanel.add(radLabelArray[i], gbc);
+            a0LabelArray[i] = new JLabel(df.format(a0Array[i]));
+            a0LabelArray[i].setFont(serif12);
+            createPanel.add(a0LabelArray[i], gbc);
             
             gbc.gridx = 3;
-            theta0 = theta0Array[i];
-            if (theta0 < 0.0) {
-            	theta0 = theta0 + 2.0 * Math.PI;
-            }
-            theta0 = 180.0 * theta0/Math.PI;
-            theta0LabelArray[i] = new JLabel(df.format(theta0));
-            theta0LabelArray[i].setFont(serif12);
-            createPanel.add(theta0LabelArray[i], gbc);
-            
-            gbc.gridx = 4;
             countLabelArray[i] = new JLabel(String.valueOf(countArray[i]));
             countLabelArray[i].setFont(serif12);
             createPanel.add(countLabelArray[i], gbc);
             
-            gbc.gridx = 5;
+            gbc.gridx = 4;
             selectedArray[i] = new JCheckBox("");
             selectedArray[i].setSelected(false);
             selectedArray[i].setFont(serif12);
@@ -235,3 +214,4 @@ public class JDialogHoughCardioidChoice extends JDialogBase {
         setVisible(true);
     }
 }
+
