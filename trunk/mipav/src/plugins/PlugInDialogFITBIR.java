@@ -189,7 +189,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static boolean ddUseAuthService = false;
 
-    private List<DataStructure> dataStructureList;
+    private List<FormStructure> dataStructureList;
 
     private File csvFile;
 
@@ -211,7 +211,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.22";
+    private static final String pluginVersion = "0.23";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -973,7 +973,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             // format: "structname_-_PREFIXGUID"
             final String lowerName = getStructFromString(tableName).toLowerCase();
             if ( !csvStructRowData.containsKey(lowerName)) {
-                DataStructure dsInfo = null;
+                FormStructure dsInfo = null;
                 for (final FormStructureData fs : fsDataList) {
                     if (fs.getStructInfo().getShortName().toLowerCase().equals(lowerName)) {
                         dsInfo = fs.getStructInfo();
@@ -1018,7 +1018,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     final RepeatableGroup g = orderedGroupList.get(groupNum);
                     final ArrayList<MapElement> deList = orderedElementListsByGroup.get(groupNum);
                     for (int deNum = 0; deNum < deList.size(); deNum++) {
-                        elementHeader += CSV_OUTPUT_DELIM + g.getName() + "." + deList.get(deNum).getName();
+                        elementHeader += CSV_OUTPUT_DELIM + g.getName() + "." + deList.get(deNum).getStructuralDataElement().getName();
                     }
                 }
 
@@ -2119,6 +2119,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      *         format).
      */
     private static final String convertDateToISOFormat(final String date) {
+        if (date == null) {
+            return "";
+        }
+
         final String pattern = "^(\\d{1,2})[/-]*(\\d{1,2})[/-]*(\\d{4})$";
         final Pattern p = Pattern.compile(pattern);
         final Matcher m = p.matcher(date);
@@ -2147,7 +2151,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      * @return An ISO 8601 formatted version of the given date and time (or the original string if not in the DICOM/US
      *         date format).
      */
-    private static final String convertDateTimeToISOFormat(final String date, final String time) {
+    private static final String convertDateTimeToISOFormat(String date, String time) {
+        if (date == null) {
+            date = "";
+        }
+        if (time == null) {
+            time = "";
+        }
+
         String isoDate = date.trim();
         String isoTime = time.trim();
 
@@ -3040,7 +3051,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             structsTable.getColumn("Status").setPreferredWidth(40);
 
             // new way of doing web service
-            for (final DataStructure ds : dataStructureList) {
+            for (final FormStructure ds : dataStructureList) {
                 if (ds.getShortName().equals("")) {
                     // something is wrong. a shortname is required. this is to work around an apparent stage DDT problem
                     continue;
@@ -3236,7 +3247,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         private boolean addedPreviewImage = false;
 
-        private DataStructure dataStructure;
+        private FormStructure dataStructure;
 
         private final boolean setInitialVisible;
 
@@ -3271,7 +3282,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 this.dataStructureName = name;
             }
 
-            for (final DataStructure ds : dataStructureList) {
+            for (final FormStructure ds : dataStructureList) {
                 if (ds.getShortName().equalsIgnoreCase(dataStructureName)) {
                     dataStructure = ds;
                 }
@@ -3317,7 +3328,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         for (int i = 0; i < csvFieldNames.size(); i++) {
                             final String[] deGroupAndName = splitFieldString(csvFieldNames.get(i));
 
-                            DataElement de = null;
+                            StructuralDataElement de = null;
                             for (final GroupRepeat repeat : fsData.getAllGroupRepeats(deGroupAndName[0])) {
                                 for (final DataElementValue deVal : repeat.getDataElements()) {
                                     if (deVal.getName().equalsIgnoreCase(deGroupAndName[1])) {
@@ -3951,7 +3962,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     egbc.gridx = 0;
                     egbc.anchor = GridBagConstraints.WEST;
 
-                    final DataElement deInfo = deVal.getDataElementInfo();
+                    final StructuralDataElement deInfo = deVal.getDataElementInfo();
 
                     if (deInfo.getType().equals(DataType.FILE)) {
                         elementPanel.add(deVal.getComp(), egbc);
@@ -4001,7 +4012,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             return repeatPanel;
         }
 
-        private void parseDataStructure(final DataStructure dataStructure, final FormStructureData fsData, final ArrayList<ArrayList<String>> record) {
+        private void parseDataStructure(final FormStructure dataStructure, final FormStructureData fsData, final ArrayList<ArrayList<String>> record) {
             // setup the group bins in the form data
             for (final RepeatableGroup g : dataStructure.getRepeatableGroups()) {
                 // if the group repeats an exact number of times, create them now
@@ -4048,27 +4059,33 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
             for (final MapElement de : group.getDataElements()) {
                 final DataElementValue newDeVal = new DataElementValue(repeat, de);
+                final DataElement deFullInfo = fsData.getDataElement(de.getStructuralDataElement().getName());
 
                 JLabel l;
 
-                l = new JLabel(de.getTitle());
-                l.setFont(MipavUtil.font12);
-                l.setName(de.getName());
+                l = new JLabel(deFullInfo.getTitle());
+                // l = new JLabel(de.getStructuralDataElement().getName());
 
-                String tooltip = "<html><p><b>Name:</b> " + de.getName() + "<br/>";
+                l.setFont(MipavUtil.font12);
+                l.setName(de.getStructuralDataElement().getName());
+
+                String tooltip = "<html><p><b>Name:</b> " + de.getStructuralDataElement().getName() + "<br/>";
                 tooltip += "<b>Required?:</b> " + de.getRequiredType().getValue() + "<br/>";
-                tooltip += "<b>Description:</b><br/>" + WordUtils.wrap(de.getDescription(), 80, "<br/>", false);
+                tooltip += "<b>Description:</b><br/>" + WordUtils.wrap(deFullInfo.getDescription(), 80, "<br/>", false);
                 tooltip += "</p></html>";
                 l.setToolTipText(tooltip);
+
+                for (final Alias a : de.getStructuralDataElement().getAliasList()) {
+                    System.out.println(a);
+                }
 
                 // if valuerange is enumeration, create a combo box...otherwise create a textfield
 
                 // special handling of SiteName for PDBP, where they want to use a set of permissible values
-                // with
-                // the free-form DE
-                if (isPDBPImagingStructure(dataStructure.getShortName()) && de.getName().equalsIgnoreCase(SITE_NAME_ELEMENT_NAME)) {
+                // with the free-form DE
+                if (isPDBPImagingStructure(dataStructure.getShortName()) && de.getStructuralDataElement().getName().equalsIgnoreCase(SITE_NAME_ELEMENT_NAME)) {
                     final JComboBox cb = new JComboBox();
-                    cb.setName(de.getName());
+                    cb.setName(de.getStructuralDataElement().getName());
                     cb.setFont(MipavUtil.font12);
                     final String[] items = PDBP_ALLOWED_SITE_NAMES;
                     cb.addItem("");
@@ -4082,18 +4099,19 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     }
 
                     tooltip = "<html>";
-                    if (de.getMeasuringUnit() != null) {
-                        tooltip += "<p><b>Unit of measure:</b> " + de.getMeasuringUnit() + "</p>";
+                    if (de.getStructuralDataElement().getMeasuringUnit() != null) {
+                        tooltip += "<p><b>Unit of measure:</b> " + de.getStructuralDataElement().getMeasuringUnit() + "</p>";
                     }
-                    if (de.getNinds() != null && !de.getNinds().getValue().equals("")) {
-                        tooltip += "<p><b>NINDS CDE ID:</b> " + de.getNinds().getValue() + "</p>";
+
+                    if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
+                        tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
                     }
-                    if (de.getGuidelines() != null && !de.getGuidelines().trim().equals("")) {
+                    if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
                         tooltip += "<p><b>Guidelines & Instructions:</b></br>"
-                                + WordUtils.wrap(removeRedundantDiseaseInfo(de.getGuidelines()), 80, "<br/>", false) + "</p>";
+                                + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
                     }
-                    if (de.getNotes() != null && !de.getNotes().trim().equals("")) {
-                        tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(de.getNotes()), 80, "<br/>", false) + "</p>";
+                    if (deFullInfo.getNotes() != null && !deFullInfo.getNotes().trim().equals("")) {
+                        tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getNotes()), 80, "<br/>", false) + "</p>";
                     }
                     tooltip += "</html>";
                     if ( !tooltip.equals("<html></html>")) {
@@ -4102,14 +4120,16 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                     newDeVal.setLabel(l);
                     newDeVal.setComp(cb);
-                } else if (de.getValueRangeList() != null && de.getValueRangeList().size() > 0 && de.getType() != null && !de.getType().equals(DataType.DATE)) {
-                    if (de.getRestrictions() == InputRestrictions.SINGLE || de.getRestrictions() == InputRestrictions.FREE_FORM) {
+                } else if (de.getStructuralDataElement().getValueRangeList() != null && de.getStructuralDataElement().getValueRangeList().size() > 0
+                        && de.getStructuralDataElement().getType() != null && !de.getStructuralDataElement().getType().equals(DataType.DATE)) {
+                    if (de.getStructuralDataElement().getRestrictions() == InputRestrictions.SINGLE
+                            || de.getStructuralDataElement().getRestrictions() == InputRestrictions.FREE_FORM) {
                         final JComboBox cb = new JComboBox();
-                        cb.setName(de.getName());
+                        cb.setName(de.getStructuralDataElement().getName());
                         cb.setFont(MipavUtil.font12);
 
                         cb.addItem("");
-                        for (final ValueRange val : de.getValueRangeList()) {
+                        for (final ValueRange val : de.getStructuralDataElement().getValueRangeList()) {
                             cb.addItem(val.getValueRange());
                         }
                         cb.addItemListener(this);
@@ -4119,18 +4139,19 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         }
 
                         tooltip = "<html>";
-                        if (de.getMeasuringUnit() != null) {
-                            tooltip += "<p><b>Unit of measure:</b> " + de.getMeasuringUnit() + "</p>";
+                        if (de.getStructuralDataElement().getMeasuringUnit() != null) {
+                            tooltip += "<p><b>Unit of measure:</b> " + de.getStructuralDataElement().getMeasuringUnit() + "</p>";
                         }
-                        if (de.getNinds() != null && !de.getNinds().getValue().equals("")) {
-                            tooltip += "<p><b>NINDS CDE ID:</b> " + de.getNinds().getValue() + "</p>";
+
+                        if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
+                            tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
                         }
-                        if (de.getGuidelines() != null && !de.getGuidelines().trim().equals("")) {
+                        if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
                             tooltip += "<p><b>Guidelines & Instructions:</b></br>"
-                                    + WordUtils.wrap(removeRedundantDiseaseInfo(de.getGuidelines()), 80, "<br/>", false) + "</p>";
+                                    + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
                         }
-                        if (de.getNotes() != null && !de.getNotes().trim().equals("")) {
-                            tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(de.getNotes()), 80, "<br/>", false) + "</p>";
+                        if (deFullInfo.getNotes() != null && !deFullInfo.getNotes().trim().equals("")) {
+                            tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getNotes()), 80, "<br/>", false) + "</p>";
                         }
                         tooltip += "</html>";
                         if ( !tooltip.equals("<html></html>")) {
@@ -4139,15 +4160,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                         newDeVal.setLabel(l);
                         newDeVal.setComp(cb);
-                    } else if (de.getRestrictions() == InputRestrictions.MULTIPLE) {
-                        final Object[] valRangeList = de.getValueRangeList().toArray();
-                        final String[] listData = new String[de.getValueRangeList().size()];
+                    } else if (de.getStructuralDataElement().getRestrictions() == InputRestrictions.MULTIPLE) {
+                        final Object[] valRangeList = de.getStructuralDataElement().getValueRangeList().toArray();
+                        final String[] listData = new String[de.getStructuralDataElement().getValueRangeList().size()];
                         for (int i = 0; i < listData.length; i++) {
                             listData[i] = ((ValueRange) valRangeList[i]).getValueRange();
                         }
 
                         final JList list = new JList(listData);
-                        list.setName(de.getName());
+                        list.setName(de.getStructuralDataElement().getName());
                         list.setFont(MipavUtil.font12);
                         list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
                         list.setLayoutOrientation(JList.VERTICAL);
@@ -4162,18 +4183,19 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         }
 
                         tooltip = "<html>";
-                        if (de.getMeasuringUnit() != null) {
-                            tooltip += "<p><b>Unit of measure:</b> " + de.getMeasuringUnit() + "</p>";
+                        if (de.getStructuralDataElement().getMeasuringUnit() != null) {
+                            tooltip += "<p><b>Unit of measure:</b> " + de.getStructuralDataElement().getMeasuringUnit() + "</p>";
                         }
-                        if (de.getNinds() != null && !de.getNinds().getValue().equals("")) {
-                            tooltip += "<p><b>NINDS CDE ID:</b> " + de.getNinds().getValue() + "</p>";
+
+                        if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
+                            tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
                         }
-                        if (de.getGuidelines() != null && !de.getGuidelines().trim().equals("")) {
+                        if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
                             tooltip += "<p><b>Guidelines & Instructions:</b></br>"
-                                    + WordUtils.wrap(removeRedundantDiseaseInfo(de.getGuidelines()), 80, "<br/>", false) + "</p>";
+                                    + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
                         }
-                        if (de.getNotes() != null && !de.getNotes().trim().equals("")) {
-                            tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(de.getNotes()), 80, "<br/>", false) + "</p>";
+                        if (deFullInfo.getNotes() != null && !deFullInfo.getNotes().trim().equals("")) {
+                            tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getNotes()), 80, "<br/>", false) + "</p>";
                         }
                         tooltip += "</html>";
                         if ( !tooltip.equals("<html></html>")) {
@@ -4185,52 +4207,54 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     }
                 } else {
                     final JTextField tf = new JTextField(20);
-                    tf.setName(de.getName());
+                    tf.setName(de.getStructuralDataElement().getName());
                     tf.setFont(MipavUtil.font12);
 
                     tf.addMouseListener(new ContextMenuMouseListener());
 
-                    tooltip = "<html><p><b>Type:</b> " + de.getType().getValue();
-                    if (de.getType().equals(DataType.ALPHANUMERIC) && de.getSize() != null) {
-                        tooltip += " (" + de.getSize() + ")";
+                    tooltip = "<html><p><b>Type:</b> " + de.getStructuralDataElement().getType().getValue();
+                    if (de.getStructuralDataElement().getType().equals(DataType.ALPHANUMERIC) && de.getStructuralDataElement().getSize() != null) {
+                        tooltip += " (" + de.getStructuralDataElement().getSize() + ")";
                     }
                     tooltip += "</p>";
 
-                    if (de.getType().equals(DataType.NUMERIC) || de.getType().equals(DataType.ALPHANUMERIC)) {
-                        if (de.getMinimumValue() != null || de.getMaximumValue() != null) {
+                    if (de.getStructuralDataElement().getType().equals(DataType.NUMERIC)
+                            || de.getStructuralDataElement().getType().equals(DataType.ALPHANUMERIC)) {
+                        if (de.getStructuralDataElement().getMinimumValue() != null || de.getStructuralDataElement().getMaximumValue() != null) {
                             tooltip += "<p>";
-                            if (de.getMinimumValue() != null) {
-                                tooltip += "<b>Min:</b> " + de.getMinimumValue() + " ";
+                            if (de.getStructuralDataElement().getMinimumValue() != null) {
+                                tooltip += "<b>Min:</b> " + de.getStructuralDataElement().getMinimumValue() + " ";
                             }
-                            if (de.getMaximumValue() != null) {
-                                tooltip += "<b>Max:</b> " + de.getMaximumValue();
+                            if (de.getStructuralDataElement().getMaximumValue() != null) {
+                                tooltip += "<b>Max:</b> " + de.getStructuralDataElement().getMaximumValue();
                             }
                             tooltip += "</p>";
                         }
                     }
 
-                    if (de.getMeasuringUnit() != null) {
-                        tooltip += "<p><b>Unit of measure:</b> " + de.getMeasuringUnit() + "</p>";
+                    if (de.getStructuralDataElement().getMeasuringUnit() != null) {
+                        tooltip += "<p><b>Unit of measure:</b> " + de.getStructuralDataElement().getMeasuringUnit() + "</p>";
                     }
-                    if (de.getNinds() != null && !de.getNinds().getValue().equals("")) {
-                        tooltip += "<p><b>NINDS CDE ID: </b>" + de.getNinds().getValue() + "</p>";
+
+                    if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
+                        tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
                     }
-                    if (de.getGuidelines() != null && !de.getGuidelines().trim().equals("")) {
-                        tooltip += "<p><b>Guidelines & Instructions:</b><br/>"
-                                + WordUtils.wrap(removeRedundantDiseaseInfo(de.getGuidelines()), 80, "<br/>", false) + "</p>";
+                    if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
+                        tooltip += "<p><b>Guidelines & Instructions:</b></br>"
+                                + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
                     }
-                    if (de.getNotes() != null && !de.getNotes().trim().equals("")) {
-                        tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(de.getNotes()), 80, "<br/>", false) + "</p>";
+                    if (deFullInfo.getNotes() != null && !deFullInfo.getNotes().trim().equals("")) {
+                        tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getNotes()), 80, "<br/>", false) + "</p>";
                     }
                     tooltip += "</html>";
                     tf.setToolTipText(tooltip);
                     tf.addFocusListener(this);
 
-                    disableUnchangableFields(de.getName(), tf);
+                    disableUnchangableFields(de.getStructuralDataElement().getName(), tf);
 
-                    if (de.getName().equalsIgnoreCase(IMG_HASH_CODE_ELEMENT_NAME)) {
+                    if (de.getStructuralDataElement().getName().equalsIgnoreCase(IMG_HASH_CODE_ELEMENT_NAME)) {
                         tf.setText("Automatically generated from selected image files.");
-                    } else if (de.getName().equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
+                    } else if (de.getStructuralDataElement().getName().equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
                         tf.setText("Automatically generated from selected image files.");
                     }
 
@@ -4745,7 +4769,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     csvPList.add(repeatValues.get(i));
                                     headerList.add(flipAngle);
                                 }
-                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgMRIT1T2SeqName")) {
+                            } else if (csvFieldNames.get(i).equalsIgnoreCase("Magnetic Resonance Information.ImgMRIT1T2SeqName") && mriT1T2Name != null
+                                    && !mriT1T2Name.equals("")) {
                                 if ( !repeatValues.get(i).trim().equals(mriT1T2Name)) {
                                     csvFList.add(csvFieldNames.get(i));
                                     csvPList.add(repeatValues.get(i));
@@ -5510,11 +5535,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             final String key = "";
             RequiredType required = null;
             DataType type = null;
+            String title = "";
 
             for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
                 for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
                     for (final DataElementValue deVal : repeat.getDataElements()) {
-                        final DataElement deInfo = deVal.getDataElementInfo();
+                        final StructuralDataElement deInfo = deVal.getDataElementInfo();
 
                         final JComponent deComp = deVal.getComp();
                         if (deComp instanceof JTextField) {
@@ -5536,15 +5562,16 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         // now we need to validate
                         required = deVal.getRequiredType();
                         type = deInfo.getType();
+                        title = fsData.getDataElement(deInfo.getName()).getTitle();
 
                         if (required.equals(RequiredType.REQUIRED)) {
                             if (value.trim().equalsIgnoreCase("")) {
-                                errs.add(deInfo.getTitle() + " is a required field");
+                                errs.add(title + " is a required field");
                                 errors.add(deVal);
                             } else {
                                 if (key.equalsIgnoreCase(GUID_ELEMENT_NAME)) {
                                     if ( !isGuid(value.trim())) {
-                                        errs.add(deInfo.getTitle() + " must begin with a valid GUID prefix");
+                                        errs.add(title + " must begin with a valid GUID prefix");
                                         errors.add(deVal);
                                     }
                                 }
@@ -5556,23 +5583,23 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 try {
                                     final float floatValue = Float.valueOf(value.trim()).floatValue();
                                     if (deInfo.getMinimumValue() != null && floatValue < deInfo.getMinimumValue().floatValue()) {
-                                        errs.add(deInfo.getTitle() + " must be in the range of " + deInfo.getMinimumValue().floatValue() + " to "
+                                        errs.add(title + " must be in the range of " + deInfo.getMinimumValue().floatValue() + " to "
                                                 + deInfo.getMaximumValue().floatValue());
                                         errors.add(deVal);
                                     } else if (deInfo.getMaximumValue() != null && floatValue > deInfo.getMaximumValue().floatValue()) {
-                                        errs.add(deInfo.getTitle() + " must be in the range of " + deInfo.getMinimumValue().floatValue() + " to "
+                                        errs.add(title + " must be in the range of " + deInfo.getMinimumValue().floatValue() + " to "
                                                 + deInfo.getMaximumValue().floatValue());
                                         errors.add(deVal);
                                     }
                                 } catch (final NumberFormatException e) {
-                                    errs.add(deInfo.getTitle() + " must be a number");
+                                    errs.add(title + " must be a number");
                                     errors.add(deVal);
                                 }
                             }
                         }
                         if (type.equals(DataType.ALPHANUMERIC)) {
                             if (deInfo.getSize() != null && deInfo.getSize() > 0 && value.length() > deInfo.getSize()) {
-                                errs.add(deInfo.getTitle() + " must not exceed " + deInfo.getSize() + " in length");
+                                errs.add(title + " must not exceed " + deInfo.getSize() + " in length");
                                 errors.add(deVal);
                             }
                         }
@@ -5718,10 +5745,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
     }
 
-    private List<DataStructure> filterDataStructures(final List<DataStructure> fullList) {
-        final List<DataStructure> filteredList = new ArrayList<DataStructure>();
+    private List<FormStructure> filterDataStructures(final List<FormStructure> fullList) {
+        final List<FormStructure> filteredList = new ArrayList<FormStructure>();
 
-        for (final DataStructure ds : fullList) {
+        for (final FormStructure ds : fullList) {
             if (ds.getShortName().equals("")) {
                 // something is wrong. a shortname is required. this is to work around an apparent stage DDT problem
                 continue;
@@ -5746,7 +5773,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         private static final String ddRequestBase = "/portal/ws/ddt/dictionary/FormStructure";
 
-        private static final String ddStructListRequest = ddRequestBase + "/Published/list?page=1&pageSize=100000&ascending=false&sort=shortName";
+        private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=IMAGING";
 
         private JButton progressCancelButton;
 
@@ -5786,9 +5813,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
 
                 final long startTime = System.currentTimeMillis();
-                List<DataStructure> fullList;
+                List<FormStructure> fullList;
                 if (ddUseAuthService) {
-                    fullList = (List<DataStructure>) client.accept("text/xml").getCollection(DataStructure.class);
+                    fullList = (List<FormStructure>) client.accept("text/xml").getCollection(FormStructure.class);
                 } else {
                     final DataStructureList dsl = client.accept("text/xml").get(DataStructureList.class);
                     fullList = dsl.getList();
@@ -5799,7 +5826,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                 dataStructureList = filterDataStructures(fullList);
 
-                // for (final DataStructure ds : dataStructureList) {
+                // for (final FormStructure ds : dataStructureList) {
                 // System.out.println("FS title:\t" + ds.getTitle() + "\tversion:\t" + ds.getVersion() + "\tpub:\t" +
                 // ds.getStatus());
                 // }
@@ -5847,7 +5874,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         private JTextField otherSpecifyField;
 
-        private DataElement deInfo;
+        private StructuralDataElement deInfo;
 
         private String deValue;
 
@@ -5859,7 +5886,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             deGroup = group;
             deLabel = label;
             setComp(comp);
-            deInfo = info.getDataElement();
+            deInfo = info.getStructuralDataElement();
             dePosition = info.getPosition();
             deRequiredType = info.getRequiredType();
             deValue = val;
@@ -5867,7 +5894,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         public DataElementValue(final GroupRepeat group, final MapElement info) {
             deGroup = group;
-            deInfo = info.getDataElement();
+            deInfo = info.getStructuralDataElement();
             dePosition = info.getPosition();
             deRequiredType = info.getRequiredType();
         }
@@ -5918,11 +5945,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             return deInfo.getName();
         }
 
-        public DataElement getDataElementInfo() {
+        public StructuralDataElement getDataElementInfo() {
             return deInfo;
         }
 
-        public void setDataElementInfo(final DataElement deInfo) {
+        public void setDataElementInfo(final StructuralDataElement deInfo) {
             this.deInfo = deInfo;
         }
 
@@ -6013,11 +6040,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     }
 
     public class FormStructureData {
-        private DataStructure structInfo;
+        private FormStructure structInfo;
 
         private final Hashtable<String, Vector<GroupRepeat>> groupTable;
 
-        public FormStructureData(final DataStructure structInfo) {
+        public FormStructureData(final FormStructure structInfo) {
             this.structInfo = structInfo;
             groupTable = new Hashtable<String, Vector<GroupRepeat>>();
         }
@@ -6058,12 +6085,16 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             return groupTable.get(groupName).get(groupNum);
         }
 
-        public DataStructure getStructInfo() {
+        public FormStructure getStructInfo() {
             return structInfo;
         }
 
-        public void setStructInfo(final DataStructure structInfo) {
+        public void setStructInfo(final FormStructure structInfo) {
             this.structInfo = structInfo;
+        }
+
+        public DataElement getDataElement(final String deName) {
+            return getStructInfo().getDataElements().get(deName);
         }
     }
 
