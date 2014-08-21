@@ -60,7 +60,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     // Threshold on saliency
     private double yt = 0.0;
     
-    private boolean fastplog = true;
+    private boolean fastplog = false;
     
     private static final int plogpres = 10000;
     
@@ -385,6 +385,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
         } // else if (srcImage.isComplexImage())
     	
     	if (fastplog) {
+    		plogpArray = new double[plogpres];
     	    for (i = 0; i < plogpres; i++) {
     	        plogpArray[i] = plogp((double)i/plogpres);	
     	    }
@@ -534,7 +535,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
         
         for (pointx = xStart; pointx < xStop; pointx++) {
         	currentProgress += dprogress;
-            fireProgressStateChanged((int)Math.round(100.0/currentProgress));
+            fireProgressStateChanged((int)Math.round(100.0*currentProgress));
             x = pointx - hs;
             for (pointy = yStart; pointy < yStop; pointy++) {
                 y = pointy - hs;
@@ -692,7 +693,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
         
         for (x = xStart; x < xStop; x++) {
             currentProgress += dprogress;
-            fireProgressStateChanged((int)Math.round(100.0/currentProgress));
+            fireProgressStateChanged((int)Math.round(100.0*currentProgress));
             for (y = yStart; y < yStop; y++) {
                 index = x + y * xDim;
                 sum = 0.0;
@@ -865,7 +866,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
         
         for (pointx = xStart; pointx < xStop; pointx++) {
         	currentProgress += dprogress;
-            fireProgressStateChanged((int)Math.round(100.0/currentProgress));
+            fireProgressStateChanged((int)Math.round(100.0*currentProgress));
             x = pointx - hs;
             for (pointy = yStart; pointy < yStop; pointy++) {
                 y = pointy - hs;
@@ -1037,7 +1038,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
         
         for (pointx = xStart; pointx < xStop; pointx++) {
         	currentProgress += dprogress;
-            fireProgressStateChanged((int)Math.round(100.0/currentProgress));
+            fireProgressStateChanged((int)Math.round(100.0*currentProgress));
             x = pointx - hs;
             for (pointy = yStart; pointy < yStop; pointy++) {
                 y = pointy - hs;
@@ -1210,7 +1211,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
         
         for (pointx = xStart; pointx < xStop; pointx++) {
         	currentProgress += dprogress;
-            fireProgressStateChanged((int)Math.round(100.0/currentProgress));
+            fireProgressStateChanged((int)Math.round(100.0*currentProgress));
             x = pointx - hs;
             for (pointy = yStart; pointy < yStop; pointy++) {
                 y = pointy - hs;
@@ -1350,10 +1351,10 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
             final double a = o1.getSaliency();
             final double b = o2.getSaliency();
 
-            if (a < b) {
-                return 1;
-            } else if (a > b) {
+            if (a > b) {
                 return -1;
+            } else if (a < b) {
+                return 1;
             } else {
                 return 0;
             }
@@ -1369,7 +1370,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     	private double interScaleSaliency;
     	private double saliency;
     	
-    	public sixItems(int pointX, int pointy,int circleRadius, double entropy, double interScaleSaliency, double saliency) {
+    	public sixItems(int pointx, int pointy,int circleRadius, double entropy, double interScaleSaliency, double saliency) {
     		this.pointx = pointx;
     		this.pointy = pointy;
     		this.circleRadius = circleRadius;
@@ -1390,7 +1391,8 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     		return circleRadius;
     	}
     	
-    	public double getEntropy() {
+    	@SuppressWarnings("unused")
+		public double getEntropy() {
     		return entropy;
     	}
     	
@@ -1410,5 +1412,5 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
         else {
         	return(p * Math.log(p));
         }
-    } // private doble plogp(double p)
+    } // private double plogp(double p)
 }
