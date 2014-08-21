@@ -6094,7 +6094,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
 
         public DataElement getDataElement(final StructuralDataElement deInfo) {
-            return getStructInfo().getDataElements().get(deInfo.getName() + "V" + deInfo.getVersion());
+            return getStructInfo().getDataElements().get(deInfo.getNameAndVersion());
         }
     }
 
