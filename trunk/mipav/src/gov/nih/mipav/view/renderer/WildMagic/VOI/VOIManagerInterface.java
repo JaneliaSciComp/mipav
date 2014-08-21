@@ -80,6 +80,7 @@ import gov.nih.mipav.view.dialogs.JDialogPointArea;
 import gov.nih.mipav.view.dialogs.JDialogSaveMergedVOIs;
 import gov.nih.mipav.view.dialogs.JDialogSnake;
 import gov.nih.mipav.view.dialogs.JDialogSurfaceReconstruction;
+import gov.nih.mipav.view.dialogs.JDialogTransformVOI;
 import gov.nih.mipav.view.dialogs.JDialogTrim;
 import gov.nih.mipav.view.dialogs.JDialogVOIBoolean;
 import gov.nih.mipav.view.dialogs.JDialogVOILogicalOperations;
@@ -1296,7 +1297,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         		MipavUtil.displayError( "Enter a number > 0" );
         		defaultVoxelSize.requestFocus();
         	}
-        } else {
+        } else if ( command.equals("TransformVOI")){
+        	new JDialogTransformVOI(m_kImageA);
+        }
+        else {
             doVOI(command);
         }
 

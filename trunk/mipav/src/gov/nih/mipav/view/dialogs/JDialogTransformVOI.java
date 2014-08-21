@@ -9,17 +9,24 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
+import gov.nih.mipav.model.algorithms.AlgorithmTPSpline;
 import gov.nih.mipav.model.algorithms.AlgorithmTransformVOI;
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
@@ -27,6 +34,9 @@ import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIBaseVector;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewImageFileFilter;
+import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 
 public class JDialogTransformVOI extends JDialogBase {
 
@@ -51,6 +61,8 @@ public class JDialogTransformVOI extends JDialogBase {
 	
 	private float t_x, t_y, t_z;
 	
+	private JCheckBox allVOIBox;
+	
 	public JDialogTransformVOI(ModelImage im){
 		super(false);
 		srcImage = im;
@@ -69,6 +81,10 @@ public class JDialogTransformVOI extends JDialogBase {
 	protected void callAlgorithm(){
 		boolean voiActive = false;
 		VOIVector vois = srcImage.getVOIs();
+		if(vois.isEmpty()){
+			MipavUtil.displayError("There are no VOIs to transform");
+			return;
+		}
 		for(VOI v : vois){
 			VOIBaseVector vec = v.getCurves();
 			for(VOIBase b : vec){
@@ -78,11 +94,14 @@ public class JDialogTransformVOI extends JDialogBase {
 				}
 			}
 		}
-		if(!voiActive){
+		if(!(voiActive || allVOIBox.isSelected())){
 			MipavUtil.displayError("Please select a VOI");
 		}else if(setVariables()){
+			srcImage.getParentFrame().getVOIManager().saveVOIs("TransformVOI");
+			
 			AlgorithmTransformVOI alg = new AlgorithmTransformVOI(srcImage, xfrm);
 			alg.setTranslation(t_x, t_y, t_z);
+			alg.setAllVOIs(allVOIBox.isSelected());
 			alg.run();
 		}
 	}
@@ -504,6 +523,12 @@ public class JDialogTransformVOI extends JDialogBase {
         gbc.gridx = 11;
         translationPanel.add(textSKz, gbc);
 
+        gbc.gridx = 1;
+        gbc.gridy = 3;
+        allVOIBox = new JCheckBox("Transform all VOIs");
+        allVOIBox.setFont(serif12);
+        translationPanel.add(allVOIBox, gbc);
+        
         matrixPanel.add(translationPanel);
         
         textTx.setEnabled(true);
@@ -542,5 +567,117 @@ public class JDialogTransformVOI extends JDialogBase {
         System.gc();
         
 	}
+	
+	//Difficulty in transforming the VOI from a file is that traslation will
+	//already be a part of the matrix, where as we want it away from the matrix
+	//No way to extract the translation portion of the transformation, which
+	//might make using files a waste
+	
+	/**
+     * Allows the user to select matrix file.
+     * 
+     * @return fileName
+     */
+    /*public String matrixFileMenu() {
+        String fileName;
+        JFileChooser chooser;
+        fileName = null;
+
+        // bring up file dialog
+        try {
+            chooser = new JFileChooser();
+
+            if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+            } else {
+                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+            }
+
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MATRIX));
+
+            final int returnVal = chooser.showOpenDialog(ViewUserInterface.getReference().getMainFrame());
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                fileName = chooser.getSelectedFile().getName();
+                matrixDirectory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                ViewUserInterface.getReference().setDefaultDirectory(matrixDirectory);
+                matrixFName.setText(fileName);
+                
+                //TODO: Fill in user defined fields from here
+                
+            } else {
+                return null;
+            }
+        } catch (final OutOfMemoryError error) {
+            MipavUtil.displayError("Out of memory: JDialogScriptableTransform.displayMatrixFileMenu");
+
+            return null;
+        }
+
+        readTransformMatrixFile(fileName);
+
+        return fileName;
+    }*/
+
+    /**
+     * Reads a matrix from a file.
+     * 
+     * @param fileName name of the matrix file.
+     */
+    /*public TransMatrix readTransformMatrixFile(final String fileName) {
+    	
+    	int nDims = image.getNDims() > 3 ? 4 : image.getNDims() + 1; 
+    	
+        TransMatrix matrix = new TransMatrix(nDims);
+        matrix.identity();
+
+        if (fileName == null) {
+            MipavUtil.displayError("filename = null");
+        }
+
+        try {
+            // search for file name relative to image first, then relative to MIPAV default, then absolute path
+            File file = null;
+            if (matrixDirectory != null) {
+                file = new File(matrixDirectory + fileName);
+            }
+            if ((matrixDirectory == null) || (!file.exists())) {
+                file = new File(image.getImageDirectory() + fileName);
+            }
+            if ( !file.exists()) {
+                file = new File(ViewUserInterface.getReference().getDefaultDirectory() + fileName);
+            }
+            if ( !file.exists()) {
+                file = new File(fileName);
+            }
+
+            final RandomAccessFile raFile = new RandomAccessFile(file, "r");
+            
+            final String extension = FileUtility.getExtension(file.getAbsolutePath()).toLowerCase();
+            if (extension.equals(".tps")) {
+                spline = new AlgorithmTPSpline(image);
+                spline.readMatrix(raFile);
+                raFile.close();
+            } else if(extension.equals(".1d")) { 
+            	fileTransMatrix = TransMatrix.readAfniMatrix(raFile);
+            } else {
+                spline = null;
+                matrix.readMatrix(raFile, fileInterp, fileXres, fileYres, fileZres, fileXdim, fileYdim, fileZdim, 
+                                  filetVOI, fileClip, filePad, false);
+                raFile.close();
+                fileTransMatrix = matrix;
+            }
+
+            // We don't know the coordinate system that the transformation represents. Therefore
+            // bring up a dialog where the user can ID the coordinate system changes (i.e.
+            // world coordinate and/or the "left-hand" coordinate system!
+            // new JDialogOrientMatrix(parentFrame, (JDialogBase) this);
+        } catch (final IOException error) {
+            MipavUtil.displayError("Matrix read error");
+            fileTransMatrix.identity();
+        }
+        
+        return fileTransMatrix;
+    }*/
 	
 }
