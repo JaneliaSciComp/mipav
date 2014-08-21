@@ -33,6 +33,14 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 public class AlgorithmScaleSaliency extends AlgorithmBase {
 	
+	private static final int NORMAL_MODE = 1;
+	
+	private static final int PARZEN_WINDOW_MODE = 2;
+	
+	private static final int ANTI_ALIASED_SAMPLING_MODE = 3;
+	
+	private int mode = NORMAL_MODE;
+	
 	// Minimum scale
 	private int startScale = 3;
 	
@@ -44,9 +52,6 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     
     // sigma for Parzen window (has nbins = 256.  Only available on scalar data).
     private double sigma = 1.0;
-    
-    // Anti-aliased sampling for generating the histograms(not available with Parzen windowing).
-    private boolean antiAliasedSampling = false;
     
     // Threshold on inter-scale saliency values (set between 0 and 2)
     // Setting wt high forces the selection of features that are more scale localized or isotropic.
@@ -60,8 +65,6 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     private static final int plogpres = 10000;
     
     private double plogpArray[] = null;
-    
-    private boolean doParzen = false;
     
     private int xDim;
 	private int yDim;
@@ -79,20 +82,19 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
      * @param srcImg Source image
      * @param startScale
      * @param stopScale
-     * @param doParzen
+     * @param mode
      * @param nbins Number of bins (has 256 for Parzen window PDF estimation)
      * @param antiAliasedSampling (not available with Parzen windowing)
      * @param wt Threshold on inter-scale saliency values
      * @param yt Threshold on saliency
      */
-    public AlgorithmScaleSaliency(ModelImage srcImg, int startScale, int stopScale, boolean doParzen, int nbins, double sigma,
-    		                      boolean antiAliasedSampling, double wt, double yt) {
+    public AlgorithmScaleSaliency(ModelImage srcImg, int startScale, int stopScale, int mode, int nbins, double sigma,
+    		                      double wt, double yt) {
     	super(null, srcImg);
     	this.startScale = startScale;
     	this.stopScale = stopScale;
-    	this.doParzen = doParzen;
+    	this.mode = mode;
     	this.nbins = nbins;
-    	this.antiAliasedSampling = antiAliasedSampling;
     	this.wt = wt;
     	this.yt = yt;
     }
@@ -390,18 +392,15 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     	
     	if ((!srcImage.isColorImage()) && (!srcImage.isComplexImage())) {
     		// Input is scalar image
-    		if (!doParzen) {
-    			// Don't use Parzen window
-    			if (antiAliasedSampling) {
+    			if (mode == ANTI_ALIASED_SAMPLING_MODE) {
     				bestSaliency = calcSalScale1DAA(imageBuffer);
-    			} // if (antiAliasedSampling)
-    			else {
+    			} 
+    			else if (mode == NORMAL_MODE){
     				bestSaliency = calcSalScale1D(imageBuffer);	
     			}
-    		} // if (!doParzen)
-    		else {
-    			bestSaliency = calcSalScale1DParzen(imageBuffer);
-    		}
+    		    else {
+    			    bestSaliency = calcSalScale1DParzen(imageBuffer);
+    		    }
     	} // if ((!srcImage.isColorImage()) && (!srcImage.isComplexImage()))
     	else if ((srcImage.isComplexImage()) || (colorsFound == 2)) {
         	bestSaliency = calcSalScale2D(imageBuffer, imageBuffer2);
