@@ -322,6 +322,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("VOI landmark", "VOILandmark", 0, null, false),
                 // menuBuilder.buildMenuItem("REGTEST", "REGTEST", 0, null, false),
                         }),
+                menuBuilder.buildMenuItem("Scale saliency", "SCALE_SALIENCY", 0, null, false),
                 menuBuilder.makeMenu("Segmentation", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Evaluate VOI segmentation", "evalSeg", 0, null, false),
 
@@ -1028,6 +1029,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("FFT", false);
             menuBuilder.setMenuItemEnabled("Canny", false);
             menuBuilder.setMenuItemEnabled("Harris corner detector", false);
+            menuBuilder.setMenuItemEnabled("Scale saliency", false);
             menuBuilder.setMenuItemEnabled("Filters (wavelet)", false);
             menuBuilder.setMenuItemEnabled("Anisotropic diffusion", false);
             menuBuilder.setMenuItemEnabled("Boundary attenuation", false);
@@ -1144,6 +1146,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Spatial color compactness", false);
             menuBuilder.setMenuItemEnabled("Canny", false);
             menuBuilder.setMenuItemEnabled("Harris corner detector", false);
+            menuBuilder.setMenuItemEnabled("Scale saliency", false);
             menuBuilder.setMenuItemEnabled("Entropic", false);
             
             menuBuilder.setMenuItemEnabled("Thinning", false);
@@ -1295,6 +1298,7 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Density based clustering", true);
         menuBuilder.setMenuItemEnabled("Edge detection", true);
         menuBuilder.setMenuItemEnabled("Canny", true);
+        menuBuilder.setMenuItemEnabled("Harris corner detector", true);
         menuBuilder.setMenuItemEnabled("Harris corner detector", true);
         menuBuilder.setMenuItemEnabled("Evaluate segmentation", true); // vois
         menuBuilder.setMenuItemEnabled("Entropy minimization", true);
