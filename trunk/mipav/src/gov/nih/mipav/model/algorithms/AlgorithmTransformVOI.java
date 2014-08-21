@@ -18,6 +18,8 @@ public class AlgorithmTransformVOI extends AlgorithmBase {
 	
 	private float t_z;
 	
+	private boolean allVOIs;
+	
 	public AlgorithmTransformVOI(ModelImage im, TransMatrix matrix){
 		super(null, im);
 		mat = matrix;
@@ -29,6 +31,10 @@ public class AlgorithmTransformVOI extends AlgorithmBase {
 		t_z = z;
 	}
 	
+	public void setAllVOIs(boolean all){
+		allVOIs = all;
+	}
+	
 	@Override
 	public void runAlgorithm() {
 		
@@ -38,7 +44,7 @@ public class AlgorithmTransformVOI extends AlgorithmBase {
 		for(VOI v : vois){
 			VOIBaseVector vec = v.getCurves();
 			for(VOIBase b : vec){
-				if(b.isActive())
+				if(b.isActive() || allVOIs)
 					active.add(b);
 			}
 		}
@@ -55,7 +61,7 @@ public class AlgorithmTransformVOI extends AlgorithmBase {
 		if(srcImage.is2DImage()){
 			for(VOIBase b : active){
 				Vector3f center = b.getGeometricCenter();
-				Vector3f newCenter = Vector3f.add(center, new Vector3f(t_x, t_y, t_z));//center.add(t_x, t_y, t_z);
+				Vector3f newCenter = Vector3f.add(center, new Vector3f(t_x, t_y, t_z));
 				Vector3f[] pts = new Vector3f[b.size()]; 
 				for(int i=0;i<b.size();i++){
 					b.get(i).add(Vector3f.neg(center));
@@ -86,6 +92,8 @@ public class AlgorithmTransformVOI extends AlgorithmBase {
 				b.update();
 			}
 		}
+		
+		
 		
 
 		srcImage.notifyImageDisplayListeners();
