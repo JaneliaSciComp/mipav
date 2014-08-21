@@ -211,7 +211,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.23";
+    private static final String pluginVersion = "0.24";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -2529,7 +2529,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         if ( !foundOtherInDE && item.equalsIgnoreCase(VALUE_OTHER_SPECIFY) || item.equalsIgnoreCase(VALUE_YES_SPECIFY)) {
                             foundOtherInDE = true;
                             otherSpecifyIndex = k;
-                            selectedIndicies.add(k);
                         }
 
                         if (item.equalsIgnoreCase(val)) {
@@ -2541,6 +2540,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                     if ( !found) {
                         if (foundOtherInDE) {
+                            selectedIndicies.add(otherSpecifyIndex);
                             if (deVal.getOtherSpecifyField() != null) {
                                 deVal.getOtherSpecifyField().setText(val);
                             }
@@ -3517,7 +3517,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                                         && (item.equalsIgnoreCase(VALUE_OTHER_SPECIFY) || item.equalsIgnoreCase(VALUE_YES_SPECIFY))) {
                                                     foundOtherInDE = true;
                                                     otherSpecifyIndex = k;
-                                                    selectedIndicies.add(k);
                                                 }
 
                                                 if (item.equalsIgnoreCase(val)) {
@@ -3529,6 +3528,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                                             if ( !found) {
                                                 if (foundOtherInDE) {
+                                                    selectedIndicies.add(otherSpecifyIndex);
                                                     if (deVal.getOtherSpecifyField() != null) {
                                                         deVal.getOtherSpecifyField().setText(val);
                                                     }
@@ -3625,7 +3625,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                                         && (item.equalsIgnoreCase(VALUE_OTHER_SPECIFY) || item.equalsIgnoreCase(VALUE_YES_SPECIFY))) {
                                                     foundOtherInDE = true;
                                                     otherSpecifyIndex = k;
-                                                    selectedIndicies.add(k);
                                                 }
 
                                                 if (item.equalsIgnoreCase(val)) {
@@ -3637,6 +3636,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                                             if ( !found) {
                                                 if (foundOtherInDE) {
+                                                    selectedIndicies.add(otherSpecifyIndex);
                                                     if (deVal.getOtherSpecifyField() != null) {
                                                         deVal.getOtherSpecifyField().setText(val);
                                                     }
@@ -4059,7 +4059,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
             for (final MapElement de : group.getDataElements()) {
                 final DataElementValue newDeVal = new DataElementValue(repeat, de);
-                final DataElement deFullInfo = fsData.getDataElement(de.getStructuralDataElement().getName());
+                final DataElement deFullInfo = fsData.getDataElement(de.getStructuralDataElement());
 
                 JLabel l;
 
@@ -4466,7 +4466,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(nDims));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim1ExtentVal")
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim1ExtentVal") && exts.length > 0
                             && String.valueOf(exts[0]) != null) {
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == exts[0])) {
 
@@ -4474,98 +4474,98 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(exts[0]));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim2ExtentVal")
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim2ExtentVal") && exts.length > 1
                             && String.valueOf(exts[1]) != null) {
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == exts[1])) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(exts[1]));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim3ExtentVal")
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim3ExtentVal") && exts.length > 2
                             && String.valueOf(exts[2]) != null) {
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == exts[2])) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(exts[2]));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim4ExtentVal")
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim4ExtentVal") && exts.length > 3
                             && String.valueOf(exts[3]) != null) {
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == exts[3])) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(exts[3]));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim5ExtentVal")
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim5ExtentVal") && exts.length > 4
                             && String.valueOf(exts[4]) != null) {
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == exts[4])) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(exts[4]));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim1UoMVal")
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim1UoMVal") && units.length > 0
                             && Unit.getUnitFromLegacyNum(units[0]) != null) {
                         if ( !repeatValues.get(i).trim().equals(Unit.getUnitFromLegacyNum(units[0]).toString())) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(Unit.getUnitFromLegacyNum(units[0]).toString());
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim2UoMVal")
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim2UoMVal") && units.length > 1
                             && Unit.getUnitFromLegacyNum(units[1]) != null) {
                         if ( !repeatValues.get(i).trim().equals(Unit.getUnitFromLegacyNum(units[1]).toString())) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(Unit.getUnitFromLegacyNum(units[1]).toString());
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim3UoMVal")
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim3UoMVal") && units.length > 2
                             && Unit.getUnitFromLegacyNum(units[2]) != null) {
                         if ( !repeatValues.get(i).trim().equals(Unit.getUnitFromLegacyNum(units[2]).toString())) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(Unit.getUnitFromLegacyNum(units[2]).toString());
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim4UoMVal")
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim4UoMVal") && units.length > 3
                             && Unit.getUnitFromLegacyNum(units[3]) != null) {
                         if ( !repeatValues.get(i).trim().equals(Unit.getUnitFromLegacyNum(units[3]).toString())) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(Unit.getUnitFromLegacyNum(units[3]).toString());
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim5UoMVal")
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim5UoMVal") && units.length > 4
                             && Unit.getUnitFromLegacyNum(units[4]) != null) {
                         if ( !repeatValues.get(i).trim().equals(Unit.getUnitFromLegacyNum(units[4]).toString())) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(Unit.getUnitFromLegacyNum(units[4]).toString());
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim1ResolVal")
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim1ResolVal") && res.length > 0
                             && String.valueOf(res[0]) != null) {
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == res[0])) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(res[0]));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim2ResolVal")
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim2ResolVal") && res.length > 1
                             && String.valueOf(res[1]) != null) {
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == res[1])) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(res[1]));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim3ResolVal")
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim3ResolVal") && res.length > 2
                             && String.valueOf(res[2]) != null) {
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == res[2])) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(res[2]));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim4ResolVal")
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim4ResolVal") && res.length > 3
                             && String.valueOf(res[3]) != null) {
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == res[3])) {
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(res[3]));
                         }
-                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim5ResolVal")
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim5ResolVal") && res.length > 4
                             && String.valueOf(res[4]) != null) {
                         if ( ! (Float.parseFloat(repeatValues.get(i).trim()) == res[4])) {
                             csvFList.add(csvFieldNames.get(i));
@@ -5562,7 +5562,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         // now we need to validate
                         required = deVal.getRequiredType();
                         type = deInfo.getType();
-                        title = fsData.getDataElement(deInfo.getName()).getTitle();
+                        title = fsData.getDataElement(deInfo).getTitle();
 
                         if (required.equals(RequiredType.REQUIRED)) {
                             if (value.trim().equalsIgnoreCase("")) {
@@ -6093,8 +6093,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             this.structInfo = structInfo;
         }
 
-        public DataElement getDataElement(final String deName) {
-            return getStructInfo().getDataElements().get(deName);
+        public DataElement getDataElement(final StructuralDataElement deInfo) {
+            return getStructInfo().getDataElements().get(deInfo.getName() + "V" + deInfo.getVersion());
         }
     }
 
