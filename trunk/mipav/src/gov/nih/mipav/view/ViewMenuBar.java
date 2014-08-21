@@ -889,6 +889,7 @@ public class ViewMenuBar {
                                 menuBuilder.buildMenuItem("Interpolate VOIs", "interpolateVOIs", 0, null, true),
                                 ViewMenuBar.separator,
                                 menuBuilder.buildMenuItem("Smooth VOI", "SmoothVOI", 0, null, true),
+                                menuBuilder.buildMenuItem("Transform VOI", "TransformVOI", 0, null, true),
                                 menuBuilder.buildMenuItem("Trim parameter", "Trim", 0, null, true),
                                 ViewMenuBar.separator,
                                 menuBuilder.buildMenuItem("Bounding VOIs", "BoundingVOIs", 0, null, true),
