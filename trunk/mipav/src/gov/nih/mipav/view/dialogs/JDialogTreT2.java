@@ -941,8 +941,8 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
                         Nfa_phase180 = 0;
                     }
 
-                    maxT2 = Double.parseDouble(maxM0Field.getText());
-                    maxM0 = Double.parseDouble(maxT2Field.getText());
+                    maxT2 = Double.parseDouble(maxT2Field.getText());
+                    maxM0 = Double.parseDouble(maxM0Field.getText());
 
                     includeB1Map = checkBoxes.get(0).isSelected();
                     calculateT2 = checkBoxes.get(1).isSelected();
