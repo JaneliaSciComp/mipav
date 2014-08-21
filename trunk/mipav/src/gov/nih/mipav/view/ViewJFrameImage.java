@@ -2692,7 +2692,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             final ReportBugBuilder form = new ReportBugBuilder();
         } else if (command.equals("phasecongruency")){
         	new JDialogPhaseCongruency(this, getActiveImage());
-        }
+        } 
     }
 
     /**
