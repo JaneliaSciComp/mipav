@@ -7,8 +7,11 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Vector;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 /**
  * Original source code in C and MATLAB is Copyright 1998-2004 by Timor Kadir Version 1.5
@@ -30,23 +33,26 @@ import java.util.Vector;
 
 public class AlgorithmScaleSaliency extends AlgorithmBase {
 	
+	// Minimum scale
 	private int startScale = 3;
 	
-    private int stopScale = 33;
+    // Maximum scale
+	private int stopScale = 33;
     
-    // Number of bins (set to 256 for Parzen window PDF estimation)
+    // Number of bins for histogram (set to 256 for Parzen window PDF estimation)
     private int nbins = 16;
     
     // sigma for Parzen window (has nbins = 256.  Only available on scalar data).
     private double sigma = 1.0;
     
-    // Anti-aliased sampling (not available with Parzen windowing).
+    // Anti-aliased sampling for generating the histograms(not available with Parzen windowing).
     private boolean antiAliasedSampling = false;
     
-    // Threshold on saliency values
+    // Threshold on inter-scale saliency values (set between 0 and 2)
+    // Setting wt high forces the selection of features that are more scale localized or isotropic.
     private double wt = 0.5;
     
-    // Threshold on inter-scale saliency
+    // Threshold on saliency
     private double yt = 0.0;
     
     private boolean fastplog = true;
@@ -76,8 +82,8 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
      * @param doParzen
      * @param nbins Number of bins (has 256 for Parzen window PDF estimation)
      * @param antiAliasedSampling (not available with Parzen windowing)
-     * @param wt Threshold on saliency values
-     * @param yt Threshold on inter-scale saliency
+     * @param wt Threshold on inter-scale saliency values
+     * @param yt Threshold on saliency
      */
     public AlgorithmScaleSaliency(ModelImage srcImg, int startScale, int stopScale, boolean doParzen, int nbins, double sigma,
     		                      boolean antiAliasedSampling, double wt, double yt) {
@@ -112,7 +118,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     	boolean image25D = false;
     	int i;
     	Vector<sixItems> bestSaliency = null;
-    	Vector<Double>[] C = null;
+    	Vector<sixItems> C = null;
     	short imageBuffer[] = null;
     	short imageBuffer2[] = null;
     	short imageBuffer3[] = null;
@@ -125,6 +131,20 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     	double imagBuffer[] = null;
     	ModelImage realImage = null;
     	ModelImage imagImage = null;
+    	int maxCirclePoints;
+    	int j;
+    	int xcenter;
+    	int ycenter;
+    	int radius;
+    	double theta;
+    	int x;
+    	int y;
+    	int lastx;
+    	int lasty;
+    	VOI circleVOI = null;
+    	Vector<Vector3f> circleV= null;
+    	Vector3f pt[] = null;
+    	VOIVector VOIs = new VOIVector();
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -392,14 +412,46 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     	
     	C = greedyCluster(bestSaliency);
     	
+    	for (i = 0; i < C.size(); i++) {
+    		circleVOI =  new VOI((short)i, "circleVOI"+ String.valueOf(i), VOI.CONTOUR, -1 );
+    		circleV = null;
+    		circleV = new Vector<Vector3f>();
+    		xcenter = C.get(i).getPointx();
+    		ycenter = C.get(i).getPointy();
+    	    radius = C.get(i).getCircleRadius();
+    	    maxCirclePoints = 24 * radius;
+    	    lastx = -1;
+    	    lasty = -1;
+    	    for (j = 0; j < maxCirclePoints; j++) {
+                theta = j * 2.0 * Math.PI/maxCirclePoints;
+                x = (int)Math.round(xcenter + radius*Math.cos(theta));
+                y = (int)Math.round(ycenter + radius*Math.sin(theta));
+                if ((x >= 0) && (x < xDim) && (y >= 0) && (y < yDim) && ((x != lastx) || (y != lasty))) {
+                    lastx = x;
+                    lasty = y;
+                    circleV.add(new Vector3f(x, y, 0.0f));
+                }
+    	    } // for (j = 0; j < maxCirclePoints; j++)
+    	    pt = null;
+    	    pt = new Vector3f[circleV.size()];
+        	for (j = 0; j < circleV.size(); j++) {
+        		pt[j] = circleV.elementAt(j);
+        	}
+        	circleVOI.importCurve(pt);
+        	VOIs.add(circleVOI);
+    	} // for (i = 0; i < C.size(); i++)
+    	srcImage.setVOIs(VOIs);
+    	setCompleted(true);
+    	return;
+    	
     } // runAlgorithm()
     
     @SuppressWarnings("unchecked")
 	private Vector<sixItems> calcSalScale1D(short imageBuffer[]) {
     	Vector<sixItems> bestSaliency = new Vector<sixItems>();
-    	int bestScale;
-    	double HD;
-    	double WD;
+    	int circleRadius;
+    	double entropy;
+    	double interScaleSaliency;
     	double saliency;
     	int histo1[];
         double histo2[];
@@ -530,12 +582,12 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
              // Assign the best (peaks) scales and global saliency for this x, y location
                 if (counts > 0) {
                 	for (i = numScales; i < numScales + counts; i++) {
-                		bestScale = peaks[i-numScales];
-                		norm = (bestScale*bestScale)/(2.0*bestScale - 1.0);
-                		HD = entropyArray[bestScale];
-                		WD = distArray[bestScale] * norm;
-                		saliency = HD * WD;
-                		bestSaliency.add(new sixItems(pointx, pointy, bestScale, HD, WD, saliency));
+                		circleRadius = peaks[i-numScales];
+                		norm = (circleRadius*circleRadius)/(2.0*circleRadius - 1.0);
+                		entropy = entropyArray[circleRadius];
+                		interScaleSaliency = distArray[circleRadius] * norm;
+                		saliency = entropy * interScaleSaliency;
+                		bestSaliency.add(new sixItems(pointx, pointy, circleRadius, entropy, interScaleSaliency, saliency));
                 	} // for (i = numScales; i < numScales + counts; i++)
                 } // if (counts > 0)
                 numScales += counts;
@@ -553,9 +605,9 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     @SuppressWarnings("unchecked")
 	private Vector<sixItems> calcSalScale1DAA(short imageBuffer[]) {
     	Vector<sixItems> bestSaliency = new Vector<sixItems>();
-    	int bestScale;
-    	double HD;
-    	double WD;
+    	int circleRadius;
+    	double entropy;
+    	double interScaleSaliency;
     	double saliency;
         int histo1[];
         double histo2[];
@@ -685,12 +737,12 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
                 // Assign the best (peaks) scales and global saliency for this x, y location
                 if (counts > 0) {
                 	for (i = numScales; i < numScales + counts; i++) {
-                		bestScale = peaks[i-numScales];
-                		norm = bestScale;
-                		HD = entropyArray[bestScale];
-                		WD = distArray[bestScale] * norm;
-                		saliency = HD * WD;
-                		bestSaliency.add(new sixItems(x, y, bestScale, HD, WD, saliency));
+                		circleRadius = peaks[i-numScales];
+                		norm = circleRadius;
+                		entropy = entropyArray[circleRadius];
+                		interScaleSaliency = distArray[circleRadius] * norm;
+                		saliency = entropy * interScaleSaliency;
+                		bestSaliency.add(new sixItems(x, y, circleRadius, entropy, interScaleSaliency, saliency));
                 	} // for (i = numScales; i < numScales + counts; i++)
                 } // if (counts > 0)
                 numScales += counts;
@@ -708,9 +760,9 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     @SuppressWarnings("unchecked")
 	private Vector<sixItems> calcSalScale1DParzen(short imageBuffer[]) {
     	Vector<sixItems> bestSaliency = new Vector<sixItems>();
-    	int bestScale;
-    	double HD;
-    	double WD;
+    	int circleRadius;
+    	double entropy;
+    	double interScaleSaliency;
     	double saliency;
     	int histo1[];
     	double histo2[];
@@ -868,12 +920,12 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
                 // Assign the best (peaks) scales and global saliency for this x, y location
                 if (counts > 0) {
                 	for (i = numScales; i < numScales + counts; i++) {
-                		bestScale = peaks[i-numScales] + 1;
-                		norm = (bestScale*bestScale)/(2.0*bestScale - 1);
-                		HD = entropyArray[peaks[i-numScales]];
-                		WD = distArray[peaks[i - numScales]] * norm;
-                		saliency = HD * WD;
-                		bestSaliency.add(new sixItems(pointx, pointy, bestScale, HD, WD, saliency));
+                		circleRadius = peaks[i-numScales] + 1;
+                		norm = (circleRadius*circleRadius)/(2.0*circleRadius - 1);
+                		entropy = entropyArray[peaks[i-numScales]];
+                		interScaleSaliency = distArray[peaks[i - numScales]] * norm;
+                		saliency = entropy * interScaleSaliency;
+                		bestSaliency.add(new sixItems(pointx, pointy, circleRadius, entropy, interScaleSaliency, saliency));
                 	} // for (i = numScales; i < numScales + counts; i++)
                 } // if (counts > 0)
                 numScales += counts;
@@ -892,9 +944,9 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     @SuppressWarnings("unchecked")
 	private Vector<sixItems> calcSalScale2D(short imageBuffer[], short imageBuffer2[]) {
     	Vector<sixItems> bestSaliency = new Vector<sixItems>();
-    	int bestScale;
-    	double HD;
-    	double WD;
+    	int circleRadius;
+    	double entropy;
+    	double interScaleSaliency;
     	double saliency;
     	int binmax = 0;
     	int histo1[];
@@ -1043,12 +1095,12 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
                 // Assign the best (peaks) scales and global saliency for this x, y location
                 if (counts > 0) {
                 	for (i = numScales; i < numScales + counts; i++) {
-                		bestScale = peaks[i-numScales] + 1;
-                		norm = (bestScale*bestScale)/(2.0*bestScale - 1);
-                		HD = entropyArray[peaks[i-numScales]];
-                		WD = distArray[peaks[i - numScales]] * norm;
-                		saliency = HD * WD;
-                		bestSaliency.add(new sixItems(pointx, pointy, bestScale, HD, WD, saliency));
+                		circleRadius = peaks[i-numScales] + 1;
+                		norm = (circleRadius*circleRadius)/(2.0*circleRadius - 1);
+                		entropy = entropyArray[peaks[i-numScales]];
+                		interScaleSaliency = distArray[peaks[i - numScales]] * norm;
+                		saliency = entropy * interScaleSaliency;
+                		bestSaliency.add(new sixItems(pointx, pointy, circleRadius, entropy, interScaleSaliency, saliency));
                 	} // for (i = numScales; i < numScales + counts; i++)
                 } // if (counts > 0)
                 numScales += counts;
@@ -1066,9 +1118,9 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     @SuppressWarnings("unchecked")
 	private Vector<sixItems> calcSalScale3D(short imageBuffer[], short imageBuffer2[], short imageBuffer3[]) {
     	Vector<sixItems> bestSaliency = new Vector<sixItems>();
-    	int bestScale;
-    	double HD;
-    	double WD;
+    	int circleRadius;
+    	double entropy;
+    	double interScaleSaliency;
     	double saliency;
     	int binmax = 0;
     	int histo1[];
@@ -1103,7 +1155,6 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
         int sum;
         int ind = 0;
         int sind;
-        double isum;
         double r;
         double tempNormBin;
         int counts;
@@ -1176,7 +1227,6 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
                     sum += lengths[scale];
                     entropyArray[sind] = 0;
                     distArray[sind] = 0;
-                    isum = 1.0/sum;
                     for (j = 0; j < ind; j++) {
                     	if (histo1[pPNZ[j]] == 0) {
                     	    // this optimized so that it only does this when histo2 > 0 (a bin is in the PNZ)
@@ -1219,12 +1269,12 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
                 // Assign the best (peaks) scales and global saliency for this x, y location
                 if (counts > 0) {
                 	for (i = numScales; i < numScales + counts; i++) {
-                		bestScale = peaks[i-numScales] + 1;
-                		norm = (bestScale*bestScale)/(2.0*bestScale - 1);
-                		HD = entropyArray[peaks[i-numScales]];
-                		WD = distArray[peaks[i - numScales]] * norm;
-                		saliency = HD * WD;
-                		bestSaliency.add(new sixItems(pointx, pointy, bestScale, HD, WD, saliency));
+                		circleRadius = peaks[i-numScales] + 1;
+                		norm = (circleRadius*circleRadius)/(2.0*circleRadius - 1);
+                		entropy = entropyArray[peaks[i-numScales]];
+                		interScaleSaliency = distArray[peaks[i - numScales]] * norm;
+                		saliency = entropy * interScaleSaliency;
+                		bestSaliency.add(new sixItems(pointx, pointy, circleRadius, entropy, interScaleSaliency, saliency));
                 	} // for (i = numScales; i < numScales + counts; i++)
                 } // if (counts > 0)
                 numScales += counts;
@@ -1239,18 +1289,49 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     	return bestSaliency;
     }
     
-    @SuppressWarnings("unchecked")
-   	private Vector<Double>[] greedyCluster(Vector<sixItems> Y) {
+   	private Vector<sixItems> greedyCluster(Vector<sixItems> Y) {
     	// Greedy clusterer for salient feature post-processing
-       	Vector<Double> C[] = (Vector<Double>[]) new Vector[3];
+   		// It starts with the highest saliency feature and works down removing any features
+   		// which are to close in (xpoint, ypoint).  Here, close means within the support of
+   		// the current feature, i.e., its diameter.
+       	Vector<sixItems> C = new Vector<sixItems>();
        	int j;
+       	sixItems Yi;
+       	double dists[];
+       	double diffx;
+       	double diffy;
        	
-       	for (j = 0; j < 3; j++) {
-        	C[j] = new Vector<Double>();
-        }
-       	j = 1;
        	// Sort in ascending saliency
        	// Y[5] are all positive and must be put in descending order
+       	Collections.sort(Y, new sixItemsComparator());
+       	for (j = Y.size() - 1; j >= 0; j--) {
+       		if (Y.get(j).getSaliency() <= yt) {
+       			Y.remove(j);
+       		}
+       	}
+       	
+       	for (j = Y.size() - 1; j >= 0; j--) {
+       		if (Y.get(j).getInterScaleSaliency() <= wt) {
+       			Y.remove(j);
+       		}
+       	}
+       	
+       	while (Y.size() > 0) {
+       	    Yi = Y.get(0);	
+       	    C.add(Yi);
+       	    dists = null;
+       	    dists = new double [Y.size()];
+       	    for (j = 0; j < Y.size(); j++) {
+       	    	diffx = Y.get(j).getPointx() - Yi.getPointx();
+       	    	diffy = Y.get(j).getPointy() - Yi.getPointy();
+       	    	dists[j] = Math.sqrt(diffx*diffx + diffy*diffy);
+       	    }
+       	    for (j = Y.size() - 1; j >= 0; j--) {
+       	    	if (dists[j] <= Yi.getCircleRadius()) {
+       	    		Y.remove(j);
+       	    	}
+       	    }
+       	} // while (Y.size() > 0)
        	
        	return C;
     }
@@ -1284,17 +1365,17 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     private class sixItems {
     	private int pointx;
     	private int pointy;
-    	private int bestScale;
-    	private double HD;
-    	private double WD;
+    	private int circleRadius;
+    	private double entropy;
+    	private double interScaleSaliency;
     	private double saliency;
     	
-    	public sixItems(int pointX, int pointy,int bestScale, double HD, double WD, double saliency) {
+    	public sixItems(int pointX, int pointy,int circleRadius, double entropy, double interScaleSaliency, double saliency) {
     		this.pointx = pointx;
     		this.pointy = pointy;
-    		this.bestScale = bestScale;
-    		this.HD = HD;
-    		this.WD = WD;
+    		this.circleRadius = circleRadius;
+    		this.entropy = entropy;
+    		this.interScaleSaliency = interScaleSaliency;
     		this.saliency = saliency;
     	}
     	
@@ -1306,16 +1387,16 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     		return pointy;
     	}
     	
-    	public int getBestScale() {
-    		return bestScale;
+    	public int getCircleRadius() {
+    		return circleRadius;
     	}
     	
-    	public double getHD() {
-    		return HD;
+    	public double getEntropy() {
+    		return entropy;
     	}
     	
-    	public double getWD() {
-    		return WD;
+    	public double getInterScaleSaliency() {
+    		return interScaleSaliency;
     	}
     	
     	public double getSaliency() {
