@@ -212,15 +212,15 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     	
     	            return;
     	        }
-    	    	quantizedImage.disposeLocal();
-    	    	quantizedImage = null;
             } // if (destImageR.getMin() != destImageR.getMax())
             destImageR.disposeLocal();
             destImageR = null;
             if (destImageG.getMin() != destImageG.getMax()) {
                 colorsFound++;
                 // Quantize values to go from 0 to nbins-1
-    	    	quantizedImage = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "quantizedImage");
+                if (quantizedImage == null) {
+    	    	    quantizedImage = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "quantizedImage");
+                }
     	    	algoChange = new AlgorithmChangeType(quantizedImage, destImageG, destImageG.getMin(), 
     	    			                             destImageG.getMax(), 0, nbins-1,image25D);
     	    	algoChange.run();
@@ -250,15 +250,15 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
 	    	            return;
 	    	        }	
     	    	}
-    	    	quantizedImage.disposeLocal();
-    	    	quantizedImage = null;
             } // if (destImageG.getMin() != destImageG.getMax())
             destImageG.disposeLocal();
             destImageG = null;
             if (destImageB.getMin() != destImageB.getMax()) {
                 colorsFound++;
                 // Quantize values to go from 0 to nbins-1
-    	    	quantizedImage = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "quantizedImage");
+                if (quantizedImage == null) {
+    	    	    quantizedImage = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "quantizedImage");
+                }
     	    	algoChange = new AlgorithmChangeType(quantizedImage, destImageB, destImageB.getMin(), 
     	    			                             destImageB.getMax(), 0, nbins-1,image25D);
     	    	algoChange.run();
@@ -300,9 +300,9 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
 	    	            return;
 	    	        }		
     	    	}
-    	    	quantizedImage.disposeLocal();
-    	    	quantizedImage = null;
             } // if (destImageB.getMin() != destImageB.getMax())
+            quantizedImage.disposeLocal();
+	    	quantizedImage = null;
             destImageB.disposeLocal();
             destImageB = null;
         } // else if (srcImage.isColorImage())
@@ -348,8 +348,6 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
 	
 	            return;
 	        }
-	    	quantizedImage.disposeLocal();
-	    	quantizedImage = null;
 	    	
 	    	imagImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), "imagImage");
         	try {
@@ -362,7 +360,6 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
 	            return;
 	        }
         	// Quantize values to go from 0 to nbins-1
-	    	quantizedImage = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "quantizedImage");
 	    	algoChange = new AlgorithmChangeType(quantizedImage, imagImage, imagImage.getMin(), 
 	    			                             imagImage.getMax(), 0, nbins-1,image25D);
 	    	algoChange.run();
