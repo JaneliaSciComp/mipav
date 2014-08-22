@@ -60,7 +60,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     // Threshold on saliency
     private double yt = 0.0;
     
-    private boolean fastplog = false;
+    private boolean fastplog = true;
     
     private static final int plogpres = 10000;
     
@@ -385,8 +385,8 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
         } // else if (srcImage.isComplexImage())
     	
     	if (fastplog) {
-    		plogpArray = new double[plogpres];
-    	    for (i = 0; i < plogpres; i++) {
+    		plogpArray = new double[plogpres + 1];
+    	    for (i = 0; i <= plogpres; i++) {
     	        plogpArray[i] = plogp((double)i/plogpres);	
     	    }
     	}
@@ -411,6 +411,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     	}
     	
     	C = greedyCluster(bestSaliency);
+    	fireProgressStateChanged(95);
     	
     	for (i = 0; i < C.size(); i++) {
     		circleVOI =  new VOI((short)i, "circleVOI"+ String.valueOf(i), VOI.CONTOUR, -1 );
@@ -441,6 +442,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
         	VOIs.add(circleVOI);
     	} // for (i = 0; i < C.size(); i++)
     	srcImage.setVOIs(VOIs);
+    	fireProgressStateChanged(100);
     	setCompleted(true);
     	return;
     	
@@ -535,7 +537,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
         
         for (pointx = xStart; pointx < xStop; pointx++) {
         	currentProgress += dprogress;
-            fireProgressStateChanged((int)Math.round(100.0*currentProgress));
+            fireProgressStateChanged((int)Math.round(90.0*currentProgress));
             x = pointx - hs;
             for (pointy = yStart; pointy < yStop; pointy++) {
                 y = pointy - hs;
@@ -552,7 +554,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
                         if (histo1[j] > 0) {
                             tempNormBin = (double)histo1[j]/sum;
                             if (fastplog) {
-                            	entropyArray[scale] -= plogpArray[(int)(tempNormBin * plogpres)];
+                                entropyArray[scale] -= plogpArray[(int)(tempNormBin * plogpres)];
                             }
                             else {
                             	entropyArray[scale] -= plogp(tempNormBin);
@@ -597,7 +599,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
                 }
             } // for (pointy = yStart; pointy < yStop; pointy++)
         } // for (pointx = xStart; pointx < xStop; pointx++)
-        fireProgressStateChanged(100);
+        fireProgressStateChanged(90);
     	
     	return bestSaliency;
     }
@@ -693,7 +695,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
         
         for (x = xStart; x < xStop; x++) {
             currentProgress += dprogress;
-            fireProgressStateChanged((int)Math.round(100.0*currentProgress));
+            fireProgressStateChanged((int)Math.round(90.0*currentProgress));
             for (y = yStart; y < yStop; y++) {
                 index = x + y * xDim;
                 sum = 0.0;
@@ -752,7 +754,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
                 }
             } // for (y = yStart; y < yStop; y++)
         } // for (x = xStart; x < xStop; x++)
-        fireProgressStateChanged(100);
+        fireProgressStateChanged(90);
         
         return bestSaliency;
     } // private double[][] calcSalScale1DAA(ModelImage image)
@@ -866,7 +868,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
         
         for (pointx = xStart; pointx < xStop; pointx++) {
         	currentProgress += dprogress;
-            fireProgressStateChanged((int)Math.round(100.0*currentProgress));
+            fireProgressStateChanged((int)Math.round(90.0*currentProgress));
             x = pointx - hs;
             for (pointy = yStart; pointy < yStop; pointy++) {
                 y = pointy - hs;
@@ -936,7 +938,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
                 }
             } // for (pointy = yStart; pointy < yStop; pointy++)
         } // for (pointx = xStart; pointx < xStop; pointx++)
-        fireProgressStateChanged(100);
+        fireProgressStateChanged(90);
     	
     	return bestSaliency;
     }
@@ -1038,7 +1040,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
         
         for (pointx = xStart; pointx < xStop; pointx++) {
         	currentProgress += dprogress;
-            fireProgressStateChanged((int)Math.round(100.0*currentProgress));
+            fireProgressStateChanged((int)Math.round(90.0*currentProgress));
             x = pointx - hs;
             for (pointy = yStart; pointy < yStop; pointy++) {
                 y = pointy - hs;
@@ -1110,7 +1112,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
                 }
             } // for (pointy = yStart; pointy < yStop; pointy++)
         } // for (pointx = xStart; pointx < xStop; pointx++)
-        fireProgressStateChanged(100);
+        fireProgressStateChanged(90);
     	
     	return bestSaliency;
     }
@@ -1211,7 +1213,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
         
         for (pointx = xStart; pointx < xStop; pointx++) {
         	currentProgress += dprogress;
-            fireProgressStateChanged((int)Math.round(100.0*currentProgress));
+            fireProgressStateChanged((int)Math.round(90.0*currentProgress));
             x = pointx - hs;
             for (pointy = yStart; pointy < yStop; pointy++) {
                 y = pointy - hs;
@@ -1284,7 +1286,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
                 }
             } // for (pointy = yStart; pointy < yStop; pointy++)
         } // for (pointx = xStart; pointx < xStop; pointx++)
-        fireProgressStateChanged(100);
+        fireProgressStateChanged(90);
         
     	return bestSaliency;
     }
