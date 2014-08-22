@@ -60,7 +60,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     // Fraction of saliency maximum value used as threshold
     private double yt = 0.5;
     
-    private boolean fastplog = true;
+    private boolean fastplog = false;
     
     private static final int plogpres = 10000;
     
@@ -84,9 +84,9 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
      * @param stopScale
      * @param mode
      * @param nbins Number of bins (has 256 for Parzen window PDF estimation)
-     * @param antiAliasedSampling (not available with Parzen windowing)
+     * @param sigma for Parzen window
      * @param wt Threshold on inter-scale saliency values
-     * @param yt Threshold on saliency
+     * @param yt Fraction of saliency maximum value used as threshold
      */
     public AlgorithmScaleSaliency(ModelImage srcImg, int startScale, int stopScale, int mode, int nbins, double sigma,
     		                      double wt, double yt) {
@@ -95,6 +95,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     	this.stopScale = stopScale;
     	this.mode = mode;
     	this.nbins = nbins;
+    	this.sigma = sigma;
     	this.wt = wt;
     	this.yt = yt;
     }
@@ -581,7 +582,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
                     }	
                 } // for (scale = startScale+1; scale < stopScale; scale++)
                 
-             // Assign the best (peaks) scales and global saliency for this x, y location
+                // Assign the best (peaks) scales and global saliency for this x, y location
                 if (counts > 0) {
                 	for (i = numScales; i < numScales + counts; i++) {
                 		circleRadius = peaks[i-numScales];
@@ -702,7 +703,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
                 for (scale = startScale; scale <= stopScale; scale++) {
                     for (i = 0; i < lengths[scale] - 1; i++) {
                     	histo1[imageBuffer[index + ROIP[scale].get(i)]] += ROIW[scale].get(i);
-                    }
+                    } 
                     sum += sums[scale];
                     entropyArray[scale] = 0.0;
                     distArray[scale] = 0.0;
@@ -1294,7 +1295,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
    	private Vector<sixItems> greedyCluster(Vector<sixItems> Y) {
     	// Greedy clusterer for salient feature post-processing
    		// It starts with the highest saliency feature and works down removing any features
-   		// which are to close in (xpoint, ypoint).  Here, close means within the support of
+   		// which are too close in (xpoint, ypoint).  Here, close means within the support of
    		// the current feature, i.e., its diameter.
        	Vector<sixItems> C = new Vector<sixItems>();
        	int j;
@@ -1305,7 +1306,7 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
        	double maxSaliency;
        	double saliencyThreshold;
        	
-       	// Sort in ascending saliency
+       	// Sort in descending saliency
        	// Y[5] are all positive and must be put in descending order
        	Collections.sort(Y, new sixItemsComparator());
         maxSaliency = Y.get(0).getSaliency();
