@@ -83,8 +83,8 @@ public class JDialogScaleSaliency extends JDialogScriptableBase implements Algor
     
     private JTextField interScaleSaliencyText;
     
-    // Threshold on saliency
-    private double yt = 0.0;
+    // Fraction of saliency maximum value used as threshold
+    private double yt = 0.5;
     
     private JTextField saliencyText;
 
@@ -403,7 +403,7 @@ public class JDialogScaleSaliency extends JDialogScriptableBase implements Algor
         gbc6.gridx = 1;
         paramPanel.add(interScaleSaliencyText, gbc6);
         
-        saliencyLabel = new JLabel("Saliency threshold ");
+        saliencyLabel = new JLabel("Fraction of saliency maximum value used as threshold ");
         saliencyLabel.setForeground(Color.black);
         saliencyLabel.setFont(serif12);
         saliencyLabel.setEnabled(true);
@@ -412,7 +412,7 @@ public class JDialogScaleSaliency extends JDialogScriptableBase implements Algor
         paramPanel.add(saliencyLabel, gbc6);
         
         saliencyText = new JTextField(3);
-        saliencyText.setText("0.0");
+        saliencyText.setText("0.5");
         saliencyText.setFont(serif12);
         saliencyText.setEnabled(true);
         gbc6.gridx = 1;
@@ -554,7 +554,7 @@ public class JDialogScaleSaliency extends JDialogScriptableBase implements Algor
             table.put(new ParameterInt("nb", 16));
             table.put(new ParameterDouble("sig", 1.0));
             table.put(new ParameterDouble("w_t", 0.5));
-            table.put(new ParameterDouble("y_t", 0.0));
+            table.put(new ParameterDouble("y_t", 0.5));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
