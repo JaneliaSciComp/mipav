@@ -57,8 +57,8 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
     // Setting wt high forces the selection of features that are more scale localized or isotropic.
     private double wt = 0.5;
     
-    // Threshold on saliency
-    private double yt = 0.0;
+    // Fraction of saliency maximum value used as threshold
+    private double yt = 0.5;
     
     private boolean fastplog = true;
     
@@ -1302,12 +1302,16 @@ public class AlgorithmScaleSaliency extends AlgorithmBase {
        	double dists[];
        	double diffx;
        	double diffy;
+       	double maxSaliency;
+       	double saliencyThreshold;
        	
        	// Sort in ascending saliency
        	// Y[5] are all positive and must be put in descending order
        	Collections.sort(Y, new sixItemsComparator());
+        maxSaliency = Y.get(0).getSaliency();
+        saliencyThreshold = yt * maxSaliency;
        	for (j = Y.size() - 1; j >= 0; j--) {
-       		if (Y.get(j).getSaliency() <= yt) {
+       		if (Y.get(j).getSaliency() < saliencyThreshold) {
        			Y.remove(j);
        		}
        	}
