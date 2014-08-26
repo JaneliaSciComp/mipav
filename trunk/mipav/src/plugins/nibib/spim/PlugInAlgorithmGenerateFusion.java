@@ -837,13 +837,13 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             for (int i = 0; i < transformImage.getFileInfo().length; i++) {
                 transformImage.getFileInfo(i).setSliceThickness(transformImage.getResolutions(i)[2]);
             }
-
-            if (doInterImages) {
-                resultImageList.add(baseImage);
-            }
             
             if (baseRotation >= 0) {
                 baseImage = rotate(baseImage, baseRotation);	
+            }
+            
+            if (doInterImages) {
+                resultImageList.add(baseImage);
             }
 
             if (transformRotation >= 0) {
