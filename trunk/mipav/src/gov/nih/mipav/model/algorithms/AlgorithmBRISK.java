@@ -6,7 +6,10 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.io.*;
+import java.util.Iterator;
 import java.util.Vector;
+
+import javax.vecmath.Point2d;
 
 /**
 BRISK - Binary Robust Invariant Scalable Keypoints
@@ -511,8 +514,197 @@ public class AlgorithmBRISK extends AlgorithmBase {
     	} // if (dx + dy > 2)
     	
     	// Now the calculation
-    	return 0;
+    	int ptr = x_left + xDim * y_top;
+    	// First row
+    	ret_val = A * (int)doubleBuffer[ptr];
+    	ptr++;
+    	final int end1 = ptr + dx;
+    	for (; ptr < end1; ptr++) {
+    		ret_val += r_y_1_i * (int)doubleBuffer[ptr];
+    	}
+    	ret_val += B * (int)doubleBuffer[ptr];
+    	// Middle ones
+    	ptr += xDim - dx - 1;
+    	int end_j = ptr + dy * xDim;
+    	for (; ptr < end_j; ptr += xDim-dx-1) {
+    		ret_val += r_x_1_i * (int)doubleBuffer[ptr];
+    		ptr++;
+    		final int end2 = ptr + dx;
+    		for (; ptr < end2; ptr++) {
+    			ret_val += (int)doubleBuffer[ptr]*scaling;
+    		}
+    		ret_val += r_x1_i * (int)doubleBuffer[ptr];
+    	}
+    	// Last row
+    	ret_val += D * (int)doubleBuffer[ptr];
+    	ptr++;
+    	final int end3 = ptr + dx;
+    	for (; ptr < end3; ptr++) {
+    		ret_val += r_y1_i * (int)doubleBuffer[ptr];
+    	}
+    	ret_val += C * (int)doubleBuffer[ptr];
+    	
+    	return (ret_val + scaling2/2)/scaling2;
+    } // private int smoothedIntensity
+    
+    private boolean RoiPredicate(final double minX, final double minY, final double maxX, final double maxY,
+    		                     final KeyPoint keyPt) {
+        Point2d pt = keyPt.getPt();
+        return (pt.x < minX) || (pt.x >= maxX) || (pt.y < minY) || (pt.y >= maxY);
     }
+    
+    // This is the subclass keypoint computation implementation
+    private void computeImpl(ModelImage image, Vector<KeyPoint>keypoints, short[][] descriptors) {
+    	int xDim = image.getExtents()[0];
+    	int yDim = image.getExtents()[1];
+    	int sliceSize = xDim * yDim;
+    	double doubleBuffer[] = new double[sliceSize];
+    	try {
+    		image.exportData(0, sliceSize, doubleBuffer);
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("IOException " + e + " on image.exportData(0, sliceSize, doubleBuffer) in computeImp1");
+    		setCompleted(false);
+    		return;
+    	}
+        // Remove keypoints very close to the border
+    	int ksize = keypoints.size();
+    	// Remember the scale per keypoint
+    	Vector<Integer>kscales = new Vector<Integer>();
+    	kscales.setSize(ksize);
+    	final double log2 = 0.693147180559945;
+    	final double lb_scaleRange = Math.log(scaleRange)/log2;
+    	//Iterator <KeyPoint> beginning = keypoints.iterator();
+    	int beginning = 0;
+    	//Iterator <Integer> beginningkscales = kscales.iterator();
+    	int beginningkscales = 0;
+    	final double basicSize06 = basicSize * 0.6;
+    	int basicScale = 0;
+    	if (!scaleInvariant) {
+    	    basicScale = Math.max((int)(scales/lb_scaleRange*(Math.log(1.45*basicSize/basicSize06)/log2)+0.5), 0);
+    	    for (int k = 0; k < ksize; k++) {
+    	        int scale;
+    	        if (scaleInvariant) {
+    	        	scale = Math.max((int)(scales/lb_scaleRange*(Math.log(keypoints.get(k).getSize()/basicSize06)/log2)+0.5), 0);
+    	        	// Saturate
+    	        	if (scale >= scales) {
+    	        		scale = scales - 1;
+    	        	}
+    	        	kscales.set(k, Integer.valueOf(scale));
+    	        } // if (scaleInvariant)
+    	        else {
+    	        	scale = basicScale;
+    	        	kscales.set(k, Integer.valueOf(scale));
+    	        }
+    	        final int border = sizeList[scale];
+    	        final int border_x = xDim - border;
+    	        final int border_y = yDim - border;
+    	        if (RoiPredicate(border, border, border_x, border_y, keypoints.get(k))) {
+    	        	keypoints.remove(beginning+k);
+    	        	kscales.remove(beginningkscales + k);
+    	        	if (k == 0) {
+    	        		beginning = 0;
+    	        		beginningkscales = 0;
+    	        	}
+    	        	ksize--;
+    	        	k--;
+    	        } // if (RoiPredicate(border, border, border_x, border_y, keypoints.get(k)))
+    	    } // for (int k = 0; k < ksize; k++)
+    	    
+    	    // First, calculate the integral image over the whole image:
+    	    // Current integral image
+    	    int extents[] = new int[2];
+    	    extents[0] = xDim + 1;
+    	    extents[1] = yDim+1;
+    	    double integralBuffer[] = new double[extents[0]*extents[1]];
+    	    for (int y = 0; y < yDim+1; y++) {
+    	    	for (int x = 0; x < xDim + 1; x++) {
+    	    		for (int y2 = 0; y2 < y; y2++) {
+    	    			for (int x2 = 0; x2 < x; x2++) {
+    	    				integralBuffer[x + y*(xDim+1)] += doubleBuffer[x2 + y2*xDim];
+    	    			}
+    	    		}
+    	    	}
+    	    }
+    	    ModelImage integral = new ModelImage(ModelStorageBase.DOUBLE, extents, "integral");
+    	    try {
+    	    	integral.importData(0, integralBuffer, true);
+    	    }
+    	    catch (IOException e){
+    	    	MipavUtil.displayError("IOexception " + e + " on integral.importData(0, integralBuffer, true) in computeImpl");
+    	    	setCompleted(false);
+    	    	return;
+    	    }
+    	    
+    	    // For temporary use
+    	    int values[] = new int[points];
+    	    
+    	    // Create the descriptors
+    	    // ksize is the number of descriptos
+    	    // strings is the number of shorts the descriptor consists of
+    	    descriptors = new short[ksize][strings];
+    	    
+    	    // Now do the extraction for all keypoints:
+    	    
+    	    // Temporary variables containing gray values at sample pointsZZ
+    	    int t1;
+    	    int t2;
+    	    
+    	    // The feature orientation
+    	    int direction0;
+    	    int direction1;
+    	    
+    	    // Points to the start of descriptors
+    	    int ptr = 0;
+    	    for (int k = 0; k < ksize; k++) {
+    	        int theta;
+    	        KeyPoint kp = keypoints.get(k);
+    	        final int scale = kscales.get(k);
+    	        int shifter = 0;
+    	        // Points to start of values
+    	        int pvalues = 0;
+    	        final double x = kp.getPt().x;
+    	        final double y = kp.getPt().y;
+    	        if (true /* kp.getAngle() == -1) */) {
+    	            if (!rotationInvariant) {
+    	            	// Don't compute the gradient direction, just assign a rotation of 0 degrees
+    	            	theta = 0;
+    	            }
+    	            else {
+    	            	// Get the gray values in the unrotated pattern
+    	            	for (int i = 0; i < points; i++) {
+    	            		values[pvalues++] = smoothedIntensity(image, integral, x, y, scale, 0 , i);
+    	            	}
+    	            	
+    	            	direction0 = 0;
+    	            	direction1 = 0;
+    	            	// Now iterate through the long pairings
+    	            	for (int iter = 0; iter <numLongPairs; ++iter) {
+    	            	    t1 = values[longPairs[iter].getI()];
+    	            	    t2 = values[longPairs[iter].getJ()];
+    	            	    final int delta_t = t1 - t2;
+    	            	    // Update the direction
+    	            	    final int tmp0 = delta_t*longPairs[iter].getWeighted_dx()/1024;
+    	            	    final int tmp1 = delta_t*longPairs[iter].getWeighted_dy()/1024;
+    	            	    direction0 += tmp0;
+    	            	    direction1 += tmp1;
+    	            	} // for (int iter = 0; iter <numLongPairs; ++iter)
+    	            	kp.setAngle(Math.atan2((double)direction1, (double)direction0)/Math.PI*180.0);
+    	            	theta = (int)((n_rot*kp.getAngle())/360.0 + 0.5);
+    	            	if (theta < 0) {
+    	            		theta += n_rot;
+    	            	}
+    	            	if (theta >= (int)n_rot) {
+    	            		theta -= n_rot;
+    	            	}
+    	            } // else
+    	        } // if (true /* kp.getAngle() == -1) */)
+    	        else {
+    	        	// Figure out the direction
+    	        } // else
+    	    } // for (int k = 0; k < ksize; k++)
+    	} // if (!scaleInvariant)
+    } // private void computeImp1
     
     // Some helper classes for the Brisk pattern representation
     private class BriskPatternPoint {
@@ -632,6 +824,55 @@ public class AlgorithmBRISK extends AlgorithmBase {
     	
     	public int getWeighted_dy() {
     		return weighted_dy;
+    	}
+    }
+    
+    // Data structure for salient point detectors
+    public class KeyPoint {
+    	// Coordinates of the keypoint
+    	private Point2d pt;
+    	// Diameter of meaningful keypoint neighborhood
+    	private double size;
+    	// Computed orientation of the keypoint (-1 if not applicable)
+    	// Its possible values are in the range [0,360) degrees.
+    	// It is measured relative to the image coordinate system
+    	// (y-axis is directed downward), i.e. clockwise
+    	private double angle = -1.0;
+    	// The response by which the most strong keypoints have been selected.
+    	// Can be used for further sorting or subsampling
+    	private double response = 0.0;
+    	// Octave (pyramid layer) from which the keypoint has been selected
+    	private int octave = 0;
+    	// Object id that can be used to cluster keypoint by an object they belong to
+    	private int class_id = -1;
+    	
+    	public KeyPoint() {
+    		
+    	}
+    	
+    	public KeyPoint(Point2d pt, double size) {
+    		this.pt = pt;
+    		this.size = size;
+    		this.angle = -1.0;
+    		this.response = 0.0;
+    		this.octave = 0;
+    		this.class_id = -1;
+    	}
+    	
+    	public void setAngle(double angle) {
+    		this.angle = angle;
+    	}
+    	
+    	public Point2d getPt() {
+    		return pt;
+    	}
+    	
+    	public double getSize() {
+    		return size;
+    	}
+    	
+    	public double getAngle() {
+    		return angle;
     	}
     }
     
