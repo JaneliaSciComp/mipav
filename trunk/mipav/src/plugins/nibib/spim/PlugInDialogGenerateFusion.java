@@ -291,6 +291,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     private JRadioButton plusXBaseRotationButton;
     private JRadioButton minusYBaseRotationButton;
     private JRadioButton plusYBaseRotationButton;
+    private JRadioButton invertYBaseRotationButton;
     
     private ButtonGroup transformImageRotation;
     private JRadioButton noTransformRotationButton;
@@ -298,6 +299,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     private JRadioButton plusXTransformRotationButton;
     private JRadioButton minusYTransformRotationButton;
     private JRadioButton plusYTransformRotationButton;
+    private JRadioButton invertYTransformRotationButton;
     
     private int baseRotation = -1;
     private int transformRotation = AlgorithmRotate.Y_AXIS_MINUS;
@@ -671,7 +673,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     private void init() {
         setResizable(true);
         setForeground(Color.black);
-        setTitle("Generate fusion 544h");
+        setTitle("Generate fusion 544i");
         try {
             setIconImage(MipavUtil.getIconImage("divinci.gif"));
         } catch (FileNotFoundException e) {
@@ -1356,6 +1358,13 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         basePanel.add(plusYBaseRotationButton, gbc);
         gbc.gridy++;
         
+        invertYBaseRotationButton = new JRadioButton("180 degree Y axis base image rotation", false);
+        invertYBaseRotationButton.setFont(serif12);
+        invertYBaseRotationButton.setForeground(Color.black);
+        baseImageRotation.add(invertYBaseRotationButton);
+        basePanel.add(invertYBaseRotationButton, gbc);
+        gbc.gridy++;
+        
         JPanel transformImagePanel = new JPanel(new GridBagLayout());
         transformImagePanel.setForeground(Color.black);
         transformImagePanel.setBorder(buildTitledBorder("Transform image rotations"));
@@ -1397,6 +1406,13 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         plusYTransformRotationButton.setForeground(Color.black);
         transformImageRotation.add(plusYTransformRotationButton);
         transformImagePanel.add(plusYTransformRotationButton, gbc);
+        gbc.gridy++;
+        
+        invertYTransformRotationButton = new JRadioButton("180 degree Y axis transform image rotation", false);
+        invertYTransformRotationButton.setFont(serif12);
+        invertYTransformRotationButton.setForeground(Color.black);
+        transformImageRotation.add(invertYTransformRotationButton);
+        transformImagePanel.add(invertYTransformRotationButton, gbc);
         gbc.gridy++;
         
         gbc.gridx = 0;
@@ -2533,6 +2549,9 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	    else if (plusYBaseRotationButton.isSelected()) {
 	    	baseRotation = AlgorithmRotate.Y_AXIS_PLUS;
 	    }
+	    else if (invertYBaseRotationButton.isSelected()) {
+	    	baseRotation = AlgorithmRotate.Y_AXIS_180;	
+	    }
 	    
 	    if (noTransformRotationButton.isSelected()) {
 	        transformRotation = -1;	
@@ -2548,6 +2567,9 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	    }
 	    else if (plusYTransformRotationButton.isSelected()) {
 	    	transformRotation = AlgorithmRotate.Y_AXIS_PLUS;
+	    }
+	    else if (invertYTransformRotationButton.isSelected()) {
+	    	transformRotation = AlgorithmRotate.Y_AXIS_180;
 	    }
 	    
 		return true;
