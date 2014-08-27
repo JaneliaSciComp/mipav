@@ -4531,9 +4531,12 @@ public class ModelImage extends ModelStorageBase {
                 }
             } // if (matHolder != null) 
             
-            if ( (srcImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
-                    || (srcImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
+            if ( (srcImage.getMatrix().getTransformID() == TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)
+                    || (srcImage.getMatrix().getTransformID() == TransMatrix.TRANSFORM_ANOTHER_DATASET)
+                     || (srcImage.getMatrix().getTransformID() == TransMatrix.TRANSFORM_UNKNOWN)
+                     || (srcImage.getMatrix().getTransformID() == TransMatrix.TRANSFORM_COMPOSITE)) {
             	TransMatrix dicomMatrix = null;
+            	int transformID = srcImage.getMatrix().getTransformID();
             	dicomMatrix = srcImage.getMatrix();
             	TransMatrix newMatrix = new TransMatrix(4);
             	for (i = 0; i < 3; i++) {
@@ -4546,7 +4549,12 @@ public class ModelImage extends ModelStorageBase {
                     	}
                     }
             	} // for (i = 0; i < 3; i++)
-            	newMatrix.setTransformID(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL);
+            	if (transformID == TransMatrix.TRANSFORM_COMPOSITE) {
+            	    newMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET)	;
+            	}
+            	else {
+            	    newMatrix.setTransformID(transformID);
+            	}
             	destImage.getMatrixHolder().clearMatrices();
             	destImage.getMatrixHolder().addMatrix(newMatrix);
             	
@@ -4572,7 +4580,7 @@ public class ModelImage extends ModelStorageBase {
                 	    }
                 	}
                 }
-            } // if ( (srcImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
+            } // if ( (srcImage.getMatrix().getTransformID() == TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)
             
             
         } // if (destImage.getNDims() >= 3)
