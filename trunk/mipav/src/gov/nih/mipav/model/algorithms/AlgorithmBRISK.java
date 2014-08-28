@@ -12,6 +12,8 @@ import java.util.Vector;
 
 import javax.vecmath.Point2d;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 /**
 BRISK - Binary Robust Invariant Scalable Keypoints
 Reference implementation of
@@ -155,6 +157,14 @@ public class AlgorithmBRISK extends AlgorithmBase {
 	
 	// The image pyramids
 	private int layers;
+	private Vector<BriskLayer> pyramid = new Vector<BriskLayer>();
+	
+	private static final int HALFSAMPLE = 0;
+	
+	private static final int TWOTHIRDSAMPLE = 1;
+	
+	private double safeThreshold;
+	
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -770,7 +780,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
     	return ModelStorageBase.SHORT;
     }
     
-    private void detectImpl(ModelImage image, Vector<KeyPoint> keypoints, BitSet mask) {
+    public void detectImpl(ModelImage image, Vector<KeyPoint> keypoints, BitSet mask) {
     	int xDim = image.getExtents()[0];
     	int x;
     	int y;
@@ -793,8 +803,8 @@ public class AlgorithmBRISK extends AlgorithmBase {
 	    	}
     	} // if (mask != null)
     }
-    
-    private void briskScaleSpace() {
+	
+	private void briskScaleSpace() {
     	if (octaves == 0) {
     		layers = 1;
     	}
@@ -804,11 +814,39 @@ public class AlgorithmBRISK extends AlgorithmBase {
     }
     
     private void constructPyramid(ModelImage image) {
+    
+        // Set correct size
+    	pyramid.clear();
     	
+    	// Fill the pyramid
+    	pyramid.add(new BriskLayer((ModelImage)image.clone())); 
+    	if (layers > 1) {
+    		pyramid.add(new BriskLayer(pyramid.lastElement(),TWOTHIRDSAMPLE));
+    	}
+    	
+    	for (int i = 2; i < layers; i += 2) {
+    		pyramid.add(new BriskLayer(pyramid.get(i-2), HALFSAMPLE));
+    		pyramid.add(new BriskLayer(pyramid.get(i-1), HALFSAMPLE));
+    	}
     }
     
     private void getKeypoints(Vector<KeyPoint> keypoints) {
+        // Make sure keypoints is empty
+    	keypoints.clear();
+    	keypoints.setSize(2000);
     	
+    	// Assign thresholds
+    	safeThreshold = threshold * safetyFactor;
+    	Vector<Vector<Point2d>> agastPoints = new Vector<Vector<Point2d>>();
+    	agastPoints.setSize(layers);
+    	
+    	// Go through the octaves and intra layers and calculate 
+    	// fast corner scores
+    	for (int i = 0; i < layers; i++) {
+    		// Call OAST16_9 without nms
+    		BriskLayer l = pyramid.get(i);
+    		l.getAgastPoints(safeThreshold, agastPoints.get(i));
+    	} 
     }
     
     // Some helper classes for the Brisk pattern representation
@@ -981,24 +1019,115 @@ public class AlgorithmBRISK extends AlgorithmBase {
     	}
     }
     
+    
+    // Construct a layer
     private class BriskLayer {
     	private ModelImage image;
     	private double scale = 1.0;
     	private double offset = 0.0;
     	short scores[][] = null;
-    	int xDim;
-    	int yDim;
+    	private int xDim;
+    	private int yDim;
+    	OastDetector9_16 oastDetector;
+    	AgastDetector5_8 agastDetector_5_8;
     	
+    	// attention: this means that the passed image reference must point to persistent memory
     	public BriskLayer(ModelImage image) {
     		this.image = image;
     		xDim = image.getExtents()[0];
     		yDim = image.getExtents()[1];
     		scores = new short[yDim][xDim];
     		// create an agast detector
-    		//oastDetector_ = new agast::OastDetector9_16(xDim, yDim, 0);
-    		//agastDetector_5_8_ = new agast::AgastDetector5_8(xDim, yDim, 0);
+    		oastDetector = new OastDetector9_16(xDim, yDim, 0);
+    		agastDetector_5_8 = new AgastDetector5_8(xDim, yDim, 0);
 
     	}
+    	
+    	// Derive a layer
+    	public BriskLayer(BriskLayer layer, int mode) {
+    		final boolean doClip = true;
+            final boolean doVOI = false;
+            final boolean doRotateCenter = false;
+            final Vector3f center = new Vector3f();
+            final float fillValue = 0.0f;
+            final boolean doUpdateOrigin = false;
+            final boolean doPad = false;
+            TransMatrix xfrm = new TransMatrix(3);
+			xfrm.identity();
+			float iXres = layer.getImage().getFileInfo(0).getResolutions()[0];
+			float iYres = layer.getImage().getFileInfo(0).getResolutions()[1];
+			int interp = AlgorithmTransform.BILINEAR;
+		    int units[] = layer.getImage().getUnitsOfMeasure();
+    		if(mode == HALFSAMPLE){
+    			xDim = layer.getXDim()/2;
+    			yDim = layer.getYDim()/2;
+    			scale = layer.getScale()*2;
+    		}
+    		else {
+    			xDim = 2 * (layer.getXDim()/3);
+    			yDim = 2 * (layer.getYDim()/3);
+    			scale = layer.getScale()*1.5;
+    		}
+    		offset = 0.5*scale-0.5;
+    		float oXres = (iXres * layer.getXDim())/xDim;
+			float oYres = (iYres * layer.getYDim())/yDim;
+			AlgorithmTransform algoTrans = new AlgorithmTransform(layer.getImage(), xfrm, interp, oXres,
+					 oYres, xDim, yDim, units, doVOI, doClip,
+                     doPad, doRotateCenter, center);
+            algoTrans.setFillValue(fillValue);
+            algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+            algoTrans.setSuppressProgressBar(true);
+            algoTrans.run();
+            image = algoTrans. getTransformedImage();
+            algoTrans.disposeLocal();
+            algoTrans = null;
+    		scores = new short[yDim][xDim];
+    		oastDetector = new OastDetector9_16(xDim, yDim, 0);
+    		agastDetector_5_8 = new AgastDetector5_8(xDim, yDim, 0);
+    	}
+    	
+    	public double getScale() {
+    		return scale;
+    	}
+    	
+    	public ModelImage getImage() {
+    		return image;
+    	}
+    	
+    	public int getXDim() {
+    		return xDim;
+    	}
+    	
+    	public int getYDim() {
+    		return yDim;
+    	}
+    	
+    	 public void getAgastPoints(double threshold, Vector<Point2d> keypoints){
+         	oastDetector.setThreshold(threshold);
+         	int sliceSize = xDim * yDim;
+         	double doubleBuffer[] = new double[sliceSize];
+         	try {
+         		image.exportData(0, sliceSize, doubleBuffer);
+         	}
+         	catch (IOException e) {
+         		MipavUtil.displayError("IOException " + e + " on image.exportData(0, sliceSize, doubleBuffer) in getAgastPoints()");
+         		setCompleted(false);
+         		return;
+         	}
+         	oastDetector.detect(doubleBuffer,keypoints);
+
+         	// also write scores
+         	final int num=keypoints.size();
+         	
+         	double maxValue = -Double.MAX_VALUE;
+
+         	for(int i=0; i<num; i++){
+         		int x = (int)Math.round(keypoints.get(i).x);
+         		int y = (int)Math.round(keypoints.get(i).y);
+         		final int offs= x+ y*xDim;
+         		//scores[y][x]=oastDetector.setCornerScore(doubleBuffer, offs);
+         	}
+         }
     }
     
 }
