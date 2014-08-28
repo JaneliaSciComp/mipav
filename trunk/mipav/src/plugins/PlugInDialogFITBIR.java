@@ -211,7 +211,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.24";
+    private static final String pluginVersion = "0.25";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -566,10 +566,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             csvFieldNames = new ArrayList<String>(csvFieldNamesWithRecord.length - 1);
             int recordFieldIndex = -1;
             for (int i = 0; i < csvFieldNamesWithRecord.length; i++) {
-                if (csvFieldNamesWithRecord[i].equalsIgnoreCase(recordIndicatorColumn)) {
+                if (csvFieldNamesWithRecord[i].equalsIgnoreCase(recordIndicatorColumn)
+                        || csvFieldNamesWithRecord[i].equalsIgnoreCase("\"" + recordIndicatorColumn + "\"")) {
                     recordFieldIndex = i;
                 } else {
-                    csvFieldNames.add(csvFieldNamesWithRecord[i]);
+                    // if the names are surrounded by quotes, remove them before adding
+                    csvFieldNames.add(csvFieldNamesWithRecord[i].replaceAll("^\"|\"$", ""));
                 }
             }
 
