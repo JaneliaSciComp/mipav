@@ -2192,2080 +2192,2079 @@ public class OastDetector9_16 {
 		}										
 	}
 	
-	/*int OastDetector9_16::cornerScore(const unsigned char* p)
+	public double getCornerScore(double doubleBuffer[], int p, double bmax)
 	{
-	    int bmin = b;
-	    //std::cout <<int(b)<<":";
-	    int bmax = 255;
-	    int b_test = (bmax + bmin)/2;
+	    double bmin = threshold;
+	    double b_test = (bmax + bmin)/2;
 
-		register int_fast16_t offset0=s_offset0;
-		register int_fast16_t offset1=s_offset1;
-		register int_fast16_t offset2=s_offset2;
-		register int_fast16_t offset3=s_offset3;
-		register int_fast16_t offset4=s_offset4;
-		register int_fast16_t offset5=s_offset5;
-		register int_fast16_t offset6=s_offset6;
-		register int_fast16_t offset7=s_offset7;
-		register int_fast16_t offset8=s_offset8;
-		register int_fast16_t offset9=s_offset9;
-		register int_fast16_t offset10=s_offset10;
-		register int_fast16_t offset11=s_offset11;
-		register int_fast16_t offset12=s_offset12;
-		register int_fast16_t offset13=s_offset13;
-		register int_fast16_t offset14=s_offset14;
-		register int_fast16_t offset15=s_offset15;
+		int offset0=s_offset0;
+		int offset1=s_offset1;
+		int offset2=s_offset2;
+		int offset3=s_offset3;
+		int offset4=s_offset4;
+		int offset5=s_offset5;
+		int offset6=s_offset6;
+		int offset7=s_offset7;
+		int offset8=s_offset8;
+		int offset9=s_offset9;
+		int offset10=s_offset10;
+		int offset11=s_offset11;
+		int offset12=s_offset12;
+		int offset13=s_offset13;
+		int offset14=s_offset14;
+		int offset15=s_offset15;
 
-		while(1)
+		while(true)
 		{
-			register const int cb = *p + b_test;
-			//std::cout << offset0 << ".";
-			register const int c_b = *p - b_test;
-			if(p[offset0] > cb)
-			  if(p[offset2] > cb)
-			    if(p[offset4] > cb)
-			      if(p[offset5] > cb)
-			        if(p[offset7] > cb)
-			          if(p[offset3] > cb)
-			            if(p[offset1] > cb)
-			              if(p[offset6] > cb)
-			                if(p[offset8] > cb)
-			                  goto is_a_corner;
+		is_not_a_corner: while (true)
+		{
+		is_a_corner: while (true)
+		{
+			double cb = doubleBuffer[p] + b_test;
+			double c_b = doubleBuffer[p] - b_test;
+			if(doubleBuffer[p + offset0] > cb)
+			  if(doubleBuffer[p + offset2] > cb)
+			    if(doubleBuffer[p + offset4] > cb)
+			      if(doubleBuffer[p + offset5] > cb)
+			        if(doubleBuffer[p + offset7] > cb)
+			          if(doubleBuffer[p + offset3] > cb)
+			            if(doubleBuffer[p + offset1] > cb)
+			              if(doubleBuffer[p + offset6] > cb)
+			                if(doubleBuffer[p + offset8] > cb)
+			                  break is_a_corner;
 			                else
-			                  if(p[offset15] > cb)
-			                    goto is_a_corner;
+			                  if(doubleBuffer[p + offset15] > cb)
+			                    break is_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset13] > cb)
-			                  if(p[offset14] > cb)
-			                    if(p[offset15] > cb)
-			                      goto is_a_corner;
+			                if(doubleBuffer[p + offset13] > cb)
+			                  if(doubleBuffer[p + offset14] > cb)
+			                    if(doubleBuffer[p + offset15] > cb)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              if(p[offset8] > cb)
-			                if(p[offset9] > cb)
-			                  if(p[offset10] > cb)
-			                    if(p[offset6] > cb)
-			                      goto is_a_corner;
+			              if(doubleBuffer[p + offset8] > cb)
+			                if(doubleBuffer[p + offset9] > cb)
+			                  if(doubleBuffer[p + offset10] > cb)
+			                    if(doubleBuffer[p + offset6] > cb)
+			                      break is_a_corner;
 			                    else
-			                      if(p[offset11] > cb)
-			                        if(p[offset12] > cb)
-			                          if(p[offset13] > cb)
-			                            if(p[offset14] > cb)
-			                              if(p[offset15] > cb)
-			                                goto is_a_corner;
+			                      if(doubleBuffer[p + offset11] > cb)
+			                        if(doubleBuffer[p + offset12] > cb)
+			                          if(doubleBuffer[p + offset13] > cb)
+			                            if(doubleBuffer[p + offset14] > cb)
+			                              if(doubleBuffer[p + offset15] > cb)
+			                                break is_a_corner;
 			                              else
-			                                goto is_not_a_corner;
+			                                break is_not_a_corner;
 			                            else
-			                              goto is_not_a_corner;
+			                              break is_not_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			          else
-			            if(p[offset10] > cb)
-			              if(p[offset11] > cb)
-			                if(p[offset12] > cb)
-			                  if(p[offset8] > cb)
-			                    if(p[offset9] > cb)
-			                      if(p[offset6] > cb)
-			                        goto is_a_corner;
+			            if(doubleBuffer[p + offset10] > cb)
+			              if(doubleBuffer[p + offset11] > cb)
+			                if(doubleBuffer[p + offset12] > cb)
+			                  if(doubleBuffer[p + offset8] > cb)
+			                    if(doubleBuffer[p + offset9] > cb)
+			                      if(doubleBuffer[p + offset6] > cb)
+			                        break is_a_corner;
 			                      else
-			                        if(p[offset13] > cb)
-			                          if(p[offset14] > cb)
-			                            if(p[offset15] > cb)
-			                              goto is_a_corner;
+			                        if(doubleBuffer[p + offset13] > cb)
+			                          if(doubleBuffer[p + offset14] > cb)
+			                            if(doubleBuffer[p + offset15] > cb)
+			                              break is_a_corner;
 			                            else
-			                              goto is_not_a_corner;
+			                              break is_not_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                    else
-			                      if(p[offset1] > cb)
-			                        if(p[offset13] > cb)
-			                          if(p[offset14] > cb)
-			                            if(p[offset15] > cb)
-			                              goto is_a_corner;
+			                      if(doubleBuffer[p + offset1] > cb)
+			                        if(doubleBuffer[p + offset13] > cb)
+			                          if(doubleBuffer[p + offset14] > cb)
+			                            if(doubleBuffer[p + offset15] > cb)
+			                              break is_a_corner;
 			                            else
-			                              goto is_not_a_corner;
+			                              break is_not_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                  else
-			                    if(p[offset1] > cb)
-			                      if(p[offset13] > cb)
-			                        if(p[offset14] > cb)
-			                          if(p[offset15] > cb)
-			                            goto is_a_corner;
+			                    if(doubleBuffer[p + offset1] > cb)
+			                      if(doubleBuffer[p + offset13] > cb)
+			                        if(doubleBuffer[p + offset14] > cb)
+			                          if(doubleBuffer[p + offset15] > cb)
+			                            break is_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
-			        else if(p[offset7] < c_b)
-			          if(p[offset14] > cb)
-			            if(p[offset15] > cb)
-			              if(p[offset1] > cb)
-			                if(p[offset3] > cb)
-			                  if(p[offset6] > cb)
-			                    goto is_a_corner;
+			              break is_not_a_corner;
+			        else if(doubleBuffer[p + offset7] < c_b)
+			          if(doubleBuffer[p + offset14] > cb)
+			            if(doubleBuffer[p + offset15] > cb)
+			              if(doubleBuffer[p + offset1] > cb)
+			                if(doubleBuffer[p + offset3] > cb)
+			                  if(doubleBuffer[p + offset6] > cb)
+			                    break is_a_corner;
 			                  else
-			                    if(p[offset13] > cb)
-			                      goto is_a_corner;
+			                    if(doubleBuffer[p + offset13] > cb)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset10] > cb)
-			                    if(p[offset11] > cb)
-			                      if(p[offset12] > cb)
-			                        if(p[offset13] > cb)
-			                          goto is_a_corner;
+			                  if(doubleBuffer[p + offset10] > cb)
+			                    if(doubleBuffer[p + offset11] > cb)
+			                      if(doubleBuffer[p + offset12] > cb)
+			                        if(doubleBuffer[p + offset13] > cb)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset8] > cb)
-			                  if(p[offset9] > cb)
-			                    if(p[offset10] > cb)
-			                      if(p[offset11] > cb)
-			                        if(p[offset12] > cb)
-			                          if(p[offset13] > cb)
-			                            goto is_a_corner;
+			                if(doubleBuffer[p + offset8] > cb)
+			                  if(doubleBuffer[p + offset9] > cb)
+			                    if(doubleBuffer[p + offset10] > cb)
+			                      if(doubleBuffer[p + offset11] > cb)
+			                        if(doubleBuffer[p + offset12] > cb)
+			                          if(doubleBuffer[p + offset13] > cb)
+			                            break is_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
-			          else if(p[offset14] < c_b)
-			            if(p[offset8] < c_b)
-			              if(p[offset9] < c_b)
-			                if(p[offset10] < c_b)
-			                  if(p[offset11] < c_b)
-			                    if(p[offset12] < c_b)
-			                      if(p[offset13] < c_b)
-			                        if(p[offset6] < c_b)
-			                          goto is_a_corner;
+			              break is_not_a_corner;
+			          else if(doubleBuffer[p + offset14] < c_b)
+			            if(doubleBuffer[p + offset8] < c_b)
+			              if(doubleBuffer[p + offset9] < c_b)
+			                if(doubleBuffer[p + offset10] < c_b)
+			                  if(doubleBuffer[p + offset11] < c_b)
+			                    if(doubleBuffer[p + offset12] < c_b)
+			                      if(doubleBuffer[p + offset13] < c_b)
+			                        if(doubleBuffer[p + offset6] < c_b)
+			                          break is_a_corner;
 			                        else
-			                          if(p[offset15] < c_b)
-			                            goto is_a_corner;
+			                          if(doubleBuffer[p + offset15] < c_b)
+			                            break is_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
+			            break is_not_a_corner;
 			        else
-			          if(p[offset14] > cb)
-			            if(p[offset15] > cb)
-			              if(p[offset1] > cb)
-			                if(p[offset3] > cb)
-			                  if(p[offset6] > cb)
-			                    goto is_a_corner;
+			          if(doubleBuffer[p + offset14] > cb)
+			            if(doubleBuffer[p + offset15] > cb)
+			              if(doubleBuffer[p + offset1] > cb)
+			                if(doubleBuffer[p + offset3] > cb)
+			                  if(doubleBuffer[p + offset6] > cb)
+			                    break is_a_corner;
 			                  else
-			                    if(p[offset13] > cb)
-			                      goto is_a_corner;
+			                    if(doubleBuffer[p + offset13] > cb)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset10] > cb)
-			                    if(p[offset11] > cb)
-			                      if(p[offset12] > cb)
-			                        if(p[offset13] > cb)
-			                          goto is_a_corner;
+			                  if(doubleBuffer[p + offset10] > cb)
+			                    if(doubleBuffer[p + offset11] > cb)
+			                      if(doubleBuffer[p + offset12] > cb)
+			                        if(doubleBuffer[p + offset13] > cb)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset8] > cb)
-			                  if(p[offset9] > cb)
-			                    if(p[offset10] > cb)
-			                      if(p[offset11] > cb)
-			                        if(p[offset12] > cb)
-			                          if(p[offset13] > cb)
-			                            goto is_a_corner;
+			                if(doubleBuffer[p + offset8] > cb)
+			                  if(doubleBuffer[p + offset9] > cb)
+			                    if(doubleBuffer[p + offset10] > cb)
+			                      if(doubleBuffer[p + offset11] > cb)
+			                        if(doubleBuffer[p + offset12] > cb)
+			                          if(doubleBuffer[p + offset13] > cb)
+			                            break is_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
-			      else if(p[offset5] < c_b)
-			        if(p[offset12] > cb)
-			          if(p[offset13] > cb)
-			            if(p[offset14] > cb)
-			              if(p[offset15] > cb)
-			                if(p[offset1] > cb)
-			                  if(p[offset3] > cb)
-			                    goto is_a_corner;
+			            break is_not_a_corner;
+			      else if(doubleBuffer[p + offset5] < c_b)
+			        if(doubleBuffer[p + offset12] > cb)
+			          if(doubleBuffer[p + offset13] > cb)
+			            if(doubleBuffer[p + offset14] > cb)
+			              if(doubleBuffer[p + offset15] > cb)
+			                if(doubleBuffer[p + offset1] > cb)
+			                  if(doubleBuffer[p + offset3] > cb)
+			                    break is_a_corner;
 			                  else
-			                    if(p[offset10] > cb)
-			                      if(p[offset11] > cb)
-			                        goto is_a_corner;
+			                    if(doubleBuffer[p + offset10] > cb)
+			                      if(doubleBuffer[p + offset11] > cb)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset8] > cb)
-			                    if(p[offset9] > cb)
-			                      if(p[offset10] > cb)
-			                        if(p[offset11] > cb)
-			                          goto is_a_corner;
+			                  if(doubleBuffer[p + offset8] > cb)
+			                    if(doubleBuffer[p + offset9] > cb)
+			                      if(doubleBuffer[p + offset10] > cb)
+			                        if(doubleBuffer[p + offset11] > cb)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset6] > cb)
-			                  if(p[offset7] > cb)
-			                    if(p[offset8] > cb)
-			                      if(p[offset9] > cb)
-			                        if(p[offset10] > cb)
-			                          if(p[offset11] > cb)
-			                            goto is_a_corner;
+			                if(doubleBuffer[p + offset6] > cb)
+			                  if(doubleBuffer[p + offset7] > cb)
+			                    if(doubleBuffer[p + offset8] > cb)
+			                      if(doubleBuffer[p + offset9] > cb)
+			                        if(doubleBuffer[p + offset10] > cb)
+			                          if(doubleBuffer[p + offset11] > cb)
+			                            break is_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
-			        else if(p[offset12] < c_b)
-			          if(p[offset7] < c_b)
-			            if(p[offset8] < c_b)
-			              if(p[offset9] < c_b)
-			                if(p[offset10] < c_b)
-			                  if(p[offset11] < c_b)
-			                    if(p[offset13] < c_b)
-			                      if(p[offset6] < c_b)
-			                        goto is_a_corner;
+			            break is_not_a_corner;
+			        else if(doubleBuffer[p + offset12] < c_b)
+			          if(doubleBuffer[p + offset7] < c_b)
+			            if(doubleBuffer[p + offset8] < c_b)
+			              if(doubleBuffer[p + offset9] < c_b)
+			                if(doubleBuffer[p + offset10] < c_b)
+			                  if(doubleBuffer[p + offset11] < c_b)
+			                    if(doubleBuffer[p + offset13] < c_b)
+			                      if(doubleBuffer[p + offset6] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        if(p[offset14] < c_b)
-			                          if(p[offset15] < c_b)
-			                            goto is_a_corner;
+			                        if(doubleBuffer[p + offset14] < c_b)
+			                          if(doubleBuffer[p + offset15] < c_b)
+			                            break is_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
+			            break is_not_a_corner;
 			        else
-			          goto is_not_a_corner;
+			          break is_not_a_corner;
 			      else
-			        if(p[offset12] > cb)
-			          if(p[offset13] > cb)
-			            if(p[offset14] > cb)
-			              if(p[offset15] > cb)
-			                if(p[offset1] > cb)
-			                  if(p[offset3] > cb)
-			                    goto is_a_corner;
+			        if(doubleBuffer[p + offset12] > cb)
+			          if(doubleBuffer[p + offset13] > cb)
+			            if(doubleBuffer[p + offset14] > cb)
+			              if(doubleBuffer[p + offset15] > cb)
+			                if(doubleBuffer[p + offset1] > cb)
+			                  if(doubleBuffer[p + offset3] > cb)
+			                    break is_a_corner;
 			                  else
-			                    if(p[offset10] > cb)
-			                      if(p[offset11] > cb)
-			                        goto is_a_corner;
+			                    if(doubleBuffer[p + offset10] > cb)
+			                      if(doubleBuffer[p + offset11] > cb)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset8] > cb)
-			                    if(p[offset9] > cb)
-			                      if(p[offset10] > cb)
-			                        if(p[offset11] > cb)
-			                          goto is_a_corner;
+			                  if(doubleBuffer[p + offset8] > cb)
+			                    if(doubleBuffer[p + offset9] > cb)
+			                      if(doubleBuffer[p + offset10] > cb)
+			                        if(doubleBuffer[p + offset11] > cb)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset6] > cb)
-			                  if(p[offset7] > cb)
-			                    if(p[offset8] > cb)
-			                      if(p[offset9] > cb)
-			                        if(p[offset10] > cb)
-			                          if(p[offset11] > cb)
-			                            goto is_a_corner;
+			                if(doubleBuffer[p + offset6] > cb)
+			                  if(doubleBuffer[p + offset7] > cb)
+			                    if(doubleBuffer[p + offset8] > cb)
+			                      if(doubleBuffer[p + offset9] > cb)
+			                        if(doubleBuffer[p + offset10] > cb)
+			                          if(doubleBuffer[p + offset11] > cb)
+			                            break is_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
-			        else if(p[offset12] < c_b)
-			          if(p[offset7] < c_b)
-			            if(p[offset8] < c_b)
-			              if(p[offset9] < c_b)
-			                if(p[offset10] < c_b)
-			                  if(p[offset11] < c_b)
-			                    if(p[offset13] < c_b)
-			                      if(p[offset14] < c_b)
-			                        if(p[offset6] < c_b)
-			                          goto is_a_corner;
+			            break is_not_a_corner;
+			        else if(doubleBuffer[p + offset12] < c_b)
+			          if(doubleBuffer[p + offset7] < c_b)
+			            if(doubleBuffer[p + offset8] < c_b)
+			              if(doubleBuffer[p + offset9] < c_b)
+			                if(doubleBuffer[p + offset10] < c_b)
+			                  if(doubleBuffer[p + offset11] < c_b)
+			                    if(doubleBuffer[p + offset13] < c_b)
+			                      if(doubleBuffer[p + offset14] < c_b)
+			                        if(doubleBuffer[p + offset6] < c_b)
+			                          break is_a_corner;
 			                        else
-			                          if(p[offset15] < c_b)
-			                            goto is_a_corner;
+			                          if(doubleBuffer[p + offset15] < c_b)
+			                            break is_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
+			            break is_not_a_corner;
 			        else
-			          goto is_not_a_corner;
-			    else if(p[offset4] < c_b)
-			      if(p[offset11] > cb)
-			        if(p[offset12] > cb)
-			          if(p[offset13] > cb)
-			            if(p[offset10] > cb)
-			              if(p[offset14] > cb)
-			                if(p[offset15] > cb)
-			                  if(p[offset1] > cb)
-			                    goto is_a_corner;
+			          break is_not_a_corner;
+			    else if(doubleBuffer[p + offset4] < c_b)
+			      if(doubleBuffer[p + offset11] > cb)
+			        if(doubleBuffer[p + offset12] > cb)
+			          if(doubleBuffer[p + offset13] > cb)
+			            if(doubleBuffer[p + offset10] > cb)
+			              if(doubleBuffer[p + offset14] > cb)
+			                if(doubleBuffer[p + offset15] > cb)
+			                  if(doubleBuffer[p + offset1] > cb)
+			                    break is_a_corner;
 			                  else
-			                    if(p[offset8] > cb)
-			                      if(p[offset9] > cb)
-			                        goto is_a_corner;
+			                    if(doubleBuffer[p + offset8] > cb)
+			                      if(doubleBuffer[p + offset9] > cb)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset6] > cb)
-			                    if(p[offset7] > cb)
-			                      if(p[offset8] > cb)
-			                        if(p[offset9] > cb)
-			                          goto is_a_corner;
+			                  if(doubleBuffer[p + offset6] > cb)
+			                    if(doubleBuffer[p + offset7] > cb)
+			                      if(doubleBuffer[p + offset8] > cb)
+			                        if(doubleBuffer[p + offset9] > cb)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset5] > cb)
-			                  if(p[offset6] > cb)
-			                    if(p[offset7] > cb)
-			                      if(p[offset8] > cb)
-			                        if(p[offset9] > cb)
-			                          goto is_a_corner;
+			                if(doubleBuffer[p + offset5] > cb)
+			                  if(doubleBuffer[p + offset6] > cb)
+			                    if(doubleBuffer[p + offset7] > cb)
+			                      if(doubleBuffer[p + offset8] > cb)
+			                        if(doubleBuffer[p + offset9] > cb)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              if(p[offset1] > cb)
-			                if(p[offset3] > cb)
-			                  if(p[offset14] > cb)
-			                    if(p[offset15] > cb)
-			                      goto is_a_corner;
+			              if(doubleBuffer[p + offset1] > cb)
+			                if(doubleBuffer[p + offset3] > cb)
+			                  if(doubleBuffer[p + offset14] > cb)
+			                    if(doubleBuffer[p + offset15] > cb)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
+			            break is_not_a_corner;
 			        else
-			          goto is_not_a_corner;
-			      else if(p[offset11] < c_b)
-			        if(p[offset7] < c_b)
-			          if(p[offset8] < c_b)
-			            if(p[offset9] < c_b)
-			              if(p[offset10] < c_b)
-			                if(p[offset6] < c_b)
-			                  if(p[offset5] < c_b)
-			                    if(p[offset3] < c_b)
-			                      goto is_a_corner;
+			          break is_not_a_corner;
+			      else if(doubleBuffer[p + offset11] < c_b)
+			        if(doubleBuffer[p + offset7] < c_b)
+			          if(doubleBuffer[p + offset8] < c_b)
+			            if(doubleBuffer[p + offset9] < c_b)
+			              if(doubleBuffer[p + offset10] < c_b)
+			                if(doubleBuffer[p + offset6] < c_b)
+			                  if(doubleBuffer[p + offset5] < c_b)
+			                    if(doubleBuffer[p + offset3] < c_b)
+			                      break is_a_corner;
 			                    else
-			                      if(p[offset12] < c_b)
-			                        goto is_a_corner;
+			                      if(doubleBuffer[p + offset12] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                  else
-			                    if(p[offset12] < c_b)
-			                      if(p[offset13] < c_b)
-			                        if(p[offset14] < c_b)
-			                          goto is_a_corner;
+			                    if(doubleBuffer[p + offset12] < c_b)
+			                      if(doubleBuffer[p + offset13] < c_b)
+			                        if(doubleBuffer[p + offset14] < c_b)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset12] < c_b)
-			                    if(p[offset13] < c_b)
-			                      if(p[offset14] < c_b)
-			                        if(p[offset15] < c_b)
-			                          goto is_a_corner;
+			                  if(doubleBuffer[p + offset12] < c_b)
+			                    if(doubleBuffer[p + offset13] < c_b)
+			                      if(doubleBuffer[p + offset14] < c_b)
+			                        if(doubleBuffer[p + offset15] < c_b)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
+			            break is_not_a_corner;
 			        else
-			          goto is_not_a_corner;
+			          break is_not_a_corner;
 			      else
-			        goto is_not_a_corner;
+			        break is_not_a_corner;
 			    else
-			      if(p[offset11] > cb)
-			        if(p[offset12] > cb)
-			          if(p[offset13] > cb)
-			            if(p[offset10] > cb)
-			              if(p[offset14] > cb)
-			                if(p[offset15] > cb)
-			                  if(p[offset1] > cb)
-			                    goto is_a_corner;
+			      if(doubleBuffer[p + offset11] > cb)
+			        if(doubleBuffer[p + offset12] > cb)
+			          if(doubleBuffer[p + offset13] > cb)
+			            if(doubleBuffer[p + offset10] > cb)
+			              if(doubleBuffer[p + offset14] > cb)
+			                if(doubleBuffer[p + offset15] > cb)
+			                  if(doubleBuffer[p + offset1] > cb)
+			                    break is_a_corner;
 			                  else
-			                    if(p[offset8] > cb)
-			                      if(p[offset9] > cb)
-			                        goto is_a_corner;
+			                    if(doubleBuffer[p + offset8] > cb)
+			                      if(doubleBuffer[p + offset9] > cb)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset6] > cb)
-			                    if(p[offset7] > cb)
-			                      if(p[offset8] > cb)
-			                        if(p[offset9] > cb)
-			                          goto is_a_corner;
+			                  if(doubleBuffer[p + offset6] > cb)
+			                    if(doubleBuffer[p + offset7] > cb)
+			                      if(doubleBuffer[p + offset8] > cb)
+			                        if(doubleBuffer[p + offset9] > cb)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset5] > cb)
-			                  if(p[offset6] > cb)
-			                    if(p[offset7] > cb)
-			                      if(p[offset8] > cb)
-			                        if(p[offset9] > cb)
-			                          goto is_a_corner;
+			                if(doubleBuffer[p + offset5] > cb)
+			                  if(doubleBuffer[p + offset6] > cb)
+			                    if(doubleBuffer[p + offset7] > cb)
+			                      if(doubleBuffer[p + offset8] > cb)
+			                        if(doubleBuffer[p + offset9] > cb)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              if(p[offset1] > cb)
-			                if(p[offset3] > cb)
-			                  if(p[offset14] > cb)
-			                    if(p[offset15] > cb)
-			                      goto is_a_corner;
+			              if(doubleBuffer[p + offset1] > cb)
+			                if(doubleBuffer[p + offset3] > cb)
+			                  if(doubleBuffer[p + offset14] > cb)
+			                    if(doubleBuffer[p + offset15] > cb)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
+			            break is_not_a_corner;
 			        else
-			          goto is_not_a_corner;
-			      else if(p[offset11] < c_b)
-			        if(p[offset7] < c_b)
-			          if(p[offset8] < c_b)
-			            if(p[offset9] < c_b)
-			              if(p[offset10] < c_b)
-			                if(p[offset12] < c_b)
-			                  if(p[offset13] < c_b)
-			                    if(p[offset6] < c_b)
-			                      if(p[offset5] < c_b)
-			                        goto is_a_corner;
+			          break is_not_a_corner;
+			      else if(doubleBuffer[p + offset11] < c_b)
+			        if(doubleBuffer[p + offset7] < c_b)
+			          if(doubleBuffer[p + offset8] < c_b)
+			            if(doubleBuffer[p + offset9] < c_b)
+			              if(doubleBuffer[p + offset10] < c_b)
+			                if(doubleBuffer[p + offset12] < c_b)
+			                  if(doubleBuffer[p + offset13] < c_b)
+			                    if(doubleBuffer[p + offset6] < c_b)
+			                      if(doubleBuffer[p + offset5] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        if(p[offset14] < c_b)
-			                          goto is_a_corner;
+			                        if(doubleBuffer[p + offset14] < c_b)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                    else
-			                      if(p[offset14] < c_b)
-			                        if(p[offset15] < c_b)
-			                          goto is_a_corner;
+			                      if(doubleBuffer[p + offset14] < c_b)
+			                        if(doubleBuffer[p + offset15] < c_b)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
+			            break is_not_a_corner;
 			        else
-			          goto is_not_a_corner;
+			          break is_not_a_corner;
 			      else
-			        goto is_not_a_corner;
-			  else if(p[offset2] < c_b)
-			    if(p[offset9] > cb)
-			      if(p[offset10] > cb)
-			        if(p[offset11] > cb)
-			          if(p[offset8] > cb)
-			            if(p[offset12] > cb)
-			              if(p[offset13] > cb)
-			                if(p[offset14] > cb)
-			                  if(p[offset15] > cb)
-			                    goto is_a_corner;
+			        break is_not_a_corner;
+			  else if(doubleBuffer[p + offset2] < c_b)
+			    if(doubleBuffer[p + offset9] > cb)
+			      if(doubleBuffer[p + offset10] > cb)
+			        if(doubleBuffer[p + offset11] > cb)
+			          if(doubleBuffer[p + offset8] > cb)
+			            if(doubleBuffer[p + offset12] > cb)
+			              if(doubleBuffer[p + offset13] > cb)
+			                if(doubleBuffer[p + offset14] > cb)
+			                  if(doubleBuffer[p + offset15] > cb)
+			                    break is_a_corner;
 			                  else
-			                    if(p[offset6] > cb)
-			                      if(p[offset7] > cb)
-			                        goto is_a_corner;
+			                    if(doubleBuffer[p + offset6] > cb)
+			                      if(doubleBuffer[p + offset7] > cb)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset5] > cb)
-			                    if(p[offset6] > cb)
-			                      if(p[offset7] > cb)
-			                        goto is_a_corner;
+			                  if(doubleBuffer[p + offset5] > cb)
+			                    if(doubleBuffer[p + offset6] > cb)
+			                      if(doubleBuffer[p + offset7] > cb)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset4] > cb)
-			                  if(p[offset5] > cb)
-			                    if(p[offset6] > cb)
-			                      if(p[offset7] > cb)
-			                        goto is_a_corner;
+			                if(doubleBuffer[p + offset4] > cb)
+			                  if(doubleBuffer[p + offset5] > cb)
+			                    if(doubleBuffer[p + offset6] > cb)
+			                      if(doubleBuffer[p + offset7] > cb)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              if(p[offset3] > cb)
-			                if(p[offset4] > cb)
-			                  if(p[offset5] > cb)
-			                    if(p[offset6] > cb)
-			                      if(p[offset7] > cb)
-			                        goto is_a_corner;
+			              if(doubleBuffer[p + offset3] > cb)
+			                if(doubleBuffer[p + offset4] > cb)
+			                  if(doubleBuffer[p + offset5] > cb)
+			                    if(doubleBuffer[p + offset6] > cb)
+			                      if(doubleBuffer[p + offset7] > cb)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			          else
-			            if(p[offset1] > cb)
-			              if(p[offset12] > cb)
-			                if(p[offset13] > cb)
-			                  if(p[offset14] > cb)
-			                    if(p[offset15] > cb)
-			                      goto is_a_corner;
+			            if(doubleBuffer[p + offset1] > cb)
+			              if(doubleBuffer[p + offset12] > cb)
+			                if(doubleBuffer[p + offset13] > cb)
+			                  if(doubleBuffer[p + offset14] > cb)
+			                    if(doubleBuffer[p + offset15] > cb)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			        else
-			          goto is_not_a_corner;
+			          break is_not_a_corner;
 			      else
-			        goto is_not_a_corner;
-			    else if(p[offset9] < c_b)
-			      if(p[offset7] < c_b)
-			        if(p[offset8] < c_b)
-			          if(p[offset6] < c_b)
-			            if(p[offset5] < c_b)
-			              if(p[offset4] < c_b)
-			                if(p[offset3] < c_b)
-			                  if(p[offset1] < c_b)
-			                    goto is_a_corner;
+			        break is_not_a_corner;
+			    else if(doubleBuffer[p + offset9] < c_b)
+			      if(doubleBuffer[p + offset7] < c_b)
+			        if(doubleBuffer[p + offset8] < c_b)
+			          if(doubleBuffer[p + offset6] < c_b)
+			            if(doubleBuffer[p + offset5] < c_b)
+			              if(doubleBuffer[p + offset4] < c_b)
+			                if(doubleBuffer[p + offset3] < c_b)
+			                  if(doubleBuffer[p + offset1] < c_b)
+			                    break is_a_corner;
 			                  else
-			                    if(p[offset10] < c_b)
-			                      goto is_a_corner;
+			                    if(doubleBuffer[p + offset10] < c_b)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset10] < c_b)
-			                    if(p[offset11] < c_b)
-			                      if(p[offset12] < c_b)
-			                        goto is_a_corner;
+			                  if(doubleBuffer[p + offset10] < c_b)
+			                    if(doubleBuffer[p + offset11] < c_b)
+			                      if(doubleBuffer[p + offset12] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset10] < c_b)
-			                  if(p[offset11] < c_b)
-			                    if(p[offset12] < c_b)
-			                      if(p[offset13] < c_b)
-			                        goto is_a_corner;
+			                if(doubleBuffer[p + offset10] < c_b)
+			                  if(doubleBuffer[p + offset11] < c_b)
+			                    if(doubleBuffer[p + offset12] < c_b)
+			                      if(doubleBuffer[p + offset13] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              if(p[offset10] < c_b)
-			                if(p[offset11] < c_b)
-			                  if(p[offset12] < c_b)
-			                    if(p[offset13] < c_b)
-			                      if(p[offset14] < c_b)
-			                        goto is_a_corner;
+			              if(doubleBuffer[p + offset10] < c_b)
+			                if(doubleBuffer[p + offset11] < c_b)
+			                  if(doubleBuffer[p + offset12] < c_b)
+			                    if(doubleBuffer[p + offset13] < c_b)
+			                      if(doubleBuffer[p + offset14] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			          else
-			            if(p[offset10] < c_b)
-			              if(p[offset11] < c_b)
-			                if(p[offset12] < c_b)
-			                  if(p[offset13] < c_b)
-			                    if(p[offset14] < c_b)
-			                      if(p[offset15] < c_b)
-			                        goto is_a_corner;
+			            if(doubleBuffer[p + offset10] < c_b)
+			              if(doubleBuffer[p + offset11] < c_b)
+			                if(doubleBuffer[p + offset12] < c_b)
+			                  if(doubleBuffer[p + offset13] < c_b)
+			                    if(doubleBuffer[p + offset14] < c_b)
+			                      if(doubleBuffer[p + offset15] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			        else
-			          goto is_not_a_corner;
+			          break is_not_a_corner;
 			      else
-			        goto is_not_a_corner;
+			        break is_not_a_corner;
 			    else
-			      goto is_not_a_corner;
+			      break is_not_a_corner;
 			  else
-			    if(p[offset9] > cb)
-			      if(p[offset10] > cb)
-			        if(p[offset11] > cb)
-			          if(p[offset8] > cb)
-			            if(p[offset12] > cb)
-			              if(p[offset13] > cb)
-			                if(p[offset14] > cb)
-			                  if(p[offset15] > cb)
-			                    goto is_a_corner;
+			    if(doubleBuffer[p + offset9] > cb)
+			      if(doubleBuffer[p + offset10] > cb)
+			        if(doubleBuffer[p + offset11] > cb)
+			          if(doubleBuffer[p + offset8] > cb)
+			            if(doubleBuffer[p + offset12] > cb)
+			              if(doubleBuffer[p + offset13] > cb)
+			                if(doubleBuffer[p + offset14] > cb)
+			                  if(doubleBuffer[p + offset15] > cb)
+			                    break is_a_corner;
 			                  else
-			                    if(p[offset6] > cb)
-			                      if(p[offset7] > cb)
-			                        goto is_a_corner;
+			                    if(doubleBuffer[p + offset6] > cb)
+			                      if(doubleBuffer[p + offset7] > cb)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset5] > cb)
-			                    if(p[offset6] > cb)
-			                      if(p[offset7] > cb)
-			                        goto is_a_corner;
+			                  if(doubleBuffer[p + offset5] > cb)
+			                    if(doubleBuffer[p + offset6] > cb)
+			                      if(doubleBuffer[p + offset7] > cb)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset4] > cb)
-			                  if(p[offset5] > cb)
-			                    if(p[offset6] > cb)
-			                      if(p[offset7] > cb)
-			                        goto is_a_corner;
+			                if(doubleBuffer[p + offset4] > cb)
+			                  if(doubleBuffer[p + offset5] > cb)
+			                    if(doubleBuffer[p + offset6] > cb)
+			                      if(doubleBuffer[p + offset7] > cb)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              if(p[offset3] > cb)
-			                if(p[offset4] > cb)
-			                  if(p[offset5] > cb)
-			                    if(p[offset6] > cb)
-			                      if(p[offset7] > cb)
-			                        goto is_a_corner;
+			              if(doubleBuffer[p + offset3] > cb)
+			                if(doubleBuffer[p + offset4] > cb)
+			                  if(doubleBuffer[p + offset5] > cb)
+			                    if(doubleBuffer[p + offset6] > cb)
+			                      if(doubleBuffer[p + offset7] > cb)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			          else
-			            if(p[offset1] > cb)
-			              if(p[offset12] > cb)
-			                if(p[offset13] > cb)
-			                  if(p[offset14] > cb)
-			                    if(p[offset15] > cb)
-			                      goto is_a_corner;
+			            if(doubleBuffer[p + offset1] > cb)
+			              if(doubleBuffer[p + offset12] > cb)
+			                if(doubleBuffer[p + offset13] > cb)
+			                  if(doubleBuffer[p + offset14] > cb)
+			                    if(doubleBuffer[p + offset15] > cb)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			        else
-			          goto is_not_a_corner;
+			          break is_not_a_corner;
 			      else
-			        goto is_not_a_corner;
-			    else if(p[offset9] < c_b)
-			      if(p[offset7] < c_b)
-			        if(p[offset8] < c_b)
-			          if(p[offset10] < c_b)
-			            if(p[offset11] < c_b)
-			              if(p[offset6] < c_b)
-			                if(p[offset5] < c_b)
-			                  if(p[offset4] < c_b)
-			                    if(p[offset3] < c_b)
-			                      goto is_a_corner;
+			        break is_not_a_corner;
+			    else if(doubleBuffer[p + offset9] < c_b)
+			      if(doubleBuffer[p + offset7] < c_b)
+			        if(doubleBuffer[p + offset8] < c_b)
+			          if(doubleBuffer[p + offset10] < c_b)
+			            if(doubleBuffer[p + offset11] < c_b)
+			              if(doubleBuffer[p + offset6] < c_b)
+			                if(doubleBuffer[p + offset5] < c_b)
+			                  if(doubleBuffer[p + offset4] < c_b)
+			                    if(doubleBuffer[p + offset3] < c_b)
+			                      break is_a_corner;
 			                    else
-			                      if(p[offset12] < c_b)
-			                        goto is_a_corner;
+			                      if(doubleBuffer[p + offset12] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                  else
-			                    if(p[offset12] < c_b)
-			                      if(p[offset13] < c_b)
-			                        goto is_a_corner;
+			                    if(doubleBuffer[p + offset12] < c_b)
+			                      if(doubleBuffer[p + offset13] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset12] < c_b)
-			                    if(p[offset13] < c_b)
-			                      if(p[offset14] < c_b)
-			                        goto is_a_corner;
+			                  if(doubleBuffer[p + offset12] < c_b)
+			                    if(doubleBuffer[p + offset13] < c_b)
+			                      if(doubleBuffer[p + offset14] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset12] < c_b)
-			                  if(p[offset13] < c_b)
-			                    if(p[offset14] < c_b)
-			                      if(p[offset15] < c_b)
-			                        goto is_a_corner;
+			                if(doubleBuffer[p + offset12] < c_b)
+			                  if(doubleBuffer[p + offset13] < c_b)
+			                    if(doubleBuffer[p + offset14] < c_b)
+			                      if(doubleBuffer[p + offset15] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
+			            break is_not_a_corner;
 			        else
-			          goto is_not_a_corner;
+			          break is_not_a_corner;
 			      else
-			        goto is_not_a_corner;
+			        break is_not_a_corner;
 			    else
-			      goto is_not_a_corner;
-			else if(p[offset0] < c_b)
-			  if(p[offset2] > cb)
-			    if(p[offset9] > cb)
-			      if(p[offset7] > cb)
-			        if(p[offset8] > cb)
-			          if(p[offset6] > cb)
-			            if(p[offset5] > cb)
-			              if(p[offset4] > cb)
-			                if(p[offset3] > cb)
-			                  if(p[offset1] > cb)
-			                    goto is_a_corner;
+			      break is_not_a_corner;
+			else if(doubleBuffer[p + offset0] < c_b)
+			  if(doubleBuffer[p + offset2] > cb)
+			    if(doubleBuffer[p + offset9] > cb)
+			      if(doubleBuffer[p + offset7] > cb)
+			        if(doubleBuffer[p + offset8] > cb)
+			          if(doubleBuffer[p + offset6] > cb)
+			            if(doubleBuffer[p + offset5] > cb)
+			              if(doubleBuffer[p + offset4] > cb)
+			                if(doubleBuffer[p + offset3] > cb)
+			                  if(doubleBuffer[p + offset1] > cb)
+			                    break is_a_corner;
 			                  else
-			                    if(p[offset10] > cb)
-			                      goto is_a_corner;
+			                    if(doubleBuffer[p + offset10] > cb)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset10] > cb)
-			                    if(p[offset11] > cb)
-			                      if(p[offset12] > cb)
-			                        goto is_a_corner;
+			                  if(doubleBuffer[p + offset10] > cb)
+			                    if(doubleBuffer[p + offset11] > cb)
+			                      if(doubleBuffer[p + offset12] > cb)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset10] > cb)
-			                  if(p[offset11] > cb)
-			                    if(p[offset12] > cb)
-			                      if(p[offset13] > cb)
-			                        goto is_a_corner;
+			                if(doubleBuffer[p + offset10] > cb)
+			                  if(doubleBuffer[p + offset11] > cb)
+			                    if(doubleBuffer[p + offset12] > cb)
+			                      if(doubleBuffer[p + offset13] > cb)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              if(p[offset10] > cb)
-			                if(p[offset11] > cb)
-			                  if(p[offset12] > cb)
-			                    if(p[offset13] > cb)
-			                      if(p[offset14] > cb)
-			                        goto is_a_corner;
+			              if(doubleBuffer[p + offset10] > cb)
+			                if(doubleBuffer[p + offset11] > cb)
+			                  if(doubleBuffer[p + offset12] > cb)
+			                    if(doubleBuffer[p + offset13] > cb)
+			                      if(doubleBuffer[p + offset14] > cb)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			          else
-			            if(p[offset10] > cb)
-			              if(p[offset11] > cb)
-			                if(p[offset12] > cb)
-			                  if(p[offset13] > cb)
-			                    if(p[offset14] > cb)
-			                      if(p[offset15] > cb)
-			                        goto is_a_corner;
+			            if(doubleBuffer[p + offset10] > cb)
+			              if(doubleBuffer[p + offset11] > cb)
+			                if(doubleBuffer[p + offset12] > cb)
+			                  if(doubleBuffer[p + offset13] > cb)
+			                    if(doubleBuffer[p + offset14] > cb)
+			                      if(doubleBuffer[p + offset15] > cb)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			        else
-			          goto is_not_a_corner;
+			          break is_not_a_corner;
 			      else
-			        goto is_not_a_corner;
-			    else if(p[offset9] < c_b)
-			      if(p[offset10] < c_b)
-			        if(p[offset11] < c_b)
-			          if(p[offset8] < c_b)
-			            if(p[offset12] < c_b)
-			              if(p[offset13] < c_b)
-			                if(p[offset14] < c_b)
-			                  if(p[offset15] < c_b)
-			                    goto is_a_corner;
+			        break is_not_a_corner;
+			    else if(doubleBuffer[p + offset9] < c_b)
+			      if(doubleBuffer[p + offset10] < c_b)
+			        if(doubleBuffer[p + offset11] < c_b)
+			          if(doubleBuffer[p + offset8] < c_b)
+			            if(doubleBuffer[p + offset12] < c_b)
+			              if(doubleBuffer[p + offset13] < c_b)
+			                if(doubleBuffer[p + offset14] < c_b)
+			                  if(doubleBuffer[p + offset15] < c_b)
+			                    break is_a_corner;
 			                  else
-			                    if(p[offset6] < c_b)
-			                      if(p[offset7] < c_b)
-			                        goto is_a_corner;
+			                    if(doubleBuffer[p + offset6] < c_b)
+			                      if(doubleBuffer[p + offset7] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset5] < c_b)
-			                    if(p[offset6] < c_b)
-			                      if(p[offset7] < c_b)
-			                        goto is_a_corner;
+			                  if(doubleBuffer[p + offset5] < c_b)
+			                    if(doubleBuffer[p + offset6] < c_b)
+			                      if(doubleBuffer[p + offset7] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset4] < c_b)
-			                  if(p[offset5] < c_b)
-			                    if(p[offset6] < c_b)
-			                      if(p[offset7] < c_b)
-			                        goto is_a_corner;
+			                if(doubleBuffer[p + offset4] < c_b)
+			                  if(doubleBuffer[p + offset5] < c_b)
+			                    if(doubleBuffer[p + offset6] < c_b)
+			                      if(doubleBuffer[p + offset7] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              if(p[offset3] < c_b)
-			                if(p[offset4] < c_b)
-			                  if(p[offset5] < c_b)
-			                    if(p[offset6] < c_b)
-			                      if(p[offset7] < c_b)
-			                        goto is_a_corner;
+			              if(doubleBuffer[p + offset3] < c_b)
+			                if(doubleBuffer[p + offset4] < c_b)
+			                  if(doubleBuffer[p + offset5] < c_b)
+			                    if(doubleBuffer[p + offset6] < c_b)
+			                      if(doubleBuffer[p + offset7] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			          else
-			            if(p[offset1] < c_b)
-			              if(p[offset12] < c_b)
-			                if(p[offset13] < c_b)
-			                  if(p[offset14] < c_b)
-			                    if(p[offset15] < c_b)
-			                      goto is_a_corner;
+			            if(doubleBuffer[p + offset1] < c_b)
+			              if(doubleBuffer[p + offset12] < c_b)
+			                if(doubleBuffer[p + offset13] < c_b)
+			                  if(doubleBuffer[p + offset14] < c_b)
+			                    if(doubleBuffer[p + offset15] < c_b)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			        else
-			          goto is_not_a_corner;
+			          break is_not_a_corner;
 			      else
-			        goto is_not_a_corner;
+			        break is_not_a_corner;
 			    else
-			      goto is_not_a_corner;
-			  else if(p[offset2] < c_b)
-			    if(p[offset4] > cb)
-			      if(p[offset11] > cb)
-			        if(p[offset7] > cb)
-			          if(p[offset8] > cb)
-			            if(p[offset9] > cb)
-			              if(p[offset10] > cb)
-			                if(p[offset6] > cb)
-			                  if(p[offset5] > cb)
-			                    if(p[offset3] > cb)
-			                      goto is_a_corner;
+			      break is_not_a_corner;
+			  else if(doubleBuffer[p + offset2] < c_b)
+			    if(doubleBuffer[p + offset4] > cb)
+			      if(doubleBuffer[p + offset11] > cb)
+			        if(doubleBuffer[p + offset7] > cb)
+			          if(doubleBuffer[p + offset8] > cb)
+			            if(doubleBuffer[p + offset9] > cb)
+			              if(doubleBuffer[p + offset10] > cb)
+			                if(doubleBuffer[p + offset6] > cb)
+			                  if(doubleBuffer[p + offset5] > cb)
+			                    if(doubleBuffer[p + offset3] > cb)
+			                      break is_a_corner;
 			                    else
-			                      if(p[offset12] > cb)
-			                        goto is_a_corner;
+			                      if(doubleBuffer[p + offset12] > cb)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                  else
-			                    if(p[offset12] > cb)
-			                      if(p[offset13] > cb)
-			                        if(p[offset14] > cb)
-			                          goto is_a_corner;
+			                    if(doubleBuffer[p + offset12] > cb)
+			                      if(doubleBuffer[p + offset13] > cb)
+			                        if(doubleBuffer[p + offset14] > cb)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset12] > cb)
-			                    if(p[offset13] > cb)
-			                      if(p[offset14] > cb)
-			                        if(p[offset15] > cb)
-			                          goto is_a_corner;
+			                  if(doubleBuffer[p + offset12] > cb)
+			                    if(doubleBuffer[p + offset13] > cb)
+			                      if(doubleBuffer[p + offset14] > cb)
+			                        if(doubleBuffer[p + offset15] > cb)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
+			            break is_not_a_corner;
 			        else
-			          goto is_not_a_corner;
-			      else if(p[offset11] < c_b)
-			        if(p[offset12] < c_b)
-			          if(p[offset13] < c_b)
-			            if(p[offset10] < c_b)
-			              if(p[offset14] < c_b)
-			                if(p[offset15] < c_b)
-			                  if(p[offset1] < c_b)
-			                    goto is_a_corner;
+			          break is_not_a_corner;
+			      else if(doubleBuffer[p + offset11] < c_b)
+			        if(doubleBuffer[p + offset12] < c_b)
+			          if(doubleBuffer[p + offset13] < c_b)
+			            if(doubleBuffer[p + offset10] < c_b)
+			              if(doubleBuffer[p + offset14] < c_b)
+			                if(doubleBuffer[p + offset15] < c_b)
+			                  if(doubleBuffer[p + offset1] < c_b)
+			                    break is_a_corner;
 			                  else
-			                    if(p[offset8] < c_b)
-			                      if(p[offset9] < c_b)
-			                        goto is_a_corner;
+			                    if(doubleBuffer[p + offset8] < c_b)
+			                      if(doubleBuffer[p + offset9] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset6] < c_b)
-			                    if(p[offset7] < c_b)
-			                      if(p[offset8] < c_b)
-			                        if(p[offset9] < c_b)
-			                          goto is_a_corner;
+			                  if(doubleBuffer[p + offset6] < c_b)
+			                    if(doubleBuffer[p + offset7] < c_b)
+			                      if(doubleBuffer[p + offset8] < c_b)
+			                        if(doubleBuffer[p + offset9] < c_b)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset5] < c_b)
-			                  if(p[offset6] < c_b)
-			                    if(p[offset7] < c_b)
-			                      if(p[offset8] < c_b)
-			                        if(p[offset9] < c_b)
-			                          goto is_a_corner;
+			                if(doubleBuffer[p + offset5] < c_b)
+			                  if(doubleBuffer[p + offset6] < c_b)
+			                    if(doubleBuffer[p + offset7] < c_b)
+			                      if(doubleBuffer[p + offset8] < c_b)
+			                        if(doubleBuffer[p + offset9] < c_b)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              if(p[offset1] < c_b)
-			                if(p[offset3] < c_b)
-			                  if(p[offset14] < c_b)
-			                    if(p[offset15] < c_b)
-			                      goto is_a_corner;
+			              if(doubleBuffer[p + offset1] < c_b)
+			                if(doubleBuffer[p + offset3] < c_b)
+			                  if(doubleBuffer[p + offset14] < c_b)
+			                    if(doubleBuffer[p + offset15] < c_b)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
+			            break is_not_a_corner;
 			        else
-			          goto is_not_a_corner;
+			          break is_not_a_corner;
 			      else
-			        goto is_not_a_corner;
-			    else if(p[offset4] < c_b)
-			      if(p[offset5] > cb)
-			        if(p[offset12] > cb)
-			          if(p[offset7] > cb)
-			            if(p[offset8] > cb)
-			              if(p[offset9] > cb)
-			                if(p[offset10] > cb)
-			                  if(p[offset11] > cb)
-			                    if(p[offset13] > cb)
-			                      if(p[offset6] > cb)
-			                        goto is_a_corner;
+			        break is_not_a_corner;
+			    else if(doubleBuffer[p + offset4] < c_b)
+			      if(doubleBuffer[p + offset5] > cb)
+			        if(doubleBuffer[p + offset12] > cb)
+			          if(doubleBuffer[p + offset7] > cb)
+			            if(doubleBuffer[p + offset8] > cb)
+			              if(doubleBuffer[p + offset9] > cb)
+			                if(doubleBuffer[p + offset10] > cb)
+			                  if(doubleBuffer[p + offset11] > cb)
+			                    if(doubleBuffer[p + offset13] > cb)
+			                      if(doubleBuffer[p + offset6] > cb)
+			                        break is_a_corner;
 			                      else
-			                        if(p[offset14] > cb)
-			                          if(p[offset15] > cb)
-			                            goto is_a_corner;
+			                        if(doubleBuffer[p + offset14] > cb)
+			                          if(doubleBuffer[p + offset15] > cb)
+			                            break is_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
-			        else if(p[offset12] < c_b)
-			          if(p[offset13] < c_b)
-			            if(p[offset14] < c_b)
-			              if(p[offset15] < c_b)
-			                if(p[offset1] < c_b)
-			                  if(p[offset3] < c_b)
-			                    goto is_a_corner;
+			            break is_not_a_corner;
+			        else if(doubleBuffer[p + offset12] < c_b)
+			          if(doubleBuffer[p + offset13] < c_b)
+			            if(doubleBuffer[p + offset14] < c_b)
+			              if(doubleBuffer[p + offset15] < c_b)
+			                if(doubleBuffer[p + offset1] < c_b)
+			                  if(doubleBuffer[p + offset3] < c_b)
+			                    break is_a_corner;
 			                  else
-			                    if(p[offset10] < c_b)
-			                      if(p[offset11] < c_b)
-			                        goto is_a_corner;
+			                    if(doubleBuffer[p + offset10] < c_b)
+			                      if(doubleBuffer[p + offset11] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset8] < c_b)
-			                    if(p[offset9] < c_b)
-			                      if(p[offset10] < c_b)
-			                        if(p[offset11] < c_b)
-			                          goto is_a_corner;
+			                  if(doubleBuffer[p + offset8] < c_b)
+			                    if(doubleBuffer[p + offset9] < c_b)
+			                      if(doubleBuffer[p + offset10] < c_b)
+			                        if(doubleBuffer[p + offset11] < c_b)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset6] < c_b)
-			                  if(p[offset7] < c_b)
-			                    if(p[offset8] < c_b)
-			                      if(p[offset9] < c_b)
-			                        if(p[offset10] < c_b)
-			                          if(p[offset11] < c_b)
-			                            goto is_a_corner;
+			                if(doubleBuffer[p + offset6] < c_b)
+			                  if(doubleBuffer[p + offset7] < c_b)
+			                    if(doubleBuffer[p + offset8] < c_b)
+			                      if(doubleBuffer[p + offset9] < c_b)
+			                        if(doubleBuffer[p + offset10] < c_b)
+			                          if(doubleBuffer[p + offset11] < c_b)
+			                            break is_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
+			            break is_not_a_corner;
 			        else
-			          goto is_not_a_corner;
-			      else if(p[offset5] < c_b)
-			        if(p[offset7] > cb)
-			          if(p[offset14] > cb)
-			            if(p[offset8] > cb)
-			              if(p[offset9] > cb)
-			                if(p[offset10] > cb)
-			                  if(p[offset11] > cb)
-			                    if(p[offset12] > cb)
-			                      if(p[offset13] > cb)
-			                        if(p[offset6] > cb)
-			                          goto is_a_corner;
+			          break is_not_a_corner;
+			      else if(doubleBuffer[p + offset5] < c_b)
+			        if(doubleBuffer[p + offset7] > cb)
+			          if(doubleBuffer[p + offset14] > cb)
+			            if(doubleBuffer[p + offset8] > cb)
+			              if(doubleBuffer[p + offset9] > cb)
+			                if(doubleBuffer[p + offset10] > cb)
+			                  if(doubleBuffer[p + offset11] > cb)
+			                    if(doubleBuffer[p + offset12] > cb)
+			                      if(doubleBuffer[p + offset13] > cb)
+			                        if(doubleBuffer[p + offset6] > cb)
+			                          break is_a_corner;
 			                        else
-			                          if(p[offset15] > cb)
-			                            goto is_a_corner;
+			                          if(doubleBuffer[p + offset15] > cb)
+			                            break is_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
-			          else if(p[offset14] < c_b)
-			            if(p[offset15] < c_b)
-			              if(p[offset1] < c_b)
-			                if(p[offset3] < c_b)
-			                  if(p[offset6] < c_b)
-			                    goto is_a_corner;
+			              break is_not_a_corner;
+			          else if(doubleBuffer[p + offset14] < c_b)
+			            if(doubleBuffer[p + offset15] < c_b)
+			              if(doubleBuffer[p + offset1] < c_b)
+			                if(doubleBuffer[p + offset3] < c_b)
+			                  if(doubleBuffer[p + offset6] < c_b)
+			                    break is_a_corner;
 			                  else
-			                    if(p[offset13] < c_b)
-			                      goto is_a_corner;
+			                    if(doubleBuffer[p + offset13] < c_b)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset10] < c_b)
-			                    if(p[offset11] < c_b)
-			                      if(p[offset12] < c_b)
-			                        if(p[offset13] < c_b)
-			                          goto is_a_corner;
+			                  if(doubleBuffer[p + offset10] < c_b)
+			                    if(doubleBuffer[p + offset11] < c_b)
+			                      if(doubleBuffer[p + offset12] < c_b)
+			                        if(doubleBuffer[p + offset13] < c_b)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset8] < c_b)
-			                  if(p[offset9] < c_b)
-			                    if(p[offset10] < c_b)
-			                      if(p[offset11] < c_b)
-			                        if(p[offset12] < c_b)
-			                          if(p[offset13] < c_b)
-			                            goto is_a_corner;
+			                if(doubleBuffer[p + offset8] < c_b)
+			                  if(doubleBuffer[p + offset9] < c_b)
+			                    if(doubleBuffer[p + offset10] < c_b)
+			                      if(doubleBuffer[p + offset11] < c_b)
+			                        if(doubleBuffer[p + offset12] < c_b)
+			                          if(doubleBuffer[p + offset13] < c_b)
+			                            break is_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
-			        else if(p[offset7] < c_b)
-			          if(p[offset3] < c_b)
-			            if(p[offset1] < c_b)
-			              if(p[offset6] < c_b)
-			                if(p[offset8] < c_b)
-			                  goto is_a_corner;
+			            break is_not_a_corner;
+			        else if(doubleBuffer[p + offset7] < c_b)
+			          if(doubleBuffer[p + offset3] < c_b)
+			            if(doubleBuffer[p + offset1] < c_b)
+			              if(doubleBuffer[p + offset6] < c_b)
+			                if(doubleBuffer[p + offset8] < c_b)
+			                  break is_a_corner;
 			                else
-			                  if(p[offset15] < c_b)
-			                    goto is_a_corner;
+			                  if(doubleBuffer[p + offset15] < c_b)
+			                    break is_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset13] < c_b)
-			                  if(p[offset14] < c_b)
-			                    if(p[offset15] < c_b)
-			                      goto is_a_corner;
+			                if(doubleBuffer[p + offset13] < c_b)
+			                  if(doubleBuffer[p + offset14] < c_b)
+			                    if(doubleBuffer[p + offset15] < c_b)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              if(p[offset8] < c_b)
-			                if(p[offset9] < c_b)
-			                  if(p[offset10] < c_b)
-			                    if(p[offset6] < c_b)
-			                      goto is_a_corner;
+			              if(doubleBuffer[p + offset8] < c_b)
+			                if(doubleBuffer[p + offset9] < c_b)
+			                  if(doubleBuffer[p + offset10] < c_b)
+			                    if(doubleBuffer[p + offset6] < c_b)
+			                      break is_a_corner;
 			                    else
-			                      if(p[offset11] < c_b)
-			                        if(p[offset12] < c_b)
-			                          if(p[offset13] < c_b)
-			                            if(p[offset14] < c_b)
-			                              if(p[offset15] < c_b)
-			                                goto is_a_corner;
+			                      if(doubleBuffer[p + offset11] < c_b)
+			                        if(doubleBuffer[p + offset12] < c_b)
+			                          if(doubleBuffer[p + offset13] < c_b)
+			                            if(doubleBuffer[p + offset14] < c_b)
+			                              if(doubleBuffer[p + offset15] < c_b)
+			                                break is_a_corner;
 			                              else
-			                                goto is_not_a_corner;
+			                                break is_not_a_corner;
 			                            else
-			                              goto is_not_a_corner;
+			                              break is_not_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			          else
-			            if(p[offset10] < c_b)
-			              if(p[offset11] < c_b)
-			                if(p[offset12] < c_b)
-			                  if(p[offset8] < c_b)
-			                    if(p[offset9] < c_b)
-			                      if(p[offset6] < c_b)
-			                        goto is_a_corner;
+			            if(doubleBuffer[p + offset10] < c_b)
+			              if(doubleBuffer[p + offset11] < c_b)
+			                if(doubleBuffer[p + offset12] < c_b)
+			                  if(doubleBuffer[p + offset8] < c_b)
+			                    if(doubleBuffer[p + offset9] < c_b)
+			                      if(doubleBuffer[p + offset6] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        if(p[offset13] < c_b)
-			                          if(p[offset14] < c_b)
-			                            if(p[offset15] < c_b)
-			                              goto is_a_corner;
+			                        if(doubleBuffer[p + offset13] < c_b)
+			                          if(doubleBuffer[p + offset14] < c_b)
+			                            if(doubleBuffer[p + offset15] < c_b)
+			                              break is_a_corner;
 			                            else
-			                              goto is_not_a_corner;
+			                              break is_not_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                    else
-			                      if(p[offset1] < c_b)
-			                        if(p[offset13] < c_b)
-			                          if(p[offset14] < c_b)
-			                            if(p[offset15] < c_b)
-			                              goto is_a_corner;
+			                      if(doubleBuffer[p + offset1] < c_b)
+			                        if(doubleBuffer[p + offset13] < c_b)
+			                          if(doubleBuffer[p + offset14] < c_b)
+			                            if(doubleBuffer[p + offset15] < c_b)
+			                              break is_a_corner;
 			                            else
-			                              goto is_not_a_corner;
+			                              break is_not_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                  else
-			                    if(p[offset1] < c_b)
-			                      if(p[offset13] < c_b)
-			                        if(p[offset14] < c_b)
-			                          if(p[offset15] < c_b)
-			                            goto is_a_corner;
+			                    if(doubleBuffer[p + offset1] < c_b)
+			                      if(doubleBuffer[p + offset13] < c_b)
+			                        if(doubleBuffer[p + offset14] < c_b)
+			                          if(doubleBuffer[p + offset15] < c_b)
+			                            break is_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			        else
-			          if(p[offset14] < c_b)
-			            if(p[offset15] < c_b)
-			              if(p[offset1] < c_b)
-			                if(p[offset3] < c_b)
-			                  if(p[offset6] < c_b)
-			                    goto is_a_corner;
+			          if(doubleBuffer[p + offset14] < c_b)
+			            if(doubleBuffer[p + offset15] < c_b)
+			              if(doubleBuffer[p + offset1] < c_b)
+			                if(doubleBuffer[p + offset3] < c_b)
+			                  if(doubleBuffer[p + offset6] < c_b)
+			                    break is_a_corner;
 			                  else
-			                    if(p[offset13] < c_b)
-			                      goto is_a_corner;
+			                    if(doubleBuffer[p + offset13] < c_b)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset10] < c_b)
-			                    if(p[offset11] < c_b)
-			                      if(p[offset12] < c_b)
-			                        if(p[offset13] < c_b)
-			                          goto is_a_corner;
+			                  if(doubleBuffer[p + offset10] < c_b)
+			                    if(doubleBuffer[p + offset11] < c_b)
+			                      if(doubleBuffer[p + offset12] < c_b)
+			                        if(doubleBuffer[p + offset13] < c_b)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset8] < c_b)
-			                  if(p[offset9] < c_b)
-			                    if(p[offset10] < c_b)
-			                      if(p[offset11] < c_b)
-			                        if(p[offset12] < c_b)
-			                          if(p[offset13] < c_b)
-			                            goto is_a_corner;
+			                if(doubleBuffer[p + offset8] < c_b)
+			                  if(doubleBuffer[p + offset9] < c_b)
+			                    if(doubleBuffer[p + offset10] < c_b)
+			                      if(doubleBuffer[p + offset11] < c_b)
+			                        if(doubleBuffer[p + offset12] < c_b)
+			                          if(doubleBuffer[p + offset13] < c_b)
+			                            break is_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
+			            break is_not_a_corner;
 			      else
-			        if(p[offset12] > cb)
-			          if(p[offset7] > cb)
-			            if(p[offset8] > cb)
-			              if(p[offset9] > cb)
-			                if(p[offset10] > cb)
-			                  if(p[offset11] > cb)
-			                    if(p[offset13] > cb)
-			                      if(p[offset14] > cb)
-			                        if(p[offset6] > cb)
-			                          goto is_a_corner;
+			        if(doubleBuffer[p + offset12] > cb)
+			          if(doubleBuffer[p + offset7] > cb)
+			            if(doubleBuffer[p + offset8] > cb)
+			              if(doubleBuffer[p + offset9] > cb)
+			                if(doubleBuffer[p + offset10] > cb)
+			                  if(doubleBuffer[p + offset11] > cb)
+			                    if(doubleBuffer[p + offset13] > cb)
+			                      if(doubleBuffer[p + offset14] > cb)
+			                        if(doubleBuffer[p + offset6] > cb)
+			                          break is_a_corner;
 			                        else
-			                          if(p[offset15] > cb)
-			                            goto is_a_corner;
+			                          if(doubleBuffer[p + offset15] > cb)
+			                            break is_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
-			        else if(p[offset12] < c_b)
-			          if(p[offset13] < c_b)
-			            if(p[offset14] < c_b)
-			              if(p[offset15] < c_b)
-			                if(p[offset1] < c_b)
-			                  if(p[offset3] < c_b)
-			                    goto is_a_corner;
+			            break is_not_a_corner;
+			        else if(doubleBuffer[p + offset12] < c_b)
+			          if(doubleBuffer[p + offset13] < c_b)
+			            if(doubleBuffer[p + offset14] < c_b)
+			              if(doubleBuffer[p + offset15] < c_b)
+			                if(doubleBuffer[p + offset1] < c_b)
+			                  if(doubleBuffer[p + offset3] < c_b)
+			                    break is_a_corner;
 			                  else
-			                    if(p[offset10] < c_b)
-			                      if(p[offset11] < c_b)
-			                        goto is_a_corner;
+			                    if(doubleBuffer[p + offset10] < c_b)
+			                      if(doubleBuffer[p + offset11] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset8] < c_b)
-			                    if(p[offset9] < c_b)
-			                      if(p[offset10] < c_b)
-			                        if(p[offset11] < c_b)
-			                          goto is_a_corner;
+			                  if(doubleBuffer[p + offset8] < c_b)
+			                    if(doubleBuffer[p + offset9] < c_b)
+			                      if(doubleBuffer[p + offset10] < c_b)
+			                        if(doubleBuffer[p + offset11] < c_b)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset6] < c_b)
-			                  if(p[offset7] < c_b)
-			                    if(p[offset8] < c_b)
-			                      if(p[offset9] < c_b)
-			                        if(p[offset10] < c_b)
-			                          if(p[offset11] < c_b)
-			                            goto is_a_corner;
+			                if(doubleBuffer[p + offset6] < c_b)
+			                  if(doubleBuffer[p + offset7] < c_b)
+			                    if(doubleBuffer[p + offset8] < c_b)
+			                      if(doubleBuffer[p + offset9] < c_b)
+			                        if(doubleBuffer[p + offset10] < c_b)
+			                          if(doubleBuffer[p + offset11] < c_b)
+			                            break is_a_corner;
 			                          else
-			                            goto is_not_a_corner;
+			                            break is_not_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
+			            break is_not_a_corner;
 			        else
-			          goto is_not_a_corner;
+			          break is_not_a_corner;
 			    else
-			      if(p[offset11] > cb)
-			        if(p[offset7] > cb)
-			          if(p[offset8] > cb)
-			            if(p[offset9] > cb)
-			              if(p[offset10] > cb)
-			                if(p[offset12] > cb)
-			                  if(p[offset13] > cb)
-			                    if(p[offset6] > cb)
-			                      if(p[offset5] > cb)
-			                        goto is_a_corner;
+			      if(doubleBuffer[p + offset11] > cb)
+			        if(doubleBuffer[p + offset7] > cb)
+			          if(doubleBuffer[p + offset8] > cb)
+			            if(doubleBuffer[p + offset9] > cb)
+			              if(doubleBuffer[p + offset10] > cb)
+			                if(doubleBuffer[p + offset12] > cb)
+			                  if(doubleBuffer[p + offset13] > cb)
+			                    if(doubleBuffer[p + offset6] > cb)
+			                      if(doubleBuffer[p + offset5] > cb)
+			                        break is_a_corner;
 			                      else
-			                        if(p[offset14] > cb)
-			                          goto is_a_corner;
+			                        if(doubleBuffer[p + offset14] > cb)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                    else
-			                      if(p[offset14] > cb)
-			                        if(p[offset15] > cb)
-			                          goto is_a_corner;
+			                      if(doubleBuffer[p + offset14] > cb)
+			                        if(doubleBuffer[p + offset15] > cb)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
+			            break is_not_a_corner;
 			        else
-			          goto is_not_a_corner;
-			      else if(p[offset11] < c_b)
-			        if(p[offset12] < c_b)
-			          if(p[offset13] < c_b)
-			            if(p[offset10] < c_b)
-			              if(p[offset14] < c_b)
-			                if(p[offset15] < c_b)
-			                  if(p[offset1] < c_b)
-			                    goto is_a_corner;
+			          break is_not_a_corner;
+			      else if(doubleBuffer[p + offset11] < c_b)
+			        if(doubleBuffer[p + offset12] < c_b)
+			          if(doubleBuffer[p + offset13] < c_b)
+			            if(doubleBuffer[p + offset10] < c_b)
+			              if(doubleBuffer[p + offset14] < c_b)
+			                if(doubleBuffer[p + offset15] < c_b)
+			                  if(doubleBuffer[p + offset1] < c_b)
+			                    break is_a_corner;
 			                  else
-			                    if(p[offset8] < c_b)
-			                      if(p[offset9] < c_b)
-			                        goto is_a_corner;
+			                    if(doubleBuffer[p + offset8] < c_b)
+			                      if(doubleBuffer[p + offset9] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset6] < c_b)
-			                    if(p[offset7] < c_b)
-			                      if(p[offset8] < c_b)
-			                        if(p[offset9] < c_b)
-			                          goto is_a_corner;
+			                  if(doubleBuffer[p + offset6] < c_b)
+			                    if(doubleBuffer[p + offset7] < c_b)
+			                      if(doubleBuffer[p + offset8] < c_b)
+			                        if(doubleBuffer[p + offset9] < c_b)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset5] < c_b)
-			                  if(p[offset6] < c_b)
-			                    if(p[offset7] < c_b)
-			                      if(p[offset8] < c_b)
-			                        if(p[offset9] < c_b)
-			                          goto is_a_corner;
+			                if(doubleBuffer[p + offset5] < c_b)
+			                  if(doubleBuffer[p + offset6] < c_b)
+			                    if(doubleBuffer[p + offset7] < c_b)
+			                      if(doubleBuffer[p + offset8] < c_b)
+			                        if(doubleBuffer[p + offset9] < c_b)
+			                          break is_a_corner;
 			                        else
-			                          goto is_not_a_corner;
+			                          break is_not_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              if(p[offset1] < c_b)
-			                if(p[offset3] < c_b)
-			                  if(p[offset14] < c_b)
-			                    if(p[offset15] < c_b)
-			                      goto is_a_corner;
+			              if(doubleBuffer[p + offset1] < c_b)
+			                if(doubleBuffer[p + offset3] < c_b)
+			                  if(doubleBuffer[p + offset14] < c_b)
+			                    if(doubleBuffer[p + offset15] < c_b)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
+			            break is_not_a_corner;
 			        else
-			          goto is_not_a_corner;
+			          break is_not_a_corner;
 			      else
-			        goto is_not_a_corner;
+			        break is_not_a_corner;
 			  else
-			    if(p[offset9] > cb)
-			      if(p[offset7] > cb)
-			        if(p[offset8] > cb)
-			          if(p[offset10] > cb)
-			            if(p[offset11] > cb)
-			              if(p[offset6] > cb)
-			                if(p[offset5] > cb)
-			                  if(p[offset4] > cb)
-			                    if(p[offset3] > cb)
-			                      goto is_a_corner;
+			    if(doubleBuffer[p + offset9] > cb)
+			      if(doubleBuffer[p + offset7] > cb)
+			        if(doubleBuffer[p + offset8] > cb)
+			          if(doubleBuffer[p + offset10] > cb)
+			            if(doubleBuffer[p + offset11] > cb)
+			              if(doubleBuffer[p + offset6] > cb)
+			                if(doubleBuffer[p + offset5] > cb)
+			                  if(doubleBuffer[p + offset4] > cb)
+			                    if(doubleBuffer[p + offset3] > cb)
+			                      break is_a_corner;
 			                    else
-			                      if(p[offset12] > cb)
-			                        goto is_a_corner;
+			                      if(doubleBuffer[p + offset12] > cb)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                  else
-			                    if(p[offset12] > cb)
-			                      if(p[offset13] > cb)
-			                        goto is_a_corner;
+			                    if(doubleBuffer[p + offset12] > cb)
+			                      if(doubleBuffer[p + offset13] > cb)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset12] > cb)
-			                    if(p[offset13] > cb)
-			                      if(p[offset14] > cb)
-			                        goto is_a_corner;
+			                  if(doubleBuffer[p + offset12] > cb)
+			                    if(doubleBuffer[p + offset13] > cb)
+			                      if(doubleBuffer[p + offset14] > cb)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset12] > cb)
-			                  if(p[offset13] > cb)
-			                    if(p[offset14] > cb)
-			                      if(p[offset15] > cb)
-			                        goto is_a_corner;
+			                if(doubleBuffer[p + offset12] > cb)
+			                  if(doubleBuffer[p + offset13] > cb)
+			                    if(doubleBuffer[p + offset14] > cb)
+			                      if(doubleBuffer[p + offset15] > cb)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
+			            break is_not_a_corner;
 			        else
-			          goto is_not_a_corner;
+			          break is_not_a_corner;
 			      else
-			        goto is_not_a_corner;
-			    else if(p[offset9] < c_b)
-			      if(p[offset10] < c_b)
-			        if(p[offset11] < c_b)
-			          if(p[offset8] < c_b)
-			            if(p[offset12] < c_b)
-			              if(p[offset13] < c_b)
-			                if(p[offset14] < c_b)
-			                  if(p[offset15] < c_b)
-			                    goto is_a_corner;
+			        break is_not_a_corner;
+			    else if(doubleBuffer[p + offset9] < c_b)
+			      if(doubleBuffer[p + offset10] < c_b)
+			        if(doubleBuffer[p + offset11] < c_b)
+			          if(doubleBuffer[p + offset8] < c_b)
+			            if(doubleBuffer[p + offset12] < c_b)
+			              if(doubleBuffer[p + offset13] < c_b)
+			                if(doubleBuffer[p + offset14] < c_b)
+			                  if(doubleBuffer[p + offset15] < c_b)
+			                    break is_a_corner;
 			                  else
-			                    if(p[offset6] < c_b)
-			                      if(p[offset7] < c_b)
-			                        goto is_a_corner;
+			                    if(doubleBuffer[p + offset6] < c_b)
+			                      if(doubleBuffer[p + offset7] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset5] < c_b)
-			                    if(p[offset6] < c_b)
-			                      if(p[offset7] < c_b)
-			                        goto is_a_corner;
+			                  if(doubleBuffer[p + offset5] < c_b)
+			                    if(doubleBuffer[p + offset6] < c_b)
+			                      if(doubleBuffer[p + offset7] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset4] < c_b)
-			                  if(p[offset5] < c_b)
-			                    if(p[offset6] < c_b)
-			                      if(p[offset7] < c_b)
-			                        goto is_a_corner;
+			                if(doubleBuffer[p + offset4] < c_b)
+			                  if(doubleBuffer[p + offset5] < c_b)
+			                    if(doubleBuffer[p + offset6] < c_b)
+			                      if(doubleBuffer[p + offset7] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              if(p[offset3] < c_b)
-			                if(p[offset4] < c_b)
-			                  if(p[offset5] < c_b)
-			                    if(p[offset6] < c_b)
-			                      if(p[offset7] < c_b)
-			                        goto is_a_corner;
+			              if(doubleBuffer[p + offset3] < c_b)
+			                if(doubleBuffer[p + offset4] < c_b)
+			                  if(doubleBuffer[p + offset5] < c_b)
+			                    if(doubleBuffer[p + offset6] < c_b)
+			                      if(doubleBuffer[p + offset7] < c_b)
+			                        break is_a_corner;
 			                      else
-			                        goto is_not_a_corner;
+			                        break is_not_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			          else
-			            if(p[offset1] < c_b)
-			              if(p[offset12] < c_b)
-			                if(p[offset13] < c_b)
-			                  if(p[offset14] < c_b)
-			                    if(p[offset15] < c_b)
-			                      goto is_a_corner;
+			            if(doubleBuffer[p + offset1] < c_b)
+			              if(doubleBuffer[p + offset12] < c_b)
+			                if(doubleBuffer[p + offset13] < c_b)
+			                  if(doubleBuffer[p + offset14] < c_b)
+			                    if(doubleBuffer[p + offset15] < c_b)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			        else
-			          goto is_not_a_corner;
+			          break is_not_a_corner;
 			      else
-			        goto is_not_a_corner;
+			        break is_not_a_corner;
 			    else
-			      goto is_not_a_corner;
+			      break is_not_a_corner;
 			else
-			  if(p[offset7] > cb)
-			    if(p[offset8] > cb)
-			      if(p[offset9] > cb)
-			        if(p[offset6] > cb)
-			          if(p[offset5] > cb)
-			            if(p[offset4] > cb)
-			              if(p[offset3] > cb)
-			                if(p[offset2] > cb)
-			                  if(p[offset1] > cb)
-			                    goto is_a_corner;
+			  if(doubleBuffer[p + offset7] > cb)
+			    if(doubleBuffer[p + offset8] > cb)
+			      if(doubleBuffer[p + offset9] > cb)
+			        if(doubleBuffer[p + offset6] > cb)
+			          if(doubleBuffer[p + offset5] > cb)
+			            if(doubleBuffer[p + offset4] > cb)
+			              if(doubleBuffer[p + offset3] > cb)
+			                if(doubleBuffer[p + offset2] > cb)
+			                  if(doubleBuffer[p + offset1] > cb)
+			                    break is_a_corner;
 			                  else
-			                    if(p[offset10] > cb)
-			                      goto is_a_corner;
+			                    if(doubleBuffer[p + offset10] > cb)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset10] > cb)
-			                    if(p[offset11] > cb)
-			                      goto is_a_corner;
+			                  if(doubleBuffer[p + offset10] > cb)
+			                    if(doubleBuffer[p + offset11] > cb)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset10] > cb)
-			                  if(p[offset11] > cb)
-			                    if(p[offset12] > cb)
-			                      goto is_a_corner;
+			                if(doubleBuffer[p + offset10] > cb)
+			                  if(doubleBuffer[p + offset11] > cb)
+			                    if(doubleBuffer[p + offset12] > cb)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              if(p[offset10] > cb)
-			                if(p[offset11] > cb)
-			                  if(p[offset12] > cb)
-			                    if(p[offset13] > cb)
-			                      goto is_a_corner;
+			              if(doubleBuffer[p + offset10] > cb)
+			                if(doubleBuffer[p + offset11] > cb)
+			                  if(doubleBuffer[p + offset12] > cb)
+			                    if(doubleBuffer[p + offset13] > cb)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			          else
-			            if(p[offset10] > cb)
-			              if(p[offset11] > cb)
-			                if(p[offset12] > cb)
-			                  if(p[offset13] > cb)
-			                    if(p[offset14] > cb)
-			                      goto is_a_corner;
+			            if(doubleBuffer[p + offset10] > cb)
+			              if(doubleBuffer[p + offset11] > cb)
+			                if(doubleBuffer[p + offset12] > cb)
+			                  if(doubleBuffer[p + offset13] > cb)
+			                    if(doubleBuffer[p + offset14] > cb)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			        else
-			          if(p[offset10] > cb)
-			            if(p[offset11] > cb)
-			              if(p[offset12] > cb)
-			                if(p[offset13] > cb)
-			                  if(p[offset14] > cb)
-			                    if(p[offset15] > cb)
-			                      goto is_a_corner;
+			          if(doubleBuffer[p + offset10] > cb)
+			            if(doubleBuffer[p + offset11] > cb)
+			              if(doubleBuffer[p + offset12] > cb)
+			                if(doubleBuffer[p + offset13] > cb)
+			                  if(doubleBuffer[p + offset14] > cb)
+			                    if(doubleBuffer[p + offset15] > cb)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
+			            break is_not_a_corner;
 			      else
-			        goto is_not_a_corner;
+			        break is_not_a_corner;
 			    else
-			      goto is_not_a_corner;
-			  else if(p[offset7] < c_b)
-			    if(p[offset8] < c_b)
-			      if(p[offset9] < c_b)
-			        if(p[offset6] < c_b)
-			          if(p[offset5] < c_b)
-			            if(p[offset4] < c_b)
-			              if(p[offset3] < c_b)
-			                if(p[offset2] < c_b)
-			                  if(p[offset1] < c_b)
-			                    goto is_a_corner;
+			      break is_not_a_corner;
+			  else if(doubleBuffer[p + offset7] < c_b)
+			    if(doubleBuffer[p + offset8] < c_b)
+			      if(doubleBuffer[p + offset9] < c_b)
+			        if(doubleBuffer[p + offset6] < c_b)
+			          if(doubleBuffer[p + offset5] < c_b)
+			            if(doubleBuffer[p + offset4] < c_b)
+			              if(doubleBuffer[p + offset3] < c_b)
+			                if(doubleBuffer[p + offset2] < c_b)
+			                  if(doubleBuffer[p + offset1] < c_b)
+			                    break is_a_corner;
 			                  else
-			                    if(p[offset10] < c_b)
-			                      goto is_a_corner;
+			                    if(doubleBuffer[p + offset10] < c_b)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                else
-			                  if(p[offset10] < c_b)
-			                    if(p[offset11] < c_b)
-			                      goto is_a_corner;
+			                  if(doubleBuffer[p + offset10] < c_b)
+			                    if(doubleBuffer[p + offset11] < c_b)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			              else
-			                if(p[offset10] < c_b)
-			                  if(p[offset11] < c_b)
-			                    if(p[offset12] < c_b)
-			                      goto is_a_corner;
+			                if(doubleBuffer[p + offset10] < c_b)
+			                  if(doubleBuffer[p + offset11] < c_b)
+			                    if(doubleBuffer[p + offset12] < c_b)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			            else
-			              if(p[offset10] < c_b)
-			                if(p[offset11] < c_b)
-			                  if(p[offset12] < c_b)
-			                    if(p[offset13] < c_b)
-			                      goto is_a_corner;
+			              if(doubleBuffer[p + offset10] < c_b)
+			                if(doubleBuffer[p + offset11] < c_b)
+			                  if(doubleBuffer[p + offset12] < c_b)
+			                    if(doubleBuffer[p + offset13] < c_b)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			          else
-			            if(p[offset10] < c_b)
-			              if(p[offset11] < c_b)
-			                if(p[offset12] < c_b)
-			                  if(p[offset13] < c_b)
-			                    if(p[offset14] < c_b)
-			                      goto is_a_corner;
+			            if(doubleBuffer[p + offset10] < c_b)
+			              if(doubleBuffer[p + offset11] < c_b)
+			                if(doubleBuffer[p + offset12] < c_b)
+			                  if(doubleBuffer[p + offset13] < c_b)
+			                    if(doubleBuffer[p + offset14] < c_b)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			        else
-			          if(p[offset10] < c_b)
-			            if(p[offset11] < c_b)
-			              if(p[offset12] < c_b)
-			                if(p[offset13] < c_b)
-			                  if(p[offset14] < c_b)
-			                    if(p[offset15] < c_b)
-			                      goto is_a_corner;
+			          if(doubleBuffer[p + offset10] < c_b)
+			            if(doubleBuffer[p + offset11] < c_b)
+			              if(doubleBuffer[p + offset12] < c_b)
+			                if(doubleBuffer[p + offset13] < c_b)
+			                  if(doubleBuffer[p + offset14] < c_b)
+			                    if(doubleBuffer[p + offset15] < c_b)
+			                      break is_a_corner;
 			                    else
-			                      goto is_not_a_corner;
+			                      break is_not_a_corner;
 			                  else
-			                    goto is_not_a_corner;
+			                    break is_not_a_corner;
 			                else
-			                  goto is_not_a_corner;
+			                  break is_not_a_corner;
 			              else
-			                goto is_not_a_corner;
+			                break is_not_a_corner;
 			            else
-			              goto is_not_a_corner;
+			              break is_not_a_corner;
 			          else
-			            goto is_not_a_corner;
+			            break is_not_a_corner;
 			      else
-			        goto is_not_a_corner;
+			        break is_not_a_corner;
 			    else
-			      goto is_not_a_corner;
+			      break is_not_a_corner;
 			  else
-			    goto is_not_a_corner;
+			    break is_not_a_corner;
 
-			is_a_corner:
+			} // is_a_corner: while(true)
 				bmin=b_test;
-				goto end;
-
-			is_not_a_corner:
-				bmax=b_test;
-				goto end;
-
-			end:
-
-			if(bmin == bmax - 1 || bmin == bmax)
+				if(bmax - bmin <= 1.0)
 				return bmin;
-			b_test = (bmin + bmax) / 2;
-		}
-	}*/
+			     b_test = (bmin + bmax) / 2;
+
+		  } //	is_not_a_corner: while (true)
+				bmax=b_test;
+				if(bmax - bmin <= 1.0)
+					return bmin;
+				b_test = (bmin + bmax) / 2;
+		} // while (true)
+	}
 
 
 
