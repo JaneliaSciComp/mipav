@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.Vector;
 
 import javax.vecmath.Point2d;
+import javax.vecmath.Point2i;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
@@ -847,7 +848,486 @@ public class AlgorithmBRISK extends AlgorithmBase {
     		BriskLayer l = pyramid.get(i);
     		l.getAgastPoints(safeThreshold, agastPoints.get(i));
     	} 
+    	
+    	if (layers == 1) {
+    	  // Just do a simple 2D subpixel refinement
+    		final int num = agastPoints.get(0).size();
+    		for (int n = 0; n < num; n++) {
+    			final Point2d point = agastPoints.get(0).get(n);
+    			// First check if it is a maximum
+    			if (!pyramid.get(0).isMax2D((int)Math.round(point.x), (int)Math.round(point.y))) {
+    				continue;
+    			}
+    			
+    			// Let's do the subpixel and double scale refinement
+    			BriskLayer l = pyramid.get(0);
+    			int s_0_0 = (int)Math.round(l.getAgastScore((int)Math.round(point.x)-1,(int)Math.round(point.y)-1, 1.0));
+    			int s_1_0 = (int)Math.round(l.getAgastScore((int)Math.round(point.x), (int)Math.round(point.y)-1, 1.0));
+    			int s_2_0 = (int)Math.round(l.getAgastScore((int)Math.round(point.x)+1, (int)Math.round(point.y)-1, 1.0));
+    			int s_2_1 = (int)Math.round(l.getAgastScore((int)Math.round(point.x)+1, (int)Math.round(point.y), 1.0));
+    			int s_1_1 = (int)Math.round(l.getAgastScore((int)Math.round(point.x), (int)Math.round(point.y), 1.0));
+    			int s_0_1 = (int)Math.round(l.getAgastScore((int)Math.round(point.x)-1, (int)Math.round(point.y), 1.0));
+    			int s_0_2 = (int)Math.round(l.getAgastScore((int)Math.round(point.x)-1, (int)Math.round(point.y)+1, 1.0));
+    			int s_1_2 = (int)Math.round(l.getAgastScore((int)Math.round(point.x), (int)Math.round(point.y)+1, 1.0));
+    			int s_2_2 = (int)Math.round(l.getAgastScore((int)Math.round(point.x)+1, (int)Math.round(point.y)+1, 1.0));
+    			double delta_x[] = new double[1];
+    			double delta_y[] = new double[1];
+    			double max = subpixel2D(s_0_0, s_0_1, s_0_2, s_1_0, s_1_1, s_1_2, s_2_0, s_2_1, s_2_2, delta_x, delta_y);
+    			// Store
+    			keypoints.add(new KeyPoint(point.x + delta_x[0], point.y + delta_y[0], basicSize, -1, max, 0));
+    		} // for (int n = 0; n < num; n++)
+    		return;
+    	} // if (layers == 1)
+    	
+    	double x, y, scale, score;
+    	for (int i = 0; i < layers; i++) {
+    	    BriskLayer l = pyramid.get(i);
+    	    final int num = agastPoints.get(i).size();
+    	    if (i == layers - 1) {
+    	    	for (int n = 0; n < num; n++) {
+    	    		final Point2d point = agastPoints.get(i).get(n);
+        			// Consider only 2D maxima
+        			if (!pyramid.get(i).isMax2D((int)Math.round(point.x), (int)Math.round(point.y))) {
+        				continue;
+        			}
+        			boolean ismax[] = new boolean[1];
+        			double dx[] = new double[1];
+        			double dy[] = new double[1];
+        			//getScoreMaxBelow(i, (int)Math.round(point.x), (int)Math.round(point.y),
+        					//l.getAgastScore((int)Math.round(point.x), (int)Math.round(point.y), safeThreshold),
+        					//ismax, dx, dy);
+    	    	} // for (int n = 0; n < num; n++)
+    	    } // if (i == layers - 1)
+    	} // for (int i = 0; i < layers; i++)
     }
+    
+    private double getScoreMaxBelow(final int layer,
+    		final int x_layer, final int y_layer,
+    		final double threshold, boolean[] ismax,
+    		double[] dx, double[] dy){
+    	ismax[0]=false;
+
+    	// relevant floating point coordinates
+    	double x_1;
+    	double x1;
+    	double y_1;
+    	double y1;
+
+    	if(layer%2==0){
+    		// octave
+    		x_1=(double)(8*(x_layer)+1-4)/6.0;
+    		x1=(double)(8*(x_layer)+1+4)/6.0;
+    		y_1=(double)(8*(y_layer)+1-4)/6.0;
+    		y1=(double)(8*(y_layer)+1+4)/6.0;
+    	}
+    	else{
+    		x_1=(double)(6*(x_layer)+1-3)/4.0;
+    		x1=(double)(6*(x_layer)+1+3)/4.0;
+    		y_1=(double)(6*(y_layer)+1-3)/4.0;
+    		y1=(double)(6*(y_layer)+1+3)/4.0;
+    	}
+
+    	// the layer below
+    	BriskLayer layerBelow=pyramid.get(layer-1);
+
+    	// check the first row
+    	int max_x = (int)x_1+1;
+    	int max_y = (int)y_1+1;
+    	double tmp_max;
+    	double max=layerBelow.getAgastScore(x_1,y_1,1);
+    	if(max>threshold) return 0;
+    	for(int x=(int)x_1+1; x<=(int)(x1); x++){
+    		tmp_max=layerBelow.getAgastScore((double)(x),y_1,1);
+    		if(tmp_max>threshold) return 0;
+    		if(tmp_max>max){
+    			max=tmp_max;
+    			max_x = x;
+    		}
+    	}
+    	tmp_max=layerBelow.getAgastScore(x1,y_1,1);
+    	if(tmp_max>threshold) return 0;
+    	if(tmp_max>max){
+    		max=tmp_max;
+    		max_x = (int)(x1);
+    	}
+
+    	// middle rows
+    	for(int y=(int)y_1+1; y<=(int)(y1); y++){
+    		tmp_max=layerBelow.getAgastScore(x_1,(double)(y),1);
+    		if(tmp_max>threshold) return 0;
+    		if(tmp_max>max){
+    			max=tmp_max;
+    			max_x = (int)(x_1+1);
+    			max_y = y;
+    		}
+    		for(int x=(int)x_1+1; x<=(int)(x1); x++){
+    			tmp_max=layerBelow.getAgastScore(x,y,1);
+    			if(tmp_max>threshold) return 0;
+    			if(tmp_max==max){
+    				final double t1=2*(
+    						layerBelow.getAgastScore(x-1,y,1)
+    						+layerBelow.getAgastScore(x+1,y,1)
+    						+layerBelow.getAgastScore(x,y+1,1)
+    						+layerBelow.getAgastScore(x,y-1,1))
+    						+(layerBelow.getAgastScore(x+1,y+1,1)
+    						+layerBelow.getAgastScore(x-1,y+1,1)
+    						+layerBelow.getAgastScore(x+1,y-1,1)
+    						+layerBelow.getAgastScore(x-1,y-1,1));
+    				final double t2=2*(
+    						layerBelow.getAgastScore(max_x-1,max_y,1)
+    						+layerBelow.getAgastScore(max_x+1,max_y,1)
+    						+layerBelow.getAgastScore(max_x,max_y+1,1)
+    						+layerBelow.getAgastScore(max_x,max_y-1,1))
+    						+(layerBelow.getAgastScore(max_x+1,max_y+1,1)
+    						+layerBelow.getAgastScore(max_x-1,max_y+1,1)
+    						+layerBelow.getAgastScore(max_x+1,max_y-1,1)
+    						+layerBelow.getAgastScore(max_x-1,max_y-1,1));
+    				if(t1>t2){
+    					max_x = x;
+    					max_y = y;
+    				}
+    			}
+    			if(tmp_max>max){
+    				max=tmp_max;
+    				max_x = x;
+    				max_y = y;
+    			}
+    		}
+    		tmp_max=layerBelow.getAgastScore(x1,(double)(y),1);
+    		if(tmp_max>threshold) return 0;
+    		if(tmp_max>max){
+    			max=tmp_max;
+    			max_x = (int)(x1);
+    			max_y = y;
+    		}
+    	}
+
+    	// bottom row
+    	tmp_max=layerBelow.getAgastScore(x_1,y1,1);
+    	if(tmp_max>max){
+    		max=tmp_max;
+    		max_x = (int)(x_1+1);
+    		max_y = (int)(y1);
+    	}
+    	for(int x=(int)x_1+1; x<=(int)(x1); x++){
+    		tmp_max=layerBelow.getAgastScore((double)(x),y1,1);
+    		if(tmp_max>max){
+    			max=tmp_max;
+    			max_x = x;
+    			max_y = (int)(y1);
+    		}
+    	}
+    	tmp_max=layerBelow.getAgastScore(x1,y1,1);
+    	if(tmp_max>max){
+    		max=tmp_max;
+    		max_x = (int)(x1);
+    		max_y = (int)(y1);
+    	}
+
+    	//find dx/dy:
+    	int s_0_0 = (int)Math.round(layerBelow.getAgastScore(max_x-1, max_y-1,1));
+    	int s_1_0 = (int)Math.round(layerBelow.getAgastScore(max_x,   max_y-1,1));
+    	int s_2_0 = (int)Math.round(layerBelow.getAgastScore(max_x+1, max_y-1,1));
+    	int s_2_1 = (int)Math.round(layerBelow.getAgastScore(max_x+1, max_y,1));
+    	int s_1_1 = (int)Math.round(layerBelow.getAgastScore(max_x,   max_y,1));
+    	int s_0_1 = (int)Math.round(layerBelow.getAgastScore(max_x-1, max_y,1));
+    	int s_0_2 = (int)Math.round(layerBelow.getAgastScore(max_x-1, max_y+1,1));
+    	int s_1_2 = (int)Math.round(layerBelow.getAgastScore(max_x,   max_y+1,1));
+    	int s_2_2 = (int)Math.round(layerBelow.getAgastScore(max_x+1, max_y+1,1));
+    	double dx_1[] = new double[1];
+    	double dy_1[] = new double[1];
+    	double refined_max=subpixel2D(s_0_0, s_0_1,  s_0_2,
+    			s_1_0, s_1_1, s_1_2,
+    			s_2_0, s_2_1, s_2_2,
+    			dx_1, dy_1);
+
+    	// calculate dx/dy in above coordinates
+    	double real_x = (double)(max_x)+dx_1[0];
+    	double real_y = (double)(max_y)+dy_1[0];
+    	boolean returnrefined=true;
+    	if(layer%2==0){
+    		dx[0]=(real_x*6.0+1.0)/8.0-(double)(x_layer);
+    		dy[0]=(real_y*6.0+1.0)/8.0-(double)(y_layer);
+    	}
+    	else{
+    		dx[0]=(real_x*4.0-1.0)/6.0-(double)(x_layer);
+    		dy[0]=(real_y*4.0-1.0)/6.0-(double)(y_layer);
+    	}
+
+    	// saturate
+    	if(dx[0]>1.0) {dx[0]=1.0;returnrefined=false;}
+    	if(dx[0]<-1.0) {dx[0]=-1.0;returnrefined=false;}
+    	if(dy[0]>1.0) {dy[0]=1.0;returnrefined=false;}
+    	if(dy[0]<-1.0) {dy[0]=-1.0;returnrefined=false;}
+
+    	// done and ok.
+    	ismax[0]=true;
+    	if(returnrefined){
+    		return Math.max(refined_max,max);
+    	}
+    	return max;
+    }
+
+    
+ // return the maximum of score patches above or below
+ private double getScoreMaxAbove(final int layer,
+    		final int x_layer, final int y_layer,
+    		final double threshold, boolean ismax[],
+    		double dx[], double dy[]){
+
+    	ismax[0]=false;
+    	// relevant floating point coordinates
+    	double x_1;
+    	double x1;
+    	double y_1;
+    	double y1;
+
+    	// the layer above
+    	//assert(layer+1<layers_);
+    	BriskLayer layerAbove=pyramid.get(layer+1);
+
+    	if(layer%2==0) {
+    		// octave
+    		x_1=(double)(4*(x_layer)-1-2)/6.0;
+    		x1=(double)(4*(x_layer)-1+2)/6.0;
+    		y_1=(double)(4*(y_layer)-1-2)/6.0;
+    		y1=(double)(4*(y_layer)-1+2)/6.0;
+    	}
+    	else{
+    		// intra
+    		x_1=(double)(6*(x_layer)-1-3)/8.0;
+    		x1=(double)(6*(x_layer)-1+3)/8.0;
+    		y_1=(double)(6*(y_layer)-1-3)/8.0;
+    		y1=(double)(6*(y_layer)-1+3)/8.0;
+    	}
+
+
+    	// check the first row
+    	int max_x = (int)x_1+1;
+    	int max_y = (int)y_1+1;
+    	double tmp_max;
+    	double max=layerAbove.getAgastScore(x_1, y_1,1.0);
+    	if(max>threshold) return 0;
+    	for(int x=(int)x_1+1; x<=(int)(x1); x++){
+    		tmp_max=layerAbove.getAgastScore((double)(x),y_1,1);
+    		if(tmp_max>threshold) return 0;
+    		if(tmp_max>max){
+    			max=tmp_max;
+    			max_x = x;
+    		}
+    	}
+    	tmp_max=layerAbove.getAgastScore(x1,y_1,1);
+    	if(tmp_max>threshold) return 0;
+    	if(tmp_max>max){
+    		max=tmp_max;
+    		max_x = (int)(x1);
+    	}
+
+    	// middle rows
+    	for(int y=(int)y_1+1; y<=(int)(y1); y++){
+    		tmp_max=layerAbove.getAgastScore(x_1,(double)(y),1);
+    		if(tmp_max>threshold) return 0;
+    		if(tmp_max>max){
+    			max=tmp_max;
+    			max_x = (int)(x_1+1);
+    			max_y = y;
+    		}
+    		for(int x=(int)x_1+1; x<=(int)(x1); x++){
+    			tmp_max=layerAbove.getAgastScore(x,y,1);
+    			if(tmp_max>threshold) return 0;
+    			if(tmp_max>max){
+    				max=tmp_max;
+    				max_x = x;
+    				max_y = y;
+    			}
+    		}
+    		tmp_max=layerAbove.getAgastScore(x1,(double)(y),1);
+    		if(tmp_max>threshold) return 0;
+    		if(tmp_max>max){
+    			max=tmp_max;
+    			max_x = (int)(x1);
+    			max_y = y;
+    		}
+    	}
+
+    	// bottom row
+    	tmp_max=layerAbove.getAgastScore(x_1,y1,1);
+    	if(tmp_max>max){
+    		max=tmp_max;
+    		max_x = (int)(x_1+1);
+    		max_y = (int)(y1);
+    	}
+    	for(int x=(int)x_1+1; x<=(int)(x1); x++){
+    		tmp_max=layerAbove.getAgastScore((double)(x),y1,1);
+    		if(tmp_max>max){
+    			max=tmp_max;
+    			max_x = x;
+    			max_y = (int)(y1);
+    		}
+    	}
+    	tmp_max=layerAbove.getAgastScore(x1,y1,1);
+    	if(tmp_max>max){
+    		max=tmp_max;
+    		max_x = (int)(x1);
+    		max_y = (int)(y1);
+    	}
+
+    	//find dx/dy:
+    	int s_0_0 = (int)Math.round(layerAbove.getAgastScore(max_x-1, max_y-1,1));
+    	int s_1_0 = (int)Math.round(layerAbove.getAgastScore(max_x,   max_y-1,1));
+    	int s_2_0 = (int)Math.round(layerAbove.getAgastScore(max_x+1, max_y-1,1));
+    	int s_2_1 = (int)Math.round(layerAbove.getAgastScore(max_x+1, max_y,1));
+    	int s_1_1 = (int)Math.round(layerAbove.getAgastScore(max_x,   max_y,1));
+    	int s_0_1 = (int)Math.round(layerAbove.getAgastScore(max_x-1, max_y,1));
+    	int s_0_2 = (int)Math.round(layerAbove.getAgastScore(max_x-1, max_y+1,1));
+    	int s_1_2 = (int)Math.round(layerAbove.getAgastScore(max_x,   max_y+1,1));
+    	int s_2_2 = (int)Math.round(layerAbove.getAgastScore(max_x+1, max_y+1,1));
+    	double dx_1[] = new double[1];
+    	double dy_1[] = new double[1];
+    	double refined_max=subpixel2D(s_0_0, s_0_1,  s_0_2,
+    			s_1_0, s_1_1, s_1_2,
+    			s_2_0, s_2_1, s_2_2,
+    			dx_1, dy_1);
+
+    	// calculate dx/dy in above coordinates
+    	double real_x = (double)(max_x)+dx_1[0];
+    	double real_y = (double)(max_y)+dy_1[0];
+    	boolean returnrefined=true;
+    	if(layer%2==0){
+    		dx[0]=(real_x*6.0+1.0)/4.0-(double)(x_layer);
+    		dy[0]=(real_y*6.0+1.0)/4.0-(double)(y_layer);
+    	}
+    	else{
+    		dx[0]=(real_x*8.0+1.0)/6.0-(double)(x_layer);
+    		dy[0]=(real_y*8.0+1.0)/6.0-(double)(y_layer);
+    	}
+
+    	// saturate
+    	if(dx[0]>1.0) {dx[0]=1.0;returnrefined=false;}
+    	if(dx[0]<-1.0) {dx[0]=-1.0;returnrefined=false;}
+    	if(dy[0]>1.0) {dy[0]=1.0;returnrefined=false;}
+    	if(dy[0]<-1.0) {dy[0]=-1.0;returnrefined=false;}
+
+    	// done and ok.
+    	ismax[0]=true;
+    	if(returnrefined){
+    		return Math.max(refined_max,max);
+    	}
+    	return max;
+    }
+
+    
+    private double subpixel2D(final int s_0_0, final int s_0_1, final int s_0_2,
+			final int s_1_0, final int s_1_1, final int s_1_2,
+			final int s_2_0, final int s_2_1, final int s_2_2,
+			double[] delta_x, double[] delta_y){
+
+		// the coefficients of the 2d quadratic function least-squares fit:
+		int tmp1 =        s_0_0 + s_0_2 - 2*s_1_1 + s_2_0 + s_2_2;
+		int coeff1 = 3*(tmp1 + s_0_1 - ((s_1_0 + s_1_2)<<1) + s_2_1);
+		int coeff2 = 3*(tmp1 - ((s_0_1+ s_2_1)<<1) + s_1_0 + s_1_2 );
+		int tmp2 =                                  s_0_2 - s_2_0;
+		int tmp3 =                         (s_0_0 + tmp2 - s_2_2);
+		int tmp4 =                                   tmp3 -2*tmp2;
+		int coeff3 =                    -3*(tmp3 + s_0_1 - s_2_1);
+		int coeff4 =                    -3*(tmp4 + s_1_0 - s_1_2);
+		int coeff5 =            (s_0_0 - s_0_2 - s_2_0 + s_2_2)<<2;
+		int coeff6 = -(s_0_0  + s_0_2 - ((s_1_0 + s_0_1 + s_1_2 + s_2_1)<<1) - 5*s_1_1  + s_2_0  + s_2_2)<<1;
+		
+		
+		// 2nd derivative test:
+		int H_det=4*coeff1*coeff2 - coeff5*coeff5;
+		
+		if(H_det==0){
+		delta_x[0]=0.0;
+		delta_y[0]=0.0;
+		return (double)(coeff6)/18.0;
+		}
+		
+		if(!(H_det>0&&coeff1<0)){
+		// The maximum must be at the one of the 4 patch corners.
+		int tmp_max=coeff3+coeff4+coeff5;
+		delta_x[0]=1.0; delta_y[0]=1.0;
+		
+		int tmp = -coeff3+coeff4-coeff5;
+		if(tmp>tmp_max){
+		tmp_max=tmp;
+		delta_x[0]=-1.0; delta_y[0]=1.0;
+		}
+		tmp = coeff3-coeff4-coeff5;
+		if(tmp>tmp_max){
+		tmp_max=tmp;
+		delta_x[0]=1.0; delta_y[0]=-1.0;
+		}
+		tmp = -coeff3-coeff4+coeff5;
+		if(tmp>tmp_max){
+		tmp_max=tmp;
+		delta_x[0]=-1.0; delta_y[0]=-1.0;
+		}
+		return (double)(tmp_max+coeff1+coeff2+coeff6)/18.0;
+		}
+		
+		// this is hopefully the normal outcome of the Hessian test
+		delta_x[0]=(double)(2*coeff2*coeff3 - coeff4*coeff5)/(double)(-H_det);
+		delta_y[0]=(double)(2*coeff1*coeff4 - coeff3*coeff5)/(double)(-H_det);
+		// TODO: this is not correct, but easy, so perform a real boundary maximum search:
+		boolean tx=false; boolean tx_=false; boolean ty=false; boolean ty_=false;
+		if(delta_x[0]>1.0) tx=true;
+		else if(delta_x[0]<-1.0) tx_=true;
+		if(delta_y[0]>1.0) ty=true;
+		if(delta_y[0]<-1.0) ty_=true;
+		
+		if(tx||tx_||ty||ty_){
+		// get two candidates:
+		double delta_x1=0.0, delta_x2=0.0, delta_y1=0.0, delta_y2=0.0;
+		if(tx) {
+		delta_x1=1.0;
+		delta_y1=-(double)(coeff4+coeff5)/(double)(2*coeff2);
+		if(delta_y1>1.0) delta_y1=1.0; else if (delta_y1<-1.0) delta_y1=-1.0;
+		}
+		else if(tx_) {
+		delta_x1=-1.0;
+		delta_y1=-(double)(coeff4-coeff5)/(double)(2*coeff2);
+		if(delta_y1>1.0) delta_y1=1.0; else if (delta_y1<-1.0) delta_y1=-1.0;
+		}
+		if(ty) {
+		delta_y2=1.0;
+		delta_x2=-(double)(coeff3+coeff5)/(double)(2*coeff1);
+		if(delta_x2>1.0) delta_x2=1.0; else if (delta_x2<-1.0) delta_x2=-1.0;
+		}
+		else if(ty_) {
+		delta_y2=-1.0;
+		delta_x2=-(double)(coeff3-coeff5)/(double)(2*coeff1);
+		if(delta_x2>1.0) delta_x2=1.0; else if (delta_x2<-1.0) delta_x2=-1.0;
+		}
+		// insert both options for evaluation which to pick
+		double max1 = (coeff1*delta_x1*delta_x1+coeff2*delta_y1*delta_y1
+		+coeff3*delta_x1+coeff4*delta_y1
+		+coeff5*delta_x1*delta_y1
+		+coeff6)/18.0;
+		double max2 = (coeff1*delta_x2*delta_x2+coeff2*delta_y2*delta_y2
+		+coeff3*delta_x2+coeff4*delta_y2
+		+coeff5*delta_x2*delta_y2
+		+coeff6)/18.0;
+		if(max1>max2) {
+		delta_x[0]=delta_x1;
+		delta_y[0]=delta_x1;
+		return max1;
+		}
+		else{
+		delta_x[0]=delta_x2;
+		delta_y[0]=delta_x2;
+		return max2;
+		}
+		}
+		
+		// this is the case of the maximum inside the boundaries:
+		return (coeff1*delta_x[0]*delta_x[0]+coeff2*delta_y[0]*delta_y[0]
+		+coeff3*delta_x[0]+coeff4*delta_y[0]
+		+coeff5*delta_x[0]*delta_y[0]
+		+coeff6)/18.0;
+}
+
     
     // Some helper classes for the Brisk pattern representation
     private class BriskPatternPoint {
@@ -1002,6 +1482,15 @@ public class AlgorithmBRISK extends AlgorithmBase {
     		this.class_id = -1;
     	}
     	
+    	public KeyPoint(double x, double y, double size, double angle, double response, int octave) {
+    		this.pt = new Point2d(x, y);
+    		this.size = size;
+    		this.angle = angle;
+    		this.response = response;
+    		this.octave = octave;
+    		this.class_id = -1;
+    	}
+    	
     	public void setAngle(double angle) {
     		this.angle = angle;
     	}
@@ -1025,7 +1514,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
     	private ModelImage image;
     	private double scale = 1.0;
     	private double offset = 0.0;
-    	short scores[][] = null;
+    	private int scores[][] = null;
     	private int xDim;
     	private int yDim;
     	OastDetector9_16 oastDetector;
@@ -1036,7 +1525,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
     		this.image = image;
     		xDim = image.getExtents()[0];
     		yDim = image.getExtents()[1];
-    		scores = new short[yDim][xDim];
+    		scores = new int[yDim][xDim];
     		// create an agast detector
     		oastDetector = new OastDetector9_16(xDim, yDim, 0);
     		agastDetector_5_8 = new AgastDetector5_8(xDim, yDim, 0);
@@ -1081,7 +1570,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
             image = algoTrans. getTransformedImage();
             algoTrans.disposeLocal();
             algoTrans = null;
-    		scores = new short[yDim][xDim];
+    		scores = new int[yDim][xDim];
     		oastDetector = new OastDetector9_16(xDim, yDim, 0);
     		agastDetector_5_8 = new AgastDetector5_8(xDim, yDim, 0);
     	}
@@ -1102,6 +1591,10 @@ public class AlgorithmBRISK extends AlgorithmBase {
     		return yDim;
     	}
     	
+    	public int[][] getScores() {
+    		return scores;
+    	}
+    	
     	 public void getAgastPoints(double threshold, Vector<Point2d> keypoints){
          	oastDetector.setThreshold(threshold);
          	int sliceSize = xDim * yDim;
@@ -1118,16 +1611,241 @@ public class AlgorithmBRISK extends AlgorithmBase {
 
          	// also write scores
          	final int num=keypoints.size();
-         	
-         	double maxValue = -Double.MAX_VALUE;
 
          	for(int i=0; i<num; i++){
          		int x = (int)Math.round(keypoints.get(i).x);
          		int y = (int)Math.round(keypoints.get(i).y);
          		final int offs= x+ y*xDim;
-         		//scores[y][x]=oastDetector.setCornerScore(doubleBuffer, offs);
+         		scores[y][x]=(int)Math.round(oastDetector.getCornerScore(doubleBuffer, offs, image.getMax()));
          	}
          }
+    	 
+    	 public boolean isMax2D(final int x_layer, final int y_layer){
+    			// decision tree:
+    			final int center = scores[y_layer][x_layer];
+    			final int s_10= scores[y_layer][x_layer-1];
+    			if(center<s_10) return false;
+    			final int s10= scores[y_layer][x_layer+1];
+    			if(center<s10) return false;
+    			final int s0_1= scores[y_layer-1][x_layer];
+    			if(center<s0_1) return false;
+    			final int s01= scores[y_layer+1][x_layer];
+    			if(center<s01) return false;
+    			final int s_11= scores[y_layer+1][x_layer-1];
+    			if(center<s_11) return false;
+    			final int s11= scores[y_layer+1][x_layer+1];
+    			if(center<s11) return false;
+    			final int s1_1= scores[y_layer-1][x_layer+1];
+    			if(center<s1_1) return false;
+    			final int s_1_1= scores[y_layer-1][x_layer-1];
+    			if(center<s_1_1) return false;
+
+    			// reject neighbor maxima
+    			Vector<Integer> delta = new Vector<Integer>();
+    			// put together a list of 2d-offsets to where the maximum is also reached
+    			if(center==s_1_1) {
+    				delta.add(-1);
+    				delta.add(-1);
+    			}
+    			if(center==s0_1) {
+    				delta.add(0);
+    				delta.add(-1);
+    			}
+    			if(center==s1_1) {
+    				delta.add(1);
+    				delta.add(-1);
+    			}
+    			if(center==s_10) {
+    				delta.add(-1);
+    				delta.add(0);
+    			}
+    			if(center==s10) {
+    				delta.add(1);
+    				delta.add(0);
+    			}
+    			if(center==s_11) {
+    				delta.add(-1);
+    				delta.add(1);
+    			}
+    			if(center==s01) {
+    				delta.add(0);
+    				delta.add(1);
+    			}
+    			if(center==s11) {
+    				delta.add(1);
+    				delta.add(1);
+    			}
+    			final int deltasize=delta.size();
+    			if(deltasize!=0){
+    				// in this case, we have to analyze the situation more carefully:
+    				// the values are gaussian blurred and then we really decide
+    				int smoothedcenter=4*center+2*(s_10+s10+s0_1+s01)+s_1_1+s1_1+s_11+s11;
+    				for(int i=0; i<deltasize;i+=2){
+    					int othercenter= scores[y_layer-1+delta.get(i+1)][x_layer+delta.get(i)-1];
+    					othercenter+=2*(scores[y_layer-1+delta.get(i+1)][x_layer+delta.get(i)]);
+    					othercenter+= scores[y_layer-1+delta.get(i+1)][x_layer+delta.get(i)+1];
+    					othercenter+=2*(scores[y_layer+delta.get(i+1)][x_layer+delta.get(i)+1]);
+    					othercenter+=4*(scores[y_layer+delta.get(i+1)][x_layer+delta.get(i)]);
+    					othercenter+=2*(scores[y_layer+delta.get(i+1)][x_layer+delta.get(i)-1]);
+    					othercenter+= scores[y_layer+delta.get(i+1)+1][x_layer+delta.get(i)-1];
+    					othercenter+=2*(scores[y_layer+delta.get(i+1)+1][x_layer+delta.get(i)]);
+    					othercenter+= scores[y_layer+delta.get(i+1)+1][x_layer+delta.get(i)+1];
+    					if(othercenter>smoothedcenter) return false;
+    				}
+    			}
+    			return true;
+    		}
+    	 
+    	 public double getAgastScore(double xf, double yf, double threshold) {
+    		  return getAgastScore(xf, yf, threshold, 1.0);
+    	 }
+    	 
+    	 public double getAgastScore(double xf, double yf, double threshold, double scale){
+    			if(scale<=1.0f){
+    				// just do an interpolation inside the layer
+    				final int x=(int)(xf);
+    				final double rx1=xf-(double)(x);
+    				final double rx=1.0-rx1;
+    				final int y=(int)(yf);
+    				final double ry1=yf-(double)(y);
+    				final double ry=1.0-ry1;
+
+    				return rx*ry*getAgastScore(x, y, threshold)+
+    						rx1*ry*getAgastScore(x+1, y, threshold)+
+    						rx*ry1*getAgastScore(x, y+1, threshold)+
+    						rx1*ry1*getAgastScore(x+1, y+1, threshold);
+    			}
+    			else{
+    				// this means we overlap area smoothing
+    				final double halfscale = scale/2.0;
+    				// get the scores first:
+    				for(int x=(int)(xf-halfscale); x<=(int)(xf+halfscale+1.0f); x++){
+    					for(int y=(int)(yf-halfscale); y<=(int)(yf+halfscale+1.0f); y++){
+    						getAgastScore(x, y, threshold);
+    					}
+    				}
+    				// get the smoothed value
+    				return value(scores,xf,yf,scale);
+    			}
+    		}
+
+    	 
+    	// get scores - attention, this is in layer coordinates, not scale=1 coordinates!
+    	 public double getAgastScore(int x, int y, double threshold){
+    			if(x<3||y<3) return 0;
+    			if(x>=xDim-3||y>=yDim-3) return 0;
+    			double score = scores[y][x];
+    			if(score>2) { return score; }
+    			oastDetector.setThreshold(threshold-1);
+    			int sliceSize = xDim * yDim;
+             	double doubleBuffer[] = new double[sliceSize];
+             	try {
+             		image.exportData(0, sliceSize, doubleBuffer);
+             	}
+             	catch (IOException e) {
+             		MipavUtil.displayError("IOException " + e + " on image.exportData(0, sliceSize, doubleBuffer) in getAgastScore()");
+             		setCompleted(false);
+             		return -1;
+             	}
+             	int offs= x+ y*xDim;
+    			score = oastDetector.getCornerScore(doubleBuffer, offs, image.getMax());
+    			if (score<threshold) score = 0;
+    			return score;
+    		}
+    	 
+    	// access gray values (smoothed/interpolated)
+    	private double value(int scores[][], double xf, double yf, double scale){
+    	 	// get the position
+    	 	final int x = (int)Math.floor(xf);
+    	 	final int y = (int)Math.floor(yf);
+    	 	int xDim = scores[0].length;
+
+    	 	// get the sigma_half:
+    	 	final double sigma_half=scale/2;
+    	 	final double area=4.0*sigma_half*sigma_half;
+    	 	// calculate output:
+    	 	int ret_val;
+    	 	if(sigma_half<0.5){
+    	 		//interpolation multipliers:
+    	 		final int r_x=(int)((xf-x)*1024);
+    	 		final int r_y=(int)((yf-y)*1024);
+    	 		final int r_x_1=(1024-r_x);
+    	 		final int r_y_1=(1024-r_y);
+    	 		// just interpolate:
+    	 		ret_val=(r_x_1*r_y_1*scores[y][x]);
+    	 		ret_val+=(r_x*r_y_1*scores[y][x+1]);
+    	 		ret_val+=(r_x*r_y*scores[y+1][x+1]);
+    	 		ret_val+=(r_x_1*r_y*scores[y+1][x]);
+    	 		return ((ret_val+512)/1024/1024);
+    	 	}
+
+    	 	// this is the standard case (simple, not speed optimized yet):
+
+    	 	// scaling:
+    	 	final int scaling = (int)(4194304.0/area);
+    	 	final int scaling2= (int)(scaling*area/1024.0);
+
+    	 	// calculate borders
+    	 	final double x_1=xf-sigma_half;
+    	 	final double x1=xf+sigma_half;
+    	 	final double y_1=yf-sigma_half;
+    	 	final double y1=yf+sigma_half;
+
+    	 	final int x_left=(int)(x_1+0.5);
+    	 	final int y_top=(int)(y_1+0.5);
+    	 	final int x_right=(int)(x1+0.5);
+    	 	final int y_bottom=(int)(y1+0.5);
+
+    	 	// overlap area - multiplication factors:
+    	 	final double r_x_1=(double)(x_left)-x_1+0.5;
+    	 	final double r_y_1=(double)(y_top)-y_1+0.5;
+    	 	final double r_x1=x1-(double)(x_right)+0.5;
+    	 	final double r_y1=y1-(double)(y_bottom)+0.5;
+    	 	final int dx=x_right-x_left-1;
+    	 	final int dy=y_bottom-y_top-1;
+    	 	final int A=(int)((r_x_1*r_y_1)*scaling);
+    	 	final int B=(int)((r_x1*r_y_1)*scaling);
+    	 	final int C=(int)((r_x1*r_y1)*scaling);
+    	 	final int D=(int)((r_x_1*r_y1)*scaling);
+    	 	final int r_x_1_i=(int)(r_x_1*scaling);
+    	 	final int r_y_1_i=(int)(r_y_1*scaling);
+    	 	final int r_x1_i=(int)(r_x1*scaling);
+    	 	final int r_y1_i=(int)(r_y1*scaling);
+
+    	 	// now the calculation:
+    	 	// first row:
+    	 	ret_val=A*scores[y_top][x_left];
+    	 	int xptr = x_left + 1;
+    	 	int endx = x_right;
+    	 	for(; xptr<endx; xptr++){
+    	 		ret_val+=r_y_1_i*scores[y_top][xptr];
+    	 	}
+    	 	ret_val+=B*scores[y_top][x_right];
+    	 	// middle ones:
+    	 	int yptr = y_top + 1;
+    	 	xptr = x_left;
+    	 	int endy = y_bottom;
+    	 	for(; yptr < y_bottom; yptr++, xptr = x_left){
+    	 		ret_val+=r_x_1_i*scores[yptr][x_left];
+    	 		xptr++;
+    	 		for(; xptr<x_right; xptr++){
+    	 			ret_val+=scores[yptr][xptr]*scaling;
+    	 		}
+    	 		ret_val+=r_x1_i*scores[yptr][x_right];
+    	 	}
+    	 	// last row:
+    	 	ret_val+=D*scores[y_bottom][x_left];
+    	 	xptr = x_left+1;
+    	 	for(; xptr<x_right; xptr++){
+    	 		ret_val+=r_y1_i*scores[y_bottom][xptr];
+    	 	}
+    	 	ret_val+=C*scores[y_bottom][x_right];
+
+    	 	return ((ret_val+scaling2/2)/scaling2/1024);
+    	 }
+
+
+
     }
     
 }
