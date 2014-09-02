@@ -174,6 +174,10 @@ public class AlgorithmBRISK extends AlgorithmBase {
      */
     public AlgorithmBRISK() { }
     
+    public AlgorithmBRISK(ModelImage srcImg) {
+    	super(null, srcImg);
+    }
+    
     /**
      * @param destImage List of images to be matched
      * @param srcImg Source image
@@ -254,8 +258,31 @@ public class AlgorithmBRISK extends AlgorithmBase {
         		(radiusList.size() == numberList.size())) {
         	    generateKernel();	
         	}
-        	BriskDescriptorExtractor();
+        	else {
+        	    BriskDescriptorExtractor();
+        	}
         }
+        
+     // Construct the matcher
+        //cv::Ptr<cv::DescriptorMatcher> descriptorMatcher;
+        //descriptorMatcher = new cv::BruteForceMatcher<cv::HammingSse>();
+
+        // process an arbitrary number of images:
+        //detector->detect(grayImage1,keypoints1);
+        //descriptorExtractor->compute(imgGray1,keypoints1,descriptors1);
+        //detector->detect(grayImageN,keypointsN);
+        //descriptorExtractor->compute(imgGrayN,keypointsN,descriptorsN);
+  
+        //descriptorMatcher->radiusMatch(descriptorsI,descriptorsJ,
+        		//matches,hammingMax);
+        // alternatively use knnMatch (or match for k:=1).
+        
+        Vector<KeyPoint> keypoints = new Vector<KeyPoint>();
+        detectImpl(srcImage, keypoints, null);
+
+        
+        setCompleted(true);
+        return;
     }
     
     // Create a descriptor with a standard pattern
@@ -279,6 +306,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
         dMax = 5.85 * patternScale;
         dMin = 8.2 * patternScale;
         indexChange = null;
+        generateKernel();
     }
     
     // Call this to generate the kernel:
@@ -839,7 +867,9 @@ public class AlgorithmBRISK extends AlgorithmBase {
     	// Assign thresholds
     	safeThreshold = threshold * safetyFactor;
     	Vector<Vector<Point2d>> agastPoints = new Vector<Vector<Point2d>>();
-    	agastPoints.setSize(layers);
+    	for (int i = 0; i < layers; i++) {
+    		agastPoints.addElement(new Vector<Point2d>());
+    	}
     	
     	// Go through the octaves and intra layers and calculate 
     	// fast corner scores
@@ -879,7 +909,10 @@ public class AlgorithmBRISK extends AlgorithmBase {
     		return;
     	} // if (layers == 1)
     	
-    	double x, y, scale, score;
+    	double x[] = new double[1];
+    	double y[] = new double[1];
+    	double scale[] = new double[1];
+    	double score;
     	for (int i = 0; i < layers; i++) {
     	    BriskLayer l = pyramid.get(i);
     	    final int num = agastPoints.get(i).size();
@@ -893,13 +926,350 @@ public class AlgorithmBRISK extends AlgorithmBase {
         			boolean ismax[] = new boolean[1];
         			double dx[] = new double[1];
         			double dy[] = new double[1];
-        			//getScoreMaxBelow(i, (int)Math.round(point.x), (int)Math.round(point.y),
-        					//l.getAgastScore((int)Math.round(point.x), (int)Math.round(point.y), safeThreshold),
-        					//ismax, dx, dy);
+        			getScoreMaxBelow(i, (int)Math.round(point.x), (int)Math.round(point.y),
+        					l.getAgastScore((int)Math.round(point.x), (int)Math.round(point.y), safeThreshold),
+        					ismax, dx, dy);
+        			if (!ismax[0]) {
+        				continue;
+        			}
+        			
+        			// Get the patch on this layer
+        			int s_0_0 = (int)Math.round(l.getAgastScore((int)Math.round(point.x)-1,(int)Math.round(point.y)-1, 1.0));
+        			int s_1_0 = (int)Math.round(l.getAgastScore((int)Math.round(point.x), (int)Math.round(point.y)-1, 1.0));
+        			int s_2_0 = (int)Math.round(l.getAgastScore((int)Math.round(point.x)+1, (int)Math.round(point.y)-1, 1.0));
+        			int s_2_1 = (int)Math.round(l.getAgastScore((int)Math.round(point.x)+1, (int)Math.round(point.y), 1.0));
+        			int s_1_1 = (int)Math.round(l.getAgastScore((int)Math.round(point.x), (int)Math.round(point.y), 1.0));
+        			int s_0_1 = (int)Math.round(l.getAgastScore((int)Math.round(point.x)-1, (int)Math.round(point.y), 1.0));
+        			int s_0_2 = (int)Math.round(l.getAgastScore((int)Math.round(point.x)-1, (int)Math.round(point.y)+1, 1.0));
+        			int s_1_2 = (int)Math.round(l.getAgastScore((int)Math.round(point.x), (int)Math.round(point.y)+1, 1.0));
+        			int s_2_2 = (int)Math.round(l.getAgastScore((int)Math.round(point.x)+1, (int)Math.round(point.y)+1, 1.0));
+        			double delta_x[] = new double[1];
+        			double delta_y[] = new double[1];
+        			double max = subpixel2D(s_0_0, s_0_1, s_0_2, s_1_0, s_1_1, s_1_2, s_2_0, s_2_1, s_2_2, delta_x, delta_y);
+        			// Store
+        			keypoints.add(new KeyPoint((point.x + delta_x[0])*l.getScale() + l.getOffset(), 
+        					(point.y + delta_y[0])*l.getScale() + l.getOffset(), basicSize*l.getScale(), -1, max, i));
     	    	} // for (int n = 0; n < num; n++)
     	    } // if (i == layers - 1)
+    	    else { // not the last layer
+    	    	for (int n = 0; n < num; n++) {
+    	    	    final Point2d point	= agastPoints.get(i).get(n);
+    	    	    
+    	    	    // First check if it is a maximum
+    	    	    if (!pyramid.get(i).isMax2D((int)Math.round(point.x), (int)Math.round(point.y))) {
+        				continue;
+        			}
+    	    	    
+    	    	    // Let's do subpixel and double scale refinement
+    	    	    boolean ismax[] = new boolean[1];
+    	    	    score = refine3D(i, (int)Math.round(point.x), (int)Math.round(point.y), x, y, scale, ismax);
+    	    	    if (!ismax[0]) {
+    	    	    	continue;
+    	    	    }
+    	    	    
+    	    	    // Finally store the detected keypoint
+    	    	    if (score > threshold) {
+    	    	    	keypoints.add(new KeyPoint(x[0], y[0], basicSize * scale[0], -1 , score, i));
+    	    	    }
+    	    	} // for (int n = 0; n < num; n++)
+    	    } // else not the last layer
     	} // for (int i = 0; i < layers; i++)
+    } // getKeyPoints(Vector <KeyPoint) keypoints)
+    
+ // 3D maximum refinement centered around (x_layer,y_layer)
+ private double refine3D(final int layer, final int x_layer, final int y_layer,
+    		double x[], double y[], double scale[], boolean ismax[]){
+    	ismax[0]=true;
+    	BriskLayer thisLayer=pyramid.get(layer);
+    	final double center = thisLayer.getAgastScore(x_layer,y_layer,1);
+
+    	// check and get above maximum:
+    	double delta_x_above[] = new double[1];
+    	double delta_y_above[] = new double[1];
+ 
+    	double max_above = getScoreMaxAbove(layer,x_layer, y_layer,
+    					center, ismax,
+    					delta_x_above, delta_y_above);
+
+    	if(!ismax[0]) return 0.0;
+
+    	double max[] = new double[1]; // to be returned
+
+    	if(layer%2==0){ // on octave
+    		// treat the patch below:
+    		double delta_x_below[] = new double[1];
+    		double delta_y_below[] = new double[1];
+    		double max_below_float;
+    		int max_below_uchar=0;
+    		if(layer==0){
+    			// guess the lower intra octave...
+    			BriskLayer l=pyramid.get(0);
+    			int s_0_0 = (int)Math.round(l.getAgastScore_5_8(x_layer-1, y_layer-1, 1));
+    			max_below_uchar=s_0_0;
+    			int s_1_0 = (int)Math.round(l.getAgastScore_5_8(x_layer,   y_layer-1, 1));
+    			if(s_1_0>max_below_uchar) max_below_uchar=s_1_0;
+    			int s_2_0 = (int)Math.round(l.getAgastScore_5_8(x_layer+1, y_layer-1, 1));
+    			if(s_2_0>max_below_uchar) max_below_uchar=s_2_0;
+    			int s_2_1 = (int)Math.round(l.getAgastScore_5_8(x_layer+1, y_layer,   1));
+    			if(s_2_1>max_below_uchar) max_below_uchar=s_2_1;
+    			int s_1_1 = (int)Math.round(l.getAgastScore_5_8(x_layer,   y_layer,   1));
+    			if(s_1_1>max_below_uchar) max_below_uchar=s_1_1;
+    			int s_0_1 = (int)Math.round(l.getAgastScore_5_8(x_layer-1, y_layer,   1));
+    			if(s_0_1>max_below_uchar) max_below_uchar=s_0_1;
+    			int s_0_2 = (int)Math.round(l.getAgastScore_5_8(x_layer-1, y_layer+1, 1));
+    			if(s_0_2>max_below_uchar) max_below_uchar=s_0_2;
+    			int s_1_2 = (int)Math.round(l.getAgastScore_5_8(x_layer,   y_layer+1, 1));
+    			if(s_1_2>max_below_uchar) max_below_uchar=s_1_2;
+    			int s_2_2 = (int)Math.round(l.getAgastScore_5_8(x_layer+1, y_layer+1, 1));
+    			if(s_2_2>max_below_uchar) max_below_uchar=s_2_2;
+
+    			max_below_float = subpixel2D(s_0_0, s_0_1, s_0_2,
+    							s_1_0, s_1_1, s_1_2,
+    							s_2_0, s_2_1, s_2_2,
+    							delta_x_below, delta_y_below);
+    			max_below_float = max_below_uchar;
+    		}
+    		else{
+    			max_below_float = getScoreMaxBelow(layer,x_layer, y_layer,
+    								center, ismax,
+    								delta_x_below, delta_y_below);
+    			if(!ismax[0]) return 0;
+    		}
+
+    		// get the patch on this layer:
+    		int s_0_0 = (int)Math.round(thisLayer.getAgastScore(x_layer-1, y_layer-1,1));
+    		int s_1_0 = (int)Math.round(thisLayer.getAgastScore(x_layer,   y_layer-1,1));
+    		int s_2_0 = (int)Math.round(thisLayer.getAgastScore(x_layer+1, y_layer-1,1));
+    		int s_2_1 = (int)Math.round(thisLayer.getAgastScore(x_layer+1, y_layer,1));
+    		int s_1_1 = (int)Math.round(thisLayer.getAgastScore(x_layer,   y_layer,1));
+    		int s_0_1 = (int)Math.round(thisLayer.getAgastScore(x_layer-1, y_layer,1));
+    		int s_0_2 = (int)Math.round(thisLayer.getAgastScore(x_layer-1, y_layer+1,1));
+    		int s_1_2 = (int)Math.round(thisLayer.getAgastScore(x_layer,   y_layer+1,1));
+    		int s_2_2 = (int)Math.round(thisLayer.getAgastScore(x_layer+1, y_layer+1,1));
+    		double delta_x_layer[] = new double[1];
+    		double delta_y_layer[] = new double[1];
+    		double max_layer = subpixel2D(s_0_0, s_0_1, s_0_2,
+    				s_1_0, s_1_1, s_1_2,
+    				s_2_0, s_2_1, s_2_2,
+    				delta_x_layer, delta_y_layer);
+
+    		// calculate the relative scale (1D maximum):
+    		if(layer==0){
+    			scale[0]=refine1D_2(max_below_float,
+    					Math.max(center,max_layer),
+    					max_above,max);
+    		}
+    		else
+    			scale[0]=refine1D(max_below_float,
+    					Math.max(center,max_layer),
+    					max_above,max);
+
+    		if(scale[0]>1.0){
+    			// interpolate the position:
+    			final double r0=(1.5-scale[0])/.5;
+    			final double r1=1.0-r0;
+    			x[0]=(r0*delta_x_layer[0]+r1*delta_x_above[0]+(double)(x_layer))
+    					*thisLayer.getScale()+thisLayer.getOffset();
+    			y[0]=(r0*delta_y_layer[0]+r1*delta_y_above[0]+(double)(y_layer))
+    					*thisLayer.getScale()+thisLayer.getOffset();
+    		}
+    		else{
+    			if(layer==0){
+    				// interpolate the position:
+    				final double r0=(scale[0]-0.5)/0.5;
+    				final double r_1=1.0-r0;
+    				x[0]=r0*delta_x_layer[0]+r_1*delta_x_below[0]+(double)(x_layer);
+    				y[0]=r0*delta_y_layer[0]+r_1*delta_y_below[0]+(double)(y_layer);
+    			}
+    			else{
+    				// interpolate the position:
+    				final double r0=(scale[0]-0.75)/0.25;
+    				final double r_1=1.0-r0;
+    				x[0]=(r0*delta_x_layer[0]+r_1*delta_x_below[0]+(double)(x_layer))
+    						*thisLayer.getScale()+thisLayer.getOffset();
+    				y[0]=(r0*delta_y_layer[0]+r_1*delta_y_below[0]+(double)(y_layer))
+    						*thisLayer.getScale()+thisLayer.getOffset();
+    			}
+    		}
+    	}
+    	else{
+    		// on intra
+    		// check the patch below:
+    		double delta_x_below[] = new double[1];
+    		double delta_y_below[] = new double[1];
+    		double max_below = getScoreMaxBelow(layer,x_layer, y_layer,
+    					center, ismax,
+    					delta_x_below, delta_y_below);
+    		if(!ismax[0]) return 0.0;
+
+    		// get the patch on this layer:
+    		int s_0_0 = (int)Math.round(thisLayer.getAgastScore(x_layer-1, y_layer-1,1));
+    		int s_1_0 = (int)Math.round(thisLayer.getAgastScore(x_layer,   y_layer-1,1));
+    		int s_2_0 = (int)Math.round(thisLayer.getAgastScore(x_layer+1, y_layer-1,1));
+    		int s_2_1 = (int)Math.round(thisLayer.getAgastScore(x_layer+1, y_layer,1));
+    		int s_1_1 = (int)Math.round(thisLayer.getAgastScore(x_layer,   y_layer,1));
+    		int s_0_1 = (int)Math.round(thisLayer.getAgastScore(x_layer-1, y_layer,1));
+    		int s_0_2 = (int)Math.round(thisLayer.getAgastScore(x_layer-1, y_layer+1,1));
+    		int s_1_2 = (int)Math.round(thisLayer.getAgastScore(x_layer,   y_layer+1,1));
+    		int s_2_2 = (int)Math.round(thisLayer.getAgastScore(x_layer+1, y_layer+1,1));
+    		double delta_x_layer[] = new double[1];
+    		double delta_y_layer[] = new double[1];
+    		double max_layer = subpixel2D(s_0_0, s_0_1, s_0_2,
+    				s_1_0, s_1_1, s_1_2,
+    				s_2_0, s_2_1, s_2_2,
+    				delta_x_layer, delta_y_layer);
+
+    		// calculate the relative scale (1D maximum):
+    		scale[0]=refine1D_1(max_below,
+    				Math.max(center,max_layer),
+    				max_above,max);
+    		if(scale[0]>1.0){
+    			// interpolate the position:
+    			final double r0=4.0-scale[0]*3.0;
+    			final double r1=1.0-r0;
+    			x[0]=(r0*delta_x_layer[0]+r1*delta_x_above[0]+(double)(x_layer))
+    					*thisLayer.getScale()+thisLayer.getOffset();
+    			y[0]=(r0*delta_y_layer[0]+r1*delta_y_above[0]+(double)(y_layer))
+    					*thisLayer.getScale()+thisLayer.getOffset();
+    		}
+    		else{
+    			// interpolate the position:
+    			final double r0=scale[0]*3.0-2.0;
+    			final double r_1=1.0-r0;
+    			x[0]=(r0*delta_x_layer[0]+r_1*delta_x_below[0]+(double)(x_layer))
+    					*thisLayer.getScale()+thisLayer.getOffset();
+    			y[0]=(r0*delta_y_layer[0]+r_1*delta_y_below[0]+(double)(y_layer))
+    					*thisLayer.getScale()+thisLayer.getOffset();
+    		}
+    	}
+
+    	// calculate the absolute scale:
+    	scale[0]*=thisLayer.getScale();
+
+    	// that's it, return the refined maximum:
+    	return max[0];
     }
+
+    
+    
+    private double refine1D(final double s_05,
+			final double s0, final double s05, double max[]){
+int i_05=(int)(1024.0*s_05+0.5);
+int i0=(int)(1024.0*s0+0.5);
+int i05=(int)(1024.0*s05+0.5);
+
+//   16.0000  -24.0000    8.0000
+//  -40.0000   54.0000  -14.0000
+//   24.0000  -27.0000    6.0000
+
+int three_a=16*i_05-24*i0+8*i05;
+// second derivative must be negative:
+if(three_a>=0){
+	if(s0>=s_05 && s0>=s05){
+		max[0]=s0;
+		return 1.0;
+	}
+	if(s_05>=s0 && s_05>=s05){
+		max[0]=s_05;
+		return 0.75;
+	}
+	if(s05>=s0 && s05>=s_05){
+		max[0]=s05;
+		return 1.5;
+	}
+}
+
+int three_b=-40*i_05+54*i0-14*i05;
+// calculate max location:
+double ret_val=-(double)(three_b)/(double)(2*three_a);
+// saturate and return
+if(ret_val<0.75) ret_val= 0.75;
+else if(ret_val>1.5) ret_val= 1.5; // allow to be slightly off bounds ...?
+int three_c = +24*i_05  -27*i0    +6*i05;
+max[0]=(double)(three_c)+(double)(three_a)*ret_val*ret_val+(double)(three_b)*ret_val;
+max[0]/=3072.0;
+return ret_val;
+}
+
+private double refine1D_1(final double s_05,
+			final double s0, final double s05, double max[]){
+int i_05=(int)(1024.0*s_05+0.5);
+int i0=(int)(1024.0*s0+0.5);
+int i05=(int)(1024.0*s05+0.5);
+
+//  4.5000   -9.0000    4.5000
+//-10.5000   18.0000   -7.5000
+//  6.0000   -8.0000    3.0000
+
+int two_a=9*i_05-18*i0+9*i05;
+// second derivative must be negative:
+if(two_a>=0){
+	if(s0>=s_05 && s0>=s05){
+		max[0]=s0;
+		return 1.0;
+	}
+	if(s_05>=s0 && s_05>=s05){
+		max[0]=s_05;
+		return 0.6666666666666666666666666667;
+	}
+	if(s05>=s0 && s05>=s_05){
+		max[0]=s05;
+		return 1.3333333333333333333333333333;
+	}
+}
+
+int two_b=-21*i_05+36*i0-15*i05;
+// calculate max location:
+double ret_val=-(double)(two_b)/(double)(2*two_a);
+// saturate and return
+if(ret_val<0.6666666666666666666666666667) ret_val= 0.666666666666666666666666667;
+else if(ret_val>1.33333333333333333333333333) ret_val= 1.333333333333333333333333333;
+int two_c = +12*i_05  -16*i0    +6*i05;
+max[0]=(double)(two_c)+(double)(two_a)*ret_val*ret_val+(double)(two_b)*ret_val;
+max[0]/=2048.0;
+return ret_val;
+}
+
+private double refine1D_2(final double s_05,
+			final double s0, final double s05, double[] max){
+int i_05=(int)(1024.0*s_05+0.5);
+int i0=(int)(1024.0*s0+0.5);
+int i05=(int)(1024.0*s05+0.5);
+
+//   18.0000  -30.0000   12.0000
+//  -45.0000   65.0000  -20.0000
+//   27.0000  -30.0000    8.0000
+
+int a=2*i_05-4*i0+2*i05;
+// second derivative must be negative:
+if(a>=0){
+	if(s0>=s_05 && s0>=s05){
+		max[0]=s0;
+		return 1.0;
+	}
+	if(s_05>=s0 && s_05>=s05){
+		max[0]=s_05;
+		return 0.7;
+	}
+	if(s05>=s0 && s05>=s_05){
+		max[0]=s05;
+		return 1.5;
+	}
+}
+
+int b=-5*i_05+8*i0-3*i05;
+// calculate max location:
+double ret_val=-(double)(b)/(double)(2*a);
+// saturate and return
+if(ret_val<0.7) ret_val= 0.7;
+else if(ret_val>1.5) ret_val= 1.5; // allow to be slightly off bounds ...?
+int c = +3*i_05  -3*i0    +1*i05;
+max[0]=(double)(c)+(double)(a)*ret_val*ret_val+(double)(b)*ret_val;
+max[0]/=1024;
+return ret_val;
+}
+
+
     
     private double getScoreMaxBelow(final int layer,
     		final int x_layer, final int y_layer,
@@ -1469,10 +1839,6 @@ public class AlgorithmBRISK extends AlgorithmBase {
     	// Object id that can be used to cluster keypoint by an object they belong to
     	private int class_id = -1;
     	
-    	public KeyPoint() {
-    		
-    	}
-    	
     	public KeyPoint(Point2d pt, double size) {
     		this.pt = pt;
     		this.size = size;
@@ -1577,6 +1943,10 @@ public class AlgorithmBRISK extends AlgorithmBase {
     	
     	public double getScale() {
     		return scale;
+    	}
+    	
+    	public double getOffset() {
+    		return offset;
     	}
     	
     	public ModelImage getImage() {
@@ -1753,12 +2123,32 @@ public class AlgorithmBRISK extends AlgorithmBase {
     			return score;
     		}
     	 
+    	 public double getAgastScore_5_8(int x, int y, double threshold){
+    			if(x<2||y<2) return 0;
+    			if(x>=xDim-2||y>=yDim-2) return 0;
+    			agastDetector_5_8.setThreshold(threshold-1);
+    			int sliceSize = xDim * yDim;
+    			double doubleBuffer[] = new double[sliceSize];
+             	try {
+             		image.exportData(0, sliceSize, doubleBuffer);
+             	}
+             	catch (IOException e) {
+             		MipavUtil.displayError("IOException " + e + " on image.exportData(0, sliceSize, doubleBuffer) in getAgastScore_5_8()");
+             		setCompleted(false);
+             		return -1;
+             	}
+    			int offs= x+ y*xDim;
+    			double score = agastDetector_5_8.getCornerScore(doubleBuffer, offs, image.getMax());
+    			if (score<threshold) score = 0;
+    			return score;
+    		}
+
+    	 
     	// access gray values (smoothed/interpolated)
     	private double value(int scores[][], double xf, double yf, double scale){
     	 	// get the position
     	 	final int x = (int)Math.floor(xf);
     	 	final int y = (int)Math.floor(yf);
-    	 	int xDim = scores[0].length;
 
     	 	// get the sigma_half:
     	 	final double sigma_half=scale/2;
@@ -1801,8 +2191,6 @@ public class AlgorithmBRISK extends AlgorithmBase {
     	 	final double r_y_1=(double)(y_top)-y_1+0.5;
     	 	final double r_x1=x1-(double)(x_right)+0.5;
     	 	final double r_y1=y1-(double)(y_bottom)+0.5;
-    	 	final int dx=x_right-x_left-1;
-    	 	final int dy=y_bottom-y_top-1;
     	 	final int A=(int)((r_x_1*r_y_1)*scaling);
     	 	final int B=(int)((r_x1*r_y_1)*scaling);
     	 	final int C=(int)((r_x1*r_y1)*scaling);
@@ -1824,7 +2212,6 @@ public class AlgorithmBRISK extends AlgorithmBase {
     	 	// middle ones:
     	 	int yptr = y_top + 1;
     	 	xptr = x_left;
-    	 	int endy = y_bottom;
     	 	for(; yptr < y_bottom; yptr++, xptr = x_left){
     	 		ret_val+=r_x_1_i*scores[yptr][x_left];
     	 		xptr++;
@@ -1847,5 +2234,112 @@ public class AlgorithmBRISK extends AlgorithmBase {
 
 
     }
+    
+    /**#ifndef HAMMINGSSE_HPP_
+    #define HAMMINGSSE_HPP_
+
+    #include <emmintrin.h>
+    #include <tmmintrin.h>
+
+    namespace cv{
+
+    #ifdef __GNUC__
+    static const char __attribute__((aligned(16))) MASK_4bit[16] = {0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf};
+    static const uint8_t __attribute__((aligned(16))) POPCOUNT_4bit[16] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4};
+    static const __m128i shiftval = _mm_set_epi32 (0,0,0,4);
+    #endif
+    #ifdef _MSC_VER
+    __declspec(align(16)) static const char MASK_4bit[16] = {0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf, 0xf};
+    __declspec(align(16)) static const uint8_t POPCOUNT_4bit[16] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4};
+    static const __m128i shiftval = _mm_set_epi32 (0,0,0,4);
+    #endif
+
+    __inline__ // - SSSE3 - better alorithm, minimized psadbw usage - adapted from http://wm.ite.pl/articles/sse-popcount.html
+    uint32_t HammingSse::ssse3_popcntofXORed(const __m128i* signature1, const __m128i* signature2, const int numberOf128BitWords) {
+
+    	uint32_t result = 0;
+
+    	register __m128i xmm0;
+    	register __m128i xmm1;
+    	register __m128i xmm2;
+    	register __m128i xmm3;
+    	register __m128i xmm4;
+    	register __m128i xmm5;
+    	register __m128i xmm6;
+    	register __m128i xmm7;
+
+    	//__asm__ volatile ("movdqa (%0), %%xmm7" : : "a" (POPCOUNT_4bit) : "xmm7");
+    	xmm7 = _mm_load_si128 ((__m128i *)POPCOUNT_4bit);
+    	//__asm__ volatile ("movdqa (%0), %%xmm6" : : "a" (MASK_4bit) : "xmm6");
+    	xmm6 = _mm_load_si128 ((__m128i *)MASK_4bit);
+    	//__asm__ volatile ("pxor    %%xmm5, %%xmm5" : : : "xmm5"); // xmm5 -- global accumulator
+    	xmm5 = _mm_setzero_si128();
+
+    	const size_t end=(size_t)(signature1+numberOf128BitWords);
+
+    	//__asm__ volatile ("movdqa %xmm5, %xmm4"); // xmm4 -- local accumulator
+    	xmm4 = xmm5;//_mm_load_si128(&xmm5);
+
+    	//for (n=0; n < numberOf128BitWords; n++) {
+    	do{
+    		//__asm__ volatile ("movdqa (%0), %%xmm0" : : "a" (signature1++) : "xmm0"); //slynen load data for XOR
+    		//		__asm__ volatile(
+    		//				"movdqa	  (%0), %%xmm0	\n"
+    		//"pxor      (%0), %%xmm0   \n" //slynen do XOR
+    		xmm0 = _mm_xor_si128 ( (__m128i)*signature1++, (__m128i)*signature2++); //slynen load data for XOR and do XOR
+    		//				"movdqu    %%xmm0, %%xmm1	\n"
+    		xmm1 = xmm0;//_mm_loadu_si128(&xmm0);
+    		//				"psrlw         $4, %%xmm1	\n"
+    		xmm1 = _mm_srl_epi16 (xmm1, shiftval);
+    		//				"pand      %%xmm6, %%xmm0	\n"	// xmm0 := lower nibbles
+    		xmm0 = _mm_and_si128 (xmm0, xmm6);
+    		//				"pand      %%xmm6, %%xmm1	\n"	// xmm1 := higher nibbles
+    		xmm1 = _mm_and_si128 (xmm1, xmm6);
+    		//				"movdqu    %%xmm7, %%xmm2	\n"
+    		xmm2 = xmm7;//_mm_loadu_si128(&xmm7);
+    		//				"movdqu    %%xmm7, %%xmm3	\n"	// get popcount
+    		xmm3 = xmm7;//_mm_loadu_si128(&xmm7);
+    		//				"pshufb    %%xmm0, %%xmm2	\n"	// for all nibbles
+    		xmm2 = _mm_shuffle_epi8(xmm2, xmm0);
+    		//				"pshufb    %%xmm1, %%xmm3	\n"	// using PSHUFB
+    		xmm3 = _mm_shuffle_epi8(xmm3, xmm1);
+    		//				"paddb     %%xmm2, %%xmm4	\n"	// update local
+    		xmm4 = _mm_add_epi8(xmm4, xmm2);
+    		//				"paddb     %%xmm3, %%xmm4	\n"	// accumulator
+    		xmm4 = _mm_add_epi8(xmm4, xmm3);
+    		//				:
+    		//				: "a" (buffer++)
+    		//				: "xmm0","xmm1","xmm2","xmm3","xmm4"
+    		//		);
+    	}while((size_t)signature1<end);
+    	// update global accumulator (two 32-bits counters)
+    	//	__asm__ volatile (
+    	//			/*"pxor	%xmm0, %xmm0		\n"*/
+    
+    
+    	//			"psadbw	%%xmm5, %%xmm4		\n"
+    	/**xmm4 = _mm_sad_epu8(xmm4, xmm5);
+    	//			"paddd	%%xmm4, %%xmm5		\n"
+    	xmm5 = _mm_add_epi32(xmm5, xmm4);
+    	//			:
+    	//			:
+    	//			: "xmm4","xmm5"
+    	//	);
+    	// finally add together 32-bits counters stored in global accumulator
+//    	__asm__ volatile (
+//    			"movhlps   %%xmm5, %%xmm0	\n"
+    	xmm0 = _mm_cvtps_epi32(_mm_movehl_ps(_mm_cvtepi32_ps(xmm0), _mm_cvtepi32_ps(xmm5))); //TODO fix with appropriate intrinsic
+//    			"paddd     %%xmm5, %%xmm0	\n"
+    	xmm0 = _mm_add_epi32(xmm0, xmm5);
+//    			"movd      %%xmm0, %%eax	\n"
+    	result = _mm_cvtsi128_si32 (xmm0);
+//    			: "=a" (result) : : "xmm5","xmm0"
+//    	);
+    	return result;
+    }
+
+    }
+    #endif /* HAMMINGSSE_HPP_ */
+
     
 }
