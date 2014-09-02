@@ -2176,17 +2176,17 @@ public class OastDetector9_16 {
 					if(nExpectedCorners==0)
 					{
 						nExpectedCorners=512;
-						corners_all.setSize(nExpectedCorners);
+						//corners_all.setSize(nExpectedCorners);
 					}
 					else
 					{
 						nExpectedCorners *=2;
-						corners_all.setSize(nExpectedCorners);
+						//corners_all.setSize(nExpectedCorners);
 					}
 				}
 				h.x=x;
 				h.y=y;
-				corners_all.add(h);
+				corners_all.add(new Point2d(h));
 				total++;
 			}									
 		}										
