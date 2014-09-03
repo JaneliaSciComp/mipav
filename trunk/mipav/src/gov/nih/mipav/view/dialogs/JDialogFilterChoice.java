@@ -2,7 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.file.FileTypeTable;
-
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewImageDirectory;
 import gov.nih.mipav.view.ViewImageFileFilter;
@@ -51,6 +51,10 @@ public class JDialogFilterChoice extends JDialogBase {
     private int[] fileTypeInts = JDialogUnknownIO.getTypeInts();
 
     private String[] fileTypeExtensions = JDialogUnknownIO.getTypeDefaultExtensions();
+    
+    private JCheckBox allFiles;
+    
+    private JCheckBox noExt;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -84,8 +88,12 @@ public class JDialogFilterChoice extends JDialogBase {
                 if (checkImages[i].isSelected()) {
                     count += FileTypeTable.getFileTypeInfo(fileTypeInts[i]).getExtensionList().size();
                 }
+                
             }
-
+            if (noExt.isSelected()){
+                count++;
+            }
+            
             String[] exts = new String[count];
             count = 0;
 
@@ -100,7 +108,14 @@ public class JDialogFilterChoice extends JDialogBase {
                 }
             }
 
-            imageFilter = new ViewImageFileFilter(exts);
+            if (noExt.isSelected()){
+                exts[count] = FileTypeTable.getFileTypeInfo(FileUtility.UNDEFINED).getExtensionsString();
+            }
+            
+            if(allFiles.isSelected())
+            	imageFilter = new ViewImageFileFilter(ViewImageFileFilter.ALL);
+            else
+            	imageFilter = new ViewImageFileFilter(exts);
             dispose();
         } else if (command.equals("Cancel")) {
             cancelFlag = true;
@@ -115,6 +130,18 @@ public class JDialogFilterChoice extends JDialogBase {
             for (int i = 0; i < checkImages.length; i++) {
                 checkImages[i].setSelected(false);
             }
+        } else if (command.equals("All files")){
+        	if(allFiles.isSelected()){
+        		noExt.setEnabled(false);
+        		for(JCheckBox b : checkImages){
+        			b.setEnabled(false);
+        		}
+        	}else{
+        		noExt.setEnabled(true);
+        		for(JCheckBox b : checkImages){
+        			b.setEnabled(true);
+        		}
+        	}
         } else {
             super.actionPerformed(e);
         }
@@ -135,7 +162,8 @@ public class JDialogFilterChoice extends JDialogBase {
     private void init() {
         setTitle("Choose Image Filter");
 
-        JPanel panel = new JPanel(new GridLayout(fileTypeDescriptions.length, 1));
+        //JPanel panel = new JPanel(new GridLayout(fileTypeDescriptions.length, 1));
+        JPanel panel = new JPanel(new GridLayout(0, 1));
         panel.setForeground(Color.white);
         panel.setBackground(Color.white);
 
@@ -152,6 +180,19 @@ public class JDialogFilterChoice extends JDialogBase {
 
         imageFilter = new ViewImageFileFilter(filter);
 
+        allFiles = new JCheckBox("All files");
+        allFiles.setFont(serif12);
+        allFiles.setForeground(Color.black);
+        allFiles.setBackground(Color.white);
+        allFiles.addActionListener(this);
+        panel.add(allFiles);
+        
+        noExt = new JCheckBox("No extension");
+        noExt.setFont(serif12);;
+        noExt.setForeground(Color.black);
+        noExt.setBackground(Color.white);
+        panel.add(noExt);
+        
         checkImages = new JCheckBox[fileTypeDescriptions.length];
 
         for (int i = 0; i < fileTypeDescriptions.length; i++) {
