@@ -278,8 +278,23 @@ public class AlgorithmBRISK extends AlgorithmBase {
         // alternatively use knnMatch (or match for k:=1).
         
         Vector<KeyPoint> keypoints = new Vector<KeyPoint>();
+        // Create keypoints
         detectImpl(srcImage, keypoints, null);
-
+        
+        short descriptors[][] = null;
+        // Create descriptors
+        descriptors = computeImpl(srcImage, keypoints);
+        System.out.println("keypoints.size() = " + keypoints.size());
+        int numNull = 0;
+        for (int k = 0; k < keypoints.size(); k++) {
+        	if (keypoints.get(k)  == null) {
+        		numNull++;
+        	}
+        }
+        System.out.println("Number of null keypoints = " + numNull);
+        
+        System.out.println("descriptors.length = " + descriptors.length);
+        System.out.println("descriptors[0].length = " + descriptors[0].length);
         
         setCompleted(true);
         return;
@@ -609,7 +624,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
     }
     
     // This is the subclass keypoint computation implementation
-    private void computeImpl(ModelImage image, Vector<KeyPoint>keypoints, short[][] descriptors) {
+    private short[][] computeImpl(ModelImage image, Vector<KeyPoint>keypoints) {
     	int xDim = image.getExtents()[0];
     	int yDim = image.getExtents()[1];
     	int sliceSize = xDim * yDim;
@@ -620,7 +635,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
     	catch (IOException e) {
     		MipavUtil.displayError("IOException " + e + " on image.exportData(0, sliceSize, doubleBuffer) in computeImp1");
     		setCompleted(false);
-    		return;
+    		return null;
     	}
         // Remove keypoints very close to the border
     	int ksize = keypoints.size();
@@ -689,16 +704,16 @@ public class AlgorithmBRISK extends AlgorithmBase {
 	    catch (IOException e){
 	    	MipavUtil.displayError("IOexception " + e + " on integral.importData(0, integralBuffer, true) in computeImpl");
 	    	setCompleted(false);
-	    	return;
+	    	return null;
 	    }
 	    
 	    // For temporary use
 	    int values[] = new int[points];
 	    
 	    // Create the descriptors
-	    // ksize is the number of descriptos
+	    // ksize is the number of descriptors
 	    // strings is the number of shorts the descriptor consists of
-	    descriptors = new short[ksize][strings];
+	    short descriptors[][] = new short[ksize][strings];
 	    
 	    // Now do the extraction for all keypoints:
 	    
@@ -799,6 +814,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
 	    integral.disposeLocal();
 	    integral = null;
 	    values = null;
+	    return descriptors;
     } // private void computeImp1
     
     private int descriptorSize() {
@@ -862,7 +878,8 @@ public class AlgorithmBRISK extends AlgorithmBase {
     private void getKeypoints(Vector<KeyPoint> keypoints) {
         // Make sure keypoints is empty
     	keypoints.clear();
-    	keypoints.setSize(2000);
+    	// Gives 2000 null keypoints before nonnull ones
+    	//keypoints.setSize(2000);
     	
     	// Assign thresholds
     	safeThreshold = threshold * safetyFactor;
