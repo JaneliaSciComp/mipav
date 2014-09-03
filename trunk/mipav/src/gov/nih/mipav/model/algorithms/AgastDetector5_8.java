@@ -438,7 +438,10 @@ public class AgastDetector5_8 {
 		    b_test = (bmin + bmax) / 2;
 
 	        } //	is_not_a_corner: while (true)
-			
+			bmax=b_test;
+			if(bmax - bmin <= 1.0)
+				return bmin;
+			b_test = (bmin + bmax) / 2;
 		}
 	}
 
