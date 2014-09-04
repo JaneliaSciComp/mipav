@@ -5,6 +5,8 @@ import gov.nih.mipav.view.*;
 
 import java.io.*;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 public class AlgorithmNonMaxSuppts extends AlgorithmBase {
 	/** 
 	Non-maximal suppression for features/corners
@@ -36,6 +38,7 @@ public class AlgorithmNonMaxSuppts extends AlgorithmBase {
 	January   2011  Warning given if no maxima found
 	*/
 	
+	private VOIVector VOIs;
 	private int radius;
 	private double threshold;
 	private double xsubp[] = null;
@@ -47,13 +50,15 @@ public class AlgorithmNonMaxSuppts extends AlgorithmBase {
 	 * @param destImg  Optional image.  If this is supplied, the thresholded corners are overlayed on
 	 *                 this image.  This can be useful for parameter tuning
 	 * @param srcImg   Corner strength image
+	 * @param VOIs
 	 * @param radius   Radius of the region considered in non-maximal suppression.
 	 *                 Typical values to use might be 1-3 pixels.
 	 * @param threshold
 	 * @param hcd byte buffer containing corner points
 	 */
-	public AlgorithmNonMaxSuppts(ModelImage destImg, ModelImage srcImg, int radius, double threshold) {
+	public AlgorithmNonMaxSuppts(ModelImage destImg, ModelImage srcImg, VOIVector VOIs, int radius, double threshold) {
 		super(destImg, srcImg);	
+		this.VOIs = VOIs;
 		this.radius = radius;
 		this.threshold = threshold;
 		subpixel = false;
@@ -64,6 +69,7 @@ public class AlgorithmNonMaxSuppts extends AlgorithmBase {
 	 * @param destImg  Optional image.  If this is supplied, the thresholded corners are overlayed on
 	 *                 this image.  This can be useful for parameter tuning
 	 * @param srcImg   Corner strength image
+	 * @param VOIs
 	 * @param radius   Radius of the region considered in non-maximal suppression.
 	 *                 Typical values to use might be 1-3 pixels.
 	 * @param threshold
@@ -73,9 +79,10 @@ public class AlgorithmNonMaxSuppts extends AlgorithmBase {
 	 *               windows for feature matching.
 	 * @param ysubp
 	 */
-	public AlgorithmNonMaxSuppts(ModelImage destImg, ModelImage srcImg, int radius, double threshold,
+	public AlgorithmNonMaxSuppts(ModelImage destImg, ModelImage srcImg, VOIVector VOIs, int radius, double threshold,
 			                     double[] xsubp, double[] ysubp) {
-		super(destImg, srcImg);	
+		super(destImg, srcImg);
+		this.VOIs = VOIs;
 		this.radius = radius;
 		this.threshold = threshold;
 		this.xsubp = xsubp;
@@ -121,6 +128,8 @@ public class AlgorithmNonMaxSuppts extends AlgorithmBase {
     	double cy;
     	double yshift;
     	int presentCorner;
+    	VOI newVOI;
+    	Vector3f pt;
     
     	try {
     		srcImage.exportData(0, sliceSize, cim);
@@ -154,6 +163,12 @@ public class AlgorithmNonMaxSuppts extends AlgorithmBase {
     			index = x + y * xDim;
     			if ((cim[index] == mx[index]) && (cim[index] >= threshold)) {
     				hcd[index] = 1;
+    				if (VOIs != null) {
+	    				newVOI = new VOI((short) cornersFound, "pt" + String.valueOf(cornersFound), VOI.POINT, -1);
+	    				pt = new Vector3f(x, y, 0);
+	    				newVOI.importPoint(pt);
+	    				VOIs.add(newVOI);
+    				}
     				cornersFound++;
     			} // if ((cim[index] == mx[index]) && (cim[index] >= threshold))
     		} // for (x = radius; x <= xDim - 1 - radius; x++)
