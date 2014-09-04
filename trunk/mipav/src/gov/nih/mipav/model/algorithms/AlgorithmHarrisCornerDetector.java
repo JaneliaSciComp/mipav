@@ -162,6 +162,7 @@ public class AlgorithmHarrisCornerDetector extends AlgorithmBase implements Algo
         float d1[];
         ModelImage IxImage;
         ModelImage IyImage;
+        VOIVector VOIs;
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -412,8 +413,11 @@ public class AlgorithmHarrisCornerDetector extends AlgorithmBase implements Algo
         	return;
         }
         
-        nonMaxAlgo = new AlgorithmNonMaxSuppts(destImage, cimImage, radius, pointThreshold);
+        VOIs = srcImage.getVOIs();
+        nonMaxAlgo = new AlgorithmNonMaxSuppts(destImage, cimImage, VOIs, radius, pointThreshold);
         nonMaxAlgo.run();
+        srcImage.setVOIs(VOIs);
+        srcImage.notifyImageDisplayListeners();
         
         setCompleted(true);
         return;
