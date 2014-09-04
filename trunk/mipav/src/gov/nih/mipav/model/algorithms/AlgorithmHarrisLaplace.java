@@ -48,8 +48,6 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
     
     private int operationType = xOp;
     
-    private ModelImage destImage[];
-    
  // epsilon = D1MACH(4)
     // Machine epsilon is the smallest positive epsilon such that
     // (1.0 + epsilon) != 1.0.
@@ -69,12 +67,10 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
     /**
      * AlgorithmHarrisLaplace.
      *
-     * @param  destImg  DOCUMENT ME!
      * @param  srcImg   DOCUMENT ME!
      */
-    public AlgorithmHarrisLaplace(ModelImage destImage[], ModelImage srcImg) {
+    public AlgorithmHarrisLaplace(ModelImage srcImg) {
         super(null, srcImg);
-        this.destImage = destImage;
     }
 
 
@@ -119,6 +115,9 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
         Vector<Integer> harrisPtsX = new Vector<Integer>();
         Vector<Integer> harrisPtsY = new Vector<Integer>();
         Vector<Integer> harrisPtsScale = new Vector<Integer>();
+        Vector<Integer> cptX = new Vector<Integer>();
+        Vector<Integer> cptY = new Vector<Integer>();
+        Vector<Double> cptScale = new Vector<Double>();
         // Integration scale
         double sI;
         // Derivative scale
@@ -132,12 +131,11 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
         double cim[];
         double sum;
         // Factor in original Harris measure
-        double k = 0.06;
+        //double k = 0.06;
         int x;
         int y;
         double distSquared;
         double radiusSquared;
-        int nb;
         double maxLocal[];
         byte localMask[][];
         int x2;
@@ -158,6 +156,14 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
         float laplace_snlo[][];
         double total;
         double mean;
+        int n;
+        int scale;
+        float val;
+        VOI newVOI;
+        int xp[];
+        int yp[];
+        int zp[];
+        VOIVector VOIs = srcImage.getVOIs();
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -201,9 +207,6 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
         		GxData[j] = (float)(xm[j]* Math.exp(-xm[j]*xm[j]/denom)/denom2);
         	}
         	convolver = new AlgorithmConvolver(srcImage, GxData, kExtents,entireImage, image25D);
-	        //convolver.setMinProgressValue(0);
-	        //convolver.setMaxProgressValue(10);
-	        //linkProgressToAlgorithm(convolver);
 	        convolver.addListener(this);
 	        if (!entireImage) {
 	            convolver.setMask(mask);
@@ -218,9 +221,6 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
 	        	GyData[j] = GxData[j];
 	        }
 	        convolver = new AlgorithmConvolver(srcImage, GyData, kExtents,entireImage, image25D);
-	        //convolver.setMinProgressValue(11);
-	        //convolver.setMaxProgressValue(20);
-	        //linkProgressToAlgorithm(convolver);
 	        convolver.addListener(this);
 	        if (!entireImage) {
 	            convolver.setMask(mask);
@@ -264,10 +264,10 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
 	        IxIx = new float[sliceSize];
 	        IxIy = new float[sliceSize];
 	        IyIy = new float[sliceSize];
-	        for (i = 0; i < sliceSize; i++) {
-	        	IxIx[i] = Ix[i] * Ix[i];
-	        	IxIy[i] = Ix[i] * Iy[i];
-	        	IyIy[i] = Iy[i] * Iy[i];
+	        for (j = 0; j < sliceSize; j++) {
+	        	IxIx[j] = Ix[j] * Ix[j];
+	        	IxIy[j] = Ix[j] * Iy[j];
+	        	IyIy[j] = Iy[j] * Iy[j];
 	        }
 	        
 	        IxIxImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), "IxIxImage");
@@ -302,9 +302,6 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
 	        IyIy = null;
 	        
 	        convolver = new AlgorithmConvolver(IxIxImage, GData, kExtents,entireImage, image25D);
-	        //convolver.setMinProgressValue(41);
-	        //convolver.setMaxProgressValue(50);
-	        //linkProgressToAlgorithm(convolver);
 	        convolver.addListener(this);
 	        if (!entireImage) {
 	            convolver.setMask(mask);
@@ -313,9 +310,6 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
 	        convolver.run();
 	        
 	        convolver = new AlgorithmConvolver(IxIyImage, GData, kExtents,entireImage, image25D);
-	        //convolver.setMinProgressValue(51);
-	        //convolver.setMaxProgressValue(60);
-	        //linkProgressToAlgorithm(convolver);
 	        convolver.addListener(this);
 	        if (!entireImage) {
 	            convolver.setMask(mask);
@@ -324,9 +318,6 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
 	        convolver.run();
 	        
 	        convolver = new AlgorithmConvolver(IyIyImage, GData, kExtents,entireImage, image25D);
-	        //convolver.setMinProgressValue(61);
-	        //convolver.setMaxProgressValue(70);
-	        //linkProgressToAlgorithm(convolver);
 	        convolver.addListener(this);
 	        if (!entireImage) {
 	            convolver.setMask(mask);
@@ -340,13 +331,13 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
 	        
 	        // Interest point response
 	        cim = new double[sliceSize];
-	        for (i = 0; i < sliceSize; i++) {
-	        	if (entireImage || mask.get(i)) {
-		        	sum = Ix2[i] + Iy2[i];
+	        for (j = 0; j < sliceSize; j++) {
+	        	if (entireImage || mask.get(j)) {
+		        	sum = Ix2[j] + Iy2[j];
 		        	// Original Harris measure
-		        	//cim[i] = (Ix2[i]*Iy2[i] - Ixy[i]*Ixy[i]) - k * sum *sum;
+		        	//cim[j] = (Ix2[j]*Iy2[j] - Ixy[j]*Ixy[j]) - k * sum *sum;
 		        	// Alison Noble measure
-		        	cim[i] = (Ix2[i]*Iy2[i] - Ixy[i]*Ixy[i])/(sum + epsilon);
+		        	cim[j] = (Ix2[j]*Iy2[j] - Ixy[j]*Ixy[j])/(sum + epsilon);
 	        	}
 	        }
 	        
@@ -354,14 +345,12 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
 	        // Find unique local maxima using filtering fast
 	        halfMask = (int)Math.ceil(3 * sI);
 	        radiusSquared = 9.0 * sI * sI;
-	        nb = 0;
 	        localMask = new byte[2*halfMask + 1][2*halfMask+1];
 	        maxLocal = new double[sliceSize];
 	        for (y = -halfMask; y <= halfMask; y++) {
 	        	for (x = -halfMask; x <= halfMask; x++) {
 	        	    distSquared = x*x + y*y;
 	        	    if (distSquared <= radiusSquared) {
-	        	        nb++;
 	        	        localMask[y + halfMask][x + halfMask] = 1;
 	        	    }
 	        	}
@@ -400,7 +389,7 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
 	        		if (maxLocal[index] >= threshold) {
 	        			harrisPtsX.add(x);
 	        			harrisPtsY.add(y);
-	        			harrisPtsScale.add(i+1);
+	        			harrisPtsScale.add(i);
 	        		}
 	        	}
 	        }
@@ -419,6 +408,8 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
             return;
         }
         for (i = 0; i < sigmaNB; i++) {
+        	loopVal = (40 *i)/sigmaNB;
+        	fireProgressStateChanged(50 + loopVal);
         	sL =  sigmaArray[i]; // scale
         	halfMask = (int)Math.floor(6*sL+1);
         	//To eliminate the zero-padding artifacts around the edge of the image, use an alternative boundary
@@ -495,10 +486,7 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
         		}
         	} // for (y = -halfMask; y <= halfMask; y++)
         	
-        	convolver = new AlgorithmConvolver(srcImage, GData, kExtents,entireImage, image25D);
-	        //convolver.setMinProgressValue(11);
-	        //convolver.setMaxProgressValue(20);
-	        //linkProgressToAlgorithm(convolver);
+        	convolver = new AlgorithmConvolver(expandedImage, GData, kExtents,entireImage, image25D);
 	        convolver.addListener(this);
 	        if (!entireImage) {
 	            convolver.setMask(mask);
@@ -519,6 +507,62 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
 	        	}
 	        }
         } // for (i = 0; i < sigmaNB; i++)
+        
+        // Verify for each of the initial points whether the Laplacian of the Gaussian
+        // attains a maximum at the scale of the point
+        // Set scale to 3 * sigma for display
+        n = harrisPtsX.size();
+        for (i = 0; i < n; i++) {
+            x = harrisPtsX.get(i);
+            y = harrisPtsY.get(i);
+            scale = harrisPtsScale.get(i);
+            val = laplace_snlo[scale][x + y * xDim];
+            if ((scale > 0) && (scale < sigmaNB-1)) {
+            	if ((val > laplace_snlo[scale-1][x + y*xDim]) && (val > laplace_snlo[scale+1][x + y*xDim])) {
+            	    cptX.add(harrisPtsX.get(i));
+            	    cptY.add(harrisPtsY.get(i));
+            	    cptScale.add(3.0 * sigmaArray[harrisPtsScale.get(i)]);
+            	}
+            } // if ((scale > 0) && (scale < sigmaNB-1))
+            else if (scale == 0) {
+            	if (val > laplace_snlo[1][x + y*xDim]) {
+            		cptX.add(harrisPtsX.get(i));
+            	    cptY.add(harrisPtsY.get(i));
+            	    cptScale.add(3.0 * sigmaArray[harrisPtsScale.get(i)]);	
+            	}
+            } // else if (scale == 0)
+            else if (scale == sigmaNB-1) {
+            	if (val > laplace_snlo[sigmaNB-2][x + y*xDim]) {
+            		cptX.add(harrisPtsX.get(i));
+            	    cptY.add(harrisPtsY.get(i));
+            	    cptScale.add(3.0 * sigmaArray[harrisPtsScale.get(i)]);	
+            	}	
+            } // else if (scale == sigmaNB-1)
+        } // for (i = 0; i < n; i++)
+        
+        n = cptX.size();
+        for (i = 0; i < n; i++) {
+        	newVOI = new VOI((short) i, "rect" + String.valueOf(i), VOI.CONTOUR, -1);
+            xp = new int[4];
+            yp = new int[4];
+            zp = new int[4];
+            xp[0] = (int)Math.round(cptX.get(i) - cptScale.get(i));
+            yp[0] = (int)Math.round(cptY.get(i) - cptScale.get(i));
+            xp[1] = (int)Math.round(cptX.get(i) + cptScale.get(i));
+            yp[1] = (int)Math.round(cptY.get(i) - cptScale.get(i));
+            xp[2] = (int)Math.round(cptX.get(i) + cptScale.get(i));
+            yp[2] = (int)Math.round(cptY.get(i) + cptScale.get(i));
+            xp[3] = (int)Math.round(cptX.get(i) - cptScale.get(i));
+            yp[3] = (int)Math.round(cptY.get(i) + cptScale.get(i));
+            newVOI.importCurve(xp, yp, zp);
+            VOIs.add(newVOI);	
+        }
+        
+        srcImage.setVOIs(VOIs);
+        srcImage.notifyImageDisplayListeners();
+        setCompleted(true);
+        return;
+        
     }
 	public void algorithmPerformed(AlgorithmBase algorithm){
         if(!algorithm.isCompleted()){
