@@ -220,6 +220,7 @@ public class ViewMenuBar {
                 	    menuBuilder.buildMenuItem("Fuzzy minimization De and Chatterji", "FuzzMinDeAndChatterji", 0, null, false),
                 	    menuBuilder.buildMenuItem("Rule based contrast enhancement","rbcEnhancement", 0, null, false),}),
                 menuBuilder.buildMenuItem("Harris corner detector", "HARRIS", 0, null, false),
+                menuBuilder.buildMenuItem("Harris Laplace", "HARRIS_LAPLACE", 0, null, false),
                 menuBuilder.makeMenu("Histogram tools", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("2D histogram", "histTwoDim", 0, null, false),
                         menuBuilder.buildMenuItem("Cumulative histogram", "cumHistogram", 0, null, false),
@@ -1030,6 +1031,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("FFT", false);
             menuBuilder.setMenuItemEnabled("Canny", false);
             menuBuilder.setMenuItemEnabled("Harris corner detector", false);
+            menuBuilder.setMenuItemEnabled("Harris Laplace", false);
             menuBuilder.setMenuItemEnabled("Scale saliency", false);
             menuBuilder.setMenuItemEnabled("Filters (wavelet)", false);
             menuBuilder.setMenuItemEnabled("Anisotropic diffusion", false);
@@ -1148,6 +1150,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Spatial color compactness", false);
             menuBuilder.setMenuItemEnabled("Canny", false);
             menuBuilder.setMenuItemEnabled("Harris corner detector", false);
+            menuBuilder.setMenuItemEnabled("Harris Laplace", false);
             menuBuilder.setMenuItemEnabled("Scale saliency", false);
             menuBuilder.setMenuItemEnabled("Entropic", false);
             
@@ -1234,6 +1237,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("SWI", false);
             menuBuilder.setMenuItemEnabled("Canny", false);
             menuBuilder.setMenuItemEnabled("Harris corner detector", false);
+            menuBuilder.setMenuItemEnabled("Harris Laplace", false);
             menuBuilder.setMenuItemEnabled("Filters (homomorphic)", false);
             menuBuilder.setMenuItemEnabled("Filters (wavelet)", false);
             menuBuilder.setMenuItemEnabled("Edge extraction by FIRE operators", false);
@@ -1302,7 +1306,7 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Edge detection", true);
         menuBuilder.setMenuItemEnabled("Canny", true);
         menuBuilder.setMenuItemEnabled("Harris corner detector", true);
-        menuBuilder.setMenuItemEnabled("Harris corner detector", true);
+        menuBuilder.setMenuItemEnabled("Harris Laplace", true);
         menuBuilder.setMenuItemEnabled("Evaluate segmentation", true); // vois
         menuBuilder.setMenuItemEnabled("Entropy minimization", true);
         menuBuilder.setMenuItemEnabled("Extract surface (marching cubes)", true);
