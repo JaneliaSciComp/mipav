@@ -189,7 +189,7 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
         	fireProgressStateChanged(loopVal);
         	// scale (standard deviation)
         	sI = sigmaArray[i]; // Integration scale
-        	sD = 0.7 * sI;  // Derivative mask
+        	sD = 0.7 * sI;  // Derivative scale
         	
         	// Derivative mask
         	xk = (int)Math.round(3*sD);
@@ -231,7 +231,7 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
 	        // Auto-correlation matrix
 	        derivOrder[0] = 0;
 	        derivOrder[1] = 0;
-	        xkDim = (int)Math.round(11 * sI);
+	        xkDim = (int)Math.floor(6 * sI + 1);
 
 	        if ((xkDim % 2) == 0) {
 	            xkDim++;
@@ -243,7 +243,7 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
 
 	        kExtents[0] = xkDim;
 
-	        ykDim = (int)Math.round(11 * sI);
+	        ykDim = (int)Math.floor(6 * sI + 1);
 
 	        if ((ykDim % 2) == 0) {
 	            ykDim++;
