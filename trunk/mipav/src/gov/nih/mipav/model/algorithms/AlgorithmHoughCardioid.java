@@ -32,6 +32,9 @@ import java.io.*;
  *    = y0 + a*(0.5*sin(theta0) + sin(theta) -0.5*sin(2*theta + theta0))
  *  dy/dx = dy/dtheta/dx/dtheta = (-cos(2*theta + theta0) + cos(theta))/(sin(2*theta + theta0) - sin(theta))
  *        = tan((1/2)*(3*theta + theta0))
+ *  dy'/dtheta = -a*sin(theta) + 2a*sin(2*theta + theta0)
+ *  d2y/dx2 = dy'/dtheta/dx/dtheta = 
+ *  (-sin(theta) + 2*sin(2*theta + theta0))/(-sin(theta) + sin(2*theta + theta0))
  *  All cusp chords are of length 2 * a.
  *  The tangents to the endpoints of a cusp chord are perpindicular.
  *  Every slope value occurs 3 times.
@@ -163,7 +166,6 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
         
         int houghSlice;
         byte[] srcBuffer;
-        float aBuffer[];
         int[] houghBuffer;
         double theta;
         double d1Array[];
@@ -407,7 +409,6 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
             System.out.println(" x3 = " + xSum3 + " y3 = " + ySum3 + " theta0 = " + theta0 + " radius3 = " + radSum);*/
         }
 
-        aBuffer = new float[houghSlice];
         houghBuffer = new int[houghSlice];
         
         // Calculate d1Array and d2Array
@@ -451,7 +452,6 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
                                     m = (int)Math.round(d3*d3Scale);
                                     indexDest = j + k * x0 + m * x0y0;
                                     houghBuffer[indexDest]++;
-                                    aBuffer[indexDest] += d3;
                                 }
                             } // for (k = 0; k < y0; k++)
                         } // for (j = 0; j < x0; j++)
@@ -483,14 +483,14 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
             x0Array[c] = x0Array[c] * ((double)(xDim - 1))/((double)(x0 - 1));
             y0Array[c] = (largestIndex % x0y0)/x0;
             y0Array[c] = y0Array[c] * ((double)(yDim - 1))/((double)(y0 - 1));
-            a0Array[c] = aBuffer[largestIndex]/largestValue;
+            a0Array[c] = largestIndex/x0y0;
+            a0Array[c] = a0Array[c] * (maxA/(double)(a0-1));
             countArray[c] = largestValue;
             
             if (c < numCardioids - 1) {
                 // Zero hough buffer for next run
                 for (i = 0; i < houghSlice; i++) {
                     houghBuffer[i] = 0;
-                    aBuffer[i] = 0.0f;
                 }
                 // zero all points in the source slice that contributed to this cardioid
                 fireProgressStateChanged("Zeroing source cardioid " + String.valueOf(c+1));
