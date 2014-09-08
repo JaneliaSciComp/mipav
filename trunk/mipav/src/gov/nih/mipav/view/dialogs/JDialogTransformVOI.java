@@ -7,6 +7,7 @@ import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.io.File;
@@ -63,6 +64,8 @@ public class JDialogTransformVOI extends JDialogBase {
 	
 	private JCheckBox allVOIBox;
 	
+	private JRadioButton cornerRB, centerRB, imCenterRB;
+	
 	public JDialogTransformVOI(ModelImage im){
 		super(false);
 		srcImage = im;
@@ -101,6 +104,14 @@ public class JDialogTransformVOI extends JDialogBase {
 			
 			AlgorithmTransformVOI alg = new AlgorithmTransformVOI(srcImage, xfrm);
 			alg.setTranslation(t_x, t_y, t_z);
+			if(centerRB.isSelected()){
+				alg.setCenter(AlgorithmTransformVOI.VOICENTER);
+			} else if(cornerRB.isSelected()){
+				alg.setCenter(AlgorithmTransformVOI.ORIGIN);
+			} else if(imCenterRB.isSelected()){
+				alg.setCenter(AlgorithmTransformVOI.IMCENTER);
+			}
+			
 			alg.setAllVOIs(allVOIBox.isSelected());
 			alg.run();
 		}
@@ -522,7 +533,7 @@ public class JDialogTransformVOI extends JDialogBase {
         translationPanel.add(labelSKz, gbc);
         gbc.gridx = 11;
         translationPanel.add(textSKz, gbc);
-
+        
         gbc.gridx = 1;
         gbc.gridy = 3;
         allVOIBox = new JCheckBox("Transform all VOIs");
@@ -551,7 +562,31 @@ public class JDialogTransformVOI extends JDialogBase {
             textSKz.setEnabled(false);
         }
 
-        getContentPane().add(matrixPanel, BorderLayout.CENTER);
+        getContentPane().add(matrixPanel, BorderLayout.NORTH);
+        
+        JPanel centerPanel = new JPanel(new GridLayout());
+        centerPanel.setForeground(Color.black);
+        centerPanel.setBorder(buildTitledBorder("Rotate about: "));
+        
+        ButtonGroup locationGroup = new ButtonGroup();
+        
+        centerRB = new JRadioButton("VOI center");
+        centerRB.setFont(serif12);
+        centerRB.setSelected(true);
+        locationGroup.add(centerRB);
+        centerPanel.add(centerRB);
+        
+        cornerRB = new JRadioButton("Image origin");
+        cornerRB.setFont(serif12);
+        locationGroup.add(cornerRB);
+        centerPanel.add(cornerRB);
+
+        imCenterRB = new JRadioButton("Image center");
+        imCenterRB.setFont(serif12);
+        locationGroup.add(imCenterRB);
+        centerPanel.add(imCenterRB);
+        
+        getContentPane().add(centerPanel, BorderLayout.CENTER);
         
         buildOKCancelButtons();
         
