@@ -1,4 +1,5 @@
 package gov.nih.mipav.view.renderer.WildMagic.ProstateFramework;
+
 import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.libsvm.*;
 import java.io.*;
 import java.util.*;
@@ -12,6 +13,11 @@ class svm_train {
 	private String error_msg;
 	private int cross_validation;
 	private int nr_fold;
+
+	private static svm_print_interface svm_print_null = new svm_print_interface()
+	{
+		public void print(String s) {}
+	};
 
 	private static void exit_with_help()
 	{
@@ -46,6 +52,149 @@ class svm_train {
 		);
 		System.exit(1);
 	}
+	
+	private void setParameters()
+	{
+		int i;
+
+		param = new svm_parameter();
+		// default values
+		// param.svm_type = svm_parameter.C_SVC;
+		param.svm_type = svm_parameter.ONE_CLASS;
+		param.kernel_type = svm_parameter.RBF;
+		param.degree = 3;
+		param.gamma = 0.1;	// 1/num_features
+		param.coef0 = 0;
+		param.nu = 0.1;
+		param.cache_size = 100;
+		param.C = 1;
+		param.eps = 1e-3;
+		param.p = 0.1;
+		param.shrinking = 1;
+		param.probability = 0;
+		param.nr_weight = 0;
+		param.weight_label = new int[0];
+		param.weight = new double[0];
+		cross_validation = 0;
+		
+	}
+	
+	 private static svm_problem constructProblem(List<Double> vy, List<svm_node[]> vx, int _max_index) {
+	        svm_problem prob = new svm_problem();
+	        // Vector<Double> vy = new Vector<Double>();
+			// Vector<svm_node[]> vx = new Vector<svm_node[]>();
+			int max_index = _max_index;
+	        
+	        /*
+	        prob.l = vy.size();
+	        
+	        prob.n = max_index;
+	        
+	        prob.x = new FeatureNode[prob.l][];
+	        for (int i = 0; i < prob.l; i++) {
+	            prob.x[i] = vx.get(i);
+
+	            if (bias >= 0) {
+	                assert prob.x[i][prob.x[i].length - 1] == null;
+	                prob.x[i][prob.x[i].length - 1] = new FeatureNode(max_index + 1, bias);
+	            } else {
+	                assert prob.x[i][prob.x[i].length - 1] != null;
+	            }
+	        }
+
+	        prob.y = new int[prob.l];
+	        for (int i = 0; i < prob.l; i++)
+	            prob.y[i] = vy.get(i);
+         */
+	        
+	        prob = new svm_problem();
+			prob.l = vy.size();
+			prob.x = new svm_node[prob.l][];
+			for(int i=0;i<prob.l;i++)
+				prob.x[i] = vx.get(i);
+			prob.y = new double[prob.l];
+			for(int i=0;i<prob.l;i++)
+				prob.y[i] = vy.get(i);
+
+			
+	        
+	        return prob;
+	    }
+
+	
+	 public void run(List<Double> classes, List<svm_node[]> feature, int numberFeatures) {
+		   setParameters();
+	       prob = constructProblem(classes, feature, numberFeatures);
+	       if (cross_validation != 0)
+	            do_cross_validation();
+	        else {
+	            model = svm.svm_train(prob, param);
+	            // Linear.saveModel(new File(modelFilename), model);
+	        }
+	       
+	 }
+	 
+		private void set_file_name(String inputFileName, String modelFileName)
+		{
+			int i;
+
+			param = new svm_parameter();
+			// default values
+		    // param.svm_type = svm_parameter.C_SVC;
+			param.svm_type = svm_parameter.ONE_CLASS;
+			param.kernel_type = svm_parameter.RBF;
+			// param.kernel_type = svm_parameter.LINEAR;
+			param.degree = 3;
+			param.gamma = 0.1;	// 1/num_features
+			param.coef0 = 0;
+			param.nu = 0.5;
+			param.cache_size = 100;
+			param.C = 1;
+			param.eps = 1e-3;
+			param.p = 0.1;
+			param.shrinking = 1;
+			param.probability = 0;
+			param.nr_weight = 0;
+			param.weight_label = new int[0];
+			param.weight = new double[0];
+			cross_validation = 0;
+
+			// determine filenames
+			input_file_name = inputFileName;
+			model_file_name = modelFileName;
+			
+		}
+		
+	 
+	 public void run(String trainFileName, String modelFileName) throws IOException
+	 {
+			// parse_command_line(argv);
+			set_file_name(trainFileName, modelFileName);
+			read_problem();
+			error_msg = svm.svm_check_parameter(prob,param);
+
+			if(error_msg != null)
+			{
+				System.err.print("Error: "+error_msg+"\n");
+				System.exit(1);
+			}
+
+			if(cross_validation != 0)
+			{
+				do_cross_validation();
+			}
+			else
+			{
+				model = svm.svm_train(prob,param);
+				svm.svm_save_model(model_file_name,model);
+			}
+			
+		}
+
+	  
+	 public svm_model getModel() {
+		 return model;
+	 }
 
 	private void do_cross_validation()
 	{
@@ -93,7 +242,7 @@ class svm_train {
 
 		if(error_msg != null)
 		{
-			System.err.print("Error: "+error_msg+"\n");
+			System.err.print("ERROR: "+error_msg+"\n");
 			System.exit(1);
 		}
 
@@ -108,38 +257,11 @@ class svm_train {
 		}
 	}
 
-	public void run(String trainFileName, String modelFileName) throws IOException
-	{
-		// parse_command_line(argv);
-		set_file_name(trainFileName, modelFileName);
-		read_problem();
-		error_msg = svm.svm_check_parameter(prob,param);
-
-		if(error_msg != null)
-		{
-			System.err.print("Error: "+error_msg+"\n");
-			System.exit(1);
-		}
-
-		if(cross_validation != 0)
-		{
-			do_cross_validation();
-		}
-		else
-		{
-			model = svm.svm_train(prob,param);
-			svm.svm_save_model(model_file_name,model);
-		}
-		
-	}
-
-    /*	
 	public static void main(String argv[]) throws IOException
 	{
 		svm_train t = new svm_train();
 		t.run(argv);
 	}
-	*/
 
 	private static double atof(String s)
 	{
@@ -160,6 +282,7 @@ class svm_train {
 	private void parse_command_line(String argv[])
 	{
 		int i;
+		svm_print_interface print_func = null;	// default printing to stdout
 
 		param = new svm_parameter();
 		// default values
@@ -225,10 +348,7 @@ class svm_train {
 					param.probability = atoi(argv[i]);
 					break;
 				case 'q':
-					svm.svm_print_string = new svm_print_interface()
-					{ 
-						public void print(String s){}
-					};
+					print_func = svm_print_null;
 					i--;
 					break;
 				case 'v':
@@ -263,6 +383,8 @@ class svm_train {
 			}
 		}
 
+		svm.svm_set_print_string_function(print_func);
+
 		// determine filenames
 
 		if(i>=argv.length)
@@ -280,37 +402,6 @@ class svm_train {
 		}
 	}
 
-	
-	private void set_file_name(String inputFileName, String modelFileName)
-	{
-		int i;
-
-		param = new svm_parameter();
-		// default values
-		param.svm_type = svm_parameter.C_SVC;
-		param.kernel_type = svm_parameter.RBF;
-		param.degree = 3;
-		param.gamma = 0;	// 1/num_features
-		param.coef0 = 0;
-		param.nu = 0.5;
-		param.cache_size = 100;
-		param.C = 1;
-		param.eps = 1e-3;
-		param.p = 0.1;
-		param.shrinking = 1;
-		param.probability = 0;
-		param.nr_weight = 0;
-		param.weight_label = new int[0];
-		param.weight = new double[0];
-		cross_validation = 0;
-
-		// determine filenames
-		input_file_name = inputFileName;
-		model_file_name = modelFileName;
-		
-	}
-	
-	
 	// read in a problem (in svmlight format)
 
 	private void read_problem() throws IOException

@@ -289,6 +289,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     private JMenu voiMenu;
     private ViewMenuBuilder voiMenuBuilder;
 
+    private JDialogAAMClassification prostateAAMClassification;
+    private JDialogAAMplusSVM prostateML;
+    
     /**
      * Creates a VOIManagerInterface object.
      * @param kParent the parent frame, must be a VOIManagerInterfaceListener
@@ -1159,9 +1162,34 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         	prostateSemiAutoBSpline();
         } else if ( command.equals("SemiAutoBSplineFuzzyC")) {
         	prostateSemiAutoBSplineFuzzyC();
-        }else if (command.equals("SaveDicomMatrix")) {
+        } else if (command.equals("SaveDicomMatrix")) {
             saveDicomMatrixInfo();
-        }  else if (command.equals(CustomUIBuilder.PARAM_VOI_LOGICAL_OPERATIONS.getActionCommand())) {
+        } else if (command.equals("aamGroups")) {
+            aamGroups();
+        } else if ( command.equals("RenameAAMDir")) {
+        	aamGroupRename();
+    	} else if (command.equals("aamClassification")) {
+            aamClassification();
+        } else if (command.equals("aamMLClassification")) {
+            aamMLClassification();
+        } else if ( command.equals("extractCEFeature")) {
+        	extractCEFeature();
+        } else if (command.equals("ProstateFeaturesSave2D")) {
+            saveProstateFeatures2D();
+        } else if (command.equals("ProstateBoundaryFeatureSave")) {
+            saveProstateBoundaryFeature();
+        } else if (command.equals("ProstateFeaturesTest2D")) {
+            testProstateFeatures2D();
+        } else if (command.equals("ProstateFeaturesTrain")) {
+            testProstateFeaturesTrain();
+        } else if (command.equals("ProstateBoundaryFeatureTrain")) {
+            testProstateBoundaryFeatureTrain();
+        } else if ( command.equals("generateAtlasImage")) {
+        	generateAtlasImage();
+        } else if ( command.equals("generateEndingSlices")) {
+        	generateEndingSlices();
+        }        
+        else if (command.equals(CustomUIBuilder.PARAM_VOI_LOGICAL_OPERATIONS.getActionCommand())) {
         	if ( (getActiveImage().getVOIs() != null) && (getActiveImage().getVOIs().size() >= 1 )) {
         		m_kVOILogicalOperationsDialog = new JDialogVOILogicalOperations(this,getActiveImage().getVOIs());
 
@@ -2599,11 +2627,27 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
     }
 
-    public void saveProstateFeatures() {
+    private void saveProstateFeatures() {
         final JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures(m_kParent.getFrame(), getActiveImage(), false);
         saveFeaturesDialog.validate();
     }
 
+    private void saveProstateFeatures2D() {
+        final JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures2D(m_kParent.getFrame(), getActiveImage(), false);
+        saveFeaturesDialog.validate();
+    }
+
+    private void saveProstateBoundaryFeature() {
+        final JDialogBase saveFeaturesDialog = new JDialogProstateSaveBoundaryFeature2D(m_kParent.getFrame(), getActiveImage(), false);
+        saveFeaturesDialog.validate();
+    }
+    
+    private void testProstateFeatures2D() {
+    	final JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures2D(m_kParent.getFrame(), getActiveImage(), true);
+        saveFeaturesDialog.validate();
+    }
+    
+    
     /**
      * Save the current VOIState to the undo/re-do list.
      * @param kCommand the VOI Action Command about to be issued.
@@ -6368,6 +6412,61 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     	trainFeaturesDialog.validate();
     }
 
+    private void testProstateBoundaryFeatureTrain() {
+    	JDialogBase trainFeaturesDialog = new JDialogProstateBoundaryFeatureTrain(m_kParent.getFrame());
+    	trainFeaturesDialog.validate();
+    }
+
+    /**
+     * Read the 3D atlas images directory, convert each 3D image to 2D slices based atlas. And
+     * save the final 2D slice and corresponding VOIs to specified atlas directory. 
+     */
+    private void generateAtlasImage() {
+    	final JDialogProstate2DSlicesAtlasConverter atlas = new JDialogProstate2DSlicesAtlasConverter(m_kParent.getFrame());
+    	atlas.validate();
+    }
+    
+    private void generateEndingSlices() {
+    	final JDialogGenerateEndingSlices atlas = new JDialogGenerateEndingSlices(m_kParent.getFrame(), getActiveImage());
+    	atlas.validate();
+    }
+    
+    private void aamGroups() {
+    	final JDialogProstateImageCategorize prostateGroups = new JDialogProstateImageCategorize(m_kParent.getFrame());
+        prostateGroups.validate();    
+    }
+    
+    private void aamGroupRename() {
+    	JDialogRenameDirs rename = new JDialogRenameDirs(m_kParent.getFrame()); 
+    }
+    
+    private void aamClassification() {
+    	if ( prostateAAMClassification == null ) {
+    		prostateAAMClassification = new JDialogAAMClassification(m_kParent.getFrame());
+    		prostateAAMClassification.validate();
+    	} else {
+    		prostateAAMClassification.createTargetDialog();
+    		prostateAAMClassification.validate();
+    	}
+    }
+    
+    private void aamMLClassification() {
+    
+    	if ( prostateML == null ) {
+    		prostateML = new JDialogAAMplusSVM(m_kParent.getFrame());
+    		prostateML.validate();
+    	} else {
+    		prostateML.createTargetDialog();
+    		prostateML.validate();
+    	}
+    }
+    
+    private void extractCEFeature() {
+    	final JDialogProstateExtractCEFeature atlas = new JDialogProstateExtractCEFeature(m_kParent.getFrame());
+    	atlas.validate();
+    }
+    
+    
     private void undoImage( )
     {
         if ( m_kImageAUndo == null )

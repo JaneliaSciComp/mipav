@@ -1,4 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.ProstateFramework;
+
+
 import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.libsvm.*;
 import java.io.*;
 import java.util.*;
@@ -106,8 +108,85 @@ class svm_predict {
 		+"-b probability_estimates: whether to predict probability estimates, 0 or 1 (default 0); one-class SVM not supported yet\n");
 		System.exit(1);
 	}
+	
+	 public static double doPredict(int[][]classification, FeaturesSVM[] featureArray,  svm_model model, int currentSlice, int index) {
+		    int correct = 0;
+		    int total = 0;
+		   
+		    // int zDim = featureArray.length;
+		        int nr_class = svm.svm_get_nr_class(model);
+		        double[] prob_estimates = null;
+		       
+		     	List<svm_node[]> feature = featureArray[currentSlice].getFeatureArray();
+				List<Double> classify = featureArray[currentSlice].getClassArray();
 
+				int len = feature.size();
+
+				for (int i = 0; i < len; i++) {
+					// List<FeatureNode> x = new ArrayList<FeatureNode>();
+					// int target_label = classify.get(i);
+					svm_node[] nodes = feature.get(i);
+					// nodes = x.toArray(nodes);
+
+					double predict_label;
+					predict_label =svm.svm_predict(model, nodes);
+
+					classification[index][i] = (int)predict_label;
+
+					
+					if (predict_label == 1) {
+						++correct;
+					}
+					++total;
+					
+				}
+				// System.out.printf("Accuracy = %g%% (%d/%d)" + NL, (double) correct / total * 100, correct, total);
+				return ((double)correct/total*100);
+		    
+		    }
+
+	 
+	 public static void run(String inputFileName, String modelFileName, String outputFileName) throws IOException
+		{
+			int i, predict_probability=0;
+
+			
+			try 
+			{
+				BufferedReader input = new BufferedReader(new FileReader(inputFileName));
+				DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(outputFileName)));
+				svm_model model = svm.svm_load_model(modelFileName);
+				if(predict_probability == 1)
+				{
+					if(svm.svm_check_probability_model(model)==0)
+					{
+						System.err.print("Model does not support probabiliy estimates\n");
+						System.exit(1);
+					}
+				}
+				else
+				{
+					if(svm.svm_check_probability_model(model)!=0)
+					{
+						System.out.print("Model supports probability estimates, but disabled in prediction.\n");
+					}
+				}
+				predict(input,output,model,predict_probability);
+				input.close();
+				output.close();
+			} 
+			catch(FileNotFoundException e) 
+			{
+				exit_with_help();
+			}
+			catch(ArrayIndexOutOfBoundsException e) 
+			{
+				exit_with_help();
+			}
+		}
+	 
 	/*
+
 	public static void main(String argv[]) throws IOException
 	{
 		int i, predict_probability=0;
@@ -163,44 +242,4 @@ class svm_predict {
 		}
 	}
 	*/
-	
-	public static void run(String inputFileName, String modelFileName, String outputFileName) throws IOException
-	{
-		int i, predict_probability=0;
-
-		
-		try 
-		{
-			BufferedReader input = new BufferedReader(new FileReader(inputFileName));
-			DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(outputFileName)));
-			svm_model model = svm.svm_load_model(modelFileName);
-			if(predict_probability == 1)
-			{
-				if(svm.svm_check_probability_model(model)==0)
-				{
-					System.err.print("Model does not support probabiliy estimates\n");
-					System.exit(1);
-				}
-			}
-			else
-			{
-				if(svm.svm_check_probability_model(model)!=0)
-				{
-					System.out.print("Model supports probability estimates, but disabled in prediction.\n");
-				}
-			}
-			predict(input,output,model,predict_probability);
-			input.close();
-			output.close();
-		} 
-		catch(FileNotFoundException e) 
-		{
-			exit_with_help();
-		}
-		catch(ArrayIndexOutOfBoundsException e) 
-		{
-			exit_with_help();
-		}
-	}
-	
 }
