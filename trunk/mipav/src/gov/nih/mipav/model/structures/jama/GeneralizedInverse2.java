@@ -130,7 +130,7 @@ public class GeneralizedInverse2 implements java.io.Serializable {
     *
     
     */
-    private void dgelss(int m, int n, int nrhs, double A[][], int lda, double B[][], int ldb, double s[],
+    public void dgelss(int m, int n, int nrhs, double A[][], int lda, double B[][], int ldb, double s[],
                         double rcond, int rank[], double work[], int lwork, int info[]) {
         /*  Arguments
         *  =========

@@ -698,6 +698,33 @@ public abstract class VOIBase extends Vector<Vector3f> {
         
         return containsZ((int)iX,(int)iY);
     }
+    
+    /**
+     * This is used by SVM boundary training to identify the prostate
+     * boundary VOI landmark points. 
+     * @param iX
+     * @param iY
+     * @return
+     */
+    public boolean contain(float iX, float iY)
+    {
+        Vector3f[] kBounds = getImageBoundingBox();
+        if ( iX < kBounds[0].X || iX > kBounds[1].X ||
+                iY < kBounds[0].Y || iY > kBounds[1].Y  )
+        {
+            return false;
+        }        
+        for ( int i = 0; i < size(); i++ )
+        {
+            if ( elementAt(i).X == iX && elementAt(i).Y == iY )
+            {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
 
     /**
      * Returns true if the input iX,iY,iZ is contained within this contour.

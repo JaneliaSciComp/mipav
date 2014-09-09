@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.structures;
 
 
+import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
@@ -79,9 +80,18 @@ public class ModelSimpleImage extends ModelSerialCloneable {
 
     /** Z voxel resolution. */
     public float zRes = 1.0f;
+    
+    /** add simple image name for AAM model only. */
+    public String name;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
+    /**
+     * Add the empty default contructor. 
+     * AAM appearance model needs to call the default one for local image processing. 
+     */
+    public ModelSimpleImage() {}
+    
     /**
      * Creates a class to hold the minimum information about an image - the extents, the resolutions, and optionall, the
      * image data.
@@ -1570,5 +1580,137 @@ public class ModelSimpleImage extends ModelSerialCloneable {
         this.disposeLocal(false);
         super.finalize();
     }
+
+    
+    /*******************************  Following section is for AAM model **********************************/
+    /**
+     *  Used by AAM appearance model to get dimension
+     * @return  x dimension
+     */
+    public int Width() {
+		return xDim;
+	}
+
+    /**
+     * Used by AAM appearance model to get dimension
+     * @return  y dimension
+     */
+	public int Height() {
+		return yDim;
+	}
+	
+	/**
+     * Used by AAM appearance model to get dimension
+     * @return  z dimension
+     */
+	public int Depth() {
+		return zDim;
+	}
+	
+	/**
+	 * Binary interpolation call
+	 * @param y1
+	 * @param y2
+	 * @param d
+	 * @param result
+	 */
+	public void CB(double y1, double y2, double d, double[] result) {
+		result[0] = d * (y2 - y1) + y1;
+	}
+
+	/**
+     * Used by AAM appearance model to get bilinear interpolation. 
+     * @return  interpolation value. 
+     */
+	public double Pixel1(float x, float y) {
+		int Y = (int) y;
+		int X = (int) x;
+
+		double c = y - Y;
+		double d = x - X;
+
+		double[] t1 = new double[1];
+		double[] t2 = new double[1];
+
+		// CB((TPixel*)PixelAddress(X,Y,0), (TPixel*)PixelAddress(X,Y+1,0), c,
+		// t1);
+		// CB((TPixel*)PixelAddress(X+1,Y,0), (TPixel*)PixelAddress(X+1,Y+1,0),
+		// c, t2);
+		// System.err.println("x, y = " + getValue(X, Y) + "    x, y+1 = " +
+		// getValue(X, Y + 1));
+		// System.err.println("x+1, y = " + getValue(X+1, Y) + "    x+1, y+1 = "
+		// + getValue(X+1, Y + 1));
+		CB(getValue(X, Y), getValue(X, Y + 1), c, t1);
+		CB(getValue(X + 1, Y), getValue(X + 1, Y + 1), c, t2);
+
+		return (d * (t2[0] - t1[0]) + t1[0]);
+	}
+
+	/**
+	 * Set the simple image name
+	 * @param _name
+	 */
+	public void SetName(String _name) {
+		name = _name;
+	}
+
+	/**
+	 * Get the simple image name
+	 * @return
+	 */
+	public String getName() {
+		return name;
+	}
+	
+	/**
+	 * In model simple image, fill pixel with given intensity value. 
+	 * @param value
+	 */
+	public final void FillPixels(float value) {
+		for (int i = 0; i < data.length; i++) {
+			data[i] = value;
+		}
+
+	}
+	
+	/**
+	 * For AAM model only, import buffer to the simple image data. 
+	 * @param buffer
+	 * @param start
+	 * @param end
+	 */
+	public void importData(float[] buffer, int start, int end) {
+		System.arraycopy(buffer, 0, data, 0, end - start);
+	}
+	
+	/**
+	 * Temporary function to handle AAM image file IO for AAM own testing cases.  
+	 * Lately this function will be removed. 
+	 * @param szFilename
+	 * @return
+	 */
+	public ModelSimpleImage ReadBandedFile(final String szFilename) {
+		return ReadFile(szFilename);
+	}
+
+	/**
+	 * Temporary function to handle AAM image file IO for AAM own testing cases.  
+	 * Lately this function will be removed. 
+	 * @param szFilename
+	 * @return
+	 */
+	public ModelSimpleImage ReadFile(String szFileName) {
+		FileIO io = new FileIO();
+		System.err.println("szFileName = " + szFileName);
+		ModelImage image = io.readImage(szFileName);
+		// new ViewJFrameImage(image);
+		// return new ModelSimpleImage(image.getExtents(),
+		// image.getFileInfo(0).getResolutions(), image);
+		ModelSimpleImage temp = new ModelSimpleImage(image.getExtents(), image
+				.getFileInfo(0).getResolutions(), image);
+		ModelImage img = new ModelImage(temp, szFileName);
+		// new ViewJFrameImage(img);
+		return temp;
+	}
 
 }

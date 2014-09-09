@@ -1,4 +1,5 @@
 package gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.libsvm;
+
 public class svm_parameter implements Cloneable,java.io.Serializable
 {
 	/* svm_type */

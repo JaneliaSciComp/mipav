@@ -928,7 +928,36 @@ public class ViewMenuBar {
                                                 menuBuilder.buildMenuItem("semi-auto B-Spline", "SemiAutoBSpline", 0,
 	                                                                null, false),
 	                                            menuBuilder.buildMenuItem("semi-auto B-Spline & Fuzzy-C", "SemiAutoBSplineFuzzyC", 0,
-                                                              null, false)}),
+                                                              null, false),  
+                                                                                          
+                                				}),
+                                ViewMenuBar.separator,
+                                menuBuilder.makeMenu("Prostate Seg Auto", true,
+                                		 new JMenuItem[] {
+                                		
+                                		 	  menuBuilder.buildMenuItem("Atlas","generateAtlasImage", 0, null, false),
+                                		 	  menuBuilder.buildMenuItem("Extract Features","extractCEFeature", 0, null, false),
+                                		 	  menuBuilder.buildMenuItem("EndSlices","generateEndingSlices", 0, null, false),
+                                		
+                                			  menuBuilder.buildMenuItem("Save Features", "ProstateFeaturesSave2D", 0,
+	                                                  null, false),
+	                                          menuBuilder.buildMenuItem("Save Boundary Feature", "ProstateBoundaryFeatureSave", 0,
+	                                                          null, false),
+	                                          menuBuilder.buildMenuItem("Save Test Features", "ProstateFeaturesTest2D",
+	                                                  0, null, false),
+	                                          menuBuilder.buildMenuItem("Training", "ProstateFeaturesTrain", 0, null,
+	                                                  false),
+	                                          menuBuilder.buildMenuItem("Training Boundary", "ProstateBoundaryFeatureTrain", 0, null,
+	                                                  false),
+                                              menuBuilder.buildMenuItem("Rename AAM Group Dir", "RenameAAMDir", 0, null, false),     
+		                                      menuBuilder.buildMenuItem("AAM Group training","aamGroups", 0,
+		                                                null, false),
+		                                      menuBuilder.buildMenuItem("aamClassification","aamClassification", 0,
+		                                                null, false),
+		                                      menuBuilder.buildMenuItem("aamMLClassification","aamMLClassification", 0,
+		                                                null, false)     
+	                                		
+                								}),
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("Graph", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_OPEN, true),
