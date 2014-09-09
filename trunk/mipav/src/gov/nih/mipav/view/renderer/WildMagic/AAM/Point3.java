@@ -1,11 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.AAM;
 
 
-/*
-The templated class for representing a point in 3D space.
-The class is templated over the ScalarType class that is used to represent coordinates. All the usual
-operator overloading (* + - ...) is present. 
-*/
 public class Point3 {
 	public float x, y, z;
 	
