@@ -40,7 +40,7 @@ import java.util.*;
  * 
  * 
  * -------------
- * M. B. Stegmann, B. K. Ersbøll, R. Larsen, "FAME -- A Flexible Appearance 
+ * M. B. Stegmann, B. K. Ersboll, R. Larsen, "FAME -- A Flexible Appearance 
  * Modelling Environment", IEEE Transactions on Medical Imaging, IEEE, 2003
  * (to appear)
  * -------------
@@ -95,7 +95,7 @@ import java.util.*;
  * $Date: 2003/04/23 14:49:15 $ 
  * 
  * 
- * Copyright © 1999-2001 by Informatics & Mathmatical Modelling, Section for
+ * Copyright (c) 1999-2001 by Informatics & Mathmatical Modelling, Section for
  * Image Analysis
  * 
  * IMM, Informatics & Mathmatical Modelling Technical University of Denmark

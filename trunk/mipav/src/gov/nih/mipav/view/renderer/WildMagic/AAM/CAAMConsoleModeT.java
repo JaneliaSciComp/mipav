@@ -42,7 +42,7 @@ import gov.nih.mipav.model.file.*;
  * 
  * 
  * -------------
- * M. B. Stegmann, B. K. Ersbøll, R. Larsen, "FAME -- A Flexible Appearance 
+ * M. B. Stegmann, B. K. Ersboll, R. Larsen, "FAME -- A Flexible Appearance 
  * Modelling Environment", IEEE Transactions on Medical Imaging, IEEE, 2003
  * (to appear)
  * -------------
