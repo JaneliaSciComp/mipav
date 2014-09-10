@@ -37,11 +37,11 @@ import java.util.*;
  * similarity shapes can be found. AAM training follow the work of Stegmann et
  * al. Cootes. et al. to create AAM model.
  * 
- * M. B. Stegmann, B. K. Ersboll, and R. Larsen, “FAME-A Flexible Appearance
- * Modeling Environment”, IEEE Trans. Med. Imag., 22(10):1319-1331, October,
+ * M. B. Stegmann, B. K. Ersboll, and R. Larsen, "FAME-A Flexible Appearance
+ * Modeling Environment", IEEE Trans. Med. Imag., 22(10):1319-1331, October,
  * 2003.
  * 
- * T. F. Cootes, G. J. Edwards, and C. J. Taylor, “Active appearance models”,
+ * T. F. Cootes, G. J. Edwards, and C. J. Taylor, "Active appearance models",
  * Proc. Eur. Conf. Comput. Vis. 2:484-498, 1998.
  * 
  * @author Ruida Cheng

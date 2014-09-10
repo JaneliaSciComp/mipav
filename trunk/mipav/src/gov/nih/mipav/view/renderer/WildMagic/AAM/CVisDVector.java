@@ -34,7 +34,7 @@ import java.util.Arrays;
  * 
  * 
  * -------------
- * M. B. Stegmann, B. K. Ersbøll, R. Larsen, "FAME -- A Flexible Appearance 
+ * M. B. Stegmann, B. K. Ersboll, R. Larsen, "FAME -- A Flexible Appearance 
  * Modelling Environment", IEEE Transactions on Medical Imaging, IEEE, 2003
  * (to appear)
  * -------------
@@ -102,7 +102,7 @@ import java.util.Arrays;
  * To take advantage of the IMSL numerical analysis routines, define VIS_USE_IMSL 
  * in the Build Settings C/C++ property page. 
  *  
- * Copyright © 1996-2000 Microsoft Corporation, All Rights Reserved 
+ * Copyright (c) 1996-2000 Microsoft Corporation, All Rights Reserved 
  * 
  * Java modification from the original cpp file. 
  * Use partial routine for matrix manipulation for automatic prostate segmentation. 
