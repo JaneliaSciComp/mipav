@@ -174,7 +174,7 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
         double d2Array[];
         double d3;
         double d3Scale;
-        boolean test = true;
+        boolean test = false;
         double xCenter;
         double yCenter;
         double radius;
