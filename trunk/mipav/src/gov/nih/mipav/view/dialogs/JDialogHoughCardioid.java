@@ -3,11 +3,11 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.text.DecimalFormat;
 
 import javax.swing.*;
 
@@ -235,14 +235,17 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
     private void init() {
         JLabel mainLabel;
         JLabel mainLabel2;
+        JLabel mainLabel3;
         JLabel theta0Label;
         JLabel x0Label;
         JLabel y0Label;
         JLabel a0Label;
+        JLabel maxALabel;
         JLabel numCardioidsLabel;
         int xDim = Math.min(512, image.getExtents()[0]);
         int yDim = Math.min(512, image.getExtents()[1]);
-        int aDim = Math.min(512, Math.max(image.getExtents()[0], image.getExtents()[1]));
+        int aDim = (int)Math.round((Math.sqrt((xDim - 1)*(xDim -1) + (yDim - 1)*(yDim - 1))/2.0));
+        DecimalFormat df = new DecimalFormat("0.#");
         setForeground(Color.black);
         setTitle("Hough transform for cardioid detection");
 
@@ -273,6 +276,13 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
         mainLabel2.setEnabled(true);
         gbc6.gridy++;
         paramPanel.add(mainLabel2, gbc6);
+        
+        mainLabel3 = new JLabel("Suggest setting a dimension to maximum a value");
+        mainLabel3.setForeground(Color.black);
+        mainLabel3.setFont(serif12);
+        mainLabel3.setEnabled(true);
+        gbc6.gridy++;
+        paramPanel.add(mainLabel3, gbc6);
         
         theta0Label = new JLabel("Cusp angular position theta0 (right = 0.0 top = 90.0)");
         theta0Label.setForeground(Color.black);
