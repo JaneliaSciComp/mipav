@@ -125,7 +125,8 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
      * @param  theta0   angle of cusp
      * @param  x0       number of dimension 1 bins in Hough transform space
      * @param  y0       number of dimension 2 bins in Hough transform space
-     * @param  a0   number of dimension 3 bins in Hough transform space
+     * @param  a0       number of dimension 3 bins in Hough transform space
+     * @param  maxA     maximum a value
      * @param  numCardioids number of cardioids to be found
      */
     public AlgorithmHoughCardioid(ModelImage destImg, ModelImage srcImg, double theta0,
@@ -154,6 +155,7 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
     public void runAlgorithm() {
         int x, y;
         int offset;
+        double maxA;
 
         int xDim;
 
@@ -172,7 +174,7 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
         double d2Array[];
         double d3;
         double d3Scale;
-        boolean test = false;
+        boolean test = true;
         double xCenter;
         double yCenter;
         double radius;
@@ -189,7 +191,6 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
         JDialogHoughCardioidChoice choice;
         byte value = 0;
         int maxCardioidPoints;
-        double maxA;
         int x0y0;
         double theta1 = 7.0 * Math.PI/4.0;
         //double xSum;
@@ -199,7 +200,9 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
         //double ySum2;
         //double ySum3;
         //int radCount;
-        double num;
+        double dist;
+        double distX;
+        double distY;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -214,8 +217,8 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
 
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
-        sourceSlice = xDim * yDim; 
-        maxA = Math.sqrt((xDim - 1)*(xDim -1) + (yDim - 1)*(yDim - 1))/2.0;
+        sourceSlice = xDim * yDim;
+        maxA = a0;
 
         x0y0 = x0 * y0;
         houghSlice = x0y0 * a0;
@@ -439,30 +442,31 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
                     index = offset + x;
                     if (srcBuffer[index] != 0) {
                         for (j = 0; j < x0; j++) {
+                        	distX = x - d1Array[j];
                             for (k = 0; k < y0; k++) {
-                            	theta = Math.atan2(y - d2Array[k], x - d1Array[j]);
-                                num = Math.sqrt((x - d1Array[j])*(x - d1Array[j]) + (y - d2Array[k])*(y - d2Array[k]));
-                            	 if (theta != -theta0) {
-                            	    d3 = num/(1.0 - Math.cos(theta + theta0));	
-                            	}
-                            	else {
-                            		d3 = Double.MAX_VALUE;
-                            	}
-                                if (d3 <= maxA) {
-                                    m = (int)Math.round(d3*d3Scale);
-                                    indexDest = j + k * x0 + m * x0y0;
-                                    houghBuffer[indexDest]++;
-                                }
+                            	distY = y - d2Array[k];
+                            	dist = Math.sqrt(distX*distX + distY*distY);
+                            	if (dist <= 2.0 * maxA) {
+	                            	theta = Math.atan2(distY, distX);
+	                            	 if (theta != -theta0) {
+	                            	    d3 = dist/(1.0 - Math.cos(theta + theta0));	
+	                            	}
+	                            	else {
+	                            		d3 = Double.MAX_VALUE;
+	                            	}
+	                                if (d3 <= maxA) {
+	                                    m = (int)Math.round(d3*d3Scale);
+	                                    indexDest = j + k * x0 + m * x0y0;
+	                                    houghBuffer[indexDest]++;
+	                                }
+                            	} // if (dist <= 2.0 * maxA)
                             } // for (k = 0; k < y0; k++)
                         } // for (j = 0; j < x0; j++)
                     } // if (srcBuffer[index] != 0)
                 } // for (x = 0; x < xDim; x++)
             } // for (y = 0; y < yDim; y++)
-            	
-            
-            
            
-            // Find up to cell with the highest counts
+            // Find value with the highest counts
             // Obtain the x0, y0, rad, and count values of this cardioid
             fireProgressStateChanged("Finding Hough peak cardioid " + String.valueOf(c+1));
             
@@ -488,7 +492,7 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
             countArray[c] = largestValue;
             
             if (c < numCardioids - 1) {
-                // Zero hough buffer for next run
+                // Zero Hough buffer for next run
                 for (i = 0; i < houghSlice; i++) {
                     houghBuffer[i] = 0;
                 }
@@ -501,22 +505,26 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
 	                        index = offset + x;
 	                        if (srcBuffer[index] != 0) {
 	                            for (j = 0; j < x0; j++) {
+	                            	distX = x - d1Array[j];
 	                                for (k = 0; k < y0; k++) {
-	                                	theta = Math.atan2(y - d2Array[k], x - d1Array[j]);
-	                                    num = Math.sqrt((x - d1Array[j])*(x - d1Array[j]) + (y - d2Array[k])*(y - d2Array[k]));
-	                                    if (theta != -theta0) {
-		                            	    d3 = num/(1.0 - Math.cos(theta + theta0));	
-		                            	}
-	                                	else {
-	                                		d3 = Double.MAX_VALUE;
-	                                	}
-	                                    if (d3 <= maxA) {
-	                                        m = (int)Math.round(d3*d3Scale);
-	                                        indexDest = j + k * x0 + m * x0y0;
-	                                        if (indexDest == largestIndex) {
-	                                            srcBuffer[index] = 0;
-	                                        }
-	                                    }
+	                                	distY = y - d2Array[k];
+	                                	dist = Math.sqrt(distX*distX + distY*distY);
+	                                	if (dist <= 2.0 * maxA) {
+		                                	theta = Math.atan2(distY, distX);
+		                                    if (theta != -theta0) {
+			                            	    d3 = dist/(1.0 - Math.cos(theta + theta0));	
+			                            	}
+		                                	else {
+		                                		d3 = Double.MAX_VALUE;
+		                                	}
+		                                    if (d3 <= maxA) {
+		                                        m = (int)Math.round(d3*d3Scale);
+		                                        indexDest = j + k * x0 + m * x0y0;
+		                                        if (indexDest == largestIndex) {
+		                                            srcBuffer[index] = 0;
+		                                        }
+		                                    }
+	                                	} // if (dist <= 2.0 * maxA)
 	                                } // for (k = 0; k < y0; k++)
 	                            } // for (j = 0; j < x0; j++)
 	                        } // if (srcBuffer[index] != 0)
