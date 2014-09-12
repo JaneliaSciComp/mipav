@@ -672,9 +672,9 @@ public class PlugInDialogWormRegistration extends JDialogStandalonePlugin implem
     		}
     		else if ( matrix == null )
     		{
-    			AlgorithmRegOAR3D reg = new AlgorithmRegOAR3D(prevImageA, destImage, 1, 6, 0,
-    					-5, 5, 1.5f, .6f, -5, 5, 1.5f, .6f, -5, 5, 1.5f, .6f, true, true, true, 
-                        false, 2, 3);
+    			AlgorithmRegOAR3D reg = new AlgorithmRegOAR3D(prevImageA, destImage, AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION, 6, 0,
+						-30, 30, 15, 6, -30, 30, 15, 6, -30, 30, 15, 6, true, true, true, 
+						false, 2, 3);
     			reg.setRunningInSeparateThread(false);
     			reg.run();
     			ModelImage result = getTransformedImage( reg, prevImageA, destImage );
