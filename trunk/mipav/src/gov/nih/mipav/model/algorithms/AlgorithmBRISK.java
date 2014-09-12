@@ -279,7 +279,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
         
         Vector<KeyPoint> keypoints = new Vector<KeyPoint>();
         // Create keypoints
-        detectImpl(srcImage, keypoints, null);
+        detectImpl(srcImage, keypoints, srcImage.getMask());
         
         short descriptors[][] = null;
         // Create descriptors
@@ -360,6 +360,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
     		    theta = (double)rot * 2.0 * Math.PI/(double)n_rot;
     		    for (int ring = 0; ring < rings; ++ring) {
     		        for (int num = 0; num < numberList.get(ring); ++num) {
+    		        	// The actual coordinates on the circle
     		            alpha = ((double)num) * 2.0 * Math.PI/(double)numberList.get(ring);
     		            patternPoints[patternIterator] = new BriskPatternPoint();
     		            // Feature rotation plus angle of the point
@@ -371,11 +372,11 @@ public class AlgorithmBRISK extends AlgorithmBase {
     		            }
     		            else {
     		            	patternPoints[patternIterator].setSigma(sigma_scale * scaleList[scale] * 
-    		            			((double)radiusList.get(ring))* Math.sin(Math.PI/numberList.get(ring)));
+    		            		radiusList.get(ring)* Math.sin(Math.PI/numberList.get(ring)));
     		            }
     		            // Adapt the sizeList if necessary
-    		            final int size = (int)Math.ceil(((scaleList[scale] * radiusList.get(ring)) + 
-    		            		patternPoints[patternIterator].getSigma())) +1;
+    		            final int size = (int)Math.ceil((scaleList[scale] * radiusList.get(ring)) + 
+    		            		patternPoints[patternIterator].getSigma()) +1;
     		            if (sizeList[scale] < size) {
     		            	sizeList[scale] = size;
     		            }
@@ -440,7 +441,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
     	} // for (int i = 1; i < points; i++)
     	
     	// no bits:
-    	strings =  (int)Math.ceil(((float)numShortPairs)/128.0)*4 *4;
+    	strings =  (int)Math.ceil(((double)numShortPairs)/128.0)*4 *4;
     } // private void (generateKernel)
     
     private int smoothedIntensity(ModelImage image, ModelImage integral, final double key_x, final double key_y,
@@ -2106,13 +2107,13 @@ return ret_val;
     				// this means we overlap area smoothing
     				final double halfscale = scale/2.0;
     				// get the scores first:
-    				for(int x=(int)(xf-halfscale); x<=(int)(xf+halfscale+1.0f); x++){
-    					for(int y=(int)(yf-halfscale); y<=(int)(yf+halfscale+1.0f); y++){
+    				for(int x=(int)(xf-halfscale); x<=(int)(xf+halfscale+1.0); x++){
+    					for(int y=(int)(yf-halfscale); y<=(int)(yf+halfscale+1.0); y++){
     						getAgastScore(x, y, threshold);
     					}
     				}
     				// get the smoothed value
-    				return value(scores,xf,yf,scale);
+    				return (double)value(scores,xf,yf,scale);
     			}
     		}
 
@@ -2121,7 +2122,7 @@ return ret_val;
     	 public double getAgastScore(int x, int y, double threshold){
     			if(x<3||y<3) return 0;
     			if(x>=xDim-3||y>=yDim-3) return 0;
-    			double score = scores[y][x];
+    			double score = (double)scores[y][x];
     			if(score>2) { return score; }
     			oastDetector.setThreshold(threshold-1);
     			int sliceSize = xDim * yDim;
@@ -2162,7 +2163,7 @@ return ret_val;
 
     	 
     	// access gray values (smoothed/interpolated)
-    	private double value(int scores[][], double xf, double yf, double scale){
+    	private int value(int scores[][], double xf, double yf, double scale){
     	 	// get the position
     	 	final int x = (int)Math.floor(xf);
     	 	final int y = (int)Math.floor(yf);
