@@ -125,7 +125,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
 	private static final double scaleRange = 30.0;
 	
     // Discretization of the rotation look-up pairs
-    private final int n_rot = 1204;
+    private final int n_rot = 1024;
     
     private final double safetyFactor = 1.0;
     
