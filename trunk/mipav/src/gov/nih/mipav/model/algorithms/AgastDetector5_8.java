@@ -45,7 +45,7 @@ public class AgastDetector5_8 {
 	
 	private int ysize = 0;
 	
-	private double threshold = -1;
+	private int threshold = -1;
 	
 	private int  s_offset0;
 	private int  s_offset1;
@@ -56,7 +56,7 @@ public class AgastDetector5_8 {
 	private int  s_offset6;
 	private int  s_offset7;
 	
-	public AgastDetector5_8(int xsize, int ysize, double threshold) {
+	public AgastDetector5_8(int xsize, int ysize, int threshold) {
 	    this.xsize = xsize;
 	    this.ysize = ysize;
 	    this.threshold = threshold;
@@ -76,17 +76,19 @@ public class AgastDetector5_8 {
 	
 	}
 	
-	public void setThreshold(double threshold) {
+	public void setThreshold(int threshold) {
 		this.threshold = threshold;
 	}
 	
 	//using also bisection as propsed by Edward Rosten in FAST,
 	//but it is based on the OAST
 		
-		public double getCornerScore(double doubleBuffer[], int p, double bmax)
+		public int getCornerScore(int intBuffer[], int p)
 		{
-		    double bmin = threshold;
-		    double b_test = (bmax + bmin)/2;
+		    
+			int bmax = 255;
+			int bmin = threshold;
+		    int b_test = (bmax + bmin)/2;
 
 			int offset0=s_offset0;
 			int offset1=s_offset1;
@@ -104,63 +106,63 @@ public class AgastDetector5_8 {
 			{
 			is_a_corner: while (true)
 			{
-				double cb = doubleBuffer[p] + b_test;
-				double c_b = doubleBuffer[p] - b_test;
-			if(doubleBuffer[p + offset0] > cb)
-			  if(doubleBuffer[p + offset2] > cb)
-			    if(doubleBuffer[p + offset3] > cb)
-			      if(doubleBuffer[p + offset5] > cb)
-			        if(doubleBuffer[p + offset1] > cb)
-			          if(doubleBuffer[p + offset4] > cb)
+		    int cb = intBuffer[p] + b_test;
+		    int c_b = intBuffer[p] - b_test;
+			if(intBuffer[p + offset0] > cb)
+			  if(intBuffer[p + offset2] > cb)
+			    if(intBuffer[p + offset3] > cb)
+			      if(intBuffer[p + offset5] > cb)
+			        if(intBuffer[p + offset1] > cb)
+			          if(intBuffer[p + offset4] > cb)
 			            break is_a_corner;
 			          else
-			            if(doubleBuffer[p + offset7] > cb)
+			            if(intBuffer[p + offset7] > cb)
 			              break is_a_corner;
 			            else
 			              break is_not_a_corner;
 			        else
-			          if(doubleBuffer[p + offset4] > cb)
-			            if(doubleBuffer[p + offset6] > cb)
+			          if(intBuffer[p + offset4] > cb)
+			            if(intBuffer[p + offset6] > cb)
 			              break is_a_corner;
 			            else
 			              break is_not_a_corner;
 			          else
 			            break is_not_a_corner;
 			      else
-			        if(doubleBuffer[p + offset1] > cb)
-			          if(doubleBuffer[p + offset4] > cb)
+			        if(intBuffer[p + offset1] > cb)
+			          if(intBuffer[p + offset4] > cb)
 			            break is_a_corner;
 			          else
-			            if(doubleBuffer[p + offset7] > cb)
+			            if(intBuffer[p + offset7] > cb)
 			              break is_a_corner;
 			            else
 			              break is_not_a_corner;
 			        else
 			          break is_not_a_corner;
 			    else
-			      if(doubleBuffer[p + offset7] > cb)
-			        if(doubleBuffer[p + offset6] > cb)
-			          if(doubleBuffer[p + offset5] > cb)
-			            if(doubleBuffer[p + offset1] > cb)
+			      if(intBuffer[p + offset7] > cb)
+			        if(intBuffer[p + offset6] > cb)
+			          if(intBuffer[p + offset5] > cb)
+			            if(intBuffer[p + offset1] > cb)
 			              break is_a_corner;
 			            else
-			              if(doubleBuffer[p + offset4] > cb)
+			              if(intBuffer[p + offset4] > cb)
 			                break is_a_corner;
 			              else
 			                break is_not_a_corner;
 			          else
-			            if(doubleBuffer[p + offset1] > cb)
+			            if(intBuffer[p + offset1] > cb)
 			              break is_a_corner;
 			            else
 			              break is_not_a_corner;
 			        else
 			          break is_not_a_corner;
 			      else
-			        if(doubleBuffer[p + offset5] < c_b)
-			          if(doubleBuffer[p + offset3] < c_b)
-			            if(doubleBuffer[p + offset7] < c_b)
-			              if(doubleBuffer[p + offset4] < c_b)
-			                if(doubleBuffer[p + offset6] < c_b)
+			        if(intBuffer[p + offset5] < c_b)
+			          if(intBuffer[p + offset3] < c_b)
+			            if(intBuffer[p + offset7] < c_b)
+			              if(intBuffer[p + offset4] < c_b)
+			                if(intBuffer[p + offset6] < c_b)
 			                  break is_a_corner;
 			                else
 			                  break is_not_a_corner;
@@ -173,13 +175,13 @@ public class AgastDetector5_8 {
 			        else
 			          break is_not_a_corner;
 			  else
-			    if(doubleBuffer[p + offset5] > cb)
-			      if(doubleBuffer[p + offset7] > cb)
-			        if(doubleBuffer[p + offset6] > cb)
-			          if(doubleBuffer[p + offset1] > cb)
+			    if(intBuffer[p + offset5] > cb)
+			      if(intBuffer[p + offset7] > cb)
+			        if(intBuffer[p + offset6] > cb)
+			          if(intBuffer[p + offset1] > cb)
 			            break is_a_corner;
 			          else
-			            if(doubleBuffer[p + offset4] > cb)
+			            if(intBuffer[p + offset4] > cb)
 			              break is_a_corner;
 			            else
 			              break is_not_a_corner;
@@ -188,26 +190,26 @@ public class AgastDetector5_8 {
 			      else
 			        break is_not_a_corner;
 			    else
-			      if(doubleBuffer[p + offset5] < c_b)
-			        if(doubleBuffer[p + offset3] < c_b)
-			          if(doubleBuffer[p + offset2] < c_b)
-			            if(doubleBuffer[p + offset1] < c_b)
-			              if(doubleBuffer[p + offset4] < c_b)
+			      if(intBuffer[p + offset5] < c_b)
+			        if(intBuffer[p + offset3] < c_b)
+			          if(intBuffer[p + offset2] < c_b)
+			            if(intBuffer[p + offset1] < c_b)
+			              if(intBuffer[p + offset4] < c_b)
 			                break is_a_corner;
 			              else
 			                break is_not_a_corner;
 			            else
-			              if(doubleBuffer[p + offset4] < c_b)
-			                if(doubleBuffer[p + offset6] < c_b)
+			              if(intBuffer[p + offset4] < c_b)
+			                if(intBuffer[p + offset6] < c_b)
 			                  break is_a_corner;
 			                else
 			                  break is_not_a_corner;
 			              else
 			                break is_not_a_corner;
 			          else
-			            if(doubleBuffer[p + offset7] < c_b)
-			              if(doubleBuffer[p + offset4] < c_b)
-			                if(doubleBuffer[p + offset6] < c_b)
+			            if(intBuffer[p + offset7] < c_b)
+			              if(intBuffer[p + offset4] < c_b)
+			                if(intBuffer[p + offset6] < c_b)
 			                  break is_a_corner;
 			                else
 			                  break is_not_a_corner;
@@ -219,37 +221,37 @@ public class AgastDetector5_8 {
 			          break is_not_a_corner;
 			      else
 			        break is_not_a_corner;
-			else if(doubleBuffer[p + offset0] < c_b)
-			  if(doubleBuffer[p + offset2] < c_b)
-			    if(doubleBuffer[p + offset7] > cb)
-			      if(doubleBuffer[p + offset3] < c_b)
-			        if(doubleBuffer[p + offset5] < c_b)
-			          if(doubleBuffer[p + offset1] < c_b)
-			            if(doubleBuffer[p + offset4] < c_b)
+			else if(intBuffer[p + offset0] < c_b)
+			  if(intBuffer[p + offset2] < c_b)
+			    if(intBuffer[p + offset7] > cb)
+			      if(intBuffer[p + offset3] < c_b)
+			        if(intBuffer[p + offset5] < c_b)
+			          if(intBuffer[p + offset1] < c_b)
+			            if(intBuffer[p + offset4] < c_b)
 			              break is_a_corner;
 			            else
 			              break is_not_a_corner;
 			          else
-			            if(doubleBuffer[p + offset4] < c_b)
-			              if(doubleBuffer[p + offset6] < c_b)
+			            if(intBuffer[p + offset4] < c_b)
+			              if(intBuffer[p + offset6] < c_b)
 			                break is_a_corner;
 			              else
 			                break is_not_a_corner;
 			            else
 			              break is_not_a_corner;
 			        else
-			          if(doubleBuffer[p + offset1] < c_b)
-			            if(doubleBuffer[p + offset4] < c_b)
+			          if(intBuffer[p + offset1] < c_b)
+			            if(intBuffer[p + offset4] < c_b)
 			              break is_a_corner;
 			            else
 			              break is_not_a_corner;
 			          else
 			            break is_not_a_corner;
 			      else
-			        if(doubleBuffer[p + offset5] > cb)
-			          if(doubleBuffer[p + offset3] > cb)
-			            if(doubleBuffer[p + offset4] > cb)
-			              if(doubleBuffer[p + offset6] > cb)
+			        if(intBuffer[p + offset5] > cb)
+			          if(intBuffer[p + offset3] > cb)
+			            if(intBuffer[p + offset4] > cb)
+			              if(intBuffer[p + offset6] > cb)
 			                break is_a_corner;
 			              else
 			                break is_not_a_corner;
@@ -260,60 +262,60 @@ public class AgastDetector5_8 {
 			        else
 			          break is_not_a_corner;
 			    else
-			      if(doubleBuffer[p + offset7] < c_b)
-			        if(doubleBuffer[p + offset3] < c_b)
-			          if(doubleBuffer[p + offset5] < c_b)
-			            if(doubleBuffer[p + offset1] < c_b)
+			      if(intBuffer[p + offset7] < c_b)
+			        if(intBuffer[p + offset3] < c_b)
+			          if(intBuffer[p + offset5] < c_b)
+			            if(intBuffer[p + offset1] < c_b)
 			              break is_a_corner;
 			            else
-			              if(doubleBuffer[p + offset4] < c_b)
-			                if(doubleBuffer[p + offset6] < c_b)
+			              if(intBuffer[p + offset4] < c_b)
+			                if(intBuffer[p + offset6] < c_b)
 			                  break is_a_corner;
 			                else
 			                  break is_not_a_corner;
 			              else
 			                break is_not_a_corner;
 			          else
-			            if(doubleBuffer[p + offset1] < c_b)
+			            if(intBuffer[p + offset1] < c_b)
 			              break is_a_corner;
 			            else
 			              break is_not_a_corner;
 			        else
-			          if(doubleBuffer[p + offset6] < c_b)
-			            if(doubleBuffer[p + offset5] < c_b)
-			              if(doubleBuffer[p + offset1] < c_b)
+			          if(intBuffer[p + offset6] < c_b)
+			            if(intBuffer[p + offset5] < c_b)
+			              if(intBuffer[p + offset1] < c_b)
 			                break is_a_corner;
 			              else
-			                if(doubleBuffer[p + offset4] < c_b)
+			                if(intBuffer[p + offset4] < c_b)
 			                  break is_a_corner;
 			                else
 			                  break is_not_a_corner;
 			            else
-			              if(doubleBuffer[p + offset1] < c_b)
+			              if(intBuffer[p + offset1] < c_b)
 			                break is_a_corner;
 			              else
 			                break is_not_a_corner;
 			          else
 			            break is_not_a_corner;
 			      else
-			        if(doubleBuffer[p + offset3] < c_b)
-			          if(doubleBuffer[p + offset5] < c_b)
-			            if(doubleBuffer[p + offset1] < c_b)
-			              if(doubleBuffer[p + offset4] < c_b)
+			        if(intBuffer[p + offset3] < c_b)
+			          if(intBuffer[p + offset5] < c_b)
+			            if(intBuffer[p + offset1] < c_b)
+			              if(intBuffer[p + offset4] < c_b)
 			                break is_a_corner;
 			              else
 			                break is_not_a_corner;
 			            else
-			              if(doubleBuffer[p + offset4] < c_b)
-			                if(doubleBuffer[p + offset6] < c_b)
+			              if(intBuffer[p + offset4] < c_b)
+			                if(intBuffer[p + offset6] < c_b)
 			                  break is_a_corner;
 			                else
 			                  break is_not_a_corner;
 			              else
 			                break is_not_a_corner;
 			          else
-			            if(doubleBuffer[p + offset1] < c_b)
-			              if(doubleBuffer[p + offset4] < c_b)
+			            if(intBuffer[p + offset1] < c_b)
+			              if(intBuffer[p + offset4] < c_b)
 			                break is_a_corner;
 			              else
 			                break is_not_a_corner;
@@ -322,26 +324,26 @@ public class AgastDetector5_8 {
 			        else
 			          break is_not_a_corner;
 			  else
-			    if(doubleBuffer[p + offset5] > cb)
-			      if(doubleBuffer[p + offset3] > cb)
-			        if(doubleBuffer[p + offset2] > cb)
-			          if(doubleBuffer[p + offset1] > cb)
-			            if(doubleBuffer[p + offset4] > cb)
+			    if(intBuffer[p + offset5] > cb)
+			      if(intBuffer[p + offset3] > cb)
+			        if(intBuffer[p + offset2] > cb)
+			          if(intBuffer[p + offset1] > cb)
+			            if(intBuffer[p + offset4] > cb)
 			              break is_a_corner;
 			            else
 			              break is_not_a_corner;
 			          else
-			            if(doubleBuffer[p + offset4] > cb)
-			              if(doubleBuffer[p + offset6] > cb)
+			            if(intBuffer[p + offset4] > cb)
+			              if(intBuffer[p + offset6] > cb)
 			                break is_a_corner;
 			              else
 			                break is_not_a_corner;
 			            else
 			              break is_not_a_corner;
 			        else
-			          if(doubleBuffer[p + offset7] > cb)
-			            if(doubleBuffer[p + offset4] > cb)
-			              if(doubleBuffer[p + offset6] > cb)
+			          if(intBuffer[p + offset7] > cb)
+			            if(intBuffer[p + offset4] > cb)
+			              if(intBuffer[p + offset6] > cb)
 			                break is_a_corner;
 			              else
 			                break is_not_a_corner;
@@ -352,13 +354,13 @@ public class AgastDetector5_8 {
 			      else
 			        break is_not_a_corner;
 			    else
-			      if(doubleBuffer[p + offset5] < c_b)
-			        if(doubleBuffer[p + offset7] < c_b)
-			          if(doubleBuffer[p + offset6] < c_b)
-			            if(doubleBuffer[p + offset1] < c_b)
+			      if(intBuffer[p + offset5] < c_b)
+			        if(intBuffer[p + offset7] < c_b)
+			          if(intBuffer[p + offset6] < c_b)
+			            if(intBuffer[p + offset1] < c_b)
 			              break is_a_corner;
 			            else
-			              if(doubleBuffer[p + offset4] < c_b)
+			              if(intBuffer[p + offset4] < c_b)
 			                break is_a_corner;
 			              else
 			                break is_not_a_corner;
@@ -369,26 +371,26 @@ public class AgastDetector5_8 {
 			      else
 			        break is_not_a_corner;
 			else
-			  if(doubleBuffer[p + offset3] > cb)
-			    if(doubleBuffer[p + offset5] > cb)
-			      if(doubleBuffer[p + offset2] > cb)
-			        if(doubleBuffer[p + offset1] > cb)
-			          if(doubleBuffer[p + offset4] > cb)
+			  if(intBuffer[p + offset3] > cb)
+			    if(intBuffer[p + offset5] > cb)
+			      if(intBuffer[p + offset2] > cb)
+			        if(intBuffer[p + offset1] > cb)
+			          if(intBuffer[p + offset4] > cb)
 			            break is_a_corner;
 			          else
 			            break is_not_a_corner;
 			        else
-			          if(doubleBuffer[p + offset4] > cb)
-			            if(doubleBuffer[p + offset6] > cb)
+			          if(intBuffer[p + offset4] > cb)
+			            if(intBuffer[p + offset6] > cb)
 			              break is_a_corner;
 			            else
 			              break is_not_a_corner;
 			          else
 			            break is_not_a_corner;
 			      else
-			        if(doubleBuffer[p + offset7] > cb)
-			          if(doubleBuffer[p + offset4] > cb)
-			            if(doubleBuffer[p + offset6] > cb)
+			        if(intBuffer[p + offset7] > cb)
+			          if(intBuffer[p + offset4] > cb)
+			            if(intBuffer[p + offset6] > cb)
 			              break is_a_corner;
 			            else
 			              break is_not_a_corner;
@@ -399,26 +401,26 @@ public class AgastDetector5_8 {
 			    else
 			      break is_not_a_corner;
 			  else
-			    if(doubleBuffer[p + offset3] < c_b)
-			      if(doubleBuffer[p + offset5] < c_b)
-			        if(doubleBuffer[p + offset2] < c_b)
-			          if(doubleBuffer[p + offset1] < c_b)
-			            if(doubleBuffer[p + offset4] < c_b)
+			    if(intBuffer[p + offset3] < c_b)
+			      if(intBuffer[p + offset5] < c_b)
+			        if(intBuffer[p + offset2] < c_b)
+			          if(intBuffer[p + offset1] < c_b)
+			            if(intBuffer[p + offset4] < c_b)
 			              break is_a_corner;
 			            else
 			              break is_not_a_corner;
 			          else
-			            if(doubleBuffer[p + offset4] < c_b)
-			              if(doubleBuffer[p + offset6] < c_b)
+			            if(intBuffer[p + offset4] < c_b)
+			              if(intBuffer[p + offset6] < c_b)
 			                break is_a_corner;
 			              else
 			                break is_not_a_corner;
 			            else
 			              break is_not_a_corner;
 			        else
-			          if(doubleBuffer[p + offset7] < c_b)
-			            if(doubleBuffer[p + offset4] < c_b)
-			              if(doubleBuffer[p + offset6] < c_b)
+			          if(intBuffer[p + offset7] < c_b)
+			            if(intBuffer[p + offset4] < c_b)
+			              if(intBuffer[p + offset6] < c_b)
 			                break is_a_corner;
 			              else
 			                break is_not_a_corner;
@@ -433,13 +435,13 @@ public class AgastDetector5_8 {
 			
 			} // is_a_corner: while(true)
 			bmin=b_test;
-			if(bmax - bmin <= 1.0)
+			if(bmax - bmin <= 1)
 			return bmin;
 		    b_test = (bmin + bmax) / 2;
 
 	        } //	is_not_a_corner: while (true)
 			bmax=b_test;
-			if(bmax - bmin <= 1.0)
+			if(bmax - bmin <= 1)
 				return bmin;
 			b_test = (bmin + bmax) / 2;
 		}
