@@ -54,6 +54,7 @@ import gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.CorticalAnaly
 import gov.nih.mipav.view.renderer.WildMagic.flythroughview.FlyThroughRender;
 import gov.nih.mipav.view.renderer.WildMagic.flythroughview.JPanelVirtualEndoscopySetup_WM;
 import gov.nih.mipav.view.renderer.flythroughview.JPanelFlythruMove;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.*;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -237,6 +238,9 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 
     /** Renderer mode user-interface panel */
     protected JPanelRenderMode_WM rendererGUI;
+    
+    /** Navigation mode user-interface panel */
+    protected JPanelNavigation navigationGUI;
 
     /** Multihistogram panel: */
     protected JPanelMultiDimensionalTransfer multiHistogramGUI;
@@ -587,6 +591,9 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         } else if (command.equals("Renderer")) {
             insertTab("Renderer", rendererGUI.getMainPanel());
             resizePanel();
+        } else if (command.equals("Navigation")) {
+            insertTab("Navigation", navigationGUI.getMainPanel());
+            resizePanel();
         } else if ( command.equals("Home")) { 
             rollbackToImageCenter();
         } else if (command.equals("ResetX")) {
@@ -909,6 +916,14 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         maxPanelWidth = Math.max(rendererGUI.getPreferredSize().width, maxPanelWidth);
     }
 
+    /**
+     * Builds the navigation mode control panel.
+     */
+    public void buildNavigationModePanel() {
+        navigationGUI = new JPanelNavigation(this);
+        maxPanelWidth = Math.max(navigationGUI.getPreferredSize().width, maxPanelWidth);
+    }
+    
     /**
      * Build the Sculpturing control panel.
      */
@@ -1313,6 +1328,14 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         return rendererGUI;
     }
 
+    /**
+     * Get the navigation mode interface panel.
+     * 
+     * @return navigation mode interface panel.
+     */
+    public JPanelNavigation getNavigationGUI() {
+        return navigationGUI;
+    }
 
     /**
      * Return the size of the surface-area of the given surface.
@@ -2545,6 +2568,10 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
             rendererGUI.disposeLocal();
             rendererGUI = null;
         }
+        if (navigationGUI != null) {
+            navigationGUI.disposeLocal();
+            navigationGUI = null;
+        }
         if ( m_kVOIInterface != null )
         {
             m_kVOIInterface.disposeLocal(true);
@@ -2963,6 +2990,8 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
             	insertTab("LUT", frameHistogram.getContainingPanel());
             } else if (name.equals("Renderer")) {
                 insertTab("Renderer", rendererGUI.getMainPanel());
+            } else if (name.equals("Navigation")) {
+                insertTab("Navigation", navigationGUI.getMainPanel());
             } else if (name.equals("Light")) {
                 insertTab("Light", m_kLightsPanel.getMainPanel());
             } else if (name.equals("Surface")) {
@@ -3234,6 +3263,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         buildHistoLUTPanel();
         buildOpacityPanel();
         buildRenderModePanel();
+        buildNavigationModePanel();
         build3DMousePanel();
 
         m_kVolumeImageA.GetImage().addImageDisplayListener(this);
@@ -3318,7 +3348,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         viewToolBar.add(toolbarBuilder.buildButton("Slices", "Slice render", "triplanar"));
         viewToolBar.add(toolbarBuilder.buildButton("Opacity", "Surface volume renderer", "renderer"));
         viewToolBar.add(toolbarBuilder.buildButton("Renderer", "Renderer mode control", "control"));
-
+        viewToolBar.add(toolbarBuilder.buildButton("Navigation", "Navigation mode control", "nevigation"));
         viewToolBar.add(ViewToolBarBuilder.makeSeparator());
 
         viewToolBar.add(toolbarBuilder.buildButton("SurfaceDialog", "Add surface to viewer", "isosurface"));
@@ -3584,6 +3614,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
             sliceGUI.resizePanel(maxPanelWidth, height);
             clipGUI.resizePanel(maxPanelWidth, height);
             rendererGUI.resizePanel(maxPanelWidth, height);
+            navigationGUI.resizePanel(maxPanelWidth, height);
             if (multiHistogramGUI != null) {
                 multiHistogramGUI.resizePanel(maxPanelWidth, height);
             }
@@ -3667,4 +3698,36 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 		super.setVisible(b);
 		raycastRenderWM.setVisible(b);
 	}
+	
+	/**
+	  * Set the annotation mode 
+	  * @param _isAnnotationEnabled
+	  */
+	 public void setAnnotationMode(boolean _isAnnotationEnabled) {
+		  for (int i = 0; i < 3; i++) {
+             if (m_akPlaneRender[i] != null) {
+                 m_akPlaneRender[i].setAnnotationMode(_isAnnotationEnabled);
+             }
+         }
+	 }
+	 
+	 /**
+	  * Set the flythru mode
+	  * @param _flythru
+	  */
+	 public void setMouseFlythruMode(boolean _isMouseflythru) {
+		 for (int i = 0; i < 3; i++) {
+            if (m_akPlaneRender[i] != null) {
+                m_akPlaneRender[i].setMouseFlythruMode(_isMouseflythru);
+            }
+        }
+	 }
+	 
+	 public void setPathFlythruMode(boolean _isPathflythru) {
+		 for (int i = 0; i < 3; i++) {
+            if (m_akPlaneRender[i] != null) {
+                m_akPlaneRender[i].setPathFlythruMode(_isPathflythru);
+            }
+        }
+	 }
 }

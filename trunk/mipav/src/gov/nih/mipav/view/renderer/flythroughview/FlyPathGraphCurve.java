@@ -75,6 +75,21 @@ public class FlyPathGraphCurve extends FlyPathGraph {
         }
     }
 
+    /**
+     * Create a new graph with the same structure as this graph but with each node having a BSpline approximation for
+     * each of the points (and boundary distances) for each node.
+     * @param akVec                points array
+     * @param iNumControlPoints    number of control points
+     * @param iDegree		       int BSpline degree to use for all approximated curves.	
+     */
+    public FlyPathGraphCurve(Vector3f[] akVec, int iNumControlPoints, int iDegree) {
+   	 // Allocate storage for curves
+   	   super();
+       m_kListCurvePosition = new ArrayList<BSplineCurve3f>();
+       m_kListCurvePosition.add(BSplineCurve3f.CreateApproximation(akVec, iNumControlPoints, iDegree));   
+    }
+   
+    
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
