@@ -279,7 +279,8 @@ public class AlgorithmBRISK extends AlgorithmBase {
         
         Vector<KeyPoint> keypoints = new Vector<KeyPoint>();
         // Create keypoints
-        detectImpl(srcImage, keypoints, srcImage.getMask());
+        // detectImpl(srcImage, keypoints, srcImage.getMask()) results in keypoints.size() = 0.
+        detectImpl(srcImage, keypoints, null);
         
         short descriptors[][] = null;
         // Create descriptors
