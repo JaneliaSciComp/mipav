@@ -9,6 +9,7 @@ import java.io.*;
 import java.util.Vector;
 
 import javax.vecmath.Point2d;
+import javax.vecmath.Point2i;
 
 /**
 oast9 - OAST, an optimal corner detector based on the
@@ -48,7 +49,7 @@ public class OastDetector9_16 {
 	
 	private int ysize = 0;
 	
-	private double threshold = -1;
+	private int threshold = -1;
 	
 	private int  s_offset0;
 	private int  s_offset1;
@@ -67,7 +68,7 @@ public class OastDetector9_16 {
 	private int  s_offset14;
 	private int  s_offset15;
 
-	public OastDetector9_16(int xsize, int ysize, double threshold) {
+	public OastDetector9_16(int xsize, int ysize, int threshold) {
 	    this.xsize = xsize;
 	    this.ysize = ysize;
 	    this.threshold = threshold;
@@ -94,15 +95,15 @@ public class OastDetector9_16 {
 		s_offset15=(-3)+(1)*xsize;
 	}
 	
-	public void setThreshold(double threshold) {
+	public void setThreshold(int threshold) {
 		this.threshold = threshold;
 	}
 	
-	public void detect(double doubleBuffer[], Vector<Point2d> corners_all)
+	public void detect(int intBuffer[], Vector<Point2i> corners_all)
 	{
 		int total=0;
 		int nExpectedCorners=corners_all.capacity();
-		Point2d h = new Point2d();
+		Point2i h = new Point2i();
 		int x, y;
 		int xsizeB=xsize - 4;
 		int ysizeB=ysize - 3;
@@ -139,27 +140,27 @@ public class OastDetector9_16 {
 				else
 				{
 					int p = y*xsize + x;
-					double cb = doubleBuffer[p] + threshold;
-					double c_b = doubleBuffer[p] - threshold;
-					if(doubleBuffer[p + offset0] > cb)
-					  if(doubleBuffer[p + offset2] > cb)
-						if(doubleBuffer[p + offset4] > cb)
-						  if(doubleBuffer[p + offset5] > cb)
-							if(doubleBuffer[p + offset7] > cb)
-							  if(doubleBuffer[p + offset3] > cb)
-								if(doubleBuffer[p + offset1] > cb)
-								  if(doubleBuffer[p + offset6] > cb)
-									if(doubleBuffer[p + offset8] > cb)
+					int cb = intBuffer[p] + threshold;
+					int c_b = intBuffer[p] - threshold;
+					if(intBuffer[p + offset0] > cb)
+					  if(intBuffer[p + offset2] > cb)
+						if(intBuffer[p + offset4] > cb)
+						  if(intBuffer[p + offset5] > cb)
+							if(intBuffer[p + offset7] > cb)
+							  if(intBuffer[p + offset3] > cb)
+								if(intBuffer[p + offset1] > cb)
+								  if(intBuffer[p + offset6] > cb)
+									if(intBuffer[p + offset8] > cb)
 									  {}
 									else
-									  if(doubleBuffer[p + offset15] > cb)
+									  if(intBuffer[p + offset15] > cb)
 										{}
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset13] > cb)
-									  if(doubleBuffer[p + offset14] > cb)
-										if(doubleBuffer[p + offset15] > cb)
+									if(intBuffer[p + offset13] > cb)
+									  if(intBuffer[p + offset14] > cb)
+										if(intBuffer[p + offset15] > cb)
 										  {}
 										else
 										  continue;
@@ -168,17 +169,17 @@ public class OastDetector9_16 {
 									else
 									  continue;
 								else
-								  if(doubleBuffer[p + offset8] > cb)
-									if(doubleBuffer[p + offset9] > cb)
-									  if(doubleBuffer[p + offset10] > cb)
-										if(doubleBuffer[p + offset6] > cb)
+								  if(intBuffer[p + offset8] > cb)
+									if(intBuffer[p + offset9] > cb)
+									  if(intBuffer[p + offset10] > cb)
+										if(intBuffer[p + offset6] > cb)
 										  {}
 										else
-										  if(doubleBuffer[p + offset11] > cb)
-											if(doubleBuffer[p + offset12] > cb)
-											  if(doubleBuffer[p + offset13] > cb)
-												if(doubleBuffer[p + offset14] > cb)
-												  if(doubleBuffer[p + offset15] > cb)
+										  if(intBuffer[p + offset11] > cb)
+											if(intBuffer[p + offset12] > cb)
+											  if(intBuffer[p + offset13] > cb)
+												if(intBuffer[p + offset14] > cb)
+												  if(intBuffer[p + offset15] > cb)
 													{}
 												  else
 													continue;
@@ -197,17 +198,17 @@ public class OastDetector9_16 {
 								  else
 									continue;
 							  else
-								if(doubleBuffer[p + offset10] > cb)
-								  if(doubleBuffer[p + offset11] > cb)
-									if(doubleBuffer[p + offset12] > cb)
-									  if(doubleBuffer[p + offset8] > cb)
-										if(doubleBuffer[p + offset9] > cb)
-										  if(doubleBuffer[p + offset6] > cb)
+								if(intBuffer[p + offset10] > cb)
+								  if(intBuffer[p + offset11] > cb)
+									if(intBuffer[p + offset12] > cb)
+									  if(intBuffer[p + offset8] > cb)
+										if(intBuffer[p + offset9] > cb)
+										  if(intBuffer[p + offset6] > cb)
 											{}
 										  else
-											if(doubleBuffer[p + offset13] > cb)
-											  if(doubleBuffer[p + offset14] > cb)
-												if(doubleBuffer[p + offset15] > cb)
+											if(intBuffer[p + offset13] > cb)
+											  if(intBuffer[p + offset14] > cb)
+												if(intBuffer[p + offset15] > cb)
 												  {}
 												else
 												  continue;
@@ -216,10 +217,10 @@ public class OastDetector9_16 {
 											else
 											  continue;
 										else
-										  if(doubleBuffer[p + offset1] > cb)
-											if(doubleBuffer[p + offset13] > cb)
-											  if(doubleBuffer[p + offset14] > cb)
-												if(doubleBuffer[p + offset15] > cb)
+										  if(intBuffer[p + offset1] > cb)
+											if(intBuffer[p + offset13] > cb)
+											  if(intBuffer[p + offset14] > cb)
+												if(intBuffer[p + offset15] > cb)
 												  {}
 												else
 												  continue;
@@ -230,10 +231,10 @@ public class OastDetector9_16 {
 										  else
 											continue;
 									  else
-										if(doubleBuffer[p + offset1] > cb)
-										  if(doubleBuffer[p + offset13] > cb)
-											if(doubleBuffer[p + offset14] > cb)
-											  if(doubleBuffer[p + offset15] > cb)
+										if(intBuffer[p + offset1] > cb)
+										  if(intBuffer[p + offset13] > cb)
+											if(intBuffer[p + offset14] > cb)
+											  if(intBuffer[p + offset15] > cb)
 												{}
 											  else
 												continue;
@@ -249,23 +250,23 @@ public class OastDetector9_16 {
 									continue;
 								else
 								  continue;
-							else if(doubleBuffer[p + offset7] < c_b)
-							  if(doubleBuffer[p + offset14] > cb)
-								if(doubleBuffer[p + offset15] > cb)
-								  if(doubleBuffer[p + offset1] > cb)
-									if(doubleBuffer[p + offset3] > cb)
-									  if(doubleBuffer[p + offset6] > cb)
+							else if(intBuffer[p + offset7] < c_b)
+							  if(intBuffer[p + offset14] > cb)
+								if(intBuffer[p + offset15] > cb)
+								  if(intBuffer[p + offset1] > cb)
+									if(intBuffer[p + offset3] > cb)
+									  if(intBuffer[p + offset6] > cb)
 										{}
 									  else
-										if(doubleBuffer[p + offset13] > cb)
+										if(intBuffer[p + offset13] > cb)
 										  {}
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset10] > cb)
-										if(doubleBuffer[p + offset11] > cb)
-										  if(doubleBuffer[p + offset12] > cb)
-											if(doubleBuffer[p + offset13] > cb)
+									  if(intBuffer[p + offset10] > cb)
+										if(intBuffer[p + offset11] > cb)
+										  if(intBuffer[p + offset12] > cb)
+											if(intBuffer[p + offset13] > cb)
 											  {}
 											else
 											  continue;
@@ -276,12 +277,12 @@ public class OastDetector9_16 {
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset8] > cb)
-									  if(doubleBuffer[p + offset9] > cb)
-										if(doubleBuffer[p + offset10] > cb)
-										  if(doubleBuffer[p + offset11] > cb)
-											if(doubleBuffer[p + offset12] > cb)
-											  if(doubleBuffer[p + offset13] > cb)
+									if(intBuffer[p + offset8] > cb)
+									  if(intBuffer[p + offset9] > cb)
+										if(intBuffer[p + offset10] > cb)
+										  if(intBuffer[p + offset11] > cb)
+											if(intBuffer[p + offset12] > cb)
+											  if(intBuffer[p + offset13] > cb)
 												{}
 											  else
 												continue;
@@ -297,17 +298,17 @@ public class OastDetector9_16 {
 									  continue;
 								else
 								  continue;
-							  else if(doubleBuffer[p + offset14] < c_b)
-								if(doubleBuffer[p + offset8] < c_b)
-								  if(doubleBuffer[p + offset9] < c_b)
-									if(doubleBuffer[p + offset10] < c_b)
-									  if(doubleBuffer[p + offset11] < c_b)
-										if(doubleBuffer[p + offset12] < c_b)
-										  if(doubleBuffer[p + offset13] < c_b)
-											if(doubleBuffer[p + offset6] < c_b)
+							  else if(intBuffer[p + offset14] < c_b)
+								if(intBuffer[p + offset8] < c_b)
+								  if(intBuffer[p + offset9] < c_b)
+									if(intBuffer[p + offset10] < c_b)
+									  if(intBuffer[p + offset11] < c_b)
+										if(intBuffer[p + offset12] < c_b)
+										  if(intBuffer[p + offset13] < c_b)
+											if(intBuffer[p + offset6] < c_b)
 											  {}
 											else
-											  if(doubleBuffer[p + offset15] < c_b)
+											  if(intBuffer[p + offset15] < c_b)
 												{}
 											  else
 												continue;
@@ -326,22 +327,22 @@ public class OastDetector9_16 {
 							  else
 								continue;
 							else
-							  if(doubleBuffer[p + offset14] > cb)
-								if(doubleBuffer[p + offset15] > cb)
-								  if(doubleBuffer[p + offset1] > cb)
-									if(doubleBuffer[p + offset3] > cb)
-									  if(doubleBuffer[p + offset6] > cb)
+							  if(intBuffer[p + offset14] > cb)
+								if(intBuffer[p + offset15] > cb)
+								  if(intBuffer[p + offset1] > cb)
+									if(intBuffer[p + offset3] > cb)
+									  if(intBuffer[p + offset6] > cb)
 										{}
 									  else
-										if(doubleBuffer[p + offset13] > cb)
+										if(intBuffer[p + offset13] > cb)
 										  {}
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset10] > cb)
-										if(doubleBuffer[p + offset11] > cb)
-										  if(doubleBuffer[p + offset12] > cb)
-											if(doubleBuffer[p + offset13] > cb)
+									  if(intBuffer[p + offset10] > cb)
+										if(intBuffer[p + offset11] > cb)
+										  if(intBuffer[p + offset12] > cb)
+											if(intBuffer[p + offset13] > cb)
 											  {}
 											else
 											  continue;
@@ -352,12 +353,12 @@ public class OastDetector9_16 {
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset8] > cb)
-									  if(doubleBuffer[p + offset9] > cb)
-										if(doubleBuffer[p + offset10] > cb)
-										  if(doubleBuffer[p + offset11] > cb)
-											if(doubleBuffer[p + offset12] > cb)
-											  if(doubleBuffer[p + offset13] > cb)
+									if(intBuffer[p + offset8] > cb)
+									  if(intBuffer[p + offset9] > cb)
+										if(intBuffer[p + offset10] > cb)
+										  if(intBuffer[p + offset11] > cb)
+											if(intBuffer[p + offset12] > cb)
+											  if(intBuffer[p + offset13] > cb)
 												{}
 											  else
 												continue;
@@ -375,27 +376,27 @@ public class OastDetector9_16 {
 								  continue;
 							  else
 								continue;
-						  else if(doubleBuffer[p + offset5] < c_b)
-							if(doubleBuffer[p + offset12] > cb)
-							  if(doubleBuffer[p + offset13] > cb)
-								if(doubleBuffer[p + offset14] > cb)
-								  if(doubleBuffer[p + offset15] > cb)
-									if(doubleBuffer[p + offset1] > cb)
-									  if(doubleBuffer[p + offset3] > cb)
+						  else if(intBuffer[p + offset5] < c_b)
+							if(intBuffer[p + offset12] > cb)
+							  if(intBuffer[p + offset13] > cb)
+								if(intBuffer[p + offset14] > cb)
+								  if(intBuffer[p + offset15] > cb)
+									if(intBuffer[p + offset1] > cb)
+									  if(intBuffer[p + offset3] > cb)
 										{}
 									  else
-										if(doubleBuffer[p + offset10] > cb)
-										  if(doubleBuffer[p + offset11] > cb)
+										if(intBuffer[p + offset10] > cb)
+										  if(intBuffer[p + offset11] > cb)
 											{}
 										  else
 											continue;
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset8] > cb)
-										if(doubleBuffer[p + offset9] > cb)
-										  if(doubleBuffer[p + offset10] > cb)
-											if(doubleBuffer[p + offset11] > cb)
+									  if(intBuffer[p + offset8] > cb)
+										if(intBuffer[p + offset9] > cb)
+										  if(intBuffer[p + offset10] > cb)
+											if(intBuffer[p + offset11] > cb)
 											  {}
 											else
 											  continue;
@@ -406,12 +407,12 @@ public class OastDetector9_16 {
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset6] > cb)
-									  if(doubleBuffer[p + offset7] > cb)
-										if(doubleBuffer[p + offset8] > cb)
-										  if(doubleBuffer[p + offset9] > cb)
-											if(doubleBuffer[p + offset10] > cb)
-											  if(doubleBuffer[p + offset11] > cb)
+									if(intBuffer[p + offset6] > cb)
+									  if(intBuffer[p + offset7] > cb)
+										if(intBuffer[p + offset8] > cb)
+										  if(intBuffer[p + offset9] > cb)
+											if(intBuffer[p + offset10] > cb)
+											  if(intBuffer[p + offset11] > cb)
 												{}
 											  else
 												continue;
@@ -429,18 +430,18 @@ public class OastDetector9_16 {
 								  continue;
 							  else
 								continue;
-							else if(doubleBuffer[p + offset12] < c_b)
-							  if(doubleBuffer[p + offset7] < c_b)
-								if(doubleBuffer[p + offset8] < c_b)
-								  if(doubleBuffer[p + offset9] < c_b)
-									if(doubleBuffer[p + offset10] < c_b)
-									  if(doubleBuffer[p + offset11] < c_b)
-										if(doubleBuffer[p + offset13] < c_b)
-										  if(doubleBuffer[p + offset6] < c_b)
+							else if(intBuffer[p + offset12] < c_b)
+							  if(intBuffer[p + offset7] < c_b)
+								if(intBuffer[p + offset8] < c_b)
+								  if(intBuffer[p + offset9] < c_b)
+									if(intBuffer[p + offset10] < c_b)
+									  if(intBuffer[p + offset11] < c_b)
+										if(intBuffer[p + offset13] < c_b)
+										  if(intBuffer[p + offset6] < c_b)
 											{}
 										  else
-											if(doubleBuffer[p + offset14] < c_b)
-											  if(doubleBuffer[p + offset15] < c_b)
+											if(intBuffer[p + offset14] < c_b)
+											  if(intBuffer[p + offset15] < c_b)
 												{}
 											  else
 												continue;
@@ -461,26 +462,26 @@ public class OastDetector9_16 {
 							else
 							  continue;
 						  else
-							if(doubleBuffer[p + offset12] > cb)
-							  if(doubleBuffer[p + offset13] > cb)
-								if(doubleBuffer[p + offset14] > cb)
-								  if(doubleBuffer[p + offset15] > cb)
-									if(doubleBuffer[p + offset1] > cb)
-									  if(doubleBuffer[p + offset3] > cb)
+							if(intBuffer[p + offset12] > cb)
+							  if(intBuffer[p + offset13] > cb)
+								if(intBuffer[p + offset14] > cb)
+								  if(intBuffer[p + offset15] > cb)
+									if(intBuffer[p + offset1] > cb)
+									  if(intBuffer[p + offset3] > cb)
 										{}
 									  else
-										if(doubleBuffer[p + offset10] > cb)
-										  if(doubleBuffer[p + offset11] > cb)
+										if(intBuffer[p + offset10] > cb)
+										  if(intBuffer[p + offset11] > cb)
 											{}
 										  else
 											continue;
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset8] > cb)
-										if(doubleBuffer[p + offset9] > cb)
-										  if(doubleBuffer[p + offset10] > cb)
-											if(doubleBuffer[p + offset11] > cb)
+									  if(intBuffer[p + offset8] > cb)
+										if(intBuffer[p + offset9] > cb)
+										  if(intBuffer[p + offset10] > cb)
+											if(intBuffer[p + offset11] > cb)
 											  {}
 											else
 											  continue;
@@ -491,12 +492,12 @@ public class OastDetector9_16 {
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset6] > cb)
-									  if(doubleBuffer[p + offset7] > cb)
-										if(doubleBuffer[p + offset8] > cb)
-										  if(doubleBuffer[p + offset9] > cb)
-											if(doubleBuffer[p + offset10] > cb)
-											  if(doubleBuffer[p + offset11] > cb)
+									if(intBuffer[p + offset6] > cb)
+									  if(intBuffer[p + offset7] > cb)
+										if(intBuffer[p + offset8] > cb)
+										  if(intBuffer[p + offset9] > cb)
+											if(intBuffer[p + offset10] > cb)
+											  if(intBuffer[p + offset11] > cb)
 												{}
 											  else
 												continue;
@@ -514,18 +515,18 @@ public class OastDetector9_16 {
 								  continue;
 							  else
 								continue;
-							else if(doubleBuffer[p + offset12] < c_b)
-							  if(doubleBuffer[p + offset7] < c_b)
-								if(doubleBuffer[p + offset8] < c_b)
-								  if(doubleBuffer[p + offset9] < c_b)
-									if(doubleBuffer[p + offset10] < c_b)
-									  if(doubleBuffer[p + offset11] < c_b)
-										if(doubleBuffer[p + offset13] < c_b)
-										  if(doubleBuffer[p + offset14] < c_b)
-											if(doubleBuffer[p + offset6] < c_b)
+							else if(intBuffer[p + offset12] < c_b)
+							  if(intBuffer[p + offset7] < c_b)
+								if(intBuffer[p + offset8] < c_b)
+								  if(intBuffer[p + offset9] < c_b)
+									if(intBuffer[p + offset10] < c_b)
+									  if(intBuffer[p + offset11] < c_b)
+										if(intBuffer[p + offset13] < c_b)
+										  if(intBuffer[p + offset14] < c_b)
+											if(intBuffer[p + offset6] < c_b)
 											  {}
 											else
-											  if(doubleBuffer[p + offset15] < c_b)
+											  if(intBuffer[p + offset15] < c_b)
 												{}
 											  else
 												continue;
@@ -545,28 +546,28 @@ public class OastDetector9_16 {
 								continue;
 							else
 							  continue;
-						else if(doubleBuffer[p + offset4] < c_b)
-						  if(doubleBuffer[p + offset11] > cb)
-							if(doubleBuffer[p + offset12] > cb)
-							  if(doubleBuffer[p + offset13] > cb)
-								if(doubleBuffer[p + offset10] > cb)
-								  if(doubleBuffer[p + offset14] > cb)
-									if(doubleBuffer[p + offset15] > cb)
-									  if(doubleBuffer[p + offset1] > cb)
+						else if(intBuffer[p + offset4] < c_b)
+						  if(intBuffer[p + offset11] > cb)
+							if(intBuffer[p + offset12] > cb)
+							  if(intBuffer[p + offset13] > cb)
+								if(intBuffer[p + offset10] > cb)
+								  if(intBuffer[p + offset14] > cb)
+									if(intBuffer[p + offset15] > cb)
+									  if(intBuffer[p + offset1] > cb)
 										{}
 									  else
-										if(doubleBuffer[p + offset8] > cb)
-										  if(doubleBuffer[p + offset9] > cb)
+										if(intBuffer[p + offset8] > cb)
+										  if(intBuffer[p + offset9] > cb)
 											{}
 										  else
 											continue;
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset6] > cb)
-										if(doubleBuffer[p + offset7] > cb)
-										  if(doubleBuffer[p + offset8] > cb)
-											if(doubleBuffer[p + offset9] > cb)
+									  if(intBuffer[p + offset6] > cb)
+										if(intBuffer[p + offset7] > cb)
+										  if(intBuffer[p + offset8] > cb)
+											if(intBuffer[p + offset9] > cb)
 											  {}
 											else
 											  continue;
@@ -577,11 +578,11 @@ public class OastDetector9_16 {
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset5] > cb)
-									  if(doubleBuffer[p + offset6] > cb)
-										if(doubleBuffer[p + offset7] > cb)
-										  if(doubleBuffer[p + offset8] > cb)
-											if(doubleBuffer[p + offset9] > cb)
+									if(intBuffer[p + offset5] > cb)
+									  if(intBuffer[p + offset6] > cb)
+										if(intBuffer[p + offset7] > cb)
+										  if(intBuffer[p + offset8] > cb)
+											if(intBuffer[p + offset9] > cb)
 											  {}
 											else
 											  continue;
@@ -594,10 +595,10 @@ public class OastDetector9_16 {
 									else
 									  continue;
 								else
-								  if(doubleBuffer[p + offset1] > cb)
-									if(doubleBuffer[p + offset3] > cb)
-									  if(doubleBuffer[p + offset14] > cb)
-										if(doubleBuffer[p + offset15] > cb)
+								  if(intBuffer[p + offset1] > cb)
+									if(intBuffer[p + offset3] > cb)
+									  if(intBuffer[p + offset14] > cb)
+										if(intBuffer[p + offset15] > cb)
 										  {}
 										else
 										  continue;
@@ -611,24 +612,24 @@ public class OastDetector9_16 {
 								continue;
 							else
 							  continue;
-						  else if(doubleBuffer[p + offset11] < c_b)
-							if(doubleBuffer[p + offset7] < c_b)
-							  if(doubleBuffer[p + offset8] < c_b)
-								if(doubleBuffer[p + offset9] < c_b)
-								  if(doubleBuffer[p + offset10] < c_b)
-									if(doubleBuffer[p + offset6] < c_b)
-									  if(doubleBuffer[p + offset5] < c_b)
-										if(doubleBuffer[p + offset3] < c_b)
+						  else if(intBuffer[p + offset11] < c_b)
+							if(intBuffer[p + offset7] < c_b)
+							  if(intBuffer[p + offset8] < c_b)
+								if(intBuffer[p + offset9] < c_b)
+								  if(intBuffer[p + offset10] < c_b)
+									if(intBuffer[p + offset6] < c_b)
+									  if(intBuffer[p + offset5] < c_b)
+										if(intBuffer[p + offset3] < c_b)
 										  {}
 										else
-										  if(doubleBuffer[p + offset12] < c_b)
+										  if(intBuffer[p + offset12] < c_b)
 											{}
 										  else
 											continue;
 									  else
-										if(doubleBuffer[p + offset12] < c_b)
-										  if(doubleBuffer[p + offset13] < c_b)
-											if(doubleBuffer[p + offset14] < c_b)
+										if(intBuffer[p + offset12] < c_b)
+										  if(intBuffer[p + offset13] < c_b)
+											if(intBuffer[p + offset14] < c_b)
 											  {}
 											else
 											  continue;
@@ -637,10 +638,10 @@ public class OastDetector9_16 {
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset12] < c_b)
-										if(doubleBuffer[p + offset13] < c_b)
-										  if(doubleBuffer[p + offset14] < c_b)
-											if(doubleBuffer[p + offset15] < c_b)
+									  if(intBuffer[p + offset12] < c_b)
+										if(intBuffer[p + offset13] < c_b)
+										  if(intBuffer[p + offset14] < c_b)
+											if(intBuffer[p + offset15] < c_b)
 											  {}
 											else
 											  continue;
@@ -661,27 +662,27 @@ public class OastDetector9_16 {
 						  else
 							continue;
 						else
-						  if(doubleBuffer[p + offset11] > cb)
-							if(doubleBuffer[p + offset12] > cb)
-							  if(doubleBuffer[p + offset13] > cb)
-								if(doubleBuffer[p + offset10] > cb)
-								  if(doubleBuffer[p + offset14] > cb)
-									if(doubleBuffer[p + offset15] > cb)
-									  if(doubleBuffer[p + offset1] > cb)
+						  if(intBuffer[p + offset11] > cb)
+							if(intBuffer[p + offset12] > cb)
+							  if(intBuffer[p + offset13] > cb)
+								if(intBuffer[p + offset10] > cb)
+								  if(intBuffer[p + offset14] > cb)
+									if(intBuffer[p + offset15] > cb)
+									  if(intBuffer[p + offset1] > cb)
 										{}
 									  else
-										if(doubleBuffer[p + offset8] > cb)
-										  if(doubleBuffer[p + offset9] > cb)
+										if(intBuffer[p + offset8] > cb)
+										  if(intBuffer[p + offset9] > cb)
 											{}
 										  else
 											continue;
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset6] > cb)
-										if(doubleBuffer[p + offset7] > cb)
-										  if(doubleBuffer[p + offset8] > cb)
-											if(doubleBuffer[p + offset9] > cb)
+									  if(intBuffer[p + offset6] > cb)
+										if(intBuffer[p + offset7] > cb)
+										  if(intBuffer[p + offset8] > cb)
+											if(intBuffer[p + offset9] > cb)
 											  {}
 											else
 											  continue;
@@ -692,11 +693,11 @@ public class OastDetector9_16 {
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset5] > cb)
-									  if(doubleBuffer[p + offset6] > cb)
-										if(doubleBuffer[p + offset7] > cb)
-										  if(doubleBuffer[p + offset8] > cb)
-											if(doubleBuffer[p + offset9] > cb)
+									if(intBuffer[p + offset5] > cb)
+									  if(intBuffer[p + offset6] > cb)
+										if(intBuffer[p + offset7] > cb)
+										  if(intBuffer[p + offset8] > cb)
+											if(intBuffer[p + offset9] > cb)
 											  {}
 											else
 											  continue;
@@ -709,10 +710,10 @@ public class OastDetector9_16 {
 									else
 									  continue;
 								else
-								  if(doubleBuffer[p + offset1] > cb)
-									if(doubleBuffer[p + offset3] > cb)
-									  if(doubleBuffer[p + offset14] > cb)
-										if(doubleBuffer[p + offset15] > cb)
+								  if(intBuffer[p + offset1] > cb)
+									if(intBuffer[p + offset3] > cb)
+									  if(intBuffer[p + offset14] > cb)
+										if(intBuffer[p + offset15] > cb)
 										  {}
 										else
 										  continue;
@@ -726,24 +727,24 @@ public class OastDetector9_16 {
 								continue;
 							else
 							  continue;
-						  else if(doubleBuffer[p + offset11] < c_b)
-							if(doubleBuffer[p + offset7] < c_b)
-							  if(doubleBuffer[p + offset8] < c_b)
-								if(doubleBuffer[p + offset9] < c_b)
-								  if(doubleBuffer[p + offset10] < c_b)
-									if(doubleBuffer[p + offset12] < c_b)
-									  if(doubleBuffer[p + offset13] < c_b)
-										if(doubleBuffer[p + offset6] < c_b)
-										  if(doubleBuffer[p + offset5] < c_b)
+						  else if(intBuffer[p + offset11] < c_b)
+							if(intBuffer[p + offset7] < c_b)
+							  if(intBuffer[p + offset8] < c_b)
+								if(intBuffer[p + offset9] < c_b)
+								  if(intBuffer[p + offset10] < c_b)
+									if(intBuffer[p + offset12] < c_b)
+									  if(intBuffer[p + offset13] < c_b)
+										if(intBuffer[p + offset6] < c_b)
+										  if(intBuffer[p + offset5] < c_b)
 											{}
 										  else
-											if(doubleBuffer[p + offset14] < c_b)
+											if(intBuffer[p + offset14] < c_b)
 											  {}
 											else
 											  continue;
 										else
-										  if(doubleBuffer[p + offset14] < c_b)
-											if(doubleBuffer[p + offset15] < c_b)
+										  if(intBuffer[p + offset14] < c_b)
+											if(intBuffer[p + offset15] < c_b)
 											  {}
 											else
 											  continue;
@@ -763,28 +764,28 @@ public class OastDetector9_16 {
 							  continue;
 						  else
 							continue;
-					  else if(doubleBuffer[p + offset2] < c_b)
-						if(doubleBuffer[p + offset9] > cb)
-						  if(doubleBuffer[p + offset10] > cb)
-							if(doubleBuffer[p + offset11] > cb)
-							  if(doubleBuffer[p + offset8] > cb)
-								if(doubleBuffer[p + offset12] > cb)
-								  if(doubleBuffer[p + offset13] > cb)
-									if(doubleBuffer[p + offset14] > cb)
-									  if(doubleBuffer[p + offset15] > cb)
+					  else if(intBuffer[p + offset2] < c_b)
+						if(intBuffer[p + offset9] > cb)
+						  if(intBuffer[p + offset10] > cb)
+							if(intBuffer[p + offset11] > cb)
+							  if(intBuffer[p + offset8] > cb)
+								if(intBuffer[p + offset12] > cb)
+								  if(intBuffer[p + offset13] > cb)
+									if(intBuffer[p + offset14] > cb)
+									  if(intBuffer[p + offset15] > cb)
 										{}
 									  else
-										if(doubleBuffer[p + offset6] > cb)
-										  if(doubleBuffer[p + offset7] > cb)
+										if(intBuffer[p + offset6] > cb)
+										  if(intBuffer[p + offset7] > cb)
 											{}
 										  else
 											continue;
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset5] > cb)
-										if(doubleBuffer[p + offset6] > cb)
-										  if(doubleBuffer[p + offset7] > cb)
+									  if(intBuffer[p + offset5] > cb)
+										if(intBuffer[p + offset6] > cb)
+										  if(intBuffer[p + offset7] > cb)
 											{}
 										  else
 											continue;
@@ -793,10 +794,10 @@ public class OastDetector9_16 {
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset4] > cb)
-									  if(doubleBuffer[p + offset5] > cb)
-										if(doubleBuffer[p + offset6] > cb)
-										  if(doubleBuffer[p + offset7] > cb)
+									if(intBuffer[p + offset4] > cb)
+									  if(intBuffer[p + offset5] > cb)
+										if(intBuffer[p + offset6] > cb)
+										  if(intBuffer[p + offset7] > cb)
 											{}
 										  else
 											continue;
@@ -807,11 +808,11 @@ public class OastDetector9_16 {
 									else
 									  continue;
 								else
-								  if(doubleBuffer[p + offset3] > cb)
-									if(doubleBuffer[p + offset4] > cb)
-									  if(doubleBuffer[p + offset5] > cb)
-										if(doubleBuffer[p + offset6] > cb)
-										  if(doubleBuffer[p + offset7] > cb)
+								  if(intBuffer[p + offset3] > cb)
+									if(intBuffer[p + offset4] > cb)
+									  if(intBuffer[p + offset5] > cb)
+										if(intBuffer[p + offset6] > cb)
+										  if(intBuffer[p + offset7] > cb)
 											{}
 										  else
 											continue;
@@ -824,11 +825,11 @@ public class OastDetector9_16 {
 								  else
 									continue;
 							  else
-								if(doubleBuffer[p + offset1] > cb)
-								  if(doubleBuffer[p + offset12] > cb)
-									if(doubleBuffer[p + offset13] > cb)
-									  if(doubleBuffer[p + offset14] > cb)
-										if(doubleBuffer[p + offset15] > cb)
+								if(intBuffer[p + offset1] > cb)
+								  if(intBuffer[p + offset12] > cb)
+									if(intBuffer[p + offset13] > cb)
+									  if(intBuffer[p + offset14] > cb)
+										if(intBuffer[p + offset15] > cb)
 										  {}
 										else
 										  continue;
@@ -844,24 +845,24 @@ public class OastDetector9_16 {
 							  continue;
 						  else
 							continue;
-						else if(doubleBuffer[p + offset9] < c_b)
-						  if(doubleBuffer[p + offset7] < c_b)
-							if(doubleBuffer[p + offset8] < c_b)
-							  if(doubleBuffer[p + offset6] < c_b)
-								if(doubleBuffer[p + offset5] < c_b)
-								  if(doubleBuffer[p + offset4] < c_b)
-									if(doubleBuffer[p + offset3] < c_b)
-									  if(doubleBuffer[p + offset1] < c_b)
+						else if(intBuffer[p + offset9] < c_b)
+						  if(intBuffer[p + offset7] < c_b)
+							if(intBuffer[p + offset8] < c_b)
+							  if(intBuffer[p + offset6] < c_b)
+								if(intBuffer[p + offset5] < c_b)
+								  if(intBuffer[p + offset4] < c_b)
+									if(intBuffer[p + offset3] < c_b)
+									  if(intBuffer[p + offset1] < c_b)
 										{}
 									  else
-										if(doubleBuffer[p + offset10] < c_b)
+										if(intBuffer[p + offset10] < c_b)
 										  {}
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset10] < c_b)
-										if(doubleBuffer[p + offset11] < c_b)
-										  if(doubleBuffer[p + offset12] < c_b)
+									  if(intBuffer[p + offset10] < c_b)
+										if(intBuffer[p + offset11] < c_b)
+										  if(intBuffer[p + offset12] < c_b)
 											{}
 										  else
 											continue;
@@ -870,10 +871,10 @@ public class OastDetector9_16 {
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset10] < c_b)
-									  if(doubleBuffer[p + offset11] < c_b)
-										if(doubleBuffer[p + offset12] < c_b)
-										  if(doubleBuffer[p + offset13] < c_b)
+									if(intBuffer[p + offset10] < c_b)
+									  if(intBuffer[p + offset11] < c_b)
+										if(intBuffer[p + offset12] < c_b)
+										  if(intBuffer[p + offset13] < c_b)
 											{}
 										  else
 											continue;
@@ -884,11 +885,11 @@ public class OastDetector9_16 {
 									else
 									  continue;
 								else
-								  if(doubleBuffer[p + offset10] < c_b)
-									if(doubleBuffer[p + offset11] < c_b)
-									  if(doubleBuffer[p + offset12] < c_b)
-										if(doubleBuffer[p + offset13] < c_b)
-										  if(doubleBuffer[p + offset14] < c_b)
+								  if(intBuffer[p + offset10] < c_b)
+									if(intBuffer[p + offset11] < c_b)
+									  if(intBuffer[p + offset12] < c_b)
+										if(intBuffer[p + offset13] < c_b)
+										  if(intBuffer[p + offset14] < c_b)
 											{}
 										  else
 											continue;
@@ -901,12 +902,12 @@ public class OastDetector9_16 {
 								  else
 									continue;
 							  else
-								if(doubleBuffer[p + offset10] < c_b)
-								  if(doubleBuffer[p + offset11] < c_b)
-									if(doubleBuffer[p + offset12] < c_b)
-									  if(doubleBuffer[p + offset13] < c_b)
-										if(doubleBuffer[p + offset14] < c_b)
-										  if(doubleBuffer[p + offset15] < c_b)
+								if(intBuffer[p + offset10] < c_b)
+								  if(intBuffer[p + offset11] < c_b)
+									if(intBuffer[p + offset12] < c_b)
+									  if(intBuffer[p + offset13] < c_b)
+										if(intBuffer[p + offset14] < c_b)
+										  if(intBuffer[p + offset15] < c_b)
 											{}
 										  else
 											continue;
@@ -927,27 +928,27 @@ public class OastDetector9_16 {
 						else
 						  continue;
 					  else
-						if(doubleBuffer[p + offset9] > cb)
-						  if(doubleBuffer[p + offset10] > cb)
-							if(doubleBuffer[p + offset11] > cb)
-							  if(doubleBuffer[p + offset8] > cb)
-								if(doubleBuffer[p + offset12] > cb)
-								  if(doubleBuffer[p + offset13] > cb)
-									if(doubleBuffer[p + offset14] > cb)
-									  if(doubleBuffer[p + offset15] > cb)
+						if(intBuffer[p + offset9] > cb)
+						  if(intBuffer[p + offset10] > cb)
+							if(intBuffer[p + offset11] > cb)
+							  if(intBuffer[p + offset8] > cb)
+								if(intBuffer[p + offset12] > cb)
+								  if(intBuffer[p + offset13] > cb)
+									if(intBuffer[p + offset14] > cb)
+									  if(intBuffer[p + offset15] > cb)
 										{}
 									  else
-										if(doubleBuffer[p + offset6] > cb)
-										  if(doubleBuffer[p + offset7] > cb)
+										if(intBuffer[p + offset6] > cb)
+										  if(intBuffer[p + offset7] > cb)
 											{}
 										  else
 											continue;
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset5] > cb)
-										if(doubleBuffer[p + offset6] > cb)
-										  if(doubleBuffer[p + offset7] > cb)
+									  if(intBuffer[p + offset5] > cb)
+										if(intBuffer[p + offset6] > cb)
+										  if(intBuffer[p + offset7] > cb)
 											{}
 										  else
 											continue;
@@ -956,10 +957,10 @@ public class OastDetector9_16 {
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset4] > cb)
-									  if(doubleBuffer[p + offset5] > cb)
-										if(doubleBuffer[p + offset6] > cb)
-										  if(doubleBuffer[p + offset7] > cb)
+									if(intBuffer[p + offset4] > cb)
+									  if(intBuffer[p + offset5] > cb)
+										if(intBuffer[p + offset6] > cb)
+										  if(intBuffer[p + offset7] > cb)
 											{}
 										  else
 											continue;
@@ -970,11 +971,11 @@ public class OastDetector9_16 {
 									else
 									  continue;
 								else
-								  if(doubleBuffer[p + offset3] > cb)
-									if(doubleBuffer[p + offset4] > cb)
-									  if(doubleBuffer[p + offset5] > cb)
-										if(doubleBuffer[p + offset6] > cb)
-										  if(doubleBuffer[p + offset7] > cb)
+								  if(intBuffer[p + offset3] > cb)
+									if(intBuffer[p + offset4] > cb)
+									  if(intBuffer[p + offset5] > cb)
+										if(intBuffer[p + offset6] > cb)
+										  if(intBuffer[p + offset7] > cb)
 											{}
 										  else
 											continue;
@@ -987,11 +988,11 @@ public class OastDetector9_16 {
 								  else
 									continue;
 							  else
-								if(doubleBuffer[p + offset1] > cb)
-								  if(doubleBuffer[p + offset12] > cb)
-									if(doubleBuffer[p + offset13] > cb)
-									  if(doubleBuffer[p + offset14] > cb)
-										if(doubleBuffer[p + offset15] > cb)
+								if(intBuffer[p + offset1] > cb)
+								  if(intBuffer[p + offset12] > cb)
+									if(intBuffer[p + offset13] > cb)
+									  if(intBuffer[p + offset14] > cb)
+										if(intBuffer[p + offset15] > cb)
 										  {}
 										else
 										  continue;
@@ -1007,33 +1008,33 @@ public class OastDetector9_16 {
 							  continue;
 						  else
 							continue;
-						else if(doubleBuffer[p + offset9] < c_b)
-						  if(doubleBuffer[p + offset7] < c_b)
-							if(doubleBuffer[p + offset8] < c_b)
-							  if(doubleBuffer[p + offset10] < c_b)
-								if(doubleBuffer[p + offset11] < c_b)
-								  if(doubleBuffer[p + offset6] < c_b)
-									if(doubleBuffer[p + offset5] < c_b)
-									  if(doubleBuffer[p + offset4] < c_b)
-										if(doubleBuffer[p + offset3] < c_b)
+						else if(intBuffer[p + offset9] < c_b)
+						  if(intBuffer[p + offset7] < c_b)
+							if(intBuffer[p + offset8] < c_b)
+							  if(intBuffer[p + offset10] < c_b)
+								if(intBuffer[p + offset11] < c_b)
+								  if(intBuffer[p + offset6] < c_b)
+									if(intBuffer[p + offset5] < c_b)
+									  if(intBuffer[p + offset4] < c_b)
+										if(intBuffer[p + offset3] < c_b)
 										  {}
 										else
-										  if(doubleBuffer[p + offset12] < c_b)
+										  if(intBuffer[p + offset12] < c_b)
 											{}
 										  else
 											continue;
 									  else
-										if(doubleBuffer[p + offset12] < c_b)
-										  if(doubleBuffer[p + offset13] < c_b)
+										if(intBuffer[p + offset12] < c_b)
+										  if(intBuffer[p + offset13] < c_b)
 											{}
 										  else
 											continue;
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset12] < c_b)
-										if(doubleBuffer[p + offset13] < c_b)
-										  if(doubleBuffer[p + offset14] < c_b)
+									  if(intBuffer[p + offset12] < c_b)
+										if(intBuffer[p + offset13] < c_b)
+										  if(intBuffer[p + offset14] < c_b)
 											{}
 										  else
 											continue;
@@ -1042,10 +1043,10 @@ public class OastDetector9_16 {
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset12] < c_b)
-									  if(doubleBuffer[p + offset13] < c_b)
-										if(doubleBuffer[p + offset14] < c_b)
-										  if(doubleBuffer[p + offset15] < c_b)
+									if(intBuffer[p + offset12] < c_b)
+									  if(intBuffer[p + offset13] < c_b)
+										if(intBuffer[p + offset14] < c_b)
+										  if(intBuffer[p + offset15] < c_b)
 											{}
 										  else
 											continue;
@@ -1059,196 +1060,196 @@ public class OastDetector9_16 {
 								  continue;
 							  else
 								continue;
-							else
-							  continue;
-						  else
-							continue;
-						else
-						  continue;
-					else if(doubleBuffer[p + offset0] < c_b)
-					  if(doubleBuffer[p + offset2] > cb)
-						if(doubleBuffer[p + offset9] > cb)
-						  if(doubleBuffer[p + offset7] > cb)
-							if(doubleBuffer[p + offset8] > cb)
-							  if(doubleBuffer[p + offset6] > cb)
-								if(doubleBuffer[p + offset5] > cb)
-								  if(doubleBuffer[p + offset4] > cb)
-									if(doubleBuffer[p + offset3] > cb)
-									  if(doubleBuffer[p + offset1] > cb)
-										{}
-									  else
-										if(doubleBuffer[p + offset10] > cb)
-										  {}
-										else
-										  continue;
-									else
-									  if(doubleBuffer[p + offset10] > cb)
-										if(doubleBuffer[p + offset11] > cb)
-										  if(doubleBuffer[p + offset12] > cb)
-											{}
-										  else
-											continue;
-										else
-										  continue;
-									  else
-										continue;
-								  else
-									if(doubleBuffer[p + offset10] > cb)
-									  if(doubleBuffer[p + offset11] > cb)
-										if(doubleBuffer[p + offset12] > cb)
-										  if(doubleBuffer[p + offset13] > cb)
-											{}
-										  else
-											continue;
-										else
-										  continue;
-									  else
-										continue;
-									else
-									  continue;
-								else
-								  if(doubleBuffer[p + offset10] > cb)
-									if(doubleBuffer[p + offset11] > cb)
-									  if(doubleBuffer[p + offset12] > cb)
-										if(doubleBuffer[p + offset13] > cb)
-										  if(doubleBuffer[p + offset14] > cb)
-											{}
-										  else
-											continue;
-										else
-										  continue;
-									  else
-										continue;
-									else
-									  continue;
-								  else
-									continue;
-							  else
-								if(doubleBuffer[p + offset10] > cb)
-								  if(doubleBuffer[p + offset11] > cb)
-									if(doubleBuffer[p + offset12] > cb)
-									  if(doubleBuffer[p + offset13] > cb)
-										if(doubleBuffer[p + offset14] > cb)
-										  if(doubleBuffer[p + offset15] > cb)
-											{}
-										  else
-											continue;
-										else
-										  continue;
-									  else
-										continue;
-									else
-									  continue;
-								  else
-									continue;
-								else
-								  continue;
-							else
-							  continue;
-						  else
-							continue;
-						else if(doubleBuffer[p + offset9] < c_b)
-						  if(doubleBuffer[p + offset10] < c_b)
-							if(doubleBuffer[p + offset11] < c_b)
-							  if(doubleBuffer[p + offset8] < c_b)
-								if(doubleBuffer[p + offset12] < c_b)
-								  if(doubleBuffer[p + offset13] < c_b)
-									if(doubleBuffer[p + offset14] < c_b)
-									  if(doubleBuffer[p + offset15] < c_b)
-										{}
-									  else
-										if(doubleBuffer[p + offset6] < c_b)
-										  if(doubleBuffer[p + offset7] < c_b)
-											{}
-										  else
-											continue;
-										else
-										  continue;
-									else
-									  if(doubleBuffer[p + offset5] < c_b)
-										if(doubleBuffer[p + offset6] < c_b)
-										  if(doubleBuffer[p + offset7] < c_b)
-											{}
-										  else
-											continue;
-										else
-										  continue;
-									  else
-										continue;
-								  else
-									if(doubleBuffer[p + offset4] < c_b)
-									  if(doubleBuffer[p + offset5] < c_b)
-										if(doubleBuffer[p + offset6] < c_b)
-										  if(doubleBuffer[p + offset7] < c_b)
-											{}
-										  else
-											continue;
-										else
-										  continue;
-									  else
-										continue;
-									else
-									  continue;
-								else
-								  if(doubleBuffer[p + offset3] < c_b)
-									if(doubleBuffer[p + offset4] < c_b)
-									  if(doubleBuffer[p + offset5] < c_b)
-										if(doubleBuffer[p + offset6] < c_b)
-										  if(doubleBuffer[p + offset7] < c_b)
-											{}
-										  else
-											continue;
-										else
-										  continue;
-									  else
-										continue;
-									else
-									  continue;
-								  else
-									continue;
-							  else
-								if(doubleBuffer[p + offset1] < c_b)
-								  if(doubleBuffer[p + offset12] < c_b)
-									if(doubleBuffer[p + offset13] < c_b)
-									  if(doubleBuffer[p + offset14] < c_b)
-										if(doubleBuffer[p + offset15] < c_b)
-										  {}
-										else
-										  continue;
-									  else
-										continue;
-									else
-									  continue;
-								  else
-									continue;
-								else
-								  continue;
 							else
 							  continue;
 						  else
 							continue;
 						else
 						  continue;
-					  else if(doubleBuffer[p + offset2] < c_b)
-						if(doubleBuffer[p + offset4] > cb)
-						  if(doubleBuffer[p + offset11] > cb)
-							if(doubleBuffer[p + offset7] > cb)
-							  if(doubleBuffer[p + offset8] > cb)
-								if(doubleBuffer[p + offset9] > cb)
-								  if(doubleBuffer[p + offset10] > cb)
-									if(doubleBuffer[p + offset6] > cb)
-									  if(doubleBuffer[p + offset5] > cb)
-										if(doubleBuffer[p + offset3] > cb)
+					else if(intBuffer[p + offset0] < c_b)
+					  if(intBuffer[p + offset2] > cb)
+						if(intBuffer[p + offset9] > cb)
+						  if(intBuffer[p + offset7] > cb)
+							if(intBuffer[p + offset8] > cb)
+							  if(intBuffer[p + offset6] > cb)
+								if(intBuffer[p + offset5] > cb)
+								  if(intBuffer[p + offset4] > cb)
+									if(intBuffer[p + offset3] > cb)
+									  if(intBuffer[p + offset1] > cb)
+										{}
+									  else
+										if(intBuffer[p + offset10] > cb)
 										  {}
 										else
-										  if(doubleBuffer[p + offset12] > cb)
+										  continue;
+									else
+									  if(intBuffer[p + offset10] > cb)
+										if(intBuffer[p + offset11] > cb)
+										  if(intBuffer[p + offset12] > cb)
+											{}
+										  else
+											continue;
+										else
+										  continue;
+									  else
+										continue;
+								  else
+									if(intBuffer[p + offset10] > cb)
+									  if(intBuffer[p + offset11] > cb)
+										if(intBuffer[p + offset12] > cb)
+										  if(intBuffer[p + offset13] > cb)
+											{}
+										  else
+											continue;
+										else
+										  continue;
+									  else
+										continue;
+									else
+									  continue;
+								else
+								  if(intBuffer[p + offset10] > cb)
+									if(intBuffer[p + offset11] > cb)
+									  if(intBuffer[p + offset12] > cb)
+										if(intBuffer[p + offset13] > cb)
+										  if(intBuffer[p + offset14] > cb)
+											{}
+										  else
+											continue;
+										else
+										  continue;
+									  else
+										continue;
+									else
+									  continue;
+								  else
+									continue;
+							  else
+								if(intBuffer[p + offset10] > cb)
+								  if(intBuffer[p + offset11] > cb)
+									if(intBuffer[p + offset12] > cb)
+									  if(intBuffer[p + offset13] > cb)
+										if(intBuffer[p + offset14] > cb)
+										  if(intBuffer[p + offset15] > cb)
+											{}
+										  else
+											continue;
+										else
+										  continue;
+									  else
+										continue;
+									else
+									  continue;
+								  else
+									continue;
+								else
+								  continue;
+							else
+							  continue;
+						  else
+							continue;
+						else if(intBuffer[p + offset9] < c_b)
+						  if(intBuffer[p + offset10] < c_b)
+							if(intBuffer[p + offset11] < c_b)
+							  if(intBuffer[p + offset8] < c_b)
+								if(intBuffer[p + offset12] < c_b)
+								  if(intBuffer[p + offset13] < c_b)
+									if(intBuffer[p + offset14] < c_b)
+									  if(intBuffer[p + offset15] < c_b)
+										{}
+									  else
+										if(intBuffer[p + offset6] < c_b)
+										  if(intBuffer[p + offset7] < c_b)
+											{}
+										  else
+											continue;
+										else
+										  continue;
+									else
+									  if(intBuffer[p + offset5] < c_b)
+										if(intBuffer[p + offset6] < c_b)
+										  if(intBuffer[p + offset7] < c_b)
+											{}
+										  else
+											continue;
+										else
+										  continue;
+									  else
+										continue;
+								  else
+									if(intBuffer[p + offset4] < c_b)
+									  if(intBuffer[p + offset5] < c_b)
+										if(intBuffer[p + offset6] < c_b)
+										  if(intBuffer[p + offset7] < c_b)
+											{}
+										  else
+											continue;
+										else
+										  continue;
+									  else
+										continue;
+									else
+									  continue;
+								else
+								  if(intBuffer[p + offset3] < c_b)
+									if(intBuffer[p + offset4] < c_b)
+									  if(intBuffer[p + offset5] < c_b)
+										if(intBuffer[p + offset6] < c_b)
+										  if(intBuffer[p + offset7] < c_b)
+											{}
+										  else
+											continue;
+										else
+										  continue;
+									  else
+										continue;
+									else
+									  continue;
+								  else
+									continue;
+							  else
+								if(intBuffer[p + offset1] < c_b)
+								  if(intBuffer[p + offset12] < c_b)
+									if(intBuffer[p + offset13] < c_b)
+									  if(intBuffer[p + offset14] < c_b)
+										if(intBuffer[p + offset15] < c_b)
+										  {}
+										else
+										  continue;
+									  else
+										continue;
+									else
+									  continue;
+								  else
+									continue;
+								else
+								  continue;
+							else
+							  continue;
+						  else
+							continue;
+						else
+						  continue;
+					  else if(intBuffer[p + offset2] < c_b)
+						if(intBuffer[p + offset4] > cb)
+						  if(intBuffer[p + offset11] > cb)
+							if(intBuffer[p + offset7] > cb)
+							  if(intBuffer[p + offset8] > cb)
+								if(intBuffer[p + offset9] > cb)
+								  if(intBuffer[p + offset10] > cb)
+									if(intBuffer[p + offset6] > cb)
+									  if(intBuffer[p + offset5] > cb)
+										if(intBuffer[p + offset3] > cb)
+										  {}
+										else
+										  if(intBuffer[p + offset12] > cb)
 											{}
 										  else
 											continue;
 									  else
-										if(doubleBuffer[p + offset12] > cb)
-										  if(doubleBuffer[p + offset13] > cb)
-											if(doubleBuffer[p + offset14] > cb)
+										if(intBuffer[p + offset12] > cb)
+										  if(intBuffer[p + offset13] > cb)
+											if(intBuffer[p + offset14] > cb)
 											  {}
 											else
 											  continue;
@@ -1257,10 +1258,10 @@ public class OastDetector9_16 {
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset12] > cb)
-										if(doubleBuffer[p + offset13] > cb)
-										  if(doubleBuffer[p + offset14] > cb)
-											if(doubleBuffer[p + offset15] > cb)
+									  if(intBuffer[p + offset12] > cb)
+										if(intBuffer[p + offset13] > cb)
+										  if(intBuffer[p + offset14] > cb)
+											if(intBuffer[p + offset15] > cb)
 											  {}
 											else
 											  continue;
@@ -1278,27 +1279,27 @@ public class OastDetector9_16 {
 								continue;
 							else
 							  continue;
-						  else if(doubleBuffer[p + offset11] < c_b)
-							if(doubleBuffer[p + offset12] < c_b)
-							  if(doubleBuffer[p + offset13] < c_b)
-								if(doubleBuffer[p + offset10] < c_b)
-								  if(doubleBuffer[p + offset14] < c_b)
-									if(doubleBuffer[p + offset15] < c_b)
-									  if(doubleBuffer[p + offset1] < c_b)
+						  else if(intBuffer[p + offset11] < c_b)
+							if(intBuffer[p + offset12] < c_b)
+							  if(intBuffer[p + offset13] < c_b)
+								if(intBuffer[p + offset10] < c_b)
+								  if(intBuffer[p + offset14] < c_b)
+									if(intBuffer[p + offset15] < c_b)
+									  if(intBuffer[p + offset1] < c_b)
 										{}
 									  else
-										if(doubleBuffer[p + offset8] < c_b)
-										  if(doubleBuffer[p + offset9] < c_b)
+										if(intBuffer[p + offset8] < c_b)
+										  if(intBuffer[p + offset9] < c_b)
 											{}
 										  else
 											continue;
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset6] < c_b)
-										if(doubleBuffer[p + offset7] < c_b)
-										  if(doubleBuffer[p + offset8] < c_b)
-											if(doubleBuffer[p + offset9] < c_b)
+									  if(intBuffer[p + offset6] < c_b)
+										if(intBuffer[p + offset7] < c_b)
+										  if(intBuffer[p + offset8] < c_b)
+											if(intBuffer[p + offset9] < c_b)
 											  {}
 											else
 											  continue;
@@ -1309,11 +1310,11 @@ public class OastDetector9_16 {
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset5] < c_b)
-									  if(doubleBuffer[p + offset6] < c_b)
-										if(doubleBuffer[p + offset7] < c_b)
-										  if(doubleBuffer[p + offset8] < c_b)
-											if(doubleBuffer[p + offset9] < c_b)
+									if(intBuffer[p + offset5] < c_b)
+									  if(intBuffer[p + offset6] < c_b)
+										if(intBuffer[p + offset7] < c_b)
+										  if(intBuffer[p + offset8] < c_b)
+											if(intBuffer[p + offset9] < c_b)
 											  {}
 											else
 											  continue;
@@ -1326,10 +1327,10 @@ public class OastDetector9_16 {
 									else
 									  continue;
 								else
-								  if(doubleBuffer[p + offset1] < c_b)
-									if(doubleBuffer[p + offset3] < c_b)
-									  if(doubleBuffer[p + offset14] < c_b)
-										if(doubleBuffer[p + offset15] < c_b)
+								  if(intBuffer[p + offset1] < c_b)
+									if(intBuffer[p + offset3] < c_b)
+									  if(intBuffer[p + offset14] < c_b)
+										if(intBuffer[p + offset15] < c_b)
 										  {}
 										else
 										  continue;
@@ -1345,20 +1346,20 @@ public class OastDetector9_16 {
 							  continue;
 						  else
 							continue;
-						else if(doubleBuffer[p + offset4] < c_b)
-						  if(doubleBuffer[p + offset5] > cb)
-							if(doubleBuffer[p + offset12] > cb)
-							  if(doubleBuffer[p + offset7] > cb)
-								if(doubleBuffer[p + offset8] > cb)
-								  if(doubleBuffer[p + offset9] > cb)
-									if(doubleBuffer[p + offset10] > cb)
-									  if(doubleBuffer[p + offset11] > cb)
-										if(doubleBuffer[p + offset13] > cb)
-										  if(doubleBuffer[p + offset6] > cb)
+						else if(intBuffer[p + offset4] < c_b)
+						  if(intBuffer[p + offset5] > cb)
+							if(intBuffer[p + offset12] > cb)
+							  if(intBuffer[p + offset7] > cb)
+								if(intBuffer[p + offset8] > cb)
+								  if(intBuffer[p + offset9] > cb)
+									if(intBuffer[p + offset10] > cb)
+									  if(intBuffer[p + offset11] > cb)
+										if(intBuffer[p + offset13] > cb)
+										  if(intBuffer[p + offset6] > cb)
 											{}
 										  else
-											if(doubleBuffer[p + offset14] > cb)
-											  if(doubleBuffer[p + offset15] > cb)
+											if(intBuffer[p + offset14] > cb)
+											  if(intBuffer[p + offset15] > cb)
 												{}
 											  else
 												continue;
@@ -1376,26 +1377,26 @@ public class OastDetector9_16 {
 								  continue;
 							  else
 								continue;
-							else if(doubleBuffer[p + offset12] < c_b)
-							  if(doubleBuffer[p + offset13] < c_b)
-								if(doubleBuffer[p + offset14] < c_b)
-								  if(doubleBuffer[p + offset15] < c_b)
-									if(doubleBuffer[p + offset1] < c_b)
-									  if(doubleBuffer[p + offset3] < c_b)
+							else if(intBuffer[p + offset12] < c_b)
+							  if(intBuffer[p + offset13] < c_b)
+								if(intBuffer[p + offset14] < c_b)
+								  if(intBuffer[p + offset15] < c_b)
+									if(intBuffer[p + offset1] < c_b)
+									  if(intBuffer[p + offset3] < c_b)
 										{}
 									  else
-										if(doubleBuffer[p + offset10] < c_b)
-										  if(doubleBuffer[p + offset11] < c_b)
+										if(intBuffer[p + offset10] < c_b)
+										  if(intBuffer[p + offset11] < c_b)
 											{}
 										  else
 											continue;
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset8] < c_b)
-										if(doubleBuffer[p + offset9] < c_b)
-										  if(doubleBuffer[p + offset10] < c_b)
-											if(doubleBuffer[p + offset11] < c_b)
+									  if(intBuffer[p + offset8] < c_b)
+										if(intBuffer[p + offset9] < c_b)
+										  if(intBuffer[p + offset10] < c_b)
+											if(intBuffer[p + offset11] < c_b)
 											  {}
 											else
 											  continue;
@@ -1406,12 +1407,12 @@ public class OastDetector9_16 {
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset6] < c_b)
-									  if(doubleBuffer[p + offset7] < c_b)
-										if(doubleBuffer[p + offset8] < c_b)
-										  if(doubleBuffer[p + offset9] < c_b)
-											if(doubleBuffer[p + offset10] < c_b)
-											  if(doubleBuffer[p + offset11] < c_b)
+									if(intBuffer[p + offset6] < c_b)
+									  if(intBuffer[p + offset7] < c_b)
+										if(intBuffer[p + offset8] < c_b)
+										  if(intBuffer[p + offset9] < c_b)
+											if(intBuffer[p + offset10] < c_b)
+											  if(intBuffer[p + offset11] < c_b)
 												{}
 											  else
 												continue;
@@ -1431,19 +1432,19 @@ public class OastDetector9_16 {
 								continue;
 							else
 							  continue;
-						  else if(doubleBuffer[p + offset5] < c_b)
-							if(doubleBuffer[p + offset7] > cb)
-							  if(doubleBuffer[p + offset14] > cb)
-								if(doubleBuffer[p + offset8] > cb)
-								  if(doubleBuffer[p + offset9] > cb)
-									if(doubleBuffer[p + offset10] > cb)
-									  if(doubleBuffer[p + offset11] > cb)
-										if(doubleBuffer[p + offset12] > cb)
-										  if(doubleBuffer[p + offset13] > cb)
-											if(doubleBuffer[p + offset6] > cb)
+						  else if(intBuffer[p + offset5] < c_b)
+							if(intBuffer[p + offset7] > cb)
+							  if(intBuffer[p + offset14] > cb)
+								if(intBuffer[p + offset8] > cb)
+								  if(intBuffer[p + offset9] > cb)
+									if(intBuffer[p + offset10] > cb)
+									  if(intBuffer[p + offset11] > cb)
+										if(intBuffer[p + offset12] > cb)
+										  if(intBuffer[p + offset13] > cb)
+											if(intBuffer[p + offset6] > cb)
 											  {}
 											else
-											  if(doubleBuffer[p + offset15] > cb)
+											  if(intBuffer[p + offset15] > cb)
 												{}
 											  else
 												continue;
@@ -1459,22 +1460,22 @@ public class OastDetector9_16 {
 									continue;
 								else
 								  continue;
-							  else if(doubleBuffer[p + offset14] < c_b)
-								if(doubleBuffer[p + offset15] < c_b)
-								  if(doubleBuffer[p + offset1] < c_b)
-									if(doubleBuffer[p + offset3] < c_b)
-									  if(doubleBuffer[p + offset6] < c_b)
+							  else if(intBuffer[p + offset14] < c_b)
+								if(intBuffer[p + offset15] < c_b)
+								  if(intBuffer[p + offset1] < c_b)
+									if(intBuffer[p + offset3] < c_b)
+									  if(intBuffer[p + offset6] < c_b)
 										{}
 									  else
-										if(doubleBuffer[p + offset13] < c_b)
+										if(intBuffer[p + offset13] < c_b)
 										  {}
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset10] < c_b)
-										if(doubleBuffer[p + offset11] < c_b)
-										  if(doubleBuffer[p + offset12] < c_b)
-											if(doubleBuffer[p + offset13] < c_b)
+									  if(intBuffer[p + offset10] < c_b)
+										if(intBuffer[p + offset11] < c_b)
+										  if(intBuffer[p + offset12] < c_b)
+											if(intBuffer[p + offset13] < c_b)
 											  {}
 											else
 											  continue;
@@ -1485,12 +1486,12 @@ public class OastDetector9_16 {
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset8] < c_b)
-									  if(doubleBuffer[p + offset9] < c_b)
-										if(doubleBuffer[p + offset10] < c_b)
-										  if(doubleBuffer[p + offset11] < c_b)
-											if(doubleBuffer[p + offset12] < c_b)
-											  if(doubleBuffer[p + offset13] < c_b)
+									if(intBuffer[p + offset8] < c_b)
+									  if(intBuffer[p + offset9] < c_b)
+										if(intBuffer[p + offset10] < c_b)
+										  if(intBuffer[p + offset11] < c_b)
+											if(intBuffer[p + offset12] < c_b)
+											  if(intBuffer[p + offset13] < c_b)
 												{}
 											  else
 												continue;
@@ -1508,21 +1509,21 @@ public class OastDetector9_16 {
 								  continue;
 							  else
 								continue;
-							else if(doubleBuffer[p + offset7] < c_b)
-							  if(doubleBuffer[p + offset3] < c_b)
-								if(doubleBuffer[p + offset1] < c_b)
-								  if(doubleBuffer[p + offset6] < c_b)
-									if(doubleBuffer[p + offset8] < c_b)
+							else if(intBuffer[p + offset7] < c_b)
+							  if(intBuffer[p + offset3] < c_b)
+								if(intBuffer[p + offset1] < c_b)
+								  if(intBuffer[p + offset6] < c_b)
+									if(intBuffer[p + offset8] < c_b)
 									  {}
 									else
-									  if(doubleBuffer[p + offset15] < c_b)
+									  if(intBuffer[p + offset15] < c_b)
 										{}
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset13] < c_b)
-									  if(doubleBuffer[p + offset14] < c_b)
-										if(doubleBuffer[p + offset15] < c_b)
+									if(intBuffer[p + offset13] < c_b)
+									  if(intBuffer[p + offset14] < c_b)
+										if(intBuffer[p + offset15] < c_b)
 										  {}
 										else
 										  continue;
@@ -1531,17 +1532,17 @@ public class OastDetector9_16 {
 									else
 									  continue;
 								else
-								  if(doubleBuffer[p + offset8] < c_b)
-									if(doubleBuffer[p + offset9] < c_b)
-									  if(doubleBuffer[p + offset10] < c_b)
-										if(doubleBuffer[p + offset6] < c_b)
+								  if(intBuffer[p + offset8] < c_b)
+									if(intBuffer[p + offset9] < c_b)
+									  if(intBuffer[p + offset10] < c_b)
+										if(intBuffer[p + offset6] < c_b)
 										  {}
 										else
-										  if(doubleBuffer[p + offset11] < c_b)
-											if(doubleBuffer[p + offset12] < c_b)
-											  if(doubleBuffer[p + offset13] < c_b)
-												if(doubleBuffer[p + offset14] < c_b)
-												  if(doubleBuffer[p + offset15] < c_b)
+										  if(intBuffer[p + offset11] < c_b)
+											if(intBuffer[p + offset12] < c_b)
+											  if(intBuffer[p + offset13] < c_b)
+												if(intBuffer[p + offset14] < c_b)
+												  if(intBuffer[p + offset15] < c_b)
 													{}
 												  else
 													continue;
@@ -1560,17 +1561,17 @@ public class OastDetector9_16 {
 								  else
 									continue;
 							  else
-								if(doubleBuffer[p + offset10] < c_b)
-								  if(doubleBuffer[p + offset11] < c_b)
-									if(doubleBuffer[p + offset12] < c_b)
-									  if(doubleBuffer[p + offset8] < c_b)
-										if(doubleBuffer[p + offset9] < c_b)
-										  if(doubleBuffer[p + offset6] < c_b)
+								if(intBuffer[p + offset10] < c_b)
+								  if(intBuffer[p + offset11] < c_b)
+									if(intBuffer[p + offset12] < c_b)
+									  if(intBuffer[p + offset8] < c_b)
+										if(intBuffer[p + offset9] < c_b)
+										  if(intBuffer[p + offset6] < c_b)
 											{}
 										  else
-											if(doubleBuffer[p + offset13] < c_b)
-											  if(doubleBuffer[p + offset14] < c_b)
-												if(doubleBuffer[p + offset15] < c_b)
+											if(intBuffer[p + offset13] < c_b)
+											  if(intBuffer[p + offset14] < c_b)
+												if(intBuffer[p + offset15] < c_b)
 												  {}
 												else
 												  continue;
@@ -1579,10 +1580,10 @@ public class OastDetector9_16 {
 											else
 											  continue;
 										else
-										  if(doubleBuffer[p + offset1] < c_b)
-											if(doubleBuffer[p + offset13] < c_b)
-											  if(doubleBuffer[p + offset14] < c_b)
-												if(doubleBuffer[p + offset15] < c_b)
+										  if(intBuffer[p + offset1] < c_b)
+											if(intBuffer[p + offset13] < c_b)
+											  if(intBuffer[p + offset14] < c_b)
+												if(intBuffer[p + offset15] < c_b)
 												  {}
 												else
 												  continue;
@@ -1593,10 +1594,10 @@ public class OastDetector9_16 {
 										  else
 											continue;
 									  else
-										if(doubleBuffer[p + offset1] < c_b)
-										  if(doubleBuffer[p + offset13] < c_b)
-											if(doubleBuffer[p + offset14] < c_b)
-											  if(doubleBuffer[p + offset15] < c_b)
+										if(intBuffer[p + offset1] < c_b)
+										  if(intBuffer[p + offset13] < c_b)
+											if(intBuffer[p + offset14] < c_b)
+											  if(intBuffer[p + offset15] < c_b)
 												{}
 											  else
 												continue;
@@ -1613,22 +1614,22 @@ public class OastDetector9_16 {
 								else
 								  continue;
 							else
-							  if(doubleBuffer[p + offset14] < c_b)
-								if(doubleBuffer[p + offset15] < c_b)
-								  if(doubleBuffer[p + offset1] < c_b)
-									if(doubleBuffer[p + offset3] < c_b)
-									  if(doubleBuffer[p + offset6] < c_b)
+							  if(intBuffer[p + offset14] < c_b)
+								if(intBuffer[p + offset15] < c_b)
+								  if(intBuffer[p + offset1] < c_b)
+									if(intBuffer[p + offset3] < c_b)
+									  if(intBuffer[p + offset6] < c_b)
 										{}
 									  else
-										if(doubleBuffer[p + offset13] < c_b)
+										if(intBuffer[p + offset13] < c_b)
 										  {}
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset10] < c_b)
-										if(doubleBuffer[p + offset11] < c_b)
-										  if(doubleBuffer[p + offset12] < c_b)
-											if(doubleBuffer[p + offset13] < c_b)
+									  if(intBuffer[p + offset10] < c_b)
+										if(intBuffer[p + offset11] < c_b)
+										  if(intBuffer[p + offset12] < c_b)
+											if(intBuffer[p + offset13] < c_b)
 											  {}
 											else
 											  continue;
@@ -1639,12 +1640,12 @@ public class OastDetector9_16 {
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset8] < c_b)
-									  if(doubleBuffer[p + offset9] < c_b)
-										if(doubleBuffer[p + offset10] < c_b)
-										  if(doubleBuffer[p + offset11] < c_b)
-											if(doubleBuffer[p + offset12] < c_b)
-											  if(doubleBuffer[p + offset13] < c_b)
+									if(intBuffer[p + offset8] < c_b)
+									  if(intBuffer[p + offset9] < c_b)
+										if(intBuffer[p + offset10] < c_b)
+										  if(intBuffer[p + offset11] < c_b)
+											if(intBuffer[p + offset12] < c_b)
+											  if(intBuffer[p + offset13] < c_b)
 												{}
 											  else
 												continue;
@@ -1663,18 +1664,18 @@ public class OastDetector9_16 {
 							  else
 								continue;
 						  else
-							if(doubleBuffer[p + offset12] > cb)
-							  if(doubleBuffer[p + offset7] > cb)
-								if(doubleBuffer[p + offset8] > cb)
-								  if(doubleBuffer[p + offset9] > cb)
-									if(doubleBuffer[p + offset10] > cb)
-									  if(doubleBuffer[p + offset11] > cb)
-										if(doubleBuffer[p + offset13] > cb)
-										  if(doubleBuffer[p + offset14] > cb)
-											if(doubleBuffer[p + offset6] > cb)
+							if(intBuffer[p + offset12] > cb)
+							  if(intBuffer[p + offset7] > cb)
+								if(intBuffer[p + offset8] > cb)
+								  if(intBuffer[p + offset9] > cb)
+									if(intBuffer[p + offset10] > cb)
+									  if(intBuffer[p + offset11] > cb)
+										if(intBuffer[p + offset13] > cb)
+										  if(intBuffer[p + offset14] > cb)
+											if(intBuffer[p + offset6] > cb)
 											  {}
 											else
-											  if(doubleBuffer[p + offset15] > cb)
+											  if(intBuffer[p + offset15] > cb)
 												{}
 											  else
 												continue;
@@ -1692,26 +1693,26 @@ public class OastDetector9_16 {
 								  continue;
 							  else
 								continue;
-							else if(doubleBuffer[p + offset12] < c_b)
-							  if(doubleBuffer[p + offset13] < c_b)
-								if(doubleBuffer[p + offset14] < c_b)
-								  if(doubleBuffer[p + offset15] < c_b)
-									if(doubleBuffer[p + offset1] < c_b)
-									  if(doubleBuffer[p + offset3] < c_b)
+							else if(intBuffer[p + offset12] < c_b)
+							  if(intBuffer[p + offset13] < c_b)
+								if(intBuffer[p + offset14] < c_b)
+								  if(intBuffer[p + offset15] < c_b)
+									if(intBuffer[p + offset1] < c_b)
+									  if(intBuffer[p + offset3] < c_b)
 										{}
 									  else
-										if(doubleBuffer[p + offset10] < c_b)
-										  if(doubleBuffer[p + offset11] < c_b)
+										if(intBuffer[p + offset10] < c_b)
+										  if(intBuffer[p + offset11] < c_b)
 											{}
 										  else
 											continue;
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset8] < c_b)
-										if(doubleBuffer[p + offset9] < c_b)
-										  if(doubleBuffer[p + offset10] < c_b)
-											if(doubleBuffer[p + offset11] < c_b)
+									  if(intBuffer[p + offset8] < c_b)
+										if(intBuffer[p + offset9] < c_b)
+										  if(intBuffer[p + offset10] < c_b)
+											if(intBuffer[p + offset11] < c_b)
 											  {}
 											else
 											  continue;
@@ -1722,12 +1723,12 @@ public class OastDetector9_16 {
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset6] < c_b)
-									  if(doubleBuffer[p + offset7] < c_b)
-										if(doubleBuffer[p + offset8] < c_b)
-										  if(doubleBuffer[p + offset9] < c_b)
-											if(doubleBuffer[p + offset10] < c_b)
-											  if(doubleBuffer[p + offset11] < c_b)
+									if(intBuffer[p + offset6] < c_b)
+									  if(intBuffer[p + offset7] < c_b)
+										if(intBuffer[p + offset8] < c_b)
+										  if(intBuffer[p + offset9] < c_b)
+											if(intBuffer[p + offset10] < c_b)
+											  if(intBuffer[p + offset11] < c_b)
 												{}
 											  else
 												continue;
@@ -1748,24 +1749,24 @@ public class OastDetector9_16 {
 							else
 							  continue;
 						else
-						  if(doubleBuffer[p + offset11] > cb)
-							if(doubleBuffer[p + offset7] > cb)
-							  if(doubleBuffer[p + offset8] > cb)
-								if(doubleBuffer[p + offset9] > cb)
-								  if(doubleBuffer[p + offset10] > cb)
-									if(doubleBuffer[p + offset12] > cb)
-									  if(doubleBuffer[p + offset13] > cb)
-										if(doubleBuffer[p + offset6] > cb)
-										  if(doubleBuffer[p + offset5] > cb)
+						  if(intBuffer[p + offset11] > cb)
+							if(intBuffer[p + offset7] > cb)
+							  if(intBuffer[p + offset8] > cb)
+								if(intBuffer[p + offset9] > cb)
+								  if(intBuffer[p + offset10] > cb)
+									if(intBuffer[p + offset12] > cb)
+									  if(intBuffer[p + offset13] > cb)
+										if(intBuffer[p + offset6] > cb)
+										  if(intBuffer[p + offset5] > cb)
 											{}
 										  else
-											if(doubleBuffer[p + offset14] > cb)
+											if(intBuffer[p + offset14] > cb)
 											  {}
 											else
 											  continue;
 										else
-										  if(doubleBuffer[p + offset14] > cb)
-											if(doubleBuffer[p + offset15] > cb)
+										  if(intBuffer[p + offset14] > cb)
+											if(intBuffer[p + offset15] > cb)
 											  {}
 											else
 											  continue;
@@ -1783,27 +1784,27 @@ public class OastDetector9_16 {
 								continue;
 							else
 							  continue;
-						  else if(doubleBuffer[p + offset11] < c_b)
-							if(doubleBuffer[p + offset12] < c_b)
-							  if(doubleBuffer[p + offset13] < c_b)
-								if(doubleBuffer[p + offset10] < c_b)
-								  if(doubleBuffer[p + offset14] < c_b)
-									if(doubleBuffer[p + offset15] < c_b)
-									  if(doubleBuffer[p + offset1] < c_b)
+						  else if(intBuffer[p + offset11] < c_b)
+							if(intBuffer[p + offset12] < c_b)
+							  if(intBuffer[p + offset13] < c_b)
+								if(intBuffer[p + offset10] < c_b)
+								  if(intBuffer[p + offset14] < c_b)
+									if(intBuffer[p + offset15] < c_b)
+									  if(intBuffer[p + offset1] < c_b)
 										{}
 									  else
-										if(doubleBuffer[p + offset8] < c_b)
-										  if(doubleBuffer[p + offset9] < c_b)
+										if(intBuffer[p + offset8] < c_b)
+										  if(intBuffer[p + offset9] < c_b)
 											{}
 										  else
 											continue;
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset6] < c_b)
-										if(doubleBuffer[p + offset7] < c_b)
-										  if(doubleBuffer[p + offset8] < c_b)
-											if(doubleBuffer[p + offset9] < c_b)
+									  if(intBuffer[p + offset6] < c_b)
+										if(intBuffer[p + offset7] < c_b)
+										  if(intBuffer[p + offset8] < c_b)
+											if(intBuffer[p + offset9] < c_b)
 											  {}
 											else
 											  continue;
@@ -1814,11 +1815,11 @@ public class OastDetector9_16 {
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset5] < c_b)
-									  if(doubleBuffer[p + offset6] < c_b)
-										if(doubleBuffer[p + offset7] < c_b)
-										  if(doubleBuffer[p + offset8] < c_b)
-											if(doubleBuffer[p + offset9] < c_b)
+									if(intBuffer[p + offset5] < c_b)
+									  if(intBuffer[p + offset6] < c_b)
+										if(intBuffer[p + offset7] < c_b)
+										  if(intBuffer[p + offset8] < c_b)
+											if(intBuffer[p + offset9] < c_b)
 											  {}
 											else
 											  continue;
@@ -1831,10 +1832,10 @@ public class OastDetector9_16 {
 									else
 									  continue;
 								else
-								  if(doubleBuffer[p + offset1] < c_b)
-									if(doubleBuffer[p + offset3] < c_b)
-									  if(doubleBuffer[p + offset14] < c_b)
-										if(doubleBuffer[p + offset15] < c_b)
+								  if(intBuffer[p + offset1] < c_b)
+									if(intBuffer[p + offset3] < c_b)
+									  if(intBuffer[p + offset14] < c_b)
+										if(intBuffer[p + offset15] < c_b)
 										  {}
 										else
 										  continue;
@@ -1851,33 +1852,33 @@ public class OastDetector9_16 {
 						  else
 							continue;
 					  else
-						if(doubleBuffer[p + offset9] > cb)
-						  if(doubleBuffer[p + offset7] > cb)
-							if(doubleBuffer[p + offset8] > cb)
-							  if(doubleBuffer[p + offset10] > cb)
-								if(doubleBuffer[p + offset11] > cb)
-								  if(doubleBuffer[p + offset6] > cb)
-									if(doubleBuffer[p + offset5] > cb)
-									  if(doubleBuffer[p + offset4] > cb)
-										if(doubleBuffer[p + offset3] > cb)
+						if(intBuffer[p + offset9] > cb)
+						  if(intBuffer[p + offset7] > cb)
+							if(intBuffer[p + offset8] > cb)
+							  if(intBuffer[p + offset10] > cb)
+								if(intBuffer[p + offset11] > cb)
+								  if(intBuffer[p + offset6] > cb)
+									if(intBuffer[p + offset5] > cb)
+									  if(intBuffer[p + offset4] > cb)
+										if(intBuffer[p + offset3] > cb)
 										  {}
 										else
-										  if(doubleBuffer[p + offset12] > cb)
+										  if(intBuffer[p + offset12] > cb)
 											{}
 										  else
 											continue;
 									  else
-										if(doubleBuffer[p + offset12] > cb)
-										  if(doubleBuffer[p + offset13] > cb)
+										if(intBuffer[p + offset12] > cb)
+										  if(intBuffer[p + offset13] > cb)
 											{}
 										  else
 											continue;
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset12] > cb)
-										if(doubleBuffer[p + offset13] > cb)
-										  if(doubleBuffer[p + offset14] > cb)
+									  if(intBuffer[p + offset12] > cb)
+										if(intBuffer[p + offset13] > cb)
+										  if(intBuffer[p + offset14] > cb)
 											{}
 										  else
 											continue;
@@ -1886,10 +1887,10 @@ public class OastDetector9_16 {
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset12] > cb)
-									  if(doubleBuffer[p + offset13] > cb)
-										if(doubleBuffer[p + offset14] > cb)
-										  if(doubleBuffer[p + offset15] > cb)
+									if(intBuffer[p + offset12] > cb)
+									  if(intBuffer[p + offset13] > cb)
+										if(intBuffer[p + offset14] > cb)
+										  if(intBuffer[p + offset15] > cb)
 											{}
 										  else
 											continue;
@@ -1907,27 +1908,27 @@ public class OastDetector9_16 {
 							  continue;
 						  else
 							continue;
-						else if(doubleBuffer[p + offset9] < c_b)
-						  if(doubleBuffer[p + offset10] < c_b)
-							if(doubleBuffer[p + offset11] < c_b)
-							  if(doubleBuffer[p + offset8] < c_b)
-								if(doubleBuffer[p + offset12] < c_b)
-								  if(doubleBuffer[p + offset13] < c_b)
-									if(doubleBuffer[p + offset14] < c_b)
-									  if(doubleBuffer[p + offset15] < c_b)
+						else if(intBuffer[p + offset9] < c_b)
+						  if(intBuffer[p + offset10] < c_b)
+							if(intBuffer[p + offset11] < c_b)
+							  if(intBuffer[p + offset8] < c_b)
+								if(intBuffer[p + offset12] < c_b)
+								  if(intBuffer[p + offset13] < c_b)
+									if(intBuffer[p + offset14] < c_b)
+									  if(intBuffer[p + offset15] < c_b)
 										{}
 									  else
-										if(doubleBuffer[p + offset6] < c_b)
-										  if(doubleBuffer[p + offset7] < c_b)
+										if(intBuffer[p + offset6] < c_b)
+										  if(intBuffer[p + offset7] < c_b)
 											{}
 										  else
 											continue;
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset5] < c_b)
-										if(doubleBuffer[p + offset6] < c_b)
-										  if(doubleBuffer[p + offset7] < c_b)
+									  if(intBuffer[p + offset5] < c_b)
+										if(intBuffer[p + offset6] < c_b)
+										  if(intBuffer[p + offset7] < c_b)
 											{}
 										  else
 											continue;
@@ -1936,10 +1937,10 @@ public class OastDetector9_16 {
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset4] < c_b)
-									  if(doubleBuffer[p + offset5] < c_b)
-										if(doubleBuffer[p + offset6] < c_b)
-										  if(doubleBuffer[p + offset7] < c_b)
+									if(intBuffer[p + offset4] < c_b)
+									  if(intBuffer[p + offset5] < c_b)
+										if(intBuffer[p + offset6] < c_b)
+										  if(intBuffer[p + offset7] < c_b)
 											{}
 										  else
 											continue;
@@ -1950,11 +1951,11 @@ public class OastDetector9_16 {
 									else
 									  continue;
 								else
-								  if(doubleBuffer[p + offset3] < c_b)
-									if(doubleBuffer[p + offset4] < c_b)
-									  if(doubleBuffer[p + offset5] < c_b)
-										if(doubleBuffer[p + offset6] < c_b)
-										  if(doubleBuffer[p + offset7] < c_b)
+								  if(intBuffer[p + offset3] < c_b)
+									if(intBuffer[p + offset4] < c_b)
+									  if(intBuffer[p + offset5] < c_b)
+										if(intBuffer[p + offset6] < c_b)
+										  if(intBuffer[p + offset7] < c_b)
 											{}
 										  else
 											continue;
@@ -1967,11 +1968,11 @@ public class OastDetector9_16 {
 								  else
 									continue;
 							  else
-								if(doubleBuffer[p + offset1] < c_b)
-								  if(doubleBuffer[p + offset12] < c_b)
-									if(doubleBuffer[p + offset13] < c_b)
-									  if(doubleBuffer[p + offset14] < c_b)
-										if(doubleBuffer[p + offset15] < c_b)
+								if(intBuffer[p + offset1] < c_b)
+								  if(intBuffer[p + offset12] < c_b)
+									if(intBuffer[p + offset13] < c_b)
+									  if(intBuffer[p + offset14] < c_b)
+										if(intBuffer[p + offset15] < c_b)
 										  {}
 										else
 										  continue;
@@ -1990,33 +1991,33 @@ public class OastDetector9_16 {
 						else
 						  continue;
 					else
-					  if(doubleBuffer[p + offset7] > cb)
-						if(doubleBuffer[p + offset8] > cb)
-						  if(doubleBuffer[p + offset9] > cb)
-							if(doubleBuffer[p + offset6] > cb)
-							  if(doubleBuffer[p + offset5] > cb)
-								if(doubleBuffer[p + offset4] > cb)
-								  if(doubleBuffer[p + offset3] > cb)
-									if(doubleBuffer[p + offset2] > cb)
-									  if(doubleBuffer[p + offset1] > cb)
+					  if(intBuffer[p + offset7] > cb)
+						if(intBuffer[p + offset8] > cb)
+						  if(intBuffer[p + offset9] > cb)
+							if(intBuffer[p + offset6] > cb)
+							  if(intBuffer[p + offset5] > cb)
+								if(intBuffer[p + offset4] > cb)
+								  if(intBuffer[p + offset3] > cb)
+									if(intBuffer[p + offset2] > cb)
+									  if(intBuffer[p + offset1] > cb)
 										{}
 									  else
-										if(doubleBuffer[p + offset10] > cb)
+										if(intBuffer[p + offset10] > cb)
 										  {}
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset10] > cb)
-										if(doubleBuffer[p + offset11] > cb)
+									  if(intBuffer[p + offset10] > cb)
+										if(intBuffer[p + offset11] > cb)
 										  {}
 										else
 										  continue;
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset10] > cb)
-									  if(doubleBuffer[p + offset11] > cb)
-										if(doubleBuffer[p + offset12] > cb)
+									if(intBuffer[p + offset10] > cb)
+									  if(intBuffer[p + offset11] > cb)
+										if(intBuffer[p + offset12] > cb)
 										  {}
 										else
 										  continue;
@@ -2025,10 +2026,10 @@ public class OastDetector9_16 {
 									else
 									  continue;
 								else
-								  if(doubleBuffer[p + offset10] > cb)
-									if(doubleBuffer[p + offset11] > cb)
-									  if(doubleBuffer[p + offset12] > cb)
-										if(doubleBuffer[p + offset13] > cb)
+								  if(intBuffer[p + offset10] > cb)
+									if(intBuffer[p + offset11] > cb)
+									  if(intBuffer[p + offset12] > cb)
+										if(intBuffer[p + offset13] > cb)
 										  {}
 										else
 										  continue;
@@ -2039,11 +2040,11 @@ public class OastDetector9_16 {
 								  else
 									continue;
 							  else
-								if(doubleBuffer[p + offset10] > cb)
-								  if(doubleBuffer[p + offset11] > cb)
-									if(doubleBuffer[p + offset12] > cb)
-									  if(doubleBuffer[p + offset13] > cb)
-										if(doubleBuffer[p + offset14] > cb)
+								if(intBuffer[p + offset10] > cb)
+								  if(intBuffer[p + offset11] > cb)
+									if(intBuffer[p + offset12] > cb)
+									  if(intBuffer[p + offset13] > cb)
+										if(intBuffer[p + offset14] > cb)
 										  {}
 										else
 										  continue;
@@ -2056,12 +2057,12 @@ public class OastDetector9_16 {
 								else
 								  continue;
 							else
-							  if(doubleBuffer[p + offset10] > cb)
-								if(doubleBuffer[p + offset11] > cb)
-								  if(doubleBuffer[p + offset12] > cb)
-									if(doubleBuffer[p + offset13] > cb)
-									  if(doubleBuffer[p + offset14] > cb)
-										if(doubleBuffer[p + offset15] > cb)
+							  if(intBuffer[p + offset10] > cb)
+								if(intBuffer[p + offset11] > cb)
+								  if(intBuffer[p + offset12] > cb)
+									if(intBuffer[p + offset13] > cb)
+									  if(intBuffer[p + offset14] > cb)
+										if(intBuffer[p + offset15] > cb)
 										  {}
 										else
 										  continue;
@@ -2079,33 +2080,33 @@ public class OastDetector9_16 {
 							continue;
 						else
 						  continue;
-					  else if(doubleBuffer[p + offset7] < c_b)
-						if(doubleBuffer[p + offset8] < c_b)
-						  if(doubleBuffer[p + offset9] < c_b)
-							if(doubleBuffer[p + offset6] < c_b)
-							  if(doubleBuffer[p + offset5] < c_b)
-								if(doubleBuffer[p + offset4] < c_b)
-								  if(doubleBuffer[p + offset3] < c_b)
-									if(doubleBuffer[p + offset2] < c_b)
-									  if(doubleBuffer[p + offset1] < c_b)
+					  else if(intBuffer[p + offset7] < c_b)
+						if(intBuffer[p + offset8] < c_b)
+						  if(intBuffer[p + offset9] < c_b)
+							if(intBuffer[p + offset6] < c_b)
+							  if(intBuffer[p + offset5] < c_b)
+								if(intBuffer[p + offset4] < c_b)
+								  if(intBuffer[p + offset3] < c_b)
+									if(intBuffer[p + offset2] < c_b)
+									  if(intBuffer[p + offset1] < c_b)
 										{}
 									  else
-										if(doubleBuffer[p + offset10] < c_b)
+										if(intBuffer[p + offset10] < c_b)
 										  {}
 										else
 										  continue;
 									else
-									  if(doubleBuffer[p + offset10] < c_b)
-										if(doubleBuffer[p + offset11] < c_b)
+									  if(intBuffer[p + offset10] < c_b)
+										if(intBuffer[p + offset11] < c_b)
 										  {}
 										else
 										  continue;
 									  else
 										continue;
 								  else
-									if(doubleBuffer[p + offset10] < c_b)
-									  if(doubleBuffer[p + offset11] < c_b)
-										if(doubleBuffer[p + offset12] < c_b)
+									if(intBuffer[p + offset10] < c_b)
+									  if(intBuffer[p + offset11] < c_b)
+										if(intBuffer[p + offset12] < c_b)
 										  {}
 										else
 										  continue;
@@ -2114,10 +2115,10 @@ public class OastDetector9_16 {
 									else
 									  continue;
 								else
-								  if(doubleBuffer[p + offset10] < c_b)
-									if(doubleBuffer[p + offset11] < c_b)
-									  if(doubleBuffer[p + offset12] < c_b)
-										if(doubleBuffer[p + offset13] < c_b)
+								  if(intBuffer[p + offset10] < c_b)
+									if(intBuffer[p + offset11] < c_b)
+									  if(intBuffer[p + offset12] < c_b)
+										if(intBuffer[p + offset13] < c_b)
 										  {}
 										else
 										  continue;
@@ -2128,11 +2129,11 @@ public class OastDetector9_16 {
 								  else
 									continue;
 							  else
-								if(doubleBuffer[p + offset10] < c_b)
-								  if(doubleBuffer[p + offset11] < c_b)
-									if(doubleBuffer[p + offset12] < c_b)
-									  if(doubleBuffer[p + offset13] < c_b)
-										if(doubleBuffer[p + offset14] < c_b)
+								if(intBuffer[p + offset10] < c_b)
+								  if(intBuffer[p + offset11] < c_b)
+									if(intBuffer[p + offset12] < c_b)
+									  if(intBuffer[p + offset13] < c_b)
+										if(intBuffer[p + offset14] < c_b)
 										  {}
 										else
 										  continue;
@@ -2145,12 +2146,12 @@ public class OastDetector9_16 {
 								else
 								  continue;
 							else
-							  if(doubleBuffer[p + offset10] < c_b)
-								if(doubleBuffer[p + offset11] < c_b)
-								  if(doubleBuffer[p + offset12] < c_b)
-									if(doubleBuffer[p + offset13] < c_b)
-									  if(doubleBuffer[p + offset14] < c_b)
-										if(doubleBuffer[p + offset15] < c_b)
+							  if(intBuffer[p + offset10] < c_b)
+								if(intBuffer[p + offset11] < c_b)
+								  if(intBuffer[p + offset12] < c_b)
+									if(intBuffer[p + offset13] < c_b)
+									  if(intBuffer[p + offset14] < c_b)
+										if(intBuffer[p + offset15] < c_b)
 										  {}
 										else
 										  continue;
@@ -2186,16 +2187,17 @@ public class OastDetector9_16 {
 				}
 				h.x=x;
 				h.y=y;
-				corners_all.add(new Point2d(h));
+				corners_all.add(new Point2i(h));
 				total++;
 			}									
 		}										
 	}
 	
-	public double getCornerScore(double doubleBuffer[], int p, double bmax)
+	public int getCornerScore(int intBuffer[], int p)
 	{
-	    double bmin = threshold;
-	    double b_test = (bmax + bmin)/2;
+	    int bmax = 255;
+		int bmin = threshold;
+	    int b_test = (bmax + bmin)/2;
 
 		int offset0=s_offset0;
 		int offset1=s_offset1;
@@ -2220,27 +2222,27 @@ public class OastDetector9_16 {
 		{
 		is_a_corner: while (true)
 		{
-			double cb = doubleBuffer[p] + b_test;
-			double c_b = doubleBuffer[p] - b_test;
-			if(doubleBuffer[p + offset0] > cb)
-			  if(doubleBuffer[p + offset2] > cb)
-			    if(doubleBuffer[p + offset4] > cb)
-			      if(doubleBuffer[p + offset5] > cb)
-			        if(doubleBuffer[p + offset7] > cb)
-			          if(doubleBuffer[p + offset3] > cb)
-			            if(doubleBuffer[p + offset1] > cb)
-			              if(doubleBuffer[p + offset6] > cb)
-			                if(doubleBuffer[p + offset8] > cb)
+			int cb = intBuffer[p] + b_test;
+			int c_b = intBuffer[p] - b_test;
+			if(intBuffer[p + offset0] > cb)
+			  if(intBuffer[p + offset2] > cb)
+			    if(intBuffer[p + offset4] > cb)
+			      if(intBuffer[p + offset5] > cb)
+			        if(intBuffer[p + offset7] > cb)
+			          if(intBuffer[p + offset3] > cb)
+			            if(intBuffer[p + offset1] > cb)
+			              if(intBuffer[p + offset6] > cb)
+			                if(intBuffer[p + offset8] > cb)
 			                  break is_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset15] > cb)
+			                  if(intBuffer[p + offset15] > cb)
 			                    break is_a_corner;
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset13] > cb)
-			                  if(doubleBuffer[p + offset14] > cb)
-			                    if(doubleBuffer[p + offset15] > cb)
+			                if(intBuffer[p + offset13] > cb)
+			                  if(intBuffer[p + offset14] > cb)
+			                    if(intBuffer[p + offset15] > cb)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
@@ -2249,17 +2251,17 @@ public class OastDetector9_16 {
 			                else
 			                  break is_not_a_corner;
 			            else
-			              if(doubleBuffer[p + offset8] > cb)
-			                if(doubleBuffer[p + offset9] > cb)
-			                  if(doubleBuffer[p + offset10] > cb)
-			                    if(doubleBuffer[p + offset6] > cb)
+			              if(intBuffer[p + offset8] > cb)
+			                if(intBuffer[p + offset9] > cb)
+			                  if(intBuffer[p + offset10] > cb)
+			                    if(intBuffer[p + offset6] > cb)
 			                      break is_a_corner;
 			                    else
-			                      if(doubleBuffer[p + offset11] > cb)
-			                        if(doubleBuffer[p + offset12] > cb)
-			                          if(doubleBuffer[p + offset13] > cb)
-			                            if(doubleBuffer[p + offset14] > cb)
-			                              if(doubleBuffer[p + offset15] > cb)
+			                      if(intBuffer[p + offset11] > cb)
+			                        if(intBuffer[p + offset12] > cb)
+			                          if(intBuffer[p + offset13] > cb)
+			                            if(intBuffer[p + offset14] > cb)
+			                              if(intBuffer[p + offset15] > cb)
 			                                break is_a_corner;
 			                              else
 			                                break is_not_a_corner;
@@ -2278,17 +2280,17 @@ public class OastDetector9_16 {
 			              else
 			                break is_not_a_corner;
 			          else
-			            if(doubleBuffer[p + offset10] > cb)
-			              if(doubleBuffer[p + offset11] > cb)
-			                if(doubleBuffer[p + offset12] > cb)
-			                  if(doubleBuffer[p + offset8] > cb)
-			                    if(doubleBuffer[p + offset9] > cb)
-			                      if(doubleBuffer[p + offset6] > cb)
+			            if(intBuffer[p + offset10] > cb)
+			              if(intBuffer[p + offset11] > cb)
+			                if(intBuffer[p + offset12] > cb)
+			                  if(intBuffer[p + offset8] > cb)
+			                    if(intBuffer[p + offset9] > cb)
+			                      if(intBuffer[p + offset6] > cb)
 			                        break is_a_corner;
 			                      else
-			                        if(doubleBuffer[p + offset13] > cb)
-			                          if(doubleBuffer[p + offset14] > cb)
-			                            if(doubleBuffer[p + offset15] > cb)
+			                        if(intBuffer[p + offset13] > cb)
+			                          if(intBuffer[p + offset14] > cb)
+			                            if(intBuffer[p + offset15] > cb)
 			                              break is_a_corner;
 			                            else
 			                              break is_not_a_corner;
@@ -2297,10 +2299,10 @@ public class OastDetector9_16 {
 			                        else
 			                          break is_not_a_corner;
 			                    else
-			                      if(doubleBuffer[p + offset1] > cb)
-			                        if(doubleBuffer[p + offset13] > cb)
-			                          if(doubleBuffer[p + offset14] > cb)
-			                            if(doubleBuffer[p + offset15] > cb)
+			                      if(intBuffer[p + offset1] > cb)
+			                        if(intBuffer[p + offset13] > cb)
+			                          if(intBuffer[p + offset14] > cb)
+			                            if(intBuffer[p + offset15] > cb)
 			                              break is_a_corner;
 			                            else
 			                              break is_not_a_corner;
@@ -2311,10 +2313,10 @@ public class OastDetector9_16 {
 			                      else
 			                        break is_not_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset1] > cb)
-			                      if(doubleBuffer[p + offset13] > cb)
-			                        if(doubleBuffer[p + offset14] > cb)
-			                          if(doubleBuffer[p + offset15] > cb)
+			                    if(intBuffer[p + offset1] > cb)
+			                      if(intBuffer[p + offset13] > cb)
+			                        if(intBuffer[p + offset14] > cb)
+			                          if(intBuffer[p + offset15] > cb)
 			                            break is_a_corner;
 			                          else
 			                            break is_not_a_corner;
@@ -2330,23 +2332,23 @@ public class OastDetector9_16 {
 			                break is_not_a_corner;
 			            else
 			              break is_not_a_corner;
-			        else if(doubleBuffer[p + offset7] < c_b)
-			          if(doubleBuffer[p + offset14] > cb)
-			            if(doubleBuffer[p + offset15] > cb)
-			              if(doubleBuffer[p + offset1] > cb)
-			                if(doubleBuffer[p + offset3] > cb)
-			                  if(doubleBuffer[p + offset6] > cb)
+			        else if(intBuffer[p + offset7] < c_b)
+			          if(intBuffer[p + offset14] > cb)
+			            if(intBuffer[p + offset15] > cb)
+			              if(intBuffer[p + offset1] > cb)
+			                if(intBuffer[p + offset3] > cb)
+			                  if(intBuffer[p + offset6] > cb)
 			                    break is_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset13] > cb)
+			                    if(intBuffer[p + offset13] > cb)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset10] > cb)
-			                    if(doubleBuffer[p + offset11] > cb)
-			                      if(doubleBuffer[p + offset12] > cb)
-			                        if(doubleBuffer[p + offset13] > cb)
+			                  if(intBuffer[p + offset10] > cb)
+			                    if(intBuffer[p + offset11] > cb)
+			                      if(intBuffer[p + offset12] > cb)
+			                        if(intBuffer[p + offset13] > cb)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -2357,12 +2359,12 @@ public class OastDetector9_16 {
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset8] > cb)
-			                  if(doubleBuffer[p + offset9] > cb)
-			                    if(doubleBuffer[p + offset10] > cb)
-			                      if(doubleBuffer[p + offset11] > cb)
-			                        if(doubleBuffer[p + offset12] > cb)
-			                          if(doubleBuffer[p + offset13] > cb)
+			                if(intBuffer[p + offset8] > cb)
+			                  if(intBuffer[p + offset9] > cb)
+			                    if(intBuffer[p + offset10] > cb)
+			                      if(intBuffer[p + offset11] > cb)
+			                        if(intBuffer[p + offset12] > cb)
+			                          if(intBuffer[p + offset13] > cb)
 			                            break is_a_corner;
 			                          else
 			                            break is_not_a_corner;
@@ -2378,17 +2380,17 @@ public class OastDetector9_16 {
 			                  break is_not_a_corner;
 			            else
 			              break is_not_a_corner;
-			          else if(doubleBuffer[p + offset14] < c_b)
-			            if(doubleBuffer[p + offset8] < c_b)
-			              if(doubleBuffer[p + offset9] < c_b)
-			                if(doubleBuffer[p + offset10] < c_b)
-			                  if(doubleBuffer[p + offset11] < c_b)
-			                    if(doubleBuffer[p + offset12] < c_b)
-			                      if(doubleBuffer[p + offset13] < c_b)
-			                        if(doubleBuffer[p + offset6] < c_b)
+			          else if(intBuffer[p + offset14] < c_b)
+			            if(intBuffer[p + offset8] < c_b)
+			              if(intBuffer[p + offset9] < c_b)
+			                if(intBuffer[p + offset10] < c_b)
+			                  if(intBuffer[p + offset11] < c_b)
+			                    if(intBuffer[p + offset12] < c_b)
+			                      if(intBuffer[p + offset13] < c_b)
+			                        if(intBuffer[p + offset6] < c_b)
 			                          break is_a_corner;
 			                        else
-			                          if(doubleBuffer[p + offset15] < c_b)
+			                          if(intBuffer[p + offset15] < c_b)
 			                            break is_a_corner;
 			                          else
 			                            break is_not_a_corner;
@@ -2407,22 +2409,22 @@ public class OastDetector9_16 {
 			          else
 			            break is_not_a_corner;
 			        else
-			          if(doubleBuffer[p + offset14] > cb)
-			            if(doubleBuffer[p + offset15] > cb)
-			              if(doubleBuffer[p + offset1] > cb)
-			                if(doubleBuffer[p + offset3] > cb)
-			                  if(doubleBuffer[p + offset6] > cb)
+			          if(intBuffer[p + offset14] > cb)
+			            if(intBuffer[p + offset15] > cb)
+			              if(intBuffer[p + offset1] > cb)
+			                if(intBuffer[p + offset3] > cb)
+			                  if(intBuffer[p + offset6] > cb)
 			                    break is_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset13] > cb)
+			                    if(intBuffer[p + offset13] > cb)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset10] > cb)
-			                    if(doubleBuffer[p + offset11] > cb)
-			                      if(doubleBuffer[p + offset12] > cb)
-			                        if(doubleBuffer[p + offset13] > cb)
+			                  if(intBuffer[p + offset10] > cb)
+			                    if(intBuffer[p + offset11] > cb)
+			                      if(intBuffer[p + offset12] > cb)
+			                        if(intBuffer[p + offset13] > cb)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -2433,12 +2435,12 @@ public class OastDetector9_16 {
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset8] > cb)
-			                  if(doubleBuffer[p + offset9] > cb)
-			                    if(doubleBuffer[p + offset10] > cb)
-			                      if(doubleBuffer[p + offset11] > cb)
-			                        if(doubleBuffer[p + offset12] > cb)
-			                          if(doubleBuffer[p + offset13] > cb)
+			                if(intBuffer[p + offset8] > cb)
+			                  if(intBuffer[p + offset9] > cb)
+			                    if(intBuffer[p + offset10] > cb)
+			                      if(intBuffer[p + offset11] > cb)
+			                        if(intBuffer[p + offset12] > cb)
+			                          if(intBuffer[p + offset13] > cb)
 			                            break is_a_corner;
 			                          else
 			                            break is_not_a_corner;
@@ -2456,27 +2458,27 @@ public class OastDetector9_16 {
 			              break is_not_a_corner;
 			          else
 			            break is_not_a_corner;
-			      else if(doubleBuffer[p + offset5] < c_b)
-			        if(doubleBuffer[p + offset12] > cb)
-			          if(doubleBuffer[p + offset13] > cb)
-			            if(doubleBuffer[p + offset14] > cb)
-			              if(doubleBuffer[p + offset15] > cb)
-			                if(doubleBuffer[p + offset1] > cb)
-			                  if(doubleBuffer[p + offset3] > cb)
+			      else if(intBuffer[p + offset5] < c_b)
+			        if(intBuffer[p + offset12] > cb)
+			          if(intBuffer[p + offset13] > cb)
+			            if(intBuffer[p + offset14] > cb)
+			              if(intBuffer[p + offset15] > cb)
+			                if(intBuffer[p + offset1] > cb)
+			                  if(intBuffer[p + offset3] > cb)
 			                    break is_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset10] > cb)
-			                      if(doubleBuffer[p + offset11] > cb)
+			                    if(intBuffer[p + offset10] > cb)
+			                      if(intBuffer[p + offset11] > cb)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset8] > cb)
-			                    if(doubleBuffer[p + offset9] > cb)
-			                      if(doubleBuffer[p + offset10] > cb)
-			                        if(doubleBuffer[p + offset11] > cb)
+			                  if(intBuffer[p + offset8] > cb)
+			                    if(intBuffer[p + offset9] > cb)
+			                      if(intBuffer[p + offset10] > cb)
+			                        if(intBuffer[p + offset11] > cb)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -2487,12 +2489,12 @@ public class OastDetector9_16 {
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset6] > cb)
-			                  if(doubleBuffer[p + offset7] > cb)
-			                    if(doubleBuffer[p + offset8] > cb)
-			                      if(doubleBuffer[p + offset9] > cb)
-			                        if(doubleBuffer[p + offset10] > cb)
-			                          if(doubleBuffer[p + offset11] > cb)
+			                if(intBuffer[p + offset6] > cb)
+			                  if(intBuffer[p + offset7] > cb)
+			                    if(intBuffer[p + offset8] > cb)
+			                      if(intBuffer[p + offset9] > cb)
+			                        if(intBuffer[p + offset10] > cb)
+			                          if(intBuffer[p + offset11] > cb)
 			                            break is_a_corner;
 			                          else
 			                            break is_not_a_corner;
@@ -2510,18 +2512,18 @@ public class OastDetector9_16 {
 			              break is_not_a_corner;
 			          else
 			            break is_not_a_corner;
-			        else if(doubleBuffer[p + offset12] < c_b)
-			          if(doubleBuffer[p + offset7] < c_b)
-			            if(doubleBuffer[p + offset8] < c_b)
-			              if(doubleBuffer[p + offset9] < c_b)
-			                if(doubleBuffer[p + offset10] < c_b)
-			                  if(doubleBuffer[p + offset11] < c_b)
-			                    if(doubleBuffer[p + offset13] < c_b)
-			                      if(doubleBuffer[p + offset6] < c_b)
+			        else if(intBuffer[p + offset12] < c_b)
+			          if(intBuffer[p + offset7] < c_b)
+			            if(intBuffer[p + offset8] < c_b)
+			              if(intBuffer[p + offset9] < c_b)
+			                if(intBuffer[p + offset10] < c_b)
+			                  if(intBuffer[p + offset11] < c_b)
+			                    if(intBuffer[p + offset13] < c_b)
+			                      if(intBuffer[p + offset6] < c_b)
 			                        break is_a_corner;
 			                      else
-			                        if(doubleBuffer[p + offset14] < c_b)
-			                          if(doubleBuffer[p + offset15] < c_b)
+			                        if(intBuffer[p + offset14] < c_b)
+			                          if(intBuffer[p + offset15] < c_b)
 			                            break is_a_corner;
 			                          else
 			                            break is_not_a_corner;
@@ -2542,26 +2544,26 @@ public class OastDetector9_16 {
 			        else
 			          break is_not_a_corner;
 			      else
-			        if(doubleBuffer[p + offset12] > cb)
-			          if(doubleBuffer[p + offset13] > cb)
-			            if(doubleBuffer[p + offset14] > cb)
-			              if(doubleBuffer[p + offset15] > cb)
-			                if(doubleBuffer[p + offset1] > cb)
-			                  if(doubleBuffer[p + offset3] > cb)
+			        if(intBuffer[p + offset12] > cb)
+			          if(intBuffer[p + offset13] > cb)
+			            if(intBuffer[p + offset14] > cb)
+			              if(intBuffer[p + offset15] > cb)
+			                if(intBuffer[p + offset1] > cb)
+			                  if(intBuffer[p + offset3] > cb)
 			                    break is_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset10] > cb)
-			                      if(doubleBuffer[p + offset11] > cb)
+			                    if(intBuffer[p + offset10] > cb)
+			                      if(intBuffer[p + offset11] > cb)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset8] > cb)
-			                    if(doubleBuffer[p + offset9] > cb)
-			                      if(doubleBuffer[p + offset10] > cb)
-			                        if(doubleBuffer[p + offset11] > cb)
+			                  if(intBuffer[p + offset8] > cb)
+			                    if(intBuffer[p + offset9] > cb)
+			                      if(intBuffer[p + offset10] > cb)
+			                        if(intBuffer[p + offset11] > cb)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -2572,12 +2574,12 @@ public class OastDetector9_16 {
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset6] > cb)
-			                  if(doubleBuffer[p + offset7] > cb)
-			                    if(doubleBuffer[p + offset8] > cb)
-			                      if(doubleBuffer[p + offset9] > cb)
-			                        if(doubleBuffer[p + offset10] > cb)
-			                          if(doubleBuffer[p + offset11] > cb)
+			                if(intBuffer[p + offset6] > cb)
+			                  if(intBuffer[p + offset7] > cb)
+			                    if(intBuffer[p + offset8] > cb)
+			                      if(intBuffer[p + offset9] > cb)
+			                        if(intBuffer[p + offset10] > cb)
+			                          if(intBuffer[p + offset11] > cb)
 			                            break is_a_corner;
 			                          else
 			                            break is_not_a_corner;
@@ -2595,18 +2597,18 @@ public class OastDetector9_16 {
 			              break is_not_a_corner;
 			          else
 			            break is_not_a_corner;
-			        else if(doubleBuffer[p + offset12] < c_b)
-			          if(doubleBuffer[p + offset7] < c_b)
-			            if(doubleBuffer[p + offset8] < c_b)
-			              if(doubleBuffer[p + offset9] < c_b)
-			                if(doubleBuffer[p + offset10] < c_b)
-			                  if(doubleBuffer[p + offset11] < c_b)
-			                    if(doubleBuffer[p + offset13] < c_b)
-			                      if(doubleBuffer[p + offset14] < c_b)
-			                        if(doubleBuffer[p + offset6] < c_b)
+			        else if(intBuffer[p + offset12] < c_b)
+			          if(intBuffer[p + offset7] < c_b)
+			            if(intBuffer[p + offset8] < c_b)
+			              if(intBuffer[p + offset9] < c_b)
+			                if(intBuffer[p + offset10] < c_b)
+			                  if(intBuffer[p + offset11] < c_b)
+			                    if(intBuffer[p + offset13] < c_b)
+			                      if(intBuffer[p + offset14] < c_b)
+			                        if(intBuffer[p + offset6] < c_b)
 			                          break is_a_corner;
 			                        else
-			                          if(doubleBuffer[p + offset15] < c_b)
+			                          if(intBuffer[p + offset15] < c_b)
 			                            break is_a_corner;
 			                          else
 			                            break is_not_a_corner;
@@ -2626,28 +2628,28 @@ public class OastDetector9_16 {
 			            break is_not_a_corner;
 			        else
 			          break is_not_a_corner;
-			    else if(doubleBuffer[p + offset4] < c_b)
-			      if(doubleBuffer[p + offset11] > cb)
-			        if(doubleBuffer[p + offset12] > cb)
-			          if(doubleBuffer[p + offset13] > cb)
-			            if(doubleBuffer[p + offset10] > cb)
-			              if(doubleBuffer[p + offset14] > cb)
-			                if(doubleBuffer[p + offset15] > cb)
-			                  if(doubleBuffer[p + offset1] > cb)
+			    else if(intBuffer[p + offset4] < c_b)
+			      if(intBuffer[p + offset11] > cb)
+			        if(intBuffer[p + offset12] > cb)
+			          if(intBuffer[p + offset13] > cb)
+			            if(intBuffer[p + offset10] > cb)
+			              if(intBuffer[p + offset14] > cb)
+			                if(intBuffer[p + offset15] > cb)
+			                  if(intBuffer[p + offset1] > cb)
 			                    break is_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset8] > cb)
-			                      if(doubleBuffer[p + offset9] > cb)
+			                    if(intBuffer[p + offset8] > cb)
+			                      if(intBuffer[p + offset9] > cb)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset6] > cb)
-			                    if(doubleBuffer[p + offset7] > cb)
-			                      if(doubleBuffer[p + offset8] > cb)
-			                        if(doubleBuffer[p + offset9] > cb)
+			                  if(intBuffer[p + offset6] > cb)
+			                    if(intBuffer[p + offset7] > cb)
+			                      if(intBuffer[p + offset8] > cb)
+			                        if(intBuffer[p + offset9] > cb)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -2658,11 +2660,11 @@ public class OastDetector9_16 {
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset5] > cb)
-			                  if(doubleBuffer[p + offset6] > cb)
-			                    if(doubleBuffer[p + offset7] > cb)
-			                      if(doubleBuffer[p + offset8] > cb)
-			                        if(doubleBuffer[p + offset9] > cb)
+			                if(intBuffer[p + offset5] > cb)
+			                  if(intBuffer[p + offset6] > cb)
+			                    if(intBuffer[p + offset7] > cb)
+			                      if(intBuffer[p + offset8] > cb)
+			                        if(intBuffer[p + offset9] > cb)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -2675,10 +2677,10 @@ public class OastDetector9_16 {
 			                else
 			                  break is_not_a_corner;
 			            else
-			              if(doubleBuffer[p + offset1] > cb)
-			                if(doubleBuffer[p + offset3] > cb)
-			                  if(doubleBuffer[p + offset14] > cb)
-			                    if(doubleBuffer[p + offset15] > cb)
+			              if(intBuffer[p + offset1] > cb)
+			                if(intBuffer[p + offset3] > cb)
+			                  if(intBuffer[p + offset14] > cb)
+			                    if(intBuffer[p + offset15] > cb)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
@@ -2692,24 +2694,24 @@ public class OastDetector9_16 {
 			            break is_not_a_corner;
 			        else
 			          break is_not_a_corner;
-			      else if(doubleBuffer[p + offset11] < c_b)
-			        if(doubleBuffer[p + offset7] < c_b)
-			          if(doubleBuffer[p + offset8] < c_b)
-			            if(doubleBuffer[p + offset9] < c_b)
-			              if(doubleBuffer[p + offset10] < c_b)
-			                if(doubleBuffer[p + offset6] < c_b)
-			                  if(doubleBuffer[p + offset5] < c_b)
-			                    if(doubleBuffer[p + offset3] < c_b)
+			      else if(intBuffer[p + offset11] < c_b)
+			        if(intBuffer[p + offset7] < c_b)
+			          if(intBuffer[p + offset8] < c_b)
+			            if(intBuffer[p + offset9] < c_b)
+			              if(intBuffer[p + offset10] < c_b)
+			                if(intBuffer[p + offset6] < c_b)
+			                  if(intBuffer[p + offset5] < c_b)
+			                    if(intBuffer[p + offset3] < c_b)
 			                      break is_a_corner;
 			                    else
-			                      if(doubleBuffer[p + offset12] < c_b)
+			                      if(intBuffer[p + offset12] < c_b)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset12] < c_b)
-			                      if(doubleBuffer[p + offset13] < c_b)
-			                        if(doubleBuffer[p + offset14] < c_b)
+			                    if(intBuffer[p + offset12] < c_b)
+			                      if(intBuffer[p + offset13] < c_b)
+			                        if(intBuffer[p + offset14] < c_b)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -2718,10 +2720,10 @@ public class OastDetector9_16 {
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset12] < c_b)
-			                    if(doubleBuffer[p + offset13] < c_b)
-			                      if(doubleBuffer[p + offset14] < c_b)
-			                        if(doubleBuffer[p + offset15] < c_b)
+			                  if(intBuffer[p + offset12] < c_b)
+			                    if(intBuffer[p + offset13] < c_b)
+			                      if(intBuffer[p + offset14] < c_b)
+			                        if(intBuffer[p + offset15] < c_b)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -2742,27 +2744,27 @@ public class OastDetector9_16 {
 			      else
 			        break is_not_a_corner;
 			    else
-			      if(doubleBuffer[p + offset11] > cb)
-			        if(doubleBuffer[p + offset12] > cb)
-			          if(doubleBuffer[p + offset13] > cb)
-			            if(doubleBuffer[p + offset10] > cb)
-			              if(doubleBuffer[p + offset14] > cb)
-			                if(doubleBuffer[p + offset15] > cb)
-			                  if(doubleBuffer[p + offset1] > cb)
+			      if(intBuffer[p + offset11] > cb)
+			        if(intBuffer[p + offset12] > cb)
+			          if(intBuffer[p + offset13] > cb)
+			            if(intBuffer[p + offset10] > cb)
+			              if(intBuffer[p + offset14] > cb)
+			                if(intBuffer[p + offset15] > cb)
+			                  if(intBuffer[p + offset1] > cb)
 			                    break is_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset8] > cb)
-			                      if(doubleBuffer[p + offset9] > cb)
+			                    if(intBuffer[p + offset8] > cb)
+			                      if(intBuffer[p + offset9] > cb)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset6] > cb)
-			                    if(doubleBuffer[p + offset7] > cb)
-			                      if(doubleBuffer[p + offset8] > cb)
-			                        if(doubleBuffer[p + offset9] > cb)
+			                  if(intBuffer[p + offset6] > cb)
+			                    if(intBuffer[p + offset7] > cb)
+			                      if(intBuffer[p + offset8] > cb)
+			                        if(intBuffer[p + offset9] > cb)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -2773,11 +2775,11 @@ public class OastDetector9_16 {
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset5] > cb)
-			                  if(doubleBuffer[p + offset6] > cb)
-			                    if(doubleBuffer[p + offset7] > cb)
-			                      if(doubleBuffer[p + offset8] > cb)
-			                        if(doubleBuffer[p + offset9] > cb)
+			                if(intBuffer[p + offset5] > cb)
+			                  if(intBuffer[p + offset6] > cb)
+			                    if(intBuffer[p + offset7] > cb)
+			                      if(intBuffer[p + offset8] > cb)
+			                        if(intBuffer[p + offset9] > cb)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -2790,10 +2792,10 @@ public class OastDetector9_16 {
 			                else
 			                  break is_not_a_corner;
 			            else
-			              if(doubleBuffer[p + offset1] > cb)
-			                if(doubleBuffer[p + offset3] > cb)
-			                  if(doubleBuffer[p + offset14] > cb)
-			                    if(doubleBuffer[p + offset15] > cb)
+			              if(intBuffer[p + offset1] > cb)
+			                if(intBuffer[p + offset3] > cb)
+			                  if(intBuffer[p + offset14] > cb)
+			                    if(intBuffer[p + offset15] > cb)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
@@ -2807,24 +2809,24 @@ public class OastDetector9_16 {
 			            break is_not_a_corner;
 			        else
 			          break is_not_a_corner;
-			      else if(doubleBuffer[p + offset11] < c_b)
-			        if(doubleBuffer[p + offset7] < c_b)
-			          if(doubleBuffer[p + offset8] < c_b)
-			            if(doubleBuffer[p + offset9] < c_b)
-			              if(doubleBuffer[p + offset10] < c_b)
-			                if(doubleBuffer[p + offset12] < c_b)
-			                  if(doubleBuffer[p + offset13] < c_b)
-			                    if(doubleBuffer[p + offset6] < c_b)
-			                      if(doubleBuffer[p + offset5] < c_b)
+			      else if(intBuffer[p + offset11] < c_b)
+			        if(intBuffer[p + offset7] < c_b)
+			          if(intBuffer[p + offset8] < c_b)
+			            if(intBuffer[p + offset9] < c_b)
+			              if(intBuffer[p + offset10] < c_b)
+			                if(intBuffer[p + offset12] < c_b)
+			                  if(intBuffer[p + offset13] < c_b)
+			                    if(intBuffer[p + offset6] < c_b)
+			                      if(intBuffer[p + offset5] < c_b)
 			                        break is_a_corner;
 			                      else
-			                        if(doubleBuffer[p + offset14] < c_b)
+			                        if(intBuffer[p + offset14] < c_b)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
 			                    else
-			                      if(doubleBuffer[p + offset14] < c_b)
-			                        if(doubleBuffer[p + offset15] < c_b)
+			                      if(intBuffer[p + offset14] < c_b)
+			                        if(intBuffer[p + offset15] < c_b)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -2844,28 +2846,28 @@ public class OastDetector9_16 {
 			          break is_not_a_corner;
 			      else
 			        break is_not_a_corner;
-			  else if(doubleBuffer[p + offset2] < c_b)
-			    if(doubleBuffer[p + offset9] > cb)
-			      if(doubleBuffer[p + offset10] > cb)
-			        if(doubleBuffer[p + offset11] > cb)
-			          if(doubleBuffer[p + offset8] > cb)
-			            if(doubleBuffer[p + offset12] > cb)
-			              if(doubleBuffer[p + offset13] > cb)
-			                if(doubleBuffer[p + offset14] > cb)
-			                  if(doubleBuffer[p + offset15] > cb)
+			  else if(intBuffer[p + offset2] < c_b)
+			    if(intBuffer[p + offset9] > cb)
+			      if(intBuffer[p + offset10] > cb)
+			        if(intBuffer[p + offset11] > cb)
+			          if(intBuffer[p + offset8] > cb)
+			            if(intBuffer[p + offset12] > cb)
+			              if(intBuffer[p + offset13] > cb)
+			                if(intBuffer[p + offset14] > cb)
+			                  if(intBuffer[p + offset15] > cb)
 			                    break is_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset6] > cb)
-			                      if(doubleBuffer[p + offset7] > cb)
+			                    if(intBuffer[p + offset6] > cb)
+			                      if(intBuffer[p + offset7] > cb)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset5] > cb)
-			                    if(doubleBuffer[p + offset6] > cb)
-			                      if(doubleBuffer[p + offset7] > cb)
+			                  if(intBuffer[p + offset5] > cb)
+			                    if(intBuffer[p + offset6] > cb)
+			                      if(intBuffer[p + offset7] > cb)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
@@ -2874,10 +2876,10 @@ public class OastDetector9_16 {
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset4] > cb)
-			                  if(doubleBuffer[p + offset5] > cb)
-			                    if(doubleBuffer[p + offset6] > cb)
-			                      if(doubleBuffer[p + offset7] > cb)
+			                if(intBuffer[p + offset4] > cb)
+			                  if(intBuffer[p + offset5] > cb)
+			                    if(intBuffer[p + offset6] > cb)
+			                      if(intBuffer[p + offset7] > cb)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
@@ -2888,11 +2890,11 @@ public class OastDetector9_16 {
 			                else
 			                  break is_not_a_corner;
 			            else
-			              if(doubleBuffer[p + offset3] > cb)
-			                if(doubleBuffer[p + offset4] > cb)
-			                  if(doubleBuffer[p + offset5] > cb)
-			                    if(doubleBuffer[p + offset6] > cb)
-			                      if(doubleBuffer[p + offset7] > cb)
+			              if(intBuffer[p + offset3] > cb)
+			                if(intBuffer[p + offset4] > cb)
+			                  if(intBuffer[p + offset5] > cb)
+			                    if(intBuffer[p + offset6] > cb)
+			                      if(intBuffer[p + offset7] > cb)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
@@ -2905,11 +2907,11 @@ public class OastDetector9_16 {
 			              else
 			                break is_not_a_corner;
 			          else
-			            if(doubleBuffer[p + offset1] > cb)
-			              if(doubleBuffer[p + offset12] > cb)
-			                if(doubleBuffer[p + offset13] > cb)
-			                  if(doubleBuffer[p + offset14] > cb)
-			                    if(doubleBuffer[p + offset15] > cb)
+			            if(intBuffer[p + offset1] > cb)
+			              if(intBuffer[p + offset12] > cb)
+			                if(intBuffer[p + offset13] > cb)
+			                  if(intBuffer[p + offset14] > cb)
+			                    if(intBuffer[p + offset15] > cb)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
@@ -2925,24 +2927,24 @@ public class OastDetector9_16 {
 			          break is_not_a_corner;
 			      else
 			        break is_not_a_corner;
-			    else if(doubleBuffer[p + offset9] < c_b)
-			      if(doubleBuffer[p + offset7] < c_b)
-			        if(doubleBuffer[p + offset8] < c_b)
-			          if(doubleBuffer[p + offset6] < c_b)
-			            if(doubleBuffer[p + offset5] < c_b)
-			              if(doubleBuffer[p + offset4] < c_b)
-			                if(doubleBuffer[p + offset3] < c_b)
-			                  if(doubleBuffer[p + offset1] < c_b)
+			    else if(intBuffer[p + offset9] < c_b)
+			      if(intBuffer[p + offset7] < c_b)
+			        if(intBuffer[p + offset8] < c_b)
+			          if(intBuffer[p + offset6] < c_b)
+			            if(intBuffer[p + offset5] < c_b)
+			              if(intBuffer[p + offset4] < c_b)
+			                if(intBuffer[p + offset3] < c_b)
+			                  if(intBuffer[p + offset1] < c_b)
 			                    break is_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset10] < c_b)
+			                    if(intBuffer[p + offset10] < c_b)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset10] < c_b)
-			                    if(doubleBuffer[p + offset11] < c_b)
-			                      if(doubleBuffer[p + offset12] < c_b)
+			                  if(intBuffer[p + offset10] < c_b)
+			                    if(intBuffer[p + offset11] < c_b)
+			                      if(intBuffer[p + offset12] < c_b)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
@@ -2951,10 +2953,10 @@ public class OastDetector9_16 {
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset10] < c_b)
-			                  if(doubleBuffer[p + offset11] < c_b)
-			                    if(doubleBuffer[p + offset12] < c_b)
-			                      if(doubleBuffer[p + offset13] < c_b)
+			                if(intBuffer[p + offset10] < c_b)
+			                  if(intBuffer[p + offset11] < c_b)
+			                    if(intBuffer[p + offset12] < c_b)
+			                      if(intBuffer[p + offset13] < c_b)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
@@ -2965,11 +2967,11 @@ public class OastDetector9_16 {
 			                else
 			                  break is_not_a_corner;
 			            else
-			              if(doubleBuffer[p + offset10] < c_b)
-			                if(doubleBuffer[p + offset11] < c_b)
-			                  if(doubleBuffer[p + offset12] < c_b)
-			                    if(doubleBuffer[p + offset13] < c_b)
-			                      if(doubleBuffer[p + offset14] < c_b)
+			              if(intBuffer[p + offset10] < c_b)
+			                if(intBuffer[p + offset11] < c_b)
+			                  if(intBuffer[p + offset12] < c_b)
+			                    if(intBuffer[p + offset13] < c_b)
+			                      if(intBuffer[p + offset14] < c_b)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
@@ -2982,12 +2984,12 @@ public class OastDetector9_16 {
 			              else
 			                break is_not_a_corner;
 			          else
-			            if(doubleBuffer[p + offset10] < c_b)
-			              if(doubleBuffer[p + offset11] < c_b)
-			                if(doubleBuffer[p + offset12] < c_b)
-			                  if(doubleBuffer[p + offset13] < c_b)
-			                    if(doubleBuffer[p + offset14] < c_b)
-			                      if(doubleBuffer[p + offset15] < c_b)
+			            if(intBuffer[p + offset10] < c_b)
+			              if(intBuffer[p + offset11] < c_b)
+			                if(intBuffer[p + offset12] < c_b)
+			                  if(intBuffer[p + offset13] < c_b)
+			                    if(intBuffer[p + offset14] < c_b)
+			                      if(intBuffer[p + offset15] < c_b)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
@@ -3008,27 +3010,27 @@ public class OastDetector9_16 {
 			    else
 			      break is_not_a_corner;
 			  else
-			    if(doubleBuffer[p + offset9] > cb)
-			      if(doubleBuffer[p + offset10] > cb)
-			        if(doubleBuffer[p + offset11] > cb)
-			          if(doubleBuffer[p + offset8] > cb)
-			            if(doubleBuffer[p + offset12] > cb)
-			              if(doubleBuffer[p + offset13] > cb)
-			                if(doubleBuffer[p + offset14] > cb)
-			                  if(doubleBuffer[p + offset15] > cb)
+			    if(intBuffer[p + offset9] > cb)
+			      if(intBuffer[p + offset10] > cb)
+			        if(intBuffer[p + offset11] > cb)
+			          if(intBuffer[p + offset8] > cb)
+			            if(intBuffer[p + offset12] > cb)
+			              if(intBuffer[p + offset13] > cb)
+			                if(intBuffer[p + offset14] > cb)
+			                  if(intBuffer[p + offset15] > cb)
 			                    break is_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset6] > cb)
-			                      if(doubleBuffer[p + offset7] > cb)
+			                    if(intBuffer[p + offset6] > cb)
+			                      if(intBuffer[p + offset7] > cb)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset5] > cb)
-			                    if(doubleBuffer[p + offset6] > cb)
-			                      if(doubleBuffer[p + offset7] > cb)
+			                  if(intBuffer[p + offset5] > cb)
+			                    if(intBuffer[p + offset6] > cb)
+			                      if(intBuffer[p + offset7] > cb)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
@@ -3037,10 +3039,10 @@ public class OastDetector9_16 {
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset4] > cb)
-			                  if(doubleBuffer[p + offset5] > cb)
-			                    if(doubleBuffer[p + offset6] > cb)
-			                      if(doubleBuffer[p + offset7] > cb)
+			                if(intBuffer[p + offset4] > cb)
+			                  if(intBuffer[p + offset5] > cb)
+			                    if(intBuffer[p + offset6] > cb)
+			                      if(intBuffer[p + offset7] > cb)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
@@ -3051,11 +3053,11 @@ public class OastDetector9_16 {
 			                else
 			                  break is_not_a_corner;
 			            else
-			              if(doubleBuffer[p + offset3] > cb)
-			                if(doubleBuffer[p + offset4] > cb)
-			                  if(doubleBuffer[p + offset5] > cb)
-			                    if(doubleBuffer[p + offset6] > cb)
-			                      if(doubleBuffer[p + offset7] > cb)
+			              if(intBuffer[p + offset3] > cb)
+			                if(intBuffer[p + offset4] > cb)
+			                  if(intBuffer[p + offset5] > cb)
+			                    if(intBuffer[p + offset6] > cb)
+			                      if(intBuffer[p + offset7] > cb)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
@@ -3068,11 +3070,11 @@ public class OastDetector9_16 {
 			              else
 			                break is_not_a_corner;
 			          else
-			            if(doubleBuffer[p + offset1] > cb)
-			              if(doubleBuffer[p + offset12] > cb)
-			                if(doubleBuffer[p + offset13] > cb)
-			                  if(doubleBuffer[p + offset14] > cb)
-			                    if(doubleBuffer[p + offset15] > cb)
+			            if(intBuffer[p + offset1] > cb)
+			              if(intBuffer[p + offset12] > cb)
+			                if(intBuffer[p + offset13] > cb)
+			                  if(intBuffer[p + offset14] > cb)
+			                    if(intBuffer[p + offset15] > cb)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
@@ -3088,33 +3090,33 @@ public class OastDetector9_16 {
 			          break is_not_a_corner;
 			      else
 			        break is_not_a_corner;
-			    else if(doubleBuffer[p + offset9] < c_b)
-			      if(doubleBuffer[p + offset7] < c_b)
-			        if(doubleBuffer[p + offset8] < c_b)
-			          if(doubleBuffer[p + offset10] < c_b)
-			            if(doubleBuffer[p + offset11] < c_b)
-			              if(doubleBuffer[p + offset6] < c_b)
-			                if(doubleBuffer[p + offset5] < c_b)
-			                  if(doubleBuffer[p + offset4] < c_b)
-			                    if(doubleBuffer[p + offset3] < c_b)
+			    else if(intBuffer[p + offset9] < c_b)
+			      if(intBuffer[p + offset7] < c_b)
+			        if(intBuffer[p + offset8] < c_b)
+			          if(intBuffer[p + offset10] < c_b)
+			            if(intBuffer[p + offset11] < c_b)
+			              if(intBuffer[p + offset6] < c_b)
+			                if(intBuffer[p + offset5] < c_b)
+			                  if(intBuffer[p + offset4] < c_b)
+			                    if(intBuffer[p + offset3] < c_b)
 			                      break is_a_corner;
 			                    else
-			                      if(doubleBuffer[p + offset12] < c_b)
+			                      if(intBuffer[p + offset12] < c_b)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset12] < c_b)
-			                      if(doubleBuffer[p + offset13] < c_b)
+			                    if(intBuffer[p + offset12] < c_b)
+			                      if(intBuffer[p + offset13] < c_b)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset12] < c_b)
-			                    if(doubleBuffer[p + offset13] < c_b)
-			                      if(doubleBuffer[p + offset14] < c_b)
+			                  if(intBuffer[p + offset12] < c_b)
+			                    if(intBuffer[p + offset13] < c_b)
+			                      if(intBuffer[p + offset14] < c_b)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
@@ -3123,10 +3125,10 @@ public class OastDetector9_16 {
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset12] < c_b)
-			                  if(doubleBuffer[p + offset13] < c_b)
-			                    if(doubleBuffer[p + offset14] < c_b)
-			                      if(doubleBuffer[p + offset15] < c_b)
+			                if(intBuffer[p + offset12] < c_b)
+			                  if(intBuffer[p + offset13] < c_b)
+			                    if(intBuffer[p + offset14] < c_b)
+			                      if(intBuffer[p + offset15] < c_b)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
@@ -3140,196 +3142,196 @@ public class OastDetector9_16 {
 			              break is_not_a_corner;
 			          else
 			            break is_not_a_corner;
-			        else
-			          break is_not_a_corner;
-			      else
-			        break is_not_a_corner;
-			    else
-			      break is_not_a_corner;
-			else if(doubleBuffer[p + offset0] < c_b)
-			  if(doubleBuffer[p + offset2] > cb)
-			    if(doubleBuffer[p + offset9] > cb)
-			      if(doubleBuffer[p + offset7] > cb)
-			        if(doubleBuffer[p + offset8] > cb)
-			          if(doubleBuffer[p + offset6] > cb)
-			            if(doubleBuffer[p + offset5] > cb)
-			              if(doubleBuffer[p + offset4] > cb)
-			                if(doubleBuffer[p + offset3] > cb)
-			                  if(doubleBuffer[p + offset1] > cb)
-			                    break is_a_corner;
-			                  else
-			                    if(doubleBuffer[p + offset10] > cb)
-			                      break is_a_corner;
-			                    else
-			                      break is_not_a_corner;
-			                else
-			                  if(doubleBuffer[p + offset10] > cb)
-			                    if(doubleBuffer[p + offset11] > cb)
-			                      if(doubleBuffer[p + offset12] > cb)
-			                        break is_a_corner;
-			                      else
-			                        break is_not_a_corner;
-			                    else
-			                      break is_not_a_corner;
-			                  else
-			                    break is_not_a_corner;
-			              else
-			                if(doubleBuffer[p + offset10] > cb)
-			                  if(doubleBuffer[p + offset11] > cb)
-			                    if(doubleBuffer[p + offset12] > cb)
-			                      if(doubleBuffer[p + offset13] > cb)
-			                        break is_a_corner;
-			                      else
-			                        break is_not_a_corner;
-			                    else
-			                      break is_not_a_corner;
-			                  else
-			                    break is_not_a_corner;
-			                else
-			                  break is_not_a_corner;
-			            else
-			              if(doubleBuffer[p + offset10] > cb)
-			                if(doubleBuffer[p + offset11] > cb)
-			                  if(doubleBuffer[p + offset12] > cb)
-			                    if(doubleBuffer[p + offset13] > cb)
-			                      if(doubleBuffer[p + offset14] > cb)
-			                        break is_a_corner;
-			                      else
-			                        break is_not_a_corner;
-			                    else
-			                      break is_not_a_corner;
-			                  else
-			                    break is_not_a_corner;
-			                else
-			                  break is_not_a_corner;
-			              else
-			                break is_not_a_corner;
-			          else
-			            if(doubleBuffer[p + offset10] > cb)
-			              if(doubleBuffer[p + offset11] > cb)
-			                if(doubleBuffer[p + offset12] > cb)
-			                  if(doubleBuffer[p + offset13] > cb)
-			                    if(doubleBuffer[p + offset14] > cb)
-			                      if(doubleBuffer[p + offset15] > cb)
-			                        break is_a_corner;
-			                      else
-			                        break is_not_a_corner;
-			                    else
-			                      break is_not_a_corner;
-			                  else
-			                    break is_not_a_corner;
-			                else
-			                  break is_not_a_corner;
-			              else
-			                break is_not_a_corner;
-			            else
-			              break is_not_a_corner;
-			        else
-			          break is_not_a_corner;
-			      else
-			        break is_not_a_corner;
-			    else if(doubleBuffer[p + offset9] < c_b)
-			      if(doubleBuffer[p + offset10] < c_b)
-			        if(doubleBuffer[p + offset11] < c_b)
-			          if(doubleBuffer[p + offset8] < c_b)
-			            if(doubleBuffer[p + offset12] < c_b)
-			              if(doubleBuffer[p + offset13] < c_b)
-			                if(doubleBuffer[p + offset14] < c_b)
-			                  if(doubleBuffer[p + offset15] < c_b)
-			                    break is_a_corner;
-			                  else
-			                    if(doubleBuffer[p + offset6] < c_b)
-			                      if(doubleBuffer[p + offset7] < c_b)
-			                        break is_a_corner;
-			                      else
-			                        break is_not_a_corner;
-			                    else
-			                      break is_not_a_corner;
-			                else
-			                  if(doubleBuffer[p + offset5] < c_b)
-			                    if(doubleBuffer[p + offset6] < c_b)
-			                      if(doubleBuffer[p + offset7] < c_b)
-			                        break is_a_corner;
-			                      else
-			                        break is_not_a_corner;
-			                    else
-			                      break is_not_a_corner;
-			                  else
-			                    break is_not_a_corner;
-			              else
-			                if(doubleBuffer[p + offset4] < c_b)
-			                  if(doubleBuffer[p + offset5] < c_b)
-			                    if(doubleBuffer[p + offset6] < c_b)
-			                      if(doubleBuffer[p + offset7] < c_b)
-			                        break is_a_corner;
-			                      else
-			                        break is_not_a_corner;
-			                    else
-			                      break is_not_a_corner;
-			                  else
-			                    break is_not_a_corner;
-			                else
-			                  break is_not_a_corner;
-			            else
-			              if(doubleBuffer[p + offset3] < c_b)
-			                if(doubleBuffer[p + offset4] < c_b)
-			                  if(doubleBuffer[p + offset5] < c_b)
-			                    if(doubleBuffer[p + offset6] < c_b)
-			                      if(doubleBuffer[p + offset7] < c_b)
-			                        break is_a_corner;
-			                      else
-			                        break is_not_a_corner;
-			                    else
-			                      break is_not_a_corner;
-			                  else
-			                    break is_not_a_corner;
-			                else
-			                  break is_not_a_corner;
-			              else
-			                break is_not_a_corner;
-			          else
-			            if(doubleBuffer[p + offset1] < c_b)
-			              if(doubleBuffer[p + offset12] < c_b)
-			                if(doubleBuffer[p + offset13] < c_b)
-			                  if(doubleBuffer[p + offset14] < c_b)
-			                    if(doubleBuffer[p + offset15] < c_b)
-			                      break is_a_corner;
-			                    else
-			                      break is_not_a_corner;
-			                  else
-			                    break is_not_a_corner;
-			                else
-			                  break is_not_a_corner;
-			              else
-			                break is_not_a_corner;
-			            else
-			              break is_not_a_corner;
 			        else
 			          break is_not_a_corner;
 			      else
 			        break is_not_a_corner;
 			    else
 			      break is_not_a_corner;
-			  else if(doubleBuffer[p + offset2] < c_b)
-			    if(doubleBuffer[p + offset4] > cb)
-			      if(doubleBuffer[p + offset11] > cb)
-			        if(doubleBuffer[p + offset7] > cb)
-			          if(doubleBuffer[p + offset8] > cb)
-			            if(doubleBuffer[p + offset9] > cb)
-			              if(doubleBuffer[p + offset10] > cb)
-			                if(doubleBuffer[p + offset6] > cb)
-			                  if(doubleBuffer[p + offset5] > cb)
-			                    if(doubleBuffer[p + offset3] > cb)
+			else if(intBuffer[p + offset0] < c_b)
+			  if(intBuffer[p + offset2] > cb)
+			    if(intBuffer[p + offset9] > cb)
+			      if(intBuffer[p + offset7] > cb)
+			        if(intBuffer[p + offset8] > cb)
+			          if(intBuffer[p + offset6] > cb)
+			            if(intBuffer[p + offset5] > cb)
+			              if(intBuffer[p + offset4] > cb)
+			                if(intBuffer[p + offset3] > cb)
+			                  if(intBuffer[p + offset1] > cb)
+			                    break is_a_corner;
+			                  else
+			                    if(intBuffer[p + offset10] > cb)
 			                      break is_a_corner;
 			                    else
-			                      if(doubleBuffer[p + offset12] > cb)
+			                      break is_not_a_corner;
+			                else
+			                  if(intBuffer[p + offset10] > cb)
+			                    if(intBuffer[p + offset11] > cb)
+			                      if(intBuffer[p + offset12] > cb)
+			                        break is_a_corner;
+			                      else
+			                        break is_not_a_corner;
+			                    else
+			                      break is_not_a_corner;
+			                  else
+			                    break is_not_a_corner;
+			              else
+			                if(intBuffer[p + offset10] > cb)
+			                  if(intBuffer[p + offset11] > cb)
+			                    if(intBuffer[p + offset12] > cb)
+			                      if(intBuffer[p + offset13] > cb)
+			                        break is_a_corner;
+			                      else
+			                        break is_not_a_corner;
+			                    else
+			                      break is_not_a_corner;
+			                  else
+			                    break is_not_a_corner;
+			                else
+			                  break is_not_a_corner;
+			            else
+			              if(intBuffer[p + offset10] > cb)
+			                if(intBuffer[p + offset11] > cb)
+			                  if(intBuffer[p + offset12] > cb)
+			                    if(intBuffer[p + offset13] > cb)
+			                      if(intBuffer[p + offset14] > cb)
+			                        break is_a_corner;
+			                      else
+			                        break is_not_a_corner;
+			                    else
+			                      break is_not_a_corner;
+			                  else
+			                    break is_not_a_corner;
+			                else
+			                  break is_not_a_corner;
+			              else
+			                break is_not_a_corner;
+			          else
+			            if(intBuffer[p + offset10] > cb)
+			              if(intBuffer[p + offset11] > cb)
+			                if(intBuffer[p + offset12] > cb)
+			                  if(intBuffer[p + offset13] > cb)
+			                    if(intBuffer[p + offset14] > cb)
+			                      if(intBuffer[p + offset15] > cb)
+			                        break is_a_corner;
+			                      else
+			                        break is_not_a_corner;
+			                    else
+			                      break is_not_a_corner;
+			                  else
+			                    break is_not_a_corner;
+			                else
+			                  break is_not_a_corner;
+			              else
+			                break is_not_a_corner;
+			            else
+			              break is_not_a_corner;
+			        else
+			          break is_not_a_corner;
+			      else
+			        break is_not_a_corner;
+			    else if(intBuffer[p + offset9] < c_b)
+			      if(intBuffer[p + offset10] < c_b)
+			        if(intBuffer[p + offset11] < c_b)
+			          if(intBuffer[p + offset8] < c_b)
+			            if(intBuffer[p + offset12] < c_b)
+			              if(intBuffer[p + offset13] < c_b)
+			                if(intBuffer[p + offset14] < c_b)
+			                  if(intBuffer[p + offset15] < c_b)
+			                    break is_a_corner;
+			                  else
+			                    if(intBuffer[p + offset6] < c_b)
+			                      if(intBuffer[p + offset7] < c_b)
+			                        break is_a_corner;
+			                      else
+			                        break is_not_a_corner;
+			                    else
+			                      break is_not_a_corner;
+			                else
+			                  if(intBuffer[p + offset5] < c_b)
+			                    if(intBuffer[p + offset6] < c_b)
+			                      if(intBuffer[p + offset7] < c_b)
+			                        break is_a_corner;
+			                      else
+			                        break is_not_a_corner;
+			                    else
+			                      break is_not_a_corner;
+			                  else
+			                    break is_not_a_corner;
+			              else
+			                if(intBuffer[p + offset4] < c_b)
+			                  if(intBuffer[p + offset5] < c_b)
+			                    if(intBuffer[p + offset6] < c_b)
+			                      if(intBuffer[p + offset7] < c_b)
+			                        break is_a_corner;
+			                      else
+			                        break is_not_a_corner;
+			                    else
+			                      break is_not_a_corner;
+			                  else
+			                    break is_not_a_corner;
+			                else
+			                  break is_not_a_corner;
+			            else
+			              if(intBuffer[p + offset3] < c_b)
+			                if(intBuffer[p + offset4] < c_b)
+			                  if(intBuffer[p + offset5] < c_b)
+			                    if(intBuffer[p + offset6] < c_b)
+			                      if(intBuffer[p + offset7] < c_b)
+			                        break is_a_corner;
+			                      else
+			                        break is_not_a_corner;
+			                    else
+			                      break is_not_a_corner;
+			                  else
+			                    break is_not_a_corner;
+			                else
+			                  break is_not_a_corner;
+			              else
+			                break is_not_a_corner;
+			          else
+			            if(intBuffer[p + offset1] < c_b)
+			              if(intBuffer[p + offset12] < c_b)
+			                if(intBuffer[p + offset13] < c_b)
+			                  if(intBuffer[p + offset14] < c_b)
+			                    if(intBuffer[p + offset15] < c_b)
+			                      break is_a_corner;
+			                    else
+			                      break is_not_a_corner;
+			                  else
+			                    break is_not_a_corner;
+			                else
+			                  break is_not_a_corner;
+			              else
+			                break is_not_a_corner;
+			            else
+			              break is_not_a_corner;
+			        else
+			          break is_not_a_corner;
+			      else
+			        break is_not_a_corner;
+			    else
+			      break is_not_a_corner;
+			  else if(intBuffer[p + offset2] < c_b)
+			    if(intBuffer[p + offset4] > cb)
+			      if(intBuffer[p + offset11] > cb)
+			        if(intBuffer[p + offset7] > cb)
+			          if(intBuffer[p + offset8] > cb)
+			            if(intBuffer[p + offset9] > cb)
+			              if(intBuffer[p + offset10] > cb)
+			                if(intBuffer[p + offset6] > cb)
+			                  if(intBuffer[p + offset5] > cb)
+			                    if(intBuffer[p + offset3] > cb)
+			                      break is_a_corner;
+			                    else
+			                      if(intBuffer[p + offset12] > cb)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset12] > cb)
-			                      if(doubleBuffer[p + offset13] > cb)
-			                        if(doubleBuffer[p + offset14] > cb)
+			                    if(intBuffer[p + offset12] > cb)
+			                      if(intBuffer[p + offset13] > cb)
+			                        if(intBuffer[p + offset14] > cb)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -3338,10 +3340,10 @@ public class OastDetector9_16 {
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset12] > cb)
-			                    if(doubleBuffer[p + offset13] > cb)
-			                      if(doubleBuffer[p + offset14] > cb)
-			                        if(doubleBuffer[p + offset15] > cb)
+			                  if(intBuffer[p + offset12] > cb)
+			                    if(intBuffer[p + offset13] > cb)
+			                      if(intBuffer[p + offset14] > cb)
+			                        if(intBuffer[p + offset15] > cb)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -3359,27 +3361,27 @@ public class OastDetector9_16 {
 			            break is_not_a_corner;
 			        else
 			          break is_not_a_corner;
-			      else if(doubleBuffer[p + offset11] < c_b)
-			        if(doubleBuffer[p + offset12] < c_b)
-			          if(doubleBuffer[p + offset13] < c_b)
-			            if(doubleBuffer[p + offset10] < c_b)
-			              if(doubleBuffer[p + offset14] < c_b)
-			                if(doubleBuffer[p + offset15] < c_b)
-			                  if(doubleBuffer[p + offset1] < c_b)
+			      else if(intBuffer[p + offset11] < c_b)
+			        if(intBuffer[p + offset12] < c_b)
+			          if(intBuffer[p + offset13] < c_b)
+			            if(intBuffer[p + offset10] < c_b)
+			              if(intBuffer[p + offset14] < c_b)
+			                if(intBuffer[p + offset15] < c_b)
+			                  if(intBuffer[p + offset1] < c_b)
 			                    break is_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset8] < c_b)
-			                      if(doubleBuffer[p + offset9] < c_b)
+			                    if(intBuffer[p + offset8] < c_b)
+			                      if(intBuffer[p + offset9] < c_b)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset6] < c_b)
-			                    if(doubleBuffer[p + offset7] < c_b)
-			                      if(doubleBuffer[p + offset8] < c_b)
-			                        if(doubleBuffer[p + offset9] < c_b)
+			                  if(intBuffer[p + offset6] < c_b)
+			                    if(intBuffer[p + offset7] < c_b)
+			                      if(intBuffer[p + offset8] < c_b)
+			                        if(intBuffer[p + offset9] < c_b)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -3390,11 +3392,11 @@ public class OastDetector9_16 {
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset5] < c_b)
-			                  if(doubleBuffer[p + offset6] < c_b)
-			                    if(doubleBuffer[p + offset7] < c_b)
-			                      if(doubleBuffer[p + offset8] < c_b)
-			                        if(doubleBuffer[p + offset9] < c_b)
+			                if(intBuffer[p + offset5] < c_b)
+			                  if(intBuffer[p + offset6] < c_b)
+			                    if(intBuffer[p + offset7] < c_b)
+			                      if(intBuffer[p + offset8] < c_b)
+			                        if(intBuffer[p + offset9] < c_b)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -3407,10 +3409,10 @@ public class OastDetector9_16 {
 			                else
 			                  break is_not_a_corner;
 			            else
-			              if(doubleBuffer[p + offset1] < c_b)
-			                if(doubleBuffer[p + offset3] < c_b)
-			                  if(doubleBuffer[p + offset14] < c_b)
-			                    if(doubleBuffer[p + offset15] < c_b)
+			              if(intBuffer[p + offset1] < c_b)
+			                if(intBuffer[p + offset3] < c_b)
+			                  if(intBuffer[p + offset14] < c_b)
+			                    if(intBuffer[p + offset15] < c_b)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
@@ -3426,20 +3428,20 @@ public class OastDetector9_16 {
 			          break is_not_a_corner;
 			      else
 			        break is_not_a_corner;
-			    else if(doubleBuffer[p + offset4] < c_b)
-			      if(doubleBuffer[p + offset5] > cb)
-			        if(doubleBuffer[p + offset12] > cb)
-			          if(doubleBuffer[p + offset7] > cb)
-			            if(doubleBuffer[p + offset8] > cb)
-			              if(doubleBuffer[p + offset9] > cb)
-			                if(doubleBuffer[p + offset10] > cb)
-			                  if(doubleBuffer[p + offset11] > cb)
-			                    if(doubleBuffer[p + offset13] > cb)
-			                      if(doubleBuffer[p + offset6] > cb)
+			    else if(intBuffer[p + offset4] < c_b)
+			      if(intBuffer[p + offset5] > cb)
+			        if(intBuffer[p + offset12] > cb)
+			          if(intBuffer[p + offset7] > cb)
+			            if(intBuffer[p + offset8] > cb)
+			              if(intBuffer[p + offset9] > cb)
+			                if(intBuffer[p + offset10] > cb)
+			                  if(intBuffer[p + offset11] > cb)
+			                    if(intBuffer[p + offset13] > cb)
+			                      if(intBuffer[p + offset6] > cb)
 			                        break is_a_corner;
 			                      else
-			                        if(doubleBuffer[p + offset14] > cb)
-			                          if(doubleBuffer[p + offset15] > cb)
+			                        if(intBuffer[p + offset14] > cb)
+			                          if(intBuffer[p + offset15] > cb)
 			                            break is_a_corner;
 			                          else
 			                            break is_not_a_corner;
@@ -3457,26 +3459,26 @@ public class OastDetector9_16 {
 			              break is_not_a_corner;
 			          else
 			            break is_not_a_corner;
-			        else if(doubleBuffer[p + offset12] < c_b)
-			          if(doubleBuffer[p + offset13] < c_b)
-			            if(doubleBuffer[p + offset14] < c_b)
-			              if(doubleBuffer[p + offset15] < c_b)
-			                if(doubleBuffer[p + offset1] < c_b)
-			                  if(doubleBuffer[p + offset3] < c_b)
+			        else if(intBuffer[p + offset12] < c_b)
+			          if(intBuffer[p + offset13] < c_b)
+			            if(intBuffer[p + offset14] < c_b)
+			              if(intBuffer[p + offset15] < c_b)
+			                if(intBuffer[p + offset1] < c_b)
+			                  if(intBuffer[p + offset3] < c_b)
 			                    break is_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset10] < c_b)
-			                      if(doubleBuffer[p + offset11] < c_b)
+			                    if(intBuffer[p + offset10] < c_b)
+			                      if(intBuffer[p + offset11] < c_b)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset8] < c_b)
-			                    if(doubleBuffer[p + offset9] < c_b)
-			                      if(doubleBuffer[p + offset10] < c_b)
-			                        if(doubleBuffer[p + offset11] < c_b)
+			                  if(intBuffer[p + offset8] < c_b)
+			                    if(intBuffer[p + offset9] < c_b)
+			                      if(intBuffer[p + offset10] < c_b)
+			                        if(intBuffer[p + offset11] < c_b)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -3487,12 +3489,12 @@ public class OastDetector9_16 {
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset6] < c_b)
-			                  if(doubleBuffer[p + offset7] < c_b)
-			                    if(doubleBuffer[p + offset8] < c_b)
-			                      if(doubleBuffer[p + offset9] < c_b)
-			                        if(doubleBuffer[p + offset10] < c_b)
-			                          if(doubleBuffer[p + offset11] < c_b)
+			                if(intBuffer[p + offset6] < c_b)
+			                  if(intBuffer[p + offset7] < c_b)
+			                    if(intBuffer[p + offset8] < c_b)
+			                      if(intBuffer[p + offset9] < c_b)
+			                        if(intBuffer[p + offset10] < c_b)
+			                          if(intBuffer[p + offset11] < c_b)
 			                            break is_a_corner;
 			                          else
 			                            break is_not_a_corner;
@@ -3512,19 +3514,19 @@ public class OastDetector9_16 {
 			            break is_not_a_corner;
 			        else
 			          break is_not_a_corner;
-			      else if(doubleBuffer[p + offset5] < c_b)
-			        if(doubleBuffer[p + offset7] > cb)
-			          if(doubleBuffer[p + offset14] > cb)
-			            if(doubleBuffer[p + offset8] > cb)
-			              if(doubleBuffer[p + offset9] > cb)
-			                if(doubleBuffer[p + offset10] > cb)
-			                  if(doubleBuffer[p + offset11] > cb)
-			                    if(doubleBuffer[p + offset12] > cb)
-			                      if(doubleBuffer[p + offset13] > cb)
-			                        if(doubleBuffer[p + offset6] > cb)
+			      else if(intBuffer[p + offset5] < c_b)
+			        if(intBuffer[p + offset7] > cb)
+			          if(intBuffer[p + offset14] > cb)
+			            if(intBuffer[p + offset8] > cb)
+			              if(intBuffer[p + offset9] > cb)
+			                if(intBuffer[p + offset10] > cb)
+			                  if(intBuffer[p + offset11] > cb)
+			                    if(intBuffer[p + offset12] > cb)
+			                      if(intBuffer[p + offset13] > cb)
+			                        if(intBuffer[p + offset6] > cb)
 			                          break is_a_corner;
 			                        else
-			                          if(doubleBuffer[p + offset15] > cb)
+			                          if(intBuffer[p + offset15] > cb)
 			                            break is_a_corner;
 			                          else
 			                            break is_not_a_corner;
@@ -3540,22 +3542,22 @@ public class OastDetector9_16 {
 			                break is_not_a_corner;
 			            else
 			              break is_not_a_corner;
-			          else if(doubleBuffer[p + offset14] < c_b)
-			            if(doubleBuffer[p + offset15] < c_b)
-			              if(doubleBuffer[p + offset1] < c_b)
-			                if(doubleBuffer[p + offset3] < c_b)
-			                  if(doubleBuffer[p + offset6] < c_b)
+			          else if(intBuffer[p + offset14] < c_b)
+			            if(intBuffer[p + offset15] < c_b)
+			              if(intBuffer[p + offset1] < c_b)
+			                if(intBuffer[p + offset3] < c_b)
+			                  if(intBuffer[p + offset6] < c_b)
 			                    break is_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset13] < c_b)
+			                    if(intBuffer[p + offset13] < c_b)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset10] < c_b)
-			                    if(doubleBuffer[p + offset11] < c_b)
-			                      if(doubleBuffer[p + offset12] < c_b)
-			                        if(doubleBuffer[p + offset13] < c_b)
+			                  if(intBuffer[p + offset10] < c_b)
+			                    if(intBuffer[p + offset11] < c_b)
+			                      if(intBuffer[p + offset12] < c_b)
+			                        if(intBuffer[p + offset13] < c_b)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -3566,12 +3568,12 @@ public class OastDetector9_16 {
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset8] < c_b)
-			                  if(doubleBuffer[p + offset9] < c_b)
-			                    if(doubleBuffer[p + offset10] < c_b)
-			                      if(doubleBuffer[p + offset11] < c_b)
-			                        if(doubleBuffer[p + offset12] < c_b)
-			                          if(doubleBuffer[p + offset13] < c_b)
+			                if(intBuffer[p + offset8] < c_b)
+			                  if(intBuffer[p + offset9] < c_b)
+			                    if(intBuffer[p + offset10] < c_b)
+			                      if(intBuffer[p + offset11] < c_b)
+			                        if(intBuffer[p + offset12] < c_b)
+			                          if(intBuffer[p + offset13] < c_b)
 			                            break is_a_corner;
 			                          else
 			                            break is_not_a_corner;
@@ -3589,21 +3591,21 @@ public class OastDetector9_16 {
 			              break is_not_a_corner;
 			          else
 			            break is_not_a_corner;
-			        else if(doubleBuffer[p + offset7] < c_b)
-			          if(doubleBuffer[p + offset3] < c_b)
-			            if(doubleBuffer[p + offset1] < c_b)
-			              if(doubleBuffer[p + offset6] < c_b)
-			                if(doubleBuffer[p + offset8] < c_b)
+			        else if(intBuffer[p + offset7] < c_b)
+			          if(intBuffer[p + offset3] < c_b)
+			            if(intBuffer[p + offset1] < c_b)
+			              if(intBuffer[p + offset6] < c_b)
+			                if(intBuffer[p + offset8] < c_b)
 			                  break is_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset15] < c_b)
+			                  if(intBuffer[p + offset15] < c_b)
 			                    break is_a_corner;
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset13] < c_b)
-			                  if(doubleBuffer[p + offset14] < c_b)
-			                    if(doubleBuffer[p + offset15] < c_b)
+			                if(intBuffer[p + offset13] < c_b)
+			                  if(intBuffer[p + offset14] < c_b)
+			                    if(intBuffer[p + offset15] < c_b)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
@@ -3612,17 +3614,17 @@ public class OastDetector9_16 {
 			                else
 			                  break is_not_a_corner;
 			            else
-			              if(doubleBuffer[p + offset8] < c_b)
-			                if(doubleBuffer[p + offset9] < c_b)
-			                  if(doubleBuffer[p + offset10] < c_b)
-			                    if(doubleBuffer[p + offset6] < c_b)
+			              if(intBuffer[p + offset8] < c_b)
+			                if(intBuffer[p + offset9] < c_b)
+			                  if(intBuffer[p + offset10] < c_b)
+			                    if(intBuffer[p + offset6] < c_b)
 			                      break is_a_corner;
 			                    else
-			                      if(doubleBuffer[p + offset11] < c_b)
-			                        if(doubleBuffer[p + offset12] < c_b)
-			                          if(doubleBuffer[p + offset13] < c_b)
-			                            if(doubleBuffer[p + offset14] < c_b)
-			                              if(doubleBuffer[p + offset15] < c_b)
+			                      if(intBuffer[p + offset11] < c_b)
+			                        if(intBuffer[p + offset12] < c_b)
+			                          if(intBuffer[p + offset13] < c_b)
+			                            if(intBuffer[p + offset14] < c_b)
+			                              if(intBuffer[p + offset15] < c_b)
 			                                break is_a_corner;
 			                              else
 			                                break is_not_a_corner;
@@ -3641,17 +3643,17 @@ public class OastDetector9_16 {
 			              else
 			                break is_not_a_corner;
 			          else
-			            if(doubleBuffer[p + offset10] < c_b)
-			              if(doubleBuffer[p + offset11] < c_b)
-			                if(doubleBuffer[p + offset12] < c_b)
-			                  if(doubleBuffer[p + offset8] < c_b)
-			                    if(doubleBuffer[p + offset9] < c_b)
-			                      if(doubleBuffer[p + offset6] < c_b)
+			            if(intBuffer[p + offset10] < c_b)
+			              if(intBuffer[p + offset11] < c_b)
+			                if(intBuffer[p + offset12] < c_b)
+			                  if(intBuffer[p + offset8] < c_b)
+			                    if(intBuffer[p + offset9] < c_b)
+			                      if(intBuffer[p + offset6] < c_b)
 			                        break is_a_corner;
 			                      else
-			                        if(doubleBuffer[p + offset13] < c_b)
-			                          if(doubleBuffer[p + offset14] < c_b)
-			                            if(doubleBuffer[p + offset15] < c_b)
+			                        if(intBuffer[p + offset13] < c_b)
+			                          if(intBuffer[p + offset14] < c_b)
+			                            if(intBuffer[p + offset15] < c_b)
 			                              break is_a_corner;
 			                            else
 			                              break is_not_a_corner;
@@ -3660,10 +3662,10 @@ public class OastDetector9_16 {
 			                        else
 			                          break is_not_a_corner;
 			                    else
-			                      if(doubleBuffer[p + offset1] < c_b)
-			                        if(doubleBuffer[p + offset13] < c_b)
-			                          if(doubleBuffer[p + offset14] < c_b)
-			                            if(doubleBuffer[p + offset15] < c_b)
+			                      if(intBuffer[p + offset1] < c_b)
+			                        if(intBuffer[p + offset13] < c_b)
+			                          if(intBuffer[p + offset14] < c_b)
+			                            if(intBuffer[p + offset15] < c_b)
 			                              break is_a_corner;
 			                            else
 			                              break is_not_a_corner;
@@ -3674,10 +3676,10 @@ public class OastDetector9_16 {
 			                      else
 			                        break is_not_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset1] < c_b)
-			                      if(doubleBuffer[p + offset13] < c_b)
-			                        if(doubleBuffer[p + offset14] < c_b)
-			                          if(doubleBuffer[p + offset15] < c_b)
+			                    if(intBuffer[p + offset1] < c_b)
+			                      if(intBuffer[p + offset13] < c_b)
+			                        if(intBuffer[p + offset14] < c_b)
+			                          if(intBuffer[p + offset15] < c_b)
 			                            break is_a_corner;
 			                          else
 			                            break is_not_a_corner;
@@ -3694,22 +3696,22 @@ public class OastDetector9_16 {
 			            else
 			              break is_not_a_corner;
 			        else
-			          if(doubleBuffer[p + offset14] < c_b)
-			            if(doubleBuffer[p + offset15] < c_b)
-			              if(doubleBuffer[p + offset1] < c_b)
-			                if(doubleBuffer[p + offset3] < c_b)
-			                  if(doubleBuffer[p + offset6] < c_b)
+			          if(intBuffer[p + offset14] < c_b)
+			            if(intBuffer[p + offset15] < c_b)
+			              if(intBuffer[p + offset1] < c_b)
+			                if(intBuffer[p + offset3] < c_b)
+			                  if(intBuffer[p + offset6] < c_b)
 			                    break is_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset13] < c_b)
+			                    if(intBuffer[p + offset13] < c_b)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset10] < c_b)
-			                    if(doubleBuffer[p + offset11] < c_b)
-			                      if(doubleBuffer[p + offset12] < c_b)
-			                        if(doubleBuffer[p + offset13] < c_b)
+			                  if(intBuffer[p + offset10] < c_b)
+			                    if(intBuffer[p + offset11] < c_b)
+			                      if(intBuffer[p + offset12] < c_b)
+			                        if(intBuffer[p + offset13] < c_b)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -3720,12 +3722,12 @@ public class OastDetector9_16 {
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset8] < c_b)
-			                  if(doubleBuffer[p + offset9] < c_b)
-			                    if(doubleBuffer[p + offset10] < c_b)
-			                      if(doubleBuffer[p + offset11] < c_b)
-			                        if(doubleBuffer[p + offset12] < c_b)
-			                          if(doubleBuffer[p + offset13] < c_b)
+			                if(intBuffer[p + offset8] < c_b)
+			                  if(intBuffer[p + offset9] < c_b)
+			                    if(intBuffer[p + offset10] < c_b)
+			                      if(intBuffer[p + offset11] < c_b)
+			                        if(intBuffer[p + offset12] < c_b)
+			                          if(intBuffer[p + offset13] < c_b)
 			                            break is_a_corner;
 			                          else
 			                            break is_not_a_corner;
@@ -3744,18 +3746,18 @@ public class OastDetector9_16 {
 			          else
 			            break is_not_a_corner;
 			      else
-			        if(doubleBuffer[p + offset12] > cb)
-			          if(doubleBuffer[p + offset7] > cb)
-			            if(doubleBuffer[p + offset8] > cb)
-			              if(doubleBuffer[p + offset9] > cb)
-			                if(doubleBuffer[p + offset10] > cb)
-			                  if(doubleBuffer[p + offset11] > cb)
-			                    if(doubleBuffer[p + offset13] > cb)
-			                      if(doubleBuffer[p + offset14] > cb)
-			                        if(doubleBuffer[p + offset6] > cb)
+			        if(intBuffer[p + offset12] > cb)
+			          if(intBuffer[p + offset7] > cb)
+			            if(intBuffer[p + offset8] > cb)
+			              if(intBuffer[p + offset9] > cb)
+			                if(intBuffer[p + offset10] > cb)
+			                  if(intBuffer[p + offset11] > cb)
+			                    if(intBuffer[p + offset13] > cb)
+			                      if(intBuffer[p + offset14] > cb)
+			                        if(intBuffer[p + offset6] > cb)
 			                          break is_a_corner;
 			                        else
-			                          if(doubleBuffer[p + offset15] > cb)
+			                          if(intBuffer[p + offset15] > cb)
 			                            break is_a_corner;
 			                          else
 			                            break is_not_a_corner;
@@ -3773,26 +3775,26 @@ public class OastDetector9_16 {
 			              break is_not_a_corner;
 			          else
 			            break is_not_a_corner;
-			        else if(doubleBuffer[p + offset12] < c_b)
-			          if(doubleBuffer[p + offset13] < c_b)
-			            if(doubleBuffer[p + offset14] < c_b)
-			              if(doubleBuffer[p + offset15] < c_b)
-			                if(doubleBuffer[p + offset1] < c_b)
-			                  if(doubleBuffer[p + offset3] < c_b)
+			        else if(intBuffer[p + offset12] < c_b)
+			          if(intBuffer[p + offset13] < c_b)
+			            if(intBuffer[p + offset14] < c_b)
+			              if(intBuffer[p + offset15] < c_b)
+			                if(intBuffer[p + offset1] < c_b)
+			                  if(intBuffer[p + offset3] < c_b)
 			                    break is_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset10] < c_b)
-			                      if(doubleBuffer[p + offset11] < c_b)
+			                    if(intBuffer[p + offset10] < c_b)
+			                      if(intBuffer[p + offset11] < c_b)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset8] < c_b)
-			                    if(doubleBuffer[p + offset9] < c_b)
-			                      if(doubleBuffer[p + offset10] < c_b)
-			                        if(doubleBuffer[p + offset11] < c_b)
+			                  if(intBuffer[p + offset8] < c_b)
+			                    if(intBuffer[p + offset9] < c_b)
+			                      if(intBuffer[p + offset10] < c_b)
+			                        if(intBuffer[p + offset11] < c_b)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -3803,12 +3805,12 @@ public class OastDetector9_16 {
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset6] < c_b)
-			                  if(doubleBuffer[p + offset7] < c_b)
-			                    if(doubleBuffer[p + offset8] < c_b)
-			                      if(doubleBuffer[p + offset9] < c_b)
-			                        if(doubleBuffer[p + offset10] < c_b)
-			                          if(doubleBuffer[p + offset11] < c_b)
+			                if(intBuffer[p + offset6] < c_b)
+			                  if(intBuffer[p + offset7] < c_b)
+			                    if(intBuffer[p + offset8] < c_b)
+			                      if(intBuffer[p + offset9] < c_b)
+			                        if(intBuffer[p + offset10] < c_b)
+			                          if(intBuffer[p + offset11] < c_b)
 			                            break is_a_corner;
 			                          else
 			                            break is_not_a_corner;
@@ -3829,24 +3831,24 @@ public class OastDetector9_16 {
 			        else
 			          break is_not_a_corner;
 			    else
-			      if(doubleBuffer[p + offset11] > cb)
-			        if(doubleBuffer[p + offset7] > cb)
-			          if(doubleBuffer[p + offset8] > cb)
-			            if(doubleBuffer[p + offset9] > cb)
-			              if(doubleBuffer[p + offset10] > cb)
-			                if(doubleBuffer[p + offset12] > cb)
-			                  if(doubleBuffer[p + offset13] > cb)
-			                    if(doubleBuffer[p + offset6] > cb)
-			                      if(doubleBuffer[p + offset5] > cb)
+			      if(intBuffer[p + offset11] > cb)
+			        if(intBuffer[p + offset7] > cb)
+			          if(intBuffer[p + offset8] > cb)
+			            if(intBuffer[p + offset9] > cb)
+			              if(intBuffer[p + offset10] > cb)
+			                if(intBuffer[p + offset12] > cb)
+			                  if(intBuffer[p + offset13] > cb)
+			                    if(intBuffer[p + offset6] > cb)
+			                      if(intBuffer[p + offset5] > cb)
 			                        break is_a_corner;
 			                      else
-			                        if(doubleBuffer[p + offset14] > cb)
+			                        if(intBuffer[p + offset14] > cb)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
 			                    else
-			                      if(doubleBuffer[p + offset14] > cb)
-			                        if(doubleBuffer[p + offset15] > cb)
+			                      if(intBuffer[p + offset14] > cb)
+			                        if(intBuffer[p + offset15] > cb)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -3864,27 +3866,27 @@ public class OastDetector9_16 {
 			            break is_not_a_corner;
 			        else
 			          break is_not_a_corner;
-			      else if(doubleBuffer[p + offset11] < c_b)
-			        if(doubleBuffer[p + offset12] < c_b)
-			          if(doubleBuffer[p + offset13] < c_b)
-			            if(doubleBuffer[p + offset10] < c_b)
-			              if(doubleBuffer[p + offset14] < c_b)
-			                if(doubleBuffer[p + offset15] < c_b)
-			                  if(doubleBuffer[p + offset1] < c_b)
+			      else if(intBuffer[p + offset11] < c_b)
+			        if(intBuffer[p + offset12] < c_b)
+			          if(intBuffer[p + offset13] < c_b)
+			            if(intBuffer[p + offset10] < c_b)
+			              if(intBuffer[p + offset14] < c_b)
+			                if(intBuffer[p + offset15] < c_b)
+			                  if(intBuffer[p + offset1] < c_b)
 			                    break is_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset8] < c_b)
-			                      if(doubleBuffer[p + offset9] < c_b)
+			                    if(intBuffer[p + offset8] < c_b)
+			                      if(intBuffer[p + offset9] < c_b)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset6] < c_b)
-			                    if(doubleBuffer[p + offset7] < c_b)
-			                      if(doubleBuffer[p + offset8] < c_b)
-			                        if(doubleBuffer[p + offset9] < c_b)
+			                  if(intBuffer[p + offset6] < c_b)
+			                    if(intBuffer[p + offset7] < c_b)
+			                      if(intBuffer[p + offset8] < c_b)
+			                        if(intBuffer[p + offset9] < c_b)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -3895,11 +3897,11 @@ public class OastDetector9_16 {
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset5] < c_b)
-			                  if(doubleBuffer[p + offset6] < c_b)
-			                    if(doubleBuffer[p + offset7] < c_b)
-			                      if(doubleBuffer[p + offset8] < c_b)
-			                        if(doubleBuffer[p + offset9] < c_b)
+			                if(intBuffer[p + offset5] < c_b)
+			                  if(intBuffer[p + offset6] < c_b)
+			                    if(intBuffer[p + offset7] < c_b)
+			                      if(intBuffer[p + offset8] < c_b)
+			                        if(intBuffer[p + offset9] < c_b)
 			                          break is_a_corner;
 			                        else
 			                          break is_not_a_corner;
@@ -3912,10 +3914,10 @@ public class OastDetector9_16 {
 			                else
 			                  break is_not_a_corner;
 			            else
-			              if(doubleBuffer[p + offset1] < c_b)
-			                if(doubleBuffer[p + offset3] < c_b)
-			                  if(doubleBuffer[p + offset14] < c_b)
-			                    if(doubleBuffer[p + offset15] < c_b)
+			              if(intBuffer[p + offset1] < c_b)
+			                if(intBuffer[p + offset3] < c_b)
+			                  if(intBuffer[p + offset14] < c_b)
+			                    if(intBuffer[p + offset15] < c_b)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
@@ -3932,33 +3934,33 @@ public class OastDetector9_16 {
 			      else
 			        break is_not_a_corner;
 			  else
-			    if(doubleBuffer[p + offset9] > cb)
-			      if(doubleBuffer[p + offset7] > cb)
-			        if(doubleBuffer[p + offset8] > cb)
-			          if(doubleBuffer[p + offset10] > cb)
-			            if(doubleBuffer[p + offset11] > cb)
-			              if(doubleBuffer[p + offset6] > cb)
-			                if(doubleBuffer[p + offset5] > cb)
-			                  if(doubleBuffer[p + offset4] > cb)
-			                    if(doubleBuffer[p + offset3] > cb)
+			    if(intBuffer[p + offset9] > cb)
+			      if(intBuffer[p + offset7] > cb)
+			        if(intBuffer[p + offset8] > cb)
+			          if(intBuffer[p + offset10] > cb)
+			            if(intBuffer[p + offset11] > cb)
+			              if(intBuffer[p + offset6] > cb)
+			                if(intBuffer[p + offset5] > cb)
+			                  if(intBuffer[p + offset4] > cb)
+			                    if(intBuffer[p + offset3] > cb)
 			                      break is_a_corner;
 			                    else
-			                      if(doubleBuffer[p + offset12] > cb)
+			                      if(intBuffer[p + offset12] > cb)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset12] > cb)
-			                      if(doubleBuffer[p + offset13] > cb)
+			                    if(intBuffer[p + offset12] > cb)
+			                      if(intBuffer[p + offset13] > cb)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset12] > cb)
-			                    if(doubleBuffer[p + offset13] > cb)
-			                      if(doubleBuffer[p + offset14] > cb)
+			                  if(intBuffer[p + offset12] > cb)
+			                    if(intBuffer[p + offset13] > cb)
+			                      if(intBuffer[p + offset14] > cb)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
@@ -3967,10 +3969,10 @@ public class OastDetector9_16 {
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset12] > cb)
-			                  if(doubleBuffer[p + offset13] > cb)
-			                    if(doubleBuffer[p + offset14] > cb)
-			                      if(doubleBuffer[p + offset15] > cb)
+			                if(intBuffer[p + offset12] > cb)
+			                  if(intBuffer[p + offset13] > cb)
+			                    if(intBuffer[p + offset14] > cb)
+			                      if(intBuffer[p + offset15] > cb)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
@@ -3988,27 +3990,27 @@ public class OastDetector9_16 {
 			          break is_not_a_corner;
 			      else
 			        break is_not_a_corner;
-			    else if(doubleBuffer[p + offset9] < c_b)
-			      if(doubleBuffer[p + offset10] < c_b)
-			        if(doubleBuffer[p + offset11] < c_b)
-			          if(doubleBuffer[p + offset8] < c_b)
-			            if(doubleBuffer[p + offset12] < c_b)
-			              if(doubleBuffer[p + offset13] < c_b)
-			                if(doubleBuffer[p + offset14] < c_b)
-			                  if(doubleBuffer[p + offset15] < c_b)
+			    else if(intBuffer[p + offset9] < c_b)
+			      if(intBuffer[p + offset10] < c_b)
+			        if(intBuffer[p + offset11] < c_b)
+			          if(intBuffer[p + offset8] < c_b)
+			            if(intBuffer[p + offset12] < c_b)
+			              if(intBuffer[p + offset13] < c_b)
+			                if(intBuffer[p + offset14] < c_b)
+			                  if(intBuffer[p + offset15] < c_b)
 			                    break is_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset6] < c_b)
-			                      if(doubleBuffer[p + offset7] < c_b)
+			                    if(intBuffer[p + offset6] < c_b)
+			                      if(intBuffer[p + offset7] < c_b)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset5] < c_b)
-			                    if(doubleBuffer[p + offset6] < c_b)
-			                      if(doubleBuffer[p + offset7] < c_b)
+			                  if(intBuffer[p + offset5] < c_b)
+			                    if(intBuffer[p + offset6] < c_b)
+			                      if(intBuffer[p + offset7] < c_b)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
@@ -4017,10 +4019,10 @@ public class OastDetector9_16 {
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset4] < c_b)
-			                  if(doubleBuffer[p + offset5] < c_b)
-			                    if(doubleBuffer[p + offset6] < c_b)
-			                      if(doubleBuffer[p + offset7] < c_b)
+			                if(intBuffer[p + offset4] < c_b)
+			                  if(intBuffer[p + offset5] < c_b)
+			                    if(intBuffer[p + offset6] < c_b)
+			                      if(intBuffer[p + offset7] < c_b)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
@@ -4031,11 +4033,11 @@ public class OastDetector9_16 {
 			                else
 			                  break is_not_a_corner;
 			            else
-			              if(doubleBuffer[p + offset3] < c_b)
-			                if(doubleBuffer[p + offset4] < c_b)
-			                  if(doubleBuffer[p + offset5] < c_b)
-			                    if(doubleBuffer[p + offset6] < c_b)
-			                      if(doubleBuffer[p + offset7] < c_b)
+			              if(intBuffer[p + offset3] < c_b)
+			                if(intBuffer[p + offset4] < c_b)
+			                  if(intBuffer[p + offset5] < c_b)
+			                    if(intBuffer[p + offset6] < c_b)
+			                      if(intBuffer[p + offset7] < c_b)
 			                        break is_a_corner;
 			                      else
 			                        break is_not_a_corner;
@@ -4048,11 +4050,11 @@ public class OastDetector9_16 {
 			              else
 			                break is_not_a_corner;
 			          else
-			            if(doubleBuffer[p + offset1] < c_b)
-			              if(doubleBuffer[p + offset12] < c_b)
-			                if(doubleBuffer[p + offset13] < c_b)
-			                  if(doubleBuffer[p + offset14] < c_b)
-			                    if(doubleBuffer[p + offset15] < c_b)
+			            if(intBuffer[p + offset1] < c_b)
+			              if(intBuffer[p + offset12] < c_b)
+			                if(intBuffer[p + offset13] < c_b)
+			                  if(intBuffer[p + offset14] < c_b)
+			                    if(intBuffer[p + offset15] < c_b)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
@@ -4071,33 +4073,33 @@ public class OastDetector9_16 {
 			    else
 			      break is_not_a_corner;
 			else
-			  if(doubleBuffer[p + offset7] > cb)
-			    if(doubleBuffer[p + offset8] > cb)
-			      if(doubleBuffer[p + offset9] > cb)
-			        if(doubleBuffer[p + offset6] > cb)
-			          if(doubleBuffer[p + offset5] > cb)
-			            if(doubleBuffer[p + offset4] > cb)
-			              if(doubleBuffer[p + offset3] > cb)
-			                if(doubleBuffer[p + offset2] > cb)
-			                  if(doubleBuffer[p + offset1] > cb)
+			  if(intBuffer[p + offset7] > cb)
+			    if(intBuffer[p + offset8] > cb)
+			      if(intBuffer[p + offset9] > cb)
+			        if(intBuffer[p + offset6] > cb)
+			          if(intBuffer[p + offset5] > cb)
+			            if(intBuffer[p + offset4] > cb)
+			              if(intBuffer[p + offset3] > cb)
+			                if(intBuffer[p + offset2] > cb)
+			                  if(intBuffer[p + offset1] > cb)
 			                    break is_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset10] > cb)
+			                    if(intBuffer[p + offset10] > cb)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset10] > cb)
-			                    if(doubleBuffer[p + offset11] > cb)
+			                  if(intBuffer[p + offset10] > cb)
+			                    if(intBuffer[p + offset11] > cb)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset10] > cb)
-			                  if(doubleBuffer[p + offset11] > cb)
-			                    if(doubleBuffer[p + offset12] > cb)
+			                if(intBuffer[p + offset10] > cb)
+			                  if(intBuffer[p + offset11] > cb)
+			                    if(intBuffer[p + offset12] > cb)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
@@ -4106,10 +4108,10 @@ public class OastDetector9_16 {
 			                else
 			                  break is_not_a_corner;
 			            else
-			              if(doubleBuffer[p + offset10] > cb)
-			                if(doubleBuffer[p + offset11] > cb)
-			                  if(doubleBuffer[p + offset12] > cb)
-			                    if(doubleBuffer[p + offset13] > cb)
+			              if(intBuffer[p + offset10] > cb)
+			                if(intBuffer[p + offset11] > cb)
+			                  if(intBuffer[p + offset12] > cb)
+			                    if(intBuffer[p + offset13] > cb)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
@@ -4120,11 +4122,11 @@ public class OastDetector9_16 {
 			              else
 			                break is_not_a_corner;
 			          else
-			            if(doubleBuffer[p + offset10] > cb)
-			              if(doubleBuffer[p + offset11] > cb)
-			                if(doubleBuffer[p + offset12] > cb)
-			                  if(doubleBuffer[p + offset13] > cb)
-			                    if(doubleBuffer[p + offset14] > cb)
+			            if(intBuffer[p + offset10] > cb)
+			              if(intBuffer[p + offset11] > cb)
+			                if(intBuffer[p + offset12] > cb)
+			                  if(intBuffer[p + offset13] > cb)
+			                    if(intBuffer[p + offset14] > cb)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
@@ -4137,12 +4139,12 @@ public class OastDetector9_16 {
 			            else
 			              break is_not_a_corner;
 			        else
-			          if(doubleBuffer[p + offset10] > cb)
-			            if(doubleBuffer[p + offset11] > cb)
-			              if(doubleBuffer[p + offset12] > cb)
-			                if(doubleBuffer[p + offset13] > cb)
-			                  if(doubleBuffer[p + offset14] > cb)
-			                    if(doubleBuffer[p + offset15] > cb)
+			          if(intBuffer[p + offset10] > cb)
+			            if(intBuffer[p + offset11] > cb)
+			              if(intBuffer[p + offset12] > cb)
+			                if(intBuffer[p + offset13] > cb)
+			                  if(intBuffer[p + offset14] > cb)
+			                    if(intBuffer[p + offset15] > cb)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
@@ -4160,33 +4162,33 @@ public class OastDetector9_16 {
 			        break is_not_a_corner;
 			    else
 			      break is_not_a_corner;
-			  else if(doubleBuffer[p + offset7] < c_b)
-			    if(doubleBuffer[p + offset8] < c_b)
-			      if(doubleBuffer[p + offset9] < c_b)
-			        if(doubleBuffer[p + offset6] < c_b)
-			          if(doubleBuffer[p + offset5] < c_b)
-			            if(doubleBuffer[p + offset4] < c_b)
-			              if(doubleBuffer[p + offset3] < c_b)
-			                if(doubleBuffer[p + offset2] < c_b)
-			                  if(doubleBuffer[p + offset1] < c_b)
+			  else if(intBuffer[p + offset7] < c_b)
+			    if(intBuffer[p + offset8] < c_b)
+			      if(intBuffer[p + offset9] < c_b)
+			        if(intBuffer[p + offset6] < c_b)
+			          if(intBuffer[p + offset5] < c_b)
+			            if(intBuffer[p + offset4] < c_b)
+			              if(intBuffer[p + offset3] < c_b)
+			                if(intBuffer[p + offset2] < c_b)
+			                  if(intBuffer[p + offset1] < c_b)
 			                    break is_a_corner;
 			                  else
-			                    if(doubleBuffer[p + offset10] < c_b)
+			                    if(intBuffer[p + offset10] < c_b)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                else
-			                  if(doubleBuffer[p + offset10] < c_b)
-			                    if(doubleBuffer[p + offset11] < c_b)
+			                  if(intBuffer[p + offset10] < c_b)
+			                    if(intBuffer[p + offset11] < c_b)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
 			                  else
 			                    break is_not_a_corner;
 			              else
-			                if(doubleBuffer[p + offset10] < c_b)
-			                  if(doubleBuffer[p + offset11] < c_b)
-			                    if(doubleBuffer[p + offset12] < c_b)
+			                if(intBuffer[p + offset10] < c_b)
+			                  if(intBuffer[p + offset11] < c_b)
+			                    if(intBuffer[p + offset12] < c_b)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
@@ -4195,10 +4197,10 @@ public class OastDetector9_16 {
 			                else
 			                  break is_not_a_corner;
 			            else
-			              if(doubleBuffer[p + offset10] < c_b)
-			                if(doubleBuffer[p + offset11] < c_b)
-			                  if(doubleBuffer[p + offset12] < c_b)
-			                    if(doubleBuffer[p + offset13] < c_b)
+			              if(intBuffer[p + offset10] < c_b)
+			                if(intBuffer[p + offset11] < c_b)
+			                  if(intBuffer[p + offset12] < c_b)
+			                    if(intBuffer[p + offset13] < c_b)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
@@ -4209,11 +4211,11 @@ public class OastDetector9_16 {
 			              else
 			                break is_not_a_corner;
 			          else
-			            if(doubleBuffer[p + offset10] < c_b)
-			              if(doubleBuffer[p + offset11] < c_b)
-			                if(doubleBuffer[p + offset12] < c_b)
-			                  if(doubleBuffer[p + offset13] < c_b)
-			                    if(doubleBuffer[p + offset14] < c_b)
+			            if(intBuffer[p + offset10] < c_b)
+			              if(intBuffer[p + offset11] < c_b)
+			                if(intBuffer[p + offset12] < c_b)
+			                  if(intBuffer[p + offset13] < c_b)
+			                    if(intBuffer[p + offset14] < c_b)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
@@ -4226,12 +4228,12 @@ public class OastDetector9_16 {
 			            else
 			              break is_not_a_corner;
 			        else
-			          if(doubleBuffer[p + offset10] < c_b)
-			            if(doubleBuffer[p + offset11] < c_b)
-			              if(doubleBuffer[p + offset12] < c_b)
-			                if(doubleBuffer[p + offset13] < c_b)
-			                  if(doubleBuffer[p + offset14] < c_b)
-			                    if(doubleBuffer[p + offset15] < c_b)
+			          if(intBuffer[p + offset10] < c_b)
+			            if(intBuffer[p + offset11] < c_b)
+			              if(intBuffer[p + offset12] < c_b)
+			                if(intBuffer[p + offset13] < c_b)
+			                  if(intBuffer[p + offset14] < c_b)
+			                    if(intBuffer[p + offset15] < c_b)
 			                      break is_a_corner;
 			                    else
 			                      break is_not_a_corner;
@@ -4254,13 +4256,13 @@ public class OastDetector9_16 {
 
 			} // is_a_corner: while(true)
 				bmin=b_test;
-				if(bmax - bmin <= 1.0)
+				if(bmax - bmin <= 1)
 				return bmin;
 			     b_test = (bmin + bmax) / 2;
 
 		  } //	is_not_a_corner: while (true)
 				bmax=b_test;
-				if(bmax - bmin <= 1.0)
+				if(bmax - bmin <= 1)
 					return bmin;
 				b_test = (bmin + bmax) / 2;
 		} // while (true)
