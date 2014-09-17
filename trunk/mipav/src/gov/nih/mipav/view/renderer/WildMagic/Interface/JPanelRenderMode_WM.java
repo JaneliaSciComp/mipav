@@ -125,6 +125,9 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     /** Opacity slider. */
     private JSlider m_kIPDSlider;
 
+    /** Navigation (fly-thru) checkbox */
+    private JCheckBox navigationCheckBox;
+
     /** Mouse translation speed slider. */
     private JSlider mouseTranslationSpeedSlider;
     
@@ -162,7 +165,17 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         	case 1: m_kVolumeViewer.actionPerformed( new ActionEvent(this, 0, "StereoRED") );   break;
         	case 2: m_kVolumeViewer.actionPerformed( new ActionEvent(this, 0, "StereoSHUTTER") );   break;
         	}        	
-        } 
+        } else if ( command.equals("Navigation")) {
+        	boolean isSelected = navigationCheckBox.isSelected();
+        	rayBasedRenderWM.toggleNavigation(isSelected);
+        	if ( isSelected ) {
+        		cameraRotationDegreeSlider.setEnabled(true);
+        		cameraRotationDegreeLabel.setEnabled(true);
+        	} else {
+        		cameraRotationDegreeSlider.setEnabled(false);
+        		cameraRotationDegreeLabel.setEnabled(false);
+        	}
+		}
         else
         {
         	m_kVolumeViewer.actionPerformed(event);
@@ -245,6 +258,14 @@ public class JPanelRenderMode_WM extends JInterfaceBase
      */
     public JCheckBox getVolumeCheck()  {
     	return m_kDisplayVolumeCheck;
+    }
+    
+    /**
+     * Get the navigation checkbox, fly-thru checkbox
+     * @return true or false
+     */
+    public JCheckBox getNaviCheckBox() {
+    	return navigationCheckBox;
     }
     
     /* (non-Javadoc)
@@ -695,6 +716,38 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          gbc.gridx = 2;
          extractPanel.add(m_kIntensityTF, gbc);
          
+         // add navigation panel
+         JPanel naviPanel = new JPanel(new GridBagLayout());
+         naviPanel.setBorder(buildTitledBorder("Navigation"));
+         
+         // navigation checkbox
+         navigationCheckBox = new JCheckBox( "Enable Navigation" );
+         navigationCheckBox.setSelected(false);
+         navigationCheckBox.setActionCommand( "Navigation");
+         navigationCheckBox.addActionListener(this);        
+         gbc.gridx = 0;
+         gbc.gridy = 0;
+         naviPanel.add(navigationCheckBox, gbc);
+         
+         // camera rotation sliders
+         cameraRotationDegreeLabel = new JLabel("Camera Rotation");
+         cameraRotationDegreeLabel.setEnabled(false);
+         gbc.gridx = 0;
+         gbc.gridy = 1;
+         naviPanel.add(cameraRotationDegreeLabel, gbc);
+         cameraRotationDegreeSlider = new JSlider( 0, 60, 3 );
+         cameraRotationDegreeSlider.setMajorTickSpacing(30);
+         cameraRotationDegreeSlider.setMinorTickSpacing(3);
+         cameraRotationDegreeSlider.addChangeListener(this);
+         cameraRotationDegreeSlider.setPaintTicks(true);
+         cameraRotationDegreeSlider.setPaintLabels(true);
+         Font cFont = new Font("Serif", Font.ITALIC, 10);
+         cameraRotationDegreeSlider.setFont(cFont);
+         cameraRotationDegreeSlider.setEnabled(false);
+         gbc.gridx = 1;
+         naviPanel.add(cameraRotationDegreeSlider, gbc);         
+         
+         
          // the main panel
          Box contentBox = new Box(BoxLayout.Y_AXIS);
 
@@ -704,6 +757,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          contentBox.add(blendPanel);
          contentBox.add(mouseSpeedPanel);
          contentBox.add(extractPanel);
+         contentBox.add(naviPanel);
   
          mainScrollPanel.add(contentBox, BorderLayout.NORTH);
          
