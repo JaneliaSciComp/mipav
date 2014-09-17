@@ -22,6 +22,7 @@ import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
+import gov.nih.mipav.view.renderer.WildMagic.Navigation.NavigationBehavior;
 import gov.nih.mipav.view.renderer.WildMagic.Render.OrderIndpTransparencyEffect;
 import gov.nih.mipav.view.renderer.WildMagic.Render.Sculptor_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeBoundingBox;
@@ -38,6 +39,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget;
+import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphCurve;
 
 import java.awt.BorderLayout;
 import java.awt.event.KeyEvent;
@@ -194,7 +196,36 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	 */
 	private JPanelGPU container;
 
+	/** is nagivation mode enabled or not. */
 	protected boolean isNavigationEnabled = false;
+	
+	/** navigation behavior. */
+	protected NavigationBehavior navigationBehavior;
+	
+	/** number of annotate points along the specified path. */
+	protected int annotatePtsCounter = 0;
+	
+	/** annotate path planning points list */
+	protected Vector<Vector3f> annotatePtsList = new Vector<Vector3f>();
+	
+	/** Color for the parts of the path that have not yet been visited (Dark Green) */
+	protected ColorRGB m_kNormalColorPathUnvisited = new ColorRGB(1.0f, 0.0f, 0.0f);
+    
+    /** Fly path curve. */
+	protected FlyPathGraphCurve m_kFlyPathGraphCurve = null; 
+    
+    /** is path planning mode enabled or not. */ 
+	protected boolean isPathPlanningEnabled = false;
+    
+    /** is mouse control enabled or not. */
+	protected boolean isMouseControlEnabled = true;
+    
+    /** is annotation mode is enabled or not. */
+	protected boolean isAnnotateEnabled = false;
+	protected Node kPolyNode;
+	protected Polyline kPoly;
+	protected Polyline kGeometryBranchPath;
+	
 
 	/**
 	 * Default Constructor.

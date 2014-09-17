@@ -17,6 +17,14 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageSurfaceMask;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
 import gov.nih.mipav.view.renderer.WildMagic.Navigation.NavigationBehavior;
+import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphCurve;
+import gov.nih.mipav.util.MipavCoordinateSystems;
+import WildMagic.LibFoundation.Curves.BSplineCurve3f;
+import WildMagic.LibFoundation.Curves.Curve3f;
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibGraphics.Rendering.MaterialState;
+import WildMagic.LibGraphics.SceneGraph.Polyline;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 import java.awt.Color;
 import java.awt.Cursor;
@@ -61,9 +69,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 
 	/** Parent user-interface and display frame. */
 	protected VolumeTriPlanarInterface m_kParent = null;
-
-	private NavigationBehavior navigationBehavior;
-
+    
 	/**
 	 * Default Constructor.
 	 */
@@ -578,6 +584,22 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 
 	}
 
+	
+	public void setPathPlanningFlythru(boolean _isPathPlanning) {
+		isPathPlanningEnabled = _isPathPlanning;
+		navigationBehavior.setPathFlythruMode(_isPathPlanning);
+	}
+	
+	public void setMouseControlFlythru(boolean _isMouseControl) {
+		isMouseControlEnabled = _isMouseControl;
+		navigationBehavior.setMouseFlythruMode(_isMouseControl);
+	}
+
+	public void setAnnotationMode(boolean _isAnnotateEnabled) {
+		isAnnotateEnabled = _isAnnotateEnabled;
+	}
+	
+	
 	/**
 	 * Setup the Navigation scene graph view for debugging purpose
 	 */
@@ -811,23 +833,59 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	 */
 	public void viewChanged(NavigationBehavior behavior, int iEvent) {
 
-		if (isNavigationEnabled) {
 
+		if (isNavigationEnabled) {
+           
 			Vector3f kCDir = behavior.getViewDirection();
 			kCDir.normalize();
 			Vector3f kCUp = behavior.getViewUp();
 			kCUp.normalize();
 			Vector3f kCLoc = behavior.getViewPoint();
 			Vector3f kCRight = Vector3f.unitCross(kCDir, kCUp);
-			m_spkCamera.SetFrame(kCLoc, kCDir, kCUp, kCRight);
-
-			// if (iEvent == NavigationBehavior.EVENT_CHANGE_POSITION) {
-			// updateSlicesCenter();
-			// }
+			
+			if ( isPathPlanningEnabled || isAnnotateEnabled ) {
+				Vector3f kPositionScaled = getPositionScaled(kCLoc);
+				m_spkCamera.SetFrame(kPositionScaled, kCDir, kCUp, kCRight);
+				updateSlicesCenter(kPositionScaled);
+			} else if ( isMouseControlEnabled ) {
+				m_spkCamera.SetFrame(kCLoc, kCDir, kCUp, kCRight);
+			}
+			
 		}
 
 	}
 
+	/**
+     * Scaled coordinates for the current position along the path for viewing.
+     * @param   Point in normalized path coordinates.
+     * @return  Point3f A new instance created which contains the path position coordinates, scaled to match the
+     *          TriMesh in JPanelSurface.
+     */
+    public Vector3f getPositionScaled( Vector3f kPoint) {
+
+        int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
+        float[] afResolutions = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions();
+        float[] afOrigins = m_kVolumeImageA.GetImage().getFileInfo(0).getOrigin();
+        int[] aiDirections = m_kVolumeImageA.GetImage().getFileInfo(0).getAxisDirection();
+
+        int xDim = aiExtents[0];
+        int yDim = aiExtents[1];
+        int zDim = aiExtents[2];
+
+        float xBox = (xDim - 1) * afResolutions[0];
+        float yBox = (yDim - 1) * afResolutions[1];
+        float zBox = (zDim - 1) * afResolutions[2];
+        float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+        Vector3f kPointScaled = new Vector3f();
+        kPointScaled.X = ((2.0f * (kPoint.X - afOrigins[0]) / aiDirections[0]) -
+                          xBox) / (2.0f*maxBox);
+        kPointScaled.Y = ((2.0f * (kPoint.Y - afOrigins[1]) / aiDirections[1]) -
+                          yBox) / (2.0f*maxBox);
+        kPointScaled.Z = ((2.0f * (kPoint.Z - afOrigins[2]) / aiDirections[2]) -
+                          zBox) / (2.0f*maxBox);
+        return kPointScaled;
+    }
+	
 	/**
 	 * Currently only being used to update the picking point
 	 * @param name   surface name
@@ -862,38 +920,229 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	 * Update the camera in 3D view window.
 	 * @param kCenter   center in image space
 	 */
-	public void setCameraCenter(Vector3f kCenter) {
+	 public void setCameraCenter(Vector3f kCenter) {
+		  
+		 if ( isNavigationEnabled ) {
+	
+			  int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
+			  Vector3f tfCenter = new Vector3f( (kCenter.X / (aiExtents[0] -1)),
+					  (kCenter.Y / (aiExtents[1] -1)),
+					  (kCenter.Z / (aiExtents[2] -1))  );
+			  tfCenter.X *= m_fX;
+			  tfCenter.Y *= m_fY;
+			  tfCenter.Z *= m_fZ;
+	
+			  tfCenter.add(m_kTranslate);
+			  
+			  m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,getNearPlane(),10.0f);
+			
+			  Matrix3f currentRotation = getObjectRotation();
+			  Matrix3f rotationInverse = Matrix3f.inverse(currentRotation);
+			  Vector3f location = rotationInverse.multLeft(tfCenter);
+			  
+			  navigationBehavior.setViewPoint(location);
+			  navigationBehavior.setDirection(m_spkCamera.GetDVector());
+			  navigationBehavior.setUpVector(m_spkCamera.GetUVector());
+			  Vector3f cameraRight = Vector3f.unitCross(m_spkCamera.GetDVector(), m_spkCamera.GetUVector());
+			  
+			  m_spkCamera.SetFrame(location, m_spkCamera.GetDVector(), m_spkCamera.GetUVector(), cameraRight);			  
+		  
+		  }
+		  
+	  }
 
-		if ( isNavigationEnabled ) {
+	 /**
+	  * Add the annotation point
+	  * @param point
+	  */
+	 public void addAnnotationPoint(Vector3f point, Vector3f scannerPt) {
+		 if ( isNavigationEnabled ) {
+			 /*
+			  int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
+			  Vector3f tfCenter = new Vector3f( (point.X / (aiExtents[0] -1)),
+					  (point.Y / (aiExtents[1] -1)),
+					  (point.Z / (aiExtents[2] -1))  );
+			  tfCenter.X *= m_fX;
+			  tfCenter.Y *= m_fY;
+			  tfCenter.Z *= m_fZ;
+			  tfCenter.add(m_kTranslate);
+			  */
 
-			int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
-			Vector3f tfCenter = new Vector3f( (kCenter.X / (aiExtents[0] -1)),
-					(kCenter.Y / (aiExtents[1] -1)),
-					(kCenter.Z / (aiExtents[2] -1))  );
-			tfCenter.X *= m_fX;
-			tfCenter.Y *= m_fY;
-			tfCenter.Z *= m_fZ;
+				int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
+				float[] afResolutions = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions();
+				float[] afOrigins = m_kVolumeImageA.GetImage().getFileInfo(0).getOrigin();
+				int[] aiModelDirection = MipavCoordinateSystems.getModelDirections(m_kVolumeImageA.GetImage());
+				float[] aiDirections = new float[] { aiModelDirection[0], aiModelDirection[1], aiModelDirection[2] };
 
-			tfCenter.add(m_kTranslate);
+				int xDim = aiExtents[0];
+				int yDim = aiExtents[1];
+				int zDim = aiExtents[2];
 
-			m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,getNearPlane(),10.0f);
+				float xBox = (xDim - 1) * afResolutions[0];
+				float yBox = (yDim - 1) * afResolutions[1];
+				float zBox = (zDim - 1) * afResolutions[2];
+				float maxBox = Math.max(xBox, Math.max(yBox, zBox));
 
-			Matrix3f currentRotation = getObjectRotation();
-			Matrix3f rotationInverse = Matrix3f.inverse(currentRotation);
-			Vector3f location = rotationInverse.multLeft(tfCenter);
+				
+				Vector3f tfCenter = new Vector3f();
+				tfCenter.X = ((2.0f * (scannerPt.X - afOrigins[0]) / aiDirections[0]) - xBox)
+						/ (2.0f * maxBox);
+				tfCenter.Y = ((2.0f * (scannerPt.Y - afOrigins[1]) / aiDirections[1]) - yBox)
+						/ (2.0f * maxBox);
+				tfCenter.Z = ((2.0f * (scannerPt.Z - afOrigins[2]) / aiDirections[2]) - zBox)
+						/ (2.0f * maxBox);
+				
+			 
+			  createAnnotatePoint(tfCenter);
+			  // annotatePtsList.add(tfCenter);
+			  annotatePtsList.add(scannerPt);
+		 }
+	 }
+	 
+	 /**
+	  * Set camera view rotation degree
+	  * @param degree
+	  */
+	  public void setCameraViewRotationDegree(int degree) {
+		  navigationBehavior.setCamerViewRotationDegree(degree);
+	  }
+	  
+	  /**
+	   * Generate the path planning path. 
+	   */
+	  public void generatePath() {
+		  
+		  int len = annotatePtsList.size();
+		  Vector3f[] akVec = new Vector3f[len];
+		  /*
+		  for ( int i = len-1; i >= 0 ; i-- ) {
+			  akVec[i] = new Vector3f(annotatePtsList.get(i));
+		  }
+		  */
+		  
+		  for ( int i = len-1; i >= 0 ; i-- ) {
+			  akVec[len-1-i] = new Vector3f(annotatePtsList.get(i));
+		  }
+		  
+		  m_kFlyPathGraphCurve = new FlyPathGraphCurve(akVec, len-1, 2);
+		  
+		  kGeometryBranchPath = createBranchPathGeometryScaled(0);
+		  kGeometryBranchPath.AttachEffect( new VertexColor3Effect() );
+          m_spkScene.AttachChild(kGeometryBranchPath);
+          
+          kPoly = new Polyline(kGeometryBranchPath.VBuffer, false, true);
+          kPoly.AttachEffect( new VertexColor3Effect() );
+          
+          if ( kPolyNode == null ) {
+        	  kPolyNode = new Node();
+        	  m_kParent.addNode( kPolyNode );
+          }
+          kPolyNode.AttachChild(kPoly);
+          
+          navigationBehavior.setupPath(m_kFlyPathGraphCurve);
+	  
+	  }
+	  
+	  
+	  /**
+	   * Clear the annotated path
+	   */
+	  public void clearPath() {
+		  
+		  annotatePtsList.clear();
+		  m_spkScene.DetachChild(kGeometryBranchPath);
+		  kPolyNode.DetachChild(kPoly);
+		  if ( kPoly != null ) {
+			  kPoly.dispose();
+			  kPoly = null;
+		  }
+		  if ( kGeometryBranchPath != null ) {
+			  kGeometryBranchPath.dispose();
+			  kGeometryBranchPath = null;
+		  }
+		  navigationBehavior.clearPath();
+		  m_kFlyPathGraphCurve = null;
+		  
+		  for ( int i = 0; i < annotatePtsCounter; i++ ) {
+			  String pointName = "annotate" + i;
+			  RemoveNode(pointName);
+		  }
+		  
+	  }
+	  
+	  /**
+	   * Translate the path points from image coordinate to view volume coordinate.  
+	   * @param iBranch
+	   * @return
+	   */
+	  private Polyline createBranchPathGeometryScaled(int iBranch) {
+		int iNumVertex = 500;
+		Attributes kAttributes = new Attributes();
+		kAttributes.SetPChannels(3);
+		kAttributes.SetCChannels(0, 3);
+		VertexBuffer kVBuffer = new VertexBuffer(kAttributes, iNumVertex);
 
-			navigationBehavior.setViewPoint(location);
-			navigationBehavior.setDirection(m_spkCamera.GetDVector());
-			navigationBehavior.setUpVector(m_spkCamera.GetUVector());
-			Vector3f cameraRight = Vector3f.unitCross(m_spkCamera.GetDVector(), m_spkCamera.GetUVector());
+		Curve3f kCurve = m_kFlyPathGraphCurve.getCurvePosition(iBranch);
+		float fStep = kCurve.GetTotalLength() / (iNumVertex - 1);
 
-			m_spkCamera.SetFrame(location, m_spkCamera.GetDVector(), m_spkCamera.GetUVector(), cameraRight);			  
+		int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
+		float[] afResolutions = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions();
+		float[] afOrigins = m_kVolumeImageA.GetImage().getFileInfo(0).getOrigin();
+		int[] aiModelDirection = MipavCoordinateSystems.getModelDirections(m_kVolumeImageA.GetImage());
+		float[] aiDirections = new float[] { aiModelDirection[0], aiModelDirection[1], aiModelDirection[2] };
 
+		int xDim = aiExtents[0];
+		int yDim = aiExtents[1];
+		int zDim = aiExtents[2];
+
+		float xBox = (xDim - 1) * afResolutions[0];
+		float yBox = (yDim - 1) * afResolutions[1];
+		float zBox = (zDim - 1) * afResolutions[2];
+		float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+
+		for (int iPoint = 0; iPoint < iNumVertex; ++iPoint) {
+			float fDist = iPoint * fStep;
+			float fTime = kCurve.GetTime(fDist, 100, 1e-02f);
+			Vector3f kPoint = kCurve.GetPosition(fTime);
+			
+			kPoint.X = ((2.0f * (kPoint.X - afOrigins[0]) / aiDirections[0]) - xBox)
+					/ (2.0f * maxBox);
+			kPoint.Y = ((2.0f * (kPoint.Y - afOrigins[1]) / aiDirections[1]) - yBox)
+					/ (2.0f * maxBox);
+			kPoint.Z = ((2.0f * (kPoint.Z - afOrigins[2]) / aiDirections[2]) - zBox)
+					/ (2.0f * maxBox);
+			
+			kVBuffer.SetPosition3(iPoint, kPoint);
+			kVBuffer.SetColor3(0, iPoint, m_kNormalColorPathUnvisited);
 		}
 
+		return new Polyline(kVBuffer, false, true);
 	}
 
-	public void setCameraViewRotationDegree(int degree) {
-		navigationBehavior.setCamerViewRotationDegree(degree);
-	}
+  /**
+     * Create a new Annotation point at the position specified.
+     * @param kPosition position of new annotation point.
+     */
+    private void createAnnotatePoint(Vector3f kPosition)
+    {
+     
+        Attributes kAttr = new Attributes();
+        kAttr.SetPChannels(3);
+        kAttr.SetNChannels(3);
+        kAttr.SetCChannels(0, 3);
+        StandardMesh kSM = new StandardMesh(kAttr);
+        TriMesh kMesh = kSM.Sphere(10, 10, 0.003f);
+        for (int i = 0; i < kMesh.VBuffer.GetVertexQuantity(); i++) {
+        	kMesh.VBuffer.SetColor3(0, i, 0, 1, 0);
+		}
+        kMesh.AttachEffect(new VertexColor3Effect());
+        Node annotateNode = new Node();
+        annotateNode.AttachChild(kMesh);
+        String pointName = "annotate" + annotatePtsCounter;
+        annotateNode.SetName(pointName);
+        AddNode(annotateNode);
+        m_kParent.translateSurface(pointName, kPosition);
+        annotatePtsCounter++;
+    }
+  
 }

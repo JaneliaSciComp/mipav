@@ -208,6 +208,10 @@ implements GLEventListener, ScreenCoordinateListener
 
 	// If navigation enabled, update the camera location in mouseReleased
 	protected Vector3f latestVolumePt = new Vector3f();
+	
+	protected boolean isAnnotationEnabled = false;
+	protected boolean isMouseFlythru = true;
+	protected boolean isPathFlythru = false;
 
 	/**
 	 * @param kParent
@@ -777,6 +781,13 @@ implements GLEventListener, ScreenCoordinateListener
 
 		 if ((kEvent.getButton() == MouseEvent.BUTTON3) && !kEvent.isShiftDown()) {
 			 m_bRightMousePressed = true;
+		 }
+		 
+		 // When the navigation mode is enabled, left mouse press on the planar 
+		 // render with control key press down, add the annotation point
+		 if ( (kEvent.getButton() == MouseEvent.BUTTON1) && kEvent.isControlDown() 
+				&& isAnnotationEnabled ) {
+			 processMousePress(kEvent);
 		 }
 	 }
 
@@ -2113,6 +2124,21 @@ implements GLEventListener, ScreenCoordinateListener
 		 }
 	 }
 
+	 /**
+	  * Process mouse prese when adding annotation point
+	  * @param kEvent
+	  */
+	 private void processMousePress(MouseEvent kEvent) {
+		 Vector3f localPt = new Vector3f();
+		 this.ScreenToLocal(kEvent.getX(), kEvent.getY(), m_iSlice, localPt);
+		 Vector3f patientPt = new Vector3f();
+		 this.LocalToPatient( localPt, patientPt );
+		 Vector3f volumePt = new Vector3f();
+		 MipavCoordinateSystems.patientToFile( patientPt, volumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
+		 Vector3f scannerPt = new Vector3f();
+		 MipavCoordinateSystems.fileToScanner( volumePt, scannerPt, m_kVolumeImageA.GetImage() );
+		 m_kParent.addAnnotationPoint(volumePt, scannerPt);
+	 }
 
 	 /**
 	  * Sets the local slice value.
@@ -2302,5 +2328,30 @@ implements GLEventListener, ScreenCoordinateListener
 
 		 m_kCenter.mult( m_kVolumeScale );
 
+	 }
+	 
+	 
+	 /**
+	  * Set the annotation mode 
+	  * @param _isAnnotationEnabled
+	  */
+	 public void setAnnotationMode(boolean _isAnnotationEnabled) {
+		 isAnnotationEnabled = _isAnnotationEnabled;
+	 }
+	 
+	 /**
+	  * Set the mouse flythru mode
+	  * @param _isMouseFlythur enabled
+	  */
+	 public void setMouseFlythruMode(boolean _isMouseFlythru) {
+		 isMouseFlythru = _isMouseFlythru;
+	 }
+	 
+	 /**
+	  * Set the path flythru mode
+	  * @param _isPathFlythur enabled
+	  */
+	 public void setPathFlythruMode(boolean _isPathFlythru) {
+		 isPathFlythru = _isPathFlythru;
 	 }
 }
