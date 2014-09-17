@@ -48,6 +48,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
 import gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.CorticalAnalysisRender;
@@ -324,7 +325,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     /** Current frame width and height. */
     protected int screenWidth, screenHeight;
 
-    protected VOIManagerInterface m_kVOIInterface = null;
+    protected VOILatticeManagerInterface m_kVOIInterface = null;
 
     protected int m_iVOICount = 0;
 
@@ -1419,29 +1420,29 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     {
     	return m_kVOIInterface == null ? false : m_kVOIInterface.is3DSelectionEnabled();
     }
-    
-    public void set3DMouseEnabled( boolean enabled )
+        
+    public void modify3DMarker( Vector3f startPt, Vector3f endPt, Vector3f pt )
     {
     	if ( m_kVOIInterface != null )
     	{
-    		m_kVOIInterface.set3DMouseEnabled(enabled);
-    	}
-    }
-    
-    public void modifyLattice( Vector3f startPt, Vector3f endPt, Vector3f pt )
-    {
-    	if ( m_kVOIInterface != null )
-    	{
-    		m_kVOIInterface.modifyLattice(startPt, endPt, pt);
+    		m_kVOIInterface.modify3DMarker(startPt, endPt, pt);
     	}    	
     }
     
-    public void addLeftRightMarker( VOI textVOI )
+    public void add3DMarker( VOI textVOI )
     {
     	if ( m_kVOIInterface != null )
     	{
-    		m_kVOIInterface.addLeftRightMarker(textVOI);
+    		m_kVOIInterface.add3DMarker(textVOI);
     	}    	
+    }
+    
+    public void deleteSelectedPoint( )
+    {
+    	if ( m_kVOIInterface != null )
+    	{
+    		m_kVOIInterface.deleteSelectedPoint( );
+    	}    	    	
     }
     
     public void moveSelectedPoint( Vector3f direction )
@@ -2687,7 +2688,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     private void initVOI()
     {        
         setSliceFromSurface( sliceGUI.getCenter() );
-        m_kVOIInterface = new VOIManagerInterface( this, m_kVolumeImageA.GetImage(),
+        m_kVOIInterface = new VOILatticeManagerInterface( this, m_kVolumeImageA.GetImage(),
                 m_kVolumeImageB.GetImage(), 3, true, null );
         panelToolbar.add( m_kVOIInterface.getToolBar(), panelToolBarGBC );
         for ( int i = 0; i < 3; i++ )
@@ -3264,7 +3265,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         ViewMenuBar menuBarMaker = new ViewMenuBar(menuObj);
 
         final JMenuBar menuBar = new JMenuBar();
-        voiMenu = menuBarMaker.makeVOIMenu();
+        voiMenu = menuBarMaker.makeVOIMenu(true);
 
         menuBar.add(menuObj.makeMenu("File", false, new JComponent[] {separator,
         		// Use VoluemTriPlanarRendererDTI instead? Systems analysis -> DTI -> visualization...

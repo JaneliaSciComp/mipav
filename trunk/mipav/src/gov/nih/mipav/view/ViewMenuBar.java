@@ -775,12 +775,187 @@ public class ViewMenuBar {
 
     }
 
+    public JMenu makeVOIMenu() 
+    {
+        return menuBuilder
+                .makeMenu("VOI", 'V', false,
+                        new JComponent[] {
+
+                                menuBuilder.makeMenu("New VOI", true, new JMenuItem[] {
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_POINT, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_LINE, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_RECTANGLE, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_ELLIPSE, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_POLYGON, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_LEVELSET, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_3D_RECTANGLE, true)}),
+                                ViewMenuBar.separator,
+                                menuBuilder.makeMenu("Open VOI", true, new JMenuItem[] {
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_IMPORT_VOI_POLYGON, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_VOI, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_VOI_ALL, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_VOI_ALL_FROM, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_VOI_LABEL, true)}),
+                                ViewMenuBar.separator,
+                                menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_PAINT, true),
+                                ViewMenuBar.separator,
+                                menuBuilder.makeMenu("Save VOI", true, new JMenuItem[] {
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_EXPORT_SELECTED_CONTOURS_AS_POLYGON, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_SELECTED_CONTOURS, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_SELECTED_CONTOURS_AS, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_VOI, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_VOI_AS, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_ALL_VOI, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_ALL_VOI_TO, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_VOI_INTENSITIES, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_VOI_INTENSITIES_TO, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_SELECTED_LABEL, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_ALL_LABEL, true)}),
+                                ViewMenuBar.separator,
+                                menuBuilder.makeMenu("Save Paint", true, new JMenuItem[] {
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_PAINT, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_PAINT_AS, true)}),
+                                ViewMenuBar.separator,
+                                menuBuilder.makeMenu("Edit VOI", true, new JMenuItem[] {
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_UNDO, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_REDO, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_DELETE, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_CUT, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_COPY, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PASTE, true),}),
+                                menuBuilder.makeMenu("Select VOI", true, new JMenuItem[] {
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SELECT_ALL, false),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_SELECT_ALL, false),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SELECT_NONE, false),}),
+                                ViewMenuBar.separator,
+                                menuBuilder.makeMenu("VOI grouping", true, new JMenuItem[] {
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GROUP, false),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_UNGROUP, false),}),
+                                menuBuilder.makeMenu("VOI order", true, new JMenuItem[] {
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FRONT, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_BACK, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FORWARD, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_BACKWARD, true)}),
+                                menuBuilder.makeMenu("Contour order", true, new JMenuItem[] {
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_FRONT, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_BACK, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_FORWARD, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_BACKWARD, true)}),
+                                ViewMenuBar.separator,
+                                menuBuilder.makeMenu("VOI conversion", true, new JMenuItem[] {
+                                        menuBuilder.buildMenuItem("VOI -> Paint", "PaintMask", 0, null, false),
+                                        menuBuilder.buildMenuItem("VOI -> All to Binary mask", "BinaryMask", 0, null,
+                                                false),
+                                        menuBuilder.buildMenuItem("VOI -> All to Short mask", "ShortMask", 0, null,
+                                                false),
+                                        menuBuilder.buildMenuItem("VOI -> All to Unsigned byte mask",
+                                                "UnsignedByteMask", 0, null, false),
+                                        menuBuilder.buildMenuItem("VOI -> Selected to Binary mask",
+                                                "BinaryMaskSelected", 0, null, false),
+                                        menuBuilder.buildMenuItem("VOI -> Selected to Short mask", "ShortMaskSelected",
+                                                0, null, false),
+                                        menuBuilder.buildMenuItem("VOI -> Selected to Unsigned byte mask",
+                                                "UnsignedByteMaskSelected", 0, null, false)}),
+                                menuBuilder.makeMenu("Mask conversion", true, new JMenuItem[] {
+                                        menuBuilder.buildMenuItem("Mask -> VOI", "MaskToVOI", 0, null, false),
+                                        menuBuilder.buildMenuItem("Mask -> Paint", "MaskToPaint", 0, null, false),}),
+                                menuBuilder.makeMenu("Paint conversion", true, new JMenuItem[] {
+                                        menuBuilder.buildMenuItem("Paint -> VOI", "PaintToVOI", 0, null, false),
+                                        menuBuilder.buildMenuItem("Paint -> Unsigned byte mask", "PaintToUbyteMask", 0,
+                                                null, false),
+                                        menuBuilder.buildMenuItem("Paint -> Short mask", "PaintToShortMask", 0, null,
+                                                false),}),
+                                // menuBuilder.buildCheckBoxMenuItem("Allow VOI holes (XOR)", "XOR", Preferences
+                                // .is(Preferences.PREF_USE_VOI_XOR)),
+                                // menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_LOGICAL_OPERATIONS, false),
+                                menuBuilder.buildMenuItem("VOI Logical Operations", "VOILogicalOperations", 0, null,
+                                        true),
+                                ViewMenuBar.separator,
+                                menuBuilder.makeMenu("Propagate", true, new JMenuItem[] {
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPAGATE_UP, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPAGATE_DOWN, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPAGATE_ALL, true)}),
+                                menuBuilder.makeMenu("Evolve boundary 2D", true, new JMenuItem[] {
+                                        menuBuilder.buildMenuItem("Active contour", "Snake", 0, null, false),
+                                        menuBuilder.buildMenuItem("Active GVF", "AGVF", 0, null, false),
+                                        menuBuilder.buildMenuItem("Spline active contour", "BSnake", 0, null, false),
+                                        menuBuilder.buildMenuItem("Spline GVF", "GVF", 0, null, false),
+                                        menuBuilder.buildMenuItem("User-defined", "EvolveConstant", 0, null, false)}),
+                                menuBuilder.makeMenu("Flip VOI", true, new JMenuItem[] {
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FLIPY, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FLIPX, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FLIPZ, true)}),
+                                menuBuilder.buildMenuItem("Interpolate VOIs", "interpolateVOIs", 0, null, true),
+                                ViewMenuBar.separator,
+                                menuBuilder.buildMenuItem("Smooth VOI", "SmoothVOI", 0, null, true),
+                                menuBuilder.buildMenuItem("Transform VOI", "TransformVOI", 0, null, true),
+                                menuBuilder.buildMenuItem("Trim parameter", "Trim", 0, null, true),
+                                ViewMenuBar.separator,
+                                menuBuilder.buildMenuItem("Bounding VOIs", "BoundingVOIs", 0, null, true),
+                                ViewMenuBar.separator,
+                                menuBuilder.buildMenuItem("Convex hull 2D", "ConvexHull2D", 0, null, true),
+                                ViewMenuBar.separator,
+                                menuBuilder.buildMenuItem("Boolean VOIs", "BooleanVOIs", 0, null, true),
+                                ViewMenuBar.separator,
+                                menuBuilder.buildMenuItem("VOI indentations 2D", "IndentationVOIs2D", 0, null, true),
+                                ViewMenuBar.separator,
+                                menuBuilder.makeMenu("Prostate VOI", true,
+                                        new JMenuItem[] {
+                                                menuBuilder.buildMenuItem("Merge VOIs", "ProstateMergedVOIs", 0, null,
+                                                        false),
+                                                menuBuilder.buildMenuItem("Surface Reconstruction",
+                                                        "ProstateReconstruct", 0, null, false),
+                                                menuBuilder.buildMenuItem("Save Features", "ProstateFeaturesSave", 0,
+                                                        null, false),
+                                                menuBuilder.buildMenuItem("Save Test Features", "ProstateFeaturesTest",
+                                                        0, null, false),
+                                                menuBuilder.buildMenuItem("Training", "ProstateFeaturesTrain", 0, null,
+                                                        false),
+                                                menuBuilder.buildMenuItem("Classification",
+                                                        "ProstateFeaturesClassification", 0, null, false),
+                                                menuBuilder.buildMenuItem("Load Mask", "LoadProstateMask", 0, null,
+                                                        false),
+                                                menuBuilder.buildMenuItem("Save DicomMatrix", "SaveDicomMatrix", 0,
+                                                        null, false),
+                                                menuBuilder.buildMenuItem("Extract Surface", "ProstateExtract", 0,
+                                                        null, false),
+                                                menuBuilder.buildMenuItem("Open other orientation",
+                                                		"NewVOIOtherOrientation", 0, null, false), 
+                                                menuBuilder.buildMenuItem("semi-auto B-Spline", "SemiAutoBSpline", 0,
+	                                                                null, false),
+	                                            menuBuilder.buildMenuItem("semi-auto B-Spline & Fuzzy-C", "SemiAutoBSplineFuzzyC", 0,
+                                                              null, false)}),
+                                ViewMenuBar.separator,
+                                menuBuilder.makeMenu("Graph", true, new JMenuItem[] {
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_OPEN, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_BOUNDARY_CURVATURE,
+                                                 false),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_BOUNDARY_INTENSITY,
+                                                false),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_TOTAL_INTENSITY,
+                                                false),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_AVERAGE_INTENSITY,
+                                                false),
+                                        menuBuilder.buildMenuItem(
+                                                CustomUIBuilder.PARAM_VOI_GRAPH_TOTAL_INTENSITY_THRESHOLD, false),
+                                        menuBuilder.buildMenuItem(
+                                                CustomUIBuilder.PARAM_VOI_GRAPH_AVERAGE_INTENSITY_THRESHOLD, false)}),
+                                ViewMenuBar.separator,
+                                // menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPERTIES, false),
+                                // menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_STATISTICS, false),
+                                menuBuilder.buildMenuItem("View VOI Properties", "VOIProperties", 'P', null, true),
+                                menuBuilder.buildMenuItem("Statistics generator", "VOIStistics", 'G', null, true),
+
+                        });
+    }
+
     /**
      * Construct the VOI menu.
      * 
      * @return the VOI menu
      */
-    public JMenu makeVOIMenu() {
+    public JMenu makeVOIMenu( boolean displayLatticeMenu ) 
+    {
         return menuBuilder
                 .makeMenu("VOI", 'V', false,
                         new JComponent[] {
@@ -974,19 +1149,28 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem(
                                                 CustomUIBuilder.PARAM_VOI_GRAPH_AVERAGE_INTENSITY_THRESHOLD, false)}),
                                 ViewMenuBar.separator,
+                                menuBuilder.makeMenu("Worm Annotations", true,
+                                        new JMenuItem[] 
+                                        		{
+                                		menuBuilder.buildRadioButtonMenuItem("Add Annotations", "AddAnnotations", false, new ButtonGroup() ),
+                                		menuBuilder.buildRadioButtonMenuItem("Edit Annotations", "EditAnnotations", false),
+                                		menuBuilder.buildMenuItem("Open Annotations", "OpenAnnotations", 0, null, false),
+                                		menuBuilder.buildMenuItem("Save Annotations", "SaveAnnotations", 0, null, false)
+                                        		}
+                                ),
                                 menuBuilder.makeMenu("Worm VOI", true,
                                         new JMenuItem[] 
                                         		{
-                                		menuBuilder.buildRadioButtonMenuItem("Add Lattice Points", "AddLeftRightMarkers", false, new ButtonGroup() ),
+                                		menuBuilder.buildRadioButtonMenuItem("Add Lattice Points", "AddLattice", false, new ButtonGroup() ),
                                 		menuBuilder.buildRadioButtonMenuItem("Edit Lattice", "EditLattice", false),
                                         menuBuilder.buildMenuItem("Save Lattice", "SaveLattice", 0, null,
                                                 false),
                                 		menuBuilder.buildMenuItem("Open Lattice", "OpenLattice", 0, null,
                                                         false),
-                                        menuBuilder.buildCheckBoxMenuItem("Show Model", "showStraightenLattice", false),
-                                        menuBuilder.buildMenuItem("Show Interpolated Model", "interpolateModel", 0, null,
+                                        menuBuilder.buildCheckBoxMenuItem("Show Model", "ShowModel", false),
+                                        menuBuilder.buildMenuItem("Show Interpolated Model", "ShowInterpolateModel", 0, null,
                                             	false),
-                                        menuBuilder.buildMenuItem("Straighten", "straightenLattice2", 0, null,
+                                        menuBuilder.buildMenuItem("Straighten", "StraightenLattice", 0, null,
                                                 false),
                                         menuBuilder.buildMenuItem("Default Voxel Size", "voxelSize", 0, null,
                                         		false)
