@@ -282,7 +282,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
         // detectImpl(srcImage, keypoints, srcImage.getMask()) results in keypoints.size() = 0.
         detectImpl(srcImage, keypoints, null);
         
-        short descriptors[][] = null;
+        byte descriptors[][] = null;
         // Create descriptors
         descriptors = computeImpl(srcImage, keypoints);
         System.out.println("keypoints.size() = " + keypoints.size());
@@ -456,12 +456,12 @@ public class AlgorithmBRISK extends AlgorithmBase {
     	int xDim = image.getExtents()[0];
     	int yDim = image.getExtents()[1];
     	int sliceSize = xDim * yDim;
-    	double doubleBuffer[] = new double[sliceSize];
+    	int intBuffer[] = new int[sliceSize];
     	try {
-    		image.exportData(0, sliceSize, doubleBuffer);
+    		image.exportData(0, sliceSize, intBuffer);
     	}
     	catch (IOException e) {
-    		MipavUtil.displayError("IOException " + e + " on image.exportData(0, sliceSize, doubleBuffer) in smoothedIntensity");
+    		MipavUtil.displayError("IOException " + e + " on image.exportData(0, sliceSize, intBuffer) in smoothedIntensity");
     		setCompleted(false);
     		return -1;
     	}
@@ -470,7 +470,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
     	int integralXDim = integral.getExtents()[0];
     	int integralYDim = integral.getExtents()[1];
     	int  integralSlice = integralXDim * integralYDim;
-    	double integralBuffer[] = new double[integralSlice];
+    	int integralBuffer[] = new int[integralSlice];
     	try {
     		integral.exportData(0, integralSlice, integralBuffer);
     	}
@@ -494,13 +494,13 @@ public class AlgorithmBRISK extends AlgorithmBase {
     		final int r_y_1 = (1024 - r_y);
     		int ptr = x + y*xDim;
     		// Just interpolate
-    		ret_val = (r_x_1*r_y_1*(int)doubleBuffer[ptr]);
+    		ret_val = (r_x_1*r_y_1*intBuffer[ptr]);
     		ptr++;
-    		ret_val += (r_x*r_y_1*(int)doubleBuffer[ptr]);
+    		ret_val += (r_x*r_y_1*intBuffer[ptr]);
     		ptr += xDim;
-    		ret_val += (r_x*r_y*(int)doubleBuffer[ptr]);
+    		ret_val += (r_x*r_y*intBuffer[ptr]);
     		ptr--;
-    		ret_val += (r_x_1*r_y*(int)doubleBuffer[ptr]);
+    		ret_val += (r_x_1*r_y*intBuffer[ptr]);
     		return (ret_val + 512)/1024;
     	} // if (sigma_half < 0.5)
     	
@@ -541,42 +541,42 @@ public class AlgorithmBRISK extends AlgorithmBase {
     		// Now the calculation
     		int ptr = x_left + xDim * y_top;
     		// First the corners
-    		ret_val = A*(int)doubleBuffer[ptr];
+    		ret_val = A*intBuffer[ptr];
     		ptr += dx + 1;
-    		ret_val += B * (int)doubleBuffer[ptr];
+    		ret_val += B * intBuffer[ptr];
     		ptr += dy*xDim + 1;
-    		ret_val += C*(int)doubleBuffer[ptr];
+    		ret_val += C*intBuffer[ptr];
     		ptr -= dx+1;
-    		ret_val += D*(int)doubleBuffer[ptr];
+    		ret_val += D*intBuffer[ptr];
     		
     		// Next the edges
     		int ptr_integral = x_left + integralXDim*y_top + 1;
     		// Find a simple path through the different surface corners
-    		final int tmp1 = ptr_integral;
+    		final int tmp1 = integralBuffer[ptr_integral];
     		ptr_integral += dx;
-    		final int tmp2 = ptr_integral;
+    		final int tmp2 = integralBuffer[ptr_integral];
     		ptr_integral += integralXDim;
-    		final int tmp3 = ptr_integral;
+    		final int tmp3 = integralBuffer[ptr_integral];
     		ptr_integral++;
-    		final int tmp4 = ptr_integral;
+    		final int tmp4 = integralBuffer[ptr_integral];
     		ptr_integral += dy*integralXDim;
-    		final int tmp5 = ptr_integral;
+    		final int tmp5 = integralBuffer[ptr_integral];
     		ptr_integral--;
-    		final int tmp6 = ptr_integral;
+    		final int tmp6 = integralBuffer[ptr_integral];
     		ptr_integral += integralXDim;
-    		final int tmp7 = ptr_integral;
+    		final int tmp7 = integralBuffer[ptr_integral];
     		ptr_integral -= dx;
-    		final int tmp8 = ptr_integral;
+    		final int tmp8 = integralBuffer[ptr_integral];
     		ptr_integral -= integralXDim;
-    		final int tmp9 = ptr_integral;
+    		final int tmp9 = integralBuffer[ptr_integral];
     		ptr_integral--;
-    		final int tmp10 = ptr_integral;
+    		final int tmp10 = integralBuffer[ptr_integral];
     		ptr_integral -= dy*integralXDim;
-    		final int tmp11 = ptr_integral;
+    		final int tmp11 = integralBuffer[ptr_integral];
     		ptr_integral++;
-    		final int tmp12 = ptr_integral;
+    		final int tmp12 = integralBuffer[ptr_integral];
     		
-    		// Assign the wieghted surface integrals
+    		// Assign the weighted surface integrals
     		final int upper = (tmp3 - tmp2 + tmp1 - tmp12) * r_y_1_i;
     		final int middle = (tmp6 - tmp3 + tmp12 - tmp9) * scaling;
     		final int left = (tmp9 - tmp12 + tmp11 - tmp10) * r_x_1_i;
@@ -588,33 +588,33 @@ public class AlgorithmBRISK extends AlgorithmBase {
     	// Now the calculation
     	int ptr = x_left + xDim * y_top;
     	// First row
-    	ret_val = A * (int)doubleBuffer[ptr];
+    	ret_val = A * intBuffer[ptr];
     	ptr++;
     	final int end1 = ptr + dx;
     	for (; ptr < end1; ptr++) {
-    		ret_val += r_y_1_i * (int)doubleBuffer[ptr];
+    		ret_val += r_y_1_i * intBuffer[ptr];
     	}
-    	ret_val += B * (int)doubleBuffer[ptr];
+    	ret_val += B * intBuffer[ptr];
     	// Middle ones
     	ptr += xDim - dx - 1;
     	int end_j = ptr + dy * xDim;
     	for (; ptr < end_j; ptr += xDim-dx-1) {
-    		ret_val += r_x_1_i * (int)doubleBuffer[ptr];
+    		ret_val += r_x_1_i * intBuffer[ptr];
     		ptr++;
     		final int end2 = ptr + dx;
     		for (; ptr < end2; ptr++) {
-    			ret_val += (int)doubleBuffer[ptr]*scaling;
+    			ret_val += intBuffer[ptr]*scaling;
     		}
-    		ret_val += r_x1_i * (int)doubleBuffer[ptr];
+    		ret_val += r_x1_i * intBuffer[ptr];
     	}
     	// Last row
-    	ret_val += D * (int)doubleBuffer[ptr];
+    	ret_val += D * intBuffer[ptr];
     	ptr++;
     	final int end3 = ptr + dx;
     	for (; ptr < end3; ptr++) {
-    		ret_val += r_y1_i * (int)doubleBuffer[ptr];
+    		ret_val += r_y1_i * intBuffer[ptr];
     	}
-    	ret_val += C * (int)doubleBuffer[ptr];
+    	ret_val += C * intBuffer[ptr];
     	
     	return (ret_val + scaling2/2)/scaling2;
     } // private int smoothedIntensity
@@ -626,16 +626,16 @@ public class AlgorithmBRISK extends AlgorithmBase {
     }
     
     // This is the subclass keypoint computation implementation
-    private short[][] computeImpl(ModelImage image, Vector<KeyPoint>keypoints) {
+    private byte[][] computeImpl(ModelImage image, Vector<KeyPoint>keypoints) {
     	int xDim = image.getExtents()[0];
     	int yDim = image.getExtents()[1];
     	int sliceSize = xDim * yDim;
-    	double doubleBuffer[] = new double[sliceSize];
+    	int intBuffer[] = new int[sliceSize];
     	try {
-    		image.exportData(0, sliceSize, doubleBuffer);
+    		image.exportData(0, sliceSize, intBuffer);
     	}
     	catch (IOException e) {
-    		MipavUtil.displayError("IOException " + e + " on image.exportData(0, sliceSize, doubleBuffer) in computeImp1");
+    		MipavUtil.displayError("IOException " + e + " on image.exportData(0, sliceSize, intBuffer) in computeImp1");
     		setCompleted(false);
     		return null;
     	}
@@ -689,17 +689,17 @@ public class AlgorithmBRISK extends AlgorithmBase {
 	    int extents[] = new int[2];
 	    extents[0] = xDim + 1;
 	    extents[1] = yDim+1;
-	    double integralBuffer[] = new double[extents[0]*extents[1]];
+	    int integralBuffer[] = new int[extents[0]*extents[1]];
 	    for (int y = 0; y < yDim+1; y++) {
 	    	for (int x = 0; x < xDim + 1; x++) {
 	    		for (int y2 = 0; y2 < y; y2++) {
 	    			for (int x2 = 0; x2 < x; x2++) {
-	    				integralBuffer[x + y*(xDim+1)] += doubleBuffer[x2 + y2*xDim];
+	    				integralBuffer[x + y*(xDim+1)] += intBuffer[x2 + y2*xDim];
 	    			}
 	    		}
 	    	}
 	    }
-	    ModelImage integral = new ModelImage(ModelStorageBase.DOUBLE, extents, "integral");
+	    ModelImage integral = new ModelImage(ModelStorageBase.INTEGER, extents, "integral");
 	    try {
 	    	integral.importData(0, integralBuffer, true);
 	    }
@@ -714,12 +714,12 @@ public class AlgorithmBRISK extends AlgorithmBase {
 	    
 	    // Create the descriptors
 	    // ksize is the number of descriptors
-	    // strings is the number of shorts the descriptor consists of
-	    short descriptors[][] = new short[ksize][strings];
+	    // strings is the number of bytes the descriptor consists of
+	    byte descriptors[][] = new byte[ksize][strings];
 	    
 	    // Now do the extraction for all keypoints:
 	    
-	    // Temporary variables containing gray values at sample pointsZZ
+	    // Temporary variables containing gray values at sample points
 	    int t1;
 	    int t2;
 	    
@@ -728,7 +728,6 @@ public class AlgorithmBRISK extends AlgorithmBase {
 	    int direction1;
 	    
 	    // Points to the start of descriptors
-	    int ptr = 0;
 	    for (int k = 0; k < ksize; k++) {
 	        int theta;
 	        KeyPoint kp = keypoints.get(k);
@@ -797,12 +796,23 @@ public class AlgorithmBRISK extends AlgorithmBase {
 	        	values[pvalues++] = smoothedIntensity(image, integral, x, y, scale, theta, i);
 	        }
 	        // Now iterate through all the pairings
-	        int ptr2 = ptr;
+	        int ptr2 = 0;
 	        for (int iter = 0; iter < numShortPairs; ++iter) {
 	            t1 = values[shortPairs[iter].getI()];
 	            t2 = values[shortPairs[iter].getJ()];
 	            if (t1 > t2) {
-	            	descriptors[ptr/strings][ptr2-ptr] |= (1 << shifter);
+	            	if (shifter < 8) {
+	            	    descriptors[k][4*ptr2] |= (1 << shifter);
+	            	}
+	            	else if (shifter < 16) {
+	            		descriptors[k][4*ptr2+1] |= ((1 << shifter) >>> 8);
+	            	}
+	            	else if (shifter < 24) {
+	            		descriptors[k][4*ptr2+2] |= ((1 << shifter) >>> 16);
+	            	}
+	            	else {
+	            		descriptors[k][4*ptr2+3] |= ((1 << shifter) >>> 24);
+	            	}
 	            } // else already initialized with zero
 	            ++shifter;
 	            if (shifter == 32) {
@@ -810,7 +820,6 @@ public class AlgorithmBRISK extends AlgorithmBase {
 	            	++ptr2;
 	            }
 	        } // for (int iter = 0; iter < numShortPairs; ++iter)
-	        ptr += strings;
 	    } // for (int k = 0; k < ksize; k++)
 	    // Clean up
 	    integral.disposeLocal();
@@ -824,7 +833,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
     }
     
     private int descriptorType() {
-    	return ModelStorageBase.SHORT;
+    	return ModelStorageBase.BYTE;
     }
     
     public void detectImpl(ModelImage image, Vector<KeyPoint> keypoints, BitSet mask) {
