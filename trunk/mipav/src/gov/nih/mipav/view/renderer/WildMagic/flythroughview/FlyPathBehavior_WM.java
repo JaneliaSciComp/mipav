@@ -35,7 +35,7 @@ public class FlyPathBehavior_WM implements KeyListener {
     /**
      * Branch information.
      */
-    private class BranchState extends Object implements Cloneable {
+    public class BranchState extends Object implements Cloneable {
 
         /** List of branch points (normalized path distances where one or more branches starts). */
         public float[] m_afBranchPoint;
