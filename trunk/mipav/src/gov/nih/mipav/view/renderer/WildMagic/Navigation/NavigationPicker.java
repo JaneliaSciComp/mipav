@@ -13,19 +13,10 @@ import WildMagic.LibGraphics.SceneGraph.Triangles;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.Collision.*;
 
-/**
- * Navigation fly-thru mode picker, which pick the fly-thru direction. 
- * 
- * @author Ruida Cheng
- *
- */
 public class NavigationPicker extends Picker {
 	/**  */
 	private static final long serialVersionUID = -9171618026409224678L;
 
-	/**
-	 * Picking records along the mouse click point.  
-	 */
 	public Vector<PickRecord> Records = new Vector<PickRecord>();
 
 	private Vector3f m_kOrigin, m_kDirection;

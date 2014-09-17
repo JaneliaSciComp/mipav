@@ -209,10 +209,6 @@ implements GLEventListener, ScreenCoordinateListener
 	// If navigation enabled, update the camera location in mouseReleased
 	protected Vector3f latestVolumePt = new Vector3f();
 
-	protected boolean isAnnotationEnabled = false;
-	protected boolean isMouseFlythru = true;
-	protected boolean isPathFlythru = false;
-	
 	/**
 	 * @param kParent
 	 * @param kAnimator
@@ -2306,29 +2302,5 @@ implements GLEventListener, ScreenCoordinateListener
 
 		 m_kCenter.mult( m_kVolumeScale );
 
-	 }
-	 
-	 /**
-	  * Set the annotation mode 
-	  * @param _isAnnotationEnabled
-	  */
-	 public void setAnnotationMode(boolean _isAnnotationEnabled) {
-		 isAnnotationEnabled = _isAnnotationEnabled;
-	 }
-	 
-	 /**
-	  * Set the mouse flythru mode
-	  * @param _isMouseFlythur enabled
-	  */
-	 public void setMouseFlythruMode(boolean _isMouseFlythru) {
-		 isMouseFlythru = _isMouseFlythru;
-	 }
-	 
-	 /**
-	  * Set the path flythru mode
-	  * @param _isPathFlythur enabled
-	  */
-	 public void setPathFlythruMode(boolean _isPathFlythru) {
-		 isPathFlythru = _isPathFlythru;
 	 }
 }
