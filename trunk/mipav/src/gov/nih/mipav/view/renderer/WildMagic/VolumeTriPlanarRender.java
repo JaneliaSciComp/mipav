@@ -210,6 +210,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				m_kVolumeRayCast.GetScene().UpdateGS();
 				m_kParent.moveSelectedPoint( world.InvertVector(m_spkCamera.GetRVector()).neg() );
 				break;
+			case KeyEvent.VK_DELETE:
+				m_kParent.deleteSelectedPoint( );
+				break;
 			}
 	        // look for shortcuts now
 
@@ -337,51 +340,55 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							
 							float maxValue = -Float.MAX_VALUE;
 							Vector3f maxPt = new Vector3f();
-//							Vector3f maxPtT = null;
 							
 							Vector3f p0 = new Vector3f(firstIntersectionPoint);
 							Vector3f p1 = new Vector3f(secondIntersectionPoint);
 							Vector3f step = Vector3f.sub(p1, p0);
 							float numSteps = step.length() + 1;
 							step.normalize();
-							ColorRGBA accumulativeColor = new ColorRGBA();
 							for ( int i = 0; i < numSteps; i++ )
 							{
 								p0.add(step);
-								float value = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z);
+								float value;
+								if ( m_kVolumeImageA.GetImage().isColorImage() )
+								{
+									boolean useRed = m_kVolumeImageA.GetRGB().getROn();
+									boolean useGreen = m_kVolumeImageA.GetRGB().getGOn();
+									boolean useBlue = m_kVolumeImageA.GetRGB().getBOn();
+									
+									float red = 0;
+									float green = 0;
+									float blue = 0;
+									if ( useRed )
+									{
+										red = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z, 1);
+									}
+									if ( useGreen )
+									{
+										green = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z, 2);
+									}
+									if ( useBlue )
+									{
+										blue = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z, 3);
+									}
+									value = Math.max(red, Math.max(green, blue) );
+								}
+								else 
+								{
+									value = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z);
+								}
 								if ( value > maxValue )
 								{
 									maxValue = value;
 									maxPt.copy(p0);
 								}
-//								ColorRGBA color = m_kVolumeImageA.GetTransferedValue(p0.X, p0.Y, p0.Z);
-//								float r = (1 - color.A) * accumulativeColor.R + (color.A) * color.R;  
-//								float g = (1 - color.A) * accumulativeColor.G + (color.A) * color.G;  
-//								float b = (1 - color.A) * accumulativeColor.B + (color.A) * color.B;  
-//								float a = (1 - color.A) * accumulativeColor.A + (color.A) * color.A;  
-//								accumulativeColor.Set(r, g, b, a);
-//								if ( (r >= 255) || (g >= 255) || (b >= 255) || (a >= 255) )
-//								{
-//									if ( maxPtT == null )
-//									{
-//										maxPtT = new Vector3f(p0);
-//									}
-//								}
 							}
-//							if ( maxPtT == null )
-//							{
-//								maxPtT = new Vector3f(maxPt);
-//							}
 							
 							if ( maxValue != -Float.MAX_VALUE )
-							{						
-//								System.err.println( maxPt );
-//								System.err.println( maxPtT );
-//								maxPt.copy(maxPtT);
-								
+							{														
 								if ( m_kParent.is3DSelectionEnabled() )
 								{
-									m_kParent.modifyLattice( firstIntersectionPoint, secondIntersectionPoint, maxPt );
+									m_kParent.modify3DMarker( firstIntersectionPoint, secondIntersectionPoint, maxPt );
 								}
 								else
 								{
@@ -390,10 +397,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 									VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
 									VOIText textVOI = new VOIText( );
 									textVOI.add( maxPt );
-									textVOI.add( Vector3f.add( new Vector3f(2,0,0), maxPt) );
-									textVOI.setText("LR_" + id);
+									Transformation world = m_kVolumeRayCast.getMesh().World;
+									Vector3f dir = world.InvertVector(m_spkCamera.GetRVector());
+									dir.scale(5);
+									textVOI.add( Vector3f.add( dir, maxPt) );
+									textVOI.setText("origin");
 									newTextVOI.getCurves().add(textVOI);
-									m_kParent.addLeftRightMarker( newTextVOI );
+									m_kParent.add3DMarker( newTextVOI );
 								}
 							}
 						}

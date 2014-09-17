@@ -165,7 +165,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
         	    		if ( (lattice.elementAt(0) != null) && (lattice.elementAt(0).getCurves().size() == 2) )
         	    		{
             	    		LatticeModel model = new LatticeModel( wormImageA, wormImageB, lattice.elementAt(0) );
-            	    		model.interpolateLattice( 2, false );
+            	    		model.interpolateLattice( false );
             	    		model.dispose();
             	    		model = null;
         	    		}
@@ -212,7 +212,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
         	    		if ( (lattice.elementAt(0) != null) && (lattice.elementAt(0).getCurves().size() == 2) )
         	    		{
             	    		LatticeModel model = new LatticeModel( wormImageA, wormImageB, lattice.elementAt(0) );
-            	    		model.interpolateLattice( 2, false );
+            	    		model.interpolateLattice( false );
             	    		model.dispose();
             	    		model = null;
         	    		}

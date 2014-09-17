@@ -31,10 +31,8 @@ import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.UpdateVOISelectionListener;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
-import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.model.structures.VOIPolyLineSlice;
-import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.model.structures.event.VOIEvent;
 import gov.nih.mipav.model.structures.event.VOIListener;
@@ -87,18 +85,13 @@ import gov.nih.mipav.view.dialogs.JDialogVOILogicalOperations;
 import gov.nih.mipav.view.dialogs.JDialogVOIShapeInterpolation;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
 import gov.nih.mipav.view.dialogs.JDialogVOIStats;
-import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogLattice;
 import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.*;
-import gov.nih.mipav.view.renderer.WildMagic.Render.LatticeModel;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridLayout;
-import java.awt.Insets;
 import java.awt.Polygon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -120,25 +113,18 @@ import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.event.EventListenerList;
 
-import WildMagic.LibFoundation.Distance.DistanceSegment3Segment3;
-import WildMagic.LibFoundation.Distance.DistanceVector3Segment3;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
-import WildMagic.LibFoundation.Mathematics.Segment3f;
-import WildMagic.LibFoundation.Mathematics.Vector3d;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
@@ -197,11 +183,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     }
     
     /** Reference to the parent frame. */
-    private VOIManagerInterfaceListener m_kParent = null;
+    protected VOIManagerInterfaceListener m_kParent = null;
     /** Reference to imageA */
-    private ModelImage m_kImageA;
+    protected ModelImage m_kImageA;
     /** Reference to imageB */
-    private ModelImage m_kImageB;
+    protected ModelImage m_kImageB;
     /** The toolbar builder that constructs the VOI toolbar -- it stores the VOI color button. */
     private ViewToolBarBuilder toolbarBuilder;
     /** Reference to the VOI toolbar. */
@@ -215,7 +201,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     /** VOI ID used to set the VOI color button on a call to newVOI() */
     private int voiUID = 0;
     /** The current active VOI */
-    private VOI m_kCurrentVOIGroup = null;
+    protected VOI m_kCurrentVOIGroup = null;
     /** List of undo commands */
     private Vector<String> m_kUndoCommands = new Vector<String>();
     /** List of re-do commands */
@@ -225,15 +211,15 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     /** Set to true if this VOIManagerInterface is used for the GPU-based Volume Renderer */
     private boolean m_bGPURenderer = false;
     /** VOI Properties dialog -- from the popup menu or drop-down menu. */
-    private JDialogVOIStats m_kVOIDialog;
+    protected JDialogVOIStats m_kVOIDialog;
     
     private JDialogVOILogicalOperations m_kVOILogicalOperationsDialog;
     
     private int m_iMaxUndo = 1000;
     /** Saved VOI states for undo. */
-    private Vector<VOISaveState> m_kUndoList = new Vector<VOISaveState>();
+    protected Vector<VOISaveState> m_kUndoList = new Vector<VOISaveState>();
     /** Saved VOI states for re-do. */
-    private Vector<VOISaveState> m_kRedoList = new Vector<VOISaveState>();
+    protected Vector<VOISaveState> m_kRedoList = new Vector<VOISaveState>();
 
     /** Single-level undo/redo for image masks, undo-imageA: */
     private Object m_kImageAUndo = null;
@@ -282,12 +268,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     
     private boolean m_bDefaultImage;
     private ModelImage m_kTempImage = null;
-
-    private boolean mouse3D = false;
-    private boolean mouseSelection3D = false;
     
-    private JMenu voiMenu;
-    private ViewMenuBuilder voiMenuBuilder;
+    protected JMenu voiMenu;
+    protected ViewMenuBuilder voiMenuBuilder;
 
     private JDialogAAMClassification prostateAAMClassification;
     private JDialogAAMplusSVM prostateML;
@@ -1201,175 +1184,14 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             } else {
                 MipavUtil.displayError("At least 1 VOI must be present to perform Logical Operations");
             }
-        } else if ( command.equals("OpenLeftRightMarkers") ) {
-            // get the voi directory
-            String fileName = null;
-            String directory = null;
-            String voiDir = null;
-
-            final JFileChooser chooser = new JFileChooser();
-
-            if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
-                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-            } else {
-                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
-            }
-
-            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-            final int returnVal = chooser.showOpenDialog(m_kParent.getFrame());
-
-            if (returnVal == JFileChooser.APPROVE_OPTION) {
-                fileName = chooser.getSelectedFile().getName();
-                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-                Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
-            }
-
-            if (fileName != null) {
-            	VOIVector leftRightMarkers = new VOIVector();
-                voiDir = new String(directory + fileName + File.separator);
-                loadAllVOIsFrom(voiDir, false, leftRightMarkers, true);
-                System.err.println( "Left Right Markers " + leftRightMarkers.size() );
-            }
-        } else if ( command.equals("OpenLattice") ) {
-            // get the voi directory
-            String fileName = null;
-            String directory = null;
-            String voiDir = null;
-
-            final JFileChooser chooser = new JFileChooser();
-
-            if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
-                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-            } else {
-                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
-            }
-
-            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-            final int returnVal = chooser.showOpenDialog(m_kParent.getFrame());
-
-            if (returnVal == JFileChooser.APPROVE_OPTION) {
-                fileName = chooser.getSelectedFile().getName();
-                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-                Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
-            }
-
-            if (fileName != null) {
-            	VOIVector lattice = new VOIVector();
-                voiDir = new String(directory + fileName + File.separator);
-                loadAllVOIsFrom(voiDir, false, lattice, false);
-
-                if ( latticeModel != null )
-                {
-                	latticeModel.dispose();
-                }
-                latticeModel = new LatticeModel( m_kImageA, m_kImageB, lattice.elementAt(0) );
-            }
-        } else if ( command.equals("AddLeftRightMarkers") ) {
-        	mouse3D = voiMenuBuilder.isMenuItemSelected("Add Lattice Points");
-        	mouseSelection3D = voiMenuBuilder.isMenuItemSelected("Edit Lattice");
-        } else if ( command.equals("EditLattice") ) {
-        	mouse3D = voiMenuBuilder.isMenuItemSelected("Add Lattice Points");
-        	mouseSelection3D = voiMenuBuilder.isMenuItemSelected("Edit Lattice");
-        	if ( latticeModel != null )
-        	{
-        		latticeModel.clearAddLeftRightMarkers();
-        	}
-        } else if ( command.equals("buildWormLattice") ) {
-        	new JDialogLattice( getActiveImage(), this );
-        } else if ( command.equals("SaveLattice") ) {
-        	if ( latticeModel != null )
-        	{
-        		latticeModel.saveLattice( );
-        	}
-        } else if ( command.equals("showStraightenLattice") ) {
-        	if ( latticeModel != null )
-        	{
-        		latticeModel.showModel( );
-        	}
-        } else if ( command.equals("interpolateModel") ) { 
-        	if ( latticeModel != null )
-        	{
-        		latticeModel.showInterpolatedModel( );
-        	}
-        } else if ( command.equals("straightenLattice2") ) {
-        	if ( latticeModel != null )
-        	{
-        		latticeModel.interpolateLattice( 2, true );
-        	}
-        } else if ( command.equals("straightenLattice") ) {
-        	if ( latticeModel != null )
-        	{
-        		latticeModel.interpolateLattice( 0, true );
-        	}
-        } else if ( command.equals("voxelSize") ) {
-        	setVoxelSize();
-        } else if ( command.equals("OKVoxelSize") ) {
-        	try {
-        		float value = Float.valueOf(defaultVoxelSize.getText());
-        		if ( value > 0 )
-        		{
-        			JDialogLattice.VoxelSize = Float.valueOf(defaultVoxelSize.getText());
-        			updateVoxelSize.setVisible(false);
-        			updateVoxelSize.dispose();
-        		}
-        		else
-        		{
-        			MipavUtil.displayError( "Enter a voxel size > 0" );
-        			defaultVoxelSize.requestFocus();
-        		}
-        	}
-        	catch ( java.lang.NumberFormatException e )
-        	{
-        		MipavUtil.displayError( "Enter a number > 0" );
-        		defaultVoxelSize.requestFocus();
-        	}
-        } else if ( command.equals("TransformVOI")){
+        } 
+        else if ( command.equals("TransformVOI")){
         	new JDialogTransformVOI(m_kImageA);
         }
         else {
             doVOI(command);
         }
 
-    }
-
-    private LatticeModel latticeModel;
-    
-	public void setLattice( VOIVector lattice )
-	{
-		if ( latticeModel != null )
-		{
-			latticeModel.dispose();
-		}
-		getActiveImage().unregisterAllVOIs();
-		latticeModel = new LatticeModel( m_kImageA, m_kImageB, lattice.elementAt(0) );
-	}
-    
-	private JTextField defaultVoxelSize;
-	private JDialog updateVoxelSize;
-	private void setVoxelSize()
-    {
-    	JButton OK = new JButton( "OK" );
-    	OK.setActionCommand("OKVoxelSize");
-    	OK.addActionListener(this);
-    	defaultVoxelSize = new JTextField( "" + JDialogLattice.VoxelSize );
-    	defaultVoxelSize.addActionListener(this);
-    	JPanel panel = new JPanel( new GridLayout(1, 3) );
-    	panel.add( new JLabel( "Current Voxel Size" ) );
-    	panel.add( defaultVoxelSize );
-    	panel.add( new JLabel("um") );
-
-    	updateVoxelSize = new JDialog();
-    	updateVoxelSize.getContentPane().setLayout(new BorderLayout());
-    	updateVoxelSize.setModalityType( JDialog.ModalityType.APPLICATION_MODAL);    	
-    	updateVoxelSize.getContentPane().add( panel, BorderLayout.NORTH );
-    	updateVoxelSize.getContentPane().add( OK, BorderLayout.SOUTH );
-    	updateVoxelSize.pack();
-    	updateVoxelSize.setResizable(false);
-
-        MipavUtil.centerOnScreen(updateVoxelSize);
-    	updateVoxelSize.setVisible(true);
     }
 	
     @Override
@@ -2231,37 +2053,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
     }
     
-    private VOI pickedPoint = null;
-    private boolean movingPickedPoint = false;
-    public void clear3DSelection()
-    {
-    	if ( latticeModel != null )
-    	{
-    		latticeModel.clear3DSelection();
-    	}
-    	if ( movingPickedPoint )
-    	{
-            movingPickedPoint = false;
-    	}
-    	pickedPoint = null;
-    }
-    
-    public boolean is3DMouseEnabled()
-    {
-    	return mouse3D;
-    }
-    
-    public boolean is3DSelectionEnabled()
-    {
-    	return mouseSelection3D;
-    }
-    
-    public void set3DMouseEnabled( boolean enabled )
-    {
-    	mouse3D = enabled;
-    	voiMenuBuilder.setMenuItemSelected("Add Lattice Points", mouse3D);
-    }
-
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.VOIHandlerInterface#isNewVoiNeeded(int)
      */
@@ -3154,117 +2945,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }        
     }
 
-    public void modifyLattice( Vector3f startPt, Vector3f endPt, Vector3f pt )
-    {
-    	if ( latticeModel != null )
-    	{
-    		if ( !movingPickedPoint )
-    		{
-    			movingPickedPoint = true;
-//    			System.err.println("modifyLattice");
-    			saveVOIs("modifyLattice");
-    		}
-    		latticeModel.modifyLattice(startPt, endPt, pt);
-    	}
-    }
-
-    public void moveSelectedPoint( Vector3f direction )
-    {
-    	if ( latticeModel != null )
-    	{
-//    		saveVOIs("moveSelectedPoint");
-    		if ( !movingPickedPoint )
-    		{
-	    		movingPickedPoint = true;
-//	    		System.err.println("moveSelectedPoint");
-	            saveVOIs("moveSelectedPoint");
-    		}
-    		latticeModel.moveSelectedPoint(direction);
-    	}
-    }
-    
-
-    public void addLeftRightMarker( VOI textVOI )
-    {       
-    	if ( latticeModel == null )
-    	{
-    		latticeModel = new LatticeModel( m_kImageA, m_kImageB);
-    	}
-    	if ( latticeModel.getPicked() != null )
-    	{
-    		if ( !movingPickedPoint )
-    		{
-    			movingPickedPoint = true;
-//    			System.err.println("moveLeftRightMarker");
-    			saveVOIs("moveLeftRightMarker");
-    		}
-    		latticeModel.setPicked( textVOI.getCurves().elementAt(0).elementAt(0) );
-    	}
-    	else
-    	{
-    		Vector3f pt = latticeModel.getPicked( textVOI.getCurves().elementAt(0).elementAt(0) );
-    		if ( pt == null )
-    		{
-    			saveVOIs("addLeftRightMarker");
-    			latticeModel.addLeftRightMarker( textVOI.getCurves().elementAt(0).elementAt(0) );
-    		}
-    	}
-    	
-    	
-//    	if ( pickedPoint != null )
-//    	{
-//    		if ( !movingPickedPoint )
-//    		{
-//    			movingPickedPoint = true;
-////    			System.err.println("moveLeftRightMarker");
-//    			saveVOIs("moveLeftRightMarker");
-//    		}
-//    		for ( int i = 0; i < pickedPoint.getCurves().elementAt(0).size(); i++ )
-//    		{
-//    			pickedPoint.getCurves().elementAt(0).elementAt(i).copy( textVOI.getCurves().elementAt(0).elementAt(i) );
-//    		}
-//    		pickedPoint.update();
-//    	}
-//    	else
-//    	{
-//    		float minDist = Float.MAX_VALUE;
-//    		int minIndex = -1;
-//    		VOIVector markers = getActiveImage().getVOIs();
-//    		for ( int i = 0; i < markers.size(); i++ )
-//    		{
-//    			VOI currentVOI = markers.elementAt(i);
-//    			if ( currentVOI.getCurveType() == VOI.ANNOTATION )
-//    			{
-//    				VOIText textTemp = (VOIText) currentVOI.getCurves().elementAt(0);
-//    				float distance = textTemp.elementAt(0).distance( textVOI.getCurves().elementAt(0).elementAt(0) );
-//    				if ( distance < minDist )
-//    				{
-//    					minDist = distance;
-//    					minIndex = i;
-//    				}
-//    			}
-//    		}
-//    		if ( minDist < 12 )
-//    		{
-////    			System.err.println("selectLeftRightMarker");
-//    			pickedPoint = markers.elementAt(minIndex);
-//    		}
-//    		else
-//    		{
-////    			System.err.println( minDist + " " + minIndex );
-////    			System.err.println("addLeftRightMarker");
-//    			saveVOIs("addLeftRightMarker");
-//    			textVOI.setActive(true);
-//    			ModelImage kActive = getActiveImage();
-//    			if ( kActive != null )
-//    			{
-//    				kActive.registerVOI(textVOI);
-//    			}
-//    			pickedPoint = textVOI;
-//    		}
-//    	}
-    }
-
     private void addVOI( ModelImage kImage, VOIBase kNew, boolean bQuickLUT, boolean bUpdate, boolean isFinished )
     {       
         if ( kNew.getGroup() == null )
@@ -3741,7 +3421,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         return (int)m_kParent.getCenterPt().Z;
     }
 
-    private VOISaveState getVOIState( )
+    protected VOISaveState getVOIState( )
     {
         //System.out.println(Runtime.getRuntime().maxMemory() / 1048576);
         //System.out.println(Runtime.getRuntime().totalMemory() / 1048576);
@@ -4223,7 +3903,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * @param voiDir the directory to load voi's from
      * @param quietMode if true indicates that warnings should not be displayed.
      */
-    private void loadAllVOIsFrom(final String voiDir, boolean quietMode, VOIVector resultVector, boolean registerVOIs) {
+    protected void loadAllVOIsFrom(final String voiDir, boolean quietMode, VOIVector resultVector, boolean registerVOIs) {
 
         int i, j;
         VOI[] VOIs;
@@ -5222,7 +4902,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         toolbarBuilder.getVOIRedoButton().setEnabled(!m_kRedoCommands.isEmpty());
     }
 
-    private void redoVOIs()
+    protected void redoVOIs()
     {
         if ( m_kRedoList.isEmpty() )
         {
@@ -5230,11 +4910,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
         m_kUndoList.add( getVOIState() );
         setVOIState( m_kRedoList.remove( m_kRedoList.size() - 1) );
-        if ( latticeModel != null )
-        {
-        	latticeModel.redo();
-        }
-        
+
         if ( imageStatList != null )
         {
             imageStatList.refreshVOIList(getActiveImage().getVOIs());
@@ -5243,7 +4919,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             m_kVOIDialog.updateVOIPanel(m_kCurrentVOIGroup, getActiveImage() );
         }
         updateDisplay();
-        pickedPoint = null;
     }
 
     /**
@@ -6378,7 +6053,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * extractSurfaceDialog.validate(); }
      */
 
-    private void setVOIState( VOISaveState kVOIState )
+    protected void setVOIState( VOISaveState kVOIState )
     {
         m_kImageA.unregisterAllVOIs();
         m_kImageA.restoreVOIs( kVOIState.voiVectorA );
@@ -6515,7 +6190,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         toolbarBuilder.getVOIRedoButton().setEnabled(true);
     }
 
-    private void undoVOIs()
+    protected void undoVOIs()
     {
         if ( m_kUndoList.size() <= 0 )
         {
@@ -6523,10 +6198,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
         m_kRedoList.add( getVOIState() );
         setVOIState( m_kUndoList.remove( m_kUndoList.size() - 1) );
-        if ( latticeModel != null )
-        {
-        	latticeModel.undo();
-        }
         
         if ( imageStatList != null )
         {
@@ -6536,7 +6207,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             m_kVOIDialog.updateVOIPanel(m_kCurrentVOIGroup, getActiveImage() );
         }
         updateDisplay();
-        pickedPoint = null;
     }
 
     /**
