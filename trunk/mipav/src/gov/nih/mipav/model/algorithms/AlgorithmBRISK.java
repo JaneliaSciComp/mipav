@@ -55,8 +55,24 @@ public class AlgorithmBRISK extends AlgorithmBase {
 	// List of images to be matched
 	private ModelImage destImage[] = null;
 	
+	private boolean wholeImageFlag = true;
+	
 	// FAST/AGAST detection threshold.  The default value is 60.
+	// In BRISK: Binary Robust Invariant Scalable Keypoints
+	// Table 1 uses a detection threshold of 67 and Figure 8 uses
+	// a detection threshold of 70.
+	// If threshold is not given in the demo file, a default value of 60 is used.
+	// If threshold is 0 in the demo file, a value of 30 is used.
 	private int threshold = 60;
+	
+	// A measure of dissimilarity of 2 descriptors.
+	// Each descriptor has 512 bits.
+	// A bitwise XOR of the 2 descriptors is followed
+	// by a bit count.  90 is used in section 4.4 and
+	// Figure 8 of the reference.
+	// Since the maximum possible Hamming distance being 64 · 8 = 512 bits, the distribution
+	// of distances for non-matching points is roughly Gaussian and centered around 256.
+	private int HammingDistanceThreshold = 90;
 	
 	// Number of octaves for the detection. The default value is 4
 	private int octaves = 4;
@@ -68,16 +84,20 @@ public class AlgorithmBRISK extends AlgorithmBase {
 	// Scale factor for the BRISK pattern.  The default value is 1.0.
 	private double patternScale = 1.0;
 	
-	private static final int TYPE_STANDARD = 1;
+	//private static final int TYPE_STANDARD = 1;
 	
-	private static final int TYPE_S = 2;
+	//private static final int TYPE_S = 2;
 	
-	private static final int TYPE_U = 3;
+	//private static final int TYPE_U = 3;
 	
-	private static final int TYPE_SU = 4;
+	//private static final int TYPE_SU = 4;
 	
 	// BRISK special types are 'S', 'U', and 'SU'.  By default, the standard BRISK is used.
-	private int type = TYPE_STANDARD;
+	// SU is unrotated, single scale BRISK.
+	// S is rotation invariant, single scale BRISK.
+	// Scale and/or rotation invariance can be omitted trivially, increasing the speed as well
+	// as the matching quality in applications where they are not needed.
+	//private int type = TYPE_STANDARD;
 	
 	// First intialize BRISK.  This will create the pattern look-up table so this
 	// may take some fraction of a second.  Do not rerun!
@@ -90,17 +110,9 @@ public class AlgorithmBRISK extends AlgorithmBase {
 	// 3.) Matching.  Construct the matcher and process an arbitrary number of images.
 	//     Use radiusMatch, or alternatively use knnMatch (or match for k == 1)
 	
-	// Detect the keypoints.  Optionally get the keypoints back.
-	private boolean detect = true;
+	private static final int radiusMatch = 1;
 	
-	// Get the descriptors and the corresponding keypoints.
-	private boolean describe = true;
-	
-	private static final int NO_MATCH = 1;
-	
-	private static final int radiusMatch = 2;
-	
-	private static final int knnMatch = 3;
+	private static final int knnMatch = 2;
 	
 	private int match = radiusMatch;
 	
@@ -181,36 +193,35 @@ public class AlgorithmBRISK extends AlgorithmBase {
     /**
      * @param destImage List of images to be matched
      * @param srcImg Source image
+     * @param wholeImageFlag
      * @param threshold FAST/AGAST detection threshold
+     * @param HammingDistanceThreshold
      * @param octaves Number of octaves for the detection
      * @param rotationInvariant
      * @param scaleInvariant
      * @param patternScale Scale factor for the BRISK pattern.
-     * @param type
-     * @param detect Detect the keypoints.  Optionally get the keypoints back.
-     * @param describe  Get the descriptors and the corresponding keypoints.
-     * @param match NO_MATCH, radiusMatch, or knnMatch
+     * @param match radiusMatch or knnMatch
      * @param radiusList
      * @param numberList
      * @param dMax Short pair maximum distance
      * @param dMin Long pair maximum distance
      * @param indexChange
      */
-    public AlgorithmBRISK(ModelImage destImage[], ModelImage srcImg, int threshold, int octaves,
+    public AlgorithmBRISK(ModelImage destImage[], ModelImage srcImg, boolean wholeImageFlag,
+    		              int threshold, int HammingDistanceThreshold, int octaves,
     		boolean rotationInvariant, boolean scaleInvariant,
-    		double patternScale, int type, boolean detect, boolean describe, int match,
+    		double patternScale, int match,
     		Vector<Double>radiusList, Vector<Integer>numberList, double dMax, double dMin, 
     		Vector<Integer>indexChange) {
     	super(null, srcImg);
     	this.destImage = destImage;
+    	this.wholeImageFlag = wholeImageFlag;
     	this.threshold = threshold;
+    	this.HammingDistanceThreshold = HammingDistanceThreshold;
     	this.octaves = octaves;
     	this.rotationInvariant = rotationInvariant;
     	this.scaleInvariant = scaleInvariant;
     	this.patternScale = patternScale;
-    	this.type = type;
-    	this.detect = detect;
-    	this.describe = describe;
     	this.match = match;
     	this.radiusList = radiusList;
     	this.numberList = numberList;
@@ -235,9 +246,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
-    	int xDim;
-    	int yDim;
-    	int sliceSize;
+    	int i;
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -248,20 +257,14 @@ public class AlgorithmBRISK extends AlgorithmBase {
     	
 
         fireProgressStateChanged(srcImage.getImageName(), "BRISK ...");
-
-        xDim = srcImage.getExtents()[0];
-        yDim = srcImage.getExtents()[1];
-        sliceSize = xDim * yDim;
         
-        if (describe) {
-        	if ((radiusList != null)  && (radiusList.size() != 0) && (numberList != null) &&
-        		(radiusList.size() == numberList.size())) {
-        	    generateKernel();	
-        	}
-        	else {
-        	    BriskDescriptorExtractor();
-        	}
-        }
+    	if ((radiusList != null)  && (radiusList.size() != 0) && (numberList != null) &&
+    		(radiusList.size() == numberList.size())) {
+    	    generateKernel();	
+    	}
+    	else {
+    	    BriskDescriptorExtractor();
+    	}
         
      // Construct the matcher
         //cv::Ptr<cv::DescriptorMatcher> descriptorMatcher;
@@ -280,7 +283,12 @@ public class AlgorithmBRISK extends AlgorithmBase {
         Vector<KeyPoint> keypoints = new Vector<KeyPoint>();
         // Create keypoints
         // detectImpl(srcImage, keypoints, srcImage.getMask()) results in keypoints.size() = 0.
-        detectImpl(srcImage, keypoints, null);
+        if (wholeImageFlag) {
+            detectImpl(srcImage, keypoints, null);
+        }
+        else {
+        	detectImpl(srcImage, keypoints, srcImage.generateVOIMask());
+        }
         
         byte descriptors[][] = null;
         // Create descriptors
@@ -296,6 +304,33 @@ public class AlgorithmBRISK extends AlgorithmBase {
         
         System.out.println("descriptors.length = " + descriptors.length);
         System.out.println("descriptors[0].length = " + descriptors[0].length);
+        
+        if (destImage != null) {
+        	@SuppressWarnings("unchecked")
+			Vector<KeyPoint> destKeypoints[] = new Vector[destImage.length];
+        	byte destDescriptors[][][] = new byte[destImage.length][][];
+        	for (i = 0; i < destImage.length; i++) {
+        	    destKeypoints[i] = new Vector<KeyPoint>();
+        	    if (wholeImageFlag) {
+        	        detectImpl(destImage[i], destKeypoints[i], null);
+        	    }
+        	    else {
+        	    	detectImpl(destImage[i], destKeypoints[i], destImage[i].generateVOIMask());	
+        	    }
+        	    destDescriptors[i] = computeImpl(destImage[i], destKeypoints[i]);
+        	    System.out.println("destKeypoints["+i+"].size() = " + destKeypoints[i].size());
+                numNull = 0;
+                for (int k = 0; k < destKeypoints[i].size(); k++) {
+                	if (destKeypoints[i].get(k)  == null) {
+                		numNull++;
+                	}
+                }
+                System.out.println("Number of null destKeypoints["+i+"] = " + numNull);
+                
+                System.out.println("destDescriptors["+i+"].length = " + destDescriptors[i].length);
+                System.out.println("destDescriptors["+i+"][0].length = " + destDescriptors[i][0].length);
+        	} // for (i = 0; i < destImage.length; i++)
+        } // if (destImage != null)
         
         setCompleted(true);
         return;
