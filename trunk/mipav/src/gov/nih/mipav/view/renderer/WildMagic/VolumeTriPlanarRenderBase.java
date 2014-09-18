@@ -1556,7 +1556,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	@Override
 	public void mousePressed(MouseEvent e) {
 		if (!e.isControlDown()) {
-			if (isNavigationEnabled && e.isShiftDown()) {
+			if (isNavigationEnabled && e.isShiftDown() && !isPathPlanningEnabled ) {
 				super.mousePressed(e);
 			} else if (!isNavigationEnabled) {
 				super.mousePressed(e);
