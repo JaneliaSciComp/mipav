@@ -672,8 +672,9 @@ public class PlugInDialogWormRegistration extends JDialogStandalonePlugin implem
     		}
     		else if ( matrix == null )
     		{
-    			AlgorithmRegOAR3D reg = new AlgorithmRegOAR3D(prevImageA, destImage, AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION, 6, 0,
-						-30, 30, 15, 6, -30, 30, 15, 6, -30, 30, 15, 6, true, true, true, 
+    			AlgorithmRegOAR3D reg = new AlgorithmRegOAR3D(prevImageA, destImage,
+						AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED, 6, 0,
+						-30, 30, 15, 6, -30, 30, 15, 6, -30, 30, 15, 6, true, true, false, 
 						false, 2, 3);
     			reg.setRunningInSeparateThread(false);
     			reg.run();
@@ -729,8 +730,8 @@ public class PlugInDialogWormRegistration extends JDialogStandalonePlugin implem
     			if ( matrix == null )
     			{
     				AlgorithmRegOAR3D reg = new AlgorithmRegOAR3D(prevImageA, wormImageA, 
-    						AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION, 6, 0,
-    						-30, 30, 15, 6, -30, 30, 15, 6, -30, 30, 15, 6, true, true, true, 
+    						AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED, 6, 0,
+    						-30, 30, 15, 6, -30, 30, 15, 6, -30, 30, 15, 6, true, true, false, 
     						false, 2, 3);
     				reg.setRunningInSeparateThread(false);
     				reg.run();
