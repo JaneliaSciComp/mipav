@@ -167,7 +167,7 @@ public class JPanelNavigation extends JInterfaceBase
 		} else if ( command.equals("ClearPath")) {
 			rayBasedRenderWM.clearPath();
 			m_kVolumeViewer.setPathFlythruMode(false);
-			rayBasedRenderWM.setPathPlanningFlythru(false);
+			rayBasedRenderWM.setPathPlanningFlythru(true);
 			rayBasedRenderWM.setMouseControlFlythru(false);
 			m_kVolumeViewer.setMouseFlythruMode(false);
 			

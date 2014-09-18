@@ -1,8 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.Navigation;
 
-import gov.nih.mipav.model.structures.TransferFunction;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
-import gov.nih.mipav.view.renderer.WildMagic.flythroughview.FlyPathBehavior_WM.BranchState;
 import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphCurve;
 
 import java.awt.Toolkit;
@@ -15,11 +13,20 @@ import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Collision.PickRecord;
 import WildMagic.LibGraphics.Rendering.Camera;
-import WildMagic.LibFoundation.Mathematics.*;
 
 
 /**
  * Behavior which allows for flying down a specified path and looking around.
+ * Adding a few conventions for the path planning fly-thru.
+ * 1) Shift + Left mouse press to stop at the current location to fly-thru.  At the path two ends, 
+ *    also need to use Shift + Left mouse to switch flying direction.   Apply Shift+Left Mouse press
+ *    once, the mouse wheel to control the auto fly-thru direction.   Wheel one move forward to fly
+ *    into the screen.   Wheel one move backward to fly out of the screen direction. 
+ * 2) In path-planning fly-thru mode, doesn't allow to change the camera view.   If so, it introduces
+ *    weird bug that distort the bottom three planner cross-hair location.   
+ * 3) When switch to mouse control mode, users can change the camera view location.   When switch back 
+ * 	  to path planning fly-thru mode, the view is directed to the first starting point of plan planning
+ *    annotated path.   This way to avoid the cross-hair location distortion.   
  * 
  * @author Ruida Cheng
  *
@@ -456,6 +463,9 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 	
 	public void setPathFlythruMode(boolean _isPathFlythru) {
 		isPathFlythru = _isPathFlythru;
+		if ( m_kFlyPathGraph  != null ) {
+			setupPath(m_kFlyPathGraph);
+		}
 	}
 
 	/**
@@ -749,6 +759,8 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 					mouseFlythru.terminate();
 					mouseFlythru = null;
 				}
+				setPathDist(m_kBranchState.m_fNormalizedPathDist);
+				setIdentityViewOrientation();
 				mousePathPlanning = new MouseWheelPathPlanning(e);
 				prevEventTime = e.getWhen();
 				mousePathPlanning.start();
@@ -909,71 +921,11 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 
 	        // Note which branch we are currently on before we possibly change it.
 	        int iBranch = getBranchIndex();
-
-	        // Determine which segment of the branch path, in relation to the
-	        // branch points, that we are currently in and that we are
-	        // stepping into.
-	        // ????????????????????????????????????????????????????????????????????????????????????????????
-	        /*
-	        int iPathSegment = m_kBranchState.getBranchPointSegment(getNormalizedPathDistance());
-	        int iNewPathSegment = m_kBranchState.getBranchPointSegment(fNewNormalizedPathDistance);
-
-	        // If the segments are different, then we will step into the branch.
-	        // The subbranch information is indexed by the minimum
-	        // of the two indexes.  Don't check if this is the first step
-	        // being taken after selecting a branch at a branch point.
-	        if (((Math.abs(iPathSegment - iNewPathSegment) >= 1) && !bFirstSelectedBranchStep) ||
-	                ((Math.abs(iPathSegment - iNewPathSegment) > 1) && bFirstSelectedBranchStep)) {
-	            beep();
-
-	            // Access the branch point by its segment.
-	            int iSegment = Math.min(iPathSegment, iNewPathSegment);
-
-	            // Clamp the path distance to this branch point.
-	            fNewNormalizedPathDistance = m_kBranchState.m_afBranchPoint[iSegment];
-	            m_kBranchState.updateDistUnvisited(fNewNormalizedPathDistance);
-	            setPathDist(fNewNormalizedPathDistance);
-
-	            // Build the list of possible branches.
-	            setupBranchChoices(iBranch, iSegment);
-	        } // Check for reaching the beginning of the branch in which
-
-	        // there is a parent.  Then we will step back onto the parent.
-	        // Don't check if this is the first step being taken after
-	        // selecting a branch at a branch point.
-	        else if ((fNewNormalizedPathDistance < 0.0f) && (-1 != m_kBranchState.m_iParentBranchIndex) &&
-	                     !bFirstSelectedBranchStep) {
-	            beep();
-
-	            // Clamp the path distance to this branch point.
-	            fNewNormalizedPathDistance = 0.0f;
-	            m_kBranchState.updateDistUnvisited(fNewNormalizedPathDistance);
-	            setPathDist(fNewNormalizedPathDistance);
-
-	            // Access the branch point by its segment.
-	            int iBranchParent = m_kBranchState.m_iParentBranchIndex;
-	            BranchState kBranchStateParent = m_akBranchState[iBranchParent];
-	            int iSegment = 0;
-
-	            while (iSegment < kBranchStateParent.m_afBranchPoint.length) {
-
-	                if (m_kBranchState.m_fParentBranchPoint == kBranchStateParent.m_afBranchPoint[iSegment]) {
-	                    break;
-	                }
-
-	                ++iSegment;
-	            }
-
-	            // Build the list of possible branches.
-	            setupBranchChoices(iBranchParent, iSegment);
-	        } // Remain on the same branch.
-	        else */
-	        {
-	            // Make sure the distance is in the [0,1] range.
-	            fNewNormalizedPathDistance = clampNormalizedPathDistance(fNewNormalizedPathDistance);
-	            m_kBranchState.updateDistUnvisited(fNewNormalizedPathDistance);
-	            setPathDist(fNewNormalizedPathDistance);
-	        }
+            // Make sure the distance is in the [0,1] range.
+            fNewNormalizedPathDistance = clampNormalizedPathDistance(fNewNormalizedPathDistance);
+            m_kBranchState.updateDistUnvisited(fNewNormalizedPathDistance);
+            setPathDist(fNewNormalizedPathDistance);
+	        
 	    }
 
 	  /**
