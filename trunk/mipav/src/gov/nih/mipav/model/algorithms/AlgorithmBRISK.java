@@ -70,7 +70,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
 	// A bitwise XOR of the 2 descriptors is followed
 	// by a bit count.  90 is used in section 4.4 and
 	// Figure 8 of the reference.
-	// Since the maximum possible Hamming distance being 64 · 8 = 512 bits, the distribution
+	// Since the maximum possible Hamming distance being 64 * 8 = 512 bits, the distribution
 	// of distances for non-matching points is roughly Gaussian and centered around 256.
 	private int HammingDistanceThreshold = 90;
 	
