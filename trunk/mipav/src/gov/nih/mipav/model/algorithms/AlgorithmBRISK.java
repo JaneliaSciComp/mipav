@@ -346,7 +346,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
             System.out.println("destDescriptors.length = " + destDescriptors.length);
             System.out.println("destDescriptors[0].length = " + destDescriptors[0].length);
             closestSrcDescriptorIndex = new int[destDescriptors.length];
-            closestSrcDescriptorHammingDistance = new int[descriptors.length];
+            closestSrcDescriptorHammingDistance = new int[destDescriptors.length];
             for (j = 0; j < destDescriptors.length; j++) {
                 closestSrcDescriptorIndex[j] = -1;
                 // Maximum possible Hamming distance is 512 for every point distance
@@ -457,6 +457,14 @@ public class AlgorithmBRISK extends AlgorithmBase {
     // short pairings with dMax, long pairings with dMin
     private void generateKernel() {
         // Get the total number of points
+    	if (radiusList.size() == 0) {
+    		MipavUtil.displayError("radiusList.size() = 0");
+    		return;
+    	}
+    	if (radiusList.size() != numberList.size()) {
+    		MipavUtil.displayError("radiusList.size() != numberList.size()");
+    		return;
+    	}
     	final int rings = radiusList.size();
     	// Remember the total number of points
     	points = 0;
