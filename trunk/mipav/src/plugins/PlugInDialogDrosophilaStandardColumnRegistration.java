@@ -6,10 +6,13 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.TreeMap;
+
+
 
 
 import javax.swing.ButtonGroup;
@@ -33,8 +36,8 @@ import gov.nih.mipav.model.file.FileInfoImageXML;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ScrollCorrector;
-
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 
@@ -195,7 +198,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v6.4");
+        setTitle("Drosophila Standard Column Registration v6.5.2");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
@@ -305,7 +308,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         swcCB.addActionListener(this);
         swcCB.setActionCommand("swcCB");
         
-        greenValueRadiusThresholdLabel = new JLabel("SWC-Green vaue radius threshold ");
+        greenValueRadiusThresholdLabel = new JLabel("SWC-Green value radius threshold ");
         greenValueRadiusThresholdTextField = new JTextField(35);
         greenValueRadiusThresholdTextField.setEnabled(false);
         greenValueRadiusThresholdTextField.setText("0.0");
@@ -486,15 +489,16 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
 		if(command.equalsIgnoreCase("imageBrowse")) {
-			 JFileChooser chooser = new JFileChooser();
-		        if (currDir != null) {
+			 JFileChooser chooser = new JFileChooser(Preferences.getImageDirectory());
+		        /*if (currDir != null) {
 					chooser.setCurrentDirectory(new File(currDir));
-		        }
+		        }*/
 		        chooser.setDialogTitle("Choose image");
 		        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		        int returnValue = chooser.showOpenDialog(this);
 		        if (returnValue == JFileChooser.APPROVE_OPTION) {
 		        	currDir = chooser.getSelectedFile().getAbsolutePath();
+		        	Preferences.setImageDirectory(chooser.getSelectedFile().getParentFile());
 		        	FileIO fileIO = new FileIO();
 		        	neuronImage = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory() + File.separator, true, null);
 		        	resols = neuronImage.getResolutions(0);
@@ -597,6 +601,10 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 
 			raFile = new RandomAccessFile(surfaceFile, "r");
 			
+			//String fi = surfaceFile.getName();
+			//String di = surfaceFile.getParent();
+			//FileWriter fw = new FileWriter(new File(di + File.separator + fi.substring(0, fi.indexOf(".")) + ".txt"));
+			
 			String line;
 			
 			
@@ -644,6 +652,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 							float[] coords = {coord_x,coord_y,coord_z,0};
 							
 							filamentCoords.add(coords);
+							//fw.append(coord_x + "\t" + coord_y + "\t" + coord_z + "\r\n");
 						}
 					}
 					allFilamentCoords.add(filamentCoords);
@@ -655,6 +664,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 				
 			}
 			raFile.close();
+			//fw.close();
 			
 		}catch(Exception e) {
 			try {
