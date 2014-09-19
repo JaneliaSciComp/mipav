@@ -48,12 +48,13 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Reference for counting number of bits set in a byte:
+Anatomy of High-Performance 2D Similarity Calculations by
+Imran S. Haque, Vijay S. Pande, and W. Patrick Walters
 */
 
 public class AlgorithmBRISK extends AlgorithmBase {
-	
-	// List of images to be matched
-	private ModelImage destImage[] = null;
 	
 	private boolean wholeImageFlag = true;
 	
@@ -110,11 +111,11 @@ public class AlgorithmBRISK extends AlgorithmBase {
 	// 3.) Matching.  Construct the matcher and process an arbitrary number of images.
 	//     Use radiusMatch, or alternatively use knnMatch (or match for k == 1)
 	
-	private static final int radiusMatch = 1;
+	//private static final int radiusMatch = 1;
 	
-	private static final int knnMatch = 2;
+	//private static final int knnMatch = 2;
 	
-	private int match = radiusMatch;
+	//private int match = radiusMatch;
 	
 	private Vector<Double>radiusList = null;
 	
@@ -191,7 +192,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
     }
     
     /**
-     * @param destImage List of images to be matched
+     * @param destImage
      * @param srcImg Source image
      * @param wholeImageFlag
      * @param threshold FAST/AGAST detection threshold
@@ -200,21 +201,19 @@ public class AlgorithmBRISK extends AlgorithmBase {
      * @param rotationInvariant
      * @param scaleInvariant
      * @param patternScale Scale factor for the BRISK pattern.
-     * @param match radiusMatch or knnMatch
      * @param radiusList
      * @param numberList
      * @param dMax Short pair maximum distance
      * @param dMin Long pair maximum distance
      * @param indexChange
      */
-    public AlgorithmBRISK(ModelImage destImage[], ModelImage srcImg, boolean wholeImageFlag,
+    public AlgorithmBRISK(ModelImage destImage, ModelImage srcImg, boolean wholeImageFlag,
     		              int threshold, int HammingDistanceThreshold, int octaves,
     		boolean rotationInvariant, boolean scaleInvariant,
-    		double patternScale, int match,
+    		double patternScale, 
     		Vector<Double>radiusList, Vector<Integer>numberList, double dMax, double dMin, 
     		Vector<Integer>indexChange) {
-    	super(null, srcImg);
-    	this.destImage = destImage;
+    	super(destImage, srcImg);
     	this.wholeImageFlag = wholeImageFlag;
     	this.threshold = threshold;
     	this.HammingDistanceThreshold = HammingDistanceThreshold;
@@ -222,7 +221,6 @@ public class AlgorithmBRISK extends AlgorithmBase {
     	this.rotationInvariant = rotationInvariant;
     	this.scaleInvariant = scaleInvariant;
     	this.patternScale = patternScale;
-    	this.match = match;
     	this.radiusList = radiusList;
     	this.numberList = numberList;
     	this.dMax = dMax;
@@ -247,6 +245,25 @@ public class AlgorithmBRISK extends AlgorithmBase {
      */
     public void runAlgorithm() {
     	int i;
+    	int j;
+    	int k;
+    	int m;
+    	int xorInt;
+    	int srcD;
+    	int destD;
+    	int cnt2;
+    	int cnt4;
+    	int cnt8;
+    	int cnt16;
+    	int cnt32;
+    	int HammingDistance;
+    	int numSrcUsed[] = null;
+    	int closestDistance;
+    	int closestDestIndex;
+    	VOI newSrcVOI;
+    	VOI newDestVOI;
+    	VOIVector srcVOIs = srcImage.getVOIs();
+    	VOIVector destVOIs = destImage.getVOIs();
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -295,7 +312,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
         descriptors = computeImpl(srcImage, keypoints);
         System.out.println("keypoints.size() = " + keypoints.size());
         int numNull = 0;
-        for (int k = 0; k < keypoints.size(); k++) {
+        for (k = 0; k < keypoints.size(); k++) {
         	if (keypoints.get(k)  == null) {
         		numNull++;
         	}
@@ -306,30 +323,105 @@ public class AlgorithmBRISK extends AlgorithmBase {
         System.out.println("descriptors[0].length = " + descriptors[0].length);
         
         if (destImage != null) {
-        	@SuppressWarnings("unchecked")
-			Vector<KeyPoint> destKeypoints[] = new Vector[destImage.length];
-        	byte destDescriptors[][][] = new byte[destImage.length][][];
-        	for (i = 0; i < destImage.length; i++) {
-        	    destKeypoints[i] = new Vector<KeyPoint>();
-        	    if (wholeImageFlag) {
-        	        detectImpl(destImage[i], destKeypoints[i], null);
-        	    }
-        	    else {
-        	    	detectImpl(destImage[i], destKeypoints[i], destImage[i].generateVOIMask());	
-        	    }
-        	    destDescriptors[i] = computeImpl(destImage[i], destKeypoints[i]);
-        	    System.out.println("destKeypoints["+i+"].size() = " + destKeypoints[i].size());
-                numNull = 0;
-                for (int k = 0; k < destKeypoints[i].size(); k++) {
-                	if (destKeypoints[i].get(k)  == null) {
-                		numNull++;
-                	}
-                }
-                System.out.println("Number of null destKeypoints["+i+"] = " + numNull);
-                
-                System.out.println("destDescriptors["+i+"].length = " + destDescriptors[i].length);
-                System.out.println("destDescriptors["+i+"][0].length = " + destDescriptors[i][0].length);
-        	} // for (i = 0; i < destImage.length; i++)
+			Vector<KeyPoint> destKeypoints = new Vector<KeyPoint>();
+        	byte destDescriptors[][] = null;
+        	int closestSrcDescriptorIndex[] = null;
+        	int closestSrcDescriptorHammingDistance[] = null;;
+    	    if (wholeImageFlag) {
+    	        detectImpl(destImage, destKeypoints, null);
+    	    }
+    	    else {
+    	    	detectImpl(destImage, destKeypoints, destImage.generateVOIMask());	
+    	    }
+    	    destDescriptors = computeImpl(destImage, destKeypoints);
+    	    System.out.println("destKeypoints.size() = " + destKeypoints.size());
+            numNull = 0;
+            for (k = 0; k < destKeypoints.size(); k++) {
+            	if (destKeypoints.get(k)  == null) {
+            		numNull++;
+            	}
+            }
+            System.out.println("Number of null destKeypoints = " + numNull);
+            
+            System.out.println("destDescriptors.length = " + destDescriptors.length);
+            System.out.println("destDescriptors[0].length = " + destDescriptors[0].length);
+            closestSrcDescriptorIndex = new int[destDescriptors.length];
+            closestSrcDescriptorHammingDistance = new int[descriptors.length];
+            for (j = 0; j < destDescriptors.length; j++) {
+                closestSrcDescriptorIndex[j] = -1;
+                // Maximum possible Hamming distance is 512 for every point distance
+                closestSrcDescriptorHammingDistance[j] = 513;
+                numSrcUsed = new int[descriptors.length];
+                for (k = 0; k < descriptors.length; k++) {
+                	HammingDistance = 0;
+                    for (m = 0; m < 16; m++) {
+                        srcD = (descriptors[k][4*m+3] << 24) | (descriptors[k][4*m+2] << 16) |
+                        	   (descriptors[k][4*m+1] << 8) | (descriptors[k][4*m]);
+                        destD = (destDescriptors[j][4*m+3] << 24) | (destDescriptors[j][4*m+2] << 16) |
+                        		(destDescriptors[j][4*m+1] << 8) | (destDescriptors[j][4*m]);
+                        xorInt = srcD ^ destD;
+                        // Parallel reduction population count of a 32 bit integer in 5 stages.
+                        // We wish to count the number of 1 bits in the 32 bit integer.  In the
+                        // first reduction stage, pairs of adjacent bits are summed to form counts
+                        // of the number of bits set in each 2-bit chunk.  Pairs of 2-bit chunks are
+                        // then summed into 4-bit chunks, the 4-bit chunks are summed into 8-bit
+                        // chunks, the 8-bit chunks are summed into 16-bit chunks, and the 16-bit
+                        // halves are then summed into the final 32-bit population count.
+                        cnt2 = (xorInt & 0x55555555) + ((xorInt &0xAAAAAAAA) >>> 1);
+                        cnt4 = (cnt2 & 0x33333333) + ((cnt2 & 0xCCCCCCCC) >>> 2);
+                        cnt8 = (cnt4 & 0x0F0F0F0F) + ((cnt4 & 0xF0F0F0F0) >>> 4);
+                        cnt16 = (cnt8 & 0x00FF00FF) + ((cnt8 & 0xFF00FF00) >>> 8);
+                        cnt32 = (cnt16 & 0x0000FFFF) + ((cnt16 & 0xFFFF0000) >>> 16);
+                        HammingDistance += cnt32;
+                    } // for (m = 0; m < 16; m++)
+                    if (HammingDistance < closestSrcDescriptorHammingDistance[j]) {
+                    	closestSrcDescriptorHammingDistance[j] = HammingDistance;
+                    	closestSrcDescriptorIndex[j] = k;
+                    }
+                } // for (k = 0; k < descriptors.length; k++)
+                numSrcUsed[closestSrcDescriptorIndex[j]]++;
+            } // for (j = 0; j < destDescriptors.length; j++)
+            for (k = 0; k < descriptors.length; k++) {
+            	if (numSrcUsed[k] > 1) {
+            	    closestDistance = 513;
+            	    closestDestIndex = -1;
+            	    for (j = 0; j < descriptors.length; j++) {
+            	    	if (closestSrcDescriptorHammingDistance[j] < closestDistance) {
+            	    		closestDistance = closestSrcDescriptorHammingDistance[j];
+            	    		closestDestIndex = j;
+            	    	}
+            	    } // for (j = 0; j < descriptors.length; j++)
+            	    for (j = 0; j < descriptors.length; j++) {
+            	    	if ((closestSrcDescriptorIndex[j] == k) && (j != closestDestIndex)) {
+            	    		closestSrcDescriptorIndex[j] = -1;
+            	    	}
+            	    } // for (j = 0; j < descriptors.length; j++)
+            	} // if (numSrcUsed[k] > 1)
+            } // for (k = 0; k < descriptors.length; k++)
+            for (i = 0, j = 0; j < destDescriptors.length; j++) {
+            	if ((closestSrcDescriptorIndex[j] >= 0) && (closestSrcDescriptorHammingDistance[j] <= HammingDistanceThreshold)) {
+            		newSrcVOI = new VOI((short) i, String.valueOf(i), VOI.POINT, -1);
+            		newSrcVOI.setFixed(true);
+            		newDestVOI = new VOI((short) i, String.valueOf(i), VOI.POINT, -1);
+            		newDestVOI.setFixed(true);
+            		k = closestSrcDescriptorIndex[j];
+            		float srcX = (float)keypoints.get(k).getPt().x;
+            		float srcY = (float)keypoints.get(k).getPt().y;
+            		newSrcVOI.importPoint(new Vector3f(srcX, srcY, 0.0f));
+            		((VOIPoint) (newSrcVOI.getCurves().elementAt(0))).setLabel(String.valueOf(i));
+            		float destX = (float)destKeypoints.get(j).getPt().x;
+            		float destY = (float)destKeypoints.get(j).getPt().y;
+            		newDestVOI.importPoint(new Vector3f(destX, destY, 0.0f));
+            		((VOIPoint) (newDestVOI.getCurves().elementAt(0))).setLabel(String.valueOf(i));
+            		i++;
+            		srcVOIs.add(newSrcVOI);
+            		destVOIs.add(newDestVOI);
+            	}  // if ((closestSrcDescriptorIndex[j] >= 0) && (closestSrcDescriptorHammingDistance[j] <= HammingDistanceThreshold)) 
+            } // for (j = 0; j < destDescriptors.length; j++)
+            srcImage.setVOIs(srcVOIs);
+            srcImage.notifyImageDisplayListeners();
+            destImage.setVOIs(destVOIs);
+            destImage.notifyImageDisplayListeners();
         } // if (destImage != null)
         
         setCompleted(true);
