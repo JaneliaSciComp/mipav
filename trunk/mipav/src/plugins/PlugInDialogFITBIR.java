@@ -352,6 +352,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 csvFileDir = chooser.getSelectedFile().getAbsolutePath() + File.separator;
                 Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_CSV_DIR, csvFileDir);
             }
+            listPane.setBorder(JDialogBase.buildTitledBorder(structTableModel.getRowCount() + " Form Structure(s) "));
         } else if (command.equalsIgnoreCase("RemoveStruct")) {
             final int selected = structTable.getSelectedRow();
             structTableModel.removeRow(selected);
@@ -633,11 +634,16 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             progressBar.updateValue(5);
             final long csvReadStartTime = System.currentTimeMillis();
             final int progressInc = 95 / recordList.size();
+            final int rowsPerInc = (recordList.size() / 95) + 1;
             int i = 1;
             for (final ArrayList<ArrayList<String>> record : recordList) {
                 progressBar.setMessage("Reading CSV row " + i + " of " + recordList.size());
                 new InfoDialog(this, dsName, false, false, record);
-                progressBar.updateValue(progressBar.getValue() + progressInc);
+                if (progressInc > 0) {
+                    progressBar.updateValue(progressBar.getValue() + progressInc);
+                } else if ( (i % rowsPerInc) == 0) {
+                    progressBar.updateValue(progressBar.getValue() + 1);
+                }
                 i++;
             }
             final long csvReadEndTime = System.currentTimeMillis();
@@ -860,6 +866,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         int middleSlice = 0;
         LightboxGenerator lightGen;
 
+        class MyListener implements ProgressChangeListener {
+            @Override
+            public void progressStateChanged(final ProgressChangeEvent e) {
+                // do nothing
+            }
+        }
+        ;
+        final MyListener listener = new MyListener();
+
         if (origImage.is2DImage()) {
             // Creating a blank TransMatrix for resampling
             final TransMatrix percentSizer = new TransMatrix(4);
@@ -870,6 +885,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     (float) (origImage.getResolutions(0)[0] / (percentage * .01)), (float) (origImage.getResolutions(0)[1] / (percentage * .01)),
                     (int) (origImage.getExtents()[0] * percentage * .01), (int) (origImage.getExtents()[1] * percentage * .01), origImage.getUnitsOfMeasure(),
                     false, true, false, true, origImage.getImageCentermm(false));
+            transformer.addProgressChangeListener(listener);
             transformer.runAlgorithm();
             thumbnailImage = transformer.getTransformedImage();
             thumbnailImage.calcMinMax();
@@ -877,6 +893,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             if ( !thumbnailImage.isColorImage()) {
                 final ModelImage newRGB = new ModelImage(ModelStorageBase.ARGB, thumbnailImage.getExtents(), thumbnailImage.getImageName());
                 final AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(thumbnailImage, thumbnailImage, thumbnailImage, newRGB, true, true, 255.0f, true);
+                mathAlgo.addProgressChangeListener(listener);
                 mathAlgo.run();
                 thumbnailImage.disposeLocal();
                 thumbnailImage = null;
@@ -899,6 +916,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 // Make algorithm
                 lightGen = new LightboxGenerator(origImage, startSlice, endSlice, percentage, rows, columns, rBorderVal, gBorderVal, bBorderVal, false,
                         borderThick);
+                lightGen.addProgressChangeListener(listener);
                 lightGen.run();
                 thumbnailImage = lightGen.getImage();
                 thumbnailImage.calcMinMax();
@@ -923,6 +941,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 middleVol = middleVol - 1; // 0 based
             }
             final AlgorithmSubset subsetAlgo = new AlgorithmSubset(origImage, timeImage, AlgorithmSubset.REMOVE_T, middleVol);
+            subsetAlgo.addProgressChangeListener(listener);
             subsetAlgo.run();
 
             numSlices = timeImage.getExtents()[2];
@@ -940,6 +959,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 // Make algorithm
                 lightGen = new LightboxGenerator(timeImage, startSlice, endSlice, percentage, rows, columns, rBorderVal, gBorderVal, bBorderVal, false,
                         borderThick);
+                lightGen.addProgressChangeListener(listener);
                 lightGen.run();
                 thumbnailImage = lightGen.getImage();
                 thumbnailImage.calcMinMax();
@@ -2153,9 +2173,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      * @return An ISO 8601 formatted version of the given date and time (or the original string if not in the DICOM/US
      *         date format).
      */
-    private static final String convertDateTimeToISOFormat(String date, String time) {
+    private static final String convertDateTimeToISOFormat(final String date, String time) {
         if (date == null) {
-            date = "";
+            return "";
         }
         if (time == null) {
             time = "";
@@ -4884,12 +4904,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         }
                         return RESOLVE_CONFLICT_IMG;
                     }
-                } else {
-                    return resolveConflictsUsing;
                 }
-            } else {
-                return RESOLVE_CONFLICT_ASK;
             }
+
+            return resolveConflictsUsing;
         }
 
         /**
