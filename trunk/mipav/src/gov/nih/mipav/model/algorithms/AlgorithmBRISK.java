@@ -760,7 +760,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
         return (pt.x < minX) || (pt.x >= maxX) || (pt.y < minY) || (pt.y >= maxY);
     }
     
-    // This is the subclass keypoint computation implementation
+    // Computes the descriptor
     private byte[][] computeImpl(ModelImage image, Vector<KeyPoint>keypoints) {
     	int xDim = image.getExtents()[0];
     	int yDim = image.getExtents()[1];
@@ -770,7 +770,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
     		image.exportData(0, sliceSize, intBuffer);
     	}
     	catch (IOException e) {
-    		MipavUtil.displayError("IOException " + e + " on image.exportData(0, sliceSize, intBuffer) in computeImp1");
+    		MipavUtil.displayError("IOException " + e + " on image.exportData(0, sliceSize, intBuffer) in computeImpl");
     		setCompleted(false);
     		return null;
     	}
