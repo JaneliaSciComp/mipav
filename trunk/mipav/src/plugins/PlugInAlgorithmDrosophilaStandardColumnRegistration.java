@@ -1,14 +1,10 @@
 import gov.nih.mipav.util.MipavMath;
-
 import gov.nih.mipav.model.algorithms.*;
-
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegLeastSquares;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBtoGray;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.RegionGrowDialog;
 
 import java.io.*;
 import java.util.*;
@@ -201,7 +197,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     //private ModelImage greenRegionGrowMaskImage;
     
 
-    private BitSet paintBitmap;
+    //private BitSet paintBitmap;
     
     private boolean doSWC;
     
@@ -209,7 +205,10 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     
     private String numPointsString;
     
-    private int numPoints;
+    @SuppressWarnings("unused")
+	private int numPoints;
+    
+    //private AlgorithmTPSpline invSpline;
     
     
     
@@ -299,14 +298,18 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
      * run algorithm
      */
     public void runAlgorithm() {
+    	//Updated to 6.5 on 9/12/2014
+    	//Adjusted algorithm so that filament points are transformed and 
+    	//written regardless of whether they are outside of the transformed
+    	//FOV
+    	//6.5.1 (9/16/14) just fixes problem where the registration was done
+    	//in the wrong order
     	if(outputTextArea != null) {
-    		outputTextArea.append("Running Algorithm v6.4" + "\n");
+    		outputTextArea.append("Running Algorithm v6.5.2" + "\n");
     	}else {
-    		System.out.println("Running Algorithm v6.4");
+    		System.out.println("Running Algorithm v6.5.2");
     	}
     	
-    	
-        
         //outputTextArea.append("Standard Column : RV/LD (in to out); RD/LV(out to in)" + "\n");
         /*String text = "";
         if(rvld) {
@@ -5932,7 +5935,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             thinPlateSplineAlgorithmPerformed();
         }
 
-        
+    	//testFilamentPoints();
 
         createFinalImage();
         
@@ -5950,7 +5953,6 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 					 al.remove(k);
 				 }
 			 }
-			 
         }
 			 
 			 
@@ -6023,6 +6025,390 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
         setCompleted(true);
     }
+    
+    /**
+     * Update for algorithm version 6.5.x
+     * 
+     * The original FOV (512x512x512) was not enough to take into account the entirety
+     * of the neuron of interest. As such, we needed to expand the search area in the 
+     * transformed coordinate system to correctly register the filaments that were 
+     * outside of the FOV. 
+     * 
+     * This is achieved by using the rigid registration to act as a guide for how much
+     * further we need to search in the new coordinate system. Otherwise, the algorithm
+     * is the same as it is previously. 
+     */
+    
+    private void populateNewSurfacePoints(){
+		
+		if(outputTextArea != null) {
+	    	outputTextArea.append("Registering filament points outside of FOV\n");
+		}else {
+			System.out.println("Registering filament points outside of FOV\n");
+		}
+		
+		float[] maxCoords = new float[3];
+		float[] minCoords = new float[]{999, 999, 999};
+		
+		//Determine bounding box in original coordinates
+		
+		for(ArrayList<float[]> a : allFilamentCoords){
+			for(float[] f : a){
+				for(int i=0;i<3;i++){
+					if(f[i] < minCoords[i])
+						minCoords[i] = f[i];
+					if(f[i] > maxCoords[i])
+						maxCoords[i] = f[i];
+				}
+			}
+		}
+		
+		float[] res = neuronImage.getResolutions(0);
+		float[] maxBox = new float[3];
+		float[] minBox = new float[]{999, 999, 999};
+		
+		//transform original bounding box to determine
+		//bounding box in new coordinates
+		
+		for(int k=0;k<2;k++){
+			float z = k==0 ? minCoords[2] : maxCoords[2];
+			for(int j=0;j<2;j++){
+				float y = j==0 ? minCoords[1] : maxCoords[1];
+				for(int i=0;i<2;i++){
+					float x = i==0 ? minCoords[0] : maxCoords[0];
+					float[] tPt = new float[3];
+	
+					x*= res[0];
+					y*= res[1];
+					z*= res[2];
+					
+					lsMatrix.transform(x, y, z, tPt);
+					
+					for(int n=0;n<3;n++)
+						tPt[n]/= res[n];
+					
+					//Use only rigid transform as the spline registration
+					//is not commutative
+					
+					/*if(!doRigidOnly){
+						x = tPt[0];
+						y = tPt[1];
+						z = tPt[2];
+						tPt = invSpline.getCorrespondingPoint(x, y, z);
+					}*/
+					
+					for(int n=0;n<3;n++){
+	    				if(tPt[n] < minBox[n])
+	    					minBox[n] = tPt[n];
+	    				if(tPt[n] > maxBox[n])
+	    					maxBox[n] = tPt[n];
+	    			}
+					
+				}
+			}
+			
+		}
+		
+		for(int i=0;i<3;i++){
+			minBox[i] = (float) Math.floor(minBox[i]);
+			maxBox[i] = (float) Math.ceil(maxBox[i]);
+		}
+		
+		lsMatrix.Inverse();
+		
+		//We only really care about the Z dimension of the new bounding
+		//box based on what we know. Search the extra Z space to find the
+		//filaments in the same way as the original algorithm
+		
+		//Pad the box since the thin plate spline is not done, so just 
+		//make sure we aren't excluding any points (within reason)
+		
+		int[] ext = neuronImage.getExtents();
+		for(float z = 512; z < maxBox[2] + 20; z+=samplingRate){
+			if(outputTextArea != null && (z-512) % 10 < 1) {
+				float prog = 100 * (z - 512) / (maxBox[2] + 20 - 512);
+	        	outputTextArea.append(prog + "% complete\n");
+	    	}
+			for(float y = 0; y < 512; y+=samplingRate){
+				for(float x = 0; x < 512; x+=samplingRate){
+					
+					float xm = x;
+					float ym = y;
+					float zm = z;
+					float[] tPt = new float[3];
+					
+					if(!doRigidOnly){
+						tPt = spline.getCorrespondingPoint(xm,  ym,  zm);
+						xm = tPt[0];
+						ym = tPt[1];
+						zm = tPt[2];
+						
+					}
+					
+					xm = x * res[0];
+					ym = y * res[1];
+					zm = z * res[2];
+					
+					lsMatrix.transform(xm, ym, zm, tPt);
+					
+					tPt[0]/= res[0];
+					tPt[1]/= res[1];
+					tPt[2]/= res[2];
+					
+					if(tPt[0] < 0 || tPt[0] >= ext[0] - 0.5 ||
+							tPt[1] < 0 || tPt[1] >= ext[1] - 0.5 ||
+							tPt[2] < 0 || tPt[2] >= ext[2] - 0.5)
+						continue;
+					
+					if (cityBlockImage.getByte(Math.round(tPt[0]), Math.round(tPt[1]),Math.round(tPt[2])) != 100) {	
+	                    ArrayList<float[]> al;
+	                    ArrayList<float[]> al_new;
+	                    float[] coords;
+	                    final int allFilamentsSize = allFilamentCoords.size();
+	                    int alSize;
+	                    for (int i = 0; i < allFilamentsSize; i++) {
+	                        al = allFilamentCoords.get(i);
+	                        alSize = al.size();
+	                        for (int k = 0; k < alSize; k++) {
+	                            coords = al.get(k);
+	                            float diffX = Math.abs(tPt[0] - coords[0]);
+	                            float diffY = Math.abs(tPt[1] - coords[1]);
+	                            float diffZ = Math.abs(tPt[2] - coords[2]);
+	                            
+	                            //5/30/2011
+	                           /* diffX = Math.abs(Math.round(tPt2[0]) - coords[0]);
+	                            diffY = Math.abs(Math.round(tPt2[1]) - coords[1]);
+	                            diffZ = Math.abs(Math.round(tPt2[2]) - coords[2]);*/
+	
+	
+	                            float diffTotal = (diffX * diffX) + (diffY * diffY) + (diffZ * diffZ);
+	
+	                            if (diffTotal < toleranceSq) {
+	                                final float[] nCoords = {x, y, z, diffTotal};
+	
+	                                al_new = allFilamentCoords_newCoords.get(i);
+	                                final float[] ft = al_new.get(k);
+	                                if (ft == null || (ft != null && ft[3] > diffTotal)) {
+	                                    al_new.set(k, nCoords);
+	                                }
+	
+	                                // coords[3] = 1;
+	                            }
+	                        }
+	
+	                    }
+	                }
+				}
+			}
+		}
+			
+		lsMatrix.Inverse();
+	}
+
+
+	/*private void populateNewSurfacePoints2(){
+    	float[] res = neuronImage.getResolutions(0);
+
+    	for(int i=0;i<allFilamentCoords.size();i++){
+    		ArrayList<float[]> a = allFilamentCoords.get(i);
+    		for(int j=0;j<a.size();j++){
+    			float[] f = a.get(j);
+    			float[] tPt = new float[3];
+    			float x = f[0];
+    			float y = f[1];
+    			float z = f[2];
+    			
+    			x*= res[0];
+				y*= res[1];
+				z*= res[2];
+				
+				lsMatrix.transform(x, y, z, tPt);
+				for(int k=0;k<3;k++)
+					tPt[k]/= res[k];
+				
+    			if(!doRigidOnly){
+    				x = tPt[0];
+    				y = tPt[1];
+    				z = tPt[2];
+    				tPt = invSpline.getCorrespondingPoint(x, y, z);
+    			}
+				
+				allFilamentCoords_newCoords.get(i).set(j, tPt);
+    			
+    		}
+    	}
+    }
+    
+	private void transformR7Point(){
+    	r7_27Coord_transformed = new float[4];
+    	float x = r7_27Coord[0];
+    	float y = r7_27Coord[1];
+    	float z = r7_27Coord[2];
+    	
+    	float[] res = neuronImage.getResolutions(0);
+    	float[] tPt = new float[3];
+    	
+    	x*= res[0];
+		y*= res[1];
+		z*= res[2];
+		
+		lsMatrix.transform(x, y, z, tPt);
+		for(int k=0;k<3;k++)
+			tPt[k]/= res[k];
+		
+		if(!doRigidOnly){
+			x = tPt[0];
+			y = tPt[1];
+			z = tPt[2];
+			tPt = invSpline.getCorrespondingPoint(x, y, z);
+		}
+		
+		r7_27Coord_transformed[0] = tPt[0]*res[0];
+		r7_27Coord_transformed[1] = tPt[1]*res[1];
+		r7_27Coord_transformed[2] = tPt[2]*res[2];
+		
+		r7CenterPointFound = true;
+    	
+    }
+    
+    private void populateNewPoints(){
+
+    	float[] res = neuronImage.getResolutions(0);
+    	int[] ext = neuronImage.getExtents();
+
+    	for (int i = 0; i < inputPointsList.size(); i++) {
+    		final float[] f = inputPointsList.get(i);
+    		if (f != null) {
+    			float[] tPt = new float[3];
+    			float x = f[0];
+    			float y = f[1];
+    			float z = f[2];
+    			
+    			x*= res[0];
+				y*= res[1];
+				z*= res[2];
+				
+				lsMatrix.transform(x, y, z, tPt);
+				for(int k=0;k<3;k++)
+					tPt[k]/= res[k];
+				
+    			if(!doRigidOnly){
+    				x = tPt[0];
+    				y = tPt[1];
+    				z = tPt[2];
+    				tPt = invSpline.getCorrespondingPoint(x, y, z);
+    			}
+    			if(tPt[0] < 0 || tPt[0] >= ext[0] ||
+						tPt[1] < 0 || tPt[1] >= ext[1] ||
+						tPt[2] < 0 || tPt[2] >= ext[2] )
+    				continue;
+    			
+    			transformedPointsList.set(i, tPt);
+
+    		}
+
+    	}
+    }
+    
+    private void testRegistration(){
+    	
+    	String dir = oldSurfaceFile.getParent();
+    	File regTest = new File(dir + File.separator + "regTest.txt");
+    	float[] res = neuronImage.getResolutions(0);
+    	try {
+			FileWriter fw = new FileWriter(regTest);
+			
+			for(ArrayList<float[]> a : allFilamentCoords){
+				for(float[] f : a){
+					if (f != null) {
+						float[] tPt = new float[3];
+		    			float x = f[0];
+		    			float y = f[1];
+		    			float z = f[2];
+		    			
+		    			fw.append(x + "\t" + y + "\t" + z + "\t\t");
+		    			
+		    			x*= res[0];
+						y*= res[1];
+						z*= res[2];
+						
+						lsMatrix.transform(x, y, z, tPt);
+						for(int k=0;k<3;k++)
+							tPt[k]/= res[k];
+						
+		    			if(!doRigidOnly){
+		    				x = tPt[0];
+		    				y = tPt[1];
+		    				z = tPt[2];
+		    				tPt = invSpline.getCorrespondingPoint(x, y, z);
+		    			}
+		    			
+		    			//fw.append(x + "\t" + y + "\t" + z + "\t\t");
+		    			
+		    			if(!doRigidOnly){
+		    				x = tPt[0];
+		    				y = tPt[1];
+		    				z = tPt[2];
+		    				tPt = spline.getCorrespondingPoint(x, y, z);
+		    			}
+		    			
+		    			for(int k=0;k<3;k++)
+							tPt[k]*= res[k];
+						
+		    			x = tPt[0];
+	    				y = tPt[1];
+	    				z = tPt[2];
+		    			
+						lsMatrix.Inverse();
+						lsMatrix.transform(x, y, z, tPt);
+						x = tPt[0]/res[0];
+	    				y = tPt[1]/res[1];
+	    				z = tPt[2]/res[2];
+	    				
+	    				fw.append(x + "\t" + y + "\t" + z + "\r\n");
+
+		    		}
+				}
+			}
+			fw.close();
+			lsMatrix.Inverse();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    	
+    }
+    
+    private void testFilamentPoints(){
+    	
+    	try {
+    		float[] res = neuronImage.getResolutions(0);
+    		int[] ext = neuronImage.getExtents();
+			FileWriter w = new FileWriter(new File(neuronImage.getImageDirectory() + File.separator + "tranPts.txt"));
+			for(int i=0;i<allFilamentCoords.size();i++){
+	    		ArrayList<float[]> a = allFilamentCoords.get(i);
+	    		w.append("Filament " + i + "\r\n");
+	    		for(float[] f : a){
+	    			if(f == null)
+	    				continue;
+	    			float[] tPt = new float[3];
+	    			f[0] *= res[0];
+	    			f[1] *= res[1];
+	    			f[2] *= res[2];
+	    			lsMatrix.transform(f, tPt);
+	    			tPt[0] /= res[0];
+	    			tPt[1] /= res[1];
+	    			tPt[2] /= res[2];
+	    			//if(tPt[0] < ext[0] && tPt[1] < ext[1] && tPt[2] < ext[2])
+	    				w.append(String.format("%f %f %f \r\n", (double)tPt[0], (double)tPt[1], (double)tPt[2]));
+	    		}
+			}
+			w.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    	
+    	
+    }*/
     
     
     /**
@@ -6129,10 +6515,10 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 			int allFilamentsSize = filamentCoords.size();
 			int alMatchSize;
 			ArrayList<float[]> al;
-			ArrayList<float[]> al2;
+			//ArrayList<float[]> al2;
 			ArrayList<float[]> alMatch;
 			float[] coords = new float[6];
-			float[] coords2;
+			//float[] coords2;
 			float[] coordsMatch = new float[6];
 			al = filamentCoords.get(0);
 
@@ -6186,7 +6572,6 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 			
 			for(int i=1;i<allFilamentsSize;i++) {
 				
-				
 				 al = filamentCoords.get(i);
 				 coords = al.get(0);
 				
@@ -6232,7 +6617,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 				 if(coords[4] == 0) {
 					 //this means this block is not connected!
 					 String coordsString = coords[0] + "," + coords[1] + "," + coords[2];
-					 System.out.println("Standardized IV file is not properly connecte: the block of points starting with " + coordsString + " is not connected to anything");
+					 System.out.println("Standardized IV file is not properly connected: the block of points starting with " + coordsString + " in filament " + i + " is not connected to anything");
 					 
 					 break;
 					 
@@ -7253,7 +7638,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
      * This is done by convolving an increasing sized laplacian kernel to the center point.
      * The max value returned reflects the radius size
      */
-    private void determineRadiiAutomatically_swc(ArrayList <ArrayList<float[]>> newFilamentCoords) {
+    @SuppressWarnings("unused")
+	private void determineRadiiAutomatically_swc(ArrayList <ArrayList<float[]>> newFilamentCoords) {
 		int newFilamentsSize = newFilamentCoords.size();
 		int alSize;
 		ArrayList<float[]> al;
@@ -7689,7 +8075,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		int highestZBlockIndex = 0;
 		float connectedTo = 0;  //This is 1-based!
 		 
-		for(int i=0,m=1;i<allFilamentsSize;i++,m++) {
+		for(int i=0;i<allFilamentsSize;i++) {
 			 al = filamentCoords.get(i);
 			 alSize = al.size();
 			 float c = 0;
@@ -7889,6 +8275,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 									continue;
 								}
 							}
+							
 							String[] splits = line.split("\\s+");
 							splits[0] = splits[0].trim();
 							splits[1] = splits[1].trim();
@@ -7908,7 +8295,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 							filamentCoords.add(coords);
 						}
 					}
-					allFilamentCoords_swc.add(filamentCoords);
+					if(!filamentCoords.isEmpty())
+						allFilamentCoords_swc.add(filamentCoords);
 				}
 				
 				
@@ -7929,6 +8317,22 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 			e.printStackTrace();
 			return false;
 		}
+		
+    	/*try {
+			FileWriter writer = new FileWriter(new File(dir + File.separator + "points.txt"));
+			for(ArrayList<float[]> a : allFilamentCoords_swc){
+				String label = String.valueOf(allFilamentCoords_swc.indexOf(a));
+				writer.append(label + "\r\n");
+				for(float[] f : a){
+					
+					String outWrite = String.valueOf(f[0]) + "\t" + String.valueOf(f[1]) + "\t" + String.valueOf(f[2]);
+					writer.append(outWrite + "\r\n");
+				}
+			}
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}*/
 		
 		return success;
 	}
@@ -8084,9 +8488,29 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
         // 0.0f for no smoothing, with smoothing interpolation is not exact
 
+        //ModelImage stanClone, resClone;
         try {
             spline = new AlgorithmTPSpline(xSource, ySource, zSource, xTar, yTar, zTar, 0.0f, standardColumnImage,
                     resultImage1, true);
+           /* stanClone = (ModelImage) standardColumnImage.clone();
+            resClone = (ModelImage) resultImage1.clone();
+            double[] xSourceC = new double[nPtsA];
+            double[] ySourceC = new double[nPtsA];
+            double[] zSourceC = new double[nPtsA];
+
+            double[] xTarC = new double[nPtsB];
+            double[] yTarC = new double[nPtsB];
+            double[] zTarC = new double[nPtsB];
+            
+            System.arraycopy(xSource, 0, xSourceC, 0, nPtsA);
+            System.arraycopy(ySource, 0, ySourceC, 0, nPtsA);
+            System.arraycopy(zSource, 0, zSourceC, 0, nPtsA);
+            
+            System.arraycopy(xTar, 0, xTarC, 0, nPtsB);
+            System.arraycopy(yTar, 0, yTarC, 0, nPtsB);
+            System.arraycopy(zTar, 0, zTarC, 0, nPtsB);
+            invSpline = new AlgorithmTPSpline(xTarC, yTarC, zTarC, xSourceC, ySourceC, zSourceC, 0.0f, resClone,
+                    stanClone, true);*/
         } catch (final OutOfMemoryError error) {
             spline = null;
             System.gc();
@@ -8096,6 +8520,10 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         }
 
         spline.run();
+        /*invSpline.run();
+        
+        stanClone.disposeLocal();
+        resClone.disposeLocal();*/
 
     }
 
@@ -8402,6 +8830,13 @@ System.out.println(nPtsB);
     	String neuronImageName = neuronImage.getImageFileName();
     	String finalImageName = neuronImageName.substring(0, neuronImageName.lastIndexOf(".")) + "_Standardized";
         // make LS MAtrix into inverse
+    	
+    	//testRegistration();
+    	
+    	populateNewSurfacePoints();
+    	//populateNewPoints();
+    	//transformR7Point();
+    	
         lsMatrix.Inverse();
 
         final int[] extents = {512, 512, 512};
@@ -8488,9 +8923,6 @@ System.out.println(nPtsB);
                     	
                     	lsMatrix.transform(xmm, ymm, zmm, tPt2);
                     }
-                    
-                    
-
 
                     tPt2[0] = tPt2[0] / finalImageRes[0];
                     tPt2[1] = tPt2[1] / finalImageRes[1];
@@ -8574,7 +9006,10 @@ System.out.println(nPtsB);
                             // Calculating new surface file points!!!!!
                             /*if (cityBlockImage.getByte((int) (tPt2[0] + 0.5f), (int) (tPt2[1] + 0.5f),
                                     (int) (tPt2[2] + 0.5f)) != 100) {*/
-                            	
+                            	 //5/30/2011
+                                       /* diffX = Math.abs(Math.round(tPt2[0]) - coords[0]);
+                                        diffY = Math.abs(Math.round(tPt2[1]) - coords[1]);
+                                        diffZ = Math.abs(Math.round(tPt2[2]) - coords[2]);*/
                             if (cityBlockImage.getByte(Math.round(tPt2[0]), Math.round(tPt2[1]),Math.round(tPt2[2])) != 100) {	
                                 ArrayList<float[]> al;
                                 ArrayList<float[]> al_new;
@@ -8590,12 +9025,6 @@ System.out.println(nPtsB);
                                         diffY = Math.abs(tPt2[1] - coords[1]);
                                         diffZ = Math.abs(tPt2[2] - coords[2]);
                                         
-                                        //5/30/2011
-                                       /* diffX = Math.abs(Math.round(tPt2[0]) - coords[0]);
-                                        diffY = Math.abs(Math.round(tPt2[1]) - coords[1]);
-                                        diffZ = Math.abs(Math.round(tPt2[2]) - coords[2]);*/
-
-
                                         diffTotal = (diffX * diffX) + (diffY * diffY) + (diffZ * diffZ);
 
                                         if (diffTotal < toleranceSq) {
@@ -8645,6 +9074,7 @@ System.out.println(nPtsB);
 
         }
 
+        
         
         if(outputTextArea != null) {
         	outputTextArea.append("\n");
@@ -8827,6 +9257,9 @@ System.out.println(nPtsB);
         if (flipZ) {
         	standardizedFilamentFileName = standardizedFilamentFileName + "_flipZ";
         }
+        
+        String txtName = standardizedFilamentFileName + ".txt";
+        
         standardizedFilamentFileName = standardizedFilamentFileName + ".iv";
         if(outputTextArea != null) {
         	outputTextArea.append("Saving new filament file as: \n");
@@ -8845,6 +9278,8 @@ System.out.println(nPtsB);
             final FileWriter fw = new FileWriter(newSurfaceFile);
             final BufferedWriter bw = new BufferedWriter(fw);
 
+            FileWriter txtWriter = new FileWriter(new File(filamentFileParentDir + File.separator + txtName));
+            
             String line;
 
             while ( (line = raFile.readLine()) != null) {
@@ -8889,6 +9324,7 @@ System.out.println(nPtsB);
 
                                 bw.write(tPt3[0] + " " + tPt3[1] + " " + tPt3[2] + ",");
                                 bw.newLine();
+                                txtWriter.append(tPt3[0] + "\t" + tPt3[1] + "\t" + tPt3[2] + "\r\n");
                             }else {
                             	System.out.println("index is " + index);
                             	System.out.println(k + " is null");
@@ -8921,6 +9357,7 @@ System.out.println(nPtsB);
             raFile.close();
             bw.close();
             fw.close();
+            txtWriter.close();
         } catch (final Exception e) {
             e.printStackTrace();
             return false;
