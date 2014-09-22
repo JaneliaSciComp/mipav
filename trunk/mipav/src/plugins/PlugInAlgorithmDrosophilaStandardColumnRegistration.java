@@ -304,10 +304,14 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     	//FOV
     	//6.5.1 (9/16/14) just fixes problem where the registration was done
     	//in the wrong order
+    	//6.5.2 fixed the registration to remove the inverse spline, since 
+    	//TPS splines are not commutative
+    	//6.5.3 fixed major bug in filament points outside of FOV being
+    	//transformed incorrectly
     	if(outputTextArea != null) {
-    		outputTextArea.append("Running Algorithm v6.5.2" + "\n");
+    		outputTextArea.append("Running Algorithm v6.5.3" + "\n");
     	}else {
-    		System.out.println("Running Algorithm v6.5.2");
+    		System.out.println("Running Algorithm v6.5.3");
     	}
     	
         //outputTextArea.append("Standard Column : RV/LD (in to out); RD/LV(out to in)" + "\n");
@@ -6124,9 +6128,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		//make sure we aren't excluding any points (within reason)
 		
 		int[] ext = neuronImage.getExtents();
-		for(float z = 512; z < maxBox[2] + 20; z+=samplingRate){
+		for(float z = 512; z < maxBox[2] + 30; z+=samplingRate){
 			if(outputTextArea != null && (z-512) % 10 < 1) {
-				float prog = 100 * (z - 512) / (maxBox[2] + 20 - 512);
+				float prog = 100 * (z - 512) / (maxBox[2] + 30 - 512);
 	        	outputTextArea.append(prog + "% complete\n");
 	    	}
 			for(float y = 0; y < 512; y+=samplingRate){
@@ -6145,9 +6149,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 						
 					}
 					
-					xm = x * res[0];
-					ym = y * res[1];
-					zm = z * res[2];
+					xm = xm * res[0];
+					ym = ym * res[1];
+					zm = zm * res[2];
 					
 					lsMatrix.transform(xm, ym, zm, tPt);
 					
@@ -6668,6 +6672,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 						 //System.out.println("********" + al2.size());
 						 coords[4] = al2.get(al2.size()-1)[4] + 1;
 						 al.set(k, coords);
+						 
 						 //counter = al2.size() + 1;
 						 //counter = al2.size() +1;
 						 
