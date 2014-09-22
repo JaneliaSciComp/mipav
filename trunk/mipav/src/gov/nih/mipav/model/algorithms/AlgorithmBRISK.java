@@ -2096,7 +2096,7 @@ return ret_val;
             algoTrans.setUpdateOriginFlag(doUpdateOrigin);
             algoTrans.setSuppressProgressBar(true);
             algoTrans.run();
-            image = algoTrans. getTransformedImage();
+            image = algoTrans.getTransformedImage();
             algoTrans.disposeLocal();
             algoTrans = null;
     		scores = new int[yDim][xDim];
@@ -2146,8 +2146,8 @@ return ret_val;
          	final int num=keypoints.size();
 
          	for(int i=0; i<num; i++){
-         		int x = (int)Math.round(keypoints.get(i).x);
-         		int y = (int)Math.round(keypoints.get(i).y);
+         		int x = keypoints.get(i).x;
+         		int y = keypoints.get(i).y;
          		final int offs= x+ y*xDim;
          		scores[y][x]=oastDetector.getCornerScore(intBuffer, offs);
          	}
