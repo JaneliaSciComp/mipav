@@ -1279,6 +1279,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("ENTROPIC")) {
             new JDialogEntropicEdgeDetection(this, getActiveImage());
         } else if (command.equals("BRISK")) {
+        	final ModelImage mi = getActiveImage();
+        	if (mi.getMax() > 255) {
+        		MipavUtil.displayError("BRISK assumes a maximum value of 255");
+        		return;
+        	}
         	new JDialogBRISK(this, getActiveImage());
         } else if (command.equals("CONVERGENCE")) {
             new JDialogConvergenceField(this, getActiveImage());
