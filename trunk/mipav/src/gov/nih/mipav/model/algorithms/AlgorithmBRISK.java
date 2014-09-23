@@ -417,7 +417,8 @@ public class AlgorithmBRISK extends AlgorithmBase {
             		srcVOIs.add(newSrcVOI);
             		destVOIs.add(newDestVOI);
             	}  // if ((closestSrcDescriptorIndex[j] >= 0) && (closestSrcDescriptorHammingDistance[j] <= HammingDistanceThreshold)) 
-            } // for (j = 0; j < destDescriptors.length; j++)
+            } // for (i = 0, j = 0; j < destDescriptors.length; j++)
+            System.out.println("Number of matching key points = " + i);
             srcImage.setVOIs(srcVOIs);
             srcImage.notifyImageDisplayListeners();
             destImage.setVOIs(destVOIs);
