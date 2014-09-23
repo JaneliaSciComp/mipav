@@ -100,7 +100,7 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
 	 
 	 private JCheckBox scaleCheckBox;
 	 
-	 private JComboBox comboBoxImage;
+	 private JComboBox<String> comboBoxImage;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -410,8 +410,8 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
      *
      * @return  Newly created combo box.
      */
-    private JComboBox buildImgComboBox(ModelImage image) {
-        JComboBox comboBox = new JComboBox();
+    private JComboBox<String> buildImgComboBox(ModelImage image) {
+        JComboBox<String> comboBox = new JComboBox<String>();
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
 
