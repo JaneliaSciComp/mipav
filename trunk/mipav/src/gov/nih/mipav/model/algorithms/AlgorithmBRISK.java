@@ -3,11 +3,9 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
 
 import java.io.*;
 import java.util.BitSet;
-import java.util.Iterator;
 import java.util.Vector;
 
 import javax.vecmath.Point2d;
@@ -938,7 +936,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
 	            	}
 	            } // else
 	        } // if (true /* kp.getAngle() == -1) */)
-	        else { // Should never enter here after an if (true)
+	        /*else { // Should never enter here after an if (true)
 	        	// Figure out the direction
 	        	if (!rotationInvariant) {
 	        		theta = 0;
@@ -952,7 +950,7 @@ public class AlgorithmBRISK extends AlgorithmBase {
 	        			theta -= n_rot;
 	        		}
 	        	}
-	        } // else
+	        } // else*/
 	        // Now also extract the stuff for the actual direction:
 	        // Let us compute the smoothed values
 	        shifter = 0;
@@ -994,14 +992,6 @@ public class AlgorithmBRISK extends AlgorithmBase {
 	    values = null;
 	    return descriptors;
     } // private void computeImp1
-    
-    private int descriptorSize() {
-    	return strings;
-    }
-    
-    private int descriptorType() {
-    	return ModelStorageBase.BYTE;
-    }
     
     public void detectImpl(ModelImage image, Vector<KeyPoint> keypoints, BitSet mask) {
     	int xDim = image.getExtents()[0];
@@ -1904,12 +1894,6 @@ return ret_val;
     		
     	}
     	
-    	public BriskPatternPoint(double x, double y, double sigma) {
-    		this.x = x;
-    		this.y = y;
-    		this.sigma = sigma;
-    	}
-    	
     	public void setX(double x) {
     		this.x = x;
     	}
@@ -1943,11 +1927,6 @@ return ret_val;
     		
     	}
     	
-    	public BriskShortPair(int i, int j) {
-    		this.i = i;
-    		this.j = j;
-    	}
-    	
     	public void setI(int i) {
     		this.i = i;
     	}
@@ -1973,13 +1952,6 @@ return ret_val;
     	
     	public BriskLongPair() {
     		
-    	}
-    	
-    	public BriskLongPair(int i, int j, int weighted_dx, int weighted_dy) {
-    		this.i = i;
-    		this.j = j;
-    		this.weighted_dx = weighted_dx;
-    		this.weighted_dy = weighted_dy;
     	}
     	
     	public void setI(int i) {
@@ -2028,20 +2000,14 @@ return ret_val;
     	private double angle = -1.0;
     	// The response by which the most strong keypoints have been selected.
     	// Can be used for further sorting or subsampling
-    	private double response = 0.0;
+    	@SuppressWarnings("unused")
+		private double response = 0.0;
     	// Octave (pyramid layer) from which the keypoint has been selected
-    	private int octave = 0;
+    	@SuppressWarnings("unused")
+		private int octave = 0;
     	// Object id that can be used to cluster keypoint by an object they belong to
-    	private int class_id = -1;
-    	
-    	public KeyPoint(Point2d pt, double size) {
-    		this.pt = pt;
-    		this.size = size;
-    		this.angle = -1.0;
-    		this.response = 0.0;
-    		this.octave = 0;
-    		this.class_id = -1;
-    	}
+    	@SuppressWarnings("unused")
+		private int class_id = -1;
     	
     	public KeyPoint(double x, double y, double size, double angle, double response, int octave) {
     		this.pt = new Point2d(x, y);
@@ -2154,10 +2120,6 @@ return ret_val;
     	
     	public int getYDim() {
     		return yDim;
-    	}
-    	
-    	public int[][] getScores() {
-    		return scores;
     	}
     	
     	 public void getAgastPoints(int threshold, Vector<Point2i> keypoints){
