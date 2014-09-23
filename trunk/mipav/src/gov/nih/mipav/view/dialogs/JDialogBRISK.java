@@ -447,7 +447,9 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
     	// assign destImage to image selected in comboBox
         String selectedName = (String) comboBoxImage.getSelectedItem();
 
-        destImage = ViewUserInterface.getReference().getRegisteredImageByName(selectedName);
+        if (selectedName != null) {
+            destImage = ViewUserInterface.getReference().getRegisteredImageByName(selectedName);
+        }
 
         if (wholeImage.isSelected()) {
             wholeImageFlag = true;
@@ -468,7 +470,7 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
         
         tmpStr = textHammingDistanceThreshold.getText();
 
-        if (testParameter(tmpStr, 30, 200)) {
+        if (testParameter(tmpStr, 0, 200)) {
             HammingDistanceThreshold = Integer.valueOf(tmpStr).intValue();
         } else {
             textHammingDistanceThreshold.requestFocus();
