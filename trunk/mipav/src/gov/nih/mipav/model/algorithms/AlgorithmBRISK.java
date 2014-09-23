@@ -258,8 +258,8 @@ public class AlgorithmBRISK extends AlgorithmBase {
     	int cnt32;
     	int HammingDistance;
     	int numSrcUsed[] = null;
-    	int closestDistance;
-    	int closestDestIndex;
+    	int closestDestDistance;
+    	int closestIndex;
     	VOI newSrcVOI;
     	VOI newDestVOI;
     	VOIVector srcVOIs = srcImage.getVOIs();
@@ -347,11 +347,11 @@ public class AlgorithmBRISK extends AlgorithmBase {
             System.out.println("destDescriptors[0].length = " + destDescriptors[0].length);
             closestSrcDescriptorIndex = new int[destDescriptors.length];
             closestSrcDescriptorHammingDistance = new int[destDescriptors.length];
+            numSrcUsed = new int[descriptors.length]; 
             for (j = 0; j < destDescriptors.length; j++) {
                 closestSrcDescriptorIndex[j] = -1;
                 // Maximum possible Hamming distance is 512 for every point distance
                 closestSrcDescriptorHammingDistance[j] = 513;
-                numSrcUsed = new int[descriptors.length];
                 for (k = 0; k < descriptors.length; k++) {
                 	HammingDistance = 0;
                     for (m = 0; m < 16; m++) {
@@ -383,19 +383,19 @@ public class AlgorithmBRISK extends AlgorithmBase {
             } // for (j = 0; j < destDescriptors.length; j++)
             for (k = 0; k < descriptors.length; k++) {
             	if (numSrcUsed[k] > 1) {
-            	    closestDistance = 513;
-            	    closestDestIndex = -1;
-            	    for (j = 0; j < descriptors.length; j++) {
-            	    	if (closestSrcDescriptorHammingDistance[j] < closestDistance) {
-            	    		closestDistance = closestSrcDescriptorHammingDistance[j];
-            	    		closestDestIndex = j;
+            	    closestDestDistance = 513;
+            	    closestIndex = -1;
+            	    for (j = 0; j < destDescriptors.length; j++) {
+            	    	if ((closestSrcDescriptorIndex[j] == k) && (closestSrcDescriptorHammingDistance[j] < closestDestDistance)) {
+            	    		closestDestDistance = closestSrcDescriptorHammingDistance[j];
+            	    		closestIndex = j;
             	    	}
-            	    } // for (j = 0; j < descriptors.length; j++)
-            	    for (j = 0; j < descriptors.length; j++) {
-            	    	if ((closestSrcDescriptorIndex[j] == k) && (j != closestDestIndex)) {
+            	    } // for (j = 0; j < destDescriptors.length; j++)
+            	    for (j = 0; j < destDescriptors.length; j++) {
+            	    	if ((closestSrcDescriptorIndex[j] == k) && (j != closestIndex)) {
             	    		closestSrcDescriptorIndex[j] = -1;
             	    	}
-            	    } // for (j = 0; j < descriptors.length; j++)
+            	    } // for (j = 0; j < destDescriptors.length; j++)
             	} // if (numSrcUsed[k] > 1)
             } // for (k = 0; k < descriptors.length; k++)
             for (i = 0, j = 0; j < destDescriptors.length; j++) {
