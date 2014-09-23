@@ -263,7 +263,11 @@ public class AlgorithmBRISK extends AlgorithmBase {
     	VOI newSrcVOI;
     	VOI newDestVOI;
     	VOIVector srcVOIs = srcImage.getVOIs();
-    	VOIVector destVOIs = destImage.getVOIs();
+    	VOIVector destVOIs = null;
+    	
+    	if (destImage != null) {
+    	    destVOIs = destImage.getVOIs();
+    	}
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -398,6 +402,20 @@ public class AlgorithmBRISK extends AlgorithmBase {
             	    } // for (j = 0; j < destDescriptors.length; j++)
             	} // if (numSrcUsed[k] > 1)
             } // for (k = 0; k < descriptors.length; k++)
+            int minHammingDistance = 513;
+            int maxHammingDistance = -1;
+            for (j = 0; j < destDescriptors.length; j++) {
+                if (closestSrcDescriptorIndex[j] >= 0) {
+                	if (closestSrcDescriptorHammingDistance[j] < minHammingDistance) {
+                		minHammingDistance = closestSrcDescriptorHammingDistance[j];
+                	}
+                	if (closestSrcDescriptorHammingDistance[j] > maxHammingDistance) {
+                		maxHammingDistance = closestSrcDescriptorHammingDistance[j];
+                	}
+                }
+            } // for (j = 0; j < destDescriptors.length; j++)
+            System.out.println("Minimum Hamming distance = " + minHammingDistance);
+            System.out.println("Maximum Hamming distance = " + maxHammingDistance);
             for (i = 0, j = 0; j < destDescriptors.length; j++) {
             	if ((closestSrcDescriptorIndex[j] >= 0) && (closestSrcDescriptorHammingDistance[j] <= HammingDistanceThreshold)) {
             		newSrcVOI = new VOI((short) i, String.valueOf(i), VOI.POINT, -1);
@@ -424,6 +442,19 @@ public class AlgorithmBRISK extends AlgorithmBase {
             destImage.setVOIs(destVOIs);
             destImage.notifyImageDisplayListeners();
         } // if (destImage != null)
+        else {
+        	for (k = 0; k < descriptors.length; k++) {
+        		newSrcVOI = new VOI((short) k, String.valueOf(k), VOI.POINT, -1);
+        		newSrcVOI.setFixed(true);	
+        		float srcX = (float)keypoints.get(k).getPt().x;
+        		float srcY = (float)keypoints.get(k).getPt().y;
+        		newSrcVOI.importPoint(new Vector3f(srcX, srcY, 0.0f));
+        		((VOIPoint) (newSrcVOI.getCurves().elementAt(0))).setLabel(String.valueOf(k));
+        		srcVOIs.add(newSrcVOI);
+        	} // for (k = 0; k < descriptors.length; k++)
+        	srcImage.setVOIs(srcVOIs);
+            srcImage.notifyImageDisplayListeners();
+        } // else destImage == null
         
         setCompleted(true);
         return;
