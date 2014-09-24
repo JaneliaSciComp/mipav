@@ -21,18 +21,25 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Vector;
 
 import javax.swing.JFileChooser;
 
+import WildMagic.LibFoundation.Containment.ContBox3f;
 import WildMagic.LibFoundation.Curves.NaturalSpline3;
 import WildMagic.LibFoundation.Distance.DistanceSegment3Segment3;
+import WildMagic.LibFoundation.Distance.DistanceVector3Plane3;
 import WildMagic.LibFoundation.Distance.DistanceVector3Segment3;
 import WildMagic.LibFoundation.Mathematics.Box3f;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Ellipsoid3f;
+import WildMagic.LibFoundation.Mathematics.Plane3f;
 import WildMagic.LibFoundation.Mathematics.Segment3f;
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Mathematics.Vector4f;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
@@ -157,17 +164,14 @@ public class LatticeModel {
 			if ( wormOrigin == null )
 			{
 				wormOrigin = new Vector3f( text.elementAt(0) );
-				updateLattice(true);
+//				updateLattice(true);
 			}
 			else
 			{
 				wormOrigin.copy( text.elementAt(0) );
-				updateLattice(false);
+//				updateLattice(false);
 			}
 		}
-		
-//    	pickedAnnotation = annotationVOIs.getCurves().size() - 1;
-//		pickedPoint = annotationVOIs.getCurves().elementAt(pickedAnnotation).elementAt(0);
     }
     
     private void addInsertionPoint( Vector3f startPt, Vector3f endPt, Vector3f maxPt )
@@ -373,7 +377,7 @@ public class LatticeModel {
         		if ( text.getText().equalsIgnoreCase( "nose" ) || text.getText().equalsIgnoreCase( "origin" ) )
         		{
         			wormOrigin = null;
-        			updateLattice(true);
+//        			updateLattice(true);
         		}
         	}    		
     	}
@@ -948,7 +952,7 @@ public class LatticeModel {
     		if ( text.getText().equalsIgnoreCase( "nose" ) || text.getText().equalsIgnoreCase( "origin" ) )
     		{
     			wormOrigin.copy( pickedPoint );
-    			updateLattice(false);
+//    			updateLattice(false);
     		}
     	}
     	
@@ -1382,18 +1386,20 @@ public class LatticeModel {
         	VOIText text = (VOIText) annotationVOIs.getCurves().elementAt(i);
         	Color c = text.getColor();
         	text.update( new ColorRGBA( c.getRed()/255.0f, c.getGreen()/255.0f, c.getBlue()/255.0f, 1f ));
+        	text.elementAt(1).copy( text.elementAt(0) );
+        	text.elementAt(1).add( 6, 0, 0 );
         	
 			if ( text.getText().equalsIgnoreCase( "nose" ) || text.getText().equalsIgnoreCase( "origin" ) )
 			{
 				if ( wormOrigin == null )
 				{
 					wormOrigin = new Vector3f( text.elementAt(0) );
-					updateLattice(true);
+//					updateLattice(true);
 				}
 				else
 				{
 					wormOrigin.copy( text.elementAt(0) );
-					updateLattice(false);
+//					updateLattice(false);
 				}
 			}
     	}
@@ -1527,7 +1533,7 @@ public class LatticeModel {
     	updateLinks();
     }
     
-    private ModelImage computeOriginToStraight( ModelImage originalImage, ModelImage straightToOrigin )
+    private ModelImage computeOriginToStraight( ModelImage originalImage, ModelImage model, ModelImage straightToOrigin )
     {
     	String imageName = originalImage.getImageName();
     	if ( imageName.contains("_clone") )
@@ -1544,9 +1550,7 @@ public class LatticeModel {
     	int dimX = straightToOrigin.getExtents().length > 0 ? straightToOrigin.getExtents()[0] : 1;
     	int dimY = straightToOrigin.getExtents().length > 1 ? straightToOrigin.getExtents()[1] : 1;
     	int dimZ = straightToOrigin.getExtents().length > 2 ? straightToOrigin.getExtents()[2] : 1;
-    	
-    	int[] outputExtents = originalImage.getExtents();
-    	
+    	    	
     	for ( int z = 0; z < dimZ; z++ )
     	{
     		for ( int y = 0; y < dimY; y++ )
@@ -1556,20 +1560,80 @@ public class LatticeModel {
     				float a = straightToOrigin.getFloatC(x, y, z, 0);
     				if ( a == 1 )
     				{
-    					int inputIndex = z * dimX * dimY + y * dimX + x;
-    					int outputX = Math.round(straightToOrigin.getFloat( (inputIndex * 4) + 1));
-    					int outputY = Math.round(straightToOrigin.getFloat( (inputIndex * 4) + 2));
-    					int outputZ = Math.round(straightToOrigin.getFloat( (inputIndex * 4) + 3));
+    					int outputX = Math.round(straightToOrigin.getFloatC(x, y, z, 1));
+    					int outputY = Math.round(straightToOrigin.getFloatC(x, y, z, 2));
+    					int outputZ = Math.round(straightToOrigin.getFloatC(x, y, z, 3));
 
-    					int outputIndex = outputZ * outputExtents[0] * outputExtents[1] + outputY * outputExtents[0] + outputX;
-    					originToStraight.set( (outputIndex * 4) + 0, 1);
-    					originToStraight.set( (outputIndex * 4) + 1, x);
-    					originToStraight.set( (outputIndex * 4) + 2, y);
-    					originToStraight.set( (outputIndex * 4) + 3, z);
+    					originToStraight.setC( outputX, outputY, outputZ, 0, 1);
+    					originToStraight.setC( outputX, outputY, outputZ, 1, x);
+    					originToStraight.setC( outputX, outputY, outputZ, 2, y);
+    					originToStraight.setC( outputX, outputY, outputZ, 3, z);
     				}
     			}
     		}
     	}
+    	
+    	
+    	dimX = model.getExtents().length > 0 ? model.getExtents()[0] : 1;
+    	dimY = model.getExtents().length > 1 ? model.getExtents()[1] : 1;
+    	dimZ = model.getExtents().length > 2 ? model.getExtents()[2] : 1;
+
+    	int missing1 = 0;
+    	int missing2 = 0;
+    	int modelCount = 0;
+    	for ( int z = 0; z < dimZ; z++ )
+    	{
+    		for ( int y = 0; y < dimY; y++ )
+    		{
+    			for ( int x = 0; x < dimX; x++ )
+    			{
+    				float a = originToStraight.getFloatC(x, y, z, 0);
+    				float m = model.getFloat(x,y,z);
+    				if ( m != 0 )
+    				{
+    					modelCount++;
+    				}
+    				if ( (a == 0) && (m != 0) )
+    				{
+    					missing1++;
+    					float r = 0, g = 0, b = 0;
+    					int count = 0;
+    					for ( int z1 = Math.max(0, z-1); z1 < Math.min(dimZ, z+1); z1++ )
+    					{
+    						for ( int y1 = Math.max(0, y-1); y1 < Math.min(dimY, y+1); y1++ )
+    						{
+    							for ( int x1 = Math.max(0, x-1); x1 < Math.min(dimX, x+1); x1++ )
+    							{
+    		    					if ( (originToStraight.getFloatC(x1, y1, z1, 0) != 0) && 
+    		    						 (Math.abs(model.getFloat(x1,y1,z1) - m) < SampleLimit) )
+    		    					{
+    		        					r += originToStraight.getFloatC(x1, y1, z1, 1);
+    		        					g += originToStraight.getFloatC(x1, y1, z1, 2);
+    		        					b += originToStraight.getFloatC(x1, y1, z1, 3);
+    		    						count++;
+    		    					}    								
+    							}
+    						}
+    					}
+    					if ( count != 0 )
+    					{
+    						originToStraight.setC(x, y, z, 0, 1);
+    						originToStraight.setC(x, y, z, 1, r/(float)count);
+    						originToStraight.setC(x, y, z, 2, g/(float)count);
+    						originToStraight.setC(x, y, z, 3, b/(float)count);
+    					}
+    					else
+    					{
+//        					System.err.println( "computeO2S " + m );    
+        					missing2++;
+    					}
+    				}
+    			}
+    		}
+    	}
+//    	System.err.println( modelCount + " " + missing1 + " " + missing2 );
+//    	System.err.println( missing1/(float)modelCount + " " + missing2/(float)modelCount );
+    	
     	return originToStraight;
     }
     
@@ -1990,14 +2054,14 @@ public class LatticeModel {
 		leftExtended = new VOIContour(false);
 		rightExtended = new VOIContour(false);
 
-		if ( wormOrigin != null )
-		{
-			center.add(new Vector3f(wormOrigin) );
-			Vector3f margin = Vector3f.sub( left.elementAt(0), right.elementAt(0) );
-			margin.normalize();
-			leftExtended.add( Vector3f.add( wormOrigin, margin ) );
-			rightExtended.add( Vector3f.sub( wormOrigin, margin ) );
-		}
+//		if ( wormOrigin != null )
+//		{
+//			center.add(new Vector3f(wormOrigin) );
+//			Vector3f margin = Vector3f.sub( left.elementAt(0), right.elementAt(0) );
+//			margin.normalize();
+//			leftExtended.add( Vector3f.add( wormOrigin, margin ) );
+//			rightExtended.add( Vector3f.sub( wormOrigin, margin ) );
+//		}
     	
 		for ( int i = 0; i < left.size(); i++ )
 		{
@@ -2191,7 +2255,32 @@ public class LatticeModel {
 		}
     }
 
-
+    private boolean checkAnnotations( ModelImage model )
+    {
+    	if ( annotationVOIs == null )
+    	{
+    		return true;
+    	}
+    	if ( annotationVOIs.getCurves().size() == 0 )
+    	{
+    		return true;
+    	}
+    	boolean outsideFound = false;
+    	for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ )
+    	{
+        	VOIText text = (VOIText) annotationVOIs.getCurves().elementAt(i);
+        	Vector3f position = text.elementAt(0);
+    		float value = model.getFloatTriLinearBounds( position.X, position.Y, position.Z );
+//    		System.err.println( text.getText() + " " + position + "  " + value );
+    		if ( value == 0 )
+    		{
+    			outsideFound = true;
+    		}
+    	}
+    	return !outsideFound;
+    }
+    
+    
     private void generateMasks( ModelImage imageA, ModelImage imageB, VOI samplingPlanes, 
     		Vector<Ellipsoid3f> ellipseBounds, Vector<Float> diameters, int diameter, boolean straighten, boolean displayResult  )
     {
@@ -2299,27 +2388,32 @@ public class LatticeModel {
 //			growEdges( model, edgesY );
 //		}
 
-    	for ( int d = 0; d < 15; d++ )
+    	int growStep = 0;
+    	while ( (growStep < 20) && (!checkAnnotations(model) || (growStep < 15) ) )
     	{		
-    		growEdges( model, d );
-    		if ( !straighten )
-    		{
-    			if ( d == 14 )
-    			{
-    				for ( int i = 0; i < growContours.getCurves().size(); i += 30 )
-    				{
-    					VOIContour contour = (VOIContour) growContours.getCurves().elementAt(i).clone();
-    					contour.trimPoints(0.5, true);
-    					displayInterpolatedContours.getCurves().add(contour);
-    					contour.update( new ColorRGBA(0,1,0,1));
-    					contour.setVolumeDisplayRange(minRange);
-    				}
-    			}
-    		}
+    		growEdges( model, growStep++ );
+//    		growEdges( model, resultExtents, growStep++ );
     	}
+//    	System.err.println( "generateMasks " + growStep );
+		if ( !straighten )
+		{
+			for ( int i = 0; i < growContours.getCurves().size(); i += 30 )
+			{
+				VOIContour contour = (VOIContour) growContours.getCurves().elementAt(i).clone();
+				contour.trimPoints(0.5, true);
+				displayInterpolatedContours.getCurves().add(contour);
+				contour.update( new ColorRGBA(0,1,0,1));
+				contour.setVolumeDisplayRange(minRange);
+			}
+		}
 		
 //		model.calcMinMax();
-//		new ViewJFrameImage((ModelImage)model.clone());
+//		model.registerVOI( (VOI)annotationVOIs.clone() );
+//		new ViewJFrameImage((ModelImage)model.clone());		
+//		modelToStraight( imageA, model, resultExtents, imageName, true, displayResult, true );
+		
+		
+		
 		if ( !straighten )
 		{
 			imageA.registerVOI(displayInterpolatedContours);	
@@ -2359,6 +2453,107 @@ public class LatticeModel {
 		model = null;
     }
 
+    
+//    private void growEdges2( ModelImage model, int[] resultExtents, int step )
+//    {
+//    	int dimX = model.getExtents().length > 0 ? model.getExtents()[0] : 1;
+//    	int dimY = model.getExtents().length > 1 ? model.getExtents()[1] : 1;
+//    	int dimZ = model.getExtents().length > 2 ? model.getExtents()[2] : 1;    	
+//
+//    	if ( step == 0 )
+//    	{
+//    		if ( growContours != null )
+//    		{
+//    			growContours.dispose();
+//    			growContours = null;
+//    		}
+//        	short sID = (short)(imageA.getVOIs().getUniqueID());
+//    		growContours = new VOI(sID, "growContours");
+//
+//    		for( int i = 0; i < samplingPlanes.getCurves().size(); i++ )
+//    		{
+////    			float diameterInterp = samplingDiameters.elementAt(i);
+//    			VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i);
+//    	        Vector3f[] corners = new Vector3f[4];
+//    	        for ( int j = 0; j < 4; j++ )
+//    	        {
+//    	        	corners[j] = kBox.elementAt(j);
+//    	        }
+//    	        growContours.getCurves().add( writeDiagonal( model, 0, i, resultExtents, corners ) );
+//    		}
+//    	}
+//    	
+//
+//		for ( int i = 0; i < growContours.getCurves().size(); i++ )
+//		{
+//			int value = i+1;
+//			VOIContour ellipse = (VOIContour) growContours.getCurves().elementAt(i);
+//			int ellipseSize = ellipse.size();
+//			float currentValue;
+//			int x, y, z;
+//			for ( int j = 0; j < ellipseSize; j++ )
+//			{
+//				Vector3f pt = ellipse.remove(0);
+//				
+//				x = (int) (pt.X - 1);
+//				y = (int) pt.Y;
+//				z = (int) pt.Z;    						
+//				currentValue = model.getFloat(x, y, z);
+//				if ( currentValue == 0 )
+//				{
+//					model.set(x, y, z, value );
+//					ellipse.add( new Vector3f(x, y, z) );
+//				}				
+//				x = (int) (pt.X + 1);
+//				y = (int) pt.Y;
+//				z = (int) pt.Z;    						
+//				currentValue = model.getFloat(x, y, z);
+//				if ( currentValue == 0 )
+//				{
+//					model.set(x, y, z, value );
+//					ellipse.add( new Vector3f(x, y, z) );
+//				}
+//
+//				x = (int) pt.X;
+//				y = (int) (pt.Y - 1);
+//				z = (int) pt.Z;    						
+//				currentValue = model.getFloat(x, y, z);
+//				if ( currentValue == 0 )
+//				{
+//					model.set(x, y, z, value );
+//					ellipse.add( new Vector3f(x, y, z) );
+//				}
+//				x = (int) pt.X;
+//				y = (int) (pt.Y + 1);
+//				z = (int) pt.Z;    						
+//				currentValue = model.getFloat(x, y, z);
+//				if ( currentValue == 0 )
+//				{
+//					model.set(x, y, z, value );
+//					ellipse.add( new Vector3f(x, y, z) );
+//				}
+//
+//				x = (int) pt.X;
+//				y = (int) pt.Y;
+//				z = (int) (pt.Z - 1);    						
+//				currentValue = model.getFloat(x, y, z);
+//				if ( currentValue == 0 )
+//				{
+//					model.set(x, y, z, value );
+//					ellipse.add( new Vector3f(x, y, z) );
+//				}
+//				x = (int) pt.X;
+//				y = (int) pt.Y;
+//				z = (int) (pt.Z + 1);   					
+//				currentValue = model.getFloat(x, y, z);
+//				if ( currentValue == 0 )
+//				{
+//					model.set(x, y, z, value );
+//					ellipse.add( new Vector3f(x, y, z) );
+//				}
+//			}
+//		}
+//    }
     
     private void growEdges( ModelImage model, int step )
     {
@@ -2714,13 +2909,22 @@ public class LatticeModel {
         VOI transformedAnnotations = null;
         try {
         	Vector3f transformedOrigin = new Vector3f();
-        	if ( outputDim != null )
+        	if ( (originToStraight != null) && (wormOrigin != null) )
         	{
-				int outputX = outputDim.length > 0 ? outputDim[0]/2 : 0;
-				int outputY = outputDim.length > 1 ? outputDim[1]/2 : 0;
-				int outputZ = 0;
+            	int dimX = originToStraight.getExtents().length > 0 ? originToStraight.getExtents()[0] : 1;
+            	int dimY = originToStraight.getExtents().length > 1 ? originToStraight.getExtents()[1] : 1;
+				int inputIndex = (int) (wormOrigin.Z * dimX * dimY + wormOrigin.Y * dimX + wormOrigin.X);
 
+				int outputA = Math.round(originToStraight.getFloat( (inputIndex * 4) + 0));
+				int outputX = Math.round(originToStraight.getFloat( (inputIndex * 4) + 1));
+				int outputY = Math.round(originToStraight.getFloat( (inputIndex * 4) + 2));
+				int outputZ = Math.round(originToStraight.getFloat( (inputIndex * 4) + 3));
+				
         		transformedOrigin.set(outputX, outputY, outputZ);
+        		if ( outputA == 0 )
+        		{
+        			System.err.println( wormOrigin + "      " + transformedOrigin );
+        		}
         	}
         	if ( originToStraight != null )
         	{
@@ -2744,20 +2948,25 @@ public class LatticeModel {
 					int outputX = Math.round(originToStraight.getFloat( (inputIndex * 4) + 1));
 					int outputY = Math.round(originToStraight.getFloat( (inputIndex * 4) + 2));
 					int outputZ = Math.round(originToStraight.getFloat( (inputIndex * 4) + 3));
-					
+
+	        		if ( outputA == 0 )
+	        		{
+	        			System.err.println( text.getText() + " " + position + "      " + outputX + " " + outputY + " " + outputZ );
+	        		}
 					position.set(outputX, outputY, outputZ);
 					
-		    		if ( text.getText().equalsIgnoreCase( "nose" ) || text.getText().equalsIgnoreCase( "origin" ) )
-		    		{
-		    			position.copy(transformedOrigin);
-		    		}
+//		    		if ( text.getText().equalsIgnoreCase( "nose" ) || text.getText().equalsIgnoreCase( "origin" ) )
+//		    		{
+//		    			position.copy(transformedOrigin);
+//		    		}
 		    		
 //		    		System.err.println( outputA + "     " + position );
 
 		    		transformedAnnotations.getCurves().elementAt(i).elementAt(0).copy( position );
 		    		transformedAnnotations.getCurves().elementAt(i).elementAt(1).set( position.X + 5 , position.Y, position.Z );
             	}
-        		bw.write(text.getText() + "," + position.X + "," + position.Y + "," + position.Z + "\n");
+        		bw.write(text.getText() + "," + (position.X - transformedOrigin.X) + "," + 
+        				(position.Y - transformedOrigin.Y) + "," + (position.Z - transformedOrigin.Z) + "\n");
         	}
             bw.newLine();
         	bw.close();
@@ -3013,8 +3222,13 @@ public class LatticeModel {
     	}
 
 		int colorFactor = image.isColorImage() ? 4 : 1;
-		float[][] values = new float[resultExtents[2]][resultExtents[0] * resultExtents[1] * colorFactor]; 
-		float[][] dataOrigin = null;
+		float[] values = new float[resultExtents[0] * resultExtents[1] * colorFactor]; 
+//		float[] valuesM = new float[resultExtents[0] * resultExtents[1] * colorFactor]; 
+//		float[] valuesP = new float[resultExtents[0] * resultExtents[1] * colorFactor]; 
+
+		float[] dataOrigin = null;
+//		float[] dataOriginM = null;
+//		float[] dataOriginP = null;
 		
 
 		ModelImage resultImage = new ModelImage(image.getType(), resultExtents, imageName + "_straight.xml");
@@ -3025,7 +3239,9 @@ public class LatticeModel {
 		
 		if ( saveStats )
 		{
-			dataOrigin = new float[resultExtents[2]][resultExtents[0] * resultExtents[1] * 4]; 
+			dataOrigin = new float[resultExtents[0] * resultExtents[1] * 4]; 
+//			dataOriginM = new float[resultExtents[0] * resultExtents[1] * 4]; 
+//			dataOriginP = new float[resultExtents[0] * resultExtents[1] * 4]; 
 			straightToOrigin =new ModelImage( ModelStorageBase.ARGB_FLOAT, resultExtents, imageName + "_toOriginal.xml");
 			JDialogBase.updateFileInfo( image, straightToOrigin );
 			straightToOrigin.setResolutions( new float[]{1,1,1});
@@ -3045,18 +3261,60 @@ public class LatticeModel {
 	        	corners[j] = kBox.elementAt(j);
 	        }
 			try {
-				if ( dataOrigin == null )
-				{
-					writeDiagonal( image, model, overlap, 0, i, resultExtents, corners, values[i], null);
-				}
-				else
-				{
-					writeDiagonal( image, model, overlap, 0, i, resultExtents, corners, values[i], dataOrigin[i]);
-				}
-				resultImage.importData(i*values[i].length, values[i], false);
+				writeDiagonal( image, model, overlap, 0, i, resultExtents, corners, values, dataOrigin);
+				
+//				if ( (i > 0) && (i < samplingPlanes.getCurves().size() - 1) )
+//				{
+//					VOIContour kBoxM = (VOIContour) samplingPlanes.getCurves().elementAt(i-1);
+//			        for ( int j = 0; j < 4; j++ )
+//			        {
+//			        	corners[j] = Vector3f.add( kBox.elementAt(j), kBoxM.elementAt(j) );
+//			        	corners[j].scale(0.5f);
+//			        }
+//					writeDiagonal( image, model, overlap, 0, i, resultExtents, corners, valuesM, dataOriginM);
+//					
+//					VOIContour kBoxP = (VOIContour) samplingPlanes.getCurves().elementAt(i+1);
+//			        for ( int j = 0; j < 4; j++ )
+//			        {
+//			        	corners[j] = Vector3f.add( kBox.elementAt(j), kBoxP.elementAt(j) );
+//			        	corners[j].scale(0.5f);
+//			        }
+//					writeDiagonal( image, model, overlap, 0, i, resultExtents, corners, valuesP, dataOriginP);
+//					
+//					for ( int j = 0; j < values.length; j++ )
+//					{
+//						values[j] = (values[j] + valuesM[j] + valuesP[j])/3f;
+//						if ( dataOrigin != null )
+//						{
+//							if ( (dataOrigin[j*4 + 0] != 0) && (dataOriginM[j*4 + 0] != 0) && (dataOriginP[j*4 + 0] != 0))
+//							for ( int c = 1; c < 4; c++ )
+//							{
+//								dataOrigin[j * 4 + c] = (dataOrigin[j * 4 + c] + dataOriginM[j * 4 + c] + dataOriginP[j * 4 + c])/3f;
+//							}
+//						}
+//					}
+//				}
+				
+				resultImage.importData(i*values.length, values, false);
 				if ( straightToOrigin != null )
 				{
-					straightToOrigin.importData(i*dataOrigin[i].length, dataOrigin[i], false);
+					straightToOrigin.importData(i*dataOrigin.length, dataOrigin, false);
+				}
+				
+				for ( int j = 0; j < values.length; j++ )
+				{
+					values[j] = 0;
+//					valuesM[j] = 0;
+//					valuesP[j] = 0;
+					if ( dataOrigin != null )
+					{
+						for ( int c = 0; c < 4; c++ )
+						{
+							dataOrigin[j * 4 + c] = 0;
+//							dataOriginM[j * 4 + c] = 0;
+//							dataOriginP[j * 4 + c] = 0;
+						}
+					}
 				}
 			} catch(IOException e) {
 				e.printStackTrace();
@@ -3066,6 +3324,47 @@ public class LatticeModel {
 		VOI transformedAnnotations = null;
 		if ( saveStats && (straightToOrigin != null) )
 		{
+			
+			
+
+//        	for ( int a = 0; a < annotationVOIs.getCurves().size(); a++ )
+//        	{
+//            	VOIText text = (VOIText) annotationVOIs.getCurves().elementAt(a);
+//            	Vector3f position = text.elementAt(0);            	
+//            	
+//    			float minDist = Float.MAX_VALUE;
+//    			Vector3f nearestPt = new Vector3f();
+//
+//    			for ( int z = 0; z < resultExtents[2]; z++ )
+//    			{
+//    				for ( int x = 0; x < resultExtents[0]; x++ )
+//    				{
+//    					for ( int y = 0; y < resultExtents[1]; y++ )
+//    					{
+//							Vector3f pos0 = new Vector3f( straightToOrigin.getFloatC(x, y, z, 1), 
+//									straightToOrigin.getFloatC(x, y, z, 2), straightToOrigin.getFloatC(x, y, z, 3) );
+//
+//							Vector3f test = new Vector3f(pos0);
+//							float distance = position.distance( test );
+//							if ( distance < minDist )
+//							{
+//								minDist = distance;
+//								nearestPt.copy(test);
+//							}
+//    					}
+//    				}
+//    			}
+//            	
+//        		System.err.println( "straighten " + text.getText() + " " + position + "     " + position.distance(nearestPt) );
+//        		if ( position.distance(nearestPt) <= 1 )
+//        		{
+//        			position.copy(nearestPt);
+//        		}
+//        	}
+			
+			
+			
+			
 			ModelImage overlap2 = new ModelImage( ModelStorageBase.ARGB_FLOAT, resultExtents, imageName + "_sampleDensity.xml");
 			JDialogBase.updateFileInfo( image, overlap2 );
 			overlap2.setResolutions( new float[]{1,1,1});
@@ -3077,10 +3376,10 @@ public class LatticeModel {
 					{
 						if ( z + 1 < resultExtents[2] )
 						{
-							Vector3f pos1 = new Vector3f( straightToOrigin.getFloatC(x, y, z+1, 1), 
-									straightToOrigin.getFloatC(x, y, z+1, 2), straightToOrigin.getFloatC(x, y, z+1, 3) );
 							Vector3f pos0 = new Vector3f( straightToOrigin.getFloatC(x, y, z, 1), 
 									straightToOrigin.getFloatC(x, y, z, 2), straightToOrigin.getFloatC(x, y, z, 3) );
+							Vector3f pos1 = new Vector3f( straightToOrigin.getFloatC(x, y, z+1, 1), 
+									straightToOrigin.getFloatC(x, y, z+1, 2), straightToOrigin.getFloatC(x, y, z+1, 3) );
 							if ( !pos0.isEqual(Vector3f.ZERO) && !pos1.isEqual(Vector3f.ZERO))
 							{
 								float diff = pos1.distance(pos0);
@@ -3149,7 +3448,7 @@ public class LatticeModel {
 			
 
 			saveTransformImage(baseName, straightToOrigin, false);
-			ModelImage originToStraight = computeOriginToStraight(image, straightToOrigin);
+			ModelImage originToStraight = computeOriginToStraight(image, model, straightToOrigin);
 			saveTransformImage(baseName, originToStraight, false);
 			transformedAnnotations = saveAnnotationStatistics( imageA, originToStraight, resultExtents, "_after");
 			
@@ -3254,6 +3553,146 @@ public class LatticeModel {
 			resultImage = null;
 		}
     }
+    
+//    private void findClosestPlane( int x, int y, int z, float value, ModelImage image, HashMap<Vector3f, Vector<Vector2f>> modelMap )
+//    {
+//    	Vector3f pt = new Vector3f(x,y,z);
+//    	Plane3f plane = new Plane3f();
+//    	float[] extents = new float[3];
+//    	
+//    	float minDist = Float.MAX_VALUE;
+//    	Vector3f closestPt = new Vector3f();
+//    	int closest = -1;
+//    	
+//    	int count = (int)Math.min( boxBounds.size(), value + SampleLimit) - (int)Math.max( value - SampleLimit, 0);
+//    	float[] distances = new float[ count ];
+//    	int index = 0;
+//		for( int i = (int) Math.max( value - SampleLimit, 0); i < Math.min( boxBounds.size(), value + SampleLimit); i++ )
+//		{
+//			Box3f kBox = boxBounds.elementAt(i);
+//			extents[0] = kBox.Extent[0];
+//			extents[1] = kBox.Extent[1];
+//			extents[2] = SampleLimit;
+//			distances[index] = Float.MAX_VALUE;
+//			Box3f kSampleBox = new Box3f( kBox.Center, kBox.Axis, extents );
+//			if ( ContBox3f.InBox( pt, kSampleBox ) )
+//			{
+//				plane = new Plane3f( kBox.Axis[2], kBox.Center );
+//				DistanceVector3Plane3 dist = new DistanceVector3Plane3( pt, plane );
+//				float distance = dist.Get();
+//				distances[index] = distance;
+//				if ( distance < minDist )
+//				{
+//					minDist = distance;
+//					closestPt.copy( dist.GetClosestPoint1() );
+//					closest = i;
+//				}
+//			}
+//			index++;
+//		}
+//		
+//		if ( closest != -1 )
+//		{
+//			index = 0;
+//			for( int i = (int) Math.max( value - SampleLimit, 0); i < Math.min( boxBounds.size(), value + SampleLimit); i++ )
+//			{
+//				if ( distances[index] <= minDist )
+//				{
+//					VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i);
+//					Segment3f xSeg = new Segment3f( kBox.elementAt(0), kBox.elementAt(3) );
+//					Segment3f ySeg = new Segment3f( kBox.elementAt(0), kBox.elementAt(1) );
+//
+//					DistanceVector3Segment3 dist = new DistanceVector3Segment3( closestPt, xSeg );
+//					float xDist = dist.Get();
+//
+//					dist = new DistanceVector3Segment3( closestPt, ySeg );
+//					float yDist = dist.Get();
+//
+//					
+//
+//					float dataValue = image.getFloatTriLinearBounds(x, y, z);
+//					pt = new Vector3f( Math.round(xDist),  Math.round(yDist), i );
+//					Vector<Vector2f> map = modelMap.get( pt );
+//					if ( map != null )
+//					{
+//						map.add( new Vector2f(distances[index], dataValue) );
+//					}
+//					else
+//					{
+//						map = new Vector<Vector2f>();
+//						map.add( new Vector2f(distances[index], dataValue) );
+//						modelMap.put( pt, map );
+//					}	
+//				}
+//				index++;
+//			}
+//		}
+//    }
+//    
+//    
+//    private void modelToStraight( ModelImage image, ModelImage model, int[] resultExtents, String baseName, boolean saveStats, boolean displayResult, boolean saveAsTif )
+//    {
+//    	String imageName = image.getImageName();
+//    	if ( imageName.contains("_clone") )
+//    	{
+//    		imageName = imageName.replaceAll("_clone", "" );
+//    	}
+//
+//		int colorFactor = image.isColorImage() ? 4 : 1;
+//
+//		ModelImage resultImage = new ModelImage(image.getType(), resultExtents, imageName + "_straight.xml");
+//		JDialogBase.updateFileInfo( image, resultImage );
+//		resultImage.setResolutions( new float[]{1,1,1});
+//		for ( int i = 0; i < resultImage.getSize(); i++ )
+//		{
+//			resultImage.set(i, image.getMin() );
+//		}
+//
+//    	int dimX = model.getExtents().length > 0 ? model.getExtents()[0] : 1;
+//    	int dimY = model.getExtents().length > 1 ? model.getExtents()[1] : 1;
+//    	int dimZ = model.getExtents().length > 2 ? model.getExtents()[2] : 1;
+//    	
+//    	HashMap<Vector3f, Vector<Vector2f>> modelMap = new HashMap<Vector3f,  Vector<Vector2f>>();
+//    	
+//    	for ( int z = 0; z < dimZ; z++ )
+//    	{
+//    		for ( int y = 0; y < dimY; y++ )
+//    		{
+//    			for ( int x = 0; x < dimX; x++ )
+//    			{
+//    				float value = model.getFloat(x, y, z);
+//    				if ( value != 0 )
+//    				{
+//    					findClosestPlane( x, y, z, value - 1, image, modelMap );
+//    				}
+//    			}
+//    		}
+//    	}
+//    	
+//    	Iterator<Vector3f> keys = modelMap.keySet().iterator();
+//    	while ( keys.hasNext() )
+//    	{
+//    		Vector3f pt = keys.next();
+//			Vector<Vector2f> map = modelMap.get( pt );
+//			if ( map != null )
+//			{
+//				float value = 0;
+//				for ( int i = 0; i < map.size(); i++ )
+//				{
+//					value += map.elementAt(i).Y;
+//				}
+//				value /= map.size();
+//				resultImage.set( (int)pt.X, (int)pt.Y, (int)pt.Z, value);
+//			}
+//    	}
+//
+//    	
+////    	model.calcMinMax();
+////    	new ViewJFrameImage((ModelImage)model.clone());
+//    	
+//    	resultImage.calcMinMax();
+//    	new ViewJFrameImage(resultImage);
+//    }
     
     
     private void testTransform( ModelImage original, ModelImage transform, int[] outputExtents, float[] outputRes )
@@ -3541,6 +3980,107 @@ public class LatticeModel {
         }        
     }
     
+//    private VOIContour writeDiagonal( ModelImage model, final int tSlice, final int slice, final int[] extents, final Vector3f[] verts) 
+//    {
+//        final int iBound = extents[0];
+//        final int jBound = extents[1];
+//        int[] dimExtents = model.getExtents();
+//        
+//        /*
+//         * Get the loop multiplication factors for indexing into the 1D array with 3 index variables: based on the
+//         * coordinate-systems: transformation:
+//         */
+//        final int iFactor = 1;
+//        final int jFactor = dimExtents[0];
+//        final int kFactor = dimExtents[0] * dimExtents[1];
+//        final int tFactor = dimExtents[0] * dimExtents[1] * dimExtents[2];
+//
+//        int buffFactor = 1;
+//        
+//        Vector3f center = new Vector3f();
+//        for ( int i = 0; i < verts.length; i++ )
+//        {
+//        	center.add(verts[i]);
+//        }
+//        center.scale( 1f/verts.length );
+//        
+//        /* Calculate the slopes for traversing the data in x,y,z: */
+//        float xSlopeX = verts[1].X - verts[0].X;
+//        float ySlopeX = verts[1].Y - verts[0].Y;
+//        float zSlopeX = verts[1].Z - verts[0].Z;
+//
+//        float xSlopeY = verts[3].X - verts[0].X;
+//        float ySlopeY = verts[3].Y - verts[0].Y;
+//        float zSlopeY = verts[3].Z - verts[0].Z;
+//
+//        float x0 = verts[0].X;
+//        float y0 = verts[0].Y;
+//        float z0 = verts[0].Z;
+//
+//        xSlopeX /= (iBound - 1);
+//        ySlopeX /= (iBound - 1);
+//        zSlopeX /= (iBound - 1);
+//
+//        xSlopeY /= (jBound - 1);
+//        ySlopeY /= (jBound - 1);
+//        zSlopeY /= (jBound - 1);
+//
+//        /* loop over the 2D image (values) we're writing into */
+//        float x = x0;
+//        float y = y0;
+//        float z = z0;
+//
+//        VOIContour insideList = new VOIContour(false);
+//        for (int j = 0; j < jBound; j++) {
+//
+//            /* Initialize the first diagonal point(x,y,z): */
+//            x = x0;
+//            y = y0;
+//            z = z0;
+//
+//            for (int i = 0; i < iBound; i++) {
+//                final int iIndex = Math.round(x);
+//                final int jIndex = Math.round(y);
+//                final int kIndex = Math.round(z);
+//
+//                /* calculate the ModelImage space index: */
+//                final int index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
+//
+//                // Bounds checking:
+//                if ( ( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
+//                		|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > model.getSize()))) {
+//
+//                	// do nothing
+//                } else {
+//                	if ( model != null )
+//                	{
+//                		float currentValue = model.getFloatTriLinearBounds(x, y, z);
+//                		if ( Math.abs(currentValue - (slice+1)) < SampleLimit )
+//                		{
+//                			insideList.add( new Vector3f(x,y,z) );
+//                		}
+//                	}
+//                }
+//                /*
+//                 * Inner loop: Move to the next diagonal point along the x-direction of the plane, using the xSlopeX,
+//                 * ySlopeX and zSlopeX values:
+//                 */
+//                x = x + xSlopeX;
+//                y = y + ySlopeX;
+//                z = z + zSlopeX;
+//            }
+//
+//            /*
+//             * Outer loop: Move to the next diagonal point along the y-direction of the plane, using the xSlopeY,
+//             * ySlopeY and zSlopeY values:
+//             */
+//            x0 = x0 + xSlopeY;
+//            y0 = y0 + ySlopeY;
+//            z0 = z0 + zSlopeY;
+//        }
+//        return insideList;
+//    }
+    
     private void writeDiagonal( ModelImage image, ModelImage model, ModelImage overlap, final int tSlice, final int slice, final int[] extents,
             final Vector3f[] verts, final float[] values, float[] dataOrigin) 
     {
@@ -3597,6 +4137,7 @@ public class LatticeModel {
         float y = y0;
         float z = z0;
 
+        Vector3f test = new Vector3f();
         for (int j = 0; j < jBound; j++) {
 
             /* Initialize the first diagonal point(x,y,z): */
@@ -3611,6 +4152,18 @@ public class LatticeModel {
 
                 /* calculate the ModelImage space index: */
                 final int index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
+                
+
+            	for ( int a = 0; a < annotationVOIs.getCurves().size(); a++ )
+            	{
+                	VOIText text = (VOIText) annotationVOIs.getCurves().elementAt(a);
+                	Vector3f position = text.elementAt(0);
+                	test.set(x, y, z);
+                	if ( position.isEqual(test) )
+                	{
+                		System.err.println( "writeDiagonal " + text.getText() + " " + position );
+                	}
+            	}
 
                 // Bounds checking:
                 if ( ( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
@@ -3621,7 +4174,8 @@ public class LatticeModel {
                 	float currentValue = (slice+1);
                 	if ( model != null )
                 	{
-                		currentValue = model.getFloat((int)x, (int)y, (int)z);
+//                		currentValue = model.getFloat((int)x, (int)y, (int)z);
+                		currentValue = model.getFloatTriLinearBounds(x, y, z);
                 	}
                 	if ( currentValue == 0 )
                 	{
