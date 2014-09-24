@@ -145,6 +145,10 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
    
    private boolean plugInCompleted = false;
    
+   private JTextField searchField;
+   
+   private int searchTolerance = 20;
+   
    //public static final int _27POINTS = 27;
    //public static final int _75POINTS = 75;
    //public static final int _147POINTS = 147;
@@ -198,7 +202,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v6.5.3");
+        setTitle("Drosophila Standard Column Registration v6.6.1");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
@@ -246,7 +250,10 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         flipPanel.add(flipYCB);
         flipPanel.add(flipZCB);
         
+        JLabel searchLabel = new JLabel("Search tolerance in Z dimension");
         
+        searchField = new JTextField(5);
+        searchField.setText("20");
         
         pointsGroup = new ButtonGroup();
         //_27PointsRadio = new JRadioButton("27 Points (3X3X3)");
@@ -380,33 +387,42 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         gbc.anchor = GridBagConstraints.EAST;
         gbc.gridx = 0;
         gbc.gridy = 4;
+        
+        mainPanel.add(searchLabel, gbc);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 1;
+        mainPanel.add(searchField, gbc);
+        
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.gridx = 0;
+        gbc.gridy = 5;
         mainPanel.add(invertIVFileCBLabel,gbc);
         gbc.gridx = 1;
         gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(flipPanel,gbc);
         
         
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         gbc.gridx = 1;
         mainPanel.add(pointsPanel,gbc);
         
         
         
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         gbc.gridx = 1;
         mainPanel.add(eyePanel,gbc);
         
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         gbc.gridx = 1;
         mainPanel.add(regPanel,gbc);
         
-        gbc.gridy = 8;
+        gbc.gridy = 9;
         gbc.gridx = 1;
         mainPanel.add(swcCB,gbc);
         
         
         
-        gbc.gridy = 9;
+        gbc.gridy = 10;
         gbc.gridx = 0;
         mainPanel.add(greenValueRadiusThresholdLabel,gbc);
         gbc.gridx = 1;
@@ -416,7 +432,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         
         
         
-        gbc.gridy = 10;
+        gbc.gridy = 11;
         gbc.gridx = 0;
         mainPanel.add(subsamplingDistanceLabel,gbc);
         gbc.gridx = 1;
@@ -460,7 +476,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         
         
         gbc.gridx = 0;
-        gbc.gridy = 11;
+        gbc.gridy = 12;
         gbc.gridwidth = 3;
         mainPanel.add(scrollPane,gbc);
 
@@ -873,6 +889,13 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 			}
 		}
 		
+		try{
+			searchTolerance = Integer.valueOf(searchField.getText());
+		} catch (NumberFormatException e){
+			MipavUtil.displayError("Search tolerance must be an integer");
+			return false;
+		}
+		
 		
 		return true;
 	}
@@ -885,6 +908,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 
 		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate,cityBlockImage,pointsFile,outputTextArea,flipXCB.isSelected(), flipYCB.isSelected(), flipZCB.isSelected(),greenThreshold,subsamplingDistance,rigRadio.isSelected(),doSWC,rvldRadio.isSelected(),numPointsString);
 		alg.addListener(this);
+		alg.setSearchTolerance(searchTolerance);
 		setCursor(new Cursor(Cursor.WAIT_CURSOR));
 		
 		if (isRunInSeparateThread()) {

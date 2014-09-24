@@ -208,6 +208,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     @SuppressWarnings("unused")
 	private int numPoints;
     
+    private int searchTolerance = 20;
+    
     //private AlgorithmTPSpline invSpline;
     
     
@@ -308,10 +310,11 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     	//TPS splines are not commutative
     	//6.5.3 fixed major bug in filament points outside of FOV being
     	//transformed incorrectly
+    	//6.6 added the ability to customize search tolerance
     	if(outputTextArea != null) {
-    		outputTextArea.append("Running Algorithm v6.5.3" + "\n");
+    		outputTextArea.append("Running Algorithm v6.6.1" + "\n");
     	}else {
-    		System.out.println("Running Algorithm v6.5.3");
+    		System.out.println("Running Algorithm v6.6.1");
     	}
     	
         //outputTextArea.append("Standard Column : RV/LD (in to out); RD/LV(out to in)" + "\n");
@@ -6030,6 +6033,10 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         setCompleted(true);
     }
     
+    public void setSearchTolerance(int tol){
+    	searchTolerance = tol;
+    }
+    
     /**
      * Update for algorithm version 6.5.x
      * 
@@ -6128,9 +6135,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		//make sure we aren't excluding any points (within reason)
 		
 		int[] ext = neuronImage.getExtents();
-		for(float z = 512; z < maxBox[2] + 30; z+=samplingRate){
+		for(float z = 512; z < maxBox[2] + searchTolerance; z+=samplingRate){
 			if(outputTextArea != null && (z-512) % 10 < 1) {
-				float prog = 100 * (z - 512) / (maxBox[2] + 30 - 512);
+				float prog = 100 * (z - 512) / (maxBox[2] + searchTolerance - 512);
 	        	outputTextArea.append(prog + "% complete\n");
 	    	}
 			for(float y = 0; y < 512; y+=samplingRate){
@@ -7620,7 +7627,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 					 cInt = (int)c;
 					 aInt = (int)a;
 					 //System.out.println(counter + " " + aInt + " " + x + " " + y + " " + z + " " + r + " " + cInt) ;
-					 bw.write(counter + " " + aInt + " " + x + " " + y + " " + z + " " + r + " " + cInt);
+					 //bw.write(counter + " " + aInt + " " + x + " " + y + " " + z + " " + r + " " + cInt);
+					 bw.write(counter + " " + aInt + " " + x + " " + y + " " + z + " 0.1 " + cInt);
 					 bw.newLine();
 					 counter++;
 					 //System.out.println("   " + Math.abs(Math.round(x/resols[0])) + " " + Math.abs(Math.round(y/resols[1])) + " " + Math.abs(Math.round(z/resols[2])));
