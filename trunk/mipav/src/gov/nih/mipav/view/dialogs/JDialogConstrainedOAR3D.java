@@ -1578,6 +1578,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                             scriptParameters.getParams().getInt("num_minima"));
         
         float[] transLim1D = scriptParameters.getParams().getList("translation_limits").getAsFloatArray();
+        transLimits = new float[2][3];
         setMinTx(transLim1D[0]);
         setMaxTx(transLim1D[1]);
         setMinTy(transLim1D[2]);
