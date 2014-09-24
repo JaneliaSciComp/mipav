@@ -1576,6 +1576,14 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         setAdvancedSettings(scriptParameters.getParams().getInt("bracket_bound"),
                             scriptParameters.getParams().getInt("max_iterations"),
                             scriptParameters.getParams().getInt("num_minima"));
+        
+        float[] transLim1D = scriptParameters.getParams().getList("translation_limits").getAsFloatArray();
+        setMinTx(transLim1D[0]);
+        setMaxTx(transLim1D[1]);
+        setMinTy(transLim1D[2]);
+        setMaxTy(transLim1D[3]);
+        setMinTz(transLim1D[4]);
+        setMaxTz(transLim1D[5]);
     }
 
     /**
@@ -1622,6 +1630,14 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         scriptParameters.getParams().put(ParameterFactory.newParameter("bracket_bound", bracketBound));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIterations));
         scriptParameters.getParams().put(ParameterFactory.newParameter("num_minima", numMinima));
+        
+        float[] transLim1D = new float[]{
+        	transLimits[0][0], transLimits[1][0], transLimits[0][1],
+        	transLimits[1][1], transLimits[0][2], transLimits[1][2]
+        }; 
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("translation_limits", transLim1D));
+        
     }
 
     /**
