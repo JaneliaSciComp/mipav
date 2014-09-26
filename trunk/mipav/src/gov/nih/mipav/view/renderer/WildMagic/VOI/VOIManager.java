@@ -52,6 +52,7 @@ import javax.swing.KeyStroke;
 
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Curves.*;
 
 /**
  * VOIManager class performs all direct user-manipulation of VOIs. The VOIManager is a MouseListener and
@@ -400,6 +401,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	private static final int SPLITLINE = 11;
 	private static final int LUT = 12;
 	private static final int RETRACE = 13;
+	private static final int BSPLINE = 14;
 	private int m_iDrawType;
 
 	/** Current active voi contour. */
@@ -710,7 +712,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			} 
 			else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_POLYGON.getActionCommand()) ) {
 				m_iDrawType = POLYLINE;
-			} 
+			}
+			else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_BSPLINE.getActionCommand()) ) {
+				m_iDrawType = BSPLINE;
+			}
 			else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_LEVELSET.getActionCommand()) ) {
 				m_iDrawType = LEVELSET;
 			} 
@@ -1167,7 +1172,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			return;
 		}
 		// On double-click, finish the current livewire or polyline contour:
-		if ( m_bDrawVOI && (m_iDrawType == LIVEWIRE || m_iDrawType == POLYLINE) && (kEvent.getClickCount() > 1) )
+		if ( m_bDrawVOI && (m_iDrawType == LIVEWIRE || m_iDrawType == POLYLINE || m_iDrawType == BSPLINE) && (kEvent.getClickCount() > 1) )
 		{
 			showSelectedVOI( kEvent );
 			if ( m_iNearStatus == NearPoint )
@@ -1201,10 +1206,15 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			{
 				anchor( kEvent.getX(), kEvent.getY(), false );
 			}
+			else if ( m_iDrawType == BSPLINE) 
+			{
+				anchorBSpline(kEvent.getX(), kEvent.getY(), true);
+			}
 			else
 			{
 				anchorPolyline( kEvent.getX(), kEvent.getY(), true );                
 			}
+			
 			
 			m_kCurrentVOI.trimPoints(Preferences.getTrimVoi(),
 					Preferences.getTrimAdjacient());
@@ -1323,6 +1333,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		{
 			drawNextPolyline( kEvent.getX(), kEvent.getY() );
 		} 
+		else if ( (m_kCurrentVOI != null) && m_bDrawVOI && (m_iDrawType == BSPLINE) )
+		{
+			drawNextPolyline( kEvent.getX(), kEvent.getY() );
+		} 
 	}
 
 
@@ -1404,6 +1418,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	 * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseReleased(java.awt.event.MouseEvent)
 	 */
 	public void mouseReleased(MouseEvent kEvent) {
+		
 		m_kParent.setActive(this, m_kImageActive);
 		if ( !isActive() || kEvent.getButton() != MouseEvent.BUTTON1 )
 		{
@@ -1461,7 +1476,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			return;
 		}
 		// If the current draw type is a polyline or livewire, a new anchor point is added on mouse release:
-		else if ( m_bDrawVOI && ((m_iDrawType == POLYLINE) || (m_iDrawType == LIVEWIRE)) )
+		else if ( m_bDrawVOI && ((m_iDrawType == POLYLINE) || (m_iDrawType == LIVEWIRE) || (m_iDrawType == BSPLINE)) )
 		{   
 			// If the contour has more than 2 points already, then we can possibly close the polyline:
 			if ( m_kCurrentVOI != null && m_kCurrentVOI.size() > 2 )
@@ -1514,7 +1529,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			{
 				anchor( kEvent.getX(), kEvent.getY(), true );
 			}
-			else
+			else if ( m_iDrawType == BSPLINE ) 
+			{
+				anchorBSpline( kEvent.getX(), kEvent.getY(), false );
+			}
+			else 
 			{
 				anchorPolyline( kEvent.getX(), kEvent.getY(), false );
 			}
@@ -2005,8 +2024,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			m_kCurrentVOI.setSize( m_kCurrentVOI.getAnchor()+1 );
 			if ( add( m_kCurrentVOI, kNewPoint, false ) )
 			{
-				m_kParent.updateDisplay();
+			    m_kParent.updateDisplay();
 			}
+			
 		}
 		m_kCurrentVOI.setAnchor();
 		if ( !bFinished )
@@ -2015,6 +2035,337 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 	}
 
+	/** Add an anchor point to the BSpline line contour.
+	 * @param iX x value of the anchor point in file coordinates.
+	 * @param iY y value of the anchor point in file coordinates.
+	 * @param bFinished when true the current voi is set to active.
+	 */
+	private void anchorBSpline(int iX, int iY, boolean bFinished) {
+		Vector3f kNewPoint = new Vector3f( iX, iY, m_kDrawingContext.getSlice() ) ;
+		if ( m_kCurrentVOI == null )
+		{
+			Vector<Vector3f> kPositions = new Vector<Vector3f>();
+			kPositions.add( kNewPoint );
+			m_kCurrentVOI = createVOI( m_iDrawType, false, false, kPositions );
+			// m_kCurrentVOI = createVOI( POLYLINE, false, false, kPositions );
+			m_kParent.addVOI( m_kCurrentVOI, false, true, false );
+		}
+		else
+		{
+			m_kCurrentVOI.setSize( m_kCurrentVOI.getAnchor()+1 );
+			if ( add( m_kCurrentVOI, kNewPoint, false ) )
+			{
+				SplineSmooth(m_kCurrentVOI);
+			    m_kParent.updateDisplay();
+			}
+			
+		}
+		m_kCurrentVOI.setAnchor();
+		if ( !bFinished )
+		{
+			m_kCurrentVOI.setActive(true);
+		}
+	}
+	
+	/**
+	 * Bspline smoothing 
+	 * @param voiLine     VOI contour
+	 */
+	private void SplineSmooth(VOIBase voiLine) {
+		
+		int size = voiLine.size();
+		
+		Vector3f interpPt = new Vector3f();
+		Vector3f inNormPt = new Vector3f();
+		Vector3f outNormPt = new Vector3f();
+		Vector3f normStep = new Vector3f();
+		float stepPct = (float) 20.0;
+		
+		Vector3f []BsplinePts = new Vector3f[5];
+		Vector3f startPt = voiLine.get(size-2);
+		Vector3f endPt = voiLine.get(size-1);
+		
+		float []xMid = new float[1];
+		float []yMid = new float[1];
+		float []x_1_4 = new float[1];
+		float []y_1_4 = new float[1];
+		float []x_3_4 = new float[1];
+		float []y_3_4 = new float[1];
+		
+		Vector3f midPt = Vector3f.add(startPt, endPt);
+		midPt.div(2.0f);
+		Vector3f oneForthPt = Vector3f.add(startPt, midPt);
+		oneForthPt.div(2.0f);
+		Vector3f threeForthPt = Vector3f.add(midPt, endPt); 
+		threeForthPt.div(2.0f);
+		
+		// center normal line
+		computeNormalLine(startPt, endPt, midPt, outNormPt, inNormPt, stepPct, normStep, interpPt);
+		findBestGradientChange(interpPt, normStep, startPt.Z, xMid, yMid);
+		
+		// 1/4 normal line
+		computeNormalLine(startPt, midPt, oneForthPt, outNormPt, inNormPt, stepPct, normStep, interpPt);
+		findBestGradientChange(interpPt, normStep, startPt.Z, x_1_4, y_1_4);
+	    
+		// 3/4 normal line
+		computeNormalLine(midPt, endPt, threeForthPt, outNormPt, inNormPt, stepPct, normStep, interpPt);
+		findBestGradientChange(interpPt, normStep, startPt.Z, x_3_4, y_3_4);
+		
+		// First, Bspline the last line segment. 
+		BsplinePts[0] = startPt;
+		BsplinePts[1] = new Vector3f(x_1_4[0], y_1_4[0], 0f);
+		BsplinePts[2] = new Vector3f(xMid[0], yMid[0], 0f);
+		BsplinePts[3] = new Vector3f(x_3_4[0], y_3_4[0], 0f);
+		BsplinePts[4] = endPt;
+	    Vector<Vector3f> result = new Vector<Vector3f>();
+		BsplineCurve(BsplinePts, 5, 1, 2, result);
+		
+	    int nPts = result.size();
+	    // points array hold the last line segment Bspline.
+	    int[] xPts = new int[nPts];
+		int[] yPts = new int[nPts];
+		int[] zPts = new int[nPts];
+		for (int u = 0; u < nPts; u++) {
+			Vector3f p = result.get(u);
+			xPts[u] = (int)p.X;
+			yPts[u] = (int)p.Y;
+			zPts[u] = (int)startPt.Z;
+		}
+		
+		// 2nd, add up the last spline segment to the previous draw VOI contour line
+	    int oldPts;
+	    int voiLineSize = voiLine.size();
+	    if ( voiLineSize <= 2 ) { 	    
+	    	oldPts = 2;
+	    } else {
+	    	oldPts = voiLineSize;
+	    }
+	    int[] xOld = new int[oldPts];
+		int[] yOld = new int[oldPts];
+		int[] zOld = new int[oldPts];
+	    int index = 0;
+        int k = 0;
+	    if ( voiLine.size() <= 2 ) {
+	    	// if voi contour size is less two, just add the last spline segment.
+	    	voiLine.importArrays(xPts, yPts, zPts, nPts);
+	    } else {
+	    	// else, add the last spline segmenet back to the VOI contour. 
+	        voiLine.exportArrays(xOld, yOld, zOld);
+	        
+	        int pointSize = nPts+oldPts-2;
+	        
+		    int[] xNew = new int[pointSize];
+			int[] yNew = new int[pointSize];
+			int[] zNew = new int[pointSize];
+	        
+	        for ( index = 0; index < oldPts-2; index++ ) {
+	        	xNew[index] = xOld[index];
+	        	yNew[index] = yOld[index];
+	        	zNew[index] = (int)startPt.Z; 
+	        }
+	       
+	        for ( k = 0 ; k < nPts; k++) {
+	        	xNew[index+k] = xPts[k];
+	        	yNew[index+k] = yPts[k];
+	        	zNew[index+k] = (int)startPt.Z;
+	        }
+	        
+	        // Bspline smoothing for the connection point
+	        int start_index = index - 3;
+	        int curr_index = start_index;
+	        int w;
+	        
+	        Vector3f[] spline = new Vector3f[6];
+	        for ( w = 0, curr_index = start_index; w < 6; w++, curr_index++ ) {
+	        	spline[w] = new Vector3f(xNew[curr_index], yNew[curr_index], zNew[curr_index]);
+	        }
+	        
+	        Vector<Vector3f> temp = new Vector<Vector3f>();
+	        BsplineCurve(spline, 6, 3, 2, temp);
+			nPts = temp.size();
+		    
+			// Add the specific connector point spline segment back to the VOI contour. 
+			for (int u = 0; u < nPts; u++) {
+				Vector3f p = temp.get(u);
+				xNew[u+start_index] = (int)p.X;
+				yNew[u+start_index] = (int)p.Y;
+				zNew[u+start_index] = (int)startPt.Z;
+			}
+			
+			voiLine.importArrays(xNew, yNew, zNew, pointSize);
+			
+	    }
+	}
+	
+	/**
+	 * Compute Bspline segment
+	 * @param BsplinePts    BSpline init line points
+	 * @param numPts		number points
+	 * @param pointReduced	reduced number to create control points
+	 * @param degree	    Bspline degree
+	 * @param result		resulting smoothed Bspline curve
+	 */
+	private void BsplineCurve(Vector3f[] BsplinePts, int numPts, int pointReduced, int degree, Vector<Vector3f> result ) {
+		BSplineCurve3f curve = BSplineCurve3f.CreateApproximation( BsplinePts, numPts-pointReduced, degree);
+	    float minTime = curve.GetMinTime();
+	    float maxTime = curve.GetMaxTime();
+	    float step = (maxTime - minTime) / (float)numPts;
+	    
+	    for ( float t = minTime; t <= maxTime; t += step) {
+			Vector3f pt = curve.GetPosition(t);
+			result.add(pt);
+		}
+	}
+	
+	/**
+	 * When the line segment is drawn, take the mid point, create the normal line across the mid point.  The drawn normal
+	 * line will be the search range of the best gradient changes. 
+	 * @param startPt      start point
+	 * @param endPt        end point
+	 * @param midPt		   mid point
+	 * @param outNormPt	   normal line outward point
+	 * @param inNormPt	   normal line inward point
+	 * @param stepPct	   normal line step percentile
+	 * @param normStep	   number of steps to trace the normal line
+	 * @param interpPt	   the interpolated point, actually just the middle point
+	 */
+	private void computeNormalLine(Vector3f startPt,  Vector3f endPt,  Vector3f midPt, Vector3f outNormPt, 
+			Vector3f inNormPt, float stepPct, Vector3f normStep, Vector3f interpPt) {
+		float normLength;
+		Vector3f tangentDir = new Vector3f();
+		Vector3f normDir = new Vector3f();
+		
+		tangentDir.X = ( midPt.X - startPt.X + endPt.X - midPt.X ) / 2f;
+		tangentDir.Y = ( midPt.Y - startPt.Y + endPt.Y - midPt.Y ) / 2f;
+		
+		normLength = (float) Math.sqrt((tangentDir.X * tangentDir.X) + (tangentDir.Y * tangentDir.Y));
+		normDir.X = -tangentDir.Y / normLength;
+		normDir.Y = tangentDir.X / normLength;
+		
+		interpPt.X = midPt.X;
+		interpPt.Y = midPt.Y;
+		
+		normStep.X = stepPct * normDir.X;
+		normStep.Y = stepPct * normDir.Y;
+	
+		outNormPt.X = -normStep.X + interpPt.X;
+		outNormPt.Y = -normStep.Y + interpPt.Y;
+	
+		inNormPt.X = normStep.X + interpPt.X;
+		inNormPt.Y = normStep.Y + interpPt.Y;
+	}
+	
+	/**
+	 * With given x, y, z point coordinate, compute the gradient changes
+	 * @param xCoord		x coordinate
+	 * @param yCoord		y coordinate
+	 * @param zCoord	    z coordinate
+	 * @param result		result x, y direction gradient sum. 
+	 */
+	private void computeGradient(float xCoord, float yCoord, float zCoord, double []result) {
+
+		double gradientXsrc = 0, gradientYsrc = 0;
+		
+		int x = (int)xCoord;
+		int y = (int)yCoord;
+		int z = (int)zCoord;
+		
+		int[][]	GX = new int[3][3];
+		int[][] GY = new int[3][3];
+		
+		// 3x3 GX Sobel mask. 
+		GX[0][0] = -1; GX[0][1] = 0; GX[0][2] = 1;
+	    GX[1][0] = -2; GX[1][1] = 0; GX[1][2] = 2;
+	    GX[2][0] = -1; GX[2][1] = 0; GX[2][2] = 1;
+
+		// 3x3 GY Sobel mask.
+	    GY[0][0] =  1; GY[0][1] =  2; GY[0][2] =  1;
+	    GY[1][0] =  0; GY[1][1] =  0; GY[1][2] =  0;
+	    GY[2][0] = -1; GY[2][1] = -2; GY[2][2] = -1;
+		
+		for (int II = -1; II <= 1; II++) {
+			for (int JJ = -1; JJ <= 1; JJ++) {
+				
+				gradientXsrc = gradientXsrc + m_kImageActive.get(x + II, y + JJ, z).floatValue() * GX[II + 1][JJ + 1];
+				gradientYsrc = gradientYsrc + m_kImageActive.get(x + II, y + JJ, z).floatValue() * GY[II + 1][JJ + 1];
+
+			}
+		}
+		result[0] = gradientXsrc;
+		result[1] = gradientYsrc;
+	}
+	
+	/**
+	 * From the mid point of normal line, tracing both inward and outward diection along the normal line
+	 * @param interpPt	  mid point
+	 * @param normStep	  normline step, which needed to compute the tracing steps
+	 * @param sliceZ	  z slice number
+	 * @param x			  best gradient change point x coordinate
+	 * @param y			  best gradient change point y coordinate
+	 */
+	private void findBestGradientChange(Vector3f interpPt, Vector3f normStep, float sliceZ, float []x, float []y) {
+
+		float currentX, currentY;
+		currentX = interpPt.X;
+		currentY = interpPt.Y;
+
+		double max_change_out = Double.MIN_VALUE;
+		double max_change_in = Double.MIN_VALUE;
+		double change;
+		float bestXout = 0f, bestYout = 0f;
+		float bestXin = 0f, bestYin = 0f;
+		float bestX, bestY;
+		float stepX = -normStep.X / 10f;
+		float stepY = -normStep.Y / 10f;
+
+		// interpPt --> outward tracing --> outNormPt
+		for (int i = 0; i < 3; i++) {
+			
+			double []result = new double[2];
+			computeGradient(currentX, currentY, sliceZ, result);
+			change = Math.abs(result[0]) + Math.abs(result[1]);
+			if (change > max_change_out) {
+				max_change_out = change;
+				bestXout = currentX;
+				bestYout = currentY;
+			}
+			currentX += stepX;
+			currentY += stepY;
+		}
+
+		// interpPt --> inward tracing --> inNormPt
+		currentX = interpPt.X;
+		currentY = interpPt.Y;
+		stepX = normStep.X / 10f;
+		stepY = normStep.Y / 10f;
+		for (int i = 0; i < 3; i++) {
+			
+			double []result = new double[2];
+			computeGradient(currentX, currentY, sliceZ, result);
+			change = Math.abs(result[0]) + Math.abs(result[1]);
+			if (change > max_change_in) {
+				max_change_in = change;
+				bestXin = currentX;
+				bestYin = currentY;
+			}
+			currentX += stepX;
+			currentY += stepY;
+		}
+
+		if (max_change_in > max_change_out) {
+			bestX = bestXin;
+			bestY = bestYin;
+		} else {
+			bestX = bestXout;
+			bestY = bestYout;
+		}
+		x[0] = bestX;
+		y[0] = bestY;
+		
+	}
+	
+	
+	
 	/**
 	 * This method calculates the average pixel value based on the four neighbors (N, S, E, W).
 	 *
@@ -2208,6 +2559,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		case OVAL:
 		case POLYLINE:
 		case LIVEWIRE:
+		case BSPLINE:
 			kVOI = new VOIContour( bFixed, bClosed ); break;
 		case LINE:
 		case SPLITLINE:
@@ -2421,6 +2773,29 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			m_fMouseX = iX;
 			m_fMouseY = iY;
 		}
+		else if ( m_iDrawType == BSPLINE )
+		{
+			if ( m_kCurrentVOI == null )
+			{
+				Vector<Vector3f> kPositions = new Vector<Vector3f>();
+				kPositions.add( new Vector3f( m_fMouseX, fYStart, m_kDrawingContext.getSlice()) ) ;
+				kPositions.add( new Vector3f( iX, fY, m_kDrawingContext.getSlice()) ) ;
+
+				m_kCurrentVOI = createVOI( m_iDrawType, false, false, kPositions );
+			}
+			else
+			{
+				Vector3f kNewPoint = new Vector3f( iX, fY, m_kDrawingContext.getSlice() ) ;
+				if ( add( m_kCurrentVOI, kNewPoint, false ) )
+				{
+					m_kCurrentVOI.setAnchor();
+					m_kParent.updateDisplay( );
+				}
+			}
+
+			m_fMouseX = iX;
+			m_fMouseY = iY;
+		}
 		else if ( (m_iDrawType == LINE) || (m_iDrawType == SPLITLINE) )
 		{
 			if ( m_kCurrentVOI == null )
@@ -2489,7 +2864,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 				}
 			}
 			m_kParent.addVOI( m_kCurrentVOI, (m_iDrawType == LUT), true,
-					!(m_iDrawType == POLYLINE || m_iDrawType == LIVEWIRE) );
+					!(m_iDrawType == POLYLINE || m_iDrawType == LIVEWIRE || m_iDrawType == BSPLINE) );
 			if ( kOld != null )
 			{
 				kOld.setActive(false);
@@ -2703,10 +3078,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		y = (mouseIndex - x)/xDim;
 		kNewPoint = new Vector3f( x, y, m_kDrawingContext.getSlice() ) ;
 		Vector3f kVolumePt = patientCoordinatesToFile(kNewPoint);
+		
 		if ( add( m_kCurrentVOI, iAnchor, kVolumePt, true ) )
 		{
 			bPointsAdded = true;
 		}
+		
 		if ( bPointsAdded )
 		{
 			m_kParent.updateDisplay();
@@ -3130,7 +3507,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		new DecimalFormat(".##");
 		gon = scalePolygon(kVOI);
 
-		if ( !m_bMouseDrag && !(m_iDrawType == LIVEWIRE) && !(m_iDrawType == POLYLINE)) 
+		if ( !m_bMouseDrag && !(m_iDrawType == LIVEWIRE) && !(m_iDrawType == POLYLINE) && !(m_iDrawType == BSPLINE)) 
 		{
 			if (kVOI.isActive()) {
 				if (kVOI.isClosed()) {
