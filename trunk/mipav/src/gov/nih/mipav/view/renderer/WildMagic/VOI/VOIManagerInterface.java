@@ -3823,6 +3823,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 kCommand.equals(CustomUIBuilder.PARAM_VOI_RECTANGLE.getActionCommand()) ||
                 kCommand.equals(CustomUIBuilder.PARAM_VOI_ELLIPSE.getActionCommand()) || 
                 kCommand.equals(CustomUIBuilder.PARAM_VOI_POLYGON.getActionCommand()) || 
+                kCommand.equals(CustomUIBuilder.PARAM_VOI_BSPLINE.getActionCommand()) || 
                 kCommand.equals(CustomUIBuilder.PARAM_VOI_LEVELSET.getActionCommand()) ||
                 kCommand.equals(CustomUIBuilder.PARAM_LUT_QUICK.getActionCommand() ) 
                 || kCommand.equals("quickLUT") ) {

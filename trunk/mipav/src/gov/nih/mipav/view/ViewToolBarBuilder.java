@@ -978,7 +978,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
         VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_RECTANGLE, VOIGroup));
         VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_ELLIPSE, VOIGroup));
         VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_POLYGON, VOIGroup));
-
+        VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_BSPLINE, VOIGroup));
 
         VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_LEVELSET, VOIGroup));
         VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_LIVEWIRE, VOIGroup));

@@ -28,6 +28,9 @@ public class CustomUIBuilder {
     public static final UIParams PARAM_VOI_POLYLINE = new UIParams("Draw Polyline VOI","Polyline", UIParams.INVALID_MNEMONIC,
                                                                    "<html>" + "Draw levelset VOI" + "<br>" + "Hold SHIFT for multiple drawing" +
                                                                    "</html>", "contour", true);
+    public static final UIParams PARAM_VOI_BSPLINE = new UIParams("Draw BSpline VOI","PolylineSpline", UIParams.INVALID_MNEMONIC,
+            													   "<html>" + "Draw Bspline VOI" + "<br>" + "Hold SHIFT for multiple drawing" +
+            													   "</html>", "polycombo", true);
     public static final UIParams PARAM_VOI_LEVELSET = new UIParams("Draw LevelSet VOI","LevelSetVOI", UIParams.INVALID_MNEMONIC,
                                                                    "<html>" + "Draw levelset VOI" + "<br>" + "Hold SHIFT for multiple drawing" +
                                                                    "</html>", "contour", true);
