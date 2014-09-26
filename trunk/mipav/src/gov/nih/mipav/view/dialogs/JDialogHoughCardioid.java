@@ -3,11 +3,11 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.text.DecimalFormat;
 
 import javax.swing.*;
 
@@ -39,21 +39,12 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
     private ModelImage resultImage = null;
 
     /** DOCUMENT ME! */
-    private int x0;
+    private int theta0Num;
 
     /** DOCUMENT ME! */
-    private JTextField x0Text;
-
-    /** DOCUMENT ME! */
-    private int y0;
+    private JTextField theta0Text;
     
-    private JTextField y0Text;
-    
-    JTextField theta0Text;
-    
-    private double theta0;
-    
-    private int a0;
+    private int a0Num;
 
     /** DOCUMENT ME! */
     private JTextField aText;
@@ -61,6 +52,12 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
     private int numCardioids;
     
     private JTextField numCardioidsText;
+    
+    /** Maximum number of points to take from each side of a point on a curve in determining a curvature */
+    private int sidePointsForCurvature;
+    
+    private JTextField sideText;
+
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -196,8 +193,8 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
             resultImage.setImageName(name);
 
             // Make algorithm
-            hAlgo = new AlgorithmHoughCardioid(resultImage, image, theta0,
-            		    x0, y0, a0, numCardioids);
+            hAlgo = new AlgorithmHoughCardioid(resultImage, image,
+            		    theta0Num, a0Num, numCardioids, sidePointsForCurvature);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -235,17 +232,12 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
     private void init() {
         JLabel mainLabel;
         JLabel mainLabel2;
-        JLabel mainLabel3;
         JLabel theta0Label;
-        JLabel x0Label;
-        JLabel y0Label;
         JLabel a0Label;
-        JLabel maxALabel;
         JLabel numCardioidsLabel;
-        int xDim = Math.min(512, image.getExtents()[0]);
-        int yDim = Math.min(512, image.getExtents()[1]);
-        int aDim = (int)Math.round((Math.sqrt((xDim - 1)*(xDim -1) + (yDim - 1)*(yDim - 1))/2.0));
-        DecimalFormat df = new DecimalFormat("0.#");
+        JLabel sideLabel;
+
+        int aDim = Math.min(512, 2*Math.max(image.getExtents()[0], image.getExtents()[1]));
         setForeground(Color.black);
         setTitle("Hough transform for cardioid detection");
 
@@ -276,15 +268,8 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
         mainLabel2.setEnabled(true);
         gbc6.gridy++;
         paramPanel.add(mainLabel2, gbc6);
-        
-        mainLabel3 = new JLabel("Suggest setting a dimension to maximum a value");
-        mainLabel3.setForeground(Color.black);
-        mainLabel3.setFont(serif12);
-        mainLabel3.setEnabled(true);
-        gbc6.gridy++;
-        paramPanel.add(mainLabel3, gbc6);
-        
-        theta0Label = new JLabel("Cusp angular position theta0 (right = 0.0 top = 90.0)");
+
+        theta0Label = new JLabel("theta0 dimension of Hough transform image ");
         theta0Label.setForeground(Color.black);
         theta0Label.setFont(serif12);
         theta0Label.setEnabled(true);
@@ -293,41 +278,11 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
         paramPanel.add(theta0Label, gbc6);
 
         theta0Text = new JTextField(10);
-        theta0Text.setText(String.valueOf(0.0));
+        theta0Text.setText(String.valueOf(720));
         theta0Text.setFont(serif12);
         theta0Text.setEnabled(true);
         gbc6.gridx = 1;
         paramPanel.add(theta0Text, gbc6);
-
-        x0Label = new JLabel("x0 dimension of Hough transform image ");
-        x0Label.setForeground(Color.black);
-        x0Label.setFont(serif12);
-        x0Label.setEnabled(true);
-        gbc6.gridx = 0;
-        gbc6.gridy++;
-        paramPanel.add(x0Label, gbc6);
-
-        x0Text = new JTextField(10);
-        x0Text.setText(String.valueOf(xDim));
-        x0Text.setFont(serif12);
-        x0Text.setEnabled(true);
-        gbc6.gridx = 1;
-        paramPanel.add(x0Text, gbc6);
-
-        y0Label = new JLabel("y0 dimension of Hough transform image ");
-        y0Label.setForeground(Color.black);
-        y0Label.setFont(serif12);
-        y0Label.setEnabled(true);
-        gbc6.gridx = 0;
-        gbc6.gridy++;
-        paramPanel.add(y0Label, gbc6);
-
-        y0Text = new JTextField(10);
-        y0Text.setText(String.valueOf(yDim));
-        y0Text.setFont(serif12);
-        y0Text.setEnabled(true);
-        gbc6.gridx = 1;
-        paramPanel.add(y0Text, gbc6);
         
         a0Label = new JLabel("a dimension of Hough transform image ");
         a0Label.setForeground(Color.black);
@@ -358,6 +313,22 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
         numCardioidsText.setEnabled(true);
         gbc6.gridx = 1;
         paramPanel.add(numCardioidsText, gbc6);
+        
+        sideLabel = new JLabel("Maximum curve points on each side for curvature ");
+        sideLabel.setForeground(Color.black);
+        sideLabel.setFont(serif12);
+        sideLabel.setEnabled(true);
+        gbc6.gridx = 0;
+        gbc6.gridy++;
+        paramPanel.add(sideLabel, gbc6);
+
+        sideText = new JTextField(10);
+        sideText.setText("5");
+        sideText.setFont(serif12);
+        sideText.setEnabled(true);
+        gbc6.gridx = 1;
+        paramPanel.add(sideText, gbc6);
+
 
         getContentPane().add(paramPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -372,37 +343,14 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
-    	
-    	if (!testParameter(theta0Text.getText(), 0, 359.9999999)) {
+
+        if (!testParameter(theta0Text.getText(), 5, 1000000)) {
             theta0Text.requestFocus();
             theta0Text.selectAll();
 
             return false;
         } else {
-            theta0 = (Math.PI/180.0)*Double.valueOf(theta0Text.getText()).doubleValue();
-            // Change to range -PI to PI
-            if (theta0 > Math.PI) {
-            	theta0 = theta0 - 2.0 * Math.PI;
-            }
-        }
-
-
-        if (!testParameter(x0Text.getText(), 5, 1000000)) {
-            x0Text.requestFocus();
-            x0Text.selectAll();
-
-            return false;
-        } else {
-            x0 = Integer.valueOf(x0Text.getText()).intValue();
-        }
-
-        if (!testParameter(y0Text.getText(), 5, 1000000)) {
-            y0Text.requestFocus();
-            y0Text.selectAll();
-
-            return false;
-        } else {
-            y0 = Integer.valueOf(y0Text.getText()).intValue();
+            theta0Num = Integer.valueOf(theta0Text.getText()).intValue();
         }
         
         if (!testParameter(aText.getText(), 5, 1000000)) {
@@ -411,7 +359,7 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
 
             return false;
         } else {
-            a0 = Integer.valueOf(aText.getText()).intValue();
+            a0Num = Integer.valueOf(aText.getText()).intValue();
         }
         
         if (!testParameter(numCardioidsText.getText(), 1, 100)) {
@@ -422,6 +370,16 @@ public class JDialogHoughCardioid extends JDialogBase implements AlgorithmInterf
         } else {
             numCardioids = Integer.valueOf(numCardioidsText.getText()).intValue();
         }
+        
+        if (!testParameter(sideText.getText(), 1, 10)) {
+            sideText.requestFocus();
+            sideText.selectAll();
+
+            return false;
+        } else {
+            sidePointsForCurvature = Integer.valueOf(sideText.getText()).intValue();
+        }
+
 
         return true;
     }
