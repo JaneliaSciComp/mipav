@@ -1,27 +1,30 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.parameters.*;
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.model.algorithms.AlgorithmBRISK;
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.ScriptableActionInterface;
+import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterTable;
+import gov.nih.mipav.model.structures.ModelImage;
+
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewUserInterface;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
 import java.util.Enumeration;
 import java.util.Vector;
 
-import javax.swing.ButtonGroup;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JTextField;
+import javax.swing.*;
 
-//import javax.swing.*;
 
+// import javax.swing.*;
 
 /**
  * DOCUMENT ME!
@@ -29,13 +32,14 @@ import javax.swing.JTextField;
 @SuppressWarnings("serial")
 public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
-    //private static final long serialVersionUID;
+    // private static final long serialVersionUID;
 
-    
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
@@ -45,101 +49,103 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
 
     /** DOCUMENT ME! */
     private AlgorithmBRISK bAlgo;
-    
-    private int threshold = 60;
-    
-    private int HammingDistanceThreshold = 90;
-    
-    private int octaves = 4;
-    
-    private boolean rotationInvariant = true;
-	
-	private boolean scaleInvariant = true;
-	
-	private double patternScale = 1.0;
-	
-	private Vector<Double>radiusList = null;
-	
-	private Vector<Integer>numberList = null;
-	
-	// Short pair maximum distance
-	private double dMax = 5.85;
-	
-	// Long pair maximum distance
-	private double dMin = 8.2;
-	
-	private Vector<Integer>indexChange = new Vector<Integer>();
-	 
-	 private JPanel paramPanel;
-	 
-	 private JPanel imageVOIPanel;
-	 
-	 private ButtonGroup imageVOIGroup;
-	 
-	 private JRadioButton wholeImage;
-	 
-	 private JRadioButton VOIRegions;
-	 
-	 private ViewUserInterface userInterface;
-	 
-	 private JLabel labelThreshold;
-	 
-	 private JTextField textThreshold;
-	 
-	 private boolean wholeImageFlag = true;
-	 
-	 private JLabel labelHammingDistanceThreshold;
-	 
-	 private JTextField textHammingDistanceThreshold;
-	 
-	 private JLabel labelOctaves;
-	 
-	 private JTextField textOctaves;
-	 
-	 private JCheckBox rotationCheckBox;
-	 
-	 private JCheckBox scaleCheckBox;
-	 
-	 private JComboBox<String> comboBoxImage;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    private int threshold = 60;
+
+    private int HammingDistanceThreshold = 90;
+
+    private int octaves = 4;
+
+    private boolean rotationInvariant = true;
+
+    private boolean scaleInvariant = true;
+
+    private final double patternScale = 1.0;
+
+    private final Vector<Double> radiusList = null;
+
+    private final Vector<Integer> numberList = null;
+
+    // Short pair maximum distance
+    private final double dMax = 5.85;
+
+    // Long pair maximum distance
+    private final double dMin = 8.2;
+
+    private final Vector<Integer> indexChange = new Vector<Integer>();
+
+    private JPanel paramPanel;
+
+    private JPanel imageVOIPanel;
+
+    private ButtonGroup imageVOIGroup;
+
+    private JRadioButton wholeImage;
+
+    private JRadioButton VOIRegions;
+
+    private ViewUserInterface userInterface;
+
+    private JLabel labelThreshold;
+
+    private JTextField textThreshold;
+
+    private boolean wholeImageFlag = true;
+
+    private JLabel labelHammingDistanceThreshold;
+
+    private JTextField textHammingDistanceThreshold;
+
+    private JLabel labelOctaves;
+
+    private JTextField textOctaves;
+
+    private JCheckBox rotationCheckBox;
+
+    private JCheckBox scaleCheckBox;
+
+    private JComboBox comboBoxImage;
+
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Empty constructor needed for dynamic instantiation (used during scripting).
      */
-    public JDialogBRISK() { }
+    public JDialogBRISK() {}
 
     /**
      * Creates new dialog for entering parameters for BRISK.
-     *
-     * @param  theParentFrame  Parent frame
-     * @param  im              Source image
+     * 
+     * @param theParentFrame Parent frame
+     * @param im Source image
      */
-    public JDialogBRISK(Frame theParentFrame, ModelImage im) {
+    public JDialogBRISK(final Frame theParentFrame, final ModelImage im) {
         super(theParentFrame, false);
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * actionPerformed - Closes dialog box when the OK button is pressed and calls the algorithm.
-     *
-     * @param  event  event that triggers function
+     * 
+     * @param event event that triggers function
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
+    @Override
+    public void actionPerformed(final ActionEvent event) {
+        final String command = event.getActionCommand();
 
         if (command.equals("OK")) {
 
             if (setVariables()) {
                 callAlgorithm();
             }
-        }
-        else if (command.equals("Help")) {
-            //MipavUtil.showHelp("");
+        } else if (command.equals("Help")) {
+            // MipavUtil.showHelp("");
         } else if (command.equals("Cancel")) {
             dispose();
         } else {
@@ -150,14 +156,15 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
     // ************************************************************************
     // ************************** Algorithm Events ****************************
     // ************************************************************************
-    
+
     /**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithm when it
      * has completed or failed to to complete, so that the dialog can be display the result image and/or clean up.
-     *
-     * @param  algorithm  Algorithm that caused the event.
+     * 
+     * @param algorithm Algorithm that caused the event.
      */
-    public void algorithmPerformed(AlgorithmBase algorithm) {
+    @Override
+    public void algorithmPerformed(final AlgorithmBase algorithm) {
 
         if (algorithm instanceof AlgorithmBRISK) {
             System.err.println("BRISK Elapsed: " + algorithm.getElapsedTime());
@@ -172,9 +179,8 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
 
         bAlgo.finalize();
         bAlgo = null;
-        //dispose();
+        // dispose();
     }
-
 
     // *******************************************************************
     // ************************* Item Events ****************************
@@ -182,29 +188,28 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
 
     /**
      * Method to handle item events.
-     *
-     * @param  event  event that cause the method to fire
+     * 
+     * @param event event that cause the method to fire
      */
-    public void itemStateChanged(ItemEvent event) {
+    @Override
+    public void itemStateChanged(final ItemEvent event) {
         // Object source = event.getSource();
         // float tempNum;
 
     }
 
-    
-   
     /**
-     * Once all the necessary variables are set, call the rule based contrast enhancement algorithm based on what type of image this is and
-     * whether or not there is a separate destination image.
+     * Once all the necessary variables are set, call the rule based contrast enhancement algorithm based on what type
+     * of image this is and whether or not there is a separate destination image.
      */
+    @Override
     protected void callAlgorithm() {
 
         try {
 
             // Make algorithm
-            bAlgo = new AlgorithmBRISK(destImage, image, wholeImageFlag, threshold, HammingDistanceThreshold, octaves, 
-            		rotationInvariant, scaleInvariant, patternScale, radiusList, numberList,
-                    dMax, dMin, indexChange);
+            bAlgo = new AlgorithmBRISK(destImage, image, wholeImageFlag, threshold, HammingDistanceThreshold, octaves, rotationInvariant, scaleInvariant,
+                    patternScale, radiusList, numberList, dMax, dMin, indexChange);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -225,29 +230,26 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
 
                 bAlgo.run();
             }
-        } catch (OutOfMemoryError x) {
+        } catch (final OutOfMemoryError x) {
             MipavUtil.displayError("Dialog BRISK: unable to allocate enough memory");
-
-            
 
             return;
         }
-           
-    }
 
-    
+    }
 
     /**
      * {@inheritDoc}
      */
+    @Override
     protected void doPostAlgorithmActions() {
 
-        
     }
 
     /**
      * {@inheritDoc}
      */
+    @Override
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
     }
@@ -255,6 +257,7 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
     /**
      * {@inheritDoc}
      */
+    @Override
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
     }
@@ -263,11 +266,11 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
-    	setForeground(Color.black);
+        setForeground(Color.black);
 
         setTitle("BRISK");
-        
-        JLabel labelImage = new JLabel("Base image [" + image.getImageName() + "] for:");
+
+        final JLabel labelImage = new JLabel("Base image [" + image.getImageName() + "] for:");
         labelImage.setForeground(Color.black);
         labelImage.setFont(serif12);
         comboBoxImage = buildImgComboBox(image);
@@ -291,22 +294,22 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
         labelOctaves = new JLabel("Octaves for the detection");
         labelOctaves.setForeground(Color.black);
         labelOctaves.setFont(serif12);
-        
+
         textOctaves = new JTextField(5);
         textOctaves.setText("4");
         textOctaves.setFont(serif12);
-        
+
         rotationCheckBox = new JCheckBox("Rotation invariance");
         rotationCheckBox.setFont(serif12);
         rotationCheckBox.setSelected(true);
-        
+
         scaleCheckBox = new JCheckBox("Scale invariance");
         scaleCheckBox.setFont(serif12);
         scaleCheckBox.setSelected(true);
 
-        JPanel upperPanel = new JPanel(new GridBagLayout());
+        final JPanel upperPanel = new JPanel(new GridBagLayout());
 
-        GridBagConstraints gbc = new GridBagConstraints();
+        final GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.anchor = GridBagConstraints.WEST;
@@ -402,29 +405,28 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
         pack();
         setVisible(true);
     }
-    
+
     /**
      * Builds a list of images. Returns combobox.
-     *
-     * @param   image  DOCUMENT ME!
-     *
-     * @return  Newly created combo box.
+     * 
+     * @param image DOCUMENT ME!
+     * 
+     * @return Newly created combo box.
      */
-    private JComboBox<String> buildImgComboBox(ModelImage image) {
-        JComboBox<String> comboBox = new JComboBox<String>();
+    private JComboBox buildImgComboBox(final ModelImage image) {
+        final JComboBox comboBox = new JComboBox();
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
 
-        Enumeration<String> names = userInterface.getRegisteredImageNames();
+        final Enumeration<String> names = userInterface.getRegisteredImageNames();
 
         while (names.hasMoreElements()) {
-            String name = names.nextElement();
+            final String name = names.nextElement();
 
-            if (!name.equals(image.getImageName())) {
-                ModelImage img = userInterface.getRegisteredImageByName(name);
+            if ( !name.equals(image.getImageName())) {
+                final ModelImage img = userInterface.getRegisteredImageByName(name);
 
-                if ((img.getNDims() == 2) && (!img.isColorImage()) &&
-                        (userInterface.getFrameContainingImage(img) != null)) {
+                if ( (img.getNDims() == 2) && ( !img.isColorImage()) && (userInterface.getFrameContainingImage(img) != null)) {
                     comboBox.addItem(name);
                 }
             }
@@ -433,19 +435,17 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
 
         return comboBox;
     }
-    
-   
 
     /**
      * Use the GUI results to set up the variables needed to run the algorithm.
-     *
-     * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
+     * 
+     * @return <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
-    	String tmpStr;
-    	
-    	// assign destImage to image selected in comboBox
-        String selectedName = (String) comboBoxImage.getSelectedItem();
+        String tmpStr;
+
+        // assign destImage to image selected in comboBox
+        final String selectedName = (String) comboBoxImage.getSelectedItem();
 
         if (selectedName != null) {
             destImage = ViewUserInterface.getReference().getRegisteredImageByName(selectedName);
@@ -456,7 +456,7 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
         } else if (VOIRegions.isSelected()) {
             wholeImageFlag = false;
         }
-        
+
         tmpStr = textThreshold.getText();
 
         if (testParameter(tmpStr, 1, 255)) {
@@ -467,7 +467,7 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
 
             return false;
         }
-        
+
         tmpStr = textHammingDistanceThreshold.getText();
 
         if (testParameter(tmpStr, 0, 200)) {
@@ -478,7 +478,7 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
 
             return false;
         }
-        
+
         tmpStr = textOctaves.getText();
 
         if (testParameter(tmpStr, 1, 8)) {
@@ -489,11 +489,10 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
 
             return false;
         }
-        
+
         rotationInvariant = rotationCheckBox.isSelected();
-        
+
         scaleInvariant = scaleCheckBox.isSelected();
-        
 
         return true;
 
@@ -504,34 +503,40 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
      * 
      * @return Metadata for this action.
      */
+    @Override
     public ActionMetadata getActionMetadata() {
         return new MipavActionMetadata() {
+            @Override
             public String getCategory() {
                 return new String("Algorithms BRISK");
             }
 
+            @Override
             public String getDescription() {
                 return new String("Applies Binary Robust Invariant Scalable Keypoints.");
             }
 
+            @Override
             public String getDescriptionLong() {
                 return new String("Applies Binary Robust Invariant Scalable Keypoints.");
             }
 
+            @Override
             public String getShortLabel() {
                 return new String("BRISK");
             }
 
+            @Override
             public String getLabel() {
                 return new String("BRISK");
             }
 
+            @Override
             public String getName() {
                 return new String("BRISK");
             }
         };
     }
-
 
     /**
      * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
@@ -539,16 +544,13 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
      * 
      * @return A parameter table listing the inputs of this algorithm.
      */
+    @Override
     public ParameterTable createInputParameters() {
         final ParameterTable table = new ParameterTable();
 
-
-
-
-        
         try {
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
-            } catch (final ParserException e) {
+        } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
         }
@@ -556,13 +558,13 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
         return table;
     }
 
-
     /**
      * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
      * names later).
      * 
      * @return A parameter table listing the outputs of this algorithm.
      */
+    @Override
     public ParameterTable createOutputParameters() {
         final ParameterTable table = new ParameterTable();
 
@@ -576,28 +578,24 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
         return table;
     }
 
-
-    
-
     /**
      * Returns whether the action has successfully completed its execution.
      * 
      * @return True, if the action is complete. False, if the action failed or is still running.
      */
+    @Override
     public boolean isActionComplete() {
         return isComplete();
     }
-    
+
     /**
      * Accessor that returns the image.
-     *
-     * @return  the result image
+     * 
+     * @return the result image
      */
     public ModelImage getResultImage() {
         return destImage;
     }
-
-    
 
     /**
      * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
@@ -606,6 +604,7 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
      * @param imageParamName The output image parameter label for which to get the image name.
      * @return The image name of the requested output image parameter label.
      */
+    @Override
     public String getOutputImageName(final String imageParamName) {
         if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
             if (getResultImage() != null) {
@@ -621,7 +620,5 @@ public class JDialogBRISK extends JDialogScriptableBase implements AlgorithmInte
 
         return null;
     }
-
-
 
 }
