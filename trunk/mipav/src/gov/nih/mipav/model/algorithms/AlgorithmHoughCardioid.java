@@ -10,7 +10,8 @@ import java.io.*;
 /**
  *  This Hough transform uses (xi, yi) points in the original image space to generate theta0, a0 points in the Hough
  *  transform.  xc and yc of the cusp are obtained from finding the point of maximum curvature.
- *  Hough space is used to check the 9 possibilities of xc-1, xc, xc+1, yc-1, yc, yc+1.  
+ *  Hough space is used to check the (xcdim * ycdim) possibilities of xc-xchalf to xc + xchalf, yc - ychalf to yc + ychalf,
+ *  where xchalf = (xcdim - 1)/2 and ychalf = (ycdim - 1)/2.  
  *  This Hough transform module only works with binary images.   Before it is used the user must 
  *  compute the gradient of an image and threshold it to obtain a binary image.  Noise removal and thinning should also
  *  be performed, if necessary, before this program is run. 
@@ -243,6 +244,8 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
         int ycdim;
         int xf;
         int yf;
+        int xchalf;
+        int ychalf;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -260,8 +263,10 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
         sourceSlice = xDim * yDim; 
         maxA = Math.sqrt((xDim - 1)*(xDim -1) + (yDim - 1)*(yDim - 1))/2.0;
         
-        xcdim = 3;
-        ycdim = 3;
+        xcdim = 5;
+        ycdim = 5;
+        xchalf = (xcdim - 1)/2;
+        ychalf = (ycdim - 1)/2;
 
         houghSlice = theta0Num * a0Num * xcdim * ycdim;
         srcBuffer = new byte[sourceSlice];
@@ -959,8 +964,8 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
        		    if (indexArray[i] >= 0) {
 	                y = indexArray[i] / xDim;
 	        		x = indexArray[i] % xDim;
-	        		for (yf = -1; yf <= 1; yf++) {
-		        		for (xf = -1; xf <= 1; xf++) {
+	        		for (yf = -ychalf; yf <= ychalf; yf++) {
+		        		for (xf = -xchalf; xf <= xchalf; xf++) {
 		                	theta = Math.atan2(y - (yc+yf), x - (xc+xf));
 		                    num = Math.sqrt((x - (xc+xf))*(x - (xc+xf)) + (y - (yc+yf))*(y - (yc+yf)));
 		                    for (j = 0; j < theta0Num; j++) {
@@ -973,12 +978,13 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
 			                	}
 			                    if (d2 <= maxA) {
 			                        m = (int)Math.round(d2*d2Scale);
-			                        indexDest = j + m * theta0Num + (xf + 1) * theta0Num * a0Num + (yf+1) * theta0Num * a0Num * xcdim;
+			                        indexDest = j + m * theta0Num + (xf + xchalf) * theta0Num * a0Num +
+			                        		(yf+ychalf) * theta0Num * a0Num * xcdim;
 			                        houghBuffer[indexDest]++;
 			                    }
 		                    } // for (j = 0; j < theta0Num; j++) 
-		        		} // for (xf = -1; xf <= 1; xf++)
-	        		} // for (yf = -1; yf <= 1; yf++)
+		        		} // for (xf = -xchalf; xf <= xchalf; xf++)
+	        		} // for (yf = -ychalf; yf <= ychalf; yf++)
        		} // if (indexArray[i] >= 0)
        	} // for (i = 0; i < numPoints; i++)     
 
@@ -1000,9 +1006,9 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
             }
             
             numCardioidsFound++;
-            xf = (largestIndex % (theta0Num * a0Num * xcdim))/(theta0Num * a0Num) - 1;
+            xf = (largestIndex % (theta0Num * a0Num * xcdim))/(theta0Num * a0Num) - xchalf;
             xcArray[c] = xc + xf;
-            yf = largestIndex/(theta0Num * a0Num * xcdim) - 1;
+            yf = largestIndex/(theta0Num * a0Num * xcdim) - ychalf;
             ycArray[c] = yc + yf;
             a0Index = (largestIndex % (theta0Num*a0Num))/theta0Num;
             a0Array[c] = a0Index *(maxA/(double)(a0Num -1));
@@ -1023,8 +1029,8 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
                 	if (indexArray[i] >= 0) {
                		 y = indexArray[i] / xDim;
                		 x = indexArray[i] % xDim;
-               		for (yf = -1; yf <= 1; yf++) {
-		        		for (xf = -1; xf <= 1; xf++) {
+               		for (yf = -ychalf; yf <= ychalf; yf++) {
+		        		for (xf = -xchalf; xf <= xchalf; xf++) {
 		        			if ((x == xf + xc) && (y == yf + yc)) {
 		        				indexArray[i] = -1;
 		        				continue loop;
@@ -1041,14 +1047,15 @@ public class AlgorithmHoughCardioid extends AlgorithmBase {
 			                	}
 			                    if (d2 <= maxA) {
 			                        m = (int)Math.round(d2*d2Scale);
-			                        indexDest = j + m * theta0Num + (xf + 1) * theta0Num * a0Num + (yf+1) * theta0Num * a0Num * xcdim;
+			                        indexDest = j + m * theta0Num + (xf + xchalf) * theta0Num * a0Num +
+			                        		(yf+ychalf) * theta0Num * a0Num * xcdim;
 			                        if (indexDest == largestIndex) {
 			                        	indexArray[i] = -1;
 			                        }
 			                    }
 		                    } // for (j = 0; j < theta0Num; j++) 
-		        		} // for (xf = -1; xf <= 1; xf++)
-	        		} // for (yf = -1; yf <= 1; yf++)
+		        		} // for (xf = -xchalf; xf <= xchalf; xf++)
+	        		} // for (yf = -ychalf; yf <= ychalf; yf++)
                 } // if (indexArray[i] >= 0)
             } // for (i = 0; i < numPoints; i++)     
 
