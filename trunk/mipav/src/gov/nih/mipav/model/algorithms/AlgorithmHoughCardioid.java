@@ -38,6 +38,11 @@ import java.io.*;
  *  dy'/dtheta = -a*sin(theta) + 2a*sin(2*theta + theta0)
  *  d2y/dx2 = dy'/dtheta/dx/dtheta = 
  *  (-sin(theta) + 2*sin(2*theta + theta0))/(-sin(theta) + sin(2*theta + theta0))
+ *  curvature(theta) = ((dx/dtheta)*(d2y/dtheta2) - (dy/dtheta)*(d2x/dtheta2))/((dx/dtheta)**2 + (dy/dtheta)**2)**1.5
+ *  d2x/dtheta2 = -a*cos(theta) + 2*a*cos(2*theta + theta0)
+ *  d2y/dtheta2 = -a*sin(theta) + 2*a*sin(2*theta + theta0)
+ *  curvature(theta) = 3/(2*sqrt(2)*a*sqrt(1 - cos(theta+theta0))
+ *  so the curvature is infinite at theta = -theta0.
  *  All cusp chords are of length 2 * a.
  *  The tangents to the endpoints of a cusp chord are perpindicular.
  *  If 3 points have parallel tangents, the lines from the cusp to these 3 points make equal angles
