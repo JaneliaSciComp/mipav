@@ -1229,8 +1229,10 @@ public class LatticeModel {
     	if ( pickedPoint != null )
     	{
     		pickedPoint.add(direction);
-    		if ( doAnnotation )
+    		if ( doAnnotation && (pickedAnnotation != -1) )
     		{
+        		annotationVOIs.getCurves().elementAt(pickedAnnotation).elementAt(1).add(direction);
+        		annotationVOIs.getCurves().elementAt(pickedAnnotation).update();
     			updateSelected();
     		}
     		else
@@ -2933,7 +2935,7 @@ public class LatticeModel {
 
         	FileWriter fw = new FileWriter(file);
         	BufferedWriter bw = new BufferedWriter(fw);
-        	bw.write( "name" + "," + "x" + "," + "y" + "," + "z" + "\n" );
+        	bw.write( "name" + "," + "x_voxels" + "," + "y_voxels" + "," + "z_voxels" + "," + "x_um" + "," + "y_um" + "," + "z_um" + "\n" );
         	for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ )
         	{
             	VOIText text = (VOIText) annotationVOIs.getCurves().elementAt(i);
@@ -2966,7 +2968,13 @@ public class LatticeModel {
 		    		transformedAnnotations.getCurves().elementAt(i).elementAt(1).set( position.X + 5 , position.Y, position.Z );
             	}
         		bw.write(text.getText() + "," + (position.X - transformedOrigin.X) + "," + 
-        				(position.Y - transformedOrigin.Y) + "," + (position.Z - transformedOrigin.Z) + "\n");
+        				(position.Y - transformedOrigin.Y) + "," + 
+        				(position.Z - transformedOrigin.Z) + "," + 
+        				
+        				VOILatticeManagerInterface.VoxelSize * (position.X - transformedOrigin.X) + "," + 
+        				VOILatticeManagerInterface.VoxelSize * (position.Y - transformedOrigin.Y) + "," + 
+        				VOILatticeManagerInterface.VoxelSize * (position.Z - transformedOrigin.Z) +
+        				"\n");
         	}
             bw.newLine();
         	bw.close();
