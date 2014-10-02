@@ -25,6 +25,17 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 	 */
 	private ArrayList<String[]> fileLines;
 	
+	private int varName = -1;
+	private int fieldType = -1;
+	private int title = -1;
+	private int permValues = -1;
+	private int permValDesc = -1;
+	private int measureType = -1;
+	private int dataType = -1;
+	private int minVal = -1;
+	private int maxVal = -1;
+	private int fieldSize = -1;
+	
 	public PlugInAlgorithmDataElementTransfer(File input){
 		
 		//Output file is saved to the same directory
@@ -384,17 +395,6 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 		
 		return realout;
 	}
-	
-	private int varName = -1;
-	private int fieldType = -1;
-	private int title = -1;
-	private int permValues = -1;
-	private int permValDesc = -1;
-	private int measureType = -1;
-	private int dataType = -1;
-	private int minVal = -1;
-	private int maxVal = -1;
-	private int fieldSize = -1;
 	
 	/**
 	 * Initialize the output CSV header
