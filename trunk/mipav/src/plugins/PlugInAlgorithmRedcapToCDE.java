@@ -22,11 +22,14 @@ public class PlugInAlgorithmRedcapToCDE extends AlgorithmBase {
 	
 	private String stewardName;
 	
-	public PlugInAlgorithmRedcapToCDE(File input, String subName, String stewName){
+	private String keyword;
+	
+	public PlugInAlgorithmRedcapToCDE(File input, String subName, String stewName, String key){
 		file = input; 
 		fileLines = new ArrayList<String[]>();
 		submitName = subName;
 		stewardName = stewName;
+		keyword = key;
 	}
 	
 	@Override
@@ -104,8 +107,9 @@ public class PlugInAlgorithmRedcapToCDE extends AlgorithmBase {
 						notes = line[5];
 					else notes += " | " + line[5];
 				}else if(field.equals("yesno")){
-					values = "0;1";
-					valueDesc = "No;Yes";
+					values = "Yes;No";
+					valueDesc = "Yes;No";
+					type = "Alphanumeric";
 					restriction = "Single Pre-Defined Value Selected";
 				}else{
 					
@@ -114,8 +118,9 @@ public class PlugInAlgorithmRedcapToCDE extends AlgorithmBase {
 				String output = name + "," + title + ",Unique Data Element,," + desc + ","
 						+ type + "," + size + "," + restriction + "," + min + "," + max + ","
 						+ values + "," + valueDesc + "," + units + ",," + notes
-						+ ",,,,,,,,,,,,,Adult;Pediatric"
-						+ ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,," + submitName + ",,,"
+						+ ",," + keyword + ",,,,,,,,,,,Adult;Pediatric"
+						+ ",,,,,,,,,,,,,,,,,,Supplemental,Supplemental,Supplemental,Supplemental,"
+						+ ",,,,,,,,,,,,,," + submitName + ",,,"
 						+ stewardName + "\r\n";
 				
 				wr.write(output);

@@ -35,6 +35,8 @@ public class PlugInDialogRedcapToCDE extends JDialogStandalonePlugin implements 
 	
 	private JTextField submitText;
 	
+	private JTextField keyText;
+	
 	private JFileChooser fileChooser;
 	
 	public PlugInDialogRedcapToCDE(){
@@ -97,13 +99,15 @@ public class PlugInDialogRedcapToCDE extends JDialogStandalonePlugin implements 
 		
 		String steward = stewardText.getText();
 		String submitter = submitText.getText();
+		String key = keyText.getText();
 		
-		if(steward.equals("") || submitter.equals("")){
+		if(steward.equals("") || submitter.equals("")
+				|| key.equals("")){
 			MipavUtil.displayError("All fields must be populated");
 			return;
 		}
 		
-		PlugInAlgorithmRedcapToCDE alg = new PlugInAlgorithmRedcapToCDE(file, submitter, steward);
+		PlugInAlgorithmRedcapToCDE alg = new PlugInAlgorithmRedcapToCDE(file, submitter, steward, key);
 		alg.addListener(this);
 		alg.run();
 	}
@@ -190,6 +194,21 @@ public class PlugInDialogRedcapToCDE extends JDialogStandalonePlugin implements 
         stewardText = new JTextField(20);
         stewardText.setFont(serif12);
         textPanel.add(stewardText, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.weightx = 0;
+        
+        JLabel keyLabel = new JLabel("Keyword");
+        keyLabel.setFont(serif12);
+        textPanel.add(keyLabel, gbc);
+
+        gbc.gridx = 1;
+        gbc.weighty = 1;
+        
+        keyText = new JTextField(20);
+        keyText.setFont(serif12);
+        textPanel.add(keyText, gbc);
         
         centerPanel.add(textPanel);
         
