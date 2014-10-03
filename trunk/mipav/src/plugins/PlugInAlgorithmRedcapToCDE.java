@@ -126,7 +126,7 @@ public class PlugInAlgorithmRedcapToCDE extends AlgorithmBase {
 					
 					if(type.equals("Numeric Values")){
 						type = "Alphanumeric";
-						keyValues += "Key values [" + values + "] ";
+						keyValues += "Code values [" + values + "] ";
 						values = valueDesc;
 					}
 				}else if(field.equals("calc")){
@@ -141,7 +141,7 @@ public class PlugInAlgorithmRedcapToCDE extends AlgorithmBase {
 					valueDesc = "Yes;No";
 					type = "Alphanumeric";
 					restriction = "Single Pre-Defined Value Selected";
-					keyValues += "Key values [1;0]";
+					keyValues += "Code values [1;0]";
 				}else{
 					
 				}
