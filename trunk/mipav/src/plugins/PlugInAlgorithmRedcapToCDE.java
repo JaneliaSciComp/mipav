@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
@@ -24,12 +25,33 @@ public class PlugInAlgorithmRedcapToCDE extends AlgorithmBase {
 	
 	private String keyword;
 	
+	private Comparator<String> compare;
+	
 	public PlugInAlgorithmRedcapToCDE(File input, String subName, String stewName, String key){
 		file = input; 
 		fileLines = new ArrayList<String[]>();
 		submitName = subName;
 		stewardName = stewName;
 		keyword = key;
+		
+		compare = new Comparator<String>(){
+
+			@Override
+			public int compare(String o1, String o2) {
+				try{
+					float n1 = Float.valueOf(o1);
+					float n2 = Float.valueOf(o2);
+					if(n1 > n2)
+						return 1;
+					else if(n1 < n2)
+						return -1;
+					else return 0;
+				} catch (NumberFormatException e){
+					return o1.compareTo(o2);
+				}
+			}
+			
+		};
 	}
 	
 	@Override
@@ -58,7 +80,8 @@ public class PlugInAlgorithmRedcapToCDE extends AlgorithmBase {
 				String max = line[9];
 				String restriction = "";
 				String units = ""; //No units in Redcap
-				String notes = line[11] + "";
+				String notes = line[11];
+				String keyValues = "";
 				
 				//question is what to do with branching logic?
 				
@@ -69,11 +92,11 @@ public class PlugInAlgorithmRedcapToCDE extends AlgorithmBase {
 							line[7].equals("integer"))
 						type = "Numeric Values";
 					else type = "Alphanumeric";
-					size = "55";
+					size = "255";
 					restriction = "Free-Form Entry";
 				}else if(field.equals("notes")){
 					type = "Alphanumeric";
-					size = "200";
+					size = "4000";
 					restriction = "Free-Form Entry";
 				}else if(field.equals("dropdown") || 
 						field.equals("checkbox") ||
@@ -92,6 +115,7 @@ public class PlugInAlgorithmRedcapToCDE extends AlgorithmBase {
 					}
 					values = values.substring(0, values.length() - 1);
 					valueDesc = valueDesc.substring(0, valueDesc.length() - 1);
+					
 					if(values.contains(","))
 						values = "\"" + values + "\"";
 					if(valueDesc.contains(","))
@@ -99,6 +123,12 @@ public class PlugInAlgorithmRedcapToCDE extends AlgorithmBase {
 					if(field.equals("radio"))
 						restriction = "Single Pre-Defined Value Selected";
 					else restriction = "Multiple Pre-Defined Values Selected";
+					
+					if(type.equals("Numeric Values")){
+						type = "Alphanumeric";
+						keyValues += "Key values [" + values + "] ";
+						values = valueDesc;
+					}
 				}else if(field.equals("calc")){
 					//what to do here? no clue right now
 					type = "Numeric Values";
@@ -111,13 +141,14 @@ public class PlugInAlgorithmRedcapToCDE extends AlgorithmBase {
 					valueDesc = "Yes;No";
 					type = "Alphanumeric";
 					restriction = "Single Pre-Defined Value Selected";
+					keyValues += "Key values [1;0]";
 				}else{
 					
 				}
 				
 				String output = name + "," + title + ",Unique Data Element,," + desc + ","
 						+ type + "," + size + "," + restriction + "," + min + "," + max + ","
-						+ values + "," + valueDesc + "," + units + ",," + notes
+						+ values + "," + valueDesc + "," + units + "," + notes + "," + keyValues
 						+ ",," + keyword + ",,,,,,,,,,,Adult;Pediatric"
 						+ ",,,,,,,,,,,,,,,,,,Supplemental,Supplemental,Supplemental,Supplemental,"
 						+ ",,,,,,,,,,,,,," + submitName + ",,,"
@@ -196,7 +227,7 @@ public class PlugInAlgorithmRedcapToCDE extends AlgorithmBase {
 		if(choices.startsWith("\""))
 			choices = choices.substring(1,choices.length()-1);
 		String[] split = choices.split("\\|");
-		TreeMap<String, String> pairs = new TreeMap<String, String>();
+		TreeMap<String, String> pairs = new TreeMap<String, String>(compare);
 		for(int i=0;i<split.length;i++){
 			String[] pair = split[i].split(",");
 			pairs.put(pair[0].trim(), pair[1].trim());
