@@ -1208,16 +1208,15 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			}
 			else if ( m_iDrawType == BSPLINE) 
 			{
-				anchorBSpline(kEvent.getX(), kEvent.getY(), true);
+				// anchorBSpline(kEvent.getX(), kEvent.getY(), true);
 			}
 			else
 			{
-				anchorPolyline( kEvent.getX(), kEvent.getY(), true );                
+				// anchorPolyline( kEvent.getX(), kEvent.getY(), true );                
 			}
 			
 			
-			m_kCurrentVOI.trimPoints(Preferences.getTrimVoi(),
-					Preferences.getTrimAdjacient());
+			// m_kCurrentVOI.trimPoints(Preferences.getTrimVoi(), Preferences.getTrimAdjacient());
 			//m_bDrawVOI = false;
 			m_iNearStatus = NearNone;
 			//m_kParent.setDefaultCursor();
