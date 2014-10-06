@@ -25,6 +25,11 @@ public class PlugInAlgorithmRedcapToCDE extends AlgorithmBase {
 	
 	private String keyword;
 	
+	/**
+	 * Correctly compare the permissible values
+	 * so that numbers compare correctly instead
+	 * or lexographically comparing numbers
+	 */
 	private Comparator<String> compare;
 	
 	public PlugInAlgorithmRedcapToCDE(File input, String subName, String stewName, String key){
@@ -47,6 +52,8 @@ public class PlugInAlgorithmRedcapToCDE extends AlgorithmBase {
 						return -1;
 					else return 0;
 				} catch (NumberFormatException e){
+					//If one or both are not numbers, 
+					//compare lexographically
 					return o1.compareTo(o2);
 				}
 			}
@@ -65,11 +72,10 @@ public class PlugInAlgorithmRedcapToCDE extends AlgorithmBase {
 		
 			FileWriter wr = new FileWriter(outCSV, true);
 			for(int i=0;i<fileLines.size();i++){
+				
 				String[] line = fileLines.get(i);
 				String name = convertName(line[0]);
 				String title = line[4];
-				/*if(title.contains(","))
-					title = "\"" + title + "\"";*/
 				String desc = title;
 				String type = "";
 				String size = "";
@@ -82,8 +88,6 @@ public class PlugInAlgorithmRedcapToCDE extends AlgorithmBase {
 				String units = ""; //No units in Redcap
 				String notes = line[11];
 				String keyValues = "";
-				
-				//question is what to do with branching logic?
 				
 				if(field.equals("text")){
 					if(line[7].startsWith("date"))
@@ -120,9 +124,9 @@ public class PlugInAlgorithmRedcapToCDE extends AlgorithmBase {
 						values = "\"" + values + "\"";
 					if(valueDesc.contains(","))
 						valueDesc = "\"" + valueDesc + "\"";
-					if(field.equals("radio"))
-						restriction = "Single Pre-Defined Value Selected";
-					else restriction = "Multiple Pre-Defined Values Selected";
+					if(field.equals("checkbox"))
+						restriction = "Multiple Pre-Defined Values Selected";
+					else restriction = "Single Pre-Defined Value Selected";
 					
 					if(type.equals("Numeric Values")){
 						type = "Alphanumeric";
