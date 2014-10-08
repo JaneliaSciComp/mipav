@@ -50,6 +50,12 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
 
     /** DOCUMENT ME! */
     private int innerIndex = -1;
+    
+    /** DOCUMENT ME! */
+    private boolean removeOriginal;
+
+    /** DOCUMENT ME! */
+    private JCheckBox removeOriginalCheckBox;
 
 
     /** DOCUMENT ME! */
@@ -69,6 +75,10 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
 
     /** DOCUMENT ME! */
     private int yPos;
+    
+    private VOI resultVOI = null;
+    
+    private String[] titles;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -148,7 +158,44 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
 
-        if (dualAlgo.isCompleted() == true) { }
+        if (dualAlgo.isCompleted() == true) {
+
+                 // The algorithm has completed and produced a new VOI to be displayed.
+                 resultVOI = dualAlgo.getResultVOI();
+                 if (resultVOI != null) {
+                     resultVOI.setColor(Color.GREEN);
+                 }
+
+                 if (removeOriginal) {
+                     image.getVOIs().removeElementAt(Math.max(innerIndex, outerIndex));
+                     image.getVOIs().removeElementAt(Math.min(innerIndex, outerIndex));
+                 }
+
+                 if (resultVOI != null) {
+                     image.registerVOI(resultVOI);
+                 }
+
+                 // Update frame
+                 if ( voiManager != null )
+                 {
+                     voiManager.algorithmPerformed();
+                 }
+
+           } // if(dualAlgo.isCompleted() == true)
+
+             // These next lines set the titles in all frames where the source image is displayed to
+             // image name so as to indicate that the image is now unlocked!
+             // The image frames are enabled and then registed to the userinterface.
+             Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
+
+             for (int i = 0; i < imageFrames.size(); i++) {
+             	if ( imageFrames.elementAt(i) instanceof ViewJFrameBase )
+             	{
+             		((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
+             		((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
+             		((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame) (imageFrames.elementAt(i)));
+             	}
+             }
 
         dispose();
     }
@@ -202,6 +249,21 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
 
             // Hide dialog
             setVisible(false);
+            
+            // These next lines set the titles in all frames where the source image is displayed to
+            // "locked - " image name so as to indicate that the image is now read/write locked!
+            // The image frames are disabled and then unregisted from the userinterface until the
+            // algorithm has completed.
+            Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
+            titles = new String[imageFrames.size()];
+
+            for (int i = 0; i < imageFrames.size(); i++) {
+                titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
+                ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
+                ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame)
+                                                                                  (imageFrames.elementAt(i)));
+            }
 
             if (isRunInSeparateThread()) {
 
@@ -249,23 +311,22 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
         gbc4.gridy = 0;
 
         VOIGroup = new ButtonGroup();
-
-        innerButton = new JRadioButton("Add required inner contour", true);
-        innerButton.setForeground(Color.red);
-        innerButton.setFont(serif12);
-        innerButton.addActionListener(this);
-        VOIGroup.add(innerButton);
-        VOIPanel.add(innerButton, gbc4);
-        componentImage.getVOIHandler().newVOI(0.0f); // red
-       
-
-        outerButton = new JRadioButton("Add required outer contour", false);
+        
+        outerButton = new JRadioButton("Add required outer contour", true);
         outerButton.setForeground(Color.blue);
         outerButton.setFont(serif12);
         outerButton.addActionListener(this);
         VOIGroup.add(outerButton);
-        gbc4.gridy = 1;
         VOIPanel.add(outerButton, gbc4);
+        componentImage.getVOIHandler().newVOI(2.0f/3.0f); // blue
+
+        innerButton = new JRadioButton("Add required inner contour", false);
+        innerButton.setForeground(Color.red);
+        innerButton.setFont(serif12);
+        innerButton.addActionListener(this);
+        VOIGroup.add(innerButton);
+        gbc4.gridy = 1;
+        VOIPanel.add(innerButton, gbc4);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
@@ -329,6 +390,14 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
         textRegularization.setFont(serif12);
         gbc.gridx = 1;
         paramPanel.add(textRegularization, gbc);
+        
+        removeOriginalCheckBox = new JCheckBox("Remove Original Contours");
+        removeOriginalCheckBox.setFont(serif12);
+        removeOriginalCheckBox.setForeground(Color.black);
+        removeOriginalCheckBox.setSelected(false);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        paramPanel.add(removeOriginalCheckBox, gbc);
 
         getContentPane().add(VOIPanel, BorderLayout.NORTH);
         getContentPane().add(paramPanel, BorderLayout.CENTER);
@@ -446,6 +515,8 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
         	
         	return false;
         }
+        
+        removeOriginal = removeOriginalCheckBox.isSelected();
         
 
         return true;
