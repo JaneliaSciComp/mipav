@@ -21,6 +21,7 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 	private int contourPoints;
 	private int linePoints;
 	private double regularization;
+	private VOI resultVOI = null;
 	
 	
 	public  AlgorithmDualContourSearch(ModelImage srcImg, int innerIndex, int outerIndex, int contourPoints, int linePoints,
@@ -34,7 +35,19 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		this.regularization = regularization;
 	}
 	
+	/**
+     * Accessor that returns the resultant VOI.
+     *
+     * @return  resultant VOI that has localized to the boundaries of the object
+     */
+    public VOI getResultVOI() {
+        return resultVOI;
+    }
+	
 	public void runAlgorithm() {
+		  
 		
+		setCompleted(true);
+		return;
 	}
 }
