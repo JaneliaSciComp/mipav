@@ -879,6 +879,7 @@ public class ViewMenuBar {
                                 menuBuilder.makeMenu("Evolve boundary 2D", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem("Active contour", "Snake", 0, null, false),
                                         menuBuilder.buildMenuItem("Active GVF", "AGVF", 0, null, false),
+                                        menuBuilder.buildMenuItem("Dual contour search", "DCSearch", 0, null, false),
                                         menuBuilder.buildMenuItem("Spline active contour", "BSnake", 0, null, false),
                                         menuBuilder.buildMenuItem("Spline GVF", "GVF", 0, null, false),
                                         menuBuilder.buildMenuItem("User-defined", "EvolveConstant", 0, null, false)}),
@@ -1086,6 +1087,7 @@ public class ViewMenuBar {
                                 menuBuilder.makeMenu("Evolve boundary 2D", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem("Active contour", "Snake", 0, null, false),
                                         menuBuilder.buildMenuItem("Active GVF", "AGVF", 0, null, false),
+                                        menuBuilder.buildMenuItem("Dual contour search", "DCSearch", 0, null, false),
                                         menuBuilder.buildMenuItem("Spline active contour", "BSnake", 0, null, false),
                                         menuBuilder.buildMenuItem("Spline GVF", "GVF", 0, null, false),
                                         menuBuilder.buildMenuItem("User-defined", "EvolveConstant", 0, null, false)}),
