@@ -33,4 +33,8 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		this.linePoints = linePoints;
 		this.regularization = regularization;
 	}
+	
+	public void runAlgorithm() {
+		
+	}
 }
