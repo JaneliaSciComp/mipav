@@ -64,6 +64,7 @@ import gov.nih.mipav.view.dialogs.JDialogBSnake;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogBoundingVOIs;
 import gov.nih.mipav.view.dialogs.JDialogConvexHull2D;
+import gov.nih.mipav.view.dialogs.JDialogDualContourSearch;
 import gov.nih.mipav.view.dialogs.JDialogEditCircleDiameter;
 import gov.nih.mipav.view.dialogs.JDialogEditSquareLength;
 import gov.nih.mipav.view.dialogs.JDialogEvolveBoundaryManual;
@@ -928,6 +929,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 return;
             }
             evolveBoundary2D(command);
+        } else if (command.equals("DCSearch")) {
+        	evolveBoundary2D(command);	
         } else if (command.equals("SmoothVOI")) {
             if ( !checkForActiveVOIs()) {
                 MipavUtil.displayWarning("Please select a VOI!");
@@ -3342,6 +3345,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         else if (command.equals("EvolveConstant")) {
             JDialogEvolveBoundaryManual kEvolve = new JDialogEvolveBoundaryManual(m_kParent.getFrame(), m_kTempImage);
             kEvolve.setVOIManager(this);
+        }
+        else if (command.equals("DCSearch")) {
+        	JDialogDualContourSearch kEvolve = new JDialogDualContourSearch(m_kParent.getFrame(), m_kTempImage);
+            kEvolve.setVOIManager(this);	
         }
     }
 
