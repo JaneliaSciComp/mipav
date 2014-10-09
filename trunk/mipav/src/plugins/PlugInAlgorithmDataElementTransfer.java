@@ -438,46 +438,74 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 			fileLines = new ArrayList<String[]>();
 			String line;
 			String header = lineScan.next();
+			System.out.println(unEscapeString(header));
 			String[] hArray = header.split(",");
 			for(int i=0;i<hArray.length;i++){
 				String hVal = hArray[i].trim();
-				if(hVal.equals("Name"))
+				hVal = hVal.replace("\"", "");
+				if(hVal.equalsIgnoreCase("Variable Name"))
 					varName = i;
-				else if(hVal.equals("Title"))
+				else if(hVal.equalsIgnoreCase("Title"))
 					title = i;
-				else if(hVal.equals("Size"))
+				else if(hVal.equalsIgnoreCase("Maximum Character Quantity"))
 					fieldSize = i;
-				else if(hVal.equals("Input Restrictions"))
+				else if(hVal.equalsIgnoreCase("Input Restriction"))
 					fieldType = i;
-				else if(hVal.equals("Permissible Values"))
+				else if(hVal.equalsIgnoreCase("Permissible Values"))
 					permValues = i;
-				else if(hVal.equals("Permissible Value Descriptions"))
+				else if(hVal.equalsIgnoreCase("Permissible Value Descriptions"))
 					permValDesc = i;
-				else if(hVal.equals("Measurement Type"))
+				else if(hVal.equalsIgnoreCase("Unit of Measure"))
 					measureType = i;
-				else if(hVal.equals("Data Type"))
+				else if(hVal.equalsIgnoreCase("Datatype"))
 					dataType = i;
-				else if(hVal.equals("Minimum Value"))
+				else if(hVal.equalsIgnoreCase("Minimum Value"))
 					minVal = i;
-				else if(hVal.equals("Maximum Value"))
+				else if(hVal.equalsIgnoreCase("Maximum Value"))
 					maxVal = i;
 			}
 			if(varName == -1 || fieldType == -1 || title == -1 || permValues == -1
 					|| permValDesc == -1 || measureType == -1 || dataType == -1 
 					|| minVal == -1 || maxVal == -1 || fieldSize == -1){
 				MipavUtil.displayError("A header is missing");
+				System.out.printf("%d %d %d %d %d %d %d %d %d %d\n", varName, fieldType, title,
+						permValues, permValDesc, measureType, dataType, minVal, maxVal, fieldSize);
+				scan.close();
 				return true;
 			}
-			while(lineScan.hasNext()){
-				cnt++;
-				line = scan.next();
-				if(line.contains(",")){
-					lineArray = parseLine(line);
-					if(lineArray.length != 0){
-						fileLines.add(lineArray);
+			
+			if(header.contains("\"\n\"")){
+				//some weird stuff was occuring where when I downloaded some
+				//CDEs, the lines were separated by \n instead of \r\n, so this
+				//is the fix for it
+				header = header.replace("\"\n\"", "\"\r\n\"");
+				String[] split = header.split("\r\n");
+				for(int i=1;i<split.length;i++){
+					String[] parts = parseLine(split[i]);
+					for(int j=0;j<parts.length;j++){
+						if(!parts[j].contains(",")){
+							parts[j] = parts[j].replace("\"", "");
+						}
+					}
+					fileLines.add(parts);
+				}
+			} else {
+				//old style
+				while(lineScan.hasNext()){
+					cnt++;
+					line = scan.next();
+					//System.out.println(line);
+					if(line.contains(",")){
+						lineArray = parseLine(line);
+						if(lineArray.length != 0){
+							fileLines.add(lineArray);
+						}
 					}
 				}
 			}
+			
+				
+			
 			scan.close();
 		}
 		catch (IOException ex){
@@ -519,6 +547,22 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 		return out;
 		
 		
+	}
+	
+	public static String unEscapeString(String s){
+	    StringBuilder sb = new StringBuilder();
+	    for (int i=0; i<s.length(); i++){
+	        char c = s.charAt(i);
+	        if(c == '\n'){
+	        	sb.append("\\n");
+	        } else if (c == '\r'){
+	        	sb.append("\\r");
+	        } else {
+	        	// ... rest of escape characters
+	        sb.append(s.charAt(i));
+	        }
+	    }
+	    return sb.toString();
 	}
 
 
