@@ -15,7 +15,8 @@ import javax.swing.*;
 /**
  * Dialog to get user search for best boundary between 2 contours
  */
-public class JDialogDualContourSearch extends JDialogBase implements AlgorithmInterface, ItemListener, WindowListener {
+@SuppressWarnings("serial")
+public class JDialogDualContourSearch extends JDialogBase implements AlgorithmInterface, WindowListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -65,20 +66,20 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
     private ModelImage image;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
     private ButtonGroup VOIGroup;
 
     /** DOCUMENT ME! */
     private ViewVOIVector VOIs;
-
-    /** DOCUMENT ME! */
-    private int yPos;
     
     private VOI resultVOI = null;
     
     private String[] titles;
+    
+    private float sigmas[] = new float[]{2.0f, 2.0f};
+    
+    private JTextField textGaussX;
+    
+    private JTextField textGaussY;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -89,7 +90,6 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
      */
     public JDialogDualContourSearch(ModelImage image) {
         super();
-        this.UI = ViewUserInterface.getReference();
         this.image = image;
         parentFrame = image.getParentFrame();
         componentImage = ((ViewJFrameImage) parentFrame).getComponentImage();
@@ -105,7 +105,6 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
         super(theParentFrame, false);
         image = im;
         componentImage = ((ViewJFrameImage) theParentFrame).getComponentImage();
-        UI = ViewUserInterface.getReference();
         init();
     }
 
@@ -160,19 +159,10 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
 
         if (dualAlgo.isCompleted() == true) {
 
-                 // The algorithm has completed and produced a new VOI to be displayed.
-                 resultVOI = dualAlgo.getResultVOI();
-                 if (resultVOI != null) {
-                     resultVOI.setColor(Color.GREEN);
-                 }
-
+                 
                  if (removeOriginal) {
                      image.getVOIs().removeElementAt(Math.max(innerIndex, outerIndex));
                      image.getVOIs().removeElementAt(Math.min(innerIndex, outerIndex));
-                 }
-
-                 if (resultVOI != null) {
-                     image.registerVOI(resultVOI);
                  }
 
                  // Update frame
@@ -204,19 +194,6 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
     // *******************************************************************
 
     /**
-     * itemStateChanged.
-     *
-     * @param  event  DOCUMENT ME!
-     */
-    public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
-
-        
-
-
-    } 
-
-    /**
      * Disposes of error dialog, then frame. Sets cancelled to <code>true</code>.
      *
      * @param  event  DOCUMENT ME!
@@ -238,7 +215,8 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
 
             
 
-            dualAlgo = new AlgorithmDualContourSearch(image, innerIndex, outerIndex, contourPoints, linePoints, regularization);
+            dualAlgo = new AlgorithmDualContourSearch(image, innerIndex, outerIndex, contourPoints, linePoints,
+            		regularization, sigmas);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -335,7 +313,6 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        yPos = 0;
         gbc.gridx = 0;
         gbc.gridy = 0;
 
@@ -391,12 +368,38 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
         gbc.gridx = 1;
         paramPanel.add(textRegularization, gbc);
         
+        JLabel labelGaussX = new JLabel(" X dimension gaussian (0.5 - 5.0) ");
+        labelGaussX.setForeground(Color.black);
+        labelGaussX.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        paramPanel.add(labelGaussX, gbc);
+
+        textGaussX = new JTextField();
+        textGaussX.setText("2.0");
+        textGaussX.setFont(serif12);
+        gbc.gridx = 1;
+        paramPanel.add(textGaussX, gbc);
+
+        JLabel labelGaussY = new JLabel(" Y dimension gaussian (0.5 - 5.0) ");
+        labelGaussY.setForeground(Color.black);
+        labelGaussY.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        paramPanel.add(labelGaussY, gbc);
+
+        textGaussY = new JTextField();
+        textGaussY.setText("2.0");
+        textGaussY.setFont(serif12);
+        gbc.gridx = 1;
+        paramPanel.add(textGaussY, gbc);
+        
         removeOriginalCheckBox = new JCheckBox("Remove Original Contours");
         removeOriginalCheckBox.setFont(serif12);
         removeOriginalCheckBox.setForeground(Color.black);
         removeOriginalCheckBox.setSelected(false);
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 5;
         paramPanel.add(removeOriginalCheckBox, gbc);
 
         getContentPane().add(VOIPanel, BorderLayout.NORTH);
@@ -514,6 +517,28 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
         	textRegularization.selectAll();
         	
         	return false;
+        }
+        
+        tmpStr = textGaussX.getText();
+
+        if (testParameter(tmpStr, 0.5, 5.0)) {
+            sigmas[0] = Float.valueOf(tmpStr).floatValue();
+        } else {
+            textGaussX.requestFocus();
+            textGaussX.selectAll();
+
+            return false;
+        }
+
+        tmpStr = textGaussY.getText();
+
+        if (testParameter(tmpStr, 0.5, 5.0)) {
+            sigmas[1] = Float.valueOf(tmpStr).floatValue();
+        } else {
+            textGaussY.requestFocus();
+            textGaussY.selectAll();
+
+            return false;
         }
         
         removeOriginal = removeOriginalCheckBox.isSelected();
