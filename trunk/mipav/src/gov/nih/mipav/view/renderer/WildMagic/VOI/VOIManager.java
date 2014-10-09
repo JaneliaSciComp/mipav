@@ -2174,6 +2174,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	        int curr_index = start_index;
 	        int w;
 	        
+	        if ( start_index < 0 ) return;
+	        
 	        Vector3f[] spline = new Vector3f[6];
 	        for ( w = 0, curr_index = start_index; w < 6; w++, curr_index++ ) {
 	        	spline[w] = new Vector3f(xNew[curr_index], yNew[curr_index], zNew[curr_index]);
