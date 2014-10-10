@@ -363,7 +363,7 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
         paramPanel.add(labelRegularization, gbc);
         
         textRegularization = new JTextField();
-        textRegularization.setText("0.7");
+        textRegularization.setText("0.5");
         textRegularization.setFont(serif12);
         gbc.gridx = 1;
         paramPanel.add(textRegularization, gbc);
