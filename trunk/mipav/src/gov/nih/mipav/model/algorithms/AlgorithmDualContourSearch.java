@@ -109,6 +109,7 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		 int im1;
 		 Vector3f resultPt[] = new Vector3f[contourPoints];
 		 Vector<Vector3f>resultCurve = new Vector();
+		 boolean problem;
 		 
 		 xDim = srcImage.getExtents()[0];
 		 yDim = srcImage.getExtents()[1];
@@ -145,58 +146,81 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		 yCenter = innerCenter.Y;
 		 
 		 largestDistance = Math.sqrt((xDim-1)*(xDim-1) + (yDim-1)*(yDim-1));
-		 for (i = 0; i < contourPoints; i++) {
-		     theta = 2.0 * i * Math.PI/contourPoints;
-		     costheta = Math.cos(theta);
-		     sintheta = Math.sin(theta);
-		     minDistance = 0.0;
-		     maxDistance = largestDistance;
-		     boundaryDistance = Double.MAX_VALUE;
-		     while (Math.abs(boundaryDistance) > 1.0E-1) {
-		         distance = (minDistance + maxDistance)/2.0;
-		         delX = costheta*distance;
-		         delY = sintheta*distance;
-		         innerX = xCenter + delX;
-		         innerY = yCenter + delY;
-		         boundaryDistance = innerContour.pinpol(innerX, innerY, snear, i1, i2);
-		         if (boundaryDistance < 0.0) {
-		        	 // point outside polygon
-		        	 maxDistance = distance;
-		         }
-		         else if (boundaryDistance > 0.0) {
-		        	 // point inside polygon
-		        	 minDistance = distance;
-		         }
-		     } // while (Math.abs(boundaryDistance) > 1.0E-1)
-		     xArray[i][0] = innerX;
-		     yArray[i][0] = innerY;
-		     maxDistance = largestDistance;
-		     boundaryDistance = Double.MAX_VALUE;
-		     while (Math.abs(boundaryDistance) > 1.0E-1) {
-		         distance = (minDistance + maxDistance)/2.0;
-		         delX = costheta*distance;
-		         delY = sintheta*distance;
-		         outerX = xCenter + delX;
-		         outerY = yCenter + delY;
-		         boundaryDistance = outerContour.pinpol(outerX, outerY, snear, i1, i2);
-		         if (boundaryDistance < 0.0) {
-		        	 // point outside polygon
-		        	 maxDistance = distance;
-		         }
-		         else if (boundaryDistance > 0.0) {
-		        	 // point inside polygon
-		        	 minDistance = distance;
-		         }
-		     } // while (Math.abs(boundaryDistance) > 1.0E-1)
-		     xArray[i][linePoints-1] = outerX;
-		     yArray[i][linePoints-1] = outerY;
-		     delX = (outerX - innerX)/(linePoints-1);
-		     delY = (outerY - innerY)/(linePoints-1);
-		     for (j = 1; j <= linePoints-2; j++) {
-		    	 xArray[i][j] = innerX + j * delX;
-		         yArray[i][j] = innerY + j * delY;
-		     }
-		 } // for (i = 0; i < contourPoints; i++)
+		 problem = true;
+		 loop: while (problem) {
+			 problem = false;
+			 for (i = 0; i < contourPoints; i++) {
+			     theta = 2.0 * i * Math.PI/contourPoints;
+			     costheta = Math.cos(theta);
+			     sintheta = Math.sin(theta);
+			     minDistance = 0.0;
+			     maxDistance = largestDistance;
+			     boundaryDistance = Double.MAX_VALUE;
+			     while (Math.abs(boundaryDistance) > 1.0E-1) {
+			         distance = (minDistance + maxDistance)/2.0;
+			         if (((largestDistance - minDistance) < 1.0E-6) && (snear[0] == false)) {
+			             // Have a branch point on outside of contour that must be deleted
+			        	 innerContour.removeElementAt(i1[0]);
+			        	 Preferences.debug("Deleting inner contour outside branch with index " + i1[0] + "\n", 
+			        			 Preferences.DEBUG_ALGORITHM );
+			        	 innerCenter = innerContour.getGeometricCenter();
+			        	 xCenter = innerCenter.X;
+			    		 yCenter = innerCenter.Y;
+			    		 problem = true;
+			    		 continue loop;
+			         } // if (((largestDistance - minDistance) < 1.0E-6) && (snear[0] == false)) 
+			         delX = costheta*distance;
+			         delY = sintheta*distance;
+			         innerX = xCenter + delX;
+			         innerY = yCenter + delY;
+			         boundaryDistance = innerContour.pinpol(innerX, innerY, snear, i1, i2);
+			         if (boundaryDistance < 0.0) {
+			        	 // point outside polygon
+			        	 maxDistance = distance;
+			         }
+			         else if (boundaryDistance > 0.0) {
+			        	 // point inside polygon
+			        	 minDistance = distance;
+			         }
+			     } // while (Math.abs(boundaryDistance) > 1.0E-1)
+			     xArray[i][0] = innerX;
+			     yArray[i][0] = innerY;
+			     maxDistance = largestDistance;
+			     boundaryDistance = Double.MAX_VALUE;
+			     while (Math.abs(boundaryDistance) > 1.0E-1) {
+			         distance = (minDistance + maxDistance)/2.0;
+			         if (((largestDistance - minDistance) < 1.0E-6) && (snear[0] == false)) {
+			             // Have a branch point on outside of contour that must be deleted
+			        	 outerContour.removeElementAt(i1[0]);
+			        	 Preferences.debug("Deleting outer contour outside branch with index " + i1[0] + "\n", 
+			        			 Preferences.DEBUG_ALGORITHM );
+			    		 problem = true;
+			    		 continue loop;
+			         } // if (((largestDistance - minDistance) < 1.0E-6) && (snear[0] == false)) 
+			         delX = costheta*distance;
+			         delY = sintheta*distance;
+			         outerX = xCenter + delX;
+			         outerY = yCenter + delY;
+			         boundaryDistance = outerContour.pinpol(outerX, outerY, snear, i1, i2);
+			         if (boundaryDistance < 0.0) {
+			        	 // point outside polygon
+			        	 maxDistance = distance;
+			         }
+			         else if (boundaryDistance > 0.0) {
+			        	 // point inside polygon
+			        	 minDistance = distance;
+			         }
+			     } // while (Math.abs(boundaryDistance) > 1.0E-1)
+			     xArray[i][linePoints-1] = outerX;
+			     yArray[i][linePoints-1] = outerY;
+			     delX = (outerX - innerX)/(linePoints-1);
+			     delY = (outerY - innerY)/(linePoints-1);
+			     for (j = 1; j <= linePoints-2; j++) {
+			    	 xArray[i][j] = innerX + j * delX;
+			         yArray[i][j] = innerY + j * delY;
+			     }
+			 } // for (i = 0; i < contourPoints; i++)
+		 } // loop: while (problem)
 		 
 		 maxGrad = -Double.MAX_VALUE;
 		 minGrad = Double.MAX_VALUE;
