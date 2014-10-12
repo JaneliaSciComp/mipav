@@ -75,6 +75,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
     private Vector<Integer> includeRange;
 
     private JCheckBox includeNuclearImage;
+    private JTextField  nuclearFileNameText;
 
     public PlugInDialogWormLatticeStraighten() {}
 
@@ -148,7 +149,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 	                	}
     	                if ( includeNuclearImage.isSelected() )
     	                {    	    	
-    	                	fileName = baseFileNameText.getText() + "_nuclei_" + includeRange.elementAt(i) + ".tif";
+    	                	fileName = nuclearFileNameText.getText() + "_" + includeRange.elementAt(i) + ".tif";
     	                	voiFile = new File(baseFileDir + File.separator + fileName);
     	    	            if ( voiFile.exists() )
     	    	            {
@@ -169,9 +170,11 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
             	    		fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotations";            	    		
             				VOIVector annotations = new VOIVector();
             	    		voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-            				loadAllVOIsFrom(voiDir, false, annotations, false);
-            	    		model.setAnnotations( annotations.elementAt(0) );
-            	    		
+            				loadAllVOIsFrom(voiDir, true, annotations, false);
+            				if ( annotations.size() > 0 )
+            				{
+            					model.setAnnotations( annotations.elementAt(0) );
+            				}
             	    		model.interpolateLattice( false );
             	    		model.dispose();
             	    		model = null;
@@ -202,7 +205,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 	                	}
     	                if ( includeNuclearImage.isSelected() )
     	                {    	    	
-    	                	fileName = baseFileNameText.getText() + "_nuclei_" + fileCount + ".tif";
+    	                	fileName = nuclearFileNameText.getText() + "_" + fileCount + ".tif";
     	                	voiFile = new File(baseFileDir + File.separator + fileName);
     	    	            if ( voiFile.exists() )
     	    	            {
@@ -223,8 +226,11 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
             	    		fileName = baseFileNameText.getText() + "_" + fileCount + File.separator + "annotations";            	    		
             				VOIVector annotations = new VOIVector();
             	    		voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-            				loadAllVOIsFrom(voiDir, false, annotations, false);
-            	    		model.setAnnotations( annotations.elementAt(0) );
+            				loadAllVOIsFrom(voiDir, true, annotations, false);
+            				if ( annotations.size() > 0 )
+            				{
+            					model.setAnnotations( annotations.elementAt(0) );
+            				}
             	    		
             	    		model.interpolateLattice( false );
             	    		model.dispose();
@@ -301,6 +307,10 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 
     	includeNuclearImage = gui.buildCheckBox("include nuclear image", true );
     	panel.add(includeNuclearImage.getParent(), gbc);
+    	gbc.gridy++;
+
+    	nuclearFileNameText = gui.buildField("Nuclear image name: ", "Neuron");
+    	panel.add(nuclearFileNameText.getParent(), gbc);
     	gbc.gridy++;
 
     	getContentPane().add(panel, BorderLayout.CENTER);
