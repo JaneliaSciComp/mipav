@@ -144,6 +144,20 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		 innerCenter = innerContour.getGeometricCenter();
 		 xCenter = innerCenter.X;
 		 yCenter = innerCenter.Y;
+		 boundaryDistance = innerContour.pinpol(xCenter, yCenter, snear, i1, i2);
+         if (boundaryDistance < 0.0) {
+        	 // point outside polygon
+        	 Preferences.debug("Inner contour geometric center is outside innter contour\n", Preferences.DEBUG_ALGORITHM);
+        	 if (!snear[0]) {
+        		 // Nearer to vertex i1[0] than to a line segment
+        		 xCenter = innerContour.elementAt(i1[0]).X;
+        		 yCenter = innerContour.elementAt(i1[0]).Y;
+        	 }
+        	 else {
+        		 xCenter = (innerContour.elementAt(i1[0]).X + innerContour.elementAt(i2[0]).X)/2.0f;
+        		 yCenter = (innerContour.elementAt(i1[0]).Y + innerContour.elementAt(i2[0]).Y)/2.0f;	 
+        	 }
+         }
 		 
 		 largestDistance = Math.sqrt((xDim-1)*(xDim-1) + (yDim-1)*(yDim-1));
 		 problem = true;
