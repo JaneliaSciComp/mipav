@@ -1346,6 +1346,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Markov random field", false);
             menuBuilder.setMenuItemEnabled("Convergence field", false);
             menuBuilder.setMenuItemEnabled("BRISK", false);
+            menuBuilder.setMenuItemEnabled("Dual contour search", false);
         } else if (numberOfDimensions == 2) {
             menuBuilder.setMenuItemEnabled("Align patient position", false);
             menuBuilder.setMenuItemEnabled("Draw 3D rectangle VOI", false);
