@@ -327,6 +327,12 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			 statePreceding[contourPoints/2][nextLinePoint] = startingLinePoint;
 		 }
 		 
+		 for (i = 0; i < contourPoints; i++) {
+			 for (j = 0; j < linePoints; j++) {
+				 stateEnergy[i][j] = 0.0;
+			 }
+		 }
+		 
 		 for (i = contourPoints/2+1; i <= contourPoints-1; i++) {
 			 if (i == contourPoints - 1) {
 				 ip1 = 0;
