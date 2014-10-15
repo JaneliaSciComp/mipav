@@ -2080,6 +2080,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		Vector3f normStep = new Vector3f();
 		float stepPct = (float) 20.0;
 		
+		if ( size-2 < 0 ) return;
+		
 		Vector3f []BsplinePts = new Vector3f[5];
 		Vector3f startPt = voiLine.get(size-2);
 		Vector3f endPt = voiLine.get(size-1);
@@ -2257,13 +2259,15 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	}
 	
 	/**
-	 * With given x, y, z point coordinate, compute the gradient changes
+	 * With given x, y, z point coordinate, compute the gradient magnitude and gradient direction
 	 * @param xCoord		x coordinate
 	 * @param yCoord		y coordinate
 	 * @param zCoord	    z coordinate
 	 * @param result		result x, y direction gradient sum. 
+	 * @param grad			gradient magnitude
+	 * @param gradDir 		gradient direction. 
 	 */
-	private void computeGradient(float xCoord, float yCoord, float zCoord, double []result) {
+	private void computeGradient(float xCoord, float yCoord, float zCoord, double []result, double[] grad, double[] gradDir) {
 
 		double gradientXsrc = 0, gradientYsrc = 0;
 		
@@ -2292,6 +2296,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 			}
 		}
+		
+		grad[0] = Math.sqrt(gradientXsrc*gradientXsrc + gradientYsrc*gradientYsrc);
+		gradDir[0] = Math.atan2(gradientYsrc, gradientXsrc);
 		result[0] = gradientXsrc;
 		result[1] = gradientYsrc;
 	}
@@ -2306,65 +2313,40 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	 */
 	private void findBestGradientChange(Vector3f interpPt, Vector3f normStep, float sliceZ, float []x, float []y) {
 
-		float currentX, currentY;
-		currentX = interpPt.X;
-		currentY = interpPt.Y;
+		float centerX, centerY;
+		centerX = interpPt.X;
+		centerY = interpPt.Y;
 
-		double max_change_out = Double.MIN_VALUE;
-		double max_change_in = Double.MIN_VALUE;
+		double []result = new double[2];
+		double []grad = new double[1];
+		double []gradDir = new double[1];
+		
+		
+		double max_change = Double.MIN_VALUE;
 		double change;
-		float bestXout = 0f, bestYout = 0f;
-		float bestXin = 0f, bestYin = 0f;
-		float bestX, bestY;
-		float stepX = -normStep.X / 10f;
-		float stepY = -normStep.Y / 10f;
+		
+		float bestX = 0, bestY = 0;
+		float stepX = normStep.X / 20f;
+		float stepY = normStep.Y / 20f;
 
-		// interpPt --> outward tracing --> outNormPt
-		for (int i = 0; i < 3; i++) {
-			
-			double []result = new double[2];
-			computeGradient(currentX, currentY, sliceZ, result);
-			change = Math.abs(result[0]) + Math.abs(result[1]);
-			if (change > max_change_out) {
-				max_change_out = change;
-				bestXout = currentX;
-				bestYout = currentY;
+		centerX = centerX - normStep.X / 20f * 3;
+		centerY = centerY - normStep.Y / 20f * 3;
+		
+		for (int i = 0; i < 6; i++) {	
+			computeGradient(centerX, centerY, sliceZ, result, grad, gradDir);
+			change = grad[0];
+			if (change > max_change) {
+				max_change = change;
+				bestX = centerX;
+				bestY = centerY;
 			}
-			currentX += stepX;
-			currentY += stepY;
+			centerX += stepX;
+			centerY += stepY;
 		}
 
-		// interpPt --> inward tracing --> inNormPt
-		currentX = interpPt.X;
-		currentY = interpPt.Y;
-		stepX = normStep.X / 10f;
-		stepY = normStep.Y / 10f;
-		for (int i = 0; i < 3; i++) {
-			
-			double []result = new double[2];
-			computeGradient(currentX, currentY, sliceZ, result);
-			change = Math.abs(result[0]) + Math.abs(result[1]);
-			if (change > max_change_in) {
-				max_change_in = change;
-				bestXin = currentX;
-				bestYin = currentY;
-			}
-			currentX += stepX;
-			currentY += stepY;
-		}
-
-		if (max_change_in > max_change_out) {
-			bestX = bestXin;
-			bestY = bestYin;
-		} else {
-			bestX = bestXout;
-			bestY = bestYout;
-		}
 		x[0] = bestX;
 		y[0] = bestY;
-		
 	}
-	
 	
 	
 	/**
