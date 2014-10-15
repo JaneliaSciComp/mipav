@@ -6,9 +6,19 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
-import java.util.Vector;
 
 public class AlgorithmDualContourSearch extends AlgorithmBase {
+	
+	/*
+	 * References: 1.) Global and Local Active Contours for Head Boundary Extraction by Steve R. Gunn
+	 *                 and Mark S. Nixon, International Journal of Computer Vision, 30(1), pp. 43-54, 1998.
+	 *             2.) Active Contours for Head Boundary Extraction by Global and Local Energy Minimisation
+	 *                 by Steve R. Gunn and Mark S. Nixon, November, 1997.
+	 *             3.) Unsupervised cell nucleus segmentation with active contours by Pascal Bamford and
+	 *                 Brian Lovell, Signal Processing, 71, 1998, pp. 203-213.
+	 *             4.) Principles of Digital and Analog Communications Second Edition by Jerry D. Gibson,
+	 *                 Macmillan Publishing Company, 1993, pp. 363 -366 for Viterbi algorithm.
+	 */
 	
 	private int innerIndex;
 	private int outerIndex;
@@ -86,15 +96,14 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		 double maxGrad;
 		 double minGrad;
 		 int j;
-		 int k;
 		 int length;
 		 float[] imgBuffer;
 		 float gx;
 		 float gy;
 		 Vector2f interpPt;
 		 int bestLinePoint[] = new int[contourPoints];
-		 double lastState[][] = new double[linePoints][linePoints];
-		 double state[][] = new double[linePoints][linePoints];
+		 double stateEnergy[][] = new double[contourPoints][linePoints];
+		 int statePreceding[][] = new int[contourPoints][linePoints];
 		 int presentLinePoint;
 		 int nextLinePoint;
 		 double Eint;
@@ -108,8 +117,10 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		 int ip1;
 		 int im1;
 		 Vector3f resultPt[] = new Vector3f[contourPoints];
-		 Vector<Vector3f>resultCurve = new Vector();
 		 boolean problem;
+		 double stateEnergyTemp;
+		 int startingLinePoint;
+		 int terminatingLinePoint;
 		 
 		 xDim = srcImage.getExtents()[0];
 		 yDim = srcImage.getExtents()[1];
@@ -260,39 +271,62 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			 }
 		 }
 		 
-		 bestLinePoint[0] = linePoints/2;
+		 
+		 for (i = 0; i < linePoints; i++) {
+			 statePreceding[0][i] = linePoints/2;
+		 }
+		 
 		 for (i = 1; i <= contourPoints-2; i++) {
-			 minState = Double.MAX_VALUE;
-		     for (presentLinePoint = 0; presentLinePoint < linePoints; presentLinePoint++) {
-		    	 for (nextLinePoint = 0; nextLinePoint < linePoints; nextLinePoint++) {
-		    		 numX = xArray[i-1][bestLinePoint[i-1]] - 2.0*xArray[i][presentLinePoint] + xArray[i+1][nextLinePoint];
-		    		 numY = yArray[i-1][bestLinePoint[i-1]] - 2.0*yArray[i][presentLinePoint] + yArray[i+1][nextLinePoint];
+			 for (nextLinePoint = 0; nextLinePoint < linePoints; nextLinePoint++) {
+			     minState = Double.MAX_VALUE;
+			     for (presentLinePoint = 0; presentLinePoint < linePoints; presentLinePoint++) {
+			    	 numX = xArray[i-1][statePreceding[i-1][presentLinePoint]] - 2.0*xArray[i][presentLinePoint] +
+			    			 xArray[i+1][nextLinePoint];
+			    	 numY = yArray[i-1][statePreceding[i-1][presentLinePoint]] - 2.0*yArray[i][presentLinePoint] + 
+			    			 yArray[i+1][nextLinePoint];
 		    		 num = (numX*numX) + (numY*numY);
-		    		 denomX = xArray[i-1][bestLinePoint[i-1]] - xArray[i+1][nextLinePoint];
-		    		 denomY = yArray[i-1][bestLinePoint[i-1]] - yArray[i+1][nextLinePoint];
+		    		 denomX = xArray[i-1][statePreceding[i-1][presentLinePoint]] - xArray[i+1][nextLinePoint];
+		    		 denomY = yArray[i-1][statePreceding[i-1][presentLinePoint]] - yArray[i+1][nextLinePoint];
 		    		 denom = (denomX*denomX) + (denomY*denomY);
 		    		 Eint = num/denom;
-		    	     state[nextLinePoint][presentLinePoint] = lastState[presentLinePoint][bestLinePoint[i-1]]
+		    		 stateEnergyTemp = stateEnergy[i-1][presentLinePoint]
 		    	    		 + regularization*Eint + (1.0 - regularization)*Eimage[i][presentLinePoint];
-		    	     if (state[nextLinePoint][presentLinePoint] < minState) {
-		    	    	 minState = state[nextLinePoint][presentLinePoint];
-		    	    	 bestLinePoint[i] = presentLinePoint;
+		    		 if (stateEnergyTemp < minState) {
+		    	    	 minState = stateEnergyTemp;
+		    	    	 statePreceding[i][nextLinePoint] = presentLinePoint;
+		    	    	 stateEnergy[i][nextLinePoint] = stateEnergyTemp;
 		    	     }
-		    	 }
-		     } // for (presentLinePoint = 0; presentLinePoint < linePoints; presentLinePoint++)
-		     for (j = 0; j < linePoints; j++) {
-		    	 for (k = 0; k < linePoints; k++) {
-		    		 lastState[j][k] = state[j][k];
-		    	 }
-		     }
+			     } // for (presentLinePoint = 0; presentLinePoint < linePoints; presentLinePoint++)
+			 } // for (nextLinePoint = 0; nextLinePoint < linePoints; nextLinePoint++)
 		 } // for (i = 1; i <= contourPoints-2; i++)
 		 
+		 minState = Double.MAX_VALUE;
+		 terminatingLinePoint = -1;
+		 for (nextLinePoint = 0; nextLinePoint < linePoints; nextLinePoint++) {
+			 if (stateEnergy[contourPoints-2][nextLinePoint] < minState) {
+			     minState = stateEnergy[contourPoints-2][nextLinePoint];
+			     terminatingLinePoint = nextLinePoint;
+			 }
+		 }
 		 
-		 for (j = 0; j < linePoints; j++) {
-	    	 for (k = 0; k < linePoints; k++) {
-	    		 lastState[j][k] = 0;
-	    	 }
-	     }
+		 
+		 nextLinePoint = terminatingLinePoint;
+		 startingLinePoint = -1;
+		 for (i = contourPoints-2; i >= contourPoints/2 -1; i--) {
+		     presentLinePoint = statePreceding[i][nextLinePoint];
+		     if (i == contourPoints/2) {
+		         startingLinePoint = presentLinePoint;	 
+		     }
+		     else if (i == contourPoints/2 - 1) {
+		    	 terminatingLinePoint = nextLinePoint;
+		     }
+		     nextLinePoint = presentLinePoint;
+		 } // for (i = contourPoints-2; i >= contourPoints/2 -1; i--)
+		 
+		 for (nextLinePoint = 0; nextLinePoint < linePoints; nextLinePoint++) {
+			 statePreceding[contourPoints/2][nextLinePoint] = startingLinePoint;
+		 }
+		 
 		 for (i = contourPoints/2+1; i <= contourPoints-1; i++) {
 			 if (i == contourPoints - 1) {
 				 ip1 = 0;
@@ -300,62 +334,99 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			 else {
 				 ip1 = i + 1;
 			 }
-			 minState = Double.MAX_VALUE;
-		     for (presentLinePoint = 0; presentLinePoint < linePoints; presentLinePoint++) {
-		    	 for (nextLinePoint = 0; nextLinePoint < linePoints; nextLinePoint++) {
-		    		 numX = xArray[i-1][bestLinePoint[i-1]] - 2.0*xArray[i][presentLinePoint] + xArray[ip1][nextLinePoint];
-		    		 numY = yArray[i-1][bestLinePoint[i-1]] - 2.0*yArray[i][presentLinePoint] + yArray[ip1][nextLinePoint];
+			 for (nextLinePoint = 0; nextLinePoint < linePoints; nextLinePoint++) {
+			     minState = Double.MAX_VALUE;
+			     for (presentLinePoint = 0; presentLinePoint < linePoints; presentLinePoint++) {
+			    	 numX = xArray[i-1][statePreceding[i-1][presentLinePoint]] - 2.0*xArray[i][presentLinePoint] +
+			    			 xArray[ip1][nextLinePoint];
+			    	 numY = yArray[i-1][statePreceding[i-1][presentLinePoint]] - 2.0*yArray[i][presentLinePoint] + 
+			    			 yArray[ip1][nextLinePoint];
 		    		 num = (numX*numX) + (numY*numY);
-		    		 denomX = xArray[i-1][bestLinePoint[i-1]] - xArray[ip1][nextLinePoint];
-		    		 denomY = yArray[i-1][bestLinePoint[i-1]] - yArray[ip1][nextLinePoint];
+		    		 denomX = xArray[i-1][statePreceding[i-1][presentLinePoint]] - xArray[ip1][nextLinePoint];
+		    		 denomY = yArray[i-1][statePreceding[i-1][presentLinePoint]] - yArray[ip1][nextLinePoint];
 		    		 denom = (denomX*denomX) + (denomY*denomY);
 		    		 Eint = num/denom;
-		    	     state[nextLinePoint][presentLinePoint] = lastState[presentLinePoint][bestLinePoint[i-1]]
+		    		 stateEnergyTemp = stateEnergy[i-1][presentLinePoint]
 		    	    		 + regularization*Eint + (1.0 - regularization)*Eimage[i][presentLinePoint];
-		    	     if (state[nextLinePoint][presentLinePoint] < minState) {
-		    	    	 minState = state[nextLinePoint][presentLinePoint];
-		    	    	 bestLinePoint[i] = presentLinePoint;
+		    		 if (stateEnergyTemp < minState) {
+		    	    	 minState = stateEnergyTemp;
+		    	    	 statePreceding[i][nextLinePoint] = presentLinePoint;
+		    	    	 stateEnergy[i][nextLinePoint] = stateEnergyTemp;
 		    	     }
-		    	 }
-		     } // for (presentLinePoint = 0; presentLinePoint < linePoints; presentLinePoint++)
-		     for (j = 0; j < linePoints; j++) {
-		    	 for (k = 0; k < linePoints; k++) {
-		    		 lastState[j][k] = state[j][k];
-		    	 }
-		     }	 
+			     } // for (presentLinePoint = 0; presentLinePoint < linePoints; presentLinePoint++)
+			 } // for (nextLinePoint = 0; nextLinePoint < linePoints; nextLinePoint++)
 		 } // for (i = contourPoints/2+1; i <= contourPoints-1; i++)
 		 
-		 for (i = 0; i <= contourPoints/2-1; i++) {
+		 for (i = 0; i < contourPoints/2-1; i++) {
 			 if (i == 0) {
 				 im1 = contourPoints-1;
 			 }
 			 else {
 				 im1 = i - 1;
 			 }
-			 minState = Double.MAX_VALUE;
-		     for (presentLinePoint = 0; presentLinePoint < linePoints; presentLinePoint++) {
-		    	 for (nextLinePoint = 0; nextLinePoint < linePoints; nextLinePoint++) {
-		    		 numX = xArray[im1][bestLinePoint[im1]] - 2.0*xArray[i][presentLinePoint] + xArray[i+1][nextLinePoint];
-		    		 numY = yArray[im1][bestLinePoint[im1]] - 2.0*yArray[i][presentLinePoint] + yArray[i+1][nextLinePoint];
+			 if (i < contourPoints/2 - 2) {
+				 for (nextLinePoint = 0; nextLinePoint < linePoints; nextLinePoint++) {
+				     minState = Double.MAX_VALUE;
+				     for (presentLinePoint = 0; presentLinePoint < linePoints; presentLinePoint++) {
+				    	 numX = xArray[im1][statePreceding[im1][presentLinePoint]] - 2.0*xArray[i][presentLinePoint] +
+				    			 xArray[i+1][nextLinePoint];
+				    	 numY = yArray[im1][statePreceding[im1][presentLinePoint]] - 2.0*yArray[i][presentLinePoint] + 
+				    			 yArray[i+1][nextLinePoint];
+			    		 num = (numX*numX) + (numY*numY);
+			    		 denomX = xArray[im1][statePreceding[im1][presentLinePoint]] - xArray[i+1][nextLinePoint];
+			    		 denomY = yArray[im1][statePreceding[im1][presentLinePoint]] - yArray[i+1][nextLinePoint];
+			    		 denom = (denomX*denomX) + (denomY*denomY);
+			    		 Eint = num/denom;
+			    		 stateEnergyTemp = stateEnergy[im1][presentLinePoint]
+			    	    		 + regularization*Eint + (1.0 - regularization)*Eimage[i][presentLinePoint];
+			    		 if (stateEnergyTemp < minState) {
+			    	    	 minState = stateEnergyTemp;
+			    	    	 statePreceding[i][nextLinePoint] = presentLinePoint;
+			    	    	 stateEnergy[i][nextLinePoint] = stateEnergyTemp;
+			    	     }
+				     } // for (presentLinePoint = 0; presentLinePoint < linePoints; presentLinePoint++)
+				 } // for (nextLinePoint = 0; nextLinePoint < linePoints; nextLinePoint++)
+			 } // if (i < contourPoints/2 - 2)
+			 else {
+				 nextLinePoint = terminatingLinePoint;
+				 minState = Double.MAX_VALUE;
+			     for (presentLinePoint = 0; presentLinePoint < linePoints; presentLinePoint++) {
+			    	 numX = xArray[im1][statePreceding[im1][presentLinePoint]] - 2.0*xArray[i][presentLinePoint] +
+			    			 xArray[i+1][nextLinePoint];
+			    	 numY = yArray[im1][statePreceding[im1][presentLinePoint]] - 2.0*yArray[i][presentLinePoint] + 
+			    			 yArray[i+1][nextLinePoint];
 		    		 num = (numX*numX) + (numY*numY);
-		    		 denomX = xArray[im1][bestLinePoint[im1]] - xArray[i+1][nextLinePoint];
-		    		 denomY = yArray[im1][bestLinePoint[im1]] - yArray[i+1][nextLinePoint];
+		    		 denomX = xArray[im1][statePreceding[im1][presentLinePoint]] - xArray[i+1][nextLinePoint];
+		    		 denomY = yArray[im1][statePreceding[im1][presentLinePoint]] - yArray[i+1][nextLinePoint];
 		    		 denom = (denomX*denomX) + (denomY*denomY);
 		    		 Eint = num/denom;
-		    	     state[nextLinePoint][presentLinePoint] = lastState[presentLinePoint][bestLinePoint[im1]]
+		    		 stateEnergyTemp = stateEnergy[im1][presentLinePoint]
 		    	    		 + regularization*Eint + (1.0 - regularization)*Eimage[i][presentLinePoint];
-		    	     if (state[nextLinePoint][presentLinePoint] < minState) {
-		    	    	 minState = state[nextLinePoint][presentLinePoint];
-		    	    	 bestLinePoint[i] = presentLinePoint;
+		    		 if (stateEnergyTemp < minState) {
+		    	    	 minState = stateEnergyTemp;
+		    	    	 statePreceding[i][nextLinePoint] = presentLinePoint;
+		    	    	 stateEnergy[i][nextLinePoint] = stateEnergyTemp;
 		    	     }
-		    	 }
-		     } // for (presentLinePoint = 0; presentLinePoint < linePoints; presentLinePoint++)
-		     for (j = 0; j < linePoints; j++) {
-		    	 for (k = 0; k < linePoints; k++) {
-		    		 lastState[j][k] = state[j][k];
-		    	 }
-		     }	 	 
-		 } // for (i = 0; i <= contourPoints/2-1; i++)
+			     } // for (presentLinePoint = 0; presentLinePoint < linePoints; presentLinePoint++)
+			 }
+		 } // for (i = 0; i < contourPoints/2-1; i++)
+		 
+		 bestLinePoint[contourPoints/2] = startingLinePoint;
+		 bestLinePoint[contourPoints/2 - 1] = terminatingLinePoint;
+		 nextLinePoint = terminatingLinePoint;
+		 for (i = contourPoints/2 - 2; i >= 0; i--) {
+		     presentLinePoint = statePreceding[i][nextLinePoint];
+		     bestLinePoint[i] = presentLinePoint;
+		     nextLinePoint = presentLinePoint;
+		 }
+		 
+		 for (i = contourPoints-1; i >= contourPoints/2+1; i--) {
+			 presentLinePoint = statePreceding[i][nextLinePoint];
+		     bestLinePoint[i] = presentLinePoint;
+		     nextLinePoint = presentLinePoint;	 
+		 }
+		 
+		 
 		 
 		 for (i = 0; i < contourPoints; i++) {
 			 resultPt[i] = new Vector3f((float)xArray[i][bestLinePoint[i]], (float)yArray[i][bestLinePoint[i]], 0.0f);
