@@ -1542,6 +1542,10 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         setCoarseBeginZ(rotBegin[2]);
         setCoarseEndZ(rotEnd[2]);
         setNumCoarseZ(coarseRates[2]);
+        
+        rotateRangeX = rotateEndX - rotateBeginX;
+        rotateRangeY = rotateEndY - rotateBeginY;
+        rotateRangeZ = rotateEndZ - rotateBeginZ;
 
         setDisplayTransform(scriptParameters.getParams().getBoolean("do_display_transform"));
         setInterp2(scriptParameters.getParams().getInt("final_interpolation_type"));
