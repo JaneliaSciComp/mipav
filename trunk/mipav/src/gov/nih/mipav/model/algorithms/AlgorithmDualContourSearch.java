@@ -193,7 +193,7 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			    		 yCenter = innerCenter.Y;
 			    		 problem = true;
 			    		 continue loop;
-			         } // if (((largestDistance - minDistance) < 1.0E-6) && (snear[0] == false)) 
+			         } // if (((maxDistance - minDistance) < 1.0E-6) && (snear[0] == false)) 
 			         delX = costheta*distance;
 			         delY = sintheta*distance;
 			         innerX = xCenter + delX;
@@ -221,7 +221,7 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			        			 Preferences.DEBUG_ALGORITHM );
 			    		 problem = true;
 			    		 continue loop;
-			         } // if (((largestDistance - minDistance) < 1.0E-6) && (snear[0] == false)) 
+			         } // if (((maxDistance - minDistance) < 1.0E-6) && (snear[0] == false)) 
 			         delX = costheta*distance;
 			         delY = sintheta*distance;
 			         outerX = xCenter + delX;
