@@ -183,7 +183,7 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			     boundaryDistance = Double.MAX_VALUE;
 			     while (Math.abs(boundaryDistance) > 1.0E-1) {
 			         distance = (minDistance + maxDistance)/2.0;
-			         if (((largestDistance - minDistance) < 1.0E-6) && (snear[0] == false)) {
+			         if (((maxDistance - minDistance) < 1.0E-6) && (snear[0] == false)) {
 			             // Have a branch point on outside of contour that must be deleted
 			        	 innerContour.removeElementAt(i1[0]);
 			        	 Preferences.debug("Deleting inner contour outside branch with index " + i1[0] + "\n", 
@@ -214,7 +214,7 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			     boundaryDistance = Double.MAX_VALUE;
 			     while (Math.abs(boundaryDistance) > 1.0E-1) {
 			         distance = (minDistance + maxDistance)/2.0;
-			         if (((largestDistance - minDistance) < 1.0E-6) && (snear[0] == false)) {
+			         if (((maxDistance - minDistance) < 1.0E-6) && (snear[0] == false)) {
 			             // Have a branch point on outside of contour that must be deleted
 			        	 outerContour.removeElementAt(i1[0]);
 			        	 Preferences.debug("Deleting outer contour outside branch with index " + i1[0] + "\n", 
