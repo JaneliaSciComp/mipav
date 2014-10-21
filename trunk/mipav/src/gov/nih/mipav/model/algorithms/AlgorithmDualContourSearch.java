@@ -127,6 +127,8 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		 int x;
 		 int y;
 		 boolean halvingMethod;
+		 int innerPolarity = 1;
+		 int outerPolarity = 1;
 		 
 		 xDim = srcImage.getExtents()[0];
 		 yDim = srcImage.getExtents()[1];
@@ -157,11 +159,20 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		 innerVOI = VOIs.VOIAt(innerIndex);
 		 outerVOI = VOIs.VOIAt(outerIndex);
 		 innerContour = (VOIContour)innerVOI.getCurves().elementAt(0);
+		 // Lines protruding out from contours can flip the polarity of pinpol function
+		 boundaryDistance = innerContour.pinpol(2*xDim, 2*yDim, snear, i1, i2);
+		 if (boundaryDistance > 0.0) {
+			 innerPolarity = -1;
+		 }
 		 outerContour = (VOIContour)outerVOI.getCurves().elementAt(0);
+		 boundaryDistance = outerContour.pinpol(2*xDim, 2*yDim, snear, i1, i2);
+		 if (boundaryDistance > 0.0) {
+			 outerPolarity = -1;
+		 }
 		 innerCenter = innerContour.getGeometricCenter();
 		 xCenter = innerCenter.X;
 		 yCenter = innerCenter.Y;
-		 boundaryDistance = innerContour.pinpol(xCenter, yCenter, snear, i1, i2);
+		 boundaryDistance = innerContour.pinpol(xCenter, yCenter, snear, i1, i2) * innerPolarity;
          if (boundaryDistance < 0.0) {
         	 // point outside polygon
         	 Preferences.debug("Inner contour geometric center is outside innter contour\n", Preferences.DEBUG_ALGORITHM);
@@ -169,7 +180,7 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
         	 largestBoundaryDistance = 0.0;
         	 for (y = yBounds[0]; y <= yBounds[1]; y++) {
         	     for (x = xBounds[0]; x <= xBounds[1]; x++) {
-        	    	 boundaryDistance = innerContour.pinpol(x, y, snear, i1, i2);
+        	    	 boundaryDistance = innerContour.pinpol(x, y, snear, i1, i2) * innerPolarity;
         	    	 if (boundaryDistance > largestBoundaryDistance) {
         	    		 largestBoundaryDistance = boundaryDistance;
         	    		 xCenter = x;
@@ -224,7 +235,7 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		         delY = sintheta*distance;
 		         innerX = xCenter + delX;
 		         innerY = yCenter + delY;
-		         boundaryDistance = innerContour.pinpol(innerX, innerY, snear, i1, i2);
+		         boundaryDistance = innerContour.pinpol(innerX, innerY, snear, i1, i2) * innerPolarity;
 		         if (halvingMethod) {
 			         if (boundaryDistance < 0.0) {
 			        	 // point outside polygon
@@ -275,7 +286,7 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		         delY = sintheta*distance;
 		         outerX = xCenter + delX;
 		         outerY = yCenter + delY;
-		         boundaryDistance = outerContour.pinpol(outerX, outerY, snear, i1, i2);
+		         boundaryDistance = outerContour.pinpol(outerX, outerY, snear, i1, i2) * outerPolarity;
 		         if (halvingMethod) {
 			         if (boundaryDistance < 0.0) {
 			        	 // point outside polygon
