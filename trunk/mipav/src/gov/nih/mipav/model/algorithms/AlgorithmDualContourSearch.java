@@ -127,9 +127,6 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		 int x;
 		 int y;
 		 boolean halvingMethod;
-		 int innerPoints;
-		 float xp;
-		 float yp;
 		 
 		 xDim = srcImage.getExtents()[0];
 		 yDim = srcImage.getExtents()[1];
