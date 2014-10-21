@@ -117,17 +117,19 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		 int ip1;
 		 int im1;
 		 Vector3f resultPt[] = new Vector3f[contourPoints];
-		 boolean problem;
 		 double stateEnergyTemp;
 		 int startingLinePoint;
 		 int terminatingLinePoint;
-		 int iter;
 		 int xBounds[] = new int[2];
 		 int yBounds[] = new int[2];
 		 int zBounds[] = new int[2];
 		 double largestBoundaryDistance;
 		 int x;
 		 int y;
+		 boolean halvingMethod;
+		 int innerPoints;
+		 float xp;
+		 float yp;
 		 
 		 xDim = srcImage.getExtents()[0];
 		 yDim = srcImage.getExtents()[1];
@@ -182,48 +184,51 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
          } // if (boundaryDistance < 0.0)
 		 
 		 largestDistance = Math.sqrt((xDim-1)*(xDim-1) + (yDim-1)*(yDim-1));
-		 problem = true;
-		 loop: while (problem) {
-			 problem = false;
-			 for (i = 0; i < contourPoints; i++) {
-			     theta = 2.0 * i * Math.PI/contourPoints;
-			     costheta = Math.cos(theta);
-			     sintheta = Math.sin(theta);
-			     minDistance = 0.0;
-			     maxDistance = largestDistance;
-			     boundaryDistance = Double.MAX_VALUE;
-			     iter = 0;
-			     while (Math.abs(boundaryDistance) > 1.0E-1) {
-			    	 iter++;
-			         distance = (minDistance + maxDistance)/2.0;
-			         if ((maxDistance - minDistance) < 1.0E-6) {
-			             // Have a branch point on outside of contour that must be deleted
-			        	 if (!snear[0]) {
-				        	 innerContour.removeElementAt(i1[0]);
-				        	 Preferences.debug("Deleting inner contour outside branch with index " + i1[0] + "\n", 
-				        			 Preferences.DEBUG_ALGORITHM );
-			        	     innerCenter = innerContour.getGeometricCenter();
-			        	     xCenter = innerCenter.X;
-			    		     yCenter = innerCenter.Y;
-			    		     problem = true;
-			    		     continue loop;
-			        	 }
-			         } // if ((maxDistance - minDistance) < 1.0E-6) 
-			         delX = costheta*distance;
-			         delY = sintheta*distance;
-			         innerX = xCenter + delX;
-			         innerY = yCenter + delY;
-			         boundaryDistance = innerContour.pinpol(innerX, innerY, snear, i1, i2);
-			         if (iter > 1000) {
-			             System.out.println("Exiting due to infinite loop around inner contour for point i = " + i);
-			             System.out.println("minDistance = " + minDistance + " maxDistance = " + maxDistance + " distance = "
-			            		 + distance);
-			             System.out.println("boundaryDistance = " + boundaryDistance);
-			             System.out.println("innerX = " + innerX + " innerY = " + innerY + " snear[0] = " + snear[0]);
-			             System.out.println("i1[0] = " + i1[0] + " i2[0] = " + i2[0]);
-			             setCompleted(false);
-			             return;
-			         } // if (iter > 1000)
+		 
+		 for (i = 0; i < contourPoints; i++) {
+		     theta = 2.0 * i * Math.PI/contourPoints;
+		     costheta = Math.cos(theta);
+		     sintheta = Math.sin(theta);
+		     minDistance = 0.0;
+		     maxDistance = largestDistance;
+		     distance = largestDistance/2.0;
+		     boundaryDistance = Double.MAX_VALUE;
+		     halvingMethod = true;
+		     while (Math.abs(boundaryDistance) > 1.0E-1) {
+		    	 if (halvingMethod) {
+		             distance = (minDistance + maxDistance)/2.0;
+		    	 }
+		    	 else {
+		    		 distance = distance - 0.1;
+		    		 if (distance <= 0.0) {
+		    			 setCompleted(false);
+		    			 return;
+		    		 }
+		    	 }
+		         if (halvingMethod && ((maxDistance - minDistance) < 1.0E-6)) {
+		             halvingMethod = false;
+		             distance = largestDistance;
+		             if (costheta > 0) {
+		                 distance = Math.min(distance, xDim - 1 - xCenter)/costheta;	 
+		             }
+		             if (costheta < 0) {
+		            	 distance = Math.min(distance, -xCenter/costheta);
+		             }
+		             if (sintheta > 0) {
+		                 distance = Math.min(distance, yDim - 1 - yCenter)/sintheta;	 
+		             }
+		             if (sintheta < 0) {
+		            	 distance = Math.min(distance, -yCenter/sintheta);
+		             }
+		             Preferences.debug("For i = " + i + " for inner contour leaving halving method setting distance = " + distance + "\n",
+		            		 Preferences.DEBUG_ALGORITHM);
+		         } //  if (halvingMethod && ((maxDistance - minDistance) < 1.0E-6)) 
+		         delX = costheta*distance;
+		         delY = sintheta*distance;
+		         innerX = xCenter + delX;
+		         innerY = yCenter + delY;
+		         boundaryDistance = innerContour.pinpol(innerX, innerY, snear, i1, i2);
+		         if (halvingMethod) {
 			         if (boundaryDistance < 0.0) {
 			        	 // point outside polygon
 			        	 maxDistance = distance;
@@ -232,40 +237,49 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			        	 // point inside polygon
 			        	 minDistance = distance;
 			         }
-			     } // while (Math.abs(boundaryDistance) > 1.0E-1)
-			     xArray[i][0] = innerX;
-			     yArray[i][0] = innerY;
-			     maxDistance = largestDistance;
-			     boundaryDistance = Double.MAX_VALUE;
-			     iter = 0;
-			     while (Math.abs(boundaryDistance) > 1.0E-1) {
-			    	 iter++;
-			         distance = (minDistance + maxDistance)/2.0;
-			         if ((maxDistance - minDistance) < 1.0E-6) {
-			             // Have a branch point on outside of contour that must be deleted
-			        	 if (!snear[0]) {
-				        	 outerContour.removeElementAt(i1[0]);
-				        	 Preferences.debug("Deleting outer contour outside branch with index " + i1[0] + "\n", 
-				        			 Preferences.DEBUG_ALGORITHM );
-			    		     problem = true;
-			    		     continue loop;
-			        	 }
-			         } // if ((maxDistance - minDistance) < 1.0E-6) 
-			         delX = costheta*distance;
-			         delY = sintheta*distance;
-			         outerX = xCenter + delX;
-			         outerY = yCenter + delY;
-			         boundaryDistance = outerContour.pinpol(outerX, outerY, snear, i1, i2);
-			         if (iter > 1000) {
-			             System.out.println("Exiting due to infinite loop around outer contour for point i = " + i);
-			             System.out.println("minDistance = " + minDistance + " maxDistance = " + maxDistance + " distance = "
-			            		 + distance);
-			             System.out.println("boundaryDistance = " + boundaryDistance);
-			             System.out.println("outerX = " + outerX + " outerY = " + outerY + " snear[0] = " + snear[0]);
-			             System.out.println("i1[0] = " + i1[0] + " i2[0] = " + i2[0]);
-			             setCompleted(false);
-			             return;
-			         } // if (iter > 1000)
+		         } // if (halvingMethod)
+		     } // while (Math.abs(boundaryDistance) > 1.0E-1)
+		     xArray[i][0] = innerX;
+		     yArray[i][0] = innerY;
+		     minDistance = distance;
+		     maxDistance = largestDistance;
+		     boundaryDistance = Double.MAX_VALUE;
+		     halvingMethod = true;
+		     while (Math.abs(boundaryDistance) > 1.0E-1) {
+		    	 if (halvingMethod) {
+		             distance = (minDistance + maxDistance)/2.0;
+		    	 }
+		    	 else {
+		    		 distance = distance - 0.1;
+		    		 if (distance <= 0.0) {
+		    			 setCompleted(false);
+		    			 return;
+		    		 }
+		    	 }
+		         if (halvingMethod && ((maxDistance - minDistance) < 1.0E-6)) {
+		             halvingMethod = false;
+		             distance = largestDistance;
+		             if (costheta > 0) {
+		                 distance = Math.min(distance, xDim - 1 - xCenter)/costheta;	 
+		             }
+		             if (costheta < 0) {
+		            	 distance = Math.min(distance, -xCenter/costheta);
+		             }
+		             if (sintheta > 0) {
+		                 distance = Math.min(distance, yDim - 1 - yCenter)/sintheta;	 
+		             }
+		             if (sintheta < 0) {
+		            	 distance = Math.min(distance, -yCenter/sintheta);
+		             }
+		             Preferences.debug("For i = " + i + " for outer contour leaving halving method setting distance = " + distance + "\n",
+		            		 Preferences.DEBUG_ALGORITHM);
+		         } //  if (halvingMethod && ((maxDistance - minDistance) < 1.0E-6)) 
+		         delX = costheta*distance;
+		         delY = sintheta*distance;
+		         outerX = xCenter + delX;
+		         outerY = yCenter + delY;
+		         boundaryDistance = outerContour.pinpol(outerX, outerY, snear, i1, i2);
+		         if (halvingMethod) {
 			         if (boundaryDistance < 0.0) {
 			        	 // point outside polygon
 			        	 maxDistance = distance;
@@ -274,17 +288,17 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			        	 // point inside polygon
 			        	 minDistance = distance;
 			         }
-			     } // while (Math.abs(boundaryDistance) > 1.0E-1)
-			     xArray[i][linePoints-1] = outerX;
-			     yArray[i][linePoints-1] = outerY;
-			     delX = (outerX - innerX)/(linePoints-1);
-			     delY = (outerY - innerY)/(linePoints-1);
-			     for (j = 1; j <= linePoints-2; j++) {
-			    	 xArray[i][j] = innerX + j * delX;
-			         yArray[i][j] = innerY + j * delY;
-			     }
-			 } // for (i = 0; i < contourPoints; i++)
-		 } // loop: while (problem)
+		         } // if (halvingMethod)
+		     } // while (Math.abs(boundaryDistance) > 1.0E-1)
+		     xArray[i][linePoints-1] = outerX;
+		     yArray[i][linePoints-1] = outerY;
+		     delX = (outerX - innerX)/(linePoints-1);
+		     delY = (outerY - innerY)/(linePoints-1);
+		     for (j = 1; j <= linePoints-2; j++) {
+		    	 xArray[i][j] = innerX + j * delX;
+		         yArray[i][j] = innerY + j * delY;
+		     }
+		 } // for (i = 0; i < contourPoints; i++)
 		 
 		 maxGrad = -Double.MAX_VALUE;
 		 minGrad = Double.MAX_VALUE;
