@@ -1,8 +1,8 @@
-package gov.nih.mipav.view.dialogs;
+package gov.nih.mipav.view.renderer.WildMagic.TBI;
 
 
+import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.model.file.*;
-
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
@@ -22,28 +22,29 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
- * Simple dialog to save the 3 VOIs ( Sagittal, Coronal, Axial ) for each view, and merge them into one cloud points.
- * The cloud points is written as a .ply file, which can be read from MeshLab software.
+ * This dialog converts the VOI lines or VOI contour lines into .ply file format as the point cloud based file. 
+ * The cloud points is written as a .ply file, which can be read from MeshLab software.  Current assumption is
+ * the TBI brain file is coronal image. 
  * 
- * @version 09 Jan, 2009
+ * @version 22 Oct, 2014
  * @author Ruida Cheng
  */
-public class JDialogSaveMergedVOIs extends JDialogBase {
+public class JDialogConvertVOITBI extends JDialogSaveMergedVOIs {
 
     /*
      * Label for each VOI and ply file.
      */
-    public JLabel labelAxialVOI, labelSagittalVOI, labelCoronalVOI, labelPlyFile;
+    private JLabel labelCoronalVOI, labelPlyFile;
 
     /**
      * Text field for each VOI and ply file.
      */
-    public JTextField textFieldAxialVOI, textFieldSagittalVOI, textFieldCoronalVOI, textFieldPlyFile;
+    public JTextField textFieldCoronalVOI, textFieldPlyFile;
 
     /**
      * Choose button for each VOI and ply file.
      */
-    public JButton buttonAxial, buttonSagittal, buttonCoronal, buttonPly;
+    public JButton buttonCoronal, buttonPly;
 
     /*
      * VOIs panel to hold the VOI inputs and ply input.
@@ -54,77 +55,40 @@ public class JDialogSaveMergedVOIs extends JDialogBase {
      * Button panel to hold the OK button, Cancel button, and Help button.
      */
     public JPanel buttonPanel;
-
-    /**
-     * Msg box to show the Prostate surface analysis related info.
-     */
-    public JPanel msgPanel;
-
-    /**
-     * Axial VOI instance
-     */
-    private InstanceVOI AxialVOIs;
-
-    /**
-     * Sagittal VOI instance
-     */
-    private InstanceVOI SagittalVOIs;
-
-    /**
+  
+     /*
      * Coronal VOI instance
      */
-    private InstanceVOI CoronalVOIs;
+    private final InstanceVOI CoronalVOIs;
 
     /**
      * Ply file instance. This instance only uses the file dir and file name.
      */
-    private InstanceVOI PlyInstance;
+    private final InstanceVOI PlyInstance;
 
     /**
      * Constructor for Merging the 3 VOIs and save into one cloudy points file.
      * 
      * @param theParentFrame
      */
-    public JDialogSaveMergedVOIs(final Frame theParentFrame) {
+    public JDialogConvertVOITBI(final Frame theParentFrame) {
         super(theParentFrame, false);
-
         init();
-        AxialVOIs = new InstanceVOI(".xml", textFieldAxialVOI);
-        SagittalVOIs = new InstanceVOI(".xml", textFieldSagittalVOI);
         CoronalVOIs = new InstanceVOI(".xml", textFieldCoronalVOI);
         PlyInstance = new InstanceVOI(".ply", textFieldPlyFile);
-
     }
 
-    /**
-     * Constructor that sets the parent frame of the dialog and whether or not the dialog is modal. Also adds this as a
-     * window listener to all dialogs.
-     *
-     * @param  parent  Parent frame.
-     * @param  modal   Modality of the dialog; <code>true</code> means the user can't do anything until this dialog is
-     *                 diposed of.
-     */
-    public JDialogSaveMergedVOIs(final Frame theParentFrame, boolean modal) {
-        super(theParentFrame, modal);
-    }
-    
     /**
      * handler the button click evens.
      */
     public void actionPerformed(final ActionEvent event) {
         final String command = event.getActionCommand();
 
-        if (command.equals("ChooseAxial")) {
-            AxialVOIs.selectFile();
-        } else if (command.equals("ChooseSagittal")) {
-            SagittalVOIs.selectFile();
-        } else if (command.equals("ChooseCoronal")) {
+        if (command.equals("ChooseCoronal")) {
             CoronalVOIs.selectFile();
         } else if (command.equals("ChoosePly")) {
             PlyInstance.selectFile();
         } else if (command.equals("Save")) {
-            AxialVOIs.readXML();
-            SagittalVOIs.readXML();
             CoronalVOIs.readXML();
             writePlyFile();
         } else if (command.equals("Cancel")) {
@@ -145,8 +109,7 @@ public class JDialogSaveMergedVOIs extends JDialogBase {
         FileWriter fwp;
         File filePly = null;
         PrintWriter plyFileWriter;
-        final int ptSize = AxialVOIs.myContourVector.size() + SagittalVOIs.myContourVector.size()
-                + CoronalVOIs.myContourVector.size();
+        final int ptSize = CoronalVOIs.myContourVector.size();
 
         try {
             filePly = new File(PlyInstance.directory + PlyInstance.fileName);
@@ -165,22 +128,7 @@ public class JDialogSaveMergedVOIs extends JDialogBase {
             plyFileWriter.println("end_header");
 
             Vector3f v;
-            for (i = 0; i < AxialVOIs.myContourVector.size(); i++) {
-                v = (Vector3f) AxialVOIs.myContourVector.get(i);
-                plyFileWriter.print(v.X);
-                plyFileWriter.print(" ");
-                plyFileWriter.print(v.Y);
-                plyFileWriter.print(" ");
-                plyFileWriter.println(v.Z);
-            }
-            for (i = 0; i < SagittalVOIs.myContourVector.size(); i++) {
-                v = (Vector3f) SagittalVOIs.myContourVector.get(i);
-                plyFileWriter.print(v.X);
-                plyFileWriter.print(" ");
-                plyFileWriter.print(v.Y);
-                plyFileWriter.print(" ");
-                plyFileWriter.println(v.Z);
-            }
+          
             for (i = 0; i < CoronalVOIs.myContourVector.size(); i++) {
                 v = (Vector3f) CoronalVOIs.myContourVector.get(i);
                 plyFileWriter.print(v.X);
@@ -203,7 +151,7 @@ public class JDialogSaveMergedVOIs extends JDialogBase {
      * Sets up GUI and displays the dialog.
      */
     private void init() {
-        setTitle("Merge VOIs and Save");
+        setTitle("Convert VOI to .ply file");
         //setResizable(false);
         cancelFlag = false;
 
@@ -218,72 +166,13 @@ public class JDialogSaveMergedVOIs extends JDialogBase {
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.EAST;
 
-        // message Panel
-        msgPanel = new JPanel(new GridLayout(4, 1));
-        final JLabel msg1 = new JLabel(
-                "This panel is used for the prostate surface analysis. When the axial, sagittal, and coronal VOIs\n");
-        final JLabel msg2 = new JLabel(
-                "are extracted from each corresponding images, this panel merges the 3 VOIs into one cloudy\n");
-        final JLabel msg3 = new JLabel(
-                "points dataset. And, the dataset is saved as points data file of the .ply file format.\n\n");
-        gbc.gridy = 1;
-        msgPanel.add(msg1, gbc);
-        gbc.gridy = 2;
-        msgPanel.add(msg2, gbc);
-        gbc.gridy = 3;
-        msgPanel.add(msg3, gbc);
-
         VOIsPanel = new JPanel();
-        VOIsPanel.setLayout(new GridLayout(4, 3));
-        VOIsPanel.setBorder(buildTitledBorder("Choose the 3 VOIs (Axial, Sagittal, Coronal)"));
+        VOIsPanel.setLayout(new GridLayout(2, 3));
+        VOIsPanel.setBorder(buildTitledBorder("Choose the VOIs"));
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        // Axial
-        labelAxialVOI = new JLabel("Axial :");
-        labelAxialVOI.setFont(serif12);
-        labelAxialVOI.setForeground(Color.black);
-
-        VOIsPanel.add(labelAxialVOI, gbc);
-
-        textFieldAxialVOI = new JTextField(20);
-        textFieldAxialVOI.setFont(serif12);
-
-        gbc.gridx = 1;
-        VOIsPanel.add(textFieldAxialVOI, gbc);
-
-        buttonAxial = new JButton("Choose");
-        buttonAxial.addActionListener(this);
-        buttonAxial.setActionCommand("ChooseAxial");
-        buttonAxial.setFont(serif12B);
-        buttonAxial.setPreferredSize(MipavUtil.defaultButtonSize);
-
-        gbc.gridx = 2;
-        VOIsPanel.add(buttonAxial, gbc);
-
-        // Sagittal
-        gbc.gridy = 1;
-        labelSagittalVOI = new JLabel("Sagittal :");
-        labelSagittalVOI.setFont(serif12);
-        labelSagittalVOI.setForeground(Color.black);
-
-        VOIsPanel.add(labelSagittalVOI, gbc);
-
-        textFieldSagittalVOI = new JTextField(20);
-        textFieldSagittalVOI.setFont(serif12);
-
-        gbc.gridx = 1;
-        VOIsPanel.add(textFieldSagittalVOI, gbc);
-
-        buttonSagittal = new JButton("Choose");
-        buttonSagittal.addActionListener(this);
-        buttonSagittal.setActionCommand("ChooseSagittal");
-        buttonSagittal.setFont(serif12B);
-        buttonSagittal.setPreferredSize(MipavUtil.defaultButtonSize);
-
-        gbc.gridx = 2;
-        VOIsPanel.add(buttonSagittal, gbc);
-
+      
         // Coronal
         gbc.gridy = 2;
         labelCoronalVOI = new JLabel("Coronal :");
@@ -340,7 +229,6 @@ public class JDialogSaveMergedVOIs extends JDialogBase {
         gbc.gridy = 2;
         buttonPanel.add(buildHelpButton(), gbc);
 
-        mainPanel.add(msgPanel);
         mainPanel.add(VOIsPanel);
         mainPanel.add(buttonPanel);
 
@@ -446,6 +334,7 @@ class InstanceVOI {
 
     // XML file parser handler
     MyXMLHandler handler;
+    MyXMLHandler preParserHandler;
 
     // chunk vector to hold all the points coordinates reading from VOI xml file.
     Vector<Vector3f> myContourVector = new Vector<Vector3f>();
@@ -541,7 +430,9 @@ class InstanceVOI {
             // Tell the XMLReader to parse the XML document
             xmlReader.parse(MipavUtil.convertToFileURL(directory + fileName));
 
+            // handler.expandPoints();
             myContourVector = handler.getContourVector();
+           
 
         } catch (final Exception error) {
             MipavUtil.displayError("Error: " + error.getMessage());
@@ -564,6 +455,8 @@ class MyXMLHandler extends DefaultHandler {
 
     /** The contours of the VOI we are building. */
     private final Vector<Vector3f> contourVector;
+    
+    private final Vector<Vector3f> result;
 
     /** The current XML tag we are parsing. */
     private String currentKey;
@@ -574,6 +467,7 @@ class MyXMLHandler extends DefaultHandler {
     /** The slice the VOI contour should be on. */
     @SuppressWarnings("unused")
     private int sliceNumber = 0;
+    private int pointsCount;
 
     /**
      * Construct our custom XML data handler.
@@ -582,6 +476,7 @@ class MyXMLHandler extends DefaultHandler {
      */
     public MyXMLHandler() {
         contourVector = new Vector<Vector3f>();
+        result = new Vector<Vector3f>();
     }
 
     /**
@@ -590,9 +485,34 @@ class MyXMLHandler extends DefaultHandler {
      * @return contour vector
      */
     public Vector<Vector3f> getContourVector() {
-        return contourVector;
+        // return contourVector;
+    	return result;
     }
 
+    
+    public Vector<Vector3f> expandPoints() {
+    	int size = contourVector.size();
+    	System.err.println("size = " + size);
+    	for (int i = 0; i < size-1; i += 2 ) {
+    		Vector3f pt1 = contourVector.get(i);
+    		Vector3f pt2 = contourVector.get(i+1);
+    		
+    		Vector3f step =  Vector3f.sub(pt2, pt1);
+    		step.div(10f);
+    		Vector3f loc = pt1;
+    		for ( int k = 0; k < 10; k++ ) {
+    			result.add(Vector3f.add(loc, step));
+    			loc.add(step);
+    		}
+    	}
+    	
+    	return result;
+    }
+    
+    public int getNumPoints() {
+    	return pointsCount;
+    }
+    
     /**
      * DOCUMENT ME!
      * 
@@ -655,25 +575,35 @@ class MyXMLHandler extends DefaultHandler {
                 y = Float.parseFloat(st.nextToken());
                 z = Float.parseFloat(st.nextToken());
                 contourVector.addElement(new Vector3f(x, y, z));
+                pointsCount++;
             } catch (final NumberFormatException nfex) {
                 Preferences.debug("Error reading pt: " + nfex.toString() + "\n", Preferences.DEBUG_FILEIO);
             }
         } else if (currentKey.equals("Contour")) {
-
-            // Omit this part. Since, we just need to read the Pt from the XML file and save those points
-            // into a vector array.
-            // finished adding points to contour.. now add to VOI
-            /*
-             * int index; float[] x, y, z;
-             * 
-             * x = new float[contourVector.size()]; y = new float[contourVector.size()]; z = new
-             * float[contourVector.size()];
-             * 
-             * 
-             * for (index = 0; index < contourVector.size(); index++) { x[index] = ((Vector3f)
-             * contourVector.elementAt(index)).X; y[index] = ((Vector3f) contourVector.elementAt(index)).Y; z[index] =
-             * ((Vector3f) contourVector.elementAt(index)).Z; }
-             */
+        	// this is a bit tricky.   
+            // check the points number inside the contour. 
+        	// if nPts < 5, regarding the VOIs as straight lines based VOI.
+        	//       expand the points between two end line points
+        	// otherwise, treat the VOI as curvature based VOI
+        	//        expand the points between two consecutive points.
+        	// So, the final cloud points will be the expanded grid points, which 
+        	// will be used to reconstruct the TBI surface.  
+        	int size = contourVector.size();
+        	int iter_step;
+        	iter_step = size < 5 ? 2 : 1; 
+        	for (int i = 0; i < size-1; i += iter_step ) {
+        		Vector3f pt1 = contourVector.get(i);
+        		Vector3f pt2 = contourVector.get(i+1);
+        		
+        		Vector3f step =  Vector3f.sub(pt2, pt1);
+        		step.div(10f);
+        		Vector3f loc = pt1;
+        		for ( int k = 0; k < 10; k++ ) {
+        			result.add(Vector3f.add(loc, step));
+        			loc.add(step);
+        		}
+        	}
+        	
         }
 
     }
@@ -694,11 +624,9 @@ class MyXMLHandler extends DefaultHandler {
         elementBuffer = "";
 
         if (currentKey.equals("Contour")) {
-            // contourVector.clear();
+            contourVector.clear();
+        	pointsCount= 0;
         }
-        // else if (currentKey.equals("VOI")) {
-        // voi.setName(Integer.toString(voi.getUID()));
-        // }
     }
 
 }
