@@ -273,9 +273,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     protected JMenu voiMenu;
     protected ViewMenuBuilder voiMenuBuilder;
 
-    private JDialogAAMClassification prostateAAMClassification;
-    private JDialogAAMplusSVM prostateML;
-    
     /**
      * Creates a VOIManagerInterface object.
      * @param kParent the parent frame, must be a VOIManagerInterfaceListener
@@ -1126,55 +1123,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         	
         	new JDialogEditSquareLength((Component)m_kParent, widthString,measuredWidthString,xUnitsString, getActiveImage().getResolutions(0), activeVOI, voiManager);
         	
-        } else if (command.equals("ProstateMergedVOIs")) {
-            saveMergedVOIs();
-        } else if (command.equals("ProstateReconstruct")) {
-            reconstructSurfaceFromVOIs();
-        } else if (command.equals("ProstateExtract")) {
-            // extractSurfaceFromVOIs();
-        } else if (command.equals("ProstateFeaturesSave")) {
-            saveProstateFeatures();
-        } else if (command.equals("ProstateFeaturesTest")) {
-            testProstateFeatures();
-        } else if (command.equals("ProstateFeaturesTrain")) {
-            testProstateFeaturesTrain();
-        } else if (command.equals("ProstateFeaturesClassification")) {
-            testProstateFeaturesClassification();
-        } else if (command.equals("LoadProstateMask")) {
-            loadProstateMask();
-        } else if (command.equals("ProstateSegAuto")) {
-        	prostateSegAuto();
-        } else if ( command.equals("SemiAutoBSpline")) {
-        	prostateSemiAutoBSpline();
-        } else if ( command.equals("SemiAutoBSplineFuzzyC")) {
-        	prostateSemiAutoBSplineFuzzyC();
-        } else if (command.equals("SaveDicomMatrix")) {
-            saveDicomMatrixInfo();
-        } else if (command.equals("aamGroups")) {
-            aamGroups();
-        } else if ( command.equals("RenameAAMDir")) {
-        	aamGroupRename();
-    	} else if (command.equals("aamClassification")) {
-            aamClassification();
-        } else if (command.equals("aamMLClassification")) {
-            aamMLClassification();
-        } else if ( command.equals("extractCEFeature")) {
-        	extractCEFeature();
-        } else if (command.equals("ProstateFeaturesSave2D")) {
-            saveProstateFeatures2D();
-        } else if (command.equals("ProstateBoundaryFeatureSave")) {
-            saveProstateBoundaryFeature();
-        } else if (command.equals("ProstateFeaturesTest2D")) {
-            testProstateFeatures2D();
-        } else if (command.equals("ProstateFeaturesTrain")) {
-            testProstateFeaturesTrain();
-        } else if (command.equals("ProstateBoundaryFeatureTrain")) {
-            testProstateBoundaryFeatureTrain();
-        } else if ( command.equals("generateAtlasImage")) {
-        	generateAtlasImage();
-        } else if ( command.equals("generateEndingSlices")) {
-        	generateEndingSlices();
-        }        
+        }
         else if (command.equals(CustomUIBuilder.PARAM_VOI_LOGICAL_OPERATIONS.getActionCommand())) {
         	if ( (getActiveImage().getVOIs() != null) && (getActiveImage().getVOIs().size() >= 1 )) {
         		m_kVOILogicalOperationsDialog = new JDialogVOILogicalOperations(this,getActiveImage().getVOIs());
@@ -2420,27 +2369,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             m_kVOIManagers.elementAt(i).doVOI( "ResetLiveWire", false );
         }
     }
-
-    private void saveProstateFeatures() {
-        final JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures(m_kParent.getFrame(), getActiveImage(), false);
-        saveFeaturesDialog.validate();
-    }
-
-    private void saveProstateFeatures2D() {
-        final JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures2D(m_kParent.getFrame(), getActiveImage(), false);
-        saveFeaturesDialog.validate();
-    }
-
-    private void saveProstateBoundaryFeature() {
-        final JDialogBase saveFeaturesDialog = new JDialogProstateSaveBoundaryFeature2D(m_kParent.getFrame(), getActiveImage(), false);
-        saveFeaturesDialog.validate();
-    }
-    
-    private void testProstateFeatures2D() {
-    	final JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures2D(m_kParent.getFrame(), getActiveImage(), true);
-        saveFeaturesDialog.validate();
-    }
-    
     
     /**
      * Save the current VOIState to the undo/re-do list.
@@ -2908,12 +2836,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
     }
     
-    
-    public void testProstateFeatures() {
-        final JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures(m_kParent.getFrame(), getActiveImage(), true);
-        saveFeaturesDialog.validate();
-    }
-
     /**
      * Called from VOIManager. Causes the parent frame to redraw the ModelImage and VOIs.
      */
@@ -3993,11 +3915,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     } // end loadAllVOIsFrom()
 
-    private void loadProstateMask() {
-        final JDialogBase loadProstateMaskDialog = new JDialogLoadProstateMask(m_kParent.getFrame(), getActiveImage());
-        loadProstateMaskDialog.validate();
-    }
-
     private boolean make3DVOI( boolean bIntersection, ModelImage kSrc, ModelImage kVolume, BitSet kMask, 
     		VOIManager kManager, int iValue )
     {
@@ -4694,24 +4611,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
     }
 
-
-    private void prostateSegAuto() {
-    	// final JDialogProstateSegmentationAuto prostateSegAutoDialog = new JDialogProstateSegmentationAuto(m_kParent.getFrame(), getActiveImage());
-    	// prostateSegAutoDialog.validate();
-    }
-    
-	private void prostateSemiAutoBSplineFuzzyC() {
-		final JDialogProstateSegmentationRegBSpline3D prostateSegAutoDialog = new JDialogProstateSegmentationRegBSpline3D(
-				m_kParent.getFrame());
-		prostateSegAutoDialog.validate();
-	}
-
-	private void prostateSemiAutoBSpline() {
-		final JDialogProstateSegmentationRegBSpline3DFast prostateSegAutoDialog = new JDialogProstateSegmentationRegBSpline3DFast(
-				m_kParent.getFrame());
-		prostateSegAutoDialog.validate();
-	}
-    
     /**
      * method that performs the quick LUT operation
      * @param akMinMax
@@ -4852,15 +4751,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         RGB.getBlueFunction().importArrays(x[2], y[2], 4);
         RGB.makeRGB( -1);
     }
-
-    /**
-     * Reconstruct the prostate surface from the coarse VOIs cloudy points.
-     */
-    private void reconstructSurfaceFromVOIs() {
-        final JDialogBase reconstructSurfaceDialog = new JDialogSurfaceReconstruction(m_kParent.getFrame());
-        reconstructSurfaceDialog.validate();
-    }
-
 
     private void redoImage( )
     {
@@ -5032,89 +4922,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * This ensures the correct scale of surface. The dicom matrix info is saved in the current image directory with the
      * .dicomMatrix suffix.
      */
-    private void saveDicomMatrixInfo() {
-        int iXDim, iYDim, iZDim;
-        final boolean flip = true;
-
-        iXDim = getActiveImage().getExtents()[0];
-        iYDim = getActiveImage().getExtents()[1];
-        iZDim = getActiveImage().getExtents()[2];
-
-        float fXRes, fYRes, fZRes;
-
-        fXRes = getActiveImage().getFileInfo()[0].getResolutions()[0];
-        fYRes = getActiveImage().getFileInfo()[0].getResolutions()[1];
-        fZRes = getActiveImage().getFileInfo()[0].getResolutions()[2];
-
-        final float[] box = new float[3];
-
-        box[0] = (iXDim - 1) * fXRes;
-        box[1] = (iYDim - 1) * fYRes;
-        box[2] = (iZDim - 1) * fZRes;
-
-        final int[] direction = MipavCoordinateSystems.getModelDirections(getActiveImage());
-        final float[] startLocation = getActiveImage().getFileInfo(0).getOrigin();
-
-        TransMatrix inverseDicomMatrix = null;
-        if (getActiveImage().getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
-            inverseDicomMatrix = new TransMatrix(getActiveImage().getMatrix());
-            inverseDicomMatrix.Inverse();
-        }
-
-        final String fileDir = getActiveImage().getImageDirectory();
-        final String fName = getActiveImage().getImageFileName();
-        final int index = fName.indexOf('.');
-        final String fileName = fName.substring(0, index);
-
-        System.err.println("Dicom Matrix File Dir = " + fileDir);
-        System.err.println("Dicom Matrix File Name = " + (fileName + ".dicomMatrix"));
-
-        try {
-            final FileOutputStream fOut = new FileOutputStream(fileDir + fileName + ".dicomMatrix");
-            final DataOutputStream kOut = new DataOutputStream(fOut);
-
-            if (inverseDicomMatrix == null) {
-
-                if (flip) {
-                    kOut.writeInt(1);
-                } else {
-                    kOut.writeInt(0);
-                }
-            } else {
-
-                if (flip) {
-                    kOut.writeInt(3);
-                } else {
-                    kOut.writeInt(2);
-                }
-            }
-
-            kOut.writeInt(direction[0]);
-            kOut.writeInt(direction[1]);
-            kOut.writeInt(direction[2]);
-
-            kOut.writeFloat(startLocation[0]);
-            kOut.writeFloat(startLocation[1]);
-            kOut.writeFloat(startLocation[2]);
-            kOut.writeFloat(box[0]);
-            kOut.writeFloat(box[1]);
-            kOut.writeFloat(box[2]);
-
-            if (inverseDicomMatrix != null) {
-                for (int i = 0; i <= 3; i++) {
-                    for (int j = 0; j <= 3; j++) {
-                        kOut.writeDouble(inverseDicomMatrix.get(i, j));
-                    }
-                }
-            }
-            kOut.close();
-
-        } catch (final Exception e) {
-            System.err.println("CAUGHT EXCEPTION WITHIN saveDicomMatrixInfo() of FileVOI");
-            e.printStackTrace();
-        }
-
-    }
     private void saveImage( String kCommand )
     {
         m_kUndoCommands.add( kCommand );
@@ -5242,15 +5049,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     }
 
-    /**
-     * This method merges the 3 axial, sagittal, coronal VOIs and save them into one cloudy points file. This function
-     * is used by the prostate surface reconstruction analysis.
-     */
-    private void saveMergedVOIs() {
-        final JDialogBase mergeVOIsDialog = new JDialogSaveMergedVOIs(m_kParent.getFrame());
-        mergeVOIsDialog.validate();
-    }
-    
     /**
      * This method saves a selected VOI
      * @param saveAllContours if true all contours are saved
@@ -6085,71 +5883,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         m_kParent.setCenter( new Vector3f( kVOIState.currentCenter ) );
     }
 
-    private void testProstateFeaturesClassification() {
-    	JDialogBase classificationFeaturesDialog = new JDialogProstateFeaturesClassification(m_kParent.getFrame());
-    	classificationFeaturesDialog.validate();
-    }
-
-    private void testProstateFeaturesTrain() {
-    	JDialogBase trainFeaturesDialog = new JDialogProstateFeaturesTrain(m_kParent.getFrame());
-    	trainFeaturesDialog.validate();
-    }
-
-    private void testProstateBoundaryFeatureTrain() {
-    	JDialogBase trainFeaturesDialog = new JDialogProstateBoundaryFeatureTrain(m_kParent.getFrame());
-    	trainFeaturesDialog.validate();
-    }
-
-    /**
-     * Read the 3D atlas images directory, convert each 3D image to 2D slices based atlas. And
-     * save the final 2D slice and corresponding VOIs to specified atlas directory. 
-     */
-    private void generateAtlasImage() {
-    	final JDialogProstate2DSlicesAtlasConverter atlas = new JDialogProstate2DSlicesAtlasConverter(m_kParent.getFrame());
-    	atlas.validate();
-    }
-    
-    private void generateEndingSlices() {
-    	final JDialogGenerateEndingSlices atlas = new JDialogGenerateEndingSlices(m_kParent.getFrame(), getActiveImage());
-    	atlas.validate();
-    }
-    
-    private void aamGroups() {
-    	final JDialogProstateImageCategorize prostateGroups = new JDialogProstateImageCategorize(m_kParent.getFrame());
-        prostateGroups.validate();    
-    }
-    
-    private void aamGroupRename() {
-    	JDialogRenameDirs rename = new JDialogRenameDirs(m_kParent.getFrame()); 
-    }
-    
-    private void aamClassification() {
-    	if ( prostateAAMClassification == null ) {
-    		prostateAAMClassification = new JDialogAAMClassification(m_kParent.getFrame());
-    		prostateAAMClassification.validate();
-    	} else {
-    		prostateAAMClassification.createTargetDialog();
-    		prostateAAMClassification.validate();
-    	}
-    }
-    
-    private void aamMLClassification() {
-    
-    	if ( prostateML == null ) {
-    		prostateML = new JDialogAAMplusSVM(m_kParent.getFrame());
-    		prostateML.validate();
-    	} else {
-    		prostateML.createTargetDialog();
-    		prostateML.validate();
-    	}
-    }
-    
-    private void extractCEFeature() {
-    	final JDialogProstateExtractCEFeature atlas = new JDialogProstateExtractCEFeature(m_kParent.getFrame());
-    	atlas.validate();
-    }
-    
-    
     private void undoImage( )
     {
         if ( m_kImageAUndo == null )

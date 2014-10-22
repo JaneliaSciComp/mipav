@@ -2,7 +2,6 @@ package gov.nih.mipav.view;
 
 
 import gov.nih.mipav.plugins.*;
-
 import gov.nih.mipav.model.algorithms.AlgorithmMatchForReference;
 import gov.nih.mipav.model.algorithms.itk.AutoItkLoader;
 import gov.nih.mipav.model.algorithms.utilities.*;
@@ -12,7 +11,6 @@ import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
 import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.dialogs.JDialogSwapSlicesVolumes.SwapMode;
 import gov.nih.mipav.view.dialogs.reportbug.ReportBugBuilder;
@@ -24,9 +22,10 @@ import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIColorDisplay;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIPipeline;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.JPanelDTIVisualization;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
+import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.*;
+import gov.nih.mipav.view.renderer.WildMagic.TBI.*;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
-
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
@@ -191,6 +190,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
     protected VOIManagerInterface voiManager;
 
+    private JDialogAAMClassification prostateAAMClassification;
+    private JDialogAAMplusSVM prostateML;
+    
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -2703,7 +2705,55 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             final ReportBugBuilder form = new ReportBugBuilder();
         } else if (command.equals("phasecongruency")){
         	new JDialogPhaseCongruency(this, getActiveImage());
-        } 
+        } else if (command.equals("convertVOI_TBI")) {
+        	convertVOITBI();
+        } else if (command.equals("surfaceReconstructTBI") ) {
+        	surfaceReconstructionTBI();
+        } else if (command.equals("ProstateMergedVOIs")) {
+            saveMergedVOIs();
+        } else if (command.equals("ProstateReconstruct")) {
+            reconstructSurfaceFromVOIs();
+        } else if (command.equals("ProstateExtract")) {
+            // extractSurfaceFromVOIs();
+        } else if (command.equals("ProstateFeaturesSave")) {
+            saveProstateFeatures();
+        } else if (command.equals("ProstateFeaturesTest")) {
+            testProstateFeatures();
+        } else if (command.equals("ProstateFeaturesTrain")) {
+            testProstateFeaturesTrain();
+        } else if (command.equals("ProstateFeaturesClassification")) {
+            testProstateFeaturesClassification();
+        } else if (command.equals("LoadProstateMask")) {
+            loadProstateMask();
+        } else if ( command.equals("SemiAutoBSpline")) {
+        	prostateSemiAutoBSpline();
+        } else if ( command.equals("SemiAutoBSplineFuzzyC")) {
+        	prostateSemiAutoBSplineFuzzyC();
+        } else if (command.equals("aamGroups")) {
+            aamGroups();
+        } else if ( command.equals("RenameAAMDir")) {
+        	aamGroupRename();
+    	} else if (command.equals("aamClassification")) {
+            aamClassification();
+        } else if (command.equals("aamMLClassification")) {
+            aamMLClassification();
+        } else if ( command.equals("extractCEFeature")) {
+        	extractCEFeature();
+        } else if (command.equals("ProstateFeaturesSave2D")) {
+            saveProstateFeatures2D();
+        } else if (command.equals("ProstateBoundaryFeatureSave")) {
+            saveProstateBoundaryFeature();
+        } else if (command.equals("ProstateFeaturesTest2D")) {
+            testProstateFeatures2D();
+        } else if (command.equals("ProstateFeaturesTrain")) {
+            testProstateFeaturesTrain();
+        } else if (command.equals("ProstateBoundaryFeatureTrain")) {
+            testProstateBoundaryFeatureTrain();
+        } else if ( command.equals("generateAtlasImage")) {
+        	generateAtlasImage();
+        } else if ( command.equals("generateEndingSlices")) {
+        	generateEndingSlices();
+        }        
     }
 
     /**
@@ -5697,6 +5747,146 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         return foundActive;
     }
 
+    /* 
+     * For the TBI, convert the VOI .xml file into .ply file format. 
+     */
+    private void convertVOITBI() {
+    	final JDialogBase convertVOIDialog = new JDialogConvertVOITBI(this);
+    	convertVOIDialog.validate();
+    }
+    
+    /*
+     * For the TBI, use Ball pivoting to reconstruct the TBI 3D surface sheet. 
+     */
+    private void surfaceReconstructionTBI() {	
+    	final JDialog surReconTBI = new JDialogSurfaceReconstructionTBI(this);
+    	surReconTBI.validate();
+    }
+    
+    /**
+     * This method merges the 3 axial, sagittal, coronal VOIs and save them into one cloudy points file. This function
+     * is used by the prostate surface reconstruction analysis.
+     */
+    private void saveMergedVOIs() {
+        final JDialogBase mergeVOIsDialog = new JDialogSaveMergedVOIs(this);
+        mergeVOIsDialog.validate();
+    }
+    
+    /**
+     * Reconstruct the prostate surface from the coarse VOIs cloudy points.
+     */
+    private void reconstructSurfaceFromVOIs() {
+        final JDialogBase reconstructSurfaceDialog = new JDialogSurfaceReconstruction(this);
+        reconstructSurfaceDialog.validate();
+    }
+    
+
+    private void saveProstateFeatures() {
+        final JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures(this, getActiveImage(), false);
+        saveFeaturesDialog.validate();
+    }
+
+    private void saveProstateFeatures2D() {
+        final JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures2D(this, getActiveImage(), false);
+        saveFeaturesDialog.validate();
+    }
+
+    private void saveProstateBoundaryFeature() {
+        final JDialogBase saveFeaturesDialog = new JDialogProstateSaveBoundaryFeature2D(this, getActiveImage(), false);
+        saveFeaturesDialog.validate();
+    }
+    
+    private void testProstateFeatures2D() {
+    	final JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures2D(this, getActiveImage(), true);
+        saveFeaturesDialog.validate();
+    }
+    
+    public void testProstateFeatures() {
+        final JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures(this, getActiveImage(), true);
+        saveFeaturesDialog.validate();
+    }
+
+    private void testProstateFeaturesClassification() {
+    	JDialogBase classificationFeaturesDialog = new JDialogProstateFeaturesClassification(this);
+    	classificationFeaturesDialog.validate();
+    }
+
+    private void testProstateFeaturesTrain() {
+    	JDialogBase trainFeaturesDialog = new JDialogProstateFeaturesTrain(this);
+    	trainFeaturesDialog.validate();
+    }
+
+    private void testProstateBoundaryFeatureTrain() {
+    	JDialogBase trainFeaturesDialog = new JDialogProstateBoundaryFeatureTrain(this);
+    	trainFeaturesDialog.validate();
+    }
+
+    /**
+     * Read the 3D atlas images directory, convert each 3D image to 2D slices based atlas. And
+     * save the final 2D slice and corresponding VOIs to specified atlas directory. 
+     */
+    private void generateAtlasImage() {
+    	final JDialogProstate2DSlicesAtlasConverter atlas = new JDialogProstate2DSlicesAtlasConverter(this);
+    	atlas.validate();
+    }
+    
+    private void generateEndingSlices() {
+    	final JDialogGenerateEndingSlices atlas = new JDialogGenerateEndingSlices(this, getActiveImage());
+    	atlas.validate();
+    }
+    
+    private void aamGroups() {
+    	final JDialogProstateImageCategorize prostateGroups = new JDialogProstateImageCategorize(this);
+        prostateGroups.validate();    
+    }
+    
+    private void aamGroupRename() {
+    	JDialogRenameDirs rename = new JDialogRenameDirs(this); 
+    }
+    
+    private void aamClassification() {
+    	if ( prostateAAMClassification == null ) {
+    		prostateAAMClassification = new JDialogAAMClassification(this);
+    		prostateAAMClassification.validate();
+    	} else {
+    		prostateAAMClassification.createTargetDialog();
+    		prostateAAMClassification.validate();
+    	}
+    }
+    
+    private void aamMLClassification() {
+    
+    	if ( prostateML == null ) {
+    		prostateML = new JDialogAAMplusSVM(this);
+    		prostateML.validate();
+    	} else {
+    		prostateML.createTargetDialog();
+    		prostateML.validate();
+    	}
+    }
+    
+    private void extractCEFeature() {
+    	final JDialogProstateExtractCEFeature atlas = new JDialogProstateExtractCEFeature(this);
+    	atlas.validate();
+    }
+    
+    private void loadProstateMask() {
+        final JDialogBase loadProstateMaskDialog = new JDialogLoadProstateMask(this, getActiveImage());
+        loadProstateMaskDialog.validate();
+    }
+    
+	private void prostateSemiAutoBSplineFuzzyC() {
+		final JDialogProstateSegmentationRegBSpline3D prostateSegAutoDialog = new JDialogProstateSegmentationRegBSpline3D(this);
+		prostateSegAutoDialog.validate();
+	}
+
+	private void prostateSemiAutoBSpline() {
+		final JDialogProstateSegmentationRegBSpline3DFast prostateSegAutoDialog = new JDialogProstateSegmentationRegBSpline3DFast(this);
+		prostateSegAutoDialog.validate();
+	}
+    
+	
+	
     private class DicomQueryListener implements ActionListener {
 
         private JCheckBox checkBox;

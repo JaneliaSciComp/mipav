@@ -1,5 +1,6 @@
-package gov.nih.mipav.view.dialogs;
+package gov.nih.mipav.view.renderer.WildMagic.TBI;
 
+import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
@@ -9,14 +10,13 @@ import java.io.*;
 import javax.swing.*;
 
 import gov.nih.mipav.view.renderer.WildMagic.BallPivoting.*;
-import gov.nih.mipav.view.renderer.WildMagic.Poisson.*;
 
 /**
  * 
- * @version 09 Jan, 2009
+ * @version 24 10, 2014
  * @author Ruida Cheng
  */
-public class JDialogSurfaceReconstruction extends JDialogBase {
+public class JDialogSurfaceReconstructionTBI extends JDialogSurfaceReconstruction {
 
    
    
@@ -32,8 +32,6 @@ public class JDialogSurfaceReconstruction extends JDialogBase {
 
     private JPanel BallPivotingPanel;
     
-    private JPanel PoissonPanel;
-    
     private JPanel plyInputFilePanel;
     
     private JPanel plyOutputFilePanel;
@@ -42,10 +40,6 @@ public class JDialogSurfaceReconstruction extends JDialogBase {
     private JTextField textFieldClusteringRadius;
     private JTextField textFieldAngleThreshold;
 
-    private JTextField textOctreeDepth;
-    private JTextField textSolverDivide;
-    private JTextField textSamplePerNode;
-    
     private JTextField textFieldInputFile;
     
     private JTextField textFieldOutputFile;
@@ -82,14 +76,10 @@ public class JDialogSurfaceReconstruction extends JDialogBase {
      * 
      * @param theParentFrame
      */
-    public JDialogSurfaceReconstruction(Frame theParentFrame) {
+    public JDialogSurfaceReconstructionTBI(Frame theParentFrame) {
         super(theParentFrame, false);
         UI = ViewUserInterface.getReference();
         init();
-    }
-    
-    public JDialogSurfaceReconstruction(Frame theParentFrame, boolean modal) {
-        super(theParentFrame, false);
     }
 
     /**
@@ -118,7 +108,7 @@ public class JDialogSurfaceReconstruction extends JDialogBase {
     	float Clustering = Integer.parseInt(textFieldClusteringRadius.getText());
     	float CreaseThr = ToRad(Integer.parseInt(textFieldAngleThreshold.getText()));	
     	
-    	boolean DeleteFaces = true; //  = par.getBool("DeleteFaces");
+    	boolean DeleteFaces = true; 
 		MeshModel m = new MeshModel();
 		
 		PlyReader reader = new PlyReader();
@@ -147,18 +137,8 @@ public class JDialogSurfaceReconstruction extends JDialogBase {
 	    System.err.println("m.cm.fn = " + m.cm.fn);
 	    
 	    PlyWriter writer = new PlyWriter();
-	    writer.writePlyAsciiMesh(m.cm, directoryInput, "bpt_output.ply");
-	    
-	    // Run Poisson Algorithm
-	    PoissonRun poisson = new PoissonRun();
-	    String inputFileName = new String(directoryInput + File.separator + "bpt_output.ply");
-	    String outputFileName = new String(directoryOutput + File.separator + fileNameOutput);
-	    
-	    int octreeDepth = Integer.parseInt(textOctreeDepth.getText());
-    	int solverDivide = Integer.parseInt(textSolverDivide.getText());
-    	int samplePerNode = Integer.parseInt(textSamplePerNode.getText());	
-    	
-	    poisson.Execute(inputFileName, outputFileName, octreeDepth, solverDivide,samplePerNode, 2);
+	    writer.writePlyAsciiMesh(m.cm, directoryOutput, fileNameOutput);
+	  
 	    dispose();
     }
     
@@ -229,55 +209,7 @@ public class JDialogSurfaceReconstruction extends JDialogBase {
         }
 
     }
-
     
-    /**
-     * Write the cloud points from the 3 VOIs into one .ply file. The .ply file is readable for MeshLab.
-     */
-    public void writePlyFile() {
-        /*
-    	int i;
-        FileWriter fwp;
-        File filePly = null;
-        PrintWriter plyFileWriter;
-        int ptSize = AxialVOIs.myContourVector.size() + SagittalVOIs.myContourVector.size()
-                + CoronalVOIs.myContourVector.size();
-
-        try {
-            filePly = new File(PlyInstance.directory + PlyInstance.fileName);
-
-            fwp = new FileWriter(filePly);
-            plyFileWriter = new PrintWriter(fwp);
-            // write header
-            plyFileWriter.println("ply"); // object is ModelTriangleMesh
-            plyFileWriter.println("format ascii 1.0");
-            plyFileWriter.println("element vertex " + ptSize);
-            plyFileWriter.println("property float32 x");
-            plyFileWriter.println("property float32 y");
-            plyFileWriter.println("property float32 z");
-            plyFileWriter.println("element face " + 0);
-            plyFileWriter.println("property list uint8 int32 vertex_indices");
-            plyFileWriter.println("end_header");
-
-            Vector3f v;
-            for (i = 0; i < AxialVOIs.myContourVector.size(); i++) {
-                v = (Vector3f) AxialVOIs.myContourVector.get(i);
-                plyFileWriter.print(v.X);
-                plyFileWriter.print(" ");
-                plyFileWriter.print(v.Y);
-                plyFileWriter.print(" ");
-                plyFileWriter.println(v.Z);
-            }
-          
-            plyFileWriter.close();
-            dispose();
-        } catch (Exception e) {
-            System.err.println("CAUGHT EXCEPTION WITHIN writeXML() of FileVOI");
-            e.printStackTrace();
-        }
-         */
-    }
-
     /**
      * Sets up GUI and displays the dialog.
      */
@@ -368,7 +300,7 @@ public class JDialogSurfaceReconstruction extends JDialogBase {
          
         BallPivotingPanel.add(clusteringRadiusLabel, gbc);
 
-        textFieldClusteringRadius = new JTextField(Integer.toString(10), 3);
+        textFieldClusteringRadius = new JTextField(Integer.toString(20), 3);
         textFieldClusteringRadius.setFont(serif12);
 
         gbc.gridx = 1;
@@ -387,57 +319,7 @@ public class JDialogSurfaceReconstruction extends JDialogBase {
 
         gbc.gridx = 1;
         BallPivotingPanel.add(textFieldAngleThreshold, gbc);
-        
-        /********   Poisson Panel *********************/
-        PoissonPanel = new JPanel();
-        PoissonPanel.setLayout(new GridLayout(3, 2));
-        PoissonPanel.setBorder(buildTitledBorder("Poisson"));
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        
-        JLabel octreeDepthLabel = new JLabel("Octree Depth");
-        octreeDepthLabel.setFont(serif12);
-        octreeDepthLabel.setForeground(Color.black);
-
-        PoissonPanel.add(octreeDepthLabel, gbc);
-
-        textOctreeDepth = new JTextField(Integer.toString(8), 3);
-        textOctreeDepth.setFont(serif12);
-
-        gbc.gridx = 1;
-        PoissonPanel.add(textOctreeDepth, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        
-        JLabel solverDivideLabel = new JLabel("Solver Divide");
-        solverDivideLabel.setFont(serif12);
-        solverDivideLabel.setForeground(Color.black);
-
-        PoissonPanel.add(solverDivideLabel, gbc);
-
-        textSolverDivide = new JTextField(Integer.toString(8), 3);
-        textSolverDivide.setFont(serif12);
-
-        gbc.gridx = 1;
-        PoissonPanel.add(textSolverDivide, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        
-        JLabel samplePerNodeLabel = new JLabel("Sample per Node");
-        samplePerNodeLabel.setFont(serif12);
-        samplePerNodeLabel.setForeground(Color.black);
-
-        PoissonPanel.add(samplePerNodeLabel, gbc);
-
-        textSamplePerNode = new JTextField(Integer.toString(1), 3);
-        textSamplePerNode.setFont(serif12);
-
-        gbc.gridx = 1;
-        PoissonPanel.add(textSamplePerNode, gbc);
-
+       
         // button Panel
         buttonPanel = new JPanel();
         buttonPanel.setLayout(new GridLayout(1, 2));
@@ -450,7 +332,6 @@ public class JDialogSurfaceReconstruction extends JDialogBase {
         mainPanel.add(plyInputFilePanel);
         mainPanel.add(plyOutputFilePanel);
         mainPanel.add(BallPivotingPanel);
-        mainPanel.add(PoissonPanel);
         mainPanel.add(buttonPanel);
         
         
