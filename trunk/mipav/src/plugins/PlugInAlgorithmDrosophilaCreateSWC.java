@@ -4,6 +4,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.Stack;
 
 import javax.swing.JTextArea;
 
@@ -44,7 +45,7 @@ public class PlugInAlgorithmDrosophilaCreateSWC extends AlgorithmBase {
 	
 	
 	public void runAlgorithm() {
-		outputTextArea.append("Running Algorithm v1.0" + "\n");
+		outputTextArea.append("Running Algorithm v1.2" + "\n");
         
    
 
@@ -73,16 +74,54 @@ public class PlugInAlgorithmDrosophilaCreateSWC extends AlgorithmBase {
 
 	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+	private int[] testBounds(){
+		float[] bounds = new float[]{999, 0, 999, 0, 999, 0};
+		for(ArrayList<float[]> a : allFilamentCoords_swc){
+			for(float[] fa : a){
+				if(fa[0] < bounds[0]){
+					bounds[0] = fa[0];
+				} else if (fa[0] > bounds[1]){
+					bounds[1] = fa[0];
+				}
+				if(fa[1] < bounds[2]){
+					bounds[2] = fa[1];
+				} else if (fa[1] > bounds[3]){
+					bounds[3] = fa[1];
+				}
+				if(fa[2] < bounds[4]){
+					bounds[4] = fa[2];
+				} else if (fa[2] > bounds[5]){
+					bounds[5] = fa[2];
+				}
+			}
+		}
+		
+		float[] diff = new float[]{bounds[1]-bounds[0], 
+				bounds[3]-bounds[2], bounds[5]-bounds[1]
+		};
+		
+		int axis = -1;
+		float max = 0;
+		for(int i=0;i<3;i++){
+			if(diff[i] > max){
+				max = diff[i];
+				axis = i;
+			}
+		}
+		
+		int dir = 0;
+		
+		float first = allFilamentCoords_swc.get(0).get(0)[axis];
+		
+		if(Math.abs(first - bounds[2*axis]) > Math.abs(first - bounds[2*axis+1])){
+			dir = 1; //start is at the top
+		}else {
+			dir = -1;
+		}
+		
+		return new int[]{axis, dir};
+		
+	}
 	
 	 /**
      * creates the swc file
@@ -95,9 +134,11 @@ public class PlugInAlgorithmDrosophilaCreateSWC extends AlgorithmBase {
         outputTextArea.append("\n");
 
     	readFilamentFile_swc(filamentFile);
+    	int[] axis = testBounds();
     	determineConnectivity1_swc(allFilamentCoords_swc);
-    	determineAxon_swc(allFilamentCoords_swc);
+    	determineAxon_swc(allFilamentCoords_swc, axis);
 		determineDistances_swc(allFilamentCoords_swc);
+		//determineAxon_swc2(allFilamentCoords_swc);
 		outputTextArea.append("SWC - subsampling..." + "\n");
         outputTextArea.append("\n");
 		subsample_swc(allFilamentCoords_swc,newFilamentCoords_swc);
@@ -266,11 +307,6 @@ public class PlugInAlgorithmDrosophilaCreateSWC extends AlgorithmBase {
 					}
 					allFilamentCoords_swc.add(filamentCoords);
 				}
-				
-				
-				
-				
-				
 			}
 			raFile.close();
 			
@@ -288,14 +324,6 @@ public class PlugInAlgorithmDrosophilaCreateSWC extends AlgorithmBase {
 		
 		return success;
 	}
-    
-    
-    
-    
-    
-    
-    
-    
     
 	 /**
      * Determines initial conenctivity...how one block is connected to the previous blocks
@@ -358,11 +386,6 @@ public class PlugInAlgorithmDrosophilaCreateSWC extends AlgorithmBase {
 				 }
 				 
 		   }*/
-			
-			
-			
-			
-			
 			for(int i=1;i<allFilamentsSize;i++) {
 				
 				
@@ -395,15 +418,6 @@ public class PlugInAlgorithmDrosophilaCreateSWC extends AlgorithmBase {
 				
 			}
 			
-			
-			
-			
-			
-			
-			
-			
-			
-			
 			//make sure all are connected
 			for(int i=1;i<allFilamentsSize;i++) {
 				 al = filamentCoords.get(i);
@@ -426,23 +440,28 @@ public class PlugInAlgorithmDrosophilaCreateSWC extends AlgorithmBase {
 		}
 
 	}
-    
-	
-	
-	
 	  /**
      * Dtermines is block of points is axon or dendritic brach
      */
-    private void determineAxon_swc(ArrayList <ArrayList<float[]>> filamentCoords) {
+    private void determineAxon_swc(ArrayList <ArrayList<float[]>> filamentCoords, int[] _axis) {
 		//first find block of points that has highest z-value
 		int allFilamentsSize = filamentCoords.size();
 		ArrayList<float[]> al;
 		int alSize;
 		float[] coords = new float[6];
-		float zVal = 0;
+		float zVal;
 		float z;
 		int highestZBlockIndex = 0;
 		float connectedTo = 0;  //This is 1-based!
+		int axis = _axis[0];
+		int dir = _axis[1];
+		boolean greater = dir == -1;
+		if(dir == 1){
+			//want to go downards
+			zVal = 999;
+		}else {
+			zVal = 0;
+		}
 		 
 		for(int i=0,m=1;i<allFilamentsSize;i++,m++) {
 			 al = filamentCoords.get(i);
@@ -453,11 +472,19 @@ public class PlugInAlgorithmDrosophilaCreateSWC extends AlgorithmBase {
 				 if(k==0) {
 					 c = coords[4];
 				 }
-				 z = coords[2];
-				 if(z>zVal) {
-					 zVal=z;
-					 highestZBlockIndex=i;
-					 connectedTo = c;
+				 z = coords[axis];
+				 if(greater){
+					 if(z>zVal) {
+						 zVal=z;
+						 highestZBlockIndex=i;
+						 connectedTo = c;
+					 }
+				 }else{
+					 if(z<zVal) {
+						 zVal=z;
+						 highestZBlockIndex=i;
+						 connectedTo = c;
+					 }
 				 }
 			 } 
 		}
@@ -537,7 +564,61 @@ public class PlugInAlgorithmDrosophilaCreateSWC extends AlgorithmBase {
 		 }
 	}
 	
-	
+	private void determineAxon_swc2(ArrayList<ArrayList<float[]>> filamentCoords){
+		
+		int index = 0;
+		float longestLength = 0;
+		
+		Stack<float[]> stack = new Stack<float[]>();
+		ArrayList<float[]> l = filamentCoords.get(0);
+		
+		for(int i=1;i<filamentCoords.size();i++){
+			l = filamentCoords.get(i);
+			float[] f = l.get(0);
+			float[] flast = l.get(l.size()-1);
+			if(f[4]==1){
+				stack.push(new float[]{i, flast[3]});
+			}
+		}
+		
+		while(!stack.empty()){
+			float[] fa = stack.pop();
+			int fil = (int)fa[0];
+			boolean done = true;
+			for(int i=fil+1;i<filamentCoords.size();i++){
+				l = filamentCoords.get(i);
+				float[] f = l.get(0);
+				float[] flast = l.get(l.size()-1);
+				//if(f[0] == last[0] && f[1] == last[1] && f[2] == last[2]){
+				if(f[4]==fil+1){
+					stack.push(new float[]{i, flast[3]+fa[1]});
+					done = false;
+				}
+				
+			}
+			if(done && fa[1] > longestLength){
+				longestLength = fa[1];
+				index = fil;
+			}
+		}
+		
+		//traverse back to root of tree
+		//after this, there are problems
+		l = filamentCoords.get(index);
+		for(float[] f : l){
+			f[5] = 2;
+		}
+		int c = (int) l.get(0)[4]-1;
+		while(c > 0){
+			l = filamentCoords.get(c);
+			for(float[] f: l){
+				f[5] = 2;
+			}
+			c = (int) l.get(0)[4]-1;
+		}
+		
+		
+	}
 	
 	
 	
@@ -849,7 +930,7 @@ public class PlugInAlgorithmDrosophilaCreateSWC extends AlgorithmBase {
 												 greenValue = greenImage.getFloat(x, y, z);
 												 
 												 
-												 System.out.println("green value is " + greenValue	);
+												 //System.out.println("green value is " + greenValue	);
 												 
 												 if(greenValue <= greenThreshold) {
 													 //this means we have exceeded the radius
@@ -937,7 +1018,8 @@ public class PlugInAlgorithmDrosophilaCreateSWC extends AlgorithmBase {
 					 cInt = (int)c;
 					 aInt = (int)a;
 					 //System.out.println(counter + " " + aInt + " " + x + " " + y + " " + z + " " + r + " " + cInt) ;
-					 bw.write(counter + " " + aInt + " " + x + " " + y + " " + z + " " + r + " " + cInt);
+					 //bw.write(counter + " " + aInt + " " + x + " " + y + " " + z + " " + r + " " + cInt);
+					 bw.write(counter + " " + aInt + " " + x + " " + y + " " + z + " 0.1 " + cInt);
 					 bw.newLine();
 					 counter++;
 					 //System.out.println("   " + Math.abs(Math.round(x/resols[0])) + " " + Math.abs(Math.round(y/resols[1])) + " " + Math.abs(Math.round(z/resols[2])));
@@ -951,6 +1033,8 @@ public class PlugInAlgorithmDrosophilaCreateSWC extends AlgorithmBase {
 			e.printStackTrace();
 		}
 	}
+	
+	
 	
 	
 
