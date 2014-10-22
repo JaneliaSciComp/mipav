@@ -5,6 +5,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 
 import javax.swing.JButton;
@@ -22,11 +23,12 @@ import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ScrollCorrector;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 
-public class PlugInDialogDrosophilaCreateSWC extends JDialogBase implements AlgorithmInterface {
+public class PlugInDialogDrosophilaCreateSWC extends JDialogBase implements AlgorithmInterface, ActionListener {
 
 	private JPanel mainPanel;
 	
@@ -70,7 +72,7 @@ public class PlugInDialogDrosophilaCreateSWC extends JDialogBase implements Algo
 	
 	private void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Create SWC v1.0");
+        setTitle("Drosophila Create SWC v1.2");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
@@ -225,15 +227,16 @@ public class PlugInDialogDrosophilaCreateSWC extends JDialogBase implements Algo
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
 		if(command.equalsIgnoreCase("imageBrowse")) {
-			JFileChooser chooser = new JFileChooser();
-	        if (currDir != null) {
+			JFileChooser chooser = new JFileChooser(Preferences.getImageDirectory());
+	        /*if (currDir != null) {
 				chooser.setCurrentDirectory(new File(currDir));
-	        }
+	        }*/
 	        chooser.setDialogTitle("Choose image");
 	        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 	        int returnValue = chooser.showOpenDialog(this);
 	        if (returnValue == JFileChooser.APPROVE_OPTION) {
 	        	currDir = chooser.getSelectedFile().getAbsolutePath();
+	        	Preferences.setImageDirectory(new File(currDir));
 	        	FileIO fileIO = new FileIO();
 	        	finalImage = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory() + File.separator, true, null);
 	        	float[] resols = finalImage.getResolutions(0);
@@ -259,7 +262,12 @@ public class PlugInDialogDrosophilaCreateSWC extends JDialogBase implements Algo
 			 if(setVariables()) {
 				 callAlgorithm();
 			 }
-		 } else {
+		 }else if(command.equalsIgnoreCase("cancel")){
+			 finalImage.disposeLocal();
+			 finalImage = null;
+			 
+			 dispose();
+		 }else {
 		     super.actionPerformed(e);
 		 }
 
