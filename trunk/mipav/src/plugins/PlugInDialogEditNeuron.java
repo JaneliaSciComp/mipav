@@ -2282,11 +2282,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			if(outX == -1 || outY == -1){
 				//did not attach to anything
 				controlPts.removeCurve(newBranchVOI);
-				addingBranch = false;
-				newBranchVOI = null;
-				lastSpot = null;
-				subVolume.notifyImageDisplayListeners();
-				return;
 			}else{
 				LinkElement toLink;
 				Point linkPt = new Point(outX, outY);
@@ -2301,6 +2296,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			
 			addingBranch = false;
 			newBranchVOI = null;
+			lastSpot = null;
 			
 			subVolume.notifyImageDisplayListeners();
 			
