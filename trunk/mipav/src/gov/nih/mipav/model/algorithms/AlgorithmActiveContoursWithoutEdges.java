@@ -146,7 +146,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         ViewVOIVector VOIs;
         VOI cVOI;
         VOI c2VOI;
-        VOIContour contour;
+        VOIContour contour = null;
         int xDim;
         int yDim;
         int sliceSize;
@@ -203,6 +203,48 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 		float maxR;
 		float maxG;
 		float maxB;
+		double T[];
+		double ip1;
+		double im1;
+		double ipxdim;
+		double imxdim;
+		double maxT;
+		double thre;
+		int pixelsFound;
+		int sumX;
+		int sumY;
+		int cx;
+		int cy;
+		byte[] m;
+		byte[] m2;
+		int r = 0;
+		int diffy;
+		int dy2;
+		int diffx;
+		int r2;
+		int siz;
+		int sx;
+		int itop;
+		int jtop;
+		int jmed;
+		int j;
+		AlgorithmMorphology2D dilateAlgo;
+		ModelImage dilateImage;
+		int dilateExtents[];
+		int kernel;
+		float circleDiameter;
+		int morphologyMethod;
+		int itersDilation;
+		int itersErosion;
+		int numPruningPixels;
+		int edgingType;
+		boolean wholeImage;
+		byte mcrop[];
+		int xbase;
+		int ybase;
+		byte M[];
+		int padSize;
+		byte tem[][];
         
         fireProgressStateChanged(srcImage.getImageName(), "Evolving the level set ...");
         
@@ -229,46 +271,51 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         } // if (s < 1.0)
         else {
         	image = srcImage;
+        	oXdim = xDim;
+        	oYdim = yDim;
         }
 		
-		VOIs = image.getVOIs();
-        nVOI = VOIs.size();
-
-        numFound = 0;
-        for (i = 0; i < nVOI; i++) {
-
-            if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                if (numFound == 0) {
-                	n1 = i;
-                }
-                else if (numFound == 1) {
-                    n2 = i;	
-                }
-                else {
-                    MipavUtil.displayError("Exiting! Found an impossible third VOI.CONTOUR");
-                    setCompleted(false);
-                    return;
-                }
-                numFound++;
-            }
-        }
-        
-        if ((numFound == 2) && ((method == chan) || (method == vector))) {
-        	MipavUtil.displayError("Found an impossible second VOI.CONTOUR for method == chen or method == vector");
-        	setCompleted(false);
-        	return;
-        }
-        
-        if ((numFound == 1) && (method == multiphase)) {
-        	MipavUtil.displayError("multiphase requires two VOI.CONTOUR but only one is present");
-        	setCompleted(false);
-        	return;
-        }
-
-        cVOI = VOIs.VOIAt(n1);
-        if (method == multiphase) {
-        	c2VOI = VOIs.VOIAt(n2);
-        }
+		if (mask == user) {
+	        VOIs = image.getVOIs();
+	        nVOI = VOIs.size();
+	
+	        numFound = 0;
+	        for (i = 0; i < nVOI; i++) {
+	
+	            if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
+	                if (numFound == 0) {
+	                	n1 = i;
+	                }
+	                else if (numFound == 1) {
+	                    n2 = i;	
+	                }
+	                else {
+	                    MipavUtil.displayError("Exiting! Found an impossible third VOI.CONTOUR");
+	                    setCompleted(false);
+	                    return;
+	                }
+	                numFound++;
+	            }
+	        }
+	        
+	        if ((numFound == 2) && ((method == chan) || (method == vector))) {
+	        	MipavUtil.displayError("Found an impossible second VOI.CONTOUR for method == chen or method == vector");
+	        	setCompleted(false);
+	        	return;
+	        }
+	        
+	        if ((numFound == 1) && (method == multiphase)) {
+	        	MipavUtil.displayError("multiphase requires two VOI.CONTOUR but only one is present");
+	        	setCompleted(false);
+	        	return;
+	        }
+	
+	        cVOI = VOIs.VOIAt(n1);
+	        if (method == multiphase) {
+	        	c2VOI = VOIs.VOIAt(n2);
+	        }
+	        contour = (VOIContour)cVOI.getCurves().elementAt(0);
+		} // if (mask == user)
         
         if ((method == chan) && (image.isColorImage())) {
             if (image.getMinR() == image.getMaxR()) {
@@ -300,23 +347,183 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             gAlgo.finalize();
         } // if ((method == chen) && (image.isColorImage()))
         
+        sliceSize = oXdim * oYdim;
+        buffer = new double[sliceSize];
+        try {
+        	image.exportData(0, sliceSize, buffer);
+        }
+        catch (IOException e) {
+        	MipavUtil.displayError("IOException " + e + " on image.exportData(0, sliceize, buffer)");
+        	setCompleted(false);
+        	return;
+        }
+        
+        if ((mask >= 1) && (mask <= 5)) {
+            T = new double[sliceSize];
+            for (y = 0; y < oYdim; y++) {
+            	for (x = 0; x < oXdim; x++) {
+            		index = x + y * oXdim;
+            		if (x >= 1) {
+            			im1 = buffer[index-1];
+            		}
+            		else {
+            			im1 = 0.0;
+            		}
+            		if (x < oXdim - 1) {
+            			ip1 = buffer[index+1];
+            		}
+            		else {
+            			ip1 = 0.0;
+            		}
+            		if (y >= 1) {
+            			imxdim = buffer[index - oXdim];
+            		}
+            		else {
+            			imxdim = 0.0;
+            		}
+            		if (y < oYdim - 1) {
+            			ipxdim = buffer[index + oXdim];
+            		}
+            		else {
+            			ipxdim = 0;
+            		}
+            		T[index] = im1 + ip1 + imxdim + ipxdim - 4*buffer[index];
+            	}
+            } // for (y = 0; y < oYdim; y++)
+            maxT = -Double.MAX_VALUE;
+            for (i = 0; i < sliceSize; i++) {
+                if (Math.abs(T[i]) > maxT) {
+                	maxT = Math.abs(T[i]);
+                }
+            }
+            thre = 0.5 * maxT;
+            pixelsFound = 0;
+            sumX = 0;
+            sumY = 0;
+            for (y = 0; y < oYdim; y++) {
+            	for (x = 0; x < oXdim; x++) {
+            		index = x + y * oXdim;
+            		if (T[index] > thre) {
+            			pixelsFound++;
+            			sumX += x;
+            			sumY += y;
+            		}
+            	}
+            } // for (y = 0; y < oYdim; y++)
+            cx = (int)Math.round((double)sumX/(double)pixelsFound);
+            cy = (int)Math.round((double)sumY/(double)pixelsFound);
+            
+            if ((mask == small) || (mask == whole_small)) {
+            	r = 10;
+            }
+            else if (mask == medium) {
+            	r = Math.min(Math.min(cx, oXdim - cx - 1), Math.min(cy, oYdim - cy - 1));
+            	r = Math.max(2*r/3, 25);
+            }
+            else if (mask == large) {
+            	r = Math.min(Math.min(cx, oXdim - cx - 1), Math.min(cy, oYdim - cy - 1));
+            	r = Math.max(2*r/3, 60);	
+            }
+            if ((mask == small) || (mask == medium) || (mask == large) || (mask == whole_small)) {
+            	m = new byte[sliceSize];
+            	r2 = r*r;
+                for (y = 0; y < oYdim; y++) {
+                	diffy = y - cy;
+                	dy2 = diffy * diffy;
+                	for (x = 0; x < oXdim; x++) {
+                		diffx = x - cx;
+                		index = x + y * oXdim;
+                		if (diffx*diffx + dy2 < r2) {
+                			m[index] = 1;
+                		}
+                	}
+                }
+            } // if ((mask == small) || (mask == medium) || (mask == large) || (mask == whole_small)) 
+            if ((mask == whole) || (mask == whole_small)) {
+            	r = 9;
+            	siz = (int)Math.round(Math.ceil(Math.max(oXdim, oYdim)/2.0/(r+1.0))*3*(r+1));
+            	m2 = new byte[siz * siz];
+            	sx = (int)Math.round(siz/2.0);
+            	itop = (int)Math.round(siz/2.0/(r+1.0));
+            	jtop = (int)Math.round(0.9*siz/2.0/(r+1.0));
+            	jmed = (int)Math.round((1.0 + jtop)/2.0);
+            	for (j = 1 - jmed; j <= jtop - jmed; j++) {
+            		for (i = 1; i <= itop; i++) {
+            		    m2[(2*i-1)*(r+1)-1 + siz*(sx+2*j*(r+1)-1)] = 1;	
+            		}
+            	}
+            	dilateExtents = new int[2];
+            	dilateExtents[0] = siz;
+            	dilateExtents[1] = siz;
+            	dilateImage = new ModelImage(ModelStorageBase.BYTE, dilateExtents, "dilateImage");
+            	try {
+            		dilateImage.importData(0, m2, true);
+            	}
+            	catch (IOException e) {
+            		MipavUtil.displayError("IOException " + e + " on dilateImage.importData(0, m2, true)");
+            		setCompleted(false);
+            		return;
+            	}
+            	kernel = AlgorithmMorphology2D.SIZED_CIRCLE;
+            	circleDiameter = (2*r+1)*dilateImage.getFileInfo()[0].getResolutions()[0];
+            	morphologyMethod = AlgorithmMorphology2D.DILATE;
+            	itersDilation = 1;
+            	itersErosion = 0;
+            	numPruningPixels = 0;
+            	edgingType = 0;
+            	wholeImage = true;
+            	dilateAlgo = new AlgorithmMorphology2D(dilateImage, kernel, circleDiameter, morphologyMethod, itersDilation,
+                        itersErosion, numPruningPixels, edgingType, wholeImage);
+                dilateAlgo.run();
+                dilateAlgo.finalize();
+                dilateAlgo = null;
+            	try {
+            		dilateImage.exportData(0, siz*siz, m2);
+            	}
+            	catch(IOException e) {
+            		MipavUtil.displayError("IOException " + e + " on dilateImage.exportData(0, siz*siz, m2)");
+            		setCompleted(false);
+            		return;
+            	}
+            	dilateImage.disposeLocal();
+            	dilateImage = null;
+            	mcrop = new byte[sliceSize];
+            	xbase = (int)Math.round(siz/2.0 - oXdim/2.0 - 7);
+            	ybase = (int)Math.round(siz/2.0 - oYdim/2.0 - 7);
+            	for (y = 0; y < oYdim; y++) {
+            		for (x = 0; x < oXdim; x++) {
+            			mcrop[x + y * oXdim] = m2[x + xbase + (y + ybase) * siz];
+            		}
+            	}
+            	tem = new byte[sliceSize][2];
+            	for (y = 0; y < oYdim; y++) {
+            		for (x = 0; x < oXdim; x++) {
+            			tem[x + y * oXdim][0] = mcrop[x + y * oXdim];
+            		}
+            	}
+            	padSize = (int)Math.floor(2.0*r/3.0);
+            	M = new byte[(oXdim + padSize) * (oYdim + padSize)];
+            	for (y = 0; y < oYdim ; y++) {
+            	    for (x = 0; x < oXdim; x++) {
+            	    	M[x + y * (oXdim + padSize)] = mcrop[x + y * oXdim];
+            	    }
+            	}
+            	for (y = 0; y < oYdim; y++) {
+            		for (x = 0; x < oXdim; x++) {
+            			tem[x + y * oXdim][1] = M[x + padSize + (y + padSize) * (oXdim + padSize)];
+            		}
+            	}
+            } // if ((mask == whole) || (mask == whole_small))
+        } // if ((mask >= 1) && (mask <= 5))
+        
         // Core function
         if ((method == chan) || (method == vector)) {
         	
         } // if ((method == chan) || (method == vector))
-        contour = (VOIContour)cVOI.getCurves().elementAt(0);
         
         
-        sliceSize = xDim * yDim;
-        buffer = new double[sliceSize];
-        try {
-        	srcImage.exportData(0, sliceSize, buffer);
-        }
-        catch (IOException e) {
-        	MipavUtil.displayError("IOException " + e + " on srcImage.exportData(0, sliceize, buffer)");
-        	setCompleted(false);
-        	return;
-        }
+        
+        
         
         phi = new double[sliceSize];
         nextPhi = new double[sliceSize];
