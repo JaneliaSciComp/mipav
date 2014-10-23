@@ -598,7 +598,9 @@ class MyXMLHandler extends DefaultHandler {
         		Vector3f step =  Vector3f.sub(pt2, pt1);
         		step.div(10f);
         		Vector3f loc = pt1;
-        		for ( int k = 0; k < 10; k++ ) {
+        		loc.sub(step);
+        		result.add(loc);
+        		for ( int k = 0; k <= 10; k++ ) {
         			result.add(Vector3f.add(loc, step));
         			loc.add(step);
         		}
