@@ -2219,6 +2219,20 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		int x = (int) ((float)e.getX()/zoomX);
 		int y = (int) ((float)e.getY()/zoomY);
 		
+		if(editPolyRB.isSelected())
+			return;
+		
+		int thisSlice = subVolumeFrame.getViewableSlice();
+		if(thisSlice != activeSlice)
+			return;
+		
+		
+		int numClicks = e.getClickCount();
+		int button = e.getButton();
+		
+		if(numClicks != 2 || button != MouseEvent.BUTTON1)
+			return;
+		
 		if(addingBranch){
 			Vector3f branchVOIPt = newBranchVOI.getPosition();
 			Point newPt = new Point((int)branchVOIPt.X, (int)branchVOIPt.Y);
@@ -2293,22 +2307,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			//update all the line lists and linked elements
 			return; //So nothing else happens
 		}
-		
-		if(editPolyRB.isSelected())
-			return;
-		
-		int thisSlice = subVolumeFrame.getViewableSlice();
-		if(thisSlice != activeSlice)
-			return;
-		
-		
-		int numClicks = e.getClickCount();
-		int button = e.getButton();
-		
-		if(numClicks != 2 || button != MouseEvent.BUTTON1)
-			return;
-
 		if(addRB.isSelected()){
+			
 			if(lastActive != null){
 				lastActive = null;
 				return;
