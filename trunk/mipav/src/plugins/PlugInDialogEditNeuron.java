@@ -249,6 +249,12 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	
 	private JCheckBox hideVOIBox;
 	
+	private boolean addingBranch = false;
+	
+	private VOIPoint newBranchVOI;
+	
+	private Point lastSpot;
+	
 	/**
 	 * Primary constructor. Initializes a dialog to ask the user
 	 * for a directory to use
@@ -2178,7 +2184,26 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
-
+		if(addingBranch){
+			Vector3f pt = newBranchVOI.getPosition();
+			int ox = (int) pt.X;
+			int oy = (int) pt.Y;
+			
+			float zoomX = subVolumeFrame.getComponentImage().getZoomX();
+			float zoomY = subVolumeFrame.getComponentImage().getZoomY();
+			int x = (int) ((float)e.getX()/zoomX);
+			int y = (int) ((float)e.getY()/zoomY);
+			
+			Point oldPt = new Point(ox, oy);
+			Point newPt = new Point(x, y);
+			
+			if(lastSpot != null)
+				paths.remove(oldPt, lastSpot);
+			paths.add(oldPt, newPt);
+			lastSpot = newPt;
+			
+			subVolume.notifyImageDisplayListeners();
+		}
 	}
 
 	/**
@@ -2188,6 +2213,86 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	 */
 	@Override
 	public void mouseClicked(MouseEvent e) {
+		
+		float zoomX = subVolumeFrame.getComponentImage().getZoomX();
+		float zoomY = subVolumeFrame.getComponentImage().getZoomY();
+		int x = (int) ((float)e.getX()/zoomX);
+		int y = (int) ((float)e.getY()/zoomY);
+		
+		if(addingBranch){
+			Vector3f branchVOIPt = newBranchVOI.getPosition();
+			Point newPt = new Point((int)branchVOIPt.X, (int)branchVOIPt.Y);
+			paths.remove(newPt, lastSpot);
+			
+			//check to make sure this point is at least on a line
+			//or on a node
+			int dx, dy;
+			int maxDistSqr = Integer.MAX_VALUE;
+			int ind;
+			int outX = -1;
+			int outY = -1;
+			boolean isNode = false;
+			
+			if(mask.get(x + y*width + activeSlice*length)){
+				outX = x;
+				outY = y;
+			}
+			else{
+				loop:for(int ny = y-2;ny<=y+2;ny++){
+					if(ny < 0 || ny >= height) continue;
+					for(int nx = x-2;nx<=x+2;nx++){
+						if(nx < 0 || nx >= width) continue;
+						ind = nx + ny*width;
+						if(links.get(new Point(nx, ny)) != null){
+							outX = nx;
+							outY = ny;
+							isNode = true;
+							break loop;
+						}
+						if(mask.get(ind + activeSlice*length)){
+							dx = x - nx;
+							dx *= dx;
+							dy = y - ny;
+							dy *= dy;
+							int dSqr = dx + dy;
+							if(dSqr < maxDistSqr){
+								outX = nx;
+								outY = ny;
+								maxDistSqr = dSqr;
+							}
+						}
+					}
+				}
+			}
+			
+			if(outX == -1 || outY == -1){
+				//did not attach to anything
+				controlPts.removeCurve(newBranchVOI);
+				addingBranch = false;
+				newBranchVOI = null;
+				lastSpot = null;
+				subVolume.notifyImageDisplayListeners();
+				return;
+			}else{
+				LinkElement toLink;
+				Point linkPt = new Point(outX, outY);
+				if(isNode)
+					toLink = links.get(linkPt);
+				else
+					toLink = links.addNode(linkPt);
+				LinkElement newNode = new LinkElement(newPt);
+				newNode.addLinkTo(toLink);
+				paths.add(newPt, linkPt);
+			}
+			
+			addingBranch = false;
+			newBranchVOI = null;
+			
+			subVolume.notifyImageDisplayListeners();
+			
+			//update all the line lists and linked elements
+			return; //So nothing else happens
+		}
 		
 		if(editPolyRB.isSelected())
 			return;
@@ -2208,11 +2313,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				lastActive = null;
 				return;
 			}
-
-			float zoomX = subVolumeFrame.getComponentImage().getZoomX();
-			float zoomY = subVolumeFrame.getComponentImage().getZoomY();
-			int x = (int) ((float)e.getX()/zoomX);
-			int y = (int) ((float)e.getY()/zoomY);
 			
 			int dx, dy;
 			int maxDistSqr = Integer.MAX_VALUE;
@@ -2248,7 +2348,21 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				}
 			}
 			
-			if(outX == -1 || outY == -1) return;
+			if(outX == -1 || outY == -1) {
+				//Not clicking near any branches, so either don't do anything, or possibly do
+				//something fancy (it might work)
+				addingBranch = true;
+				//Add voi? And also line path? Or just VOI and start drawing the line?
+				
+				newBranchVOI = new VOIPoint(VOI.POINT, new Vector3f(x, y, activeSlice));
+				newBranchVOI.setLabel("");
+				controlPts.importCurve(newBranchVOI);
+				VOIBaseVector vbv = controlPts.getCurves();
+				newBranchVOI = (VOIPoint) vbv.get(vbv.size()-1);
+				
+				subVolume.notifyImageDisplayListeners();
+				return;
+			}
 
 			LinePath onPath = paths.findPath(new Point(outX, outY));
 			if(onPath != null){
@@ -2662,6 +2776,11 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			}
 
 			return null;
+		}
+		
+		private LinkElement addNode(Point node){
+			LinePath path = paths.findPath(node);
+			return addNode(node, path);
 		}
 		
 		/**
@@ -3167,7 +3286,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 
 			@Override
 			public int compareTo(PriorityElement o) {
-				// TODO Auto-generated method stub
 				if(depth > o.depth)
 					return 1;
 				else if(depth < o.depth)
