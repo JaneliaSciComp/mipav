@@ -73,7 +73,6 @@ public class PlugInDialogSaveTraceAsAVI extends JDialogStandalonePlugin implemen
 		else if(command.equals("Cancel")){
 			
 			if (isExitRequired()) {
-	            System.exit(0);
 	            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 	        } else {
 	        	dispose();
