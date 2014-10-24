@@ -256,6 +256,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	
 	private Point lastSpot;
 	
+	private boolean blockClick = false;
+	
 	/**
 	 * Primary constructor. Initializes a dialog to ask the user
 	 * for a directory to use
@@ -2230,24 +2232,20 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		int x = (int) ((float)e.getX()/zoomX);
 		int y = (int) ((float)e.getY()/zoomY);
 		
-		if(editPolyRB.isSelected())
-			return;
-		
-		int thisSlice = subVolumeFrame.getViewableSlice();
-		if(thisSlice != activeSlice)
-			return;
-		
-		
 		int numClicks = e.getClickCount();
 		int button = e.getButton();
 		
-		if(numClicks != 2 || button != MouseEvent.BUTTON1)
-			return;
+		if(blockClick){//block clicks after adding a new branch to prevent issues
+			if(numClicks == 1)//any legitimate action is going to be a double click anyways
+				blockClick = false;
+			else return;
+		}
 		
-		if(addingBranch){
+		if(addingBranch && numClicks == 1 && button == 1){
 			Vector3f branchVOIPt = newBranchVOI.getPosition();
 			Point newPt = new Point((int)branchVOIPt.X, (int)branchVOIPt.Y);
-			paths.remove(newPt, lastSpot);
+			if(lastSpot != null)
+				paths.remove(newPt, lastSpot);
 			
 			//check to make sure this point is at least on a line
 			//or on a node
@@ -2296,8 +2294,21 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			}else{
 				LinkElement toLink;
 				Point linkPt = new Point(outX, outY);
-				if(isNode)
+				if(isNode){
 					toLink = links.get(linkPt);
+					//logic for progenitor and origin
+					if(linkPt.equals(progenitorPt)){
+						progenitorVOI.setLabel("");
+						newBranchVOI.setLabel("P");
+						progenitorVOI = newBranchVOI;
+						progenitorPt = newPt;
+					}else if(linkPt.equals(origin)){
+						originVOI.setLabel("");
+						newBranchVOI.setLabel("O");
+						originVOI = newBranchVOI;
+						origin = newPt;
+					}
+				}
 				else
 					toLink = links.addNode(linkPt);
 				LinkElement newNode = new LinkElement(newPt);
@@ -2311,9 +2322,23 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			
 			subVolume.notifyImageDisplayListeners();
 			
+			blockClick = true;
 			//update all the line lists and linked elements
 			return; //So nothing else happens
 		}
+		
+		if(editPolyRB.isSelected())
+			return;
+		
+		int thisSlice = subVolumeFrame.getViewableSlice();
+		if(thisSlice != activeSlice)
+			return;
+		
+		
+		if(numClicks != 2 || button != MouseEvent.BUTTON1)
+			return;
+		
+		
 		if(addRB.isSelected()){
 			
 			if(lastActive != null){
