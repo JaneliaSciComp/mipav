@@ -1894,18 +1894,20 @@ public class VolumeSurface extends VolumeObject
             kSum.set(0f,0f,0f);
             num = 0;
             m_kMesh.VBuffer.GetPosition3(i, kOriginalPos);
-
+           
             // get all the verticies that are connected to this one (at i)
-            for (Iterator iter = connections[i].iterator(); iter.hasNext();) {
-                int index = ((Integer) iter.next()).intValue();
-
-                m_kMesh.VBuffer.GetPosition3(index, kConnectionPos);
-
-                // Sum of (xj - xi) where j ranges over all the points connected to xi
-                // xj = m_kV2; xi = m_kV3
-                kConnectionPos.sub( kOriginalPos );
-                kSum.add( kConnectionPos );
-                num++;
+            if ( connections[i] != null ) {
+	            for (Iterator iter = connections[i].iterator(); iter.hasNext();) {
+	                int index = ((Integer) iter.next()).intValue();
+	
+	                m_kMesh.VBuffer.GetPosition3(index, kConnectionPos);
+	
+	                // Sum of (xj - xi) where j ranges over all the points connected to xi
+	                // xj = m_kV2; xi = m_kV3
+	                kConnectionPos.sub( kOriginalPos );
+	                kSum.add( kConnectionPos );
+	                num++;
+	            }
             }
             // xi+1 = xi + (alpha)*(sum of(points xi is connected to - xi))
 
