@@ -162,6 +162,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		listenersOn = false;
 		segmentList = new ArrayList<Point>();
 		init();
+			
 	}
 	
 	public void actionPerformed(ActionEvent e){
@@ -174,7 +175,6 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		else if(command.equals("Cancel")){
 			
 			if (isExitRequired()) {
-	            System.exit(0);
 	            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 	        } else {
 	        	dispose();
@@ -1161,7 +1161,6 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
-		// TODO Auto-generated method stub
 		
 	}
 	
@@ -1179,8 +1178,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 			images.clear();
 			seg.finalize();
 			if (isExitRequired()) {
-	            System.exit(0);
-	            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+	            ViewUserInterface.getReference().windowClosing(event);
 	        } else {
 	        	dispose();
 	        	if(listDialog != null) 
@@ -1194,10 +1192,9 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		else if(source == this){
 			cancelFlag = true;
 			if (isExitRequired()) {
-				System.exit(0);
-				ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+				ViewUserInterface.getReference().windowClosing(event);
 			} else {
-				dispose();
+				
 				if(listDialog != null) 
 					listDialog.dispose();
 				if (frame != null) frame.close();
@@ -1207,6 +1204,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 				seg.finalize();
 				seg = null;
 				skeleton = null;
+				dispose();
 			}
 
 

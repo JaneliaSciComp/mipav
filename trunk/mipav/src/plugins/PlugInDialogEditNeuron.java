@@ -281,7 +281,6 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         }
 		else if(command.equals("Cancel")){
 			if (isExitRequired()) {
-	            System.exit(0);
 	            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 	        } else {
 	        	dispose();
@@ -2537,8 +2536,13 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				e1.printStackTrace();
 			}
 			if (isExitRequired()) {
-	            System.exit(0);
-	            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+	            ViewUserInterface.getReference().windowClosing(e);
+	        } else {
+	        	dispose();
+	        }
+		} else if(e.getSource() == this){
+			if (isExitRequired()) {
+	            ViewUserInterface.getReference().windowClosing(e);
 	        } else {
 	        	dispose();
 	        }
