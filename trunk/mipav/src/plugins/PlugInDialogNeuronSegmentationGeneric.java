@@ -33,6 +33,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -328,6 +329,10 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		frame.getComponentImage().setZoom(zX, zY);
 		//frame.updateFrame(zX, zY);
 		frame.updateImages();
+		if(isExitRequired()){
+			frame.removeWindowListener(frame);
+			frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+		}
 		
 		if(tipBox.isSelected()) seg.displayTips();
 		if(centroidBox.isSelected()) seg.displayCentroid();
@@ -1174,16 +1179,17 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 			segImageBox.setSelected(false);
 		}
 		else if(source == frame){
-			cancelFlag = true;
-			images.clear();
-			seg.finalize();
 			if (isExitRequired()) {
 	            ViewUserInterface.getReference().windowClosing(event);
 	        } else {
-	        	dispose();
+	        	cancelFlag = true;
+	        	images.clear();
+	        	seg.finalize();
+	        	
 	        	if(listDialog != null) 
 	        		listDialog.dispose();
 	        	if(segFrame != null) segFrame.close();
+	        	dispose();
 	        }
 		}
 		else if(source == listDialog){

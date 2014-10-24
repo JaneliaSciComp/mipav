@@ -40,6 +40,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.WindowConstants;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmMean;
@@ -1358,6 +1359,12 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			subVolumeFrame.setVisible(true);
 			subVolumeFrame.addWindowListener(this);
 			
+			if(isExitRequired()){
+				subVolumeFrame.removeWindowListener(subVolumeFrame);
+				subVolumeFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+			}
+			
+			
 			readSWC(lowerBound);
 			
 		} catch(IOException e){
@@ -1423,6 +1430,11 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		subVolumeFrame.setSlice(activeSlice);
 		subVolumeFrame.setVisible(true);
 		subVolumeFrame.addWindowListener(this);
+		
+		if(isExitRequired()){
+			subVolumeFrame.removeWindowListener(subVolumeFrame);
+			subVolumeFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+		}
 		
 		try {
 			readSWC(lowerBound);
