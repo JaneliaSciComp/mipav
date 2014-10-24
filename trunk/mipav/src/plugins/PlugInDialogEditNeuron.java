@@ -2235,13 +2235,16 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		int numClicks = e.getClickCount();
 		int button = e.getButton();
 		
+		if(button != MouseEvent.BUTTON1)
+			return;
+		
 		if(blockClick){//block clicks after adding a new branch to prevent issues
 			if(numClicks == 1)//any legitimate action is going to be a double click anyways
 				blockClick = false;
 			else return;
 		}
 		
-		if(addingBranch && numClicks == 1 && button == 1){
+		if(addingBranch && numClicks == 1){
 			Vector3f branchVOIPt = newBranchVOI.getPosition();
 			Point newPt = new Point((int)branchVOIPt.X, (int)branchVOIPt.Y);
 			if(lastSpot != null)
@@ -2261,9 +2264,9 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				outY = y;
 			}
 			else{
-				loop:for(int ny = y-2;ny<=y+2;ny++){
+				loop:for(int ny = y-4;ny<=y+4;ny++){
 					if(ny < 0 || ny >= height) continue;
-					for(int nx = x-2;nx<=x+2;nx++){
+					for(int nx = x-4;nx<=x+4;nx++){
 						if(nx < 0 || nx >= width) continue;
 						ind = nx + ny*width;
 						if(links.get(new Point(nx, ny)) != null){
@@ -2335,7 +2338,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			return;
 		
 		
-		if(numClicks != 2 || button != MouseEvent.BUTTON1)
+		if(numClicks != 2)
 			return;
 		
 		
