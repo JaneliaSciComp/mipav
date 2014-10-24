@@ -1,14 +1,6 @@
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.file.DicomDictionary;
-import gov.nih.mipav.model.file.FileDicomKey;
-import gov.nih.mipav.model.file.FileDicomSQ;
-import gov.nih.mipav.model.file.FileDicomTag;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.FileDicomTagInfo.VR;
-import gov.nih.mipav.model.file.FileDicomTagTable;
-import gov.nih.mipav.model.file.FileIO;
-import gov.nih.mipav.model.file.FileInfoDicom;
-import gov.nih.mipav.model.file.FileUtility;
-import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 
 import gov.nih.mipav.view.MipavUtil;
@@ -23,12 +15,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Vector;
+import java.util.*;
 
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -358,9 +345,8 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
     /**
      * constructor
      */
-    public PlugInAlgorithmNINDSAnonymizationTool(String inputDirectoryPath, String outputDirectoryPath,
-            final String parentBlindingFilePath, final HashMap<String, String> blindedPatientIdMap,
-            final JTextArea outputTextArea, final JLabel errorMessageLabel, final JDialog parentDialog,
+    public PlugInAlgorithmNINDSAnonymizationTool(String inputDirectoryPath, String outputDirectoryPath, final String parentBlindingFilePath,
+            final HashMap<String, String> blindedPatientIdMap, final JTextArea outputTextArea, final JLabel errorMessageLabel, final JDialog parentDialog,
             final String csvFilePath, final boolean newCSVFile) {
         this.inputDirectoryPath = inputDirectoryPath;
         this.outputDirectoryPath = outputDirectoryPath;
@@ -403,8 +389,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
             outputStreamCSV = new FileOutputStream(csvFile, true);
             printStreamCSV = new PrintStream(outputStreamCSV);
             if (newCSVFile) {
-                printStreamCSV
-                        .println("patientID,patientsAge,studyDate,studyID,seriesNo,todaysDate,sequenceName,blindedPatientID");
+                printStreamCSV.println("patientID,patientsAge,studyDate,studyID,seriesNo,todaysDate,sequenceName,blindedPatientID");
             }
             final Calendar t = Calendar.getInstance();
             final SimpleDateFormat sdf = new SimpleDateFormat("MMddyyyy");
@@ -481,8 +466,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 
             if (children[i].isDirectory()) {
                 // create this directory in output directory if its not there yet
-                final File outputDataFolder = new File(children[i].getAbsolutePath().replace(inputDirectoryPath,
-                        outputDirectoryPath));
+                final File outputDataFolder = new File(children[i].getAbsolutePath().replace(inputDirectoryPath, outputDirectoryPath));
                 if ( !outputDataFolder.exists() && !skipPatient) {
                     outputDataFolder.mkdir();
                 }
@@ -492,12 +476,10 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
             } else if ( !children[i].isDirectory()) {
                 try {
                     if ( (FileUtility.isDicom(children[i].getName(), children[i].getParent() + File.separator, true) == FileUtility.DICOM)
-                            || (FileUtility.isDicom_ver2(children[i].getName(), children[i].getParent()
-                                    + File.separator, true) == FileUtility.DICOM)) {
+                            || (FileUtility.isDicom_ver2(children[i].getName(), children[i].getParent() + File.separator, true) == FileUtility.DICOM)) {
                         final String currentSeriesFolder = children[i].getParent().trim();
                         final String currentStudyFolder = children[i].getParentFile().getParent().trim();
-                        final String currentPatientFolder = children[i].getParentFile().getParentFile().getParent()
-                                .trim();
+                        final String currentPatientFolder = children[i].getParentFile().getParentFile().getParent().trim();
 
                         // New patient
                         if ( ! (currentPatientFolder.equalsIgnoreCase(patientFolder))) {
@@ -511,8 +493,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
                             totalSeries = children[i].getParentFile().getParentFile().listFiles().length;
                             currentStudy = 1;
                             currentSeries = 1;
-                        } else if (currentPatientFolder.equalsIgnoreCase(patientFolder)
-                                && ( ! (currentStudyFolder.equalsIgnoreCase(studyFolder)))) {
+                        } else if (currentPatientFolder.equalsIgnoreCase(patientFolder) && ( ! (currentStudyFolder.equalsIgnoreCase(studyFolder)))) {
                             if (skipPatient == true) {
                                 break;
                             }
@@ -525,13 +506,11 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
                             currentStudy += 1;
                             currentSeries = 1;
                             if (skipPatient == false) {
-                                progressMsg = "Processing Patient " + currentPatient + "/" + totalPatients + "  Study "
-                                        + currentStudy + "/" + totalStudies + "  Series " + currentSeries + "/"
-                                        + totalSeries;
+                                progressMsg = "Processing Patient " + currentPatient + "/" + totalPatients + "  Study " + currentStudy + "/" + totalStudies
+                                        + "  Series " + currentSeries + "/" + totalSeries;
                                 fireProgressStateChanged(0, "Image De-identification Progress", progressMsg);
                             }
-                        } else if (currentPatientFolder.equalsIgnoreCase(patientFolder)
-                                && currentStudyFolder.equalsIgnoreCase(studyFolder)
+                        } else if (currentPatientFolder.equalsIgnoreCase(patientFolder) && currentStudyFolder.equalsIgnoreCase(studyFolder)
                                 && ( ! (currentSeriesFolder.equalsIgnoreCase(seriesFolder)))) {
                             if (skipPatient == true) {
                                 break;
@@ -542,9 +521,8 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
                             seriesFolder = currentSeriesFolder;
                             currentSeries += 1;
                             if (skipPatient == false) {
-                                progressMsg = "Processing Patient " + currentPatient + "/" + totalPatients + "  Study "
-                                        + currentStudy + "/" + totalStudies + "  Series " + currentSeries + "/"
-                                        + totalSeries;
+                                progressMsg = "Processing Patient " + currentPatient + "/" + totalPatients + "  Study " + currentStudy + "/" + totalStudies
+                                        + "  Series " + currentSeries + "/" + totalSeries;
                                 fireProgressStateChanged(0, "Image De-identification Progress", progressMsg);
                             }
                         } else {
@@ -562,20 +540,16 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
                             if (skipPatient == true) {
                                 break;
                             }
-                            outputTextArea.append("WARNING: Error in anonymizing. Skipping file "
-                                    + children[i].getName() + " \n\n");
-                            printStream
-                                    .println("WARNING: Error in anonymizing. Skipping file " + children[i].getName());
+                            outputTextArea.append("WARNING: Error in anonymizing. Skipping file " + children[i].getName() + " \n\n");
+                            printStream.println("WARNING: Error in anonymizing. Skipping file " + children[i].getName());
                             printStream.println();
                             continue;
                         }
 
                     }
                 } catch (final IOException e) {
-                    outputTextArea.append("WARNING: IO Error in determing if file is DICOM. Skipping file "
-                            + children[i].getName() + " \n\n");
-                    printStream.println("WARNING: IO Error in determing if file is DICOM. Skipping file "
-                            + children[i].getName());
+                    outputTextArea.append("WARNING: IO Error in determing if file is DICOM. Skipping file " + children[i].getName() + " \n\n");
+                    printStream.println("WARNING: IO Error in determing if file is DICOM. Skipping file " + children[i].getName());
                     printStream.println();
                     continue;
                 }
@@ -692,19 +666,17 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
             if ( !patientID.equals(previousPatientId)) {
                 previousPatientId = patientID;
                 currentPatient += 1;
-                progressMsg = "Processing Patient " + currentPatient + "/" + totalPatients + "  Study " + currentStudy
-                        + "/" + totalStudies + "  Series " + currentSeries + "/" + totalSeries;
+                progressMsg = "Processing Patient " + currentPatient + "/" + totalPatients + "  Study " + currentStudy + "/" + totalStudies + "  Series "
+                        + currentSeries + "/" + totalSeries;
                 fireProgressStateChanged(0, "Image De-identification Progress", progressMsg);
             }
-            outputTextArea.append("Anonymizing " + inputImage.getImageFileName() + " from "
-                    + inputImage.getImageDirectory() + " \n");
-            printStream.println("Anonymizing " + inputImage.getImageFileName() + " from "
-                    + inputImage.getImageDirectory());
+            outputTextArea.append("Anonymizing " + inputImage.getImageFileName() + " from " + inputImage.getImageDirectory() + " \n");
+            printStream.println("Anonymizing " + inputImage.getImageFileName() + " from " + inputImage.getImageDirectory());
             newUID = blindedPatientIdMap.get(patientID);
         } else {
             skipPatient = true;
-            final File skippedPatientFolder = new File(file.getParentFile().getParentFile().getParentFile()
-                    .getAbsolutePath().replace(inputDirectoryPath, outputDirectoryPath));
+            final File skippedPatientFolder = new File(file.getParentFile().getParentFile().getParentFile().getAbsolutePath()
+                    .replace(inputDirectoryPath, outputDirectoryPath));
             delete(skippedPatientFolder);
             return false;
         }
@@ -726,7 +698,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
         final int sdyyyy = Integer.valueOf(sdyyyyString);
         sdyyyyString = String.valueOf(sdyyyy - 100);
 
-        if (tagTable.containsTag(patientDOBKey)) {
+        if (tagTable.containsTag(patientDOBKey) && ! ((String) tagTable.getValue(patientDOBKey)).trim().equals("")) {
             dob = ((String) tagTable.getValue(patientDOBKey)).trim();
             if (dob.contains("/")) {
                 dob = dob.replaceAll("\\/", "");
@@ -834,7 +806,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
         if (tagTable.containsTag(patientAgeKey)) {
             if (calculatedAge != -1) {
                 patientsAge = String.valueOf(calculatedAge);
-            } else {
+            } else if ( ! ((String) tagTable.getValue(patientAgeKey)).trim().equals("")) {
                 patientsAge = ((String) tagTable.getValue(patientAgeKey)).trim();
                 if (patientsAge.startsWith("0")) {
                     patientsAge = patientsAge.substring(0, 3).trim();
@@ -900,8 +872,8 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
             studyDate = sdmmString + "/" + sdddString + "/" + sdyyyyString;
 
             // write out to csv
-            printStreamCSV.println(patientID + "," + patientsAge + "," + studyDate + "," + studyID + "," + seriesNo
-                    + "," + todaysDateString + "," + sequenceName + "," + newUID);
+            printStreamCSV.println(patientID + "," + patientsAge + "," + studyDate + "," + studyID + "," + seriesNo + "," + todaysDateString + ","
+                    + sequenceName + "," + newUID);
             donePatientIDs.add(csvCheck);
         }
 
@@ -910,7 +882,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
         String s;
         for (int i = 0; i < size; i++) {
             final FileDicomKey key = replaceTagsVector.get(i);
-            if (tagTable.containsTag(key)) {
+            if (tagTable.containsTag(key) && ! ((String) tagTable.getValue(key)).trim().equals("")) {
                 final String keyString = key.getKey();
                 if (keyString.equals("0002,0003")) {
                     s = (String) tagTable.getValue(key);
