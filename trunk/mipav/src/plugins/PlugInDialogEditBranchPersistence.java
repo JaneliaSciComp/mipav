@@ -38,6 +38,7 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerListModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.WindowConstants;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmMean;
@@ -1062,6 +1063,10 @@ ItemListener
 			subVolumeFrame.setSlice(activeSlice);
 			subVolumeFrame.setVisible(true);
 			subVolumeFrame.addWindowListener(this);
+			if(isExitRequired()){
+				subVolumeFrame.removeWindowListener(subVolumeFrame);
+				subVolumeFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+			}
 			
 			readSWC(lowerBound);
 			
@@ -1124,6 +1129,10 @@ ItemListener
 		subVolumeFrame.setSlice(activeSlice);
 		subVolumeFrame.setVisible(true);
 		subVolumeFrame.addWindowListener(this);
+		if(isExitRequired()){
+			subVolumeFrame.removeWindowListener(subVolumeFrame);
+			subVolumeFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+		}
 		
 		try {
 			readSWC(lowerBound);
@@ -1505,15 +1514,20 @@ ItemListener
 	}
 	
 	public void windowClosing(WindowEvent e){
-		if(e.getSource() == subVolumeFrame){
-			/*try {
-				statsCSV.close();
-			} catch (IOException e1) {
-				MipavUtil.displayError("Could not close CSV output");
-				e1.printStackTrace();
-			}*/
+		
+		/*if(e.getSource() == subVolumeFrame){
 			subVolumeFrame = null;
 			actionPerformed(new ActionEvent(this, 0, "End"));
+		}else if(e.getSource() == this){
+			
+		}*/
+		
+		if (isExitRequired()) {
+			ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+		} else {
+			if(subVolumeFrame != null) subVolumeFrame.close();
+			if(imStack != null) imStack.disposeLocal();
+			dispose();
 		}
 	}
 	
