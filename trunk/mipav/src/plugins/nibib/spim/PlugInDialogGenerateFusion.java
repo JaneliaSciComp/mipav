@@ -84,6 +84,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     final String initTransformPrefusionLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "PrefusionTransform" + File.separator;
     final String initBasePrefusionLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "PrefusionBase" + File.separator;
     final String initDeconvLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "Deconvolution" + File.separator;
+    final String initRegLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "Register2D" + File.separator;
     
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -97,7 +98,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     
     private GridBagConstraints gbc;
 
-    private JTextField mtxFileLocText, mtxFileDirectoryText, transformFileLocText, baseFileLocText;
+    private JTextField mtxFileLocText, mtxFileDirectoryText, transformFileLocText, baseFileLocText, register2DFileDirectoryText;
 
     private JCheckBox geometricMeanShowBox, arithmeticMeanShowBox, interImagesBox;
 
@@ -118,6 +119,8 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     private boolean showGeoMean, showAriMean;
 
     private String transformFileDir, baseFileDir;
+    
+    private File register2DFileDir;
 
     private String baseImage;
 
@@ -241,8 +244,10 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	private JRadioButton noRegisterButton;
 	private JRadioButton registerOneButton;
 	private JRadioButton registerAllButton;
+	private JRadioButton register2DButton;
 	private boolean registerOne = true;
 	private boolean registerAll = false;
+	private boolean register2D = false;
 	private JLabel labelTimeExt;
 	private JTextField textTimeExt;
 	private int timeNum; // The extension number in the file name
@@ -392,7 +397,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 
         try {
             
-            generateFusionAlgo = new PlugInAlgorithmGenerateFusion(registerOne, registerAll, rotateBeginX, rotateEndX, 
+            generateFusionAlgo = new PlugInAlgorithmGenerateFusion(registerOne, registerAll, register2D, register2DFileDir, rotateBeginX, rotateEndX, 
             		                                               coarseRateX, fineRateX, rotateBeginY, 
                                                                    rotateEndY, coarseRateY, fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ,
                                                                    fineRateZ,doShowPreFusion, doInterImages, showGeoMean, showAriMean, 
@@ -570,6 +575,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 
     	registerOne = scriptParameters.getParams().getBoolean("reg_one");
     	registerAll = scriptParameters.getParams().getBoolean("reg_all");
+    	register2D = scriptParameters.getParams().getBoolean("reg_2D");
     	final float[] rotBegin = scriptParameters.getParams().getList("rotate_begin").getAsFloatArray();
         final float[] rotEnd = scriptParameters.getParams().getList("rotate_end").getAsFloatArray();
         final float[] coarseRates = scriptParameters.getParams().getList("coarse_rate").getAsFloatArray();
@@ -595,7 +601,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     	doShowPreFusion = scriptParameters.getParams().getBoolean("do_subsample");
     	doThreshold = scriptParameters.getParams().getBoolean("do_threshold");
     	
-    	if (registerOne || registerAll) {
+    	if (registerOne || registerAll || register2D) {
     	    mtxFileDirectory = scriptParameters.getParams().getFile("mtxFileDirectory");
     	    if (registerOne) {
     	        timeNum = scriptParameters.getParams().getInt("time_num");
@@ -623,6 +629,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
    
         scriptParameters.getParams().put(ParameterFactory.newParameter("reg_one", registerOne));
         scriptParameters.getParams().put(ParameterFactory.newParameter("reg_all", registerAll));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("reg_2D", register2D));
         scriptParameters.getParams().put(
                 ParameterFactory.newParameter("rotate_begin", new float[] {rotateBeginX, rotateBeginY, rotateBeginZ}));
         scriptParameters.getParams().put(
@@ -637,7 +644,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doShowPreFusion));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_threshold", doThreshold));
        
-        if (registerOne || registerAll) {
+        if (registerOne || registerAll || register2D) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("mtxFileDirectory", mtxFileDirectory));
             if (registerOne) {
                 scriptParameters.getParams().put(ParameterFactory.newParameter("time_num", timeNum));
@@ -721,6 +728,13 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         mtxPanel.add(registerAllButton, gbc);
         gbc.gridy++;
         
+        register2DButton = new JRadioButton("2D registrations", false);
+        register2DButton.setFont(serif12);
+        register2DButton.setForeground(Color.black);
+        registrationGroup.add(register2DButton);
+        mtxPanel.add(register2DButton, gbc);
+        gbc.gridy++;
+        
         GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.gridwidth = 1;
         gbc2.gridheight = 1;
@@ -763,6 +777,26 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         gbc2.gridwidth = 2;
         mtxFileDirectoryText = gui.buildFileField("Directory containing matrix file: ", " ", false, JFileChooser.DIRECTORIES_ONLY);
         timeNumberPanel.add(mtxFileDirectoryText.getParent(), gbc2);
+        gbc2.gridx = 0;
+        gbc2.gridy++;
+        
+        GridBagConstraints gbc5 = new GridBagConstraints();
+        gbc5.gridwidth = 1;
+        gbc5.gridheight = 1;
+        gbc5.anchor = GridBagConstraints.WEST;
+        gbc5.weightx = 1;
+        gbc5.fill = GridBagConstraints.HORIZONTAL;
+        gbc5.gridx = 0;
+        gbc5.gridy = 0; 
+        final JPanel registerFilePanel = new JPanel(new GridBagLayout());
+        registerFilePanel.setForeground(Color.black);
+        
+        register2DFileDirectoryText = gui.buildFileField("Directory containing registered 2D files: ", " ", false,
+        		JFileChooser.DIRECTORIES_ONLY);
+        registerFilePanel.add(register2DFileDirectoryText.getParent(), gbc5);
+        registerFilePanel.setVisible(false);
+        
+        timeNumberPanel.add(registerFilePanel, gbc2);
         gbc2.gridx = 0;
         gbc2.gridy++;
         
@@ -1043,25 +1077,45 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         
         noRegisterButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
-                timeNumberPanel.setVisible(registerOneButton.isSelected() || registerAllButton.isSelected());
+                timeNumberPanel.setVisible(registerOneButton.isSelected() || registerAllButton.isSelected() ||
+                		register2DButton.isSelected());
                 oneTimePanel.setVisible(registerOneButton.isSelected());
-                matrixFilePanel.setVisible(!(registerOneButton.isSelected() || registerAllButton.isSelected()));
+                matrixFilePanel.setVisible(!(registerOneButton.isSelected() || registerAllButton.isSelected() ||
+                		register2DButton.isSelected()));
+                registerFilePanel.setVisible(register2DButton.isSelected());
             }
         });
         
         registerOneButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
-            	timeNumberPanel.setVisible(registerOneButton.isSelected() || registerAllButton.isSelected());  
+            	timeNumberPanel.setVisible(registerOneButton.isSelected() || registerAllButton.isSelected() ||
+            			register2DButton.isSelected());  
             	oneTimePanel.setVisible(registerOneButton.isSelected());
-                matrixFilePanel.setVisible(!(registerOneButton.isSelected() || registerAllButton.isSelected()));
+                matrixFilePanel.setVisible(!(registerOneButton.isSelected() || registerAllButton.isSelected() ||
+                		register2DButton.isSelected()));
+                registerFilePanel.setVisible(register2DButton.isSelected());
             }
         });
         
         registerAllButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
-            	timeNumberPanel.setVisible(registerOneButton.isSelected() || registerAllButton.isSelected()); 
+            	timeNumberPanel.setVisible(registerOneButton.isSelected() || registerAllButton.isSelected() ||
+            			register2DButton.isSelected()); 
             	oneTimePanel.setVisible(registerOneButton.isSelected());
-                matrixFilePanel.setVisible(!(registerOneButton.isSelected() || registerAllButton.isSelected()));
+                matrixFilePanel.setVisible(!(registerOneButton.isSelected() || registerAllButton.isSelected() ||
+                		register2DButton.isSelected()));
+                registerFilePanel.setVisible(register2DButton.isSelected());
+            }
+        });
+        
+        register2DButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent arg0) {
+            	timeNumberPanel.setVisible(registerOneButton.isSelected() || registerAllButton.isSelected() ||
+            			register2DButton.isSelected()); 
+            	oneTimePanel.setVisible(registerOneButton.isSelected());
+                matrixFilePanel.setVisible(!(registerOneButton.isSelected() || registerAllButton.isSelected() ||
+                		register2DButton.isSelected()));
+                registerFilePanel.setVisible(register2DButton.isSelected());
             }
         });
         
@@ -1282,12 +1336,22 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
             public void actionPerformed(ActionEvent e) {
                 try {
                     File f;
-                    if ((registerOneButton.isSelected() || registerAllButton.isSelected())) {
+                    if ((registerOneButton.isSelected() || registerAllButton.isSelected() || register2DButton.isSelected())) {
                         f = new File(mtxFileLocText.getText()).getParentFile().getParentFile();
                     }
                     else {
                         f = new File(mtxFileLocText.getText()).getParentFile().getParentFile().getParentFile();    
                     }
+                    Preferences.setImageDirectory(f);
+                } catch(Exception ex) {}
+            }
+        });
+        
+        register2DFileDirectoryText.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    File f; 
+                    f = new File(register2DFileDirectoryText.getText()).getParentFile().getParentFile();    
                     Preferences.setImageDirectory(f);
                 } catch(Exception ex) {}
             }
@@ -1995,6 +2059,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	private boolean setVariables() {
 	    registerOne = registerOneButton.isSelected();
 	    registerAll = registerAllButton.isSelected();
+	    register2D = register2DButton.isSelected();
 	    showGeoMean = geometricMeanShowBox.isSelected();
         showAriMean = arithmeticMeanShowBox.isSelected();
         saveGeoMean = geometricMeanSaveBox.isSelected();
@@ -2043,6 +2108,12 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
             }
         }
         
+        if (register2D) {
+        	if ((register2DFileDir = createDirectory(register2DFileDirectoryText.getText())) == null) {
+        		return false;
+        	}
+        }
+        
         doDeconv = deconvPerformCheckbox.isSelected();
         if (doDeconv) {
         	if((deconvDir = createDirectory(saveDeconvFolderText.getText())) == null) {
@@ -2065,9 +2136,11 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 		    
 		    resX = Double.valueOf(resXText.getText()).doubleValue();
 		    resY = Double.valueOf(resYText.getText()).doubleValue();
-		    resZ = Double.valueOf(resZText.getText()).doubleValue();
+		    if (!register2D) {
+		        resZ = Double.valueOf(resZText.getText()).doubleValue();
+		    }
 		    
-		    if (registerOne || registerAll) {
+		    if (registerOne || registerAll || register2D) {
 		    	
 		    	if (registerOne) {
                     timeNum = Integer.valueOf(textTimeExt.getText()).intValue();
@@ -2150,172 +2223,175 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
                     }
                 }
 
-                if (universalCheckbox.isSelected()) {
-                    rotateBeginY = rotateBeginX;
-                    rotateBeginZ = rotateBeginX;
-                    rotateEndY = rotateEndX;
-                    rotateEndZ = rotateEndX;
-                    coarseRateY = coarseRateX;
-                    coarseRateZ = coarseRateX;
-                    fineRateY = fineRateX;
-                    fineRateZ = fineRateX;
-                } else { // universalCheckbox not selected
+                if (!register2D) {
+	                if (universalCheckbox.isSelected()) {
+	                    rotateBeginY = rotateBeginX;
+	                    rotateBeginZ = rotateBeginX;
+	                    rotateEndY = rotateEndX;
+	                    rotateEndZ = rotateEndX;
+	                    coarseRateY = coarseRateX;
+	                    coarseRateZ = coarseRateX;
+	                    fineRateY = fineRateX;
+	                    fineRateZ = fineRateX;
+	                } else { // universalCheckbox not selected
+	
+	                    if ( !JDialogBase.testParameter(rotateBeginTextY.getText(), -360, 360)) {
+	                        showY();
+	                        rotateBeginTextY.requestFocus();
+	                        rotateBeginTextY.selectAll();
+	
+	                        return false;
+	                    } else {
+	                        rotateBeginY = Float.valueOf(rotateBeginTextY.getText()).floatValue();
+	                    }
+	
+	                    if ( !JDialogBase.testParameter(rotateEndTextY.getText(), -360, 360)) {
+	                        showY();
+	                        rotateEndTextY.requestFocus();
+	                        rotateEndTextY.selectAll();
+	
+	                        return false;
+	                    } else {
+	                        rotateEndY = Float.valueOf(rotateEndTextY.getText()).floatValue();
+	                    }
+	
+	                    if ( !JDialogBase.testParameter(coarseRateTextY.getText(), 0.01, 360)) {
+	                        showY();
+	                        coarseRateTextY.requestFocus();
+	                        coarseRateTextY.selectAll();
+	
+	                        return false;
+	                    } else {
+	                        coarseRateY = Float.valueOf(coarseRateTextY.getText()).floatValue();
+	                    }
+	
+	                    if (rotateBeginY > rotateEndY) {
+	                        MipavUtil.displayError("Beginning of rangeY must be less than end of range.");
+	                        showY();
+	                        rotateBeginTextY.requestFocus();
+	                        rotateBeginTextY.selectAll();
+	
+	                        return false;
+	                    }
+	
+	                    if ( ( (rotateEndY - rotateBeginY) / coarseRateY) < 1) {
+	                        final int response = JOptionPane.showConfirmDialog(this,
+	                                "Warning: with such a large rateY, there will only be 1 sampling.  Continue?",
+	                                "Sampling warning", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+	
+	                        if (response == JOptionPane.NO_OPTION) {
+	                            showY();
+	                            coarseRateTextY.requestFocus();
+	                            coarseRateTextY.selectAll();
+	
+	                            return false;
+	                        }
+	                    }
+	
+	                    if ( !JDialogBase.testParameter(fineRateTextY.getText(), 0.01, 360)) {
+	                        showY();
+	                        fineRateTextY.requestFocus();
+	                        fineRateTextY.selectAll();
+	
+	                        return false;
+	                    } else {
+	                        fineRateY = Float.valueOf(fineRateTextY.getText()).floatValue();
+	                    }
+	
+	                    if ( ( (rotateEndY - rotateBeginY) / fineRateY) < 1) {
+	                        final int response = JOptionPane.showConfirmDialog(this,
+	                                "Warning: with such a large rateY, there will only be 1 sampling.  Continue?",
+	                                "Sampling warning", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+	
+	                        if (response == JOptionPane.NO_OPTION) {
+	                            showY();
+	                            coarseRateTextY.requestFocus();
+	                            coarseRateTextY.selectAll();
+	
+	                            return false;
+	                        }
+	                    }
 
-                    if ( !JDialogBase.testParameter(rotateBeginTextY.getText(), -360, 360)) {
-                        showY();
-                        rotateBeginTextY.requestFocus();
-                        rotateBeginTextY.selectAll();
-
-                        return false;
-                    } else {
-                        rotateBeginY = Float.valueOf(rotateBeginTextY.getText()).floatValue();
-                    }
-
-                    if ( !JDialogBase.testParameter(rotateEndTextY.getText(), -360, 360)) {
-                        showY();
-                        rotateEndTextY.requestFocus();
-                        rotateEndTextY.selectAll();
-
-                        return false;
-                    } else {
-                        rotateEndY = Float.valueOf(rotateEndTextY.getText()).floatValue();
-                    }
-
-                    if ( !JDialogBase.testParameter(coarseRateTextY.getText(), 0.01, 360)) {
-                        showY();
-                        coarseRateTextY.requestFocus();
-                        coarseRateTextY.selectAll();
-
-                        return false;
-                    } else {
-                        coarseRateY = Float.valueOf(coarseRateTextY.getText()).floatValue();
-                    }
-
-                    if (rotateBeginY > rotateEndY) {
-                        MipavUtil.displayError("Beginning of rangeY must be less than end of range.");
-                        showY();
-                        rotateBeginTextY.requestFocus();
-                        rotateBeginTextY.selectAll();
-
-                        return false;
-                    }
-
-                    if ( ( (rotateEndY - rotateBeginY) / coarseRateY) < 1) {
-                        final int response = JOptionPane.showConfirmDialog(this,
-                                "Warning: with such a large rateY, there will only be 1 sampling.  Continue?",
-                                "Sampling warning", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-
-                        if (response == JOptionPane.NO_OPTION) {
-                            showY();
-                            coarseRateTextY.requestFocus();
-                            coarseRateTextY.selectAll();
-
-                            return false;
-                        }
-                    }
-
-                    if ( !JDialogBase.testParameter(fineRateTextY.getText(), 0.01, 360)) {
-                        showY();
-                        fineRateTextY.requestFocus();
-                        fineRateTextY.selectAll();
-
-                        return false;
-                    } else {
-                        fineRateY = Float.valueOf(fineRateTextY.getText()).floatValue();
-                    }
-
-                    if ( ( (rotateEndY - rotateBeginY) / fineRateY) < 1) {
-                        final int response = JOptionPane.showConfirmDialog(this,
-                                "Warning: with such a large rateY, there will only be 1 sampling.  Continue?",
-                                "Sampling warning", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-
-                        if (response == JOptionPane.NO_OPTION) {
-                            showY();
-                            coarseRateTextY.requestFocus();
-                            coarseRateTextY.selectAll();
-
-                            return false;
-                        }
-                    }
-
-                    if ( !JDialogBase.testParameter(rotateBeginTextZ.getText(), -360, 360)) {
-                        showZ();
-                        rotateBeginTextZ.requestFocus();
-                        rotateBeginTextZ.selectAll();
-
-                        return false;
-                    } else {
-                        rotateBeginZ = Float.valueOf(rotateBeginTextZ.getText()).floatValue();
-                    }
-
-                    if ( !JDialogBase.testParameter(rotateEndTextZ.getText(), -360, 360)) {
-                        showZ();
-                        rotateEndTextZ.requestFocus();
-                        rotateEndTextZ.selectAll();
-
-                        return false;
-                    } else {
-                        rotateEndZ = Float.valueOf(rotateEndTextZ.getText()).floatValue();
-                    }
-
-                    if ( !JDialogBase.testParameter(coarseRateTextZ.getText(), 0.01, 360)) {
-                        showZ();
-                        coarseRateTextZ.requestFocus();
-                        coarseRateTextZ.selectAll();
-
-                        return false;
-                    } else {
-                        coarseRateZ = Float.valueOf(coarseRateTextZ.getText()).floatValue();
-                    }
-
-                    if (rotateBeginZ > rotateEndZ) {
-                        MipavUtil.displayError("Beginning of rangeZ must be less than end of range.");
-                        showZ();
-                        rotateBeginTextZ.requestFocus();
-                        rotateBeginTextZ.selectAll();
-
-                        return false;
-                    }
-
-                    if ( ( (rotateEndZ - rotateBeginZ) / coarseRateZ) < 1) {
-                        final int response = JOptionPane.showConfirmDialog(this,
-                                "Warning: with such a large rateZ, there will only be 1 sampling.  Continue?",
-                                "Sampling warning", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-
-                        if (response == JOptionPane.NO_OPTION) {
-                            showZ();
-                            coarseRateTextZ.requestFocus();
-                            coarseRateTextZ.selectAll();
-
-                            return false;
-                        }
-                    }
-
-                    if ( !JDialogBase.testParameter(fineRateTextZ.getText(), 0.01, 360)) {
-                        showZ();
-                        fineRateTextZ.requestFocus();
-                        fineRateTextZ.selectAll();
-
-                        return false;
-                    } else {
-                        fineRateZ = Float.valueOf(fineRateTextZ.getText()).floatValue();
-                    }
-
-                    if ( ( (rotateEndZ - rotateBeginZ) / fineRateZ) < 1) {
-                        final int response = JOptionPane.showConfirmDialog(this,
-                                "Warning: with such a large rateZ, there will only be 1 sampling.  Continue?",
-                                "Sampling warning", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-
-                        if (response == JOptionPane.NO_OPTION) {
-                            showZ();
-                            coarseRateTextZ.requestFocus();
-                            coarseRateTextZ.selectAll();
-
-                            return false;
-                        }
-                    }
+                    
+	                    if ( !JDialogBase.testParameter(rotateBeginTextZ.getText(), -360, 360)) {
+	                        showZ();
+	                        rotateBeginTextZ.requestFocus();
+	                        rotateBeginTextZ.selectAll();
+	
+	                        return false;
+	                    } else {
+	                        rotateBeginZ = Float.valueOf(rotateBeginTextZ.getText()).floatValue();
+	                    }
+	
+	                    if ( !JDialogBase.testParameter(rotateEndTextZ.getText(), -360, 360)) {
+	                        showZ();
+	                        rotateEndTextZ.requestFocus();
+	                        rotateEndTextZ.selectAll();
+	
+	                        return false;
+	                    } else {
+	                        rotateEndZ = Float.valueOf(rotateEndTextZ.getText()).floatValue();
+	                    }
+	
+	                    if ( !JDialogBase.testParameter(coarseRateTextZ.getText(), 0.01, 360)) {
+	                        showZ();
+	                        coarseRateTextZ.requestFocus();
+	                        coarseRateTextZ.selectAll();
+	
+	                        return false;
+	                    } else {
+	                        coarseRateZ = Float.valueOf(coarseRateTextZ.getText()).floatValue();
+	                    }
+	
+	                    if (rotateBeginZ > rotateEndZ) {
+	                        MipavUtil.displayError("Beginning of rangeZ must be less than end of range.");
+	                        showZ();
+	                        rotateBeginTextZ.requestFocus();
+	                        rotateBeginTextZ.selectAll();
+	
+	                        return false;
+	                    }
+	
+	                    if ( ( (rotateEndZ - rotateBeginZ) / coarseRateZ) < 1) {
+	                        final int response = JOptionPane.showConfirmDialog(this,
+	                                "Warning: with such a large rateZ, there will only be 1 sampling.  Continue?",
+	                                "Sampling warning", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+	
+	                        if (response == JOptionPane.NO_OPTION) {
+	                            showZ();
+	                            coarseRateTextZ.requestFocus();
+	                            coarseRateTextZ.selectAll();
+	
+	                            return false;
+	                        }
+	                    }
+	
+	                    if ( !JDialogBase.testParameter(fineRateTextZ.getText(), 0.01, 360)) {
+	                        showZ();
+	                        fineRateTextZ.requestFocus();
+	                        fineRateTextZ.selectAll();
+	
+	                        return false;
+	                    } else {
+	                        fineRateZ = Float.valueOf(fineRateTextZ.getText()).floatValue();
+	                    }
+	
+	                    if ( ( (rotateEndZ - rotateBeginZ) / fineRateZ) < 1) {
+	                        final int response = JOptionPane.showConfirmDialog(this,
+	                                "Warning: with such a large rateZ, there will only be 1 sampling.  Continue?",
+	                                "Sampling warning", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+	
+	                        if (response == JOptionPane.NO_OPTION) {
+	                            showZ();
+	                            coarseRateTextZ.requestFocus();
+	                            coarseRateTextZ.selectAll();
+	
+	                            return false;
+	                        }
+	                    }
+                    } // (if !register2D)
                 } // else universalCheckbox not selected
-            } // if (registerOne || registerAll)
+            } // if (registerOne || registerAll || register2D)
 		    
 		    if(showAriMean || saveAriMean) {
     		    baseAriWeight = Double.valueOf(baseAriWeightText.getText()).doubleValue();
@@ -2364,7 +2440,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
             return false;
         }
 	      
-	    if (!(registerOne || registerAll)) {
+	    if (!(registerOne || registerAll || register2D)) {
     	    try {
     	        mtxFileLoc = mtxFileLocText.getText();
     	        File f = new File(mtxFileLoc);
@@ -2379,7 +2455,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     	    }
     	    transformFileDir = transformFileLocText.getText();
     	    baseFileDir = baseFileLocText.getText();
-	    } // if (!(registerOne || registerAll))
+	    } // if (!(registerOne || registerAll || register2D))
 	    else {
 	        mtxFileDirectory = mtxFileDirectoryText.getText();
 	        transformFileDir = transformFileLocText.getText();
