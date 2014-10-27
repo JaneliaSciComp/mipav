@@ -23,11 +23,12 @@ package nibib.spim;
  ******************************************************************/
 
 import gov.nih.mipav.util.ThreadUtil;
-
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmCostFunctions;
+import gov.nih.mipav.model.algorithms.AlgorithmCostFunctions2D;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmDeconvolution;
+import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR2D;
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR3D;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmMaximumIntensityProjection;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
@@ -37,7 +38,6 @@ import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
-
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -90,6 +90,10 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
     private boolean registerOne = true;
     
     private boolean registerAll = false;
+    
+    private boolean register2D = false;
+    
+    private File register2DFileDir = null;
 
     private boolean showAriMean = true;
 
@@ -211,6 +215,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
      * 
      * @param registerOne
      * @param registerAll
+     * @param register2D
+     * @param register2DFileDir
      * @param rotateBeginX
      * @param rotateEndX
      * @param coarseRateX
@@ -270,8 +276,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
      * @param baseRotation
      * @param transformRotation
      */
-    public PlugInAlgorithmGenerateFusion(final boolean registerOne, final boolean registerAll, 
-    		final float rotateBeginX, final float rotateEndX,
+    public PlugInAlgorithmGenerateFusion(final boolean registerOne, final boolean registerAll, final boolean register2D, 
+    		final File register2DFileDir, final float rotateBeginX, final float rotateEndX,
             final float coarseRateX, final float fineRateX, final float rotateBeginY, final float rotateEndY,
             final float coarseRateY, final float fineRateY, final float rotateBeginZ, final float rotateEndZ,
             final float coarseRateZ, final float fineRateZ, final boolean doShowPrefusion, final boolean doInterImages,
@@ -291,6 +297,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             final int baseRotation, final int transformRotation) {
         this.registerOne = registerOne;
         this.registerAll = registerAll;
+        this.register2D = register2D;
+        this.register2DFileDir = register2DFileDir;
         this.rotateBeginX = rotateBeginX;
         this.rotateEndX = rotateEndX;
         this.coarseRateX = coarseRateX;
@@ -509,18 +517,32 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             io.setTIFFOrientation(false);
 
             final ModelImage baseImage = io.readImage(baseImageAr[i].getAbsolutePath());
-            for (int j = 0; j < baseImage.getExtents()[2]; j++) {
-                for (int k = 0; k < 3; k++) {
-                    baseImage.getFileInfo(j).setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, k);
+            if (register2D) {
+                for (int k = 0; k < 2; k++) {
+                	baseImage.getFileInfo(0).setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, k);	
                 }
             }
+            else {
+	            for (int j = 0; j < baseImage.getExtents()[2]; j++) {
+	                for (int k = 0; k < 3; k++) {
+	                    baseImage.getFileInfo(j).setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, k);
+	                }
+	            }
+            } // else 
             final ModelImage transformImage = io.readImage(transformImageAr[i].getAbsolutePath());
             io = null;
-            for (int j = 0; j < transformImage.getExtents()[2]; j++) {
-                for (int k = 0; k < 3; k++) {
-                    transformImage.getFileInfo(j).setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, k);
-                }
+            if (register2D) {
+            	for (int k = 0; k < 2; k++) {
+                	transformImage.getFileInfo(0).setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, k);	
+                }	
             }
+            else {
+	            for (int j = 0; j < transformImage.getExtents()[2]; j++) {
+	                for (int k = 0; k < 3; k++) {
+	                    transformImage.getFileInfo(j).setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, k);
+	                }
+	            }
+            } // else
 
             try {
                 semaphore.acquire();
@@ -825,257 +847,416 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         public Boolean call() {
             // fireProgressStateChanged(5, "Transform", "Rotating");
             System.out.println("Processing " + baseImage.getImageName() + " and " + transformImage.getImageName());
-
-            baseImage.setResolutions(new float[] {(float) resX, (float) resY, (float) resZ});
-            transformImage.setResolutions(new float[] {(float) resX, (float) resY, (float) resZ});
-            finalRes = new float[baseImage.getResolutions(0).length];
-
-            for (int i = 0; i < baseImage.getFileInfo().length; i++) {
-                baseImage.getFileInfo(i).setSliceThickness(baseImage.getResolutions(i)[2]);
-            }
-
-            for (int i = 0; i < transformImage.getFileInfo().length; i++) {
-                transformImage.getFileInfo(i).setSliceThickness(transformImage.getResolutions(i)[2]);
-            }
             
-            if (baseRotation >= 0) {
-                baseImage = rotate(baseImage, baseRotation);	
-            }
-            
-            if (doInterImages) {
-                resultImageList.add(baseImage);
-            }
+            if (register2D) {
+            	//baseImage.setResolutions(new float[] {(float) resX, (float) resY});
+ 	            //transformImage.setResolutions(new float[] {(float) resX, (float) resY});
+            	final int[] dim = new int[transformImage.getExtents().length];
+                final float[] res = new float[transformImage.getResolutions(0).length];
+                float oXres = 1.0f;
+                float oYres = 1.0f;
+                int oXdim = 0;
+                int oYdim = 0;
 
-            if (transformRotation >= 0) {
-                transformImage = rotate(transformImage, transformRotation);
-            }
+                switch (mode) {
 
-            // fireProgressStateChanged(10, "Transform", "Performing "+mode.toString());
+                    case DownsampleToBase:
+                        oXdim = baseImage.getExtents()[0];
+                        oYdim = baseImage.getExtents()[1];
+                        oXres = baseImage.getResolutions(0)[0];
+                        oYres = baseImage.getResolutions(0)[1];
+                        break;
 
-            transform();
-
-            // fireProgressStateChanged(15, "Generating movements", "Performing "+mode.toString());
-
-            synchronized (parentObject) {
-                if (xMovement == null && yMovement == null && zMovement == null) {
-                    if (exec == null) {
-                        exec = Executors.newFixedThreadPool(1);
-                        System.out.println("Print once");
-                        // fireProgressStateChanged(15, "Transform", "Launching measure algorithm");
-                        final MeasureAlg alg = new MeasureAlg(baseImage, transformImage);
-                        exec.submit(alg);
-                        exec.shutdown();
-                    }
-
-                    try {
-                        exec.awaitTermination(1, TimeUnit.DAYS);
-                    } catch (final InterruptedException e) {
-                        MipavUtil.displayError("Time point " + transformImage.getImageName() + " will be incomplete.");
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-            // fireProgressStateChanged(20, "Transform", "Performing "+mode.toString());
-
-            final FileIO io = new FileIO();
-            io.setQuiet(true);
-            io.setSuppressProgressBar(true);
-            final FileWriteOptions options = new FileWriteOptions(null, null, true);
-            saveType = saveType.toLowerCase();
-            if (saveType.contains("raw")) {
-                options.setFileType(FileUtility.XML);
-            } else {
-                options.setFileType(FileUtility.TIFF);
-            }
-
-            options.setIsScript(true);
-            options.setOptionsSet(true);
-
-            FileInfoBase resultImageInfoBase = null;
-
-            switch (mode) {
-
-                case DownsampleToBase:
-                    // downsampleToBase(); transform image has already been downsampled
-                    resultImageInfoBase = baseImage.getFileInfo(0);
-                    for (int i = 0; i < baseImage.getResolutions(0).length; i++) {
-                        finalRes[i] = baseImage.getResolutions(0)[i];
-                    }
-                    break;
-
-                case DownsampleUpsampleCombined:
-                    downsampleUpsampleCombined();
-
-                    resultImageInfoBase = baseImage.getFileInfo(0);
-                    final int[] dim = new int[baseImage.getExtents().length];
-                    for (int i = 0; i < baseImage.getExtents().length; i++) {
-                        dim[i] = (int) ( ( ((double) baseImage.getExtents()[i]) + transformImage.getExtents()[i]) / 2.0);
-                    }
-                    resultImageInfoBase.setExtents(dim);
-
-                    break;
-
-                case UpsampleToTransform:
-                    upsampleToTransform();
-
-                    resultImageInfoBase = baseImage.getFileInfo(0);
-                    resultImageInfoBase.setExtents(new int[] {transformImage.getExtents()[0],
-                            baseImage.getExtents()[1], baseImage.getExtents()[2]});
-                    break;
-            }
-
-            resultImageInfoBase.setResolutions(finalRes);
-            for (int j = 0; j < 3; j ++) {
-            	resultImageInfoBase.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, j);
-            }
-
-            if (showGeoMean || saveGeoMean) {
-                subGeoImage = ViewUserInterface.getReference().createBlankImage(
-                        (FileInfoBase) resultImageInfoBase.clone(), false);
-            }
-            if (showAriMean || saveAriMean) {
-                subAriImage = ViewUserInterface.getReference().createBlankImage(
-                        (FileInfoBase) resultImageInfoBase.clone(), false);
-            }
-
-            if (doThreshold) {
-                threshold(baseImage, thresholdIntensity);
-                threshold(transformImage, thresholdIntensity); // all transformations are complete
-            }
-
-            if (doShowPrefusion || doSavePrefusion || doDeconv) {
-                // fireProgressStateChanged(15, "Transform", "Creating prefusion images");
-
-                final ModelImage prefusionTransformImage = ViewUserInterface.getReference().createBlankImage(
-                        (FileInfoBase) resultImageInfoBase.clone(), false);
-                final ModelImage prefusionBaseImage = ViewUserInterface.getReference().createBlankImage(
-                        (FileInfoBase) resultImageInfoBase.clone(), false);
-                // new ViewJFrameImage(transformImage);
-                int transformX, transformY, transformZ;
-
-                for (int i = 0; i < resultImageInfoBase.getExtents()[0]; i++) {
-                    transformX = i - xMovement;
-                    for (int j = 0; j < resultImageInfoBase.getExtents()[1]; j++) {
-                        transformY = j - yMovement;
-                        for (int k = 0; k < resultImageInfoBase.getExtents()[2]; k++) {
-                            transformZ = k - zMovement;
-                            if (transformX >= 0 && transformX < transformImage.getExtents()[0]
-                                    && transformX < baseImage.getExtents()[0] && transformY >= 0
-                                    && transformY < transformImage.getExtents()[1]
-                                    && transformY < baseImage.getExtents()[1] && transformZ >= 0
-                                    && transformZ < transformImage.getExtents()[2]
-                                    && transformZ < baseImage.getExtents()[2]) {
-                                prefusionTransformImage.set(i, j, k,
-                                        transformImage.getDouble(transformX, transformY, transformZ));
-                            }
-                            if (i < baseImage.getExtents()[0] && j < baseImage.getExtents()[1]
-                                    && k < baseImage.getExtents()[2]) {
-                                prefusionBaseImage.set(i, j, k, baseImage.getDouble(i, j, k));
+                    case UpsampleToTransform:
+                        for (int i = 0; i < dim.length; i++) {
+                            if (transformImage.getExtents()[i] > baseImage.getExtents()[i]) {
+                                dim[i] = transformImage.getExtents()[i];
+                            } else {
+                                dim[i] = baseImage.getExtents()[i];
                             }
                         }
-                    }
+
+                        oXdim = dim[0];
+                        oYdim = dim[1];
+
+                        for (int i = 0; i < res.length; i++) {
+                            if (transformImage.getResolutions(0)[i] < baseImage.getResolutions(0)[i]) {
+                                res[i] = transformImage.getResolutions(0)[i];
+                            } else {
+                                res[i] = baseImage.getResolutions(0)[i];
+                            }
+                        }
+
+                        oXres = res[0];
+                        oYres = res[1];
+                        break;
+
+                    case DownsampleUpsampleCombined:
+
+                        for (int i = 0; i < res.length; i++) {
+                            if (transformImage.getResolutions(0)[i] == baseImage.getResolutions(0)[i]) {
+                                res[i] = transformImage.getResolutions(0)[i];
+                            } else if (transformImage.getResolutions(0)[i] > baseImage.getResolutions(0)[i]) {
+                                res[i] = baseImage.getResolutions(0)[i] / transformImage.getResolutions(0)[i];
+                            } else { // transform res < base res
+                                res[i] = transformImage.getResolutions(0)[i] / baseImage.getResolutions(0)[i];
+                            }
+                        }
+
+                        for (int i = 0; i < dim.length; i++) {
+                            dim[i] = (int) ( (baseImage.getExtents()[i] + transformImage.getExtents()[i]) / 2.0);
+                        }
+
+                        oXdim = dim[0];
+                        oYdim = dim[1];
+                        oXres = res[0];
+                        oYres = res[1];
+                        break;
+
+                }
+            	final boolean doPad = false;
+                TransMatrix xfrm = new TransMatrix(3);
+            	final int cost = AlgorithmCostFunctions2D.CORRELATION_RATIO_SMOOTHED;
+                final int DOF = 6;
+                final int interp = AlgorithmTransform.BILINEAR;
+                final boolean doSubsample = true;
+                // Already in multithreads
+                final boolean doMultiThread = false;
+                AlgorithmRegOAR2D regAlgo2D = new AlgorithmRegOAR2D(baseImage, transformImage, cost, DOF, interp, rotateBeginX, rotateEndX,
+                        coarseRateX, fineRateX, doSubsample, doMultiThread);
+                regAlgo2D.run();
+                if (regAlgo2D.isCompleted()) {
+                    final int xdimA = baseImage.getExtents()[0];
+                    final int ydimA = baseImage.getExtents()[1];
+                    final float xresA = baseImage.getFileInfo(0).getResolutions()[0];
+                    final float yresA = baseImage.getFileInfo(0).getResolutions()[1];
+                    xfrm = regAlgo2D.getTransform();
+                    // Do not do finalMatrix.Inverse()
+                    xfrm.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
+                    final String costName = "CORRELATION_RATIO_SMOOTHED";
+                    String message = "Using cost function, " + costName;
+                    message += ", the cost is " + Double.toString(regAlgo2D.getCost()) + ".\n";
+                    message += "Some registration settings: \n";
+                    message += "Rotations from " + rotateBeginX + " to " + rotateEndX + ", ";
+                    message += "with a coarse rate of " + coarseRateX + " and fine rate of " + fineRateX + ".\n";
+                    mtxFileLoc = mtxFileDirectory + File.separator + transformImageName + "_To_" + baseImageName + ".mtx";
+                    final int interp2 = AlgorithmTransform.BILINEAR;
+                    final boolean pad = false;
+                    System.out.println("xfrm = " + xfrm);
+                    xfrm.saveMatrix(mtxFileLoc, interp2, xresA, yresA, 0.0f, xdimA, ydimA, 0, true, false, pad,
+                            message);
+                    Preferences.debug("Saved " + mtxFileLoc + "\n", Preferences.DEBUG_FILEIO);
+                    regAlgo2D.disposeLocal();
+                    regAlgo2D = null;
+                } // if (regAlgo2D.isCompleted())
+                else {
+                    MipavUtil.displayError("AlgorithmRegOAR2D did not complete successfully");
+                    setCompleted(false);
+                    return false;
+                }
+                
+                final int units[] = new int[2];
+                units[0] = FileInfoBase.UNKNOWN_MEASURE;
+                units[1] = FileInfoBase.UNKNOWN_MEASURE;
+                final boolean doClip = true;
+                final boolean doVOI = false;
+                final boolean doRotateCenter = false;
+                final Vector3f center = new Vector3f();
+                final float fillValue = 0.0f;
+                final boolean doUpdateOrigin = false;
+                final boolean isSATransform = false;
+                AlgorithmTransform algoTrans = new AlgorithmTransform(transformImage, xfrm, interp, oXres, oYres,
+                        oXdim, oYdim, units, doVOI, doClip, doPad, doRotateCenter, center);
+                algoTrans.setFillValue(fillValue);
+                algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+                algoTrans.setUseScannerAnatomical(isSATransform);
+                algoTrans.setSuppressProgressBar(true);
+
+                algoTrans.run();
+
+                if ( !doInterImages) {
+                    transformImage.disposeLocal();
                 }
 
-                prefusionTransformImage.calcMinMax();
-                prefusionTransformImage.setImageName("Prefusion_" + transformImageName);
-                prefusionBaseImage.calcMinMax();
-                prefusionBaseImage.setImageName("Prefusion_" + baseImageName);
-
-                if (doSavePrefusion) {
-                    options.setFileDirectory(prefusionBaseDir.getAbsolutePath() + File.separator);
-                    options.setFileName(prefusionBaseImage.getImageFileName());
-                    options.setBeginSlice(0);
-                    options.setEndSlice(prefusionBaseImage.getExtents()[2] - 1);
-                    io.writeImage(prefusionBaseImage, options, false);
-
-                    options.setFileDirectory(prefusionTransformDir.getAbsolutePath() + File.separator);
-                    options.setFileName(prefusionTransformImage.getImageFileName());
-                    options.setBeginSlice(0);
-                    options.setEndSlice(prefusionTransformImage.getExtents()[2] - 1);
-                    io.writeImage(prefusionTransformImage, options, false);
-                }
-
-                doMaxProj(prefusionBaseImage, doShowPrefusion, doSavePrefusion, prefusionBaseDir, options, io);
-                doMaxProj(prefusionTransformImage, doShowPrefusion, doSavePrefusion, prefusionTransformDir, options, io);
-
-                if (doShowPrefusion) {
-                    resultImageList.add(prefusionTransformImage);
-                    resultImageList.add(prefusionBaseImage);
-                }
+                transformImage = algoTrans.getTransformedImage();
+                algoTrans.disposeLocal();
+                algoTrans = null;
+                transformImage.calcMinMax();
 
                 if (doInterImages) {
-                    new ViewJFrameImage(prefusionTransformImage);
-                    new ViewJFrameImage(prefusionBaseImage);
+                    new ViewJFrameImage(transformImage);
                 }
-
-                if (doDeconv) {
-                    final ModelImage deconvImg = deconvolve(prefusionBaseImage, prefusionTransformImage);
-
-                    options.setFileDirectory(deconvDir.getAbsolutePath() + File.separator);
-                    options.setFileName(deconvImg.getImageName());
-                    options.setBeginSlice(0);
-                    options.setEndSlice(deconvImg.getExtents()[2] - 1);
-                    io.writeImage(deconvImg, options, false);
-
-                    doMaxProj(deconvImg, false, true, deconvDir, options, io);
-
-                    if (!deconvShowResults) {
-                        deconvImg.disposeLocal(false);
-                    }
-                }
-
-                if ( !doShowPrefusion && !doInterImages) {
-                    prefusionBaseImage.disposeLocal();
-
-                    prefusionTransformImage.disposeLocal();
-                }
-            }
-
-            // fireProgressStateChanged(75, "Transform", "Calculating means");
-
-            if (showAriMean || saveAriMean) {
-                calcAriMean();
-                if (saveMaxProj || showMaxProj) {
-                    doMaxProj(subAriImage, showAriMean, saveAriMean, ariMeanDir, options, io);
-                }
-            }
-
-            if (saveAriMean) {
-                options.setFileDirectory(ariMeanDir.getAbsolutePath() + File.separator);
-                options.setFileName(subAriImage.getImageFileName());
-                options.setBeginSlice(0);
-                options.setEndSlice(subAriImage.getExtents()[2] - 1);
-                io.writeImage(subAriImage, options, false);
-            }
-
-            if (showAriMean) {
-                resultImageList.add(subAriImage);
-            } else if (saveAriMean && !doInterImages) {
-                subAriImage.disposeLocal();
-            }
-
-            if (showGeoMean || saveGeoMean) {
-                calcGeoMean();
-
-                if (saveMaxProj || showMaxProj) {
-                    doMaxProj(subGeoImage, showGeoMean, saveGeoMean, geoMeanDir, options, io);
-                }
-            }
-
-            if (saveGeoMean) {
-                options.setFileDirectory(geoMeanDir.getAbsolutePath() + File.separator);
-                options.setFileName(subGeoImage.getImageFileName());
-                options.setBeginSlice(0);
-                options.setEndSlice(subGeoImage.getExtents()[2] - 1);
-                io.writeImage(subGeoImage, options, false);
-            }
-
-            if (showGeoMean) {
-                resultImageList.add(subGeoImage);
-            } else if (saveGeoMean && !doInterImages) {
-                subGeoImage.disposeLocal();
-            }
+                
+                final FileIO io = new FileIO();
+	            io.setQuiet(true);
+	            io.setSuppressProgressBar(true);
+	            final FileWriteOptions options = new FileWriteOptions(null, null, true);
+	            saveType = saveType.toLowerCase();
+	            if (saveType.contains("raw")) {
+	                options.setFileType(FileUtility.XML);
+	            } else {
+	                options.setFileType(FileUtility.TIFF);
+	            }
+	
+	            options.setIsScript(true);
+	            options.setOptionsSet(true);
+	            
+	            options.setFileDirectory(register2DFileDir.getAbsolutePath() + File.separator);
+                options.setFileName(transformImage.getImageFileName());
+                io.writeImage(transformImage, options, false);
+            } // if (register2D)
+            else {
+	            baseImage.setResolutions(new float[] {(float) resX, (float) resY, (float) resZ});
+	            transformImage.setResolutions(new float[] {(float) resX, (float) resY, (float) resZ});
+	            finalRes = new float[baseImage.getResolutions(0).length];
+	
+	            for (int i = 0; i < baseImage.getFileInfo().length; i++) {
+	                baseImage.getFileInfo(i).setSliceThickness(baseImage.getResolutions(i)[2]);
+	            }
+	
+	            for (int i = 0; i < transformImage.getFileInfo().length; i++) {
+	                transformImage.getFileInfo(i).setSliceThickness(transformImage.getResolutions(i)[2]);
+	            }
+	            
+	            if (baseRotation >= 0) {
+	                baseImage = rotate(baseImage, baseRotation);	
+	            }
+	            
+	            if (doInterImages) {
+	                resultImageList.add(baseImage);
+	            }
+	
+	            if (transformRotation >= 0) {
+	                transformImage = rotate(transformImage, transformRotation);
+	            }
+	
+	            // fireProgressStateChanged(10, "Transform", "Performing "+mode.toString());
+	
+	            transform();
+	
+	            // fireProgressStateChanged(15, "Generating movements", "Performing "+mode.toString());
+	
+	            synchronized (parentObject) {
+	                if (xMovement == null && yMovement == null && zMovement == null) {
+	                    if (exec == null) {
+	                        exec = Executors.newFixedThreadPool(1);
+	                        System.out.println("Print once");
+	                        // fireProgressStateChanged(15, "Transform", "Launching measure algorithm");
+	                        final MeasureAlg alg = new MeasureAlg(baseImage, transformImage);
+	                        exec.submit(alg);
+	                        exec.shutdown();
+	                    }
+	
+	                    try {
+	                        exec.awaitTermination(1, TimeUnit.DAYS);
+	                    } catch (final InterruptedException e) {
+	                        MipavUtil.displayError("Time point " + transformImage.getImageName() + " will be incomplete.");
+	                        e.printStackTrace();
+	                    }
+	                }
+	            }
+	
+	            // fireProgressStateChanged(20, "Transform", "Performing "+mode.toString());
+	
+	            final FileIO io = new FileIO();
+	            io.setQuiet(true);
+	            io.setSuppressProgressBar(true);
+	            final FileWriteOptions options = new FileWriteOptions(null, null, true);
+	            saveType = saveType.toLowerCase();
+	            if (saveType.contains("raw")) {
+	                options.setFileType(FileUtility.XML);
+	            } else {
+	                options.setFileType(FileUtility.TIFF);
+	            }
+	
+	            options.setIsScript(true);
+	            options.setOptionsSet(true);
+	
+	            FileInfoBase resultImageInfoBase = null;
+	
+	            switch (mode) {
+	
+	                case DownsampleToBase:
+	                    // downsampleToBase(); transform image has already been downsampled
+	                    resultImageInfoBase = baseImage.getFileInfo(0);
+	                    for (int i = 0; i < baseImage.getResolutions(0).length; i++) {
+	                        finalRes[i] = baseImage.getResolutions(0)[i];
+	                    }
+	                    break;
+	
+	                case DownsampleUpsampleCombined:
+	                    downsampleUpsampleCombined();
+	
+	                    resultImageInfoBase = baseImage.getFileInfo(0);
+	                    final int[] dim = new int[baseImage.getExtents().length];
+	                    for (int i = 0; i < baseImage.getExtents().length; i++) {
+	                        dim[i] = (int) ( ( ((double) baseImage.getExtents()[i]) + transformImage.getExtents()[i]) / 2.0);
+	                    }
+	                    resultImageInfoBase.setExtents(dim);
+	
+	                    break;
+	
+	                case UpsampleToTransform:
+	                    upsampleToTransform();
+	
+	                    resultImageInfoBase = baseImage.getFileInfo(0);
+	                    resultImageInfoBase.setExtents(new int[] {transformImage.getExtents()[0],
+	                            baseImage.getExtents()[1], baseImage.getExtents()[2]});
+	                    break;
+	            }
+	
+	            resultImageInfoBase.setResolutions(finalRes);
+	            for (int j = 0; j < 3; j ++) {
+	            	resultImageInfoBase.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, j);
+	            }
+	
+	            if (showGeoMean || saveGeoMean) {
+	                subGeoImage = ViewUserInterface.getReference().createBlankImage(
+	                        (FileInfoBase) resultImageInfoBase.clone(), false);
+	            }
+	            if (showAriMean || saveAriMean) {
+	                subAriImage = ViewUserInterface.getReference().createBlankImage(
+	                        (FileInfoBase) resultImageInfoBase.clone(), false);
+	            }
+	
+	            if (doThreshold) {
+	                threshold(baseImage, thresholdIntensity);
+	                threshold(transformImage, thresholdIntensity); // all transformations are complete
+	            }
+	
+	            if (doShowPrefusion || doSavePrefusion || doDeconv) {
+	                // fireProgressStateChanged(15, "Transform", "Creating prefusion images");
+	
+	                final ModelImage prefusionTransformImage = ViewUserInterface.getReference().createBlankImage(
+	                        (FileInfoBase) resultImageInfoBase.clone(), false);
+	                final ModelImage prefusionBaseImage = ViewUserInterface.getReference().createBlankImage(
+	                        (FileInfoBase) resultImageInfoBase.clone(), false);
+	                // new ViewJFrameImage(transformImage);
+	                int transformX, transformY, transformZ;
+	
+	                for (int i = 0; i < resultImageInfoBase.getExtents()[0]; i++) {
+	                    transformX = i - xMovement;
+	                    for (int j = 0; j < resultImageInfoBase.getExtents()[1]; j++) {
+	                        transformY = j - yMovement;
+	                        for (int k = 0; k < resultImageInfoBase.getExtents()[2]; k++) {
+	                            transformZ = k - zMovement;
+	                            if (transformX >= 0 && transformX < transformImage.getExtents()[0]
+	                                    && transformX < baseImage.getExtents()[0] && transformY >= 0
+	                                    && transformY < transformImage.getExtents()[1]
+	                                    && transformY < baseImage.getExtents()[1] && transformZ >= 0
+	                                    && transformZ < transformImage.getExtents()[2]
+	                                    && transformZ < baseImage.getExtents()[2]) {
+	                                prefusionTransformImage.set(i, j, k,
+	                                        transformImage.getDouble(transformX, transformY, transformZ));
+	                            }
+	                            if (i < baseImage.getExtents()[0] && j < baseImage.getExtents()[1]
+	                                    && k < baseImage.getExtents()[2]) {
+	                                prefusionBaseImage.set(i, j, k, baseImage.getDouble(i, j, k));
+	                            }
+	                        }
+	                    }
+	                }
+	
+	                prefusionTransformImage.calcMinMax();
+	                prefusionTransformImage.setImageName("Prefusion_" + transformImageName);
+	                prefusionBaseImage.calcMinMax();
+	                prefusionBaseImage.setImageName("Prefusion_" + baseImageName);
+	
+	                if (doSavePrefusion) {
+	                    options.setFileDirectory(prefusionBaseDir.getAbsolutePath() + File.separator);
+	                    options.setFileName(prefusionBaseImage.getImageFileName());
+	                    options.setBeginSlice(0);
+	                    options.setEndSlice(prefusionBaseImage.getExtents()[2] - 1);
+	                    io.writeImage(prefusionBaseImage, options, false);
+	
+	                    options.setFileDirectory(prefusionTransformDir.getAbsolutePath() + File.separator);
+	                    options.setFileName(prefusionTransformImage.getImageFileName());
+	                    options.setBeginSlice(0);
+	                    options.setEndSlice(prefusionTransformImage.getExtents()[2] - 1);
+	                    io.writeImage(prefusionTransformImage, options, false);
+	                }
+	
+	                doMaxProj(prefusionBaseImage, doShowPrefusion, doSavePrefusion, prefusionBaseDir, options, io);
+	                doMaxProj(prefusionTransformImage, doShowPrefusion, doSavePrefusion, prefusionTransformDir, options, io);
+	
+	                if (doShowPrefusion) {
+	                    resultImageList.add(prefusionTransformImage);
+	                    resultImageList.add(prefusionBaseImage);
+	                }
+	
+	                if (doInterImages) {
+	                    new ViewJFrameImage(prefusionTransformImage);
+	                    new ViewJFrameImage(prefusionBaseImage);
+	                }
+	
+	                if (doDeconv) {
+	                    final ModelImage deconvImg = deconvolve(prefusionBaseImage, prefusionTransformImage);
+	
+	                    options.setFileDirectory(deconvDir.getAbsolutePath() + File.separator);
+	                    options.setFileName(deconvImg.getImageName());
+	                    options.setBeginSlice(0);
+	                    options.setEndSlice(deconvImg.getExtents()[2] - 1);
+	                    io.writeImage(deconvImg, options, false);
+	
+	                    doMaxProj(deconvImg, false, true, deconvDir, options, io);
+	
+	                    if (!deconvShowResults) {
+	                        deconvImg.disposeLocal(false);
+	                    }
+	                }
+	
+	                if ( !doShowPrefusion && !doInterImages) {
+	                    prefusionBaseImage.disposeLocal();
+	
+	                    prefusionTransformImage.disposeLocal();
+	                }
+	            }
+	
+	            // fireProgressStateChanged(75, "Transform", "Calculating means");
+	
+	            if (showAriMean || saveAriMean) {
+	                calcAriMean();
+	                if (saveMaxProj || showMaxProj) {
+	                    doMaxProj(subAriImage, showAriMean, saveAriMean, ariMeanDir, options, io);
+	                }
+	            }
+	
+	            if (saveAriMean) {
+	                options.setFileDirectory(ariMeanDir.getAbsolutePath() + File.separator);
+	                options.setFileName(subAriImage.getImageFileName());
+	                options.setBeginSlice(0);
+	                options.setEndSlice(subAriImage.getExtents()[2] - 1);
+	                io.writeImage(subAriImage, options, false);
+	            }
+	
+	            if (showAriMean) {
+	                resultImageList.add(subAriImage);
+	            } else if (saveAriMean && !doInterImages) {
+	                subAriImage.disposeLocal();
+	            }
+	
+	            if (showGeoMean || saveGeoMean) {
+	                calcGeoMean();
+	
+	                if (saveMaxProj || showMaxProj) {
+	                    doMaxProj(subGeoImage, showGeoMean, saveGeoMean, geoMeanDir, options, io);
+	                }
+	            }
+	
+	            if (saveGeoMean) {
+	                options.setFileDirectory(geoMeanDir.getAbsolutePath() + File.separator);
+	                options.setFileName(subGeoImage.getImageFileName());
+	                options.setBeginSlice(0);
+	                options.setEndSlice(subGeoImage.getExtents()[2] - 1);
+	                io.writeImage(subGeoImage, options, false);
+	            }
+	
+	            if (showGeoMean) {
+	                resultImageList.add(subGeoImage);
+	            } else if (saveGeoMean && !doInterImages) {
+	                subGeoImage.disposeLocal();
+	            }
+            } // else !register2D
 
             if ( !doInterImages) {
                 baseImage.disposeLocal();
