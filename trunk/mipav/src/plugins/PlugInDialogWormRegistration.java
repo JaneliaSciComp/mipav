@@ -518,7 +518,7 @@ public class PlugInDialogWormRegistration extends JDialogStandalonePlugin implem
 //        ModelImage.saveImage( image, image.getImageName() + ".xml", voiDir );
 //		System.err.println( imageName + ".tif" + "   " + voiDir );
 		image.setImageName(imageName);
-        ModelImage.saveImage( image, imageName + ".tif", voiDir ); 
+        ModelImage.saveImage( image, imageName + ".tif", voiDir, false ); 
     }
 
 	

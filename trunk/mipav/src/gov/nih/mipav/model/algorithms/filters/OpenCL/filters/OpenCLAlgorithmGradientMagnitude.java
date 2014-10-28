@@ -895,7 +895,7 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 		if ( (elementCount > (maxAllocSize / (Sizeof.cl_float))) || (memoryUsed >= (totalMemSize / Sizeof.cl_float)) )
 		{
 			// Try switching to the CPU device for more memory:
-			MipavUtil.displayInfo( "Not enough GPU memory. Calling CPU version" );
+//			MipavUtil.displayInfo( "Not enough GPU memory. Calling CPU version" );
 			m_iDeviceType = CL.CL_DEVICE_TYPE_CPU;
 			initCL(m_iDeviceType, null);
 			maxAllocSize = OpenCLAlgorithmBase.getLong(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE);

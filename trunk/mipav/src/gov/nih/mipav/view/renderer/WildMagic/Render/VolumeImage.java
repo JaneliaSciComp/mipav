@@ -626,7 +626,7 @@ public class VolumeImage implements Serializable {
 		final String kImageName = ModelImage.makeImageName(m_kImage.getFileInfo(0).getFileName(), "_Normal_"
 				+ i);
 		JDialogBase.updateFileInfo( m_kImage, kImage );
-		ModelImage.saveImage( kImage, kImageName + ".xml", m_kDir );
+		ModelImage.saveImage( kImage, kImageName + ".xml", m_kDir, false );
 		if ( m_kImage.isColorImage() )
 		{
 			m_kNormal[i] = initVolumeData(kImage, 0, m_kNormalMapTarget, kImage.getImageName(), true, true);
@@ -1753,6 +1753,8 @@ public class VolumeImage implements Serializable {
 		gradientMagAlgo.setGreen(true);
 		gradientMagAlgo.setBlue(true);
 		gradientMagAlgo.gradientMagnitudeSep3D( i );
+		gradientMagAlgo.finalize();
+		gradientMagAlgo = null;
 		return outputImage;
 	}
 	
