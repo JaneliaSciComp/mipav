@@ -2,9 +2,7 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.util.MipavMath;
-
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.renderer.WildMagic.Render.ImageRegistrationGPU;
 
@@ -149,19 +147,23 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
     private final int yDim;
 
     /** DOCUMENT ME! */
-    private final int yEnd;
+    private int yEnd;
 
     /** DOCUMENT ME! */
     private final double yEnd2;
+    
+    private int yStart;
 
     /** DOCUMENT ME! */
     private final int zDim;
 
     /** DOCUMENT ME! */
-    private final int zEnd;
+    private int zEnd;
 
     /** DOCUMENT ME! */
     private final double zEnd2;
+    
+    private int zStart;
 
     private float[] m_afJointHisto;
 
@@ -205,7 +207,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         zEnd2 = zDim - 1.0001;
 
         xEnd = refImage.xDim - 1;
+        yStart = 0;
         yEnd = refImage.yDim - 1;
+        zStart = 0;
         zEnd = refImage.zDim - 1;
         refSliceSize = refImage.xDim * refImage.yDim;
 
@@ -524,6 +528,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
      * @param inputWgtImg the input weight image
      */
     public void setInputWgtImage(final ModelSimpleImage inputWgtImg) {
+    	 
         inputWgtImage = inputWgtImg;
 
         float diff;
@@ -545,7 +550,8 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         }
     }
 
-    /**
+   
+	/**
      * Sets the reference weight image. If the weight values are outside the range [0:1] then the weigthts will be
      * remapped to be between 0:1.
      * 
@@ -571,6 +577,36 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 }
             }
         }
+        
+        int minZ = refImage.zDim-1;
+        int maxZ = 0;
+        int minY = refImage.yDim-1;
+        int maxY = 0;
+        for (int z = 0; z < refImage.zDim; z++) {
+        	for (int y = 0; y < refImage.yDim; y++) {
+        		for (int x = 0; x < refImage.xDim; x++) {
+        		    int index = x + y * refImage.xDim + z * refSliceSize;
+        		    if (refWgtImage.data[index] > 0) {
+        		    	if (z < minZ) {
+        		    		minZ = z;
+        		    	}
+        		    	if (z > maxZ) {
+        		    		maxZ = z;
+        		    	}
+        		    	if (y < minY) {
+        		    		minY = y;
+        		    	}
+        		    	if (y > maxY) {
+        		    		maxY = y;
+        		    	}
+        		    }
+        		}
+        	}
+        }
+        yStart = Math.max(yStart, minY);
+        yEnd = Math.min(yEnd, maxY);
+        zStart = Math.max(zStart, minZ);
+        zEnd = Math.min(zEnd, maxZ);
     }
 
     /**
@@ -1710,14 +1746,14 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         }
         final Point minMaxPt = new Point();
 
-        // zEnd has been previously defined to be refImage.zDim-1 (likewise xEnd and yEnd)
-        for (z = 0; z <= zEnd; z++) {
+        // zEnd has been previously defined to be refImage.zDim-1 modified by highest nonzero z value in refWgtImage
+        for (z = zStart; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
             tmpZ2 = (z * T12) + T13;
             tmpZ3 = (z * T22) + T23;
             indexZ = z * refSliceSize;
 
-            for (y = 0; y <= yEnd; y++) {
+            for (y = yStart; y <= yEnd; y++) {
 
                 newPtX = (y * T01) + tmpZ1;
                 newPtY = (y * T11) + tmpZ2;
@@ -1849,7 +1885,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double p = 0.0;
         double n = 0.0;
 
-        nVoxels = refImage.data.length;
+        nVoxels = (zEnd - zStart + 1) * (yEnd - yStart + 1) * refImage.xDim;
 
         // Joint entropy H(A,B)
         for (int i = 0; i < (nBins * nBins); i++) {
@@ -2026,14 +2062,14 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         }
         final Point minMaxPt = new Point();
 
-        // zEnd has been previously defined to be refImage.zDim-1 (likewise xEnd and yEnd)
-        for (z = 0; z <= zEnd; z++) {
+        // // zEnd has been previously defined to be refImage.zDim-1 modified by highest nonzero z value in refWgtImage
+        for (z = zStart; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
             tmpZ2 = (z * T12) + T13;
             tmpZ3 = (z * T22) + T23;
             indexZ = z * refSliceSize;
 
-            for (y = 0; y <= yEnd; y++) {
+            for (y = yStart; y <= yEnd; y++) {
 
                 newPtX = (y * T01) + tmpZ1;
                 newPtY = (y * T11) + tmpZ2;
@@ -2165,7 +2201,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double p = 0.0;
         double n = 0.0;
 
-        nVoxels = refImage.data.length;
+        nVoxels = (zEnd - zStart + 1) * (yEnd - yStart + 1) * refImage.xDim;
 
         // Joint entropy H(A,B)
         for (int i = 0; i < (nBins * nBins); i++) {
@@ -3224,13 +3260,13 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         int nCalcs = 0;
         final Point minMaxPt = new Point();
 
-        for (z = 0; z <= zEnd; z++) {
+        for (z = zStart; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
             tmpZ2 = (z * T12) + T13;
             tmpZ3 = (z * T22) + T23;
             indexZ = z * refSliceSize;
 
-            for (y = 0; y <= yEnd; y++) {
+            for (y = yStart; y <= yEnd; y++) {
 
                 newPtX = (y * T01) + tmpZ1;
                 newPtY = (y * T11) + tmpZ2;
@@ -3465,13 +3501,13 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         int nCalcs = 0;
         final Point minMaxPt = new Point();
 
-        for (z = 0; z <= zEnd; z++) {
+        for (z = zStart; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
             tmpZ2 = (z * T12) + T13;
             tmpZ3 = (z * T22) + T23;
             indexZ = z * refSliceSize;
 
-            for (y = 0; y <= yEnd; y++) {
+            for (y = yStart; y <= yEnd; y++) {
 
                 newPtX = (y * T01) + tmpZ1;
                 newPtY = (y * T11) + tmpZ2;
@@ -5238,13 +5274,13 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         final Point minMaxPt = new Point();
 
-        for (z = 0; z <= zEnd; z++) {
+        for (z = zStart; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
             tmpZ2 = (z * T12) + T13;
             tmpZ3 = (z * T22) + T23;
             indexZ = z * refSliceSize;
 
-            for (y = 0; y <= yEnd; y++) {
+            for (y = yStart; y <= yEnd; y++) {
 
                 newPtX = (y * T01) + tmpZ1;
                 newPtY = (y * T11) + tmpZ2;
@@ -5430,13 +5466,13 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         final Point minMaxPt = new Point();
 
-        for (z = 0; z <= zEnd; z++) {
+        for (z = zStart; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
             tmpZ2 = (z * T12) + T13;
             tmpZ3 = (z * T22) + T23;
             indexZ = z * refSliceSize;
 
-            for (y = 0; y <= yEnd; y++) {
+            for (y = yStart; y <= yEnd; y++) {
 
                 newPtX = (y * T01) + tmpZ1;
                 newPtY = (y * T11) + tmpZ2;
@@ -5622,13 +5658,13 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         final Point minMaxPt = new Point();
 
-        for (z = 0; z <= zEnd; z++) {
+        for (z = zStart; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
             tmpZ2 = (z * T12) + T13;
             tmpZ3 = (z * T22) + T23;
             indexZ = z * refSliceSize;
 
-            for (y = 0; y <= yEnd; y++) {
+            for (y = yStart; y <= yEnd; y++) {
 
                 newPtX = (y * T01) + tmpZ1;
                 newPtY = (y * T11) + tmpZ2;
@@ -5820,13 +5856,13 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         final Point minMaxPt = new Point();
 
-        for (z = 0; z <= zEnd; z++) {
+        for (z = zStart; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
             tmpZ2 = (z * T12) + T13;
             tmpZ3 = (z * T22) + T23;
             indexZ = z * refSliceSize;
 
-            for (y = 0; y <= yEnd; y++) {
+            for (y = yStart; y <= yEnd; y++) {
 
                 newPtX = (y * T01) + tmpZ1;
                 newPtY = (y * T11) + tmpZ2;
@@ -7287,13 +7323,13 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         for (iter = 0; iter <= 1; iter++) {
 
-            for (z = 0; z <= zEnd; z++) {
+            for (z = zStart; z <= zEnd; z++) {
                 tmpZ1 = (z * T02) + T03;
                 tmpZ2 = (z * T12) + T13;
                 tmpZ3 = (z * T22) + T23;
                 indexZ = z * refSliceSize;
 
-                for (y = 0; y <= yEnd; y++) {
+                for (y = yStart; y <= yEnd; y++) {
 
                     newPtX = (y * T01) + tmpZ1;
                     newPtY = (y * T11) + tmpZ2;
@@ -7512,13 +7548,13 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         for (iter = 0; iter <= 1; iter++) {
 
-            for (z = 0; z <= zEnd; z++) {
+            for (z = zStart; z <= zEnd; z++) {
                 tmpZ1 = (z * T02) + T03;
                 tmpZ2 = (z * T12) + T13;
                 tmpZ3 = (z * T22) + T23;
                 indexZ = z * refSliceSize;
 
-                for (y = 0; y <= yEnd; y++) {
+                for (y = yStart; y <= yEnd; y++) {
 
                     newPtX = (y * T01) + tmpZ1;
                     newPtY = (y * T11) + tmpZ2;
