@@ -138,10 +138,12 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
     private final int xDim;
 
     /** DOCUMENT ME! */
-    private final int xEnd;
+    private int xEnd;
 
     /** DOCUMENT ME! */
     private final double xEnd2;
+    
+    private int xStart;
 
     /** DOCUMENT ME! */
     private final int yDim;
@@ -206,6 +208,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         yEnd2 = yDim - 1.0001;
         zEnd2 = zDim - 1.0001;
 
+        xStart = 0;
         xEnd = refImage.xDim - 1;
         yStart = 0;
         yEnd = refImage.yDim - 1;
@@ -582,6 +585,8 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         int maxZ = 0;
         int minY = refImage.yDim-1;
         int maxY = 0;
+        int minX = refImage.xDim-1;
+        int maxX = 0;
         for (int z = 0; z < refImage.zDim; z++) {
         	for (int y = 0; y < refImage.yDim; y++) {
         		for (int x = 0; x < refImage.xDim; x++) {
@@ -599,10 +604,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         		    	if (y > maxY) {
         		    		maxY = y;
         		    	}
+        		    	if (x < minX) {
+        		    		minX = x;
+        		    	}
+        		    	if (x > maxX) {
+        		    		maxX = x;
+        		    	}
         		    }
         		}
         	}
         }
+        xStart = Math.max(xStart, minX);
+        xEnd = Math.min(xEnd, maxX);
         yStart = Math.max(yStart, minY);
         yEnd = Math.min(yEnd, maxY);
         zStart = Math.max(zStart, minZ);
@@ -1639,7 +1652,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             final double[] margEntropyR, final double[] margEntropyI) {
         int x, y, z;
         double tmpZ1, tmpZ2, tmpZ3;
+        double tmpY1, tmpY2, tmpY3;
         int indexZ;
+        int indexY;
         int index, indexValueR;
         int iCenter;
         int position1, position2, position1x, position2x;
@@ -1676,7 +1691,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double aT00 = T00;
         double aT10 = T10;
         double aT20 = T20;
-        double iT00, iT10, iT20;
         double newPtX, newPtY, newPtZ;
 
         // The variables aT00, aT10, aT20, iT00... etc. will be used for findRangeX, but calculated before
@@ -1696,25 +1710,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT20 < 0) {
             aT20 = -aT20;
-        }
-
-        // Also take the inverse of each multiplier, unless it is smaller than 1.0e-8
-        if (aT00 >= 1.0e-8) {
-            iT00 = 1 / T00;
-        } else {
-            iT00 = Double.MAX_VALUE;
-        }
-
-        if (aT10 >= 1.0e-8) {
-            iT10 = 1 / T10;
-        } else {
-            iT10 = Double.MAX_VALUE;
-        }
-
-        if (aT20 >= 1.0e-8) {
-            iT20 = 1 / T20;
-        } else {
-            iT20 = Double.MAX_VALUE;
         }
 
         final double[] jointHist = new double[nBins * nBins];
@@ -1744,7 +1739,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         if ( (inputImage.max - inputImage.min) != 0) {
             constantI = (nBins - 1) / (inputImage.max - inputImage.min);
         }
-        final Point minMaxPt = new Point();
 
         // zEnd has been previously defined to be refImage.zDim-1 modified by highest nonzero z value in refWgtImage
         for (z = zStart; z <= zEnd; z++) {
@@ -1754,126 +1748,114 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             indexZ = z * refSliceSize;
 
             for (y = yStart; y <= yEnd; y++) {
+                tmpY1 = (y * T01) + tmpZ1;
+                tmpY2 = (y * T11) + tmpZ2;
+                tmpY3 = (y * T21) + tmpZ3;
+                indexY = indexZ + y * refImage.xDim;
+                
+                for (x = xStart; x <= xEnd; x++) {
+                    newPtX = (x * T00) + tmpY1;
+                    if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
+                        newPtY = (y * T10) + tmpY2;
+                        if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
+                            newPtZ = (z * T20) + tmpY3;
+                            if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
+                                index = indexY + x;
 
-                newPtX = (y * T01) + tmpZ1;
-                newPtY = (y * T11) + tmpZ2;
-                newPtZ = (y * T21) + tmpZ3;
+			                    // newPt's aren't integers, but we can only index images with integers.
+			                    // Interpolate (trilinear) between image value at neighboring indices.
+			                    intX = (int) newPtX;
+			                    intY = (int) newPtY;
+			                    intZ = (int) newPtZ;
+			
+			                    dx = newPtX - intX;
+			                    dy = newPtY - intY;
+			                    dz = newPtZ - intZ;
+			
+			                    dx1 = 1 - dx;
+			                    dy1 = 1 - dy;
+			
+			                    position1 = (intZ * sliceSize) + (intY * xDim) + intX;
+			                    position1x = position1 + xDim;
+			                    position2 = position1 + sliceSize;
+			                    position2x = position2 + xDim;
+			                    position11 = position1 + 1;
+			                    position11x = position11 + xDim;
+			                    position21 = position2 + 1;
+			                    position21x = position21 + xDim;
+			
+			                    // Get value at current x,y, z for the inputImage.
+			                    // b1 is value interplated between x values and y values at rounded-down z slice
+			                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
+			                            + (dy * ( (dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
+			
+			                    // b2 is value interpolated between x value and y values at rounded-up z slice
+			                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
+			                            + (dy * ( (dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
+			
+			                    // value is interpolation between b1 and b2 and exact z location
+			                    value = ( (1 - dz) * b1) + (dz * b2);
+			
+			                    // Get value at current x,y, z for the inputWgtImage - weighted image!!
+			                    // b1, b2 are same as above; wValue is now interpolation between b1 and b2
+			                    b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
+			                            + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
+			
+			                    b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
+			                            + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
+			                    wValue = ( (1 - dz) * b1) + (dz * b2);
+			
+			                    // Weight assigned wValue (weight of input image at current loc) times the Reference image weight.
+			                    weight = wValue * refWgtImage.data[index];
+			
+			                    // Find iCenter and indexValueR. iCenter is bin number for this pixel in the Input image (y
+			                    // coordinate of joint histogram image). indexValueR in the bin number for this pixel in the
+			                    // Reference image (x coordiante of joint histogram image).
+			                    iCenter = (int) ( (value - inputImage.min) * constantI);
+			                    indexValueR = (int) ( (refImage.data[index] - refImage.min) * constantR);
+			
+			                    // Smooth out the edges.
+			                    if (newPtX < smoothX) {
+			                        weight *= newPtX * invSmoothX;
+			                    } else if ( (xEnd2 - newPtX) < smoothX) {
+			                        weight *= (xEnd2 - newPtX) * invSmoothX;
+			                    }
+			
+			                    if (newPtY < smoothY) {
+			                        weight *= newPtY * invSmoothY;
+			                    } else if ( (yEnd2 - newPtY) < smoothY) {
+			                        weight *= (yEnd2 - newPtY) * invSmoothY;
+			                    }
+			
+			                    if (newPtZ < smoothZ) {
+			                        weight *= newPtZ * invSmoothZ;
+			                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
+			                        weight *= (zEnd2 - newPtZ) * invSmoothZ;
+			                    }
+			
+			                    if (weight < 0.0) {
+			                        weight = 0.0;
+			                    }
+			
+			                    if (iCenter >= nBins) {
+			                        System.out.println("Testing.  iCenter is greater than nBins.");
+			                        iCenter = nBins - 1;
+			                    }
+			
+			                    if (iCenter < 0) {
+			                        System.out.println("Testing. iCenter is less than zero.");
+			                        iCenter = 0;
+			                    }
+			
+			                    // Add "weight" to the histograms. Index the jointHistogram (saved as 1D array) assuming width of
+			                    // nBins, so indexValueR*nBins + iCenter.
+			                    jointHist[ (indexValueR * nBins) + iCenter] += weight;
+			                    margHistI[iCenter] += weight;
+			                    margHistR[indexValueR] += weight;
 
-                // determine range of x values for the current y value, so don't have to loop through all x's
-                // and always check that it's in bounds
-                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
-
-                // Full formula for newPt's:
-                // newPtX = minMaxPt.x*T00 + y*T01 + z*T02 + T03
-                // newPtY = minMaxPt.x*T01 + y*T11 + z*T12 + T13
-                // newPtZ = minMaxPt.x*T20 + y*T21 + z*T22 + T23
-
-                newPtX += minMaxPt.x * T00;
-                newPtY += minMaxPt.x * T10;
-                newPtZ += minMaxPt.x * T20;
-
-                // index keeps track of where we are in the reference image
-                index = indexZ + (y * (xEnd + 1)) + minMaxPt.x;
-
-                for (x = minMaxPt.x; x <= minMaxPt.y; x++) {
-
-                    // newPt's aren't integers, but we can only index images with integers.
-                    // Interpolate (trilinear) between image value at neighboring indices.
-                    intX = (int) newPtX;
-                    intY = (int) newPtY;
-                    intZ = (int) newPtZ;
-
-                    dx = newPtX - intX;
-                    dy = newPtY - intY;
-                    dz = newPtZ - intZ;
-
-                    dx1 = 1 - dx;
-                    dy1 = 1 - dy;
-
-                    position1 = (intZ * sliceSize) + (intY * xDim) + intX;
-                    position1x = position1 + xDim;
-                    position2 = position1 + sliceSize;
-                    position2x = position2 + xDim;
-                    position11 = position1 + 1;
-                    position11x = position11 + xDim;
-                    position21 = position2 + 1;
-                    position21x = position21 + xDim;
-
-                    // Get value at current x,y, z for the inputImage.
-                    // b1 is value interplated between x values and y values at rounded-down z slice
-                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
-                            + (dy * ( (dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
-
-                    // b2 is value interpolated between x value and y values at rounded-up z slice
-                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
-                            + (dy * ( (dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
-
-                    // value is interpolation between b1 and b2 and exact z location
-                    value = ( (1 - dz) * b1) + (dz * b2);
-
-                    // Get value at current x,y, z for the inputWgtImage - weighted image!!
-                    // b1, b2 are same as above; wValue is now interpolation between b1 and b2
-                    b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
-                            + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
-
-                    b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
-                            + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
-                    wValue = ( (1 - dz) * b1) + (dz * b2);
-
-                    // Weight assigned wValue (weight of input image at current loc) times the Reference image weight.
-                    weight = wValue * refWgtImage.data[index];
-
-                    // Find iCenter and indexValueR. iCenter is bin number for this pixel in the Input image (y
-                    // coordinate of joint histogram image). indexValueR in the bin number for this pixel in the
-                    // Reference image (x coordiante of joint histogram image).
-                    iCenter = (int) ( (value - inputImage.min) * constantI);
-                    indexValueR = (int) ( (refImage.data[index] - refImage.min) * constantR);
-
-                    // Smooth out the edges.
-                    if (newPtX < smoothX) {
-                        weight *= newPtX * invSmoothX;
-                    } else if ( (xEnd2 - newPtX) < smoothX) {
-                        weight *= (xEnd2 - newPtX) * invSmoothX;
-                    }
-
-                    if (newPtY < smoothY) {
-                        weight *= newPtY * invSmoothY;
-                    } else if ( (yEnd2 - newPtY) < smoothY) {
-                        weight *= (yEnd2 - newPtY) * invSmoothY;
-                    }
-
-                    if (newPtZ < smoothZ) {
-                        weight *= newPtZ * invSmoothZ;
-                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
-                        weight *= (zEnd2 - newPtZ) * invSmoothZ;
-                    }
-
-                    if (weight < 0.0) {
-                        weight = 0.0;
-                    }
-
-                    if (iCenter >= nBins) {
-                        System.out.println("Testing.  iCenter is greater than nBins.");
-                        iCenter = nBins - 1;
-                    }
-
-                    if (iCenter < 0) {
-                        System.out.println("Testing. iCenter is less than zero.");
-                        iCenter = 0;
-                    }
-
-                    // Add "weight" to the histograms. Index the jointHistogram (saved as 1D array) assuming width of
-                    // nBins, so indexValueR*nBins + iCenter.
-                    jointHist[ (indexValueR * nBins) + iCenter] += weight;
-                    margHistI[iCenter] += weight;
-                    margHistR[indexValueR] += weight;
-
-                    // Increment index. Go to next point.
-                    index++;
-                    newPtX += T00;
-                    newPtY += T10;
-                    newPtZ += T20;
-
+                            } // if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2))
+                        } // if ( (0.0 <= newPtY) && (newPtY <= yEnd2))
+                    } // if ( (0.0 <= newPtX) && (newPtX <= xEnd2))
                 } // end of x loop
             } // end of y loop
         } // end of z loop
@@ -1885,7 +1867,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double p = 0.0;
         double n = 0.0;
 
-        nVoxels = (zEnd - zStart + 1) * (yEnd - yStart + 1) * refImage.xDim;
+        nVoxels = (zEnd - zStart + 1) * (yEnd - yStart + 1) * (xEnd - xStart + 1);
 
         // Joint entropy H(A,B)
         for (int i = 0; i < (nBins * nBins); i++) {
@@ -1955,7 +1937,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             final double[] margEntropyR, final double[] margEntropyI) {
         int x, y, z;
         double tmpZ1, tmpZ2, tmpZ3;
+        double tmpY1, tmpY2, tmpY3;
         int indexZ;
+        int indexY;
         int index, indexValueR;
         int iCenter;
         int position1, position2, position1x, position2x;
@@ -1992,7 +1976,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double aT00 = T00;
         double aT10 = T10;
         double aT20 = T20;
-        double iT00, iT10, iT20;
         double newPtX, newPtY, newPtZ;
 
         // The variables aT00, aT10, aT20, iT00... etc. will be used for findRangeX, but calculated before
@@ -2012,25 +1995,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         if (aT20 < 0) {
             aT20 = -aT20;
-        }
-
-        // Also take the inverse of each multiplier, unless it is smaller than 1.0e-8
-        if (aT00 >= 1.0e-8) {
-            iT00 = 1 / T00;
-        } else {
-            iT00 = Double.MAX_VALUE;
-        }
-
-        if (aT10 >= 1.0e-8) {
-            iT10 = 1 / T10;
-        } else {
-            iT10 = Double.MAX_VALUE;
-        }
-
-        if (aT20 >= 1.0e-8) {
-            iT20 = 1 / T20;
-        } else {
-            iT20 = Double.MAX_VALUE;
         }
 
         final double[] jointHist = new double[nBins * nBins];
@@ -2060,7 +2024,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         if ( (inputImage.max - inputImage.min) != 0) {
             constantI = (nBins - 1) / (inputImage.max - inputImage.min);
         }
-        final Point minMaxPt = new Point();
 
         // // zEnd has been previously defined to be refImage.zDim-1 modified by highest nonzero z value in refWgtImage
         for (z = zStart; z <= zEnd; z++) {
@@ -2070,126 +2033,113 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             indexZ = z * refSliceSize;
 
             for (y = yStart; y <= yEnd; y++) {
-
-                newPtX = (y * T01) + tmpZ1;
-                newPtY = (y * T11) + tmpZ2;
-                newPtZ = (y * T21) + tmpZ3;
-
-                // determine range of x values for the current y value, so don't have to loop through all x's
-                // and always check that it's in bounds
-                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
-
-                // Full formula for newPt's:
-                // newPtX = minMaxPt.x*T00 + y*T01 + z*T02 + T03
-                // newPtY = minMaxPt.x*T01 + y*T11 + z*T12 + T13
-                // newPtZ = minMaxPt.x*T20 + y*T21 + z*T22 + T23
-
-                newPtX += minMaxPt.x * T00;
-                newPtY += minMaxPt.x * T10;
-                newPtZ += minMaxPt.x * T20;
-
-                // index keeps track of where we are in the reference image
-                index = indexZ + (y * (xEnd + 1)) + minMaxPt.x;
-
-                for (x = minMaxPt.x; x <= minMaxPt.y; x++) {
-
-                    // newPt's aren't integers, but we can only index images with integers.
-                    // Interpolate (trilinear) between image value at neighboring indices.
-                    intX = (int) newPtX;
-                    intY = (int) newPtY;
-                    intZ = (int) newPtZ;
-
-                    dx = newPtX - intX;
-                    dy = newPtY - intY;
-                    dz = newPtZ - intZ;
-
-                    dx1 = 1 - dx;
-                    dy1 = 1 - dy;
-
-                    position1 = (intZ * sliceSize) + (intY * xDim) + intX;
-                    position1x = position1 + xDim;
-                    position2 = position1 + sliceSize;
-                    position2x = position2 + xDim;
-                    position11 = position1 + 1;
-                    position11x = position11 + xDim;
-                    position21 = position2 + 1;
-                    position21x = position21 + xDim;
-
-                    // Get value at current x,y, z for the inputImage.
-                    // b1 is value interplated between x values and y values at rounded-down z slice
-                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
-                            + (dy * ( (dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
-
-                    // b2 is value interpolated between x value and y values at rounded-up z slice
-                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
-                            + (dy * ( (dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
-
-                    // value is interpolation between b1 and b2 and exact z location
-                    value = ( (1 - dz) * b1) + (dz * b2);
-
-                    // Get value at current x,y, z for the inputWgtImage - weighted image!!
-                    // b1, b2 are same as above; wValue is now interpolation between b1 and b2
-                    b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
-                            + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
-
-                    b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
-                            + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
-                    wValue = ( (1 - dz) * b1) + (dz * b2);
-
-                    // Weight assigned wValue (weight of input image at current loc) times the Reference image weight.
-                    weight = wValue * refWgtImage.data[index];
-
-                    // Find iCenter and indexValueR. iCenter is bin number for this pixel in the Input image (y
-                    // coordinate of joint histogram image). indexValueR in the bin number for this pixel in the
-                    // Reference image (x coordiante of joint histogram image).
-                    iCenter = (int) ( (value - inputImage.min) * constantI);
-                    indexValueR = (int) ( (refImage.data[index] - refImage.min) * constantR);
-
-                    // Smooth out the edges.
-                    if (newPtX < smoothX) {
-                        weight *= newPtX * invSmoothX;
-                    } else if ( (xEnd2 - newPtX) < smoothX) {
-                        weight *= (xEnd2 - newPtX) * invSmoothX;
-                    }
-
-                    if (newPtY < smoothY) {
-                        weight *= newPtY * invSmoothY;
-                    } else if ( (yEnd2 - newPtY) < smoothY) {
-                        weight *= (yEnd2 - newPtY) * invSmoothY;
-                    }
-
-                    if (newPtZ < smoothZ) {
-                        weight *= newPtZ * invSmoothZ;
-                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
-                        weight *= (zEnd2 - newPtZ) * invSmoothZ;
-                    }
-
-                    if (weight < 0.0) {
-                        weight = 0.0;
-                    }
-
-                    if (iCenter >= nBins) {
-                        System.out.println("Testing.  iCenter is greater than nBins.");
-                        iCenter = nBins - 1;
-                    }
-
-                    if (iCenter < 0) {
-                        System.out.println("Testing. iCenter is less than zero.");
-                        iCenter = 0;
-                    }
-
-                    // Add "weight" to the histograms. Index the jointHistogram (saved as 1D array) assuming width of
-                    // nBins, so indexValueR*nBins + iCenter.
-                    jointHist[ (indexValueR * nBins) + iCenter] += weight;
-                    margHistI[iCenter] += weight;
-                    margHistR[indexValueR] += weight;
-
-                    // Increment index. Go to next point.
-                    index++;
-                    newPtX += T00;
-                    newPtY += T10;
-                    newPtZ += T20;
-
+            	tmpY1 = (y * T01) + tmpZ1;
+                tmpY2 = (y * T11) + tmpZ2;
+                tmpY3 = (y * T21) + tmpZ3;
+                indexY = indexZ + y * refImage.xDim;
+                
+                for (x = xStart; x <= xEnd; x++) {
+                    newPtX = (x * T00) + tmpY1;
+                    if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
+                        newPtY = (y * T10) + tmpY2;
+                        if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
+                            newPtZ = (z * T20) + tmpY3;
+                            if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
+                                index = indexY + x;
+                
+			                    // newPt's aren't integers, but we can only index images with integers.
+			                    // Interpolate (trilinear) between image value at neighboring indices.
+			                    intX = (int) newPtX;
+			                    intY = (int) newPtY;
+			                    intZ = (int) newPtZ;
+			
+			                    dx = newPtX - intX;
+			                    dy = newPtY - intY;
+			                    dz = newPtZ - intZ;
+			
+			                    dx1 = 1 - dx;
+			                    dy1 = 1 - dy;
+			
+			                    position1 = (intZ * sliceSize) + (intY * xDim) + intX;
+			                    position1x = position1 + xDim;
+			                    position2 = position1 + sliceSize;
+			                    position2x = position2 + xDim;
+			                    position11 = position1 + 1;
+			                    position11x = position11 + xDim;
+			                    position21 = position2 + 1;
+			                    position21x = position21 + xDim;
+			
+			                    // Get value at current x,y, z for the inputImage.
+			                    // b1 is value interplated between x values and y values at rounded-down z slice
+			                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
+			                            + (dy * ( (dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
+			
+			                    // b2 is value interpolated between x value and y values at rounded-up z slice
+			                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
+			                            + (dy * ( (dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
+			
+			                    // value is interpolation between b1 and b2 and exact z location
+			                    value = ( (1 - dz) * b1) + (dz * b2);
+			
+			                    // Get value at current x,y, z for the inputWgtImage - weighted image!!
+			                    // b1, b2 are same as above; wValue is now interpolation between b1 and b2
+			                    b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
+			                            + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
+			
+			                    b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
+			                            + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
+			                    wValue = ( (1 - dz) * b1) + (dz * b2);
+			
+			                    // Weight assigned wValue (weight of input image at current loc) times the Reference image weight.
+			                    weight = wValue * refWgtImage.data[index];
+			
+			                    // Find iCenter and indexValueR. iCenter is bin number for this pixel in the Input image (y
+			                    // coordinate of joint histogram image). indexValueR in the bin number for this pixel in the
+			                    // Reference image (x coordiante of joint histogram image).
+			                    iCenter = (int) ( (value - inputImage.min) * constantI);
+			                    indexValueR = (int) ( (refImage.data[index] - refImage.min) * constantR);
+			
+			                    // Smooth out the edges.
+			                    if (newPtX < smoothX) {
+			                        weight *= newPtX * invSmoothX;
+			                    } else if ( (xEnd2 - newPtX) < smoothX) {
+			                        weight *= (xEnd2 - newPtX) * invSmoothX;
+			                    }
+			
+			                    if (newPtY < smoothY) {
+			                        weight *= newPtY * invSmoothY;
+			                    } else if ( (yEnd2 - newPtY) < smoothY) {
+			                        weight *= (yEnd2 - newPtY) * invSmoothY;
+			                    }
+			
+			                    if (newPtZ < smoothZ) {
+			                        weight *= newPtZ * invSmoothZ;
+			                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
+			                        weight *= (zEnd2 - newPtZ) * invSmoothZ;
+			                    }
+			
+			                    if (weight < 0.0) {
+			                        weight = 0.0;
+			                    }
+			
+			                    if (iCenter >= nBins) {
+			                        System.out.println("Testing.  iCenter is greater than nBins.");
+			                        iCenter = nBins - 1;
+			                    }
+			
+			                    if (iCenter < 0) {
+			                        System.out.println("Testing. iCenter is less than zero.");
+			                        iCenter = 0;
+			                    }
+			
+			                    // Add "weight" to the histograms. Index the jointHistogram (saved as 1D array) assuming width of
+			                    // nBins, so indexValueR*nBins + iCenter.
+			                    jointHist[ (indexValueR * nBins) + iCenter] += weight;
+			                    margHistI[iCenter] += weight;
+			                    margHistR[indexValueR] += weight;
+                            } // if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2))
+                        } // if ( (0.0 <= newPtY) && (newPtY <= yEnd2))
+                    } // if ( (0.0 <= newPtX) && (newPtX <= xEnd2))
                 } // end of x loop
             } // end of y loop
         } // end of z loop
@@ -2201,7 +2151,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double p = 0.0;
         double n = 0.0;
 
-        nVoxels = (zEnd - zStart + 1) * (yEnd - yStart + 1) * refImage.xDim;
+        nVoxels = (zEnd - zStart + 1) * (yEnd - yStart + 1) * (xEnd - xStart + 1);
 
         // Joint entropy H(A,B)
         for (int i = 0; i < (nBins * nBins); i++) {
@@ -3100,7 +3050,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     index++;
                     newPtX += T00;
                     newPtY += T10;
-                    newPtZ += T20;
+                    newPtZ += T20;       
                 }
             }
         }
@@ -3171,7 +3121,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         int x, y, z;
         double tmpZ1, tmpZ2, tmpZ3;
+        double tmpY1, tmpY2, tmpY3;
         int indexZ;
+        int indexY;
         int index, indexValue;
         double value, wValue;
         double weight;
@@ -3214,7 +3166,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double aT00 = T00;
         double aT10 = T10;
         double aT20 = T20;
-        double iT00, iT10, iT20;
         double newPtX, newPtY, newPtZ;
 
         if (aT00 < 0) {
@@ -3229,24 +3180,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             aT20 = -aT20;
         }
 
-        if (aT00 >= 1.0e-8) {
-            iT00 = 1 / T00;
-        } else {
-            iT00 = Double.MAX_VALUE;
-        }
-
-        if (aT10 >= 1.0e-8) {
-            iT10 = 1 / T10;
-        } else {
-            iT10 = Double.MAX_VALUE;
-        }
-
-        if (aT20 >= 1.0e-8) {
-            iT20 = 1 / T20;
-        } else {
-            iT20 = Double.MAX_VALUE;
-        }
-
         // Something to think about - could we use shear-warping to speed this process ???(Paeth, Levoy)
         // Volumes must be of the same resolution.
         // Although I could correct for this it would slow the process down - maybe two version are needed.
@@ -3257,8 +3190,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             constant = (nBins - 1) / (refImage.max - refImage.min);
         }
 
-        int nCalcs = 0;
-        final Point minMaxPt = new Point();
 
         for (z = zStart; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
@@ -3267,90 +3198,86 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             indexZ = z * refSliceSize;
 
             for (y = yStart; y <= yEnd; y++) {
+            	tmpY1 = (y * T01) + tmpZ1;
+                tmpY2 = (y * T11) + tmpZ2;
+                tmpY3 = (y * T21) + tmpZ3;
+                indexY = indexZ + y * refImage.xDim;
+                
+                for (x = xStart; x <= xEnd; x++) {
+                    newPtX = (x * T00) + tmpY1;
+                    if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
+                        newPtY = (y * T10) + tmpY2;
+                        if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
+                            newPtZ = (z * T20) + tmpY3;
+                            if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
+                                index = indexY + x;
 
-                newPtX = (y * T01) + tmpZ1;
-                newPtY = (y * T11) + tmpZ2;
-                newPtZ = (y * T21) + tmpZ3;
-
-                // determine range
-                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
-
-                newPtX += minMaxPt.x * T00;
-                newPtY += minMaxPt.x * T10;
-                newPtZ += minMaxPt.x * T20;
-
-                index = indexZ + (y * (xEnd + 1)) + minMaxPt.x;
-
-                for (x = minMaxPt.x; x <= minMaxPt.y; x++) {
-                    nCalcs++;
-                    intX = (int) newPtX;
-                    intY = (int) newPtY;
-                    intZ = (int) newPtZ;
-
-                    dx = newPtX - intX;
-                    dy = newPtY - intY;
-                    dz = newPtZ - intZ;
-
-                    dx1 = 1 - dx;
-                    dy1 = 1 - dy;
-
-                    position1 = (intZ * sliceSize) + (intY * xDim) + intX;
-                    position1x = position1 + xDim;
-                    position2 = position1 + sliceSize;
-                    position2x = position2 + xDim;
-                    position11 = position1 + 1;
-                    position11x = position11 + xDim;
-                    position21 = position2 + 1;
-                    position21x = position21 + xDim;
-
-                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
-                            + (dy * ( (dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
-
-                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
-                            + (dy * ( (dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
-                    value = ( (1 - dz) * b1) + (dz * b2);
-
-                    b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
-                            + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
-
-                    b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
-                            + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
-                    wValue = ( (1 - dz) * b1) + (dz * b2);
-
-                    weight = wValue * refWgtImage.data[index];
-
-                    if (newPtX < smoothX) {
-                        weight *= newPtX * invSmoothX;
-                    } else if ( (xEnd2 - newPtX) < smoothX) {
-                        weight *= (xEnd2 - newPtX) * invSmoothX;
-                    }
-
-                    if (newPtY < smoothY) {
-                        weight *= newPtY * invSmoothY;
-                    } else if ( (yEnd2 - newPtY) < smoothY) {
-                        weight *= (yEnd2 - newPtY) * invSmoothY;
-                    }
-
-                    if (newPtZ < smoothZ) {
-                        weight *= newPtZ * invSmoothZ;
-                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
-                        weight *= (zEnd2 - newPtZ) * invSmoothZ;
-                    }
-
-                    if (weight < 0.0) {
-                        weight = 0.0;
-                    }
-
-                    indexValue = (int) ( (refImage.data[index] - refImage.min) * constant);
-                    tmp = weight * (value - inputImage.min);
-                    numY[indexValue] += weight;
-                    sumY[indexValue] += tmp;
-                    sumY2[indexValue] += tmp * (value - inputImage.min);
-
-                    index++;
-                    newPtX += T00;
-                    newPtY += T10;
-                    newPtZ += T20;
+			                    intX = (int) newPtX;
+			                    intY = (int) newPtY;
+			                    intZ = (int) newPtZ;
+			
+			                    dx = newPtX - intX;
+			                    dy = newPtY - intY;
+			                    dz = newPtZ - intZ;
+			
+			                    dx1 = 1 - dx;
+			                    dy1 = 1 - dy;
+			
+			                    position1 = (intZ * sliceSize) + (intY * xDim) + intX;
+			                    position1x = position1 + xDim;
+			                    position2 = position1 + sliceSize;
+			                    position2x = position2 + xDim;
+			                    position11 = position1 + 1;
+			                    position11x = position11 + xDim;
+			                    position21 = position2 + 1;
+			                    position21x = position21 + xDim;
+			
+			                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
+			                            + (dy * ( (dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
+			
+			                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
+			                            + (dy * ( (dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
+			                    value = ( (1 - dz) * b1) + (dz * b2);
+			
+			                    b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
+			                            + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
+			
+			                    b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
+			                            + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
+			                    wValue = ( (1 - dz) * b1) + (dz * b2);
+			
+			                    weight = wValue * refWgtImage.data[index];
+			
+			                    if (newPtX < smoothX) {
+			                        weight *= newPtX * invSmoothX;
+			                    } else if ( (xEnd2 - newPtX) < smoothX) {
+			                        weight *= (xEnd2 - newPtX) * invSmoothX;
+			                    }
+			
+			                    if (newPtY < smoothY) {
+			                        weight *= newPtY * invSmoothY;
+			                    } else if ( (yEnd2 - newPtY) < smoothY) {
+			                        weight *= (yEnd2 - newPtY) * invSmoothY;
+			                    }
+			
+			                    if (newPtZ < smoothZ) {
+			                        weight *= newPtZ * invSmoothZ;
+			                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
+			                        weight *= (zEnd2 - newPtZ) * invSmoothZ;
+			                    }
+			
+			                    if (weight < 0.0) {
+			                        weight = 0.0;
+			                    }
+			
+			                    indexValue = (int) ( (refImage.data[index] - refImage.min) * constant);
+			                    tmp = weight * (value - inputImage.min);
+			                    numY[indexValue] += weight;
+			                    sumY[indexValue] += tmp;
+			                    sumY2[indexValue] += tmp * (value - inputImage.min);
+                            } // if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2))
+                        } // if ( (0.0 <= newPtY) && (newPtY <= yEnd2))
+                    } // if ( (0.0 <= newPtX) && (newPtX <= xEnd2))
                 }
             }
         }
@@ -3412,7 +3339,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         int x, y, z;
         double tmpZ1, tmpZ2, tmpZ3;
+        double tmpY1, tmpY2, tmpY3;
         int indexZ;
+        int indexY;
         int index, indexValue;
         double value, wValue;
         double weight;
@@ -3455,7 +3384,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double aT00 = T00;
         double aT10 = T10;
         double aT20 = T20;
-        double iT00, iT10, iT20;
         double newPtX, newPtY, newPtZ;
 
         if (aT00 < 0) {
@@ -3470,24 +3398,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             aT20 = -aT20;
         }
 
-        if (aT00 >= 1.0e-8) {
-            iT00 = 1 / T00;
-        } else {
-            iT00 = Double.MAX_VALUE;
-        }
-
-        if (aT10 >= 1.0e-8) {
-            iT10 = 1 / T10;
-        } else {
-            iT10 = Double.MAX_VALUE;
-        }
-
-        if (aT20 >= 1.0e-8) {
-            iT20 = 1 / T20;
-        } else {
-            iT20 = Double.MAX_VALUE;
-        }
-
         // Something to think about - could we use shear-warping to speed this process ???(Paeth, Levoy)
         // Volumes must be of the same resolution.
         // Although I could correct for this it would slow the process down - maybe two version are needed.
@@ -3498,9 +3408,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             constant = (nBins - 1) / (refImage.max - refImage.min);
         }
 
-        int nCalcs = 0;
-        final Point minMaxPt = new Point();
-
         for (z = zStart; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
             tmpZ2 = (z * T12) + T13;
@@ -3508,90 +3415,86 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             indexZ = z * refSliceSize;
 
             for (y = yStart; y <= yEnd; y++) {
+            	tmpY1 = (y * T01) + tmpZ1;
+                tmpY2 = (y * T11) + tmpZ2;
+                tmpY3 = (y * T21) + tmpZ3;
+                indexY = indexZ + y * refImage.xDim;
+                
+                for (x = xStart; x <= xEnd; x++) {
+                    newPtX = (x * T00) + tmpY1;
+                    if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
+                        newPtY = (y * T10) + tmpY2;
+                        if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
+                            newPtZ = (z * T20) + tmpY3;
+                            if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
+                                index = indexY + x;
 
-                newPtX = (y * T01) + tmpZ1;
-                newPtY = (y * T11) + tmpZ2;
-                newPtZ = (y * T21) + tmpZ3;
-
-                // determine range
-                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
-
-                newPtX += minMaxPt.x * T00;
-                newPtY += minMaxPt.x * T10;
-                newPtZ += minMaxPt.x * T20;
-
-                index = indexZ + (y * (xEnd + 1)) + minMaxPt.x;
-
-                for (x = minMaxPt.x; x <= minMaxPt.y; x++) {
-                    nCalcs++;
-                    intX = (int) newPtX;
-                    intY = (int) newPtY;
-                    intZ = (int) newPtZ;
-
-                    dx = newPtX - intX;
-                    dy = newPtY - intY;
-                    dz = newPtZ - intZ;
-
-                    dx1 = 1 - dx;
-                    dy1 = 1 - dy;
-
-                    position1 = (intZ * sliceSize) + (intY * xDim) + intX;
-                    position1x = position1 + xDim;
-                    position2 = position1 + sliceSize;
-                    position2x = position2 + xDim;
-                    position11 = position1 + 1;
-                    position11x = position11 + xDim;
-                    position21 = position2 + 1;
-                    position21x = position21 + xDim;
-
-                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
-                            + (dy * ( (dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
-
-                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
-                            + (dy * ( (dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
-                    value = ( (1 - dz) * b1) + (dz * b2);
-
-                    b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
-                            + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
-
-                    b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
-                            + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
-                    wValue = ( (1 - dz) * b1) + (dz * b2);
-
-                    weight = wValue * refWgtImage.data[index];
-
-                    if (newPtX < smoothX) {
-                        weight *= newPtX * invSmoothX;
-                    } else if ( (xEnd2 - newPtX) < smoothX) {
-                        weight *= (xEnd2 - newPtX) * invSmoothX;
-                    }
-
-                    if (newPtY < smoothY) {
-                        weight *= newPtY * invSmoothY;
-                    } else if ( (yEnd2 - newPtY) < smoothY) {
-                        weight *= (yEnd2 - newPtY) * invSmoothY;
-                    }
-
-                    if (newPtZ < smoothZ) {
-                        weight *= newPtZ * invSmoothZ;
-                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
-                        weight *= (zEnd2 - newPtZ) * invSmoothZ;
-                    }
-
-                    if (weight < 0.0) {
-                        weight = 0.0;
-                    }
-
-                    indexValue = (int) ( (refImage.data[index] - refImage.min) * constant);
-                    tmp = weight * (value - inputImage.min);
-                    numY[indexValue] += weight;
-                    sumY[indexValue] += tmp;
-                    sumY2[indexValue] += tmp * (value - inputImage.min);
-
-                    index++;
-                    newPtX += T00;
-                    newPtY += T10;
-                    newPtZ += T20;
+			                    intX = (int) newPtX;
+			                    intY = (int) newPtY;
+			                    intZ = (int) newPtZ;
+			
+			                    dx = newPtX - intX;
+			                    dy = newPtY - intY;
+			                    dz = newPtZ - intZ;
+			
+			                    dx1 = 1 - dx;
+			                    dy1 = 1 - dy;
+			
+			                    position1 = (intZ * sliceSize) + (intY * xDim) + intX;
+			                    position1x = position1 + xDim;
+			                    position2 = position1 + sliceSize;
+			                    position2x = position2 + xDim;
+			                    position11 = position1 + 1;
+			                    position11x = position11 + xDim;
+			                    position21 = position2 + 1;
+			                    position21x = position21 + xDim;
+			
+			                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
+			                            + (dy * ( (dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
+			
+			                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
+			                            + (dy * ( (dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
+			                    value = ( (1 - dz) * b1) + (dz * b2);
+			
+			                    b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
+			                            + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
+			
+			                    b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
+			                            + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
+			                    wValue = ( (1 - dz) * b1) + (dz * b2);
+			
+			                    weight = wValue * refWgtImage.data[index];
+			
+			                    if (newPtX < smoothX) {
+			                        weight *= newPtX * invSmoothX;
+			                    } else if ( (xEnd2 - newPtX) < smoothX) {
+			                        weight *= (xEnd2 - newPtX) * invSmoothX;
+			                    }
+			
+			                    if (newPtY < smoothY) {
+			                        weight *= newPtY * invSmoothY;
+			                    } else if ( (yEnd2 - newPtY) < smoothY) {
+			                        weight *= (yEnd2 - newPtY) * invSmoothY;
+			                    }
+			
+			                    if (newPtZ < smoothZ) {
+			                        weight *= newPtZ * invSmoothZ;
+			                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
+			                        weight *= (zEnd2 - newPtZ) * invSmoothZ;
+			                    }
+			
+			                    if (weight < 0.0) {
+			                        weight = 0.0;
+			                    }
+			
+			                    indexValue = (int) ( (refImage.data[index] - refImage.min) * constant);
+			                    tmp = weight * (value - inputImage.min);
+			                    numY[indexValue] += weight;
+			                    sumY[indexValue] += tmp;
+			                    sumY2[indexValue] += tmp * (value - inputImage.min);
+                            } // if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2))
+                        } // if ( (0.0 <= newPtY) && (newPtY <= yEnd2))
+                    } // if ( (0.0 <= newPtX) && (newPtX <= xEnd2))
                 }
             }
         }
@@ -5198,7 +5101,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         int x, y, z;
         double tmpZ1, tmpZ2, tmpZ3;
+        double tmpY1, tmpY2, tmpY3;
         int indexZ;
+        int indexY;
         int index;
         double smoothX, smoothY, smoothZ;
         double invSmoothX, invSmoothY, invSmoothZ;
@@ -5239,7 +5144,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double aT00 = T00;
         double aT10 = T10;
         double aT20 = T20;
-        double iT00, iT10, iT20;
         double newPtX, newPtY, newPtZ;
 
         if (aT00 < 0) {
@@ -5254,26 +5158,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             aT20 = -aT20;
         }
 
-        if (aT00 >= 1.0e-8) {
-            iT00 = 1 / T00;
-        } else {
-            iT00 = Double.MAX_VALUE;
-        }
-
-        if (aT10 >= 1.0e-8) {
-            iT10 = 1 / T10;
-        } else {
-            iT10 = Double.MAX_VALUE;
-        }
-
-        if (aT20 >= 1.0e-8) {
-            iT20 = 1 / T20;
-        } else {
-            iT20 = Double.MAX_VALUE;
-        }
-
-        final Point minMaxPt = new Point();
-
         for (z = zStart; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
             tmpZ2 = (z * T12) + T13;
@@ -5281,89 +5165,85 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             indexZ = z * refSliceSize;
 
             for (y = yStart; y <= yEnd; y++) {
+            	tmpY1 = (y * T01) + tmpZ1;
+                tmpY2 = (y * T11) + tmpZ2;
+                tmpY3 = (y * T21) + tmpZ3;
+                indexY = indexZ + y * refImage.xDim;
+                
+                for (x = xStart; x <= xEnd; x++) {
+                    newPtX = (x * T00) + tmpY1;
+                    if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
+                        newPtY = (y * T10) + tmpY2;
+                        if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
+                            newPtZ = (z * T20) + tmpY3;
+                            if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
+                                index = indexY + x;
 
-                newPtX = (y * T01) + tmpZ1;
-                newPtY = (y * T11) + tmpZ2;
-                newPtZ = (y * T21) + tmpZ3;
-
-                // determine range
-                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
-
-                newPtX += minMaxPt.x * T00;
-                newPtY += minMaxPt.x * T10;
-                newPtZ += minMaxPt.x * T20;
-
-                index = indexZ + (y * (xEnd + 1)) + minMaxPt.x;
-
-                for (x = minMaxPt.x; x <= minMaxPt.y; x++) {
-
-                    intX = (int) newPtX;
-                    intY = (int) newPtY;
-                    intZ = (int) newPtZ;
-
-                    dx = newPtX - intX;
-                    dy = newPtY - intY;
-                    dz = newPtZ - intZ;
-
-                    dx1 = 1 - dx;
-                    dy1 = 1 - dy;
-
-                    position1 = (intZ * sliceSize) + (intY * xDim) + intX;
-                    position1x = position1 + xDim;
-                    position2 = position1 + sliceSize;
-                    position2x = position2 + xDim;
-                    position11 = position1 + 1;
-                    position11x = position11 + xDim;
-                    position21 = position2 + 1;
-                    position21x = position21 + xDim;
-
-                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
-                            + (dy * ( (dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
-
-                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
-                            + (dy * ( (dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
-                    value = ( (1 - dz) * b1) + (dz * b2);
-
-                    b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
-                            + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
-
-                    b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
-                            + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
-                    wValue = ( (1 - dz) * b1) + (dz * b2);
-
-                    weight = wValue * refWgtImage.data[index];
-
-                    if (newPtX < smoothX) {
-                        weight *= newPtX * invSmoothX;
-                    } else if ( (xEnd2 - newPtX) < smoothX) {
-                        weight *= (xEnd2 - newPtX) * invSmoothX;
-                    }
-
-                    if (newPtY < smoothY) {
-                        weight *= newPtY * invSmoothY;
-                    } else if ( (yEnd2 - newPtY) < smoothY) {
-                        weight *= (yEnd2 - newPtY) * invSmoothY;
-                    }
-
-                    if (newPtZ < smoothZ) {
-                        weight *= newPtZ * invSmoothZ;
-                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
-                        weight *= (zEnd2 - newPtZ) * invSmoothZ;
-                    }
-
-                    if (weight < 0.0) {
-                        weight = 0.0;
-                    }
-
-                    valueR = refImage.data[index] - refImage.min;
-                    index++;
-                    valueI = value - inputImage.min;
-                    count += weight;
-                    sum += weight * (valueR - valueI) * (valueR - valueI);
-
-                    newPtX += T00;
-                    newPtY += T10;
-                    newPtZ += T20;
+			                    intX = (int) newPtX;
+			                    intY = (int) newPtY;
+			                    intZ = (int) newPtZ;
+			
+			                    dx = newPtX - intX;
+			                    dy = newPtY - intY;
+			                    dz = newPtZ - intZ;
+			
+			                    dx1 = 1 - dx;
+			                    dy1 = 1 - dy;
+			
+			                    position1 = (intZ * sliceSize) + (intY * xDim) + intX;
+			                    position1x = position1 + xDim;
+			                    position2 = position1 + sliceSize;
+			                    position2x = position2 + xDim;
+			                    position11 = position1 + 1;
+			                    position11x = position11 + xDim;
+			                    position21 = position2 + 1;
+			                    position21x = position21 + xDim;
+			
+			                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
+			                            + (dy * ( (dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
+			
+			                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
+			                            + (dy * ( (dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
+			                    value = ( (1 - dz) * b1) + (dz * b2);
+			
+			                    b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
+			                            + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
+			
+			                    b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
+			                            + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
+			                    wValue = ( (1 - dz) * b1) + (dz * b2);
+			
+			                    weight = wValue * refWgtImage.data[index];
+			
+			                    if (newPtX < smoothX) {
+			                        weight *= newPtX * invSmoothX;
+			                    } else if ( (xEnd2 - newPtX) < smoothX) {
+			                        weight *= (xEnd2 - newPtX) * invSmoothX;
+			                    }
+			
+			                    if (newPtY < smoothY) {
+			                        weight *= newPtY * invSmoothY;
+			                    } else if ( (yEnd2 - newPtY) < smoothY) {
+			                        weight *= (yEnd2 - newPtY) * invSmoothY;
+			                    }
+			
+			                    if (newPtZ < smoothZ) {
+			                        weight *= newPtZ * invSmoothZ;
+			                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
+			                        weight *= (zEnd2 - newPtZ) * invSmoothZ;
+			                    }
+			
+			                    if (weight < 0.0) {
+			                        weight = 0.0;
+			                    }
+			
+			                    valueR = refImage.data[index] - refImage.min;
+			                    valueI = value - inputImage.min;
+			                    count += weight;
+			                    sum += weight * (valueR - valueI) * (valueR - valueI);
+                            } // if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2))
+                        } // if ( (0.0 <= newPtY) && (newPtY <= yEnd2))
+                    } // if ( (0.0 <= newPtX) && (newPtX <= xEnd2))
                 }
             }
         }
@@ -5390,7 +5270,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         int x, y, z;
         double tmpZ1, tmpZ2, tmpZ3;
+        double tmpY1, tmpY2, tmpY3;
         int indexZ;
+        int indexY;
         int index;
         double smoothX, smoothY, smoothZ;
         double invSmoothX, invSmoothY, invSmoothZ;
@@ -5431,7 +5313,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double aT00 = T00;
         double aT10 = T10;
         double aT20 = T20;
-        double iT00, iT10, iT20;
         double newPtX, newPtY, newPtZ;
 
         if (aT00 < 0) {
@@ -5446,26 +5327,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             aT20 = -aT20;
         }
 
-        if (aT00 >= 1.0e-8) {
-            iT00 = 1 / T00;
-        } else {
-            iT00 = Double.MAX_VALUE;
-        }
-
-        if (aT10 >= 1.0e-8) {
-            iT10 = 1 / T10;
-        } else {
-            iT10 = Double.MAX_VALUE;
-        }
-
-        if (aT20 >= 1.0e-8) {
-            iT20 = 1 / T20;
-        } else {
-            iT20 = Double.MAX_VALUE;
-        }
-
-        final Point minMaxPt = new Point();
-
         for (z = zStart; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
             tmpZ2 = (z * T12) + T13;
@@ -5473,89 +5334,85 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             indexZ = z * refSliceSize;
 
             for (y = yStart; y <= yEnd; y++) {
+            	tmpY1 = (y * T01) + tmpZ1;
+                tmpY2 = (y * T11) + tmpZ2;
+                tmpY3 = (y * T21) + tmpZ3;
+                indexY = indexZ + y * refImage.xDim;
+                
+                for (x = xStart; x <= xEnd; x++) {
+                    newPtX = (x * T00) + tmpY1;
+                    if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
+                        newPtY = (y * T10) + tmpY2;
+                        if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
+                            newPtZ = (z * T20) + tmpY3;
+                            if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
+                                index = indexY + x;
 
-                newPtX = (y * T01) + tmpZ1;
-                newPtY = (y * T11) + tmpZ2;
-                newPtZ = (y * T21) + tmpZ3;
-
-                // determine range
-                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
-
-                newPtX += minMaxPt.x * T00;
-                newPtY += minMaxPt.x * T10;
-                newPtZ += minMaxPt.x * T20;
-
-                index = indexZ + (y * (xEnd + 1)) + minMaxPt.x;
-
-                for (x = minMaxPt.x; x <= minMaxPt.y; x++) {
-
-                    intX = (int) newPtX;
-                    intY = (int) newPtY;
-                    intZ = (int) newPtZ;
-
-                    dx = newPtX - intX;
-                    dy = newPtY - intY;
-                    dz = newPtZ - intZ;
-
-                    dx1 = 1 - dx;
-                    dy1 = 1 - dy;
-
-                    position1 = (intZ * sliceSize) + (intY * xDim) + intX;
-                    position1x = position1 + xDim;
-                    position2 = position1 + sliceSize;
-                    position2x = position2 + xDim;
-                    position11 = position1 + 1;
-                    position11x = position11 + xDim;
-                    position21 = position2 + 1;
-                    position21x = position21 + xDim;
-
-                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
-                            + (dy * ( (dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
-
-                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
-                            + (dy * ( (dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
-                    value = ( (1 - dz) * b1) + (dz * b2);
-
-                    b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
-                            + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
-
-                    b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
-                            + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
-                    wValue = ( (1 - dz) * b1) + (dz * b2);
-
-                    weight = wValue * refWgtImage.data[index];
-
-                    if (newPtX < smoothX) {
-                        weight *= newPtX * invSmoothX;
-                    } else if ( (xEnd2 - newPtX) < smoothX) {
-                        weight *= (xEnd2 - newPtX) * invSmoothX;
-                    }
-
-                    if (newPtY < smoothY) {
-                        weight *= newPtY * invSmoothY;
-                    } else if ( (yEnd2 - newPtY) < smoothY) {
-                        weight *= (yEnd2 - newPtY) * invSmoothY;
-                    }
-
-                    if (newPtZ < smoothZ) {
-                        weight *= newPtZ * invSmoothZ;
-                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
-                        weight *= (zEnd2 - newPtZ) * invSmoothZ;
-                    }
-
-                    if (weight < 0.0) {
-                        weight = 0.0;
-                    }
-
-                    valueR = refImage.data[index] - refImage.min;
-                    index++;
-                    valueI = value - inputImage.min;
-                    count += weight;
-                    sum += weight * (valueR - valueI) * (valueR - valueI);
-
-                    newPtX += T00;
-                    newPtY += T10;
-                    newPtZ += T20;
+			                    intX = (int) newPtX;
+			                    intY = (int) newPtY;
+			                    intZ = (int) newPtZ;
+			
+			                    dx = newPtX - intX;
+			                    dy = newPtY - intY;
+			                    dz = newPtZ - intZ;
+			
+			                    dx1 = 1 - dx;
+			                    dy1 = 1 - dy;
+			
+			                    position1 = (intZ * sliceSize) + (intY * xDim) + intX;
+			                    position1x = position1 + xDim;
+			                    position2 = position1 + sliceSize;
+			                    position2x = position2 + xDim;
+			                    position11 = position1 + 1;
+			                    position11x = position11 + xDim;
+			                    position21 = position2 + 1;
+			                    position21x = position21 + xDim;
+			
+			                    b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
+			                            + (dy * ( (dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
+			
+			                    b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
+			                            + (dy * ( (dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
+			                    value = ( (1 - dz) * b1) + (dz * b2);
+			
+			                    b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
+			                            + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
+			
+			                    b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
+			                            + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
+			                    wValue = ( (1 - dz) * b1) + (dz * b2);
+			
+			                    weight = wValue * refWgtImage.data[index];
+			
+			                    if (newPtX < smoothX) {
+			                        weight *= newPtX * invSmoothX;
+			                    } else if ( (xEnd2 - newPtX) < smoothX) {
+			                        weight *= (xEnd2 - newPtX) * invSmoothX;
+			                    }
+			
+			                    if (newPtY < smoothY) {
+			                        weight *= newPtY * invSmoothY;
+			                    } else if ( (yEnd2 - newPtY) < smoothY) {
+			                        weight *= (yEnd2 - newPtY) * invSmoothY;
+			                    }
+			
+			                    if (newPtZ < smoothZ) {
+			                        weight *= newPtZ * invSmoothZ;
+			                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
+			                        weight *= (zEnd2 - newPtZ) * invSmoothZ;
+			                    }
+			
+			                    if (weight < 0.0) {
+			                        weight = 0.0;
+			                    }
+			
+			                    valueR = refImage.data[index] - refImage.min;
+			                    valueI = value - inputImage.min;
+			                    count += weight;
+			                    sum += weight * (valueR - valueI) * (valueR - valueI);
+                            } // if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2))
+                        } // if ( (0.0 <= newPtY) && (newPtY <= yEnd2))
+                    } // if ( (0.0 <= newPtX) && (newPtX <= xEnd2))
                 }
             }
         }
@@ -5582,7 +5439,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         int x, y, z, c;
         double tmpZ1, tmpZ2, tmpZ3;
+        double tmpY1, tmpY2, tmpY3;
         int indexZ;
+        int indexY;
         int index;
         double smoothX, smoothY, smoothZ;
         double invSmoothX, invSmoothY, invSmoothZ;
@@ -5623,7 +5482,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double aT00 = T00;
         double aT10 = T10;
         double aT20 = T20;
-        double iT00, iT10, iT20;
         double newPtX, newPtY, newPtZ;
 
         if (aT00 < 0) {
@@ -5638,26 +5496,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             aT20 = -aT20;
         }
 
-        if (aT00 >= 1.0e-8) {
-            iT00 = 1 / T00;
-        } else {
-            iT00 = Double.MAX_VALUE;
-        }
-
-        if (aT10 >= 1.0e-8) {
-            iT10 = 1 / T10;
-        } else {
-            iT10 = Double.MAX_VALUE;
-        }
-
-        if (aT20 >= 1.0e-8) {
-            iT20 = 1 / T20;
-        } else {
-            iT20 = Double.MAX_VALUE;
-        }
-
-        final Point minMaxPt = new Point();
-
         for (z = zStart; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
             tmpZ2 = (z * T12) + T13;
@@ -5665,95 +5503,91 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             indexZ = z * refSliceSize;
 
             for (y = yStart; y <= yEnd; y++) {
+            	tmpY1 = (y * T01) + tmpZ1;
+                tmpY2 = (y * T11) + tmpZ2;
+                tmpY3 = (y * T21) + tmpZ3;
+                indexY = indexZ + y * refImage.xDim;
+                
+                for (x = xStart; x <= xEnd; x++) {
+                    newPtX = (x * T00) + tmpY1;
+                    if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
+                        newPtY = (y * T10) + tmpY2;
+                        if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
+                            newPtZ = (z * T20) + tmpY3;
+                            if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
+                                index = indexY + x;
 
-                newPtX = (y * T01) + tmpZ1;
-                newPtY = (y * T11) + tmpZ2;
-                newPtZ = (y * T21) + tmpZ3;
-
-                // determine range
-                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
-
-                newPtX += minMaxPt.x * T00;
-                newPtY += minMaxPt.x * T10;
-                newPtZ += minMaxPt.x * T20;
-
-                index = indexZ + (y * (xEnd + 1)) + minMaxPt.x;
-
-                for (x = minMaxPt.x; x <= minMaxPt.y; x++) {
-
-                    intX = (int) newPtX;
-                    intY = (int) newPtY;
-                    intZ = (int) newPtZ;
-
-                    dx = newPtX - intX;
-                    dy = newPtY - intY;
-                    dz = newPtZ - intZ;
-
-                    dx1 = 1 - dx;
-                    dy1 = 1 - dy;
-
-                    position1 = (intZ * sliceSize) + (intY * xDim) + intX;
-                    position1x = position1 + xDim;
-                    position2 = position1 + sliceSize;
-                    position2x = position2 + xDim;
-                    position11 = position1 + 1;
-                    position11x = position11 + xDim;
-                    position21 = position2 + 1;
-                    position21x = position21 + xDim;
-
-                    b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
-                            + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
-
-                    b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
-                            + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
-                    wValue = ( (1 - dz) * b1) + (dz * b2);
-
-                    weight = wValue * refWgtImage.data[index];
-
-                    if (newPtX < smoothX) {
-                        weight *= newPtX * invSmoothX;
-                    } else if ( (xEnd2 - newPtX) < smoothX) {
-                        weight *= (xEnd2 - newPtX) * invSmoothX;
-                    }
-
-                    if (newPtY < smoothY) {
-                        weight *= newPtY * invSmoothY;
-                    } else if ( (yEnd2 - newPtY) < smoothY) {
-                        weight *= (yEnd2 - newPtY) * invSmoothY;
-                    }
-
-                    if (newPtZ < smoothZ) {
-                        weight *= newPtZ * invSmoothZ;
-                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
-                        weight *= (zEnd2 - newPtZ) * invSmoothZ;
-                    }
-
-                    if (weight < 0.0) {
-                        weight = 0.0;
-                    }
-
-                    for (c = 1; c <= 3; c++) {
-                        b1 = (dy1 * ( (dx1 * inputImage.data[ (4 * position1) + c]) + (dx * inputImage.data[ (4 * position11)
-                                + c])))
-                                + (dy * ( (dx1 * inputImage.data[ (4 * position1x) + c]) + (dx * inputImage.data[ (4 * position11x)
-                                        + c])));
-
-                        b2 = (dy1 * ( (dx1 * inputImage.data[ (4 * position2) + c]) + (dx * inputImage.data[ (4 * position21)
-                                + c])))
-                                + (dy * ( (dx1 * inputImage.data[ (4 * position2x) + c]) + (dx * inputImage.data[ (4 * position21x)
-                                        + c])));
-                        valueI = ( (1 - dz) * b1) + (dz * b2);
-
-                        valueR = refImage.data[ (4 * index) + c];
-                        sum += weight * (valueR - valueI) * (valueR - valueI);
-                    } // for (c = 1; c <= 3; c++)
-
-                    count += weight;
-                    index++;
-
-                    newPtX += T00;
-                    newPtY += T10;
-                    newPtZ += T20;
+			                    intX = (int) newPtX;
+			                    intY = (int) newPtY;
+			                    intZ = (int) newPtZ;
+			
+			                    dx = newPtX - intX;
+			                    dy = newPtY - intY;
+			                    dz = newPtZ - intZ;
+			
+			                    dx1 = 1 - dx;
+			                    dy1 = 1 - dy;
+			
+			                    position1 = (intZ * sliceSize) + (intY * xDim) + intX;
+			                    position1x = position1 + xDim;
+			                    position2 = position1 + sliceSize;
+			                    position2x = position2 + xDim;
+			                    position11 = position1 + 1;
+			                    position11x = position11 + xDim;
+			                    position21 = position2 + 1;
+			                    position21x = position21 + xDim;
+			
+			                    b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
+			                            + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
+			
+			                    b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
+			                            + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
+			                    wValue = ( (1 - dz) * b1) + (dz * b2);
+			
+			                    weight = wValue * refWgtImage.data[index];
+			
+			                    if (newPtX < smoothX) {
+			                        weight *= newPtX * invSmoothX;
+			                    } else if ( (xEnd2 - newPtX) < smoothX) {
+			                        weight *= (xEnd2 - newPtX) * invSmoothX;
+			                    }
+			
+			                    if (newPtY < smoothY) {
+			                        weight *= newPtY * invSmoothY;
+			                    } else if ( (yEnd2 - newPtY) < smoothY) {
+			                        weight *= (yEnd2 - newPtY) * invSmoothY;
+			                    }
+			
+			                    if (newPtZ < smoothZ) {
+			                        weight *= newPtZ * invSmoothZ;
+			                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
+			                        weight *= (zEnd2 - newPtZ) * invSmoothZ;
+			                    }
+			
+			                    if (weight < 0.0) {
+			                        weight = 0.0;
+			                    }
+			
+			                    for (c = 1; c <= 3; c++) {
+			                        b1 = (dy1 * ( (dx1 * inputImage.data[ (4 * position1) + c]) + (dx * inputImage.data[ (4 * position11)
+			                                + c])))
+			                                + (dy * ( (dx1 * inputImage.data[ (4 * position1x) + c]) + (dx * inputImage.data[ (4 * position11x)
+			                                        + c])));
+			
+			                        b2 = (dy1 * ( (dx1 * inputImage.data[ (4 * position2) + c]) + (dx * inputImage.data[ (4 * position21)
+			                                + c])))
+			                                + (dy * ( (dx1 * inputImage.data[ (4 * position2x) + c]) + (dx * inputImage.data[ (4 * position21x)
+			                                        + c])));
+			                        valueI = ( (1 - dz) * b1) + (dz * b2);
+			
+			                        valueR = refImage.data[ (4 * index) + c];
+			                        sum += weight * (valueR - valueI) * (valueR - valueI);
+			                    } // for (c = 1; c <= 3; c++)
+			
+			                    count += weight;
+                            } // if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2))
+                        } // if ( (0.0 <= newPtY) && (newPtY <= yEnd2))
+                    } // if ( (0.0 <= newPtX) && (newPtX <= xEnd2))
                 }
             }
         }
@@ -5780,7 +5614,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         int x, y, z, c;
         double tmpZ1, tmpZ2, tmpZ3;
+        double tmpY1, tmpY2, tmpY3;
         int indexZ;
+        int indexY;
         int index;
         double smoothX, smoothY, smoothZ;
         double invSmoothX, invSmoothY, invSmoothZ;
@@ -5821,7 +5657,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double aT00 = T00;
         double aT10 = T10;
         double aT20 = T20;
-        double iT00, iT10, iT20;
         double newPtX, newPtY, newPtZ;
 
         if (aT00 < 0) {
@@ -5836,26 +5671,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             aT20 = -aT20;
         }
 
-        if (aT00 >= 1.0e-8) {
-            iT00 = 1 / T00;
-        } else {
-            iT00 = Double.MAX_VALUE;
-        }
-
-        if (aT10 >= 1.0e-8) {
-            iT10 = 1 / T10;
-        } else {
-            iT10 = Double.MAX_VALUE;
-        }
-
-        if (aT20 >= 1.0e-8) {
-            iT20 = 1 / T20;
-        } else {
-            iT20 = Double.MAX_VALUE;
-        }
-
-        final Point minMaxPt = new Point();
-
         for (z = zStart; z <= zEnd; z++) {
             tmpZ1 = (z * T02) + T03;
             tmpZ2 = (z * T12) + T13;
@@ -5863,95 +5678,91 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             indexZ = z * refSliceSize;
 
             for (y = yStart; y <= yEnd; y++) {
+            	tmpY1 = (y * T01) + tmpZ1;
+                tmpY2 = (y * T11) + tmpZ2;
+                tmpY3 = (y * T21) + tmpZ3;
+                indexY = indexZ + y * refImage.xDim;
+                
+                for (x = xStart; x <= xEnd; x++) {
+                    newPtX = (x * T00) + tmpY1;
+                    if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
+                        newPtY = (y * T10) + tmpY2;
+                        if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
+                            newPtZ = (z * T20) + tmpY3;
+                            if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
+                                index = indexY + x;
 
-                newPtX = (y * T01) + tmpZ1;
-                newPtY = (y * T11) + tmpZ2;
-                newPtZ = (y * T21) + tmpZ3;
-
-                // determine range
-                findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
-
-                newPtX += minMaxPt.x * T00;
-                newPtY += minMaxPt.x * T10;
-                newPtZ += minMaxPt.x * T20;
-
-                index = indexZ + (y * (xEnd + 1)) + minMaxPt.x;
-
-                for (x = minMaxPt.x; x <= minMaxPt.y; x++) {
-
-                    intX = (int) newPtX;
-                    intY = (int) newPtY;
-                    intZ = (int) newPtZ;
-
-                    dx = newPtX - intX;
-                    dy = newPtY - intY;
-                    dz = newPtZ - intZ;
-
-                    dx1 = 1 - dx;
-                    dy1 = 1 - dy;
-
-                    position1 = (intZ * sliceSize) + (intY * xDim) + intX;
-                    position1x = position1 + xDim;
-                    position2 = position1 + sliceSize;
-                    position2x = position2 + xDim;
-                    position11 = position1 + 1;
-                    position11x = position11 + xDim;
-                    position21 = position2 + 1;
-                    position21x = position21 + xDim;
-
-                    b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
-                            + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
-
-                    b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
-                            + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
-                    wValue = ( (1 - dz) * b1) + (dz * b2);
-
-                    weight = wValue * refWgtImage.data[index];
-
-                    if (newPtX < smoothX) {
-                        weight *= newPtX * invSmoothX;
-                    } else if ( (xEnd2 - newPtX) < smoothX) {
-                        weight *= (xEnd2 - newPtX) * invSmoothX;
-                    }
-
-                    if (newPtY < smoothY) {
-                        weight *= newPtY * invSmoothY;
-                    } else if ( (yEnd2 - newPtY) < smoothY) {
-                        weight *= (yEnd2 - newPtY) * invSmoothY;
-                    }
-
-                    if (newPtZ < smoothZ) {
-                        weight *= newPtZ * invSmoothZ;
-                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
-                        weight *= (zEnd2 - newPtZ) * invSmoothZ;
-                    }
-
-                    if (weight < 0.0) {
-                        weight = 0.0;
-                    }
-
-                    for (c = 1; c <= 3; c++) {
-                        b1 = (dy1 * ( (dx1 * inputImage.data[ (4 * position1) + c]) + (dx * inputImage.data[ (4 * position11)
-                                + c])))
-                                + (dy * ( (dx1 * inputImage.data[ (4 * position1x) + c]) + (dx * inputImage.data[ (4 * position11x)
-                                        + c])));
-
-                        b2 = (dy1 * ( (dx1 * inputImage.data[ (4 * position2) + c]) + (dx * inputImage.data[ (4 * position21)
-                                + c])))
-                                + (dy * ( (dx1 * inputImage.data[ (4 * position2x) + c]) + (dx * inputImage.data[ (4 * position21x)
-                                        + c])));
-                        valueI = ( (1 - dz) * b1) + (dz * b2);
-
-                        valueR = refImage.data[ (4 * index) + c];
-                        sum += weight * (valueR - valueI) * (valueR - valueI);
-                    } // for (c = 1; c <= 3; c++)
-
-                    count += weight;
-                    index++;
-
-                    newPtX += T00;
-                    newPtY += T10;
-                    newPtZ += T20;
+			                    intX = (int) newPtX;
+			                    intY = (int) newPtY;
+			                    intZ = (int) newPtZ;
+			
+			                    dx = newPtX - intX;
+			                    dy = newPtY - intY;
+			                    dz = newPtZ - intZ;
+			
+			                    dx1 = 1 - dx;
+			                    dy1 = 1 - dy;
+			
+			                    position1 = (intZ * sliceSize) + (intY * xDim) + intX;
+			                    position1x = position1 + xDim;
+			                    position2 = position1 + sliceSize;
+			                    position2x = position2 + xDim;
+			                    position11 = position1 + 1;
+			                    position11x = position11 + xDim;
+			                    position21 = position2 + 1;
+			                    position21x = position21 + xDim;
+			
+			                    b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
+			                            + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
+			
+			                    b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
+			                            + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
+			                    wValue = ( (1 - dz) * b1) + (dz * b2);
+			
+			                    weight = wValue * refWgtImage.data[index];
+			
+			                    if (newPtX < smoothX) {
+			                        weight *= newPtX * invSmoothX;
+			                    } else if ( (xEnd2 - newPtX) < smoothX) {
+			                        weight *= (xEnd2 - newPtX) * invSmoothX;
+			                    }
+			
+			                    if (newPtY < smoothY) {
+			                        weight *= newPtY * invSmoothY;
+			                    } else if ( (yEnd2 - newPtY) < smoothY) {
+			                        weight *= (yEnd2 - newPtY) * invSmoothY;
+			                    }
+			
+			                    if (newPtZ < smoothZ) {
+			                        weight *= newPtZ * invSmoothZ;
+			                    } else if ( (zEnd2 - newPtZ) < smoothZ) {
+			                        weight *= (zEnd2 - newPtZ) * invSmoothZ;
+			                    }
+			
+			                    if (weight < 0.0) {
+			                        weight = 0.0;
+			                    }
+			
+			                    for (c = 1; c <= 3; c++) {
+			                        b1 = (dy1 * ( (dx1 * inputImage.data[ (4 * position1) + c]) + (dx * inputImage.data[ (4 * position11)
+			                                + c])))
+			                                + (dy * ( (dx1 * inputImage.data[ (4 * position1x) + c]) + (dx * inputImage.data[ (4 * position11x)
+			                                        + c])));
+			
+			                        b2 = (dy1 * ( (dx1 * inputImage.data[ (4 * position2) + c]) + (dx * inputImage.data[ (4 * position21)
+			                                + c])))
+			                                + (dy * ( (dx1 * inputImage.data[ (4 * position2x) + c]) + (dx * inputImage.data[ (4 * position21x)
+			                                        + c])));
+			                        valueI = ( (1 - dz) * b1) + (dz * b2);
+			
+			                        valueR = refImage.data[ (4 * index) + c];
+			                        sum += weight * (valueR - valueI) * (valueR - valueI);
+			                    } // for (c = 1; c <= 3; c++)
+			
+			                    count += weight;
+                            } // if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2))
+                        } // if ( (0.0 <= newPtY) && (newPtY <= yEnd2))
+                    } // if ( (0.0 <= newPtX) && (newPtX <= xEnd2))
                 }
             }
         }
@@ -7234,7 +7045,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         int x, y, z, iter;
         double tmpZ1, tmpZ2, tmpZ3;
+        double tmpY1, tmpY2, tmpY3;
         int indexZ;
+        int indexY;
         int index;
         int numValues = 0;
         double correlation;
@@ -7286,7 +7099,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double aT00 = T00;
         double aT10 = T10;
         double aT20 = T20;
-        double iT00, iT10, iT20;
         double newPtX, newPtY, newPtZ;
 
         if (aT00 < 0) {
@@ -7301,26 +7113,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             aT20 = -aT20;
         }
 
-        if (aT00 >= 1.0e-8) {
-            iT00 = 1 / T00;
-        } else {
-            iT00 = Double.MAX_VALUE;
-        }
-
-        if (aT10 >= 1.0e-8) {
-            iT10 = 1 / T10;
-        } else {
-            iT10 = Double.MAX_VALUE;
-        }
-
-        if (aT20 >= 1.0e-8) {
-            iT20 = 1 / T20;
-        } else {
-            iT20 = Double.MAX_VALUE;
-        }
-
-        final Point minMaxPt = new Point();
-
         for (iter = 0; iter <= 1; iter++) {
 
             for (z = zStart; z <= zEnd; z++) {
@@ -7330,98 +7122,95 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 indexZ = z * refSliceSize;
 
                 for (y = yStart; y <= yEnd; y++) {
+                	tmpY1 = (y * T01) + tmpZ1;
+                    tmpY2 = (y * T11) + tmpZ2;
+                    tmpY3 = (y * T21) + tmpZ3;
+                    indexY = indexZ + y * refImage.xDim;
+                    
+                    for (x = xStart; x <= xEnd; x++) {
+                        newPtX = (x * T00) + tmpY1;
+                        if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
+                            newPtY = (y * T10) + tmpY2;
+                            if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
+                                newPtZ = (z * T20) + tmpY3;
+                                if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
+                                    index = indexY + x;
 
-                    newPtX = (y * T01) + tmpZ1;
-                    newPtY = (y * T11) + tmpZ2;
-                    newPtZ = (y * T21) + tmpZ3;
+			                        intX = (int) newPtX;
+			                        intY = (int) newPtY;
+			                        intZ = (int) newPtZ;
+			
+			                        dx = newPtX - intX;
+			                        dy = newPtY - intY;
+			                        dz = newPtZ - intZ;
+			
+			                        dx1 = 1 - dx;
+			                        dy1 = 1 - dy;
+			
+			                        position1 = (intZ * sliceSize) + (intY * xDim) + intX;
+			                        position1x = position1 + xDim;
+			                        position2 = position1 + sliceSize;
+			                        position2x = position2 + xDim;
+			                        position11 = position1 + 1;
+			                        position11x = position11 + xDim;
+			                        position21 = position2 + 1;
+			                        position21x = position21 + xDim;
+			
+			                        b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
+			                                + (dy * ( (dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
+			
+			                        b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
+			                                + (dy * ( (dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
+			                        value = ( (1 - dz) * b1) + (dz * b2);
+			
+			                        b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
+			                                + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
+			
+			                        b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
+			                                + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
+			                        wValue = ( (1 - dz) * b1) + (dz * b2);
+			
+			                        weight = wValue * refWgtImage.data[index];
+			
+			                        if (newPtX < smoothX) {
+			                            weight *= newPtX * invSmoothX;
+			                        } else if ( (xEnd2 - newPtX) < smoothX) {
+			                            weight *= (xEnd2 - newPtX) * invSmoothX;
+			                        }
+			
+			                        if (newPtY < smoothY) {
+			                            weight *= newPtY * invSmoothY;
+			                        } else if ( (yEnd2 - newPtY) < smoothY) {
+			                            weight *= (yEnd2 - newPtY) * invSmoothY;
+			                        }
+			
+			                        if (newPtZ < smoothZ) {
+			                            weight *= newPtZ * invSmoothZ;
+			                        } else if ( (zEnd2 - newPtZ) < smoothZ) {
+			                            weight *= (zEnd2 - newPtZ) * invSmoothZ;
+			                        }
+			
+			                        if (weight < 0.0) {
+			                            weight = 0.0;
+			                        }
+			
+			                        valueR = refImage.data[index] - refImage.min;
+			                        valueI = value - inputImage.min;
+			
+			                        if (iter == 0) {
+			                            sumX += weight * valueR;
+			                            sumY += weight * valueI;
+			                            count += weight;
+			                            numValues++;
+			                        } else if (iter == 1) {
+			                            sumX2 += weight * (valueR - xAverage) * (valueR - xAverage);
+			                            sumY2 += weight * (valueI - yAverage) * (valueI - yAverage);
+			                            sumXY += weight * (valueR - xAverage) * (valueI - yAverage);
+			                        }
 
-                    // determine range
-                    findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
-
-                    newPtX += minMaxPt.x * T00;
-                    newPtY += minMaxPt.x * T10;
-                    newPtZ += minMaxPt.x * T20;
-
-                    index = indexZ + (y * (xEnd + 1)) + minMaxPt.x;
-
-                    for (x = minMaxPt.x; x <= minMaxPt.y; x++) {
-
-                        intX = (int) newPtX;
-                        intY = (int) newPtY;
-                        intZ = (int) newPtZ;
-
-                        dx = newPtX - intX;
-                        dy = newPtY - intY;
-                        dz = newPtZ - intZ;
-
-                        dx1 = 1 - dx;
-                        dy1 = 1 - dy;
-
-                        position1 = (intZ * sliceSize) + (intY * xDim) + intX;
-                        position1x = position1 + xDim;
-                        position2 = position1 + sliceSize;
-                        position2x = position2 + xDim;
-                        position11 = position1 + 1;
-                        position11x = position11 + xDim;
-                        position21 = position2 + 1;
-                        position21x = position21 + xDim;
-
-                        b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
-                                + (dy * ( (dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
-
-                        b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
-                                + (dy * ( (dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
-                        value = ( (1 - dz) * b1) + (dz * b2);
-
-                        b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
-                                + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
-
-                        b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
-                                + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
-                        wValue = ( (1 - dz) * b1) + (dz * b2);
-
-                        weight = wValue * refWgtImage.data[index];
-
-                        if (newPtX < smoothX) {
-                            weight *= newPtX * invSmoothX;
-                        } else if ( (xEnd2 - newPtX) < smoothX) {
-                            weight *= (xEnd2 - newPtX) * invSmoothX;
-                        }
-
-                        if (newPtY < smoothY) {
-                            weight *= newPtY * invSmoothY;
-                        } else if ( (yEnd2 - newPtY) < smoothY) {
-                            weight *= (yEnd2 - newPtY) * invSmoothY;
-                        }
-
-                        if (newPtZ < smoothZ) {
-                            weight *= newPtZ * invSmoothZ;
-                        } else if ( (zEnd2 - newPtZ) < smoothZ) {
-                            weight *= (zEnd2 - newPtZ) * invSmoothZ;
-                        }
-
-                        if (weight < 0.0) {
-                            weight = 0.0;
-                        }
-
-                        valueR = refImage.data[index] - refImage.min;
-                        valueI = value - inputImage.min;
-
-                        if (iter == 0) {
-                            sumX += weight * valueR;
-                            sumY += weight * valueI;
-                            count += weight;
-                            numValues++;
-                        } else if (iter == 1) {
-                            sumX2 += weight * (valueR - xAverage) * (valueR - xAverage);
-                            sumY2 += weight * (valueI - yAverage) * (valueI - yAverage);
-                            sumXY += weight * (valueR - xAverage) * (valueI - yAverage);
-                        }
-
-                        index++;
-                        newPtX += T00;
-                        newPtY += T10;
-                        newPtZ += T20;
+                                } // if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2))
+                            } // if ( (0.0 <= newPtY) && (newPtY <= yEnd2))
+                        } // if ( (0.0 <= newPtX) && (newPtX <= xEnd2))
                     }
                 }
             }
@@ -7459,7 +7248,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
         int x, y, z, iter;
         double tmpZ1, tmpZ2, tmpZ3;
+        double tmpY1, tmpY2, tmpY3;
         int indexZ;
+        int indexY;
         int index;
         int numValues = 0;
         double correlation;
@@ -7511,7 +7302,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         double aT00 = T00;
         double aT10 = T10;
         double aT20 = T20;
-        double iT00, iT10, iT20;
         double newPtX, newPtY, newPtZ;
 
         if (aT00 < 0) {
@@ -7526,26 +7316,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             aT20 = -aT20;
         }
 
-        if (aT00 >= 1.0e-8) {
-            iT00 = 1 / T00;
-        } else {
-            iT00 = Double.MAX_VALUE;
-        }
-
-        if (aT10 >= 1.0e-8) {
-            iT10 = 1 / T10;
-        } else {
-            iT10 = Double.MAX_VALUE;
-        }
-
-        if (aT20 >= 1.0e-8) {
-            iT20 = 1 / T20;
-        } else {
-            iT20 = Double.MAX_VALUE;
-        }
-
-        final Point minMaxPt = new Point();
-
         for (iter = 0; iter <= 1; iter++) {
 
             for (z = zStart; z <= zEnd; z++) {
@@ -7555,98 +7325,94 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 indexZ = z * refSliceSize;
 
                 for (y = yStart; y <= yEnd; y++) {
+                	tmpY1 = (y * T01) + tmpZ1;
+                    tmpY2 = (y * T11) + tmpZ2;
+                    tmpY3 = (y * T21) + tmpZ3;
+                    indexY = indexZ + y * refImage.xDim;
+                    
+                    for (x = xStart; x <= xEnd; x++) {
+                        newPtX = (x * T00) + tmpY1;
+                        if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
+                            newPtY = (y * T10) + tmpY2;
+                            if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
+                                newPtZ = (z * T20) + tmpY3;
+                                if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
+                                    index = indexY + x;
 
-                    newPtX = (y * T01) + tmpZ1;
-                    newPtY = (y * T11) + tmpZ2;
-                    newPtZ = (y * T21) + tmpZ3;
-
-                    // determine range
-                    findRangeX(minMaxPt, newPtX, newPtY, newPtZ, aT00, aT10, aT20, iT00, iT10, iT20);
-
-                    newPtX += minMaxPt.x * T00;
-                    newPtY += minMaxPt.x * T10;
-                    newPtZ += minMaxPt.x * T20;
-
-                    index = indexZ + (y * (xEnd + 1)) + minMaxPt.x;
-
-                    for (x = minMaxPt.x; x <= minMaxPt.y; x++) {
-
-                        intX = (int) newPtX;
-                        intY = (int) newPtY;
-                        intZ = (int) newPtZ;
-
-                        dx = newPtX - intX;
-                        dy = newPtY - intY;
-                        dz = newPtZ - intZ;
-
-                        dx1 = 1 - dx;
-                        dy1 = 1 - dy;
-
-                        position1 = (intZ * sliceSize) + (intY * xDim) + intX;
-                        position1x = position1 + xDim;
-                        position2 = position1 + sliceSize;
-                        position2x = position2 + xDim;
-                        position11 = position1 + 1;
-                        position11x = position11 + xDim;
-                        position21 = position2 + 1;
-                        position21x = position21 + xDim;
-
-                        b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
-                                + (dy * ( (dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
-
-                        b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
-                                + (dy * ( (dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
-                        value = ( (1 - dz) * b1) + (dz * b2);
-
-                        b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
-                                + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
-
-                        b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
-                                + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
-                        wValue = ( (1 - dz) * b1) + (dz * b2);
-
-                        weight = wValue * refWgtImage.data[index];
-
-                        if (newPtX < smoothX) {
-                            weight *= newPtX * invSmoothX;
-                        } else if ( (xEnd2 - newPtX) < smoothX) {
-                            weight *= (xEnd2 - newPtX) * invSmoothX;
-                        }
-
-                        if (newPtY < smoothY) {
-                            weight *= newPtY * invSmoothY;
-                        } else if ( (yEnd2 - newPtY) < smoothY) {
-                            weight *= (yEnd2 - newPtY) * invSmoothY;
-                        }
-
-                        if (newPtZ < smoothZ) {
-                            weight *= newPtZ * invSmoothZ;
-                        } else if ( (zEnd2 - newPtZ) < smoothZ) {
-                            weight *= (zEnd2 - newPtZ) * invSmoothZ;
-                        }
-
-                        if (weight < 0.0) {
-                            weight = 0.0;
-                        }
-
-                        valueR = refImage.data[index] - refImage.min;
-                        valueI = value - inputImage.min;
-
-                        if (iter == 0) {
-                            sumX += weight * valueR;
-                            sumY += weight * valueI;
-                            count += weight;
-                            numValues++;
-                        } else if (iter == 1) {
-                            sumX2 += weight * (valueR - xAverage) * (valueR - xAverage);
-                            sumY2 += weight * (valueI - yAverage) * (valueI - yAverage);
-                            sumXY += weight * (valueR - xAverage) * (valueI - yAverage);
-                        }
-
-                        index++;
-                        newPtX += T00;
-                        newPtY += T10;
-                        newPtZ += T20;
+			                        intX = (int) newPtX;
+			                        intY = (int) newPtY;
+			                        intZ = (int) newPtZ;
+			
+			                        dx = newPtX - intX;
+			                        dy = newPtY - intY;
+			                        dz = newPtZ - intZ;
+			
+			                        dx1 = 1 - dx;
+			                        dy1 = 1 - dy;
+			
+			                        position1 = (intZ * sliceSize) + (intY * xDim) + intX;
+			                        position1x = position1 + xDim;
+			                        position2 = position1 + sliceSize;
+			                        position2x = position2 + xDim;
+			                        position11 = position1 + 1;
+			                        position11x = position11 + xDim;
+			                        position21 = position2 + 1;
+			                        position21x = position21 + xDim;
+			
+			                        b1 = (dy1 * ( (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11])))
+			                                + (dy * ( (dx1 * inputImage.data[position1x]) + (dx * inputImage.data[position11x])));
+			
+			                        b2 = (dy1 * ( (dx1 * inputImage.data[position2]) + (dx * inputImage.data[position21])))
+			                                + (dy * ( (dx1 * inputImage.data[position2x]) + (dx * inputImage.data[position21x])));
+			                        value = ( (1 - dz) * b1) + (dz * b2);
+			
+			                        b1 = (dy1 * ( (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11])))
+			                                + (dy * ( (dx1 * inputWgtImage.data[position1x]) + (dx * inputWgtImage.data[position11x])));
+			
+			                        b2 = (dy1 * ( (dx1 * inputWgtImage.data[position2]) + (dx * inputWgtImage.data[position21])))
+			                                + (dy * ( (dx1 * inputWgtImage.data[position2x]) + (dx * inputWgtImage.data[position21x])));
+			                        wValue = ( (1 - dz) * b1) + (dz * b2);
+			
+			                        weight = wValue * refWgtImage.data[index];
+			
+			                        if (newPtX < smoothX) {
+			                            weight *= newPtX * invSmoothX;
+			                        } else if ( (xEnd2 - newPtX) < smoothX) {
+			                            weight *= (xEnd2 - newPtX) * invSmoothX;
+			                        }
+			
+			                        if (newPtY < smoothY) {
+			                            weight *= newPtY * invSmoothY;
+			                        } else if ( (yEnd2 - newPtY) < smoothY) {
+			                            weight *= (yEnd2 - newPtY) * invSmoothY;
+			                        }
+			
+			                        if (newPtZ < smoothZ) {
+			                            weight *= newPtZ * invSmoothZ;
+			                        } else if ( (zEnd2 - newPtZ) < smoothZ) {
+			                            weight *= (zEnd2 - newPtZ) * invSmoothZ;
+			                        }
+			
+			                        if (weight < 0.0) {
+			                            weight = 0.0;
+			                        }
+			
+			                        valueR = refImage.data[index] - refImage.min;
+			                        valueI = value - inputImage.min;
+			
+			                        if (iter == 0) {
+			                            sumX += weight * valueR;
+			                            sumY += weight * valueI;
+			                            count += weight;
+			                            numValues++;
+			                        } else if (iter == 1) {
+			                            sumX2 += weight * (valueR - xAverage) * (valueR - xAverage);
+			                            sumY2 += weight * (valueI - yAverage) * (valueI - yAverage);
+			                            sumXY += weight * (valueR - xAverage) * (valueI - yAverage);
+			                        }
+                                } // if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2))
+                            } // if ( (0.0 <= newPtY) && (newPtY <= yEnd2))
+                        } // if ( (0.0 <= newPtX) && (newPtX <= xEnd2))
                     }
                 }
             }
