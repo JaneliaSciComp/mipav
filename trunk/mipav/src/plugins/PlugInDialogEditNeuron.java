@@ -2417,7 +2417,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			Vector3f ptVec = ptVOI.exportPoint();
 			Point coord = new Point((int)ptVec.X, (int)ptVec.Y);
 			
-			LinkElement elem = links.get(origin);
+			LinkElement elem = links.get(coord);
 			Point tempPt = elem.linked.get(0).pt;
 			
 			boolean delete = links.removeNode(coord);
@@ -2441,6 +2441,23 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 						originVOI.setLabel("O");
 						
 						break;
+					}
+				}
+			}else if(coord.equals(progenitorPt)){
+				LinkElement tempNode = links.get(tempPt);
+				if(tempNode.linked.size() == 1){//if it has more than 1 link, don't bother
+					progenitorPt = tempPt;
+					VOIBaseVector base = controlPts.getCurves();
+					for(int i=0;i<base.size();i++){
+						ptVOI = (VOIPoint)base.get(i);
+						ptVec = ptVOI.exportPoint();
+						Point checkPt = new Point((int)ptVec.X, (int)ptVec.Y);
+						if(progenitorPt.equals(checkPt)){
+							progenitorVOI = ptVOI;
+							progenitorVOI.setLabel("P");
+							
+							break;
+						}
 					}
 				}
 			}
