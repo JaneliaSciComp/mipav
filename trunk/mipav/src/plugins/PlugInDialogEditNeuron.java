@@ -2310,6 +2310,11 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 						newBranchVOI.setLabel("O");
 						originVOI = newBranchVOI;
 						origin = newPt;
+					}else if(linkPt.equals(primaryPt)){
+						primaryVOI.setLabel("");
+						newBranchVOI.setLabel("1");
+						primaryVOI = newBranchVOI;
+						primaryPt = newPt;
 					}
 				}
 				else
@@ -2318,6 +2323,9 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				newNode.addLinkTo(toLink);
 				paths.add(newPt, linkPt);
 			}
+			
+			//should add logic to adjust the polygonal VOI as well are a result
+			//of any additions
 			
 			addingBranch = false;
 			newBranchVOI = null;
@@ -2455,6 +2463,23 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 						if(progenitorPt.equals(checkPt)){
 							progenitorVOI = ptVOI;
 							progenitorVOI.setLabel("P");
+							
+							break;
+						}
+					}
+				}
+			}else if(coord.equals(primaryPt)){
+				LinkElement tempNode = links.get(tempPt);
+				if(tempNode.linked.size() == 1){//if it has more than 1 link, don't bother
+					primaryPt = tempPt;
+					VOIBaseVector base = controlPts.getCurves();
+					for(int i=0;i<base.size();i++){
+						ptVOI = (VOIPoint)base.get(i);
+						ptVec = ptVOI.exportPoint();
+						Point checkPt = new Point((int)ptVec.X, (int)ptVec.Y);
+						if(primaryPt.equals(checkPt)){
+							primaryVOI = ptVOI;
+							primaryVOI.setLabel("1");
 							
 							break;
 						}
