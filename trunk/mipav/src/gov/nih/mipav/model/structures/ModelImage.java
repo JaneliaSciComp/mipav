@@ -3641,6 +3641,27 @@ public class ModelImage extends ModelStorageBase {
         options.doPutInQuicklist(false);
         fileIO.writeImage(kImage, options);
     }
+
+    public static void saveImage(final ModelImage kImage, String fName, String dName, boolean displayProgressBar ) {
+        final FileIO fileIO = new FileIO();
+        fileIO.setQuiet(true);        
+        final FileWriteOptions options = new FileWriteOptions(false);
+        options.setFileDirectory(dName);
+        options.setFileName(fName);
+        options.setSaveAs(true);
+        options.setBeginSlice(0);
+        options.setOptionsSet(true);
+        int end = kImage.getExtents().length > 2 ? kImage.getExtents()[2] - 1 : 0;
+        options.setEndSlice(end);
+        if ( kImage.getExtents().length > 3 )
+        {
+        	options.setBeginTime(0);
+        	end = kImage.getExtents()[3] - 1;
+        	options.setEndTime(end);
+        }
+        options.doPutInQuicklist(false);
+        fileIO.writeImage(kImage, options, displayProgressBar);
+    }
     
     
 /*
