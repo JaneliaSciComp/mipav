@@ -2418,6 +2418,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			Point coord = new Point((int)ptVec.X, (int)ptVec.Y);
 			
 			LinkElement elem = links.get(origin);
+			Point tempPt = elem.linked.get(0).pt;
 			
 			boolean delete = links.removeNode(coord);
 			
@@ -2429,7 +2430,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			
 			if(coord.equals(origin)){
 				
-				origin = elem.linked.get(0).pt;
+				origin = tempPt;
 				VOIBaseVector base = controlPts.getCurves();
 				for(int i=0;i<base.size();i++){
 					ptVOI = (VOIPoint)base.get(i);
