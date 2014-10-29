@@ -1750,9 +1750,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 for (x = xStart; x <= xEnd; x++) {
                     newPtX = (x * T00) + tmpY1;
                     if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
-                        newPtY = (y * T10) + tmpY2;
+                        newPtY = (x * T10) + tmpY2;
                         if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
-                            newPtZ = (z * T20) + tmpY3;
+                            newPtZ = (x * T20) + tmpY3;
                             if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
                                 index = indexY + x;
 
@@ -2035,9 +2035,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 for (x = xStart; x <= xEnd; x++) {
                     newPtX = (x * T00) + tmpY1;
                     if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
-                        newPtY = (y * T10) + tmpY2;
+                        newPtY = (x * T10) + tmpY2;
                         if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
-                            newPtZ = (z * T20) + tmpY3;
+                            newPtZ = (x * T20) + tmpY3;
                             if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
                                 index = indexY + x;
                 
@@ -3200,9 +3200,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 for (x = xStart; x <= xEnd; x++) {
                     newPtX = (x * T00) + tmpY1;
                     if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
-                        newPtY = (y * T10) + tmpY2;
+                        newPtY = (x * T10) + tmpY2;
                         if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
-                            newPtZ = (z * T20) + tmpY3;
+                            newPtZ = (x * T20) + tmpY3;
                             if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
                                 index = indexY + x;
 
@@ -3417,9 +3417,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 for (x = xStart; x <= xEnd; x++) {
                     newPtX = (x * T00) + tmpY1;
                     if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
-                        newPtY = (y * T10) + tmpY2;
+                        newPtY = (x * T10) + tmpY2;
                         if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
-                            newPtZ = (z * T20) + tmpY3;
+                            newPtZ = (x * T20) + tmpY3;
                             if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
                                 index = indexY + x;
 
@@ -5167,9 +5167,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 for (x = xStart; x <= xEnd; x++) {
                     newPtX = (x * T00) + tmpY1;
                     if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
-                        newPtY = (y * T10) + tmpY2;
+                        newPtY = (x * T10) + tmpY2;
                         if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
-                            newPtZ = (z * T20) + tmpY3;
+                            newPtZ = (x * T20) + tmpY3;
                             if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
                                 index = indexY + x;
 
@@ -5336,9 +5336,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 for (x = xStart; x <= xEnd; x++) {
                     newPtX = (x * T00) + tmpY1;
                     if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
-                        newPtY = (y * T10) + tmpY2;
+                        newPtY = (x * T10) + tmpY2;
                         if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
-                            newPtZ = (z * T20) + tmpY3;
+                            newPtZ = (x * T20) + tmpY3;
                             if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
                                 index = indexY + x;
 
@@ -5505,9 +5505,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 for (x = xStart; x <= xEnd; x++) {
                     newPtX = (x * T00) + tmpY1;
                     if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
-                        newPtY = (y * T10) + tmpY2;
+                        newPtY = (x * T10) + tmpY2;
                         if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
-                            newPtZ = (z * T20) + tmpY3;
+                            newPtZ = (x * T20) + tmpY3;
                             if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
                                 index = indexY + x;
 
@@ -5680,9 +5680,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 for (x = xStart; x <= xEnd; x++) {
                     newPtX = (x * T00) + tmpY1;
                     if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
-                        newPtY = (y * T10) + tmpY2;
+                        newPtY = (x * T10) + tmpY2;
                         if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
-                            newPtZ = (z * T20) + tmpY3;
+                            newPtZ = (x * T20) + tmpY3;
                             if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
                                 index = indexY + x;
 
@@ -7124,9 +7124,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     for (x = xStart; x <= xEnd; x++) {
                         newPtX = (x * T00) + tmpY1;
                         if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
-                            newPtY = (y * T10) + tmpY2;
+                            newPtY = (x * T10) + tmpY2;
                             if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
-                                newPtZ = (z * T20) + tmpY3;
+                                newPtZ = (x * T20) + tmpY3;
                                 if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
                                     index = indexY + x;
 
@@ -7327,9 +7327,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     for (x = xStart; x <= xEnd; x++) {
                         newPtX = (x * T00) + tmpY1;
                         if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
-                            newPtY = (y * T10) + tmpY2;
+                            newPtY = (x * T10) + tmpY2;
                             if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
-                                newPtZ = (z * T20) + tmpY3;
+                                newPtZ = (x * T20) + tmpY3;
                                 if ( (0.0 <= newPtZ) && (newPtZ <= zEnd2)) {
                                     index = indexY + x;
 
