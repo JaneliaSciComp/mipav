@@ -581,45 +581,39 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             }
         }
         
-        int minZ = refImage.zDim-1;
-        int maxZ = 0;
-        int minY = refImage.yDim-1;
-        int maxY = 0;
-        int minX = refImage.xDim-1;
-        int maxX = 0;
+        zStart = refImage.zDim-1;
+        zEnd = 0;
+        yStart = refImage.yDim-1;
+        yEnd = 0;
+        xStart = refImage.xDim-1;
+        xEnd = 0;
         for (int z = 0; z < refImage.zDim; z++) {
         	for (int y = 0; y < refImage.yDim; y++) {
         		for (int x = 0; x < refImage.xDim; x++) {
         		    int index = x + y * refImage.xDim + z * refSliceSize;
         		    if (refWgtImage.data[index] > 0) {
-        		    	if (z < minZ) {
-        		    		minZ = z;
+        		    	if (z < zStart) {
+        		    		zStart = z;
         		    	}
-        		    	if (z > maxZ) {
-        		    		maxZ = z;
+        		    	if (z > zEnd) {
+        		    		zEnd = z;
         		    	}
-        		    	if (y < minY) {
-        		    		minY = y;
+        		    	if (y < yStart) {
+        		    		yStart = y;
         		    	}
-        		    	if (y > maxY) {
-        		    		maxY = y;
+        		    	if (y > yEnd) {
+        		    		yEnd = y;
         		    	}
-        		    	if (x < minX) {
-        		    		minX = x;
+        		    	if (x < xStart) {
+        		    		xStart = x;
         		    	}
-        		    	if (x > maxX) {
-        		    		maxX = x;
+        		    	if (x > xEnd) {
+        		    		xEnd = x;
         		    	}
         		    }
         		}
         	}
         }
-        xStart = Math.max(xStart, minX);
-        xEnd = Math.min(xEnd, maxX);
-        yStart = Math.max(yStart, minY);
-        yEnd = Math.min(yEnd, maxY);
-        zStart = Math.max(zStart, minZ);
-        zEnd = Math.min(zEnd, maxZ);
     }
 
     /**
