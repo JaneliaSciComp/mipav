@@ -10,6 +10,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.WindowEvent;
+import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Float;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
@@ -258,6 +260,8 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 	
 	private boolean blockClick = false;
 	
+	private Point originalMovePt;
+	
 	/**
 	 * Primary constructor. Initializes a dialog to ask the user
 	 * for a directory to use
@@ -458,6 +462,68 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			primaryRB.setEnabled(false);
 		}
 	}	
+	
+	private boolean adjustPolygon(Point p1, Point p2){
+		//find if line between p1 and p2 intersects any lines
+		//of the polygonal VOI
+		//p1 should be the one being adjusted, p2 its connected node
+		VOIBaseVector vbv = polyVOI.getCurves();
+		VOIBase curve = vbv.get(0);
+		if(curve instanceof VOIContour){
+			for(int i=0;i<curve.size();i++){
+				Vector3f v1 = curve.get(i);
+				int next = i+1 < curve.size() ? i+1 : 0;
+				Vector3f v2 = curve.get(next);
+				Point p3 = new Point((int) v1.X, (int)v1.Y);
+				Point p4 = new Point((int) v2.X, (int)v2.Y);
+				if(intersects(p1, p2, p3, p4)){
+					Vector3f newVec = new Vector3f(p1.x, p1.y, v1.Z);
+					if(next == 0)
+						curve.add(newVec);
+					else curve.add(i+1, newVec);
+					return true;
+				}
+			}
+		}
+		return false;
+		
+	}
+	
+	private boolean intersects(Point p1, Point p2, Point p3, Point p4){
+		//p1 and p2 are for the branch, p3 and p4 for the polygon VOI
+		int x1 = p1.x;
+		int y1 = p1.y;
+		int x2 = p2.x;
+		int y2 = p2.y;
+		int x3 = p3.x;
+		int y3 = p3.y;
+		int x4 = p4.x;
+		int y4 = p4.y;
+		
+		float denom = (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4);
+		
+		if(denom != 0){
+			float numx = (x1*y2-y1*x2)*(x3-x4) - (x1 - x2)*(x3*y4 - y3*x4);
+			float numy = (x1*y2 - y1*x2)*(y3-y4) - (y1 - y2)*(x3*y4 - y3*x4);
+			float intx = numx / denom;
+			float inty = numy / denom;
+			int xmin = Math.min(x1, x2);
+			int ymin = Math.min(y1, y2);
+			int xmax = Math.max(x1, x2);
+			int ymax = Math.max(y1, y2);
+			int xmin2 = Math.min(x3, x4);
+			int ymin2 = Math.min(y3, y4);
+			int xmax2 = Math.max(x3, x4);
+			int ymax2 = Math.max(y3, y4);
+			if(xmin < intx && intx < xmax 
+					&& ymin < inty && inty < ymax
+					&& xmin2 < intx && intx < xmax2 
+					&& ymin2 < inty && inty < ymax2){
+				return true;
+			}
+		}
+		return false;
+	}
 	
 	/**
 	 * Modified DFS to check for if a cycle in the neuron exists, which
@@ -2322,10 +2388,10 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 				LinkElement newNode = new LinkElement(newPt);
 				newNode.addLinkTo(toLink);
 				paths.add(newPt, linkPt);
+				
+				//check if the new branch intersects with the polygonal VOI
+				adjustPolygon(newPt, linkPt);
 			}
-			
-			//should add logic to adjust the polygonal VOI as well are a result
-			//of any additions
 			
 			addingBranch = false;
 			newBranchVOI = null;
@@ -2578,6 +2644,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			VOIPoint ptVOI = (VOIPoint) activeVOI;
 			Vector3f vPt = ptVOI.getPosition();
 			toChange = new Point((int)vPt.X, (int)vPt.Y);
+			originalMovePt = new Point((int)vPt.X, (int)vPt.Y);
 		}
 	}
 
@@ -2592,6 +2659,39 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 		if(editPolyRB.isSelected()){
 			polyVOI = subVolume.getVOIs().get(0);
 			return;
+		}else if(originalMovePt != null){
+			VOIBaseVector vbv = polyVOI.getCurves();
+			float zoomX = subVolumeFrame.getComponentImage().getZoomX();
+			float zoomY = subVolumeFrame.getComponentImage().getZoomY();
+			boolean onVOI = false;
+			int x = (int) ((float)e.getX()/zoomX);
+			int y = (int) ((float)e.getY()/zoomY);
+			for(VOIBase v : vbv){
+				for(Vector3f vec : v){
+					if(vec.X == originalMovePt.x &&
+							vec.Y == originalMovePt.y){
+						onVOI = true;
+						vec.X = x;
+						vec.Y = y;
+					}
+				}
+			}
+			if(!onVOI){
+				Vector3f lastVec = lastActive.get(0);
+				Point lastPt = new Point((int)lastVec.X, (int)lastVec.Y);
+				LinkElement l = links.get(lastPt);
+				ArrayList<LinkElement> linked = l.linked;
+				for(LinkElement le : linked){
+					if(adjustPolygon(lastPt, le.pt))
+						break;
+				}
+				//adjustPolygon(new Point(x,y));
+			}
+			
+			originalMovePt = null;
+		}else{
+			//Check to see if a was node was moved and to see if it now
+			//crosses the boundary
 		}
 		
 		controlPts.setAllActive(false);
