@@ -197,9 +197,9 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 		int sumY;
 		int cx;
 		int cy;
-		byte mtemp[] = null;
-		byte[][] m = null;
-		byte[] m2;
+		byte mask1[] = null;
+		byte mask2[] = null;
+		byte m2[] = null;
 		int r = 0;
 		int diffy;
 		int dy2;
@@ -237,6 +237,8 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 		float FGDist[];
 		float BGDist[];
 		double phi0[];
+		double phi1[];
+		double phi2[];
 	    int n;
 	    int layer = 1;
 	    int inidx;
@@ -247,6 +249,8 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 	    double L[];
 	    int offset;
 	    double Heav[];
+	    double Heav1[];
+	    double Heav2[];
 	    double sumLH;
 	    double sumL1mH;
 	    double force[];
@@ -260,6 +264,47 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 	    byte seg[];
 	    ModelImage maskImage;
 	    AlgorithmVOIExtraction VOIExtractionAlgo;
+	    int nb1Num;
+	    int nb2Num;
+	    int c11Num;
+	    int c12Num;
+	    int c21Num;
+	    int c22Num;
+	    int nb1Index[];
+	    int nb2Index[];
+	    int cc11Index[];
+	    int cc12Index[];
+	    int cc21Index[];
+	    int cc22Index[];
+	    int nb1;
+	    int nb2;
+	    int i11;
+	    int i12;
+	    int i21;
+	    int i22;
+	    double f_image11[];
+	    double f_image12[];
+	    double f_image21[];
+	    double f_image22[];
+	    double c11;
+	    double c12;
+	    double c21;
+	    double c22;
+	    double curvature[];
+	    double curvature1[];
+	    double curvature2[];
+	    double fim1[];
+	    double fim2[];
+	    double maxfim1;
+	    double maxfim2;
+	    double force1[];
+	    double force2[];
+	    double oldm[][];
+	    double newm[][];
+	    byte seg11[];
+	    byte seg12[];
+	    byte seg21[];
+	    byte seg22[];
         
         fireProgressStateChanged(srcImage.getImageName(), "Evolving the level set ...");
         
@@ -393,22 +438,19 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 	        XOR = false;
 	        onlyActive = true;
 	        uByteImage = image.generateUnsignedByteImage(IDOffset, XOR, onlyActive);
-	        mtemp = new byte[sliceSize];
-	        m = new byte[sliceSize][numFound];
+	        mask1 = new byte[sliceSize];
 	        try {
-	        	uByteImage.exportData(0, sliceSize, mtemp);
+	        	uByteImage.exportData(0, sliceSize, mask1);
 	        }
 	        catch (IOException e) {
-	        	MipavUtil.displayError("IOException " + e + "on uByteImage.exportData(0, sliceSize, mtemp");
+	        	MipavUtil.displayError("IOException " + e + "on uByteImage.exportData(0, sliceSize, mask1");
 	        	setCompleted(false);
 	        	return;
 	        }
 	        uByteImage.disposeLocal();
 	        uByteImage = null;
-	        for (i = 0; i < sliceSize; i++) {
-	        	m[i][0] = mtemp[i];
-	        }
 	        if (method == multiphase) {
+	        	mask2 = new byte[sliceSize];
 	        	for (i = 0; i < nVOI; i++) {
 		        	if (i == n2) {
 		        		VOIs.VOIAt(i).setActive(true);
@@ -422,18 +464,15 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 		        onlyActive = true;
 		        uByteImage = image.generateUnsignedByteImage(IDOffset, XOR, onlyActive);
 		        try {
-		        	uByteImage.exportData(0, sliceSize, mtemp);
+		        	uByteImage.exportData(0, sliceSize, mask2);
 		        }
 		        catch (IOException e) {
-		        	MipavUtil.displayError("IOException " + e + "on uByteImage.exportData(0, sliceSize, mtemp");
+		        	MipavUtil.displayError("IOException " + e + "on uByteImage.exportData(0, sliceSize, mask2");
 		        	setCompleted(false);
 		        	return;
 		        }
 		        uByteImage.disposeLocal();
 		        uByteImage = null;
-		        for (i = 0; i < sliceSize; i++) {
-	        		m[i][1] = mtemp[i];
-	        	}
 	        } // if (method == multiphase)
 		} // if (mask == user)
         
@@ -501,12 +540,11 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             } // for (y = 0; y < oYdim; y++)
             cx = (int)Math.round((double)sumX/(double)pixelsFound);
             cy = (int)Math.round((double)sumY/(double)pixelsFound);
-            if ((mask == whole) || (mask == whole_small)) {
-            	m = new byte[sliceSize][2];
+            mask1 = new byte[sliceSize];
+            if ((mask == whole) || (mask == whole_small)) {	
+            	mask2 = new byte[sliceSize];
             }
-            else {
-            	m = new byte[sliceSize][1];
-            }
+           
             if ((mask == small) || (mask == whole_small)) {
             	r = 10;
             }
@@ -528,10 +566,10 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
                 		index = x + y * oXdim;
                 		if (diffx*diffx + dy2 < r2) {
                 			if (mask == whole_small) {
-                			    m[index][1] = 1;
+                			    mask2[index] = 1;
                 			}
                 			else {
-                				m[index][0] = 1;
+                				mask1[index] = 1;
                 			}
                 		}
                 	}
@@ -594,7 +632,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             	}
             	for (y = 0; y < oYdim; y++) {
             		for (x = 0; x < oXdim; x++) {
-            			m[x + y * oXdim][0] = mcrop[x + y * oXdim];
+            			mask1[x + y * oXdim] = mcrop[x + y * oXdim];
             		}
             	}
             	if (mask == whole) {
@@ -607,7 +645,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 	            	}
 	            	for (y = 0; y < oYdim; y++) {
 	            		for (x = 0; x < oXdim; x++) {
-	            			m[x + y * oXdim][1] = M[x + padSize + (y + padSize) * (oXdim + padSize)];
+	            			mask2[x + y * oXdim] = M[x + padSize + (y + padSize) * (oXdim + padSize)];
 	            		}
 	            	}
             	} // if (mask == whole)
@@ -619,17 +657,14 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	seg = new byte[sliceSize];
             // SDF
         	// Get the distance map of the initial mask
-        	for (i = 0; i < sliceSize; i++) {
-        		mtemp[i] = m[i][0];
-        	}
         	distImage = new ModelImage(ModelStorageBase.UBYTE, extents, "distImage");
         	// AlgorithmMorphology2D requires BOOLEAN, BYTE, UBYTE, SHORT, or USHORT for entry 
         	// Reallocated to float in AlgorithmMorphology2D distanceMapForShapeInterpolation
         	try {
-        		distImage.importData(0, mtemp, true);
+        		distImage.importData(0, mask1, true);
         	}
         	catch (IOException e) {
-        		MipavUtil.displayError("IOexception " + e + " on distance.importData(0, mtemp, true");
+        		MipavUtil.displayError("IOexception " + e + " on distance.importData(0, mask1, true");
         		setCompleted(false);
         		return;
         	}
@@ -651,10 +686,10 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	}
         	distImage.reallocate(ModelStorageBase.UBYTE);
         	try {
-        		distImage.importData(0, mtemp, true);
+        		distImage.importData(0, mask1, true);
         	}
         	catch (IOException e) {
-        		MipavUtil.displayError("IOexception " + e + " on distance.importData(0, mtemp, true");
+        		MipavUtil.displayError("IOexception " + e + " on distance.importData(0, mask1, true");
         		setCompleted(false);
         		return;
         	}
@@ -677,16 +712,16 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	distImage = null;
         	phi0 = new double[sliceSize];
         	for (i = 0; i < sliceSize; i++) {
-        		phi0[i] = FGDist[i] + BGDist[i] + mtemp[i] - 0.5;
+        		phi0[i] = FGDist[i] + BGDist[i] + mask1[i] - 0.5;
         	}
         	// Initial force, set to epsilon to avoid division by zeros
         	//force = epsilon;
         	// End intialization
         	
         	// Main loop
-        	inidx = 0;
-        	outidx = 0;
         	iloop: for (n = 1; n <= numIter; n++) {
+        		inidx = 0;
+            	outidx = 0;
         	    for (i = 0; i < sliceSize; i++) {
         	    	// frontground index
         	        if (phi0[i] >= 0) {
@@ -820,8 +855,471 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             setCompleted(true);
             return;
         } // if ((method == chan) || (method == vector))
+        else if (method == multiphase) {
+        	seg11 = new byte[sliceSize];
+        	seg12 = new byte[sliceSize];
+        	seg21 = new byte[sliceSize];
+        	seg22 = new byte[sliceSize];
+            // Initializations
+        	// Get the distance map of the initial massk
+        	distImage = new ModelImage(ModelStorageBase.UBYTE, extents, "distImage");
+        	// AlgorithmMorphology2D requires BOOLEAN, BYTE, UBYTE, SHORT, or USHORT for entry 
+        	// Reallocated to float in AlgorithmMorphology2D distanceMapForShapeInterpolation
+        	try {
+        		distImage.importData(0, mask1, true);
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOexception " + e + " on distance.importData(0, mask1, true");
+        		setCompleted(false);
+        		return;
+        	}
+        	kernel = 0;
+        	distMapAlgo2D = new AlgorithmMorphology2D(distImage, kernel, 0,
+                    AlgorithmMorphology2D.DISTANCE_MAP, 0, 0, 0, 0,
+                    wholeImage);
+        	distMapAlgo2D.run();
+        	distMapAlgo2D.finalize();
+        	distMapAlgo2D = null;
+        	FGDist = new float[sliceSize];
+        	try {
+        		distImage.exportData(0, sliceSize, FGDist);
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOException " + e + " on distImage.exportData(0, sliceSize, FGDist)");
+        		setCompleted(false);
+        		return;
+        	}
+        	distImage.reallocate(ModelStorageBase.UBYTE);
+        	try {
+        		distImage.importData(0, mask1, true);
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOexception " + e + " on distance.importData(0, mask1, true");
+        		setCompleted(false);
+        		return;
+        	}
+        	distMapAlgo2D = new AlgorithmMorphology2D(distImage, kernel, 0,
+                    AlgorithmMorphology2D.BG_DISTANCE_MAP, 0, 0, 0, 0,
+                    wholeImage);
+        	distMapAlgo2D.run();
+        	distMapAlgo2D.finalize();
+        	distMapAlgo2D = null;
+        	BGDist = new float[sliceSize];
+        	try {
+        		distImage.exportData(0, sliceSize, BGDist);
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOException " + e + " on distImage.exportData(0, sliceSize, BGDist)");
+        		setCompleted(false);
+        		return;
+        	}
+        	phi1 = new double[sliceSize];
+        	for (i = 0; i < sliceSize; i++) {
+        		phi1[i] = FGDist[i] + BGDist[i] + mask1[i] - 0.5;
+        	}
+        	distImage.reallocate(ModelStorageBase.UBYTE);
+        	try {
+        		distImage.importData(0, mask2, true);
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOexception " + e + " on distance.importData(0, mask2, true");
+        		setCompleted(false);
+        		return;
+        	}
+        	distMapAlgo2D = new AlgorithmMorphology2D(distImage, kernel, 0,
+                    AlgorithmMorphology2D.DISTANCE_MAP, 0, 0, 0, 0,
+                    wholeImage);
+        	distMapAlgo2D.run();
+        	distMapAlgo2D.finalize();
+        	distMapAlgo2D = null;
+        	try {
+        		distImage.exportData(0, sliceSize, FGDist);
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOException " + e + " on distImage.exportData(0, sliceSize, FGDist)");
+        		setCompleted(false);
+        		return;
+        	}
+        	distImage.reallocate(ModelStorageBase.UBYTE);
+        	try {
+        		distImage.importData(0, mask2, true);
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOexception " + e + " on distance.importData(0, mask2, true");
+        		setCompleted(false);
+        		return;
+        	}
+        	distMapAlgo2D = new AlgorithmMorphology2D(distImage, kernel, 0,
+                    AlgorithmMorphology2D.BG_DISTANCE_MAP, 0, 0, 0, 0,
+                    wholeImage);
+        	distMapAlgo2D.run();
+        	distMapAlgo2D.finalize();
+        	distMapAlgo2D = null;
+        	try {
+        		distImage.exportData(0, sliceSize, BGDist);
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOException " + e + " on distImage.exportData(0, sliceSize, BGDist)");
+        		setCompleted(false);
+        		return;
+        	}
+        	phi2 = new double[sliceSize];
+        	for (i = 0; i < sliceSize; i++) {
+        		phi2[i] = FGDist[i] + BGDist[i] + mask2[i] - 0.5;
+        	}
+        	
+        	// Main loop
+        	iloop2: for (n = 1; n <= numIter; n++) {
+        		nb1Num = 0;
+        		nb2Num = 0;
+            	c11Num = 0;
+            	c12Num = 0;
+            	c21Num = 0;
+            	c22Num = 0;
+        	    for (i = 0; i < sliceSize; i++) {
+        	    	// Narrow band for each phase
+        	    	// Narrow band of phi1
+        	    	if ((phi1[i] < 1.2) && (phi1[i] >= -1.2)) {
+        	    		nb1Num++;
+        	    	}
+        	    	// Narrow band of phi2
+        	    	if ((phi2[i] < 1.2) && (phi2[i] >= -1.2)) {
+        	    		nb2Num++;
+        	    	}
+        	        if (phi1[i] >= 0) {
+        	        	if (phi2[i] >= 0) {
+        	        	    c11Num++;
+        	        	}
+        	        	else {
+        	        	    c12Num++;	
+        	        	}
+        	        } // if (phi1[i] >= 0)
+        	        else {
+        	        	if (phi2[i] >= 0) {
+        	        		c21Num++;
+        	        	}
+        	        	else {
+        	        		c22Num++;
+        	        	}
+        	        }
+        	    } // for (i = 0; i < sliceSize; i++)
+        	    nb1Index = new int[nb1Num];
+        	    nb2Index = new int[nb2Num];
+        	    cc11Index = new int[c11Num];
+        	    cc12Index = new int[c12Num];
+        	    cc21Index = new int[c21Num];
+        	    cc22Index = new int[c22Num];
+        	    nb1 = 0;
+        	    nb2 = 0;
+        	    i11 = 0;
+        	    i12 = 0;
+        	    i21 = 0;
+        	    i22 = 0;
+        	    for (i = 0; i < sliceSize; i++) {
+        	    	// Narrow band for each phase
+        	    	// Narrow band of phi1
+        	    	if ((phi1[i] < 1.2) && (phi1[i] >= -1.2)) {
+        	    		nb1Index[nb1++] = i;
+        	    	}
+        	    	// Narrow band of phi2
+        	    	if ((phi2[i] < 1.2) && (phi2[i] >= -1.2)) {
+        	    		nb2Index[nb2++] = i;
+        	    	}
+        	        if (phi1[i] >= 0) {
+        	        	if (phi2[i] >= 0) {
+        	        	    cc11Index[i11++] = i;
+        	        	}
+        	        	else {
+        	        	    cc12Index[i12++] = i;	
+        	        	}
+        	        } // if (phi1[i] >= 0)
+        	        else {
+        	        	if (phi2[i] >= 0) {
+        	        	    cc21Index[i21++] = i;
+        	        	}
+        	        	else {
+        	        		cc22Index[i22++] = i;
+        	        	}
+        	        }
+        	    } // for (i = 0; i < sliceSize; i++)
+        	    
+        	    // Initial image force for each layer
+        	    f_image11 = new double[sliceSize];
+        	    f_image12 = new double[sliceSize];
+        	    f_image21 = new double[sliceSize];
+        	    f_image22 = new double[sliceSize];
+        	    L = new double[sliceSize];
+        	    for (i = 0; i < layer; i++) {
+        	    	if (i == 0) {
+        	    		try {
+        	    		    image.exportRGBDataNoLock(firstColor, 0, sliceSize, L);
+        	    		}
+        	    		catch (IOException e) {
+        	    			MipavUtil.displayError("IOException " + e + " on image.exportRGBDataNoLock(firstColor, 0, sliceSize, L)");
+        	    			setCompleted(false);
+        	    			return;
+        	    		}
+        	    	} // if (i == 0)
+        	    	else {
+        	    		try {
+        	    		    image.exportRGBDataNoLock(secondColor, 0, sliceSize, L);
+        	    		}
+        	    		catch (IOException e) {
+        	    			MipavUtil.displayError("IOException " + e + " on image.exportRGBDataNoLock(secondColor, 0, sliceSize, L)");
+        	    			setCompleted(false);
+        	    			return;
+        	    		}	
+        	    	} // else
+        	    	c11 = 0.0;
+        	    	if (c11Num == 0) {
+        	    		c11 = epsilon;
+        	    	}
+        	    	else {
+        	    		for (j = 0; j < c11Num; j++) {
+        	    		    c11 += L[cc11Index[j]];	
+        	    		}
+        	    		c11 = c11/c11Num;
+        	    	}
+        	    	c12 = 0.0;
+        	    	if (c12Num == 0) {
+        	    		c12 = epsilon;
+        	    	}
+        	    	else {
+        	    		for (j = 0; j < c12Num; j++) {
+        	    			c12 += L[cc12Index[j]];
+        	    		}
+        	    		c12 = c12/c12Num;
+        	    	}
+        	    	c21 = 0.0;
+        	    	if (c21Num == 0) {
+        	    		c21 = epsilon;
+        	    	}
+        	    	else {
+        	    		for (j = 0; j < c21Num; j++) {
+        	    			c21 += L[cc21Index[j]];
+        	    		}
+        	    		c21 = c21/c21Num;
+        	    	}
+        	    	c22 = 0.0;
+        	    	if (c22Num == 0) {
+        	    		c22 = epsilon;
+        	    	}
+        	    	else {
+        	    		for (j = 0; j < c22Num; j++) {
+        	    			c22 += L[cc22Index[j]];
+        	    		}
+        	    		c22 = c22/c22Num;
+        	    	}
+        	    	
+        	    	// Force calculation and normalization force on each partition
+        	    	Heav1 = Heaviside(phi1);
+        	    	Heav2 = Heaviside(phi2);
+        	    	// Sum image force on all componentsw (used for vector image)
+        	    	for (j = 0; j < sliceSize; j++) {
+        	    	    f_image11[j] = (L[j] - c11) * (L[j] - c11) * Heav1[j] * Heav2[j] + f_image11[j];
+        	    	    f_image12[j] = (L[j] - c12) * (L[j] - c12) * Heav1[j] * (1.0 - Heav2[j]) + f_image12[j];
+        	    	    f_image21[j] = (L[j] - c21) * (L[j] - c21) * (1.0 - Heav1[j]) * Heav2[j] + f_image21[j];
+        	    	    f_image22[j] = (L[j] - c22) * (L[j] - c22) * (1.0 - Heav1[j]) * (1.0 - Heav2[j]) + f_image22[j];
+        	    	} // for (j = 0; j < sliceSize; j++)
+        	    } // for (i = 0; i < layer; i++)
+        	    
+        	    // Calculate the external force of the image
+        	    
+        	    // Curvature on phi1
+        	    curvature = kappa(phi1, oXdim);
+        	    for (i = 0; i < sliceSize; i++) {
+        	    	curvature[i] = mu * curvature[i];
+        	    }
+        	    curvature1 = new double[nb1Num];
+        	    nb1 = 0;
+        	    for (i = 0; i < nb1Num; i++) {
+        	    	curvature1[i] = curvature[nb1Index[i]];
+        	    }
+        	    // Image force on phi1
+        	    fim1 = new double[nb1Num];
+        	    maxfim1 = -Double.MAX_VALUE;
+        	    for (i = 0; i < nb1Num; i++) {
+        	    	fim1[i] = (1.0/layer) * (-f_image11[nb1Index[i]] + f_image21[nb1Index[i]] -
+        	    			                 f_image12[nb1Index[i]] + f_image22[nb1Index[i]]);
+        	    	if (Math.abs(fim1[i]) > maxfim1) {
+        	    		maxfim1 = Math.abs(fim1[i]);
+        	    	}
+        	    }
+        	    for (i = 0; i < nb1Num; i++) {
+        	    	fim1[i] = fim1[i]/(maxfim1 + epsilon);
+        	    }
+        	    
+        	    // Curvature on phi2
+        	    curvature = kappa(phi2, oXdim);
+        	    for (i = 0; i < sliceSize; i++) {
+        	    	curvature[i] = mu * curvature[i];
+        	    }
+        	    curvature2 = new double[nb2Num];
+        	    nb2 = 0;
+        	    for (i = 0; i < nb2Num; i++) {
+        	    	curvature2[i] = curvature[nb2Index[i]];
+        	    }
+        	    // Image force on phi2
+        	    fim2 = new double[nb2Num];
+        	    maxfim2 = -Double.MAX_VALUE;
+        	    for (i = 0; i < nb2Num; i++) {
+        	    	fim2[i] = (1.0/layer) * (-f_image11[nb2Index[i]] + f_image21[nb2Index[i]] -
+        	    			                 f_image12[nb2Index[i]] + f_image22[nb2Index[i]]);
+        	    	if (Math.abs(fim2[i]) > maxfim2) {
+        	    		maxfim2 = Math.abs(fim2[i]);
+        	    	}
+        	    }
+        	    for (i = 0; i < nb2Num; i++) {
+        	    	fim2[i] = fim2[i]/(maxfim2 + epsilon);
+        	    }
+        	    
+        	    // Force on phi1 and phi2
+        	    force1 = new double[nb1Num];
+        	    for (i = 0; i < nb1Num; i++) {
+        	    	force1[i] = curvature1[i] + fim1[i];
+        	    }
+        	    force2 = new double[nb2Num];
+        	    for (i = 0; i < nb2Num; i++) {
+        	    	force2[i] = curvature2[i] + fim2[i];
+        	    }
+        	    
+        	    // delta t
+        	    dt = 1.5;
+        	    
+        	    oldm = new double[2][sliceSize];
+        	    for (i = 0; i < sliceSize; i++) {
+        	    	oldm[0][i] = phi1[i];
+        	    	oldm[1][i] = phi2[i];
+        	    }
+        	    
+        	    // Update of phi1 and phi2
+        	    for (i = 0; i < nb1Num; i++) {
+        	    	phi1[nb1Index[i]] = phi1[nb1Index[i]] + dt * force1[i];
+        	    }
+        	    for (i = 0; i < nb2Num; i++) {
+        	    	phi2[nb2Index[i]] = phi2[nb2Index[i]] + dt * force2[i];
+        	    }
+        	    
+        	    newm = new double[2][sliceSize];
+        	    for (i = 0; i < sliceSize; i++) {
+        	    	newm[0][i] = phi1[i];
+        	    	newm[1][i] = phi2[i];
+        	    }
+        	    
+        	    indicator = checkstop(oldm, newm, dt);
+        	    
+        	    if (indicator) {
+        	        break iloop2;    
+        	    } // if (indicator)
+        	    // Re-initializations
+        	} // for (n = 1; n <= numIter; n++)
+        	// Make mask from SDF
+	    	// Get mask from levelset
+	    	for (i = 0; i < sliceSize; i++) {
+	    		if (phi1[i] >= 0) {
+	    		    if (phi2[i] >= 0) {
+	    		    	seg11[i] = 1;
+	    		    }
+	    		    else {
+	    		    	seg12[i] = 1;
+	    		    }
+	    		} // if (phi1[i] >= 0)
+	    		else {
+	    			if (phi2[i] >= 0) {
+	    				seg21[i] = 1;
+	    			}
+	    			else {
+	    				seg22[i]  = 1;
+	    			}
+	    		}
+	    	} // for (i = 0; i < sliceSize; i++)
+        } // else if (method == multiphase)
         
 	}
+	
+	// Reinitialize the distance map for active contour
+	private double[] reinitialization(double D[], double dt, int xDim) {
+		int sliceSize = D.length;
+	    int yDim = sliceSize/xDim;
+	    double T[] = new double[(xDim + 2)*(yDim + 2)];
+	    int x;
+	    int y;
+	    double a[] = new double[sliceSize];
+	    double b[] = new double[sliceSize];
+	    double c[] = new double[sliceSize];
+	    double d[] = new double[sliceSize];
+	    
+	    for (y = 0; y < yDim; y++) {
+	    	for (x = 0; x < xDim; x++) {
+	    		T[(x+1) + (y+1)*(xDim+2)] = D[x + y*xDim];
+	    	}
+	    }
+	    for (x = 0; x < xDim + 2; x++) {
+	    	T[x] = 1.0;
+	    	T[x + (yDim+1)*(xDim+2)] = 1.0;
+	    }
+	    for (y = 0; y < yDim + 2; y++) {
+	    	T[y*(xDim+2)] = 1.0;
+	    	T[(xDim+1) + y*(xDim+2)] = 1.0;
+	    }
+	    
+	    // Differences on all directions
+		return D;
+	}
+	
+	    // Indicate whether we should perform further iterations or stop
+		private boolean checkstop(double[][] old, double[][] neww, double dt) {
+			int sliceSize = old[0].length;
+			int i;
+			boolean indicator = true;
+			int M1;
+			int ind1Index[];
+			int M2;
+			int ind2Index[];
+			int i1;
+			int i2;
+			double Q1 = 0.0;
+			double Q2 = 0.0;
+	        
+		    M1 = 0;
+		    M2 = 0;
+		    for (i = 0; i < sliceSize; i++) {
+		    	if (Math.abs(old[0][i]) < 1.0) {
+		    		M1++;
+		    	}
+		    	if (Math.abs(old[1][i]) < 1.0) {
+		    		M2++;
+		    	}
+		    }
+		    ind1Index = new int[M1];
+		    ind2Index = new int[M2];
+		    i1 = 0;
+		    i2 = 0;
+		    for (i = 0; i < sliceSize; i++) {
+		    	if (Math.abs(old[0][i]) < 1.0) {
+		    		ind1Index[i1++] = i;
+		    	}
+		    	if (Math.abs(old[1][i]) < 1.0) {
+		    		ind2Index[i2++] = i;
+		    	}
+		    }
+		    
+		    for (i = 0; i < M1; i++) {
+		        Q1 += Math.abs(neww[0][ind1Index[i]] -old[0][ind1Index[i]]);	
+		    }
+		    Q1 = Q1/M1;
+		    for (i = 0; i < M2; i++) {
+		        Q2 += Math.abs(neww[1][ind2Index[i]] -old[1][ind2Index[i]]);	
+		    }
+		    Q2 = Q2/M2;
+		    if ((Q1 <= dt * 0.18 * 0.18) && (Q2 <= dt * 0.18 * 0.18)) {
+		    	indicator = true;
+		    }
+		    else {
+		    	indicator = false;
+		    }
+			return indicator;
+		}
 	
 	// Indicate whether we should perform further iterations or stop
 	private boolean checkstop(double[] old, double[] neww, double dt) {
