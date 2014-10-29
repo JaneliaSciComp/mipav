@@ -143,6 +143,8 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
 
     /** DOCUMENT ME! */
     private int xDim;
+    
+    private int xStart;
 
     /** DOCUMENT ME! */
     private int xEnd;
@@ -155,6 +157,8 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
 
     /** DOCUMENT ME! */
     private int yDim;
+    
+    private int yStart;
 
     /** DOCUMENT ME! */
     private int yEnd;
@@ -195,7 +199,9 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         xEnd2 = xDim - 1.0001;
         yEnd2 = yDim - 1.0001;
 
+        xStart = 0;
         xEnd = refImage.xDim - 1;
+        yStart = 0;
         yEnd = refImage.yDim - 1;
 
         if ((costFunctID >= MUTUAL_INFORMATION_SMOOTHED) && (costFunctID <= NORMALIZED_MUTUAL_INFORMATION)) {
@@ -609,7 +615,30 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
 
             refWgtImage.calcMinMax();
         }
-
+        
+        yStart = refImage.yDim-1;
+        yEnd = 0;
+        xStart = refImage.xDim-1;
+        xEnd = 0;
+    	for (int y = 0; y < refImage.yDim; y++) {
+    		for (int x = 0; x < refImage.xDim; x++) {
+    		    int index = x + y * refImage.xDim;
+    		    if (refWgtImage.data[index] > 0) {
+    		    	if (y < yStart) {
+    		    		yStart = y;
+    		    	}
+    		    	if (y > yEnd) {
+    		    		yEnd = y;
+    		    	}
+    		    	if (x < xStart) {
+    		    		xStart = x;
+    		    	}
+    		    	if (x > xEnd) {
+    		    		xEnd = x;
+    		    	}
+    		    }
+    		}
+    	}
     }
 
     /**
@@ -1472,6 +1501,8 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
                                         double[] margEntropyI) {
 
         int x, y;
+        int indexY;
+        double tmpY1, tmpY2;
         int index, indexValueR;
         int iCenter;
         int position1;
@@ -1501,7 +1532,6 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         double aT00 = T00;
         double aT10 = T10;
 
-        double iT00, iT10;
         double newPtX, newPtY;
 
         if (aT00 < 0) {
@@ -1510,18 +1540,6 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
 
         if (aT10 < 0) {
             aT10 = -aT10;
-        }
-
-        if (aT00 >= 1.0e-8) {
-            iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
-        }
-
-        if (aT10 >= 1.0e-8) {
-            iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
         }
 
         double[] jointHist = new double[nBins * nBins];
@@ -1549,85 +1567,80 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             constantI = (nBins - 1) / (inputImage.max - inputImage.min);
         }
 
-        Point minMaxPt = new Point();
-        for (y = 0; y <= yEnd; y++) {
+        for (y = yStart; y <= yEnd; y++) {
 
-            newPtX = (y * T01) + T02;
-            newPtY = (y * T11) + T12;
+            tmpY1 = (y * T01) + T02;
+            tmpY2 = (y * T11) + T12;
+            indexY = y * refImage.xDim;
+            
+            for (x = xStart; x <= xEnd; x++) {
+                newPtX = (x * T00) + tmpY1;
+                if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
+                    newPtY = (x * T10) + tmpY2;
+                    if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
+                        index = indexY + x;
 
-            // determine range
-            findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
-
-            newPtX += minMaxPt.x * T00;
-            newPtY += minMaxPt.x * T10;
-
-            index = (y * (xEnd + 1)) + minMaxPt.x;
-
-            for (x = minMaxPt.x; x <= minMaxPt.y; x++) {
-
-                intX = (int) newPtX;
-                intY = (int) newPtY;
-
-                dx = newPtX - intX;
-                dy = newPtY - intY;
-
-                dx1 = 1 - dx;
-                dy1 = 1 - dy;
-
-                position1 = (intY * xDim) + intX;
-                position11 = position1 + 1;
-
-                // bilinear interpolation
-                b1 = (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]);
-                b2 = (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11 + xDim]);
-                value = (dy1 * b1) + (dy * b2);
-
-                b1 = (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]);
-                b2 = (dx1 * inputWgtImage.data[position1 + xDim]) + (dx * inputWgtImage.data[position11 + xDim]);
-                wValue = (dy1 * b1) + (dy * b2);
-
-                weight = wValue * refWgtImage.data[index];
-
-                iCenter = (int) ((value - inputImage.min) * constantI);
-                indexValueR = (int) ((refImage.data[index] - refImage.min) * constantR);
-
-                if (newPtX < smoothX) {
-                    weight *= newPtX * invSmoothX;
-                } else if ((xEnd2 - newPtX) < smoothX) {
-                    weight *= (xEnd2 - newPtX) * invSmoothX;
-                }
-
-                if (newPtY < smoothY) {
-                    weight *= newPtY * invSmoothY;
-                } else if ((yEnd2 - newPtY) < smoothY) {
-                    weight *= (yEnd2 - newPtY) * invSmoothY;
-                }
-
-                if (weight < 0.0) {
-                    weight = 0.0;
-                }
-
-                if (iCenter >= nBins) {
-                    iCenter = nBins - 1;
-                }
-
-                if (iCenter < 0) {
-                    iCenter = 0;
-                }
-
-                jointHist[(indexValueR * nBins) + iCenter] += weight;
-                margHistI[iCenter] += weight;
-                margHistR[indexValueR] += weight;
-
-                index++;
-                newPtX += T00;
-                newPtY += T10;
+		                intX = (int) newPtX;
+		                intY = (int) newPtY;
+		
+		                dx = newPtX - intX;
+		                dy = newPtY - intY;
+		
+		                dx1 = 1 - dx;
+		                dy1 = 1 - dy;
+		
+		                position1 = (intY * xDim) + intX;
+		                position11 = position1 + 1;
+		
+		                // bilinear interpolation
+		                b1 = (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]);
+		                b2 = (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11 + xDim]);
+		                value = (dy1 * b1) + (dy * b2);
+		
+		                b1 = (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]);
+		                b2 = (dx1 * inputWgtImage.data[position1 + xDim]) + (dx * inputWgtImage.data[position11 + xDim]);
+		                wValue = (dy1 * b1) + (dy * b2);
+		
+		                weight = wValue * refWgtImage.data[index];
+		
+		                iCenter = (int) ((value - inputImage.min) * constantI);
+		                indexValueR = (int) ((refImage.data[index] - refImage.min) * constantR);
+		
+		                if (newPtX < smoothX) {
+		                    weight *= newPtX * invSmoothX;
+		                } else if ((xEnd2 - newPtX) < smoothX) {
+		                    weight *= (xEnd2 - newPtX) * invSmoothX;
+		                }
+		
+		                if (newPtY < smoothY) {
+		                    weight *= newPtY * invSmoothY;
+		                } else if ((yEnd2 - newPtY) < smoothY) {
+		                    weight *= (yEnd2 - newPtY) * invSmoothY;
+		                }
+		
+		                if (weight < 0.0) {
+		                    weight = 0.0;
+		                }
+		
+		                if (iCenter >= nBins) {
+		                    iCenter = nBins - 1;
+		                }
+		
+		                if (iCenter < 0) {
+		                    iCenter = 0;
+		                }
+		
+		                jointHist[(indexValueR * nBins) + iCenter] += weight;
+		                margHistI[iCenter] += weight;
+		                margHistR[indexValueR] += weight;
+                    } // if ( (0.0 <= newPtY) && (newPtY <= yEnd2))
+                } // if ( (0.0 <= newPtX) && (newPtX <= xEnd2))
             }
         }
 
         double p = 0.0;
         double n = 0.0;
-        int nVoxels = refImage.data.length;
+        int nVoxels = (yEnd - yStart + 1) * (xEnd - xStart + 1);
 
         for (int i = 0; i < (nBins * nBins); i++) {
             n = jointHist[i];
@@ -1695,7 +1708,9 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
                                         double[] margEntropyI) {
 
         int x, y;
+        int indexY;
         int index, indexValueR;
+        double tmpY1, tmpY2;
         int iCenter;
         int position1;
         int position11;
@@ -1724,7 +1739,6 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         double aT00 = T00;
         double aT10 = T10;
 
-        double iT00, iT10;
         double newPtX, newPtY;
 
         if (aT00 < 0) {
@@ -1733,18 +1747,6 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
 
         if (aT10 < 0) {
             aT10 = -aT10;
-        }
-
-        if (aT00 >= 1.0e-8) {
-            iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
-        }
-
-        if (aT10 >= 1.0e-8) {
-            iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
         }
 
         double[] jointHist = new double[nBins * nBins];
@@ -1772,85 +1774,79 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             constantI = (nBins - 1) / (inputImage.max - inputImage.min);
         }
 
-        Point minMaxPt = new Point();
-        for (y = 0; y <= yEnd; y++) {
+        for (y = yStart; y <= yEnd; y++) {
+        	tmpY1 = (y * T01) + T02;
+            tmpY2 = (y * T11) + T12;
+            indexY = y * refImage.xDim;
+            
+            for (x = xStart; x <= xEnd; x++) {
+                newPtX = (x * T00) + tmpY1;
+                if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
+                    newPtY = (x * T10) + tmpY2;
+                    if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
+                        index = indexY + x;
 
-            newPtX = (y * T01) + T02;
-            newPtY = (y * T11) + T12;
-
-            // determine range
-            findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
-
-            newPtX += minMaxPt.x * T00;
-            newPtY += minMaxPt.x * T10;
-
-            index = (y * (xEnd + 1)) + minMaxPt.x;
-
-            for (x = minMaxPt.x; x <= minMaxPt.y; x++) {
-
-                intX = (int) newPtX;
-                intY = (int) newPtY;
-
-                dx = newPtX - intX;
-                dy = newPtY - intY;
-
-                dx1 = 1 - dx;
-                dy1 = 1 - dy;
-
-                position1 = (intY * xDim) + intX;
-                position11 = position1 + 1;
-
-                // bilinear interpolation
-                b1 = (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]);
-                b2 = (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11 + xDim]);
-                value = (dy1 * b1) + (dy * b2);
-
-                b1 = (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]);
-                b2 = (dx1 * inputWgtImage.data[position1 + xDim]) + (dx * inputWgtImage.data[position11 + xDim]);
-                wValue = (dy1 * b1) + (dy * b2);
-
-                weight = wValue * refWgtImage.data[index];
-
-                iCenter = (int) ((value - inputImage.min) * constantI);
-                indexValueR = (int) ((refImage.data[index] - refImage.min) * constantR);
-
-                if (newPtX < smoothX) {
-                    weight *= newPtX * invSmoothX;
-                } else if ((xEnd2 - newPtX) < smoothX) {
-                    weight *= (xEnd2 - newPtX) * invSmoothX;
-                }
-
-                if (newPtY < smoothY) {
-                    weight *= newPtY * invSmoothY;
-                } else if ((yEnd2 - newPtY) < smoothY) {
-                    weight *= (yEnd2 - newPtY) * invSmoothY;
-                }
-
-                if (weight < 0.0) {
-                    weight = 0.0;
-                }
-
-                if (iCenter >= nBins) {
-                    iCenter = nBins - 1;
-                }
-
-                if (iCenter < 0) {
-                    iCenter = 0;
-                }
-
-                jointHist[(indexValueR * nBins) + iCenter] += weight;
-                margHistI[iCenter] += weight;
-                margHistR[indexValueR] += weight;
-
-                index++;
-                newPtX += T00;
-                newPtY += T10;
+		                intX = (int) newPtX;
+		                intY = (int) newPtY;
+		
+		                dx = newPtX - intX;
+		                dy = newPtY - intY;
+		
+		                dx1 = 1 - dx;
+		                dy1 = 1 - dy;
+		
+		                position1 = (intY * xDim) + intX;
+		                position11 = position1 + 1;
+		
+		                // bilinear interpolation
+		                b1 = (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]);
+		                b2 = (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11 + xDim]);
+		                value = (dy1 * b1) + (dy * b2);
+		
+		                b1 = (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]);
+		                b2 = (dx1 * inputWgtImage.data[position1 + xDim]) + (dx * inputWgtImage.data[position11 + xDim]);
+		                wValue = (dy1 * b1) + (dy * b2);
+		
+		                weight = wValue * refWgtImage.data[index];
+		
+		                iCenter = (int) ((value - inputImage.min) * constantI);
+		                indexValueR = (int) ((refImage.data[index] - refImage.min) * constantR);
+		
+		                if (newPtX < smoothX) {
+		                    weight *= newPtX * invSmoothX;
+		                } else if ((xEnd2 - newPtX) < smoothX) {
+		                    weight *= (xEnd2 - newPtX) * invSmoothX;
+		                }
+		
+		                if (newPtY < smoothY) {
+		                    weight *= newPtY * invSmoothY;
+		                } else if ((yEnd2 - newPtY) < smoothY) {
+		                    weight *= (yEnd2 - newPtY) * invSmoothY;
+		                }
+		
+		                if (weight < 0.0) {
+		                    weight = 0.0;
+		                }
+		
+		                if (iCenter >= nBins) {
+		                    iCenter = nBins - 1;
+		                }
+		
+		                if (iCenter < 0) {
+		                    iCenter = 0;
+		                }
+		
+		                jointHist[(indexValueR * nBins) + iCenter] += weight;
+		                margHistI[iCenter] += weight;
+		                margHistR[indexValueR] += weight;
+                    } // if ( (0.0 <= newPtY) && (newPtY <= yEnd2))
+                } // if ( (0.0 <= newPtX) && (newPtX <= xEnd2))
             }
         }
 
         double p = 0.0;
         double n = 0.0;
-        int nVoxels = refImage.data.length;
+        int nVoxels = (yEnd - yStart + 1) * (xEnd - xStart + 1);
 
         for (int i = 0; i < (nBins * nBins); i++) {
             n = jointHist[i];
@@ -2663,7 +2659,9 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
     private double correlationRatioSmoothedWgt(TransMatrix tMatrix) {
 
         int x, y;
+        int indexY;
         int index, indexValue;
+        double tmpY1, tmpY2;
         double value, wValue;
         double weight;
         double smoothX, smoothY;
@@ -2695,7 +2693,6 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         double aT00 = T00;
         double aT10 = T10;
 
-        double iT00, iT10;
         double newPtX, newPtY;
 
         if (aT00 < 0) {
@@ -2704,18 +2701,6 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
 
         if (aT10 < 0) {
             aT10 = -aT10;
-        }
-
-        if (aT00 >= 1.0e-8) {
-            iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
-        }
-
-        if (aT10 >= 1.0e-8) {
-            iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
         }
 
         // Something to think about - could we use shear-warping to speed this process ???(Paeth, Levoy)
@@ -2728,72 +2713,64 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             constant = (nBins - 1) / (refImage.max - refImage.min);
         }
 
-        int nCalcs = 0;
+        for (y = yStart; y <= yEnd; y++) {
+        	tmpY1 = (y * T01) + T02;
+            tmpY2 = (y * T11) + T12;
+            indexY = y * refImage.xDim;
+            
+            for (x = xStart; x <= xEnd; x++) {
+                newPtX = (x * T00) + tmpY1;
+                if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
+                    newPtY = (x * T10) + tmpY2;
+                    if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
+                        index = indexY + x;
 
-        Point minMaxPt = new Point();
-        for (y = 0; y <= yEnd; y++) {
-
-            newPtX = (y * T01) + T02;
-            newPtY = (y * T11) + T12;
-
-            // determine range
-            findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
-
-            newPtX += minMaxPt.x * T00;
-            newPtY += minMaxPt.x * T10;
-
-            index = (y * (xEnd + 1)) + minMaxPt.x;
-
-            for (x = minMaxPt.x; x <= minMaxPt.y; x++) {
-                nCalcs++;
-                intX = (int) newPtX;
-                intY = (int) newPtY;
-
-                dx = newPtX - intX;
-                dy = newPtY - intY;
-
-                dx1 = 1 - dx;
-                dy1 = 1 - dy;
-
-                position1 = (intY * xDim) + intX;
-                position11 = position1 + 1;
-
-                // bilinear interpolation
-                b1 = (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]);
-                b2 = (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11 + xDim]);
-                value = (dy1 * b1) + (dy * b2);
-
-                b1 = (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]);
-                b2 = (dx1 * inputWgtImage.data[position1 + xDim]) + (dx * inputWgtImage.data[position11 + xDim]);
-                wValue = (dy1 * b1) + (dy * b2);
-
-                weight = wValue * refWgtImage.data[index];
-
-                if (newPtX < smoothX) {
-                    weight *= newPtX * invSmoothX;
-                } else if ((xEnd2 - newPtX) < smoothX) {
-                    weight *= (xEnd2 - newPtX) * invSmoothX;
-                }
-
-                if (newPtY < smoothY) {
-                    weight *= newPtY * invSmoothY;
-                } else if ((yEnd2 - newPtY) < smoothY) {
-                    weight *= (yEnd2 - newPtY) * invSmoothY;
-                }
-
-                if (weight < 0.0) {
-                    weight = 0.0;
-                }
-
-                indexValue = (int) ((refImage.data[index] - refImage.min) * constant);
-                tmp = weight * (value - inputImage.min); // Added by Matt to handle image with neg values
-                numY[indexValue] += weight;
-                sumY[indexValue] += tmp;
-                sumY2[indexValue] += tmp * (value - inputImage.min);
-
-                index++;
-                newPtX += T00;
-                newPtY += T10;
+		                intX = (int) newPtX;
+		                intY = (int) newPtY;
+		
+		                dx = newPtX - intX;
+		                dy = newPtY - intY;
+		
+		                dx1 = 1 - dx;
+		                dy1 = 1 - dy;
+		
+		                position1 = (intY * xDim) + intX;
+		                position11 = position1 + 1;
+		
+		                // bilinear interpolation
+		                b1 = (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]);
+		                b2 = (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11 + xDim]);
+		                value = (dy1 * b1) + (dy * b2);
+		
+		                b1 = (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]);
+		                b2 = (dx1 * inputWgtImage.data[position1 + xDim]) + (dx * inputWgtImage.data[position11 + xDim]);
+		                wValue = (dy1 * b1) + (dy * b2);
+		
+		                weight = wValue * refWgtImage.data[index];
+		
+		                if (newPtX < smoothX) {
+		                    weight *= newPtX * invSmoothX;
+		                } else if ((xEnd2 - newPtX) < smoothX) {
+		                    weight *= (xEnd2 - newPtX) * invSmoothX;
+		                }
+		
+		                if (newPtY < smoothY) {
+		                    weight *= newPtY * invSmoothY;
+		                } else if ((yEnd2 - newPtY) < smoothY) {
+		                    weight *= (yEnd2 - newPtY) * invSmoothY;
+		                }
+		
+		                if (weight < 0.0) {
+		                    weight = 0.0;
+		                }
+		
+		                indexValue = (int) ((refImage.data[index] - refImage.min) * constant);
+		                tmp = weight * (value - inputImage.min); // Added by Matt to handle image with neg values
+		                numY[indexValue] += weight;
+		                sumY[indexValue] += tmp;
+		                sumY2[indexValue] += tmp * (value - inputImage.min);
+                    } // if ( (0.0 <= newPtY) && (newPtY <= yEnd2))
+                } // if ( (0.0 <= newPtX) && (newPtX <= xEnd2))
             }
         }
 
@@ -2805,12 +2782,10 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
 
         // now calculate the individual variances for each iso-set
         // weighting them by the number of pixels from Image x that contribute
-        int binsUsed = 0;
 
         for (int b = 0; b < nBins; b++) {
 
             if (numY[b] > 2.0) {
-                binsUsed++;
                 numTotY += numY[b];
                 totSumY += sumY[b];
                 totSumY2 += sumY2[b];
@@ -2854,7 +2829,9 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
     private double correlationRatioSmoothedWgt(TransMatrixd tMatrix) {
 
         int x, y;
+        int indexY;
         int index, indexValue;
+        double tmpY1, tmpY2;
         double value, wValue;
         double weight;
         double smoothX, smoothY;
@@ -2886,7 +2863,6 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         double aT00 = T00;
         double aT10 = T10;
 
-        double iT00, iT10;
         double newPtX, newPtY;
 
         if (aT00 < 0) {
@@ -2895,18 +2871,6 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
 
         if (aT10 < 0) {
             aT10 = -aT10;
-        }
-
-        if (aT00 >= 1.0e-8) {
-            iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
-        }
-
-        if (aT10 >= 1.0e-8) {
-            iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
         }
 
         // Something to think about - could we use shear-warping to speed this process ???(Paeth, Levoy)
@@ -2919,72 +2883,64 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             constant = (nBins - 1) / (refImage.max - refImage.min);
         }
 
-        int nCalcs = 0;
-
-        Point minMaxPt = new Point();
-        for (y = 0; y <= yEnd; y++) {
-
-            newPtX = (y * T01) + T02;
-            newPtY = (y * T11) + T12;
-
-            // determine range
-            findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
-
-            newPtX += minMaxPt.x * T00;
-            newPtY += minMaxPt.x * T10;
-
-            index = (y * (xEnd + 1)) + minMaxPt.x;
-
-            for (x = minMaxPt.x; x <= minMaxPt.y; x++) {
-                nCalcs++;
-                intX = (int) newPtX;
-                intY = (int) newPtY;
-
-                dx = newPtX - intX;
-                dy = newPtY - intY;
-
-                dx1 = 1 - dx;
-                dy1 = 1 - dy;
-
-                position1 = (intY * xDim) + intX;
-                position11 = position1 + 1;
-
-                // bilinear interpolation
-                b1 = (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]);
-                b2 = (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11 + xDim]);
-                value = (dy1 * b1) + (dy * b2);
-
-                b1 = (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]);
-                b2 = (dx1 * inputWgtImage.data[position1 + xDim]) + (dx * inputWgtImage.data[position11 + xDim]);
-                wValue = (dy1 * b1) + (dy * b2);
-
-                weight = wValue * refWgtImage.data[index];
-
-                if (newPtX < smoothX) {
-                    weight *= newPtX * invSmoothX;
-                } else if ((xEnd2 - newPtX) < smoothX) {
-                    weight *= (xEnd2 - newPtX) * invSmoothX;
-                }
-
-                if (newPtY < smoothY) {
-                    weight *= newPtY * invSmoothY;
-                } else if ((yEnd2 - newPtY) < smoothY) {
-                    weight *= (yEnd2 - newPtY) * invSmoothY;
-                }
-
-                if (weight < 0.0) {
-                    weight = 0.0;
-                }
-
-                indexValue = (int) ((refImage.data[index] - refImage.min) * constant);
-                tmp = weight * (value - inputImage.min); // Added by Matt to handle image with neg values
-                numY[indexValue] += weight;
-                sumY[indexValue] += tmp;
-                sumY2[indexValue] += tmp * (value - inputImage.min);
-
-                index++;
-                newPtX += T00;
-                newPtY += T10;
+        for (y = yStart; y <= yEnd; y++) {
+        	tmpY1 = (y * T01) + T02;
+            tmpY2 = (y * T11) + T12;
+            indexY = y * refImage.xDim;
+            
+            for (x = xStart; x <= xEnd; x++) {
+                newPtX = (x * T00) + tmpY1;
+                if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
+                    newPtY = (x * T10) + tmpY2;
+                    if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
+                        index = indexY + x;
+          
+		                intX = (int) newPtX;
+		                intY = (int) newPtY;
+		
+		                dx = newPtX - intX;
+		                dy = newPtY - intY;
+		
+		                dx1 = 1 - dx;
+		                dy1 = 1 - dy;
+		
+		                position1 = (intY * xDim) + intX;
+		                position11 = position1 + 1;
+		
+		                // bilinear interpolation
+		                b1 = (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]);
+		                b2 = (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11 + xDim]);
+		                value = (dy1 * b1) + (dy * b2);
+		
+		                b1 = (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]);
+		                b2 = (dx1 * inputWgtImage.data[position1 + xDim]) + (dx * inputWgtImage.data[position11 + xDim]);
+		                wValue = (dy1 * b1) + (dy * b2);
+		
+		                weight = wValue * refWgtImage.data[index];
+		
+		                if (newPtX < smoothX) {
+		                    weight *= newPtX * invSmoothX;
+		                } else if ((xEnd2 - newPtX) < smoothX) {
+		                    weight *= (xEnd2 - newPtX) * invSmoothX;
+		                }
+		
+		                if (newPtY < smoothY) {
+		                    weight *= newPtY * invSmoothY;
+		                } else if ((yEnd2 - newPtY) < smoothY) {
+		                    weight *= (yEnd2 - newPtY) * invSmoothY;
+		                }
+		
+		                if (weight < 0.0) {
+		                    weight = 0.0;
+		                }
+		
+		                indexValue = (int) ((refImage.data[index] - refImage.min) * constant);
+		                tmp = weight * (value - inputImage.min); // Added by Matt to handle image with neg values
+		                numY[indexValue] += weight;
+		                sumY[indexValue] += tmp;
+		                sumY2[indexValue] += tmp * (value - inputImage.min);
+                    } // if ( (0.0 <= newPtY) && (newPtY <= yEnd2))
+                } // if ( (0.0 <= newPtX) && (newPtX <= xEnd2))
             }
         }
 
@@ -2996,12 +2952,10 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
 
         // now calculate the individual variances for each iso-set
         // weighting them by the number of pixels from Image x that contribute
-        int binsUsed = 0;
 
         for (int b = 0; b < nBins; b++) {
 
             if (numY[b] > 2.0) {
-                binsUsed++;
                 numTotY += numY[b];
                 totSumY += sumY[b];
                 totSumY2 += sumY2[b];
@@ -4098,7 +4052,9 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
     private double leastSquaresSmoothedWgt(TransMatrix tMatrix) {
 
         int x, y;
+        int indexY;
         int index;
+        double tmpY1, tmpY2;
         double smoothX, smoothY;
         double invSmoothX, invSmoothY;
         double weight;
@@ -4128,7 +4084,6 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         double aT00 = T00;
         double aT10 = T10;
 
-        double iT00, iT10;
         double newPtX, newPtY;
 
         if (aT00 < 0) {
@@ -4138,81 +4093,64 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         if (aT10 < 0) {
             aT10 = -aT10;
         }
+        
+        for (y = yStart; y <= yEnd; y++) {
+        	tmpY1 = (y * T01) + T02;
+            tmpY2 = (y * T11) + T12;
+            indexY = y * refImage.xDim;
+            
+            for (x = xStart; x <= xEnd; x++) {
+                newPtX = (x * T00) + tmpY1;
+                if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
+                    newPtY = (x * T10) + tmpY2;
+                    if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
+                        index = indexY + x;
 
-        if (aT00 >= 1.0e-8) {
-            iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
-        }
-
-        if (aT10 >= 1.0e-8) {
-            iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
-        }
-
-        Point minMaxPt = new Point();
-        for (y = 0; y <= yEnd; y++) {
-
-            newPtX = (y * T01) + T02;
-            newPtY = (y * T11) + T12;
-
-            // determine range
-            findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
-
-            newPtX += minMaxPt.x * T00;
-            newPtY += minMaxPt.x * T10;
-
-            index = (y * (xEnd + 1)) + minMaxPt.x;
-
-            for (x = minMaxPt.x; x <= minMaxPt.y; x++) {
-                intX = (int) newPtX;
-                intY = (int) newPtY;
-
-                dx = newPtX - intX;
-                dy = newPtY - intY;
-
-                dx1 = 1 - dx;
-                dy1 = 1 - dy;
-
-                position1 = (intY * xDim) + intX;
-                position11 = position1 + 1;
-
-                // bilinear interpolation
-                b1 = (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]);
-                b2 = (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11 + xDim]);
-                value = (dy1 * b1) + (dy * b2);
-
-                b1 = (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]);
-                b2 = (dx1 * inputWgtImage.data[position1 + xDim]) + (dx * inputWgtImage.data[position11 + xDim]);
-                wValue = (dy1 * b1) + (dy * b2);
-
-                weight = wValue * refWgtImage.data[index];
-
-                if (newPtX < smoothX) {
-                    weight *= newPtX * invSmoothX;
-                } else if ((xEnd2 - newPtX) < smoothX) {
-                    weight *= (xEnd2 - newPtX) * invSmoothX;
-                }
-
-                if (newPtY < smoothY) {
-                    weight *= newPtY * invSmoothY;
-                } else if ((yEnd2 - newPtY) < smoothY) {
-                    weight *= (yEnd2 - newPtY) * invSmoothY;
-                }
-
-                if (weight < 0.0) {
-                    weight = 0.0;
-                }
-
-                valueR = refImage.data[index] - refImage.min;
-                index++;
-                valueI = value - inputImage.min;
-                count += weight;
-                sum += weight * (valueR - valueI) * (valueR - valueI);
-
-                newPtX += T00;
-                newPtY += T10;
+		                intX = (int) newPtX;
+		                intY = (int) newPtY;
+		
+		                dx = newPtX - intX;
+		                dy = newPtY - intY;
+		
+		                dx1 = 1 - dx;
+		                dy1 = 1 - dy;
+		
+		                position1 = (intY * xDim) + intX;
+		                position11 = position1 + 1;
+		
+		                // bilinear interpolation
+		                b1 = (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]);
+		                b2 = (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11 + xDim]);
+		                value = (dy1 * b1) + (dy * b2);
+		
+		                b1 = (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]);
+		                b2 = (dx1 * inputWgtImage.data[position1 + xDim]) + (dx * inputWgtImage.data[position11 + xDim]);
+		                wValue = (dy1 * b1) + (dy * b2);
+		
+		                weight = wValue * refWgtImage.data[index];
+		
+		                if (newPtX < smoothX) {
+		                    weight *= newPtX * invSmoothX;
+		                } else if ((xEnd2 - newPtX) < smoothX) {
+		                    weight *= (xEnd2 - newPtX) * invSmoothX;
+		                }
+		
+		                if (newPtY < smoothY) {
+		                    weight *= newPtY * invSmoothY;
+		                } else if ((yEnd2 - newPtY) < smoothY) {
+		                    weight *= (yEnd2 - newPtY) * invSmoothY;
+		                }
+		
+		                if (weight < 0.0) {
+		                    weight = 0.0;
+		                }
+		
+		                valueR = refImage.data[index] - refImage.min;
+		                valueI = value - inputImage.min;
+		                count += weight;
+		                sum += weight * (valueR - valueI) * (valueR - valueI);
+                    } // if ( (0.0 <= newPtY) && (newPtY <= yEnd2))
+                } // if ( (0.0 <= newPtX) && (newPtX <= xEnd2))
             }
         }
 
@@ -4237,7 +4175,9 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
     private double leastSquaresSmoothedWgt(TransMatrixd tMatrix) {
 
         int x, y;
+        int indexY;
         int index;
+        double tmpY1, tmpY2;
         double smoothX, smoothY;
         double invSmoothX, invSmoothY;
         double weight;
@@ -4267,7 +4207,6 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         double aT00 = T00;
         double aT10 = T10;
 
-        double iT00, iT10;
         double newPtX, newPtY;
 
         if (aT00 < 0) {
@@ -4278,80 +4217,63 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             aT10 = -aT10;
         }
 
-        if (aT00 >= 1.0e-8) {
-            iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
-        }
+        for (y = yStart; y <= yEnd; y++) {
+        	tmpY1 = (y * T01) + T02;
+            tmpY2 = (y * T11) + T12;
+            indexY = y * refImage.xDim;
+            
+            for (x = xStart; x <= xEnd; x++) {
+                newPtX = (x * T00) + tmpY1;
+                if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
+                    newPtY = (x * T10) + tmpY2;
+                    if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
+                        index = indexY + x;
 
-        if (aT10 >= 1.0e-8) {
-            iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
-        }
-
-        Point minMaxPt = new Point();
-        for (y = 0; y <= yEnd; y++) {
-
-            newPtX = (y * T01) + T02;
-            newPtY = (y * T11) + T12;
-
-            // determine range
-            findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
-
-            newPtX += minMaxPt.x * T00;
-            newPtY += minMaxPt.x * T10;
-
-            index = (y * (xEnd + 1)) + minMaxPt.x;
-
-            for (x = minMaxPt.x; x <= minMaxPt.y; x++) {
-                intX = (int) newPtX;
-                intY = (int) newPtY;
-
-                dx = newPtX - intX;
-                dy = newPtY - intY;
-
-                dx1 = 1 - dx;
-                dy1 = 1 - dy;
-
-                position1 = (intY * xDim) + intX;
-                position11 = position1 + 1;
-
-                // bilinear interpolation
-                b1 = (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]);
-                b2 = (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11 + xDim]);
-                value = (dy1 * b1) + (dy * b2);
-
-                b1 = (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]);
-                b2 = (dx1 * inputWgtImage.data[position1 + xDim]) + (dx * inputWgtImage.data[position11 + xDim]);
-                wValue = (dy1 * b1) + (dy * b2);
-
-                weight = wValue * refWgtImage.data[index];
-
-                if (newPtX < smoothX) {
-                    weight *= newPtX * invSmoothX;
-                } else if ((xEnd2 - newPtX) < smoothX) {
-                    weight *= (xEnd2 - newPtX) * invSmoothX;
-                }
-
-                if (newPtY < smoothY) {
-                    weight *= newPtY * invSmoothY;
-                } else if ((yEnd2 - newPtY) < smoothY) {
-                    weight *= (yEnd2 - newPtY) * invSmoothY;
-                }
-
-                if (weight < 0.0) {
-                    weight = 0.0;
-                }
-
-                valueR = refImage.data[index] - refImage.min;
-                index++;
-                valueI = value - inputImage.min;
-                count += weight;
-                sum += weight * (valueR - valueI) * (valueR - valueI);
-
-                newPtX += T00;
-                newPtY += T10;
+		                intX = (int) newPtX;
+		                intY = (int) newPtY;
+		
+		                dx = newPtX - intX;
+		                dy = newPtY - intY;
+		
+		                dx1 = 1 - dx;
+		                dy1 = 1 - dy;
+		
+		                position1 = (intY * xDim) + intX;
+		                position11 = position1 + 1;
+		
+		                // bilinear interpolation
+		                b1 = (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]);
+		                b2 = (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11 + xDim]);
+		                value = (dy1 * b1) + (dy * b2);
+		
+		                b1 = (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]);
+		                b2 = (dx1 * inputWgtImage.data[position1 + xDim]) + (dx * inputWgtImage.data[position11 + xDim]);
+		                wValue = (dy1 * b1) + (dy * b2);
+		
+		                weight = wValue * refWgtImage.data[index];
+		
+		                if (newPtX < smoothX) {
+		                    weight *= newPtX * invSmoothX;
+		                } else if ((xEnd2 - newPtX) < smoothX) {
+		                    weight *= (xEnd2 - newPtX) * invSmoothX;
+		                }
+		
+		                if (newPtY < smoothY) {
+		                    weight *= newPtY * invSmoothY;
+		                } else if ((yEnd2 - newPtY) < smoothY) {
+		                    weight *= (yEnd2 - newPtY) * invSmoothY;
+		                }
+		
+		                if (weight < 0.0) {
+		                    weight = 0.0;
+		                }
+		
+		                valueR = refImage.data[index] - refImage.min;
+		                valueI = value - inputImage.min;
+		                count += weight;
+		                sum += weight * (valueR - valueI) * (valueR - valueI);
+                    } // if ( (0.0 <= newPtY) && (newPtY <= yEnd2))
+                } // if ( (0.0 <= newPtX) && (newPtX <= xEnd2))
             }
         }
 
@@ -4376,7 +4298,9 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
     private double leastSquaresSmoothedWgtColor(TransMatrix tMatrix) {
 
         int x, y, c;
+        int indexY;
         int index;
+        double tmpY1, tmpY2;
         double smoothX, smoothY;
         double invSmoothX, invSmoothY;
         double weight;
@@ -4406,7 +4330,6 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         double aT00 = T00;
         double aT10 = T10;
 
-        double iT00, iT10;
         double newPtX, newPtY;
 
         if (aT00 < 0) {
@@ -4417,84 +4340,67 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             aT10 = -aT10;
         }
 
-        if (aT00 >= 1.0e-8) {
-            iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
-        }
+        for (y = yStart; y <= yEnd; y++) {
+        	tmpY1 = (y * T01) + T02;
+            tmpY2 = (y * T11) + T12;
+            indexY = y * refImage.xDim;
+            
+            for (x = xStart; x <= xEnd; x++) {
+                newPtX = (x * T00) + tmpY1;
+                if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
+                    newPtY = (x * T10) + tmpY2;
+                    if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
+                        index = indexY + x;
 
-        if (aT10 >= 1.0e-8) {
-            iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
-        }
-
-        Point minMaxPt = new Point();
-        for (y = 0; y <= yEnd; y++) {
-
-            newPtX = (y * T01) + T02;
-            newPtY = (y * T11) + T12;
-
-            // determine range
-            findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
-
-            newPtX += minMaxPt.x * T00;
-            newPtY += minMaxPt.x * T10;
-
-            index = (y * (xEnd + 1)) + minMaxPt.x;
-
-            for (x = minMaxPt.x; x <= minMaxPt.y; x++) {
-                intX = (int) newPtX;
-                intY = (int) newPtY;
-
-                dx = newPtX - intX;
-                dy = newPtY - intY;
-
-                dx1 = 1 - dx;
-                dy1 = 1 - dy;
-
-                position1 = (intY * xDim) + intX;
-                position11 = position1 + 1;
-
-                b1 = (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]);
-                b2 = (dx1 * inputWgtImage.data[position1 + xDim]) + (dx * inputWgtImage.data[position11 + xDim]);
-                wValue = (dy1 * b1) + (dy * b2);
-
-                weight = wValue * refWgtImage.data[index];
-
-                if (newPtX < smoothX) {
-                    weight *= newPtX * invSmoothX;
-                } else if ((xEnd2 - newPtX) < smoothX) {
-                    weight *= (xEnd2 - newPtX) * invSmoothX;
-                }
-
-                if (newPtY < smoothY) {
-                    weight *= newPtY * invSmoothY;
-                } else if ((yEnd2 - newPtY) < smoothY) {
-                    weight *= (yEnd2 - newPtY) * invSmoothY;
-                }
-
-                if (weight < 0.0) {
-                    weight = 0.0;
-                }
-
-                for (c = 1; c <= 3; c++) {
-
-                    // bilinear interpolation
-                    b1 = (dx1 * inputImage.data[(4 * position1) + c]) + (dx * inputImage.data[(4 * position11) + c]);
-                    b2 = (dx1 * inputImage.data[(4 * (position1 + xDim)) + c]) +
-                         (dx * inputImage.data[(4 * (position11 + xDim)) + c]);
-                    valueI = (dy1 * b1) + (dy * b2);
-
-                    valueR = refImage.data[(4 * index) + c];
-                    sum += weight * (valueR - valueI) * (valueR - valueI);
-                } // for (c = 1; c <= 3; c++)
-
-                count += weight;
-                index++;
-
-                newPtX += T00;
-                newPtY += T10;
+		                intX = (int) newPtX;
+		                intY = (int) newPtY;
+		
+		                dx = newPtX - intX;
+		                dy = newPtY - intY;
+		
+		                dx1 = 1 - dx;
+		                dy1 = 1 - dy;
+		
+		                position1 = (intY * xDim) + intX;
+		                position11 = position1 + 1;
+		
+		                b1 = (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]);
+		                b2 = (dx1 * inputWgtImage.data[position1 + xDim]) + (dx * inputWgtImage.data[position11 + xDim]);
+		                wValue = (dy1 * b1) + (dy * b2);
+		
+		                weight = wValue * refWgtImage.data[index];
+		
+		                if (newPtX < smoothX) {
+		                    weight *= newPtX * invSmoothX;
+		                } else if ((xEnd2 - newPtX) < smoothX) {
+		                    weight *= (xEnd2 - newPtX) * invSmoothX;
+		                }
+		
+		                if (newPtY < smoothY) {
+		                    weight *= newPtY * invSmoothY;
+		                } else if ((yEnd2 - newPtY) < smoothY) {
+		                    weight *= (yEnd2 - newPtY) * invSmoothY;
+		                }
+		
+		                if (weight < 0.0) {
+		                    weight = 0.0;
+		                }
+		
+		                for (c = 1; c <= 3; c++) {
+		
+		                    // bilinear interpolation
+		                    b1 = (dx1 * inputImage.data[(4 * position1) + c]) + (dx * inputImage.data[(4 * position11) + c]);
+		                    b2 = (dx1 * inputImage.data[(4 * (position1 + xDim)) + c]) +
+		                         (dx * inputImage.data[(4 * (position11 + xDim)) + c]);
+		                    valueI = (dy1 * b1) + (dy * b2);
+		
+		                    valueR = refImage.data[(4 * index) + c];
+		                    sum += weight * (valueR - valueI) * (valueR - valueI);
+		                } // for (c = 1; c <= 3; c++)
+		
+		                count += weight;
+                    } // if ( (0.0 <= newPtY) && (newPtY <= yEnd2))
+                } // if ( (0.0 <= newPtX) && (newPtX <= xEnd2))
             }
         }
 
@@ -4519,7 +4425,9 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
     private double leastSquaresSmoothedWgtColor(TransMatrixd tMatrix) {
 
         int x, y, c;
+        int indexY;
         int index;
+        double tmpY1, tmpY2;
         double smoothX, smoothY;
         double invSmoothX, invSmoothY;
         double weight;
@@ -4549,7 +4457,6 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         double aT00 = T00;
         double aT10 = T10;
 
-        double iT00, iT10;
         double newPtX, newPtY;
 
         if (aT00 < 0) {
@@ -4560,84 +4467,67 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             aT10 = -aT10;
         }
 
-        if (aT00 >= 1.0e-8) {
-            iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
-        }
+        for (y = yStart; y <= yEnd; y++) {
+        	tmpY1 = (y * T01) + T02;
+            tmpY2 = (y * T11) + T12;
+            indexY = y * refImage.xDim;
+            
+            for (x = xStart; x <= xEnd; x++) {
+                newPtX = (x * T00) + tmpY1;
+                if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
+                    newPtY = (x * T10) + tmpY2;
+                    if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
+                        index = indexY + x;
 
-        if (aT10 >= 1.0e-8) {
-            iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
-        }
-
-        Point minMaxPt = new Point();
-        for (y = 0; y <= yEnd; y++) {
-
-            newPtX = (y * T01) + T02;
-            newPtY = (y * T11) + T12;
-
-            // determine range
-            findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
-
-            newPtX += minMaxPt.x * T00;
-            newPtY += minMaxPt.x * T10;
-
-            index = (y * (xEnd + 1)) + minMaxPt.x;
-
-            for (x = minMaxPt.x; x <= minMaxPt.y; x++) {
-                intX = (int) newPtX;
-                intY = (int) newPtY;
-
-                dx = newPtX - intX;
-                dy = newPtY - intY;
-
-                dx1 = 1 - dx;
-                dy1 = 1 - dy;
-
-                position1 = (intY * xDim) + intX;
-                position11 = position1 + 1;
-
-                b1 = (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]);
-                b2 = (dx1 * inputWgtImage.data[position1 + xDim]) + (dx * inputWgtImage.data[position11 + xDim]);
-                wValue = (dy1 * b1) + (dy * b2);
-
-                weight = wValue * refWgtImage.data[index];
-
-                if (newPtX < smoothX) {
-                    weight *= newPtX * invSmoothX;
-                } else if ((xEnd2 - newPtX) < smoothX) {
-                    weight *= (xEnd2 - newPtX) * invSmoothX;
-                }
-
-                if (newPtY < smoothY) {
-                    weight *= newPtY * invSmoothY;
-                } else if ((yEnd2 - newPtY) < smoothY) {
-                    weight *= (yEnd2 - newPtY) * invSmoothY;
-                }
-
-                if (weight < 0.0) {
-                    weight = 0.0;
-                }
-
-                for (c = 1; c <= 3; c++) {
-
-                    // bilinear interpolation
-                    b1 = (dx1 * inputImage.data[(4 * position1) + c]) + (dx * inputImage.data[(4 * position11) + c]);
-                    b2 = (dx1 * inputImage.data[(4 * (position1 + xDim)) + c]) +
-                         (dx * inputImage.data[(4 * (position11 + xDim)) + c]);
-                    valueI = (dy1 * b1) + (dy * b2);
-
-                    valueR = refImage.data[(4 * index) + c];
-                    sum += weight * (valueR - valueI) * (valueR - valueI);
-                } // for (c = 1; c <= 3; c++)
-
-                count += weight;
-                index++;
-
-                newPtX += T00;
-                newPtY += T10;
+		                intX = (int) newPtX;
+		                intY = (int) newPtY;
+		
+		                dx = newPtX - intX;
+		                dy = newPtY - intY;
+		
+		                dx1 = 1 - dx;
+		                dy1 = 1 - dy;
+		
+		                position1 = (intY * xDim) + intX;
+		                position11 = position1 + 1;
+		
+		                b1 = (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]);
+		                b2 = (dx1 * inputWgtImage.data[position1 + xDim]) + (dx * inputWgtImage.data[position11 + xDim]);
+		                wValue = (dy1 * b1) + (dy * b2);
+		
+		                weight = wValue * refWgtImage.data[index];
+		
+		                if (newPtX < smoothX) {
+		                    weight *= newPtX * invSmoothX;
+		                } else if ((xEnd2 - newPtX) < smoothX) {
+		                    weight *= (xEnd2 - newPtX) * invSmoothX;
+		                }
+		
+		                if (newPtY < smoothY) {
+		                    weight *= newPtY * invSmoothY;
+		                } else if ((yEnd2 - newPtY) < smoothY) {
+		                    weight *= (yEnd2 - newPtY) * invSmoothY;
+		                }
+		
+		                if (weight < 0.0) {
+		                    weight = 0.0;
+		                }
+		
+		                for (c = 1; c <= 3; c++) {
+		
+		                    // bilinear interpolation
+		                    b1 = (dx1 * inputImage.data[(4 * position1) + c]) + (dx * inputImage.data[(4 * position11) + c]);
+		                    b2 = (dx1 * inputImage.data[(4 * (position1 + xDim)) + c]) +
+		                         (dx * inputImage.data[(4 * (position11 + xDim)) + c]);
+		                    valueI = (dy1 * b1) + (dy * b2);
+		
+		                    valueR = refImage.data[(4 * index) + c];
+		                    sum += weight * (valueR - valueI) * (valueR - valueI);
+		                } // for (c = 1; c <= 3; c++)
+		
+		                count += weight;
+                    } // if ( (0.0 <= newPtY) && (newPtY <= yEnd2))
+                } // if ( (0.0 <= newPtX) && (newPtX <= xEnd2))
             }
         }
 
@@ -5472,7 +5362,9 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
     private double normalizedXCorrelationSmoothedWgt(TransMatrix tMatrix) {
 
         int x, y, iter;
+        int indexY;
         int index;
+        double tmpY1, tmpY2;
         int numValues = 0;
         double correlation;
         int position1;
@@ -5513,7 +5405,6 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         double aT00 = T00;
         double aT10 = T10;
 
-        double iT00, iT10;
         double newPtX, newPtY;
 
         if (aT00 < 0) {
@@ -5524,92 +5415,74 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             aT10 = -aT10;
         }
 
-        if (aT00 >= 1.0e-8) {
-            iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
-        }
-
-        if (aT10 >= 1.0e-8) {
-            iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
-        }
-
-        Point minMaxPt = new Point();
         for (iter = 0; iter <= 1; iter++) {
 
-            for (y = 0; y <= yEnd; y++) {
+            for (y = yStart; y <= yEnd; y++) {
+            	tmpY1 = (y * T01) + T02;
+                tmpY2 = (y * T11) + T12;
+                indexY = y * refImage.xDim;
+                
+                for (x = xStart; x <= xEnd; x++) {
+                    newPtX = (x * T00) + tmpY1;
+                    if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
+                        newPtY = (x * T10) + tmpY2;
+                        if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
+                            index = indexY + x;
 
-                newPtX = (y * T01) + T02;
-                newPtY = (y * T11) + T12;
-
-                // determine range
-                findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
-
-                newPtX += minMaxPt.x * T00;
-                newPtY += minMaxPt.x * T10;
-
-                index = (y * (xEnd + 1)) + minMaxPt.x;
-
-                for (x = minMaxPt.x; x <= minMaxPt.y; x++) {
-
-                    intX = (int) newPtX;
-                    intY = (int) newPtY;
-
-                    dx = newPtX - intX;
-                    dy = newPtY - intY;
-
-                    dx1 = 1 - dx;
-                    dy1 = 1 - dy;
-
-                    position1 = (intY * xDim) + intX;
-                    position11 = position1 + 1;
-
-                    // bilinear interpolation
-                    b1 = (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]);
-                    b2 = (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11 + xDim]);
-                    value = (dy1 * b1) + (dy * b2);
-
-                    b1 = (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]);
-                    b2 = (dx1 * inputWgtImage.data[position1 + xDim]) + (dx * inputWgtImage.data[position11 + xDim]);
-                    wValue = (dy1 * b1) + (dy * b2);
-
-                    weight = wValue * refWgtImage.data[index];
-
-                    if (newPtX < smoothX) {
-                        weight *= newPtX * invSmoothX;
-                    } else if ((xEnd2 - newPtX) < smoothX) {
-                        weight *= (xEnd2 - newPtX) * invSmoothX;
-                    }
-
-                    if (newPtY < smoothY) {
-                        weight *= newPtY * invSmoothY;
-                    } else if ((yEnd2 - newPtY) < smoothY) {
-                        weight *= (yEnd2 - newPtY) * invSmoothY;
-                    }
-
-                    if (weight < 0.0) {
-                        weight = 0.0;
-                    }
-
-                    valueR = refImage.data[index] - refImage.min;
-                    valueI = value - inputImage.min;
-
-                    if (iter == 0) {
-                        sumX += weight * valueR;
-                        sumY += weight * valueI;
-                        count += weight;
-                        numValues++;
-                    } else if (iter == 1) {
-                        sumX2 += weight * (valueR - xAverage) * (valueR - xAverage);
-                        sumY2 += weight * (valueI - yAverage) * (valueI - yAverage);
-                        sumXY += weight * (valueR - xAverage) * (valueI - yAverage);
-                    }
-
-                    index++;
-                    newPtX += T00;
-                    newPtY += T10;
+		                    intX = (int) newPtX;
+		                    intY = (int) newPtY;
+		
+		                    dx = newPtX - intX;
+		                    dy = newPtY - intY;
+		
+		                    dx1 = 1 - dx;
+		                    dy1 = 1 - dy;
+		
+		                    position1 = (intY * xDim) + intX;
+		                    position11 = position1 + 1;
+		
+		                    // bilinear interpolation
+		                    b1 = (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]);
+		                    b2 = (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11 + xDim]);
+		                    value = (dy1 * b1) + (dy * b2);
+		
+		                    b1 = (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]);
+		                    b2 = (dx1 * inputWgtImage.data[position1 + xDim]) + (dx * inputWgtImage.data[position11 + xDim]);
+		                    wValue = (dy1 * b1) + (dy * b2);
+		
+		                    weight = wValue * refWgtImage.data[index];
+		
+		                    if (newPtX < smoothX) {
+		                        weight *= newPtX * invSmoothX;
+		                    } else if ((xEnd2 - newPtX) < smoothX) {
+		                        weight *= (xEnd2 - newPtX) * invSmoothX;
+		                    }
+		
+		                    if (newPtY < smoothY) {
+		                        weight *= newPtY * invSmoothY;
+		                    } else if ((yEnd2 - newPtY) < smoothY) {
+		                        weight *= (yEnd2 - newPtY) * invSmoothY;
+		                    }
+		
+		                    if (weight < 0.0) {
+		                        weight = 0.0;
+		                    }
+		
+		                    valueR = refImage.data[index] - refImage.min;
+		                    valueI = value - inputImage.min;
+		
+		                    if (iter == 0) {
+		                        sumX += weight * valueR;
+		                        sumY += weight * valueI;
+		                        count += weight;
+		                        numValues++;
+		                    } else if (iter == 1) {
+		                        sumX2 += weight * (valueR - xAverage) * (valueR - xAverage);
+		                        sumY2 += weight * (valueI - yAverage) * (valueI - yAverage);
+		                        sumXY += weight * (valueR - xAverage) * (valueI - yAverage);
+		                    }
+                        } // if ( (0.0 <= newPtY) && (newPtY <= yEnd2))
+                    } // if ( (0.0 <= newPtX) && (newPtX <= xEnd2))
                 }
             }
 
@@ -5645,7 +5518,9 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
     private double normalizedXCorrelationSmoothedWgt(TransMatrixd tMatrix) {
 
         int x, y, iter;
+        int indexY;
         int index;
+        double tmpY1, tmpY2;
         int numValues = 0;
         double correlation;
         int position1;
@@ -5686,7 +5561,6 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         double aT00 = T00;
         double aT10 = T10;
 
-        double iT00, iT10;
         double newPtX, newPtY;
 
         if (aT00 < 0) {
@@ -5696,93 +5570,75 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         if (aT10 < 0) {
             aT10 = -aT10;
         }
-
-        if (aT00 >= 1.0e-8) {
-            iT00 = 1 / T00;
-        }else{
-        	iT00 = Double.MAX_VALUE;
-        }
-
-        if (aT10 >= 1.0e-8) {
-            iT10 = 1 / T10;
-        }else{
-        	iT10 = Double.MAX_VALUE;
-        }
-
-        Point minMaxPt = new Point();
+        
         for (iter = 0; iter <= 1; iter++) {
 
-            for (y = 0; y <= yEnd; y++) {
+            for (y = yStart; y <= yEnd; y++) {
+            	tmpY1 = (y * T01) + T02;
+                tmpY2 = (y * T11) + T12;
+                indexY = y * refImage.xDim;
+                
+                for (x = xStart; x <= xEnd; x++) {
+                    newPtX = (x * T00) + tmpY1;
+                    if ( (0.0 <= newPtX) && (newPtX <= xEnd2)) {
+                        newPtY = (x * T10) + tmpY2;
+                        if ( (0.0 <= newPtY) && (newPtY <= yEnd2)) {
+                            index = indexY + x;
 
-                newPtX = (y * T01) + T02;
-                newPtY = (y * T11) + T12;
-
-                // determine range
-                findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
-
-                newPtX += minMaxPt.x * T00;
-                newPtY += minMaxPt.x * T10;
-
-                index = (y * (xEnd + 1)) + minMaxPt.x;
-
-                for (x = minMaxPt.x; x <= minMaxPt.y; x++) {
-
-                    intX = (int) newPtX;
-                    intY = (int) newPtY;
-
-                    dx = newPtX - intX;
-                    dy = newPtY - intY;
-
-                    dx1 = 1 - dx;
-                    dy1 = 1 - dy;
-
-                    position1 = (intY * xDim) + intX;
-                    position11 = position1 + 1;
-
-                    // bilinear interpolation
-                    b1 = (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]);
-                    b2 = (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11 + xDim]);
-                    value = (dy1 * b1) + (dy * b2);
-
-                    b1 = (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]);
-                    b2 = (dx1 * inputWgtImage.data[position1 + xDim]) + (dx * inputWgtImage.data[position11 + xDim]);
-                    wValue = (dy1 * b1) + (dy * b2);
-
-                    weight = wValue * refWgtImage.data[index];
-
-                    if (newPtX < smoothX) {
-                        weight *= newPtX * invSmoothX;
-                    } else if ((xEnd2 - newPtX) < smoothX) {
-                        weight *= (xEnd2 - newPtX) * invSmoothX;
-                    }
-
-                    if (newPtY < smoothY) {
-                        weight *= newPtY * invSmoothY;
-                    } else if ((yEnd2 - newPtY) < smoothY) {
-                        weight *= (yEnd2 - newPtY) * invSmoothY;
-                    }
-
-                    if (weight < 0.0) {
-                        weight = 0.0;
-                    }
-
-                    valueR = refImage.data[index] - refImage.min;
-                    valueI = value - inputImage.min;
-
-                    if (iter == 0) {
-                        sumX += weight * valueR;
-                        sumY += weight * valueI;
-                        count += weight;
-                        numValues++;
-                    } else if (iter == 1) {
-                        sumX2 += weight * (valueR - xAverage) * (valueR - xAverage);
-                        sumY2 += weight * (valueI - yAverage) * (valueI - yAverage);
-                        sumXY += weight * (valueR - xAverage) * (valueI - yAverage);
-                    }
-
-                    index++;
-                    newPtX += T00;
-                    newPtY += T10;
+		                    intX = (int) newPtX;
+		                    intY = (int) newPtY;
+		
+		                    dx = newPtX - intX;
+		                    dy = newPtY - intY;
+		
+		                    dx1 = 1 - dx;
+		                    dy1 = 1 - dy;
+		
+		                    position1 = (intY * xDim) + intX;
+		                    position11 = position1 + 1;
+		
+		                    // bilinear interpolation
+		                    b1 = (dx1 * inputImage.data[position1]) + (dx * inputImage.data[position11]);
+		                    b2 = (dx1 * inputImage.data[position1 + xDim]) + (dx * inputImage.data[position11 + xDim]);
+		                    value = (dy1 * b1) + (dy * b2);
+		
+		                    b1 = (dx1 * inputWgtImage.data[position1]) + (dx * inputWgtImage.data[position11]);
+		                    b2 = (dx1 * inputWgtImage.data[position1 + xDim]) + (dx * inputWgtImage.data[position11 + xDim]);
+		                    wValue = (dy1 * b1) + (dy * b2);
+		
+		                    weight = wValue * refWgtImage.data[index];
+		
+		                    if (newPtX < smoothX) {
+		                        weight *= newPtX * invSmoothX;
+		                    } else if ((xEnd2 - newPtX) < smoothX) {
+		                        weight *= (xEnd2 - newPtX) * invSmoothX;
+		                    }
+		
+		                    if (newPtY < smoothY) {
+		                        weight *= newPtY * invSmoothY;
+		                    } else if ((yEnd2 - newPtY) < smoothY) {
+		                        weight *= (yEnd2 - newPtY) * invSmoothY;
+		                    }
+		
+		                    if (weight < 0.0) {
+		                        weight = 0.0;
+		                    }
+		
+		                    valueR = refImage.data[index] - refImage.min;
+		                    valueI = value - inputImage.min;
+		
+		                    if (iter == 0) {
+		                        sumX += weight * valueR;
+		                        sumY += weight * valueI;
+		                        count += weight;
+		                        numValues++;
+		                    } else if (iter == 1) {
+		                        sumX2 += weight * (valueR - xAverage) * (valueR - xAverage);
+		                        sumY2 += weight * (valueI - yAverage) * (valueI - yAverage);
+		                        sumXY += weight * (valueR - xAverage) * (valueI - yAverage);
+		                    }
+                        } // if ( (0.0 <= newPtY) && (newPtY <= yEnd2))
+                    } // if ( (0.0 <= newPtX) && (newPtX <= xEnd2))
                 }
             }
 
