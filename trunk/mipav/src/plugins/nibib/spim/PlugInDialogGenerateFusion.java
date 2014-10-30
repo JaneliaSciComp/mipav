@@ -84,7 +84,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     final String initTransformPrefusionLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "PrefusionTransform" + File.separator;
     final String initBasePrefusionLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "PrefusionBase" + File.separator;
     final String initDeconvLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "Deconvolution" + File.separator;
-    final String initRegLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "Register2D" + File.separator;
+    final String initRegLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "register2DAll" + File.separator;
     
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -244,10 +244,12 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	private JRadioButton noRegisterButton;
 	private JRadioButton registerOneButton;
 	private JRadioButton registerAllButton;
-	private JRadioButton register2DButton;
+	private JRadioButton register2DOneButton;
+	private JRadioButton register2DAllButton;
 	private boolean registerOne = true;
 	private boolean registerAll = false;
-	private boolean register2D = false;
+	private boolean register2DOne = false;
+	private boolean register2DAll = false;
 	private JLabel labelTimeExt;
 	private JTextField textTimeExt;
 	private int timeNum; // The extension number in the file name
@@ -397,7 +399,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 
         try {
             
-            generateFusionAlgo = new PlugInAlgorithmGenerateFusion(registerOne, registerAll, register2D, register2DFileDir, rotateBeginX, rotateEndX, 
+            generateFusionAlgo = new PlugInAlgorithmGenerateFusion(registerOne, registerAll, register2DOne, register2DAll, register2DFileDir, rotateBeginX, rotateEndX, 
             		                                               coarseRateX, fineRateX, rotateBeginY, 
                                                                    rotateEndY, coarseRateY, fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ,
                                                                    fineRateZ,doShowPreFusion, doInterImages, showGeoMean, showAriMean, 
@@ -575,7 +577,8 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 
     	registerOne = scriptParameters.getParams().getBoolean("reg_one");
     	registerAll = scriptParameters.getParams().getBoolean("reg_all");
-    	register2D = scriptParameters.getParams().getBoolean("reg_2D");
+    	register2DOne = scriptParameters.getParams().getBoolean("reg_2D_one");
+    	register2DAll = scriptParameters.getParams().getBoolean("reg_2D_all");
     	final float[] rotBegin = scriptParameters.getParams().getList("rotate_begin").getAsFloatArray();
         final float[] rotEnd = scriptParameters.getParams().getList("rotate_end").getAsFloatArray();
         final float[] coarseRates = scriptParameters.getParams().getList("coarse_rate").getAsFloatArray();
@@ -601,9 +604,9 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     	doShowPreFusion = scriptParameters.getParams().getBoolean("do_subsample");
     	doThreshold = scriptParameters.getParams().getBoolean("do_threshold");
     	
-    	if (registerOne || registerAll || register2D) {
+    	if (registerOne || registerAll || register2DOne || register2DAll) {
     	    mtxFileDirectory = scriptParameters.getParams().getFile("mtxFileDirectory");
-    	    if (registerOne) {
+    	    if (registerOne || register2DOne) {
     	        timeNum = scriptParameters.getParams().getInt("time_num");
     	    }
     	}
@@ -629,7 +632,8 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
    
         scriptParameters.getParams().put(ParameterFactory.newParameter("reg_one", registerOne));
         scriptParameters.getParams().put(ParameterFactory.newParameter("reg_all", registerAll));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("reg_2D", register2D));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("reg_2D_one", register2DOne));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("reg_2D_all", register2DAll));
         scriptParameters.getParams().put(
                 ParameterFactory.newParameter("rotate_begin", new float[] {rotateBeginX, rotateBeginY, rotateBeginZ}));
         scriptParameters.getParams().put(
@@ -644,9 +648,9 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doShowPreFusion));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_threshold", doThreshold));
        
-        if (registerOne || registerAll || register2D) {
+        if (registerOne || registerAll || register2DOne || register2DAll) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("mtxFileDirectory", mtxFileDirectory));
-            if (registerOne) {
+            if (registerOne || register2DOne) {
                 scriptParameters.getParams().put(ParameterFactory.newParameter("time_num", timeNum));
             }
         }
@@ -680,7 +684,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     private void init() {
         setResizable(true);
         setForeground(Color.black);
-        setTitle("Generate fusion 544i");
+        setTitle("Generate fusion 544j");
         try {
             setIconImage(MipavUtil.getIconImage("divinci.gif"));
         } catch (FileNotFoundException e) {
@@ -728,11 +732,18 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         mtxPanel.add(registerAllButton, gbc);
         gbc.gridy++;
         
-        register2DButton = new JRadioButton("2D registrations", false);
-        register2DButton.setFont(serif12);
-        register2DButton.setForeground(Color.black);
-        registrationGroup.add(register2DButton);
-        mtxPanel.add(register2DButton, gbc);
+        register2DOneButton = new JRadioButton("One time 2D registration", false);
+        register2DOneButton.setFont(serif12);
+        register2DOneButton.setForeground(Color.black);
+        registrationGroup.add(register2DOneButton);
+        mtxPanel.add(register2DOneButton, gbc);
+        gbc.gridy++;
+        
+        register2DAllButton = new JRadioButton("All times 2D registration", false);
+        register2DAllButton.setFont(serif12);
+        register2DAllButton.setForeground(Color.black);
+        registrationGroup.add(register2DAllButton);
+        mtxPanel.add(register2DAllButton, gbc);
         gbc.gridy++;
         
         GridBagConstraints gbc2 = new GridBagConstraints();
@@ -902,35 +913,39 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         rotatePanel = new JPanel();
         rotatePanel.setLayout(new GridBagLayout());
         rotatePanel.setBorder(buildTitledBorder("Rotations"));
+        GridBagConstraints gbc6 = new GridBagConstraints();
+        gbc6.gridheight = 1;
+        gbc6.anchor = GridBagConstraints.WEST;
+        gbc6.insets = new Insets(3, 3, 3, 3);
 
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        rotatePanel.add(universalCheckbox, gbc);
+        gbc6.fill = GridBagConstraints.HORIZONTAL;
+        gbc6.weightx = 1;
+        gbc6.gridx = 0;
+        gbc6.gridy = 0;
+        gbc6.gridwidth = 1;
+        rotatePanel.add(universalCheckbox, gbc6);
 
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.anchor = GridBagConstraints.WEST;
-        rotatePanel.add(xyzPanel, gbc);
+        gbc6.gridx = 0;
+        gbc6.gridy = 1;
+        gbc6.gridwidth = GridBagConstraints.REMAINDER;
+        gbc6.anchor = GridBagConstraints.WEST;
+        rotatePanel.add(xyzPanel, gbc6);
 
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        rotatePanel.add(rotateRangePanelX, gbc);
+        gbc6.gridx = 0;
+        gbc6.gridy = 2;
+        gbc6.gridwidth = 1;
+        gbc6.anchor = GridBagConstraints.WEST;
+        rotatePanel.add(rotateRangePanelX, gbc6);
 
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        rotatePanel.add(coarsePanelX, gbc);
+        gbc6.gridx = 0;
+        gbc6.gridy = 3;
+        gbc6.gridwidth = GridBagConstraints.REMAINDER;
+        rotatePanel.add(coarsePanelX, gbc6);
 
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        rotatePanel.add(finePanelX, gbc);
+        gbc6.gridx = 0;
+        gbc6.gridy = 4;
+        gbc6.gridwidth = GridBagConstraints.REMAINDER;
+        rotatePanel.add(finePanelX, gbc6);
 
         rotateRangePanelY = new JPanel(new FlowLayout(FlowLayout.LEFT));
         rotateRangePanelY.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -1077,45 +1092,56 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         
         noRegisterButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
-                timeNumberPanel.setVisible(registerOneButton.isSelected() || registerAllButton.isSelected() ||
-                		register2DButton.isSelected());
-                oneTimePanel.setVisible(registerOneButton.isSelected());
+            	timeNumberPanel.setVisible(registerOneButton.isSelected() || registerAllButton.isSelected() ||
+            			register2DOneButton.isSelected() || register2DAllButton.isSelected()); 
+            	oneTimePanel.setVisible(registerOneButton.isSelected() || register2DOneButton.isSelected());
                 matrixFilePanel.setVisible(!(registerOneButton.isSelected() || registerAllButton.isSelected() ||
-                		register2DButton.isSelected()));
-                registerFilePanel.setVisible(register2DButton.isSelected());
+                		register2DOneButton.isSelected() || register2DAllButton.isSelected()));
+                registerFilePanel.setVisible(register2DOneButton.isSelected() || register2DAllButton.isSelected());    
             }
         });
         
         registerOneButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
             	timeNumberPanel.setVisible(registerOneButton.isSelected() || registerAllButton.isSelected() ||
-            			register2DButton.isSelected());  
-            	oneTimePanel.setVisible(registerOneButton.isSelected());
+            			register2DOneButton.isSelected() || register2DAllButton.isSelected()); 
+            	oneTimePanel.setVisible(registerOneButton.isSelected() || register2DOneButton.isSelected());
                 matrixFilePanel.setVisible(!(registerOneButton.isSelected() || registerAllButton.isSelected() ||
-                		register2DButton.isSelected()));
-                registerFilePanel.setVisible(register2DButton.isSelected());
+                		register2DOneButton.isSelected() || register2DAllButton.isSelected()));
+                registerFilePanel.setVisible(register2DOneButton.isSelected() || register2DAllButton.isSelected());	
             }
         });
         
         registerAllButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
             	timeNumberPanel.setVisible(registerOneButton.isSelected() || registerAllButton.isSelected() ||
-            			register2DButton.isSelected()); 
-            	oneTimePanel.setVisible(registerOneButton.isSelected());
+            			register2DOneButton.isSelected() || register2DAllButton.isSelected()); 
+            	oneTimePanel.setVisible(registerOneButton.isSelected() || register2DOneButton.isSelected());
                 matrixFilePanel.setVisible(!(registerOneButton.isSelected() || registerAllButton.isSelected() ||
-                		register2DButton.isSelected()));
-                registerFilePanel.setVisible(register2DButton.isSelected());
+                		register2DOneButton.isSelected() || register2DAllButton.isSelected()));
+                registerFilePanel.setVisible(register2DOneButton.isSelected() || register2DAllButton.isSelected());	
             }
         });
         
-        register2DButton.addActionListener(new ActionListener() {
+        register2DOneButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
             	timeNumberPanel.setVisible(registerOneButton.isSelected() || registerAllButton.isSelected() ||
-            			register2DButton.isSelected()); 
-            	oneTimePanel.setVisible(registerOneButton.isSelected());
+            			register2DOneButton.isSelected() || register2DAllButton.isSelected()); 
+            	oneTimePanel.setVisible(registerOneButton.isSelected() || register2DOneButton.isSelected());
                 matrixFilePanel.setVisible(!(registerOneButton.isSelected() || registerAllButton.isSelected() ||
-                		register2DButton.isSelected()));
-                registerFilePanel.setVisible(register2DButton.isSelected());
+                		register2DOneButton.isSelected() || register2DAllButton.isSelected()));
+                registerFilePanel.setVisible(register2DOneButton.isSelected() || register2DAllButton.isSelected());
+            }
+        });
+        
+        register2DAllButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent arg0) {
+            	timeNumberPanel.setVisible(registerOneButton.isSelected() || registerAllButton.isSelected() ||
+            			register2DOneButton.isSelected() || register2DAllButton.isSelected()); 
+            	oneTimePanel.setVisible(registerOneButton.isSelected() || register2DOneButton.isSelected());
+                matrixFilePanel.setVisible(!(registerOneButton.isSelected() || registerAllButton.isSelected() ||
+                		register2DOneButton.isSelected() || register2DAllButton.isSelected()));
+                registerFilePanel.setVisible(register2DOneButton.isSelected() || register2DAllButton.isSelected());	
             }
         });
         
@@ -1336,7 +1362,8 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
             public void actionPerformed(ActionEvent e) {
                 try {
                     File f;
-                    if ((registerOneButton.isSelected() || registerAllButton.isSelected() || register2DButton.isSelected())) {
+                    if ((registerOneButton.isSelected() || registerAllButton.isSelected() || register2DOneButton.isSelected() ||
+                    		register2DAllButton.isSelected())) {
                         f = new File(mtxFileLocText.getText()).getParentFile().getParentFile();
                     }
                     else {
@@ -2059,7 +2086,8 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	private boolean setVariables() {
 	    registerOne = registerOneButton.isSelected();
 	    registerAll = registerAllButton.isSelected();
-	    register2D = register2DButton.isSelected();
+	    register2DOne = register2DOneButton.isSelected();
+	    register2DAll = register2DAllButton.isSelected();
 	    showGeoMean = geometricMeanShowBox.isSelected();
         showAriMean = arithmeticMeanShowBox.isSelected();
         saveGeoMean = geometricMeanSaveBox.isSelected();
@@ -2108,7 +2136,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
             }
         }
         
-        if (register2D) {
+        if (register2DOne || register2DAll) {
         	if ((register2DFileDir = createDirectory(register2DFileDirectoryText.getText())) == null) {
         		return false;
         	}
@@ -2136,13 +2164,13 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 		    
 		    resX = Double.valueOf(resXText.getText()).doubleValue();
 		    resY = Double.valueOf(resYText.getText()).doubleValue();
-		    if (!register2D) {
+		    if (!(register2DOne || register2DAll)) {
 		        resZ = Double.valueOf(resZText.getText()).doubleValue();
 		    }
 		    
-		    if (registerOne || registerAll || register2D) {
+		    if (registerOne || registerAll || register2DOne || register2DAll) {
 		    	
-		    	if (registerOne) {
+		    	if (registerOne || register2DOne) {
                     timeNum = Integer.valueOf(textTimeExt.getText()).intValue();
 		    	}
 		    	
@@ -2223,7 +2251,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
                     }
                 }
 
-                if (!register2D) {
+                if (!(register2DOne || register2DAll)) {
 	                if (universalCheckbox.isSelected()) {
 	                    rotateBeginY = rotateBeginX;
 	                    rotateBeginZ = rotateBeginX;
@@ -2389,9 +2417,9 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	                            return false;
 	                        }
 	                    }
-                    } // (if !register2D)
+                    } // (if !(register2DOne || register2DAll))
                 } // else universalCheckbox not selected
-            } // if (registerOne || registerAll || register2D)
+            } // if (registerOne || registerAll || register2DOne || register2DAll)
 		    
 		    if(showAriMean || saveAriMean) {
     		    baseAriWeight = Double.valueOf(baseAriWeightText.getText()).doubleValue();
@@ -2440,7 +2468,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
             return false;
         }
 	      
-	    if (!(registerOne || registerAll || register2D)) {
+	    if (!(registerOne || registerAll || register2DOne || register2DAll)) {
     	    try {
     	        mtxFileLoc = mtxFileLocText.getText();
     	        File f = new File(mtxFileLoc);
@@ -2455,7 +2483,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     	    }
     	    transformFileDir = transformFileLocText.getText();
     	    baseFileDir = baseFileLocText.getText();
-	    } // if (!(registerOne || registerAll || register2D))
+	    } // if (!(registerOne || registerAll || register2DOne || register2DAll))
 	    else {
 	        mtxFileDirectory = mtxFileDirectoryText.getText();
 	        transformFileDir = transformFileLocText.getText();
@@ -2901,7 +2929,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
             }
         }
         
-        if (registerOne) {
+        if (registerOne || register2DOne) {
            timeIndex = -1;
            for (int i = 0; i < baseImageList.size(); i++) {
                int index = getIndex(baseImageList.get(i));
@@ -2914,7 +2942,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
                MipavUtil.displayError("Error in image number to register");
                return false;
            }
-        } // if (registerOne)
+        } // if (registerOne || register2DOne)
         
         FileCompare f = new FileCompare();
         Collections.sort(baseImageList, f);
