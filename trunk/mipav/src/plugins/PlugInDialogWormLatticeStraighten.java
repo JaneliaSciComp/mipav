@@ -711,7 +711,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
     		{
     			AlgorithmRegOAR3D reg = new AlgorithmRegOAR3D(prevImageA, destImage,
     					AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED, 6, 0,
-    					-30, 30, 15, 6, -30, 30, 15, 6, -30, 30, 15, 6, true, true, false, 
+    					-10, 10, 5, 2, -10, 10, 5, 2, -15, 15, 7, 2, true, true, true, 
     					false, 2, 3);
     			reg.setRunningInSeparateThread(false);
     			reg.run();
@@ -750,7 +750,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
     		{
     			AlgorithmRegOAR3D reg = new AlgorithmRegOAR3D(prevImageA, wormImageA, 
     					AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED, 6, 0,
-    					-30, 30, 15, 6, -30, 30, 15, 6, -30, 30, 15, 6, true, true, false, 
+    					-10, 10, 5, 2, -10, 10, 5, 2, -15, 15, 7, 2, true, true, true, 
     					false, 2, 3);
     			reg.setRunningInSeparateThread(false);
     			reg.run();
