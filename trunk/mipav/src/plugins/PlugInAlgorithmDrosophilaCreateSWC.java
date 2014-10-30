@@ -109,6 +109,13 @@ public class PlugInAlgorithmDrosophilaCreateSWC extends AlgorithmBase {
 			}
 		}
 		
+		if(axis == -1){
+			//We have a problem
+			System.err.println("No major axis found");
+			outputTextArea.append("No major axis found");
+			return null;
+		}
+		
 		int dir = 0;
 		
 		float first = allFilamentCoords_swc.get(0).get(0)[axis];
@@ -135,6 +142,9 @@ public class PlugInAlgorithmDrosophilaCreateSWC extends AlgorithmBase {
 
     	readFilamentFile_swc(filamentFile);
     	int[] axis = testBounds();
+    	if(axis == null){
+    		return;
+    	}
     	determineConnectivity1_swc(allFilamentCoords_swc);
     	determineAxon_swc(allFilamentCoords_swc, axis);
 		determineDistances_swc(allFilamentCoords_swc);
