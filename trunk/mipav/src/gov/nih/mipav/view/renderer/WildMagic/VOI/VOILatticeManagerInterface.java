@@ -193,11 +193,12 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 				latticeModel.showModel( );
 			}
 		} 
-		else if ( command.equals("ShowInterpolateModel") ) { 
-			if ( latticeModel != null )
+		else if ( command.equals("SegmentWorm") ) { 
+			if ( latticeModel == null )
 			{
-				latticeModel.showInterpolatedModel( );
+				latticeModel = new LatticeModel( m_kImageA, m_kImageB);
 			}
+			latticeModel.segmentWorm( );
 		} 
 		else if ( command.equals("StraightenLattice") ) {
 			if ( latticeModel != null )

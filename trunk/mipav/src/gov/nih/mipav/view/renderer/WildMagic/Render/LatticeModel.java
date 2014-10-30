@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmGaussianBlur;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
@@ -661,6 +662,7 @@ public class LatticeModel {
 		saveLatticeStatistics(imageA, length, left, right, leftDistances, rightDistances, "_before");
 		saveAnnotationStatistics( imageA, null, null, null, "_before");
 		
+//		segmentAll( imageA );
 
         // modify markers based on volume segmentation:
     	markerVolumes = new int[left.size()][2];
@@ -1465,6 +1467,112 @@ public class LatticeModel {
     		updateLattice(false);
     	}
     }
+	
+	public void segmentWorm()
+	{
+//		segmentAll(imageA);
+	}
+	
+	private void segmentAll( ModelImage image )
+	{
+		ModelImage blurs = blur(image, 9);
+		ModelImage blurb = blur(image, 11);
+
+    	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+    	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+    	int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+    	for ( int z = 0; z < dimZ; z++ )
+    	{
+    		for ( int y = 0; y < dimY; y++ )
+    		{
+    			for ( int x = 0; x < dimX; x++ )
+    			{
+    				blurb.set(x,  y, z, blurb.getFloat(x,y,z) - blurs.getFloat(x,y,z) );
+//        			if ( (x <= 10) || (x > dimX-10) || (y <= 10) || (y > dimY-10) || (z <= 10) || (z > dimZ-10) )
+//        			{
+//        				blurb.set(x, y, z, image.getMin() );
+//        			}
+    			}
+    		}
+    	}
+    	blurs.disposeLocal();
+    	blurs = null;
+    	blurb.calcMinMax();
+    	new ViewJFrameImage(blurb);
+    	
+
+    	String imageName = image.getImageName();
+    	if ( imageName.contains("_clone") )
+    	{
+    		imageName = imageName.replaceAll("_clone", "" );
+    	}
+		ModelImage markerSegmentation = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), imageName + "_markers.xml");
+		JDialogBase.updateFileInfo( image, markerSegmentation );		
+    	
+    	
+    	
+//    	double max = blur7.getMax();
+//    	Vector<Vector3f> seedList = new Vector<Vector3f>();
+//
+//    	for ( int z = 0; z < dimZ; z++ )
+//    	{
+//    		for ( int y = 0; y < dimY; y++ )
+//    		{
+//    			for ( int x = 0; x < dimX; x++ )
+//    			{
+//    				if ( blur7.getFloat(x,y,z) > (0.1f * max) )
+//    				{
+//    					seedList.add( new Vector3f(x,y,z) );
+//    				}
+//    			}
+//    		}
+//    	}
+//    	System.err.println( seedList.size() );
+//    	fill( image, markerSegmentation, (float) (0.1f * max), seedList );
+//    	
+//    	markerSegmentation.calcMinMax();
+//    	new ViewJFrameImage(markerSegmentation);
+	}
+	
+	private ModelImage blur(ModelImage image, int sigma)
+	{
+    	String imageName = image.getImageName();
+    	if ( imageName.contains("_clone") )
+    	{
+    		imageName = imageName.replaceAll("_clone", "" );
+    	}
+    	imageName = imageName + "_gblur";
+
+		float[] sigmas = new float[] { sigma, sigma, sigma * getCorrectionFactor(image) };
+		OpenCLAlgorithmGaussianBlur blurAlgo;
+
+		ModelImage resultImage = new ModelImage( image.getType(), image.getExtents(), imageName );
+		JDialogBase.updateFileInfo( image, resultImage );
+		blurAlgo = new OpenCLAlgorithmGaussianBlur(resultImage, image, 
+				sigmas, true, true, false);   
+
+		blurAlgo.setRed(true);
+		blurAlgo.setGreen(true);
+		blurAlgo.setBlue(true);
+		blurAlgo.run();
+
+		return blurAlgo.getDestImage();
+	}
+
+
+	/**
+	 * Returns the amount of correction which should be applied to the z-direction sigma (assuming that correction is
+	 * requested).
+	 *
+	 * @return  the amount to multiply the z-sigma by to correct for resolution differences
+	 */
+	private float getCorrectionFactor( ModelImage image ) {
+		int index = image.getExtents()[2] / 2;
+		float xRes = image.getFileInfo(index).getResolutions()[0];
+		float zRes = image.getFileInfo(index).getResolutions()[2];
+
+		return xRes / zRes;
+	}
 
 	public ModelImage segmentMarkers( ModelImage image, VOIContour left, VOIContour right, int[] markerIDs, int[][] markerVolumes, boolean segAll )
 	{
@@ -1776,6 +1884,86 @@ public class LatticeModel {
 			value = markerImage.getFloat(x,y,z);
 		}
 	}
+	
+
+    private int fill( ModelImage image, ModelImage model, float intensityMin, 
+    		Vector<Vector3f> seedList )
+    {
+    	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+    	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+    	int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+    	
+    	double averageValue = 0;
+    	int count = 0;
+
+    	
+    	while ( seedList.size() > 0 )
+    	{
+    		Vector3f seed = seedList.remove(0);
+    		
+    		int z = Math.round(seed.Z);
+    		int y = Math.round(seed.Y);
+    		int x = Math.round(seed.X);
+    		float value = model.getFloat(x,y,z);
+    		if ( value != 0 )
+    		{
+    			continue;
+    		}
+    		if ( image.isColorImage() )
+    		{
+    			value = image.getFloatC(x, y, z, 2);
+    		}
+    		else
+    		{
+    			value = image.getFloat(x, y, z);
+    		}
+			if ( (value >= intensityMin) )
+			{
+				for ( int z1 = Math.max(0, z-1); z1 <= Math.min(dimZ-1, z+1); z1++ )
+				{
+					for ( int y1 = Math.max(0, y-1); y1 <= Math.min(dimY-1, y+1); y1++ )
+					{
+						for ( int x1 = Math.max(0, x-1); x1 <= Math.min(dimX-1, x+1); x1++ )
+						{
+							if ( !((x == x1) && (y == y1) && (z == z1)) )
+							{
+								if ( image.isColorImage() )
+								{
+									value = image.getFloatC(x1, y1, z1, 2);
+								}
+								else
+								{
+									value = image.getFloat(x1, y1, z1);
+								}
+								if ( value >= intensityMin )
+								{
+									seedList.add( new Vector3f(x1,y1,z1) );
+								}
+							}
+						}
+					}
+				}
+				count++;
+				model.set(x, y, z, 1);
+	    		if ( image.isColorImage() )
+	    		{
+	    			value = image.getFloatC(x, y, z, 2);
+	    		}
+	    		else
+	    		{
+	    			value = image.getFloat(x, y, z);	    			
+	    		}
+				averageValue += value;
+			}
+    	}
+//    	if ( count != 0 )
+//    	{
+//    		averageValue /= (float)count;
+//    		System.err.println( "fill markers " + count + " " + (float)averageValue + " " + (float)(averageValue/image.getMax()) );
+//    	}
+    	return count;
+    }
+	
 	
 
     private int fill( ModelImage image, ModelImage gmImage, ModelImage model, float gmMin, float intensityMin, Vector3f centerPt, 
