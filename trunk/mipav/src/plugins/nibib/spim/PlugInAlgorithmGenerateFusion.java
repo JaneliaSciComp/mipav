@@ -91,7 +91,9 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
     
     private boolean registerAll = false;
     
-    private boolean register2D = false;
+    private boolean register2DOne = false;
+    
+    private boolean register2DAll = false;
     
     private File register2DFileDir = null;
 
@@ -215,7 +217,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
      * 
      * @param registerOne
      * @param registerAll
-     * @param register2D
+     * @param register2DOne
+     * @param register2DAll
      * @param register2DFileDir
      * @param rotateBeginX
      * @param rotateEndX
@@ -276,7 +279,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
      * @param baseRotation
      * @param transformRotation
      */
-    public PlugInAlgorithmGenerateFusion(final boolean registerOne, final boolean registerAll, final boolean register2D, 
+    public PlugInAlgorithmGenerateFusion(final boolean registerOne, final boolean registerAll, 
+    		final boolean register2DOne, final boolean register2DAll, 
     		final File register2DFileDir, final float rotateBeginX, final float rotateEndX,
             final float coarseRateX, final float fineRateX, final float rotateBeginY, final float rotateEndY,
             final float coarseRateY, final float fineRateY, final float rotateBeginZ, final float rotateEndZ,
@@ -297,7 +301,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             final int baseRotation, final int transformRotation) {
         this.registerOne = registerOne;
         this.registerAll = registerAll;
-        this.register2D = register2D;
+        this.register2DOne = register2DOne;
+        this.register2DAll = register2DAll;
         this.register2DFileDir = register2DFileDir;
         this.rotateBeginX = rotateBeginX;
         this.rotateEndX = rotateEndX;
@@ -505,6 +510,67 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                 return;
             }
         } // if (registerOne)
+        else if (register2DOne) {
+        	AlgorithmRegOAR2D regAlgo2D = null;
+            final FileIO io = new FileIO();
+            io.setQuiet(true);
+            io.setSuppressProgressBar(true);
+            io.setTIFFOrientation(false);
+            ModelImage baseImage = io.readImage(baseImageAr[timeIndex].getAbsolutePath());
+            for (int j = 0; j < 2; j++) {
+                baseImage.getFileInfo(0).setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, j);
+            }
+            final String baseImageName = baseImage.getImageName();
+            ModelImage transformImage = io.readImage(transformImageAr[timeIndex].getAbsolutePath());
+            for (int j = 0; j < 2; j++) {
+                transformImage.getFileInfo(0).setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, j);
+            }
+            final String transformImageName = transformImage.getImageName();
+            //baseImage.setResolutions(new float[] {(float) resX, (float) resY});
+            //transformImage.setResolutions(new float[] {(float) resX, (float) resY});
+        	final int cost = AlgorithmCostFunctions2D.CORRELATION_RATIO_SMOOTHED;
+            final int DOF = 6;
+            final int interp = AlgorithmTransform.BILINEAR;
+            final boolean doSubsample = true;
+            // Already in multithreads
+            final boolean doMultiThread  = Preferences.isMultiThreadingEnabled() && (ThreadUtil.getAvailableCores() > 1);
+            regAlgo2D = new AlgorithmRegOAR2D(baseImage, transformImage, cost, DOF, interp, rotateBeginX, rotateEndX,
+                    coarseRateX, fineRateX, doSubsample, doMultiThread);
+            regAlgo2D.run();
+            if (regAlgo2D.isCompleted()) {
+                final int xdimA = baseImage.getExtents()[0];
+                final int ydimA = baseImage.getExtents()[1];
+                final float xresA = baseImage.getFileInfo(0).getResolutions()[0];
+                final float yresA = baseImage.getFileInfo(0).getResolutions()[1];
+                final TransMatrix finalMatrix  = regAlgo2D.getTransform();
+                // Do not do finalMatrix.Inverse()
+                finalMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
+                final String costName = "CORRELATION_RATIO_SMOOTHED";
+                String message = "Using cost function, " + costName;
+                message += ", the cost is " + Double.toString(regAlgo2D.getCost()) + ".\n";
+                message += "Some registration settings: \n";
+                message += "Rotations from " + rotateBeginX + " to " + rotateEndX + ", ";
+                message += "with a coarse rate of " + coarseRateX + " and fine rate of " + fineRateX + ".\n";
+                mtxFileLoc = mtxFileDirectory + File.separator + transformImageName + "_To_" + baseImageName + ".mtx";
+                final int interp2 = AlgorithmTransform.BILINEAR;
+                final boolean pad = false;
+                System.out.println("finalMatrix = " + finalMatrix);
+                finalMatrix.saveMatrix(mtxFileLoc, interp2, xresA, yresA, 0.0f, xdimA, ydimA, 0, true, false, pad,
+                        message);
+                Preferences.debug("Saved " + mtxFileLoc + "\n", Preferences.DEBUG_FILEIO);
+                regAlgo2D.disposeLocal();
+                regAlgo2D = null;
+                baseImage.disposeLocal();
+                baseImage = null;
+                transformImage.disposeLocal();
+                transformImage = null;
+            } // if (regAlgo2D.isCompleted())
+            else {
+                MipavUtil.displayError("AlgorithmRegOAR2D did not complete successfully");
+                setCompleted(false);
+                return;
+            }
+        } // else if (register2DOne)
 
         final ThreadPoolExecutor exec = new ThreadPoolExecutor(concurrentNum, concurrentNum, 0L, TimeUnit.MILLISECONDS,
                 new LinkedBlockingQueue<Runnable>());
@@ -517,7 +583,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             io.setTIFFOrientation(false);
 
             final ModelImage baseImage = io.readImage(baseImageAr[i].getAbsolutePath());
-            if (register2D) {
+            if (register2DOne || register2DAll) {
                 for (int k = 0; k < 2; k++) {
                 	baseImage.getFileInfo(0).setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, k);	
                 }
@@ -531,7 +597,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             } // else 
             final ModelImage transformImage = io.readImage(transformImageAr[i].getAbsolutePath());
             io = null;
-            if (register2D) {
+            if (register2DOne || register2DAll) {
             	for (int k = 0; k < 2; k++) {
                 	transformImage.getFileInfo(0).setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, k);	
                 }	
@@ -848,7 +914,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             // fireProgressStateChanged(5, "Transform", "Rotating");
             System.out.println("Processing " + baseImage.getImageName() + " and " + transformImage.getImageName());
             
-            if (register2D) {
+            if (register2DOne || register2DAll) {
             	//baseImage.setResolutions(new float[] {(float) resX, (float) resY});
  	            //transformImage.setResolutions(new float[] {(float) resX, (float) resY});
             	final int[] dim = new int[transformImage.getExtents().length];
@@ -916,44 +982,88 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                 }
             	final boolean doPad = false;
                 TransMatrix xfrm = new TransMatrix(3);
-            	final int cost = AlgorithmCostFunctions2D.CORRELATION_RATIO_SMOOTHED;
-                final int DOF = 6;
                 final int interp = AlgorithmTransform.BILINEAR;
-                final boolean doSubsample = true;
-                // Already in multithreads
-                final boolean doMultiThread = false;
-                AlgorithmRegOAR2D regAlgo2D = new AlgorithmRegOAR2D(baseImage, transformImage, cost, DOF, interp, rotateBeginX, rotateEndX,
-                        coarseRateX, fineRateX, doSubsample, doMultiThread);
-                regAlgo2D.run();
-                if (regAlgo2D.isCompleted()) {
-                    final int xdimA = baseImage.getExtents()[0];
-                    final int ydimA = baseImage.getExtents()[1];
-                    final float xresA = baseImage.getFileInfo(0).getResolutions()[0];
-                    final float yresA = baseImage.getFileInfo(0).getResolutions()[1];
-                    xfrm = regAlgo2D.getTransform();
-                    // Do not do finalMatrix.Inverse()
-                    xfrm.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
-                    final String costName = "CORRELATION_RATIO_SMOOTHED";
-                    String message = "Using cost function, " + costName;
-                    message += ", the cost is " + Double.toString(regAlgo2D.getCost()) + ".\n";
-                    message += "Some registration settings: \n";
-                    message += "Rotations from " + rotateBeginX + " to " + rotateEndX + ", ";
-                    message += "with a coarse rate of " + coarseRateX + " and fine rate of " + fineRateX + ".\n";
-                    mtxFileLoc = mtxFileDirectory + File.separator + transformImageName + "_To_" + baseImageName + ".mtx";
-                    final int interp2 = AlgorithmTransform.BILINEAR;
-                    final boolean pad = false;
-                    System.out.println("xfrm = " + xfrm);
-                    xfrm.saveMatrix(mtxFileLoc, interp2, xresA, yresA, 0.0f, xdimA, ydimA, 0, true, false, pad,
-                            message);
-                    Preferences.debug("Saved " + mtxFileLoc + "\n", Preferences.DEBUG_FILEIO);
-                    regAlgo2D.disposeLocal();
-                    regAlgo2D = null;
-                } // if (regAlgo2D.isCompleted())
-                else {
-                    MipavUtil.displayError("AlgorithmRegOAR2D did not complete successfully");
-                    setCompleted(false);
-                    return false;
-                }
+                if (register2DAll) {
+	            	final int cost = AlgorithmCostFunctions2D.CORRELATION_RATIO_SMOOTHED;
+	                final int DOF = 6;
+	                final boolean doSubsample = true;
+	                // Already in multithreads
+	                final boolean doMultiThread = false;
+	                AlgorithmRegOAR2D regAlgo2D = new AlgorithmRegOAR2D(baseImage, transformImage, cost, DOF, interp, rotateBeginX, rotateEndX,
+	                        coarseRateX, fineRateX, doSubsample, doMultiThread);
+	                regAlgo2D.run();
+	                if (regAlgo2D.isCompleted()) {
+	                    final int xdimA = baseImage.getExtents()[0];
+	                    final int ydimA = baseImage.getExtents()[1];
+	                    final float xresA = baseImage.getFileInfo(0).getResolutions()[0];
+	                    final float yresA = baseImage.getFileInfo(0).getResolutions()[1];
+	                    xfrm = regAlgo2D.getTransform();
+	                    // Do not do finalMatrix.Inverse()
+	                    xfrm.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
+	                    final String costName = "CORRELATION_RATIO_SMOOTHED";
+	                    String message = "Using cost function, " + costName;
+	                    message += ", the cost is " + Double.toString(regAlgo2D.getCost()) + ".\n";
+	                    message += "Some registration settings: \n";
+	                    message += "Rotations from " + rotateBeginX + " to " + rotateEndX + ", ";
+	                    message += "with a coarse rate of " + coarseRateX + " and fine rate of " + fineRateX + ".\n";
+	                    mtxFileLoc = mtxFileDirectory + File.separator + transformImageName + "_To_" + baseImageName + ".mtx";
+	                    final int interp2 = AlgorithmTransform.BILINEAR;
+	                    final boolean pad = false;
+	                    System.out.println("xfrm = " + xfrm);
+	                    xfrm.saveMatrix(mtxFileLoc, interp2, xresA, yresA, 0.0f, xdimA, ydimA, 0, true, false, pad,
+	                            message);
+	                    Preferences.debug("Saved " + mtxFileLoc + "\n", Preferences.DEBUG_FILEIO);
+	                    regAlgo2D.disposeLocal();
+	                    regAlgo2D = null;
+	                } // if (regAlgo2D.isCompleted())
+	                else {
+	                    MipavUtil.displayError("AlgorithmRegOAR2D did not complete successfully");
+	                    setCompleted(false);
+	                    return false;
+	                }
+                } // if (register2DAll)
+                else if (register2DOne) {
+                	xfrm.identity();
+    	            if (mtxFileLoc == null) {
+    	                MipavUtil.displayError("mtxFileLoc = null");
+    	            }
+    	            try {
+    	                // search for file name relative to image first, then relative to MIPAV default, then absolute path
+    	                File file = null;
+    	
+    	                file = new File(transformImage.getImageDirectory() + mtxFileLoc);
+    	                if ( !file.exists()) {
+    	                    file = new File(ViewUserInterface.getReference().getDefaultDirectory() + mtxFileLoc);
+    	                }
+    	                if ( !file.exists()) {
+    	                    file = new File(mtxFileLoc);
+    	                }
+    	
+    	                final RandomAccessFile raFile = new RandomAccessFile(file, "r");
+    	
+    	                final int fileInterp[] = new int[1];
+    	                final float fileXres[] = new float[1];
+    	                final float fileYres[] = new float[1];
+    	                final float fileZres[] = new float[1];
+    	                final int fileXdim[] = new int[1];
+    	                final int fileYdim[] = new int[1];
+    	                final int fileZdim[] = new int[1];
+    	                final boolean filetVOI[] = new boolean[1];
+    	                final boolean fileClip[] = new boolean[1];
+    	                final boolean filePad[] = new boolean[1];
+    	                xfrm.readMatrix(raFile, fileInterp, fileXres, fileYres, fileZres, fileXdim, fileYdim, fileZdim,
+    	                        filetVOI, fileClip, filePad, false);
+    	                raFile.close();
+    	
+    	                // We don't know the coordinate system that the transformation represents. Therefore
+    	                // bring up a dialog where the user can ID the coordinate system changes (i.e.
+    	                // world coordinate and/or the "left-hand" coordinate system!
+    	                // new JDialogOrientMatrix(parentFrame, (JDialogBase) this);
+    	            } catch (final IOException error) {
+    	                MipavUtil.displayError("Matrix read error");
+    	                xfrm.identity();
+    	            }	
+                } // else if (register2DOne)
                 
                 final int units[] = new int[2];
                 units[0] = FileInfoBase.UNKNOWN_MEASURE;
@@ -1004,7 +1114,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
 	            options.setFileDirectory(register2DFileDir.getAbsolutePath() + File.separator);
                 options.setFileName(transformImage.getImageFileName());
                 io.writeImage(transformImage, options, false);
-            } // if (register2D)
+            } // if (register2DOne || register2DAll)
             else {
 	            baseImage.setResolutions(new float[] {(float) resX, (float) resY, (float) resZ});
 	            transformImage.setResolutions(new float[] {(float) resX, (float) resY, (float) resZ});
