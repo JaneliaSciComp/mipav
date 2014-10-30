@@ -5,6 +5,7 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBtoGray;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
+import java.awt.Color;
 import java.io.IOException;
 
 public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
@@ -135,6 +136,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 	// One example in reference 1 had 1 iteration of reinitialization and 4
 	// examples had 5 iterations of reinitialization.
 	//private int reinitializations = 0;
+    private ModelImage segImage = null;
 
 	
 	public AlgorithmActiveContoursWithoutEdges(ModelImage srcImg, int mask, int numIter, double mu, int method) {
@@ -305,6 +307,8 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 	    byte seg12[];
 	    byte seg21[];
 	    byte seg22[];
+	    ModelImage erodeImage;
+	    AlgorithmMorphology2D erodeAlgo;
         
         fireProgressStateChanged(srcImage.getImageName(), "Evolving the level set ...");
         
@@ -1211,7 +1215,10 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	    if (indicator) {
         	        break iloop2;    
         	    } // if (indicator)
+        	    
         	    // Re-initializations
+        	    reinitialization(phi1, 0.6, oXdim);
+        	    reinitialization(phi2, 0.6, oXdim);
         	} // for (n = 1; n <= numIter; n++)
         	// Make mask from SDF
 	    	// Get mask from levelset
@@ -1233,12 +1240,178 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 	    			}
 	    		}
 	    	} // for (i = 0; i < sliceSize; i++)
+	    	erodeImage = new ModelImage(ModelStorageBase.BYTE, extents, "erodeImage");
+        	try {
+        		erodeImage.importData(0, seg11, true);
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOException " + e + " on erodeImage.importData(0, seg11, true)");
+        		setCompleted(false);
+        		return;
+        	}
+	    	kernel = AlgorithmMorphology2D.SIZED_CIRCLE;
+        	circleDiameter = 3*erodeImage.getFileInfo()[0].getResolutions()[0];
+        	morphologyMethod = AlgorithmMorphology2D.ERODE;
+        	itersDilation = 0;
+        	itersErosion = 1;
+        	numPruningPixels = 0;
+        	edgingType = 0;
+        	erodeAlgo = new AlgorithmMorphology2D(erodeImage, kernel, circleDiameter, morphologyMethod, itersDilation,
+                    itersErosion, numPruningPixels, edgingType, wholeImage);
+            erodeAlgo.run();
+            erodeAlgo.finalize();
+            erodeAlgo = null;
+            VOIExtractionAlgo = new AlgorithmVOIExtraction(erodeImage);
+        	VOIExtractionAlgo.run();
+            
+            VOIVector kVOIs = erodeImage.getVOIs();
+            for (i = 0; i < kVOIs.size(); i++ )
+            {
+                VOI kCurrentGroup = kVOIs.get(i);
+                kCurrentGroup.setAllActive(true);
+                kCurrentGroup.setColor(Color.RED);
+            }
+            erodeImage.groupVOIs();
+            kVOIs = erodeImage.getVOIs();
+            //image.setVOIs(kVOIs);
+            image.addVOIs(kVOIs);
+        	try {
+        		erodeImage.importData(0, seg12, true);
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOException " + e + " on erodeImage.importData(0, seg12, true)");
+        		setCompleted(false);
+        		return;
+        	}
+        	erodeAlgo = new AlgorithmMorphology2D(erodeImage, kernel, circleDiameter, morphologyMethod, itersDilation,
+                    itersErosion, numPruningPixels, edgingType, wholeImage);
+            erodeAlgo.run();
+            erodeAlgo.finalize();
+            erodeAlgo = null;
+            try {
+        		erodeImage.exportData(0, sliceSize, seg12);
+        	}
+        	catch(IOException e) {
+        		MipavUtil.displayError("IOException " + e + " on erodeImage.exportData(0, sliceSize, seg12)");
+        		setCompleted(false);
+        		return;
+        	}
+            VOIExtractionAlgo = new AlgorithmVOIExtraction(erodeImage);
+        	VOIExtractionAlgo.run();
+            
+            kVOIs = erodeImage.getVOIs();
+            for (i = 0; i < kVOIs.size(); i++ )
+            {
+                VOI kCurrentGroup = kVOIs.get(i);
+                kCurrentGroup.setAllActive(true);
+                kCurrentGroup.setColor(Color.GREEN);
+            }
+            erodeImage.groupVOIs();
+            kVOIs = erodeImage.getVOIs();
+            //image.setVOIs(kVOIs);
+            image.addVOIs(kVOIs);
+        	try {
+        		erodeImage.exportData(0, sliceSize, seg12);
+        	}
+        	catch(IOException e) {
+        		MipavUtil.displayError("IOException " + e + " on erodeImage.exportData(0, sliceSize, seg12)");
+        		setCompleted(false);
+        		return;
+        	}
+        	try {
+        		erodeImage.importData(0, seg21, true);
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOException " + e + " on erodeImage.importData(0, seg21, true)");
+        		setCompleted(false);
+        		return;
+        	}
+        	erodeAlgo = new AlgorithmMorphology2D(erodeImage, kernel, circleDiameter, morphologyMethod, itersDilation,
+                    itersErosion, numPruningPixels, edgingType, wholeImage);
+            erodeAlgo.run();
+            erodeAlgo.finalize();
+            erodeAlgo = null;
+        	try {
+        		erodeImage.exportData(0, sliceSize, seg21);
+        	}
+        	catch(IOException e) {
+        		MipavUtil.displayError("IOException " + e + " on erodeImage.exportData(0, sliceSize, seg21)");
+        		setCompleted(false);
+        		return;
+        	}
+        	VOIExtractionAlgo = new AlgorithmVOIExtraction(erodeImage);
+        	VOIExtractionAlgo.run();
+            
+            kVOIs = erodeImage.getVOIs();
+            for (i = 0; i < kVOIs.size(); i++ )
+            {
+                VOI kCurrentGroup = kVOIs.get(i);
+                kCurrentGroup.setAllActive(true);
+                kCurrentGroup.setColor(Color.BLUE);
+            }
+            erodeImage.groupVOIs();
+            kVOIs = erodeImage.getVOIs();
+            //image.setVOIs(kVOIs);
+            image.addVOIs(kVOIs);
+        	try {
+        		erodeImage.importData(0, seg22, true);
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOException " + e + " on erodeImage.importData(0, seg22, true)");
+        		setCompleted(false);
+        		return;
+        	}
+        	erodeAlgo = new AlgorithmMorphology2D(erodeImage, kernel, circleDiameter, morphologyMethod, itersDilation,
+                    itersErosion, numPruningPixels, edgingType, wholeImage);
+            erodeAlgo.run();
+            erodeAlgo.finalize();
+            erodeAlgo = null;
+        	try {
+        		erodeImage.exportData(0, sliceSize, seg22);
+        	}
+        	catch(IOException e) {
+        		MipavUtil.displayError("IOException " + e + " on erodeImage.exportData(0, sliceSize, seg22)");
+        		setCompleted(false);
+        		return;
+        	}
+        	VOIExtractionAlgo = new AlgorithmVOIExtraction(erodeImage);
+        	VOIExtractionAlgo.run();
+            
+            kVOIs = erodeImage.getVOIs();
+            for (i = 0; i < kVOIs.size(); i++ )
+            {
+                VOI kCurrentGroup = kVOIs.get(i);
+                kCurrentGroup.setAllActive(true);
+                kCurrentGroup.setColor(Color.CYAN);
+            }
+            erodeImage.groupVOIs();
+            kVOIs = erodeImage.getVOIs();
+            //image.setVOIs(kVOIs);
+            image.addVOIs(kVOIs);
+        	erodeImage.disposeLocal();
+        	erodeImage = null;
+        	seg = new byte[sliceSize];
+        	for (i = 0; i < sliceSize; i++) {
+        		seg[i] = (byte)(seg11[i] + 2 * seg12[i] + 3 * seg21[i] + 4 * seg22[i]);
+        	}
+        	segImage = new ModelImage(ModelStorageBase.BYTE, extents, "segImage");
+        	try {
+        		segImage.importData(0, seg, true);
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOException " + e + " on segImage.importData(0, seg, true)");
+        		setCompleted(false);
+        		return;
+        	}
+        	new ViewJFrameImage(segImage);
+        	setCompleted(true);
+        	return;
         } // else if (method == multiphase)
         
 	}
 	
 	// Reinitialize the distance map for active contour
-	private double[] reinitialization(double D[], double dt, int xDim) {
+	private void reinitialization(double D[], double dt, int xDim) {
 		int sliceSize = D.length;
 	    int yDim = sliceSize/xDim;
 	    double T[] = new double[(xDim + 2)*(yDim + 2)];
@@ -1248,6 +1421,18 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 	    double b[] = new double[sliceSize];
 	    double c[] = new double[sliceSize];
 	    double d[] = new double[sliceSize];
+	    double ap[];
+	    double am[];
+	    double bp[];
+	    double bm[];
+	    double cp[];
+	    double cm[];
+	    double dp[];
+	    double dm[];
+	    int index;
+	    int i;
+	    double G[];
+	    double signD[];
 	    
 	    for (y = 0; y < yDim; y++) {
 	    	for (x = 0; x < xDim; x++) {
@@ -1264,7 +1449,62 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 	    }
 	    
 	    // Differences on all directions
-		return D;
+	    for (y = 0; y < yDim; y++) {
+	    	for (x = 0; x < xDim; x++) {
+	    		index = x + y * xDim;
+	    		a[index] = D[index] - T[x + 1 + y * (xDim + 2)];
+	    		b[index] = T[x + 1 + (y + 2) * (xDim + 2)] - D[index];
+	    		c[index] = D[index] - T[x + (y + 1) * (xDim+2)];
+	    		d[index] = T[x + 2 + (y + 1) * (xDim + 2)] - D[index];
+	    	}
+	    }
+	    T = null;
+	    ap = new double[sliceSize];
+	    am = new double[sliceSize];
+	    bp = new double[sliceSize];
+	    bm = new double[sliceSize];
+	    cp = new double[sliceSize];
+	    cm = new double[sliceSize];
+	    dp = new double[sliceSize];
+	    dm = new double[sliceSize];
+	    
+	    for (i = 0; i < sliceSize; i++) {
+	        ap[i] = Math.max(a[i], 0.0);
+	        am[i] = Math.min(a[i], 0.0);
+	        bp[i] = Math.max(b[i], 0.0);
+	        bm[i] = Math.min(b[i], 0.0);
+	        cp[i] = Math.max(c[i], 0.0);
+	        cm[i] = Math.min(c[i], 0.0);
+	        dp[i] = Math.max(d[i], 0.0);
+	        dm[i] = Math.min(d[i], 0.0);
+	    }
+	    a = null;
+	    b = null;
+	    c = null;
+	    d = null;
+	    G = new double[sliceSize];
+	    for (i = 0; i < sliceSize; i++) {
+	    	if (D[i] > 0.0) {
+	    		G[i] = Math.sqrt(Math.max(ap[i]*ap[i], bm[i]*bm[i]) + Math.max(cp[i]*cp[i],dm[i]*dm[i])) - 1.0;
+	    	}
+	    	if (D[i] < 0.0) {
+	    		G[i] = Math.sqrt(Math.max(am[i]*am[i],bp[i]*bp[i]) + Math.max(cm[i]*cm[i],dp[i]*dp[i])) - 1.0;
+	    	}
+	    }
+	    ap = null;
+	    am = null;
+	    bp = null;
+	    bm = null;
+	    cp = null;
+	    cm = null;
+	    dp = null;
+	    dm = null;
+	    signD = new double[sliceSize];
+	    for (i = 0; i < sliceSize; i++) {
+	    	signD[i] = D[i]/Math.sqrt(D[i]*D[i] + 1.0);
+	    	D[i] = D[i] - dt * signD[i] * G[i];
+	    }
+		return;
 	}
 	
 	    // Indicate whether we should perform further iterations or stop
