@@ -85,7 +85,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 	// and the other layer with holes (only works for method multiphase)
 	private static final int whole_small = 5;
 	
-	private int mask;
+	private int maskType;
 	
 	
 	// The total mumber of iterations
@@ -139,9 +139,9 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
     private ModelImage segImage = null;
 
 	
-	public AlgorithmActiveContoursWithoutEdges(ModelImage srcImg, int mask, int numIter, double mu, int method) {
+	public AlgorithmActiveContoursWithoutEdges(ModelImage srcImg, int maskType, int numIter, double mu, int method) {
 		super(null, srcImg);
-		this.mask = mask;
+		this.maskType = maskType;
 		this.numIter = numIter;
 		this.mu = mu;
 		this.method = method;
@@ -312,7 +312,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         
         fireProgressStateChanged(srcImage.getImageName(), "Evolving the level set ...");
         
-        if ((method == multiphase) && ((mask == small) || (mask == medium) || (mask == large))) {
+        if ((method == multiphase) && ((maskType == small) || (maskType == medium) || (maskType == large))) {
         	MipavUtil.displayError("multiphase requires 2 masks but only gets one");
         	setCompleted(false);
         	return;
@@ -394,7 +394,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             }
         } // if (image.isColorImage())
 		
-		if (mask == user) {
+		if (maskType == user) {
 	        VOIs = image.getVOIs();
 	        nVOI = VOIs.size();
 	
@@ -490,7 +490,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	return;
         }
         
-        if ((mask >= 1) && (mask <= 5)) {
+        if ((maskType >= 1) && (maskType <= 5)) {
             T = new double[sliceSize];
             for (y = 0; y < oYdim; y++) {
             	for (x = 0; x < oXdim; x++) {
@@ -545,22 +545,22 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             cx = (int)Math.round((double)sumX/(double)pixelsFound);
             cy = (int)Math.round((double)sumY/(double)pixelsFound);
             mask1 = new byte[sliceSize];
-            if ((mask == whole) || (mask == whole_small)) {	
+            if ((maskType == whole) || (maskType == whole_small)) {	
             	mask2 = new byte[sliceSize];
             }
            
-            if ((mask == small) || (mask == whole_small)) {
+            if ((maskType == small) || (maskType == whole_small)) {
             	r = 10;
             }
-            else if (mask == medium) {
+            else if (maskType == medium) {
             	r = Math.min(Math.min(cx, oXdim - cx - 1), Math.min(cy, oYdim - cy - 1));
             	r = Math.max(2*r/3, 25);
             }
-            else if (mask == large) {
+            else if (maskType == large) {
             	r = Math.min(Math.min(cx, oXdim - cx - 1), Math.min(cy, oYdim - cy - 1));
             	r = Math.max(2*r/3, 60);	
             }
-            if ((mask == small) || (mask == medium) || (mask == large) || (mask == whole_small)) {
+            if ((maskType == small) || (maskType == medium) || (maskType == large) || (maskType == whole_small)) {
             	r2 = r*r; 
                 for (y = 0; y < oYdim; y++) {
                 	diffy = y - cy;
@@ -569,7 +569,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
                 		diffx = x - cx;
                 		index = x + y * oXdim;
                 		if (diffx*diffx + dy2 < r2) {
-                			if (mask == whole_small) {
+                			if (maskType == whole_small) {
                 			    mask2[index] = 1;
                 			}
                 			else {
@@ -578,8 +578,8 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
                 		}
                 	}
                 }
-            } // if ((mask == small) || (mask == medium) || (mask == large) || (mask == whole_small)) 
-            if ((mask == whole) || (mask == whole_small)) {
+            } // if ((maskType == small) || (maskType == medium) || (maskType == large) || (maskType == whole_small)) 
+            if ((maskType == whole) || (maskType == whole_small)) {
             	r = 9;
             	siz = (int)Math.round(Math.ceil(Math.max(oXdim, oYdim)/2.0/(r+1.0))*3*(r+1));
             	m2 = new byte[siz * siz];
@@ -639,7 +639,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             			mask1[x + y * oXdim] = mcrop[x + y * oXdim];
             		}
             	}
-            	if (mask == whole) {
+            	if (maskType == whole) {
 	            	padSize = (int)Math.floor(2.0*r/3.0);
 	            	M = new byte[(oXdim + padSize) * (oYdim + padSize)];
 	            	for (y = 0; y < oYdim ; y++) {
@@ -652,9 +652,9 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 	            			mask2[x + y * oXdim] = M[x + padSize + (y + padSize) * (oXdim + padSize)];
 	            		}
 	            	}
-            	} // if (mask == whole)
-            } // if ((mask == whole) || (mask == whole_small))
-        } // if ((mask >= 1) && (mask <= 5))
+            	} // if (maskType == whole)
+            } // if ((maskType == whole) || (maskType == whole_small))
+        } // if ((maskType >= 1) && (maskType <= 5))
         
         // Core function
         if ((method == chan) || (method == vector)) {
