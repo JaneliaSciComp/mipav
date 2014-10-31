@@ -136,11 +136,10 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 	// One example in reference 1 had 1 iteration of reinitialization and 4
 	// examples had 5 iterations of reinitialization.
 	//private int reinitializations = 0;
-    private ModelImage segImage = null;
 
 	
-	public AlgorithmActiveContoursWithoutEdges(ModelImage srcImg, int maskType, int numIter, double mu, int method) {
-		super(null, srcImg);
+	public AlgorithmActiveContoursWithoutEdges(ModelImage destImg, ModelImage srcImg, int maskType, int numIter, double mu, int method) {
+		super(destImg, srcImg);
 		this.maskType = maskType;
 		this.numIter = numIter;
 		this.mu = mu;
@@ -845,6 +844,16 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	VOIExtractionAlgo.run();
             
             VOIVector kVOIs = maskImage.getVOIs();
+            if (kVOIs == null) {
+            	MipavUtil.displayError("maskImage.getVOIs() == null");
+            	setCompleted(false);
+            	return;
+            }
+            if (kVOIs.size() == 0) {
+            	MipavUtil.displayError("maskImage.getVOIs().size() == 0");
+            	setCompleted(false);
+            	return;
+            }
             for (i = 0; i < kVOIs.size(); i++ )
             {
                 VOI kCurrentGroup = kVOIs.get(i);
@@ -1394,16 +1403,14 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	for (i = 0; i < sliceSize; i++) {
         		seg[i] = (byte)(seg11[i] + 2 * seg12[i] + 3 * seg21[i] + 4 * seg22[i]);
         	}
-        	segImage = new ModelImage(ModelStorageBase.BYTE, extents, "segImage");
         	try {
-        		segImage.importData(0, seg, true);
+        		destImage.importData(0, seg, true);
         	}
         	catch (IOException e) {
-        		MipavUtil.displayError("IOException " + e + " on segImage.importData(0, seg, true)");
+        		MipavUtil.displayError("IOException " + e + " on destImage.importData(0, seg, true)");
         		setCompleted(false);
         		return;
         	}
-        	new ViewJFrameImage(segImage);
         	setCompleted(true);
         	return;
         } // else if (method == twophase)
