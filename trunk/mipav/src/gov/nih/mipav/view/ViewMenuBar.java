@@ -326,6 +326,7 @@ public class ViewMenuBar {
                         }),
                 menuBuilder.buildMenuItem("Scale saliency", "SCALE_SALIENCY", 0, null, false),
                 menuBuilder.makeMenu("Segmentation", false, new JMenuItem[] {
+                		menuBuilder.buildMenuItem("Active contours without edges", "ActiveContours", 0, null, false),
                         menuBuilder.buildMenuItem("Evaluate VOI segmentation", "evalSeg", 0, null, false),
 
                         // menuBuilder.buildMenuItem("Extract object surface",
@@ -1251,6 +1252,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Multispectral", false);
             menuBuilder.setMenuItemEnabled("Inhomogeneity N3 correction", false);
             menuBuilder.setMenuItemEnabled("Levelset", false);
+            menuBuilder.setMenuItemEnabled("ActiveContours", false);
             menuBuilder.setMenuItemEnabled("Levelset diffusion", false);
             menuBuilder.setMenuItemEnabled("Markov random field", false);
             menuBuilder.setMenuItemEnabled("Morphological", false);
@@ -1346,6 +1348,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Harris Laplace", false);
             menuBuilder.setMenuItemEnabled("Scale saliency", false);
             menuBuilder.setMenuItemEnabled("Entropic", false);
+            menuBuilder.setMenuItemEnabled("ActiveContours", false);
             
             menuBuilder.setMenuItemEnabled("Thinning", false);
             menuBuilder.setMenuItemEnabled("Markov random field", false);
