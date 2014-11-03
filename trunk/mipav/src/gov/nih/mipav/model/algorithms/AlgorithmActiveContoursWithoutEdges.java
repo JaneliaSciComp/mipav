@@ -830,27 +830,34 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 	        	if (phi0[i] <= 0.0) {
 	        		seg[i] = 1;
 	        	}
-	        } // for (i = 0; i < sliceSize; i++) 
-        	maskImage = new ModelImage(ModelStorageBase.BYTE, extents, "SegmentationImage");
+	        } // for (i = 0; i < sliceSize; i++)
         	try {
-        		maskImage.importData(0, seg, true);
+        		destImage.importData(0, seg, true);
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOException " + e + " on destImage.importData(0, seg, true)");
+        		setCompleted(false);
+        		return;
+        	}
+        	try {
+        		destImage.importData(0, seg, true);
         	}
         	catch (IOException e) {
         		MipavUtil.displayError("IOExcepion " + e + " on maskImage.importData(0, seg, true)");
         		setCompleted(false);
         		return;
         	}
-        	VOIExtractionAlgo = new AlgorithmVOIExtraction(maskImage);
+        	VOIExtractionAlgo = new AlgorithmVOIExtraction(destImage);
         	VOIExtractionAlgo.run();
             
-            VOIVector kVOIs = maskImage.getVOIs();
+            VOIVector kVOIs = destImage.getVOIs();
             if (kVOIs == null) {
-            	MipavUtil.displayError("maskImage.getVOIs() == null");
+            	MipavUtil.displayError("destImage.getVOIs() == null");
             	setCompleted(false);
             	return;
             }
             if (kVOIs.size() == 0) {
-            	MipavUtil.displayError("maskImage.getVOIs().size() == 0");
+            	MipavUtil.displayError("destImage.getVOIs().size() == 0");
             	setCompleted(false);
             	return;
             }
@@ -859,12 +866,10 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
                 VOI kCurrentGroup = kVOIs.get(i);
                 kCurrentGroup.setAllActive(true);
             }
-            maskImage.groupVOIs();
-            kVOIs = maskImage.getVOIs();
-            //image.setVOIs(kVOIs);
-            image.addVOIs(kVOIs);
-            maskImage.disposeLocal();
-            maskImage = null;
+            destImage.groupVOIs();
+            kVOIs = destImage.getVOIs();
+            image.setVOIs(kVOIs);
+            destImage.resetVOIs();
             setCompleted(true);
             return;
         } // if ((method == chan) || (method == vector))
@@ -1395,8 +1400,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             }
             erodeImage.groupVOIs();
             kVOIs = erodeImage.getVOIs();
-            //image.setVOIs(kVOIs);
-            image.addVOIs(kVOIs);
+            image.setVOIs(kVOIs);
         	erodeImage.disposeLocal();
         	erodeImage = null;
         	seg = new byte[sliceSize];
