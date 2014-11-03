@@ -308,10 +308,8 @@ public class JDialogActiveContoursWithoutEdges extends JDialogScriptableBase imp
        
 
             try {
-            	if (method == twophase) {
-                    String name = makeImageName(image.getImageName(), "_activeContours");
-                    resultImage = new ModelImage(ModelStorageBase.BYTE, image.getExtents(), name);
-            	}
+                String name = makeImageName(image.getImageName(), "_activeContours");
+                resultImage = new ModelImage(ModelStorageBase.BYTE, image.getExtents(), name);
 
                
                 // Make algorithm
