@@ -168,7 +168,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 		//boolean transformVOI = true;
 		//boolean clip = true;
 		//boolean pad = false;
-		ModelImage image;
+		ModelImage image = null;
 		int numFound = 0;
 		int n1 = -1;
 		int n2 = -2;
@@ -263,7 +263,6 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 	    double neww[];
 	    boolean indicator;
 	    byte seg[];
-	    ModelImage maskImage;
 	    AlgorithmVOIExtraction VOIExtractionAlgo;
 	    int nb1Num;
 	    int nb2Num;
@@ -321,29 +320,12 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         // Resize original image
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
-        // Resize scale
-        /*s = 200.0/Math.min(xDim,yDim);
-        if (s < 1.0) {
-        	xfrm = new TransMatrix(3);
-        	xfrm.identity();
-        	oXdim = (int)Math.round(xDim * s);
-            oYdim = (int)Math.round(yDim * s);
-            oXres = (srcImage.getFileInfo(0).getResolutions()[0] * xDim)/ oXdim;
-            oYres = (srcImage.getFileInfo(0).getResolutions()[1] * yDim)/ oYdim;
-        	transform = new AlgorithmTransform(srcImage, xfrm, AlgorithmTransform.BILINEAR, oXres, oYres, oXdim,
-                    oYdim, transformVOI, clip, pad);
-            transform.run();
-            image = transform.getTransformedImage();
-            image.calcMinMax();
-            transform.disposeLocal();
-            transform = null;
-        } // if (s < 1.0)
+        if (srcImage.isColorImage()) {
+            image = (ModelImage)srcImage.clone();
+        }
         else {
         	image = srcImage;
-        	oXdim = xDim;
-        	oYdim = yDim;
-        }*/
-        image = srcImage;
+        }
         oXdim = xDim;
         oYdim = yDim;
         sliceSize = oXdim * oYdim;
@@ -381,15 +363,15 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             	layer = 3;
             	
             }
+            maxR = (float)image.getMaxR();
+            maxG = (float)image.getMaxG();
+            maxB = (float)image.getMaxB();
+            gAlgo = new AlgorithmRGBtoGray(image, redValue, greenValue, blueValue, thresholdAverage, threshold, intensityAverage,
+            		equalRange, minR, maxR, minG, maxG, minB, maxB);
+            gAlgo.run();
+            gAlgo.finalize();
             if (method == chan) {
-	            maxR = (float)image.getMaxR();
-	            maxG = (float)image.getMaxG();
-	            maxB = (float)image.getMaxB();
-	            gAlgo = new AlgorithmRGBtoGray(image, redValue, greenValue, blueValue, thresholdAverage, threshold, intensityAverage,
-	            		equalRange, minR, maxR, minG, maxG, minB, maxB);
-	            gAlgo.run();
-	            gAlgo.finalize();
-	            layer = 1;
+                layer = 1;
             }
         } // if (image.isColorImage())
 		
@@ -417,7 +399,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 	        }
 	        
 	        if ((numFound == 2) && ((method == chan) || (method == vector))) {
-	        	MipavUtil.displayError("Found an impossible second VOI.CONTOUR for method == chen or method == vector");
+	        	MipavUtil.displayError("Found an impossible second VOI.CONTOUR for method == chan or method == vector");
 	        	setCompleted(false);
 	        	return;
 	        }
@@ -739,7 +721,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	    forceImage = new double[sliceSize];
         	    L = new double[sliceSize];
         	    for (i = 1; i <= layer; i++) {
-        	        if (image.isColorImage()) {
+        	        if (srcImage.isColorImage() && method != chan) {
         	        	if (i == 1) {
         	        		offset = firstColor;
         	        	}
@@ -750,24 +732,24 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	        		offset = 3;
         	        	}
         	        	try {
-        	                image.exportRGBDataNoLock(offset, 0, sliceSize, L);	
+        	                srcImage.exportRGBDataNoLock(offset, 0, sliceSize, L);	
         	        	}
         	        	catch (IOException e) {
-        	        		MipavUtil.displayError("IOException " + e + " on image.exportRGBDataNoLock(offset, 0, sliceSize, L)");
+        	        		MipavUtil.displayError("IOException " + e + " on srcImage.exportRGBDataNoLock(offset, 0, sliceSize, L)");
         	        		setCompleted(false);
         	        		return;
         	        	}
-        	        } // if (image.isColorImage())
+        	        } // if (srcImage.isColorImage() && method != chan)
         	        else {
         	        	try {
         	        	    image.exportData(0, sliceSize, L);
         	        	}
         	        	catch (IOException e) {
-        	        		MipavUtil.displayError("IOException " + e + " on image.exportData(0, sliceSize, L)");
+        	        		MipavUtil.displayError("IOException " + e + " on srcImage.exportData(0, sliceSize, L)");
         	        		setCompleted(false);
         	        		return;
-        	        	}
-        	        } // else
+        	        	}	
+        	        }
         	        sumLH = 0.0;
         	        sumL1mH = 0.0;
         	        Heav = Heaviside(phi0);
@@ -825,6 +807,10 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	        break iloop;    
         	    } // if (indicator)
         	} // for (n = 1; n <= numIter; n++)
+        	if (srcImage.isColorImage()) {
+    	    	image.disposeLocal();
+    	    	image = null;
+    	    }
         	// Get mask from levelset
         	for (i = 0; i < sliceSize; i++) {
 	        	if (phi0[i] <= 0.0) {
@@ -868,12 +854,16 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             }
             destImage.groupVOIs();
             kVOIs = destImage.getVOIs();
-            image.setVOIs(kVOIs);
+            srcImage.setVOIs(kVOIs);
             destImage.resetVOIs();
             setCompleted(true);
             return;
         } // if ((method == chan) || (method == vector))
         else if (method == twophase) {
+        	if (srcImage.isColorImage()) {
+        	    image.disposeLocal();
+        	    image = null;
+        	}
         	seg11 = new byte[sliceSize];
         	seg12 = new byte[sliceSize];
         	seg21 = new byte[sliceSize];
@@ -1068,26 +1058,35 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	    f_image22 = new double[sliceSize];
         	    L = new double[sliceSize];
         	    for (i = 0; i < layer; i++) {
-        	    	if (i == 0) {
+        	    	if (srcImage.isColorImage()) {
+        	    		if (i == 0) {
+        	        		offset = firstColor;
+        	        	}
+        	        	else if (i == 1) {
+        	        		offset = secondColor;
+        	        	}
+        	        	else {
+        	        		offset = 3;
+        	        	}
         	    		try {
-        	    		    image.exportRGBDataNoLock(firstColor, 0, sliceSize, L);
+        	    		    srcImage.exportRGBDataNoLock(offset, 0, sliceSize, L);
         	    		}
         	    		catch (IOException e) {
-        	    			MipavUtil.displayError("IOException " + e + " on image.exportRGBDataNoLock(firstColor, 0, sliceSize, L)");
+        	    			MipavUtil.displayError("IOException " + e + " on image.exportRGBDataNoLock(offset, 0, sliceSize, L)");
         	    			setCompleted(false);
         	    			return;
         	    		}
-        	    	} // if (i == 0)
+        	    	} // if (srcImage.isColorImage())
         	    	else {
-        	    		try {
-        	    		    image.exportRGBDataNoLock(secondColor, 0, sliceSize, L);
-        	    		}
-        	    		catch (IOException e) {
-        	    			MipavUtil.displayError("IOException " + e + " on image.exportRGBDataNoLock(secondColor, 0, sliceSize, L)");
-        	    			setCompleted(false);
-        	    			return;
-        	    		}	
-        	    	} // else
+        	        	try {
+        	        	    image.exportData(0, sliceSize, L);
+        	        	}
+        	        	catch (IOException e) {
+        	        		MipavUtil.displayError("IOException " + e + " on srcImage.exportData(0, sliceSize, L)");
+        	        		setCompleted(false);
+        	        		return;
+        	        	}	
+        	        }
         	    	c11 = 0.0;
         	    	if (c11Num == 0) {
         	    		c11 = epsilon;
@@ -1287,8 +1286,8 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             }
             erodeImage.groupVOIs();
             kVOIs = erodeImage.getVOIs();
-            //image.setVOIs(kVOIs);
-            image.addVOIs(kVOIs);
+            srcImage.resetVOIs();
+            srcImage.addVOIs(kVOIs);
         	try {
         		erodeImage.importData(0, seg12, true);
         	}
@@ -1322,8 +1321,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             }
             erodeImage.groupVOIs();
             kVOIs = erodeImage.getVOIs();
-            //image.setVOIs(kVOIs);
-            image.addVOIs(kVOIs);
+            srcImage.addVOIs(kVOIs);
         	try {
         		erodeImage.exportData(0, sliceSize, seg12);
         	}
@@ -1365,8 +1363,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             }
             erodeImage.groupVOIs();
             kVOIs = erodeImage.getVOIs();
-            //image.setVOIs(kVOIs);
-            image.addVOIs(kVOIs);
+            srcImage.addVOIs(kVOIs);
         	try {
         		erodeImage.importData(0, seg22, true);
         	}
@@ -1400,7 +1397,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             }
             erodeImage.groupVOIs();
             kVOIs = erodeImage.getVOIs();
-            image.setVOIs(kVOIs);
+            srcImage.addVOIs(kVOIs);
         	erodeImage.disposeLocal();
         	erodeImage = null;
         	seg = new byte[sliceSize];
