@@ -933,7 +933,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	}
         	phi1 = new double[sliceSize];
         	for (i = 0; i < sliceSize; i++) {
-        		phi1[i] = FGDist[i] + BGDist[i] + mask1[i] - 0.5;
+        		phi1[i] = FGDist[i] - BGDist[i] + mask1[i] - 0.5;
         	}
         	distImage.reallocate(ModelStorageBase.UBYTE);
         	try {
@@ -983,7 +983,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	}
         	phi2 = new double[sliceSize];
         	for (i = 0; i < sliceSize; i++) {
-        		phi2[i] = FGDist[i] + BGDist[i] + mask2[i] - 0.5;
+        		phi2[i] = FGDist[i] - BGDist[i] + mask2[i] - 0.5;
         	}
         	
         	// Main loop
