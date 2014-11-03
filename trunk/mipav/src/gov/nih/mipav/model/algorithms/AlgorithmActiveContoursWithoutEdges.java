@@ -715,7 +715,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	distImage = null;
         	phi0 = new double[sliceSize];
         	for (i = 0; i < sliceSize; i++) {
-        		phi0[i] = FGDist[i] + BGDist[i] + mask1[i] - 0.5;
+        		phi0[i] = FGDist[i] - BGDist[i] + mask1[i] - 0.5;
         	}
         	// Initial force, set to epsilon to avoid division by zeros
         	//force = epsilon;
