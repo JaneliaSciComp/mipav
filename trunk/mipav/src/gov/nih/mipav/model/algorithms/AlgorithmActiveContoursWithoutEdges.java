@@ -608,7 +608,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	// Get the distance map of the initial mask
         	distImage = new ModelImage(ModelStorageBase.UBYTE, extents, "distImage");
         	// AlgorithmMorphology2D requires BOOLEAN, BYTE, UBYTE, SHORT, or USHORT for entry 
-        	// Reallocated to float in AlgorithmMorphology2D distanceMapForShapeInterpolation
+        	// Reallocated to float in AlgorithmMorphology2D distanceMap
         	try {
         		distImage.importData(0, mask1, true);
         	}
@@ -663,11 +663,14 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	for (i = 0; i < sliceSize; i++) {
         		phi0[i] = FGDist[i] - BGDist[i] + mask1[i] - 0.5;
         	}
-        	// Initial force, set to epsilon to avoid division by zeros
-        	//force = epsilon;
+    
         	// End intialization
         	
-        	// Main loop
+        	L = new double[sliceSize];
+        	force = new double[sliceSize];
+        	old = new double[sliceSize];
+     	    neww = new double[sliceSize];
+     	    // Main loop
         	iloop: for (n = 1; n <= numIter; n++) {
         		inidx = 0;
             	outidx = 0;
@@ -681,9 +684,8 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	        	outidx++;
         	        }
         	    } // for (i = 0; i < sliceSize; i++)
-        	    // Initial image force for each layeer
+        	    // Initial image force for each layer
         	    forceImage = new double[sliceSize];
-        	    L = new double[sliceSize];
         	    for (i = 1; i <= layer; i++) {
         	        if (srcImage.isColorImage() && method != chan) {
         	        	if (i == 1) {
@@ -709,7 +711,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	        	    image.exportData(0, sliceSize, L);
         	        	}
         	        	catch (IOException e) {
-        	        		MipavUtil.displayError("IOException " + e + " on srcImage.exportData(0, sliceSize, L)");
+        	        		MipavUtil.displayError("IOException " + e + " on image.exportData(0, sliceSize, L)");
         	        		setCompleted(false);
         	        		return;
         	        	}	
@@ -730,8 +732,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	        }
         	    } // for (i = 1; i <= layer; i++)
         	    
-        	    // Calculate the external force of the image
-        	    force = new double[sliceSize];
+        	    // Calculate the external force of the image   
         	    maxKap = -Double.MAX_VALUE;
         	    kap = kappa(phi0, xDim);
         	    for (i = 0; i < sliceSize; i++) {
@@ -759,8 +760,6 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	    dt = 0.5;
         	    
         	    // Get parameters for checking whether to stop
-        	    old = new double[sliceSize];
-        	    neww = new double[sliceSize];
         	    for (i = 0; i < sliceSize; i++) {
         	    	old[i] = phi0[i];
         	    	phi0[i] = phi0[i] + dt * force[i];
@@ -770,7 +769,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	    if (indicator) {
         	        break iloop;    
         	    } // if (indicator)
-        	} // for (n = 1; n <= numIter; n++)
+        	} // iloop: for (n = 1; n <= numIter; n++)
         	if (srcImage.isColorImage()) {
     	    	image.disposeLocal();
     	    	image = null;
@@ -785,20 +784,14 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         		destImage.importData(0, seg, true);
         	}
         	catch (IOException e) {
-        		MipavUtil.displayError("IOException " + e + " on destImage.importData(0, seg, true)");
-        		setCompleted(false);
-        		return;
-        	}
-        	try {
-        		destImage.importData(0, seg, true);
-        	}
-        	catch (IOException e) {
         		MipavUtil.displayError("IOExcepion " + e + " on maskImage.importData(0, seg, true)");
         		setCompleted(false);
         		return;
         	}
         	VOIExtractionAlgo = new AlgorithmVOIExtraction(destImage);
         	VOIExtractionAlgo.run();
+        	VOIExtractionAlgo.finalize();
+        	VOIExtractionAlgo = null;
             
             VOIVector kVOIs = destImage.getVOIs();
             if (kVOIs == null) {
@@ -836,7 +829,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	// Get the distance map of the initial massk
         	distImage = new ModelImage(ModelStorageBase.UBYTE, extents, "distImage");
         	// AlgorithmMorphology2D requires BOOLEAN, BYTE, UBYTE, SHORT, or USHORT for entry 
-        	// Reallocated to float in AlgorithmMorphology2D distanceMapForShapeInterpolation
+        	// Reallocated to float in AlgorithmMorphology2D distanceMap
         	try {
         		distImage.importData(0, mask1, true);
         	}
@@ -940,6 +933,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         		phi2[i] = FGDist[i] - BGDist[i] + mask2[i] - 0.5;
         	}
         	
+        	L = new double[sliceSize];
         	// Main loop
         	iloop2: for (n = 1; n <= numIter; n++) {
         		nb1Num = 0;
@@ -1020,7 +1014,6 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	    f_image12 = new double[sliceSize];
         	    f_image21 = new double[sliceSize];
         	    f_image22 = new double[sliceSize];
-        	    L = new double[sliceSize];
         	    for (i = 0; i < layer; i++) {
         	    	if (srcImage.isColorImage()) {
         	    		if (i == 0) {
@@ -1036,7 +1029,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	    		    srcImage.exportRGBDataNoLock(offset, 0, sliceSize, L);
         	    		}
         	    		catch (IOException e) {
-        	    			MipavUtil.displayError("IOException " + e + " on image.exportRGBDataNoLock(offset, 0, sliceSize, L)");
+        	    			MipavUtil.displayError("IOException " + e + " on srcImage.exportRGBDataNoLock(offset, 0, sliceSize, L)");
         	    			setCompleted(false);
         	    			return;
         	    		}
@@ -1046,7 +1039,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	        	    image.exportData(0, sliceSize, L);
         	        	}
         	        	catch (IOException e) {
-        	        		MipavUtil.displayError("IOException " + e + " on srcImage.exportData(0, sliceSize, L)");
+        	        		MipavUtil.displayError("IOException " + e + " on image.exportData(0, sliceSize, L)");
         	        		setCompleted(false);
         	        		return;
         	        	}	
@@ -1095,7 +1088,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	    	// Force calculation and normalization force on each partition
         	    	Heav1 = Heaviside(phi1);
         	    	Heav2 = Heaviside(phi2);
-        	    	// Sum image force on all componentsw (used for vector image)
+        	    	// Sum image force on all components (used for vector image)
         	    	for (j = 0; j < sliceSize; j++) {
         	    	    f_image11[j] = (L[j] - c11) * (L[j] - c11) * Heav1[j] * Heav2[j] + f_image11[j];
         	    	    f_image12[j] = (L[j] - c12) * (L[j] - c12) * Heav1[j] * (1.0 - Heav2[j]) + f_image12[j];
@@ -1112,7 +1105,6 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	    	curvature[i] = mu * curvature[i];
         	    }
         	    curvature1 = new double[nb1Num];
-        	    nb1 = 0;
         	    for (i = 0; i < nb1Num; i++) {
         	    	curvature1[i] = curvature[nb1Index[i]];
         	    }
@@ -1136,7 +1128,6 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	    	curvature[i] = mu * curvature[i];
         	    }
         	    curvature2 = new double[nb2Num];
-        	    nb2 = 0;
         	    for (i = 0; i < nb2Num; i++) {
         	    	curvature2[i] = curvature[nb2Index[i]];
         	    }
@@ -1144,8 +1135,8 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	    fim2 = new double[nb2Num];
         	    maxfim2 = -Double.MAX_VALUE;
         	    for (i = 0; i < nb2Num; i++) {
-        	    	fim2[i] = (1.0/layer) * (-f_image11[nb2Index[i]] + f_image21[nb2Index[i]] -
-        	    			                 f_image12[nb2Index[i]] + f_image22[nb2Index[i]]);
+        	    	fim2[i] = (1.0/layer) * (-f_image11[nb2Index[i]] + f_image12[nb2Index[i]] -
+        	    			                 f_image21[nb2Index[i]] + f_image22[nb2Index[i]]);
         	    	if (Math.abs(fim2[i]) > maxfim2) {
         	    		maxfim2 = Math.abs(fim2[i]);
         	    	}
@@ -1238,8 +1229,18 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             erodeAlgo.run();
             erodeAlgo.finalize();
             erodeAlgo = null;
+            try {
+        		erodeImage.exportData(0, sliceSize, seg11);
+        	}
+        	catch(IOException e) {
+        		MipavUtil.displayError("IOException " + e + " on erodeImage.exportData(0, sliceSize, seg11)");
+        		setCompleted(false);
+        		return;
+        	}
             VOIExtractionAlgo = new AlgorithmVOIExtraction(erodeImage);
         	VOIExtractionAlgo.run();
+        	VOIExtractionAlgo.finalize();
+        	VOIExtractionAlgo = null;
             
             VOIVector kVOIs = erodeImage.getVOIs();
             for (i = 0; i < kVOIs.size(); i++ )
@@ -1275,6 +1276,8 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	}
             VOIExtractionAlgo = new AlgorithmVOIExtraction(erodeImage);
         	VOIExtractionAlgo.run();
+        	VOIExtractionAlgo.finalize();
+        	VOIExtractionAlgo = null;
             
             kVOIs = erodeImage.getVOIs();
             for (i = 0; i < kVOIs.size(); i++ )
@@ -1286,14 +1289,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             erodeImage.groupVOIs();
             kVOIs = erodeImage.getVOIs();
             srcImage.addVOIs(kVOIs);
-        	try {
-        		erodeImage.exportData(0, sliceSize, seg12);
-        	}
-        	catch(IOException e) {
-        		MipavUtil.displayError("IOException " + e + " on erodeImage.exportData(0, sliceSize, seg12)");
-        		setCompleted(false);
-        		return;
-        	}
+        	
         	try {
         		erodeImage.importData(0, seg21, true);
         	}
@@ -1317,6 +1313,8 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	}
         	VOIExtractionAlgo = new AlgorithmVOIExtraction(erodeImage);
         	VOIExtractionAlgo.run();
+        	VOIExtractionAlgo.finalize();
+        	VOIExtractionAlgo = null;
             
             kVOIs = erodeImage.getVOIs();
             for (i = 0; i < kVOIs.size(); i++ )
@@ -1351,6 +1349,8 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	}
         	VOIExtractionAlgo = new AlgorithmVOIExtraction(erodeImage);
         	VOIExtractionAlgo.run();
+        	VOIExtractionAlgo.finalize();
+        	VOIExtractionAlgo = null;
             
             kVOIs = erodeImage.getVOIs();
             for (i = 0; i < kVOIs.size(); i++ )
