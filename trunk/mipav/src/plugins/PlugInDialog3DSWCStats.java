@@ -23,7 +23,15 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.filechooser.FileFilter;
 
-
+/**
+ * New plugin for Akanni Clarke of the Giniger Lab. Conceptually similar to the 
+ * DrosophilaCreateSWC plugin written by Nish Pandya, this one also includes
+ * keeping track of statistics. These statistics are: branch order, number, and 
+ * length as well as the distance along the axon/parent that the branch
+ * originates from. 
+ * @author wangvg
+ *
+ */
 public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements AlgorithmInterface
 {
 
