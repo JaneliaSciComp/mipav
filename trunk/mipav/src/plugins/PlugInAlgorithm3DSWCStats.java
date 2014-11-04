@@ -50,10 +50,23 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 	@Override
 	public void runAlgorithm() {
 		
-		for(File f : surfaceFiles){
+		boolean allGood = true;
+		
+		loop:for(File f : surfaceFiles){
 			readSurfaceFile(f);
 			calculateDistances();
 			ArrayList<ArrayList<Integer>> forward = makeConnections();
+			
+			for(int i=1;i<swcCoordinates.size();i++){
+				ArrayList<float[]> fil = swcCoordinates.get(i);
+				if(fil.get(fil.size()-1)[4] == Float.NEGATIVE_INFINITY){
+					//No connection was made, something is wrong
+					System.err.println(f.getName() + " is not connected properly.");
+					allGood = false;
+					continue loop;
+				}
+			}
+			
 			int maxOrder = determineOrder(forward);
 			ArrayList<String> messages = consolidateFilaments(forward, maxOrder);
 			recalculateDistances();
@@ -61,12 +74,12 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 			try {
 				writeSWC(f, messages);
 			} catch (IOException e) {
-				MipavUtil.displayError("Cannot save to SWC file");
-				return;
+				System.err.println("Could not write SWC for " + f.getName());
+				allGood = false;
 			}
 		}
 
-		setCompleted(true);
+		setCompleted(allGood);
 
 		
 	}
@@ -609,7 +622,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 							 * Backwards connection (4)
 							 * Branch order (5)
 							 */
-							float[] coords = {coord_x,coord_y,coord_z,0,0,0};
+							float[] coords = {coord_x,coord_y,coord_z,0,Float.NEGATIVE_INFINITY,0};
 							
 							filamentCoords.add(coords);
 						}

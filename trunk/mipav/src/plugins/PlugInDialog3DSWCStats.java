@@ -73,24 +73,32 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 
 	@Override
 	public void algorithmPerformed(AlgorithmBase algorithm) {
-		if(algorithm instanceof PlugInAlgorithm3DSWCStats && algorithm.isCompleted()){
-			String fileText = textField.getText();
-			File file = new File(fileText);
-			
-			String message;
-			
-			if(file.isDirectory()){
-				message = "Converted files have been saved to "
-						+ fileText;
+		if(algorithm instanceof PlugInAlgorithm3DSWCStats){
+			if(algorithm.isCompleted()){
+				String fileText = textField.getText();
+				File file = new File(fileText);
+				
+				String message;
+				
+				if(file.isDirectory()){
+					message = "Converted files have been saved to "
+							+ fileText;
+				}else{
+					String parent = file.getParent();
+					String name = file.getName();
+					name = name.substring(0, name.lastIndexOf("."));
+					name += ".swc";
+					message = "Converted file has been saved to "
+							+ parent + File.separator + name + ".";
+				}
+				MipavUtil.displayInfo(message);
 			}else{
-				String parent = file.getParent();
-				String name = file.getName();
-				name = name.substring(0, name.lastIndexOf("."));
-				name += ".swc";
-				message = "Converted file has been saved to "
-						+ parent + File.separator + name + ".";
+				String message = "One or more files were unable to "
+						+ "complete conversion. Check debugging output"
+						+ "for more information.";
+				MipavUtil.displayError(message);
 			}
-			MipavUtil.displayInfo(message);
+			
 		}
 	}
 	
