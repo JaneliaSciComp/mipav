@@ -11,7 +11,15 @@ import java.util.TreeMap;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.view.MipavUtil;
 
-
+/**
+ * New plugin for Akanni Clarke of the Giniger Lab. Conceptually similar to the 
+ * DrosophilaCreateSWC plugin written by Nish Pandya, this one also includes
+ * keeping track of statistics. These statistics are: branch order, number, and 
+ * length as well as the distance along the axon/parent that the branch
+ * originates from. 
+ * @author wangvg
+ *
+ */
 public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 
 	private ArrayList<ArrayList<float[]>> swcCoordinates;
