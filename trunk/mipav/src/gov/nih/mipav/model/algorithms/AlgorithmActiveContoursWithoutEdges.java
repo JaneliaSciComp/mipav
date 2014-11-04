@@ -118,24 +118,6 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
     // epsilon = 2.2204460e-16
     // epsilon is called the largest relative spacing
     private double epsilon = Math.pow(2, -52);
-	
-	// The step space
-	//private double h = 1.0;
-	
-	// The time step
-	// A value of delt = 0.01 was used in 1 example in reference 1.
-	//private double delt = 0.1;
-	
-	//private double lambda1 = 1.0;
-	
-	//private double lambda2 = 1.0;
-	
-	// Area parameter was set to 0.02 * 255 * 255 in 1 example in reference 1
-	//private double nu = 0.0;
-	
-	// One example in reference 1 had 1 iteration of reinitialization and 4
-	// examples had 5 iterations of reinitialization.
-	//private int reinitializations = 0;
 
 	
 	public AlgorithmActiveContoursWithoutEdges(ModelImage destImg, ModelImage srcImg, int maskType, int numIter, double mu, int method) {
@@ -159,15 +141,6 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 		int index;
 		double c1;
 		double c2;
-		//AlgorithmTransform transform;
-		//TransMatrix xfrm;
-		int oXdim;
-		int oYdim;
-		//float oXres;
-		//float oYres;
-		//boolean transformVOI = true;
-		//boolean clip = true;
-		//boolean pad = false;
 		ModelImage image = null;
 		int numFound = 0;
 		int n1 = -1;
@@ -223,7 +196,6 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 		int numPruningPixels;
 		int edgingType;
 		boolean wholeImage = true;
-		byte mcrop[];
 		int xbase;
 		int ybase;
 		byte M[];
@@ -326,12 +298,10 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         else {
         	image = srcImage;
         }
-        oXdim = xDim;
-        oYdim = yDim;
-        sliceSize = oXdim * oYdim;
+        sliceSize = xDim * yDim;
         extents = new int[2];
-        extents[0] = oXdim;
-        extents[1] = oYdim;
+        extents[0] = xDim;
+        extents[1] = yDim;
         
         if (image.isColorImage()) {
             if (image.getMinR() == image.getMaxR()) {
@@ -473,36 +443,36 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         
         if ((maskType >= 1) && (maskType <= 5)) {
             T = new double[sliceSize];
-            for (y = 0; y < oYdim; y++) {
-            	for (x = 0; x < oXdim; x++) {
-            		index = x + y * oXdim;
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		index = x + y * xDim;
             		if (x >= 1) {
             			im1 = buffer[index-1];
             		}
             		else {
             			im1 = 0.0;
             		}
-            		if (x < oXdim - 1) {
+            		if (x < xDim - 1) {
             			ip1 = buffer[index+1];
             		}
             		else {
             			ip1 = 0.0;
             		}
             		if (y >= 1) {
-            			imxdim = buffer[index - oXdim];
+            			imxdim = buffer[index - xDim];
             		}
             		else {
             			imxdim = 0.0;
             		}
-            		if (y < oYdim - 1) {
-            			ipxdim = buffer[index + oXdim];
+            		if (y < yDim - 1) {
+            			ipxdim = buffer[index + xDim];
             		}
             		else {
             			ipxdim = 0;
             		}
             		T[index] = im1 + ip1 + imxdim + ipxdim - 4*buffer[index];
             	}
-            } // for (y = 0; y < oYdim; y++)
+            } // for (y = 0; y < yDim; y++)
             maxT = -Double.MAX_VALUE;
             for (i = 0; i < sliceSize; i++) {
                 if (Math.abs(T[i]) > maxT) {
@@ -513,16 +483,16 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             pixelsFound = 0;
             sumX = 0;
             sumY = 0;
-            for (y = 0; y < oYdim; y++) {
-            	for (x = 0; x < oXdim; x++) {
-            		index = x + y * oXdim;
-            		if (T[index] > thre) {
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		index = x + y * xDim;
+            		if (Math.abs(T[index]) > thre) {
             			pixelsFound++;
             			sumX += x;
             			sumY += y;
             		}
             	}
-            } // for (y = 0; y < oYdim; y++)
+            } // for (y = 0; y < yDim; y++)
             cx = (int)Math.round((double)sumX/(double)pixelsFound);
             cy = (int)Math.round((double)sumY/(double)pixelsFound);
             mask1 = new byte[sliceSize];
@@ -534,21 +504,21 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             	r = 10;
             }
             else if (maskType == medium) {
-            	r = Math.min(Math.min(cx, oXdim - cx - 1), Math.min(cy, oYdim - cy - 1));
+            	r = Math.min(Math.min(cx, xDim - cx - 1), Math.min(cy, yDim - cy - 1));
             	r = Math.max(2*r/3, 25);
             }
             else if (maskType == large) {
-            	r = Math.min(Math.min(cx, oXdim - cx - 1), Math.min(cy, oYdim - cy - 1));
+            	r = Math.min(Math.min(cx, xDim - cx - 1), Math.min(cy, yDim - cy - 1));
             	r = Math.max(2*r/3, 60);	
             }
             if ((maskType == small) || (maskType == medium) || (maskType == large) || (maskType == holes_small)) {
             	r2 = r*r; 
-                for (y = 0; y < oYdim; y++) {
+                for (y = 0; y < yDim; y++) {
                 	diffy = y - cy;
                 	dy2 = diffy * diffy;
-                	for (x = 0; x < oXdim; x++) {
+                	for (x = 0; x < xDim; x++) {
                 		diffx = x - cx;
-                		index = x + y * oXdim;
+                		index = x + y * xDim;
                 		if (diffx*diffx + dy2 < r2) {
                 			if (maskType == holes_small) {
                 			    mask2[index] = 1;
@@ -562,7 +532,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             } // if ((maskType == small) || (maskType == medium) || (maskType == large) || (maskType == holes_small)) 
             if ((maskType == holes) || (maskType == holes_small)) {
             	r = 9;
-            	siz = (int)Math.round(Math.ceil(Math.max(oXdim, oYdim)/2.0/(r+1.0))*3*(r+1));
+            	siz = (int)Math.round(Math.ceil(Math.max(xDim, yDim)/2.0/(r+1.0))*3*(r+1));
             	m2 = new byte[siz * siz];
             	sx = (int)Math.round(siz/2.0);
             	itop = (int)Math.round(siz/2.0/(r+1.0));
@@ -607,30 +577,24 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             	}
             	dilateImage.disposeLocal();
             	dilateImage = null;
-            	mcrop = new byte[sliceSize];
-            	xbase = (int)Math.round(siz/2.0 - oXdim/2.0 - 7);
-            	ybase = (int)Math.round(siz/2.0 - oYdim/2.0 - 7);
-            	for (y = 0; y < oYdim; y++) {
-            		for (x = 0; x < oXdim; x++) {
-            			mcrop[x + y * oXdim] = m2[x + xbase + (y + ybase) * siz];
-            		}
-            	}
-            	for (y = 0; y < oYdim; y++) {
-            		for (x = 0; x < oXdim; x++) {
-            			mask1[x + y * oXdim] = mcrop[x + y * oXdim];
+            	xbase = (int)Math.round(siz/2.0 - xDim/2.0 - 7);
+            	ybase = (int)Math.round(siz/2.0 - yDim/2.0 - 7);
+            	for (y = 0; y < yDim; y++) {
+            		for (x = 0; x < xDim; x++) {
+            			mask1[x + y * xDim] = m2[x + xbase + (y + ybase) * siz];
             		}
             	}
             	if (maskType == holes) {
 	            	padSize = (int)Math.floor(2.0*r/3.0);
-	            	M = new byte[(oXdim + padSize) * (oYdim + padSize)];
-	            	for (y = 0; y < oYdim ; y++) {
-	            	    for (x = 0; x < oXdim; x++) {
-	            	    	M[x + y * (oXdim + padSize)] = mcrop[x + y * oXdim];
+	            	M = new byte[(xDim + padSize) * (yDim + padSize)];
+	            	for (y = 0; y < yDim ; y++) {
+	            	    for (x = 0; x < xDim; x++) {
+	            	    	M[x + y * (xDim + padSize)] = mask1[x + y * xDim];
 	            	    }
 	            	}
-	            	for (y = 0; y < oYdim; y++) {
-	            		for (x = 0; x < oXdim; x++) {
-	            			mask2[x + y * oXdim] = M[x + padSize + (y + padSize) * (oXdim + padSize)];
+	            	for (y = 0; y < yDim; y++) {
+	            		for (x = 0; x < xDim; x++) {
+	            			mask2[x + y * xDim] = M[x + padSize + (y + padSize) * (xDim + padSize)];
 	            		}
 	            	}
             	} // if (maskType == holes)
@@ -769,7 +733,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	    // Calculate the external force of the image
         	    force = new double[sliceSize];
         	    maxKap = -Double.MAX_VALUE;
-        	    kap = kappa(phi0, oXdim);
+        	    kap = kappa(phi0, xDim);
         	    for (i = 0; i < sliceSize; i++) {
         	        if (Math.abs(kap[i]) > maxKap) {
         	        	maxKap = Math.abs(kap[i]);
@@ -1143,7 +1107,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	    // Calculate the external force of the image
         	    
         	    // Curvature on phi1
-        	    curvature = kappa(phi1, oXdim);
+        	    curvature = kappa(phi1, xDim);
         	    for (i = 0; i < sliceSize; i++) {
         	    	curvature[i] = mu * curvature[i];
         	    }
@@ -1167,7 +1131,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	    }
         	    
         	    // Curvature on phi2
-        	    curvature = kappa(phi2, oXdim);
+        	    curvature = kappa(phi2, xDim);
         	    for (i = 0; i < sliceSize; i++) {
         	    	curvature[i] = mu * curvature[i];
         	    }
@@ -1230,8 +1194,8 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	    } // if (indicator)
         	    
         	    // Re-initializations
-        	    reinitialization(phi1, 0.6, oXdim);
-        	    reinitialization(phi2, 0.6, oXdim);
+        	    reinitialization(phi1, 0.6, xDim);
+        	    reinitialization(phi2, 0.6, xDim);
         	} // for (n = 1; n <= numIter; n++)
         	// Make mask from SDF
 	    	// Get mask from levelset
