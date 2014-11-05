@@ -1,3 +1,4 @@
+import java.awt.Color;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -8,7 +9,12 @@ import java.util.Comparator;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-import javax.swing.JTextArea;
+import javax.swing.JTextPane;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 
@@ -29,9 +35,9 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 	
 	private String resolutionUnit;
 	
-	private JTextArea textArea;
+	private JTextPane textArea;
 	
-	public PlugInAlgorithm3DSWCStats(ArrayList<File> surfaces, String units, JTextArea textBox){
+	public PlugInAlgorithm3DSWCStats(ArrayList<File> surfaces, String units, JTextPane textBox){
 		super();
 		surfaceFiles = surfaces;
 		resolutionUnit = units;
@@ -43,12 +49,22 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 	@Override
 	public void runAlgorithm() {
 		
+		try {
+			textArea.getDocument().remove(0, textArea.getDocument().getLength());
+		} catch (BadLocationException e) {}
+		
 		boolean allGood = true;
+		SimpleAttributeSet attr = new SimpleAttributeSet();
+		StyleConstants.setFontFamily(attr, "Serif");
+		StyleConstants.setFontSize(attr, 12);
+		
+		SimpleAttributeSet redText = new SimpleAttributeSet(attr);
+		StyleConstants.setForeground(redText, Color.red);
+
 		
 		loop:for(File f : surfaceFiles){
 			
-			textArea.append("Reading " + f.getName() + "\n");
-			
+			append("Reading " + f.getName() + "\n", attr);
 			readSurfaceFile(f);
 			
 			calculateDistances();
@@ -58,7 +74,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				ArrayList<float[]> fil = swcCoordinates.get(i);
 				if(fil.get(0)[4] == Float.NEGATIVE_INFINITY){
 					//No connection was made, something is wrong
-					textArea.append(f.getName() + " is not connected properly.\n");
+					append(f.getName() + " is not connected properly.\n", redText);
 					allGood = false;
 					continue loop;
 				}
@@ -71,28 +87,37 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 			
 			try {
 				String output = writeSWC(f, messages, branchLengths);
-				textArea.append("Converted to SWC -> " + output + "\n");
+				append("Converted to SWC -> " + output + "\n", attr);
 			} catch (IOException e) {
-				textArea.append("Could not write SWC for " + f.getName() + "\n");
+				append("Could not write SWC for " + f.getName() + "\n", redText);
 				allGood = false;
 			}
 			try{
 				String output = exportStatsToCSV(f, messages, branchLengths);
-				textArea.append("Exported stats to CSV -> " + output + "\n");
+				append("Exported stats to CSV -> " + output + "\n", attr);
 			} catch (IOException e) {
-				textArea.append("Could not export stats to CSV for " + f.getName() + "\n");
+				append("Could not export stats to CSV for " + f.getName() + "\n", redText);
 				allGood = false;
 			}
 		}
 
 		if(allGood){
-			textArea.append("All conversions completed.");
+			append("All conversions completed.", attr);
 		}else{
-			textArea.append("Some conversions failed to complete.");
+			append("Some conversions failed to complete.", redText);
 		}
 		setCompleted(allGood);
 
 		
+	}
+	
+	private void append(String message, AttributeSet a){
+		Document doc = textArea.getDocument();
+		try {
+			doc.insertString(doc.getLength(), message, a);
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/**

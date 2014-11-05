@@ -9,6 +9,7 @@ import gov.nih.mipav.view.ViewUserInterface;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -18,6 +19,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -25,9 +27,10 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileFilter;
 
 /**
@@ -54,7 +57,7 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 	@SuppressWarnings("rawtypes")
 	private JComboBox resolutionUnits;
 	
-	private JTextArea textArea;
+	private JTextPane textArea;
 
 	public PlugInDialog3DSWCStats(){
 		super();
@@ -247,14 +250,18 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		
 		getContentPane().add(buttonPanel);
 		
+		JPanel debugPanel = new JPanel();
+		debugPanel.setLayout(new BoxLayout(debugPanel, BoxLayout.PAGE_AXIS));;
+		debugPanel.setForeground(Color.black);
+		debugPanel.setBorder(new TitledBorder(BorderFactory.createEmptyBorder(), "Debugging Output"));
 		
-		textArea = new JTextArea(10,5);
-		textArea.setEditable(false);
+		textArea = new JTextPane();
 		JScrollPane scrollPane = new JScrollPane(textArea);
+		scrollPane.setPreferredSize(new Dimension(100,200));
 		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		debugPanel.add(scrollPane);
 		
-		getContentPane().add(scrollPane);
-		
+		getContentPane().add(debugPanel);
 		
 		pack();
 		setVisible(true);
