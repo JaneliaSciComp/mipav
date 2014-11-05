@@ -6059,7 +6059,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		}
 		
 		float[] maxCoords = new float[3];
-		float[] minCoords = new float[]{999, 999, 999};
+		float[] minCoords = new float[]{Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
 		
 		//Determine bounding box in original coordinates
 		
@@ -6076,7 +6076,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		
 		float[] res = neuronImage.getResolutions(0);
 		float[] maxBox = new float[3];
-		float[] minBox = new float[]{999, 999, 999};
+		float[] minBox = new float[]{Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
 		
 		//transform original bounding box to determine
 		//bounding box in new coordinates
@@ -6201,6 +6201,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	                                final float[] ft = al_new.get(k);
 	                                if (ft == null || (ft != null && ft[3] > diffTotal)) {
 	                                    al_new.set(k, nCoords);
+	                                    System.out.println("Adjusting " + i + " " + k);
 	                                }
 	
 	                                // coords[3] = 1;
@@ -6493,7 +6494,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     		System.out.println(); 
     	}
 		
-		determineRadiiThreshold_swc(newFilamentCoords_swc);
+		//determineRadiiThreshold_swc(newFilamentCoords_swc);
 		
 		String outputFilename = oldSurfaceFile.getName().substring(0, oldSurfaceFile.getName().indexOf(".")) + ".swc";
 		output_swc(outputFilename,newFilamentCoords_swc);
