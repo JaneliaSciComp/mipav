@@ -18,12 +18,16 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.filechooser.FileFilter;
 
 /**
@@ -49,6 +53,8 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 	
 	@SuppressWarnings("rawtypes")
 	private JComboBox resolutionUnits;
+	
+	private JTextArea textArea;
 
 	public PlugInDialog3DSWCStats(){
 		super();
@@ -142,7 +148,7 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 			}
 		}
 		
-		PlugInAlgorithm3DSWCStats alg = new PlugInAlgorithm3DSWCStats(files, (String) resolutionUnits.getSelectedItem());
+		PlugInAlgorithm3DSWCStats alg = new PlugInAlgorithm3DSWCStats(files, (String) resolutionUnits.getSelectedItem(), textArea);
 		alg.addListener(this);
 		
 		if(isRunInSeparateThread()){
@@ -158,6 +164,9 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 	private void init(){
 		
 		setTitle("Imaris to 3D SWC with stats");
+		
+		getContentPane().removeAll();
+		getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.PAGE_AXIS));
 		
 		JPanel mainPanel = new JPanel(new GridBagLayout());
 		mainPanel.setForeground(Color.black);
@@ -214,7 +223,7 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		
 		mainPanel.add(browseButton, gbc);
 		
-		getContentPane().add(mainPanel, BorderLayout.NORTH);
+		getContentPane().add(mainPanel);
 		
 		JPanel resPanel = new JPanel();
 		resPanel.setForeground(Color.black);
@@ -222,7 +231,7 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		resPanel.add(resLabel);
 		resPanel.add(resolutionUnits);
 		
-		getContentPane().add(resPanel, BorderLayout.CENTER);
+		getContentPane().add(resPanel);
 		
 		buildOKCancelButtons();
 		
@@ -236,7 +245,16 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		buttonPanel.add(OKButton, BorderLayout.WEST);
 		buttonPanel.add(cancelButton, BorderLayout.EAST);
 		
-		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+		getContentPane().add(buttonPanel);
+		
+		
+		textArea = new JTextArea(10,5);
+		textArea.setEditable(false);
+		JScrollPane scrollPane = new JScrollPane(textArea);
+		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		
+		getContentPane().add(scrollPane);
+		
 		
 		pack();
 		setVisible(true);
