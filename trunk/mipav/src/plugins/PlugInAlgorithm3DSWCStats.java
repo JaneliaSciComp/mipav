@@ -71,16 +71,16 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 			
 			int maxOrder = determineOrder(forward);
 			ArrayList<String> messages = consolidateFilaments(forward, maxOrder);
-			recalculateDistances();
+			float[] branchLengths = recalculateDistances();
 			addToMessages(messages);
 			try {
-				writeSWC(f, messages);
+				writeSWC(f, messages, branchLengths);
 			} catch (IOException e) {
 				System.err.println("Could not write SWC for " + f.getName());
 				allGood = false;
 			}
 			try{
-				exportStatsToCSV(f, messages);
+				exportStatsToCSV(f, messages, branchLengths);
 			} catch (IOException e) {
 				System.err.println("Could not export stats to CSV for " + f.getName());
 				allGood = false;
@@ -137,7 +137,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		}
 	}
 	
-	private void exportStatsToCSV(File file, ArrayList<String> messages) throws IOException{
+	private void exportStatsToCSV(File file, ArrayList<String> messages, float[] branchLengths) throws IOException{
 		String parent = file.getParent();
 		String name = file.getName();
 		name = name.substring(0, name.lastIndexOf("."));
@@ -145,6 +145,14 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		File outputFile = new File(output);
 		
 		FileWriter fw = new FileWriter(outputFile);
+		
+		fw.append("Units," + resolutionUnit + "\n");
+		
+		String branchInfo = "";
+		branchInfo += "Total branch length," + String.valueOf(branchLengths[0]) + "\n";
+		branchInfo += "Minus axon," + String.valueOf(branchLengths[1]) + "\n\n";
+		
+		fw.append(branchInfo);
 		
 		String header = "Branch Number, Branch Order, Branch Length, Length along parent \n";
 		
@@ -203,7 +211,9 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 	 * distance along the axon/parent this branch
 	 * originates from. 
 	 */
-	private void recalculateDistances(){
+	private float[] recalculateDistances(){
+		//0 => Total branch length, 1=> Higher order branch length
+		float[] branchLengths = new float[2];
 		
 		for(int i=0;i<swcCoordinates.size();i++){
 			ArrayList<float[]> fil = swcCoordinates.get(i);
@@ -240,10 +250,19 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 					dist += diff*diff;
 				}
 				nextPt[3] = currPt[3] + (float)Math.sqrt(dist);
+				currPt = nextPt;
 			}
+			branchLengths[0] += currPt[3];
 			fil.get(0)[3] = parentLength;//head hold length along parent branch
 		}
+		
+		ArrayList<float[]> axon = swcCoordinates.get(0);
+		float axonLength = axon.get(axon.size()-1)[3];
+		branchLengths[1] = branchLengths[0] - axonLength;
+		
 		//Should now have length for all branches
+		
+		return branchLengths;
 	}
 	
 	/**
@@ -292,7 +311,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		return String.format(format, lineNum, type, line[0], line[1], line[2], 0.1F, (int)line[4]);
 	}
 	
-	private void writeSWC(File file, ArrayList<String> messages) throws IOException{
+	private void writeSWC(File file, ArrayList<String> messages, float[] branchLengths) throws IOException{
 		String parent = file.getParent();
 		String name = file.getName();
 		name = name.substring(0, name.lastIndexOf("."));
@@ -301,8 +320,11 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		
 		FileWriter fw = new FileWriter(outputFile);
 		
-		String header = "#-----------------------------------------------------------------\n"
-				+ "# Organization of branches is a such:\n"
+		String header = 
+				  "#-----------------------------------------------------------------\n"
+				+ "# SWC generated in MIPAV\n"
+				+ "#-----------------------------------------------------------------\n"
+				+ "# Organization of branches is as such:\n"
 				+ "# -Axon is the first filament written (and noted as such)\n"
 				+ "# -Branches are written in order of closest to its parent's\n"
 				+ "#  origin\n"
@@ -313,6 +335,10 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				+ "# originates and Branch 2 is the second closest child branch.\n"
 				+ "# Branch 1.1 is the closest child branch from where the\n"
 				+ "# first branch originated from.\n"
+				+ "#-----------------------------------------------------------------\n"
+				+ "# Branch Length Information\n"
+				+ "# Total branch length: " + String.valueOf(branchLengths[0]) + " " + resolutionUnit + "\n"
+				+ "# Minus axon: " + String.valueOf(branchLengths[1]) + " " + resolutionUnit + "\n"
 				+ "#-----------------------------------------------------------------\n"
 				+ "# Begin SWC Coordinates\n";
 
