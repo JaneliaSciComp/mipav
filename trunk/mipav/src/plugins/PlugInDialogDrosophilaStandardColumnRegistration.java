@@ -5,16 +5,14 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowEvent;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.TreeMap;
 
-
-
-
+import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -35,9 +33,11 @@ import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoImageXML;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ScrollCorrector;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 
@@ -52,7 +52,7 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
  * 
  * @author pandyan
  */
-public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBase implements AlgorithmInterface {
+public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogStandalonePlugin implements AlgorithmInterface {
 
 	/** grid bag constraints **/
 	private GridBagConstraints gbc;
@@ -353,6 +353,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         
 		scrollPane.getVerticalScrollBar().addAdjustmentListener(new ScrollCorrector());
 
+		
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.insets = new Insets(15,5,5,15);
@@ -360,22 +361,28 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         gbc.anchor = GridBagConstraints.EAST;
         mainPanel.add(imageLabel,gbc);
         gbc.gridx = 1;
+        //gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(imageFilePathTextField,gbc);
         gbc.gridx = 2;
+        //gbc.fill = GridBagConstraints.NONE;
         mainPanel.add(imageBrowseButton,gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         mainPanel.add(pointsLabel,gbc);
         gbc.gridx = 1;
+        //gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(pointsFilePathTextField,gbc);
         gbc.gridx = 2;
+        //gbc.fill = GridBagConstraints.NONE;
         mainPanel.add(pointsBrowseButton,gbc);
         gbc.gridx = 0;
         gbc.gridy = 2;
         mainPanel.add(surfaceLabel,gbc);
         gbc.gridx = 1;
+        //gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(surfaceFilePathTextField,gbc);
         gbc.gridx = 2;
+        //gbc.fill = GridBagConstraints.NONE;
         mainPanel.add(surfaceBrowseButton,gbc);
         gbc.gridx = 0;
         gbc.gridy = 3;
@@ -391,6 +398,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         mainPanel.add(searchLabel, gbc);
         gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 1;
+        //gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(searchField, gbc);
         
         gbc.anchor = GridBagConstraints.EAST;
@@ -427,8 +435,10 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         mainPanel.add(greenValueRadiusThresholdLabel,gbc);
         gbc.gridx = 1;
         gbc.anchor = GridBagConstraints.WEST;
+        //gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(greenValueRadiusThresholdTextField,gbc);
         gbc.anchor = GridBagConstraints.EAST;
+        //gbc.fill = GridBagConstraints.NONE;
         
         
         
@@ -437,8 +447,10 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         mainPanel.add(subsamplingDistanceLabel,gbc);
         gbc.gridx = 1;
         gbc.anchor = GridBagConstraints.WEST;
+        //gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(subsamplingDistanceTextField,gbc);
         gbc.anchor = GridBagConstraints.EAST;
+        //gbc.fill = GridBagConstraints.NONE;
         
         
         /*gbc.gridy = 10;
@@ -478,6 +490,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         gbc.gridx = 0;
         gbc.gridy = 12;
         gbc.gridwidth = 3;
+        //gbc.gridheight = GridBagConstraints.REMAINDER;
         mainPanel.add(scrollPane,gbc);
 
         JPanel OKCancelPanel = new JPanel();
@@ -491,11 +504,15 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
         
+        /*JPanel emptyPanel = new JPanel();
+        getContentPane().add(emptyPanel, BorderLayout.NORTH);*/
+        
         pack();
         setMinimumSize(getSize());
         
         setVisible(true);
         setResizable(false);
+        setVisibleMenuBar(false);
 
 	}
 	
@@ -597,7 +614,12 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 				 neuronImage.disposeLocal();
 				 neuronImage = null;
 			 }
-			 dispose();
+			 if (isExitRequired()) {
+		            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+		        } else {
+		        	dispose();
+		        }
+			 //dispose();
 		 } else {
              super.actionPerformed(e);
          }
