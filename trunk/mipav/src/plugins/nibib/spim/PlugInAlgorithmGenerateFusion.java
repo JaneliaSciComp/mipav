@@ -91,6 +91,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
     
     private boolean registerAll = false;
     
+    private boolean noRegister2D = false;
+    
     private boolean register2DOne = false;
     
     private boolean register2DAll = false;
@@ -217,6 +219,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
      * 
      * @param registerOne
      * @param registerAll
+     * @param noRegister2D
      * @param register2DOne
      * @param register2DAll
      * @param register2DFileDir
@@ -280,7 +283,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
      * @param transformRotation
      */
     public PlugInAlgorithmGenerateFusion(final boolean registerOne, final boolean registerAll, 
-    		final boolean register2DOne, final boolean register2DAll, 
+    		final boolean noRegister2D, final boolean register2DOne, final boolean register2DAll, 
     		final File register2DFileDir, final float rotateBeginX, final float rotateEndX,
             final float coarseRateX, final float fineRateX, final float rotateBeginY, final float rotateEndY,
             final float coarseRateY, final float fineRateY, final float rotateBeginZ, final float rotateEndZ,
@@ -301,6 +304,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             final int baseRotation, final int transformRotation) {
         this.registerOne = registerOne;
         this.registerAll = registerAll;
+        this.noRegister2D = noRegister2D;
         this.register2DOne = register2DOne;
         this.register2DAll = register2DAll;
         this.register2DFileDir = register2DFileDir;
@@ -583,7 +587,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             io.setTIFFOrientation(false);
 
             final ModelImage baseImage = io.readImage(baseImageAr[i].getAbsolutePath());
-            if (register2DOne || register2DAll) {
+            if (noRegister2D || register2DOne || register2DAll) {
                 for (int k = 0; k < 2; k++) {
                 	baseImage.getFileInfo(0).setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, k);	
                 }
@@ -597,7 +601,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             } // else 
             final ModelImage transformImage = io.readImage(transformImageAr[i].getAbsolutePath());
             io = null;
-            if (register2DOne || register2DAll) {
+            if (noRegister2D || register2DOne || register2DAll) {
             	for (int k = 0; k < 2; k++) {
                 	transformImage.getFileInfo(0).setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, k);	
                 }	
@@ -914,7 +918,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             // fireProgressStateChanged(5, "Transform", "Rotating");
             System.out.println("Processing " + baseImage.getImageName() + " and " + transformImage.getImageName());
             
-            if (register2DOne || register2DAll) {
+            if (noRegister2D || register2DOne || register2DAll) {
             	//baseImage.setResolutions(new float[] {(float) resX, (float) resY});
  	            //transformImage.setResolutions(new float[] {(float) resX, (float) resY});
             	final int[] dim = new int[transformImage.getExtents().length];
@@ -1022,7 +1026,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
 	                    return false;
 	                }
                 } // if (register2DAll)
-                else if (register2DOne) {
+                else if (noRegister2D || register2DOne) {
                 	xfrm.identity();
     	            if (mtxFileLoc == null) {
     	                MipavUtil.displayError("mtxFileLoc = null");
@@ -1063,7 +1067,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
     	                MipavUtil.displayError("Matrix read error");
     	                xfrm.identity();
     	            }	
-                } // else if (register2DOne)
+                } // else if (noRegister2D || register2DOne)
                 
                 final int units[] = new int[2];
                 units[0] = FileInfoBase.UNKNOWN_MEASURE;
@@ -1114,7 +1118,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
 	            options.setFileDirectory(register2DFileDir.getAbsolutePath() + File.separator);
                 options.setFileName(transformImage.getImageFileName());
                 io.writeImage(transformImage, options, false);
-            } // if (register2DOne || register2DAll)
+            } // if (noRegister2D || register2DOne || register2DAll)
             else {
 	            baseImage.setResolutions(new float[] {(float) resX, (float) resY, (float) resZ});
 	            transformImage.setResolutions(new float[] {(float) resX, (float) resY, (float) resZ});
