@@ -1,5 +1,7 @@
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
+import gov.nih.mipav.model.file.FileInfoBase.UnitType;
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -17,6 +19,7 @@ import java.io.FilenameFilter;
 import java.util.ArrayList;
 
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -43,6 +46,9 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 	private JTextField textField;
 	
 	private JFileChooser fileChooser;
+	
+	@SuppressWarnings("rawtypes")
+	private JComboBox resolutionUnits;
 
 	public PlugInDialog3DSWCStats(){
 		super();
@@ -136,7 +142,7 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 			}
 		}
 		
-		PlugInAlgorithm3DSWCStats alg = new PlugInAlgorithm3DSWCStats(files);
+		PlugInAlgorithm3DSWCStats alg = new PlugInAlgorithm3DSWCStats(files, (String) resolutionUnits.getSelectedItem());
 		alg.addListener(this);
 		
 		if(isRunInSeparateThread()){
@@ -148,12 +154,10 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		}
 	}
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void init(){
 		
 		setTitle("Imaris to 3D SWC with stats");
-		
-		JPanel blankPanel = new JPanel();
-		getContentPane().add(blankPanel, BorderLayout.NORTH);
 		
 		JPanel mainPanel = new JPanel(new GridBagLayout());
 		mainPanel.setForeground(Color.black);
@@ -169,6 +173,24 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		browseButton.setFont(serif12);
 		browseButton.addActionListener(this);
 		
+		JLabel resLabel = new JLabel("SWC Resolution Units");
+		resLabel.setFont(serif12);
+		
+		Unit[] allSame = UnitType.getUnitsOfType(UnitType.LENGTH);
+        int[] allSameMeasure = new int[allSame.length]; 
+        for(int i=0; i<allSameMeasure.length; i++) {
+            allSameMeasure[i] = allSame[i].getLegacyNum();
+        }
+        String[] unitArr = new String[allSameMeasure.length];
+        for(int i=0; i<allSameMeasure.length; i++) {
+        	Unit unit = Unit.getUnitFromLegacyNum(allSameMeasure[i]);
+        	unitArr[i] = unit.getAbbrev();
+        }
+		
+		resolutionUnits = new JComboBox(unitArr);
+		resolutionUnits.setSelectedItem("um");
+		resolutionUnits.setFont(serif12);
+		
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.gridx = 0;
 		gbc.gridy = 0;
@@ -182,15 +204,25 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		
 		gbc.gridy = 1;
 		gbc.weightx = 1;
+		gbc.gridwidth = 2;
 		
 		mainPanel.add(textField, gbc);
 		
-		gbc.gridx = 1;
+		gbc.gridx = 2;
 		gbc.weightx = 0;
+		gbc.gridwidth = 1;
 		
 		mainPanel.add(browseButton, gbc);
 		
 		getContentPane().add(mainPanel, BorderLayout.NORTH);
+		
+		JPanel resPanel = new JPanel();
+		resPanel.setForeground(Color.black);
+		
+		resPanel.add(resLabel);
+		resPanel.add(resolutionUnits);
+		
+		getContentPane().add(resPanel, BorderLayout.CENTER);
 		
 		buildOKCancelButtons();
 		
