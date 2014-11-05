@@ -8,6 +8,8 @@ import java.util.Comparator;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import javax.swing.JTextArea;
+
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 
 /**
@@ -23,28 +25,18 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 
 	private ArrayList<ArrayList<float[]>> swcCoordinates;
 	
-	//private File surfaceFile;
-	
 	private ArrayList<File> surfaceFiles;
 	
 	private String resolutionUnit;
 	
-	/*
-	 * Was only for singular run, but now designed for bulk runs
-	 * by choosing a directory
-	 */
+	private JTextArea textArea;
 	
-	/*public PlugInAlgorithm3DSWCStats(File surface){
-		super();
-		surfaceFile = surface;
-		swcCoordinates = new ArrayList<ArrayList<float[]>>();
-		
-	}*/
-	
-	public PlugInAlgorithm3DSWCStats(ArrayList<File> surfaces, String units){
+	public PlugInAlgorithm3DSWCStats(ArrayList<File> surfaces, String units, JTextArea textBox){
 		super();
 		surfaceFiles = surfaces;
 		resolutionUnit = units;
+		textArea = textBox;
+		
 		swcCoordinates = new ArrayList<ArrayList<float[]>>();
 	}
 	
@@ -54,6 +46,9 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		boolean allGood = true;
 		
 		loop:for(File f : surfaceFiles){
+			
+			textArea.append("Reading " + f.getName() + "\n");
+			
 			readSurfaceFile(f);
 			
 			calculateDistances();
@@ -63,7 +58,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				ArrayList<float[]> fil = swcCoordinates.get(i);
 				if(fil.get(0)[4] == Float.NEGATIVE_INFINITY){
 					//No connection was made, something is wrong
-					System.err.println(f.getName() + " is not connected properly.");
+					textArea.append(f.getName() + " is not connected properly.\n");
 					allGood = false;
 					continue loop;
 				}
@@ -73,20 +68,28 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 			ArrayList<String> messages = consolidateFilaments(forward, maxOrder);
 			float[] branchLengths = recalculateDistances();
 			addToMessages(messages);
+			
 			try {
-				writeSWC(f, messages, branchLengths);
+				String output = writeSWC(f, messages, branchLengths);
+				textArea.append("Converted to SWC -> " + output + "\n");
 			} catch (IOException e) {
-				System.err.println("Could not write SWC for " + f.getName());
+				textArea.append("Could not write SWC for " + f.getName() + "\n");
 				allGood = false;
 			}
 			try{
-				exportStatsToCSV(f, messages, branchLengths);
+				String output = exportStatsToCSV(f, messages, branchLengths);
+				textArea.append("Exported stats to CSV -> " + output + "\n");
 			} catch (IOException e) {
-				System.err.println("Could not export stats to CSV for " + f.getName());
+				textArea.append("Could not export stats to CSV for " + f.getName() + "\n");
 				allGood = false;
 			}
 		}
 
+		if(allGood){
+			textArea.append("All conversions completed.");
+		}else{
+			textArea.append("Some conversions failed to complete.");
+		}
 		setCompleted(allGood);
 
 		
@@ -137,7 +140,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		}
 	}
 	
-	private void exportStatsToCSV(File file, ArrayList<String> messages, float[] branchLengths) throws IOException{
+	private String exportStatsToCSV(File file, ArrayList<String> messages, float[] branchLengths) throws IOException{
 		String parent = file.getParent();
 		String name = file.getName();
 		name = name.substring(0, name.lastIndexOf("."));
@@ -203,6 +206,8 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		}
 		
 		fw.close();
+		
+		return output;
 	}
 	
 	/**
@@ -311,7 +316,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		return String.format(format, lineNum, type, line[0], line[1], line[2], 0.1F, (int)line[4]);
 	}
 	
-	private void writeSWC(File file, ArrayList<String> messages, float[] branchLengths) throws IOException{
+	private String writeSWC(File file, ArrayList<String> messages, float[] branchLengths) throws IOException{
 		String parent = file.getParent();
 		String name = file.getName();
 		name = name.substring(0, name.lastIndexOf("."));
@@ -357,6 +362,8 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		}
 		
 		fw.close();
+		
+		return output;
 	}
 	
 	/**
