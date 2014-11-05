@@ -1485,11 +1485,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 			int i;
 			boolean indicator = true;
 			int M1;
-			int ind1Index[];
 			int M2;
-			int ind2Index[];
-			int i1;
-			int i2;
 			double Q1 = 0.0;
 			double Q2 = 0.0;
 	        
@@ -1498,31 +1494,14 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 		    for (i = 0; i < sliceSize; i++) {
 		    	if (Math.abs(old[0][i]) < 1.0) {
 		    		M1++;
+		    		Q1 += Math.abs(neww[0][i] - old[0][i]);
 		    	}
 		    	if (Math.abs(old[1][i]) < 1.0) {
 		    		M2++;
+		    		Q2 += Math.abs(neww[1][i] - old[1][i]);
 		    	}
-		    }
-		    ind1Index = new int[M1];
-		    ind2Index = new int[M2];
-		    i1 = 0;
-		    i2 = 0;
-		    for (i = 0; i < sliceSize; i++) {
-		    	if (Math.abs(old[0][i]) < 1.0) {
-		    		ind1Index[i1++] = i;
-		    	}
-		    	if (Math.abs(old[1][i]) < 1.0) {
-		    		ind2Index[i2++] = i;
-		    	}
-		    }
-		    
-		    for (i = 0; i < M1; i++) {
-		        Q1 += Math.abs(neww[0][ind1Index[i]] -old[0][ind1Index[i]]);	
 		    }
 		    Q1 = Q1/M1;
-		    for (i = 0; i < M2; i++) {
-		        Q2 += Math.abs(neww[1][ind2Index[i]] -old[1][ind2Index[i]]);	
-		    }
 		    Q2 = Q2/M2;
 		    if ((Q1 <= dt * 0.18 * 0.18) && (Q2 <= dt * 0.18 * 0.18)) {
 		    	indicator = true;
