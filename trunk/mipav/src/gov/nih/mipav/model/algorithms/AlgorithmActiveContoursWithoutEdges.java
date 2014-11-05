@@ -1412,12 +1412,12 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 	    	}
 	    }
 	    for (x = 0; x < xDim + 2; x++) {
-	    	T[x] = 1.0;
-	    	T[x + (yDim+1)*(xDim+2)] = 1.0;
+	    	T[x] = 0.0;
+	    	T[x + (yDim+1)*(xDim+2)] = 0.0;
 	    }
 	    for (y = 0; y < yDim + 2; y++) {
-	    	T[y*(xDim+2)] = 1.0;
-	    	T[(xDim+1) + y*(xDim+2)] = 1.0;
+	    	T[y*(xDim+2)] = 0.0;
+	    	T[(xDim+1) + y*(xDim+2)] = 0.0;
 	    }
 	    
 	    // Differences on all directions
