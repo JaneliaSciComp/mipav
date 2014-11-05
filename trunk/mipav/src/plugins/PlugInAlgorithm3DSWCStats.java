@@ -9,7 +9,6 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.view.MipavUtil;
 
 /**
  * New plugin for Akanni Clarke of the Giniger Lab. Conceptually similar to the 
@@ -28,6 +27,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 	
 	private ArrayList<File> surfaceFiles;
 	
+	private String resolutionUnit;
 	
 	/*
 	 * Was only for singular run, but now designed for bulk runs
@@ -41,9 +41,10 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		
 	}*/
 	
-	public PlugInAlgorithm3DSWCStats(ArrayList<File> surfaces){
+	public PlugInAlgorithm3DSWCStats(ArrayList<File> surfaces, String units){
 		super();
 		surfaceFiles = surfaces;
+		resolutionUnit = units;
 		swcCoordinates = new ArrayList<ArrayList<float[]>>();
 	}
 	
@@ -54,12 +55,13 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		
 		loop:for(File f : surfaceFiles){
 			readSurfaceFile(f);
+			
 			calculateDistances();
 			ArrayList<ArrayList<Integer>> forward = makeConnections();
 			
 			for(int i=1;i<swcCoordinates.size();i++){
 				ArrayList<float[]> fil = swcCoordinates.get(i);
-				if(fil.get(fil.size()-1)[4] == Float.NEGATIVE_INFINITY){
+				if(fil.get(0)[4] == Float.NEGATIVE_INFINITY){
 					//No connection was made, something is wrong
 					System.err.println(f.getName() + " is not connected properly.");
 					allGood = false;
@@ -75,6 +77,12 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				writeSWC(f, messages);
 			} catch (IOException e) {
 				System.err.println("Could not write SWC for " + f.getName());
+				allGood = false;
+			}
+			try{
+				exportStatsToCSV(f, messages);
+			} catch (IOException e) {
+				System.err.println("Could not export stats to CSV for " + f.getName());
 				allGood = false;
 			}
 		}
@@ -114,15 +122,79 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		for(int i=0;i<messages.size();i++){
 			String message = messages.get(i);
 			ArrayList<float[]> fil = swcCoordinates.get(i);
-			message += String.format("#Branch Length: %3.5f \n", 
-					fil.get(fil.size()-1)[3]);
+			message += String.format("# Branch Length: %3.5f %s\n", 
+					fil.get(fil.size()-1)[3], resolutionUnit);
+			String parent;
 			if(i!=0){
-				message += String.format("#Length along parent branch: %3.5f \n"
-						, fil.get(0)[3]);
+				if(i==1)
+					parent = "axon";
+				else parent = "parent branch";
+				message += String.format("# Length along %s: %3.5f %s\n"
+						, parent, fil.get(0)[3], resolutionUnit);
 			}
 			message += "#------------------------------------\n";
 			messages.set(i, message);
 		}
+	}
+	
+	private void exportStatsToCSV(File file, ArrayList<String> messages) throws IOException{
+		String parent = file.getParent();
+		String name = file.getName();
+		name = name.substring(0, name.lastIndexOf("."));
+		String output = parent + File.separator + name + "_stats.csv";
+		File outputFile = new File(output);
+		
+		FileWriter fw = new FileWriter(outputFile);
+		
+		String header = "Branch Number, Branch Order, Branch Length, Length along parent \n";
+		
+		fw.append(header);
+		
+		for(String s : messages){
+			StringBuilder sb = new StringBuilder(30);
+			String[] rows = s.split("\n");
+			int rowNum = 1;
+			
+			//Write branch number (or axon);
+			String branch = rows[rowNum].replace("#", "").trim();
+			String[] branchSplit = branch.split(" ");
+			if(branchSplit.length == 1){
+				sb.append("Axon");
+				sb.append(",");
+				sb.append("0"); //Write axon
+				rowNum++;
+			}else{
+				sb.append(branchSplit[1]);
+				sb.append(",");
+				rowNum++;
+				//Write branch order
+				String order = rows[rowNum].replace("#", "").trim();
+				String[] orderSplit = order.split(" ");
+				sb.append(orderSplit[2]);
+				rowNum++;
+			}
+			sb.append(",");
+			
+			//Write length
+			String length = rows[rowNum].replace("#", "").trim();
+			String[] lengthSplit = length.split(" ");
+			sb.append(lengthSplit[2]);
+			sb.append(",");
+			rowNum++;
+			
+			//Write length along parent
+			if(branchSplit.length == 1){
+				sb.append("Axon");
+			}else{
+				String along = rows[rowNum].replace("#", "").trim();
+				String[] alongSplit = along.split(" ");
+				sb.append(alongSplit[alongSplit.length - 2]);
+			}
+			sb.append("\n");
+			fw.append(sb.toString());
+		}
+		
+		fw.close();
 	}
 	
 	/**
@@ -228,7 +300,24 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		File outputFile = new File(output);
 		
 		FileWriter fw = new FileWriter(outputFile);
+		
+		String header = "#-----------------------------------------------------------------\n"
+				+ "# Organization of branches is a such:\n"
+				+ "# -Axon is the first filament written (and noted as such)\n"
+				+ "# -Branches are written in order of closest to its parent's\n"
+				+ "#  origin\n"
+				+ "# -Higher order branches are given further identification\n"
+				+ "# \n"
+				+ "# For example: \n"
+				+ "# Branch 1 is the closest child branch of where the axon\n"
+				+ "# originates and Branch 2 is the second closest child branch.\n"
+				+ "# Branch 1.1 is the closest child branch from where the\n"
+				+ "# first branch originated from.\n"
+				+ "#-----------------------------------------------------------------\n"
+				+ "# Begin SWC Coordinates\n";
 
+		fw.append(header);
+		
 		int counter = 1;
 		
 		for(int i=0;i<swcCoordinates.size();i++){
@@ -317,15 +406,15 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				String message = "";
 				if(currentOrder == 0){
 					message = "#------------------------------------\n"
-							+ "#Axon\n";
+							+ "# Axon\n";
 				}else{
 					message = "#------------------------------------\n"
-							+ "#Branch " + String.valueOf(branchNumber[1] + 1);
+							+ "# Branch " + String.valueOf(branchNumber[1] + 1);
 					for(int i=2;i<=currentOrder;i++){
 						message += "." + String.valueOf(branchNumber[i] + 1);
 					}
 					message += "\n";
-					message += "#Branch Order: " + String.valueOf(currentOrder);
+					message += "# Branch Order: " + String.valueOf(currentOrder);
 					message += "\n";
 				}
 				
