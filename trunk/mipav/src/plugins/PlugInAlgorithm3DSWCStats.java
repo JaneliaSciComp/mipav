@@ -37,6 +37,8 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 	
 	private JTextPane textArea;
 	
+	private boolean disconnected;
+	
 	public PlugInAlgorithm3DSWCStats(ArrayList<File> surfaces, String units, JTextPane textBox){
 		super();
 		surfaceFiles = surfaces;
@@ -69,14 +71,29 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 			
 			calculateDistances();
 			ArrayList<ArrayList<Integer>> forward = makeConnections();
+			disconnected = false;
+			
 			
 			for(int i=1;i<swcCoordinates.size();i++){
 				ArrayList<float[]> fil = swcCoordinates.get(i);
 				if(fil.get(0)[4] == Float.NEGATIVE_INFINITY){
 					//No connection was made, something is wrong
-					append(f.getName() + " is not connected properly.\n", redText);
-					allGood = false;
-					continue loop;
+					disconnected = true;
+					break;
+				}
+			}
+			if(disconnected){
+				//Try version with tolerance
+				forward = makeConnectionsTol();
+				//Test out one more time
+				for(int i=1;i<swcCoordinates.size();i++){
+					ArrayList<float[]> fil = swcCoordinates.get(i);
+					if(fil.get(0)[4] == Float.NEGATIVE_INFINITY){
+						//No connection was made, something is wrong
+						append(f.getName() + " is not connected properly.\n", redText);
+						allGood = false;
+						continue loop;
+					}
 				}
 			}
 			
@@ -126,17 +143,50 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 	 * to determine the axon filaments. 
 	 */
 	private void calculateDistances(){
-		for(ArrayList<float[]> alf : swcCoordinates){
-			float[] currPt = alf.get(0);
-			for(int i=1;i<alf.size();i++){
-				float[] nextPt = alf.get(i);
-				float dist = 0;
-				for(int j=0;j<3;j++){
-					float diff = currPt[j] - nextPt[j];
-					dist += diff*diff;
+		if(disconnected){//Distance at head of filament is not 0
+			for(int i=0;i<swcCoordinates.size();i++){
+				ArrayList<float[]> fil = swcCoordinates.get(i);
+				if(i==0){
+					fil.get(0)[3] = 0;
+				}else{
+					float[] head = fil.get(0);
+					int c = (int) fil.get(0)[4]-1;
+					ArrayList<float[]> conn = swcCoordinates.get(c);
+					float[] tail = conn.get(conn.size()-1);
+					
+					
+					float dist = 0;
+					for(int j=0;j<3;j++){
+						float diff = tail[j] - head[j];
+						dist += diff*diff;
+					}
+					head[3] = (float)Math.sqrt(dist);
 				}
-				nextPt[3] = currPt[3] + (float)Math.sqrt(dist);
-				currPt = nextPt;
+				float[] currPt = fil.get(0);
+				for(int j=1;j<fil.size();j++){
+					float[] nextPt = fil.get(j);
+					float dist = 0;
+					for(int k=0;k<3;k++){
+						float diff = currPt[k] - nextPt[k];
+						dist += diff*diff;
+					}
+					nextPt[3] = currPt[3] + (float)Math.sqrt(dist);
+					currPt = nextPt;
+				}
+			}
+		}else{//Distance at head of filament is 0
+			for(ArrayList<float[]> alf : swcCoordinates){
+				float[] currPt = alf.get(0);
+				for(int i=1;i<alf.size();i++){
+					float[] nextPt = alf.get(i);
+					float dist = 0;
+					for(int j=0;j<3;j++){
+						float diff = currPt[j] - nextPt[j];
+						dist += diff*diff;
+					}
+					nextPt[3] = currPt[3] + (float)Math.sqrt(dist);
+					currPt = nextPt;
+				}
 			}
 		}
 	}
@@ -318,7 +368,52 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 			for(int j=0;j<i;j++){
 				fil = swcCoordinates.get(j);
 				float[] tail = fil.get(fil.size()-1);
+				
 				if(head[0] == tail[0] && head[1] == tail[1] && head[2] == tail[2]){
+					head[4] = j;
+					connections.get(j).add(i);
+					break;
+				}
+			}
+		}
+		
+		return connections;
+	}
+	
+	/**
+	 * Build both forward and backwards connections based on
+	 * the coordinates read from the Imaris trace. The 
+	 * backwards connection routine is taken from the 
+	 * Drosophila Registration algorithm written by
+	 * Nish Pandya. This version includes a tolerance because
+	 * the traces Akanni gave me do not overlap and thus need
+	 * to be connected a little more loosely.
+	 * @return
+	 */
+	private ArrayList<ArrayList<Integer>> makeConnectionsTol(){
+		
+		float tolerance = 0.15F;
+		
+		//Forward connections
+		ArrayList<ArrayList<Integer>> connections = new ArrayList<ArrayList<Integer>>();
+		for(int i=0;i<swcCoordinates.size();i++){
+			ArrayList<Integer> a = new ArrayList<Integer>();
+			connections.add(a);
+		}
+		swcCoordinates.get(0).get(0)[4] = -1;
+		for(int i=1;i<swcCoordinates.size();i++){
+			ArrayList<float[]> fil = swcCoordinates.get(i);
+			float[] head = fil.get(0);
+			for(int j=0;j<i;j++){
+				fil = swcCoordinates.get(j);
+				float[] tail = fil.get(fil.size()-1);
+				float dist = 0;
+				for(int k=0;k<3;k++){
+					float diff = head[k] - tail[k];
+					dist += diff*diff;
+				}
+				
+				if(dist < tolerance){//To deal with non-overlapping filaments
 					head[4] = j;
 					connections.get(j).add(i);
 					break;
@@ -402,6 +497,13 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 	 */
 	private ArrayList<String> consolidateFilaments(ArrayList<ArrayList<Integer>> connections, int maxOrder){
 		
+		int offset;
+		if(disconnected){
+			offset = 0;
+		}else{
+			offset = 1;
+		}
+		
 		ArrayList<ArrayList<float[]>> newFilaments = new ArrayList<ArrayList<float[]>>();
 		
 		ArrayList<float[]> current = new ArrayList<float[]>();
@@ -437,11 +539,11 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 			ArrayList<Integer> connected = connections.get(ind);
 			fil = swcCoordinates.get(ind);
 			float thisOrder = fil.get(0)[5];
-			float[] second = fil.get(1);
+			float[] second = fil.get(offset);
 			second[5] = thisOrder;
 			current.add(second);
 			counter++;
-			for(int i=2;i<fil.size();i++){
+			for(int i=offset+1;i<fil.size();i++){
 				float[] fa = fil.get(i);
 				fa[4] = counter;
 				fa[5] = thisOrder;
@@ -527,7 +629,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 					 */
 					int next = connected.get(i);
 					fil = swcCoordinates.get(next);
-					fil.get(1)[4] = counter;
+					fil.get(offset)[4] = counter;
 					int order = (int) (fil.get(0)[5] - 1);
 					if(i==0){
 						dequeList.get(order).addFirst(next);
