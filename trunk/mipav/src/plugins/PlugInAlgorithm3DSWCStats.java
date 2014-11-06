@@ -50,91 +50,100 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 	
 	@Override
 	public void runAlgorithm() {
-		
-		try {
-			textArea.getDocument().remove(0, textArea.getDocument().getLength());
-		} catch (BadLocationException e) {}
-		
 		boolean allGood = true;
 		SimpleAttributeSet attr = new SimpleAttributeSet();
 		StyleConstants.setFontFamily(attr, "Serif");
 		StyleConstants.setFontSize(attr, 12);
-		
-		SimpleAttributeSet redText = new SimpleAttributeSet(attr);
-		StyleConstants.setForeground(redText, Color.red);
 
-		
-		loop:for(File f : surfaceFiles){
-			
-			append("Reading " + f.getName() + "\n", attr);
-			readSurfaceFile(f);
-			
-			calculateDistances();
-			ArrayList<ArrayList<Integer>> forward = makeConnections();
-			disconnected = false;
-			
-			
-			for(int i=1;i<swcCoordinates.size();i++){
-				ArrayList<float[]> fil = swcCoordinates.get(i);
-				if(fil.get(0)[4] == Float.NEGATIVE_INFINITY){
-					//No connection was made, something is wrong
-					disconnected = true;
-					break;
-				}
-			}
-			if(disconnected){
-				//Try version with tolerance
-				forward = makeConnectionsTol();
-				//Test out one more time
+		SimpleAttributeSet redText = new SimpleAttributeSet(attr);
+		StyleConstants.setForeground(redText, Color.red.darker());
+		try{
+			try {
+				textArea.getDocument().remove(0, textArea.getDocument().getLength());
+			} catch (BadLocationException e) {}
+
+			loop:for(File f : surfaceFiles){
+
+				swcCoordinates.clear();
+				
+				append("Reading " + f.getName(), attr);
+				readSurfaceFile(f);
+				disconnected = false;
+				
+				ArrayList<ArrayList<Integer>> forward = makeConnections();
+
 				for(int i=1;i<swcCoordinates.size();i++){
 					ArrayList<float[]> fil = swcCoordinates.get(i);
 					if(fil.get(0)[4] == Float.NEGATIVE_INFINITY){
 						//No connection was made, something is wrong
-						append(f.getName() + " is not connected properly.\n", redText);
-						allGood = false;
-						continue loop;
+						disconnected = true;
+						break;
 					}
 				}
-			}
-			
-			int maxOrder = determineOrder(forward);
-			ArrayList<String> messages = consolidateFilaments(forward, maxOrder);
-			float[] branchLengths = recalculateDistances();
-			addToMessages(messages);
-			
-			try {
-				String output = writeSWC(f, messages, branchLengths);
-				append("Converted to SWC -> " + output + "\n", attr);
-			} catch (IOException e) {
-				append("Could not write SWC for " + f.getName() + "\n", redText);
-				allGood = false;
-			}
-			try{
-				String output = exportStatsToCSV(f, messages, branchLengths);
-				append("Exported stats to CSV -> " + output + "\n", attr);
-			} catch (IOException e) {
-				append("Could not export stats to CSV for " + f.getName() + "\n", redText);
-				allGood = false;
-			}
-		}
+				if(disconnected){
+					//Try version with tolerance
+					forward = makeConnectionsTol();
+					//Test out one more time
+					for(int i=1;i<swcCoordinates.size();i++){
+						ArrayList<float[]> fil = swcCoordinates.get(i);
+						if(fil.get(0)[4] == Float.NEGATIVE_INFINITY){
+							//No connection was made, something is wrong
+							append(f.getName() + " is not connected properly.", redText);
+							allGood = false;
+							continue loop;
+						}
+					}
+				}
+				
+				calculateDistances();
+				int maxOrder = determineOrder(forward);
+				ArrayList<String> messages = consolidateFilaments(forward, maxOrder);
+				float[] branchLengths = recalculateDistances();
+				addToMessages(messages);
 
-		if(allGood){
-			append("All conversions completed.", attr);
-		}else{
-			append("Some conversions failed to complete.", redText);
+				try {
+					String output = writeSWC(f, messages, branchLengths);
+					append("Converted to SWC -> " + output, attr);
+				} catch (IOException e) {
+					append("Could not write SWC for " + f.getName(), redText);
+					allGood = false;
+				}
+				try{
+					String output = exportStatsToCSV(f, messages, branchLengths);
+					append("Exported stats to CSV -> " + output, attr);
+				} catch (IOException e) {
+					append("Could not export stats to CSV for " + f.getName(), redText);
+					allGood = false;
+				}
+			}
+
+			if(allGood){
+				SimpleAttributeSet greenText = new SimpleAttributeSet(attr);
+				StyleConstants.setForeground(greenText, Color.green.darker());
+				append("All conversions completed.", greenText);
+			}else{
+				append("Some conversions failed to complete.", redText);
+			}
+
+		}catch(Exception e){
+			append("The following Java error has occured:", redText);
+			append(e.toString(), redText);
+			for(StackTraceElement t : e.getStackTrace())
+				append(t.toString(), redText);
+			allGood = false;
 		}
 		setCompleted(allGood);
-
-		
 	}
 	
 	private void append(String message, AttributeSet a){
 		Document doc = textArea.getDocument();
 		try {
-			doc.insertString(doc.getLength(), message, a);
+			doc.insertString(doc.getLength(), message + "\n", a);
 		} catch (BadLocationException e) {
 			e.printStackTrace();
 		}
+		
+		textArea.setCaretPosition(doc.getLength());
 	}
 	
 	/**
@@ -150,7 +159,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 					fil.get(0)[3] = 0;
 				}else{
 					float[] head = fil.get(0);
-					int c = (int) fil.get(0)[4]-1;
+					int c = (int) fil.get(0)[4];
 					ArrayList<float[]> conn = swcCoordinates.get(c);
 					float[] tail = conn.get(conn.size()-1);
 					

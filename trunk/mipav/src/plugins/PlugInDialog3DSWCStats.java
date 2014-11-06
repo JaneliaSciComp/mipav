@@ -255,10 +255,13 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		debugPanel.setForeground(Color.black);
 		debugPanel.setBorder(new TitledBorder(BorderFactory.createEmptyBorder(), "Debugging Output"));
 		
+		JPanel textPanel = new JPanel(new BorderLayout());
 		textArea = new JTextPane();
-		JScrollPane scrollPane = new JScrollPane(textArea);
+		textPanel.add(textArea, BorderLayout.CENTER);
+		JScrollPane scrollPane = new JScrollPane(textPanel);
 		scrollPane.setPreferredSize(new Dimension(100,200));
 		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		debugPanel.add(scrollPane);
 		
 		getContentPane().add(debugPanel);
