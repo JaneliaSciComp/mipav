@@ -78,7 +78,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 	// Create a large circular mask
 	private static final int large = 3;
 	
-	// Create a mask with holes around
+	// Create a mask with holes all over the mask
 	private static final int holes = 4;
 	
 	// Create a two layer mask with one layer small circular mask
@@ -382,10 +382,10 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 	
 	        for (i = 0; i < nVOI; i++) {
 	        	if (i == n1) {
-	        		VOIs.VOIAt(i).setActive(true);
+	        		VOIs.VOIAt(i).setAllActive(true);
 	        	}
 	        	else {
-	        		VOIs.VOIAt(i).setActive(false);
+	        		VOIs.VOIAt(i).setAllActive(false);
 	        	}
 	        }
 	        
@@ -408,10 +408,10 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 	        	mask2 = new byte[sliceSize];
 	        	for (i = 0; i < nVOI; i++) {
 		        	if (i == n2) {
-		        		VOIs.VOIAt(i).setActive(true);
+		        		VOIs.VOIAt(i).setAllActive(true);
 		        	}
 		        	else {
-		        		VOIs.VOIAt(i).setActive(false);
+		        		VOIs.VOIAt(i).setAllActive(false);
 		        	}
 		        }
 	        	IDOffset = 1;
@@ -661,7 +661,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	distImage = null;
         	phi0 = new double[sliceSize];
         	for (i = 0; i < sliceSize; i++) {
-        		phi0[i] = FGDist[i] - BGDist[i] + mask1[i] - 0.5;
+        		phi0[i] = BGDist[i] - FGDist[i] + mask1[i] - 0.5;
         	}
     
         	// End intialization
@@ -880,7 +880,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	}
         	phi1 = new double[sliceSize];
         	for (i = 0; i < sliceSize; i++) {
-        		phi1[i] = FGDist[i] - BGDist[i] + mask1[i] - 0.5;
+        		phi1[i] = BGDist[i] - FGDist[i] + mask1[i] - 0.5;
         	}
         	distImage.reallocate(ModelStorageBase.UBYTE);
         	try {
@@ -930,7 +930,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
         	}
         	phi2 = new double[sliceSize];
         	for (i = 0; i < sliceSize; i++) {
-        		phi2[i] = FGDist[i] - BGDist[i] + mask2[i] - 0.5;
+        		phi2[i] = BGDist[i] - FGDist[i] + mask2[i] - 0.5;
         	}
         	
         	L = new double[sliceSize];
