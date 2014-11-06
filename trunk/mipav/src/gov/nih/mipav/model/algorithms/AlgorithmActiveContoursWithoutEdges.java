@@ -70,15 +70,19 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 	private static final int user = 0;
 	
 	//Create a small circular mask
+	// Only for chan and vector methods
 	private static final int small = 1;
 	
 	// Create a medium circular mask
+	// Only for chan and vector methods
 	private static final int medium = 2;
 	
 	// Create a large circular mask
+	// Only for chan and vector methods
 	private static final int large = 3;
 	
 	// Create a mask with holes all over the mask
+	// Can be used in all methods
 	private static final int holes = 4;
 	
 	// Create a two layer mask with one layer small circular mask
@@ -496,7 +500,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             cx = (int)Math.round((double)sumX/(double)pixelsFound);
             cy = (int)Math.round((double)sumY/(double)pixelsFound);
             mask1 = new byte[sliceSize];
-            if ((maskType == holes) || (maskType == holes_small)) {	
+            if (method == twophase) {	
             	mask2 = new byte[sliceSize];
             }
            
@@ -584,7 +588,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
             			mask1[x + y * xDim] = m2[x + xbase + (y + ybase) * siz];
             		}
             	}
-            	if (maskType == holes) {
+            	if ((maskType == holes) && (method == twophase)) {
 	            	padSize = (int)Math.floor(2.0*r/3.0);
 	            	M = new byte[(xDim + padSize) * (yDim + padSize)];
 	            	for (y = 0; y < yDim ; y++) {
@@ -597,7 +601,7 @@ public class AlgorithmActiveContoursWithoutEdges extends AlgorithmBase  {
 	            			mask2[x + y * xDim] = M[x + padSize + (y + padSize) * (xDim + padSize)];
 	            		}
 	            	}
-            	} // if (maskType == holes)
+            	} // if ((maskType == holes) && (method == twophase))
             } // if ((maskType == holes) || (maskType == holes_small))
         } // if ((maskType >= 1) && (maskType <= 5))
         
