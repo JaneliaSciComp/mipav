@@ -70,7 +70,7 @@ public class JDialogActiveContoursWithoutEdges extends JDialogScriptableBase imp
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private JRadioButton mediumCircularMask;
+    private JRadioButton mediumCircularButton;
 
     /** DOCUMENT ME! */
     private JRadioButton largeCircularButton;
@@ -183,13 +183,19 @@ public class JDialogActiveContoursWithoutEdges extends JDialogScriptableBase imp
                 callAlgorithm();
             }
         } else if (source == channelButton) {
-            holesButton.setEnabled(false);
+        	smallCircularButton.setEnabled(true);
+        	mediumCircularButton.setEnabled(true);
+        	largeCircularButton.setEnabled(true);
             holesAndSmallCircularButton.setEnabled(false);
         } else if (source == vectorButton) {
-        	holesButton.setEnabled(false);
+        	smallCircularButton.setEnabled(true);
+        	mediumCircularButton.setEnabled(true);
+        	largeCircularButton.setEnabled(true);
             holesAndSmallCircularButton.setEnabled(false);
         } else if (source == twoPhaseButton) {
-        	holesButton.setEnabled(true);
+        	smallCircularButton.setEnabled(false);
+        	mediumCircularButton.setEnabled(false);
+        	largeCircularButton.setEnabled(false);
             holesAndSmallCircularButton.setEnabled(true);
         } else if (command.equals("Cancel")) {
             dispose();
@@ -469,10 +475,10 @@ public class JDialogActiveContoursWithoutEdges extends JDialogScriptableBase imp
         smallCircularButton.setForeground(Color.black);
         maskGroup.add(smallCircularButton);
 
-        mediumCircularMask = new JRadioButton("Medium circular mask", false);
-        mediumCircularMask.setFont(serif12);
-        mediumCircularMask.setForeground(Color.black);
-        maskGroup.add(mediumCircularMask);
+        mediumCircularButton = new JRadioButton("Medium circular mask", false);
+        mediumCircularButton.setFont(serif12);
+        mediumCircularButton.setForeground(Color.black);
+        maskGroup.add(mediumCircularButton);
 
         largeCircularButton = new JRadioButton("Large circular mask", false);
         largeCircularButton.setForeground(Color.black);
@@ -483,7 +489,7 @@ public class JDialogActiveContoursWithoutEdges extends JDialogScriptableBase imp
         holesButton.setForeground(Color.black);
         holesButton.setFont(serif12);
         maskGroup.add(holesButton);
-        holesButton.setEnabled(false);
+        holesButton.setEnabled(true);
         
         holesAndSmallCircularButton = new JRadioButton("2 layers - holes and small circle", false);
         holesAndSmallCircularButton.setForeground(Color.black);
@@ -500,7 +506,7 @@ public class JDialogActiveContoursWithoutEdges extends JDialogScriptableBase imp
         gbc.gridy = 1;
         maskPanel.add(smallCircularButton, gbc);
         gbc.gridy = 2;
-        maskPanel.add(mediumCircularMask, gbc);
+        maskPanel.add(mediumCircularButton, gbc);
         gbc.gridy = 3;
         maskPanel.add(largeCircularButton, gbc);
         gbc.gridy = 4;
@@ -566,7 +572,7 @@ public class JDialogActiveContoursWithoutEdges extends JDialogScriptableBase imp
             maskType = user;
         } else if (smallCircularButton.isSelected()) {
             maskType = small;
-        } else if (mediumCircularMask.isSelected()) {
+        } else if (mediumCircularButton.isSelected()) {
             maskType = medium;
         } else if (largeCircularButton.isSelected()) {
             maskType = large;
