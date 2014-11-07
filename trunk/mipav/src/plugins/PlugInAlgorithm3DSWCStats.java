@@ -5,9 +5,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Map.Entry;
-import java.util.TreeMap;
 
 import javax.swing.JTextPane;
 import javax.swing.text.AttributeSet;
@@ -98,7 +95,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				}
 				
 				calculateDistances();
-				int maxOrder = determineOrder2(forward);
+				int maxOrder = determineOrder(forward);
 				ArrayList<String> messages = consolidateFilaments(forward, maxOrder);
 				float[] branchLengths = recalculateDistances();
 				addToMessages(messages);
@@ -135,39 +132,6 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 			allGood = false;
 		}
 		setCompleted(allGood);
-	}
-	
-	private void writeIndividualFilaments(File file) throws IOException{
-		String parent = file.getParent();
-		String name = file.getName();
-		name = name.substring(0, name.lastIndexOf("."));
-		String output = parent + File.separator + name + "_part_%d.swc";
-		
-		for(int i=0;i<swcCoordinates.size();i++){
-			File outputFile = new File(String.format(output, i));
-		
-			FileWriter fw = new FileWriter(outputFile);
-			
-			int counter = 1;
-			
-			ArrayList<float[]> fil = swcCoordinates.get(i);
-			float[] fa = fil.get(0);
-			float[] fo = new float[fa.length];
-			System.arraycopy(fa, 0, fo, 0, fa.length);
-			fo[4] = -1;
-			
-			fw.append(formatSWCLine(counter, fo));
-			
-			for(int j=1;j<fil.size();j++, counter++){
-				fa = fil.get(j);
-				System.arraycopy(fa, 0, fo, 0, fa.length);
-				fo[4] = counter;
-				fw.append(formatSWCLine(counter+1, fo));
-			}
-			
-			fw.close();
-		}
-		
 	}
 	
 	private void append(String message, AttributeSet a){
@@ -690,175 +654,18 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		return messages;
 	}
 	
-	/**
-	 * Three pass process to determine branch ordering and which filaments
-	 * are the axon. Determines by finding the longest path from the first
-	 * filament. 
-	 * @param connections
-	 */
-	private int determineOrder(ArrayList<ArrayList<Integer>> connections){
-		
-		ArrayDeque<Integer> queue = new ArrayDeque<Integer>();
-		
-		ArrayList<float[]> fil = swcCoordinates.get(0);
-		float[] head = fil.get(0);
-		float[] tail = fil.get(fil.size()-1);
-		float dist = tail[3];
-		
-		int maxOrder = 1;
-		
-		ArrayList<Integer> branches = connections.get(0);
-		for(int i : branches){
-			queue.add(i);
-			fil = swcCoordinates.get(i);
-			fil.get(0)[3] = dist;
-		}
-		
-		TreeMap<Float, Integer> tmap = new TreeMap<Float, Integer>(new Comparator<Float>(){
-			@Override
-			public int compare(Float o1, Float o2) {
-				float f1 = o1.floatValue();
-				float f2 = o2.floatValue();
-				if(f1 > f2)
-					return -1;
-				else if(f1 < f2) 
-					return 1;
-				else
-					return 0;
-			}
-		});
-		
-		/* 
-		 * Pass 1
-		 * Accumulate the length of each filament. At the head
-		 * of the filament, store the cumulative length for 
-		 * later use. Once a tip has been reached, put the 
-		 * length to that tip in a tree map.
-		 * 
-		 * Pretty much a BFS as the ArrayDeque is used as a queue
-		 */
-		while(!queue.isEmpty()){
-			int i = queue.poll();
-			fil = swcCoordinates.get(i);
-			head = fil.get(0);
-			tail = fil.get(fil.size()-1);
-			dist = tail[3] + head[3];
-			head[3] = dist;
-			branches = connections.get(i);
-			if(branches.isEmpty()){
-				tmap.put(dist, i);
-				tail[3] = dist;
-			}
-			for(int j : branches){
-				queue.add(j);
-				fil = swcCoordinates.get(j);
-				fil.get(0)[3] = dist;
-			}
-		}
-		
-		/*
-		 * Pass 2
-		 * Tree map is based on length to the tips. Working
-		 * backwards from the furthest points to the closest
-		 * points should increase efficiency. 
-		 * 
-		 * Trace back from the tips and replace the tail
-		 * length values to the length at the tip. If you
-		 * are tracing backwards and the connected filament
-		 * already has been reached by a longer filament 
-		 * (which should always be the case because of the
-		 * tree map), then move on to the next tip.
-		 * 
-		 * Rearrange forward connections so that the first one
-		 * in the list is the longest path away from this 
-		 * filament.
-		 */
-		while(!tmap.isEmpty()){
-			Entry<Float, Integer> entry = tmap.pollFirstEntry();
-			int i = entry.getValue();
-			dist = entry.getKey();
-			fil = swcCoordinates.get(i);
-			int c = (int)fil.get(0)[4];
-			int prev = i;
-			while(c > -1){
-				fil = swcCoordinates.get(c);
-				head = fil.get(0);
-				tail = fil.get(fil.size()-1);
-				if(tail[3] < dist){
-					tail[3] = dist;
-					branches = connections.get(c);
-					branches.remove(new Integer(prev));
-					branches.add(0, prev);
-					prev = c;
-					c = (int) head[4];
-				}else{
-					c = -1;
-				}
-			}
-		}
-		
-		/*
-		 * Pass 3
-		 * Forward connections are organized so that the longest 
-		 * path is the first element. Increment the branch order
-		 * of all the other elements in the list. Traverse the
-		 * entire neuron in a BFS. 
-		 */
-		
-		fil = swcCoordinates.get(0);
-		head = fil.get(0);
-		head[5] = 1;
-		
-		branches = connections.get(0);
-		for(int i=0;i<branches.size();i++){
-			int ind = branches.get(i);
-			queue.add(ind);
-			fil = swcCoordinates.get(i);
-		}
-		
-		for(int i=0;i<branches.size();i++){
-			int ind = branches.get(i);
-			fil = swcCoordinates.get(ind);
-			if(i == 0){
-				fil.get(0)[5] = head[5];
-			}else{
-				fil.get(0)[5] = head[5] + 1;
-			}
-		}
-		
-		while(!queue.isEmpty()){
-			int i = queue.poll();
-			fil = swcCoordinates.get(i);
-			head = fil.get(0);
-			branches = connections.get(i);
-			if(branches.size() == 0)
-				continue;
-			for(int j=0;j<branches.size();j++){
-				int ind = branches.get(j);
-				queue.add(ind);
-				fil = swcCoordinates.get(j);
-			}
-			
-			for(int j=0;j<branches.size();j++){
-				int ind = branches.get(j);
-				fil = swcCoordinates.get(ind);
-				if(j == 0){
-					fil.get(0)[5] = head[5];
-				}else{
-					fil.get(0)[5] = head[5] + 1;
-					if(head[5] + 1 > maxOrder){
-						maxOrder = (int) (head[5] + 1);
-					}
-				}
-			}
-		}
-		
-		return maxOrder;
-		
-	}
 	
-	//Try not bothering to rearrange. Might help
-	private int determineOrder2(ArrayList<ArrayList<Integer>> connections){
+	
+	/**
+	 * Imaris filament files are patterned in a way that branch organization 
+	 * can be inferred from it. Simplified the algorithm to determine the 
+	 * axon/branch number so that it is based on the pattern seen in the files.
+	 * 
+	 * Basically take the last step of the three pass method earlier since
+	 * in forward connections, the lower number is the one that goes
+	 * towards the axon and others are child branches. 
+	*/
+	private int determineOrder(ArrayList<ArrayList<Integer>> connections){
 		
 		int maxOrder = 1;
 		
@@ -998,50 +805,217 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		return success;
 	}
 	
-	/*private void testSWCOut(ArrayList<ArrayList<Integer>> connections) throws IOException{
 	
-		float[] origin = swcCoordinates.get(0).get(0);
-		origin[4] = -1;
-		ArrayList<float[]> fil = swcCoordinates.get(0);
-		fil.get(0)[4] = -1;
-		fil.get(1)[4] = 1;
-		
-		int counter = 1;
+	/**
+	 * Test method to output each individual filament to its own SWC file.
+	 * Was used to figure out general ordering of filmanets in the Imaris
+	 * trace file. 
+	 */
+	/*
+	private void writeIndividualFilaments(File file) throws IOException{
+		String parent = file.getParent();
+		String name = file.getName();
+		name = name.substring(0, name.lastIndexOf("."));
+		String output = parent + File.separator + name + "_part_%d.swc";
 		
 		for(int i=0;i<swcCoordinates.size();i++){
+			File outputFile = new File(String.format(output, i));
+		
+			FileWriter fw = new FileWriter(outputFile);
+			
+			int counter = 1;
+			
+			ArrayList<float[]> fil = swcCoordinates.get(i);
+			float[] fa = fil.get(0);
+			float[] fo = new float[fa.length];
+			System.arraycopy(fa, 0, fo, 0, fa.length);
+			fo[4] = -1;
+			
+			fw.append(formatSWCLine(counter, fo));
+			
+			for(int j=1;j<fil.size();j++, counter++){
+				fa = fil.get(j);
+				System.arraycopy(fa, 0, fo, 0, fa.length);
+				fo[4] = counter;
+				fw.append(formatSWCLine(counter+1, fo));
+			}
+			
+			fw.close();
+		}
+		
+	}*/
+	
+	/**
+	 * Three pass process to determine branch ordering and which filaments
+	 * are the axon. Determines by finding the longest path from the first
+	 * filament. 
+	 * 
+	 * Removed on 11/7/14 because it is unnecessarily complicated, and the
+	 * Imaris filament file allows you to generally infer branch ordering
+	 * and which branch is the axon. 
+	 * 
+	 * @param connections
+	 */
+	
+	/*
+	private int determineOrder_bad(ArrayList<ArrayList<Integer>> connections){
+		
+		ArrayDeque<Integer> queue = new ArrayDeque<Integer>();
+		
+		ArrayList<float[]> fil = swcCoordinates.get(0);
+		float[] head = fil.get(0);
+		float[] tail = fil.get(fil.size()-1);
+		float dist = tail[3];
+		
+		int maxOrder = 1;
+		
+		ArrayList<Integer> branches = connections.get(0);
+		for(int i : branches){
+			queue.add(i);
 			fil = swcCoordinates.get(i);
-			ArrayList<Integer> branches = connections.get(i);
-			counter++;
-			for(int j=2;j<fil.size();j++, counter++){
-				fil.get(j)[4] = counter;
+			fil.get(0)[3] = dist;
+		}
+		
+		TreeMap<Float, Integer> tmap = new TreeMap<Float, Integer>(new Comparator<Float>(){
+			@Override
+			public int compare(Float o1, Float o2) {
+				float f1 = o1.floatValue();
+				float f2 = o2.floatValue();
+				if(f1 > f2)
+					return -1;
+				else if(f1 < f2) 
+					return 1;
+				else
+					return 0;
+			}
+		});
+		
+		 
+		// Pass 1
+		// Accumulate the length of each filament. At the head
+		// of the filament, store the cumulative length for 
+		// later use. Once a tip has been reached, put the 
+		// length to that tip in a tree map.
+		// 
+		// Pretty much a BFS as the ArrayDeque is used as a queue
+		 
+		while(!queue.isEmpty()){
+			int i = queue.poll();
+			fil = swcCoordinates.get(i);
+			head = fil.get(0);
+			tail = fil.get(fil.size()-1);
+			dist = tail[3] + head[3];
+			head[3] = dist;
+			branches = connections.get(i);
+			if(branches.isEmpty()){
+				tmap.put(dist, i);
+				tail[3] = dist;
 			}
 			for(int j : branches){
+				queue.add(j);
 				fil = swcCoordinates.get(j);
-				fil.get(1)[4] = counter;
+				fil.get(0)[3] = dist;
 			}
 		}
 		
-		String parent = surfaceFile.getParent();
-		String name = surfaceFile.getName();
-		name = name.substring(0, name.lastIndexOf("."));
-		String output = parent + File.separator + name + ".swc";
-		File outputFile = new File(output);
 		
-		FileWriter fw = new FileWriter(outputFile);
-		
-		counter = 1;
-		
-		fw.append(formatSWCLine(counter, swcCoordinates.get(0).get(0)));
-		counter++;
-		for(int i=0;i<swcCoordinates.size();i++){
+		// Pass 2
+		// Tree map is based on length to the tips. Working
+		// backwards from the furthest points to the closest
+		// points should increase efficiency. 
+		// 
+		// Trace back from the tips and replace the tail
+		// length values to the length at the tip. If you
+		// are tracing backwards and the connected filament
+		// already has been reached by a longer filament 
+		// (which should always be the case because of the
+		// tree map), then move on to the next tip.
+		  
+		// Rearrange forward connections so that the first one
+		// in the list is the longest path away from this 
+		// filament.
+		 
+		while(!tmap.isEmpty()){
+			Entry<Float, Integer> entry = tmap.pollFirstEntry();
+			int i = entry.getValue();
+			dist = entry.getKey();
 			fil = swcCoordinates.get(i);
-			for(int j=1;j<fil.size();j++, counter++){
-				fw.append(formatSWCLine(counter, fil.get(j)));
+			int c = (int)fil.get(0)[4];
+			int prev = i;
+			while(c > -1){
+				fil = swcCoordinates.get(c);
+				head = fil.get(0);
+				tail = fil.get(fil.size()-1);
+				if(tail[3] < dist){
+					tail[3] = dist;
+					branches = connections.get(c);
+					branches.remove(new Integer(prev));
+					branches.add(0, prev);
+					prev = c;
+					c = (int) head[4];
+				}else{
+					c = -1;
+				}
 			}
 		}
 		
-		fw.close();
-	
+		// Pass 3
+		// Forward connections are organized so that the longest 
+		// path is the first element. Increment the branch order
+		// of all the other elements in the list. Traverse the
+		// entire neuron in a BFS. 
+		 
+		
+		fil = swcCoordinates.get(0);
+		head = fil.get(0);
+		head[5] = 1;
+		
+		branches = connections.get(0);
+		for(int i=0;i<branches.size();i++){
+			int ind = branches.get(i);
+			queue.add(ind);
+			fil = swcCoordinates.get(i);
+		}
+		
+		for(int i=0;i<branches.size();i++){
+			int ind = branches.get(i);
+			fil = swcCoordinates.get(ind);
+			if(i == 0){
+				fil.get(0)[5] = head[5];
+			}else{
+				fil.get(0)[5] = head[5] + 1;
+			}
+		}
+		
+		while(!queue.isEmpty()){
+			int i = queue.poll();
+			fil = swcCoordinates.get(i);
+			head = fil.get(0);
+			branches = connections.get(i);
+			if(branches.size() == 0)
+				continue;
+			for(int j=0;j<branches.size();j++){
+				int ind = branches.get(j);
+				queue.add(ind);
+				fil = swcCoordinates.get(j);
+			}
+			
+			for(int j=0;j<branches.size();j++){
+				int ind = branches.get(j);
+				fil = swcCoordinates.get(ind);
+				if(j == 0){
+					fil.get(0)[5] = head[5];
+				}else{
+					fil.get(0)[5] = head[5] + 1;
+					if(head[5] + 1 > maxOrder){
+						maxOrder = (int) (head[5] + 1);
+					}
+				}
+			}
+		}
+		
+		return maxOrder;
+		
 	}*/
 
 }
