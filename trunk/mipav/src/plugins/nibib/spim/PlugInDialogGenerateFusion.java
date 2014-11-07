@@ -120,6 +120,8 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 
     private String transformFileDir, baseFileDir;
     
+    private String register2DFileDirString;
+    
     private File register2DFileDir;
 
     private String baseImage;
@@ -145,6 +147,8 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     private Integer xMovement, yMovement, zMovement;
 
     private SampleMode mode;
+    
+    private int modeNum;
     
     private JComboBox modeOption;
 
@@ -609,21 +613,27 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     	doThreshold = scriptParameters.getParams().getBoolean("do_threshold");
     	
     	if (registerOne || registerAll || register2DOne || register2DAll) {
-    	    mtxFileDirectory = scriptParameters.getParams().getFile("mtxFileDirectory");
+    	    mtxFileDirectory = scriptParameters.getParams().getString("mtxFileDirectory");
     	    if (registerOne || register2DOne) {
     	        timeNum = scriptParameters.getParams().getInt("time_num");
     	    }
     	}
     	else {
-    	    mtxFileLoc = scriptParameters.getParams().getFile("mtxFileLoc");
+    	    mtxFileLoc = scriptParameters.getParams().getString("mtxFileLoc");
     	}
-    	transformFileDir = scriptParameters.getParams().getFile("spimAFileDir");
-    	baseFileDir = scriptParameters.getParams().getFile("spimBFileDir");
+    	if (noRegister2D || register2DOne || register2DAll) {
+    		register2DFileDirString = scriptParameters.getParams().getString("register2DFileDirString");
+    	}
+    	transformFileDir = scriptParameters.getParams().getString("spimAFileDir");
+    	baseFileDir = scriptParameters.getParams().getString("spimBFileDir");
     	
     	baseImage = scriptParameters.getParams().getString("baseImage");
     	
     	baseRotation = scriptParameters.getParams().getInt("base_rotation");
     	transformRotation = scriptParameters.getParams().getInt("transform_rotation");
+    	concurrentNum = scriptParameters.getParams().getInt("concurrent_num");
+    	modeNum = scriptParameters.getParams().getInt("mode_num");
+    	saveType = scriptParameters.getParams().getString("save_type");
     	
     	populateFileLists(null);
     	
@@ -662,6 +672,9 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         else {
             scriptParameters.getParams().put(ParameterFactory.newParameter("mtxFileLoc", mtxFileLoc));
         }
+        if (noRegister2D || register2DOne || register2DAll) {
+        	scriptParameters.getParams().put(ParameterFactory.newParameter("register2DFileDirString", register2DFileDirString));	
+        }
         scriptParameters.getParams().put(ParameterFactory.newParameter("spimAFileDir", transformFileDir));
         scriptParameters.getParams().put(ParameterFactory.newParameter("spimBFileDir", baseFileDir));
         
@@ -669,6 +682,9 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         
         scriptParameters.getParams().put(ParameterFactory.newParameter("base_rotation", baseRotation));
         scriptParameters.getParams().put(ParameterFactory.newParameter("transform_rotation", transformRotation));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("concurrent_num", concurrentNum));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("mode_num", modeNum));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("save_type", saveType));
     } //end storeParamsFromGUI()
    
     private GridBagConstraints createGBC() {
@@ -1419,7 +1435,8 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
             public void actionPerformed(ActionEvent e) {
                 try {
                     File f; 
-                    f = new File(register2DFileDirectoryText.getText()).getParentFile().getParentFile();    
+                    register2DFileDirString = register2DFileDirectoryText.getText();
+                    f = new File(register2DFileDirString).getParentFile().getParentFile();    
                     Preferences.setImageDirectory(f);
                 } catch(Exception ex) {}
             }
@@ -2179,7 +2196,8 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         }
         
         if (noRegister2D || register2DOne || register2DAll) {
-        	if ((register2DFileDir = createDirectory(register2DFileDirectoryText.getText())) == null) {
+        	register2DFileDirString = register2DFileDirectoryText.getText();
+        	if ((register2DFileDir = createDirectory(register2DFileDirString)) == null) {
         		return false;
         	}
         }
@@ -2545,7 +2563,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	    baseImage = baseImageText.getText();
 	    
 	    mode = (SampleMode) modeOption.getSelectedItem();
-	    
+	    modeNum = modeOption.getSelectedIndex();
 	    String rangeFusion = rangeFusionText.getText();
 	    HashSet<Integer> includeRange = new HashSet<Integer>();
 	    if(rangeFusion != null) {  
@@ -2988,12 +3006,20 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
            }
         } // if (registerOne || register2DOne)
         
+        if (noRegister2D || register2DOne || register2DAll) {
+        	if ((register2DFileDir = createDirectory(register2DFileDirString)) == null) {
+        		return false;
+        	}	
+        }
+        
         FileCompare f = new FileCompare();
         Collections.sort(baseImageList, f);
         Collections.sort(transformImageList, f);
         
         baseImageAr = baseImageList.toArray(new File[baseImageList.size()]);
         transformImageAr = transformImageList.toArray(new File[transformImageList.size()]);
+        
+        mode = SampleMode.values()[modeNum];
         
         return true;
     }
