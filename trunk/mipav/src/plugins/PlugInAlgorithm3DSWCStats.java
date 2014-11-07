@@ -68,6 +68,8 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				
 				append("Reading " + f.getName(), attr);
 				readSurfaceFile(f);
+				//writeIndividualFilaments(f);
+				
 				disconnected = false;
 				
 				ArrayList<ArrayList<Integer>> forward = makeConnections();
@@ -96,7 +98,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				}
 				
 				calculateDistances();
-				int maxOrder = determineOrder(forward);
+				int maxOrder = determineOrder2(forward);
 				ArrayList<String> messages = consolidateFilaments(forward, maxOrder);
 				float[] branchLengths = recalculateDistances();
 				addToMessages(messages);
@@ -133,6 +135,39 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 			allGood = false;
 		}
 		setCompleted(allGood);
+	}
+	
+	private void writeIndividualFilaments(File file) throws IOException{
+		String parent = file.getParent();
+		String name = file.getName();
+		name = name.substring(0, name.lastIndexOf("."));
+		String output = parent + File.separator + name + "_part_%d.swc";
+		
+		for(int i=0;i<swcCoordinates.size();i++){
+			File outputFile = new File(String.format(output, i));
+		
+			FileWriter fw = new FileWriter(outputFile);
+			
+			int counter = 1;
+			
+			ArrayList<float[]> fil = swcCoordinates.get(i);
+			float[] fa = fil.get(0);
+			float[] fo = new float[fa.length];
+			System.arraycopy(fa, 0, fo, 0, fa.length);
+			fo[4] = -1;
+			
+			fw.append(formatSWCLine(counter, fo));
+			
+			for(int j=1;j<fil.size();j++, counter++){
+				fa = fil.get(j);
+				System.arraycopy(fa, 0, fo, 0, fa.length);
+				fo[4] = counter;
+				fw.append(formatSWCLine(counter+1, fo));
+			}
+			
+			fw.close();
+		}
+		
 	}
 	
 	private void append(String message, AttributeSet a){
@@ -374,7 +409,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		for(int i=1;i<swcCoordinates.size();i++){
 			ArrayList<float[]> fil = swcCoordinates.get(i);
 			float[] head = fil.get(0);
-			for(int j=0;j<i;j++){
+			for(int j=i-1;j>=0;j--){
 				fil = swcCoordinates.get(j);
 				float[] tail = fil.get(fil.size()-1);
 				
@@ -413,7 +448,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		for(int i=1;i<swcCoordinates.size();i++){
 			ArrayList<float[]> fil = swcCoordinates.get(i);
 			float[] head = fil.get(0);
-			for(int j=0;j<i;j++){
+			for(int j=i-1;j>=0;j--){
 				fil = swcCoordinates.get(j);
 				float[] tail = fil.get(fil.size()-1);
 				float dist = 0;
@@ -820,6 +855,65 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		
 		return maxOrder;
 		
+	}
+	
+	//Try not bothering to rearrange. Might help
+	private int determineOrder2(ArrayList<ArrayList<Integer>> connections){
+		
+		int maxOrder = 1;
+		
+		ArrayDeque<Integer> queue = new ArrayDeque<Integer>();
+		
+		ArrayList<float[]> fil = swcCoordinates.get(0);
+		ArrayList<Integer> branches = connections.get(0);
+		float[] head = fil.get(0);
+		
+		head[5] = 1;
+		
+		for(int i=0;i<branches.size();i++){
+			int ind = branches.get(i);
+			queue.add(ind);
+			fil = swcCoordinates.get(i);
+		}
+		
+		for(int i=0;i<branches.size();i++){
+			int ind = branches.get(i);
+			fil = swcCoordinates.get(ind);
+			if(i == 0){
+				fil.get(0)[5] = head[5];
+			}else{
+				fil.get(0)[5] = head[5] + 1;
+			}
+		}
+		
+		while(!queue.isEmpty()){
+			int i = queue.poll();
+			fil = swcCoordinates.get(i);
+			head = fil.get(0);
+			branches = connections.get(i);
+			if(branches.size() == 0)
+				continue;
+			for(int j=0;j<branches.size();j++){
+				int ind = branches.get(j);
+				queue.add(ind);
+				fil = swcCoordinates.get(j);
+			}
+			
+			for(int j=0;j<branches.size();j++){
+				int ind = branches.get(j);
+				fil = swcCoordinates.get(ind);
+				if(j == 0){
+					fil.get(0)[5] = head[5];
+				}else{
+					fil.get(0)[5] = head[5] + 1;
+					if(head[5] + 1 > maxOrder){
+						maxOrder = (int) (head[5] + 1);
+					}
+				}
+			}
+		}
+		
+		return maxOrder;
 	}
 	
 	/**
