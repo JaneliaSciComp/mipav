@@ -4053,7 +4053,7 @@ public class FileIO {
      * @param options Needed info to write this image.
      */
     public void writeImage(final ModelImage image, final FileWriteOptions options) {
-        writeImage(image, options, true);
+        writeImage(image, options, true, true);
     }
 
     /**
@@ -4065,7 +4065,8 @@ public class FileIO {
      * @param options Needed info to write this image.
      * @param bDisplayProgress when true display the progress bar for writing.
      */
-    public void writeImage(final ModelImage image, final FileWriteOptions options, final boolean bDisplayProgress) {
+    public void writeImage(final ModelImage image, final FileWriteOptions options, final boolean bDisplayProgress, 
+    		final boolean allowScriptRecording) {
         int fileType;
         String suffix;
         int index;
@@ -5246,15 +5247,17 @@ public class FileIO {
         // now checks to make sure we're not writing NDAR srb transfers (xml header only)
         if (success && ProvenanceRecorder.getReference().getRecorderStatus() == ProvenanceRecorder.RECORDING && !options.writeHeaderOnly()) {
 
-            ScriptableActionInterface action;
-
-            if (options.isSaveAs()) {
-                action = new ActionSaveImageAs(image, options);
-            } else {
-                action = new ActionSaveImage(image, options);
-            }
-
-            ProvenanceRecorder.getReference().addLine(action);
+            if (allowScriptRecording) {
+	        	ScriptableActionInterface action;
+	
+	            if (options.isSaveAs()) {
+	                action = new ActionSaveImageAs(image, options);
+	            } else {
+	                action = new ActionSaveImage(image, options);
+	            }
+	
+	            ProvenanceRecorder.getReference().addLine(action);
+            } // if (allowScriptRecording)
 
             if (Preferences.is(Preferences.PREF_IMAGE_LEVEL_DATA_PROVENANCE)) {
                 FileDataProvenance fdp;
@@ -5328,7 +5331,7 @@ public class FileIO {
             }
         }
 
-        if (success) {
+        if (success && allowScriptRecording) {
             ScriptableActionInterface action;
 
             if (options.isSaveAs()) {
