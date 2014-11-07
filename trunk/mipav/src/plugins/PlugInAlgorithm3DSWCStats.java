@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import javax.swing.JTextPane;
 import javax.swing.text.AttributeSet;
@@ -35,6 +38,8 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 	private JTextPane textArea;
 	
 	private boolean disconnected;
+	
+	private boolean axonUseLength;
 	
 	public PlugInAlgorithm3DSWCStats(ArrayList<File> surfaces, String units, JTextPane textBox){
 		super();
@@ -95,7 +100,11 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				}
 				
 				calculateDistances();
-				int maxOrder = determineOrder(forward);
+				int maxOrder;
+				if(axonUseLength)
+					maxOrder = determineOrder_useLength(forward);
+				else 
+					maxOrder = determineOrder(forward);
 				ArrayList<String> messages = consolidateFilaments(forward, maxOrder);
 				float[] branchLengths = recalculateDistances();
 				addToMessages(messages);
@@ -132,6 +141,10 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 			allGood = false;
 		}
 		setCompleted(allGood);
+	}
+	
+	public void useAxonLength(boolean useLength){
+		axonUseLength = useLength;
 	}
 	
 	private void append(String message, AttributeSet a){
@@ -724,141 +737,17 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 	}
 	
 	/**
-	 * Reads surface file. Taken from drosophila registration dialog written by Nish Pandya.
-	 * @param surfaceFile
-	 * @return
-	 */
-	private boolean readSurfaceFile(File surfaceFile) {
-		boolean success = true;
-		RandomAccessFile raFile = null;
-		try {
-
-			raFile = new RandomAccessFile(surfaceFile, "r");
-			
-			String line;
-			
-			
-			while((line=raFile.readLine())!= null) {
-				line = line.trim();
-				if(line.startsWith("Translate1Dragger")) {
-					break;
-				}
-				if(line.contains("Coordinate3")) {
-					ArrayList<float[]> filamentCoords = new ArrayList<float[]>();
-					while(!((line=raFile.readLine()).endsWith("}"))) {
-						line = line.trim();
-						if(!line.equals("")) {
-							if(line.startsWith("point [")) {
-								line = line.substring(line.indexOf("point [") + 7, line.length()).trim();
-								if(line.equals("")) {
-									continue;
-								}
-							}
-							if(line.endsWith("]")) {
-								line = line.substring(0, line.indexOf("]")).trim();
-								if(line.equals("")) {
-									continue;
-								}
-							}
-							if(line.endsWith(",")) {
-								line = line.substring(0, line.indexOf(",")).trim();
-								if(line.equals("")) {
-									continue;
-								}
-							}
-							String[] splits = line.split("\\s+");
-							splits[0] = splits[0].trim();
-							splits[1] = splits[1].trim();
-							splits[2] = splits[2].trim();
-							float coord_x = new Float(splits[0]).floatValue();
-							float coord_y = new Float(splits[1]).floatValue();
-							float coord_z = new Float(splits[2]).floatValue();
-							  
-							/**
-							 * Changing from previous versions. Order is now:
-							 * X, Y, Z coordinates (0, 1, 2)
-							 * Distance (3)
-							 * Backwards connection (4)
-							 * Branch order (5)
-							 */
-							float[] coords = {coord_x,coord_y,coord_z,0,Float.NEGATIVE_INFINITY,0};
-							
-							filamentCoords.add(coords);
-						}
-					}
-					swcCoordinates.add(filamentCoords);
-				}
-			}
-			raFile.close();
-		}catch(Exception e) {
-			try {
-				if(raFile != null) {
-					raFile.close();
-				}
-			}catch(Exception ex) {
-				
-			}
-			e.printStackTrace();
-			return false;
-		}
-		
-		return success;
-	}
-	
-	
-	/**
-	 * Test method to output each individual filament to its own SWC file.
-	 * Was used to figure out general ordering of filmanets in the Imaris
-	 * trace file. 
-	 */
-	/*
-	private void writeIndividualFilaments(File file) throws IOException{
-		String parent = file.getParent();
-		String name = file.getName();
-		name = name.substring(0, name.lastIndexOf("."));
-		String output = parent + File.separator + name + "_part_%d.swc";
-		
-		for(int i=0;i<swcCoordinates.size();i++){
-			File outputFile = new File(String.format(output, i));
-		
-			FileWriter fw = new FileWriter(outputFile);
-			
-			int counter = 1;
-			
-			ArrayList<float[]> fil = swcCoordinates.get(i);
-			float[] fa = fil.get(0);
-			float[] fo = new float[fa.length];
-			System.arraycopy(fa, 0, fo, 0, fa.length);
-			fo[4] = -1;
-			
-			fw.append(formatSWCLine(counter, fo));
-			
-			for(int j=1;j<fil.size();j++, counter++){
-				fa = fil.get(j);
-				System.arraycopy(fa, 0, fo, 0, fa.length);
-				fo[4] = counter;
-				fw.append(formatSWCLine(counter+1, fo));
-			}
-			
-			fw.close();
-		}
-		
-	}*/
-	
-	/**
 	 * Three pass process to determine branch ordering and which filaments
 	 * are the axon. Determines by finding the longest path from the first
 	 * filament. 
 	 * 
-	 * Removed on 11/7/14 because it is unnecessarily complicated, and the
-	 * Imaris filament file allows you to generally infer branch ordering
-	 * and which branch is the axon. 
+	 * Changed name to longest length to allow for axon to determined
+	 * by either longest length or by filament ordering
 	 * 
 	 * @param connections
 	 */
 	
-	/*
-	private int determineOrder_bad(ArrayList<ArrayList<Integer>> connections){
+	private int determineOrder_useLength(ArrayList<ArrayList<Integer>> connections){
 		
 		ArrayDeque<Integer> queue = new ArrayDeque<Integer>();
 		
@@ -1016,6 +905,128 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		
 		return maxOrder;
 		
-	}*/
+	}
+	
+	/**
+	 * Reads surface file. Taken from drosophila registration dialog written by Nish Pandya.
+	 * @param surfaceFile
+	 * @return
+	 */
+	private boolean readSurfaceFile(File surfaceFile) {
+		boolean success = true;
+		RandomAccessFile raFile = null;
+		try {
 
+			raFile = new RandomAccessFile(surfaceFile, "r");
+			
+			String line;
+			
+			
+			while((line=raFile.readLine())!= null) {
+				line = line.trim();
+				if(line.startsWith("Translate1Dragger")) {
+					break;
+				}
+				if(line.contains("Coordinate3")) {
+					ArrayList<float[]> filamentCoords = new ArrayList<float[]>();
+					while(!((line=raFile.readLine()).endsWith("}"))) {
+						line = line.trim();
+						if(!line.equals("")) {
+							if(line.startsWith("point [")) {
+								line = line.substring(line.indexOf("point [") + 7, line.length()).trim();
+								if(line.equals("")) {
+									continue;
+								}
+							}
+							if(line.endsWith("]")) {
+								line = line.substring(0, line.indexOf("]")).trim();
+								if(line.equals("")) {
+									continue;
+								}
+							}
+							if(line.endsWith(",")) {
+								line = line.substring(0, line.indexOf(",")).trim();
+								if(line.equals("")) {
+									continue;
+								}
+							}
+							String[] splits = line.split("\\s+");
+							splits[0] = splits[0].trim();
+							splits[1] = splits[1].trim();
+							splits[2] = splits[2].trim();
+							float coord_x = new Float(splits[0]).floatValue();
+							float coord_y = new Float(splits[1]).floatValue();
+							float coord_z = new Float(splits[2]).floatValue();
+							  
+							/**
+							 * Changing from previous versions. Order is now:
+							 * X, Y, Z coordinates (0, 1, 2)
+							 * Distance (3)
+							 * Backwards connection (4)
+							 * Branch order (5)
+							 */
+							float[] coords = {coord_x,coord_y,coord_z,0,Float.NEGATIVE_INFINITY,0};
+							
+							filamentCoords.add(coords);
+						}
+					}
+					swcCoordinates.add(filamentCoords);
+				}
+			}
+			raFile.close();
+		}catch(Exception e) {
+			try {
+				if(raFile != null) {
+					raFile.close();
+				}
+			}catch(Exception ex) {
+				
+			}
+			e.printStackTrace();
+			return false;
+		}
+		
+		return success;
+	}
+	
+	
+	/**
+	 * Test method to output each individual filament to its own SWC file.
+	 * Was used to figure out general ordering of filmanets in the Imaris
+	 * trace file. 
+	 */
+	/*
+	private void writeIndividualFilaments(File file) throws IOException{
+		String parent = file.getParent();
+		String name = file.getName();
+		name = name.substring(0, name.lastIndexOf("."));
+		String output = parent + File.separator + name + "_part_%d.swc";
+		
+		for(int i=0;i<swcCoordinates.size();i++){
+			File outputFile = new File(String.format(output, i));
+		
+			FileWriter fw = new FileWriter(outputFile);
+			
+			int counter = 1;
+			
+			ArrayList<float[]> fil = swcCoordinates.get(i);
+			float[] fa = fil.get(0);
+			float[] fo = new float[fa.length];
+			System.arraycopy(fa, 0, fo, 0, fa.length);
+			fo[4] = -1;
+			
+			fw.append(formatSWCLine(counter, fo));
+			
+			for(int j=1;j<fil.size();j++, counter++){
+				fa = fil.get(j);
+				System.arraycopy(fa, 0, fo, 0, fa.length);
+				fo[4] = counter;
+				fw.append(formatSWCLine(counter+1, fo));
+			}
+			
+			fw.close();
+		}
+		
+	}*/
+	
 }
