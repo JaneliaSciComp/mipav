@@ -197,7 +197,8 @@ public class PlugInDialogConvertToByteNIFTI extends JDialogScriptableBase implem
                  opts.setEndSlice(img.getExtents()[2]-1);
                  opts.setOptionsSet(true);
                  
-                 fileIO.writeImage(img, opts, false);
+                 boolean allowScriptRecording = true;
+                 fileIO.writeImage(img, opts, false, allowScriptRecording);
             	 
                  
                  img.disposeLocal();
