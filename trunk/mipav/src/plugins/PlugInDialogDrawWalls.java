@@ -734,6 +734,7 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
 		destName = destName.substring(0, destName.indexOf(".")).concat("_mask.xml");
 		opt = new FileWriteOptions(destName, maskDir.toString().concat(separator), true);
 		imWriter = new FileIO();
-		imWriter.writeImage(outImage, opt, false);
+		boolean allowScriptRecording = true;
+		imWriter.writeImage(outImage, opt, false, allowScriptRecording);
 	}
 }
