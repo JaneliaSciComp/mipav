@@ -3541,7 +3541,8 @@ public class ModelImage extends ModelStorageBase {
         // like the number of images.
         final FileIO fileIO = new FileIO();
 
-        fileIO.writeImage(this, options, bDisplayProgress);
+        boolean allowScriptRecording = true;
+        fileIO.writeImage(this, options, bDisplayProgress, allowScriptRecording);
 
         return true;
     }
@@ -3660,7 +3661,8 @@ public class ModelImage extends ModelStorageBase {
         	options.setEndTime(end);
         }
         options.doPutInQuicklist(false);
-        fileIO.writeImage(kImage, options, displayProgressBar);
+        boolean allowScriptRecording = true;
+        fileIO.writeImage(kImage, options, displayProgressBar, allowScriptRecording);
     }
     
     
