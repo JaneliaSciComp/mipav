@@ -213,6 +213,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
     private int transformRotation = AlgorithmRotate.Y_AXIS_MINUS;
     
     private int deconvolutionMethod = OpenCLAlgorithmDeconvolution.JOINT_DECON;
+    
+    private boolean allowScriptRecording = false;
 
     /**
      * Constructor.
@@ -1117,7 +1119,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
 	            
 	            options.setFileDirectory(register2DFileDir.getAbsolutePath() + File.separator);
                 options.setFileName(transformImage.getImageFileName());
-                io.writeImage(transformImage, options, false);
+                io.writeImage(transformImage, options, false, allowScriptRecording);
             } // if (noRegister2D || register2DOne || register2DAll)
             else {
 	            baseImage.setResolutions(new float[] {(float) resX, (float) resY, (float) resZ});
@@ -1281,13 +1283,13 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
 	                    options.setFileName(prefusionBaseImage.getImageFileName());
 	                    options.setBeginSlice(0);
 	                    options.setEndSlice(prefusionBaseImage.getExtents()[2] - 1);
-	                    io.writeImage(prefusionBaseImage, options, false);
+	                    io.writeImage(prefusionBaseImage, options, false, allowScriptRecording);
 	
 	                    options.setFileDirectory(prefusionTransformDir.getAbsolutePath() + File.separator);
 	                    options.setFileName(prefusionTransformImage.getImageFileName());
 	                    options.setBeginSlice(0);
 	                    options.setEndSlice(prefusionTransformImage.getExtents()[2] - 1);
-	                    io.writeImage(prefusionTransformImage, options, false);
+	                    io.writeImage(prefusionTransformImage, options, false, allowScriptRecording);
 	                }
 	
 	                doMaxProj(prefusionBaseImage, doShowPrefusion, doSavePrefusion, prefusionBaseDir, options, io);
@@ -1310,7 +1312,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
 	                    options.setFileName(deconvImg.getImageName());
 	                    options.setBeginSlice(0);
 	                    options.setEndSlice(deconvImg.getExtents()[2] - 1);
-	                    io.writeImage(deconvImg, options, false);
+	                    io.writeImage(deconvImg, options, false, allowScriptRecording);
 	
 	                    doMaxProj(deconvImg, false, true, deconvDir, options, io);
 	
@@ -1340,7 +1342,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
 	                options.setFileName(subAriImage.getImageFileName());
 	                options.setBeginSlice(0);
 	                options.setEndSlice(subAriImage.getExtents()[2] - 1);
-	                io.writeImage(subAriImage, options, false);
+	                io.writeImage(subAriImage, options, false, allowScriptRecording);
 	            }
 	
 	            if (showAriMean) {
@@ -1362,7 +1364,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
 	                options.setFileName(subGeoImage.getImageFileName());
 	                options.setBeginSlice(0);
 	                options.setEndSlice(subGeoImage.getExtents()[2] - 1);
-	                io.writeImage(subGeoImage, options, false);
+	                io.writeImage(subGeoImage, options, false, allowScriptRecording);
 	            }
 	
 	            if (showGeoMean) {
@@ -1461,7 +1463,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                             } else {
                                 options.setEndSlice(0);
                             }
-                            io.writeImage(resImageVec.get(j), options, false);
+                            io.writeImage(resImageVec.get(j), options, false, allowScriptRecording);
                         }
                         if ( ! (parentShow && showMaxProj)) {
                             for (int j = resImageVec.size() - 1; j >= 0; j--) {
