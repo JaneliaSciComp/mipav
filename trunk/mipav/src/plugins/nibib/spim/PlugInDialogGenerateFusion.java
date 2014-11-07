@@ -665,7 +665,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         scriptParameters.getParams().put(ParameterFactory.newParameter("spimAFileDir", transformFileDir));
         scriptParameters.getParams().put(ParameterFactory.newParameter("spimBFileDir", baseFileDir));
         
-        scriptParameters.getParams().put(ParameterFactory.newParameter("baseImageText", baseImageText));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("baseImage", baseImage));
         
         scriptParameters.getParams().put(ParameterFactory.newParameter("base_rotation", baseRotation));
         scriptParameters.getParams().put(ParameterFactory.newParameter("transform_rotation", transformRotation));
