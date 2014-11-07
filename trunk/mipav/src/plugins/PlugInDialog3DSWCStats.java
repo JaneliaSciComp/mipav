@@ -12,6 +12,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
@@ -21,11 +22,13 @@ import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
@@ -58,6 +61,8 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 	private JComboBox resolutionUnits;
 	
 	private JTextPane textArea;
+	
+	private JRadioButton axonRB;
 
 	public PlugInDialog3DSWCStats(){
 		super();
@@ -152,6 +157,7 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		}
 		
 		PlugInAlgorithm3DSWCStats alg = new PlugInAlgorithm3DSWCStats(files, (String) resolutionUnits.getSelectedItem(), textArea);
+		alg.useAxonLength(axonRB.isSelected());
 		alg.addListener(this);
 		
 		if(isRunInSeparateThread()){
@@ -184,6 +190,24 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		JButton browseButton = new JButton("Browse");
 		browseButton.setFont(serif12);
 		browseButton.addActionListener(this);
+		
+		JPanel rbPanel = new JPanel(new GridLayout(0, 2));
+		rbPanel.setForeground(Color.black);
+		rbPanel.setBorder(new TitledBorder(BorderFactory.createLineBorder(Color.black), "Axon determination"));
+		
+		ButtonGroup group = new ButtonGroup();
+		
+		axonRB = new JRadioButton("Use absolute length");
+		axonRB.setFont(serif12);
+		axonRB.setSelected(true);
+		group.add(axonRB);
+		
+		JRadioButton imarisRB = new JRadioButton("Infer from file");
+		imarisRB.setFont(serif12);
+		group.add(imarisRB);
+		
+		rbPanel.add(axonRB);
+		rbPanel.add(imarisRB);
 		
 		JLabel resLabel = new JLabel("SWC Resolution Units");
 		resLabel.setFont(serif12);
@@ -225,6 +249,11 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		gbc.gridwidth = 1;
 		
 		mainPanel.add(browseButton, gbc);
+		
+		gbc.gridx = 0;
+		gbc.gridy = 2;
+		gbc.gridwidth = GridBagConstraints.REMAINDER;
+		mainPanel.add(rbPanel, gbc);
 		
 		getContentPane().add(mainPanel);
 		
