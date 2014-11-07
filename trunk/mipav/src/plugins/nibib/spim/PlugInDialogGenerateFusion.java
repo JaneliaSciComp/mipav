@@ -179,8 +179,10 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     private boolean saveAriMean;
 
     private File geoMeanDir;
+    private String geoMeanDirString;
 
     private File ariMeanDir;
+    private String ariMeanDirString;
     private JTextField savePrefusionTransformFolderText;
     private JTextField savePrefusionBaseFolderText;
     private JCheckBox doSavePrefusionBox;
@@ -242,6 +244,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	private JCheckBox deconvUseSigmaConversionFactor;
 	/** The directory to save deconvolved files to. */
 	private File deconvDir;
+	private String deconvDirString;
 	/** The text field for setting the directory to save deconvolved files to. */
 	private JTextField saveDeconvFolderText;
 	private ButtonGroup registrationGroup;
@@ -606,7 +609,9 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         setCoarseEndZ(rotEnd[2]);
         setCoarseRateZ(coarseRates[2]);
         setFineRateZ(fineRates[2]);
+        saveAriMean = scriptParameters.getParams().getBoolean("save_arithmetic");
         showAriMean = scriptParameters.getParams().getBoolean("show_arithmetic");
+        saveGeoMean = scriptParameters.getParams().getBoolean("save_geometric");
     	showGeoMean = scriptParameters.getParams().getBoolean("show_geometric");
     	doInterImages = scriptParameters.getParams().getBoolean("do_interImages");
     	doShowPreFusion = scriptParameters.getParams().getBoolean("do_subsample");
@@ -634,6 +639,18 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     	concurrentNum = scriptParameters.getParams().getInt("concurrent_num");
     	modeNum = scriptParameters.getParams().getInt("mode_num");
     	saveType = scriptParameters.getParams().getString("save_type");
+    	if (!(noRegister2D || register2DOne || register2DAll)) {
+	    	doDeconv = scriptParameters.getParams().getBoolean("do_deconv");
+	    	if (doDeconv) {
+	    	    deconvDirString = scriptParameters.getParams().getString("deconvDirString");
+	    	    deconvShowResults = scriptParameters.getParams().getBoolean("deconv_show_results");
+	    	    deconvolutionMethod = scriptParameters.getParams().getInt("deconvolution_method");
+	    	    deconvIterations = scriptParameters.getParams().getInt("deconv_iterations");
+	    	    deconvSigmaA = scriptParameters.getParams().getList("deconv_sigmaA").getAsFloatArray();
+	    	    deconvSigmaB = scriptParameters.getParams().getList("deconv_sigmaB").getAsFloatArray();
+	    	    useDeconvSigmaConversionFactor = scriptParameters.getParams().getBoolean("use_deconv_sigma_conversion_factor");
+	    	} // if (doDeconv)
+    	} // if (!(noRegister2D || register2DOne || register2DAll))
     	
     	populateFileLists(null);
     	
@@ -657,7 +674,9 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
                 ParameterFactory.newParameter("coarse_rate", new float[] {coarseRateX, coarseRateY, coarseRateZ}));
         scriptParameters.getParams().put(
                 ParameterFactory.newParameter("fine_rate", new float[] {fineRateX, fineRateY, fineRateZ}));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("save_arithmetic", saveAriMean));
         scriptParameters.getParams().put(ParameterFactory.newParameter("show_arithmetic", showAriMean));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("save_geometric", saveGeoMean));
         scriptParameters.getParams().put(ParameterFactory.newParameter("show_geometric", showGeoMean));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_interImages", doInterImages));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doShowPreFusion));
@@ -685,6 +704,19 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         scriptParameters.getParams().put(ParameterFactory.newParameter("concurrent_num", concurrentNum));
         scriptParameters.getParams().put(ParameterFactory.newParameter("mode_num", modeNum));
         scriptParameters.getParams().put(ParameterFactory.newParameter("save_type", saveType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_deconv", doDeconv));
+        if (!(noRegister2D || register2DOne || register2DAll)) {
+	        if (doDeconv) {
+	            scriptParameters.getParams().put(ParameterFactory.newParameter("deconvDirString", deconvDirString));
+	            scriptParameters.getParams().put(ParameterFactory.newParameter("deconv_show_results", deconvShowResults));
+	            scriptParameters.getParams().put(ParameterFactory.newParameter("deconvolution_method", deconvolutionMethod));
+	            scriptParameters.getParams().put(ParameterFactory.newParameter("deconv_iterations", deconvIterations));
+	            scriptParameters.getParams().put(ParameterFactory.newParameter("deconv_sigmaA", deconvSigmaA));
+	            scriptParameters.getParams().put(ParameterFactory.newParameter("deconv_sigmaB", deconvSigmaB));
+	            scriptParameters.getParams().put(ParameterFactory.newParameter("use_deconv_sigma_conversion_factor",
+	            		useDeconvSigmaConversionFactor));
+	        } // if (doDeconv)
+        } // if (!(noRegister2D || register2DOne || register2DAll))
     } //end storeParamsFromGUI()
    
     private GridBagConstraints createGBC() {
@@ -2164,36 +2196,40 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         saveType = saveTypeText.getSelectedItem().toString();
         
         boolean maxProjCreate = true;
-        if(saveGeoMean) {
-            if((geoMeanDir = createDirectory(geometricMeanFolderText.getText())) == null) {
-                return false;
-            }
-            if(saveMaxProj) {
-                maxProjCreate = createMaxProjFolders(geometricMeanFolderText.getText());
-            }
-        }
-        
-        if(saveAriMean) {
-            if((ariMeanDir = createDirectory(arithmeticMeanFolderText.getText())) == null) {
-                return false;
-            }
-            if(saveMaxProj) {
-                maxProjCreate = createMaxProjFolders(arithmeticMeanFolderText.getText());
-            }
-        }
-        
-        if(savePrefusion) {
-            if((prefusionBaseDir = createDirectory(savePrefusionBaseFolderText.getText())) == null) {
-                return false;
-            }
-            if((prefusionTransformDir = createDirectory(savePrefusionTransformFolderText.getText())) == null) {
-                return false;
-            }
-            if(saveMaxProj) {
-                maxProjCreate = createMaxProjFolders(savePrefusionBaseFolderText.getText());
-                maxProjCreate = createMaxProjFolders(savePrefusionTransformFolderText.getText());
-            }
-        }
+        if (!(noRegister2D || register2DOne || register2DAll)) {
+	        if(saveGeoMean) {
+	        	geoMeanDirString = geometricMeanFolderText.getText();
+	            if((geoMeanDir = createDirectory(geoMeanDirString)) == null) {
+	                return false;
+	            }
+	            if(saveMaxProj) {
+	                maxProjCreate = createMaxProjFolders(geoMeanDirString);
+	            }
+	        }
+	        
+	        if(saveAriMean) {
+	        	ariMeanDirString = arithmeticMeanFolderText.getText();
+	            if((ariMeanDir = createDirectory(ariMeanDirString)) == null) {
+	                return false;
+	            }
+	            if(saveMaxProj) {
+	                maxProjCreate = createMaxProjFolders(ariMeanDirString);
+	            }
+	        }
+	        
+	        if(savePrefusion) {
+	            if((prefusionBaseDir = createDirectory(savePrefusionBaseFolderText.getText())) == null) {
+	                return false;
+	            }
+	            if((prefusionTransformDir = createDirectory(savePrefusionTransformFolderText.getText())) == null) {
+	                return false;
+	            }
+	            if(saveMaxProj) {
+	                maxProjCreate = createMaxProjFolders(savePrefusionBaseFolderText.getText());
+	                maxProjCreate = createMaxProjFolders(savePrefusionTransformFolderText.getText());
+	            }
+	        }
+        } // if (!(noRegister2D || register2DOne || register2DAll))
         
         if (noRegister2D || register2DOne || register2DAll) {
         	register2DFileDirString = register2DFileDirectoryText.getText();
@@ -2205,11 +2241,12 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         doDeconv = deconvPerformCheckbox.isSelected();
         if (!(noRegister2D || register2DOne || register2DAll)) {
 	        if (doDeconv) {
-	        	if((deconvDir = createDirectory(saveDeconvFolderText.getText())) == null) {
+	        	deconvDirString = saveDeconvFolderText.getText();
+	        	if((deconvDir = createDirectory(deconvDirString)) == null) {
 	                return false;
 	            }
 	        	if (saveMaxProj) {
-	        		maxProjCreate = createMaxProjFolders(saveDeconvFolderText.getText());
+	        		maxProjCreate = createMaxProjFolders(deconvDirString);
 	        	}
 	        }
         }
@@ -2483,15 +2520,17 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
                 } // else universalCheckbox not selected
             } // if (registerOne || registerAll || register2DOne || register2DAll)
 		    
-		    if(showAriMean || saveAriMean) {
-    		    baseAriWeight = Double.valueOf(baseAriWeightText.getText()).doubleValue();
-    		    transformAriWeight = Double.valueOf(transformAriWeightText.getText()).doubleValue();
-		    }
-		    
-		    if(showGeoMean || saveGeoMean) {
-    		    baseGeoWeight = Double.valueOf(baseGeoWeightText.getText()).doubleValue();
-                transformGeoWeight = Double.valueOf(transformGeoWeightText.getText()).doubleValue();
-		    }
+		    if (!(noRegister2D || register2DOne || register2DAll)) {
+			    if(showAriMean || saveAriMean) {
+	    		    baseAriWeight = Double.valueOf(baseAriWeightText.getText()).doubleValue();
+	    		    transformAriWeight = Double.valueOf(transformAriWeightText.getText()).doubleValue();
+			    }
+			    
+			    if(showGeoMean || saveGeoMean) {
+	    		    baseGeoWeight = Double.valueOf(baseGeoWeightText.getText()).doubleValue();
+	                transformGeoWeight = Double.valueOf(transformGeoWeightText.getText()).doubleValue();
+			    }
+		    } // if (!(noRegister2D || register2DOne || register2DAll))
 		    
 		    if(!doSmartMovement) {
     		    xMovement = Integer.valueOf(xMovementText.getText());
@@ -3020,6 +3059,40 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         transformImageAr = transformImageList.toArray(new File[transformImageList.size()]);
         
         mode = SampleMode.values()[modeNum];
+        
+        boolean maxProjCreate = true;
+        if (!(noRegister2D || register2DOne || register2DAll)) {
+	        if (doDeconv) {
+	        	if((deconvDir = createDirectory(deconvDirString)) == null) {
+	                return false;
+	            }
+	        	if (saveMaxProj) {
+	        		maxProjCreate = createMaxProjFolders(deconvDirString);
+	        	}
+	        } // if (doDeconv)
+	        
+	        if(saveGeoMean) {
+	            if((geoMeanDir = createDirectory(geoMeanDirString)) == null) {
+	                return false;
+	            }
+	            if(saveMaxProj) {
+	                maxProjCreate = createMaxProjFolders(geoMeanDirString);
+	            }
+	        } // if (saveGeoMean)
+	        
+	        if(saveAriMean) {
+	            if((ariMeanDir = createDirectory(ariMeanDirString)) == null) {
+	                return false;
+	            }
+	            if(saveMaxProj) {
+	                maxProjCreate = createMaxProjFolders(ariMeanDirString);
+	            }
+	        }
+        } // if (!(noRegister2D || register2DOne || register2DAll))
+        
+        if(!maxProjCreate) {
+            return false;
+        }
         
         return true;
     }
