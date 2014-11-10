@@ -1228,11 +1228,11 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
 	
 	            if (showGeoMean || saveGeoMean) {
 	                subGeoImage = ViewUserInterface.getReference().createBlankImage(
-	                        (FileInfoBase) resultImageInfoBase.clone(), false);
+	                        (FileInfoBase) resultImageInfoBase.clone(), false, allowScriptRecording);
 	            }
 	            if (showAriMean || saveAriMean) {
 	                subAriImage = ViewUserInterface.getReference().createBlankImage(
-	                        (FileInfoBase) resultImageInfoBase.clone(), false);
+	                        (FileInfoBase) resultImageInfoBase.clone(), false, allowScriptRecording);
 	            }
 	
 	            if (doThreshold) {
@@ -1244,9 +1244,9 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
 	                // fireProgressStateChanged(15, "Transform", "Creating prefusion images");
 	
 	                final ModelImage prefusionTransformImage = ViewUserInterface.getReference().createBlankImage(
-	                        (FileInfoBase) resultImageInfoBase.clone(), false);
+	                        (FileInfoBase) resultImageInfoBase.clone(), false, allowScriptRecording);
 	                final ModelImage prefusionBaseImage = ViewUserInterface.getReference().createBlankImage(
-	                        (FileInfoBase) resultImageInfoBase.clone(), false);
+	                        (FileInfoBase) resultImageInfoBase.clone(), false, allowScriptRecording);
 	                // new ViewJFrameImage(transformImage);
 	                int transformX, transformY, transformZ;
 	
@@ -1885,7 +1885,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             }
 
             final ModelImage resultImage = ViewUserInterface.getReference().createBlankImage(
-                    (FileInfoBase) imageA.getFileInfo(0).clone(), false);
+                    (FileInfoBase) imageA.getFileInfo(0).clone(), false, allowScriptRecording);
             resultImage.setImageName(name);
             for (int i = 0; i < imageA.getFileInfo().length; i++) {
             	for (int j = 0; j < 3; j++) {
