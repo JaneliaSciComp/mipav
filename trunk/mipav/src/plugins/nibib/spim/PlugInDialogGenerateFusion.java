@@ -208,10 +208,12 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     private boolean zMaxBoxSelected;
     /** Max projection lower intensity threshold text field */
     private JTextField minThresholdMaxProjText;
+    private float minThreshold;
     /** MIP algorithm for later processing */
     private AlgorithmMaximumIntensityProjection[] maxAlgo;
     private JTextField slidingWindowText;
     private JCheckBox doSlideWindowBox;
+    private int slidingWindow;
     /** Combobox for selecting save result type */
     private JComboBox saveTypeText;
 	/** File format for saving result images */
@@ -658,7 +660,14 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     	concurrentNum = scriptParameters.getParams().getInt("concurrent_num");
     	modeNum = scriptParameters.getParams().getInt("mode_num");
     	saveType = scriptParameters.getParams().getString("save_type");
-    	if (!(noRegister2D || register2DOne || register2DAll)) {
+    	if (!(noRegister2D || register2DOne || register2DAll)) { 
+    		
+    		if(showMaxProj || saveMaxProj) {
+    			minThreshold = scriptParameters.getParams().getFloat("min_threshold");
+    			slidingWindow = scriptParameters.getParams().getInt("sliding_window");
+    	        setMaxProjVariables();
+    	    } 
+    		
 	    	doDeconv = scriptParameters.getParams().getBoolean("do_deconv");
 	    	if (doDeconv) {
 	    	    deconvDirString = scriptParameters.getParams().getString("deconvDirString");
@@ -783,6 +792,12 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         scriptParameters.getParams().put(ParameterFactory.newParameter("save_type", saveType));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_deconv", doDeconv));
         if (!(noRegister2D || register2DOne || register2DAll)) {
+        	
+        	if(showMaxProj || saveMaxProj) {
+        		scriptParameters.getParams().put(ParameterFactory.newParameter("min_threshold", minThreshold));	
+        		scriptParameters.getParams().put(ParameterFactory.newParameter("sliding_window", slidingWindow));
+        	}
+        	
 	        if (doDeconv) {
 	            scriptParameters.getParams().put(ParameterFactory.newParameter("deconvDirString", deconvDirString));
 	            scriptParameters.getParams().put(ParameterFactory.newParameter("deconv_show_results", deconvShowResults));
@@ -2837,6 +2852,20 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	    }
 	    
 	    if(showMaxProj || saveMaxProj) {
+	    	 minThreshold = 0.0f;
+	         slidingWindow = 1;
+	         
+	         try {
+	             minThreshold = Float.valueOf(minThresholdMaxProjText.getText());
+	             if(doSlideWindowBox.isSelected()) {
+	                 slidingWindow = Integer.valueOf(slidingWindowText.getText());
+	             } else {
+	                 slidingWindow = -1;
+	             }
+	         } catch(NumberFormatException nfe) {
+	             MipavUtil.displayError("Bad algorithm input for maximum intensity projection.");
+	             return false;
+	         }
 	        setMaxProjVariables();
 	    }
 	    
@@ -3038,51 +3067,36 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	private boolean setMaxProjVariables() {
 	    
 	    int numDim = 0;
-        if(doXMaxBox.isSelected()) {
+        if(xMaxBoxSelected) {
             numDim++;
         }
         
-        if(doYMaxBox.isSelected()) {
+        if(yMaxBoxSelected) {
             numDim++;
         }
         
-        if(doZMaxBox.isSelected()) {
+        if(zMaxBoxSelected) {
             numDim++;
         }
         
         maxAlgo = new AlgorithmMaximumIntensityProjection[numDim];
-        
-        float minThreshold = 0.0f;
-        int slidingWindow = 1;
-        
-        try {
-            minThreshold = Float.valueOf(minThresholdMaxProjText.getText());
-            if(doSlideWindowBox.isSelected()) {
-                slidingWindow = Integer.valueOf(slidingWindowText.getText());
-            } else {
-                slidingWindow = -1;
-            }
-        } catch(NumberFormatException nfe) {
-            MipavUtil.displayError("Bad algorithm input for maximum intensity projection.");
-            return false;
-        }
         
 //        if((maxProjDir = createDirectory(saveMaxProjFolderText)) == null) {
 //            return false;
 //        }
         
         int index = 0;
-        if(doXMaxBox.isSelected()) {
+        if(xMaxBoxSelected) {
             maxAlgo[index] = new AlgorithmMaximumIntensityProjection(null, 0, 0, slidingWindow, minThreshold, 0, true, false, AlgorithmMaximumIntensityProjection.X_PROJECTION);
             index++;
         }
         
-        if(doYMaxBox.isSelected()) {
+        if(yMaxBoxSelected) {
             maxAlgo[index] = new AlgorithmMaximumIntensityProjection(null, 0, 0, slidingWindow, minThreshold, 0, true, false, AlgorithmMaximumIntensityProjection.Y_PROJECTION);
             index++;
         }
         
-        if(doZMaxBox.isSelected()) {
+        if(zMaxBoxSelected) {
             maxAlgo[index] = new AlgorithmMaximumIntensityProjection(null, 0, 0, slidingWindow, minThreshold, 0, true, false, AlgorithmMaximumIntensityProjection.Z_PROJECTION);
         }
         
