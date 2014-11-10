@@ -145,6 +145,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     private JTextField xMovementText, yMovementText, zMovementText;
 
     private Integer xMovement, yMovement, zMovement;
+    private int xMove, yMove, zMove;
 
     private SampleMode mode;
     
@@ -188,7 +189,9 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     private JCheckBox doSavePrefusionBox;
     private boolean savePrefusion;
     private File prefusionBaseDir;
+    private String prefusionBaseDirString;
     private File prefusionTransformDir;
+    private String prefusionTransformDirString;
     private JTextField transformAriWeightText, baseAriWeightText, transformGeoWeightText, baseGeoWeightText;
     /** Weighting scheme for arithmetic and geometric weighting, unweighted by default. */
     private double baseAriWeight = 1, transformAriWeight = 1, baseGeoWeight = 1, transformGeoWeight = 1;
@@ -614,8 +617,13 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         saveGeoMean = scriptParameters.getParams().getBoolean("save_geometric");
     	showGeoMean = scriptParameters.getParams().getBoolean("show_geometric");
     	doInterImages = scriptParameters.getParams().getBoolean("do_interImages");
-    	doShowPreFusion = scriptParameters.getParams().getBoolean("do_subsample");
+    	savePrefusion = scriptParameters.getParams().getBoolean("save_prefusion");
+    	doShowPreFusion = scriptParameters.getParams().getBoolean("do_show_pre_fusion");
     	doThreshold = scriptParameters.getParams().getBoolean("do_threshold");
+    	saveMaxProj = scriptParameters.getParams().getBoolean("save_max_proj");
+    	showMaxProj = scriptParameters.getParams().getBoolean("show_max_proj");
+    	doSmartMovement = scriptParameters.getParams().getBoolean("do_smart_movement");
+    	thresholdIntensity = scriptParameters.getParams().getDouble("threshold_intensity");
     	
     	if (registerOne || registerAll || register2DOne || register2DAll) {
     	    mtxFileDirectory = scriptParameters.getParams().getString("mtxFileDirectory");
@@ -650,6 +658,38 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	    	    deconvSigmaB = scriptParameters.getParams().getList("deconv_sigmaB").getAsFloatArray();
 	    	    useDeconvSigmaConversionFactor = scriptParameters.getParams().getBoolean("use_deconv_sigma_conversion_factor");
 	    	} // if (doDeconv)
+	    	
+	    	if(showAriMean || saveAriMean) {
+	    		baseAriWeight = scriptParameters.getParams().getDouble("base_ari_weight");
+	    		transformAriWeight = scriptParameters.getParams().getDouble("transform_ari_weight");	
+	    	}
+	    	
+	    	if(showGeoMean || saveGeoMean) {
+	    		baseGeoWeight = scriptParameters.getParams().getDouble("base_geo_weight");
+	    		transformGeoWeight = scriptParameters.getParams().getDouble("transform_geo_weight");		
+	    	}
+	    	
+	    	if(!doSmartMovement) {
+	    		xMove =  scriptParameters.getParams().getInt("x_move");
+	    		xMovement = Integer.valueOf(xMove);
+	    		yMove =  scriptParameters.getParams().getInt("y_move");
+	    		yMovement = Integer.valueOf(yMove);
+	    		zMove =  scriptParameters.getParams().getInt("z_move");
+	    		zMovement = Integer.valueOf(zMove);
+	    	}
+	    	else {
+		        xMovement = yMovement = zMovement = null;
+		        
+		        minX = scriptParameters.getParams().getInt("min_x");
+		        minY = scriptParameters.getParams().getInt("min_y");
+		        minZ = scriptParameters.getParams().getInt("min_z");
+		        
+		        maxX = scriptParameters.getParams().getInt("max_x");
+		        maxY = scriptParameters.getParams().getInt("max_y");
+		        maxZ = scriptParameters.getParams().getInt("max_z");
+		        
+		        stepSize = scriptParameters.getParams().getInt("step_size");
+	    	}
     	} // if (!(noRegister2D || register2DOne || register2DAll))
     	
     	populateFileLists(null);
@@ -679,8 +719,13 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         scriptParameters.getParams().put(ParameterFactory.newParameter("save_geometric", saveGeoMean));
         scriptParameters.getParams().put(ParameterFactory.newParameter("show_geometric", showGeoMean));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_interImages", doInterImages));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doShowPreFusion));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("save_prefusion", savePrefusion));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_show_pre_fusion", doShowPreFusion));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_threshold", doThreshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("save_max_proj", saveMaxProj));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("show_max_proj", showMaxProj));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_smart_movement", doSmartMovement));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold_intensity", thresholdIntensity));
        
         if (registerOne || registerAll || register2DOne || register2DAll) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("mtxFileDirectory", mtxFileDirectory));
@@ -716,6 +761,34 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	            scriptParameters.getParams().put(ParameterFactory.newParameter("use_deconv_sigma_conversion_factor",
 	            		useDeconvSigmaConversionFactor));
 	        } // if (doDeconv)
+	        
+	        if(showAriMean || saveAriMean) {
+	        	scriptParameters.getParams().put(ParameterFactory.newParameter("base_ari_weight", baseAriWeight));
+	        	scriptParameters.getParams().put(ParameterFactory.newParameter("transform_ari_weight", transformAriWeight));
+		    }
+		    
+		    if(showGeoMean || saveGeoMean) {
+		    	scriptParameters.getParams().put(ParameterFactory.newParameter("base_geo_weight", baseGeoWeight));
+	        	scriptParameters.getParams().put(ParameterFactory.newParameter("transform_geo_weight", transformGeoWeight));
+		    }
+		    
+		    if(!doSmartMovement) {
+		    	scriptParameters.getParams().put(ParameterFactory.newParameter("x_move", xMove));
+		    	scriptParameters.getParams().put(ParameterFactory.newParameter("y_move", yMove));
+		    	scriptParameters.getParams().put(ParameterFactory.newParameter("z_move", zMove));
+		    } else {
+		        xMovement = yMovement = zMovement = null;
+		        
+		        scriptParameters.getParams().put(ParameterFactory.newParameter("min_x", minX));
+		        scriptParameters.getParams().put(ParameterFactory.newParameter("min_y", minY));
+		        scriptParameters.getParams().put(ParameterFactory.newParameter("min_z", minZ));
+		        
+		        scriptParameters.getParams().put(ParameterFactory.newParameter("max_x",maxX));
+		        scriptParameters.getParams().put(ParameterFactory.newParameter("max_y", maxY));
+		        scriptParameters.getParams().put(ParameterFactory.newParameter("max_z", maxZ));
+		        
+		        scriptParameters.getParams().put(ParameterFactory.newParameter("step_size", stepSize));
+		    }
         } // if (!(noRegister2D || register2DOne || register2DAll))
     } //end storeParamsFromGUI()
    
@@ -2187,7 +2260,6 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         doInterImages = interImagesBox.isSelected();
         doShowPreFusion = doShowPrefusionBox.isSelected();
         doThreshold = doThresholdBox.isSelected();
-        doInterImages = interImagesBox.isSelected();
         saveMaxProj = doSaveMaxProjBox.isSelected();
         showMaxProj = doShowMaxProjBox.isSelected();
 	    
@@ -2218,15 +2290,17 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	        }
 	        
 	        if(savePrefusion) {
-	            if((prefusionBaseDir = createDirectory(savePrefusionBaseFolderText.getText())) == null) {
+	        	prefusionBaseDirString = savePrefusionBaseFolderText.getText();
+	        	prefusionTransformDirString = savePrefusionTransformFolderText.getText();
+	            if((prefusionBaseDir = createDirectory(prefusionBaseDirString)) == null) {
 	                return false;
 	            }
-	            if((prefusionTransformDir = createDirectory(savePrefusionTransformFolderText.getText())) == null) {
+	            if((prefusionTransformDir = createDirectory(prefusionTransformDirString)) == null) {
 	                return false;
 	            }
 	            if(saveMaxProj) {
-	                maxProjCreate = createMaxProjFolders(savePrefusionBaseFolderText.getText());
-	                maxProjCreate = createMaxProjFolders(savePrefusionTransformFolderText.getText());
+	                maxProjCreate = createMaxProjFolders(prefusionBaseDirString);
+	                maxProjCreate = createMaxProjFolders(prefusionTransformDirString);
 	            }
 	        }
         } // if (!(noRegister2D || register2DOne || register2DAll))
@@ -2530,40 +2604,44 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	    		    baseGeoWeight = Double.valueOf(baseGeoWeightText.getText()).doubleValue();
 	                transformGeoWeight = Double.valueOf(transformGeoWeightText.getText()).doubleValue();
 			    }
-		    } // if (!(noRegister2D || register2DOne || register2DAll))
 		    
-		    if(!doSmartMovement) {
-    		    xMovement = Integer.valueOf(xMovementText.getText());
-    		    yMovement = Integer.valueOf(yMovementText.getText());
-    		    zMovement = Integer.valueOf(zMovementText.getText());
-		    } else {
-		        xMovement = yMovement = zMovement = null;
-		        
-		        minX = Integer.valueOf(minXText.getText());
-                minY = Integer.valueOf(minYText.getText());
-                minZ = Integer.valueOf(minZText.getText());
-                
-                maxX = Integer.valueOf(maxXText.getText());
-                maxY = Integer.valueOf(maxYText.getText());
-                maxZ = Integer.valueOf(maxZText.getText());
-                
-                if(minX >= maxX) {
-                    MipavUtil.displayError("Input error, maxX < minX.");
-                    return false;
-                }
-                
-                if(minY >= maxY) {
-                    MipavUtil.displayError("Input error, maxY < minY.");
-                    return false;    
-                }
-                
-                if(minZ >= maxZ) {
-                    MipavUtil.displayError("Input error, maxZ < minZ.");
-                    return false;
-                }
-                
-                stepSize = Integer.valueOf(stepSizeText.getText());
-		    }
+		    
+			    if(!doSmartMovement) {
+	    		    xMovement = Integer.valueOf(xMovementText.getText());
+	    		    xMove = xMovement.intValue();
+	    		    yMovement = Integer.valueOf(yMovementText.getText());
+	    		    yMove = yMovement.intValue();
+	    		    zMovement = Integer.valueOf(zMovementText.getText());
+	    		    zMove = zMovement.intValue();
+			    } else {
+			        xMovement = yMovement = zMovement = null;
+			        
+			        minX = Integer.valueOf(minXText.getText());
+	                minY = Integer.valueOf(minYText.getText());
+	                minZ = Integer.valueOf(minZText.getText());
+	                
+	                maxX = Integer.valueOf(maxXText.getText());
+	                maxY = Integer.valueOf(maxYText.getText());
+	                maxZ = Integer.valueOf(maxZText.getText());
+	                
+	                if(minX >= maxX) {
+	                    MipavUtil.displayError("Input error, maxX < minX.");
+	                    return false;
+	                }
+	                
+	                if(minY >= maxY) {
+	                    MipavUtil.displayError("Input error, maxY < minY.");
+	                    return false;    
+	                }
+	                
+	                if(minZ >= maxZ) {
+	                    MipavUtil.displayError("Input error, maxZ < minZ.");
+	                    return false;
+	                }
+	                
+	                stepSize = Integer.valueOf(stepSizeText.getText());
+			    }
+		    } // if (!(noRegister2D || register2DOne || register2DAll))
 		} catch(NumberFormatException nfe) {
             MipavUtil.displayError("Input error, enter numerical values only.");
             return false;
@@ -3086,6 +3164,19 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	            }
 	            if(saveMaxProj) {
 	                maxProjCreate = createMaxProjFolders(ariMeanDirString);
+	            }
+	        }
+	        
+	        if(savePrefusion) {
+	            if((prefusionBaseDir = createDirectory(prefusionBaseDirString)) == null) {
+	                return false;
+	            }
+	            if((prefusionTransformDir = createDirectory(prefusionTransformDirString)) == null) {
+	                return false;
+	            }
+	            if(saveMaxProj) {
+	                maxProjCreate = createMaxProjFolders(prefusionBaseDirString);
+	                maxProjCreate = createMaxProjFolders(prefusionTransformDirString);
 	            }
 	        }
         } // if (!(noRegister2D || register2DOne || register2DAll))
