@@ -1475,8 +1475,8 @@ public class LatticeModel {
 	
 	private void segmentAll( ModelImage image )
 	{
-		ModelImage blurs = blur(image, 9);
-		ModelImage blurb = blur(image, 11);
+		ModelImage blurs = blur(image, 5);
+		ModelImage blurb = blur(image, 7);
 
     	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
     	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
