@@ -229,6 +229,17 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 						{
 							model.setAnnotations( annotations.elementAt(0) );
 						}
+						else
+						{
+							fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotation";            	    		
+							annotations = new VOIVector();
+							voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+							loadAllVOIsFrom(voiDir, true, annotations, false);
+							if ( annotations.size() > 0 )
+							{
+								model.setAnnotations( annotations.elementAt(0) );
+							}							
+						}
 						model.interpolateLattice( false );
 						model.dispose();
 						model = null;
@@ -291,6 +302,17 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 						if ( annotations.size() > 0 )
 						{
 							model.setAnnotations( annotations.elementAt(0) );
+						}
+						else
+						{
+							fileName = baseFileNameText.getText() + "_" + fileCount + File.separator + "annotation";            	    		
+							annotations = new VOIVector();
+							voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+							loadAllVOIsFrom(voiDir, true, annotations, false);
+							if ( annotations.size() > 0 )
+							{
+								model.setAnnotations( annotations.elementAt(0) );
+							}							
 						}
 
 						model.interpolateLattice( false );
