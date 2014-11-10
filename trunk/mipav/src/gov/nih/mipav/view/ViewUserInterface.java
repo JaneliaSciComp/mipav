@@ -1553,7 +1553,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      *            blank image).
      */
     public ModelImage createBlankImage(final FileInfoBase fileInfo) {
-        return createBlankImage(fileInfo, true);
+        return createBlankImage(fileInfo, true, true);
     }
 
     /**
@@ -1561,8 +1561,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * 
      * @param fileInfo This object contains the enough image information to build a ModelImage with nothing inside (eg.
      *            blank image).
+     * @param doDisplay
+     * @param allowRecording
      */
-    public ModelImage createBlankImage(FileInfoBase fileInfo, final boolean doDisplay) {
+    public ModelImage createBlankImage(FileInfoBase fileInfo, final boolean doDisplay, final boolean allowRecording) {
         ModelImage image = null;
 
         if (fileInfo == null) {
@@ -1616,8 +1618,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             return null;
         }
 
-        ProvenanceRecorder.getReference().addLine(new ActionCreateBlankImage(image));
-        ScriptRecorder.getReference().addLine(new ActionCreateBlankImage(image));
+        if (allowRecording) {
+            ProvenanceRecorder.getReference().addLine(new ActionCreateBlankImage(image));
+            ScriptRecorder.getReference().addLine(new ActionCreateBlankImage(image));
+        }
 
         return image;
     }
