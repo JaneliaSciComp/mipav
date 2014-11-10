@@ -630,6 +630,11 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     	zMaxBoxSelected = scriptParameters.getParams().getBoolean("z_max_box_selected");
     	doSmartMovement = scriptParameters.getParams().getBoolean("do_smart_movement");
     	thresholdIntensity = scriptParameters.getParams().getDouble("threshold_intensity");
+    	resX = scriptParameters.getParams().getDouble("res_x");
+    	resY = scriptParameters.getParams().getDouble("res_y");
+    	if (!(noRegister2D || register2DOne || register2DAll)) {
+    		resZ = scriptParameters.getParams().getDouble("res_z");	
+    	}
     	
     	if (registerOne || registerAll || register2DOne || register2DAll) {
     	    mtxFileDirectory = scriptParameters.getParams().getString("mtxFileDirectory");
@@ -748,6 +753,11 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         scriptParameters.getParams().put(ParameterFactory.newParameter("z_max_box_selected", zMaxBoxSelected));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_smart_movement", doSmartMovement));
         scriptParameters.getParams().put(ParameterFactory.newParameter("threshold_intensity", thresholdIntensity));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("res_x", resX));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("res_y", resY));
+        if (!(noRegister2D || register2DOne || register2DAll)) {
+        	scriptParameters.getParams().put(ParameterFactory.newParameter("res_z", resZ));	
+        }
        
         if (registerOne || registerAll || register2DOne || register2DAll) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("mtxFileDirectory", mtxFileDirectory));
