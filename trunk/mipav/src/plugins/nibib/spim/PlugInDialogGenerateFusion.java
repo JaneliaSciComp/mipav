@@ -665,6 +665,19 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	    	    useDeconvSigmaConversionFactor = scriptParameters.getParams().getBoolean("use_deconv_sigma_conversion_factor");
 	    	} // if (doDeconv)
 	    	
+	    	if (saveAriMean) {
+	    		ariMeanDirString = scriptParameters.getParams().getString("ariMeanDirString");
+	    	}
+	    	
+	    	if (saveGeoMean) {
+	    		geoMeanDirString = scriptParameters.getParams().getString("geoMeanDirString");	
+	    	}
+	    	
+	    	if (savePrefusion) {
+	    		prefusionBaseDirString = scriptParameters.getParams().getString("prefusionBaseDirString");	
+	    		prefusionTransformDirString = scriptParameters.getParams().getString("prefusionTransformDirString");
+	    	}
+	    	
 	    	if(showAriMean || saveAriMean) {
 	    		baseAriWeight = scriptParameters.getParams().getDouble("base_ari_weight");
 	    		transformAriWeight = scriptParameters.getParams().getDouble("transform_ari_weight");	
@@ -770,6 +783,19 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	            scriptParameters.getParams().put(ParameterFactory.newParameter("use_deconv_sigma_conversion_factor",
 	            		useDeconvSigmaConversionFactor));
 	        } // if (doDeconv)
+	        
+	        if (saveAriMean) {
+	        	scriptParameters.getParams().put(ParameterFactory.newParameter("ariMeanDirString", ariMeanDirString));	
+	        }
+	        
+	        if (saveGeoMean) {
+	        	scriptParameters.getParams().put(ParameterFactory.newParameter("geoMeanDirString", geoMeanDirString));		
+	        }
+	        
+	        if (savePrefusion) {
+	        	scriptParameters.getParams().put(ParameterFactory.newParameter("prefusionBaseDirString", prefusionBaseDirString));	
+	        	scriptParameters.getParams().put(ParameterFactory.newParameter("prefusionTransformDirString", prefusionTransformDirString));	
+	        }
 	        
 	        if(showAriMean || saveAriMean) {
 	        	scriptParameters.getParams().put(ParameterFactory.newParameter("base_ari_weight", baseAriWeight));
