@@ -203,6 +203,9 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     private JCheckBox doShowMaxProjBox, doSaveMaxProjBox;
     /** Checkboxes for computing x, y, and z max projections */
     private JCheckBox doXMaxBox, doYMaxBox, doZMaxBox;
+    private boolean xMaxBoxSelected;
+    private boolean yMaxBoxSelected;
+    private boolean zMaxBoxSelected;
     /** Max projection lower intensity threshold text field */
     private JTextField minThresholdMaxProjText;
     /** MIP algorithm for later processing */
@@ -622,6 +625,9 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     	doThreshold = scriptParameters.getParams().getBoolean("do_threshold");
     	saveMaxProj = scriptParameters.getParams().getBoolean("save_max_proj");
     	showMaxProj = scriptParameters.getParams().getBoolean("show_max_proj");
+    	xMaxBoxSelected = scriptParameters.getParams().getBoolean("x_max_box_selected");
+    	yMaxBoxSelected = scriptParameters.getParams().getBoolean("y_max_box_selected");
+    	zMaxBoxSelected = scriptParameters.getParams().getBoolean("z_max_box_selected");
     	doSmartMovement = scriptParameters.getParams().getBoolean("do_smart_movement");
     	thresholdIntensity = scriptParameters.getParams().getDouble("threshold_intensity");
     	
@@ -724,6 +730,9 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_threshold", doThreshold));
         scriptParameters.getParams().put(ParameterFactory.newParameter("save_max_proj", saveMaxProj));
         scriptParameters.getParams().put(ParameterFactory.newParameter("show_max_proj", showMaxProj));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("x_max_box_selected", xMaxBoxSelected));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("y_max_box_selected", yMaxBoxSelected));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("z_max_box_selected", zMaxBoxSelected));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_smart_movement", doSmartMovement));
         scriptParameters.getParams().put(ParameterFactory.newParameter("threshold_intensity", thresholdIntensity));
        
@@ -2220,19 +2229,19 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     }
 
     private boolean createMaxProjFolders(String parentFolder) {
-        if(doXMaxBox.isSelected()) {
+        if(xMaxBoxSelected) {
             if(createDirectory(parentFolder+File.separator+XPROJ) == null) {
                 return false;
             }
         }
         
-        if(doYMaxBox.isSelected()) {
+        if(yMaxBoxSelected) {
             if(createDirectory(parentFolder+File.separator+YPROJ) == null) {
                 return false;
             }
         }
         
-        if(doZMaxBox.isSelected()) {
+        if(zMaxBoxSelected) {
             if(createDirectory(parentFolder+File.separator+ZPROJ) == null) {
                 return false;
             }
@@ -2262,6 +2271,9 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         doThreshold = doThresholdBox.isSelected();
         saveMaxProj = doSaveMaxProjBox.isSelected();
         showMaxProj = doShowMaxProjBox.isSelected();
+        xMaxBoxSelected = doXMaxBox.isSelected();
+        yMaxBoxSelected = doYMaxBox.isSelected();
+        zMaxBoxSelected = doZMaxBox.isSelected();
 	    
         doSmartMovement = doSmartMovementBox.isSelected();
         
