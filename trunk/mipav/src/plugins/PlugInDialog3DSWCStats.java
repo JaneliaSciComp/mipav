@@ -63,6 +63,8 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 	private JTextPane textArea;
 	
 	private JRadioButton axonRB;
+	
+	private JRadioButton customRB;
 
 	public PlugInDialog3DSWCStats(){
 		super();
@@ -156,16 +158,24 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 			}
 		}
 		
-		PlugInAlgorithm3DSWCStats alg = new PlugInAlgorithm3DSWCStats(files, (String) resolutionUnits.getSelectedItem(), textArea);
-		alg.useAxonLength(axonRB.isSelected());
-		alg.addListener(this);
+		if(customRB.isSelected()){
+			if(files.size()==1)
+				new PlugInDialog3DSWCViewer(files.get(0), textArea, (String) resolutionUnits.getSelectedItem());
+			else
+				MipavUtil.displayError("You may only select one file for this mode");
+		}else{
 		
-		if(isRunInSeparateThread()){
-			if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
-				MipavUtil.displayError("A thread is already running on this object");
+			PlugInAlgorithm3DSWCStats alg = new PlugInAlgorithm3DSWCStats(files, (String) resolutionUnits.getSelectedItem(), textArea);
+			alg.useAxonLength(axonRB.isSelected());
+			alg.addListener(this);
+			
+			if(isRunInSeparateThread()){
+				if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
+					MipavUtil.displayError("A thread is already running on this object");
+				}
+			} else {
+				alg.run();
 			}
-		} else {
-			alg.run();
 		}
 	}
 	
@@ -206,8 +216,13 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		imarisRB.setFont(serif12);
 		group.add(imarisRB);
 		
+		customRB = new JRadioButton("Choose filament");
+		customRB.setFont(serif12);
+		group.add(customRB);
+		
 		rbPanel.add(axonRB);
 		rbPanel.add(imarisRB);
+		rbPanel.add(customRB);
 		
 		JLabel resLabel = new JLabel("SWC Resolution Units");
 		resLabel.setFont(serif12);
