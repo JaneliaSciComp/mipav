@@ -203,16 +203,19 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 	
 	/**
 	 * Rotates the image and makes the projection to
-	 * be displayed in the image frame. 
+	 * be displayed in the image frame. Also includes
+	 * zoom factor now.
 	 * @param rx
 	 * @param ry
 	 * @param rz
+	 * @param zoom
 	 */
-	public void rotateImage(int rx, int ry, int rz){
+	public void transformImage(int tx, int ty, int rx, int ry, int rz, double zoom){
 		
 		TransMatrix mat = new TransMatrix(3);
 		//if you want to zoom, do it AFTER rotate
 		mat.setRotate(rx, ry, rz, TransMatrix.DEGREES);
+		mat.setZoom(zoom, zoom);
 		
 		viewPts.clear();
 		
@@ -228,6 +231,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 			for(int j=0;j<3;j++){
 				rotJoint[j] += 256;
 			}
+			rotJoint[0] += tx;
+			rotJoint[1] += ty;
 			viewPts.add(new Point(Math.round(rotJoint[0]), Math.round(rotJoint[1])));
 		}
 		

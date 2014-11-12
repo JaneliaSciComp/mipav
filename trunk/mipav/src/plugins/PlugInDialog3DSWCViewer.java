@@ -33,6 +33,7 @@ import javax.swing.text.StyleConstants;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJComponentEditImage;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
@@ -150,6 +151,12 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 				frame.getControls().getTools().setOpacity(1.0f);
 				frame.getControls().getTools().setPaintColor(Color.RED);
 				frame.setVisible(true);
+				
+				ViewJComponentEditImage comp = frame.getComponentImage();
+				comp.removeMouseListener(comp);
+				comp.removeMouseMotionListener(comp);
+				comp.removeMouseWheelListener(comp);
+				
 	
 				pack();
 				setVisible(true);
@@ -193,37 +200,58 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 	@SuppressWarnings("rawtypes")
 	private void init(){
 		
-		sliders = new JSlider[3];
-		spinners = new JSpinner[3];
-		String[] labelStr = new String[]{"X", "Y", "Z"};
-		JLabel[] labels = new JLabel[3];
+		sliders = new JSlider[6];
+		spinners = new JSpinner[6];
+		String[] labelStr = new String[]{"Tx", "Ty", "Rx", "Ry", "Rz", "Zoom"};
+		JLabel[] labels = new JLabel[6];
 		
-		for(int i=0;i<3;i++){
-			sliders[i] = new JSlider(JSlider.HORIZONTAL, 0, 360, 0);
+		for(int i=0;i<5;i++){
+			if(i<2){
+				sliders[i] = new JSlider(JSlider.HORIZONTAL, -500, 500, 0);
+				spinners[i] = new JSpinner(new SpinnerNumberModel(0, -500, 500, 1));
+			}
+			else{
+				sliders[i] = new JSlider(JSlider.HORIZONTAL, 0, 360, 0);
+				spinners[i] = new JSpinner(new SpinnerNumberModel(0, 0, 360, 1));
+			}
 			sliders[i].setFont(serif12);
 			sliders[i].addChangeListener(this);
-			spinners[i] = new JSpinner(new SpinnerNumberModel(0, 0, 360, 1));
+			
 			spinners[i].setFont(serif12);
 			spinners[i].addChangeListener(this);
 			labels[i] = new JLabel(labelStr[i]);
 			labels[i].setFont(serif12B);
 		}
 		
+		sliders[5] = new JSlider(JSlider.HORIZONTAL, 1, 100, 10);
+		sliders[5].setPaintTicks(false);
+		sliders[5].setFont(serif12);
+		sliders[5].addChangeListener(this);
+		spinners[5] = new JSpinner(new SpinnerNumberModel(1.0, 0.1, 10.0, 0.1));
+		spinners[5].setFont(serif12);
+		spinners[5].addChangeListener(this);
+		labels[5] = new JLabel("Zoom");
+		labels[5].setFont(serif12B);
+		
 		JPanel topPanel = new JPanel(new GridBagLayout());
-		topPanel.setBorder(new TitledBorder(BorderFactory.createLineBorder(Color.black), "Rotate image"));
+		
+		topPanel.setBorder(new TitledBorder(BorderFactory.createLineBorder(Color.black), "Change view"));
 		topPanel.setForeground(Color.black);
 		
 		GridBagConstraints gbc = new GridBagConstraints();
 
 		gbc.insets = new Insets(0, 5, 0, 5);
 		gbc.gridwidth = 1;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
 		
-		for(int i=0;i<3;i++){
+		for(int i=0;i<6;i++){
 			gbc.gridy = i;
 			gbc.gridx = 0;
+			gbc.anchor = GridBagConstraints.EAST;
 			topPanel.add(labels[i], gbc);
 			gbc.gridx = 1;
 			gbc.gridwidth = 3;
+			gbc.anchor = GridBagConstraints.WEST;
 			topPanel.add(sliders[i], gbc);
 			gbc.gridx = 4;
 			gbc.gridwidth = 1;
@@ -277,13 +305,19 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 			}
 			
 			int value = sliders[ind].getValue();
-			spinners[ind].setValue(value);
+			if(ind == 5)
+				spinners[ind].setValue((double)value/10.0);
+			else
+				spinners[ind].setValue(value);
 			
-			int rx = sliders[0].getValue();
-			int ry = sliders[1].getValue();
-			int rz = sliders[2].getValue();
+			int tx = sliders[0].getValue();
+			int ty = sliders[1].getValue();
+			int rx = sliders[2].getValue();
+			int ry = sliders[3].getValue();
+			int rz = sliders[4].getValue();
+			double zoom = (double)sliders[5].getValue() / 10.0;
 			
-			alg.rotateImage(rx, ry, rz);
+			alg.transformImage(tx, ty, rx, ry, rz, zoom);
 			
 		} else if(e.getSource() instanceof JSpinner){
 			int ind;
@@ -295,13 +329,24 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 			try{
 				spinners[ind].commitEdit();
 				Object val = spinners[ind].getValue();
-				int value;
-				if(val instanceof Integer){
-					value = (Integer)spinners[ind].getValue();
-				} else {
-					throw new NumberFormatException();
+				if(ind < 5){
+					int value;
+					if(val instanceof Integer){
+						value = (Integer)spinners[ind].getValue();
+					} else {
+						throw new NumberFormatException();
+					}
+					sliders[ind].setValue(value);
+				}else if(ind == 5){
+					double value;
+					if(val instanceof Double){
+						value = (Double)spinners[ind].getValue();
+					} else {
+						throw new NumberFormatException();
+					}
+					int intVal = (int) (value*10);
+					sliders[ind].setValue(intVal);
 				}
-				sliders[ind].setValue(value);
 			} catch (NumberFormatException ne){
 				MipavUtil.displayError("Rotation value is not an integer");
 				return;
@@ -310,11 +355,14 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 				pe.printStackTrace();
 			}
 			
-			int rx = sliders[0].getValue();
-			int ry = sliders[1].getValue();
-			int rz = sliders[2].getValue();
+			int tx = sliders[0].getValue();
+			int ty = sliders[1].getValue();
+			int rx = sliders[2].getValue();
+			int ry = sliders[3].getValue();
+			int rz = sliders[4].getValue();
+			double zoom = (double)sliders[5].getValue() / 10.0;
 			
-			alg.rotateImage(rx, ry, rz);
+			alg.transformImage(tx, ty, rx, ry, rz, zoom);
 		}
 	}
 
