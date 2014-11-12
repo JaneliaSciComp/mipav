@@ -36,6 +36,15 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
+/**
+ * A sister plugin to the 3DSWCStats set of plugins. This dialog opens up
+ * a very rudimentary 3D viewer of the neuron skeleton. The user can
+ * then choose which branch to use as the axon when exported to a SWC
+ * and in the stats CSV. 
+ * @see PlugInDialog3DSWCStats
+ * @author wangvg
+ *
+ */
 
 public class PlugInDialog3DSWCViewer extends JDialogBase implements
 		AlgorithmInterface, ChangeListener, ListSelectionListener {
@@ -49,11 +58,24 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 	
 	private JTextPane textArea;
 	
+	/**
+	 * Sliders to control rotation about the
+	 * x-, y-, and z-axes
+	 */
 	private JSlider[] sliders;
 	
+	/**
+	 * Spinners to control rotation about the
+	 * x-, y-, and z-axes while also displaying
+	 * the value of each
+	 */
 	private JSpinner[] spinners;
 	
 	@SuppressWarnings("rawtypes")
+	/**
+	 * List used to display and select which
+	 * branch to denote as the axon
+	 */
 	private JList tips;
 	
 	private PlugInAlgorithm3DSWCViewer alg;
@@ -103,27 +125,39 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 	
 	@SuppressWarnings("unchecked")
 	@Override
+	/**
+	 * Only performed after the Imaris file has
+	 * been imported and the general SWC structure
+	 * has been setup for display. Populates the list
+	 * of potential filaments to use as the axon and
+	 * selects the most likely one to start with. 
+	 */
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 		if(algorithm instanceof PlugInAlgorithm3DSWCViewer){
-			frame = new ViewJFrameImage(alg.getDestImage());
-			ArrayList<Integer> tipList = alg.getTips();
-			Vector<String> tipName = new Vector<String>();
-			for(Integer i : tipList){
-				String name = "Filament " + i.toString();
-				tipName.add(name);
+			if(algorithm.isCompleted()){
+				frame = new ViewJFrameImage(alg.getDestImage());
+				ArrayList<Integer> tipList = alg.getTips();
+				Vector<String> tipName = new Vector<String>();
+				for(Integer i : tipList){
+					String name = "Filament " + i.toString();
+					tipName.add(name);
+				}
+				tips.setListData(tipName);
+				tips.setSelectedIndex(0);
+				BitSet axonMask = alg.highlightAxon(tipList.get(0));
+	
+				frame.getComponentImage().setPaintMask(axonMask);
+				frame.getControls().getTools().setOpacity(1.0f);
+				frame.getControls().getTools().setPaintColor(Color.RED);
+				frame.setVisible(true);
+	
+				pack();
+				setVisible(true);
+				System.gc();
+			}else{
+				MipavUtil.displayError("Could not build viewer. Check"
+						+ "debugging output for more information.");
 			}
-			tips.setListData(tipName);
-			tips.setSelectedIndex(0);
-			BitSet axonMask = alg.highlightAxon(tipList.get(0));
-
-			frame.getComponentImage().setPaintMask(axonMask);
-			frame.getControls().getTools().setOpacity(1.0f);
-			frame.getControls().getTools().setPaintColor(Color.RED);
-			frame.setVisible(true);
-
-			pack();
-			setVisible(true);
-			System.gc();
 		}
 		
 	}
@@ -139,6 +173,11 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 		textArea.setCaretPosition(doc.getLength());
 	}
 	
+	/**
+	 * Run the setup step for the algorithm, which
+	 * just reads the Imaris file and makes some
+	 * basic inferences. 
+	 */
 	private void setup(){
 		alg = new PlugInAlgorithm3DSWCViewer(swcFile, textArea, resUnit);
 		alg.addListener(this);
@@ -224,6 +263,11 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 	}
 
 	@Override
+	/**
+	 * Constantly rotate the projection when the sliders
+	 * or spinners change. Also update the sliders when
+	 * the spinners change, and vice versa. 
+	 */
 	public void stateChanged(ChangeEvent e) {
 		if(e.getSource() instanceof JSlider){
 			int ind;
@@ -275,6 +319,10 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 	}
 
 	@Override
+	/**
+	 * Highlight a branch whenever the user selects 
+	 * a filament from the list. 
+	 */
 	public void valueChanged(ListSelectionEvent e) {
 		Object obj = tips.getSelectedValue();
 		if(obj instanceof String){
