@@ -20,7 +20,18 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.ViewJFrameImage;
 
-
+/**
+ * A sister plugin to the 3DSWCStats set of plugins. The dialog opens up
+ * a very rudimentary 3D viewer of the neuron skeleton. The user can
+ * then choose which branch to use as the axon when exported to a SWC
+ * and in the stats CSV. This algorithm is very similar to the original
+ * 3DSWCStats since all the methods still occur. However, the dialog
+ * allows the user to choose an axon and thus requires the connections
+ * in this algorithm to be rearranged.
+ * @see PlugInAlgorithm3DSWCStats 
+ * @author wangvg
+ *
+ */
 public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 
 	public static int SETUP = 0;
@@ -62,16 +73,17 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		swcFile = file;
 		textArea = text;
 		resolutionUnit = resUnit;
-		
-		
-		
 	}
 	
 	@Override
+	/**
+	 * In this algorithm, only the setup steps are carried out. 
+	 * These steps are reading the Imaris file, attempting to
+	 * create connections, and building the basic structure 
+	 * for output to the 3D viewer. The writing steps are handled
+	 * in a different method. 
+	 */
 	public void runAlgorithm() {
-
-		swcCoordinates = new ArrayList<ArrayList<float[]>>();
-		joints = new ArrayList<float[]>();
 		
 		attr = new SimpleAttributeSet();
 		StyleConstants.setFontFamily(attr, "Serif");
@@ -80,52 +92,68 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		SimpleAttributeSet redText = new SimpleAttributeSet(attr);
 		StyleConstants.setForeground(redText, Color.red.darker());
 		
-		swcCoordinates.clear();
-
-		append("Reading " + swcFile.getName(), attr);
-		readSurfaceFile(swcFile);
-		//writeIndividualFilaments(f);
-
-		disconnected = false;
-
-		connections = makeConnections();
-
-		for(int i=1;i<swcCoordinates.size();i++){
-			ArrayList<float[]> fil = swcCoordinates.get(i);
-			if(fil.get(0)[4] == Float.NEGATIVE_INFINITY){
-				//No connection was made, something is wrong
-				disconnected = true;
-				break;
-			}
-		}
-		if(disconnected){
-			//Try version with tolerance
-			connections = makeConnectionsTol();
-			//Test out one more time
+		try{
+		
+			swcCoordinates = new ArrayList<ArrayList<float[]>>();
+			joints = new ArrayList<float[]>();
+	
+			append("Reading " + swcFile.getName(), attr);
+			readSurfaceFile(swcFile);
+	
+			disconnected = false;
+	
+			connections = makeConnections();
+	
 			for(int i=1;i<swcCoordinates.size();i++){
 				ArrayList<float[]> fil = swcCoordinates.get(i);
 				if(fil.get(0)[4] == Float.NEGATIVE_INFINITY){
 					//No connection was made, something is wrong
-					append(swcFile.getName() + " is not connected properly.", redText);
-					//allGood = false;
-					setCompleted(false);
-					return;
+					disconnected = true;
+					break;
 				}
 			}
+			if(disconnected){
+				//Try version with tolerance
+				connections = makeConnectionsTol();
+				//Test out one more time
+				for(int i=1;i<swcCoordinates.size();i++){
+					ArrayList<float[]> fil = swcCoordinates.get(i);
+					if(fil.get(0)[4] == Float.NEGATIVE_INFINITY){
+						//No connection was made, something is wrong
+						append(swcFile.getName() + " is not connected properly.", redText);
+						//allGood = false;
+						setCompleted(false);
+						return;
+					}
+				}
+			}
+	
+			joints.add(swcCoordinates.get(0).get(0));
+			for(int i=0;i<swcCoordinates.size();i++){
+				ArrayList<float[]> fil = swcCoordinates.get(i);
+				joints.add(fil.get(fil.size()-1));
+			}
+	
+			//Make the viewer image here
+			setupImage();
+		}catch(Exception e){
+			append("The following Java error has occured:", redText);
+			append(e.toString(), redText);
+			for(StackTraceElement t : e.getStackTrace())
+				append(t.toString(), redText);
+			setCompleted(false);
+			return;
 		}
-
-		joints.add(swcCoordinates.get(0).get(0));
-		for(int i=0;i<swcCoordinates.size();i++){
-			ArrayList<float[]> fil = swcCoordinates.get(i);
-			joints.add(fil.get(fil.size()-1));
-		}
-
-		//Make the viewer image here
-		setupImage();
-			
+		setCompleted(true);
 		
 	}
 	
+	/**
+	 * This method handles the actual writing and calculation steps
+	 * after the user has chosen an axon. Other than rearranging
+	 * the order of forward connections, this portion is more or
+	 * less the same as the back half of the sibling algorithm.
+	 */
 	public void write(){
 		
 		SimpleAttributeSet redText = new SimpleAttributeSet(attr);
@@ -145,12 +173,14 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 				append("Converted to SWC -> " + output, attr);
 			} catch (IOException e) {
 				append("Could not write SWC for " + swcFile.getName(), redText);
+				allGood = false;
 			}
 			try{
 				String output = exportStatsToCSV(swcFile, messages, branchLengths);
 				append("Exported stats to CSV -> " + output, attr);
 			} catch (IOException e) {
 				append("Could not export stats to CSV for " + swcFile.getName(), redText);
+				allGood = false;
 			}
 		}catch(Exception e){
 			append("The following Java error has occured:", redText);
@@ -171,13 +201,22 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		algStep = step;
 	}
 	
+	/**
+	 * Rotates the image and makes the projection to
+	 * be displayed in the image frame. 
+	 * @param rx
+	 * @param ry
+	 * @param rz
+	 */
 	public void rotateImage(int rx, int ry, int rz){
 		
 		TransMatrix mat = new TransMatrix(3);
+		//if you want to zoom, do it AFTER rotate
 		mat.setRotate(rx, ry, rz, TransMatrix.DEGREES);
 		
 		viewPts.clear();
 		
+		//Rotate about the center of the image
 		for(int i=0;i<joints.size();i++){
 			float[] joint = joints.get(i);
 			float[] transJoint = new float[3];
@@ -206,6 +245,14 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		
 	}
 
+	/**
+	 * Using the selected branch, create a bitset to be used
+	 * as the image mask that overlays both the branch that
+	 * was selected as well as the connections all the way
+	 * back to the origin. 
+	 * @param branch
+	 * @return
+	 */
 	public BitSet highlightAxon(int branch){
 		
 		currentAxon = branch;
@@ -242,6 +289,12 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		return axonMask;
 	}
 
+	/**
+	 * Gets all branches that have no forward connections
+	 * (and thus would be a tip). This will be used to
+	 * populate the list of potential axon branches. 
+	 * @return
+	 */
 	public ArrayList<Integer> getTips(){
 		ArrayList<Integer> tips = new ArrayList<Integer>();
 		for(int i=0;i<connections.size();i++){
@@ -757,6 +810,10 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		return output;
 	}
 	
+	/**
+	 * Using the selected branch, make sure that it comes first
+	 * in the forward connections. 
+	 */
 	private void rearrangeBranches(){
 		
 		ArrayList<float[]> fil = swcCoordinates.get(currentAxon);
@@ -773,6 +830,12 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		}
 	}
 	
+	/**
+	 * The setup for making the 3D viewer. Translates the 
+	 * branch into the center of a 512x512 image with a
+	 * at least a 20 pixel pad on each dimension in the
+	 * base (no rotation) image. 
+	 */
 	private void setupImage(){
 		float[] minBounds = new float[]{Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
 		float[] maxBounds = new float[]{-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
@@ -821,6 +884,11 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		
 	}
 	
+	/**
+	 * Draws all the branches on the image based on
+	 * the transform variables made in the earlier
+	 * portions. 
+	 */
 	private void makeViewImage(){
 		
 		
