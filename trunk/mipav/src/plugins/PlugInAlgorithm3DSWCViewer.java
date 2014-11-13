@@ -52,13 +52,15 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 	
 	private File swcFile;
 	
-	private ArrayList<Point> viewPts;
-	
 	private int currentAxon;
 	
 	private String resolutionUnit;
 	
 	private SimpleAttributeSet attr;
+	
+	private ArrayList<float[]> spacePts;
+	
+	private TransMatrix mat; 
 	
 	public PlugInAlgorithm3DSWCViewer(File file, JTextPane text, String resUnit){
 		
@@ -96,6 +98,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		
 			swcCoordinates = new ArrayList<ArrayList<float[]>>();
 			joints = new ArrayList<float[]>();
+			mat = new TransMatrix(3);
 	
 			append("Reading " + swcFile.getName(), attr);
 			readSurfaceFile(swcFile);
@@ -212,28 +215,65 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 	 */
 	public void transformImage(int tx, int ty, int rx, int ry, int rz, double zoom){
 		
-		TransMatrix mat = new TransMatrix(3);
+		mat = new TransMatrix(3);
 		//if you want to zoom, do it AFTER rotate
 		mat.setRotate(rx, ry, rz, TransMatrix.DEGREES);
 		mat.setZoom(zoom, zoom);
 		
-		viewPts.clear();
 		
 		//Rotate about the center of the image
 		for(int i=0;i<joints.size();i++){
 			float[] joint = joints.get(i);
 			float[] transJoint = new float[3];
-			for(int j=0;j<3;j++){
+			for(int j=0;j<2;j++){
 				transJoint[j] = joint[j] - 256;
 			}
+			transJoint[2] = joint[2];
 			float[] rotJoint = new float[3];
 			mat.transform(transJoint, rotJoint);
-			for(int j=0;j<3;j++){
+			for(int j=0;j<2;j++){
 				rotJoint[j] += 256;
 			}
 			rotJoint[0] += tx;
 			rotJoint[1] += ty;
-			viewPts.add(new Point(Math.round(rotJoint[0]), Math.round(rotJoint[1])));
+			
+			spacePts.set(i, rotJoint);
+			
+		}
+		
+		makeViewImage();
+		
+		BitSet axonMask = highlightAxon(currentAxon);
+		ViewJFrameImage frame = destImage.getParentFrame();
+		
+		frame.getComponentImage().setPaintMask(axonMask);
+		frame.getControls().getTools().setOpacity(1.0f);
+		frame.getControls().getTools().setPaintColor(Color.RED);
+		
+		frame.updateImages(true);
+	}
+	
+	public TransMatrix getMatrix(){
+		return mat;
+	}
+	
+	public TransMatrix mouseRotate(int tx, int ty, int rx, int ry){
+		//Want to rotate about center of neuron, so recenter the points
+		
+		mat.setRotate(rx, ry, 0, TransMatrix.DEGREES);
+		
+		for(int i=0;i<joints.size();i++){
+			float[] pt = joints.get(i);
+			float[] tPt = new float[3];
+			tPt[0] = pt[0] - 256;
+			tPt[1] = pt[1] - 256;
+			tPt[2] = pt[2];
+			float[] rPt = new float[3];
+			mat.transform(tPt, rPt);
+			rPt[0] += 256 + tx;
+			rPt[1] += 256 + ty;
+			
+			spacePts.set(i, rPt);
 		}
 		
 		makeViewImage();
@@ -247,7 +287,27 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		
 		frame.updateImages(true);
 		
+		return mat;
 		
+	}
+	
+	public void mouseTranslate(int tx, int ty){
+		for(int i=0;i<spacePts.size();i++){
+			float[] pt = spacePts.get(i);
+			pt[0] += tx;
+			pt[1] += ty;
+		}
+		
+		makeViewImage();
+		
+		BitSet axonMask = highlightAxon(currentAxon);
+		ViewJFrameImage frame = destImage.getParentFrame();
+		
+		frame.getComponentImage().setPaintMask(axonMask);
+		frame.getControls().getTools().setOpacity(1.0f);
+		frame.getControls().getTools().setPaintColor(Color.RED);
+		
+		frame.updateImages(true);
 	}
 
 	/**
@@ -269,12 +329,19 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		
 		ArrayList<ArrayList<Point>> lines = new ArrayList<ArrayList<Point>>();
 		
-		lines.add(bresenham(viewPts.get(0), viewPts.get(1)));
+		float[] oPt = spacePts.get(0);
+		Point origin = new Point(Math.round(oPt[0]), Math.round(oPt[1]));
+		float[] nPt = spacePts.get(1);
+		Point pt = new Point(Math.round(nPt[0]), Math.round(nPt[1]));
+		
+		lines.add(bresenham(origin, pt));
 		
 		while(c > -1){
-			Point currPt = viewPts.get(branch+1);
-			Point nextPt = viewPts.get(c+1);
-			lines.add(bresenham(currPt, nextPt));
+			oPt = spacePts.get(branch+1);
+			nPt = spacePts.get(c+1);
+			origin = new Point(Math.round(oPt[0]), Math.round(oPt[1]));
+			pt = new Point(Math.round(nPt[0]), Math.round(nPt[1]));
+			lines.add(bresenham(origin, pt));
 			
 			fil = swcCoordinates.get(c);
 			branch = c;
@@ -284,7 +351,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		for(int i=0;i<lines.size();i++){
 			ArrayList<Point> line = lines.get(i);
 			for(int j=0;j<line.size();j++){
-				Point pt = line.get(j);
+				pt = line.get(j);
 				if(pt.x > 0 && pt.x < 512 &&
 						pt.y > 0 && pt.y < 512)
 					axonMask.set(pt.x + pt.y*512);
@@ -857,16 +924,16 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		
 		float xDiff = maxBounds[0] - minBounds[0];
 		float yDiff = maxBounds[1] - minBounds[1];
-		float zDiff = maxBounds[2] - minBounds[2];
+		float zSum = maxBounds[2] + minBounds[2];
 		
 		float scale = 471.0F/Math.max(xDiff, yDiff);
 		
 		float xPad = (512.0F - xDiff*scale)/2.0F;
 		float yPad = (512.0F - yDiff*scale)/2.0F;
-		float zPad = (512.0F - zDiff*scale)/2.0F;
+		float zCenter = zSum / 2.0F;
 		
-		viewPts = new ArrayList<Point>();
-		
+		spacePts = new ArrayList<float[]>();
+
 		for(int i=0;i<joints.size();i++){
 			float[] joint = joints.get(i);
 			float x = joint[0];
@@ -875,12 +942,11 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 			
 			x = (x - minBounds[0])*scale + xPad; 
 			y = (y - minBounds[1])*scale + yPad;
-			z = (z - minBounds[2])*scale + zPad;
+			z = (z - zCenter)*scale;
 			
-			Point pt = new Point(Math.round(x), Math.round(y));
-			joints.set(i, new float[]{x, y, z});
-			
-			viewPts.add(pt);
+			float[] fPt = new float[]{x, y, z};
+			joints.set(i, fPt);
+			spacePts.add(fPt);
 		}
 		
 		makeViewImage();
@@ -901,20 +967,27 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		
 		ArrayList<ArrayList<Point>> lines = new ArrayList<ArrayList<Point>>();
 		
-		lines.add(bresenham(viewPts.get(0), viewPts.get(1)));
+		float[] oPt = spacePts.get(0);
+		Point origin = new Point(Math.round(oPt[0]), Math.round(oPt[1]));
+		float[] nPt = spacePts.get(1);
+		Point pt = new Point(Math.round(nPt[0]), Math.round(nPt[1]));
+		
+		lines.add(bresenham(origin, pt));
 		
 		for(int i=0;i<connections.size();i++){
-			Point currPt = viewPts.get(i+1);
+			oPt = spacePts.get(i+1);
+			origin = new Point(Math.round(oPt[0]), Math.round(oPt[1]));
 			ArrayList<Integer> branches = connections.get(i);
 			for(int j : branches){
-				Point nextPt = viewPts.get(j+1);
-				lines.add(bresenham(currPt, nextPt));
+				nPt = spacePts.get(j+1);
+				pt = new Point(Math.round(nPt[0]), Math.round(nPt[1]));
+				lines.add(bresenham(origin, pt));
 			}
 		}
 		for(int i=0;i<lines.size();i++){
 			ArrayList<Point> line = lines.get(i);
 			for(int j=0;j<line.size();j++){
-				Point pt = line.get(j);
+				pt = line.get(j);
 				if(pt.x > 0 && pt.x < 512 &&
 						pt.y > 0 && pt.y < 512)
 					skeleton.set(pt.x + pt.y*512);
