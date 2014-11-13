@@ -8,6 +8,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -54,7 +57,8 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
  */
 
 public class PlugInDialog3DSWCViewer extends JDialogBase implements
-		AlgorithmInterface, ChangeListener, ListSelectionListener, MouseListener, MouseMotionListener {
+		AlgorithmInterface, ChangeListener, ListSelectionListener, 
+		MouseListener, MouseMotionListener, MouseWheelListener{
 
 	/**
 	 * 
@@ -107,6 +111,10 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 		StyleConstants.setFontFamily(attr, "Serif");
 		StyleConstants.setFontSize(attr, 12);
 
+		try {
+			textArea.getDocument().remove(0, textArea.getDocument().getLength());
+		} catch (BadLocationException e) {}
+		
 		append("Creating viewer...", attr);
 		
 		init();
@@ -121,6 +129,7 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 		if(command.equals("ok")){
 			setVisible(false);
 			frame.close();
+			
 			append("Closing viewer...", attr);
 			append("Writing with new axon choice", attr);
 			alg.write();
@@ -160,19 +169,22 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 				frame.getComponentImage().setPaintMask(axonMask);
 				frame.getControls().getTools().setOpacity(1.0f);
 				frame.getControls().getTools().setPaintColor(Color.RED);
+				frame.addWindowListener(this);
 				frame.setVisible(true);
 				
 				ViewJComponentEditImage comp = frame.getComponentImage();
 				comp.removeMouseListener(comp);
 				comp.removeMouseMotionListener(comp);
 				comp.removeMouseWheelListener(comp);
-				comp.addMouseListener(this);
-				comp.addMouseMotionListener(this);
+				//comp.addMouseListener(this);
+				//comp.addMouseMotionListener(this);
+				//comp.addMouseWheelListener(this);
 				
 	
 				pack();
 				setVisible(true);
 				System.gc();
+				
 			}else{
 				MipavUtil.displayError("Could not build viewer. Check"
 						+ "debugging output for more information.");
@@ -212,15 +224,18 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 	@SuppressWarnings("rawtypes")
 	private void init(){
 		
+		setTitle("3D Neuron Viewer");
+		
 		sliders = new JSlider[6];
 		spinners = new JSpinner[6];
+		//This is order of sliders/spinners
 		String[] labelStr = new String[]{"Tx", "Ty", "Rx", "Ry", "Rz", "Zoom"};
 		JLabel[] labels = new JLabel[6];
 		
 		for(int i=0;i<5;i++){
 			if(i<2){
 				sliders[i] = new JSlider(JSlider.HORIZONTAL, -500, 500, 0);
-				spinners[i] = new JSpinner(new SpinnerNumberModel(0, -500, 500, 1));
+				spinners[i] = new JSpinner(new SpinnerNumberModel(0, -1000, 1000, 1));
 			}
 			else{
 				sliders[i] = new JSlider(JSlider.HORIZONTAL, -180, 180, 0);
@@ -388,7 +403,15 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 		if(obj instanceof String){
 			String label = obj.toString();
 			String num = label.split(" ")[1];
-			Integer branch = Integer.valueOf(num);
+			Integer branch;
+			try{
+				branch = Integer.valueOf(num);
+			} catch (NumberFormatException ne){
+				SimpleAttributeSet redText = new SimpleAttributeSet(attr);
+				StyleConstants.setForeground(redText, Color.red.darker());
+				append("Invalid branch choice. Check for non-integer numbers.", redText);
+				return;	
+			}
 			BitSet axonMask = alg.highlightAxon(branch);
 			
 			frame.getComponentImage().setPaintMask(axonMask);
@@ -440,11 +463,14 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 		int tx = sliders[0].getValue();
 		int ty = sliders[1].getValue();
 		
+		
 		if(buttonPressed == MouseEvent.BUTTON1){
 			
+			//double zoom = (double)sliders[5].getValue() / 10.0;
 			TransMatrix mat = alg.mouseRotate(tx, ty, diffY, diffX);
 			Vector3f rotate = new Vector3f();
 			
+			//This is working improperly, returning dubious results
 			mat.decomposeMatrix(rotate, null, null, null);
 			
 			float rxf = (float) ((double)rotate.X * 180.0 / Math.PI);
@@ -492,6 +518,23 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
+		
+	}
+	
+	public void windowClosing(WindowEvent e){
+		if(e.getSource() == this ||
+				e.getSource() == frame){
+			actionPerformed(new ActionEvent(this, 0, "cancel"));
+		}
+	}
+
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent e) {
+		
+		int num = e.getWheelRotation();
+		int value = sliders[5].getValue();
+		sliders[5].setValue(value - num);
+		
 		
 	}
 	
