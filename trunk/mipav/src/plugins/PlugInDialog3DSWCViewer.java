@@ -3,7 +3,11 @@ import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -30,8 +34,10 @@ import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJComponentEditImage;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -48,7 +54,7 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
  */
 
 public class PlugInDialog3DSWCViewer extends JDialogBase implements
-		AlgorithmInterface, ChangeListener, ListSelectionListener {
+		AlgorithmInterface, ChangeListener, ListSelectionListener, MouseListener, MouseMotionListener {
 
 	/**
 	 * 
@@ -86,6 +92,10 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 	private SimpleAttributeSet attr;
 	
 	private String resUnit;
+	
+	private Point prevPt;
+	
+	private int buttonPressed;
 	
 	public PlugInDialog3DSWCViewer(File file, JTextPane text, String unit){
 		
@@ -156,6 +166,8 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 				comp.removeMouseListener(comp);
 				comp.removeMouseMotionListener(comp);
 				comp.removeMouseWheelListener(comp);
+				comp.addMouseListener(this);
+				comp.addMouseMotionListener(this);
 				
 	
 				pack();
@@ -211,8 +223,8 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 				spinners[i] = new JSpinner(new SpinnerNumberModel(0, -500, 500, 1));
 			}
 			else{
-				sliders[i] = new JSlider(JSlider.HORIZONTAL, 0, 360, 0);
-				spinners[i] = new JSpinner(new SpinnerNumberModel(0, 0, 360, 1));
+				sliders[i] = new JSlider(JSlider.HORIZONTAL, -180, 180, 0);
+				spinners[i] = new JSpinner(new SpinnerNumberModel(0, -180, 180, 1));
 			}
 			sliders[i].setFont(serif12);
 			sliders[i].addChangeListener(this);
@@ -384,6 +396,103 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 			frame.getControls().getTools().setPaintColor(Color.RED);
 			frame.setVisible(true);
 		}
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		int x = e.getX();
+		int y = e.getY();
+		prevPt = new Point(x, y);
+		buttonPressed = e.getButton();
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		
+	}
+
+	@Override
+	public void mouseDragged(MouseEvent e) {
+		
+		int x = e.getX();
+		int y = e.getY();
+		
+		Point currPt = new Point(x, y);
+		
+		int diffX = x - prevPt.x;
+		int diffY = y - prevPt.y;
+		
+		int tx = sliders[0].getValue();
+		int ty = sliders[1].getValue();
+		
+		if(buttonPressed == MouseEvent.BUTTON1){
+			
+			TransMatrix mat = alg.mouseRotate(tx, ty, diffY, diffX);
+			Vector3f rotate = new Vector3f();
+			
+			mat.decomposeMatrix(rotate, null, null, null);
+			
+			float rxf = (float) ((double)rotate.X * 180.0 / Math.PI);
+			float ryf = (float) ((double)rotate.Y * 180.0 / Math.PI);
+			float rzf = (float) ((double)rotate.Z * 180.0 / Math.PI);
+			float[] ra = new float[]{rxf, ryf, rzf};
+			for(int i=0;i<6;i++){
+				sliders[i].removeChangeListener(this);
+				spinners[i].removeChangeListener(this);
+			}
+			
+			for(int i=2;i<5;i++){
+				sliders[i].setValue(Math.round(ra[i-2]));
+				spinners[i].setValue(Math.round(ra[i-2]));
+			}	
+			for(int i=0;i<6;i++){
+				sliders[i].addChangeListener(this);
+				spinners[i].addChangeListener(this);
+			}
+		}else if(buttonPressed == MouseEvent.BUTTON3){
+			
+			alg.mouseTranslate(diffX, diffY);
+			
+			for(int i=0;i<6;i++){
+				sliders[i].removeChangeListener(this);
+				spinners[i].removeChangeListener(this);
+			}
+			
+			sliders[0].setValue(tx + diffX);
+			sliders[1].setValue(ty + diffY);
+			spinners[0].setValue(tx + diffX);
+			spinners[1].setValue(ty + diffY);
+			
+			for(int i=0;i<6;i++){
+				sliders[i].addChangeListener(this);
+				spinners[i].addChangeListener(this);
+			}
+		}else{
+			return;
+		}
+		
+		prevPt = currPt;
+		
+	}
+
+	@Override
+	public void mouseMoved(MouseEvent e) {
+		
 	}
 	
 	
