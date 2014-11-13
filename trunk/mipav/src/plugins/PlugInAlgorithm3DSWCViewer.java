@@ -66,7 +66,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		
 		super();
 		
-		destImage = new ModelImage(ModelImage.BOOLEAN, new int[]{512, 512}, "");
+		destImage = new ModelImage(ModelImage.BOOLEAN, new int[]{512, 512}, "3D Neuron Viewer");
 		
 		String name = file.getName();
 		name = name.substring(0, name.lastIndexOf("."));
