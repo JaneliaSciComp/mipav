@@ -7,6 +7,9 @@ import java.io.RandomAccessFile;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Comparator;
+import java.util.TreeMap;
+import java.util.Map.Entry;
 
 import javax.swing.JTextPane;
 import javax.swing.text.AttributeSet;
@@ -55,7 +58,9 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 	
 	private JTextPane textArea;
 	
-	public PlugInAlgorithm3DSWCViewer(File file, JTextPane text, String resUnit){
+	private boolean axonUseLength;
+	
+	public PlugInAlgorithm3DSWCViewer(File file, JTextPane text, String resUnit, boolean useLength){
 		
 		super();
 		
@@ -68,6 +73,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		swcFile = file;
 		textArea = text;
 		resolutionUnit = resUnit;
+		axonUseLength = useLength;
 	}
 	
 	@Override
@@ -266,7 +272,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 	 * @param ty
 	 * @param zoom
 	 */
-	public void mouseTranslate(int tx, int ty, float zoom){
+	public void mouseTranslate(int tx, int ty, double zoom){
 		for(int i=0;i<spacePts.size();i++){
 			float[] pt = spacePts.get(i);
 			pt[0] += tx*zoom;
@@ -279,8 +285,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		ViewJFrameImage frame = destImage.getParentFrame();
 		
 		frame.getComponentImage().setPaintMask(axonMask);
-		frame.getControls().getTools().setOpacity(1.0f);
-		frame.getControls().getTools().setPaintColor(Color.RED);
+		//frame.getControls().getTools().setOpacity(1.0f);
+		//frame.getControls().getTools().setPaintColor(Color.RED);
 		
 		frame.updateImages(true);
 	}
@@ -328,8 +334,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		ViewJFrameImage frame = destImage.getParentFrame();
 		
 		frame.getComponentImage().setPaintMask(axonMask);
-		frame.getControls().getTools().setOpacity(1.0f);
-		frame.getControls().getTools().setPaintColor(Color.RED);
+		//frame.getControls().getTools().setOpacity(1.0f);
+		//frame.getControls().getTools().setPaintColor(Color.RED);
 		
 		frame.updateImages(true);
 	}
@@ -352,9 +358,13 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		boolean allGood = true;
 		
 		try{
-			rearrangeBranches();
 			calculateDistances();
-			int maxOrder = determineOrder(connections);
+			int maxOrder;
+			if(axonUseLength){
+				maxOrder = determineOrder_useLength(connections);
+			}else{
+				maxOrder = determineOrder(connections);
+			}
 			ArrayList<String> messages = consolidateFilaments(connections, maxOrder);
 			float[] branchLengths = recalculateDistances();
 			addToMessages(messages);
@@ -690,6 +700,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 	*/
 	private int determineOrder(ArrayList<ArrayList<Integer>> connections){
 		
+		rearrangeBranches();
+		
 		int maxOrder = 1;
 		
 		ArrayDeque<Integer> queue = new ArrayDeque<Integer>();
@@ -744,6 +756,179 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		}
 		
 		return maxOrder;
+	}
+	
+	/**
+	 * Three pass process to determine branch ordering and which filaments
+	 * are the axon. Determines by finding the longest path from the first
+	 * filament. 
+	 * 
+	 * Changed name to longest length to allow for axon to determined
+	 * by either longest length or by filament ordering
+	 * 
+	 * @param connections
+	 */
+	
+	private int determineOrder_useLength(ArrayList<ArrayList<Integer>> connections){
+		
+		ArrayDeque<Integer> queue = new ArrayDeque<Integer>();
+		
+		ArrayList<float[]> fil = swcCoordinates.get(0);
+		float[] head = fil.get(0);
+		float[] tail = fil.get(fil.size()-1);
+		float dist = tail[3];
+		
+		int maxOrder = 1;
+		
+		ArrayList<Integer> branches = connections.get(0);
+		for(int i : branches){
+			queue.add(i);
+			fil = swcCoordinates.get(i);
+			fil.get(0)[3] = dist;
+		}
+		
+		TreeMap<Float, Integer> tmap = new TreeMap<Float, Integer>(new Comparator<Float>(){
+			@Override
+			public int compare(Float o1, Float o2) {
+				float f1 = o1.floatValue();
+				float f2 = o2.floatValue();
+				if(f1 > f2)
+					return -1;
+				else if(f1 < f2) 
+					return 1;
+				else
+					return 0;
+			}
+		});
+		
+		 
+		// Pass 1
+		// Accumulate the length of each filament. At the head
+		// of the filament, store the cumulative length for 
+		// later use. Once a tip has been reached, put the 
+		// length to that tip in a tree map.
+		// 
+		// Pretty much a BFS as the ArrayDeque is used as a queue
+		 
+		while(!queue.isEmpty()){
+			int i = queue.poll();
+			fil = swcCoordinates.get(i);
+			head = fil.get(0);
+			tail = fil.get(fil.size()-1);
+			dist = tail[3] + head[3];
+			head[3] = dist;
+			branches = connections.get(i);
+			if(branches.isEmpty()){
+				tmap.put(dist, i);
+				tail[3] = dist;
+			}
+			for(int j : branches){
+				queue.add(j);
+				fil = swcCoordinates.get(j);
+				fil.get(0)[3] = dist;
+			}
+		}
+		
+		
+		// Pass 2
+		// Tree map is based on length to the tips. Working
+		// backwards from the furthest points to the closest
+		// points should increase efficiency. 
+		// 
+		// Trace back from the tips and replace the tail
+		// length values to the length at the tip. If you
+		// are tracing backwards and the connected filament
+		// already has been reached by a longer filament 
+		// (which should always be the case because of the
+		// tree map), then move on to the next tip.
+		  
+		// Rearrange forward connections so that the first one
+		// in the list is the longest path away from this 
+		// filament.
+		 
+		while(!tmap.isEmpty()){
+			Entry<Float, Integer> entry = tmap.pollFirstEntry();
+			int i = entry.getValue();
+			dist = entry.getKey();
+			fil = swcCoordinates.get(i);
+			int c = (int)fil.get(0)[4];
+			int prev = i;
+			while(c > -1){
+				fil = swcCoordinates.get(c);
+				head = fil.get(0);
+				tail = fil.get(fil.size()-1);
+				if(tail[3] < dist){
+					tail[3] = dist;
+					branches = connections.get(c);
+					branches.remove(new Integer(prev));
+					branches.add(0, prev);
+					prev = c;
+					c = (int) head[4];
+				}else{
+					c = -1;
+				}
+			}
+		}
+		
+		rearrangeBranches();
+		
+		// Pass 3
+		// Forward connections are organized so that the longest 
+		// path is the first element. Increment the branch order
+		// of all the other elements in the list. Traverse the
+		// entire neuron in a BFS. 
+		 
+		
+		fil = swcCoordinates.get(0);
+		head = fil.get(0);
+		head[5] = 1;
+		
+		branches = connections.get(0);
+		for(int i=0;i<branches.size();i++){
+			int ind = branches.get(i);
+			queue.add(ind);
+			fil = swcCoordinates.get(i);
+		}
+		
+		for(int i=0;i<branches.size();i++){
+			int ind = branches.get(i);
+			fil = swcCoordinates.get(ind);
+			if(i == 0){
+				fil.get(0)[5] = head[5];
+			}else{
+				fil.get(0)[5] = head[5] + 1;
+			}
+		}
+		
+		while(!queue.isEmpty()){
+			int i = queue.poll();
+			fil = swcCoordinates.get(i);
+			head = fil.get(0);
+			branches = connections.get(i);
+			if(branches.size() == 0)
+				continue;
+			for(int j=0;j<branches.size();j++){
+				int ind = branches.get(j);
+				queue.add(ind);
+				fil = swcCoordinates.get(j);
+			}
+			
+			for(int j=0;j<branches.size();j++){
+				int ind = branches.get(j);
+				fil = swcCoordinates.get(ind);
+				if(j == 0){
+					fil.get(0)[5] = head[5];
+				}else{
+					fil.get(0)[5] = head[5] + 1;
+					if(head[5] + 1 > maxOrder){
+						maxOrder = (int) (head[5] + 1);
+					}
+				}
+			}
+		}
+		
+		return maxOrder;
+		
 	}
 
 	private String exportStatsToCSV(File file, ArrayList<String> messages, float[] branchLengths) throws IOException{

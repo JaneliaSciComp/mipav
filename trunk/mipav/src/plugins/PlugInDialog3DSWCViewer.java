@@ -2,6 +2,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -18,14 +19,17 @@ import java.util.BitSet;
 import java.util.Vector;
 
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.JTextPane;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -66,6 +70,8 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 	private PlugInAlgorithm3DSWCViewer alg;
 
 	private SimpleAttributeSet attr;
+	
+	private JRadioButton axonRB;
 
 	private int buttonPressed;
 
@@ -274,11 +280,32 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 		tips.setVisibleRowCount(10);
 		
 		JScrollPane scrollPane = new JScrollPane(tips);
+		scrollPane.setBorder(new TitledBorder(BorderFactory.createLineBorder(Color.black), "Select axon"));
 		
 		JPanel middlePanel = new JPanel(new BorderLayout());
 		middlePanel.setForeground(Color.black);
-		middlePanel.setBorder(new TitledBorder(BorderFactory.createLineBorder(Color.black), "Select axon"));
+		middlePanel.setBorder(new EmptyBorder(0,0,0,0));
 		middlePanel.add(scrollPane, BorderLayout.CENTER);
+		
+		JPanel rbPanel = new JPanel(new GridLayout(0,2));
+		rbPanel.setForeground(Color.black);
+		rbPanel.setBorder(new TitledBorder(BorderFactory.createLineBorder(Color.black), "Branch ordering"));
+		
+		ButtonGroup group = new ButtonGroup();
+		
+		axonRB = new JRadioButton("Use absolute length");
+		axonRB.setFont(serif12);
+		axonRB.setSelected(true);
+		group.add(axonRB);
+		
+		JRadioButton imarisRB = new JRadioButton("Infer from file");
+		imarisRB.setFont(serif12);
+		group.add(imarisRB);
+		
+		rbPanel.add(axonRB);
+		rbPanel.add(imarisRB);
+		
+		middlePanel.add(rbPanel, BorderLayout.SOUTH);
 		
 		getContentPane().add(middlePanel, BorderLayout.CENTER);
 		
@@ -304,7 +331,7 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 	 * basic inferences. 
 	 */
 	private void setup(){
-		alg = new PlugInAlgorithm3DSWCViewer(swcFile, textArea, resUnit);
+		alg = new PlugInAlgorithm3DSWCViewer(swcFile, textArea, resUnit, axonRB.isSelected());
 		alg.addListener(this);
 		if(isRunInSeparateThread()){
 			if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
@@ -351,6 +378,9 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 					break;
 			}
 			
+			SimpleAttributeSet redText = new SimpleAttributeSet(attr);
+			StyleConstants.setForeground(redText, Color.red.darker());
+			
 			try{
 				spinners[ind].commitEdit();
 				Object val = spinners[ind].getValue();
@@ -373,11 +403,19 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 					sliders[ind].setValue(intVal);
 				}
 			} catch (NumberFormatException ne){
-				MipavUtil.displayError("Rotation value is not an integer");
+				MipavUtil.displayError("Could not format a value into a number");
+				append("Error in formatting values.", redText);
+				append(e.toString(), redText);
+				for(StackTraceElement t : ne.getStackTrace())
+					append(t.toString(), redText);
 				return;
 			} catch (ParseException pe) {
-				MipavUtil.displayError("Could not read range value");
-				pe.printStackTrace();
+				MipavUtil.displayError("Could not parse a value");
+				append("Error in parsing values.", redText);
+				append(e.toString(), redText);
+				for(StackTraceElement t : pe.getStackTrace())
+					append(t.toString(), redText);
+				return;
 			}
 			
 			int tx = sliders[0].getValue();
@@ -405,6 +443,7 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 			try{
 				branch = Integer.valueOf(num);
 			} catch (NumberFormatException ne){
+				//This should never happen but on the off-chance something goes wrong
 				SimpleAttributeSet redText = new SimpleAttributeSet(attr);
 				StyleConstants.setForeground(redText, Color.red.darker());
 				append("Invalid branch choice. Check for non-integer numbers.", redText);
@@ -413,9 +452,10 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 			BitSet axonMask = alg.highlightAxon(branch);
 			
 			frame.getComponentImage().setPaintMask(axonMask);
-			frame.getControls().getTools().setOpacity(1.0f);
+			frame.updateImages(true);
+			/*frame.getControls().getTools().setOpacity(1.0f);
 			frame.getControls().getTools().setPaintColor(Color.RED);
-			frame.setVisible(true);
+			frame.setVisible(true);*/
 		}
 	}
 
@@ -460,23 +500,10 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 		
 		int tx = sliders[0].getValue();
 		int ty = sliders[1].getValue();
-		float zoom = (float) ((double)sliders[5].getValue()/10.0);
+		double zoom = (double)sliders[5].getValue()/10.0;
 		
 		
 		if(buttonPressed == MouseEvent.BUTTON1){
-			
-			//double zoom = (double)sliders[5].getValue() / 10.0;
-			/*TransMatrix mat = alg.mouseRotate(tx, ty, diffY, diffX);
-			Vector3f rotate = new Vector3f();
-			
-			//This is working improperly, returning dubious results
-			mat.decomposeMatrix(rotate, null, null, null);
-			
-			float rxf = (float) ((double)rotate.X * 180.0 / Math.PI);
-			float ryf = (float) ((double)rotate.Y * 180.0 / Math.PI);
-			float rzf = (float) ((double)rotate.Z * 180.0 / Math.PI);
-			float[] ra = new float[]{rxf, ryf, rzf};
-			*/
 			
 			int[] ra = alg.mouseRotate(diffY, diffX);
 			
