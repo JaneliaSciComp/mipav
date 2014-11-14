@@ -1960,7 +1960,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
 
         fuzzyCheckbox = new JCheckBox("Fuzzy connectedness");
         fuzzyCheckbox.setFont(serif12);
-        fuzzyCheckbox.setEnabled(true);
+        fuzzyCheckbox.setEnabled(false);
         fuzzyCheckbox.setSelected(false);
         fuzzyCheckbox.addActionListener(this);
 
