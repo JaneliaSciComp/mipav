@@ -63,22 +63,34 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 	 */
 	private static final long serialVersionUID = 4712836845621801009L;
 
-	private File swcFile;
-	
-	private JTextPane textArea;
-	
+	private PlugInAlgorithm3DSWCViewer alg;
+
+	private SimpleAttributeSet attr;
+
+	private int buttonPressed;
+
+	private ViewJFrameImage frame;
+
+	private Point prevPt;
+
+	private String resUnit;
+
 	/**
 	 * Sliders to control rotation about the
 	 * x-, y-, and z-axes
 	 */
 	private JSlider[] sliders;
-	
+
 	/**
 	 * Spinners to control rotation about the
 	 * x-, y-, and z-axes while also displaying
 	 * the value of each
 	 */
 	private JSpinner[] spinners;
+
+	private File swcFile;
+	
+	private JTextPane textArea;
 	
 	@SuppressWarnings("rawtypes")
 	/**
@@ -86,18 +98,6 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 	 * branch to denote as the axon
 	 */
 	private JList tips;
-	
-	private PlugInAlgorithm3DSWCViewer alg;
-	
-	private ViewJFrameImage frame;
-	
-	private SimpleAttributeSet attr;
-	
-	private String resUnit;
-	
-	private Point prevPt;
-	
-	private int buttonPressed;
 	
 	public PlugInDialog3DSWCViewer(File file, JTextPane text, String unit){
 		
@@ -202,23 +202,6 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 		textArea.setCaretPosition(doc.getLength());
 	}
 	
-	/**
-	 * Run the setup step for the algorithm, which
-	 * just reads the Imaris file and makes some
-	 * basic inferences. 
-	 */
-	private void setup(){
-		alg = new PlugInAlgorithm3DSWCViewer(swcFile, textArea, resUnit);
-		alg.addListener(this);
-		if(isRunInSeparateThread()){
-			if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
-				MipavUtil.displayError("A thread is already running on this object");
-			}
-		} else {
-			alg.run();
-		}
-	}
-	
 	@SuppressWarnings("rawtypes")
 	private void init(){
 		
@@ -264,7 +247,7 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 		topPanel.setForeground(Color.black);
 		
 		GridBagConstraints gbc = new GridBagConstraints();
-
+	
 		gbc.insets = new Insets(0, 5, 0, 5);
 		gbc.gridwidth = 1;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -315,6 +298,23 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 		
 	}
 
+	/**
+	 * Run the setup step for the algorithm, which
+	 * just reads the Imaris file and makes some
+	 * basic inferences. 
+	 */
+	private void setup(){
+		alg = new PlugInAlgorithm3DSWCViewer(swcFile, textArea, resUnit);
+		alg.addListener(this);
+		if(isRunInSeparateThread()){
+			if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
+				MipavUtil.displayError("A thread is already running on this object");
+			}
+		} else {
+			alg.run();
+		}
+	}
+	
 	@Override
 	/**
 	 * Constantly rotate the projection when the sliders

@@ -34,34 +34,26 @@ import gov.nih.mipav.view.ViewJFrameImage;
  *
  */
 public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
-
-	public static int SETUP = 0;
-	
-	public static int WRITE = 1;
-	
-	private int algStep = SETUP;
-	
-	private ArrayList<ArrayList<float[]>> swcCoordinates;
 	
 	private ArrayList<ArrayList<Integer>> connections;
 	
-	private ArrayList<float[]> joints;
-	
-	private JTextPane textArea;
+	private int currentAxon;
 	
 	private boolean disconnected;
 	
-	private File swcFile;
+	private ArrayList<float[]> joints;
 	
-	private int currentAxon;
+	private TransMatrix mat;
 	
 	private String resolutionUnit;
 	
-	private SimpleAttributeSet attr;
-	
 	private ArrayList<float[]> spacePts;
 	
-	private TransMatrix mat; 
+	private ArrayList<ArrayList<float[]>> swcCoordinates;
+	
+	private File swcFile;
+	
+	private JTextPane textArea;
 	
 	public PlugInAlgorithm3DSWCViewer(File file, JTextPane text, String resUnit){
 		
@@ -88,7 +80,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 	 */
 	public void runAlgorithm() {
 		
-		attr = new SimpleAttributeSet();
+		SimpleAttributeSet attr = new SimpleAttributeSet();
 		StyleConstants.setFontFamily(attr, "Serif");
 		StyleConstants.setFontSize(attr, 12);
 
@@ -152,161 +144,26 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		
 	}
 	
+	public int getAxon(){
+		return currentAxon;
+	}
+
 	/**
-	 * This method handles the actual writing and calculation steps
-	 * after the user has chosen an axon. Other than rearranging
-	 * the order of forward connections, this portion is more or
-	 * less the same as the back half of the sibling algorithm.
+	 * Gets all branches that have no forward connections
+	 * (and thus would be a tip). This will be used to
+	 * populate the list of potential axon branches. 
+	 * @return
 	 */
-	public void write(){
-		
-		SimpleAttributeSet redText = new SimpleAttributeSet(attr);
-		StyleConstants.setForeground(redText, Color.red.darker());
-		
-		boolean allGood = true;
-		
-		try{
-			rearrangeBranches();
-			calculateDistances();
-			int maxOrder = determineOrder(connections);
-			ArrayList<String> messages = consolidateFilaments(connections, maxOrder);
-			float[] branchLengths = recalculateDistances();
-			addToMessages(messages);
-			try {
-				String output = writeSWC(swcFile, messages, branchLengths);
-				append("Converted to SWC -> " + output, attr);
-			} catch (IOException e) {
-				append("Could not write SWC for " + swcFile.getName(), redText);
-				allGood = false;
+	public ArrayList<Integer> getTips(){
+		ArrayList<Integer> tips = new ArrayList<Integer>();
+		for(int i=0;i<connections.size();i++){
+			ArrayList<Integer> branches = connections.get(i);
+			if(branches.size()==0){
+				tips.add(i);
 			}
-			try{
-				String output = exportStatsToCSV(swcFile, messages, branchLengths);
-				append("Exported stats to CSV -> " + output, attr);
-			} catch (IOException e) {
-				append("Could not export stats to CSV for " + swcFile.getName(), redText);
-				allGood = false;
-			}
-		}catch(Exception e){
-			append("The following Java error has occured:", redText);
-			append(e.toString(), redText);
-			for(StackTraceElement t : e.getStackTrace())
-				append(t.toString(), redText);
-			allGood = false;
 		}
 		
-		setCompleted(allGood);
-	}
-	
-	public int getAlgStep(){
-		return algStep;
-	}
-	
-	public void setAlgStep(int step){
-		algStep = step;
-	}
-	
-	/**
-	 * Rotates the image and makes the projection to
-	 * be displayed in the image frame. Also includes
-	 * zoom factor now.
-	 * @param rx
-	 * @param ry
-	 * @param rz
-	 * @param zoom
-	 */
-	public void transformImage(int tx, int ty, int rx, int ry, int rz, double zoom){
-		
-		mat = new TransMatrix(3);
-		//if you want to zoom, do it AFTER rotate
-		mat.setRotate(rx, ry, rz, TransMatrix.DEGREES);
-		mat.setZoom(zoom, zoom, zoom);
-		
-		
-		//Rotate about the center of the image
-		for(int i=0;i<joints.size();i++){
-			float[] joint = joints.get(i);
-			float[] transJoint = new float[3];
-			for(int j=0;j<2;j++){
-				transJoint[j] = joint[j] - 256;
-			}
-			transJoint[2] = joint[2];
-			float[] rotJoint = new float[3];
-			mat.transform(transJoint, rotJoint);
-			for(int j=0;j<2;j++){
-				rotJoint[j] += 256;
-			}
-			rotJoint[0] += tx*zoom;
-			rotJoint[1] += ty*zoom;
-			
-			spacePts.set(i, rotJoint);
-			
-		}
-		
-		makeViewImage();
-		
-		BitSet axonMask = highlightAxon(currentAxon);
-		ViewJFrameImage frame = destImage.getParentFrame();
-		
-		frame.getComponentImage().setPaintMask(axonMask);
-		frame.getControls().getTools().setOpacity(1.0f);
-		frame.getControls().getTools().setPaintColor(Color.RED);
-		
-		frame.updateImages(true);
-	}
-	
-	public TransMatrix getMatrix(){
-		return mat;
-	}
-	
-	public int[] mouseRotate(int rx, int ry){
-		//Want to rotate about center of neuron, so recenter the points
-		
-		mat.setRotate(rx, ry, 0, TransMatrix.DEGREES);
-		
-		Vector3f[] bases = new Vector3f[3];
-		bases[0] = new Vector3f(1,0,0);
-		bases[1] = new Vector3f(0,1,0);
-		bases[2] = new Vector3f(0,0,1);
-		
-		Vector3f[] rBases = new Vector3f[3];
-		for(int i=0;i<3;i++){
-			rBases[i] = new Vector3f();
-			mat.transformAsPoint3Df(bases[i], rBases[i]);
-		}
-		
-		/*float rxRad = Vector3f.angle(bases[1], rBases[1]);
-		float ryRad = Vector3f.angle(bases[2], rBases[2]);
-		float rzRad = Vector3f.angle(bases[0], rBases[0]);*/
-		
-		float rxRad = (float) Math.atan2(rBases[1].Z, rBases[2].Z);
-		float ryRad = (float) Math.atan2(-rBases[0].Z, Math.sqrt(Math.pow(rBases[1].Z, 2) + Math.pow(rBases[2].Z, 2)));
-		float rzRad = (float) Math.atan2(rBases[0].Y, rBases[0].X);
-		
-		int rxDeg = (int) Math.round((double)rxRad*180.0/Math.PI);
-		int ryDeg = (int) Math.round((double)ryRad*180.0/Math.PI);
-		int rzDeg = (int) Math.round((double)rzRad*180.0/Math.PI);
-		
-		return new int[]{ rxDeg, ryDeg, rzDeg};
-		
-	}
-	
-	public void mouseTranslate(int tx, int ty, float zoom){
-		for(int i=0;i<spacePts.size();i++){
-			float[] pt = spacePts.get(i);
-			pt[0] += tx*zoom;
-			pt[1] += ty*zoom;
-		}
-		
-		makeViewImage();
-		
-		BitSet axonMask = highlightAxon(currentAxon);
-		ViewJFrameImage frame = destImage.getParentFrame();
-		
-		frame.getComponentImage().setPaintMask(axonMask);
-		frame.getControls().getTools().setOpacity(1.0f);
-		frame.getControls().getTools().setPaintColor(Color.RED);
-		
-		frame.updateImages(true);
+		return tips;
 	}
 
 	/**
@@ -361,25 +218,251 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 	}
 
 	/**
-	 * Gets all branches that have no forward connections
-	 * (and thus would be a tip). This will be used to
-	 * populate the list of potential axon branches. 
+	 * Used as part of the action for dragging the 
+	 * mouse with the left click. This applies a 
+	 * rotation based on the mouse movement and
+	 * returns the new rotation angles, which is
+	 * then used in the transform method. 
+	 * 
+	 * @param rx
+	 * @param ry
 	 * @return
 	 */
-	public ArrayList<Integer> getTips(){
-		ArrayList<Integer> tips = new ArrayList<Integer>();
-		for(int i=0;i<connections.size();i++){
-			ArrayList<Integer> branches = connections.get(i);
-			if(branches.size()==0){
-				tips.add(i);
+	public int[] mouseRotate(int rx, int ry){
+		//Want to rotate about center of neuron, so recenter the points
+		
+		mat.setRotate(rx, ry, 0, TransMatrix.DEGREES);
+		
+		Vector3f[] bases = new Vector3f[3];
+		bases[0] = new Vector3f(1,0,0);
+		bases[1] = new Vector3f(0,1,0);
+		bases[2] = new Vector3f(0,0,1);
+		
+		Vector3f[] rBases = new Vector3f[3];
+		for(int i=0;i<3;i++){
+			rBases[i] = new Vector3f();
+			mat.transformAsPoint3Df(bases[i], rBases[i]);
+		}
+		
+		float rxRad = (float) Math.atan2(rBases[1].Z, rBases[2].Z);
+		float ryRad = (float) Math.atan2(-rBases[0].Z, Math.sqrt(Math.pow(rBases[1].Z, 2) + Math.pow(rBases[2].Z, 2)));
+		float rzRad = (float) Math.atan2(rBases[0].Y, rBases[0].X);
+		
+		int rxDeg = (int) Math.round((double)rxRad*180.0/Math.PI);
+		int ryDeg = (int) Math.round((double)ryRad*180.0/Math.PI);
+		int rzDeg = (int) Math.round((double)rzRad*180.0/Math.PI);
+		
+		return new int[]{ rxDeg, ryDeg, rzDeg};
+	}
+
+	/**
+	 * Used to translate the neuron structure in the X-Y 
+	 * viewing plane. Unlike in mouse rotate, which
+	 * simply passes the new parameters back to the dialog
+	 * to carry out the transform, this one takes care of
+	 * the translation by itself (since it is a fairly
+	 * trivial endeavour). 
+	 * @param tx
+	 * @param ty
+	 * @param zoom
+	 */
+	public void mouseTranslate(int tx, int ty, float zoom){
+		for(int i=0;i<spacePts.size();i++){
+			float[] pt = spacePts.get(i);
+			pt[0] += tx*zoom;
+			pt[1] += ty*zoom;
+		}
+		
+		makeViewImage();
+		
+		BitSet axonMask = highlightAxon(currentAxon);
+		ViewJFrameImage frame = destImage.getParentFrame();
+		
+		frame.getComponentImage().setPaintMask(axonMask);
+		frame.getControls().getTools().setOpacity(1.0f);
+		frame.getControls().getTools().setPaintColor(Color.RED);
+		
+		frame.updateImages(true);
+	}
+
+	/**
+	 * Rotates the image and makes the projection to
+	 * be displayed in the image frame. Also includes
+	 * zoom factor now.
+	 * @param rx
+	 * @param ry
+	 * @param rz
+	 * @param zoom
+	 */
+	public void transformImage(int tx, int ty, int rx, int ry, int rz, double zoom){
+		
+		mat = new TransMatrix(3);
+		//if you want to zoom, do it AFTER rotate
+		mat.setRotate(rx, ry, rz, TransMatrix.DEGREES);
+		mat.setZoom(zoom, zoom, zoom);
+		
+		
+		//Rotate about the center of the image
+		for(int i=0;i<joints.size();i++){
+			float[] joint = joints.get(i);
+			float[] transJoint = new float[3];
+			for(int j=0;j<2;j++){
+				transJoint[j] = joint[j] - 256;
+			}
+			transJoint[2] = joint[2];
+			float[] rotJoint = new float[3];
+			mat.transform(transJoint, rotJoint);
+			for(int j=0;j<2;j++){
+				rotJoint[j] += 256;
+			}
+			rotJoint[0] += tx*zoom;
+			rotJoint[1] += ty*zoom;
+			
+			spacePts.set(i, rotJoint);
+			
+		}
+		
+		makeViewImage();
+		
+		BitSet axonMask = highlightAxon(currentAxon);
+		ViewJFrameImage frame = destImage.getParentFrame();
+		
+		frame.getComponentImage().setPaintMask(axonMask);
+		frame.getControls().getTools().setOpacity(1.0f);
+		frame.getControls().getTools().setPaintColor(Color.RED);
+		
+		frame.updateImages(true);
+	}
+
+	/**
+	 * This method handles the actual writing and calculation steps
+	 * after the user has chosen an axon. Other than rearranging
+	 * the order of forward connections, this portion is more or
+	 * less the same as the back half of the sibling algorithm.
+	 */
+	public void write(){
+		
+		SimpleAttributeSet attr = new SimpleAttributeSet();
+		StyleConstants.setFontFamily(attr, "Serif");
+		StyleConstants.setFontSize(attr, 12);
+		
+		SimpleAttributeSet redText = new SimpleAttributeSet(attr);
+		StyleConstants.setForeground(redText, Color.red.darker());
+		
+		boolean allGood = true;
+		
+		try{
+			rearrangeBranches();
+			calculateDistances();
+			int maxOrder = determineOrder(connections);
+			ArrayList<String> messages = consolidateFilaments(connections, maxOrder);
+			float[] branchLengths = recalculateDistances();
+			addToMessages(messages);
+			try {
+				String output = writeSWC(swcFile, messages, branchLengths);
+				append("Converted to SWC -> " + output, attr);
+			} catch (IOException e) {
+				append("Could not write SWC for " + swcFile.getName(), redText);
+				allGood = false;
+			}
+			try{
+				String output = exportStatsToCSV(swcFile, messages, branchLengths);
+				append("Exported stats to CSV -> " + output, attr);
+			} catch (IOException e) {
+				append("Could not export stats to CSV for " + swcFile.getName(), redText);
+				allGood = false;
+			}
+		}catch(Exception e){
+			append("The following Java error has occured:", redText);
+			append(e.toString(), redText);
+			for(StackTraceElement t : e.getStackTrace())
+				append(t.toString(), redText);
+			allGood = false;
+		}
+		
+		setCompleted(allGood);
+	}
+
+	/**
+	 * Adds the branch length and distance along the
+	 * axon/parent to the output messages. 
+	 * @param messages
+	 */
+	private void addToMessages(ArrayList<String> messages){
+		for(int i=0;i<messages.size();i++){
+			String message = messages.get(i);
+			ArrayList<float[]> fil = swcCoordinates.get(i);
+			message += String.format("# Branch Length: %3.5f %s\n", 
+					fil.get(fil.size()-1)[3], resolutionUnit);
+			String parent;
+			if(i!=0){
+				if(i==1)
+					parent = "axon";
+				else parent = "parent branch";
+				message += String.format("# Length along %s: %3.5f %s\n"
+						, parent, fil.get(0)[3], resolutionUnit);
+			}
+			message += "#------------------------------------\n";
+			messages.set(i, message);
+		}
+	}
+
+	private void append(String message, AttributeSet a){
+		Document doc = textArea.getDocument();
+		try {
+			doc.insertString(doc.getLength(), message + "\n", a);
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+		}
+		
+		textArea.setCaretPosition(doc.getLength());
+	}
+
+	/**
+	 * Bresenham line algorithm used to draw the paths between two points.
+	 * This version is used with the subclasses to keep track of which
+	 * lines are displayed in the active slice to make it easier to add
+	 * nodes between points
+	 * @param p0
+	 * @param p1
+	 * @return
+	 */
+	private ArrayList<Point> bresenham(Point p0, Point p1){
+		
+		int x0 = p0.x;
+		int x1 = p1.x;
+		int y0 = p0.y;
+		int y1 = p1.y;
+		
+		ArrayList<Point> pts = new ArrayList<Point>();
+		int dx = Math.abs(x1-x0);
+		int dy = Math.abs(y1-y0);
+		int sx, sy;
+		int err, e2;
+		if(x0 < x1)
+			sx = 1;
+		else sx = -1;
+		if(y0 < y1)
+			sy = 1;
+		else sy = -1;
+		err = dx - dy;
+		
+		while(true){
+			pts.add(new Point(x0, y0));
+	
+			if(x0 == x1 && y0 == y1) break;
+			e2 = 2*err;
+			if(e2 > -dy){
+				err -= dy;
+				x0 += sx;
+			}
+			if(e2 < dx){
+				err += dx;
+				y0 += sy;
 			}
 		}
 		
-		return tips;
-	}
-
-	public int getAxon(){
-		return currentAxon;
+		return pts;
 	}
 
 	/**
@@ -434,160 +517,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 				}
 			}
 		}
-	}
-	
-	/**
-	 * Adds the branch length and distance along the
-	 * axon/parent to the output messages. 
-	 * @param messages
-	 */
-	private void addToMessages(ArrayList<String> messages){
-		for(int i=0;i<messages.size();i++){
-			String message = messages.get(i);
-			ArrayList<float[]> fil = swcCoordinates.get(i);
-			message += String.format("# Branch Length: %3.5f %s\n", 
-					fil.get(fil.size()-1)[3], resolutionUnit);
-			String parent;
-			if(i!=0){
-				if(i==1)
-					parent = "axon";
-				else parent = "parent branch";
-				message += String.format("# Length along %s: %3.5f %s\n"
-						, parent, fil.get(0)[3], resolutionUnit);
-			}
-			message += "#------------------------------------\n";
-			messages.set(i, message);
-		}
-	}
-	
-	private String exportStatsToCSV(File file, ArrayList<String> messages, float[] branchLengths) throws IOException{
-		String parent = file.getParent();
-		String name = file.getName();
-		name = name.substring(0, name.lastIndexOf("."));
-		String output = parent + File.separator + name + "_stats.csv";
-		File outputFile = new File(output);
-		
-		FileWriter fw = new FileWriter(outputFile);
-		
-		fw.append("Units," + resolutionUnit + "\n");
-		
-		String branchInfo = "";
-		branchInfo += "Total branch length," + String.valueOf(branchLengths[0]) + "\n";
-		branchInfo += "Minus axon," + String.valueOf(branchLengths[1]) + "\n\n";
-		
-		fw.append(branchInfo);
-		
-		String header = "Branch Number, Branch Order, Branch Length, Length along parent \n";
-		
-		fw.append(header);
-		
-		for(String s : messages){
-			StringBuilder sb = new StringBuilder(30);
-			String[] rows = s.split("\n");
-			int rowNum = 1;
-			
-			//Write branch number (or axon);
-			String branch = rows[rowNum].replace("#", "").trim();
-			String[] branchSplit = branch.split(" ");
-			if(branchSplit.length == 1){
-				sb.append("Axon");
-				sb.append(",");
-				sb.append("0"); //Write axon
-				rowNum++;
-			}else{
-				sb.append(branchSplit[1]);
-				sb.append(",");
-				rowNum++;
-				//Write branch order
-				String order = rows[rowNum].replace("#", "").trim();
-				String[] orderSplit = order.split(" ");
-				sb.append(orderSplit[2]);
-				rowNum++;
-			}
-			sb.append(",");
-			
-			//Write length
-			String length = rows[rowNum].replace("#", "").trim();
-			String[] lengthSplit = length.split(" ");
-			sb.append(lengthSplit[2]);
-			sb.append(",");
-			rowNum++;
-			
-			//Write length along parent
-			if(branchSplit.length == 1){
-				sb.append("Axon");
-			}else{
-				String along = rows[rowNum].replace("#", "").trim();
-				String[] alongSplit = along.split(" ");
-				sb.append(alongSplit[alongSplit.length - 2]);
-			}
-			sb.append("\n");
-			fw.append(sb.toString());
-		}
-		
-		fw.close();
-		
-		return output;
-	}
-	
-	/**
-	 * Recalculate distances for the consolidated branches
-	 * so that it also includes the branch length and
-	 * distance along the axon/parent this branch
-	 * originates from. 
-	 */
-	private float[] recalculateDistances(){
-		//0 => Total branch length, 1=> Higher order branch length
-		float[] branchLengths = new float[2];
-		
-		for(int i=0;i<swcCoordinates.size();i++){
-			ArrayList<float[]> fil = swcCoordinates.get(i);
-			float parentLength = 0;
-			if(i==0){
-				fil.get(0)[3] = 0;
-			}else{
-				float[] head = fil.get(0);
-				int connection = (int) fil.get(0)[4]-1;
-				ArrayList<float[]> list = null;
-				for(int j=0;j<swcCoordinates.size();j++){
-					list = swcCoordinates.get(j);
-					if(connection >= list.size()){
-						connection -= list.size();
-					}else{
-						break;
-					}
-				}
-				float[] pt = list.get(connection);
-				parentLength = pt[3];
-				float dist = 0;
-				for(int j=0;j<3;j++){
-					float diff = pt[j] - head[j];
-					dist += diff*diff;
-				}
-				head[3] = (float)Math.sqrt(dist);
-			}
-			float[] currPt = fil.get(0);
-			for(int j=1;j<fil.size();j++){
-				float[] nextPt = fil.get(j);
-				float dist = 0;
-				for(int k=0;k<3;k++){
-					float diff = currPt[k] - nextPt[k];
-					dist += diff*diff;
-				}
-				nextPt[3] = currPt[3] + (float)Math.sqrt(dist);
-				currPt = nextPt;
-			}
-			branchLengths[0] += currPt[3];
-			fil.get(0)[3] = parentLength;//head hold length along parent branch
-		}
-		
-		ArrayList<float[]> axon = swcCoordinates.get(0);
-		float axonLength = axon.get(axon.size()-1)[3];
-		branchLengths[1] = branchLengths[0] - axonLength;
-		
-		//Should now have length for all branches
-		
-		return branchLengths;
 	}
 	
 	/**
@@ -749,9 +678,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		
 		return messages;
 	}
-	
-	
-	
+
 	/**
 	 * Imaris filament files are patterned in a way that branch organization 
 	 * can be inferred from it. Simplified the algorithm to determine the 
@@ -818,6 +745,76 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		
 		return maxOrder;
 	}
+
+	private String exportStatsToCSV(File file, ArrayList<String> messages, float[] branchLengths) throws IOException{
+		String parent = file.getParent();
+		String name = file.getName();
+		name = name.substring(0, name.lastIndexOf("."));
+		String output = parent + File.separator + name + "_stats.csv";
+		File outputFile = new File(output);
+		
+		FileWriter fw = new FileWriter(outputFile);
+		
+		fw.append("Units," + resolutionUnit + "\n");
+		
+		String branchInfo = "";
+		branchInfo += "Total branch length," + String.valueOf(branchLengths[0]) + "\n";
+		branchInfo += "Minus axon," + String.valueOf(branchLengths[1]) + "\n\n";
+		
+		fw.append(branchInfo);
+		
+		String header = "Branch Number, Branch Order, Branch Length, Length along parent \n";
+		
+		fw.append(header);
+		
+		for(String s : messages){
+			StringBuilder sb = new StringBuilder(30);
+			String[] rows = s.split("\n");
+			int rowNum = 1;
+			
+			//Write branch number (or axon);
+			String branch = rows[rowNum].replace("#", "").trim();
+			String[] branchSplit = branch.split(" ");
+			if(branchSplit.length == 1){
+				sb.append("Axon");
+				sb.append(",");
+				sb.append("0"); //Write axon
+				rowNum++;
+			}else{
+				sb.append(branchSplit[1]);
+				sb.append(",");
+				rowNum++;
+				//Write branch order
+				String order = rows[rowNum].replace("#", "").trim();
+				String[] orderSplit = order.split(" ");
+				sb.append(orderSplit[2]);
+				rowNum++;
+			}
+			sb.append(",");
+			
+			//Write length
+			String length = rows[rowNum].replace("#", "").trim();
+			String[] lengthSplit = length.split(" ");
+			sb.append(lengthSplit[2]);
+			sb.append(",");
+			rowNum++;
+			
+			//Write length along parent
+			if(branchSplit.length == 1){
+				sb.append("Axon");
+			}else{
+				String along = rows[rowNum].replace("#", "").trim();
+				String[] alongSplit = along.split(" ");
+				sb.append(alongSplit[alongSplit.length - 2]);
+			}
+			sb.append("\n");
+			fw.append(sb.toString());
+		}
+		
+		fw.close();
+		
+		return output;
+	}
 	
 	private String formatSWCLine(int lineNum, float[] line) {
 		String format = "%d %d %4.5f %4.5f %4.5f %4.2f %d \n";
@@ -830,131 +827,86 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		
 		return String.format(format, lineNum, type, line[0], line[1], line[2], 0.1F, (int)line[4]);
 	}
-	
-	private String writeSWC(File file, ArrayList<String> messages, float[] branchLengths) throws IOException{
-		String parent = file.getParent();
-		String name = file.getName();
-		name = name.substring(0, name.lastIndexOf("."));
-		String output = parent + File.separator + name + ".swc";
-		File outputFile = new File(output);
-		
-		FileWriter fw = new FileWriter(outputFile);
-		
-		String header = 
-				  "#-----------------------------------------------------------------\n"
-				+ "# SWC generated in MIPAV\n"
-				+ "#-----------------------------------------------------------------\n"
-				+ "# Organization of branches is as such:\n"
-				+ "# -Axon is the first filament written (and noted as such)\n"
-				+ "# -Branches are written in order of closest to its parent's\n"
-				+ "#  origin\n"
-				+ "# -Higher order branches are given further identification\n"
-				+ "# \n"
-				+ "# For example: \n"
-				+ "# Branch 1 is the closest child branch of where the axon\n"
-				+ "# originates and Branch 2 is the second closest child branch.\n"
-				+ "# Branch 1.1 is the closest child branch from where the\n"
-				+ "# first branch originated from.\n"
-				+ "#-----------------------------------------------------------------\n"
-				+ "# Branch Length Information\n"
-				+ "# Total branch length: " + String.valueOf(branchLengths[0]) + " " + resolutionUnit + "\n"
-				+ "# Minus axon: " + String.valueOf(branchLengths[1]) + " " + resolutionUnit + "\n"
-				+ "#-----------------------------------------------------------------\n"
-				+ "# Begin SWC Coordinates\n";
 
-		fw.append(header);
+	/**
+	 * Build both forward and backwards connections based on
+	 * the coordinates read from the Imaris trace. The 
+	 * backwards connection routine is taken from the 
+	 * Drosophila Registration algorithm written by
+	 * Nish Pandya. 
+	 * @return
+	 */
+	private ArrayList<ArrayList<Integer>> makeConnections(){
 		
-		int counter = 1;
-		
+		//Forward connections
+		ArrayList<ArrayList<Integer>> connections = new ArrayList<ArrayList<Integer>>();
 		for(int i=0;i<swcCoordinates.size();i++){
+			ArrayList<Integer> a = new ArrayList<Integer>();
+			connections.add(a);
+		}
+		swcCoordinates.get(0).get(0)[4] = -1;
+		for(int i=1;i<swcCoordinates.size();i++){
 			ArrayList<float[]> fil = swcCoordinates.get(i);
-			String message = messages.get(i);
-			fw.append(message);
-			
-			for(int j=0 ;j<fil.size();j++, counter++){
-				fw.append(formatSWCLine(counter, fil.get(j)));
+			float[] head = fil.get(0);
+			for(int j=i-1;j>=0;j--){
+				fil = swcCoordinates.get(j);
+				float[] tail = fil.get(fil.size()-1);
+				
+				if(head[0] == tail[0] && head[1] == tail[1] && head[2] == tail[2]){
+					head[4] = j;
+					connections.get(j).add(i);
+					break;
+				}
 			}
 		}
 		
-		fw.close();
-		
-		return output;
+		return connections;
 	}
-	
-	/**
-	 * Using the selected branch, make sure that it comes first
-	 * in the forward connections. 
-	 */
-	private void rearrangeBranches(){
-		
-		ArrayList<float[]> fil = swcCoordinates.get(currentAxon);
-		int change = currentAxon;
-		int c = (int)fil.get(0)[4];
-		
-		while(c > -1){
-			ArrayList<Integer> branches = connections.get(c);
-			branches.remove(new Integer(change));
-			branches.add(0, change);
-			fil = swcCoordinates.get(c);
-			change = c;
-			c = (int)fil.get(0)[4];
-		}
-	}
-	
-	/**
-	 * The setup for making the 3D viewer. Translates the 
-	 * branch into the center of a 512x512 image with a
-	 * at least a 20 pixel pad on each dimension in the
-	 * base (no rotation) image. 
-	 */
-	private void setupImage(){
-		float[] minBounds = new float[]{Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
-		float[] maxBounds = new float[]{-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
-		
-		for(int i=0;i<joints.size();i++){
-			float[] joint = joints.get(i);
-			for(int j=0;j<3;j++){
-				if(joint[j] < minBounds[j])
-					minBounds[j] = joint[j];
-				if(joint[j] > maxBounds[j])
-					maxBounds[j] = joint[j];
-			}
-		}
-		
-		float xDiff = maxBounds[0] - minBounds[0];
-		float yDiff = maxBounds[1] - minBounds[1];
-		float zSum = maxBounds[2] + minBounds[2];
-		
-		float scale = 471.0F/Math.max(xDiff, yDiff);
-		
-		float xPad = (512.0F - xDiff*scale)/2.0F;
-		float yPad = (512.0F - yDiff*scale)/2.0F;
-		float zCenter = zSum / 2.0F;
-		
-		spacePts = new ArrayList<float[]>();
 
-		for(int i=0;i<joints.size();i++){
-			float[] joint = joints.get(i);
-			float x = joint[0];
-			float y = joint[1];
-			float z = joint[2];
-			
-			x = (x - minBounds[0])*scale + xPad; 
-			y = (y - minBounds[1])*scale + yPad;
-			z = (z - zCenter)*scale;
-			
-			float[] fPt = new float[]{x, y, z};
-			float[] fPt2 = new float[]{x, y, z};
-			joints.set(i, fPt);
-			spacePts.add(fPt2);
+	/**
+	 * Build both forward and backwards connections based on
+	 * the coordinates read from the Imaris trace. The 
+	 * backwards connection routine is taken from the 
+	 * Drosophila Registration algorithm written by
+	 * Nish Pandya. This version includes a tolerance because
+	 * the traces Akanni gave me do not overlap and thus need
+	 * to be connected a little more loosely.
+	 * @return
+	 */
+	private ArrayList<ArrayList<Integer>> makeConnectionsTol(){
+		
+		float tolerance = 0.15F;
+		
+		//Forward connections
+		ArrayList<ArrayList<Integer>> connections = new ArrayList<ArrayList<Integer>>();
+		for(int i=0;i<swcCoordinates.size();i++){
+			ArrayList<Integer> a = new ArrayList<Integer>();
+			connections.add(a);
+		}
+		swcCoordinates.get(0).get(0)[4] = -1;
+		for(int i=1;i<swcCoordinates.size();i++){
+			ArrayList<float[]> fil = swcCoordinates.get(i);
+			float[] head = fil.get(0);
+			for(int j=i-1;j>=0;j--){
+				fil = swcCoordinates.get(j);
+				float[] tail = fil.get(fil.size()-1);
+				float dist = 0;
+				for(int k=0;k<3;k++){
+					float diff = head[k] - tail[k];
+					dist += diff*diff;
+				}
+				
+				if(dist < tolerance){//To deal with non-overlapping filaments
+					head[4] = j;
+					connections.get(j).add(i);
+					break;
+				}
+			}
 		}
 		
-		makeViewImage();
-		
-		currentAxon = getTips().get(0);
-		
+		return connections;
 	}
-	
+
 	/**
 	 * Draws all the branches on the image based on
 	 * the transform variables made in the earlier
@@ -1001,145 +953,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		}
 		
 	}
-	
-	/**
-	 * Bresenham line algorithm used to draw the paths between two points.
-	 * This version is used with the subclasses to keep track of which
-	 * lines are displayed in the active slice to make it easier to add
-	 * nodes between points
-	 * @param p0
-	 * @param p1
-	 * @return
-	 */
-	private ArrayList<Point> bresenham(Point p0, Point p1){
-		
-		int x0 = p0.x;
-		int x1 = p1.x;
-		int y0 = p0.y;
-		int y1 = p1.y;
-		
-		ArrayList<Point> pts = new ArrayList<Point>();
-		int dx = Math.abs(x1-x0);
-		int dy = Math.abs(y1-y0);
-		int sx, sy;
-		int err, e2;
-		if(x0 < x1)
-			sx = 1;
-		else sx = -1;
-		if(y0 < y1)
-			sy = 1;
-		else sy = -1;
-		err = dx - dy;
-		
-		while(true){
-			pts.add(new Point(x0, y0));
 
-			if(x0 == x1 && y0 == y1) break;
-			e2 = 2*err;
-			if(e2 > -dy){
-				err -= dy;
-				x0 += sx;
-			}
-			if(e2 < dx){
-				err += dx;
-				y0 += sy;
-			}
-		}
-		
-		return pts;
-	}
-	
-	
-	private void append(String message, AttributeSet a){
-		Document doc = textArea.getDocument();
-		try {
-			doc.insertString(doc.getLength(), message + "\n", a);
-		} catch (BadLocationException e) {
-			e.printStackTrace();
-		}
-		
-		textArea.setCaretPosition(doc.getLength());
-	}
-	
-	/**
-	 * Build both forward and backwards connections based on
-	 * the coordinates read from the Imaris trace. The 
-	 * backwards connection routine is taken from the 
-	 * Drosophila Registration algorithm written by
-	 * Nish Pandya. 
-	 * @return
-	 */
-	private ArrayList<ArrayList<Integer>> makeConnections(){
-		
-		//Forward connections
-		ArrayList<ArrayList<Integer>> connections = new ArrayList<ArrayList<Integer>>();
-		for(int i=0;i<swcCoordinates.size();i++){
-			ArrayList<Integer> a = new ArrayList<Integer>();
-			connections.add(a);
-		}
-		swcCoordinates.get(0).get(0)[4] = -1;
-		for(int i=1;i<swcCoordinates.size();i++){
-			ArrayList<float[]> fil = swcCoordinates.get(i);
-			float[] head = fil.get(0);
-			for(int j=i-1;j>=0;j--){
-				fil = swcCoordinates.get(j);
-				float[] tail = fil.get(fil.size()-1);
-				
-				if(head[0] == tail[0] && head[1] == tail[1] && head[2] == tail[2]){
-					head[4] = j;
-					connections.get(j).add(i);
-					break;
-				}
-			}
-		}
-		
-		return connections;
-	}
-	
-	/**
-	 * Build both forward and backwards connections based on
-	 * the coordinates read from the Imaris trace. The 
-	 * backwards connection routine is taken from the 
-	 * Drosophila Registration algorithm written by
-	 * Nish Pandya. This version includes a tolerance because
-	 * the traces Akanni gave me do not overlap and thus need
-	 * to be connected a little more loosely.
-	 * @return
-	 */
-	private ArrayList<ArrayList<Integer>> makeConnectionsTol(){
-		
-		float tolerance = 0.15F;
-		
-		//Forward connections
-		ArrayList<ArrayList<Integer>> connections = new ArrayList<ArrayList<Integer>>();
-		for(int i=0;i<swcCoordinates.size();i++){
-			ArrayList<Integer> a = new ArrayList<Integer>();
-			connections.add(a);
-		}
-		swcCoordinates.get(0).get(0)[4] = -1;
-		for(int i=1;i<swcCoordinates.size();i++){
-			ArrayList<float[]> fil = swcCoordinates.get(i);
-			float[] head = fil.get(0);
-			for(int j=i-1;j>=0;j--){
-				fil = swcCoordinates.get(j);
-				float[] tail = fil.get(fil.size()-1);
-				float dist = 0;
-				for(int k=0;k<3;k++){
-					float diff = head[k] - tail[k];
-					dist += diff*diff;
-				}
-				
-				if(dist < tolerance){//To deal with non-overlapping filaments
-					head[4] = j;
-					connections.get(j).add(i);
-					break;
-				}
-			}
-		}
-		
-		return connections;
-	}
-	
 	/**
 	 * Reads surface file. Taken from drosophila registration dialog written by Nish Pandya.
 	 * @param surfaceFile
@@ -1149,7 +963,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		boolean success = true;
 		RandomAccessFile raFile = null;
 		try {
-
+	
 			raFile = new RandomAccessFile(surfaceFile, "r");
 			
 			String line;
@@ -1220,6 +1034,190 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		}
 		
 		return success;
+	}
+
+	/**
+	 * Using the selected branch, make sure that it comes first
+	 * in the forward connections. 
+	 */
+	private void rearrangeBranches(){
+		
+		ArrayList<float[]> fil = swcCoordinates.get(currentAxon);
+		int change = currentAxon;
+		int c = (int)fil.get(0)[4];
+		
+		while(c > -1){
+			ArrayList<Integer> branches = connections.get(c);
+			branches.remove(new Integer(change));
+			branches.add(0, change);
+			fil = swcCoordinates.get(c);
+			change = c;
+			c = (int)fil.get(0)[4];
+		}
+	}
+
+	/**
+	 * Recalculate distances for the consolidated branches
+	 * so that it also includes the branch length and
+	 * distance along the axon/parent this branch
+	 * originates from. 
+	 */
+	private float[] recalculateDistances(){
+		//0 => Total branch length, 1=> Higher order branch length
+		float[] branchLengths = new float[2];
+		
+		for(int i=0;i<swcCoordinates.size();i++){
+			ArrayList<float[]> fil = swcCoordinates.get(i);
+			float parentLength = 0;
+			if(i==0){
+				fil.get(0)[3] = 0;
+			}else{
+				float[] head = fil.get(0);
+				int connection = (int) fil.get(0)[4]-1;
+				ArrayList<float[]> list = null;
+				for(int j=0;j<swcCoordinates.size();j++){
+					list = swcCoordinates.get(j);
+					if(connection >= list.size()){
+						connection -= list.size();
+					}else{
+						break;
+					}
+				}
+				float[] pt = list.get(connection);
+				parentLength = pt[3];
+				float dist = 0;
+				for(int j=0;j<3;j++){
+					float diff = pt[j] - head[j];
+					dist += diff*diff;
+				}
+				head[3] = (float)Math.sqrt(dist);
+			}
+			float[] currPt = fil.get(0);
+			for(int j=1;j<fil.size();j++){
+				float[] nextPt = fil.get(j);
+				float dist = 0;
+				for(int k=0;k<3;k++){
+					float diff = currPt[k] - nextPt[k];
+					dist += diff*diff;
+				}
+				nextPt[3] = currPt[3] + (float)Math.sqrt(dist);
+				currPt = nextPt;
+			}
+			branchLengths[0] += currPt[3];
+			fil.get(0)[3] = parentLength;//head hold length along parent branch
+		}
+		
+		ArrayList<float[]> axon = swcCoordinates.get(0);
+		float axonLength = axon.get(axon.size()-1)[3];
+		branchLengths[1] = branchLengths[0] - axonLength;
+		
+		//Should now have length for all branches
+		
+		return branchLengths;
+	}
+	
+	/**
+	 * The setup for making the 3D viewer. Translates the 
+	 * branch into the center of a 512x512 image with a
+	 * at least a 20 pixel pad on each dimension in the
+	 * base (no rotation) image. 
+	 */
+	private void setupImage(){
+		float[] minBounds = new float[]{Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
+		float[] maxBounds = new float[]{-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
+		
+		for(int i=0;i<joints.size();i++){
+			float[] joint = joints.get(i);
+			for(int j=0;j<3;j++){
+				if(joint[j] < minBounds[j])
+					minBounds[j] = joint[j];
+				if(joint[j] > maxBounds[j])
+					maxBounds[j] = joint[j];
+			}
+		}
+		
+		float xDiff = maxBounds[0] - minBounds[0];
+		float yDiff = maxBounds[1] - minBounds[1];
+		float zSum = maxBounds[2] + minBounds[2];
+		
+		float scale = 471.0F/Math.max(xDiff, yDiff);
+		
+		float xPad = (512.0F - xDiff*scale)/2.0F;
+		float yPad = (512.0F - yDiff*scale)/2.0F;
+		float zCenter = zSum / 2.0F;
+		
+		spacePts = new ArrayList<float[]>();
+	
+		for(int i=0;i<joints.size();i++){
+			float[] joint = joints.get(i);
+			float x = joint[0];
+			float y = joint[1];
+			float z = joint[2];
+			
+			x = (x - minBounds[0])*scale + xPad; 
+			y = (y - minBounds[1])*scale + yPad;
+			z = (z - zCenter)*scale;
+			
+			float[] fPt = new float[]{x, y, z};
+			float[] fPt2 = new float[]{x, y, z};
+			joints.set(i, fPt);
+			spacePts.add(fPt2);
+		}
+		
+		makeViewImage();
+		
+		currentAxon = getTips().get(0);
+		
+	}
+
+	private String writeSWC(File file, ArrayList<String> messages, float[] branchLengths) throws IOException{
+		String parent = file.getParent();
+		String name = file.getName();
+		name = name.substring(0, name.lastIndexOf("."));
+		String output = parent + File.separator + name + ".swc";
+		File outputFile = new File(output);
+		
+		FileWriter fw = new FileWriter(outputFile);
+		
+		String header = 
+				  "#-----------------------------------------------------------------\n"
+				+ "# SWC generated in MIPAV\n"
+				+ "#-----------------------------------------------------------------\n"
+				+ "# Organization of branches is as such:\n"
+				+ "# -Axon is the first filament written (and noted as such)\n"
+				+ "# -Branches are written in order of closest to its parent's\n"
+				+ "#  origin\n"
+				+ "# -Higher order branches are given further identification\n"
+				+ "# \n"
+				+ "# For example: \n"
+				+ "# Branch 1 is the closest child branch of where the axon\n"
+				+ "# originates and Branch 2 is the second closest child branch.\n"
+				+ "# Branch 1.1 is the closest child branch from where the\n"
+				+ "# first branch originated from.\n"
+				+ "#-----------------------------------------------------------------\n"
+				+ "# Branch Length Information\n"
+				+ "# Total branch length: " + String.valueOf(branchLengths[0]) + " " + resolutionUnit + "\n"
+				+ "# Minus axon: " + String.valueOf(branchLengths[1]) + " " + resolutionUnit + "\n"
+				+ "#-----------------------------------------------------------------\n"
+				+ "# Begin SWC Coordinates\n";
+
+		fw.append(header);
+		
+		int counter = 1;
+		
+		for(int i=0;i<swcCoordinates.size();i++){
+			ArrayList<float[]> fil = swcCoordinates.get(i);
+			String message = messages.get(i);
+			fw.append(message);
+			
+			for(int j=0 ;j<fil.size();j++, counter++){
+				fw.append(formatSWCLine(counter, fil.get(j)));
+			}
+		}
+		
+		fw.close();
+		
+		return output;
 	}
 
 }
