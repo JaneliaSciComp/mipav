@@ -15,6 +15,7 @@ import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
@@ -218,7 +219,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		mat = new TransMatrix(3);
 		//if you want to zoom, do it AFTER rotate
 		mat.setRotate(rx, ry, rz, TransMatrix.DEGREES);
-		mat.setZoom(zoom, zoom);
+		mat.setZoom(zoom, zoom, zoom);
 		
 		
 		//Rotate about the center of the image
@@ -234,8 +235,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 			for(int j=0;j<2;j++){
 				rotJoint[j] += 256;
 			}
-			rotJoint[0] += tx;
-			rotJoint[1] += ty;
+			rotJoint[0] += tx*zoom;
+			rotJoint[1] += ty*zoom;
 			
 			spacePts.set(i, rotJoint);
 			
@@ -257,45 +258,43 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		return mat;
 	}
 	
-	public TransMatrix mouseRotate(int tx, int ty, int rx, int ry){
+	public int[] mouseRotate(int rx, int ry){
 		//Want to rotate about center of neuron, so recenter the points
 		
 		mat.setRotate(rx, ry, 0, TransMatrix.DEGREES);
 		
-		for(int i=0;i<joints.size();i++){
-			float[] pt = joints.get(i);
-			float[] tPt = new float[3];
-			tPt[0] = pt[0] - 256;
-			tPt[1] = pt[1] - 256;
-			tPt[2] = pt[2];
-			float[] rPt = new float[3];
-			mat.transform(tPt, rPt);
-			rPt[0] += 256 + tx;
-			rPt[1] += 256 + ty;
-			
-			spacePts.set(i, rPt);
+		Vector3f[] bases = new Vector3f[3];
+		bases[0] = new Vector3f(1,0,0);
+		bases[1] = new Vector3f(0,1,0);
+		bases[2] = new Vector3f(0,0,1);
+		
+		Vector3f[] rBases = new Vector3f[3];
+		for(int i=0;i<3;i++){
+			rBases[i] = new Vector3f();
+			mat.transformAsPoint3Df(bases[i], rBases[i]);
 		}
 		
-		makeViewImage();
+		/*float rxRad = Vector3f.angle(bases[1], rBases[1]);
+		float ryRad = Vector3f.angle(bases[2], rBases[2]);
+		float rzRad = Vector3f.angle(bases[0], rBases[0]);*/
 		
-		BitSet axonMask = highlightAxon(currentAxon);
-		ViewJFrameImage frame = destImage.getParentFrame();
+		float rxRad = (float) Math.atan2(rBases[1].Z, rBases[2].Z);
+		float ryRad = (float) Math.atan2(-rBases[0].Z, Math.sqrt(Math.pow(rBases[1].Z, 2) + Math.pow(rBases[2].Z, 2)));
+		float rzRad = (float) Math.atan2(rBases[0].Y, rBases[0].X);
 		
-		frame.getComponentImage().setPaintMask(axonMask);
-		frame.getControls().getTools().setOpacity(1.0f);
-		frame.getControls().getTools().setPaintColor(Color.RED);
+		int rxDeg = (int) Math.round((double)rxRad*180.0/Math.PI);
+		int ryDeg = (int) Math.round((double)ryRad*180.0/Math.PI);
+		int rzDeg = (int) Math.round((double)rzRad*180.0/Math.PI);
 		
-		frame.updateImages(true);
-		
-		return mat;
+		return new int[]{ rxDeg, ryDeg, rzDeg};
 		
 	}
 	
-	public void mouseTranslate(int tx, int ty){
+	public void mouseTranslate(int tx, int ty, float zoom){
 		for(int i=0;i<spacePts.size();i++){
 			float[] pt = spacePts.get(i);
-			pt[0] += tx;
-			pt[1] += ty;
+			pt[0] += tx*zoom;
+			pt[1] += ty*zoom;
 		}
 		
 		makeViewImage();

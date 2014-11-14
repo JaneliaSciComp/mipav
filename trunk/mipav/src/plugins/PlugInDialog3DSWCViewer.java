@@ -37,10 +37,8 @@ import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJComponentEditImage;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -176,9 +174,9 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 				comp.removeMouseListener(comp);
 				comp.removeMouseMotionListener(comp);
 				comp.removeMouseWheelListener(comp);
-				//comp.addMouseListener(this);
-				//comp.addMouseMotionListener(this);
-				//comp.addMouseWheelListener(this);
+				comp.addMouseListener(this);
+				comp.addMouseMotionListener(this);
+				comp.addMouseWheelListener(this);
 				
 	
 				pack();
@@ -462,12 +460,13 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 		
 		int tx = sliders[0].getValue();
 		int ty = sliders[1].getValue();
+		float zoom = (float) ((double)sliders[5].getValue()/10.0);
 		
 		
 		if(buttonPressed == MouseEvent.BUTTON1){
 			
 			//double zoom = (double)sliders[5].getValue() / 10.0;
-			TransMatrix mat = alg.mouseRotate(tx, ty, diffY, diffX);
+			/*TransMatrix mat = alg.mouseRotate(tx, ty, diffY, diffX);
 			Vector3f rotate = new Vector3f();
 			
 			//This is working improperly, returning dubious results
@@ -477,22 +476,29 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 			float ryf = (float) ((double)rotate.Y * 180.0 / Math.PI);
 			float rzf = (float) ((double)rotate.Z * 180.0 / Math.PI);
 			float[] ra = new float[]{rxf, ryf, rzf};
+			*/
+			
+			int[] ra = alg.mouseRotate(diffY, diffX);
+			
 			for(int i=0;i<6;i++){
 				sliders[i].removeChangeListener(this);
 				spinners[i].removeChangeListener(this);
 			}
 			
 			for(int i=2;i<5;i++){
-				sliders[i].setValue(Math.round(ra[i-2]));
-				spinners[i].setValue(Math.round(ra[i-2]));
+				sliders[i].setValue(ra[i-2]);
+				spinners[i].setValue(ra[i-2]);
 			}	
 			for(int i=0;i<6;i++){
 				sliders[i].addChangeListener(this);
 				spinners[i].addChangeListener(this);
 			}
+			
+			alg.transformImage(tx, ty, ra[0], ra[1], ra[2], zoom);
+			
 		}else if(buttonPressed == MouseEvent.BUTTON3){
 			
-			alg.mouseTranslate(diffX, diffY);
+			alg.mouseTranslate(diffX, diffY, zoom);
 			
 			for(int i=0;i<6;i++){
 				sliders[i].removeChangeListener(this);
