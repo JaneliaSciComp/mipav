@@ -944,8 +944,9 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 			z = (z - zCenter)*scale;
 			
 			float[] fPt = new float[]{x, y, z};
+			float[] fPt2 = new float[]{x, y, z};
 			joints.set(i, fPt);
-			spacePts.add(fPt);
+			spacePts.add(fPt2);
 		}
 		
 		makeViewImage();
