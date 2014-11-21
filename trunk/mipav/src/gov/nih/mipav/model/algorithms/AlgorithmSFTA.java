@@ -36,6 +36,8 @@ public class AlgorithmSFTA extends AlgorithmBase  {
 	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 	
+	Ported from MATLAB to Java by William Gandler
+	
 	SFTA extracts texture features from the grayscale image I using the SFTA 
     algorithm (Segmentation-based Fractal Texture Analysis).
 
@@ -74,6 +76,14 @@ public class AlgorithmSFTA extends AlgorithmBase  {
 		this.nt = nt;
 	}
 	
+	/**
+	 * 
+	 * @return
+	 */
+	public double[] getD() {
+	    return D;	
+	}
+	
 	public void runAlgorithm() {
 		ModelImage image;
 		float redValue;
@@ -106,6 +116,10 @@ public class AlgorithmSFTA extends AlgorithmBase  {
 		double vals[];
 		double sumVals;
 		int inc;
+		short lowerThresh;
+		short upperThresh;
+		
+		fireProgressStateChanged(srcImage.getImageName(), "Extracting texture features ...");
 		
 		// If necessary convert I to a grayscale image with a bit depth of 8.
 		if (srcImage.isColorImage()) {
@@ -160,26 +174,29 @@ public class AlgorithmSFTA extends AlgorithmBase  {
 			setCompleted(false);
 			return;
 		}
+		if (image != srcImage) {
+			image.disposeLocal();
+			image = null;
+		}
 		otsurec(buffer, nt);
+		counts = null;
 		dSize = 6 * nt;
 		D = new double[dSize];
 		pos = 0;
+		Ib = new byte[length];
 		for (i = 0; i < nt; i++) {
 		    thresh = T[i];
-		    Ib = new byte[length];
+		    valLength = 0;
 		    for (j = 0; j < length; j++) {
 		    	if (buffer[j] > thresh) {
 		    		Ib[j] = 1;
+		    		valLength++;
+		    	}
+		    	else {
+		    		Ib[j] = 0;
 		    	}
 		    }
 		    Ib = findBorders(Ib , xDim, yDim);
-		    
-		    valLength = 0;
-		    for (j = 0; j < length; j++) {
-		        if (Ib[j] == 1) {
-		        	valLength++;
-		        }
-		    }
 		    
 		    vals = new double[valLength];
 		    sumVals = 0.0;
@@ -200,6 +217,50 @@ public class AlgorithmSFTA extends AlgorithmBase  {
 		    D[pos] = valLength;
 		    pos++;
 		} // for (i = 0; i < nt; i++)
+		
+		for (i = 0; i < nt; i++) {
+		    lowerThresh = T[i];
+		    if (i < nt - 1) {
+		    	upperThresh = T[i+1];
+		    }
+		    else {
+		    	upperThresh = 255;
+		    }
+		    
+		    valLength = 0;
+		    for (j = 0; j < length; j++) {
+		    	if ((buffer[j] > lowerThresh) && (buffer[j] < upperThresh)) {
+		    		Ib[j] = 1;
+		    		valLength++;
+		    	}
+		    	else {
+		    		Ib[j] = 0;
+		    	}
+		    } // for (j = 0; j < length; j++)
+            Ib = findBorders(Ib , xDim, yDim);
+		    
+		    vals = new double[valLength];
+		    sumVals = 0.0;
+		    inc = 0;
+		    for (j = 0; j < length; j++) {
+		        if (Ib[j] == 1) {
+		        	vals[inc++] = (double)buffer[j];
+		        	sumVals += vals[j];
+		        }
+		    }
+		    
+		    D[pos] = hausDim(Ib, xDim, yDim);
+		    pos++;
+		    
+		    D[pos] = sumVals/valLength;
+		    pos++;
+		    
+		    D[pos] = valLength;
+		    pos++;
+		} // for (i = 0; i < nt; i++)
+		T = null;
+		setCompleted(true);
+		return;
 	}
 	
 	/**
@@ -304,7 +365,7 @@ public class AlgorithmSFTA extends AlgorithmBase  {
 		    	    objFound = false;
 		    	    for (row = minBox[boxRow]; row <= maxBox[boxRow]; row++) {
 		    	    	for (col = minBox[boxCol]; col <= maxBox[boxCol]; col++) {
-		    	    	    if (I[col + row * xDim] == 1) {
+		    	    	    if (Ip[col + row * newDimSize] == 1) {
 		    	    	    	boxCount++;
 		    	    	    	objFound = true;
 		    	    	    	break;
@@ -383,11 +444,11 @@ public class AlgorithmSFTA extends AlgorithmBase  {
 	    bkgFound = false;
 	    for (y = 0; y < yDim; y++) {
 	    	for (x = 0; x < xDim; x++) {
-	    		if (I[x+1 + (y+1)*(xDim+2)] == 1) {
+	    		if (Ip[x+1 + (y+1)*(xDim+2)] == 1) {
 	    			bkgFound  = false;
 	    			for (i = 0; i <= 2; i++) {
 	    				for (j = 0; j <= 2; j++) {
-	    					if (I[x + j + (y + i)*(xDim+2)] == 0) {
+	    					if (Ip[x + j + (y + i)*(xDim+2)] == 0) {
 	    						Im[x + y * xDim] = 1;
 	    						bkgFound = true;
 	    						break;
@@ -425,7 +486,7 @@ public class AlgorithmSFTA extends AlgorithmBase  {
 		    counts[I[i]]++;
 	    }
 	    T = new short[ttotal];
-	    otsurec_helper(0, numBins, 0, ttotal-1);
+	    otsurec_helper(0, numBins-1, 0, ttotal-1);
 	    
 	    return;
 	}
@@ -445,7 +506,7 @@ public class AlgorithmSFTA extends AlgorithmBase  {
 		    }
 		    level = otsu(pCounts) + lowerBin;
 		    insertPos = (int)Math.ceil((double)(tLower + tUpper)/2.0);
-		    // Dividing by numBins gives threshold as a fraction of the maximum possible]
+		    // Dividing by numBins gives threshold as a fraction of the maximum possible range value
 		    // Don't divide to give T as an actual gray value
 		    //T[insertPos] = (short)(level/numBins);
 		    T[insertPos] = (short)level;
@@ -455,7 +516,7 @@ public class AlgorithmSFTA extends AlgorithmBase  {
 	}
 	
 	private int otsu(int counts[]) {
-		// Variable names are chosen to be similar to the formulas int the Otsu paper
+		// Variable names are chosen to be similar to the formulas in the Otsu paper
 		int sum = 0;
 		int i;
 		double p[];
@@ -464,7 +525,7 @@ public class AlgorithmSFTA extends AlgorithmBase  {
 		double mu_t;
 		double sigma_b_squared[];
 		double diff;
-		boolean allNaN;
+		boolean allNaNorInfinite;
 		double maxval;
 		int firstIndex;
 		int numLocations;
@@ -490,23 +551,23 @@ public class AlgorithmSFTA extends AlgorithmBase  {
 		sigma_b_squared = new double[counts.length];
 		// Find the location of the maximum value of sigma_b_squared.
 	    // The maximum may extend over several bins, so average together the
-	    // locations.  If maxval is NaN, meaning that sigma_b_squared is all NaN,
+	    // locations.  If maxval is NaN or infinite, meaning that sigma_b_squared is all NaN or infinite,
 	    //  then return 0.
-		allNaN = true;
+		allNaNorInfinite = true;
 		maxval = -Double.MAX_VALUE;
 		firstIndex = -1;
 		for (i = 0; i < counts.length; i++) {
 			diff = mu_t * omega[i] - mu[i];
 			sigma_b_squared[i] = (diff *diff)/(omega[i] * (1.0 - omega[i]));
-			if (!Double.isNaN(sigma_b_squared[i])) {
-			    allNaN = false;	
+			if ((!Double.isNaN(sigma_b_squared[i])  && (!Double.isInfinite(sigma_b_squared[i])))) {
+			    allNaNorInfinite = false;	
 			    if (sigma_b_squared[i] > maxval) {
 			    	maxval = sigma_b_squared[i];
 			    	firstIndex = i;
 			    }
-			} // if (!Double.isNaN(sigma_b_squared[i]))
+			} // if ((!Double.isNaN(sigma_b_squared[i])  && (!Double.isInfinite(sigma_b_squared[i]))))
 		} // for (i = 0; i < counts.length; i++)
-		if (allNaN) {
+		if (allNaNorInfinite) {
 			return 0;
 		}
 		numLocations = 0;
