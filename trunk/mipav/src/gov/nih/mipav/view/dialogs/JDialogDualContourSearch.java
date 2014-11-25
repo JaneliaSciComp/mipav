@@ -412,7 +412,7 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
         
         if (image.getNDims() > 2) {
             JLabel labelContract = new JLabel("Number of pixels to contract for next slice ");
-            labelContract.setText("2");
+            labelContract.setForeground(Color.black);
             labelContract.setFont(serif12);
             gbc.gridx = 0;
             gbc.gridy = 6;
@@ -425,7 +425,7 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
             paramPanel.add(textContract, gbc);
             
             JLabel labelExpand = new JLabel("Number of pixels to expand for next slice ");
-            labelExpand.setText("2");
+            labelExpand.setForeground(Color.black);
             labelExpand.setFont(serif12);
             gbc.gridx = 0;
             gbc.gridy = 7;
