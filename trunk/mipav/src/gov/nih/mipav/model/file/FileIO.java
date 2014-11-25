@@ -5906,7 +5906,16 @@ public class FileIO {
     private static class LinkedComparator implements Comparator<LinkedNum> {
         @Override
         public int compare(final LinkedNum arg0, final LinkedNum arg1) {
-            return (int) (arg0.num - arg1.num);
+        	float diff = arg0.num - arg1.num;
+            if (diff > 0.0f) { 
+                return 1;
+            }
+            else if (diff < 0.0f) {
+            	return -1;
+            }
+            else {
+            	return 0;
+            }
         }
 
     }
