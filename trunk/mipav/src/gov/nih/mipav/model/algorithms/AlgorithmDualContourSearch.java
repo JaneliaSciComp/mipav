@@ -540,15 +540,15 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		 double largestDistance;
 		 double distance;
 		 double theta;
-		 double costheta;
-		 double sintheta;
+		 double costheta[] = new double[contourPoints];
+		 double sintheta[] = new double[contourPoints];
 		 double minDistance;
 		 double maxDistance;
 		 boolean snear[] = new boolean[1];
 		 int i1[] = new int[1];
 		 int i2[] = new int[1];
-		 double delX[] = new double[contourPoints];
-		 double delY[] = new double[contourPoints];
+		 double delX;
+		 double delY;
 		 double innerX = -1.0;
 		 double innerY = -1.0;
 		 double outerX = -1.0;
@@ -615,6 +615,12 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
          int z;
 		 short voiNum = (short)VOIs.size();
 		 
+		 for (i = 0; i < contourPoints; i++) {
+		     theta = 2.0 * i * Math.PI/contourPoints;
+		     costheta[i] = Math.cos(theta);
+		     sintheta[i] = Math.sin(theta);
+		 }
+		 
 		 try {
 	            
 	            srcImage.exportData(startingZ*length, length, imgBuffer); // locks and releases lock
@@ -674,8 +680,8 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		 
 		 for (i = 0; i < contourPoints; i++) {
 		     theta = 2.0 * i * Math.PI/contourPoints;
-		     costheta = Math.cos(theta);
-		     sintheta = Math.sin(theta);
+		     costheta[i] = Math.cos(theta);
+		     sintheta[i] = Math.sin(theta);
 		     minDistance = 0.0;
 		     maxDistance = largestDistance;
 		     distance = largestDistance/2.0;
@@ -695,25 +701,25 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		         if (halvingMethod && ((maxDistance - minDistance) < 1.0E-6)) {
 		             halvingMethod = false;
 		             distance = largestDistance;
-		             if (costheta > 0) {
-		                 distance = Math.min(distance, xDim - 1 - xCenter)/costheta;	 
+		             if (costheta[i] > 0) {
+		                 distance = Math.min(distance, xDim - 1 - xCenter)/costheta[i];	 
 		             }
-		             if (costheta < 0) {
-		            	 distance = Math.min(distance, -xCenter/costheta);
+		             if (costheta[i] < 0) {
+		            	 distance = Math.min(distance, -xCenter/costheta[i]);
 		             }
-		             if (sintheta > 0) {
-		                 distance = Math.min(distance, yDim - 1 - yCenter)/sintheta;	 
+		             if (sintheta[i] > 0) {
+		                 distance = Math.min(distance, yDim - 1 - yCenter)/sintheta[i];	 
 		             }
-		             if (sintheta < 0) {
-		            	 distance = Math.min(distance, -yCenter/sintheta);
+		             if (sintheta[i] < 0) {
+		            	 distance = Math.min(distance, -yCenter/sintheta[i]);
 		             }
 		             Preferences.debug("For i = " + i + " for inner contour leaving halving method setting distance = " + distance + "\n",
 		            		 Preferences.DEBUG_ALGORITHM);
 		         } //  if (halvingMethod && ((maxDistance - minDistance) < 1.0E-6)) 
-		         delX[i] = costheta*distance;
-		         delY[i] = sintheta*distance;
-		         innerX = xCenter + delX[i];
-		         innerY = yCenter + delY[i];
+		         delX = costheta[i]*distance;
+		         delY = sintheta[i]*distance;
+		         innerX = xCenter + delX;
+		         innerY = yCenter + delY;
 		         boundaryDistance = innerContour.pinpol(innerX, innerY, snear, i1, i2) * innerPolarity;
 		         if (halvingMethod) {
 			         if (boundaryDistance < 0.0) {
@@ -746,25 +752,25 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		         if (halvingMethod && ((maxDistance - minDistance) < 1.0E-6)) {
 		             halvingMethod = false;
 		             distance = largestDistance;
-		             if (costheta > 0) {
-		                 distance = Math.min(distance, xDim - 1 - xCenter)/costheta;	 
+		             if (costheta[i] > 0) {
+		                 distance = Math.min(distance, xDim - 1 - xCenter)/costheta[i];	 
 		             }
-		             if (costheta < 0) {
-		            	 distance = Math.min(distance, -xCenter/costheta);
+		             if (costheta[i] < 0) {
+		            	 distance = Math.min(distance, -xCenter/costheta[i]);
 		             }
-		             if (sintheta > 0) {
-		                 distance = Math.min(distance, yDim - 1 - yCenter)/sintheta;	 
+		             if (sintheta[i] > 0) {
+		                 distance = Math.min(distance, yDim - 1 - yCenter)/sintheta[i];	 
 		             }
-		             if (sintheta < 0) {
-		            	 distance = Math.min(distance, -yCenter/sintheta);
+		             if (sintheta[i] < 0) {
+		            	 distance = Math.min(distance, -yCenter/sintheta[i]);
 		             }
 		             Preferences.debug("For i = " + i + " for outer contour leaving halving method setting distance = " + distance + "\n",
 		            		 Preferences.DEBUG_ALGORITHM);
 		         } //  if (halvingMethod && ((maxDistance - minDistance) < 1.0E-6)) 
-		         delX[i] = costheta*distance;
-		         delY[i] = sintheta*distance;
-		         outerX = xCenter + delX[i];
-		         outerY = yCenter + delY[i];
+		         delX = costheta[i]*distance;
+		         delY = sintheta[i]*distance;
+		         outerX = xCenter + delX;
+		         outerY = yCenter + delY;
 		         boundaryDistance = outerContour.pinpol(outerX, outerY, snear, i1, i2) * outerPolarity;
 		         if (halvingMethod) {
 			         if (boundaryDistance < 0.0) {
@@ -779,11 +785,11 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		     } // while (Math.abs(boundaryDistance) > 1.0E-1)
 		     xArray[i][linePoints-1] = outerX;
 		     yArray[i][linePoints-1] = outerY;
-		     delX[i] = (outerX - innerX)/(linePoints-1);
-		     delY[i] = (outerY - innerY)/(linePoints-1);
+		     delX = (outerX - innerX)/(linePoints-1);
+		     delY = (outerY - innerY)/(linePoints-1);
 		     for (j = 1; j <= linePoints-2; j++) {
-		    	 xArray[i][j] = innerX + j * delX[i];
-		         yArray[i][j] = innerY + j * delY[i];
+		    	 xArray[i][j] = innerX + j * delX;
+		         yArray[i][j] = innerY + j * delY;
 		     }
 		 } // for (i = 0; i < contourPoints; i++)
 		 
@@ -974,10 +980,10 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		  
 		 for (i = 0; i < contourPoints; i++) {
 			 resultPt[i] = new Vector3f((float)xArray[i][bestLinePoint[i]], (float)yArray[i][bestLinePoint[i]], (float)startingZ);
-			 startingContractX[i] = xArray[i][bestLinePoint[i]] - pixelsContract * delX[i];
-			 startingExpandX[i] = xArray[i][bestLinePoint[i]] + pixelsExpand * delX[i];
-			 startingContractY[i] = yArray[i][bestLinePoint[i]] - pixelsContract * delY[i];
-			 startingExpandY[i] = yArray[i][bestLinePoint[i]] + pixelsExpand * delY[i];
+			 startingContractX[i] = xArray[i][bestLinePoint[i]] - pixelsContract * costheta[i];
+			 startingExpandX[i] = xArray[i][bestLinePoint[i]] + pixelsExpand * costheta[i];
+			 startingContractY[i] = yArray[i][bestLinePoint[i]] - pixelsContract * sintheta[i];
+			 startingExpandY[i] = yArray[i][bestLinePoint[i]] + pixelsExpand * sintheta[i];
 		 }
 		 resultVOI.importCurve(resultPt);
 		 VOIs.add(resultVOI);
@@ -1048,8 +1054,8 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			 
 			 for (i = 0; i < contourPoints; i++) {
 			     theta = 2.0 * i * Math.PI/contourPoints;
-			     costheta = Math.cos(theta);
-			     sintheta = Math.sin(theta);
+			     costheta[i] = Math.cos(theta);
+			     sintheta[i] = Math.sin(theta);
 			     minDistance = 0.0;
 			     maxDistance = largestDistance;
 			     distance = largestDistance/2.0;
@@ -1069,25 +1075,25 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			         if (halvingMethod && ((maxDistance - minDistance) < 1.0E-6)) {
 			             halvingMethod = false;
 			             distance = largestDistance;
-			             if (costheta > 0) {
-			                 distance = Math.min(distance, xDim - 1 - xCenter)/costheta;	 
+			             if (costheta[i] > 0) {
+			                 distance = Math.min(distance, xDim - 1 - xCenter)/costheta[i];	 
 			             }
-			             if (costheta < 0) {
-			            	 distance = Math.min(distance, -xCenter/costheta);
+			             if (costheta[i] < 0) {
+			            	 distance = Math.min(distance, -xCenter/costheta[i]);
 			             }
-			             if (sintheta > 0) {
-			                 distance = Math.min(distance, yDim - 1 - yCenter)/sintheta;	 
+			             if (sintheta[i] > 0) {
+			                 distance = Math.min(distance, yDim - 1 - yCenter)/sintheta[i];	 
 			             }
-			             if (sintheta < 0) {
-			            	 distance = Math.min(distance, -yCenter/sintheta);
+			             if (sintheta[i] < 0) {
+			            	 distance = Math.min(distance, -yCenter/sintheta[i]);
 			             }
 			             Preferences.debug("For i = " + i + " for inner contour leaving halving method setting distance = " + distance + "\n",
 			            		 Preferences.DEBUG_ALGORITHM);
 			         } //  if (halvingMethod && ((maxDistance - minDistance) < 1.0E-6)) 
-			         delX[i] = costheta*distance;
-			         delY[i] = sintheta*distance;
-			         innerX = xCenter + delX[i];
-			         innerY = yCenter + delY[i];
+			         delX = costheta[i]*distance;
+			         delY = sintheta[i]*distance;
+			         innerX = xCenter + delX;
+			         innerY = yCenter + delY;
 			         boundaryDistance = innerContour.pinpol(innerX, innerY, snear, i1, i2) * innerPolarity;
 			         if (halvingMethod) {
 				         if (boundaryDistance < 0.0) {
@@ -1120,25 +1126,25 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			         if (halvingMethod && ((maxDistance - minDistance) < 1.0E-6)) {
 			             halvingMethod = false;
 			             distance = largestDistance;
-			             if (costheta > 0) {
-			                 distance = Math.min(distance, xDim - 1 - xCenter)/costheta;	 
+			             if (costheta[i] > 0) {
+			                 distance = Math.min(distance, xDim - 1 - xCenter)/costheta[i];	 
 			             }
-			             if (costheta < 0) {
-			            	 distance = Math.min(distance, -xCenter/costheta);
+			             if (costheta[i] < 0) {
+			            	 distance = Math.min(distance, -xCenter/costheta[i]);
 			             }
-			             if (sintheta > 0) {
-			                 distance = Math.min(distance, yDim - 1 - yCenter)/sintheta;	 
+			             if (sintheta[i] > 0) {
+			                 distance = Math.min(distance, yDim - 1 - yCenter)/sintheta[i];	 
 			             }
-			             if (sintheta < 0) {
-			            	 distance = Math.min(distance, -yCenter/sintheta);
+			             if (sintheta[i] < 0) {
+			            	 distance = Math.min(distance, -yCenter/sintheta[i]);
 			             }
 			             Preferences.debug("For i = " + i + " for outer contour leaving halving method setting distance = " + distance + "\n",
 			            		 Preferences.DEBUG_ALGORITHM);
 			         } //  if (halvingMethod && ((maxDistance - minDistance) < 1.0E-6)) 
-			         delX[i] = costheta*distance;
-			         delY[i] = sintheta*distance;
-			         outerX = xCenter + delX[i];
-			         outerY = yCenter + delY[i];
+			         delX = costheta[i]*distance;
+			         delY = sintheta[i]*distance;
+			         outerX = xCenter + delX;
+			         outerY = yCenter + delY;
 			         boundaryDistance = outerContour.pinpol(outerX, outerY, snear, i1, i2) * outerPolarity;
 			         if (halvingMethod) {
 				         if (boundaryDistance < 0.0) {
@@ -1153,11 +1159,11 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			     } // while (Math.abs(boundaryDistance) > 1.0E-1)
 			     xArray[i][linePoints-1] = outerX;
 			     yArray[i][linePoints-1] = outerY;
-			     delX[i] = (outerX - innerX)/(linePoints-1);
-			     delY[i] = (outerY - innerY)/(linePoints-1);
+			     delX = (outerX - innerX)/(linePoints-1);
+			     delY = (outerY - innerY)/(linePoints-1);
 			     for (j = 1; j <= linePoints-2; j++) {
-			    	 xArray[i][j] = innerX + j * delX[i];
-			         yArray[i][j] = innerY + j * delY[i];
+			    	 xArray[i][j] = innerX + j * delX;
+			         yArray[i][j] = innerY + j * delY;
 			     }
 			 } // for (i = 0; i < contourPoints; i++)
 			 
@@ -1351,10 +1357,10 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			 for (i = 0; i < contourPoints; i++) {
 				 resultPt[i] = new Vector3f((float)xArray[i][bestLinePoint[i]], (float)yArray[i][bestLinePoint[i]], (float)z);
 				 if (z > 0) {
-					 innerContour.add(new Vector3f((float)(xArray[i][bestLinePoint[i]] - pixelsContract * delX[i]),
-							 (float)(yArray[i][bestLinePoint[i]] - pixelsContract * delY[i]), (float)(z-1)));
-					 outerContour.add(new Vector3f((float)(xArray[i][bestLinePoint[i]] + pixelsExpand * delX[i]),
-							 (float)(yArray[i][bestLinePoint[i]] + pixelsExpand * delY[i]), (float)(z-1)));
+					 innerContour.add(new Vector3f((float)(xArray[i][bestLinePoint[i]] - pixelsContract * costheta[i]),
+							 (float)(yArray[i][bestLinePoint[i]] - pixelsContract * sintheta[i]), (float)(z-1)));
+					 outerContour.add(new Vector3f((float)(xArray[i][bestLinePoint[i]] + pixelsExpand * costheta[i]),
+							 (float)(yArray[i][bestLinePoint[i]] + pixelsExpand * sintheta[i]), (float)(z-1)));
 				 }
 			 }
 			 resultVOI.importCurve(resultPt);
@@ -1426,8 +1432,8 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			 
 			 for (i = 0; i < contourPoints; i++) {
 			     theta = 2.0 * i * Math.PI/contourPoints;
-			     costheta = Math.cos(theta);
-			     sintheta = Math.sin(theta);
+			     costheta[i] = Math.cos(theta);
+			     sintheta[i] = Math.sin(theta);
 			     minDistance = 0.0;
 			     maxDistance = largestDistance;
 			     distance = largestDistance/2.0;
@@ -1447,25 +1453,25 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			         if (halvingMethod && ((maxDistance - minDistance) < 1.0E-6)) {
 			             halvingMethod = false;
 			             distance = largestDistance;
-			             if (costheta > 0) {
-			                 distance = Math.min(distance, xDim - 1 - xCenter)/costheta;	 
+			             if (costheta[i] > 0) {
+			                 distance = Math.min(distance, xDim - 1 - xCenter)/costheta[i];	 
 			             }
-			             if (costheta < 0) {
-			            	 distance = Math.min(distance, -xCenter/costheta);
+			             if (costheta[i] < 0) {
+			            	 distance = Math.min(distance, -xCenter/costheta[i]);
 			             }
-			             if (sintheta > 0) {
-			                 distance = Math.min(distance, yDim - 1 - yCenter)/sintheta;	 
+			             if (sintheta[i] > 0) {
+			                 distance = Math.min(distance, yDim - 1 - yCenter)/sintheta[i];	 
 			             }
-			             if (sintheta < 0) {
-			            	 distance = Math.min(distance, -yCenter/sintheta);
+			             if (sintheta[i] < 0) {
+			            	 distance = Math.min(distance, -yCenter/sintheta[i]);
 			             }
 			             Preferences.debug("For i = " + i + " for inner contour leaving halving method setting distance = " + distance + "\n",
 			            		 Preferences.DEBUG_ALGORITHM);
 			         } //  if (halvingMethod && ((maxDistance - minDistance) < 1.0E-6)) 
-			         delX[i] = costheta*distance;
-			         delY[i] = sintheta*distance;
-			         innerX = xCenter + delX[i];
-			         innerY = yCenter + delY[i];
+			         delX = costheta[i]*distance;
+			         delY = sintheta[i]*distance;
+			         innerX = xCenter + delX;
+			         innerY = yCenter + delY;
 			         boundaryDistance = innerContour.pinpol(innerX, innerY, snear, i1, i2) * innerPolarity;
 			         if (halvingMethod) {
 				         if (boundaryDistance < 0.0) {
@@ -1498,25 +1504,25 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			         if (halvingMethod && ((maxDistance - minDistance) < 1.0E-6)) {
 			             halvingMethod = false;
 			             distance = largestDistance;
-			             if (costheta > 0) {
-			                 distance = Math.min(distance, xDim - 1 - xCenter)/costheta;	 
+			             if (costheta[i] > 0) {
+			                 distance = Math.min(distance, xDim - 1 - xCenter)/costheta[i];	 
 			             }
-			             if (costheta < 0) {
-			            	 distance = Math.min(distance, -xCenter/costheta);
+			             if (costheta[i] < 0) {
+			            	 distance = Math.min(distance, -xCenter/costheta[i]);
 			             }
-			             if (sintheta > 0) {
-			                 distance = Math.min(distance, yDim - 1 - yCenter)/sintheta;	 
+			             if (sintheta[i] > 0) {
+			                 distance = Math.min(distance, yDim - 1 - yCenter)/sintheta[i];	 
 			             }
-			             if (sintheta < 0) {
-			            	 distance = Math.min(distance, -yCenter/sintheta);
+			             if (sintheta[i] < 0) {
+			            	 distance = Math.min(distance, -yCenter/sintheta[i]);
 			             }
 			             Preferences.debug("For i = " + i + " for outer contour leaving halving method setting distance = " + distance + "\n",
 			            		 Preferences.DEBUG_ALGORITHM);
 			         } //  if (halvingMethod && ((maxDistance - minDistance) < 1.0E-6)) 
-			         delX[i] = costheta*distance;
-			         delY[i] = sintheta*distance;
-			         outerX = xCenter + delX[i];
-			         outerY = yCenter + delY[i];
+			         delX = costheta[i]*distance;
+			         delY = sintheta[i]*distance;
+			         outerX = xCenter + delX;
+			         outerY = yCenter + delY;
 			         boundaryDistance = outerContour.pinpol(outerX, outerY, snear, i1, i2) * outerPolarity;
 			         if (halvingMethod) {
 				         if (boundaryDistance < 0.0) {
@@ -1531,11 +1537,11 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			     } // while (Math.abs(boundaryDistance) > 1.0E-1)
 			     xArray[i][linePoints-1] = outerX;
 			     yArray[i][linePoints-1] = outerY;
-			     delX[i] = (outerX - innerX)/(linePoints-1);
-			     delY[i] = (outerY - innerY)/(linePoints-1);
+			     delX = (outerX - innerX)/(linePoints-1);
+			     delY = (outerY - innerY)/(linePoints-1);
 			     for (j = 1; j <= linePoints-2; j++) {
-			    	 xArray[i][j] = innerX + j * delX[i];
-			         yArray[i][j] = innerY + j * delY[i];
+			    	 xArray[i][j] = innerX + j * delX;
+			         yArray[i][j] = innerY + j * delY;
 			     }
 			 } // for (i = 0; i < contourPoints; i++)
 			 
@@ -1729,10 +1735,10 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			 for (i = 0; i < contourPoints; i++) {
 				 resultPt[i] = new Vector3f((float)xArray[i][bestLinePoint[i]], (float)yArray[i][bestLinePoint[i]], (float)z);
 				 if (z < zDim-1) {
-					 innerContour.add(new Vector3f((float)(xArray[i][bestLinePoint[i]] - pixelsContract * delX[i]),
-							 (float)(yArray[i][bestLinePoint[i]] - pixelsContract * delY[i]), (float)(z+1)));
-					 outerContour.add(new Vector3f((float)(xArray[i][bestLinePoint[i]] + pixelsExpand * delX[i]),
-							 (float)(yArray[i][bestLinePoint[i]] + pixelsExpand * delY[i]), (float)(z+1)));
+					 innerContour.add(new Vector3f((float)(xArray[i][bestLinePoint[i]] - pixelsContract * costheta[i]),
+							 (float)(yArray[i][bestLinePoint[i]] - pixelsContract * sintheta[i]), (float)(z+1)));
+					 outerContour.add(new Vector3f((float)(xArray[i][bestLinePoint[i]] + pixelsExpand * costheta[i]),
+							 (float)(yArray[i][bestLinePoint[i]] + pixelsExpand * sintheta[i]), (float)(z+1)));
 				 }
 			 }
 			 resultVOI.importCurve(resultPt);
