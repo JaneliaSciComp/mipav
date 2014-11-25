@@ -85,9 +85,9 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
     
     private JTextField textExpand;
     
-    private int pixelsContract = 2;
+    private int pixelsContract = 5;
     
-    private int pixelsExpand = 2;
+    private int pixelsExpand = 5;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -419,7 +419,7 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
             paramPanel.add(labelContract, gbc);
             
             textContract = new JTextField();
-            textContract.setText("2");
+            textContract.setText("5");
             textContract.setFont(serif12);
             gbc.gridx = 1;
             paramPanel.add(textContract, gbc);
@@ -432,7 +432,7 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
             paramPanel.add(labelExpand, gbc);
             
             textExpand = new JTextField();
-            textExpand.setText("2");
+            textExpand.setText("5");
             textExpand.setFont(serif12);
             gbc.gridx = 1;
             paramPanel.add(textExpand, gbc);
