@@ -80,6 +80,14 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
     private JTextField textGaussX;
     
     private JTextField textGaussY;
+    
+    private JTextField textContract;
+    
+    private JTextField textExpand;
+    
+    private int pixelsContract = 2;
+    
+    private int pixelsExpand = 2;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -216,7 +224,7 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
             
 
             dualAlgo = new AlgorithmDualContourSearch(image, innerIndex, outerIndex, contourPoints, linePoints,
-            		regularization, sigmas);
+            		regularization, sigmas, pixelsContract, pixelsExpand);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -401,6 +409,34 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
         gbc.gridx = 0;
         gbc.gridy = 5;
         paramPanel.add(removeOriginalCheckBox, gbc);
+        
+        if (image.getNDims() > 2) {
+            JLabel labelContract = new JLabel("Number of pixels to contract for next slice ");
+            labelContract.setText("2");
+            labelContract.setFont(serif12);
+            gbc.gridx = 0;
+            gbc.gridy = 6;
+            paramPanel.add(labelContract, gbc);
+            
+            textContract = new JTextField();
+            textContract.setText("2");
+            textContract.setFont(serif12);
+            gbc.gridx = 1;
+            paramPanel.add(textContract, gbc);
+            
+            JLabel labelExpand = new JLabel("Number of pixels to expand for next slice ");
+            labelExpand.setText("2");
+            labelExpand.setFont(serif12);
+            gbc.gridx = 0;
+            gbc.gridy = 7;
+            paramPanel.add(labelExpand, gbc);
+            
+            textExpand = new JTextField();
+            textExpand.setText("2");
+            textExpand.setFont(serif12);
+            gbc.gridx = 1;
+            paramPanel.add(textExpand, gbc);
+        } // if (image.getNDims() > 2)
 
         getContentPane().add(VOIPanel, BorderLayout.NORTH);
         getContentPane().add(paramPanel, BorderLayout.CENTER);
@@ -542,6 +578,30 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
         }
         
         removeOriginal = removeOriginalCheckBox.isSelected();
+        
+        if (image.getNDims() > 2) {
+        	tmpStr = textContract.getText();
+        	if (testParameter(tmpStr, 0, 100)) {
+        		pixelsContract = Integer.valueOf(tmpStr).intValue();
+        	}
+        	else {
+        		textContract.requestFocus();
+        		textContract.selectAll();
+        		
+        		return false;
+        	}
+        	
+        	tmpStr = textExpand.getText();
+        	if (testParameter(tmpStr, 0, 100)) {
+        		pixelsExpand = Integer.valueOf(tmpStr).intValue();
+        	}
+        	else {
+        		textExpand.requestFocus();
+        		textExpand.selectAll();
+        		
+        		return false;
+        	}
+        } // if (image.getNDims() > 2)
         
 
         return true;
