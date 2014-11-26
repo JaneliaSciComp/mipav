@@ -995,11 +995,11 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			 outerContour.add(new Vector3f((float)startingExpandX[i], (float)startingExpandY[i], (float)(startingZ - 1)));
 		 }
 		 for (z = startingZ - 1; z >= 0; z--) {
+			 fireProgressStateChanged(100 * (startingZ - z)/zDim);
 			 try {
 		            
 		            srcImage.exportData(z*length, length, imgBuffer); // locks and releases lock
 
-		            fireProgressStateChanged(srcImage.getImageName(), "Searching for boundary ...");
 
 		        } catch (IOException error) {
 		            displayError("Algorithm DualContourSearch: Image(s) locked");
@@ -1373,11 +1373,10 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			 outerContour.add(new Vector3f((float)startingExpandX[i], (float)startingExpandY[i], (float)(startingZ + 1)));
 		 }
 		 for (z = startingZ + 1; z < zDim; z++) {
+			 fireProgressStateChanged(z * 100/zDim);
 			 try {
 		            
 		            srcImage.exportData(z*length, length, imgBuffer); // locks and releases lock
-
-		            fireProgressStateChanged(srcImage.getImageName(), "Searching for boundary ...");
 
 		        } catch (IOException error) {
 		            displayError("Algorithm DualContourSearch: Image(s) locked");
