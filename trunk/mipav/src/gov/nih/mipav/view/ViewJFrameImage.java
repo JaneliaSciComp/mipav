@@ -1477,6 +1477,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogHomomorphicFilter(this, getActiveImage());
         } else if (command.equals("Fill image")) {
             new JDialogMask(this, getActiveImage());
+        } else if (command.equals("LocalVariance")) {
+            new JDialogLocalVariance(this, getActiveImage());
         } else if (command.equals("Mean")) {
             new JDialogMean(this, getActiveImage());
         } else if (command.equals("Median")) {
