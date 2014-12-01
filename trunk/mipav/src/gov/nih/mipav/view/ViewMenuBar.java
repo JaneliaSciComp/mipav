@@ -197,6 +197,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Laplacian", null, 0, null, false),
                         menuBuilder.buildMenuItem("Laws texture", "Laws", 0, null, false),
                         menuBuilder.buildMenuItem("Local normalization", null, 0, null, false),
+                        menuBuilder.buildMenuItem("Local variance", "LocalVariance", 0, null, false),
                         menuBuilder.buildMenuItem("Mean", null, 0, null, false),
                         menuBuilder.buildMenuItem("Median", null, 0, null, false),
                         menuBuilder.buildMenuItem("Mode", null, 0, null, false),
@@ -1233,6 +1234,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Laplacian", false);
             menuBuilder.setMenuItemEnabled("Locally linear embedding", false);
             menuBuilder.setMenuItemEnabled("Maximum intensity projection (MIP)", false);
+            menuBuilder.setMenuItemEnabled("Local variance", false);
             menuBuilder.setMenuItemEnabled("Mean", false);
             menuBuilder.setMenuItemEnabled("Median", false);
             menuBuilder.setMenuItemEnabled("Mode", false);
@@ -1447,6 +1449,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Levelset diffusion", false);
             menuBuilder.setMenuItemEnabled("Local normalization", false);
             menuBuilder.setMenuItemEnabled("Locally linear embedding", false);
+            menuBuilder.setMenuItemEnabled("Local variance", false);
             menuBuilder.setMenuItemEnabled("Mode", false);
             menuBuilder.setMenuItemEnabled("Morphological", false);
             menuBuilder.setMenuItemEnabled("MRI combined info", false);
