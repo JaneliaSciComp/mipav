@@ -6,21 +6,14 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.MipavUtil;
 
 import java.io.*;
-import java.util.*;
 
 public class AlgorithmLocalVariance extends AlgorithmBase {
 	
 	private boolean entireImage;
 	
-	private int kernelSize;
-	
 	private int halfK;
 	
 	private boolean do25D;
-	
-	private boolean isColorImage;
-	
-	private int valuesPerPixel = 1;
 	
 	 /**
      * Constructor for 3D images in which changes are placed in a predetermined destination image.
@@ -36,15 +29,7 @@ public class AlgorithmLocalVariance extends AlgorithmBase {
     public AlgorithmLocalVariance(ModelImage destImg, ModelImage srcImg, int kernelSize, boolean do25D, boolean entireImage) {
 
         super(destImg, srcImg);
-
-        if (srcImg.isColorImage()) {
-            isColorImage = true;
-            valuesPerPixel = 4;
-        }
-
-        // else, already false
         this.entireImage = entireImage;
-        this.kernelSize = kernelSize; // dimension of the kernel
         halfK = (kernelSize - 1) / 2;
         this.do25D = do25D;
         if (!entireImage) {
@@ -89,6 +74,11 @@ public class AlgorithmLocalVariance extends AlgorithmBase {
     	double sum;
     	double mean;
     	double diff;
+    	int index;
+    	double maxVariance;
+    	double maxAllowed = Double.MAX_VALUE;
+    	int i;
+    	double ratio;
     	
     	xDim = srcImage.getExtents()[0];
     	yDim = srcImage.getExtents()[1];
@@ -102,7 +92,33 @@ public class AlgorithmLocalVariance extends AlgorithmBase {
     		zDim = 1;
     	}
     	
+    	if (srcImage.getType() == ModelStorageBase.BYTE) {
+    	    maxAllowed = 127.0;	
+    	}
+    	else if (srcImage.getType() == ModelStorageBase.UBYTE) {
+    		maxAllowed = 255.0;
+    	}
+    	else if (srcImage.getType() == ModelStorageBase.SHORT) {
+    		maxAllowed = 32767.0;
+    	}
+    	else if (srcImage.getType() == ModelStorageBase.USHORT) {
+    		maxAllowed = 65535.0;
+    	}
+    	else if (srcImage.getType() == ModelStorageBase.INTEGER) {
+    		maxAllowed = Integer.MAX_VALUE;
+    	}
+    	else if (srcImage.getType() == ModelStorageBase.UINTEGER) {
+    		maxAllowed = 4294967295L; 
+    	}
+    	else if (srcImage.getType() == ModelStorageBase.LONG) {
+    		maxAllowed = Long.MAX_VALUE;
+    	}
+    	else if (srcImage.getType() == ModelStorageBase.FLOAT) {
+    		maxAllowed = Float.MAX_VALUE;
+    	}
+    	
     	for (z = 0; z < zDim; z++) {
+    		fireProgressStateChanged(100 * z / zDim);
     	    try {
     	    	srcImage.exportData(z*length, length, buffer);
     	    }
@@ -112,26 +128,32 @@ public class AlgorithmLocalVariance extends AlgorithmBase {
     	    	return;
     	    }
     	    
-    	    
+    	    maxVariance = 0.0;
     	    for (y = 0; y < yDim; y++) {
     	    	for (x = 0; x < xDim; x++) {
-    	    		num = 0;
-    	    		sum = 0.0;
-    	    	    for (yloc = Math.max(0, y - halfK); yloc <= Math.min(yDim-1, y + halfK); yloc++) {
-    	    	    	for (xloc = Math.max(0, x - halfK); xloc <= Math.min(xDim-1, x + halfK); xloc++) {
-    	    	    		num++;
-    	    	    		sum += buffer[xloc + xDim * yloc];
-    	    	    	}
-    	    	    }
-    	    	    mean = sum / num;
-    	    	    sum = 0.0;
-    	    	    for (yloc = Math.max(0, y - halfK); yloc <= Math.min(yDim-1, y + halfK); yloc++) {
-    	    	    	for (xloc = Math.max(0, x - halfK); xloc <= Math.min(xDim-1, x + halfK); xloc++) {
-    	    	    	    diff = buffer[xloc + xDim * yloc] - mean;
-    	    	    	    sum += diff * diff;
-    	    	    	}
-    	    	    }
-    	    	    variance[x + xDim * y] = sum /num;
+    	    		index = x + y * xDim;
+    	    		if (entireImage || mask.get(index)) {
+	    	    		num = 0;
+	    	    		sum = 0.0;
+	    	    	    for (yloc = Math.max(0, y - halfK); yloc <= Math.min(yDim-1, y + halfK); yloc++) {
+	    	    	    	for (xloc = Math.max(0, x - halfK); xloc <= Math.min(xDim-1, x + halfK); xloc++) {
+	    	    	    		num++;
+	    	    	    		sum += buffer[xloc + xDim * yloc];
+	    	    	    	}
+	    	    	    }
+	    	    	    mean = sum / num;
+	    	    	    sum = 0.0;
+	    	    	    for (yloc = Math.max(0, y - halfK); yloc <= Math.min(yDim-1, y + halfK); yloc++) {
+	    	    	    	for (xloc = Math.max(0, x - halfK); xloc <= Math.min(xDim-1, x + halfK); xloc++) {
+	    	    	    	    diff = buffer[xloc + xDim * yloc] - mean;
+	    	    	    	    sum += diff * diff;
+	    	    	    	}
+	    	    	    }
+	    	    	    variance[index] = sum /num;
+	    	    	    if (variance[index] > maxVariance) {
+	    	    	    	maxVariance = variance[index];
+	    	    	    }
+    	    		}
     	    	}
     	    }
     	    
@@ -146,6 +168,12 @@ public class AlgorithmLocalVariance extends AlgorithmBase {
         	    }
     	    }
     	    else {
+    	    	if (maxVariance > maxAllowed) {
+    	    		ratio = maxAllowed/maxVariance;
+    	    		for (i = 0; i < length; i++) {
+    	    			variance[i] = variance[i] * ratio;
+    	    		}
+    	    	}
     	    	try {
     	    	    srcImage.importData(z * length, variance, false);
     	    	}
@@ -169,7 +197,137 @@ public class AlgorithmLocalVariance extends AlgorithmBase {
     }
     
     private void run3D() {
+    	int xDim;
+    	int yDim;
+    	int zDim;
+    	int length;
+    	double buffer[];
+    	int x;
+    	int y;
+    	int z;
+    	double variance[];
+    	int zloc;
+    	int yloc;
+    	int xloc;
+    	int num;
+    	double sum;
+    	double mean;
+    	double diff;
+    	int sliceSize;
+    	int index;
+    	double maxVariance = 0.0;
+    	double maxAllowed = Double.MAX_VALUE;
+    	int i;
+    	double ratio;
     	
+    	xDim = srcImage.getExtents()[0];
+    	yDim = srcImage.getExtents()[1];
+    	zDim = srcImage.getExtents()[2];
+    	sliceSize = xDim * yDim;
+    	length = sliceSize * zDim;
+    	buffer = new double[length];
+    	variance = new double[length];
+    	
+    	if (srcImage.getType() == ModelStorageBase.BYTE) {
+    	    maxAllowed = 127.0;	
+    	}
+    	else if (srcImage.getType() == ModelStorageBase.UBYTE) {
+    		maxAllowed = 255.0;
+    	}
+    	else if (srcImage.getType() == ModelStorageBase.SHORT) {
+    		maxAllowed = 32767.0;
+    	}
+    	else if (srcImage.getType() == ModelStorageBase.USHORT) {
+    		maxAllowed = 65535.0;
+    	}
+    	else if (srcImage.getType() == ModelStorageBase.INTEGER) {
+    		maxAllowed = Integer.MAX_VALUE;
+    	}
+    	else if (srcImage.getType() == ModelStorageBase.UINTEGER) {
+    		maxAllowed = 4294967295L; 
+    	}
+    	else if (srcImage.getType() == ModelStorageBase.LONG) {
+    		maxAllowed = Long.MAX_VALUE;
+    	}
+    	else if (srcImage.getType() == ModelStorageBase.FLOAT) {
+    		maxAllowed = Float.MAX_VALUE;
+    	}
+    	
+	    try {
+	    	srcImage.exportData(0, length, buffer);
+	    }
+	    catch(IOException e) {
+	    	MipavUtil.displayError("IOException " + e + " on srcImage.exportData(0, length, buffer)");
+	    	setCompleted(false);
+	    	return;
+	    }
+	    
+	    
+	    for (z = 0; z < zDim; z++) {
+	    	fireProgressStateChanged(100 * z / zDim);
+		    for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    		index = x + y * xDim + z * sliceSize;
+		    		if (entireImage || mask.get(index)) {
+			    		num = 0;
+			    		sum = 0.0;
+			    		for (zloc = Math.max(0, z - halfK); zloc <= Math.min(zDim-1, z + halfK); zloc++) {
+				    	    for (yloc = Math.max(0, y - halfK); yloc <= Math.min(yDim-1, y + halfK); yloc++) {
+				    	    	for (xloc = Math.max(0, x - halfK); xloc <= Math.min(xDim-1, x + halfK); xloc++) {
+				    	    		num++;
+				    	    		sum += buffer[xloc + xDim * yloc + sliceSize * zloc];
+				    	    	}
+				    	    }
+			    		}
+			    	    mean = sum / num;
+			    	    sum = 0.0;
+			    	    for (zloc = Math.max(0, z - halfK); zloc <= Math.min(zDim-1, z + halfK); zloc++) {
+				    	    for (yloc = Math.max(0, y - halfK); yloc <= Math.min(yDim-1, y + halfK); yloc++) {
+				    	    	for (xloc = Math.max(0, x - halfK); xloc <= Math.min(xDim-1, x + halfK); xloc++) {
+				    	    	    diff = buffer[xloc + xDim * yloc + sliceSize * zloc] - mean;
+				    	    	    sum += diff * diff;
+				    	    	}
+				    	    }
+			    	    }
+			    	    variance[index] = sum /num;
+			    	    if (variance[index] > maxVariance) {
+	    	    	    	maxVariance = variance[index];
+	    	    	    }
+		    		}
+		    	}
+		    }
+	    }
+	    
+	    if (destImage != null) {
+	    	try {
+	    	    destImage.importData(0, variance, true);
+	    	}
+	    	catch(IOException e) {
+    	    	MipavUtil.displayError("IOException " + e + " on destImage.importData(0, result, true)");
+    	    	setCompleted(false);
+    	    	return;
+    	    }
+	    }
+	    else {
+	    	if (maxVariance > maxAllowed) {
+	    		ratio = maxAllowed/maxVariance;
+	    		for (i = 0; i < length; i++) {
+	    			variance[i] = variance[i] * ratio;
+	    		}
+	    	}
+	    	try {
+	    	    srcImage.importData(0, variance, true);
+	    	}
+	    	catch(IOException e) {
+    	    	MipavUtil.displayError("IOException " + e + " on srcImage.importData(0, result, true)");
+    	    	setCompleted(false);
+    	    	return;
+    	    }	
+	    }
+    	
+    	setCompleted(true);
+    	return;
+    		
     }
 	
 }
