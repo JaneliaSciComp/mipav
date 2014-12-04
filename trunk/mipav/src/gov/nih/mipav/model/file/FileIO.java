@@ -709,6 +709,7 @@ public class FileIO {
                     }
 
                     if (performSort) {
+                        // System.err.println(seriesNo + "\t" + seriesNoMaster + "\n" + studyID + "\t" + studyIDMaster);
                         if (seriesNo.equals(seriesNoMaster) && studyID.equals(studyIDMaster)) { // &&
                             // acqNo.equals(acqNoMaster))
                             // {
@@ -1377,6 +1378,11 @@ public class FileIO {
                     image = null;
                 }
 
+                if (progressBar != null) {
+                    progressBar.dispose();
+                    progressBar = null;
+                }
+
                 System.gc();
 
                 return null;
@@ -1392,6 +1398,11 @@ public class FileIO {
                 if (image != null) {
                     image.disposeLocal();
                     image = null;
+                }
+
+                if (progressBar != null) {
+                    progressBar.dispose();
+                    progressBar = null;
                 }
 
                 error.printStackTrace();
@@ -4065,8 +4076,7 @@ public class FileIO {
      * @param options Needed info to write this image.
      * @param bDisplayProgress when true display the progress bar for writing.
      */
-    public void writeImage(final ModelImage image, final FileWriteOptions options, final boolean bDisplayProgress, 
-    		final boolean allowScriptRecording) {
+    public void writeImage(final ModelImage image, final FileWriteOptions options, final boolean bDisplayProgress, final boolean allowScriptRecording) {
         int fileType;
         String suffix;
         int index;
@@ -5248,15 +5258,15 @@ public class FileIO {
         if (success && ProvenanceRecorder.getReference().getRecorderStatus() == ProvenanceRecorder.RECORDING && !options.writeHeaderOnly()) {
 
             if (allowScriptRecording) {
-	        	ScriptableActionInterface action;
-	
-	            if (options.isSaveAs()) {
-	                action = new ActionSaveImageAs(image, options);
-	            } else {
-	                action = new ActionSaveImage(image, options);
-	            }
-	
-	            ProvenanceRecorder.getReference().addLine(action);
+                ScriptableActionInterface action;
+
+                if (options.isSaveAs()) {
+                    action = new ActionSaveImageAs(image, options);
+                } else {
+                    action = new ActionSaveImage(image, options);
+                }
+
+                ProvenanceRecorder.getReference().addLine(action);
             } // if (allowScriptRecording)
 
             if (Preferences.is(Preferences.PREF_IMAGE_LEVEL_DATA_PROVENANCE)) {
@@ -5906,15 +5916,13 @@ public class FileIO {
     private static class LinkedComparator implements Comparator<LinkedNum> {
         @Override
         public int compare(final LinkedNum arg0, final LinkedNum arg1) {
-        	float diff = arg0.num - arg1.num;
-            if (diff > 0.0f) { 
+            final float diff = arg0.num - arg1.num;
+            if (diff > 0.0f) {
                 return 1;
-            }
-            else if (diff < 0.0f) {
-            	return -1;
-            }
-            else {
-            	return 0;
+            } else if (diff < 0.0f) {
+                return -1;
+            } else {
+                return 0;
             }
         }
 
