@@ -217,7 +217,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 	            radianEnd = 2.0 * Math.PI/largestPeriod;
 	            
 	            T1_responses(nscales, ndirs, sig2omega, radianStart, radianEnd,
-	            		inputXDim, inputYDim, "texture");
+	            		inputXDim, inputYDim, "texture", null);
 	        } // if (setupFilters)
         
         } // for (i = 0; i < srcImage.length; i++) 
@@ -225,14 +225,219 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
     }
     
     private void T1_responses(int nscales, int ndirs, double sig2omega, double radianStart, double radianEnd, 
-    		int inputXDim, int inputYDim, String filterType) {
+    		int inputXDim, int inputYDim, String filterType, String domain) {
     	double omegas[][] = null;
     	double amplitudes[][] = null;
     	double filterAngle[] = null;
     	double sigmaX[] = null;
+    	int filInd;
+    	int scInd;
+    	int drInd;
+    	double sigmas[] = new double[ndirs];
+    	int ps[] = new int[1];
+    	int szfm;
+    	int szfn;
+    	int i;
+    	double fm[];
+    	double fn[];
+    	double xfreq[][];
+    	double yfreq[][];
+    	int y;
+    	int x;
     	
     	filterbank_DCA_2D(omegas, amplitudes, filterAngle, sigmaX, nscales, filterType, ndirs, sig2omega, radianStart, radianEnd);
     	
+    	filInd = 0;
+    	for (scInd = 1; scInd <= nscales; scInd++) {
+    	    if (domain == null) {
+    	        if (scInd < 4) {
+    	        	domain = "time";
+    	        }
+    	        else {
+    	        	domain = "freq";
+    	        }
+    	    } // if (domain == null);
+    	    for (drInd = 1; drInd <= ndirs; drInd++) {
+    	        filInd++;
+    	        sigmas[filInd-1] = sigmaX[filInd-1];
+    	        
+    	        if (domain.equals("freq")) {
+    	           ps[0] = 3 * (int)Math.ceil(sigmas[filInd-1]);
+    	           szfm = inputYDim + 2 * ps[0];
+    	           szfn = inputXDim + 2 * ps[0];
+    	           fm = new double[szfm];
+    	           fn = new double[szfn];
+    	           if ((szfm % 2) == 1) {
+    	               for (i = 0; i < szfm; i++) {
+    	            	   fm[i] = -1.0 + 1.0/szfm + (2.0*i)/szfm;
+    	               }
+    	           }
+    	           else {
+    	        	   for (i = 0; i < szfm; i++) {
+    	            	   fm[i] = -1.0 + (2.0*i)/szfm;
+    	               }   
+    	           }
+    	           if ((szfn % 2) == 1) {
+    	               for (i = 0; i < szfn; i++) {
+    	            	   fn[i] = -1.0 + 1.0/szfn + (2.0*i)/szfn;
+    	               }
+    	           }
+    	           else {
+    	        	   for (i = 0; i < szfn; i++) {
+    	            	   fn[i] = -1.0 + (2.0*i)/szfn;
+    	               }   
+    	           }
+    	           xfreq = new double[szfn][szfm];
+    	           yfreq = new double[szfn][szfm];
+    	           for (y = 0; y < szfn; y++) {
+    	        	   for (x = 0; x < szfm; x++) {
+    	        		   xfreq[y][x] = fm[x];
+    	        	   }
+    	           }
+    	           for (x = 0; x < szfm; x++) {
+    	        	   for (y = 0; y < szfn; y++) {
+    	        		   yfreq[y][x] = fn[y];
+    	        	   }
+    	           }
+    	        } // if (domain.equals("freq"))
+    	        else {
+    	        	xfreq = null;
+    	        	yfreq = null;
+    	        	ps = null;
+    	        }
+    	        T1z2_get_filter_struct(omegas[filInd-1], amplitudes[filInd-1], filterAngle[filInd-1], sigmaX[filInd-1],
+    	        		domain, xfreq, yfreq, ps);
+    	    } // for (drInd = 1; drInd <= ndirs; drInd++)
+    	} // for (scInd = 1; scInd <= nscales; scInd++) 
+    	
+    }
+    
+    private void T1z2_get_filter_struct(double omegas[], double amplitudes[], double filterAngle, double sigmaX,
+    		String domain, double xfreq[][], double yfreq[][], int ps[]) {
+    	double omegasOut[] = null;
+    	double amplitudesOut[] = null;
+    	double amplitudesOutImag[] = null;
+    	// gaussian (constant basis)
+    	T1z2a_convert_filter(omegasOut, amplitudesOut, amplitudesOutImag, omegas, amplitudes, filterAngle, sigmaX, 0);
+    }
+    
+    private void T1z2a_convert_filter(double omegasOut[], double amplitudesOut[], double amplitudesOutImag[], 
+    		double omegas[], double amplitudes[], double filterAngle,double sigmaX, int conj) {
+        int sz0;
+        double amplitudesOriginal[];
+        int i;
+        double omegas2[];
+        double amplitudesEven[];
+        double amplitudesOddImag[];
+        double omegas3[];
+        double amplitudesUns[] = null;
+        double amplitudesUnsImag[] = null;
+        double amplitudesMult[] = null;
+        double amplitudesMultImag[];
+        
+        sz0 = amplitudes.length-1;
+        
+        amplitudesOriginal = new double[amplitudes.length + sz0];
+        for (i = 0; i < amplitudes.length; i++) {
+        	amplitudesOriginal[i] = amplitudes[i];
+        }
+        omegas2 = new double[2*omegas.length-1];
+        for (i = 0; i < omegas.length; i++) {
+        	omegas2[i] = omegas[i];
+        }
+        for (i = 0; i < omegas.length-1; i++) {
+        	omegas2[omegas.length + i] = omegas[i+1] + omegas[omegas.length-1];
+        }
+        amplitudesEven = new double[2*amplitudesOriginal.length-1];
+        for (i = 0; i < amplitudesOriginal.length-1; i++) {
+        	amplitudesEven[i] = amplitudesOriginal[amplitudesOriginal.length-1-i];
+        }
+        for (i = 0; i < amplitudesOriginal.length; i++) {
+        	amplitudesEven[i+amplitudesOriginal.length-1] = amplitudesOriginal[i];
+        }
+        amplitudesOddImag = new double[2*amplitudesOriginal.length-1];
+        for (i = 0; i < amplitudesOriginal.length-1; i++) {
+        	amplitudesOddImag[i] = -amplitudesOriginal[amplitudesOriginal.length-1-i];
+        }
+        for (i = 0; i < amplitudesOriginal.length; i++) {
+        	amplitudesOddImag[i+amplitudesOriginal.length-1] = amplitudesOriginal[i];
+        }
+        omegas3 = new double[omegas2.length-1];
+        for (i = 0; i < omegas2.length-1; i++) {
+            omegas3[i] = -omegas2[omegas2.length-1-i];	
+        }
+        for (i = 0; i < omegas2.length; i++) {
+        	omegas3[i + omegas2.length-1] = omegas2[i];
+        }
+        
+        switch (conj) {
+            case 0:
+            	amplitudesUns = new double[amplitudesEven.length];
+            	for (i = 0; i < amplitudesUns.length; i++) {
+            		amplitudes[i] = amplitudesEven[i];
+            	}
+            	amplitudesMult = new double[amplitudesEven.length];
+            	for (i = 0; i < amplitudesMult.length; i++) {
+            		amplitudesMult[i] = amplitudesEven[i];
+            	}
+            	break;
+            case 1:
+            	amplitudesUns = new double[amplitudesEven.length];
+            	for (i = 0; i < amplitudesUns.length; i++) {
+            		amplitudes[i] = amplitudesEven[i];
+            	}
+            	break;
+            case 2:
+            	amplitudesUnsImag = new double[amplitudesOddImag.length];
+            	for (i = 0; i < amplitudesUnsImag.length; i++) {
+            		amplitudesUnsImag[i] = amplitudesOddImag[i];
+            	}
+            	break;
+            case 11:
+            	amplitudesUns = new double[amplitudesEven.length];
+            	for (i = 0; i < amplitudesUns.length; i++) {
+            		amplitudes[i] = amplitudesEven[i];
+            	}
+            	amplitudesMult = new double[amplitudesEven.length];
+            	for (i = 0; i < amplitudesMult.length; i++) {
+            		amplitudesMult[i] = amplitudesEven[i];
+            	}
+            	break;
+            case 12:
+            	amplitudesUnsImag = new double[amplitudesOddImag.length];
+            	for (i = 0; i < amplitudesUnsImag.length; i++) {
+            		amplitudesUnsImag[i] = amplitudesOddImag[i];
+            	}
+            	amplitudesMult = new double[amplitudesEven.length];
+            	for (i = 0; i < amplitudesMult.length; i++) {
+            		amplitudesMult[i] = amplitudesEven[i];
+            	}
+            	break;
+            case 22:
+            	amplitudesUnsImag = new double[amplitudesOddImag.length];
+            	for (i = 0; i < amplitudesUnsImag.length; i++) {
+            		amplitudesUnsImag[i] = amplitudesOddImag[i];
+            	}
+            	amplitudesMultImag = new double[amplitudesOddImag.length];
+            	for (i = 0; i < amplitudesMultImag.length; i++) {
+            		amplitudesMultImag[i] = amplitudesOddImag[i];
+            	}
+            	break;
+        } // switch (conj)
+        
+        switch (conj) {
+            case 0:
+               amplitudesOut = new double[]{2};
+               omegasOut = new double[]{0};
+               break;
+            case 1:
+            case 2:
+               amplitudesOut = amplitudesUns;
+               amplitudesOutImag = amplitudesUnsImag;
+               break;
+            default:
+            	// Estimate the fourier series coefficients of filter^2 = convolution of 1-d filters
+        } // switch (conj)
     }
     
     private void filterbank_DCA_2D(double omegas[][], double amplitudes[][], double filterAngle[], double sigmaX[],
