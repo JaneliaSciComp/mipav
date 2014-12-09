@@ -57,6 +57,8 @@ import com.sun.jimi.core.JimiException;
 
 /**
  * TODO: Add non-ImgFile support for selecting multiple files and have them automatically zipped together?
+ * 
+ * TODO: Test csv handling of incorrect form/de names (and add in case-insensitivity)
  */
 public class PlugInDialogFITBIR extends JFrame implements ActionListener, ChangeListener, ItemListener, TreeSelectionListener, MouseListener,
         PreviewImageContainer, WindowListener {
@@ -211,7 +213,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.25";
+    private static final String pluginVersion = "0.26";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -3310,6 +3312,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
             }
 
+            if (dataStructure == null) {
+                MipavUtil.displayError("Form structure not found in Data Dictionary: " + dataStructureName);
+                dispose();
+                return;
+            }
+
             init();
         }
 
@@ -3487,6 +3495,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                     for (int i = 0; i < csvFieldNames.size(); i++) {
                         final String[] deGroupAndName = splitFieldString(csvFieldNames.get(i).trim());
+
+                        if ( !fsData.isDataElementInForm(deGroupAndName[0], deGroupAndName[1])) {
+                            MipavUtil.displayError("Unable to find CSV data element in form: " + csvFieldNames.get(i).trim());
+                            continue;
+                        }
+
                         String value = repeatValues.get(i).trim();
                         if (i != imageFileIndex && !value.equals("")) {
                             final GroupRepeat curRepeat = fsData.getGroupRepeat(deGroupAndName[0], curRepeatNum);
@@ -3595,6 +3609,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     final ArrayList<String> repeatValues = record.get(curRepeatNum);
                     for (int i = 0; i < csvFieldNames.size(); i++) {
                         final String[] deGroupAndName = splitFieldString(csvFieldNames.get(i).trim());
+
+                        if ( !fsData.isDataElementInForm(deGroupAndName[0], deGroupAndName[1])) {
+                            MipavUtil.displayError("Unable to find CSV data element in form: " + csvFieldNames.get(i).trim());
+                            continue;
+                        }
+
                         String value = repeatValues.get(i).trim();
                         if ( !value.equals("")) {
                             final GroupRepeat curRepeat = fsData.getGroupRepeat(deGroupAndName[0], curRepeatNum);
@@ -3813,6 +3833,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
 
                 final File file = new File(filePath);
+                // System.out.println(file.getParent());
                 srcImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultifile, null);
 
                 final int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
@@ -6115,6 +6136,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         public DataElement getDataElement(final StructuralDataElement deInfo) {
             return getStructInfo().getDataElements().get(deInfo.getNameAndVersion());
+        }
+
+        public boolean isDataElementInForm(final String groupName, final String deName) {
+            return (structInfo.getRepeatableGroupByName(groupName) != null)
+                    && (structInfo.getRepeatableGroupByName(groupName).getMapElementByName(deName) != null);
         }
     }
 
