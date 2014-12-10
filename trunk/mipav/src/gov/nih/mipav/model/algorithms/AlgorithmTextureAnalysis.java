@@ -1,12 +1,12 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBtoGray;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
-
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
@@ -326,6 +326,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         double td22[][];
         double td23[][];
         double td33[][];
+        int sz[] = new int[2];
         // gaussian (constant basis)
         T1z2a_convert_filter(omegasgb0, amplitudesgb0, amplitudesgb0Imag, omegas, amplitudes, filterAngle, sigmaX, 0);
 
@@ -351,7 +352,89 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
             td22 = T1z2b_time_resp(omegasgbee, amplitudesgbee, amplitudesgbeeImag, filterAngle, sigmaX);
             td23 = T1z2b_time_resp(omegasgbeo, amplitudesgbeo, amplitudesgbeoImag, filterAngle, sigmaX);
             td33 = T1z2b_time_resp(omegasgboo, amplitudesgboo, amplitudesgbooImag, filterAngle, sigmaX);
-        }
+            if (domain.equals("freq")) {
+                sz[0] = xfreq.length;
+                sz[1] = xfreq[0].length; 
+            } // if (domain.equals("freq"))
+        } // if (domain.equals("time") || domain.equals("freq"))
+    }
+    
+    private void freqz2(double hout[][], double w1[], double w2[], double a[][], int n1, int n2) {
+    	double apad[][] = null;
+    	int y;
+    	int x;
+    	int yoff;
+    	int xoff;
+    	int i;
+    	int w1off;
+    	double w1scale;
+    	int w2off;
+    	double w2scale;
+    	boolean useMesh = false;
+    	double FFTR[];
+    	double FFTI[];
+    	FFTUtility fft;
+    	
+    	w1 = new double[n1];
+	    w1off = (int)Math.floor(n1/2.0);
+	    w1scale = 2.0/n1;
+	    for (i = 0; i < n1; i++) {
+	    	w1[i] = (i - w1off)*w1scale; 
+	    }
+	    
+	    w2 = new double[n2];
+	    w2off = (int)Math.floor(n2/2.0);
+	    w2scale = 2.0/n2;
+	    for (i = 0; i < n2; i++) {
+	    	w2[i] = (i - w2off)*w2scale; 
+	    }
+	    
+    	if ((a.length > n2) || (a[0].length > n1)) {
+    		useMesh = true;
+    	}
+    	else if (a.length != n2 || a[0].length != n1) {
+    	    apad = new double[n2][n1];
+    	    yoff  = (int)Math.floor(n2/2.0) - (int)Math.floor(a.length/2.0);
+    	    xoff = (int)Math.floor(n1/2.0) - (int)Math.floor(a[0].length/2.0);
+    	    
+    	    for (y = 0; y < a.length; y++) {
+    	    	for (x = 0; x < a[0].length; x++) {
+    	    		apad[y + yoff][x + xoff] = a[y][x];
+    	    	}
+    	    }
+    	} // if (a.length != n2 || a[0].length != n1)
+    	else {
+    		apad = a;
+    	}
+    	
+    	    
+	    if (!useMesh) {
+		    FFTR = new double[n2 * n1];
+		    FFTI = new double[n2 * n1];
+		    for (y = 0; y < n2; y++) {
+		    	for (x = 0; x < n1; x++) {
+		    		FFTR[x + y * n1] = apad[y][x];
+		    	}
+		    }
+		    // For FFTUtility calls are scaled by 1/n for the inverse transform
+		    // In MATLAB ifft has a scaling of 1/M
+		    fft = new FFTUtility(FFTR, FFTI, n2, n1, 1, -1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    fft = new FFTUtility(FFTR, FFTI, 1, n2, n1, -1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    hout = new double[n2][n1];
+		    for (y = 0; y < n2; y++) {
+		    	for (x = 0; x < n1; x++) {
+		    		hout[y][x] = FFTR[x + y * n1];
+		    	}
+		    }
+		    return;
+	    } // if (!useMesh)
+    	
     }
 
     private double[][] T1z2b_time_resp(final double omegas[], final double amplitudes[], final double amplitudesImag[], final double filterAngle,
