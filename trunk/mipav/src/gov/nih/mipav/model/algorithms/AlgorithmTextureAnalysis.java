@@ -294,14 +294,15 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
                     yfreq = null;
                     ps = null;
                 }
-                T1z2_get_filter_struct(omegas[filInd - 1], amplitudes[filInd - 1], filterAngle[filInd - 1], sigmaX[filInd - 1], domain, xfreq, yfreq, ps);
+                T1z2_get_filter_struct(omegas[filInd - 1], amplitudes[filInd - 1], filterAngle[filInd - 1], sigmaX[filInd - 1],
+                		domain, xfreq, yfreq, ps);
             } // for (drInd = 1; drInd <= ndirs; drInd++)
         } // for (scInd = 1; scInd <= nscales; scInd++)
 
     }
 
-    private void T1z2_get_filter_struct(final double omegas[], final double amplitudes[], final double filterAngle, final double sigmaX, final String domain,
-            final double xfreq[][], final double yfreq[][], final int ps[]) {
+    private void T1z2_get_filter_struct(final double omegas[], final double amplitudes[], final double filterAngle, final double sigmaX, 
+    		final String domain, final double xfreq[][], final double yfreq[][], final int ps[]) {
         final double omegasgb0[] = null;
         final double amplitudesgb0[] = null;
         final double amplitudesgb0Imag[] = null;
@@ -326,6 +327,30 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         double td22[][];
         double td23[][];
         double td33[][];
+        double houtfd1[][] = null;
+        double houtImagfd1[][] = null;
+        double w1fd1[] = null;
+        double w2fd1[] = null;
+        double houtfd2[][] = null;
+        double houtImagfd2[][] = null;
+        double w1fd2[] = null;
+        double w2fd2[] = null;
+        double houtfd3[][] = null;
+        double houtImagfd3[][] = null;
+        double w1fd3[] = null;
+        double w2fd3[] = null;
+        double houtfd22[][] = null;
+        double houtImagfd22[][] = null;
+        double w1fd22[] = null;
+        double w2fd22[] = null;
+        double houtfd23[][] = null;
+        double houtImagfd23[][] = null;
+        double w1fd23[] = null;
+        double w2fd23[] = null;
+        double houtfd33[][] = null;
+        double houtImagfd33[][] = null;
+        double w1fd33[] = null;
+        double w2fd33[] = null;
         int sz[] = new int[2];
         // gaussian (constant basis)
         T1z2a_convert_filter(omegasgb0, amplitudesgb0, amplitudesgb0Imag, omegas, amplitudes, filterAngle, sigmaX, 0);
@@ -355,11 +380,51 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
             if (domain.equals("freq")) {
                 sz[0] = xfreq.length;
                 sz[1] = xfreq[0].length; 
+                freqz2(houtfd1, houtImagfd1, w1fd1, w2fd1, td1, sz[1], sz[0]);
+                freqz2(houtfd2, houtImagfd2, w1fd2, w2fd2, td2, sz[1], sz[0]);
+                freqz2(houtfd3, houtImagfd3, w1fd3, w2fd3, td3, sz[1], sz[0]);
+                freqz2(houtfd22, houtImagfd22, w1fd22, w2fd22, td22, sz[1], sz[0]);
+                freqz2(houtfd23, houtImagfd23, w1fd23, w2fd23, td23, sz[1], sz[0]);
+                freqz2(houtfd33, houtImagfd33, w1fd33, w2fd33, td33, sz[1], sz[0]);
             } // if (domain.equals("freq"))
         } // if (domain.equals("time") || domain.equals("freq"))
+        else if (domain.equals("freq_pure")) {
+        } // else if (domain.equals("freq_pure"))
     }
     
-    private void freqz2(double hout[][], double w1[], double w2[], double a[][], int n1, int n2) {
+    private double Tzz_freq_resp(double omegax[][], double omegay[][], double sigmaX, double filterAngle, double omegas[],
+    		double amplitudes[], double amplitudesImag[]) {
+    	int y;
+    	int x;
+    	double res = 0.0;
+    	double invSigmaX;
+    	double cosang;
+    	double sinang;
+    	int sizem;
+    	int sizen;
+    	
+        for (y = 0; y < omegax.length; y++) {
+        	for (x = 0; x < omegax[0].length; x++) {
+        		omegax[y][x] = -omegax[y][x];
+        	}
+        }
+        for (y = 0; y < omegay.length; y++) {
+        	for (x = 0; x < omegay[0].length; x++) {
+        		omegay[y][x] = -omegay[y][x];
+        	}
+        }
+        
+        
+        invSigmaX = 1.0/(Math.PI * sigmaX);
+        cosang = Math.cos(filterAngle);
+        sinang = Math.sin(filterAngle);
+        
+        sizem = omegax.length;
+        sizen = omegax[0].length;
+    	return res;
+    }
+    
+    private void freqz2(double hout[][], double houtImag[][], double w1[], double w2[], double a[][], int n1, int n2) {
     	double apad[][] = null;
     	int y;
     	int x;
@@ -374,6 +439,16 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
     	double FFTR[];
     	double FFTI[];
     	FFTUtility fft;
+    	double t1[][];
+    	double t2[][];
+    	double w1g[][];
+    	double w2g[][];
+    	int yout;
+    	int xout;
+    	double maxAbsImag;
+    	
+    	hout = new double[n2][n1];
+		houtImag = new double[n2][n1];
     	
     	w1 = new double[n1];
 	    w1off = (int)Math.floor(n1/2.0);
@@ -426,14 +501,87 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		    fft.run();
 		    fft.finalize();
 		    fft = null;
-		    hout = new double[n2][n1];
 		    for (y = 0; y < n2; y++) {
 		    	for (x = 0; x < n1; x++) {
 		    		hout[y][x] = FFTR[x + y * n1];
+		    		houtImag[y][x] = FFTI[x + y * n1];
 		    	}
 		    }
-		    return;
 	    } // if (!useMesh)
+	    else { // useMesh
+		    w1g = new double[n2][n1];
+		    w2g = new double[n2][n1];
+		    for (y = 0; y < n2; y++) {
+		    	for (x = 0; x < n1; x++) {
+		    		w1g[y][x] = w1[x];
+		    	}
+		    }
+		    
+		    for (x = 0; x < n1; x++) {
+		    	for (y = 0; y < n2; y++) {
+		    		w2g[y][x] = w2[y];
+		    	}
+		    }
+		    
+		    t1 = new double[a.length][a[0].length];
+	        t2 = new double[a.length][a[0].length];
+	        if ( (a[0].length % 2) == 1) {
+	            for (y = 0; y < a.length; y++) {
+		            for (x = 0; x < a[0].length; x++) {
+		                t1[y][x] = -a[0].length/2.0 + 1.0 / 2.0 + x;
+		            }
+	            }
+	        } else {
+	        	for (y = 0; y < a.length; y++) {
+		            for (x = 0; x < a[0].length; x++) {
+		                t1[y][x] = -a[0].length/2.0 + x;
+		            }
+	        	}
+	        }
+	        if ( (a.length % 2) == 1) {
+	        	for (x = 0; x < a[0].length; x++) {
+		            for (y = 0; y < a.length; y++) {
+		                t2[y][x] = -a.length/2.0 + 1.0 / 2.0 + y;
+		            }
+	        	}
+	        } else {
+	        	for (x = 0; x < a[0].length; x++) {
+		            for (y = 0; y < a.length; y++) {
+		                t2[y][x] = -a.length/2.0 + y;
+		            }
+	        	}
+	        }
+	        
+	        for (yout = 0; yout < n2; yout++) {
+	            for (xout = 0; xout < n1; xout++) {
+	            	for (y = 0; y < a.length; y++) {
+	            		for (x = 0; x < a[0].length; x++) {
+	            			hout[yout][xout] += Math.cos(Math.PI*(w1g[yout][xout]*t1[y][x] + w2g[yout][xout]*t2[y][x])*a[y][x]);
+	            			houtImag[yout][xout] -= Math.sin(Math.PI*(w1g[yout][xout]*t1[y][x] + w2g[yout][xout]*t2[y][x])*a[y][x]);
+	            		}
+	            	}
+	            }
+	        } // for (yout = 0; yout < n2; yout++)
+	    }
+	    
+	    maxAbsImag = 0.0;
+	    for (y = 0; y < n2; y++) {
+	    	for (x = 0; x < n1; x++) {
+	    		if (Math.abs(houtImag[y][x]) > maxAbsImag) {
+	    			maxAbsImag = Math.abs(houtImag[y][x]);
+	    		}
+	    	}
+	    }
+	    
+	    if (maxAbsImag < Math.sqrt(epsilon)) {
+	    	for (y = 0; y < n2; y++) {
+	    		for (x = 0; x < n1; x++) {
+	    			houtImag[y][x] = 0.0;
+	    		}
+	    	}
+	    }
+	    
+	    return;
     	
     }
 
