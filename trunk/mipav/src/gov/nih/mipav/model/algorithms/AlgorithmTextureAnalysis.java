@@ -89,6 +89,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         AlgorithmTransform algoTrans;
         AlgorithmRGBtoGray gAlgo;
         ModelImage grayImage = null;
+        ModelImage inputImage = null;
         int i;
         boolean setupFilters = true;
         final int lastXDim = srcImage[0].getExtents()[0];
@@ -104,6 +105,48 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         // Range of radians per pixel for sinusoid of Gabor filter
         final double radianStart = 0.7; // Highest frequency
         double radianEnd; // Lowest frequency
+        double texttd1[][][] = new double[ndirs*nscales][][];
+        double texttd2[][][] = new double[ndirs*nscales][][];
+        double texttd3[][][] = new double[ndirs*nscales][][];
+        double texttd22[][][] = new double[ndirs*nscales][][];
+        double texttd23[][][] = new double[ndirs*nscales][][];
+        double texttd33[][][] = new double[ndirs*nscales][][];
+        double textfd1[][][] = new double[ndirs*nscales][][];
+        double textfd1Imag[][][] = new double[ndirs*nscales][][];
+        double textfd2[][][] = new double[ndirs*nscales][][];
+        double textfd2Imag[][][] = new double[ndirs*nscales][][];
+        double textfd3[][][] = new double[ndirs*nscales][][];
+        double textfd3Imag[][][] = new double[ndirs*nscales][][];
+        double textfd22[][][] = new double[ndirs*nscales][][];
+        double textfd22Imag[][][] = new double[ndirs*nscales][][];
+        double textfd23[][][] = new double[ndirs*nscales][][];
+        double textfd23Imag[][][] = new double[ndirs*nscales][][];
+        double textfd33[][][] = new double[ndirs*nscales][][];
+        double textfd33Imag[][][] = new double[ndirs*nscales][][];
+        double textsigmas[] = new double[ndirs*nscales];
+        int textps[] = new int[ndirs*nscales];
+        String textdomain[] = new String[ndirs*nscales];
+        double edgetd1[][][] = new double[ndirs*nscales][][];
+        double edgetd2[][][] = new double[ndirs*nscales][][];
+        double edgetd3[][][] = new double[ndirs*nscales][][];
+        double edgetd22[][][] = new double[ndirs*nscales][][];
+        double edgetd23[][][] = new double[ndirs*nscales][][];
+        double edgetd33[][][] = new double[ndirs*nscales][][];
+        double edgefd1[][][] = new double[ndirs*nscales][][];
+        double edgefd1Imag[][][] = new double[ndirs*nscales][][];
+        double edgefd2[][][] = new double[ndirs*nscales][][];
+        double edgefd2Imag[][][] = new double[ndirs*nscales][][];
+        double edgefd3[][][] = new double[ndirs*nscales][][];
+        double edgefd3Imag[][][] = new double[ndirs*nscales][][];
+        double edgefd22[][][] = new double[ndirs*nscales][][];
+        double edgefd22Imag[][][] = new double[ndirs*nscales][][];
+        double edgefd23[][][] = new double[ndirs*nscales][][];
+        double edgefd23Imag[][][] = new double[ndirs*nscales][][];
+        double edgefd33[][][] = new double[ndirs*nscales][][];
+        double edgefd33Imag[][][] = new double[ndirs*nscales][][];
+        double edgesigmas[] = new double[ndirs*nscales];
+        int edgeps[] = new int[ndirs*nscales];
+        String edgedomain[] = new String[ndirs*nscales];
         for (i = 0; i < srcImage.length; i++) {
             inputXDim = srcImage[i].getExtents()[0];
             inputYDim = srcImage[i].getExtents()[1];
@@ -179,7 +222,8 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
                 final float fillValue = 0.0f;
                 final boolean doUpdateOrigin = false;
                 final boolean isSATransform = false;
-                algoTrans = new AlgorithmTransform(destImage, xfrm, interp, oXres, oYres, oXdim, oYdim, units, doVOI, doClip, doPad, doRotateCenter, center);
+                algoTrans = new AlgorithmTransform(destImage, xfrm, interp, oXres, oYres, oXdim, oYdim, units, doVOI,
+                		doClip, doPad, doRotateCenter, center);
                 algoTrans.setFillValue(fillValue);
                 algoTrans.setUpdateOriginFlag(doUpdateOrigin);
                 algoTrans.setUseScannerAnatomical(isSATransform);
@@ -209,15 +253,112 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
                 largestPeriod = minSize / 4.0;
                 radianEnd = 2.0 * Math.PI / largestPeriod;
 
-                T1_responses(nscales, ndirs, sig2omega, radianStart, radianEnd, inputXDim, inputYDim, "texture", null);
+                // Construct filters and their time or frequency response
+                // For efficiency use the time domain for small
+                // filters and the frequency domain for large ones
+                T1_responses(texttd1, texttd2, texttd3, texttd22, texttd23, texttd33,
+                		textfd1, textfd1Imag, textfd2, textfd2Imag, textfd3, textfd3Imag, 
+                		textfd22, textfd22Imag, textfd23, textfd23Imag, textfd33, textfd33Imag, textsigmas, textps,
+                		nscales, ndirs, sig2omega, radianStart, radianEnd, inputXDim, inputYDim, "texture", textdomain);
+                T1_responses(edgetd1, edgetd2, edgetd3, edgetd22, edgetd23, edgetd33,
+                		edgefd1, edgefd1Imag, edgefd2, edgefd2Imag, edgefd3, edgefd3Imag, 
+                		edgefd22, edgefd22Imag, edgefd23, edgefd23Imag, edgefd33, edgefd33Imag, edgesigmas, edgeps,
+                		nscales, ndirs, sig2omega, radianStart, radianEnd, inputXDim, inputYDim, "edge", edgedomain);
+                
+                if (destImage != null) {
+                	inputImage = destImage;
+                }
+                else if (grayImage != null) {
+                	inputImage = grayImage;
+                }
+                else {
+                	inputImage = srcImage[i];
+                }
+                
+                // Terms computed off-line for weighted projection on basis
+                
+                // These account for boundary conditions & for a 
+                // non-zero mean value of the even filter
+                T2z0_projection_terms(textps, nscales, ndirs, textdomain, inputImage);
             } // if (setupFilters)
 
         } // for (i = 0; i < srcImage.length; i++)
 
     }
+    
+    private void T2z0_projection_terms(int ps[], int nscales, int ndirs, String filtDomain[], ModelImage inputImage) {
+    	// Precompute terms required for weighted projection on basis
+    	int xDim = inputImage.getExtents()[0];
+    	int yDim = inputImage.getExtents()[1];
+    	double domain[][] = new double[yDim][xDim];
+    	int y;
+    	int x;
+    	int sc;
+    	int offsetsc;
+    	for (y = 0; y < yDim; y++) {
+    		for (x = 0; x < xDim; x++) {
+    			domain[y][x] = 1.0;
+    		}
+    	}
+    	
+    	for (sc = 1; sc <= nscales; sc++) {
+    	    offsetsc = (sc-1)*ndirs;
+    	    if (filtDomain[offsetsc].equals("freq")) {
+    	        T2z1a_make_image_structure(domain, ps[offsetsc]);	
+    	    }
+    	} // for (sc = 1; sc <= nscales; sc++)
+    }
+    
+    private void T2z1a_make_image_structure(double input[][], int patchSize) {
+        int sizem0 = input.length;
+        int sizen0 = input[0].length;
+        int padXDim = sizen0 + 2*patchSize;
+        int padYDim = sizem0 + 2 * patchSize;
+        int y;
+        int x;
+        double timeImagePatch[] = new double[padXDim * padYDim];
+        double fftImagePatch[] = new double[padXDim * padYDim];
+        double fftImagePatchImag[] = new double[padXDim * padYDim];
+        double timeSupportPatch[] = new double[padXDim * padYDim];
+        double fftSupportPatch[] = new double[padXDim * padYDim];
+        double fftSupportPatchImag[] = new double[padXDim * padYDim];
+        FFTUtility fft;
+        for (y = 0; y < sizem0; y++) {
+            for (x = 0; x < sizen0; x++) {
+            	timeImagePatch[x + patchSize + padXDim * (y + patchSize)] = input[y][x];
+            	timeSupportPatch[x + patchSize + padXDim * (y + patchSize)] = 1.0;
+            	fftImagePatch[x + patchSize + padXDim * (y + patchSize)] = input[y][x];
+            	fftSupportPatch[x + patchSize + padXDim * (y + patchSize)] = 1.0;
+            }
+        }
+        
+        fft = new FFTUtility(fftImagePatch, fftImagePatchImag, padYDim, padXDim, 1, -1, FFTUtility.FFT);
+	    fft.run();
+	    fft.finalize();
+	    fft = null;
+	    fft = new FFTUtility(fftImagePatch, fftImagePatchImag, 1, padYDim, padXDim, -1, FFTUtility.FFT);
+	    fft.run();
+	    fft.finalize();
+	    fft = null;
+	    
+	    fft = new FFTUtility(fftSupportPatch, fftSupportPatchImag, padYDim, padXDim, 1, -1, FFTUtility.FFT);
+	    fft.run();
+	    fft.finalize();
+	    fft = null;
+	    fft = new FFTUtility(fftSupportPatch, fftSupportPatchImag, 1, padYDim, padXDim, -1, FFTUtility.FFT);
+	    fft.run();
+	    fft.finalize();
+	    fft = null;
+    }
 
-    private void T1_responses(final int nscales, final int ndirs, final double sig2omega, final double radianStart, final double radianEnd,
-            final int inputXDim, final int inputYDim, final String filterType, String domain) {
+    private void T1_responses(double td1[][][], double td2[][][], double td3[][][],
+    		                  double td22[][][], double td23[][][], double td33[][][],
+    		                  double fd1[][][], double fd1Imag[][][], double fd2[][][], double fd2Imag[][][],
+    		                  double fd3[][][], double fd3Imag[][][], double fd22[][][], double fd22Imag[][][],
+    		                  double fd23[][][], double fd23Imag[][][], double fd33[][][], double fd33Imag[][][],
+    		                  double sigmas[], int ps[],
+    		final int nscales, final int ndirs, final double sig2omega, final double radianStart, final double radianEnd,
+            final int inputXDim, final int inputYDim, final String filterType, String domain[]) {
         final double omegas[][] = null;
         final double amplitudes[][] = null;
         final double filterAngle[] = null;
@@ -225,8 +366,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         int filInd;
         int scInd;
         int drInd;
-        final double sigmas[] = new double[ndirs];
-        int ps[] = new int[1];
         int szfm;
         int szfn;
         int i;
@@ -241,19 +380,21 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 
         filInd = 0;
         for (scInd = 1; scInd <= nscales; scInd++) {
-            if (domain == null) {
-                if (scInd < 4) {
-                    domain = "time";
-                } else {
-                    domain = "freq";
-                }
-            } // if (domain == null);
+            
+           
             for (drInd = 1; drInd <= ndirs; drInd++) {
                 filInd++;
+                if (domain[filInd-1] == null) {
+                    if (scInd < 4) {
+                        domain[filInd-1] = "time";
+                    } else {
+                        domain[filInd-1] = "freq";
+                    }
+                } // if (domain == null);
                 sigmas[filInd - 1] = sigmaX[filInd - 1];
 
-                if (domain.equals("freq")) {
-                    ps[0] = 3 * (int) Math.ceil(sigmas[filInd - 1]);
+                if (domain[filInd-1].equals("freq")) {
+                    ps[filInd-1] = 3 * (int) Math.ceil(sigmas[filInd - 1]);
                     szfm = inputYDim + 2 * ps[0];
                     szfn = inputXDim + 2 * ps[0];
                     fm = new double[szfm];
@@ -288,21 +429,31 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
                             yfreq[y][x] = fn[y];
                         }
                     }
-                } // if (domain.equals("freq"))
+                } // if (domain[filInd-1].equals("freq"))
                 else {
                     xfreq = null;
                     yfreq = null;
-                    ps = null;
+                    ps[filInd-1] = -1;
                 }
-                T1z2_get_filter_struct(omegas[filInd - 1], amplitudes[filInd - 1], filterAngle[filInd - 1], sigmaX[filInd - 1],
-                		domain, xfreq, yfreq, ps);
+                T1z2_get_filter_struct(td1[filInd-1], td2[filInd-1],td3[filInd-1],
+                		td22[filInd-1], td23[filInd-1], td33[filInd-1],
+                		fd1[filInd-1], fd1Imag[filInd-1], fd2[filInd-1], fd2Imag[filInd-1],
+                		fd3[filInd-1], fd3Imag[filInd-1], fd22[filInd-1], fd22Imag[filInd-1],
+                		fd23[filInd-1], fd23[filInd-1], fd33[filInd-1], fd33Imag[filInd-1],
+                		omegas[filInd - 1], amplitudes[filInd - 1], filterAngle[filInd - 1], sigmaX[filInd - 1],
+                		domain[filInd - 1], xfreq, yfreq);
             } // for (drInd = 1; drInd <= ndirs; drInd++)
         } // for (scInd = 1; scInd <= nscales; scInd++)
 
     }
 
-    private void T1z2_get_filter_struct(final double omegas[], final double amplitudes[], final double filterAngle, final double sigmaX, 
-    		final String domain, final double xfreq[][], final double yfreq[][], final int ps[]) {
+    private void T1z2_get_filter_struct(double td1[][], double td2[][], double td3[][], 
+    		                            double td22[][], double td23[][], double td33[][],
+    		                            double fd1[][], double fd1Imag[][], double fd2[][], double fd2Imag[][],
+    		                            double fd3[][], double fd3Imag[][], double fd22[][], double fd22Imag[][],
+    		                            double fd23[][], double fd23Imag[][], double fd33[][], double fd33Imag[][],
+    		final double omegas[], final double amplitudes[], final double filterAngle, final double sigmaX, 
+    		final String domain, final double xfreq[][], final double yfreq[][]) {
         final double omegasgb0[] = null;
         final double amplitudesgb0[] = null;
         final double amplitudesgb0Imag[] = null;
@@ -321,34 +472,16 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         final double omegasgboo[] = null;
         final double amplitudesgboo[] = null;
         final double amplitudesgbooImag[] = null;
-        double td1[][];
-        double td2[][];
-        double td3[][];
-        double td22[][];
-        double td23[][];
-        double td33[][];
-        double houtfd1[][] = null;
-        double houtImagfd1[][] = null;
         double w1fd1[] = null;
         double w2fd1[] = null;
-        double houtfd2[][] = null;
-        double houtImagfd2[][] = null;
         double w1fd2[] = null;
         double w2fd2[] = null;
-        double houtfd3[][] = null;
-        double houtImagfd3[][] = null;
         double w1fd3[] = null;
         double w2fd3[] = null;
-        double houtfd22[][] = null;
-        double houtImagfd22[][] = null;
         double w1fd22[] = null;
         double w2fd22[] = null;
-        double houtfd23[][] = null;
-        double houtImagfd23[][] = null;
         double w1fd23[] = null;
         double w2fd23[] = null;
-        double houtfd33[][] = null;
-        double houtImagfd33[][] = null;
         double w1fd33[] = null;
         double w2fd33[] = null;
         int sz[] = new int[2];
@@ -380,28 +513,58 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
             if (domain.equals("freq")) {
                 sz[0] = xfreq.length;
                 sz[1] = xfreq[0].length; 
-                freqz2(houtfd1, houtImagfd1, w1fd1, w2fd1, td1, sz[1], sz[0]);
-                freqz2(houtfd2, houtImagfd2, w1fd2, w2fd2, td2, sz[1], sz[0]);
-                freqz2(houtfd3, houtImagfd3, w1fd3, w2fd3, td3, sz[1], sz[0]);
-                freqz2(houtfd22, houtImagfd22, w1fd22, w2fd22, td22, sz[1], sz[0]);
-                freqz2(houtfd23, houtImagfd23, w1fd23, w2fd23, td23, sz[1], sz[0]);
-                freqz2(houtfd33, houtImagfd33, w1fd33, w2fd33, td33, sz[1], sz[0]);
+                freqz2(fd1, fd1Imag, w1fd1, w2fd1, td1, sz[1], sz[0]);
+                freqz2(fd2, fd2Imag, w1fd2, w2fd2, td2, sz[1], sz[0]);
+                freqz2(fd3, fd3Imag, w1fd3, w2fd3, td3, sz[1], sz[0]);
+                freqz2(fd22, fd22Imag, w1fd22, w2fd22, td22, sz[1], sz[0]);
+                freqz2(fd23, fd23Imag, w1fd23, w2fd23, td23, sz[1], sz[0]);
+                freqz2(fd33, fd33Imag, w1fd33, w2fd33, td33, sz[1], sz[0]);
             } // if (domain.equals("freq"))
         } // if (domain.equals("time") || domain.equals("freq"))
         else if (domain.equals("freq_pure")) {
+            Tzz_freq_resp(fd1, fd1Imag, xfreq, yfreq, sigmaX, filterAngle, omegasgb0, amplitudesgb0, amplitudesgb0Imag);
+            Tzz_freq_resp(fd2, fd2Imag, xfreq, yfreq, sigmaX, filterAngle, omegasgbe, amplitudesgbe, amplitudesgbeImag);
+            Tzz_freq_resp(fd3, fd3Imag, xfreq, yfreq, sigmaX, filterAngle, omegasgbo, amplitudesgbo, amplitudesgboImag);
+            Tzz_freq_resp(fd22, fd22Imag, xfreq, yfreq, sigmaX, filterAngle, omegasgbee, amplitudesgbee, amplitudesgbeeImag);
+            Tzz_freq_resp(fd23, fd23Imag, xfreq, yfreq, sigmaX, filterAngle, omegasgbeo, amplitudesgbeo, amplitudesgbeoImag);
+            Tzz_freq_resp(fd33, fd33Imag, xfreq, yfreq, sigmaX, filterAngle, omegasgboo, amplitudesgboo, amplitudesgbooImag);
         } // else if (domain.equals("freq_pure"))
     }
     
-    private double Tzz_freq_resp(double omegax[][], double omegay[][], double sigmaX, double filterAngle, double omegas[],
+    private void Tzz_freq_resp(double hout[][], double houtImag[][], double omegax[][], double omegay[][], double sigmaX, 
+    		double filterAngle, double omegas[],
     		double amplitudes[], double amplitudesImag[]) {
     	int y;
     	int x;
-    	double res = 0.0;
     	double invSigmaX;
     	double cosang;
     	double sinang;
     	int sizem;
     	int sizen;
+    	double maxAbsOmegas;
+    	int i;
+    	double rotatedx[][][];
+    	double rotatedy[][][];
+    	int cnt;
+    	int sig1[] = new int[]{0,-1,1};
+    	int sig2[] = new int[]{0,-1,1};
+    	int sig1Index;
+    	int sig2Index;
+    	double absAmp[];
+    	double maxAbsAmp;
+    	double threshMin;
+    	boolean omegaswt[];
+    	double carrier;
+    	double cenx;
+    	double ceny;
+    	double offx;
+    	double offy;
+    	double distCen[][];
+    	double gaussianTerm;
+    	int j;
+    	double diffx;
+    	double diffy;
+    	double denom;
     	
         for (y = 0; y < omegax.length; y++) {
         	for (x = 0; x < omegax[0].length; x++) {
@@ -414,14 +577,109 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         	}
         }
         
-        
         invSigmaX = 1.0/(Math.PI * sigmaX);
         cosang = Math.cos(filterAngle);
         sinang = Math.sin(filterAngle);
         
         sizem = omegax.length;
         sizen = omegax[0].length;
-    	return res;
+        
+        maxAbsOmegas = 0.0;
+        for (i = 0; i < omegas.length; i++) {
+        	if (Math.abs(omegas[i]) > maxAbsOmegas) {
+        		maxAbsOmegas = Math.abs(omegas[i]);
+        	}
+        }
+        if ((maxAbsOmegas + 3.0 * invSigmaX) > 1.0) {
+        	rotatedx = new double[sizem][sizen][9];
+        	rotatedy = new double[sizem][sizen][9];
+        }
+        else {
+        	rotatedx = new double[sizem][sizen][1];
+        	rotatedy = new double[sizem][sizen][1];
+        }
+        
+        for (y = 0; y < sizem; y++) {
+        	for (x = 0; x < sizen; x++) {
+        		rotatedx[y][x][0] = omegax[y][x]*cosang + omegay[y][x]*sinang;
+        		rotatedy[y][x][0] = -omegax[y][x]*sinang + omegay[y][x]*cosang;
+        	}
+        }
+        
+        cnt = 0;
+        for (sig1Index = 0; sig1Index <= 2; sig1Index++) {
+            for (sig2Index = 0; sig2Index <= 2; sig2Index++) {
+                for (y = 0; y < sizem; y++) {
+                	for (x = 0; x < sizen; x++) {
+                		rotatedx[y][x][cnt] = rotatedx[y][x][0] + 2.0*sig1[sig1Index]*cosang + 2.0*sig2[sig2Index]*sinang;
+                		rotatedy[y][x][cnt] = rotatedy[y][x][0] - 2.0*sig1[sig1Index]*sinang + 2.0*sig2[sig2Index]*cosang;
+                	}
+                } // for (y = 0; y < sizem; y++)
+                cnt++;
+            }
+        }
+        
+        absAmp = new double[amplitudes.length];
+        maxAbsAmp = 0.0;
+        for (i = 0; i < amplitudes.length; i++) {
+        	absAmp[i] = Math.sqrt(amplitudes[i]*amplitudes[i] + amplitudesImag[i]*amplitudesImag[i]);
+        	if (absAmp[i] > maxAbsAmp) {
+        		maxAbsAmp = absAmp[i];
+        	}
+        }
+        threshMin = 0.01 * maxAbsAmp;
+        omegaswt = new boolean[amplitudes.length];
+        for (i = 0; i < amplitudes.length; i++) {
+        	if (absAmp[i] > threshMin) {
+        		omegaswt[i] = true;
+        	}
+        }
+        
+        distCen = new double[sizem][sizen];
+        hout = new double[sizem][sizen];
+        houtImag = new double[sizem][sizen];
+        denom = 2.0 * invSigmaX * invSigmaX;
+        for (i = 0; i < amplitudes.length; i++) {
+        	if (omegaswt[i]) {
+        	    carrier = omegas[i];
+        	    cenx = carrier * cosang;
+        	    ceny = carrier * sinang;
+        	    offx = (-cenx * cosang) - ceny*sinang;
+        	    offy = (cenx * sinang) - ceny*cosang;
+        	    if ((Math.abs(carrier) + 3.0*invSigmaX) > 1.0) {
+        	        for (y = 0; y < sizem; y++) {
+    	    		    for (x = 0; x < sizen; x++) { 
+        	    			distCen[y][x] = Double.MAX_VALUE;
+        	    			for (j = 0; j < 9; j++) {
+	        	    			diffx = rotatedx[y][x][j] - offx;
+	        	    			diffy = rotatedy[y][x][j] - offy;
+	        	    			if (diffx*diffx + diffy*diffy < distCen[y][x]) {
+	        	    				distCen[y][x] = diffx*diffx + diffy*diffy;
+	        	    			}
+        	    			}
+        	    		}
+        	    	}
+        	    } //  if ((Math.abs(carrier) + 3.0*invSigmaX) > 1.0)
+        	    else {
+        	    	for (y = 0; y < sizem; y++) {
+        	    		for (x = 0; x < sizen; x++) {
+        	    			diffx = rotatedx[y][x][0] - offx;
+        	    			diffy = rotatedy[y][x][0] - offy;
+        	    			distCen[y][x] = diffx*diffx + diffy*diffy;
+        	    		}
+        	    	}
+        	    } // else
+        	    for (y = 0; y < sizem; y++) {
+        	    	for (x = 0; x < sizen; x++) {
+        	    		gaussianTerm = Math.exp(-distCen[y][x]/denom)/2.0;
+        	    		hout[y][x] = hout[y][x] + amplitudes[i]*gaussianTerm;
+        	    		houtImag[y][x] = houtImag[y][x] + amplitudesImag[i]*gaussianTerm;
+        	    	}
+        	    }
+        	} // if (omegaswt[i])
+        } // for (i = 0; i < amplitudes.length; i++)
+       
+    	return;
     }
     
     private void freqz2(double hout[][], double houtImag[][], double w1[], double w2[], double a[][], int n1, int n2) {
