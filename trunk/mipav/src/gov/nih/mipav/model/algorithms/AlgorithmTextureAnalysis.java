@@ -279,37 +279,93 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
                 
                 // These account for boundary conditions & for a 
                 // non-zero mean value of the even filter
-                T2z0_projection_terms(textps, nscales, ndirs, textdomain, inputImage);
+                T2z0_projection_terms(textfd1, textfd1Imag, textfd2, textfd2Imag, textfd3, textfd3Imag, 
+                		textfd22, textfd22Imag, textfd23, textfd23Imag, textfd33, textfd33Imag,
+                		textps, nscales, ndirs, textdomain, inputImage);
             } // if (setupFilters)
 
         } // for (i = 0; i < srcImage.length; i++)
 
     }
     
-    private void T2z0_projection_terms(int ps[], int nscales, int ndirs, String filtDomain[], ModelImage inputImage) {
+    private void T2z0_projection_terms(double fd1[][][], double fd1Imag[][][], double fd2[][][], double fd2Imag[][][],
+    		double fd3[][][], double fd3Imag[][][], double fd22[][][], double fd22Imag[][][],
+    		double fd23[][][], double fd23Imag[][][], double fd33[][][], double fd33Imag[][][],
+    		int ps[], int nscales, int ndirs, String filtDomain[], ModelImage inputImage) {
     	// Precompute terms required for weighted projection on basis
-    	int xDim = inputImage.getExtents()[0];
-    	int yDim = inputImage.getExtents()[1];
-    	double domain[][] = new double[yDim][xDim];
+    	int sizen0 = inputImage.getExtents()[0];
+    	int sizem0 = inputImage.getExtents()[1];
+    	double domain[][] = new double[sizem0][sizen0];  
+    	double fftImagePatch[] = null;
+    	double fftImagePatchImag[] = null;
+    	double fftSupportPatch[] = null;
+    	double fftSupportPatchImag[] = null;
+    	int patchSize;
     	int y;
     	int x;
     	int sc;
     	int offsetsc;
-    	for (y = 0; y < yDim; y++) {
-    		for (x = 0; x < xDim; x++) {
+    	int dirInd;
+    	int filInd;
+    	for (y = 0; y < sizem0; y++) {
+    		for (x = 0; x < sizen0; x++) {
     			domain[y][x] = 1.0;
     		}
     	}
     	
     	for (sc = 1; sc <= nscales; sc++) {
     	    offsetsc = (sc-1)*ndirs;
+    	    patchSize = ps[offsetsc];
     	    if (filtDomain[offsetsc].equals("freq")) {
-    	        T2z1a_make_image_structure(domain, ps[offsetsc]);	
+    	        T2z1a_make_image_structure(fftImagePatch, fftImagePatchImag,
+    	        		                   fftSupportPatch, fftSupportPatchImag,
+    	        		                   domain, patchSize);	
     	    }
+    	    
+    	    for (dirInd = 1; dirInd <= ndirs; dirInd++) {
+    	        filInd = offsetsc + dirInd;
+    	        if (filtDomain[offsetsc].equals("freq")) {
+    	            T2z1b_get_responses_freq(fd1[filInd-1], fd1Imag[filInd-1], fd2[filInd-1], fd2Imag[filInd-1],
+    	            		fd3[filInd-1], fd3Imag[filInd-1], fd22[filInd-1], fd22Imag[filInd-1],
+    	            		fd23[filInd-1], fd23Imag[filInd-1], fd33[filInd-1], fd33Imag[filInd-1], 0);
+    	        } // if (filtDomain[offsetsc].equals("freq"))
+    	        else if (filtDomain[offsetsc].equals("time")) {
+    	        	
+    	        } //  else if (filtDomain[offsetsc].equals("time"))
+    	    } // for (dirInd = 1; dirInd <= ndirs; dirInd++) 
     	} // for (sc = 1; sc <= nscales; sc++)
     }
     
-    private void T2z1a_make_image_structure(double input[][], int patchSize) {
+    private void T2z1b_get_responses_freq(double fd1[][], double fd1Imag[][], double fd2[][], double fd2Imag[][],
+                         double fd3[][], double fd3Imag[][], double fd22[][], double fd22Imag[][],
+                         double fd23[][], double fd23Imag[][], double fd33[][], double fd33Imag[][],
+                         int findNorm) {
+    	int sizem = fd1.length;
+    	int sizen = fd1[0].length;
+    	int y;
+    	int x;
+    	for (y = 0; y < sizem; y++) {
+    		for (x = 0; x < sizen; x++) {
+    			fd1[y][x] = fd1[y][x]/65535.0;
+    			fd1Imag[y][x] = fd1Imag[y][x]/65535.0;
+    			fd2[y][x] = fd2[y][x]/65535.0;
+    			fd2Imag[y][x] = fd2Imag[y][x]/65535.0;
+    			fd22[y][x] = fd22[y][x]/65535.0;
+    			fd22Imag[y][x] = fd22Imag[y][x]/65535.0;
+    			fd33[y][x] = fd33[y][x]/65535.0;
+    			fd33Imag[y][x] = fd33Imag[y][x]/65535.0;
+    			fd3[y][x] = -fd3Imag[y][x] - 1.0;
+    			fd3Imag[y][x] = fd3[y][x];
+    			fd23[y][x] = -fd23Imag[y][x] - 1.0;
+    			fd23Imag[y][x] = fd23[y][x];
+    		}
+    	}
+    	
+    }
+    
+    private void T2z1a_make_image_structure(double fftImagePatch[], double fftImagePatchImag[],
+    		                                double fftSupportPatch[], double fftSupportPatchImag[],
+    		                                double input[][], int patchSize) {
         int sizem0 = input.length;
         int sizen0 = input[0].length;
         int padXDim = sizen0 + 2*patchSize;
@@ -317,11 +373,11 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         int y;
         int x;
         double timeImagePatch[] = new double[padXDim * padYDim];
-        double fftImagePatch[] = new double[padXDim * padYDim];
-        double fftImagePatchImag[] = new double[padXDim * padYDim];
-        double timeSupportPatch[] = new double[padXDim * padYDim];
-        double fftSupportPatch[] = new double[padXDim * padYDim];
-        double fftSupportPatchImag[] = new double[padXDim * padYDim];
+        fftImagePatch = new double[padXDim * padYDim];
+        fftImagePatchImag = new double[padXDim * padYDim];
+        double[] timeSupportPatch = new double[padXDim * padYDim];
+        fftSupportPatch = new double[padXDim * padYDim];
+        fftSupportPatchImag = new double[padXDim * padYDim];
         FFTUtility fft;
         for (y = 0; y < sizem0; y++) {
             for (x = 0; x < sizen0; x++) {
