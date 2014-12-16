@@ -71,7 +71,7 @@ public class ActionSaveTab implements ScriptableActionInterface {
         if (parameters.containsParameter(DIR_LABEL)) {
             ViewUserInterface.getReference().getMessageFrame().save(parameters.getString(TAB_NAME_LABEL), parameters.getString(TAB_NAME_LABEL));
         } else {
-            ViewUserInterface.getReference().getMessageFrame().save(parameters.getString(dir, TAB_NAME_LABEL));
+            ViewUserInterface.getReference().getMessageFrame().save(parameters.getString(TAB_NAME_LABEL));
         }
 
     }
