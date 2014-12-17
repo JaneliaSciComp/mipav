@@ -279,7 +279,8 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
                 
                 // These account for boundary conditions & for a 
                 // non-zero mean value of the even filter
-                T2z0_projection_terms(textfd1, textfd1Imag, textfd2, textfd2Imag, textfd3, textfd3Imag, 
+                T2z0_projection_terms(texttd1, texttd2, texttd3, texttd22, texttd23, texttd33,
+                		textfd1, textfd1Imag, textfd2, textfd2Imag, textfd3, textfd3Imag, 
                 		textfd22, textfd22Imag, textfd23, textfd23Imag, textfd33, textfd33Imag,
                 		textps, nscales, ndirs, textdomain, inputImage);
             } // if (setupFilters)
@@ -288,7 +289,9 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 
     }
     
-    private void T2z0_projection_terms(double fd1[][][], double fd1Imag[][][], double fd2[][][], double fd2Imag[][][],
+    private void T2z0_projection_terms(double td1[][][], double td2[][][], double td3[][][],
+    		double td22[][][], double td23[][][], double td33[][][],
+    		double fd1[][][], double fd1Imag[][][], double fd2[][][], double fd2Imag[][][],
     		double fd3[][][], double fd3Imag[][][], double fd22[][][], double fd22Imag[][][],
     		double fd23[][][], double fd23Imag[][][], double fd33[][][], double fd33Imag[][][],
     		int ps[], int nscales, int ndirs, String filtDomain[], ModelImage inputImage) {
@@ -300,6 +303,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
     	double fftImagePatchImag[] = null;
     	double fftSupportPatch[] = null;
     	double fftSupportPatchImag[] = null;
+    	double Sc1[][] = null;
+    	double Sc2[][] = null;
+    	double Sc3[][] = null;
+    	double Sc22[][] = null;
+    	double Sc23[][] = null;
+    	double Sc33[][] = null;
     	int patchSize;
     	int y;
     	int x;
@@ -325,18 +334,41 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
     	    for (dirInd = 1; dirInd <= ndirs; dirInd++) {
     	        filInd = offsetsc + dirInd;
     	        if (filtDomain[offsetsc].equals("freq")) {
-    	            T2z1b_get_responses_freq(fd1[filInd-1], fd1Imag[filInd-1], fd2[filInd-1], fd2Imag[filInd-1],
+    	            T2z1b_get_responses_freq(null, null, null, null, null, Sc1, Sc2, Sc3, Sc22, Sc23, Sc33,
+    	            		fftSupportPatch, fftSupportPatchImag, patchSize, null, null, 
+    	            		fd1[filInd-1], fd1Imag[filInd-1], fd2[filInd-1], fd2Imag[filInd-1],
     	            		fd3[filInd-1], fd3Imag[filInd-1], fd22[filInd-1], fd22Imag[filInd-1],
     	            		fd23[filInd-1], fd23Imag[filInd-1], fd33[filInd-1], fd33Imag[filInd-1], 0);
     	        } // if (filtDomain[offsetsc].equals("freq"))
     	        else if (filtDomain[offsetsc].equals("time")) {
-    	        	
+    	            T2z1b_get_responses_time(null, null, null, null, null, Sc1, Sc2, Sc3, Sc22, Sc23, Sc33,
+    	            		td1[filInd-1], td2[filInd-1], td3[filInd-1], 
+    	            		td22[filInd-1], td23[filInd-1], td33[filInd-1], domain, 0);	
     	        } //  else if (filtDomain[offsetsc].equals("time"))
     	    } // for (dirInd = 1; dirInd <= ndirs; dirInd++) 
     	} // for (sc = 1; sc <= nscales; sc++)
     }
     
-    private void T2z1b_get_responses_freq(double fd1[][], double fd1Imag[][], double fd2[][], double fd2Imag[][],
+    private void T2z1b_get_responses_time(double preComputedIc1[][], double preComputedIc2[][],
+    		double preComputedIc3[][], double preComputedSc1[][], double preComputedsm[][],
+    		double Sc1[][], double Sc2[][], double Sc3[][],
+    		double Sc22[][], double Sc23[][], double Sc33[][],double td1[][], double td2[][], double td3[][],
+    		double td22[][], double td23[][], double td33[][], double inputIm[][] , int findNorm) {
+    	switch(findNorm) {
+    	case 0:
+    		
+    		break;
+    	}
+    	
+    }
+    
+    private void T2z1b_get_responses_freq(double preComputedIc1[][], double preComputedIc2[][],
+    		double preComputedIc3[][], double preComputedSc1[][], double preComputedsm[][],
+    		double Sc1[][], double Sc2[][], double Sc3[][],
+    		double Sc22[][], double Sc23[][], double Sc33[][],
+    		double fftSupportPatch[], double fftSupportPatchImag[], int patchSize,
+    		double fftImagePatch[], double fftImagePatchImag[],
+    		double fd1[][], double fd1Imag[][], double fd2[][], double fd2Imag[][],
                          double fd3[][], double fd3Imag[][], double fd22[][], double fd22Imag[][],
                          double fd23[][], double fd23Imag[][], double fd33[][], double fd33Imag[][],
                          int findNorm) {
@@ -344,6 +376,11 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
     	int sizen = fd1[0].length;
     	int y;
     	int x;
+    	int yDim = sizem - 2 * patchSize;
+    	int xDim = sizen - 2 * patchSize;
+    	FFTUtility fft;
+    	double ScR[] = new double[sizem * sizen];
+    	double ScI[] = new double[sizem * sizen];
     	for (y = 0; y < sizem; y++) {
     		for (x = 0; x < sizen; x++) {
     			fd1[y][x] = fd1[y][x]/65535.0;
@@ -360,7 +397,295 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
     			fd23Imag[y][x] = fd23[y][x];
     		}
     	}
+    	// Inverse fftshifts
+    	fftshift(fd1);
+    	fftshift(fd1Imag);
+    	fftshift(fd2);
+    	fftshift(fd2Imag);
+    	fftshift(fd3);
+    	fftshift(fd3Imag);
+    	fftshift(fd22);
+    	fftshift(fd22Imag);
+    	fftshift(fd23);
+    	fftshift(fd23Imag);
+    	fftshift(fd33);
+    	fftshift(fd33Imag);
     	
+    	switch(findNorm) {
+    	case 0:
+	    	for (y = 0; y < sizem; y++) {
+	    		for (x = 0; x < sizen; x++) {
+	    			ScR[x + y * sizen] = fd1[y][x] * fftSupportPatch[x + y * sizen] - fd1Imag[y][x] * fftSupportPatchImag[x + y * sizen];
+	    			ScI[x + y * sizen] = fd1Imag[y][x] * fftSupportPatch[x + y * sizen] + fd1[y][x] * fftSupportPatchImag[x + y * sizen];
+	    		}
+	    	}
+	    	
+	    	fft = new FFTUtility(ScR, ScI, sizem, sizen, 1, 1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    fft = new FFTUtility(ScR, ScI, 1, sizem, sizen, 1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    
+		    Sc1 = new double[yDim][xDim];
+		    for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    		Sc1[y][x] = ScR[x + patchSize + sizen * (y + patchSize)];
+		    	}
+		    }
+		    
+		    for (y = 0; y < sizem; y++) {
+	    		for (x = 0; x < sizen; x++) {
+	    			ScR[x + y * sizen] = fd2[y][x] * fftSupportPatch[x + y * sizen] - fd2Imag[y][x] * fftSupportPatchImag[x + y * sizen];
+	    			ScI[x + y * sizen] = fd2Imag[y][x] * fftSupportPatch[x + y * sizen] + fd2[y][x] * fftSupportPatchImag[x + y * sizen];
+	    		}
+	    	}
+	    	
+	    	fft = new FFTUtility(ScR, ScI, sizem, sizen, 1, 1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    fft = new FFTUtility(ScR, ScI, 1, sizem, sizen, 1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    
+		    Sc2 = new double[yDim][xDim];
+		    for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    		Sc2[y][x] = ScR[x + patchSize + sizen * (y + patchSize)];
+		    	}
+		    }
+		    
+		    for (y = 0; y < sizem; y++) {
+	    		for (x = 0; x < sizen; x++) {
+	    			ScR[x + y * sizen] = fd3[y][x] * fftSupportPatch[x + y * sizen] - fd3Imag[y][x] * fftSupportPatchImag[x + y * sizen];
+	    			ScI[x + y * sizen] = fd3Imag[y][x] * fftSupportPatch[x + y * sizen] + fd3[y][x] * fftSupportPatchImag[x + y * sizen];
+	    		}
+	    	}
+	    	
+	    	fft = new FFTUtility(ScR, ScI, sizem, sizen, 1, 1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    fft = new FFTUtility(ScR, ScI, 1, sizem, sizen, 1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    
+		    Sc3 = new double[yDim][xDim];
+		    for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    		Sc3[y][x] = ScR[x + patchSize + sizen * (y + patchSize)];
+		    	}
+		    }
+		    
+		    for (y = 0; y < sizem; y++) {
+	    		for (x = 0; x < sizen; x++) {
+	    			ScR[x + y * sizen] = fd22[y][x] * fftSupportPatch[x + y * sizen] - fd22Imag[y][x] * fftSupportPatchImag[x + y * sizen];
+	    			ScI[x + y * sizen] = fd22Imag[y][x] * fftSupportPatch[x + y * sizen] + fd22[y][x] * fftSupportPatchImag[x + y * sizen];
+	    		}
+	    	}
+	    	
+	    	fft = new FFTUtility(ScR, ScI, sizem, sizen, 1, 1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    fft = new FFTUtility(ScR, ScI, 1, sizem, sizen, 1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    
+		    Sc22 = new double[yDim][xDim];
+		    for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    		Sc22[y][x] = ScR[x + patchSize + sizen * (y + patchSize)];
+		    	}
+		    }
+		    
+		    for (y = 0; y < sizem; y++) {
+	    		for (x = 0; x < sizen; x++) {
+	    			ScR[x + y * sizen] = fd23[y][x] * fftSupportPatch[x + y * sizen] - fd23Imag[y][x] * fftSupportPatchImag[x + y * sizen];
+	    			ScI[x + y * sizen] = fd23Imag[y][x] * fftSupportPatch[x + y * sizen] + fd23[y][x] * fftSupportPatchImag[x + y * sizen];
+	    		}
+	    	}
+	    	
+	    	fft = new FFTUtility(ScR, ScI, sizem, sizen, 1, 1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    fft = new FFTUtility(ScR, ScI, 1, sizem, sizen, 1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    
+		    Sc23 = new double[yDim][xDim];
+		    for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    		Sc23[y][x] = ScR[x + patchSize + sizen * (y + patchSize)];
+		    	}
+		    }
+		    
+		    for (y = 0; y < sizem; y++) {
+	    		for (x = 0; x < sizen; x++) {
+	    			ScR[x + y * sizen] = fd33[y][x] * fftSupportPatch[x + y * sizen] - fd33Imag[y][x] * fftSupportPatchImag[x + y * sizen];
+	    			ScI[x + y * sizen] = fd33Imag[y][x] * fftSupportPatch[x + y * sizen] + fd33[y][x] * fftSupportPatchImag[x + y * sizen];
+	    		}
+	    	}
+	    	
+	    	fft = new FFTUtility(ScR, ScI, sizem, sizen, 1, 1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    fft = new FFTUtility(ScR, ScI, 1, sizem, sizen, 1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    
+		    Sc33 = new double[yDim][xDim];
+		    for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    		Sc33[y][x] = ScR[x + patchSize + sizen * (y + patchSize)];
+		    	}
+		    }
+		    
+		    break;
+    	case 1:
+	    	for (y = 0; y < sizem; y++) {
+	    		for (x = 0; x < sizen; x++) {
+	    			ScR[x + y * sizen] = fd1[y][x] * fftSupportPatch[x + y * sizen] - fd1Imag[y][x] * fftSupportPatchImag[x + y * sizen];
+	    			ScI[x + y * sizen] = fd1Imag[y][x] * fftSupportPatch[x + y * sizen] + fd1[y][x] * fftSupportPatchImag[x + y * sizen];
+	    		}
+	    	}
+	    	
+	    	fft = new FFTUtility(ScR, ScI, sizem, sizen, 1, 1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    fft = new FFTUtility(ScR, ScI, 1, sizem, sizen, 1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    
+		    preComputedSc1 = new double[yDim][xDim];
+		    for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    		preComputedSc1[y][x] = ScR[x + patchSize + sizen * (y + patchSize)];
+		    	}
+		    }
+		    
+		    for (y = 0; y < sizem; y++) {
+	    		for (x = 0; x < sizen; x++) {
+	    			ScR[x + y * sizen] = fd1[y][x] * fftImagePatch[x + y * sizen] - fd1Imag[y][x] * fftImagePatchImag[x + y * sizen];
+	    			ScI[x + y * sizen] = fd1Imag[y][x] * fftImagePatch[x + y * sizen] + fd1[y][x] * fftImagePatchImag[x + y * sizen];
+	    		}
+	    	}
+	    	
+	    	fft = new FFTUtility(ScR, ScI, sizem, sizen, 1, 1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    fft = new FFTUtility(ScR, ScI, 1, sizem, sizen, 1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    
+		    preComputedIc1 = new double[yDim][xDim];
+		    for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    		preComputedIc1[y][x] = ScR[x + patchSize + sizen * (y + patchSize)];
+		    	}
+		    }
+		    
+		    preComputedsm = new double[yDim][xDim];
+		    for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    		preComputedsm[y][x] = preComputedIc1[y][x]/preComputedSc1[y][x];
+		    	}
+		    }
+    		
+    		break;
+    	case 2:
+    		for (y = 0; y < sizem; y++) {
+	    		for (x = 0; x < sizen; x++) {
+	    			ScR[x + y * sizen] = fd2[y][x] * fftImagePatch[x + y * sizen] - fd2Imag[y][x] * fftImagePatchImag[x + y * sizen];
+	    			ScI[x + y * sizen] = fd2Imag[y][x] * fftImagePatch[x + y * sizen] + fd2[y][x] * fftImagePatchImag[x + y * sizen];
+	    		}
+	    	}
+	    	
+	    	fft = new FFTUtility(ScR, ScI, sizem, sizen, 1, 1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    fft = new FFTUtility(ScR, ScI, 1, sizem, sizen, 1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    
+		    preComputedIc2 = new double[yDim][xDim];
+		    for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    		preComputedIc2[y][x] = ScR[x + patchSize + sizen * (y + patchSize)];
+		    	}
+		    }
+		    
+		    for (y = 0; y < sizem; y++) {
+	    		for (x = 0; x < sizen; x++) {
+	    			ScR[x + y * sizen] = fd3[y][x] * fftImagePatch[x + y * sizen] - fd3Imag[y][x] * fftImagePatchImag[x + y * sizen];
+	    			ScI[x + y * sizen] = fd3Imag[y][x] * fftImagePatch[x + y * sizen] + fd3[y][x] * fftImagePatchImag[x + y * sizen];
+	    		}
+	    	}
+	    	
+	    	fft = new FFTUtility(ScR, ScI, sizem, sizen, 1, 1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    fft = new FFTUtility(ScR, ScI, 1, sizem, sizen, 1, FFTUtility.FFT);
+		    fft.run();
+		    fft.finalize();
+		    fft = null;
+		    
+		    preComputedIc3 = new double[yDim][xDim];
+		    for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    		preComputedIc3[y][x] = ScR[x + patchSize + sizen * (y + patchSize)];
+		    	}
+		    }
+    	} // switch (fnorm)
+    }
+    
+    // Works for both fftshift and ifftshift
+    private void fftshift(double mtx[][]) {
+    	int sizem = mtx.length;
+    	int sizen = mtx[0].length;
+    	int y;
+    	int x;
+    	int DCY = (int)Math.ceil(sizem/2.0);
+    	int DCX = (int)Math.ceil(sizen/2.0);
+    	double temp[][] = new double[sizem][sizen];
+    	for (y = 0; y < DCY; y++) {
+    		for (x = 0; x < DCX; x++) {
+    			temp[y][x] = mtx[y + DCY][x + DCX];
+    		}
+    		for (x = DCX; x < sizen; x++) {
+    			temp[y][x] = mtx[y + DCY][x - DCX];
+    		}
+    	}
+    	for (y = DCY; y < sizem; y++) {
+    		for (x = 0; x < DCX; x++) {
+    			temp[y][x] = mtx[y - DCY][x + DCX];
+    		}
+    		for (x = DCX; x < sizen; x++) {
+    			temp[y][x] = mtx[y - DCY][x - DCX];
+    		}
+    	}
+    	for (y = 0; y < sizem; y++) {
+    		for (x = 0; x < sizen; x++) {
+    			mtx[y][x] = temp[y][x];
+    		}
+    	}
     }
     
     private void T2z1a_make_image_structure(double fftImagePatch[], double fftImagePatchImag[],
@@ -373,9 +698,9 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         int y;
         int x;
         double timeImagePatch[] = new double[padXDim * padYDim];
+        double timeSupportPatch[] = new double[padXDim * padYDim];
         fftImagePatch = new double[padXDim * padYDim];
         fftImagePatchImag = new double[padXDim * padYDim];
-        double[] timeSupportPatch = new double[padXDim * padYDim];
         fftSupportPatch = new double[padXDim * padYDim];
         fftSupportPatchImag = new double[padXDim * padYDim];
         FFTUtility fft;
@@ -404,7 +729,9 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 	    fft = new FFTUtility(fftSupportPatch, fftSupportPatchImag, 1, padYDim, padXDim, -1, FFTUtility.FFT);
 	    fft.run();
 	    fft.finalize();
-	    fft = null;
+	    fft = null; 
+	    
+	    return;
     }
 
     private void T1_responses(double td1[][][], double td2[][][], double td3[][][],
@@ -777,6 +1104,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 	    for (i = 0; i < n2; i++) {
 	    	w2[i] = (i - w2off)*w2scale; 
 	    }
+	    rot180(a);
 	    
     	if ((a.length > n2) || (a[0].length > n1)) {
     		useMesh = true;
@@ -798,6 +1126,8 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
     	
     	    
 	    if (!useMesh) {
+	    	// Inverse fftshift
+	    	fftshift(apad);
 		    FFTR = new double[n2 * n1];
 		    FFTI = new double[n2 * n1];
 		    for (y = 0; y < n2; y++) {
@@ -821,6 +1151,8 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		    		houtImag[y][x] = FFTI[x + y * n1];
 		    	}
 		    }
+		    fftshift(hout);
+		    fftshift(houtImag);
 	    } // if (!useMesh)
 	    else { // useMesh
 		    w1g = new double[n2][n1];
@@ -897,6 +1229,24 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 	    
 	    return;
     	
+    }
+    
+    private void rot180(double mtx[][]) {
+        int sizem = mtx.length;
+        int sizen = mtx[0].length;
+        int y;
+        int x;
+        double temp[][] = new double[sizem][sizen];
+        for (y = 0; y < sizem; y++) {
+        	for (x = 0; x < sizen; x++) {
+        		temp[y][x] = mtx[sizem - 1 - y][sizen - 1 - x];
+        	}
+        }
+        for (y = 0; y < sizem; y++) {
+        	for (x = 0; x < sizen; x++) {
+        		mtx[y][x] = temp[y][x];
+        	}
+        }
     }
 
     private double[][] T1z2b_time_resp(final double omegas[], final double amplitudes[], final double amplitudesImag[], final double filterAngle,
