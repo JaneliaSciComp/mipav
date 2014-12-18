@@ -250,6 +250,10 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 	 * @return
 	 */
 	public FileDicomKey[] getSelectedKeys(){
+		
+		if(checkTree == null)
+			return null;
+		
 		ArrayList<Integer> paths = new ArrayList<Integer>();
 		CheckTreeSelectionModel model = checkTree.getSelectionModel();
 		for(int i=1;i<tree.getRowCount();i++){
