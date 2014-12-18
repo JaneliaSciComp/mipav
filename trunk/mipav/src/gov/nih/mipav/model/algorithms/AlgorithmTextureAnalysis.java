@@ -361,6 +361,8 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
                     		edgetimefd22, edgetimefd22Imag, edgetimefd23, edgetimefd23Imag, edgetimefd33, edgetimefd33Imag, 
                     		edgetimesigmas, edgetimeps,
                     		nscales, ndirs, sig2omega, radianStart, radianEnd, inputXDim, inputYDim, "edge", edgetimedomain);
+                    
+                    // Show texture and edge filters at a single scale and orientation
                     int filId = 10;
                     int texttimeLength = texttimetd2[0].length * texttimetd2[0][0].length;
                     double buffer[] = new double[texttimeLength];
@@ -438,6 +440,10 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
                     new ViewJFrameImage(edgetd3Image);
                 } // if (displayFilters)
             } // if (setupFilters)
+            
+            // mdl criterion terms (refer to paper)
+            // G: gaussian function with maximum at (x == 0) equal to 1
+            // sum G = (filter_scales.^2) * [2*PI]
 
         } // for (i = 0; i < srcImage.length; i++)
 
