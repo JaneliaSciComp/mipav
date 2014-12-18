@@ -1,12 +1,16 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import java.io.IOException;
+
 import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBtoGray;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJFrameImage;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
@@ -69,6 +73,16 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
     // epsilon = 2.2204460e-16
     // epsilon is called the largest relative spacing
     private final double epsilon = Math.pow(2.0, -52);
+    
+    private boolean displayFilters = false;
+    
+    ModelImage texttd2Image;
+    
+    ModelImage texttd3Image;
+    
+    ModelImage edgetd2Image;
+    
+    ModelImage edgetd3Image;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -91,6 +105,8 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         ModelImage grayImage = null;
         ModelImage inputImage = null;
         int i;
+        int x;
+        int y;
         boolean setupFilters = true;
         final int lastXDim = srcImage[0].getExtents()[0];
         final int lastYDim = srcImage[0].getExtents()[1];
@@ -105,6 +121,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         // Range of radians per pixel for sinusoid of Gabor filter
         final double radianStart = 0.7; // Highest frequency
         double radianEnd; // Lowest frequency
+        double textinvDes[][][][][] = new double[ndirs*nscales][][][][];
         double texttd1[][][] = new double[ndirs*nscales][][];
         double texttd2[][][] = new double[ndirs*nscales][][];
         double texttd3[][][] = new double[ndirs*nscales][][];
@@ -125,7 +142,8 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         double textfd33Imag[][][] = new double[ndirs*nscales][][];
         double textsigmas[] = new double[ndirs*nscales];
         int textps[] = new int[ndirs*nscales];
-        String textdomain[] = new String[ndirs*nscales];
+        String textdomain = null;
+        double edgeinvDes[][][][][] = new double[ndirs*nscales][][][][];
         double edgetd1[][][] = new double[ndirs*nscales][][];
         double edgetd2[][][] = new double[ndirs*nscales][][];
         double edgetd3[][][] = new double[ndirs*nscales][][];
@@ -146,7 +164,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         double edgefd33Imag[][][] = new double[ndirs*nscales][][];
         double edgesigmas[] = new double[ndirs*nscales];
         int edgeps[] = new int[ndirs*nscales];
-        String edgedomain[] = new String[ndirs*nscales];
+        String edgedomain = null;
         for (i = 0; i < srcImage.length; i++) {
             inputXDim = srcImage[i].getExtents()[0];
             inputYDim = srcImage[i].getExtents()[1];
@@ -279,22 +297,158 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
                 
                 // These account for boundary conditions & for a 
                 // non-zero mean value of the even filter
-                T2z0_projection_terms(texttd1, texttd2, texttd3, texttd22, texttd23, texttd33,
+                T2z0_projection_terms(textinvDes, texttd1, texttd2, texttd3, texttd22, texttd23, texttd33,
                 		textfd1, textfd1Imag, textfd2, textfd2Imag, textfd3, textfd3Imag, 
                 		textfd22, textfd22Imag, textfd23, textfd23Imag, textfd33, textfd33Imag,
                 		textps, nscales, ndirs, textdomain, inputImage);
+                
+                T2z0_projection_terms(edgeinvDes, edgetd1, edgetd2, edgetd3, edgetd22, edgetd23, edgetd33,
+                		edgefd1, edgefd1Imag, edgefd2, edgefd2Imag, edgefd3, edgefd3Imag, 
+                		edgefd22, edgefd22Imag, edgefd23, edgefd23Imag, edgefd33, edgefd33Imag,
+                		edgeps, nscales, ndirs, edgedomain, inputImage);
+                
+                if (displayFilters) {
+                    double texttimetd1[][][] = new double[ndirs*nscales][][];
+                    double texttimetd2[][][] = new double[ndirs*nscales][][];
+                    double texttimetd3[][][] = new double[ndirs*nscales][][];
+                    double texttimetd22[][][] = new double[ndirs*nscales][][];
+                    double texttimetd23[][][] = new double[ndirs*nscales][][];
+                    double texttimetd33[][][] = new double[ndirs*nscales][][];
+                    double texttimefd1[][][] = new double[ndirs*nscales][][];
+                    double texttimefd1Imag[][][] = new double[ndirs*nscales][][];
+                    double texttimefd2[][][] = new double[ndirs*nscales][][];
+                    double texttimefd2Imag[][][] = new double[ndirs*nscales][][];
+                    double texttimefd3[][][] = new double[ndirs*nscales][][];
+                    double texttimefd3Imag[][][] = new double[ndirs*nscales][][];
+                    double texttimefd22[][][] = new double[ndirs*nscales][][];
+                    double texttimefd22Imag[][][] = new double[ndirs*nscales][][];
+                    double texttimefd23[][][] = new double[ndirs*nscales][][];
+                    double texttimefd23Imag[][][] = new double[ndirs*nscales][][];
+                    double texttimefd33[][][] = new double[ndirs*nscales][][];
+                    double texttimefd33Imag[][][] = new double[ndirs*nscales][][];
+                    double texttimesigmas[] = new double[ndirs*nscales];
+                    int texttimeps[] = new int[ndirs*nscales];
+                    String texttimedomain = "time";
+                    double edgetimetd1[][][] = new double[ndirs*nscales][][];
+                    double edgetimetd2[][][] = new double[ndirs*nscales][][];
+                    double edgetimetd3[][][] = new double[ndirs*nscales][][];
+                    double edgetimetd22[][][] = new double[ndirs*nscales][][];
+                    double edgetimetd23[][][] = new double[ndirs*nscales][][];
+                    double edgetimetd33[][][] = new double[ndirs*nscales][][];
+                    double edgetimefd1[][][] = new double[ndirs*nscales][][];
+                    double edgetimefd1Imag[][][] = new double[ndirs*nscales][][];
+                    double edgetimefd2[][][] = new double[ndirs*nscales][][];
+                    double edgetimefd2Imag[][][] = new double[ndirs*nscales][][];
+                    double edgetimefd3[][][] = new double[ndirs*nscales][][];
+                    double edgetimefd3Imag[][][] = new double[ndirs*nscales][][];
+                    double edgetimefd22[][][] = new double[ndirs*nscales][][];
+                    double edgetimefd22Imag[][][] = new double[ndirs*nscales][][];
+                    double edgetimefd23[][][] = new double[ndirs*nscales][][];
+                    double edgetimefd23Imag[][][] = new double[ndirs*nscales][][];
+                    double edgetimefd33[][][] = new double[ndirs*nscales][][];
+                    double edgetimefd33Imag[][][] = new double[ndirs*nscales][][];
+                    double edgetimesigmas[] = new double[ndirs*nscales];
+                    int edgetimeps[] = new int[ndirs*nscales];
+                    String edgetimedomain = "time";
+                    
+                    T1_responses(texttimetd1, texttimetd2, texttimetd3, texttimetd22, texttimetd23, texttimetd33,
+                    		texttimefd1, texttimefd1Imag, texttimefd2, texttimefd2Imag, texttimefd3, texttimefd3Imag, 
+                    		texttimefd22, texttimefd22Imag, texttimefd23, texttimefd23Imag, texttimefd33, texttimefd33Imag, 
+                    		texttimesigmas, texttimeps,
+                    		nscales, ndirs, sig2omega, radianStart, radianEnd, inputXDim, inputYDim, "texture", texttimedomain);
+                    T1_responses(edgetimetd1, edgetimetd2, edgetimetd3, edgetimetd22, edgetimetd23, edgetimetd33,
+                    		edgetimefd1, edgetimefd1Imag, edgetimefd2, edgetimefd2Imag, edgetimefd3, edgetimefd3Imag, 
+                    		edgetimefd22, edgetimefd22Imag, edgetimefd23, edgetimefd23Imag, edgetimefd33, edgetimefd33Imag, 
+                    		edgetimesigmas, edgetimeps,
+                    		nscales, ndirs, sig2omega, radianStart, radianEnd, inputXDim, inputYDim, "edge", edgetimedomain);
+                    int filId = 10;
+                    int texttimeLength = texttimetd2[0].length * texttimetd2[0][0].length;
+                    double buffer[] = new double[texttimeLength];
+       
+                    for (y = 0; y < texttimetd2[0].length; y++) {
+                    	for (x = 0; x < texttimetd2[0][0].length; x++) {
+                    		buffer[x + y * texttimetd2[0][0].length] = texttimetd2[filId][y][x];
+                    	}
+                    }
+                    int dExtents[] = new int[2];
+                    dExtents[0] = texttimetd2[0][0].length;
+                    dExtents[1] = texttimetd2[0].length;
+                    texttd2Image = new ModelImage(ModelStorageBase.DOUBLE, dExtents, "text_td2_Image");
+                    try {
+                    	texttd2Image.importData(0, buffer, true);
+                    }
+                    catch (IOException e) {
+                    	MipavUtil.displayError("IOException " + e + " on texttd2Image.importData(0, buffer, true)");
+                    	setCompleted(false);
+                    	return;
+                    }
+                    new ViewJFrameImage(texttd2Image);
+                    
+                    for (y = 0; y < texttimetd2[0].length; y++) {
+                    	for (x = 0; x < texttimetd2[0][0].length; x++) {
+                    		buffer[x + y * texttimetd2[0][0].length] = texttimetd3[filId][y][x];
+                    	}
+                    }
+                    texttd3Image = new ModelImage(ModelStorageBase.DOUBLE, dExtents, "text_td3_Image");
+                    try {
+                    	texttd3Image.importData(0, buffer, true);
+                    }
+                    catch (IOException e) {
+                    	MipavUtil.displayError("IOException " + e + " on texttd3Image.importData(0, buffer, true)");
+                    	setCompleted(false);
+                    	return;
+                    }
+                    new ViewJFrameImage(texttd3Image);
+                    
+                    int edgetimeLength = edgetimetd2[0].length * edgetimetd2[0][0].length;
+                    buffer = new double[edgetimeLength];
+       
+                    for (y = 0; y < edgetimetd2[0].length; y++) {
+                    	for (x = 0; x < edgetimetd2[0][0].length; x++) {
+                    		buffer[x + y * edgetimetd2[0][0].length] = edgetimetd2[filId][y][x];
+                    	}
+                    }
+                    dExtents[0] = edgetimetd2[0][0].length;
+                    dExtents[1] = edgetimetd2[0].length;
+                    edgetd2Image = new ModelImage(ModelStorageBase.DOUBLE, dExtents, "edge_td2_Image");
+                    try {
+                    	edgetd2Image.importData(0, buffer, true);
+                    }
+                    catch (IOException e) {
+                    	MipavUtil.displayError("IOException " + e + " on edgetd2Image.importData(0, buffer, true)");
+                    	setCompleted(false);
+                    	return;
+                    }
+                    new ViewJFrameImage(edgetd2Image);
+                    
+                    for (y = 0; y < edgetimetd2[0].length; y++) {
+                    	for (x = 0; x < edgetimetd2[0][0].length; x++) {
+                    		buffer[x + y * edgetimetd2[0][0].length] = edgetimetd3[filId][y][x];
+                    	}
+                    }
+                    edgetd3Image = new ModelImage(ModelStorageBase.DOUBLE, dExtents, "edge_td3_Image");
+                    try {
+                    	edgetd3Image.importData(0, buffer, true);
+                    }
+                    catch (IOException e) {
+                    	MipavUtil.displayError("IOException " + e + " on edgetd3Image.importData(0, buffer, true)");
+                    	setCompleted(false);
+                    	return;
+                    }
+                    new ViewJFrameImage(edgetd3Image);
+                } // if (displayFilters)
             } // if (setupFilters)
 
         } // for (i = 0; i < srcImage.length; i++)
 
     }
     
-    private void T2z0_projection_terms(double td1[][][], double td2[][][], double td3[][][],
+    private void T2z0_projection_terms(double invDes[][][][][], double td1[][][], double td2[][][], double td3[][][],
     		double td22[][][], double td23[][][], double td33[][][],
     		double fd1[][][], double fd1Imag[][][], double fd2[][][], double fd2Imag[][][],
     		double fd3[][][], double fd3Imag[][][], double fd22[][][], double fd22Imag[][][],
     		double fd23[][][], double fd23Imag[][][], double fd33[][][], double fd33Imag[][][],
-    		int ps[], int nscales, int ndirs, String filtDomain[], ModelImage inputImage) {
+    		int ps[], int nscales, int ndirs, String filtDomain, ModelImage inputImage) {
     	// Precompute terms required for weighted projection on basis
     	int sizen0 = inputImage.getExtents()[0];
     	int sizem0 = inputImage.getExtents()[1];
@@ -325,7 +479,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
     	for (sc = 1; sc <= nscales; sc++) {
     	    offsetsc = (sc-1)*ndirs;
     	    patchSize = ps[offsetsc];
-    	    if (filtDomain[offsetsc].equals("freq")) {
+    	    if (filtDomain.equals("freq")) {
     	        T2z1a_make_image_structure(fftImagePatch, fftImagePatchImag,
     	        		                   fftSupportPatch, fftSupportPatchImag,
     	        		                   domain, patchSize);	
@@ -333,20 +487,100 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
     	    
     	    for (dirInd = 1; dirInd <= ndirs; dirInd++) {
     	        filInd = offsetsc + dirInd;
-    	        if (filtDomain[offsetsc].equals("freq")) {
+    	        if (filtDomain.equals("freq")) {
     	            T2z1b_get_responses_freq(null, null, null, null, null, Sc1, Sc2, Sc3, Sc22, Sc23, Sc33,
     	            		fftSupportPatch, fftSupportPatchImag, patchSize, null, null, 
     	            		fd1[filInd-1], fd1Imag[filInd-1], fd2[filInd-1], fd2Imag[filInd-1],
     	            		fd3[filInd-1], fd3Imag[filInd-1], fd22[filInd-1], fd22Imag[filInd-1],
     	            		fd23[filInd-1], fd23Imag[filInd-1], fd33[filInd-1], fd33Imag[filInd-1], 0);
     	        } // if (filtDomain[offsetsc].equals("freq"))
-    	        else if (filtDomain[offsetsc].equals("time")) {
+    	        else if (filtDomain.equals("time")) {
     	            T2z1b_get_responses_time(null, null, null, null, null, Sc1, Sc2, Sc3, Sc22, Sc23, Sc33,
     	            		td1[filInd-1], td2[filInd-1], td3[filInd-1], 
     	            		td22[filInd-1], td23[filInd-1], td33[filInd-1], domain, 0);	
     	        } //  else if (filtDomain[offsetsc].equals("time"))
+    	        invDes[filInd-1] = T2z0a_invert_design(Sc1, Sc2, Sc3, Sc22, Sc23, Sc33);
     	    } // for (dirInd = 1; dirInd <= ndirs; dirInd++) 
     	} // for (sc = 1; sc <= nscales; sc++)
+    }
+    
+    private double[][][][] T2z0a_invert_design(double Sc1[][], double Sc2[][], double Sc3[][],
+    		double Sc22[][], double Sc23[][], double Sc33[][]) {
+    	int y;
+    	int x;
+    	double invDes[][][][] = new double[3][3][Sc1.length][Sc1[0].length];
+    	double convqpinb[][][][] = new double[3][3][Sc1.length][Sc1[0].length];
+    	double det[][] = new double[Sc1.length][Sc1[0].length];
+    	double invDet[][] = new double[Sc1.length][Sc1[0].length];
+    	int k1;
+    	int k2;
+    	// dc * dc
+    	for (y = 0; y < Sc1.length; y++) {
+    		for (x = 0; x < Sc1[0].length; x++) {
+    			convqpinb[0][0][y][x] = Sc1[y][x];
+    		}
+    	}
+        // sin * dc / cos * dc
+    	for (y = 0; y < Sc1.length; y++) {
+    		for (x = 0; x < Sc1[0].length; x++) {
+    			convqpinb[0][1][y][x] = Sc2[y][x];
+    			convqpinb[1][0][y][x] = Sc2[y][x];
+    			convqpinb[0][2][y][x] = Sc3[y][x];
+    			convqpinb[2][0][y][x] = Sc3[y][x];
+    		}
+    	}
+    	
+    	// cos * cos / sin * cos / sin * sin
+    	for (y = 0; y < Sc1.length; y++) {
+    		for (x = 0; x < Sc1[0].length; x++) {
+    			convqpinb[1][1][y][x] = Sc22[y][x];
+    			convqpinb[1][2][y][x] = Sc23[y][x];
+    			convqpinb[2][1][y][x] = Sc23[y][x];
+    			convqpinb[2][2][y][x] = Sc33[y][x];
+    		}
+    	}
+    	
+    	for (y = 0; y < Sc1.length; y++) {
+    		for (x = 0; x < Sc1[0].length; x++) {
+    			det[y][x] = convqpinb[0][0][y][x] * convqpinb[1][1][y][x] * convqpinb[2][2][y][x] -
+    					    convqpinb[0][0][y][x] * convqpinb[1][2][y][x] * convqpinb[2][1][y][x] -
+    					    convqpinb[1][0][y][x] * convqpinb[0][1][y][x] * convqpinb[2][2][y][x] +
+    					    convqpinb[1][0][y][x] * convqpinb[0][2][y][x] * convqpinb[2][1][y][x] +
+    					    convqpinb[2][0][y][x] * convqpinb[0][1][y][x] * convqpinb[1][2][y][x] -
+    					    convqpinb[2][0][y][x] * convqpinb[0][2][y][x] * convqpinb[1][1][y][x];
+    		}
+    	}
+    	
+    	for (y = 0; y < Sc1.length; y++) {
+    		for (x = 0; x < Sc1[0].length; x++) {
+    		    invDes[0][0][y][x] = (convqpinb[1][1][y][x] * convqpinb[2][2][y][x] - convqpinb[1][2][y][x] * convqpinb[2][1][y][x]);
+    		    invDes[0][1][y][x] = -(convqpinb[0][1][y][x] * convqpinb[2][2][y][x] - convqpinb[0][2][y][x] * convqpinb[2][1][y][x]);
+    		    invDes[0][2][y][x] = (convqpinb[0][1][y][x] * convqpinb[1][2][y][x] - convqpinb[0][2][y][x] * convqpinb[1][1][y][x]);
+    		    invDes[1][0][y][x] = -(convqpinb[1][0][y][x] * convqpinb[2][2][y][x] - convqpinb[1][2][y][x] * convqpinb[2][0][y][x]);
+    		    invDes[1][1][y][x] = (convqpinb[0][0][y][x] * convqpinb[2][2][y][x] - convqpinb[0][2][y][x] * convqpinb[2][0][y][x]);
+    		    invDes[1][2][y][x] = -(convqpinb[0][0][y][x] * convqpinb[1][2][y][x] - convqpinb[0][2][y][x] * convqpinb[1][0][y][x]);
+    		    invDes[2][0][y][x] = (convqpinb[1][0][y][x] * convqpinb[2][1][y][x] - convqpinb[1][1][y][x] * convqpinb[2][0][y][x]);
+    		    invDes[2][1][y][x] = -(convqpinb[0][0][y][x] * convqpinb[2][1][y][x] - convqpinb[0][1][y][x] * convqpinb[2][0][y][x]);
+    		    invDes[2][2][y][x] = (convqpinb[0][0][y][x] * convqpinb[1][1][y][x] - convqpinb[0][1][y][x] * convqpinb[1][0][y][x]);
+    		    if (det[y][x] >= 0.0) {
+    		    	invDet[y][x] = 1.0/Math.max(det[y][x], 1.0E-8);
+    		    }
+    		    else {
+    		    	invDet[y][x] = -1.0/Math.max(Math.abs(det[y][x]), 1.0E-8);
+    		    }
+    		}
+    	}
+    	
+    	for (k1 = 0; k1 < 3; k1++) {
+    		for (k2 = 0; k2 < 3; k2++) {
+	    	    for (y = 0; y < Sc1.length; y++) {
+	    		    for (x = 0; x < Sc1[0].length; x++) {
+	    			    invDes[1][k2][y][x] = invDes[k1][k2][y][x] * invDet[y][x];	    		    }
+	    		}
+	    	}
+    	}
+    	
+    	return invDes;
     }
     
     private void T2z1b_get_responses_time(double preComputedIc1[][], double preComputedIc2[][],
@@ -354,12 +588,138 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
     		double Sc1[][], double Sc2[][], double Sc3[][],
     		double Sc22[][], double Sc23[][], double Sc33[][],double td1[][], double td2[][], double td3[][],
     		double td22[][], double td23[][], double td33[][], double inputIm[][] , int findNorm) {
+    	double onesm[][];
+    	int y;
+    	int x;
     	switch(findNorm) {
     	case 0:
-    		
+    		Sc1 = filter2(td1, inputIm);
+    		Sc2 = filter2(td2, inputIm);
+    		Sc3 = filter2(td3, inputIm);
+    		Sc22 = filter2(td22, inputIm);
+    		Sc23 = filter2(td23, inputIm);
+    		Sc33 = filter2(td33, inputIm);
     		break;
+    	case 1:
+    		preComputedIc1 = filter2(td1, inputIm);
+    		onesm = new double[inputIm.length][inputIm[0].length];
+    		for (y = 0; y < inputIm.length; y++) {
+    			for (x = 0; x < inputIm[0].length; x++) {
+    				onesm[y][x] = 1.0;
+    			}
+    		}
+    		preComputedSc1 = filter2(td1, onesm);
+    		preComputedsm = new double[preComputedIc1.length][preComputedIc1[0].length];
+    		for (y = 0; y < preComputedIc1.length; y++) {
+    			for (x = 0; x < preComputedIc1[0].length; x++) {
+    				preComputedsm[y][x] = preComputedIc1[y][x]/preComputedSc1[y][x];
+    			}
+    		}
+    		break;
+    	case 2:
+    		preComputedIc2 = filter2(td2, inputIm);
+    		preComputedIc3 = filter2(td3, inputIm);
     	}
     	
+    }
+    
+    private double[][] filter2(double A[][], double B[][]) {
+    	double C[][];
+    	rot180(A);
+    	C = conv2(B, A);
+    	return C;
+    }
+    
+    private double[][] conv2(double A[][], double B[][]) {
+    	double L[][];
+    	double S[][];
+    	int ml;
+    	int nl;
+    	int ms;
+    	int ns;
+    	int y;
+    	int x;
+    	int y2;
+    	int x2;
+    	double C[][];
+    	double Cout[][];
+    	double large;
+    	int yoff;
+    	int xoff;
+        if (A.length * A[0].length >= B.length * B[0].length) {
+        	ml = A.length;
+        	nl = A[0].length;
+        	L = A;
+        	ms = B.length;
+        	ns = B[0].length;
+        	S = B;
+        }
+        else {
+        	ml = B.length;
+        	nl = B[0].length;
+        	L = B;
+        	ms = A.length;
+        	ns = A[0].length;
+        	S = A;
+        }
+        C = new double[ml+ms-1][nl+ns-1];
+        for (y = 0; y < ml; y++) {
+        	for (x = 0; x < nl; x++) {
+        		large = L[y][x];
+        		for (y2 = 0; y2 < ms; y2++) {
+        			for (x2 = 0; x2 < ns; x2++) {
+        				C[y+y2][x+x2] += S[y2][x2]*large;
+        			}
+        		}
+        	}
+        }
+        Cout = new double[A.length][A[0].length];
+        yoff = (int)Math.floor(B.length/2.0);
+        xoff = (int)Math.floor(B[0].length/2.0);
+        for (y = 0; y < A.length; y++) {
+        	for (x = 0; x < A[0].length; x++) {
+        		Cout[y][x] = C[y + yoff][x + xoff];
+        	}
+        }
+        return Cout;
+    }
+    
+    private double[] conv(double A[], double B[]) {
+    	double L[];
+    	double S[];
+    	int ml;
+    	int ms;
+    	int y;
+    	int y2;
+    	double C[];
+    	double Cout[];
+    	double large;
+    	int yoff;
+        if (A.length >= B.length) {
+        	ml = A.length;
+        	L = A;
+        	ms = B.length;
+        	S = B;
+        }
+        else {
+        	ml = B.length;
+        	L = B;
+        	ms = A.length;
+        	S = A;
+        }
+        C = new double[ml+ms-1];
+        for (y = 0; y < ml; y++) {
+    		large = L[y];
+    		for (y2 = 0; y2 < ms; y2++) {
+    	        C[y+y2] += S[y2]*large;
+    		}
+        }
+        Cout = new double[A.length];
+        yoff = (int)Math.floor(B.length/2.0);
+        for (y = 0; y < A.length; y++) {
+        	Cout[y] = C[y + yoff];
+        }
+        return Cout;
     }
     
     private void T2z1b_get_responses_freq(double preComputedIc1[][], double preComputedIc2[][],
@@ -741,11 +1101,11 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
     		                  double fd23[][][], double fd23Imag[][][], double fd33[][][], double fd33Imag[][][],
     		                  double sigmas[], int ps[],
     		final int nscales, final int ndirs, final double sig2omega, final double radianStart, final double radianEnd,
-            final int inputXDim, final int inputYDim, final String filterType, String domain[]) {
-        final double omegas[][] = null;
-        final double amplitudes[][] = null;
-        final double filterAngle[] = null;
-        final double sigmaX[] = null;
+            final int inputXDim, final int inputYDim, final String filterType, String domain) {
+        final double omegas[][] = new double[nscales * ndirs][];
+        final double amplitudes[][] = new double[nscales * ndirs][];
+        final double filterAngle[] = new double[nscales * ndirs];
+        final double sigmaX[] = new double[nscales * ndirs];
         int filInd;
         int scInd;
         int drInd;
@@ -767,16 +1127,16 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
            
             for (drInd = 1; drInd <= ndirs; drInd++) {
                 filInd++;
-                if (domain[filInd-1] == null) {
+                if (domain == null) {
                     if (scInd < 4) {
-                        domain[filInd-1] = "time";
+                        domain = "time";
                     } else {
-                        domain[filInd-1] = "freq";
+                        domain = "freq";
                     }
                 } // if (domain == null);
                 sigmas[filInd - 1] = sigmaX[filInd - 1];
 
-                if (domain[filInd-1].equals("freq")) {
+                if (domain.equals("freq")) {
                     ps[filInd-1] = 3 * (int) Math.ceil(sigmas[filInd - 1]);
                     szfm = inputYDim + 2 * ps[0];
                     szfn = inputXDim + 2 * ps[0];
@@ -824,7 +1184,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
                 		fd3[filInd-1], fd3Imag[filInd-1], fd22[filInd-1], fd22Imag[filInd-1],
                 		fd23[filInd-1], fd23[filInd-1], fd33[filInd-1], fd33Imag[filInd-1],
                 		omegas[filInd - 1], amplitudes[filInd - 1], filterAngle[filInd - 1], sigmaX[filInd - 1],
-                		domain[filInd - 1], xfreq, yfreq);
+                		domain, xfreq, yfreq);
             } // for (drInd = 1; drInd <= ndirs; drInd++)
         } // for (scInd = 1; scInd <= nscales; scInd++)
 
@@ -1370,14 +1730,10 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         double amplitudesUnsImag[] = null;
         double amplitudesMult[] = null;
         double amplitudesMultImag[] = null;
-        double src[];
         double A[];
         double B[];
         double C[];
-        int leftPad;
-        int rightPad;
         int sz1;
-        int j;
 
         sz0 = amplitudes.length - 1;
 
@@ -1490,32 +1846,19 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
                 // Both A and B are the same length
                 if (amplitudesUns != null) {
                     sz1 = amplitudesUns.length;
-                    src = amplitudesUns;
+                    A = amplitudesUns;
                 } else {
                     sz1 = amplitudesUnsImag.length;
-                    src = amplitudesUnsImag;
+                    A = amplitudesUnsImag;
                 }
-                leftPad = (int) Math.floor( (sz1 - 1) / 2.0);
-                rightPad = (int) Math.ceil( (sz1 - 1) / 2.0);
-                A = new double[leftPad + sz1 + rightPad];
-                for (i = 0; i < sz1; i++) {
-                    A[leftPad + i] = src[i];
-                }
-                B = new double[sz1];
                 if (amplitudesMult != null) {
-                    for (i = 0; i < sz1; i++) {
-                        B[i] = amplitudesMult[sz1 - 1 - i];
-                    }
+                    B = amplitudesMult;
                 } else {
-                    for (i = 0; i < sz1; i++) {
-                        B[i] = amplitudesMultImag[sz1 - 1 - i];
-                    }
+                    B = amplitudesMultImag;
                 }
-                C = new double[sz1];
+                C = conv(A, B);
                 for (i = 0; i < sz1; i++) {
-                    for (j = 0; j < sz1; j++) {
-                        C[i] += B[j] * A[i + j];
-                    }
+                	C[i] = C[i]/2.0;
                 }
                 if ( (amplitudesUns != null) && (amplitudesMult != null)) {
                     amplitudesOut = C;
@@ -1544,13 +1887,8 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         double sigmaXTemp;
         int angle;
         int counter;
-        final int numCounted = nscales * ndirs;
-        sigmaX = new double[numCounted];
-        filterAngle = new double[numCounted];
         double omegasInit[];
-        omegas = new double[numCounted][];
         double amplitudesInit[];
-        amplitudes = new double[numCounted][];
         double temp[];
         int dim;
         int dim2;
