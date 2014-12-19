@@ -408,7 +408,7 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
                 xlatDestDirectory = chuseDest.getSelectedFile();
                 xlatDestDirText.setText(xlatDestDirectory.getAbsolutePath() + File.separator);
             }
-        } else if (command.equals("LoadProfile")){
+        /*} else if (command.equals("LoadProfile")){
         	ArrayList<String> profiles = getProfiles();
         	if(profiles.size() > 0) {
                 Object select = JOptionPane.showInputDialog(this, "Choose the profile to load", "Load profile", JOptionPane.INFORMATION_MESSAGE, null, profiles.toArray(), profiles.toArray()[0]);
@@ -432,7 +432,7 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
                 }
             }
             if(doSave == JOptionPane.YES_OPTION)
-            	saveProfile(str);
+            	saveProfile(str);*/
     	} else {
             super.actionPerformed(ae);
         }
@@ -1820,8 +1820,8 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
                     //Now also anonymize more tags other than the Supplement 55 tags
                     FileDicomKey[] keys = privateTagsPanel.getSelectedKeys();
                     if(keys != null){
-                    	mi.removePrivateTags(keys);
-                    	mi.removePrivateSequenceTags(keys, seqTags);
+                    	mi.removePrivateTagsWhite(keys);
+                    	mi.removePrivateSequenceTagsWhite(keys, seqTags);
                     }
                     
                     keys = publicTagsPanel.getSelectedKeys();

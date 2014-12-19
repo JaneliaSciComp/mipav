@@ -23,9 +23,11 @@ import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
+import gov.nih.mipav.model.file.DicomDictionary;
 import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomSQItem;
 import gov.nih.mipav.model.file.FileDicomTag;
+import gov.nih.mipav.model.file.FileDicomTagInfo;
 import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -74,12 +76,61 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 	
 	public JPanelAnonymizePublicTags(){
 		super();
-		add(new JLabel("Load profile for public tags"));
+		//add(new JLabel("Load profile for public tags"));
 		
 		suppTags = new HashSet<String>();
 		for(int i=0;i<FileInfoDicom.anonymizeTagIDs.length;i++){
 			suppTags.add(FileInfoDicom.anonymizeTagIDs[i]);
 		}
+		
+		tree = createTreeFromDictionary();
+		
+		checkTree = new CheckTreeManager(tree);
+		
+		//Build the layout
+		removeAll();
+		setLayout(new GridBagLayout());
+		setBorder(JDialogBase.buildTitledBorder("Check the fields to anonymize:"));
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.weightx = 1.0;
+		gbc.weighty = 1.0;
+		gbc.fill = GridBagConstraints.BOTH;
+
+		JScrollPane treeView = new JScrollPane(tree, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		treeView.setViewportView(tree);
+		add(treeView, gbc);
+
+		gbc.gridy = 1;
+		gbc.weightx = 0;
+		gbc.weighty = 0;
+
+
+		JPanel buttonPanel = new JPanel();
+		//buttonPanel.setBorder(new EmptyBorder(0,0,3,0));
+		JButton checkButton = new JButton("Select all");
+		checkButton.setActionCommand("publicAll");
+		checkButton.setFont(MipavUtil.font12B);
+		checkButton.setPreferredSize(new Dimension(85, 30));
+		buttonPanel.add(checkButton, BorderLayout.WEST);
+		checkButton.addActionListener(this);
+
+		JButton unCheckButton = new JButton("Clear");
+		unCheckButton.setActionCommand("publicClear");
+		unCheckButton.setFont(MipavUtil.font12B);
+		unCheckButton.setPreferredSize(new Dimension(85, 30));
+		unCheckButton.addActionListener(this);
+		buttonPanel.add(unCheckButton, BorderLayout.EAST);
+
+		add(buttonPanel, gbc);
+
+		tree.expandRow(0);
+		/*for (int i = 2; i < tree.getRowCount(); i++) {
+			tree.collapseRow(i);
+		}*/
+		
 	}
 	
 	/**
@@ -137,9 +188,54 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 		for (int i = 0; i < tree.getRowCount(); i++) {
 			tree.expandRow(i);
 		}
-
-		//Unlike the private tags version, don't default to every
-		//option checked.
+	}
+	
+	public void populateFromProfile(ArrayList<FileDicomKey> keys){
+		
+		if(keys.isEmpty())
+			return;
+		
+		Collections.sort(keys);
+		
+		int offset = 1;
+		int i = 0;
+		
+		String currGrp = "";
+		
+		ArrayList<Integer> selectedList = new ArrayList<Integer>();
+		
+		for(FileDicomKey k : keys){
+			while(true){
+				FileDicomKey treeKey = keyList.get(i);
+				String treeGrp = treeKey.getGroup();
+				if(!treeGrp.equals(currGrp)){
+					currGrp = treeGrp;
+					offset++;
+				}
+				int compare = k.compareTo(treeKey);
+				if(compare == 0){
+					selectedList.add(new Integer(i+offset));
+					i++;
+					break;
+				}else if(compare > 0){
+					i++;
+				}else{//This key isn't in the list for some reason
+					break;
+				}
+			}
+		}
+		
+		TreePath[] paths = new TreePath[selectedList.size()];
+		i=0;
+		
+		for(int j : selectedList){
+			TreePath path = tree.getPathForRow(j);
+			paths[i] = path;
+			i++;
+		}
+		
+		tree.setSelectionPaths(paths);
+		
 	}
 	
 	/**
@@ -153,6 +249,8 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 	 * @param selected Which keys were selected
 	 */
 	public void populateFromProfile(ArrayList<FileDicomKey> keys, ArrayList<String> tags, boolean[] selected){
+		
+		
 		
 		if(keys.isEmpty())
 			return;
@@ -243,6 +341,46 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 		}
 		removeAllPaths();
 		checkTree.getSelectionModel().addSelectionPaths(paths);
+	}
+	
+	private JTree createTreeFromDictionary(){
+		DefaultMutableTreeNode top = new DefaultMutableTreeNode("Public keys");
+		JTree keyTree = new JTree(top);
+		
+		Hashtable<FileDicomKey, FileDicomTagInfo> table = DicomDictionary.getDicomTagTable();
+		FileDicomKey[] keys = DicomDictionary.sortTagKeys(table);
+		
+		keyList = new ArrayList<FileDicomKey>();
+		tagList = new ArrayList<String>();
+		
+		String currGrp = "";
+		//String nodeStr = "Group (" + currGrp + ")";
+		DefaultMutableTreeNode currNode = null; 
+		//top.add(currNode);
+		
+		for(int i=0;i<keys.length;i++){
+			FileDicomKey k = keys[i];
+			if(k.getKey().equals("0002,0010") ||
+					k.getKey().equals("0018,1310") || //do NOT anonymize Transfer Syntax
+					k.getGroup().equals("0028") ||
+					suppTags.contains(k.getKey())) //This group contains a lot of image info
+				continue;
+			keyList.add(k);
+			if(!k.getGroup().equals(currGrp)){
+				currGrp = k.getGroup();
+				String nodeStr = "Group (" + currGrp + ")";
+				currNode = new DefaultMutableTreeNode(nodeStr);
+				top.add(currNode);
+			}
+			FileDicomTagInfo info = table.get(k);
+			tagList.add(info.getName());
+			String childStr = "(" + k.getElement() + ") " + info.getName();
+			DefaultMutableTreeNode child = new DefaultMutableTreeNode(childStr);
+			currNode.add(child);
+			
+		}
+		
+		return keyTree;
 	}
 	
 	/**

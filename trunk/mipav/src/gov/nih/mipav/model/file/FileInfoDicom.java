@@ -337,6 +337,24 @@ public class FileInfoDicom extends FileInfoBase {
     	}
     }
     
+    public final void removePrivateTagsWhite(FileDicomKey[] keys){
+    	HashSet<FileDicomKey> hash = new HashSet<FileDicomKey>();
+    	for(int i=0;i<keys.length;i++){
+    		hash.add(keys[i]);
+    	}
+    	
+    	Hashtable<FileDicomKey, FileDicomTag> table = tagTable.getTagList();
+    	Set<FileDicomKey> keySet = table.keySet();
+    	for(FileDicomKey k : keySet){
+    		if(k.getGroupNumber() % 2 == 0)
+    			continue;
+    		if(hash.contains(k)){
+    			continue;
+    		}
+    		tagTable.removeTag(k);
+    	}
+    }
+    
     /**
      * Method to anonymize private tags that may appear in
      * sequence tags. A list of sequence tags should be passed in so that you do not have
@@ -348,6 +366,26 @@ public class FileInfoDicom extends FileInfoBase {
     		for(FileDicomSQItem d : seqs){
     			d.removeTag(key);
     		}
+    	}
+    }
+    
+    public final void removePrivateSequenceTagsWhite(FileDicomKey[] keys, Vector<FileDicomSQItem> seqs){
+    	HashSet<FileDicomKey> hash = new HashSet<FileDicomKey>();
+    	for(int i=0;i<keys.length;i++){
+    		hash.add(keys[i]);
+    	}
+    	
+    	for(FileDicomSQItem item : seqs){
+	    	Hashtable<FileDicomKey, FileDicomTag> table = item.getTagList();
+	    	Set<FileDicomKey> keySet = table.keySet();
+	    	for(FileDicomKey k : keySet){
+	    		if(k.getGroupNumber() % 2 == 0)
+	    			continue;
+	    		if(hash.contains(k)){
+	    			continue;
+	    		}
+	    		item.removeTag(k);
+	    	}
     	}
     }
     
