@@ -86,6 +86,7 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 	
 	private JTextField nameField;
 	
+	@SuppressWarnings("rawtypes")
 	private DefaultListModel listModel;
 	
 	/**
@@ -357,6 +358,7 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		
 	}
 	
+	@SuppressWarnings("unchecked")
 	private void addKey(){
 		String group = groupField.getText();
 		String element = elementField.getText();
@@ -452,7 +454,7 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		JPanel listPanel = new JPanel(new GridBagLayout());
 		listPanel.setForeground(Color.black);
 		
-		JLabel listLabel = new JLabel("DICOM private key whitelist");
+		JLabel listLabel = new JLabel("DICOM private key whitelist - All others will be removed");
 		listLabel.setFont(serif12b);
 		
 		listModel = new DefaultListModel();
@@ -567,7 +569,11 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 			keyList.add(groupNameKey);
 			Collections.sort(key);
 			FileDicomTag groupNameTag = hash.get(groupNameKey);
-			tagList.add(groupNameTag.getValue(false).toString());
+			Object value = groupNameTag.getValue(false);
+			String valStr = "";
+			if(value != null)
+				valStr = value.toString();
+			tagList.add(valStr);
 			String nodeTitle = "(" + groupNameKey.getGroup() + ") " 
 					+ groupNameTag.getValue(false);
 			DefaultMutableTreeNode root = new DefaultMutableTreeNode(nodeTitle);
