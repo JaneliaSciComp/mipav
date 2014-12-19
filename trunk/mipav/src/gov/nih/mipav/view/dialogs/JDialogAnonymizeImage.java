@@ -311,7 +311,7 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
      * @param name
      */
     private void loadProfile(String name){
-    	String profile = "profileAnonymizeDICOM" + name;
+    	String profile = "profileAnonymizeDICOMImage" + name;
     	String value = Preferences.getProperty(profile);
     	String[] split = value.split(";");
     	int i;
@@ -337,7 +337,21 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
     		i++;
     	checkboxPanel.setSelectedList(publicList);
     	
-    	ArrayList<FileDicomKey> keys = new ArrayList<FileDicomKey>();
+    	ArrayList<FileDicomKey> publicKeys = new ArrayList<FileDicomKey>();
+    	ArrayList<FileDicomKey> privateKeys = new ArrayList<FileDicomKey>();
+    	
+    	for(;i<split.length-1;i++){
+    		String key = split[i];
+    		String group = key.substring(0, key.indexOf(","));
+    		int groupNum = Integer.valueOf(group, 0x10);
+    		if(groupNum%2==0){
+    			publicKeys.add(new FileDicomKey(key));
+    		}else{
+    			privateKeys.add(new FileDicomKey(key));
+    		}
+    	}
+    	
+    	/*ArrayList<FileDicomKey> keys = new ArrayList<FileDicomKey>();
     	ArrayList<FileDicomKey> publicKeys = new ArrayList<FileDicomKey>();
     	ArrayList<FileDicomKey> workingList = keys;
     	for(;i<split.length-1;i+=3){
@@ -349,15 +363,15 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
     			String keyString = split[i];
     			workingList.add(new FileDicomKey(keyString));
     		}
-    	}
-    	if(keys.size()>0)
-    		privateTagsPanel.setSelectedKeys(keys);
+    	}*/
+    	if(privateKeys.size()>0)
+    		privateTagsPanel.setSelectedKeys(privateKeys);
     	if(publicKeys.size()>0)
     		publicTagsPanel.setSelectedKeys(publicKeys);
     	String boxChecked = split[i];
     	if(boxChecked.equals("t"))
     		removeBox.setSelected(true);
-    	else removeBox.setSelected(true);
+    	else removeBox.setSelected(false);
     }
     
     /**
@@ -373,8 +387,8 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
     	for(Object o : keys){
     		if(o instanceof String){
     			String s = (String) o;
-    			if(s.startsWith("profileAnonymizeDICOM")){
-    				profiles.add(s.substring(21));
+    			if(s.startsWith("profileAnonymizeDICOMImage")){
+    				profiles.add(s.substring(26));
     			}
     		}
     	}
@@ -390,17 +404,13 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
      */
     private void saveProfile(String name){
     	
-    	String profile = "profileAnonymizeDICOM" + name;
+    	String profile = "profileAnonymizeDICOMImage" + name;
     	StringBuilder hashString = new StringBuilder();
     	String delimiter = ";";
     	
     	boolean[] standardKeys = checkboxPanel.getSelectedList();
-    	boolean[] privateSelected = privateTagsPanel.getSelectedKeysBool();
-    	boolean[] publicSelected = publicTagsPanel.getSelectedKeysBool();
-    	ArrayList<FileDicomKey> keyList = privateTagsPanel.getKeyList();
-    	ArrayList<String> tagList = privateTagsPanel.getTagList();
-    	ArrayList<FileDicomKey> publicKeyList = publicTagsPanel.getKeyList();
-    	ArrayList<String> publicTagList = publicTagsPanel.getTagList();
+    	FileDicomKey[] publicKeys = publicTagsPanel.getSelectedKeys();
+    	FileDicomKey[] privateKeys = privateTagsPanel.getSelectedKeys();
     	
     	//For the supplement 55 tags, just save off "t" or "f" since we
     	//already know what it corresponds to
@@ -410,6 +420,29 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
     		else hashString.append("f");
     		hashString.append(delimiter);
     	}
+    	
+    	if(publicKeys != null){
+	    	for(int i=0;i<publicKeys.length;i++){
+	    		FileDicomKey k = publicKeys[i];
+	    		hashString.append(k.getKey() + delimiter);
+	    	}
+    	}
+    	
+    	if(privateKeys != null){
+    		for(int i=0;i<privateKeys.length;i++){
+    			FileDicomKey k = privateKeys[i];
+    			hashString.append(k.getKey() + delimiter);
+    		}
+    	}
+    	
+    	
+    	/*
+    	ArrayList<FileDicomKey> keyList = privateTagsPanel.getKeyList();
+    	ArrayList<String> tagList = privateTagsPanel.getTagList();
+    	ArrayList<FileDicomKey> publicKeyList = publicTagsPanel.getKeyList();
+    	ArrayList<String> publicTagList = publicTagsPanel.getTagList();
+    	
+    	
     	//For other public and private tags, you need to save off
     	//the key numbers, name of the key, and whether or not
     	//it was selected
@@ -435,7 +468,7 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
     		else hashString.append("f");
     		hashString.append(delimiter);
     	}
-    	
+    	*/
     	if(removeBox.isSelected())
     		hashString.append("t");
     	else hashString.append("f");
