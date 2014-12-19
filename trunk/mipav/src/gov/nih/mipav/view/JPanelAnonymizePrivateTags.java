@@ -277,6 +277,20 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 			keyList.toArray(keys);
 		}
 		else{
+			
+			ArrayList<TreePath> collapsed = new ArrayList<TreePath>();
+			
+			for(int i=0;i<tree.getRowCount();i++){
+				TreePath path = tree.getPathForRow(i);
+				if(tree.isCollapsed(path)){
+					collapsed.add(path);
+				}
+			}
+			
+			for(TreePath p : collapsed){
+				tree.expandPath(p);
+			}
+			
 			ArrayList<Integer> paths = new ArrayList<Integer>();
 			CheckTreeSelectionModel model = checkTree.getSelectionModel();
 			for(int i=1;i<tree.getRowCount();i++){
@@ -292,6 +306,10 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 			for(int i=0;i<length;i++){
 				keys[i] = keyList.get(paths.get(i));
 			}
+			
+			for(TreePath p : collapsed){
+				tree.collapsePath(p);
+			}
 		}
 		return keys;
 	}
@@ -303,11 +321,29 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 	 * @return
 	 */
 	public boolean[] getSelectedKeysBool(){
+		
+		ArrayList<TreePath> collapsed = new ArrayList<TreePath>();
+		
+		for(int i=0;i<tree.getRowCount();i++){
+			TreePath path = tree.getPathForRow(i);
+			if(tree.isCollapsed(path)){
+				collapsed.add(path);
+			}
+		}
+		
+		for(TreePath p : collapsed){
+			tree.expandPath(p);
+		}
+		
 		boolean[] selected = new boolean[keyList.size()];
 		CheckTreeSelectionModel model = checkTree.getSelectionModel();
 		for(int i=1;i<tree.getRowCount();i++){
 			TreePath path = tree.getPathForRow(i);
 			selected[i-1] = model.isPathSelected(path, true);
+		}
+		
+		for(TreePath p : collapsed){
+			tree.collapsePath(p);
 		}
 		
 		return selected;
@@ -317,6 +353,18 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		return keyList.isEmpty();
 	}
 
+	public void addWhiteListedKeys(ArrayList<FileDicomKey> keys, ArrayList<String> names){
+		
+		for(int i=0;i<keys.size();i++){
+			FileDicomKey k = keys.get(i);
+			String group = k.getGroup();
+			String element = k.getElement();
+			String name = names.get(i);
+			addKey(group, element, name);
+		}
+		
+	}
+	
 	/**
 	 * Method used for loading profiles into the panel. Keys
 	 * passed in are compared to the current tree in order
@@ -359,9 +407,8 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void addKey(){
-		String group = groupField.getText();
-		String element = elementField.getText();
+	private void addKey(String group, String element, String name){
+		
 		if(group.length() != 4){
 			MipavUtil.displayError("Group must be 4 characters long.");
 			return;
@@ -382,7 +429,7 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		}
 		
 		String keyStr = group + "," + element;
-		String name = nameField.getText();
+
 		if(name.length() == 0){
 			name = "Unnamed";
 		}
@@ -610,7 +657,10 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		else if(command.equals("privateClear"))
 			removeAllPaths();
 		else if(command.equals("add")){
-			addKey();
+			String group = groupField.getText();
+			String element = elementField.getText();
+			String name = nameField.getText();
+			addKey(group, element, name);
 		}
 		
 	}
