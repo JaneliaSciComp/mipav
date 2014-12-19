@@ -507,6 +507,19 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 		if(checkTree == null)
 			return null;
 		
+		ArrayList<TreePath> collapsed = new ArrayList<TreePath>();
+		
+		for(int i=0;i<tree.getRowCount();i++){
+			TreePath path = tree.getPathForRow(i);
+			if(tree.isCollapsed(path)){
+				collapsed.add(path);
+			}
+		}
+		
+		for(TreePath p : collapsed){
+			tree.expandPath(p);
+		}
+		
 		ArrayList<Integer> paths = new ArrayList<Integer>();
 		CheckTreeSelectionModel model = checkTree.getSelectionModel();
 		int offset = 1;
@@ -528,12 +541,30 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 			keys[i] = keyList.get(paths.get(i));
 		}
 		
+		for(TreePath p : collapsed){
+			tree.collapsePath(p);
+		}
+		
 		return keys;
 	}
 
 	public boolean[] getSelectedKeysBool(){
 		boolean[] selected = new boolean[keyList.size()];
 		int offset = 1;
+		
+		ArrayList<TreePath> collapsed = new ArrayList<TreePath>();
+		
+		for(int i=0;i<tree.getRowCount();i++){
+			TreePath path = tree.getPathForRow(i);
+			if(tree.isCollapsed(path)){
+				collapsed.add(path);
+			}
+		}
+		
+		for(TreePath p : collapsed){
+			tree.expandPath(p);
+		}
+		
 		CheckTreeSelectionModel model = checkTree.getSelectionModel();
 		for(int i=1;i<tree.getRowCount();i++){
 			TreePath path = tree.getPathForRow(i);
@@ -542,6 +573,10 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 				continue;
 			}
 			selected[i-offset] = model.isPathSelected(path, true);
+		}
+		
+		for(TreePath p : collapsed){
+			tree.collapsePath(p);
 		}
 		
 		return selected;
@@ -574,6 +609,20 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 				selected.add(i+offset);
 			}
 		}
+		
+		ArrayList<TreePath> collapsed = new ArrayList<TreePath>();
+		
+		for(int i=0;i<tree.getRowCount();i++){
+			TreePath path = tree.getPathForRow(i);
+			if(tree.isCollapsed(path)){
+				collapsed.add(path);
+			}
+		}
+		
+		for(TreePath p : collapsed){
+			tree.expandPath(p);
+		}
+		
 		TreePath[] selectedPaths = new TreePath[selected.size()];
 		for(int i=0;i<selected.size();i++){
 			selectedPaths[i] = tree.getPathForRow(selected.get(i));
@@ -581,6 +630,10 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 		
 		removeAllPaths();
 		checkTree.getSelectionModel().addSelectionPaths(selectedPaths);
+		
+		for(TreePath p : collapsed){
+			tree.collapsePath(p);
+		}
 		
 	}
 
