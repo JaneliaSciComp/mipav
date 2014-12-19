@@ -10,7 +10,9 @@ import gov.nih.mipav.view.CheckTreeManager.CheckTreeSelectionModel;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
@@ -23,11 +25,16 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.Vector;
 
+import javax.swing.BorderFactory;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.JTree;
+import javax.swing.border.TitledBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
@@ -73,13 +80,25 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 	 */
 	private ArrayList<String> tagList;
 	
+	private JTextField groupField;
+	
+	private JTextField elementField;
+	
+	private JTextField nameField;
+	
+	private DefaultListModel listModel;
+	
 	/**
 	 * The default constructor that occurs in the anonymize directory
 	 * dialog before a profile has been loaded to populate the tree
 	 */
 	public JPanelAnonymizePrivateTags(){
 		super();
-		add(new JLabel("Load profile for private tags"));
+		init();
+		
+		keyList = new ArrayList<FileDicomKey>();
+		tagList = new ArrayList<String>();
+		//add(new JLabel("Load profile for private tags"));
 	}
 	
 	/**
@@ -251,25 +270,28 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 	 */
 	public FileDicomKey[] getSelectedKeys(){
 		
-		if(checkTree == null)
-			return null;
-		
-		ArrayList<Integer> paths = new ArrayList<Integer>();
-		CheckTreeSelectionModel model = checkTree.getSelectionModel();
-		for(int i=1;i<tree.getRowCount();i++){
-			TreePath path = tree.getPathForRow(i);
-			if(model.isPathSelected(path, true)){
-				paths.add(i-1);
+		FileDicomKey[] keys;
+		if(checkTree == null){
+			keys = new FileDicomKey[keyList.size()];
+			keyList.toArray(keys);
+		}
+		else{
+			ArrayList<Integer> paths = new ArrayList<Integer>();
+			CheckTreeSelectionModel model = checkTree.getSelectionModel();
+			for(int i=1;i<tree.getRowCount();i++){
+				TreePath path = tree.getPathForRow(i);
+				if(model.isPathSelected(path, true)){
+					paths.add(i-1);
+				}
+			}
+			int length = paths.size();
+			if(length == 0)
+				return null;
+			keys = new FileDicomKey[length];
+			for(int i=0;i<length;i++){
+				keys[i] = keyList.get(paths.get(i));
 			}
 		}
-		int length = paths.size();
-		if(length == 0)
-			return null;
-		FileDicomKey[] keys = new FileDicomKey[length];
-		for(int i=0;i<length;i++){
-			keys[i] = keyList.get(paths.get(i));
-		}
-		
 		return keys;
 	}
 
@@ -332,6 +354,136 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 		
 		removeAllPaths();
 		checkTree.getSelectionModel().addSelectionPaths(selectedPaths);
+		
+	}
+	
+	private void addKey(){
+		String group = groupField.getText();
+		String element = elementField.getText();
+		if(group.length() != 4){
+			MipavUtil.displayError("Group must be 4 characters long.");
+			return;
+		}
+		if(element.length() != 4){
+			MipavUtil.displayError("Element must be 4 characters long.");
+			return;
+		}
+		
+		if(!group.matches("[A-F0-9x]+")){
+			MipavUtil.displayError("Group may consist of only hexadecimal characters or 'x'");
+			return;
+		}
+		
+		if(!element.matches("[A-F0-9x]+")){
+			MipavUtil.displayError("Element may consist of only hexadecimal characters or 'x'");
+			return;
+		}
+		
+		String keyStr = group + "," + element;
+		String name = nameField.getText();
+		if(name.length() == 0){
+			name = "Unnamed";
+		}
+		keyList.add(new FileDicomKey(keyStr));
+		tagList.add(name);
+		
+		String listStr = "(" + keyStr + ") " + name;
+		listModel.addElement(listStr);
+		
+	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private void init(){
+		
+		setLayout(new BorderLayout());
+		
+		JPanel entryPanel = new JPanel(new GridBagLayout());
+		entryPanel.setBorder(new TitledBorder(BorderFactory.createLineBorder(Color.black), "Add keys"));
+		entryPanel.setForeground(Color.black);
+		
+		Font serif12 = new Font(Font.SERIF, Font.PLAIN, 12);
+		Font serif12b = new Font(Font.SERIF, Font.BOLD, 12);
+		
+		
+		JLabel groupLabel = new JLabel("Group");
+		groupLabel.setFont(serif12b);
+		
+		JLabel elementLabel = new JLabel("Element");
+		elementLabel.setFont(serif12b);
+		
+		JLabel nameLabel = new JLabel("Name (Optional)");
+		nameLabel.setFont(serif12b);
+		
+		groupField = new JTextField(6);
+		groupField.setFont(serif12);
+		
+		elementField = new JTextField(6);
+		elementField.setFont(serif12);
+		
+		nameField = new JTextField(15);
+		nameField.setFont(serif12);
+		
+		JButton addButton = new JButton("Add to List");
+		addButton.setFont(serif12);
+		addButton.setActionCommand("add");
+		addButton.addActionListener(this);
+		
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.anchor = GridBagConstraints.WEST;
+		
+		entryPanel.add(groupLabel, gbc);
+		gbc.gridx = 1;
+		entryPanel.add(elementLabel, gbc);
+		gbc.gridx = 2;
+		entryPanel.add(nameLabel, gbc);
+		gbc.gridx = 0;
+		gbc.gridy = 1;
+		entryPanel.add(groupField, gbc);
+		gbc.gridx = 1;
+		entryPanel.add(elementField, gbc);
+		gbc.gridx = 2;
+		entryPanel.add(nameField, gbc);
+		gbc.gridx = 3;
+		entryPanel.add(addButton, gbc);
+		
+		JPanel listPanel = new JPanel(new GridBagLayout());
+		listPanel.setForeground(Color.black);
+		
+		JLabel listLabel = new JLabel("DICOM private key whitelist");
+		listLabel.setFont(serif12b);
+		
+		listModel = new DefaultListModel();
+		
+		JList whiteList = new JList(listModel);
+		whiteList.setFont(serif12);
+		//whiteList.setVisibleRowCount(10);
+		
+		JScrollPane scrollPane = new JScrollPane(whiteList);
+		
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.weighty = 0;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.anchor = GridBagConstraints.WEST;
+		
+		listPanel.add(listLabel, gbc);
+		
+		gbc.gridy = 1;
+		gbc.weightx = 1;
+		gbc.weighty = 1;
+		gbc.gridwidth = GridBagConstraints.REMAINDER;
+		gbc.fill = GridBagConstraints.BOTH;
+		
+		listPanel.add(scrollPane, gbc);
+		
+		
+		add(entryPanel, BorderLayout.NORTH);
+		add(listPanel, BorderLayout.CENTER);
+		
+		
 		
 	}
 	
@@ -451,6 +603,9 @@ public class JPanelAnonymizePrivateTags extends JPanel implements ActionListener
 			checkAllPaths();
 		else if(command.equals("privateClear"))
 			removeAllPaths();
+		else if(command.equals("add")){
+			addKey();
+		}
 		
 	}
 	

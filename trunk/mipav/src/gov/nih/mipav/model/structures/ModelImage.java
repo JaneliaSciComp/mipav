@@ -435,6 +435,21 @@ public class ModelImage extends ModelStorageBase {
             }
         }
     }
+    
+    public void removePrivateTagsWhite(FileDicomKey[] keys){
+    	if (getNDims() == 2) { // and if image is a single slice
+            ((FileInfoDicom) fileInfo[0]).removePrivateTagsWhite(keys); // tell the fileInfo to anonymize itself
+            this.setFileInfo(fileInfo[0], 0); // and then make sure (by resetting) the fileInfo in this image is
+            // the same as the sanitised version
+        } else { // and image has more than one slice
+
+            for (int i = 0; i < getExtents()[2]; i++) { // then for all slices in this image,
+                ((FileInfoDicom) fileInfo[i]).removePrivateTagsWhite(keys); // tell the fileInfo of slice i to anonymize itself
+                this.setFileInfo(fileInfo[i], i); // and then make sure (by resetting) the ith fileInfo in this
+                // image is the same as the sanitised version
+            }
+        }
+    }
     /**
      * Method to anonymize private tags that may appear in
      * sequence tags. A list of sequence tags should be passed in so that you do not have
@@ -451,6 +466,21 @@ public class ModelImage extends ModelStorageBase {
 
             for (int i = 0; i < getExtents()[2]; i++) { // then for all slices in this image,
                 ((FileInfoDicom) fileInfo[i]).removePrivateSequenceTags(keys, seqs); // tell the fileInfo of slice i to anonymize itself
+                this.setFileInfo(fileInfo[i], i); // and then make sure (by resetting) the ith fileInfo in this
+                // image is the same as the sanitised version
+            }
+        }
+    }
+    
+    public final void removePrivateSequenceTagsWhite(FileDicomKey[] keys, Vector<FileDicomSQItem> seqs){
+    	if (getNDims() == 2) { // and if image is a single slice
+            ((FileInfoDicom) fileInfo[0]).removePrivateSequenceTagsWhite(keys, seqs); // tell the fileInfo to anonymize itself
+            this.setFileInfo(fileInfo[0], 0); // and then make sure (by resetting) the fileInfo in this image is
+            // the same as the sanitised version
+        } else { // and image has more than one slice
+
+            for (int i = 0; i < getExtents()[2]; i++) { // then for all slices in this image,
+                ((FileInfoDicom) fileInfo[i]).removePrivateSequenceTagsWhite(keys, seqs); // tell the fileInfo of slice i to anonymize itself
                 this.setFileInfo(fileInfo[i], i); // and then make sure (by resetting) the ith fileInfo in this
                 // image is the same as the sanitised version
             }
