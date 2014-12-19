@@ -242,7 +242,7 @@ public class JDialogAnonymizeImage extends JDialogScriptableBase {
                 str = JOptionPane.showInputDialog(this, "Name the profile");
                 if(str != null && str.length() == 0) {
                     doSave = JOptionPane.NO_OPTION;
-                } else if(Preferences.getProperty("profileAnonymizeDICOM"+str) != null) {
+                } else if(Preferences.getProperty("profileAnonymizeDICOMImage"+str) != null) {
                     doSave = JOptionPane.showConfirmDialog(this, "Profile "+str+" already exists.  Overwrite?", "Overwrite?", JOptionPane.YES_NO_CANCEL_OPTION);
                 } else {
                     doSave = JOptionPane.YES_OPTION;
