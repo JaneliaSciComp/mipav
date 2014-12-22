@@ -1,8 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import java.io.IOException;
-
 import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBtoGray;
@@ -11,6 +9,9 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
+
+import java.io.IOException;
+
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
@@ -83,6 +84,8 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
     ModelImage edgetd2Image;
     
     ModelImage edgetd3Image;
+    
+    ModelImage gImage;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -105,6 +108,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         ModelImage grayImage = null;
         ModelImage inputImage = null;
         int i;
+        int k;
         int x;
         int y;
         boolean setupFilters = true;
@@ -165,6 +169,13 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         double edgesigmas[] = new double[ndirs*nscales];
         int edgeps[] = new int[ndirs*nscales];
         String edgedomain = null;
+        double sgx[] = new double[ndirs * nscales];
+        double invVariance2;
+        double factorSharpness;
+        double factorMdl;
+        int scaleswt[] = new int[nscales];
+        String DCAmethod = null;
+        String esameth = null;
         for (i = 0; i < srcImage.length; i++) {
             inputXDim = srcImage[i].getExtents()[0];
             inputYDim = srcImage[i].getExtents()[1];
@@ -350,6 +361,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
                     double edgetimesigmas[] = new double[ndirs*nscales];
                     int edgetimeps[] = new int[ndirs*nscales];
                     String edgetimedomain = "time";
+                    double dhout[][] = null;
+                    double dhoutImag[][] = null;
+                    double dw1[] = null;
+                    double dw2[] = null;
+                    double mx[] = null;
+                    double mag;
                     
                     T1_responses(texttimetd1, texttimetd2, texttimetd3, texttimetd22, texttimetd23, texttimetd33,
                     		texttimefd1, texttimefd1Imag, texttimefd2, texttimefd2Imag, texttimefd3, texttimefd3Imag, 
@@ -361,7 +378,32 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
                     		edgetimefd22, edgetimefd22Imag, edgetimefd23, edgetimefd23Imag, edgetimefd33, edgetimefd33Imag, 
                     		edgetimesigmas, edgetimeps,
                     		nscales, ndirs, sig2omega, radianStart, radianEnd, inputXDim, inputYDim, "edge", edgetimedomain);
-                    
+                    // Max of gabor filter response, frequency domain
+                    mx = new double[200 * 200];
+                    for (k = 0; k < 40 ; k++) {
+                        freqz2(dhout, dhoutImag, dw1, dw2, texttimetd2[k], 200, 200);
+                        for (y = 0; y < 200; y++) {
+                        	for (x = 0; x < 200; x++) {
+                        		mag = Math.sqrt(dhout[y][x]*dhout[y][x] + dhoutImag[y][x]*dhoutImag[y][x]);
+                        		if (mag > mx[x + 200 * y]) {
+                        			mx[x + 200 * y] = mag;
+                        		}
+                        	}
+                        }
+                    }
+                    int dExtents[] = new int[2];
+                    dExtents[0] = 200;
+                    dExtents[1] = 200;
+                    gImage = new ModelImage(ModelStorageBase.DOUBLE, dExtents, "max_gabor_response");
+                    try {
+                    	gImage.importData(0, mx, true);
+                    }
+                    catch (IOException e) {
+                    	MipavUtil.displayError("IOException " + e + " on gImage.importData(0, mx, true)");
+                    	setCompleted(false);
+                    	return;
+                    }
+                    new ViewJFrameImage(gImage);
                     // Show texture and edge filters at a single scale and orientation
                     int filId = 10;
                     int texttimeLength = texttimetd2[0].length * texttimetd2[0][0].length;
@@ -372,7 +414,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
                     		buffer[x + y * texttimetd2[0][0].length] = texttimetd2[filId][y][x];
                     	}
                     }
-                    int dExtents[] = new int[2];
+                    
                     dExtents[0] = texttimetd2[0][0].length;
                     dExtents[1] = texttimetd2[0].length;
                     texttd2Image = new ModelImage(ModelStorageBase.DOUBLE, dExtents, "text_td2_Image");
@@ -444,9 +486,159 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
             // mdl criterion terms (refer to paper)
             // G: gaussian function with maximum at (x == 0) equal to 1
             // sum G = (filter_scales.^2) * [2*PI]
-
+            for (k = 0; k < ndirs*nscales; k++) {
+                sgx[k] = (2.0 * Math.PI)*textsigmas[k]*textsigmas[k];
+            }
+            invVariance2 = 1.0/(2.0 * 0.03 * 0.03);
+            factorSharpness = 1.0;
+            factorMdl = 1.0;
+            
+            // Determine scales over which the decision is taken
+            for (k = 0; k < nscales; k++) {
+            	scaleswt[k] = k;
+            }
+            
+            // For the whole process to run at a single scale modify the code above
+            // by an outer for loop
+            //for (scaleInd = 0; scaleInd < nscales; scaleInd++) {
+                 //scaleswt = scaleInd;
+           // }
+            
+            // Main part:
+            // Multi-scale and orientation filtering for texture/edge signals
+            
+            // Note: Filtering for texture is bundled with demodulation
+            // This 'inflates' the filter responses where they
+            // are decreased due to a mismatch between 
+            // the signal's and the Gabor's central frequencies.
+            
+            // channel selection criterion
+            // 'mdl' : mdl -like criterion (current)
+            // 'teag' : teager energy (teager-based DCA)
+            // 'ampl' : amplitude
+            DCAmethod = "mdl";
+            
+            // Choose demodulation algorithm
+            // 'gesa' : Gabor - ESA
+            // 'cesa' : Complex-ESA
+            // '' : no demodulation (use Gabor filter's amplitude/frequency)
+            
+            esameth = "gesa";
+            T2z1_filter(texttd1, texttd2, texttd3, textfd1, textfd1Imag, textfd2, textfd2Imag, textfd3, textfd3Imag, 
+            		textfd22, textfd22Imag, textfd23, textfd23Imag, textfd33, textfd33Imag,
+            		textps, textdomain, scaleswt, ndirs, inputImage);
         } // for (i = 0; i < srcImage.length; i++)
 
+    }
+    
+    private void T2z1_filter(double td1[][][], double td2[][][], double td3[][][],
+    		double fd1[][][], double fd1Imag[][][], double fd2[][][], double fd2Imag[][][],
+    		double fd3[][][], double fd3Imag[][][], double fd22[][][], double fd22Imag[][][],
+    		double fd23[][][], double fd23Imag[][][], double fd33[][][], double fd33Imag[][][],
+    		int ps[], String domain, int scaleswt[], int ndirs, ModelImage inputImage) {
+    	// fields that are being accumulated
+    	// A: amplitude, ph: phase, idx: filter index
+    	// en: model-based decrease in reconstruction error (sum of squares)
+    	// Fx, Fy; frequency components
+    	double critDCA = -1.0E11;
+    	int xDim = inputImage.getExtents()[0];
+    	int yDim = inputImage.getExtents()[1];
+    	int length = xDim * yDim;
+    	double inputImageFFT[] = new double[length];
+    	double inputImageFFTImag[] = new double[length];
+    	FFTUtility fft;
+    	int k;
+    	int scaleInd;
+    	int filStart;
+    	double inputIm[][] = new double[yDim][xDim];
+    	int y;
+    	int x;
+    	double preComputedIc1[][] = null;
+    	double preComputedIc2[][] = null;
+    	double preComputedIc3[][] = null;
+    	double preComputedSc1[][] = null;
+    	double preComputedsm[][] = null;
+    	double fftImagePatch[] = null;
+    	double fftImagePatchImag[] = null;
+    	double fftSupportPatch[] = null;
+    	double fftSupportPatchImag[] = null;
+    	double endc[][] = null;
+    	int dirInd;
+    	int filInd;
+    	try {
+    		inputImage.exportData(0, length, inputImageFFT);
+    	}
+    	catch(IOException e) {
+    		MipavUtil.displayError("IOException " + e + " on inputImage.exportData(0, length, inputImageFFT");
+    		return;
+    	}
+    	
+    	for (y = 0; y < yDim; y++) {
+    		for (x = 0; x < xDim; x++) {
+    			inputIm[y][x] = inputImageFFT[x + y * xDim];
+    		}
+    	}
+    	
+    	fft = new FFTUtility(inputImageFFT, inputImageFFTImag, yDim, xDim, 1, -1, FFTUtility.FFT);
+	    fft.run();
+	    fft.finalize();
+	    fft = null;
+	    fft = new FFTUtility(inputImageFFT, inputImageFFTImag, 1, yDim, xDim, -1, FFTUtility.FFT);
+	    fft.run();
+	    fft.finalize();
+	    fft = null;
+	    
+	    for (k = 0; k < scaleswt.length; k++) {
+	    	scaleInd = scaleswt[k];
+	    	filStart = scaleInd * ndirs;
+	    	
+	    	// Once for every scale, construct dc model for background
+	    	if (domain.equals("time")) {
+	    		T2z1b_get_responses_time(preComputedIc1, null, null, preComputedSc1, preComputedsm, null, null, null,
+	    				null, null, null,
+	            		td1[filStart], null, null, 
+	            		null, null, null, inputIm, 1);		
+	    	} // if (domain.equals("time"))
+	    	else if (domain.equals("freq")) {
+	    		T2z1a_make_image_structure(fftImagePatch, fftImagePatchImag,
+		                   fftSupportPatch, fftSupportPatchImag,
+		                   inputIm, ps[filStart]);
+	    		 T2z1b_get_responses_freq(preComputedIc1, null, null, preComputedSc1, preComputedsm, null, null, null, null, null, null,
+ 	            		fftSupportPatch, fftSupportPatchImag, ps[filStart], fftImagePatch, fftImagePatchImag, 
+ 	            		fd1[filStart], fd1Imag[filStart], fd2[filStart], fd2Imag[filStart],
+ 	            		fd3[filStart], fd3Imag[filStart], fd22[filStart], fd22Imag[filStart],
+ 	            		fd23[filStart], fd23Imag[filStart], fd33[filStart], fd33Imag[filStart], 1);
+	    	} // else if (domain.equals("freq"))
+	    	endc = new double[preComputedIc1.length][preComputedIc1[0].length];
+	    	for (y = 0; y < preComputedIc1.length; y++) {
+	    		for (x = 0; x < preComputedIc1[0].length; x++) {
+	    			endc[y][x] = preComputedIc1[y][x] * preComputedsm[y][x];
+	    		}
+	    	}
+	    	
+	    	// And now loop over orientations
+	    	for (dirInd = 0; dirInd < ndirs; dirInd++) {
+	    	    filInd = filStart + dirInd;
+	    	    
+	    	    // Construct fields involved in projection
+	    	    if (domain.equals("time")) {
+	    	        T2z1b_get_responses_time(null, preComputedIc2, preComputedIc3, null, null, null, null, null,
+	    				null, null, null,
+	            		null, td2[filInd], td3[filInd], 
+	            		null, null, null, inputIm, 2);
+	    	    }
+	    	    else if (domain.equals("freq")) {
+	    	        T2z1b_get_responses_freq(null, preComputedIc2, preComputedIc3, null, null, null, null, null, null, null, null,
+ 	            		null, null, ps[filInd], fftImagePatch, fftImagePatchImag, 
+ 	            		null, null, fd2[filInd], fd2Imag[filInd],
+ 	            		fd3[filInd], fd3Imag[filInd], null, null,
+ 	            		null, null, null, null, 2);
+	    	    }
+	    	    
+	    	    // Estimate projection onto basis elements
+	    	} // for (dirInd = 0; dirInd < ndirs; dirInd++)
+	    } // for (k = 0; k < scaleswt.length; k++)
+    	
     }
     
     private void T2z0_projection_terms(double invDes[][][][][], double td1[][][], double td2[][][], double td3[][][],
