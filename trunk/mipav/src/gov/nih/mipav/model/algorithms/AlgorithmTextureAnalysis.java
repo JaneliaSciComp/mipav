@@ -147,6 +147,11 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         double textsigmas[] = new double[ndirs*nscales];
         int textps[] = new int[ndirs*nscales];
         String textdomain = null;
+        double textomegas[][] = new double[ndirs*nscales][];
+        double textamplitudes[][] = new double[ndirs*nscales][];
+        double textamplitudesImag[][] = new double[ndirs*nscales][];
+        double textfilterAngle[] = new double[ndirs*nscales];
+        double textsigmaX[] = new double[ndirs*nscales];
         double edgeinvDes[][][][][] = new double[ndirs*nscales][][][][];
         double edgetd1[][][] = new double[ndirs*nscales][][];
         double edgetd2[][][] = new double[ndirs*nscales][][];
@@ -169,6 +174,11 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         double edgesigmas[] = new double[ndirs*nscales];
         int edgeps[] = new int[ndirs*nscales];
         String edgedomain = null;
+        double edgeomegas[][] = new double[ndirs*nscales][];
+        double edgeamplitudes[][] = new double[ndirs*nscales][];
+        double edgeamplitudesImag[][] = new double[ndirs*nscales][];
+        double edgefilterAngle[] = new double[ndirs*nscales];
+        double edgesigmaX[] = new double[ndirs*nscales];
         double sgx[] = new double[ndirs * nscales];
         double invVariance2;
         double factorSharpness;
@@ -285,11 +295,13 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
                 // Construct filters and their time or frequency response
                 // For efficiency use the time domain for small
                 // filters and the frequency domain for large ones
-                T1_responses(texttd1, texttd2, texttd3, texttd22, texttd23, texttd33,
+                T1_responses(textomegas, textamplitudes, textamplitudesImag, textfilterAngle, textsigmaX,
+                		texttd1, texttd2, texttd3, texttd22, texttd23, texttd33,
                 		textfd1, textfd1Imag, textfd2, textfd2Imag, textfd3, textfd3Imag, 
                 		textfd22, textfd22Imag, textfd23, textfd23Imag, textfd33, textfd33Imag, textsigmas, textps,
                 		nscales, ndirs, sig2omega, radianStart, radianEnd, inputXDim, inputYDim, "texture", textdomain);
-                T1_responses(edgetd1, edgetd2, edgetd3, edgetd22, edgetd23, edgetd33,
+                T1_responses(edgeomegas, edgeamplitudes, edgeamplitudesImag, edgefilterAngle, edgesigmaX,
+                		edgetd1, edgetd2, edgetd3, edgetd22, edgetd23, edgetd33,
                 		edgefd1, edgefd1Imag, edgefd2, edgefd2Imag, edgefd3, edgefd3Imag, 
                 		edgefd22, edgefd22Imag, edgefd23, edgefd23Imag, edgefd33, edgefd33Imag, edgesigmas, edgeps,
                 		nscales, ndirs, sig2omega, radianStart, radianEnd, inputXDim, inputYDim, "edge", edgedomain);
@@ -340,6 +352,11 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
                     double texttimesigmas[] = new double[ndirs*nscales];
                     int texttimeps[] = new int[ndirs*nscales];
                     String texttimedomain = "time";
+                    double texttimeomegas[][] = new double[ndirs*nscales][];
+                    double texttimeamplitudes[][] = new double[ndirs*nscales][];
+                    double texttimeamplitudesImag[][] = new double[ndirs*nscales][];
+                    double texttimefilterAngle[] = new double[ndirs*nscales];
+                    double texttimesigmaX[] = new double[ndirs*nscales];
                     double edgetimetd1[][][] = new double[ndirs*nscales][][];
                     double edgetimetd2[][][] = new double[ndirs*nscales][][];
                     double edgetimetd3[][][] = new double[ndirs*nscales][][];
@@ -361,6 +378,11 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
                     double edgetimesigmas[] = new double[ndirs*nscales];
                     int edgetimeps[] = new int[ndirs*nscales];
                     String edgetimedomain = "time";
+                    double edgetimeomegas[][] = new double[ndirs*nscales][];
+                    double edgetimeamplitudes[][] = new double[ndirs*nscales][];
+                    double edgetimeamplitudesImag[][] = new double[ndirs*nscales][];
+                    double edgetimefilterAngle[] = new double[ndirs*nscales];
+                    double edgetimesigmaX[] = new double[ndirs*nscales];
                     double dhout[][] = null;
                     double dhoutImag[][] = null;
                     double dw1[] = null;
@@ -368,12 +390,14 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
                     double mx[] = null;
                     double mag;
                     
-                    T1_responses(texttimetd1, texttimetd2, texttimetd3, texttimetd22, texttimetd23, texttimetd33,
+                    T1_responses(texttimeomegas, texttimeamplitudes, texttimeamplitudesImag, texttimefilterAngle, texttimesigmaX,
+                    		texttimetd1, texttimetd2, texttimetd3, texttimetd22, texttimetd23, texttimetd33,
                     		texttimefd1, texttimefd1Imag, texttimefd2, texttimefd2Imag, texttimefd3, texttimefd3Imag, 
                     		texttimefd22, texttimefd22Imag, texttimefd23, texttimefd23Imag, texttimefd33, texttimefd33Imag, 
                     		texttimesigmas, texttimeps,
                     		nscales, ndirs, sig2omega, radianStart, radianEnd, inputXDim, inputYDim, "texture", texttimedomain);
-                    T1_responses(edgetimetd1, edgetimetd2, edgetimetd3, edgetimetd22, edgetimetd23, edgetimetd33,
+                    T1_responses(edgetimeomegas, edgetimeamplitudes, edgetimeamplitudesImag, edgetimefilterAngle, edgetimesigmaX,
+                    		edgetimetd1, edgetimetd2, edgetimetd3, edgetimetd22, edgetimetd23, edgetimetd33,
                     		edgetimefd1, edgetimefd1Imag, edgetimefd2, edgetimefd2Imag, edgetimefd3, edgetimefd3Imag, 
                     		edgetimefd22, edgetimefd22Imag, edgetimefd23, edgetimefd23Imag, edgetimefd33, edgetimefd33Imag, 
                     		edgetimesigmas, edgetimeps,
@@ -524,18 +548,21 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
             // '' : no demodulation (use Gabor filter's amplitude/frequency)
             
             esameth = "gesa";
-            T2z1_filter(texttd1, texttd2, texttd3, textfd1, textfd1Imag, textfd2, textfd2Imag, textfd3, textfd3Imag, 
+            T2z1_filter(textomegas, textamplitudes, textamplitudesImag, textfilterAngle, textsigmaX,
+            		texttd1, texttd2, texttd3, textfd1, textfd1Imag, textfd2, textfd2Imag, textfd3, textfd3Imag, 
             		textfd22, textfd22Imag, textfd23, textfd23Imag, textfd33, textfd33Imag,
-            		textps, textdomain, scaleswt, ndirs, inputImage);
+            		textps, textdomain, scaleswt, ndirs, inputImage, textinvDes, esameth);
         } // for (i = 0; i < srcImage.length; i++)
 
     }
     
-    private void T2z1_filter(double td1[][][], double td2[][][], double td3[][][],
+    private void T2z1_filter(double omegas[][], double amplitudes[][], double amplitudesImag[][], double filterAngle[],
+    		double sigmaX[], double td1[][][], double td2[][][], double td3[][][],
     		double fd1[][][], double fd1Imag[][][], double fd2[][][], double fd2Imag[][][],
     		double fd3[][][], double fd3Imag[][][], double fd22[][][], double fd22Imag[][][],
     		double fd23[][][], double fd23Imag[][][], double fd33[][][], double fd33Imag[][][],
-    		int ps[], String domain, int scaleswt[], int ndirs, ModelImage inputImage) {
+    		int ps[], String domain, int scaleswt[], int ndirs, ModelImage inputImage, double invDes[][][][][],
+    		String esameth) {
     	// fields that are being accumulated
     	// A: amplitude, ph: phase, idx: filter index
     	// en: model-based decrease in reconstruction error (sum of squares)
@@ -546,8 +573,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
     	int length = xDim * yDim;
     	double inputImageFFT[] = new double[length];
     	double inputImageFFTImag[] = new double[length];
+    	double inputImFFT[][] = new double[yDim][xDim];
+    	double inputImFFTImag[][] = new double[yDim][xDim];
     	FFTUtility fft;
     	int k;
+    	int i;
+    	int j;
     	int scaleInd;
     	int filStart;
     	double inputIm[][] = new double[yDim][xDim];
@@ -565,6 +596,10 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
     	double endc[][] = null;
     	int dirInd;
     	int filInd;
+    	double Fn[][][] = null;
+    	int modnd;
+    	int sgn;
+    	double minresp;
     	try {
     		inputImage.exportData(0, length, inputImageFFT);
     	}
@@ -587,6 +622,13 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 	    fft.run();
 	    fft.finalize();
 	    fft = null;
+	    
+	    for (y = 0; y < yDim; y++) {
+	    	for (x = 0; x < xDim; x++) {
+	    		inputImFFT[y][x] = inputImageFFT[x + y * xDim];
+	    		inputImFFTImag[y][x] = inputImageFFTImag[x + y * xDim];
+	    	}
+	    }
 	    
 	    for (k = 0; k < scaleswt.length; k++) {
 	    	scaleInd = scaleswt[k];
@@ -636,9 +678,125 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 	    	    }
 	    	    
 	    	    // Estimate projection onto basis elements
+	    	    Fn = new double[3][preComputedIc1.length][preComputedIc1[0].length];
+	    	    for (i = 0; i < 3; i++) {
+    	        	for (y = 0; y < preComputedIc1.length; y++) {
+	    	        	for (x = 0; x < preComputedIc1[0].length; x++) {
+	    	        	    Fn[i][y][x] += (invDes[filInd][i][0][y][x] * preComputedIc1[y][x] +
+	    	        	    		        invDes[filInd][i][1][y][x] * preComputedIc2[y][x] +
+	    	        	    		        invDes[filInd][i][2][y][x] * preComputedIc3[y][x]);
+	    	        	}
+    	        	}
+	    	    } // for (i = 0; i < 3; i++)
+	    	    
+	    	    // ESA demodulation (Gabor only! - for edges:  esa_meth = '')
+	    	    // Recover frequency vector and use to compensate for amplitude losses
+	    	    // due to front-end filtering
+	    	    
+	    	    // Decide whether to flip frequency sign based on filter index
+	    	    modnd = (filInd % ndirs) + 1;
+	    	    if (modnd > ndirs/2) {
+	    	    	sgn = -1;
+	    	    }
+	    	    else {
+	    	    	sgn = 1;
+	    	    }
+	    	    
+	    	    // minresp: determines the maximum scaling of responses (= 1/minresp)
+	    	    // The frequency domain is 'tesselated' by Gabor filters
+	    	    // (see visualization in 1.53-64 of T00_batch_script)
+	    	    // The minimum value on the 'borders' of the compartments is
+	    	    // the minimum resp considered
+	    	    
+	    	    minresp = 0.35;
+	    	    if (esameth.equals("gesa")) {
+	    	    	// gabor esa
+	    	    	T2z1d_esa2D(inputImFFT, inputImFFTImag, sgn, omegas[filInd], amplitudes[filInd], amplitudesImag[filInd],
+	    	    			filterAngle[filInd], sigmaX[filInd], minresp, 0);
+	    	    }
 	    	} // for (dirInd = 0; dirInd < ndirs; dirInd++)
 	    } // for (k = 0; k < scaleswt.length; k++)
     	
+    }
+    
+    private void T2z1d_esa2D(double imIn[][], double imInImag[][], int signChange, double omegas[],
+    		double amplitudes[], double amplitudesImag[], double filterAngle, double sigmaX, double ct, int diffType) {
+    	int gaussFiltthpp[];
+    	int gaussFiltAmplitudes[];
+        if (diffType == 0) {
+        	gaussFiltthpp = new int[1];
+        	gaussFiltAmplitudes = new int[1];
+            T2z1dI_get_responses_freq_gabor(gaussFiltthpp, gaussFiltAmplitudes,
+            		imIn, imInImag, omegas, amplitudes, amplitudesImag, filterAngle, sigmaX);	
+        }
+    }
+    
+    private void T2z1dI_get_responses_freq_gabor(int gaussFiltthpp[], int gaussFiltAmplitudes[],
+    		double fftImage[][], double fftImageImag[][], double omegas[],
+    		double amplitudes[], double amplitudesImag[], double filterAngle, double sigmaX) {
+        int sizem = fftImage.length;
+        int sizen = fftImage[0].length;
+        double fm[] = new double[sizem];
+        double fn[] = new double[sizen];
+        int i;
+        double omegasn[][];
+        double omegasm[][];
+        int y;
+        int x;
+        double dirc[][] = null;
+        double dircImag[][] = null;
+        if ( (sizem % 2) == 1) {
+            for (i = 0; i < sizem; i++) {
+                fm[i] = -1.0 + 1.0 / sizem + (2.0 * i) / sizem;
+            }
+        } else {
+            for (i = 0; i < sizem; i++) {
+                fm[i] = -1.0 + (2.0 * i) / sizem;
+            }
+        }
+        if ( (sizen % 2) == 1) {
+            for (i = 0; i < sizen; i++) {
+                fn[i] = -1.0 + 1.0 / sizen + (2.0 * i) / sizen;
+            }
+        } else {
+            for (i = 0; i < sizen; i++) {
+                fn[i] = -1.0 + (2.0 * i) / sizen;
+            }
+        }
+        omegasn = new double[sizem][sizen];
+        omegasm = new double[sizem][sizen];
+        for (y = 0; y < sizem; y++) {
+            for (x = 0; x < sizen; x++) {
+                omegasn[y][x] = fn[x];
+            }
+        }
+        for (x = 0; x < sizen; x++) {
+            for (y = 0; y < sizem; y++) {
+                omegasm[y][x] = fm[y];
+            }
+        }
+        
+        fftshift(omegasn);
+        fftshift(omegasm);
+        
+        Tzz_freq_resp(dirc, dircImag, omegasn, omegasm, sigmaX, filterAngle, omegas, amplitudes, amplitudesImag);
+        for (y = 0; y < sizem; y++) {
+        	for (x = 0; x < sizen; x++) {
+        		omegasn[y][x] = Math.PI * omegasn[y][x];
+        		omegasm[y][x] = Math.PI * omegasm[y][x];
+        	}
+        }
+        for (y = 0; y < dirc.length; y++) {
+        	for (x = 0; x < dirc[0].length; x++) {
+        		dirc[y][x] *= 4.0;
+        		dircImag[y][x] *= 4.0;
+        	}
+        }
+        
+        dirc[0][0] = 0.0;
+        dircImag[0][0] = 0.0;
+        gaussFiltthpp[0] = 0;
+        gaussFiltAmplitudes[0] = 1;
     }
     
     private void T2z0_projection_terms(double invDes[][][][][], double td1[][][], double td2[][][], double td3[][][],
@@ -1292,7 +1450,8 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 	    return;
     }
 
-    private void T1_responses(double td1[][][], double td2[][][], double td3[][][],
+    private void T1_responses(double omegas[][], double amplitudes[][], double amplitudesImag[][], double filterAngle[], double sigmaX[],
+    		                  double td1[][][], double td2[][][], double td3[][][],
     		                  double td22[][][], double td23[][][], double td33[][][],
     		                  double fd1[][][], double fd1Imag[][][], double fd2[][][], double fd2Imag[][][],
     		                  double fd3[][][], double fd3Imag[][][], double fd22[][][], double fd22Imag[][][],
@@ -1300,10 +1459,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
     		                  double sigmas[], int ps[],
     		final int nscales, final int ndirs, final double sig2omega, final double radianStart, final double radianEnd,
             final int inputXDim, final int inputYDim, final String filterType, String domain) {
-        final double omegas[][] = new double[nscales * ndirs][];
-        final double amplitudes[][] = new double[nscales * ndirs][];
-        final double filterAngle[] = new double[nscales * ndirs];
-        final double sigmaX[] = new double[nscales * ndirs];
         int filInd;
         int scInd;
         int drInd;
@@ -1317,7 +1472,8 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         int y;
         int x;
 
-        filterbank_DCA_2D(omegas, amplitudes, filterAngle, sigmaX, nscales, filterType, ndirs, sig2omega, radianStart, radianEnd);
+        filterbank_DCA_2D(omegas, amplitudes, amplitudesImag, filterAngle, sigmaX, nscales, filterType, ndirs, 
+        		sig2omega, radianStart, radianEnd);
 
         filInd = 0;
         for (scInd = 1; scInd <= nscales; scInd++) {
@@ -1358,16 +1514,16 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
                             fn[i] = -1.0 + (2.0 * i) / szfn;
                         }
                     }
-                    xfreq = new double[szfn][szfm];
-                    yfreq = new double[szfn][szfm];
-                    for (y = 0; y < szfn; y++) {
-                        for (x = 0; x < szfm; x++) {
-                            xfreq[y][x] = fm[x];
+                    xfreq = new double[szfm][szfn];
+                    yfreq = new double[szfm][szfn];
+                    for (y = 0; y < szfm; y++) {
+                        for (x = 0; x < szfn; x++) {
+                            xfreq[y][x] = fn[x];
                         }
                     }
-                    for (x = 0; x < szfm; x++) {
-                        for (y = 0; y < szfn; y++) {
-                            yfreq[y][x] = fn[y];
+                    for (x = 0; x < szfn; x++) {
+                        for (y = 0; y < szfm; y++) {
+                            yfreq[y][x] = fm[y];
                         }
                     }
                 } // if (domain[filInd-1].equals("freq"))
@@ -2074,7 +2230,8 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         } // switch (conj)
     }
 
-    private void filterbank_DCA_2D(double omegas[][], double amplitudes[][], double filterAngle[], double sigmaX[], final int nscales, final String filterType,
+    private void filterbank_DCA_2D(double omegas[][], double amplitudes[][], double amplitudesImag[][],
+    		double filterAngle[], double sigmaX[], final int nscales, final String filterType,
             final int ndirs, final double sig2omega, final double radianStart, final double radianEnd) {
         // Put central frequencies on logarithmic scale
         double factr;
@@ -2115,6 +2272,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
                 if (filterType.equals("texture")) {
                     omegas[counter - 1] = new double[] {0, rpp};
                     amplitudes[counter - 1] = new double[] {0.0, 1.0};
+                    amplitudesImag[counter - 1] = new double[]{0.0, 0.0};
                 } else { // filterType.equals("edge"))
                     dim = 0;
                     for (val = 0; val <= 1.0; val += rpp) {
@@ -2138,6 +2296,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
                     }
                     omegas[counter - 1] = new double[dim2 + 1];
                     amplitudes[counter - 1] = new double[dim2 + 1];
+                    amplitudesImag[counter - 1] = new double[dim2 + 1];
                     sum = 0.0;
                     for (j = 1; j < dim2 + 1; j++) {
                         omegas[counter - 1][j] = omegasInit[j - 1];
