@@ -709,9 +709,32 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 	    	    // the minimum resp considered
 	    	    
 	    	    minresp = 0.35;
+	    	    double Am[][] = new double[yDim][xDim];
+	    	    double Wx[][] = new double[yDim][xDim];
+	    	    double Wy[][] = new double[yDim][xDim];
+	    	    double Araw[][] = new double[yDim][xDim];
 	    	    if (esameth.equals("gesa")) {
 	    	    	// gabor esa
-	    	    	T2z1d_esa2D(inputImFFT, inputImFFTImag, sgn, omegas[filInd], amplitudes[filInd], amplitudesImag[filInd],
+	    	    	double F[][] = new double[yDim][xDim];
+	    	    	double FImag[][] = new double[yDim][xDim];
+	    	    	double Fx[][] = new double[yDim][xDim];
+	    	    	double FxImag[][] = new double[yDim][xDim];
+	    	    	double Fy[][] = new double[yDim][xDim];
+	    	    	double FyImag[][] = new double[yDim][xDim];
+	    	    	double Fxx[][] = new double[yDim][xDim];
+	    	    	double FxxImag[][] = new double[yDim][xDim];
+	    	    	double Fyy[][] = new double[yDim][xDim];
+	    	    	double FyyImag[][] = new double[yDim][xDim];
+	    	    	double Fxy[][] = new double[yDim][xDim];
+	    	    	double FxyImag[][] = new double[yDim][xDim];
+	    	    	double V2Fx[][] = new double[yDim][xDim];
+	    	    	double V2FxImag[][] = new double[yDim][xDim];
+	    	    	double V2Fy[][] = new double[yDim][xDim];
+	    	    	double V2FyImag[][] = new double[yDim][xDim];
+	    	    	T2z1d_esa2D(Am, Wx, Wy, Araw,
+	    	    			F, FImag, Fx, FxImag, Fy, FyImag, Fxx, FxxImag, Fyy, FyyImag, 
+	    	    			Fxy, FxyImag, V2Fx, V2FxImag, V2Fy, V2FyImag,
+	    	    			inputImFFT, inputImFFTImag, sgn, omegas[filInd], amplitudes[filInd], amplitudesImag[filInd],
 	    	    			filterAngle[filInd], sigmaX[filInd], minresp, 0);
 	    	    }
 	    	} // for (dirInd = 0; dirInd < ndirs; dirInd++)
@@ -719,19 +742,275 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
     	
     }
     
-    private void T2z1d_esa2D(double imIn[][], double imInImag[][], int signChange, double omegas[],
+    private void T2z1d_esa2D(double A[][], double Wx[][], double Wy[][], double Anonorm[][],
+    		double F[][], double FImag[][], double Fx[][], double FxImag[][],
+    		double Fy[][], double FyImag[][], double Fxx[][], double FxxImag[][], double Fyy[][], double FyyImag[][],
+    		double Fxy[][], double FxyImag[][], double V2Fx[][], double V2FxImag[][], double V2Fy[][], double V2FyImag[][],
+    		double imIn[][], double imInImag[][], int signChange, double omegas[],
     		double amplitudes[], double amplitudesImag[], double filterAngle, double sigmaX, double ct, int diffType) {
+    	
     	int gaussFiltthpp[];
     	int gaussFiltAmplitudes[];
+    	int yDim = imIn.length;
+    	int xDim = imIn[0].length;
+    	double Eo[][] = new double[yDim][xDim];
+    	double Eox[][] = new double[yDim][xDim];
+    	double Eoy[][] = new double[yDim][xDim];
+    	double im[][];
+    	double Ix[][] = null;
+    	double Iy[][] = null;
+    	double Ixx[][] = null;
+    	double Iyy[][] = null;
+    	double Ixy[][] = null;
+    	double EoxTerm[][] = null;
+    	double EoyTerm[][] = null;
+    	double Eon[][];
+    	double Eoxn[][];
+    	double Eoyn[][];
+    	double denom[][];
+    	double maxDenom;
+    	int ch;
+    	int y;
+    	int x;
+    	int nc;
         if (diffType == 0) {
+        	nc = 2;
         	gaussFiltthpp = new int[1];
         	gaussFiltAmplitudes = new int[1];
-            T2z1dI_get_responses_freq_gabor(gaussFiltthpp, gaussFiltAmplitudes,
+            T2z1dI_get_responses_freq_gabor(F, FImag, Fx, FxImag, Fy, FyImag, Fxx, FxxImag, Fyy, FyyImag, 
+            		Fxy, FxyImag, V2Fx, V2FxImag, V2Fy, V2FyImag,
+            		imIn, imInImag, gaussFiltthpp, gaussFiltAmplitudes,
             		imIn, imInImag, omegas, amplitudes, amplitudesImag, filterAngle, sigmaX);	
+        } // if (diffType == 0)
+        else {
+        	nc = 1;
+        }
+        for (ch = 0; ch < nc; ch++) {
+        	if (ch == 0) {
+        		im = imIn;
+        	}
+        	else {
+        		im = imInImag;
+        	}
+        	switch (diffType) {
+        	case 0:
+        		if (ch == 0) {
+        		    Ix = Fx;
+        		    Iy = Fy;
+        		    Ixx = Fxx;
+        		    Iyy = Fyy;
+        		    Ixy = Fxy;
+        		    EoxTerm = V2Fx;
+        		    EoyTerm = V2Fy;
+        		} // if (ch == 0)
+        		else {
+        			Ix = FxImag;
+        		    Iy = FyImag;
+        		    Ixx = FxxImag;
+        		    Iyy = FyyImag;
+        		    Ixy = FxyImag;
+        		    EoxTerm = V2FxImag;
+        		    EoyTerm = V2FyImag;	
+        		} // else 
+        		break;
+        	case 1:
+        		Ix = deriv_x_right(im);
+        		Iy = deriv_y_up(im);
+        		break;
+        	case 2:
+        		Ix = deriv_x_left(im);
+        		Iy = deriv_y_down(im);
+        	} // switch (diffType)
+        	
+        	if (diffType == 0) {
+        		Eon = new double[yDim][xDim];
+        		Eoxn = new double[yDim][xDim];
+        		Eoyn = new double[yDim][xDim];
+        		for (y = 0; y < yDim; y++) {
+        			for (x = 0; x < xDim; x++) {
+        				Eon[y][x] = Ix[y][x]*Ix[y][x] + Iy[y][x]*Iy[y][x] - im[y][x]*(Ixx[y][x] + Iyy[y][x]);
+        				Eoxn[y][x] = Ixx[y][x]*Ixx[y][x] + Ixy[y][x]*Ixy[y][x] - Ix[y][x]*EoxTerm[y][x];
+        				Eoyn[y][x] = Ixy[y][x]*Ixy[y][x] + Iyy[y][x]*Iyy[y][x] - Iy[y][x]*EoyTerm[y][x];
+        			}
+        		}
+        	} // if (diffType == 0)
+        	else {
+        		Eon = enop2D(im);
+        		Eoxn = enop2D(Ix);
+        		Eoyn = enop2D(Iy);
+        	}
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			Eo[y][x] += Eon[y][x]/2.0;
+        			Eox[y][x] += Eoxn[y][x]/2.0;
+        			Eoy[y][x] += Eoyn[y][x]/2.0;
+        		}
+        	}
+        } // for (ch = 0; ch < nc; ch++)
+        
+        if (nc > 1) {
+        	// gabor-based amplitude estimate (no division)
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			A[y][x] = Math.sqrt(imIn[y][x]*imIn[y][x] + imInImag[y][x] * imInImag[y][x]);
+        		}
+        	}
+        } // if (nc > 1)
+        else {
+        	// esa-based amplitude estimate (needs some treatment of 0s in divisor)
+        	denom = new double[yDim][xDim];
+        	maxDenom = 0.0;
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			denom[y][x] = Math.sqrt(Math.max(Eox[y][x] + Eoy[y][x],0.0));
+        			if (denom[y][x] > maxDenom) {
+        				maxDenom = denom[y][x];
+        			}
+        		}
+        	}
+        	maxDenom = Math.max(maxDenom, 1.0E-3);
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			A[y][x] = Eo[y][x]/Math.max(denom[y][x], 1.0E-2 * maxDenom);
+        		}
+        	}
+        } // else
+        
+        for (y = 0; y < yDim; y++) {
+        	for (x = 0; x < xDim; x++) {
+        		Wx[y][x] = Math.sqrt(Math.max(Eox[y][x]/Eo[y][x], 0.0));
+        		Wy[y][x] = Math.sqrt(Math.max(Eoy[y][x]/Eo[y][x], 0.0));
+        		if (Eo[y][x] < 0.0) {
+        		    Wx[y][x] = 0.0;
+        		    Wy[y][x] = 0.0;
+        		}
+        	}
+        }
+        
+        if (signChange == -1) {
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			Wx[y][x] = -Wx[y][x];
+        		}
+        	}
+        }
+        
+        for (y = 0; y < yDim; y++) {
+        	for (x = 0; x < xDim; x++) {
+        		Anonorm[y][x] = A[y][x];
+        	}
         }
     }
     
-    private void T2z1dI_get_responses_freq_gabor(int gaussFiltthpp[], int gaussFiltAmplitudes[],
+    private double[][] enop2D(double im[][]) {
+    	int yDim = im.length;
+    	int xDim = im[0].length;
+    	double Ix1[][] = new double[yDim][xDim];
+    	double Ix_1[][] = new double[yDim][xDim];
+    	double Iy1[][] = new double[yDim][xDim];
+    	double Iy_1[][] = new double[yDim][xDim];
+    	double energy[][] = new double[yDim][xDim];
+    	int y;
+    	int x;
+    	
+    	for (y = 0; y < yDim; y++) {
+    		for (x = 0; x < xDim-1; x++) {
+    			Ix1[y][x] = im[y][x+1];
+    		}
+    		Ix1[y][xDim-1] = im[y][xDim-1];
+    	}
+    	
+    	for (y = 0; y < yDim; y++) {
+    		Ix_1[y][0] = im[y][0];
+    		for (x = 1; x < xDim; x++) {
+    			Ix_1[y][x] = im[y][x-1];
+    		}
+    	}
+    	
+    	for (x = 0; x < xDim; x++) {
+    		for (y = 0; y < yDim-1; y++) {
+    			Iy1[y][x] = im[y+1][x];
+    		}
+    		Iy1[yDim-1][x] = im[yDim-1][x];
+    	}
+    	
+    	for (x = 0; x < xDim; x++) {
+    		Iy_1[0][x] = im[0][x];
+    		for (y = 1; y < yDim; y++) {
+    			Iy_1[y][x] = im[y-1][x];
+    		}
+    	}
+    	
+    	for (y = 0; y < yDim; y++) {
+    		for (x = 0; x < xDim; x++) {
+    			energy[y][x] = 2.0 * im[y][x] * im[y][x] - Ix1[y][x] * Ix_1[y][x] - Iy1[y][x] * Iy_1[y][x];
+    		}
+    	}
+    	
+    	return energy;
+    }
+    
+    private double[][] deriv_x_right(double buf[][]) {
+    	int yDim = buf.length;
+    	int xDim = buf[0].length;
+    	double result[][] = new double[yDim][xDim];
+    	int y;
+    	int x;
+    	for (y = 0; y < yDim; y++) {
+		    for (x = 0; x < xDim-1; x++) {
+		    	result[y][x] = buf[y][x+1] -buf[y][x]; 
+		    }
+		}
+    	return result;
+    }
+    
+    private double[][] deriv_x_left(double buf[][]) {
+    	int yDim = buf.length;
+    	int xDim = buf[0].length;
+    	double result[][] = new double[yDim][xDim];
+    	int y;
+    	int x;
+    	for (y = 0; y < yDim; y++) {
+		    for (x = 1; x < xDim; x++) {
+		    	result[y][x] = buf[y][x] -buf[y][x-1]; 
+		    }
+		}
+    	return result;
+    }
+    
+    private double[][] deriv_y_up(double buf[][]) {
+    	int yDim = buf.length;
+    	int xDim = buf[0].length;
+    	double result[][] = new double[yDim][xDim];
+    	int y;
+    	int x;
+    	for (y = 1; y < yDim; y++) {
+		    for (x = 0; x < xDim; x++) {
+		    	result[y][x] = buf[y][x] -buf[y-1][x]; 
+		    }
+		}
+    	return result;
+    }
+    
+    private double[][] deriv_y_down(double buf[][]) {
+    	int yDim = buf.length;
+    	int xDim = buf[0].length;
+    	double result[][] = new double[yDim][xDim];
+    	int y;
+    	int x;
+    	for (y = 0; y < yDim-1; y++) {
+		    for (x = 0; x < xDim; x++) {
+		    	result[y][x] = buf[y+1][x] -buf[y][x]; 
+		    }
+		}
+    	return result;
+    }
+    
+    private void T2z1dI_get_responses_freq_gabor(double F[][], double FImag[][], double Fx[][], double FxImag[][],
+    		double Fy[][], double FyImag[][], double Fxx[][], double FxxImag[][], double Fyy[][], double FyyImag[][],
+    		double Fxy[][], double FxyImag[][], double V2Fx[][], double V2FxImag[][], double V2Fy[][], double V2FyImag[][],
+    		double imIn[][], double imInImag[][],
+    		int gaussFiltthpp[], int gaussFiltAmplitudes[],
     		double fftImage[][], double fftImageImag[][], double omegas[],
     		double amplitudes[], double amplitudesImag[], double filterAngle, double sigmaX) {
         int sizem = fftImage.length;
@@ -745,6 +1024,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         int x;
         double dirc[][] = null;
         double dircImag[][] = null;
+        
+        double omegasn2[][] = new double[sizem][sizen];
+        double omegasm2[][] = new double[sizem][sizen];
+        double nmterm;
+        double sumterm;
+        double prodterm;
         if ( (sizem % 2) == 1) {
             for (i = 0; i < sizem; i++) {
                 fm[i] = -1.0 + 1.0 / sizem + (2.0 * i) / sizem;
@@ -797,6 +1082,106 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         dircImag[0][0] = 0.0;
         gaussFiltthpp[0] = 0;
         gaussFiltAmplitudes[0] = 1;
+        for (y = 0; y < sizem; y++) {
+        	for (x = 0; x < sizen; x++) {
+        		F[y][x] = dirc[y][x] * fftImage[y][x] - dircImag[y][x] * fftImageImag[y][x];
+        		FImag[y][x] = dircImag[y][x] * fftImage[y][x] + dirc[y][x] * fftImageImag[y][x];
+        	}
+        }
+        for (y = 0; y < sizem; y++) {
+        	for (x = 0; x < sizen; x++) {
+        		Fx[y][x] = -omegasn[y][x] * FImag[y][x];
+        		FxImag[y][x] = omegasn[y][x] * F[y][x];
+        	}
+        }
+        ifft2(Fx, FxImag);
+        
+        for (y = 0; y < sizem; y++) {
+        	for (x = 0; x < sizen; x++) {
+        		Fy[y][x] = -omegasm[y][x] * FImag[y][x];
+        		FyImag[y][x] = omegasm[y][x] * F[y][x];
+        	}
+        }
+        ifft2(Fy, FyImag);
+        
+        for (y = 0; y < sizem; y++) {
+        	for (x = 0; x < sizen; x++) {
+        		omegasn2[y][x] = omegasn[y][x] * omegasn[y][x];
+        		Fxx[y][x] = -omegasn2[y][x] * F[y][x];
+        		FxxImag[y][x] = -omegasn2[y][x] * FImag[y][x];
+        		omegasm2[y][x] = omegasm[y][x] * omegasm[y][x];
+        		Fyy[y][x] =  -omegasm2[y][x] * F[y][x];
+        		FyyImag[y][x] = -omegasm2[y][x] * FImag[y][x];
+        	}
+        }
+        ifft2(Fxx, FxxImag);
+        ifft2(Fyy, FyyImag);
+        
+        for (y = 0; y < sizem; y++) {
+        	for (x = 0; x < sizen; x++) {
+        		nmterm = omegasn[y][x] * omegasm[y][x];
+        		Fxy[y][x] = -nmterm*F[y][x];
+        		FxyImag[y][x] = -nmterm * FImag[y][x];
+        	}
+        }
+        ifft2(Fxy, FxyImag);
+        
+        for (y = 0; y < sizem; y++) {
+        	for (x = 0; x < sizen; x++) {
+        		sumterm = omegasn2[y][x] + omegasm2[y][x];
+        		prodterm = omegasn[y][x] * sumterm;
+        		V2Fx[y][x] = prodterm * FImag[y][x];
+        		V2FxImag[y][x] = -prodterm * F[y][x];
+        		prodterm = omegasm[y][x] * sumterm;
+        		V2Fy[y][x] = prodterm * FImag[y][x];
+        		V2FyImag[y][x] = -prodterm * F[y][x];
+        	}
+        }
+        ifft2(V2Fx, V2FxImag);
+        ifft2(V2Fy, V2FyImag);
+        
+        for (y = 0; y < sizem; y++) {
+        	for (x = 0; x < sizen; x++) {
+        		imIn[y][x] = F[y][x];
+        		imInImag[y][x] = FImag[y][x];
+        	}
+        }
+        
+        ifft2(imIn, imInImag);
+    }
+    
+    private void ifft2(double buf[][], double bufI[][]) {
+    	int yDim = buf.length;
+    	int xDim = buf[0].length;
+    	int length = xDim * yDim;
+    	double buffer[] = new double[length];
+    	double bufferImag[] = new double[length];
+    	int y;
+    	int x;
+    	FFTUtility fft;
+    	for (y = 0; y < yDim; y++) {
+    		for (x = 0; x < xDim; x++) {
+    			buffer[x + y * xDim] = buf[y][x];
+    			bufferImag[x + y * xDim] = bufI[y][x];
+    		}
+    	}
+    	fft = new FFTUtility(buffer, bufferImag, yDim, xDim, 1, 1, FFTUtility.FFT);
+	    fft.run();
+	    fft.finalize();
+	    fft = null;
+	    fft = new FFTUtility(buffer, bufferImag, 1, yDim, xDim, 1, FFTUtility.FFT);
+	    fft.run();
+	    fft.finalize();
+	    fft = null;
+	    for (y = 0; y < yDim; y++) {
+    		for (x = 0; x < xDim; x++) {
+    			buf[y][x] = buffer[x + y * xDim];;
+    			bufI[y][x] = bufferImag[x + y * xDim];
+    		}
+    	}
+	    buffer = null;
+	    bufferImag = null;
+	    return;
     }
     
     private void T2z0_projection_terms(double invDes[][][][][], double td1[][][], double td2[][][], double td3[][][],
