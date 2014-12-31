@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.model.algorithms.filters.AlgorithmMedian;
 import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBtoGray;
@@ -10,7 +11,6 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.io.IOException;
-import java.util.Vector;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
@@ -73,10 +73,10 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  */
 
 public class AlgorithmTextureAnalysis extends AlgorithmBase {
+	
+	private ModelImage[] destImage = null;
 
-	private final ModelImage[] srcImage;
-
-	private final boolean[] scaleImage;
+	private final boolean scaleImage;
 
 	// epsilon = D1MACH(4)
 	// Machine epsilon is the smallest positive epsilon such that
@@ -87,8 +87,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 	private final double epsilon = Math.pow(2.0, -52);
 
 	private boolean displayFilters = false;
-	
-	private boolean visualization = true;
 
 	ModelImage texttd2Image;
 
@@ -102,10 +100,9 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
-	public AlgorithmTextureAnalysis(final ModelImage[] srcImage,
-			final boolean scaleImage[]) {
-		// super(null, srcImg);
-		this.srcImage = srcImage;
+	public AlgorithmTextureAnalysis(ModelImage[] destImg, ModelImage srcImage,
+			boolean scaleImage) {
+		super(null, srcImage);
 		this.scaleImage = scaleImage;
 	}
 
@@ -114,20 +111,16 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 	 */
 	@Override
 	public void runAlgorithm() {
-		ModelImage destImage = null;
+		ModelImage resizedImage = null;
 		AlgorithmChangeType changeTypeAlgo;
 		final boolean image25D = true;
 		AlgorithmTransform algoTrans;
 		AlgorithmRGBtoGray gAlgo;
 		ModelImage grayImage = null;
 		ModelImage inputImage = null;
-		int i;
 		int k;
 		int x;
 		int y;
-		boolean setupFilters = true;
-		final int lastXDim = srcImage[0].getExtents()[0];
-		final int lastYDim = srcImage[0].getExtents()[1];
 		int inputXDim;
 		int inputYDim;
 		final int ndirs = 10;
@@ -222,9 +215,9 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		double expCritEdge;
 		double expCritText;
 		double denom;
-		double ped[][];
-		double ptx[][];
-		double psm[][];
+		double ped[];
+		double ptx[];
+		double psm[];
 		double synthText[];
 		double freqText[];
 		double synthEdge[];
@@ -232,517 +225,718 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		double buf[];
 		double buf2[];
 		ModelImage medianImage;
-		int medianExtents[] = new int[2];
-		for (i = 0; i < srcImage.length; i++) {
-			inputXDim = srcImage[i].getExtents()[0];
-			inputYDim = srcImage[i].getExtents()[1];
-			if (srcImage[i].isColorImage()) {
-				final boolean thresholdAverage = false;
-				final float threshold = 0.0f;
-				final boolean intensityAverage = false;
-				final boolean equalRange = true;
-				final float minR = 0.0f;
-				final float minG = 0.0f;
-				final float minB = 0.0f;
-				float redValue;
-				float greenValue;
-				float blueValue;
-				float maxR;
-				float maxG;
-				float maxB;
-				if (srcImage[i].getMinR() == srcImage[i].getMaxR()) {
-					redValue = 0.0f;
-					greenValue = 0.5f;
-					blueValue = 0.5f;
-				} else if (srcImage[i].getMinG() == srcImage[i].getMaxG()) {
-					redValue = 0.5f;
-					greenValue = 0.0f;
-					blueValue = 0.5f;
-				} else if (srcImage[i].getMinB() == srcImage[i].getMaxB()) {
-					redValue = 0.5f;
-					greenValue = 0.5f;
-					blueValue = 0.0f;
-				} else {
-					redValue = (float) (1.0 / 3.0);
-					greenValue = redValue;
-					blueValue = redValue;
-
-				}
-				maxR = (float) srcImage[i].getMaxR();
-				maxG = (float) srcImage[i].getMaxG();
-				maxB = (float) srcImage[i].getMaxB();
-				grayImage = new ModelImage(ModelStorageBase.FLOAT,
-						srcImage[i].getExtents(), "grayImage");
-				gAlgo = new AlgorithmRGBtoGray(grayImage, srcImage[i],
-						redValue, greenValue, blueValue, thresholdAverage,
-						threshold, intensityAverage, equalRange, minR, maxR,
-						minG, maxG, minB, maxB);
-				gAlgo.run();
-				gAlgo.finalize();
-			} // if (srcImage.isColorImage())
-			if (scaleImage[i]) {
-				destImage = new ModelImage(ModelStorageBase.DOUBLE,
-						srcImage[i].getExtents(), "changeTypeImage");
-				if (srcImage[i].isColorImage()) {
-					changeTypeAlgo = new AlgorithmChangeType(destImage,
-							grayImage, grayImage.getMin(), grayImage.getMax(),
-							0.0, 1.0, image25D);
-					grayImage.disposeLocal();
-					grayImage = null;
-				} else {
-					changeTypeAlgo = new AlgorithmChangeType(destImage,
-							srcImage[i], srcImage[i].getMin(),
-							srcImage[i].getMax(), 0.0, 1.0, image25D);
-				}
-				changeTypeAlgo.run();
-				changeTypeAlgo.finalize();
-				changeTypeAlgo = null;
-
-				final boolean doPad = false;
-				final TransMatrix xfrm = new TransMatrix(3);
-				xfrm.identity();
-				final int interp = AlgorithmTransform.BILINEAR;
-				final int oXdim = 219;
-				final int oYdim = 146;
-				inputXDim = oXdim;
-				inputYDim = oYdim;
-				final float oXres = srcImage[i].getFileInfo()[0]
-						.getResolutions()[0]
-						* srcImage[i].getExtents()[0]
-						/ oXdim;
-				final float oYres = srcImage[i].getFileInfo()[0]
-						.getResolutions()[1]
-						* srcImage[i].getExtents()[1]
-						/ oYdim;
-				final int units[] = srcImage[i].getUnitsOfMeasure();
-				final boolean doClip = true;
-				final boolean doVOI = false;
-				final boolean doRotateCenter = false;
-				final Vector3f center = new Vector3f();
-				final float fillValue = 0.0f;
-				final boolean doUpdateOrigin = false;
-				final boolean isSATransform = false;
-				algoTrans = new AlgorithmTransform(destImage, xfrm, interp,
-						oXres, oYres, oXdim, oYdim, units, doVOI, doClip,
-						doPad, doRotateCenter, center);
-				algoTrans.setFillValue(fillValue);
-				algoTrans.setUpdateOriginFlag(doUpdateOrigin);
-				algoTrans.setUseScannerAnatomical(isSATransform);
-				algoTrans.setSuppressProgressBar(true);
-
-				algoTrans.run();
-				destImage.disposeLocal();
-
-				destImage = algoTrans.getTransformedImage();
-				algoTrans.disposeLocal();
-				algoTrans = null;
-				destImage.calcMinMax();
-			} // if (scaleImage[i])
-
-			// Construct filterbank once, off-line
-			// If image dimensions change for different images
-			// you will need to reconstruct (and wait)
-
-			if ((i == 0) || (inputXDim != lastXDim) || (inputYDim != lastYDim)) {
-				setupFilters = true;
+		int outputExtents[] = new int[2];
+		AlgorithmMedian medianAlgo;
+		int iters;
+		int ksize;
+		int kernelShape;
+		float stdDev;
+		int filterType;
+		int maximumSize;
+		boolean entireImage;
+		inputXDim = srcImage.getExtents()[0];
+		inputYDim = srcImage.getExtents()[1];
+		if (srcImage.isColorImage()) {
+			final boolean thresholdAverage = false;
+			final float threshold = 0.0f;
+			final boolean intensityAverage = false;
+			final boolean equalRange = true;
+			final float minR = 0.0f;
+			final float minG = 0.0f;
+			final float minB = 0.0f;
+			float redValue;
+			float greenValue;
+			float blueValue;
+			float maxR;
+			float maxG;
+			float maxB;
+			if (srcImage.getMinR() == srcImage.getMaxR()) {
+				redValue = 0.0f;
+				greenValue = 0.5f;
+				blueValue = 0.5f;
+			} else if (srcImage.getMinG() == srcImage.getMaxG()) {
+				redValue = 0.5f;
+				greenValue = 0.0f;
+				blueValue = 0.5f;
+			} else if (srcImage.getMinB() == srcImage.getMaxB()) {
+				redValue = 0.5f;
+				greenValue = 0.5f;
+				blueValue = 0.0f;
 			} else {
-				setupFilters = false;
+				redValue = (float) (1.0 / 3.0);
+				greenValue = redValue;
+				blueValue = redValue;
+
 			}
+			maxR = (float) srcImage.getMaxR();
+			maxG = (float) srcImage.getMaxG();
+			maxB = (float) srcImage.getMaxB();
+			grayImage = new ModelImage(ModelStorageBase.FLOAT,
+					srcImage.getExtents(), "grayImage");
+			gAlgo = new AlgorithmRGBtoGray(grayImage, srcImage,
+					redValue, greenValue, blueValue, thresholdAverage,
+					threshold, intensityAverage, equalRange, minR, maxR,
+					minG, maxG, minB, maxB);
+			gAlgo.run();
+			gAlgo.finalize();
+		} // if (srcImage.isColorImage())
+		if (scaleImage) {
+			resizedImage = new ModelImage(ModelStorageBase.DOUBLE,
+					srcImage.getExtents(), "changeTypeImage");
+			if (srcImage.isColorImage()) {
+				changeTypeAlgo = new AlgorithmChangeType(resizedImage,
+						grayImage, grayImage.getMin(), grayImage.getMax(),
+						0.0, 1.0, image25D);
+				grayImage.disposeLocal();
+				grayImage = null;
+			} else {
+				changeTypeAlgo = new AlgorithmChangeType(resizedImage,
+						srcImage, srcImage.getMin(),
+						srcImage.getMax(), 0.0, 1.0, image25D);
+			}
+			changeTypeAlgo.run();
+			changeTypeAlgo.finalize();
+			changeTypeAlgo = null;
 
-			if (setupFilters) {
-				minSize = Math.min(inputXDim, inputYDim);
-				largestPeriod = minSize / 4.0;
-				radianEnd = 2.0 * Math.PI / largestPeriod;
+			final boolean doPad = false;
+			final TransMatrix xfrm = new TransMatrix(3);
+			xfrm.identity();
+			final int interp = AlgorithmTransform.BILINEAR;
+			final int oXdim = 219;
+			final int oYdim = 146;
+			inputXDim = oXdim;
+			inputYDim = oYdim;
+			final float oXres = srcImage.getFileInfo()[0]
+					.getResolutions()[0]
+					* srcImage.getExtents()[0]
+					/ oXdim;
+			final float oYres = srcImage.getFileInfo()[0]
+					.getResolutions()[1]
+					* srcImage.getExtents()[1]
+					/ oYdim;
+			final int units[] = srcImage.getUnitsOfMeasure();
+			final boolean doClip = true;
+			final boolean doVOI = false;
+			final boolean doRotateCenter = false;
+			final Vector3f center = new Vector3f();
+			final float fillValue = 0.0f;
+			final boolean doUpdateOrigin = false;
+			final boolean isSATransform = false;
+			algoTrans = new AlgorithmTransform(resizedImage, xfrm, interp,
+					oXres, oYres, oXdim, oYdim, units, doVOI, doClip,
+					doPad, doRotateCenter, center);
+			algoTrans.setFillValue(fillValue);
+			algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+			algoTrans.setUseScannerAnatomical(isSATransform);
+			algoTrans.setSuppressProgressBar(true);
 
-				// Construct filters and their time or frequency response
-				// For efficiency use the time domain for small
-				// filters and the frequency domain for large ones
-				T1_responses(textomegas, textamplitudes, textamplitudesImag,
-						textfilterAngle, textsigmaX, texttd1, texttd2, texttd3,
-						texttd22, texttd23, texttd33, textfd1, textfd1Imag,
-						textfd2, textfd2Imag, textfd3, textfd3Imag, textfd22,
-						textfd22Imag, textfd23, textfd23Imag, textfd33,
-						textfd33Imag, textsigmas, textps, nscales, ndirs,
-						sig2omega, radianStart, radianEnd, inputXDim,
-						inputYDim, "texture", textdomain);
-				T1_responses(edgeomegas, edgeamplitudes, edgeamplitudesImag,
-						edgefilterAngle, edgesigmaX, edgetd1, edgetd2, edgetd3,
-						edgetd22, edgetd23, edgetd33, edgefd1, edgefd1Imag,
-						edgefd2, edgefd2Imag, edgefd3, edgefd3Imag, edgefd22,
-						edgefd22Imag, edgefd23, edgefd23Imag, edgefd33,
-						edgefd33Imag, edgesigmas, edgeps, nscales, ndirs,
-						sig2omega, radianStart, radianEnd, inputXDim,
-						inputYDim, "edge", edgedomain);
+			algoTrans.run();
+			resizedImage.disposeLocal();
 
-				if (destImage != null) {
-					inputImage = destImage;
-				} else if (grayImage != null) {
-					inputImage = grayImage;
-				} else {
-					inputImage = srcImage[i];
-				}
+			resizedImage = algoTrans.getTransformedImage();
+			algoTrans.disposeLocal();
+			algoTrans = null;
+			resizedImage.calcMinMax();
+		} // if (scaleImage)
 
-				// Terms computed off-line for weighted projection on basis
+		minSize = Math.min(inputXDim, inputYDim);
+		largestPeriod = minSize / 4.0;
+		radianEnd = 2.0 * Math.PI / largestPeriod;
 
-				// These account for boundary conditions & for a
-				// non-zero mean value of the even filter
-				T2z0_projection_terms(textinvDes, texttd1, texttd2, texttd3,
-						texttd22, texttd23, texttd33, textfd1, textfd1Imag,
-						textfd2, textfd2Imag, textfd3, textfd3Imag, textfd22,
-						textfd22Imag, textfd23, textfd23Imag, textfd33,
-						textfd33Imag, textps, nscales, ndirs, textdomain,
-						inputImage);
+		// Construct filters and their time or frequency response
+		// For efficiency use the time domain for small
+		// filters and the frequency domain for large ones
+		T1_responses(textomegas, textamplitudes, textamplitudesImag,
+				textfilterAngle, textsigmaX, texttd1, texttd2, texttd3,
+				texttd22, texttd23, texttd33, textfd1, textfd1Imag,
+				textfd2, textfd2Imag, textfd3, textfd3Imag, textfd22,
+				textfd22Imag, textfd23, textfd23Imag, textfd33,
+				textfd33Imag, textsigmas, textps, nscales, ndirs,
+				sig2omega, radianStart, radianEnd, inputXDim,
+				inputYDim, "texture", textdomain);
+		T1_responses(edgeomegas, edgeamplitudes, edgeamplitudesImag,
+				edgefilterAngle, edgesigmaX, edgetd1, edgetd2, edgetd3,
+				edgetd22, edgetd23, edgetd33, edgefd1, edgefd1Imag,
+				edgefd2, edgefd2Imag, edgefd3, edgefd3Imag, edgefd22,
+				edgefd22Imag, edgefd23, edgefd23Imag, edgefd33,
+				edgefd33Imag, edgesigmas, edgeps, nscales, ndirs,
+				sig2omega, radianStart, radianEnd, inputXDim,
+				inputYDim, "edge", edgedomain);
 
-				T2z0_projection_terms(edgeinvDes, edgetd1, edgetd2, edgetd3,
-						edgetd22, edgetd23, edgetd33, edgefd1, edgefd1Imag,
-						edgefd2, edgefd2Imag, edgefd3, edgefd3Imag, edgefd22,
-						edgefd22Imag, edgefd23, edgefd23Imag, edgefd33,
-						edgefd33Imag, edgeps, nscales, ndirs, edgedomain,
-						inputImage);
-
-				if (displayFilters) {
-					double texttimetd1[][][] = new double[ndirs * nscales][][];
-					double texttimetd2[][][] = new double[ndirs * nscales][][];
-					double texttimetd3[][][] = new double[ndirs * nscales][][];
-					double texttimetd22[][][] = new double[ndirs * nscales][][];
-					double texttimetd23[][][] = new double[ndirs * nscales][][];
-					double texttimetd33[][][] = new double[ndirs * nscales][][];
-					double texttimefd1[][][] = new double[ndirs * nscales][][];
-					double texttimefd1Imag[][][] = new double[ndirs * nscales][][];
-					double texttimefd2[][][] = new double[ndirs * nscales][][];
-					double texttimefd2Imag[][][] = new double[ndirs * nscales][][];
-					double texttimefd3[][][] = new double[ndirs * nscales][][];
-					double texttimefd3Imag[][][] = new double[ndirs * nscales][][];
-					double texttimefd22[][][] = new double[ndirs * nscales][][];
-					double texttimefd22Imag[][][] = new double[ndirs * nscales][][];
-					double texttimefd23[][][] = new double[ndirs * nscales][][];
-					double texttimefd23Imag[][][] = new double[ndirs * nscales][][];
-					double texttimefd33[][][] = new double[ndirs * nscales][][];
-					double texttimefd33Imag[][][] = new double[ndirs * nscales][][];
-					double texttimesigmas[] = new double[ndirs * nscales];
-					int texttimeps[] = new int[ndirs * nscales];
-					String texttimedomain = "time";
-					double texttimeomegas[][] = new double[ndirs * nscales][];
-					double texttimeamplitudes[][] = new double[ndirs * nscales][];
-					double texttimeamplitudesImag[][] = new double[ndirs
-							* nscales][];
-					double texttimefilterAngle[] = new double[ndirs * nscales];
-					double texttimesigmaX[] = new double[ndirs * nscales];
-					double edgetimetd1[][][] = new double[ndirs * nscales][][];
-					double edgetimetd2[][][] = new double[ndirs * nscales][][];
-					double edgetimetd3[][][] = new double[ndirs * nscales][][];
-					double edgetimetd22[][][] = new double[ndirs * nscales][][];
-					double edgetimetd23[][][] = new double[ndirs * nscales][][];
-					double edgetimetd33[][][] = new double[ndirs * nscales][][];
-					double edgetimefd1[][][] = new double[ndirs * nscales][][];
-					double edgetimefd1Imag[][][] = new double[ndirs * nscales][][];
-					double edgetimefd2[][][] = new double[ndirs * nscales][][];
-					double edgetimefd2Imag[][][] = new double[ndirs * nscales][][];
-					double edgetimefd3[][][] = new double[ndirs * nscales][][];
-					double edgetimefd3Imag[][][] = new double[ndirs * nscales][][];
-					double edgetimefd22[][][] = new double[ndirs * nscales][][];
-					double edgetimefd22Imag[][][] = new double[ndirs * nscales][][];
-					double edgetimefd23[][][] = new double[ndirs * nscales][][];
-					double edgetimefd23Imag[][][] = new double[ndirs * nscales][][];
-					double edgetimefd33[][][] = new double[ndirs * nscales][][];
-					double edgetimefd33Imag[][][] = new double[ndirs * nscales][][];
-					double edgetimesigmas[] = new double[ndirs * nscales];
-					int edgetimeps[] = new int[ndirs * nscales];
-					String edgetimedomain = "time";
-					double edgetimeomegas[][] = new double[ndirs * nscales][];
-					double edgetimeamplitudes[][] = new double[ndirs * nscales][];
-					double edgetimeamplitudesImag[][] = new double[ndirs
-							* nscales][];
-					double edgetimefilterAngle[] = new double[ndirs * nscales];
-					double edgetimesigmaX[] = new double[ndirs * nscales];
-					double dhout[][] = null;
-					double dhoutImag[][] = null;
-					double dw1[] = null;
-					double dw2[] = null;
-					double mx[] = null;
-					double mag;
-
-					T1_responses(texttimeomegas, texttimeamplitudes,
-							texttimeamplitudesImag, texttimefilterAngle,
-							texttimesigmaX, texttimetd1, texttimetd2,
-							texttimetd3, texttimetd22, texttimetd23,
-							texttimetd33, texttimefd1, texttimefd1Imag,
-							texttimefd2, texttimefd2Imag, texttimefd3,
-							texttimefd3Imag, texttimefd22, texttimefd22Imag,
-							texttimefd23, texttimefd23Imag, texttimefd33,
-							texttimefd33Imag, texttimesigmas, texttimeps,
-							nscales, ndirs, sig2omega, radianStart, radianEnd,
-							inputXDim, inputYDim, "texture", texttimedomain);
-					T1_responses(edgetimeomegas, edgetimeamplitudes,
-							edgetimeamplitudesImag, edgetimefilterAngle,
-							edgetimesigmaX, edgetimetd1, edgetimetd2,
-							edgetimetd3, edgetimetd22, edgetimetd23,
-							edgetimetd33, edgetimefd1, edgetimefd1Imag,
-							edgetimefd2, edgetimefd2Imag, edgetimefd3,
-							edgetimefd3Imag, edgetimefd22, edgetimefd22Imag,
-							edgetimefd23, edgetimefd23Imag, edgetimefd33,
-							edgetimefd33Imag, edgetimesigmas, edgetimeps,
-							nscales, ndirs, sig2omega, radianStart, radianEnd,
-							inputXDim, inputYDim, "edge", edgetimedomain);
-					// Max of gabor filter response, frequency domain
-					mx = new double[200 * 200];
-					dhout = new double[200][200];
-					dhoutImag = new double[200][200];
-					for (k = 0; k < 40; k++) {
-						freqz2(dhout, dhoutImag, dw1, dw2, texttimetd2[k], 200,
-								200);
-						for (y = 0; y < 200; y++) {
-							for (x = 0; x < 200; x++) {
-								mag = Math.sqrt(dhout[y][x] * dhout[y][x]
-										+ dhoutImag[y][x] * dhoutImag[y][x]);
-								if (mag > mx[x + 200 * y]) {
-									mx[x + 200 * y] = mag;
-								}
+			if (resizedImage != null) {
+				inputImage = resizedImage;
+			} else if (grayImage != null) {
+				inputImage = grayImage;
+			} else {
+				inputImage = srcImage;
+			}
+	
+			// Terms computed off-line for weighted projection on basis
+	
+			// These account for boundary conditions & for a
+			// non-zero mean value of the even filter
+			T2z0_projection_terms(textinvDes, texttd1, texttd2, texttd3,
+					texttd22, texttd23, texttd33, textfd1, textfd1Imag,
+					textfd2, textfd2Imag, textfd3, textfd3Imag, textfd22,
+					textfd22Imag, textfd23, textfd23Imag, textfd33,
+					textfd33Imag, textps, nscales, ndirs, textdomain,
+					inputImage);
+	
+			T2z0_projection_terms(edgeinvDes, edgetd1, edgetd2, edgetd3,
+					edgetd22, edgetd23, edgetd33, edgefd1, edgefd1Imag,
+					edgefd2, edgefd2Imag, edgefd3, edgefd3Imag, edgefd22,
+					edgefd22Imag, edgefd23, edgefd23Imag, edgefd33,
+					edgefd33Imag, edgeps, nscales, ndirs, edgedomain,
+					inputImage);
+	        if (displayFilters) {
+				double texttimetd1[][][] = new double[ndirs * nscales][][];
+				double texttimetd2[][][] = new double[ndirs * nscales][][];
+				double texttimetd3[][][] = new double[ndirs * nscales][][];
+				double texttimetd22[][][] = new double[ndirs * nscales][][];
+				double texttimetd23[][][] = new double[ndirs * nscales][][];
+				double texttimetd33[][][] = new double[ndirs * nscales][][];
+				double texttimefd1[][][] = new double[ndirs * nscales][][];
+				double texttimefd1Imag[][][] = new double[ndirs * nscales][][];
+				double texttimefd2[][][] = new double[ndirs * nscales][][];
+				double texttimefd2Imag[][][] = new double[ndirs * nscales][][];
+				double texttimefd3[][][] = new double[ndirs * nscales][][];
+				double texttimefd3Imag[][][] = new double[ndirs * nscales][][];
+				double texttimefd22[][][] = new double[ndirs * nscales][][];
+				double texttimefd22Imag[][][] = new double[ndirs * nscales][][];
+				double texttimefd23[][][] = new double[ndirs * nscales][][];
+				double texttimefd23Imag[][][] = new double[ndirs * nscales][][];
+				double texttimefd33[][][] = new double[ndirs * nscales][][];
+				double texttimefd33Imag[][][] = new double[ndirs * nscales][][];
+				double texttimesigmas[] = new double[ndirs * nscales];
+				int texttimeps[] = new int[ndirs * nscales];
+				String texttimedomain = "time";
+				double texttimeomegas[][] = new double[ndirs * nscales][];
+				double texttimeamplitudes[][] = new double[ndirs * nscales][];
+				double texttimeamplitudesImag[][] = new double[ndirs
+						* nscales][];
+				double texttimefilterAngle[] = new double[ndirs * nscales];
+				double texttimesigmaX[] = new double[ndirs * nscales];
+				double edgetimetd1[][][] = new double[ndirs * nscales][][];
+				double edgetimetd2[][][] = new double[ndirs * nscales][][];
+				double edgetimetd3[][][] = new double[ndirs * nscales][][];
+				double edgetimetd22[][][] = new double[ndirs * nscales][][];
+				double edgetimetd23[][][] = new double[ndirs * nscales][][];
+				double edgetimetd33[][][] = new double[ndirs * nscales][][];
+				double edgetimefd1[][][] = new double[ndirs * nscales][][];
+				double edgetimefd1Imag[][][] = new double[ndirs * nscales][][];
+				double edgetimefd2[][][] = new double[ndirs * nscales][][];
+				double edgetimefd2Imag[][][] = new double[ndirs * nscales][][];
+				double edgetimefd3[][][] = new double[ndirs * nscales][][];
+				double edgetimefd3Imag[][][] = new double[ndirs * nscales][][];
+				double edgetimefd22[][][] = new double[ndirs * nscales][][];
+				double edgetimefd22Imag[][][] = new double[ndirs * nscales][][];
+				double edgetimefd23[][][] = new double[ndirs * nscales][][];
+				double edgetimefd23Imag[][][] = new double[ndirs * nscales][][];
+				double edgetimefd33[][][] = new double[ndirs * nscales][][];
+				double edgetimefd33Imag[][][] = new double[ndirs * nscales][][];
+				double edgetimesigmas[] = new double[ndirs * nscales];
+				int edgetimeps[] = new int[ndirs * nscales];
+				String edgetimedomain = "time";
+				double edgetimeomegas[][] = new double[ndirs * nscales][];
+				double edgetimeamplitudes[][] = new double[ndirs * nscales][];
+				double edgetimeamplitudesImag[][] = new double[ndirs
+						* nscales][];
+				double edgetimefilterAngle[] = new double[ndirs * nscales];
+				double edgetimesigmaX[] = new double[ndirs * nscales];
+				double dhout[][] = null;
+				double dhoutImag[][] = null;
+				double dw1[] = null;
+				double dw2[] = null;
+				double mx[] = null;
+				double mag;
+	
+				T1_responses(texttimeomegas, texttimeamplitudes,
+						texttimeamplitudesImag, texttimefilterAngle,
+						texttimesigmaX, texttimetd1, texttimetd2,
+						texttimetd3, texttimetd22, texttimetd23,
+						texttimetd33, texttimefd1, texttimefd1Imag,
+						texttimefd2, texttimefd2Imag, texttimefd3,
+						texttimefd3Imag, texttimefd22, texttimefd22Imag,
+						texttimefd23, texttimefd23Imag, texttimefd33,
+						texttimefd33Imag, texttimesigmas, texttimeps,
+						nscales, ndirs, sig2omega, radianStart, radianEnd,
+						inputXDim, inputYDim, "texture", texttimedomain);
+				T1_responses(edgetimeomegas, edgetimeamplitudes,
+						edgetimeamplitudesImag, edgetimefilterAngle,
+						edgetimesigmaX, edgetimetd1, edgetimetd2,
+						edgetimetd3, edgetimetd22, edgetimetd23,
+						edgetimetd33, edgetimefd1, edgetimefd1Imag,
+						edgetimefd2, edgetimefd2Imag, edgetimefd3,
+						edgetimefd3Imag, edgetimefd22, edgetimefd22Imag,
+						edgetimefd23, edgetimefd23Imag, edgetimefd33,
+						edgetimefd33Imag, edgetimesigmas, edgetimeps,
+						nscales, ndirs, sig2omega, radianStart, radianEnd,
+						inputXDim, inputYDim, "edge", edgetimedomain);
+				// Max of gabor filter response, frequency domain
+				mx = new double[200 * 200];
+				dhout = new double[200][200];
+				dhoutImag = new double[200][200];
+				for (k = 0; k < 40; k++) {
+					freqz2(dhout, dhoutImag, dw1, dw2, texttimetd2[k], 200,
+							200);
+					for (y = 0; y < 200; y++) {
+						for (x = 0; x < 200; x++) {
+							mag = Math.sqrt(dhout[y][x] * dhout[y][x]
+									+ dhoutImag[y][x] * dhoutImag[y][x]);
+							if (mag > mx[x + 200 * y]) {
+								mx[x + 200 * y] = mag;
 							}
 						}
 					}
-					for (x = 0; x < 200; x++) {
-						dhout[x] = null;
-						dhoutImag[x] = null;
-					}
-					dhout = null;
-					dhoutImag = null;
-					int dExtents[] = new int[2];
-					dExtents[0] = 200;
-					dExtents[1] = 200;
-					gImage = new ModelImage(ModelStorageBase.DOUBLE, dExtents,
-							"max_gabor_response");
-					try {
-						gImage.importData(0, mx, true);
-					} catch (IOException e) {
-						MipavUtil.displayError("IOException " + e
-								+ " on gImage.importData(0, mx, true)");
-						setCompleted(false);
-						return;
-					}
-					new ViewJFrameImage(gImage);
-					// Show texture and edge filters at a single scale and
-					// orientation
-					int filId = 10;
-					int texttimeLength = texttimetd2[0].length
-							* texttimetd2[0][0].length;
-					double buffer[] = new double[texttimeLength];
-
-					for (y = 0; y < texttimetd2[0].length; y++) {
-						for (x = 0; x < texttimetd2[0][0].length; x++) {
-							buffer[x + y * texttimetd2[0][0].length] = texttimetd2[filId][y][x];
-						}
-					}
-
-					dExtents[0] = texttimetd2[0][0].length;
-					dExtents[1] = texttimetd2[0].length;
-					texttd2Image = new ModelImage(ModelStorageBase.DOUBLE,
-							dExtents, "text_td2_Image");
-					try {
-						texttd2Image.importData(0, buffer, true);
-					} catch (IOException e) {
-						MipavUtil
-								.displayError("IOException "
-										+ e
-										+ " on texttd2Image.importData(0, buffer, true)");
-						setCompleted(false);
-						return;
-					}
-					new ViewJFrameImage(texttd2Image);
-
-					for (y = 0; y < texttimetd2[0].length; y++) {
-						for (x = 0; x < texttimetd2[0][0].length; x++) {
-							buffer[x + y * texttimetd2[0][0].length] = texttimetd3[filId][y][x];
-						}
-					}
-					texttd3Image = new ModelImage(ModelStorageBase.DOUBLE,
-							dExtents, "text_td3_Image");
-					try {
-						texttd3Image.importData(0, buffer, true);
-					} catch (IOException e) {
-						MipavUtil
-								.displayError("IOException "
-										+ e
-										+ " on texttd3Image.importData(0, buffer, true)");
-						setCompleted(false);
-						return;
-					}
-					new ViewJFrameImage(texttd3Image);
-
-					int edgetimeLength = edgetimetd2[0].length
-							* edgetimetd2[0][0].length;
-					buffer = new double[edgetimeLength];
-
-					for (y = 0; y < edgetimetd2[0].length; y++) {
-						for (x = 0; x < edgetimetd2[0][0].length; x++) {
-							buffer[x + y * edgetimetd2[0][0].length] = edgetimetd2[filId][y][x];
-						}
-					}
-					dExtents[0] = edgetimetd2[0][0].length;
-					dExtents[1] = edgetimetd2[0].length;
-					edgetd2Image = new ModelImage(ModelStorageBase.DOUBLE,
-							dExtents, "edge_td2_Image");
-					try {
-						edgetd2Image.importData(0, buffer, true);
-					} catch (IOException e) {
-						MipavUtil
-								.displayError("IOException "
-										+ e
-										+ " on edgetd2Image.importData(0, buffer, true)");
-						setCompleted(false);
-						return;
-					}
-					new ViewJFrameImage(edgetd2Image);
-
-					for (y = 0; y < edgetimetd2[0].length; y++) {
-						for (x = 0; x < edgetimetd2[0][0].length; x++) {
-							buffer[x + y * edgetimetd2[0][0].length] = edgetimetd3[filId][y][x];
-						}
-					}
-					edgetd3Image = new ModelImage(ModelStorageBase.DOUBLE,
-							dExtents, "edge_td3_Image");
-					try {
-						edgetd3Image.importData(0, buffer, true);
-					} catch (IOException e) {
-						MipavUtil
-								.displayError("IOException "
-										+ e
-										+ " on edgetd3Image.importData(0, buffer, true)");
-						setCompleted(false);
-						return;
-					}
-					new ViewJFrameImage(edgetd3Image);
-				} // if (displayFilters)
-			} // if (setupFilters)
-
-			// mdl criterion terms (refer to paper)
-			// G: gaussian function with maximum at (x == 0) equal to 1
-			// sum G = (filter_scales.^2) * [2*PI]
-			for (k = 0; k < ndirs * nscales; k++) {
-				sgx[k] = (2.0 * Math.PI) * textsigmas[k] * textsigmas[k];
-			}
-			invVariance2 = 1.0 / (2.0 * 0.03 * 0.03);
-			factorSharpness = 1.0;
-			factorMdl = 1.0;
-
-			// Determine scales over which the decision is taken
-			for (k = 0; k < nscales; k++) {
-				scaleswt[k] = k;
-			}
-
-			// For the whole process to run at a single scale modify the code
-			// above
-			// by an outer for loop
-			// for (scaleInd = 0; scaleInd < nscales; scaleInd++) {
-			// scaleswt = scaleInd;
-			// }
-
-			// Main part:
-			// Multi-scale and orientation filtering for texture/edge signals
-
-			// Note: Filtering for texture is bundled with demodulation
-			// This 'inflates' the filter responses where they
-			// are decreased due to a mismatch between
-			// the signal's and the Gabor's central frequencies.
-
-			// channel selection criterion
-			// 'mdl' : mdl -like criterion (current)
-			// 'teag' : teager energy (teager-based DCA)
-			// 'ampl' : amplitude
-			DCAmethod = "mdl";
-
-			// Choose demodulation algorithm
-			// 'gesa' : Gabor - ESA
-			// 'cesa' : Complex-ESA
-			// '' : no demodulation (use Gabor filter's amplitude/frequency)
-
-			esameth = "gesa";
-			textA = new double[inputYDim][inputXDim];
-			textph = new double[inputYDim][inputXDim];
-			textFx = new double[inputYDim][inputXDim];
-			textFy = new double[inputYDim][inputXDim];
-			textidx = new int[inputYDim][inputXDim];
-			texten = new double[inputYDim][inputXDim];
-			textcritDCA = new double[inputYDim][inputXDim];
-			
-			T2z1_filter(textA, textph, textFx, textFy,
-					textidx, texten, textcritDCA, 
-					textomegas, textamplitudes, textamplitudesImag,
-					textfilterAngle, textsigmaX, texttd1, texttd2, texttd3,
-					textfd1, textfd1Imag, textfd2, textfd2Imag, textfd3,
-					textfd3Imag, textfd22, textfd22Imag, textfd23,
-					textfd23Imag, textfd33, textfd33Imag, textps, textdomain,
-					scaleswt, ndirs, inputImage, textinvDes, DCAmethod,
-					esameth, sgx, invVariance2, factorSharpness, factorMdl);
-			
-			// Filtering for edges
-			DCAmethod = "mdl";
-			esameth = ""; // no demodulation edges
-			edgeA = new double[inputYDim][inputXDim];
-			edgeph = new double[inputYDim][inputXDim];
-			edgeFx = new double[inputYDim][inputXDim];
-			edgeFy = new double[inputYDim][inputXDim];
-			edgeidx = new int[inputYDim][inputXDim];
-			edgeen = new double[inputYDim][inputXDim];
-			edgecritDCA = new double[inputYDim][inputXDim];
-			T2z1_filter(edgeA, edgeph, edgeFx, edgeFy,
-					edgeidx, edgeen, edgecritDCA, 
-					edgeomegas, edgeamplitudes, edgeamplitudesImag,
-					edgefilterAngle, edgesigmaX, edgetd1, edgetd2, edgetd3,
-					edgefd1, edgefd1Imag, edgefd2, edgefd2Imag, edgefd3,
-					edgefd3Imag, edgefd22, edgefd22Imag, edgefd23,
-					edgefd23Imag, edgefd33, edgefd33Imag, edgeps, edgedomain,
-					scaleswt, ndirs, inputImage, edgeinvDes, DCAmethod,
-					esameth, sgx, invVariance2, factorSharpness, factorMdl);
-			
-			offset = 1; // A design parameter that allows 'smooth' to become stronger
-			
-			// Different filters at different pixels
-			critEdge = new double[inputYDim][inputXDim];
-			critText = new double[inputYDim][inputXDim];
-			ped = new double[inputYDim][inputXDim];
-			ptx = new double[inputYDim][inputXDim];
-			psm = new double[inputYDim][inputXDim];
-			for (y = 0; y < inputYDim; y++) {
-				for (x = 0; x < inputXDim; x++) {
-				    sg = sgx[edgeidx[y][x]];
-				    mdlCostScale = -Math.log(sg)/sg;
-				    critEdge[y][x] = factorSharpness*(factorMdl*mdlCostScale + edgeen[y][x]*invVariance2) - offset;
-				    sg = sgx[textidx[y][x]];
-				    mdlCostScale = -Math.log(sg)/sg;
-				    critText[y][x] = factorSharpness*(factorMdl*mdlCostScale + texten[y][x]*invVariance2) - offset;
-				    expCritEdge = Math.exp(critEdge[y][x]);
-				    expCritText = Math.exp(critText[y][x]);
-				    denom = expCritEdge + expCritText + 1.0;
-				    ped[y][x] = expCritEdge/denom;
-				    ptx[y][x] = expCritText/denom;
-				    psm[y][x] = 1.0 - ped[y][x] - ptx[y][x];
 				}
+				for (x = 0; x < 200; x++) {
+					dhout[x] = null;
+					dhoutImag[x] = null;
+				}
+				dhout = null;
+				dhoutImag = null;
+				int dExtents[] = new int[2];
+				dExtents[0] = 200;
+				dExtents[1] = 200;
+				gImage = new ModelImage(ModelStorageBase.DOUBLE, dExtents,
+						"max_gabor_response");
+				try {
+					gImage.importData(0, mx, true);
+				} catch (IOException e) {
+					MipavUtil.displayError("IOException " + e
+							+ " on gImage.importData(0, mx, true)");
+					setCompleted(false);
+					return;
+				}
+				new ViewJFrameImage(gImage);
+				// Show texture and edge filters at a single scale and
+				// orientation
+				int filId = 10;
+				int texttimeLength = texttimetd2[0].length
+						* texttimetd2[0][0].length;
+				double buffer[] = new double[texttimeLength];
+	
+				for (y = 0; y < texttimetd2[0].length; y++) {
+					for (x = 0; x < texttimetd2[0][0].length; x++) {
+						buffer[x + y * texttimetd2[0][0].length] = texttimetd2[filId][y][x];
+					}
+				}
+	
+				dExtents[0] = texttimetd2[0][0].length;
+				dExtents[1] = texttimetd2[0].length;
+				texttd2Image = new ModelImage(ModelStorageBase.DOUBLE,
+						dExtents, "text_td2_Image");
+				try {
+					texttd2Image.importData(0, buffer, true);
+				} catch (IOException e) {
+					MipavUtil
+							.displayError("IOException "
+									+ e
+									+ " on texttd2Image.importData(0, buffer, true)");
+					setCompleted(false);
+					return;
+				}
+				new ViewJFrameImage(texttd2Image);
+	
+				for (y = 0; y < texttimetd2[0].length; y++) {
+					for (x = 0; x < texttimetd2[0][0].length; x++) {
+						buffer[x + y * texttimetd2[0][0].length] = texttimetd3[filId][y][x];
+					}
+				}
+				texttd3Image = new ModelImage(ModelStorageBase.DOUBLE,
+						dExtents, "text_td3_Image");
+				try {
+					texttd3Image.importData(0, buffer, true);
+				} catch (IOException e) {
+					MipavUtil
+							.displayError("IOException "
+									+ e
+									+ " on texttd3Image.importData(0, buffer, true)");
+					setCompleted(false);
+					return;
+				}
+				new ViewJFrameImage(texttd3Image);
+	
+				int edgetimeLength = edgetimetd2[0].length
+						* edgetimetd2[0][0].length;
+				buffer = new double[edgetimeLength];
+	
+				for (y = 0; y < edgetimetd2[0].length; y++) {
+					for (x = 0; x < edgetimetd2[0][0].length; x++) {
+						buffer[x + y * edgetimetd2[0][0].length] = edgetimetd2[filId][y][x];
+					}
+				}
+				dExtents[0] = edgetimetd2[0][0].length;
+				dExtents[1] = edgetimetd2[0].length;
+				edgetd2Image = new ModelImage(ModelStorageBase.DOUBLE,
+						dExtents, "edge_td2_Image");
+				try {
+					edgetd2Image.importData(0, buffer, true);
+				} catch (IOException e) {
+					MipavUtil
+							.displayError("IOException "
+									+ e
+									+ " on edgetd2Image.importData(0, buffer, true)");
+					setCompleted(false);
+					return;
+				}
+				new ViewJFrameImage(edgetd2Image);
+	
+				for (y = 0; y < edgetimetd2[0].length; y++) {
+					for (x = 0; x < edgetimetd2[0][0].length; x++) {
+						buffer[x + y * edgetimetd2[0][0].length] = edgetimetd3[filId][y][x];
+					}
+				}
+				edgetd3Image = new ModelImage(ModelStorageBase.DOUBLE,
+						dExtents, "edge_td3_Image");
+				try {
+					edgetd3Image.importData(0, buffer, true);
+				} catch (IOException e) {
+					MipavUtil
+							.displayError("IOException "
+									+ e
+									+ " on edgetd3Image.importData(0, buffer, true)");
+					setCompleted(false);
+					return;
+				}
+				new ViewJFrameImage(edgetd3Image);
+			} // if (displayFilters)
+	
+		// mdl criterion terms (refer to paper)
+		// G: gaussian function with maximum at (x == 0) equal to 1
+		// sum G = (filter_scales.^2) * [2*PI]
+		for (k = 0; k < ndirs * nscales; k++) {
+			sgx[k] = (2.0 * Math.PI) * textsigmas[k] * textsigmas[k];
+		}
+		invVariance2 = 1.0 / (2.0 * 0.03 * 0.03);
+		factorSharpness = 1.0;
+		factorMdl = 1.0;
+	
+		// Determine scales over which the decision is taken
+		for (k = 0; k < nscales; k++) {
+			scaleswt[k] = k;
+		}
+	
+		// For the whole process to run at a single scale modify the code
+		// above
+		// by an outer for loop
+		// for (scaleInd = 0; scaleInd < nscales; scaleInd++) {
+		// scaleswt = scaleInd;
+		// }
+	
+		// Main part:
+		// Multi-scale and orientation filtering for texture/edge signals
+	
+		// Note: Filtering for texture is bundled with demodulation
+		// This 'inflates' the filter responses where they
+		// are decreased due to a mismatch between
+		// the signal's and the Gabor's central frequencies.
+	
+		// channel selection criterion
+		// 'mdl' : mdl -like criterion (current)
+		// 'teag' : teager energy (teager-based DCA)
+		// 'ampl' : amplitude
+		DCAmethod = "mdl";
+	
+		// Choose demodulation algorithm
+		// 'gesa' : Gabor - ESA
+		// 'cesa' : Complex-ESA
+		// '' : no demodulation (use Gabor filter's amplitude/frequency)
+	
+		esameth = "gesa";
+		textA = new double[inputYDim][inputXDim];
+		textph = new double[inputYDim][inputXDim];
+		textFx = new double[inputYDim][inputXDim];
+		textFy = new double[inputYDim][inputXDim];
+		textidx = new int[inputYDim][inputXDim];
+		texten = new double[inputYDim][inputXDim];
+		textcritDCA = new double[inputYDim][inputXDim];
+		
+		T2z1_filter(textA, textph, textFx, textFy,
+				textidx, texten, textcritDCA, 
+				textomegas, textamplitudes, textamplitudesImag,
+				textfilterAngle, textsigmaX, texttd1, texttd2, texttd3,
+				textfd1, textfd1Imag, textfd2, textfd2Imag, textfd3,
+				textfd3Imag, textfd22, textfd22Imag, textfd23,
+				textfd23Imag, textfd33, textfd33Imag, textps, textdomain,
+				scaleswt, ndirs, inputImage, textinvDes, DCAmethod,
+				esameth, sgx, invVariance2, factorSharpness, factorMdl);
+		
+		// Filtering for edges
+		DCAmethod = "mdl";
+		esameth = ""; // no demodulation edges
+		edgeA = new double[inputYDim][inputXDim];
+		edgeph = new double[inputYDim][inputXDim];
+		edgeFx = new double[inputYDim][inputXDim];
+		edgeFy = new double[inputYDim][inputXDim];
+		edgeidx = new int[inputYDim][inputXDim];
+		edgeen = new double[inputYDim][inputXDim];
+		edgecritDCA = new double[inputYDim][inputXDim];
+		T2z1_filter(edgeA, edgeph, edgeFx, edgeFy,
+				edgeidx, edgeen, edgecritDCA, 
+				edgeomegas, edgeamplitudes, edgeamplitudesImag,
+				edgefilterAngle, edgesigmaX, edgetd1, edgetd2, edgetd3,
+				edgefd1, edgefd1Imag, edgefd2, edgefd2Imag, edgefd3,
+				edgefd3Imag, edgefd22, edgefd22Imag, edgefd23,
+				edgefd23Imag, edgefd33, edgefd33Imag, edgeps, edgedomain,
+				scaleswt, ndirs, inputImage, edgeinvDes, DCAmethod,
+				esameth, sgx, invVariance2, factorSharpness, factorMdl);
+		
+		offset = 1; // A design parameter that allows 'smooth' to become stronger
+		
+		// Different filters at different pixels
+		critEdge = new double[inputYDim][inputXDim];
+		critText = new double[inputYDim][inputXDim];
+		ped = new double[inputXDim * inputYDim];
+		ptx = new double[inputXDim * inputYDim];
+		psm = new double[inputXDim * inputYDim];
+		for (y = 0; y < inputYDim; y++) {
+			for (x = 0; x < inputXDim; x++) {
+			    sg = sgx[edgeidx[y][x]];
+			    mdlCostScale = -Math.log(sg)/sg;
+			    critEdge[y][x] = factorSharpness*(factorMdl*mdlCostScale + edgeen[y][x]*invVariance2) - offset;
+			    sg = sgx[textidx[y][x]];
+			    mdlCostScale = -Math.log(sg)/sg;
+			    critText[y][x] = factorSharpness*(factorMdl*mdlCostScale + texten[y][x]*invVariance2) - offset;
+			    expCritEdge = Math.exp(critEdge[y][x]);
+			    expCritText = Math.exp(critText[y][x]);
+			    denom = expCritEdge + expCritText + 1.0;
+			    ped[x + y * inputXDim] = expCritEdge/denom;
+			    ptx[x + y * inputXDim] = expCritText/denom;
+			    psm[x + y * inputXDim] = 1.0 - ped[x + y * inputXDim] - ptx[x + y * inputXDim];
 			}
-			
-			// Visualization of results
-			if (visualization) {
-			    synthText = new double[inputXDim * inputYDim];
-			    synthEdge = new double[inputXDim * inputYDim];
-			    for (y = 0; y < inputYDim; y++) {
-			    	for (x = 0; x < inputXDim; x++) {
-			    		synthText[x + y * inputXDim] = textA[y][x] * Math.cos(textph[y][x]);
-			    		synthEdge[x + y * inputXDim] = edgeA[y][x] * Math.cos(edgeph[y][x]);
-			    	}
-			    }
-			    
-			    medianExtents[0] = inputXDim;
-			    medianExtents[1] = inputYDim;
-			    buf = new double[inputXDim * inputYDim];
-			    for (y = 0; y < inputYDim; y++) {
-			    	for (x = 0; x < inputXDim; x++) {
-			    	    buf[x + y * inputXDim] = textFx[y][x];	
-			    	}
-			    }
-			    medianImage = new ModelImage(ModelStorageBase.DOUBLE, medianExtents, "medianImage");
-			} // if (visualization)
+		}
+		
+		// Visualization of results
+	    synthText = new double[inputXDim * inputYDim];
+	    synthEdge = new double[inputXDim * inputYDim];
+	    for (y = 0; y < inputYDim; y++) {
+	    	for (x = 0; x < inputXDim; x++) {
+	    		synthText[x + y * inputXDim] = textA[y][x] * Math.cos(textph[y][x]);
+	    		synthEdge[x + y * inputXDim] = edgeA[y][x] * Math.cos(edgeph[y][x]);
+	    	}
+	    }
+	    
+	    outputExtents[0] = inputXDim;
+	    outputExtents[1] = inputYDim;
+	    buf = new double[inputXDim * inputYDim];
+	    for (y = 0; y < inputYDim; y++) {
+	    	for (x = 0; x < inputXDim; x++) {
+	    	    buf[x + y * inputXDim] = textFx[y][x];	
+	    	}
+	    }
+	    medianImage = new ModelImage(ModelStorageBase.DOUBLE, outputExtents, "medianImage");
+	    try {
+	    	medianImage.importData(0, buf, true);
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException " + e + " on medianImage.importData(0, buf, true)");
+	    	setCompleted(false);
+	    	return;
+	    }
+	    iters = 1;
+	    ksize = 3;
+	    kernelShape = AlgorithmMedian.SQUARE_KERNEL;
+	    stdDev = 0.0f;
+	    filterType = AlgorithmMedian.STANDARD;
+	    maximumSize = 3;
+	    entireImage = true;
+	    medianAlgo = new AlgorithmMedian(medianImage, iters, ksize, kernelShape, stdDev, filterType, maximumSize, entireImage);
+	    medianAlgo.run();
+	    medianAlgo.finalize();
+	    medianAlgo = null;
+	    try {
+	    	medianImage.exportData(0, inputXDim * inputYDim, buf);
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException " + e + " on medianImage.exportData(0, inputXDim * inputYDim, buf)");
+	    	setCompleted(false);
+	    	return;	
+	    }
+	    
+	    buf2 = new double[inputXDim * inputYDim];
+	    for (y = 0; y < inputYDim; y++) {
+	    	for (x = 0; x < inputXDim; x++) {
+	    	    buf2[x + y * inputXDim] = textFy[y][x];	
+	    	}
+	    }
+	    try {
+	    	medianImage.importData(0, buf2, true);
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException " + e + " on medianImage.importData(0, buf2, true)");
+	    	setCompleted(false);
+	    	return;
+	    }
+	    medianAlgo = new AlgorithmMedian(medianImage, iters, ksize, kernelShape, stdDev, filterType, maximumSize, entireImage);
+	    medianAlgo.run();
+	    medianAlgo.finalize();
+	    medianAlgo = null;
+	    try {
+	    	medianImage.exportData(0, inputXDim * inputYDim, buf2);
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException " + e + " on medianImage.exportData(0, inputXDim * inputYDim, buf2)");
+	    	setCompleted(false);
+	    	return;	
+	    }
+	    freqText = new double[inputXDim * inputYDim];
+	    for (x = 0; x < inputXDim * inputYDim; x++) {
+	    	freqText[x] = Math.sqrt(buf[x]*buf[x] + buf2[x]*buf2[x]);
+	    }
+	    
+	    for (y = 0; y < inputYDim; y++) {
+	    	for (x = 0; x < inputXDim; x++) {
+	    	    buf[x + y * inputXDim] = edgeFx[y][x];	
+	    	}
+	    }
+	    try {
+	    	medianImage.importData(0, buf, true);
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException " + e + " on medianImage.importData(0, buf, true)");
+	    	setCompleted(false);
+	    	return;
+	    }
+	    medianAlgo = new AlgorithmMedian(medianImage, iters, ksize, kernelShape, stdDev, filterType, maximumSize, entireImage);
+	    medianAlgo.run();
+	    medianAlgo.finalize();
+	    medianAlgo = null;
+	    try {
+	    	medianImage.exportData(0, inputXDim * inputYDim, buf);
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException " + e + " on medianImage.exportData(0, inputXDim * inputYDim, buf)");
+	    	setCompleted(false);
+	    	return;	
+	    }
+	    for (y = 0; y < inputYDim; y++) {
+	    	for (x = 0; x < inputXDim; x++) {
+	    	    buf2[x + y * inputXDim] = edgeFy[y][x];	
+	    	}
+	    }
+	    try {
+	    	medianImage.importData(0, buf2, true);
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException " + e + " on medianImage.importData(0, buf2, true)");
+	    	setCompleted(false);
+	    	return;
+	    }
+	    medianAlgo = new AlgorithmMedian(medianImage, iters, ksize, kernelShape, stdDev, filterType, maximumSize, entireImage);
+	    medianAlgo.run();
+	    medianAlgo.finalize();
+	    medianAlgo = null;
+	    try {
+	    	medianImage.exportData(0, inputXDim * inputYDim, buf2);
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException " + e + " on medianImage.exportData(0, inputXDim * inputYDim, buf2)");
+	    	setCompleted(false);
+	    	return;	
+	    }
+	    medianImage.disposeLocal();
+	    medianImage = null;
+	    freqEdge = new double[inputXDim * inputYDim];
+	    for (x = 0; x < inputXDim * inputYDim; x++) {
+	    	freqEdge[x] = Math.sqrt(buf[x]*buf[x] + buf2[x]*buf2[x]);
+	    }
+	    
+	    try {
+	    	destImage[0].importData(0, synthText, true);
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException " + e + " on destImage[0].importData(0, synthText, true)");
+	    	setCompleted(false);
+	    	return;
+	    }
+	    
+	    for (y = 0; y < inputYDim; y++) {
+	    	for (x = 0; x < inputXDim; x++) {
+	    	    buf[x + y * inputXDim] = textA[y][x];	
+	    	}
+	    }
+	    try {
+	    	destImage[1].importData(0, buf, true);
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException " + e + " on destImage[1].importData(0, buf, true)");
+	    	setCompleted(false);
+	    	return;
+	    }
+	    
+	    try {
+	    	destImage[2].importData(0, freqText, true);
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException " + e + " on destImage[2].importData(0, freqText, true)");
+	    	setCompleted(false);
+	    	return;
+	    }
+	    
+	    try {
+	    	destImage[3].importData(0, synthEdge, true);
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException " + e + " on destImage[3].importData(0, synthEdge, true)");
+	    	setCompleted(false);
+	    	return;
+	    }
+	    
+	    for (y = 0; y < inputYDim; y++) {
+	    	for (x = 0; x < inputXDim; x++) {
+	    	    buf[x + y * inputXDim] = edgeA[y][x];	
+	    	}
+	    }
+	    try {
+	    	destImage[4].importData(0, buf, true);
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException " + e + " on destImage[4].importData(0, buf, true)");
+	    	setCompleted(false);
+	    	return;
+	    }
+	    
+	    try {
+	    	destImage[5].importData(0, freqEdge, true);
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException " + e + " on destImage[5].importData(0, freqEdge, true)");
+	    	setCompleted(false);
+	    	return;
+	    }
+	    
 
-		} // for (i = 0; i < srcImage.length; i++)
+	    try {
+	    	destImage[6].importData(0, ptx, true);
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException " + e + " on destImage[6].importData(0, ptx, true)");
+	    	setCompleted(false);
+	    	return;
+	    }
+	    
+	    try {
+	    	destImage[7].importData(0, ped, true);
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException " + e + " on destImage[7].importData(0, ped, true)");
+	    	setCompleted(false);
+	    	return;
+	    }
+	    
+	    try {
+	    	destImage[8].importData(0, psm, true);
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException " + e + " on destImage[8].importData(0, psm, true)");
+	    	setCompleted(false);
+	    	return;
+	    }
+		
+		setCompleted(true);
+		
+		return;
 
 	}
 
