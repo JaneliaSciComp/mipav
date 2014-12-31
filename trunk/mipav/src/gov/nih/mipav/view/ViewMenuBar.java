@@ -208,6 +208,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Slice averaging", "sliceAveraging", 0, null, false),
                         menuBuilder.buildMenuItem("Sobel gradient components", "sobel", 0, null, false),
                         menuBuilder.buildMenuItem("Tamura texture", "Tamura", 0, null, false),
+                        menuBuilder.buildMenuItem("Texture analysis", "TextAnalysis", 0, null, false),
                         menuBuilder.buildMenuItem("Unsharp mask", null, 0, null, false),}),
                 menuBuilder.makeMenu("Filters (wavelet)", false, new JMenuItem[] { // menuBuilder.buildMenuItem("Maxima",
                         // null, null, null),
@@ -1297,6 +1298,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Capture image slices to new frame", false);
             menuBuilder.setMenuItemEnabled("Haralick texture", false);
             menuBuilder.setMenuItemEnabled("Tamura texture", false);
+            menuBuilder.setMenuItemEnabled("Texture analysis", false);
             menuBuilder.setMenuItemEnabled("Hurst index", false);
             menuBuilder.setMenuItemEnabled("Laws texture", false);
             menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", false);
@@ -1356,6 +1358,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Markov random field", false);
             menuBuilder.setMenuItemEnabled("Convergence field", false);
             menuBuilder.setMenuItemEnabled("BRISK", false);
+            menuBuilder.setMenuItemEnabled("Texture analysis", false);
         } else if (numberOfDimensions == 2) {
             menuBuilder.setMenuItemEnabled("Align patient position", false);
             menuBuilder.setMenuItemEnabled("Draw 3D rectangle VOI", false);
