@@ -100,9 +100,10 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
-	public AlgorithmTextureAnalysis(ModelImage[] destImg, ModelImage srcImage,
+	public AlgorithmTextureAnalysis(ModelImage[] destImage, ModelImage srcImage,
 			boolean scaleImage) {
 		super(null, srcImage);
+		this.destImage = destImage;
 		this.scaleImage = scaleImage;
 	}
 
@@ -118,7 +119,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		AlgorithmRGBtoGray gAlgo;
 		ModelImage grayImage = null;
 		ModelImage inputImage = null;
-		int i;
 		int k;
 		int x;
 		int y;
@@ -2167,6 +2167,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		int sizen;
 		int y;
 		int x;
+	
 		if (fd1 != null) {
 			sizem = fd1.length;
 			sizen = fd1[0].length;
@@ -2180,89 +2181,44 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		FFTUtility fft;
 		double ScR[] = new double[sizem * sizen];
 		double ScI[] = new double[sizem * sizen];
+		
+		// Inverse fftshifts
 		if (fd1 != null) {
-			for (y = 0; y < sizem; y++) {
-				for (x = 0; x < sizen; x++) {
-					fd1[y][x] = fd1[y][x] / 65535.0;
-				}
-			}
+		    fftshift(fd1);
 		}
 		if (fd1Imag != null) {
-			for (y = 0; y < sizem; y++) {
-				for (x = 0; x < sizen; x++) {
-					fd1Imag[y][x] = fd1Imag[y][x] / 65535.0;
-				}
-			}
+		    fftshift(fd1Imag);
 		}
-		
 		if (fd2 != null) {
-			for (y = 0; y < sizem; y++) {
-				for (x = 0; x < sizen; x++) {
-					fd2[y][x] = fd2[y][x] / 65535.0;
-				}
-			}
+		    fftshift(fd2);
 		}
 		if (fd2Imag != null) {
-			for (y = 0; y < sizem; y++) {
-				for (x = 0; x < sizen; x++) {
-					fd2Imag[y][x] = fd2Imag[y][x] / 65535.0;
-				}
-			}
+		    fftshift(fd2Imag);
 		}
-		
+		if (fd3 != null) {
+		    fftshift(fd3);
+		}
+		if (fd3Imag != null) {
+		    fftshift(fd3Imag);
+		}
 		if (fd22 != null) {
-			for (y = 0; y < sizem; y++) {
-				for (x = 0; x < sizen; x++) {
-					fd22[y][x] = fd22[y][x] / 65535.0;
-				}
-			}
+		    fftshift(fd22);
 		}
 		if (fd22Imag != null) {
-			for (y = 0; y < sizem; y++) {
-				for (x = 0; x < sizen; x++) {
-					fd22Imag[y][x] = fd22Imag[y][x] / 65535.0;
-				}
-			}
+		    fftshift(fd22Imag);
 		}
-		
+		if (fd23 != null) {
+		    fftshift(fd23);
+		}
+		if (fd23Imag != null) {
+		    fftshift(fd23Imag);
+		}
 		if (fd33 != null) {
-			for (y = 0; y < sizem; y++) {
-				for (x = 0; x < sizen; x++) {
-					fd33[y][x] = fd33[y][x] / 65535.0;
-				}
-			}
+		    fftshift(fd33);
 		}
 		if (fd33Imag != null) {
-			for (y = 0; y < sizem; y++) {
-				for (x = 0; x < sizen; x++) {
-					fd33Imag[y][x] = fd33Imag[y][x] / 65535.0;
-				}
-			}
+		    fftshift(fd33Imag);
 		}
-		
-		
-		
-		for (y = 0; y < sizem; y++) {
-			for (x = 0; x < sizen; x++) {
-				fd3[y][x] = -fd3Imag[y][x] - 1.0;
-				fd3Imag[y][x] = fd3[y][x];
-				fd23[y][x] = -fd23Imag[y][x] - 1.0;
-				fd23Imag[y][x] = fd23[y][x];
-			}
-		}
-		// Inverse fftshifts
-		fftshift(fd1);
-		fftshift(fd1Imag);
-		fftshift(fd2);
-		fftshift(fd2Imag);
-		fftshift(fd3);
-		fftshift(fd3Imag);
-		fftshift(fd22);
-		fftshift(fd22Imag);
-		fftshift(fd23);
-		fftshift(fd23Imag);
-		fftshift(fd33);
-		fftshift(fd33Imag);
 
 		switch (findNorm) {
 		case 0:
