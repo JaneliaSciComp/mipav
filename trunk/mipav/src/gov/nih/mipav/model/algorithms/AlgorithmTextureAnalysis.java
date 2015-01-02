@@ -1713,8 +1713,8 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			}
 		}
 
-		fftshift(omegasn);
-		fftshift(omegasm);
+		ifftshift(omegasn);
+		ifftshift(omegasm);
 
 		Tzz_freq_resp(dirc, dircImag, omegasn, omegasm, sigmaX, filterAngle,
 				omegas, amplitudes, amplitudesImag);
@@ -2167,6 +2167,18 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		int sizen;
 		int y;
 		int x;
+		double fd1Copy[][] = null;
+		double fd1ImagCopy[][] = null;
+		double fd2Copy[][] = null;
+		double fd2ImagCopy[][] = null;
+		double fd3Copy[][] = null;
+		double fd3ImagCopy[][] = null;
+		double fd22Copy[][] = null;
+		double fd22ImagCopy[][] = null;
+		double fd23Copy[][] = null;
+		double fd23ImagCopy[][] = null;
+		double fd33Copy[][] = null;
+		double fd33ImagCopy[][] = null;
 	
 		if (fd1 != null) {
 			sizem = fd1.length;
@@ -2184,51 +2196,123 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		
 		// Inverse fftshifts
 		if (fd1 != null) {
-		    fftshift(fd1);
+			fd1Copy = new double[sizem][sizen];
+			for (y = 0; y < sizem; y++) {
+				for (x = 0; x < sizen; x++) {
+					fd1Copy[y][x] = fd1[y][x];
+				}
+			}
+		    ifftshift(fd1Copy);
 		}
 		if (fd1Imag != null) {
-		    fftshift(fd1Imag);
+			fd1ImagCopy = new double[sizem][sizen];
+			for (y = 0; y < sizem; y++) {
+				for (x = 0; x < sizen; x++) {
+					fd1ImagCopy[y][x] = fd1Imag[y][x];
+				}
+			}
+		    ifftshift(fd1ImagCopy);
 		}
 		if (fd2 != null) {
-		    fftshift(fd2);
+			fd2Copy = new double[sizem][sizen];
+			for (y = 0; y < sizem; y++) {
+				for (x = 0; x < sizen; x++) {
+					fd2Copy[y][x] = fd2[y][x];
+				}
+			}
+		    ifftshift(fd2Copy);
 		}
 		if (fd2Imag != null) {
-		    fftshift(fd2Imag);
+			fd2ImagCopy = new double[sizem][sizen];
+			for (y = 0; y < sizem; y++) {
+				for (x = 0; x < sizen; x++) {
+					fd2ImagCopy[y][x] = fd2Imag[y][x];
+				}
+			}
+		    ifftshift(fd2ImagCopy);
 		}
 		if (fd3 != null) {
-		    fftshift(fd3);
+			fd3Copy = new double[sizem][sizen];
+			for (y = 0; y < sizem; y++) {
+				for (x = 0; x < sizen; x++) {
+					fd3Copy[y][x] = fd3[y][x];
+				}
+			}
+		    ifftshift(fd3Copy);
 		}
 		if (fd3Imag != null) {
-		    fftshift(fd3Imag);
+			fd3ImagCopy = new double[sizem][sizen];
+			for (y = 0; y < sizem; y++) {
+				for (x = 0; x < sizen; x++) {
+					fd3ImagCopy[y][x] = fd3Imag[y][x];
+				}
+			}
+		    ifftshift(fd3ImagCopy);
 		}
 		if (fd22 != null) {
-		    fftshift(fd22);
+			fd22Copy = new double[sizem][sizen];
+			for (y = 0; y < sizem; y++) {
+				for (x = 0; x < sizen; x++) {
+					fd22Copy[y][x] = fd22[y][x];
+				}
+			}
+		    ifftshift(fd22Copy);
 		}
 		if (fd22Imag != null) {
-		    fftshift(fd22Imag);
+			fd22ImagCopy = new double[sizem][sizen];
+			for (y = 0; y < sizem; y++) {
+				for (x = 0; x < sizen; x++) {
+					fd22ImagCopy[y][x] = fd22Imag[y][x];
+				}
+			}
+		    ifftshift(fd22ImagCopy);
 		}
 		if (fd23 != null) {
-		    fftshift(fd23);
+			fd23Copy = new double[sizem][sizen];
+			for (y = 0; y < sizem; y++) {
+				for (x = 0; x < sizen; x++) {
+					fd23Copy[y][x] = fd23[y][x];
+				}
+			}
+		    ifftshift(fd23Copy);
 		}
 		if (fd23Imag != null) {
-		    fftshift(fd23Imag);
+			fd23ImagCopy = new double[sizem][sizen];
+			for (y = 0; y < sizem; y++) {
+				for (x = 0; x < sizen; x++) {
+					fd23ImagCopy[y][x] = fd23Imag[y][x];
+				}
+			}
+		    ifftshift(fd23ImagCopy);
 		}
 		if (fd33 != null) {
-		    fftshift(fd33);
+			fd33Copy = new double[sizem][sizen];
+			for (y = 0; y < sizem; y++) {
+				for (x = 0; x < sizen; x++) {
+					fd33Copy[y][x] = fd33[y][x];
+				}
+			}
+		    ifftshift(fd33Copy);
 		}
 		if (fd33Imag != null) {
-		    fftshift(fd33Imag);
+			fd33ImagCopy = new double[sizem][sizen];
+			for (y = 0; y < sizem; y++) {
+				for (x = 0; x < sizen; x++) {
+					fd33ImagCopy[y][x] = fd33Imag[y][x];
+				}
+			}
+		    ifftshift(fd33ImagCopy);
 		}
 
 		switch (findNorm) {
 		case 0:
 			for (y = 0; y < sizem; y++) {
 				for (x = 0; x < sizen; x++) {
-					ScR[x + y * sizen] = fd1[y][x]
-							* fftSupportPatch[x + y * sizen] - fd1Imag[y][x]
+					ScR[x + y * sizen] = fd1Copy[y][x]
+							* fftSupportPatch[x + y * sizen] - fd1ImagCopy[y][x]
 							* fftSupportPatchImag[x + y * sizen];
-					ScI[x + y * sizen] = fd1Imag[y][x]
-							* fftSupportPatch[x + y * sizen] + fd1[y][x]
+					ScI[x + y * sizen] = fd1ImagCopy[y][x]
+							* fftSupportPatch[x + y * sizen] + fd1Copy[y][x]
 							* fftSupportPatchImag[x + y * sizen];
 				}
 			}
@@ -2251,11 +2335,11 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 
 			for (y = 0; y < sizem; y++) {
 				for (x = 0; x < sizen; x++) {
-					ScR[x + y * sizen] = fd2[y][x]
-							* fftSupportPatch[x + y * sizen] - fd2Imag[y][x]
+					ScR[x + y * sizen] = fd2Copy[y][x]
+							* fftSupportPatch[x + y * sizen] - fd2ImagCopy[y][x]
 							* fftSupportPatchImag[x + y * sizen];
-					ScI[x + y * sizen] = fd2Imag[y][x]
-							* fftSupportPatch[x + y * sizen] + fd2[y][x]
+					ScI[x + y * sizen] = fd2ImagCopy[y][x]
+							* fftSupportPatch[x + y * sizen] + fd2Copy[y][x]
 							* fftSupportPatchImag[x + y * sizen];
 				}
 			}
@@ -2278,11 +2362,11 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 
 			for (y = 0; y < sizem; y++) {
 				for (x = 0; x < sizen; x++) {
-					ScR[x + y * sizen] = fd3[y][x]
-							* fftSupportPatch[x + y * sizen] - fd3Imag[y][x]
+					ScR[x + y * sizen] = fd3Copy[y][x]
+							* fftSupportPatch[x + y * sizen] - fd3ImagCopy[y][x]
 							* fftSupportPatchImag[x + y * sizen];
-					ScI[x + y * sizen] = fd3Imag[y][x]
-							* fftSupportPatch[x + y * sizen] + fd3[y][x]
+					ScI[x + y * sizen] = fd3ImagCopy[y][x]
+							* fftSupportPatch[x + y * sizen] + fd3Copy[y][x]
 							* fftSupportPatchImag[x + y * sizen];
 				}
 			}
@@ -2305,11 +2389,11 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 
 			for (y = 0; y < sizem; y++) {
 				for (x = 0; x < sizen; x++) {
-					ScR[x + y * sizen] = fd22[y][x]
-							* fftSupportPatch[x + y * sizen] - fd22Imag[y][x]
+					ScR[x + y * sizen] = fd22Copy[y][x]
+							* fftSupportPatch[x + y * sizen] - fd22ImagCopy[y][x]
 							* fftSupportPatchImag[x + y * sizen];
-					ScI[x + y * sizen] = fd22Imag[y][x]
-							* fftSupportPatch[x + y * sizen] + fd22[y][x]
+					ScI[x + y * sizen] = fd22ImagCopy[y][x]
+							* fftSupportPatch[x + y * sizen] + fd22Copy[y][x]
 							* fftSupportPatchImag[x + y * sizen];
 				}
 			}
@@ -2332,11 +2416,11 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 
 			for (y = 0; y < sizem; y++) {
 				for (x = 0; x < sizen; x++) {
-					ScR[x + y * sizen] = fd23[y][x]
-							* fftSupportPatch[x + y * sizen] - fd23Imag[y][x]
+					ScR[x + y * sizen] = fd23Copy[y][x]
+							* fftSupportPatch[x + y * sizen] - fd23ImagCopy[y][x]
 							* fftSupportPatchImag[x + y * sizen];
-					ScI[x + y * sizen] = fd23Imag[y][x]
-							* fftSupportPatch[x + y * sizen] + fd23[y][x]
+					ScI[x + y * sizen] = fd23ImagCopy[y][x]
+							* fftSupportPatch[x + y * sizen] + fd23Copy[y][x]
 							* fftSupportPatchImag[x + y * sizen];
 				}
 			}
@@ -2359,11 +2443,11 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 
 			for (y = 0; y < sizem; y++) {
 				for (x = 0; x < sizen; x++) {
-					ScR[x + y * sizen] = fd33[y][x]
-							* fftSupportPatch[x + y * sizen] - fd33Imag[y][x]
+					ScR[x + y * sizen] = fd33Copy[y][x]
+							* fftSupportPatch[x + y * sizen] - fd33ImagCopy[y][x]
 							* fftSupportPatchImag[x + y * sizen];
-					ScI[x + y * sizen] = fd33Imag[y][x]
-							* fftSupportPatch[x + y * sizen] + fd33[y][x]
+					ScI[x + y * sizen] = fd33ImagCopy[y][x]
+							* fftSupportPatch[x + y * sizen] + fd33Copy[y][x]
 							* fftSupportPatchImag[x + y * sizen];
 				}
 			}
@@ -2388,11 +2472,11 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		case 1:
 			for (y = 0; y < sizem; y++) {
 				for (x = 0; x < sizen; x++) {
-					ScR[x + y * sizen] = fd1[y][x]
-							* fftSupportPatch[x + y * sizen] - fd1Imag[y][x]
+					ScR[x + y * sizen] = fd1Copy[y][x]
+							* fftSupportPatch[x + y * sizen] - fd1ImagCopy[y][x]
 							* fftSupportPatchImag[x + y * sizen];
-					ScI[x + y * sizen] = fd1Imag[y][x]
-							* fftSupportPatch[x + y * sizen] + fd1[y][x]
+					ScI[x + y * sizen] = fd1ImagCopy[y][x]
+							* fftSupportPatch[x + y * sizen] + fd1Copy[y][x]
 							* fftSupportPatchImag[x + y * sizen];
 				}
 			}
@@ -2415,11 +2499,11 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 
 			for (y = 0; y < sizem; y++) {
 				for (x = 0; x < sizen; x++) {
-					ScR[x + y * sizen] = fd1[y][x]
-							* fftImagePatch[x + y * sizen] - fd1Imag[y][x]
+					ScR[x + y * sizen] = fd1Copy[y][x]
+							* fftImagePatch[x + y * sizen] - fd1ImagCopy[y][x]
 							* fftImagePatchImag[x + y * sizen];
-					ScI[x + y * sizen] = fd1Imag[y][x]
-							* fftImagePatch[x + y * sizen] + fd1[y][x]
+					ScI[x + y * sizen] = fd1ImagCopy[y][x]
+							* fftImagePatch[x + y * sizen] + fd1Copy[y][x]
 							* fftImagePatchImag[x + y * sizen];
 				}
 			}
@@ -2451,11 +2535,11 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		case 2:
 			for (y = 0; y < sizem; y++) {
 				for (x = 0; x < sizen; x++) {
-					ScR[x + y * sizen] = fd2[y][x]
-							* fftImagePatch[x + y * sizen] - fd2Imag[y][x]
+					ScR[x + y * sizen] = fd2Copy[y][x]
+							* fftImagePatch[x + y * sizen] - fd2ImagCopy[y][x]
 							* fftImagePatchImag[x + y * sizen];
-					ScI[x + y * sizen] = fd2Imag[y][x]
-							* fftImagePatch[x + y * sizen] + fd2[y][x]
+					ScI[x + y * sizen] = fd2ImagCopy[y][x]
+							* fftImagePatch[x + y * sizen] + fd2Copy[y][x]
 							* fftImagePatchImag[x + y * sizen];
 				}
 			}
@@ -2478,11 +2562,11 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 
 			for (y = 0; y < sizem; y++) {
 				for (x = 0; x < sizen; x++) {
-					ScR[x + y * sizen] = fd3[y][x]
-							* fftImagePatch[x + y * sizen] - fd3Imag[y][x]
+					ScR[x + y * sizen] = fd3Copy[y][x]
+							* fftImagePatch[x + y * sizen] - fd3ImagCopy[y][x]
 							* fftImagePatchImag[x + y * sizen];
-					ScI[x + y * sizen] = fd3Imag[y][x]
-							* fftImagePatch[x + y * sizen] + fd3[y][x]
+					ScI[x + y * sizen] = fd3ImagCopy[y][x]
+							* fftImagePatch[x + y * sizen] + fd3Copy[y][x]
 							* fftImagePatchImag[x + y * sizen];
 				}
 			}
@@ -2505,7 +2589,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		} // switch (fnorm)
 	}
 
-	// Works for both fftshift and ifftshift
 	private void fftshift(double mtx[][]) {
 		int sizem = mtx.length;
 		int sizen = mtx[0].length;
@@ -2513,6 +2596,37 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		int x;
 		int DCY = (int) Math.ceil(sizem / 2.0);
 		int DCX = (int) Math.ceil(sizen / 2.0);
+		double temp[][] = new double[sizem][sizen];
+		for (y = 0; y < DCY; y++) {
+			for (x = 0; x < DCX; x++) {
+				temp[y][x] = mtx[y + DCY][x + DCX];
+			}
+			for (x = DCX; x < sizen; x++) {
+				temp[y][x] = mtx[y + DCY][x - DCX];
+			}
+		}
+		for (y = DCY; y < sizem; y++) {
+			for (x = 0; x < DCX; x++) {
+				temp[y][x] = mtx[y - DCY][x + DCX];
+			}
+			for (x = DCX; x < sizen; x++) {
+				temp[y][x] = mtx[y - DCY][x - DCX];
+			}
+		}
+		for (y = 0; y < sizem; y++) {
+			for (x = 0; x < sizen; x++) {
+				mtx[y][x] = temp[y][x];
+			}
+		}
+	}
+	
+	private void ifftshift(double mtx[][]) {
+		int sizem = mtx.length;
+		int sizen = mtx[0].length;
+		int y;
+		int x;
+		int DCY = (int) Math.floor(sizem / 2.0);
+		int DCX = (int) Math.floor(sizen / 2.0);
 		double temp[][] = new double[sizem][sizen];
 		for (y = 0; y < DCY; y++) {
 			for (x = 0; x < DCX; x++) {
@@ -3023,7 +3137,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 
 		if (!useMesh) {
 			// Inverse fftshift
-			fftshift(apad);
+			ifftshift(apad);
 			FFTR = new double[n2 * n1];
 			FFTI = new double[n2 * n1];
 			for (y = 0; y < n2; y++) {
