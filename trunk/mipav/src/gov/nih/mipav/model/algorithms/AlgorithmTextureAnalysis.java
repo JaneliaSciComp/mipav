@@ -2326,7 +2326,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			fft.finalize();
 			fft = null;
 
-			Sc1 = new double[yDim][xDim];
 			for (y = 0; y < yDim; y++) {
 				for (x = 0; x < xDim; x++) {
 					Sc1[y][x] = ScR[x + patchSize + sizen * (y + patchSize)];
@@ -2353,7 +2352,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			fft.finalize();
 			fft = null;
 
-			Sc2 = new double[yDim][xDim];
 			for (y = 0; y < yDim; y++) {
 				for (x = 0; x < xDim; x++) {
 					Sc2[y][x] = ScR[x + patchSize + sizen * (y + patchSize)];
@@ -2380,7 +2378,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			fft.finalize();
 			fft = null;
 
-			Sc3 = new double[yDim][xDim];
 			for (y = 0; y < yDim; y++) {
 				for (x = 0; x < xDim; x++) {
 					Sc3[y][x] = ScR[x + patchSize + sizen * (y + patchSize)];
@@ -2407,7 +2404,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			fft.finalize();
 			fft = null;
 
-			Sc22 = new double[yDim][xDim];
 			for (y = 0; y < yDim; y++) {
 				for (x = 0; x < xDim; x++) {
 					Sc22[y][x] = ScR[x + patchSize + sizen * (y + patchSize)];
@@ -2433,8 +2429,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			fft.run();
 			fft.finalize();
 			fft = null;
-
-			Sc23 = new double[yDim][xDim];
+			
 			for (y = 0; y < yDim; y++) {
 				for (x = 0; x < xDim; x++) {
 					Sc23[y][x] = ScR[x + patchSize + sizen * (y + patchSize)];
@@ -2461,7 +2456,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			fft.finalize();
 			fft = null;
 
-			Sc33 = new double[yDim][xDim];
 			for (y = 0; y < yDim; y++) {
 				for (x = 0; x < xDim; x++) {
 					Sc33[y][x] = ScR[x + patchSize + sizen * (y + patchSize)];
