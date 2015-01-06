@@ -19,6 +19,7 @@ import java.util.BitSet;
 import java.util.Vector;
 
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -105,6 +106,8 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 	 */
 	private JList tips;
 	
+	private JRadioButton showAxonRB;
+	
 	public PlugInDialog3DSWCViewer(File file, JTextPane text, String unit){
 		
 		swcFile = file;
@@ -141,6 +144,35 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 			append("Closing viewer...", attr);
 			frame.close();
 			dispose();
+		}else if(command.equals("axon")){
+			alg.showAxon();
+			Object obj = tips.getSelectedValue();
+			if(obj instanceof String){
+				String label = obj.toString();
+				String num = label.split(" ")[1];
+				Integer branch;
+				try{
+					branch = Integer.valueOf(num);
+				} catch (NumberFormatException ne){
+					//This should never happen but on the off-chance something goes wrong
+					SimpleAttributeSet redText = new SimpleAttributeSet(attr);
+					StyleConstants.setForeground(redText, Color.red.darker());
+					append("Invalid branch choice. Check for non-integer numbers.", redText);
+					return;	
+				}
+				BitSet axonMask = alg.highlightAxon(branch);
+				
+				frame.getComponentImage().setPaintMask(axonMask);
+				frame.getControls().getTools().setPaintColor(Color.RED);
+				frame.updateImages(true);
+			}
+		}else if(command.equals("hull")){
+			alg.showHull();
+			BitSet hullMask = alg.convexHull();
+			frame.getComponentImage().setPaintMask(hullMask);
+			frame.getControls().getTools().setPaintColor(Color.GREEN);
+			frame.updateImages(true);
+			
 		}else{
 			super.actionPerformed(event);
 		}
@@ -169,8 +201,9 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 				tips.setListData(tipName);
 				tips.setSelectedIndex(0);
 				BitSet axonMask = alg.highlightAxon(tipList.get(0));
-	
 				frame.getComponentImage().setPaintMask(axonMask);
+				//BitSet hullMask = alg.convexHull();
+				//frame.getComponentImage().setPaintMask(hullMask);
 				frame.getControls().getTools().setOpacity(1.0f);
 				frame.getControls().getTools().setPaintColor(Color.RED);
 				frame.addWindowListener(this);
@@ -212,6 +245,10 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 	private void init(){
 		
 		setTitle("3D Neuron Viewer");
+		
+		getContentPane().removeAll();
+		
+		getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.PAGE_AXIS));
 		
 		sliders = new JSlider[6];
 		spinners = new JSpinner[6];
@@ -272,7 +309,33 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 			topPanel.add(spinners[i], gbc);
 		}
 		
-		getContentPane().add(topPanel, BorderLayout.NORTH);
+		//getContentPane().add(topPanel, BorderLayout.NORTH);
+		getContentPane().add(topPanel);
+		
+		JPanel overlayPanel = new JPanel();
+		overlayPanel.setForeground(Color.black);
+		overlayPanel.setBorder(new TitledBorder(BorderFactory.createLineBorder(Color.black), "Overlay Options"));
+		overlayPanel.setLayout(new GridLayout(0,2));
+		
+		ButtonGroup overlayGroup = new ButtonGroup();
+		
+		showAxonRB = new JRadioButton("Highlight Axon");
+		showAxonRB.setFont(serif12);
+		showAxonRB.setActionCommand("axon");
+		showAxonRB.addActionListener(this);
+		showAxonRB.setSelected(true);
+		overlayGroup.add(showAxonRB);
+		overlayPanel.add(showAxonRB);
+		
+		JRadioButton showHullRB = new JRadioButton("Display Hull");
+		showHullRB.setFont(serif12);
+		showHullRB.setActionCommand("hull");
+		showHullRB.addActionListener(this);
+		overlayGroup.add(showHullRB);
+		overlayPanel.add(showHullRB);
+		
+		getContentPane().add(overlayPanel);
+		
 		
 		tips = new JList();
 		tips.addListSelectionListener(this);
@@ -307,7 +370,8 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 		
 		middlePanel.add(rbPanel, BorderLayout.SOUTH);
 		
-		getContentPane().add(middlePanel, BorderLayout.CENTER);
+		//getContentPane().add(middlePanel, BorderLayout.CENTER);
+		getContentPane().add(middlePanel);
 		
 		JPanel bottomPanel = new JPanel();
 		bottomPanel.setForeground(Color.black);
@@ -320,7 +384,8 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 		bottomPanel.add(OKButton);
 		bottomPanel.add(cancelButton);
 		
-		getContentPane().add(bottomPanel, BorderLayout.SOUTH);
+		//getContentPane().add(bottomPanel, BorderLayout.SOUTH);
+		getContentPane().add(bottomPanel);
 		
 		
 	}
@@ -435,27 +500,29 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 	 * a filament from the list. 
 	 */
 	public void valueChanged(ListSelectionEvent e) {
-		Object obj = tips.getSelectedValue();
-		if(obj instanceof String){
-			String label = obj.toString();
-			String num = label.split(" ")[1];
-			Integer branch;
-			try{
-				branch = Integer.valueOf(num);
-			} catch (NumberFormatException ne){
-				//This should never happen but on the off-chance something goes wrong
-				SimpleAttributeSet redText = new SimpleAttributeSet(attr);
-				StyleConstants.setForeground(redText, Color.red.darker());
-				append("Invalid branch choice. Check for non-integer numbers.", redText);
-				return;	
+		if(showAxonRB.isSelected()){
+			Object obj = tips.getSelectedValue();
+			if(obj instanceof String){
+				String label = obj.toString();
+				String num = label.split(" ")[1];
+				Integer branch;
+				try{
+					branch = Integer.valueOf(num);
+				} catch (NumberFormatException ne){
+					//This should never happen but on the off-chance something goes wrong
+					SimpleAttributeSet redText = new SimpleAttributeSet(attr);
+					StyleConstants.setForeground(redText, Color.red.darker());
+					append("Invalid branch choice. Check for non-integer numbers.", redText);
+					return;	
+				}
+				BitSet axonMask = alg.highlightAxon(branch);
+				
+				frame.getComponentImage().setPaintMask(axonMask);
+				frame.updateImages(true);
+				/*frame.getControls().getTools().setOpacity(1.0f);
+				frame.getControls().getTools().setPaintColor(Color.RED);
+				frame.setVisible(true);*/
 			}
-			BitSet axonMask = alg.highlightAxon(branch);
-			
-			frame.getComponentImage().setPaintMask(axonMask);
-			frame.updateImages(true);
-			/*frame.getControls().getTools().setOpacity(1.0f);
-			frame.getControls().getTools().setPaintColor(Color.RED);
-			frame.setVisible(true);*/
 		}
 	}
 
