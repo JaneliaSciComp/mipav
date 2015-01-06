@@ -3425,7 +3425,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		for (i = 0; i < amplitudesOriginal.length; i++) {
 			amplitudesOddImag[i + amplitudesOriginal.length - 1] = amplitudesOriginal[i];
 		}
-		omegasOut = new double[2 * omegas2.length - 1];
 		for (i = 0; i < omegas2.length - 1; i++) {
 			omegasOut[i] = -omegas2[omegas2.length - 1 - i];
 		}
