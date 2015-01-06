@@ -79,6 +79,8 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		}else if(command.equals("cancel")){
 			if(isExitRequired()){
 				ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+			}else{
+				dispose();
 			}
 		}else if(command.equals(JFileChooser.APPROVE_SELECTION)){
 			File selected = fileChooser.getSelectedFile();

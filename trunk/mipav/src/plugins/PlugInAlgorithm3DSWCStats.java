@@ -41,11 +41,14 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 	
 	private boolean axonUseLength;
 	
+	private boolean saveData;
+	
 	public PlugInAlgorithm3DSWCStats(ArrayList<File> surfaces, String units, JTextPane textBox){
 		super();
 		surfaceFiles = surfaces;
 		resolutionUnit = units;
 		textArea = textBox;
+		saveData = true;
 		
 		swcCoordinates = new ArrayList<ArrayList<float[]>>();
 	}
@@ -61,7 +64,8 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		StyleConstants.setForeground(redText, Color.red.darker());
 		try{
 			try {
-				textArea.getDocument().remove(0, textArea.getDocument().getLength());
+				if(textArea != null)
+					textArea.getDocument().remove(0, textArea.getDocument().getLength());
 			} catch (BadLocationException e) {}
 
 			loop:for(File f : surfaceFiles){
@@ -109,19 +113,22 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				float[] branchLengths = recalculateDistances();
 				addToMessages(messages);
 
-				try {
-					String output = writeSWC(f, messages, branchLengths);
-					append("Converted to SWC -> " + output, attr);
-				} catch (IOException e) {
-					append("Could not write SWC for " + f.getName(), redText);
-					allGood = false;
-				}
-				try{
-					String output = exportStatsToCSV(f, messages, branchLengths);
-					append("Exported stats to CSV -> " + output, attr);
-				} catch (IOException e) {
-					append("Could not export stats to CSV for " + f.getName(), redText);
-					allGood = false;
+				if(saveData){
+				
+					try {
+						String output = writeSWC(f, messages, branchLengths);
+						append("Converted to SWC -> " + output, attr);
+					} catch (IOException e) {
+						append("Could not write SWC for " + f.getName(), redText);
+						allGood = false;
+					}
+					try{
+						String output = exportStatsToCSV(f, messages, branchLengths, maxOrder);
+						append("Exported stats to CSV -> " + output, attr);
+					} catch (IOException e) {
+						append("Could not export stats to CSV for " + f.getName(), redText);
+						allGood = false;
+					}
 				}
 			}
 
@@ -147,15 +154,30 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		axonUseLength = useLength;
 	}
 	
+	public void setSaveData(boolean save){
+		saveData = save;
+	}
+	
+	public ArrayList<ArrayList<float[]>> getFilaments(){
+		return swcCoordinates;
+	}
+	
 	private void append(String message, AttributeSet a){
-		Document doc = textArea.getDocument();
-		try {
-			doc.insertString(doc.getLength(), message + "\n", a);
-		} catch (BadLocationException e) {
-			e.printStackTrace();
-		}
 		
-		textArea.setCaretPosition(doc.getLength());
+		if(textArea == null){
+			if(a.getAttribute(StyleConstants.Foreground) == Color.red.darker())
+				System.err.println(message);
+			else System.out.println(message);
+		}else{
+			Document doc = textArea.getDocument();
+			try {
+				doc.insertString(doc.getLength(), message + "\n", a);
+			} catch (BadLocationException e) {
+				e.printStackTrace();
+			}
+			
+			textArea.setCaretPosition(doc.getLength());
+		}
 	}
 	
 	/**
@@ -236,7 +258,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		}
 	}
 	
-	private String exportStatsToCSV(File file, ArrayList<String> messages, float[] branchLengths) throws IOException{
+	private String exportStatsToCSV(File file, ArrayList<String> messages, float[] branchLengths, int maxOrder) throws IOException{
 		String parent = file.getParent();
 		String name = file.getName();
 		name = name.substring(0, name.lastIndexOf("."));
@@ -247,11 +269,13 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		
 		fw.append("Units," + resolutionUnit + "\n");
 		
-		String branchInfo = "";
+		writeBranchInformation(fw, maxOrder);
+		
+		/*String branchInfo = "";
 		branchInfo += "Total branch length," + String.valueOf(branchLengths[0]) + "\n";
 		branchInfo += "Minus axon," + String.valueOf(branchLengths[1]) + "\n\n";
 		
-		fw.append(branchInfo);
+		fw.append(branchInfo);*/
 		
 		String header = "Branch Number, Branch Order, Branch Length, Length along parent \n";
 		
@@ -904,6 +928,40 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		}
 		
 		return maxOrder;
+		
+	}
+	
+	private void writeBranchInformation(FileWriter fw, int maxOrder) throws IOException{
+		
+		float[] lengths = new float[maxOrder];
+		for(int i=0;i<lengths.length;i++){
+			lengths[i] = 0.0F;
+		}
+		
+		
+		for(int i=1;i<swcCoordinates.size();i++){
+			ArrayList<float[]> fil = swcCoordinates.get(i);
+			float filLength = fil.get(fil.size()-1)[3];
+			int order = (int) fil.get(0)[5];
+			lengths[order-1] += filLength;
+		}
+		
+		float allBranches = 0;
+		float higherOrder = 0;
+		
+		for(int i=1;i<maxOrder;i++){
+			allBranches += lengths[i];
+			if(i!=1)
+				higherOrder += lengths[i];
+		}
+		
+		fw.append("Branch lengths\n");
+		fw.append("Total Branches," + String.valueOf(allBranches) + "\n");
+		fw.append("Higher order," + String.valueOf(higherOrder) + "\n\n");
+		
+		for(int i=1;i<maxOrder;i++){
+			fw.append("Order " + String.valueOf(i) + "," + String.valueOf(lengths[i]) + "\n");
+		}
 		
 	}
 	

@@ -18,6 +18,8 @@ import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
+import quickhull3d.Point3d;
+import quickhull3d.QuickHull3D;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -60,6 +62,10 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 	
 	private boolean axonUseLength;
 	
+	private boolean showAxon;
+	
+	private float convexHullVolume = 0f;
+	
 	public PlugInAlgorithm3DSWCViewer(File file, JTextPane text, String resUnit, boolean useLength){
 		
 		super();
@@ -74,6 +80,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		textArea = text;
 		resolutionUnit = resUnit;
 		axonUseLength = useLength;
+		showAxon = true;
 	}
 	
 	@Override
@@ -146,6 +153,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 			setCompleted(false);
 			return;
 		}
+		
 		setCompleted(true);
 		
 	}
@@ -330,16 +338,222 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		
 		makeViewImage();
 		
-		BitSet axonMask = highlightAxon(currentAxon);
+		
 		ViewJFrameImage frame = destImage.getParentFrame();
 		
-		frame.getComponentImage().setPaintMask(axonMask);
-		//frame.getControls().getTools().setOpacity(1.0f);
-		//frame.getControls().getTools().setPaintColor(Color.RED);
+		if(showAxon){
+			BitSet axonMask = highlightAxon(currentAxon);
+			frame.getComponentImage().setPaintMask(axonMask);
+		}else{
+			BitSet hullMask = convexHull();
+			frame.getComponentImage().setPaintMask(hullMask);
+		}
 		
 		frame.updateImages(true);
 	}
+	
+	public void showAxon(){
+		showAxon = true;
+		
+	}
+	
+	public void showHull(){
+		showAxon = false;
+	}
 
+	public BitSet convexHull(){
+		
+		ArrayList<Integer> tips = getTips();
+		
+		ArrayList<Point3d> ptList = new ArrayList<Point3d>();
+
+		BitSet hullMask = new BitSet(512*512);
+		
+		tips.add(0, -1);
+		
+		for(int i : tips){
+			float[] pt = spacePts.get(i+1);
+			ptList.add(new Point3d(pt[0], pt[1], pt[2]));
+		}
+		
+		Point3d[] pts = new Point3d[ptList.size()];
+		ptList.toArray(pts);
+		
+		QuickHull3D hull = new QuickHull3D(pts);
+		
+		Point3d[] verticies = hull.getVertices();
+		int[][] faceVerticies = hull.getFaces();
+		
+		/*ArrayList<Integer> toRemove = new ArrayList<Integer>();
+		
+		for(int i=0;i<verticies.length;i++){
+			Point3d vertex = verticies[i];
+			int ind = ptList.indexOf(vertex);
+			if(ind > -1)
+			toRemove.add(tips.get(ind));
+		}
+		for(int i=0;i<toRemove.size();i++){
+			tips.remove(toRemove.get(i));
+		}
+		
+		int firstInd = tips.get(1);
+		ArrayList<float[]> fil = swcCoordinates.get(firstInd);
+		float[] start = fil.get(0);
+		float[] tip = fil.get(fil.size()-1);
+		
+		Vector3f headPt = new Vector3f(tip[0], tip[1], tip[2]);
+		Vector3f vecC = new Vector3f(start[0], start[1], start[2]);
+		vecC = Vector3f.sub(headPt, vecC);
+		
+		float minDist = Float.MAX_VALUE;
+		int minInd = -1;
+		
+		for(int i=0;i<faceVerticies.length;i++){
+			int[] vert = faceVerticies[i];
+			Point3d ptA = verticies[vert[0]];
+			Point3d ptB = verticies[vert[1]];
+			Point3d ptC = verticies[vert[2]];
+			
+			Vector3f originPt = new Vector3f((float)ptA.x, (float)ptA.y, (float)ptA.z);
+			Vector3f vecA = new Vector3f((float)ptB.x, (float)ptB.y, (float)ptB.z);
+			Vector3f vecB = new Vector3f((float)ptC.x, (float)ptC.y, (float)ptC.z);
+			
+			float distance = distanceVectorToPlane(originPt, vecA, vecB, vecC, headPt);
+			
+			if(distance > 0 && distance < minDist){
+				minDist = distance;
+				minInd = i;
+			}
+			
+		}
+		
+		System.out.println(firstInd);
+		System.out.println(minDist);
+		
+		int i = minInd;
+		
+		for(int j=0;j<faceVerticies[i].length;j++){
+			
+			int j1 = j+1;
+			if(j1==faceVerticies[i].length)
+				j1 = 0;
+			int ind1 = faceVerticies[i][j];
+			int ind2 = faceVerticies[i][j1];
+			Point3d pt03d = verticies[ind1];
+			Point3d pt13d = verticies[ind2];
+			
+			Point pt0 = new Point((int)pt03d.x, (int)pt03d.y);
+			Point pt1 = new Point((int)pt13d.x, (int)pt13d.y);
+			
+			ArrayList<Point> line = bresenham(pt0, pt1);
+
+			for(int k=0;k<line.size();k++){
+				Point pt = line.get(k);
+				if(pt.x > 0 && pt.x < 512 &&
+						pt.y > 0 && pt.y < 512)
+					hullMask.set(pt.x + pt.y*512);
+			}
+			
+			//System.out.print(faceVerticies[i][j] + " ");
+		}*/
+		
+		for(int i=0;i<faceVerticies.length;i++){
+			for(int j=0;j<faceVerticies[i].length;j++){
+				
+				int j1 = j+1;
+				if(j1==faceVerticies[i].length)
+					j1 = 0;
+				int ind1 = faceVerticies[i][j];
+				int ind2 = faceVerticies[i][j1];
+				Point3d pt03d = verticies[ind1];
+				Point3d pt13d = verticies[ind2];
+				
+				Point pt0 = new Point((int)pt03d.x, (int)pt03d.y);
+				Point pt1 = new Point((int)pt13d.x, (int)pt13d.y);
+				
+				ArrayList<Point> line = bresenham(pt0, pt1);
+
+				for(int k=0;k<line.size();k++){
+					Point pt = line.get(k);
+					if(pt.x > 0 && pt.x < 512 &&
+							pt.y > 0 && pt.y < 512)
+						hullMask.set(pt.x + pt.y*512);
+				}
+				
+				//System.out.print(faceVerticies[i][j] + " ");
+			}
+			//System.out.println();
+		}
+		
+		System.out.println(convexHullVolume() + " is volume");
+		
+		return hullMask;
+		
+	}
+	
+	public float convexHullVolume(){
+		
+		ArrayList<Integer> tips = getTips();
+		
+		ArrayList<Point3d> ptList = new ArrayList<Point3d>();
+
+		float volume = 0;
+		
+		float[] origin = swcCoordinates.get(0).get(0);
+		ptList.add(new Point3d(origin[0], origin[1], origin[2]));
+		
+		for(int i : tips){
+			ArrayList<float[]> fil = swcCoordinates.get(i);
+			float[] pt = fil.get(fil.size()-1);
+			ptList.add(new Point3d(pt[0], pt[1], pt[2]));
+		}
+		
+		Point3d[] pts = new Point3d[ptList.size()];
+		ptList.toArray(pts);
+		
+		QuickHull3D hull = new QuickHull3D(pts);
+		
+		Point3d centroid = new Point3d();
+		
+		for(int i=0;i<pts.length;i++){
+			Point3d pt = pts[i];
+			centroid.add(pt);
+		}
+		
+		double num = pts.length;
+		centroid.x /= num;
+		centroid.y /= num;
+		centroid.z /= num;
+		
+		Point3d[] verticies = hull.getVertices();
+		int[][] faceVerticies = hull.getFaces();
+		
+		for(int i=0;i<faceVerticies.length;i++){
+			
+			Point3d ptA = new Point3d(verticies[faceVerticies[i][0]]);
+			Point3d ptB = new Point3d(verticies[faceVerticies[i][1]]);
+			Point3d ptC = new Point3d(verticies[faceVerticies[i][2]]);
+			Point3d ptCentroid = new Point3d(centroid);
+			//Point3d ptCentroid = new Point3d(boxVec.X, boxVec.Y, boxVec.Z);
+			
+			ptB.sub(ptA);
+			ptC.sub(ptA);
+			ptCentroid.sub(ptA);
+			
+			Vector3f vecA = new Vector3f((float)ptB.x, (float)ptB.y, (float)ptB.z);
+			Vector3f vecB = new Vector3f((float)ptC.x, (float)ptC.y, (float)ptC.z);
+			Vector3f vecC = new Vector3f((float)ptCentroid.x, (float)ptCentroid.y, (float)ptCentroid.z);
+			Vector3f axb = Vector3f.cross(vecA, vecB);
+			
+			volume += Math.abs(axb.dot(vecC));
+			//System.out.println(Math.abs(axb.dot(vecC)));
+		}
+		
+		volume /= 6.0f;
+		
+		return volume;
+	}
+	
 	/**
 	 * This method handles the actual writing and calculation steps
 	 * after the user has chosen an axon. Other than rearranging
@@ -358,6 +572,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		boolean allGood = true;
 		
 		try{
+			convexHullVolume = convexHullVolume();
 			calculateDistances();
 			int maxOrder;
 			if(axonUseLength){
@@ -376,7 +591,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 				allGood = false;
 			}
 			try{
-				String output = exportStatsToCSV(swcFile, messages, branchLengths);
+				String output = exportStatsToCSV(swcFile, messages, branchLengths, maxOrder);
 				append("Exported stats to CSV -> " + output, attr);
 			} catch (IOException e) {
 				append("Could not export stats to CSV for " + swcFile.getName(), redText);
@@ -391,6 +606,32 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		}
 		
 		setCompleted(allGood);
+	}
+	
+	private float distanceVectorToPlane(Vector3f originPt, Vector3f vecA, Vector3f vecB, Vector3f vecC, Vector3f headPt){
+		
+		Vector3f a = Vector3f.sub(vecA, originPt);
+		Vector3f b = Vector3f.sub(vecB, originPt);
+		Vector3f pt = Vector3f.sub(headPt, originPt);
+		//Vector vecC is already relative since it contains direction information
+		
+		Vector3f d = Vector3f.cross(a, b);
+		float num = d.dot(pt);
+		float denom = d.dot(vecC);
+		
+		if(denom == 0){
+			return -1.0f;
+		}
+		
+		float magC = vecC.length();
+		float distance = num * magC / denom;
+		
+		if(distance < 0){
+			return -distance;
+		}else{
+			return -1.0f;
+		}
+		
 	}
 
 	/**
@@ -931,7 +1172,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		
 	}
 
-	private String exportStatsToCSV(File file, ArrayList<String> messages, float[] branchLengths) throws IOException{
+	private String exportStatsToCSV(File file, ArrayList<String> messages, float[] branchLengths, int maxOrder) throws IOException{
 		String parent = file.getParent();
 		String name = file.getName();
 		name = name.substring(0, name.lastIndexOf("."));
@@ -942,11 +1183,15 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		
 		fw.append("Units," + resolutionUnit + "\n");
 		
-		String branchInfo = "";
+		//Write the new branch info here
+		
+		writeBranchInformation(fw, maxOrder);
+		
+		/*String branchInfo = "";
 		branchInfo += "Total branch length," + String.valueOf(branchLengths[0]) + "\n";
 		branchInfo += "Minus axon," + String.valueOf(branchLengths[1]) + "\n\n";
 		
-		fw.append(branchInfo);
+		fw.append(branchInfo);*/
 		
 		String header = "Branch Number, Branch Order, Branch Length, Length along parent \n";
 		
@@ -1352,6 +1597,40 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		makeViewImage();
 		
 		currentAxon = getTips().get(0);
+		
+	}
+	
+	private void writeBranchInformation(FileWriter fw, int maxOrder) throws IOException{
+		
+		float[] lengths = new float[maxOrder];
+		for(int i=0;i<lengths.length;i++){
+			lengths[i] = 0.0F;
+		}
+		
+		for(int i=1;i<swcCoordinates.size();i++){
+			ArrayList<float[]> fil = swcCoordinates.get(i);
+			float filLength = fil.get(fil.size()-1)[3];
+			int order = (int) fil.get(0)[5];
+			lengths[order-1] += filLength;
+		}
+		
+		float allBranches = 0;
+		float higherOrder = 0;
+		
+		for(int i=1;i<maxOrder;i++){
+			allBranches += lengths[i];
+			if(i!=1)
+				higherOrder += lengths[i];
+		}
+		
+		fw.append("Convex hull volume," + convexHullVolume + "\n");
+		fw.append("Branch lengths\n");
+		fw.append("Total Branches," + String.valueOf(allBranches) + "\n");
+		fw.append("Higher order," + String.valueOf(higherOrder) + "\n\n");
+		
+		for(int i=1;i<maxOrder;i++){
+			fw.append("Order " + String.valueOf(i) + "," + String.valueOf(lengths[i]) + "\n");
+		}
 		
 	}
 
