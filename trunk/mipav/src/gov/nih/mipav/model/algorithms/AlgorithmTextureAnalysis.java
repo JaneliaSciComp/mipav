@@ -3349,7 +3349,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			ampNegImag = amplitudesImag[cen - k - 1];
 			omega = Math.PI * omegas[cen + k - 1];
 			ampPosAbs = Math.sqrt(ampPos * ampPos + ampPosImag * ampPosImag);
-			if (ampPosAbs > 1.0E-8) {
+			if (ampPosAbs > 1.0E-7) {
 				ampDiff = ampPos - ampNeg;
 				ampDiffImag = ampPosImag - ampNegImag;
 				ampDiffAbs = Math.sqrt(ampDiff * ampDiff + ampDiffImag
@@ -3370,7 +3370,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 						}
 					}
 				}
-			} // if (ampPosAbs < 1.0E-8)
+			} // if (ampPosAbs > 1.0E-7)
 		} // for (k = 1; k <= namp; k++)
 
 		return res;
