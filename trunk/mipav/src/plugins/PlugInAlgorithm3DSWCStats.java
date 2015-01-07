@@ -17,6 +17,7 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.file.FileIO;
 
 /**
  * New plugin for Akanni Clarke of the Giniger Lab. Conceptually similar to the 
@@ -30,29 +31,44 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 
 	private ArrayList<ArrayList<float[]>> swcCoordinates;
-	
-	private ArrayList<File> surfaceFiles;
-	
+
+	private File surfaceFile;
+
 	private String resolutionUnit;
-	
+
 	private JTextPane textArea;
-	
+
 	private boolean disconnected;
-	
+
 	private boolean axonUseLength;
-	
+
 	private boolean saveData;
-	
-	public PlugInAlgorithm3DSWCStats(ArrayList<File> surfaces, String units, JTextPane textBox){
+
+	private String imageFile;
+
+	/*public PlugInAlgorithm3DSWCStats(ArrayList<File> surfaces, String units, JTextPane textBox){
 		super();
 		surfaceFiles = surfaces;
 		resolutionUnit = units;
 		textArea = textBox;
 		saveData = true;
-		
+
+		swcCoordinates = new ArrayList<ArrayList<float[]>>();
+	}*/
+
+	public PlugInAlgorithm3DSWCStats(String imFile, File surface, String units, JTextPane textBox){
+		super();
+
+		imageFile = imFile;
+
+		surfaceFile = surface;
+		resolutionUnit = units;
+		textArea = textBox;
+		saveData = true;
+
 		swcCoordinates = new ArrayList<ArrayList<float[]>>();
 	}
-	
+
 	@Override
 	public void runAlgorithm() {
 		boolean allGood = true;
@@ -68,69 +84,71 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 					textArea.getDocument().remove(0, textArea.getDocument().getLength());
 			} catch (BadLocationException e) {}
 
-			loop:for(File f : surfaceFiles){
+			swcCoordinates.clear();
 
-				swcCoordinates.clear();
-				
-				append("Reading " + f.getName(), attr);
-				readSurfaceFile(f);
-				//writeIndividualFilaments(f);
-				
-				disconnected = false;
-				
-				ArrayList<ArrayList<Integer>> forward = makeConnections();
+			append("Reading " + surfaceFile.getName(), attr);
+			readSurfaceFile(surfaceFile);
+			//writeIndividualFilaments(f);
 
+			disconnected = false;
+
+			ArrayList<ArrayList<Integer>> forward = makeConnections();
+
+			for(int i=1;i<swcCoordinates.size();i++){
+				ArrayList<float[]> fil = swcCoordinates.get(i);
+				if(fil.get(0)[4] == Float.NEGATIVE_INFINITY){
+					//No connection was made, something is wrong
+					disconnected = true;
+					break;
+				}
+			}
+			if(disconnected){
+				//Try version with tolerance
+				forward = makeConnectionsTol();
+				//Test out one more time
 				for(int i=1;i<swcCoordinates.size();i++){
 					ArrayList<float[]> fil = swcCoordinates.get(i);
 					if(fil.get(0)[4] == Float.NEGATIVE_INFINITY){
 						//No connection was made, something is wrong
-						disconnected = true;
-						break;
-					}
-				}
-				if(disconnected){
-					//Try version with tolerance
-					forward = makeConnectionsTol();
-					//Test out one more time
-					for(int i=1;i<swcCoordinates.size();i++){
-						ArrayList<float[]> fil = swcCoordinates.get(i);
-						if(fil.get(0)[4] == Float.NEGATIVE_INFINITY){
-							//No connection was made, something is wrong
-							append(f.getName() + " is not connected properly.", redText);
-							allGood = false;
-							continue loop;
-						}
-					}
-				}
-				
-				calculateDistances();
-				int maxOrder;
-				if(axonUseLength)
-					maxOrder = determineOrder_useLength(forward);
-				else 
-					maxOrder = determineOrder(forward);
-				ArrayList<String> messages = consolidateFilaments(forward, maxOrder);
-				float[] branchLengths = recalculateDistances();
-				addToMessages(messages);
-
-				if(saveData){
-				
-					try {
-						String output = writeSWC(f, messages, branchLengths);
-						append("Converted to SWC -> " + output, attr);
-					} catch (IOException e) {
-						append("Could not write SWC for " + f.getName(), redText);
-						allGood = false;
-					}
-					try{
-						String output = exportStatsToCSV(f, messages, branchLengths, maxOrder);
-						append("Exported stats to CSV -> " + output, attr);
-					} catch (IOException e) {
-						append("Could not export stats to CSV for " + f.getName(), redText);
+						append(surfaceFile.getName() + " is not connected properly.", redText);
 						allGood = false;
 					}
 				}
 			}
+
+			float convexHullVolume = PlugInAlgorithm3DSWCViewer.convexHullVolume(swcCoordinates, forward);
+
+			calculateDistances();
+			int maxOrder;
+			if(axonUseLength)
+				maxOrder = determineOrder_useLength(forward);
+			else 
+				maxOrder = determineOrder(forward);
+			ArrayList<String> messages = consolidateFilaments(forward, maxOrder);
+			float[] branchLengths = recalculateDistances();
+			addToMessages(messages);
+			append("Opening image " + imageFile, attr);
+			FileIO reader = new FileIO();
+			srcImage = reader.readImage(imageFile);
+			
+			if(saveData){
+
+				try {
+					String output = writeSWC(surfaceFile, messages, branchLengths);
+					append("Converted to SWC -> " + output, attr);
+				} catch (IOException e) {
+					append("Could not write SWC for " + surfaceFile.getName(), redText);
+					allGood = false;
+				}
+				try{
+					String output = exportStatsToCSV(surfaceFile, messages, branchLengths, maxOrder, convexHullVolume);
+					append("Exported stats to CSV -> " + output, attr);
+				} catch (IOException e) {
+					append("Could not export stats to CSV for " + surfaceFile.getName(), redText);
+					allGood = false;
+				}
+			}
+
 
 			if(allGood){
 				SimpleAttributeSet greenText = new SimpleAttributeSet(attr);
@@ -149,21 +167,21 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		}
 		setCompleted(allGood);
 	}
-	
+
 	public void useAxonLength(boolean useLength){
 		axonUseLength = useLength;
 	}
-	
+
 	public void setSaveData(boolean save){
 		saveData = save;
 	}
-	
+
 	public ArrayList<ArrayList<float[]>> getFilaments(){
 		return swcCoordinates;
 	}
-	
+
 	private void append(String message, AttributeSet a){
-		
+
 		if(textArea == null){
 			if(a.getAttribute(StyleConstants.Foreground) == Color.red.darker())
 				System.err.println(message);
@@ -175,11 +193,11 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 			} catch (BadLocationException e) {
 				e.printStackTrace();
 			}
-			
+
 			textArea.setCaretPosition(doc.getLength());
 		}
 	}
-	
+
 	/**
 	 * Determines the length of each individual filament
 	 * read from the Imaris trace. These will be used
@@ -196,8 +214,8 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 					int c = (int) fil.get(0)[4];
 					ArrayList<float[]> conn = swcCoordinates.get(c);
 					float[] tail = conn.get(conn.size()-1);
-					
-					
+
+
 					float dist = 0;
 					for(int j=0;j<3;j++){
 						float diff = tail[j] - head[j];
@@ -233,7 +251,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 			}
 		}
 	}
-	
+
 	/**
 	 * Adds the branch length and distance along the
 	 * axon/parent to the output messages. 
@@ -257,35 +275,40 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 			messages.set(i, message);
 		}
 	}
-	
-	private String exportStatsToCSV(File file, ArrayList<String> messages, float[] branchLengths, int maxOrder) throws IOException{
+
+	private String exportStatsToCSV(File file, ArrayList<String> messages, 
+			float[] branchLengths, int maxOrder, float convexHullVolume) throws IOException{
 		String parent = file.getParent();
 		String name = file.getName();
 		name = name.substring(0, name.lastIndexOf("."));
 		String output = parent + File.separator + name + "_stats.csv";
 		File outputFile = new File(output);
-		
+
 		FileWriter fw = new FileWriter(outputFile);
-		
+
 		fw.append("Units," + resolutionUnit + "\n");
-		
+
+		PlugInAlgorithmSWCVolume alg = new PlugInAlgorithmSWCVolume(srcImage, swcCoordinates);
+		alg.run();
+		fw.append("Neuron volume," + alg.getVolume() + "\n");
+		fw.append("Convex hull volume," + convexHullVolume + "\n");
 		writeBranchInformation(fw, maxOrder);
-		
+
 		/*String branchInfo = "";
 		branchInfo += "Total branch length," + String.valueOf(branchLengths[0]) + "\n";
 		branchInfo += "Minus axon," + String.valueOf(branchLengths[1]) + "\n\n";
-		
+
 		fw.append(branchInfo);*/
-		
+
 		String header = "Branch Number, Branch Order, Branch Length, Length along parent \n";
-		
+
 		fw.append(header);
-		
+
 		for(String s : messages){
 			StringBuilder sb = new StringBuilder(30);
 			String[] rows = s.split("\n");
 			int rowNum = 1;
-			
+
 			//Write branch number (or axon);
 			String branch = rows[rowNum].replace("#", "").trim();
 			String[] branchSplit = branch.split(" ");
@@ -305,14 +328,14 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				rowNum++;
 			}
 			sb.append(",");
-			
+
 			//Write length
 			String length = rows[rowNum].replace("#", "").trim();
 			String[] lengthSplit = length.split(" ");
 			sb.append(lengthSplit[2]);
 			sb.append(",");
 			rowNum++;
-			
+
 			//Write length along parent
 			if(branchSplit.length == 1){
 				sb.append("Axon");
@@ -324,12 +347,12 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 			sb.append("\n");
 			fw.append(sb.toString());
 		}
-		
+
 		fw.close();
-		
+
 		return output;
 	}
-	
+
 	/**
 	 * Recalculate distances for the consolidated branches
 	 * so that it also includes the branch length and
@@ -339,7 +362,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 	private float[] recalculateDistances(){
 		//0 => Total branch length, 1=> Higher order branch length
 		float[] branchLengths = new float[2];
-		
+
 		for(int i=0;i<swcCoordinates.size();i++){
 			ArrayList<float[]> fil = swcCoordinates.get(i);
 			float parentLength = 0;
@@ -380,16 +403,16 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 			branchLengths[0] += currPt[3];
 			fil.get(0)[3] = parentLength;//head hold length along parent branch
 		}
-		
+
 		ArrayList<float[]> axon = swcCoordinates.get(0);
 		float axonLength = axon.get(axon.size()-1)[3];
 		branchLengths[1] = branchLengths[0] - axonLength;
-		
+
 		//Should now have length for all branches
-		
+
 		return branchLengths;
 	}
-	
+
 	/**
 	 * Build both forward and backwards connections based on
 	 * the coordinates read from the Imaris trace. The 
@@ -399,7 +422,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 	 * @return
 	 */
 	private ArrayList<ArrayList<Integer>> makeConnections(){
-		
+
 		//Forward connections
 		ArrayList<ArrayList<Integer>> connections = new ArrayList<ArrayList<Integer>>();
 		for(int i=0;i<swcCoordinates.size();i++){
@@ -413,7 +436,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 			for(int j=i-1;j>=0;j--){
 				fil = swcCoordinates.get(j);
 				float[] tail = fil.get(fil.size()-1);
-				
+
 				if(head[0] == tail[0] && head[1] == tail[1] && head[2] == tail[2]){
 					head[4] = j;
 					connections.get(j).add(i);
@@ -421,10 +444,10 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				}
 			}
 		}
-		
+
 		return connections;
 	}
-	
+
 	/**
 	 * Build both forward and backwards connections based on
 	 * the coordinates read from the Imaris trace. The 
@@ -436,9 +459,9 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 	 * @return
 	 */
 	private ArrayList<ArrayList<Integer>> makeConnectionsTol(){
-		
+
 		float tolerance = 0.15F;
-		
+
 		//Forward connections
 		ArrayList<ArrayList<Integer>> connections = new ArrayList<ArrayList<Integer>>();
 		for(int i=0;i<swcCoordinates.size();i++){
@@ -457,7 +480,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 					float diff = head[k] - tail[k];
 					dist += diff*diff;
 				}
-				
+
 				if(dist < tolerance){//To deal with non-overlapping filaments
 					head[4] = j;
 					connections.get(j).add(i);
@@ -465,10 +488,10 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				}
 			}
 		}
-		
+
 		return connections;
 	}
-	
+
 	private String formatSWCLine(int lineNum, float[] line) {
 		String format = "%d %d %4.5f %4.5f %4.5f %4.2f %d \n";
 		int type;
@@ -477,60 +500,60 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		}else{
 			type = 3;
 		}
-		
-		return String.format(format, lineNum, type, line[0], line[1], line[2], 0.1F, (int)line[4]);
+
+		return String.format(format, lineNum, type, line[0], line[1], line[2], line[6], (int)line[4]);
 	}
-	
+
 	private String writeSWC(File file, ArrayList<String> messages, float[] branchLengths) throws IOException{
 		String parent = file.getParent();
 		String name = file.getName();
 		name = name.substring(0, name.lastIndexOf("."));
 		String output = parent + File.separator + name + ".swc";
 		File outputFile = new File(output);
-		
+
 		FileWriter fw = new FileWriter(outputFile);
-		
+
 		String header = 
-				  "#-----------------------------------------------------------------\n"
-				+ "# SWC generated in MIPAV\n"
-				+ "#-----------------------------------------------------------------\n"
-				+ "# Organization of branches is as such:\n"
-				+ "# -Axon is the first filament written (and noted as such)\n"
-				+ "# -Branches are written in order of closest to its parent's\n"
-				+ "#  origin\n"
-				+ "# -Higher order branches are given further identification\n"
-				+ "# \n"
-				+ "# For example: \n"
-				+ "# Branch 1 is the closest child branch of where the axon\n"
-				+ "# originates and Branch 2 is the second closest child branch.\n"
-				+ "# Branch 1.1 is the closest child branch from where the\n"
-				+ "# first branch originated from.\n"
-				+ "#-----------------------------------------------------------------\n"
-				+ "# Branch Length Information\n"
-				+ "# Total branch length: " + String.valueOf(branchLengths[0]) + " " + resolutionUnit + "\n"
-				+ "# Minus axon: " + String.valueOf(branchLengths[1]) + " " + resolutionUnit + "\n"
-				+ "#-----------------------------------------------------------------\n"
-				+ "# Begin SWC Coordinates\n";
+				"#-----------------------------------------------------------------\n"
+						+ "# SWC generated in MIPAV\n"
+						+ "#-----------------------------------------------------------------\n"
+						+ "# Organization of branches is as such:\n"
+						+ "# -Axon is the first filament written (and noted as such)\n"
+						+ "# -Branches are written in order of closest to its parent's\n"
+						+ "#  origin\n"
+						+ "# -Higher order branches are given further identification\n"
+						+ "# \n"
+						+ "# For example: \n"
+						+ "# Branch 1 is the closest child branch of where the axon\n"
+						+ "# originates and Branch 2 is the second closest child branch.\n"
+						+ "# Branch 1.1 is the closest child branch from where the\n"
+						+ "# first branch originated from.\n"
+						+ "#-----------------------------------------------------------------\n"
+						+ "# Branch Length Information\n"
+						+ "# Total branch length: " + String.valueOf(branchLengths[0]) + " " + resolutionUnit + "\n"
+						+ "# Minus axon: " + String.valueOf(branchLengths[1]) + " " + resolutionUnit + "\n"
+						+ "#-----------------------------------------------------------------\n"
+						+ "# Begin SWC Coordinates\n";
 
 		fw.append(header);
-		
+
 		int counter = 1;
-		
+
 		for(int i=0;i<swcCoordinates.size();i++){
 			ArrayList<float[]> fil = swcCoordinates.get(i);
 			String message = messages.get(i);
 			fw.append(message);
-			
+
 			for(int j=0 ;j<fil.size();j++, counter++){
 				fw.append(formatSWCLine(counter, fil.get(j)));
 			}
 		}
-		
+
 		fw.close();
-		
+
 		return output;
 	}
-	
+
 	/**
 	 * Consolidate the multitude of filaments from the input to make
 	 * stat tracking easier. Also organizes the output SWC so that
@@ -541,16 +564,16 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 	 * @return
 	 */
 	private ArrayList<String> consolidateFilaments(ArrayList<ArrayList<Integer>> connections, int maxOrder){
-		
+
 		int offset;
 		if(disconnected){
 			offset = 0;
 		}else{
 			offset = 1;
 		}
-		
+
 		ArrayList<ArrayList<float[]>> newFilaments = new ArrayList<ArrayList<float[]>>();
-		
+
 		ArrayList<float[]> current = new ArrayList<float[]>();
 		ArrayList<String> messages = new ArrayList<String>();
 		//Keep track of which branches we need to add.
@@ -560,10 +583,10 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		for(int i=0;i<maxOrder;i++){
 			dequeList.add(new ArrayDeque<Integer>());
 		}
-		
+
 		//To keep track of branch numbering. 
 		int[] branchNumber = new int[maxOrder];
-		
+
 		//Keep track of which line in the SWC this coordinate
 		//is connected to.
 		int counter = 1;
@@ -574,9 +597,9 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		fil.get(1)[5] = 1;
 		current.add(fil.get(0));
 		dequeList.get(0).add(0);
-		
+
 		boolean isFinished = false;
-		
+
 		while(!isFinished){
 			//This looks confusing, but maybe the comments will be helpful
 			ArrayDeque<Integer> currentFil = dequeList.get(currentOrder);
@@ -595,7 +618,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				current.add(fa);
 				counter++;
 			}
-			
+
 			//Reached the end of a branch, need to see if there
 			//are child branches that need to be added as well
 			if(connected.size() == 0){
@@ -622,7 +645,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 					message += "# Branch Order: " + String.valueOf(currentOrder);
 					message += "\n";
 				}
-				
+
 				messages.add(message);
 				current = new ArrayList<float[]>();
 				//Highest order branch, can't keep going higher
@@ -656,7 +679,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				}else{
 					currentOrder++;//Go to higher branch since you populated it
 				}
-				
+
 			}
 			//This is not an endpoint
 			else{
@@ -681,18 +704,18 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 					}else{
 						dequeList.get(order).add(next);
 					}
-					
+
 				}
 			}
 		}
-		
+
 		swcCoordinates = newFilaments;
-		
+
 		return messages;
 	}
-	
-	
-	
+
+
+
 	/**
 	 * Imaris filament files are patterned in a way that branch organization 
 	 * can be inferred from it. Simplified the algorithm to determine the 
@@ -701,25 +724,25 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 	 * Basically take the last step of the three pass method earlier since
 	 * in forward connections, the lower number is the one that goes
 	 * towards the axon and others are child branches. 
-	*/
+	 */
 	private int determineOrder(ArrayList<ArrayList<Integer>> connections){
-		
+
 		int maxOrder = 1;
-		
+
 		ArrayDeque<Integer> queue = new ArrayDeque<Integer>();
-		
+
 		ArrayList<float[]> fil = swcCoordinates.get(0);
 		ArrayList<Integer> branches = connections.get(0);
 		float[] head = fil.get(0);
-		
+
 		head[5] = 1;
-		
+
 		for(int i=0;i<branches.size();i++){
 			int ind = branches.get(i);
 			queue.add(ind);
 			fil = swcCoordinates.get(i);
 		}
-		
+
 		for(int i=0;i<branches.size();i++){
 			int ind = branches.get(i);
 			fil = swcCoordinates.get(ind);
@@ -729,7 +752,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				fil.get(0)[5] = head[5] + 1;
 			}
 		}
-		
+
 		while(!queue.isEmpty()){
 			int i = queue.poll();
 			fil = swcCoordinates.get(i);
@@ -742,7 +765,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				queue.add(ind);
 				fil = swcCoordinates.get(j);
 			}
-			
+
 			for(int j=0;j<branches.size();j++){
 				int ind = branches.get(j);
 				fil = swcCoordinates.get(ind);
@@ -756,10 +779,10 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				}
 			}
 		}
-		
+
 		return maxOrder;
 	}
-	
+
 	/**
 	 * Three pass process to determine branch ordering and which filaments
 	 * are the axon. Determines by finding the longest path from the first
@@ -770,25 +793,25 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 	 * 
 	 * @param connections
 	 */
-	
+
 	private int determineOrder_useLength(ArrayList<ArrayList<Integer>> connections){
-		
+
 		ArrayDeque<Integer> queue = new ArrayDeque<Integer>();
-		
+
 		ArrayList<float[]> fil = swcCoordinates.get(0);
 		float[] head = fil.get(0);
 		float[] tail = fil.get(fil.size()-1);
 		float dist = tail[3];
-		
+
 		int maxOrder = 1;
-		
+
 		ArrayList<Integer> branches = connections.get(0);
 		for(int i : branches){
 			queue.add(i);
 			fil = swcCoordinates.get(i);
 			fil.get(0)[3] = dist;
 		}
-		
+
 		TreeMap<Float, Integer> tmap = new TreeMap<Float, Integer>(new Comparator<Float>(){
 			@Override
 			public int compare(Float o1, Float o2) {
@@ -802,8 +825,8 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 					return 0;
 			}
 		});
-		
-		 
+
+
 		// Pass 1
 		// Accumulate the length of each filament. At the head
 		// of the filament, store the cumulative length for 
@@ -811,7 +834,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		// length to that tip in a tree map.
 		// 
 		// Pretty much a BFS as the ArrayDeque is used as a queue
-		 
+
 		while(!queue.isEmpty()){
 			int i = queue.poll();
 			fil = swcCoordinates.get(i);
@@ -830,8 +853,8 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				fil.get(0)[3] = dist;
 			}
 		}
-		
-		
+
+
 		// Pass 2
 		// Tree map is based on length to the tips. Working
 		// backwards from the furthest points to the closest
@@ -843,11 +866,11 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		// already has been reached by a longer filament 
 		// (which should always be the case because of the
 		// tree map), then move on to the next tip.
-		  
+
 		// Rearrange forward connections so that the first one
 		// in the list is the longest path away from this 
 		// filament.
-		 
+
 		while(!tmap.isEmpty()){
 			Entry<Float, Integer> entry = tmap.pollFirstEntry();
 			int i = entry.getValue();
@@ -871,25 +894,25 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				}
 			}
 		}
-		
+
 		// Pass 3
 		// Forward connections are organized so that the longest 
 		// path is the first element. Increment the branch order
 		// of all the other elements in the list. Traverse the
 		// entire neuron in a BFS. 
-		 
-		
+
+
 		fil = swcCoordinates.get(0);
 		head = fil.get(0);
 		head[5] = 1;
-		
+
 		branches = connections.get(0);
 		for(int i=0;i<branches.size();i++){
 			int ind = branches.get(i);
 			queue.add(ind);
 			fil = swcCoordinates.get(i);
 		}
-		
+
 		for(int i=0;i<branches.size();i++){
 			int ind = branches.get(i);
 			fil = swcCoordinates.get(ind);
@@ -899,7 +922,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				fil.get(0)[5] = head[5] + 1;
 			}
 		}
-		
+
 		while(!queue.isEmpty()){
 			int i = queue.poll();
 			fil = swcCoordinates.get(i);
@@ -912,7 +935,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				queue.add(ind);
 				fil = swcCoordinates.get(j);
 			}
-			
+
 			for(int j=0;j<branches.size();j++){
 				int ind = branches.get(j);
 				fil = swcCoordinates.get(ind);
@@ -926,45 +949,45 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				}
 			}
 		}
-		
+
 		return maxOrder;
-		
+
 	}
-	
+
 	private void writeBranchInformation(FileWriter fw, int maxOrder) throws IOException{
-		
+
 		float[] lengths = new float[maxOrder];
 		for(int i=0;i<lengths.length;i++){
 			lengths[i] = 0.0F;
 		}
-		
-		
+
+
 		for(int i=1;i<swcCoordinates.size();i++){
 			ArrayList<float[]> fil = swcCoordinates.get(i);
 			float filLength = fil.get(fil.size()-1)[3];
 			int order = (int) fil.get(0)[5];
 			lengths[order-1] += filLength;
 		}
-		
+
 		float allBranches = 0;
 		float higherOrder = 0;
-		
+
 		for(int i=1;i<maxOrder;i++){
 			allBranches += lengths[i];
 			if(i!=1)
 				higherOrder += lengths[i];
 		}
-		
+
 		fw.append("Branch lengths\n");
 		fw.append("Total Branches," + String.valueOf(allBranches) + "\n");
 		fw.append("Higher order," + String.valueOf(higherOrder) + "\n\n");
-		
+
 		for(int i=1;i<maxOrder;i++){
 			fw.append("Order " + String.valueOf(i) + "," + String.valueOf(lengths[i]) + "\n");
 		}
-		
+
 	}
-	
+
 	/**
 	 * Reads surface file. Taken from drosophila registration dialog written by Nish Pandya.
 	 * @param surfaceFile
@@ -976,10 +999,10 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		try {
 
 			raFile = new RandomAccessFile(surfaceFile, "r");
-			
+
 			String line;
-			
-			
+
+
 			while((line=raFile.readLine())!= null) {
 				line = line.trim();
 				if(line.startsWith("Translate1Dragger")) {
@@ -1015,16 +1038,17 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 							float coord_x = new Float(splits[0]).floatValue();
 							float coord_y = new Float(splits[1]).floatValue();
 							float coord_z = new Float(splits[2]).floatValue();
-							  
+
 							/**
 							 * Changing from previous versions. Order is now:
 							 * X, Y, Z coordinates (0, 1, 2)
 							 * Distance (3)
 							 * Backwards connection (4)
 							 * Branch order (5)
+							 * Radius (6)
 							 */
-							float[] coords = {coord_x,coord_y,coord_z,0,Float.NEGATIVE_INFINITY,0};
-							
+							float[] coords = {coord_x,coord_y,coord_z,0,Float.NEGATIVE_INFINITY,0, -1.0f};
+
 							filamentCoords.add(coords);
 						}
 					}
@@ -1038,16 +1062,16 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 					raFile.close();
 				}
 			}catch(Exception ex) {
-				
+
 			}
 			e.printStackTrace();
 			return false;
 		}
-		
+
 		return success;
 	}
-	
-	
+
+
 	/**
 	 * Test method to output each individual filament to its own SWC file.
 	 * Was used to figure out general ordering of filmanets in the Imaris
@@ -1059,32 +1083,32 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		String name = file.getName();
 		name = name.substring(0, name.lastIndexOf("."));
 		String output = parent + File.separator + name + "_part_%d.swc";
-		
+
 		for(int i=0;i<swcCoordinates.size();i++){
 			File outputFile = new File(String.format(output, i));
-		
+
 			FileWriter fw = new FileWriter(outputFile);
-			
+
 			int counter = 1;
-			
+
 			ArrayList<float[]> fil = swcCoordinates.get(i);
 			float[] fa = fil.get(0);
 			float[] fo = new float[fa.length];
 			System.arraycopy(fa, 0, fo, 0, fa.length);
 			fo[4] = -1;
-			
+
 			fw.append(formatSWCLine(counter, fo));
-			
+
 			for(int j=1;j<fil.size();j++, counter++){
 				fa = fil.get(j);
 				System.arraycopy(fa, 0, fo, 0, fa.length);
 				fo[4] = counter;
 				fw.append(formatSWCLine(counter+1, fo));
 			}
-			
+
 			fw.close();
 		}
-		
+
 	}*/
-	
+
 }

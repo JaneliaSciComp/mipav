@@ -22,6 +22,7 @@ import quickhull3d.Point3d;
 import quickhull3d.QuickHull3D;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -66,10 +67,13 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 	
 	private float convexHullVolume = 0f;
 	
-	public PlugInAlgorithm3DSWCViewer(File file, JTextPane text, String resUnit, boolean useLength){
+	private String imageFile;
+	
+	public PlugInAlgorithm3DSWCViewer(String imFile, File file, JTextPane text, String resUnit, boolean useLength){
 		
 		super();
 		
+		imageFile = imFile;
 		destImage = new ModelImage(ModelImage.BOOLEAN, new int[]{512, 512}, "3D Neuron Viewer");
 		
 		String name = file.getName();
@@ -485,15 +489,20 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 			//System.out.println();
 		}
 		
-		System.out.println(convexHullVolume() + " is volume");
+		System.out.println(convexHullVolume(swcCoordinates, connections) + " is volume");
 		
 		return hullMask;
 		
 	}
 	
-	public float convexHullVolume(){
-		
-		ArrayList<Integer> tips = getTips();
+	public static float convexHullVolume(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<ArrayList<Integer>> connections){
+		ArrayList<Integer> tips = new ArrayList<Integer>();
+		for(int i=0;i<connections.size();i++){
+			ArrayList<Integer> branches = connections.get(i);
+			if(branches.size()==0){
+				tips.add(i);
+			}
+		}
 		
 		ArrayList<Point3d> ptList = new ArrayList<Point3d>();
 
@@ -562,50 +571,53 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 	 */
 	public void write(){
 		
-		SimpleAttributeSet attr = new SimpleAttributeSet();
+		final SimpleAttributeSet attr = new SimpleAttributeSet();
 		StyleConstants.setFontFamily(attr, "Serif");
 		StyleConstants.setFontSize(attr, 12);
 		
-		SimpleAttributeSet redText = new SimpleAttributeSet(attr);
+		final SimpleAttributeSet redText = new SimpleAttributeSet(attr);
 		StyleConstants.setForeground(redText, Color.red.darker());
 		
-		boolean allGood = true;
+		Thread writeThread = new Thread(){
+			public void run(){
+				try{
+					convexHullVolume = convexHullVolume(swcCoordinates, connections);
+					calculateDistances();
+					int maxOrder;
+					if(axonUseLength){
+						maxOrder = determineOrder_useLength(connections);
+					}else{
+						maxOrder = determineOrder(connections);
+					}
+					ArrayList<String> messages = consolidateFilaments(connections, maxOrder);
+					float[] branchLengths = recalculateDistances();
+					addToMessages(messages);
+					append("Opening image " + imageFile, attr);
+					FileIO reader = new FileIO();
+					srcImage = reader.readImage(imageFile);
+					try {
+						String output = writeSWC(swcFile, messages, branchLengths);
+						append("Converted to SWC -> " + output, attr);
+					} catch (IOException e) {
+						append("Could not write SWC for " + swcFile.getName(), redText);
+					}
+					try{
+						String output = exportStatsToCSV(swcFile, messages, branchLengths, maxOrder);
+						append("Exported stats to CSV -> " + output, attr);
+					} catch (IOException e) {
+						append("Could not export stats to CSV for " + swcFile.getName(), redText);
+					}
+				}catch(Exception e){
+					append("The following Java error has occured:", redText);
+					append(e.toString(), redText);
+					for(StackTraceElement t : e.getStackTrace())
+						append(t.toString(), redText);
+				}
+			}
+		};
 		
-		try{
-			convexHullVolume = convexHullVolume();
-			calculateDistances();
-			int maxOrder;
-			if(axonUseLength){
-				maxOrder = determineOrder_useLength(connections);
-			}else{
-				maxOrder = determineOrder(connections);
-			}
-			ArrayList<String> messages = consolidateFilaments(connections, maxOrder);
-			float[] branchLengths = recalculateDistances();
-			addToMessages(messages);
-			try {
-				String output = writeSWC(swcFile, messages, branchLengths);
-				append("Converted to SWC -> " + output, attr);
-			} catch (IOException e) {
-				append("Could not write SWC for " + swcFile.getName(), redText);
-				allGood = false;
-			}
-			try{
-				String output = exportStatsToCSV(swcFile, messages, branchLengths, maxOrder);
-				append("Exported stats to CSV -> " + output, attr);
-			} catch (IOException e) {
-				append("Could not export stats to CSV for " + swcFile.getName(), redText);
-				allGood = false;
-			}
-		}catch(Exception e){
-			append("The following Java error has occured:", redText);
-			append(e.toString(), redText);
-			for(StackTraceElement t : e.getStackTrace())
-				append(t.toString(), redText);
-			allGood = false;
-		}
+		writeThread.start();
 		
-		setCompleted(allGood);
 	}
 	
 	private float distanceVectorToPlane(Vector3f originPt, Vector3f vecA, Vector3f vecB, Vector3f vecC, Vector3f headPt){
@@ -1255,7 +1267,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 			type = 3;
 		}
 		
-		return String.format(format, lineNum, type, line[0], line[1], line[2], 0.1F, (int)line[4]);
+		return String.format(format, lineNum, type, line[0], line[1], line[2], line[6], (int)line[4]);
 	}
 
 	/**
@@ -1441,8 +1453,9 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 							 * Distance (3)
 							 * Backwards connection (4)
 							 * Branch order (5)
+							 * Radius (6)
 							 */
-							float[] coords = {coord_x,coord_y,coord_z,0,Float.NEGATIVE_INFINITY,0};
+							float[] coords = {coord_x,coord_y,coord_z,0,Float.NEGATIVE_INFINITY, 0f, -1.0f};
 							
 							filamentCoords.add(coords);
 						}
@@ -1622,6 +1635,10 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 			if(i!=1)
 				higherOrder += lengths[i];
 		}
+		
+		PlugInAlgorithmSWCVolume alg = new PlugInAlgorithmSWCVolume(srcImage, swcCoordinates);
+		alg.run();
+		fw.append("Neuron volume," + alg.getVolume() + "\n");
 		
 		fw.append("Convex hull volume," + convexHullVolume + "\n");
 		fw.append("Branch lengths\n");
