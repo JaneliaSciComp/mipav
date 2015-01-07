@@ -55,6 +55,8 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 	
 	private JTextField textField;
 	
+	private JTextField imageField;
+	
 	private JFileChooser fileChooser;
 	
 	@SuppressWarnings("rawtypes")
@@ -65,6 +67,8 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 	private JRadioButton axonRB;
 	
 	private JRadioButton customRB;
+	
+	private boolean chooseIV;
 
 	public PlugInDialog3DSWCStats(){
 		super();
@@ -86,8 +90,14 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 			File selected = fileChooser.getSelectedFile();
 			String name = selected.getAbsolutePath();
 			Preferences.setImageDirectory(selected);
-			textField.setText(name);
+			if(chooseIV)
+				textField.setText(name);
+			else imageField.setText(name);
 		}else if(command.equals("Browse")){
+			chooseIV = true;
+			chooseDir();
+		}else if(command.equals("BrowseImage")){
+			chooseIV = false;
 			chooseDir();
 		}else{
 			super.actionPerformed(e);
@@ -130,44 +140,22 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		
 		String fileName = textField.getText();
 		File file = new File(fileName);
-		if(!(fileName.endsWith(".iv") || file.isDirectory())){
+		if(!fileName.endsWith(".iv")){
 			MipavUtil.displayError("This file is not the correct format");
 			return;
 		}
 		
 		if(!file.exists()){
-			MipavUtil.displayError("This file or directory does not exist");
+			MipavUtil.displayError("This file does not exist");
 			return;
 		}
 		
-		ArrayList<File> files = new ArrayList<File>();
-		
-		if(file.isFile()){
-			files.add(file);
-		}else{
-			File[] array = file.listFiles(new FilenameFilter(){
-
-				@Override
-				public boolean accept(File dir, String name) {
-					if(name.endsWith(".iv"))
-						return true;
-					else
-						return false;
-				}
-			});
-			for(File f : array){
-				files.add(f);
-			}
-		}
-		
 		if(customRB.isSelected()){
-			if(files.size()==1)
-				new PlugInDialog3DSWCViewer(files.get(0), textArea, (String) resolutionUnits.getSelectedItem());
-			else
-				MipavUtil.displayError("You may only select one file for this mode");
+			new PlugInDialog3DSWCViewer(imageField.getText(), file, textArea, (String) resolutionUnits.getSelectedItem());
+
 		}else{
 		
-			PlugInAlgorithm3DSWCStats alg = new PlugInAlgorithm3DSWCStats(files, (String) resolutionUnits.getSelectedItem(), textArea);
+			PlugInAlgorithm3DSWCStats alg = new PlugInAlgorithm3DSWCStats(imageField.getText(), file, (String) resolutionUnits.getSelectedItem(), textArea);
 			alg.useAxonLength(axonRB.isSelected());
 			alg.addListener(this);
 			
@@ -196,12 +184,22 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		fileLabel.setFont(serif12B);
 		
 		textField = new JTextField(30);
-		textField.setText(Preferences.getImageDirectory());
 		textField.setFont(serif12);
 		
 		JButton browseButton = new JButton("Browse");
 		browseButton.setFont(serif12);
 		browseButton.addActionListener(this);
+		
+		JLabel imLabel = new JLabel("Input Imaris image");
+		imLabel.setFont(serif12B);
+		
+		imageField = new JTextField(30);
+		imageField.setFont(serif12);
+		
+		JButton browseImage = new JButton("Browse");
+		browseImage.setFont(serif12);
+		browseImage.setActionCommand("BrowseImage");
+		browseImage.addActionListener(this);
 		
 		JPanel rbPanel = new JPanel(new GridLayout(0, 2));
 		rbPanel.setForeground(Color.black);
@@ -268,7 +266,24 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		mainPanel.add(browseButton, gbc);
 		
 		gbc.gridx = 0;
-		gbc.gridy = 2;
+		gbc.gridy++;
+		
+		mainPanel.add(imLabel, gbc);
+		
+		gbc.gridy++;
+		gbc.weightx = 1;
+		gbc.gridwidth = 2;
+		
+		mainPanel.add(imageField, gbc);
+		
+		gbc.gridx = 2;
+		gbc.weightx = 0;
+		gbc.gridwidth = 1;
+		
+		mainPanel.add(browseImage, gbc);
+		
+		gbc.gridx = 0;
+		gbc.gridy++;
 		gbc.gridwidth = GridBagConstraints.REMAINDER;
 		mainPanel.add(rbPanel, gbc);
 		
@@ -320,14 +335,15 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 	private void chooseDir(){
 		String dirText = Preferences.getImageDirectory();
 		
-		FileFilter filter = new FileFilter(){
+		FileFilter ivFilter = new FileFilter(){
 
 			@Override
 			public boolean accept(File pathname) {
 				if(pathname.isDirectory())
 					return true;
 				String name = pathname.getName();
-				if(name.endsWith(".iv"))
+				String fileExt = name.substring(name.lastIndexOf("."));
+				if(fileExt.equalsIgnoreCase(".iv"))
 					return true;
 				else
 					return false;
@@ -341,8 +357,30 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 			
 		};
 		
+		FileFilter imFilter = new FileFilter(){
+			@Override
+			public boolean accept(File pathname) {
+				if(pathname.isDirectory())
+					return true;
+				String name = pathname.getName();
+				String fileExt = name.substring(name.lastIndexOf("."));
+				if(fileExt.equalsIgnoreCase(".ics"))
+					return true;
+				else
+					return false;
+			}
+			
+			@Override
+			public String getDescription()
+            {
+                return "Imaris Image (.ics)";
+            }
+		};
+		
+		FileFilter filter = chooseIV ? ivFilter : imFilter;
+		
 		fileChooser = new JFileChooser(dirText);
-		fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		fileChooser.addActionListener(this);
 		fileChooser.addChoosableFileFilter(filter);
 		fileChooser.setFileFilter(filter);

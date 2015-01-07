@@ -108,8 +108,11 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 	
 	private JRadioButton showAxonRB;
 	
-	public PlugInDialog3DSWCViewer(File file, JTextPane text, String unit){
+	private String imageFile;
+	
+	public PlugInDialog3DSWCViewer(String imFile, File file, JTextPane text, String unit){
 		
+		imageFile = imFile;
 		swcFile = file;
 		textArea = text;
 		resUnit = unit;
@@ -396,7 +399,7 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 	 * basic inferences. 
 	 */
 	private void setup(){
-		alg = new PlugInAlgorithm3DSWCViewer(swcFile, textArea, resUnit, axonRB.isSelected());
+		alg = new PlugInAlgorithm3DSWCViewer(imageFile, swcFile, textArea, resUnit, axonRB.isSelected());
 		alg.addListener(this);
 		if(isRunInSeparateThread()){
 			if (alg.startMethod(Thread.MIN_PRIORITY) == false) {

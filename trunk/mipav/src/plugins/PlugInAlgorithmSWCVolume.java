@@ -81,6 +81,18 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 		swcCoordinates = new ArrayList<ArrayList<float[]>>();
 	}
 	
+	public PlugInAlgorithmSWCVolume(ModelImage image, ArrayList<ArrayList<float[]>> filaments){
+		super(null, image);
+		
+		extents = srcImage.getExtents();
+		width = extents[0];
+		height = extents[1];
+		depth = extents[2];
+		length = width*height*depth;
+		
+		swcCoordinates = filaments;
+	}
+	
 	public float getVolume(){
 		return volume;
 	}
@@ -89,8 +101,10 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 	public void runAlgorithm() {
 
 		BitSet mask = new BitSet(length);
-		readSurfaceFile(filFile);
 		
+		if(filFile != null){
+			readSurfaceFile(filFile);
+		}
 		/*for(int i=0;i<swcCoordinates.size();i++){
 			ArrayList<float[]> fil = swcCoordinates.get(i);
 			for(int j=0;j<fil.size();j++){
@@ -141,14 +155,14 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
         
         //calcVolumeBasic(probImage);
         
-        ArrayList<File> fileList = new ArrayList<File>();
+        /*ArrayList<File> fileList = new ArrayList<File>();
         fileList.add(filFile);
         
         PlugInAlgorithm3DSWCStats swc = new PlugInAlgorithm3DSWCStats(fileList, "um", null);
         swc.setSaveData(false);
         swc.run();
         
-        swcCoordinates = swc.getFilaments();
+        swcCoordinates = swc.getFilaments();*/
        
         for(int i=0;i<swcCoordinates.size();i++){
         
@@ -307,7 +321,7 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 			
 		}
 		
-		coord[3] = radius;
+		coord[6] = radius;
 		
 		return mask;
 		
@@ -336,7 +350,7 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 			}*/
 			for(int j=0;j<fil.size()-1;j++){
 				float[] pt0 = fil.get(j);
-				if(pt0[3] == 0)
+				if(pt0[6] == 0)
 					continue;
 				/*if(i > 0){
 					float parentRad = parent[3];
@@ -356,8 +370,8 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 					dist += diff*diff;
 				}
 				dist = (float)Math.sqrt(dist);
-				float r0 = pt0[3];
-				float r1 = pt1[3];
+				float r0 = pt0[6];
+				float r1 = pt1[6];
 				
 				volume += dist * (r0*r0 + r0*r1 + r1*r1);
 			}
@@ -517,142 +531,6 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 		
 	}
 	
-    private void determineRadiiThreshold_swc(ModelImage image, ArrayList <ArrayList<float[]>> newFilamentCoords) {
-		
-		int threshold = 25;
-		
-    	float[] res = srcImage.getResolutions(0);
-    	float[] origin = srcImage.getOrigin();
-
-		float resX = res[0];
-		float resY = res[1];
-		float resZ = res[2];
-		
-		float increaseRadiusBy = resZ;
-		
-		int newFilamentsSize = newFilamentCoords.size();
-		int alSize;
-		ArrayList<float[]> al;
-		float[] coords;
-		int xCenterPixel,yCenterPixel,zCenterPixel;
-		float radius;
-		float radiusSquared;
-		float xDist,yDist,zDist;
-		float distance;
-		int xStart,yStart,zStart;
-		int xEnd,yEnd,zEnd;
-		int value;
-		
-		
-		//intitialize all radii to 0 first
-		for(int i=0;i<newFilamentsSize;i++) {
-			 al = newFilamentCoords.get(i);
-			 alSize = al.size();
-			 for(int k=0;k<alSize;k++) {
-				 coords = al.get(k);
-				 coords[3] = 0;
-				 al.set(k, coords);
-				 
-			 }
-		}
-		
-		for(int i=0;i<newFilamentsSize;i++) {
-			al = newFilamentCoords.get(i);
-			alSize = al.size();
-			for(int k=0;k<alSize;k++) {
-				coords = al.get(k);
-
-				xCenterPixel = (int)Math.floor((coords[0]-origin[0])/res[0]);
-				yCenterPixel = (int)Math.floor((coords[1]-origin[1])/res[1]);
-				zCenterPixel = (int)Math.floor((coords[2]-origin[2])/res[2]);
-
-
-				//expand radius..start with increaseRadiusBy and increse
-				loop:		for(radius=increaseRadiusBy;;radius=radius+increaseRadiusBy) {
-					//System.out.println("Radius " + radius);
-					radiusSquared = radius * radius;  //we will work with radius squared...that way we dont have to do SqrRt down in the for loops
-
-					xStart = xCenterPixel - Math.round(radius/resX);
-					xStart = xStart - 1;
-					yStart = yCenterPixel - Math.round(radius/resY);
-					yStart = yStart - 1;
-					zStart = zCenterPixel - Math.round(radius/resZ);
-					zStart = zStart - 1;
-
-					xEnd = xCenterPixel + Math.round(radius/resX);
-					xEnd = xEnd + 1;
-					yEnd = yCenterPixel + Math.round(radius/resY);
-					yEnd = yEnd + 1;
-					zEnd = zCenterPixel + Math.round(radius/resZ);
-					zEnd = zEnd + 1;
-
-					for(int z=zStart;z<=zEnd;z++) {
-						zDist = ((z-zCenterPixel)*(resZ)) * ((z-zCenterPixel)*(resZ));
-						for(int y=yStart;y<=yEnd;y++) {
-							yDist = ((y-yCenterPixel)*(resY)) * ((y-yCenterPixel)*(resY));
-							for(int x=xStart;x<=xEnd;x++) {
-								xDist = ((x-xCenterPixel)*(resX)) * ((x-xCenterPixel)*(resX));
-								distance = xDist + yDist + zDist;
-								if(distance <= radiusSquared) {
-									//this means we have a valid pixel in the sphere
-									//first check to see of x,y,z are in bounds
-									/*if(x<0 || x>=finalImage.getExtents()[0] || y<0 || y>=finalImage.getExtents()[1] || z<0 || z>=finalImage.getExtents()[2]) {
-													 continue;
-												 }
-												 greenValue = finalImage.getFloatC(x, y, z, 2);*/
-
-
-									if(x<0 || x>=image.getExtents()[0] || y<0 || y>=image.getExtents()[1] || z<0 || z>=image.getExtents()[2]) {
-										continue;
-									}
-									value = image.getInt(x, y, z);
-
-
-
-
-									if(value <= threshold) {
-										//this means we have exceeded the radius
-										//break the loop:  and move on to next point
-										//store the radius....but make sure you store radius-increaseRadiusBy since this one has exceeded
-										coords[3] = radius-increaseRadiusBy;
-										al.set(k, coords);
-										break loop;
-									}else {
-										///////////////////////////////////////////////////////////
-										//maskImage.set(x, y, z, 100);
-									}
-								}
-
-							}
-
-						}
-					}
-				} //end loop:
-			}
-		}
-		
-		
-		//some radii might still be at 0 because the threshold was already met...in this case set the
-		//radius to the "increaseRadiusBy" step size
-		float r;
-		for(int i=0;i<newFilamentsSize;i++) {
-			 al = newFilamentCoords.get(i);
-			 alSize = al.size();
-			 for(int k=0;k<alSize;k++) {
-				 coords = al.get(k);
-				 r = coords[3];
-				 if(r == 0) {
-					 coords[3] = increaseRadiusBy;
-					 al.set(k, coords);
-				 }
-			 }
-		}
-		
-		
-		
-		
-	}
-	
 	/**
 	 * Reads surface file. Taken from drosophila registration dialog written by Nish Pandya.
 	 * @param surfaceFile
@@ -710,8 +588,9 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 							 * Distance (3)
 							 * Backwards connection (4)
 							 * Branch order (5)
+							 * Radius (6)
 							 */
-							float[] coords = {coord_x,coord_y,coord_z,0,Float.NEGATIVE_INFINITY,0};
+							float[] coords = {coord_x,coord_y,coord_z,0,Float.NEGATIVE_INFINITY,0, -1.0f};
 							
 							filamentCoords.add(coords);
 						}
