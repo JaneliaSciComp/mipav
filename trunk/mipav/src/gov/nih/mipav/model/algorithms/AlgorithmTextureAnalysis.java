@@ -2953,19 +2953,27 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		double diffx;
 		double diffy;
 		double denom;
+		double omegax2[][] = new double[omegax.length][omegax[0].length];
+		double omegay2[][] = new double[omegay.length][omegay[0].length];
 
 		for (y = 0; y < omegax.length; y++) {
 			for (x = 0; x < omegax[0].length; x++) {
-				omegax[y][x] = -omegax[y][x];
+				omegax2[y][x] = -omegax[y][x];
 			}
 		}
 		for (y = 0; y < omegay.length; y++) {
 			for (x = 0; x < omegay[0].length; x++) {
-				omegay[y][x] = -omegay[y][x];
+				omegay2[y][x] = -omegay[y][x];
 			}
 		}
 
 		invSigmaX = 1.0 / (Math.PI * sigmaX);
+		for (y = 0; y < hout.length; y++) {
+			for (x = 0; x < hout[0].length; x++) {
+				hout[y][x] = 0.0;
+				houtImag[y][x] = 0.0;
+			}
+		}
 		cosang = Math.cos(filterAngle);
 		sinang = Math.sin(filterAngle);
 
@@ -2988,9 +2996,9 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 
 		for (y = 0; y < sizem; y++) {
 			for (x = 0; x < sizen; x++) {
-				rotatedx[y][x][0] = omegax[y][x] * cosang + omegay[y][x]
+				rotatedx[y][x][0] = omegax2[y][x] * cosang + omegay2[y][x]
 						* sinang;
-				rotatedy[y][x][0] = -omegax[y][x] * sinang + omegay[y][x]
+				rotatedy[y][x][0] = -omegax2[y][x] * sinang + omegay2[y][x]
 						* cosang;
 			}
 		}
