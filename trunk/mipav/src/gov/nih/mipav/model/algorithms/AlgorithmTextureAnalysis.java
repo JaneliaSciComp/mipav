@@ -1058,11 +1058,13 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 
 		fft = new FFTUtility(inputImageFFT, inputImageFFTImag, yDim, xDim, 1,
 				-1, FFTUtility.FFT);
+		fft.setShowProgress(false);
 		fft.run();
 		fft.finalize();
 		fft = null;
 		fft = new FFTUtility(inputImageFFT, inputImageFFTImag, 1, yDim, xDim,
 				-1, FFTUtility.FFT);
+		fft.setShowProgress(false);
 		fft.run();
 		fft.finalize();
 		fft = null;
@@ -1500,11 +1502,13 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 
 		for (y = 0; y < yDim; y++) {
 			for (x = 0; x < xDim; x++) {
-				Wx[y][x] = Math.sqrt(Math.max(Eox[y][x] / Eo[y][x], 0.0));
-				Wy[y][x] = Math.sqrt(Math.max(Eoy[y][x] / Eo[y][x], 0.0));
-				if (Eo[y][x] < 0.0) {
+				if (Eo[y][x] <= 0.0) {
 					Wx[y][x] = 0.0;
 					Wy[y][x] = 0.0;
+				}
+				else {
+					Wx[y][x] = Math.sqrt(Math.max(Eox[y][x] / Eo[y][x], 0.0));
+					Wy[y][x] = Math.sqrt(Math.max(Eoy[y][x] / Eo[y][x], 0.0));
 				}
 			}
 		}
@@ -1827,11 +1831,13 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		}
 		fft = new FFTUtility(buffer, bufferImag, yDim, xDim, 1, 1,
 				FFTUtility.FFT);
+		fft.setShowProgress(false);
 		fft.run();
 		fft.finalize();
 		fft = null;
 		fft = new FFTUtility(buffer, bufferImag, 1, yDim, xDim, 1,
 				FFTUtility.FFT);
+		fft.setShowProgress(false);
 		fft.run();
 		fft.finalize();
 		fft = null;
@@ -2323,10 +2329,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			}
 
 			fft = new FFTUtility(ScR, ScI, sizem, sizen, 1, 1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
 			fft = new FFTUtility(ScR, ScI, 1, sizem, sizen, 1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
@@ -2349,10 +2357,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			}
 
 			fft = new FFTUtility(ScR, ScI, sizem, sizen, 1, 1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
 			fft = new FFTUtility(ScR, ScI, 1, sizem, sizen, 1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
@@ -2375,10 +2385,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			}
 
 			fft = new FFTUtility(ScR, ScI, sizem, sizen, 1, 1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
 			fft = new FFTUtility(ScR, ScI, 1, sizem, sizen, 1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
@@ -2401,10 +2413,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			}
 
 			fft = new FFTUtility(ScR, ScI, sizem, sizen, 1, 1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
 			fft = new FFTUtility(ScR, ScI, 1, sizem, sizen, 1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
@@ -2427,10 +2441,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			}
 
 			fft = new FFTUtility(ScR, ScI, sizem, sizen, 1, 1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
 			fft = new FFTUtility(ScR, ScI, 1, sizem, sizen, 1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
@@ -2453,10 +2469,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			}
 
 			fft = new FFTUtility(ScR, ScI, sizem, sizen, 1, 1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
 			fft = new FFTUtility(ScR, ScI, 1, sizem, sizen, 1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
@@ -2481,10 +2499,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			}
 
 			fft = new FFTUtility(ScR, ScI, sizem, sizen, 1, 1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
 			fft = new FFTUtility(ScR, ScI, 1, sizem, sizen, 1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
@@ -2508,10 +2528,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			}
 
 			fft = new FFTUtility(ScR, ScI, sizem, sizen, 1, 1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
 			fft = new FFTUtility(ScR, ScI, 1, sizem, sizen, 1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
@@ -2544,10 +2566,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			}
 
 			fft = new FFTUtility(ScR, ScI, sizem, sizen, 1, 1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
 			fft = new FFTUtility(ScR, ScI, 1, sizem, sizen, 1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
@@ -2571,10 +2595,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			}
 
 			fft = new FFTUtility(ScR, ScI, sizem, sizen, 1, 1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
 			fft = new FFTUtility(ScR, ScI, 1, sizem, sizen, 1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
@@ -2673,22 +2699,26 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 
 		fft = new FFTUtility(fftImagePatch, fftImagePatchImag, padYDim,
 				padXDim, 1, -1, FFTUtility.FFT);
+		fft.setShowProgress(false);
 		fft.run();
 		fft.finalize();
 		fft = null;
 		fft = new FFTUtility(fftImagePatch, fftImagePatchImag, 1, padYDim,
 				padXDim, -1, FFTUtility.FFT);
+		fft.setShowProgress(false);
 		fft.run();
 		fft.finalize();
 		fft = null;
 
 		fft = new FFTUtility(fftSupportPatch, fftSupportPatchImag, padYDim,
 				padXDim, 1, -1, FFTUtility.FFT);
+		fft.setShowProgress(false);
 		fft.run();
 		fft.finalize();
 		fft = null;
 		fft = new FFTUtility(fftSupportPatch, fftSupportPatchImag, 1, padYDim,
 				padXDim, -1, FFTUtility.FFT);
+		fft.setShowProgress(false);
 		fft.run();
 		fft.finalize();
 		fft = null;
@@ -3155,10 +3185,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			// For FFTUtility calls are scaled by 1/n for the inverse transform
 			// In MATLAB ifft has a scaling of 1/M
 			fft = new FFTUtility(FFTR, FFTI, n2, n1, 1, -1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
 			fft = new FFTUtility(FFTR, FFTI, 1, n2, n1, -1, FFTUtility.FFT);
+			fft.setShowProgress(false);
 			fft.run();
 			fft.finalize();
 			fft = null;
