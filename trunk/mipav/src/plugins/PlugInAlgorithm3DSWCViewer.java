@@ -595,17 +595,18 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 					append("Opening image " + imageFile, attr);
 					FileIO reader = new FileIO();
 					srcImage = reader.readImage(imageFile);
-					try {
-						String output = writeSWC(swcFile, messages, branchLengths);
-						append("Converted to SWC -> " + output, attr);
-					} catch (IOException e) {
-						append("Could not write SWC for " + swcFile.getName(), redText);
-					}
+					
 					try{
 						String output = exportStatsToCSV(swcFile, messages, branchLengths, maxOrder);
 						append("Exported stats to CSV -> " + output, attr);
 					} catch (IOException e) {
 						append("Could not export stats to CSV for " + swcFile.getName(), redText);
+					}
+					try {
+						String output = writeSWC(swcFile, messages, branchLengths);
+						append("Converted to SWC -> " + output, attr);
+					} catch (IOException e) {
+						append("Could not write SWC for " + swcFile.getName(), redText);
 					}
 				}catch(Exception e){
 					append("The following Java error has occured:", redText);

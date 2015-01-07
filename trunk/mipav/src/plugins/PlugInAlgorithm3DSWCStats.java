@@ -132,19 +132,19 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 			srcImage = reader.readImage(imageFile);
 			
 			if(saveData){
-
-				try {
-					String output = writeSWC(surfaceFile, messages, branchLengths);
-					append("Converted to SWC -> " + output, attr);
-				} catch (IOException e) {
-					append("Could not write SWC for " + surfaceFile.getName(), redText);
-					allGood = false;
-				}
+				
 				try{
 					String output = exportStatsToCSV(surfaceFile, messages, branchLengths, maxOrder, convexHullVolume);
 					append("Exported stats to CSV -> " + output, attr);
 				} catch (IOException e) {
 					append("Could not export stats to CSV for " + surfaceFile.getName(), redText);
+					allGood = false;
+				}
+				try {
+					String output = writeSWC(surfaceFile, messages, branchLengths);
+					append("Converted to SWC -> " + output, attr);
+				} catch (IOException e) {
+					append("Could not write SWC for " + surfaceFile.getName(), redText);
 					allGood = false;
 				}
 			}

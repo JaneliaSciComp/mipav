@@ -194,7 +194,7 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 					}
 				}
 				parent = list.get(connection);
-				parentRad = parent[3];
+				parentRad = parent[6];
 			}
 			boolean skip = false;
 			if(i == 0)
@@ -211,7 +211,7 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 					}
 					dist = (float)Math.sqrt(dist);
 					if(dist < parentRad){
-						pt0[3] = 0;
+						pt0[6] = 0;
 						continue;
 					}else{
 						skip = true;
