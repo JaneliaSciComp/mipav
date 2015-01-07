@@ -1170,8 +1170,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 				minresp = 0.35;
 				if (esameth.equals("gesa")) {
 					// gabor esa
-					double F[][] = new double[yDim][xDim];
-					double FImag[][] = new double[yDim][xDim];
 					double Fxx[][] = new double[yDim][xDim];
 					double FxxImag[][] = new double[yDim][xDim];
 					double Fyy[][] = new double[yDim][xDim];
@@ -1182,8 +1180,8 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 					double V2FxImag[][] = new double[yDim][xDim];
 					double V2Fy[][] = new double[yDim][xDim];
 					double V2FyImag[][] = new double[yDim][xDim];
-					T2z1d_esa2D(Am, Wx, Wy, ratio, ratioImag, Araw, TeagEn, F,
-							FImag, Fx, FxImag, Fy, FyImag, Fxx, FxxImag, Fyy,
+					T2z1d_esa2D(Am, Wx, Wy, ratio, ratioImag, Araw, TeagEn,
+							Fx, FxImag, Fy, FyImag, Fxx, FxxImag, Fyy,
 							FyyImag, Fxy, FxyImag, V2Fx, V2FxImag, V2Fy,
 							V2FyImag, inputImFFT, inputImFFTImag, sgn,
 							omegas[filInd], amplitudes[filInd],
@@ -1192,16 +1190,16 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 				} else if (esameth.equals("cesa")) {
 					// complex esa
 					T2z1d_esa2D(Am, Wx, Wy, ratio, ratioImag, Araw, TeagEn,
-							null, null, null, null, null, null, null, null,
-							null, null, null, null, null, null, null, null,
+							null, null, null, null, null, null, null,
+							null, null, null, null, null, null, null,
 							Fn[1], Fn[2], sgn, omegas[filInd],
 							amplitudes[filInd], amplitudesImag[filInd],
 							filterAngle[filInd], sigmaX[filInd], minresp, 1);
 				} else if (esameth.equals("aesa")) {
 					// plain esa
 					T2z1d_esa2D(Am, Wx, Wy, ratio, ratioImag, Araw, TeagEn,
-							null, null, null, null, null, null, null, null,
-							null, null, null, null, null, null, null, null,
+							null, null, null, null, null, null, null,
+							null, null, null, null, null, null, null,
 							Fn[1], null, sgn, omegas[filInd],
 							amplitudes[filInd], amplitudesImag[filInd],
 							filterAngle[filInd], sigmaX[filInd], minresp, 1);
@@ -1348,7 +1346,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 
 	private void T2z1d_esa2D(double A[][], double Wx[][], double Wy[][],
 			double freqr[][], double freqrImag[][], double Anonorm[][],
-			double Eo[][], double F[][], double FImag[][], double Fx[][],
+			double Eo[][], double Fx[][],
 			double FxImag[][], double Fy[][], double FyImag[][],
 			double Fxx[][], double FxxImag[][], double Fyy[][],
 			double FyyImag[][], double Fxy[][], double FxyImag[][],
@@ -1383,6 +1381,11 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		int y;
 		int x;
 		int nc;
+		for (y = 0; y < yDim; y++) {
+			for (x = 0; x < xDim; x++) {
+				Eo[y][x] = 0.0;
+			}
+		}
 		if (imInImag == null) {
 			nc = 1;
 		} else {
@@ -1391,7 +1394,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		if (diffType == 0) {
 			gaussFiltthpp = new int[1];
 			gaussFiltAmplitudes = new int[1];
-			T2z1dI_get_responses_freq_gabor(F, FImag, Fx, FxImag, Fy, FyImag,
+			T2z1dI_get_responses_freq_gabor(Fx, FxImag, Fy, FyImag,
 					Fxx, FxxImag, Fyy, FyyImag, Fxy, FxyImag, V2Fx, V2FxImag,
 					V2Fy, V2FyImag, imIn, imInImag, gaussFiltthpp,
 					gaussFiltAmplitudes, imIn, imInImag, omegas, amplitudes,
@@ -1476,6 +1479,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			// divisor)
 			denom = new double[yDim][xDim];
 			maxDenom = 0.0;
+			
 			for (y = 0; y < yDim; y++) {
 				for (x = 0; x < xDim; x++) {
 					denom[y][x] = Math.sqrt(Math
@@ -1653,8 +1657,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		return result;
 	}
 
-	private void T2z1dI_get_responses_freq_gabor(double F[][],
-			double FImag[][], double Fx[][], double FxImag[][], double Fy[][],
+	private void T2z1dI_get_responses_freq_gabor(double Fx[][], double FxImag[][], double Fy[][],
 			double FyImag[][], double Fxx[][], double FxxImag[][],
 			double Fyy[][], double FyyImag[][], double Fxy[][],
 			double FxyImag[][], double V2Fx[][], double V2FxImag[][],
@@ -1665,6 +1668,8 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			double amplitudesImag[], double filterAngle, double sigmaX) {
 		int sizem = fftImage.length;
 		int sizen = fftImage[0].length;
+		double F[][] = new double[sizem][sizen];
+		double FImag[][] = new double[sizem][sizen];
 		double fm[] = new double[sizem];
 		double fn[] = new double[sizen];
 		int i;
@@ -1794,6 +1799,8 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		}
 		ifft2(V2Fx, V2FxImag);
 		ifft2(V2Fy, V2FyImag);
+		
+		ifft2(F, FImag);
 
 		for (y = 0; y < sizem; y++) {
 			for (x = 0; x < sizen; x++) {
@@ -1801,8 +1808,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 				imInImag[y][x] = FImag[y][x];
 			}
 		}
-
-		ifft2(imIn, imInImag);
 	}
 
 	private void ifft2(double buf[][], double bufI[][]) {
