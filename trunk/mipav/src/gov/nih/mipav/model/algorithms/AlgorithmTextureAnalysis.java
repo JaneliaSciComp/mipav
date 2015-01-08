@@ -1844,7 +1844,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		for (y = 0; y < yDim; y++) {
 			for (x = 0; x < xDim; x++) {
 				buf[y][x] = buffer[x + y * xDim];
-				;
 				bufI[y][x] = bufferImag[x + y * xDim];
 			}
 		}
@@ -2622,19 +2621,19 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		int DCY = (int) Math.ceil(sizem / 2.0);
 		int DCX = (int) Math.ceil(sizen / 2.0);
 		double temp[][] = new double[sizem][sizen];
-		for (y = 0; y < DCY; y++) {
-			for (x = 0; x < DCX; x++) {
+		for (y = 0; y < sizem - DCY; y++) {
+			for (x = 0; x < sizen - DCX; x++) {
 				temp[y][x] = mtx[y + DCY][x + DCX];
 			}
-			for (x = DCX; x < sizen; x++) {
+			for (x = DCX; x < 2 * DCX; x++) {
 				temp[y][x] = mtx[y + DCY][x - DCX];
 			}
 		}
-		for (y = DCY; y < sizem; y++) {
-			for (x = 0; x < DCX; x++) {
+		for (y = DCY; y < 2 * DCY; y++) {
+			for (x = 0; x < sizen - DCX; x++) {
 				temp[y][x] = mtx[y - DCY][x + DCX];
 			}
-			for (x = DCX; x < sizen; x++) {
+			for (x = DCX; x < 2 * DCX; x++) {
 				temp[y][x] = mtx[y - DCY][x - DCX];
 			}
 		}
@@ -2653,19 +2652,19 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		int DCY = (int) Math.floor(sizem / 2.0);
 		int DCX = (int) Math.floor(sizen / 2.0);
 		double temp[][] = new double[sizem][sizen];
-		for (y = 0; y < DCY; y++) {
-			for (x = 0; x < DCX; x++) {
+		for (y = 0; y < sizem - DCY; y++) {
+			for (x = 0; x < sizen - DCX; x++) {
 				temp[y][x] = mtx[y + DCY][x + DCX];
 			}
-			for (x = DCX; x < sizen; x++) {
+			for (x = DCX; x < 2 * DCX; x++) {
 				temp[y][x] = mtx[y + DCY][x - DCX];
 			}
 		}
-		for (y = DCY; y < sizem; y++) {
-			for (x = 0; x < DCX; x++) {
+		for (y = DCY; y < 2 * DCY; y++) {
+			for (x = 0; x < sizen - DCX; x++) {
 				temp[y][x] = mtx[y - DCY][x + DCX];
 			}
-			for (x = DCX; x < sizen; x++) {
+			for (x = DCX; x < 2 * DCX; x++) {
 				temp[y][x] = mtx[y - DCY][x - DCX];
 			}
 		}
