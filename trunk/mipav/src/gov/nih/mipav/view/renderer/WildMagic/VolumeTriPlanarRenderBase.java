@@ -13,6 +13,7 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
+import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.view.CustomUIBuilder;
@@ -83,6 +84,8 @@ import WildMagic.LibGraphics.SceneGraph.Geometry;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
+import WildMagic.LibGraphics.SceneGraph.StandardMesh;
+import WildMagic.LibGraphics.SceneGraph.Transformation;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLFrameBuffer;
@@ -167,6 +170,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	protected float fSample_mouseDragged;
 
 	protected boolean m_bPlay4D = false;
+	protected boolean m_bPlay4DVOIs = false;
 	protected float m_fAnimateRate = 0;
 	protected int m_iAnimateCount = 0;
 
@@ -390,7 +394,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	 */
 	public void addSurface(SurfaceState kSurface, boolean isFileCoords) {
 		VolumeSurface kVolumeSurfaces = new VolumeSurface(m_kVolumeImageA,
-				m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ, kSurface, true);
+				m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ, kSurface, isFileCoords);
 		m_kDisplayList.add(kVolumeSurfaces);
 		m_bSurfaceUpdate = true;
 		m_bSurfaceMaskUpdate = true;
@@ -613,10 +617,17 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 
 		// System.err.println( "fps: " + m_dFrameRate);
 
-		if (m_bPlay4D) {
+		if (m_bPlay4D || m_bPlay4DVOIs ) {
 			if (m_iAnimateCount++ > m_fAnimateRate) {
 				m_iAnimateCount = 0;
-				update4D(true);
+				if( m_bPlay4D )
+				{
+					update4D(true);
+				}
+				else
+				{
+					update4DVOIs(true);
+				}
 			}
 		}
 		if (m_bSurfaceUpdate) {
@@ -1490,6 +1501,15 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			// System.err.println( "Profile DONE" );
 			profile = false;
 			break;
+		case ' ':
+			play4DVOIs( !play4DVOIs() );
+			setAnimationSpeed( 100 );
+			break;
+		case 'r':
+			m_bSnapshot = !m_bSnapshot;
+			play4DVOIs( !play4DVOIs() );
+			setAnimationSpeed( 0 );
+			break;
 		}
 
 		return;
@@ -1619,7 +1639,33 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	public void play4D(boolean bOn) {
 		m_bPlay4D = bOn;
 	}
+	
+	public void addAnimationVOIs(VOIVector vois)	{}
+	
+	
+	public void play4DVOIs(boolean bOn) {
+		m_bPlay4DVOIs = bOn;
+	}
+	
+	public boolean play4DVOIs() {
+		return m_bPlay4DVOIs;
+	}
 
+	public void startStopVOIAnimation()
+	{
+		play4DVOIs( !play4DVOIs() );
+		setAnimationSpeed( 50 );
+	}
+
+	public void startRecording()
+	{
+		m_bSnapshot = !m_bSnapshot;
+		play4DVOIs( !play4DVOIs() );
+		setAnimationSpeed( 0 );
+	}
+
+	public void setAnnotationVOIColor( String name, ColorRGB color ) {}
+	
 	/**
 	 * Causes the texture representation of all the surface meshes to be
 	 * recalculated.
@@ -1850,6 +1896,10 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 
 	public void setAnimationSpeed(float fValue) {
 		m_fAnimateRate = 32 * (1 - fValue);
+	}
+
+	public void setAnimationSpeed(int value) {
+		m_fAnimateRate = value;
 	}
 
 	/**
@@ -3435,6 +3485,8 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		m_kVolumeImageA.update4D(bForward);
 		// m_kParent.setModified();
 	}
+	
+	protected void update4DVOIs(boolean bForward) {}
 
 	protected void updateCenterOnDisplay() {
 		m_bUpdateCenterOnDisplay = false;
@@ -3682,5 +3734,29 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	public void setPlaneConstant(float constant) {
 		m_kVolumeRayCast.setPlaneConstant(constant);
 	}
+
+    protected static void updateSphere( TriMesh sphere, float x, float y, float z, ColorRGBA c )
+    {
+//    	Vector3f center = new Vector3f();
+//		Vector3f min = new Vector3f(  Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE );
+//		Vector3f max = new Vector3f( -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE );
+    	for ( int i = 0; i < sphere.VBuffer.GetVertexQuantity(); i++ )
+    	{
+    		Vector3f p = sphere.VBuffer.GetPosition3(i);
+    		p.add(x,y,z);
+    		sphere.VBuffer.SetPosition3(i, p);
+    		sphere.VBuffer.SetColor4( 0, i, c );
+//    		System.err.println( i + "     " + p );
+//    		center.add(p);
+//    		min.min(p);
+//    		max.max(p);
+    	}
+//    	center.scale(1f/(float)sphere.VBuffer.GetVertexQuantity());
+//    	System.err.println("");
+//    	System.err.println(center);
+//    	System.err.println(min);
+//    	System.err.println(max);
+//    	System.err.println("");
+    }
 	
 }

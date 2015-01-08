@@ -90,8 +90,15 @@ public class VolumeSurface extends VolumeObject
      * @param fY the size of the volume in the y-dimension (extent * resolutions)
      * @param fZ the size of the volume in the z-dimension (extent * resolutions)
      */
+
     public VolumeSurface ( VolumeImage kImageA, VolumeImage kImageB, Vector3f kTranslate, 
             float fX, float fY, float fZ, SurfaceState kSurface )
+    {
+    	this(kImageA, kImageB, kTranslate, fX, fY, fZ, kSurface, true, false );
+    }
+    
+    public VolumeSurface ( VolumeImage kImageA, VolumeImage kImageB, Vector3f kTranslate, 
+            float fX, float fY, float fZ, SurfaceState kSurface, boolean bComputeSurfaceMask, boolean isFileCoords )
     {
         super(kImageA,kImageB,kTranslate,fX,fY,fZ);
         m_kSurfaceState = kSurface;
@@ -114,8 +121,20 @@ public class VolumeSurface extends VolumeObject
         m_kSurfaceState.Material = m_kMaterial;
         m_akBackupColor = new ColorRGBA[m_kMesh.VBuffer.GetVertexQuantity()];
 
+//		Vector3f center = new Vector3f();
+//		Vector3f min = new Vector3f(  Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE );
+//		Vector3f max = new Vector3f( -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE );
         for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
         {
+        	if ( isFileCoords )
+        	{
+        		Vector3f pos = m_kMesh.VBuffer.GetPosition3( i );
+        		volumeToLocalCoords(pos);
+        		m_kMesh.VBuffer.SetPosition3( i, pos );
+//        		center.add( pos );
+//        		min.min( pos );
+//        		max.max( pos );
+        	}
             if ( m_kMesh.VBuffer.GetAttributes().HasTCoord(0) )
             {
                 m_kMesh.VBuffer.SetTCoord3( 0, i, 
@@ -128,7 +147,10 @@ public class VolumeSurface extends VolumeObject
             m_kMesh.VBuffer.GetColor4( 0, i, m_akBackupColor[i]);
         }
         m_kMesh.UpdateMS();
-
+//        System.err.println( center );
+//        System.err.println( min );
+//        System.err.println( max );
+        
         m_kLightShader = new SurfaceLightingEffect( kImageA, false );
         m_kLightShaderTransparent = new SurfaceLightingEffect( kImageA, true );
         m_kLightShader.SetPerPixelLighting(true);
@@ -165,9 +187,10 @@ public class VolumeSurface extends VolumeObject
     		m_akUnitsLabel[i] = new String( Unit.getUnitFromLegacyNum(m_kVolumeImageA.GetImage().getUnitsOfMeasure()[i]).getAbbrev() );
     	}
     	
-
-        
-        m_kVolumeImageA.setSurfaceMask(m_kMesh.GetName(), m_kMaterial.Diffuse, computeSurfaceMask() );
+    	if ( bComputeSurfaceMask )
+    	{   
+    		m_kVolumeImageA.setSurfaceMask(m_kMesh.GetName(), m_kMaterial.Diffuse, computeSurfaceMask() );
+    	}
     }
 
     public VolumeSurface ( VolumeImage kImageA, VolumeImage kImageB, Vector3f kTranslate, 
@@ -212,10 +235,10 @@ public class VolumeSurface extends VolumeObject
             {
             	if ( isFileCoords )
             	{
-                m_kMesh.VBuffer.SetPosition3( i, 
-                        (m_kResolutions.X * m_kMesh.VBuffer.GetPosition3fX(i))/maxBox  - m_fX/2f,
-                        (m_kResolutions.Y * m_kMesh.VBuffer.GetPosition3fY(i))/maxBox  - m_fY/2f,
-                        (m_kResolutions.Z * m_kMesh.VBuffer.GetPosition3fZ(i))/maxBox  - m_fZ/2f);
+            		m_kMesh.VBuffer.SetPosition3( i, 
+            				(m_kResolutions.X * m_kMesh.VBuffer.GetPosition3fX(i))/maxBox  - m_fX/2f,
+            				(m_kResolutions.Y * m_kMesh.VBuffer.GetPosition3fY(i))/maxBox  - m_fY/2f,
+            				(m_kResolutions.Z * m_kMesh.VBuffer.GetPosition3fZ(i))/maxBox  - m_fZ/2f);
             	}
                 m_kMesh.VBuffer.SetTCoord3( 0, i, 
                         (m_kMesh.VBuffer.GetPosition3fX(i)  - kTranslate.X) * 1.0f/m_fX,
@@ -1131,6 +1154,13 @@ public class VolumeSurface extends VolumeObject
         m_kLightShader.SetSurfaceTexture(bOn, bUseNewImage, bUseNewLUT);
         m_kLightShaderTransparent.SetSurfaceTexture(bOn, bUseNewImage, bUseNewLUT);
         m_bTextureOn = bOn;
+    }
+    
+    public void SetTranslateVolumeCoords( Vector3f position )
+    {
+    	position.mult( m_kVolumeScale ).scale( m_fVolumeDiv );	
+		m_kMesh.Local.SetTranslate( position );
+		m_kMesh.UpdateGS();
     }
 
     /**

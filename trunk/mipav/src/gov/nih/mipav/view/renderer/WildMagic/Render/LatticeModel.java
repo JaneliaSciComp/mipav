@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Random;
 import java.util.Vector;
 
 import javax.swing.JFileChooser;
@@ -670,6 +671,7 @@ public class LatticeModel {
     	completedIDs = new boolean[left.size()];
     	currentID = new int[]{0};
     	markerSegmentation = segmentMarkers( imageA, left, right, markerIDs, markerVolumes, false );
+		saveLatticeStatistics( imageA, null, null, left, right, markerVolumes, "_before" );
 		for ( int i = 0; i < completedIDs.length; i++ )
 		{
 			if ( markerIDs[i] == 0 )
@@ -1299,7 +1301,7 @@ public class LatticeModel {
         }
 
     }
-    
+
     public void saveLattice( )
     {
         final JFileChooser chooser = new JFileChooser();
@@ -1370,6 +1372,58 @@ public class LatticeModel {
 			updateLattice(true);
         }
 
+    }
+
+    public void saveLattice( String directory, String fileName )
+    {
+        if (fileName != null) {
+            String voiDir = new String(directory + fileName + File.separator);   
+            
+            clear3DSelection();
+            
+			imageA.unregisterAllVOIs();
+			imageA.registerVOI(lattice);
+			lattice.setColor( new Color( 0, 0, 255) );
+			lattice.getCurves().elementAt(0).update( new ColorRGBA(0,0,1,1));
+			lattice.getCurves().elementAt(1).update( new ColorRGBA(0,0,1,1));
+			lattice.getCurves().elementAt(0).setClosed(false);
+			lattice.getCurves().elementAt(1).setClosed(false);
+			for ( int j = 0; j < lattice.getCurves().elementAt(0).size(); j++ )
+			{
+				short id = (short) imageA.getVOIs().getUniqueID();
+				VOI marker = new VOI(id, "pair_" + j, VOI.POLYLINE, (float)Math.random() );
+				VOIContour mainAxis = new VOIContour(false); 		    		    		
+				mainAxis.add( lattice.getCurves().elementAt(0).elementAt(j) );
+				mainAxis.add( lattice.getCurves().elementAt(1).elementAt(j) );
+				marker.getCurves().add(mainAxis);
+				marker.setColor( new Color( 255, 255, 0) );
+				mainAxis.update( new ColorRGBA(1,1,0,1));
+				if ( j == 0 )
+				{
+					marker.setColor( new Color( 0, 255, 0) );
+					mainAxis.update( new ColorRGBA(0,1,0,1));
+				}
+				imageA.registerVOI( marker );
+			}
+			
+			saveAllVOIsTo( voiDir, imageA );    
+
+			imageA.unregisterAllVOIs();
+			imageA.registerVOI(lattice);
+			if ( leftMarker != null )
+			{
+				imageA.registerVOI(leftMarker);
+			}
+			if ( rightMarker != null )
+			{
+				imageA.registerVOI(rightMarker);
+			}
+			if ( annotationVOIs != null )
+			{
+				imageA.registerVOI( annotationVOIs );
+			}
+			updateLattice(true);
+        }
     }
 
     
@@ -1470,13 +1524,34 @@ public class LatticeModel {
 	
 	public void segmentWorm()
 	{
-//		segmentAll(imageA);
+		imageA.calcMinMax();
+		float minValue = (float) (0.1 * imageA.getMax());
+		float maxValue = (float) (1.0 * imageA.getMax());
+		ModelImage imageNoSeam = segmentAll1(imageA, minValue, maxValue, 20, 1 );
+		minValue = (float) (0.25 * imageNoSeam.getMax());
+		maxValue = (float) (1.0 *  imageNoSeam.getMax());
+		segmentAll2(imageA, imageNoSeam, minValue, maxValue, 10, .5f );
 	}
 	
-	private void segmentAll( ModelImage image )
+	private static ModelImage segmentAll2( ModelImage image )
 	{
-		ModelImage blurs = blur(image, 5);
-		ModelImage blurb = blur(image, 7);
+		ModelImage blurs = blur(image, 3);
+    	blurs.calcMinMax();  		    	
+//    	new ViewJFrameImage(blurs);
+    	
+		ModelImage blurb = blur(image, 5);
+		blurb.calcMinMax();  		    	
+//    	new ViewJFrameImage(blurb);
+
+    	String imageName = image.getImageName();
+    	if ( imageName.contains("_clone") )
+    	{
+    		imageName = imageName.replaceAll("_clone", "" );
+    	}
+    	imageName = imageName + "_gblur";
+		ModelImage resultImage = new ModelImage( ModelStorageBase.FLOAT, image.getExtents(), imageName );
+		JDialogBase.updateFileInfo( image, resultImage );
+    	
 
     	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
     	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
@@ -1487,54 +1562,691 @@ public class LatticeModel {
     		{
     			for ( int x = 0; x < dimX; x++ )
     			{
-    				blurb.set(x,  y, z, blurb.getFloat(x,y,z) - blurs.getFloat(x,y,z) );
-//        			if ( (x <= 10) || (x > dimX-10) || (y <= 10) || (y > dimY-10) || (z <= 10) || (z > dimZ-10) )
-//        			{
-//        				blurb.set(x, y, z, image.getMin() );
-//        			}
+    				resultImage.set(x, y, z, Math.max(0, blurs.getFloat(x,y,z) - blurb.getFloat(x,y,z) ) );
     			}
     		}
     	}
     	blurs.disposeLocal();
     	blurs = null;
-    	blurb.calcMinMax();
-    	new ViewJFrameImage(blurb);
+    	blurb.disposeLocal();
+    	blurb = null;
+    	resultImage.calcMinMax();  		    	
+    	resultImage.restoreVOIs( image.getVOIsCopy() );
+    	return resultImage;
+	}
+	
+	public static ModelImage segmentAll1( ModelImage image, float minValue, float maxValue, int numClusters, float color )
+	{
+		ModelImage result = (ModelImage)image.clone();
+		
+		System.err.println( "segmentAll " + minValue + " " + maxValue );
+		
+		Vector<Vector3f> positions = new Vector<Vector3f>();
+    	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+    	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+    	int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+    	for ( int z = 0; z < dimZ; z++ )
+    	{
+    		for ( int y = 0; y < dimY; y++ )
+    		{
+    			for ( int x = 0; x < dimX; x++ )
+    			{
+//    				result.set(x,y,z,0);
+    				if ( (image.getFloat(x,y,z) > minValue) && (image.getFloat(x,y,z) < maxValue) )
+    				{
+    					positions.add( new Vector3f(x,y,z) );
+//        				result.set(x,y,z, image.getFloat(x,y,z));
+    				}
+    			}
+    		}
+    	}
+    	System.err.println( "segmentAll " + positions.size() );
     	
+    	int numAttempts = 1000;
+		Random randomGen = new Random();
+    	double minCost = Float.MAX_VALUE;
+    	Vector3f[] potentialClusters = null;
+    	for ( int i = 0; i < numAttempts; i++ )
+    	{
+    		// generate random potential cluster centers:
+    		Vector<Integer> indexList = new Vector<Integer>();
+    		while( indexList.size() < numClusters )
+    		{
+    			int index = (int) (randomGen.nextFloat() * (positions.size()));
+    			if ( !indexList.contains(index) )
+    			{
+    				indexList.add( index );
+    			}
+    		}
+    		Vector3f[] centers = new Vector3f[numClusters];
+    		for ( int j = 0; j < numClusters; j++ )
+    		{
+    			centers[j] = new Vector3f(positions.elementAt( indexList.elementAt(j) ));
+    		}
+    			
 
+    		boolean done = false;
+    		while ( !done )
+    		{
+    			VOIContour[] groups = new VOIContour[numClusters];
+    			// for each position find closest center and put in that group:
+    			for ( int j = 0; j < positions.size(); j++ )
+    			{
+    				int minGroupIndex = -1;
+    				float minGroupDist = Float.MAX_VALUE;
+    				for ( int k = 0; k < numClusters; k++ )
+    				{
+    					float distance = positions.elementAt(j).distance( centers[k] );
+    					if ( distance < minGroupDist )
+    					{
+    						minGroupDist = distance;
+    						minGroupIndex = k;
+    					}
+    				}
+    				if ( groups[minGroupIndex] == null )
+    				{
+    					groups[minGroupIndex] = new VOIContour(false);
+    				}
+    				groups[minGroupIndex].add( positions.elementAt(j) );
+    			}
+
+    			// calculate new center positions based on the average of group:
+    			Vector3f[] listCenters = new Vector3f[numClusters];
+    			for ( int j = 0; j < groups.length; j++ )
+    			{
+    				listCenters[j] = new Vector3f();
+    				if ( groups[j] != null )
+    				{
+    					for ( int k = 0; k < groups[j].size(); k++ )
+    					{
+    						listCenters[j].add( groups[j].elementAt(k) );
+    					}
+    					listCenters[j].scale( 1f / (float) groups[j].size() );
+    				}
+    			}
+    			float maxMoved = -Float.MAX_VALUE;
+    			// check distance moved, if less than threshold, done:
+    			for ( int j = 0; j < numClusters; j++ )
+    			{
+    				float dist = centers[j].distance( listCenters[j] );
+    				if ( dist > maxMoved )
+    				{
+    					maxMoved = dist;
+    				}
+    				centers[j].copy( listCenters[j] );
+    			}
+    			if ( maxMoved < 2 )
+    			{
+    				// done:
+    				done = true;
+    				// calculate cost:
+    				double cost = 0;
+    				for ( int j = 0; j < groups.length; j++ )
+    				{
+    					if ( groups[j] != null )
+    					{
+    						for ( int k = 0; k < groups[j].size(); k++ )
+    						{
+    							cost += centers[j].distance(groups[j].elementAt(k) );
+    						}
+    					}
+    				}
+    				cost /= (float)positions.size();
+    				if ( cost < minCost )
+    				{
+    					minCost = cost;
+    					if ( potentialClusters != null )
+    					{
+    						potentialClusters = null;
+    					}
+    					potentialClusters = new Vector3f[numClusters];
+    					for ( int j = 0; j < centers.length; j++ )
+    					{
+    						potentialClusters[j] = new Vector3f(centers[j]);
+    					}
+    				}
+    			}
+    			else
+    			{
+    				for ( int j = 0; j < numClusters; j++ )
+    				{
+    					if ( groups[j] != null )
+    					{
+    						groups[j].clear();
+    					}
+    				}
+    				groups = null;
+    				listCenters = null;
+    			}
+    		}
+    	}
+
+		for ( int z = 0; z < dimZ; z++ )
+		{
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					for ( int pos = 0; pos < potentialClusters.length; pos++ )
+					{
+						if ( potentialClusters[pos].distance( new Vector3f(x, y, z ) ) < 25 )
+						{
+							result.set(x, y, z, image.getMin());
+						}
+					}
+				}
+			}
+		}
+		
+
+		short sID = (short)(image.getVOIs().getUniqueID());
+		VOI clusters = new VOI(sID, "clusters", VOI.POINT, color );
+		for ( int i = 0; i < potentialClusters.length; i++ )
+		{
+//			System.err.println( i + "     " + potentialClusters[i] );
+			clusters.importPoint( potentialClusters[i] );
+		}
+		image.registerVOI(clusters);
+    	System.err.println( minCost + " " + clusters.getCurves().size() );
+    
+//    	result.restoreVOIs( image.getVOIsCopy() );
+    	result.calcMinMax();
+//    	new ViewJFrameImage(result);
+    	return result;
+	}
+
+	
+	public static void segmentAll2( ModelImage image, ModelImage imageNoSeam, float minValue, float maxValue, int numClusters, float color )
+	{
     	String imageName = image.getImageName();
     	if ( imageName.contains("_clone") )
     	{
     		imageName = imageName.replaceAll("_clone", "" );
     	}
-		ModelImage markerSegmentation = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), imageName + "_markers.xml");
-		JDialogBase.updateFileInfo( image, markerSegmentation );		
+		
+		System.err.println( "segmentAll " + minValue + " " + maxValue );
+		
+		Vector<Vector3f> positions = new Vector<Vector3f>();
+    	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+    	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+    	int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+    	for ( int z = 0; z < dimZ; z++ )
+    	{
+    		for ( int y = 0; y < dimY; y++ )
+    		{
+    			for ( int x = 0; x < dimX; x++ )
+    			{
+    				if ( (imageNoSeam.getFloat(x,y,z) > minValue) && (imageNoSeam.getFloat(x,y,z) < maxValue) )
+    				{
+    					positions.add( new Vector3f(x,y,z) );
+    				}
+    			}
+    		}
+    	}
+    	System.err.println( "segmentAll " + positions.size() );
     	
+    	int numAttempts = 1000;
+		Random randomGen = new Random();
+    	double minCost = Float.MAX_VALUE;
+    	Vector3f[] potentialClusters = null;
+    	for ( int i = 0; i < numAttempts; i++ )
+    	{
+    		// generate random potential cluster centers:
+    		Vector<Integer> indexList = new Vector<Integer>();
+    		while( indexList.size() < numClusters )
+    		{
+    			int index = (int) (randomGen.nextFloat() * (positions.size()));
+    			if ( !indexList.contains(index) )
+    			{
+    				indexList.add( index );
+    			}
+    		}
+    		Vector3f[] centers = new Vector3f[numClusters];
+    		for ( int j = 0; j < numClusters; j++ )
+    		{
+    			centers[j] = new Vector3f(positions.elementAt( indexList.elementAt(j) ));
+    		}
+    			
+
+    		boolean done = false;
+    		while ( !done )
+    		{
+    			VOIContour[] groups = new VOIContour[numClusters];
+    			// for each position find closest center and put in that group:
+    			for ( int j = 0; j < positions.size(); j++ )
+    			{
+    				int minGroupIndex = -1;
+    				float minGroupDist = Float.MAX_VALUE;
+    				for ( int k = 0; k < numClusters; k++ )
+    				{
+    					float distance = positions.elementAt(j).distance( centers[k] );
+    					if ( distance < minGroupDist )
+    					{
+    						minGroupDist = distance;
+    						minGroupIndex = k;
+    					}
+    				}
+    				if ( groups[minGroupIndex] == null )
+    				{
+    					groups[minGroupIndex] = new VOIContour(false);
+    				}
+    				groups[minGroupIndex].add( positions.elementAt(j) );
+    			}
+
+    			// calculate new center positions based on the average of group:
+    			Vector3f[] listCenters = new Vector3f[numClusters];
+    			for ( int j = 0; j < groups.length; j++ )
+    			{
+    				listCenters[j] = new Vector3f();
+    				if ( groups[j] != null )
+    				{
+    					for ( int k = 0; k < groups[j].size(); k++ )
+    					{
+    						listCenters[j].add( groups[j].elementAt(k) );
+    					}
+    					listCenters[j].scale( 1f / (float) groups[j].size() );
+    				}
+    			}
+    			float maxMoved = -Float.MAX_VALUE;
+    			// check distance moved, if less than threshold, done:
+    			for ( int j = 0; j < numClusters; j++ )
+    			{
+    				float dist = centers[j].distance( listCenters[j] );
+    				if ( dist > maxMoved )
+    				{
+    					maxMoved = dist;
+    				}
+    				centers[j].copy( listCenters[j] );
+    			}
+    			if ( maxMoved < 2 )
+    			{
+    				// done:
+    				done = true;
+    				// calculate cost:
+    				double cost = 0;
+    				for ( int j = 0; j < groups.length; j++ )
+    				{
+    					if ( groups[j] != null )
+    					{
+    						for ( int k = 0; k < groups[j].size(); k++ )
+    						{
+    							cost += centers[j].distance(groups[j].elementAt(k) );
+    						}
+    					}
+    				}
+    				cost /= (float)positions.size();
+    				if ( cost < minCost )
+    				{
+    					minCost = cost;
+    					if ( potentialClusters != null )
+    					{
+    						potentialClusters = null;
+    					}
+    					potentialClusters = new Vector3f[numClusters];
+    					for ( int j = 0; j < centers.length; j++ )
+    					{
+    						potentialClusters[j] = new Vector3f(centers[j]);
+    					}
+    				}
+    			}
+    			else
+    			{
+    				for ( int j = 0; j < numClusters; j++ )
+    				{
+    					if ( groups[j] != null )
+    					{
+    						groups[j].clear();
+    					}
+    				}
+    				groups = null;
+    				listCenters = null;
+    			}
+    		}
+    	}
     	
+
+		ModelImage result = segmentAll2(imageNoSeam);
+		Vector<Vector3f> seeds = new Vector<Vector3f>();
+		Vector<Vector3f> newClusters = new Vector<Vector3f>();
+		Vector<Vector3f> midLineClusters = new Vector<Vector3f>();
+		float maxSize = -Float.MAX_VALUE;
+		int maxIndex = -1;
+		for ( int i = 0; i < potentialClusters.length; i++ )
+		{
+			seeds.clear();
+			seeds.add( potentialClusters[i] );
+			float size = fill( result, (float)(0.1 * result.getMax()), seeds );
+			if ( size > maxSize )
+			{
+				maxSize = size;
+				maxIndex = i;
+			}
+			System.err.println( "potential clusters " + i + " " + size );
+			BitSet mask = result.getMask();
+			int count = 0;
+			for ( int j = 0; j < potentialClusters.length; j++ )
+			{
+	    		int index = (int) (potentialClusters[j].Z * dimX * dimY + potentialClusters[j].Y * dimX + potentialClusters[j].X);
+	    		if ( mask.get(index ) )
+	    		{
+	    			count++;
+	    		}
+			}
+			if ( (size > 0) && (size < 10000) )
+			{
+				newClusters.add( potentialClusters[i] );
+			}
+			else if ( size > 0 )
+			{
+				midLineClusters.add( potentialClusters[i] );
+			}
+			mask.clear();
+		}
+
+		System.err.println( "newClusters " + newClusters.size() );
+		System.err.println( "midLineClusters " + midLineClusters.size() );
     	
-//    	double max = blur7.getMax();
-//    	Vector<Vector3f> seedList = new Vector<Vector3f>();
-//
-//    	for ( int z = 0; z < dimZ; z++ )
-//    	{
-//    		for ( int y = 0; y < dimY; y++ )
-//    		{
-//    			for ( int x = 0; x < dimX; x++ )
-//    			{
-//    				if ( blur7.getFloat(x,y,z) > (0.1f * max) )
-//    				{
-//    					seedList.add( new Vector3f(x,y,z) );
-//    				}
-//    			}
-//    		}
-//    	}
-//    	System.err.println( seedList.size() );
-//    	fill( image, markerSegmentation, (float) (0.1f * max), seedList );
-//    	
-//    	markerSegmentation.calcMinMax();
-//    	new ViewJFrameImage(markerSegmentation);
+		String voiDir = image.getImageDirectory() + JDialogBase.makeImageName( imageName, "") + File.separator + "segmentation" + File.separator;
+        final File voiFileDir = new File(voiDir);
+        if (voiFileDir.exists() && voiFileDir.isDirectory()) { 
+        } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+        } else { // voiFileDir does not exist
+            voiFileDir.mkdir();
+        }
+
+		
+		
+		if ( midLineClusters.size() > 0 )
+		{
+			for ( int i = 0; i < midLineClusters.size(); i++ )
+			{
+				seeds.clear();
+				seeds.add( potentialClusters[maxIndex] );
+				float size = fill( result, (float)(0.1 * result.getMax()), seeds );
+				System.err.println( "Midline clusters " + i + " " + size );
+			}
+
+			image.setMask( (BitSet)result.getMask().clone() );
+			
+			ModelImage tmpImage = segmentAll2(image);
+			
+			VOI seamCells = image.getVOIs().elementAt(0);
+			Vector<Vector3f> newMidLineClusters = new Vector<Vector3f>();
+			boolean[] removeSeam = new boolean[seamCells.getCurves().size()];
+			for ( int i = 0; i < seamCells.getCurves().size(); i++ )
+			{
+				tmpImage.getMask().clear();
+				seeds.clear();
+				seeds.add( seamCells.getCurves().elementAt(i).elementAt(0) );
+				float size = fill( tmpImage, (float)(0.1 * result.getMax()), seeds );
+				System.err.println( "Original clusters " + i + " " + size );
+				if ( (size >= 10000) )
+				{
+					newMidLineClusters.add( seamCells.getCurves().elementAt(i).elementAt(0) );
+				}
+				boolean midLine = false;
+				for ( int j = 0; j < midLineClusters.size(); j++ )
+				{
+		    		int index = (int) (midLineClusters.elementAt(j).Z * dimX * dimY + midLineClusters.elementAt(j).Y * dimX + midLineClusters.elementAt(j).X);
+		    		if ( tmpImage.getMask().get(index) )
+		    		{
+		    			System.err.println( "found midLine" );
+		    			midLine = true;
+		    			break;
+		    		}
+				}
+				if ( midLine )
+				{
+					midLineClusters.add( seamCells.getCurves().elementAt(i).elementAt(0) );
+					image.getMask().or( tmpImage.getMask() );
+					removeSeam[i] = true;
+				}
+			}
+			for ( int i = removeSeam.length - 1; i >= 0; i-- )
+			{
+				if ( removeSeam[i] )
+				{
+					seamCells.getCurves().remove(i);
+				}
+			}
+			System.err.println( "newMidLineClusters " + newMidLineClusters.size() );
+			
+
+	    	for ( int z = 0; z < dimZ; z++ )
+	    	{
+	    		for ( int y = 0; y < dimY; y++ )
+	    		{
+	    			for ( int x = 0; x < dimX; x++ )
+	    			{
+	    				int index = z * dimY * dimX + y * dimX + x;
+	    				if ( image.getMask().get(index) )
+	    				{
+	    					result.set(x, y, z, image.get(x,y,z) );
+	    				}
+	    				else
+	    				{
+	    					result.set(x, y, z, image.getMin() );
+	    				}
+	    			}
+	    		}
+	    	}
+	    	
+			voiDir = image.getImageDirectory() + JDialogBase.makeImageName( imageName, "") + File.separator + "segmentation" + File.separator;
+	        result.setImageName(imageName + "_midLine.xml");
+			ModelImage.saveImage( result, imageName + "_midLine.xml", voiDir, false );
+			result.disposeLocal();
+			result = null;
+		}		
+
+		if ( newClusters.size() > 0 )
+		{
+			short sID = (short)(image.getVOIs().getUniqueID());
+			VOI clusters = new VOI(sID, "clusters2", VOI.POINT, color );
+			for ( int i = 0; i < newClusters.size(); i++ )
+			{
+				System.err.println( "new cluster " + newClusters.elementAt(i) );
+				clusters.importPoint( newClusters.elementAt(i) );
+			}
+			image.registerVOI(clusters);
+		}
+        voiDir = image.getImageDirectory() + JDialogBase.makeImageName( imageName, "") + File.separator + "segmentation" + File.separator +
+        		"seam_cells" + File.separator;
+		saveAllVOIsTo( voiDir, image );		
+//		new ViewJFrameImage((ModelImage)image.clone());	
 	}
 	
-	private ModelImage blur(ModelImage image, int sigma)
+	
+	public static ModelImage segmentAnnotations( ModelImage image, VOI annotations, int time, BufferedWriter statistics )
+	{
+    	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+    	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+    	int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+    	
+		ModelImage result = segmentAll2( image );
+		
+		float cutoff = (float) (0.125 * result.getMax());
+		float[] minValue = new float[annotations.getCurves().size()];
+		Vector<Vector3f> positions = new Vector<Vector3f>();
+		for ( int i = 0; i < annotations.getCurves().size(); i++ )
+		{
+        	VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+			if ( text.getText().equalsIgnoreCase( "nose" ) || text.getText().equalsIgnoreCase( "origin" ) )
+			{
+				continue;
+			}
+			Vector3f pos =  text.elementAt(0);
+			Vector3f seed = new Vector3f(pos);
+			minValue[i] = result.getFloat( (int)pos.X, (int)pos.Y, (int)pos.Z );
+
+			if ( minValue[i] < cutoff )
+			{
+				for ( int z = (int) (pos.Z - 4); z <= pos.Z + 4; z++ )
+				{
+					for ( int y = (int) (pos.Y - 4); y <= pos.Y + 4; y++ )
+					{
+						for ( int x = (int) (pos.X - 4); x <= pos.X + 4; x++ )
+						{
+
+							float value = result.getFloat( x, y, z );
+							if ( (value >= cutoff) && (value > minValue[i]) )
+							{
+								minValue[i] = value;
+								seed.set( x, y, z );
+							}
+							else if ( (minValue[i] < cutoff) && (value > minValue[i]) )
+							{
+								minValue[i] = value;
+								seed.set( x, y, z );
+							}
+						}
+					}
+				}
+			}
+			positions.add( seed );
+		}
+		
+
+//		System.err.println( minValue + "     " + (float)(0.1 * result.getMax()) + "     " + 0.75f * minValue );
+//		if ( minValue < (float)(0.1 * result.getMax()) )
+//		{
+//			minValue = 0.75f * minValue;
+//		}
+		BitSet allNodes = new BitSet(dimX*dimY*dimZ);
+		Vector<Vector3f> seeds = new Vector<Vector3f>();
+		int posCount = 0;
+		for ( int i = 0; i < annotations.getCurves().size(); i++ )
+		{
+        	VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+			if ( text.getText().equalsIgnoreCase( "nose" ) || text.getText().equalsIgnoreCase( "origin" ) )
+			{
+				continue;
+			}
+			Vector3f pos = positions.elementAt(posCount++);
+			seeds.clear();
+			seeds.add( pos );
+			float size = fill( result, minValue[i], seeds );
+//			System.err.println( text.getText() + " " + size );
+//			System.err.println( minValue[i] + "     " + (float)(0.1 * result.getMax()) + "     " + overallMin + " " + 100* (overallMin/result.getMax()) + " " + size );
+
+			if ( size == 0 )
+			{
+				System.err.println( i + "    " + minValue[i] + "     " + 100* (minValue[i]/result.getMax()) + "  " + size );
+			}
+			
+			if ( size > 20000 )
+			{				
+				result.getMask().clear();
+				System.err.println( i + "    " + minValue[i] + "     " + 100* (minValue[i]/result.getMax()) + "  " + size);
+				
+//				pos = text.elementAt(0);
+				size = 0;
+				for ( int z = (int) (pos.Z - 4); z <= pos.Z + 4; z++ )
+				{
+					for ( int y = (int) (pos.Y - 4); y <= pos.Y + 4; y++ )
+					{
+						for ( int x = (int) (pos.X - 4); x <= pos.X + 4; x++ )
+						{
+							if ( pos.distance( new Vector3f(x,y,z) ) <= 4 )
+							{
+								float value = result.getFloat( x, y, z );
+								if ( value >= minValue[i] )
+								{
+									int index = z*dimY*dimX + y*dimX + x;
+									result.getMask().set(index);
+									size++;
+								}
+							}
+						}
+					}
+				}						
+			}
+
+			System.err.println( i + "    " + minValue[i] + "     " + 100* (minValue[i]/result.getMax()) + "  " + size );
+			
+			allNodes.or( result.getMask() );
+			result.getMask().clear();
+
+			String sameSide = text.getText().contains("L") ? "L" : "R";
+			String opposite = text.getText().contains("L") ? "R" : "L";
+			String[] ids = text.getText().split(sameSide);
+			int index = -1;
+			for ( int j = 0; j < ids.length; j++ )
+			{
+				if ( ids[j].length() > 0 )
+				{
+					index = Integer.valueOf( ids[j] );
+				}
+			}
+			if ( index != -1 )
+			{
+				float distancePair = 0;
+				float distancePrevSame = 0;
+				float distancePrevOpposite = 0;
+				float distanceNextSame = 0;
+				float distanceNextOpposite = 0;
+				String pair = new String( index + opposite );
+				String prevSame = new String( (index - 1) + sameSide );
+				String prevOpposite = new String( (index - 1) + opposite );
+				String nextSame = new String( (index + 1) + sameSide );
+				String nextOpposite = new String( (index + 1) + opposite );
+				for ( int j = 0; j < annotations.getCurves().size(); j++ )
+				{
+					VOIText text2 = (VOIText) annotations.getCurves().elementAt(j);
+					if ( text2.getText().equals(pair) )
+					{
+						distancePair = text.elementAt(0).distance(text2.elementAt(0) );
+					}
+					if ( text2.getText().equals(prevSame) )
+					{
+						distancePrevSame = text.elementAt(0).distance(text2.elementAt(0) );
+					}
+					if ( text2.getText().equals(prevOpposite) )
+					{
+						distancePrevOpposite = text.elementAt(0).distance(text2.elementAt(0) );
+					}
+					if ( text2.getText().equals(nextSame) )
+					{
+						distanceNextSame = text.elementAt(0).distance(text2.elementAt(0) );
+					}
+					if ( text2.getText().equals(nextOpposite) )
+					{
+						distanceNextOpposite = text.elementAt(0).distance(text2.elementAt(0) );
+					}
+				}
+				float imageValue = image.getFloat( (int)pos.X, (int)pos.Y, (int)pos.Z );
+				float dogValue = result.getFloat( (int)pos.X, (int)pos.Y, (int)pos.Z );
+				try {
+					statistics.write( time + "," + text.getText() + "," + distancePair + "," + distancePrevSame + "," + distancePrevOpposite + "," + distanceNextSame + "," + distanceNextOpposite + ","
+							+ size + "," + imageValue + "," + dogValue + "," + minValue[i] + "\n"  );
+				} catch (IOException e) {}
+			}
+		}
+		
+    	for ( int z = 0; z < dimZ; z++ )
+    	{
+    		for ( int y = 0; y < dimY; y++ )
+    		{
+    			for ( int x = 0; x < dimX; x++ )
+    			{
+    				int index = z * dimY * dimX + y * dimX + x;
+    				if ( allNodes.get(index) )
+    				{
+    					result.set(x, y, z, image.get(x,y,z) );
+    				}
+    				else
+    				{
+    					result.set(x, y, z, image.getMin() );
+    				}
+    			}
+    		}
+    	}
+//		new ViewJFrameImage(result);
+    	result.calcMinMax();
+		return result;
+	}
+	
+	
+	private static ModelImage blur(ModelImage image, int sigma)
 	{
     	String imageName = image.getImageName();
     	if ( imageName.contains("_clone") )
@@ -1566,7 +2278,7 @@ public class LatticeModel {
 	 *
 	 * @return  the amount to multiply the z-sigma by to correct for resolution differences
 	 */
-	private float getCorrectionFactor( ModelImage image ) {
+	private static float getCorrectionFactor( ModelImage image ) {
 		int index = image.getExtents()[2] / 2;
 		float xRes = image.getFileInfo(index).getResolutions()[0];
 		float zRes = image.getFileInfo(index).getResolutions()[2];
@@ -1688,7 +2400,7 @@ public class LatticeModel {
     	}
     	
     	minOverall *= 0.75;
-    	int step = (int) (minOverall / 3f);
+    	int step = (int) Math.max( 1, (minOverall / 3f) );
 //    	System.err.println( step + " " + minDistance );
 
     	Vector<Vector3f> seedList = new Vector<Vector3f>();
@@ -1742,7 +2454,6 @@ public class LatticeModel {
     		markerVolumes[i][0] = counts[i][0];
     		markerVolumes[i][1] = counts[i][1];
     	}
-		saveLatticeStatistics( imageA, null, null, left, right, markerVolumes, "_before" );
 
     	for ( int i = 0; i < left.size(); i++ )
     	{
@@ -1886,6 +2597,76 @@ public class LatticeModel {
 	}
 	
 
+    private static int fill( ModelImage image, float intensityMin, Vector<Vector3f> seedList )
+    {
+    	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+    	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+    	int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+    	
+    	int count = 0;
+
+    	BitSet mask = new BitSet(dimX*dimY*dimZ);
+    	while ( seedList.size() > 0 )
+    	{
+    		Vector3f seed = seedList.remove(0);
+    		
+    		int z = Math.round(seed.Z);
+    		int y = Math.round(seed.Y);
+    		int x = Math.round(seed.X);
+    		int index = z * dimX * dimY + y * dimX + x;
+    		if ( mask.get( index ) )
+    		{
+    			continue;
+    		}
+    		mask.set(index);
+    		float value;
+    		if ( image.isColorImage() )
+    		{
+    			value = image.getFloatC(x, y, z, 2);
+    		}
+    		else
+    		{
+    			value = image.getFloat(x, y, z);
+    		}
+			if ( (value >= intensityMin) )
+			{
+				for ( int z1 = Math.max(0, z-1); z1 <= Math.min(dimZ-1, z+1); z1++ )
+				{
+					for ( int y1 = Math.max(0, y-1); y1 <= Math.min(dimY-1, y+1); y1++ )
+					{
+						for ( int x1 = Math.max(0, x-1); x1 <= Math.min(dimX-1, x+1); x1++ )
+						{
+							if ( !((x == x1) && (y == y1) && (z == z1)) )
+							{
+					    		index = z1 * dimX * dimY + y1 * dimX + x1;
+					    		if ( !mask.get( index ) )
+					    		{
+					    			if ( image.isColorImage() )
+					    			{
+					    				value = image.getFloatC(x1, y1, z1, 2);
+					    			}
+					    			else
+					    			{
+					    				value = image.getFloat(x1, y1, z1);
+					    			}
+					    			if ( value >= intensityMin )
+					    			{
+					    				seedList.add( new Vector3f(x1,y1,z1) );
+					    			}
+					    		}
+							}
+						}
+					}
+				}
+				count++;
+			}
+    	}
+    	
+    	image.getMask().or( mask );
+    	return count;
+    }
+	
+
     private int fill( ModelImage image, ModelImage model, float intensityMin, 
     		Vector<Vector3f> seedList )
     {
@@ -1965,6 +2746,7 @@ public class LatticeModel {
     }
 	
 	
+
 
     private int fill( ModelImage image, ModelImage gmImage, ModelImage model, float gmMin, float intensityMin, Vector3f centerPt, 
     		Vector<Vector3f> seedList, Vector<Vector3f> saveSeedList,
@@ -4121,7 +4903,7 @@ public class LatticeModel {
 		}
 	}
     
-    private void saveAllVOIsTo(final String voiDir, ModelImage image) {
+    public static void saveAllVOIsTo(final String voiDir, ModelImage image) {
         try {
             ViewVOIVector VOIs = image.getVOIs();
 

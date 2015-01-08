@@ -9,6 +9,8 @@ import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.CustomUIBuilder;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewMenuBar;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelAnnotationAnimation;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 import gov.nih.mipav.view.renderer.WildMagic.Navigation.NavigationBehavior;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageCrop;
@@ -34,9 +36,13 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.TreeMap;
 import java.util.Vector;
 
+import javax.imageio.ImageIO;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
@@ -69,7 +75,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 
 	/** Parent user-interface and display frame. */
 	protected VolumeTriPlanarInterface m_kParent = null;
-    
+    protected boolean m_bFirstDisplay = true;
 	/**
 	 * Default Constructor.
 	 */
@@ -181,6 +187,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			VolumeImageExtract.main(m_kParent.newSharedCanvas(), m_kParent, m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect(), m_iExtractLevel);
 			m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 			m_bExtract = false;
+		}
+
+		if ( m_bFirstDisplay && (m_kShared != null) )
+		{		
+			m_kParent.firstDisplay();
+			m_bFirstDisplay = false;
 		}
 	}
 
@@ -555,17 +567,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		sphere.SetName( "Sphere_" + index);
 		m_kParent.addSurface( sphere );
 	}
-
-    private static void updateSphere( TriMesh sphere, float x, float y, float z, ColorRGBA c )
-    {
-    	for ( int i = 0; i < sphere.VBuffer.GetVertexQuantity(); i++ )
-    	{
-    		Vector3f p = sphere.VBuffer.GetPosition3(i);
-    		p.add(x,y,z);
-    		sphere.VBuffer.SetPosition3(i, p);
-    		sphere.VBuffer.SetColor4( 0, i, c );
-    	}
-    }
 	
 	/**
 	 * Toggle Navigation mode.
@@ -885,6 +886,254 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
                           zBox) / (2.0f*maxBox);
         return kPointScaled;
     }
+	
+
+	protected void update4DVOIs(boolean bForward) {		
+		annotationVOIsUpdate(annotationSpheresIndex + 1);
+	}
+
+	private VOIVector annotationPositions;
+	private VolumeSurface[] annotationSpheres;
+	private boolean[][] annotationDisplay;
+	private int annotationSpheresIndex = -1;
+	private VOI[] annotationVOIs;
+	private ColorRGBA[] annotationLabelColors;
+	private JPanelAnnotationAnimation annotationAnimationPanel;
+	public void addAnimationVOIs(VOIVector vois, JPanelAnnotationAnimation annotationAnimationPanel)
+	{		
+		annotationPositions = vois;
+		this.annotationAnimationPanel = annotationAnimationPanel;
+		Attributes attributes = new Attributes();
+		attributes.SetPChannels(3);
+		attributes.SetNChannels(3);
+		attributes.SetCChannels(0,4);
+		StandardMesh std = new StandardMesh(attributes);
+
+		int dimX = m_kVolumeImageA.GetImage().getExtents().length > 0 ? m_kVolumeImageA.GetImage().getExtents()[0] : 1;
+		int dimY = m_kVolumeImageA.GetImage().getExtents().length > 1 ? m_kVolumeImageA.GetImage().getExtents()[1] : 1;
+		int dimZ = m_kVolumeImageA.GetImage().getExtents().length > 2 ? m_kVolumeImageA.GetImage().getExtents()[2] : 1;
+		float scale = 0.05f * Math.min( dimX, Math.min( dimY, dimZ ) );
+		scale = Math.max( 3, scale );
+//		System.err.println( scale );
+		
+		Transformation xfrm = new Transformation();
+		xfrm.SetUniformScale( scale );
+		int maxCount = -1;
+		int maxIndex = -1;
+		for ( int i = 0; i < vois.size(); i++ )
+		{
+			if ( vois.elementAt(i).getCurves().size() > maxCount )
+			{
+				maxCount = vois.elementAt(i).getCurves().size();
+				maxIndex = i;
+			}
+		}
+
+		annotationSpheres = new VolumeSurface[maxCount];
+		annotationDisplay = new boolean[maxCount][2];
+		annotationVOIs = new VOI[maxCount];
+		annotationLabelColors = new ColorRGBA[maxCount];
+		for ( int i = 0; i < maxCount; i++ )
+		{
+			VOIText text = (VOIText) vois.elementAt(maxIndex).getCurves().elementAt(i);
+			Color c = text.getColor();
+
+			annotationVOIs[i] = new VOI( (short)i, text.getName(), VOI.ANNOTATION, 0 );
+			annotationVOIs[i].setColor(c);
+			
+			ColorRGBA colorRGBA = new ColorRGBA(c.getRed()/255f,c.getGreen()/255f,c.getBlue()/255f,1);
+			
+//			System.err.println( text.getText() + " " + c );
+			std.SetTransformation( xfrm );
+			TriMesh sphere = std.Sphere(2);
+			updateSphere( sphere, 0, 0, 0, colorRGBA );
+			SurfaceState kSurface = new SurfaceState( sphere, text.getText() );	
+			annotationSpheres[i] = new VolumeSurface(m_kVolumeImageA,
+					m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ, kSurface, false, true);
+			annotationSpheres[i].SetDisplay(false);
+			m_kDisplayList.add(annotationSpheres[i]);	
+			annotationDisplay[i][0] = true;
+			annotationDisplay[i][1] = true;
+			
+
+			annotationLabelColors[i] = new ColorRGBA(1,1,1,1);
+		}
+
+		Vector3f origin = new Vector3f();
+		for ( int i = 0; i < vois.size(); i++ )
+		{
+			for ( int j = 0; j < vois.elementAt(i).getCurves().size(); j++ )
+			{
+				VOIText text = (VOIText) vois.elementAt(i).getCurves().elementAt(j);
+				if ( text.size() == 0 )
+				{
+					System.err.println( text.getText() );
+				}
+				Vector3f position = text.elementAt(0);
+				if ( text.getText().equals("origin" ) )
+				{
+//					System.err.println( position );
+					origin.copy(position);
+					break;
+				}
+			}
+			for ( int j = 0; j < vois.elementAt(i).getCurves().size(); j++ )
+			{
+				VOIText text = (VOIText) vois.elementAt(i).getCurves().elementAt(j);
+				text.setUseMarker(false);
+				Vector3f position = text.elementAt(0);
+				position.sub(origin);
+				position.add( m_kVolumeImageA.GetImage().getExtents()[0]/2, m_kVolumeImageA.GetImage().getExtents()[1]/2, 0 );
+//				position.add( 4, 0, 0 );
+				
+				position = text.elementAt(1);
+				position.sub(origin);
+				position.add( m_kVolumeImageA.GetImage().getExtents()[0]/2, m_kVolumeImageA.GetImage().getExtents()[1]/2, 0 );
+			}
+		}
+		
+//		for ( int i = 0; i < m_kDisplayList.size(); i++ )
+//		{
+//			System.err.println( m_kDisplayList.elementAt(i).GetName() + " " + m_kDisplayList.elementAt(i).GetDisplay() );
+//		}
+		
+		annotationVOIsUpdate(maxIndex);
+	}  
+
+	public void setAnnotationVOIColor( String name, ColorRGB color )
+	{
+		for ( int i = 0; i < annotationSpheres.length; i++ )
+		{
+			if ( annotationSpheres[i].GetName().equals(name) )
+			{
+				annotationSpheres[i].SetColor(color, true );
+				annotationVOIsUpdate(annotationSpheresIndex);
+				break;
+			}
+		}
+	}
+	
+	public void setDisplayAnnotation( String name, boolean display )
+	{
+		for ( int i = 0; i < annotationSpheres.length; i++ )
+		{
+			if ( annotationSpheres[i].GetName().equals(name) )
+			{
+				annotationDisplay[i][0] = display;
+				annotationVOIsUpdate(annotationSpheresIndex);
+				break;
+			}
+		}
+	}
+	
+	public void setDisplayAnnotationLabel( String name, boolean display )
+	{
+		for ( int i = 0; i < annotationSpheres.length; i++ )
+		{
+			if ( annotationSpheres[i].GetName().equals(name) )
+			{
+				annotationDisplay[i][1] = display;
+				annotationVOIsUpdate(annotationSpheresIndex);
+				break;
+			}
+		}
+	}
+
+	public void setAnnotationLabelColor( String name, ColorRGBA color )
+	{
+		for ( int i = 0; i < annotationSpheres.length; i++ )
+		{
+			if ( annotationSpheres[i].GetName().equals(name) )
+			{
+				annotationLabelColors[i] = color;
+				annotationVOIsUpdate(annotationSpheresIndex);
+				break;
+			}
+		}
+	}
+
+	public void play4DVOIs(boolean bOn) {
+		m_iScreenCaptureCounter = 0;
+		m_bPlay4DVOIs = bOn;
+	}
+	
+	public boolean writeImage()
+    {
+        super.writeImage();
+        if ( m_iScreenCaptureCounter >= annotationPositions.size() )
+        {
+        	m_bSnapshot = false;
+        	m_bPlay4DVOIs = false;
+        }
+        return true;
+    }
+    
+	
+	public void annotationVOIsUpdate( int value )
+	{
+		for ( int i = 0; i < annotationSpheres.length; i++ )
+		{
+			annotationSpheres[i].SetDisplay(false);
+
+			m_kVolumeImageA.GetImage().unregisterVOI( annotationVOIs[i] );
+			annotationVOIs[i].getCurves().clear();
+		}
+			
+		annotationSpheresIndex = value;
+    	if ( annotationSpheresIndex >= annotationPositions.size() )
+    	{
+    		annotationSpheresIndex = 0;
+    	}
+    	if ( annotationSpheresIndex < 0)
+    	{
+    		annotationSpheresIndex = 0;
+    	}
+		if ( annotationSpheresIndex != -1 )
+		{
+			int dimX = m_kVolumeImageA.GetImage().getExtents().length > 0 ? m_kVolumeImageA.GetImage().getExtents()[0] : 1;
+			int dimY = m_kVolumeImageA.GetImage().getExtents().length > 1 ? m_kVolumeImageA.GetImage().getExtents()[1] : 1;
+			int dimZ = m_kVolumeImageA.GetImage().getExtents().length > 2 ? m_kVolumeImageA.GetImage().getExtents()[2] : 1;
+			VOI currentTime = annotationPositions.elementAt( annotationSpheresIndex );
+//			m_kVolumeImageA.GetImage().registerVOI(currentTime);
+//			System.err.println( currentTime.getCurves().size() );
+			
+			for ( int i = 0; i < currentTime.getCurves().size(); i++ )
+			{
+				VOIText text = (VOIText) currentTime.getCurves().elementAt(i);
+				for ( int j = 0; j < annotationSpheres.length; j++ )
+				{
+					if ( annotationSpheres[j].GetName().equals(text.getText()) )
+					{
+						text.update(annotationLabelColors[j]);
+						Vector3f position = new Vector3f(text.elementAt(0));
+						if ( !position.equals( Vector3f.ZERO ) &&
+							 (position.X >= 0) && (position.X < dimX) && (position.Y >= 0) && (position.Y < dimY) && 
+							 (position.Z >= 0) && (position.Z < dimZ) )
+						{
+							annotationSpheres[j].SetTranslateVolumeCoords( position );
+							annotationSpheres[j].SetDisplay(annotationDisplay[j][0]);
+//							System.err.println( annotationSpheres[j].GetName() );
+							
+							if ( annotationDisplay[j][1] )
+							{
+								annotationVOIs[i].getCurves().add(text);
+								m_kVolumeImageA.GetImage().registerVOI( annotationVOIs[i] );
+							}
+						}
+						
+						break;
+					}
+				}
+				
+			}
+			if (annotationAnimationPanel != null)
+			{
+				annotationAnimationPanel.setAnnimationSlider( annotationSpheresIndex );
+			}
+		}
+		m_bSurfaceUpdate = true;
+	}
+	
 	
 	/**
 	 * Currently only being used to update the picking point

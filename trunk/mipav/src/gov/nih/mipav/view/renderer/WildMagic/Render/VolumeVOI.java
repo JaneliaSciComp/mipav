@@ -184,11 +184,23 @@ public class VolumeVOI extends VolumeObject
 		if ( !bPreRender && (m_kVOITicMarks != null) && ((m_kVOI.getType() == VOI.LINE) || (m_kVOI.getType() == VOI.PROTRACTOR)  || (m_kVOI.getType() == VOI.ANNOTATION)) )
 		{
 			m_kScene.DetachChild(m_kVOITicMarks);
-			if ( m_kVOI.isActive() || (m_kVOI.getType() == VOI.ANNOTATION))
+			if ( m_kVOI.isActive() || (m_kVOI.getType() == VOI.ANNOTATION) )
 			{
-				m_kVOITicMarks.DetachAllEffects();
-				m_kVOITicMarks.AttachEffect( m_kVOIShader );
-				m_kScene.AttachChild(m_kVOITicMarks);
+				if ( m_kVOI.getType() == VOI.ANNOTATION )
+				{
+					if ( ((VOIText)m_kVOI).useMarker() )
+					{
+						m_kVOITicMarks.DetachAllEffects();
+						m_kVOITicMarks.AttachEffect( m_kVOIShader );
+						m_kScene.AttachChild(m_kVOITicMarks);
+					}
+				}
+				else
+				{
+					m_kVOITicMarks.DetachAllEffects();
+					m_kVOITicMarks.AttachEffect( m_kVOIShader );
+					m_kScene.AttachChild(m_kVOITicMarks);
+				}
 			}
 		}
 
@@ -348,6 +360,12 @@ public class VolumeVOI extends VolumeObject
 		m_bUpdateDisplay = true;
 	}
 
+	
+	public Vector3f GetBillboardPosition()
+	{
+		return m_kBillboardPos;
+	}
+	
 	/**
 	 * Turns the ZBufferState compare mode on or off.
 	 * @param bOn
@@ -372,13 +390,17 @@ public class VolumeVOI extends VolumeObject
 	{
 		m_bShowText = bShow;
 	}
-
+	
 	/**
 	 * Set the color of the VolumeVOI object.
 	 * @param kColor
 	 */
 	public void update( ColorRGBA kColor )
 	{
+		if ( (m_kColor.R == kColor.R) && (m_kColor.G == kColor.G) && (m_kColor.B == kColor.B) )
+		{
+			return;
+		}
 		m_kColor.Set( kColor.R, kColor.G, kColor.B );
 		m_fOpacity = kColor.A;
 		setBlend( m_fOpacity );

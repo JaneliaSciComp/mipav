@@ -118,7 +118,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     /** Minimizes rendering, only render when modified is true. */
     protected boolean m_bModified = true;
     /** Screen capture counter. */
-    private int m_iScreenCaptureCounter = 0;
+    protected int m_iScreenCaptureCounter = 0;
     private int m_iMovieCounter = 0;
 
     /** Set to true when recording. */
@@ -877,8 +877,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     {
         BufferedImage kScreenShot = m_pkRenderer.Screenshot();
         try {
-            String directory = m_kVolumeImageA.GetImage().getFileInfo(0).getFileDirectory();
-            //System.err.println( directory );
+            String directory = m_kVolumeImageA.GetImage().getImageDirectory();
             ImageIO.write(kScreenShot, "jpg", new File( directory + "captureImage" + m_iScreenCaptureCounter++ + "." + "jpg"));
         } catch (IOException e) {
             e.printStackTrace();
