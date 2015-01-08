@@ -618,7 +618,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		// System.err.println( "fps: " + m_dFrameRate);
 
 		if (m_bPlay4D || m_bPlay4DVOIs ) {
-			if (m_iAnimateCount++ > m_fAnimateRate) {
+			if (m_iAnimateCount++ >= m_fAnimateRate) {
 				m_iAnimateCount = 0;
 				if( m_bPlay4D )
 				{
