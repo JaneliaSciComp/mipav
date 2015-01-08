@@ -1054,12 +1054,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 
 	public void play4DVOIs(boolean bOn) {
 		m_iScreenCaptureCounter = 0;
+		annotationVOIsUpdate(0);
 		m_bPlay4DVOIs = bOn;
 	}
 	
 	public boolean writeImage()
     {
         super.writeImage();
+//        System.err.println( "writeImage " + m_iScreenCaptureCounter + " " + annotationPositions.size() );
         if ( m_iScreenCaptureCounter >= annotationPositions.size() )
         {
         	m_bSnapshot = false;
