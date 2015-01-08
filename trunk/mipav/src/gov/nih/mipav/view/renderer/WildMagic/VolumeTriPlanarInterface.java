@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic;
 
 
+import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
@@ -25,7 +26,6 @@ import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.Preferences.OperatingSystem;
 import gov.nih.mipav.view.renderer.ViewJComponentVolOpacityBase;
-import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialog4DVOI;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanel3DMouse_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelClip_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelCustomBlend;
@@ -356,6 +356,8 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     protected GLOffscreenAutoDrawable sharedDrawable = null;
 
     protected VolumeTriPlanarRender sharedRenderer;
+    
+    protected AlgorithmInterface configuredListener = null;
 
     protected static boolean init = initClass();
 
@@ -390,6 +392,10 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     }
 
     public VolumeTriPlanarInterface(final ModelImage _imageA, final ModelImage _imageB) {
+    	this( _imageA, _imageB, null );
+    }
+    
+    public VolumeTriPlanarInterface(final ModelImage _imageA, final ModelImage _imageB, AlgorithmInterface algorithmListener) {
         userInterface = ViewUserInterface.getReference();
         getContentPane().setLayout(new BorderLayout());
         addWindowListener(this);
@@ -440,7 +446,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         raycastRenderWM.setVisible(true);
         raycastRenderWM.startAnimator(true);
     	
-    	
+        this.configuredListener = algorithmListener;
     }
 
     /*
@@ -712,8 +718,6 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 		        panelCoronal.add(m_akPlaneRender[2].GetCanvas(), BorderLayout.CENTER);
 		        setModified();
 		        mainPane.revalidate();
-		        
-		        isConfigured = true;
 			}
     	}
     }
@@ -763,75 +767,39 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         }
     }
     
-    private boolean isConfigured = false;
-    public boolean isConfigured()
+    public void display3DWindowOnly()
     {
-    	return isConfigured;
+    	rightPane.setDividerLocation( 1.0 );
     }
     
-    Vector<VOIVector> voisList;
-    int voisIndex = -1;
-    public void addVOIS( Vector<VOIVector> vois )
+    public void displayAnnotationSpheres()
     {
-    	menuObj.setMenuItemSelected("VOI toolbar", true);
-        final boolean showVOI = menuObj.isMenuItemSelected("VOI toolbar");
-        if ( m_kVOIInterface == null )
-        {
-            initVOI();
-        }
-        m_kVOIInterface.getToolBar().setVisible(showVOI);
-        setModified();
-        mainPane.revalidate();
-        voisList = vois;
-        if ( voisList.size() > 0 )
-        {
-        	showVOI(0);
-        }
+        rendererGUI.setDisplayVolumeCheck(false);
+        rendererGUI.setDisplaySlicesCheck(false);
+        rendererGUI.setDisplaySurfaceCheck(true);
+        rendererGUI.setDisplayVOICheck(false);
+        
+        raycastRenderWM.displayVolumeSlices(false);
+        raycastRenderWM.displayVolumeRaycast(false);
+//        raycastRenderWM.displaySurface(true);
+//        raycastRenderWM.displayVOIs(false);        
+        
+        resetAxisX();
     }
     
-    public void openVOIs()
-    {
-    	new JDialog4DVOI( this, m_kVolumeImageA.GetImage() );
-    }
-    
-    public void showNextVOI()
-    {
-    	voisIndex++;
-    	if ( voisIndex >= voisList.size() )
-    	{
-    		voisIndex = 0;
-    	}
-    	showVOI(voisIndex);
-    }
-    
-    public void showPreviousVOI()
-    {
-    	voisIndex--;
-    	if ( voisIndex < 0 )
-    	{
-    		voisIndex = voisList.size()-1;
-    	}
-    	showVOI(voisIndex);
-    }
-    
-    public void showVOI(int index)
-    {
-    	if ( voisList == null )
-    		return;
-    	if ( voisList.size() <= index )
-    	{
-    		return;
-    	}
+    public void addVOIS( VOIVector vois, Vector<String> annotationNames )
+    {        
+        insertTab("Light", m_kLightsPanel.getMainPanel());
+        m_kLightsPanel.enableLight(0, true);
+        m_kLightsPanel.enableLight(1, true);
+        rendererGUI.setDisplaySurfaceCheck(true);
     	
-    	m_kVolumeImageA.GetImage().resetVOIs();
-    	m_kVolumeImageA.GetImage().restoreVOIs(voisList.elementAt(index));
-    	voisIndex = index;
+    	JPanelAnnotationAnimation annotationAnimationPanel = new JPanelAnnotationAnimation(raycastRenderWM, vois.size(), annotationNames);
+    	insertTab( "Annotation Animation", annotationAnimationPanel.getMainPanel() );
     	
-    	raycastRenderWM.updateVOIs();
-    	
-//    	System.err.println( index + "   " + voisList.elementAt(index).size() );
+    	raycastRenderWM.addAnimationVOIs(vois, annotationAnimationPanel);
     }
-
+        
     /**
      * Build the clipping control panel for the surface render.
      */
@@ -1129,6 +1097,14 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
      */
     public void eraseAllPaint() {
         raycastRenderWM.eraseAllPaint();
+    }
+    
+    public void firstDisplay()
+    {
+    	if ( configuredListener != null )
+    	{
+    		configuredListener.algorithmPerformed( null );
+    	}
     }
 
     public ModelImage getActiveImage()
@@ -2142,7 +2118,6 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     public void setTimeSlice(final int slice) {
         m_kVolume4DGUI.setTimeSlice(slice);
         m_kVolumeImageA.SetTimeSlice(slice);
-        showVOI(slice);
         setModified();
     }
 

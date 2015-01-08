@@ -313,7 +313,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
      * Set the VOI check box to true of false
      * @param flag  true or false
      */
-    public void setDisplaVOICheck(boolean flag ) {
+    public void setDisplayVOICheck(boolean flag ) {
     	m_kDisplayVOICheck.setSelected(flag);
     	m_kDisplayVOICheck.setEnabled(flag);
     }
