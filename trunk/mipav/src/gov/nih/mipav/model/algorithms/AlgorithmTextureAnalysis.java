@@ -3089,6 +3089,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		int yout;
 		int xout;
 		double maxAbsImag;
+		double acopy[][] = new double[a.length][a[0].length];
+		for (y = 0; y < a.length; y++) {
+			for (x = 0; x < a[0].length; x++) {
+				acopy[y][x] = a[y][x];
+			}
+		}
 
 		w1off = (int) Math.floor(n1 / 2.0);
 		w1scale = 2.0 / n1;
@@ -3101,7 +3107,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		for (i = 0; i < n2; i++) {
 			w2[i] = (i - w2off) * w2scale;
 		}
-		rot180(a);
+		rot180(acopy);
 
 		if ((a.length > n2) || (a[0].length > n1)) {
 			useMesh = true;
@@ -3114,12 +3120,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 
 			for (y = 0; y < a.length; y++) {
 				for (x = 0; x < a[0].length; x++) {
-					apad[y + yoff][x + xoff] = a[y][x];
+					apad[y + yoff][x + xoff] = acopy[y][x];
 				}
 			}
 		} // if (a.length != n2 || a[0].length != n1)
 		else {
-			apad = a;
+			apad = acopy;
 		}
 
 		if (!useMesh) {
@@ -3173,26 +3179,26 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			if ((a[0].length % 2) == 1) {
 				for (y = 0; y < a.length; y++) {
 					for (x = 0; x < a[0].length; x++) {
-						t1[y][x] = -a[0].length / 2.0 + 1.0 / 2.0 + x;
+						t1[y][x] = -acopy[0].length / 2.0 + 1.0 / 2.0 + x;
 					}
 				}
 			} else {
 				for (y = 0; y < a.length; y++) {
 					for (x = 0; x < a[0].length; x++) {
-						t1[y][x] = -a[0].length / 2.0 + x;
+						t1[y][x] = -acopy[0].length / 2.0 + x;
 					}
 				}
 			}
 			if ((a.length % 2) == 1) {
 				for (x = 0; x < a[0].length; x++) {
 					for (y = 0; y < a.length; y++) {
-						t2[y][x] = -a.length / 2.0 + 1.0 / 2.0 + y;
+						t2[y][x] = -acopy.length / 2.0 + 1.0 / 2.0 + y;
 					}
 				}
 			} else {
 				for (x = 0; x < a[0].length; x++) {
 					for (y = 0; y < a.length; y++) {
-						t2[y][x] = -a.length / 2.0 + y;
+						t2[y][x] = -acopy.length / 2.0 + y;
 					}
 				}
 			}
@@ -3206,11 +3212,11 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 							hout[yout][xout] += Math
 									.cos(Math.PI
 											* (w1g[yout][xout] * t1[y][x] + w2g[yout][xout]
-													* t2[y][x]) * a[y][x]);
+													* t2[y][x]) * acopy[y][x]);
 							houtImag[yout][xout] -= Math
 									.sin(Math.PI
 											* (w1g[yout][xout] * t1[y][x] + w2g[yout][xout]
-													* t2[y][x]) * a[y][x]);
+													* t2[y][x]) * acopy[y][x]);
 						}
 					}
 				}
