@@ -492,6 +492,8 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 				mx = new double[200 * 200];
 				dhout = new double[200][200];
 				dhoutImag = new double[200][200];
+				dw1 = new double[200];
+				dw2 = new double[200];
 				for (k = 0; k < 40; k++) {
 					freqz2(dhout, dhoutImag, dw1, dw2, texttimetd2[k], 200,
 							200);
@@ -2815,18 +2817,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			final double filterAngle, final double sigmaX, final String domain,
 			final double xfreq[][], final double yfreq[][], int index) {
 		
-		double w1fd1[] = null;
-		double w2fd1[] = null;
-		double w1fd2[] = null;
-		double w2fd2[] = null;
-		double w1fd3[] = null;
-		double w2fd3[] = null;
-		double w1fd22[] = null;
-		double w2fd22[] = null;
-		double w1fd23[] = null;
-		double w2fd23[] = null;
-		double w1fd33[] = null;
-		double w2fd33[] = null;
 		int sz[] = new int[2];
 		// gaussian (constant basis)
 		double []amplitudesgb0 = new double[]{2};
@@ -2898,6 +2888,18 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 				fd23Imag[index] = new double[xfreq.length][xfreq[0].length];
 				fd33[index] = new double[xfreq.length][xfreq[0].length];
 				fd33Imag[index] = new double[xfreq.length][xfreq[0].length];
+				double w1fd1[] = new double[sz[1]];
+				double w2fd1[] = new double[sz[0]];
+				double w1fd2[] = new double[sz[1]];
+				double w2fd2[] = new double[sz[0]];
+				double w1fd3[] = new double[sz[1]];
+				double w2fd3[] = new double[sz[0]];
+				double w1fd22[] = new double[sz[1]];
+				double w2fd22[] = new double[sz[0]];
+				double w1fd23[] = new double[sz[1]];
+				double w2fd23[] = new double[sz[0]];
+				double w1fd33[] = new double[sz[1]];
+				double w2fd33[] = new double[sz[0]];
 				freqz2(fd1[index], fd1Imag[index], w1fd1, w2fd1, td1[index], sz[1], sz[0]);
 				freqz2(fd2[index], fd2Imag[index], w1fd2, w2fd2, td2[index], sz[1], sz[0]);
 				freqz2(fd3[index], fd3Imag[index], w1fd3, w2fd3, td3[index], sz[1], sz[0]);
@@ -3088,14 +3090,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		int xout;
 		double maxAbsImag;
 
-		w1 = new double[n1];
 		w1off = (int) Math.floor(n1 / 2.0);
 		w1scale = 2.0 / n1;
 		for (i = 0; i < n1; i++) {
 			w1[i] = (i - w1off) * w1scale;
 		}
 
-		w2 = new double[n2];
 		w2off = (int) Math.floor(n2 / 2.0);
 		w2scale = 2.0 / n2;
 		for (i = 0; i < n2; i++) {
