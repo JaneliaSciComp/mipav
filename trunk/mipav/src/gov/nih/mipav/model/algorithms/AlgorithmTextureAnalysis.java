@@ -2919,7 +2919,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		double sinang;
 		int sizem;
 		int sizen;
-		double maxAbsOmegas;
 		int i;
 		double rotatedx[][][];
 		double rotatedy[][][];
@@ -2969,12 +2968,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		sizem = omegax.length;
 		sizen = omegax[0].length;
 		
-		maxAbsOmegas = 0.0;
-		for (i = 0; i < omegas.length; i++) {
-			if (Math.abs(omegas[i]) > maxAbsOmegas) {
-				maxAbsOmegas = Math.abs(omegas[i]);
-			}
-		}
+		
 		//if ((maxAbsOmegas + 3.0 * invSigmaX) > 1.0) {
 			rotatedx = new double[sizem][sizen][9];
 			rotatedy = new double[sizem][sizen][9];
