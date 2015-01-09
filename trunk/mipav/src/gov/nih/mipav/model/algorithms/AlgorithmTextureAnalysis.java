@@ -3558,8 +3558,9 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		int dim2;
 		int j;
 		double val;
-		int k;
 		double sum;
+		boolean exclude[];
+		int excludeCount;
 
 		factr = Math.exp(Math.log(radianEnd / radianStart) / (nscales - 1));
 		for (i = 0; i < nscales; i++) {
@@ -3590,13 +3591,18 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 					for (val = 0, j = 0; val <= 1.0; val += rpp) {
 						temp[j++] = val;
 					}
-					dim2 = 0;
-					for (j = 1; j <= dim - 1; j += 2) {
-						dim2++;
+					excludeCount = 0;
+					exclude = new boolean[dim];
+					for (j = 0; j < dim-1; j += 2) {
+						exclude[j] = true;
+						excludeCount++;
 					}
-					omegasInit = new double[dim2];
-					for (j = 1, k = 0; j <= dim - 1; j += 2) {
-						omegasInit[k++] = temp[j];
+					dim2 = dim - excludeCount;
+					omegasInit  = new double[dim2];
+					for (i = 0,j = 0; j < dim; j++) {
+						if (!exclude[j]) {
+							omegasInit[i++] = temp[j];
+						}
 					}
 					amplitudesInit = new double[dim2];
 					for (j = 0; j < dim2; j++) {
