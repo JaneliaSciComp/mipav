@@ -2058,8 +2058,16 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 	}
 
 	private void filter2(double A[][], double B[][], double C[][]) {
-		rot180(A);
-		conv2(B, A, C);
+		double A2[][] = new double[A.length][A[0].length];
+		int y;
+		int x;
+		for (y = 0; y < A.length; y++) {
+			for (x = 0; x < A[0].length; x++) {
+				A2[y][x] = A[y][x];
+			}
+		}
+		rot180(A2);
+		conv2(B, A2, C);
 		return;
 	}
 
