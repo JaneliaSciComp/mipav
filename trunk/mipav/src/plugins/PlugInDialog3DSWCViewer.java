@@ -133,6 +133,28 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 		
 	}
 	
+	public PlugInDialog3DSWCViewer(JTextPane text, String unit, PlugInAlgorithm3DSWCViewer algorithm){
+		
+		alg = algorithm; //yes this is a bit backwards but it'll work
+		alg.addListener(this);
+		
+		textArea = text;
+		resUnit = unit;
+		
+		attr = new SimpleAttributeSet();
+		StyleConstants.setFontFamily(attr, "Serif");
+		StyleConstants.setFontSize(attr, 12);
+
+		/*try {
+			textArea.getDocument().remove(0, textArea.getDocument().getLength());
+		} catch (BadLocationException e) {}*/
+		
+		append("Creating viewer...", attr);
+		
+		init();
+		
+	}
+	
 	public void actionPerformed(ActionEvent event){
 		
 		String command = event.getActionCommand();
@@ -142,9 +164,14 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 			
 			append("Closing viewer...", attr);
 			append("Writing with new axon choice", attr);
+			alg.setUseLength(axonRB.isSelected());
 			alg.write();
 		}else if(command.equals("cancel")){
+			alg.viewerClosed();
+			alg.setCompleted(true);
+			alg.notifyListeners(alg);
 			append("Closing viewer...", attr);
+			append("-----------------------------------------", attr);
 			frame.close();
 			dispose();
 		}else if(command.equals("axon")){
@@ -194,6 +221,8 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 		if(algorithm instanceof PlugInAlgorithm3DSWCViewer){
 			if(algorithm.isCompleted()){
+				algorithm.setCompleted(false);
+				algorithm.removeListener(this);
 				frame = new ViewJFrameImage(alg.getDestImage());
 				ArrayList<Integer> tipList = alg.getTips();
 				Vector<String> tipName = new Vector<String>();
@@ -399,7 +428,7 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 	 * basic inferences. 
 	 */
 	private void setup(){
-		alg = new PlugInAlgorithm3DSWCViewer(imageFile, swcFile, textArea, resUnit, axonRB.isSelected());
+		alg = new PlugInAlgorithm3DSWCViewer(imageFile, swcFile, textArea, resUnit, axonRB.isSelected(), true);
 		alg.addListener(this);
 		if(isRunInSeparateThread()){
 			if (alg.startMethod(Thread.MIN_PRIORITY) == false) {

@@ -69,9 +69,18 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 	private JRadioButton customRB;
 	
 	private boolean chooseIV;
-
+	
+	private PlugInAlgorithm3DSWCViewer alg;
+	
+	private boolean writeStep;
+	
+	private boolean locked;
+	
 	public PlugInDialog3DSWCStats(){
 		super();
+		
+		writeStep = false;
+		locked = false;
 		
 		init();
 	}
@@ -79,7 +88,17 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 	public void actionPerformed(ActionEvent e){
 		String command = e.getActionCommand();
 		if(command.equals("ok")){
-			callAlgorithm();
+			if(!locked && (alg == null || !alg.isViewerOpen())){
+				System.out.println(writeStep);
+				if(writeStep){
+					locked = true;
+					if(!alg.write())
+						locked = false;
+				}else{
+					locked = true;
+					callAlgorithm();
+				}
+			}
 		}else if(command.equals("cancel")){
 			if(isExitRequired()){
 				ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
@@ -107,9 +126,11 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 
 	@Override
 	public void algorithmPerformed(AlgorithmBase algorithm) {
-		if(algorithm instanceof PlugInAlgorithm3DSWCStats){
+		if(algorithm instanceof PlugInAlgorithm3DSWCViewer){
 			if(algorithm.isCompleted()){
-				String fileText = textField.getText();
+				writeStep ^= true;
+				locked = false;
+				/*String fileText = textField.getText();
 				File file = new File(fileText);
 				
 				String message;
@@ -125,12 +146,19 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 					message = "Converted file has been saved to "
 							+ parent + File.separator + name + ".";
 				}
-				MipavUtil.displayInfo(message);
+				MipavUtil.displayInfo(message);*/
+				
 			}else{
-				String message = "One or more files were unable to "
+				locked = false;
+				if(!writeStep){
+				/*String message = "One or more files were unable to "
+						+ "complete conversion. Check debugging output"
+						+ "for more information.";*/
+				String message = "Unable to "
 						+ "complete conversion. Check debugging output"
 						+ "for more information.";
 				MipavUtil.displayError(message);
+				}
 			}
 			
 		}
@@ -151,21 +179,27 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		}
 		
 		if(customRB.isSelected()){
-			new PlugInDialog3DSWCViewer(imageField.getText(), file, textArea, (String) resolutionUnits.getSelectedItem());
+			alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, (String) resolutionUnits.getSelectedItem(), false, true);
+			alg.addListener(this);
+			new PlugInDialog3DSWCViewer(textArea, (String) resolutionUnits.getSelectedItem(), alg);
+			
+			//PlugInDialog3DSWCViewer viewer = new PlugInDialog3DSWCViewer(imageField.getText(), file, textArea, (String) resolutionUnits.getSelectedItem());
+			//alg = new PlugInAlgorithm3DSWCViewer()
 
 		}else{
 		
-			PlugInAlgorithm3DSWCStats alg = new PlugInAlgorithm3DSWCStats(imageField.getText(), file, (String) resolutionUnits.getSelectedItem(), textArea);
-			alg.useAxonLength(axonRB.isSelected());
+			alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, 
+					(String) resolutionUnits.getSelectedItem(), axonRB.isSelected(), false);
 			alg.addListener(this);
 			
-			if(isRunInSeparateThread()){
-				if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
-					MipavUtil.displayError("A thread is already running on this object");
-				}
-			} else {
-				alg.run();
+		}
+		
+		if(isRunInSeparateThread()){
+			if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
+				MipavUtil.displayError("A thread is already running on this object");
 			}
+		} else {
+			alg.run();
 		}
 	}
 	
@@ -342,7 +376,10 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 				if(pathname.isDirectory())
 					return true;
 				String name = pathname.getName();
-				String fileExt = name.substring(name.lastIndexOf("."));
+				int index = name.lastIndexOf(".");
+				if(index < 0)
+					return false;
+				String fileExt = name.substring(index);
 				if(fileExt.equalsIgnoreCase(".iv"))
 					return true;
 				else
@@ -363,7 +400,10 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 				if(pathname.isDirectory())
 					return true;
 				String name = pathname.getName();
-				String fileExt = name.substring(name.lastIndexOf("."));
+				int index = name.lastIndexOf(".");
+				if(index < 0)
+					return false;
+				String fileExt = name.substring(index);
 				if(fileExt.equalsIgnoreCase(".ics"))
 					return true;
 				else

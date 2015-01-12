@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
+import javax.swing.JOptionPane;
 import javax.swing.JTextPane;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -22,9 +23,12 @@ import quickhull3d.Point3d;
 import quickhull3d.QuickHull3D;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmMaximumIntensityProjection;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.view.ViewJFrameImage;
 
 /**
@@ -69,7 +73,11 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 	
 	private String imageFile;
 	
-	public PlugInAlgorithm3DSWCViewer(String imFile, File file, JTextPane text, String resUnit, boolean useLength){
+	private boolean showViewer;
+	
+	private boolean viewerOpen;
+	
+	public PlugInAlgorithm3DSWCViewer(String imFile, File file, JTextPane text, String resUnit, boolean useLength, boolean showView){
 		
 		super();
 		
@@ -85,6 +93,9 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		resolutionUnit = resUnit;
 		axonUseLength = useLength;
 		showAxon = true;
+		showViewer = showView;
+		
+		viewerOpen = false;
 	}
 	
 	@Override
@@ -110,7 +121,12 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 			joints = new ArrayList<float[]>();
 			mat = new TransMatrix(3);
 	
+			StyleConstants.setBold(attr, true);
+			
 			append("Reading " + swcFile.getName(), attr);
+			
+			StyleConstants.setBold(attr, false);
+			
 			readSurfaceFile(swcFile);
 	
 			disconnected = false;
@@ -141,14 +157,32 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 				}
 			}
 	
-			joints.add(swcCoordinates.get(0).get(0));
-			for(int i=0;i<swcCoordinates.size();i++){
-				ArrayList<float[]> fil = swcCoordinates.get(i);
-				joints.add(fil.get(fil.size()-1));
+			if(showViewer){
+				joints.add(swcCoordinates.get(0).get(0));
+				for(int i=0;i<swcCoordinates.size();i++){
+					ArrayList<float[]> fil = swcCoordinates.get(i);
+					joints.add(fil.get(fil.size()-1));
+				}
+		
+				//Make the viewer image here
+				setupImage();
+				viewerOpen = true;
 			}
-	
-			//Make the viewer image here
-			setupImage();
+			
+			append("Opening image " + imageFile, attr);
+			FileIO reader = new FileIO();
+			srcImage = reader.readImage(imageFile);
+			
+			setupSplitChooser();
+			
+			StyleConstants.setBold(attr, true);
+			
+			append("Select split point from image", attr);
+			
+			StyleConstants.setBold(attr, false);
+			
+			setCompleted(true);
+			
 		}catch(Exception e){
 			append("The following Java error has occured:", redText);
 			append(e.toString(), redText);
@@ -182,6 +216,14 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		}
 		
 		return tips;
+	}
+	
+	public boolean isViewerOpen(){
+		return viewerOpen;
+	}
+	
+	public void viewerClosed(){
+		viewerOpen = false;
 	}
 
 	/**
@@ -563,13 +605,33 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		return volume;
 	}
 	
+	public void setUseLength(boolean useLength){
+		axonUseLength = useLength;
+	}
+	
 	/**
 	 * This method handles the actual writing and calculation steps
 	 * after the user has chosen an axon. Other than rearranging
 	 * the order of forward connections, this portion is more or
 	 * less the same as the back half of the sibling algorithm.
 	 */
-	public void write(){
+	public boolean write(){
+		
+		final Vector3f splitPt = srcImage.getVOIs().get(0).exportPoint();
+		
+		int[] extents = srcImage.getExtents();
+		int width = extents[0];
+		int height = extents[1];
+		int depth = extents[2];
+		
+		if(splitPt.X == width/2 && splitPt.Y == height/2
+				&& splitPt.Z == depth/2){
+			int response = JOptionPane.showConfirmDialog(null, "Split point has not moved. Is it correct?", "Continue?",
+					JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+			if(response == JOptionPane.NO_OPTION)
+				return false;
+			
+		}
 		
 		final SimpleAttributeSet attr = new SimpleAttributeSet();
 		StyleConstants.setFontFamily(attr, "Serif");
@@ -578,9 +640,12 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		final SimpleAttributeSet redText = new SimpleAttributeSet(attr);
 		StyleConstants.setForeground(redText, Color.red.darker());
 		
+		final PlugInAlgorithm3DSWCViewer alg = this;
+		
 		Thread writeThread = new Thread(){
 			public void run(){
 				try{
+					viewerOpen = false;
 					convexHullVolume = convexHullVolume(swcCoordinates, connections);
 					calculateDistances();
 					int maxOrder;
@@ -589,15 +654,60 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 					}else{
 						maxOrder = determineOrder(connections);
 					}
+					
+					int branch;
+					if(showViewer){
+						branch = currentAxon;
+					}else{
+						branch = getTips().get(0);
+					}
+					boolean onAxon = false;
+					float[] origin = srcImage.getOrigin();
+					float[] res = srcImage.getResolutions(0);
+					float minDist = Float.MAX_VALUE;
+					
+					float[] splitLoc = null;
+					
+					while(!onAxon){
+						ArrayList<float[]> fil = swcCoordinates.get(branch);
+						for(int i=0;i<fil.size();i++){
+							float[] coord = fil.get(i);
+							float[] pt = new float[2];
+							pt[0] = (coord[0]-origin[0])/res[0];
+							pt[1] = (coord[1]-origin[1])/res[1];
+							
+							float dx = pt[0] - splitPt.X;
+							float dy = pt[1] - splitPt.Y;
+							float dist = dx*dx + dy*dy;
+							
+							if(dist < 25){
+								onAxon = true;
+								if(dist < minDist){
+									minDist = dist;
+									splitLoc = coord;
+								}
+							}
+						}
+						branch = (int) fil.get(0)[4];
+						if(branch == -1)
+							break;
+					}
+					
+					if(!onAxon){
+						setCompleted(false);
+						append("Split point does not lie on axon", redText);
+						notifyListeners(alg);
+						return;
+					}
+					
+					
 					ArrayList<String> messages = consolidateFilaments(connections, maxOrder);
 					float[] branchLengths = recalculateDistances();
 					addToMessages(messages);
-					append("Opening image " + imageFile, attr);
-					FileIO reader = new FileIO();
-					srcImage = reader.readImage(imageFile);
 					
 					try{
-						String output = exportStatsToCSV(swcFile, messages, branchLengths, maxOrder);
+						append("Calculating volumes", attr);
+						String output = exportStatsToCSV(swcFile, messages, branchLengths, maxOrder, splitLoc);
 						append("Exported stats to CSV -> " + output, attr);
 					} catch (IOException e) {
 						append("Could not export stats to CSV for " + swcFile.getName(), redText);
@@ -608,16 +718,70 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 					} catch (IOException e) {
 						append("Could not write SWC for " + swcFile.getName(), redText);
 					}
+					
+					SimpleAttributeSet greenText = new SimpleAttributeSet(attr);
+					StyleConstants.setForeground(greenText, Color.green.darker());
+					
+					append("Finished writing stats and SWC file", greenText);
+					append("-----------------------------------------", attr);
+					setCompleted(true);
+					
+					destImage.getParentFrame().close();
 				}catch(Exception e){
 					append("The following Java error has occured:", redText);
 					append(e.toString(), redText);
 					for(StackTraceElement t : e.getStackTrace())
 						append(t.toString(), redText);
 				}
+				
+				
+				notifyListeners(alg);
 			}
 		};
 		
 		writeThread.start();
+		return true;
+	}
+	
+	private void setupSplitChooser(){
+		
+		int[] extents = srcImage.getExtents();
+		int width = extents[0];
+		int height = extents[1];
+		int depth = extents[2];
+		
+		AlgorithmMaximumIntensityProjection alg = new AlgorithmMaximumIntensityProjection(srcImage, 0, depth-1, depth,
+				srcImage.getMin(), srcImage.getMax(), true, true, AlgorithmMaximumIntensityProjection.Z_PROJECTION);
+		alg.run();
+		destImage = alg.getResultImage().get(0);
+		
+		ViewJFrameImage frame = new ViewJFrameImage(destImage);
+		VOI voi = new VOI((short)0, "Split Point", VOI.POINT, -1.0f);
+		
+		Vector3f centerPt = new Vector3f(width/2, height/2, 0);
+		VOIPoint voiPt = new VOIPoint(VOI.POINT, centerPt);
+		voiPt.setLabel("Split point");
+		voi.importCurve(voiPt);
+		
+		frame.setVisible(true);
+		
+		destImage.getVOIs().add(voi);
+		destImage.notifyImageDisplayListeners(true, null);
+		
+		srcImage.getVOIs().add(voi);
+		
+		/*ViewJFrameImage frame = new ViewJFrameImage(srcImage);
+		VOI voi = new VOI((short)0, "Split Point", VOI.POINT, -1.0f);
+		
+		Vector3f centerPt = new Vector3f(width/2, height/2, depth/2);
+		VOIPoint voiPt = new VOIPoint(VOI.POINT, centerPt);
+		voiPt.setLabel("Split point");
+		voi.importCurve(voiPt);
+		
+		frame.setVisible(true);
+		
+		srcImage.getVOIs().add(voi);
+		srcImage.notifyImageDisplayListeners(true, null);*/
 		
 	}
 	
@@ -954,7 +1118,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 	*/
 	private int determineOrder(ArrayList<ArrayList<Integer>> connections){
 		
-		rearrangeBranches();
+		if(showViewer)
+			rearrangeBranches();
 		
 		int maxOrder = 1;
 		
@@ -1124,7 +1289,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 			}
 		}
 		
-		rearrangeBranches();
+		if(showViewer)
+			rearrangeBranches();
 		
 		// Pass 3
 		// Forward connections are organized so that the longest 
@@ -1185,7 +1351,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		
 	}
 
-	private String exportStatsToCSV(File file, ArrayList<String> messages, float[] branchLengths, int maxOrder) throws IOException{
+	private String exportStatsToCSV(File file, ArrayList<String> messages, float[] branchLengths, int maxOrder, float[] splitLoc) throws IOException{
 		String parent = file.getParent();
 		String name = file.getName();
 		name = name.substring(0, name.lastIndexOf("."));
@@ -1199,6 +1365,15 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		//Write the new branch info here
 		
 		writeBranchInformation(fw, maxOrder);
+		
+		if(splitLoc != null){
+			float dist = splitLoc[3];
+			fw.append("Split pt to origin," + dist + "\n");
+			ArrayList<float[]> fil = swcCoordinates.get(0);
+			float[] tail = fil.get(fil.size()-1);
+			float toTail = tail[3] - dist;
+			fw.append("Split pt to progenitor," + toTail + "\n");
+		}
 		
 		/*String branchInfo = "";
 		branchInfo += "Total branch length," + String.valueOf(branchLengths[0]) + "\n";
@@ -1639,9 +1814,10 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		
 		PlugInAlgorithmSWCVolume alg = new PlugInAlgorithmSWCVolume(srcImage, swcCoordinates);
 		alg.run();
+		fw.append("\nVolumes\n");
 		fw.append("Neuron volume," + alg.getVolume() + "\n");
 		
-		fw.append("Convex hull volume," + convexHullVolume + "\n");
+		fw.append("Convex hull volume," + convexHullVolume + "\n\n");
 		fw.append("Branch lengths\n");
 		fw.append("Total Branches," + String.valueOf(allBranches) + "\n");
 		fw.append("Higher order," + String.valueOf(higherOrder) + "\n\n");
@@ -1649,6 +1825,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 		for(int i=1;i<maxOrder;i++){
 			fw.append("Order " + String.valueOf(i) + "," + String.valueOf(lengths[i]) + "\n");
 		}
+		
+		fw.append("\n");
 		
 	}
 
