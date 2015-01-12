@@ -4,6 +4,8 @@ import gov.nih.mipav.model.algorithms.filters.AlgorithmMedian;
 import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBtoGray;
+import gov.nih.mipav.model.file.FileBase;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
@@ -235,6 +237,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		boolean entireImage;
 		inputXDim = srcImage.getExtents()[0];
 		inputYDim = srcImage.getExtents()[1];
+		FileInfoBase[] fileInfo;
 		if (srcImage.isColorImage()) {
 			final boolean thresholdAverage = false;
 			final float threshold = 0.0f;
@@ -282,6 +285,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		if (scaleImage) {
 			resizedImage = new ModelImage(ModelStorageBase.DOUBLE,
 					srcImage.getExtents(), "changeTypeImage");
+			resizedImage.getFileInfo(0).setEndianess(FileBase.LITTLE_ENDIAN);
 			if (srcImage.isColorImage()) {
 				changeTypeAlgo = new AlgorithmChangeType(resizedImage,
 						grayImage, grayImage.getMin(), grayImage.getMax(),
@@ -296,6 +300,17 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			changeTypeAlgo.run();
 			changeTypeAlgo.finalize();
 			changeTypeAlgo = null;
+			fileInfo = resizedImage.getFileInfo();
+            fileInfo[0].setModality(srcImage.getFileInfo()[0].getModality());
+            fileInfo[0].setFileDirectory(srcImage.getFileInfo()[0].getFileDirectory());
+            fileInfo[0].setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
+            fileInfo[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
+            fileInfo[0].setExtents(resizedImage.getExtents());
+            fileInfo[0].setMax(resizedImage.getMax());
+            fileInfo[0].setMin(resizedImage.getMin());
+            fileInfo[0].setImageOrientation(srcImage.getImageOrientation());
+            fileInfo[0].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation());
+            fileInfo[0].setOrigin(srcImage.getFileInfo()[0].getOrigin());
 
 			final boolean doPad = false;
 			final TransMatrix xfrm = new TransMatrix(3);
@@ -654,13 +669,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		// 'mdl' : mdl -like criterion (current)
 		// 'teag' : teager energy (teager-based DCA)
 		// 'ampl' : amplitude
-		DCAmethod = "mdl";
+	    DCAmethod = "mdl";
 	
 		// Choose demodulation algorithm
 		// 'gesa' : Gabor - ESA
 		// 'cesa' : Complex-ESA
 		// '' : no demodulation (use Gabor filter's amplitude/frequency)
-	
 		esameth = "gesa";
 		textA = new double[inputYDim][inputXDim];
 		textph = new double[inputYDim][inputXDim];
