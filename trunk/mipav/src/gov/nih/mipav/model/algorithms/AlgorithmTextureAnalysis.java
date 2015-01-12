@@ -2624,16 +2624,16 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			for (x = 0; x < sizen - DCX; x++) {
 				temp[y][x] = mtx[y + DCY][x + DCX];
 			}
-			for (x = DCX; x < 2 * DCX; x++) {
-				temp[y][x] = mtx[y + DCY][x - DCX];
+			for (x = sizen - DCX; x < sizen; x++) {
+				temp[y][x] = mtx[y + DCY][x - (sizen - DCX)];
 			}
 		}
-		for (y = DCY; y < 2 * DCY; y++) {
+		for (y = sizem - DCY; y < sizem; y++) {
 			for (x = 0; x < sizen - DCX; x++) {
-				temp[y][x] = mtx[y - DCY][x + DCX];
+				temp[y][x] = mtx[y - (sizem - DCY)][x + DCX];
 			}
-			for (x = DCX; x < 2 * DCX; x++) {
-				temp[y][x] = mtx[y - DCY][x - DCX];
+			for (x = sizen - DCX; x < sizen; x++) {
+				temp[y][x] = mtx[y - (sizem - DCY)][x - (sizen - DCX)];
 			}
 		}
 		for (y = 0; y < sizem; y++) {
@@ -2655,16 +2655,16 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			for (x = 0; x < sizen - DCX; x++) {
 				temp[y][x] = mtx[y + DCY][x + DCX];
 			}
-			for (x = DCX; x < 2 * DCX; x++) {
-				temp[y][x] = mtx[y + DCY][x - DCX];
+			for (x = sizen - DCX; x < sizen; x++) {
+				temp[y][x] = mtx[y + DCY][x - (sizen - DCX)];
 			}
 		}
-		for (y = DCY; y < 2 * DCY; y++) {
+		for (y = sizem - DCY; y < sizem; y++) {
 			for (x = 0; x < sizen - DCX; x++) {
-				temp[y][x] = mtx[y - DCY][x + DCX];
+				temp[y][x] = mtx[y - (sizem - DCY)][x + DCX];
 			}
-			for (x = DCX; x < 2 * DCX; x++) {
-				temp[y][x] = mtx[y - DCY][x - DCX];
+			for (x = sizen - DCX; x < sizen; x++) {
+				temp[y][x] = mtx[y - (sizem - DCY)][x - (sizen - DCX)];
 			}
 		}
 		for (y = 0; y < sizem; y++) {
