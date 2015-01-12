@@ -2083,7 +2083,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		int y2;
 		int x2;
 		double C[][];
-		double large;
+		double small;
 		int yoff;
 		int xoff;
 		if (A.length * A[0].length >= B.length * B[0].length) {
@@ -2102,12 +2102,14 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			S = A;
 		}
 		C = new double[ml + ms - 1][nl + ns - 1];
-		for (y = 0; y < ml; y++) {
-			for (x = 0; x < nl; x++) {
-				large = L[y][x];
-				for (y2 = 0; y2 < ms; y2++) {
-					for (x2 = 0; x2 < ns; x2++) {
-						C[y + y2][x + x2] += S[y2][x2] * large;
+		for (y = 0; y < ms; y++) {
+			for (x = 0; x < ns; x++) {
+				small = S[y][x];
+				if (small != 0.0) {
+					for (y2 = 0; y2 < ml; y2++) {
+						for (x2 = 0; x2 < nl; x2++) {
+							C[y + y2][x + x2] += L[y2][x2] * small;
+						}
 					}
 				}
 			}
@@ -2122,7 +2124,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		return;
 	}
 
-	private double[] conv(double A[], double B[]) {
+	private double[] conv(double A[], double B[], double Cout[]) {
 		double L[];
 		double S[];
 		int ml;
@@ -2130,8 +2132,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		int y;
 		int y2;
 		double C[];
-		double Cout[];
-		double large;
+		double small;
 		int yoff;
 		if (A.length >= B.length) {
 			ml = A.length;
@@ -2145,13 +2146,14 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			S = A;
 		}
 		C = new double[ml + ms - 1];
-		for (y = 0; y < ml; y++) {
-			large = L[y];
-			for (y2 = 0; y2 < ms; y2++) {
-				C[y + y2] += S[y2] * large;
+		for (y = 0; y < ms; y++) {
+			small = S[y];
+			if (small != 0.0) {
+				for (y2 = 0; y2 < ml; y2++) {
+					C[y + y2] += L[y2] * small;
+				}
 			}
 		}
-		Cout = new double[A.length];
 		yoff = (int) Math.floor(B.length / 2.0);
 		for (y = 0; y < A.length; y++) {
 			Cout[y] = C[y + yoff];
@@ -3530,7 +3532,8 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			} else {
 				B = amplitudesMultImag;
 			}
-			C = conv(A, B);
+			C = new double[sz1];
+			conv(A, B, C);
 			for (i = 0; i < sz1; i++) {
 				C[i] = C[i] / 2.0;
 			}
