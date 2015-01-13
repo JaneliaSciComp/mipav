@@ -238,6 +238,13 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		inputXDim = srcImage.getExtents()[0];
 		inputYDim = srcImage.getExtents()[1];
 		FileInfoBase[] fileInfo;
+		
+		boolean testfreqz2 = false;
+		if (testfreqz2) {
+			testfreqz2();
+			setCompleted(false);
+			return;
+		}
 		if (srcImage.isColorImage()) {
 			final boolean thresholdAverage = false;
 			final float threshold = 0.0f;
@@ -3088,6 +3095,158 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		} // for (i = 0; i < amplitudes.length; i++)
 
 		return;
+	}
+	
+	private void testfreqz2() {
+		int testNum = 5;
+	    double a[][] = null;
+	    int n1 = 64;
+	    int n2 = 64;
+	    Bessel bes;
+	    double realArg;
+    	double imaginaryArg = 0.0;
+    	double initialOrder = 1.0;
+    	int sequenceNumber = 1; // Number of sequential Bessel function orders calculated
+    	double realResult[] = new double[1];
+    	double imagResult[] = new double[1];
+    	int[] nz = new int[1]; // number of components set to zero due to underflow
+        int[] errorFlag = new int[1]; // zero if no error
+        int y;
+        int x;
+        double root;
+        double wc;
+        double sum;
+		switch (testNum) {
+		case 1:
+			// freqz2 has a zero imaginary component.
+			// The real component is circular with zero at the center and -5.33333 at the periphery.
+			// This corresponds to the frequency magnitude plot given by MATLAB
+			a = new double[3][3];
+			a[0][0] = 1.0/6.0;
+			a[0][1] = 2.0/3.0;
+			a[0][2] = 1.0/6.0;
+			a[1][0] = 2.0/3.0;
+			a[1][1] = -10.0/3.0;
+			a[1][2] = 2.0/3.0;
+			a[2][0] = 1.0/6.0;
+			a[2][1] = 2.0/3.0;
+			a[2][2] = 1.0/6.0;
+			break;
+		case 2:
+			// 1/4(1 + cosw1)(1 + cosw2)
+			// LPF with hout(0,0) = 1
+			a = new double[3][3];
+			a[0][0] = 1.0/16.0;
+			a[0][1] = 2.0/16.0;
+			a[0][2] = 1.0/16.0;
+			a[1][0] = 2.0/16.0;
+			a[1][1] = 4.0/16.0;
+			a[1][2] = 2.0/16.0;
+			a[2][0] = 1.0/16.0;
+			a[2][1] = 2.0/16.0;
+			a[2][2] = 1.0/16.0;	
+			break;
+		case 3:
+			// 1/4(1 - cosw1)(1 - cosw2)
+			// HPF with hout(0,0) = 0, 1 at 4 diagonal corners
+			a = new double[3][3];
+			a[0][0] = 1.0/16.0;
+			a[0][1] = -2.0/16.0;
+			a[0][2] = 1.0/16.0;
+			a[1][0] = -2.0/16.0;
+			a[1][1] = 4.0/16.0;
+			a[1][2] = -2.0/16.0;
+			a[2][0] = 1.0/16.0;
+			a[2][1] = -2.0/16.0;
+			a[2][2] = 1.0/16.0;	
+			break;	
+		case 4:
+			// 1/3(1 + cosw1 + cosw2)
+			// LPF with hout(0,0) = 1
+			a = new double[3][3];
+			a[0][0] = 0.0;
+			a[0][1] = 1.0/6.0;
+			a[0][2] = 0.0;
+			a[1][0] = 1.0/6.0;
+			a[1][1] = 1.0/3.0;
+			a[1][2] = 1.0/6.0;
+			a[2][0] = 0.0;
+			a[2][1] = 1.0/6.0;
+			a[2][2] = 0.0;	
+			break;
+		case 5:
+			// hlp(n1,n2) = (wc/2*PI*sqrt(n1^2 + n2^2)*J1(wc*sqrt(n1^2 + n2^2)) lowpaass
+			// limit as x -> 0 of J1(x)/x = 1/2.
+			a = new double[101][101];
+			wc = 0.5 * Math.PI;
+			sum = 0.0;
+			for (y = -50; y <= 50; y++) {
+		    	for (x = -50; x <= 50; x++) {
+		    		if ((x == 0) && (y == 0)) {
+		    		    a[50][50] = (wc * wc)/(4.0 * Math.PI);
+		    		    sum += Math.abs(a[50][50]);
+		    		}
+		    		else {
+			    		root = Math.sqrt(x*x + y*y);
+			    		realArg = wc * root;
+						bes = new Bessel(Bessel.BESSEL_J, realArg, imaginaryArg, initialOrder, Bessel.UNSCALED_FUNCTION,
+			                    sequenceNumber, realResult, imagResult, nz, errorFlag);
+			        	bes.run();
+			        	if (errorFlag[0] != 0) {
+			        	    displayError("Bessel_J error for realArg = " + realArg);
+			        	    return;
+			        	}
+			        	a[y + 50][x + 50] = (wc/(2.0 * Math.PI * root))*realResult[0];
+			        	sum += Math.abs(a[y + 50][x + 50]);
+		    		}
+		    	}
+			}
+			for (y = 0; y <= 100; y++) {
+				for (x = 0; x <= 100; x++) {
+					a[y][x] = a[y][x]/sum;
+				}
+			}
+			break;
+		}
+	    double w1[] = new double[n1];
+	    double w2[] = new double[n2];
+	    double hout[][] = new double[n2][n1];
+	    double houtImag[][] = new double[n2][n1];
+	    freqz2(hout, houtImag, w1, w2, a, n1, n2);
+	    double buffer[] = new double[n2 * n1];
+	    for (y = 0; y < n2; y++) {
+	    	for (x = 0; x < n1; x++) {
+	    		buffer[x + y * n1] = hout[y][x];
+	    	}
+	    }
+	    int extents[] = new int[2];
+	    extents[0] = n1;
+	    extents[1] = n2;
+	    ModelImage FIRfilter = new ModelImage(ModelStorageBase.DOUBLE, extents, "FIRfilter");
+	    try {
+	    	FIRfilter.importData(0, buffer, true);
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException " + e + "on FIRfilter.importData(0, buffer, true)");
+	    	return;
+	    }
+	    new ViewJFrameImage(FIRfilter);
+	    
+	    for (y = 0; y < n2; y++) {
+	    	for (x = 0; x < n1; x++) {
+	    		buffer[x + y * n1] = houtImag[y][x];
+	    	}
+	    }
+	    ModelImage FIRImagfilter = new ModelImage(ModelStorageBase.DOUBLE, extents, "FIRImagfilter");
+	    try {
+	    	FIRImagfilter.importData(0, buffer, true);
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException " + e + "on FIRImagfilter.importData(0, buffer, true)");
+	    	return;
+	    }
+	    new ViewJFrameImage(FIRImagfilter);
+	    return;
 	}
 
 	private void freqz2(double hout[][], double houtImag[][], double w1[],
