@@ -3098,7 +3098,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 	}
 	
 	private void testfreqz2() {
-		int testNum = 5;
+		int testNum = 8;
 	    double a[][] = null;
 	    int n1 = 64;
 	    int n2 = 64;
@@ -3115,7 +3115,9 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
         int x;
         double root;
         double wc;
-        double sum;
+        double wc2;
+        double wc1;
+        double part2;
 		switch (testNum) {
 		case 1:
 			// freqz2 has a zero imaginary component.
@@ -3175,16 +3177,15 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			a[2][2] = 0.0;	
 			break;
 		case 5:
-			// hlp(n1,n2) = (wc/2*PI*sqrt(n1^2 + n2^2)*J1(wc*sqrt(n1^2 + n2^2)) lowpaass
+			// hlp(n1,n2) = (wc/(2.0 * PI * sqrt(n1^2 + n2^2))*J1(wc*sqrt(n1^2 + n2^2)) lowpass
 			// limit as x -> 0 of J1(x)/x = 1/2.
+			// Sharp circular cutoff with values going from -0.088569 to 1.1030
 			a = new double[101][101];
 			wc = 0.5 * Math.PI;
-			sum = 0.0;
 			for (y = -50; y <= 50; y++) {
 		    	for (x = -50; x <= 50; x++) {
 		    		if ((x == 0) && (y == 0)) {
 		    		    a[50][50] = (wc * wc)/(4.0 * Math.PI);
-		    		    sum += Math.abs(a[50][50]);
 		    		}
 		    		else {
 			    		root = Math.sqrt(x*x + y*y);
@@ -3197,14 +3198,105 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			        	    return;
 			        	}
 			        	a[y + 50][x + 50] = (wc/(2.0 * Math.PI * root))*realResult[0];
-			        	sum += Math.abs(a[y + 50][x + 50]);
 		    		}
 		    	}
 			}
-			for (y = 0; y <= 100; y++) {
-				for (x = 0; x <= 100; x++) {
-					a[y][x] = a[y][x]/sum;
-				}
+			break;
+		case 6:
+			// hhp(n1, n2) = delta(n1,n2) - hlp(n1, n2) highpass
+			// Sharp circular cutoff with values going from -0.1030 to 1.0885
+			a = new double[101][101];
+			wc = 0.5 * Math.PI;
+			for (y = -50; y <= 50; y++) {
+		    	for (x = -50; x <= 50; x++) {
+		    		if ((x == 0) && (y == 0)) {
+		    		    a[50][50] = 1 - (wc * wc)/(4.0 * Math.PI);
+		    		}
+		    		else {
+			    		root = Math.sqrt(x*x + y*y);
+			    		realArg = wc * root;
+						bes = new Bessel(Bessel.BESSEL_J, realArg, imaginaryArg, initialOrder, Bessel.UNSCALED_FUNCTION,
+			                    sequenceNumber, realResult, imagResult, nz, errorFlag);
+			        	bes.run();
+			        	if (errorFlag[0] != 0) {
+			        	    displayError("Bessel_J error for realArg = " + realArg);
+			        	    return;
+			        	}
+			        	a[y + 50][x + 50] = (-wc/(2.0 * Math.PI * root))*realResult[0];
+		    		}
+		    	}
+			}
+			break;
+		case 7:
+			// hbp(n1, n2) = (wc2/(2.0 * PI * sqrt(n1^2 + n2^2))*J1(wc2*sqrt(n1^2 + n2^2)) 
+			//                - (wc1/(2.0 * PI * sqrt(n1^2 + n2^2))*J1(wc1*sqrt(n1^2 + n2^2))
+			// bandpass with wc2 - wc1
+			// Sharp bandpass with values between -0.0892 and 1.0895
+			a = new double[101][101];
+			wc2 = 0.6 * Math.PI;
+			wc1 = 0.4 * Math.PI;
+			for (y = -50; y <= 50; y++) {
+		    	for (x = -50; x <= 50; x++) {
+		    		if ((x == 0) && (y == 0)) {
+		    		    a[50][50] = ((wc2 * wc2) - (wc1 * wc1))/(4.0 * Math.PI) ;
+		    		}
+		    		else {
+			    		root = Math.sqrt(x*x + y*y);
+			    		realArg = wc2 * root;
+						bes = new Bessel(Bessel.BESSEL_J, realArg, imaginaryArg, initialOrder, Bessel.UNSCALED_FUNCTION,
+			                    sequenceNumber, realResult, imagResult, nz, errorFlag);
+			        	bes.run();
+			        	if (errorFlag[0] != 0) {
+			        	    displayError("Bessel_J error for realArg = " + realArg);
+			        	    return;
+			        	}
+			        	part2 = (wc2/(2.0 * Math.PI * root))*realResult[0];
+			        	realArg = wc1 * root;
+			        	bes = new Bessel(Bessel.BESSEL_J, realArg, imaginaryArg, initialOrder, Bessel.UNSCALED_FUNCTION,
+			                    sequenceNumber, realResult, imagResult, nz, errorFlag);
+			        	bes.run();
+			        	if (errorFlag[0] != 0) {
+			        	    displayError("Bessel_J error for realArg = " + realArg);
+			        	    return;
+			        	}
+			        	a[y + 50][x + 50] = part2 - (wc1/(2.0 * Math.PI * root))*realResult[0];
+		    		}
+		    	}
+			}
+			break;
+		case 8:
+			// hbs(n1, n2) = delta(n1, n2) - hbp(n1, n2)
+			// Sharp bandstop with values going from -0.0895 to 1.0892
+			a = new double[101][101];
+			wc2 = 0.6 * Math.PI;
+			wc1 = 0.4 * Math.PI;
+			for (y = -50; y <= 50; y++) {
+		    	for (x = -50; x <= 50; x++) {
+		    		if ((x == 0) && (y == 0)) {
+		    		    a[50][50] = 1.0 - ((wc2 * wc2) - (wc1 * wc1))/(4.0 * Math.PI) ;
+		    		}
+		    		else {
+			    		root = Math.sqrt(x*x + y*y);
+			    		realArg = wc2 * root;
+						bes = new Bessel(Bessel.BESSEL_J, realArg, imaginaryArg, initialOrder, Bessel.UNSCALED_FUNCTION,
+			                    sequenceNumber, realResult, imagResult, nz, errorFlag);
+			        	bes.run();
+			        	if (errorFlag[0] != 0) {
+			        	    displayError("Bessel_J error for realArg = " + realArg);
+			        	    return;
+			        	}
+			        	part2 = (wc2/(2.0 * Math.PI * root))*realResult[0];
+			        	realArg = wc1 * root;
+			        	bes = new Bessel(Bessel.BESSEL_J, realArg, imaginaryArg, initialOrder, Bessel.UNSCALED_FUNCTION,
+			                    sequenceNumber, realResult, imagResult, nz, errorFlag);
+			        	bes.run();
+			        	if (errorFlag[0] != 0) {
+			        	    displayError("Bessel_J error for realArg = " + realArg);
+			        	    return;
+			        	}
+			        	a[y + 50][x + 50] = -part2 + (wc1/(2.0 * Math.PI * root))*realResult[0];
+		    		}
+		    	}
 			}
 			break;
 		}
