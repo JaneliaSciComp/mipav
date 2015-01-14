@@ -211,8 +211,8 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		int offset;
 		double sg;
 		double mdlCostScale;
-		double critEdge[][];
-		double critText[][];
+		double critEdge;
+		double critText;
 		double expCritEdge;
 		double expCritText;
 		double denom;
@@ -731,8 +731,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		offset = 1; // A design parameter that allows 'smooth' to become stronger
 		
 		// Different filters at different pixels
-		critEdge = new double[inputYDim][inputXDim];
-		critText = new double[inputYDim][inputXDim];
 		ped = new double[inputXDim * inputYDim];
 		ptx = new double[inputXDim * inputYDim];
 		psm = new double[inputXDim * inputYDim];
@@ -740,12 +738,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			for (x = 0; x < inputXDim; x++) {
 			    sg = sgx[edgeidx[y][x]];
 			    mdlCostScale = -Math.log(sg)/sg;
-			    critEdge[y][x] = factorSharpness*(factorMdl*mdlCostScale + edgeen[y][x]*invVariance2) - offset;
+			    critEdge = factorSharpness*(factorMdl*mdlCostScale + edgeen[y][x]*invVariance2) - offset;
 			    sg = sgx[textidx[y][x]];
 			    mdlCostScale = -Math.log(sg)/sg;
-			    critText[y][x] = factorSharpness*(factorMdl*mdlCostScale + texten[y][x]*invVariance2) - offset;
-			    expCritEdge = Math.exp(critEdge[y][x]);
-			    expCritText = Math.exp(critText[y][x]);
+			    critText = factorSharpness*(factorMdl*mdlCostScale + texten[y][x]*invVariance2) - offset;
+			    expCritEdge = Math.exp(critEdge);
+			    expCritText = Math.exp(critText);
 			    denom = expCritEdge + expCritText + 1.0;
 			    ped[x + y * inputXDim] = expCritEdge/denom;
 			    ptx[x + y * inputXDim] = expCritText/denom;
