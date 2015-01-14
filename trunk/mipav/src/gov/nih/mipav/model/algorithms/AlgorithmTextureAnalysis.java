@@ -245,6 +245,13 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			setCompleted(false);
 			return;
 		}
+		
+		boolean testconv2 = false;
+		if (testconv2) {
+			testconv2();
+			setCompleted(false);
+			return;
+		}
 		if (srcImage.isColorImage()) {
 			final boolean thresholdAverage = false;
 			final float threshold = 0.0f;
@@ -2090,6 +2097,138 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		rot180(A2);
 		conv2(B, A2, C);
 		return;
+	}
+	
+	private void testconv2() {
+		int x;
+		int y;
+		double diff;
+		int testNum = 3;
+		double h[][];
+		double I[][];
+		double ans[][];
+		double Cout[][];
+		double f[][];
+		double g[][];
+		switch(testNum) {
+			case 1:
+			h = new double[3][3];
+			h[0][0] = 1.0;
+			h[0][1] = 2.0;
+			h[0][2] = 3.0;
+			h[1][0] = 0.0;
+			h[1][1] = 0.0;
+			h[1][2] = 0.0;
+			h[2][0] = 6.0;
+			h[2][1] = 5.0;
+			h[2][2] = 4.0;
+			I = new double[3][4];
+			I[0][0] = 1.0;
+			I[0][1] = 5.0;
+			I[0][2] = 2.0;
+			I[0][3] = 3.0;
+			I[1][0] = 8.0;
+			I[1][1] = 7.0;
+			I[1][2] = 3.0;
+			I[1][3] = 6.0;
+			I[2][0] = 3.0;
+			I[2][1] = 3.0;
+			I[2][2] = 9.0;
+			I[2][3] = 1.0;
+			ans = new double[3][4];
+			ans[0][0] = 23.0;
+			ans[0][1] = 41.0;
+			ans[0][2] = 33.0;
+			ans[0][3] = 21.0;
+			ans[1][0] = 44.0;
+			ans[1][1] = 65.0;
+			ans[1][2] = 76.0;
+			ans[1][3] = 52.0;
+			ans[2][0] = 82.0;
+			ans[2][1] = 85.0;
+			ans[2][2] = 79.0;
+			ans[2][3] = 42.0;
+			Cout = new double[I.length][I[0].length];
+			conv2(I, h, Cout);
+			for (y = 0; y < I.length; y++) {
+				for (x = 0; x < I[0].length; x++) {
+					diff = Cout[y][x] - ans[y][x];
+					System.out.println("Difference at y = " + y + " x = " + x + " is " + diff);
+				}
+			}
+			break;
+		case 2:
+			f = new double[2][3];
+			f[0][0] = 2;
+			f[0][1] = 3;
+			f[0][2] = 4;
+			f[1][0] = 1;
+			f[1][1] = 6;
+			f[1][2] = 7;
+			g = new double[3][3];
+			g[0][0] = 9;
+			g[0][1] = 1;
+			g[0][2] = 0;
+			g[1][0] = 2;
+			g[1][1] = 5;
+			g[1][2] = 8;
+			g[2][0] = 1;
+			g[2][1] = 3;
+			g[2][2] = 3;
+			ans = new double[2][3];
+			ans[0][0] = 71;
+			ans[0][1] = 108;
+			ans[0][2] = 51;
+			ans[1][0] = 26;
+			ans[1][1] = 71;
+			ans[1][2] = 104;
+			Cout = new double[f.length][f[0].length];
+			conv2(f, g, Cout);
+			for (y = 0; y < f.length; y++) {
+				for (x = 0; x < f[0].length; x++) {
+					diff = Cout[y][x] - ans[y][x];
+					System.out.println("Difference at y = " + y + " x = " + x + " is " + diff);
+				}
+			}
+		    break;
+		case 3:
+			f = new double[2][3];
+			f[0][0] = 2;
+			f[0][1] = 3;
+			f[0][2] = 4;
+			f[1][0] = 1;
+			f[1][1] = 6;
+			f[1][2] = 7;
+			g = new double[3][3];
+			g[0][0] = 9;
+			g[0][1] = 1;
+			g[0][2] = 0;
+			g[1][0] = 2;
+			g[1][1] = 5;
+			g[1][2] = 8;
+			g[2][0] = 1;
+			g[2][1] = 3;
+			g[2][2] = 3;
+			ans = new double[3][3];
+			ans[0][0] = 71;
+			ans[0][1] = 108;
+			ans[0][2] = 51;
+			ans[1][0] = 26;
+			ans[1][1] = 71;
+			ans[1][2] = 104;
+			ans[2][0] = 9;
+			ans[2][1] = 28;
+			ans[2][2] = 39;
+			Cout = new double[g.length][g[0].length];
+			conv2(g, f, Cout);
+			for (y = 0; y < g.length; y++) {
+				for (x = 0; x < g[0].length; x++) {
+					diff = Cout[y][x] - ans[y][x];
+					System.out.println("Difference at y = " + y + " x = " + x + " is " + diff);
+				}
+			}
+		    break;
+		}
 	}
 
 	private void conv2(double A[][], double B[][], double Cout[][]) {
