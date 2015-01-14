@@ -3395,11 +3395,11 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 							hout[yout][xout] += Math
 									.cos(Math.PI
 											* (w1g[yout][xout] * t1[y][x] + w2g[yout][xout]
-													* t2[y][x]) * acopy[y][x]);
+													* t2[y][x])) * acopy[y][x];
 							houtImag[yout][xout] -= Math
 									.sin(Math.PI
 											* (w1g[yout][xout] * t1[y][x] + w2g[yout][xout]
-													* t2[y][x]) * acopy[y][x]);
+													* t2[y][x])) * acopy[y][x];
 						}
 					}
 				}
