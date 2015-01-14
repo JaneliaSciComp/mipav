@@ -1212,11 +1212,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 							omegas[filInd], amplitudes[filInd],
 							filterAngle[filInd],
 							sigmaX[filInd], minresp, 0);
-					for (y = 0; y < yDim; y++) {
-						for (x = 0; x < xDim; x++) {
-							System.out.println("Fx["+y+"]["+x+"] = " + Fx[y][x] + " Fy["+y+"]["+x+"] = " + Fy[y][x]);
-						}
-					}
 				} else if (esameth.equals("cesa")) {
 					// complex esa
 					T2z1d_esa2D(Am, Wx, Wy, ratio, Araw, TeagEn,
