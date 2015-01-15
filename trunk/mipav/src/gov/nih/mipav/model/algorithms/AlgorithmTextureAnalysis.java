@@ -1953,6 +1953,24 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			} // for (dirInd = 1; dirInd <= ndirs; dirInd++)
 		} // for (sc = 1; sc <= nscales; sc++)
 	}
+	
+	private void test_T2z0a_invert_design() {
+	 
+		double Sc1[][] = new double[1][1];
+		double Sc2[][] = new double[1][1];
+		double Sc3[][] = new double[1][1];
+		double Sc4[][] = new double[1][1];
+		double Sc5[][] = new double[1][1];
+		 // Test inversion of symmetrical 3 by 3 matrices
+		 //  2   -1    0
+		 // -1    2   -1
+		 //  0    -1   2
+	     // has as its inverse
+		 // 3/4   2/4   1/4
+		 // 2/4   4/4   2/4
+		 // 1/4   2/4   3/4
+		
+	}
 
 	private double[][][][] T2z0a_invert_design(double Sc1[][], double Sc2[][],
 			double Sc3[][], double Sc22[][], double Sc23[][], double Sc33[][]) {
@@ -2045,7 +2063,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			for (k2 = 0; k2 < 3; k2++) {
 				for (y = 0; y < Sc1.length; y++) {
 					for (x = 0; x < Sc1[0].length; x++) {
-						invDes[1][k2][y][x] = invDes[k1][k2][y][x]
+						invDes[k1][k2][y][x] = invDes[k1][k2][y][x]
 								* invDet[y][x];
 					}
 				}
