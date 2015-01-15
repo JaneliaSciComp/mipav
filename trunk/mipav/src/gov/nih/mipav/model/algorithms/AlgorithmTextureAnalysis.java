@@ -252,6 +252,13 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			setCompleted(false);
 			return;
 		}
+		
+		boolean testInvert = false;
+		if (testInvert) {
+			test_T2z0a_invert_design();
+			setCompleted(false);
+			return;
+		}
 		if (srcImage.isColorImage()) {
 			final boolean thresholdAverage = false;
 			final float threshold = 0.0f;
@@ -1955,13 +1962,21 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 	}
 	
 	private void test_T2z0a_invert_design() {
-	 
+		// Test inversion of symmetrical 3 by 3 matrices
 		double Sc1[][] = new double[1][1];
 		double Sc2[][] = new double[1][1];
 		double Sc3[][] = new double[1][1];
-		double Sc4[][] = new double[1][1];
-		double Sc5[][] = new double[1][1];
-		 // Test inversion of symmetrical 3 by 3 matrices
+		double Sc22[][] = new double[1][1];
+		double Sc23[][] = new double[1][1];
+		double Sc33[][] = new double[1][1];
+		double ans[][] = new double[3][3];
+		double invMat[][][][];
+		int x;
+		int y;
+		double diff;
+		int testNum = 2;
+		switch(testNum) {
+		case 1:
 		 //  2   -1    0
 		 // -1    2   -1
 		 //  0    -1   2
@@ -1969,7 +1984,64 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		 // 3/4   2/4   1/4
 		 // 2/4   4/4   2/4
 		 // 1/4   2/4   3/4
-		
+		 Sc1[0][0] = 2;
+		 Sc2[0][0] = -1;
+		 Sc3[0][0] = 0;
+		 Sc22[0][0] = 2;
+		 Sc23[0][0] = -1;
+		 Sc33[0][0] = 2;
+		 ans[0][0] = 0.75;
+		 ans[0][1] = 0.5;
+		 ans[0][2] = 0.25;
+		 ans[1][0] = 0.5;
+		 ans[1][1] = 1.0;
+		 ans[1][2] = 0.5;
+		 ans[2][0] = 0.25;
+		 ans[2][1] = 0.5;
+		 ans[2][2] = 0.75;
+		 break;
+		 case 2:
+		 // 1    1/2   1/3
+	     // 1/2  1/3   1/4
+	     // 1/3  1/4   1/5
+	     // has as its inverse
+	     //  9    -36   30
+	     // -36   192  -180
+		 // 30   -180   180
+	     // Small generated errors:
+	     // y = 0 x = 0 diff = -1.1901590823981678E-13
+		 // y = 0 x = 1 diff = 5.044853423896711E-13
+	     // y = 0 x = 2 diff = -4.192202140984591E-13
+		 // y = 1 x = 0 diff = 5.044853423896711E-13
+		 // y = 1 x = 1 diff = -2.6147972675971687E-12
+		 // y = 1 x = 2 diff = 2.4442670110147446E-12
+	     // y = 2 x = 0 diff = -4.192202140984591E-13
+	     // y = 2 x = 1 diff = 2.4442670110147446E-12
+		 // y = 2 x = 2 diff = -2.3874235921539366E-12
+		 Sc1[0][0] = 1.0;
+		 Sc2[0][0] = 0.5;
+		 Sc3[0][0] = 1.0/3.0;
+		 Sc22[0][0] = 1.0/3.0;
+		 Sc23[0][0] = 0.25;
+		 Sc33[0][0] = 0.2;
+		 ans[0][0] = 9.0;
+		 ans[0][1] = -36.0;
+		 ans[0][2] = 30.0;
+		 ans[1][0] = -36.0;
+		 ans[1][1] = 192.0;
+		 ans[1][2] = -180.0;
+		 ans[2][0] = 30.0;
+		 ans[2][1] = -180.0;
+		 ans[2][2] = 180.0;
+		 break;
+		}
+		 invMat = T2z0a_invert_design(Sc1, Sc2, Sc3, Sc22, Sc23, Sc33);
+		 for (y = 0; y < 3; y++) {
+			 for (x = 0; x < 3; x++) {
+				 diff = ans[y][x] - invMat[y][x][0][0];
+				 System.out.println("y = " + y + " x = " + x + " diff = " + diff);
+			 }
+		 }
 	}
 
 	private double[][][][] T2z0a_invert_design(double Sc1[][], double Sc2[][],
