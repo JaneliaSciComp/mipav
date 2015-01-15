@@ -3042,7 +3042,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		T1z2a_convert_filter(omegasgboo, amplitudesgboo, amplitudesgbooImag,
 				omegas, amplitudes, filterAngle, sigmaX, 22);
 
-		if (domain.equals("time") || domain.equals("freq")) {
+		if (domain.equals("time")) {
 			td1[index] = T1z2b_time_resp(omegasgb0, amplitudesgb0, amplitudesgb0Imag,
 					filterAngle, sigmaX);
 			td2[index] = T1z2b_time_resp(omegasgbe, amplitudesgbe, amplitudesgbeImag,
@@ -3055,41 +3055,59 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 					amplitudesgbeoImag, filterAngle, sigmaX);
 			td33[index] = T1z2b_time_resp(omegasgboo, amplitudesgboo,
 					amplitudesgbooImag, filterAngle, sigmaX);
-			if (domain.equals("freq")) {
-				sz[0] = xfreq.length;
-				sz[1] = xfreq[0].length;
-				fd1[index] = new double[xfreq.length][xfreq[0].length];
-				fd1Imag[index] = new double[xfreq.length][xfreq[0].length];
-				fd2[index] = new double[xfreq.length][xfreq[0].length];
-				fd2Imag[index] = new double[xfreq.length][xfreq[0].length];
-				fd3[index] = new double[xfreq.length][xfreq[0].length];
-				fd3Imag[index] = new double[xfreq.length][xfreq[0].length];
-				fd22[index] = new double[xfreq.length][xfreq[0].length];
-				fd22Imag[index] = new double[xfreq.length][xfreq[0].length];
-				fd23[index] = new double[xfreq.length][xfreq[0].length];
-				fd23Imag[index] = new double[xfreq.length][xfreq[0].length];
-				fd33[index] = new double[xfreq.length][xfreq[0].length];
-				fd33Imag[index] = new double[xfreq.length][xfreq[0].length];
-				double w1fd1[] = new double[sz[1]];
-				double w2fd1[] = new double[sz[0]];
-				double w1fd2[] = new double[sz[1]];
-				double w2fd2[] = new double[sz[0]];
-				double w1fd3[] = new double[sz[1]];
-				double w2fd3[] = new double[sz[0]];
-				double w1fd22[] = new double[sz[1]];
-				double w2fd22[] = new double[sz[0]];
-				double w1fd23[] = new double[sz[1]];
-				double w2fd23[] = new double[sz[0]];
-				double w1fd33[] = new double[sz[1]];
-				double w2fd33[] = new double[sz[0]];
-				freqz2(fd1[index], fd1Imag[index], w1fd1, w2fd1, td1[index], sz[1], sz[0]);
-				freqz2(fd2[index], fd2Imag[index], w1fd2, w2fd2, td2[index], sz[1], sz[0]);
-				freqz2(fd3[index], fd3Imag[index], w1fd3, w2fd3, td3[index], sz[1], sz[0]);
-				freqz2(fd22[index], fd22Imag[index], w1fd22, w2fd22, td22[index], sz[1], sz[0]);
-				freqz2(fd23[index], fd23Imag[index], w1fd23, w2fd23, td23[index], sz[1], sz[0]);
-				freqz2(fd33[index], fd33Imag[index], w1fd33, w2fd33, td33[index], sz[1], sz[0]);
-			} // if (domain.equals("freq"))
-		} // if (domain.equals("time") || domain.equals("freq"))
+		}
+		else if (domain.equals("freq")) {
+			double td1temp[][];
+			double td2temp[][];
+			double td3temp[][];
+			double td22temp[][];
+			double td23temp[][];
+			double td33temp[][];
+			td1temp = T1z2b_time_resp(omegasgb0, amplitudesgb0, amplitudesgb0Imag,
+					filterAngle, sigmaX);
+			td2temp = T1z2b_time_resp(omegasgbe, amplitudesgbe, amplitudesgbeImag,
+					filterAngle, sigmaX);
+			td3temp = T1z2b_time_resp(omegasgbo, amplitudesgbo, amplitudesgboImag,
+					filterAngle, sigmaX);
+			td22temp = T1z2b_time_resp(omegasgbee, amplitudesgbee,
+					amplitudesgbeeImag, filterAngle, sigmaX);
+			td23temp = T1z2b_time_resp(omegasgbeo, amplitudesgbeo,
+					amplitudesgbeoImag, filterAngle, sigmaX);
+			td33temp = T1z2b_time_resp(omegasgboo, amplitudesgboo,
+					amplitudesgbooImag, filterAngle, sigmaX);
+			sz[0] = xfreq.length;
+			sz[1] = xfreq[0].length;
+			fd1[index] = new double[xfreq.length][xfreq[0].length];
+			fd1Imag[index] = new double[xfreq.length][xfreq[0].length];
+			fd2[index] = new double[xfreq.length][xfreq[0].length];
+			fd2Imag[index] = new double[xfreq.length][xfreq[0].length];
+			fd3[index] = new double[xfreq.length][xfreq[0].length];
+			fd3Imag[index] = new double[xfreq.length][xfreq[0].length];
+			fd22[index] = new double[xfreq.length][xfreq[0].length];
+			fd22Imag[index] = new double[xfreq.length][xfreq[0].length];
+			fd23[index] = new double[xfreq.length][xfreq[0].length];
+			fd23Imag[index] = new double[xfreq.length][xfreq[0].length];
+			fd33[index] = new double[xfreq.length][xfreq[0].length];
+			fd33Imag[index] = new double[xfreq.length][xfreq[0].length];
+			double w1fd1[] = new double[sz[1]];
+			double w2fd1[] = new double[sz[0]];
+			double w1fd2[] = new double[sz[1]];
+			double w2fd2[] = new double[sz[0]];
+			double w1fd3[] = new double[sz[1]];
+			double w2fd3[] = new double[sz[0]];
+			double w1fd22[] = new double[sz[1]];
+			double w2fd22[] = new double[sz[0]];
+			double w1fd23[] = new double[sz[1]];
+			double w2fd23[] = new double[sz[0]];
+			double w1fd33[] = new double[sz[1]];
+			double w2fd33[] = new double[sz[0]];
+			freqz2(fd1[index], fd1Imag[index], w1fd1, w2fd1, td1temp, sz[1], sz[0]);
+			freqz2(fd2[index], fd2Imag[index], w1fd2, w2fd2, td2temp, sz[1], sz[0]);
+			freqz2(fd3[index], fd3Imag[index], w1fd3, w2fd3, td3temp, sz[1], sz[0]);
+			freqz2(fd22[index], fd22Imag[index], w1fd22, w2fd22, td22temp, sz[1], sz[0]);
+			freqz2(fd23[index], fd23Imag[index], w1fd23, w2fd23, td23temp, sz[1], sz[0]);
+			freqz2(fd33[index], fd33Imag[index], w1fd33, w2fd33, td33temp, sz[1], sz[0]);
+			} // else if (domain.equals("freq"))
         // domain is never equal to freq_pure
 	}
 
