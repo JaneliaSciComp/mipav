@@ -2034,9 +2034,9 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 						* convqpinb[1][1][y][x] - convqpinb[0][1][y][x]
 						* convqpinb[1][0][y][x]);
 				if (det[y][x] >= 0.0) {
-					invDet[y][x] = 1.0 / Math.max(det[y][x], 1.0E-8);
+					invDet[y][x] = 1.0 / Math.max(det[y][x], 1.0E-7);
 				} else {
-					invDet[y][x] = -1.0 / Math.max(Math.abs(det[y][x]), 1.0E-8);
+					invDet[y][x] = -1.0 / Math.max(Math.abs(det[y][x]), 1.0E-7);
 				}
 			}
 		}
