@@ -17,7 +17,9 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
@@ -35,6 +37,10 @@ import javax.swing.JTextPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
 
 /**
  * New plugin for Akanni Clarke of the Giniger Lab. Conceptually similar to the 
@@ -67,6 +73,7 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 	private JRadioButton axonRB;
 	
 	private JRadioButton customRB;
+	private JRadioButton densityRB;
 	
 	private boolean chooseIV;
 	
@@ -75,6 +82,10 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 	private boolean writeStep;
 	
 	private boolean locked;
+	
+	private File[] densityFiles;
+	
+	private int densityCount;
 	
 	public PlugInDialog3DSWCStats(){
 		super();
@@ -89,7 +100,6 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		String command = e.getActionCommand();
 		if(command.equals("ok")){
 			if(!locked && (alg == null || !alg.isViewerOpen())){
-				System.out.println(writeStep);
 				if(writeStep){
 					locked = true;
 					if(!alg.write())
@@ -128,8 +138,26 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 		if(algorithm instanceof PlugInAlgorithm3DSWCViewer){
 			if(algorithm.isCompleted()){
+				if(densityRB.isSelected() && writeStep){
+					densityCount++;
+					if(densityCount<densityFiles.length){
+						alg = new PlugInAlgorithm3DSWCViewer(densityFiles[densityCount], textArea, (String) resolutionUnits.getSelectedItem());
+						alg.addListener(this);
+						new PlugInDialog3DSWCViewer(textArea, (String) resolutionUnits.getSelectedItem(), alg);
+						if(isRunInSeparateThread()){
+							if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
+								MipavUtil.displayError("A thread is already running on this object");
+							}
+						} else {
+							alg.run();
+						}
+					}else{
+						locked = false;
+					}
+				}else{
+					locked = false;
+				}
 				writeStep ^= true;
-				locked = false;
 				/*String fileText = textField.getText();
 				File file = new File(fileText);
 				
@@ -150,15 +178,7 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 				
 			}else{
 				locked = false;
-				if(!writeStep){
-				/*String message = "One or more files were unable to "
-						+ "complete conversion. Check debugging output"
-						+ "for more information.";*/
-				String message = "Unable to "
-						+ "complete conversion. Check debugging output"
-						+ "for more information.";
-				MipavUtil.displayError(message);
-				}
+				writeStep = false;
 			}
 			
 		}
@@ -168,30 +188,82 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		
 		String fileName = textField.getText();
 		File file = new File(fileName);
-		if(!fileName.endsWith(".iv")){
-			MipavUtil.displayError("This file is not the correct format");
-			return;
-		}
 		
-		if(!file.exists()){
-			MipavUtil.displayError("This file does not exist");
-			return;
-		}
-		
-		if(customRB.isSelected()){
-			alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, (String) resolutionUnits.getSelectedItem(), false, true);
+		if(densityRB.isSelected()){
+			
+			File parent = file.getParentFile();
+			File[] list = parent.listFiles(new FilenameFilter(){
+
+				@Override
+				public boolean accept(File dir, String name) {
+					int ind = name.lastIndexOf(".");
+					if(ind < 0)
+						return false;
+					String ext = name.substring(ind);
+					if(ext.equalsIgnoreCase(".iv")){
+						return true;
+					}else{
+						return false;
+					}
+				}
+			});
+			
+			String parentStr = parent.getAbsolutePath();
+			File csvFile = new File(parentStr + File.separator + "branch_density.csv");
+			try {
+				FileWriter fw = new FileWriter(csvFile);
+				fw.append("Branch Density Statistics\n");
+				fw.close();
+			} catch (IOException e) {
+				String message = "Could not create a CSV file for writing. Make sure to close any open CSVs.";
+				SimpleAttributeSet redText = new SimpleAttributeSet();
+				StyleConstants.setFontFamily(redText, "Serif");
+				StyleConstants.setFontSize(redText, 12);
+				StyleConstants.setForeground(redText, Color.red.darker());
+				Document doc = textArea.getDocument();
+				try {
+					doc.insertString(doc.getLength(), message + "\n", redText);
+				} catch (BadLocationException ex) {
+					ex.printStackTrace();
+				}
+				textArea.setCaretPosition(doc.getLength());
+				return;
+			}
+			
+			densityFiles = list;
+			densityCount = 0;
+			
+			alg = new PlugInAlgorithm3DSWCViewer(list[densityCount], textArea, (String) resolutionUnits.getSelectedItem());
 			alg.addListener(this);
 			new PlugInDialog3DSWCViewer(textArea, (String) resolutionUnits.getSelectedItem(), alg);
 			
-			//PlugInDialog3DSWCViewer viewer = new PlugInDialog3DSWCViewer(imageField.getText(), file, textArea, (String) resolutionUnits.getSelectedItem());
-			//alg = new PlugInAlgorithm3DSWCViewer()
-
 		}else{
-		
-			alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, 
-					(String) resolutionUnits.getSelectedItem(), axonRB.isSelected(), false);
-			alg.addListener(this);
 			
+			if(!fileName.endsWith(".iv")){
+				MipavUtil.displayError("This file is not the correct format");
+				return;
+			}
+			
+			if(!file.exists()){
+				MipavUtil.displayError("This file does not exist");
+				return;
+			}
+			
+			if(customRB.isSelected()){
+				alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, (String) resolutionUnits.getSelectedItem(), false, true);
+				alg.addListener(this);
+				new PlugInDialog3DSWCViewer(textArea, (String) resolutionUnits.getSelectedItem(), alg);
+				
+				//PlugInDialog3DSWCViewer viewer = new PlugInDialog3DSWCViewer(imageField.getText(), file, textArea, (String) resolutionUnits.getSelectedItem());
+				//alg = new PlugInAlgorithm3DSWCViewer()
+	
+			}else{
+			
+				alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, 
+						(String) resolutionUnits.getSelectedItem(), axonRB.isSelected(), false);
+				alg.addListener(this);
+				
+			}
 		}
 		
 		if(isRunInSeparateThread()){
@@ -254,9 +326,14 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		customRB.setFont(serif12);
 		group.add(customRB);
 		
+		densityRB = new JRadioButton("Branch Density");
+		densityRB.setFont(serif12);
+		group.add(densityRB);
+		
 		rbPanel.add(axonRB);
 		rbPanel.add(imarisRB);
 		rbPanel.add(customRB);
+		rbPanel.add(densityRB);
 		
 		JLabel resLabel = new JLabel("SWC Resolution Units");
 		resLabel.setFont(serif12);
