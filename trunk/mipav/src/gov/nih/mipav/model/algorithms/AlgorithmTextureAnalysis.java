@@ -3024,8 +3024,8 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 
 				if (domain[filInd-1].equals("freq")) {
 					ps[filInd - 1] = 3 * (int) Math.ceil(sigmas[filInd - 1]);
-					szfm = inputYDim + 2 * ps[0];
-					szfn = inputXDim + 2 * ps[0];
+					szfm = inputYDim + 2 * ps[filInd - 1];
+					szfn = inputXDim + 2 * ps[filInd - 1];
 					fm = new double[szfm];
 					fn = new double[szfn];
 					if ((szfm % 2) == 1) {
