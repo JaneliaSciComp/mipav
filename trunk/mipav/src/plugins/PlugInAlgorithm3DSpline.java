@@ -32,6 +32,8 @@ public class PlugInAlgorithm3DSpline extends AlgorithmBase {
 		
 		for(float y = -15F*xres;y<=15F*xres;y+=xres/2.0){
 			for(float x = -15F*xres;x<=15F*xres;x+=xres/2.0){
+				if(x==0 && y==0)
+					continue;
 				Vector3f pt = new Vector3f(x, y, 0);
 				searchFieldBase.add(pt);
 			}

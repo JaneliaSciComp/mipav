@@ -1,4 +1,3 @@
-import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -9,11 +8,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.PriorityQueue;
 
-import quickhull3d.Point3d;
-import quickhull3d.QuickHull3D;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmMorphology3D;
 import gov.nih.mipav.model.algorithms.AlgorithmThresholdDual;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmMean;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
@@ -121,7 +117,7 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 			}
 		}*/
 		
-		ModelImage maskImage = new ModelImage(ModelImage.BOOLEAN, extents, "Mask Image");
+		/*ModelImage maskImage = new ModelImage(ModelImage.BOOLEAN, extents, "Mask Image");
 		
 		try {
 			maskImage.importData(0, mask, true);
@@ -135,7 +131,7 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 			maskImage.exportData(0, length, mask);
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		}*/
 		
 		ModelImage cloneImage = (ModelImage)srcImage.clone();
 		filterShotNoiseMean(cloneImage);
@@ -211,7 +207,7 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 					}
 					dist = (float)Math.sqrt(dist);
 					if(dist < parentRad){
-						pt0[6] = 0;
+						pt0[6] = 0.01f;
 						continue;
 					}else{
 						skip = true;
@@ -350,7 +346,7 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 			}*/
 			for(int j=0;j<fil.size()-1;j++){
 				float[] pt0 = fil.get(j);
-				if(pt0[6] == 0)
+				if(pt0[6] <= 0.01f)
 					continue;
 				/*if(i > 0){
 					float parentRad = parent[3];
