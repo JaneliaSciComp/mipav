@@ -3613,7 +3613,7 @@ public class FileDicom extends FileDicomBase {
         }
         
         //System.out.println("Location of tag write: "+raFile.getFilePointer());
-
+        
         writeShort((short) gr, endianess); // write group
         writeShort((short) el, endianess); // write element
 
@@ -3803,7 +3803,7 @@ public class FileDicom extends FileDicomBase {
     	}
     	
     	raFile = outputFile;
-    	System.out.println(raFile.getFilePointer()+" vs "+raFile.length());
+    	//System.out.println(raFile.getFilePointer()+" vs "+raFile.length());
     	
     	endianess = FileBase.LITTLE_ENDIAN; // all DICOM files start as little endian (tags 0002)
         flag = true;
@@ -4001,10 +4001,18 @@ nextTag: while (flag == true) {
         
         
         
-		int offset = -6; //shorten by tag and length descriptors
-		if(fileInfo.getVr_type() == VRtype.EXPLICIT) {
+		int offset = -8; //shorten by tag and length descriptors
+		if(fileInfo.getVr_type() == VRtype.EXPLICIT && (
+				newTag.getValueRepresentation().equals(VR.OB) || 
+				newTag.getValueRepresentation().equals(VR.OF) || 
+				newTag.getValueRepresentation().equals(VR.OW) || 
+				newTag.getValueRepresentation().equals(VR.SQ) || 
+				newTag.getValueRepresentation().equals(VR.UT) || 
+				newTag.getValueRepresentation().equals(VR.UN)))
 			offset = offset - 2;
-		}
+		/*if(fileInfo.getVr_type() == VRtype.EXPLICIT) {
+			offset = offset - 2;
+		}*/
 		
 		raFile.seek(pointerLoc+offset);  //gets raFile to current tag
 
