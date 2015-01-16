@@ -844,7 +844,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 						ArrayList<String> messages = consolidateFilaments(maxOrder);
 						float[] branchLengths = recalculateDistances();
 						addToMessages(messages);
-
+						
 						ArrayList<float[]> axon = swcCoordinates.get(0);
 						for(int i=0;i<axon.size();i++){
 							float[] coord = axon.get(i);
