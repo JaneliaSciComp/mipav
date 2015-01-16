@@ -1780,7 +1780,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		for (y = 0; y < sizem; y++) {
 			for (x = 0; x < sizen; x++) {
 				F[y][x] = dirc[y][x] * imIn[y][x];
-				FImag[y][x] = dirc[y][x] * imIn[y][x];
+				FImag[y][x] = dirc[y][x] * imInImag[y][x];
 			}
 		}
 		for (y = 0; y < sizem; y++) {
