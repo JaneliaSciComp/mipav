@@ -93,6 +93,25 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		locked = false;
 		
 		init();
+		
+		SimpleAttributeSet blackText = new SimpleAttributeSet();
+		StyleConstants.setFontFamily(blackText, "Serif");
+		StyleConstants.setFontSize(blackText, 12);
+		
+		String version = "1.0";
+		String lastUpdate = "1/16/15";
+		
+		String message = "Initializing v " + version + "\n" +
+				"Last updated: " + lastUpdate + "\n" +
+				"-----------------------------------------";
+		
+		Document doc = textArea.getDocument();
+		try {
+			doc.insertString(doc.getLength(), message + "\n", blackText);
+		} catch (BadLocationException ex) {
+			ex.printStackTrace();
+		}
+		textArea.setCaretPosition(doc.getLength());
 	}
 	
 	public void actionPerformed(ActionEvent e){
