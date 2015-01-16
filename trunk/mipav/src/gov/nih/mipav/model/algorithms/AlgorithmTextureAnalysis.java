@@ -1413,7 +1413,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		    imInImag = new double[imInSrc.length][imInSrc[0].length];
 		}
 		for (y = 0; y < imInSrc.length; y++) {
-			for (x = 0; x < imInSrc.length; x++) {
+			for (x = 0; x < imInSrc[0].length; x++) {
 				imIn[y][x] = imInSrc[y][x];
 				if (imInImag != null) {
 				    imInImag[y][x] = imInSrcImag[y][x];
