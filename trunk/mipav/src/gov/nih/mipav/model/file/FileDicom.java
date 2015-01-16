@@ -4009,7 +4009,7 @@ nextTag: while (flag == true) {
 				newTag.getValueRepresentation().equals(VR.SQ) || 
 				newTag.getValueRepresentation().equals(VR.UT) || 
 				newTag.getValueRepresentation().equals(VR.UN)))
-			offset = offset - 2;
+			offset = offset - 4;
 		/*if(fileInfo.getVr_type() == VRtype.EXPLICIT) {
 			offset = offset - 2;
 		}*/
