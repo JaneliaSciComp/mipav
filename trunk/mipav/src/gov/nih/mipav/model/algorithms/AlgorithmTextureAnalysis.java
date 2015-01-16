@@ -1316,18 +1316,13 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 						enerTeag[y][x] = TeagEn[y][x];
 					}
 				}
-				for (y = 0; y < yDim; y++) {
-					for (x = 0; x < xDim; x++) {
-						en[y][x] = ennew[y][x];
-					}
-				}
 
 				sg = sgx[filInd];
 				mdlCostScale = -Math.log(sg) / sg;
 				for (y = 0; y < yDim; y++) {
 					for (x = 0; x < xDim; x++) {
 						critMDL[y][x] = factorSharpness
-								* (factorMdl * mdlCostScale + en[y][x]
+								* (factorMdl * mdlCostScale + ennew[y][x]
 										* invVariance2);
 					}
 				}
