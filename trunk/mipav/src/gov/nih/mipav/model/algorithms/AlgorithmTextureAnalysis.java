@@ -1240,11 +1240,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 							amplitudes[filInd],
 							filterAngle[filInd], sigmaX[filInd], minresp, 1);
 				} else if (esameth.equals("")) {
-					for (y = 0; y < yDim; y++) {
-						for (x = 0; x < xDim; x++) {
-							ph[y][x] = Math.atan2(Fn[2][y][x], Fn[1][y][x]);
-						}
-					}
 					Wx = deriv_x_right(ph);
 					Wy = deriv_y_up(ph);
 					for (y = 0; y < yDim; y++) {
