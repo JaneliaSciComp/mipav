@@ -164,7 +164,9 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		double textA[][];
 		double textph[][];
 		double textFx[][];
+		double textFxImag[][];
 		double textFy[][];
+		double textFyImag[][];
 		int textidx[][];
 		double texten[][];
 		double textcritDCA[][];
@@ -197,7 +199,9 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		double edgeA[][];
 		double edgeph[][];
 		double edgeFx[][];
+		double edgeFxImag[][];
 		double edgeFy[][];
+		double edgeFyImag[][];
 		int edgeidx[][];
 		double edgeen[][];
 		double edgecritDCA[][];
@@ -700,12 +704,14 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		textA = new double[inputYDim][inputXDim];
 		textph = new double[inputYDim][inputXDim];
 		textFx = new double[inputYDim][inputXDim];
+		textFxImag = new double[inputYDim][inputXDim];
 		textFy = new double[inputYDim][inputXDim];
+		textFyImag = new double[inputYDim][inputXDim];
 		textidx = new int[inputYDim][inputXDim];
 		texten = new double[inputYDim][inputXDim];
 		textcritDCA = new double[inputYDim][inputXDim];
 		
-		T2z1_filter(textA, textph, textFx, textFy,
+		T2z1_filter(textA, textph, textFx, textFxImag, textFy, textFyImag,
 				textidx, texten, textcritDCA, 
 				textomegas, textamplitudes,
 				textfilterAngle, textsigmaX, texttd1, texttd2, texttd3,
@@ -721,11 +727,13 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		edgeA = new double[inputYDim][inputXDim];
 		edgeph = new double[inputYDim][inputXDim];
 		edgeFx = new double[inputYDim][inputXDim];
+		edgeFxImag = new double[inputYDim][inputXDim];
 		edgeFy = new double[inputYDim][inputXDim];
+		edgeFyImag = new double[inputYDim][inputXDim];
 		edgeidx = new int[inputYDim][inputXDim];
 		edgeen = new double[inputYDim][inputXDim];
 		edgecritDCA = new double[inputYDim][inputXDim];
-		T2z1_filter(edgeA, edgeph, edgeFx, edgeFy,
+		T2z1_filter(edgeA, edgeph, edgeFx, edgeFxImag, edgeFy, edgeFyImag,
 				edgeidx, edgeen, edgecritDCA, 
 				edgeomegas, edgeamplitudes,
 				edgefilterAngle, edgesigmaX, edgetd1, edgetd2, edgetd3,
@@ -773,7 +781,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 	    buf = new double[inputXDim * inputYDim];
 	    for (y = 0; y < inputYDim; y++) {
 	    	for (x = 0; x < inputXDim; x++) {
-	    	    buf[x + y * inputXDim] = textFx[y][x];	
+	    	    buf[x + y * inputXDim] = Math.sqrt(textFx[y][x]*textFx[y][x] + textFxImag[y][x]*textFxImag[y][x]);	
 	    	}
 	    }
 	    medianImage = new ModelImage(ModelStorageBase.DOUBLE, outputExtents, "medianImage");
@@ -808,7 +816,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 	    buf2 = new double[inputXDim * inputYDim];
 	    for (y = 0; y < inputYDim; y++) {
 	    	for (x = 0; x < inputXDim; x++) {
-	    	    buf2[x + y * inputXDim] = textFy[y][x];
+	    	    buf2[x + y * inputXDim] = Math.sqrt(textFy[y][x]*textFy[y][x] + textFyImag[y][x]*textFyImag[y][x]);
 	    	}
 	    }
 	    try {
@@ -838,7 +846,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 	    
 	    for (y = 0; y < inputYDim; y++) {
 	    	for (x = 0; x < inputXDim; x++) {
-	    	    buf[x + y * inputXDim] = edgeFx[y][x];	
+	    	    buf[x + y * inputXDim] = Math.sqrt(edgeFx[y][x]*edgeFx[y][x] + edgeFxImag[y][x]*edgeFxImag[y][x]);	
 	    	}
 	    }
 	    try {
@@ -863,7 +871,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 	    }
 	    for (y = 0; y < inputYDim; y++) {
 	    	for (x = 0; x < inputXDim; x++) {
-	    	    buf2[x + y * inputXDim] = edgeFy[y][x];	
+	    	    buf2[x + y * inputXDim] = Math.sqrt(edgeFy[y][x]*edgeFy[y][x] + edgeFyImag[y][x]*edgeFyImag[y][x]);	
 	    	}
 	    }
 	    try {
@@ -991,7 +999,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 
 	}
 
-	private void T2z1_filter(double A[][], double ph[][], double Fx[][], double Fy[][],
+	private void T2z1_filter(double A[][], double ph[][], double Fx[][], double FxImag[][], double Fy[][], double FyImag[][],
 			int idx[][], double en[][], double critDCA[][],
 			double omegas[][], double amplitudes[][],
 			double filterAngle[], double sigmaX[],
@@ -1011,8 +1019,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		int xDim = inputImage.getExtents()[0];
 		int yDim = inputImage.getExtents()[1];
 		int length = xDim * yDim;
-		double FxImag[][] = new double[yDim][xDim];
-		double FyImag[][] = new double[yDim][xDim];
 		double Anew[][] = new double[yDim][xDim];
 		double phnew[][] = new double[yDim][xDim];
 		double Fxnew[][] = new double[yDim][xDim];
@@ -1355,7 +1361,9 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 							A[y][x] = Anew[y][x];
 							ph[y][x] = phnew[y][x];
 							Fx[y][x] = Fxnew[y][x];
+							FxImag[y][x] = 0.0;
 							Fy[y][x] = Fynew[y][x];
+							FyImag[y][x] = 0.0;
 							idx[y][x] = idxnew;
 							en[y][x] = ennew[y][x];
 							critDCA[y][x] = critDCAnew[y][x];
@@ -1364,7 +1372,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 				}
 			} // for (dirInd = 0; dirInd < ndirs; dirInd++)
 		} // for (k = 0; k < scaleswt.length; k++)
-
+        
 	}
 
 	
