@@ -107,6 +107,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 	private JTextField  nuclearFileNameText;
 
 	private JCheckBox latticeStraighten;
+	private JCheckBox buildLattice;
 	private JCheckBox calcStatistics;
 	private JCheckBox generateTrainingData;
 	private JCheckBox segmentSeamCells;
@@ -184,9 +185,13 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			{
 				latticeStraighten();
 			}
+			if ( buildLattice.isSelected() )
+			{
+				buildLattice();
+			}
 			if ( calcStatistics.isSelected() )
 			{
-				calcStatistics();
+				calcStatistics( true );
 			}
 			if ( registerImages.isSelected() )
 			{
@@ -803,14 +808,19 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 	}
 
 
-	private void calcStatistics()
+	private void calcStatistics( boolean calcAutomaticLatticeData )
 	{
+		VOIVector annotationStatsBefore = new VOIVector();
+		VOIVector annotationStatsAfter = new VOIVector();
 		if ( includeRange != null )
 		{
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
-				String fileName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "statistics" + File.separator + "LatticePositions_before.csv";
-				readLatticePositions( fileName, includeRange.elementAt(i) );
+				String fileName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "statistics" + File.separator + "AnnotationInfo_before.csv";
+				readLatticePositions( fileName, includeRange.elementAt(i), annotationStatsBefore );
+				
+				fileName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "statistics" + File.separator + "AnnotationInfo_after.csv";
+				readLatticePositions( fileName, includeRange.elementAt(i), annotationStatsAfter );
 			}
 		}
 		else
@@ -823,8 +833,11 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 				File voiFile = new File(baseFileDir + File.separator + fileName);
 				if ( voiFile.exists() )
 				{
-					fileName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + fileCount + File.separator + "statistics" + File.separator + "LatticePositions_before.csv";
-					readLatticePositions( fileName, fileCount );
+					fileName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + fileCount + File.separator + "statistics" + File.separator + "AnnotationInfo_before.csv";
+					readLatticePositions( fileName, fileCount, annotationStatsBefore );
+					
+					fileName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + fileCount + File.separator + "statistics" + File.separator + "AnnotationInfo_after.csv";
+					readLatticePositions( fileName, fileCount, annotationStatsAfter );
 					fileCount++;
 				}    				
 				else
@@ -834,17 +847,421 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			}
 		}
 
-		if ( (leftPositions != null) && (rightPositions != null) )
+		if ( (annotationStatsBefore != null) && (annotationStatsAfter != null) )
 		{
-			String fileName = baseFileDir + File.separator + "stats";
-			calcStatistics(fileName);
+			String fileName = baseFileDir + File.separator + "annotation_statistics";
+			File statsFile = new File(fileName);
+			if ( !statsFile.exists() )
+			{
+				System.err.println( "mkdir " + fileName );
+				statsFile.mkdir();
+			}
+			calcStatistics(fileName, annotationStatsBefore, "_before", calcAutomaticLatticeData );
+			calcStatistics(fileName, annotationStatsAfter, "_after", calcAutomaticLatticeData );
 
-			leftPositions = null;
-			rightPositions = null;
-			IDs = null;
-			volumes = null;
+			annotationList = annotationStatsAfter;
+			
+			annotationStatsBefore = null;
+			annotationStatsAfter = null;
 		}
 	}     
+
+	private void buildLattice( )
+	{
+		VOIVector annotationStatsBefore = new VOIVector();
+		if ( includeRange != null )
+		{
+			for ( int i = 0; i < includeRange.size(); i++ )
+			{
+				String fileName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "statistics" + File.separator + "AnnotationInfo_before.csv";
+				readLatticePositions( fileName, includeRange.elementAt(i), annotationStatsBefore );
+				fileName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "potential_lattices" + File.separator;
+		        File outputFileDir = new File(fileName);
+//		        if ( !outputFileDir.exists() )
+//		        {
+//		        	outputFileDir.mkdir();
+//		        }
+		        buildLattice( outputFileDir, annotationStatsBefore.elementAt(0), includeRange.elementAt(i) );
+				annotationStatsBefore.clear();
+			}
+		}
+		else
+		{
+			int fileCount = 0;
+			boolean fileExists = true;
+			while ( fileExists )
+			{    	    	
+				String fileName = baseFileNameText.getText() + "_" + fileCount + ".tif";
+				File voiFile = new File(baseFileDir + File.separator + fileName);
+				if ( voiFile.exists() )
+				{
+					fileName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + fileCount + File.separator + "statistics" + File.separator + "AnnotationInfo_before.csv";
+					readLatticePositions( fileName, fileCount, annotationStatsBefore );
+					annotationStatsBefore.clear();
+					fileCount++;
+				}    				
+				else
+				{
+					fileExists = false;
+				}
+			}
+		}
+
+		annotationStatsBefore = null;
+	}     
+	
+	private void buildLattice( File outputDir, VOI annotations, int time )
+	{
+		Vector<Vector3f> positions = new Vector<Vector3f>();
+		for ( int i = 0; i < annotations.getCurves().size(); i++ )
+		{
+			VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+			if ( text.getText().equals("origin") )
+			{
+				continue;
+			}
+			positions.add( new Vector3f( text.elementAt(0) ) );
+		}
+		
+		// pair distance > 50 time step for 1-9 is in the range of 5-15 um
+		// pair distance > 50 time step for 10 is in the range of 1-5 um
+		
+		
+		VOIVector lattices = new VOIVector();
+		
+		float tenMin = 1;
+		float tenMax = 5;
+		// look for potential 10 pair:
+		int count = 0;
+		while ( (count == 0) && (tenMin > 0.5) )
+		{
+			count = 0;
+			for ( int i = 0; i < positions.size(); i++ )
+			{
+				for ( int j = i + 1; j < positions.size(); j++ )
+				{
+					float distance = positions.elementAt(i).distance( positions.elementAt(j) );
+					if (  (distance >= tenMin) && (distance <= tenMax) )
+					{
+//											System.err.println( time + " " + i + " " + j + " " + distance );
+						
+						addPair( i, j, positions, lattices );
+						count++;
+					}
+				}
+			}
+			if ( count == 0 )
+			{
+				tenMin -= 0.1;
+				tenMax += 0.1;
+			}
+		}
+		System.err.println( time + " " + lattices.size() );
+		
+		checkPairs( lattices );
+		System.err.println( time + " " + lattices.size() );
+		
+		
+//		System.err.println( time + " 10 pair " + count );
+//		
+//
+//		// look for potential pairs:
+//		for ( int i = 0; i < positions.size(); i++ )
+//		{
+//			count = 0;
+//			for ( int j = i + 1; j < positions.size(); j++ )
+//			{
+//				float distance = positions.elementAt(i).distance( positions.elementAt(j) );
+//				if (  (distance >= 5) && (distance <= 15) )
+//				{
+////					System.err.println( time + " " + i + " " + j + " " + distance );
+//					count++;
+//				}
+//			}
+//			System.err.println( time + " " + i + " pair " + count );
+//		}
+//		System.err.println( "" );
+	}
+	
+	private void checkPairs( VOIVector lattices )
+	{
+		int count = 0;
+		for ( int i = lattices.size() - 1; i >= 0; i-- )
+		{
+			Vector<int[]> sequenceList = checkPairs( lattices.elementAt(i) );
+			if ( sequenceList == null )
+			{
+				lattices.remove(i);
+			}
+			else if ( sequenceList.size() == 0 )
+			{
+				lattices.remove(i);
+			}
+			else
+			{
+//				addLattices( lattices.elementAt(i), sequenceList );
+				count += sequenceList.size();
+				System.err.println( i + " " + count );
+			}
+		}
+		System.err.println( count );
+	}
+	
+	private Vector<int[]> checkPairs( VOI lattice )
+	{
+		VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
+		VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
+		
+		float tenMin = 1;
+		float tenMax = 5;
+		int tenIndex = -1;
+		for ( int i = 0; i < left.size(); i++ )
+		{
+			Vector3f l1 = left.elementAt(i);
+			Vector3f r1 = right.elementAt(i);
+			
+			float distance = l1.distance(r1);
+			if (  (distance >= tenMin) && (distance <= tenMax) )
+			{
+				tenIndex = i;
+//				System.err.println( tenIndex + " " + distance );
+			}
+		}
+		
+		if ( tenIndex == -1 )
+		{
+			return null;
+		}
+		
+		Vector<int[]> sequenceList = new Vector<int[]>();
+		int[] sequence = new int[10];
+		for ( int i = 0; i < sequence.length; i++ )
+		{
+			sequence[i] = -1;
+		}
+		sequence[0] = tenIndex;
+		
+		
+		int minDist = 5;
+		int maxDist = 25;
+		int maxDiff = 10;
+
+		Vector3f l1 = left.elementAt(tenIndex);
+		Vector3f r1 = right.elementAt(tenIndex);
+		for ( int i = 0; i < left.size(); i++ )
+		{			
+			if ( i == tenIndex )
+			{
+				continue;
+			}
+			Vector3f l2 = left.elementAt(i);
+			Vector3f r2 = right.elementAt(i);
+			float distL1L2 = l1.distance(l2);
+			float distR1R2 = r1.distance(r2);
+			float distL1R2 = l1.distance(r2);
+			float distR1L2 = r1.distance(l2);
+			
+			Vector3f v1 = Vector3f.sub( l1, r1 );
+			v1.normalize();
+			
+			Vector3f v2 = Vector3f.sub( l2, r2 );
+			v2.normalize();
+			
+			Vector3f v3 = Vector3f.sub( r2, l2 );
+			v3.normalize();
+			
+			float angle1 = (float) (180 * v1.angle(v2) / Math.PI);
+			float angle2 = (float) (180 * v1.angle(v3) / Math.PI);
+
+			if ( ((distL1L2 >= minDist) && (distL1L2 <= maxDist) && (distR1R2 >= minDist) && (distR1R2 <= maxDist) && (Math.abs( distL1L2 - distR1R2) <= maxDiff) && (angle1 <= 90))
+					||
+					((distL1R2 >= minDist) && (distL1R2 <= maxDist) && (distR1L2 >= minDist) && (distR1L2 <= maxDist) && (Math.abs( distL1R2 - distR1L2) <= maxDiff) && (angle2 <= 90)) )
+			{
+				addSequence( sequence, sequenceList, i, left, right );
+			}
+		}
+		return sequenceList;
+	}
+	
+	private void addSequence( int[] sequence, Vector<int[]> sequenceList, int index, VOIContour left, VOIContour right )
+	{
+		int[] newSequence = new int[10];
+		for ( int i = 0; i < newSequence.length; i++ )
+		{
+			newSequence[i] = sequence[i];
+		}
+		int lastIndex = -1;
+		int count = 1;
+		for ( int i = 0; i < newSequence.length; i++ )
+		{
+			if ( newSequence[i] == -1 )
+			{
+				newSequence[i] = index;
+				lastIndex = i;
+				break;
+			}
+			count++;
+		}
+		if ( count == newSequence.length )
+		{
+			sequenceList.add(newSequence);
+			return;
+		}
+		if ( lastIndex == -1 )
+		{
+			return;
+		}
+		
+
+		
+		int minDist = 5;
+		int maxDist = 25;
+		int maxDiff = 10;
+
+		Vector3f l1 = left.elementAt(lastIndex);
+		Vector3f r1 = right.elementAt(lastIndex);
+		for ( int i = 0; i < left.size(); i++ )
+		{		
+			boolean found = false;
+			for ( int j = 0; j < newSequence.length; j++ )
+			{
+				if ( i == newSequence[j] )
+				{
+					found = true;
+					break;
+				}
+			}
+			if ( found )
+			{
+				continue;
+			}
+			Vector3f l2 = left.elementAt(i);
+			Vector3f r2 = right.elementAt(i);
+			float distL1L2 = l1.distance(l2);
+			float distR1R2 = r1.distance(r2);
+			float distL1R2 = l1.distance(r2);
+			float distR1L2 = r1.distance(l2);
+			
+			Vector3f v1 = Vector3f.sub( l1, r1 );
+			v1.normalize();
+			
+			Vector3f v2 = Vector3f.sub( l2, r2 );
+			v2.normalize();
+			
+			Vector3f v3 = Vector3f.sub( r2, l2 );
+			v3.normalize();
+			
+			float angle1 = (float) (180 * v1.angle(v2) / Math.PI);
+			float angle2 = (float) (180 * v1.angle(v3) / Math.PI);
+
+			if ( ((distL1L2 >= minDist) && (distL1L2 <= maxDist) && (distR1R2 >= minDist) && (distR1R2 <= maxDist) && (Math.abs( distL1L2 - distR1R2) <= maxDiff) && (angle1 <= 90))
+					||
+					((distL1R2 >= minDist) && (distL1R2 <= maxDist) && (distR1L2 >= minDist) && (distR1L2 <= maxDist) && (Math.abs( distL1R2 - distR1L2) <= maxDiff) && (angle2 <= 90)) )
+			{
+				addSequence( newSequence, sequenceList, i, left, right );
+			}
+		}
+	}
+	
+	private void addPair( int p1, int p2, Vector<Vector3f> positions, VOIVector lattices )
+	{
+		VOIContour left = new VOIContour( false );
+		VOIContour right = new VOIContour( false );
+		VOI lattice = new VOI((short) lattices.size(), "lattice", 1, VOI.POLYLINE );
+		Vector<Vector3f> newPositions = new Vector<Vector3f>();
+		
+		for ( int i = 0; i < positions.size(); i++ )
+		{
+			if ( i == p1 )
+			{
+				left.add( new Vector3f(positions.elementAt(i) ) );
+			}
+			else if ( i == p2 )
+			{
+				right.add( new Vector3f(positions.elementAt(i) ) );
+			}
+			else
+			{
+				newPositions.add( new Vector3f(positions.elementAt(i) ) );
+			}
+		}
+
+		lattice.getCurves().add(left);
+		lattice.getCurves().add(right);
+		
+
+		int pairMin = 5;
+		int pairMax = 15;
+		for ( int i = 0; i < newPositions.size(); i++ )
+		{
+			for ( int j = i + 1; j < newPositions.size(); j++ )
+			{
+				float distance = newPositions.elementAt(i).distance( newPositions.elementAt(j) );
+				if (  (distance >= pairMin) && (distance <= pairMax) )
+				{
+					addPair( i, j, newPositions, lattice, lattices, 1 );
+				}
+			}
+		}
+	}
+	
+
+	private void addPair( int p1, int p2, Vector<Vector3f> positions, VOI lattice, VOIVector lattices, int count )
+	{
+		VOI newLattice = new VOI(lattice);
+		VOIContour left = (VOIContour) newLattice.getCurves().elementAt(0);
+		VOIContour right = (VOIContour) newLattice.getCurves().elementAt(1);
+		Vector<Vector3f> newPositions = new Vector<Vector3f>();
+		
+		for ( int i = 0; i < positions.size(); i++ )
+		{
+			if ( i == p1 )
+			{
+				left.add( new Vector3f(positions.elementAt(i) ) );
+			}
+			else if ( i == p2 )
+			{
+				right.add( new Vector3f(positions.elementAt(i) ) );
+			}
+			else
+			{
+				newPositions.add( new Vector3f(positions.elementAt(i) ) );
+			}
+		}
+		
+		
+		if ( newPositions.size() == 0 )
+		{
+//			System.err.println( "yes lattice " + left.size() + " " + positions.size() + " " + newPositions.size() + " " + count );
+			lattices.add(newLattice);
+			return;
+		}
+		
+		if ( count >= 10 )
+		{
+//			System.err.println( "no1 lattice " + left.size() + " " + positions.size() + " " + newPositions.size() + " " + count );
+			newLattice.dispose();
+			newLattice = null;
+			newPositions = null;
+			return;
+		}
+
+		int pairMin = 5;
+		int pairMax = 15;
+		int i = 0;
+//		for ( int i = 0; i < newPositions.size(); i++ )
+//		{
+			for ( int j = i + 1; j < newPositions.size(); j++ )
+			{
+				float distance = newPositions.elementAt(i).distance( newPositions.elementAt(j) );
+				if (  (distance >= pairMin) && (distance <= pairMax) )
+				{
+					addPair( i, j, newPositions, newLattice, lattices, count + 1 );
+				}
+			}
+//		}
+//		System.err.println( "no2 lattice " + left.size() + " " + positions.size() + " " + newPositions.size() + " " + count );
+	}
 
 
 	private void flipLattices()
@@ -886,7 +1303,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			wormImageA = null;
 		}
 
-		System.err.println( "Done segmentation" );
+//		System.err.println( "Done segmentation" );
 	}
 
 
@@ -997,119 +1414,137 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 
 	private void generateAnnotationAnimation()
 	{
-		int[] extents = new int[3];
-		annotationList = new VOIVector();
-		ViewJProgressBar progress = new  ViewJProgressBar( "Generating Animation", "", 0, 100, false);
-		if ( includeRange != null )
-		{
-			progress.setVisible(true);
-			for ( int i = 0; i < includeRange.size(); i++ )
-			{
-				String fileName = baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + 
-						"output_images" + File.separator + baseFileNameText.getText() + "_" + includeRange.elementAt(i) + "_straight_register" + ".tif";
+//		int[] extents = new int[3];
+//		annotationList = new VOIVector();
+//		ViewJProgressBar progress = new  ViewJProgressBar( "Generating Animation", "", 0, 100, false);
+//		if ( includeRange != null )
+//		{
+//			progress.setVisible(true);
+//			for ( int i = 0; i < includeRange.size(); i++ )
+//			{
 //				String fileName = baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + 
-//						"output_images" + File.separator + baseFileNameText.getText() + "_" + includeRange.elementAt(i) + "_straight" + ".tif";
-//				String fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + ".tif";
-				File voiFile = new File(baseFileDir + File.separator + fileName);
-				if ( voiFile.exists() )
-				{
-					progress.updateValue((int) (100 * (float)i/(float)includeRange.size()));
-					System.err.println( fileName );
-					FileIO fileIO = new FileIO();
-					fileIO.setSuppressProgressBar(true);
-					if(wormImageA != null) {
-						if ( (i%10) == 0 )
-						{
-							wormImageA.disposeLocal(true);
-						}
-						else
-						{
-							wormImageA.disposeLocal();
-						}
-						wormImageA = null;
-					}
-					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
-					extents[0] = Math.max(extents[0], wormImageA.getExtents()[0] );
-					extents[1] = Math.max(extents[1], wormImageA.getExtents()[1] );
-					extents[2] = Math.max(extents[2], wormImageA.getExtents()[2] );
-
-					fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "straightened_annotations"; 
-//					fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotations";            	    		
-					VOIVector annotations = new VOIVector();
-					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-					loadAllVOIsFrom(voiDir, true, annotations, false);
-					if ( annotations.size() == 0 )
-					{
-						fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "straightened_annotation";   
-//						fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotation";            	    		
-						annotations = new VOIVector();
-						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-						loadAllVOIsFrom(voiDir, true, annotations, false);
-					}
-					if ( annotations.size() > 0 )
-					{
-						annotationList.add( annotations.elementAt(0) );
-					}
-				}
-			}
-			progress.setVisible(false);
-		}
-		else
-		{
-			int fileCount = 0;
-			boolean fileExists = true;
-			while ( fileExists )
-			{    	    	
-				String fileName = baseFileNameText.getText() + "_"  + fileCount + File.separator + 
-						"output_images" + File.separator + baseFileNameText.getText() + "_" + fileCount + "_straight_register" + ".tif";
-//				String fileName = baseFileNameText.getText() + "_" + fileCount + ".tif";
-				File voiFile = new File(baseFileDir + File.separator + fileName);
-				if ( voiFile.exists() )
-				{
-					System.err.println( fileName );
-					FileIO fileIO = new FileIO();
-					fileIO.setSuppressProgressBar(true);
-					if(wormImageA != null) {
-						wormImageA.disposeLocal();
-						wormImageA = null;
-					}
-					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
-					extents[0] = Math.max(extents[0], wormImageA.getExtents()[0] );
-					extents[1] = Math.max(extents[1], wormImageA.getExtents()[1] );
-					extents[2] = Math.max(extents[2], wormImageA.getExtents()[2] );
-
-					fileName = baseFileNameText.getText() + "_" + fileCount + File.separator + "straightened_annotations";          
-//					fileName = baseFileNameText.getText() + "_" + fileCount + File.separator + "annotations";            	    		
-					VOIVector annotations = new VOIVector();
-					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-					loadAllVOIsFrom(voiDir, true, annotations, false);
-					if ( annotations.size() == 0 )
-					{
-						fileName = baseFileNameText.getText() + "_" + fileCount + File.separator + "straightened_annotation";    
-//						fileName = baseFileNameText.getText() + "_" + fileCount + File.separator + "annotation";            	    		
-						annotations = new VOIVector();
-						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-						loadAllVOIsFrom(voiDir, true, annotations, false);
-					}
-					if ( annotations.size() > 0 )
-					{
-						annotationList.add( annotations.elementAt(0) );
-					}
-					fileCount++;
-				}    				
-				else
-				{
-					fileExists = false;
-				}
-			}
-		}
-		progress.dispose();
-		progress = null;
+//						"output_images" + File.separator + baseFileNameText.getText() + "_" + includeRange.elementAt(i) + "_straight_register" + ".tif";
+////				String fileName = baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + 
+////						"output_images" + File.separator + baseFileNameText.getText() + "_" + includeRange.elementAt(i) + "_straight" + ".tif";
+////				String fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + ".tif";
+//				File voiFile = new File(baseFileDir + File.separator + fileName);
+//				if ( voiFile.exists() )
+//				{
+//					progress.updateValue((int) (100 * (float)i/(float)includeRange.size()));
+//					System.err.println( fileName );
+//					FileIO fileIO = new FileIO();
+//					fileIO.setSuppressProgressBar(true);
+//					if(wormImageA != null) {
+//						if ( (i%10) == 0 )
+//						{
+//							wormImageA.disposeLocal(true);
+//						}
+//						else
+//						{
+//							wormImageA.disposeLocal();
+//						}
+//						wormImageA = null;
+//					}
+//					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
+//					extents[0] = Math.max(extents[0], wormImageA.getExtents()[0] );
+//					extents[1] = Math.max(extents[1], wormImageA.getExtents()[1] );
+//					extents[2] = Math.max(extents[2], wormImageA.getExtents()[2] );
+//
+//					fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "straightened_annotations"; 
+////					fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotations";            	    		
+//					VOIVector annotations = new VOIVector();
+//					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+//					loadAllVOIsFrom(voiDir, true, annotations, false);
+//					if ( annotations.size() == 0 )
+//					{
+//						fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "straightened_annotation";   
+////						fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotation";            	    		
+//						annotations = new VOIVector();
+//						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+//						loadAllVOIsFrom(voiDir, true, annotations, false);
+//					}
+//					if ( annotations.size() > 0 )
+//					{
+//						annotationList.add( annotations.elementAt(0) );
+//					}
+//				}
+//			}
+//			progress.setVisible(false);
+//		}
+//		else
+//		{
+//			int fileCount = 0;
+//			boolean fileExists = true;
+//			while ( fileExists )
+//			{    	    	
+//				String fileName = baseFileNameText.getText() + "_"  + fileCount + File.separator + 
+//						"output_images" + File.separator + baseFileNameText.getText() + "_" + fileCount + "_straight_register" + ".tif";
+////				String fileName = baseFileNameText.getText() + "_" + fileCount + ".tif";
+//				File voiFile = new File(baseFileDir + File.separator + fileName);
+//				if ( voiFile.exists() )
+//				{
+//					System.err.println( fileName );
+//					FileIO fileIO = new FileIO();
+//					fileIO.setSuppressProgressBar(true);
+//					if(wormImageA != null) {
+//						wormImageA.disposeLocal();
+//						wormImageA = null;
+//					}
+//					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
+//					extents[0] = Math.max(extents[0], wormImageA.getExtents()[0] );
+//					extents[1] = Math.max(extents[1], wormImageA.getExtents()[1] );
+//					extents[2] = Math.max(extents[2], wormImageA.getExtents()[2] );
+//
+//					fileName = baseFileNameText.getText() + "_" + fileCount + File.separator + "straightened_annotations";          
+////					fileName = baseFileNameText.getText() + "_" + fileCount + File.separator + "annotations";            	    		
+//					VOIVector annotations = new VOIVector();
+//					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+//					loadAllVOIsFrom(voiDir, true, annotations, false);
+//					if ( annotations.size() == 0 )
+//					{
+//						fileName = baseFileNameText.getText() + "_" + fileCount + File.separator + "straightened_annotation";    
+////						fileName = baseFileNameText.getText() + "_" + fileCount + File.separator + "annotation";            	    		
+//						annotations = new VOIVector();
+//						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+//						loadAllVOIsFrom(voiDir, true, annotations, false);
+//					}
+//					if ( annotations.size() > 0 )
+//					{
+//						annotationList.add( annotations.elementAt(0) );
+//					}
+//					fileCount++;
+//				}    				
+//				else
+//				{
+//					fileExists = false;
+//				}
+//			}
+//		}
+//		progress.dispose();
+//		progress = null;
 		
+		calcStatistics( false );
+		int[] extents = new int[3];
+        Vector3f min = new Vector3f(  Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE );
+        Vector3f max = new Vector3f( -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE );
+		
+		for ( int i = 0; i < annotationList.size(); i++ )
+		{
+			VOI annotation = annotationList.elementAt(i);
+			for ( int j = 0; j < annotation.getCurves().size(); j++ )
+			{
+				VOIText text = (VOIText)annotation.getCurves().elementAt(j);
+				min.min(text.elementAt(0));
+				max.max(text.elementAt(0));
+			}
+		}
+		extents[0] = (int)(max.X - min.X) + 1;
+		extents[1] = (int)(max.Y - min.Y) + 1;
+		extents[2] = (int)(max.Z - min.Z) + 1;
 		
 		System.err.println( "generateAnnotationAnimation " + annotationList.size() );		
 		ModelImage animationImage = new ModelImage( ModelStorageBase.BOOLEAN, extents, "animationImage" );
-		JDialogBase.updateFileInfo( wormImageA, animationImage );
+//		JDialogBase.updateFileInfo( wormImageA, animationImage );
 		String outputDirName = baseFileDir + File.separator + "animation" + File.separator;
         final File outputFileDir = new File(outputDirName);
 
@@ -2035,9 +2470,15 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 
 
 		gbc.gridx = 0;
+		buildLattice = gui.buildCheckBox("build lattice", false );
+//		panel.add(buildLattice.getParent(), gbc);
+//		gbc.gridy++;
+
+
+		gbc.gridx = 0;
 		calcStatistics = gui.buildCheckBox("calculate staticstics", false );
-		//		panel.add(calcStatistics.getParent(), gbc);
-		//		gbc.gridy++;
+//		panel.add(calcStatistics.getParent(), gbc);
+//		gbc.gridy++;
 
 		gbc.gridx = 0;
 		generateTrainingData = gui.buildCheckBox("generate training data", false );
@@ -2086,8 +2527,8 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 
 		gbc.gridx = 0;
 		flipLattices = gui.buildCheckBox("flip lattices", false );
-		//		panel.add(flipLattices.getParent(), gbc);
-		//		gbc.gridy++;
+		panel.add(flipLattices.getParent(), gbc);
+		gbc.gridy++;
 
 		getContentPane().add(panel, BorderLayout.CENTER);
 
@@ -2213,19 +2654,8 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		return true;
 	}
 
-	Vector<VOIContour> leftPositions = null;
-	Vector<VOIContour> rightPositions = null;
-	Vector<Integer> IDs = null;
-	Vector<Integer> volumes = null;
-	private void readLatticePositions( String fileName, int ID )
+	private void readLatticePositions( String fileName, int ID, Vector<VOI> annotationStats )
 	{
-		if ( leftPositions == null )
-		{
-			leftPositions = new Vector<VOIContour>();
-			rightPositions = new Vector<VOIContour>();
-			IDs = new Vector<Integer>();
-			volumes = new Vector<Integer>();
-		}
 		File file = new File(fileName);
 		if ( file.exists() )
 		{
@@ -2236,75 +2666,34 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 				BufferedReader br = new BufferedReader(fr);
 				String line = br.readLine();
 				line = br.readLine();
-				VOIContour left = new VOIContour(false);
-				VOIContour right = new VOIContour(false);
+				
+	    		VOI annotationVOI = new VOI( (short)ID, "time" + ID, VOI.ANNOTATION, 0 );
 				while ( line != null )
 				{
-					float volume;
-					Vector3f pos = new Vector3f();
-					StringTokenizer st = new StringTokenizer(line, ",");
-					if (st.hasMoreTokens()) {
-						String name = st.nextToken();
-					}
-					if (st.hasMoreTokens()) {
-						pos.X = Float.valueOf(st.nextToken());
-					}
-					if (st.hasMoreTokens()) {
-						pos.Y = Float.valueOf(st.nextToken());
-					}
-					if (st.hasMoreTokens()) {
-						pos.Z = Float.valueOf(st.nextToken());
-					}
-					if (st.hasMoreTokens()) {
-						float temp = Float.valueOf(st.nextToken());
-					}
-					if (st.hasMoreTokens()) {
-						float temp = Float.valueOf(st.nextToken());
-					}
-					if (st.hasMoreTokens()) {
-						float temp = Float.valueOf(st.nextToken());
-					}
-					if (st.hasMoreTokens()) {
-						volume = Float.valueOf(st.nextToken());
-					}
-					left.add(pos);
-
-					line = br.readLine();
-					if ( line != null )
+					String[] parsed = line.split( "," );
+					if ( parsed.length != 0 )
 					{
-						pos = new Vector3f();
-						st = new StringTokenizer(line, ",");
-						if (st.hasMoreTokens()) {
-							String name = st.nextToken();
+						String name  = (parsed.length > 0) ? (parsed[0].length() > 0) ? new String( parsed[0] ) : "" : "";
+						float x    = (parsed.length > 1) ? (parsed[1].length() > 0) ? Float.valueOf( parsed[1] ) : 0 : 0; 
+						float y    = (parsed.length > 2) ? (parsed[2].length() > 0) ? Float.valueOf( parsed[2] ) : 0 : 0; 
+						float z    = (parsed.length > 3) ? (parsed[3].length() > 0) ? Float.valueOf( parsed[3] ) : 0 : 0; 
+
+						x    = (parsed.length > 4) ? (parsed[4].length() > 0) ? Float.valueOf( parsed[4] ) : 0 : 0; 
+						y    = (parsed.length > 5) ? (parsed[5].length() > 0) ? Float.valueOf( parsed[5] ) : 0 : 0; 
+						z    = (parsed.length > 6) ? (parsed[6].length() > 0) ? Float.valueOf( parsed[6] ) : 0 : 0; 
+
+						if ( !name.equals("") )
+						{
+							VOIText text = new VOIText();
+							text.setText( name );
+							text.add( new Vector3f( x, y, z ) );
+							text.add( new Vector3f( x+1, y, z ) );
+							annotationVOI.getCurves().add(text);
 						}
-						if (st.hasMoreTokens()) {
-							pos.X = Float.valueOf(st.nextToken());
-						}
-						if (st.hasMoreTokens()) {
-							pos.Y = Float.valueOf(st.nextToken());
-						}
-						if (st.hasMoreTokens()) {
-							pos.Z = Float.valueOf(st.nextToken());
-						}
-						if (st.hasMoreTokens()) {
-							float temp = Float.valueOf(st.nextToken());
-						}
-						if (st.hasMoreTokens()) {
-							float temp = Float.valueOf(st.nextToken());
-						}
-						if (st.hasMoreTokens()) {
-							float temp = Float.valueOf(st.nextToken());
-						}
-						if (st.hasMoreTokens()) {
-							volume = Float.valueOf(st.nextToken());
-						}
-						right.add(pos);		        		
 					}
 					line = br.readLine();
 				}
-				leftPositions.add(left);
-				rightPositions.add(right);
-				IDs.add(ID);
+				annotationStats.add( annotationVOI );
 				fr.close();
 			} catch (FileNotFoundException e) {
 				// TODO Auto-generated catch block
@@ -2415,120 +2804,478 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		return null;
 	}
 
-	private void calcStatistics( String fileName )
+	private void calcStatistics( String dirName, VOIVector annotationList, String postScript, boolean generateAutomaticLatticeData )
 	{
-
-		File file = new File(fileName + ".csv");
-		if ( file.exists() )
+		String fileName = dirName + File.separator + "annotation_data" + postScript;
+		File statsFile = new File(fileName);
+		if ( !statsFile.exists() )
 		{
-			file.delete();
-			file = new File(fileName + ".csv");
+			statsFile.mkdir();
+//			System.err.println( "mkdir " + fileName );
 		}
-		FileWriter fw;
-		try {
-			fw = new FileWriter(file);
-			BufferedWriter bw = new BufferedWriter(fw);
-			bw.write( "ID" + "," + "minPair" + "," + "maxPair" + "," +  "average_pair" + "," + "minDistance" + "," + "maxDistance" + "\n" );
 
-
-			for ( int i = 0; i < Math.min( IDs.size(), Math.min(leftPositions.size(), rightPositions.size())); i++ )
+		Vector<String> annotationNames = new Vector<String>();
+		for ( int i = 0; i < annotationList.size(); i++ )
+		{
+			VOI annotation = annotationList.elementAt(i);
+			for ( int j = 0; j < annotation.getCurves().size(); j++ )
 			{
-				double averageDistance = 0;
-				int count = 0;
-				double minPair = Float.MAX_VALUE;
-				double maxPair = -Float.MAX_VALUE;
-				double minDistance = Float.MAX_VALUE;
-				double maxDistance = -Float.MAX_VALUE;
-
-				// average pair distance:
-				VOIContour left = leftPositions.elementAt(i);
-				VOIContour right = rightPositions.elementAt(i);
-
-				for ( int j = 0; j < Math.min(left.size(), right.size()); j++ )
+				VOIText text = (VOIText)annotation.getCurves().elementAt(j);
+				String name = text.getText();
+				if ( !annotationNames.contains(name) )
 				{
-					float distance = left.elementAt(j).distance(right.elementAt(j) );
-					if ( distance < minPair )
-					{
-						minPair = distance;
-					}
-					if ( distance > maxPair )
-					{
-						maxPair = distance;
-					}
-
-					averageDistance += distance;
-					count++;
+					annotationNames.add(name);
 				}
-
-				// min distances overall:
-				for ( int j = 0; j < left.size(); j++ )
-				{
-					for ( int k = j+1; k < left.size(); k++ )
-					{
-						float distance = left.elementAt(j).distance(left.elementAt(k) );
-						if ( distance < minDistance )
-						{
-							minDistance = distance;
-						}
-						if ( distance > maxDistance )
-						{
-							maxDistance = distance;
-						}
-					}
-					for ( int k = 0; k < right.size(); k++ )
-					{
-						if ( j == k ) // don't include pairs:
-							continue;
-						float distance = left.elementAt(j).distance(right.elementAt(k) );
-						if ( distance < minDistance )
-						{
-							minDistance = distance;
-						}
-						if ( distance > maxDistance )
-						{
-							maxDistance = distance;
-						}
-					}
-				}
-				for ( int j = 0; j < right.size(); j++ )
-				{
-					for ( int k = j+1; k < right.size(); k++ )
-					{
-						float distance = right.elementAt(j).distance(right.elementAt(k) );
-						if ( distance < minDistance )
-						{
-							minDistance = distance;
-						}
-						if ( distance > maxDistance )
-						{
-							maxDistance = distance;
-						}
-					}
-					for ( int k = 0; k < left.size(); k++ )
-					{
-						if ( j == k ) // don't include pairs:
-							continue;
-						float distance = right.elementAt(j).distance(left.elementAt(k) );
-						if ( distance < minDistance )
-						{
-							minDistance = distance;
-						}
-						if ( distance > maxDistance )
-						{
-							maxDistance = distance;
-						}
-					}
-				}
-				//			System.err.println( "Average pair distance = " + averageDistance / (double)count );
-				//			System.err.println( "Minimum distance overall = " + minDistance );	
-				bw.write( IDs.elementAt(i) + "," + minPair + "," + maxPair +  "," + averageDistance / (double)count + "," + minDistance + "," + maxDistance + "\n" );
 			}
-			bw.close();
+		}
+		for ( int i = 0; i < annotationNames.size(); i++ )
+		{
+			String annotationFile = fileName + File.separator + annotationNames.elementAt(i) + ".csv";
+//			System.err.println( annotationFile );
+			File file = new File(annotationFile);
+			if ( file.exists() )
+			{
+				file.delete();
+				file = new File(annotationFile);
+			}
+			FileWriter fw;
+			try {
+				fw = new FileWriter(file);
+				BufferedWriter bw = new BufferedWriter(fw);
+				
+				bw.write( "time,x-um,y-um,z-um,Distance\n");
+				
+				for ( int j = 0; j < annotationList.size(); j++ )
+				{
+					VOI annotation = annotationList.elementAt(j);
+					Vector3f origin = new Vector3f();
+					for ( int k = 0; k < annotation.getCurves().size(); k++ )
+					{
+						VOIText text = (VOIText)annotation.getCurves().elementAt(k);
+						String name = text.getText();
+						if ( annotationNames.elementAt(i).equals("origin") )
+						{
+							origin = text.elementAt(0);
+							break;
+						}
+					}
+					
+					boolean found = false;
+					for ( int k = 0; k < annotation.getCurves().size(); k++ )
+					{
+						VOIText text = (VOIText)annotation.getCurves().elementAt(k);
+						String name = text.getText();
+						if ( annotationNames.elementAt(i).equals(name) )
+						{
+							Vector3f pos = text.elementAt(0);
+							bw.write( j + "," + pos.X + "," + pos.Y + "," + pos.Z + "," + origin.distance(pos) + "\n" );
+							found = true;
+							break;
+						}
+					}
+					if ( !found )
+					{
+						bw.write( j + "\n" );						
+					}
+				}
+				
+				bw.close();
 
-		} catch (IOException e) {
+			} catch (IOException e) {
+			}
+			
+		}
+		if ( !generateAutomaticLatticeData )
+		{
+			return;
+		}
+		fileName = dirName + File.separator + "automatic_lattice_data";
+		statsFile = new File(fileName);
+		if ( !statsFile.exists() )
+		{
+			statsFile.mkdir();
+//			System.err.println( "mkdir " + fileName );
+		}
+		
+		if ( postScript.contains("after") )
+		{
+			for ( int i = 0; i < annotationNames.size(); i++ )
+			{
+				String pair = annotationNames.elementAt(i);
+				if ( pair.equals("origin" ) )
+				{
+					continue;
+				}
+				String annotationFile = fileName + File.separator + annotationNames.elementAt(i) + "_pair_distances.csv";
+				//			System.err.println( annotationFile );
+				File file = new File(annotationFile);
+				if ( file.exists() )
+				{
+					file.delete();
+					file = new File(annotationFile);
+				}
+				try {
+					FileWriter fw = new FileWriter(file);
+					BufferedWriter bw = new BufferedWriter(fw);
+
+					bw.write( "time,Distance\n");
+
+					for ( int j = 0; j < annotationList.size(); j++ )
+					{
+						VOI annotation = annotationList.elementAt(j);					
+						boolean found = false;
+						for ( int k = 0; k < annotation.getCurves().size(); k++ )
+						{
+							VOIText text = (VOIText)annotation.getCurves().elementAt(k);
+							String name = text.getText();
+							if ( pair.equals(name) )
+							{
+								Vector3f opposite = new Vector3f(text.elementAt(0));
+								String oppositePair = new String(pair);
+								if ( oppositePair.contains("L" ) )
+								{
+									oppositePair = oppositePair.replace("L", "R" );
+								}
+								else if ( oppositePair.contains("R") )
+								{
+									oppositePair = oppositePair.replace("R", "L" );
+								}
+								for ( int p = 0; p < annotation.getCurves().size(); p++ )
+								{
+									if ( p != k )
+									{
+										VOIText textP = (VOIText)annotation.getCurves().elementAt(p);
+										String nameP = textP.getText();
+										if ( nameP.equals(oppositePair) )
+										{
+											opposite.copy( textP.elementAt(0) );
+											break;
+										}
+									}
+								}
+
+								Vector3f pos = text.elementAt(0);
+								bw.write( j + "," + opposite.distance(pos) + "\n" );
+								found = true;
+								break;
+							}
+						}
+						if ( !found )
+						{
+							bw.write( j + "," + 0.0 + "\n" );
+						}
+					}
+
+					bw.close();
+
+				} catch (IOException e) {
+				}
+				
+				
+				
+
+				annotationFile = fileName + File.separator + annotationNames.elementAt(i) + "_sequence_distances.csv";
+				file = new File(annotationFile);
+				if ( file.exists() )
+				{
+					file.delete();
+					file = new File(annotationFile);
+				}
+				try {
+					FileWriter fw = new FileWriter(file);
+					BufferedWriter bw = new BufferedWriter(fw);
+
+					bw.write( "time,Distance\n");
+
+					for ( int j = 0; j < annotationList.size(); j++ )
+					{
+						VOI annotation = annotationList.elementAt(j);					
+						boolean found = false;
+						for ( int k = 0; k < annotation.getCurves().size(); k++ )
+						{
+							VOIText text = (VOIText)annotation.getCurves().elementAt(k);
+							String name = text.getText();
+							if ( pair.equals(name) )
+							{
+								Vector3f next = new Vector3f(text.elementAt(0));
+								String nextPair = new String(pair);
+								if ( nextPair.contains("L" ) )
+								{
+									nextPair = nextPair.replace("L", "" );
+									int value = Integer.valueOf(nextPair);
+									value++;
+									nextPair = new String( value + "L" );
+								}
+								else if ( nextPair.contains("R") )
+								{
+									nextPair = nextPair.replace("R", "" );
+									int value = Integer.valueOf(nextPair);
+									value++;
+									nextPair = new String( value + "R" );
+								}
+								for ( int p = 0; p < annotation.getCurves().size(); p++ )
+								{
+									if ( p != k )
+									{
+										VOIText textP = (VOIText)annotation.getCurves().elementAt(p);
+										String nameP = textP.getText();
+										if ( nameP.equals(nextPair) )
+										{
+											next.copy( textP.elementAt(0) );
+											break;
+										}
+									}
+								}
+
+								Vector3f pos = text.elementAt(0);
+								bw.write( j + "," + next.distance(pos) + "\n" );
+								found = true;
+								break;
+							}
+						}
+						if ( !found )
+						{
+							bw.write( j + "," + 0.0 + "\n" );
+						}
+					}
+
+					bw.close();
+
+				} catch (IOException e) {
+				}
+
+			}
+		}
+		
+
+		if ( postScript.contains("before") )
+		{
+			VOIVector latticeList = convertToLattice( annotationList );
+			for ( int i = 0; i < annotationNames.size(); i++ )
+			{
+				String pair = annotationNames.elementAt(i);
+				if ( pair.equals("origin" ) )
+				{
+					continue;
+				}			
+				if ( pair.contains("L" ) )
+				{
+					pair = pair.replace( "L", "" );
+				}
+				if ( pair.contains("R" ) )
+				{
+					pair = pair.replace( "R", "" );
+				}
+				int value = Integer.valueOf(pair);
+				if ( value >= 10 )
+				{
+					continue;
+				}
+				int index = value - 1;
+				
+				String annotationFile = fileName + File.separator + value + "_sequence_distances_twisted.csv";
+				File file = new File(annotationFile);
+				if ( file.exists() )
+				{
+					file.delete();
+					file = new File(annotationFile);
+				}
+				try {
+					FileWriter fw = new FileWriter(file);
+					BufferedWriter bw = new BufferedWriter(fw);
+
+					bw.write( "time,distL,distR,Difference\n");
+
+					for ( int j = 0; j < latticeList.size(); j++ )
+					{
+						VOI lattice = latticeList.elementAt(j);		
+						
+						VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
+						VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
+						if ( (index+1) >= left.size() )
+						{
+							bw.write( j + "," + 0.0 + "\n" );	
+						}
+						else
+						{
+							Vector3f leftPt = left.elementAt(index);
+							Vector3f rightPt = right.elementAt(index);
+
+							Vector3f leftP1Pt = left.elementAt(index+1);
+							Vector3f rightP1Pt = right.elementAt(index+1);
+
+							float distanceL = leftPt.distance(leftP1Pt);
+							float distanceR = rightPt.distance(rightP1Pt);
+
+							float diff = Math.abs( distanceL - distanceR );
+							bw.write( j + "," + distanceL + "," + distanceR + "," + diff + "\n" );
+						}
+					}
+
+					bw.close();
+
+				} catch (IOException e) {
+				}
+				
+				
+
+				annotationFile = fileName + File.separator + value + "_sequence_twist.csv";
+				file = new File(annotationFile);
+				if ( file.exists() )
+				{
+					file.delete();
+					file = new File(annotationFile);
+				}
+				try {
+					FileWriter fw = new FileWriter(file);
+					BufferedWriter bw = new BufferedWriter(fw);
+
+					bw.write( "time,Angle\n");
+
+					for ( int j = 0; j < latticeList.size(); j++ )
+					{
+						VOI lattice = latticeList.elementAt(j);		
+						
+						VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
+						VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
+						if ( (index+1) >= left.size() )
+						{
+							bw.write( j + "," + 0.0 + "\n" );	
+						}
+						else
+						{
+							Vector3f leftPt = left.elementAt(index);
+							Vector3f rightPt = right.elementAt(index);
+							Vector3f v1 = Vector3f.sub( rightPt, leftPt );
+							v1.normalize();
+
+							Vector3f leftP1Pt = left.elementAt(index+1);
+							Vector3f rightP1Pt = right.elementAt(index+1);
+							Vector3f v2 = Vector3f.sub( rightP1Pt, leftP1Pt );
+							v2.normalize();
+							float angle = (float) (180 * v1.angle(v2) / Math.PI);
+							
+							bw.write( j + "," + angle + "\n" );
+						}
+					}
+
+					bw.close();
+
+				} catch (IOException e) {
+				}
+				
+
+				if ( value >= 9 )
+				{
+					continue;
+				}
+				annotationFile = fileName + File.separator + value + "_sequence_bend.csv";
+				file = new File(annotationFile);
+				if ( file.exists() )
+				{
+					file.delete();
+					file = new File(annotationFile);
+				}
+				try {
+					FileWriter fw = new FileWriter(file);
+					BufferedWriter bw = new BufferedWriter(fw);
+
+					bw.write( "time,AngleL,AngleR,Difference\n");
+
+					for ( int j = 0; j < latticeList.size(); j++ )
+					{
+						VOI lattice = latticeList.elementAt(j);		
+						
+						VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
+						VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
+						if ( (index+2) >= left.size() )
+						{
+							bw.write( j + "," + 0.0 + "\n" );	
+						}
+						else
+						{
+							Vector3f leftPt = left.elementAt(index);
+							Vector3f rightPt = right.elementAt(index);
+
+							Vector3f leftP1Pt = left.elementAt(index+1);
+							Vector3f rightP1Pt = right.elementAt(index+1);
+
+							Vector3f leftP2Pt = left.elementAt(index+2);
+							Vector3f rightP2Pt = right.elementAt(index+2);
+
+							Vector3f v1L = Vector3f.sub( leftP1Pt, leftPt );
+							Vector3f v2L = Vector3f.sub( leftP2Pt, leftP1Pt );
+
+							Vector3f v1R = Vector3f.sub( rightP1Pt, rightPt );
+							Vector3f v2R = Vector3f.sub( rightP2Pt, rightP1Pt );
+							
+							v1L.normalize();
+							v2L.normalize();
+							v1R.normalize();
+							v2R.normalize();
+
+							float angleL = (float) (180 * v1L.angle(v2L) / Math.PI);
+							float angleR = (float) (180 * v1R.angle(v2R) / Math.PI);
+							
+							bw.write( j + "," + angleL + "," + angleR + "," + Math.abs(angleL - angleR) + "\n" );
+						}
+					}
+
+					bw.close();
+
+				} catch (IOException e) {
+				}
+			}
 		}
 	}
 
+	
+	private VOIVector convertToLattice( VOIVector annotationList )
+	{
+		VOIVector latticeList = new VOIVector();
+		for ( int i = 0; i < annotationList.size(); i++ )
+		{
+			VOI annotation = annotationList.elementAt(i);	
+			
+			VOIContour left = new VOIContour( false );
+			VOIContour right = new VOIContour( false );
+			VOI lattice = new VOI((short) i, "lattice", 1, VOI.POLYLINE );
+			lattice.getCurves().add(left);
+			lattice.getCurves().add(right);
+
+			
+			for ( int j = 0; j < annotation.getCurves().size(); j++ )
+			{
+				int value = j+1;
+				for ( int k = 0; k < annotation.getCurves().size(); k++ )
+				{
+					VOIText text = (VOIText)annotation.getCurves().elementAt(k);
+					String name = text.getText();
+					if ( name.equals(value+"L") )
+					{
+//						System.err.println( "adding to left " + name );
+						left.add( text.elementAt(0) );
+						break;
+					}
+				}
+				for ( int k = 0; k < annotation.getCurves().size(); k++ )
+				{
+					VOIText text = (VOIText)annotation.getCurves().elementAt(k);
+					String name = text.getText();
+					if ( name.equals(value+"R") )
+					{
+//						System.err.println( "adding to right " + name );
+						right.add( text.elementAt(0) );
+						break;
+					}
+				}
+			}
+			
+			latticeList.add(lattice);
+		}
+		
+		return latticeList;
+	}
 
 	private void saveTrainingData( VOIVector trainingData )
 	{
