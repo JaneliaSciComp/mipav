@@ -374,7 +374,6 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 			
 		}
 		volume *= Math.PI/3.0;
-		System.out.println("Volume from new way is " + volume + " um2");
 		
 	}
 	

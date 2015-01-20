@@ -116,7 +116,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				}
 			}
 
-			float convexHullVolume = PlugInAlgorithm3DSWCViewer.convexHullVolume(swcCoordinates, forward);
+			//float convexHullVolume = PlugInAlgorithm3DSWCViewer.convexHullVolume(swcCoordinates, forward, false);
 
 			calculateDistances();
 			int maxOrder;
@@ -134,7 +134,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 			if(saveData){
 				
 				try{
-					String output = exportStatsToCSV(surfaceFile, messages, branchLengths, maxOrder, convexHullVolume);
+					String output = exportStatsToCSV(surfaceFile, messages, branchLengths, maxOrder);
 					append("Exported stats to CSV -> " + output, attr);
 				} catch (IOException e) {
 					append("Could not export stats to CSV for " + surfaceFile.getName(), redText);
@@ -277,7 +277,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 	}
 
 	private String exportStatsToCSV(File file, ArrayList<String> messages, 
-			float[] branchLengths, int maxOrder, float convexHullVolume) throws IOException{
+			float[] branchLengths, int maxOrder) throws IOException{
 		String parent = file.getParent();
 		String name = file.getName();
 		name = name.substring(0, name.lastIndexOf("."));
@@ -291,7 +291,7 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 		PlugInAlgorithmSWCVolume alg = new PlugInAlgorithmSWCVolume(srcImage, swcCoordinates);
 		alg.run();
 		fw.append("Neuron volume," + alg.getVolume() + "\n");
-		fw.append("Convex hull volume," + convexHullVolume + "\n");
+		//fw.append("Convex hull volume," + convexHullVolume + "\n");
 		writeBranchInformation(fw, maxOrder);
 
 		/*String branchInfo = "";
