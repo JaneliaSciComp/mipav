@@ -310,8 +310,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			changeTypeAlgo = new AlgorithmChangeType(inputImage,
 					grayImage, grayImage.getMin(), grayImage.getMax(),
 					0.0, 1.0, image25D);
-			grayImage.disposeLocal();
-			grayImage = null;
 		} else {
 			changeTypeAlgo = new AlgorithmChangeType(inputImage,
 					srcImage, srcImage.getMin(),
@@ -320,6 +318,10 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		changeTypeAlgo.run();
 		changeTypeAlgo.finalize();
 		changeTypeAlgo = null;
+		if (grayImage != null) {
+			grayImage.disposeLocal();
+			grayImage = null;
+		}
 		fileInfo = inputImage.getFileInfo();
         fileInfo[0].setModality(srcImage.getFileInfo()[0].getModality());
         fileInfo[0].setFileDirectory(srcImage.getFileInfo()[0].getFileDirectory());
