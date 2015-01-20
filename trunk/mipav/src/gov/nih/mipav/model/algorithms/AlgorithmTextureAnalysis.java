@@ -164,9 +164,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		double textA[][];
 		double textph[][];
 		double textFx[][];
-		double textFxImag[][];
 		double textFy[][];
-		double textFyImag[][];
 		int textidx[][];
 		double texten[][];
 		double textcritDCA[][];
@@ -199,9 +197,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		double edgeA[][];
 		double edgeph[][];
 		double edgeFx[][];
-		double edgeFxImag[][];
 		double edgeFy[][];
-		double edgeFyImag[][];
 		int edgeidx[][];
 		double edgeen[][];
 		double edgecritDCA[][];
@@ -1374,8 +1370,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		double V2FxImag[][] = new double[yDim][xDim];
 		double V2Fy[][] = new double[yDim][xDim];
 		double V2FyImag[][] = new double[yDim][xDim];
-		int gaussFiltthpp[];
-		int gaussFiltAmplitudes[];
 		double Eox[][] = new double[yDim][xDim];
 		double Eoy[][] = new double[yDim][xDim];
 		double im[][];
@@ -1422,12 +1416,10 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			nc = 2;
 		}
 		if (diffType == 0) {
-			gaussFiltthpp = new int[1];
-			gaussFiltAmplitudes = new int[1];
 			T2z1dI_get_responses_freq_gabor(Fx, FxImag, Fy, FyImag,
 					Fxx, FxxImag, Fyy, FyyImag, Fxy, FxyImag, V2Fx, V2FxImag,
-					V2Fy, V2FyImag, imIn, imInImag, gaussFiltthpp,
-					gaussFiltAmplitudes, omegas, amplitudes,
+					V2Fy, V2FyImag, imIn, imInImag,
+					omegas, amplitudes,
 					filterAngle, sigmaX);
 		} // if (diffType == 0)
 		for (ch = 0; ch < nc; ch++) {
@@ -1694,8 +1686,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			double Fyy[][], double FyyImag[][], double Fxy[][],
 			double FxyImag[][], double V2Fx[][], double V2FxImag[][],
 			double V2Fy[][], double V2FyImag[][], double imIn[][],
-			double imInImag[][], int gaussFiltthpp[],
-			int gaussFiltAmplitudes[],
+			double imInImag[][],
 			double omegas[], double amplitudes[],
 			double filterAngle, double sigmaX) {
 		int sizem = imIn.length;
@@ -1766,8 +1757,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		}
 
 		dirc[0][0] = 0.0;
-		gaussFiltthpp[0] = 0;
-		gaussFiltAmplitudes[0] = 1;
 		for (y = 0; y < sizem; y++) {
 			for (x = 0; x < sizen; x++) {
 				F[y][x] = dirc[y][x] * imIn[y][x];
