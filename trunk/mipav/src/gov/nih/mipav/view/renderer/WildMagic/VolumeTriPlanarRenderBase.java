@@ -611,10 +611,6 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			// Profile.start();
 		}
 
-		updateVOIs(m_kVolumeImageA.GetImage().getVOIs());
-		Render(arg0);
-		UpdateFrameCount();
-
 		// System.err.println( "fps: " + m_dFrameRate);
 
 		if (m_bPlay4D || m_bPlay4DVOIs ) {
@@ -630,6 +626,11 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 				}
 			}
 		}
+
+		updateVOIs(m_kVolumeImageA.GetImage().getVOIs());
+		Render(arg0);
+		UpdateFrameCount();
+		
 		if (m_bSurfaceUpdate) {
 			m_bSurfaceUpdate = false;
 			for (int i = 1; i < m_kDisplayList.size(); i++) {
@@ -641,6 +642,8 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			UpdateSceneRotation();
 			updateLighting(m_akLights);
 		}
+		
+		
 		if (profile) {
 			// Profile.stop();
 			// Profile.setFileName( "volume_render_profile" );
@@ -3296,11 +3299,11 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 					m_kDisplayList.get(i).Render(m_pkRenderer, m_kCuller, true,
 							true);
 				}
+				m_pkRenderer.DisplayBackBuffer();
 				if (m_bSnapshot || m_bWriteImage) {
 					writeImage();
 					m_bWriteImage = false;
 				}
-				m_pkRenderer.DisplayBackBuffer();
 			} else {
 				if (m_kVolumeRayCast.GetDisplay()) {
 					RenderWithTransparency(true);
@@ -3317,11 +3320,11 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 				RenderSculpt();
 
 				RenderFrameRate(kDraw);
+				m_pkRenderer.DisplayBackBuffer();
 				if (m_bSnapshot || m_bWriteImage) {
 					writeImage();
 					m_bWriteImage = false;
 				}
-				m_pkRenderer.DisplayBackBuffer();
 			}
 		} else {
 			m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
@@ -3372,10 +3375,10 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 
 			m_pkRenderer.DrawDefault();
 			RenderFrameRate(kDraw);
+			m_pkRenderer.DisplayBackBuffer();
 			if (m_bSnapshot) {
 				writeImage();
 			}
-			m_pkRenderer.DisplayBackBuffer();
 
 			MoveRight();
 			m_pkRenderer.SetColorMask(true, true, true, true);
