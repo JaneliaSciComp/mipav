@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Comparator;
 import java.util.TreeMap;
@@ -70,8 +69,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	private boolean axonUseLength;
 	
 	private boolean showAxon;
-	
-	private float convexHullVolume = 0f;
 	
 	private String imageFile;
 	
@@ -171,7 +168,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	
 			disconnected = false;
 	
-			connections = makeConnections();
+			connections = makeConnections(swcCoordinates);
 	
 			for(int i=1;i<swcCoordinates.size();i++){
 				ArrayList<float[]> fil = swcCoordinates.get(i);
@@ -183,7 +180,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 			}
 			if(disconnected){
 				//Try version with tolerance
-				connections = makeConnectionsTol();
+				connections = makeConnectionsTol(swcCoordinates);
 				//Test out one more time
 				for(int i=1;i<swcCoordinates.size();i++){
 					ArrayList<float[]> fil = swcCoordinates.get(i);
@@ -457,6 +454,9 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 
 	public BitSet convexHull(){
 		
+		//Added line, should remove
+		//Point3d tipPt = null;
+		
 		ArrayList<Integer> tips = getTips();
 		
 		ArrayList<Point3d> ptList = new ArrayList<Point3d>();
@@ -467,7 +467,12 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		
 		for(int i : tips){
 			float[] pt = spacePts.get(i+1);
-			ptList.add(new Point3d(pt[0], pt[1], pt[2]));
+			Point3d pt3d = new Point3d(pt[0], pt[1], pt[2]);
+			
+			//Added this if statement too, need to remove
+			//if(i == currentAxon)
+			//	tipPt = pt3d; 
+			ptList.add(pt3d);
 		}
 		
 		Point3d[] pts = new Point3d[ptList.size()];
@@ -478,78 +483,95 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		Point3d[] verticies = hull.getVertices();
 		int[][] faceVerticies = hull.getFaces();
 		
-		/*ArrayList<Integer> toRemove = new ArrayList<Integer>();
+		/**/
 		
+		/*boolean onHull = false;
 		for(int i=0;i<verticies.length;i++){
-			Point3d vertex = verticies[i];
-			int ind = ptList.indexOf(vertex);
-			if(ind > -1)
-			toRemove.add(tips.get(ind));
-		}
-		for(int i=0;i<toRemove.size();i++){
-			tips.remove(toRemove.get(i));
+			Point3d pt = verticies[i];
+			if(pt.x == tipPt.x && pt.y == tipPt.y && pt.z == tipPt.z){
+				onHull = true;
+				break;
+			}
 		}
 		
-		int firstInd = tips.get(1);
-		ArrayList<float[]> fil = swcCoordinates.get(firstInd);
-		float[] start = fil.get(0);
-		float[] tip = fil.get(fil.size()-1);
-		
-		Vector3f headPt = new Vector3f(tip[0], tip[1], tip[2]);
-		Vector3f vecC = new Vector3f(start[0], start[1], start[2]);
-		vecC = Vector3f.sub(headPt, vecC);
-		
-		float minDist = Float.MAX_VALUE;
-		int minInd = -1;
-		
-		for(int i=0;i<faceVerticies.length;i++){
-			int[] vert = faceVerticies[i];
-			Point3d ptA = verticies[vert[0]];
-			Point3d ptB = verticies[vert[1]];
-			Point3d ptC = verticies[vert[2]];
+		if(!onHull){
 			
-			Vector3f originPt = new Vector3f((float)ptA.x, (float)ptA.y, (float)ptA.z);
-			Vector3f vecA = new Vector3f((float)ptB.x, (float)ptB.y, (float)ptB.z);
-			Vector3f vecB = new Vector3f((float)ptC.x, (float)ptC.y, (float)ptC.z);
+			ArrayList<Integer> toRemove = new ArrayList<Integer>();
 			
-			float distance = distanceVectorToPlane(originPt, vecA, vecB, vecC, headPt);
-			
-			if(distance > 0 && distance < minDist){
-				minDist = distance;
-				minInd = i;
+			for(int i=0;i<verticies.length;i++){
+				Point3d vertex = verticies[i];
+				int ind = ptList.indexOf(vertex);
+				if(ind > -1)
+				toRemove.add(tips.get(ind));
+			}
+			for(int i=0;i<toRemove.size();i++){
+				tips.remove(toRemove.get(i));
 			}
 			
-		}
-		
-		System.out.println(firstInd);
-		System.out.println(minDist);
-		
-		int i = minInd;
-		
-		for(int j=0;j<faceVerticies[i].length;j++){
+			ArrayList<float[]> fil = swcCoordinates.get(currentAxon);
+			int connection = (int)fil.get(0)[4];
+	
+			float[] start = spacePts.get(connection+1);
+			float[] tip = spacePts.get(currentAxon+1);
 			
-			int j1 = j+1;
-			if(j1==faceVerticies[i].length)
-				j1 = 0;
-			int ind1 = faceVerticies[i][j];
-			int ind2 = faceVerticies[i][j1];
-			Point3d pt03d = verticies[ind1];
-			Point3d pt13d = verticies[ind2];
+			Vector3f headPt = new Vector3f(tip[0], tip[1], tip[2]);
+			Vector3f vecC = new Vector3f(start[0], start[1], start[2]);
+			vecC = Vector3f.sub(headPt, vecC);
 			
-			Point pt0 = new Point((int)pt03d.x, (int)pt03d.y);
-			Point pt1 = new Point((int)pt13d.x, (int)pt13d.y);
+			float minDist = Float.MAX_VALUE;
+			int minInd = -1;
 			
-			ArrayList<Point> line = bresenham(pt0, pt1);
-
-			for(int k=0;k<line.size();k++){
-				Point pt = line.get(k);
-				if(pt.x > 0 && pt.x < 512 &&
-						pt.y > 0 && pt.y < 512)
-					hullMask.set(pt.x + pt.y*512);
+			for(int i=0;i<faceVerticies.length;i++){
+				int[] vert = faceVerticies[i];
+				Point3d ptA = verticies[vert[0]];
+				Point3d ptB = verticies[vert[1]];
+				Point3d ptC = verticies[vert[2]];
+				
+				Vector3f originPt = new Vector3f((float)ptA.x, (float)ptA.y, (float)ptA.z);
+				Vector3f vecA = new Vector3f((float)ptB.x, (float)ptB.y, (float)ptB.z);
+				Vector3f vecB = new Vector3f((float)ptC.x, (float)ptC.y, (float)ptC.z);
+				
+				float distance = distanceVectorToPlane(originPt, vecA, vecB, vecC, headPt);
+				
+				if(distance > 0 && distance < minDist){
+					minDist = distance;
+					minInd = i;
+				}
+				
 			}
 			
-			//System.out.print(faceVerticies[i][j] + " ");
-		}*/
+			//System.out.println(firstInd);
+			//System.out.println(minDist);
+			
+			int i = minInd;
+			
+			for(int j=0;j<faceVerticies[i].length;j++){
+				
+				int j1 = j+1;
+				if(j1==faceVerticies[i].length)
+					j1 = 0;
+				int ind1 = faceVerticies[i][j];
+				int ind2 = faceVerticies[i][j1];
+				Point3d pt03d = verticies[ind1];
+				Point3d pt13d = verticies[ind2];
+				
+				Point pt0 = new Point((int)pt03d.x, (int)pt03d.y);
+				Point pt1 = new Point((int)pt13d.x, (int)pt13d.y);
+				
+				ArrayList<Point> line = bresenham(pt0, pt1);
+	
+				for(int k=0;k<line.size();k++){
+					Point pt = line.get(k);
+					if(pt.x > 0 && pt.x < 512 &&
+							pt.y > 0 && pt.y < 512)
+						hullMask.set(pt.x + pt.y*512);
+				}
+			}
+		}
+		
+		hullMask.or(highlightAxon(currentAxon));
+		*/
+		/**/
 		
 		for(int i=0;i<faceVerticies.length;i++){
 			for(int j=0;j<faceVerticies[i].length;j++){
@@ -573,84 +595,11 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 							pt.y > 0 && pt.y < 512)
 						hullMask.set(pt.x + pt.y*512);
 				}
-				
-				//System.out.print(faceVerticies[i][j] + " ");
 			}
-			//System.out.println();
 		}
-		
-		System.out.println(convexHullVolume(swcCoordinates, connections) + " is volume");
 		
 		return hullMask;
 		
-	}
-	
-	public static float convexHullVolume(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<ArrayList<Integer>> connections){
-		ArrayList<Integer> tips = new ArrayList<Integer>();
-		for(int i=0;i<connections.size();i++){
-			ArrayList<Integer> branches = connections.get(i);
-			if(branches.size()==0){
-				tips.add(i);
-			}
-		}
-		
-		ArrayList<Point3d> ptList = new ArrayList<Point3d>();
-
-		float volume = 0;
-		
-		float[] origin = swcCoordinates.get(0).get(0);
-		ptList.add(new Point3d(origin[0], origin[1], origin[2]));
-		
-		for(int i : tips){
-			ArrayList<float[]> fil = swcCoordinates.get(i);
-			float[] pt = fil.get(fil.size()-1);
-			ptList.add(new Point3d(pt[0], pt[1], pt[2]));
-		}
-		
-		Point3d[] pts = new Point3d[ptList.size()];
-		ptList.toArray(pts);
-		
-		QuickHull3D hull = new QuickHull3D(pts);
-		
-		Point3d centroid = new Point3d();
-		
-		for(int i=0;i<pts.length;i++){
-			Point3d pt = pts[i];
-			centroid.add(pt);
-		}
-		
-		double num = pts.length;
-		centroid.x /= num;
-		centroid.y /= num;
-		centroid.z /= num;
-		
-		Point3d[] verticies = hull.getVertices();
-		int[][] faceVerticies = hull.getFaces();
-		
-		for(int i=0;i<faceVerticies.length;i++){
-			
-			Point3d ptA = new Point3d(verticies[faceVerticies[i][0]]);
-			Point3d ptB = new Point3d(verticies[faceVerticies[i][1]]);
-			Point3d ptC = new Point3d(verticies[faceVerticies[i][2]]);
-			Point3d ptCentroid = new Point3d(centroid);
-			//Point3d ptCentroid = new Point3d(boxVec.X, boxVec.Y, boxVec.Z);
-			
-			ptB.sub(ptA);
-			ptC.sub(ptA);
-			ptCentroid.sub(ptA);
-			
-			Vector3f vecA = new Vector3f((float)ptB.x, (float)ptB.y, (float)ptB.z);
-			Vector3f vecB = new Vector3f((float)ptC.x, (float)ptC.y, (float)ptC.z);
-			Vector3f vecC = new Vector3f((float)ptCentroid.x, (float)ptCentroid.y, (float)ptCentroid.z);
-			Vector3f axb = Vector3f.cross(vecA, vecB);
-			
-			volume += Math.abs(axb.dot(vecC));
-			//System.out.println(Math.abs(axb.dot(vecC)));
-		}
-		
-		volume /= 6.0f;
-		
-		return volume;
 	}
 	
 	public void setUseLength(boolean useLength){
@@ -685,26 +634,24 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 			}
 		}
 		
-		
-		
 		final PlugInAlgorithm3DSWCViewer alg = this;
 		
 		Thread writeThread = new Thread(){
 			public void run(){
 				try{
 					viewerOpen = false;
-					convexHullVolume = convexHullVolume(swcCoordinates, connections);
+					//convexHullVolume = convexHullVolume(swcCoordinates, connections, false);
 					
 					int maxOrder;
 					int branch;
 					
 					if(showViewer){
 						branch = currentAxon;
-						calculateDistances();
+						calculateDistances(swcCoordinates);
 						if(axonUseLength){
-							maxOrder = determineOrder_useLength(currentAxon);
+							maxOrder = determineOrder_useLength(swcCoordinates, connections, currentAxon);
 						}else{
-							maxOrder = determineOrder(currentAxon);
+							maxOrder = determineOrder(swcCoordinates, connections, currentAxon);
 						}
 					}else{
 						maxOrder = 0;
@@ -725,8 +672,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 					}
 					
 					if(branchDensity){
-						consolidateFilaments(maxOrder);
-						recalculateDistances();
+						consolidateFilaments(swcCoordinates, connections, maxOrder);
+						recalculateDistances(swcCoordinates, connections);
 						ArrayList<float[]> stats = branchDensity();
 						
 						//write stats out
@@ -824,26 +771,26 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 							return;
 						}
 
-						/*int[] axonIndex = new int[1];
-					ArrayList<ArrayList<float[]>> growthCone = filterGrowthCone(splitLoc, filIndex, axonIndex);
-					ArrayList<ArrayList<Integer>> gcConnections;
-					if(disconnected){
-						gcConnections = makeConnectionsTol(growthCone);
-					}else{
-						gcConnections = makeConnections(growthCone);
-					}
+						int[] axonIndex = new int[1];
+						ArrayList<ArrayList<float[]>> growthCone = filterGrowthCone(splitLoc, filIndex, axonIndex);
+						ArrayList<ArrayList<Integer>> gcConnections;
+						if(disconnected){
+							gcConnections = makeConnectionsTol(growthCone);
+						}else{
+							gcConnections = makeConnections(growthCone);
+						}
+	
+						calculateDistances(growthCone);
+						int gcOrder;
+						if(axonUseLength){
+							gcOrder = determineOrder_useLength(growthCone, gcConnections, axonIndex[0]);
+						}else{
+							gcOrder = determineOrder(growthCone, gcConnections, axonIndex[0]);
+						}
 
-					calculateDistances(growthCone);
-					int gcOrder;
-					if(axonUseLength){
-						gcOrder = determineOrder_useLength(growthCone, gcConnections, axonIndex[0]);
-					}else{
-						gcOrder = determineOrder(growthCone, gcConnections, axonIndex[0]);
-					}*/
-
-						ArrayList<String> messages = consolidateFilaments(maxOrder);
-						float[] branchLengths = recalculateDistances();
-						addToMessages(messages);
+						ArrayList<String> messages = consolidateFilaments(swcCoordinates, connections, maxOrder);
+						float[] branchLengths = recalculateDistances(swcCoordinates, connections);
+						addToMessages(swcCoordinates, messages);
 						
 						ArrayList<float[]> axon = swcCoordinates.get(0);
 						for(int i=0;i<axon.size();i++){
@@ -855,28 +802,28 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 
 						try{
 							append("Calculating volumes", blackText);
-							String output = exportStatsToCSV(swcFile, messages, branchLengths, maxOrder, splitLoc);
+							String output = exportStatsToCSV(swcCoordinates, connections, swcFile, messages, branchLengths, maxOrder, splitLoc);
 							append("Exported stats to CSV -> " + output, blackText);
 						} catch (IOException e) {
 							append("Could not export stats to CSV for " + swcFile.getName(), redText);
 						}
 
-						/*ArrayList<String> gcMessages = consolidateFilaments(growthCone, gcConnections, gcOrder);
-					float[] gcLengths = recalculateDistances(growthCone);
-					addToMessages(growthCone, gcMessages);
-
-					try{
-						append("Calculating volumes", blackText);
-						String parent = swcFile.getParent();
-						String name = swcFile.getName();
-						String sub = name.substring(0, name.lastIndexOf("."));
-						String ext = name.substring(name.lastIndexOf("."));
-						File inFile = new File(parent + File.separator + sub + "_gc" + ext);
-						String output = exportStatsToCSV(inFile, gcMessages, gcLengths, gcOrder, splitLoc);
-						append("Exported stats to CSV -> " + output, blackText);
-					} catch (IOException e) {
-						append("Could not export stats to CSV for " + swcFile.getName(), redText);
-					}*/
+						ArrayList<String> gcMessages = consolidateFilaments(growthCone, gcConnections, gcOrder);
+						float[] gcLengths = recalculateDistances(growthCone, gcConnections);
+						addToMessages(growthCone, gcMessages);
+	
+						try{
+							append("Calculating volumes", blackText);
+							String parent = swcFile.getParent();
+							String name = swcFile.getName();
+							String sub = name.substring(0, name.lastIndexOf("."));
+							String ext = name.substring(name.lastIndexOf("."));
+							File inFile = new File(parent + File.separator + sub + "_gc" + ext);
+							String output = exportStatsToCSV(growthCone, gcConnections, inFile, gcMessages, gcLengths, gcOrder, null);
+							append("Exported stats to CSV -> " + output, blackText);
+						} catch (IOException e) {
+							append("Could not export stats to CSV for " + swcFile.getName(), redText);
+						}
 
 
 						try {
@@ -914,6 +861,91 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	}
 	
 	
+	/**
+	 * Convex hull volume for non-consolidated filaments
+	 * 
+	 * @param swcCoordinates
+	 * @param connections
+	 * @return
+	 */
+	private float convexHullVolume(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<ArrayList<Integer>> connections, boolean consolidated){
+		
+		ArrayList<Point3d> ptList = new ArrayList<Point3d>();
+		
+		float[] origin = swcCoordinates.get(0).get(0);
+		ptList.add(new Point3d(origin[0], origin[1], origin[2]));
+		
+		if(consolidated){
+			for(int i=0;i<swcCoordinates.size();i++){
+				ArrayList<float[]> fil = swcCoordinates.get(i);
+				float[] pt = fil.get(fil.size()-1);
+				ptList.add(new Point3d(pt[0], pt[1], pt[2]));
+			}
+		}else{
+			//This portion is for non-consolidated only
+			ArrayList<Integer> tips = new ArrayList<Integer>();
+			for(int i=0;i<connections.size();i++){
+				ArrayList<Integer> branches = connections.get(i);
+				if(branches.size()==0){
+					tips.add(i);
+				}
+			}
+			
+			for(int i : tips){
+				ArrayList<float[]> fil = swcCoordinates.get(i);
+				float[] pt = fil.get(fil.size()-1);
+				ptList.add(new Point3d(pt[0], pt[1], pt[2]));
+			}
+		}
+		
+		float volume = 0;
+		
+		Point3d[] pts = new Point3d[ptList.size()];
+		ptList.toArray(pts);
+		
+		QuickHull3D hull = new QuickHull3D(pts);
+		
+		Point3d centroid = new Point3d();
+		
+		for(int i=0;i<pts.length;i++){
+			Point3d pt = pts[i];
+			centroid.add(pt);
+		}
+		
+		double num = pts.length;
+		centroid.x /= num;
+		centroid.y /= num;
+		centroid.z /= num;
+		
+		Point3d[] verticies = hull.getVertices();
+		int[][] faceVerticies = hull.getFaces();
+		
+		for(int i=0;i<faceVerticies.length;i++){
+			
+			Point3d ptA = new Point3d(verticies[faceVerticies[i][0]]);
+			Point3d ptB = new Point3d(verticies[faceVerticies[i][1]]);
+			Point3d ptC = new Point3d(verticies[faceVerticies[i][2]]);
+			Point3d ptCentroid = new Point3d(centroid);
+			//Point3d ptCentroid = new Point3d(boxVec.X, boxVec.Y, boxVec.Z);
+			
+			ptB.sub(ptA);
+			ptC.sub(ptA);
+			ptCentroid.sub(ptA);
+			
+			Vector3f vecA = new Vector3f((float)ptB.x, (float)ptB.y, (float)ptB.z);
+			Vector3f vecB = new Vector3f((float)ptC.x, (float)ptC.y, (float)ptC.z);
+			Vector3f vecC = new Vector3f((float)ptCentroid.x, (float)ptCentroid.y, (float)ptCentroid.z);
+			Vector3f axb = Vector3f.cross(vecA, vecB);
+			
+			volume += Math.abs(axb.dot(vecC));
+			//System.out.println(Math.abs(axb.dot(vecC)));
+		}
+		
+		volume /= 6.0f;
+		
+		return volume;
+	}
+
 	private ArrayList<float[]> branchDensity(){
 		//Would be based on the consolidated branches, so comes after that method
 		//Could reuse the messages to figure out where the branches fall
@@ -1088,11 +1120,11 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		currentAxon = getTips().get(0);
 		
 		if(!showViewer){
-			calculateDistances();
+			calculateDistances(swcCoordinates);
 			if(axonUseLength){
-				determineOrder_useLength(currentAxon);
+				determineOrder_useLength(swcCoordinates, connections, currentAxon);
 			}else{
-				determineOrder(currentAxon);
+				determineOrder(swcCoordinates, connections, currentAxon);
 			}
 			
 			/*String parent = swcFile.getParent();
@@ -1144,6 +1176,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		
 	}
 	
+	//Code right now is in the convexHull() method
 	private float distanceVectorToPlane(Vector3f originPt, Vector3f vecA, Vector3f vecB, Vector3f vecC, Vector3f headPt){
 		
 		Vector3f a = Vector3f.sub(vecA, originPt);
@@ -1175,7 +1208,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	 * axon/parent to the output messages. 
 	 * @param messages
 	 */
-	private void addToMessages(ArrayList<String> messages){
+	private void addToMessages(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<String> messages){
 		for(int i=0;i<messages.size();i++){
 			String message = messages.get(i);
 			ArrayList<float[]> fil = swcCoordinates.get(i);
@@ -1257,7 +1290,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	 * read from the Imaris trace. These will be used
 	 * to determine the axon filaments. 
 	 */
-	private void calculateDistances(){
+	private void calculateDistances(ArrayList<ArrayList<float[]>> swcCoordinates){
 		if(disconnected){//Distance at head of filament is not 0
 			for(int i=0;i<swcCoordinates.size();i++){
 				ArrayList<float[]> fil = swcCoordinates.get(i);
@@ -1316,7 +1349,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	 * @param maxOrder
 	 * @return
 	 */
-	private ArrayList<String> consolidateFilaments(int maxOrder){
+	private ArrayList<String> consolidateFilaments(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<ArrayList<Integer>> connections, int maxOrder){
 		
 		int offset;
 		if(disconnected){
@@ -1462,7 +1495,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 			}
 		}
 		
-		swcCoordinates = newFilaments;
+		swcCoordinates.clear();
+		swcCoordinates.addAll(newFilaments);
 		
 		return messages;
 	}
@@ -1476,7 +1510,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	 * in forward connections, the lower number is the one that goes
 	 * towards the axon and others are child branches. 
 	*/
-	private int determineOrder(int branch){
+	private int determineOrder(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<ArrayList<Integer>> connections, int branch){
 		
 		if(showViewer)
 			rearrangeBranches(branch);
@@ -1548,7 +1582,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	 * @param connections
 	 */
 	
-	private int determineOrder_useLength(int branch){
+	private int determineOrder_useLength(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<ArrayList<Integer>> connections, int branch){
 		
 		ArrayDeque<Integer> queue = new ArrayDeque<Integer>();
 		
@@ -1711,7 +1745,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		
 	}
 
-	private String exportStatsToCSV(File file, ArrayList<String> messages, float[] branchLengths, int maxOrder, float[] splitLoc) throws IOException{
+	private String exportStatsToCSV(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<ArrayList<Integer>> connections,
+			File file, ArrayList<String> messages, float[] branchLengths, int maxOrder, float[] splitLoc) throws IOException{
 		String parent = file.getParent();
 		String name = file.getName();
 		name = name.substring(0, name.lastIndexOf("."));
@@ -1724,7 +1759,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		
 		//Write the new branch info here
 		
-		writeBranchInformation(fw, maxOrder);
+		writeBranchInformation(swcCoordinates, connections, fw, maxOrder);
 		
 		if(splitLoc != null){
 			float dist = splitLoc[3];
@@ -1814,7 +1849,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	 * Nish Pandya. 
 	 * @return
 	 */
-	private ArrayList<ArrayList<Integer>> makeConnections(){
+	private ArrayList<ArrayList<Integer>> makeConnections(ArrayList<ArrayList<float[]>> swcCoordinates){
 		
 		//Forward connections
 		ArrayList<ArrayList<Integer>> connections = new ArrayList<ArrayList<Integer>>();
@@ -1851,7 +1886,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	 * to be connected a little more loosely.
 	 * @return
 	 */
-	private ArrayList<ArrayList<Integer>> makeConnectionsTol(){
+	private ArrayList<ArrayList<Integer>> makeConnectionsTol(ArrayList<ArrayList<float[]>> swcCoordinates){
 		
 		float tolerance = 0.15F;
 		
@@ -2041,7 +2076,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	 * distance along the axon/parent this branch
 	 * originates from. 
 	 */
-	private float[] recalculateDistances(){
+	private float[] recalculateDistances(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<ArrayList<Integer>> connections){
 		//0 => Total branch length, 1=> Higher order branch length
 		float[] branchLengths = new float[2];
 		
@@ -2149,7 +2184,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		
 	}
 	
-	private void writeBranchInformation(FileWriter fw, int maxOrder) throws IOException{
+	private void writeBranchInformation(ArrayList<ArrayList<float[]>> swcCoordinates,
+			ArrayList<ArrayList<Integer>> connections, FileWriter fw, int maxOrder) throws IOException{
 		
 		float[] lengths = new float[maxOrder];
 		for(int i=0;i<lengths.length;i++){
@@ -2176,6 +2212,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		alg.run();
 		fw.append("\nVolumes\n");
 		fw.append("Neuron volume," + alg.getVolume() + "\n");
+		
+		float convexHullVolume = convexHullVolume(swcCoordinates, connections, true);
 		
 		fw.append("Convex hull volume," + convexHullVolume + "\n\n");
 		fw.append("Branch lengths\n");
