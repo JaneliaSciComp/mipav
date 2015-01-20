@@ -920,20 +920,87 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			{
 				continue;
 			}
+			System.err.println( positions.size() + " " + text.getText() );
 			positions.add( new Vector3f( text.elementAt(0) ) );
 		}
 		
 		// pair distance > 50 time step for 1-9 is in the range of 5-15 um
 		// pair distance > 50 time step for 10 is in the range of 1-5 um
-		
+
+		VOIContour leftTarget = new VOIContour(false);
+		VOIContour rightTarget = new VOIContour(false);
+		VOI target = new VOI((short) 0, "lattice", 1, VOI.POLYLINE );
+		target.getCurves().add(leftTarget);
+		target.getCurves().add(rightTarget);
+		for ( int i = 10; i > 0; i-- )
+		{
+			for ( int j = 0; j < annotations.getCurves().size(); j++ )
+			{
+				VOIText text = (VOIText) annotations.getCurves().elementAt(j);
+				if ( text.getText().contains(i + "L") )
+				{
+					leftTarget.add(text.elementAt(0) );
+//					System.err.println( "Adding to left " + text.getText() );
+					break;
+				}					
+			}
+			for ( int j = 0; j < annotations.getCurves().size(); j++ )
+			{
+				VOIText text = (VOIText) annotations.getCurves().elementAt(j);			
+				if ( text.getText().contains(i + "R") )
+				{
+					rightTarget.add(text.elementAt(0) );
+//					System.err.println( "Adding to right " + text.getText() );
+					break;
+				}				
+			}
+		}
+		for ( int i = 0; i < leftTarget.size(); i++ )
+		{
+			System.err.println( leftTarget.elementAt(i).distance(rightTarget.elementAt(i) ) );
+		}
+		for ( int i = 0; i < leftTarget.size(); i++ )
+		{
+			if ( i < leftTarget.size() - 1 )
+			{
+				System.err.println( leftTarget.elementAt(i).distance(leftTarget.elementAt(i+1)) + " " + rightTarget.elementAt(i).distance(rightTarget.elementAt(i+1)) );
+			}
+		}
+		for ( int i = 0; i < leftTarget.size(); i++ )
+		{
+			if ( i < leftTarget.size() - 1 )
+			{
+				Vector3f v1 = Vector3f.sub(  rightTarget.elementAt(i),  leftTarget.elementAt(i) );
+				Vector3f v2 = Vector3f.sub(  rightTarget.elementAt(i+1),  leftTarget.elementAt(i+1) );
+				v1.normalize();
+				v2.normalize();
+				float angle = (float) (180 * v1.angle(v2) / Math.PI);
+				System.err.println( angle );
+			}
+		}
+		for ( int i = 0; i < leftTarget.size(); i++ )
+		{
+			if ( i < leftTarget.size() - 2 )
+			{
+				Vector3f vL1 = Vector3f.sub(  leftTarget.elementAt(i+1),  leftTarget.elementAt(i) );
+				Vector3f vL2 = Vector3f.sub(  leftTarget.elementAt(i+2),  leftTarget.elementAt(i+1) );
+				Vector3f vR1 = Vector3f.sub(  rightTarget.elementAt(i+1), rightTarget.elementAt(i) );
+				Vector3f vR2 = Vector3f.sub(  rightTarget.elementAt(i+2), rightTarget.elementAt(i+1) );
+				vL1.normalize();
+				vL2.normalize();
+				vR1.normalize();
+				vR2.normalize();
+				float angleL = (float) (180 * vL1.angle(vL2) / Math.PI);
+				float angleR = (float) (180 * vR1.angle(vR2) / Math.PI);
+				System.err.println( angleL + "  " + angleR );
+			}
+		}
 		
 		VOIVector lattices = new VOIVector();
 		
-		float tenMin = 1;
-		float tenMax = 5;
 		// look for potential 10 pair:
 		int count = 0;
-		while ( (count == 0) && (tenMin > 0.5) )
+		while ( (count == 0) && (tenMinDist > 0.5) )
 		{
 			count = 0;
 			for ( int i = 0; i < positions.size(); i++ )
@@ -941,9 +1008,9 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 				for ( int j = i + 1; j < positions.size(); j++ )
 				{
 					float distance = positions.elementAt(i).distance( positions.elementAt(j) );
-					if (  (distance >= tenMin) && (distance <= tenMax) )
+					if (  (distance > tenMinDist) && (distance < tenMaxDist) )
 					{
-//											System.err.println( time + " " + i + " " + j + " " + distance );
+						System.err.println( time + " " + i + " " + j + " " + distance );
 						
 						addPair( i, j, positions, lattices );
 						count++;
@@ -952,14 +1019,59 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			}
 			if ( count == 0 )
 			{
-				tenMin -= 0.1;
-				tenMax += 0.1;
+				tenMinDist -= 0.1;
+				tenMaxDist += 0.1;
 			}
 		}
 		System.err.println( time + " " + lattices.size() );
 		
-		checkPairs( lattices );
+		System.err.println( "target " + !checkLattice( target, lattices ) );
+
+		VOIVector allLattices = checkPairs( lattices );
+//		lattices.add(target);
+//		VOIVector allLattices = checkPairs( lattices );
 		System.err.println( time + " " + lattices.size() );
+		
+		
+		
+		
+		for ( int i = 0; i < allLattices.size(); i++ )
+		{
+			VOI lattice = allLattices.elementAt(i);
+			VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
+			VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
+			
+			boolean matches = (left.size() == leftTarget.size());
+			if ( left.size() == leftTarget.size() )
+			{
+				for ( int j = 0; j < left.size(); j++ )
+				{
+					if ( !left.elementAt(j).equals( leftTarget.elementAt(j)) || !right.elementAt(j).equals( rightTarget.elementAt(j)) )
+					{
+						matches = false;
+					}
+				}
+			}
+			if ( matches )
+			{
+				System.err.println( "Found target " + i );
+			}
+			matches = (left.size() == leftTarget.size());
+			if ( left.size() == leftTarget.size() )
+			{
+				for ( int j = 0; j < left.size(); j++ )
+				{
+					if ( !left.elementAt(j).equals( rightTarget.elementAt(j)) || !right.elementAt(j).equals( leftTarget.elementAt(j)) )
+					{
+						matches = false;
+					}
+				}
+			}
+			if ( matches )
+			{
+				System.err.println( "Found target " + i );
+			}
+		}
 		
 		
 //		System.err.println( time + " 10 pair " + count );
@@ -983,8 +1095,9 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 //		System.err.println( "" );
 	}
 	
-	private void checkPairs( VOIVector lattices )
+	private VOIVector checkPairs( VOIVector lattices )
 	{
+		VOIVector allLattices = new VOIVector();
 		int count = 0;
 		for ( int i = lattices.size() - 1; i >= 0; i-- )
 		{
@@ -1000,11 +1113,14 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			else
 			{
 //				addLattices( lattices.elementAt(i), sequenceList );
+				untwistLattice( lattices.elementAt(i) );
+				addAllSequences( allLattices, lattices.elementAt(i), sequenceList );
 				count += sequenceList.size();
-				System.err.println( i + " " + count );
+//				System.err.println( i + " " + count );
 			}
 		}
-		System.err.println( count );
+		System.err.println( count + " " + allLattices.size() );
+		return allLattices;
 	}
 	
 	private Vector<int[]> checkPairs( VOI lattice )
@@ -1012,8 +1128,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
 		VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
 		
-		float tenMin = 1;
-		float tenMax = 5;
 		int tenIndex = -1;
 		for ( int i = 0; i < left.size(); i++ )
 		{
@@ -1021,7 +1135,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			Vector3f r1 = right.elementAt(i);
 			
 			float distance = l1.distance(r1);
-			if (  (distance >= tenMin) && (distance <= tenMax) )
+			if (  (distance > tenMinDist) && (distance < tenMaxDist) )
 			{
 				tenIndex = i;
 //				System.err.println( tenIndex + " " + distance );
@@ -1041,11 +1155,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		}
 		sequence[0] = tenIndex;
 		
-		
-		int minDist = 5;
-		int maxDist = 25;
-		int maxDiff = 10;
-
 		Vector3f l1 = left.elementAt(tenIndex);
 		Vector3f r1 = right.elementAt(tenIndex);
 		for ( int i = 0; i < left.size(); i++ )
@@ -1073,9 +1182,9 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			float angle1 = (float) (180 * v1.angle(v2) / Math.PI);
 			float angle2 = (float) (180 * v1.angle(v3) / Math.PI);
 
-			if ( ((distL1L2 >= minDist) && (distL1L2 <= maxDist) && (distR1R2 >= minDist) && (distR1R2 <= maxDist) && (Math.abs( distL1L2 - distR1R2) <= maxDiff) && (angle1 <= 90))
+			if ( ((distL1L2 >= minSequenceDist) && (distL1L2 <= maxSequenceDist) && (distR1R2 >= minSequenceDist) && (distR1R2 <= maxSequenceDist) && (Math.abs( distL1L2 - distR1R2) <= sequenceDistDiff) && (angle1 <= sequenceTwist1))
 					||
-					((distL1R2 >= minDist) && (distL1R2 <= maxDist) && (distR1L2 >= minDist) && (distR1L2 <= maxDist) && (Math.abs( distL1R2 - distR1L2) <= maxDiff) && (angle2 <= 90)) )
+					((distL1R2 >= minSequenceDist) && (distL1R2 <= maxSequenceDist) && (distR1L2 >= minSequenceDist) && (distR1L2 <= maxSequenceDist) && (Math.abs( distL1R2 - distR1L2) <= sequenceDistDiff) && (angle2 <= sequenceTwist1)) )
 			{
 				addSequence( sequence, sequenceList, i, left, right );
 			}
@@ -1083,6 +1192,47 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		return sequenceList;
 	}
 	
+	
+	private boolean equalSequence( int[] sequence1, int[] sequence2 )
+	{
+		if ( sequence1.length != sequence2.length )
+		{
+			return false;
+		}
+		for ( int i = 0; i < sequence1.length; i++ )
+		{
+			if ( sequence1[i] != sequence2[i] )
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	private boolean checkSequence(int[] sequence, Vector<int[]> sequenceList)
+	{		
+		for ( int i = 0; i < sequenceList.size(); i++ )
+		{
+			int[] testSequence = sequenceList.elementAt(i);
+			if ( equalSequence(sequence, testSequence) )
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	
+	private int minSequenceDist = 4;
+	private int maxSequenceDist = 20;
+	private int sequenceDistDiff = 10;
+	private int minPairDist = 5;
+	private int maxPairDist = 15;
+	private int tenMinDist = 1;
+	private int tenMaxDist = 5;
+	private int sequenceTwist1 = 70;
+	private int sequenceTwist2 = 100;
+	private int sequenceBendMax = 170;
 	private void addSequence( int[] sequence, Vector<int[]> sequenceList, int index, VOIContour left, VOIContour right )
 	{
 		int[] newSequence = new int[10];
@@ -1104,7 +1254,13 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		}
 		if ( count == newSequence.length )
 		{
-			sequenceList.add(newSequence);
+			if ( checkBend( newSequence, left, right ) )
+			{
+				if ( checkSequence(newSequence, sequenceList) )
+				{
+					sequenceList.add(newSequence);
+				}
+			}
 			return;
 		}
 		if ( lastIndex == -1 )
@@ -1112,12 +1268,12 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			return;
 		}
 		
-
+		int twistMax = sequenceTwist1;
+		if ( lastIndex > 6 )
+		{
+			twistMax = sequenceTwist2;
+		}
 		
-		int minDist = 5;
-		int maxDist = 25;
-		int maxDiff = 10;
-
 		Vector3f l1 = left.elementAt(lastIndex);
 		Vector3f r1 = right.elementAt(lastIndex);
 		for ( int i = 0; i < left.size(); i++ )
@@ -1154,13 +1310,114 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			float angle1 = (float) (180 * v1.angle(v2) / Math.PI);
 			float angle2 = (float) (180 * v1.angle(v3) / Math.PI);
 
-			if ( ((distL1L2 >= minDist) && (distL1L2 <= maxDist) && (distR1R2 >= minDist) && (distR1R2 <= maxDist) && (Math.abs( distL1L2 - distR1R2) <= maxDiff) && (angle1 <= 90))
+			if ( ((distL1L2 >= minSequenceDist) && (distL1L2 <= maxSequenceDist) && (distR1R2 >= minSequenceDist) && (distR1R2 <= maxSequenceDist) && (Math.abs( distL1L2 - distR1R2) <= sequenceDistDiff) && (angle1 <= twistMax))
 					||
-					((distL1R2 >= minDist) && (distL1R2 <= maxDist) && (distR1L2 >= minDist) && (distR1L2 <= maxDist) && (Math.abs( distL1R2 - distR1L2) <= maxDiff) && (angle2 <= 90)) )
+					((distL1R2 >= minSequenceDist) && (distL1R2 <= maxSequenceDist) && (distR1L2 >= minSequenceDist) && (distR1L2 <= maxSequenceDist) && (Math.abs( distL1R2 - distR1L2) <= sequenceDistDiff) && (angle2 <= twistMax)) )
 			{
 				addSequence( newSequence, sequenceList, i, left, right );
 			}
 		}
+	}
+	
+	private void untwistLattice( VOI lattice )
+	{
+		VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
+		VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
+		for ( int i = 0; i < left.size()-1; i++ )
+		{		
+			Vector3f l1 = left.elementAt(i);
+			Vector3f r1 = right.elementAt(i);
+			Vector3f l2 = left.elementAt(i+1);
+			Vector3f r2 = right.elementAt(i+1);
+			
+			Vector3f v1 = Vector3f.sub( l1, r1 );
+			v1.normalize();
+			
+			Vector3f v2 = Vector3f.sub( l2, r2 );
+			v2.normalize();
+			
+			Vector3f v3 = Vector3f.sub( r2, l2 );
+			v3.normalize();
+			
+			float angle1 = (float) (180 * v1.angle(v2) / Math.PI);
+			float angle2 = (float) (180 * v1.angle(v3) / Math.PI);
+
+			int twistMax = sequenceTwist1;
+			if ( i > 6 )
+			{
+				twistMax = sequenceTwist2;
+			}
+			
+			if ( (angle1 > twistMax) && (angle2 <= twistMax) )
+			{
+				// untwist:
+				Vector3f temp = new Vector3f(l2);
+				l2.copy(r2);
+				r2.copy(temp);
+			}
+		}
+		
+	}
+	
+	private void addAllSequences( VOIVector allLattices, VOI lattice, Vector<int[]> sequenceList )
+	{
+		VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
+		VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
+		for ( int i = 0; i < sequenceList.size(); i++ )
+		{
+			VOIContour newLeft = new VOIContour( false );
+			VOIContour newRight = new VOIContour( false );
+			VOI newLattice = new VOI((short) allLattices.size(), "lattice", 1, VOI.POLYLINE );
+			newLattice.getCurves().add(newLeft);
+			newLattice.getCurves().add(newRight);
+			int[] sequence = sequenceList.elementAt(i);
+			for ( int j = 0; j < sequence.length; j++ )
+			{
+				newLeft.add( new Vector3f( left.elementAt( sequence[j] ) ) );
+				newRight.add( new Vector3f( right.elementAt( sequence[j] ) ) );
+			}
+			
+			if ( !containsLattice( allLattices, newLattice ) )
+			{
+				allLattices.add(newLattice);
+			}
+		}
+	}
+	
+	private boolean equalLattice( VOI lattice1, VOI lattice2 )
+	{
+		VOIContour left1 = (VOIContour) lattice1.getCurves().elementAt(0);
+		VOIContour right1 = (VOIContour) lattice1.getCurves().elementAt(1);
+		
+		VOIContour left2 = (VOIContour) lattice2.getCurves().elementAt(0);
+		VOIContour right2 = (VOIContour) lattice2.getCurves().elementAt(1);
+		
+		if ( (left1.size() != left2.size()) || (right1.size() != right2.size()) )
+		{
+			return false;
+		}
+		for ( int i = 0; i < left1.size(); i++ )
+		{
+			if ( !((left1.elementAt(i).equals( left2.elementAt(i)) && right1.elementAt(i).equals( right2.elementAt(i))) || 
+				  (left1.elementAt(i).equals( right2.elementAt(i)) && right1.elementAt(i).equals( left2.elementAt(i)))     ))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	private boolean containsLattice( VOIVector lattices, VOI lattice )
+	{
+		for ( int i = 0; i < lattices.size(); i++ )
+		{
+			VOI testLattice = lattices.elementAt(i);
+			if ( equalLattice(lattice, testLattice) )
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	private void addPair( int p1, int p2, Vector<Vector3f> positions, VOIVector lattices )
@@ -1190,14 +1447,12 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		lattice.getCurves().add(right);
 		
 
-		int pairMin = 5;
-		int pairMax = 15;
 		for ( int i = 0; i < newPositions.size(); i++ )
 		{
 			for ( int j = i + 1; j < newPositions.size(); j++ )
 			{
 				float distance = newPositions.elementAt(i).distance( newPositions.elementAt(j) );
-				if (  (distance >= pairMin) && (distance <= pairMax) )
+				if (  (distance >= minPairDist) && (distance <= maxPairDist) )
 				{
 					addPair( i, j, newPositions, lattice, lattices, 1 );
 				}
@@ -1205,6 +1460,84 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		}
 	}
 	
+	private boolean equalLatticePairSet( VOI lattice1, VOI lattice2 )
+	{
+		VOIContour left1 = (VOIContour) lattice1.getCurves().elementAt(0);
+		VOIContour right1 = (VOIContour) lattice1.getCurves().elementAt(1);
+		
+		VOIContour left2 = (VOIContour) lattice2.getCurves().elementAt(0);
+		VOIContour right2 = (VOIContour) lattice2.getCurves().elementAt(1);
+		
+		if ( (left1.size() != left2.size()) || (right1.size() != right2.size()) )
+		{
+			return false;
+		}
+		int sameCount = 0;
+		for ( int i = 0; i < left1.size(); i++ )
+		{
+			Vector3f l1 = left1.elementAt(i);
+			Vector3f r1 = right1.elementAt(i);
+			for ( int j = 0; j < left2.size(); j++ )
+			{
+				Vector3f l2 = left2.elementAt(j);
+				Vector3f r2 = right2.elementAt(j);
+				if ( (l1.equals(l2) && r1.equals(r2)) || (l1.equals(r2) && r1.equals(l2)) )
+				{
+					sameCount++;
+					break;
+				}
+			}
+		}
+		return (sameCount == left1.size());
+	}
+	
+	private boolean checkBend( int[] sequence, VOIContour left, VOIContour right )
+	{		
+		for ( int i = 0; i < sequence.length - 2; i++ )
+		{
+			Vector3f leftPt = left.elementAt(sequence[i]);
+			Vector3f rightPt = right.elementAt(sequence[i]);
+
+			Vector3f leftP1Pt = left.elementAt(sequence[i+1]);
+			Vector3f rightP1Pt = right.elementAt(sequence[i+1]);
+
+			Vector3f leftP2Pt = left.elementAt(sequence[i+2]);
+			Vector3f rightP2Pt = right.elementAt(sequence[i+2]);
+
+			Vector3f v1L = Vector3f.sub( leftP1Pt, leftPt );
+			Vector3f v2L = Vector3f.sub( leftP2Pt, leftP1Pt );
+
+			Vector3f v1R = Vector3f.sub( rightP1Pt, rightPt );
+			Vector3f v2R = Vector3f.sub( rightP2Pt, rightP1Pt );
+			
+			v1L.normalize();
+			v2L.normalize();
+			v1R.normalize();
+			v2R.normalize();
+
+			float angleL = (float) (180 * v1L.angle(v2L) / Math.PI);
+			float angleR = (float) (180 * v1R.angle(v2R) / Math.PI);
+			
+			if ( (angleL >= sequenceBendMax) || (angleR >= sequenceBendMax) )
+			{
+				return false;
+			}			
+		}
+		return true;
+	}
+	
+	private boolean checkLattice(VOI lattice, VOIVector lattices)
+	{		
+		for ( int i = 0; i < lattices.size(); i++ )
+		{
+			VOI testLattice = lattices.elementAt(i);
+			if ( equalLatticePairSet(lattice, testLattice) )
+			{
+				return false;
+			}
+		}
+		return true;
+	}
 
 	private void addPair( int p1, int p2, Vector<Vector3f> positions, VOI lattice, VOIVector lattices, int count )
 	{
@@ -1233,7 +1566,10 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		if ( newPositions.size() == 0 )
 		{
 //			System.err.println( "yes lattice " + left.size() + " " + positions.size() + " " + newPositions.size() + " " + count );
-			lattices.add(newLattice);
+			if ( checkLattice( newLattice, lattices ) )
+			{
+				lattices.add(newLattice);
+			}
 			return;
 		}
 		
@@ -1245,16 +1581,13 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			newPositions = null;
 			return;
 		}
-
-		int pairMin = 5;
-		int pairMax = 15;
 		int i = 0;
 //		for ( int i = 0; i < newPositions.size(); i++ )
 //		{
 			for ( int j = i + 1; j < newPositions.size(); j++ )
 			{
 				float distance = newPositions.elementAt(i).distance( newPositions.elementAt(j) );
-				if (  (distance >= pairMin) && (distance <= pairMax) )
+				if (  (distance >= minPairDist) && (distance <= maxPairDist) )
 				{
 					addPair( i, j, newPositions, newLattice, lattices, count + 1 );
 				}
@@ -1538,9 +1871,9 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 				max.max(text.elementAt(0));
 			}
 		}
-		extents[0] = (int)(max.X - min.X) + 1;
-		extents[1] = (int)(max.Y - min.Y) + 1;
-		extents[2] = (int)(max.Z - min.Z) + 1;
+		extents[0] = (int)Math.max( 30, (max.X - min.X) + 10);
+		extents[1] = (int)Math.max( 30, (max.Y - min.Y) + 10);
+		extents[2] = (int)Math.max( 30, (max.Z - min.Z) + 10);
 		
 		System.err.println( "generateAnnotationAnimation " + annotationList.size() );		
 		ModelImage animationImage = new ModelImage( ModelStorageBase.BOOLEAN, extents, "animationImage" );
@@ -1619,6 +1952,10 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
         	{
         		File annotationFile = new File( inputFileDir + File.separator + list[i] );
         		if ( annotationFile.isDirectory() )
+        		{
+        			continue;
+        		}
+        		if ( !list[i].endsWith(".csv") )
         		{
         			continue;
         		}
@@ -1797,9 +2134,9 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 //		System.err.println( min );
 //		System.err.println( max );
 		
-		extents[0] = (int)(max.X - min.X) + 1;
-		extents[1] = (int)(max.Y - min.Y) + 1;
-		extents[2] = (int)(max.Z - min.Z) + 1;
+		extents[0] = (int)Math.max( 30, (max.X - min.X) + 10);
+		extents[1] = (int)Math.max( 30, (max.Y - min.Y) + 10);
+		extents[2] = (int)Math.max( 30, (max.Z - min.Z) + 10);
 		
 		ModelImage animationImage = new ModelImage( ModelStorageBase.BOOLEAN, extents, "animationImage" );
 		String outputDirName = baseFileDir + File.separator + "animation" + File.separator;

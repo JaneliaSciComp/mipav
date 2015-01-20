@@ -912,6 +912,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		int dimX = m_kVolumeImageA.GetImage().getExtents().length > 0 ? m_kVolumeImageA.GetImage().getExtents()[0] : 1;
 		int dimY = m_kVolumeImageA.GetImage().getExtents().length > 1 ? m_kVolumeImageA.GetImage().getExtents()[1] : 1;
 		int dimZ = m_kVolumeImageA.GetImage().getExtents().length > 2 ? m_kVolumeImageA.GetImage().getExtents()[2] : 1;
+//		System.err.println( dimX + " " + dimY + " " + dimZ );
 		float scale = 0.05f * Math.min( dimX, Math.min( dimY, dimZ ) );
 		scale = Math.max( 3, scale );
 //		System.err.println( scale );
@@ -940,6 +941,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 
 			annotationVOIs[i] = new VOI( (short)i, text.getName(), VOI.ANNOTATION, 0 );
 			annotationVOIs[i].setColor(c);
+//			annotationVOIs[i].getCurves().add(text);
+//			m_kVolumeImageA.GetImage().registerVOI( annotationVOIs[i] );
 			
 			ColorRGBA colorRGBA = new ColorRGBA(c.getRed()/255f,c.getGreen()/255f,c.getBlue()/255f,1);
 			
@@ -985,6 +988,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				position.sub(origin);
 				position.add( m_kVolumeImageA.GetImage().getExtents()[0]/2, m_kVolumeImageA.GetImage().getExtents()[1]/2, 0 );
 //				position.add( 4, 0, 0 );
+//				System.err.println( text.getText() + "      " + position );
 				
 				position = text.elementAt(1);
 				position.sub(origin);
@@ -1121,6 +1125,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 								annotationVOIs[i].getCurves().add(text);
 								m_kVolumeImageA.GetImage().registerVOI( annotationVOIs[i] );
 							}
+						}
+						else
+						{
+//							System.err.println( text.getText() + " " + position );
 						}
 						
 						break;
