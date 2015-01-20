@@ -114,7 +114,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 	 */
 	@Override
 	public void runAlgorithm() {
-		ModelImage resizedImage = null;
 		AlgorithmChangeType changeTypeAlgo;
 		final boolean image25D = true;
 		AlgorithmTransform algoTrans;
@@ -303,35 +302,36 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			gAlgo.run();
 			gAlgo.finalize();
 		} // if (srcImage.isColorImage())
-		if (scaleImage) {
-			resizedImage = new ModelImage(ModelStorageBase.DOUBLE,
-					srcImage.getExtents(), "changeTypeImage");
-			resizedImage.getFileInfo(0).setEndianess(FileBase.LITTLE_ENDIAN);
-			if (srcImage.isColorImage()) {
-				changeTypeAlgo = new AlgorithmChangeType(resizedImage,
-						grayImage, grayImage.getMin(), grayImage.getMax(),
-						0.0, 1.0, image25D);
-				grayImage.disposeLocal();
-				grayImage = null;
-			} else {
-				changeTypeAlgo = new AlgorithmChangeType(resizedImage,
-						srcImage, srcImage.getMin(),
-						srcImage.getMax(), 0.0, 1.0, image25D);
-			}
-			changeTypeAlgo.run();
-			changeTypeAlgo.finalize();
-			changeTypeAlgo = null;
-			fileInfo = resizedImage.getFileInfo();
-            fileInfo[0].setModality(srcImage.getFileInfo()[0].getModality());
-            fileInfo[0].setFileDirectory(srcImage.getFileInfo()[0].getFileDirectory());
-            fileInfo[0].setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
-            fileInfo[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
-            fileInfo[0].setExtents(resizedImage.getExtents());
-            fileInfo[0].setMax(resizedImage.getMax());
-            fileInfo[0].setMin(resizedImage.getMin());
-            fileInfo[0].setImageOrientation(srcImage.getImageOrientation());
-            fileInfo[0].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation());
-            fileInfo[0].setOrigin(srcImage.getFileInfo()[0].getOrigin());
+		
+		inputImage = new ModelImage(ModelStorageBase.DOUBLE,
+				srcImage.getExtents(), "changeTypeImage");
+		inputImage.getFileInfo(0).setEndianess(FileBase.LITTLE_ENDIAN);
+		if (srcImage.isColorImage()) {
+			changeTypeAlgo = new AlgorithmChangeType(inputImage,
+					grayImage, grayImage.getMin(), grayImage.getMax(),
+					0.0, 1.0, image25D);
+			grayImage.disposeLocal();
+			grayImage = null;
+		} else {
+			changeTypeAlgo = new AlgorithmChangeType(inputImage,
+					srcImage, srcImage.getMin(),
+					srcImage.getMax(), 0.0, 1.0, image25D);
+		}
+		changeTypeAlgo.run();
+		changeTypeAlgo.finalize();
+		changeTypeAlgo = null;
+		fileInfo = inputImage.getFileInfo();
+        fileInfo[0].setModality(srcImage.getFileInfo()[0].getModality());
+        fileInfo[0].setFileDirectory(srcImage.getFileInfo()[0].getFileDirectory());
+        fileInfo[0].setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
+        fileInfo[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
+        fileInfo[0].setExtents(inputImage.getExtents());
+        fileInfo[0].setMax(inputImage.getMax());
+        fileInfo[0].setMin(inputImage.getMin());
+        fileInfo[0].setImageOrientation(srcImage.getImageOrientation());
+        fileInfo[0].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation());
+        fileInfo[0].setOrigin(srcImage.getFileInfo()[0].getOrigin());
+        if (scaleImage) {
 
 			final boolean doPad = false;
 			final TransMatrix xfrm = new TransMatrix(3);
@@ -357,7 +357,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			final float fillValue = 0.0f;
 			final boolean doUpdateOrigin = false;
 			final boolean isSATransform = false;
-			algoTrans = new AlgorithmTransform(resizedImage, xfrm, interp,
+			algoTrans = new AlgorithmTransform(inputImage, xfrm, interp,
 					oXres, oYres, oXdim, oYdim, units, doVOI, doClip,
 					doPad, doRotateCenter, center);
 			algoTrans.setFillValue(fillValue);
@@ -366,12 +366,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			algoTrans.setSuppressProgressBar(true);
 
 			algoTrans.run();
-			resizedImage.disposeLocal();
+			inputImage.disposeLocal();
 
-			resizedImage = algoTrans.getTransformedImage();
+			inputImage = algoTrans.getTransformedImage();
 			algoTrans.disposeLocal();
 			algoTrans = null;
-			resizedImage.calcMinMax();
+			inputImage.calcMinMax();
 		} // if (scaleImage)
 
 		minSize = Math.min(inputXDim, inputYDim);
@@ -410,14 +410,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 				edgefd33Imag, edgesigmas, edgeps, nscales, ndirs,
 				sig2omega, radianStart, radianEnd, inputXDim,
 				inputYDim, "edge", edgedomain);
-
-			if (resizedImage != null) {
-				inputImage = resizedImage;
-			} else if (grayImage != null) {
-				inputImage = grayImage;
-			} else {
-				inputImage = srcImage;
-			}
 	
 			// Terms computed off-line for weighted projection on basis
 	
