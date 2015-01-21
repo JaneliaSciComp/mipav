@@ -84,12 +84,17 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	
 	private boolean branchDensity;
 	
+	private int[][] faceVerticies;
+	
+	private Point3d[] verticies;
+	
 	public PlugInAlgorithm3DSWCViewer(String imFile, File file, JTextPane text, String resUnit, boolean useLength, boolean showView){
 		
 		super();
 		
 		imageFile = imFile;
-		destImage = new ModelImage(ModelImage.BOOLEAN, new int[]{512, 512}, "3D Neuron Viewer");
+		//destImage = new ModelImage(ModelImage.BOOLEAN, new int[]{512, 512}, "3D Neuron Viewer");
+		destImage = new ModelImage(ModelImage.ARGB, new int[]{512, 512}, "3D Neuron Viewer");
 		
 		String name = file.getName();
 		name = name.substring(0, name.lastIndexOf("."));
@@ -122,7 +127,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	public PlugInAlgorithm3DSWCViewer(File file, JTextPane text, String resUnit){
 		super();
 		
-		destImage = new ModelImage(ModelImage.BOOLEAN, new int[]{512, 512}, "3D Neuron Viewer");
+		//destImage = new ModelImage(ModelImage.BOOLEAN, new int[]{512, 512}, "3D Neuron Viewer");
+		destImage = new ModelImage(ModelImage.ARGB, new int[]{512, 512}, "3D Neuron Viewer");
 		
 		swcFile = file;
 		textArea = text;
@@ -133,6 +139,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		branchDensity = true;
 		
 		viewerOpen = false;
+		verticies = null;
 		
 		blackText = new SimpleAttributeSet();
 		StyleConstants.setFontFamily(blackText, "Serif");
@@ -235,6 +242,10 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		
 	}
 	
+	public void setAxon(int axon){
+		currentAxon = axon;
+	}
+	
 	public int getAxon(){
 		return currentAxon;
 	}
@@ -266,60 +277,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		if(splitImage != null){
 			splitImage.getParentFrame().close();
 		}
-	}
-
-	/**
-	 * Using the selected branch, create a bitset to be used
-	 * as the image mask that overlays both the branch that
-	 * was selected as well as the connections all the way
-	 * back to the origin. 
-	 * @param branch
-	 * @return
-	 */
-	public BitSet highlightAxon(int branch){
-		
-		currentAxon = branch;
-		
-		BitSet axonMask = new BitSet(512*512);
-		
-		ArrayList<float[]> fil = swcCoordinates.get(branch);
-		int c = (int) fil.get(0)[4];
-		
-		ArrayList<ArrayList<Point>> lines = new ArrayList<ArrayList<Point>>();
-		
-		float[] oPt = spacePts.get(0);
-		Point origin = new Point(Math.round(oPt[0]), Math.round(oPt[1]));
-		float[] nPt = spacePts.get(1);
-		Point pt = new Point(Math.round(nPt[0]), Math.round(nPt[1]));
-		
-		lines.add(bresenham(origin, pt));
-		
-		while(c > -1){
-			oPt = spacePts.get(branch+1);
-			nPt = spacePts.get(c+1);
-			origin = new Point(Math.round(oPt[0]), Math.round(oPt[1]));
-			pt = new Point(Math.round(nPt[0]), Math.round(nPt[1]));
-			lines.add(bresenham(origin, pt));
-			
-			fil = swcCoordinates.get(c);
-			branch = c;
-			c = (int) fil.get(0)[4];
-		}
-		
-		for(int i=0;i<lines.size();i++){
-			ArrayList<Point> line = lines.get(i);
-			for(int j=0;j<line.size();j++){
-				pt = line.get(j);
-				if(pt.x > 0 && pt.x < 512 &&
-						pt.y > 0 && pt.y < 512)
-					axonMask.set(pt.x + pt.y*512);
-			}
-		}
-		
-		if(!branchDensity)
-			highlightAxonSplit();
-		
-		return axonMask;
 	}
 
 	/**
@@ -380,14 +337,15 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		
 		makeViewImage();
 		
-		BitSet axonMask = highlightAxon(currentAxon);
-		ViewJFrameImage frame = destImage.getParentFrame();
+		//BitSet axonMask = highlightAxon(currentAxon);
+		highlightAxon(currentAxon);
+		//ViewJFrameImage frame = destImage.getParentFrame();
 		
-		frame.getComponentImage().setPaintMask(axonMask);
+		//frame.getComponentImage().setPaintMask(axonMask);
 		//frame.getControls().getTools().setOpacity(1.0f);
 		//frame.getControls().getTools().setPaintColor(Color.RED);
 		
-		frame.updateImages(true);
+		//frame.updateImages(true);
 	}
 
 	/**
@@ -432,13 +390,19 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		
 		ViewJFrameImage frame = destImage.getParentFrame();
 		
-		if(showAxon){
-			BitSet axonMask = highlightAxon(currentAxon);
-			frame.getComponentImage().setPaintMask(axonMask);
-		}else{
-			BitSet hullMask = convexHull();
-			frame.getComponentImage().setPaintMask(hullMask);
+		highlightAxon(currentAxon);
+		if(!showAxon){
+			convexHull();
 		}
+		/*if(showAxon){
+			highlightAxon(currentAxon);
+			//BitSet axonMask = highlightAxon(currentAxon);
+			//frame.getComponentImage().setPaintMask(axonMask);
+		}else{
+			convexHull();
+			//BitSet hullMask = convexHull();
+			//frame.getComponentImage().setPaintMask(hullMask);
+		}*/
 		
 		frame.updateImages(true);
 	}
@@ -452,156 +416,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		showAxon = false;
 	}
 
-	public BitSet convexHull(){
-		
-		//Added line, should remove
-		//Point3d tipPt = null;
-		
-		ArrayList<Integer> tips = getTips();
-		
-		ArrayList<Point3d> ptList = new ArrayList<Point3d>();
-
-		BitSet hullMask = new BitSet(512*512);
-		
-		tips.add(0, -1);
-		
-		for(int i : tips){
-			float[] pt = spacePts.get(i+1);
-			Point3d pt3d = new Point3d(pt[0], pt[1], pt[2]);
-			
-			//Added this if statement too, need to remove
-			//if(i == currentAxon)
-			//	tipPt = pt3d; 
-			ptList.add(pt3d);
-		}
-		
-		Point3d[] pts = new Point3d[ptList.size()];
-		ptList.toArray(pts);
-		
-		QuickHull3D hull = new QuickHull3D(pts);
-		
-		Point3d[] verticies = hull.getVertices();
-		int[][] faceVerticies = hull.getFaces();
-		
-		/**/
-		
-		/*boolean onHull = false;
-		for(int i=0;i<verticies.length;i++){
-			Point3d pt = verticies[i];
-			if(pt.x == tipPt.x && pt.y == tipPt.y && pt.z == tipPt.z){
-				onHull = true;
-				break;
-			}
-		}
-		
-		if(!onHull){
-			
-			ArrayList<Integer> toRemove = new ArrayList<Integer>();
-			
-			for(int i=0;i<verticies.length;i++){
-				Point3d vertex = verticies[i];
-				int ind = ptList.indexOf(vertex);
-				if(ind > -1)
-				toRemove.add(tips.get(ind));
-			}
-			for(int i=0;i<toRemove.size();i++){
-				tips.remove(toRemove.get(i));
-			}
-			
-			ArrayList<float[]> fil = swcCoordinates.get(currentAxon);
-			int connection = (int)fil.get(0)[4];
-	
-			float[] start = spacePts.get(connection+1);
-			float[] tip = spacePts.get(currentAxon+1);
-			
-			Vector3f headPt = new Vector3f(tip[0], tip[1], tip[2]);
-			Vector3f vecC = new Vector3f(start[0], start[1], start[2]);
-			vecC = Vector3f.sub(headPt, vecC);
-			
-			float minDist = Float.MAX_VALUE;
-			int minInd = -1;
-			
-			for(int i=0;i<faceVerticies.length;i++){
-				int[] vert = faceVerticies[i];
-				Point3d ptA = verticies[vert[0]];
-				Point3d ptB = verticies[vert[1]];
-				Point3d ptC = verticies[vert[2]];
-				
-				Vector3f originPt = new Vector3f((float)ptA.x, (float)ptA.y, (float)ptA.z);
-				Vector3f vecA = new Vector3f((float)ptB.x, (float)ptB.y, (float)ptB.z);
-				Vector3f vecB = new Vector3f((float)ptC.x, (float)ptC.y, (float)ptC.z);
-				
-				float distance = distanceVectorToPlane(originPt, vecA, vecB, vecC, headPt);
-				
-				if(distance > 0 && distance < minDist){
-					minDist = distance;
-					minInd = i;
-				}
-				
-			}
-			
-			//System.out.println(firstInd);
-			//System.out.println(minDist);
-			
-			int i = minInd;
-			
-			for(int j=0;j<faceVerticies[i].length;j++){
-				
-				int j1 = j+1;
-				if(j1==faceVerticies[i].length)
-					j1 = 0;
-				int ind1 = faceVerticies[i][j];
-				int ind2 = faceVerticies[i][j1];
-				Point3d pt03d = verticies[ind1];
-				Point3d pt13d = verticies[ind2];
-				
-				Point pt0 = new Point((int)pt03d.x, (int)pt03d.y);
-				Point pt1 = new Point((int)pt13d.x, (int)pt13d.y);
-				
-				ArrayList<Point> line = bresenham(pt0, pt1);
-	
-				for(int k=0;k<line.size();k++){
-					Point pt = line.get(k);
-					if(pt.x > 0 && pt.x < 512 &&
-							pt.y > 0 && pt.y < 512)
-						hullMask.set(pt.x + pt.y*512);
-				}
-			}
-		}
-		
-		hullMask.or(highlightAxon(currentAxon));
-		*/
-		/**/
-		
-		for(int i=0;i<faceVerticies.length;i++){
-			for(int j=0;j<faceVerticies[i].length;j++){
-				
-				int j1 = j+1;
-				if(j1==faceVerticies[i].length)
-					j1 = 0;
-				int ind1 = faceVerticies[i][j];
-				int ind2 = faceVerticies[i][j1];
-				Point3d pt03d = verticies[ind1];
-				Point3d pt13d = verticies[ind2];
-				
-				Point pt0 = new Point((int)pt03d.x, (int)pt03d.y);
-				Point pt1 = new Point((int)pt13d.x, (int)pt13d.y);
-				
-				ArrayList<Point> line = bresenham(pt0, pt1);
-
-				for(int k=0;k<line.size();k++){
-					Point pt = line.get(k);
-					if(pt.x > 0 && pt.x < 512 &&
-							pt.y > 0 && pt.y < 512)
-						hullMask.set(pt.x + pt.y*512);
-				}
-			}
-		}
-		
-		return hullMask;
-		
-	}
-	
 	public void setUseLength(boolean useLength){
 		axonUseLength = useLength;
 	}
@@ -860,7 +674,169 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		return true;
 	}
 	
+	public boolean isTipInHull(int row){
+		
+		if(verticies == null)
+			return false;
+		
+		int branch = getTips().get(row);
+		float[] spacePt = spacePts.get(branch+1);
+		Point3d pt = new Point3d(spacePt[0], spacePt[1], spacePt[2]);
+		for(int i=0;i<verticies.length;i++){
+			Point3d vPt = verticies[i];
+			if(vPt.x == pt.x && vPt.y == pt.y && vPt.z == pt.z){
+				return true;
+			}
+		}
+		
+		return false;
+	}
 	
+	private void convexHull(){
+		
+		//Added line, should remove
+		//Point3d tipPt = null;
+		
+		ArrayList<Integer> tips = getTips();
+		
+		ArrayList<Point3d> ptList = new ArrayList<Point3d>();
+	
+		//BitSet hullMask = new BitSet(512*512);
+		byte[] hullMask = new byte[512*512];
+		
+		tips.add(0, -1);
+		
+		for(int i : tips){
+			float[] pt = spacePts.get(i+1);
+			Point3d pt3d = new Point3d(pt[0], pt[1], pt[2]);
+			
+			//Added this if statement too, need to remove
+			//if(i == currentAxon)
+			//	tipPt = pt3d; 
+			ptList.add(pt3d);
+		}
+		
+		Point3d[] pts = new Point3d[ptList.size()];
+		ptList.toArray(pts);
+		
+		QuickHull3D hull = new QuickHull3D(pts);
+		
+		verticies = hull.getVertices();
+		faceVerticies = hull.getFaces();
+		
+		/**/
+		/*
+		boolean onHull = false;
+		for(int i=0;i<verticies.length;i++){
+			Point3d pt = verticies[i];
+			if(pt.x == tipPt.x && pt.y == tipPt.y && pt.z == tipPt.z){
+				onHull = true;
+				break;
+			}
+		}
+		
+		if(!onHull){
+			
+			ArrayList<float[]> fil = swcCoordinates.get(currentAxon);
+			int connection = (int)fil.get(0)[4];
+	
+			float[] start = spacePts.get(connection+1);
+			float[] tip = spacePts.get(currentAxon+1);
+			
+			Vector3f headPt = new Vector3f(tip[0], tip[1], tip[2]);
+			Vector3f vecC = new Vector3f(start[0], start[1], start[2]);
+			vecC = Vector3f.sub(headPt, vecC);
+			
+			float minDist = Float.MAX_VALUE;
+			int minInd = -1;
+			
+			for(int i=0;i<faceVerticies.length;i++){
+				int[] vert = faceVerticies[i];
+				Point3d ptA = verticies[vert[0]];
+				Point3d ptB = verticies[vert[1]];
+				Point3d ptC = verticies[vert[2]];
+				
+				Vector3f originPt = new Vector3f((float)ptA.x, (float)ptA.y, (float)ptA.z);
+				Vector3f vecA = new Vector3f((float)ptB.x, (float)ptB.y, (float)ptB.z);
+				Vector3f vecB = new Vector3f((float)ptC.x, (float)ptC.y, (float)ptC.z);
+				
+				float distance = distanceVectorToPlane(originPt, vecA, vecB, vecC, headPt);
+				
+				if(distance > 0 && distance < minDist){
+					minDist = distance;
+					minInd = i;
+				}
+				
+			}
+			
+			int i = minInd;
+			
+			for(int j=0;j<faceVerticies[i].length;j++){
+				
+				int j1 = j+1;
+				if(j1==faceVerticies[i].length)
+					j1 = 0;
+				int ind1 = faceVerticies[i][j];
+				int ind2 = faceVerticies[i][j1];
+				Point3d pt03d = verticies[ind1];
+				Point3d pt13d = verticies[ind2];
+				
+				Point pt0 = new Point((int)pt03d.x, (int)pt03d.y);
+				Point pt1 = new Point((int)pt13d.x, (int)pt13d.y);
+				
+				ArrayList<Point> line = bresenham(pt0, pt1);
+	
+				for(int k=0;k<line.size();k++){
+					Point pt = line.get(k);
+					if(pt.x > 0 && pt.x < 512 &&
+							pt.y > 0 && pt.y < 512)
+						hullMask.set(pt.x + pt.y*512);
+				}
+			}
+		}
+		
+		hullMask.or(highlightAxon(currentAxon));
+		*/
+		/**/
+		
+		for(int i=0;i<faceVerticies.length;i++){
+			for(int j=0;j<faceVerticies[i].length;j++){
+				
+				int j1 = j+1;
+				if(j1==faceVerticies[i].length)
+					j1 = 0;
+				int ind1 = faceVerticies[i][j];
+				int ind2 = faceVerticies[i][j1];
+				Point3d pt03d = verticies[ind1];
+				Point3d pt13d = verticies[ind2];
+				
+				Point pt0 = new Point((int)pt03d.x, (int)pt03d.y);
+				Point pt1 = new Point((int)pt13d.x, (int)pt13d.y);
+				
+				ArrayList<Point> line = bresenham(pt0, pt1);
+	
+				for(int k=0;k<line.size();k++){
+					Point pt = line.get(k);
+					if(pt.x > 0 && pt.x < 512 &&
+							pt.y > 0 && pt.y < 512){
+						//hullMask.set(pt.x + pt.y*512);
+						//hullMask[pt.x + pt.y*512] = (byte) 255;
+						destImage.setC(pt.x + pt.y*512, 2, 255);
+					}
+				}
+			}
+		}
+		
+		/*try{
+			destImage.importRGBData(2, 0, hullMask, true);
+		}catch(IOException e){
+			e.printStackTrace();
+		}*/
+		
+		//return hullMask;
+		
+	}
+
 	/**
 	 * Convex hull volume for non-consolidated filaments
 	 * 
@@ -944,6 +920,74 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		volume /= 6.0f;
 		
 		return volume;
+	}
+
+	/**
+	 * Using the selected branch, create a bitset to be used
+	 * as the image mask that overlays both the branch that
+	 * was selected as well as the connections all the way
+	 * back to the origin. 
+	 * @param branch
+	 * @return
+	 */
+	private void highlightAxon(int branch){
+		
+		currentAxon = branch;
+		
+		//BitSet axonMask = new BitSet(512*512);
+		//byte[] axonMask = new byte[512*512];
+		//byte[] blank = new byte[512*512];
+		
+		ArrayList<float[]> fil = swcCoordinates.get(branch);
+		int c = (int) fil.get(0)[4];
+		
+		ArrayList<ArrayList<Point>> lines = new ArrayList<ArrayList<Point>>();
+		
+		float[] oPt = spacePts.get(0);
+		Point origin = new Point(Math.round(oPt[0]), Math.round(oPt[1]));
+		float[] nPt = spacePts.get(1);
+		Point pt = new Point(Math.round(nPt[0]), Math.round(nPt[1]));
+		
+		lines.add(bresenham(origin, pt));
+		
+		while(c > -1){
+			oPt = spacePts.get(branch+1);
+			nPt = spacePts.get(c+1);
+			origin = new Point(Math.round(oPt[0]), Math.round(oPt[1]));
+			pt = new Point(Math.round(nPt[0]), Math.round(nPt[1]));
+			lines.add(bresenham(origin, pt));
+			
+			fil = swcCoordinates.get(c);
+			branch = c;
+			c = (int) fil.get(0)[4];
+		}
+		
+		for(int i=0;i<lines.size();i++){
+			ArrayList<Point> line = lines.get(i);
+			for(int j=0;j<line.size();j++){
+				pt = line.get(j);
+				if(pt.x > 0 && pt.x < 512 &&
+						pt.y > 0 && pt.y < 512){
+					//axonMask.set(pt.x + pt.y*512);
+					//axonMask[pt.x + pt.y*512] = (byte) 255;
+					destImage.setC(pt.x + pt.y*512, 2, 0);
+					destImage.setC(pt.x + pt.y*512, 3, 0);
+				}
+			}
+		}
+		
+		/*try{
+			destImage.importRGBData(1, 0, axonMask, true);
+			destImage.importRGBData(2, 0, blank, true);
+			destImage.importRGBData(3, 0, blank, true);
+		}catch(IOException e){
+			e.printStackTrace();
+		}*/
+		
+		if(!branchDensity)
+			highlightAxonSplit();
+		
+		//return axonMask;
 	}
 
 	private ArrayList<float[]> branchDensity(){
@@ -1928,7 +1972,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	private void makeViewImage(){
 		
 		
-		BitSet skeleton = new BitSet(512*512);
+		//BitSet skeleton = new BitSet(512*512);
+		byte[] skeleton = new byte[512*512];
 		
 		ArrayList<ArrayList<Point>> lines = new ArrayList<ArrayList<Point>>();
 		
@@ -1955,12 +2000,16 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 				pt = line.get(j);
 				if(pt.x > 0 && pt.x < 512 &&
 						pt.y > 0 && pt.y < 512)
-					skeleton.set(pt.x + pt.y*512);
+					//skeleton.set(pt.x + pt.y*512);
+					skeleton[pt.x + pt.y*512] = (byte) 255;
 			}
 		}
 		
 		try {
-			destImage.importData(0, skeleton, true);
+			//destImage.importData(0, skeleton, true);
+			for(int i=0;i<4;i++){
+				destImage.importRGBData(i, 0, skeleton, true);
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
