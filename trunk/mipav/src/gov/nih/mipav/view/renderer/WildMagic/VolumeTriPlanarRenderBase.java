@@ -603,9 +603,6 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			updateCenterOnDisplay();
 		}
 
-		Move();
-		Pick();
-
 		if (profile) {
 			// Profile.clear();
 			// Profile.start();
@@ -626,10 +623,14 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 				}
 			}
 		}
-
 		updateVOIs(m_kVolumeImageA.GetImage().getVOIs());
+
+		Move();
+		Pick();
+
 		Render(arg0);
 		UpdateFrameCount();
+//		UpdateSceneRotation();
 		
 		if (m_bSurfaceUpdate) {
 			m_bSurfaceUpdate = false;
@@ -3520,7 +3521,8 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 						m_kTranslate);
 			}
 		}
-		if (bUpdateVOIs) {
+		if (bUpdateVOIs)
+		{
 			UpdateSceneRotation();
 			// m_kParent.setModified();
 		}
