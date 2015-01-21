@@ -1124,6 +1124,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							{
 								annotationVOIs[i].getCurves().add(text);
 								m_kVolumeImageA.GetImage().registerVOI( annotationVOIs[i] );
+//								System.err.println( text.getText() + " " + (text.getVolumeVOI() == null) );
 							}
 						}
 						else
@@ -1143,8 +1144,30 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		}
 		m_bSurfaceUpdate = true;
 	}
-	
-	
+
+	protected void UpdateSceneRotation()
+	{
+		super.UpdateSceneRotation();
+		if ( annotationPositions == null )
+		{
+			return;
+		}
+		for ( int i = 0; i < annotationPositions.size(); i++ )
+		{
+			VOI currentTime = annotationPositions.elementAt( i );
+			for ( int j = 0; j < currentTime.getCurves().size(); j++ )
+			{
+				VOIText text = (VOIText) currentTime.getCurves().elementAt(j);
+				VolumeVOI vText = text.getVolumeVOI();
+				if ( vText != null )
+				{
+					vText.GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+					vText.GetScene().UpdateGS();
+				}
+			}
+		}
+	}
+
 	/**
 	 * Currently only being used to update the picking point
 	 * @param name   surface name

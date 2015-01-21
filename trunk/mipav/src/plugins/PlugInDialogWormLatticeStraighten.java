@@ -1028,6 +1028,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		System.err.println( "target " + !checkLattice( target, lattices ) );
 
 		VOIVector allLattices = checkPairs( lattices );
+		System.err.println( "target " + !checkLattice( target, lattices ) );
 //		lattices.add(target);
 //		VOIVector allLattices = checkPairs( lattices );
 		System.err.println( time + " " + lattices.size() );
