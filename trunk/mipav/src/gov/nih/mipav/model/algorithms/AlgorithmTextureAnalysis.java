@@ -483,8 +483,6 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 				double edgetimesigmaX[] = new double[ndirs * nscales];
 				double dhout[][] = null;
 				double dhoutImag[][] = null;
-				double dw1[] = null;
-				double dw2[] = null;
 				double mx[] = null;
 				double mag;
 				
@@ -522,10 +520,8 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 				mx = new double[200 * 200];
 				dhout = new double[200][200];
 				dhoutImag = new double[200][200];
-				dw1 = new double[200];
-				dw2 = new double[200];
 				for (k = 0; k < 40; k++) {
-					freqz2(dhout, dhoutImag, dw1, dw2, texttimetd2[k], 200,
+					freqz2(dhout, dhoutImag, texttimetd2[k], 200,
 							200);
 					for (y = 0; y < 200; y++) {
 						for (x = 0; x < 200; x++) {
@@ -3148,24 +3144,12 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			fd23Imag[index] = new double[xfreq.length][xfreq[0].length];
 			fd33[index] = new double[xfreq.length][xfreq[0].length];
 			fd33Imag[index] = new double[xfreq.length][xfreq[0].length];
-			double w1fd1[] = new double[sz[1]];
-			double w2fd1[] = new double[sz[0]];
-			double w1fd2[] = new double[sz[1]];
-			double w2fd2[] = new double[sz[0]];
-			double w1fd3[] = new double[sz[1]];
-			double w2fd3[] = new double[sz[0]];
-			double w1fd22[] = new double[sz[1]];
-			double w2fd22[] = new double[sz[0]];
-			double w1fd23[] = new double[sz[1]];
-			double w2fd23[] = new double[sz[0]];
-			double w1fd33[] = new double[sz[1]];
-			double w2fd33[] = new double[sz[0]];
-			freqz2(fd1[index], fd1Imag[index], w1fd1, w2fd1, td1temp, sz[1], sz[0]);
-			freqz2(fd2[index], fd2Imag[index], w1fd2, w2fd2, td2temp, sz[1], sz[0]);
-			freqz2(fd3[index], fd3Imag[index], w1fd3, w2fd3, td3temp, sz[1], sz[0]);
-			freqz2(fd22[index], fd22Imag[index], w1fd22, w2fd22, td22temp, sz[1], sz[0]);
-			freqz2(fd23[index], fd23Imag[index], w1fd23, w2fd23, td23temp, sz[1], sz[0]);
-			freqz2(fd33[index], fd33Imag[index], w1fd33, w2fd33, td33temp, sz[1], sz[0]);
+			freqz2(fd1[index], fd1Imag[index], td1temp, sz[1], sz[0]);
+			freqz2(fd2[index], fd2Imag[index], td2temp, sz[1], sz[0]);
+			freqz2(fd3[index], fd3Imag[index], td3temp, sz[1], sz[0]);
+			freqz2(fd22[index], fd22Imag[index], td22temp, sz[1], sz[0]);
+			freqz2(fd23[index], fd23Imag[index], td23temp, sz[1], sz[0]);
+			freqz2(fd33[index], fd33Imag[index], td33temp, sz[1], sz[0]);
 			} // else if (domain.equals("freq"))
         // domain is never equal to freq_pure
 	}
@@ -3528,11 +3512,9 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			}
 			break;
 		}
-	    double w1[] = new double[n1];
-	    double w2[] = new double[n2];
 	    double hout[][] = new double[n2][n1];
 	    double houtImag[][] = new double[n2][n1];
-	    freqz2(hout, houtImag, w1, w2, a, n1, n2);
+	    freqz2(hout, houtImag, a, n1, n2);
 	    double buffer[] = new double[n2 * n1];
 	    for (y = 0; y < n2; y++) {
 	    	for (x = 0; x < n1; x++) {
@@ -3569,14 +3551,13 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 	    return;
 	}
 
-	private void freqz2(double hout[][], double houtImag[][], double w1[],
-			double w2[], double a[][], int n1, int n2) {
+	private void freqz2(double hout[][], double houtImag[][],
+			double a[][], int n1, int n2) {
 		double apad[][] = null;
 		int y;
 		int x;
 		int yoff;
 		int xoff;
-		int i;
 		int w1off;
 		double w1scale;
 		int w2off;
@@ -3599,17 +3580,7 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 			}
 		}
 
-		w1off = (int) Math.floor(n1 / 2.0);
-		w1scale = 2.0 / n1;
-		for (i = 0; i < n1; i++) {
-			w1[i] = (i - w1off) * w1scale;
-		}
-
-		w2off = (int) Math.floor(n2 / 2.0);
-		w2scale = 2.0 / n2;
-		for (i = 0; i < n2; i++) {
-			w2[i] = (i - w2off) * w2scale;
-		}
+		
 		rot180(acopy);
 
 		if ((a.length > n2) || (a[0].length > n1)) {
@@ -3664,16 +3635,20 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 		} // if (!useMesh)
 		else { // useMesh
 			w1g = new double[n2][n1];
-			w2g = new double[n2][n1];
+			w1off = (int) Math.floor(n1 / 2.0);
+			w1scale = 2.0 / n1;
 			for (y = 0; y < n2; y++) {
-				for (x = 0; x < n1; x++) {
-					w1g[y][x] = w1[x];
-				}
+			    for (x = 0; x < n1; x++) {
+				     w1g[y][x] = (x - w1off) * w1scale;
+			    }
 			}
 
+			w2g = new double[n2][n1];
+			w2off = (int) Math.floor(n2 / 2.0);
+			w2scale = 2.0 / n2;
 			for (x = 0; x < n1; x++) {
 				for (y = 0; y < n2; y++) {
-					w2g[y][x] = w2[y];
+					w2g[y][x] = (y - w2off) * w2scale;
 				}
 			}
 
