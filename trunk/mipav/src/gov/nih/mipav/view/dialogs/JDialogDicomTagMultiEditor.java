@@ -29,7 +29,7 @@ import javax.swing.table.DefaultTableModel;
 
 public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 
-	protected File file;
+	protected File[] files;
 
 	protected FileInfoDicom fileInfo;
 	
@@ -52,10 +52,10 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 	}
 	
 	public JDialogDicomTagMultiEditor(Hashtable<FileDicomKey, FileDicomTag> tagList, JDialogBase parent, 
-			boolean isStandalone, File file, FileInfoDicom fileInfo) {
+			boolean isStandalone, File[] files, FileInfoDicom fileInfo) {
 		super(parent, isStandalone);
 		
-		this.file = file;
+		this.files = files;
 		this.fileInfo = fileInfo;
 		
 		this.setTagList(tagList);
@@ -100,10 +100,12 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 
 	@Override
 	protected void callAlgorithm() {
-		processFile(file);
+		for(int i=0;i<files.length;i++){
+			processFile(files[i]);
+		}
 		
 		if(!isScriptRunning()) {
-			MipavUtil.displayInfo("Tags processed successfully for image/directory "+file.getAbsolutePath());
+			MipavUtil.displayInfo("Tags processed successfully for selected images/directories ");
 			insertScriptLine();
 		}
 
@@ -204,36 +206,48 @@ tableItr:	for(int i=0; i<length; i++) {
 	@Override
 	protected void setGUIFromParams() {
 		int numKey = 0;
+		int numFile = 0;
 		Iterator<String> itr = scriptParameters.getParams().keySet().iterator();
 		String name = null;
 		String keyName = "TagKey";
+		String fileName = "DicomFile";
 		while(itr.hasNext()) {
 			name = itr.next();
 			if(name.contains(keyName)) {
 				numKey++;
 			}
-		}
-		
-		file = new File(scriptParameters.getParams().getString("DicomFile"));
-		
-		if(!file.isDirectory()) {
-			FileDicom readDicom = null;
-			try {
-        		if(file.isDirectory()) {
-	        		readDicom = searchForDicom(file);
-	        	} else {
-	        		readDicom = new FileDicom(file.getAbsolutePath());
-	        	}
-		    	boolean success = readDicom.readHeader(true);
-		    	if(success) {
-		    		FileInfoDicom fileInfo = (FileInfoDicom)readDicom.getFileInfo();
-		    		
-		    		this.fileInfo = fileInfo;
-		    	}
-			} catch(IOException io) {
-				System.err.println("Unable to read file: "+file.getAbsolutePath());
+			if(name.contains(fileName)){
+				numFile++;
 			}
 		}
+		
+		files = new File[numFile];
+		
+		for(int i=0;i<numFile;i++){
+			File file = new File(scriptParameters.getParams().getString("DicomFile" + i));
+			files[i] = file;
+
+			if(!file.isDirectory()) {
+				FileDicom readDicom = null;
+				try {
+					if(file.isDirectory()) {
+						readDicom = searchForDicom(file);
+					} else {
+						readDicom = new FileDicom(file.getAbsolutePath());
+					}
+					boolean success = readDicom.readHeader(true);
+					if(success) {
+						FileInfoDicom fileInfo = (FileInfoDicom)readDicom.getFileInfo();
+
+						this.fileInfo = fileInfo;
+					}
+				} catch(IOException io) {
+					System.err.println("Unable to read file: "+file.getAbsolutePath());
+				}
+			}
+		}
+
+		
 		
 		DefaultTableModel model = ((DefaultTableModel)tagsTable.getModel());
 		final FileDicomKey[] tagKeys = new FileDicomKey[numKey];
@@ -312,7 +326,9 @@ tableItr:	for(int i=0; i<length; i++) {
 	protected void storeParamsFromGUI() throws ParserException {
 		super.setGUIFromParams();
 
-		scriptParameters.getParams().put(ParameterFactory.newParameter("DicomFile", file.getAbsolutePath()));
+		for(int i=0;i<files.length;i++){
+			scriptParameters.getParams().put(ParameterFactory.newParameter("DicomFile" + i, files[i].getAbsolutePath()));
+		}
 		for(int i=0; i<keyArray.length; i++) {
 			scriptParameters.getParams().put(ParameterFactory.newParameter("TagKey"+i, keyArray[i].toString()));
 		}

@@ -1045,7 +1045,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         //final JFileChooser chooser = fileChooser.getFileChooser();
     	JFileChooser chooser = new JFileChooser();
-    	chooser.setDialogTitle("Select a file or directory of files to edit");
+    	chooser.setDialogTitle("Select a files or directories of files to edit");
+    	chooser.setMultiSelectionEnabled(true);
     	ViewImageFileFilter filter = new ViewImageFileFilter(new String[]{".dcm"});
     	chooser.addChoosableFileFilter(filter);
     	chooser.setFileFilter(filter);
@@ -1057,11 +1058,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         final int returnVal = chooser.showOpenDialog(null);
 
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            final File file = chooser.getSelectedFile();
+            final File[] files = chooser.getSelectedFiles();
 
-            if (file != null) {
+            if (files != null) {
                 FileDicom readDicom = null;
                 try {
+                	File file = files[0];
                     if (file.isDirectory()) {
                         readDicom = JDialogDicomTagMultiEditor.searchForDicom(file);
                     } else {
@@ -1073,12 +1075,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                         final FileInfoDicom fileInfo = (FileInfoDicom) readDicom.getFileInfo();
                         final Hashtable<FileDicomKey, FileDicomTag> tagList = fileInfo.getTagTable().getTagList();
-                        final JDialogDicomTagSelector tagSelector = new JDialogDicomTagMultiEditor(tagList, null, true, file, fileInfo);
+                        final JDialogDicomTagSelector tagSelector = new JDialogDicomTagMultiEditor(tagList, null, true, files, fileInfo);
                         tagSelector.setParentDialog(tagSelector);
                         tagSelector.setVisible(true);
                     }
                 } catch (final IOException e) {
-                    System.err.println("Unable to read dicom file: " + file.getAbsolutePath());
+                    System.err.println("Unable to read dicom file: " + files[0].getAbsolutePath());
                 }
 
                 // new JDialogEditDicom(file);
