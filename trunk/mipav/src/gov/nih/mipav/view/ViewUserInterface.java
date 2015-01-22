@@ -1039,11 +1039,17 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     public void buildEditDICOMFrame() {
         // get the selected directory
 
-        final ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
+        //final ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
 
-        fileChooser.setMulti(false);
+        //fileChooser.setMulti(false);
 
-        final JFileChooser chooser = fileChooser.getFileChooser();
+        //final JFileChooser chooser = fileChooser.getFileChooser();
+    	JFileChooser chooser = new JFileChooser();
+    	chooser.setDialogTitle("Select a file or directory of files to edit");
+    	ViewImageFileFilter filter = new ViewImageFileFilter(new String[]{".dcm"});
+    	chooser.addChoosableFileFilter(filter);
+    	chooser.setFileFilter(filter);
+    	
         chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES); // selecting directory applies changes to all
                                                                           // dicoms with the specified tags
         chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
