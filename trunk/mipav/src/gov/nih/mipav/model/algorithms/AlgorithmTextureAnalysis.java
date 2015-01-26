@@ -90,15 +90,15 @@ public class AlgorithmTextureAnalysis extends AlgorithmBase {
 
 	private boolean displayFilters = false;
 
-	ModelImage texttd2Image;
+	private ModelImage texttd2Image;
 
-	ModelImage texttd3Image;
+	private ModelImage texttd3Image;
 
-	ModelImage edgetd2Image;
+	private ModelImage edgetd2Image;
 
-	ModelImage edgetd3Image;
+	private ModelImage edgetd3Image;
 
-	ModelImage gImage;
+	private ModelImage gImage;
 
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
