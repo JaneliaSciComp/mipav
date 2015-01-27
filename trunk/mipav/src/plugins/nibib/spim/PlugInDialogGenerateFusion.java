@@ -62,7 +62,7 @@ import nibib.spim.PlugInAlgorithmGenerateFusion.SampleMode;
 /**
  * Class for performing image fusion based on reference image and transformation matrix.  Option to output geometric/arithmetic mean.
  * 
- * @version  July 3, 2014
+ * @version  January 27, 2015
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -227,6 +227,12 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	private boolean deconvShowResults;
 	/** Checkbox to control whether to leave the deconvolution output image frames open. */
 	private JCheckBox deconvShowResultsCheckbox;
+	private final static int JavaPlatform = 1;
+    private final static int OpenCLPlatform = 2;
+    private int deconvPlatform;
+    private ButtonGroup platformGroup;
+    private JRadioButton OpenCLButton;
+    private JRadioButton JavaButton;
 	/** Panel containing deconvolution parameters. */
 	private JPanel deconvParamPanel;
 	private ButtonGroup deconvolutionGroup;
@@ -428,7 +434,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
                                                                                 saveMaxProj, saveGeoMean, geoMeanDir, saveAriMean, ariMeanDir, 
                                                                                 savePrefusion, prefusionBaseDir, prefusionTransformDir, 
                                                                                 baseAriWeight, transformAriWeight, baseGeoWeight, transformGeoWeight, 
-                                                                                maxAlgo, saveType, doDeconv, 
+                                                                                maxAlgo, saveType, doDeconv, deconvPlatform,
                                                                                 deconvolutionMethod, deconvIterations, deconvSigmaA,
                                                                                 deconvSigmaB, useDeconvSigmaConversionFactor, deconvDir, deconvShowResults,
                                                                                 baseRotation, transformRotation);
@@ -670,6 +676,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     		
 	    	doDeconv = scriptParameters.getParams().getBoolean("do_deconv");
 	    	if (doDeconv) {
+	    		deconvPlatform = scriptParameters.getParams().getInt("deconv_platform");
 	    	    deconvDirString = scriptParameters.getParams().getString("deconvDirString");
 	    	    deconvShowResults = scriptParameters.getParams().getBoolean("deconv_show_results");
 	    	    deconvolutionMethod = scriptParameters.getParams().getInt("deconvolution_method");
@@ -799,6 +806,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         	}
         	
 	        if (doDeconv) {
+	        	scriptParameters.getParams().put(ParameterFactory.newParameter("deconv_platform", deconvPlatform));
 	            scriptParameters.getParams().put(ParameterFactory.newParameter("deconvDirString", deconvDirString));
 	            scriptParameters.getParams().put(ParameterFactory.newParameter("deconv_show_results", deconvShowResults));
 	            scriptParameters.getParams().put(ParameterFactory.newParameter("deconvolution_method", deconvolutionMethod));
@@ -870,7 +878,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     private void init() {
         setResizable(true);
         setForeground(Color.black);
-        setTitle("Generate fusion 544k");
+        setTitle("Generate fusion 544l");
         try {
             setIconImage(MipavUtil.getIconImage("divinci.gif"));
         } catch (FileNotFoundException e) {
@@ -2104,12 +2112,8 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         deconvPanel.setForeground(Color.black);
         deconvPanel.setBorder(MipavUtil.buildTitledBorder("Deconvolution options"));
         
-        if (OpenCLAlgorithmBase.isOCLAvailable() ) {
-            deconvPerformCheckbox = gui.buildCheckBox("Perform deconvolution", true);
-        }
-        else {
-            deconvPerformCheckbox = gui.buildCheckBox("Perform deconvolution", false);    
-        }
+        deconvPerformCheckbox = gui.buildCheckBox("Perform deconvolution", true);
+       
         deconvPerformCheckbox.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
             	deconvParamPanel.setVisible(deconvPerformCheckbox.isSelected());
@@ -2118,16 +2122,38 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         deconvPanel.add(deconvPerformCheckbox.getParent(), gbc2);
         gbc2.gridy++;
         
-        if ( !OpenCLAlgorithmBase.isOCLAvailable() ) {
-        	//MipavUtil.displayError( "OpenCL is not available on any platform" );
-        	deconvPerformCheckbox.setEnabled(false);
-        }
-        
         GridBagConstraints gbc = createGBC();
         deconvParamPanel = new JPanel(new GridBagLayout());
         deconvParamPanel.setForeground(Color.black);
         deconvParamPanel.setVisible(true);
         //deconvParamPanel.setBorder(MipavUtil.buildTitledBorder("Deconvolution options"));
+        
+        platformGroup = new ButtonGroup();
+        JavaButton = new JRadioButton("Java deconvolution on CPU", true);
+        if (OpenCLAlgorithmBase.isOCLAvailable()) {
+        	JavaButton.setEnabled(true);
+        }
+        else {
+        	JavaButton.setEnabled(false);
+        }
+        JavaButton.setFont(serif12);
+        JavaButton.setForeground(Color.black);
+        platformGroup.add(JavaButton);
+        deconvParamPanel.add(JavaButton, gbc);
+        gbc.gridy++;
+        
+        OpenCLButton = new JRadioButton("OpenCL deconvolution on graphics board", false);
+        if (OpenCLAlgorithmBase.isOCLAvailable()) {
+        	OpenCLButton.setEnabled(true);
+        }
+        else {
+        	OpenCLButton.setEnabled(false);
+        }
+        OpenCLButton.setFont(serif12);
+        OpenCLButton.setForeground(Color.black);
+        platformGroup.add(OpenCLButton);
+        deconvParamPanel.add(OpenCLButton, gbc);
+        gbc.gridy++;
         
         deconvolutionGroup = new ButtonGroup();
         jointButton = new JRadioButton("Joint deconvolution", true);
@@ -2871,6 +2897,12 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	    
 	    // deconvolution parameters
 	    if (doDeconv) {
+	    	if (JavaButton.isSelected()) {
+	    		deconvPlatform = JavaPlatform;
+	    	}
+	    	else {
+	    		deconvPlatform = OpenCLPlatform;
+	    	}
 	    	deconvShowResults = deconvShowResultsCheckbox.isSelected();
 	    	if (jointButton.isSelected()) {
 	    		deconvolutionMethod = OpenCLAlgorithmDeconvolution.JOINT_DECON;
