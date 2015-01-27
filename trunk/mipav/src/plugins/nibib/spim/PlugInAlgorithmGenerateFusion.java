@@ -171,6 +171,12 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
     private String saveType;
 
     private final boolean doDeconv;
+    
+    private final static int JavaPlatform = 1;
+    
+    private final static int OpenCLPlatform = 2;
+    
+    private final int deconvPlatform;  
 
     private final boolean deconvShowResults;
 
@@ -274,6 +280,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
      * @param maxAlgo can be null if no MIP is supposed to take place
      * @param saveType
      * @param doDeconv
+     * @param deconvPlatform
      * @param deconvolutionMethod
      * @param deconvIterations
      * @param deconvSigmaA
@@ -301,7 +308,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             final File prefusionTransformDir, final double baseAriWeight, final double transformAriWeight,
             final double baseGeoWeight, final double transformGeoWeight,
             final AlgorithmMaximumIntensityProjection[] maxAlgo, final String saveType, final boolean doDeconv,
-            final int deconvolutionMethod, final int deconvIterations, final float[] deconvSigmaA, final float[] deconvSigmaB,
+            final int deconvPlatform, final int deconvolutionMethod, final int deconvIterations, 
+            final float[] deconvSigmaA, final float[] deconvSigmaB,
             final boolean useDeconvSigmaConversionFactor, final File deconvDir, final boolean deconvShowResults,
             final int baseRotation, final int transformRotation) {
         this.registerOne = registerOne;
@@ -379,6 +387,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         this.maxAlgo = maxAlgo;
 
         this.doDeconv = doDeconv;
+        this.deconvPlatform = deconvPlatform;
         this.deconvolutionMethod = deconvolutionMethod;
         this.deconvIterations = deconvIterations;
         this.deconvSigmaA = deconvSigmaA;
