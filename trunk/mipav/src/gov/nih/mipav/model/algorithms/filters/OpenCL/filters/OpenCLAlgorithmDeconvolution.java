@@ -1509,11 +1509,11 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		    checkError(errcode[0]);
 		    argZ = 0;
 		    clSetKernelArg(kernelZB, argZ++, Sizeof.cl_mem, Pointer.to(blurredBuffer));
-			clSetKernelArg(kernelZB, argZ++, Sizeof.cl_mem, Pointer.to(derivativeZ[0]));
+			clSetKernelArg(kernelZB, argZ++, Sizeof.cl_mem, Pointer.to(derivativeZ[1]));
 			clSetKernelArg(kernelZB, argZ++, Sizeof.cl_mem, Pointer.to(estimateBufferB));
 			clSetKernelArg(kernelZB, argZ++, Sizeof.cl_int4, Pointer.to(new int[]{width, height, depth, 0}));
-			clSetKernelArg(kernelZB, argZ++, Sizeof.cl_int, Pointer.to(new int[]{kExtents[0][2]}));
-			clSetKernelArg(kernelZB, argZ++, Sizeof.cl_int, Pointer.to(new int[]{kOrigins[0][2]}));
+			clSetKernelArg(kernelZB, argZ++, Sizeof.cl_int, Pointer.to(new int[]{kExtents[1][2]}));
+			clSetKernelArg(kernelZB, argZ++, Sizeof.cl_int, Pointer.to(new int[]{kOrigins[1][2]}));
 			if ( color != 1 )
 			{
 				clSetKernelArg(kernelZB, argZ++, Sizeof.cl_int4, Pointer.to(colorMask));
