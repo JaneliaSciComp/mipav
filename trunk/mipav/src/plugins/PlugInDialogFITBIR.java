@@ -30,6 +30,7 @@ import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -51,6 +52,8 @@ import org.bouncycastle.util.encoders.Hex;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 
+import com.ice.tar.TarEntry;
+import com.ice.tar.TarInputStream;
 import com.sun.jimi.core.Jimi;
 import com.sun.jimi.core.JimiException;
 
@@ -213,7 +216,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.26";
+    private static final String pluginVersion = "0.27";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -1115,6 +1118,20 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         imagePath = destFile.getAbsolutePath();
                     } catch (final IOException e) {
                         MipavUtil.displayError("Unable to copy image zip file into output directory");
+                        e.printStackTrace();
+                    }
+                }
+                if ( ( (imgFileInfo.getImgFilePath().endsWith(".tar.gz") || imgFileInfo.getImgFilePath().endsWith(".tgz")) && new File(
+                        imgFileInfo.getImgFilePath()).exists())) {
+                    // the files were already tarballed - so don't zip again. copy to output dir
+                    try {
+                        final File srcFile = new File(imgFileInfo.getImgFilePath());
+                        final File destFile = new File(outputSubDir + outputFileNameBase + "_" + srcFile.getName());
+                        printlnToLog("Copying original image tarball file into output directory:\t" + destFile.getAbsolutePath());
+                        FileUtils.copyFile(srcFile, destFile);
+                        imagePath = destFile.getAbsolutePath();
+                    } catch (final IOException e) {
+                        MipavUtil.displayError("Unable to copy image tarball file into output directory");
                         e.printStackTrace();
                     }
                 } else if (imgFileInfo.getOrigFiles().size() == 1 && new File(imgFileInfo.getOrigFiles().get(0)).exists()) {
@@ -3821,6 +3838,77 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     // from the tempDir
                     filePath = tempDir + File.separator + fileName;
                     isMultifile = true;
+                } else if (imageFile.endsWith(".tar.gz") || imageFile.endsWith(".tgz")) {
+
+                    String destName = imageFile.replace("/", File.separator);
+                    destName = destName.replace("\\", File.separator);
+                    destName = destName.substring(destName.lastIndexOf(File.separator) + 1, destName.lastIndexOf(".t"));
+                    // String destDirName =
+                    final String tempDir = parentDir + File.separator + destName + "_temp_" + System.currentTimeMillis();
+                    tempDirs.add(tempDir);
+
+                    origSrcFile = new File(imageFile);
+                    if ( !origSrcFile.isAbsolute()) {
+                        origSrcFile = new File(parentDir + File.separator + imageFile);
+                    }
+
+                    String fileName = "";
+                    // try {
+                    final FileInputStream fis = new FileInputStream(origSrcFile);
+                    final GZIPInputStream zin = new GZIPInputStream(new BufferedInputStream(fis));
+                    final TarInputStream tin = new TarInputStream(zin);
+                    FileOutputStream fout;
+                    TarEntry entry;
+                    BufferedOutputStream dest = null;
+                    final int BUFFER = 2048;
+                    int count;
+                    final byte[] data = new byte[BUFFER];
+                    File f;
+                    // while we are at it, find the first file that does not
+                    // have a .raw extension, so we can
+                    // open it
+
+                    while ( (entry = tin.getNextEntry()) != null) {
+                        f = new File(tempDir);
+                        if ( !f.exists()) {
+                            f.mkdir();
+                        }
+
+                        if (entry.isDirectory()) {
+                            // if a directory, create it instead of trying to write it to disk
+                            f = new File(tempDir + File.separator + entry.getName());
+                            if ( !f.exists()) {
+                                f.mkdirs();
+                            }
+                        } else {
+                            // not a directory, so write out the file contents to disk from the zip and remember the
+                            // first non-raw file name we find
+                            if (fileName.equals("")) {
+                                if ( !entry.getName().endsWith(".raw")) {
+                                    fileName = entry.getName();
+                                }
+                            }
+
+                            fout = new FileOutputStream(tempDir + File.separator + entry.getName());
+                            dest = new BufferedOutputStream(fout, BUFFER);
+                            while ( (count = tin.read(data, 0, BUFFER)) != -1) {
+                                dest.write(data, 0, count);
+                            }
+                            dest.flush();
+                            dest.close();
+                        }
+                    }
+                    tin.close();
+                    // } catch (FileNotFoundException f) {
+                    // MipavUtil.displayError("The system cannot find the file specified");
+                    // } catch (final Exception e) {
+                    // e.printStackTrace();
+                    // }
+
+                    // now that everything has been unzipped, open the image
+                    // from the tempDir
+                    filePath = tempDir + File.separator + fileName;
+                    isMultifile = true;
                 } else {
                     // try to only open as a single file, since it wasn't zipped
                     filePath = parentDir + File.separator + imageFile;
@@ -5388,7 +5476,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         ViewUserInterface.getReference().setDefaultDirectory(file.getParent());
 
                         ModelImage srcImage = null;
-                        if (file.getName().endsWith(".zip")) {
+                        if (file.getName().endsWith(".zip") || file.getName().endsWith(".tar.gz") || file.getName().endsWith(".tgz")) {
                             // if the user selects a zip file containing a dataset, try to open it as if pointed to from
                             // CSV
                             srcImage = readImgFromCSV(file.getParent(), file.getName());
