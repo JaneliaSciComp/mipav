@@ -22,7 +22,13 @@ package nibib.spim;
  ****************************************************************** 
  ******************************************************************/
 
+import static org.jocl.CL.CL_MEM_COPY_HOST_PTR;
+import static org.jocl.CL.clCreateBuffer;
+import static org.jocl.CL.clEnqueueNDRangeKernel;
+import static org.jocl.CL.clSetKernelArg;
 import gov.nih.mipav.util.ThreadUtil;
+import gov.nih.mipav.model.GaussianKernelFactory;
+import gov.nih.mipav.model.Kernel;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmCostFunctions;
 import gov.nih.mipav.model.algorithms.AlgorithmCostFunctions2D;
@@ -58,6 +64,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import org.jocl.CL;
+import org.jocl.Pointer;
+import org.jocl.Sizeof;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
@@ -218,7 +228,16 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
     
     private int transformRotation = AlgorithmRotate.Y_AXIS_MINUS;
     
-    private int deconvolutionMethod = OpenCLAlgorithmDeconvolution.JOINT_DECON;
+    /** Default case */
+	public static final int JOINT_DECON = 1;
+	
+	/** Average deconvolution is based on the arithmetical mean of the two estimates from A and B separately */
+	public static final int AVERAGE_DECON = 2;
+	
+	/** Multiplication deconvolution is based on the geometrical mean of the two estimates from A and B separately */
+	public static final int MULTIPLICATION_DECON = 3;
+    
+    private int deconvolutionMethod = JOINT_DECON;
     
     private boolean allowScriptRecording = false;
 
@@ -1902,23 +1921,492 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             	}
             }
 
-            final OpenCLAlgorithmDeconvolution deconvAlgo = new OpenCLAlgorithmDeconvolution(resultImage, imageA,
-                    imageB, deconvolutionMethod, deconvSigmaA, deconvSigmaB, true, deconvIterations, useDeconvSigmaConversionFactor);
-            deconvAlgo.setRed(true);
-            deconvAlgo.setGreen(true);
-            deconvAlgo.setBlue(true);
-
-            // can only perform one deconvolution at a time because it uses the GPU
-            synchronized (parentObject) {
-                deconvAlgo.run();
+            if (deconvPlatform == OpenCLPlatform) {
+	            final OpenCLAlgorithmDeconvolution deconvAlgo = new OpenCLAlgorithmDeconvolution(resultImage, imageA,
+	                    imageB, deconvolutionMethod, deconvSigmaA, deconvSigmaB, true, deconvIterations, useDeconvSigmaConversionFactor);
+	            deconvAlgo.setRed(true);
+	            deconvAlgo.setGreen(true);
+	            deconvAlgo.setBlue(true);
+	
+	            // can only perform one deconvolution at a time because it uses the GPU
+	            synchronized (parentObject) {
+	                deconvAlgo.run();
+	            }
+	
+	            if (deconvShowResults) {
+	                resultImageList.add(deconvAlgo.getDestImage());
+	            }
+	
+	            return deconvAlgo.getDestImage();
+            } // if (deconvPlatform == OpenCLPlatform)
+            else {
+            	deconvolutionSep3D_Dual(imageA, imageB, resultImage);
+            	if (deconvShowResults) {
+            		resultImageList.add(resultImage);
+            	}
+            	
+            	return resultImage;
             }
-
-            if (deconvShowResults) {
-                resultImageList.add(deconvAlgo.getDestImage());
-            }
-
-            return deconvAlgo.getDestImage();
         }
+        
+        private void deconvolutionSep3D_Dual(ModelImage imageA, ModelImage imageB, ModelImage resultImage) {
+        	int i;
+        	int iter;
+            int width = imageA.getExtents()[0];
+            int height = imageA.getExtents()[1];
+            int depth = imageA.getExtents()[2];
+            int elementCount = width * height * depth;
+            float[] inputA = new float[ elementCount ];
+            try {
+            	imageA.exportData(0, elementCount, inputA);
+            }
+            catch (IOException e) {
+    			e.printStackTrace();
+    		}
+            float[] inputB = new float[ elementCount ];
+            try {
+            	imageB.exportData(0, elementCount, inputB);
+            }
+            catch (IOException e) {
+    			e.printStackTrace();
+    		}
+            float estimateBuffer[] = new float[elementCount];
+            float estimateBufferA[] = null;
+            float estimateBufferB[] = null;
+            if ((deconvolutionMethod == AVERAGE_DECON) || (deconvolutionMethod == MULTIPLICATION_DECON)) {
+                estimateBufferA = new float[elementCount];
+                estimateBufferB = new float[elementCount];
+            }
+            float blurredBuffer[] = new float[elementCount];
+            float tempBuffer[] = new float[elementCount];
+            for (i = 0; i < elementCount; i++) {
+            	estimateBuffer[i] = 0.5f * (inputA[i] + inputB[i]);
+            }
+            float derivativeX[][] = new float[2][];
+            float derivativeY[][] = new float[2][];
+            float derivativeZ[][] = new float[2][];
+            int kExtents[][] = new int[2][];
+            int kOrigins[][] = new int[2][];
+            initConvolutionBuffers(0, deconvSigmaA, derivativeX, derivativeY, derivativeZ, kExtents, kOrigins);
+    		initConvolutionBuffers(1, deconvSigmaB, derivativeX, derivativeY, derivativeZ, kExtents, kOrigins);
+              
+            // Iterate over the algorithm:
+    		for (iter = 0; iter < deconvIterations; iter++ )
+    		{
+    			// 
+    			//  Compute:
+    	        //  estimate *= blur(data_A / blur(estimate, view='a'), view='a')
+    			//
+    			//convolve X:
+    			for (i = 0; i < depth; i++ )
+    			{
+    			    convolveX(estimateBuffer, derivativeX[0], blurredBuffer, width, height, kExtents[0][0],
+    			    		kOrigins[0][0], i);	
+    			}
+    			
+    			//convolve Y:
+    			for (i = 0; i < depth; i++ )
+    			{
+    				convolveY(blurredBuffer, derivativeY[0], tempBuffer, width, height, kExtents[0][1],
+    			    		kOrigins[0][1], i);		
+    			}
+    			
+    			//convolve Z and divide the original image by the result:
+    			for (i = 0; i < depth; i++ )
+    			{
+    			    convolveZDiv(tempBuffer, derivativeZ[0], blurredBuffer, inputA,
+    			    		width, height, depth, kExtents[0][2], kOrigins[0][2], 0, i);
+    			}
+    			
+    			// 2nd blur and multiply result into estimate:
+    			//convolve X:
+    			for (i = 0; i < depth; i++ )
+    			{
+    				convolveX(blurredBuffer, derivativeX[0], tempBuffer, width, height, kExtents[0][0],
+    			    		kOrigins[0][0], i);		
+    			}
+    			
+    			//convolve Y:
+    			for (i = 0; i < depth; i++ )
+    			{
+    				convolveY(tempBuffer, derivativeY[0], blurredBuffer, width, height, kExtents[0][1],
+    			    		kOrigins[0][1], i);		
+    			}
+    			
+    			if (deconvolutionMethod == JOINT_DECON) {
+    				//convolve Z and multiply back into the estimate:
+    				for (i = 0; i < depth; i++ )
+    				{
+    					convolveZMult(blurredBuffer, derivativeZ[0], estimateBuffer, estimateBuffer,
+        			    		width, height, depth, kExtents[0][2], kOrigins[0][2], 0, i);	
+    				}
+    			}
+    			else { // method == AVERAGE_DECON OR MULTIPLICATION_DECON
+    				//convolve Z
+    				for (i = 0; i < depth; i++ )
+    				{
+    					convolveZ(blurredBuffer, derivativeZ[0], estimateBufferA,
+        			    		width, height, depth, kExtents[0][2], kOrigins[0][2], 0, i);		
+    				}	
+    			} // else method == AVERAGE_DECON OR MULTIPLICATION_DECON
+    			
+    			// 
+    			//  Compute:
+    	        //  estimate *= blur(data_B / blur(estimate, view='b'), view='b')
+    			//
+    			//convolve X:
+    			for (i = 0; i < depth; i++ )
+    			{
+    				convolveX(estimateBuffer, derivativeX[1], blurredBuffer, width, height, kExtents[1][0],
+    			    		kOrigins[1][0], i);		
+    			}
+    			
+    			//convolve Y:
+    			for (i = 0; i < depth; i++ )
+    			{
+    				convolveY(blurredBuffer, derivativeY[1], tempBuffer, width, height, kExtents[1][1],
+    			    		kOrigins[1][1], i);		
+    			}
+    			
+    			//convolve Z and divide the original image by the result:
+    			for (i = 0; i < depth; i++ )
+    			{
+    			    convolveZDiv(tempBuffer, derivativeZ[1], blurredBuffer, inputB,
+    			    		width, height, depth, kExtents[1][2], kOrigins[1][2], 0, i);
+    			}
+    			
+    			// 2nd blur and multiply result into estimate:
+    			//convolve X:
+    			for (i = 0; i < depth; i++ )
+    			{
+    				convolveX(blurredBuffer, derivativeX[1], tempBuffer, width, height, kExtents[1][0],
+    			    		kOrigins[1][0], i);			
+    			}
+    			
+    			//convolve Y:
+    			for (i = 0; i < depth; i++ )
+    			{
+    				convolveY(tempBuffer, derivativeY[1], blurredBuffer, width, height, kExtents[1][1],
+    			    		kOrigins[1][1], i);			
+    			}
+    			
+    			if (deconvolutionMethod == JOINT_DECON) {
+    				//convolve Z and multiply back into the estimate:
+    				for (i = 0; i < depth; i++ )
+    				{
+    					convolveZMult(blurredBuffer, derivativeZ[1], estimateBuffer, estimateBuffer,
+        			    		width, height, depth, kExtents[1][2], kOrigins[1][2], 0, i);	
+    				}
+    			}
+    			else { // method == AVERAGE_DECON OR MULTIPLICATION_DECON
+    				//convolve Z
+    				for (i = 0; i < depth; i++ )
+    				{
+    					convolveZ(blurredBuffer, derivativeZ[1], estimateBufferB,
+        			    		width, height, depth, kExtents[1][2], kOrigins[1][2], 0, i);		
+    				}	
+    			} // else method == AVERAGE_DECON OR MULTIPLICATION_DECON
+    			
+    			if (deconvolutionMethod == AVERAGE_DECON) {
+    			    for (i = 0; i < elementCount; i++) {
+    			    	estimateBuffer[i] = 0.5f * estimateBuffer[i]*(estimateBufferA[i] + estimateBufferB[i]);
+    			    }
+    			}
+    			else if (deconvolutionMethod == MULTIPLICATION_DECON) {
+    				for (i = 0; i < elementCount; i++) {
+    			    	estimateBuffer[i] = (float)(estimateBuffer[i]*Math.sqrt(estimateBufferA[i] * estimateBufferB[i]));
+    			    }	
+    			}
+    		} // for (iter = 0; iter < deconvIterations; iter++ )
+    		
+    		try {
+    			resultImage.importData(0, estimateBuffer, true);
+    		}
+    		catch(IOException e) {
+    		    e.printStackTrace();	
+    		}
+        }
+        
+        private void convolveX(float input[], float dx[], float output[], int xDim, int yDim, 
+        		int maskSize, int maskOrigin, int slice) {
+        	int length = xDim * yDim;
+        	int offset = slice * length;
+        	int x;
+        	int y;
+        	int mx;
+        	int ix;
+        	int i;
+        	int index;
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			float sumX = 0.0f;
+        			float dxVal = 0.0f;
+        			for (mx = 0; mx < maskSize; mx++) {
+        			    ix = x - maskOrigin + mx;
+        			    i = offset + y * xDim + ix;
+        			    if ((ix >= 0) && (ix < xDim)) {
+        			        dxVal = dx[mx];
+        			        sumX += input[i] * dxVal;
+        			    }
+        			} // for (mx = 0; mx < maskSize; mx++)
+        			index = offset + y * xDim + x;
+        			output[index] = sumX;
+        			if (maskSize == 0) {
+        				output[index] = input[index];
+        			}
+        		} // for (x = 0; x < xDim; x++)
+        	} // for (y = 0; y < yDim; y++)
+        }
+        
+        private void convolveY(float input[], float dy[], float output[], int xDim, int yDim, 
+        		int maskSize, int maskOrigin, int slice) {
+        	int length = xDim * yDim;
+        	int offset = slice * length;
+        	int x;
+        	int y;
+        	int my;
+        	int iy;
+        	int i;
+        	int index;
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			float sumY = 0.0f;
+        			float dyVal = 0.0f;
+        			for (my = 0; my < maskSize; my++) {
+        			    iy = y - maskOrigin + my;
+        			    i = offset + iy * xDim + x;
+        			    if ((iy >= 0) && (iy < yDim)) {
+        			        dyVal = dy[my];
+        			        sumY += input[i] * dyVal;
+        			    }
+        			} // for (my = 0; my < maskSize; my++)
+        			index = offset + y * xDim + x;
+        			output[index] = sumY;
+        			if (maskSize == 0) {
+        				output[index] = input[index];
+        			}
+        		} // for (x = 0; x < xDim; x++)
+        	} // for (y = 0; y < yDim; y++)
+        }
+        
+        private void convolveZ(float input[], float dz[], float output[],
+        		int xDim, int yDim, int zDim, 
+        		int maskSize, int maskOrigin, int clipZ, int slice) {
+        	int length = xDim * yDim;
+        	int offset = slice * length;
+        	int x;
+        	int y;
+        	int mz;
+        	int iz;
+        	int i;
+        	int index;
+        	if ((clipZ != 0) && ((slice < (maskSize/2)) || (slice >= (zDim - (maskSize/2))))) {
+        	    for (i = 0; i < length; i++) {
+        	    	output[offset + i] = input[offset + i];
+        	    }
+        	    return;
+        	} // if ((clipZ != 0) && ((slice < (maskSize/2)) || (slice >= (zDim - (maskSize/2)))))
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			float sumZ = 0.0f;
+        			float dzVal = 0.0f;
+        			for (mz = 0; mz < maskSize; mz++) {
+        			    iz = slice - maskOrigin + mz ;
+        			    i = iz * length + y * xDim + x;
+        			    if ((iz >= 0) && (iz < zDim)) {
+        			        dzVal = dz[mz];
+        			        sumZ += input[i] * dzVal;
+        			    }
+        			} // for (my = 0; my < maskSize; my++)
+        			index = offset + y * xDim + x;
+        		    output[index] = sumZ;
+        		    if (maskSize == 0) {
+        		    	output[index] = input[index];
+        		    }
+        		} // for (x = 0; x < xDim; x++)
+        	} // for (y = 0; y < yDim; y++)
+        }
+        
+        private void convolveZDiv(float input[], float dz[], float output[], float original[],
+        		int xDim, int yDim, int zDim, 
+        		int maskSize, int maskOrigin, int clipZ, int slice) {
+        	int length = xDim * yDim;
+        	int offset = slice * length;
+        	int x;
+        	int y;
+        	int mz;
+        	int iz;
+        	int i;
+        	int index;
+        	if ((clipZ != 0) && ((slice < (maskSize/2)) || (slice >= (zDim - (maskSize/2))))) {
+        	    for (i = 0; i < length; i++) {
+        	    	output[offset + i] = original[offset + i]/input[offset + i];
+        	    }
+        	    return;
+        	} // if ((clipZ != 0) && ((slice < (maskSize/2)) || (slice >= (zDim - (maskSize/2)))))
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			float sumZ = 0.0f;
+        			float dzVal = 0.0f;
+        			for (mz = 0; mz < maskSize; mz++) {
+        			    iz = slice - maskOrigin + mz ;
+        			    i = iz * length + y * xDim + x;
+        			    if ((iz >= 0) && (iz < zDim)) {
+        			        dzVal = dz[mz];
+        			        sumZ += input[i] * dzVal;
+        			    }
+        			} // for (my = 0; my < maskSize; my++)
+        			index = offset + y * xDim + x;
+        			if (sumZ != 0.0f) {
+        				output[index] = original[index]/sumZ;
+        			}
+        			else {
+        				output[index] = 0.0f;
+        			}
+        			if (maskSize == 0) {
+        				output[index] = original[index]/input[index];
+        			}
+        		} // for (x = 0; x < xDim; x++)
+        	} // for (y = 0; y < yDim; y++)
+        }
+        
+        private void convolveZMult(float input[], float dz[], float output[], float original[],
+        		int xDim, int yDim, int zDim, 
+        		int maskSize, int maskOrigin, int clipZ, int slice) {
+        	int length = xDim * yDim;
+        	int offset = slice * length;
+        	int x;
+        	int y;
+        	int mz;
+        	int iz;
+        	int i;
+        	int index;
+        	if ((clipZ != 0) && ((slice < (maskSize/2)) || (slice >= (zDim - (maskSize/2))))) {
+        	    for (i = 0; i < length; i++) {
+        	    	output[offset + i] = original[offset + i] * input[offset + i];
+        	    }
+        	    return;
+        	} // if ((clipZ != 0) && ((slice < (maskSize/2)) || (slice >= (zDim - (maskSize/2)))))
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			float sumZ = 0.0f;
+        			float dzVal = 0.0f;
+        			for (mz = 0; mz < maskSize; mz++) {
+        			    iz = slice - maskOrigin + mz ;
+        			    i = iz * length + y * xDim + x;
+        			    if ((iz >= 0) && (iz < zDim)) {
+        			        dzVal = dz[mz];
+        			        sumZ += input[i] * dzVal;
+        			    }
+        			} // for (my = 0; my < maskSize; my++)
+        			index = offset + y * xDim + x;
+        		    output[index] = original[index] * sumZ;
+        		    if (maskSize == 0) {
+        		    	output[index] = original[index] * input[index];
+        		    }
+        		} // for (x = 0; x < xDim; x++)
+        	} // for (y = 0; y < yDim; y++)
+        }
+        
+        /**
+    	 * Creates the Convolution kernels (data arrays) in OpenCL.
+    	 * Creates 3 1D arrays in OpenCL for the x-convolution kernel
+    	 * the y-convolution kernel, and the z-convolution kernel.
+    	 * @param index (0 for single-image deconvolution, 0,1 for dual-image)
+    	 * @param sigmas
+    	 */
+    	private void initConvolutionBuffers(int index, float[] sigmas, float derivativeX[][], float derivativeY[][],
+    			float derivativeZ[][], int kExtents[][], int kOrigins[][]) 
+    	{
+
+    		//
+    		// Create the convolution buffers:    
+    		//
+    		float[] localSigmas = new float[sigmas.length];
+    		if (useDeconvSigmaConversionFactor)
+    		{
+    			double conversion = 1.0 / (2*Math.sqrt(2*Math.log(2)));
+    			for ( int i = 0; i < sigmas.length; i++ )
+    			{
+    				localSigmas[i] = (float) (sigmas[i] * conversion);
+    			}
+    		}
+    		else
+    		{
+    			for ( int i = 0; i < sigmas.length; i++ )
+    			{
+    				localSigmas[i] = sigmas[i];
+    			}
+    		}
+//    		for ( int i = 0; i < sigmas.length; i++ )
+//    		{
+//    			System.err.print( localSigmas[i] + " " );
+//    		}
+//    		System.err.println("");
+//    		System.err.println("");
+    		
+    		GaussianKernelFactory gkf = GaussianKernelFactory.getInstance(localSigmas);
+    		gkf.setKernelType(GaussianKernelFactory.BLUR_KERNEL);
+    		Kernel gaussianKernel = gkf.createKernel();
+    		float[][] derivativeKernel = gaussianKernel.getData();
+
+//    		for ( int i = 0; i < derivativeKernel[0].length; i++ )
+//    			System.err.print( derivativeKernel[0][i] + " " );
+//    		System.err.println("");
+//    		System.err.println("");
+//    		System.err.println("");
+
+//    		for ( int i = 0; i < derivativeKernel[1].length; i++ )
+//    			System.err.print( derivativeKernel[1][i] + " " );
+//    		System.err.println("");
+//    		System.err.println("");
+//    		System.err.println("");
+
+//    		for ( int i = 0; i < derivativeKernel[2].length; i++ )
+//    			System.err.print( derivativeKernel[2][i] + " " );
+//    		System.err.println("");
+//    		System.err.println("");
+//    		System.err.println("");
+
+    		int[] kExtentsTemp = gaussianKernel.getExtents();
+    		kExtents[index] = new int[kExtentsTemp.length];
+    		for ( int i = 0; i < kExtents[index].length; i++ )
+    		{
+    			kExtents[index][i] = kExtentsTemp[i];
+    		}
+
+    		//	float[][] derivativeKernel = new float[3][];
+    		//	derivativeKernel[0] = getKernel(localSigmas[0]);
+    		//	derivativeKernel[1] = getKernel(localSigmas[1]);
+    		//	derivativeKernel[2] = getKernel(localSigmas[2]);
+    		//	int[] kExtents = new int[]{ derivativeKernel[0].length, derivativeKernel[1].length, derivativeKernel[2].length };
+
+    		kOrigins[index] = new int[kExtents[index].length];
+    		for ( int i = 0; i < kOrigins[index].length; i++ )
+    		{
+    			kOrigins[index][i] = (kExtents[index][i]-1)>>1;
+    		}
+//    		System.err.println( kExtents[index][0] + " " + kExtents[index][1] + " " + kExtents[index][2] );
+//    		System.err.println( kOrigins[index][0] + " " + kOrigins[index][1] + " " + kOrigins[index][2] );
+    		
+    		// x-convolution buffer:
+    		derivativeX[index] = new float[derivativeKernel[0].length];
+    		for (int i = 0; i < derivativeKernel[0].length; i++) {
+    			derivativeX[index][i] = derivativeKernel[0][i];
+    		}
+    		
+    		// y-convolution buffer:
+    		derivativeY[index] = new float[derivativeKernel[1].length];
+    		for (int i = 0; i < derivativeKernel[1].length; i++) {
+    			derivativeY[index][i] = derivativeKernel[1][i];
+    		}
+    		
+    		// z-convolution buffer:
+    		derivativeZ[index] = new float[derivativeKernel[2].length];
+    		for (int i = 0; i < derivativeKernel[2].length; i++) {
+    			derivativeZ[index][i] = derivativeKernel[2][i];
+    		}
+    	}
 
         /**
          * Discards extraneous slices from transform image.
