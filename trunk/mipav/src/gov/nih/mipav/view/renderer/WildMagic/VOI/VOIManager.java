@@ -21,6 +21,7 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.RubberbandLivewire;
 import gov.nih.mipav.view.ViewJComponentEditImage;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJPopupPt;
 import gov.nih.mipav.view.ViewJPopupVOI;
 import gov.nih.mipav.view.ViewJProgressBar;
@@ -34,10 +35,13 @@ import gov.nih.mipav.view.*;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Polygon;
+import java.awt.Toolkit;
 import java.awt.event.*;
 import java.io.IOException;
 import java.text.DecimalFormat;
@@ -1309,7 +1313,24 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			// Otherwise set the cursor to crosshair
 			else
 			{
-				m_kParent.setCursor(MipavUtil.crosshairCursor);
+				String preferredCrosshair = Preferences.getProperty(Preferences.PREF_CROSSHAIR_CURSOR);
+				Cursor cursor;
+				if (preferredCrosshair.equalsIgnoreCase("default")) {
+                    cursor = new Cursor(Cursor.CROSSHAIR_CURSOR);
+                } else {
+
+                    try {
+                        final Toolkit toolkit = Toolkit.getDefaultToolkit();
+                        cursor = toolkit.createCustomCursor(MipavUtil.getIcon(preferredCrosshair).getImage(), new Point(12, 12), preferredCrosshair);
+                    } catch (final NullPointerException noIcon) {
+
+                        // specfied icon cannot be found. Instead, we set default:
+                    	cursor = new Cursor(Cursor.CROSSHAIR_CURSOR);
+                        Preferences.debug("JDialogMipavOptions: Crosshair icon \"" + preferredCrosshair + "\" cannot be found.  "
+                                + "Instead, using default crosshair pointer.\n", 2);
+                    }
+                }
+				m_kParent.setCursor(cursor);
 			}
 		}
 		// Show any selected contours:
