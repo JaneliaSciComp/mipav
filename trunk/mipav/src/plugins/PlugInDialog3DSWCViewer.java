@@ -16,7 +16,6 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Vector;
 
 import javax.swing.BorderFactory;
