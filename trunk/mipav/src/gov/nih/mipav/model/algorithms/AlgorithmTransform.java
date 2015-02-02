@@ -4750,6 +4750,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             // destImage.setMatrix(newTMatrix);
 
         }
+        setCompleted(true);
     }
 
     /**
@@ -5733,8 +5734,6 @@ public class AlgorithmTransform extends AlgorithmBase {
 
             return;
         }
-
-        setCompleted(true);
 
     }
 
