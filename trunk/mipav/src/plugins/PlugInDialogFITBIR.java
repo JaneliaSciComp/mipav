@@ -216,7 +216,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.27";
+    private static final String pluginVersion = "0.28";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -3961,9 +3961,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
             } catch (final FileNotFoundException e) {
                 MipavUtil.displayError("The system cannot find the file specified");
+                e.printStackTrace();
                 validFile = false;
             } catch (final NullPointerException e) {
                 MipavUtil.displayError("The system cannot find the file specified");
+                e.printStackTrace();
                 validFile = false;
             } catch (final Exception e) {
                 e.printStackTrace();
@@ -5252,10 +5254,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     setElementComponentValue(deVal, ageInMonths);
                                 }
                             } else if (deName.equalsIgnoreCase("AgeYrs") && ageVal != null && !ageVal.equals("")) {
-                                final Integer ageInMonths = Integer.valueOf(convertDicomAgeToBRICS(ageVal));
-                                if (ageInMonths != 0) {
-                                    final String ageInYears = String.valueOf(ageInMonths / 12);
-                                    setElementComponentValue(deVal, ageInYears);
+                                final String ageMonthsStr = convertDicomAgeToBRICS(ageVal);
+                                if (ageMonthsStr != null && !ageMonthsStr.trim().equals("")) {
+                                    final Integer ageInMonths = Integer.valueOf(ageMonthsStr);
+                                    if (ageInMonths != 0) {
+                                        final String ageInYears = String.valueOf(ageInMonths / 12);
+                                        setElementComponentValue(deVal, ageInYears);
+                                    }
                                 }
                             } else if (deName.equalsIgnoreCase("SiteName")) {
                                 setElementComponentValue(deVal, siteName);
