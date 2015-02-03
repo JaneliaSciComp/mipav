@@ -34,17 +34,17 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
     private static final int logOp = 6;
     
     // Buffer to receive result of convolution operation
-    private float[] Ix;
+    private double[] Ix;
     
-    private float[] Iy;
+    private double[] Iy;
     
-    private float[] Ix2;
+    private double[] Ix2;
     
-    private float[] Ixy;
+    private double[] Ixy;
     
-    private float[] Iy2;
+    private double[] Iy2;
     
-    private float[] log;
+    private double[] log;
     
     private int operationType = xOp;
     
@@ -94,16 +94,16 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
         boolean entireImage = true;
         boolean image25D = true;
         int i;
-        AlgorithmConvolver convolver;
+        AlgorithmDConvolver convolver;
         int xkDim, ykDim;
         int[] derivOrder = new int[2];
-        float GxData[];
-        float GyData[];
+        double GxData[];
+        double GyData[];
         int kExtents[];
-        float[] GData;
-        float IxIx[];
-        float IxIy[];
-        float IyIy[];
+        double[] GData;
+        double IxIx[];
+        double IxIy[];
+        double IyIy[];
         ModelImage IxIxImage;
         ModelImage IxIyImage;
         ModelImage IyIyImage;
@@ -127,7 +127,7 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
         int j;
         double denom;
         double denom2;
-        float sigma2D[] = new float[2];
+        double sigma2D[] = new double[2];
         double cim[];
         double sum;
         // Factor in original Harris measure
@@ -147,18 +147,18 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
         double threshold;
         double sL;
         int halfMask;
-        float srcBuffer[];
-        float expandedBuffer[];
+        double srcBuffer[];
+        double expandedBuffer[];
         int expandedSize;
         ModelImage expandedImage;
         double kf;
         int loopVal;
-        float laplace_snlo[][];
+        double laplace_snlo[][];
         double total;
         double mean;
         int n;
         int scale;
-        float val;
+        double val;
         VOI newVOI;
         int xp[];
         int yp[];
@@ -200,13 +200,13 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
         	
         	kExtents[0] = 2*xk + 1;
         	kExtents[1] = 1;
-        	GxData = new float[2*xk + 1];
+        	GxData = new double[2*xk + 1];
         	denom = 2.0 * sD * sD;
         	denom2 = sD * sD * sD * Math.sqrt(2.0 * Math.PI);
         	for (j = 0; j <= 2*xk; j++) {
-        		GxData[j] = (float)(xm[j]* Math.exp(-xm[j]*xm[j]/denom)/denom2);
+        		GxData[j] = (xm[j]* Math.exp(-xm[j]*xm[j]/denom)/denom2);
         	}
-        	convolver = new AlgorithmConvolver(srcImage, GxData, kExtents,entireImage, image25D);
+        	convolver = new AlgorithmDConvolver(srcImage, GxData, kExtents,entireImage, image25D);
 	        convolver.addListener(this);
 	        if (!entireImage) {
 	            convolver.setMask(mask);
@@ -216,11 +216,11 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
 	        
 	        kExtents[0] = 1;
 	        kExtents[1] = 2*xk + 1;
-	        GyData = new float[2*xk + 1];
+	        GyData = new double[2*xk + 1];
 	        for (j = 0; j <= 2*xk; j++) {
 	        	GyData[j] = GxData[j];
 	        }
-	        convolver = new AlgorithmConvolver(srcImage, GyData, kExtents,entireImage, image25D);
+	        convolver = new AlgorithmDConvolver(srcImage, GyData, kExtents,entireImage, image25D);
 	        convolver.addListener(this);
 	        if (!entireImage) {
 	            convolver.setMask(mask);
@@ -255,24 +255,24 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
 
 	        kExtents[1] = ykDim;
 
-	        GData = new float[xkDim * ykDim];
-	        sigma2D[0] = (float)sI;
-	        sigma2D[1] = (float)sI;
-	        GenerateGaussian G = new GenerateGaussian(GData, kExtents, sigma2D, derivOrder);
+	        GData = new double[xkDim * ykDim];
+	        sigma2D[0] = sI;
+	        sigma2D[1] = sI;
+	        GenerateDGaussian G = new GenerateDGaussian(GData, kExtents, sigma2D, derivOrder);
 	        G.calc(false);
 
-	        IxIx = new float[sliceSize];
-	        IxIy = new float[sliceSize];
-	        IyIy = new float[sliceSize];
+	        IxIx = new double[sliceSize];
+	        IxIy = new double[sliceSize];
+	        IyIy = new double[sliceSize];
 	        for (j = 0; j < sliceSize; j++) {
 	        	IxIx[j] = Ix[j] * Ix[j];
 	        	IxIy[j] = Ix[j] * Iy[j];
 	        	IyIy[j] = Iy[j] * Iy[j];
 	        }
 	        
-	        IxIxImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), "IxIxImage");
-	        IxIyImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), "IxIyImage");
-	        IyIyImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), "IyIyImage");
+	        IxIxImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), "IxIxImage");
+	        IxIyImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), "IxIyImage");
+	        IyIyImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), "IyIyImage");
 	        try {
 	        	IxIxImage.importData(0, IxIx, true);
 	        }
@@ -301,7 +301,7 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
 	        }
 	        IyIy = null;
 	        
-	        convolver = new AlgorithmConvolver(IxIxImage, GData, kExtents,entireImage, image25D);
+	        convolver = new AlgorithmDConvolver(IxIxImage, GData, kExtents,entireImage, image25D);
 	        convolver.addListener(this);
 	        if (!entireImage) {
 	            convolver.setMask(mask);
@@ -309,7 +309,7 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
 	        operationType = xxOp;
 	        convolver.run();
 	        
-	        convolver = new AlgorithmConvolver(IxIyImage, GData, kExtents,entireImage, image25D);
+	        convolver = new AlgorithmDConvolver(IxIyImage, GData, kExtents,entireImage, image25D);
 	        convolver.addListener(this);
 	        if (!entireImage) {
 	            convolver.setMask(mask);
@@ -317,7 +317,7 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
 	        operationType = xyOp;
 	        convolver.run();
 	        
-	        convolver = new AlgorithmConvolver(IyIyImage, GData, kExtents,entireImage, image25D);
+	        convolver = new AlgorithmDConvolver(IyIyImage, GData, kExtents,entireImage, image25D);
 	        convolver.addListener(this);
 	        if (!entireImage) {
 	            convolver.setMask(mask);
@@ -397,8 +397,8 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
         
         // PART 2: LAPLACE
         // Compute scale-normalized laplacian operator
-        laplace_snlo = new float[sigmaNB][sliceSize];
-        srcBuffer = new float[sliceSize];
+        laplace_snlo = new double[sigmaNB][sliceSize];
+        srcBuffer = new double[sliceSize];
         try {
         	srcImage.exportData(0, sliceSize, srcBuffer);
         }
@@ -416,7 +416,7 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
         	// padding method called border replication. In border replication, the value of any pixel outside
         	// the image is determined by replicating the value from the nearest border pixel. 
         	expandedSize = (xDim + 2 * halfMask) * (yDim + 2 * halfMask);
-        	expandedBuffer = new float[expandedSize];
+        	expandedBuffer = new double[expandedSize];
         	for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
         			expandedBuffer[x + halfMask + (y + halfMask) * (xDim + 2 * halfMask)] = srcBuffer[x + y * xDim];
@@ -475,18 +475,18 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
         	}
         	kExtents[0] = 2*halfMask + 1;
         	kExtents[1] = 2*halfMask + 1;
-        	GData = new float[kExtents[0] * kExtents[1]];
+        	GData = new double[kExtents[0] * kExtents[1]];
         	denom = 2.0 * sL * sL;
         	kf = -1.0/(Math.PI * sL * sL);
         	for (y = -halfMask; y <= halfMask; y++) {
         		for (x = -halfMask; x <= halfMask; x++) {
         		    distSquared = x * x + y * y;
-        		    GData[(x + halfMask) + (y + halfMask) * kExtents[0]] = (float)(kf * (1.0 - distSquared/denom) *
+        		    GData[(x + halfMask) + (y + halfMask) * kExtents[0]] = (kf * (1.0 - distSquared/denom) *
         		    		         Math.exp(-distSquared/denom));
         		}
         	} // for (y = -halfMask; y <= halfMask; y++)
         	
-        	convolver = new AlgorithmConvolver(expandedImage, GData, kExtents,entireImage, image25D);
+        	convolver = new AlgorithmDConvolver(expandedImage, GData, kExtents,entireImage, image25D);
 	        convolver.addListener(this);
 	        if (!entireImage) {
 	            convolver.setMask(mask);
@@ -569,8 +569,8 @@ public class AlgorithmHarrisLaplace extends AlgorithmBase implements AlgorithmIn
             finalize();
             return;
         }
-        if (algorithm instanceof AlgorithmConvolver) {
-            AlgorithmConvolver convolver = (AlgorithmConvolver) algorithm;
+        if (algorithm instanceof AlgorithmDConvolver) {
+            AlgorithmDConvolver convolver = (AlgorithmDConvolver) algorithm;
             if (operationType == xOp) {
                 Ix = convolver.getOutputBuffer();
             }
