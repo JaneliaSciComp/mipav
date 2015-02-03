@@ -38,8 +38,10 @@ import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR2D;
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR3D;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmMaximumIntensityProjection;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
+import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -1505,7 +1507,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                 }
             }
         }
-
+        
         private void transform() {
             final int[] dim = new int[transformImage.getExtents().length];
             final float[] res = new float[transformImage.getResolutions(0).length];
@@ -1579,7 +1581,6 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
 
             }
 
-            final boolean doPad = false;
             TransMatrix xfrm = new TransMatrix(4);
             if (registerAll) {
             	final int cost = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED;
@@ -1674,35 +1675,59 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
 	                xfrm.identity();
 	            }
             } // else !registerAll
-            final int interp = AlgorithmTransform.TRILINEAR;
             final int units[] = new int[3];
             units[0] = FileInfoBase.UNKNOWN_MEASURE;
             units[1] = FileInfoBase.UNKNOWN_MEASURE;
             units[2] = FileInfoBase.UNKNOWN_MEASURE;
-            final boolean doClip = true;
-            final boolean doVOI = false;
-            final boolean doRotateCenter = false;
-            final Vector3f center = new Vector3f();
-            final float fillValue = 0.0f;
-            final boolean doUpdateOrigin = false;
-            final boolean isSATransform = false;
-            AlgorithmTransform algoTrans = new AlgorithmTransform(transformImage, xfrm, interp, oXres, oYres, oZres,
-                    oXdim, oYdim, oZdim, units, doVOI, doClip, doPad, doRotateCenter, center);
-            algoTrans.setFillValue(fillValue);
-            algoTrans.setUpdateOriginFlag(doUpdateOrigin);
-            algoTrans.setUseScannerAnatomical(isSATransform);
-            algoTrans.setSuppressProgressBar(true);
-
-            algoTrans.run();
-
-            if ( !doInterImages) {
-                transformImage.disposeLocal();
+            boolean doPad = false;
+            final double fillValue = 0.0;
+            int[]  margins = null;
+            if (doPad) {
+                margins = getImageMargins(transformImage, xfrm, oXres, oYres, oZres);  
+                oXdim = oXdim + margins[0] + margins[3];
+                oYdim = oYdim + margins[1] + margins[4];
+                oZdim = oZdim + margins[2] + margins[5];
             }
+            int iXdim = transformImage.getExtents()[0];
+            int iYdim = transformImage.getExtents()[1];
+            int iZdim = transformImage.getExtents()[2];
+            float iXres = transformImage.getFileInfo()[0].getResolutions()[0];
+            float iYres = transformImage.getFileInfo()[0].getResolutions()[1];
+            float iZres = transformImage.getFileInfo()[0].getResolutions()[2];
+            int extents[] = new int[3];
+            extents[0] = oXdim;
+            extents[1] = oYdim;
+            extents[2] = oZdim;
+            float[] destResolutions = new float[3];
+            destResolutions[0] = oXres;
+            destResolutions[1] = oYres;
+            destResolutions[2] = oZres;
+            TransMatrix transMatrix = xfrm.clone();
+            TransMatrix xfrmInverse = matrixtoInverseArray(transMatrix);
+            int imgLength = transformImage.getExtents()[0] * transformImage.getExtents()[1] * transformImage.getExtents()[2];
+            Vector<TransMatrix> originalVector = transformImage.getMatrixHolder().getMatrices();
+            double [] imgBuf = new double[imgLength];
+            try {
+                transformImage.exportData(0, imgLength, imgBuf);
+            }
+            catch (IOException e) {
+            	e.printStackTrace();
+            }
+            final String name = transformImage.getImageName() + "_transform";
+            int type = transformImage.getType();
+            ModelImage transformImage2 = new ModelImage(type, extents, name);
+            updateFileInfo(transformImage, transformImage2, destResolutions, units, transMatrix);
+            transformImage.disposeLocal();
+            transformImage = transformImage2;
+            transformTrilinear(transformImage, imgBuf, xfrmInverse, iXdim, iYdim, iZdim,
+            		iXres, iYres, iZres, oXdim, oYdim, oZdim, oXres, oYres, oZres,
+            		doPad, margins, fillValue);
+             // copy the src image's matrices into the destination image
+            transformImage.getMatrixHolder().replaceMatrices(originalVector);
 
-            transformImage = algoTrans.getTransformedImage();
-            algoTrans.disposeLocal();
-            algoTrans = null;
-            transformImage.calcMinMax();
+            // add the new transform matrix to the destination image
+            transMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
+            transformImage.getMatrixHolder().addMatrix(transMatrix);
 
             if (doInterImages) {
                 new ViewJFrameImage(transformImage);
@@ -1712,36 +1737,643 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         private ModelImage subTransform(final ModelImage image, final TransMatrix mat, final int[] outDim,
                 final float[] outRes) {
             final boolean doPad = true;
-            final int interp = AlgorithmTransform.TRILINEAR;
             final int units[] = new int[3];
             units[0] = FileInfoBase.UNKNOWN_MEASURE;
             units[1] = FileInfoBase.UNKNOWN_MEASURE;
             units[2] = FileInfoBase.UNKNOWN_MEASURE;
-            final boolean doClip = true;
-            final boolean doVOI = false;
-            final boolean doRotateCenter = false;
-            final Vector3f center = new Vector3f();
-            final float fillValue = 0.0f;
-            final boolean doUpdateOrigin = false;
-            final boolean isSATransform = false;
-            AlgorithmTransform algoTrans = new AlgorithmTransform(image, mat, interp, outRes[0], outRes[1], outRes[2],
-                    outDim[0], outDim[1], outDim[2], units, doVOI, doClip, doPad, doRotateCenter, center);
-            algoTrans.setFillValue(fillValue);
-            algoTrans.setUpdateOriginFlag(doUpdateOrigin);
-            algoTrans.setUseScannerAnatomical(isSATransform);
-            algoTrans.setSuppressProgressBar(true);
-
-            algoTrans.run();
-
+            final double fillValue = 0.0;
+            int iXdim = image.getExtents()[0];
+            int iYdim = image.getExtents()[1];
+            int iZdim = image.getExtents()[2];
+            float iXres = image.getFileInfo()[0].getResolutions()[0];
+            float iYres = image.getFileInfo()[0].getResolutions()[1];
+            float iZres = image.getFileInfo()[0].getResolutions()[2];
+            int extents[] = new int[3];
+            extents[0] = outDim[0];
+            extents[1] = outDim[1];
+            extents[2] = outDim[2];
+            int[]  margins = null;
+            if (doPad) {
+                margins = getImageMargins(transformImage, mat, outRes[0], outRes[1], outRes[2]);  
+                extents[0] = extents[0] + margins[0] + margins[3];
+                extents[1] = extents[1] + margins[1] + margins[4];
+                extents[2] = extents[2] + margins[2] + margins[5];
+            }
+            float[] destResolutions = new float[3];
+            destResolutions[0] = outRes[0];
+            destResolutions[1] = outRes[1];
+            destResolutions[2] = outRes[2];
+            final String name = image.getImageName() + "_transform";
+            int type = image.getType();
+            ModelImage subImage = new ModelImage(type, extents, name);
+            TransMatrix transMatrix = mat.clone();
+            TransMatrix xfrm = matrixtoInverseArray(transMatrix);
+            int imgLength = iXdim * iYdim * iZdim;
+            Vector<TransMatrix> originalVector = image.getMatrixHolder().getMatrices();
+            double [] imgBuf = new double[imgLength];
+            try {
+                image.exportData(0, imgLength, imgBuf);
+            }
+            catch (IOException e) {
+            	e.printStackTrace();
+            }
+            updateFileInfo(image, subImage, destResolutions, units, transMatrix);
+            transformTrilinear(subImage, imgBuf, xfrm, iXdim, iYdim, iZdim, iXres, iYres, iZres,
+            		extents[0], extents[1], extents[2], outRes[0], outRes[1], outRes[2],
+            		doPad, margins, fillValue);
             if ( !doInterImages) {
                 image.disposeLocal();
             }
+             // copy the src image's matrices into the destination image
+            subImage.getMatrixHolder().replaceMatrices(originalVector);
 
-            final ModelImage subImage = algoTrans.getTransformedImage();
-            algoTrans.disposeLocal();
-            algoTrans = null;
-            subImage.calcMinMax();
+            // add the new transform matrix to the destination image
+            transMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
+            subImage.getMatrixHolder().addMatrix(transMatrix);
+
             return subImage;
+        }
+        
+        /**
+         * Transforms and resamples a 3D volume using trilinear interpolation.
+         * 
+         * @param imgBuffer Image array
+         * @param kTM Transformation matrix to be applied
+         */
+        private void transformTrilinear(ModelImage destImage, final double[] imgBuffer, final TransMatrix kTM, 
+        		int iXdim, int iYdim, int iZdim, 
+        		float iXres, float iYres, float iZres, int oXdim, int oYdim, int oZdim, float oXres, float oYres, float oZres,
+        		boolean pad, int [] margins, double fillValue) {
+            int i, j, k;
+            int iAdj, jAdj, kAdj;
+            double[] tempBuf;
+            double X, Y, Z;
+            int x0, y0, z0;
+            double value;
+            double imm, jmm, kmm;
+            double k1, k2, k3, j1, j2, j3;
+            double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+            int deltaX, deltaY, deltaZ;
+
+            int sliceSize;
+            sliceSize = iXdim * iYdim;
+
+            int imgLength2 = oXdim * oYdim * oZdim;
+            tempBuf = new double[imgLength2];
+
+            T00 = kTM.M00;
+            T01 = kTM.M01;
+            T02 = kTM.M02;
+            T03 = kTM.M03;
+            T10 = kTM.M10;
+            T11 = kTM.M11;
+            T12 = kTM.M12;
+            T13 = kTM.M13;
+            T20 = kTM.M20;
+            T21 = kTM.M21;
+            T22 = kTM.M22;
+            T23 = kTM.M23;
+            // T30 = (float)xfrm[3][0]; T31 = (float)xfrm[3][1]; T32 = (float)xfrm[3][2]; T33 = (float)xfrm[3][3];
+
+            int position1, position2;
+            double b1, b2;
+            double dx, dy, dz, dx1, dy1;
+
+            final double invXRes = 1.0 / iXres;
+            final double invYRes = 1.0 / iYres;
+            final double invZRes = 1.0 / iZres;
+
+            int index = 0;
+
+            for (k = 0; (k < oZdim); k++) {
+
+                if (pad) {
+                    kAdj = k - margins[2];
+                } else {
+                    kAdj = k;
+                }
+
+                kmm = kAdj * oZres;
+                k1 = (kmm * T02) + T03;
+                k2 = (kmm * T12) + T13;
+                k3 = (kmm * T22) + T23;
+
+                for (j = 0; (j < oYdim); j++) {
+
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    } else {
+                        jAdj = j;
+                    }
+
+                    jmm = jAdj * oYres;
+                    j1 = (jmm * T01) + k1;
+                    j2 = (jmm * T11) + k2;
+                    j3 = (jmm * T21) + k3;
+
+                    for (i = 0; (i < oXdim); i++) {
+
+                        // transform i,j,k
+                        value = fillValue; // if voxel transforms out of bounds
+                        if (pad) {
+                            iAdj = i - margins[0];
+                        } else {
+                            iAdj = i;
+                        }
+
+                        imm = iAdj * oXres;
+                        X = (j1 + (imm * T00)) * invXRes;
+
+                        if ( (X > -0.5) && (X < iXdim)) {
+                            Y = (j2 + (imm * T10)) * invYRes;
+                            if ( (Y > -0.5) && (Y < iYdim)) {
+                                Z = (j3 + (imm * T20)) * invZRes;
+                                if ( (Z > -0.5) && (Z < iZdim)) {
+
+                                    if (X <= 0) {
+                                        x0 = 0;
+                                        dx = 0;
+                                        deltaX = 0;
+                                    } else if (X >= (iXdim - 1)) {
+                                        x0 = iXdim - 1;
+                                        dx = 0;
+                                        deltaX = 0;
+                                    } else {
+                                        x0 = (int) X;
+                                        dx = X - x0;
+                                        deltaX = 1;
+                                    }
+
+                                    if (Y <= 0) {
+                                        y0 = 0;
+                                        dy = 0;
+                                        deltaY = 0;
+                                    } else if (Y >= (iYdim - 1)) {
+                                        y0 = iYdim - 1;
+                                        dy = 0;
+                                        deltaY = 0;
+                                    } else {
+                                        y0 = (int) Y;
+                                        dy = Y - y0;
+                                        deltaY = iXdim;
+                                    }
+
+                                    if (Z <= 0) {
+                                        z0 = 0;
+                                        dz = 0;
+                                        deltaZ = 0;
+                                    } else if (Z >= (iZdim - 1)) {
+                                        z0 = iZdim - 1;
+                                        dz = 0;
+                                        deltaZ = 0;
+                                    } else {
+                                        z0 = (int) Z;
+                                        dz = Z - z0;
+                                        deltaZ = sliceSize;
+                                    }
+
+                                    dx1 = 1 - dx;
+                                    dy1 = 1 - dy;
+
+                                    position1 = (z0 * sliceSize) + (y0 * iXdim) + x0;
+                                    position2 = position1 + deltaZ;
+
+                                    b1 = (dy1 * ( (dx1 * imgBuffer[position1]) + (dx * imgBuffer[position1 + deltaX])))
+                                            + (dy * ( (dx1 * imgBuffer[position1 + deltaY]) + (dx * imgBuffer[position1
+                                                    + deltaY + deltaX])));
+
+                                    b2 = (dy1 * ( (dx1 * imgBuffer[position2]) + (dx * imgBuffer[position2 + deltaX])))
+                                            + (dy * ( (dx1 * imgBuffer[position2 + deltaY]) + (dx * imgBuffer[position2
+                                                    + deltaY + deltaX])));
+
+                                    value = ( (1 - dz) * b1) + (dz * b2);
+
+                                } // end if Z in bounds
+                            } // end if Y in bounds
+                        } // end if X in bounds
+
+                        tempBuf[index++] = value;
+                    } // end for i
+                } // end for j
+            } // end for k
+
+            try {
+                destImage.importData(0, tempBuf, true);
+                tempBuf = null;
+            } catch (final IOException error) {
+                error.printStackTrace();
+            }
+        }
+        
+        /**
+         * Calculate necessary padding for image given applied transform.
+         * 
+         * @param srcImage DOCUMENT ME!
+         * @param transMatrix array with transformation matrix
+         * @param dxOut DOCUMENT ME!
+         * @param dyOut DOCUMENT ME!
+         * @param dzOut DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        private int[] getImageMargins(final ModelImage srcImage, final TransMatrix transMatrix, final float dxOut,
+                final float dyOut, final float dzOut) {
+        	int margins[] = new int[6];
+            int i;
+            final float xi = 0.f;
+            final float yi = 0.f;
+            final float zi = 0.f;
+            final float dx = srcImage.getFileInfo(0).getResolutions()[0];
+            final float dy = srcImage.getFileInfo(0).getResolutions()[1];
+            final float dz = srcImage.getFileInfo(0).getResolutions()[2];
+            final int nx = srcImage.getExtents()[0];
+            final int ny = srcImage.getExtents()[1];
+            final int nz = srcImage.getExtents()[2];
+            float xf = 0.f, yf = 0.f, zf = 0.f;
+            float minx, miny, maxx, maxy, minz, maxz;
+            int leftPad = 0, rightPad = 0, topPad = 0, bottomPad = 0, front = 0, back = 0;
+            Vector3f[] ptsi3, ptsf3;
+
+            /* Set the far corner of the image volume in mm (but relative to image origin, in image coordinates). */
+            xf = xi + (dx * (nx - 1));
+            minx = xi;
+            maxx = xf;
+            yf = yi + (dy * (ny - 1));
+            miny = yi;
+            maxy = yf;
+            zf = zi + (dz * (nz - 1));
+            minz = zi;
+            maxz = zf;
+            // System.out.println("Far corner: " +(int)xf +", " +(int)yf +", " +(int)zf);
+
+            /*
+             * Set up array of 8 points representing the corners of the image volume and then transform them with
+             * transMatrix.
+             */
+            ptsi3 = new Vector3f[8];
+            ptsf3 = new Vector3f[8];
+
+            for (i = 1; i <= 8; i++) {
+                ptsi3[i - 1] = new Vector3f();
+                ptsf3[i - 1] = new Vector3f();
+
+                if ( (i == 1) || (i == 4) || (i == 5) || (i == 8)) {
+                    ptsi3[i - 1].X = xi;
+                } else {
+                    ptsi3[i - 1].X = xf;
+                }
+
+                if ( (i == 1) || (i == 2) || (i == 5) || (i == 6)) {
+                    ptsi3[i - 1].Y = yi;
+                } else {
+                    ptsi3[i - 1].Y = yf;
+                }
+
+                if ( (i == 1) || (i == 2) || (i == 3) || (i == 4)) {
+                    ptsi3[i - 1].Z = zi;
+                } else {
+                    ptsi3[i - 1].Z = zf;
+                }
+                // System.out.println("Initial point " +i +": " +(int)ptsi3[i-1].X +", " +(int)ptsi3[i-1].Y +", "
+                // +(int)ptsi3[i-1].Z);
+            }
+
+            /* Transform corner points, ptsi3, to get transformed points, ptsf3. */
+            for (i = 1; i <= 8; i++) {
+                transMatrix.transformAsPoint3Df(ptsi3[i - 1], ptsf3[i - 1]);
+            }
+
+            /* Find new min and max values for the transformed point. */
+            for (i = 1; i <= 8; i++) {
+
+                // System.out.println("Transformed point " +i +": " +(int)ptsf3[i-1].X +", " +(int)ptsf3[i-1].Y +", "
+                // +(int)ptsf3[i-1].Z);
+                if (ptsf3[i - 1].X < minx) {
+                    minx = ptsf3[i - 1].X;
+                }
+
+                if (ptsf3[i - 1].X > maxx) {
+                    maxx = ptsf3[i - 1].X;
+                }
+
+                if (ptsf3[i - 1].Y < miny) {
+                    miny = ptsf3[i - 1].Y;
+                }
+
+                if (ptsf3[i - 1].Y > maxy) {
+                    maxy = ptsf3[i - 1].Y;
+                }
+
+                if (ptsf3[i - 1].Z < minz) {
+                    minz = ptsf3[i - 1].Z;
+                }
+
+                if (ptsf3[i - 1].Z > maxz) {
+                    maxz = ptsf3[i - 1].Z;
+                }
+            }
+            // System.out.println("Bounding box first corner: " +(int)minx +", " +(int)miny +", " +(int)minz);
+            // System.out.println("Bounding box far corner: " +(int)maxx +", " +(int)maxy +", " +(int)maxz);
+
+            /* Calculate padding. */
+            leftPad = (int) ( ( (xi - minx) / dxOut) + 0.5);
+            rightPad = (int) ( ( (maxx - xf) / dxOut) + 0.5);
+
+            // System.out.println("Padding in x is: " + leftPad +" and " +rightPad);
+            topPad = (int) ( ( (yi - miny) / dyOut) + 0.5);
+            bottomPad = (int) ( ( (maxy - yf) / dyOut) + 0.5);
+
+            // System.out.println("Padding in y is: " + topPad+" and " +bottomPad);
+            front = (int) ( ( (zi - minz) / dzOut) + 0.5);
+            back = (int) ( ( (maxz - zf) / dzOut) + 0.5);
+            // System.out.println("Padding in z is: " + front + " and " + back);
+
+            margins[0] = leftPad;
+            margins[1] = topPad;
+            margins[2] = front;
+            margins[3] = rightPad;
+            margins[4] = bottomPad;
+            margins[5] = back;
+
+            return margins;
+        }
+        
+        /**
+         * Converts matrix to inverse array.
+         * 
+         * @param transMatrix Matrix to convert.
+         * 
+         * @return The inverted array.
+         */
+        private final TransMatrix matrixtoInverseArray(final TransMatrix transMatrix) {
+
+            if (transMatrix.isIdentity()) {
+
+                // Added explicit handling of identity matrix - or else the new matrix is other than
+                // identity because of round-off error. This situation (of identity) matrix
+                // occurs frequently -- any time there is resampling without transformation.
+                return new TransMatrix(transMatrix);
+            } else {
+                final TransMatrix kTM = new TransMatrix(transMatrix);
+                kTM.Inverse();
+                return kTM;
+            }
+
+        }
+        
+        /**
+         * Copy important file information to resultant image structure.
+         * 
+         * @param image Source image.
+         * @param resultImage Resultant image.
+         * @param resolutions DOCUMENT ME!
+         * @param units DOCUMENT ME!
+         * @param matrix DOCUMENT ME!
+         * @param useSATransform DOCUMENT ME!
+         * @param m
+         */
+        private void updateFileInfo(final ModelImage image, final ModelImage resultImage, final float[] resolutions,
+                final int[] units, final TransMatrix matrix) {
+
+            final FileInfoBase[] fileInfo = resultImage.getFileInfo();
+            float firstPos[] = null;
+            float delPos[] = null;
+            float sliceLocation0 = Float.NaN;
+            float delLoc = Float.NaN;
+
+            if (resultImage.getNDims() == 2) {
+                fileInfo[0] = (FileInfoBase) image.getFileInfo(0).clone();
+                fileInfo[0].setDataType(resultImage.getType());
+                fileInfo[0].setModality(image.getFileInfo()[0].getModality());
+                fileInfo[0].setFileDirectory(image.getFileInfo()[0].getFileDirectory());
+                fileInfo[0].setEndianess(image.getFileInfo()[0].getEndianess());
+                fileInfo[0].setUnitsOfMeasure(image.getFileInfo()[0].getUnitsOfMeasure());
+                fileInfo[0].setResolutions(resolutions);
+                fileInfo[0].setExtents(resultImage.getExtents());
+                fileInfo[0].setMax(resultImage.getMax());
+                fileInfo[0].setMin(resultImage.getMin());
+                fileInfo[0].setImageOrientation(image.getImageOrientation());
+                fileInfo[0].setAxisOrientation(image.getFileInfo()[0].getAxisOrientation());
+                fileInfo[0].setOrigin(image.getFileInfo()[0].getOrigin());
+                fileInfo[0].setPixelPadValue(image.getFileInfo()[0].getPixelPadValue());
+                fileInfo[0].setPhotometric(image.getFileInfo()[0].getPhotometric());
+                fileInfo[0].setUnitsOfMeasure(units);
+
+            } else if (resultImage.getNDims() == 3) {
+                final float[] coord = new float[3];
+                final float[] tempPos = new float[3];
+                String orientation;
+
+                if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
+                    final FileInfoDicom oldDicomInfo = (FileInfoDicom) image.getFileInfo(0);
+                    final FileDicomTagTable[] childTagTables = new FileDicomTagTable[resultImage.getExtents()[2] - 1];
+
+                    // first create all of the new file infos (reference and children) and fill them with tags from the old
+                    // file info. some of these tag values will be overridden in the next loop
+                    for (int i = 0; i < resultImage.getExtents()[2]; i++) {
+
+                        if (i == 0) {
+
+                            // create a new reference file info
+                            fileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                                    oldDicomInfo.getFileFormat());
+                            ((FileInfoDicom) fileInfo[0]).setVr_type(oldDicomInfo.getVr_type());
+                        } else {
+
+                            // all other slices are children of the first file info..
+                            fileInfo[i] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                                    oldDicomInfo.getFileFormat(), (FileInfoDicom) fileInfo[0]);
+                            ((FileInfoDicom) fileInfo[i]).setVr_type(oldDicomInfo.getVr_type());
+                            childTagTables[i - 1] = ((FileInfoDicom) fileInfo[i]).getTagTable();
+                        }
+
+                        if (image.getExtents()[2] > i) {
+
+                            // more correct information for a Z-axis rotation, so copy the file info on a slice basis
+                            ((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) image.getFileInfo(i));
+                        } else {
+
+                            // not possible for other rotations because the z-dimension is different
+                            ((FileInfoDicom) fileInfo[i]).getTagTable().importTags(oldDicomInfo);
+                        }
+                        ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0028,0010",
+                                new Short((short) resultImage.getExtents()[1]), 2);
+                        ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0028,0011",
+                                new Short((short) resultImage.getExtents()[0]), 2);
+                    }
+
+                    ((FileInfoDicom) fileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
+                } else {
+
+                    for (int i = 0; i < resultImage.getExtents()[2]; i++) {
+
+                        if (image.getExtents()[2] > i) {
+                            fileInfo[i] = (FileInfoBase) image.getFileInfo(i).clone();
+                        } else {
+                            fileInfo[i] = (FileInfoBase) image.getFileInfo(0).clone();
+                        }
+
+                    }
+                }
+
+                if ( (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM)
+                        && (image.getExtents()[2] != resultImage.getExtents()[2])) {
+
+                    float lastPos[] = null;
+                    orientation = (String) ((FileInfoDicom) fileInfo[0]).getTagTable().getValue("0020,0032");
+                    if (orientation != null) {
+
+                        int index1 = -1, index2 = -1;
+
+                        for (int k = 0; k < orientation.length(); k++) {
+
+                            if (orientation.charAt(k) == '\\') {
+
+                                if (index1 == -1) {
+                                    index1 = k;
+                                } else {
+                                    index2 = k;
+                                }
+                            }
+                        }
+
+                        coord[0] = Float.valueOf(orientation.substring(0, index1)).floatValue();
+                        coord[1] = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
+                        coord[2] = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
+                        firstPos = new float[3];
+
+                        matrix.transform(coord[0], coord[1], coord[2], firstPos);
+                    } // if (orientation != null)
+                    orientation = (String) ((FileInfoDicom) fileInfo[resultImage.getExtents()[2] - 1]).getTagTable()
+                            .getValue("0020,0032");
+
+                    if (orientation != null) {
+
+                        int index1 = -1, index2 = -1;
+
+                        for (int k = 0; k < orientation.length(); k++) {
+
+                            if (orientation.charAt(k) == '\\') {
+
+                                if (index1 == -1) {
+                                    index1 = k;
+                                } else {
+                                    index2 = k;
+                                }
+                            }
+                        }
+
+                        coord[0] = Float.valueOf(orientation.substring(0, index1)).floatValue();
+                        coord[1] = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
+                        coord[2] = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
+
+                        lastPos = new float[3];
+
+                        matrix.transform(coord[0], coord[1], coord[2], lastPos);
+                    } // if (orientation != null)
+                    if ( (firstPos != null) && (lastPos != null)) {
+                        delPos = new float[3];
+                        for (int i = 0; i <= 2; i++) {
+                            delPos[i] = (lastPos[i] - firstPos[i]) / (resultImage.getExtents()[2] - 1);
+                        }
+                    } // if ((firstPos != null) && (lastPos != null)
+                    if ( ( ((FileInfoDicom) fileInfo[0]).getTagTable().containsTag("0020,1041"))
+                            && ( ((FileInfoDicom) fileInfo[1]).getTagTable().containsTag("0020,1041"))) {
+                        if ( ((String) ((FileInfoDicom) fileInfo[0]).getTagTable().getValue("0020,1041") != null)
+                                && ((String) ((FileInfoDicom) fileInfo[1]).getTagTable().getValue("0020,1041") != null)) {
+                            try {
+                                sliceLocation0 = Float.parseFloat((String) ((FileInfoDicom) fileInfo[0]).getTagTable()
+                                        .getValue("0020,1041"));
+                                final float sliceLocation1 = Float.parseFloat((String) ((FileInfoDicom) fileInfo[1])
+                                        .getTagTable().getValue("0020,1041"));
+                                delLoc = (sliceLocation1 - sliceLocation0) * resolutions[2]
+                                        / image.getFileInfo()[0].getResolutions()[2];
+                            } catch (final NumberFormatException nfe) {
+
+                            }
+                        }
+
+                    }
+                } // if ((image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) &&
+
+                for (int i = 0; i < resultImage.getExtents()[2]; i++) {
+
+                    fileInfo[i].setDataType(resultImage.getType());
+                    fileInfo[i].setResolutions(resolutions);
+                    fileInfo[i].setSliceThickness(resolutions[2]);
+                    fileInfo[i].setExtents(resultImage.getExtents());
+                    fileInfo[i].setMax(resultImage.getMax());
+                    fileInfo[i].setMin(resultImage.getMin());
+                    fileInfo[i].setUnitsOfMeasure(units);
+
+                    if (fileInfo[i].getFileFormat() == FileUtility.DICOM) {
+                        if (image.getExtents()[2] == resultImage.getExtents()[2]) {
+                            // don't interpolate here in case spacing between slices is uneven
+                            orientation = (String) ((FileInfoDicom) fileInfo[i]).getTagTable().getValue("0020,0032");
+
+                            if (orientation != null) {
+
+                                int index1 = -1, index2 = -1;
+
+                                for (int k = 0; k < orientation.length(); k++) {
+
+                                    if (orientation.charAt(k) == '\\') {
+
+                                        if (index1 == -1) {
+                                            index1 = k;
+                                        } else {
+                                            index2 = k;
+                                        }
+                                    }
+                                }
+
+                                coord[0] = Float.valueOf(orientation.substring(0, index1)).floatValue();
+                                coord[1] = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
+                                coord[2] = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
+
+                                matrix.transform(coord[0], coord[1], coord[2], tempPos);
+
+                                // System.err.println("transformed " + orientation + " to: " +tempPos[0] + " " + tempPos[1]
+                                // + "
+                                // " + tempPos[2]);
+                                orientation = tempPos[0] + "\\" + tempPos[1] + "\\" + tempPos[2];
+                                ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0020,0032", orientation);
+                            } // if (orientation != null)
+
+                        } // if (image.getExtents()[2] == resultImage.getExtents()[2])
+                        else { // image.getExtents()[2] != resultImage.getExtents()[2]
+                            if (delPos != null) {
+                                orientation = (firstPos[0] + i * delPos[0]) + "\\" + (firstPos[1] + i * delPos[1]) + "\\"
+                                        + (firstPos[2] + i * delPos[2]);
+                                ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0020,0032", orientation);
+                            } // if (delPos != null)
+                            if ( !Float.isNaN(delLoc)) {
+                                final String sliceLoc = Float.toString(sliceLocation0 + i * delLoc);
+                                // slice location
+                                ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0020,1041", sliceLoc,
+                                        sliceLoc.length());
+                            }
+                            final String instanceString = Integer.toString(i + 1);
+                            ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0020,0013", instanceString,
+                                    instanceString.length());
+                            final String imagesInAcquisition = Integer.toString(resultImage.getExtents()[2]);
+                            ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0020,1002", imagesInAcquisition,
+                                    imagesInAcquisition.length());
+                            final String res2 = String.valueOf(resolutions[2]);
+                            if ( ((FileInfoDicom) fileInfo[i]).getTagTable().containsTag("0018,0050")) {
+                                // Slice thickness
+                                ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0018,0050", res2, res2.length());
+                            }
+                            if ( ((FileInfoDicom) fileInfo[i]).getTagTable().containsTag("0018,0088")) {
+                                // Spacing between slices
+                                ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0018,0088", res2, res2.length());
+                            }
+                        } // else image.getExtents()[2] != resultImage.getExtents()[2]
+                    } // if (fileInfo[i].getFileFormat() == FileUtility.DICOM)
+                } // for (int i = 0; i < resultImage.getExtents()[2]; i++)
+            } 
+
+            resultImage.setFileInfo(fileInfo);
         }
 
         private void downsampleUpsampleCombined() {
