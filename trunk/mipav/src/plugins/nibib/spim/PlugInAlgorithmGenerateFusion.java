@@ -2584,6 +2584,9 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         private void deconvolutionSep3D_Dual(ModelImage imageA, ModelImage imageB, ModelImage resultImage) {
         	int i;
         	int iter;
+        	float currentMax;
+        	float originalMax;
+        	float scale;
             int width = imageA.getExtents()[0];
             int height = imageA.getExtents()[1];
             int depth = imageA.getExtents()[2];
@@ -2611,8 +2614,12 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             }
             float blurredBuffer[] = new float[elementCount];
             float tempBuffer[] = new float[elementCount];
+            originalMax = -Float.MAX_VALUE;
             for (i = 0; i < elementCount; i++) {
             	estimateBuffer[i] = 0.5f * (inputA[i] + inputB[i]);
+            	if (estimateBuffer[i] > originalMax) {
+            		originalMax = estimateBuffer[i];
+            	}
             }
             float derivativeX[][] = new float[2][];
             float derivativeY[][] = new float[2][];
@@ -2749,6 +2756,17 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
     			    	estimateBuffer[i] = (float)(estimateBuffer[i]*Math.sqrt(estimateBufferA[i] * estimateBufferB[i]));
     			    }	
     			}
+    			
+    			currentMax = -Float.MAX_VALUE;
+    			for (i = 0; i < elementCount; i++) {
+    				if (estimateBuffer[i] > currentMax) {
+    					currentMax = estimateBuffer[i];
+    				}
+    			}
+				scale = originalMax/currentMax;
+				for (i = 0; i < elementCount; i++) {
+					estimateBuffer[i] *= scale;
+				}
     		} // for (iter = 0; iter < deconvIterations; iter++ )
     		
     		try {
