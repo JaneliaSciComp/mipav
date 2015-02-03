@@ -267,6 +267,19 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 				return;
 			}
 			
+			String imageStr = imageField.getText();
+			
+			if(imageStr.length() == 0){
+				MipavUtil.displayError("Please input an image");
+				return;
+			}
+			
+			File imageFile = new File(imageStr);
+			if(!imageFile.exists()){
+				MipavUtil.displayError("This image does not exist");
+				return;
+			}
+			
 			if(customRB.isSelected()){
 				alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, (String) resolutionUnits.getSelectedItem(), false, true);
 				alg.addListener(this);
