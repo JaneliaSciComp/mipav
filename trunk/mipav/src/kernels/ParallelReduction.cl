@@ -9,7 +9,7 @@ __local volatile float* sdata
     // perform first level of reduction,
     // reading from global memory, writing to shared memory
     unsigned int tid = get_local_id(0);
-    unsigned int i = get_group_id(0)*(get_local_size(0)*2) + get_local_id(0);
+    unsigned int i = get_group_id(0)*(get_local_size(0)) + get_local_id(0);
 
     sdata[tid] = (i < n) ? input[i] : 0;
     i += blockSize; 
@@ -46,7 +46,7 @@ __local volatile float* sdata
     // perform first level of reduction,
     // reading from global memory, writing to shared memory
     unsigned int tid = get_local_id(0);
-    unsigned int i = get_group_id(0)*(get_local_size(0)*2) + get_local_id(0);
+    unsigned int i = get_group_id(0)*(get_local_size(0)) + get_local_id(0);
 
     sdata[tid] = (i < n) ? input[i] : 0;
     i += blockSize; 
