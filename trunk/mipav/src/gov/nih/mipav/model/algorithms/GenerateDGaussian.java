@@ -109,7 +109,7 @@ public class GenerateDGaussian {
     }
 
     /**
-     * Converts gaussian dobule buffer to image model object.
+     * Converts gaussian double buffer to image model object.
      *
      * @param   UI  pointer to user interface
      *
