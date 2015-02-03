@@ -24,11 +24,11 @@ import gov.nih.mipav.view.MipavUtil;
 
 public class AlgorithmTextureSegmentation extends AlgorithmBase implements AlgorithmInterface {
 	
-	private static final int logOp = 1;
+	private static final int filterOp = 1;
 	
-	private int operationType = logOp;
+	private int operationType = filterOp;
 	
-	private double log[];
+	private double filter[];
 	
 	private int windowSize = 25;
 	
@@ -55,7 +55,7 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 		int halfMask;
 		double GData[];
 		double denom;
-		double sigma;
+		double sigma = 1.0;
 		double kd;
 		int x;
 		int y;
@@ -66,12 +66,18 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 		double expandedBuffer[];
 		int extents[] = new int[2];
 		ModelImage expandedImage;
+		double S = 5;
+		double f = 0.2;
+		double scale;
+		double xPrime;
+		double yPrime;
+		double theta = 0.0;
 		if (srcImage.isColorImage()) {
 			
 		}
 		else {
 			// Segment images with heavy texture
-			// This code segments gray level images\
+			// This code segments gray level images
 			srcBuffer = new double[length];
 			try {
 				srcImage.exportData(0, length, srcBuffer);
@@ -87,14 +93,36 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 			    Ig[i][0] = srcBuffer[i];	
 			}
 			
-			for (i = 1; i <= 2; i++) {
+			for (i = 1; i <= 10; i++) {
 				if (i == 1) {
 				    halfMask = 1;
 				    sigma = 0.5;
 				}
-				else {
+				else if (i == 2) {
 					halfMask = 2;
 					sigma = 1.0;
+				}
+				else if ((i >= 3) && (i <= 6)) {
+					S = 1.5;
+					halfMask = 3;
+					f = 1.0/3.0;
+				}
+				else {
+					S = 2.5;
+					halfMask = 5;
+					f = 0.2;
+				}
+				if ((i == 3) || (i == 7)) {
+					theta = Math.PI/2.0;
+				}
+				else if ((i == 4) || (i == 8)) {
+					theta = 0.0;
+				}
+				else if ((i == 5) || (i == 9)) {
+					theta = Math.PI/4.0;
+				}
+				else if ((i == 6) || (i == 10)) {
+					theta = -Math.PI/4.0;
 				}
 				expandedSize = (xDim + 2 * halfMask) * (yDim + 2 * halfMask);
 	        	expandedBuffer = new double[expandedSize];
@@ -161,27 +189,40 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 				kExtents[0] = 2*halfMask + 1;
 	        	kExtents[1] = 2*halfMask + 1;
 	        	GData = new double[kExtents[0] * kExtents[1]];
-	        	denom = 2.0 * sigma * sigma;
-	        	kd = -1.0/(Math.PI * sigma * sigma);
-	        	for (y = -halfMask; y <= halfMask; y++) {
-	        		for (x = -halfMask; x <= halfMask; x++) {
-	        		    distSquared = x * x + y * y;
-	        		    GData[(x + halfMask) + (y + halfMask) * kExtents[0]] = (kd * (1.0 - distSquared/denom) *
-	        		    		         Math.exp(-distSquared/denom));
-	        		}
-	        	} // for (y = -halfMask; y <= halfMask; y++)
-	        	
+	        	if ((i == 1) || (i == 2)) {
+		        	denom = 2.0 * sigma * sigma;
+		        	kd = -1.0/(Math.PI * sigma * sigma);
+		        	for (y = -halfMask; y <= halfMask; y++) {
+		        		for (x = -halfMask; x <= halfMask; x++) {
+		        		    distSquared = x * x + y * y;
+		        		    GData[(x + halfMask) + (y + halfMask) * kExtents[0]] = (kd * (1.0 - distSquared/denom) *
+		        		    		         Math.exp(-distSquared/denom));
+		        		}
+		        	} // for (y = -halfMask; y <= halfMask; y++)
+	        	} // if ((i == 1) || ( i == 2))
+	        	else { // i >= 3 && i <= 10
+	        	    scale = 1.0/(2.0 * Math.PI * S * S);
+	        	    for (y = -halfMask; y <= halfMask; y++) {
+		        		for (x = -halfMask; x <= halfMask; x++) {
+		        		    xPrime = x * Math.cos(theta) + y * Math.sin(theta);
+		        		    yPrime = y * Math.cos(theta) - x * Math.sin(theta);
+		        		    GData[(x + halfMask) + (y + halfMask) * kExtents[0]] = scale * 
+		        		    		Math.exp(-0.5*(xPrime*xPrime + yPrime*yPrime)/(S*S)) *
+		        		    		Math.cos(2.0 * Math.PI * f * xPrime);
+		        		}
+	        	    }
+	        	} // else i >= 3 && i <= 10
 	        	convolver = new AlgorithmDConvolver(expandedImage, GData, kExtents,entireImage, image25D);
 		        convolver.addListener(this);
-		        operationType = logOp;
+		        operationType = filterOp;
 		        convolver.run();
 		        for (y = halfMask; y <= yDim + halfMask -1; y++) {
 		        	for (x = halfMask; x <= xDim + halfMask - 1; x++) {
-		        	    Ig[(x - halfMask) + (y - halfMask)*xDim][i]= log[x + y * (xDim + 2 * halfMask)];	
+		        	    Ig[(x - halfMask) + (y - halfMask)*xDim][i]= filter[x + y * (xDim + 2 * halfMask)];	
 		        	}
 		        }
-			} // for (i = 1; i <= 2; i++)
-		} // else 
+			} // for (i = 1; i <= 10; i++)
+		} // else not color
 		
 	}
 	
@@ -192,8 +233,8 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
         }
         if (algorithm instanceof AlgorithmDConvolver) {
             AlgorithmDConvolver convolver = (AlgorithmDConvolver) algorithm;
-            if (operationType == logOp) {
-               log = convolver.getOutputBuffer();
+            if (operationType == filterOp) {
+               filter = convolver.getOutputBuffer();
             }
             
         }
