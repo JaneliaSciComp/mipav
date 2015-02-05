@@ -41,6 +41,8 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	// True when nonnegativity constraint imposed
 	private boolean nonNegativity = true;
 	
+	private boolean removeSmallRegions = false;
+	
 	// For segment number estimation based on singular values.  May need to be
 	// tuned if the choice of filters are changed.
 	private double omega = 0.05;
@@ -57,11 +59,13 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
 	public AlgorithmTextureSegmentation(ModelImage destImage, ModelImage srcImage,
-			                            int windowSize, int segmentNumber, boolean nonNegativity) {
+			                            int windowSize, int segmentNumber, boolean nonNegativity,
+			                            boolean removeSmallRegions) {
 		super(destImage, srcImage);
 		this.windowSize = windowSize;
 		this.segmentNumber = segmentNumber;
 		this.nonNegativity = nonNegativity;
+		this.removeSmallRegions = removeSmallRegions;  
 	}
 	
 	public void runAlgorithm() {
@@ -114,8 +118,52 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	    double Y2[][][];
 	    double tmp[][];
 	    byte intreg[][];
-	    byte intreg1[][];
 	    double maxtmp;
+	    double threshold;
+	    int len;
+	    double Mx[][];
+	    double tmplt[][];
+	    double L[];
+	    double maxL;
+	    int rn = 0;
+	    double seedmap[][];
+	    int idx[];
+	    int tn;
+	    double CY[][];
+	    double ccos[];
+	    double diff;
+	    double maxccos;
+	    int id = 0;
+	    double cenInt[][];
+	    double ccosArray[][];
+	    int flag;
+	    double minccos;
+	    int clab[];
+	    double NcenInt[][] = null;
+	    int lengthtmind;
+	    boolean equalArray;
+	    Matrix Ncenmat;
+	    double B[][];
+	    double maxB;
+	    int slab[];
+	    double w0[][];
+	    double dnorm0;
+	    Matrix matw0;
+	    double ww[][];
+	    Matrix matwy;
+	    Matrix matww;
+	    double h[][] = null;
+	    Matrix matH;
+	    double hh[][];
+	    Matrix mathY;
+	    double w[][];
+	    Matrix mathh;
+	    Matrix matw;
+	    double d[][];
+	    double dnorm;
+	    double maxh;
+	    int segLabel[][];
+	    int segLabelLarge[][];
 		if (srcImage.isColorImage()) {
 			
 		}
@@ -367,7 +415,6 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        tmp = new double[yDim][xDim];
 	        SHedge_ls(tmp, ws, 2, Y2);
 	        intreg = new byte[yDim][xDim];
-	        intreg1 = new byte[yDim][xDim];
 	        maxtmp = -Double.MAX_VALUE;
 	        for (y = 0; y < yDim; y++) {
 	        	for (x = 0; x < xDim; x++) {
@@ -376,8 +423,404 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        		}
 	        	}
 	        }
+	        threshold = 0.4 * maxtmp;
+	        len = 0;
+	        for (y = ws; y < yDim-ws; y++) {
+	        	for (x = ws; x < xDim-ws; x++) {
+	        		if (tmp[y][x] < threshold) {
+	        			intreg[y][x] = 1;
+	        			len++;
+	        		}
+	        	}
+	        }
+	        Mx = new double[dimn][len];
+	        idx = new int[len];
+	        for (index = 0, x = ws; x < xDim - ws; x++) {
+	        	for (y = ws; y < yDim - ws; y++) {
+	        	    if (intreg[y][x] == 1) {
+	        	        for (i = 0; i < dimn; i++) {
+	        	        	Mx[i][index] = Y1[i][x + y * xDim];
+	        	        }
+	        	        idx[index] = x + y * xDim;
+	        	        index++;
+	        	    }
+	        	}
+	        }
+	        
+	        // Representative feature estimation
+	        
+	        tmplt = new double[dimn][segmentNumber];
+	        L = new double[len];
+	        maxL = -Double.MAX_VALUE;
+	        for (x = 0; x < len; x++) {
+	        	for (y = 0; y < dimn; y++) {
+	        		L[x] = L[x] + (Mx[y][x]*Mx[y][x]);
+	        	}
+	        	if (L[x] > maxL) {
+	        		maxL = L[x];
+	        		rn = x;
+	        	}
+	        }
+	        for (i = 0; i < dimn; i++) {
+	        	tmplt[i][0] = Mx[i][rn];
+	        }
+	        n = 1;
+	        
+	        seedmap = new double[yDim][xDim];
+	        y = idx[rn]/xDim;
+	        x = idx[rn] % xDim;
+	        seedmap[y][x] = 1;
+	        
+	        tn = n+1;
+	        CY = new double[dimn][len];
+	        for (y = 0; y < dimn; y++) {
+	        	for (x = 0; x < len; x++) {
+	        		CY[y][x] = tmplt[y][n-1];
+	        	}
+	        }
+	        ccos = new double[len];
+	        maxccos = -Double.MAX_VALUE;
+	        for (x = 0; x < len; x++) {
+	        	for (y = 0; y < dimn; y++) {
+	        		diff = Mx[y][x] - CY[y][x];
+	        	    ccos[x] = ccos[x] + diff * diff; 	
+	        	}
+	        	ccos[x] = Math.sqrt(ccos[x]);
+	        	if (ccos[x] > maxccos) {
+	        		maxccos = ccos[x];
+	        		id = x;
+	        	}
+	        }
+	        for (y = 0; y < dimn; y++) {
+	        	tmplt[y][tn-1] = Mx[y][id];
+	        }
+	        y = idx[id]/xDim;
+	        x = idx[id] % xDim;
+	        seedmap[y][x] = 1;
+	        
+	        while (tn < segmentNumber) {
+	        	tmp = new double[tn][len];
+	        	for (i = 0; i < tn; i++) {
+	        		for (y = 0; y < dimn; y++) {
+	        			for (x = 0; x < len; x++) {
+	        				CY[y][x] = tmplt[y][i];
+	        			}
+	        		}
+	        		for (x = 0; x < len; x++) {
+	    	        	for (y = 0; y < dimn; y++) {
+	    	        		diff = Mx[y][x] - CY[y][x];
+	    	        		tmp[i][x] = tmp[i][x] + diff * diff;
+	    	        	}
+	    	        	tmp[i][x] = Math.sqrt(tmp[i][x]);
+	        		}
+	        	} // for (i = 0; i < tn; i++)
+	        	tn = tn + 1;
+	        	maxccos = -Double.MAX_VALUE;
+	        	for (x = 0; x < len; x++) {
+	        	    ccos[x] = Double.MAX_VALUE;
+	        	    for (y = 0; y < tn; y++) {
+	        	    	ccos[x] = Math.min(ccos[x], tmp[y][x]);
+	        	    }
+	        	    if (ccos[x] > maxccos) {
+	        	    	maxccos = ccos[x];
+	        	    	id = x;
+	        	    }
+	        	} // for (x = 0; x < len; x++)
+	        	for (y = 0; y < dimn; y++) {
+		        	tmplt[y][tn-1] = Mx[y][id];
+		        }
+		        y = idx[id]/xDim;
+		        x = idx[id] % xDim;
+		        seedmap[y][x] = 1;
+	        } // while (tn < segmentNumber)
+	        
+	        cenInt = new double[dimn][segmentNumber];
+	        for (y = 0; y < dimn; y++) {
+	        	for (x = 0; x < segmentNumber; x++) {
+	        		cenInt[y][x] = tmplt[y][x];
+	        	}
+	        }
+	        ccosArray = new double[segmentNumber][len];
+	        clab = new int[len];
+	        flag = 1;
+	        
+	        while (flag == 1) {
+	            for (i = 0; i < segmentNumber; i++) {
+	            	for (y = 0; y < dimn; y++) {
+	            		for (x = 0; x < len; x++) {
+	            			CY[y][x] = cenInt[y][i];
+	            		}
+	            	}
+	            	for (x = 0; x < len; x++) {
+	    	        	for (y = 0; y < dimn; y++) {
+	    	        		diff = Mx[y][x] - CY[y][x];
+	    	        		ccosArray[i][x] = ccosArray[i][x] + diff * diff;
+	    	        	}
+	    	        	ccosArray[i][x] = Math.sqrt(ccosArray[i][x]);
+	        		}
+	            } // for (i = 0; i < segmentNumber; i++)
+	            
+	            
+	            for (x = 0; x < len; x++) {
+	            	minccos = Double.MAX_VALUE;
+	            	for (y = 0; y < segmentNumber; y++) {
+	            		if (ccosArray[y][x] < minccos) {
+	            			minccos = ccosArray[y][x];
+	            			clab[x] = y;
+	            		}
+	            	}
+	            } // for (x = 0; x < len; x++)
+	            NcenInt = new double[dimn][segmentNumber];
+	            
+	            for (i = 0; i < segmentNumber; i++) {
+	            	lengthtmind = 0;
+	                for (x = 0; x < len; x++) {
+	                    if (clab[x]  == i)	{
+	                        lengthtmind++;	
+	                    }
+	                } // for (x = 0; x < len; x++)
+	                tmp = new double[dimn][lengthtmind];
+	                for (index = 0, x = 0; x < len; x++) {
+	                	if (clab[x] == i) {
+	                	    for (y = 0; y < dimn; y++) {
+	                	    	tmp[y][index] = Mx[y][x];
+	                	    }
+	                	    index++;
+	                	}
+	                } // for (index = 0, x = 0; x < len; x++)
+	                for (y = 0; y < dimn; y++) {
+	                	for (x = 0; x < lengthtmind; x++) {
+	                		NcenInt[y][i] = NcenInt[y][i] + tmp[y][x];
+	                	}
+	                	NcenInt[y][i] = NcenInt[y][i]/lengthtmind;
+	                }
+	            } // for (i = 0; i < segmentNumber; i++)
+	            
+	            equalArray = true;
+	            for (y = 0; y < dimn && equalArray; y++) {
+	            	for (x = 0; x < segmentNumber && equalArray; x++) {
+	            		if (NcenInt[y][x] != cenInt[y][x]) {
+	            		    equalArray = false;	
+	            		}
+	            	}
+	            }
+	            
+	            if (equalArray) {
+	            	flag = 0;
+	            }
+	            else {
+	            	for (y = 0; y < dimn; y++) {
+	            		for (x = 0; x < segmentNumber; x++) {
+	            		    cenInt[y][x] = NcenInt[y][x];	
+	            		}
+	            	}
+	            }
+	        } // while (flag == 1)
+	        
+	        Ncenmat = new Matrix(NcenInt);
+	        B = ((((Ncenmat.transpose().times(Ncenmat)).inverse()).times(Ncenmat.transpose())).times(new Matrix(Y1))).getArray();
+	        slab = new int[yDim * xDim];
+	        for (x = 0; x < yDim * xDim; x++) {
+	        	maxB = -Double.MAX_VALUE;
+	        	for (y = 0; y < segmentNumber; y++) {
+	        	    if (B[y][x] > maxB) {
+	        	    	maxB = B[y][x];
+	        	    	slab[x] = y;
+	        	    }
+	        	}
+	        }
+	        
+	        // Impose nonnegativity constraint
+	        if (nonNegativity) {
+	            w0 = (matU1.times(Ncenmat)).getArray();
+	            for (y = 0; y < bb; y++) {
+	            	for (x = 0; x < segmentNumber; x++) {
+	            		if (w0[y][x] < 0.0) {
+	            			w0[y][x] = 0.0;
+	            		}
+	            	}
+	            }
+	            
+	            dnorm0 = 1.0E5;
+	            for (i = 1; i <= 100; i++) {
+	                matw0 = new Matrix(w0);
+	                ww = ((matw0.transpose()).times(matw0)).getArray();
+	                for (y = 0; y < segmentNumber; y++) {
+	                	ww[y][y] = ww[y][y] + 0.1;
+	                }
+	                matww = new Matrix(ww);
+	                matwy = (matw0.transpose()).times(matY);
+	                h = ((matww.inverse()).times(matwy)).getArray();
+	                for (y = 0; y < segmentNumber; y++) {
+	                	for (x = 0; x < yDim * xDim; x++) {
+	                		if (h[y][x] < 0.0) {
+	                			h[y][x] = 0.0;
+	                		}
+	                	}
+	                } // for (y = 0; y < segmentNumber; y++)
+	                matH = new Matrix(h);
+	                hh = (matH.times(matH.transpose())).getArray();
+	                for (y = 0; y < segmentNumber; y++) {
+	                	hh[y][y] = hh[y][y] + 0.1;
+	                }
+	                mathh = new Matrix(hh);
+	                mathY = matH.times(matY.transpose());
+	                w = ((mathh.inverse()).times(mathY)).getArray();
+	                for (y = 0; y < segmentNumber; y++) {
+	                	for (x = 0; x < bb; x++) {
+	                		if (w[y][x] < 0.0) {
+	                			w[y][x] = 0.0;
+	                		}
+	                	}
+	                }
+	                matw = new Matrix(w);
+	                matw = matw.transpose();
+	                
+	                d = (matY.minus(matw.times(matH))).getArray();
+	                dnorm = 0.0;
+	                for (y = 0; y < bb; y++) {
+	                	for (x = 0; x < yDim * xDim; x++) {
+	                	    dnorm = dnorm + d[y][x] *d[y][x];	
+	                	}
+	                }
+	                dnorm = Math.sqrt(dnorm);
+	                dnorm = dnorm/(bb*yDim*xDim);
+	                for (i = 0; i < d.length; i++) {
+	                	d[i] = null;
+	                }
+	                d = null;
+	                
+	                // Check for convergence
+	                if (i > 1) {
+	                	if (Math.abs(dnorm0 - dnorm) <= 1.0E-3) {
+	                		break;
+	                	}
+	                }
+	                
+	                for (y = 0; y < bb; y++) {
+	                	for (x = 0; x < segmentNumber; x++) {
+	                		w0[y][x] = w[y][x];
+	                	}
+	                }
+	                dnorm0 = dnorm;
+	            } // for (i = 1; i <= 100; i++)
+	            for (x = 0; x < yDim * xDim; x++) {
+		        	maxh = -Double.MAX_VALUE;
+		        	for (y = 0; y < segmentNumber; y++) {
+		        	    if (h[y][x] > maxh) {
+		        	    	maxh = h[y][x];
+		        	    	slab[x] = y;
+		        	    }
+		        	}
+		        }
+	        } // if (nonNegativity)
+	        
+	        segLabel = new int[yDim][xDim];
+	        for (y = 0; y < yDim; y++) {
+	            for (x = 0; x < xDim; x++) {
+	                segLabel[y][x] = slab[x + y * xDim];	
+	            }
+	        }
+	        
+	        if (removeSmallRegions) {
+	        	segLabelLarge = new int[yDim][xDim];
+	        	RmSmRg(segLabelLarge, segLabel, 100);
+	        }
 		} // else not color
 		
+	}
+	
+	private void RmSmRg(int segLabelLarge[][], int segLabel[][], int minSize) {
+	    int mark[] = new int[yDim * xDim];
+	    int stk[] = new int[2 * yDim * xDim];
+	    int labelN = 0;
+	    int yy;
+	    int xx;
+	    int y;
+	    int x;
+	    int tgt;
+	    int tb[] = new int[1];
+	    int bb[] = new int[1];
+	    int lb[] = new int[1];
+	    int rb[] = new int[1];
+	    int cnt[] = new int[1];
+	    
+	    for (yy = 0; yy < yDim; yy++) {
+	    	for (xx = 0; xx < xDim; xx++) {
+	    	    if (segLabelLarge[yy][xx] == 0) {
+	    	        tgt = segLabel[yy][xx];
+	    	        labelN++;
+	    	        tb[0] = yy;
+	    	        bb[0] = yy;
+	    	        lb[0] = xx;
+	    	        rb[0] = xx;
+	    	        
+	    	        cnt[0] = 0;
+	    	        expand(yy, xx, stk, mark, segLabelLarge, segLabel, labelN, cnt, tb, bb, lb, rb, tgt);
+	    	        if (cnt[0] < minSize) {
+	    	            for (y = tb[0]; y <= bb[0]; y++) {
+	    	            	
+	    	            }
+	    	        }
+	    	    } // if (segLabelLarge[y][x] == 0) 
+	    	} // for (x = 0; x < xDim; x++)
+	    } // for (y = 0; y < yDim; y++)
+	}
+	
+	// Non-recursive growing
+	private void expand(int y, int x, int stk[], int mark[], int segLabelLarge[][], int segLabel[][], int labelN, int cnt[],
+			            int tb[], int bb[], int lb[], int rb[], int tgt) {
+	    int yy;
+	    int xx;
+	    int stkcnt;
+	    
+	    stkcnt = 1;
+	    stk[stkcnt-1] = y;
+	    stk[stkcnt-1 + yDim*xDim] = x;
+	    
+	    while (stkcnt > 0) {
+	    	yy = stk[stkcnt-1];
+	    	xx = stk[stkcnt-1 + yDim*xDim];
+	        stkcnt = stkcnt-1;
+	        if (segLabelLarge[yy][xx] == labelN) {
+	            continue;	
+	        }
+	        segLabelLarge[yy][xx] = labelN;
+	        cnt[0]++;
+	        if (yy < tb[0]) {
+	        	tb[0] = yy;
+	        }
+	        if (yy > bb[0]) {
+	        	bb[0] = yy;
+	        }
+	        if (xx < lb[0]) {
+	        	lb[0] = xx;
+	        }
+	        if (xx > rb[0]) {
+	        	rb[0] = xx;
+	        }
+	        
+	        if ((yy + 1 < yDim) && segLabel[yy+1][xx] == tgt && segLabelLarge[yy+1][xx] == 0) {
+	        	stkcnt = stkcnt + 1;
+	        	stk[stkcnt-1] = yy + 1;
+	        	stk[stkcnt-1+yDim*xDim] = xx;
+	        }
+	        if ((xx + 1 < xDim) && segLabel[yy][xx+1] == tgt && segLabelLarge[yy][xx+1] == 0) {
+	        	stkcnt = stkcnt + 1;
+	        	stk[stkcnt-1] = yy;
+	        	stk[stkcnt-1 + yDim*xDim] = xx + 1;
+	        }
+	        if (( yy - 1 >= 0) && segLabel[yy-1][xx] == tgt && segLabelLarge[yy-1][xx] == 0) {
+	        	stkcnt = stkcnt + 1;
+	        	stk[stkcnt-1] = yy - 1;
+	        	stk[stkcnt-1 + yDim*xDim] = xx;
+	        }
+	        if ((xx - 1 >= 0) && segLabel[yy][xx-1] == tgt && segLabelLarge[yy][xx-1] == 0) {
+	        	stkcnt = stkcnt + 1;
+	        	stk[stkcnt-1] = yy;
+	        	stk[stkcnt-1 + yDim*xDim] = xx-1;
+	        }
+	    } // while (stkcnt > 0)
 	}
 	
 	private void SHedge_ls(double EdgeMap[][], int ws, int dism, double sh_mx[][][]) {
