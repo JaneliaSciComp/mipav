@@ -216,7 +216,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.28";
+    private static final String pluginVersion = "0.29";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -1120,8 +1120,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         MipavUtil.displayError("Unable to copy image zip file into output directory");
                         e.printStackTrace();
                     }
-                }
-                if ( ( (imgFileInfo.getImgFilePath().endsWith(".tar.gz") || imgFileInfo.getImgFilePath().endsWith(".tgz")) && new File(
+                } else if ( ( (imgFileInfo.getImgFilePath().endsWith(".tar.gz") || imgFileInfo.getImgFilePath().endsWith(".tgz")) && new File(
                         imgFileInfo.getImgFilePath()).exists())) {
                     // the files were already tarballed - so don't zip again. copy to output dir
                     try {
