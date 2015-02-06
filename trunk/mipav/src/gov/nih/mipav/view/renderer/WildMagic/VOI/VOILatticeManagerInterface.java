@@ -117,7 +117,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 				}
 				else
 				{
-					latticeModel = new LatticeModel( m_kImageA, m_kImageB, annotations.elementAt(0), true );
+					latticeModel = new LatticeModel( m_kImageA, annotations.elementAt(0), true );
 				}
 			}
 		} 
@@ -163,7 +163,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 				}
 				else
 				{
-					latticeModel = new LatticeModel( m_kImageA, m_kImageB, lattice.elementAt(0) );
+					latticeModel = new LatticeModel( m_kImageA, lattice.elementAt(0) );
 				}
 			}
 		} 
@@ -187,6 +187,12 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 				latticeModel.saveLattice( );
 			}
 		} 
+		else if ( command.equals("ShowExpandedModel") ) {
+			if ( latticeModel != null )
+			{
+				latticeModel.showExpandedModel( );
+			}
+		} 
 		else if ( command.equals("ShowModel") ) {
 			if ( latticeModel != null )
 			{
@@ -196,7 +202,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		else if ( command.equals("SegmentWorm") ) { 
 			if ( latticeModel == null )
 			{
-				latticeModel = new LatticeModel( m_kImageA, m_kImageB);
+				latticeModel = new LatticeModel( m_kImageA );
 			}
 			latticeModel.segmentWorm( );
 		} 
@@ -204,6 +210,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			if ( latticeModel != null )
 			{
 				latticeModel.interpolateLattice( true );
+				voiMenuBuilder.setMenuItemEnabled("Show Expanded Model", true);
 			}
 		} 
 		else if ( command.equals("voxelSize") ) {
@@ -358,7 +365,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 	{       
 		if ( latticeModel == null )
 		{
-			latticeModel = new LatticeModel( m_kImageA, m_kImageB);
+			latticeModel = new LatticeModel( m_kImageA );
 		}
 		if ( latticeModel.getPicked() != null )
 		{
@@ -381,7 +388,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 	{       
 		if ( latticeModel == null )
 		{
-			latticeModel = new LatticeModel( m_kImageA, m_kImageB);
+			latticeModel = new LatticeModel( m_kImageA );
 		}
 		if ( latticeModel.getPicked() != null )
 		{

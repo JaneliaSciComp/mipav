@@ -92,7 +92,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 
 	/** This source image is typically set by the constructor */
 	private ModelImage wormImageA;    
-	private ModelImage wormImageB;    
 	private ModelImage prevImageA;     
 	private ModelImage maximumProjectionImage;
 	private int currentMP;
@@ -103,7 +102,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 	private String baseFileDir;
 	private Vector<Integer> includeRange;
 
-	private JCheckBox includeNuclearImage;
 	private JTextField  nuclearFileNameText;
 
 	private JCheckBox latticeStraighten;
@@ -666,20 +664,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 						wormImageA = null;
 					}
 					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
-					if(wormImageB != null) {
-						wormImageB.disposeLocal();
-						wormImageB = null;
-					}
-					if ( includeNuclearImage.isSelected() )
-					{    	    	
-						fileName = nuclearFileNameText.getText() + "_" + includeRange.elementAt(i) + ".tif";
-						voiFile = new File(baseFileDir + File.separator + fileName);
-						if ( voiFile.exists() )
-						{
-							fileIO = new FileIO();
-							wormImageB = fileIO.readImage(fileName, baseFileDir + File.separator, false, null); 
-						}
-					}
 
 					fileName = baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "lattice_1";
 					VOIVector lattice = new VOIVector();
@@ -688,7 +672,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 
 					if ( (lattice.elementAt(0) != null) && (lattice.elementAt(0).getCurves().size() == 2) )
 					{
-						LatticeModel model = new LatticeModel( wormImageA, wormImageB, lattice.elementAt(0) );
+						LatticeModel model = new LatticeModel( wormImageA, lattice.elementAt(0) );
 
 						fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotations";            	    		
 						VOIVector annotations = new VOIVector();
@@ -740,20 +724,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 						wormImageA = null;
 					}
 					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
-					if(wormImageB != null) {
-						wormImageB.disposeLocal();
-						wormImageB = null;
-					}
-					if ( includeNuclearImage.isSelected() )
-					{    	    	
-						fileName = nuclearFileNameText.getText() + "_" + fileCount + ".tif";
-						voiFile = new File(baseFileDir + File.separator + fileName);
-						if ( voiFile.exists() )
-						{
-							fileIO = new FileIO();
-							wormImageB = fileIO.readImage(fileName, baseFileDir + File.separator, false, null); 
-						}
-					}
 
 					fileName = baseFileNameText.getText() + "_" + fileCount + File.separator + "lattice_1";
 					VOIVector lattice = new VOIVector();
@@ -762,7 +732,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 
 					if ( (lattice.elementAt(0) != null) && (lattice.elementAt(0).getCurves().size() == 2) )
 					{
-						LatticeModel model = new LatticeModel( wormImageA, wormImageB, lattice.elementAt(0) );
+						LatticeModel model = new LatticeModel( wormImageA, lattice.elementAt(0) );
 
 						fileName = baseFileNameText.getText() + "_" + fileCount + File.separator + "annotations";            	    		
 						VOIVector annotations = new VOIVector();
@@ -797,13 +767,10 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			}
 		}
 
-		if(wormImageA != null) {
+		if ( wormImageA != null )
+		{
 			wormImageA.disposeLocal();
 			wormImageA = null;
-		}
-		if(wormImageB != null) {
-			wormImageB.disposeLocal();
-			wormImageB = null;
 		}
 	}
 
@@ -1715,7 +1682,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 					swapLattice.getCurves().add(right);
 					swapLattice.getCurves().add(left);
 					wormImageA.unregisterAllVOIs();
-					LatticeModel model = new LatticeModel( wormImageA, null, swapLattice );
+					LatticeModel model = new LatticeModel( wormImageA, swapLattice );
 					model.saveLattice( baseFileDir + File.separator + baseFileNameText.getText() + "_"  + index + File.separator, "lattice_0" );
 					model.dispose();
 					model = null;
@@ -1737,7 +1704,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 					swapLattice.getCurves().add(right);
 					swapLattice.getCurves().add(left);
 					wormImageA.unregisterAllVOIs();
-					LatticeModel model = new LatticeModel( wormImageA, null, swapLattice );
+					LatticeModel model = new LatticeModel( wormImageA, swapLattice );
 					model.saveLattice( baseFileDir + File.separator + baseFileNameText.getText() + "_"  + index + File.separator, "lattice_1" );
 					model.dispose();
 					model = null;
@@ -2790,27 +2757,19 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		panel = new JPanel(new GridBagLayout());
-		panel.setBorder(buildTitledBorder("Output Options"));
+		panel.setBorder(buildTitledBorder("Algorithms"));
 		panel.setForeground(Color.black);
 
-		includeNuclearImage = gui.buildCheckBox("include nuclear image", false );
-		panel.add(includeNuclearImage.getParent(), gbc);
-		gbc.gridy++;
-
-		nuclearFileNameText = gui.buildField("Nuclear image name: ", "Neuron");
-		panel.add(nuclearFileNameText.getParent(), gbc);
+		gbc.gridx = 0;
+		buildLattice = gui.buildCheckBox("build lattice", false );
+		buildLattice.setEnabled(false);
+		panel.add(buildLattice.getParent(), gbc);
 		gbc.gridy++;
 
 		gbc.gridx = 0;
 		latticeStraighten = gui.buildCheckBox("Straighten Lattices", false );
 		panel.add(latticeStraighten.getParent(), gbc);
 		gbc.gridy++;
-
-
-		gbc.gridx = 0;
-		buildLattice = gui.buildCheckBox("build lattice", false );
-//		panel.add(buildLattice.getParent(), gbc);
-//		gbc.gridy++;
 
 
 		gbc.gridx = 0;
