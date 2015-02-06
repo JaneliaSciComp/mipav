@@ -33,6 +33,7 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	private double filter[];
 	
 	// An integration scale.  A windowSize by windowSize square window
+	// windowSize default = 25 for gray scale, windowSize default = 21 for color
 	private int windowSize = 25;
 	
 	// Number of segments.  Determined automatically if set to 0.
@@ -99,7 +100,7 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 		int ws; 
 		double sh_mx[][][];
 		int bb;
-		double Y[][];
+		double YA[][];
 		Matrix matY;
 		double SE[][];
 		double eigenvalue[];
@@ -123,8 +124,8 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	    int len;
 	    double Mx[][];
 	    double tmplt[][];
-	    double L[];
-	    double maxL;
+	    double LV[];
+	    double maxL = -Double.MAX_VALUE;
 	    int rn = 0;
 	    double seedmap[][];
 	    int idx[];
@@ -164,9 +165,250 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	    double maxh;
 	    int segLabel[][];
 	    int segLabelLarge[][];
+	    // The three coordinates of CIELAB represent the lightness of the color(L* = 0 yields black and L* = 100 indicates diffuse 
+	    // white; specular white may be higher), its position between red/magenta and green(a*, negative values indicate green
+	    // while positive values indicate magenta) and its position between yellow and blue(b*, negative values indicate blue 
+	    // and positive values indicate yellow).  The asterisk(*) after L, a, and b are part of the full name, since they represent 
+	    // L*, a*, and b*, to distinguish them from Hunter's L, a, and b.
+	    		  
+	    // The L* coordinate ranges from 0 to 100.  The possible range of a* and b* coordinates depends on the color space that one
+	    // is converting from.  
+	    // R = 0, G = 0, B = 0 => L* = 0, a* = 0, b* = 0
+	    // R = 255, G = 0, B = 0 => L* = 53.2, a* = 80.1, b* = 67.22
+	    // R = 0, G = 255, B = 0 => L* = 87.7, a* = -86.2, b* = 83.2
+	    // R = 0, G = 0, B = 255 => L* = 32.3, a* = 79.2, b* = -107.9
+	    // R = 255, G = 255, B = 0 => L* = 97.1, a* = -21.6, b* = 94.5
+	    // R = 255, G = 0, B = 255 => L* = 60.3, a* = 98.3, b* = -60.8
+	    // R = 0, G = 255, B = 255 => L* = 91.1, a* = -48.1, b* = -14.1
+	    // R = 255, G = 255, B = 255 => L* = 100.0, a* = 0.00525, b* = -0.0104
+	    // so the range of a* equals about the range of b* and the range of a* equals about twice the range of L*.
+	    // The simplest distance metric delta E is CIE76 = sqrt((L2* - L1*)**2 + (a2* - a1*)**2 + (b2* - b1*)**2)
+	    		
+	    // XW, YW, and ZW (also called XN, YN, ZN or X0, Y0, Z0) are reference white tristimulus values - typically the white
+	    // of a perfectly reflecting diffuser under CIE standard D65 illumination(defined by x = 0.3127 and y = 0.3291 in the
+	    // CIE chromatcity diagram).  The 2 degrees, D65 reference tristimulus values are: XN = 95.047, YN = 100.000, and ZN = 108.883.
+	    
+	    // Scale factor used in RGB-CIELab conversions.  255 for ARGB, could be higher for ARGB_USHORT.
+	    double scaleMax = 255.0;
+	    float buffer[];
+	    double varR;
+	    double varG;
+	    double varB;
+	    double X;
+	    double Y;
+	    double Z;
+	    double varX;
+	    double varY;
+	    double varZ;
+	    // Observer = 2 degrees, Illuminant = D65
+        double XN = 95.047;
+        double YN = 100.000;
+        double ZN = 108.883;
+        double L;
+        double a;
+        double b;
+        double minL = Double.MAX_VALUE;
+        double mina = Double.MAX_VALUE;
+        double maxa = -Double.MAX_VALUE;
+        double minb = Double.MAX_VALUE;
+        double maxb = -Double.MAX_VALUE;
+        double Labbuf[][];
+        double gradmag[][][];
+        double expdenom;
+        double GxData[];
+        double GyData[];
 		if (srcImage.isColorImage()) {
+			// Convert RGB to CIE 1976 L*a*b
+			scaleMax = Math.max(255.0, srcImage.getMax());
+			buffer =  new float[4 * length];
+			Labbuf = new double[length][3];
+			try {
+				srcImage.exportData(0, length, buffer);
+			}
+			catch(IOException e) {
+				e.printStackTrace();
+				setCompleted(false);
+				return;
+			}
+			for (i = 0; i < buffer.length; i += 4) {
+                varR = buffer[i+1]/scaleMax;
+                varG = buffer[i+2]/scaleMax;
+                varB = buffer[i+3]/scaleMax;
+                
+                if (varR <= 0.04045) {
+                    varR = varR/12.92;
+                }
+                else {
+                    varR = Math.pow((varR + 0.055)/1.055, 2.4);
+                }
+                if (varG <= 0.04045) {
+                    varG = varG/12.92;
+                }
+                else {
+                    varG = Math.pow((varG + 0.055)/1.055, 2.4);
+                }
+                if (varB <= 0.04045) {
+                    varB = varB/12.92;
+                }
+                else {
+                    varB = Math.pow((varB + 0.055)/1.055, 2.4);
+                }
+                
+                varR = 100.0 * varR;
+                varG = 100.0 * varG;
+                varB = 100.0 * varB;
+                
+                // Observer = 2 degrees, Illuminant = D65
+                X = 0.4124*varR + 0.3576*varG + 0.1805*varB;
+                Y = 0.2126*varR + 0.7152*varG + 0.0722*varB;
+                Z = 0.0193*varR + 0.1192*varG + 0.9505*varB;
+                
+                varX = X/ XN;
+                varY = Y/ YN;
+                varZ = Z/ ZN;
+                
+                if (varX > 0.008856) {
+                    varX = Math.pow(varX, 1.0/3.0);
+                }
+                else {
+                    varX = (7.787 * varX) + (16.0/116.0);
+                }
+                if (varY > 0.008856) {
+                    varY = Math.pow(varY, 1.0/3.0);
+                }
+                else {
+                    varY = (7.787 * varY) + (16.0/116.0);
+                }
+                if (varZ > 0.008856) {
+                    varZ = Math.pow(varZ, 1.0/3.0);
+                }
+                else {
+                    varZ = (7.787 * varZ) + (16.0/116.0);
+                }
+                
+                L = (float)((116.0 * varY) - 16.0);
+                a = (float)(500.0 * (varX - varY));
+                b = (float)(200.0 * (varY - varZ));
+                
+                if (L < minL) {
+                    minL = L;
+                }
+                if (L > maxL) {
+                    maxL = L;
+                }
+                if (a < mina) {
+                    mina = a;
+                }
+                if (a > maxa) {
+                    maxa = a;
+                }
+                if (b < minb) {
+                    minb = b;
+                }
+                if (b > maxb) {
+                    maxb = b;
+                }
+                
+                Labbuf[i/4][0] = L;
+                Labbuf[i/4][1] = a;
+                Labbuf[i/4][2] = b;
+            } // for (i = 0; i < buffer.length; i += 4)
 			
-		}
+			// Apply watershed transform to the color bands
+			gradmag = new double[yDim][xDim][3];
+			//To eliminate the zero-padding artifacts around the edge of the image, use an alternative boundary
+        	// padding method called border replication. In border replication, the value of any pixel outside
+        	// the image is determined by replicating the value from the nearest border pixel.
+			// Gaussian window size is 5 by 5 so use halfMask = 2
+			halfMask = 2;
+        	expandedSize = (xDim + 2 * halfMask) * (yDim + 2 * halfMask);
+        	expandedBuffer = new double[expandedSize];
+        	extents = new int[2];
+        	extents[0] = xDim + 2 * halfMask;
+        	extents[1] = yDim + 2 * halfMask;
+        	expandedImage = new ModelImage(ModelStorageBase.FLOAT, extents, "expandedImage");
+        	kExtents[0] = 2*halfMask + 1;
+        	kExtents[1] = 2*halfMask + 1;
+        	GData = new double[kExtents[0] * kExtents[1]];
+        	sigma =  0.8;
+        	denom = (2.0 * Math.PI * sigma * sigma);
+        	expdenom = 2.0 * sigma * sigma;
+        	GxData = new double[]{1, 0, -1, 1, 0, -1, 1, 0, -1};
+        	GyData = new double[]{1, 1, 1, 0, 0, 0, -1, -1, -1};
+        	for (y = -halfMask; y <= halfMask; y++) {
+        		for (x = -halfMask; x <= halfMask; x++) {
+        		    distSquared = x * x + y * y;
+        		    GData[(x + halfMask) + (y + halfMask) * kExtents[0]] = Math.exp(-distSquared/expdenom)/denom;
+        		}
+        	} // for (y = -halfMask; y <= halfMask; y++)
+        	for (i = 0; i < 3; i++) {
+	        	for (y = 0; y < yDim; y++) {
+	        		for (x = 0; x < xDim; x++) {
+	        			expandedBuffer[x + halfMask + (y + halfMask) * (xDim + 2 * halfMask)] = Labbuf[x + y * xDim][i];
+	        		}
+	        	}
+	        	for (x = 0; x < halfMask; x++) {
+	        		for (y = 0; y < halfMask; y++) {
+	        			expandedBuffer[x + y * (xDim + 2 * halfMask)] = Labbuf[0][i];	
+	        		}
+	        		
+	        		for (y = halfMask; y <= yDim + halfMask - 1; y++) {
+	        			expandedBuffer[x + y * (xDim + 2 * halfMask)] = Labbuf[(y - halfMask)* xDim][i];	
+	        		}
+	        		
+	        		for (y = yDim + halfMask; y <= yDim + 2*halfMask - 1; y++) {
+	        			expandedBuffer[x + y * (xDim + 2 * halfMask)] = Labbuf[(yDim - 1)* xDim][i];	
+	        		}
+	        	} // for (x = 0; x < halfMask; x++)
+	        	
+	        	for (x = xDim + halfMask; x < xDim + 2 * halfMask; x++) {
+	        		for (y = 0; y < halfMask; y++) {
+	        			expandedBuffer[x + y * (xDim + 2 * halfMask)] = Labbuf[xDim-1][i];	
+	        		}
+	        		
+	        		for (y = halfMask; y <= yDim + halfMask - 1; y++) {
+	        			expandedBuffer[x + y * (xDim + 2 * halfMask)] = Labbuf[(y - halfMask)* xDim + xDim - 1][i];	
+	        		}
+	        		
+	        		for (y = yDim + halfMask; y <= yDim + 2*halfMask - 1; y++) {
+	        			expandedBuffer[x + y * (xDim + 2 * halfMask)] = Labbuf[(yDim - 1)* xDim + xDim - 1][i];	
+	        		}	
+	        	} // for (x = xDim + halfMask; x < xDim + 2 * halfMask; x++)
+	        	
+	        	for (y = 0; y < halfMask; y++) {
+	        		for (x = halfMask; x <= xDim + halfMask - 1; x++) {
+	        			expandedBuffer[x + y * (xDim + 2 * halfMask)] = Labbuf[x - halfMask][i];		
+	        		}
+	        	}
+	        	
+	        	for (y = yDim + halfMask; y < yDim + 2*halfMask; y++) {
+	        		for (x = halfMask; x <= xDim + halfMask - 1; x++) {
+	        			expandedBuffer[x + y * (xDim + 2 * halfMask)] = Labbuf[(yDim - 1)* xDim + x - halfMask][i];		
+	        		}
+	        	}
+	        	
+	        	try {
+	        		expandedImage.importData(0, expandedBuffer, true);
+	        	}
+	        	catch(IOException e) {
+	        		MipavUtil.displayError("IOException " + e + " on expandedImage.importData(0, expandedBuffer, true)");
+	        		setCompleted(false);
+	        		return;
+	        	}
+	        	convolver = new AlgorithmDConvolver(expandedImage, GData, kExtents,entireImage, image25D);
+		        convolver.addListener(this);
+		        operationType = filterOp;
+		        convolver.run();
+		        try {
+	        		expandedImage.importData(0, filter, true);
+	        	}
+	        	catch(IOException e) {
+	        		MipavUtil.displayError("IOException " + e + " on expandedImage.importData(0, filter, true)");
+	        		setCompleted(false);
+	        		return;
+	        	}
+        	} // for (i = 0; i < 3; i++)
+		} // if (srcImage.isColorImage())
 		else {
 			// Segment images with heavy texture
 			// This code segments gray level images
@@ -174,7 +416,11 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 			try {
 				srcImage.exportData(0, length, srcBuffer);
 			}
-			catch(IOException e) {}
+			catch(IOException e) {
+				e.printStackTrace();
+				setCompleted(false);
+				return;	
+			}
 			
 			Ig = new double[yDim][xDim][filterNumber];
 			for (y = 0; y < yDim; y++)  {
@@ -324,11 +570,11 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 			}
 			Ig = null;
 			bb = filterNumber * binNumber;
-			Y = new double[bb][yDim * xDim];
+			YA = new double[bb][yDim * xDim];
 			for (i = 0; i < bb; i++) {
 				for (y = 0; y < yDim; y++) {
 					for (x = 0; x < xDim; x++) {
-						Y[i][x + y * xDim] = sh_mx[i][y][x];
+						YA[i][x + y * xDim] = sh_mx[i][y][x];
 					}
 				}
 			}
@@ -339,7 +585,7 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 				sh_mx[i] = null;
 			}
 			sh_mx = null;
-			matY = new Matrix(Y);
+			matY = new Matrix(YA);
 			SE = (matY.times(matY.transpose())).getArray();
 			eigenvalue = new double[SE[0].length];
 			eigenvector = new double[SE.length][SE[0].length];
@@ -450,14 +696,14 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        // Representative feature estimation
 	        
 	        tmplt = new double[dimn][segmentNumber];
-	        L = new double[len];
+	        LV = new double[len];
 	        maxL = -Double.MAX_VALUE;
 	        for (x = 0; x < len; x++) {
 	        	for (y = 0; y < dimn; y++) {
-	        		L[x] = L[x] + (Mx[y][x]*Mx[y][x]);
+	        		LV[x] = LV[x] + (Mx[y][x]*Mx[y][x]);
 	        	}
-	        	if (L[x] > maxL) {
-	        		maxL = L[x];
+	        	if (LV[x] > maxL) {
+	        		maxL = LV[x];
 	        		rn = x;
 	        	}
 	        }
@@ -715,17 +961,31 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 		        }
 	        } // if (nonNegativity)
 	        
-	        segLabel = new int[yDim][xDim];
-	        for (y = 0; y < yDim; y++) {
-	            for (x = 0; x < xDim; x++) {
-	                segLabel[y][x] = slab[x + y * xDim];	
-	            }
-	        }
-	        
 	        if (removeSmallRegions) {
+	        	 segLabel = new int[yDim][xDim];
+	 	        for (y = 0; y < yDim; y++) {
+	 	            for (x = 0; x < xDim; x++) {
+	 	                segLabel[y][x] = slab[x + y * xDim];	
+	 	            }
+	 	        }
 	        	segLabelLarge = new int[yDim][xDim];
 	        	RmSmRg(segLabelLarge, segLabel, 100);
+	        	for (y = 0; y < yDim; y++) {
+	 	            for (x = 0; x < xDim; x++) {
+	 	                slab[x + y * xDim] = segLabelLarge[y][x];	
+	 	            }
+	 	        }
 	        }
+	        try {
+	        	destImage.importData(0, slab, true);
+	        }
+	        catch(IOException e) {
+	        	MipavUtil.displayError("IOException " + e + " on destImage.importData(0, slab, true)");
+	        	setCompleted(false);
+	        	return;
+	        }
+	        setCompleted(true);
+	        return;
 		} // else not color
 		
 	}
@@ -738,12 +998,23 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	    int xx;
 	    int y;
 	    int x;
+	    int y1;
+	    int x1;
 	    int tgt;
 	    int tb[] = new int[1];
 	    int bb[] = new int[1];
 	    int lb[] = new int[1];
 	    int rb[] = new int[1];
 	    int cnt[] = new int[1];
+	    boolean nonstop;
+	    int i;
+	    int nb[] = new int[500];
+	    int nbCt[] = new int[500];
+	    int nbN;
+	    boolean flag;
+	    int k;
+	    int maxN;
+	    int maxnbN = 0;
 	    
 	    for (yy = 0; yy < yDim; yy++) {
 	    	for (xx = 0; xx < xDim; xx++) {
@@ -756,19 +1027,111 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	    	        rb[0] = xx;
 	    	        
 	    	        cnt[0] = 0;
-	    	        expand(yy, xx, stk, mark, segLabelLarge, segLabel, labelN, cnt, tb, bb, lb, rb, tgt);
+	    	        expand(yy, xx, stk, segLabelLarge, segLabel, labelN, cnt, tb, bb, lb, rb, tgt);
 	    	        if (cnt[0] < minSize) {
 	    	            for (y = tb[0]; y <= bb[0]; y++) {
-	    	            	
-	    	            }
-	    	        }
+	    	                for (x = lb[0]; x <= rb[0]; x++) {
+	    	                	if (segLabelLarge[y][x] == labelN) {
+	    	                		segLabelLarge[y][x] = 99999;
+	    	                	}
+	    	                }
+	    	            } //  for (y = tb[0]; y <= bb[0]; y++)
+	    	            labelN = labelN - 1;
+	    	        } // if (cnt[0] < minSize)
 	    	    } // if (segLabelLarge[y][x] == 0) 
-	    	} // for (x = 0; x < xDim; x++)
-	    } // for (y = 0; y < yDim; y++)
+	    	} // for (xx = 0; xx < xDim; x++)
+	    } // for (yy = 0; yy < yDim; y++)
+	    // Eliminate small noisy region
+	    nonstop = true;
+	    while (nonstop) {
+	        nonstop = false;
+	        for (y1 = 0; y1 < yDim; y1++) {
+	            for (x1 = 0; x1 < xDim; x1++) {
+	                if (segLabelLarge[y1][x1] == 99999) {
+	                    tgt = segLabel[y1][x1];
+	                    tb[0] = y1;
+	                    bb[0] = y1;
+	                    lb[0] = x1;
+	                    rb[0] = x1;
+	                    expand2(y1, x1, stk, mark, segLabel, labelN, cnt, tb, bb, lb, rb, tgt);
+	                    
+	                    if (tb[0]-1 >= 0) {
+	                    	tb[0] = tb[0]-1;
+	                    }
+	                    if (bb[0] + 1 < yDim) {
+	                    	bb[0] = bb[0] + 1;
+	                    }
+	                    if (lb[0] - 1 >= 0) {
+	                    	lb[0] = lb[0] - 1;
+	                    }
+	                    if (rb[0] + 1 < xDim) {
+	                    	rb[0] = rb[0] + 1;
+	                    }
+	                    
+	                    for (i = 0; i < 500; i++) {
+	                    	nb[i] = 0;
+	                    	nbCt[i] = 500;
+	                    }
+	                    nbN = 0;
+	                    for (y = tb[0]; y <= bb[0]; y++) {
+	                        for (x = lb[0]; x <= rb[0]; x++) {
+	                            if (mark[x + y * xDim] == 0 && segLabelLarge[y][x] != 99999) {
+	                                if (y > 0 && mark[x + (y-1)*xDim] == 1 ||
+	                                  y < yDim-1 && mark[x + (y+1)*xDim] == 1 ||
+	                                  x > 0 && mark[x-1 + y*xDim] == 1 ||
+	                                  x < xDim-1 && mark[(x+1) + y * xDim] == 1) {
+	                                	flag = false;
+	                                	for (k = 0; k <= nbN; k++) {
+	                                	    if (segLabelLarge[y][x] == nb[k]) {
+	                                	    	nbCt[k] = nbCt[k] + 1;
+	                                	    	flag = true;
+	                                	    }
+	                                	}
+	                                	if (!flag) {
+	                                		nbN++;
+	                                		nb[nbN] = segLabelLarge[y][x];
+	                                		nbCt[nbN] = 1;
+	                                	}
+	                                }
+	                            } // if (mark[x + y * xDim] == 0 && segLabelLarge[y][x] != 99999)
+	                        } // for (x = lb[0]; x <= rb[0]; x++)
+	                    } // for (y = tb[0]; y <= bb[0]; y++)
+	                    if (nbN == 0) {
+	                    	for (y = tb[0]; y <= bb[0]; y++) {
+	                    	    for (x = lb[0]; x <= rb[0]; x++) {
+	                    	    	mark[x + y * xDim] = 0;
+	                    	    }
+	                    	} // for (y = tb[0]; y <= bb[0]; y++)
+	                    	nonstop = true;
+	                    	continue;
+	                    } // if (nbN == 0)
+	                    maxN = 0;
+	                    for (k = 1; k <= nbN; k++) {
+	                        if (nbCt[k] > maxN)	{
+	                        	maxN = nbCt[k];
+	                        	maxnbN = k;
+	                        }
+	                    } // for (k = 1; k <= nbN; k++)
+	                    for (y = tb[0]; y <= bb[0]; y++) {
+	                        for (x = lb[0]; x <= rb[0]; x++) {
+	                            if (segLabelLarge[y][x] == 99999 && mark[x + y * xDim] == 1) {
+	                            	segLabelLarge[y][x] = nb[maxnbN];
+	                            }
+	                        } // for (x = lb[0]; x <= rb[0]; x++)
+	                    } // for (y = tb[0]; y <= bb[0]; y++)
+	                    for (y = tb[0]; y <= bb[0]; y++) {
+	                        for (x = lb[0]; x <= rb[0]; x++) {
+	                            mark[x + y * xDim] = 0;	
+	                        }
+	                    }
+	                } // if (segLabelLarge[y1][x1] == 99999)
+	            } // for (x1 = 0; x1 < xDim; x1++)
+	        } // for (y1 = 0; y1 < yDim; y1++)
+	    } // while (nonstop) 
 	}
 	
 	// Non-recursive growing
-	private void expand(int y, int x, int stk[], int mark[], int segLabelLarge[][], int segLabel[][], int labelN, int cnt[],
+	private void expand(int y, int x, int stk[], int segLabelLarge[][], int segLabel[][], int labelN, int cnt[],
 			            int tb[], int bb[], int lb[], int rb[], int tgt) {
 	    int yy;
 	    int xx;
@@ -821,6 +1184,63 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        	stk[stkcnt-1 + yDim*xDim] = xx-1;
 	        }
 	    } // while (stkcnt > 0)
+	}
+	
+	// Non-recursive growing in part 2
+	private void expand2(int y, int x, int stk[], int mark[], int segLabel[][], int labelN, int cnt[],
+            int tb[], int bb[], int lb[], int rb[], int tgt) {
+		int yy;
+		int xx;
+		int stkcnt;
+		
+		stkcnt = 1;
+		stk[stkcnt-1] = y;
+		stk[stkcnt-1 + yDim*xDim] = x;
+		
+		while (stkcnt > 0) {
+			yy = stk[stkcnt-1];
+			xx = stk[stkcnt-1 +yDim*xDim];
+			stkcnt = stkcnt-1;
+			if (mark[xx + yy*xDim] == 1) {
+				continue;
+			}
+			mark[xx + yy*xDim] = 1;
+			cnt[0]++;
+			if (yy < tb[0]) {
+				tb[0] = yy;
+			}
+			if (yy > bb[0]) {
+				bb[0] = yy;
+			}
+			if (xx < lb[0]) {
+				lb[0] = xx;
+			}
+			if (xx > rb[0]) {
+				rb[0] = xx;
+			}
+			
+			if ((yy + 1 < yDim) && segLabel[yy+1][xx] == tgt && mark[xx + (yy+1)*xDim] == 0) {
+				stkcnt = stkcnt+1;
+				stk[stkcnt-1] = yy +1;
+				stk[stkcnt-1+yDim*xDim] = xx;
+			}
+			if ((xx + 1 < xDim) && segLabel[yy][xx+1] == tgt && mark[xx+1 + yy*xDim] == 0) {
+				stkcnt = stkcnt + 1;
+				stk[stkcnt-1] = yy;
+				stk[stkcnt-1+ yDim*xDim] = xx + 1;
+			}
+			if ((yy-1 >= 0) && segLabel[yy-1][xx] == tgt && mark[xx + (yy-1)*xDim] == 0) {
+				stkcnt = stkcnt + 1;
+				stk[stkcnt-1] = yy - 1;
+				stk[stkcnt-1 + yDim*xDim] = xx;
+			}
+			if ((xx - 1 >= 0) && segLabel[yy][xx-1] == tgt && mark[xx-1 + yy*xDim] == 0) {
+			    stkcnt = stkcnt + 1;
+			    stk[stkcnt-1] = yy;
+			    stk[stkcnt-1+yDim*xDim] = xx - 1;
+			}
+		} // while (stkcnt > 0)
+		
 	}
 	
 	private void SHedge_ls(double EdgeMap[][], int ws, int dism, double sh_mx[][][]) {
