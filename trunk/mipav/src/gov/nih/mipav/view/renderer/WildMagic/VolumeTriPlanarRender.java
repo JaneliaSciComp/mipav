@@ -1065,11 +1065,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	public boolean writeImage()
     {
         super.writeImage();
-//        System.err.println( "writeImage " + m_iScreenCaptureCounter + " " + annotationPositions.size() );
-        if ( m_iScreenCaptureCounter >= annotationPositions.size() )
+        if ( annotationPositions != null )
         {
-        	m_bSnapshot = false;
-        	m_bPlay4DVOIs = false;
+        	if ( m_iScreenCaptureCounter >= annotationPositions.size() )
+        	{
+        		m_bSnapshot = false;
+        		m_bPlay4DVOIs = false;
+        	}
         }
         return true;
     }

@@ -993,7 +993,7 @@ public class ViewMenuBar {
      */
     public JMenu makeVOIMenu( boolean displayLatticeMenu ) 
     {
-        return menuBuilder
+        JMenu menu =  menuBuilder
                 .makeMenu("VOI", 'V', false,
                         new JComponent[] {
 
@@ -1151,8 +1151,9 @@ public class ViewMenuBar {
                                 		menuBuilder.buildMenuItem("Open Lattice", "OpenLattice", 0, null,
                                                         false),
                                         menuBuilder.buildCheckBoxMenuItem("Show Model", "ShowModel", false),
-                                        menuBuilder.buildMenuItem("Segment Worm", "SegmentWorm", 0, null,
-                                            	false),
+                                        menuBuilder.buildCheckBoxMenuItem("Show Expanded Model", "ShowExpandedModel", false),
+//                                        menuBuilder.buildMenuItem("Segment Worm", "SegmentWorm", 0, null,
+//                                            	false),
                                         menuBuilder.buildMenuItem("Straighten", "StraightenLattice", 0, null,
                                                 false),
                                         menuBuilder.buildMenuItem("Default Voxel Size", "voxelSize", 0, null,
@@ -1166,6 +1167,9 @@ public class ViewMenuBar {
                                 menuBuilder.buildMenuItem("Statistics generator", "VOIStistics", 'G', null, true),
 
                         });
+
+        menuBuilder.setMenuItemEnabled("Show Expanded Model", false);
+        return menu;
     }
     
     
