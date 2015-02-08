@@ -48,6 +48,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.Arrays;
 import java.util.Vector;
 
 import javax.media.opengl.GLAutoDrawable;
@@ -66,6 +67,8 @@ import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
+import WildMagic.LibFoundation.Mathematics.Vector2d;
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.Mathematics.Vector4f;
 import WildMagic.LibGraphics.Collision.PickRecord;
@@ -3283,6 +3286,19 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	 * Render the display list objects without the raycast volume.
 	 */
 	protected void Render(GLAutoDrawable kDraw) {
+		
+		Vector2d[] sortedList = new Vector2d[m_kDisplayList.size()-1];
+		for (int i = 1; i < m_kDisplayList.size(); i++) {
+			
+			float depth = m_kDisplayList.get(i).getDepth(m_pkRenderer, m_kCuller);
+			sortedList[i-1] = new Vector2d( depth, i );
+		}
+		Arrays.sort(sortedList);
+//		for ( int i = 0; i < sortedList.length; i++ )
+//		{
+//			System.err.print( sortedList[i].Y + " " );
+//		}
+//		System.err.println("");
 
 		if (m_iStereo == 0) {
 			m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
@@ -3307,9 +3323,9 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 				}
 			} else {
 				if (m_kVolumeRayCast.GetDisplay()) {
-					RenderWithTransparency(true);
+					RenderWithTransparency(true, sortedList);
 				}
-				RenderWithTransparency(false);
+				RenderWithTransparency(false, sortedList);
 				if (m_kVolumeRayCast.GetDisplay()) {
 					m_kVolumeRayCast.Render(m_pkRenderer, m_kCuller, false,
 							true);
@@ -3342,9 +3358,9 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 					m_pkRenderer.ClearBuffers();
 				}
 				if (m_kVolumeRayCast.GetDisplay()) {
-					RenderWithTransparency(true);
+					RenderWithTransparency(true, sortedList);
 				}
-				RenderWithTransparency(false);
+				RenderWithTransparency(false, sortedList);
 				if (m_kVolumeRayCast.GetDisplay()) {
 					m_kVolumeRayCast.Render(m_pkRenderer, m_kCuller, false,
 							true);
@@ -3366,9 +3382,9 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 				m_pkRenderer.ClearBuffers();
 			}
 			if (m_kVolumeRayCast.GetDisplay()) {
-				RenderWithTransparency(true);
+				RenderWithTransparency(true, sortedList);
 			}
-			RenderWithTransparency(false);
+			RenderWithTransparency(false, sortedList);
 			if (m_kVolumeRayCast.GetDisplay()) {
 				m_kVolumeRayCast.Render(m_pkRenderer, m_kCuller, false, true);
 				m_pkRenderer.SetCamera(m_spkCamera);
@@ -3418,7 +3434,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	 *            when true rendering into the VolumeRayCast back-image texture
 	 *            for compositing with the VolumeRayCast rendering.
 	 */
-	private void RenderWithTransparency(boolean bPreRender) {
+	private void RenderWithTransparency(boolean bPreRender, Vector2d[] sortedList ) {
 		if (bPreRender) {
 
 			// m_pkRenderer.SetCamera(m_pkScreenCamera);
@@ -3429,8 +3445,10 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
 			m_pkRenderer.ClearBuffers();
 
-			for (int i = 0; i < m_kDisplayList.size(); i++) {
-				m_kDisplayList.get(i).Render(m_pkRenderer, m_kCuller, true,
+			m_kVolumeRayCast.Render(m_pkRenderer, m_kCuller, true, true);
+			for (int i = m_kDisplayList.size() - 1; i > 0; i--)
+			{
+				m_kDisplayList.get((int)sortedList[i-1].Y).Render(m_pkRenderer, m_kCuller, true,
 						true);
 			}
 
@@ -3450,8 +3468,9 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		if (bPreRender) {
 			m_kVolumeRayCast.Render(m_pkRenderer, m_kCuller, bPreRender, true);
 		}
-		for (int i = 1; i < m_kDisplayList.size(); i++) {
-			m_kDisplayList.get(i).Render(m_pkRenderer, m_kCuller, bPreRender,
+		for (int i = m_kDisplayList.size() - 1; i > 0; i--)
+		{
+			m_kDisplayList.get((int)sortedList[i-1].Y).Render(m_pkRenderer, m_kCuller, bPreRender,
 					true);
 		}
 		m_kFBO.Disable();
@@ -3462,8 +3481,9 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		m_pkRenderer.SetBackgroundColor(new ColorRGBA(0.0f, 0.0f, 0.0f, 0.0f));
 		m_pkRenderer.ClearBackBuffer();
 
-		for (int i = 1; i < m_kDisplayList.size(); i++) {
-			m_kDisplayList.get(i).Render(m_pkRenderer, m_kCuller, bPreRender,
+		for (int i = m_kDisplayList.size() - 1; i > 0; i--)
+		{
+			m_kDisplayList.get((int)sortedList[i-1].Y).Render(m_pkRenderer, m_kCuller, bPreRender,
 					false);
 		}
 

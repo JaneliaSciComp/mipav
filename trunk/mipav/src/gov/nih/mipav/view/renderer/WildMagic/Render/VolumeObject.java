@@ -315,6 +315,12 @@ public abstract class VolumeObject
      */
     public abstract void Render( Renderer kRenderer, Culler kCuller, boolean bPreRender, boolean bSolid );
     
+
+	public float getDepth( Renderer kRenderer, Culler kCuller )
+	{
+		return -Float.MAX_VALUE;
+	}
+    
     /**
      * Set back-face culling on/off.
      * @param bOn on/off.

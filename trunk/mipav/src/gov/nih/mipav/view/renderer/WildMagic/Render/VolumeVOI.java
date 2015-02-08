@@ -1,6 +1,15 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 
+import java.awt.Color;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.font.LineMetrics;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+
+import javax.media.opengl.GL;
+
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
@@ -49,6 +58,9 @@ public class VolumeVOI extends VolumeObject
 	private boolean m_bShowText = false;
 	private boolean m_bUpdateDisplay = true;
 
+	private byte[][] annotationTexture = null;
+	private int annotationWidth;
+	private int annotationHeight;
 
 	/**
 	 * Constructor for the VolumeVOI object.
@@ -230,13 +242,53 @@ public class VolumeVOI extends VolumeObject
 				Vector4f kTextPos = kWVP.multLeft( new Vector4f( m_kBillboardPos.X, m_kBillboardPos.Y, m_kBillboardPos.Z, 1 ) );
 				kTextPos.scale( 1f/kTextPos.W );
 
-				String kLabel = ((VOIText)m_kVOI).getText();
-				char[] acText = kLabel.toCharArray();
-				kRenderer.Draw( kTextPos.X, kTextPos.Y, kTextPos.Z, 
-						new ColorRGBA( m_kColor.R, m_kColor.G, m_kColor.B, m_fOpacity),acText);
+				if ( annotationTexture == null )
+				{
+					renderAnnotationToTexture( (VOIText)m_kVOI );
+				}
+				if ( annotationTexture != null )
+				{
+					kRenderer.Draw( kTextPos.X, kTextPos.Y, kTextPos.Z, annotationTexture, annotationWidth, annotationHeight );
+				}
+				
+//				String kLabel = ((VOIText)m_kVOI).getText();
+//				char[] acText = kLabel.toCharArray();
+//				kRenderer.Draw( kTextPos.X, kTextPos.Y, kTextPos.Z, 
+//						new ColorRGBA( m_kColor.R, m_kColor.G, m_kColor.B, m_fOpacity),acText);
 			}
 		}
 		m_bUpdateDisplay = false;
+	}
+	
+	public float getDepth( Renderer kRenderer, Culler kCuller )
+	{
+		kCuller.ComputeVisibleSet(m_kScene);    
+		if ( m_bShowText && (m_kBillboardPos != null) )
+		{
+			Matrix4f kWorld = null;
+			if ( kCuller.GetVisibleSet() != null )
+			{
+				VisibleObject[] akVisible = kCuller.GetVisibleSet().GetVisible();
+				if ( akVisible[0].Object != null )
+				{
+					kWorld = ((Geometry)akVisible[0].Object).HWorld;
+				}
+			}
+			if ( kWorld != null )
+			{
+				float[] afData = new float[16];
+				kRenderer.SetConstantVPMatrix( 0, afData );
+				Matrix4f kMat = new Matrix4f(afData, true);
+				Matrix4f kWVP = Matrix4f.mult( kWorld, kMat );
+
+				Vector4f kTextPos = kWVP.multLeft( new Vector4f( m_kBillboardPos.X, m_kBillboardPos.Y, m_kBillboardPos.Z, 1 ) );
+				kTextPos.scale( 1f/kTextPos.W );
+				
+//				System.err.println( ((VOIText)m_kVOI).getText() + " " + kTextPos.Z );
+				return kTextPos.Z;
+			}
+		}
+		return -Float.MAX_VALUE;
 	}
 
 	/**
@@ -864,6 +916,72 @@ public class VolumeVOI extends VolumeObject
 			m_kVOITicMarks.Reload(true);
 		}
 
+	}
+	
+	private void renderAnnotationToTexture( VOIText text )
+	{
+		BufferedImage image = new BufferedImage( 100, 100, BufferedImage.TYPE_INT_ARGB );
+		Graphics2D offScreen = (Graphics2D) image.getGraphics();
+
+		FontMetrics fM = offScreen.getFontMetrics(text.getTextFont());
+		LineMetrics lM = fM.getLineMetrics( text.getText(), offScreen );
+				
+		Rectangle2D bounds = fM.getStringBounds( text.getText(),  offScreen );
+		int width = (int)(bounds.getWidth() + 1);
+		int height = (int)(bounds.getHeight() + 1);
+		image = new BufferedImage( width, height, BufferedImage.TYPE_INT_ARGB );
+		offScreen = (Graphics2D) image.getGraphics();	
+		
+		Color transparent = new Color( 0, 0, 0, 0);
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+            	image.setRGB(x, y, transparent.getRGB() );
+            }
+        }
+		
+        offScreen.setFont(text.getTextFont());
+
+        int yOffset = 1 + (int) lM.getDescent();
+        offScreen.setColor( text.getBackgroundColor() );
+        offScreen.drawString( text.getText(), 0 + 1, height - yOffset - 1);
+        offScreen.drawString( text.getText(), 0 - 1, height - yOffset - 1);
+        offScreen.drawString( text.getText(), 0, height - yOffset - 1 - 1);
+        offScreen.drawString( text.getText(), 0, height - yOffset - 1 + 1);
+
+
+		offScreen.setColor( text.getColor() );
+		offScreen.drawString(text.getText(), 0, height - yOffset - 1);
+
+        if (offScreen != null) {
+        	offScreen.dispose();
+        	offScreen = null;
+        }
+        
+
+		int rowByteSize = width * 4;
+		annotationTexture = new byte[rowByteSize][height];
+		annotationWidth = width;
+		annotationHeight = height;
+
+//		System.err.println( text.getText() + " " + lM.getAscent() + " " + lM.getDescent() + " " + width + " " + height );
+		for (int y = 0; y < height; y++)
+		{
+			for (int x = 0; x < width; x++)
+			{
+				int pixel = image.getRGB(x, y);
+				int a = (pixel >> 24) & 0xff;
+				int r = (pixel >> 16) & 0xff;
+				int g = (pixel >> 8) & 0xff;
+				int b = (pixel) & 0xff;
+
+				annotationTexture[x * 4 + 0][height - 1 - y] = (byte) r;
+				annotationTexture[x * 4 + 1][height - 1 - y] = (byte) g;
+				annotationTexture[x * 4 + 2][height - 1 - y] = (byte) b;
+				annotationTexture[x * 4 + 3][height - 1 - y] = (byte) a;
+			}
+		}
 	}
 
 }
