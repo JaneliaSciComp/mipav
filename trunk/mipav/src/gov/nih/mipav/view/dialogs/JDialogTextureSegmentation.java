@@ -1,7 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.model.algorithms.AlgorithmBRISK;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.AlgorithmTextureSegmentation;
@@ -16,13 +15,11 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.ViewUserInterface;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
-import java.util.Enumeration;
-import java.util.Vector;
+import java.awt.event.ItemListener;
 
 import javax.swing.*;
 
@@ -34,7 +31,7 @@ import javax.swing.*;
  */
 @SuppressWarnings("serial")
 public class JDialogTextureSegmentation extends JDialogScriptableBase implements AlgorithmInterface,
-                             ActionDiscovery, ScriptableActionInterface {
+                             ActionDiscovery, ScriptableActionInterface, ItemListener {
 
     // ~ Static fields/initializers
     // -------------------------------------------------------------------------------------
@@ -63,16 +60,6 @@ public class JDialogTextureSegmentation extends JDialogScriptableBase implements
     private boolean removeSmallRegions = false;
 
     private JCheckBox segmentCheckBox;
-    
-    private JPanel paramPanel;
-
-    private JPanel imageVOIPanel;
-
-    private ButtonGroup imageVOIGroup;
-
-    private JRadioButton wholeImage;
-
-    private JRadioButton VOIRegions;
 
     private JLabel labelWindowSize;
 
@@ -189,7 +176,7 @@ public class JDialogTextureSegmentation extends JDialogScriptableBase implements
     public void itemStateChanged(final ItemEvent event) {
         Object source = event.getSource();
         
-        if (source == segmentCheckBox) {
+        if (source != null && source == segmentCheckBox && labelSegmentNumber != null && textSegmentNumber != null) {
         	labelSegmentNumber.setEnabled(!segmentCheckBox.isSelected());
         	textSegmentNumber.setEnabled(!segmentCheckBox.isSelected());
         }
@@ -332,6 +319,7 @@ public class JDialogTextureSegmentation extends JDialogScriptableBase implements
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.weightx = 0;
+        gbc.gridwidth = 1;
         gbc.fill = GridBagConstraints.NONE;
         paramPanel.add(labelSegmentNumber, gbc);
         gbc.gridx = 1;
