@@ -824,7 +824,7 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        	maxccos = -Double.MAX_VALUE;
 	        	for (x = 0; x < len; x++) {
 	        	    ccos[x] = Double.MAX_VALUE;
-	        	    for (y = 0; y < tn; y++) {
+	        	    for (y = 0; y < tn-1; y++) {
 	        	    	ccos[x] = Math.min(ccos[x], tmp[y][x]);
 	        	    }
 	        	    if (ccos[x] > maxccos) {
@@ -1003,8 +1003,13 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	                	}
 	                }
 	                
-	                for (y = 0; y < bb; y++) {
-	                	for (x = 0; x < segmentNumber; x++) {
+	                for (y = 0; y < w0.length; y++) {
+	                	w0[y] = null;
+	                }
+	                w0 = null;
+	                w0 = new double[segmentNumber][bb];
+	                for (y = 0; y < segmentNumber; y++) {
+	                	for (x = 0; x < bb; x++) {
 	                		w0[y][x] = w[y][x];
 	                	}
 	                }
