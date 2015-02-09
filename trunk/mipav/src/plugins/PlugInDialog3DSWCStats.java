@@ -86,6 +86,8 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 	
 	private int densityCount;
 	
+	private JTextField splitField;
+	
 	public PlugInDialog3DSWCStats(){
 		super();
 		
@@ -98,8 +100,8 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		StyleConstants.setFontFamily(blackText, "Serif");
 		StyleConstants.setFontSize(blackText, 12);
 		
-		String version = "1.3";
-		String lastUpdate = "2/5/15";
+		String version = "1.4";
+		String lastUpdate = "2/9/15";
 		
 		String message = "Initializing v " + version + "\n" +
 				"Last updated: " + lastUpdate + "\n" +
@@ -118,11 +120,7 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		String command = e.getActionCommand();
 		if(command.equals("ok")){
 			if(!locked && (alg == null || !alg.isViewerOpen())){
-				if(writeStep){
-					locked = true;
-					if(!alg.write())
-						locked = false;
-				}else{
+				if(!writeStep){
 					locked = true;
 					callAlgorithm();
 				}
@@ -143,10 +141,17 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		}else if(command.equals("Browse")){
 			chooseIV = true;
 			chooseDir();
-		}else if(command.equals("BrowseImage")){
+		}else if(command.equals("BrowseImage") && !densityRB.isSelected()){
 			chooseIV = false;
 			chooseDir();
-		}else{
+		}else if(command.equals("density")){
+			imageField.setEditable(false);
+			splitField.setEditable(false);
+		}else if(command.startsWith("notDensity")){
+			imageField.setEditable(true);
+			splitField.setEditable(true);
+		}
+		else{
 			super.actionPerformed(e);
 		}
 	}
@@ -174,8 +179,14 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 					}
 				}else{
 					locked = false;
+					
 				}
 				writeStep ^= true;
+				
+				if(!densityRB.isSelected() && !alg.isViewerOpen() && writeStep){
+					locked = true;
+					alg.write();
+				}
 				/*String fileText = textField.getText();
 				File file = new File(fileText);
 				
@@ -245,6 +256,7 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 					ex.printStackTrace();
 				}
 				textArea.setCaretPosition(doc.getLength());
+				locked = false;
 				return;
 			}
 			
@@ -259,11 +271,13 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 			
 			if(!fileName.endsWith(".iv")){
 				MipavUtil.displayError("This file is not the correct format");
+				locked = false;
 				return;
 			}
 			
 			if(!file.exists()){
 				MipavUtil.displayError("This file does not exist");
+				locked = false;
 				return;
 			}
 			
@@ -271,35 +285,47 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 			
 			if(imageStr.length() == 0){
 				MipavUtil.displayError("Please input an image");
+				locked = false;
 				return;
 			}
 			
 			File imageFile = new File(imageStr);
 			if(!imageFile.exists()){
 				MipavUtil.displayError("This image does not exist");
+				locked = false;
+				return;
+			}
+			
+			float splitDist; 
+			
+			try{
+				splitDist = Float.valueOf(splitField.getText());
+			}catch(NumberFormatException e){
+				MipavUtil.displayError("Enter the length of the growth cone");
+				locked = false;
 				return;
 			}
 			
 			if(customRB.isSelected()){
 				alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, (String) resolutionUnits.getSelectedItem(), false, true);
-				alg.addListener(this);
 				new PlugInDialog3DSWCViewer(textArea, (String) resolutionUnits.getSelectedItem(), alg);
-				
 				//PlugInDialog3DSWCViewer viewer = new PlugInDialog3DSWCViewer(imageField.getText(), file, textArea, (String) resolutionUnits.getSelectedItem());
 				//alg = new PlugInAlgorithm3DSWCViewer()
 	
 			}else{
-			
 				alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, 
 						(String) resolutionUnits.getSelectedItem(), axonRB.isSelected(), false);
-				alg.addListener(this);
-				
 			}
+			
+			alg.setSplit(splitDist);
+			alg.addListener(this);
+
 		}
 		
 		if(isRunInSeparateThread()){
 			if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
 				MipavUtil.displayError("A thread is already running on this object");
+				locked = false;
 			}
 		} else {
 			alg.run();
@@ -338,6 +364,13 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		browseImage.setActionCommand("BrowseImage");
 		browseImage.addActionListener(this);
 		
+		JLabel splitLabel = new JLabel("Growth Cone Length");
+		splitLabel.setFont(serif12B);
+		
+		splitField = new JTextField(7);
+		splitField.setFont(serif12);
+		splitField.setHorizontalAlignment(JTextField.RIGHT);
+		
 		JPanel rbPanel = new JPanel(new GridLayout(0, 2));
 		rbPanel.setForeground(Color.black);
 		rbPanel.setBorder(new TitledBorder(BorderFactory.createLineBorder(Color.black), "Axon determination"));
@@ -346,19 +379,27 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		
 		axonRB = new JRadioButton("Use absolute length");
 		axonRB.setFont(serif12);
+		axonRB.setActionCommand("notDensity_Length");
+		axonRB.addActionListener(this);
 		axonRB.setSelected(true);
 		group.add(axonRB);
 		
 		JRadioButton imarisRB = new JRadioButton("Infer from file");
 		imarisRB.setFont(serif12);
+		imarisRB.setActionCommand("notDensity_File");
+		imarisRB.addActionListener(this);
 		group.add(imarisRB);
 		
 		customRB = new JRadioButton("Choose filament");
 		customRB.setFont(serif12);
+		customRB.setActionCommand("notDensity_Choose");
+		customRB.addActionListener(this);
 		group.add(customRB);
 		
 		densityRB = new JRadioButton("Branch Density");
 		densityRB.setFont(serif12);
+		densityRB.setActionCommand("density");
+		densityRB.addActionListener(this);
 		group.add(densityRB);
 		
 		rbPanel.add(axonRB);
@@ -426,8 +467,19 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		
 		gbc.gridx = 0;
 		gbc.gridy++;
+		
+		mainPanel.add(splitLabel, gbc);
+		
+		gbc.gridx = 1;
+		gbc.fill = GridBagConstraints.NONE;
+		mainPanel.add(splitField, gbc);
+		
+		gbc.gridx = 0;
+		gbc.gridy++;
 		gbc.gridwidth = GridBagConstraints.REMAINDER;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
 		mainPanel.add(rbPanel, gbc);
+		
 		
 		getContentPane().add(mainPanel);
 		

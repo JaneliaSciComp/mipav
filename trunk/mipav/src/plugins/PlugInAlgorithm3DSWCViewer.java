@@ -79,7 +79,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	
 	private boolean viewerOpen;
 	
-	private ModelImage splitImage;
+	//private ModelImage splitImage;
 	
 	private final SimpleAttributeSet blackText;
 	
@@ -94,6 +94,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	private ArrayList<Integer> tips;
 	
 	private int[] vertexInd;
+	
+	private float splitDist;
 	
 	public PlugInAlgorithm3DSWCViewer(String imFile, File file, JTextPane text, String resUnit, boolean useLength, boolean showView){
 		
@@ -243,13 +245,24 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 				FileIO reader = new FileIO();
 				srcImage = reader.readImage(imageFile);
 				
-				setupSplitChooser();
+				if(!showViewer){
+					calculateDistances(swcCoordinates);
+					if(axonUseLength){
+						determineOrder_useLength(swcCoordinates, connections, currentAxon);
+					}else{
+						determineOrder(swcCoordinates, connections, currentAxon);
+					}
+				}
 				
-				StyleConstants.setBold(blackText, true);
+				//setupSplitChooser();
 				
-				append("Select split point from image", blackText);
+				//StyleConstants.setBold(blackText, true);
 				
-				StyleConstants.setBold(blackText, false);
+				//append("Select split point from image", blackText);
+				
+				//StyleConstants.setBold(blackText, false);
+			}else{
+				currentAxon = tips.get(0);
 			}
 			
 			setCompleted(true);
@@ -265,6 +278,10 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		
 		setCompleted(true);
 		
+	}
+	
+	public void setSplit(float dist){
+		splitDist = dist;
 	}
 	
 	public void setAxon(int axon){
@@ -291,9 +308,9 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	
 	public void viewerClosed(){
 		viewerOpen = false;
-		if(splitImage != null){
+		/*if(splitImage != null){
 			splitImage.getParentFrame().close();
-		}
+		}*/
 	}
 
 	/**
@@ -443,9 +460,9 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	 * the order of forward connections, this portion is more or
 	 * less the same as the back half of the sibling algorithm.
 	 */
-	public boolean write(){
+	public void write(){
 		
-		final Vector3f splitPt;
+		/*final Vector3f splitPt;
 		if(branchDensity){
 			splitPt = null;
 		}else{
@@ -463,7 +480,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 					return false;
 				
 			}
-		}
+		}*/
+		setCompleted(false);
 		
 		final PlugInAlgorithm3DSWCViewer alg = this;
 		
@@ -474,10 +492,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 					//convexHullVolume = convexHullVolume(swcCoordinates, connections, false);
 					
 					int maxOrder;
-					int branch;
 					
 					if(showViewer){
-						branch = currentAxon;
 						calculateDistances(swcCoordinates);
 						if(axonUseLength){
 							maxOrder = determineOrder_useLength(swcCoordinates, connections, currentAxon);
@@ -492,10 +508,10 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 								maxOrder = order;
 						}
 						
-						branch = tips.get(0);
+						currentAxon = tips.get(0);
 						for(int i : tips){
 							if(swcCoordinates.get(i).get(0)[5] == 1){
-								branch = i;
+								currentAxon = i;
 								break;
 							}
 						}
@@ -517,7 +533,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 						}
 						
 						try {
-							String output = writeSWC(swcFile, messages, branchLengths);
+							String output = writeSWC(swcFile, swcCoordinates, messages, branchLengths);
 							append("Converted to SWC -> " + output, blackText);
 						} catch (IOException e) {
 							append("Could not write SWC for " + swcFile.getName(), redText);
@@ -567,61 +583,93 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 						}
 
 						fw.close();	
+						
+						SimpleAttributeSet greenText = new SimpleAttributeSet(blackText);
+						StyleConstants.setForeground(greenText, Color.green.darker());
+
+						append("Finished writing stats and SWC files", greenText);
+						append("-----------------------------------------", blackText);
 					}else{
 
-						boolean onAxon = false;
-						float[] origin = srcImage.getOrigin();
-						float[] res = srcImage.getResolutions(0);
-						float minDist = Float.MAX_VALUE;
-
 						float[] splitLoc = null;
-						int filIndex = -1;
-
-						while(!onAxon){
-							ArrayList<float[]> fil = swcCoordinates.get(branch);
-							for(int i=0;i<fil.size();i++){
-								float[] coord = fil.get(i);
-								float[] pt = new float[2];
-								pt[0] = (coord[0]-origin[0])/res[0];
-								pt[1] = (coord[1]-origin[1])/res[1];
-
-								float dx = pt[0] - splitPt.X;
-								float dy = pt[1] - splitPt.Y;
-								float dist = dx*dx + dy*dy;
-
-								if(dist < 25){
-									onAxon = true;
-									if(dist < minDist){
-										minDist = dist;
-										splitLoc = coord;
-										filIndex = branch;
-									}
+						int filIndex = currentAxon;
+						
+						ArrayList<float[]> piece = swcCoordinates.get(currentAxon);
+						float sDist = splitDist;
+						int ind = piece.size()-1;
+						while(sDist > 0){
+							float[] fa = piece.get(ind);
+							float[] fa2;
+							if(ind == 0){
+								int con = (int)fa[4];
+								if(con == -1){
+									append("Growth cone is longer than axon", redText);
+									setCompleted(false);
+									alg.notifyListeners(alg);
+									return;
 								}
+								piece = swcCoordinates.get(con);
+								filIndex = con;
+								ind = piece.size()-1;
+								fa2 = piece.get(ind);
+							}else{
+								fa2 = piece.get(ind - 1);
+								ind--;
 							}
-							branch = (int) fil.get(0)[4];
-							if(branch == -1)
+							float dist = 0;
+							for(int i=0;i<3;i++){
+								float d = fa[i] - fa2[i];
+								dist += d*d;
+							}
+							dist = (float)Math.sqrt(dist);
+							if(sDist - dist > 0){
+								sDist -= dist;
+							}else{
+								if(Math.abs(sDist) > Math.abs(sDist - dist)){
+									splitLoc = fa2;
+								}else{
+									splitLoc = fa;
+								}
 								break;
-						}
-
-						if(!onAxon){
-							setCompleted(false);
-							append("Split point does not lie on axon", redText);
-							notifyListeners(alg);
-							return;
+							}
 						}
 						
-						splitImage.getParentFrame().removeWindowListener(alg);
-						splitImage.getParentFrame().close();
+						
+						//splitImage.getParentFrame().removeWindowListener(alg);
+						//splitImage.getParentFrame().close();
 
 						int[] axonIndex = new int[1];
 						ArrayList<ArrayList<float[]>> growthCone = filterGrowthCone(splitLoc, filIndex, axonIndex);
+						
+						/*for(int i=0;i<growthCone.size();i++){
+							String parent = swcFile.getParent();
+							File partFile = new File(parent + File.separator + "part_" + i + ".swc");
+							FileWriter fw = new FileWriter(partFile);
+							
+							ArrayList<float[]> fil = growthCone.get(i);
+							for(int j=0;j<fil.size();j++){
+								float[] coord = fil.get(j);
+								int c;
+								if(j==0){
+									c = -1;
+								}else{
+									c = j;
+								}
+								String line = String.format("%d %d %4.5f %4.5f %4.5f 0.1 %d \n", j+1, 2, coord[0], coord[1], coord[2], c);
+								fw.append(line);
+							}
+							
+							fw.close();
+						}*/
+						
+						
 						ArrayList<ArrayList<Integer>> gcConnections;
 						if(disconnected){
 							gcConnections = makeConnectionsTol(growthCone);
 						}else{
 							gcConnections = makeConnections(growthCone);
 						}
-	
+						
 						calculateDistances(growthCone);
 						int gcOrder;
 						if(axonUseLength){
@@ -707,27 +755,34 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 						 */
 						float gcHullVolume = convexHullVolume(growthCone, gcConnections, true);
 						
-						
 						PlugInAlgorithmSWCVolume alg = new PlugInAlgorithmSWCVolume(srcImage, growthCone);
 						alg.run();
 						
+						String parent = swcFile.getParent();
+						String name = swcFile.getName();
+						String sub = name.substring(0, name.lastIndexOf("."));
+						String ext = name.substring(name.lastIndexOf("."));
+						File inFile = new File(parent + File.separator + sub + "_gc" + ext);
+						
 						try{
 							append("Calculating volumes", blackText);
-							String parent = swcFile.getParent();
-							String name = swcFile.getName();
-							String sub = name.substring(0, name.lastIndexOf("."));
-							String ext = name.substring(name.lastIndexOf("."));
-							File inFile = new File(parent + File.separator + sub + "_gc" + ext);
 							String output = exportStatsToCSV(growthCone, gcConnections, inFile, gcMessages, gcLengths, alg.getVolume(), gcHullVolume, gcOrder);
 							append("Exported stats to CSV -> " + output, blackText);
 						} catch (IOException e) {
 							append("Could not export stats to CSV for " + swcFile.getName(), redText);
 						}
+						
+						try {
+							String output = writeSWC(inFile, growthCone, gcMessages, gcLengths);
+							append("Converted to SWC -> " + output, blackText);
+						} catch (IOException e) {
+							append("Could not write SWC for " + swcFile.getName(), redText);
+						}
 
 						SimpleAttributeSet greenText = new SimpleAttributeSet(blackText);
 						StyleConstants.setForeground(greenText, Color.green.darker());
 
-						append("Finished writing stats and SWC file", greenText);
+						append("Finished writing stats and SWC files", greenText);
 						append("-----------------------------------------", blackText);
 
 					}
@@ -742,12 +797,11 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 				}
 
 
-				notifyListeners(alg);
+				alg.notifyListeners(alg);
 			}
 		};
 		
 		writeThread.start();
-		return true;
 	}
 	
 	/*public boolean isTipInHullOld(int row){
@@ -1236,8 +1290,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 			e.printStackTrace();
 		}*/
 		
-		if(!branchDensity)
-			highlightAxonSplit();
+		//if(!branchDensity)
+		//	highlightAxonSplit();
 		
 		//return axonMask;
 	}
@@ -1305,7 +1359,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		
 		ArrayList<Integer> forward = connections.get(filIndex);
 		for(int i=forward.size()-1;i>=0;i--){
-			indexStack.add(forward.get(i));
+			indexStack.addFirst(forward.get(i));
 		}
 		
 		while(!indexStack.isEmpty()){
@@ -1323,14 +1377,14 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 			growthCone.add(addFil);
 			forward = connections.get(index);
 			for(int i=forward.size()-1;i>=0;i--){
-				indexStack.add(forward.get(i));
+				indexStack.addFirst(forward.get(i));
 			}
 		}
 		
 		return growthCone;
 	}
 	
-	private void highlightAxonSplit(){
+	/*private void highlightAxonSplit(){
 		
 		ViewJFrameImage frame = splitImage.getParentFrame();
 		int width = srcImage.getWidth(0);
@@ -1382,9 +1436,9 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		
 		frame.updateImages(true);
 		
-	}
+	}*/
 	
-	private void setupSplitChooser(){
+	/*private void setupSplitChooser(){
 		
 		int[] extents = srcImage.getExtents();
 		int width = extents[0];
@@ -1421,27 +1475,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 				determineOrder(swcCoordinates, connections, currentAxon);
 			}
 			
-			/*String parent = swcFile.getParent();
-			String name = swcFile.getName();
-			name = name.substring(0, name.lastIndexOf("."));
-			String type = axonUseLength ? "_diag_length" : "_diag_order";
-			File diagFile = new File(parent + File.separator + name + type + ".csv");
-			try {
-				FileWriter fw = new FileWriter(diagFile);
-				for(int i=0;i<swcCoordinates.size();i++){
-					ArrayList<float[]> fil = swcCoordinates.get(i);
-					for(int j=0;j<fil.size();j++){
-						float[] a = fil.get(j);
-						String output = String.format("%f,  %f, %f, %f, %f\n", a[0], a[1], a[2], a[3], a[5]);
-						fw.append(output);
-					}
-				}
-				
-				fw.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}*/
-			
 		}
 		
 		highlightAxonSplit();
@@ -1454,21 +1487,9 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		}else{
 			frame.addWindowListener(this);
 		}
+
 		
-		/*ViewJFrameImage frame = new ViewJFrameImage(srcImage);
-		VOI voi = new VOI((short)0, "Split Point", VOI.POINT, -1.0f);
-		
-		Vector3f centerPt = new Vector3f(width/2, height/2, depth/2);
-		VOIPoint voiPt = new VOIPoint(VOI.POINT, centerPt);
-		voiPt.setLabel("Split point");
-		voi.importCurve(voiPt);
-		
-		frame.setVisible(true);
-		
-		srcImage.getVOIs().add(voi);
-		srcImage.notifyImageDisplayListeners(true, null);*/
-		
-	}
+	}*/
 	
 	//Code right now is in the convexHull() method
 	private float distanceVectorToPlane(Vector3f originPt, Vector3f vecA, Vector3f vecB, Vector3f vecC, Vector3f headPt){
@@ -2516,7 +2537,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		
 	}
 
-	private String writeSWC(File file, ArrayList<String> messages, float[] branchLengths) throws IOException{
+	private String writeSWC(File file, ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<String> messages, float[] branchLengths) throws IOException{
 		String parent = file.getParent();
 		String name = file.getName();
 		name = name.substring(0, name.lastIndexOf("."));
