@@ -217,6 +217,12 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
         double expdenom;
         double GxData[];
         double GyData[];
+        int prewittExtents[];
+        double Iy[][];
+        double Ix[][];
+        double gradmag_all[][];
+        double maxGrad;
+        double Iws[][];
 		if (srcImage.isColorImage()) {
 			// Convert RGB to CIE 1976 L*a*b
 			scaleMax = Math.max(255.0, srcImage.getMax());
@@ -335,6 +341,11 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
         	expdenom = 2.0 * sigma * sigma;
         	GxData = new double[]{1, 0, -1, 1, 0, -1, 1, 0, -1};
         	GyData = new double[]{1, 1, 1, 0, 0, 0, -1, -1, -1};
+        	prewittExtents = new int[2];
+        	prewittExtents[0] = 3;
+        	prewittExtents[1] = 3;
+        	Iy = new double[yDim][xDim];
+        	Ix = new double[yDim][xDim];
         	for (y = -halfMask; y <= halfMask; y++) {
         		for (x = -halfMask; x <= halfMask; x++) {
         		    distSquared = x * x + y * y;
@@ -407,7 +418,56 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        		setCompleted(false);
 	        		return;
 	        	}
+		        convolver = new AlgorithmDConvolver(expandedImage, GyData, prewittExtents,entireImage, image25D);
+		        convolver.addListener(this);
+		        operationType = filterOp;
+		        convolver.run();
+		        for (y = halfMask; y <= yDim + halfMask -1; y++) {
+		        	for (x = halfMask; x <= xDim + halfMask - 1; x++) {
+		        	    Iy[y - halfMask][x - halfMask]= filter[x + y * (xDim + 2 * halfMask)];	
+		        	}
+		        }
+		        convolver = new AlgorithmDConvolver(expandedImage, GxData, prewittExtents,entireImage, image25D);
+		        convolver.addListener(this);
+		        operationType = filterOp;
+		        convolver.run();
+		        for (y = halfMask; y <= yDim + halfMask -1; y++) {
+		        	for (x = halfMask; x <= xDim + halfMask - 1; x++) {
+		        	    Ix[y - halfMask][x - halfMask]= filter[x + y * (xDim + 2 * halfMask)];	
+		        	}
+		        }
+		        for (y = 0; y < yDim; y++) {
+		        	for (x = 0; x < xDim; x++) {
+		        		gradmag[y][x][i] = Math.sqrt(Ix[y][x]*Ix[y][x] + Iy[y][x]*Iy[y][x]);
+		        	}
+		        }
         	} // for (i = 0; i < 3; i++)
+        	gradmag_all = new double[yDim][xDim];
+        	maxGrad = -Double.MAX_VALUE;
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			gradmag_all[y][x] = Math.max(gradmag[y][x][0], Math.max(gradmag[y][x][1], gradmag[y][x][2]));
+        			if (gradmag_all[y][x] > maxGrad) {
+        				maxGrad = gradmag_all[y][x];
+        			}
+        		}
+        	}
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			gradmag_all[y][x] = gradmag_all[y][x]/maxGrad;
+        		}
+        	}
+        	tmp = new double[yDim][xDim];
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			if (gradmag_all[y][x] > 0.05) {
+        				tmp[y][x] = 1.0;
+        			}
+        		}
+        	}
+        	
+        	Iws = new double[yDim][xDim];
+        	// Need to implement an automatic 2D watershed function
 		} // if (srcImage.isColorImage())
 		else {
 			// Segment images with heavy texture
