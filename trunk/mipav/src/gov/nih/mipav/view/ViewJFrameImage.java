@@ -1864,6 +1864,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         // else if ( command.equals( "Vessel Segmentation" ) ) {
         // new JDialogVesselSegmentation( this, getActiveImage() );
         // }
+        else if (command.equals("TextureSegmentation")) {
+        	new JDialogTextureSegmentation(this, getActiveImage());
+        }
         else if (command.equals("Watershed")) {
             final ViewVOIVector VOIs = getActiveImage().getVOIs();
             final int nVOI = VOIs.size();
