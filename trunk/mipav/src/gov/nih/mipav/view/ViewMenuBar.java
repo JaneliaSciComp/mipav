@@ -340,6 +340,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Levelset diffusion", "LevelsetDiffusion", 0, null, false),
                         menuBuilder.buildMenuItem("Markov random field", "HMRF_EM", 0, null, false),
                         menuBuilder.buildMenuItem("Spatial color compactness", "SCD", 0, null, false),
+                        menuBuilder.buildMenuItem("Texture segmentation", "TextureSegmentation", 0, null, false),
 
                         menuBuilder.makeMenu("Threshold", false, new JMenuItem[] {
                                 menuBuilder.buildMenuItem("Threshold using min/max", "threshMinMax", 0, null, false),
@@ -1326,6 +1327,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Box counting", false);
             menuBuilder.setMenuItemEnabled("Convergence field", false);
             menuBuilder.setMenuItemEnabled("BRISK", false);
+            menuBuilder.setMenuItemEnabled("Texture segmentation", false);
         } else if (numberOfDimensions == 3) {
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", false);
@@ -1363,6 +1365,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Convergence field", false);
             menuBuilder.setMenuItemEnabled("BRISK", false);
             menuBuilder.setMenuItemEnabled("Texture analysis", false);
+            menuBuilder.setMenuItemEnabled("Texture segmentation", false);
         } else if (numberOfDimensions == 2) {
             menuBuilder.setMenuItemEnabled("Align patient position", false);
             menuBuilder.setMenuItemEnabled("Draw 3D rectangle VOI", false);
@@ -1482,6 +1485,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Isophote curvature", false);
             menuBuilder.setMenuItemEnabled("Box counting", false);
             menuBuilder.setMenuItemEnabled("Convergence field", false);
+            menuBuilder.setMenuItemEnabled("Texture segmentation", false);
         } else {
             menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
             menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
