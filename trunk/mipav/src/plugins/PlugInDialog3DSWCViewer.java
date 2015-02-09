@@ -163,7 +163,7 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 		if(command.equals("ok")){
 			setVisible(false);
 			frame.close();
-			
+			alg.removeListener(this);
 			append("Closing viewer...", attr);
 			append("Writing with new axon choice", attr);
 			alg.setUseLength(axonRB.isSelected());
@@ -230,8 +230,7 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 		if(algorithm instanceof PlugInAlgorithm3DSWCViewer){
 			if(algorithm.isCompleted()){
-				algorithm.setCompleted(false);
-				algorithm.removeListener(this);
+				//algorithm.removeListener(this);
 				frame = new ViewJFrameImage(alg.getDestImage());
 				ArrayList<Integer> tipList = alg.getTips();
 				Vector<String> tipName = new Vector<String>();
