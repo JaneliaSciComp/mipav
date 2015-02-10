@@ -218,10 +218,10 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 				
 				BitSet radiusMask = calcRadius(probImage, pt0, rotated);
 				
-				if(radiusMask.intersects(mask))
-					pt0[6] = 0.01f;
-				else
+				if(!radiusMask.intersects(mask)){
+					pt0[7] = 1.0f;
 					mask.or(radiusMask);
+				}
 				
 			}
         }
@@ -351,7 +351,7 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 			}*/
 			for(int j=0;j<fil.size()-1;j++){
 				float[] pt0 = fil.get(j);
-				if(pt0[6] <= 0.01f)
+				if(pt0[7] == -1.0f)
 					continue;
 				/*if(i > 0){
 					float parentRad = parent[3];
@@ -367,7 +367,7 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 				int jp1 = j+1;
 				float[] pt1 = fil.get(jp1);
 				
-				while(pt1[6] <= 0.01f && jp1 < fil.size()-1){
+				while(pt1[7] == -1.0f && jp1 < fil.size()-1){
 					jp1++;
 					pt1 = fil.get(jp1);
 				}
