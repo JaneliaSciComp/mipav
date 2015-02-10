@@ -127,6 +127,48 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 				latticeModel.saveAnnotations( );
 			}
 		}
+		else if ( command.equals("OpenNeurite") ) {
+			// get the voi directory
+			String fileName = null;
+			String directory = null;
+			String voiDir = null;
+
+			final JFileChooser chooser = new JFileChooser();
+
+			if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+				chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+			} else {
+				chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+			}
+
+			chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+			final int returnVal = chooser.showOpenDialog(m_kParent.getFrame());
+
+			if (returnVal == JFileChooser.APPROVE_OPTION) {
+				fileName = chooser.getSelectedFile().getName();
+//				System.err.println( fileName );
+				directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+				Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
+			}
+
+			if (fileName != null) {
+				VOIVector annotations = new VOIVector();
+				voiDir = new String(directory + fileName + File.separator);
+				loadAllVOIsFrom(voiDir, false, annotations, true);
+
+				if ( latticeModel != null )
+				{
+					saveVOIs("OpenNeurite");
+					latticeModel.addNeurite( annotations.elementAt(0), fileName );
+				}
+				else
+				{
+					latticeModel = new LatticeModel( m_kImageA );
+					latticeModel.addNeurite( annotations.elementAt(0), fileName );
+				}
+			}
+		} 
 		else if ( command.equals("OpenLattice") ) {
 			// get the voi directory
 			String fileName = null;
