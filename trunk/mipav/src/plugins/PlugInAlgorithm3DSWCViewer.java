@@ -229,8 +229,10 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 				viewerOpen = true;
 			}
 			
-			int[][] temp = new int[tips.size()][];
-			vertexInd = new int[tips.size()];
+			int tipSize = tips.size();
+			
+			int[][] temp = new int[2*tipSize][];
+			vertexInd = new int[tipSize];
 			
 			int actualNum = calculateConvexHull(swcCoordinates, tips, temp, vertexInd);
 			faceVerticies = new int[actualNum][];
@@ -861,7 +863,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		
 		Point3d[] verticies = hull.getVertices();
 		int[][] faceVerticiesA = hull.getFaces();
-		for(int i=0;i<faceVerticies.length;i++){
+		for(int i=0;i<faceVerticiesA.length;i++){
 			faceVerticies[i] = faceVerticiesA[i];
 		}
 		

@@ -171,6 +171,7 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements
 		}else if(command.equals("cancel")){
 			alg.viewerClosed();
 			alg.setCompleted(false);
+			alg.removeListener(this);
 			alg.notifyListeners(alg);
 			append("Closing viewer...", attr);
 			append("-----------------------------------------", attr);

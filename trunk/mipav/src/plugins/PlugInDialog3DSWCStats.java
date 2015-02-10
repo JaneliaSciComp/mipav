@@ -100,8 +100,8 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		StyleConstants.setFontFamily(blackText, "Serif");
 		StyleConstants.setFontSize(blackText, 12);
 		
-		String version = "1.4";
-		String lastUpdate = "2/9/15";
+		String version = "1.4.1";
+		String lastUpdate = "2/10/15";
 		
 		String message = "Initializing v " + version + "\n" +
 				"Last updated: " + lastUpdate + "\n" +
