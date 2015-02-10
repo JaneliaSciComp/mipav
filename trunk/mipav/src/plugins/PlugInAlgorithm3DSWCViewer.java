@@ -2338,8 +2338,9 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 							 * Backwards connection (4)
 							 * Branch order (5)
 							 * Radius (6)
+							 * Include in Volume Calculations (1=Include, -1=Exclude) (7)
 							 */
-							float[] coords = {coord_x,coord_y,coord_z,0,Float.NEGATIVE_INFINITY, 0f, -1.0f};
+							float[] coords = {coord_x,coord_y,coord_z,0,Float.NEGATIVE_INFINITY, 0f, -1.0f, -1.0f};
 							
 							filamentCoords.add(coords);
 						}
