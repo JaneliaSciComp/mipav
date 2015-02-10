@@ -676,7 +676,7 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	                    eigenvector[n][index] = tempCol[n];
 	                }
 	            } // if (index != m)
-	        } // for (m = 0; m < Se[0].length; m++)
+	        } // for (m = 0; m < SE[0].length; m++)
 	        sqk = new double[SE[0].length];
 	        for (i = 0; i < SE[0].length; i++) {
 	        	sqk[i] = Math.sqrt(Math.abs(eigenvalue[i]));
@@ -1135,7 +1135,7 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	                    
 	                    for (i = 0; i < 500; i++) {
 	                    	nb[i] = 0;
-	                    	nbCt[i] = 500;
+	                    	nbCt[i] = 0;
 	                    }
 	                    nbN = 0;
 	                    for (y = tb[0]; y <= bb[0]; y++) {
@@ -1313,6 +1313,8 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	    int x;
 	    int k;
 	    int dn = sh_mx.length;
+	    
+	    // Compute edgeness
 	    double up[] = new double[dn];
 	    double bt[] = new double[dn];
 	    double lf[] = new double[dn];
