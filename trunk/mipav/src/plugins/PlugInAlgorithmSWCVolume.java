@@ -176,8 +176,8 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 			ArrayList<Vector3f> yBases = spline.getYBases();
 			ArrayList<Vector3f> zBases = spline.getZBases();
 			
-			float[] parent = null;
-			float parentRad = 0;
+			//float[] parent = null;
+			//float parentRad = 0;
 			if(i > 0){
 				int connection = (int) fil.get(0)[4]-1;
 				ArrayList<float[]> list = null;
@@ -189,16 +189,16 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 						break;
 					}
 				}
-				parent = list.get(connection);
-				parentRad = parent[6];
+				//parent = list.get(connection);
+				//parentRad = parent[6];
 			}
-			boolean skip = false;
+			/*boolean skip = false;
 			if(i == 0)
-				skip = true;
+				skip = true;*/
 			for(int j=0;j<fil.size();j++){
 			
 				float[] pt0 = fil.get(j);
-				if(!skip){
+				/*if(!skip){
 					
 					float dist = 0;
 					for(int k=0;k<3;k++){
@@ -212,25 +212,30 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 					}else{
 						skip = true;
 					}
-				}
+				}*/
 				
 				ArrayList<Vector3f> rotated = spline.rotatePlane(xBases.get(j), yBases.get(j), zBases.get(j));
 				
-				mask.or(calcRadius(probImage, pt0, rotated));
+				BitSet radiusMask = calcRadius(probImage, pt0, rotated);
+				
+				if(radiusMask.intersects(mask))
+					pt0[6] = 0.01f;
+				else
+					mask.or(radiusMask);
 				
 			}
         }
         
         calcVolumeNew();
 		
-		/*ViewJFrameImage frame = srcImage.getParentFrame();
+		/*ViewJFrameImage frame = new ViewJFrameImage(srcImage);
 		frame.getComponentImage().setPaintMask(mask);
 		frame.getControls().getTools().setOpacity(1.0f);
 		frame.getControls().getTools().setPaintColor(Color.RED);
 		frame.updateImages(true);
-		frame.setVisible(true);
+		frame.setVisible(true);*/
 		
-		convexHull();*/
+		//convexHull();
 		
 	}
 	
@@ -359,7 +364,15 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 					if(dist < parentRad)
 						continue;
 				}*/
-				float[] pt1 = fil.get(j+1);
+				int jp1 = j+1;
+				float[] pt1 = fil.get(jp1);
+				
+				while(pt1[6] <= 0.01f && jp1 < fil.size()-1){
+					jp1++;
+					pt1 = fil.get(jp1);
+				}
+				j=jp1-1;
+				
 				float dist = 0;
 				for(int k=0;k<3;k++){
 					float diff = pt0[k] - pt1[k];
