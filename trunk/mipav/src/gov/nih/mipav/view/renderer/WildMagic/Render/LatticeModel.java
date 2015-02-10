@@ -4919,4 +4919,38 @@ public class LatticeModel {
         }
     }
 
+    
+    /**
+     * Generates a natural spline curve to fit the input set of annotation points to model a neurite.
+     */
+    public void addNeurite( VOI annotionVOI, String name ) {
+        short sID;
+
+        // 1. The center line of the worm is calculated from the midpoint between the left and right points of the
+        // lattice.
+        VOIContour neurite = new VOIContour(false);
+        for (int i = 0; i < annotionVOI.getCurves().size(); i++) {
+        	VOIText text = (VOIText) annotionVOI.getCurves().elementAt(i);
+        	neurite.add( new Vector3f( text.elementAt(0) ) );
+        }
+        float[] time = new float[neurite.size()];
+        NaturalSpline3 neuriteSpline = smoothCurve(neurite, time);
+        
+        VOIContour neuriterPositions = new VOIContour(false);
+
+        float length = neuriteSpline.GetLength(0, 1);
+        for (int i = 0; i <= length; i++) {
+            final float t = neuriteSpline.GetTime(i);
+            neuriterPositions.add(neuriteSpline.GetPosition(t));
+        }
+
+        sID = (short) (imageA.getVOIs().getUniqueID());
+        VOI neuriteVOI = new VOI(sID, name );
+        neuriteVOI.getCurves().add(neuriterPositions);
+        neuriteVOI.setColor(Color.white);
+        neuriterPositions.update(new ColorRGBA(1, 1, 1, 1));
+        imageA.registerVOI(neuriteVOI);
+    }
+
+    
 }

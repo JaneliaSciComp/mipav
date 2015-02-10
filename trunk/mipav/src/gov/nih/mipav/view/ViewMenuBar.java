@@ -1142,6 +1142,12 @@ public class ViewMenuBar {
                                 		menuBuilder.buildMenuItem("Save Annotations", "SaveAnnotations", 0, null, false)
                                         		}
                                 ),
+                                menuBuilder.makeMenu("Worm Neurite", true,
+                                        new JMenuItem[] 
+                                        		{
+                                		menuBuilder.buildMenuItem("Open Neurite", "OpenNeurite", 0, null, false),
+                                        		}
+                                ),
                                 menuBuilder.makeMenu("Worm VOI", true,
                                         new JMenuItem[] 
                                         		{
