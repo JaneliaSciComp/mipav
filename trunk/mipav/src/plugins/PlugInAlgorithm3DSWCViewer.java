@@ -72,8 +72,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	
 	private boolean viewerOpen;
 	
-	//private ModelImage splitImage;
-	
 	private final SimpleAttributeSet blackText;
 	
 	private final SimpleAttributeSet redText;
@@ -81,8 +79,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	private boolean branchDensity;
 	
 	private int[][] faceVerticies;
-	
-	//private Point3d[] verticies;
 	
 	private ArrayList<Integer> tips;
 	
@@ -95,7 +91,9 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		super();
 		
 		imageFile = imFile;
-		//destImage = new ModelImage(ModelImage.BOOLEAN, new int[]{512, 512}, "3D Neuron Viewer");
+		//destImage stores the image to be used in the viewer
+		//It is RGB so that the axon and convex hull can be highlighted in different colors
+		//and shown concurrently
 		destImage = new ModelImage(ModelImage.ARGB, new int[]{512, 512}, "3D Neuron Viewer");
 		
 		String name = file.getName();
@@ -121,7 +119,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	}
 	
 	/**
-	 * For branch density
+	 * For branch density, since no input image is needed.
 	 * @param file
 	 * @param text
 	 * @param resUnit
@@ -129,7 +127,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	public PlugInAlgorithm3DSWCViewer(File file, JTextPane text, String resUnit){
 		super();
 		
-		//destImage = new ModelImage(ModelImage.BOOLEAN, new int[]{512, 512}, "3D Neuron Viewer");
 		destImage = new ModelImage(ModelImage.ARGB, new int[]{512, 512}, "3D Neuron Viewer");
 		
 		swcFile = file;
@@ -186,22 +183,25 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 					break;
 				}
 			}
+			
+			//In some cases, the Imaris IV file is not going to overlap,
+			//in which case the connections must be determined using
+			//a slight tolerance
 			if(disconnected){
-				//Try version with tolerance
 				connections = makeConnectionsTol(swcCoordinates);
-				//Test out one more time
 				for(int i=1;i<swcCoordinates.size();i++){
 					ArrayList<float[]> fil = swcCoordinates.get(i);
 					if(fil.get(0)[4] == Float.NEGATIVE_INFINITY){
 						//No connection was made, something is wrong
 						append(swcFile.getName() + " is not connected properly.", redText);
-						//allGood = false;
 						setCompleted(false);
 						return;
 					}
 				}
 			}
 			
+			//Generate the indicies of which filaments in
+			//swcCoordinates are tips (no forward connections)
 			tips = new ArrayList<Integer>();
 			for(int i=0;i<connections.size();i++){
 				ArrayList<Integer> branches = connections.get(i);
@@ -210,6 +210,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 				}
 			}
 	
+			//Generate the 3D viewer if needed
 			if(showViewer){
 				joints.add(swcCoordinates.get(0).get(0));
 				for(int i=0;i<swcCoordinates.size();i++){
@@ -224,40 +225,24 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 			
 			int tipSize = tips.size();
 			
-			int[][] temp = new int[2*tipSize][];
+			//Provide initial overestimate of array sizes
+			int[][] temp = new int[3*tipSize][];
 			vertexInd = new int[tipSize];
 			
 			int actualNum = calculateConvexHull(swcCoordinates, tips, temp, vertexInd);
 			faceVerticies = new int[actualNum][];
+			//Resize arrays to proper lengths
 			for(int i=0;i<actualNum;i++){
 				faceVerticies[i] = temp[i];
 			}
 			Arrays.resize(vertexInd, actualNum);
 			
-			if(!branchDensity){
-				
+			if(branchDensity){
+				currentAxon = tips.get(0);
+			}else{
 				append("Opening image " + imageFile, blackText);
 				FileIO reader = new FileIO();
 				srcImage = reader.readImage(imageFile);
-				
-				if(!showViewer){
-					calculateDistances(swcCoordinates);
-					if(axonUseLength){
-						determineOrder_useLength(swcCoordinates, connections, currentAxon);
-					}else{
-						determineOrder(swcCoordinates, connections, currentAxon);
-					}
-				}
-				
-				//setupSplitChooser();
-				
-				//StyleConstants.setBold(blackText, true);
-				
-				//append("Select split point from image", blackText);
-				
-				//StyleConstants.setBold(blackText, false);
-			}else{
-				currentAxon = tips.get(0);
 			}
 			
 			setCompleted(true);
@@ -275,207 +260,16 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		
 	}
 	
-	public void setSplit(float dist){
-		splitDist = dist;
-	}
-	
-	public void setAxon(int axon){
-		currentAxon = axon;
-	}
-	
-	public int getAxon(){
-		return currentAxon;
-	}
-
-	/**
-	 * Gets all branches that have no forward connections
-	 * (and thus would be a tip). This will be used to
-	 * populate the list of potential axon branches. 
-	 * @return
-	 */
-	public ArrayList<Integer> getTips(){
-		return tips;
-	}
-	
-	public boolean isViewerOpen(){
-		return viewerOpen;
-	}
-	
-	public void viewerClosed(){
-		viewerOpen = false;
-		/*if(splitImage != null){
-			splitImage.getParentFrame().close();
-		}*/
-	}
-
-	/**
-	 * Used as part of the action for dragging the 
-	 * mouse with the left click. This applies a 
-	 * rotation based on the mouse movement and
-	 * returns the new rotation angles, which is
-	 * then used in the transform method. 
-	 * 
-	 * @param rx
-	 * @param ry
-	 * @return
-	 */
-	public int[] mouseRotate(int rx, int ry){
-		//Want to rotate about center of neuron, so recenter the points
-		
-		mat.setRotate(rx, ry, 0, TransMatrix.DEGREES);
-		
-		Vector3f[] bases = new Vector3f[3];
-		bases[0] = new Vector3f(1,0,0);
-		bases[1] = new Vector3f(0,1,0);
-		bases[2] = new Vector3f(0,0,1);
-		
-		Vector3f[] rBases = new Vector3f[3];
-		for(int i=0;i<3;i++){
-			rBases[i] = new Vector3f();
-			mat.transformAsPoint3Df(bases[i], rBases[i]);
-		}
-		
-		float rxRad = (float) Math.atan2(rBases[1].Z, rBases[2].Z);
-		float ryRad = (float) Math.atan2(-rBases[0].Z, Math.sqrt(Math.pow(rBases[1].Z, 2) + Math.pow(rBases[2].Z, 2)));
-		float rzRad = (float) Math.atan2(rBases[0].Y, rBases[0].X);
-		
-		int rxDeg = (int) Math.round((double)rxRad*180.0/Math.PI);
-		int ryDeg = (int) Math.round((double)ryRad*180.0/Math.PI);
-		int rzDeg = (int) Math.round((double)rzRad*180.0/Math.PI);
-		
-		return new int[]{ rxDeg, ryDeg, rzDeg};
-	}
-
-	/**
-	 * Used to translate the neuron structure in the X-Y 
-	 * viewing plane. Unlike in mouse rotate, which
-	 * simply passes the new parameters back to the dialog
-	 * to carry out the transform, this one takes care of
-	 * the translation by itself (since it is a fairly
-	 * trivial endeavour). 
-	 * @param tx
-	 * @param ty
-	 * @param zoom
-	 */
-	public void mouseTranslate(int tx, int ty, double zoom){
-		for(int i=0;i<spacePts.size();i++){
-			float[] pt = spacePts.get(i);
-			pt[0] += tx*zoom;
-			pt[1] += ty*zoom;
-		}
-		
-		makeViewImage();
-		
-		//BitSet axonMask = highlightAxon(currentAxon);
-		highlightAxon(currentAxon);
-		//ViewJFrameImage frame = destImage.getParentFrame();
-		
-		//frame.getComponentImage().setPaintMask(axonMask);
-		//frame.getControls().getTools().setOpacity(1.0f);
-		//frame.getControls().getTools().setPaintColor(Color.RED);
-		
-		//frame.updateImages(true);
-	}
-
-	/**
-	 * Rotates the image and makes the projection to
-	 * be displayed in the image frame. Also includes
-	 * zoom factor now.
-	 * @param rx
-	 * @param ry
-	 * @param rz
-	 * @param zoom
-	 */
-	public void transformImage(int tx, int ty, int rx, int ry, int rz, double zoom){
-		
-		mat = new TransMatrix(3);
-		//if you want to zoom, do it AFTER rotate
-		mat.setRotate(rx, ry, rz, TransMatrix.DEGREES);
-		mat.setZoom(zoom, zoom, zoom);
-		
-		
-		//Rotate about the center of the image
-		for(int i=0;i<joints.size();i++){
-			float[] joint = joints.get(i);
-			float[] transJoint = new float[3];
-			for(int j=0;j<2;j++){
-				transJoint[j] = joint[j] - 256;
-			}
-			transJoint[2] = joint[2];
-			float[] rotJoint = new float[3];
-			mat.transform(transJoint, rotJoint);
-			for(int j=0;j<2;j++){
-				rotJoint[j] += 256;
-			}
-			rotJoint[0] += tx*zoom;
-			rotJoint[1] += ty*zoom;
-			
-			spacePts.set(i, rotJoint);
-			
-		}
-		
-		makeViewImage();
-		
-		
-		ViewJFrameImage frame = destImage.getParentFrame();
-		
-		highlightAxon(currentAxon);
-		if(!showAxon){
-			displayConvexHull();
-		}
-		/*if(showAxon){
-			highlightAxon(currentAxon);
-			//BitSet axonMask = highlightAxon(currentAxon);
-			//frame.getComponentImage().setPaintMask(axonMask);
-		}else{
-			convexHull();
-			//BitSet hullMask = convexHull();
-			//frame.getComponentImage().setPaintMask(hullMask);
-		}*/
-		
-		frame.updateImages(true);
-	}
-	
-	public void showAxon(){
-		showAxon = true;
-		
-	}
-	
-	public void showHull(){
-		showAxon = false;
-	}
-
-	public void setUseLength(boolean useLength){
-		axonUseLength = useLength;
-	}
-	
 	/**
 	 * This method handles the actual writing and calculation steps
 	 * after the user has chosen an axon. Other than rearranging
 	 * the order of forward connections, this portion is more or
 	 * less the same as the back half of the sibling algorithm.
+	 * 
+	 * @see PlugInAlgorithm3DSWCStats
 	 */
 	public void write(){
 		
-		/*final Vector3f splitPt;
-		if(branchDensity){
-			splitPt = null;
-		}else{
-			splitPt = splitImage.getVOIs().get(0).exportPoint();
-			int[] extents = srcImage.getExtents();
-			int width = extents[0];
-			int height = extents[1];
-			int depth = extents[2];
-			
-			if(splitPt.X == width/2 && splitPt.Y == height/2
-					&& splitPt.Z == depth/2){
-				int response = JOptionPane.showConfirmDialog(null, "Split point has not moved. Is it correct?", "Continue?",
-						JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-				if(response == JOptionPane.NO_OPTION)
-					return false;
-				
-			}
-		}*/
 		setCompleted(false);
 		
 		final PlugInAlgorithm3DSWCViewer alg = this;
@@ -484,24 +278,20 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 			public void run(){
 				try{
 					viewerOpen = false;
-					//convexHullVolume = convexHullVolume(swcCoordinates, connections, false);
 					
 					int maxOrder;
 					
-					if(showViewer){
-						calculateDistances(swcCoordinates);
-						if(axonUseLength){
-							maxOrder = determineOrder_useLength(swcCoordinates, connections, currentAxon);
-						}else{
-							maxOrder = determineOrder(swcCoordinates, connections, currentAxon);
-						}
+					//Pre-processing before all the statistics are
+					//calculated. Makes sure the logical ordering
+					//of branches is correct
+					calculateDistances(swcCoordinates);
+					if(axonUseLength){
+						maxOrder = determineOrder_useLength(swcCoordinates, connections, currentAxon);
 					}else{
-						maxOrder = 0;
-						for(int i=0;i<swcCoordinates.size();i++){
-							int order = (int)swcCoordinates.get(i).get(0)[5];
-							if(order > maxOrder)
-								maxOrder = order;
-						}
+						maxOrder = determineOrder(swcCoordinates, connections, currentAxon);
+					}
+						
+					if(!showViewer){
 						
 						currentAxon = tips.get(0);
 						for(int i : tips){
@@ -510,7 +300,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 								break;
 							}
 						}
-						
 					}
 					
 					if(branchDensity){
@@ -518,7 +307,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 						float[] branchLengths = recalculateDistances(swcCoordinates, connections);
 						addToMessages(swcCoordinates, messages);
 						
-						float hullVolume = convexHullVolume(swcCoordinates, connections, true);
+						float hullVolume = convexHullVolume(swcCoordinates, connections);
 						
 						try{
 							String output = exportStatsToCSV(swcCoordinates, connections, swcFile, messages, branchLengths, -1.0f, hullVolume, maxOrder);
@@ -549,6 +338,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 						
 						String[] rows = new String[]{"Distance,", "# of Branches,", "Branch Lengths,"};
 						
+						//Writes out the branch frequency stats in
+						//their respective bins
 						float distance = 5;
 						float increment = 5;
 						int num = 0;
@@ -576,19 +367,20 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 							rows[i] += "\n";
 							fw.append(rows[i]);
 						}
-
+	
 						fw.close();	
 						
 						SimpleAttributeSet greenText = new SimpleAttributeSet(blackText);
 						StyleConstants.setForeground(greenText, Color.green.darker());
-
+	
 						append("Finished writing stats and SWC files", greenText);
 						append("-----------------------------------------", blackText);
 					}else{
-
+	
 						float[] splitLoc = null;
 						int filIndex = currentAxon;
 						
+						//Find the location of the split point of the growth cone
 						ArrayList<float[]> piece = swcCoordinates.get(currentAxon);
 						float sDist = splitDist;
 						int ind = piece.size()-1;
@@ -616,10 +408,14 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 								float d = fa[i] - fa2[i];
 								dist += d*d;
 							}
+							//Accumulate distances until you reach
+							//the provided value
 							dist = (float)Math.sqrt(dist);
 							if(sDist - dist > 0){
 								sDist -= dist;
 							}else{
+								//Choose whichever one is closer to the
+								//given distance
 								if(Math.abs(sDist) > Math.abs(sDist - dist)){
 									splitLoc = fa2;
 								}else{
@@ -628,35 +424,14 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 								break;
 							}
 						}
-						
-						
-						//splitImage.getParentFrame().removeWindowListener(alg);
-						//splitImage.getParentFrame().close();
-
+	
+						//axonIndex contains the currentAxon value in the
+						//new set of filaments in the growth cone
 						int[] axonIndex = new int[1];
 						ArrayList<ArrayList<float[]>> growthCone = filterGrowthCone(splitLoc, filIndex, axonIndex);
 						
-						/*for(int i=0;i<growthCone.size();i++){
-							String parent = swcFile.getParent();
-							File partFile = new File(parent + File.separator + "part_" + i + ".swc");
-							FileWriter fw = new FileWriter(partFile);
-							
-							ArrayList<float[]> fil = growthCone.get(i);
-							for(int j=0;j<fil.size();j++){
-								float[] coord = fil.get(j);
-								int c;
-								if(j==0){
-									c = -1;
-								}else{
-									c = j;
-								}
-								String line = String.format("%d %d %4.5f %4.5f %4.5f 0.1 %d \n", j+1, 2, coord[0], coord[1], coord[2], c);
-								fw.append(line);
-							}
-							
-							fw.close();
-						}*/
-						
+						//Redo all the preprocessing steps for the growth
+						//cone to prevent any weird issues arising
 						ArrayList<ArrayList<Integer>> gcConnections;
 						if(disconnected){
 							gcConnections = makeConnectionsTol(growthCone);
@@ -747,7 +522,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 						//System.out.println(gcHullVolumeN);
 						 
 						 */
-						float gcHullVolume = convexHullVolume(growthCone, gcConnections, true);
+						float gcHullVolume = convexHullVolume(growthCone, gcConnections);
 						
 						PlugInAlgorithmSWCVolume alg = new PlugInAlgorithmSWCVolume(srcImage, growthCone);
 						alg.run();
@@ -772,49 +547,47 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 						} catch (IOException e) {
 							append("Could not write SWC for " + swcFile.getName(), redText);
 						}
-
+	
 						SimpleAttributeSet greenText = new SimpleAttributeSet(blackText);
 						StyleConstants.setForeground(greenText, Color.green.darker());
-
+	
 						append("Finished writing stats and SWC files", greenText);
 						append("-----------------------------------------", blackText);
-
+	
 					}
 					setCompleted(true);
-
-
+	
+	
 				}catch(Exception e){
 					append("The following Java error has occured:", redText);
 					append(e.toString(), redText);
 					for(StackTraceElement t : e.getStackTrace())
 						append(t.toString(), redText);
 				}
-
-
+	
+	
 				alg.notifyListeners(alg);
 			}
 		};
 		
 		writeThread.start();
 	}
+
+	public void setSplit(float dist){
+		splitDist = dist;
+	}
 	
-	/*public boolean isTipInHullOld(int row){
-		
-		if(verticies == null)
-			return false;
-		
-		int branch = tips.get(row);
-		float[] spacePt = spacePts.get(branch+1);
-		Point3d pt = new Point3d(spacePt[0], spacePt[1], spacePt[2]);
-		for(int i=0;i<verticies.length;i++){
-			Point3d vPt = verticies[i];
-			if(vPt.x == pt.x && vPt.y == pt.y && vPt.z == pt.z){
-				return true;
-			}
-		}
-		
-		return false;
-	}*/
+	public void setAxon(int axon){
+		currentAxon = axon;
+	}
+	
+	public int getAxon(){
+		return currentAxon;
+	}
+
+	public ArrayList<Integer> getTips(){
+		return tips;
+	}
 	
 	public boolean isTipInHull(int row){
 		
@@ -829,466 +602,186 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		
 		return false;
 	}
-	
-	private int calculateConvexHull(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<Integer> tips, int[][]faceVerticies, int[] vertexInd){
-		
-		ArrayList<Point3d> ptList = new ArrayList<Point3d>();
-		float[] originPt = swcCoordinates.get(0).get(0);
-		Point3d originPt3d = new Point3d(originPt[0], originPt[1], originPt[2]);
-		ptList.add(originPt3d);
-		
-		for(int i : tips){
-			ArrayList<float[]> fil = swcCoordinates.get(i);
-			float[] pt = fil.get(fil.size()-1);
-			Point3d pt3d = new Point3d(pt[0], pt[1], pt[2]);
-			
-			//Added this if statement too, need to remove
-			//if(i == currentAxon)
-			//	tipPt = pt3d; 
-			ptList.add(pt3d);
-		}
-		
-		Point3d[] pts = new Point3d[ptList.size()];
-		ptList.toArray(pts);
-		
-		QuickHull3D hull = new QuickHull3D(pts);
-		
-		Point3d[] verticies = hull.getVertices();
-		int[][] faceVerticiesA = hull.getFaces();
-		for(int i=0;i<faceVerticiesA.length;i++){
-			faceVerticies[i] = faceVerticiesA[i];
-		}
-		
-		int cnt = 0;
-		for(int i=1;i<verticies.length;i++){
-			Point3d vPt = verticies[i];
-			Point3d lPt = ptList.get(cnt);
-			while(vPt.x != lPt.x || vPt.y != lPt.y || vPt.z != lPt.z){
-				cnt++;
-				if(cnt >= ptList.size()){//Something messed up
-					System.out.println("Something got jacked up with convex hull");
-					break;
-				}
-				lPt = ptList.get(cnt);
-			}
-			vertexInd[i] = tips.get(cnt-1);
-		}
-		
-		return verticies.length;
-	}
-	
-	private void displayConvexHull(){
-		
-		for(int i=0;i<faceVerticies.length;i++){
-			for(int j=0;j<faceVerticies[i].length;j++){
-				
-				int j1 = j+1;
-				if(j1==faceVerticies[i].length)
-					j1 = 0;
-				int ind1 = faceVerticies[i][j];
-				int ind2 = faceVerticies[i][j1];
-				float[] pt0f;
-				float[] pt1f;
-				if(ind1 == 0){
-					pt0f = spacePts.get(0);
-					pt1f = spacePts.get(vertexInd[ind2] + 1);
-				}else if(ind2 == 0){
-					pt0f = spacePts.get(vertexInd[ind1] + 1);
-					pt1f = spacePts.get(0);
-				}else{
-					pt0f = spacePts.get(vertexInd[ind1] + 1);
-					pt1f = spacePts.get(vertexInd[ind2] + 1);
-				}
-				//Point3d pt03d = verticies[ind1];
-				//Point3d pt13d = verticies[ind2];
-				
-				Point pt0 = new Point((int)pt0f[0], (int)pt0f[1]);
-				Point pt1 = new Point((int)pt1f[0], (int)pt1f[1]);
-				
-				ArrayList<Point> line = bresenham(pt0, pt1);
-	
-				for(int k=0;k<line.size();k++){
-					Point pt = line.get(k);
-					if(pt.x > 0 && pt.x < 512 &&
-							pt.y > 0 && pt.y < 512){
-						//hullMask.set(pt.x + pt.y*512);
-						//hullMask[pt.x + pt.y*512] = (byte) 255;
-						destImage.setC(pt.x + pt.y*512, 2, 255);
-					}
-				}
-			}
-		}
-	}
+
 	/**
-	 * No longer being used, split into two methods
+	 * Used to prevent actions from occuring in the
+	 * master dialog if the viewer is open
+	 * @return
 	 */
-	@SuppressWarnings("unused")
-	private void convexHull(){
-		
-		//Added line, should remove
-		//Point3d tipPt = null;
-		
-		ArrayList<Point3d> ptList = new ArrayList<Point3d>();
+	public boolean isViewerOpen(){
+		return viewerOpen;
+	}
 	
-		//BitSet hullMask = new BitSet(512*512);
-		//byte[] hullMask = new byte[512*512];
-		
-		//tips.add(0, -1);
-		
-		float[] originPt = spacePts.get(0);
-		Point3d originPt3d = new Point3d(originPt[0], originPt[1], originPt[2]);
-		ptList.add(originPt3d);
-		
-		for(int i : tips){
-			float[] pt = spacePts.get(i+1);
-			Point3d pt3d = new Point3d(pt[0], pt[1], pt[2]);
-			
-			//Added this if statement too, need to remove
-			//if(i == currentAxon)
-			//	tipPt = pt3d; 
-			ptList.add(pt3d);
-		}
-		
-		Point3d[] pts = new Point3d[ptList.size()];
-		ptList.toArray(pts);
-		
-		QuickHull3D hull = new QuickHull3D(pts);
-		
-		Point3d[] verticies = hull.getVertices();
-		faceVerticies = hull.getFaces();
-		
-		vertexInd = new int[verticies.length];
-		
-		int cnt = 0;
-		for(int i=1;i<verticies.length;i++){
-			Point3d vPt = verticies[i];
-			Point3d lPt = ptList.get(cnt);
-			while(vPt.x != lPt.x || vPt.y != lPt.y || vPt.z != lPt.z){
-				cnt++;
-				if(cnt >= ptList.size()){//Something messed up
-					System.out.println("Something got jacked up with convex hull");
-					break;
-				}
-				lPt = ptList.get(cnt);
-			}
-			vertexInd[i] = tips.get(cnt-1);
-		}
-		
-		/**/
-		/*
-		boolean onHull = false;
-		for(int i=0;i<verticies.length;i++){
-			Point3d pt = verticies[i];
-			if(pt.x == tipPt.x && pt.y == tipPt.y && pt.z == tipPt.z){
-				onHull = true;
-				break;
-			}
-		}
-		
-		if(!onHull){
-			
-			ArrayList<float[]> fil = swcCoordinates.get(currentAxon);
-			int connection = (int)fil.get(0)[4];
-	
-			float[] start = spacePts.get(connection+1);
-			float[] tip = spacePts.get(currentAxon+1);
-			
-			Vector3f headPt = new Vector3f(tip[0], tip[1], tip[2]);
-			Vector3f vecC = new Vector3f(start[0], start[1], start[2]);
-			vecC = Vector3f.sub(headPt, vecC);
-			
-			float minDist = Float.MAX_VALUE;
-			int minInd = -1;
-			
-			for(int i=0;i<faceVerticies.length;i++){
-				int[] vert = faceVerticies[i];
-				Point3d ptA = verticies[vert[0]];
-				Point3d ptB = verticies[vert[1]];
-				Point3d ptC = verticies[vert[2]];
-				
-				Vector3f originPt = new Vector3f((float)ptA.x, (float)ptA.y, (float)ptA.z);
-				Vector3f vecA = new Vector3f((float)ptB.x, (float)ptB.y, (float)ptB.z);
-				Vector3f vecB = new Vector3f((float)ptC.x, (float)ptC.y, (float)ptC.z);
-				
-				float distance = distanceVectorToPlane(originPt, vecA, vecB, vecC, headPt);
-				
-				if(distance > 0 && distance < minDist){
-					minDist = distance;
-					minInd = i;
-				}
-				
-			}
-			
-			int i = minInd;
-			
-			for(int j=0;j<faceVerticies[i].length;j++){
-				
-				int j1 = j+1;
-				if(j1==faceVerticies[i].length)
-					j1 = 0;
-				int ind1 = faceVerticies[i][j];
-				int ind2 = faceVerticies[i][j1];
-				Point3d pt03d = verticies[ind1];
-				Point3d pt13d = verticies[ind2];
-				
-				Point pt0 = new Point((int)pt03d.x, (int)pt03d.y);
-				Point pt1 = new Point((int)pt13d.x, (int)pt13d.y);
-				
-				ArrayList<Point> line = bresenham(pt0, pt1);
-	
-				for(int k=0;k<line.size();k++){
-					Point pt = line.get(k);
-					if(pt.x > 0 && pt.x < 512 &&
-							pt.y > 0 && pt.y < 512)
-						hullMask.set(pt.x + pt.y*512);
-				}
-			}
-		}
-		
-		hullMask.or(highlightAxon(currentAxon));
-		*/
-		/**/
-		
-		for(int i=0;i<faceVerticies.length;i++){
-			for(int j=0;j<faceVerticies[i].length;j++){
-				
-				int j1 = j+1;
-				if(j1==faceVerticies[i].length)
-					j1 = 0;
-				int ind1 = faceVerticies[i][j];
-				int ind2 = faceVerticies[i][j1];
-				Point3d pt03d = verticies[ind1];
-				Point3d pt13d = verticies[ind2];
-				
-				Point pt0 = new Point((int)pt03d.x, (int)pt03d.y);
-				Point pt1 = new Point((int)pt13d.x, (int)pt13d.y);
-				
-				ArrayList<Point> line = bresenham(pt0, pt1);
-	
-				for(int k=0;k<line.size();k++){
-					Point pt = line.get(k);
-					if(pt.x > 0 && pt.x < 512 &&
-							pt.y > 0 && pt.y < 512){
-						//hullMask.set(pt.x + pt.y*512);
-						//hullMask[pt.x + pt.y*512] = (byte) 255;
-						destImage.setC(pt.x + pt.y*512, 2, 255);
-					}
-				}
-			}
-		}
-		
-		/*try{
-			destImage.importRGBData(2, 0, hullMask, true);
-		}catch(IOException e){
-			e.printStackTrace();
-		}*/
-		
-		//return hullMask;
-		
+	public void viewerClosed(){
+		viewerOpen = false;
 	}
 
 	/**
-	 * Convex hull volume for non-consolidated filaments
+	 * Used as part of the action for dragging the 
+	 * mouse with the left click. This applies a 
+	 * rotation based on the mouse movement and
+	 * returns the new rotation angles, which is
+	 * then used in the transform method. 
 	 * 
-	 * @param swcCoordinates
-	 * @param connections
+	 * @param rx
+	 * @param ry
 	 * @return
 	 */
-	private float convexHullVolume(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<ArrayList<Integer>> connections, boolean consolidated){
+	public int[] mouseRotate(int rx, int ry){
+		//Want to rotate about center of neuron, so recenter the points
 		
-		ArrayList<Point3d> ptList = new ArrayList<Point3d>();
+		mat.setRotate(rx, ry, 0, TransMatrix.DEGREES);
 		
-		float[] origin = swcCoordinates.get(0).get(0);
-		ptList.add(new Point3d(origin[0], origin[1], origin[2]));
+		Vector3f[] bases = new Vector3f[3];
+		bases[0] = new Vector3f(1,0,0);
+		bases[1] = new Vector3f(0,1,0);
+		bases[2] = new Vector3f(0,0,1);
 		
-		if(consolidated){
-			for(int i=0;i<swcCoordinates.size();i++){
-				ArrayList<float[]> fil = swcCoordinates.get(i);
-				float[] pt = fil.get(fil.size()-1);
-				ptList.add(new Point3d(pt[0], pt[1], pt[2]));
-			}
-		}else{
-			//This portion is for non-consolidated only
-			ArrayList<Integer> tips = new ArrayList<Integer>();
-			for(int i=0;i<connections.size();i++){
-				ArrayList<Integer> branches = connections.get(i);
-				if(branches.size()==0){
-					tips.add(i);
-				}
-			}
-			
-			for(int i : tips){
-				ArrayList<float[]> fil = swcCoordinates.get(i);
-				float[] pt = fil.get(fil.size()-1);
-				ptList.add(new Point3d(pt[0], pt[1], pt[2]));
-			}
+		Vector3f[] rBases = new Vector3f[3];
+		for(int i=0;i<3;i++){
+			rBases[i] = new Vector3f();
+			mat.transformAsPoint3Df(bases[i], rBases[i]);
 		}
 		
-		float volume = 0;
+		float rxRad = (float) Math.atan2(rBases[1].Z, rBases[2].Z);
+		float ryRad = (float) Math.atan2(-rBases[0].Z, Math.sqrt(Math.pow(rBases[1].Z, 2) + Math.pow(rBases[2].Z, 2)));
+		float rzRad = (float) Math.atan2(rBases[0].Y, rBases[0].X);
 		
-		Point3d[] pts = new Point3d[ptList.size()];
-		ptList.toArray(pts);
+		int rxDeg = (int) Math.round((double)rxRad*180.0/Math.PI);
+		int ryDeg = (int) Math.round((double)ryRad*180.0/Math.PI);
+		int rzDeg = (int) Math.round((double)rzRad*180.0/Math.PI);
 		
-		QuickHull3D hull = new QuickHull3D(pts);
-		
-		Point3d centroid = new Point3d();
-		
-		for(int i=0;i<pts.length;i++){
-			Point3d pt = pts[i];
-			centroid.add(pt);
-		}
-		
-		double num = pts.length;
-		centroid.x /= num;
-		centroid.y /= num;
-		centroid.z /= num;
-		
-		Point3d[] verticies = hull.getVertices();
-		int[][] faceVerticies = hull.getFaces();
-		
-		for(int i=0;i<faceVerticies.length;i++){
-			
-			Point3d ptA = new Point3d(verticies[faceVerticies[i][0]]);
-			Point3d ptB = new Point3d(verticies[faceVerticies[i][1]]);
-			Point3d ptC = new Point3d(verticies[faceVerticies[i][2]]);
-			Point3d ptCentroid = new Point3d(centroid);
-			//Point3d ptCentroid = new Point3d(boxVec.X, boxVec.Y, boxVec.Z);
-			
-			ptB.sub(ptA);
-			ptC.sub(ptA);
-			ptCentroid.sub(ptA);
-			
-			Vector3f vecA = new Vector3f((float)ptB.x, (float)ptB.y, (float)ptB.z);
-			Vector3f vecB = new Vector3f((float)ptC.x, (float)ptC.y, (float)ptC.z);
-			Vector3f vecC = new Vector3f((float)ptCentroid.x, (float)ptCentroid.y, (float)ptCentroid.z);
-			Vector3f axb = Vector3f.cross(vecA, vecB);
-			
-			volume += Math.abs(axb.dot(vecC));
-			//System.out.println(Math.abs(axb.dot(vecC)));
-		}
-		
-		volume /= 6.0f;
-		
-		return volume;
-	}
-	
-	@SuppressWarnings("unused")
-	private float convexHullVolumeNew(ArrayList<ArrayList<float[]>> swcCoordinates, int[] vertexInd, int[][] faceVerticies){
-		
-		float volume = 0;
-		
-		Point3d[] verticies = new Point3d[vertexInd.length];
-		float[] origin = swcCoordinates.get(0).get(0);
-		verticies[0] = new Point3d(origin[0], origin[1], origin[2]);
-		
-		for(int i=1;i<vertexInd.length;i++){
-			int index = vertexInd[i];
-			ArrayList<float[]> fil = swcCoordinates.get(index);
-			float[] tipPt = fil.get(fil.size()-1);
-			verticies[i] = new Point3d(tipPt[0], tipPt[1], tipPt[2]);
-		}
-		
-		Point3d centroid = new Point3d();
-		for(int i=0;i<verticies.length;i++){
-			Point3d pt = verticies[i];
-			centroid.add(pt);
-		}
-		
-		double num = verticies.length;
-		centroid.x /= num;
-		centroid.y /= num;
-		centroid.z /= num;
-		
-		for(int i=0;i<faceVerticies.length;i++){
-			
-			Point3d ptA = new Point3d(verticies[faceVerticies[i][0]]);
-			Point3d ptB = new Point3d(verticies[faceVerticies[i][1]]);
-			Point3d ptC = new Point3d(verticies[faceVerticies[i][2]]);
-			Point3d ptCentroid = new Point3d(centroid);
-			
-			ptB.sub(ptA);
-			ptC.sub(ptA);
-			ptCentroid.sub(ptA);
-			
-			Vector3f vecA = new Vector3f((float)ptB.x, (float)ptB.y, (float)ptB.z);
-			Vector3f vecB = new Vector3f((float)ptC.x, (float)ptC.y, (float)ptC.z);
-			Vector3f vecC = new Vector3f((float)ptCentroid.x, (float)ptCentroid.y, (float)ptCentroid.z);
-			Vector3f axb = Vector3f.cross(vecA, vecB);
-			
-			volume += Math.abs(axb.dot(vecC));
-		}
-		
-		volume /= 6.0f;
-		
-		return volume;
+		return new int[]{ rxDeg, ryDeg, rzDeg};
 	}
 
 	/**
-	 * Using the selected branch, create a bitset to be used
-	 * as the image mask that overlays both the branch that
-	 * was selected as well as the connections all the way
-	 * back to the origin. 
-	 * @param branch
-	 * @return
+	 * Used to translate the neuron structure in the X-Y 
+	 * viewing plane. Unlike in mouse rotate, which
+	 * simply passes the new parameters back to the dialog
+	 * to carry out the transform, this one takes care of
+	 * the translation by itself (since it is a fairly
+	 * trivial endeavour). 
+	 * @param tx
+	 * @param ty
+	 * @param zoom
 	 */
-	private void highlightAxon(int branch){
-		
-		currentAxon = branch;
-		
-		//BitSet axonMask = new BitSet(512*512);
-		//byte[] axonMask = new byte[512*512];
-		//byte[] blank = new byte[512*512];
-		
-		ArrayList<float[]> fil = swcCoordinates.get(branch);
-		int c = (int) fil.get(0)[4];
-		
-		ArrayList<ArrayList<Point>> lines = new ArrayList<ArrayList<Point>>();
-		
-		float[] oPt = spacePts.get(0);
-		Point origin = new Point(Math.round(oPt[0]), Math.round(oPt[1]));
-		float[] nPt = spacePts.get(1);
-		Point pt = new Point(Math.round(nPt[0]), Math.round(nPt[1]));
-		
-		lines.add(bresenham(origin, pt));
-		
-		while(c > -1){
-			oPt = spacePts.get(branch+1);
-			nPt = spacePts.get(c+1);
-			origin = new Point(Math.round(oPt[0]), Math.round(oPt[1]));
-			pt = new Point(Math.round(nPt[0]), Math.round(nPt[1]));
-			lines.add(bresenham(origin, pt));
-			
-			fil = swcCoordinates.get(c);
-			branch = c;
-			c = (int) fil.get(0)[4];
+	public void mouseTranslate(int tx, int ty, double zoom){
+		for(int i=0;i<spacePts.size();i++){
+			float[] pt = spacePts.get(i);
+			pt[0] += tx*zoom;
+			pt[1] += ty*zoom;
 		}
 		
-		for(int i=0;i<lines.size();i++){
-			ArrayList<Point> line = lines.get(i);
-			for(int j=0;j<line.size();j++){
-				pt = line.get(j);
-				if(pt.x > 0 && pt.x < 512 &&
-						pt.y > 0 && pt.y < 512){
-					//axonMask.set(pt.x + pt.y*512);
-					//axonMask[pt.x + pt.y*512] = (byte) 255;
-					destImage.setC(pt.x + pt.y*512, 2, 0);
-					destImage.setC(pt.x + pt.y*512, 3, 0);
-				}
+		makeViewImage();
+		
+		highlightAxon(currentAxon);
+
+	}
+
+	/**
+	 * Rotates the image and makes the projection to
+	 * be displayed in the image frame. Also includes
+	 * zoom factor now.
+	 * @param rx
+	 * @param ry
+	 * @param rz
+	 * @param zoom
+	 */
+	public void transformImage(int tx, int ty, int rx, int ry, int rz, double zoom){
+		
+		mat = new TransMatrix(3);
+		//if you want to zoom, do it AFTER rotate
+		mat.setRotate(rx, ry, rz, TransMatrix.DEGREES);
+		mat.setZoom(zoom, zoom, zoom);
+		
+		
+		//Rotate about the center of the image
+		for(int i=0;i<joints.size();i++){
+			float[] joint = joints.get(i);
+			float[] transJoint = new float[3];
+			for(int j=0;j<2;j++){
+				transJoint[j] = joint[j] - 256;
 			}
+			transJoint[2] = joint[2];
+			float[] rotJoint = new float[3];
+			mat.transform(transJoint, rotJoint);
+			for(int j=0;j<2;j++){
+				rotJoint[j] += 256;
+			}
+			rotJoint[0] += tx*zoom;
+			rotJoint[1] += ty*zoom;
+			
+			spacePts.set(i, rotJoint);
+			
 		}
 		
-		/*try{
-			destImage.importRGBData(1, 0, axonMask, true);
-			destImage.importRGBData(2, 0, blank, true);
-			destImage.importRGBData(3, 0, blank, true);
-		}catch(IOException e){
+		makeViewImage();
+		
+		
+		ViewJFrameImage frame = destImage.getParentFrame();
+		
+		highlightAxon(currentAxon);
+		if(!showAxon){
+			displayConvexHull();
+		}
+		
+		frame.updateImages(true);
+	}
+	
+	public void showAxon(){
+		showAxon = true;
+		
+	}
+	
+	public void showHull(){
+		showAxon = false;
+	}
+
+	public void setUseLength(boolean useLength){
+		axonUseLength = useLength;
+	}
+	
+	/**
+	 * Adds the branch length and distance along the
+	 * axon/parent to the output messages. 
+	 * @param messages
+	 */
+	private void addToMessages(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<String> messages){
+		for(int i=0;i<messages.size();i++){
+			String message = messages.get(i);
+			ArrayList<float[]> fil = swcCoordinates.get(i);
+			message += String.format("# Branch Length: %3.5f %s\n", 
+					fil.get(fil.size()-1)[3], resolutionUnit);
+			String parent;
+			if(i!=0){
+				if(i==1)
+					parent = "axon";
+				else parent = "parent branch";
+				message += String.format("# Length along %s: %3.5f %s\n"
+						, parent, fil.get(0)[3], resolutionUnit);
+			}
+			message += "#------------------------------------\n";
+			messages.set(i, message);
+		}
+	}
+
+	/**
+	 * Used to write messages with certain fonts to
+	 * the text area that can be used to monitor
+	 * progress and errors in lieu of using the
+	 * java console.
+	 * @param message
+	 * @param a
+	 */
+	private void append(String message, AttributeSet a){
+		Document doc = textArea.getDocument();
+		try {
+			doc.insertString(doc.getLength(), message + "\n", a);
+		} catch (BadLocationException e) {
 			e.printStackTrace();
-		}*/
+		}
 		
-		//if(!branchDensity)
-		//	highlightAxonSplit();
-		
-		//return axonMask;
+		textArea.setCaretPosition(doc.getLength());
 	}
 
 	private ArrayList<float[]> branchDensity(){
@@ -1330,223 +823,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		}
 		
 		return stats;
-	}
-	
-	private ArrayList<ArrayList<float[]>> filterGrowthCone(float[] splitPt, int filIndex, int[] axonIndex){
-		ArrayList<ArrayList<float[]>> growthCone = new ArrayList<ArrayList<float[]>>();
-		ArrayDeque<Integer> indexStack = new ArrayDeque<Integer>();
-		
-		ArrayList<float[]> fil = swcCoordinates.get(filIndex);
-		ArrayList<float[]> addFil = new ArrayList<float[]>();
-		boolean add = false;
-		for(int i=0;i<fil.size();i++){
-			float[] pt = fil.get(i);
-			if(splitPt == pt)
-				add = true;
-			if(add){
-				float[] newPt = new float[pt.length];
-				System.arraycopy(pt, 0, newPt, 0, pt.length);
-				addFil.add(newPt);
-			}
-		}
-		
-		growthCone.add(addFil);
-		
-		ArrayList<Integer> forward = connections.get(filIndex);
-		for(int i=forward.size()-1;i>=0;i--){
-			indexStack.addFirst(forward.get(i));
-		}
-		
-		while(!indexStack.isEmpty()){
-			int index = indexStack.poll();
-			if(index == currentAxon)
-				axonIndex[0] = growthCone.size();
-			fil = swcCoordinates.get(index);
-			addFil = new ArrayList<float[]>();
-			for(int i=0;i<fil.size();i++){
-				float[] pt = fil.get(i);
-				float[] newPt = new float[pt.length];
-				System.arraycopy(pt, 0, newPt, 0, pt.length);
-				addFil.add(newPt);
-			}
-			growthCone.add(addFil);
-			forward = connections.get(index);
-			for(int i=forward.size()-1;i>=0;i--){
-				indexStack.addFirst(forward.get(i));
-			}
-		}
-		
-		return growthCone;
-	}
-	
-	/*private void highlightAxonSplit(){
-		
-		ViewJFrameImage frame = splitImage.getParentFrame();
-		int width = srcImage.getWidth(0);
-		int height = srcImage.getHeight(0);
-		
-		int branch = currentAxon;
-		
-		if(!showViewer){
-			for(int i=0;i<tips.size();i++){
-				int tipNum = tips.get(i);
-				ArrayList<float[]> fil = swcCoordinates.get(tipNum);
-				if(fil.get(0)[5] == 1){
-					branch = tipNum;
-					break;
-				}
-			}
-		}
-		
-		ArrayList<Point> axonPts = new ArrayList<Point>();
-		
-		float[] origin = srcImage.getOrigin();
-		float[] res = srcImage.getResolutions(0);
-		
-		while(branch > -1){
-			ArrayList<float[]> fil = swcCoordinates.get(branch);
-			for(int i = fil.size()-1;i>=0;i--){
-				float[] coord = fil.get(i);
-				float x = (coord[0]-origin[0])/res[0];
-				float y = (coord[1]-origin[1])/res[1];
-				Point pt = new Point((int)x, (int)y);
-				axonPts.add(pt);
-			}
-			branch = (int)fil.get(0)[4];
-		}
-		
-		BitSet axonMask = new BitSet(width*height);
-		
-		for(int i=0;i<axonPts.size()-1;i++){
-			Point oPt = axonPts.get(i);
-			Point nPt = axonPts.get(i+1);
-			ArrayList<Point> linePts = bresenham(oPt, nPt);
-			for(int j=0;j<linePts.size();j++){
-				Point pt = linePts.get(j);
-				axonMask.set(pt.x + pt.y * width);
-			}
-		}
-		
-		frame.getComponentImage().setPaintMask(axonMask);
-		
-		frame.updateImages(true);
-		
-	}*/
-	
-	/*private void setupSplitChooser(){
-		
-		int[] extents = srcImage.getExtents();
-		int width = extents[0];
-		int height = extents[1];
-		int depth = extents[2];
-		
-		AlgorithmMaximumIntensityProjection proj = new AlgorithmMaximumIntensityProjection(srcImage, 0, depth-1, depth,
-				srcImage.getMin(), srcImage.getMax(), true, true, AlgorithmMaximumIntensityProjection.Z_PROJECTION);
-		proj.run();
-		splitImage = proj.getResultImage().get(0);
-		
-		ViewJFrameImage frame = new ViewJFrameImage(splitImage);
-		VOI voi = new VOI((short)0, "Split Point", VOI.POINT, -1.0f);
-		
-		Vector3f centerPt = new Vector3f(width/2, height/2, 0);
-		VOIPoint voiPt = new VOIPoint(VOI.POINT, centerPt);
-		voiPt.setLabel("Split point");
-		voi.importCurve(voiPt);
-		
-		frame.setVisible(true);
-		
-		splitImage.getVOIs().add(voi);
-		splitImage.notifyImageDisplayListeners(true, null);
-		
-		srcImage.getVOIs().add(voi);
-		
-		currentAxon = tips.get(0);
-		
-		if(!showViewer){
-			calculateDistances(swcCoordinates);
-			if(axonUseLength){
-				determineOrder_useLength(swcCoordinates, connections, currentAxon);
-			}else{
-				determineOrder(swcCoordinates, connections, currentAxon);
-			}
-			
-		}
-		
-		highlightAxonSplit();
-		
-		frame.getControls().getTools().setOpacity(1.0f);
-		frame.getControls().getTools().setPaintColor(Color.RED);
-		
-		if(showViewer){
-			frame.removeWindowListener(frame);
-		}else{
-			frame.addWindowListener(this);
-		}
-
-		
-	}*/
-	
-	//Code right now is in the convexHull() method
-	@SuppressWarnings("unused")
-	private float distanceVectorToPlane(Vector3f originPt, Vector3f vecA, Vector3f vecB, Vector3f vecC, Vector3f headPt){
-		
-		Vector3f a = Vector3f.sub(vecA, originPt);
-		Vector3f b = Vector3f.sub(vecB, originPt);
-		Vector3f pt = Vector3f.sub(headPt, originPt);
-		//Vector vecC is already relative since it contains direction information
-		
-		Vector3f d = Vector3f.cross(a, b);
-		float num = d.dot(pt);
-		float denom = d.dot(vecC);
-		
-		if(denom == 0){
-			return -1.0f;
-		}
-		
-		float magC = vecC.length();
-		float distance = num * magC / denom;
-		
-		if(distance < 0){
-			return -distance;
-		}else{
-			return -1.0f;
-		}
-		
-	}
-
-	/**
-	 * Adds the branch length and distance along the
-	 * axon/parent to the output messages. 
-	 * @param messages
-	 */
-	private void addToMessages(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<String> messages){
-		for(int i=0;i<messages.size();i++){
-			String message = messages.get(i);
-			ArrayList<float[]> fil = swcCoordinates.get(i);
-			message += String.format("# Branch Length: %3.5f %s\n", 
-					fil.get(fil.size()-1)[3], resolutionUnit);
-			String parent;
-			if(i!=0){
-				if(i==1)
-					parent = "axon";
-				else parent = "parent branch";
-				message += String.format("# Length along %s: %3.5f %s\n"
-						, parent, fil.get(0)[3], resolutionUnit);
-			}
-			message += "#------------------------------------\n";
-			messages.set(i, message);
-		}
-	}
-
-	private void append(String message, AttributeSet a){
-		Document doc = textArea.getDocument();
-		try {
-			doc.insertString(doc.getLength(), message + "\n", a);
-		} catch (BadLocationException e) {
-			e.printStackTrace();
-		}
-		
-		textArea.setCaretPosition(doc.getLength());
 	}
 
 	/**
@@ -1594,6 +870,53 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		}
 		
 		return pts;
+	}
+
+	private int calculateConvexHull(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<Integer> tips, int[][]faceVerticies, int[] vertexInd){
+		
+		ArrayList<Point3d> ptList = new ArrayList<Point3d>();
+		float[] originPt = swcCoordinates.get(0).get(0);
+		Point3d originPt3d = new Point3d(originPt[0], originPt[1], originPt[2]);
+		ptList.add(originPt3d);
+		
+		for(int i : tips){
+			ArrayList<float[]> fil = swcCoordinates.get(i);
+			float[] pt = fil.get(fil.size()-1);
+			Point3d pt3d = new Point3d(pt[0], pt[1], pt[2]);
+			
+			//Added this if statement too, need to remove
+			//if(i == currentAxon)
+			//	tipPt = pt3d; 
+			ptList.add(pt3d);
+		}
+		
+		Point3d[] pts = new Point3d[ptList.size()];
+		ptList.toArray(pts);
+		
+		QuickHull3D hull = new QuickHull3D(pts);
+		
+		Point3d[] verticies = hull.getVertices();
+		int[][] faceVerticiesA = hull.getFaces();
+		for(int i=0;i<faceVerticiesA.length;i++){
+			faceVerticies[i] = faceVerticiesA[i];
+		}
+		
+		int cnt = 0;
+		for(int i=1;i<verticies.length;i++){
+			Point3d vPt = verticies[i];
+			Point3d lPt = ptList.get(cnt);
+			while(vPt.x != lPt.x || vPt.y != lPt.y || vPt.z != lPt.z){
+				cnt++;
+				if(cnt >= ptList.size()){//Something messed up
+					System.out.println("Something is wrong with convex hull calculations");
+					break;
+				}
+				lPt = ptList.get(cnt);
+			}
+			vertexInd[i] = tips.get(cnt-1);
+		}
+		
+		return verticies.length;
 	}
 
 	/**
@@ -1810,6 +1133,133 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		swcCoordinates.addAll(newFilaments);
 		
 		return messages;
+	}
+
+	/**
+	 * Convex hull volume. Using the faces and some linear algebra, finds
+	 * the volume within the convex hull. 
+	 * 
+	 * @param swcCoordinates
+	 * @param connections
+	 * @return
+	 */
+	private float convexHullVolume(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<ArrayList<Integer>> connections){
+		
+		ArrayList<Point3d> ptList = new ArrayList<Point3d>();
+		
+		float[] origin = swcCoordinates.get(0).get(0);
+		ptList.add(new Point3d(origin[0], origin[1], origin[2]));
+		
+		
+		for(int i=0;i<swcCoordinates.size();i++){
+			ArrayList<float[]> fil = swcCoordinates.get(i);
+			float[] pt = fil.get(fil.size()-1);
+			ptList.add(new Point3d(pt[0], pt[1], pt[2]));
+		}	
+		
+		float volume = 0;
+		
+		Point3d[] pts = new Point3d[ptList.size()];
+		ptList.toArray(pts);
+		
+		QuickHull3D hull = new QuickHull3D(pts);
+		
+		//Centroid is used as common point to create a bunch
+		//of triangular pyramids from which we can find the
+		//volume of through some linear algebra
+		Point3d centroid = new Point3d();
+		
+		for(int i=0;i<pts.length;i++){
+			Point3d pt = pts[i];
+			centroid.add(pt);
+		}
+		
+		double num = pts.length;
+		centroid.x /= num;
+		centroid.y /= num;
+		centroid.z /= num;
+		
+		Point3d[] verticies = hull.getVertices();
+		int[][] faceVerticies = hull.getFaces();
+		
+		for(int i=0;i<faceVerticies.length;i++){
+			
+			
+			Point3d ptA = new Point3d(verticies[faceVerticies[i][0]]);
+			Point3d ptB = new Point3d(verticies[faceVerticies[i][1]]);
+			Point3d ptC = new Point3d(verticies[faceVerticies[i][2]]);
+			Point3d ptCentroid = new Point3d(centroid);
+			
+			ptB.sub(ptA);
+			ptC.sub(ptA);
+			ptCentroid.sub(ptA);
+			
+			//Generate three vectors. A and B describe the plane while
+			//C points to the centroid
+			Vector3f vecA = new Vector3f((float)ptB.x, (float)ptB.y, (float)ptB.z);
+			Vector3f vecB = new Vector3f((float)ptC.x, (float)ptC.y, (float)ptC.z);
+			Vector3f vecC = new Vector3f((float)ptCentroid.x, (float)ptCentroid.y, (float)ptCentroid.z);
+			Vector3f axb = Vector3f.cross(vecA, vecB);
+			
+			//Vector triple product can be used to determine the volume of a parallelohedran
+			volume += Math.abs(axb.dot(vecC));
+		}
+		
+		//To convert from volume of a parallelohedran to a triangular pyramid
+		volume /= 6.0f;
+		
+		return volume;
+	}
+
+	@SuppressWarnings("unused")
+	private float convexHullVolumeNew(ArrayList<ArrayList<float[]>> swcCoordinates, int[] vertexInd, int[][] faceVerticies){
+		
+		float volume = 0;
+		
+		Point3d[] verticies = new Point3d[vertexInd.length];
+		float[] origin = swcCoordinates.get(0).get(0);
+		verticies[0] = new Point3d(origin[0], origin[1], origin[2]);
+		
+		for(int i=1;i<vertexInd.length;i++){
+			int index = vertexInd[i];
+			ArrayList<float[]> fil = swcCoordinates.get(index);
+			float[] tipPt = fil.get(fil.size()-1);
+			verticies[i] = new Point3d(tipPt[0], tipPt[1], tipPt[2]);
+		}
+		
+		Point3d centroid = new Point3d();
+		for(int i=0;i<verticies.length;i++){
+			Point3d pt = verticies[i];
+			centroid.add(pt);
+		}
+		
+		double num = verticies.length;
+		centroid.x /= num;
+		centroid.y /= num;
+		centroid.z /= num;
+		
+		for(int i=0;i<faceVerticies.length;i++){
+			
+			Point3d ptA = new Point3d(verticies[faceVerticies[i][0]]);
+			Point3d ptB = new Point3d(verticies[faceVerticies[i][1]]);
+			Point3d ptC = new Point3d(verticies[faceVerticies[i][2]]);
+			Point3d ptCentroid = new Point3d(centroid);
+			
+			ptB.sub(ptA);
+			ptC.sub(ptA);
+			ptCentroid.sub(ptA);
+			
+			Vector3f vecA = new Vector3f((float)ptB.x, (float)ptB.y, (float)ptB.z);
+			Vector3f vecB = new Vector3f((float)ptC.x, (float)ptC.y, (float)ptC.z);
+			Vector3f vecC = new Vector3f((float)ptCentroid.x, (float)ptCentroid.y, (float)ptCentroid.z);
+			Vector3f axb = Vector3f.cross(vecA, vecB);
+			
+			volume += Math.abs(axb.dot(vecC));
+		}
+		
+		volume /= 6.0f;
+		
+		return volume;
 	}
 
 	/**
@@ -2056,6 +1506,84 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		
 	}
 
+	private void displayConvexHull(){
+		
+		for(int i=0;i<faceVerticies.length;i++){
+			for(int j=0;j<faceVerticies[i].length;j++){
+				
+				int j1 = j+1;
+				if(j1==faceVerticies[i].length)
+					j1 = 0;
+				int ind1 = faceVerticies[i][j];
+				int ind2 = faceVerticies[i][j1];
+				float[] pt0f;
+				float[] pt1f;
+				if(ind1 == 0){
+					pt0f = spacePts.get(0);
+					pt1f = spacePts.get(vertexInd[ind2] + 1);
+				}else if(ind2 == 0){
+					pt0f = spacePts.get(vertexInd[ind1] + 1);
+					pt1f = spacePts.get(0);
+				}else{
+					pt0f = spacePts.get(vertexInd[ind1] + 1);
+					pt1f = spacePts.get(vertexInd[ind2] + 1);
+				}
+				
+				Point pt0 = new Point((int)pt0f[0], (int)pt0f[1]);
+				Point pt1 = new Point((int)pt1f[0], (int)pt1f[1]);
+				
+				ArrayList<Point> line = bresenham(pt0, pt1);
+	
+				for(int k=0;k<line.size();k++){
+					Point pt = line.get(k);
+					if(pt.x > 0 && pt.x < 512 &&
+							pt.y > 0 && pt.y < 512){
+						destImage.setC(pt.x + pt.y*512, 2, 255);
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * This code is meant to be used if the ability to add/remove points from the 
+	 * convex hull is ever implemented. Finds the face that the branch would extend
+	 * to in the skeletal frame. Could also improve to instead use the derivatives
+	 * gained from using splines.
+	 * @param originPt
+	 * @param vecA
+	 * @param vecB
+	 * @param vecC
+	 * @param headPt
+	 * @return
+	 */
+	@SuppressWarnings("unused")
+	private float distanceVectorToPlane(Vector3f originPt, Vector3f vecA, Vector3f vecB, Vector3f vecC, Vector3f headPt){
+		
+		Vector3f a = Vector3f.sub(vecA, originPt);
+		Vector3f b = Vector3f.sub(vecB, originPt);
+		Vector3f pt = Vector3f.sub(headPt, originPt);
+		//Vector vecC is already relative since it contains direction information
+		
+		Vector3f d = Vector3f.cross(a, b);
+		float num = d.dot(pt);
+		float denom = d.dot(vecC);
+		
+		if(denom == 0){
+			return -1.0f;
+		}
+		
+		float magC = vecC.length();
+		float distance = num * magC / denom;
+		
+		if(distance < 0){
+			return -distance;
+		}else{
+			return -1.0f;
+		}
+		
+	}
+
 	private String exportStatsToCSV(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<ArrayList<Integer>> connections,
 			File file, ArrayList<String> messages, float[] branchLengths, float neuronVolume, float hullVolume, int maxOrder) throws IOException{
 		String parent = file.getParent();
@@ -2131,6 +1659,67 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		return output;
 	}
 	
+	/**
+	 * Creates a new set of points based on the provided split point.
+	 * Only the portions of the original filament that occur after 
+	 * the split point are output. 
+	 * @param splitPt
+	 * @param filIndex
+	 * @param axonIndex
+	 * @return
+	 */
+	private ArrayList<ArrayList<float[]>> filterGrowthCone(float[] splitPt, int filIndex, int[] axonIndex){
+		ArrayList<ArrayList<float[]>> growthCone = new ArrayList<ArrayList<float[]>>();
+		ArrayDeque<Integer> indexStack = new ArrayDeque<Integer>();
+		
+		ArrayList<float[]> fil = swcCoordinates.get(filIndex);
+		ArrayList<float[]> addFil = new ArrayList<float[]>();
+		boolean add = false;
+		//Only add points from the given filament that
+		//occur at or after the split point
+		for(int i=0;i<fil.size();i++){
+			float[] pt = fil.get(i);
+			if(splitPt == pt)
+				add = true;
+			if(add){
+				float[] newPt = new float[pt.length];
+				System.arraycopy(pt, 0, newPt, 0, pt.length);
+				addFil.add(newPt);
+			}
+		}
+		
+		growthCone.add(addFil);
+		
+		ArrayList<Integer> forward = connections.get(filIndex);
+		for(int i=forward.size()-1;i>=0;i--){
+			indexStack.addFirst(forward.get(i));
+		}
+		
+		//Add the rest of the filaments based on the forward
+		//connections. Try to maintain original ordering as
+		//much as possible.
+		while(!indexStack.isEmpty()){
+			int index = indexStack.poll();
+			if(index == currentAxon)
+				axonIndex[0] = growthCone.size();
+			fil = swcCoordinates.get(index);
+			addFil = new ArrayList<float[]>();
+			for(int i=0;i<fil.size();i++){
+				float[] pt = fil.get(i);
+				float[] newPt = new float[pt.length];
+				System.arraycopy(pt, 0, newPt, 0, pt.length);
+				addFil.add(newPt);
+			}
+			growthCone.add(addFil);
+			forward = connections.get(index);
+			for(int i=forward.size()-1;i>=0;i--){
+				indexStack.addFirst(forward.get(i));
+			}
+		}
+		
+		return growthCone;
+	}
+
 	private String formatSWCLine(int lineNum, float[] line) {
 		String format = "%d %d %4.5f %4.5f %4.5f %4.2f %d \n";
 		int type;
@@ -2145,6 +1734,56 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 			radius = 0.1f;
 		
 		return String.format(format, lineNum, type, line[0], line[1], line[2], radius, (int)line[4]);
+	}
+
+	/**
+	 * Using the selected branch, create a bitset to be used
+	 * as the image mask that overlays both the branch that
+	 * was selected as well as the connections all the way
+	 * back to the origin. 
+	 * @param branch
+	 * @return
+	 */
+	private void highlightAxon(int branch){
+		
+		currentAxon = branch;
+		
+		ArrayList<float[]> fil = swcCoordinates.get(branch);
+		int c = (int) fil.get(0)[4];
+		
+		ArrayList<ArrayList<Point>> lines = new ArrayList<ArrayList<Point>>();
+		
+		float[] oPt = spacePts.get(0);
+		Point origin = new Point(Math.round(oPt[0]), Math.round(oPt[1]));
+		float[] nPt = spacePts.get(1);
+		Point pt = new Point(Math.round(nPt[0]), Math.round(nPt[1]));
+		
+		lines.add(bresenham(origin, pt));
+		
+		while(c > -1){
+			oPt = spacePts.get(branch+1);
+			nPt = spacePts.get(c+1);
+			origin = new Point(Math.round(oPt[0]), Math.round(oPt[1]));
+			pt = new Point(Math.round(nPt[0]), Math.round(nPt[1]));
+			lines.add(bresenham(origin, pt));
+			
+			fil = swcCoordinates.get(c);
+			branch = c;
+			c = (int) fil.get(0)[4];
+		}
+		
+		for(int i=0;i<lines.size();i++){
+			ArrayList<Point> line = lines.get(i);
+			for(int j=0;j<line.size();j++){
+				pt = line.get(j);
+				if(pt.x > 0 && pt.x < 512 &&
+						pt.y > 0 && pt.y < 512){
+					destImage.setC(pt.x + pt.y*512, 2, 0);
+					destImage.setC(pt.x + pt.y*512, 3, 0);
+				}
+			}
+		}
+	
 	}
 
 	/**
