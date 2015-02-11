@@ -7,14 +7,10 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Comparator;
-import java.util.Hashtable;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
-import javax.swing.JOptionPane;
 import javax.swing.JTextPane;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -27,12 +23,9 @@ import quickhull3d.Point3d;
 import quickhull3d.QuickHull3D;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmMaximumIntensityProjection;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
-import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.view.ViewJFrameImage;
 
 /**
@@ -664,7 +657,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 							fw.close();
 						}*/
 						
-						
 						ArrayList<ArrayList<Integer>> gcConnections;
 						if(disconnected){
 							gcConnections = makeConnectionsTol(growthCone);
@@ -1180,6 +1172,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		return volume;
 	}
 	
+	@SuppressWarnings("unused")
 	private float convexHullVolumeNew(ArrayList<ArrayList<float[]>> swcCoordinates, int[] vertexInd, int[][] faceVerticies){
 		
 		float volume = 0;
@@ -1494,6 +1487,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	}*/
 	
 	//Code right now is in the convexHull() method
+	@SuppressWarnings("unused")
 	private float distanceVectorToPlane(Vector3f originPt, Vector3f vecA, Vector3f vecB, Vector3f vecC, Vector3f headPt){
 		
 		Vector3f a = Vector3f.sub(vecA, originPt);
@@ -1830,7 +1824,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	private int determineOrder(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<ArrayList<Integer>> connections, int branch){
 		
 		if(showViewer)
-			rearrangeBranches(branch);
+			rearrangeBranches(swcCoordinates, connections, branch);
 		
 		int maxOrder = 1;
 		
@@ -2001,7 +1995,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		}
 		
 		if(showViewer)
-			rearrangeBranches(branch);
+			rearrangeBranches(swcCoordinates, connections, branch);
 		
 		// Pass 3
 		// Forward connections are organized so that the longest 
@@ -2146,7 +2140,11 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 			type = 3;
 		}
 		
-		return String.format(format, lineNum, type, line[0], line[1], line[2], line[6], (int)line[4]);
+		float radius = line[6];
+		if(radius < 0)
+			radius = 0.1f;
+		
+		return String.format(format, lineNum, type, line[0], line[1], line[2], radius, (int)line[4]);
 	}
 
 	/**
@@ -2368,7 +2366,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	 * Using the selected branch, make sure that it comes first
 	 * in the forward connections. 
 	 */
-	private void rearrangeBranches(int branch){
+	private void rearrangeBranches(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<ArrayList<Integer>> connections, int branch){
 		
 		ArrayList<float[]> fil = swcCoordinates.get(branch);
 		int change = branch;
