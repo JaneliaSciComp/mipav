@@ -1058,17 +1058,18 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
 
         getContentPane().setLayout(new GridBagLayout());
         kGBC.gridx = 0;
-        kGBC.gridy = 0;
+        // Load, Save, Help go at gridy = 0;
+        kGBC.gridy = 1;
         kGBC.weightx = 1;
         kGBC.fill = GridBagConstraints.BOTH;
         getContentPane().add(kPanelGeneral, kGBC);
-        kGBC.gridy = 1;
-        getContentPane().add(kPanelOptions, kGBC);
         kGBC.gridy = 2;
-        getContentPane().add(kPanelIterations, kGBC);
+        getContentPane().add(kPanelOptions, kGBC);
         kGBC.gridy = 3;
-        getContentPane().add(kPanelResults, kGBC);
+        getContentPane().add(kPanelIterations, kGBC);
         kGBC.gridy = 4;
+        getContentPane().add(kPanelResults, kGBC);
+        kGBC.gridy = 5;
         getContentPane().add(kPanelButton, kGBC);
 
         // If 2.5D registration, the target image is the same as the
