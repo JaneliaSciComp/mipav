@@ -161,6 +161,7 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 		if(algorithm instanceof PlugInAlgorithm3DSWCViewer){
 			if(algorithm.isCompleted()){
+				//For branch density, iterate through all the files
 				if(densityRB.isSelected() && writeStep){
 					densityCount++;
 					if(densityCount<densityFiles.length){
@@ -183,27 +184,11 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 				}
 				writeStep ^= true;
 				
+				//If the 3D viewer isn't being used, go straight to the write step
 				if(!densityRB.isSelected() && !alg.isViewerOpen() && writeStep){
 					locked = true;
 					alg.write();
 				}
-				/*String fileText = textField.getText();
-				File file = new File(fileText);
-				
-				String message;
-				
-				if(file.isDirectory()){
-					message = "Converted files have been saved to "
-							+ fileText;
-				}else{
-					String parent = file.getParent();
-					String name = file.getName();
-					name = name.substring(0, name.lastIndexOf("."));
-					name += ".swc";
-					message = "Converted file has been saved to "
-							+ parent + File.separator + name + ".";
-				}
-				MipavUtil.displayInfo(message);*/
 				
 			}else{
 				locked = false;
@@ -306,12 +291,10 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 				return;
 			}
 			
+			//Open the viewer if the a custom axon is to be chosen
 			if(customRB.isSelected()){
 				alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, (String) resolutionUnits.getSelectedItem(), false, true);
 				new PlugInDialog3DSWCViewer(textArea, (String) resolutionUnits.getSelectedItem(), alg);
-				//PlugInDialog3DSWCViewer viewer = new PlugInDialog3DSWCViewer(imageField.getText(), file, textArea, (String) resolutionUnits.getSelectedItem());
-				//alg = new PlugInAlgorithm3DSWCViewer()
-	
 			}else{
 				alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, 
 						(String) resolutionUnits.getSelectedItem(), axonRB.isSelected(), false);
