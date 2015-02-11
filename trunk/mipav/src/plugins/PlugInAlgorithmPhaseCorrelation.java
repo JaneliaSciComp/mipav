@@ -1,7 +1,6 @@
 import java.awt.Point;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.PriorityQueue;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -60,6 +59,12 @@ public class PlugInAlgorithmPhaseCorrelation extends AlgorithmBase {
 	
 	private boolean requiresSetup;
 	
+	private Vector3f subpixelShift;
+	
+	private Vector3f subpixelShiftA;
+	
+	private Vector3f subpixelShiftB;
+	
 	public PlugInAlgorithmPhaseCorrelation(ModelImage _imageA, ModelImage _imageB,
 			ModelImage FFTimA, ModelImage FFTimB, int maxPeaks, int overlapPct){
 		
@@ -70,11 +75,11 @@ public class PlugInAlgorithmPhaseCorrelation extends AlgorithmBase {
 		
 		int[] extentsB = origB.getExtents();
 		
-		if(original[0]%2 != 0 || original[1]%2 != 0){
+		/*if(original[0]%2 != 0 || original[1]%2 != 0){
 			MipavUtil.displayError("Image dimensions must be even");
 			greenLight = false;
 			return;
-		}
+		}*/
 		if(original.length != extentsB.length || original[0] != extentsB[0] 
 				|| original[1] != extentsB[1]){
 			MipavUtil.displayError("Image dimensions do not match");
@@ -155,6 +160,15 @@ public class PlugInAlgorithmPhaseCorrelation extends AlgorithmBase {
 		
 	}
 	
+	public Vector3f getSubpixelShift(){
+		return subpixelShift;
+	}
+	
+	public void getSubpixelShiftTest(Vector3f a, Vector3f b){
+		a.copy(subpixelShiftA);
+		b.copy(subpixelShiftB);
+	}
+	
 	public Vector3f getTranslation(){
 		return maxPt;
 	}
@@ -171,16 +185,20 @@ public class PlugInAlgorithmPhaseCorrelation extends AlgorithmBase {
 		return greenLight;
 	}
 
+	public void setWindow(int size){
+		window = size;
+	}
+	
 	@Override
 	public void runAlgorithm() {
 
 		if(requiresSetup){
 			imageA = new ModelImage(ModelImage.COMPLEX, original, "FFTA");
 			imageB = new ModelImage(ModelImage.COMPLEX, original, "FFTB");
-			AlgorithmFFT2 fft = new AlgorithmFFT2(imageA, origA, AlgorithmFFT2.FORWARD, false, false, false,false);
-			fft.run();
-			fft = new AlgorithmFFT2(imageB, origB, AlgorithmFFT2.FORWARD, false, false, false,false);
-			fft.run();
+			AlgorithmFFT2 fftA = new AlgorithmFFT2(imageA, origA, AlgorithmFFT2.FORWARD, false, false, false,false);
+			fftA.run();
+			AlgorithmFFT2 fftB = new AlgorithmFFT2(imageB, origB, AlgorithmFFT2.FORWARD, false, false, false,false);
+			fftB.run();
 			
 			extents = imageA.getExtents();
 			width = extents[0];
@@ -227,10 +245,18 @@ public class PlugInAlgorithmPhaseCorrelation extends AlgorithmBase {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		AlgorithmFFT2 ifft = new AlgorithmFFT2(complex, AlgorithmFFT2.INVERSE, false, false, false, false);
+		AlgorithmFFT2 ifft = new AlgorithmFFT2(complex, AlgorithmFFT2.INVERSE, false, false, false, true);
 		ifft.run();
 		
-		corrBuffer = ifft.getRealData();
+		float[] realCorr = ifft.getRealData();
+		float[] imagCorr = ifft.getImaginaryData();
+		corrBuffer = new float[realCorr.length];
+		
+		for(int i=0;i<realCorr.length;i++){
+			corrBuffer[i] = (float) Math.sqrt(realCorr[i]*realCorr[i] + imagCorr[i]*imagCorr[i]);
+		}
+		
+		//corrBuffer = ifft.getRealData();
 		complex.disposeLocal();
 		//cropBack();
 		
@@ -241,7 +267,8 @@ public class PlugInAlgorithmPhaseCorrelation extends AlgorithmBase {
 			e.printStackTrace();
 		}*/
 		
-		//new ViewJFrameImage(dstImage);
+		/*ViewJFrameImage frame = new ViewJFrameImage(complex);
+		frame.setVisible(true);*/
 		
 		PriorityQueue<MaxCoord> pq = new PriorityQueue<MaxCoord>();
 		MaxCoord head;
@@ -377,11 +404,179 @@ public class PlugInAlgorithmPhaseCorrelation extends AlgorithmBase {
 				maxPt = null;
 				System.out.println("No max found");
 			}else{
+				
 				System.out.println("This R is max: " + maxR);
 				System.out.println("At: " + maxPt.X + ", " + maxPt.Y);
+				
+				int xp = (int)maxPt.X;
+				int yp = (int)maxPt.Y;
+				boolean circX = false;
+				boolean circY = false;
+				if(xp < 0){
+					xp += width;
+					circX = true;
+				}
+				if(yp < 0){
+					yp += height;
+					circX = true;
+				}
+
+				int xpp = xp + 1;
+				int ypp = yp + 1;
+				int xn = xp - 1;
+				int yn = yp - 1;
+				int jp = width * yp;
+				
+
+				if(xpp >= width)
+					xpp = 0;
+				if(ypp >= height)
+					ypp = 0;
+				if(xn < 0)
+					xn = width - 1;
+				if(yn < 0)
+					yn = height - 1; 
+				
+				int jpp = width * ypp;
+				int jn = width * yn;
+				
+				//float dX1 = ((corrBuffer[xpp + jp]*xpp + corrBuffer[xp + jp]*xp) / (corrBuffer[xpp+jp] + corrBuffer[xp + jp]))-1;
+				//float dY1 = ((corrBuffer[xp+jpp]*ypp + corrBuffer[xp+jp]*yp)/(corrBuffer[xp+jpp] + corrBuffer[xp + jp]))-1;
+				//float dX1 = ((corrBuffer[xpp + jp]*xpp + corrBuffer[xp + jp]*xp) / (corrBuffer[xpp+jp] + corrBuffer[xp + jp]));
+				//float dY1 = ((corrBuffer[xp+jpp]*ypp + corrBuffer[xp+jp]*yp)/(corrBuffer[xp+jpp] + corrBuffer[xp + jp]));
+				
+				float c00r = realCorr[xp + jp];
+				float c00i = imagCorr[xp + jp];
+				
+				float c10r = realCorr[xpp + jp];
+				float c10i = imagCorr[xpp + jp];
+				float c01r = realCorr[xp + jpp];
+				float c01i = imagCorr[xp + jpp];
+				
+				float c10rn = realCorr[xn + jp];
+				float c10in = imagCorr[xn + jp];
+				float c01rn = realCorr[xp + jn];
+				float c01in = imagCorr[xp + jn];
+				
+				float xpMag = c10r*c10r + c10i*c10i;
+				float xnMag = c10rn*c10rn + c10in*c10in;
+				float ypMag = c01r*c01r + c01i*c01i;
+				float ynMag = c01rn*c01rn + c01in*c01in;
+				
+				//float sgnX = 1.0f;
+				//float sgnY = 1.0f;
+				if(xnMag > xpMag){
+					c10r = c10rn;
+					c10i = c10in;
+					//sgnX = -1.0f;
+				}
+				if(ynMag > ypMag){
+					c01r = c01rn;
+					c01i = c01in;
+					//sgnY = -1.0f;
+				}
+				
+				float dXr1 = c10r + c00r;
+				float dXi1 = c10i + c00i;
+				float dXr2 = c10r - c00r;
+				float dXi2 = c10i - c00i;
+				
+				float dYr1 = c01r + c00r;
+				float dYi1 = c01i + c00i;
+				float dYr2 = c01r - c00r;
+				float dYi2 = c01i - c00i;
+				
+				float[] dX1a = complexDivision(c10r, c10i, dXr1, dXi1);
+				float[] dX2a = complexDivision(c10r, c10i, dXr2, dXi2);
+				float[] dY1a = complexDivision(c01r, c01i, dYr1, dYi1);
+				float[] dY2a = complexDivision(c01r, c01i, dYr2, dYi2);
+				
+				float dX1 = dX1a[0];
+				float dX2 = dX2a[0];
+				float dY1 = dY1a[0];
+				float dY2 = dY2a[0];
+				/*float dX1 = (float)Math.sqrt(dX1a[0]*dX1a[0] + dX1a[1]*dX1a[1]); 
+				float dX2 = (float)Math.sqrt(dX2a[0]*dX2a[0] + dX2a[1]*dX2a[1]); 
+				float dY1 = (float)Math.sqrt(dY1a[0]*dY1a[0] + dY1a[1]*dY1a[1]); 
+				float dY2 = (float)Math.sqrt(dY2a[0]*dY2a[0] + dY2a[1]*dY2a[1]); */
+				
+				//float dX1 = corrBuffer[xpp + jp] / (corrBuffer[xpp + jp] + corrBuffer[xp + jp]);
+				//float dX2 = corrBuffer[xpp + jp] / (corrBuffer[xpp + jp] - corrBuffer[xp + jp]);
+				//if(dX1<-1 || dX1 > 1)
+				//	dX1 = corrBuffer[xpp + jp] / (corrBuffer[xpp + jp] - corrBuffer[xp + jp]);
+				//float dY1 = corrBuffer[xp + jpp] / (corrBuffer[xp + jpp] + corrBuffer[xp + jp]);
+				//float dY2 = corrBuffer[xp + jpp] / (corrBuffer[xp + jpp] - corrBuffer[xp + jp]);
+				//if(dY1<-1 || dY1 > 1)
+				//	dY1 = corrBuffer[xp + jpp] / (corrBuffer[xp + jpp] - corrBuffer[xp + jp]);
+				
+				float dX;
+				float dY;
+				
+				if(dX1<-1 || dX1 > 1){
+					//dX = xp - sgnX * dX2;
+					dX = xp - dX2;
+				}else{
+					//dX = xp - sgnX * dX1;
+					dX = xp - dX1;
+				}
+				
+				if(dY1<-1 || dY1 > 1){
+					//dY = yp - sgnY * dY2;
+					dY = yp - dY2;
+				}else{
+					//dY = yp - sgnY * dY1;
+					dY = yp - dY1;
+				}
+				
+				subpixelShiftA = new Vector3f(dX1, dY1, 0);
+				subpixelShiftB = new Vector3f(dX2, dY2, 0);
+				
+				//dX1 += xp;//Might actually be xp - dx1?
+				//dY1 += yp;
+				
+				//float dX, dY;
+				
+				/*if(dX1 < height/2){
+					//dY = dX1;
+					dX = dX1;
+				}else{
+					dX = dX1 - width;
+					//dY = dX1 - width;
+				}
+				
+				if(dY1 < width / 2){
+					//dX = dY1;
+					dY = dY1;
+				}else{
+					dY = dY1 - height;
+					//dX = dY1 - height;
+				}*/
+				
+				//maxPt.X += dX;
+				//maxPt.Y += dY;
+				if(circX)
+					dX -= width;
+				if(circY)
+					dY -= width;
+				
+				subpixelShift = new Vector3f(dX, dY, 0);
+				
+				
+				
+				
 			}
 			
 		//}
+		
+	}
+	
+	private float[] complexDivision(float a, float b, float c, float d){
+		
+		float denom = c*c - d*d;
+		float realNum = (a*c + b*d) / denom;
+		float imagNum = (b*c - a*d) / denom;
+		
+		return new float[]{realNum, imagNum};
 		
 	}
 	
