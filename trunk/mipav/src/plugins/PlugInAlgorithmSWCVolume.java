@@ -43,7 +43,12 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 	
 	private float volume = 0f;
 	
-	
+	/**
+	 * For running this class from a standalone plugin. Not
+	 * very useful
+	 * @param imPath
+	 * @param filPath
+	 */
 	public PlugInAlgorithmSWCVolume(String imPath, String filPath){
 		
 		super();
@@ -64,6 +69,12 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 		swcCoordinates = new ArrayList<ArrayList<float[]>>();
 	}
 	
+	/**
+	 * For running the this class as an algorithm. Not 
+	 * very useful
+	 * @param image
+	 * @param filPath
+	 */
 	public PlugInAlgorithmSWCVolume(ModelImage image, String filPath){
 		super(null, image);
 		
@@ -77,6 +88,13 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 		swcCoordinates = new ArrayList<ArrayList<float[]>>();
 	}
 	
+	/**
+	 * For embedding the algorithm within another that already
+	 * has the image open as well as the filaments processed.
+	 * The most useful. 
+	 * @param image
+	 * @param filaments
+	 */
 	public PlugInAlgorithmSWCVolume(ModelImage image, ArrayList<ArrayList<float[]>> filaments){
 		super(null, image);
 		
@@ -101,37 +119,10 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 		if(filFile != null){
 			readSurfaceFile(filFile);
 		}
-		/*for(int i=0;i<swcCoordinates.size();i++){
-			ArrayList<float[]> fil = swcCoordinates.get(i);
-			for(int j=0;j<fil.size();j++){
-				float[] pt = fil.get(j);
-				int[] newPt = new int[3];
-				for(int k=0;k<newPt.length;k++){
-					float temp = pt[k] - origin[k];
-					temp /= res[k];
-					newPt[k] = Math.round(temp);
-				}
-				
-				int ind = newPt[0] + newPt[1]*width + newPt[2]*width*height;
-				mask.set(ind);
-			}
-		}*/
 		
-		/*ModelImage maskImage = new ModelImage(ModelImage.BOOLEAN, extents, "Mask Image");
-		
-		try {
-			maskImage.importData(0, mask, true);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		AlgorithmMorphology3D alg = new AlgorithmMorphology3D(maskImage, 3, 0.0f, AlgorithmMorphology3D.DILATE, 2, 0, 0, 0, true);
-		alg.run();
-		
-		try {
-			maskImage.exportData(0, length, mask);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}*/
+		//Processing the image so that shot noise issues
+		//are cleared up. Acts as a filter, although
+		//edges aren't affected too adversely
 		
 		ModelImage cloneImage = (ModelImage)srcImage.clone();
 		filterShotNoiseMean(cloneImage);
@@ -140,25 +131,12 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 				cloneImage.getMin(), cloneImage.getMax(), 0, 255, false);
 		changeZ.run();
 		
-		//calcVolumeRadii(cloneImage);
-		
 		ModelImage probImage = probabilityMap(cloneImage);
 		
 		float[] threshold = {0, (float) (- sensitivity * Math.log(sensitivity))};
         
         AlgorithmThresholdDual nThresh = new AlgorithmThresholdDual(probImage, threshold, 1, 1, true, false);
         nThresh.run();
-        
-        //calcVolumeBasic(probImage);
-        
-        /*ArrayList<File> fileList = new ArrayList<File>();
-        fileList.add(filFile);
-        
-        PlugInAlgorithm3DSWCStats swc = new PlugInAlgorithm3DSWCStats(fileList, "um", null);
-        swc.setSaveData(false);
-        swc.run();
-        
-        swcCoordinates = swc.getFilaments();*/
        
         for(int i=0;i<swcCoordinates.size();i++){
         
@@ -169,15 +147,13 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 				splinePts.add(v);
 			}
 			
+			//Use a spline to determine the gradient at a point
 			PlugInAlgorithm3DSpline spline = new PlugInAlgorithm3DSpline(splinePts);
 			spline.run();
 			
 			ArrayList<Vector3f> xBases = spline.getXBases();
 			ArrayList<Vector3f> yBases = spline.getYBases();
 			ArrayList<Vector3f> zBases = spline.getZBases();
-			
-			//float[] parent = null;
-			//float parentRad = 0;
 			if(i > 0){
 				int connection = (int) fil.get(0)[4]-1;
 				ArrayList<float[]> list = null;
@@ -189,35 +165,21 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 						break;
 					}
 				}
-				//parent = list.get(connection);
-				//parentRad = parent[6];
 			}
-			/*boolean skip = false;
-			if(i == 0)
-				skip = true;*/
 			for(int j=0;j<fil.size();j++){
 			
 				float[] pt0 = fil.get(j);
-				/*if(!skip){
-					
-					float dist = 0;
-					for(int k=0;k<3;k++){
-						float diff = pt0[k] - parent[k];
-						dist += diff*diff;
-					}
-					dist = (float)Math.sqrt(dist);
-					if(dist < parentRad){
-						pt0[6] = 0.01f;
-						continue;
-					}else{
-						skip = true;
-					}
-				}*/
 				
+				//Gradients determined earlier are used to find the
+				//plane normal to the filament so that radii can
+				//be found
 				ArrayList<Vector3f> rotated = spline.rotatePlane(xBases.get(j), yBases.get(j), zBases.get(j));
 				
 				BitSet radiusMask = calcRadius(probImage, pt0, rotated);
 				
+				//To prevent double counting areas, only include a point
+				//if the projected radius does not intersect with another
+				//point that has already been determined
 				if(!radiusMask.intersects(mask)){
 					pt0[7] = 1.0f;
 					mask.or(radiusMask);
@@ -228,17 +190,16 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
         
         calcVolumeNew();
 		
-		/*ViewJFrameImage frame = new ViewJFrameImage(srcImage);
-		frame.getComponentImage().setPaintMask(mask);
-		frame.getControls().getTools().setOpacity(1.0f);
-		frame.getControls().getTools().setPaintColor(Color.RED);
-		frame.updateImages(true);
-		frame.setVisible(true);*/
-		
-		//convexHull();
-		
 	}
 	
+	/**
+	 * Calculates the radius at the given coordinate in the given plane
+	 * which is normal to the filament.
+	 * @param image
+	 * @param coord
+	 * @param plane
+	 * @return
+	 */
 	private BitSet calcRadius(ModelImage image, float[] coord, ArrayList<Vector3f> plane){
 		
 		Vector3f center = new Vector3f(coord[0], coord[1], coord[2]);
@@ -247,6 +208,9 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 		Vector3f orgVec = new Vector3f(origin[0], origin[1], origin[2]);
 		PriorityQueue<RadialElement> pq = new PriorityQueue<RadialElement>();
 		
+		//Translate points from plane to nearest integer coordinates
+		//and place in priority queue so that you work from the 
+		//center outwards
 		for(int i=0;i<plane.size();i++){
 			Vector3f v = plane.get(i);
 			Vector3f vec = new Vector3f(v);
@@ -268,6 +232,8 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 		HashSet<Integer> hash = new HashSet<Integer>();
 		ArrayDeque<RadialElement> queue = new ArrayDeque<RadialElement>();
 		
+		//Only add the closest point if multiple points have the
+		//same integer coordinate
 		while(!pq.isEmpty()){
 			RadialElement re = pq.poll();
 			Integer index = new Integer(re.ind);
@@ -286,6 +252,17 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 		
 		ArrayList<Integer> intList = new ArrayList<Integer>();
 		
+		/*
+		 * Progress outwards from the center point and see if the point
+		 * is considered foreground or background (neuron or not). Reaching
+		 * a point not in the neuron will not automatically constrain the
+		 * radius. A moving threshold is used to determine whether the radius
+		 * has been reached to avoid spurious noise from prematurely ending
+		 * the measurement. 
+		 * 
+		 * The basic idea is to grow a circle around the point until it 
+		 * encompasses the cross section at that point. 
+		 */
 		while(!queue.isEmpty()){
 			RadialElement re = queue.poll();
 			boolean include = image.getBoolean(re.ind);
@@ -295,6 +272,8 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 			}
 			area++;
 			RadialElement next = queue.peek();
+			//Automatically allow points within the smallest
+			//resolution to be considered foreground
 			if(re.radius < res[2]){
 				mask.set(re.ind);
 			}
@@ -303,6 +282,7 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 					
 					cutoff += res[0];
 					float fraction = cnt/area;
+					//Use a sigmoidal function as the moving threshold
 					float threshold = radialThreshold/(1 + (float)Math.exp(-area/sigma));
 					
 					radius = re.radius;
@@ -315,11 +295,10 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 					intList.clear();
 				}
 			}else{
-				//Exhasted all points, should probably search further
+				//Exhasted all points, should probably be using a larger plane
 				System.err.println("Ran out of points! Need to search further next time.");
 				break;
 			}
-			
 		}
 		
 		coord[6] = radius;
@@ -335,35 +314,12 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 		
 		for(int i=0;i<swcCoordinates.size();i++){
 			ArrayList<float[]> fil = swcCoordinates.get(i);
-			/*float[] parent = null;
-			if(i > 0){
-				int connection = (int) fil.get(0)[4]-1;
-				ArrayList<float[]> list = null;
-				for(int k=0;k<swcCoordinates.size();k++){
-					list = swcCoordinates.get(k);
-					if(connection >= list.size()){
-						connection -= list.size();
-					}else{
-						break;
-					}
-				}
-				parent = list.get(connection);
-			}*/
+
 			for(int j=0;j<fil.size()-1;j++){
 				float[] pt0 = fil.get(j);
 				if(pt0[7] == -1.0f)
 					continue;
-				/*if(i > 0){
-					float parentRad = parent[3];
-					float dist = 0;
-					for(int k=0;k<3;k++){
-						float diff = pt0[k] - parent[k];
-						dist += diff*diff;
-					}
-					dist = (float)Math.sqrt(dist);
-					if(dist < parentRad)
-						continue;
-				}*/
+
 				int jp1 = j+1;
 				float[] pt1 = fil.get(jp1);
 				
@@ -382,6 +338,9 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 				float r0 = pt0[6];
 				float r1 = pt1[6];
 				
+				//Volume is estimated by using the formula
+				//for a truncated frustum, with the distance
+				//between the two points as the height
 				volume += dist * (r0*r0 + r0*r1 + r1*r1);
 			}
 			
@@ -389,88 +348,6 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 		volume *= Math.PI/3.0;
 		
 	}
-	
-	/*private void calcVolumeBasic(ModelImage segImage){
-		
-		float[] res = srcImage.getResolutions(0);
-		float[] origin = srcImage.getOrigin();
-		
-		AlgorithmMorphology3D close = new AlgorithmMorphology3D(segImage, AlgorithmMorphology3D.CONNECTED6,
-				1.0f, AlgorithmMorphology3D.CLOSE, 1, 1, 0, 0, true);
-		close.run();
-		
-		AlgorithmMorphology3D nObj = new AlgorithmMorphology3D(segImage, AlgorithmMorphology3D.CONNECTED6,
-        		1.0f, AlgorithmMorphology3D.ID_OBJECTS, 0, 0, 0, 0, true);
-		nObj.setMinMax(2, Integer.MAX_VALUE);
-		nObj.run();
-		
-		HashSet<Integer> set = new HashSet<Integer>();
-		
-		for(int i=0;i<swcCoordinates.size();i++){
-			ArrayList<float[]> fil = swcCoordinates.get(i);
-			for(int j=0;j<fil.size();j++){
-				float[] coord = fil.get(j);
-				int[] newPt = new int[3];
-				for(int k=0;k<newPt.length;k++){
-					float temp = (coord[k]-origin[k])/res[k];
-					newPt[k] = Math.round(temp);
-				}
-				int pixel = segImage.getInt(newPt[0] + newPt[1]*width + newPt[2]*width*height);
-				if(pixel != 0)
-					set.add(pixel);
-			}
-		}
-		
-		//Keeps track of volume with no resolution info
-		int cnt = 0;
-		
-		for(int i=0;i<length;i++){
-			int pixel = segImage.getInt(i);
-			if(set.contains(new Integer(pixel))){
-				segImage.set(i, 1);
-				cnt++;
-			}else segImage.set(i, 0);
-		}
-		
-		segImage.calcMinMax();
-		//new ViewJFrameImage(segImage);
-		
-		//Actual volume
-		float volume = (float)cnt;
-		for(int i=0;i<res.length;i++){
-			volume *= res[i];
-		}
-		
-		System.out.println("Volume from lazy way is " + volume + " um2 and " + cnt + " pixels");
-	}
-	
-	private void calcVolumeRadii(ModelImage image){
-		determineRadiiThreshold_swc(image, swcCoordinates);
-		
-		double volume = 0;
-		
-		for(int i=0;i<swcCoordinates.size();i++){
-			ArrayList<float[]> fil = swcCoordinates.get(i);
-			for(int j=0;j<fil.size()-1;j++){
-				int jp1 = j+1;
-				float[] pt1 = fil.get(j);
-				float[] pt2 = fil.get(jp1);
-				double dist = 0;
-				for(int k=0;k<3;k++){
-					double diff = pt1[k] - pt2[k];
-					dist += diff*diff;
-				}
-				dist = Math.sqrt(dist);
-				double r1 = pt1[3];
-				double r2 = pt2[3];
-				volume += dist * (r1*r1 + r1*r2 + r2*r2);
-			}
-		}
-		
-		volume *= Math.PI/3.0;
-		
-		System.out.println("Volume from radii " + volume + " um2");
-	}*/
 	
 	/**
 	 * Method to generate a pixel probability map as part of the 
@@ -768,16 +645,6 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 				return -1;
 			return 0;
 		}
-		
-		/*public boolean equals(Object obj){
-			if(obj instanceof RadialElement){
-				
-				return true;
-			}else{
-				return false;
-			}
-			
-		}*/
 		
 	}
 
