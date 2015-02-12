@@ -75,6 +75,7 @@ public class FilePGM extends FileBase {
             if (lineString != null) {
             	values = retrieveValues(lineString);
             	if (values != null) {
+            		currentValue = 0;
 	            	numValues = values.length;
 	        	    if ((!haveMagicNumber) && (currentValue < numValues)) {
 	        	        if (values[currentValue].equals("P2")) {
@@ -154,23 +155,25 @@ public class FilePGM extends FileBase {
             	lineString = readLine();
                 if (lineString != null) {
                 	values = retrieveValues(lineString);
-                	numValues = values.length;
-                	if (imageType == ModelStorageBase.UBYTE) {
-                        for (i = 0; (i < numValues) && (valuesRead + i < length); i++) {
-                        	sbuf[valuesRead + i] = Short.parseShort(values[i]);
-                        }
-                    }
-                    else if (imageType == ModelStorageBase.USHORT) {
-                    	for (i = 0; (i < numValues) && (valuesRead + i < length); i++) {
-                        	ibuf[valuesRead + i] = Integer.parseInt(values[i]);
-                        }	
-                    }
-                    else {
-                    	for (i = 0; (i < numValues) && (valuesRead + i < length); i++) {
-                        	lbuf[valuesRead + i] = Long.parseLong(values[i]);
-                        }	
-                    }
-                	valuesRead = valuesRead + numValues;
+	                if (values != null) {
+	                	numValues = values.length;
+	                	if (imageType == ModelStorageBase.UBYTE) {
+	                        for (i = 0; (i < numValues) && (valuesRead + i < length); i++) {
+	                        	sbuf[valuesRead + i] = Short.parseShort(values[i]);
+	                        }
+	                    }
+	                    else if (imageType == ModelStorageBase.USHORT) {
+	                    	for (i = 0; (i < numValues) && (valuesRead + i < length); i++) {
+	                        	ibuf[valuesRead + i] = Integer.parseInt(values[i]);
+	                        }	
+	                    }
+	                    else {
+	                    	for (i = 0; (i < numValues) && (valuesRead + i < length); i++) {
+	                        	lbuf[valuesRead + i] = Long.parseLong(values[i]);
+	                        }	
+	                    }
+	                	valuesRead = valuesRead + numValues;
+                	} // if (values != null)
                 } // if (lineString != null)
             } // while (valuesRead < length)
             if (imageType == ModelStorageBase.UBYTE) {	
