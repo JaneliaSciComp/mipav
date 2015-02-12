@@ -280,6 +280,9 @@ public class FileUtility {
     /** Zeiss ZISRAW (CZI) file format extension .czi */
     public static final int CZI = 79;
     
+    /** Portable Gray Map extension .pgm */
+    public static final int PGM = 80;
+    
     
 
     private static final String[] fileTypeStr = {"error", "undefined", "afni", "analyze", "analyze multifile", "avi",
@@ -290,7 +293,7 @@ public class FileUtility {
             "nrrd multifile", "osm", "pcx", "pic", "pict", "png", "psd", "qt", "raw", "raw multifile", "spm", "stk", "surface xml",
             "tga", "tiff", "tiff multifile", "tmg", "voi file", "xbm", "xml", "xml multifile", "xpm", "parrec", "parrec multifile",
             "spar", "surfaceref xml", "minc hdf", "liff", "bfloat", "siemens text", "zvi", "jp2", "mat", "v", "MetaImage", "trk",
-            "czi"};
+            "czi", "pgm"};
 
     
 
@@ -553,12 +556,10 @@ public class FileUtility {
         int i;
         int j = 0;
         int k;
-        int result = 0;
         File[] files;
         String[] fileList;
         String[] fileList2;
         String[] fileListBuffer;
-        String fileTemp;
         File imageDir;
         boolean numberSuffix = true;
         String fileName2;
