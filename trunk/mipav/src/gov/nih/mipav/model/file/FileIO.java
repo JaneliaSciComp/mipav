@@ -3112,6 +3112,10 @@ public class FileIO {
                 case FileUtility.MAGNETOM_VISION:
                     image = readMagnetomVision(fileName, fileDir);
                     break;
+                    
+                case FileUtility.PGM:
+                	image = readPGM(fileName, fileDir);
+                	break;
 
                 case FileUtility.MAGNETOM_VISION_MULTIFILE:
                     image = readMagnetomVisionMulti(fileName, fileDir);
@@ -11582,6 +11586,60 @@ public class FileIO {
             }
 
             image.setFileInfo(fileInfoArrCopy);
+        }
+
+        return image;
+
+    }
+    
+    /**
+     * Reads a PGM file by calling the read method of the file.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
+     */
+    private ModelImage readPGM(final String fileName, final String fileDir) {
+        ModelImage image = null;
+        FilePGM imageFile;
+
+        try {
+            imageFile = new FilePGM(fileName, fileDir);
+            createProgressBar(imageFile, fileName, FileIO.FILE_READ);
+            image = imageFile.readImage();
+        } catch (final IOException error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        } catch (final OutOfMemoryError error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
         }
 
         return image;
