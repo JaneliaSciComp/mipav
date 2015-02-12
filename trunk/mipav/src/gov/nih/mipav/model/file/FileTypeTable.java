@@ -306,6 +306,10 @@ public class FileTypeTable {
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.TRACKVIS, new FileTypeInfo("TrackVis", ".trk"));
         FileTypeTable.FILE_EXT_TABLE.put(".trk", FileUtility.TRACKVIS);
         FileTypeTable.FILE_EXT_TABLE.put(".TRK", FileUtility.TRACKVIS);
+        
+        FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.PGM, new FileTypeInfo("PGM", ".pgm"));
+        FileTypeTable.FILE_EXT_TABLE.put(".pgm", FileUtility.PGM);
+        FileTypeTable.FILE_EXT_TABLE.put(".PGM", FileUtility.PGM);
     }
 
     /**
