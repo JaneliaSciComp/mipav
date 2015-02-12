@@ -3,14 +3,13 @@ package gov.nih.mipav.model.algorithms.registration;
 
 import WildMagic.LibFoundation.Curves.*;
 import WildMagic.LibFoundation.Mathematics.*;
+import gov.nih.mipav.model.algorithms.AlgorithmMorphology2D;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 
 import java.io.*;
-
 import java.text.*;
 import java.util.BitSet;
 
@@ -194,8 +193,20 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
 
         ModelImage tmpMask;
         VOIVector voiVector;
-
-        
+        int numPruningPixels;
+        int edgingType;
+        int kernel;
+        float circleDiameter;
+        int method;
+        int itersDilation;
+        int itersErosion;
+        boolean wholeImage;
+        AlgorithmMorphology2D idObjectsAlgo2D;
+        int numObjects;
+        byte[] IDArray;
+        int[] sizeObjects;
+        int maxSize;
+        int maxObject;
         
         voiVector = image.getVOIs();
         
@@ -276,9 +287,59 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
 		                tmpMask.set(iX, iY, value); 
 		            }
 		        }
-		
+		        numPruningPixels = 0;
+		        edgingType = 0;   
 		        
-		
+		        kernel = AlgorithmMorphology2D.CONNECTED4;
+		        circleDiameter = 0.0f;
+		        method = AlgorithmMorphology2D.ID_OBJECTS;
+		        itersDilation = 0;
+		        itersErosion = 0;
+		        wholeImage = true;
+		        idObjectsAlgo2D = new AlgorithmMorphology2D(tmpMask, kernel, circleDiameter, method, itersDilation,
+		                                                    itersErosion, numPruningPixels, edgingType, wholeImage);
+		        idObjectsAlgo2D.setMinMax(1, Integer.MAX_VALUE);
+		        idObjectsAlgo2D.run();
+		        idObjectsAlgo2D.finalize();
+		        idObjectsAlgo2D = null;
+
+		        tmpMask.calcMinMax();
+		        numObjects = (int) tmpMask.getMax();
+		        
+		        IDArray = new byte[length];
+
+		        try {
+		            tmpMask.exportData(0, length, IDArray);
+		        } catch (IOException error) {
+		            IDArray = null;
+		            errorCleanUp("Error on tmpMask.exportData", true);
+
+		            return;
+		        }
+		        
+		        sizeObjects = new int[numObjects+1];
+		        for (i = 0; i < length; i++) {
+		        	sizeObjects[IDArray[i]]++;
+		        }
+		        
+		        
+		        maxSize = 0;
+		        maxObject = 0;
+		        for (i = 1; i <= numObjects; i++) {
+		            if (sizeObjects[i] > maxSize) {
+		            	maxSize = sizeObjects[i];
+		            	maxObject = i;
+		            }
+		        }
+		        
+		        for (i = 0; i < length; i++) {
+		            if (IDArray[i] == maxObject) {
+		                tmpMask.set(i, 1);	
+		            }
+		            else {
+		            	tmpMask.set(i, 0);
+		            }
+		        }
 		        if (threadStopped) {
 		            return;
 		        }
