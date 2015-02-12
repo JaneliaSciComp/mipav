@@ -63,6 +63,8 @@ public class FilePGM extends FileBase {
         short sbuf[] = null;
         int ibuf[] = null;
         long lbuf[] = null;
+        long preReadPosition = 0;
+        int nonWhiteBytesRead = 0;
 
         fileInfo = new FileInfoPGM(fileName, fileDir, FileUtility.PGM);
         file = new File(fileDir + fileName);
@@ -71,8 +73,10 @@ public class FilePGM extends FileBase {
         fileInfo.setEndianess(BIG_ENDIAN);
         
         while (!haveMaxValue) {
+        	preReadPosition = raFile.getFilePointer();
             lineString = readLine();
             if (lineString != null) {
+                nonWhiteBytesRead = lineString.length();
             	values = retrieveValues(lineString);
             	if (values != null) {
             		currentValue = 0;
@@ -119,8 +123,14 @@ public class FilePGM extends FileBase {
         extents[0] = xDim;
         extents[1] = yDim;
         fileInfo.setExtents(extents);
+        length = xDim * yDim;
         if (maxValue <= 255) {
         	imageType = ModelStorageBase.UBYTE;
+        	if (raFile.getFilePointer() + length > raFile.length()) {
+        		// Handle case where no new line after maxValue.
+        		// Then just set position based on 1 white space character after the maximum value.
+        		raFile.seek(preReadPosition + nonWhiteBytesRead + 1);
+        	}
         }
         else if (maxValue <= 65535) {
         	imageType = ModelStorageBase.USHORT;
@@ -140,7 +150,6 @@ public class FilePGM extends FileBase {
             rawFile.readImage(image, raFile.getFilePointer());
         }
         else { // format == ASCII_FORMAT
-            length = xDim * yDim;
             valuesRead = 0;
             if (imageType == ModelStorageBase.UBYTE) {
             	sbuf = new short[length];
