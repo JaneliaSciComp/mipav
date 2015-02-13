@@ -1080,12 +1080,34 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	    int k;
 	    int maxN;
 	    int maxnbN = 0;
+	    int maxtgt = -1;
+	    boolean usedtgt[];
+	    int newlabel[];
+	    int storedlabel = -1;
+	    
+	    for (y = 0; y < yDim; y++) {
+	    	for (x = 0; x < xDim; x++) {
+	    		tgt = segLabel[y][x];
+	    		if (tgt > maxtgt) {
+	    			maxtgt = tgt;
+	    		}
+	    	}
+	    }
+	    
+	    usedtgt = new boolean[maxtgt+1];
+	    newlabel = new int[maxtgt+1];
 	    
 	    for (yy = 0; yy < yDim; yy++) {
 	    	for (xx = 0; xx < xDim; xx++) {
 	    	    if (segLabelLarge[yy][xx] == 0) {
 	    	        tgt = segLabel[yy][xx];
-	    	        labelN++;
+	    	        if (!usedtgt[tgt]) {
+	    	            labelN++;
+	    	        }
+	    	        else {
+	    	        	storedlabel = labelN;
+	    	        	labelN = newlabel[tgt];
+	    	        }
 	    	        tb[0] = yy;
 	    	        bb[0] = yy;
 	    	        lb[0] = xx;
@@ -1101,8 +1123,22 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	    	                	}
 	    	                }
 	    	            } //  for (y = tb[0]; y <= bb[0]; y++)
-	    	            labelN = labelN - 1;
+	    	            if (!usedtgt[tgt]) {
+	    	                labelN = labelN - 1;
+	    	            }
+	    	            else {
+	    	            	labelN = storedlabel;
+	    	            }
 	    	        } // if (cnt[0] < minSize)
+	    	        else { // cnt[0] >= minSize
+	    	            if (!usedtgt[tgt]) {
+	    	            	usedtgt[tgt] = true;
+	    	            	newlabel[tgt] = labelN;
+	    	            }
+	    	            else {
+	    	            	labelN = storedlabel;
+	    	            }
+	    	        } // else cnt[0] >= minSize
 	    	    } // if (segLabelLarge[y][x] == 0) 
 	    	} // for (xx = 0; xx < xDim; x++)
 	    } // for (yy = 0; yy < yDim; y++)
