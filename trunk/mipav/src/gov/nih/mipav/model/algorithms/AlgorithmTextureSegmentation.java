@@ -131,7 +131,6 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	    double LV[];
 	    double maxL = -Double.MAX_VALUE;
 	    int rn = 0;
-	    double seedmap[][];
 	    int idx[];
 	    int tn;
 	    double CY[][];
@@ -784,11 +783,6 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        }
 	        n = 1;
 	        
-	        seedmap = new double[yDim][xDim];
-	        y = idx[rn]/xDim;
-	        x = idx[rn] % xDim;
-	        seedmap[y][x] = 1;
-	        
 	        tn = n+1;
 	        CY = new double[segmentNumber][len];
 	        for (y = 0; y < segmentNumber; y++) {
@@ -812,9 +806,6 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        for (y = 0; y < segmentNumber; y++) {
 	        	tmplt[y][tn-1] = Mx[y][id];
 	        }
-	        y = idx[id]/xDim;
-	        x = idx[id] % xDim;
-	        seedmap[y][x] = 1;
 	        
 	        while (tn < segmentNumber) {
 	        	tmp = new double[tn][len];
@@ -846,10 +837,7 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        	} // for (x = 0; x < len; x++)
 	        	for (y = 0; y < segmentNumber; y++) {
 		        	tmplt[y][tn-1] = Mx[y][id];
-		        }
-		        y = idx[id]/xDim;
-		        x = idx[id] % xDim;
-		        seedmap[y][x] = 1;
+	        	}
 	        } // while (tn < segmentNumber)
 	        
 	        cenInt = new double[segmentNumber][segmentNumber];
