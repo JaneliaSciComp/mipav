@@ -112,7 +112,6 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	    double tempCol[];
 	    double sqk[];
 	    double lse[];
-	    int dimn;
 	    double U1[][];
 	    Matrix matU1;
 	    double Y1[][];
@@ -699,19 +698,18 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        	}
 	        } // if (segmentNumber == 0)
 	        
-	        dimn = segmentNumber;
-	        U1 = new double[eigenvector.length][dimn];
+	        U1 = new double[eigenvector.length][segmentNumber];
 	        for (y = 0; y < eigenvector.length; y++) {
-	        	for (x = 0; x < dimn; x++) {
+	        	for (x = 0; x < segmentNumber; x++) {
 	        		U1[y][x] = eigenvector[y][x];
 	        	}
 	        }
 	        matU1 = new Matrix(U1);
 	        // Project features onto the subspace
-	        // Y1 is dimn by yDim*xDim
+	        // Y1 is segmentNumber by yDim*xDim
 	        Y1 = (((matY.transpose()).times(matU1)).transpose()).getArray();
-	        Y2 = new double[dimn][yDim][xDim];
-	        for (i = 0; i < dimn; i++) {
+	        Y2 = new double[segmentNumber][yDim][xDim];
+	        for (i = 0; i < segmentNumber; i++) {
 	        	for (y = 0; y < yDim; y++) {
 	        		for (x = 0; x < xDim; x++) {
 	        			Y2[i][y][x] = Y1[i][x + y * xDim];
@@ -739,12 +737,12 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        		}
 	        	}
 	        }
-	        Mx = new double[dimn][len];
+	        Mx = new double[segmentNumber][len];
 	        idx = new int[len];
 	        for (index = 0, x = ws; x < xDim - ws; x++) {
 	        	for (y = ws; y < yDim - ws; y++) {
 	        	    if (intreg[y][x] == 1) {
-	        	        for (i = 0; i < dimn; i++) {
+	        	        for (i = 0; i < segmentNumber; i++) {
 	        	        	Mx[i][index] = Y1[i][x + y * xDim];
 	        	        }
 	        	        idx[index] = x + y * xDim;
@@ -755,11 +753,11 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        
 	        // Representative feature estimation
 	        
-	        tmplt = new double[dimn][segmentNumber];
+	        tmplt = new double[segmentNumber][segmentNumber];
 	        LV = new double[len];
 	        maxL = -Double.MAX_VALUE;
 	        for (x = 0; x < len; x++) {
-	        	for (y = 0; y < dimn; y++) {
+	        	for (y = 0; y < segmentNumber; y++) {
 	        		LV[x] = LV[x] + (Mx[y][x]*Mx[y][x]);
 	        	}
 	        	if (LV[x] > maxL) {
@@ -767,7 +765,7 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        		rn = x;
 	        	}
 	        }
-	        for (i = 0; i < dimn; i++) {
+	        for (i = 0; i < segmentNumber; i++) {
 	        	tmplt[i][0] = Mx[i][rn];
 	        }
 	        n = 1;
@@ -778,8 +776,8 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        seedmap[y][x] = 1;
 	        
 	        tn = n+1;
-	        CY = new double[dimn][len];
-	        for (y = 0; y < dimn; y++) {
+	        CY = new double[segmentNumber][len];
+	        for (y = 0; y < segmentNumber; y++) {
 	        	for (x = 0; x < len; x++) {
 	        		CY[y][x] = tmplt[y][n-1];
 	        	}
@@ -787,7 +785,7 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        ccos = new double[len];
 	        maxccos = -Double.MAX_VALUE;
 	        for (x = 0; x < len; x++) {
-	        	for (y = 0; y < dimn; y++) {
+	        	for (y = 0; y < segmentNumber; y++) {
 	        		diff = Mx[y][x] - CY[y][x];
 	        	    ccos[x] = ccos[x] + diff * diff; 	
 	        	}
@@ -797,7 +795,7 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        		id = x;
 	        	}
 	        }
-	        for (y = 0; y < dimn; y++) {
+	        for (y = 0; y < segmentNumber; y++) {
 	        	tmplt[y][tn-1] = Mx[y][id];
 	        }
 	        y = idx[id]/xDim;
@@ -807,13 +805,13 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        while (tn < segmentNumber) {
 	        	tmp = new double[tn][len];
 	        	for (i = 0; i < tn; i++) {
-	        		for (y = 0; y < dimn; y++) {
+	        		for (y = 0; y < segmentNumber; y++) {
 	        			for (x = 0; x < len; x++) {
 	        				CY[y][x] = tmplt[y][i];
 	        			}
 	        		}
 	        		for (x = 0; x < len; x++) {
-	    	        	for (y = 0; y < dimn; y++) {
+	    	        	for (y = 0; y < segmentNumber; y++) {
 	    	        		diff = Mx[y][x] - CY[y][x];
 	    	        		tmp[i][x] = tmp[i][x] + diff * diff;
 	    	        	}
@@ -832,7 +830,7 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        	    	id = x;
 	        	    }
 	        	} // for (x = 0; x < len; x++)
-	        	for (y = 0; y < dimn; y++) {
+	        	for (y = 0; y < segmentNumber; y++) {
 		        	tmplt[y][tn-1] = Mx[y][id];
 		        }
 		        y = idx[id]/xDim;
@@ -840,8 +838,8 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 		        seedmap[y][x] = 1;
 	        } // while (tn < segmentNumber)
 	        
-	        cenInt = new double[dimn][segmentNumber];
-	        for (y = 0; y < dimn; y++) {
+	        cenInt = new double[segmentNumber][segmentNumber];
+	        for (y = 0; y < segmentNumber; y++) {
 	        	for (x = 0; x < segmentNumber; x++) {
 	        		cenInt[y][x] = tmplt[y][x];
 	        	}
@@ -852,13 +850,13 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        
 	        while (flag == 1) {
 	            for (i = 0; i < segmentNumber; i++) {
-	            	for (y = 0; y < dimn; y++) {
+	            	for (y = 0; y < segmentNumber; y++) {
 	            		for (x = 0; x < len; x++) {
 	            			CY[y][x] = cenInt[y][i];
 	            		}
 	            	}
 	            	for (x = 0; x < len; x++) {
-	    	        	for (y = 0; y < dimn; y++) {
+	    	        	for (y = 0; y < segmentNumber; y++) {
 	    	        		diff = Mx[y][x] - CY[y][x];
 	    	        		ccosArray[i][x] = ccosArray[i][x] + diff * diff;
 	    	        	}
@@ -876,7 +874,7 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	            		}
 	            	}
 	            } // for (x = 0; x < len; x++)
-	            NcenInt = new double[dimn][segmentNumber];
+	            NcenInt = new double[segmentNumber][segmentNumber];
 	            
 	            for (i = 0; i < segmentNumber; i++) {
 	            	lengthtmind = 0;
@@ -885,16 +883,16 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	                        lengthtmind++;	
 	                    }
 	                } // for (x = 0; x < len; x++)
-	                tmp = new double[dimn][lengthtmind];
+	                tmp = new double[segmentNumber][lengthtmind];
 	                for (index = 0, x = 0; x < len; x++) {
 	                	if (clab[x] == i) {
-	                	    for (y = 0; y < dimn; y++) {
+	                	    for (y = 0; y < segmentNumber; y++) {
 	                	    	tmp[y][index] = Mx[y][x];
 	                	    }
 	                	    index++;
 	                	}
 	                } // for (index = 0, x = 0; x < len; x++)
-	                for (y = 0; y < dimn; y++) {
+	                for (y = 0; y < segmentNumber; y++) {
 	                	for (x = 0; x < lengthtmind; x++) {
 	                		NcenInt[y][i] = NcenInt[y][i] + tmp[y][x];
 	                	}
@@ -903,7 +901,7 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	            } // for (i = 0; i < segmentNumber; i++)
 	            
 	            equalArray = true;
-	            for (y = 0; y < dimn && equalArray; y++) {
+	            for (y = 0; y < segmentNumber && equalArray; y++) {
 	            	for (x = 0; x < segmentNumber && equalArray; x++) {
 	            		if (NcenInt[y][x] != cenInt[y][x]) {
 	            		    equalArray = false;	
@@ -915,7 +913,7 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	            	flag = 0;
 	            }
 	            else {
-	            	for (y = 0; y < dimn; y++) {
+	            	for (y = 0; y < segmentNumber; y++) {
 	            		for (x = 0; x < segmentNumber; x++) {
 	            		    cenInt[y][x] = NcenInt[y][x];	
 	            		}
