@@ -727,7 +727,7 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        if (pt != null) {
 	            len = segmentNumber;
 	            for (i = 0; i < segmentNumber; i++) {
-	                intreg[Math.round(pt[i].X)][Math.round(pt[i].Y)] = 1;	
+	                intreg[Math.round(pt[i].Y)][Math.round(pt[i].X)] = 1;	
 	            }
 	        } // if (pt != null)
 	        else { // pt == null
