@@ -131,7 +131,6 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	    double LV[];
 	    double maxL = -Double.MAX_VALUE;
 	    int rn = 0;
-	    int idx[];
 	    int tn;
 	    double CY[][];
 	    double ccos[];
@@ -751,14 +750,12 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 		        }
 	        } // else pt == null
 	        Mx = new double[segmentNumber][len];
-	        idx = new int[len];
 	        for (index = 0, x = ws; x < xDim - ws; x++) {
 	        	for (y = ws; y < yDim - ws; y++) {
 	        	    if (intreg[y][x] == 1) {
 	        	        for (i = 0; i < segmentNumber; i++) {
 	        	        	Mx[i][index] = Y1[i][x + y * xDim];
 	        	        }
-	        	        idx[index] = x + y * xDim;
 	        	        index++;
 	        	    }
 	        	}
