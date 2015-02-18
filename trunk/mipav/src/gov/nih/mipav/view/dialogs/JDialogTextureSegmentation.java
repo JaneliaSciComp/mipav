@@ -12,6 +12,9 @@ import gov.nih.mipav.model.scripting.parameters.ParameterImage;
 import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
+import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -20,8 +23,11 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.Vector;
 
 import javax.swing.*;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 // import javax.swing.*;
@@ -60,6 +66,10 @@ public class JDialogTextureSegmentation extends JDialogScriptableBase implements
     private boolean removeSmallRegions = false;
 
     private JCheckBox segmentCheckBox;
+    
+    private JCheckBox pointCheckBox;
+    
+    private boolean usePoints = false;
 
     private JLabel labelWindowSize;
 
@@ -72,6 +82,8 @@ public class JDialogTextureSegmentation extends JDialogScriptableBase implements
     private JCheckBox nonNegativityCheckBox;
 
     private JCheckBox removeSmallRegionsCheckBox;
+    
+    private Vector3f pt[] = null;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -176,9 +188,14 @@ public class JDialogTextureSegmentation extends JDialogScriptableBase implements
     public void itemStateChanged(final ItemEvent event) {
         Object source = event.getSource();
         
-        if (source != null && source == segmentCheckBox && labelSegmentNumber != null && textSegmentNumber != null) {
+        if (source != null && source == segmentCheckBox && labelSegmentNumber != null && textSegmentNumber != null &&
+        		pointCheckBox != null) {
         	labelSegmentNumber.setEnabled(!segmentCheckBox.isSelected());
         	textSegmentNumber.setEnabled(!segmentCheckBox.isSelected());
+        	pointCheckBox.setEnabled(!segmentCheckBox.isSelected());
+        	if (segmentCheckBox.isSelected()) {
+        		pointCheckBox.setSelected(false);
+        	}
         }
 
     }
@@ -193,7 +210,7 @@ public class JDialogTextureSegmentation extends JDialogScriptableBase implements
 
             // Make algorithm
         	destImage = new ModelImage(ModelStorageBase.INTEGER, image.getExtents(), image.getImageName()+"_segmented");
-            textureSegAlgo = new AlgorithmTextureSegmentation(destImage, image, windowSize, segmentNumber,
+            textureSegAlgo = new AlgorithmTextureSegmentation(destImage, image, windowSize, segmentNumber, pt,
             		nonNegativity, removeSmallRegions);
 
             // This is very important. Adding this object as a listener allows the algorithm to
@@ -285,6 +302,11 @@ public class JDialogTextureSegmentation extends JDialogScriptableBase implements
         textSegmentNumber.setText("3");
         textSegmentNumber.setFont(serif12);
         textSegmentNumber.setEnabled(false);
+        
+        pointCheckBox = new JCheckBox("User points specify centers of texture windows");
+        pointCheckBox.setFont(serif12);
+        pointCheckBox.setSelected(false);
+        pointCheckBox.setEnabled(false);
 
         nonNegativityCheckBox = new JCheckBox("Nonnegativity");
         nonNegativityCheckBox.setFont(serif12);
@@ -330,9 +352,13 @@ public class JDialogTextureSegmentation extends JDialogScriptableBase implements
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.gridwidth = 2;
-        paramPanel.add(nonNegativityCheckBox, gbc);
+        paramPanel.add(pointCheckBox, gbc);
         gbc.gridx = 0;
         gbc.gridy = 4;
+        gbc.gridwidth = 2;
+        paramPanel.add(nonNegativityCheckBox, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 5;
         gbc.gridwidth = 2;
         paramPanel.add(removeSmallRegionsCheckBox, gbc);
 
@@ -350,6 +376,17 @@ public class JDialogTextureSegmentation extends JDialogScriptableBase implements
      */
     private boolean setVariables() {
         String tmpStr;
+        int nPts = 0;
+        Vector<VOIBase> curves;
+        VOIVector voiVector;
+        VOI presentVOI;
+        int i;
+        Vector3f[] tmppt = null;
+        int num;
+        int j;
+        int halfWindowSize;
+        int xDim;
+        int yDim;
 
         tmpStr = textWindowSize.getText();
 
@@ -377,6 +414,53 @@ public class JDialogTextureSegmentation extends JDialogScriptableBase implements
 	            return false;
 	        }
         }
+        
+        usePoints = pointCheckBox.isSelected();
+        
+        if (usePoints) {
+        	if (image.getVOIs().size() == 0) {
+                MipavUtil.displayError("Select points before clicking OK");
+
+                return false;
+            }
+        	
+        	voiVector = image.getVOIs();
+            for (i = 0; i < voiVector.size(); i++) {
+                presentVOI = image.getVOIs().VOIAt(i);
+                if (presentVOI.getCurveType() == VOI.POINT) {
+                	curves = presentVOI.getCurves();
+                	nPts += curves.size();
+                }
+            }
+            
+            if (nPts != segmentNumber) {
+            	MipavUtil.displayError("Segment number = " + segmentNumber + ", but number of points = " + nPts);
+            	return false;
+            }
+            
+            pt = new Vector3f[nPts];
+            for (i = 0, num = 0; i < voiVector.size(); i++) {
+                presentVOI = image.getVOIs().VOIAt(i);
+                if (presentVOI.getCurveType() == VOI.POINT) {
+                	tmppt = presentVOI.exportAllPoints();
+                	for (j = 0; j < tmppt.length; j++) {
+                		pt[num++] = tmppt[j];
+                	}
+                }
+            }
+            
+            halfWindowSize = windowSize/2;
+            xDim = image.getExtents()[0];
+            yDim = image.getExtents()[1];
+            for (i = 0; i < nPts; i++) {
+                if ((pt[i].X - halfWindowSize < 0.0) || (pt[i].X + halfWindowSize > xDim - 1) ||
+                    (pt[i].Y - halfWindowSize < 0.0) || (pt[i].Y + halfWindowSize > yDim - 1)) {
+                	MipavUtil.displayError("Point at X = " + pt[i].X + " Y = " + pt[i].Y + 
+                			" cannot be center for a window inside the image");
+                	return false;
+                    }
+            }
+        } // if (usePoints)
 
         nonNegativity = nonNegativityCheckBox.isSelected();
 
