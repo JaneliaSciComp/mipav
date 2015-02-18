@@ -2,6 +2,7 @@ package gov.nih.mipav.model.algorithms;
 
 import java.io.IOException;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
 import Jama.Matrix;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -39,6 +40,9 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	// Number of segments.  Determined automatically if set to 0.
 	private int segmentNumber = 0;
 	
+	// Points containing centers of texture windows for each segment
+	private Vector3f pt[] = null;
+	
 	// True when nonnegativity constraint imposed
 	private boolean nonNegativity = true;
 	
@@ -60,11 +64,12 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
 	public AlgorithmTextureSegmentation(ModelImage destImage, ModelImage srcImage,
-			                            int windowSize, int segmentNumber, boolean nonNegativity,
+			                            int windowSize, int segmentNumber, Vector3f pt[], boolean nonNegativity,
 			                            boolean removeSmallRegions) {
 		super(destImage, srcImage);
 		this.windowSize = windowSize;
 		this.segmentNumber = segmentNumber;
+		this.pt = pt;
 		this.nonNegativity = nonNegativity;
 		this.removeSmallRegions = removeSmallRegions;  
 	}
@@ -719,24 +724,33 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        tmp = new double[yDim][xDim];
 	        SHedge_ls(tmp, ws, 2, Y2);
 	        intreg = new byte[yDim][xDim];
-	        maxtmp = -Double.MAX_VALUE;
-	        for (y = 0; y < yDim; y++) {
-	        	for (x = 0; x < xDim; x++) {
-	        		if (tmp[y][x] > maxtmp) {
-	        			maxtmp = tmp[y][x];
-	        		}
-	        	}
-	        }
-	        threshold = 0.4 * maxtmp;
-	        len = 0;
-	        for (y = ws; y < yDim-ws; y++) {
-	        	for (x = ws; x < xDim-ws; x++) {
-	        		if (tmp[y][x] < threshold) {
-	        			intreg[y][x] = 1;
-	        			len++;
-	        		}
-	        	}
-	        }
+	        
+	        if (pt != null) {
+	            len = segmentNumber;
+	            for (i = 0; i < segmentNumber; i++) {
+	                intreg[Math.round(pt[i].X)][Math.round(pt[i].Y)] = 1;	
+	            }
+	        } // if (pt != null)
+	        else { // pt == null
+	        	maxtmp = -Double.MAX_VALUE;
+		        for (y = 0; y < yDim; y++) {
+		        	for (x = 0; x < xDim; x++) {
+		        		if (tmp[y][x] > maxtmp) {
+		        			maxtmp = tmp[y][x];
+		        		}
+		        	}
+		        }
+		        threshold = 0.4 * maxtmp;
+		        len = 0;
+		        for (y = ws; y < yDim-ws; y++) {
+		        	for (x = ws; x < xDim-ws; x++) {
+		        		if (tmp[y][x] < threshold) {
+		        			intreg[y][x] = 1;
+		        			len++;
+		        		}
+		        	}
+		        }
+	        } // else pt == null
 	        Mx = new double[segmentNumber][len];
 	        idx = new int[len];
 	        for (index = 0, x = ws; x < xDim - ws; x++) {
@@ -1035,7 +1049,8 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	        	RmSmRg(segLabelLarge, segLabel, 100);
 	        	for (y = 0; y < yDim; y++) {
 	 	            for (x = 0; x < xDim; x++) {
-	 	                slab[x + y * xDim] = segLabelLarge[y][x];	
+	 	            	// Start at 0 like segmentation does before RmSmRg
+	 	                slab[x + y * xDim] = segLabelLarge[y][x] - 1;	
 	 	            }
 	 	        }
 	        }
