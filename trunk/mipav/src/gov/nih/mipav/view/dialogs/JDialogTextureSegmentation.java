@@ -23,6 +23,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.BitSet;
 import java.util.Vector;
 
 import javax.swing.*;
@@ -67,9 +68,17 @@ public class JDialogTextureSegmentation extends JDialogScriptableBase implements
 
     private JCheckBox segmentCheckBox;
     
-    private JCheckBox pointCheckBox;
+    private JRadioButton noVOIsButton;
+    
+    private JRadioButton pointButton;
+    
+    private JRadioButton contourButton;
+    
+    private ButtonGroup VOIGroup;
     
     private boolean usePoints = false;
+    
+    private boolean useContours = false;
 
     private JLabel labelWindowSize;
 
@@ -84,6 +93,8 @@ public class JDialogTextureSegmentation extends JDialogScriptableBase implements
     private JCheckBox removeSmallRegionsCheckBox;
     
     private Vector3f pt[] = null;
+    
+    private BitSet contourMask = null;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -189,12 +200,16 @@ public class JDialogTextureSegmentation extends JDialogScriptableBase implements
         Object source = event.getSource();
         
         if (source != null && source == segmentCheckBox && labelSegmentNumber != null && textSegmentNumber != null &&
-        		pointCheckBox != null) {
+        		noVOIsButton != null && pointButton != null && contourButton != null) {
         	labelSegmentNumber.setEnabled(!segmentCheckBox.isSelected());
         	textSegmentNumber.setEnabled(!segmentCheckBox.isSelected());
-        	pointCheckBox.setEnabled(!segmentCheckBox.isSelected());
+        	noVOIsButton.setEnabled(!segmentCheckBox.isSelected());
+        	pointButton.setEnabled(!segmentCheckBox.isSelected());
+        	contourButton.setEnabled(!segmentCheckBox.isSelected());
         	if (segmentCheckBox.isSelected()) {
-        		pointCheckBox.setSelected(false);
+        		noVOIsButton.setSelected(true);
+        		pointButton.setSelected(false);
+        		contourButton.setSelected(false);
         	}
         }
 
@@ -210,7 +225,7 @@ public class JDialogTextureSegmentation extends JDialogScriptableBase implements
 
             // Make algorithm
         	destImage = new ModelImage(ModelStorageBase.INTEGER, image.getExtents(), image.getImageName()+"_segmented");
-            textureSegAlgo = new AlgorithmTextureSegmentation(destImage, image, windowSize, segmentNumber, pt,
+            textureSegAlgo = new AlgorithmTextureSegmentation(destImage, image, windowSize, segmentNumber, pt, contourMask,
             		nonNegativity, removeSmallRegions);
 
             // This is very important. Adding this object as a listener allows the algorithm to
@@ -303,10 +318,24 @@ public class JDialogTextureSegmentation extends JDialogScriptableBase implements
         textSegmentNumber.setFont(serif12);
         textSegmentNumber.setEnabled(false);
         
-        pointCheckBox = new JCheckBox("User points specify centers of texture windows");
-        pointCheckBox.setFont(serif12);
-        pointCheckBox.setSelected(false);
-        pointCheckBox.setEnabled(false);
+        VOIGroup = new ButtonGroup();
+        noVOIsButton = new JRadioButton("No User points or contours");
+        noVOIsButton.setFont(serif12);
+        noVOIsButton.setSelected(true);
+        noVOIsButton.setEnabled(false);
+        VOIGroup.add(noVOIsButton);;
+        
+        pointButton = new JRadioButton("User points specify centers of texture windows");
+        pointButton.setFont(serif12);
+        pointButton.setSelected(false);
+        pointButton.setEnabled(false);
+        VOIGroup.add(pointButton);
+        
+        contourButton = new JRadioButton("User contours limit regions of texture windows");
+        contourButton.setFont(serif12);
+        contourButton.setSelected(false);
+        contourButton.setEnabled(false);
+        VOIGroup.add(contourButton);
 
         nonNegativityCheckBox = new JCheckBox("Nonnegativity");
         nonNegativityCheckBox.setFont(serif12);
@@ -352,13 +381,21 @@ public class JDialogTextureSegmentation extends JDialogScriptableBase implements
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.gridwidth = 2;
-        paramPanel.add(pointCheckBox, gbc);
+        paramPanel.add(noVOIsButton, gbc);
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.gridwidth = 2;
-        paramPanel.add(nonNegativityCheckBox, gbc);
+        paramPanel.add(pointButton, gbc);
         gbc.gridx = 0;
         gbc.gridy = 5;
+        gbc.gridwidth = 2;
+        paramPanel.add(contourButton, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        gbc.gridwidth = 2;
+        paramPanel.add(nonNegativityCheckBox, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 7;
         gbc.gridwidth = 2;
         paramPanel.add(removeSmallRegionsCheckBox, gbc);
 
@@ -377,6 +414,7 @@ public class JDialogTextureSegmentation extends JDialogScriptableBase implements
     private boolean setVariables() {
         String tmpStr;
         int nPts = 0;
+        int nContours = 0;
         Vector<VOIBase> curves;
         VOIVector voiVector;
         VOI presentVOI;
@@ -415,7 +453,7 @@ public class JDialogTextureSegmentation extends JDialogScriptableBase implements
 	        }
         }
         
-        usePoints = pointCheckBox.isSelected();
+        usePoints = pointButton.isSelected();
         
         if (usePoints) {
         	if (image.getVOIs().size() == 0) {
@@ -461,6 +499,27 @@ public class JDialogTextureSegmentation extends JDialogScriptableBase implements
                     }
             }
         } // if (usePoints)
+        
+        useContours = contourButton.isSelected();
+        
+        if (useContours) {
+        	if (image.getVOIs().size() == 0) {
+                MipavUtil.displayError("Draw contours before clicking OK");
+
+                return false;
+            }
+        	
+        	voiVector = image.getVOIs();
+            for (i = 0; i < voiVector.size(); i++) {
+                presentVOI = image.getVOIs().VOIAt(i);
+                if (presentVOI.getCurveType() == VOI.CONTOUR) {
+                	curves = presentVOI.getCurves();
+                	nContours += curves.size();
+                }
+            }
+            
+            contourMask = image.generateVOIMask();
+        } // if (useContours)
 
         nonNegativity = nonNegativityCheckBox.isSelected();
 
