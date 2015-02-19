@@ -165,6 +165,7 @@ import gov.nih.mipav.view.Preferences;
 	    			refinedLatticeCoefficients[i] = null;
 	    		}
 	    	}
+	    	outputBuffer = null;
 	        super.finalize();
 	    }
 	    
