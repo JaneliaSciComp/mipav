@@ -460,6 +460,8 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 	        opts.setFileName("t81slice_threshold_corrected.xml");
 	        opts.setOptionsSet(true);
 			fileIO.writeImage(outputImage, opts);
+			outputImage.disposeLocal();
+			outputImage = null;
 		    setCompleted(false);
 		    return;
 		}
