@@ -149,7 +149,7 @@ import WildMagic.LibFoundation.Mathematics.Vector4d;
 	    	}
 	    }
 	    
-	    public void generateData() {
+	    /*public void generateData() {
 	    	outputImage = new ModelImage(ModelStorageBase.DOUBLE, extents, "outputImage");
 	    	if (outputImage.getFileInfo() != null) {
 	    		FileInfoBase[] fileInfo = outputImage.getFileInfo();
@@ -164,15 +164,15 @@ import WildMagic.LibFoundation.Mathematics.Vector4d;
                 }
             }
 	    	return;
-	    }
+	    }*/
 	    
 	    /**
 	     * 
 	     * @return
 	     */
-	    public ModelImage getOutputImage() {
+	    /*public ModelImage getOutputImage() {
 	    	return outputImage;
-	    }
+	    }*/
 
 	    /**
 	     * Starts the program.
