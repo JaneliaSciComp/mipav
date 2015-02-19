@@ -302,7 +302,7 @@ import gov.nih.mipav.view.Preferences;
 	    }
 	    
 	    public void generateData() {
-	    	super.generateData();
+	    	//super.generateData();
 	    	// Perform some error checking on the input
 	    	if (pointData.size() != pointLocation.size()) {
 	    		MipavUtil.displayError("pointData and pointLocation must have the same size");
@@ -668,13 +668,13 @@ import gov.nih.mipav.view.Preferences;
 	            } // for (int i = nDims - 1; i >= 0; i--)
 	            outputBuffer[it] = collapsedPhiLattices[0][0];
 	        } // for (it = 0; it < extentsLength; it++)
-	        try {
+	        /*try {
 	        	outputImage.importData(0, outputBuffer, true);
 	        }
 	        catch(IOException e) {
 	        	MipavUtil.displayError("IOException on outputImage.importData");
 	        	return;
-	        }
+	        }*/
 	    }
 	    
 	    private void collapsePhiLattice(double[] lattice, int latticeIndex[], double[] collapsedLattice, int collapsedLatticeIndex[],
