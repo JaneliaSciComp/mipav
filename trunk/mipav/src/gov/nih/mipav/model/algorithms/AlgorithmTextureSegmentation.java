@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 import java.io.IOException;
+import java.util.BitSet;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
@@ -43,6 +44,9 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	// Points containing centers of texture windows for each segment
 	private Vector3f pt[] = null;
 	
+	// Limits regions from which centers of texture windows can be obtained
+	private BitSet contourMask = null;
+	
 	// True when nonnegativity constraint imposed
 	private boolean nonNegativity = true;
 	
@@ -64,12 +68,13 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
 	public AlgorithmTextureSegmentation(ModelImage destImage, ModelImage srcImage,
-			                            int windowSize, int segmentNumber, Vector3f pt[], boolean nonNegativity,
-			                            boolean removeSmallRegions) {
+			                            int windowSize, int segmentNumber, Vector3f pt[], BitSet contourMask, 
+			                            boolean nonNegativity, boolean removeSmallRegions) {
 		super(destImage, srcImage);
 		this.windowSize = windowSize;
 		this.segmentNumber = segmentNumber;
 		this.pt = pt;
+		this.contourMask = contourMask;
 		this.nonNegativity = nonNegativity;
 		this.removeSmallRegions = removeSmallRegions;  
 	}
@@ -729,7 +734,27 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 	                intreg[Math.round(pt[i].Y)][Math.round(pt[i].X)] = 1;	
 	            }
 	        } // if (pt != null)
-	        else { // pt == null
+	        else if (contourMask != null) {
+	        	maxtmp = -Double.MAX_VALUE;
+		        for (y = 0; y < yDim; y++) {
+		        	for (x = 0; x < xDim; x++) {
+		        		if (tmp[y][x] > maxtmp) {
+		        			maxtmp = tmp[y][x];
+		        		}
+		        	}
+		        }
+		        threshold = 0.4 * maxtmp;
+		        len = 0;
+		        for (y = ws; y < yDim-ws; y++) {
+		        	for (x = ws; x < xDim-ws; x++) {
+		        		if ((tmp[y][x] < threshold) && (contourMask.get(x + y * xDim))) {
+		        			intreg[y][x] = 1;
+		        			len++;
+		        		}
+		        	}
+		        }	
+	        } // else if (contourMask != null)
+	        else { // pt == null && contourMask == null
 	        	maxtmp = -Double.MAX_VALUE;
 		        for (y = 0; y < yDim; y++) {
 		        	for (x = 0; x < xDim; x++) {
@@ -748,7 +773,7 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
 		        		}
 		        	}
 		        }
-	        } // else pt == null
+	        } // else pt == null && contourMask == null
 	        Mx = new double[segmentNumber][len];
 	        for (index = 0, x = ws; x < xDim - ws; x++) {
 	        	for (y = ws; y < yDim - ws; y++) {
