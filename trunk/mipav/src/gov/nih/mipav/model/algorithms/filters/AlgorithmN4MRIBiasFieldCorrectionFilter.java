@@ -453,7 +453,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 			filter.setPointLocation(pointLocation);
 			filter.generateData();
 			
-			ModelImage outputImage = filter.getOutputImage();
+			/*ModelImage outputImage = filter.getOutputImage();
 			FileWriteOptions opts = new FileWriteOptions(true);
 	        opts.setFileType(FileUtility.XML);
 	        opts.setFileDirectory(directory);
@@ -461,7 +461,7 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 	        opts.setOptionsSet(true);
 			fileIO.writeImage(outputImage, opts);
 			outputImage.disposeLocal();
-			outputImage = null;
+			outputImage = null;*/
 		    setCompleted(false);
 		    return;
 		}
