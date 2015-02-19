@@ -83,7 +83,7 @@ import gov.nih.mipav.view.Preferences;
 		private int extentsLength;
 		private int extentsSlice;
 		private int xyzExtents;
-		private ModelImage outputImage = null;
+		private double outputBuffer[] = null;
 		private ModelImage psiLattice = null;
 		private Matrix[] refinedLatticeCoefficients = null;
 	    
@@ -159,7 +159,6 @@ import gov.nih.mipav.view.Preferences;
 	    	closeDimension = null;
 	    	numberOfLevels = null;
 	    	inputImage = null;
-	    	outputImage = null;
 	    	psiLattice = null;
 	    	if (refinedLatticeCoefficients != null) {
 	    		for (i = 0; i < refinedLatticeCoefficients.length; i++) {
@@ -174,14 +173,6 @@ import gov.nih.mipav.view.Preferences;
 	    }
 	    
 	    public double[] getOutputBuffer() {
-	    	double outputBuffer[] = new double[extentsLength];
-	    	try {
-	    		outputImage.exportData(0, extentsLength, outputBuffer);
-	    	}
-	    	catch(IOException e) {
-	    		MipavUtil.displayError("IOException on outputImage.exportData");
-	    		return null;
-	    	}
 	    	return outputBuffer;
 	    }
 	    
@@ -230,19 +221,6 @@ import gov.nih.mipav.view.Preferences;
 	        		return;
 	        	}
 	        }
-	        
-	        outputImage = new ModelImage(ModelStorageBase.DOUBLE, extents, "outputImage");
-	        int fileInfoLength = outputImage.getFileInfo().length;
-	    	for (int i = 0; i < fileInfoLength; i++) {
-	    		outputImage.getFileInfo(i).setOrigin(origin);
-	    		outputImage.getFileInfo(i).setResolutions(resolutions);
-	    	}
-	    	
-	    	for (int i = 0; i < Math.min(nDims,3); i++) {
-                for (int j = 0; j < Math.min(nDims,3); j++) {
-                    outputImage.getMatrix().set(i, j, (float)direction[i][j]);
-                }
-            }
 	    	
 	    	int maximumNumberOfSpans = 0;
 	    	for (int d = 0; d < nDims; d++) {
@@ -304,7 +282,7 @@ import gov.nih.mipav.view.Preferences;
 	        	currentU[i] = -1;
 	        }
 	        
-	        double outputBuffer[] = new double[extentsLength];
+	        outputBuffer = new double[extentsLength];
 	        
 	        int idx[] = new int[nDims];
 	        for (it = 0; it < extentsLength; it++) {
@@ -341,13 +319,6 @@ import gov.nih.mipav.view.Preferences;
 	            } // for (int i = nDims - 1; i >= 0; i--)
 	            outputBuffer[it] = collapsedPhiLattices[0][0];
 	        } // for (it = 0; it < extentsLength; it++)
-	        try {
-	        	outputImage.importData(0, outputBuffer, true);
-	        }
-	        catch(IOException e) {
-	        	MipavUtil.displayError("IOException on outputImage.importData");
-	        	return;
-	        }
 	    }
 	    
 	    private void collapsePhiLattice(double[] lattice, int latticeIndex[], double[] collapsedLattice, int collapsedLatticeIndex[],
