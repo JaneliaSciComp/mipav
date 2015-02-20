@@ -302,6 +302,7 @@ import gov.nih.mipav.view.Preferences;
 	    }
 	    
 	    public void generateData() {
+	    	// Uncomment to use the BSplineScatteredDataPointSetToImageFilterTest self test in AlgorithmN4MRIBiasFieldCorrectionFilter
 	    	//super.generateData();
 	    	// Perform some error checking on the input
 	    	if (pointData.size() != pointLocation.size()) {
@@ -668,6 +669,7 @@ import gov.nih.mipav.view.Preferences;
 	            } // for (int i = nDims - 1; i >= 0; i--)
 	            outputBuffer[it] = collapsedPhiLattices[0][0];
 	        } // for (it = 0; it < extentsLength; it++)
+	        // Uncomment to use the BSplineScatteredDataPointSetToImageFilterTest self test in AlgorithmN4MRIBiasFieldCorrectionFilter
 	        /*try {
 	        	outputImage.importData(0, outputBuffer, true);
 	        }
