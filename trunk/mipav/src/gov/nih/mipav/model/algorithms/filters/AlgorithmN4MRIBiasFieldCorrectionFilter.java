@@ -453,6 +453,10 @@ public class AlgorithmN4MRIBiasFieldCorrectionFilter extends AlgorithmBase {
 			filter.setPointLocation(pointLocation);
 			filter.generateData();
 			
+			// To use this self test uncomment the below lines, uncomment routines
+			// generateData() and getOutputImage() in AlgorithmPointSetToImageFilter,
+			// uncomment super.generateData() in generateData()  and outputImage.importData
+			// in threadedGenerateDataForReconstruction() in AlgorithmBSplineScatteredDataPointSetToImageFilter
 			/*ModelImage outputImage = filter.getOutputImage();
 			FileWriteOptions opts = new FileWriteOptions(true);
 	        opts.setFileType(FileUtility.XML);
