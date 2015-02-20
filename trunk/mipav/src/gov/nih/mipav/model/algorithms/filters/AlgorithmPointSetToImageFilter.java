@@ -149,6 +149,7 @@ import WildMagic.LibFoundation.Mathematics.Vector4d;
 	    	}
 	    }
 	    
+	    // Uncomment to use the BSplineScatteredDataPointSetToImageFilterTest self test in AlgorithmN4MRIBiasFieldCorrectionFilter
 	    /*public void generateData() {
 	    	outputImage = new ModelImage(ModelStorageBase.DOUBLE, extents, "outputImage");
 	    	if (outputImage.getFileInfo() != null) {
@@ -170,6 +171,7 @@ import WildMagic.LibFoundation.Mathematics.Vector4d;
 	     * 
 	     * @return
 	     */
+	    // Uncomment to use the BSplineScatteredDataPointSetToImageFilterTest self test in AlgorithmN4MRIBiasFieldCorrectionFilter
 	    /*public ModelImage getOutputImage() {
 	    	return outputImage;
 	    }*/
