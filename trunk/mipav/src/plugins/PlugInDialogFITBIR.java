@@ -3959,11 +3959,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 previewImgPanel.repaint();
 
             } catch (final FileNotFoundException e) {
-                MipavUtil.displayError("The system cannot find the file specified");
+                MipavUtil.displayError("The system cannot find the file specified: " + imageFile);
                 e.printStackTrace();
                 validFile = false;
             } catch (final NullPointerException e) {
-                MipavUtil.displayError("The system cannot find the file specified");
+                MipavUtil.displayError("The system cannot find the file specified: " + imageFile);
                 e.printStackTrace();
                 validFile = false;
             } catch (final Exception e) {

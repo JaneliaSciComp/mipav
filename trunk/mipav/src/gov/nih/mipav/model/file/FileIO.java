@@ -1089,8 +1089,8 @@ public class FileIO {
                     && (sliceDim = Integer.valueOf(refFileInfo.getTagTable().getValue("0020,1002").toString()).intValue()) > 1 && sliceDim * timeDim == nImages) {
                 extents[3] = timeDim;
                 extents[2] = sliceDim;
-            } else if ( (studyDescription != null && studyDescription.toUpperCase().contains("DTI")) && dtiSliceCounter != 0
-                    || (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI")) && dtiSliceCounter != 0) {
+            } else if ( (studyDescription != null && studyDescription.toUpperCase().contains("DTI")) && dtiSliceCounter > 0
+                    || (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI")) && dtiSliceCounter > 0) {
                 if (scannerType != null && scannerType.toUpperCase().contains("PHILIPS")) {
                     extents[2] = dtiSliceCounter;
                     extents[3] = nImages / dtiSliceCounter;
