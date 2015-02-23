@@ -834,6 +834,11 @@ public class FileIO {
                         // sortDti sets indices values
                         dtiSliceCounter = sortDtiDicomData(studyDescription, seriesDescription, scannerType, tagTable, savedFileInfos, indices,
                                 instanceNums.length, zInst);
+
+                        if (dtiSliceCounter == instanceNums.length) {
+                            // all in one 4D gradient/bval bin, load as 3D
+                            dtiSliceCounter = -1;
+                        }
                     }
                 }
 
@@ -1839,7 +1844,8 @@ public class FileIO {
                         dtiSliceCounter2++;
                     }
                 }
-                if (dtiSliceCounter != 1 && dtiSliceCounter != 0 && (String) savedFileInfos[dtiSliceCounter].getTagTable().getValue("0019,10BB") != null
+                if (dtiSliceCounter != 1 && dtiSliceCounter != 0 && dtiSliceCounter < instanceNumsLength
+                        && (String) savedFileInfos[dtiSliceCounter].getTagTable().getValue("0019,10BB") != null
                         && (String) savedFileInfos[dtiSliceCounter + 1].getTagTable().getValue("0019,10BB") != null) {
                     if (dtiSliceCounter != dtiSliceCounter2) {
                         for (int i = 0; i < dtiSliceCounter; i++) {
@@ -3112,10 +3118,10 @@ public class FileIO {
                 case FileUtility.MAGNETOM_VISION:
                     image = readMagnetomVision(fileName, fileDir);
                     break;
-                    
+
                 case FileUtility.PGM:
-                	image = readPGM(fileName, fileDir);
-                	break;
+                    image = readPGM(fileName, fileDir);
+                    break;
 
                 case FileUtility.MAGNETOM_VISION_MULTIFILE:
                     image = readMagnetomVisionMulti(fileName, fileDir);
@@ -11591,7 +11597,7 @@ public class FileIO {
         return image;
 
     }
-    
+
     /**
      * Reads a PGM file by calling the read method of the file.
      * 
