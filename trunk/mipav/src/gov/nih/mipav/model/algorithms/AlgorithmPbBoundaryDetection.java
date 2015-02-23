@@ -9,6 +9,8 @@ import gov.nih.mipav.view.*;
 
 import java.io.*;
 
+import Jama.Matrix;
+
 /**
  * Compute probability of boundary using brightness gradient and texture gradient
  * Original MATLAB code written by David R. Martin in April 2003
@@ -42,6 +44,14 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 	
 	private int yDim;
 	
+	// epsilon = D1MACH(4)
+	// Machine epsilon is the smallest positive epsilon such that
+	// (1.0 + epsilon) != 1.0.
+	// epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
+	// epsilon = 2.2204460e-16
+	// epsilon is called the largest relative spacing
+	private final double epsilon = Math.pow(2.0, -52);
+	
 	
 	 //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -62,7 +72,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
        @param  numOrientations
      */
     public AlgorithmPbBoundaryDetection(ModelImage destImg, ModelImage srcImg, int gradientType, int presentation, double lowRadius,
-                                       double highRadius, int numOrienatations) {
+                                       double highRadius, int numOrientations) {
         super(destImg, srcImg);
         this.gradientType = gradientType;
         this.presentation = presentation;
@@ -239,7 +249,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
      * Compute the color gradient at a single scale and multiple orientations
      * @param cg output [yDim][xDim][1][numOrientations] array for black and white 
      *           output [yDim][xDim][3][numOrientations] array for color
-     * @param theta
+     * @param output [numOrientations] theta
      * @param image  Grayscale or RGB image, values in [0, 1].
      * @param radius Radius of disc for cg array
      * @param numOrientations Number of orientations for cg array
@@ -294,7 +304,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         
         for (y = 0; y < yDim; y++) {
         	for (x = 0; x < xDim; x++) {
-        		cmap[y][x] = (int)Math.ceil(buffer[x + y * xDim] * nbins);
+        		cmap[y][x] = Math.max(1, (int)Math.ceil(buffer[x + y * xDim] * nbins));
         	}
         }
         
@@ -320,7 +330,420 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         		csim[y][x] = 1.0 - Math.exp(-diff*diff/denom);
         	}
         }
+        tgmo(cg, theta, cmap, nbins, radius, numOrientations, csim, smooth, sigmaSmooth);
     }
+    
+    /**
+     * Compute the texture gradient at a single scale and multiple orientations
+     * @param output tg  [yDim][xDim][numOrientations] array
+     * @param output [numOrientations] theta Disc orientations (which are orthogonal to the texture gradient). 
+     * @param tmap [yDim][xDim] Texton map, values in [1, ntex]
+     * @param ntext Number of textons
+     * @param radius Radius of disc for texture gradient
+     * @param numOrientations Number of orientations at which to compute the texture graident
+     * @param tsim Texton similarity matrix.  If not provided, then use chi-squared.
+     * @param smooth Smoothing method.  One of "gaussian", "savgol", "none".  Default "none".
+     * @param sigma Sigma for smoothing.  Default to radius.
+     */
+    private void tgmo(double tg[][][], double theta[], int tmap[][], int ntex, double radius, int numOrientations, 
+    		double tsim[][], String smooth, double sigma) {
+    	int i;
+    	boolean usechi2;
+    	double tgArray[][];
+    	int y;
+    	int x;
+    	
+    	if (tsim != null) {
+    		usechi2 = false;
+    	}
+    	else {
+    		usechi2 = true;
+    	}
+    	
+    	radius = Math.max(1.0,  radius);
+    	numOrientations = Math.max(1, numOrientations);
+    	for (i = 0; i < numOrientations; i++) {
+    		theta[i] = ((double)i)/numOrientations*Math.PI;
+    	}
+    	tgArray = new double[yDim][xDim];
+    	for (i = 0; i < numOrientations; i++) {
+    		if (usechi2) {
+    		    tgso(tgArray, tmap, ntex, radius, theta[i], smooth, sigma, null);	
+    		}
+    		else {
+    			tgso(tgArray, tmap, ntex, radius, theta[i], smooth, sigma, tsim);
+    		}
+    		for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				tg[y][x][i] = tgArray[y][x];
+    			}
+    		}
+    	} // for (i = 0; i < numOrientations; i++)
+    }
+    
+    /**
+     * Compute the texture graident at a single orientation and scale
+     * @param output tg [yDim][xDim] array
+     * @param tmap [yDim][xDim] Texton map, values in [1, ntex].
+     * @param ntex Number of textons
+     * @param radius Radius of disc for tg
+     * @param theta Orientation orthogonal to tg.
+     * @param smooth Smoothing method, one of {"gaussian", "savgol", "none"}, default = "none".
+     * @param sigma Sigma for smoothing.  Default to radius.
+     * @param tsim [ntex][ntex] Texton similarity matrix.  If not provided, then use chi-squared.
+     */
+    private void tgso(double tg[][], int tmap[][], int ntex, double radius, double theta, String smooth, double sigma, double tsim[][]) {
+        boolean usechi2;
+        int y;
+        int x;
+        int wr;
+        double xgrid[][];
+        double ygrid[][];
+        double gamma[][];
+        byte mask[][];
+        int count;
+        byte side[][];
+        int sum1;
+        int sum2;
+        double lmask[][];
+        double rmask[][];
+        int i;
+        double im[][];
+        double tgL[][];
+        double tgR[][];
+        double diff;
+        double d[][];
+        Matrix dMat;
+        Matrix tsimMat;
+        double dtsim[][];
+        int hsz;
+        int sz;
+        double f[][];
+        
+        if (tsim != null) {
+    		usechi2 = false;
+    	}
+    	else {
+    		usechi2 = true;
+    	}
+        
+        radius = Math.max(1.0,  radius);
+        theta = theta % Math.PI;
+        for (y = 0; y < yDim; y++) {
+        	for (x = 0; x < xDim; x++) {
+        		if ((tmap[y][x] < 1) || (tmap[y][x] > ntex)) {
+        			MipavUtil.displayError("texton label["+y+"]["+x+"] = " + tmap[y][x] + " is out of range");
+        			return;
+        		}
+        	}
+        }
+        
+        // Radius of discrete disc
+        wr = (int)Math.floor(radius);
+        
+        // Count number of pixels in a disc
+        xgrid = new double[2*wr+1][2*wr+1];
+        ygrid = new double[2*wr+1][2*wr+1];
+        for (y = -wr; y <= wr; y++) {
+        	for (x = -wr; x <= wr; x++) {
+        		ygrid[y+wr][x+wr] = y;
+        		xgrid[y+wr][x+wr] = x;
+        	}
+        }
+        gamma = new double[2*wr+1][2*wr+1];
+        for (y = 0; y < 2*wr+1; y++) {
+        	for (x = 0; x < 2*wr+1; y++) {
+        		gamma[y][x] = Math.atan2(ygrid[y][x], xgrid[y][x]);
+        	}
+        }
+        mask = new byte[2*wr+1][2*wr+1];
+        for (y = 0; y < 2*wr+1; y++) {
+        	for (x = 0; x < 2*wr+1; x++) {
+        		if (xgrid[y][x]*xgrid[y][x] + ygrid[y][x]*ygrid[y][x] <= radius*radius) {
+        			mask[y][x] = 1;
+        		}
+        	}
+        }
+        // Mask ot center pixel to remove bias
+        mask[wr][wr] = 0;
+        count = 0;
+        for (y = 0; y < 2*wr+1; y++) {
+        	for (x = 0; x < 2*wr+1; x++) {
+        	    count += mask[y][x];	
+        	}
+        }
+        
+        // Determine which half of the disc pixels fall in
+        // (0 = masked 1 = left 2 = right)
+        sum1 = 0;
+        sum2 = 0;
+        side = new byte[2*wr+1][2*wr+1];
+        for (y = 0; y < 2*wr+1; y++) {
+        	for (x = 0; x < 2*wr+1; x++) {
+        		if (((gamma[y][x] - theta)%(2.0 * Math.PI)) < Math.PI) {
+        			side[y][x] = (byte)(2 *mask[y][x]);
+        			if (side[y][x] == 2) {
+        				sum2++;
+        			}
+        		}
+        		else {
+        			side[y][x] = mask[y][x];
+        			if (side[y][x] == 1) {
+        				sum1++;
+        			}
+        		}
+        	}
+        } // for (y = 0; y < 2*wr+1; y++)
+        if (sum1 != sum2) {
+        	MipavUtil.displayError("Sum imbalance in tgso sum1 = " + sum1 + " sum2 = " + sum2);
+        	return;
+        }
+        lmask = new double[2*wr+1][2*wr+1];
+        rmask = new double[2*wr+1][2*wr+1];
+        for (y = 0; y < 2*wr+1; y++) {
+        	for (x = 0; x < 2*wr + 1; x++) {
+        		if (side[y][x] == 1) {
+        			lmask[y][x] = 1.0/count * 2;
+        		}
+        		else if (side[y][x] == 2) {
+        			rmask[y][x] = 1.0/count * 2;
+        		}
+        	}
+        }
+        
+        // Compute tg using 2*ntex convolutions
+        im = new double[yDim][xDim];
+        tgL = new double[yDim][xDim];
+        tgR = new double[yDim][xDim];
+        if (usechi2) {
+            for (i = 1; i <= ntex; i++) {
+            	for (y = 0; y < yDim; y++) {
+            		for (x = 0; x < xDim; x++) {
+            	        if (tmap[y][x] == i) {
+            	        	im[y][x] = 1.0;
+            	        }
+            	        else {
+            	        	im[y][x] = 0.0;
+            	        }
+            		}
+            	} // for (y = 0; y < yDim; y++)
+            	conv2(im, lmask, tgL);
+            	conv2(im, rmask, tgR);
+            	for (y = 0; y < yDim; y++) {
+            		for (x = 0; x < xDim; x++) {
+            			diff = tgL[y][x] - tgR[y][x];
+            			tg[y][x] = tg[y][x] + diff*diff/(tgL[y][x] + tgR[y][x] + epsilon);
+            		}
+            	}
+            } // for ( i = 1; i <= ntex; i++)
+            for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			tg[y][x] = 0.5 * tg[y][x];
+        		}
+            }
+        } // if (usechi2)
+        else { // !usechi2
+            d = new double[yDim*xDim][ntex];
+            for (i = 1; i <= ntex; i++) {
+            	for (y = 0; y < yDim; y++) {
+            		for (x = 0; x < xDim; x++) {
+            	        if (tmap[y][x] == i) {
+            	        	im[y][x] = 1.0;
+            	        }
+            	        else {
+            	        	im[y][x] = 0.0;
+            	        }
+            		}
+            	} // for (y = 0; y < yDim; y++)
+            	conv2(im, lmask, tgL);
+            	conv2(im, rmask, tgR);
+            	for (y = 0; y < yDim; y++) {
+            		for (x = 0; x < xDim; x++) {
+            			d[x + y * xDim][i] = Math.abs(tgL[y][x] - tgR[y][x]);
+            		}
+            	}
+            } // for ( i = 1; i <= ntex; i++)
+            dMat = new Matrix(d);
+            tsimMat = new Matrix(tsim);
+            dtsim = (dMat.times(tsimMat)).getArray();
+            for (y = 0; y < xDim * yDim; y++) {
+            	for (x = 0; x < ntex; x++) {
+            		d[y][x] = dtsim[y][x] * d[y][x];
+            	}
+            }
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		tg[y][x] = 0.0;
+            	}
+            }
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		for (i = 0; i < ntex; i++) {
+            			tg[y][x] = tg[y][x] + d[x + y * xDim][i];
+            		}
+            	}
+            }
+        } // else !usechi2
+        
+        if (smooth.equals("gaussian")) {
+            hsz = (int)Math.max(Math.ceil(sigma * 3), Math.ceil(0.5 * 3));
+            sz = 2 * hsz + 1;
+            f = new double[sz][sz];
+            oeFilter(f, sigma, 0.5, 3, theta + Math.PI/2.0)	;
+        } // if (smooth.equals("gaussian"))
+        else if (smooth.equals("savgol")) {
+           
+        } // else if (smooth.equals("savgol"))
+    }
+    
+    private void oeFilter(double f[][], double sigmaX, double sigmaY, int support, double theta) {
+       int deriv = 0;
+       boolean dohil = false;
+       boolean dovis = false;
+       oeFilter(f, sigmaX, sigmaY, support, theta, deriv, dohil, dovis);
+    }
+    
+    /**
+     * Compute unit L1- norm 2D filter.
+     * The filter is a Gaussian in the x direction
+     * The filter is a Gaussian derivative with optional Hilbert transform in the y direction.
+     * The filter is zero-meaned if deriv > 0.
+     * @param f ouput square filter
+     * @param sigmaX
+     * @param sigmaY
+     * @param support Make filter +/- this many sigma
+     * @param theta Orientation of x axis, in radians
+     * @param deriv Degree of y derivative, one of {0, 1, 2}.
+     * @param dohil Do Hilbert transform in y direction?
+     * @param dovis Visualization for debugging?
+     */
+    private void oeFilter(double f[][], double sigmaX, double sigmaY, int support, double theta,
+    		int deriv, boolean dohil, boolean dovis) {
+    	int hsz;
+    	int sz;
+    	int maxsamples;
+    	int maxrate;
+    	int frate;
+    	int rate;
+    	int samples;
+    	double r;
+    	double dom[];
+    	double stepSize;
+    	int i;
+    	double sx[][];
+    	double sy[][];
+    	int x;
+    	int y;
+    	int mx[][];
+    	int my[][];
+    	int membership[][];
+    
+    	if ((deriv < 0) || (deriv > 2)) {
+    		MipavUtil.displayError("deriv = " + deriv + "in oeFilter");
+    		return;
+    	}
+    	
+    	// Calculate filter size, make sure it's odd
+    	 hsz = (int)Math.max(Math.ceil(sigmaX * support), Math.ceil(sigmaY * support));
+         sz = 2 * hsz + 1;
+         
+         // Sampling limits
+         // Max samples in each dimension
+         maxsamples = 1000;
+         // Maximum sampling rate
+         maxrate = 10;
+         // Over-sampling rate for function evaluation
+         frate = 10;
+         
+         // Calculate sampling rate and number of samples
+         rate = (int)Math.min(maxrate,  Math.max(1, Math.floor(maxsamples/sz)));
+         samples = sz * rate;
+         
+         // The 2D sampling grid
+         r = Math.floor(sz/2.0) + 0.5 * (1.0 - 1.0/rate);
+         dom = new double[samples];
+         dom[0] = -r;
+         dom[samples-1] = r;
+         stepSize = (2.0*r)/(samples - 1.0);
+         for (i = 1; i < samples-1; i++) {
+             dom[i] = -r + i * stepSize;	 
+         }
+         sx = new double[samples][samples];
+         sy = new double[samples][samples];
+         for (y = 0; y < samples; y++) {
+        	 for (x = 0; x < samples; x++) {
+        		 sx[y][x] = dom[x];
+        		 sy[y][x] = dom[y];
+        	 }
+         }
+         mx = new int[samples][samples];
+         my = new int[samples][samples];
+         for (y = 0; y < samples; y++) {
+        	 for (x = 0; x < samples; x++) {
+        		 mx[y][x] = (int)Math.round(sx[y][x]);
+        		 my[y][x] = (int)Math.round(sy[y][x]);
+        	 }
+         }
+         membership = new int[samples][samples];
+         for (y = 0; y < samples; y++) {
+        	 for (x = 0; x < samples; x++) {
+        	     membership[y][x] = (mx[y][x] + hsz + 1) + (my[y][x]+ hsz)*sz;	 
+        	 }
+         }
+    }
+    
+    private void conv2(double A[][], double B[][], double Cout[][]) {
+		double L[][];
+		double S[][];
+		int ml;
+		int nl;
+		int ms;
+		int ns;
+		int y;
+		int x;
+		int y2;
+		int x2;
+		double C[][];
+		double small;
+		int yoff;
+		int xoff;
+		if (A.length * A[0].length >= B.length * B[0].length) {
+			ml = A.length;
+			nl = A[0].length;
+			L = A;
+			ms = B.length;
+			ns = B[0].length;
+			S = B;
+		} else {
+			ml = B.length;
+			nl = B[0].length;
+			L = B;
+			ms = A.length;
+			ns = A[0].length;
+			S = A;
+		}
+		C = new double[ml + ms - 1][nl + ns - 1];
+		for (y = 0; y < ms; y++) {
+			for (x = 0; x < ns; x++) {
+				small = S[y][x];
+				if (small != 0.0) {
+					for (y2 = 0; y2 < ml; y2++) {
+						for (x2 = 0; x2 < nl; x2++) {
+							C[y + y2][x + x2] += L[y2][x2] * small;
+						}
+					}
+				}
+			}
+		}
+		yoff = (int) Math.floor(B.length / 2.0);
+		xoff = (int) Math.floor(B[0].length / 2.0);
+		for (y = 0; y < A.length; y++) {
+			for (x = 0; x < A[0].length; x++) {
+				Cout[y][x] = C[y + yoff][x + xoff];
+			}
+		}
+		return;
+	}
     
     
 }
