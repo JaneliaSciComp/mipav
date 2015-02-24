@@ -637,6 +637,17 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	int mx[][];
     	int my[][];
     	int membership[][];
+    	double su[][];
+    	double sv[][];
+    	double R;
+    	int fsamples;
+    	double fdom[];
+    	double gap;
+    	double fx[];
+    	double fy[];
+    	double denom;
+    	int xi[][];
+    	int yi[][];
     
     	if ((deriv < 0) || (deriv > 2)) {
     		MipavUtil.displayError("deriv = " + deriv + "in oeFilter");
@@ -684,10 +695,85 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         		 my[y][x] = (int)Math.round(sy[y][x]);
         	 }
          }
-         membership = new int[samples][samples];
+         membership = new int[sz][sz];
+         for (y = 0; y < sz; y++) {
+        	 for (x = 0; x < sz; x++) {
+        	     membership[y][x] = (mx[y][x] + hsz) + (my[y][x]+ hsz)*sz;	 
+        	 }
+         }
+         
+         // Rotate the 2D sampling grid by theta
+         su = new double[samples][samples];
+         sv = new double[samples][samples];
          for (y = 0; y < samples; y++) {
         	 for (x = 0; x < samples; x++) {
-        	     membership[y][x] = (mx[y][x] + hsz + 1) + (my[y][x]+ hsz)*sz;	 
+        		 su[y][x] = sx[y][x]*Math.sin(theta) + sy[y][x]*Math.cos(theta);
+        		 sv[y][x] = sx[y][x]*Math.cos(theta) - sy[y][x]*Math.sin(theta);
+        	 }
+         }
+         
+         if (dovis) {
+        	 
+         } // if (dovis)
+         
+         // Evaluate the function separably on a finer grid
+         // Radius of domain, enlarged by > sqrt(2)
+         R = r * Math.sqrt(2.0) * 1.01;
+         // Number of samples
+         fsamples = (int)Math.ceil(R * rate * frate);
+         // Must be odd
+         fsamples = fsamples + ((fsamples+1)%2);
+         // Domain for function evaluation
+         fdom = new double[fsamples];
+         fdom[0] = -R;
+         fdom[fsamples-1] = R;
+         // Distance between samples
+         gap = (2.0*R)/(fsamples - 1.0);
+         for (i = 1; i < fsamples-1; i++) {
+             fdom[i] = -R + i * gap;	 
+         } 
+         
+         // The function is a Gaussian in the x direction
+         fx = new double[fsamples];
+         denom = 2.0*sigmaX*sigmaX;
+         for (i = 0; i < fsamples; i++) {
+        	 fx[i] = Math.exp(-fdom[i]*fdom[i]/denom);
+         }
+         // .. and a Gaussian derivative in the y direction
+         fy = new double[fsamples];
+         denom = 2.0*sigmaY*sigmaY;
+         for (i = 0; i < fsamples; i++) {
+        	 fy[i] = Math.exp(-fdom[i]*fdom[i]/denom);
+         }
+         switch (deriv) {
+         case 1:
+        	 denom = sigmaY*sigmaY;
+        	 for (i = 0; i < fsamples; i++) {
+        		 fy[i] = fy[i] * (-fdom[i]/denom);
+        	 }
+        	 break;
+         case 2:
+        	 denom = sigmaY *sigmaY;
+        	 for (i = 0; i < fsamples; i++) {
+        		 fy[i] = fy[i] *(fdom[i]*fdom[i]/denom - 1.0);
+        	 }
+         } // switch(deriv)
+         // an optional Hilbert transform
+         if (dohil) {
+        	 
+         }
+         
+         // Evaluate the function with NN interpolation
+         xi = new int[samples][samples];
+         for (y = 0; y < samples; y++) {
+        	 for (x = 0; x < samples; x++) {
+        		 xi[y][x] =(int) Math.round(su[y][x]/gap) + (int)Math.floor(fsamples/2) + 1;
+        	 }
+         }
+         yi = new int[samples][samples];
+         for (y = 0; y < samples; y++) {
+        	 for (x = 0; x < samples; x++) {
+        		 yi[y][x] =(int) Math.round(sv[y][x]/gap) + (int)Math.floor(fsamples/2) + 1;
         	 }
          }
     }
