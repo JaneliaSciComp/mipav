@@ -1,10 +1,12 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.model.algorithms.filters.AlgorithmHilbertTransform;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBtoGray;
 import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
@@ -589,11 +591,115 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
             hsz = (int)Math.max(Math.ceil(sigma * 3), Math.ceil(0.5 * 3));
             sz = 2 * hsz + 1;
             f = new double[sz][sz];
-            oeFilter(f, sigma, 0.5, 3, theta + Math.PI/2.0)	;
+            oeFilter(f, sigma, 0.5, 3, theta + Math.PI/2.0);
+            fbRun(tg, f, tg);
         } // if (smooth.equals("gaussian"))
         else if (smooth.equals("savgol")) {
            
         } // else if (smooth.equals("savgol"))
+    }
+    
+    private void fbRun(double fim[][], double fb[][], double im[][]) {
+        // Run a filterbank on an image with reflected boundary conditions
+    	int maxsz;
+    	int r;
+    	double impad[][];
+    	double fimpad[][];
+    	maxsz = Math.max(fb.length, fb[0].length);
+    	
+    	// Pad the image
+    	r = (int)Math.floor(maxsz/2);
+    	impad = new double[im.length+2*r][im[0].length + 2*r];
+    	padReflect(impad, im, r);
+    	fimpad = new double[impad.length][impad[0].length];
+    	if (fb.length < 50) {
+    	    conv2(impad,fb,fimpad);	
+    	}
+    	else {
+    	    fftconv2(fimpad, impad, fb);	
+    	}
+    }
+    
+    private void fftconv2(double fim[][], double im[][], double f[][]) {
+    	double padf[][];
+    	int r;
+    	int y;
+    	int x;
+    	// Convolution using fft
+    	
+    	// Wrap the filter around the origin and pad with zeros
+    	padf = new double[im.length][im[0].length];
+    	r = (int)Math.floor(f.length/2);
+    	for (y = r; y < f.length; y++) {
+    		for (x = r; x < f[0].length; x++) {
+    			padf[y-r][x-r] = f[y][x];
+    		}
+    	}
+    	for (y = r+1; y < f.length; y++) {
+    		for (x = 0; x < r; x++) {
+    			padf[y - r - 1][im[0].length - r + x] = f[y][x];
+    		}
+    	}
+    }
+    
+    private void padReflect(double impad[][], double im[][], int r) {
+    	// Pad an image with a border of size r, and reflect the image into the border
+    	int x;
+    	int y;
+    	// Middle
+    	for (y = 0; y < yDim; y++) {
+    		for (x = 0; x < xDim; x++) {
+    			impad[y + r][x + r] = im[y][x];
+    		}
+    	}
+    	// Top
+    	for (y = 0; y < r; y++) {
+    		for (x = 0; x < xDim; x++) {
+    			impad[r - y - 1][x + r] = im[y][x];
+    		}
+    	}
+    	// Bottom
+    	for (y = yDim - r; y < yDim; y++) {
+    		for (x = 0; x < xDim; x++) {
+    			impad[2*yDim + r - y - 1][x + r] = im[y][x];
+    		}
+    	}
+    	// Left
+    	for (y = 0; y < yDim; y++) {
+    		for (x = 0; x < r; x++) {
+    			impad[y+r][r - x - 1] = im[y][x];
+    		}
+    	}
+    	// Right
+    	for (y = 0; y < yDim; y++) {
+    		for (x = xDim - r; x < xDim; x++) {
+    			impad[y+r][2*xDim + r - x - 1] = im[y][x];
+    		}
+    	}
+    	// Top-left
+    	for (y = 0; y < r; y++) {
+    		for (x = 0; x < r; x++) {
+    			impad[r - y - 1][r - x - 1] = im[y][x];
+    		}
+    	}
+    	// Top-right
+    	for (y = 0; y < r; y++) {
+    		for (x = xDim - r; x < xDim; x++) {
+    			impad[r - y - 1][2*xDim + r - x - 1] = im[y][x];
+    		}
+    	}
+    	// Bottom-left
+    	for (y = yDim - r; y < yDim; y++) {
+    		for (x = 0; x < r; x++) {
+    			impad[2*yDim + r - y - 1][r - x - 1] = im[y][x];
+    		}
+    	}
+    	// Bottom-right
+    	for (y = yDim - r; y < yDim; y++) {
+    		for (x = xDim - r; x < xDim; x++) {
+    			impad[2*yDim + r - y - 1][2*xDim + r - x - 1] = im[y][x];
+    		}
+    	}
     }
     
     private void oeFilter(double f[][], double sigmaX, double sigmaY, int support, double theta) {
@@ -608,7 +714,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
      * The filter is a Gaussian in the x direction
      * The filter is a Gaussian derivative with optional Hilbert transform in the y direction.
      * The filter is zero-meaned if deriv > 0.
-     * @param f ouput square filter
+     * @param f output [sz][sz] square filter
      * @param sigmaX
      * @param sigmaY
      * @param support Make filter +/- this many sigma
@@ -648,6 +754,14 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	double denom;
     	int xi[][];
     	int yi[][];
+    	double fprecursor[][];
+    	int v;
+    	double fsum;
+    	double fmean;
+    	double fsumabs;
+    	int paddedfsamples;
+    	double paddedfy[];
+    	AlgorithmHilbertTransform ht;
     
     	if ((deriv < 0) || (deriv > 2)) {
     		MipavUtil.displayError("deriv = " + deriv + "in oeFilter");
@@ -695,14 +809,15 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         		 my[y][x] = (int)Math.round(sy[y][x]);
         	 }
          }
-         membership = new int[sz][sz];
-         for (y = 0; y < sz; y++) {
-        	 for (x = 0; x < sz; x++) {
-        	     membership[y][x] = (mx[y][x] + hsz) + (my[y][x]+ hsz)*sz;	 
+         membership = new int[samples][samples];
+         for (y = 0; y < samples; y++) {
+        	 for (x = 0; x < samples; x++) {
+        	     membership[y][x] = (mx[y][x] + hsz + 1) + (my[y][x]+ hsz)*sz;	 
         	 }
          }
          
          // Rotate the 2D sampling grid by theta
+         
          su = new double[samples][samples];
          sv = new double[samples][samples];
          for (y = 0; y < samples; y++) {
@@ -760,7 +875,16 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
          } // switch(deriv)
          // an optional Hilbert transform
          if (dohil) {
-        	 
+        	 paddedfsamples = MipavMath.findMinimumPowerOfTwo(fsamples);
+        	 paddedfy = new double[2 * paddedfsamples];
+        	 for (i = 0; i < fsamples; i++) {
+        		 paddedfy[2*i] = fy[i];
+        	 }
+        	 ht = new AlgorithmHilbertTransform(paddedfy, paddedfsamples);
+        	 ht.run();
+        	 for (i = 0; i < fsamples; i++) {
+        		 fy[i] = paddedfy[2*i+1];
+        	 }
          }
          
          // Evaluate the function with NN interpolation
@@ -774,6 +898,55 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
          for (y = 0; y < samples; y++) {
         	 for (x = 0; x < samples; x++) {
         		 yi[y][x] =(int) Math.round(sv[y][x]/gap) + (int)Math.floor(fsamples/2) + 1;
+        	 }
+         }
+         fprecursor = new double[samples][samples];
+         for (y = 0; y < samples; y++) {
+        	 for (x = 0; x < samples; x++) {
+        	     fprecursor[y][x] = fx[xi[y][x]] * fy[yi[y][x]]; 
+        	 }
+         }
+         for (y = 0; y < samples; y++) {
+        	 for (x = 0; x < samples; x++) {
+        		 v = membership[y][x];
+        		 if (v < 1) {
+        			 continue;
+        		 }
+        		 if (v > sz*sz) {
+        			 continue;
+        		 }
+        		 f[(v-1)/sz][(v-1)%sz] += fprecursor[y][x];
+        	 }
+         }
+         
+         // Zero mean
+         if (deriv > 0) {
+	         fsum = 0.0;
+	         for (y = 0; y < sz; y++) {
+	        	 for (x = 0; x < sz; x++) {
+	        	     fsum += f[y][x];	 
+	        	 }
+	         }
+	         fmean = fsum/(sz*sz);
+	         for (y = 0; y < sz; y++) {
+	        	 for (x = 0; x < sz; x++) {
+	        		 f[y][x] -= fmean;
+	        	 }
+	         }
+         } // if (deriv > 0)
+         
+         // Unit L1-norm
+         fsumabs = 0.0;
+         for (y = 0; y < sz; y++) {
+        	 for (x = 0; x < sz; x++) {
+        		 fsumabs += Math.abs(f[y][x]);
+        	 }
+         }
+         if (fsumabs > 0.0) {
+        	 for (y = 0; y < sz; y++) {
+        		 for (x = 0; x < sz; x++) {
+        			 f[y][x] = f[y][x]/fsumabs;
+        		 }
         	 }
          }
     }
