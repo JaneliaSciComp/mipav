@@ -27,7 +27,7 @@ public class AlgorithmHilbertTransform extends AlgorithmBase {
 	// Dimension of z, must be a power of 2
 	private int n;
 	
-	AlgorithmHilbertTransform(double z[], int n) {
+	public AlgorithmHilbertTransform(double z[], int n) {
 	     this.z = z;
 	     this.n = n;
 	}
