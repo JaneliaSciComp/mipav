@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.algorithms.filters.AlgorithmHilbertTransform;
+import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBtoGray;
 import gov.nih.mipav.model.file.FileBase;
@@ -236,6 +237,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         bg = new double[yDim][xDim][numOrientations];
         gtheta = new double[numOrientations];
         cgmo(bg, gtheta, inputImage, diag*lowRadius, numOrientations, "savgol", diag*lowRadius);
+        
+        // Must read in 286,160 byte MATLAB file unitex_6_1_2_1.4_2_64.mat
     }
       
     private void cgmo(double cg[][][], double theta[], ModelImage image, double radius, int numOrientations,
@@ -421,6 +424,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         int hsz;
         int sz;
         double f[][];
+        double a[][] = null;
+        double b[][] = null;
+        double c[][] = null;
         
         if (tsim != null) {
     		usechi2 = false;
@@ -595,8 +601,263 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
             fbRun(tg, f, tg);
         } // if (smooth.equals("gaussian"))
         else if (smooth.equals("savgol")) {
-           
+        	a = new double[tg.length][tg[0].length];
+            fitparab(a, b, c, tg, sigma, sigma/4.0, theta);  
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		tg[y][x] = Math.max(0.0, a[y][x]);
+            	}
+            }
         } // else if (smooth.equals("savgol"))
+    }
+    
+    private void fitparab(double a[][], double b[][], double c[][], double z[][], double ra, double rb, double theta) {
+    	double ira2;
+    	double irb2;
+    	int wr;
+    	double sint;
+    	double cost;
+    	int h;
+    	int w;
+    	double d0;
+    	double d1;
+    	double d2;
+    	double d3;
+    	double d4;
+    	double v0;
+    	double v1;
+    	double v2;
+    	int u;
+    	int v;
+    	int x;
+    	int y;
+    	int xi;
+    	int yi;
+    	double di;
+    	double ei;
+    	double zi;
+    	double di2;
+    	double detA;
+    	double invA[][];
+    	double param[];
+    	// Fit cylindrical parabolas to elliptical patches of z at each pixel
+    	
+    	// Input
+    	// z Values to fit
+    	// ra, rb Radius of elliptical neighborhood, ra = major axis
+    	// theta Orientation of fit (i.e. of minor axis).
+    	
+    	// Output
+    	// a[][], b[][], c[][] Coefficients of fit: a + bx + cx^2
+    	
+    	ra = Math.max(1.5, ra);
+    	rb = Math.max(1.5, rb);
+    	ira2 = 1.0/(ra*ra);
+    	irb2 = 1.0/(rb*rb);
+    	wr = (int)Math.floor(Math.max(ra,rb));
+    	sint = Math.sin(theta);
+    	cost = Math.cos(theta);
+    	
+    	// Compute the interior quickly with convolutions
+    	savgol(a, z, 2, 1, ra, rb, theta);
+    	if (b != null) {
+    		savgol(b, z, 2, 2, ra, rb, theta);	
+    	}
+    	if (c != null) {
+    		savgol(c, z, 2, 3, ra, rb, theta);		
+    	}
+    	
+    	// Recompute the border since the convolution screws it up
+    	h = z.length;
+    	w = z[0].length;
+    	for (x = 1; x <= w; x++) {
+    		for (y = 1; y <= h; y++) {
+    			if ((x > wr) && (x <= w-wr) && (y > wr) && (y <= h-wr)) {
+    				continue;
+    			}
+    			d0 = 0.0;
+    			d1 = 0.0;
+    			d2 = 0.0;
+    			d3 = 0.0;
+    			d4 = 0.0;
+    			v0 = 0.0;
+    			v1 = 0.0;
+    			v2 = 0.0;
+    			for (u = -wr; u <= wr; u++) {
+    				xi = x + u;
+    				if ((xi < 1) || (xi > w)) {
+    					continue;
+    				}
+    				for (v = -wr; v <= wr; v++) {
+    					yi = y + v;
+    					if ((yi < 1) || (yi > h)) {
+    						continue;
+    					}
+    					// Distance along major axis
+    					di = -u*sint + v*cost;
+    					// Distance along minor axis (at theta)
+    					ei = u * cost + v * sint;
+    					if (di*di*ira2 + ei*ei*irb2 >1) {
+    						continue;
+    					}
+    					zi = z[yi-1][xi-1];
+    					di2 = di*di;
+    					d0 = d0 + 1;
+    					d1 = d1 + di;
+    					d2 = d2 + di2;
+    					d3 = d3 + di*di2;
+    					d4 = d4 + di2*di2;
+    					v0 = v0 + zi;
+    					v1 = v1 + zi*di;
+    					v2 = v2 + zi*di2;
+    				}
+    			}
+    			
+    			// Much faster to do 3x3 matrix inverse manually
+    			detA = -d2*d2*d2 + 2*d1*d2*d3 - d0*d3*d3 - d1*d1*d4 + d0*d2*d4;
+    			invA = new double[3][3];
+    			invA[0][0] = -d3*d3+d2*d4;
+    			invA[0][1] = d2*d3-d1*d4;
+    			invA[0][2] = -d2*d2+d1*d3;
+    			invA[1][0] = d2*d3-d1*d4;
+    			invA[1][1] = -d2*d2+d0*d4;
+    			invA[1][2] = d1*d2-d0*d3;
+    			invA[2][0] = -d2*d2+d1*d3;
+    			invA[2][1] = d1*d2-d0*d3;
+    			invA[2][2] = -d1*d1+d0*d2;
+    			for (y = 0; y < 3; y++) {
+    				for (x = 0; x < 3; x++) {
+    					invA[y][x] = invA[y][x]/(detA + epsilon);
+    				}
+    			}
+    			param = new double[3];
+    			param[0] = invA[0][0]*v0 + invA[0][1]*v1 + invA[0][2]*v2;
+    			a[y-1][x-1] = param[0];
+    			if (b != null) {
+    				param[1] = invA[1][0]*v0 + invA[1][1]*v1 + invA[1][2]*v2;
+        			b[y-1][x-1] = param[1];	
+    			}
+    			if (c != null) {
+    				param[2] = invA[2][0]*v0 + invA[2][1]*v1 + invA[2][2]*v2;
+        			c[y-1][x-1] = param[2];	
+    			}
+    		}
+    	}
+    }
+    
+    private void savgol(double c[][], double z[][], int d, int k, double ra, double rb, double theta) {
+        // Directional 2D Savitsky-Golay filtering with elliptical support.
+    	// The computation is done with a convolution, so the boundary of the output will be biased.
+    	// The boundary is of size floor(max(ra,rb)).
+    	
+    	// Input
+    	// z Values to fit
+    	// d Degree of fit, usually 2 or 4.
+    	// k Coefficient to return in [1,d+1], 1 for smoothing.
+    	// ra, rb Radius of elliptical neighborhood, ra = major axis.
+    	// theta Orientation of fit (1.e. of minor axis).
+    	
+    	// Output 
+    	// c[0] COefficient of fit
+    	double ira2;
+    	double irb2;
+    	int wr;
+    	int wd;
+    	double sint;
+    	double cost;
+    	double filt[][][];
+    	double filtk[][];
+    	double xx[];
+    	int u;
+    	int v;
+    	double ai;
+    	double bi;
+    	double A[][];
+    	double yy[][];
+    	int i;
+    	int j;
+    	Matrix matA;
+    	Matrix matyy;
+    	double prod[][];
+    	int x;
+    	int y;
+    	
+    	if (d < 0) {
+    		MipavUtil.displayError("d = " + d + " is invalid in savgol");
+    		return;
+    	}
+    	if ((k < 1) || ( k > d+1)) {
+    		MipavUtil.displayError("k = " + k + " is invalid in savgol");
+    		return;
+    	}
+    	
+    	ra = Math.max(1.5, ra);
+    	rb = Math.max(1.5, rb);
+    	ira2 = 1.0/(ra*ra);
+    	irb2 = 1.0/(rb*rb);
+    	wr = (int)Math.floor(Math.max(ra,rb));
+    	wd = 2*wr+1;
+    	sint = Math.sin(theta);
+    	cost = Math.cos(theta);
+    	
+    	// 1. Compute linear filters for coefficients
+    	// (a) Compute inverse of least-squares problem matrix
+    	filt = new double[wd][wd][d+1];
+    	xx = new double[2*d+1];
+    	for (u = -wr; u <= wr; u++) {
+    		for (v = -wr; v <= wr; v++) {
+    			// Distance along major axis
+    			ai = -u*sint + v*cost;
+    			// Distance along minor axis
+    			bi = u*cost + v*sint;
+    			if (ai*ai*ira2 + bi*bi*irb2 > 1) {
+    				continue;
+    			}
+    			xx[0] = xx[0] + 1;
+    			for (i = 1; i <= 2*d; i++) {
+    			    xx[i] = xx[i] + Math.pow(ai,i);	
+    			}
+    		}
+    	}
+    	A = new double[d+1][d+1];
+    	for (i = 0; i <= d; i++) {
+    		for (j = i; j <= i+d; j++) {
+    		    A[j][i] = xx[j];	
+    		}
+    	}
+    	matA = new Matrix(A);
+    	A = (matA.inverse()).getArray();
+    	// (b) solve least-squares problem for delta function at each pixel
+    	for (u = -wr; u <= wr; u++) {
+    		for (v = -wr; v <= wr; v++) {
+    		    yy = new double[d+1][1];
+    		    // Distance along major axis
+    		    ai = -u*sint + v*cost;
+    		    // Distance along minor axis
+    		    bi = u*cost + v*sint;
+    		    if (ai*ai*ira2 + bi*bi*irb2 > 1) {
+    		    	continue;
+    		    }
+		    	yy[0][0] = 1;
+		    	for (i = 1; i <= d; i++) {
+		    		yy[i][0] = Math.pow(ai,i); 
+		    	}
+		    	matA = new Matrix(A);
+		    	matyy = new Matrix(yy);
+		    	prod = (matA.times(matyy)).getArray();
+		    	for (i = 0; i < d+1; i++) {
+		    		filt[v+wr][u+wr][i] = prod[i][0];
+		    	}
+    		}
+    	}
+    	// 2. Apply the filter to get te fit coefficient at each pixel
+    	filtk = new double[wd][wd];
+    	for (y = 0; y < wd; y++) {
+    		for (x = 0; x < wd; x++) {
+    			filtk[y][x] = filt[y][x][k-1];
+    		}
+    	}
+    	conv2(z, filtk, c);
     }
     
     private void fbRun(double fim[][], double fb[][], double im[][]) {
@@ -605,6 +866,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	int r;
     	double impad[][];
     	double fimpad[][];
+    	int y;
+    	int x;
     	maxsz = Math.max(fb.length, fb[0].length);
     	
     	// Pad the image
@@ -618,6 +881,11 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	else {
     	    fftconv2(fimpad, impad, fb);	
     	}
+    	for (y = r; y < impad.length - r; y++) {
+    	    for (x = r; x < impad[0].length - r; x++) {
+    	    	fim[y-r][x-r] = fimpad[y][x];
+    	    }
+    	}
     }
     
     private void fftconv2(double fim[][], double im[][], double f[][]) {
@@ -625,6 +893,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	int r;
     	int y;
     	int x;
+    	FFTUtility fft;
+    	int i;
     	// Convolution using fft
     	
     	// Wrap the filter around the origin and pad with zeros
@@ -640,6 +910,79 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     			padf[y - r - 1][im[0].length - r + x] = f[y][x];
     		}
     	}
+    	for (y = 0; y < r; y++) {
+    		for (x = r+1; x < f[0].length; x++) {
+    			padf[im.length - r + y][x - r - 1] = f[y][x];
+    		}
+    	}
+    	for (y = 0; y < r; y++) {
+    		for (x = 0; x < r; x++) {
+    			padf[im.length - r + y][im[0].length - r + x] = f[y][x];
+    		}
+    	}
+    	
+    	// Magic
+    	double imFFT[] = new double[im.length * im[0].length];
+    	double imFFTImag[] = new double[im.length * im[0].length];
+    	double padfFFT[] = new double[im.length * im[0].length];
+    	double padfFFTImag[] = new double[im.length * im[0].length];
+    	double prod[] = new double[im.length * im[0].length];
+    	double prodImag[] = new double[im.length * im[0].length];
+    	for (y = 0; y < im.length; y++) {
+    		for (x = 0; x < im[0].length; x++) {
+    			imFFT[x + y * im[0].length] = im[y][x];
+    			padfFFT[x + y * im[0].length] = padf[y][x];
+    		}
+    	}
+    	fft = new FFTUtility(imFFT, imFFTImag, im.length, im[0].length, 1,
+				-1, FFTUtility.FFT);
+		fft.setShowProgress(false);
+		fft.run();
+		fft.finalize();
+		fft = null;
+		fft = new FFTUtility(imFFT, imFFTImag, 1, im.length, im[0].length,
+				-1, FFTUtility.FFT);
+		fft.setShowProgress(false);
+		fft.run();
+		fft.finalize();
+		fft = null;
+		
+		fft = new FFTUtility(padfFFT, padfFFTImag, im.length, im[0].length, 1,
+				-1, FFTUtility.FFT);
+		fft.setShowProgress(false);
+		fft.run();
+		fft.finalize();
+		fft = null;
+		fft = new FFTUtility(padfFFT, padfFFTImag, 1, im.length, im[0].length,
+				-1, FFTUtility.FFT);
+		fft.setShowProgress(false);
+		fft.run();
+		fft.finalize();
+		fft = null;
+		
+		for (i = 0; i < im.length * im[0].length; i++) {
+			prod[i] = imFFT[i]*padfFFT[i] - imFFTImag[i]*padfFFTImag[i];
+			prodImag[i] = imFFT[i]*padfFFTImag[i] + imFFTImag[i]*padfFFT[i];
+		}
+		// Inverse fft
+		fft = new FFTUtility(prod, prodImag, im.length, im[0].length, 1,
+				1, FFTUtility.FFT);
+		fft.setShowProgress(false);
+		fft.run();
+		fft.finalize();
+		fft = null;
+		fft = new FFTUtility(prod, prodImag, 1, im.length, im[0].length,
+				1, FFTUtility.FFT);
+		fft.setShowProgress(false);
+		fft.run();
+		fft.finalize();
+		fft = null;
+		for (y = 0; y < im.length; y++) {
+			for (x = 0; x < im[0].length; x++) {
+				fim[y][x] = prod[x + y * im[0].length];
+			}
+		}
+		return;
     }
     
     private void padReflect(double impad[][], double im[][], int r) {
