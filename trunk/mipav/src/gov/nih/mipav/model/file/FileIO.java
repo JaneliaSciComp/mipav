@@ -637,7 +637,7 @@ public class FileIO {
             final int[] zOri = new int[nListImages]; // sorted image orientation values (ie., image z-axis)
             final int[] zOri4D = new int[nListImages]; // sorted image orientation values taking into account
                                                        // overlapping time zones
-            final int[] zInst = new int[nListImages]; // sorted image instance values
+            int[] zInst = new int[nListImages]; // sorted image instance values
             final float[] zOrients = new float[nListImages]; // image orientation values as read in.
             final float[] instanceNums = new float[nListImages]; // image instance numbers as read in.
 
@@ -832,11 +832,31 @@ public class FileIO {
                     if ( (studyDescription != null && studyDescription.toUpperCase().contains("DTI"))
                             || (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI"))) {
                         // sortDti sets indices values
-                        dtiSliceCounter = sortDtiDicomData(studyDescription, seriesDescription, scannerType, tagTable, savedFileInfos, indices,
-                                instanceNums.length, zInst);
+
+                        // be able to revert instance number sorting if things go really wrong in dti sort
+                        final int[] prevZInst = new int[zInst.length];
+                        System.arraycopy(zInst, 0, prevZInst, 0, zInst.length);
+
+                        try {
+                            dtiSliceCounter = sortDtiDicomData(studyDescription, seriesDescription, scannerType, tagTable, savedFileInfos, indices,
+                                    instanceNums.length, zInst);
+                        } catch (final ArrayIndexOutOfBoundsException e) {
+                            e.printStackTrace();
+                            System.err.println("DTI sorting failed. Reverting to default 3D sorting.");
+                            dtiSliceCounter = -1;
+                            isDTISort = false;
+                            zInst = prevZInst;
+                        } catch (final NullPointerException e) {
+                            e.printStackTrace();
+                            System.err.println("DTI sorting failed. Reverting to default 3D sorting.");
+                            dtiSliceCounter = -1;
+                            isDTISort = false;
+                            zInst = prevZInst;
+                        }
 
                         if (dtiSliceCounter == instanceNums.length) {
                             // all in one 4D gradient/bval bin, load as 3D
+                            isDTISort = false;
                             dtiSliceCounter = -1;
                         }
                     }
