@@ -6513,7 +6513,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         }
         gamma = new double[2*wr+1][2*wr+1];
         for (y = 0; y < 2*wr+1; y++) {
-        	for (x = 0; x < 2*wr+1; y++) {
+        	for (x = 0; x < 2*wr+1; x++) {
         		gamma[y][x] = Math.atan2(ygrid[y][x], xgrid[y][x]);
         	}
         }
