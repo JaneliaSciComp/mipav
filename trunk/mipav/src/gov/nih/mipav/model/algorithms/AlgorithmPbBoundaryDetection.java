@@ -118,6 +118,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         	theta = new double[yDim][xDim];
         	pbBGTG(pb, theta);
         }
+        
+        setCompleted(true);
+        return;
     }
     
     
@@ -132,6 +135,14 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
       	double gtheta[];
       	AlgorithmChangeType changeTypeAlgo;
       	FileInfoBase[] fileInfo;
+      	double fb[][];
+      	double tex[][];
+      	int sliceSize;
+      	double buffer[];
+      	double im[][];
+      	int x;
+      	int y;
+      	double fim[][];
         
         // beta from logistic fits (trainBGTG.m)
         if ((lowRadius == 0.01) && (highRadius == 0.02)) {
@@ -253,11 +264,33 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         gtheta = new double[numOrientations];
         cgmo(bg, gtheta, inputImage, diag*lowRadius, numOrientations, "savgol", diag*lowRadius);
         
+        // Compute texture gradient
         // Must read in 286,160 byte MATLAB file unitex_6_1_2_1.4_2_64.mat
-        readFile();
+        fb = new double[13][13];
+        tex = new double[64][24];
+        readFile(fb, tex);
+        
+        sliceSize = xDim * yDim;
+        buffer = new double[sliceSize];
+        try {
+        inputImage.exportData(0, sliceSize, buffer);
+        }
+        catch(IOException e) {
+        	e.printStackTrace();
+        }
+        
+        im = new double[yDim][xDim];
+        for (y = 0; y < yDim; y++) {
+        	for (x = 0; x < xDim; x++) {
+        		im[y][x] = buffer[x + y * xDim];
+        	}
+        }
+        
+        fim = new double[yDim][xDim];
+        fbRun(fim, fb, im);
     }
       
-    private void readFile() {
+    private void readFile(double fb[][], double tex[][]) {
     	/** 8 bit, signed */
     	final int miINT8 = 1;
     	/** 8 bit, unsigned */
@@ -326,42 +359,30 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         byte firstEndianByte;
         byte secondEndianByte;
         boolean endianess = FileBase.BIG_ENDIAN;
-        FileInfoMATLAB fileInfo;
         byte firstByte;
         byte secondByte;
         byte thirdByte;
         byte fourthByte;
-        boolean level5Format;
         String headerTextField;
         long subsystemSpecificDataOffset;
         int version;
         long nextElementAddress;
         int elementNumber = 0;
-        boolean isCompressed;
         int dataType;
         int elementBytes;
         int padBytes;
         byte buffer[] = null;
-        Inflater zlibDecompresser = null;
-        int bufSize;
-        boolean memoryError;
-        byte buf[] = null;
-        byte[] decomp = null;
-        int resultLength = 0;
-        String uncompressedName = null;
-        File ufile = null;
-        int st;
         int[] imageExtents = null;
-        int imagesFound = 0;
         int logicalFields = 0;
         int arrayFlagsDataType;
         int arrayFlagsBytes;
         int arrayFlags;
         int arrayClass;
-        FileInfoMATLAB fileInfo2 = null;
+        @SuppressWarnings("unused")
         boolean complexFlag = false;
         @SuppressWarnings("unused")
         boolean globalFlag = false;
+        @SuppressWarnings("unused")
         boolean logicalFlag = false;
         int dimensionsArrayDataType;
         int dimensionsArrayBytes;
@@ -369,8 +390,6 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         int structureDimensions[];
         int i, j;
         int imageLength = 1;
-        int imageSlices = 1;
-        int imageSlices2 = 1;
         int newExtents[] = null;
         int arrayNameDataType;
         int arrayNameBytes;
@@ -393,33 +412,16 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         int numericArrayNameDataType;
         int numericArrayNameBytes;
         String numericArrayName;
-        boolean isVOI = false;
-        boolean isVOI2 = false;
-        int nonLogicalField = 0;
         int adjustedFieldDim;
-        String voiFieldName = null;
-        String voi2FieldName = null;
-        int maskExtents[] = null;
-        FileInfoMATLAB maskFileInfo = null;
-        FileInfoMATLAB maskFileInfo2 = null;
         int realDataType;
         int realDataBytes;
-        int imaginaryDataType;
-        int imaginaryDataBytes;
         boolean haveSmallRealData;
-        boolean haveSmallImaginaryData;
-        boolean isColor = false;
         int sliceSize;
-        ModelImage maskImage = null;
         byte tBuffer[] = null;
         int numberSlices;
         int x;
         int y;
         int s;
-        ModelImage image = null;
-        float realBuffer[] = null;
-        float imaginaryBuffer[] = null;
-        boolean logMagDisplay = Preferences.is(Preferences.PREF_LOGMAG_DISPLAY);
         short shortBuffer[] = null;
         int index;
         int shortNumber;
@@ -442,36 +444,16 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         int tmpInt;
         long tmpLong;
         int intBuffer[] = null;
-        double realDBuffer[] = null;
-        double imaginaryDBuffer[] = null;
         long longBuffer[] = null;
         float floatBuffer[] = null;
         double doubleBuffer[] = null;
-        ModelImage maskImage2 = null;
-        ModelImage image2 = null;
-        int totalNumber = 1;
         String str;
-        int shortMin;
-        int shortMax;
-        int shortRange;
-        int maxColorIndex;
-        double scale;
-        double scaledIndex;
-        int lowIndex;
-        int highIndex;
-        double lowFraction;
-        double highFraction;
-        int totalNumber2;
-        ViewJFrameImage vmFrame = null;
-        ViewJFrameImage vmFrame2 = null;
-        ViewJFrameImage vFrame2 = null;
         
         try {
 	        fileDir = "C:/segbench/Textons/";
 	        fileName = "unitex_6_1_2_1.4_2_64.mat";
 	        file = new File(fileDir + fileName);
 	        raFile = new RandomAccessFile(file, "r");
-	        st = fileName.lastIndexOf(".");
 	        fileLength = raFile.length();
 	        Preferences.debug("fileLength = " + fileLength + "\n", Preferences.DEBUG_FILEIO);
 	        raFile.seek(126L);
@@ -490,9 +472,6 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 	        else {
 	        	raFile.close();
 	        }
-	        
-	        fileInfo = new FileInfoMATLAB(fileName, fileDir, FileUtility.MATLAB); // dummy fileInfo
-            fileInfo.setEndianess(endianess);
             
             raFile.seek(0L);
             firstByte = raFile.readByte();
@@ -501,22 +480,17 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
             fourthByte = raFile.readByte();
             if ((firstByte == 0) || (secondByte == 0) || (thirdByte == 0) || (fourthByte == 0)) {
             	 // MATLAB uses level 4 format
-                 level5Format = false;	
                  Preferences.debug("The MATLAB file uses level 4 format\n", Preferences.DEBUG_FILEIO);
             }
             else {
             	// MATLAB uses level 5 format
-            	level5Format = true;
             	Preferences.debug("The MATLAB file uses level 5 format\n", Preferences.DEBUG_FILEIO);
             }
-            
-            fileInfo.setLevel5Format(level5Format);
             
             raFile.seek(0L);
             
             headerTextField = getString(116);
             Preferences.debug("Header text field = " + headerTextField.trim() + "\n", Preferences.DEBUG_FILEIO);
-            fileInfo.setHeaderTextField(headerTextField);
             
             // Location 116
             subsystemSpecificDataOffset = getLong(endianess);
@@ -528,7 +502,6 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
             else {
             	Preferences.debug("Subystem specific data stored at location " + subsystemSpecificDataOffset + "\n", 
             			Preferences.DEBUG_FILEIO);
-            	fileInfo.setSubsystemSpecificDataOffset(subsystemSpecificDataOffset);
             }
             
             // Location 124
@@ -540,13 +513,11 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
             	Preferences.debug("The version number = " + version + " instead of the expected 256\n", 
             			Preferences.DEBUG_FILEIO);
             }
-            fileInfo.setVersion(version);
             
          // Go to first data element location
             nextElementAddress = 128L;
             while (nextElementAddress < fileLength) {
             	elementNumber++;
-            	isCompressed = false;
                 raFile.seek(nextElementAddress);
                 dataType = getInt(endianess);
                 if ((dataType & 0xffff0000) != 0) {
@@ -571,86 +542,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                     }
                 }
                 Preferences.debug("nextElementAddress = " + nextElementAddress + "\n", Preferences.DEBUG_FILEIO);
-                if (dataType == miCOMPRESSED) {
-                	fireProgressStateChanged("Decompressing element number " + String.valueOf(elementNumber));
-                	isCompressed = true;
-                	Preferences.debug("Data type = miCOMPRESSED\n", Preferences.DEBUG_FILEIO);
-                	Preferences.debug("Bytes in data element = " + elementBytes + "\n", Preferences.DEBUG_FILEIO);
-                	buffer = new byte[elementBytes];
-                	raFile.read(buffer);
-                	zlibDecompresser = new Inflater();
-                	zlibDecompresser.setInput(buffer);
-                	
-                	// Create an expandable byte array to hand the decompressed data
-                	ByteArrayOutputStream bos = new ByteArrayOutputStream(buffer.length);
-                	
-                	// Decompress the data
-                	// Let buf be the smallest power of 2 which is at least 65536 and twice the uncompressed
-                	// size so as to balance the need for speed against excessive memory use
-                	// The maximum integer value is 2**31 -1, so limit size to 2**30.
-                	// Cast elementBytes to long in while loop in case elementBytes >= 2**30.
-                	bufSize = 65536;
-                	while ((bufSize < 2*(long)elementBytes) && (bufSize < (int)Math.pow(2,30))){
-                		bufSize *= 2;
-                	}
-                	memoryError = true;
-                	while (memoryError) {
-	                	try {
-	                	     buf = new byte[bufSize];
-	                	     memoryError = false;
-	                	}
-	                	catch (OutOfMemoryError e) {
-	                	    bufSize = bufSize/2;
-	                	    memoryError = true;
-	                	}
-                	}
-                	try {
-                		while (true) {
-                			int count = zlibDecompresser.inflate(buf);
-                			if (count > 0) {
-                				bos.write(buf, 0 , count);
-                			}
-                			else if (count == 0 && zlibDecompresser.finished()) {
-                	            break;
-                			} else  {
-                				throw new RuntimeException("bad zip data, size:" + buffer.length);
-                			} 
-                		}
-                	} catch (Throwable t) {
-                		throw new RuntimeException(t);
-                	} finally {
-                		zlibDecompresser.end();
-                	}
-                	// Get the decompressed data
-                    decomp = bos.toByteArray();
-                    resultLength = decomp.length;
-                    uncompressedName = fileDir + fileName.substring(0, st) + "uncompressed.mat";
-                    ufile = new File(uncompressedName);
-                    raFile = new RandomAccessFile(ufile, "rw");
-                    raFile.setLength(0);
-                    raFile.write(decomp, 0, resultLength);
-                    decomp = null;
-                    raFile.seek(0L);
-                    dataType = getInt(endianess);
-                    if ((dataType & 0xffff0000) != 0) {
-                    	// Small Data Element Format
-                    	elementBytes = (dataType & 0xffff0000) >>> 16;
-                    	dataType = dataType & 0xffff;
-                    }
-                    else {
-                        elementBytes = getInt(endianess);
-                    }
-                } // if (dataTypeCOMPRESSED)
+                
                 fireProgressStateChanged("Reading element number " + String.valueOf(elementNumber));
-                if (elementNumber == 1) {
-                    fireProgressStateChanged(50);
-                }
-                else if (elementNumber == 2) {
-                	fireProgressStateChanged(75);
-                }
-                else {
-                	fireProgressStateChanged(85);
-                }
+                
                 switch(dataType) {
                 case miINT8:
                 	Preferences.debug("Data type = miINT8\n", Preferences.DEBUG_FILEIO);
@@ -696,7 +590,6 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                 	Preferences.debug("Data type = miMATRIX\n", Preferences.DEBUG_FILEIO);
                 	Preferences.debug("Bytes in data element = " + elementBytes + "\n", Preferences.DEBUG_FILEIO);
                 	imageExtents = null;
-                	imagesFound++;
                 	logicalFields = 0;
                 	arrayFlagsDataType = getInt(endianess);
                 	if (arrayFlagsDataType == miUINT32) {
@@ -766,25 +659,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                     	Preferences.debug("Array type is an illegal = " + arrayClass + "\n", Preferences.DEBUG_FILEIO);
                     }
                     if (arrayClass == mxCHAR_CLASS) {
-                    	imagesFound--;
-                    	if (isCompressed) {
-                        	raFile.close();
-        	                try {
-        	                    ufile.delete();
-        	                } catch (final SecurityException sc) {
-        	                    MipavUtil.displayError("Security error occurs while trying to delete " + uncompressedName);
-        	                }
-                        	raFile = new RandomAccessFile(file, "r");
-                        }
                     	continue;
                     }
-                    if (imagesFound == 2) {
-                    	fileInfo2 = new FileInfoMATLAB(fileName + "_2", fileDir, FileUtility.MATLAB); // dummy fileInfo
-                        fileInfo2.setEndianess(endianess);
-                        fileInfo2.setLevel5Format(level5Format);
-                        fileInfo2.setHeaderTextField(headerTextField);
-                        fileInfo2.setVersion(version);
-                    }
+                    
                     if ((arrayFlags & 0x00000800) != 0) {
                     	complexFlag = true;
                     	Preferences.debug("Complex flag is set\n", Preferences.DEBUG_FILEIO);
@@ -846,12 +723,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                 	else { // arrayClass != mxSTRUCT_CLASS
 	                	imageExtents = new int[nDim];
 	                	imageLength = 1;
-	                	if (imagesFound == 1) {
-	                		imageSlices = 1;
-	                	}
-	                	else {
-	                		imageSlices2 = 1;
-	                	}
+	                	
 	                	for (i = 0; i < nDim; i++) {
 	                		if (i == 0) {
 	                			imageExtents[1] = getInt(endianess);
@@ -867,26 +739,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 	                		    		Preferences.DEBUG_FILEIO);
 	                		}
 	                		imageLength = imageLength * imageExtents[i];
-	                		if (i > 1) {
-	                			if (imagesFound == 1) {
-	                				imageSlices = imageSlices * imageExtents[i];
-	                			}
-	                			else {
-	                				imageSlices2 = imageSlices2 * imageExtents[i];
-	                			}
-	                		}
 	                	}
 	                	if ((imageExtents[0] == 1) || (imageExtents[1] == 1)) {
-	                		imagesFound--;
-	                    	if (isCompressed) {
-	                        	raFile.close();
-	        	                try {
-	        	                    ufile.delete();
-	        	                } catch (final SecurityException sc) {
-	        	                    MipavUtil.displayError("Security error occurs while trying to delete " + uncompressedName);
-	        	                }
-	                        	raFile = new RandomAccessFile(file, "r");
-	                        }
 	                    	continue;	
 	                	}
 	                	if ((nDim == 4) && (imageExtents[2] == 1)) {
@@ -900,12 +754,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 	                		imageExtents[1] = newExtents[1];
 	                		imageExtents[2] = newExtents[2];
 	                	}
-	                	if (imagesFound == 1) {
-	                		fileInfo.setExtents(imageExtents);
-	                	}
-	                	else {
-	                		fileInfo2.setExtents(imageExtents);
-	                	}
+	                	
                 	} // else arrayClass != mxSTRUCT_CLASS
                 	if ((dimensionsArrayBytes % 8) != 0) {
                 		// Skip over padding bytes
@@ -939,12 +788,6 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                     	}
                     }
                     Preferences.debug("Array name = " + arrayName + "\n", Preferences.DEBUG_FILEIO);
-                    if (imagesFound == 1) {
-                	    fileInfo.setArrayName(arrayName);
-                	}
-                	else {
-                        fileInfo2.setArrayName(arrayName);
-                	}
                     
                     if (arrayClass == mxSTRUCT_CLASS) {
                         // The field name length subelement always uses the compressed data element format
@@ -1003,12 +846,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                       	    	raFile.readByte();
                       	    }
                       	}
-                      	if (imagesFound == 1) {
-                      		fileInfo.setFieldNames(fieldNames);
-                      	}
-                      	else {
-                      		fileInfo2.setFieldNames(fieldNames);
-                      	}
+                      	
                       	if ((fieldNamesBytes % 8) != 0) {
                       	    padBytes = 8 - (fieldNamesBytes % 8);
                       	    for (i = 0; i < padBytes; i++) {
@@ -1113,39 +951,10 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                           	logicalFlag = true;
                           	Preferences.debug("Logical flag is set\n", Preferences.DEBUG_FILEIO);
                           	logicalFields++;
-                          	if (imagesFound == 1) {
-                          	    isVOI = true;
-                          	}
-                          	else {
-                          		isVOI2 = true;
-                          	}
                           }
                           else {
                           	logicalFlag = false;
                           	Preferences.debug("Logical flag is not set\n", Preferences.DEBUG_FILEIO);
-                          	if (imagesFound == 1) {
-                          	    isVOI = false;
-                          	}
-                          	else {
-                          		isVOI2 = false;
-                          	}
-                          }
-                          nonLogicalField = field - logicalFields;
-                          if ((imagesFound == 1) && (fieldNumber == 2) && (fieldNames != null) && logicalFlag) {
-                          	if (field == 0) {
-                          		voiFieldName = fieldNames[0];
-                          	}
-                          	else {
-                          		voiFieldName = fieldNames[1];
-                          	}
-                          }
-                          if ((imagesFound == 2) && (fieldNumber == 2) && (fieldNames != null) && logicalFlag) {
-                          	if (field == 0) {
-                          		voi2FieldName = fieldNames[0];
-                          	}
-                          	else {
-                          		voi2FieldName = fieldNames[1];
-                          	}
                           }
                           
                           // 4 undefined bytes
@@ -1175,98 +984,33 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                       				Preferences.DEBUG_FILEIO);
                       	}
                       	
-                      	if (logicalFlag) {
-                      		// MATLAB function used to create VOIs (roipoly) always returns a 2D mask
-                      		maskExtents = new int[nDim];
-                      		for (i = 0; i < nDim; i++) {
-                      			maskExtents[i] = getInt(endianess);
-                      		}
-                      		if (imageExtents != null) {
-  	                    		for (i = 0; i < 2; i++) {
-  	                    		    if (imageExtents[i] != maskExtents[i]) {
-  	                    		    	if (imagesFound == 1) {
-  	                    		    	    isVOI = false;
-  	                    		    	}
-  	                    		    	else {
-  	                    		    		isVOI2 = false;
-  	                    		    	}
-  	                    		    }
-  	                    		}
-                      		}
-                      		if (imagesFound == 1) {
-                      			maskFileInfo = new FileInfoMATLAB(fileName + "_mask", fileDir, FileUtility.MATLAB); // dummy fileInfo
-                                  maskFileInfo.setEndianess(endianess);
-                                  maskFileInfo.setLevel5Format(level5Format);
-                                  maskFileInfo.setHeaderTextField(headerTextField);
-                                  maskFileInfo.setVersion(version);
-                                  maskFileInfo.setExtents(maskExtents);
-                                  maskFileInfo.setArrayName(arrayName);
-                      		}
-                      		else {
-                      			maskFileInfo2 = new FileInfoMATLAB(fileName + "_2_mask", fileDir, FileUtility.MATLAB); // dummy fileInfo
-                                  maskFileInfo2.setEndianess(endianess);
-                                  maskFileInfo2.setLevel5Format(level5Format);
-                                  maskFileInfo2.setHeaderTextField(headerTextField);
-                                  maskFileInfo2.setVersion(version);
-                                  maskFileInfo2.setExtents(maskExtents);
-                                  maskFileInfo2.setArrayName(arrayName);	
-                      		}
-                      	} // if (logicalFlag)
-                      	else { // !logicalFlag
-  	                    	imageExtents = new int[nDim+1];
-  		                	imageLength = 1;
-  		                	if (imagesFound == 1) {
-  		                		imageSlices = 1;
-  		                	}
-  		                	else {
-  		                		imageSlices2 = 1;
-  		                	}
-  		                	for (i = 0; i < nDim; i++) {
-  		                		if (i == 0) {
-  		                			imageExtents[1] = getInt(endianess);
-  		                			Preferences.debug("imageExtents[1] = " + imageExtents[1] + "\n", Preferences.DEBUG_FILEIO);
-  		                		}
-  		                		else if (i == 1) {
-  		                			imageExtents[0] = getInt(endianess);
-  		                			Preferences.debug("imageExtents[0] = " + imageExtents[0] + "\n", Preferences.DEBUG_FILEIO);
-  		                		}
-  		                		else {
-  		                		    imageExtents[i] = getInt(endianess);
-  		                		    Preferences.debug("imageExtents["+ i + "] = " + imageExtents[i] + "\n", 
-  		                		    		Preferences.DEBUG_FILEIO);
-  		                		}
-  		                		imageLength = imageLength * imageExtents[i];
-  		                		
-  		                		if (i > 1) {
-  		                			if (imagesFound == 1) {
-  		                				imageSlices = imageSlices * imageExtents[i];
-  		                			}
-  		                			else {
-  		                				imageSlices2 = imageSlices2 * imageExtents[i];
-  		                			}
-  		                		}
-  		                	}
-  		                	
-  		                	
-  		                	// Note that imageLength only includes slices in one field of a structure
-  		                	imageExtents[nDim] = fieldNumber;
-  		                	Preferences.debug("imageExtents[" + nDim + "] = " + imageExtents[nDim] + "\n", 
-  		                			Preferences.DEBUG_FILEIO);
-  		                	if (nDim > 1) {
-  		                		if (imagesFound == 1) {
-  		                			imageSlices = imageSlices * fieldNumber;
-  		                		}
-  		                		else {
-  		                			imageSlices2 = imageSlices2 * fieldNumber;
-  		                		}
-  		                	}
-  		                	if (imagesFound == 1) {
-  		                		fileInfo.setExtents(imageExtents);
-  		                	}
-  		                	else {
-  		                		fileInfo2.setExtents(imageExtents);
-  		                	}
-                      	} // else !logicalFlag
+                    	imageExtents = new int[nDim+1];
+	                	imageLength = 1;
+	                	
+	                	for (i = 0; i < nDim; i++) {
+	                		if (i == 0) {
+	                			imageExtents[1] = getInt(endianess);
+	                			Preferences.debug("imageExtents[1] = " + imageExtents[1] + "\n", Preferences.DEBUG_FILEIO);
+	                		}
+	                		else if (i == 1) {
+	                			imageExtents[0] = getInt(endianess);
+	                			Preferences.debug("imageExtents[0] = " + imageExtents[0] + "\n", Preferences.DEBUG_FILEIO);
+	                		}
+	                		else {
+	                		    imageExtents[i] = getInt(endianess);
+	                		    Preferences.debug("imageExtents["+ i + "] = " + imageExtents[i] + "\n", 
+	                		    		Preferences.DEBUG_FILEIO);
+	                		}
+	                		imageLength = imageLength * imageExtents[i];
+	                		
+	                	}
+	                	
+	                	
+	                	// Note that imageLength only includes slices in one field of a structure
+	                	imageExtents[nDim] = fieldNumber;
+	                	Preferences.debug("imageExtents[" + nDim + "] = " + imageExtents[nDim] + "\n", 
+	                			Preferences.DEBUG_FILEIO);
+	                	
   	                	
   	                	if ((dimensionsArrayBytes % 8) != 0) {
   	                		// Skip over padding bytes
@@ -1313,3936 +1057,748 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                           realDataBytes = getInt(endianess);
                           haveSmallRealData = false;
                       }
-                      if ((nDim >= 3) && (imageExtents[nDim - 1] == 3) && (!logicalFlag) && (!complexFlag) &&
-                      		((realDataType == miUINT8) || (realDataType == miUINT16) || (realDataType == miDOUBLE)) &&
-                      		(nonLogicalField == 0)) {
-                      	newExtents = new int[nDim-1];
-                      	for (i = 0; i < nDim-1; i++) {
-                      		newExtents[i] = imageExtents[i];
-                      	}
-                      	imageExtents = new int[nDim-1];
-                      	for (i = 0; i < nDim-1; i++) {
-                      		imageExtents[i] = newExtents[i];
-                      	}
-                      	if (imagesFound == 1) {
-                  			imageSlices = imageSlices/3;
-                  			fileInfo.setExtents(imageExtents);
-                  		}
-                  		else {
-                  			imageSlices2 = imageSlices2/3;
-                  			fileInfo2.setExtents(imageExtents);
-                  		}
-                      	isColor = true;
-                      }
-                      else {
-                      	isColor = false;
-                      }
+                      
                       sliceSize = imageExtents[0] * imageExtents[1];
-                      if (imagesFound == 1) {
+                     
                       switch(realDataType) {
                       case miINT8:
                       	Preferences.debug("Real data type = miINT8\n", Preferences.DEBUG_FILEIO);
                       	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                      	if (logicalFlag) {
-                      	    if (logicalFields == 1) {
-  	                    	    maskImage = new ModelImage(ModelStorageBase.BYTE, maskExtents, fileName + "_mask");
-  	                    	    maskFileInfo.setDataType(ModelStorageBase.BYTE);
-  	                    	    buffer = new byte[realDataBytes];
-  		                    	raFile.read(buffer);
-  		                    	tBuffer = new byte[buffer.length];
-  	                    		numberSlices = buffer.length/sliceSize;
-  		                    	j = 0;
-  		                    	for (s = 0; s < numberSlices; s++) {
-  			                    	for (x = 0; x < imageExtents[1]; x++) {
-  			                    		for (y = 0; y < imageExtents[0]; y++) {
-                                              tBuffer[j++] = buffer[x + imageExtents[1] * y + s * sliceSize];			                    			
-  			                    		}
-  			                    	}
-  		                    	}
-  		                    	if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }  
-  		                    	try {
-  		                			maskImage.importData(0, tBuffer, true);
-  		                		}
-  		                		catch(IOException e) {
-  		                		   MipavUtil.displayError("IOException on maskImage.importData(0, tBuffer, true)");
-  		                		   throw e;
-  		                		}
-                      	    } // if (logicalFields == 1)
-                      	}
-                      	else if (!complexFlag) {
-                      		if (nonLogicalField == 0) {
-  	                    	    image = new ModelImage(ModelStorageBase.BYTE, imageExtents, fileName); 
-  	                    	    fileInfo.setDataType(ModelStorageBase.BYTE);
-                      		}
-                      		buffer = new byte[realDataBytes];
-  	                    	raFile.read(buffer);
-  	                    	tBuffer = new byte[buffer.length];
-                      		numberSlices = buffer.length/sliceSize;
-                      		j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-                                          tBuffer[j++] = buffer[x + imageExtents[1] * y + s * sliceSize];			                    			
-  		                    		}
-  		                    	}
-  	                    	}
-  	                    	if (haveSmallRealData) {
-                      		    if (realDataBytes < 4) {
-                      		    	padBytes = 4 - realDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((realDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (realDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
+                  		
+                  		buffer = new byte[realDataBytes];
+                    	raFile.read(buffer);
+                    	tBuffer = new byte[buffer.length];
+                  		numberSlices = buffer.length/sliceSize;
+                  		j = 0;
+                    	for (s = 0; s < numberSlices; s++) {
+	                    	for (x = 0; x < imageExtents[1]; x++) {
+	                    		for (y = 0; y < imageExtents[0]; y++) {
+                                      tBuffer[j++] = buffer[x + imageExtents[1] * y + s * sliceSize];			                    			
+	                    		}
+	                    	}
+                    	}
+                    	if (haveSmallRealData) {
+                  		    if (realDataBytes < 4) {
+                  		    	padBytes = 4 - realDataBytes;
+                  		    	for (i = 0; i < padBytes; i++) {
+                  		    		raFile.readByte();
+                  		    	}
+                  		    }
+                  		}
+                  		else if ((realDataBytes % 8) != 0) {
+                  	    	padBytes = 8 - (realDataBytes % 8);
+                  	    	for (i = 0; i < padBytes; i++) {
+                      	    	raFile.readByte();
+                      	    }
                       	    }  
-  	                    	try {
-  	                			image.importData(nonLogicalField * tBuffer.length, tBuffer, true);
-  	                		}
-  	                		catch(IOException e) {
-  	                		   MipavUtil.displayError("IOException on image.importData(nonLogicalField* tBuffer.length, tBuffer, true)");
-  	                		   throw e;
-  	                		}
-                      	}
-                      	else {
-                      		if (nonLogicalField == 0) {
-                      		    image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
-                      		    fileInfo.setDataType(ModelStorageBase.COMPLEX);
-                      		}
-                      		buffer = new byte[realDataBytes];
-                      		raFile.read(buffer);
-                      		realBuffer = new float[realDataBytes];
-                      		numberSlices = buffer.length/sliceSize;
-                      		j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-                                          realBuffer[j++] = (float)buffer[x + imageExtents[1] * y + s * sliceSize];			                    			
-  		                    		}
-  		                    	}
-  	                    	}
-                      		
-                      		if (haveSmallRealData) {
-                      		    if (realDataBytes < 4) {
-                      		    	padBytes = 4 - realDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((realDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (realDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }   
-                      	    imaginaryDataType = getInt(endianess);
-                      	    if ((imaginaryDataType & 0xffff0000) != 0) {
-                                  // Small data element format    
-                              	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
-                              	imaginaryDataType = imaginaryDataType & 0xffff;
-                              	haveSmallImaginaryData = true;
-                              }
-                              else {
-                                  imaginaryDataBytes = getInt(endianess);
-                                  haveSmallImaginaryData = false;
-                              }
-                      	    if (imaginaryDataType == miINT8) {
-                      	    	Preferences.debug("imaginaryDataType == miINT8 as expected\n", Preferences.DEBUG_FILEIO);
-                      	    }
-                      	    else {
-                      	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n",
-                      	    			Preferences.DEBUG_FILEIO);
-                      	    }
-            
-                              if (imaginaryDataBytes == realDataBytes) {
-                              	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
-                              			Preferences.DEBUG_FILEIO);
-                              }
-                              else {
-                              	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
-                              			Preferences.DEBUG_FILEIO);
-                              }
-                              raFile.read(buffer);
-                              imaginaryBuffer = new float[imaginaryDataBytes];
-                              j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-                                          imaginaryBuffer[j++] = (float)buffer[x + imageExtents[1] * y + s * sliceSize];			                    			
-  		                    		}
-  		                    	}
-  	                    	}
-                              
-                              if (haveSmallImaginaryData) {
-                      		    if (imaginaryDataBytes < 4) {
-                      		    	padBytes = 4 - imaginaryDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((imaginaryDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (imaginaryDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }   
-                              
-                              try {
-                      			image.importComplexData(2 * nonLogicalField* realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on image.importComplexData(2 * nonLogicalField * realBuffer.length," +
-                      		   		"  realBuffer, imaginaryBuffer, true, logMagDisplay)");
-                      		   throw e;
-                      		}		
-                      	}
+                      	
                       	break;
                       case miUINT8:
                       	Preferences.debug("Real data type = miUINT8\n", Preferences.DEBUG_FILEIO);
                       	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                      	if (logicalFlag) {
-                      		if (logicalFields == 1) {
-  	                    	    maskImage = new ModelImage(ModelStorageBase.UBYTE, maskExtents, fileName + "_mask");
-  	                    	    maskFileInfo.setDataType(ModelStorageBase.UBYTE);
-  	                    	    buffer = new byte[realDataBytes];
-  	                    	    shortBuffer = new short[realDataBytes];
-  	                    	    raFile.read(buffer);
-  	                    	    numberSlices = buffer.length/sliceSize;
-  	                    	    j = 0;
-  		                    	for (s = 0; s < numberSlices; s++) {
-  			                    	for (x = 0; x < imageExtents[1]; x++) {
-  			                    		for (y = 0; y < imageExtents[0]; y++) {
-                                              shortBuffer[j++] = (short) (buffer[x + imageExtents[1] * y + s * sliceSize] & 0xff);			                    			
-  			                    		}
-  			                    	}
-  		                    	}
-  	                    	    
-  	                    	    if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }  
-  		                    	try {
-  		                			maskImage.importUData(0, shortBuffer, true);
-  		                		}
-  		                		catch(IOException e) {
-  		                		   MipavUtil.displayError("IOException on maskImage.importUData(0, shortBuffer, true)");
-  		                		   throw e;
-  		                		}
-                      	    } // if (logicalFields == 1)	
-                      	}
-                      	else if (isColor) {
-                      		if (nonLogicalField == 0) {
-                      			image = new ModelImage(ModelStorageBase.ARGB, imageExtents, fileName);
-                      			fileInfo.setDataType(ModelStorageBase.ARGB);
-                      		}
-                      		if ((realDataBytes % 3) == 0) {
-  	                    		buffer = new byte[realDataBytes/3];
-  	                    		tBuffer = new byte[buffer.length];
-  	                    		numberSlices = buffer.length/sliceSize;
-  	                    		for (i = 0; i < 3; i++) {
-  			                    	raFile.read(buffer);
-  			                    	j = 0;
-  			                    	for (s = 0; s < numberSlices; s++) {
-  				                    	for (x = 0; x < imageExtents[1]; x++) {
-  				                    		for (y = 0; y < imageExtents[0]; y++) {
-  	                                            tBuffer[j++] = buffer[x + imageExtents[1] * y + s * sliceSize];			                    			
-  				                    		}
-  				                    	}
-  			                    	}
-  			                    	
-  			                    	try {
-  			                			image.importRGBData(i+1, nonLogicalField * tBuffer.length, tBuffer, true);
-  			                		}
-  			                		catch(IOException e) {
-  			                		   MipavUtil.displayError("IOException on image.importRGBData(i," +
-  			                		   		" nonLogicalField * tBuffer.length, tBuffer, true)");
-  			                		   throw e;
-  			                		}
-  	                    		} // if (i = 0; i < 3; i++)
-  	
-  		                    	
-  		                    	if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    } 
-  	                    	
-  	                        } // if (realDataBytes % 3) == 0)
-                      	} // else if (isColor)
-                      	else if (!complexFlag) {
-                      		if (nonLogicalField == 0) {
-  	                    	    image = new ModelImage(ModelStorageBase.UBYTE, imageExtents, fileName);
-  	                    	    fileInfo.setDataType(ModelStorageBase.UBYTE);
-                      		}
-  	                    	buffer = new byte[realDataBytes];
-  	                    	raFile.read(buffer);
-  	                    	shortBuffer = new short[realDataBytes];
-  	                    	numberSlices = buffer.length/sliceSize;
-                      	    j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-                                          shortBuffer[j++] = (short) (buffer[x + imageExtents[1] * y + s * sliceSize] & 0xff);			                    			
-  		                    		}
-  		                    	}
-  	                    	}
-  	                    	
-  	                    	if (haveSmallRealData) {
-                      		    if (realDataBytes < 4) {
-                      		    	padBytes = 4 - realDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((realDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (realDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }  
-  	                    	try {
-  	                			image.importUData(nonLogicalField * shortBuffer.length, shortBuffer, true);
-  	                		}
-  	                		catch(IOException e) {
-  	                		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * shortBuffer.length, shortBuffer, true)");
-  	                		   throw e;
-  	                		}
-                      	}
-                      	else {
-                      		if (nonLogicalField == 0) {
-                      		    image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName);
-                      		    fileInfo.setDataType(ModelStorageBase.COMPLEX);
-                      		}
-                      		buffer = new byte[realDataBytes];
-                      		raFile.read(buffer);
-                      		realBuffer = new float[realDataBytes];
-                      		numberSlices = buffer.length/sliceSize;
-                      	    j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-                                          realBuffer[j++] = (float) (buffer[x + imageExtents[1] * y + s * sliceSize] & 0xff);			                    			
-  		                    		}
-  		                    	}
-  	                    	}
-                      		
-                      		if (haveSmallRealData) {
-                      		    if (realDataBytes < 4) {
-                      		    	padBytes = 4 - realDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((realDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (realDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }  
-                      	    imaginaryDataType = getInt(endianess);
-                      	    if ((imaginaryDataType & 0xffff0000) != 0) {
-                                  // Small data element format    
-                              	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
-                              	imaginaryDataType = imaginaryDataType & 0xffff;
-                              	haveSmallImaginaryData = true;
-                              }
-                              else {
-                                  imaginaryDataBytes = getInt(endianess);
-                                  haveSmallImaginaryData = false;
-                              }
-                      	    if (imaginaryDataType == miUINT8) {
-                      	    	Preferences.debug("imaginaryDataType == miUINT8 as expected\n", Preferences.DEBUG_FILEIO);
+                      	
+                    	buffer = new byte[realDataBytes];
+                    	raFile.read(buffer);
+                    	shortBuffer = new short[realDataBytes];
+                    	numberSlices = buffer.length/sliceSize;
+                  	    j = 0;
+                    	for (s = 0; s < numberSlices; s++) {
+	                    	for (x = 0; x < imageExtents[1]; x++) {
+	                    		for (y = 0; y < imageExtents[0]; y++) {
+                                      shortBuffer[j++] = (short) (buffer[x + imageExtents[1] * y + s * sliceSize] & 0xff);			                    			
+	                    		}
+	                    	}
+                    	}
+                    	
+                    	if (haveSmallRealData) {
+                  		    if (realDataBytes < 4) {
+                  		    	padBytes = 4 - realDataBytes;
+                  		    	for (i = 0; i < padBytes; i++) {
+                  		    		raFile.readByte();
+                  		    	}
+                  		    }
+                  		}
+                  		else if ((realDataBytes % 8) != 0) {
+                  	    	padBytes = 8 - (realDataBytes % 8);
+                  	    	for (i = 0; i < padBytes; i++) {
+                      	    	raFile.readByte();
                       	    }
-                      	    else {
-                      	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
-                      	    			Preferences.DEBUG_FILEIO);
-                      	    }
-                           
-                              if (imaginaryDataBytes == realDataBytes) {
-                              	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
-                              			Preferences.DEBUG_FILEIO);
-                              }
-                              else {
-                              	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
-                              			Preferences.DEBUG_FILEIO);
-                              }
-                              raFile.read(buffer);
-                              imaginaryBuffer = new float[imaginaryDataBytes];
-                      	    j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-                                          imaginaryBuffer[j++] = (float) (buffer[x + imageExtents[1] * y + s * sliceSize] & 0xff);			                    			
-  		                    		}
-  		                    	}
-  	                    	}
-                              
-                              if (haveSmallImaginaryData) {
-                      		    if (imaginaryDataBytes < 4) {
-                      		    	padBytes = 4 - imaginaryDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((imaginaryDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (imaginaryDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }   
-                              
-                              try {
-                      			image.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on image.importComplexData(2 * nonLogicalField * realBuffer.length," +
-                      		   		"  realBuffer, imaginaryBuffer, true, logMagDisplay)");
-                      		   throw e;
-                      		}		
-                      	}
+                  	    }  
+                      	
                       	break;
                       case miINT16:
                       	Preferences.debug("Real data type = miINT16\n", Preferences.DEBUG_FILEIO);
                       	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                      	if (!complexFlag) {
-                      		if (nonLogicalField == 0) {
-                      		    image = new ModelImage(ModelStorageBase.SHORT, imageExtents, fileName); 
-                      		    fileInfo.setDataType(ModelStorageBase.SHORT);
-                      		}
-                      		buffer = new byte[realDataBytes];
-                      		raFile.read(buffer);
-                      		shortNumber = realDataBytes/2;
-                      		shortBuffer = new short[shortNumber];
-                      		numberSlices = shortNumber/sliceSize;
-                      		j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1 = buffer[index] & 0xff;
-                                          b2 = buffer[index+1] & 0xff;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	shortBuffer[j++] = (short)((b1 << 8) | b2);	
-                                          }
-                                          else {
-                                          	shortBuffer[j++] = (short)((b2 << 8) | b1);
-                                          }
-  		                    		}
-  		                    	}
-  	                    	}
-                      		 
-                      		if (haveSmallRealData) {
-                      		    if (realDataBytes < 4) {
-                      		    	padBytes = 4 - realDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((realDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (realDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }  
-                      		try {
-                      			image.importData(nonLogicalField * shortBuffer.length, shortBuffer, true);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * shortBuffer.length, shortBuffer, true)");
-                      		   throw e;
-                      		}
-                      	}
-                      	else {
-                      		if (nonLogicalField == 0) {
-                      		    image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
-                      		    fileInfo.setDataType(ModelStorageBase.COMPLEX);
-                      		}
-                      		buffer = new byte[realDataBytes];
-                      		raFile.read(buffer);
-                      		shortNumber = realDataBytes/2;
-                      		realBuffer = new float[shortNumber];
-                      		numberSlices = shortNumber/sliceSize;
-                      		j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1 = buffer[index] & 0xff;
-                                          b2 = buffer[index+1] & 0xff;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	realBuffer[j++] = (float)((b1 << 8) | b2);	
-                                          }
-                                          else {
-                                          	realBuffer[j++] = (float)((b2 << 8) | b1);
-                                          }
-  		                    		}
-  		                    	}
-  	                    	}
-                      		
-                      		if (haveSmallRealData) {
-                      		    if (realDataBytes < 4) {
-                      		    	padBytes = 4 - realDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((realDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (realDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }    
-                      	    imaginaryDataType = getInt(endianess);
-                      	    if ((imaginaryDataType & 0xffff0000) != 0) {
-                                  // Small data element format    
-                              	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
-                              	imaginaryDataType = imaginaryDataType & 0xffff;
-                              	haveSmallImaginaryData = true;
-                              }
-                              else {
-                                  imaginaryDataBytes = getInt(endianess);
-                                  haveSmallImaginaryData = false;
-                              }
-                      	    if (imaginaryDataType == miINT16) {
-                      	    	Preferences.debug("imaginaryDataType == miINT16 as expected\n", Preferences.DEBUG_FILEIO);
+                  		
+                  		buffer = new byte[realDataBytes];
+                  		raFile.read(buffer);
+                  		shortNumber = realDataBytes/2;
+                  		shortBuffer = new short[shortNumber];
+                  		numberSlices = shortNumber/sliceSize;
+                  		j = 0;
+                    	for (s = 0; s < numberSlices; s++) {
+	                    	for (x = 0; x < imageExtents[1]; x++) {
+	                    		for (y = 0; y < imageExtents[0]; y++) {
+	                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
+                                      b1 = buffer[index] & 0xff;
+                                      b2 = buffer[index+1] & 0xff;
+                                      if (endianess == FileBase.BIG_ENDIAN) {
+                                      	shortBuffer[j++] = (short)((b1 << 8) | b2);	
+                                      }
+                                      else {
+                                      	shortBuffer[j++] = (short)((b2 << 8) | b1);
+                                      }
+	                    		}
+	                    	}
+                    	}
+                  		 
+                  		if (haveSmallRealData) {
+                  		    if (realDataBytes < 4) {
+                  		    	padBytes = 4 - realDataBytes;
+                  		    	for (i = 0; i < padBytes; i++) {
+                  		    		raFile.readByte();
+                  		    	}
+                  		    }
+                  		}
+                  		else if ((realDataBytes % 8) != 0) {
+                  	    	padBytes = 8 - (realDataBytes % 8);
+                  	    	for (i = 0; i < padBytes; i++) {
+                      	    	raFile.readByte();
                       	    }
-                      	    else {
-                      	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
-                      	    			Preferences.DEBUG_FILEIO);
-                      	    }
-                              
-                              if (imaginaryDataBytes == realDataBytes) {
-                              	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
-                              			Preferences.DEBUG_FILEIO);
-                              }
-                              else {
-                              	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
-                              			Preferences.DEBUG_FILEIO);
-                              }
-                              raFile.read(buffer);
-                              imaginaryBuffer = new float[shortNumber];
-                              j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1 = buffer[index] & 0xff;
-                                          b2 = buffer[index+1] & 0xff;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	imaginaryBuffer[j++] = (float)((b1 << 8) | b2);	
-                                          }
-                                          else {
-                                          	imaginaryBuffer[j++] = (float)((b2 << 8) | b1);
-                                          }
-  		                    		}
-  		                    	}
-  	                    	}
-                              
-                              if (haveSmallImaginaryData) {
-                      		    if (imaginaryDataBytes < 4) {
-                      		    	padBytes = 4 - imaginaryDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((imaginaryDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (imaginaryDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }   
-                              
-                              try {
-                      			image.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on image.importComplexData(2 * nonLogicalField * realBuffer.length," +
-                      		   		"  realBuffer, imaginaryBuffer, true, logMagDisplay)");
-                      		   throw e;
-                      		}		
-                      	}
+                  	    }  
+                      	
                       	break;
                       case miUINT16:
                       	Preferences.debug("Real data type = miUINT16\n", Preferences.DEBUG_FILEIO);
                       	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                      	if (isColor) {
-                      		if (nonLogicalField == 0) {
-                      			image = new ModelImage(ModelStorageBase.ARGB_USHORT, imageExtents, fileName);
-                      			fileInfo.setDataType(ModelStorageBase.ARGB_USHORT);
-                      		}
-                      		if ((realDataBytes % 3) == 0) {
-  	                    		buffer = new byte[realDataBytes/3];
-  	                    		shortNumber = realDataBytes/6;
-  	                    		shortBuffer = new short[shortNumber];
-  	                    		numberSlices = shortNumber/sliceSize;
-  	                    		for (i = 0; i < 3; i++) {
-  			                    	raFile.read(buffer);
-  			                    	j = 0;
-  			                    	for (s = 0; s < numberSlices; s++) {
-  				                    	for (x = 0; x < imageExtents[1]; x++) {
-  				                    		for (y = 0; y < imageExtents[0]; y++) {
-  				                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
-  	                                            b1 = buffer[index] & 0xff;
-  	                                            b2 = buffer[index+1] & 0xff;
-  	                                            if (endianess == FileBase.BIG_ENDIAN) {
-  	                                            	shortBuffer[j++] = (short) ((b1 << 8) | b2);	
-  	                                            }
-  	                                            else {
-  	                                            	shortBuffer[j++] = (short) ((b2 << 8) | b1);
-  	                                            }
-  				                    		}
-  				                    	}
-  			                    	}
-  			                    	
-  			                    	try {
-  			                			image.importRGBData(i+1, nonLogicalField * shortBuffer.length, shortBuffer, true);
-  			                		}
-  			                		catch(IOException e) {
-  			                		   MipavUtil.displayError("IOException on image.importRGBData(i," +
-  			                		   		" nonLogicalField * shortBuffer.length, shortBuffer, true)");
-  			                		   throw e;
-  			                		}
-  	                    		} // if (i = 0; i < 3; i++)
-  	
-  		                    	
-  		                    	if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    } 
-  	                    	
-  	                        } // if (realDataBytes % 3) == 0)
-                      	} // if (isColor)
-                      	else if (!complexFlag) {
-                      		if (nonLogicalField == 0) {
-                      		    image = new ModelImage(ModelStorageBase.USHORT, imageExtents, fileName);
-                      		    fileInfo.setDataType(ModelStorageBase.USHORT);
-                      		}
-                      		buffer =  new byte[realDataBytes];
-                      		raFile.read(buffer);
-                      		shortNumber = realDataBytes/2;
-                      		intBuffer = new int[shortNumber];
-                      		numberSlices = shortNumber/sliceSize;
-                      		j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1 = buffer[index] & 0xff;
-                                          b2 = buffer[index+1] & 0xff;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	intBuffer[j++] = ((b1 << 8) | b2);	
-                                          }
-                                          else {
-                                          	intBuffer[j++] = ((b2 << 8) | b1);
-                                          }
-  		                    		}
-  		                    	}
-  	                    	}
-                      		 
-                      		if (haveSmallRealData) {
-                      		    if (realDataBytes < 4) {
-                      		    	padBytes = 4 - realDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((realDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (realDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }  
-                      		try {
-                      			image.importUData(nonLogicalField * intBuffer.length, intBuffer, true);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on image.importUData(nonLogicalField * intBuffer.length, intBuffer, true)");
-                      		   throw e;
-                      		}
-                      	}
-                      	else {
-                      		if (nonLogicalField == 0) {
-                      		    image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
-                      		    fileInfo.setDataType(ModelStorageBase.COMPLEX);
-                      		}
-                      		buffer = new byte[realDataBytes];
-                      		raFile.read(buffer);
-                      		shortNumber = realDataBytes/2;
-                      		realBuffer = new float[shortNumber];
-                      		numberSlices = shortNumber/sliceSize;
-                      		j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1 = buffer[index] & 0xff;
-                                          b2 = buffer[index+1] & 0xff;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                              realBuffer[j++] = (float) ((b1 << 8) | b2);	
-                                          }
-                                          else {
-                                          	realBuffer[j++] = (float) ((b2 << 8) | b1);
-                                          }
-  		                    		}
-  		                    	}
-  	                    	}
-                      		
-                      		if (haveSmallRealData) {
-                      		    if (realDataBytes < 4) {
-                      		    	padBytes = 4 - realDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((realDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (realDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }  
-                      	    imaginaryDataType = getInt(endianess);
-                      	    if ((imaginaryDataType & 0xffff0000) != 0) {
-                                  // Small data element format    
-                              	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
-                              	imaginaryDataType = imaginaryDataType & 0xffff;
-                              	haveSmallImaginaryData = true;
-                              }
-                              else {
-                                  imaginaryDataBytes = getInt(endianess);
-                                  haveSmallImaginaryData = false;
-                              }
-                      	    if (imaginaryDataType == miUINT16) {
-                      	    	Preferences.debug("imaginaryDataType == miUINT16 as expected\n", Preferences.DEBUG_FILEIO);
+                      	
+                  		buffer =  new byte[realDataBytes];
+                  		raFile.read(buffer);
+                  		shortNumber = realDataBytes/2;
+                  		intBuffer = new int[shortNumber];
+                  		numberSlices = shortNumber/sliceSize;
+                  		j = 0;
+                    	for (s = 0; s < numberSlices; s++) {
+	                    	for (x = 0; x < imageExtents[1]; x++) {
+	                    		for (y = 0; y < imageExtents[0]; y++) {
+	                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
+                                      b1 = buffer[index] & 0xff;
+                                      b2 = buffer[index+1] & 0xff;
+                                      if (endianess == FileBase.BIG_ENDIAN) {
+                                      	intBuffer[j++] = ((b1 << 8) | b2);	
+                                      }
+                                      else {
+                                      	intBuffer[j++] = ((b2 << 8) | b1);
+                                      }
+	                    		}
+	                    	}
+                    	}
+                  		 
+                  		if (haveSmallRealData) {
+                  		    if (realDataBytes < 4) {
+                  		    	padBytes = 4 - realDataBytes;
+                  		    	for (i = 0; i < padBytes; i++) {
+                  		    		raFile.readByte();
+                  		    	}
+                  		    }
+                  		}
+                  		else if ((realDataBytes % 8) != 0) {
+                  	    	padBytes = 8 - (realDataBytes % 8);
+                  	    	for (i = 0; i < padBytes; i++) {
+                      	    	raFile.readByte();
                       	    }
-                      	    else {
-                      	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
-                      	    			Preferences.DEBUG_FILEIO);
-                      	    }
-                              
-                              if (imaginaryDataBytes == realDataBytes) {
-                              	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
-                              			Preferences.DEBUG_FILEIO);
-                              }
-                              else {
-                              	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
-                              			Preferences.DEBUG_FILEIO);
-                              }
-                              raFile.read(buffer);
-                              imaginaryBuffer = new float[shortNumber];
-                              j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1 = buffer[index] & 0xff;
-                                          b2 = buffer[index+1] & 0xff;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                              imaginaryBuffer[j++] = (float) ((b1 << 8) | b2);	
-                                          }
-                                          else {
-                                          	imaginaryBuffer[j++] = (float) ((b2 << 8) | b1);
-                                          }
-  		                    		}
-  		                    	}
-  	                    	}
-                              
-                              if (haveSmallImaginaryData) {
-                      		    if (imaginaryDataBytes < 4) {
-                      		    	padBytes = 4 - imaginaryDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((imaginaryDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (imaginaryDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }   
-                              
-                              try {
-                      			image.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on image.importComplexData(2 * nonLogicalField * realBuffer.length," +
-                      		   		"  realBuffer, imaginaryBuffer, true, logMagDisplay)");
-                      		   throw e;
-                      		}		
-                      	}
+                  	    }  
+                      	
                       	break;
                       case miINT32:
                       	Preferences.debug("Real data type = miINT32\n", Preferences.DEBUG_FILEIO);
                       	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                      	if (!complexFlag) {
-                      		if (nonLogicalField == 0) {
-                      		    image = new ModelImage(ModelStorageBase.INTEGER, imageExtents, fileName);
-                      		    fileInfo.setDataType(ModelStorageBase.INTEGER);
-                      		}
-                      		buffer = new byte[realDataBytes];
-                      		raFile.read(buffer);
-                      		intNumber = realDataBytes/4;
-                      		intBuffer = new int[intNumber];
-                      		numberSlices = intNumber/sliceSize;
-                      		j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1 = buffer[index] & 0xff;
-                                          b2 = buffer[index+1] & 0xff;
-                                          b3 = buffer[index+2] & 0xff;
-                                          b4 = buffer[index+3] & 0xff;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	intBuffer[j++] = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-                                          }
-                                          else {
-                                          	intBuffer[j++] = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
-                                          }
-  		                    		}
-  		                    	}
-  	                    	}
-                      		
-                      		if (haveSmallRealData) {
-                      		    if (realDataBytes < 4) {
-                      		    	padBytes = 4 - realDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((realDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (realDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }  
-                      		try {
-                      			image.importData(nonLogicalField * intBuffer.length, intBuffer, true);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * intBuffer.length, intBuffer, true)");
-                      		   throw e;
-                      		}
-                      	}
-                      	else {
-                      		if (nonLogicalField == 0) {
-                      		    image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
-                      		    fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
-                      		}
-                      		buffer = new byte[realDataBytes];
-                      		raFile.read(buffer);
-                      		intNumber = realDataBytes/4;
-                      		realDBuffer = new double[intNumber];
-                      		numberSlices = intNumber/sliceSize;
-                      		j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1 = buffer[index] & 0xff;
-                                          b2 = buffer[index+1] & 0xff;
-                                          b3 = buffer[index+2] & 0xff;
-                                          b4 = buffer[index+3] & 0xff;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	realDBuffer[j++] = (double)((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-                                          }
-                                          else {
-                                          	realDBuffer[j++] = (double)((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
-                                          }
-  		                    		}
-  		                    	}
-  	                    	}
-                      		
-                      		if (haveSmallRealData) {
-                      		    if (realDataBytes < 4) {
-                      		    	padBytes = 4 - realDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((realDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (realDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }  
-                      	    imaginaryDataType = getInt(endianess);
-                      	    if ((imaginaryDataType & 0xffff0000) != 0) {
-                                  // Small data element format    
-                              	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
-                              	imaginaryDataType = imaginaryDataType & 0xffff;
-                              	haveSmallImaginaryData = true;
-                              }
-                              else {
-                                  imaginaryDataBytes = getInt(endianess);
-                                  haveSmallImaginaryData = false;
-                              }
-                      	    if (imaginaryDataType == miINT32) {
-                      	    	Preferences.debug("imaginaryDataType == miINT32 as expected\n", Preferences.DEBUG_FILEIO);
+                    
+                  		buffer = new byte[realDataBytes];
+                  		raFile.read(buffer);
+                  		intNumber = realDataBytes/4;
+                  		intBuffer = new int[intNumber];
+                  		numberSlices = intNumber/sliceSize;
+                  		j = 0;
+                    	for (s = 0; s < numberSlices; s++) {
+	                    	for (x = 0; x < imageExtents[1]; x++) {
+	                    		for (y = 0; y < imageExtents[0]; y++) {
+	                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
+                                      b1 = buffer[index] & 0xff;
+                                      b2 = buffer[index+1] & 0xff;
+                                      b3 = buffer[index+2] & 0xff;
+                                      b4 = buffer[index+3] & 0xff;
+                                      if (endianess == FileBase.BIG_ENDIAN) {
+                                      	intBuffer[j++] = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+                                      }
+                                      else {
+                                      	intBuffer[j++] = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+                                      }
+	                    		}
+	                    	}
+                    	}
+                  		
+                  		if (haveSmallRealData) {
+                  		    if (realDataBytes < 4) {
+                  		    	padBytes = 4 - realDataBytes;
+                  		    	for (i = 0; i < padBytes; i++) {
+                  		    		raFile.readByte();
+                  		    	}
+                  		    }
+                  		}
+                  		else if ((realDataBytes % 8) != 0) {
+                  	    	padBytes = 8 - (realDataBytes % 8);
+                  	    	for (i = 0; i < padBytes; i++) {
+                      	    	raFile.readByte();
                       	    }
-                      	    else {
-                      	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
-                      	    			Preferences.DEBUG_FILEIO);
-                      	    }
-                      	    
-                              if (imaginaryDataBytes == realDataBytes) {
-                              	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
-                              			Preferences.DEBUG_FILEIO);
-                              }
-                              else {
-                              	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
-                              			Preferences.DEBUG_FILEIO);
-                              }
-                              raFile.read(buffer);
-                              imaginaryDBuffer = new double[intNumber];
-                              j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1 = buffer[index] & 0xff;
-                                          b2 = buffer[index+1] & 0xff;
-                                          b3 = buffer[index+2] & 0xff;
-                                          b4 = buffer[index+3] & 0xff;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	imaginaryDBuffer[j++] = (double)((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-                                          }
-                                          else {
-                                          	imaginaryDBuffer[j++] = (double)((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
-                                          }
-  		                    		}
-  		                    	}
-  	                    	}
-                              
-                              if (haveSmallImaginaryData) {
-                      		    if (imaginaryDataBytes < 4) {
-                      		    	padBytes = 4 - imaginaryDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((imaginaryDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (imaginaryDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }   
-                              
-                              try {
-                      			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on image.importDComplexData(2 * nonLogicalField * realDBuffer.length," +
-                      		   		"  realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
-                      		   throw e;
-                      		}		
-                      	}
+                  	    }  
+                      	
                       	break;
                       case miUINT32:
                       	Preferences.debug("Real data type = miUINT32\n", Preferences.DEBUG_FILEIO);
                       	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                      	if (!complexFlag) {
-                      		if (nonLogicalField == 0) {
-                      		    image = new ModelImage(ModelStorageBase.UINTEGER, imageExtents, fileName); 
-                      		    fileInfo.setDataType(ModelStorageBase.UINTEGER);
-                      		}
-                      		buffer = new byte[realDataBytes];
-                      		raFile.read(buffer);
-                      		intNumber = realDataBytes/4;
-                      		longBuffer = new long[intNumber];
-                      		numberSlices = intNumber/sliceSize;
-                      		j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1L = buffer[index] & 0xffL;
-                                          b2L = buffer[index+1] & 0xffL;
-                                          b3L = buffer[index+2] & 0xffL;
-                                          b4L = buffer[index+3] & 0xffL;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	longBuffer[j++] = ((b1L << 24) | (b2L << 16) | (b3L << 8) | b4L);
-                                          }
-                                          else {
-                                          	longBuffer[j++] = ((b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                          }
-  		                    		}
-  		                    	}
-  	                    	}
-                      		
-                      		if (haveSmallRealData) {
-                      		    if (realDataBytes < 4) {
-                      		    	padBytes = 4 - realDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((realDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (realDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }  
-                      		try {
-                      			image.importUData(nonLogicalField * longBuffer.length, longBuffer, true);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on image.importUData(nonLogicalField * longBuffer.length, longBuffer, true)");
-                      		   throw e;
-                      		}
-                      	}
-                      	else {
-                      		if (nonLogicalField == 0) {
-                      		    image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
-                      		    fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
-                      		}
-                      		buffer = new byte[realDataBytes];
-                      		raFile.read(buffer);
-                      		intNumber = realDataBytes/4;
-                      		realDBuffer = new double[intNumber];
-                      		numberSlices = intNumber/sliceSize;
-                      		j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1L = buffer[index] & 0xffL;
-                                          b2L = buffer[index+1] & 0xffL;
-                                          b3L = buffer[index+2] & 0xffL;
-                                          b4L = buffer[index+3] & 0xffL;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	realDBuffer[j++] = (double)((b1L << 24) | (b2L << 16) | (b3L << 8) | b4L);
-                                          }
-                                          else {
-                                          	realDBuffer[j++] = (double)((b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                          }
-  		                    		}
-  		                    	}
-  	                    	}
-                      		
-                      		if (haveSmallRealData) {
-                      		    if (realDataBytes < 4) {
-                      		    	padBytes = 4 - realDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((realDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (realDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }   
-                      	    imaginaryDataType = getInt(endianess);
-                      	    if ((imaginaryDataType & 0xffff0000) != 0) {
-                                  // Small data element format    
-                              	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
-                              	imaginaryDataType = imaginaryDataType & 0xffff;
-                              	haveSmallImaginaryData = true;
-                              }
-                              else {
-                                  imaginaryDataBytes = getInt(endianess);
-                                  haveSmallImaginaryData = false;
-                              }
-                      	    if (imaginaryDataType == miUINT32) {
-                      	    	Preferences.debug("imaginaryDataType == miUINT32 as expected\n", Preferences.DEBUG_FILEIO);
+                 
+                  		buffer = new byte[realDataBytes];
+                  		raFile.read(buffer);
+                  		intNumber = realDataBytes/4;
+                  		longBuffer = new long[intNumber];
+                  		numberSlices = intNumber/sliceSize;
+                  		j = 0;
+                    	for (s = 0; s < numberSlices; s++) {
+	                    	for (x = 0; x < imageExtents[1]; x++) {
+	                    		for (y = 0; y < imageExtents[0]; y++) {
+	                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
+                                      b1L = buffer[index] & 0xffL;
+                                      b2L = buffer[index+1] & 0xffL;
+                                      b3L = buffer[index+2] & 0xffL;
+                                      b4L = buffer[index+3] & 0xffL;
+                                      if (endianess == FileBase.BIG_ENDIAN) {
+                                      	longBuffer[j++] = ((b1L << 24) | (b2L << 16) | (b3L << 8) | b4L);
+                                      }
+                                      else {
+                                      	longBuffer[j++] = ((b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+                                      }
+	                    		}
+	                    	}
+                    	}
+                  		
+                  		if (haveSmallRealData) {
+                  		    if (realDataBytes < 4) {
+                  		    	padBytes = 4 - realDataBytes;
+                  		    	for (i = 0; i < padBytes; i++) {
+                  		    		raFile.readByte();
+                  		    	}
+                  		    }
+                  		}
+                  		else if ((realDataBytes % 8) != 0) {
+                  	    	padBytes = 8 - (realDataBytes % 8);
+                  	    	for (i = 0; i < padBytes; i++) {
+                      	    	raFile.readByte();
                       	    }
-                      	    else {
-                      	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
-                      	    			Preferences.DEBUG_FILEIO);
-                      	    }
-                      	    
-                              if (imaginaryDataBytes == realDataBytes) {
-                              	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
-                              			Preferences.DEBUG_FILEIO);
-                              }
-                              else {
-                              	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
-                              			Preferences.DEBUG_FILEIO);
-                              }
-                              raFile.read(buffer);
-                              imaginaryDBuffer = new double[intNumber];
-                              j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1L = buffer[index] & 0xffL;
-                                          b2L = buffer[index+1] & 0xffL;
-                                          b3L = buffer[index+2] & 0xffL;
-                                          b4L = buffer[index+3] & 0xffL;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	imaginaryDBuffer[j++] = (double)((b1L << 24) | (b2L << 16) | (b3L << 8) | b4L);
-                                          }
-                                          else {
-                                          	imaginaryDBuffer[j++] = (double)((b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                          }
-  		                    		}
-  		                    	}
-  	                    	}
-                              
-                              if (haveSmallImaginaryData) {
-                      		    if (imaginaryDataBytes < 4) {
-                      		    	padBytes = 4 - imaginaryDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((imaginaryDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (imaginaryDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }   
-                              
-                              try {
-                      			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on image.importDComplexData(2 * nonLogicalField * realDBuffer.length," +
-                      		   		"  realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
-                      		   throw e;
-                      		}		
-                      	}
+                  	    }  
+                      	
                       	break;
                       case miSINGLE:
                       	Preferences.debug("Real data type = miSINGLE\n", Preferences.DEBUG_FILEIO);
                       	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                      	if (!complexFlag) {
-                      		if (nonLogicalField == 0) {
-                      		    image = new ModelImage(ModelStorageBase.FLOAT, imageExtents, fileName); 
-                      		    fileInfo.setDataType(ModelStorageBase.FLOAT);
-                      		}
-                      		buffer = new byte[realDataBytes];
-                      		raFile.read(buffer);
-                      		floatNumber = realDataBytes/4;
-                      		floatBuffer = new float[floatNumber];
-                      		numberSlices = floatNumber/sliceSize;
-                      		j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1 = buffer[index] & 0xff;
-                                          b2 = buffer[index+1] & 0xff;
-                                          b3 = buffer[index+2] & 0xff;
-                                          b4 = buffer[index+3] & 0xff;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-                                          }
-                                          else {
-                                          	tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
-                                          }
-                                          floatBuffer[j++] = Float.intBitsToFloat(tmpInt);
-  		                    		}
-  		                    	}
-  	                    	}
-                      		
-                      		if (haveSmallRealData) {
-                      		    if (realDataBytes < 4) {
-                      		    	padBytes = 4 - realDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((realDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (realDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }  
-                      		try {
-                      			image.importData(nonLogicalField * floatBuffer.length, floatBuffer, true);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * floatBuffer.length, floatBuffer, true)");
-                      		   throw e;
-                      		}
-                      	}
-                      	else {
-                      		if (nonLogicalField == 0) {
-                      		    image = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
-                      		    fileInfo.setDataType(ModelStorageBase.COMPLEX);
-                      		}
-                      		buffer = new byte[realDataBytes];
-                      		raFile.read(buffer);
-                      		floatNumber = realDataBytes/4;
-                      		realBuffer = new float[floatNumber];
-                      		numberSlices = floatNumber/sliceSize;
-                      		j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1 = buffer[index] & 0xff;
-                                          b2 = buffer[index+1] & 0xff;
-                                          b3 = buffer[index+2] & 0xff;
-                                          b4 = buffer[index+3] & 0xff;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-                                          }
-                                          else {
-                                          	tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
-                                          }
-                                          realBuffer[j++] = Float.intBitsToFloat(tmpInt);
-  		                    		}
-  		                    	}
-  	                    	}
-                      		
-                      		if (haveSmallRealData) {
-                      		    if (realDataBytes < 4) {
-                      		    	padBytes = 4 - realDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((realDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (realDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }    
-                      	    imaginaryDataType = getInt(endianess);
-                      	    if ((imaginaryDataType & 0xffff0000) != 0) {
-                                  // Small data element format    
-                              	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
-                              	imaginaryDataType = imaginaryDataType & 0xffff;
-                              	haveSmallImaginaryData = true;
-                              }
-                              else {
-                                  imaginaryDataBytes = getInt(endianess);
-                                  haveSmallImaginaryData = false;
-                              }
-                      	    if (imaginaryDataType == miSINGLE) {
-                      	    	Preferences.debug("imaginaryDataType == miSINGLE as expected\n", Preferences.DEBUG_FILEIO);
+                
+                  		buffer = new byte[realDataBytes];
+                  		raFile.read(buffer);
+                  		floatNumber = realDataBytes/4;
+                  		floatBuffer = new float[floatNumber];
+                  		numberSlices = floatNumber/sliceSize;
+                  		j = 0;
+                    	for (s = 0; s < numberSlices; s++) {
+	                    	for (x = 0; x < imageExtents[1]; x++) {
+	                    		for (y = 0; y < imageExtents[0]; y++) {
+	                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
+                                      b1 = buffer[index] & 0xff;
+                                      b2 = buffer[index+1] & 0xff;
+                                      b3 = buffer[index+2] & 0xff;
+                                      b4 = buffer[index+3] & 0xff;
+                                      if (endianess == FileBase.BIG_ENDIAN) {
+                                      	tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+                                      }
+                                      else {
+                                      	tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+                                      }
+                                      floatBuffer[j++] = Float.intBitsToFloat(tmpInt);
+	                    		}
+	                    	}
+                    	}
+                  		
+                  		if (haveSmallRealData) {
+                  		    if (realDataBytes < 4) {
+                  		    	padBytes = 4 - realDataBytes;
+                  		    	for (i = 0; i < padBytes; i++) {
+                  		    		raFile.readByte();
+                  		    	}
+                  		    }
+                  		}
+                  		else if ((realDataBytes % 8) != 0) {
+                  	    	padBytes = 8 - (realDataBytes % 8);
+                  	    	for (i = 0; i < padBytes; i++) {
+                      	    	raFile.readByte();
                       	    }
-                      	    else {
-                      	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
-                      	    			Preferences.DEBUG_FILEIO);
-                      	    }
-                      	   
-                              if (imaginaryDataBytes == realDataBytes) {
-                              	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
-                              			Preferences.DEBUG_FILEIO);
-                              }
-                              else {
-                              	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
-                              			Preferences.DEBUG_FILEIO);
-                              }
-                              raFile.read(buffer);
-                              imaginaryBuffer = new float[floatNumber];
-                              j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1 = buffer[index] & 0xff;
-                                          b2 = buffer[index+1] & 0xff;
-                                          b3 = buffer[index+2] & 0xff;
-                                          b4 = buffer[index+3] & 0xff;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-                                          }
-                                          else {
-                                          	tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
-                                          }
-                                          imaginaryBuffer[j++] = Float.intBitsToFloat(tmpInt);
-  		                    		}
-  		                    	}
-  	                    	}
-                            
-                              if (haveSmallImaginaryData) {
-                      		    if (imaginaryDataBytes < 4) {
-                      		    	padBytes = 4 - imaginaryDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((imaginaryDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (imaginaryDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }   
-                              
-                              try {
-                      			image.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on image.importComplexData(2 * nonLogicalField * realBuffer.length," +
-                      		   		" realBuffer, imaginaryBuffer, true, logMagDisplay)");
-                      		   throw e;
-                      		}
-                      	}
+                  	    }  
+                      	
                       	break;
                       case miDOUBLE:
                       	Preferences.debug("Real data type = miDOUBLE\n", Preferences.DEBUG_FILEIO);
                       	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                      	if (isColor) {
-                      		if (nonLogicalField == 0) {
-                      			image = new ModelImage(ModelStorageBase.ARGB_FLOAT, imageExtents, fileName);
-                      			fileInfo.setDataType(ModelStorageBase.ARGB_FLOAT);
-                      		}
-                      		if ((realDataBytes % 3) == 0) {
-  	                    		buffer = new byte[realDataBytes/3];
-  	                    		doubleNumber = realDataBytes/24;
-  	                    		floatBuffer = new float[doubleNumber];
-  	                    		numberSlices = doubleNumber/sliceSize;
-  	                    		for (i = 0; i < 3; i++) {
-  			                    	raFile.read(buffer);
-  			                    	j = 0;
-  			                    	for (s = 0; s < numberSlices; s++) {
-  				                    	for (x = 0; x < imageExtents[1]; x++) {
-  				                    		for (y = 0; y < imageExtents[0]; y++) {
-  				                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
-  	                                            b1L = buffer[index] & 0xffL;
-  	                                            b2L = buffer[index+1] & 0xffL;
-  	                                            b3L = buffer[index+2] & 0xffL;
-  	                                            b4L = buffer[index+3] & 0xffL;
-  	                                            b5L = buffer[index+4] & 0xffL;
-  	                                            b6L = buffer[index+5] & 0xffL;
-  	                                            b7L = buffer[index+6] & 0xffL;
-  	                                            b8L = buffer[index+7] & 0xffL;
-  	                                            if (endianess == FileBase.BIG_ENDIAN) {
-  	                                            	tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-  			                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
-  	                                            }
-  	                                            else {
-  	                                            	tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-  			                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-  	                                            }
-  	                                            floatBuffer[j++] = (float)(255.0 * Double.longBitsToDouble(tmpLong));
-  				                    		}
-  				                    	}
-  			                    	}
-  			                    	
-  			                    	try {
-  			                			image.importRGBData(i+1, nonLogicalField * floatBuffer.length, floatBuffer, true);
-  			                		}
-  			                		catch(IOException e) {
-  			                		   MipavUtil.displayError("IOException on image.importRGBData(i," +
-  			                		   		" nonLogicalField * floatBuffer.length, floatBuffer, true)");
-  			                		   throw e;
-  			                		}
-  	                    		} // if (i = 0; i < 3; i++)
-  	
-  		                    	
-  		                    	if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    } 
-  	                    	
-  	                        } // if (realDataBytes % 3) == 0)
-                      	} // else if (isColor)
-                      	else if (!complexFlag) {
-                      		if (nonLogicalField == 0) {
-                      		    image = new ModelImage(ModelStorageBase.DOUBLE, imageExtents, fileName); 
-                      		    fileInfo.setDataType(ModelStorageBase.DOUBLE);
-                      		}
-                      		buffer = new byte[realDataBytes];
-                      		raFile.read(buffer);
-                      		doubleNumber = realDataBytes/8;
-                      		doubleBuffer = new double[doubleNumber];
-                      		numberSlices = doubleNumber/sliceSize;
-                      		j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1L = buffer[index] & 0xffL;
-                                          b2L = buffer[index+1] & 0xffL;
-                                          b3L = buffer[index+2] & 0xffL;
-                                          b4L = buffer[index+3] & 0xffL;
-                                          b5L = buffer[index+4] & 0xffL;
-                                          b6L = buffer[index+5] & 0xffL;
-                                          b7L = buffer[index+6] & 0xffL;
-                                          b8L = buffer[index+7] & 0xffL;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-  	                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
-                                          }
-                                          else {
-                                          	tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-  	                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                          }
-                                          doubleBuffer[j++] = Double.longBitsToDouble(tmpLong);
-  		                    		}
-  		                    	}
-  	                    	}
-                      		
-                      		if (haveSmallRealData) {
-                      		    if (realDataBytes < 4) {
-                      		    	padBytes = 4 - realDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((realDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (realDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }  
-                      		try {
-                      			image.importData(nonLogicalField * doubleBuffer.length, doubleBuffer, true);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * doubleBuffer.length, doubleBuffer, true)");
-                      		   throw e;
-                      		}
-                      	}
-                      	else {
-                      		if (nonLogicalField == 0) {
-                      		    image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
-                      		    fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
-                      		}
-                      		buffer = new byte[realDataBytes];
-                      		raFile.read(buffer);
-                      		doubleNumber = realDataBytes/8;
-                      		realDBuffer = new double[doubleNumber];
-                      		numberSlices = doubleNumber/sliceSize;
-                      		j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1L = buffer[index] & 0xffL;
-                                          b2L = buffer[index+1] & 0xffL;
-                                          b3L = buffer[index+2] & 0xffL;
-                                          b4L = buffer[index+3] & 0xffL;
-                                          b5L = buffer[index+4] & 0xffL;
-                                          b6L = buffer[index+5] & 0xffL;
-                                          b7L = buffer[index+6] & 0xffL;
-                                          b8L = buffer[index+7] & 0xffL;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-  	                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
-                                          }
-                                          else {
-                                          	tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-  	                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                          }
-                                          realDBuffer[j++] = Double.longBitsToDouble(tmpLong);
-  		                    		}
-  		                    	}
-  	                    	}
-                      		
-                      		if (haveSmallRealData) {
-                      		    if (realDataBytes < 4) {
-                      		    	padBytes = 4 - realDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((realDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (realDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }   
-                      	    imaginaryDataType = getInt(endianess);
-                      	    if ((imaginaryDataType & 0xffff0000) != 0) {
-                                  // Small data element format    
-                              	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
-                              	imaginaryDataType = imaginaryDataType & 0xffff;
-                              	haveSmallImaginaryData = true;
-                              }
-                              else {
-                                  imaginaryDataBytes = getInt(endianess);
-                                  haveSmallImaginaryData = false;
-                              }
-                      	    if (imaginaryDataType == miDOUBLE) {
-                      	    	Preferences.debug("imaginaryDataType == miDOUBLE as expected\n", Preferences.DEBUG_FILEIO);
+                      	
+                  		buffer = new byte[realDataBytes];
+                  		raFile.read(buffer);
+                  		doubleNumber = realDataBytes/8;
+                  		doubleBuffer = new double[doubleNumber];
+                  		numberSlices = doubleNumber/sliceSize;
+                  		if (arrayName.equals("tex")) {
+                  			for (x = 0; x < imageExtents[1]; x++) {
+	                    		for (y = 0; y < imageExtents[0]; y++) {
+	                    			index = 8*(x + imageExtents[1] * y);
+                                      b1L = buffer[index] & 0xffL;
+                                      b2L = buffer[index+1] & 0xffL;
+                                      b3L = buffer[index+2] & 0xffL;
+                                      b4L = buffer[index+3] & 0xffL;
+                                      b5L = buffer[index+4] & 0xffL;
+                                      b6L = buffer[index+5] & 0xffL;
+                                      b7L = buffer[index+6] & 0xffL;
+                                      b8L = buffer[index+7] & 0xffL;
+                                      if (endianess == FileBase.BIG_ENDIAN) {
+                                      	tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
+                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
+                                      }
+                                      else {
+                                      	tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
+                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+                                      }
+                                      tex[y][x] = Double.longBitsToDouble(tmpLong);
+	                    		}
+	                    	}
+                    	}	
+                  		else {
+                  		j = 0;
+	                    	for (s = 0; s < numberSlices; s++) {
+		                    	for (x = 0; x < imageExtents[1]; x++) {
+		                    		for (y = 0; y < imageExtents[0]; y++) {
+		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
+	                                      b1L = buffer[index] & 0xffL;
+	                                      b2L = buffer[index+1] & 0xffL;
+	                                      b3L = buffer[index+2] & 0xffL;
+	                                      b4L = buffer[index+3] & 0xffL;
+	                                      b5L = buffer[index+4] & 0xffL;
+	                                      b6L = buffer[index+5] & 0xffL;
+	                                      b7L = buffer[index+6] & 0xffL;
+	                                      b8L = buffer[index+7] & 0xffL;
+	                                      if (endianess == FileBase.BIG_ENDIAN) {
+	                                      	tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
+	                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
+	                                      }
+	                                      else {
+	                                      	tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
+	                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+	                                      }
+	                                      doubleBuffer[j++] = Double.longBitsToDouble(tmpLong);
+		                    		}
+		                    	}
+	                    	}
+                  		}
+                  		
+                  		if (haveSmallRealData) {
+                  		    if (realDataBytes < 4) {
+                  		    	padBytes = 4 - realDataBytes;
+                  		    	for (i = 0; i < padBytes; i++) {
+                  		    		raFile.readByte();
+                  		    	}
+                  		    }
+                  		}
+                  		else if ((realDataBytes % 8) != 0) {
+                  	    	padBytes = 8 - (realDataBytes % 8);
+                  	    	for (i = 0; i < padBytes; i++) {
+                      	    	raFile.readByte();
                       	    }
-                      	    else {
-                      	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
-                      	    			Preferences.DEBUG_FILEIO);
-                      	    }
-                      	    
-                              if (imaginaryDataBytes == realDataBytes) {
-                              	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
-                              			Preferences.DEBUG_FILEIO);
-                              }
-                              else {
-                              	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
-                              			Preferences.DEBUG_FILEIO);
-                              }
-                              raFile.read(buffer);
-                              imaginaryDBuffer = new double[doubleNumber];
-                              j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1L = buffer[index] & 0xffL;
-                                          b2L = buffer[index+1] & 0xffL;
-                                          b3L = buffer[index+2] & 0xffL;
-                                          b4L = buffer[index+3] & 0xffL;
-                                          b5L = buffer[index+4] & 0xffL;
-                                          b6L = buffer[index+5] & 0xffL;
-                                          b7L = buffer[index+6] & 0xffL;
-                                          b8L = buffer[index+7] & 0xffL;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-  	                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
-                                          }
-                                          else {
-                                          	tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-  	                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                          }
-                                          imaginaryDBuffer[j++] = Double.longBitsToDouble(tmpLong);
-  		                    		}
-  		                    	}
-  	                    	}
-                              
-                              if (haveSmallImaginaryData) {
-                      		    if (imaginaryDataBytes < 4) {
-                      		    	padBytes = 4 - imaginaryDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((imaginaryDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (imaginaryDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }   
-                              
-                              try {
-                      			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on image.importDComplexData(2 * nonLogicalField * realDBuffer.length," +
-                      		   		" realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
-                      		   throw e;
-                      		}
-                      	}
+                  	    }  
+                      	
                       	break;
                       case miINT64:
                       	Preferences.debug("Real data type = miINT64\n", Preferences.DEBUG_FILEIO);
                       	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                      	if (!complexFlag) {
-                      		if (nonLogicalField == 0) {
-                      		    image = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName);
-                      		    fileInfo.setDataType(ModelStorageBase.LONG);
-                      		}
-                      		buffer = new byte[realDataBytes];
-                      		raFile.read(buffer);
-                      		longNumber = realDataBytes/8;
-                      		longBuffer = new long[longNumber];
-                      		numberSlices = longNumber/sliceSize;
-                      		j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1L = buffer[index] & 0xffL;
-                                          b2L = buffer[index+1] & 0xffL;
-                                          b3L = buffer[index+2] & 0xffL;
-                                          b4L = buffer[index+3] & 0xffL;
-                                          b5L = buffer[index+4] & 0xffL;
-                                          b6L = buffer[index+5] & 0xffL;
-                                          b7L = buffer[index+6] & 0xffL;
-                                          b8L = buffer[index+7] & 0xffL;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	longBuffer[j++] = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-  	                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
-                                          }
-                                          else {
-                                          	longBuffer[j++] = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-  	                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                          }
-  		                    		}
-  		                    	}
-  	                    	}
-                      		
-                      		if (haveSmallRealData) {
-                      		    if (realDataBytes < 4) {
-                      		    	padBytes = 4 - realDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((realDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (realDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }  
-                      		try {
-                      			image.importData(nonLogicalField * longBuffer.length, longBuffer, true);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * longBuffer.length, longBuffer, true)");
-                      		   throw e;
-                      		}
-                      	}
-                      	else {
-                      		if (nonLogicalField == 0) {
-                      		    image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
-                      		    fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
-                      		}
-                      		buffer = new byte[realDataBytes];
-                      		raFile.read(buffer);
-                      		longNumber = realDataBytes/8;
-                      		realDBuffer = new double[longNumber];
-                      		numberSlices = longNumber/sliceSize;
-                      		j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1L = buffer[index] & 0xffL;
-                                          b2L = buffer[index+1] & 0xffL;
-                                          b3L = buffer[index+2] & 0xffL;
-                                          b4L = buffer[index+3] & 0xffL;
-                                          b5L = buffer[index+4] & 0xffL;
-                                          b6L = buffer[index+5] & 0xffL;
-                                          b7L = buffer[index+6] & 0xffL;
-                                          b8L = buffer[index+7] & 0xffL;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	realDBuffer[j++] = (double)((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-  	                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
-                                          }
-                                          else {
-                                          	realDBuffer[j++] = (double)((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-  	                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                          }
-  		                    		}
-  		                    	}
-  	                    	}
-                      		
-                      		if (haveSmallRealData) {
-                      		    if (realDataBytes < 4) {
-                      		    	padBytes = 4 - realDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((realDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (realDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }    
-                      	    imaginaryDataType = getInt(endianess);
-                      	    if ((imaginaryDataType & 0xffff0000) != 0) {
-                                  // Small data element format    
-                              	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
-                              	imaginaryDataType = imaginaryDataType & 0xffff;
-                              	haveSmallImaginaryData = true;
-                              }
-                              else {
-                                  imaginaryDataBytes = getInt(endianess);
-                                  haveSmallImaginaryData = false;
-                              }
-                      	    if (imaginaryDataType == miINT64) {
-                      	    	Preferences.debug("imaginaryDataType == miINT64 as expected\n", Preferences.DEBUG_FILEIO);
+           
+                  		buffer = new byte[realDataBytes];
+                  		raFile.read(buffer);
+                  		longNumber = realDataBytes/8;
+                  		longBuffer = new long[longNumber];
+                  		numberSlices = longNumber/sliceSize;
+                  		j = 0;
+                    	for (s = 0; s < numberSlices; s++) {
+	                    	for (x = 0; x < imageExtents[1]; x++) {
+	                    		for (y = 0; y < imageExtents[0]; y++) {
+	                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
+                                      b1L = buffer[index] & 0xffL;
+                                      b2L = buffer[index+1] & 0xffL;
+                                      b3L = buffer[index+2] & 0xffL;
+                                      b4L = buffer[index+3] & 0xffL;
+                                      b5L = buffer[index+4] & 0xffL;
+                                      b6L = buffer[index+5] & 0xffL;
+                                      b7L = buffer[index+6] & 0xffL;
+                                      b8L = buffer[index+7] & 0xffL;
+                                      if (endianess == FileBase.BIG_ENDIAN) {
+                                      	longBuffer[j++] = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
+                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
+                                      }
+                                      else {
+                                      	longBuffer[j++] = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
+                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+                                      }
+	                    		}
+	                    	}
+                    	}
+                  		
+                  		if (haveSmallRealData) {
+                  		    if (realDataBytes < 4) {
+                  		    	padBytes = 4 - realDataBytes;
+                  		    	for (i = 0; i < padBytes; i++) {
+                  		    		raFile.readByte();
+                  		    	}
+                  		    }
+                  		}
+                  		else if ((realDataBytes % 8) != 0) {
+                  	    	padBytes = 8 - (realDataBytes % 8);
+                  	    	for (i = 0; i < padBytes; i++) {
+                      	    	raFile.readByte();
                       	    }
-                      	    else {
-                      	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
-                      	    			Preferences.DEBUG_FILEIO);
-                      	    }
-                      	    
-                              if (imaginaryDataBytes == realDataBytes) {
-                              	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
-                              			Preferences.DEBUG_FILEIO);
-                              }
-                              else {
-                              	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
-                              			Preferences.DEBUG_FILEIO);
-                              }
-                              raFile.read(buffer);
-                              imaginaryDBuffer = new double[longNumber];
-                      		j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1L = buffer[index] & 0xffL;
-                                          b2L = buffer[index+1] & 0xffL;
-                                          b3L = buffer[index+2] & 0xffL;
-                                          b4L = buffer[index+3] & 0xffL;
-                                          b5L = buffer[index+4] & 0xffL;
-                                          b6L = buffer[index+5] & 0xffL;
-                                          b7L = buffer[index+6] & 0xffL;
-                                          b8L = buffer[index+7] & 0xffL;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	imaginaryDBuffer[j++] = (double)((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-  	                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
-                                          }
-                                          else {
-                                          	imaginaryDBuffer[j++] = (double)((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-  	                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                          }
-  		                    		}
-  		                    	}
-  	                    	}
-                              
-                              if (haveSmallImaginaryData) {
-                      		    if (imaginaryDataBytes < 4) {
-                      		    	padBytes = 4 - imaginaryDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((imaginaryDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (imaginaryDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }   
-                              
-                              try {
-                      			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on image.importDComplexData(2 * nonLogicalField * realDBuffer.length," +
-                      		   		" realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
-                      		   throw e;
-                      		}
-                      	}
+                  	    }  
+                      	
                       	break;
                       case miUINT64:
                       	Preferences.debug("Real data type = miUINT64\n", Preferences.DEBUG_FILEIO);
                       	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                      	if (!complexFlag) {
-                      		if (nonLogicalField == 0) {
-                      		    image = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName);
-                      		    fileInfo.setDataType(ModelStorageBase.LONG);
-                      		}
-                      		buffer = new byte[realDataBytes];
-                      		raFile.read(buffer);
-                      		longNumber = realDataBytes/8;
-                      		longBuffer = new long[longNumber];
-                      		numberSlices = longNumber/sliceSize;
-                      		j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1L = buffer[index] & 0xffL;
-                                          b2L = buffer[index+1] & 0xffL;
-                                          b3L = buffer[index+2] & 0xffL;
-                                          b4L = buffer[index+3] & 0xffL;
-                                          b5L = buffer[index+4] & 0xffL;
-                                          b6L = buffer[index+5] & 0xffL;
-                                          b7L = buffer[index+6] & 0xffL;
-                                          b8L = buffer[index+7] & 0xffL;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	longBuffer[j++] = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-  	                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
-                                          }
-                                          else {
-                                          	longBuffer[j++] = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-  	                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                          }
-  		                    		}
-  		                    	}
-  	                    	}
-                      		
-                      		if (haveSmallRealData) {
-                      		    if (realDataBytes < 4) {
-                      		    	padBytes = 4 - realDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((realDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (realDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }  
-                      		try {
-                      			image.importData(nonLogicalField * longBuffer.length, longBuffer, true);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on image.importData(nonLogicalField * longBuffer.length, longBuffer, true)");
-                      		   throw e;
-                      		}
-                      	}
-                      	else {
-                      		if (nonLogicalField == 0) {
-                      		    image = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName);
-                      		    fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
-                      		}
-                      		buffer = new byte[realDataBytes];
-                      		raFile.read(buffer);
-                      		longNumber = realDataBytes/8;
-                      		realDBuffer = new double[longNumber];
-                      		numberSlices = longNumber/sliceSize;
-                      		j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1L = buffer[index] & 0xffL;
-                                          b2L = buffer[index+1] & 0xffL;
-                                          b3L = buffer[index+2] & 0xffL;
-                                          b4L = buffer[index+3] & 0xffL;
-                                          b5L = buffer[index+4] & 0xffL;
-                                          b6L = buffer[index+5] & 0xffL;
-                                          b7L = buffer[index+6] & 0xffL;
-                                          b8L = buffer[index+7] & 0xffL;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	realDBuffer[j++] = (double)((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-  	                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
-                                          }
-                                          else {
-                                          	realDBuffer[j++] = (double)((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-  	                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                          }
-  		                    		}
-  		                    	}
-  	                    	}
-                      		
-                      		if (haveSmallRealData) {
-                      		    if (realDataBytes < 4) {
-                      		    	padBytes = 4 - realDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((realDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (realDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }   
-                      	    imaginaryDataType = getInt(endianess);
-                      	    if ((imaginaryDataType & 0xffff0000) != 0) {
-                                  // Small data element format    
-                              	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
-                              	imaginaryDataType = imaginaryDataType & 0xffff;
-                              	haveSmallImaginaryData = true;
-                              }
-                              else {
-                                  imaginaryDataBytes = getInt(endianess);
-                                  haveSmallImaginaryData = false;
-                              }
-                      	    if (imaginaryDataType == miUINT64) {
-                      	    	Preferences.debug("imaginaryDataType == miUINT64 as expected\n", Preferences.DEBUG_FILEIO);
+                     
+                  		buffer = new byte[realDataBytes];
+                  		raFile.read(buffer);
+                  		longNumber = realDataBytes/8;
+                  		longBuffer = new long[longNumber];
+                  		numberSlices = longNumber/sliceSize;
+                  		j = 0;
+                    	for (s = 0; s < numberSlices; s++) {
+	                    	for (x = 0; x < imageExtents[1]; x++) {
+	                    		for (y = 0; y < imageExtents[0]; y++) {
+	                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
+                                      b1L = buffer[index] & 0xffL;
+                                      b2L = buffer[index+1] & 0xffL;
+                                      b3L = buffer[index+2] & 0xffL;
+                                      b4L = buffer[index+3] & 0xffL;
+                                      b5L = buffer[index+4] & 0xffL;
+                                      b6L = buffer[index+5] & 0xffL;
+                                      b7L = buffer[index+6] & 0xffL;
+                                      b8L = buffer[index+7] & 0xffL;
+                                      if (endianess == FileBase.BIG_ENDIAN) {
+                                      	longBuffer[j++] = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
+                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
+                                      }
+                                      else {
+                                      	longBuffer[j++] = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
+                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+                                      }
+	                    		}
+	                    	}
+                    	}
+                  		
+                  		if (haveSmallRealData) {
+                  		    if (realDataBytes < 4) {
+                  		    	padBytes = 4 - realDataBytes;
+                  		    	for (i = 0; i < padBytes; i++) {
+                  		    		raFile.readByte();
+                  		    	}
+                  		    }
+                  		}
+                  		else if ((realDataBytes % 8) != 0) {
+                  	    	padBytes = 8 - (realDataBytes % 8);
+                  	    	for (i = 0; i < padBytes; i++) {
+                      	    	raFile.readByte();
                       	    }
-                      	    else {
-                      	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
-                      	    			Preferences.DEBUG_FILEIO);
-                      	    }
-                      	    
-                              if (imaginaryDataBytes == realDataBytes) {
-                              	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
-                              			Preferences.DEBUG_FILEIO);
-                              }
-                              else {
-                              	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
-                              			Preferences.DEBUG_FILEIO);
-                              }
-                              raFile.read(buffer);
-                              imaginaryDBuffer = new double[longNumber];
-                              numberSlices = longNumber/sliceSize;
-                      		j = 0;
-  	                    	for (s = 0; s < numberSlices; s++) {
-  		                    	for (x = 0; x < imageExtents[1]; x++) {
-  		                    		for (y = 0; y < imageExtents[0]; y++) {
-  		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
-                                          b1L = buffer[index] & 0xffL;
-                                          b2L = buffer[index+1] & 0xffL;
-                                          b3L = buffer[index+2] & 0xffL;
-                                          b4L = buffer[index+3] & 0xffL;
-                                          b5L = buffer[index+4] & 0xffL;
-                                          b6L = buffer[index+5] & 0xffL;
-                                          b7L = buffer[index+6] & 0xffL;
-                                          b8L = buffer[index+7] & 0xffL;
-                                          if (endianess == FileBase.BIG_ENDIAN) {
-                                          	imaginaryDBuffer[j++] = (double)((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-  	                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
-                                          }
-                                          else {
-                                          	imaginaryDBuffer[j++] = (double)((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-  	                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                          }
-  		                    		}
-  		                    	}
-  	                    	}
-                              
-                              if (haveSmallImaginaryData) {
-                      		    if (imaginaryDataBytes < 4) {
-                      		    	padBytes = 4 - imaginaryDataBytes;
-                      		    	for (i = 0; i < padBytes; i++) {
-                      		    		raFile.readByte();
-                      		    	}
-                      		    }
-                      		}
-                      		else if ((imaginaryDataBytes % 8) != 0) {
-                      	    	padBytes = 8 - (imaginaryDataBytes % 8);
-                      	    	for (i = 0; i < padBytes; i++) {
-                          	    	raFile.readByte();
-                          	    }
-                      	    }   
-                              
-                              try {
-                      			image.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on image.importDComplexData(2 * nonLogicalField * realDBuffer.length, " +
-                      		   		"realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
-                      		   throw e;
-                      		}
-                      	}
+                  	    }  
+                      	
                       	break;
                       case miMATRIX:
                     	  Preferences.debug("Real data type = miMATRIX\n", Preferences.DEBUG_FILEIO);
                           Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                          if (!complexFlag) {
-                        	  buffer = new byte[realDataBytes];
+                
+                    	  
+                    	  if (arrayName.equals("fb")) {
+                    		  arrayFlagsDataType = getInt(endianess);
+	                          if (arrayFlagsDataType == miUINT32) {
+	                          		Preferences.debug("fb array flags data type is the expected miUINT32\n", Preferences.DEBUG_FILEIO);
+	                          }
+	                          else {
+	                          		Preferences.debug("fb array flags data type is an unexpected " + arrayFlagsDataType + "\n", 
+	                          				Preferences.DEBUG_FILEIO);
+	                          }
+                              arrayFlagsBytes = getInt(endianess);
+                              if (arrayFlagsBytes == 8) {
+                              	Preferences.debug("fb array flags byte length = 8 as expected\n", Preferences.DEBUG_FILEIO);
+                              }
+                              else {
+                              	Preferences.debug("fb array flags byte length is an unexpected " + arrayFlagsBytes + "\n", 
+                              			Preferences.DEBUG_FILEIO);
+                              }
+                              arrayFlags = getInt(endianess);
+                              arrayClass = arrayFlags & 0x000000ff;
+                              switch(arrayClass) {
+                              case mxCELL_CLASS:
+                              	Preferences.debug("fb array type is cell array\n", Preferences.DEBUG_FILEIO);
+                              	break;
+                              case mxSTRUCT_CLASS:
+                              	Preferences.debug("fb array type is structure\n", Preferences.DEBUG_FILEIO);
+                              	break;
+                              case mxOBJECT_CLASS:
+                              	Preferences.debug("fb array type is object\n", Preferences.DEBUG_FILEIO);
+                              	break;
+                              case mxCHAR_CLASS:
+                              	Preferences.debug("fb array type is character\n", Preferences.DEBUG_FILEIO);
+                              	break;
+                              case mxSPARSE_CLASS:
+                              	Preferences.debug("fb array type is sparse\n", Preferences.DEBUG_FILEIO);
+                              	break;
+                              case mxDOUBLE_CLASS:
+                              	Preferences.debug("fb array type is 8 byte double\n", Preferences.DEBUG_FILEIO);
+                              	break;
+                              case mxSINGLE_CLASS:
+                              	Preferences.debug("fb array type is 4 byte float\n", Preferences.DEBUG_FILEIO);
+                              	break;
+                              case mxINT8_CLASS:
+                              	Preferences.debug("fb array type is signed byte\n", Preferences.DEBUG_FILEIO);
+                              	break;
+                              case mxUINT8_CLASS:
+                              	Preferences.debug("fb array type is unsigned byte\n", Preferences.DEBUG_FILEIO);
+                              	break;
+                              case mxINT16_CLASS:
+                              	Preferences.debug("fb array type is signed short\n", Preferences.DEBUG_FILEIO);
+                              	break;
+                              case mxUINT16_CLASS:
+                              	Preferences.debug("fb array type is unsigned short\n", Preferences.DEBUG_FILEIO);
+                              	break;
+                              case mxINT32_CLASS:
+                                  Preferences.debug("fb array type is signed integer\n", Preferences.DEBUG_FILEIO);
+                                  break;
+                              case mxUINT32_CLASS:
+                              	Preferences.debug("fb array type is unsigned integer\n", Preferences.DEBUG_FILEIO);
+                              	break;
+                              case mxINT64_CLASS:
+                              	Preferences.debug("fb array type is signed long\n", Preferences.DEBUG_FILEIO);
+                              	break;
+                              case mxUINT64_CLASS:
+                              	Preferences.debug("fb array type is unsigned long\n", Preferences.DEBUG_FILEIO);
+                              	break;
+                              default:
+                              	Preferences.debug("fb array type is an illegal = " + arrayClass + "\n", Preferences.DEBUG_FILEIO);
+                              }
+                              if (arrayClass == mxCHAR_CLASS) {
+                              	continue;
+                              }
+                              
+                              if ((arrayFlags & 0x00000800) != 0) {
+                              	complexFlag = true;
+                              	Preferences.debug("fb complex flag is set\n", Preferences.DEBUG_FILEIO);
+                              }
+                              else {
+                              	complexFlag = false;
+                              	Preferences.debug("fb complex flag is not set\n", Preferences.DEBUG_FILEIO);
+                              }
+                              if ((arrayFlags & 0x00000400) != 0) {
+                              	globalFlag = true;
+                              	Preferences.debug("fb global flag is set\n", Preferences.DEBUG_FILEIO);
+                              }
+                              else {
+                              	globalFlag = false;
+                              	Preferences.debug("fb global flag is not set\n", Preferences.DEBUG_FILEIO);
+                              }
+                              if ((arrayFlags & 0x00000200) != 0) {
+                              	logicalFlag = true;
+                              	Preferences.debug("fb logical flag is set\n", Preferences.DEBUG_FILEIO);
+                              }
+                              else {
+                              	logicalFlag = false;
+                              	Preferences.debug("fb logical flag is not set\n", Preferences.DEBUG_FILEIO);
+                              }
+                              // 4 undefined bytes
+                          	getInt(endianess);
+                          	dimensionsArrayDataType = getInt(endianess);
+                          	if (dimensionsArrayDataType == miINT32) {
+                          		Preferences.debug("fb dimensions array data type is the expected miINT32\n", Preferences.DEBUG_FILEIO);
+                          	}
+                          	else {
+                          		Preferences.debug("fb dimensions array data type is an unexpected " + dimensionsArrayDataType + "\n", 
+                          				Preferences.DEBUG_FILEIO);
+                          	}
+                          	dimensionsArrayBytes = getInt(endianess);
+                          	Preferences.debug("fb dimensionsArrayBytes = " + dimensionsArrayBytes + "\n", Preferences.DEBUG_FILEIO);
+                          	if ((dimensionsArrayBytes % 4) == 0) {
+                          		Preferences.debug("fb dimensionsArrayBytes is a multiple of 4 as expected\n", Preferences.DEBUG_FILEIO);
+                          	}
+                          	else {
+                          		Preferences.debug("fb dimensionArrayBytes is unexpectedly not a multiple of 4\n", 
+                          				Preferences.DEBUG_FILEIO);
+                          	}
+                          	nDim = dimensionsArrayBytes/4;
+                          	Preferences.debug("fb number of dimensions = " + nDim + "\n", Preferences.DEBUG_FILEIO);
+                          	if (nDim < 2) {
+                          		Preferences.debug("Error! All fb numeric arrays should have at least 2 dimensions\n",
+                          				Preferences.DEBUG_FILEIO);
+                          	}
+                          	if (arrayClass == mxSTRUCT_CLASS) {
+                          		structureDimensions = new int[nDim];
+                          	    for (i = 0; i < nDim; i++) {
+                          	    	// Ignore structure dimensions
+                          	    	structureDimensions[i] = getInt(endianess);
+                          	    	Preferences.debug("fb ignored structureDimensions[" + i + " ] = " + structureDimensions[i] + "\n", 
+                          	    			Preferences.DEBUG_FILEIO);
+                          	    }
+                          	}
+                          	else { // arrayClass != mxSTRUCT_CLASS
+          	                	imageExtents = new int[nDim];
+          	                	imageLength = 1;
+          	                	
+          	                	for (i = 0; i < nDim; i++) {
+          	                		if (i == 0) {
+          	                			imageExtents[1] = getInt(endianess);
+          	                			Preferences.debug("fb imageExtents[1] = " + imageExtents[1] + "\n", Preferences.DEBUG_FILEIO);
+          	                		}
+          	                		else if (i == 1) {
+          	                			imageExtents[0] = getInt(endianess);
+          	                			Preferences.debug("fb imageExtents[0] = " + imageExtents[0] + "\n", Preferences.DEBUG_FILEIO);
+          	                		}
+          	                		else {
+          	                		    imageExtents[i] = getInt(endianess);
+          	                		    Preferences.debug("fb imageExtents["+ i + "] = " + imageExtents[i] + "\n", 
+          	                		    		Preferences.DEBUG_FILEIO);
+          	                		}
+          	                		imageLength = imageLength * imageExtents[i];
+          	                	}
+          	                	if ((imageExtents[0] == 1) || (imageExtents[1] == 1)) {
+          	                    	continue;	
+          	                	}
+          	                	if ((nDim == 4) && (imageExtents[2] == 1)) {
+          	                		nDim = 3;
+          	                		newExtents = new int[3];
+          	                		newExtents[0] = imageExtents[0];
+          	                		newExtents[1] = imageExtents[1];
+          	                		newExtents[2] = imageExtents[3];
+          	                		imageExtents = new int[3];
+          	                		imageExtents[0] = newExtents[0];
+          	                		imageExtents[1] = newExtents[1];
+          	                		imageExtents[2] = newExtents[2];
+          	                	}
+          	                	
+                          	} // else arrayClass != mxSTRUCT_CLASS
+                          	if ((dimensionsArrayBytes % 8) != 0) {
+                          		// Skip over padding bytes
+                          		padBytes = 8 - (dimensionsArrayBytes % 8);
+                          		for (i = 0; i < padBytes; i++) {
+                          		    raFile.readByte();
+                          		}
+                          	} // if ((dimensionsArrayBytes % 8) != 0)
+                          	arrayNameDataType = getInt(endianess);
+                              if ((arrayNameDataType & 0xffff0000) != 0) {
+                                  // Small data element format    
+                              	arrayNameBytes = (arrayNameDataType & 0xffff0000) >>> 16;
+                              	arrayNameDataType = arrayNameDataType & 0xffff;
+                              	arrayName = getString(arrayNameBytes);
+                              	if (arrayNameBytes < 4) {
+                              		for (i = 0; i < 4 - arrayNameBytes; i++) {
+                              			// Skip over padding bytes
+                              			raFile.readByte();
+                              		}
+                              	}
+                              }
+                              else {
+                              	arrayNameBytes = getInt(endianess);
+                              	Preferences.debug("fb array name bytes = " + arrayNameBytes + "\n", Preferences.DEBUG_FILEIO);
+                              	arrayName = getString(arrayNameBytes);
+                              	// Skip over padding bytes
+                              	if ((arrayNameBytes % 8) != 0) {
+          	                		padBytes = 8 - (arrayNameBytes % 8);
+          	                		for (i = 0; i < padBytes; i++) {
+          	                		    raFile.readByte();
+          	                		}
+                              	}
+                              }
+                              Preferences.debug("fb array name = " + arrayName + "\n", Preferences.DEBUG_FILEIO);
+                              realDataType = getInt(endianess);
+                              if ((realDataType & 0xffff0000) != 0) {
+                                  // Small data element format    
+                              	realDataBytes = (realDataType & 0xffff0000) >>> 16;
+                              	realDataType = realDataType & 0xffff;
+                              	haveSmallRealData = true;
+                              }
+                              else {
+                                  realDataBytes = getInt(endianess);
+                                  haveSmallRealData = false;
+                              }
+                              if (realDataType == miDOUBLE) {
+                            	  Preferences.debug("fb real data type = the expected miDOUBLE\n", Preferences.DEBUG_FILEIO);
+                              }
+                              else {Preferences.debug("fb real data type unexpectedly = " + realDataType + "\n",
+                            		  Preferences.DEBUG_FILEIO);
+                            	  
+                              }
+                              if (realDataBytes == 1352) {
+                            	  Preferences.debug("fb real data bytes = 1352 as expected\n", Preferences.DEBUG_FILEIO);
+                              }
+                              else {
+                            	  Preferences.debug("fb real data bytes unexpectedly = " + realDataBytes + "\n",
+                            			  Preferences.DEBUG_FILEIO);
+                              }
+                              buffer = new byte[realDataBytes];
                         	  raFile.read(buffer);
-                        	  if (haveSmallRealData) {
-                        		    if (realDataBytes < 4) {
-                        		    	padBytes = 4 - realDataBytes;
-                        		    	for (i = 0; i < padBytes; i++) {
-                        		    		raFile.readByte();
-                        		    	}
-                        		    }
-                        		}
-                        		else if ((realDataBytes % 8) != 0) {
-                        	    	padBytes = 8 - (realDataBytes % 8);
-                        	    	for (i = 0; i < padBytes; i++) {
-                            	    	raFile.readByte();
-                            	    }
-                        	    }  
-                          }
+                        	  for (x = 0; x < imageExtents[1]; x++) {
+  	                    		for (y = 0; y < imageExtents[0]; y++) {
+  	                    			index = 8*(x + imageExtents[1] * y);
+                                        b1L = buffer[index] & 0xffL;
+                                        b2L = buffer[index+1] & 0xffL;
+                                        b3L = buffer[index+2] & 0xffL;
+                                        b4L = buffer[index+3] & 0xffL;
+                                        b5L = buffer[index+4] & 0xffL;
+                                        b6L = buffer[index+5] & 0xffL;
+                                        b7L = buffer[index+6] & 0xffL;
+                                        b8L = buffer[index+7] & 0xffL;
+                                        if (endianess == FileBase.BIG_ENDIAN) {
+                                        	fb[y][x] = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
+                                                     (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
+                                        }
+                                        else {
+                                        	fb[y][x] = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
+                                                     (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+                                        }
+  	                    		}
+  	                    	}
+                    	  }
+                    	  else {
+	                          buffer = new byte[realDataBytes];
+	                    	  raFile.read(buffer);
+	                    	  if (haveSmallRealData) {
+	                    		    if (realDataBytes < 4) {
+	                    		    	padBytes = 4 - realDataBytes;
+	                    		    	for (i = 0; i < padBytes; i++) {
+	                    		    		raFile.readByte();
+	                    		    	}
+	                    		    }
+	                    		}
+	                    		else if ((realDataBytes % 8) != 0) {
+	                    	    	padBytes = 8 - (realDataBytes % 8);
+	                    	    	for (i = 0; i < padBytes; i++) {
+	                        	    	raFile.readByte();
+	                        	    }
+	                    	    } 
+                    	  }
+               
                     	  break;
                       default:
                       	Preferences.debug("Illegal data type = " + realDataType + "\n", Preferences.DEBUG_FILEIO);
                       	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                       }
                       
-                      } // if (imagesFound == 1)
-                      else { // imagesFound > 1
-                      	switch(realDataType) {
-                          case miINT8:
-                          	Preferences.debug("Real data type = miINT8\n", Preferences.DEBUG_FILEIO);
-                          	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                          	if (logicalFlag) {
-                          		if (logicalFields == 1) {
-      	                    	    maskImage2 = new ModelImage(ModelStorageBase.BYTE, maskExtents, fileName + "_mask");
-      	                    	    maskFileInfo2.setDataType(ModelStorageBase.BYTE);
-      	                    	    buffer = new byte[realDataBytes];
-      		                    	raFile.read(buffer);
-      		                    	tBuffer = new byte[buffer.length];
-      	                    		numberSlices = buffer.length/sliceSize;
-      		                    	j = 0;
-      		                    	for (s = 0; s < numberSlices; s++) {
-      			                    	for (x = 0; x < imageExtents[1]; x++) {
-      			                    		for (y = 0; y < imageExtents[0]; y++) {
-                                                  tBuffer[j++] = buffer[x + imageExtents[1] * y + s * sliceSize];			                    			
-      			                    		}
-      			                    	}
-      		                    	}
-      		                    	if (haveSmallRealData) {
-      	                    		    if (realDataBytes < 4) {
-      	                    		    	padBytes = 4 - realDataBytes;
-      	                    		    	for (i = 0; i < padBytes; i++) {
-      	                    		    		raFile.readByte();
-      	                    		    	}
-      	                    		    }
-      	                    		}
-      	                    		else if ((realDataBytes % 8) != 0) {
-      	                    	    	padBytes = 8 - (realDataBytes % 8);
-      	                    	    	for (i = 0; i < padBytes; i++) {
-      	                        	    	raFile.readByte();
-      	                        	    }
-      	                    	    }  
-      		                    	try {
-      		                			maskImage2.importData(0, tBuffer, true);
-      		                		}
-      		                		catch(IOException e) {
-      		                		   MipavUtil.displayError("IOException on maskImage2.importData(0, tBuffer, true)");
-      		                		   throw e;
-      		                		}
-                          	    } // if (logicalFields == 1)	
-                          	}
-                          	else if (!complexFlag) {
-                          		if (nonLogicalField == 0) {
-      	                    	    image2 = new ModelImage(ModelStorageBase.BYTE, imageExtents, fileName);
-      	                    	    fileInfo2.setDataType(ModelStorageBase.BYTE);
-                          		}
-      	                    	buffer = new byte[realDataBytes];
-      	                    	raFile.read(buffer);
-      	                    	tBuffer = new byte[buffer.length];
-  	                    		numberSlices = buffer.length/sliceSize;
-  		                    	j = 0;
-  		                    	for (s = 0; s < numberSlices; s++) {
-  			                    	for (x = 0; x < imageExtents[1]; x++) {
-  			                    		for (y = 0; y < imageExtents[0]; y++) {
-                                              tBuffer[j++] = buffer[x + imageExtents[1] * y + s * sliceSize];			                    			
-  			                    		}
-  			                    	}
-  		                    	}
-      	                    	if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }  
-      	                    	try {
-      	                			image2.importData(nonLogicalField * tBuffer.length, tBuffer, true);
-      	                		}
-      	                		catch(IOException e) {
-      	                		   MipavUtil.displayError("IOException on image2.importData(nonLogicalField * tBuffer.length, tBuffer, true)");
-      	                		   throw e;
-      	                		}
-                          	}
-                          	else {
-                          		if (nonLogicalField == 0) {
-                          		    image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
-                          		    fileInfo2.setDataType(ModelStorageBase.COMPLEX);
-                          		}
-                          		buffer = new byte[realDataBytes];
-                          		raFile.read(buffer);
-                          		realBuffer = new float[realDataBytes];
-                          		numberSlices = buffer.length/sliceSize;
-                          		j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-                                              realBuffer[j++] = (float)buffer[x + imageExtents[1] * y + s * sliceSize];			                    			
-      		                    		}
-      		                    	}
-      	                    	}
-                          		
-                          		if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }    
-                          	    imaginaryDataType = getInt(endianess);
-                          	    if ((imaginaryDataType & 0xffff0000) != 0) {
-                                      // Small data element format    
-                                  	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
-                                  	imaginaryDataType = imaginaryDataType & 0xffff;
-                                  	haveSmallImaginaryData = true;
-                                  }
-                                  else {
-                                      imaginaryDataBytes = getInt(endianess);
-                                      haveSmallImaginaryData = false;
-                                  }
-                          	    if (imaginaryDataType == miINT8) {
-                          	    	Preferences.debug("imaginaryDataType == miINT8 as expected\n", Preferences.DEBUG_FILEIO);
-                          	    }
-                          	    else {
-                          	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
-                          	    			Preferences.DEBUG_FILEIO);
-                          	    }
-                                 
-                                  if (imaginaryDataBytes == realDataBytes) {
-                                  	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
-                                  			Preferences.DEBUG_FILEIO);
-                                  }
-                                  else {
-                                  	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
-                                  			Preferences.DEBUG_FILEIO);
-                                  }
-                                  raFile.read(buffer);
-                                  imaginaryBuffer = new float[imaginaryDataBytes];
-                                  j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-                                              imaginaryBuffer[j++] = (float)buffer[x + imageExtents[1] * y + s * sliceSize];			                    			
-      		                    		}
-      		                    	}
-      	                    	}
-                                  
-                                  if (haveSmallImaginaryData) {
-                          		    if (imaginaryDataBytes < 4) {
-                          		    	padBytes = 4 - imaginaryDataBytes;
-                          		    	for (i = 0; i < padBytes; i++) {
-                          		    		raFile.readByte();
-                          		    	}
-                          		    }
-                          		}
-                          		else if ((imaginaryDataBytes % 8) != 0) {
-                          	    	padBytes = 8 - (imaginaryDataBytes % 8);
-                          	    	for (i = 0; i < padBytes; i++) {
-                              	    	raFile.readByte();
-                              	    }
-                          	    }   
-                                  
-                                  try {
-                          			image2.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.importComplexData(2 * nonLogicalField * realBuffer.length, " +
-                          		   		"realBuffer, imaginaryBuffer, true, logMagDisplay)");
-                          		   throw e;
-                          		}		
-                          	}
-                          	break;
-                          case miUINT8:
-                          	Preferences.debug("Real data type = miUINT8\n", Preferences.DEBUG_FILEIO);
-                          	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                          	if (logicalFlag) {
-                          		if (logicalFields == 1) {
-      	                    	    maskImage2 = new ModelImage(ModelStorageBase.UBYTE, maskExtents, fileName + "_mask");
-      	                    	    maskFileInfo2.setDataType(ModelStorageBase.UBYTE);
-      	                    	    buffer = new byte[realDataBytes];
-      	                    	    shortBuffer = new short[realDataBytes];
-      	                    	    raFile.read(buffer);
-      	                    	    numberSlices = buffer.length/sliceSize;
-      	                    	    j = 0;
-      		                    	for (s = 0; s < numberSlices; s++) {
-      			                    	for (x = 0; x < imageExtents[1]; x++) {
-      			                    		for (y = 0; y < imageExtents[0]; y++) {
-                                                  shortBuffer[j++] = (short) (buffer[x + imageExtents[1] * y + s * sliceSize] & 0xff);			                    			
-      			                    		}
-      			                    	}
-      		                    	}
-      	                    	    
-      	                    	    if (haveSmallRealData) {
-      	                    		    if (realDataBytes < 4) {
-      	                    		    	padBytes = 4 - realDataBytes;
-      	                    		    	for (i = 0; i < padBytes; i++) {
-      	                    		    		raFile.readByte();
-      	                    		    	}
-      	                    		    }
-      	                    		}
-      	                    		else if ((realDataBytes % 8) != 0) {
-      	                    	    	padBytes = 8 - (realDataBytes % 8);
-      	                    	    	for (i = 0; i < padBytes; i++) {
-      	                        	    	raFile.readByte();
-      	                        	    }
-      	                    	    }  
-      		                    	try {
-      		                			maskImage2.importUData(0, shortBuffer, true);
-      		                		}
-      		                		catch(IOException e) {
-      		                		   MipavUtil.displayError("IOException on maskImage2.importUData(0, shortBuffer, true)");
-      		                		   throw e;
-      		                		}
-                          	    } // if (logicalFields == 1)		
-                          	}
-                          	else if (isColor) {
-                          		if (nonLogicalField == 0) {
-                          			image2 = new ModelImage(ModelStorageBase.ARGB, imageExtents, fileName);
-                          			fileInfo2.setDataType(ModelStorageBase.ARGB);
-                          		}
-                          		if ((realDataBytes % 3) == 0) {
-      	                    		buffer = new byte[realDataBytes/3];
-      	                    		tBuffer = new byte[buffer.length];
-      	                    		numberSlices = buffer.length/sliceSize;
-      	                    		for (i = 0; i < 3; i++) {
-      			                    	raFile.read(buffer);
-      			                    	j = 0;
-      			                    	for (s = 0; s < numberSlices; s++) {
-      				                    	for (x = 0; x < imageExtents[1]; x++) {
-      				                    		for (y = 0; y < imageExtents[0]; y++) {
-      	                                            tBuffer[j++] = buffer[x + imageExtents[1] * y + s * sliceSize];			                    			
-      				                    		}
-      				                    	}
-      			                    	}
-      			                    	
-      			                    	try {
-      			                			image2.importRGBData(i+1, nonLogicalField * tBuffer.length, tBuffer, true);
-      			                		}
-      			                		catch(IOException e) {
-      			                		   MipavUtil.displayError("IOException on image2.importRGBData(i," +
-      			                		   		" nonLogicalField * tBuffer.length, tBuffer, true)");
-      			                		   throw e;
-      			                		}
-      	                    		} // if (i = 0; i < 3; i++)
-      	
-      		                    	
-      		                    	if (haveSmallRealData) {
-      	                    		    if (realDataBytes < 4) {
-      	                    		    	padBytes = 4 - realDataBytes;
-      	                    		    	for (i = 0; i < padBytes; i++) {
-      	                    		    		raFile.readByte();
-      	                    		    	}
-      	                    		    }
-      	                    		}
-      	                    		else if ((realDataBytes % 8) != 0) {
-      	                    	    	padBytes = 8 - (realDataBytes % 8);
-      	                    	    	for (i = 0; i < padBytes; i++) {
-      	                        	    	raFile.readByte();
-      	                        	    }
-      	                    	    } 
-      	                    	
-      	                        } // if (realDataBytes % 3) == 0)
-                          	} // else if (isColor)
-                          	else if (!complexFlag) {
-                          		if (nonLogicalField == 0) {
-      	                    	    image2 = new ModelImage(ModelStorageBase.UBYTE, imageExtents, fileName);
-      	                    	    fileInfo2.setDataType(ModelStorageBase.UBYTE);
-                          		}
-      	                    	buffer = new byte[realDataBytes];
-      	                    	raFile.read(buffer);
-      	                    	shortBuffer = new short[realDataBytes];
-      	                    	numberSlices = buffer.length/sliceSize;
-      	                    	j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-                                              shortBuffer[j++] = (short) (buffer[x + imageExtents[1] * y + s * sliceSize] & 0xff);			                    			
-      		                    		}
-      		                    	}
-      	                    	}
-      	                    	
-      	                    	if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }  
-      	                    	try {
-      	                			image2.importUData(nonLogicalField * shortBuffer.length, shortBuffer, true);
-      	                		}
-      	                		catch(IOException e) {
-      	                		   MipavUtil.displayError("IOException on image2.importData(nonLogicalField * shortBuffer.length, shortBuffer, true)");
-      	                		   throw e;
-      	                		}
-                          	}
-                          	else {
-                          		if (nonLogicalField == 0) {
-                          		    image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
-                          		    fileInfo2.setDataType(ModelStorageBase.COMPLEX);
-                          		}
-                          		buffer = new byte[realDataBytes];
-                          		raFile.read(buffer);
-                          		realBuffer = new float[realDataBytes];
-                          		numberSlices = buffer.length/sliceSize;
-                          	    j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-                                              realBuffer[j++] = (float) (buffer[x + imageExtents[1] * y + s * sliceSize] & 0xff);			                    			
-      		                    		}
-      		                    	}
-      	                    	}
-                          		
-                          		if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }   
-                          	    imaginaryDataType = getInt(endianess);
-                          	    if ((imaginaryDataType & 0xffff0000) != 0) {
-                                      // Small data element format    
-                                  	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
-                                  	imaginaryDataType = imaginaryDataType & 0xffff;
-                                  	haveSmallImaginaryData = true;
-                                  }
-                                  else {
-                                      imaginaryDataBytes = getInt(endianess);
-                                      haveSmallImaginaryData = false;
-                                  }
-                          	    if (imaginaryDataType == miUINT8) {
-                          	    	Preferences.debug("imaginaryDataType == miUINT8 as expected\n", Preferences.DEBUG_FILEIO);
-                          	    }
-                          	    else {
-                          	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
-                          	    			Preferences.DEBUG_FILEIO);
-                          	    }
-                                  
-                                  if (imaginaryDataBytes == realDataBytes) {
-                                  	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
-                                  			Preferences.DEBUG_FILEIO);
-                                  }
-                                  else {
-                                  	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
-                                  			Preferences.DEBUG_FILEIO);
-                                  }
-                                  raFile.read(buffer);
-                                  imaginaryBuffer = new float[imaginaryDataBytes];
-                                  j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-                                              imaginaryBuffer[j++] = (float) (buffer[x + imageExtents[1] * y + s * sliceSize] & 0xff);			                    			
-      		                    		}
-      		                    	}
-      	                    	}
-                                  
-                                  if (haveSmallImaginaryData) {
-                          		    if (imaginaryDataBytes < 4) {
-                          		    	padBytes = 4 - imaginaryDataBytes;
-                          		    	for (i = 0; i < padBytes; i++) {
-                          		    		raFile.readByte();
-                          		    	}
-                          		    }
-                          		}
-                          		else if ((imaginaryDataBytes % 8) != 0) {
-                          	    	padBytes = 8 - (imaginaryDataBytes % 8);
-                          	    	for (i = 0; i < padBytes; i++) {
-                              	    	raFile.readByte();
-                              	    }
-                          	    }   
-                                  
-                                  try {
-                          			image2.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.importComplexData(2 * nonLogicalField * realBuffer.length," +
-                          		   		" realBuffer, imaginaryBuffer, true, logMagDisplay)");
-                          		   throw e;
-                          		}	
-                          	}
-                          	break;
-                          case miINT16:
-                          	Preferences.debug("Real data type = miINT16\n", Preferences.DEBUG_FILEIO);
-                          	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                          	if (!complexFlag) {
-                          		if (nonLogicalField == 0) {
-                          		    image2 = new ModelImage(ModelStorageBase.SHORT, imageExtents, fileName); 
-                          		    fileInfo2.setDataType(ModelStorageBase.SHORT);
-                          		}
-                          		buffer = new byte[realDataBytes];
-                          		raFile.read(buffer);
-                          		shortNumber = realDataBytes/2;
-                          		shortBuffer = new short[shortNumber];
-                          		numberSlices = shortNumber/sliceSize;
-                          		j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1 = buffer[index] & 0xff;
-                                              b2 = buffer[index+1] & 0xff;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	shortBuffer[j++] = (short)((b1 << 8) | b2);	
-                                              }
-                                              else {
-                                              	shortBuffer[j++] = (short)((b2 << 8) | b1);
-                                              }
-      		                    		}
-      		                    	}
-      	                    	}
-                          		
-                          		if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }  
-                          		try {
-                          			image2.importData(nonLogicalField * shortBuffer.length, shortBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.importData(nonLogicalField * shortBuffer.length, shortBuffer, true)");
-                          		   throw e;
-                          		}
-                          	}
-                          	else {
-                          		if (nonLogicalField == 0) {
-                          		    image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
-                          		    fileInfo2.setDataType(ModelStorageBase.COMPLEX);
-                          		}
-                          		buffer = new byte[realDataBytes];
-                          		raFile.read(buffer);
-                          		shortNumber = realDataBytes/2;
-                          		realBuffer = new float[shortNumber];
-                          		numberSlices = shortNumber/sliceSize;
-                          		j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1 = buffer[index] & 0xff;
-                                              b2 = buffer[index+1] & 0xff;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	realBuffer[j++] = (float)((b1 << 8) | b2);	
-                                              }
-                                              else {
-                                              	realBuffer[j++] = (float)((b2 << 8) | b1);
-                                              }
-      		                    		}
-      		                    	}
-      	                    	}
-                          		
-                          		if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }  
-                          	    imaginaryDataType = getInt(endianess);
-                          	    if ((imaginaryDataType & 0xffff0000) != 0) {
-                                      // Small data element format    
-                                  	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
-                                  	imaginaryDataType = imaginaryDataType & 0xffff;
-                                  	haveSmallImaginaryData = true;
-                                  }
-                                  else {
-                                      imaginaryDataBytes = getInt(endianess);
-                                      haveSmallImaginaryData = false;
-                                  }
-                          	    if (imaginaryDataType == miINT16) {
-                          	    	Preferences.debug("imaginaryDataType == miINT16 as expected\n", Preferences.DEBUG_FILEIO);
-                          	    }
-                          	    else {
-                          	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
-                          	    			Preferences.DEBUG_FILEIO);
-                          	    }
-                                  
-                                  if (imaginaryDataBytes == realDataBytes) {
-                                  	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
-                                  			Preferences.DEBUG_FILEIO);
-                                  }
-                                  else {
-                                  	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
-                                  			Preferences.DEBUG_FILEIO);
-                                  }
-                                  raFile.read(buffer);
-                                  imaginaryBuffer = new float[shortNumber];
-                                  j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1 = buffer[index] & 0xff;
-                                              b2 = buffer[index+1] & 0xff;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	imaginaryBuffer[j++] = (float)((b1 << 8) | b2);	
-                                              }
-                                              else {
-                                              	imaginaryBuffer[j++] = (float)((b2 << 8) | b1);
-                                              }
-      		                    		}
-      		                    	}
-      	                    	}
-                                  
-                                  if (haveSmallImaginaryData) {
-                          		    if (imaginaryDataBytes < 4) {
-                          		    	padBytes = 4 - imaginaryDataBytes;
-                          		    	for (i = 0; i < padBytes; i++) {
-                          		    		raFile.readByte();
-                          		    	}
-                          		    }
-                          		}
-                          		else if ((imaginaryDataBytes % 8) != 0) {
-                          	    	padBytes = 8 - (imaginaryDataBytes % 8);
-                          	    	for (i = 0; i < padBytes; i++) {
-                              	    	raFile.readByte();
-                              	    }
-                          	    }   
-                                  
-                                  try {
-                          			image2.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.importComplexData(2 * nonLogicalField * realBuffer.length, " +
-                          		   		"realBuffer, imaginaryBuffer, true, logMagDisplay)");
-                          		   throw e;
-                          		}		
-                          	}
-                          	break;
-                          case miUINT16:
-                          	Preferences.debug("Real data type = miUINT16\n", Preferences.DEBUG_FILEIO);
-                          	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                          	if (isColor) {
-                          		if (nonLogicalField == 0) {
-                          			image2 = new ModelImage(ModelStorageBase.ARGB_USHORT, imageExtents, fileName);
-                          			fileInfo2.setDataType(ModelStorageBase.ARGB_USHORT);
-                          		}
-                          		if ((realDataBytes % 3) == 0) {
-      	                    		buffer = new byte[realDataBytes/3];
-      	                    		shortNumber = realDataBytes/6;
-      	                    		shortBuffer = new short[shortNumber];
-      	                    		numberSlices = shortNumber/sliceSize;
-  		                    		for (i = 0; i < 3; i++) {
-  				                    	raFile.read(buffer);
-  				                    	j = 0;
-  				                    	for (s = 0; s < numberSlices; s++) {
-  					                    	for (x = 0; x < imageExtents[1]; x++) {
-  					                    		for (y = 0; y < imageExtents[0]; y++) {
-  					                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
-  		                                            b1 = buffer[index] & 0xff;
-  		                                            b2 = buffer[index+1] & 0xff;
-  		                                            if (endianess == FileBase.BIG_ENDIAN) {
-  		                                            	shortBuffer[j++] = (short) ((b1 << 8) | b2);	
-  		                                            }
-  		                                            else {
-  		                                            	shortBuffer[j++] = (short) ((b2 << 8) | b1);
-  		                                            }
-  					                    		}
-  					                    	}
-  				                    	}
-      			                    	
-      			                    	try {
-      			                			image2.importRGBData(i+1, nonLogicalField * shortBuffer.length, shortBuffer, true);
-      			                		}
-      			                		catch(IOException e) {
-      			                		   MipavUtil.displayError("IOException on image2.importRGBData(i," +
-      			                		   		" nonLogicalField * shortBuffer.length, shortBuffer, true)");
-      			                		   throw e;
-      			                		}
-      	                    		} // if (i = 0; i < 3; i++)
-      	
-      		                    	
-      		                    	if (haveSmallRealData) {
-      	                    		    if (realDataBytes < 4) {
-      	                    		    	padBytes = 4 - realDataBytes;
-      	                    		    	for (i = 0; i < padBytes; i++) {
-      	                    		    		raFile.readByte();
-      	                    		    	}
-      	                    		    }
-      	                    		}
-      	                    		else if ((realDataBytes % 8) != 0) {
-      	                    	    	padBytes = 8 - (realDataBytes % 8);
-      	                    	    	for (i = 0; i < padBytes; i++) {
-      	                        	    	raFile.readByte();
-      	                        	    }
-      	                    	    } 
-      	                    	
-      	                        } // if (realDataBytes % 3) == 0)
-                          	} // if (isColor)
-                          	else if (!complexFlag) {
-                          		if (nonLogicalField == 0) {
-                          		    image2 = new ModelImage(ModelStorageBase.USHORT, imageExtents, fileName); 
-                          		    fileInfo2.setDataType(ModelStorageBase.USHORT);
-                          		}
-                          		buffer =  new byte[realDataBytes];
-                          		raFile.read(buffer);
-                          		shortNumber = realDataBytes/2;
-                          		intBuffer = new int[shortNumber];
-                          		numberSlices = shortNumber/sliceSize;
-                          		j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1 = buffer[index] & 0xff;
-                                              b2 = buffer[index+1] & 0xff;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	intBuffer[j++] = ((b1 << 8) | b2);	
-                                              }
-                                              else {
-                                              	intBuffer[j++] = ((b2 << 8) | b1);
-                                              }
-      		                    		}
-      		                    	}
-      	                    	}
-                          		
-                          		if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }  
-                          		try {
-                          			image2.importUData(nonLogicalField * intBuffer.length, intBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.importUData(nonLogicalField * intBuffer.length, intBuffer, true)");
-                          		   throw e;
-                          		}
-                          	}
-                          	else {
-                          		if (nonLogicalField == 0) {
-                          		    image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName); 
-                          		    fileInfo2.setDataType(ModelStorageBase.COMPLEX);
-                          		}
-                          		buffer = new byte[realDataBytes];
-                          		raFile.read(buffer);
-                          		shortNumber = realDataBytes/2;
-                          		realBuffer = new float[shortNumber];
-                          		numberSlices = shortNumber/sliceSize;
-                          		j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1 = buffer[index] & 0xff;
-                                              b2 = buffer[index+1] & 0xff;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                                  realBuffer[j++] = (float) ((b1 << 8) | b2);	
-                                              }
-                                              else {
-                                              	realBuffer[j++] = (float) ((b2 << 8) | b1);
-                                              }
-      		                    		}
-      		                    	}
-      	                    	}
-                          		
-                          		if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }   
-                          	    imaginaryDataType = getInt(endianess);
-                          	    if ((imaginaryDataType & 0xffff0000) != 0) {
-                                      // Small data element format    
-                                  	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
-                                  	imaginaryDataType = imaginaryDataType & 0xffff;
-                                  	haveSmallImaginaryData = true;
-                                  }
-                                  else {
-                                      imaginaryDataBytes = getInt(endianess);
-                                      haveSmallImaginaryData = false;
-                                  }
-                          	    if (imaginaryDataType == miUINT16) {
-                          	    	Preferences.debug("imaginaryDataType == miUINT16 as expected\n", Preferences.DEBUG_FILEIO);
-                          	    }
-                          	    else {
-                          	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
-                          	    			Preferences.DEBUG_FILEIO);
-                          	    }
-                                 
-                                  if (imaginaryDataBytes == realDataBytes) {
-                                  	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
-                                  			Preferences.DEBUG_FILEIO);
-                                  }
-                                  else {
-                                  	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
-                                  			Preferences.DEBUG_FILEIO);
-                                  }
-                                  raFile.read(buffer);
-                                  imaginaryBuffer = new float[shortNumber];
-                                  j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 2*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1 = buffer[index] & 0xff;
-                                              b2 = buffer[index+1] & 0xff;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                                  imaginaryBuffer[j++] = (float) ((b1 << 8) | b2);	
-                                              }
-                                              else {
-                                              	imaginaryBuffer[j++] = (float) ((b2 << 8) | b1);
-                                              }
-      		                    		}
-      		                    	}
-      	                    	}
-                                  
-                                  if (haveSmallImaginaryData) {
-                          		    if (imaginaryDataBytes < 4) {
-                          		    	padBytes = 4 - imaginaryDataBytes;
-                          		    	for (i = 0; i < padBytes; i++) {
-                          		    		raFile.readByte();
-                          		    	}
-                          		    }
-                          		}
-                          		else if ((imaginaryDataBytes % 8) != 0) {
-                          	    	padBytes = 8 - (imaginaryDataBytes % 8);
-                          	    	for (i = 0; i < padBytes; i++) {
-                              	    	raFile.readByte();
-                              	    }
-                          	    }   
-                                  
-                                  try {
-                          			image2.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.importComplexData(2 * nonLogicalField * realBuffer.length," +
-                          		   		" realBuffer, imaginaryBuffer, true, logMagDisplay)");
-                          		   throw e;
-                          		}		
-                          	}
-                          	break;
-                          case miINT32:
-                          	Preferences.debug("Real data type = miINT32\n", Preferences.DEBUG_FILEIO);
-                          	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                          	if (!complexFlag) {
-                          		if (nonLogicalField == 0) {
-                          		    image2 = new ModelImage(ModelStorageBase.INTEGER, imageExtents, fileName);
-                          		    fileInfo2.setDataType(ModelStorageBase.INTEGER);
-                          		}
-                          		buffer = new byte[realDataBytes];
-                          		raFile.read(buffer);
-                          		intNumber = realDataBytes/4;
-                          		intBuffer = new int[intNumber];
-                          		numberSlices = intNumber/sliceSize;
-                          		j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1 = buffer[index] & 0xff;
-                                              b2 = buffer[index+1] & 0xff;
-                                              b3 = buffer[index+2] & 0xff;
-                                              b4 = buffer[index+3] & 0xff;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	intBuffer[j++] = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-                                              }
-                                              else {
-                                              	intBuffer[j++] = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
-                                              }
-      		                    		}
-      		                    	}
-      	                    	}
-                          		
-                          		if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }  
-                          		try {
-                          			image2.importData(nonLogicalField * intBuffer.length, intBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.importData(nonLogicalField * intBuffer.length, intBuffer, true)");
-                          		   throw e;
-                          		}
-                          	}
-                          	else {
-                          		if (nonLogicalField == 0) {
-                          		    image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
-                          		    fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
-                          		}
-                          		buffer = new byte[realDataBytes];
-                          		raFile.read(buffer);
-                          		intNumber = realDataBytes/4;
-                          		realDBuffer = new double[intNumber];
-                          		numberSlices = intNumber/sliceSize;
-                          		j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1 = buffer[index] & 0xff;
-                                              b2 = buffer[index+1] & 0xff;
-                                              b3 = buffer[index+2] & 0xff;
-                                              b4 = buffer[index+3] & 0xff;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	realDBuffer[j++] = (double)((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-                                              }
-                                              else {
-                                              	realDBuffer[j++] = (double)((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
-                                              }
-      		                    		}
-      		                    	}
-      	                    	}
-                          		
-                          		if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }    
-                          	    imaginaryDataType = getInt(endianess);
-                          	    if ((imaginaryDataType & 0xffff0000) != 0) {
-                                      // Small data element format    
-                                  	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
-                                  	imaginaryDataType = imaginaryDataType & 0xffff;
-                                  	haveSmallImaginaryData = true;
-                                  }
-                                  else {
-                                      imaginaryDataBytes = getInt(endianess);
-                                      haveSmallImaginaryData = false;
-                                  }
-                          	    if (imaginaryDataType == miINT32) {
-                          	    	Preferences.debug("imaginaryDataType == miINT32 as expected\n", Preferences.DEBUG_FILEIO);
-                          	    }
-                          	    else {
-                          	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
-                          	    			Preferences.DEBUG_FILEIO);
-                          	    }
-                          	    
-                                  if (imaginaryDataBytes == realDataBytes) {
-                                  	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
-                                  			Preferences.DEBUG_FILEIO);
-                                  }
-                                  else {
-                                  	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
-                                  			Preferences.DEBUG_FILEIO);
-                                  }
-                                  raFile.read(buffer);
-                                  imaginaryDBuffer = new double[intNumber];
-                                  j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1 = buffer[index] & 0xff;
-                                              b2 = buffer[index+1] & 0xff;
-                                              b3 = buffer[index+2] & 0xff;
-                                              b4 = buffer[index+3] & 0xff;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	imaginaryDBuffer[j++] = (double)((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-                                              }
-                                              else {
-                                              	imaginaryDBuffer[j++] = (double)((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
-                                              }
-      		                    		}
-      		                    	}
-      	                    	}
-                                  
-                                  if (haveSmallImaginaryData) {
-                          		    if (imaginaryDataBytes < 4) {
-                          		    	padBytes = 4 - imaginaryDataBytes;
-                          		    	for (i = 0; i < padBytes; i++) {
-                          		    		raFile.readByte();
-                          		    	}
-                          		    }
-                          		}
-                          		else if ((imaginaryDataBytes % 8) != 0) {
-                          	    	padBytes = 8 - (imaginaryDataBytes % 8);
-                          	    	for (i = 0; i < padBytes; i++) {
-                              	    	raFile.readByte();
-                              	    }
-                          	    }   
-                                  
-                                  try {
-                          			image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, " +
-                          		   		"realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
-                          		   throw e;
-                          		}
-                          	}
-                          	break;
-                          case miUINT32:
-                          	Preferences.debug("Real data type = miUINT32\n", Preferences.DEBUG_FILEIO);
-                          	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                          	if (!complexFlag) {
-                          		if (nonLogicalField == 0) {
-                          		    image2 = new ModelImage(ModelStorageBase.UINTEGER, imageExtents, fileName);
-                          		    fileInfo2.setDataType(ModelStorageBase.UINTEGER);
-                          		}
-                          		buffer = new byte[realDataBytes];
-                          		raFile.read(buffer);
-                          		intNumber = realDataBytes/4;
-                          		longBuffer = new long[intNumber];
-                          		numberSlices = intNumber/sliceSize;
-                          		j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1L = buffer[index] & 0xffL;
-                                              b2L = buffer[index+1] & 0xffL;
-                                              b3L = buffer[index+2] & 0xffL;
-                                              b4L = buffer[index+3] & 0xffL;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	longBuffer[j++] = ((b1L << 24) | (b2L << 16) | (b3L << 8) | b4L);
-                                              }
-                                              else {
-                                              	longBuffer[j++] = ((b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                              }
-      		                    		}
-      		                    	}
-      	                    	}
-                          		
-                          		if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }  
-                          		try {
-                          			image2.importUData(nonLogicalField * longBuffer.length, longBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.importUData(nonLogicalField * longBuffer.length, longBuffer, true)");
-                          		   throw e;
-                          		}
-                          	}
-                          	else {
-                          		if (nonLogicalField == 0) {
-                          		    image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName);
-                          		    fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
-                          		}
-                          		buffer = new byte[realDataBytes];
-                          		raFile.read(buffer);
-                          		intNumber = realDataBytes/4;
-                          		realDBuffer = new double[intNumber];
-                          		numberSlices = intNumber/sliceSize;
-                          		j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1L = buffer[index] & 0xffL;
-                                              b2L = buffer[index+1] & 0xffL;
-                                              b3L = buffer[index+2] & 0xffL;
-                                              b4L = buffer[index+3] & 0xffL;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	realDBuffer[j++] = (double)((b1L << 24) | (b2L << 16) | (b3L << 8) | b4L);
-                                              }
-                                              else {
-                                              	realDBuffer[j++] = (double)((b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                              }
-      		                    		}
-      		                    	}
-      	                    	}
-                          		
-                          		if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }   
-                          	    imaginaryDataType = getInt(endianess);
-                          	    if ((imaginaryDataType & 0xffff0000) != 0) {
-                                      // Small data element format    
-                                  	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
-                                  	imaginaryDataType = imaginaryDataType & 0xffff;
-                                  	haveSmallImaginaryData = true;
-                                  }
-                                  else {
-                                      imaginaryDataBytes = getInt(endianess);
-                                      haveSmallImaginaryData = false;
-                                  }
-                          	    if (imaginaryDataType == miUINT32) {
-                          	    	Preferences.debug("imaginaryDataType == miUINT32 as expected\n", Preferences.DEBUG_FILEIO);
-                          	    }
-                          	    else {
-                          	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
-                          	    			Preferences.DEBUG_FILEIO);
-                          	    }
-                          	    
-                                  if (imaginaryDataBytes == realDataBytes) {
-                                  	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
-                                  			Preferences.DEBUG_FILEIO);
-                                  }
-                                  else {
-                                  	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
-                                  			Preferences.DEBUG_FILEIO);
-                                  }
-                                  raFile.read(buffer);
-                                  imaginaryDBuffer = new double[intNumber];
-                                  j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1L = buffer[index] & 0xffL;
-                                              b2L = buffer[index+1] & 0xffL;
-                                              b3L = buffer[index+2] & 0xffL;
-                                              b4L = buffer[index+3] & 0xffL;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	imaginaryDBuffer[j++] = (double)((b1L << 24) | (b2L << 16) | (b3L << 8) | b4L);
-                                              }
-                                              else {
-                                              	imaginaryDBuffer[j++] = (double)((b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                              }
-      		                    		}
-      		                    	}
-      	                    	}
-                                  
-                                  if (haveSmallImaginaryData) {
-                          		    if (imaginaryDataBytes < 4) {
-                          		    	padBytes = 4 - imaginaryDataBytes;
-                          		    	for (i = 0; i < padBytes; i++) {
-                          		    		raFile.readByte();
-                          		    	}
-                          		    }
-                          		}
-                          		else if ((imaginaryDataBytes % 8) != 0) {
-                          	    	padBytes = 8 - (imaginaryDataBytes % 8);
-                          	    	for (i = 0; i < padBytes; i++) {
-                              	    	raFile.readByte();
-                              	    }
-                          	    }   
-                                  
-                                  try {
-                          			image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.importDComplexData(2 * nonLogicalField * realDBuffer.length," +
-                          		   		" realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
-                          		   throw e;
-                          		}
-                          	}
-                          	break;
-                          case miSINGLE:
-                          	Preferences.debug("Real data type = miSINGLE\n", Preferences.DEBUG_FILEIO);
-                          	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                          	if (!complexFlag) {
-                          		if (nonLogicalField == 0) {
-                          		    image2 = new ModelImage(ModelStorageBase.FLOAT, imageExtents, fileName); 
-                          		    fileInfo2.setDataType(ModelStorageBase.FLOAT);
-                          		}
-                          		buffer = new byte[realDataBytes];
-                          		raFile.read(buffer);
-                          		floatNumber = realDataBytes/4;
-                          		floatBuffer = new float[floatNumber];
-                          		numberSlices = floatNumber/sliceSize;
-                          		j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1 = buffer[index] & 0xff;
-                                              b2 = buffer[index+1] & 0xff;
-                                              b3 = buffer[index+2] & 0xff;
-                                              b4 = buffer[index+3] & 0xff;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-                                              }
-                                              else {
-                                              	tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
-                                              }
-                                              floatBuffer[j++] = Float.intBitsToFloat(tmpInt);
-      		                    		}
-      		                    	}
-      	                    	}
-                          		
-                          		if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }  
-                          		try {
-                          			image2.importData(nonLogicalField * floatBuffer.length, floatBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.importData(nonLogicalField * floatBuffer.length, floatBuffer, true)");
-                          		   throw e;
-                          		}
-                          	}
-                          	else {
-                          		if (nonLogicalField == 0) {
-                          		    image2 = new ModelImage(ModelStorageBase.COMPLEX, imageExtents, fileName);
-                          		    fileInfo2.setDataType(ModelStorageBase.COMPLEX);
-                          		}
-                          		buffer = new byte[realDataBytes];
-                          		raFile.read(buffer);
-                          		floatNumber = realDataBytes/4;
-                          		realBuffer = new float[floatNumber];
-                          		numberSlices = floatNumber/sliceSize;
-                          		j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1 = buffer[index] & 0xff;
-                                              b2 = buffer[index+1] & 0xff;
-                                              b3 = buffer[index+2] & 0xff;
-                                              b4 = buffer[index+3] & 0xff;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-                                              }
-                                              else {
-                                              	tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
-                                              }
-                                              realBuffer[j++] = Float.intBitsToFloat(tmpInt);
-      		                    		}
-      		                    	}
-      	                    	}
-                          		
-                          		if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }  
-                          	    imaginaryDataType = getInt(endianess);
-                          	    if ((imaginaryDataType & 0xffff0000) != 0) {
-                                      // Small data element format    
-                                  	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
-                                  	imaginaryDataType = imaginaryDataType & 0xffff;
-                                  	haveSmallImaginaryData = true;
-                                  }
-                                  else {
-                                      imaginaryDataBytes = getInt(endianess);
-                                      haveSmallImaginaryData = false;
-                                  }
-                          	    if (imaginaryDataType == miSINGLE) {
-                          	    	Preferences.debug("imaginaryDataType == miSINGLE as expected\n", Preferences.DEBUG_FILEIO);
-                          	    }
-                          	    else {
-                          	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
-                          	    			Preferences.DEBUG_FILEIO);
-                          	    }
-                          	    
-                                  if (imaginaryDataBytes == realDataBytes) {
-                                  	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
-                                  			Preferences.DEBUG_FILEIO);
-                                  }
-                                  else {
-                                  	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
-                                  			Preferences.DEBUG_FILEIO);
-                                  }
-                                  raFile.read(buffer);
-                                  imaginaryBuffer = new float[floatNumber];
-                                  j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 4*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1 = buffer[index] & 0xff;
-                                              b2 = buffer[index+1] & 0xff;
-                                              b3 = buffer[index+2] & 0xff;
-                                              b4 = buffer[index+3] & 0xff;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-                                              }
-                                              else {
-                                              	tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
-                                              }
-                                              imaginaryBuffer[j++] = Float.intBitsToFloat(tmpInt);
-      		                    		}
-      		                    	}
-      	                    	}
-                                  
-                                  if (haveSmallImaginaryData) {
-                          		    if (imaginaryDataBytes < 4) {
-                          		    	padBytes = 4 - imaginaryDataBytes;
-                          		    	for (i = 0; i < padBytes; i++) {
-                          		    		raFile.readByte();
-                          		    	}
-                          		    }
-                          		}
-                          		else if ((imaginaryDataBytes % 8) != 0) {
-                          	    	padBytes = 8 - (imaginaryDataBytes % 8);
-                          	    	for (i = 0; i < padBytes; i++) {
-                              	    	raFile.readByte();
-                              	    }
-                          	    }   
-                                  
-                                  try {
-                          			image2.importComplexData(2 * nonLogicalField * realBuffer.length, realBuffer, imaginaryBuffer, true, logMagDisplay);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.importComplexData(2 * nonLogicalField * realBuffer.length, " +
-                          		   		"realBuffer, imaginaryBuffer, true, logMagDisplay)");
-                          		   throw e;
-                          		}
-                          	}
-                          	break;
-                          case miDOUBLE:
-                          	Preferences.debug("Real data type = miDOUBLE\n", Preferences.DEBUG_FILEIO);
-                          	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                          	if (isColor) {
-                          		if (nonLogicalField == 0) {
-                          			image2 = new ModelImage(ModelStorageBase.ARGB_FLOAT, imageExtents, fileName);
-                          			fileInfo2.setDataType(ModelStorageBase.ARGB_FLOAT);
-                          		}
-                          		if ((realDataBytes % 3) == 0) {
-      	                    		buffer = new byte[realDataBytes/3];
-      	                    		doubleNumber = realDataBytes/24;
-      	                    		floatBuffer = new float[doubleNumber];
-      	                    		numberSlices = doubleNumber/sliceSize;
-      	                    		for (i = 0; i < 3; i++) {
-      			                    	raFile.read(buffer);
-      			                    	j = 0;
-      			                    	for (s = 0; s < numberSlices; s++) {
-      				                    	for (x = 0; x < imageExtents[1]; x++) {
-      				                    		for (y = 0; y < imageExtents[0]; y++) {	
-      				                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
-      	                                            b1L = buffer[index] & 0xffL;
-      	                                            b2L = buffer[index+1] & 0xffL;
-      	                                            b3L = buffer[index+2] & 0xffL;
-      	                                            b4L = buffer[index+3] & 0xffL;
-      	                                            b5L = buffer[index+4] & 0xffL;
-      	                                            b6L = buffer[index+5] & 0xffL;
-      	                                            b7L = buffer[index+6] & 0xffL;
-      	                                            b8L = buffer[index+7] & 0xffL;
-      	                                            if (endianess == FileBase.BIG_ENDIAN) {
-      	                                            	tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-      			                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
-      	                                            }
-      	                                            else {
-      	                                            	tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-      			                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-      	                                            }
-      	                                            floatBuffer[j++] = (float)(255.0 * Double.longBitsToDouble(tmpLong));
-      				                    		}
-      				                    	}
-      			                    	}
-      			                    	
-      			                    	try {
-      			                			image2.importRGBData(i+1, nonLogicalField * floatBuffer.length, floatBuffer, true);
-      			                		}
-      			                		catch(IOException e) {
-      			                		   MipavUtil.displayError("IOException on image2.importRGBData(i," +
-      			                		   		" nonLogicalField * floatBuffer.length, floatBuffer, true)");
-      			                		   throw e;
-      			                		}
-      	                    		} // if (i = 0; i < 3; i++)
-      	
-      		                    	
-      		                    	if (haveSmallRealData) {
-      	                    		    if (realDataBytes < 4) {
-      	                    		    	padBytes = 4 - realDataBytes;
-      	                    		    	for (i = 0; i < padBytes; i++) {
-      	                    		    		raFile.readByte();
-      	                    		    	}
-      	                    		    }
-      	                    		}
-      	                    		else if ((realDataBytes % 8) != 0) {
-      	                    	    	padBytes = 8 - (realDataBytes % 8);
-      	                    	    	for (i = 0; i < padBytes; i++) {
-      	                        	    	raFile.readByte();
-      	                        	    }
-      	                    	    } 
-      	                    	
-      	                        } // if (realDataBytes % 3) == 0)
-                          	} // else if (isColor)
-                          	else if (!complexFlag) {
-                          		if (nonLogicalField == 0) {
-                          		    image2 = new ModelImage(ModelStorageBase.DOUBLE, imageExtents, fileName); 
-                          		    fileInfo2.setDataType(ModelStorageBase.DOUBLE);
-                          		}
-                          		buffer = new byte[realDataBytes];
-                          		raFile.read(buffer);
-                          		doubleNumber = realDataBytes/8;
-                          		doubleBuffer = new double[doubleNumber];
-                          		numberSlices = doubleNumber/sliceSize;
-                          		j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1L = buffer[index] & 0xffL;
-                                              b2L = buffer[index+1] & 0xffL;
-                                              b3L = buffer[index+2] & 0xffL;
-                                              b4L = buffer[index+3] & 0xffL;
-                                              b5L = buffer[index+4] & 0xffL;
-                                              b6L = buffer[index+5] & 0xffL;
-                                              b7L = buffer[index+6] & 0xffL;
-                                              b8L = buffer[index+7] & 0xffL;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-      	                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
-                                              }
-                                              else {
-                                              	tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-      	                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                              }
-                                              doubleBuffer[j++] = Double.longBitsToDouble(tmpLong);
-      		                    		}
-      		                    	}
-      	                    	}
-                          		
-                          		if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }  
-                          		try {
-                          			image2.importData(nonLogicalField * doubleBuffer.length, doubleBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.importData(nonLogicalField * doubleBuffer.length, doubleBuffer, true)");
-                          		   throw e;
-                          		}
-                          	}
-                          	else {
-                          		if (nonLogicalField == 0) {
-                          		    image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
-                          		    fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
-                          		}
-                          		buffer = new byte[realDataBytes];
-                          		raFile.read(buffer);
-                          		doubleNumber = realDataBytes/8;
-                          		realDBuffer = new double[doubleNumber];
-                          		numberSlices = doubleNumber/sliceSize;
-                          		j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1L = buffer[index] & 0xffL;
-                                              b2L = buffer[index+1] & 0xffL;
-                                              b3L = buffer[index+2] & 0xffL;
-                                              b4L = buffer[index+3] & 0xffL;
-                                              b5L = buffer[index+4] & 0xffL;
-                                              b6L = buffer[index+5] & 0xffL;
-                                              b7L = buffer[index+6] & 0xffL;
-                                              b8L = buffer[index+7] & 0xffL;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-      	                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
-                                              }
-                                              else {
-                                              	tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-      	                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                              }
-                                              realDBuffer[j++] = Double.longBitsToDouble(tmpLong);
-      		                    		}
-      		                    	}
-      	                    	}
-                          		
-                          		if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }    
-                          	    imaginaryDataType = getInt(endianess);
-                          	    if ((imaginaryDataType & 0xffff0000) != 0) {
-                                      // Small data element format    
-                                  	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
-                                  	imaginaryDataType = imaginaryDataType & 0xffff;
-                                  	haveSmallImaginaryData = true;
-                                  }
-                                  else {
-                                      imaginaryDataBytes = getInt(endianess);
-                                      haveSmallImaginaryData = false;
-                                  }
-                          	    if (imaginaryDataType == miDOUBLE) {
-                          	    	Preferences.debug("imaginaryDataType == miDOUBLE as expected\n", Preferences.DEBUG_FILEIO);
-                          	    }
-                          	    else {
-                          	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
-                          	    			Preferences.DEBUG_FILEIO);
-                          	    }
-                          	    
-                                  if (imaginaryDataBytes == realDataBytes) {
-                                  	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
-                                  			Preferences.DEBUG_FILEIO);
-                                  }
-                                  else {
-                                  	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
-                                  			Preferences.DEBUG_FILEIO);
-                                  }
-                                  raFile.read(buffer);
-                                  imaginaryDBuffer = new double[doubleNumber];
-                                  j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1L = buffer[index] & 0xffL;
-                                              b2L = buffer[index+1] & 0xffL;
-                                              b3L = buffer[index+2] & 0xffL;
-                                              b4L = buffer[index+3] & 0xffL;
-                                              b5L = buffer[index+4] & 0xffL;
-                                              b6L = buffer[index+5] & 0xffL;
-                                              b7L = buffer[index+6] & 0xffL;
-                                              b8L = buffer[index+7] & 0xffL;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-      	                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
-                                              }
-                                              else {
-                                              	tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-      	                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                              }
-                                              imaginaryDBuffer[j++] = Double.longBitsToDouble(tmpLong);
-      		                    		}
-      		                    	}
-      	                    	}
-                                  
-                                  if (haveSmallImaginaryData) {
-                          		    if (imaginaryDataBytes < 4) {
-                          		    	padBytes = 4 - imaginaryDataBytes;
-                          		    	for (i = 0; i < padBytes; i++) {
-                          		    		raFile.readByte();
-                          		    	}
-                          		    }
-                          		}
-                          		else if ((imaginaryDataBytes % 8) != 0) {
-                          	    	padBytes = 8 - (imaginaryDataBytes % 8);
-                          	    	for (i = 0; i < padBytes; i++) {
-                              	    	raFile.readByte();
-                              	    }
-                          	    }   
-                                  
-                                  try {
-                          			image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, " +
-                          		   		"realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
-                          		   throw e;
-                          		}
-                          	}
-                          	break;
-                          case miINT64:
-                          	Preferences.debug("Real data type = miINT64\n", Preferences.DEBUG_FILEIO);
-                          	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                          	if (!complexFlag) {
-                          		if (nonLogicalField == 0) {
-                          		    image2 = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName);
-                          		    fileInfo2.setDataType(ModelStorageBase.LONG);
-                          		}
-                          		buffer = new byte[realDataBytes];
-                          		raFile.read(buffer);
-                          		longNumber = realDataBytes/8;
-                          		longBuffer = new long[longNumber];
-                          		numberSlices = longNumber/sliceSize;
-                          		j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1L = buffer[index] & 0xffL;
-                                              b2L = buffer[index+1] & 0xffL;
-                                              b3L = buffer[index+2] & 0xffL;
-                                              b4L = buffer[index+3] & 0xffL;
-                                              b5L = buffer[index+4] & 0xffL;
-                                              b6L = buffer[index+5] & 0xffL;
-                                              b7L = buffer[index+6] & 0xffL;
-                                              b8L = buffer[index+7] & 0xffL;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	longBuffer[j++] = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-      	                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
-                                              }
-                                              else {
-                                              	longBuffer[j++] = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-      	                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                              }
-      		                    		}
-      		                    	}
-      	                    	}
-                          		
-                          		if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }  
-                          		try {
-                          			image2.importData(nonLogicalField * longBuffer.length, longBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.importData(nonLogicalField * longBuffer.length, longBuffer, true)");
-                          		   throw e;
-                          		}
-                          	}
-                          	else {
-                          		if (nonLogicalField == 0) {
-                          		    image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
-                          		    fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
-                          		}
-                          		buffer = new byte[realDataBytes];
-                          		raFile.read(buffer);
-                          		longNumber = realDataBytes/8;
-                          		realDBuffer = new double[longNumber];
-                          		numberSlices = longNumber/sliceSize;
-                          		j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1L = buffer[index] & 0xffL;
-                                              b2L = buffer[index+1] & 0xffL;
-                                              b3L = buffer[index+2] & 0xffL;
-                                              b4L = buffer[index+3] & 0xffL;
-                                              b5L = buffer[index+4] & 0xffL;
-                                              b6L = buffer[index+5] & 0xffL;
-                                              b7L = buffer[index+6] & 0xffL;
-                                              b8L = buffer[index+7] & 0xffL;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	realDBuffer[j++] = (double)((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-      	                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
-                                              }
-                                              else {
-                                              	realDBuffer[j++] = (double)((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-      	                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                              }
-      		                    		}
-      		                    	}
-      	                    	}
-                          		
-                          		if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }   
-                          	    imaginaryDataType = getInt(endianess);
-                          	    if ((imaginaryDataType & 0xffff0000) != 0) {
-                                      // Small data element format    
-                                  	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
-                                  	imaginaryDataType = imaginaryDataType & 0xffff;
-                                  	haveSmallImaginaryData = true;
-                                  }
-                                  else {
-                                      imaginaryDataBytes = getInt(endianess);
-                                      haveSmallImaginaryData = false;
-                                  }
-                          	    if (imaginaryDataType == miINT64) {
-                          	    	Preferences.debug("imaginaryDataType == miINT64 as expected\n", Preferences.DEBUG_FILEIO);
-                          	    }
-                          	    else {
-                          	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
-                          	    			Preferences.DEBUG_FILEIO);
-                          	    }
-                          	    
-                                  if (imaginaryDataBytes == realDataBytes) {
-                                  	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
-                                  			Preferences.DEBUG_FILEIO);
-                                  }
-                                  else {
-                                  	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
-                                  			Preferences.DEBUG_FILEIO);
-                                  }
-                                  raFile.read(buffer);
-                                  imaginaryDBuffer = new double[longNumber];
-                                  j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1L = buffer[index] & 0xffL;
-                                              b2L = buffer[index+1] & 0xffL;
-                                              b3L = buffer[index+2] & 0xffL;
-                                              b4L = buffer[index+3] & 0xffL;
-                                              b5L = buffer[index+4] & 0xffL;
-                                              b6L = buffer[index+5] & 0xffL;
-                                              b7L = buffer[index+6] & 0xffL;
-                                              b8L = buffer[index+7] & 0xffL;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	imaginaryDBuffer[j++] = (double)((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-      	                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
-                                              }
-                                              else {
-                                              	imaginaryDBuffer[j++] = (double)((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-      	                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                              }
-      		                    		}
-      		                    	}
-      	                    	}
-                                  
-                                  if (haveSmallImaginaryData) {
-                          		    if (imaginaryDataBytes < 4) {
-                          		    	padBytes = 4 - imaginaryDataBytes;
-                          		    	for (i = 0; i < padBytes; i++) {
-                          		    		raFile.readByte();
-                          		    	}
-                          		    }
-                          		}
-                          		else if ((imaginaryDataBytes % 8) != 0) {
-                          	    	padBytes = 8 - (imaginaryDataBytes % 8);
-                          	    	for (i = 0; i < padBytes; i++) {
-                              	    	raFile.readByte();
-                              	    }
-                          	    }   
-                                  
-                                  try {
-                          			image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, " +
-                          		   		"realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
-                          		   throw e;
-                          		}
-                          	}
-                          	break;
-                          case miUINT64:
-                          	Preferences.debug("Real data type = miUINT64\n", Preferences.DEBUG_FILEIO);
-                          	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                          	if (!complexFlag) {
-                          		if (nonLogicalField == 0) {
-                          		    image2 = new ModelImage(ModelStorageBase.LONG, imageExtents, fileName); 
-                          		    fileInfo2.setDataType(ModelStorageBase.LONG);
-                          		}
-                          		buffer = new byte[realDataBytes];
-                          		raFile.read(buffer);
-                          		longNumber = realDataBytes/8;
-                          		longBuffer = new long[longNumber];
-                          		numberSlices = longNumber/sliceSize;
-                          		j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1L = buffer[index] & 0xffL;
-                                              b2L = buffer[index+1] & 0xffL;
-                                              b3L = buffer[index+2] & 0xffL;
-                                              b4L = buffer[index+3] & 0xffL;
-                                              b5L = buffer[index+4] & 0xffL;
-                                              b6L = buffer[index+5] & 0xffL;
-                                              b7L = buffer[index+6] & 0xffL;
-                                              b8L = buffer[index+7] & 0xffL;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	longBuffer[j++] = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-      	                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
-                                              }
-                                              else {
-                                              	longBuffer[j++] = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-      	                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                              }
-      		                    		}
-      		                    	}
-      	                    	}
-                          		
-                          		if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }  
-                          		try {
-                          			image2.importData(nonLogicalField * longBuffer.length, longBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.importData(nonLogicalField * longBuffer.length, longBuffer, true)");
-                          		   throw e;
-                          		}
-                          	}
-                          	else {
-                          		if (nonLogicalField == 0) {
-                          		    image2 = new ModelImage(ModelStorageBase.DCOMPLEX, imageExtents, fileName); 
-                          		    fileInfo2.setDataType(ModelStorageBase.DCOMPLEX);
-                          		}
-                          		buffer = new byte[realDataBytes];
-                          		raFile.read(buffer);
-                          		longNumber = realDataBytes/8;
-                          		realDBuffer = new double[longNumber];
-                          		numberSlices = longNumber/sliceSize;
-                          		j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1L = buffer[index] & 0xffL;
-                                              b2L = buffer[index+1] & 0xffL;
-                                              b3L = buffer[index+2] & 0xffL;
-                                              b4L = buffer[index+3] & 0xffL;
-                                              b5L = buffer[index+4] & 0xffL;
-                                              b6L = buffer[index+5] & 0xffL;
-                                              b7L = buffer[index+6] & 0xffL;
-                                              b8L = buffer[index+7] & 0xffL;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	realDBuffer[j++] = (double)((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-      	                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
-                                              }
-                                              else {
-                                              	realDBuffer[j++] = (double)((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-      	                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                              }
-      		                    		}
-      		                    	}
-      	                    	}
-                          		
-                          		if (haveSmallRealData) {
-  	                    		    if (realDataBytes < 4) {
-  	                    		    	padBytes = 4 - realDataBytes;
-  	                    		    	for (i = 0; i < padBytes; i++) {
-  	                    		    		raFile.readByte();
-  	                    		    	}
-  	                    		    }
-  	                    		}
-  	                    		else if ((realDataBytes % 8) != 0) {
-  	                    	    	padBytes = 8 - (realDataBytes % 8);
-  	                    	    	for (i = 0; i < padBytes; i++) {
-  	                        	    	raFile.readByte();
-  	                        	    }
-  	                    	    }  
-                          	    imaginaryDataType = getInt(endianess);
-                          	    if ((imaginaryDataType & 0xffff0000) != 0) {
-                                      // Small data element format    
-                                  	imaginaryDataBytes = (imaginaryDataType & 0xffff0000) >>> 16;
-                                  	imaginaryDataType = imaginaryDataType & 0xffff;
-                                  	haveSmallImaginaryData = true;
-                                  }
-                                  else {
-                                      imaginaryDataBytes = getInt(endianess);
-                                      haveSmallImaginaryData = false;
-                                  }
-                          	    if (imaginaryDataType == miUINT64) {
-                          	    	Preferences.debug("imaginaryDataType == miUINT64 as expected\n", Preferences.DEBUG_FILEIO);
-                          	    }
-                          	    else {
-                          	    	Preferences.debug("imaginaryDataType unexpectedly == " + imaginaryDataType + "\n", 
-                          	    			Preferences.DEBUG_FILEIO);
-                          	    }
-                          	     
-                                  if (imaginaryDataBytes == realDataBytes) {
-                                  	Preferences.debug("imaginaryDataBytes == realDataBytes as expected\n", 
-                                  			Preferences.DEBUG_FILEIO);
-                                  }
-                                  else {
-                                  	Preferences.debug("imaginaryDataBytes unexpectedly != realDataBytes\n", 
-                                  			Preferences.DEBUG_FILEIO);
-                                  }
-                                  raFile.read(buffer);
-                                  imaginaryDBuffer = new double[longNumber];
-                                  j = 0;
-      	                    	for (s = 0; s < numberSlices; s++) {
-      		                    	for (x = 0; x < imageExtents[1]; x++) {
-      		                    		for (y = 0; y < imageExtents[0]; y++) {
-      		                    			index = 8*(x + imageExtents[1] * y + s * sliceSize);
-                                              b1L = buffer[index] & 0xffL;
-                                              b2L = buffer[index+1] & 0xffL;
-                                              b3L = buffer[index+2] & 0xffL;
-                                              b4L = buffer[index+3] & 0xffL;
-                                              b5L = buffer[index+4] & 0xffL;
-                                              b6L = buffer[index+5] & 0xffL;
-                                              b7L = buffer[index+6] & 0xffL;
-                                              b8L = buffer[index+7] & 0xffL;
-                                              if (endianess == FileBase.BIG_ENDIAN) {
-                                              	imaginaryDBuffer[j++] = (double)((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-      	                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
-                                              }
-                                              else {
-                                              	imaginaryDBuffer[j++] = (double)((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-      	                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                              }
-      		                    		}
-      		                    	}
-      	                    	}
-                                  
-                                  if (haveSmallImaginaryData) {
-                          		    if (imaginaryDataBytes < 4) {
-                          		    	padBytes = 4 - imaginaryDataBytes;
-                          		    	for (i = 0; i < padBytes; i++) {
-                          		    		raFile.readByte();
-                          		    	}
-                          		    }
-                          		}
-                          		else if ((imaginaryDataBytes % 8) != 0) {
-                          	    	padBytes = 8 - (imaginaryDataBytes % 8);
-                          	    	for (i = 0; i < padBytes; i++) {
-                              	    	raFile.readByte();
-                              	    }
-                          	    }   
-                                  
-                                  try {
-                          			image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.importDComplexData(2 * nonLogicalField * realDBuffer.length, " +
-                          		   		"realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
-                          		   throw e;
-                          		}
-                          	}
-                          	break;
-                          default:
-                          	Preferences.debug("Illegal data type = " + realDataType + "\n", Preferences.DEBUG_FILEIO);
-                          	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
-                          }	
-                      	
-                      } // else imagesFound > 1
+                      
                       } // for (field = 0; field < fieldNumber; field++)
                       if (logicalFields >= 1) {
                   	    adjustedFieldDim = imageExtents[imageExtents.length-1] - logicalFields;
@@ -5259,461 +1815,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                   	    		newExtents[i] = imageExtents[i];
                   	    	}
                   	    }
-                  	    totalNumber = 1;
-                  	    imageSlices = 1;
-                  	    for (i = 0; i < newExtents.length; i++) {
-                  	    	totalNumber *= newExtents[i];
-                  	    	if (i > 1) {
-                  	    		imageSlices *= newExtents[i];
-                  	    	}
-                  	    }
                   	} // if (logicalFields >= 1)
-                      if (imagesFound == 1) {
-                          if (logicalFields >= 1) {
-                          	switch(image.getType()) {
-                          	case ModelStorageBase.BYTE:
-                          		buffer = new byte[totalNumber];
-                          		try {
-                          			image.exportData(0, totalNumber, buffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, buffer)");
-                          		   throw e;
-                          		}
-                          		image.changeExtents(newExtents);
-                          		image.recomputeDataSize();
-                          		try {
-                          			image.importData(0, buffer, true);
-                          		}
-                          		catch(IOException e) {
-                          			MipavUtil.displayError("IOException on image.importData(0, buffer, true)");
-                          			throw e;
-                          		}
-                          		break;
-                          	case ModelStorageBase.UBYTE:
-                          		shortBuffer = new short[totalNumber];
-                          		try {
-                          			image.exportData(0, totalNumber, shortBuffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, shortBuffer)");
-                          		   throw e;
-                          		}
-                          		image.changeExtents(newExtents);
-                          		image.recomputeDataSize();
-                          		try {
-                          			image.importUData(0, shortBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          			MipavUtil.displayError("IOException on image.importUData(0, shortBuffer, true)");
-                          			throw e;
-                          		}
-                          		break;
-                          	case ModelStorageBase.SHORT:
-                          		shortBuffer = new short[totalNumber];
-                          		try {
-                          			image.exportData(0, totalNumber, shortBuffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, shortBuffer)");
-                          		   throw e;
-                          		}
-                          		image.changeExtents(newExtents);
-                          		image.recomputeDataSize();
-                          		try {
-                          			image.importData(0, shortBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          			MipavUtil.displayError("IOException on image.importData(0, shortBuffer, true)");
-                          			throw e;
-                          		}
-                          		break;
-                          	case ModelStorageBase.USHORT:
-                          		intBuffer = new int[totalNumber];
-                          		try {
-                          			image.exportData(0, totalNumber, intBuffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, intBuffer)");
-                          		   throw e;
-                          		}
-                          		image.changeExtents(newExtents);
-                          		image.recomputeDataSize();
-                          		try {
-                          			image.importUData(0, intBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          			MipavUtil.displayError("IOException on image.importUData(0, intBuffer, true)");
-                          			throw e;
-                          		}
-                          		break;
-                          	case ModelStorageBase.INTEGER:
-                          		intBuffer = new int[totalNumber];
-                          		try {
-                          			image.exportData(0, totalNumber, intBuffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, intBuffer)");
-                          		   throw e;
-                          		}
-                          		image.changeExtents(newExtents);
-                          		image.recomputeDataSize();
-                          		try {
-                          			image.importData(0, intBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          			MipavUtil.displayError("IOException on image.importData(0, intBuffer, true)");
-                          			throw e;
-                          		}
-                          		break;
-                          	case ModelStorageBase.UINTEGER:
-                          		longBuffer = new long[totalNumber];
-                          		try {
-                          			image.exportData(0, totalNumber, longBuffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, longBuffer)");
-                          		   throw e;
-                          		}
-                          		image.changeExtents(newExtents);
-                          		image.recomputeDataSize();
-                          		try {
-                          			image.importUData(0, longBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          			MipavUtil.displayError("IOException on image.importUData(0, longBuffer, true)");
-                          			throw e;
-                          		}
-                          		break;	
-                          	case ModelStorageBase.LONG:
-                          		longBuffer = new long[totalNumber];
-                          		try {
-                          			image.exportData(0, totalNumber, longBuffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, longBuffer)");
-                          		   throw e;
-                          		}
-                          		image.changeExtents(newExtents);
-                          		image.recomputeDataSize();
-                          		try {
-                          			image.importData(0, longBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          			MipavUtil.displayError("IOException on image.importData(0, longBuffer, true)");
-                          			throw e;
-                          		}
-                          		break;
-                          	case ModelStorageBase.FLOAT:
-                          		floatBuffer = new float[totalNumber];
-                          		try {
-                          			image.exportData(0, totalNumber, floatBuffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, floatBuffer)");
-                          		   throw e;
-                          		}
-                          		image.changeExtents(newExtents);
-                          		image.recomputeDataSize();
-                          		try {
-                          			image.importData(0, floatBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          			MipavUtil.displayError("IOException on image.importData(0, floatBuffer, true)");
-                          			throw e;
-                          		}
-                          		break;
-                          	case ModelStorageBase.DOUBLE:
-                          		doubleBuffer = new double[totalNumber];
-                          		try {
-                          			image.exportData(0, totalNumber, doubleBuffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, doubleBuffer)");
-                          		   throw e;
-                          		}
-                          		image.changeExtents(newExtents);
-                          		image.recomputeDataSize();
-                          		try {
-                          			image.importData(0, doubleBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          			MipavUtil.displayError("IOException on image.importData(0, doubleBuffer, true)");
-                          			throw e;
-                          		}
-                          		break;
-                          	case ModelStorageBase.COMPLEX:
-                          		realBuffer = new float[totalNumber];
-                          		imaginaryBuffer = new float[totalNumber];
-                          		try {
-                          			image.exportComplexData(0, totalNumber, realBuffer, imaginaryBuffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image.exportComplexData(0, totalNumber, realBuffer, imaginaryBuffer)");
-                          		   throw e;
-                          		}
-                          		image.changeExtents(newExtents);
-                          		image.recomputeDataSize();
-                          	    
-                                  try {
-                          			image.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay)");
-                          		   throw e;
-                          		}		
-                          		break;
-                          	case ModelStorageBase.DCOMPLEX:
-                          		realDBuffer = new double[totalNumber];
-                          		imaginaryDBuffer = new double[totalNumber];
-                          		try {
-                          			image.exportDComplexData(0, totalNumber, realDBuffer, imaginaryDBuffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image.exportDComplexData(0, totalNumber, realDBuffer, imaginaryDBuffer)");
-                          		   throw e;
-                          		}
-                          		image.changeExtents(newExtents);
-                          		image.recomputeDataSize();
-                          		
-                                  try {
-                          			image.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
-                          		   throw e;
-                          		}		
-                          		break;
-                          	} // switch(image.getType())
-                          	fileInfo.setExtents(newExtents);
-                          } // if (logicalFields >= 1)
-                      	image.calcMinMax();
-                      	fileInfo.setMin(image.getMin());
-                      	fileInfo.setMax(image.getMax());	
-                      }
-                      else {
-                      	if (logicalFields >= 1) {
-                      		switch(image2.getType()) {
-                          	case ModelStorageBase.BYTE:
-                          		buffer = new byte[totalNumber];
-                          		try {
-                          			image2.exportData(0, totalNumber, buffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, buffer)");
-                          		   throw e;
-                          		}
-                          		image2.changeExtents(newExtents);
-                          		image2.recomputeDataSize();
-                          		try {
-                          			image2.importData(0, buffer, true);
-                          		}
-                          		catch(IOException e) {
-                          			MipavUtil.displayError("IOException on image2.importData(0, buffer, true)");
-                          			throw e;
-                          		}
-                          		break;
-                          	case ModelStorageBase.UBYTE:
-                          		shortBuffer = new short[totalNumber];
-                          		try {
-                          			image2.exportData(0, totalNumber, shortBuffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, shortBuffer)");
-                          		   throw e;
-                          		}
-                          		image2.changeExtents(newExtents);
-                          		image2.recomputeDataSize();
-                          		try {
-                          			image2.importUData(0, shortBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          			MipavUtil.displayError("IOException on image2.importUData(0, shortBuffer, true)");
-                          			throw e;
-                          		}
-                          		break;
-                          	case ModelStorageBase.SHORT:
-                          		shortBuffer = new short[totalNumber];
-                          		try {
-                          			image2.exportData(0, totalNumber, shortBuffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, shortBuffer)");
-                          		   throw e;
-                          		}
-                          		image2.changeExtents(newExtents);
-                          		image2.recomputeDataSize();
-                          		try {
-                          			image2.importData(0, shortBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          			MipavUtil.displayError("IOException on image2.importData(0, shortBuffer, true)");
-                          			throw e;
-                          		}
-                          		break;
-                          	case ModelStorageBase.USHORT:
-                          		intBuffer = new int[totalNumber];
-                          		try {
-                          			image2.exportData(0, totalNumber, intBuffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, intBuffer)");
-                          		   throw e;
-                          		}
-                          		image2.changeExtents(newExtents);
-                          		image2.recomputeDataSize();
-                          		try {
-                          			image2.importUData(0, intBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          			MipavUtil.displayError("IOException on image2.importUData(0, intBuffer, true)");
-                          			throw e;
-                          		}
-                          		break;
-                          	case ModelStorageBase.INTEGER:
-                          		intBuffer = new int[totalNumber];
-                          		try {
-                          			image2.exportData(0, totalNumber, intBuffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, intBuffer)");
-                          		   throw e;
-                          		}
-                          		image2.changeExtents(newExtents);
-                          		image2.recomputeDataSize();
-                          		try {
-                          			image2.importData(0, intBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          			MipavUtil.displayError("IOException on image2.importData(0, intBuffer, true)");
-                          			throw e;
-                          		}
-                          		break;
-                          	case ModelStorageBase.UINTEGER:
-                          		longBuffer = new long[totalNumber];
-                          		try {
-                          			image2.exportData(0, totalNumber, longBuffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, longBuffer)");
-                          		   throw e;
-                          		}
-                          		image2.changeExtents(newExtents);
-                          		image2.recomputeDataSize();
-                          		try {
-                          			image2.importUData(0, longBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          			MipavUtil.displayError("IOException on image2.importUData(0, longBuffer, true)");
-                          			throw e;
-                          		}
-                          		break;	
-                          	case ModelStorageBase.LONG:
-                          		longBuffer = new long[totalNumber];
-                          		try {
-                          			image2.exportData(0, totalNumber, longBuffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, longBuffer)");
-                          		   throw e;
-                          		}
-                          		image2.changeExtents(newExtents);
-                          		image2.recomputeDataSize();
-                          		try {
-                          			image2.importData(0, longBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          			MipavUtil.displayError("IOException on image2.importData(0, longBuffer, true)");
-                          			throw e;
-                          		}
-                          		break;
-                          	case ModelStorageBase.FLOAT:
-                          		floatBuffer = new float[totalNumber];
-                          		try {
-                          			image2.exportData(0, totalNumber, floatBuffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, floatBuffer)");
-                          		   throw e;
-                          		}
-                          		image2.changeExtents(newExtents);
-                          		image2.recomputeDataSize();
-                          		try {
-                          			image2.importData(0, floatBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          			MipavUtil.displayError("IOException on image2.importData(0, floatBuffer, true)");
-                          			throw e;
-                          		}
-                          		break;
-                          	case ModelStorageBase.DOUBLE:
-                          		doubleBuffer = new double[totalNumber];
-                          		try {
-                          			image2.exportData(0, totalNumber, doubleBuffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, doubleBuffer)");
-                          		   throw e;
-                          		}
-                          		image2.changeExtents(newExtents);
-                          		image2.recomputeDataSize();
-                          		try {
-                          			image2.importData(0, doubleBuffer, true);
-                          		}
-                          		catch(IOException e) {
-                          			MipavUtil.displayError("IOException on image2.importData(0, doubleBuffer, true)");
-                          			throw e;
-                          		}
-                          		break;
-                          	case ModelStorageBase.COMPLEX:
-                          		realBuffer = new float[totalNumber];
-                          		imaginaryBuffer = new float[totalNumber];
-                          		try {
-                          			image2.exportComplexData(0, totalNumber, realBuffer, imaginaryBuffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.exportComplexData(0, totalNumber, realBuffer, imaginaryBuffer)");
-                          		   throw e;
-                          		}
-                          		image2.changeExtents(newExtents);
-                          		image2.recomputeDataSize();
-                          	    
-                                  try {
-                          			image2.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.importComplexData(0, realBuffer, imaginaryBuffer, true, logMagDisplay)");
-                          		   throw e;
-                          		}		
-                          		break;
-                          	case ModelStorageBase.DCOMPLEX:
-                          		realDBuffer = new double[totalNumber];
-                          		imaginaryDBuffer = new double[totalNumber];
-                          		try {
-                          			image2.exportDComplexData(0, totalNumber, realDBuffer, imaginaryDBuffer);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.exportDComplexData(0, totalNumber, realDBuffer, imaginaryDBuffer)");
-                          		   throw e;
-                          		}
-                          		image2.changeExtents(newExtents);
-                          		image2.recomputeDataSize();
-                          		
-                                  try {
-                          			image2.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay);
-                          		}
-                          		catch(IOException e) {
-                          		   MipavUtil.displayError("IOException on image2.importDComplexData(0, realDBuffer, imaginaryDBuffer, true, logMagDisplay)");
-                          		   throw e;
-                          		}		
-                          		break;
-                          	} // switch(image.getType())
-                      	    fileInfo2.setExtents(newExtents);	
-                      	}
-                      	image2.calcMinMax();
-                          fileInfo2.setMin(image2.getMin());
-                  	    fileInfo2.setMax(image2.getMax());
-                      }
+                     
                   	break;
                   case miUTF8:
                   	Preferences.debug("Data type = miUTF8\n", Preferences.DEBUG_FILEIO);
@@ -5753,423 +1856,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                   	Preferences.debug("Illegal data type = " + dataType + "\n", Preferences.DEBUG_FILEIO);
                   	Preferences.debug("Bytes in data element = " + elementBytes + "\n", Preferences.DEBUG_FILEIO);
                   }
-                  if (isCompressed) {
-                  	raFile.close();
-  	                try {
-  	                    ufile.delete();
-  	                } catch (final SecurityException sc) {
-  	                    MipavUtil.displayError("Security error occurs while trying to delete " + uncompressedName);
-  	                }
-                  	raFile = new RandomAccessFile(file, "r");
-                  }
               } // while (nextElementAddress)
               raFile.close();
-              if (zlibDecompresser != null) {
-                  zlibDecompresser.end();
-                  zlibDecompresser = null;
-              }
-              
              
-              if (fileInfo.getArrayName() != null) {
-              	image.setImageName(fileInfo.getArrayName());
-              	fileInfo.setFileName(fileInfo.getArrayName());
-              }
-              fileInfo.setSourceFile(fileDir + fileName);
-              for (i = 0; i < imageSlices; i++) {
-                  
-                  image.setFileInfo((FileInfoMATLAB)fileInfo.clone(), i);
-              }
-              
-              if (((image.getType() == ModelStorageBase.UBYTE)|| (image.getType() == ModelStorageBase.SHORT)) &&
-              	(image2 != null) && (image2.getType() == ModelStorageBase.DOUBLE) &&
-              	(image2.getExtents()[0]  == 3)  && (image2.getExtents()[1] <= 256)) {
-              	// image2 is really a lookup table for image
-              	totalNumber = 1;
-              	for (i = 0; i < image.getNDims(); i++) {
-              		totalNumber = totalNumber * image.getExtents()[i];
-              	}
-              	shortBuffer = new short[totalNumber];
-          		try {
-          			image.exportData(0, totalNumber, shortBuffer);
-          		}
-          		catch(IOException e) {
-          		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber, shortBuffer)");
-          		   throw e;
-          		}
-          		shortMin = 65535;
-          		shortMax = -32768;
-          		for (i = 0; i < totalNumber; i++) {
-          			if (shortBuffer[i] < shortMin) {
-          				shortMin = shortBuffer[i];
-          			}
-          			if (shortBuffer[i] > shortMax) {
-          				shortMax = shortBuffer[i];
-          			}
-          		}
-          		
-          		shortRange = shortMax - shortMin;
-          		image = new ModelImage(ModelStorageBase.ARGB_FLOAT, image.getExtents(), image.getImageFileName());
-      			fileInfo.setDataType(ModelStorageBase.ARGB_FLOAT);
-      			floatBuffer = new float[4 * totalNumber];
-      			totalNumber2 = 1;
-      			for (i = 0; i < image2.getNDims(); i++) {
-      				totalNumber2 = totalNumber2 * image2.getExtents()[i];
-      			}
-      			doubleBuffer = new double[totalNumber2];
-      			maxColorIndex = (totalNumber2/3) - 1;
-      			scale = (double)maxColorIndex/(double)shortRange;
-      			try {
-      				image2.exportData(0, totalNumber2, doubleBuffer);
-      			}
-      			catch(IOException e) {
-           		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber2, doubleBuffer)");
-           		   throw e;
-           		}
-      			
-      			image2.disposeLocal();
-      			image2 = null;
-      			for (i = 0; i < totalNumber; i++) {
-      				floatBuffer[4*i] = 0.0f;
-      				scaledIndex = (scale*(shortBuffer[i] - shortMin));
-      				lowIndex = Math.max(0,(int)(scale*(shortBuffer[i] - shortMin)));
-      				highIndex = Math.min(maxColorIndex,lowIndex+1);
-      				if (lowIndex == highIndex) {
-      					lowFraction = 1.0;
-      					highFraction = 0.0;
-      				}
-      				else {
-      				    lowFraction = Math.min(1.0, highIndex - scaledIndex);
-      				    highFraction = Math.min(1.0, scaledIndex - lowIndex);
-      				}
-      				floatBuffer[4*i+1] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex] + highFraction*doubleBuffer[3*highIndex]));
-      				floatBuffer[4*i+2] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex+1] + highFraction*doubleBuffer[3*highIndex+1]));
-      				floatBuffer[4*i+3] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex+2] + highFraction*doubleBuffer[3*highIndex+2]));
-      			}
-      			try {
-      				image.importData(0, floatBuffer, true);
-      			}
-      			catch(IOException e) {
-      				MipavUtil.displayError("IOException on image.importData(0, floatBuffer, true)");
-      				throw e;
-      			}
-              }
-              else if ((image.getType() == ModelStorageBase.DOUBLE) && (image.getExtents()[0]  == 3)  && (image.getExtents()[1] <= 256) &&
-              		 (image2 != null) && ((image2.getType() == ModelStorageBase.UBYTE) || (image2.getType() == ModelStorageBase.SHORT))) {
-                  	// image2 is really a lookup table for image
-                  	totalNumber = 1;
-                  	for (i = 0; i < image2.getNDims(); i++) {
-                  		totalNumber = totalNumber * image2.getExtents()[i];
-                  	}
-                  	shortBuffer = new short[totalNumber];
-              		try {
-              			image2.exportData(0, totalNumber, shortBuffer);
-              		}
-              		catch(IOException e) {
-              		   MipavUtil.displayError("IOException on image2.exportData(0, totalNumber, shortBuffer)");
-              		   throw e;
-              		}
-              		shortMin = 65535;
-              		shortMax = -32768;
-              		for (i = 0; i < totalNumber; i++) {
-              			if (shortBuffer[i] < shortMin) {
-              				shortMin = shortBuffer[i];
-              			}
-              			if (shortBuffer[i] > shortMax) {
-              				shortMax = shortBuffer[i];
-              			}
-              		}
-              		shortRange = shortMax - shortMin;
-          			floatBuffer = new float[4 * totalNumber];
-          			totalNumber2 = 1;
-          			for (i = 0; i < image.getNDims(); i++) {
-          				totalNumber2 = totalNumber2 * image.getExtents()[i];
-          			}
-          			doubleBuffer = new double[totalNumber2];
-          			maxColorIndex = (totalNumber2/3) - 1;
-          			scale = (double)maxColorIndex/(double)shortRange;
-          			try {
-          				image.exportData(0, totalNumber2, doubleBuffer);
-          			}
-          			catch(IOException e) {
-               		   MipavUtil.displayError("IOException on image.exportData(0, totalNumber2, doubleBuffer)");
-               		   throw e;
-               		}
-          			
-          			image = new ModelImage(ModelStorageBase.ARGB_FLOAT, image2.getExtents(), image2.getImageFileName());
-          			fileInfo = (FileInfoMATLAB)fileInfo2.clone();
-          			fileInfo.setDataType(ModelStorageBase.ARGB_FLOAT);
-          			image2.disposeLocal();
-          			image2 = null;
-          			for (i = 0; i < totalNumber; i++) {
-          				floatBuffer[4*i] = 0.0f;
-          				scaledIndex = (scale*(shortBuffer[i] - shortMin));
-          				lowIndex = Math.max(0,(int)(scale*(shortBuffer[i] - shortMin)));
-          				highIndex = Math.min(maxColorIndex,lowIndex+1);
-          				if (lowIndex == highIndex) {
-          					lowFraction = 1.0;
-          					highFraction = 0.0;
-          				}
-          				else {
-          				    lowFraction = Math.min(1.0, highIndex - scaledIndex);
-          				    highFraction = Math.min(1.0, scaledIndex - lowIndex);
-          				}
-          				floatBuffer[4*i+1] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex] + highFraction*doubleBuffer[3*highIndex]));
-          				floatBuffer[4*i+2] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex+1] + highFraction*doubleBuffer[3*highIndex+1]));
-          				floatBuffer[4*i+3] = (float)(255*(lowFraction*doubleBuffer[3*lowIndex+2] + highFraction*doubleBuffer[3*highIndex+2]));
-          			}
-          			try {
-          				image.importData(0, floatBuffer, true);
-          			}
-          			catch(IOException e) {
-          				MipavUtil.displayError("IOException on image.importData(0, floatBuffer, true)");
-          				throw e;
-          			}
-                  }
-                  
-              
-              
-              if (image2 != null) {
-              	fileInfo2.setSourceFile(fileDir + fileName);
-              	if (fileInfo2.getArrayName() != null) {
-              		image2.setImageName(fileInfo2.getArrayName());
-              		fileInfo2.setFileName(fileInfo2.getArrayName());
-              	}
-              	 for (i = 0; i < imageSlices2; i++) {
-                       
-                       image2.setFileInfo((FileInfoMATLAB)fileInfo2.clone(), i);
-                   }
-              	 vFrame2 = new ViewJFrameImage(image2);
-              	 if (fileInfo2.getArrayName() != null) {
-              		 vFrame2.setTitle(fileInfo2.getArrayName());
-              	 }
-              	 else {
-              	     vFrame2.setTitle(fileName.substring(0,st) + "_2");
-              	 }
-              }
-              
-              if (maskImage != null) {
-              	if (!isVOI) {
-              		// If xDim or yDim of maskImage does not equal xDim or yDim of image,
-              		// then do not convert to a VOI
-  	            	maskImage.setFileInfo(maskFileInfo, 0);
-  	            	vmFrame = new ViewJFrameImage(maskImage);
-  	            	if (voiFieldName != null) {
-  	            		vmFrame.setTitle(voiFieldName);
-  	            	}
-  	            	else {
-  	            	    vmFrame.setTitle(fileName.substring(0,st) + "_mask");
-  	            	}
-              	} // if (!isVOI)
-              	else { // convert maskImage to VOI
-  	            	if ((image.getNDims() >= 3) && (maskImage.getNDims() == 2)) {
-  	            		// Convert maskImage from 2D to 3D
-  	            		sliceSize = image.getExtents()[0]*image.getExtents()[1];
-  	            		newExtents = new int[3];
-  	            	    for (i = 0; i < 3; i++) {
-  	            	    	newExtents[i] = image.getExtents()[i];
-  	            	    }
-  	            		switch(maskImage.getType()) {
-                      	case ModelStorageBase.BYTE:
-                      		buffer = new byte[sliceSize];
-                      		try {
-                      			maskImage.exportData(0, sliceSize, buffer);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on maskImage.exportData(0, sliceSize, buffer)");
-                      		   throw e;
-                      		}
-                      		maskImage.changeExtents(newExtents);
-                      		maskImage.recomputeDataSize();
-                      		for (i = 0; i < image.getExtents()[2]; i++) {
-  	                    		try {
-  	                    			maskImage.importData(i * sliceSize, buffer, false);
-  	                    		}
-  	                    		catch(IOException e) {
-  	                    			MipavUtil.displayError("IOException on maskImage.importData(i * sliceSize, buffer, false)");
-  	                    			throw e;
-  	                    		}
-                      		}
-                      		maskImage.calcMinMax();
-                      		break;
-                      	case ModelStorageBase.UBYTE:
-                      		shortBuffer = new short[sliceSize];
-                      		try {
-                      			maskImage.exportData(0, sliceSize, shortBuffer);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on maskImage.exportData(0, sliceSize, shortBuffer)");
-                      		   throw e;
-                      		}
-                      		maskImage.changeExtents(newExtents);
-                      		maskImage.recomputeDataSize();
-                      		for (i = 0; i < image.getExtents()[2]; i++) {
-  	                    		try {
-  	                    			maskImage.importUData(i * sliceSize, shortBuffer, false);
-  	                    		}
-  	                    		catch(IOException e) {
-  	                    			MipavUtil.displayError("IOException on maskImage.importUData(i * sliceSize, shortBuffer, false)");
-  	                    			throw e;
-  	                    		}
-                      		}
-                      		maskImage.calcMinMax();
-                      		break;
-  	            		}
-  	            	} // if ((image.getNDims() >= 3) && (maskImage.getNDims() == 2))
-  	            	boolean wholeImage = true;
-  	            	if (maskImage.getNDims() == 2) { 
-  	                    AlgorithmMorphology2D idObjectsAlgo2D;
-  	                    int method = AlgorithmMorphology2D.ID_OBJECTS;
-  	                    
-  	                    idObjectsAlgo2D = new AlgorithmMorphology2D(maskImage, 0, 0, method, 0, 0, 0, 0, wholeImage);
-  	                    idObjectsAlgo2D.setMinMax(1, Integer.MAX_VALUE);
-  	                    idObjectsAlgo2D.run();
-  	                    idObjectsAlgo2D.finalize();
-  	                    idObjectsAlgo2D = null;
-  	            	}
-  	            	else { 
-  	                    AlgorithmMorphology3D idObjectsAlgo3D;
-  	                    int method = AlgorithmMorphology3D.ID_OBJECTS;
-  	                    
-  	                    idObjectsAlgo3D = new AlgorithmMorphology3D(maskImage, 0, 0, method, 0, 0, 0, 0, wholeImage);
-  	                    idObjectsAlgo3D.setMinMax(1, Integer.MAX_VALUE);
-  	                    idObjectsAlgo3D.run();
-  	                    idObjectsAlgo3D.finalize();
-  	                    idObjectsAlgo3D = null;
-  	            	}
-  	            	maskImage.calcMinMax();
-  	                final AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(maskImage);
-
-  	                // VOIExtractionAlgo.setActiveImage(false);
-  	                VOIExtractionAlgo.run();
-  	                
-  	                VOIVector kVOIs = maskImage.getVOIs();
-  	                for (i = 0; i < kVOIs.size(); i++ )
-  	                {
-  	                    VOI kCurrentGroup = kVOIs.get(i);
-  	                    kCurrentGroup.setAllActive(true);
-  	                }
-  	                maskImage.groupVOIs();
-  	                kVOIs = maskImage.getVOIs();
-  	                if (voiFieldName != null) {
-  	                    ((VOI)kVOIs.get(0)).setName(voiFieldName);
-  	                }
-  	                image.setVOIs(kVOIs);
-  	                maskImage.disposeLocal();
-  	                maskImage = null;
-              	} // convert maskImage to VOI
-              }
-              
-              if (maskImage2 != null) {
-              	if (!isVOI2) {
-              		// If xDim or yDim of maskImage2 does not equal xDim or yDim of image2,
-              		// then do not convert to a VOI
-  	            	maskImage2.setFileInfo(maskFileInfo2, 0);
-  	            	vmFrame2 = new ViewJFrameImage(maskImage2);
-  	            	if (voi2FieldName != null) {
-  	            		vmFrame2.setTitle(voi2FieldName);
-  	            	}
-  	            	else {
-  	            	    vmFrame2.setTitle(fileName.substring(0,st) + "_2_mask");
-  	            	}
-              	} // if (!isVOI2)
-              	else { // convert maskImage2 to VOI
-  	            	if ((image2.getNDims() >= 3) && (maskImage2.getNDims() == 2)) {
-  	            		// Convert maskImage2 from 2D to 3D
-  	            		sliceSize = image2.getExtents()[0]*image2.getExtents()[1];
-  	            		newExtents = new int[3];
-  	            	    for (i = 0; i < 3; i++) {
-  	            	    	newExtents[i] = image2.getExtents()[i];
-  	            	    }
-  	            		switch(maskImage2.getType()) {
-                      	case ModelStorageBase.BYTE:
-                      		buffer = new byte[sliceSize];
-                      		try {
-                      			maskImage2.exportData(0, sliceSize, buffer);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on maskImage2.exportData(0, sliceSize, buffer)");
-                      		   throw e;
-                      		}
-                      		maskImage2.changeExtents(newExtents);
-                      		maskImage2.recomputeDataSize();
-                      		for (i = 0; i < image2.getExtents()[2]; i++) {
-  	                    		try {
-  	                    			maskImage2.importData(i * sliceSize, buffer, false);
-  	                    		}
-  	                    		catch(IOException e) {
-  	                    			MipavUtil.displayError("IOException on maskImage2.importData(i * sliceSize, buffer, false)");
-  	                    			throw e;
-  	                    		}
-                      		}
-                      		maskImage2.calcMinMax();
-                      		break;
-                      	case ModelStorageBase.UBYTE:
-                      		shortBuffer = new short[sliceSize];
-                      		try {
-                      			maskImage2.exportData(0, sliceSize, shortBuffer);
-                      		}
-                      		catch(IOException e) {
-                      		   MipavUtil.displayError("IOException on maskImage2.exportData(0, sliceSize, shortBuffer)");
-                      		   throw e;
-                      		}
-                      		maskImage2.changeExtents(newExtents);
-                      		maskImage2.recomputeDataSize();
-                      		for (i = 0; i < image2.getExtents()[2]; i++) {
-  	                    		try {
-  	                    			maskImage2.importUData(i * sliceSize, shortBuffer, false);
-  	                    		}
-  	                    		catch(IOException e) {
-  	                    			MipavUtil.displayError("IOException on maskImage2.importUData(i * sliceSize, shortBuffer, false)");
-  	                    			throw e;
-  	                    		}
-                      		}
-                      		maskImage2.calcMinMax();
-                      		break;
-  	            		}
-  	            	} // if ((image.getNDims() >= 3) && (maskImage.getNDims() == 2))
-  	            	boolean wholeImage = true;
-  	            	if (maskImage2.getNDims() == 2) { 
-  	                    AlgorithmMorphology2D idObjectsAlgo2D;
-  	                    int method = AlgorithmMorphology2D.ID_OBJECTS;
-  	                    
-  	                    idObjectsAlgo2D = new AlgorithmMorphology2D(maskImage2, 0, 0, method, 0, 0, 0, 0, wholeImage);
-  	                    idObjectsAlgo2D.setMinMax(1, Integer.MAX_VALUE);
-  	                    idObjectsAlgo2D.run();
-  	                    idObjectsAlgo2D.finalize();
-  	                    idObjectsAlgo2D = null;
-  	            	}
-  	            	else { 
-  	                    AlgorithmMorphology3D idObjectsAlgo3D;
-  	                    int method = AlgorithmMorphology3D.ID_OBJECTS;
-  	                    
-  	                    idObjectsAlgo3D = new AlgorithmMorphology3D(maskImage2, 0, 0, method, 0, 0, 0, 0, wholeImage);
-  	                    idObjectsAlgo3D.setMinMax(1, Integer.MAX_VALUE);
-  	                    idObjectsAlgo3D.run();
-  	                    idObjectsAlgo3D.finalize();
-  	                    idObjectsAlgo3D = null;
-  	            	}
-  	            	maskImage2.calcMinMax();
-  	                final AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(maskImage2);
-
-  	                // VOIExtractionAlgo.setActiveImage(false);
-  	                VOIExtractionAlgo.run();
-  	                
-  	                VOIVector kVOIs = maskImage2.getVOIs();
-  	                for (i = 0; i < kVOIs.size(); i++ )
-  	                {
-  	                    VOI kCurrentGroup = kVOIs.get(i);
-  	                    kCurrentGroup.setAllActive(true);
-  	                }
-  	                maskImage2.groupVOIs();
-  	                kVOIs = maskImage2.getVOIs();
-  	                if (voi2FieldName != null) {
-  	                    ((VOI)kVOIs.get(0)).setName(voi2FieldName);
-  	                }
-  	                image2.setVOIs(kVOIs);
-  	                maskImage2.disposeLocal();
-  	                maskImage2 = null;
-              	} // convert maskImage2 to VOI
-              }
         }
         catch(IOException e) {
         	e.printStackTrace();
@@ -6480,6 +2169,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         double a[][] = null;
         double b[][] = null;
         double c[][] = null;
+        double modf;
         
         if (tsim != null) {
     		usechi2 = false;
@@ -6525,7 +2215,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         		}
         	}
         }
-        // Mask ot center pixel to remove bias
+        // Mask out center pixel to remove bias
         mask[wr][wr] = 0;
         count = 0;
         for (y = 0; y < 2*wr+1; y++) {
@@ -6541,7 +2231,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         side = new byte[2*wr+1][2*wr+1];
         for (y = 0; y < 2*wr+1; y++) {
         	for (x = 0; x < 2*wr+1; x++) {
-        		if (((gamma[y][x] - theta)%(2.0 * Math.PI)) < Math.PI) {
+        		modf = gamma[y][x] - theta - (2.0*Math.PI)*Math.floor((gamma[y][x] - theta)/(2.0*Math.PI));
+        		if (modf < Math.PI) {
         			side[y][x] = (byte)(2 *mask[y][x]);
         			if (side[y][x] == 2) {
         				sum2++;
@@ -6620,7 +2311,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
             	conv2(im, rmask, tgR);
             	for (y = 0; y < yDim; y++) {
             		for (x = 0; x < xDim; x++) {
-            			d[x + y * xDim][i] = Math.abs(tgL[y][x] - tgR[y][x]);
+            			d[x + y * xDim][i-1] = Math.abs(tgL[y][x] - tgR[y][x]);
             		}
             	}
             } // for ( i = 1; i <= ntex; i++)
@@ -6655,7 +2346,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         } // if (smooth.equals("gaussian"))
         else if (smooth.equals("savgol")) {
         	a = new double[tg.length][tg[0].length];
-            fitparab(a, b, c, tg, sigma, sigma/4.0, theta);  
+            fitparab(a, b, c, tg, sigma, sigma/4.0, theta);
             for (y = 0; y < yDim; y++) {
             	for (x = 0; x < xDim; x++) {
             		tg[y][x] = Math.max(0.0, a[y][x]);
@@ -6693,6 +2384,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	double detA;
     	double invA[][];
     	double param[];
+    	int yy;
+    	int xx;
     	// Fit cylindrical parabolas to elliptical patches of z at each pixel
     	
     	// Input
@@ -6778,9 +2471,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     			invA[2][0] = -d2*d2+d1*d3;
     			invA[2][1] = d1*d2-d0*d3;
     			invA[2][2] = -d1*d1+d0*d2;
-    			for (y = 0; y < 3; y++) {
-    				for (x = 0; x < 3; x++) {
-    					invA[y][x] = invA[y][x]/(detA + epsilon);
+    			for (yy = 0; yy < 3; yy++) {
+    				for (xx = 0; xx < 3; xx++) {
+    					invA[yy][xx] = invA[yy][xx]/(detA + epsilon);
     				}
     			}
     			param = new double[3];
@@ -6875,7 +2568,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	A = new double[d+1][d+1];
     	for (i = 0; i <= d; i++) {
     		for (j = i; j <= i+d; j++) {
-    		    A[j][i] = xx[j];	
+    		    A[j-i][i] = xx[j];	
     		}
     	}
     	matA = new Matrix(A);
