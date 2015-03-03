@@ -22,7 +22,7 @@ import Jama.Matrix;
  * Original MATLAB code written by David R. Martin in April 2003
  * 
  * Reference: "Learning to Detect Natural Image Boundaries Using Local Brightness, Color,
- *             and Texture Cues" by David R. Martin, Charless C. Fowlkes, and Jitendra
+ *             and Texture Cues" by David R. Martin, Charles C. Fowlkes, and Jitendra
  *             Malik, IEEE Transactions on Pattern Analysis and Machine Intelligence,
  *             Vol. 26, No. 5, May, 2004, pp. 530-549.
  * @author ilb
@@ -135,14 +135,16 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
       	double gtheta[];
       	AlgorithmChangeType changeTypeAlgo;
       	FileInfoBase[] fileInfo;
-      	double fb[][];
+      	double fb[][][][];
       	double tex[][];
+      	double tsim[][];
       	int sliceSize;
       	double buffer[];
       	double im[][];
       	int x;
       	int y;
-      	double fim[][];
+      	double fim[][][][];
+      	double tmap[][];
         
         // beta from logistic fits (trainBGTG.m)
         if ((lowRadius == 0.01) && (highRadius == 0.02)) {
@@ -266,9 +268,29 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         
         // Compute texture gradient
         // Must read in 286,160 byte MATLAB file unitex_6_1_2_1.4_2_64.mat
-        fb = new double[13][13];
+        // no = 6 the filter bank that we use for texture
+        // processing. It contains six pairs of elongated, oriented
+        // filters, as well as a center-surround filter.
+        // ss = 1
+        // ns = 2
+        // sc = sqrt(2)
+        // el = 2
+        // k = 64 universal texture primitives called textons
+        // To each pixel, we associate the vector of 13 filter responses centered at the pixel.
+        fb = new double[2][12][][];
+        for (x = 0; x < 6; x++) {
+        	for (y = 0; y < 2; y++) {
+        		fb[y][x] = new double[13][13];
+        	}
+        }
+        for (x = 6; x < 12; x++) {
+        	for (y = 0; y < 2; y++) {
+        		fb[y][x] = new double[19][19];
+        	}
+        }
         tex = new double[64][24];
-        readFile(fb, tex);
+        tsim = new double[64][64];
+        readFile(fb, tex, tsim);
         
         sliceSize = xDim * yDim;
         buffer = new double[sliceSize];
@@ -286,11 +308,31 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         	}
         }
         
-        fim = new double[yDim][xDim];
+        fim = new double[2][12][yDim][xDim];
         fbRun(fim, fb, im);
+        tmap = new double[yDim][xDim];
+        assignTextons(tmap, fim, tex);
     }
       
-    private void readFile(double fb[][], double tex[][]) {
+    private void assignTextons(double map[][], double fim[][][][], double textons[][]) {
+    	int y;
+    	int x;
+    	int ys;
+    	int xs;
+    	double data[][][][] = new double[fim[0][0].length][fim[0][0][0].length][fim.length][fim[0].length];
+    	
+    	for (y = 0; y < fim.length; y++) {
+    		for (x = 0; x < fim[0].length; x++) {
+    			for (ys = 0; ys < fim[0][0].length; ys++) {
+    				for (xs = 0; xs < fim[0][0][0].length; xs++) {
+    					data[ys][xs][y][x] = fim[y][x][ys][xs];
+    				}
+    			}
+    		}
+    	}
+    }
+      
+    private void readFile(double fb[][][][], double tex[][], double tsim[][]) {
     	/** 8 bit, signed */
     	final int miINT8 = 1;
     	/** 8 bit, unsigned */
@@ -448,6 +490,10 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         float floatBuffer[] = null;
         double doubleBuffer[] = null;
         String str;
+        int xm = 1;
+        int ym = 1;
+        int xb;
+        int yb;
         
         try {
 	        fileDir = "C:/segbench/Textons/";
@@ -1046,6 +1092,16 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
   	                    }
   	                    Preferences.debug("Numeric array name = " + numericArrayName + "\n", Preferences.DEBUG_FILEIO);
                       } // if (arrayClass == mxSTRUCT_CLASS)
+                      if (arrayName.equals("fb")) {
+                    	  ym = imageExtents[0];
+                    	  xm = imageExtents[1];
+                      }
+                      else {
+                    	  ym = 1;
+                    	  xm = 1;
+                      }
+                      for (xb = 0; xb < xm; xb++) {
+                    		for (yb = 0; yb < ym; yb++) {
                       realDataType = getInt(endianess);
                       if ((realDataType & 0xffff0000) != 0) {
                           // Small data element format    
@@ -1375,6 +1431,30 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                                       tex[y][x] = Double.longBitsToDouble(tmpLong);
 	                    		}
 	                    	}
+                    	}
+                  		else if (arrayName.equals("tsim")) {
+                  			for (x = 0; x < imageExtents[1]; x++) {
+	                    		for (y = 0; y < imageExtents[0]; y++) {
+	                    			index = 8*(x + imageExtents[1] * y);
+                                      b1L = buffer[index] & 0xffL;
+                                      b2L = buffer[index+1] & 0xffL;
+                                      b3L = buffer[index+2] & 0xffL;
+                                      b4L = buffer[index+3] & 0xffL;
+                                      b5L = buffer[index+4] & 0xffL;
+                                      b6L = buffer[index+5] & 0xffL;
+                                      b7L = buffer[index+6] & 0xffL;
+                                      b8L = buffer[index+7] & 0xffL;
+                                      if (endianess == FileBase.BIG_ENDIAN) {
+                                      	tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
+                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
+                                      }
+                                      else {
+                                      	tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
+                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+                                      }
+                                      tsim[y][x] = Double.longBitsToDouble(tmpLong);
+	                    		}
+	                    	}
                     	}	
                   		else {
                   		j = 0;
@@ -1521,11 +1601,11 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                       	
                       	break;
                       case miMATRIX:
-                    	  Preferences.debug("Real data type = miMATRIX\n", Preferences.DEBUG_FILEIO);
-                          Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
+                    	  Preferences.debug("fb real data type = miMATRIX\n", Preferences.DEBUG_FILEIO);
+                          Preferences.debug("fb real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                 
                     	  
-                    	  if (arrayName.equals("fb")) {
+                    	  
                     		  arrayFlagsDataType = getInt(endianess);
 	                          if (arrayFlagsDataType == miUINT32) {
 	                          		Preferences.debug("fb array flags data type is the expected miUINT32\n", Preferences.DEBUG_FILEIO);
@@ -1742,8 +1822,11 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                             		  Preferences.DEBUG_FILEIO);
                             	  
                               }
-                              if (realDataBytes == 1352) {
+                              if (xb < 6 &&realDataBytes == 1352) {
                             	  Preferences.debug("fb real data bytes = 1352 as expected\n", Preferences.DEBUG_FILEIO);
+                              }
+                              else if (realDataBytes == 2888) {
+                            	  Preferences.debug("fb real data bytes = 2888 as expected\n", Preferences.DEBUG_FILEIO);  
                               }
                               else {
                             	  Preferences.debug("fb real data bytes unexpectedly = " + realDataBytes + "\n",
@@ -1751,6 +1834,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                               }
                               buffer = new byte[realDataBytes];
                         	  raFile.read(buffer);
+                        	  if (arrayName.equals("fb")) {
                         	  for (x = 0; x < imageExtents[1]; x++) {
   	                    		for (y = 0; y < imageExtents[0]; y++) {
   	                    			index = 8*(x + imageExtents[1] * y);
@@ -1763,40 +1847,39 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                                         b7L = buffer[index+6] & 0xffL;
                                         b8L = buffer[index+7] & 0xffL;
                                         if (endianess == FileBase.BIG_ENDIAN) {
-                                        	fb[y][x] = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
+                                        	fb[yb][xb][y][x] = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
                                                      (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
                                         }
                                         else {
-                                        	fb[y][x] = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
+                                        	fb[yb][xb][y][x] = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
                                                      (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
                                         }
   	                    		}
   	                    	}
                     	  }
-                    	  else {
-	                          buffer = new byte[realDataBytes];
-	                    	  raFile.read(buffer);
-	                    	  if (haveSmallRealData) {
-	                    		    if (realDataBytes < 4) {
-	                    		    	padBytes = 4 - realDataBytes;
-	                    		    	for (i = 0; i < padBytes; i++) {
-	                    		    		raFile.readByte();
-	                    		    	}
-	                    		    }
-	                    		}
-	                    		else if ((realDataBytes % 8) != 0) {
-	                    	    	padBytes = 8 - (realDataBytes % 8);
-	                    	    	for (i = 0; i < padBytes; i++) {
-	                        	    	raFile.readByte();
-	                        	    }
-	                    	    } 
-                    	  }
+                    	  if (haveSmallRealData) {
+                    		    if (realDataBytes < 4) {
+                    		    	padBytes = 4 - realDataBytes;
+                    		    	for (i = 0; i < padBytes; i++) {
+                    		    		raFile.readByte();
+                    		    	}
+                    		    }
+                    		}
+                    		else if ((realDataBytes % 8) != 0) {
+                    	    	padBytes = 8 - (realDataBytes % 8);
+                    	    	for (i = 0; i < padBytes; i++) {
+                        	    	raFile.readByte();
+                        	    }
+                    	    } 
+                    	  
                
                     	  break;
                       default:
                       	Preferences.debug("Illegal data type = " + realDataType + "\n", Preferences.DEBUG_FILEIO);
                       	Preferences.debug("Real data bytes = " + realDataBytes + "\n", Preferences.DEBUG_FILEIO);
                       }
+                    		} // for (yb = 0; yb < ym; yb++)
+                      } // for (xb = 0; xb < xm; xb++)
                       
                       
                       } // for (field = 0; field < fieldNumber; field++)
@@ -2606,6 +2689,49 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	conv2(z, filtk, c);
     }
     
+    private void fbRun(double fim[][][][], double fb[][][][], double im[][]) {
+        // Run a filterbank on an image with reflected boundary conditions
+    	int maxsz;
+    	int r;
+    	double impad[][];
+    	double fimpad[][];
+    	int y;
+    	int x;
+    	int ys;
+    	int xs;
+    	
+    	// Find the maximum filter size
+    	maxsz = 1;
+    	for (y = 0; y < fb.length; y++) {
+    		for (x = 0; x < fb[0].length; x++) {
+    			maxsz = Math.max(maxsz, Math.max(fb[y][x].length,fb[y][x][0].length));
+    		}
+    	}
+    	
+    	// Pad the image
+    	r = (int)Math.floor(maxsz/2);
+    	impad = new double[im.length+2*r][im[0].length + 2*r];
+    	padReflect(impad, im, r);
+    	
+    	// Run the filterbank on the padded image, and crop the result back to the original image size
+    	fimpad = new double[impad.length][impad[0].length];
+    	for (y = 0; y < fb.length; y++) {
+    		for (x = 0; x < fb[0].length; x++) {
+		    	if (fb[y][x].length < 50) {
+		    	    conv2(impad,fb[y][x],fimpad);	
+		    	}
+		    	else {
+		    	    fftconv2(fimpad, impad, fb[y][x]);	
+		    	}
+		    	for (ys = r; ys < impad.length - r; ys++) {
+		    	    for (xs = r; xs < impad[0].length - r; xs++) {
+		    	    	fim[y][x][ys-r][xs-r] = fimpad[ys][xs];
+		    	    }
+		    	}
+    		}
+    	}
+    }
+    
     private void fbRun(double fim[][], double fb[][], double im[][]) {
         // Run a filterbank on an image with reflected boundary conditions
     	int maxsz;
@@ -2620,6 +2746,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	r = (int)Math.floor(maxsz/2);
     	impad = new double[im.length+2*r][im[0].length + 2*r];
     	padReflect(impad, im, r);
+    	
+    	// Run the filterbank on the padded image, and crop the result back to the original image size
     	fimpad = new double[impad.length][impad[0].length];
     	if (fb.length < 50) {
     	    conv2(impad,fb,fimpad);	
