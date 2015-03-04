@@ -6,14 +6,11 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBtoGray;
 import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.file.FileInfoMATLAB;
-import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
-import java.util.zip.Inflater;
 
 import Jama.Matrix;
 
@@ -128,23 +125,25 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 
       	double beta[] = new double[3];
       	double fstd[] = new double[3];
-      	double diag;
-      	ModelImage grayImage = null;
-      	ModelImage inputImage;
       	double bg[][][];
+      	double tg[][][];
       	double gtheta[];
-      	AlgorithmChangeType changeTypeAlgo;
-      	FileInfoBase[] fileInfo;
-      	double fb[][][][];
-      	double tex[][];
-      	double tsim[][];
-      	int sliceSize;
-      	double buffer[];
-      	double im[][];
+      	double pball[][][];
+      	int i;
+      	int sliceSize = xDim * yDim;
+      	double b[];
+      	double t[];
       	int x;
       	int y;
-      	double fim[][][][];
-      	double tmap[][];
+      	double xbeta;
+      	double pbi[];
+      	int maxo[][];
+      	double maxVal;
+      	double r;
+      	byte mask[][];
+      	double z[][];
+      	double a[][];
+      	double pbi2[][];
         
         // beta from logistic fits (trainBGTG.m)
         if ((lowRadius == 0.01) && (highRadius == 0.02)) {
@@ -183,7 +182,144 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         }
         
         // Get gradients
+        bg = new double[yDim][xDim][numOrientations];
+        tg = new double[yDim][xDim][numOrientations];
+        gtheta = new double[numOrientations];
+        detBGTG(bg, tg, gtheta);
+        
+        // Compute oriented pb
+        pball = new double[yDim][xDim][numOrientations];
+        b = new double[sliceSize];
+        t = new double[sliceSize];
+        pbi = new double[sliceSize];
+        for (i = 0; i < numOrientations; i++) {
+            for (x = 0; x < xDim; x++) {
+            	for (y = 0; y < yDim; y++) {
+            	    b[y + x * yDim] = bg[y][x][i];
+            	    t[y + x * yDim] = tg[y][x][i];
+            	}
+            }
+            for (y = 0; y < sliceSize; y++) {
+            	xbeta = beta[0] + b[y]*beta[1] + t[y]*beta[2];
+            	pbi[y] = 1.0/(1.0 + Math.exp(-xbeta));
+            }
+            for (x = 0; x < xDim; x++) {
+            	for (y = 0; y < yDim; y++) {
+            	    pball[y][x][i] = pbi[y + x*yDim];	
+            	}
+            }
+        } // for (i = 0; i < numOrientations; i++)
+        
+        // nonmax suppression and max over orientations
+        maxo = new int[yDim][xDim];
+        for (y = 0; y < yDim; y++) {
+        	for (x = 0; x < xDim; x++) {
+        		maxVal = -Double.MAX_VALUE;
+        		for (i = 0; i < numOrientations; i++)  {
+        			if (pball[y][x][i] > maxVal) {
+        				maxVal = pball[y][x][i];
+        				maxo[y][x] = i;
+        			}
+        		}
+        	}
+        }
+        r = 2.5;
+        mask = new byte[yDim][xDim];
+        z = new double[yDim][xDim];
+        a = new double[yDim][xDim];
+        pbi2 = new double[yDim][xDim];
+        for (i = 0; i < numOrientations; i++) {
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		if (maxo[y][x] == i) {
+            			mask[y][x] = 1;
+            		}
+            		else {
+            			mask[y][x] = 0;
+            		}
+            		z[y][x] = pball[y][x][i];
+            	}
+            }
+            fitparab(a, null, null, z, r, r, gtheta[i]);
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		a[y][x] = Math.max(0.0, a[y][x]);
+            	}
+            }
+            nonmax(pbi2, a, gtheta[i]);
+        } // for (i = 0; i < numOrientations; i++) 
+      }
+      
+      private void nonmax(double imout[][], double im[][], double theta) {
+    	  // Perform non-max suppression on im orthogonal to theta.  Theta can be
+    	  // a matrix providing a different theta for each pixel or a scalar
+    	  // proving the same theta for every pixel.
+    	  
+    	  // David R. Martin <dmartin@eecs.berkeley.edu>
+    	  // March 2003
+    	  double thetaArr[][] = new double[im.length][im[0].length];
+          int y;
+          int x;
+          boolean mask15;
+          boolean mask26;
+          boolean mask37;
+          boolean mask48;
+          
+          // Do non-max suppression orthogonal to theta.
+    	  theta = theta + Math.PI/2.0 - Math.PI*Math.floor((theta + Math.PI/2.0)/Math.PI);
+          for (y = 0; y < im.length; y++) {
+        	  for (x = 0; x < im[0].length; x++) {
+        		  thetaArr[y][x] = theta;
+        	  }
+          }
+
+    	  // The following diagram depicts the 8 cases for non-max suppression.
+    	  // Theta is valued in [0,pi), measured clockwise from the positive x
+    	  // axis.  The 'o' marks the pixel of interest, and the eight
+    	  // neighboring pixels are marked with '.'.  The orientation is divided
+    	  // into 8 45-degree blocks.  Within each block, we interpolate the
+    	  // image value between the two neighboring pixels.
+    	  //
+    	  //        .66.77.                                
+    	  //        5\ | /8                                
+    	  //        5 \|/ 8                                
+    	  //        .--o--.-----> x-axis                     
+    	  //        4 /|\ 1                                
+    	  //        4/ | \1                                
+    	  //        .33.22.                                
+    	  //           |                                   
+    	  //           |
+    	  //           v
+    	  //         y-axis                                  
+    	  //
+    	  // In the code below, d is always the distance from A, so the distance
+    	  // to B is (1-d).  A and B are the two neighboring pixels of interest
+    	  // in each of the 8 cases.  Note that the clockwise ordering of A and B
+    	  // changes from case to case in order to make it easier to compute d.
+
+    	  // Determine which pixels belong to which cases.
+          mask15 = (theta >= 0.0 && theta < Math.PI/4.0);
+      }
+      
+      private void detBGTG(double bg[][][], double tg[][][], double theta[]) {
         // Compute smoothed but not thinned BG and TG fields
+    	double diag;
+        ModelImage grayImage = null;
+        ModelImage inputImage;
+        AlgorithmChangeType changeTypeAlgo;
+      	FileInfoBase[] fileInfo;
+      	double fb[][][][];
+      	double tex[][];
+      	double tsim[][];
+      	int sliceSize;
+      	double buffer[];
+      	double im[][];
+      	int x;
+      	int y;
+      	double fim[][][][];
+      	int tmap[][];
+      	int k;
+        
         diag = Math.sqrt(xDim*xDim + yDim*yDim);
         if (srcImage.isColorImage()) {
 			final boolean thresholdAverage = false;
@@ -262,9 +398,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         fileInfo[0].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation());
         fileInfo[0].setOrigin(srcImage.getFileInfo()[0].getOrigin());
         // Compute brightness gradient
-        bg = new double[yDim][xDim][numOrientations];
-        gtheta = new double[numOrientations];
-        cgmo(bg, gtheta, inputImage, diag*lowRadius, numOrientations, "savgol", diag*lowRadius);
+        
+        cgmo(bg, theta, inputImage, diag*lowRadius, numOrientations, "savgol", diag*lowRadius);
         
         // Compute texture gradient
         // Must read in 286,160 byte MATLAB file unitex_6_1_2_1.4_2_64.mat
@@ -275,20 +410,20 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         // ns = 2
         // sc = sqrt(2)
         // el = 2
-        // k = 64 universal texture primitives called textons
+        k = 64; // universal texture primitives called textons
         // To each pixel, we associate the vector of 13 filter responses centered at the pixel.
-        fb = new double[2][12][][];
-        for (x = 0; x < 6; x++) {
-        	for (y = 0; y < 2; y++) {
+        fb = new double[12][2][][];
+        for (x = 0; x < 1; x++) {
+        	for (y = 0; y < 12; y++) {
         		fb[y][x] = new double[13][13];
         	}
         }
-        for (x = 6; x < 12; x++) {
-        	for (y = 0; y < 2; y++) {
+        for (x = 1; x < 2; x++) {
+        	for (y = 0; y < 12; y++) {
         		fb[y][x] = new double[19][19];
         	}
         }
-        tex = new double[64][24];
+        tex = new double[24][64];
         tsim = new double[64][64];
         readFile(fb, tex, tsim);
         
@@ -308,28 +443,106 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         	}
         }
         
-        fim = new double[2][12][yDim][xDim];
-        fbRun(fim, fb, im);
-        tmap = new double[yDim][xDim];
+        fim = new double[12][2][yDim][xDim];
+        fbRun(fim, fb, im);                
+        tmap = new int[yDim][xDim];
         assignTextons(tmap, fim, tex);
-    }
-      
-    private void assignTextons(double map[][], double fim[][][][], double textons[][]) {
-    	int y;
-    	int x;
-    	int ys;
-    	int xs;
-    	double data[][][][] = new double[fim[0][0].length][fim[0][0][0].length][fim.length][fim[0].length];
-    	
-    	for (y = 0; y < fim.length; y++) {
-    		for (x = 0; x < fim[0].length; x++) {
-    			for (ys = 0; ys < fim[0][0].length; ys++) {
-    				for (xs = 0; xs < fim[0][0][0].length; xs++) {
-    					data[ys][xs][y][x] = fim[y][x][ys][xs];
-    				}
-    			}
+        tgmo(tg, theta, tmap, k, diag*highRadius, numOrientations, null, "savgol", diag*highRadius);
+        return;
+      }
+        
+        private void assignTextons(int map[][], double fim[][][][], double textons[][]) {
+        int d = fim.length * fim[0].length;
+        int n = fim[0][0].length * fim[0][0][0].length;
+        double data[][] = new double[d][n];
+        double d2[][];
+        int y;
+        int x;
+        int ys;
+        int xs;
+        int map1D[];
+        double minValue;
+        
+        for (y = 0; y < fim.length; y++) {
+        	for (x = 0; x < fim[0].length; x++) {
+        		for (ys = 0; ys < fim[0][0].length; ys++) {
+        			for (xs = 0; xs < fim[0][0][0].length; xs++) {
+        				data[x + y*fim[0].length][ys + xs * fim[0][0].length] = fim[y][x][ys][xs];
+        			}
+        		}
+        	}
+        }
+    	d2 = new double[n][textons[0].length];
+    	distsqr(d2, data, textons);
+    	map1D = new int[n];
+    	for (y = 0; y < n; y++) {
+    	    minValue = Double.MAX_VALUE;
+    	    map1D[y] = -1;
+    	    for (x = 0; x < textons[0].length; x++) {
+    	    	if (d2[y][x] < minValue) {
+    	    		minValue = d2[y][x];
+    	    		// tgso requires tmap have a minimum value of 1
+    	    		map1D[y] = x+1;
+    	    	}
+    	    }
+    	}
+    	for (x = 0; x < fim[0][0][0].length; x++) {
+    	    for (y = 0; y < fim[0][0].length; y++) {
+    			map[y][x] = map1D[y + x * fim[0][0].length];
     		}
     	}
+    	return;
+    }
+    
+    private void distsqr(double z[][], double x[][], double y[][]) {
+    	// Return matrix of all-pairs squared distances between the vectors in
+    	// the columns of x and y
+    	// Inputs
+    	// x     dxn matrix of vectors
+    	// y     dxm matrix of vectors
+    	// Outputs
+    	// z     nxm matrix of squared distances
+    	// This routine is faster when m < n than when m > n.
+        Matrix matx;
+        Matrix maty;
+        double x2[];
+        double y2[];
+        int i;
+        int j;
+        int n;
+        int m;
+        int d;
+        
+    	if (x.length != y.length) {
+    		MipavUtil.displayError("x.length != y.length in distsqr");
+    		return;
+    	}
+    	
+    	d = x.length;
+    	n = x[0].length;
+    	m = y[0].length;
+    	
+        matx = new Matrix(x);
+        maty = new Matrix(y);
+        z = ((matx.transpose()).times(maty)).getArray();
+        x2 = new double[n];
+        for (i = 0; i < n; i++) {
+        	for (j = 0; j < d; j++) {
+        		x2[i] += x[j][i]*x[j][i];
+        	}
+        }
+        y2 = new double[m];
+        for (i = 0; i < m; i++) {
+        	for (j = 0; j < d; j++) {
+        		y2[i] += y[j][i]*y[j][i];
+        	}
+        }
+        for (i = 0; i < m; i++) {
+        	for (j = 0; j < n; j++) {
+        		z[j][i] = x2[j] + y2[i] - 2.0 * z[j][i];
+        	}
+        }
+        return;
     }
       
     private void readFile(double fb[][][][], double tex[][], double tsim[][]) {
@@ -1409,9 +1622,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                   		doubleBuffer = new double[doubleNumber];
                   		numberSlices = doubleNumber/sliceSize;
                   		if (arrayName.equals("tex")) {
-                  			for (x = 0; x < imageExtents[1]; x++) {
-	                    		for (y = 0; y < imageExtents[0]; y++) {
-	                    			index = 8*(x + imageExtents[1] * y);
+                  			for (x = 0; x < imageExtents[0]; x++) {
+	                    		for (y = 0; y < imageExtents[1]; y++) {
+	                    			index = 8*(x * imageExtents[1] + y);
                                       b1L = buffer[index] & 0xffL;
                                       b2L = buffer[index+1] & 0xffL;
                                       b3L = buffer[index+2] & 0xffL;
@@ -1433,9 +1646,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 	                    	}
                     	}
                   		else if (arrayName.equals("tsim")) {
-                  			for (x = 0; x < imageExtents[1]; x++) {
-	                    		for (y = 0; y < imageExtents[0]; y++) {
-	                    			index = 8*(x + imageExtents[1] * y);
+                  			for (x = 0; x < imageExtents[0]; x++) {
+	                    		for (y = 0; y < imageExtents[1]; y++) {
+	                    			index = 8*(x * imageExtents[1] + y);
                                       b1L = buffer[index] & 0xffL;
                                       b2L = buffer[index+1] & 0xffL;
                                       b3L = buffer[index+2] & 0xffL;
@@ -1835,9 +2048,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                               buffer = new byte[realDataBytes];
                         	  raFile.read(buffer);
                         	  if (arrayName.equals("fb")) {
-                        	  for (x = 0; x < imageExtents[1]; x++) {
-  	                    		for (y = 0; y < imageExtents[0]; y++) {
-  	                    			index = 8*(x + imageExtents[1] * y);
+                        	  for (x = 0; x < imageExtents[0]; x++) {
+  	                    		for (y = 0; y < imageExtents[1]; y++) {
+  	                    			index = 8*(x * imageExtents[1] + y);
                                         b1L = buffer[index] & 0xffL;
                                         b2L = buffer[index+1] & 0xffL;
                                         b3L = buffer[index+2] & 0xffL;
@@ -2092,8 +2305,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     private void cgmo(double cg[][][], double theta[],
     		ModelImage image, double radius, int numOrientations, int nbins, double sigmaSim, double gamma, 
     		String smooth, double sigmaSmooth) {
-        double abmin;
-        double abmax;
+        //double abmin;
+        //double abmax;
         int cmap[][];
         int y;
         int x;
@@ -2109,8 +2322,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         
         // Min and max values used for a,b channels of LAB
         // Used to scale values into the unit interval
-        abmin = -73;
-        abmax = 95;
+        //abmin = -73;
+        //abmax = 95;
         
         // Make sure bin is large enough with respect to sigmaSim
         if (nbins < 1.0/sigmaSim) {
