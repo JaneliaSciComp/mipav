@@ -122,6 +122,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     
     
       private void pbBGTG(double pb[][], double theta[][]) {
+    	// Compute probability of boundary using BG and TG
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// April 2003
 
       	double beta[] = new double[3];
       	double fstd[] = new double[3];
@@ -247,7 +250,30 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
             	}
             }
             nonmax(pbi2, a, gtheta[i]);
-        } // for (i = 0; i < numOrientations; i++) 
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		pb[y][x] = Math.max(pb[y][x], pbi2[y][x] * mask[y][x]);
+            		theta[y][x] = theta[y][x] * (1 - mask[y][x]) + gtheta[i]*mask[y][x];
+            	}
+            }
+        } // for (i = 0; i < numOrientations; i++)
+        
+        for (y = 0; y < yDim; y++) {
+        	for (x = 0; x < xDim; x++) {
+        		pb[y][x] = Math.max(0.0, Math.min(1.0, pb[y][x]));
+        	}
+        }
+        
+        // Mask out 1-pixel border where nonmax suppression fails
+        for (x = 0; x < xDim; x++) {
+        	pb[0][x] = 0.0;
+        	pb[yDim-1][x] = 0.0;
+        }
+        for (y = 0; y < yDim; y++) {
+        	pb[y][0] = 0.0;
+        	pb[y][xDim-1] = 0.0;
+        }
+        return;
       }
       
       private void nonmax(double imout[][], double im[][], double theta) {
@@ -255,23 +281,25 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	  // a matrix providing a different theta for each pixel or a scalar
     	  // proving the same theta for every pixel.
     	  
-    	  // David R. Martin <dmartin@eecs.berkeley.edu>
+    	  // Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
     	  // March 2003
-    	  double thetaArr[][] = new double[im.length][im[0].length];
           int y;
           int x;
           boolean mask15;
           boolean mask26;
           boolean mask37;
           boolean mask48;
+          int h = im.length;
+          int w = im[0].length;
+          byte mask[][];
+          byte idx[][];
+          byte idxA[][];
+          byte idxB[][];
+          double d;
+          double imI[][];
           
           // Do non-max suppression orthogonal to theta.
     	  theta = theta + Math.PI/2.0 - Math.PI*Math.floor((theta + Math.PI/2.0)/Math.PI);
-          for (y = 0; y < im.length; y++) {
-        	  for (x = 0; x < im[0].length; x++) {
-        		  thetaArr[y][x] = theta;
-        	  }
-          }
 
     	  // The following diagram depicts the 8 cases for non-max suppression.
     	  // Theta is valued in [0,pi), measured clockwise from the positive x
@@ -299,6 +327,368 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 
     	  // Determine which pixels belong to which cases.
           mask15 = (theta >= 0.0 && theta < Math.PI/4.0);
+          mask26 = (theta >= Math.PI/4.0 && theta < Math.PI/2.0);
+          mask37 = (theta >= Math.PI/2.0 && theta < Math.PI*3.0/4.0);
+          mask48 = (theta >= Math.PI*3.0/4.0 && theta < Math.PI);
+          
+          mask = new byte[h][w];
+          for (y = 0; y < h; y++) {
+        	  for (x = 0; x < w; x++) {
+        		  mask[y][x] = 1;
+        	  }
+          }
+          
+          idx = new byte[h][w];
+          idxA = new byte[h][w];
+          idxB = new byte[h][w];
+          imI = new double[h][w];
+          
+          if (mask15) {
+        	  // Case 1
+        	  for (y = 0; y < h; y++) {
+        		  for (x = 0; x < w; x++) {
+        			  idx[y][x] = 0;
+        			  idxA[y][x] = 0;
+        			  idxB[y][x] = 0;
+        		  }
+        	  }
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if (x < w-1 && y < h - 1) {
+            			  idx[y][x] = 1;
+            			  idxA[y+1][x] = 1;
+            			  idxB[y+1][x+1] = 1;
+            		  }
+            	  }
+              }
+              d = Math.tan(theta);
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if ((idxA[y][x] == 1) && (idxB[y][x] == 1)) {
+            			  imI[y][x] = im[y][x];
+            		  }
+            		  else if (idxA[y][x] == 1) {
+            			  imI[y][x] = (1.0 - d)*im[y][x];
+            		  }
+            		  else if (idxB[y][x] == 1) {
+            			  imI[y][x] = d*im[y][x];
+            		  }
+            		  else {
+            			  imI[y][x] = 0.0;
+            		  }
+            	  }
+              }
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if ((idx[y][x] == 1) && (im[y][x] < imI[y][x])) {
+            			  mask[y][x] = 0;
+            		  }
+            	  }
+              }
+              
+              // Case 5
+              for (y = 0; y < h; y++) {
+        		  for (x = 0; x < w; x++) {
+        			  idx[y][x] = 0;
+        			  idxA[y][x] = 0;
+        			  idxB[y][x] = 0;
+        		  }
+        	  }
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if ((x > 0) && (y > 0)) {
+            			  idx[y][x] = 1;
+            			  idxA[y-1][x] = 1;
+            			  idxB[y-1][x-1] = 1;
+            		  }
+            	  }
+              }
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if ((idxA[y][x] == 1) && (idxB[y][x] == 1)) {
+            			  imI[y][x] = im[y][x];
+            		  }
+            		  else if (idxA[y][x] == 1) {
+            			  imI[y][x] = (1.0 - d)*im[y][x];
+            		  }
+            		  else if (idxB[y][x] == 1) {
+            			  imI[y][x] = d*im[y][x];
+            		  }
+            		  else {
+            			  imI[y][x] = 0.0;
+            		  }
+            	  }
+              }
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if ((idx[y][x] == 1) && (im[y][x] < imI[y][x])) {
+            			  mask[y][x] = 0;
+            		  }
+            	  }
+              }
+          } // if (mask15)
+          
+          if (mask26) {
+              // case 2
+        	  for (y = 0; y < h; y++) {
+        		  for (x = 0; x < w; x++) {
+        			  idx[y][x] = 0;
+        			  idxA[y][x] = 0;
+        			  idxB[y][x] = 0;
+        		  }
+        	  }
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if (x < w-1 && y < h - 1) {
+            	          idx[y][x] = 1;
+            	          idxA[y][x+1] = 1;
+            	          idxB[y+1][x+1] = 1;
+            		  }
+            	  }
+              }
+              d = Math.tan(Math.PI/2.0 - theta);
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if ((idxA[y][x] == 1) && (idxB[y][x] == 1)) {
+            			  imI[y][x] = im[y][x];
+            		  }
+            		  else if (idxA[y][x] == 1) {
+            			  imI[y][x] = (1.0 - d)*im[y][x];
+            		  }
+            		  else if (idxB[y][x] == 1) {
+            			  imI[y][x] = d*im[y][x];
+            		  }
+            		  else {
+            			  imI[y][x] = 0.0;
+            		  }
+            	  }
+              }
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if ((idx[y][x] == 1) && (im[y][x] < imI[y][x])) {
+            			  mask[y][x] = 0;
+            		  }
+            	  }
+              }
+              
+              // Case 6
+              for (y = 0; y < h; y++) {
+        		  for (x = 0; x < w; x++) {
+        			  idx[y][x] = 0;
+        			  idxA[y][x] = 0;
+        			  idxB[y][x] = 0;
+        		  }
+        	  }
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if ((x > 0) && (y > 0)) {
+            			  idx[y][x] = 1;
+            			  idxA[y][x-1] = 1;
+            			  idxB[y-1][x-1] = 1;
+            		  }
+            	  }
+              }
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if ((idxA[y][x] == 1) && (idxB[y][x] == 1)) {
+            			  imI[y][x] = im[y][x];
+            		  }
+            		  else if (idxA[y][x] == 1) {
+            			  imI[y][x] = (1.0 - d)*im[y][x];
+            		  }
+            		  else if (idxB[y][x] == 1) {
+            			  imI[y][x] = d*im[y][x];
+            		  }
+            		  else {
+            			  imI[y][x] = 0.0;
+            		  }
+            	  }
+              }
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if ((idx[y][x] == 1) && (im[y][x] < imI[y][x])) {
+            			  mask[y][x] = 0;
+            		  }
+            	  }
+              }
+          } // if (mask26)
+          
+          if (mask37) {
+              // case 3
+        	  for (y = 0; y < h; y++) {
+        		  for (x = 0; x < w; x++) {
+        			  idx[y][x] = 0;
+        			  idxA[y][x] = 0;
+        			  idxB[y][x] = 0;
+        		  }
+        	  }
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if ((x < w-1) && (y > 0)) {
+            			  idx[y][x] = 1;
+            			  idxA[y][x+1] = 1;
+            			  idxB[y-1][x+1] = 1;
+            		  }
+            	  }
+              }
+              d = Math.tan(theta - Math.PI/2.0);
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if ((idxA[y][x] == 1) && (idxB[y][x] == 1)) {
+            			  imI[y][x] = im[y][x];
+            		  }
+            		  else if (idxA[y][x] == 1) {
+            			  imI[y][x] = (1.0 - d)*im[y][x];
+            		  }
+            		  else if (idxB[y][x] == 1) {
+            			  imI[y][x] = d*im[y][x];
+            		  }
+            		  else {
+            			  imI[y][x] = 0.0;
+            		  }
+            	  }
+              }
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if ((idx[y][x] == 1) && (im[y][x] < imI[y][x])) {
+            			  mask[y][x] = 0;
+            		  }
+            	  }
+              }
+              
+              // case 7
+              for (y = 0; y < h; y++) {
+        		  for (x = 0; x < w; x++) {
+        			  idx[y][x] = 0;
+        			  idxA[y][x] = 0;
+        			  idxB[y][x] = 0;
+        		  }
+        	  }
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if ((x > 0) && (y < h-1)) {
+            			  idx[y][x] = 1;
+            			  idxA[y][x-1] = 1;
+            			  idxB[y+1][x-1] = 1;
+            		  }
+            	  }
+              }
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if ((idxA[y][x] == 1) && (idxB[y][x] == 1)) {
+            			  imI[y][x] = im[y][x];
+            		  }
+            		  else if (idxA[y][x] == 1) {
+            			  imI[y][x] = (1.0 - d)*im[y][x];
+            		  }
+            		  else if (idxB[y][x] == 1) {
+            			  imI[y][x] = d*im[y][x];
+            		  }
+            		  else {
+            			  imI[y][x] = 0.0;
+            		  }
+            	  }
+              }
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if ((idx[y][x] == 1) && (im[y][x] < imI[y][x])) {
+            			  mask[y][x] = 0;
+            		  }
+            	  }
+              }
+          } // if (mask37)
+          
+          if (mask48) {
+        	  // case 4
+        	  for (y = 0; y < h; y++) {
+        		  for (x = 0; x < w; x++) {
+        			  idx[y][x] = 0;
+        			  idxA[y][x] = 0;
+        			  idxB[y][x] = 0;
+        		  }
+        	  }
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            	      if ((x < w-1) && (y > 0)) {
+            	    	  idx[y][x] = 1;
+            	    	  idxA[y-1][x] = 1;
+            	    	  idxB[y-1][x+1] = 1;
+            	      }
+            	  }
+              }
+              d = Math.tan(Math.PI - theta);
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if ((idxA[y][x] == 1) && (idxB[y][x] == 1)) {
+            			  imI[y][x] = im[y][x];
+            		  }
+            		  else if (idxA[y][x] == 1) {
+            			  imI[y][x] = (1.0 - d)*im[y][x];
+            		  }
+            		  else if (idxB[y][x] == 1) {
+            			  imI[y][x] = d*im[y][x];
+            		  }
+            		  else {
+            			  imI[y][x] = 0.0;
+            		  }
+            	  }
+              }
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if ((idx[y][x] == 1) && (im[y][x] < imI[y][x])) {
+            			  mask[y][x] = 0;
+            		  }
+            	  }
+              }
+              
+              // case 8
+              for (y = 0; y < h; y++) {
+        		  for (x = 0; x < w; x++) {
+        			  idx[y][x] = 0;
+        			  idxA[y][x] = 0;
+        			  idxB[y][x] = 0;
+        		  }
+        	  }
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if ((x > 0) && (y < h-1)) {
+            			  idx[y][x] = 1;
+            			  idxA[y+1][x] = 1;
+            			  idxB[y+1][x-1] = 1;
+            		  }
+            	  }
+              }
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if ((idxA[y][x] == 1) && (idxB[y][x] == 1)) {
+            			  imI[y][x] = im[y][x];
+            		  }
+            		  else if (idxA[y][x] == 1) {
+            			  imI[y][x] = (1.0 - d)*im[y][x];
+            		  }
+            		  else if (idxB[y][x] == 1) {
+            			  imI[y][x] = d*im[y][x];
+            		  }
+            		  else {
+            			  imI[y][x] = 0.0;
+            		  }
+            	  }
+              }
+              for (y = 0; y < h; y++) {
+            	  for (x = 0; x < w; x++) {
+            		  if ((idx[y][x] == 1) && (im[y][x] < imI[y][x])) {
+            			  mask[y][x] = 0;
+            		  }
+            	  }
+              }
+          } // if (mask48)
+          
+          // Apply mask
+          for (y = 0; y < h; y++) {
+        	  for (x = 0; x < w; x++) {
+        		  imout[y][x] = im[y][x] * mask[y][x];
+        	  }
+          }
       }
       
       private void detBGTG(double bg[][][], double tg[][][], double theta[]) {
@@ -503,6 +893,12 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	// Outputs
     	// z     nxm matrix of squared distances
     	// This routine is faster when m < n than when m > n.
+    	
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// March 2003
+    	
+    	// Based on dist2.m code
+    	// Copyright (c) Christopher M. Bishop, Ian T. Nabney (1996, 1997)
         Matrix matx;
         Matrix maty;
         double x2[];
@@ -622,7 +1018,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         long subsystemSpecificDataOffset;
         int version;
         long nextElementAddress;
-        int elementNumber = 0;
+        //int elementNumber = 0;
         int dataType;
         int elementBytes;
         int padBytes;
@@ -776,7 +1172,6 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
          // Go to first data element location
             nextElementAddress = 128L;
             while (nextElementAddress < fileLength) {
-            	elementNumber++;
                 raFile.seek(nextElementAddress);
                 dataType = getInt(endianess);
                 if ((dataType & 0xffff0000) != 0) {
@@ -801,8 +1196,6 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                     }
                 }
                 Preferences.debug("nextElementAddress = " + nextElementAddress + "\n", Preferences.DEBUG_FILEIO);
-                
-                fireProgressStateChanged("Reading element number " + String.valueOf(elementNumber));
                 
                 switch(dataType) {
                 case miINT8:
@@ -2305,6 +2698,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     private void cgmo(double cg[][][], double theta[],
     		ModelImage image, double radius, int numOrientations, int nbins, double sigmaSim, double gamma, 
     		String smooth, double sigmaSmooth) {
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// April 2003
         //double abmin;
         //double abmax;
         int cmap[][];
@@ -2390,6 +2785,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
      */
     private void tgmo(double tg[][][], double theta[], int tmap[][], int ntex, double radius, int numOrientations, 
     		double tsim[][], String smooth, double sigma) {
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// March 2003
     	int i;
     	boolean usechi2;
     	double tgArray[][];
@@ -2436,6 +2833,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
      * @param tsim [ntex][ntex] Texton similarity matrix.  If not provided, then use chi-squared.
      */
     private void tgso(double tg[][], int tmap[][], int ntex, double radius, double theta, String smooth, double sigma, double tsim[][]) {
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// March 2003
         boolean usechi2;
         int y;
         int x;
@@ -2692,6 +3091,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	// Output
     	// a[][], b[][], c[][] Coefficients of fit: a + bx + cx^2
     	
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// March 2003
+    	
     	ra = Math.max(1.5, ra);
     	rb = Math.max(1.5, rb);
     	ira2 = 1.0/(ra*ra);
@@ -2801,6 +3203,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	
     	// Output 
     	// c[0] COefficient of fit
+    	
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// March 2003
     	double ira2;
     	double irb2;
     	int wr;
@@ -2904,6 +3309,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     
     private void fbRun(double fim[][][][], double fb[][][][], double im[][]) {
         // Run a filterbank on an image with reflected boundary conditions
+    	
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// March 2003
     	int maxsz;
     	int r;
     	double impad[][];
@@ -2947,6 +3355,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     
     private void fbRun(double fim[][], double fb[][], double im[][]) {
         // Run a filterbank on an image with reflected boundary conditions
+    	
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// March 2003
     	int maxsz;
     	int r;
     	double impad[][];
@@ -2983,6 +3394,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	FFTUtility fft;
     	int i;
     	// Convolution using fft
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// March 2003
     	
     	// Wrap the filter around the origin and pad with zeros
     	padf = new double[im.length][im[0].length];
@@ -3074,6 +3487,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     
     private void padReflect(double impad[][], double im[][], int r) {
     	// Pad an image with a border of size r, and reflect the image into the border
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// March 2003
     	int x;
     	int y;
     	// Middle
@@ -3155,6 +3570,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
      */
     private void oeFilter(double f[][], double sigmaX, double sigmaY, int support, double theta,
     		int deriv, boolean dohil, boolean dovis) {
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// March 2003
     	int hsz;
     	int sz;
     	int maxsamples;
