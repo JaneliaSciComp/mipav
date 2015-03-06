@@ -7,7 +7,6 @@ import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
@@ -36,6 +35,8 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
     private ModelImage resultImage = null; // result image
     
     private static final int BGTG = 1;
+    
+    private static final int CGTG = 2;
 	
 	private int gradientType = BGTG;
 	
@@ -55,6 +56,12 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
 
     /** DOCUMENT ME! */
     private AlgorithmPbBoundaryDetection pbAlgo;
+    
+    private ButtonGroup gradientGroup;
+    
+    private JRadioButton bgtgButton;
+    
+    private JRadioButton cgtgButton;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -248,6 +255,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
         numOrientations = scriptParameters.getParams().getInt("num_orientations");
+        gradientType = scriptParameters.getParams().getInt("grad_type");
     }
 
     /**
@@ -257,6 +265,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         scriptParameters.storeInputImage(image);
         scriptParameters.storeOutputImageParams(resultImage, true);
         scriptParameters.getParams().put(ParameterFactory.newParameter("num_orientations", numOrientations));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("grad_type", gradientType));
     }
 
     /**
@@ -285,6 +294,34 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         textOrientations.setFont(serif12);
         gbc.gridx = 1;
         paramPanel.add(textOrientations, gbc);
+        
+        gradientGroup = new ButtonGroup();
+        if (image.isColorImage()) {
+            bgtgButton = new JRadioButton("Brightness gradient texture gradient", false);
+        }
+        else {
+        	bgtgButton = new JRadioButton("Brightness gradient texture gradient", true);	
+        }
+        bgtgButton.setFont(serif12);
+        bgtgButton.setForeground(Color.black);
+        gradientGroup.add(bgtgButton);
+        gbc.gridy++;
+        gbc.gridx = 0;
+        paramPanel.add(bgtgButton, gbc);
+        
+        if (image.isColorImage()) {
+            cgtgButton = new JRadioButton("Color gradient texture gradient", true);
+        }
+        else {
+        	cgtgButton = new JRadioButton("Color gradient texture gradient", false);
+        	cgtgButton.setEnabled(false);
+        }
+        cgtgButton.setFont(serif12);
+        cgtgButton.setForeground(Color.black);
+        gradientGroup.add(cgtgButton);
+        gbc.gridy++;
+        gbc.gridx = 0;
+        paramPanel.add(cgtgButton, gbc);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -322,6 +359,13 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
             textOrientations.selectAll();
 
             return false;
+        }
+        
+        if (bgtgButton.isSelected()) {
+        	gradientType = BGTG;
+        }
+        else {
+        	gradientType = CGTG;
         }
        
 
@@ -379,6 +423,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         try {
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterInt("num_orientations", 8));
+            table.put(new ParameterInt("grad_type", BGTG));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
