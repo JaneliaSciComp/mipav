@@ -100,6 +100,10 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	double theta[][];
     	 xDim = srcImage.getExtents()[0];
          yDim = srcImage.getExtents()[1];
+         int sliceSize = xDim * yDim;
+         double pbBuffer[];
+         int x;
+         int y;
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -114,6 +118,20 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         	pb = new double[yDim][xDim];
         	theta = new double[yDim][xDim];
         	pbBGTG(pb, theta);
+        	pbBuffer = new double[sliceSize];
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			pbBuffer[x + y * xDim] = pb[y][x];
+        		}
+        	}
+        	try {
+        		destImage.importData(0, pbBuffer, true);
+        	}
+        	catch(IOException e) {
+        		MipavUtil.displayError("IOException " + e + " on destImage.importData(0, pbBuffer, true");
+        		setCompleted(false);
+        		return;
+        	}
         }
         
         setCompleted(true);
