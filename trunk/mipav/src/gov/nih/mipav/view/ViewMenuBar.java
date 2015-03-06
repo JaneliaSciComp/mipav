@@ -1448,11 +1448,13 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Boundary attenuation", false);
             menuBuilder.setMenuItemEnabled("Density based clustering", false);
             menuBuilder.setMenuItemEnabled("Diffeomorphic demons", false);
-            menuBuilder.setMenuItemEnabled("Edge detection", false);
             menuBuilder.setMenuItemEnabled("Brain tools", false);
             menuBuilder.setMenuItemEnabled("FFT", false);
             menuBuilder.setMenuItemEnabled("SWI", false);
             menuBuilder.setMenuItemEnabled("Canny", false);
+            menuBuilder.setMenuItemEnabled("Entropic", false);
+            menuBuilder.setMenuItemEnabled("Phase congruency", false);
+            menuBuilder.setMenuItemEnabled("Zero X laplacian", false);
             menuBuilder.setMenuItemEnabled("Harris corner detector", false);
             menuBuilder.setMenuItemEnabled("Harris Laplace", false);
             menuBuilder.setMenuItemEnabled("Filters (homomorphic)", false);
