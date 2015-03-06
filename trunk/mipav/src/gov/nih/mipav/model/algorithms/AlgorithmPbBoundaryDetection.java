@@ -11,6 +11,8 @@ import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
+import java.net.URISyntaxException;
+import java.net.URL;
 
 import Jama.Matrix;
 
@@ -28,6 +30,8 @@ import Jama.Matrix;
 
 public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 	private static final int BGTG = 1;
+	
+	private static final int CGTG = 2;
 	
 	private int gradientType = BGTG;
 	
@@ -114,29 +118,181 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         
         fireProgressStateChanged(srcImage.getImageName(), "Running Pb Boundary Detection ...");
         
-        if (gradientType == BGTG) {
-        	pb = new double[yDim][xDim];
-        	theta = new double[yDim][xDim];
-        	pbBGTG(pb, theta);
-        	pbBuffer = new double[sliceSize];
-        	for (y = 0; y < yDim; y++) {
-        		for (x = 0; x < xDim; x++) {
-        			pbBuffer[x + y * xDim] = pb[y][x];
-        		}
-        	}
-        	try {
-        		destImage.importData(0, pbBuffer, true);
-        	}
-        	catch(IOException e) {
-        		MipavUtil.displayError("IOException " + e + " on destImage.importData(0, pbBuffer, true");
-        		setCompleted(false);
-        		return;
-        	}
-        }
+        
+    	pb = new double[yDim][xDim];
+    	theta = new double[yDim][xDim];
+    	if (gradientType == BGTG) {
+    	    pbBGTG(pb, theta);
+    	}
+    	else if (gradientType == CGTG) {
+    		pbCGTG(pb, theta);
+    	}
+    	pbBuffer = new double[sliceSize];
+    	for (y = 0; y < yDim; y++) {
+    		for (x = 0; x < xDim; x++) {
+    			pbBuffer[x + y * xDim] = pb[y][x];
+    		}
+    	}
+    	try {
+    		destImage.importData(0, pbBuffer, true);
+    	}
+    	catch(IOException e) {
+    		MipavUtil.displayError("IOException " + e + " on destImage.importData(0, pbBuffer, true");
+    		setCompleted(false);
+    		return;
+    	}
         
         setCompleted(true);
         return;
     }
+    
+    private void pbCGTG(double pb[][], double theta[][]) {
+    	// Compute probability of boundary using CG and TG
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// April 2003
+
+      	double beta[] = new double[5];
+      	double fstd[] = new double[5];
+      	double cg[][][][];
+      	double tg[][][];
+      	double gtheta[];
+      	double pball[][][];
+      	int i;
+      	int sliceSize = xDim * yDim;
+      	double l[];
+      	double a[];
+      	double b[];
+      	double t[];
+      	int x;
+      	int y;
+      	double xbeta;
+      	double pbi[];
+      	int maxo[][];
+      	double maxVal;
+      	double r;
+      	byte mask[][];
+      	double z[][];
+      	double a2[][];
+      	double pbi2[][];
+        
+        // beta from logistic fits (trainBGTG.m)
+        if ((lowRadius == 0.01) && (highRadius == 0.02)) {
+        	// 64 textons
+    		beta[0] = -4.5015774;
+    		beta[1] = 0.66845040;
+    		beta[2] = 0.13588346;
+    		beta[3] = 0.19537985;
+    		beta[4] = 0.53922927;
+    		fstd[0] = 1.0;
+    		fstd[1] = 0.39505238;
+    		fstd[2] = 0.14210176;
+    		fstd[3] = 0.19449891;
+    		fstd[4] = 0.19178634;
+    		for (i = 0; i < 5; i++) {
+    			beta[i] = beta[i]/fstd[i];
+    		}
+        } // if ((lowRadius == 0.01) && (highRadius == 0.02))
+        else {
+        	MipavUtil.displayError("No parameters for lowRadius = " + lowRadius + " highRadius = " + highRadius);
+        	setCompleted(false);
+        	return;
+        }
+        
+        // Get gradients
+        cg = new double[yDim][xDim][3][numOrientations];
+        tg = new double[yDim][xDim][numOrientations];
+        gtheta = new double[numOrientations];
+        detCGTG(cg, tg, gtheta);
+        
+        // Compute oriented pb
+        pball = new double[yDim][xDim][numOrientations];
+        l = new double[sliceSize];
+        a = new double[sliceSize];
+        b = new double[sliceSize];
+        t = new double[sliceSize];
+        pbi = new double[sliceSize];
+        for (i = 0; i < numOrientations; i++) {
+            for (x = 0; x < xDim; x++) {
+            	for (y = 0; y < yDim; y++) {
+            		l[y + x * yDim] = cg[y][x][0][i];
+            		a[y + x * yDim] = cg[y][x][1][i];
+            	    b[y + x * yDim] = cg[y][x][2][i];
+            	    t[y + x * yDim] = tg[y][x][i];
+            	}
+            }
+            for (y = 0; y < sliceSize; y++) {
+            	xbeta = beta[0] + l[y]*beta[1] + a[y]*beta[2] + b[y]*beta[3] + t[y]*beta[4];
+            	pbi[y] = 1.0/(1.0 + Math.exp(-xbeta));
+            }
+            for (x = 0; x < xDim; x++) {
+            	for (y = 0; y < yDim; y++) {
+            	    pball[y][x][i] = pbi[y + x*yDim];	
+            	}
+            }
+        } // for (i = 0; i < numOrientations; i++)
+        
+        // nonmax suppression and max over orientations
+        maxo = new int[yDim][xDim];
+        for (y = 0; y < yDim; y++) {
+        	for (x = 0; x < xDim; x++) {
+        		maxVal = -Double.MAX_VALUE;
+        		for (i = 0; i < numOrientations; i++)  {
+        			if (pball[y][x][i] > maxVal) {
+        				maxVal = pball[y][x][i];
+        				maxo[y][x] = i;
+        			}
+        		}
+        	}
+        }
+        r = 2.5;
+        mask = new byte[yDim][xDim];
+        z = new double[yDim][xDim];
+        a2 = new double[yDim][xDim];
+        pbi2 = new double[yDim][xDim];
+        for (i = 0; i < numOrientations; i++) {
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		if (maxo[y][x] == i) {
+            			mask[y][x] = 1;
+            		}
+            		else {
+            			mask[y][x] = 0;
+            		}
+            		z[y][x] = pball[y][x][i];
+            	}
+            }
+            fitparab(a2, null, null, z, r, r, gtheta[i]);
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		a2[y][x] = Math.max(0.0, a2[y][x]);
+            	}
+            }
+            nonmax(pbi2, a2, gtheta[i]);
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		pb[y][x] = Math.max(pb[y][x], pbi2[y][x] * mask[y][x]);
+            		theta[y][x] = theta[y][x] * (1 - mask[y][x]) + gtheta[i]*mask[y][x];
+            	}
+            }
+        } // for (i = 0; i < numOrientations; i++)
+        
+        for (y = 0; y < yDim; y++) {
+        	for (x = 0; x < xDim; x++) {
+        		pb[y][x] = Math.max(0.0, Math.min(1.0, pb[y][x]));
+        	}
+        }
+        
+        // Mask out 1-pixel border where nonmax suppression fails
+        for (x = 0; x < xDim; x++) {
+        	pb[0][x] = 0.0;
+        	pb[yDim-1][x] = 0.0;
+        }
+        for (y = 0; y < yDim; y++) {
+        	pb[y][0] = 0.0;
+        	pb[y][xDim-1] = 0.0;
+        }
+        return;
+      }
     
     
       private void pbBGTG(double pb[][], double theta[][]) {
@@ -709,6 +865,153 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
           }
       }
       
+      private void detCGTG(double cg[][][][], double tg[][][], double theta[]) {
+    	// Compute smoothed but not thinned CG and TG fields
+    	double diag;
+    	ModelImage inputImage;
+    	AlgorithmChangeType changeTypeAlgo;
+    	FileInfoBase[] fileInfo;
+    	final boolean thresholdAverage = false;
+		final float threshold = 0.0f;
+		final boolean intensityAverage = false;
+		final boolean equalRange = true;
+		final float minR = 0.0f;
+		final float minG = 0.0f;
+		final float minB = 0.0f;
+		float redValue;
+		float greenValue;
+		float blueValue;
+		float maxR;
+		float maxG;
+		float maxB;
+		AlgorithmRGBtoGray gAlgo;
+		ModelImage grayImage;
+		double fb[][][][];
+      	double tex[][];
+      	double tsim[][];
+      	int sliceSize;
+      	double buffer[];
+      	double im[][];
+      	int x;
+      	int y;
+      	double fim[][][][];
+      	int tmap[][];
+      	int k;
+      	double radiusArray[]; 
+      	double sigmaSmoothArray[];
+    	
+    	diag = Math.sqrt(xDim*xDim + yDim*yDim);
+    	inputImage = new ModelImage(ModelStorageBase.ARGB_FLOAT,
+				srcImage.getExtents(), "changeTypeImage");
+		inputImage.getFileInfo(0).setEndianess(FileBase.LITTLE_ENDIAN);
+		changeTypeAlgo = new AlgorithmChangeType(inputImage,
+				srcImage, srcImage.getMin(),
+				srcImage.getMax(), 0.0, 1.0, image25D);
+		changeTypeAlgo.run();
+		changeTypeAlgo.finalize();
+		changeTypeAlgo = null;
+		fileInfo = inputImage.getFileInfo();
+        fileInfo[0].setModality(srcImage.getFileInfo()[0].getModality());
+        fileInfo[0].setFileDirectory(srcImage.getFileInfo()[0].getFileDirectory());
+        fileInfo[0].setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
+        fileInfo[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
+        fileInfo[0].setExtents(inputImage.getExtents());
+        fileInfo[0].setMax(inputImage.getMax());
+        fileInfo[0].setMin(inputImage.getMin());
+        fileInfo[0].setImageOrientation(srcImage.getImageOrientation());
+        fileInfo[0].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation());
+        fileInfo[0].setOrigin(srcImage.getFileInfo()[0].getOrigin());
+        
+        // Compute color gradient
+        
+        radiusArray = new double[]{diag*lowRadius,diag*highRadius,diag*highRadius};
+        sigmaSmoothArray = new double[]{diag*lowRadius,diag*highRadius,diag*highRadius};;
+        cgmo(cg, theta, inputImage, radiusArray, numOrientations, "savgol", sigmaSmoothArray);
+        
+		if (srcImage.getMinR() == srcImage.getMaxR()) {
+			redValue = 0.0f;
+			greenValue = 0.5f;
+			blueValue = 0.5f;
+		} else if (srcImage.getMinG() == srcImage.getMaxG()) {
+			redValue = 0.5f;
+			greenValue = 0.0f;
+			blueValue = 0.5f;
+		} else if (srcImage.getMinB() == srcImage.getMaxB()) {
+			redValue = 0.5f;
+			greenValue = 0.5f;
+			blueValue = 0.0f;
+		} else {
+			redValue = (float) (1.0 / 3.0);
+			greenValue = redValue;
+			blueValue = redValue;
+
+		}
+		maxR = (float) inputImage.getMaxR();
+		maxG = (float) inputImage.getMaxG();
+		maxB = (float) inputImage.getMaxB();
+		grayImage = new ModelImage(ModelStorageBase.DOUBLE,
+				srcImage.getExtents(), "grayImage");
+		gAlgo = new AlgorithmRGBtoGray(grayImage, inputImage,
+				redValue, greenValue, blueValue, thresholdAverage,
+				threshold, intensityAverage, equalRange, minR, maxR,
+				minG, maxG, minB, maxB);
+		gAlgo.run();
+		gAlgo.finalize();
+		inputImage.disposeLocal();
+		inputImage = null;
+		
+		// Compute texture gradient
+        // Must read in 286,160 byte MATLAB file unitex_6_1_2_1.4_2_64.mat
+        // no = 6 the filter bank that we use for texture
+        // processing. It contains six pairs of elongated, oriented
+        // filters, as well as a center-surround filter.
+        // ss = 1
+        // ns = 2
+        // sc = sqrt(2)
+        // el = 2
+        k = 64; // universal texture primitives called textons
+        // To each pixel, we associate the vector of 13 filter responses centered at the pixel.
+        fb = new double[12][2][][];
+        for (x = 0; x < 1; x++) {
+        	for (y = 0; y < 12; y++) {
+        		fb[y][x] = new double[13][13];
+        	}
+        }
+        for (x = 1; x < 2; x++) {
+        	for (y = 0; y < 12; y++) {
+        		fb[y][x] = new double[19][19];
+        	}
+        }
+        tex = new double[24][64];
+        tsim = new double[64][64];
+        readFile(fb, tex, tsim);
+        
+        sliceSize = xDim * yDim;
+        buffer = new double[sliceSize];
+        try {
+            grayImage.exportData(0, sliceSize, buffer);
+        }
+        catch(IOException e) {
+        	e.printStackTrace();
+        }
+        grayImage.disposeLocal();
+        grayImage = null;
+        
+        im = new double[yDim][xDim];
+        for (y = 0; y < yDim; y++) {
+        	for (x = 0; x < xDim; x++) {
+        		im[y][x] = buffer[x + y * xDim];
+        	}
+        }
+        
+        fim = new double[12][2][yDim][xDim];
+        fbRun(fim, fb, im);                
+        tmap = new int[yDim][xDim];
+        assignTextons(tmap, fim, tex);
+        tgmo(tg, theta, tmap, k, diag*highRadius, numOrientations, null, "savgol", diag*highRadius);
+        return;
+      }
+      
       private void detBGTG(double bg[][][], double tg[][][], double theta[]) {
         // Compute smoothed but not thinned BG and TG fields
     	double diag;
@@ -838,11 +1141,13 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         sliceSize = xDim * yDim;
         buffer = new double[sliceSize];
         try {
-        inputImage.exportData(0, sliceSize, buffer);
+           inputImage.exportData(0, sliceSize, buffer);
         }
         catch(IOException e) {
         	e.printStackTrace();
         }
+        inputImage.disposeLocal();
+        inputImage = null;
         
         im = new double[yDim][xDim];
         for (y = 0; y < yDim; y++) {
@@ -1123,9 +1428,26 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         int yb;
         
         try {
-	        fileDir = "C:/segbench/Textons/";
-	        fileName = "unitex_6_1_2_1.4_2_64.mat";
-	        file = new File(fileDir + fileName);
+	        fileDir = "gov/nih/mipav/model/algorithms/";
+	        fileName = "PbBoundaryDetection_unitex_6_1_2_1.4_2_64.mat";
+	        //file = new File(fileDir + fileName);
+	        final URL fileURL = Thread.currentThread().getContextClassLoader().getResource(fileDir + fileName);
+	        
+	        if (fileURL == null) {
+	            Preferences.debug("Unable to open " + "PbBoundaryDetection_unitex_6_1_2_1.4_2_64.mat"
+	                    + ".  Make sure it is in the same directory as MipavMain.class\n", Preferences.DEBUG_MINOR);
+
+	        }
+	        file = null;
+	        
+	        if (fileURL != null) {
+                try {
+                                file = new File(fileURL.toURI());
+                } catch (URISyntaxException e) {
+                                e.printStackTrace();
+                }
+	        }
+
 	        raFile = new RandomAccessFile(file, "r");
 	        fileLength = raFile.length();
 	        Preferences.debug("fileLength = " + fileLength + "\n", Preferences.DEBUG_FILEIO);
@@ -2689,9 +3011,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         } // while (!nullFound)
         return cString;
     }
-      
-    private void cgmo(double cg[][][], double theta[], ModelImage image, double radius, int numOrientations,
-    		String smooth, double sigmaSmooth) {
+    
+    private void cgmo(double cg[][][][], double theta[], ModelImage image, double radius[], int numOrientations,
+    		String smooth, double sigmaSmooth[]) {
         int nbins = 32;
         double sigmaSim = 0.1;
         double gamma = 2.5;
@@ -2699,10 +3021,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     }
     
     /**
-     * Do a separate cgmoColor
+     * cgmo for color
      * Compute the color gradient at a single scale and multiple orientations
-     * @param cg output [yDim][xDim][1][numOrientations] array for black and white 
-     *           output [yDim][xDim][3][numOrientations] array for color
+     * @param cg output output [yDim][xDim][3][numOrientations] array for color
      * @param output [numOrientations] theta
      * @param image  Grayscale or RGB image, values in [0, 1].
      * @param radius Radius of disc for cg array
@@ -2713,13 +3034,13 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
      * @param smooth Smoothing method, one of {"gaussian", "savgol", "none"}, default none
      * @param sigmaSmooth Sigma for smoothing, default to radius
      */
-    private void cgmo(double cg[][][], double theta[],
-    		ModelImage image, double radius, int numOrientations, int nbins, double sigmaSim, double gamma, 
-    		String smooth, double sigmaSmooth) {
+    private void cgmo(double cg[][][][], double theta[],
+    		ModelImage image, double radius[], int numOrientations, int nbins, double sigmaSim, double gamma, 
+    		String smooth, double sigmaSmooth[]) {
     	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
     	// April 2003
-        //double abmin;
-        //double abmax;
+        double abmin;
+        double abmax;
         int cmap[][];
         int y;
         int x;
@@ -2732,11 +3053,260 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         double csim[][];
         double diff;
         double denom;
+        double red[];
+        double green[];
+        double blue[];
+        double lab[][][];
+        double cgcomp[][][];
+        int j;
         
         // Min and max values used for a,b channels of LAB
         // Used to scale values into the unit interval
-        //abmin = -73;
-        //abmax = 95;
+        abmin = -73;
+        abmax = 95;
+        
+        // Make sure bin is large enough with respect to sigmaSim
+        if (nbins < 1.0/sigmaSim) {
+        	MipavUtil.displayWarning("nbins < 1/sigmaSim is suspect");
+        }
+        
+        if (image.getMin() < 0.0 || image.getMax() > 1.0) {
+        	MipavUtil.displayError("Pixel values out of range 0 to 1");
+        	return;
+        }
+        
+        // Convert gamma-corrected image to LAB and scale values into [0,1]
+        buffer = new double[4*sliceSize];
+        red = new double[sliceSize];
+        green = new double[sliceSize];
+        blue = new double[sliceSize];
+        lab = new double[yDim][xDim][3];
+        try {
+        	image.exportData(0, 4*sliceSize, buffer);
+        }
+        catch(IOException e) {
+        	e.printStackTrace();
+        }
+        for (i = 0; i < 4*sliceSize; i++) {
+        	buffer[i] = Math.pow(buffer[i],gamma);
+        }
+        
+        for (i = 0; i < sliceSize; i++) {
+        	red[i] = buffer[4*i+1];
+        	green[i] = buffer[4*i+2];
+        	blue[i] = buffer[4*i+3];
+        }
+        
+        RGB2Lab(lab, red, green, blue);
+        for (y = 0; y < yDim; y++) {
+        	for (x = 0; x < xDim; x++) {
+        		lab[y][x][0] = lab[y][x][0]/100.0;
+        		lab[y][x][1] = (lab[y][x][1] - abmin)/(abmax - abmin);
+        		lab[y][x][2] = (lab[y][x][2] - abmin)/(abmax - abmin);
+        		lab[y][x][1] = Math.max(0.0,Math.min(1.0, lab[y][x][1]));
+        		lab[y][x][2] = Math.max(0.0,Math.min(1.0, lab[y][x][2]));
+        	}
+        }
+        
+        // Compute cg from LAB values
+        cmap = new int[yDim][xDim];
+        
+        // Compute color similarity matrix assuming colors are in [0, 1]
+        bc = new double[nbins];
+        for (i = 0; i < nbins; i++) {
+        	// Calculate bin centers
+        	bc[i] = (i + 0.5)/nbins;
+        }
+        xArr = new double[nbins][nbins];
+        yArr = new double[nbins][nbins];
+        for (y = 0; y <  nbins; y++) {
+        	for (x = 0; x < nbins; x++) {
+        		xArr[y][x] = bc[x];
+        		yArr[y][x] = bc[y];
+        	}
+        }
+        csim = new double[nbins][nbins];
+        denom = 2.0 * sigmaSim * sigmaSim;
+        cgcomp = new double[yDim][xDim][numOrientations];
+        for (i = 0; i < 3; i++) {
+        	for (y = 0; y < yDim; y++) {
+	        	for (x = 0; x < xDim; x++) {
+	        		cmap[y][x] = Math.max(1, (int)Math.ceil(lab[y][x][i]* nbins));
+	        	}
+        	}
+	        for (y = 0; y < nbins; y++) {
+	        	for (x = 0; x < nbins; x++) {
+	        		diff = xArr[y][x] - yArr[y][x];
+	        		csim[y][x] = 1.0 - Math.exp(-diff*diff/denom);
+	        	}
+	        }
+	        tgmo(cgcomp, theta, cmap, nbins, radius[i], numOrientations, csim, smooth, sigmaSmooth[i]);
+	        for (y = 0; y < yDim; y++) {
+	        	for (x = 0; x < xDim; x++) {
+	        		for (j = 0; j < numOrientations; j++) {
+	        		    cg[y][x][i][j] = cgcomp[y][x][j];	
+	        		}
+	        	}
+	        }
+        }
+    }
+    
+    private void RGB2Lab(double L[][][], double red[], double green[], double blue[]) {
+    	// RGB2Lab takes matrices corresponding to Red, Green, and Blue, and 
+    	// transforms them into CIELab.  This transform is based on ITU-R 
+    	// Recommendation  BT.709 using the D65 white point reference.
+    	// The error in transforming RGB -> Lab -> RGB is approximately
+    	// 10^-5.  RGB values can be either between 0 and 1 or between 0 and 255.  
+    	// By Mark Ruzon from C code by Yossi Rubner, 23 September 1997.
+    	// Updated for MATLAB 5 28 January 1998.
+    	
+    	// L has [yDim][xDim][3]
+        
+    	// Threshold
+    	double T = 0.008856;
+    	int sliceSize = red.length;
+    	double MAT[][] = new double[3][3];
+    	MAT[0][0] = 0.412453;
+    	MAT[0][1] = 0.357580;
+    	MAT[0][2] = 0.180423;
+    	MAT[1][0] = 0.212671;
+    	MAT[1][1] = 0.715160;
+    	MAT[1][2] = 0.072169;
+    	MAT[2][0] = 0.019334;
+    	MAT[2][1] = 0.119193;
+    	MAT[2][2] = 0.950227;
+    	double XYZ[][] = new double[3][sliceSize];
+    	int i;
+    	int j;
+    	int y;
+    	int x;
+    	
+    	// RGB to XYZ
+    	for (i = 0; i < 3; i++) {
+	    	for (j = 0; j < sliceSize; j++) {
+	    	    XYZ[i][j] = MAT[i][0]*red[j] + MAT[i][1]*green[j] + MAT[i][2]*blue[j];	
+	    	}
+    	}
+    	
+    	double X[] = new double[sliceSize];
+    	double Y[] = new double[sliceSize];
+    	double Z[] = new double[sliceSize];
+    	for (i = 0; i < sliceSize; i++) {
+    	    X[i] = XYZ[0][i]/0.950456;
+    	    Y[i] = XYZ[1][i];
+    	    Z[i] = XYZ[2][i]/1.088754;
+    	}
+    	
+    	byte XT[] = new byte[sliceSize];
+    	byte YT[] = new byte[sliceSize];
+    	byte ZT[] = new byte[sliceSize];
+    	for (i = 0; i < sliceSize; i++) {
+    		if (X[i] > T) {
+    			XT[i] = 1;
+    		}
+    		if (Y[i] > T) {
+    			YT[i] = 1;
+    		}
+    		if (Z[i] > T) {
+    			ZT[i] = 1;
+    		}
+    	}
+    	
+    	double fX[] = new double[sliceSize];
+    	for (i = 0; i < sliceSize; i++) {
+    		if (XT[i] == 1) {
+    			fX[i] = Math.pow(X[i],(1.0/3.0));
+    		}
+    		else {
+    			fX[i] = 7.787 * X[i] + 16.0/116.0;
+    		}
+    	}
+    	
+    	// Compute L
+    	double Y3[] = new double[sliceSize];
+    	for (i = 0; i < sliceSize; i++) {
+    		Y3[i] = Math.pow(Y[i],(1.0/3.0));
+    	}
+    	double fY[] = new double[sliceSize];
+    	for (i = 0; i < sliceSize; i++) {
+    		if (YT[i] == 1) {
+    			fY[i] = Y3[i];
+    		}
+    		else {
+    			fY[i] = 7.787 * Y[i] + 16.0/116.0;
+    		}
+    	}
+    	
+    	for (y = 0; y < yDim; y++) {
+    		for (x = 0; x < xDim; x++) {
+    			i = x + y * xDim;
+	    		if (YT[i]  == 1) {
+	    			L[y][x][0] = 116.0 * Y3[i] - 16.0;
+	    		}
+	    		else {
+	    			L[y][x][0] = 903.3 * Y[i];
+	    		}
+    		}
+    	}
+    	
+    	double fZ[] = new double[sliceSize];
+    	for (i = 0; i < sliceSize; i++) {
+    		if (ZT[i] == 1) {
+    			fZ[i] = Math.pow(Z[i],(1.0/3.0));
+    		}
+    		else {
+    			fZ[i] = 7.787 * Z[i] + 16.0/116.0;
+    		}
+    	}
+    	
+    	// Compute a and b
+    	for (y = 0; y < yDim; y++) {
+    		for (x = 0; x < xDim; x++) {
+    			i = x + y * xDim;
+    			L[y][x][1] = 500.0 * (fX[i] - fY[i]);
+    			L[y][x][2] = 200.0 * (fY[i] - fZ[i]);
+    		}
+    	}
+    }
+      
+    private void cgmo(double cg[][][], double theta[], ModelImage image, double radius, int numOrientations,
+    		String smooth, double sigmaSmooth) {
+        int nbins = 32;
+        double sigmaSim = 0.1;
+        cgmo(cg, theta, image, radius, numOrientations, nbins, sigmaSim, smooth, sigmaSmooth);
+    }
+    
+    /**
+     * cgmo for black and white
+     * Compute the color gradient at a single scale and multiple orientations
+     * @param cg output [yDim][xDim][numOrientations] array for black and white 
+     * @param output [numOrientations] theta
+     * @param image  Grayscale or RGB image, values in [0, 1].
+     * @param radius Radius of disc for cg array
+     * @param numOrientations Number of orientations for cg array
+     * @param nbins Number of bins; should be > 1/sigmaSim.
+     * @param sigmaSim For color similarity function
+     * @param gamma Gamma correction for LAB [2.5].
+     * @param smooth Smoothing method, one of {"gaussian", "savgol", "none"}, default none
+     * @param sigmaSmooth Sigma for smoothing, default to radius
+     */
+    private void cgmo(double cg[][][], double theta[],
+    		ModelImage image, double radius, int numOrientations, int nbins, double sigmaSim,
+    		String smooth, double sigmaSmooth) {
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// April 2003
+        int cmap[][];
+        int y;
+        int x;
+        double buffer[];
+        int sliceSize = xDim * yDim;
+        double bc[];
+        int i;
+        double xArr[][];
+        double yArr[][];
+        double csim[][];
+        double diff;
+        double denom;
         
         // Make sure bin is large enough with respect to sigmaSim
         if (nbins < 1.0/sigmaSim) {
