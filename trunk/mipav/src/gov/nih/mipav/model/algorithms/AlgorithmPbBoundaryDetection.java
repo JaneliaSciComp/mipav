@@ -3363,7 +3363,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
      * @param output tg  [yDim][xDim][numOrientations] array
      * @param output [numOrientations] theta Disc orientations (which are orthogonal to the texture gradient). 
      * @param tmap [yDim][xDim] Texton map, values in [1, ntex]
-     * @param ntext Number of textons
+     * @param ntex Number of textons
      * @param radius Radius of disc for texture gradient
      * @param numOrientations Number of orientations at which to compute the texture graident
      * @param tsim Texton similarity matrix.  If not provided, then use chi-squared.
@@ -3461,7 +3461,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	}
         
         radius = Math.max(1.0,  radius);
-        theta = theta % Math.PI;
+        theta = theta - Math.PI*Math.floor(theta/Math.PI);
         for (y = 0; y < yDim; y++) {
         	for (x = 0; x < xDim; x++) {
         		if ((tmap[y][x] < 1) || (tmap[y][x] > ntex)) {
