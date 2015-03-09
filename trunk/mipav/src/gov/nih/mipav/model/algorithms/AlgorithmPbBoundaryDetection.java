@@ -985,6 +985,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         tex = new double[24][64];
         tsim = new double[64][64];
         readFile(fb, tex, tsim);
+       
         
         sliceSize = xDim * yDim;
         buffer = new double[sliceSize];
@@ -1368,6 +1369,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         int arrayNameDataType;
         int arrayNameBytes;
         String arrayName;
+        @SuppressWarnings("unused")
+        String arrayName2;
         int maximumFieldNameLengthBytes;
         int maximumFieldNameLengthDataType;
         int maximumFieldNameLength;
@@ -2039,8 +2042,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
   	                    Preferences.debug("Numeric array name = " + numericArrayName + "\n", Preferences.DEBUG_FILEIO);
                       } // if (arrayClass == mxSTRUCT_CLASS)
                       if (arrayName.equals("fb")) {
-                    	  ym = imageExtents[0];
-                    	  xm = imageExtents[1];
+                    	  ym = imageExtents[1];
+                    	  xm = imageExtents[0];
                       }
                       else {
                     	  ym = 1;
@@ -2729,7 +2732,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                                   // Small data element format    
                               	arrayNameBytes = (arrayNameDataType & 0xffff0000) >>> 16;
                               	arrayNameDataType = arrayNameDataType & 0xffff;
-                              	arrayName = getString(arrayNameBytes);
+                              	arrayName2 = getString(arrayNameBytes);
                               	if (arrayNameBytes < 4) {
                               		for (i = 0; i < 4 - arrayNameBytes; i++) {
                               			// Skip over padding bytes
@@ -2740,7 +2743,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                               else {
                               	arrayNameBytes = getInt(endianess);
                               	Preferences.debug("fb array name bytes = " + arrayNameBytes + "\n", Preferences.DEBUG_FILEIO);
-                              	arrayName = getString(arrayNameBytes);
+                              	arrayName2 = getString(arrayNameBytes);
                               	// Skip over padding bytes
                               	if ((arrayNameBytes % 8) != 0) {
           	                		padBytes = 8 - (arrayNameBytes % 8);
@@ -2793,13 +2796,14 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
                                         b7L = buffer[index+6] & 0xffL;
                                         b8L = buffer[index+7] & 0xffL;
                                         if (endianess == FileBase.BIG_ENDIAN) {
-                                        	fb[yb][xb][y][x] = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
+                                        	tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
                                                      (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);	
                                         }
                                         else {
-                                        	fb[yb][xb][y][x] = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
+                                        	tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
                                                      (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
                                         }
+                                        fb[yb][xb][y][x] = Double.longBitsToDouble(tmpLong);
   	                    		}
   	                    	}
                     	  }
@@ -3789,7 +3793,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	// theta Orientation of fit (1.e. of minor axis).
     	
     	// Output 
-    	// c[0] COefficient of fit
+    	// c[0] Coefficient of fit
     	
     	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
     	// March 2003
@@ -3884,7 +3888,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 		    	}
     		}
     	}
-    	// 2. Apply the filter to get te fit coefficient at each pixel
+    	// 2. Apply the filter to get the fit coefficient at each pixel
     	filtk = new double[wd][wd];
     	for (y = 0; y < wd; y++) {
     		for (x = 0; x < wd; x++) {
@@ -4235,6 +4239,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         		 sy[y][x] = dom[y];
         	 }
          }
+         // Bin membership for 2D grid points
          mx = new int[samples][samples];
          my = new int[samples][samples];
          for (y = 0; y < samples; y++) {
@@ -4340,6 +4345,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         	     fprecursor[y][x] = fx[xi[y][x]] * fy[yi[y][x]]; 
         	 }
          }
+         // Accumulate the samples into each bin
          for (y = 0; y < samples; y++) {
         	 for (x = 0; x < samples; x++) {
         		 v = membership[y][x];
