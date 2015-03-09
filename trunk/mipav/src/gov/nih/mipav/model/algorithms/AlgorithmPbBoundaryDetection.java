@@ -3025,7 +3025,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
      * Compute the color gradient at a single scale and multiple orientations
      * @param cg output output [yDim][xDim][3][numOrientations] array for color
      * @param output [numOrientations] theta
-     * @param image  Grayscale or RGB image, values in [0, 1].
+     * @param image  RGB image, values in [0, 1].
      * @param radius Radius of disc for cg array
      * @param numOrientations Number of orientations for cg array
      * @param nbins Number of bins; should be > 1/sigmaSim.
@@ -3128,18 +3128,18 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         csim = new double[nbins][nbins];
         denom = 2.0 * sigmaSim * sigmaSim;
         cgcomp = new double[yDim][xDim][numOrientations];
+        for (y = 0; y < nbins; y++) {
+        	for (x = 0; x < nbins; x++) {
+        		diff = xArr[y][x] - yArr[y][x];
+        		csim[y][x] = 1.0 - Math.exp(-diff*diff/denom);
+        	}
+        }
         for (i = 0; i < 3; i++) {
         	for (y = 0; y < yDim; y++) {
 	        	for (x = 0; x < xDim; x++) {
 	        		cmap[y][x] = Math.max(1, (int)Math.ceil(lab[y][x][i]* nbins));
 	        	}
         	}
-	        for (y = 0; y < nbins; y++) {
-	        	for (x = 0; x < nbins; x++) {
-	        		diff = xArr[y][x] - yArr[y][x];
-	        		csim[y][x] = 1.0 - Math.exp(-diff*diff/denom);
-	        	}
-	        }
 	        tgmo(cgcomp, theta, cmap, nbins, radius[i], numOrientations, csim, smooth, sigmaSmooth[i]);
 	        for (y = 0; y < yDim; y++) {
 	        	for (x = 0; x < xDim; x++) {
@@ -3281,12 +3281,11 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
      * Compute the color gradient at a single scale and multiple orientations
      * @param cg output [yDim][xDim][numOrientations] array for black and white 
      * @param output [numOrientations] theta
-     * @param image  Grayscale or RGB image, values in [0, 1].
+     * @param image  Grayscale image, values in [0, 1].
      * @param radius Radius of disc for cg array
      * @param numOrientations Number of orientations for cg array
      * @param nbins Number of bins; should be > 1/sigmaSim.
      * @param sigmaSim For color similarity function
-     * @param gamma Gamma correction for LAB [2.5].
      * @param smooth Smoothing method, one of {"gaussian", "savgol", "none"}, default none
      * @param sigmaSmooth Sigma for smoothing, default to radius
      */
