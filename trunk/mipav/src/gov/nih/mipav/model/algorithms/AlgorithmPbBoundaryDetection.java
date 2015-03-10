@@ -1389,7 +1389,6 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         int arrayNameDataType;
         int arrayNameBytes;
         String arrayName;
-        @SuppressWarnings("unused")
         String arrayName2;
         int maximumFieldNameLengthBytes;
         int maximumFieldNameLengthDataType;
