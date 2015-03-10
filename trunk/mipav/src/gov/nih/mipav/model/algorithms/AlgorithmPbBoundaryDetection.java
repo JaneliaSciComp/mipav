@@ -2772,7 +2772,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
           	                		}
                               	}
                               }
-                              Preferences.debug("fb array name = " + arrayName + "\n", Preferences.DEBUG_FILEIO);
+                              if (arrayNameBytes > 0) {
+                                  Preferences.debug("fb array name = " + arrayName2 + "\n", Preferences.DEBUG_FILEIO);
+                              }
                               realDataType = getInt(endianess);
                               if ((realDataType & 0xffff0000) != 0) {
                                   // Small data element format    
