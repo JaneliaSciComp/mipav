@@ -1006,7 +1006,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         }
         
         fim = new double[12][2][yDim][xDim];
-        fbRun(fim, fb, im);                
+        fbRun(fim, fb, im);
         tmap = new int[yDim][xDim];
         assignTextons(tmap, fim, tex);
         tgmo(tg, theta, tmap, k, diag*highRadius, numOrientations, null, "savgol", diag*highRadius);
@@ -1225,8 +1225,11 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	// Copyright (c) Christopher M. Bishop, Ian T. Nabney (1996, 1997)
         Matrix matx;
         Matrix maty;
-        double x2[];
-        double y2[];
+        double zp[][];
+        double x2p[];
+        double x2[][];
+        double y2p[];
+        double y2[][];
         int i;
         int j;
         int n;
@@ -1244,22 +1247,39 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	
         matx = new Matrix(x);
         maty = new Matrix(y);
-        z = ((matx.transpose()).times(maty)).getArray();
-        x2 = new double[n];
+        zp = ((matx.transpose()).times(maty)).getArray();
+        for (i = 0; i < n; i++) {
+        	for (j = 0; j < m; j++) {
+        		z[i][j] = zp[i][j];
+        	}
+        }
+        x2p = new double[n];
         for (i = 0; i < n; i++) {
         	for (j = 0; j < d; j++) {
-        		x2[i] += x[j][i]*x[j][i];
+        		x2p[i] += x[j][i]*x[j][i];
         	}
         }
-        y2 = new double[m];
+        x2 = new double[n][m];
+        for (i = 0; i < n; i++) {
+        	for (j = 0; j < m; j++) {
+        		x2[i][j] = x2p[i];
+        	}
+        }
+        y2p = new double[m];
         for (i = 0; i < m; i++) {
         	for (j = 0; j < d; j++) {
-        		y2[i] += y[j][i]*y[j][i];
+        		y2p[i] += y[j][i]*y[j][i];
         	}
         }
-        for (i = 0; i < m; i++) {
-        	for (j = 0; j < n; j++) {
-        		z[j][i] = x2[j] + y2[i] - 2.0 * z[j][i];
+        y2 = new double[n][m];
+        for (i = 0; i < n; i++) {
+        	for (j = 0; j < m; j++) {
+        		y2[i][j] = y2p[j];
+        	}
+        }
+        for (i = 0; i < n; i++) {
+        	for (j = 0; j < m; j++) {
+        		z[i][j] = x2[i][j] + y2[i][j] - 2.0 * z[i][j];
         	}
         }
         return;
