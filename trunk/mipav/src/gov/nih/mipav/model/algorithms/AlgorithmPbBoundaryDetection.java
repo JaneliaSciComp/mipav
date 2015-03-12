@@ -261,6 +261,11 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
             		z[y][x] = pball[y][x][i];
             	}
             }
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		a2[y][x] = 0.0;
+            	}
+            }
             fitparab(a2, null, null, z, r, r, gtheta[i]);
             for (y = 0; y < yDim; y++) {
             	for (x = 0; x < xDim; x++) {
@@ -415,6 +420,11 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
             			mask[y][x] = 0;
             		}
             		z[y][x] = pball[y][x][i];
+            	}
+            }
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		a[y][x] = 0.0;
             	}
             }
             fitparab(a, null, null, z, r, r, gtheta[i]);
