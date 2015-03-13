@@ -47,6 +47,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 	
 	private int numOrientations = 8;
 	
+	// smooth is "savgol", "gaussian", or "none".
+	private String smooth = "savgol";
+	
 	private int xDim;
 	
 	private int yDim;
@@ -88,15 +91,17 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
        @param  lowRadius
        @param  highRadius
        @param  numOrientations
+       @param  smooth
      */
     public AlgorithmPbBoundaryDetection(ModelImage destImg, ModelImage srcImg, int gradientType, int presentation, double lowRadius,
-                                       double highRadius, int numOrientations) {
+                                       double highRadius, int numOrientations, String smooth) {
         super(destImg, srcImg);
         this.gradientType = gradientType;
         this.presentation = presentation;
         this.lowRadius = lowRadius;
         this.highRadius = highRadius;
-        this.numOrientations = numOrientations;   
+        this.numOrientations = numOrientations; 
+        this.smooth = smooth;
     }
     
     public void runAlgorithm() {
@@ -718,7 +723,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         
         radiusArray = new double[]{diag*lowRadius,diag*highRadius,diag*highRadius};
         sigmaSmoothArray = new double[]{diag*lowRadius,diag*highRadius,diag*highRadius};;
-        cgmo(cg, theta, inputImage, radiusArray, numOrientations, "savgol", sigmaSmoothArray);
+        cgmo(cg, theta, inputImage, radiusArray, numOrientations, smooth, sigmaSmoothArray);
         
 		if (srcImage.getMinR() == srcImage.getMaxR()) {
 			redValue = 0.0f;
@@ -801,7 +806,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         fbRun(fim, fb, im);
         tmap = new int[yDim][xDim];
         assignTextons(tmap, fim, tex);
-        tgmo(tg, theta, tmap, k, diag*highRadius, numOrientations, null, "savgol", diag*highRadius);
+        tgmo(tg, theta, tmap, k, diag*highRadius, numOrientations, null, smooth, diag*highRadius);
         return;
       }
       
@@ -903,7 +908,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         fileInfo[0].setOrigin(srcImage.getFileInfo()[0].getOrigin());
         // Compute brightness gradient
         
-        cgmo(bg, theta, inputImage, diag*lowRadius, numOrientations, "savgol", diag*lowRadius);
+        cgmo(bg, theta, inputImage, diag*lowRadius, numOrientations, smooth, diag*lowRadius);
         
         // Compute texture gradient
         // Must read in 286,160 byte MATLAB file unitex_6_1_2_1.4_2_64.mat
@@ -953,7 +958,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         fbRun(fim, fb, im);                
         tmap = new int[yDim][xDim];
         assignTextons(tmap, fim, tex);
-        tgmo(tg, theta, tmap, k, diag*highRadius, numOrientations, null, "savgol", diag*highRadius);
+        tgmo(tg, theta, tmap, k, diag*highRadius, numOrientations, null, smooth, diag*highRadius);
         return;
       }
         
