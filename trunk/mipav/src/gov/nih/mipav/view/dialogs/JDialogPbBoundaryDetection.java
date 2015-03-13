@@ -42,7 +42,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
 	
 	private static final int GRAY_PRESENTATION = 1;
 	
-	private static final int COLOR_PRESENTATION = 2;
+	//private static final int COLOR_PRESENTATION = 2;
 	
 	private int presentation = GRAY_PRESENTATION;
 	
@@ -62,6 +62,16 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
     private JRadioButton bgtgButton;
     
     private JRadioButton cgtgButton;
+    
+    private String smooth = "savgol";
+    
+    private ButtonGroup smoothGroup;
+    
+    private JRadioButton savgolButton;
+    
+    private JRadioButton gaussianButton;
+    
+    private JRadioButton noneButton;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -185,7 +195,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
      * 
      * @param sigma
      */
-    public void setNumOrientations(int numOrientatons) {
+    public void setNumOrientations(int numOrientations) {
         this.numOrientations = numOrientations;
     }
     
@@ -205,7 +215,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
 
             // Make algorithm
             pbAlgo = new AlgorithmPbBoundaryDetection(resultImage, image, gradientType, presentation, lowRadius, highRadius,
-            		numOrientations);
+            		numOrientations, smooth);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -256,6 +266,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         image = scriptParameters.retrieveInputImage();
         numOrientations = scriptParameters.getParams().getInt("num_orientations");
         gradientType = scriptParameters.getParams().getInt("grad_type");
+        smooth = scriptParameters.getParams().getString("smooth_type");
     }
 
     /**
@@ -266,6 +277,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         scriptParameters.storeOutputImageParams(resultImage, true);
         scriptParameters.getParams().put(ParameterFactory.newParameter("num_orientations", numOrientations));
         scriptParameters.getParams().put(ParameterFactory.newParameter("grad_type", gradientType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("smooth_type", smooth));
     }
 
     /**
@@ -322,6 +334,32 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         gbc.gridy++;
         gbc.gridx = 0;
         paramPanel.add(cgtgButton, gbc);
+        
+        smoothGroup = new ButtonGroup();
+        savgolButton = new JRadioButton("Savitsky-Golay smoothing", true);
+        savgolButton.setFont(serif12);
+        savgolButton.setForeground(Color.black);
+        smoothGroup.add(savgolButton);
+        gbc.gridy++;
+        gbc.gridx = 0;
+        paramPanel.add(savgolButton, gbc);
+        
+        gaussianButton = new JRadioButton("Gaussian smoothing", false);
+        gaussianButton.setFont(serif12);
+        gaussianButton.setForeground(Color.black);
+        smoothGroup.add(gaussianButton);
+        gbc.gridy++;
+        gbc.gridx = 0;
+        paramPanel.add(gaussianButton, gbc);
+        
+        noneButton = new JRadioButton("No smoothing", false);
+        noneButton.setFont(serif12);
+        noneButton.setForeground(Color.black);
+        smoothGroup.add(noneButton);
+        gbc.gridy++;
+        gbc.gridx = 0;
+        paramPanel.add(noneButton, gbc);
+
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -366,6 +404,16 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         }
         else {
         	gradientType = CGTG;
+        }
+        
+        if (savgolButton.isSelected()) {
+        	smooth = "savgol";
+        }
+        else if (gaussianButton.isSelected()) {
+        	smooth = "gaussian";
+        }
+        else {
+        	smooth = "none";
         }
        
 
@@ -424,6 +472,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterInt("num_orientations", 8));
             table.put(new ParameterInt("grad_type", BGTG));
+            table.put(new ParameterString("smooth_type", "savgol"));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
