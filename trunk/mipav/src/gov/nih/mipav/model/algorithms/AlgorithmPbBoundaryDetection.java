@@ -45,7 +45,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 	
 	private double highRadius = 0.02;
 	
-	private int numOrientations = 8;
+	// Original code had numOrientations = 8, but this does not handle verticle edges properly.
+	// Use numOrientations = 9 as the default.
+	private int numOrientations = 9;
 	
 	// smooth is "savgol", "gaussian", or "none".
 	private String smooth = "savgol";
