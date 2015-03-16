@@ -45,7 +45,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 	
 	private double highRadius = 0.02;
 	
-	// Original code had numOrientations = 8, but this does not handle verticle edges properly.
+	// Original code had numOrientations = 8, but this does not handle vertical edges properly.
 	// Use numOrientations = 9 as the default.
 	private int numOrientations = 9;
 	
