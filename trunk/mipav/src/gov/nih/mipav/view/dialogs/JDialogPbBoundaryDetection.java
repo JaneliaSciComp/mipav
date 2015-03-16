@@ -470,7 +470,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         
         try {
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
-            table.put(new ParameterInt("num_orientations", 8));
+            table.put(new ParameterInt("num_orientations", 9));
             table.put(new ParameterInt("grad_type", BGTG));
             table.put(new ParameterString("smooth_type", "savgol"));
             } catch (final ParserException e) {
