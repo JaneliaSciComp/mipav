@@ -936,6 +936,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         }
         tex = new double[24][64];
         tsim = new double[64][64];
+        // Also has tim 64 X 1 cell and tperm 64 X 1 double
+        // Read in of fb and tex confirmed on MATLAB
         readFile(fb, tex, tsim);
         
         sliceSize = xDim * yDim;
