@@ -18,7 +18,6 @@ import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
-import de.jtem.numericalMethods.util.Arrays;
 import quickhull3d.Point3d;
 import quickhull3d.QuickHull3D;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -229,13 +228,21 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 			int[][] temp = new int[3*tipSize][];
 			vertexInd = new int[tipSize];
 			
-			int actualNum = calculateConvexHull(swcCoordinates, tips, temp, vertexInd);
-			faceVerticies = new int[actualNum][];
+			int[] actualNums = calculateConvexHull(swcCoordinates, tips, temp, vertexInd);
+			int actualNumVec = actualNums[0];
+			int actualNumFace = actualNums[1];
+			faceVerticies = new int[actualNumFace][];
 			//Resize arrays to proper lengths
-			for(int i=0;i<actualNum;i++){
+			for(int i=0;i<actualNumFace;i++){
 				faceVerticies[i] = temp[i];
 			}
-			Arrays.resize(vertexInd, actualNum);
+			
+			int[] tempVertex = new int[actualNumVec];
+			for(int i=0;i<actualNumVec;i++){
+				tempVertex[i] = vertexInd[i];
+			}
+			
+			vertexInd = tempVertex;
 			
 			if(branchDensity){
 				currentAxon = tips.get(0);
@@ -872,7 +879,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		return pts;
 	}
 
-	private int calculateConvexHull(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<Integer> tips, int[][]faceVerticies, int[] vertexInd){
+	private int[] calculateConvexHull(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<Integer> tips, int[][]faceVerticies, int[] vertexInd){
 		
 		ArrayList<Point3d> ptList = new ArrayList<Point3d>();
 		float[] originPt = swcCoordinates.get(0).get(0);
@@ -916,7 +923,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 			vertexInd[i] = tips.get(cnt-1);
 		}
 		
-		return verticies.length;
+		return new int[]{verticies.length, faceVerticiesA.length};
 	}
 
 	/**
