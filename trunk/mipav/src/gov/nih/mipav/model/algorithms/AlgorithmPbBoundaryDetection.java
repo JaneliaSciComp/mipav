@@ -115,6 +115,28 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
          double pbBuffer[];
          int x;
          int y;
+         boolean testPadReflect = false;
+         
+         if (testPadReflect) {
+        	 xDim = 10;
+        	 yDim = 10;
+        	 double im[][] = new double[yDim][xDim];
+        	 for (y = 0; y < im.length; y++) {
+        		 for (x = 0; x < im[0].length; x++) {
+        			 im[y][x] = x + y * im[0].length;
+        		 }
+        	 }
+        	 double impad[][] = new double[yDim+8][xDim+8];
+        	 padReflect(impad, im, 4);
+        	 for (y = 0; y < impad.length; y++) {
+        		 for (x = 0; x < impad[0].length; x++) {
+        			 Preferences.debug(impad[y][x] + " ", Preferences.DEBUG_FILEIO);
+        		 }
+        		 Preferences.debug("\n");
+        	 }
+        	 setCompleted(false);
+        	 return;
+         }
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -3938,6 +3960,10 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	for (y = 0; y < r; y++) {
     		for (x = 0; x < r; x++) {
     			impad[r - y - 1][r - x - 1] = im[y][x];
+    			
+    			
+    			
+ 
     		}
     	}
     	// Top-right
