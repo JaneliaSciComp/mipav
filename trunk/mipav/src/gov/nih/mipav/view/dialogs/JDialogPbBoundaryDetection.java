@@ -37,8 +37,12 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
     private static final int BGTG = 1;
     
     private static final int CGTG = 2;
+    
+    private static final int BG = 3;
 	
-	private int gradientType = BGTG;
+	private static final int CG = 4;
+	
+	private int gradientType = BG;
 	
 	private static final int GRAY_PRESENTATION = 1;
 	
@@ -59,7 +63,11 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
     
     private ButtonGroup gradientGroup;
     
+    private JRadioButton bgButton;
+    
     private JRadioButton bgtgButton;
+    
+    private JRadioButton cgButton;
     
     private JRadioButton cgtgButton;
     
@@ -309,11 +317,19 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         
         gradientGroup = new ButtonGroup();
         if (image.isColorImage()) {
-            bgtgButton = new JRadioButton("Brightness gradient texture gradient", false);
+            bgButton = new JRadioButton("Brightness gradient", false);
         }
         else {
-        	bgtgButton = new JRadioButton("Brightness gradient texture gradient", true);	
+        	bgButton = new JRadioButton("Brightness gradient", true);
         }
+        bgButton.setFont(serif12);
+        bgButton.setForeground(Color.black);
+        gradientGroup.add(bgButton);
+        gbc.gridy++;
+        gbc.gridx = 0;
+        paramPanel.add(bgButton, gbc);
+        
+        bgtgButton = new JRadioButton("Brightness gradient texture gradient", false);
         bgtgButton.setFont(serif12);
         bgtgButton.setForeground(Color.black);
         gradientGroup.add(bgtgButton);
@@ -322,10 +338,21 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         paramPanel.add(bgtgButton, gbc);
         
         if (image.isColorImage()) {
-            cgtgButton = new JRadioButton("Color gradient texture gradient", true);
+            cgButton = new JRadioButton("Color gradient", true);
         }
         else {
-        	cgtgButton = new JRadioButton("Color gradient texture gradient", false);
+        	cgButton = new JRadioButton("Color gradient", false);
+        	cgButton.setEnabled(false);
+        }
+        cgButton.setFont(serif12);
+        cgButton.setForeground(Color.black);
+        gradientGroup.add(cgButton);
+        gbc.gridy++;
+        gbc.gridx = 0;
+        paramPanel.add(cgButton, gbc);
+        
+        cgtgButton = new JRadioButton("Color gradient texture gradient", false);
+        if (!image.isColorImage()) {
         	cgtgButton.setEnabled(false);
         }
         cgtgButton.setFont(serif12);
@@ -399,8 +426,15 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
             return false;
         }
         
-        if (bgtgButton.isSelected()) {
+        if (bgButton.isSelected()) {
+        	gradientType = BG;
+        }
+        else if (bgtgButton.isSelected()) {
         	gradientType = BGTG;
+        }
+        else if (cgButton.isSelected()) {
+        	gradientType = CG;
+        	lowRadius = 0.02;
         }
         else {
         	gradientType = CGTG;
@@ -471,7 +505,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         try {
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterInt("num_orientations", 9));
-            table.put(new ParameterInt("grad_type", BGTG));
+            table.put(new ParameterInt("grad_type", BG));
             table.put(new ParameterString("smooth_type", "savgol"));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
