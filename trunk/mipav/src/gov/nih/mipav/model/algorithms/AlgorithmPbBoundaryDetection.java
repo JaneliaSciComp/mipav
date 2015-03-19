@@ -33,7 +33,11 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 	
 	private static final int CGTG = 2;
 	
-	private int gradientType = BGTG;
+	private static final int BG = 3;
+	
+	private static final int CG = 4;
+	
+	private int gradientType = BG;
 	
 	private static final int GRAY_PRESENTATION = 1;
 	
@@ -156,6 +160,12 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	else if (gradientType == CGTG) {
     		pbCGTG(pb, theta);
     	}
+    	else if (gradientType == BG) {
+    		pbBG(pb, theta);
+    	}
+    	else if (gradientType == CG) {
+    		pbCG(pb, theta);
+    	}
     	pbBuffer = new double[sliceSize];
     	for (y = 0; y < yDim; y++) {
     		for (x = 0; x < xDim; x++) {
@@ -174,6 +184,145 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         setCompleted(true);
         return;
     }
+    
+    private void pbCG(double pb[][], double theta[][]) {
+    	// Compute probability of boundary using CG
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// April 2003
+      	double beta[] = new double[3];
+      	double fstd[] = new double[3];
+      	double cg[][][][];
+      	double gtheta[];
+      	double pball[][][];
+      	int i;
+      	int sliceSize = xDim * yDim;
+      	double a[];
+      	double b[];
+      	int x;
+      	int y;
+      	double xbeta;
+      	double pbi[];
+      	int maxo[][];
+      	double maxVal;
+      	double r;
+      	byte mask[][];
+      	double z[][];
+      	double a2[][];
+      	double pbi2[][];
+        
+        // beta from logistic fits (trainCG.m)
+        if ((lowRadius == 0.02) && (highRadius == 0.02)) {
+    		beta[0] = -2.9216153;
+    		beta[1] = 0.21939403;
+    		beta[2] = 0.53764451;
+    		fstd[0] = 1.0;
+    		fstd[1] = 0.14210176;
+    		fstd[2] = 0.19449891;
+    		for (i = 0; i < 3; i++) {
+    			beta[i] = beta[i]/fstd[i];
+    		}
+        } // if ((lowRadius == 0.01) && (highRadius == 0.02))
+        else {
+        	MipavUtil.displayError("No parameters for lowRadius = " + lowRadius + " highRadius = " + highRadius);
+        	setCompleted(false);
+        	return;
+        }
+        
+        // Get gradients
+        cg = new double[yDim][xDim][3][numOrientations];
+        gtheta = new double[numOrientations];
+        detCG(cg, gtheta);
+        
+        // Compute oriented pb
+        pball = new double[yDim][xDim][numOrientations];
+        a = new double[sliceSize];
+        b = new double[sliceSize];
+        pbi = new double[sliceSize];
+        for (i = 0; i < numOrientations; i++) {
+            for (x = 0; x < xDim; x++) {
+            	for (y = 0; y < yDim; y++) {
+            		a[y + x * yDim] = cg[y][x][1][i];
+            	    b[y + x * yDim] = cg[y][x][2][i];
+            	}
+            }
+            for (y = 0; y < sliceSize; y++) {
+            	xbeta = beta[0] + a[y]*beta[1] + b[y]*beta[2];
+            	pbi[y] = 1.0/(1.0 + Math.exp(-xbeta));
+            }
+            for (x = 0; x < xDim; x++) {
+            	for (y = 0; y < yDim; y++) {
+            	    pball[y][x][i] = pbi[y + x*yDim];	
+            	}
+            }
+        } // for (i = 0; i < numOrientations; i++)
+        
+        // nonmax suppression and max over orientations
+        maxo = new int[yDim][xDim];
+        for (y = 0; y < yDim; y++) {
+        	for (x = 0; x < xDim; x++) {
+        		maxVal = -Double.MAX_VALUE;
+        		for (i = 0; i < numOrientations; i++)  {
+        			if (pball[y][x][i] > maxVal) {
+        				maxVal = pball[y][x][i];
+        				maxo[y][x] = i;
+        			}
+        		}
+        	}
+        }
+        r = 2.5;
+        mask = new byte[yDim][xDim];
+        z = new double[yDim][xDim];
+        a2 = new double[yDim][xDim];
+        pbi2 = new double[yDim][xDim];
+        for (i = 0; i < numOrientations; i++) {
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		if (maxo[y][x] == i) {
+            			mask[y][x] = 1;
+            		}
+            		else {
+            			mask[y][x] = 0;
+            		}
+            		z[y][x] = pball[y][x][i];
+            	}
+            }
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		a2[y][x] = 0.0;
+            	}
+            }
+            fitparab(a2, null, null, z, r, r, gtheta[i]);
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		a2[y][x] = Math.max(0.0, a2[y][x]);
+            	}
+            }
+            nonmax(pbi2, a2, gtheta[i]);
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		pb[y][x] = Math.max(pb[y][x], pbi2[y][x] * mask[y][x]);
+            		theta[y][x] = theta[y][x] * (1 - mask[y][x]) + gtheta[i]*mask[y][x];
+            	}
+            }
+        } // for (i = 0; i < numOrientations; i++)
+        
+        for (y = 0; y < yDim; y++) {
+        	for (x = 0; x < xDim; x++) {
+        		pb[y][x] = Math.max(0.0, Math.min(1.0, pb[y][x]));
+        	}
+        }
+        
+        // Mask out 1-pixel border where nonmax suppression fails
+        for (x = 0; x < xDim; x++) {
+        	pb[0][x] = 0.0;
+        	pb[yDim-1][x] = 0.0;
+        }
+        for (y = 0; y < yDim; y++) {
+        	pb[y][0] = 0.0;
+        	pb[y][xDim-1] = 0.0;
+        }
+        return;
+      }
     
     private void pbCGTG(double pb[][], double theta[][]) {
     	// Compute probability of boundary using CG and TG
@@ -204,7 +353,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
       	double a2[][];
       	double pbi2[][];
         
-        // beta from logistic fits (trainBGTG.m)
+        // beta from logistic fits (trainCGTG.m)
         if ((lowRadius == 0.01) && (highRadius == 0.02)) {
         	// 64 textons
     		beta[0] = -4.5015774;
@@ -302,6 +451,142 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
             	}
             }
             nonmax(pbi2, a2, gtheta[i]);
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		pb[y][x] = Math.max(pb[y][x], pbi2[y][x] * mask[y][x]);
+            		theta[y][x] = theta[y][x] * (1 - mask[y][x]) + gtheta[i]*mask[y][x];
+            	}
+            }
+        } // for (i = 0; i < numOrientations; i++)
+        
+        for (y = 0; y < yDim; y++) {
+        	for (x = 0; x < xDim; x++) {
+        		pb[y][x] = Math.max(0.0, Math.min(1.0, pb[y][x]));
+        	}
+        }
+        
+        // Mask out 1-pixel border where nonmax suppression fails
+        for (x = 0; x < xDim; x++) {
+        	pb[0][x] = 0.0;
+        	pb[yDim-1][x] = 0.0;
+        }
+        for (y = 0; y < yDim; y++) {
+        	pb[y][0] = 0.0;
+        	pb[y][xDim-1] = 0.0;
+        }
+        return;
+      }
+    
+    private void pbBG(double pb[][], double theta[][]) {
+    	// Compute probability of boundary using BG
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// April 2003
+
+      	double beta[] = new double[2];
+      	double fstd[] = new double[2];
+      	double bg[][][];
+      	double tg[][][];
+      	double gtheta[];
+      	double pball[][][];
+      	int i;
+      	int sliceSize = xDim * yDim;
+      	double b[];
+      	int x;
+      	int y;
+      	double xbeta;
+      	double pbi[];
+      	int maxo[][];
+      	double maxVal;
+      	double r;
+      	byte mask[][];
+      	double z[][];
+      	double a[][];
+      	double pbi2[][];
+        
+        // beta from logistic fits (trainBG.m)
+        if (lowRadius == 0.01) {
+    	    beta[0] = -3.6944544;
+    	    beta[1] = 1.0261318;
+    	    fstd[0] = 1.0;
+    	    fstd[1] = 0.37408935;
+        	beta[0] = beta[0]/fstd[0];
+        	beta[1] = beta[1]/fstd[1];
+        } // if (lowRadius == 0.01)
+        else {
+        	MipavUtil.displayError("No parameter for lowRadius = " + lowRadius);
+        	setCompleted(false);
+        	return;
+        }
+        
+        // Get gradients
+        bg = new double[yDim][xDim][numOrientations];
+        tg = new double[yDim][xDim][numOrientations];
+        gtheta = new double[numOrientations];
+        detBG(bg, tg, gtheta);
+        
+        // Compute oriented pb
+        pball = new double[yDim][xDim][numOrientations];
+        b = new double[sliceSize];
+        pbi = new double[sliceSize];
+        for (i = 0; i < numOrientations; i++) {
+            for (x = 0; x < xDim; x++) {
+            	for (y = 0; y < yDim; y++) {
+            	    b[y + x * yDim] = bg[y][x][i];
+            	}
+            }
+            for (y = 0; y < sliceSize; y++) {
+            	xbeta = beta[0] + b[y]*beta[1];
+            	pbi[y] = 1.0/(1.0 + Math.exp(-xbeta));
+            }
+            for (x = 0; x < xDim; x++) {
+            	for (y = 0; y < yDim; y++) {
+            	    pball[y][x][i] = pbi[y + x*yDim];	
+            	}
+            }
+        } // for (i = 0; i < numOrientations; i++)
+        
+        // nonmax suppression and max over orientations
+        maxo = new int[yDim][xDim];
+        for (y = 0; y < yDim; y++) {
+        	for (x = 0; x < xDim; x++) {
+        		maxVal = -Double.MAX_VALUE;
+        		for (i = 0; i < numOrientations; i++)  {
+        			if (pball[y][x][i] > maxVal) {
+        				maxVal = pball[y][x][i];
+        				maxo[y][x] = i;
+        			}
+        		}
+        	}
+        }
+        r = 2.5;
+        mask = new byte[yDim][xDim];
+        z = new double[yDim][xDim];
+        a = new double[yDim][xDim];
+        pbi2 = new double[yDim][xDim];
+        for (i = 0; i < numOrientations; i++) {
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		if (maxo[y][x] == i) {
+            			mask[y][x] = 1;
+            		}
+            		else {
+            			mask[y][x] = 0;
+            		}
+            		z[y][x] = pball[y][x][i];
+            	}
+            }
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		a[y][x] = 0.0;
+            	}
+            }
+            fitparab(a, null, null, z, r, r, gtheta[i]);
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		a[y][x] = Math.max(0.0, a[y][x]);
+            	}
+            }
+            nonmax(pbi2, a, gtheta[i]);
             for (y = 0; y < yDim; y++) {
             	for (x = 0; x < xDim; x++) {
             		pb[y][x] = Math.max(pb[y][x], pbi2[y][x] * mask[y][x]);
@@ -686,6 +971,47 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
           }
       }
       
+      private void detCG(double cg[][][][], double theta[]) {
+      	// Compute smoothed but not thinned CG fields
+      	double diag;
+      	ModelImage inputImage;
+      	AlgorithmChangeType changeTypeAlgo;
+      	FileInfoBase[] fileInfo;
+        double radiusArray[]; 
+        double sigmaSmoothArray[];
+      	
+      	diag = Math.sqrt(xDim*xDim + yDim*yDim);
+      	inputImage = new ModelImage(ModelStorageBase.ARGB_FLOAT,
+  				srcImage.getExtents(), "changeTypeImage");
+  		inputImage.getFileInfo(0).setEndianess(FileBase.LITTLE_ENDIAN);
+  		changeTypeAlgo = new AlgorithmChangeType(inputImage,
+  				srcImage, srcImage.getMin(),
+  				srcImage.getMax(), 0.0, 1.0, image25D);
+  		changeTypeAlgo.run();
+  		changeTypeAlgo.finalize();
+  		changeTypeAlgo = null;
+  		fileInfo = inputImage.getFileInfo();
+          fileInfo[0].setModality(srcImage.getFileInfo()[0].getModality());
+          fileInfo[0].setFileDirectory(srcImage.getFileInfo()[0].getFileDirectory());
+          fileInfo[0].setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
+          fileInfo[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
+          fileInfo[0].setExtents(inputImage.getExtents());
+          fileInfo[0].setMax(inputImage.getMax());
+          fileInfo[0].setMin(inputImage.getMin());
+          fileInfo[0].setImageOrientation(srcImage.getImageOrientation());
+          fileInfo[0].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation());
+          fileInfo[0].setOrigin(srcImage.getFileInfo()[0].getOrigin());
+          
+          // Compute color gradient
+          
+          radiusArray = new double[]{diag*lowRadius,diag*highRadius,diag*highRadius};
+          sigmaSmoothArray = new double[]{diag*lowRadius,diag*highRadius,diag*highRadius};;
+          cgmo(cg, theta, inputImage, radiusArray, numOrientations, smooth, sigmaSmoothArray);
+          
+  		
+          return;
+        }
+      
       private void detCGTG(double cg[][][][], double tg[][][], double theta[]) {
     	// Compute smoothed but not thinned CG and TG fields
     	double diag;
@@ -833,6 +1159,99 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         tgmo(tg, theta, tmap, k, diag*highRadius, numOrientations, null, smooth, diag*highRadius);
         return;
       }
+      
+      private void detBG(double bg[][][], double tg[][][], double theta[]) {
+          // Compute smoothed but not thinned BG fields
+      	double diag;
+        ModelImage grayImage = null;
+        ModelImage inputImage;
+        AlgorithmChangeType changeTypeAlgo;
+    	FileInfoBase[] fileInfo;
+          
+          diag = Math.sqrt(xDim*xDim + yDim*yDim);
+          if (srcImage.isColorImage()) {
+  			final boolean thresholdAverage = false;
+  			final float threshold = 0.0f;
+  			final boolean intensityAverage = false;
+  			final boolean equalRange = true;
+  			final float minR = 0.0f;
+  			final float minG = 0.0f;
+  			final float minB = 0.0f;
+  			float redValue;
+  			float greenValue;
+  			float blueValue;
+  			float maxR;
+  			float maxG;
+  			float maxB;
+  			AlgorithmRGBtoGray gAlgo;
+  			if (srcImage.getMinR() == srcImage.getMaxR()) {
+  				redValue = 0.0f;
+  				greenValue = 0.5f;
+  				blueValue = 0.5f;
+  			} else if (srcImage.getMinG() == srcImage.getMaxG()) {
+  				redValue = 0.5f;
+  				greenValue = 0.0f;
+  				blueValue = 0.5f;
+  			} else if (srcImage.getMinB() == srcImage.getMaxB()) {
+  				redValue = 0.5f;
+  				greenValue = 0.5f;
+  				blueValue = 0.0f;
+  			} else {
+  				redValue = (float) (1.0 / 3.0);
+  				greenValue = redValue;
+  				blueValue = redValue;
+
+  			}
+  			maxR = (float) srcImage.getMaxR();
+  			maxG = (float) srcImage.getMaxG();
+  			maxB = (float) srcImage.getMaxB();
+  			grayImage = new ModelImage(ModelStorageBase.DOUBLE,
+  					srcImage.getExtents(), "grayImage");
+  			gAlgo = new AlgorithmRGBtoGray(grayImage, srcImage,
+  					redValue, greenValue, blueValue, thresholdAverage,
+  					threshold, intensityAverage, equalRange, minR, maxR,
+  					minG, maxG, minB, maxB);
+  			gAlgo.run();
+  			gAlgo.finalize();
+  		} // if (srcImage.isColorImage())
+          
+          inputImage = new ModelImage(ModelStorageBase.DOUBLE,
+  				srcImage.getExtents(), "changeTypeImage");
+  		inputImage.getFileInfo(0).setEndianess(FileBase.LITTLE_ENDIAN);
+  		if (srcImage.isColorImage()) {
+  			changeTypeAlgo = new AlgorithmChangeType(inputImage,
+  					grayImage, grayImage.getMin(), grayImage.getMax(),
+  					0.0, 1.0, image25D);
+  		} else {
+  			changeTypeAlgo = new AlgorithmChangeType(inputImage,
+  					srcImage, srcImage.getMin(),
+  					srcImage.getMax(), 0.0, 1.0, image25D);
+  		}
+  		changeTypeAlgo.run();
+  		changeTypeAlgo.finalize();
+  		changeTypeAlgo = null;
+  		if (grayImage != null) {
+  			grayImage.disposeLocal();
+  			grayImage = null;
+  		}
+  		fileInfo = inputImage.getFileInfo();
+          fileInfo[0].setModality(srcImage.getFileInfo()[0].getModality());
+          fileInfo[0].setFileDirectory(srcImage.getFileInfo()[0].getFileDirectory());
+          fileInfo[0].setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
+          fileInfo[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
+          fileInfo[0].setExtents(inputImage.getExtents());
+          fileInfo[0].setMax(inputImage.getMax());
+          fileInfo[0].setMin(inputImage.getMin());
+          fileInfo[0].setImageOrientation(srcImage.getImageOrientation());
+          fileInfo[0].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation());
+          fileInfo[0].setOrigin(srcImage.getFileInfo()[0].getOrigin());
+          // Compute brightness gradient
+          
+          cgmo(bg, theta, inputImage, diag*lowRadius, numOrientations, smooth, diag*lowRadius);
+          
+          
+          return;
+        }
       
       private void detBGTG(double bg[][][], double tg[][][], double theta[]) {
         // Compute smoothed but not thinned BG and TG fields
