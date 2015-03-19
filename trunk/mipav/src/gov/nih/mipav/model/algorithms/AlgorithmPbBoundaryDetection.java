@@ -3439,9 +3439,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
             	} // for (y = 0; y < yDim; y++)
             	conv2(im, lmask, tgL);
             	conv2(im, rmask, tgR);
-            	for (y = 0; y < yDim; y++) {
-            		for (x = 0; x < xDim; x++) {
-            			d[x + y * xDim][i-1] = Math.abs(tgL[y][x] - tgR[y][x]);
+            	for (x = 0; x < xDim; x++) {
+            		for (y = 0; y < yDim; y++) {
+            			d[y + x * yDim][i-1] = Math.abs(tgL[y][x] - tgR[y][x]);
             		}
             	}
             } // for ( i = 1; i <= ntex; i++)
@@ -3458,10 +3458,10 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
             		tg[y][x] = 0.0;
             	}
             }
-            for (y = 0; y < yDim; y++) {
-            	for (x = 0; x < xDim; x++) {
+            for (x = 0; x < xDim; x++) {
+            	for (y = 0; y < yDim; y++) {
             		for (i = 0; i < ntex; i++) {
-            			tg[y][x] = tg[y][x] + d[x + y * xDim][i];
+            			tg[y][x] = tg[y][x] + d[y + x * yDim][i];
             		}
             	}
             }
