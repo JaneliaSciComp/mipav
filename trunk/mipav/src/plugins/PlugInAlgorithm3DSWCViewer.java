@@ -192,7 +192,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 					ArrayList<float[]> fil = swcCoordinates.get(i);
 					if(fil.get(0)[4] == Float.NEGATIVE_INFINITY){
 						//No connection was made, something is wrong
-						append(swcFile.getName() + " is not connected properly.", redText);
+						append(swcFile.getName() + ": Filament " + i + " is not connected properly.", redText);
 						setCompleted(false);
 						return;
 					}
