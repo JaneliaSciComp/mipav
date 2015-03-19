@@ -226,7 +226,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 			
 			//Provide initial overestimate of array sizes
 			int[][] temp = new int[3*tipSize][];
-			vertexInd = new int[tipSize];
+			vertexInd = new int[tipSize + 1];
 			
 			int[] actualNums = calculateConvexHull(swcCoordinates, tips, temp, vertexInd);
 			int actualNumVec = actualNums[0];
