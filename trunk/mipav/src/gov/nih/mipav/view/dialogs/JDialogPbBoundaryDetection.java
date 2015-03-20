@@ -42,6 +42,8 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
 	
 	private static final int CG = 4;
 	
+	private static final int TG = 5;
+	
 	private int gradientType = BG;
 	
 	private static final int GRAY_PRESENTATION = 1;
@@ -70,6 +72,8 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
     private JRadioButton cgButton;
     
     private JRadioButton cgtgButton;
+    
+    private JRadioButton tgButton;
     
     private String smooth = "savgol";
     
@@ -362,6 +366,14 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         gbc.gridx = 0;
         paramPanel.add(cgtgButton, gbc);
         
+        tgButton = new JRadioButton("Texture gradient", false);
+        tgButton.setFont(serif12);
+        tgButton.setForeground(Color.black);
+        gradientGroup.add(tgButton);
+        gbc.gridy++;
+        gbc.gridx = 0;
+        paramPanel.add(tgButton, gbc);
+        
         smoothGroup = new ButtonGroup();
         savgolButton = new JRadioButton("Savitsky-Golay smoothing", true);
         savgolButton.setFont(serif12);
@@ -436,8 +448,12 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         	gradientType = CG;
         	lowRadius = 0.02;
         }
-        else {
+        else if (cgtgButton.isSelected()) {
         	gradientType = CGTG;
+        }
+        else {
+        	gradientType = TG;
+        	lowRadius = 0.02;
         }
         
         if (savgolButton.isSelected()) {
