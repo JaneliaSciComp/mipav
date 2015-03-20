@@ -222,7 +222,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 				viewerOpen = true;
 			}
 			
-			int tipSize = tips.size();
+			/*int tipSize = tips.size();
 			
 			//Provide initial overestimate of array sizes
 			int[][] temp = new int[3*tipSize][];
@@ -242,7 +242,14 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 				tempVertex[i] = vertexInd[i];
 			}
 			
-			vertexInd = tempVertex;
+			vertexInd = tempVertex;*/
+			
+			int[][] tempArray = calculateConvexHull(swcCoordinates, tips);
+			faceVerticies = new int[tempArray.length - 1][];
+			vertexInd = tempArray[tempArray.length - 1];
+			for(int i=0;i<faceVerticies.length;i++){
+				faceVerticies[i] = tempArray[i];
+			}
 			
 			if(branchDensity){
 				currentAxon = tips.get(0);
@@ -879,7 +886,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		return pts;
 	}
 
-	private int[] calculateConvexHull(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<Integer> tips, int[][]faceVerticies, int[] vertexInd){
+	/*private int[] calculateConvexHull(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<Integer> tips, int[][]faceVerticies, int[] vertexInd){
 		
 		ArrayList<Point3d> ptList = new ArrayList<Point3d>();
 		float[] originPt = swcCoordinates.get(0).get(0);
@@ -923,7 +930,64 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 			vertexInd[i] = tips.get(cnt-1);
 		}
 		
+		//Here we have the basic hull, now need to augment it
+		
 		return new int[]{verticies.length, faceVerticiesA.length};
+	}*/
+	
+	private int[][] calculateConvexHull(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<Integer> tips){
+		
+		ArrayList<Point3d> ptList = new ArrayList<Point3d>();
+		float[] originPt = swcCoordinates.get(0).get(0);
+		Point3d originPt3d = new Point3d(originPt[0], originPt[1], originPt[2]);
+		ptList.add(originPt3d);
+		
+		for(int i : tips){
+			ArrayList<float[]> fil = swcCoordinates.get(i);
+			float[] pt = fil.get(fil.size()-1);
+			Point3d pt3d = new Point3d(pt[0], pt[1], pt[2]);
+			
+			//Added this if statement too, need to remove
+			//if(i == currentAxon)
+			//	tipPt = pt3d; 
+			ptList.add(pt3d);
+		}
+		
+		Point3d[] pts = new Point3d[ptList.size()];
+		ptList.toArray(pts);
+		
+		QuickHull3D hull = new QuickHull3D(pts);
+		
+		Point3d[] verticies = hull.getVertices();
+		int[][] faceVerticiesA = hull.getFaces();
+		
+		int[][] faceVerticies = new int[faceVerticiesA.length + 1][];
+		
+		for(int i=0;i<faceVerticiesA.length;i++){
+			faceVerticies[i] = faceVerticiesA[i];
+		}
+		
+		int[] temp = new int[tips.size()+1];
+		
+		int cnt = 0;
+		for(int i=1;i<verticies.length;i++){
+			Point3d vPt = verticies[i];
+			Point3d lPt = ptList.get(cnt);
+			while(vPt.x != lPt.x || vPt.y != lPt.y || vPt.z != lPt.z){
+				cnt++;
+				if(cnt >= ptList.size()){//Something messed up
+					System.out.println("Something is wrong with convex hull calculations");
+					break;
+				}
+				lPt = ptList.get(cnt);
+			}
+			temp[i] = tips.get(cnt-1);
+		}
+		
+		faceVerticies[faceVerticies.length-1] = temp;
+		
+		return faceVerticies;
+		
 	}
 
 	/**
