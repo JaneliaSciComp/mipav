@@ -37,6 +37,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 	
 	private static final int CG = 4;
 	
+	private static final int TG = 5;
+	
 	private int gradientType = BG;
 	
 	private static final int GRAY_PRESENTATION = 1;
@@ -165,6 +167,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	}
     	else if (gradientType == CG) {
     		pbCG(pb, theta);
+    	}
+    	else if (gradientType == TG) {
+    		pbTG(pb, theta);
     	}
     	pbBuffer = new double[sliceSize];
     	for (y = 0; y < yDim; y++) {
@@ -773,6 +778,141 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         }
         return;
       }
+      
+      private void pbTG(double pb[][], double theta[][]) {
+      	// Compute probability of boundary using TG
+      	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+      	// April 2003
+
+        	double beta[] = new double[2];
+        	double fstd[] = new double[2];
+        	double tg[][][];
+        	double gtheta[];
+        	double pball[][][];
+        	int i;
+        	int sliceSize = xDim * yDim;
+        	double t[];
+        	int x;
+        	int y;
+        	double xbeta;
+        	double pbi[];
+        	int maxo[][];
+        	double maxVal;
+        	double r;
+        	byte mask[][];
+        	double z[][];
+        	double a[][];
+        	double pbi2[][];
+          
+          // beta from logistic fits (trainTG.m)
+          if (lowRadius == 0.02) {
+          	// 64 textons
+          	beta[0] = -4.7151584;
+          	beta[1] = 1.2222425;
+            fstd[0] = 1.0;
+          	fstd[1] = 0.19171689;
+          	beta[0] = beta[0]/fstd[0];
+          	beta[1] = beta[1]/fstd[1];
+          } // if ((lowRadius == 0.01) && (highRadius == 0.02))
+          else {
+          	MipavUtil.displayError("No parameters for lowRadius = " + lowRadius);
+          	setCompleted(false);
+          	return;
+          }
+          
+          // Get gradients
+          tg = new double[yDim][xDim][numOrientations];
+          gtheta = new double[numOrientations];
+          detTG(tg, gtheta);
+          
+          // Compute oriented pb
+          pball = new double[yDim][xDim][numOrientations];
+          t = new double[sliceSize];
+          pbi = new double[sliceSize];
+          for (i = 0; i < numOrientations; i++) {
+              for (x = 0; x < xDim; x++) {
+              	for (y = 0; y < yDim; y++) {
+              	    t[y + x * yDim] = tg[y][x][i];
+              	}
+              }
+              for (y = 0; y < sliceSize; y++) {
+              	xbeta = beta[0] + t[y]*beta[1];
+              	pbi[y] = 1.0/(1.0 + Math.exp(-xbeta));
+              }
+              for (x = 0; x < xDim; x++) {
+              	for (y = 0; y < yDim; y++) {
+              	    pball[y][x][i] = pbi[y + x*yDim];	
+              	}
+              }
+          } // for (i = 0; i < numOrientations; i++)
+          
+          // nonmax suppression and max over orientations
+          maxo = new int[yDim][xDim];
+          for (y = 0; y < yDim; y++) {
+          	for (x = 0; x < xDim; x++) {
+          		maxVal = -Double.MAX_VALUE;
+          		for (i = 0; i < numOrientations; i++)  {
+          			if (pball[y][x][i] > maxVal) {
+          				maxVal = pball[y][x][i];
+          				maxo[y][x] = i;
+          			}
+          		}
+          	}
+          }
+          r = 2.5;
+          mask = new byte[yDim][xDim];
+          z = new double[yDim][xDim];
+          a = new double[yDim][xDim];
+          pbi2 = new double[yDim][xDim];
+          for (i = 0; i < numOrientations; i++) {
+              for (y = 0; y < yDim; y++) {
+              	for (x = 0; x < xDim; x++) {
+              		if (maxo[y][x] == i) {
+              			mask[y][x] = 1;
+              		}
+              		else {
+              			mask[y][x] = 0;
+              		}
+              		z[y][x] = pball[y][x][i];
+              	}
+              }
+              for (y = 0; y < yDim; y++) {
+              	for (x = 0; x < xDim; x++) {
+              		a[y][x] = 0.0;
+              	}
+              }
+              fitparab(a, null, null, z, r, r, gtheta[i]);
+              for (y = 0; y < yDim; y++) {
+              	for (x = 0; x < xDim; x++) {
+              		a[y][x] = Math.max(0.0, a[y][x]);
+              	}
+              }
+              nonmax(pbi2, a, gtheta[i]);
+              for (y = 0; y < yDim; y++) {
+              	for (x = 0; x < xDim; x++) {
+              		pb[y][x] = Math.max(pb[y][x], pbi2[y][x] * mask[y][x]);
+              		theta[y][x] = theta[y][x] * (1 - mask[y][x]) + gtheta[i]*mask[y][x];
+              	}
+              }
+          } // for (i = 0; i < numOrientations; i++)
+          
+          for (y = 0; y < yDim; y++) {
+          	for (x = 0; x < xDim; x++) {
+          		pb[y][x] = Math.max(0.0, Math.min(1.0, pb[y][x]));
+          	}
+          }
+          
+          // Mask out 1-pixel border where nonmax suppression fails
+          for (x = 0; x < xDim; x++) {
+          	pb[0][x] = 0.0;
+          	pb[yDim-1][x] = 0.0;
+          }
+          for (y = 0; y < yDim; y++) {
+          	pb[y][0] = 0.0;
+          	pb[y][xDim-1] = 0.0;
+          }
+          return;
+        }
       
       private void nonmax(double imout[][], double im[][], double theta) {
     	  // Perform non-max suppression on im orthogonal to theta.  Theta can be
@@ -1406,6 +1546,157 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         tgmo(tg, theta, tmap, k, diag*highRadius, numOrientations, null, smooth, diag*highRadius);
         return;
       }
+      
+      private void detTG(double tg[][][], double theta[]) {
+          // Compute smoothed but not thinned TG fields
+      	double diag;
+          ModelImage grayImage = null;
+          ModelImage inputImage;
+          AlgorithmChangeType changeTypeAlgo;
+        	FileInfoBase[] fileInfo;
+        	double fb[][][][];
+        	double tex[][];
+        	double tsim[][];
+        	int sliceSize;
+        	double buffer[];
+        	double im[][];
+        	int x;
+        	int y;
+        	double fim[][][][];
+        	int tmap[][];
+        	int k;
+          
+          diag = Math.sqrt(xDim*xDim + yDim*yDim);
+          if (srcImage.isColorImage()) {
+  			final boolean thresholdAverage = false;
+  			final float threshold = 0.0f;
+  			final boolean intensityAverage = false;
+  			final boolean equalRange = true;
+  			final float minR = 0.0f;
+  			final float minG = 0.0f;
+  			final float minB = 0.0f;
+  			float redValue;
+  			float greenValue;
+  			float blueValue;
+  			float maxR;
+  			float maxG;
+  			float maxB;
+  			AlgorithmRGBtoGray gAlgo;
+  			if (srcImage.getMinR() == srcImage.getMaxR()) {
+  				redValue = 0.0f;
+  				greenValue = 0.5f;
+  				blueValue = 0.5f;
+  			} else if (srcImage.getMinG() == srcImage.getMaxG()) {
+  				redValue = 0.5f;
+  				greenValue = 0.0f;
+  				blueValue = 0.5f;
+  			} else if (srcImage.getMinB() == srcImage.getMaxB()) {
+  				redValue = 0.5f;
+  				greenValue = 0.5f;
+  				blueValue = 0.0f;
+  			} else {
+  				redValue = (float) (1.0 / 3.0);
+  				greenValue = redValue;
+  				blueValue = redValue;
+
+  			}
+  			maxR = (float) srcImage.getMaxR();
+  			maxG = (float) srcImage.getMaxG();
+  			maxB = (float) srcImage.getMaxB();
+  			grayImage = new ModelImage(ModelStorageBase.DOUBLE,
+  					srcImage.getExtents(), "grayImage");
+  			gAlgo = new AlgorithmRGBtoGray(grayImage, srcImage,
+  					redValue, greenValue, blueValue, thresholdAverage,
+  					threshold, intensityAverage, equalRange, minR, maxR,
+  					minG, maxG, minB, maxB);
+  			gAlgo.run();
+  			gAlgo.finalize();
+  		} // if (srcImage.isColorImage())
+          
+          inputImage = new ModelImage(ModelStorageBase.DOUBLE,
+  				srcImage.getExtents(), "changeTypeImage");
+  		inputImage.getFileInfo(0).setEndianess(FileBase.LITTLE_ENDIAN);
+  		if (srcImage.isColorImage()) {
+  			changeTypeAlgo = new AlgorithmChangeType(inputImage,
+  					grayImage, grayImage.getMin(), grayImage.getMax(),
+  					0.0, 1.0, image25D);
+  		} else {
+  			changeTypeAlgo = new AlgorithmChangeType(inputImage,
+  					srcImage, srcImage.getMin(),
+  					srcImage.getMax(), 0.0, 1.0, image25D);
+  		}
+  		changeTypeAlgo.run();
+  		changeTypeAlgo.finalize();
+  		changeTypeAlgo = null;
+  		if (grayImage != null) {
+  			grayImage.disposeLocal();
+  			grayImage = null;
+  		}
+  		fileInfo = inputImage.getFileInfo();
+          fileInfo[0].setModality(srcImage.getFileInfo()[0].getModality());
+          fileInfo[0].setFileDirectory(srcImage.getFileInfo()[0].getFileDirectory());
+          fileInfo[0].setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
+          fileInfo[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
+          fileInfo[0].setExtents(inputImage.getExtents());
+          fileInfo[0].setMax(inputImage.getMax());
+          fileInfo[0].setMin(inputImage.getMin());
+          fileInfo[0].setImageOrientation(srcImage.getImageOrientation());
+          fileInfo[0].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation());
+          fileInfo[0].setOrigin(srcImage.getFileInfo()[0].getOrigin());
+          
+          // Compute texture gradient
+          // Must read in 286,160 byte MATLAB file unitex_6_1_2_1.4_2_64.mat
+          // no = 6 the filter bank that we use for texture
+          // processing. It contains six pairs of elongated, oriented
+          // filters, as well as a center-surround filter.
+          // ss = 1
+          // ns = 2
+          // sc = sqrt(2)
+          // el = 2
+          k = 64; // universal texture primitives called textons
+          // To each pixel, we associate the vector of 13 filter responses centered at the pixel.
+          fb = new double[12][2][][];
+          for (x = 0; x < 1; x++) {
+          	for (y = 0; y < 12; y++) {
+          		fb[y][x] = new double[13][13];
+          	}
+          }
+          for (x = 1; x < 2; x++) {
+          	for (y = 0; y < 12; y++) {
+          		fb[y][x] = new double[19][19];
+          	}
+          }
+          tex = new double[24][64];
+          tsim = new double[64][64];
+          // Also has tim 64 X 1 cell and tperm 64 X 1 double
+          // Read in of fb and tex confirmed on MATLAB
+          readFile(fb, tex, tsim);
+          
+          sliceSize = xDim * yDim;
+          buffer = new double[sliceSize];
+          try {
+             inputImage.exportData(0, sliceSize, buffer);
+          }
+          catch(IOException e) {
+          	e.printStackTrace();
+          }
+          inputImage.disposeLocal();
+          inputImage = null;
+          
+          im = new double[yDim][xDim];
+          for (y = 0; y < yDim; y++) {
+          	for (x = 0; x < xDim; x++) {
+          		im[y][x] = buffer[x + y * xDim];
+          	}
+          }
+          
+          fim = new double[12][2][yDim][xDim];
+          fbRun(fim, fb, im);                
+          tmap = new int[yDim][xDim];
+          assignTextons(tmap, fim, tex);
+          tgmo(tg, theta, tmap, k, diag*highRadius, numOrientations, null, smooth, diag*highRadius);
+          return;
+        }
         
         private void assignTextons(int map[][], double fim[][][][], double textons[][]) {
         int d = fim.length * fim[0].length;
