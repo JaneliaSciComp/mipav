@@ -983,7 +983,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
               for (y = 0; y < h; y++) {
             	  for (x = 0; x < w; x++) {
             		  if (x < w-1 && y < h - 1) {
-            			  imidxA[y][x] = im[y+1][x];
+            			  imidxA[y][x] = im[y][x+1];
             			  imidxB[y][x] = im[y+1][x+1];
             			  imI[y][x] = imidxA[y][x] * (1.0 - d) + imidxB[y][x] * d;
             			  if (im[y][x] < imI[y][x]) {
@@ -997,7 +997,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
               for (y = 0; y < h; y++) {
             	  for (x = 0; x < w; x++) {
             		  if ((x > 0) && (y > 0)) {
-            			  imidxA[y][x] = im[y-1][x];
+            			  imidxA[y][x] = im[y][x-1];
             			  imidxB[y][x] = im[y-1][x-1];
             			  imI[y][x] = imidxA[y][x] * (1.0 - d) + imidxB[y][x] * d;
             			  if (im[y][x] < imI[y][x]) {
@@ -1014,7 +1014,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
               for (y = 0; y < h; y++) {
             	  for (x = 0; x < w; x++) {
             		  if (x < w-1 && y < h - 1) {
-            			  imidxA[y][x] = im[y][x+1];
+            			  imidxA[y][x] = im[y+1][x];
             			  imidxB[y][x] = im[y+1][x+1];
             			  imI[y][x] = imidxA[y][x] * (1.0 - d) + imidxB[y][x] * d;
             			  if (im[y][x] < imI[y][x]) {
@@ -1028,7 +1028,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
               for (y = 0; y < h; y++) {
             	  for (x = 0; x < w; x++) {
             		  if ((x > 0) && (y > 0)) {
-            			  imidxA[y][x] = im[y][x-1];
+            			  imidxA[y][x] = im[y-1][x];
             			  imidxB[y][x] = im[y-1][x-1];
             			  imI[y][x] = imidxA[y][x] * (1.0 - d) + imidxB[y][x] * d;
             			  if (im[y][x] < imI[y][x]) {
@@ -1044,9 +1044,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         	  d = Math.tan(theta - Math.PI/2.0);
               for (y = 0; y < h; y++) {
             	  for (x = 0; x < w; x++) {
-            		  if ((x < w-1) && (y > 0)) {
-            			  imidxA[y][x] = im[y][x+1];
-            			  imidxB[y][x] = im[y-1][x+1];
+            		  if ((x > 0) && (y < h-1)) {
+            			  imidxA[y][x] = im[y+1][x];
+            			  imidxB[y][x] = im[y+1][x-1];
             			  imI[y][x] = imidxA[y][x] * (1.0 - d) + imidxB[y][x] * d;
             			  if (im[y][x] < imI[y][x]) {
             				  mask[y][x] = 0;
@@ -1058,9 +1058,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
               // case 7
               for (y = 0; y < h; y++) {
             	  for (x = 0; x < w; x++) {
-            		  if ((x > 0) && (y < h-1)) {
-            			  imidxA[y][x] = im[y][x-1];
-            			  imidxB[y][x] = im[y+1][x-1];
+            		  if ((x < w-1) && (y > 0)) {
+            			  imidxA[y][x] = im[y-1][x];
+            			  imidxB[y][x] = im[y-1][x+1];
             			  imI[y][x] = imidxA[y][x] * (1.0 - d) + imidxB[y][x] * d;
             			  if (im[y][x] < imI[y][x]) {
             				  mask[y][x] = 0;
@@ -1075,9 +1075,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         	  // case 4
               for (y = 0; y < h; y++) {
             	  for (x = 0; x < w; x++) {
-            	      if ((x < w-1) && (y > 0)) {
-            	    	  imidxA[y][x] = im[y-1][x];
-            			  imidxB[y][x] = im[y-1][x+1];
+            	      if ((x > 0) && (y < h-1)) {
+            	    	  imidxA[y][x] = im[y][x-1];
+            			  imidxB[y][x] = im[y+1][x-1];
             			  imI[y][x] = imidxA[y][x] * (1.0 - d) + imidxB[y][x] * d;
             			  if (im[y][x] < imI[y][x]) {
             				  mask[y][x] = 0;
@@ -1089,9 +1089,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
               // case 8
               for (y = 0; y < h; y++) {
             	  for (x = 0; x < w; x++) {
-            		  if ((x > 0) && (y < h-1)) {
-            			  imidxA[y][x] = im[y+1][x];
-            			  imidxB[y][x] = im[y+1][x-1];
+            		  if ((x < w-1) && (y > 0)) {
+            			  imidxA[y][x] = im[y][x+1];
+            			  imidxB[y][x] = im[y-1][x+1];
             			  imI[y][x] = imidxA[y][x] * (1.0 - d) + imidxB[y][x] * d;
             			  if (im[y][x] < imI[y][x]) {
             				  mask[y][x] = 0;
