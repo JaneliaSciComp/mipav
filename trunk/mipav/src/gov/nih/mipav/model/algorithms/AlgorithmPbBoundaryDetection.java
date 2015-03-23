@@ -490,7 +490,6 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
       	double beta[] = new double[2];
       	double fstd[] = new double[2];
       	double bg[][][];
-      	double tg[][][];
       	double gtheta[];
       	double pball[][][];
       	int i;
@@ -525,9 +524,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         
         // Get gradients
         bg = new double[yDim][xDim][numOrientations];
-        tg = new double[yDim][xDim][numOrientations];
         gtheta = new double[numOrientations];
-        detBG(bg, tg, gtheta);
+        detBG(bg, gtheta);
         
         // Compute oriented pb
         pball = new double[yDim][xDim][numOrientations];
@@ -1300,7 +1298,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         return;
       }
       
-      private void detBG(double bg[][][], double tg[][][], double theta[]) {
+      private void detBG(double bg[][][], double theta[]) {
           // Compute smoothed but not thinned BG fields
       	double diag;
         ModelImage grayImage = null;
