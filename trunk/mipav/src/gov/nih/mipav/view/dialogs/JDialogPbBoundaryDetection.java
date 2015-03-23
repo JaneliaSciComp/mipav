@@ -56,7 +56,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
 	
 	private double highRadius = 0.02;
 	
-	private int numOrientations = 9;
+	private int numOrientations = 8;
 	
 	private JTextField textOrientations;
 
@@ -314,7 +314,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         paramPanel.add(labelOrientations, gbc);
 
         textOrientations = new JTextField(10);
-        textOrientations.setText("9");
+        textOrientations.setText("8");
         textOrientations.setFont(serif12);
         gbc.gridx = 1;
         paramPanel.add(textOrientations, gbc);
