@@ -216,7 +216,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.30";
+    private static final String pluginVersion = "0.31";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -521,14 +521,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 final String dir = tempDirs.get(i);
                 final File f = new File(dir);
                 if (f.exists()) {
-                    final String[] list = f.list();
-                    if (list != null) {
-                        for (int k = 0; k < list.length; k++) {
-                            final File entry = new File(f, list[k]);
-                            entry.delete();
-                        }
+                    try {
+                        FileUtils.deleteDirectory(f);
+                    } catch (final IOException ioe) {
+                        ioe.printStackTrace();
                     }
-                    f.delete();
                 }
             }
         }
@@ -1501,14 +1498,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 final String dir = tempDirs.get(i);
                 final File f = new File(dir);
                 if (f.exists()) {
-                    final String[] list = f.list();
-                    if (list != null) {
-                        for (int k = 0; k < list.length; k++) {
-                            final File entry = new File(f, list[k]);
-                            entry.delete();
-                        }
+                    try {
+                        FileUtils.deleteDirectory(f);
+                    } catch (final IOException e) {
+                        e.printStackTrace();
                     }
-                    f.delete();
                 }
             }
         }
@@ -3802,6 +3796,18 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             f.mkdir();
                         }
 
+                        final String entryName = entry.getName();
+
+                        // implied directory in the zip file entry; create it
+                        if (entryName.contains("/") || entryName.contains("\\")) {
+                            final File entryFile = new File(tempDir + File.separator + entryName);
+                            if ( !entryFile.getParent().equalsIgnoreCase(tempDir)) {
+                                if ( !entryFile.getParentFile().exists()) {
+                                    entryFile.getParentFile().mkdirs();
+                                }
+                            }
+                        }
+
                         if (entry.isDirectory()) {
                             // if a directory, create it instead of trying to write it to disk
                             f = new File(tempDir + File.separator + entry.getName());
@@ -3836,6 +3842,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     // now that everything has been unzipped, open the image
                     // from the tempDir
                     filePath = tempDir + File.separator + fileName;
+
                     isMultifile = true;
                 } else if (imageFile.endsWith(".tar.gz") || imageFile.endsWith(".tgz")) {
 
