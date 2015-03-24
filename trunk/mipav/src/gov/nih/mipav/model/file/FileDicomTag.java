@@ -36,7 +36,7 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
-    
+
     /** Integer element word (in hexadecimal). */
     private int element;
 
@@ -84,8 +84,6 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
 
         setValue(value);
     }
-    
-    
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
@@ -98,6 +96,7 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
      * @return Whether all of the tag data (group, element, tag info, value, length) in the other tag is the same as
      *         this one. False if the tag is null or not a FileDicomTag.
      */
+    @Override
     public boolean equals(final Object obj) {
 
         if ( (obj != null) && (obj.getClass() == this.getClass())) {
@@ -110,14 +109,12 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
                 // allow for both values to be null
                 if ( (thisVal == null) && (otherVal == null)) {
                     return true;
-                } else if(thisVal == null || otherVal == null) {
+                } else if (thisVal == null || otherVal == null) {
                     return false;
                 }
-                
-                
+
                 if (this.length == tag.length) {
-                    
-                    
+
                     if (thisVal.equals(otherVal)) {
                         return true;
                     } else {
@@ -152,6 +149,7 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
     /**
      * Prepares this class for cleanup.
      */
+    @Override
     public void finalize() {
         value = null;
         // if(tagInfo !0= null) {
@@ -167,7 +165,7 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
 
     /**
      * Calculates the number of bytes that the data (the object value) will take to be stored. This method returns the
-     * number of data items times the sizeof the data type.  This may be different from the previously stored length of
+     * number of data items times the sizeof the data type. This may be different from the previously stored length of
      * the tag.
      * 
      * @return size of the value in bytes
@@ -175,16 +173,16 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
     public final int getDataLength() {
         int dataItems = 0;
 
-        Object[] obj = getValueList();
-        for(int i=0; i<obj.length; i++) {
-            if(obj[i] != null) {
-                if(obj[i] instanceof String) {
-                	dataItems += ((String)obj[i]).length();
-                	if(i != obj.length-1) {
-                		dataItems++; //increment for vm placeholder
-                	}
+        final Object[] obj = getValueList();
+        for (int i = 0; i < obj.length; i++) {
+            if (obj[i] != null) {
+                if (obj[i] instanceof String) {
+                    dataItems += ((String) obj[i]).length();
+                    if (i != obj.length - 1) {
+                        dataItems++; // increment for vm placeholder
+                    }
                 } else {
-                	dataItems++;
+                    dataItems++;
                 }
             }
         }
@@ -273,12 +271,12 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
                 final StringTokenizer backslash = new StringTokenizer((String) value, "\\");
                 quantity = backslash.countTokens();
             } else {
-            	Object[] obj = getValueList();
-            	for(int i=0; i<obj.length; i++) {
-            		if(obj[i] != null) {
-            			quantity++;
-            		}
-            	}
+                final Object[] obj = getValueList();
+                for (int i = 0; i < obj.length; i++) {
+                    if (obj[i] != null) {
+                        quantity++;
+                    }
+                }
             }
         } catch (final NullPointerException npe) {
 
@@ -321,55 +319,56 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
 
         final VR vr = getValueRepresentation();
         final String keyword = tagInfo.getKeyword();
-        
+
         if (parse && vr != null && keyword != null) {
-            
+
             String returnValue = "";
-            if(value == null) {
+            if (value == null) {
                 return returnValue;
             }
-            
-            switch(vr) {
-            case AS:
-                returnValue = fromAStoVisibleString();
-                break;
-            case DA:
-                returnValue = fromDAtoVisibleString();
-                break;
-            case TM:
-                returnValue = fromTMtoVisibleString();
-                break;
-            case SQ:
-                StringBuilder sq = new StringBuilder();
-                Vector<String> v = ((FileDicomSQ)value).getSequenceDisplay();
-                for(int i=0; i<v.size(); i++) {
-                    sq.append(v.get(i)).append("\n");
-                }
-                returnValue = sq.toString();
-                break;
-            default:
-                if (value instanceof Object[]) {
-                    StringBuilder bu = new StringBuilder();
-                    for(int i=0; i<((Object[])value).length; i++) {
-                        bu.append(((Object[])value)[i].toString()).append("\\"); //dicom uses slash to separate elements
+
+            switch (vr) {
+                case AS:
+                    returnValue = fromAStoVisibleString();
+                    break;
+                case DA:
+                    returnValue = fromDAtoVisibleString();
+                    break;
+                case TM:
+                    returnValue = fromTMtoVisibleString();
+                    break;
+                case SQ:
+                    final StringBuilder sq = new StringBuilder();
+                    final Vector<String> v = ((FileDicomSQ) value).getSequenceDisplay();
+                    for (int i = 0; i < v.size(); i++) {
+                        sq.append(v.get(i)).append("\n");
                     }
-                    returnValue = bu.toString().trim();
-                } else if (keyword.equals("PatientSex")) {
-                    returnValue = fromPatientSexToVisibleString();
-                } else if (keyword.equals("PatientOrientation")) {
-                    returnValue = fromPatientOrientationToVisibleString();
-                } else {
-                    returnValue = value.toString().trim();
-                }
+                    returnValue = sq.toString();
+                    break;
+                default:
+                    if (value instanceof Object[]) {
+                        final StringBuilder bu = new StringBuilder();
+                        for (int i = 0; i < ((Object[]) value).length; i++) {
+                            bu.append( ((Object[]) value)[i].toString()).append("\\"); // dicom uses slash to separate
+                                                                                       // elements
+                        }
+                        returnValue = bu.toString().trim();
+                    } else if (keyword.equals("PatientSex")) {
+                        returnValue = fromPatientSexToVisibleString();
+                    } else if (keyword.equals("PatientOrientation")) {
+                        returnValue = fromPatientOrientationToVisibleString();
+                    } else {
+                        returnValue = value.toString().trim();
+                    }
             }
-            
+
             return returnValue;
-        } 
+        }
 
         return value;
     }
 
-	/**
+    /**
      * Returns the value(s) as an array so that each tag with a value multiplicity of more than 1 -- ie, TypeString
      * items separated by '\' -- is its own element in the array. This method will be so much simpler when (if) the tags
      * are seperated out as individual classes.
@@ -377,31 +376,29 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
      * @return DOCUMENT ME!
      */
     public Object[] getValueList() {
-        Object[] stuff = new Object[1];
+        final Object[] stuff = new Object[1];
 
         try {
             final VR type = tagInfo.getType();
 
-            if(value == null) {
-            	stuff[0] = null;
-            } else if(value instanceof Object[]) {
+            if (value == null) {
+                stuff[0] = null;
+            } else if (value instanceof Object[]) {
                 return (Object[]) value;
-            } else if(value instanceof FileDicomSQ) { 
+            } else if (value instanceof FileDicomSQ) {
                 return ((FileDicomSQ) value).getSequenceDisplay().toArray();
-            } else if(value instanceof FileDicomKey) { 
+            } else if (value instanceof FileDicomKey) {
                 stuff[0] = value;
                 return stuff;
-            } else if(type.getType() instanceof StringType) {
-                return ((String)value).split("\\\\");
+            } else if (type.getType() instanceof StringType) {
+                return ((String) value).split("\\\\");
             } else {
                 stuff[0] = value;
                 return stuff;
             }
         } catch (final NullPointerException npe) {
-            System.out
-                    .print("\tFileDicomTag.getValueList(): ??--" + tagInfo.getKeyword() + "--cannot be dealt with.\n");
-            Preferences.debug("\"" + tagInfo.getKeyword() + "\" cannot be found as a list;"
-                    + " this may be an error.  \n", Preferences.DEBUG_FILEIO);
+            System.out.print("\tFileDicomTag.getValueList(): ??--" + tagInfo.getKeyword() + "--cannot be dealt with.\n");
+            Preferences.debug("\"" + tagInfo.getKeyword() + "\" cannot be found as a list;" + " this may be an error.  \n", Preferences.DEBUG_FILEIO);
         }
 
         return stuff;
@@ -439,6 +436,7 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
      * 
      * @return The hash code.
      */
+    @Override
     public final int hashCode() {
 
         // TODO: this might not be a good hash code...
@@ -481,9 +479,9 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
     /**
      * Sets the value and length attributes of the DicomTag. Parses value so the stored value is converted from a
      * standard, English-readable string to a DICOM v3 form. If the parsing routine is unavailable, the value gets
-     * stored <b>as is</b>. Sending strings to set the value of tags of other types (eg., short) will attempt to
-     * convert the string to the correct type. Attempting to store a value which is too large for the given type will
-     * throw an exception. In any case, the proper size is used.
+     * stored <b>as is</b>. Sending strings to set the value of tags of other types (eg., short) will attempt to convert
+     * the string to the correct type. Attempting to store a value which is too large for the given type will throw an
+     * exception. In any case, the proper size is used.
      * 
      * <p>
      * For tags with neither value representation nor keyword (a private tag), this method ignores the value. To add,
@@ -492,11 +490,11 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
      * 
      * @param value the value to store
      */
-    public void setValue(Object value) {
+    public void setValue(final Object value) {
         final VR vr = getValueRepresentation();
         final String keyword = tagInfo.getKeyword();
-        
-        //these need to be defined elsewhere before processing of data can continue
+
+        // these need to be defined elsewhere before processing of data can continue
         if (vr == null || keyword == null || value == null) {
             return;
         }
@@ -504,155 +502,159 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
         final VR type = tagInfo.getType();
 
         String val;
-        if(type.getType() instanceof StringType) {
-            switch(type) {
-            case AS:
-                val = value.toString();
-                break;
-            case DA:
-                val = fromVisibleStringToDA(value.toString());
-                break;
-            case TM:
-                val = fromVisibleStringToTM(value.toString());
-                break;
-            case SQ:
-                setValue(value, -1); //length of sequence cannot be determined until sequence has been populated
-                return;
-            case AT:
-                setValue(value, 4);
-                return;
-            case OB:
-            	setValue(value, ((Byte[]) value).length);
-            	return;
-            case OW:
-            	setValue(value, ((char[]) value).length);
-            	return;
-            case UN:
-                setValue(value, ((Object[])value).length);
-                return;
-            default:
-                if (keyword.equals("PatientSex")) { // Patient Sex
-                    val = fromVisibleStringToPatientSex(value.toString());
-                } else if (keyword.equals("PatientOrientation")) { // Patient Orientation
-                    val = fromVisibleStringToPatientOrientation(value.toString());
-                } else {
+        if (type.getType() instanceof StringType) {
+            switch (type) {
+                case AS:
                     val = value.toString();
-                }  
+                    break;
+                case DA:
+                    val = fromVisibleStringToDA(value.toString());
+                    break;
+                case TM:
+                    val = fromVisibleStringToTM(value.toString());
+                    break;
+                case SQ:
+                    setValue(value, -1); // length of sequence cannot be determined until sequence has been populated
+                    return;
+                case AT:
+                    setValue(value, 4);
+                    return;
+                case OB:
+                    setValue(value, ((Byte[]) value).length);
+                    return;
+                case OW:
+                    if (value instanceof char[]) {
+                        setValue(value, ((char[]) value).length);
+                    } else {
+                        setValue(value, ((Byte[]) value).length);
+                    }
+                    return;
+                case UN:
+                    setValue(value, ((Object[]) value).length);
+                    return;
+                default:
+                    if (keyword.equals("PatientSex")) { // Patient Sex
+                        val = fromVisibleStringToPatientSex(value.toString());
+                    } else if (keyword.equals("PatientOrientation")) { // Patient Orientation
+                        val = fromVisibleStringToPatientOrientation(value.toString());
+                    } else {
+                        val = value.toString();
+                    }
             }
-            
-            if(val == null) {
-            	val = "";
+
+            if (val == null) {
+                val = "";
             }
             setValue(val, val.length());
         } else if (type.getType() instanceof NumType) {
             Object[] nAr = null;
             Number[] nArFinal = null;
             Number n = null;
-            if(value instanceof Object[]) {
+            if (value instanceof Object[]) {
                 nAr = (Object[]) value;
-            } else if(value instanceof int[]) {
-                nAr = new Integer[((int[]) value).length];
-                for(int i=0; i<((int[])value).length; i++) {
-                    nAr[i] = Integer.valueOf(((int[])value)[i]);
+            } else if (value instanceof int[]) {
+                nAr = new Integer[ ((int[]) value).length];
+                for (int i = 0; i < ((int[]) value).length; i++) {
+                    nAr[i] = Integer.valueOf( ((int[]) value)[i]);
                 }
-            } else if(value instanceof short[]) {
-                nAr = new Short[((short[]) value).length];
-                for(int i=0; i<((short[])value).length; i++) {
-                    nAr[i] = Short.valueOf(((short[])value)[i]);
+            } else if (value instanceof short[]) {
+                nAr = new Short[ ((short[]) value).length];
+                for (int i = 0; i < ((short[]) value).length; i++) {
+                    nAr[i] = Short.valueOf( ((short[]) value)[i]);
                 }
-            } else if(value instanceof long[]) {
-                nAr = new Long[((long[]) value).length];
-                for(int i=0; i<((long[])value).length; i++) {
-                    nAr[i] = Long.valueOf(((long[])value)[i]);
+            } else if (value instanceof long[]) {
+                nAr = new Long[ ((long[]) value).length];
+                for (int i = 0; i < ((long[]) value).length; i++) {
+                    nAr[i] = Long.valueOf( ((long[]) value)[i]);
                 }
-            } else if(value instanceof double[]) {
-                nAr = new Double[((double[]) value).length];
-                for(int i=0; i<((double[])value).length; i++) {
-                    nAr[i] = Double.valueOf(((double[])value)[i]);
+            } else if (value instanceof double[]) {
+                nAr = new Double[ ((double[]) value).length];
+                for (int i = 0; i < ((double[]) value).length; i++) {
+                    nAr[i] = Double.valueOf( ((double[]) value)[i]);
                 }
-            } else if(value instanceof float[]) {
-                nAr = new Float[((float[]) value).length];
-                for(int i=0; i<((float[])value).length; i++) {
-                    nAr[i] = Float.valueOf(((float[])value)[i]);
+            } else if (value instanceof float[]) {
+                nAr = new Float[ ((float[]) value).length];
+                for (int i = 0; i < ((float[]) value).length; i++) {
+                    nAr[i] = Float.valueOf( ((float[]) value)[i]);
                 }
-            } else if(value instanceof byte[]) {
-                nAr = new Byte[((byte[]) value).length];
-                for(int i=0; i<((byte[])value).length; i++) {
-                    nAr[i] = Byte.valueOf(((byte[])value)[i]);
+            } else if (value instanceof byte[]) {
+                nAr = new Byte[ ((byte[]) value).length];
+                for (int i = 0; i < ((byte[]) value).length; i++) {
+                    nAr[i] = Byte.valueOf( ((byte[]) value)[i]);
                 }
-            } 
-            
-            switch(((NumType)type.getType())) {
-            
-            case SHORT:
-                if(nAr != null) {
-                    if(nAr instanceof Short[]) {
-                        nArFinal = (Short[]) nAr;
-                    } else {
-                        nArFinal = new Short[nAr.length];
-                        for(int i=0; i<nAr.length; i++) {
-                            nArFinal[i] = Short.valueOf(nAr[i].toString());
-                        }
-                    }
-                } else {
-                    n = Short.valueOf(value.toString());
-                }
-                break;
-                
-            case LONG:
-                if(nAr != null) {
-                    if(nAr instanceof Integer[]) {
-                        nArFinal = (Integer[]) nAr;
-                    } else {
-                        nArFinal = new Integer[nAr.length];
-                        for(int i=0; i<nAr.length; i++) {
-                            nArFinal[i] = Integer.valueOf(nAr[i].toString());
-                        }
-                    }
-                } else {
-                    n = Integer.valueOf(value.toString());
-                }
-                break;
-                
-            case FLOAT:
-                if(nAr != null) {
-                    if(nAr instanceof Float[]) {
-                        nArFinal = (Float[]) nAr;
-                    } else {
-                        nArFinal = new Float[nAr.length];
-                        for(int i=0; i<nAr.length; i++) {
-                            nArFinal[i] = Float.valueOf(nAr[i].toString());
-                        }
-                    }
-                } else {
-                    n = Float.valueOf(value.toString());
-                }
-                break;
-                
-            case DOUBLE:
-                if(nAr != null) {
-                    if(nAr instanceof Double[]) {
-                        nArFinal = (Double[]) nAr;
-                    } else {
-                        nArFinal = new Double[nAr.length];
-                        for(int i=0; i<nAr.length; i++) {
-                            nArFinal[i] = Double.valueOf(nAr[i].toString());
-                        }
-                    }
-                } else {
-                    n = Double.valueOf(value.toString());
-                }
-                break;
             }
-            
-            if(nArFinal != null) {
-                setValue(nArFinal, nArFinal.length*((NumType)type.getType()).getNumBytes());
+
+            switch ( ((NumType) type.getType())) {
+
+                case SHORT:
+                    if (nAr != null) {
+                        if (nAr instanceof Short[]) {
+                            nArFinal = (Short[]) nAr;
+                        } else {
+                            nArFinal = new Short[nAr.length];
+                            for (int i = 0; i < nAr.length; i++) {
+                                nArFinal[i] = Short.valueOf(nAr[i].toString());
+                            }
+                        }
+                    } else {
+                        n = Short.valueOf(value.toString());
+                    }
+                    break;
+
+                case LONG:
+                    if (nAr != null) {
+                        if (nAr instanceof Integer[]) {
+                            nArFinal = (Integer[]) nAr;
+                        } else {
+                            nArFinal = new Integer[nAr.length];
+                            for (int i = 0; i < nAr.length; i++) {
+                                nArFinal[i] = Integer.valueOf(nAr[i].toString());
+                            }
+                        }
+                    } else {
+                        n = Integer.valueOf(value.toString());
+                    }
+                    break;
+
+                case FLOAT:
+                    if (nAr != null) {
+                        if (nAr instanceof Float[]) {
+                            nArFinal = (Float[]) nAr;
+                        } else {
+                            nArFinal = new Float[nAr.length];
+                            for (int i = 0; i < nAr.length; i++) {
+                                nArFinal[i] = Float.valueOf(nAr[i].toString());
+                            }
+                        }
+                    } else {
+                        n = Float.valueOf(value.toString());
+                    }
+                    break;
+
+                case DOUBLE:
+                    if (nAr != null) {
+                        if (nAr instanceof Double[]) {
+                            nArFinal = (Double[]) nAr;
+                        } else {
+                            nArFinal = new Double[nAr.length];
+                            for (int i = 0; i < nAr.length; i++) {
+                                nArFinal[i] = Double.valueOf(nAr[i].toString());
+                            }
+                        }
+                    } else {
+                        n = Double.valueOf(value.toString());
+                    }
+                    break;
+            }
+
+            if (nArFinal != null) {
+                setValue(nArFinal, nArFinal.length * ((NumType) type.getType()).getNumBytes());
             } else {
-                setValue(n, ((NumType)type.getType()).getNumBytes());
+                setValue(n, ((NumType) type.getType()).getNumBytes());
             }
-            
+
         } else {
-            return;   
+            return;
         }
     }
 
@@ -671,7 +673,7 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
 
         // illegal on UIDs which are to be padded by null when not even length
         if ( ( (length % 2) != 0) && (value instanceof java.lang.String)) {
-            value = value + new String(new byte[]{0x20});
+            value = value + new String(new byte[] {0x20});
             this.length = length + 1;
         } else {
             this.length = length;
@@ -691,19 +693,19 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
     }
 
     /**
-     * Gets the data size in bytes of the units held in this class. 
+     * Gets the data size in bytes of the units held in this class.
      * 
      * @return DOCUMENT ME!
      */
     public int sizeof() {
         final VR vr = tagInfo.getType();
         final DicomType type = vr.getType();
-        
-        if(type instanceof NumType) {
+
+        if (type instanceof NumType) {
             return ((NumType) type).getNumBytes();
-        } else if(vr.equals(VR.AT)){
+        } else if (vr.equals(VR.AT)) {
             return 4;
-        } else if(value instanceof Short[]){
+        } else if (value instanceof Short[]) {
             return 2;
         } else {
             return 1;
@@ -715,8 +717,9 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
      * 
      * @return The tag in readable form
      */
+    @Override
     public String toString() {
-        StringBuffer s = new StringBuffer();
+        final StringBuffer s = new StringBuffer();
         s.append("Group: ").append(Integer.toString(this.group, 0x10)).append(" Element: ").append(Integer.toString(this.element, 0x10));
 
         s.append(tagInfo.toString());
@@ -1131,7 +1134,7 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
 
             multiple++;
         }
-        
+
         return date.toString();
     }
 
@@ -1271,14 +1274,14 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
      */
     private String fromVisibleStringToPatientSex(final String tempValue) {
         String sex = tempValue.trim().toLowerCase();
-        if(sex.contains("female") || sex.contains("f")) {
-        	sex = "F";
-        } else if(sex.contains("male") || sex.contains("m")){
-        	sex = "M";
-        } else if(sex.contains("other") || sex.contains("o")){
-        	sex = "O";
+        if (sex.contains("female") || sex.contains("f")) {
+            sex = "F";
+        } else if (sex.contains("male") || sex.contains("m")) {
+            sex = "M";
+        } else if (sex.contains("other") || sex.contains("o")) {
+            sex = "O";
         } else {
-        	sex = ""; //sex is type 2 but not required
+            sex = ""; // sex is type 2 but not required
         }
 
         return sex;
@@ -1367,8 +1370,7 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
                     if (temp.length() == (6 + k)) {
                         timeField = temp.substring(4 + k, 6 + k);
 
-                        if ( (Integer.parseInt(timeField.toString()) < 0)
-                                || (Integer.parseInt(timeField.toString()) >= 60)) {
+                        if ( (Integer.parseInt(timeField.toString()) < 0) || (Integer.parseInt(timeField.toString()) >= 60)) {
                             return newTime.toString();
                         }
 
@@ -1405,11 +1407,9 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
         final Integer[] intArr = new Integer[vm];
         for (int i = 0; i < vm; i++, offset += 4) {
             if (endianess == FileDicomBase.BIG_ENDIAN) {
-                intArr[i] = ( (b[offset] & 0xff) << 24) | ( (b[offset + 1] & 0xff) << 16)
-                        | ( (b[offset + 2] & 0xff) << 8) | (b[offset + 3] & 0xff);
+                intArr[i] = ( (b[offset] & 0xff) << 24) | ( (b[offset + 1] & 0xff) << 16) | ( (b[offset + 2] & 0xff) << 8) | (b[offset + 3] & 0xff);
             } else {
-                intArr[i] = ( (b[offset + 3] & 0xff) << 24) | ( (b[offset + 2] & 0xff) << 16)
-                        | ( (b[offset + 1] & 0xff) << 8) | (b[offset] & 0xff);
+                intArr[i] = ( (b[offset + 3] & 0xff) << 24) | ( (b[offset + 2] & 0xff) << 16) | ( (b[offset + 1] & 0xff) << 8) | (b[offset] & 0xff);
             }
         }
 
@@ -1429,11 +1429,10 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
         final Long[] intArr = new Long[vm];
         for (int i = 0; i < vm; i++, offset += 4) {
             if (endianess == FileDicomBase.BIG_ENDIAN) {
-                intArr[i] = ( (b[offset] & 0xffL) << 24) | ( (b[offset + 1] & 0xffL) << 16)
-                        | ( (b[offset + 2] & 0xffL) << 8) | (b[offset + 3] & 0xffL); // Big Endian
+                intArr[i] = ( (b[offset] & 0xffL) << 24) | ( (b[offset + 1] & 0xffL) << 16) | ( (b[offset + 2] & 0xffL) << 8) | (b[offset + 3] & 0xffL); // Big
+                                                                                                                                                         // Endian
             } else {
-                intArr[i] = ( (b[offset + 3] & 0xffL) << 24) | ( (b[offset + 2] & 0xffL) << 16)
-                        | ( (b[offset + 1] & 0xffL) << 8) | (b[offset] & 0xffL);
+                intArr[i] = ( (b[offset + 3] & 0xffL) << 24) | ( (b[offset + 2] & 0xffL) << 16) | ( (b[offset + 1] & 0xffL) << 8) | (b[offset] & 0xffL);
             }
         }
 
@@ -1502,11 +1501,11 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
         final Float[] floatArr = new Float[vm];
         for (int i = 0; i < vm; i++, offset += 4) {
             if (endianess == FileDicomBase.BIG_ENDIAN) {
-                floatArr[i] = Float.intBitsToFloat( ( ( (b[offset] & 0xff) << 24) | ( (b[offset + 1] & 0xff) << 16)
-                        | ( (b[offset + 2] & 0xff) << 8) | (b[offset + 3] & 0xff)));
+                floatArr[i] = Float
+                        .intBitsToFloat( ( ( (b[offset] & 0xff) << 24) | ( (b[offset + 1] & 0xff) << 16) | ( (b[offset + 2] & 0xff) << 8) | (b[offset + 3] & 0xff)));
             } else {
-                floatArr[i] = Float.intBitsToFloat( ( ( (b[offset + 3] & 0xff) << 24) | ( (b[offset + 2] & 0xff) << 16)
-                        | ( (b[offset + 1] & 0xff) << 8) | (b[offset] & 0xff)));
+                floatArr[i] = Float
+                        .intBitsToFloat( ( ( (b[offset + 3] & 0xff) << 24) | ( (b[offset + 2] & 0xff) << 16) | ( (b[offset + 1] & 0xff) << 8) | (b[offset] & 0xff)));
             }
         }
 
@@ -1536,24 +1535,23 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
             b8 = (b[offset + 7] & 0xff);
 
             if (endianess == FileDicomBase.BIG_ENDIAN) {
-                doubleArr[i] = Double.longBitsToDouble( ( (b1 << 56) | (b2 << 48) | (b3 << 40) | (b4 << 32)
-                        | (b5 << 24) | (b6 << 16) | (b7 << 8) | b8));
+                doubleArr[i] = Double.longBitsToDouble( ( (b1 << 56) | (b2 << 48) | (b3 << 40) | (b4 << 32) | (b5 << 24) | (b6 << 16) | (b7 << 8) | b8));
             } else {
-                doubleArr[i] = Double.longBitsToDouble( ( (b8 << 56) | (b7 << 48) | (b6 << 40) | (b5 << 32)
-                        | (b4 << 24) | (b3 << 16) | (b2 << 8) | b1));
+                doubleArr[i] = Double.longBitsToDouble( ( (b8 << 56) | (b7 << 48) | (b6 << 40) | (b5 << 32) | (b4 << 24) | (b3 << 16) | (b2 << 8) | b1));
             }
         }
 
-        return doubleArr;
+        return doubleArr;
+
     }
-    
+
     @Override
-	public int compareTo(FileDicomTag toCompare) {
-        int keyCompare = this.getKey().compareTo(toCompare.getKey());
-        if(keyCompare == 0) {
-        	return getValue(true).toString().compareTo(toCompare.getValue(true).toString());
+    public int compareTo(final FileDicomTag toCompare) {
+        final int keyCompare = this.getKey().compareTo(toCompare.getKey());
+        if (keyCompare == 0) {
+            return getValue(true).toString().compareTo(toCompare.getValue(true).toString());
         } else {
-        	return keyCompare;
+            return keyCompare;
         }
     }
 
