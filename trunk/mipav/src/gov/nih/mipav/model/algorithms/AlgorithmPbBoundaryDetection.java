@@ -1706,11 +1706,12 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         int map1D[];
         double minValue;
         
-        for (y = 0; y < fim.length; y++) {
-        	for (x = 0; x < fim[0].length; x++) {
-        		for (ys = 0; ys < fim[0][0].length; ys++) {
-        			for (xs = 0; xs < fim[0][0][0].length; xs++) {
-        				data[x + y*fim[0].length][ys + xs * fim[0][0].length] = fim[y][x][ys][xs];
+        
+        for (x = 0; x < fim[0].length; x++) {
+        	for (y = 0; y < fim.length; y++) {
+                for (xs = 0; xs < fim[0][0][0].length; xs++) {
+        			for (ys = 0; ys < fim[0][0].length; ys++) {
+        				data[y + x*fim.length][ys + xs * fim[0][0].length] = fim[y][x][ys][xs];
         			}
         		}
         	}
