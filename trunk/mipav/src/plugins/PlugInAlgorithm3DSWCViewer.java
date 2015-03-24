@@ -295,11 +295,14 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 					}
 					
 					if(branchDensity){
+						
+						float hullVolume = convexHullVolumeNew(swcCoordinates, vertexInd, faceVerticies);
+						
 						ArrayList<String> messages = consolidateFilaments(swcCoordinates, connections, maxOrder);
 						float[] branchLengths = recalculateDistances(swcCoordinates, connections);
 						addToMessages(swcCoordinates, messages);
 						
-						float hullVolume = convexHullVolume(swcCoordinates, connections);
+						//float hullVolume = convexHullVolume(swcCoordinates, connections);
 						
 						try{
 							String output = exportStatsToCSV(swcCoordinates, connections, swcFile, messages, branchLengths, -1.0f, hullVolume, maxOrder);
@@ -439,6 +442,15 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 							gcOrder = determineOrder(growthCone, gcConnections, axonIndex[0]);
 						}
 						
+						int[][] tempArray = calculateConvexHull(growthCone, null);
+						int[][] gcFaceVerticies = new int[tempArray.length - 1][];
+						int[] gcVertexInd = tempArray[tempArray.length - 1];
+						for(int i=0;i<gcFaceVerticies.length;i++){
+							gcFaceVerticies[i] = tempArray[i];
+						}
+						
+						float gcHullVolume = convexHullVolumeNew(growthCone, gcVertexInd, gcFaceVerticies);
+						
 						ArrayList<String> gcMessages = consolidateFilaments(growthCone, gcConnections, gcOrder);
 						float[] gcLengths = recalculateDistances(growthCone, gcConnections);
 						addToMessages(growthCone, gcMessages);
@@ -514,7 +526,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 						//System.out.println(gcHullVolumeN);
 						 
 						 */
-						float gcHullVolume = convexHullVolume(growthCone, gcConnections);
+						
+						//float gcHullVolume = convexHullVolume(growthCone, gcConnections);
 						
 						PlugInAlgorithmSWCVolume alg = new PlugInAlgorithmSWCVolume(srcImage, growthCone);
 						alg.run();
@@ -815,7 +828,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 				Vector3f originVec = new Vector3f(originFil.get(originFil.size()-1));
 				Vector3f vecA = new Vector3f(filA.get(filA.size()-1));
 				Vector3f vecB = new Vector3f(filB.get(filB.size()-1));
-				float dist = distanceVectorToPlane(originVec, vecA, vecB, conVec, tipVec);
+				float dist = distanceVectorToPlaneNew(originVec, vecA, vecB, conVec, tipVec);
 				if(dist > 0 && dist < minDist){
 					minDist = dist;
 					minInd = j;
@@ -1106,7 +1119,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		Point3d originPt3d = new Point3d(originPt[0], originPt[1], originPt[2]);
 		ptList.add(originPt3d);
 		
-		for(int i : tips){
+		//for(int i : tips){
+		for(int i=0;i<swcCoordinates.size();i++){
 			ArrayList<float[]> fil = swcCoordinates.get(i);
 			float[] pt = fil.get(fil.size()-1);
 			Point3d pt3d = new Point3d(pt[0], pt[1], pt[2]);
@@ -1131,7 +1145,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 			faceVerticies[i] = faceVerticiesA[i];
 		}
 		
-		int[] temp = new int[tips.size()+1];
+		int[] temp = new int[verticies.length];
 		
 		int cnt = 0;
 		for(int i=1;i<verticies.length;i++){
@@ -1145,7 +1159,9 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 				}
 				lPt = ptList.get(cnt);
 			}
-			temp[i] = tips.get(cnt-1);
+			//temp[i] = tips.get(cnt-1);
+			temp[i] = cnt-1;
+			
 		}
 		
 		faceVerticies[faceVerticies.length-1] = temp;
@@ -1448,6 +1464,13 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		return volume;
 	}
 
+	/**
+	 * For unconsolidated filaments, not consolidated ones
+	 * @param swcCoordinates
+	 * @param vertexInd
+	 * @param faceVerticies
+	 * @return
+	 */
 	@SuppressWarnings("unused")
 	private float convexHullVolumeNew(ArrayList<ArrayList<float[]>> swcCoordinates, int[] vertexInd, int[][] faceVerticies){
 		
@@ -1825,6 +1848,30 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 			return Float.NEGATIVE_INFINITY;
 		}
 		
+	}
+	
+	private float distanceVectorToPlaneNew(Vector3f originPt, Vector3f vecA, Vector3f vecB, Vector3f vecC, Vector3f headPt){
+		Vector3f a = Vector3f.sub(vecA, originPt);
+		Vector3f b = Vector3f.sub(vecB, originPt);
+		Vector3f pt = Vector3f.sub(headPt, originPt);
+		//Vector vecC is already relative since it contains direction information
+		
+		Vector3f d = Vector3f.cross(a, b);
+		float mag = d.length();
+		float num = d.dot(pt);
+		float dist = num/mag;
+		
+		return Math.abs(dist);
+		
+		/*if(dist > 0){
+			d = d.neg();
+		}
+		float angle = d.angle(vecC);
+		if(angle <= Math.PI/2){
+			return dist;
+		}else{
+			return Float.NEGATIVE_INFINITY;
+		}*/
 	}
 
 	private String exportStatsToCSV(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<ArrayList<Integer>> connections,
