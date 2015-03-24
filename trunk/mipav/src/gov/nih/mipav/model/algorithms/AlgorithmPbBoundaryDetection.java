@@ -4105,6 +4105,11 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         tgL = new double[yDim][xDim];
         tgR = new double[yDim][xDim];
         if (usechi2) {
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			tg[y][x] = 0.0;
+        		}
+        	}
             for (i = 1; i <= ntex; i++) {
             	for (y = 0; y < yDim; y++) {
             		for (x = 0; x < xDim; x++) {
