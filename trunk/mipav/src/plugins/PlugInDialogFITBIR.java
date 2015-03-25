@@ -91,6 +91,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final String CSV_OUTPUT_DELIM = ",";
 
+    private static final String BROWSE_NONIMG_DELIM = ";;;;";
+
     private static final String MULTI_SELECT_VALUE_DELIM = ";";
 
     private static final int MULTI_SELECT_VISIBLE_ROWS = 5;
@@ -216,7 +218,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.31";
+    private static final String pluginVersion = "0.32";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -1190,15 +1192,40 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 deVal.setValue(hashCode);
                             } else if (deVal.getDataElementInfo().getType() == DataType.FILE && !deVal.getValue().equals("")) {
                                 final String srcFileValue = deVal.getValue();
-                                final File srcFile = new File(srcFileValue);
-                                try {
-                                    final File destFile = new File(outputSubDir + outputFileNameBase + "_" + srcFile.getName());
-                                    printlnToLog("Copying attached file into output directory:\t" + destFile.getAbsolutePath());
-                                    FileUtils.copyFile(srcFile, destFile);
-                                    deVal.setValue(destFile.getAbsolutePath());
-                                } catch (final IOException e) {
-                                    MipavUtil.displayError("Unable to copy file into output directory");
-                                    e.printStackTrace();
+
+                                if (srcFileValue.contains(BROWSE_NONIMG_DELIM)) {
+                                    // if the user selected multiple files, zip them all up
+                                    try {
+                                        final String[] filePaths = srcFileValue.split(BROWSE_NONIMG_DELIM);
+                                        final String newZipPath = outputSubDir + outputFileNameBase + "_" + group.getName() + "_" + repeat.getRepeatNumber()
+                                                + "_" + deVal.getName() + ".zip";
+                                        printlnToLog("Creating ZIP file:\t" + newZipPath);
+                                        final List<String> filePathList = new ArrayList<String>();
+                                        for (final String file : filePaths) {
+                                            printlnToLog("Adding file to ZIP:\t" + file);
+                                            filePathList.add(file);
+                                        }
+                                        makeZipFile(newZipPath, filePathList);
+
+                                        // now that the zip file is created, set the de value to the zip file path
+                                        deVal.setValue(newZipPath);
+                                    } catch (final IOException ioe) {
+                                        ioe.printStackTrace();
+                                        MipavUtil.displayError("Unable to write files to ZIP package:\n" + ioe.getMessage());
+                                        continue;
+                                    }
+                                } else {
+                                    // only one file selected; copy it
+                                    final File srcFile = new File(srcFileValue);
+                                    try {
+                                        final File destFile = new File(outputSubDir + outputFileNameBase + "_" + srcFile.getName());
+                                        printlnToLog("Copying attached file into output directory:\t" + destFile.getAbsolutePath());
+                                        FileUtils.copyFile(srcFile, destFile);
+                                        deVal.setValue(destFile.getAbsolutePath());
+                                    } catch (final IOException e) {
+                                        MipavUtil.displayError("Unable to copy file into output directory");
+                                        e.printStackTrace();
+                                    }
                                 }
                             }
                         }
@@ -5561,15 +5588,21 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 } else {
                     final JFileChooser chooser = new JFileChooser();
                     chooser.setDialogTitle("Choose file");
+                    chooser.setMultiSelectionEnabled(true);
                     chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
                     final int returnValue = chooser.showOpenDialog(this);
                     if (returnValue == JFileChooser.APPROVE_OPTION) {
-                        final File file = chooser.getSelectedFile();
+                        final File[] files = chooser.getSelectedFiles();
+
+                        String allFilePaths = files[0].getAbsolutePath();
+                        for (int i = 1; i < files.length; i++) {
+                            allFilePaths += BROWSE_NONIMG_DELIM + files[i].getAbsolutePath();
+                        }
 
                         for (final DataElementValue deVal : fsData.getGroupRepeat(groupName, repeatNum).getDataElements()) {
                             if (deVal.getName().equalsIgnoreCase(deName)) {
                                 final JTextField tf = (JTextField) deVal.getComp();
-                                tf.setText(file.getAbsolutePath());
+                                tf.setText(allFilePaths);
                                 tf.setEnabled(false);
                                 break;
                             }
