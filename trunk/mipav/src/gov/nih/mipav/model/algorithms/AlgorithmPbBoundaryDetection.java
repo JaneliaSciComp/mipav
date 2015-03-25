@@ -4920,7 +4920,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         		 if (v > sz*sz) {
         			 continue;
         		 }
-        		 f[(v-1)/sz][(v-1)%sz] += fprecursor[y][x];
+        		 f[(v-1)%sz][(v-1)/sz] += fprecursor[y][x];
         	 }
          }
          
