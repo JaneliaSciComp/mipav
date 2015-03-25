@@ -4906,6 +4906,11 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         	 }
          }
          // Accumulate the samples into each bin
+         for (y = 0; y < sz; y++) {
+        	 for (x = 0; x < sz; x++) {
+        	     f[y][x] = 0.0;	 
+        	 }
+         }
          for (y = 0; y < samples; y++) {
         	 for (x = 0; x < samples; x++) {
         		 v = membership[y][x];
