@@ -4902,7 +4902,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
          fprecursor = new double[samples][samples];
          for (y = 0; y < samples; y++) {
         	 for (x = 0; x < samples; x++) {
-        	     fprecursor[y][x] = fx[xi[y][x]] * fy[yi[y][x]]; 
+        	     fprecursor[y][x] = fx[xi[y][x]-1] * fy[yi[y][x]-1]; 
         	 }
          }
          // Accumulate the samples into each bin
