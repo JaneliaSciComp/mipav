@@ -1224,9 +1224,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 			greenValue = 0.5f;
 			blueValue = 0.0f;
 		} else {
-			redValue = (float) (1.0 / 3.0);
-			greenValue = redValue;
-			blueValue = redValue;
+			redValue = 0.2989f;
+			greenValue = 0.5870f;
+			blueValue = 0.1140f;
 
 		}
 		maxR = (float) inputImage.getMaxR();
@@ -1333,10 +1333,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
   				greenValue = 0.5f;
   				blueValue = 0.0f;
   			} else {
-  				redValue = (float) (1.0 / 3.0);
-  				greenValue = redValue;
-  				blueValue = redValue;
-
+  				redValue = 0.2989f;
+  				greenValue = 0.5870f;
+  				blueValue = 0.1140f;
   			}
   			maxR = (float) srcImage.getMaxR();
   			maxG = (float) srcImage.getMaxG();
@@ -1437,10 +1436,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 				greenValue = 0.5f;
 				blueValue = 0.0f;
 			} else {
-				redValue = (float) (1.0 / 3.0);
-				greenValue = redValue;
-				blueValue = redValue;
-
+				redValue = 0.2989f;
+				greenValue = 0.5870f;
+				blueValue = 0.1140f;
 			}
 			maxR = (float) srcImage.getMaxR();
 			maxG = (float) srcImage.getMaxG();
@@ -1591,10 +1589,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
   				greenValue = 0.5f;
   				blueValue = 0.0f;
   			} else {
-  				redValue = (float) (1.0 / 3.0);
-  				greenValue = redValue;
-  				blueValue = redValue;
-
+  				redValue = 0.2989f;
+  				greenValue = 0.5870f;
+  				blueValue = 0.1140f;
   			}
   			maxR = (float) srcImage.getMaxR();
   			maxG = (float) srcImage.getMaxG();
