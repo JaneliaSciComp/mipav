@@ -8,6 +8,8 @@ import java.io.RandomAccessFile;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
+import java.util.PriorityQueue;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
@@ -790,6 +792,197 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		axonUseLength = useLength;
 	}
 	
+	
+	private Vector3f planeVectorIntersection(Vector3f tip, Vector3f ptA, Vector3f ptB, Vector3f vecOrigin, Vector3f vecEnd){
+		
+		Vector3f planeA = Vector3f.sub(ptA, tip);
+		Vector3f planeB = Vector3f.sub(ptB, tip);
+		Vector3f normal = Vector3f.cross(planeA, planeB);
+		
+		Vector3f vec = Vector3f.sub(vecEnd, vecOrigin);
+		
+		Vector3f c = Vector3f.sub(vecOrigin, tip);
+		//Vector3f nc = Vector3f.mult(normal, c);
+		//Vector3f nd = Vector3f.mult(normal, vec);
+		
+		float ncd = c.dot(normal);
+		float ndd = vec.dot(normal);
+		
+		//return nd.sum() / nc.sum();
+		
+		float t = -ncd / ndd;
+		float epsilon = 0.01f;//We can handle a little overlap due to floating point error
+		if(t > epsilon && t < 1-epsilon){
+			return vecOrigin.add(vec.scale(t));
+		}
+		
+		return null;
+	}
+	
+	private boolean faceFilamentIntersection(Vector3f tip, Vector3f ptA, Vector3f ptB, Vector3f intersect){
+		
+		Vector3f u = Vector3f.sub(ptA, tip);
+		Vector3f v = Vector3f.sub(ptB, tip);
+		//Vector3f i = intersect;
+		Vector3f i = Vector3f.sub(intersect, tip);
+		
+		float scale = u.X * v.Y - v.X * u.Y;
+		float a = (i.X * v.Y - i.Y * v.X)/scale;
+		float b = (i.Y * u.X - i.X * u.Y)/scale;
+		
+		if(a >= 0 && b >= 0)
+			return true;
+		
+		return false;
+	}
+	
+	
+	
+	private int[][] addBranchesToHullNew(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<Integer> tips, int[][] hull, int[] verticies){
+		
+		append("Attempting to add all tips to hull", blackText);
+		ArrayList<Integer> missing = new ArrayList<Integer>(tips);
+		//Find which tips are not included in the hull
+		for(int i=0;i<verticies.length;i++){
+			if(missing.contains(verticies[i])){
+				missing.remove(new Integer(verticies[i]));
+			}
+		}
+		
+		//Convert hull and verticies to ArrayLists so that they can grow
+		ArrayList<int[]> hullList = new ArrayList<int[]>();
+		ArrayList<Integer> vertexList = new ArrayList<Integer>();
+		for(int i=0;i<hull.length;i++){
+			hullList.add(hull[i]);
+		}
+		for(int i=0;i<verticies.length;i++){
+			vertexList.add(verticies[i]);
+		}
+		Comparator<Pair> compare = new Comparator<Pair>(){
+			@Override
+			public int compare(Pair o1, Pair o2) {
+				float f1 = o1.volume;
+				float f2 = o2.volume;
+				if(f1 > f2)
+					return -1;
+				else if(f1 < f2)
+					return 1;
+				return 0;
+			}
+		};
+		
+		ArrayList<PriorityQueue<Pair>> newVolumes = new ArrayList<PriorityQueue<Pair>>();
+		
+		int lastSize = 0;
+		
+		while(lastSize != missing.size()){
+			
+			lastSize = missing.size();
+			newVolumes.clear();
+				
+			for(int i=0;i<missing.size();i++){
+				int tipNum = missing.get(i);
+				PriorityQueue<Pair> pq = new PriorityQueue<Pair>(10, compare);
+				newVolumes.add(pq);
+				ArrayList<float[]> fil = swcCoordinates.get(tipNum);
+				Vector3f tipVec = new Vector3f(fil.get(fil.size()-1));
+				for(int j=0;j<hullList.size();j++){
+					int[] hullFace = hullList.get(j);
+					fil = swcCoordinates.get(vertexList.get(hullFace[0]));
+					Vector3f ptA = new Vector3f(fil.get(fil.size()-1));
+					fil = swcCoordinates.get(vertexList.get(hullFace[1]));
+					Vector3f ptB = new Vector3f(fil.get(fil.size()-1));
+					fil = swcCoordinates.get(vertexList.get(hullFace[2]));
+					Vector3f ptC = new Vector3f(fil.get(fil.size()-1));
+					boolean add = true;
+					for(int k=0;k<swcCoordinates.size();k++){
+						fil = swcCoordinates.get(k);
+						Vector3f vecOrigin = new Vector3f(fil.get(0));
+						Vector3f vecEnd = new Vector3f(fil.get(fil.size()-1));
+						Vector3f intersect = planeVectorIntersection(tipVec, ptA, ptB, vecOrigin, vecEnd);
+						if(intersect != null){
+							if(faceFilamentIntersection(tipVec, ptA, ptB, intersect)){
+								add = false;
+								break;
+							}
+						}
+						intersect = planeVectorIntersection(tipVec, ptA, ptC, vecOrigin, vecEnd);
+						if(intersect != null){
+							if(faceFilamentIntersection(tipVec, ptA, ptC, intersect)){
+								add = false;
+								break;
+							}
+						}
+						intersect = planeVectorIntersection(tipVec, ptB, ptC, vecOrigin, vecEnd);
+						if(intersect != null){
+							if(faceFilamentIntersection(tipVec, ptB, ptC, intersect)){
+								add = false;
+								break;
+							}
+						}
+					}
+					if(add){
+						float volume = pyramidVolume(tipVec, ptA, ptB, ptC);
+						pq.add(new Pair(hullFace, volume));
+					}
+				}
+			}
+		
+			//Now here we have all possible faces that are valid and are ordered by volume
+			//for a given tip. Should we have an order in which to start adding in tips?
+			
+			
+			
+			//If you do any sorting, put right above here
+			Iterator<Integer> intIter = missing.iterator();
+			Iterator<PriorityQueue<Pair>> pqIter = newVolumes.iterator();
+			while(intIter.hasNext()){
+				int tip = intIter.next();
+				PriorityQueue<Pair> pq = pqIter.next();
+				Pair pair = pq.poll();
+				while(pair != null && !hullList.contains(pair.face)){
+					pair = pq.poll();
+				}
+				if(pair != null){
+					int[] face = pair.face;
+					hullList.remove(face);
+					int vertexSize = vertexList.size();
+					vertexList.add(tip);
+					hullList.add(new int[]{face[0], face[1], vertexSize});
+					hullList.add(new int[]{face[0], face[2], vertexSize});
+					hullList.add(new int[]{face[1], face[2], vertexSize});
+					intIter.remove();
+					pqIter.remove();
+				}
+			}
+		}
+		
+		int[][] outArray = new int[hullList.size()+1][];
+		for(int i=0;i<hullList.size();i++){
+			outArray[i] = hullList.get(i);
+		}
+		int[] vertexArray = new int[vertexList.size()];
+		for(int i=0;i<vertexArray.length;i++){
+			vertexArray[i] = vertexList.get(i);
+		}
+		outArray[hullList.size()] = vertexArray;
+		
+		return outArray;
+	}
+	
+	private float pyramidVolume(Vector3f top, Vector3f ptA, Vector3f ptB, Vector3f ptC){
+		
+		Vector3f vecA = Vector3f.sub(ptA, top);
+		Vector3f vecB = Vector3f.sub(ptB, top);
+		Vector3f vecC = Vector3f.sub(ptC, top);
+		Vector3f axb = Vector3f.cross(vecA, vecB);
+		
+		//Vector triple product can be used to determine the volume of a parallelohedran
+		float volume = Math.abs(axb.dot(vecC))/6.0f;
+		
+		return volume;
+	}
+	
 	private int[][] addBranchesToHull(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<Integer> tips, int[][] hull, int[] verticies){
 		
 		ArrayList<Integer> missing = new ArrayList<Integer>(tips);
@@ -1166,7 +1359,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		
 		faceVerticies[faceVerticies.length-1] = temp;
 		
-		//faceVerticies = addBranchesToHull(swcCoordinates, tips, faceVerticiesA, temp);
+		//faceVerticies = addBranchesToHullNew(swcCoordinates, tips, faceVerticiesA, temp);
 		
 		return faceVerticies;
 		
@@ -1471,7 +1664,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	 * @param faceVerticies
 	 * @return
 	 */
-	@SuppressWarnings("unused")
 	private float convexHullVolumeNew(ArrayList<ArrayList<float[]>> swcCoordinates, int[] vertexInd, int[][] faceVerticies){
 		
 		float volume = 0;
@@ -2535,5 +2727,15 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	public void windowActivated(WindowEvent e) {}
 	@Override
 	public void windowDeactivated(WindowEvent e) {}
+	
+	private class Pair {
+		private int[] face;
+		private float volume;
+		
+		private Pair(int[] hullFace, float faceVolume){
+			face = hullFace;
+			volume = faceVolume;
+		}
+	}
 
 }
