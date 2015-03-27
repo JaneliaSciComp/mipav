@@ -8,7 +8,6 @@ import java.io.RandomAccessFile;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.PriorityQueue;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
@@ -857,21 +856,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		for(int i=0;i<verticies.length;i++){
 			vertexList.add(verticies[i]);
 		}
-		Comparator<Pair> compare = new Comparator<Pair>(){
-			@Override
-			public int compare(Pair o1, Pair o2) {
-				//float f1 = o1.volume;
-				//float f2 = o2.volume;
-				Float f1 = o1.volume;
-				Float f2 = o2.volume;
-				return f1.compareTo(f2);
-				/*if(f1 > f2)
-					return -1;
-				else if(f1 < f2)
-					return 1;
-				return 0;*/
-			}
-		};
 		
 		ArrayDeque<Integer> deque = new ArrayDeque<Integer>(missing);
 		int factor = 2;
@@ -879,7 +863,9 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		int cnt = 0;
 		while(!deque.isEmpty() && cnt < maxIterations){
 			cnt++;
-			PriorityQueue<Pair> pq = new PriorityQueue<Pair>(10, compare);
+			float minDist = Float.MAX_VALUE;
+			int[] minHull = null;
+			//PriorityQueue<Pair> pq = new PriorityQueue<Pair>(10, compare);
 			int tipNum = deque.pop();ArrayList<float[]> fil = swcCoordinates.get(tipNum);
 			Vector3f tipVec = new Vector3f(fil.get(fil.size()-1));
 			for(int j=0;j<hullList.size();j++){
@@ -918,17 +904,18 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 					}
 				}
 				if(add){
-					//float volume = pyramidVolume(tipVec, ptA, ptB, ptC);
-					float volume = distanceVectorToPlaneNew(ptA, ptB, ptC, tipVec);
-					pq.add(new Pair(hullFace, volume));
+					float distance = distanceVectorToPlaneNew(ptA, ptB, ptC, tipVec);
+					if(distance < minDist){
+						minDist = distance;
+						minHull = hullFace;
+					}
 				}
 			}
 			
-			if(pq.isEmpty()){
+			if(minHull == null){
 				deque.addLast(tipNum);
 			}else{
-				Pair pair = pq.poll();
-				int[] face = pair.face;
+				int[] face = minHull;
 				hullList.remove(face);
 				int vertexSize = vertexList.size();
 				vertexList.add(tipNum);
@@ -942,93 +929,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		if(!deque.isEmpty()){
 			System.out.println("Fell through, a tip was not added");
 		}
-		
-		/*ArrayList<PriorityQueue<Pair>> newVolumes = new ArrayList<PriorityQueue<Pair>>();
-		
-		int lastSize = 0;
-		
-		while(lastSize != missing.size()){
-			
-			lastSize = missing.size();
-			newVolumes.clear();
-				
-			for(int i=0;i<missing.size();i++){
-				int tipNum = missing.get(i);
-				PriorityQueue<Pair> pq = new PriorityQueue<Pair>(10, compare);
-				newVolumes.add(pq);
-				ArrayList<float[]> fil = swcCoordinates.get(tipNum);
-				Vector3f tipVec = new Vector3f(fil.get(fil.size()-1));
-				for(int j=0;j<hullList.size();j++){
-					int[] hullFace = hullList.get(j);
-					fil = swcCoordinates.get(vertexList.get(hullFace[0]));
-					Vector3f ptA = new Vector3f(fil.get(fil.size()-1));
-					fil = swcCoordinates.get(vertexList.get(hullFace[1]));
-					Vector3f ptB = new Vector3f(fil.get(fil.size()-1));
-					fil = swcCoordinates.get(vertexList.get(hullFace[2]));
-					Vector3f ptC = new Vector3f(fil.get(fil.size()-1));
-					boolean add = true;
-					for(int k=0;k<swcCoordinates.size();k++){
-						fil = swcCoordinates.get(k);
-						Vector3f vecOrigin = new Vector3f(fil.get(0));
-						Vector3f vecEnd = new Vector3f(fil.get(fil.size()-1));
-						Vector3f intersect = planeVectorIntersection(tipVec, ptA, ptB, vecOrigin, vecEnd);
-						if(intersect != null){
-							if(faceFilamentIntersection(tipVec, ptA, ptB, intersect)){
-								add = false;
-								break;
-							}
-						}
-						intersect = planeVectorIntersection(tipVec, ptA, ptC, vecOrigin, vecEnd);
-						if(intersect != null){
-							if(faceFilamentIntersection(tipVec, ptA, ptC, intersect)){
-								add = false;
-								break;
-							}
-						}
-						intersect = planeVectorIntersection(tipVec, ptB, ptC, vecOrigin, vecEnd);
-						if(intersect != null){
-							if(faceFilamentIntersection(tipVec, ptB, ptC, intersect)){
-								add = false;
-								break;
-							}
-						}
-					}
-					if(add){
-						//float volume = pyramidVolume(tipVec, ptA, ptB, ptC);
-						float volume = distanceVectorToPlaneNew(ptA, ptB, ptC, tipVec);
-						pq.add(new Pair(hullFace, volume));
-					}
-				}
-			}
-		
-			//Now here we have all possible faces that are valid and are ordered by volume
-			//for a given tip. Should we have an order in which to start adding in tips?
-			
-			
-			
-			//If you do any sorting, put right above here
-			Iterator<Integer> intIter = missing.iterator();
-			Iterator<PriorityQueue<Pair>> pqIter = newVolumes.iterator();
-			while(intIter.hasNext()){
-				int tip = intIter.next();
-				PriorityQueue<Pair> pq = pqIter.next();
-				Pair pair = pq.poll();
-				while(pair != null && !hullList.contains(pair.face)){
-					pair = pq.poll();
-				}
-				if(pair != null){
-					int[] face = pair.face;
-					hullList.remove(face);
-					int vertexSize = vertexList.size();
-					vertexList.add(tip);
-					hullList.add(new int[]{face[0], face[1], vertexSize});
-					hullList.add(new int[]{face[0], face[2], vertexSize});
-					hullList.add(new int[]{face[1], face[2], vertexSize});
-					intIter.remove();
-					pqIter.remove();
-				}
-			}
-		}*/
 		
 		int[][] outArray = new int[hullList.size()+1][];
 		for(int i=0;i<hullList.size();i++){
@@ -2800,15 +2700,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	public void windowActivated(WindowEvent e) {}
 	@Override
 	public void windowDeactivated(WindowEvent e) {}
-	
-	private class Pair {
-		private int[] face;
-		private float volume;
-		
-		private Pair(int[] hullFace, float faceVolume){
-			face = hullFace;
-			volume = faceVolume;
-		}
-	}
+
 
 }
