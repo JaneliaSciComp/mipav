@@ -44,6 +44,8 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
 	
 	private static final int TG = 5;
 	
+	private static final int GM = 6;
+	
 	private int gradientType = BG;
 	
 	private static final int GRAY_PRESENTATION = 1;
@@ -57,6 +59,10 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
 	private double highRadius = 0.02;
 	
 	private int numOrientations = 8;
+	
+	private double sigma = 2.0;
+	
+	private JLabel labelOrientations;
 	
 	private JTextField textOrientations;
 
@@ -73,6 +79,8 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
     
     private JRadioButton cgtgButton;
     
+    private JRadioButton gmButton;
+    
     private JRadioButton tgButton;
     
     private String smooth = "savgol";
@@ -84,6 +92,20 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
     private JRadioButton gaussianButton;
     
     private JRadioButton noneButton;
+    
+    private ButtonGroup sigmaGroup;
+    
+    private JRadioButton sigma1Button;
+    
+    private JRadioButton sigma2Button;
+    
+    private JRadioButton sigma4Button;
+    
+    private JRadioButton sigma8Button;
+    
+    private JRadioButton sigma16Button;
+    
+    private JPanel sigmaPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -113,6 +135,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
+        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
@@ -123,6 +146,28 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
             //MipavUtil.showHelp("");
         } else if (command.equals("Cancel")) {
             dispose();
+        } else if ((source == bgButton) || (source == bgtgButton) || (source == cgButton) || (source == cgtgButton) ||
+        		(source == gmButton) || (source == tgButton)) {
+        	if (gmButton.isSelected()) {
+        		sigma1Button.setEnabled(true);
+        		sigma2Button.setEnabled(true);
+        		sigma4Button.setEnabled(true);
+        		sigma8Button.setEnabled(true);
+        		sigma16Button.setEnabled(true);
+        		sigmaPanel.setEnabled(true);
+        		labelOrientations.setEnabled(false);
+        		textOrientations.setEnabled(false);
+        	}
+        	else {
+        		sigma1Button.setEnabled(false);
+        		sigma2Button.setEnabled(false);
+        		sigma4Button.setEnabled(false);
+        		sigma8Button.setEnabled(false);
+        		sigma16Button.setEnabled(false);
+        		sigmaPanel.setEnabled(false);
+        		labelOrientations.setEnabled(true);
+        		textOrientations.setEnabled(true);
+        	}
         } else {
             super.actionPerformed(event);
         }
@@ -227,7 +272,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
 
             // Make algorithm
             pbAlgo = new AlgorithmPbBoundaryDetection(resultImage, image, gradientType, presentation, lowRadius, highRadius,
-            		numOrientations, smooth);
+            		numOrientations, smooth, sigma);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -279,6 +324,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         numOrientations = scriptParameters.getParams().getInt("num_orientations");
         gradientType = scriptParameters.getParams().getInt("grad_type");
         smooth = scriptParameters.getParams().getString("smooth_type");
+        sigma = scriptParameters.getParams().getDouble("sig");
     }
 
     /**
@@ -290,6 +336,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         scriptParameters.getParams().put(ParameterFactory.newParameter("num_orientations", numOrientations));
         scriptParameters.getParams().put(ParameterFactory.newParameter("grad_type", gradientType));
         scriptParameters.getParams().put(ParameterFactory.newParameter("smooth_type", smooth));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("sig", sigma));
     }
 
     /**
@@ -306,7 +353,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         JPanel paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setBorder(buildTitledBorder("Parameters"));
         
-        JLabel labelOrientations = new JLabel("Number of orientations");
+        labelOrientations = new JLabel("Number of orientations");
         labelOrientations.setForeground(Color.black);
         labelOrientations.setFont(serif12);
         gbc.gridx = 0;
@@ -319,6 +366,13 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         gbc.gridx = 1;
         paramPanel.add(textOrientations, gbc);
         
+        JPanel gradientPanel = new JPanel(new GridBagLayout());
+        gradientPanel.setBorder(buildTitledBorder("Gradient type"));
+        GridBagConstraints gbc2 = new GridBagConstraints();
+        gbc2.weightx = 1;
+        gbc2.anchor = GridBagConstraints.WEST;
+        gbc2.fill = GridBagConstraints.HORIZONTAL;
+        
         gradientGroup = new ButtonGroup();
         if (image.isColorImage()) {
             bgButton = new JRadioButton("Brightness gradient", false);
@@ -328,18 +382,20 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         }
         bgButton.setFont(serif12);
         bgButton.setForeground(Color.black);
+        bgButton.addActionListener(this);
         gradientGroup.add(bgButton);
-        gbc.gridy++;
-        gbc.gridx = 0;
-        paramPanel.add(bgButton, gbc);
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        gradientPanel.add(bgButton, gbc2);
         
         bgtgButton = new JRadioButton("Brightness gradient texture gradient", false);
         bgtgButton.setFont(serif12);
         bgtgButton.setForeground(Color.black);
+        bgtgButton.addActionListener(this);
         gradientGroup.add(bgtgButton);
-        gbc.gridy++;
-        gbc.gridx = 0;
-        paramPanel.add(bgtgButton, gbc);
+        gbc2.gridy++;
+        gbc2.gridx = 0;
+        gradientPanel.add(bgtgButton, gbc2);
         
         if (image.isColorImage()) {
             cgButton = new JRadioButton("Color gradient", true);
@@ -350,10 +406,11 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         }
         cgButton.setFont(serif12);
         cgButton.setForeground(Color.black);
+        cgButton.addActionListener(this);
         gradientGroup.add(cgButton);
-        gbc.gridy++;
-        gbc.gridx = 0;
-        paramPanel.add(cgButton, gbc);
+        gbc2.gridy++;
+        gbc2.gridx = 0;
+        gradientPanel.add(cgButton, gbc2);
         
         cgtgButton = new JRadioButton("Color gradient texture gradient", false);
         if (!image.isColorImage()) {
@@ -361,44 +418,129 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         }
         cgtgButton.setFont(serif12);
         cgtgButton.setForeground(Color.black);
+        cgtgButton.addActionListener(this);
         gradientGroup.add(cgtgButton);
-        gbc.gridy++;
-        gbc.gridx = 0;
-        paramPanel.add(cgtgButton, gbc);
+        gbc2.gridy++;
+        gbc2.gridx = 0;
+        gradientPanel.add(cgtgButton, gbc2);
+        
+        gmButton = new JRadioButton("Gradient magnitude", false);
+        gmButton.setFont(serif12);
+        gmButton.setForeground(Color.black);
+        gmButton.addActionListener(this);
+        gradientGroup.add(gmButton);
+        gbc2.gridy++;
+        gbc2.gridx = 0;
+        gradientPanel.add(gmButton, gbc2);
+        
         
         tgButton = new JRadioButton("Texture gradient", false);
         tgButton.setFont(serif12);
         tgButton.setForeground(Color.black);
+        tgButton.addActionListener(this);
         gradientGroup.add(tgButton);
-        gbc.gridy++;
+        gbc2.gridy++;
+        gbc2.gridx = 0;
+        gradientPanel.add(tgButton, gbc2);
+        
         gbc.gridx = 0;
-        paramPanel.add(tgButton, gbc);
+        gbc.gridy++;
+        paramPanel.add(gradientPanel, gbc);
+        
+        JPanel smoothPanel = new JPanel(new GridBagLayout());
+        smoothPanel.setBorder(buildTitledBorder("Smooothing"));
+        GridBagConstraints gbc3 = new GridBagConstraints();
+        gbc3.weightx = 1;
+        gbc3.anchor = GridBagConstraints.WEST;
+        gbc3.fill = GridBagConstraints.HORIZONTAL;
+        
         
         smoothGroup = new ButtonGroup();
         savgolButton = new JRadioButton("Savitsky-Golay smoothing", true);
         savgolButton.setFont(serif12);
         savgolButton.setForeground(Color.black);
         smoothGroup.add(savgolButton);
-        gbc.gridy++;
-        gbc.gridx = 0;
-        paramPanel.add(savgolButton, gbc);
+        gbc3.gridx = 0;
+        gbc3.gridy = 0;
+        smoothPanel.add(savgolButton, gbc3);
         
         gaussianButton = new JRadioButton("Gaussian smoothing", false);
         gaussianButton.setFont(serif12);
         gaussianButton.setForeground(Color.black);
         smoothGroup.add(gaussianButton);
-        gbc.gridy++;
-        gbc.gridx = 0;
-        paramPanel.add(gaussianButton, gbc);
+        gbc3.gridy++;
+        gbc3.gridx = 0;
+        smoothPanel.add(gaussianButton, gbc3);
         
         noneButton = new JRadioButton("No smoothing", false);
         noneButton.setFont(serif12);
         noneButton.setForeground(Color.black);
         smoothGroup.add(noneButton);
-        gbc.gridy++;
-        gbc.gridx = 0;
-        paramPanel.add(noneButton, gbc);
+        gbc3.gridy++;
+        gbc3.gridx = 0;
+        smoothPanel.add(noneButton, gbc3);
 
+        gbc.gridx = 0;
+        gbc.gridy++;
+        paramPanel.add(smoothPanel, gbc);
+        
+        sigmaPanel = new JPanel(new GridBagLayout());
+        sigmaPanel.setBorder(buildTitledBorder("Sigma"));
+        sigmaPanel.setEnabled(false);
+        GridBagConstraints gbc4 = new GridBagConstraints();
+        gbc4.weightx = 1;
+        gbc4.anchor = GridBagConstraints.WEST;
+        gbc4.fill = GridBagConstraints.HORIZONTAL;
+        
+        sigmaGroup = new ButtonGroup();
+        sigma1Button = new JRadioButton("sigma = 1.0", false);
+        sigma1Button.setFont(serif12);
+        sigma1Button.setForeground(Color.black);
+        sigma1Button.setEnabled(false);
+        sigmaGroup.add(sigma1Button);
+        gbc4.gridx = 0;
+        gbc4.gridy = 0;
+        sigmaPanel.add(sigma1Button, gbc4);
+        
+        sigma2Button = new JRadioButton("sigma = 2.0", true);
+        sigma2Button.setFont(serif12);
+        sigma2Button.setForeground(Color.black);
+        sigma2Button.setEnabled(false);
+        sigmaGroup.add(sigma2Button);
+        gbc4.gridx = 0;
+        gbc4.gridy++;
+        sigmaPanel.add(sigma2Button, gbc4);
+        
+        sigma4Button = new JRadioButton("sigma = 4.0", false);
+        sigma4Button.setFont(serif12);
+        sigma4Button.setForeground(Color.black);
+        sigma4Button.setEnabled(false);
+        sigmaGroup.add(sigma4Button);
+        gbc4.gridx = 0;
+        gbc4.gridy++;
+        sigmaPanel.add(sigma4Button, gbc4);
+        
+        sigma8Button = new JRadioButton("sigma = 8.0", false);
+        sigma8Button.setFont(serif12);
+        sigma8Button.setForeground(Color.black);
+        sigma8Button.setEnabled(false);
+        sigmaGroup.add(sigma8Button);
+        gbc4.gridx = 0;
+        gbc4.gridy++;
+        sigmaPanel.add(sigma8Button, gbc4);
+        
+        sigma16Button = new JRadioButton("sigma = 16.0", false);
+        sigma16Button.setFont(serif12);
+        sigma16Button.setForeground(Color.black);
+        sigma16Button.setEnabled(false);
+        sigmaGroup.add(sigma16Button);
+        gbc4.gridx = 0;
+        gbc4.gridy++;
+        sigmaPanel.add(sigma16Button, gbc4);
+        
+        gbc.gridx = 0;
+        gbc.gridy++;
+        paramPanel.add(sigmaPanel, gbc);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -427,17 +569,6 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
 
         String tmpStr;
         
-        tmpStr = textOrientations.getText();
-
-        if (testParameter(tmpStr, 1.0, 100.0)) {
-            numOrientations = Integer.valueOf(tmpStr).intValue();
-        } else {
-            textOrientations.requestFocus();
-            textOrientations.selectAll();
-
-            return false;
-        }
-        
         if (bgButton.isSelected()) {
         	gradientType = BG;
         }
@@ -451,9 +582,43 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         else if (cgtgButton.isSelected()) {
         	gradientType = CGTG;
         }
-        else {
+        else if (tgButton.isSelected()){
         	gradientType = TG;
         	lowRadius = 0.02;
+        }
+        else if (gmButton.isSelected()) {
+        	gradientType = GM;
+        }
+        
+        if (gradientType != GM) {
+	        tmpStr = textOrientations.getText();
+	
+	        if (testParameter(tmpStr, 1.0, 100.0)) {
+	            numOrientations = Integer.valueOf(tmpStr).intValue();
+	        } else {
+	            textOrientations.requestFocus();
+	            textOrientations.selectAll();
+	
+	            return false;
+	        }
+        }
+        
+        if (gradientType == GM) {
+             if (sigma1Button.isSelected()) {
+            	 sigma = 1.0;
+             }
+             else if (sigma2Button.isSelected()) {
+                 sigma = 2.0;
+             }
+             else if (sigma4Button.isSelected()) {
+                 sigma = 4.0;
+             }
+             else if (sigma8Button.isSelected()) {
+                 sigma = 8.0;
+             }
+             else if (sigma16Button.isSelected()) {
+                 sigma = 16.0;
+             }
         }
         
         if (savgolButton.isSelected()) {
@@ -523,6 +688,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
             table.put(new ParameterInt("num_orientations", 9));
             table.put(new ParameterInt("grad_type", BG));
             table.put(new ParameterString("smooth_type", "savgol"));
+            table.put(new ParameterDouble("sig", sigma));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
