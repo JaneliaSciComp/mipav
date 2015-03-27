@@ -39,6 +39,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 	
 	private static final int TG = 5;
 	
+	private static final int GM = 6;
+	
 	private int gradientType = BG;
 	
 	private static final int GRAY_PRESENTATION = 1;
@@ -55,6 +57,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 	
 	// smooth is "savgol", "gaussian", or "none".
 	private String smooth = "savgol";
+	
+	private double sigma = 2.0;
 	
 	private int xDim;
 	
@@ -98,9 +102,10 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
        @param  highRadius
        @param  numOrientations
        @param  smooth
+       @param  sigma
      */
     public AlgorithmPbBoundaryDetection(ModelImage destImg, ModelImage srcImg, int gradientType, int presentation, double lowRadius,
-                                       double highRadius, int numOrientations, String smooth) {
+                                       double highRadius, int numOrientations, String smooth, double sigma) {
         super(destImg, srcImg);
         this.gradientType = gradientType;
         this.presentation = presentation;
@@ -108,6 +113,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         this.highRadius = highRadius;
         this.numOrientations = numOrientations; 
         this.smooth = smooth;
+        this.sigma = sigma;
     }
     
     public void runAlgorithm() {
@@ -168,6 +174,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	}
     	else if (gradientType == TG) {
     		pbTG(pb, theta);
+    	}
+    	else if (gradientType == GM) {
+    		pbGM(pb, theta);
     	}
     	pbBuffer = new double[sliceSize];
     	for (y = 0; y < yDim; y++) {
@@ -479,6 +488,70 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         }
         return;
       }
+    
+    private void pbGM(double pb[][], double theta[][]) {
+    	// Compute probability of boundary using gradient magnitude
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// March 2003
+
+      	double beta[] = new double[2];
+      	double m[][];
+      	int sliceSize = xDim * yDim;
+      	double m2[];
+      	int x;
+      	int y;
+      	double xbeta;
+      	double pbi[];
+      	
+      	// Beta from logistic fits (trainGM.m)
+      	switch ((int)Math.round(sigma)) {
+      	case 1:
+      		beta[0] = -2.6828268;
+      		beta[1] = 16.251270;
+      		break;
+      	case 2:
+      		beta[0] = -2.9906198;
+      		beta[1] = 22.454909;
+      		break;
+      	case 4:
+      		beta[0] = -3.2040961;
+      		beta[1] = 25.838634;
+      		break;
+      	case 8:
+      		beta[0] = -2.9314518;
+      		beta[1] = 29.306847;
+      		break;
+      	case 16:
+      		beta[0] = -2.4502722;
+      		beta[1] = 34.139686;
+      		break;
+      	default:
+      		MipavUtil.displayError("No parameters for sigma = " + sigma);
+        	setCompleted(false);
+        	return;	
+      	} // switch ((int)Math.round(sigma))
+      	
+      	m = new double[yDim][xDim];
+      	detGM(m, theta);
+      	m2 = new double[sliceSize];
+      	for (x = 0; x < xDim; x++) {
+      		for (y = 0; y < yDim; y++) {
+      			m2[y + x * yDim] = m[y][x];
+      		}
+      	}
+      	pbi = new double[sliceSize];
+      	for (y = 0; y < sliceSize; y++) {
+        	xbeta = beta[0] + m2[y]*beta[1];
+        	pbi[y] = 1.0/(1.0 + Math.exp(-xbeta));
+        }
+      	for (x = 0; x < xDim; x++) {
+        	for (y = 0; y < yDim; y++) {
+        	    pb[y][x] = pbi[y + x*yDim];	
+        	}
+        }
+      	nonmax(pb, pb, theta);
+      	return;
+    }
     
     private void pbBG(double pb[][], double theta[][]) {
     	// Compute probability of boundary using BG
@@ -910,6 +983,205 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
           return;
         }
       
+      private void nonmax(double imout[][], double im[][], double theta[][]) {
+    	  // Perform non-max suppression on im orthogonal to theta.  Theta can be
+    	  // a matrix providing a different theta for each pixel or a scalar
+    	  // proving the same theta for every pixel.
+    	  
+    	  // Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	  // March 2003
+          int y;
+          int x;
+          int h = im.length;
+          int w = im[0].length;
+          boolean mask15[][] = new boolean[h][w];
+          boolean mask26[][] = new boolean[h][w];
+          boolean mask37[][] = new boolean[h][w];
+          boolean mask48[][] = new boolean[h][w];
+          byte mask[][];
+          double imidxA;
+          double imidxB;
+          double d;
+          double imI;
+          
+          // Do non-max suppression orthogonal to theta.
+          for (y = 0; y < h; y++) {
+        	  for (x = 0; x < w; x++) {
+        		  theta[y][x] = theta[y][x] + Math.PI/2.0 - Math.PI*Math.floor((theta[y][x] + Math.PI/2.0)/Math.PI);
+
+        	  }
+          }
+    	  
+    	  // The following diagram depicts the 8 cases for non-max suppression.
+    	  // Theta is valued in [0,pi), measured clockwise from the positive x
+    	  // axis.  The 'o' marks the pixel of interest, and the eight
+    	  // neighboring pixels are marked with '.'.  The orientation is divided
+    	  // into 8 45-degree blocks.  Within each block, we interpolate the
+    	  // image value between the two neighboring pixels.
+    	  //
+    	  //        .66.77.                                
+    	  //        5\ | /8                                
+    	  //        5 \|/ 8                                
+    	  //        .--o--.-----> x-axis                     
+    	  //        4 /|\ 1                                
+    	  //        4/ | \1                                
+    	  //        .33.22.                                
+    	  //           |                                   
+    	  //           |
+    	  //           v
+    	  //         y-axis                                  
+    	  //
+    	  // In the code below, d is always the distance from A, so the distance
+    	  // to B is (1-d).  A and B are the two neighboring pixels of interest
+    	  // in each of the 8 cases.  Note that the clockwise ordering of A and B
+    	  // changes from case to case in order to make it easier to compute d.
+
+    	  // Determine which pixels belong to which cases.
+          for (y = 0; y < h; y++) {
+        	  for (x = 0; x < w; x++) {
+        		  mask15[y][x] = (theta[y][x] >= 0.0 && theta[y][x] < Math.PI/4.0);
+                  mask26[y][x] = (theta[y][x] >= Math.PI/4.0 && theta[y][x] < Math.PI/2.0);
+                  mask37[y][x] = (theta[y][x] >= Math.PI/2.0 && theta[y][x] < Math.PI*3.0/4.0);
+                  mask48[y][x] = (theta[y][x] >= Math.PI*3.0/4.0 && theta[y][x] < Math.PI);  
+        	  }
+          }
+          
+          
+          mask = new byte[h][w];
+          for (y = 0; y < h; y++) {
+        	  for (x = 0; x < w; x++) {
+        		  mask[y][x] = 1;
+        	  }
+          }
+          
+          // Case 1
+          for (y = 0; y < h; y++) {
+        	  for (x = 0; x < w; x++) {
+        		  if (mask15[y][x] && x < w-1 && y < h - 1) {
+        			  imidxA = im[y][x+1];
+        			  imidxB = im[y+1][x+1];
+        			  d = Math.tan(theta[y][x]);
+        			  imI = imidxA * (1.0 - d) + imidxB * d;
+        			  if (im[y][x] < imI) {
+        				  mask[y][x] = 0;
+        			  }
+        		  }
+              }
+          }
+              
+          // Case 5
+          for (y = 0; y < h; y++) {
+        	  for (x = 0; x < w; x++) {
+        		  if (mask15[y][x] && (x > 0) && (y > 0)) {
+        			  imidxA = im[y][x-1];
+        			  imidxB = im[y-1][x-1];
+        			  d = Math.tan(theta[y][x]);
+        			  imI = imidxA * (1.0 - d) + imidxB * d;
+        			  if (im[y][x] < imI) {
+        				  mask[y][x] = 0;
+        			  }  
+        		  }
+        	  }
+          }
+          
+          // case 2
+          for (y = 0; y < h; y++) {
+        	  for (x = 0; x < w; x++) {
+        		  if (mask26[y][x] && x < w-1 && y < h - 1) {
+        			  imidxA = im[y+1][x];
+        			  imidxB = im[y+1][x+1];
+        			  d = Math.tan(Math.PI/2.0 - theta[y][x]);
+        			  imI = imidxA * (1.0 - d) + imidxB * d;
+        			  if (im[y][x] < imI) {
+        				  mask[y][x] = 0;
+        			  }      
+        		  }
+        	  }
+          }
+          
+          // Case 6
+          for (y = 0; y < h; y++) {
+        	  for (x = 0; x < w; x++) {
+        		  if (mask26[y][x] && (x > 0) && (y > 0)) {
+        			  imidxA = im[y-1][x];
+        			  imidxB = im[y-1][x-1];
+        			  d = Math.tan(Math.PI/2.0 - theta[y][x]);
+        			  imI = imidxA * (1.0 - d) + imidxB * d;
+        			  if (im[y][x] < imI) {
+        				  mask[y][x] = 0;
+        			  }      	  
+        		  }
+        	  }
+          }
+          
+          // case 3
+          for (y = 0; y < h; y++) {
+        	  for (x = 0; x < w; x++) {
+        		  if (mask37[y][x] && (x > 0) && (y < h-1)) {
+        			  imidxA = im[y+1][x];
+        			  imidxB = im[y+1][x-1];
+        			  d = Math.tan(theta[y][x] - Math.PI/2.0);
+        			  imI = imidxA * (1.0 - d) + imidxB * d;
+        			  if (im[y][x] < imI) {
+        				  mask[y][x] = 0;
+        			  }      	    
+        		  }
+        	  }
+          }
+          
+          // case 7
+          for (y = 0; y < h; y++) {
+        	  for (x = 0; x < w; x++) {
+        		  if (mask37[y][x] && (x < w-1) && (y > 0)) {
+        			  imidxA = im[y-1][x];
+        			  imidxB = im[y-1][x+1];
+        			  d = Math.tan(theta[y][x] - Math.PI/2.0);
+        			  imI = imidxA * (1.0 - d) + imidxB * d;
+        			  if (im[y][x] < imI) {
+        				  mask[y][x] = 0;
+        			  }      	    	  
+        		  }
+        	  }
+          }
+          
+    	  // case 4
+          for (y = 0; y < h; y++) {
+        	  for (x = 0; x < w; x++) {
+        	      if (mask48[y][x] && (x > 0) && (y < h-1)) {
+        	    	  imidxA = im[y][x-1];
+        			  imidxB = im[y+1][x-1];
+        			  d = Math.tan(Math.PI - theta[y][x]);
+        			  imI = imidxA * (1.0 - d) + imidxB * d;
+        			  if (im[y][x] < imI) {
+        				  mask[y][x] = 0;
+        			  }      	    	    
+        	      }
+        	  }
+          }
+          
+          // case 8
+          for (y = 0; y < h; y++) {
+        	  for (x = 0; x < w; x++) {
+        		  if (mask48[y][x] && (x < w-1) && (y > 0)) {
+        			  imidxA = im[y][x+1];
+        			  imidxB = im[y-1][x+1];
+        			  d = Math.tan(Math.PI - theta[y][x]);
+        			  imI = imidxA * (1.0 - d) + imidxB * d;
+        			  if (im[y][x] < imI) {
+        				  mask[y][x] = 0;
+        			  }     
+        		  }
+        	  }
+          }
+          
+          // Apply mask
+          for (y = 0; y < h; y++) {
+        	  for (x = 0; x < w; x++) {
+        		  imout[y][x] = im[y][x] * mask[y][x];
+        	  }
+          }
+      }
+      
       private void nonmax(double imout[][], double im[][], double theta) {
     	  // Perform non-max suppression on im orthogonal to theta.  Theta can be
     	  // a matrix providing a different theta for each pixel or a scalar
@@ -926,10 +1198,10 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
           int h = im.length;
           int w = im[0].length;
           byte mask[][];
-          double imidxA[][];
-          double imidxB[][];
+          double imidxA;
+          double imidxB;
           double d;
-          double imI[][];
+          double imI;
           
           // Do non-max suppression orthogonal to theta.
     	  theta = theta + Math.PI/2.0 - Math.PI*Math.floor((theta + Math.PI/2.0)/Math.PI);
@@ -971,20 +1243,16 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         	  }
           }
           
-          imI = new double[h][w];
-          imidxA = new double[h][w];
-          imidxB = new double[h][w];
-          
           if (mask15) {
         	  // Case 1
         	  d = Math.tan(theta);
               for (y = 0; y < h; y++) {
             	  for (x = 0; x < w; x++) {
             		  if (x < w-1 && y < h - 1) {
-            			  imidxA[y][x] = im[y][x+1];
-            			  imidxB[y][x] = im[y+1][x+1];
-            			  imI[y][x] = imidxA[y][x] * (1.0 - d) + imidxB[y][x] * d;
-            			  if (im[y][x] < imI[y][x]) {
+            			  imidxA = im[y][x+1];
+            			  imidxB = im[y+1][x+1];
+            			  imI = imidxA * (1.0 - d) + imidxB * d;
+            			  if (im[y][x] < imI) {
             				  mask[y][x] = 0;
             			  }
             		  }
@@ -995,10 +1263,10 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
               for (y = 0; y < h; y++) {
             	  for (x = 0; x < w; x++) {
             		  if ((x > 0) && (y > 0)) {
-            			  imidxA[y][x] = im[y][x-1];
-            			  imidxB[y][x] = im[y-1][x-1];
-            			  imI[y][x] = imidxA[y][x] * (1.0 - d) + imidxB[y][x] * d;
-            			  if (im[y][x] < imI[y][x]) {
+            			  imidxA = im[y][x-1];
+            			  imidxB = im[y-1][x-1];
+            			  imI = imidxA * (1.0 - d) + imidxB * d;
+            			  if (im[y][x] < imI) {
             				  mask[y][x] = 0;
             			  }  
             		  }
@@ -1012,10 +1280,10 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
               for (y = 0; y < h; y++) {
             	  for (x = 0; x < w; x++) {
             		  if (x < w-1 && y < h - 1) {
-            			  imidxA[y][x] = im[y+1][x];
-            			  imidxB[y][x] = im[y+1][x+1];
-            			  imI[y][x] = imidxA[y][x] * (1.0 - d) + imidxB[y][x] * d;
-            			  if (im[y][x] < imI[y][x]) {
+            			  imidxA = im[y+1][x];
+            			  imidxB = im[y+1][x+1];
+            			  imI = imidxA * (1.0 - d) + imidxB * d;
+            			  if (im[y][x] < imI) {
             				  mask[y][x] = 0;
             			  }      
             		  }
@@ -1026,10 +1294,10 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
               for (y = 0; y < h; y++) {
             	  for (x = 0; x < w; x++) {
             		  if ((x > 0) && (y > 0)) {
-            			  imidxA[y][x] = im[y-1][x];
-            			  imidxB[y][x] = im[y-1][x-1];
-            			  imI[y][x] = imidxA[y][x] * (1.0 - d) + imidxB[y][x] * d;
-            			  if (im[y][x] < imI[y][x]) {
+            			  imidxA = im[y-1][x];
+            			  imidxB = im[y-1][x-1];
+            			  imI = imidxA * (1.0 - d) + imidxB * d;
+            			  if (im[y][x] < imI) {
             				  mask[y][x] = 0;
             			  }      	  
             		  }
@@ -1043,10 +1311,10 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
               for (y = 0; y < h; y++) {
             	  for (x = 0; x < w; x++) {
             		  if ((x > 0) && (y < h-1)) {
-            			  imidxA[y][x] = im[y+1][x];
-            			  imidxB[y][x] = im[y+1][x-1];
-            			  imI[y][x] = imidxA[y][x] * (1.0 - d) + imidxB[y][x] * d;
-            			  if (im[y][x] < imI[y][x]) {
+            			  imidxA = im[y+1][x];
+            			  imidxB = im[y+1][x-1];
+            			  imI = imidxA * (1.0 - d) + imidxB * d;
+            			  if (im[y][x] < imI) {
             				  mask[y][x] = 0;
             			  }      	    
             		  }
@@ -1057,10 +1325,10 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
               for (y = 0; y < h; y++) {
             	  for (x = 0; x < w; x++) {
             		  if ((x < w-1) && (y > 0)) {
-            			  imidxA[y][x] = im[y-1][x];
-            			  imidxB[y][x] = im[y-1][x+1];
-            			  imI[y][x] = imidxA[y][x] * (1.0 - d) + imidxB[y][x] * d;
-            			  if (im[y][x] < imI[y][x]) {
+            			  imidxA = im[y-1][x];
+            			  imidxB = im[y-1][x+1];
+            			  imI = imidxA * (1.0 - d) + imidxB * d;
+            			  if (im[y][x] < imI) {
             				  mask[y][x] = 0;
             			  }      	    	  
             		  }
@@ -1074,10 +1342,10 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
               for (y = 0; y < h; y++) {
             	  for (x = 0; x < w; x++) {
             	      if ((x > 0) && (y < h-1)) {
-            	    	  imidxA[y][x] = im[y][x-1];
-            			  imidxB[y][x] = im[y+1][x-1];
-            			  imI[y][x] = imidxA[y][x] * (1.0 - d) + imidxB[y][x] * d;
-            			  if (im[y][x] < imI[y][x]) {
+            	    	  imidxA = im[y][x-1];
+            			  imidxB = im[y+1][x-1];
+            			  imI = imidxA * (1.0 - d) + imidxB * d;
+            			  if (im[y][x] < imI) {
             				  mask[y][x] = 0;
             			  }      	    	    
             	      }
@@ -1088,10 +1356,10 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
               for (y = 0; y < h; y++) {
             	  for (x = 0; x < w; x++) {
             		  if ((x < w-1) && (y > 0)) {
-            			  imidxA[y][x] = im[y][x+1];
-            			  imidxB[y][x] = im[y-1][x+1];
-            			  imI[y][x] = imidxA[y][x] * (1.0 - d) + imidxB[y][x] * d;
-            			  if (im[y][x] < imI[y][x]) {
+            			  imidxA = im[y][x+1];
+            			  imidxB = im[y-1][x+1];
+            			  imI = imidxA * (1.0 - d) + imidxB * d;
+            			  if (im[y][x] < imI) {
             				  mask[y][x] = 0;
             			  }     
             		  }
@@ -1143,7 +1411,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
           radiusArray = new double[]{diag*lowRadius,diag*highRadius,diag*highRadius};
           sigmaSmoothArray = new double[]{diag*lowRadius,diag*highRadius,diag*highRadius};;
           cgmo(cg, theta, inputImage, radiusArray, numOrientations, smooth, sigmaSmoothArray);
-          
+          inputImage.disposeLocal();
+          inputImage = null;
   		
           return;
         }
@@ -1296,6 +1565,173 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         return;
       }
       
+      /*
+       * @param m Gradient magnitude
+       * @param theta Orientation of gradient + pi/2
+       *              (i.e. edge orientation)
+       */
+      private void detGM(double m[][], double theta[][]) {
+    	  // Compute image gradient magnitude
+    	  // Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+      	  // March 2003
+    	  double diag;
+          ModelImage grayImage = null;
+          ModelImage inputImage;
+          AlgorithmChangeType changeTypeAlgo;
+      	  FileInfoBase[] fileInfo;
+      	  double sigmaX;
+      	  double sigmaY;
+      	  int support;
+      	  int deriv;
+      	  int hsz;
+      	  int sz;
+      	  double fb[][][][];
+      	  double fb1[][];
+      	  int x;
+      	  int y;
+      	  double fim[][][][];
+      	  double im[][];
+      	  double buffer[];
+      	  int sliceSize = xDim * yDim;
+      	  double dx[][];
+      	  double dy[][];
+      	  double pretheta;
+            
+          diag = Math.sqrt(xDim*xDim + yDim*yDim);
+          if (srcImage.isColorImage()) {
+			  final boolean thresholdAverage = false;
+			  final float threshold = 0.0f;
+			  final boolean intensityAverage = false;
+			  final boolean equalRange = true;
+			  final float minR = 0.0f;
+			  final float minG = 0.0f;
+			  final float minB = 0.0f;
+			  float redValue;
+			  float greenValue;
+			  float blueValue;
+			  float maxR;
+			  float maxG;
+			  float maxB;
+			  AlgorithmRGBtoGray gAlgo;
+			  if (srcImage.getMinR() == srcImage.getMaxR()) {
+				  redValue = 0.0f;
+				  greenValue = 0.5f;
+				  blueValue = 0.5f;
+			  } else if (srcImage.getMinG() == srcImage.getMaxG()) {
+				  redValue = 0.5f;
+				  greenValue = 0.0f;
+				  blueValue = 0.5f;
+			  } else if (srcImage.getMinB() == srcImage.getMaxB()) {
+				  redValue = 0.5f;
+				  greenValue = 0.5f;
+				  blueValue = 0.0f;
+			  } else {
+				  redValue = 0.2989f;
+				  greenValue = 0.5870f;
+				  blueValue = 0.1140f;
+			  }
+			  maxR = (float) srcImage.getMaxR();
+			  maxG = (float) srcImage.getMaxG();
+			  maxB = (float) srcImage.getMaxB();
+			  grayImage = new ModelImage(ModelStorageBase.DOUBLE,
+					  srcImage.getExtents(), "grayImage");
+			  gAlgo = new AlgorithmRGBtoGray(grayImage, srcImage,
+					  redValue, greenValue, blueValue, thresholdAverage,
+					  threshold, intensityAverage, equalRange, minR, maxR,
+					  minG, maxG, minB, maxB);
+			  gAlgo.run();
+			  gAlgo.finalize();
+		  } // if (srcImage.isColorImage())
+        
+          inputImage = new ModelImage(ModelStorageBase.DOUBLE,
+				  srcImage.getExtents(), "changeTypeImage");
+		  inputImage.getFileInfo(0).setEndianess(FileBase.LITTLE_ENDIAN);
+		  if (srcImage.isColorImage()) {
+			  changeTypeAlgo = new AlgorithmChangeType(inputImage,
+					  grayImage, grayImage.getMin(), grayImage.getMax(),
+					  0.0, 1.0, image25D);
+		  } else {
+			  changeTypeAlgo = new AlgorithmChangeType(inputImage,
+					  srcImage, srcImage.getMin(),
+					  srcImage.getMax(), 0.0, 1.0, image25D);
+		  }
+		  changeTypeAlgo.run();
+		  changeTypeAlgo.finalize();
+		  changeTypeAlgo = null;
+		  if (grayImage != null) {
+			  grayImage.disposeLocal();
+			  grayImage = null;
+		  }
+		  fileInfo = inputImage.getFileInfo();
+          fileInfo[0].setModality(srcImage.getFileInfo()[0].getModality());
+          fileInfo[0].setFileDirectory(srcImage.getFileInfo()[0].getFileDirectory());
+          fileInfo[0].setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
+          fileInfo[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
+          fileInfo[0].setExtents(inputImage.getExtents());
+          fileInfo[0].setMax(inputImage.getMax());
+          fileInfo[0].setMin(inputImage.getMin());
+          fileInfo[0].setImageOrientation(srcImage.getImageOrientation());
+          fileInfo[0].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation());
+          fileInfo[0].setOrigin(srcImage.getFileInfo()[0].getOrigin());
+        
+          sigma = Math.max(0.5,  sigma);
+          sigmaX = sigma;
+          sigmaY = sigma;
+        
+          // Compute x and y image derivatives
+          // Use elongated Gaussian filter derivative filters
+          // Calculate filter size, make sure it's odd
+          support = 3;
+       	  hsz = (int)Math.max(Math.ceil(sigmaX * support), Math.ceil(sigmaY * support));
+          sz = 2 * hsz + 1;
+          fb1 = new double[sz][sz];
+          deriv = 1;
+          oeFilter(fb1, sigmaX, sigmaY, support, Math.PI/2.0, deriv);
+          fb = new double[2][1][sz][sz];
+          for (y = 0; y < sz; y++) {
+              for (x = 0; x < sz; x++) {
+            	  fb[0][0][y][x] = fb1[y][x];
+            	  fb[1][0][y][x] = fb1[x][y];
+              }
+          }
+          fim = new double[2][1][yDim][xDim];
+          buffer = new double[sliceSize];
+          try {
+        	  inputImage.exportData(0, sliceSize, buffer);
+          }
+          catch(IOException e) {
+        	  MipavUtil.displayError("IOException " + e + " on inputImage.exportData(0, sliceSize, buffer");
+        	  return;
+          }
+          
+          inputImage.disposeLocal();
+          inputImage = null;
+          im = new double[yDim][xDim];
+          for (y = 0; y < yDim; y++) {
+        	  for (x = 0; x < xDim; x++) {
+        		  im[y][x] = buffer[x + y * xDim];
+        	  }
+          }
+          fbRun(fim, fb, im);
+          dx = new double[yDim][xDim];
+          dy = new double[yDim][xDim];
+          for (y = 0; y < yDim; y++) {
+        	  for (x = 0; x < xDim; x++) {
+        		  dx[y][x] = fim[0][0][y][x];
+        		  dy[y][x] = fim[1][0][y][x];
+        	  }
+          }
+          
+          // Compute gradient magnitude and orientation
+          for (y = 0; y < yDim; y++) {
+        	  for (x = 0; x < xDim; x++) {
+        		  m[y][x] = Math.sqrt(dx[y][x]*dx[y][x] + dy[y][x]*dy[y][x]);
+        		  pretheta = Math.atan2(dy[y][x],dx[y][x]);
+        		  theta[y][x] = pretheta + Math.PI/2.0 - Math.PI*Math.floor((pretheta + Math.PI/2.0)/Math.PI);
+        	  }
+          }
+      }
+      
       private void detBG(double bg[][][], double theta[]) {
           // Compute smoothed but not thinned BG fields
       	double diag;
@@ -1383,7 +1819,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
           // Compute brightness gradient
           
           cgmo(bg, theta, inputImage, diag*lowRadius, numOrientations, smooth, diag*lowRadius);
-          
+          inputImage.disposeLocal();
+          inputImage = null;   
           
           return;
         }
@@ -4702,6 +5139,12 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
        oeFilter(f, sigmaX, sigmaY, support, theta, deriv, dohil, dovis);
     }
     
+    private void oeFilter(double f[][], double sigmaX, double sigmaY, int support, double theta, int deriv) {
+        boolean dohil = false;
+        boolean dovis = false;
+        oeFilter(f, sigmaX, sigmaY, support, theta, deriv, dohil, dovis);
+     }
+    
     /**
      * Compute unit L1- norm 2D filter.
      * The filter is a Gaussian in the x direction
@@ -4763,7 +5206,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     		return;
     	}
     	
-    	// Calculate filter size, make sure it's odd
+    	 // Calculate filter size, make sure it's odd
     	 hsz = (int)Math.max(Math.ceil(sigmaX * support), Math.ceil(sigmaY * support));
          sz = 2 * hsz + 1;
          
