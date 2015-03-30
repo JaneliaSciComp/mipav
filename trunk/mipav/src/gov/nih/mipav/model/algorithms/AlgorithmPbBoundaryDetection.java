@@ -43,6 +43,10 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 	
 	private static final int GM2 = 7;
 	
+	private static final int TWOMM = 8;
+	
+	private static final int TWOMM2 = 9;
+	
 	private int gradientType = BG;
 	
 	private static final int GRAY_PRESENTATION = 1;
@@ -183,6 +187,12 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	else if (gradientType == GM2) {
     		pbGM2(pb, theta);
     	}
+    	else if (gradientType == TWOMM) {
+    		pb2MM(pb, theta);
+    	}
+    	else if (gradientType == TWOMM2) {
+    		pb2MM2(pb, theta);
+    	}
     	pbBuffer = new double[sliceSize];
     	for (y = 0; y < yDim; y++) {
     		for (x = 0; x < xDim; x++) {
@@ -200,6 +210,169 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         
         setCompleted(true);
         return;
+    }
+    
+    private void pb2MM2(double pb[][], double theta[][]) {
+    	// Compute probability of boundary using the spatially averaged second moment matrix at 2 scales
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// March 2003
+    	double beta[] = new double[5];
+    	double a1[][];
+    	double b1[][];
+    	double t1[][];
+    	double a2[][];
+    	double b2[][];
+    	double t2[][];
+    	int sliceSize = xDim * yDim;
+    	int x;
+    	int y;
+    	double pbi[];
+    	double xbeta;
+    	double a1Col[];
+    	double b1Col[];
+    	double a2Col[];
+    	double b2Col[];
+    	double dt;
+    	
+    	// Beta from logistic fits (train2MM2.m)
+      	switch ((int)Math.round(sigma)) {
+      	case 1:
+      		beta[0] = -3.2369080;
+      		beta[1] = -7.9668057;
+      		beta[2] = -0.71098318;
+      		beta[3] = -0.46178498;
+      		beta[4] = 31.575066;
+      		break;
+      	case 2:
+      		beta[0] = -3.5512404;
+      		beta[1] = -8.0101784;
+      		beta[2] = 13.527093;
+      		beta[3] = 10.531737;
+      		beta[4] = 19.292447;
+      		break;
+  		default:
+  			MipavUtil.displayError("No parameters for sigma = " + sigma);
+        	setCompleted(false);
+        	return;	
+      	}
+      	
+      	a1 = new double[yDim][xDim];
+      	b1 = new double[yDim][xDim];
+      	t1 = new double[yDim][xDim];
+      	det2MM(a1, b1, t1, sigma, sigma);
+      	a2 = new double[yDim][xDim];
+      	b2 = new double[yDim][xDim];
+      	t2 = new double[yDim][xDim];
+      	det2MM(a2, b2, t2, 2.0*sigma, 2.0*sigma);
+      	a1Col = new double[sliceSize];
+      	b1Col = new double[sliceSize];
+      	a2Col = new double[sliceSize];
+      	b2Col = new double[sliceSize];
+      	for (x = 0; x < xDim; x++) {
+      		for (y = 0; y < yDim; y++) {
+      			a1Col[y + x * yDim] = Math.sqrt(a1[y][x]);
+      			b1Col[y + x * yDim] = Math.sqrt(b1[y][x]);
+      			a2Col[y + x * yDim] = Math.sqrt(a2[y][x]);
+      			b2Col[y + x * yDim] = Math.sqrt(b2[y][x]);
+      		}
+      	}
+      	pbi = new double[sliceSize];
+      	for (y = 0; y < sliceSize; y++) {
+        	xbeta = beta[0] + a1Col[y]*beta[1] + b1Col[y]*beta[2] + a2Col[y]*beta[3] + b2Col[y]*beta[4];
+        	pbi[y] = 1.0/(1.0 + Math.exp(-xbeta));
+        }
+      	for (x = 0; x < xDim; x++) {
+        	for (y = 0; y < yDim; y++) {
+        	    pb[y][x] = pbi[y + x*yDim];	
+        	}
+        }
+      	
+     // Average orientations for nonmax suppression
+      	for (y = 0; y < yDim; y++) {
+      		for (x = 0; x < xDim; x++) {
+      			// [0, 2*PI)
+      			dt = t2[y][x] - t1[y][x] - 2.0 * Math.PI*Math.floor((t2[y][x] - t1[y][x])/(2.0*Math.PI));
+      			// [-PI, PI)
+      			if (dt >= Math.PI) {
+      				dt = dt - 2.0 * Math.PI;
+      			}
+      			theta[y][x] = t1[y][x] + dt/2.0;
+      		}
+      	}
+      	nonmax(pb, pb, theta);
+      	return;
+    }
+    
+    private void pb2MM(double pb[][], double theta[][]) {
+    	// Compute probability of boundary using the spatially averaged second moment matrix
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// March 2003
+    	double beta[] = new double[3];
+    	double a[][];
+    	double b[][];
+    	double a2[];
+    	double b2[];
+    	int sliceSize = xDim * yDim;
+    	int x;
+    	int y;
+    	double pbi[];
+    	double xbeta;
+    	
+    	// Beta from logistic fits (train2MM.m)
+      	switch ((int)Math.round(sigma)) {
+      	case 1:
+      		beta[0] = -2.9101440;
+      		beta[1] = -14.635580;
+      		beta[2] = 25.478994;
+      		break;
+      	case 2:
+      		beta[0] = -3.2511132;
+      		beta[1] = -7.3345180;
+      		beta[2] = 30.920345;
+      		break;
+      	case 4:
+      		beta[0] = -3.5676231;
+      		beta[1] = 12.901075;
+      		beta[2] = 28.938513;
+      		break;
+      	case 8:
+      		beta[0] = -3.4692147;
+      		beta[1] = 31.719655;
+      		beta[2] = 28.143428;
+      		break;
+      	case 16:
+      		beta[0] = -3.2552836;
+      		beta[1] = 64.123944;
+      		beta[2] = 25.891795;
+      		break;
+      		default:
+      			MipavUtil.displayError("No parameters for sigma = " + sigma);
+            	setCompleted(false);
+            	return;	
+      	} // switch ((int)Math.round(sigma))
+      	a = new double[yDim][xDim];
+      	b = new double[yDim][xDim];
+      	det2MM(a, b, theta, sigma, sigma);
+      	a2 = new double[sliceSize];
+      	b2 = new double[sliceSize];
+      	for (x = 0; x < xDim; x++) {
+      		for (y = 0; y < yDim; y++) {
+      			a2[y + x * yDim] = Math.sqrt(a[y][x]);
+      			b2[y + x * yDim] = Math.sqrt(b[y][x]);
+      		}
+      	}
+      	pbi = new double[sliceSize];
+      	for (y = 0; y < sliceSize; y++) {
+        	xbeta = beta[0] + a2[y]*beta[1] + b2[y]*beta[2];
+        	pbi[y] = 1.0/(1.0 + Math.exp(-xbeta));
+        }
+      	for (x = 0; x < xDim; x++) {
+        	for (y = 0; y < yDim; y++) {
+        	    pb[y][x] = pbi[y + x*yDim];	
+        	}
+        }
+      	nonmax(pb, pb, theta);
+      	return;
     }
     
     private void pbCG(double pb[][], double theta[][]) {
@@ -532,7 +705,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
       		break;
         default:
         	MipavUtil.displayError("No parameters for sigma = " + sigma);
-        	setCompleted(false);    	
+        	setCompleted(false);
+        	return;
       	} // switch ((int)Math.round(sigma))
       	
       	a = new double[yDim][xDim];
@@ -1458,6 +1632,239 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
           for (y = 0; y < h; y++) {
         	  for (x = 0; x < w; x++) {
         		  imout[y][x] = im[y][x] * mask[y][x];
+        	  }
+          }
+      }
+      
+      /**
+       * 
+       * @param e0 output smaller eigenvlaues
+       * @param e1 output larger eigenvalues
+       * @param theta output Orientation of first eigenvector + PI/2
+       *                     (i.e. orientation of possible edge)
+       * @param sigmaI input Inner scale (sigma for image derivatives)
+       * @param sigmaO input Outer scale (sigma for spatial averaging)
+       */
+      private void det2MM(double e0[][], double e1[][], double theta[][], double sigmaI, double sigmaO) {
+    	  // Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	  // March 2003
+    	  ModelImage grayImage = null;
+          ModelImage inputImage;
+          AlgorithmChangeType changeTypeAlgo;
+      	  FileInfoBase[] fileInfo;
+      	  int support;
+    	  int deriv;
+    	  int hsz;
+    	  int sz;
+    	  double fb[][][][];
+    	  double fb1[][];
+    	  int x;
+    	  int y;
+    	  double fim[][][][];
+    	  double im[][];
+    	  double buffer[];
+    	  int sliceSize = xDim * yDim;
+    	  double dx[][];
+    	  double dy[][];
+    	  double sigmaX;
+    	  double sigmaY;
+    	  double f[][];
+    	  double dx2[][];
+    	  double dy2[][];
+    	  double dxy[][];
+    	  double dxSquared[][];
+    	  double dySquared[][];
+    	  double dxdyIn[][];
+    	  double k;
+    	  double eig0;
+    	  double eig1;
+    	  double t0;
+    	  double t1;
+    	  double diff;
+    	  
+    	  if (srcImage.isColorImage()) {
+			  final boolean thresholdAverage = false;
+			  final float threshold = 0.0f;
+			  final boolean intensityAverage = false;
+			  final boolean equalRange = true;
+			  final float minR = 0.0f;
+			  final float minG = 0.0f;
+			  final float minB = 0.0f;
+			  float redValue;
+			  float greenValue;
+			  float blueValue;
+			  float maxR;
+			  float maxG;
+			  float maxB;
+			  AlgorithmRGBtoGray gAlgo;
+			  if (srcImage.getMinR() == srcImage.getMaxR()) {
+				  redValue = 0.0f;
+				  greenValue = 0.5f;
+				  blueValue = 0.5f;
+			  } else if (srcImage.getMinG() == srcImage.getMaxG()) {
+				  redValue = 0.5f;
+				  greenValue = 0.0f;
+				  blueValue = 0.5f;
+			  } else if (srcImage.getMinB() == srcImage.getMaxB()) {
+				  redValue = 0.5f;
+				  greenValue = 0.5f;
+				  blueValue = 0.0f;
+			  } else {
+				  redValue = 0.2989f;
+				  greenValue = 0.5870f;
+				  blueValue = 0.1140f;
+			  }
+			  maxR = (float) srcImage.getMaxR();
+			  maxG = (float) srcImage.getMaxG();
+			  maxB = (float) srcImage.getMaxB();
+			  grayImage = new ModelImage(ModelStorageBase.DOUBLE,
+					  srcImage.getExtents(), "grayImage");
+			  gAlgo = new AlgorithmRGBtoGray(grayImage, srcImage,
+					  redValue, greenValue, blueValue, thresholdAverage,
+					  threshold, intensityAverage, equalRange, minR, maxR,
+					  minG, maxG, minB, maxB);
+			  gAlgo.run();
+			  gAlgo.finalize();
+		  } // if (srcImage.isColorImage())
+        
+          inputImage = new ModelImage(ModelStorageBase.DOUBLE,
+				  srcImage.getExtents(), "changeTypeImage");
+		  inputImage.getFileInfo(0).setEndianess(FileBase.LITTLE_ENDIAN);
+		  if (srcImage.isColorImage()) {
+			  changeTypeAlgo = new AlgorithmChangeType(inputImage,
+					  grayImage, grayImage.getMin(), grayImage.getMax(),
+					  0.0, 1.0, image25D);
+		  } else {
+			  changeTypeAlgo = new AlgorithmChangeType(inputImage,
+					  srcImage, srcImage.getMin(),
+					  srcImage.getMax(), 0.0, 1.0, image25D);
+		  }
+		  changeTypeAlgo.run();
+		  changeTypeAlgo.finalize();
+		  changeTypeAlgo = null;
+		  if (grayImage != null) {
+			  grayImage.disposeLocal();
+			  grayImage = null;
+		  }
+		  fileInfo = inputImage.getFileInfo();
+          fileInfo[0].setModality(srcImage.getFileInfo()[0].getModality());
+          fileInfo[0].setFileDirectory(srcImage.getFileInfo()[0].getFileDirectory());
+          fileInfo[0].setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
+          fileInfo[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
+          fileInfo[0].setExtents(inputImage.getExtents());
+          fileInfo[0].setMax(inputImage.getMax());
+          fileInfo[0].setMin(inputImage.getMin());
+          fileInfo[0].setImageOrientation(srcImage.getImageOrientation());
+          fileInfo[0].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation());
+          fileInfo[0].setOrigin(srcImage.getFileInfo()[0].getOrigin());
+          
+          sigmaI = Math.max(0.5,  sigmaI);
+          sigmaO = Math.max(0.5, sigmaO);
+          
+          // Compute the x and y image derivatives at inner scale
+          sigmaX = sigmaI;
+          sigmaY = sigmaI;
+          support = 3;
+       	  hsz = (int)Math.max(Math.ceil(sigmaX * support), Math.ceil(sigmaY * support));
+          sz = 2 * hsz + 1;
+          fb1 = new double[sz][sz];
+          deriv = 1;
+          oeFilter(fb1, sigmaX, sigmaY, support, Math.PI/2.0, deriv);
+          fb = new double[2][1][sz][sz];
+          for (y = 0; y < sz; y++) {
+              for (x = 0; x < sz; x++) {
+            	  fb[0][0][y][x] = fb1[y][x];
+            	  fb[1][0][y][x] = fb1[x][y];
+              }
+          }
+          fim = new double[2][1][yDim][xDim];
+          buffer = new double[sliceSize];
+          try {
+        	  inputImage.exportData(0, sliceSize, buffer);
+          }
+          catch(IOException e) {
+        	  MipavUtil.displayError("IOException " + e + " on inputImage.exportData(0, sliceSize, buffer");
+        	  return;
+          }
+          
+          inputImage.disposeLocal();
+          inputImage = null;
+          im = new double[yDim][xDim];
+          for (y = 0; y < yDim; y++) {
+        	  for (x = 0; x < xDim; x++) {
+        		  im[y][x] = buffer[x + y * xDim];
+        	  }
+          }
+          fbRun(fim, fb, im);
+          dx = new double[yDim][xDim];
+          dy = new double[yDim][xDim];
+          for (y = 0; y < yDim; y++) {
+        	  for (x = 0; x < xDim; x++) {
+        		  dx[y][x] = fim[0][0][y][x];
+        		  dy[y][x] = fim[1][0][y][x];
+        	  }
+          }
+          
+          // Compute smoothed squared image derivatives at outer scale
+          sigmaX = sigmaO;
+          sigmaY = sigmaO; 
+          support = 3;
+          hsz = (int)Math.max(Math.ceil(sigmaX * support), Math.ceil(sigmaY * support));
+          sz = 2 * hsz + 1;
+          f = new double[sz][sz];
+          oeFilter(f, sigmaX, sigmaY, support);
+          dxSquared = new double[yDim][xDim];
+          for (y = 0; y < yDim; y++) {
+        	  for (x = 0; x < xDim; x++) {
+        		  dxSquared[y][x] = dx[y][x]*dx[y][x];
+        	  }
+          }
+          dx2 = new double[yDim][xDim];
+          fbRun(dx2, f, dxSquared);
+          dySquared = new double[yDim][xDim];
+          for (y = 0; y < yDim; y++) {
+        	  for (x = 0; x < xDim; x++) {
+        		  dySquared[y][x] = dy[y][x]*dy[y][x];
+        	  }
+          }
+          dy2 = new double[yDim][xDim];
+          fbRun(dy2, f, dySquared);
+          dxdyIn = new double[yDim][xDim];
+          for (y = 0; y < yDim; y++) {
+        	  for (x = 0; x < xDim; x++) {
+        		  dxdyIn[y][x] = dx[y][x]*dy[y][x];
+        	  }
+          }
+          dxy = new double[yDim][xDim];
+          fbRun(dxy, f, dxdyIn);
+          
+          // Compute eigenvalues of the spatially averaged 2nd moment matrix
+          // and the orientations of the eigenvectors
+          for (y = 0; y < yDim; y++) {
+        	  for (x = 0; x < xDim; x++) {
+        		  diff = dx2[y][x] - dy2[y][x];
+        		  k = Math.sqrt(diff*diff + 4.0*dxy[y][x]*dxy[y][x]);
+        		  eig0 = (dx2[y][x] + dy2[y][x] - k)/2.0;
+        		  eig1 = (dx2[y][x] + dy2[y][x] + k)/2.0;
+        		  t0 = Math.atan2(dx2[y][x] - eig0, -dxy[y][x]);
+        		  t1 = Math.atan2(dx2[y][x] - eig1, -dxy[y][x]);
+        		  // Order eigenvalues by their absolute values, so e0 <= e1, and pick
+        		  // out the orientation corresponding to the largest eigenvalue
+        		  if (Math.abs(eig1) > Math.abs(eig0)) {
+        			  e0[y][x] = Math.abs(eig0);
+        			  e1[y][x] = Math.abs(eig1);
+        			  theta[y][x] = t1;
+        		  }
+        		  else {
+        			  e0[y][x] = Math.abs(eig1);
+        			  e1[y][x] = Math.abs(eig0); 
+        			  theta[y][x] = t0;
+        		  }
+        		  theta[y][x] = theta[y][x] + Math.PI/2.0 - Math.PI*Math.floor((theta[y][x] + Math.PI/2.0)/Math.PI); 
+        		  if (e0[y][x] > e1[y][x]) {
+        			  MipavUtil.displayError("Error e0["+y+"]["+x+"] > e1["+y+"]["+x+"] in det2MM");
+        			  return;
+        		  }
         	  }
           }
       }
@@ -5216,6 +5623,14 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     		}
     	}
     }
+    
+    private void oeFilter(double f[][], double sigmaX, double sigmaY, int support) {
+    	double theta = 0.0;
+        int deriv = 0;
+        boolean dohil = false;
+        boolean dovis = false;
+        oeFilter(f, sigmaX, sigmaY, support, theta, deriv, dohil, dovis);
+     }
     
     private void oeFilter(double f[][], double sigmaX, double sigmaY, int support, double theta) {
        int deriv = 0;
