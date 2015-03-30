@@ -46,11 +46,13 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
 	
 	private static final int GM = 6;
 	
+	private static final int GM2 = 7;
+	
 	private int gradientType = BG;
 	
 	private static final int GRAY_PRESENTATION = 1;
 	
-	//private static final int COLOR_PRESENTATION = 2;
+	private static final int COLOR_PRESENTATION = 2;
 	
 	private int presentation = GRAY_PRESENTATION;
 	
@@ -80,6 +82,8 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
     private JRadioButton cgtgButton;
     
     private JRadioButton gmButton;
+    
+    private JRadioButton gm2Button;
     
     private JRadioButton tgButton;
     
@@ -147,7 +151,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         } else if (command.equals("Cancel")) {
             dispose();
         } else if ((source == bgButton) || (source == bgtgButton) || (source == cgButton) || (source == cgtgButton) ||
-        		(source == gmButton) || (source == tgButton)) {
+        		(source == gmButton) || (source == gm2Button) || (source == tgButton)) {
         	if (gmButton.isSelected()) {
         		sigma1Button.setEnabled(true);
         		sigma2Button.setEnabled(true);
@@ -157,6 +161,24 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         		sigmaPanel.setEnabled(true);
         		labelOrientations.setEnabled(false);
         		textOrientations.setEnabled(false);
+        	}
+        	else if (gm2Button.isSelected()) {
+        		sigma1Button.setEnabled(true);
+        		sigma2Button.setEnabled(true);
+        		sigma4Button.setEnabled(true);
+        		sigma8Button.setEnabled(false);
+        		sigma16Button.setEnabled(false);
+        		if (sigma8Button.isSelected()) {
+        		    sigma8Button.setSelected(false);
+        		    sigma4Button.setSelected(true);
+        		}
+        		if (sigma16Button.isSelected()) {
+        		    sigma16Button.setSelected(false);
+        		    sigma4Button.setSelected(true);
+        		}
+        		sigmaPanel.setEnabled(true);
+        		labelOrientations.setEnabled(false);
+        		textOrientations.setEnabled(false);	
         	}
         	else {
         		sigma1Button.setEnabled(false);
@@ -433,6 +455,14 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         gbc2.gridx = 0;
         gradientPanel.add(gmButton, gbc2);
         
+        gm2Button = new JRadioButton("Gradient magnitude at 2 scales", false);
+        gm2Button.setFont(serif12);
+        gm2Button.setForeground(Color.black);
+        gm2Button.addActionListener(this);
+        gradientGroup.add(gm2Button);
+        gbc2.gridy++;
+        gbc2.gridx = 0;
+        gradientPanel.add(gm2Button, gbc2);     
         
         tgButton = new JRadioButton("Texture gradient", false);
         tgButton.setFont(serif12);
@@ -574,6 +604,9 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         }
         else if (bgtgButton.isSelected()) {
         	gradientType = BGTG;
+        	if (image.isColorImage()) {
+        		presentation = COLOR_PRESENTATION;
+        	}
         }
         else if (cgButton.isSelected()) {
         	gradientType = CG;
@@ -589,8 +622,11 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         else if (gmButton.isSelected()) {
         	gradientType = GM;
         }
+        else if (gm2Button.isSelected()) {
+        	gradientType = GM2;
+        }
         
-        if (gradientType != GM) {
+        if ((gradientType != GM) && (gradientType != GM2)) {
 	        tmpStr = textOrientations.getText();
 	
 	        if (testParameter(tmpStr, 1.0, 100.0)) {
@@ -603,7 +639,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
 	        }
         }
         
-        if (gradientType == GM) {
+        if ((gradientType == GM) || (gradientType == GM2)) {
              if (sigma1Button.isSelected()) {
             	 sigma = 1.0;
              }
