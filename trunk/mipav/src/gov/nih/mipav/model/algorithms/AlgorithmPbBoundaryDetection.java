@@ -41,6 +41,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 	
 	private static final int GM = 6;
 	
+	private static final int GM2 = 7;
+	
 	private int gradientType = BG;
 	
 	private static final int GRAY_PRESENTATION = 1;
@@ -177,6 +179,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	}
     	else if (gradientType == GM) {
     		pbGM(pb, theta);
+    	}
+    	else if (gradientType == GM2) {
+    		pbGM2(pb, theta);
     	}
     	pbBuffer = new double[sliceSize];
     	for (y = 0; y < yDim; y++) {
@@ -489,6 +494,88 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         return;
       }
     
+    private void pbGM2(double pb[][], double theta[][]) {
+    	// Compute probability of boundary using gradient magnitude at 2 scales
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// March 2003
+
+      	double beta[] = new double[3];
+      	int sliceSize = xDim * yDim;
+      	int x;
+      	int y;
+      	double xbeta;
+      	double pbi[];
+      	double a[][];
+      	double t1[][];
+      	double b[][];
+      	double t2[][];
+      	double a2[];
+      	double b2[];
+      	double dt;
+      	
+      	// Beta from logistic fits (trainGM2.m)
+      	switch ((int)Math.round(sigma)) {
+      	case 1:
+      	    beta[0] = -2.9845759;
+      	    beta[1] = -4.4804245;
+      	    beta[2] = 26.493560;
+      	    break;
+      	case 2:
+      		beta[0] = -3.2341949;
+      		beta[1] = 6.5031017;
+      		beta[2] = 20.245465;
+      		break;
+      	case 3:
+      		beta[0] = -3.0361378;
+      		beta[1] = 15.965267;
+      		beta[2] = 16.130494;
+      		break;
+        default:
+        	MipavUtil.displayError("No parameters for sigma = " + sigma);
+        	setCompleted(false);    	
+      	} // switch ((int)Math.round(sigma))
+      	
+      	a = new double[yDim][xDim];
+      	t1 = new double[yDim][xDim];
+      	detGM(a, t1, sigma);
+      	b = new double[yDim][xDim];
+      	t2 = new double[yDim][xDim];
+      	detGM(b, t2, 2.0*sigma);
+      	a2 = new double[sliceSize];
+      	b2 = new double[sliceSize];
+      	for (x = 0; x < xDim; x++) {
+      		for (y = 0; y < yDim; y++) {
+      			a2[y + x * yDim] = a[y][x];
+      			b2[y + x * yDim] = b[y][x];
+      		}
+      	}
+      	pbi = new double[sliceSize];
+      	for (y = 0; y < sliceSize; y++) {
+        	xbeta = beta[0] + a2[y]*beta[1] + b2[y]*beta[2];
+        	pbi[y] = 1.0/(1.0 + Math.exp(-xbeta));
+        }
+      	for (x = 0; x < xDim; x++) {
+        	for (y = 0; y < yDim; y++) {
+        	    pb[y][x] = pbi[y + x*yDim];	
+        	}
+        }
+      	
+      	// Average orientations for nonmax suppression
+      	for (y = 0; y < yDim; y++) {
+      		for (x = 0; x < xDim; x++) {
+      			// [0, 2*PI)
+      			dt = t2[y][x] - t1[y][x] - 2.0 * Math.PI*Math.floor((t2[y][x] - t1[y][x])/(2.0*Math.PI));
+      			// [-PI, PI)
+      			if (dt >= Math.PI) {
+      				dt = dt - 2.0 * Math.PI;
+      			}
+      			theta[y][x] = t1[y][x] + dt/2.0;
+      		}
+      	}
+      	nonmax(pb, pb, theta);
+      	return;
+    }
+    
     private void pbGM(double pb[][], double theta[][]) {
     	// Compute probability of boundary using gradient magnitude
     	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
@@ -532,7 +619,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
       	} // switch ((int)Math.round(sigma))
       	
       	m = new double[yDim][xDim];
-      	detGM(m, theta);
+      	detGM(m, theta, sigma);
       	m2 = new double[sliceSize];
       	for (x = 0; x < xDim; x++) {
       		for (y = 0; y < yDim; y++) {
@@ -1570,11 +1657,10 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
        * @param theta Orientation of gradient + pi/2
        *              (i.e. edge orientation)
        */
-      private void detGM(double m[][], double theta[][]) {
+      private void detGM(double m[][], double theta[][], double sigma) {
     	  // Compute image gradient magnitude
     	  // Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
       	  // March 2003
-    	  double diag;
           ModelImage grayImage = null;
           ModelImage inputImage;
           AlgorithmChangeType changeTypeAlgo;
@@ -1597,7 +1683,6 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
       	  double dy[][];
       	  double pretheta;
             
-          diag = Math.sqrt(xDim*xDim + yDim*yDim);
           if (srcImage.isColorImage()) {
 			  final boolean thresholdAverage = false;
 			  final float threshold = 0.0f;
