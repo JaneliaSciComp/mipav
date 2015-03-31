@@ -285,13 +285,13 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		             halvingMethod = false;
 		             distance = largestDistance;
 		             if (costheta > 0) {
-		                 distance = Math.min(distance, xDim - 1 - xCenter)/costheta;	 
+		                 distance = Math.min(distance, (xDim - 1 - xCenter)/costheta);	 
 		             }
 		             if (costheta < 0) {
 		            	 distance = Math.min(distance, -xCenter/costheta);
 		             }
 		             if (sintheta > 0) {
-		                 distance = Math.min(distance, yDim - 1 - yCenter)/sintheta;	 
+		                 distance = Math.min(distance, (yDim - 1 - yCenter)/sintheta);	 
 		             }
 		             if (sintheta < 0) {
 		            	 distance = Math.min(distance, -yCenter/sintheta);
