@@ -36,6 +36,7 @@ public class GenerateGaussian {
 
     /** data storage buffer. */
     private float[] gaussianData;
+    private double[] dgaussianData;
 
     /** DOCUMENT ME! */
     private boolean invert = false;
@@ -48,6 +49,7 @@ public class GenerateGaussian {
 
     /** standard dev. in each direction */
     private float[] sigmas;
+    private double[] dsigmas;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -60,6 +62,18 @@ public class GenerateGaussian {
      * @param  derivOrder  derivative order in each dimension
      */
     public GenerateGaussian(float[] data, int[] dimLengths, float[] sigmas, int[] derivOrder) {
+        this(data, dimLengths, sigmas, derivOrder, Double.MIN_VALUE);
+    }
+    
+    /**
+     * Initializes class that calculates an n-dim Gaussian.
+     *
+     * @param  data        storage area of Gaussian function
+     * @param  dimLengths  length of function in pixels in each dimension
+     * @param  sigmas      standard dev. in each direction
+     * @param  derivOrder  derivative order in each dimension
+     */
+    public GenerateGaussian(double[] data, int[] dimLengths, double[] sigmas, int[] derivOrder) {
         this(data, dimLengths, sigmas, derivOrder, Double.MIN_VALUE);
     }
 
@@ -82,6 +96,26 @@ public class GenerateGaussian {
         this.pt = new int[nDims];
         this.denom = denom;
     }
+    
+    /**
+     * Initializes class that calculates an n-dim Gaussian.
+     *
+     * @param  data        storage area of Gaussian function
+     * @param  dimLengths  length of function in pixels in each dimension
+     * @param  sigmas      standard dev. in each direction
+     * @param  derivOrder  derivative order in each dimension
+     * @param  denom       denominator of the gaussian scale coeffient
+     */
+    public GenerateGaussian(double[] data, int[] dimLengths, double[] sigmas, int[] derivOrder, double denom) {
+
+        this.dgaussianData = data;
+        this.dsigmas = sigmas;
+        this.derivOrder = derivOrder;
+        this.dimLengths = dimLengths;
+        this.nDims = dimLengths.length;
+        this.pt = new int[nDims];
+        this.denom = denom;
+    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -98,6 +132,20 @@ public class GenerateGaussian {
 
         recursiveCalc(0, dims);
     }
+    
+    /**
+     * Starts the Gaussian calculation.
+     *
+     * @param  invert  Flag indicating inversion
+     */
+    public void dcalc(boolean invert) {
+
+        this.invert = invert;
+
+        int dims = dimLengths.length - 1;
+
+        drecursiveCalc(0, dims);
+    }
 
     /**
      * Prepares this class for destruction.
@@ -105,6 +153,7 @@ public class GenerateGaussian {
     public void finalize() {
 
         gaussianData = null;
+        dgaussianData = null;
         System.gc();
     }
 
@@ -168,6 +217,38 @@ public class GenerateGaussian {
         }
 
         return (float) gValue;
+    }
+    
+    /**
+     * Calculates the Gaussian function at a point.
+     *
+     * @param   pt  array of ints representing a point where the Gaussian should be calculated.
+     *
+     * @return  DOCUMENT ME!
+     */
+    private double dgaussPt(int[] pt) {
+        int i;
+        double gValue = 1;
+        double factor = 0;
+        double hFactor = 1;
+        double temp = 1;
+
+        for (i = 0; i < nDims; i++) {
+
+            if (dsigmas[i] != 0.0) { // If a sigma in any dimension is zero - return.
+                factor = (-pt[i] * pt[i]) / (2.0 * dsigmas[i] * dsigmas[i]);
+
+                //if (denom == Double.MIN_VALUE) {
+                    denom = Math.sqrt(2.0 * Math.PI * dsigmas[i] * dsigmas[i]);
+                //}
+
+                temp = Math.exp(factor) / denom;
+                hFactor = hermite(derivOrder[i], pt[i] / dsigmas[i]);
+                gValue *= (temp * hFactor);
+            }
+        }
+
+        return gValue;
     }
 
     /**
@@ -235,6 +316,44 @@ public class GenerateGaussian {
                     gaussianData[offset + i] = -gaussPt(pt);
                 } else {
                     gaussianData[offset + i] = gaussPt(pt);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Starts the Gaussian calculation.
+     *
+     * @param  offset  offset in data
+     * @param  dim     present dimension
+     */
+    private void drecursiveCalc(int offset, int dim) {
+        int i, j;
+        int length;
+        int index;
+
+        length = dimLengths[dim];
+        index = 1;
+
+        for (j = dim - 1; j >= 0; j--) {
+            index *= dimLengths[j];
+        }
+
+        if (dim > 0) {
+
+            for (i = 0; i < length; i++) {
+                pt[dim] = (int) (i - (length / 2));
+                drecursiveCalc((i * index) + offset, dim - 1);
+            }
+        } else {
+
+            for (i = 0; i < length; i++) {
+                pt[dim] = (int) (i - (length / 2));
+
+                if (invert) {
+                    dgaussianData[offset + i] = -dgaussPt(pt);
+                } else {
+                    dgaussianData[offset + i] = dgaussPt(pt);
                 }
             }
         }
