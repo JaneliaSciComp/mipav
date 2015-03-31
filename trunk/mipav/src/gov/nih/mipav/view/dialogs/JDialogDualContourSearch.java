@@ -71,11 +71,9 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
     /** DOCUMENT ME! */
     private ViewVOIVector VOIs;
     
-    private VOI resultVOI = null;
-    
     private String[] titles;
     
-    private float sigmas[] = new float[]{2.0f, 2.0f};
+    private double sigmas[] = new double[]{2.0, 2.0};
     
     private JTextField textGaussX;
     
@@ -558,7 +556,7 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
         tmpStr = textGaussX.getText();
 
         if (testParameter(tmpStr, 0.5, 5.0)) {
-            sigmas[0] = Float.valueOf(tmpStr).floatValue();
+            sigmas[0] = Double.valueOf(tmpStr).doubleValue();
         } else {
             textGaussX.requestFocus();
             textGaussX.selectAll();
@@ -569,7 +567,7 @@ public class JDialogDualContourSearch extends JDialogBase implements AlgorithmIn
         tmpStr = textGaussY.getText();
 
         if (testParameter(tmpStr, 0.5, 5.0)) {
-            sigmas[1] = Float.valueOf(tmpStr).floatValue();
+            sigmas[1] = Double.valueOf(tmpStr).doubleValue();
         } else {
             textGaussY.requestFocus();
             textGaussY.selectAll();
