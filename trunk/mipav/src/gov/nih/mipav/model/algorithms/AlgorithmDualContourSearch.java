@@ -702,13 +702,13 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		             halvingMethod = false;
 		             distance = largestDistance;
 		             if (costheta[i] > 0) {
-		                 distance = Math.min(distance, xDim - 1 - xCenter)/costheta[i];	 
+		                 distance = Math.min(distance, (xDim - 1 - xCenter)/costheta[i]);	 
 		             }
 		             if (costheta[i] < 0) {
 		            	 distance = Math.min(distance, -xCenter/costheta[i]);
 		             }
 		             if (sintheta[i] > 0) {
-		                 distance = Math.min(distance, yDim - 1 - yCenter)/sintheta[i];	 
+		                 distance = Math.min(distance, (yDim - 1 - yCenter)/sintheta[i]);	 
 		             }
 		             if (sintheta[i] < 0) {
 		            	 distance = Math.min(distance, -yCenter/sintheta[i]);
@@ -753,13 +753,13 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		             halvingMethod = false;
 		             distance = largestDistance;
 		             if (costheta[i] > 0) {
-		                 distance = Math.min(distance, xDim - 1 - xCenter)/costheta[i];	 
+		                 distance = Math.min(distance, (xDim - 1 - xCenter)/costheta[i]);	 
 		             }
 		             if (costheta[i] < 0) {
 		            	 distance = Math.min(distance, -xCenter/costheta[i]);
 		             }
 		             if (sintheta[i] > 0) {
-		                 distance = Math.min(distance, yDim - 1 - yCenter)/sintheta[i];	 
+		                 distance = Math.min(distance, (yDim - 1 - yCenter)/sintheta[i]);	 
 		             }
 		             if (sintheta[i] < 0) {
 		            	 distance = Math.min(distance, -yCenter/sintheta[i]);
@@ -1076,13 +1076,13 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			             halvingMethod = false;
 			             distance = largestDistance;
 			             if (costheta[i] > 0) {
-			                 distance = Math.min(distance, xDim - 1 - xCenter)/costheta[i];	 
+			                 distance = Math.min(distance, (xDim - 1 - xCenter)/costheta[i]);	 
 			             }
 			             if (costheta[i] < 0) {
 			            	 distance = Math.min(distance, -xCenter/costheta[i]);
 			             }
 			             if (sintheta[i] > 0) {
-			                 distance = Math.min(distance, yDim - 1 - yCenter)/sintheta[i];	 
+			                 distance = Math.min(distance, (yDim - 1 - yCenter)/sintheta[i]);	 
 			             }
 			             if (sintheta[i] < 0) {
 			            	 distance = Math.min(distance, -yCenter/sintheta[i]);
@@ -1127,13 +1127,13 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			             halvingMethod = false;
 			             distance = largestDistance;
 			             if (costheta[i] > 0) {
-			                 distance = Math.min(distance, xDim - 1 - xCenter)/costheta[i];	 
+			                 distance = Math.min(distance, (xDim - 1 - xCenter)/costheta[i]);	 
 			             }
 			             if (costheta[i] < 0) {
 			            	 distance = Math.min(distance, -xCenter/costheta[i]);
 			             }
 			             if (sintheta[i] > 0) {
-			                 distance = Math.min(distance, yDim - 1 - yCenter)/sintheta[i];	 
+			                 distance = Math.min(distance, (yDim - 1 - yCenter)/sintheta[i]);	 
 			             }
 			             if (sintheta[i] < 0) {
 			            	 distance = Math.min(distance, -yCenter/sintheta[i]);
@@ -1453,13 +1453,13 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			             halvingMethod = false;
 			             distance = largestDistance;
 			             if (costheta[i] > 0) {
-			                 distance = Math.min(distance, xDim - 1 - xCenter)/costheta[i];	 
+			                 distance = Math.min(distance, (xDim - 1 - xCenter)/costheta[i]);	 
 			             }
 			             if (costheta[i] < 0) {
 			            	 distance = Math.min(distance, -xCenter/costheta[i]);
 			             }
 			             if (sintheta[i] > 0) {
-			                 distance = Math.min(distance, yDim - 1 - yCenter)/sintheta[i];	 
+			                 distance = Math.min(distance, (yDim - 1 - yCenter)/sintheta[i]);	 
 			             }
 			             if (sintheta[i] < 0) {
 			            	 distance = Math.min(distance, -yCenter/sintheta[i]);
@@ -1504,13 +1504,13 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			             halvingMethod = false;
 			             distance = largestDistance;
 			             if (costheta[i] > 0) {
-			                 distance = Math.min(distance, xDim - 1 - xCenter)/costheta[i];	 
+			                 distance = Math.min(distance, (xDim - 1 - xCenter)/costheta[i]);	 
 			             }
 			             if (costheta[i] < 0) {
 			            	 distance = Math.min(distance, -xCenter/costheta[i]);
 			             }
 			             if (sintheta[i] > 0) {
-			                 distance = Math.min(distance, yDim - 1 - yCenter)/sintheta[i];	 
+			                 distance = Math.min(distance, (yDim - 1 - yCenter)/sintheta[i]);	 
 			             }
 			             if (sintheta[i] < 0) {
 			            	 distance = Math.min(distance, -yCenter/sintheta[i]);
