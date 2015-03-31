@@ -1,6 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
-import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector2d;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
@@ -27,16 +27,16 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 	private double regularization;
 	private VOI resultVOI = null;
 	/** Storage location of the first derivative of the Gaussian in the X direction. */
-    private float[] GxData;
+    private double[] GxData;
 
     /** Storage location of the first derivative of the Gaussian in the Y direction. */
-    private float[] GyData;
+    private double[] GyData;
     
     /** Dimensionality of the kernel. */
     private int[] kExtents;
     
     /** Standard deviations of the gaussian used to calculate the kernels. */
-    private float[] sigmas;
+    private double[] sigmas;
     
     // Contract from solution in going to next slice
     private int pixelsContract;
@@ -46,7 +46,7 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 	
 	
 	public  AlgorithmDualContourSearch(ModelImage srcImg, int innerIndex, int outerIndex, int contourPoints, int linePoints,
-			                           double regularization, float[] sigmas, int pixelsContract, int pixelsExpand) {
+			                           double regularization, double[] sigmas, int pixelsContract, int pixelsExpand) {
 		
 		super(null, srcImg);
 		this.innerIndex = innerIndex;
@@ -84,8 +84,8 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		 VOIContour innerContour;
 		 VOIContour outerContour;
 		 Vector3f innerCenter;
-		 float xCenter;
-		 float yCenter;
+		 double xCenter;
+		 double yCenter;
 		 int i;
 		 int xDim;
 		 int yDim;
@@ -114,10 +114,10 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		 double minGrad;
 		 int j;
 		 int length;
-		 float[] imgBuffer;
-		 float gx;
-		 float gy;
-		 Vector2f interpPt;
+		 double[] imgBuffer;
+		 double gx;
+		 double gy;
+		 Vector2d interpPt;
 		 int bestLinePoint[] = new int[contourPoints];
 		 double stateEnergy[][] = new double[contourPoints][linePoints];
 		 int statePreceding[][] = new int[contourPoints][linePoints];
@@ -152,7 +152,7 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		 
 		 try {
 	            length = xDim * yDim;
-	            imgBuffer = new float[length];
+	            imgBuffer = new double[length];
 	            srcImage.exportData(0, length, imgBuffer); // locks and releases lock
 
 	            fireProgressStateChanged(srcImage.getImageName(), "Searching for boundary ...");
@@ -329,7 +329,7 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		 minGrad = Double.MAX_VALUE;
 		 for (i = 0; i < contourPoints; i++) {
 			 for (j = 0; j < linePoints; j++) {
-				 interpPt = new Vector2f((float)xArray[i][j], (float)yArray[i][j]);
+				 interpPt = new Vector2d(xArray[i][j], yArray[i][j]);
 				 gx = AlgorithmConvolver.convolve2DPt(interpPt, srcImage.getExtents(), imgBuffer, kExtents, GxData);
                  gy = AlgorithmConvolver.convolve2DPt(interpPt, srcImage.getExtents(), imgBuffer, kExtents, GyData);
 
@@ -531,8 +531,8 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		 VOIContour innerContour;
 		 VOIContour outerContour;
 		 Vector3f innerCenter;
-		 float xCenter;
-		 float yCenter;
+		 double xCenter;
+		 double yCenter;
 		 int i;
 		 int xDim;
 		 int yDim;
@@ -562,10 +562,10 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		 double minGrad;
 		 int j;
 		 int length;
-		 float[] imgBuffer;
-		 float gx;
-		 float gy;
-		 Vector2f interpPt;
+		 double[] imgBuffer;
+		 double gx;
+		 double gy;
+		 Vector2d interpPt;
 		 int bestLinePoint[] = new int[contourPoints];
 		 double stateEnergy[][] = new double[contourPoints][linePoints];
 		 int statePreceding[][] = new int[contourPoints][linePoints];
@@ -607,7 +607,7 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		 outerContour = (VOIContour)outerVOI.getCurves().elementAt(0);
 		 startingZ = Math.round(innerContour.elementAt(0).Z);
 		 length = xDim * yDim;
-         imgBuffer = new float[length];
+         imgBuffer = new double[length];
          double startingContractX[] = new double[contourPoints];
          double startingContractY[] = new double[contourPoints];
          double startingExpandX[] = new double[contourPoints];
@@ -797,7 +797,7 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		 minGrad = Double.MAX_VALUE;
 		 for (i = 0; i < contourPoints; i++) {
 			 for (j = 0; j < linePoints; j++) {
-				 interpPt = new Vector2f((float)xArray[i][j], (float)yArray[i][j]);
+				 interpPt = new Vector2d(xArray[i][j], yArray[i][j]);
 				 gx = AlgorithmConvolver.convolve2DPt(interpPt, srcImage.getExtents(), imgBuffer, kExtents, GxData);
                 gy = AlgorithmConvolver.convolve2DPt(interpPt, srcImage.getExtents(), imgBuffer, kExtents, GyData);
 
@@ -1171,7 +1171,7 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			 minGrad = Double.MAX_VALUE;
 			 for (i = 0; i < contourPoints; i++) {
 				 for (j = 0; j < linePoints; j++) {
-					 interpPt = new Vector2f((float)xArray[i][j], (float)yArray[i][j]);
+					 interpPt = new Vector2d(xArray[i][j], yArray[i][j]);
 					 gx = AlgorithmConvolver.convolve2DPt(interpPt, srcImage.getExtents(), imgBuffer, kExtents, GxData);
 	                gy = AlgorithmConvolver.convolve2DPt(interpPt, srcImage.getExtents(), imgBuffer, kExtents, GyData);
 
@@ -1548,7 +1548,7 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			 minGrad = Double.MAX_VALUE;
 			 for (i = 0; i < contourPoints; i++) {
 				 for (j = 0; j < linePoints; j++) {
-					 interpPt = new Vector2f((float)xArray[i][j], (float)yArray[i][j]);
+					 interpPt = new Vector2d(xArray[i][j], yArray[i][j]);
 					 gx = AlgorithmConvolver.convolve2DPt(interpPt, srcImage.getExtents(), imgBuffer, kExtents, GxData);
 	                gy = AlgorithmConvolver.convolve2DPt(interpPt, srcImage.getExtents(), imgBuffer, kExtents, GyData);
 
@@ -1761,7 +1761,7 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
         derivOrder[0] = 1;
         derivOrder[1] = 0;
 
-        xkDim = Math.round(5 * sigmas[0]);
+        xkDim = (int)Math.round(5 * sigmas[0]);
 
         if ((xkDim % 2) == 0) {
             xkDim++;
@@ -1769,7 +1769,7 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 
         kExtents[0] = xkDim;
 
-        ykDim = Math.round(5 * sigmas[1]);
+        ykDim = (int)Math.round(5 * sigmas[1]);
 
         if ((ykDim % 2) == 0) {
             ykDim++;
@@ -1777,18 +1777,18 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 
         kExtents[1] = ykDim;
 
-        GxData = new float[xkDim * ykDim];
+        GxData = new double[xkDim * ykDim];
 
         GenerateGaussian Gx = new GenerateGaussian(GxData, kExtents, sigmas, derivOrder);
 
-        Gx.calc(false);
+        Gx.dcalc(false);
 
         derivOrder[0] = 0;
         derivOrder[1] = 1;
-        GyData = new float[xkDim * ykDim];
+        GyData = new double[xkDim * ykDim];
 
         GenerateGaussian Gy = new GenerateGaussian(GyData, kExtents, sigmas, derivOrder);
 
-        Gy.calc(true);
+        Gy.dcalc(true);
     }
 }
