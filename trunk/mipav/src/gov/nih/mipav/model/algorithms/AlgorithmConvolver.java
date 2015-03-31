@@ -1,8 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Mathematics.Vector2d;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.ViewJProgressBar;
@@ -865,6 +865,70 @@ public class AlgorithmConvolver extends AlgorithmBase {
 
         if (norm > 0) {
             return (float)(sum / norm);
+        } else {
+            return 0;
+        }
+    }
+    
+    /**
+     * A static function that convolves a kernel with an image at a position.
+     *
+     * @param   pt        floating point indicating location of convolution
+     * @param   iExtents  image dimensions
+     * @param   image     image data
+     * @param   kExtents  kernel dimensions
+     * @param   kernel    kernel data
+     *
+     * @return  the value of the pixel after convolution with the kernel
+     */
+    public static final double convolve2DPt(Vector2d pt, int[] iExtents, double[] image, int[] kExtents, double[] kernel) {
+
+        int i, j;
+        double dx, dy;
+        int offsetX, offsetY;
+        int xDim = iExtents[0];
+        int yDim = iExtents[1];
+        int yLimit = xDim * yDim;
+        int xKDim = kExtents[0];
+        int yKDim = kExtents[1];
+
+        int startX, startY;
+        int endX, endY;
+        int count;
+        double sum;
+        double norm = 0;
+
+        dx = pt.X - (int) pt.X;
+        dy = pt.Y - (int) pt.Y;
+        offsetX = (int) pt.X - (xKDim / 2);
+        offsetY = (int) pt.Y - (yKDim / 2);
+        sum = 0;
+        count = 0;
+        startY = offsetY * xDim;
+        endY = startY + (yKDim * xDim);
+
+        for (j = startY; j < endY; j += xDim) {
+            startX = j + offsetX;
+            endX = startX + xKDim;
+
+            for (i = startX; i < endX; i++) {
+
+                if ((j >= 0) && (j < yLimit) && ((i - j) >= 0) && ((i - j) < xDim)) {
+                    sum += kernel[count] * getBilinear(i, dx, dy, iExtents, image);
+
+                    if (kernel[count] >= 0) {
+                        norm += kernel[count];
+                    } else {
+                        norm += -kernel[count];
+                    }
+                }
+
+                count++;
+            }
+        }
+
+        if (norm > 0) {
+            return (sum / norm);
         } else {
             return 0;
         }
@@ -3811,6 +3875,47 @@ public class AlgorithmConvolver extends AlgorithmBase {
         x2 = ((1 - dx) * image[i + iy]) + (dx * image[ix + iy]);
 
         return (float) (((1 - dy) * x1) + (dy * x2));
+    }
+    
+    /**
+     * Performs bilinear interpolation of image data.
+     *
+     * @param   i         index into image
+     * @param   dx        change in x from integer
+     * @param   dy        change in y from integer
+     * @param   iExtents  dimensions of image
+     * @param   image     image data
+     *
+     * @return  the bilinearly interpolated value
+     */
+    private static double getBilinear(int i, double dx, double dy, int[] iExtents, double[] image) {
+
+        int xDim = iExtents[0];
+        int yDim = iExtents[1];
+        double x1, x2;
+        int ix, iy;
+        int xIndex;
+        int yIndex;
+        
+        xIndex = i % xDim;
+        yIndex = i / xDim;
+
+        if ((dx == 0.0f) || (xIndex == (xDim - 1))) {
+            ix = i;
+        } else {
+            ix = i + 1;
+        }
+
+        if ((dy == 0.0f) || (yIndex == (yDim - 1))) {
+            iy = 0;
+        } else {
+            iy = xDim;
+        }
+
+        x1 = ((1 - dx) * image[i]) + (dx * image[ix]);
+        x2 = ((1 - dx) * image[i + iy]) + (dx * image[ix + iy]);
+
+        return (((1 - dy) * x1) + (dy * x2));
     }
 
     /**
