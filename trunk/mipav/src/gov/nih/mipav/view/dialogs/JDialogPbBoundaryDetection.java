@@ -52,6 +52,8 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
 	
 	private static final int TWOMM2 = 9;
 	
+	private static final int CANNY = 10;
+	
 	private int gradientType = BG;
 	
 	private static final int GRAY_PRESENTATION = 1;
@@ -95,6 +97,8 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
     
     private JRadioButton twoMM2Button;
     
+    private JRadioButton CannyButton;
+    
     private String smooth = "savgol";
     
     private ButtonGroup smoothGroup;
@@ -118,6 +122,22 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
     private JRadioButton sigma16Button;
     
     private JPanel sigmaPanel;
+    
+    private JPanel CannyPanel;
+    
+    // Resolution for pb
+ 	private int nthresh = 100;
+ 	
+ 	private JLabel labelThresh;
+ 	
+ 	private JTextField textThresh;
+ 	
+ 	// Multiplier for lower hysteresis threshold, in [0, 1].
+ 	private double hmult = 1.0/3.0;
+ 	
+ 	private JLabel labelMult;
+ 	
+ 	private JTextField textMult;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -160,7 +180,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
             dispose();
         } else if ((source == bgButton) || (source == bgtgButton) || (source == cgButton) || (source == cgtgButton) ||
         		(source == gmButton) || (source == gm2Button) || (source == twoMMButton) || (source == twoMM2Button) ||
-        		(source == tgButton)) {
+        		(source == tgButton) || (source == CannyButton)) {
         	if (gmButton.isSelected() || twoMMButton.isSelected()) {
         		sigma1Button.setEnabled(true);
         		sigma2Button.setEnabled(true);
@@ -171,6 +191,11 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         		sigmaPanel.setEnabled(true);
         		labelOrientations.setEnabled(false);
         		textOrientations.setEnabled(false);
+        		labelThresh.setEnabled(false);
+        		textThresh.setEnabled(false);
+        		labelMult.setEnabled(false);
+        		textMult.setEnabled(false);
+        		CannyPanel.setEnabled(false);
         	}
         	else if (gm2Button.isSelected()) {
         		sigma1Button.setEnabled(true);
@@ -181,7 +206,12 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         		sigma2Button.setSelected(true);
         		sigmaPanel.setEnabled(true);
         		labelOrientations.setEnabled(false);
-        		textOrientations.setEnabled(false);	
+        		textOrientations.setEnabled(false);
+        		labelThresh.setEnabled(false);
+        		textThresh.setEnabled(false);
+        		labelMult.setEnabled(false);
+        		textMult.setEnabled(false);
+        		CannyPanel.setEnabled(false);
         	}
         	else if (twoMM2Button.isSelected()) {
         		sigma1Button.setEnabled(true);
@@ -192,7 +222,28 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         		sigma1Button.setSelected(true);
         		sigmaPanel.setEnabled(true);
         		labelOrientations.setEnabled(false);
-        		textOrientations.setEnabled(false);		
+        		textOrientations.setEnabled(false);	
+        		labelThresh.setEnabled(false);
+        		textThresh.setEnabled(false);
+        		labelMult.setEnabled(false);
+        		textMult.setEnabled(false);
+        		CannyPanel.setEnabled(false);
+        	}
+        	else if (CannyButton.isSelected()) {
+        		sigma1Button.setEnabled(true);
+        		sigma2Button.setEnabled(true);
+        		sigma4Button.setEnabled(true);
+        		sigma8Button.setEnabled(true);
+        		sigma16Button.setEnabled(true);
+        		sigma2Button.setSelected(true);
+        		sigmaPanel.setEnabled(true);
+        		labelOrientations.setEnabled(false);
+        		textOrientations.setEnabled(false);
+        		labelThresh.setEnabled(true);
+        		textThresh.setEnabled(true);
+        		labelMult.setEnabled(true);
+        		textMult.setEnabled(true);	
+        		CannyPanel.setEnabled(true);
         	}
         	else {
         		sigma1Button.setEnabled(false);
@@ -203,6 +254,11 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         		sigmaPanel.setEnabled(false);
         		labelOrientations.setEnabled(true);
         		textOrientations.setEnabled(true);
+        		labelThresh.setEnabled(false);
+        		textThresh.setEnabled(false);
+        		labelMult.setEnabled(false);
+        		textMult.setEnabled(false);
+        		CannyPanel.setEnabled(false);
         	}
         } else {
             super.actionPerformed(event);
@@ -308,7 +364,7 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
 
             // Make algorithm
             pbAlgo = new AlgorithmPbBoundaryDetection(resultImage, image, gradientType, presentation, lowRadius, highRadius,
-            		numOrientations, smooth, sigma);
+            		numOrientations, smooth, sigma, nthresh, hmult);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -361,6 +417,8 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         gradientType = scriptParameters.getParams().getInt("grad_type");
         smooth = scriptParameters.getParams().getString("smooth_type");
         sigma = scriptParameters.getParams().getDouble("sig");
+        nthresh = scriptParameters.getParams().getInt("thresh");
+        hmult = scriptParameters.getParams().getDouble("h_mult");
     }
 
     /**
@@ -373,6 +431,8 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         scriptParameters.getParams().put(ParameterFactory.newParameter("grad_type", gradientType));
         scriptParameters.getParams().put(ParameterFactory.newParameter("smooth_type", smooth));
         scriptParameters.getParams().put(ParameterFactory.newParameter("sig", sigma));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("thresh", nthresh));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("h_mult", hmult));
     }
 
     /**
@@ -432,6 +492,15 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         gbc2.gridy++;
         gbc2.gridx = 0;
         gradientPanel.add(bgtgButton, gbc2);
+        
+        CannyButton = new JRadioButton("Canny and gradient magnitude", false);
+        CannyButton.setFont(serif12);
+        CannyButton.setForeground(Color.black);
+        CannyButton.addActionListener(this);
+        gradientGroup.add(CannyButton);
+        gbc2.gridy++;
+        gbc2.gridx = 0;
+        gradientPanel.add(CannyButton, gbc2);
         
         if (image.isColorImage()) {
             cgButton = new JRadioButton("Color gradient", true);
@@ -603,6 +672,48 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         gbc.gridx = 0;
         gbc.gridy++;
         paramPanel.add(sigmaPanel, gbc);
+        
+        CannyPanel = new JPanel(new GridBagLayout());
+        CannyPanel.setBorder(buildTitledBorder("Canny"));
+        CannyPanel.setEnabled(false);
+        GridBagConstraints gbc5 = new GridBagConstraints();
+        gbc5.weightx = 1;
+        gbc5.anchor = GridBagConstraints.WEST;
+        gbc5.fill = GridBagConstraints.HORIZONTAL;
+        
+        labelThresh = new JLabel("Number of resolutions for pb");
+        labelThresh.setForeground(Color.black);
+        labelThresh.setFont(serif12);
+        labelThresh.setEnabled(false);
+        gbc5.gridx = 0;
+        gbc5.gridy = 0;
+        CannyPanel.add(labelThresh, gbc5);
+
+        textThresh = new JTextField(10);
+        textThresh.setText("100");
+        textThresh.setFont(serif12);
+        textThresh.setEnabled(false);
+        gbc5.gridx = 1;
+        CannyPanel.add(textThresh, gbc5);
+        
+        labelMult = new JLabel("Multiplier for lower hysteresis");
+        labelMult.setForeground(Color.black);
+        labelMult.setFont(serif12);
+        labelMult.setEnabled(false);
+        gbc5.gridx = 0;
+        gbc5.gridy = 1;
+        CannyPanel.add(labelMult, gbc5);
+
+        textMult = new JTextField(10);
+        textMult.setText("0.333333");
+        textMult.setFont(serif12);
+        textMult.setEnabled(false);
+        gbc5.gridx = 1;
+        CannyPanel.add(textMult, gbc5);
+        
+        gbc.gridx = 0;
+        gbc.gridy++;
+        paramPanel.add(CannyPanel, gbc);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -663,8 +774,12 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         else if (twoMM2Button.isSelected()) {
         	gradientType = TWOMM2;
         }
+        else if (CannyButton.isSelected()) {
+        	gradientType = CANNY;
+        }
         
-        if ((gradientType != GM) && (gradientType != GM2) && (gradientType != TWOMM) && (gradientType != TWOMM2)) {
+        if ((gradientType != GM) && (gradientType != GM2) && (gradientType != TWOMM) && (gradientType != TWOMM2) &&
+        		(gradientType != CANNY)) {
 	        tmpStr = textOrientations.getText();
 	
 	        if (testParameter(tmpStr, 1.0, 100.0)) {
@@ -677,7 +792,8 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
 	        }
         }
         
-        if ((gradientType == GM) || (gradientType == GM2) || (gradientType == TWOMM) || (gradientType == TWOMM2)) {
+        if ((gradientType == GM) || (gradientType == GM2) || (gradientType == TWOMM) || (gradientType == TWOMM2) ||
+        		(gradientType == CANNY)) {
              if (sigma1Button.isSelected()) {
             	 sigma = 1.0;
              }
@@ -703,6 +819,30 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
         }
         else {
         	smooth = "none";
+        }
+        
+        if (gradientType == CANNY) {
+        	tmpStr = textThresh.getText();
+        	
+	        if (testParameter(tmpStr, 1.0, 1000.0)) {
+	            nthresh = Integer.valueOf(tmpStr).intValue();
+	        } else {
+	            textThresh.requestFocus();
+	            textThresh.selectAll();
+	
+	            return false;
+	        }
+	        
+	        tmpStr = textMult.getText();
+	    	
+	        if (testParameter(tmpStr, 0.0, 1.0)) {
+	            hmult = Double.valueOf(tmpStr).doubleValue();
+	        } else {
+	            textMult.requestFocus();
+	            textMult.selectAll();
+	
+	            return false;
+	        }
         }
        
 
@@ -763,6 +903,8 @@ public class JDialogPbBoundaryDetection extends JDialogScriptableBase implements
             table.put(new ParameterInt("grad_type", BG));
             table.put(new ParameterString("smooth_type", "savgol"));
             table.put(new ParameterDouble("sig", sigma));
+            table.put(new ParameterInt("thresh", nthresh));
+            table.put(new ParameterDouble("h_mult", hmult));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
