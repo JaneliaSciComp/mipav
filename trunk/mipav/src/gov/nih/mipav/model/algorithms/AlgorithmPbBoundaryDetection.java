@@ -47,6 +47,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 	
 	private static final int TWOMM2 = 9;
 	
+	private static final int CANNY = 10;
+	
 	private int gradientType = BG;
 	
 	private static final int GRAY_PRESENTATION = 1;
@@ -65,6 +67,12 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 	private String smooth = "savgol";
 	
 	private double sigma = 2.0;
+	
+	// Resolution for pb
+	private int nthresh = 100;
+	
+	// Multiplier for lower hysteresis threshold, in [0, 1].
+	private double hmult = 1.0/3.0;
 	
 	private int xDim;
 	
@@ -111,7 +119,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
        @param  sigma
      */
     public AlgorithmPbBoundaryDetection(ModelImage destImg, ModelImage srcImg, int gradientType, int presentation, double lowRadius,
-                                       double highRadius, int numOrientations, String smooth, double sigma) {
+                                       double highRadius, int numOrientations, String smooth, double sigma,
+                                       int nthresh, double hmult) {
         super(destImg, srcImg);
         this.gradientType = gradientType;
         this.presentation = presentation;
@@ -120,6 +129,8 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         this.numOrientations = numOrientations; 
         this.smooth = smooth;
         this.sigma = sigma;
+        this.nthresh = nthresh;
+        this.hmult = hmult;
     }
     
     public void runAlgorithm() {
@@ -193,6 +204,9 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	else if (gradientType == TWOMM2) {
     		pb2MM2(pb, theta);
     	}
+    	else if (gradientType == CANNY) {
+    		pbCanny(pb);
+    	}
     	pbBuffer = new double[sliceSize];
     	for (y = 0; y < yDim; y++) {
     		for (x = 0; x < xDim; x++) {
@@ -210,6 +224,97 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         
         setCompleted(true);
         return;
+    }
+    
+    private void pbCanny(double pb[][]) {
+    	// Compute probability of boundary using Canny, i.e. gradient magnitude with hysteresis thresholding.
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// March 2003
+    	double pbgm[][];
+    	double theta[][];
+    	double thresh[];
+    	int i;
+    	double spacing;
+    	int x;
+    	int y;
+    	boolean found;
+    	byte b[][];
+    	
+    	// Start with the pb from gradient magnitude
+    	pbgm = new double[yDim][xDim];
+    	theta = new double[yDim][xDim];
+    	pbGM(pbgm, theta);
+    	// And apply hysteresis thresholding
+    	thresh = new double[nthresh];
+    	thresh[0] = 1.0/nthresh;
+    	thresh[nthresh-1] = 1.0 -  1.0/nthresh;
+    	spacing = (1.0 - 2.0/nthresh)/(nthresh - 1.0);
+    	for (i = 1; i < nthresh-1; i++) {
+    		thresh[i] = 1.0/nthresh + i * spacing;
+    	}
+    	b = new byte[yDim][xDim];
+    	for (i = 0; i < nthresh; i++) {
+    		found = false;
+    		for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				b[y][x] = 0;
+    				if (pbgm[y][x] >= thresh[i]) {
+    					pb[y][x] = Math.max(pb[y][x], thresh[i]);
+    					b[y][x] = 1;
+    					found = true;
+    				}
+    			}
+    		}
+    		while (found) {
+    			found = false;
+    			for (y = 0; y < yDim; y++) {
+    				for (x = 0; x < xDim; x++) {
+    					if (b[y][x] == 1) {
+	    					if (x > 0 && pbgm[y][x-1] > hmult*thresh[i] && b[y][x-1] == 0) {
+	    						pb[y][x-1] = Math.max(pb[y][x-1], thresh[i]);
+	    						b[y][x-1] = 1;
+	    						found = true;
+	    					}
+	    					if (x < xDim - 1 && pbgm[y][x+1] > hmult*thresh[i] && b[y][x+1] == 0) {
+	    						pb[y][x+1] = Math.max(pb[y][x+1], thresh[i]);
+	    						b[y][x+1] = 1;
+	    						found = true;
+	    					}
+	    					if (y > 0 && pbgm[y-1][x] > hmult*thresh[i] && b[y-1][x] == 0) {
+	    						pb[y-1][x] = Math.max(pb[y-1][x], thresh[i]);
+	    						b[y-1][x] = 1;
+	    						found = true;
+	    					}
+	    					if (y < yDim-1 && pbgm[y+1][x] > hmult*thresh[i] && b[y+1][x] == 0) {
+	    						pb[y+1][x]= Math.max(pb[y+1][x], thresh[i]);
+	    						b[y+1][x] = 1;
+	    						found = true;
+	    					}
+	    					if (x > 0  && y > 0 && pbgm[y-1][x-1] > hmult*thresh[i] && b[y-1][x-1] == 0) {
+	    						pb[y-1][x-1] = Math.max(pb[y-1][x-1], thresh[i]);
+	    						b[y-1][x-1] = 1;
+	    						found = true;
+	    					}
+	    					if (x > 0 && y < yDim-1 && pbgm[y+1][x-1] > hmult*thresh[i] && b[y+1][x-1] == 0) {
+	    						pb[y+1][x-1] = Math.max(pbgm[y+1][x-1], thresh[i]);
+	    						b[y+1][x-1] = 1;
+	    						found = true;
+	    					}
+	    					if (x < xDim-1 && y > 0 && pbgm[y-1][x+1] > hmult*thresh[i] && b[y-1][x+1] == 0) {
+	    						pb[y-1][x+1] = Math.max(pb[y-1][x+1], thresh[i]);
+	    						b[y-1][x+1] = 1;
+	    						found = true;
+	    					}
+	    					if (x < xDim-1 && y < yDim-1 && pbgm[y+1][x+1] > hmult*thresh[i] && b[y+1][x+1] == 0) {
+	    						pb[y+1][x+1] = Math.max(pb[y+1][x+1], thresh[i]);
+	    						b[y+1][x+1] = 1;
+	    						found = true;
+	    					}
+    					}
+    				}
+    			}
+    		} // while (found)
+    	} // for (i = 0; i < nthresh; i++)
     }
     
     private void pb2MM2(double pb[][], double theta[][]) {
@@ -2222,6 +2327,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         		  theta[y][x] = pretheta + Math.PI/2.0 - Math.PI*Math.floor((pretheta + Math.PI/2.0)/Math.PI);
         	  }
           }
+          return;
       }
       
       private void detBG(double bg[][][], double theta[]) {
