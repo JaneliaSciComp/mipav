@@ -1616,7 +1616,7 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			         startingLinePoint = presentLinePoint;	 
 			     }
 			     else if (i == contourPoints/2 - 1) {
-			    	 terminatingLinePoint = nextLinePoint;
+			    	 terminatingLinePoint = presentLinePoint;
 			     }
 			     nextLinePoint = presentLinePoint;
 			 } // for (i = contourPoints-2; i >= contourPoints/2 -1; i--)
