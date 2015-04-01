@@ -396,10 +396,11 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		         startingLinePoint = presentLinePoint;	 
 		     }
 		     else if (i == contourPoints/2 - 1) {
-		    	 terminatingLinePoint = nextLinePoint;
+		    	 terminatingLinePoint = presentLinePoint;
 		     }
 		     nextLinePoint = presentLinePoint;
 		 } // for (i = contourPoints-2; i >= contourPoints/2 -1; i--)
+		 
 		 
 		 for (nextLinePoint = 0; nextLinePoint < linePoints; nextLinePoint++) {
 			 statePreceding[contourPoints/2][nextLinePoint] = startingLinePoint;
@@ -864,7 +865,7 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		         startingLinePoint = presentLinePoint;	 
 		     }
 		     else if (i == contourPoints/2 - 1) {
-		    	 terminatingLinePoint = nextLinePoint;
+		    	 terminatingLinePoint = presentLinePoint;
 		     }
 		     nextLinePoint = presentLinePoint;
 		 } // for (i = contourPoints-2; i >= contourPoints/2 -1; i--)
@@ -1238,7 +1239,7 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 			         startingLinePoint = presentLinePoint;	 
 			     }
 			     else if (i == contourPoints/2 - 1) {
-			    	 terminatingLinePoint = nextLinePoint;
+			    	 terminatingLinePoint = presentLinePoint;
 			     }
 			     nextLinePoint = presentLinePoint;
 			 } // for (i = contourPoints-2; i >= contourPoints/2 -1; i--)
