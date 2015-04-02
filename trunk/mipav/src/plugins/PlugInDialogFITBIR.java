@@ -218,7 +218,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.32";
+    private static final String pluginVersion = "0.33";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -297,6 +297,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
     };
 
+    private static final Comparator valueRangeCompare = new Comparator<ValueRange>() {
+        @Override
+        public int compare(final ValueRange o1, final ValueRange o2) {
+            return o1.compareTo(o2);
+        }
+    };
+
     public PlugInDialogFITBIR() {
         super();
 
@@ -330,7 +337,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
         }
 
-        final Thread thread = new RESTThread(this);
+        final Thread thread = new FormListRESTThread(this);
         thread.start();
     }
 
@@ -3345,7 +3352,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
             for (final FormStructure ds : dataStructureList) {
                 if (ds.getShortName().equalsIgnoreCase(dataStructureName)) {
-                    dataStructure = ds;
+                    if (ds.getDataElements().size() == 0) {
+                        final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(owner, ds.getShortName());
+                        thread.run();
+
+                        dataStructure = thread.getFullFormStructure();
+                    } else {
+                        dataStructure = ds;
+                    }
                 }
             }
 
@@ -4295,7 +4309,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         cb.setFont(MipavUtil.font12);
 
                         cb.addItem("");
-                        for (final ValueRange val : de.getStructuralDataElement().getValueRangeList()) {
+                        final List<ValueRange> valuesList = new ArrayList<ValueRange>();
+                        valuesList.addAll(de.getStructuralDataElement().getValueRangeList());
+                        Collections.sort(valuesList);
+                        for (final ValueRange val : valuesList) {
                             cb.addItem(val.getValueRange());
                         }
                         cb.addItemListener(this);
@@ -4327,13 +4344,17 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         newDeVal.setLabel(l);
                         newDeVal.setComp(cb);
                     } else if (de.getStructuralDataElement().getRestrictions() == InputRestrictions.MULTIPLE) {
-                        final Object[] valRangeList = de.getStructuralDataElement().getValueRangeList().toArray();
-                        final String[] listData = new String[de.getStructuralDataElement().getValueRangeList().size()];
-                        for (int i = 0; i < listData.length; i++) {
-                            listData[i] = ((ValueRange) valRangeList[i]).getValueRange();
+                        final List<ValueRange> valuesList = new ArrayList<ValueRange>();
+                        valuesList.addAll(de.getStructuralDataElement().getValueRangeList());
+                        Collections.sort(valuesList);
+                        final String[] valStrList = new String[valuesList.size()];
+                        int i = 0;
+                        for (final ValueRange val : valuesList) {
+                            valStrList[i] = val.getValueRange();
+                            i++;
                         }
 
-                        final JList list = new JList(listData);
+                        final JList list = new JList(valStrList);
                         list.setName(de.getStructuralDataElement().getName());
                         list.setFont(MipavUtil.font12);
                         list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -5939,20 +5960,22 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     }
 
     /**
-     * Class that connects to BRICS data dictionary web service (via RESTful API).
+     * Class that connects to BRICS data dictionary web service (via RESTful API) to retrieve the list of imaging form
+     * structures (without their attached data elements).
      */
-    public class RESTThread extends Thread implements ActionListener {
+    public class FormListRESTThread extends Thread implements ActionListener {
         private static final String ddAuthBase = "/portal/ws/webstart/dictionary/formStructure/details";
 
         private static final String ddRequestBase = "/portal/ws/ddt/dictionary/FormStructure";
 
-        private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=IMAGING";
+        // private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=IMAGING";
+        private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=IMAGING&incDEs=false";
 
         private JButton progressCancelButton;
 
         private final PlugInDialogFITBIR parent;
 
-        public RESTThread(final PlugInDialogFITBIR parent) {
+        public FormListRESTThread(final PlugInDialogFITBIR parent) {
             super();
             this.parent = parent;
         }
@@ -5961,7 +5984,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public void run() {
             ViewJProgressBar progressBar = null;
             try {
-                progressBar = new ViewJProgressBar("BRICS", "Connecting to BRICS data dictionary web service...", 0, 100, true);
+                progressBar = new ViewJProgressBar("BRICS", "Retrieving imaging form structures from BRICS data dictionary...", 0, 100, true);
                 progressBar.setVisible(true);
                 progressBar.updateValue(20);
                 progressBar.setIndeterminate(true);
@@ -6009,7 +6032,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 progressBar.updateValue(100);
                 progressBar.setVisible(false);
                 progressBar.dispose();
-                printlnToLog("Successful connection to BRICS data dictionary web service");
+                printlnToLog("Successful retrieval of imaging form structures.");
 
                 addStructButton.setEnabled(true);
                 loadCSVButton.setEnabled(true);
@@ -6035,6 +6058,102 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     System.exit(0);
                 }
             }
+        }
+    }
+
+    /**
+     * Class that connects to BRICS data dictionary web service (via RESTful API) to retrieve the data elements for a
+     * given form structure.
+     */
+    public class FormDataElementsRESTThread extends Thread implements ActionListener {
+
+        private static final String ddRequestBase = "/portal/ws/ddt/dictionary/FormStructure";
+
+        private JButton progressCancelButton;
+
+        private final PlugInDialogFITBIR parent;
+
+        private final String formStructName;
+
+        private FormStructure fullFormStructure;
+
+        public FormDataElementsRESTThread(final PlugInDialogFITBIR parent, final String formStructName) {
+            super();
+            this.parent = parent;
+            this.formStructName = formStructName;
+        }
+
+        @Override
+        public void run() {
+            ViewJProgressBar progressBar = null;
+            try {
+                progressBar = new ViewJProgressBar("BRICS", "Retrieving data elements for form structure: " + formStructName, 0, 100, true);
+                progressBar.setVisible(true);
+                progressBar.updateValue(20);
+                progressBar.setIndeterminate(true);
+                progressCancelButton = progressBar.getCancelButton();
+                progressCancelButton.addActionListener(this);
+
+                // should have already read in the config file (moved from here to be before the GUI init() call)
+
+                WebClient client;
+                client = WebClient.create(ddServerURL + ddRequestBase + "/" + formStructName);
+
+                final HTTPConduit conduit = WebClient.getConfig(client).getHttpConduit();
+                conduit.getClient().setReceiveTimeout(0);
+
+                final long startTime = System.currentTimeMillis();
+                fullFormStructure = client.accept("text/xml").get(FormStructure.class);
+                final long endTime = System.currentTimeMillis();
+
+                System.out.println("Webservice request (sec):\t" + ( (endTime - startTime) / 1000));
+
+                for (int i = 0; i < dataStructureList.size(); i++) {
+                    final FormStructure curFS = dataStructureList.get(i);
+                    if (curFS.getShortName().equals(fullFormStructure.getShortName())) {
+                        dataStructureList.set(i, fullFormStructure);
+                        break;
+                    }
+                }
+
+                // for (final FormStructure ds : dataStructureList) {
+                // System.out.println("FS title:\t" + ds.getTitle() + "\tversion:\t" + ds.getVersion() + "\tpub:\t"
+                // +
+                // ds.getStatus());
+                // }
+
+                progressBar.updateValue(80);
+
+                progressBar.updateValue(100);
+                progressBar.setVisible(false);
+                progressBar.dispose();
+                printlnToLog("Successful retrieval of data elements for form structure: " + formStructName);
+            } catch (final Exception e) {
+                e.printStackTrace();
+                if (progressBar != null) {
+                    progressBar.setVisible(false);
+                    progressBar.dispose();
+                    MipavUtil.displayError("Error in connecting to web service");
+                    parent.dispose();
+                    if (JDialogStandalonePlugin.isExitRequired()) {
+                        System.exit(0);
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void actionPerformed(final ActionEvent e) {
+            if (e.getSource() == progressCancelButton) {
+                dispose();
+                if (JDialogStandalonePlugin.isExitRequired()) {
+                    System.exit(0);
+                }
+            }
+        }
+
+        public FormStructure getFullFormStructure() {
+            return fullFormStructure;
         }
     }
 
