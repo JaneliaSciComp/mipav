@@ -146,6 +146,12 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
 		 boolean halvingMethod;
 		 int innerPolarity = 1;
 		 int outerPolarity = 1;
+		 boolean selfTest = false;
+		 if (selfTest) {
+			 generateTestImage();
+			 setCompleted(false);
+			 return;
+		 }
 		 
 		 xDim = srcImage.getExtents()[0];
 		 yDim = srcImage.getExtents()[1];
@@ -1791,5 +1797,63 @@ public class AlgorithmDualContourSearch extends AlgorithmBase {
         GenerateGaussian Gy = new GenerateGaussian(GyData, kExtents, sigmas, derivOrder);
 
         Gy.dcalc(true);
+    }
+    
+    private void generateTestImage() {
+    	int extents[] = new int[2];
+    	extents[0] = 1200;
+    	extents[1] = 1200;
+    	double xcen = 599.5;
+    	double ycen = 599.5;
+    	int x;
+    	int y;
+    	double theta;
+    	int i;
+    	double radius = 400;
+    	double a = 0.2 * radius;
+    	int n = 30;
+    	byte buffer[] = new byte[extents[0]*extents[1]];
+    	boolean found;
+    	double pixelDistX;
+    	double pixelDistY;
+    	double pixelDistSquared;
+    	int xboundary;
+    	int yboundary;
+    	double boundaryDistX;
+    	double boundaryDistY;
+    	double boundaryDistSquared;
+    	
+    	for (i = 0; i < 360000; i++) {
+    		theta = i * 2.0 * Math.PI/360000.0;
+    	    x = (int)Math.round((radius + a * Math.sin(n*theta))*Math.cos(theta) + xcen);
+    	    y = (int)Math.round((radius + a * Math.sin(n*theta))*Math.sin(theta) + ycen);
+    	    buffer[x + y * extents[0]] = 1;
+    	}
+    	
+    	for (y = 0; y < extents[1]; y++) {
+    		for (x = 0; x < extents[0]; x++) {
+    		    pixelDistX = x - xcen;
+    		    pixelDistY = y - ycen;
+    		    pixelDistSquared = pixelDistX * pixelDistX + pixelDistY * pixelDistY;
+    		    theta = Math.atan2(pixelDistY, pixelDistX);
+    		    xboundary = (int)Math.round((radius + a * Math.sin(n*theta))*Math.cos(theta) + xcen);
+        	    yboundary = (int)Math.round((radius + a * Math.sin(n*theta))*Math.sin(theta) + ycen);
+        	    boundaryDistX = xboundary - xcen;
+        	    boundaryDistY = yboundary - ycen;
+        	    boundaryDistSquared = boundaryDistX * boundaryDistX + boundaryDistY * boundaryDistY;
+        	    if (pixelDistSquared <= boundaryDistSquared) {
+        	    	buffer[x + y * extents[0]] = 1;
+        	    }
+    		}
+    	}
+    	
+    	ModelImage regularizationTestImage = new ModelImage(ModelStorageBase.BYTE, extents, "regularizationTestImage");
+    	try {
+    	    regularizationTestImage.importData(0, buffer, true);	
+    	}
+    	catch(IOException e) {
+    		
+    	}
+    	new ViewJFrameImage(regularizationTestImage);
     }
 }
