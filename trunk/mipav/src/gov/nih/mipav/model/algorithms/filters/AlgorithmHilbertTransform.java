@@ -152,6 +152,10 @@ public class AlgorithmHilbertTransform extends AlgorithmBase {
 
 	    if (n == 1)
 	        return;
+	    if (n < 4) {
+	    	fft_dif_iter(z,n);
+	    	return;
+	    }
 	    t = (2.0 * Math.PI) / (double)n;
 	    a = Math.sin(0.5 * t);
 	    a *= 2.0 * a;
@@ -188,6 +192,73 @@ public class AlgorithmHilbertTransform extends AlgorithmBase {
 	    }
 	    return;
 	}   /* fft_dif_rec() */
+	
+	/***********************************************************
+	* static void fft_dif_iter(double *z, unsigned long n)
+	*
+	* Purpose:
+	*   Computes the forward discrete Fourier transform of a complex
+	*   sequence z, using an iterative radix 2 decimation-in-frequency
+	*   FFT.  z[0..2n-1] is an array of n complex numbers, stored in the
+	*   usual way with real elements in z[0,2,..2n-2] and imaginary
+	*   elements in z[1,3,..2n-1].
+	*
+	*   Entering this function, z[] should be in normal order.  On
+	*   return, the FT is stored in bit-reversed order.
+	*
+	*   n must be a power of 2.
+	*
+	* Arguments:
+	*   double *z - array of 2n doubles, representing n complex numbers
+	*   unsigned long n - dimension of z, must be a power of 2
+	*
+	* Return:
+	*   none
+	************************************************************/
+
+	private void fft_dif_iter(double z[], int n)
+	{
+	    int i, n2;
+
+	    n2 = n << 1;
+	    for (i = n; i > 1; i >>= 1) {
+	        double a, b, c, s, t;
+	        int i2, j;
+	        i2 = i << 1;
+	        t = 2.0 * Math.PI / (double)i;
+	        a = Math.sin(0.5 * t);
+	        a *= 2.0 * a;
+	        b = Math.sin(t);
+	        c = 1.0;
+	        s = 0.0;
+	        for (j = 0; j < i; j += 2) {
+	            double tmp;
+	            int kr, kmax;
+	            kmax = n2 + j;
+	            for (kr = j; kr < kmax; kr += i2) {
+	                double ur, ui;
+	                int ki, mr, mi;
+	                ki = kr + 1;
+	                mr = kr + i;
+	                mi = mr + 1;
+	                ur = z[kr];
+	                ui = z[ki];
+	                z[kr] = ur + z[mr];
+	                z[ki] = ui + z[mi];
+	                ur -= z[mr];
+	                ui -= z[mi];
+	                z[mr] = ur * c - ui * s;
+	                z[mi] = ur * s + ui * c;
+	            }
+	            tmp = c;
+	            c -= a * c + b * s;
+	            s -= a * s - b * tmp;
+	        }
+	    }
+	    return;
+	}   /* fft_dif_iter() */
+
+
 	
 	/***********************************************************
 	* void ifft_dit(double z[], int n)
@@ -260,6 +331,10 @@ public class AlgorithmHilbertTransform extends AlgorithmBase {
 
 	    if (n == 1)
 	        return;
+	    if (n < 4) {
+	    	ifft_dit_iter(z, n);
+	    	return;
+	    }
 	    nh = n >> 1;
 	    nbranch <<= 1;
 	    double z2[] = new double[2*nh];
@@ -294,6 +369,70 @@ public class AlgorithmHilbertTransform extends AlgorithmBase {
 	    }
 	    return;
 	}   /* ifft_dit_rec() */
+	
+	/***********************************************************
+	* static void ifft_dit_iter(double *z, unsigned long n)
+	*
+	* Purpose:
+	*   Computes the inverse discrete Fourier transform of a complex
+	*   sequence z, using an iterative radix 2 decimation-in-time FFT.
+	*   z[0..2n-1] is an array of n complex numbers, stored in the
+	*   usual way with real elements in z[0,2,..2n-2] and imaginary
+	*   elements in z[1,3,..2n-1].
+	*
+	*   Entering this function, z[] should be in bit-reversed order.
+	*   The returned inverse FT is restored to normal order.
+	*
+	*   n must be a power of 2.
+	*
+	* Arguments:
+	*   double *z - array of 2n doubles, representing n complex numbers
+	*   unsigned long n - dimension of z, must be a power of 2
+	*
+	* Return:
+	*   none
+	************************************************************/
+
+	private void ifft_dit_iter(double z[], int n)
+	{
+	    int i, n2;
+
+	    n2 = n << 1;
+	    for (i = 2; i <= n; i <<= 1) {
+	        double a, b, c, s, t;
+	        int i2, j;
+	        i2 = i << 1;
+	        t = -2.0*Math.PI / (double)i;
+	        a = Math.sin(0.5 * t);
+	        a *= 2.0 * a;
+	        b = Math.sin(t);
+	        c = 1.0;
+	        s = 0.0;
+	        for (j = 0; j < i; j += 2) {
+	            double tmp;
+	            int kr, kmax;
+	            kmax = n2 + j;
+	            for (kr = j; kr < kmax; kr += i2) {
+	                double vr, vi;
+	                int ki, mr, mi;
+	                ki = kr + 1;
+	                mr = kr + i;
+	                mi = mr + 1;
+	                vr = z[mr] * c - z[mi] * s;
+	                vi = z[mr] * s + z[mi] * c;
+	                z[mr] = z[kr] - vr;
+	                z[mi] = z[ki] - vi;
+	                z[kr] += vr;
+	                z[ki] += vi;
+	            }
+	            tmp = c;
+	            c -= a * c + b * s;
+	            s -= a * s - b * tmp;
+	        }
+	    }
+	    return;
+	}   /* ifft_dit_iter() */
+
 
 	
 }
