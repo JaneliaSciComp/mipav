@@ -3,12 +3,14 @@ package gov.nih.mipav.model.algorithms;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import gov.nih.mipav.model.algorithms.filters.AlgorithmHilbertTransform;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
 import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.view.MipavUtil;
 
 /**
@@ -274,7 +276,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	int n_ori = 8;
     	// sigma for small tg filters
     	double sigma_tg_filt_sm = 2.0;
-    	ArrayList <double[]> filters_small = new ArrayList<double[]>();
+    	ArrayList <double[][]> filters_small = new ArrayList<double[][]>();
     	texton_filters(filters_small, n_ori, sigma_tg_filt_sm);
     }
     
@@ -504,24 +506,24 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
      * @param n_ori
      * @param sigma
      */
-    private void texton_filters(ArrayList <double[]> filters, int n_ori, double sigma) {
+    private void texton_filters(ArrayList <double[][]> filters, int n_ori, double sigma) {
     	// Allocate collection to hold filters
-    	ArrayList <double[]> filters_even = new ArrayList <double[]>();
-    	ArrayList <double[]> filters_odd = new ArrayList <double[]>();
+    	ArrayList <double[][]> filters_even = new ArrayList <double[][]>();
+    	ArrayList <double[][]> filters_odd = new ArrayList <double[][]>();
     	oe_filters_even(n_ori, sigma, filters_even);
     	oe_filters_odd(n_ori, sigma, filters_odd);
     }
     
-    private void oe_filters_even(int n_ori, double sigma, ArrayList <double[]> filters_even) {
+    private void oe_filters_even(int n_ori, double sigma, ArrayList <double[][]> filters_even) {
     	gaussian_filters(n_ori, sigma, 2, false, 3.0, filters_even);
     }
     
-    private void oe_filters_odd(int n_ori, double sigma, ArrayList <double[]> filters_odd) {
+    private void oe_filters_odd(int n_ori, double sigma, ArrayList <double[][]> filters_odd) {
     	gaussian_filters(n_ori, sigma, 2, true, 3.0, filters_odd);
     }
     
     private void gaussian_filters(int n_ori, double sigma, int deriv, boolean hlbrt, double elongation,
-    		ArrayList <double[]> filters) {
+    		ArrayList <double[][]> filters) {
     	double oris[] = new double[n_ori];
     	standard_filter_orientations(n_ori, oris);
     	gaussian_filters(oris, sigma, deriv, hlbrt, elongation, filters);
@@ -538,7 +540,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     }
     
     private void gaussian_filters(double[] oris, double sigma, int deriv, boolean hlbrt, double elongation,
-        ArrayList <double[]> filters) {
+        ArrayList <double[][]> filters) {
     	int n;
     	// Compute support from sigma
     	int support = (int)Math.ceil(3 * sigma);
@@ -547,14 +549,194 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	// Setup filter creators
     	int n_ori = oris.length;
     	for (n = 0; n < n_ori; n++) {
-    	    double f[] = gaussian_2D(sigmaX, sigmaY, oris[n], deriv, hlbrt, support, support);	
+    	    double f[][] = gaussian_2D(sigmaX, sigmaY, oris[n], deriv, hlbrt, support, support);	
+    	    filters.add(f);
     	}
     }
     
-    private double[] gaussian_2D(double sigmaX, double sigmaY, double ori, int deriv, boolean hlbrt, int supportX,
+    /**
+     * Gaussian kernel (2D)
+     * The kernel is normalized to have unit L1 norm.  If returning a 1st or 2nd derivative,
+     * the kernel has zero mean.
+     * @param sigmaX standard deviation along x axis
+     * @param sigmaY standard deviation along y axis
+     * @param ori orientation in radians
+     * @param deriv The 1st or 2nd derivative can be taken along the y-axis prior to rotation
+     * @param hlbrt The hilbert transform can be taken along the y-axis prior to rotation
+     * @param supportX
+     * @param supportY
+     * @return
+     */
+    private double[][] gaussian_2D(double sigmaX, double sigmaY, double ori, int deriv, boolean hlbrt, int supportX,
     		int supportY) {
-    	double m[] = null;
+    	double m[][] = null;
+    	// Compute size of larger grid for axis-aligned gaussian
+    	// Reverse rotate corners of bounding box by orientation
+    	int support_x_rot = support_x_rotated(supportX, supportY, -ori);
+    	int support_y_rot = support_y_rotated(supportX, supportY, -ori);
+    	// Compute 1D kernels
+    	double mx[] = gaussian(sigmaX, 0, false, support_x_rot);
     	return m;
     }
+    
+    /*
+     * Compute integer-valued supports for rotated 2D matrix.
+     */
+    private int support_x_rotated(
+       int support_x, int support_y, double ori)
+    {
+       return (int)(
+          Math.ceil(support_x_rotated(
+             (double)(support_x), (double)(support_y), ori
+          ))
+       );
+    }
+
+    private int support_y_rotated(
+       int support_x, int support_y, double ori)
+    {
+       return (int)(
+          Math.ceil(support_y_rotated(
+             (double)(support_x), (double)(support_y), ori
+          ))
+       );
+    }
+
+    
+    private double support_x_rotated(double support_x, double support_y, double ori) {
+    	   final double sx_cos_ori = support_x * Math.cos(ori);
+    	   final double sy_sin_ori = support_y * Math.sin(ori);
+    	   double x0_mag = Math.abs(sx_cos_ori - sy_sin_ori);
+    	   double x1_mag = Math.abs(sx_cos_ori + sy_sin_ori);
+    	   return (x0_mag > x1_mag) ? x0_mag : x1_mag;
+    	}
+
+    private double support_y_rotated(double support_x, double support_y, double ori) {
+    	   final double sx_sin_ori = support_x * Math.sin(ori);
+    	   final double sy_cos_ori = support_y * Math.cos(ori);
+    	   double y0_mag = Math.abs(sx_sin_ori - sy_cos_ori);
+    	   double y1_mag = Math.abs(sx_sin_ori + sy_cos_ori);
+    	   return (y0_mag > y1_mag) ? y0_mag : y1_mag;
+    	}
+    
+    /**
+     * Gaussian kernel (1D).
+     * The length of the returned vector is 2*support + 1.
+     * The kernel is normalized to have unit L1 norm.
+     * If returning a 1st or 2nd derivative, the kernel has zero mean
+     * @param sigma
+     * @param deriv
+     * @param hlbrt
+     * @param support
+     * @return
+     */
+    private double[] gaussian(double sigma, int deriv, boolean hlbrt, int support) {
+    	double m[] = null;
+    	int n;
+    	int i;
+    	// Enlarge support so that hilbert transform can be done efficiently.
+    	int support_big = support;
+    	if (hlbrt) {
+    		support_big = 1;
+    		int temp = support;
+    		while (temp > 0) {
+    			support_big *= 2;
+    			temp /= 2;
+    		}
+    	}
+    	// Compute constants
+    	final double sigma2_inv = 1.0/(sigma * sigma);
+    	final double neg_two_sigma2_inv = -0.5 * sigma2_inv;
+    	// Compute gaussian (or gaussian derivative).
+    	int size = 2*support_big + 1;
+    	m = new double[size];
+    	double x = -(double)support_big;
+    	if (deriv == 0) {
+    		// Compute gaussian
+    		for (n = 0; n < size; n++, x++) {
+    		    m[n] = Math.exp(x*x*neg_two_sigma2_inv);	
+    		}
+    	}
+    	else if (deriv == 1) {
+    		// Compute gaussian first derivative
+    		for (n = 0; n < size; n++, x++) {
+    			m[n] = Math.exp(x*x*neg_two_sigma2_inv) * (-x);
+    		}
+    	}
+    	else if (deriv == 2) {
+    		// Compute gaussian second derivative
+    		for (n = 0; n < size; n++, x++) {
+    			double x2 = x * x;
+    			m[n] = Math.exp(x2 * neg_two_sigma2_inv) * (x2*sigma2_inv - 1);
+    		}
+    	}
+    	else {
+    		MipavUtil.displayError("Only derivatives 0, 1, and 2 supported");
+    		return null;
+    	}
+    	// Take hilbert transform (if requested)
+    	if (hlbrt) {
+    		// Grab power of two sized submatrix (ignore last element)
+    		double mtemp[] = new double[m.length-1];
+    		for (i = 0; i < m.length-1; i++) {
+    			mtemp[i] = m[i];
+    		}
+    		m = null;
+    		m = new double[mtemp.length];
+    		for (i = 0; i < mtemp.length; i++) {
+    			m[i] = mtemp[i];
+    		}
+    		mtemp = null;
+    		// Grab desired submatrix after hilbert transform
+    		int start = support_big - support;
+    		int end = start + support + support;
+    		int paddedfsamples = MipavMath.findMinimumPowerOfTwo(m.length);
+       	    double paddedfy[] = new double[2 * paddedfsamples];
+       	    for (i = 0; i < m.length; i++) {
+       		    paddedfy[2*i] = m[i];
+       	    }
+       	    AlgorithmHilbertTransform ht = new AlgorithmHilbertTransform(paddedfy, paddedfsamples);
+       	    ht.run();
+       	    for (i = 0; i < m.length; i++) {
+       		    m[i] = paddedfy[2*i+1];
+       	    }
+       	    mtemp = new double[end - start + 1];
+       	    for (i = start; i <= end; i++) {
+       	    	mtemp[i-start] = m[i];
+       	    }
+       	    m = null;
+       	    m = new double[mtemp.length];
+       	    for (i = 0; i < mtemp.length; i++) {
+       	    	m[i] = mtemp[i];
+       	    }
+       	    mtemp = null;
+    	}
+    	double sum;
+    	// Make zero mean (if returning derivative)
+    	if (deriv > 0) {
+    		 sum = 0.0;
+    		for (i = 0; i < m.length; i++) {
+    			sum += m[i];
+    		}
+    		double mean = sum/m.length; 
+    		for (i = 0; i < m.length; i++) {
+    			m[i] = m[i] - mean;
+    		}
+    	} // if (deriv > 0)
+    	// Make unit L1 norm
+    	sum = 0.0;
+    	for (i = 0; i < m.length; i++) {
+    		sum += Math.abs(m[i]);
+    	}
+    	for (i = 0; i < m.length; i++) {
+    		m[i] = m[i]/sum;
+    	}
+    	return m;
+    }
+    
+    
+    
+
+
     
 }
