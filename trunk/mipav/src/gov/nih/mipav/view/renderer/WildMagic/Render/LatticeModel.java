@@ -866,6 +866,7 @@ public class LatticeModel {
 	private VOI annotationVOIs;
 
 	private Vector3f wormOrigin = null;
+	private Vector3f transformedOrigin = new Vector3f();
 
 	private ModelImage markerSegmentation;
 
@@ -3661,10 +3662,6 @@ public class LatticeModel {
 
 		VOI transformedAnnotations = null;
 		try {
-			Vector3f transformedOrigin = new Vector3f();
-			if ( (model != null) && (originToStraight != null) && (wormOrigin != null)) {
-				transformedOrigin = originToStraight(model, originToStraight, wormOrigin, "wormOrigin");
-			}
 			if (originToStraight != null) {
 				transformedAnnotations = new VOI(annotationVOIs);
 			}
@@ -3774,10 +3771,7 @@ public class LatticeModel {
 
 		try {
 			final float cubicVolume = VOILatticeManagerInterface.VoxelSize * VOILatticeManagerInterface.VoxelSize * VOILatticeManagerInterface.VoxelSize;
-			Vector3f transformedOrigin = new Vector3f();
-			if ( (model != null) && (originToStraight != null) && (wormOrigin != null)) {
-				transformedOrigin = originToStraight(model, originToStraight, wormOrigin, "wormOrigin");
-			}
+
 
 			final FileWriter fw = new FileWriter(file);
 			final BufferedWriter bw = new BufferedWriter(fw);
@@ -4347,6 +4341,16 @@ public class LatticeModel {
 
 			saveImage(baseName, straightToOrigin, false);
 			saveImage(baseName, originToStraight, false);
+			
+			// calculate the transformed origin point:
+			if ( (model != null) && (originToStraight != null) && (wormOrigin != null)) {
+				transformedOrigin = originToStraight(model, originToStraight, wormOrigin, "wormOrigin");
+			}
+			else if ( transformedOrigin == null )
+			{
+				transformedOrigin = new Vector3f();
+			}
+			
 			transformedAnnotations = saveAnnotationStatistics(imageA, model, originToStraight, resultExtents, "_after");
 			straightToOrigin.disposeLocal();
 			straightToOrigin = null;
@@ -4949,7 +4953,7 @@ public class LatticeModel {
 		}
 
 		sID = (short) (imageA.getVOIs().getUniqueID());
-		VOI neuriteVOI = new VOI(sID, name );
+		VOI neuriteVOI = new VOI(sID, name, VOI.POLYLINE, (float) Math.random() );
 		neuriteVOI.getCurves().add(neuriterPositions);
 		neuriteVOI.setColor(Color.white);
 		neuriterPositions.update(new ColorRGBA(1, 1, 1, 1));
@@ -4991,6 +4995,8 @@ public class LatticeModel {
 			wormImage.registerVOI( neuriteData.elementAt(i) );
 			String voiDir = resultImage.getImageDirectory() + JDialogBase.makeImageName(baseName, "") + File.separator + neuriteData.elementAt(i).getName() + "_spline" + File.separator;
 			saveAllVOIsTo(voiDir, wormImage);
+			
+			saveSpline( wormImage, neuriteData.elementAt(i), Vector3f.ZERO, "_before" );
 		}
 		wormImage.restoreVOIs(temp);
 
@@ -4999,9 +5005,12 @@ public class LatticeModel {
 		for ( int i = 0; i < neuriteData.size(); i++ )
 		{
 			resultImage.resetVOIs();
-			resultImage.registerVOI( convertToStraight( model, originToStraight, neuriteData.elementAt(i)) );
+			VOI transformedData = convertToStraight( model, originToStraight, neuriteData.elementAt(i));
+			resultImage.registerVOI( transformedData );
 			String voiDir = resultImage.getImageDirectory() + JDialogBase.makeImageName(baseName, "") + File.separator + neuriteData.elementAt(i).getName() + "_straightened_spline" + File.separator;
 			saveAllVOIsTo(voiDir, resultImage);
+			
+			saveSpline( wormImage, transformedData, transformedOrigin, "_after" );
 		}
 		resultImage.restoreVOIs(temp);
 	}
@@ -5021,5 +5030,55 @@ public class LatticeModel {
 		return transformedAnnotations;
 	}
 
+
+	private void saveSpline(final ModelImage image, VOI data, Vector3f transformedOrigin, final String postFix) {
+
+		VOIContour spline = (VOIContour) data.getCurves().elementAt(0);
+		
+		String imageName = image.getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+		String voiDir = image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator;
+		File voiFileDir = new File(voiDir);
+		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+		} else { // voiFileDir does not exist
+			voiFileDir.mkdir();
+		}
+		voiDir = image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + "statistics" + File.separator;
+		voiFileDir = new File(voiDir);
+		if (voiFileDir.exists() && voiFileDir.isDirectory()) {} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {} else { // voiFileDir
+			// does
+			// not
+			// exist
+			voiFileDir.mkdir();
+		}
+
+		File file = new File(voiDir + data.getName() + postFix + ".csv");
+		if (file.exists()) {
+			file.delete();
+			file = new File(voiDir + data.getName() + postFix + ".csv");
+		}
+
+		try {			
+			final FileWriter fw = new FileWriter(file);
+			final BufferedWriter bw = new BufferedWriter(fw);
+			bw.write("index" + "," + "x_voxels" + "," + "y_voxels" + "," + "z_voxels" + "," + "x_um" + "," + "y_um" + "," + "z_um" + "\n");
+			for (int i = 0; i < spline.size(); i++) {
+				Vector3f position = spline.elementAt(i);
+				bw.write(i + "," + (position.X - transformedOrigin.X) + "," + (position.Y - transformedOrigin.Y) + ","
+						+ (position.Z - transformedOrigin.Z) + "," +
+
+                        VOILatticeManagerInterface.VoxelSize * (position.X - transformedOrigin.X) + "," + VOILatticeManagerInterface.VoxelSize
+                        * (position.Y - transformedOrigin.Y) + "," + VOILatticeManagerInterface.VoxelSize * (position.Z - transformedOrigin.Z) + "\n");
+			}
+			bw.newLine();
+			bw.close();
+		} catch (final Exception e) {
+			System.err.println("CAUGHT EXCEPTION WITHIN writeXML() of FileVOI");
+			e.printStackTrace();
+		}
+	}
 
 }

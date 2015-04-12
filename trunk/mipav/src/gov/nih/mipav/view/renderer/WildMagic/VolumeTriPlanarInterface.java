@@ -275,6 +275,8 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 
     /** Light panel */
     protected JPanelLights_WM m_kLightsPanel;
+    
+    protected JPanelAnnotationAnimation m_kAnnotationAnimationPanel = null;
 
     /** The three slice views displayed as texture-mapped polygons:. */
     protected PlaneRender_WM[] m_akPlaneRender;
@@ -794,10 +796,12 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         m_kLightsPanel.enableLight(1, true);
         rendererGUI.setDisplaySurfaceCheck(true);
     	
-    	JPanelAnnotationAnimation annotationAnimationPanel = new JPanelAnnotationAnimation(raycastRenderWM, vois.size(), annotationNames);
-    	insertTab( "Annotation Animation", annotationAnimationPanel.getMainPanel() );
+        m_kAnnotationAnimationPanel = new JPanelAnnotationAnimation(raycastRenderWM, vois.size(), annotationNames);
+    	insertTab( "Annotation Animation", m_kAnnotationAnimationPanel.getMainPanel() );
     	
-    	raycastRenderWM.addAnimationVOIs(vois, annotationAnimationPanel);
+    	raycastRenderWM.addAnimationVOIs(vois, m_kAnnotationAnimationPanel);
+    	prevHeight = 0;
+    	resizePanel();
     }
         
     /**
@@ -3606,6 +3610,9 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
             }
             if (m_kVolume4DGUI != null) {
                 m_kVolume4DGUI.resizePanel(maxPanelWidth, height);
+            }
+            if ( m_kAnnotationAnimationPanel != null ) {
+            	m_kAnnotationAnimationPanel.resizePanel(maxPanelWidth, height);
             }
         }
 
