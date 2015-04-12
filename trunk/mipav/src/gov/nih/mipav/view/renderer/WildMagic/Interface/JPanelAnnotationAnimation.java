@@ -46,6 +46,9 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
     private JSlider annimationSlider;
     private JLabel timeLabel;
     private VolumeTriPlanarRender parent;
+
+    /** Scroll pane. */
+    private JScrollPane scroller;
     
     public JPanelAnnotationAnimation( VolumeTriPlanarRender parent, int timeSteps, Vector<String> annotationNames )
     {
@@ -171,12 +174,7 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
         
         JPanel dualPanel = new JPanel( new GridLayout(1,2) );
         dualPanel.add(annotationListPanel);
-        dualPanel.add(annotationLlabelPanel);
-
-        // make the list scroll if there are enough checkboxes
-        JScrollPane scrollPane = new JScrollPane(dualPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        
+        dualPanel.add(annotationLlabelPanel);        
         
 
         JButton playButton = new JButton("Play");
@@ -228,10 +226,19 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
         kAnimatePanel.add( timeLabel, kGBC ); kGBC.gridx++;
                 
         
-        mainPanel = new JPanel(new BorderLayout());        
-        mainPanel.add(scrollPane, BorderLayout.NORTH);
-        mainPanel.add(kAnimatePanel, BorderLayout.CENTER);
+        JPanel interfacePanel = new JPanel(new BorderLayout());        
+        interfacePanel.add(dualPanel, BorderLayout.NORTH);
+        interfacePanel.add(kAnimatePanel, BorderLayout.CENTER);
 
+
+
+        // make the list scroll if there are enough checkboxes
+        scroller = new JScrollPane(interfacePanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        
+        mainPanel = new JPanel(new BorderLayout());       
+        mainPanel.add(scroller, BorderLayout.NORTH); 
+        
         getContentPane().add(mainPanel);
         pack();
     }
@@ -322,6 +329,18 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
 			}
 		}
 	}
+
+    /**
+     * Resizing the control panel with ViewJFrameVolumeView's frame width and height.
+     *
+     * @param  panelWidth   width
+     * @param  frameHeight  height
+     */
+    public void resizePanel(int panelWidth, int frameHeight) {
+        scroller.setPreferredSize(new Dimension(panelWidth, frameHeight - 40));
+        scroller.setSize(new Dimension(panelWidth, frameHeight - 40));
+        scroller.revalidate();
+    }
     
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase#setButtonColor(javax.swing.JButton, java.awt.Color)

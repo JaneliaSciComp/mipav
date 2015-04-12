@@ -23,6 +23,7 @@ import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphCurve;
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import WildMagic.LibFoundation.Curves.BSplineCurve3f;
 import WildMagic.LibFoundation.Curves.Curve3f;
+import WildMagic.LibFoundation.Curves.NaturalSpline3;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
@@ -55,14 +56,17 @@ import WildMagic.LibFoundation.Mathematics.Line3f;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibFoundation.Mathematics.Segment3f;
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Collision.PickRecord;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibGraphics.SceneGraph.Transformation;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.Surfaces.TubeSurface;
 
 import com.jogamp.opengl.util.Animator;
 
@@ -897,6 +901,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	private boolean[][] annotationDisplay;
 	private int annotationSpheresIndex = -1;
 	private VOI[] annotationVOIs;
+	private VOI[] neuriteVOIs;
+	private VOIContour[][] neurites;
+	private VolumeSurface[][] neuriteSurfaces;
 	private ColorRGBA[] annotationLabelColors;
 	private JPanelAnnotationAnimation annotationAnimationPanel;
 	public void addAnimationVOIs(VOIVector vois, JPanelAnnotationAnimation annotationAnimationPanel)
@@ -946,6 +953,16 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			
 			ColorRGBA colorRGBA = new ColorRGBA(c.getRed()/255f,c.getGreen()/255f,c.getBlue()/255f,1);
 			
+			if ( text.getText().contains("AL") )
+			{
+				colorRGBA = new ColorRGBA(1, 0, 0, 1);
+				xfrm.SetUniformScale( 3*scale/4f );
+			}
+			else
+			{
+				xfrm.SetUniformScale( scale );
+			}
+			
 //			System.err.println( text.getText() + " " + c );
 			std.SetTransformation( xfrm );
 			TriMesh sphere = std.Sphere(2);
@@ -993,6 +1010,89 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				position = text.elementAt(1);
 				position.sub(origin);
 				position.add( m_kVolumeImageA.GetImage().getExtents()[0]/2, m_kVolumeImageA.GetImage().getExtents()[1]/2, 0 );
+			}
+		}
+		
+
+		int maxAxL = -1;
+		int maxAxR = -1;
+		for ( int i = 0; i < vois.size(); i++ )
+		{
+			int countAxL = 0;
+			int countAxR = 0;
+			for ( int j = 0; j < vois.elementAt(i).getCurves().size(); j++ )
+			{
+				VOIText text = (VOIText) vois.elementAt(i).getCurves().elementAt(j);
+				if ( text.getText().contains("AxL" ) )
+				{
+					countAxL++;
+				}
+				if ( text.getText().contains("AxR" ) )
+				{
+					countAxR++;
+				}
+			}
+			if ( countAxL > maxAxL )
+			{
+				maxAxL = countAxL;
+			}
+			if ( countAxR > maxAxR )
+			{
+				maxAxR = countAxR;
+			}
+		}
+		maxAxL++;
+		maxAxR++;
+		neuriteVOIs = new VOI[2];
+		neuriteVOIs[0] = new VOI( (short) maxCount, "AxL", VOI.POLYLINE, 0 );
+		neuriteVOIs[1] = new VOI( (short) (maxCount +1), "AxR", VOI.POLYLINE, 0 );
+		
+		neurites = new VOIContour[vois.size()][2];
+		neuriteSurfaces = new VolumeSurface[vois.size()][2];
+		for ( int i = 0; i < vois.size(); i++ )
+		{
+			neurites[i][0] = new VOIContour(false);
+			neurites[i][1] = new VOIContour(false);
+			for ( int j = 0; j < vois.elementAt(i).getCurves().size(); j++ )
+			{
+				VOIText text = (VOIText) vois.elementAt(i).getCurves().elementAt(j);
+				if ( text.getText().equals("ALA") )
+				{
+					neurites[i][0].add(0, text.elementAt(0) );
+					neurites[i][1].add(0, text.elementAt(0) );
+				}
+				else if ( text.getText().contains( "AxL" ) )
+				{
+					int index = text.getText().indexOf("AxL");
+					index += 3;
+					index = Integer.valueOf( text.getText().substring(index) );
+					neurites[i][0].add( index, text.elementAt(0) );
+				}
+				else if ( text.getText().contains( "AxR" ) )
+				{
+					int index = text.getText().indexOf("AxR");
+					index += 3;
+					index = Integer.valueOf( text.getText().substring(index) );
+					neurites[i][1].add( index, text.elementAt(0) );
+				}
+			}
+
+			if ( neurites[i][0].size() > 1 )
+			{
+				SurfaceState kSurface = new SurfaceState( createNeuriteSurface(neurites[i][0], scale/3f), "AxL" );	
+				neuriteSurfaces[i][0] = new VolumeSurface(m_kVolumeImageA,
+						m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ, kSurface, false, true);
+				neuriteSurfaces[i][0].SetDisplay(false);
+				m_kDisplayList.add(neuriteSurfaces[i][0]);	
+			}
+
+			if ( neurites[i][1].size() > 1 )
+			{
+				SurfaceState kSurface = new SurfaceState( createNeuriteSurface(neurites[i][1], scale/3f), "AxR" );	
+				neuriteSurfaces[i][1] = new VolumeSurface(m_kVolumeImageA,
+						m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ, kSurface, false, true);
+				neuriteSurfaces[i][1].SetDisplay(false);
+				m_kDisplayList.add(neuriteSurfaces[i][1]);	
 			}
 		}
 		
@@ -1056,6 +1156,131 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		}
 	}
 
+	private NaturalSpline3 smoothCurve(final VOIContour curve, final float[] time) {
+		float totalDistance = 0;
+		for (int i = 0; i < curve.size() - 1; i++) {
+			totalDistance += curve.elementAt(i).distance(curve.elementAt(i + 1));
+		}
+
+		final Vector3f[] akPoints = new Vector3f[curve.size()];
+		float distance = 0;
+		for (int i = 0; i < curve.size(); i++) {
+			if (i > 0) {
+				distance += curve.elementAt(i).distance(curve.elementAt(i - 1));
+				time[i] = distance / totalDistance;
+				akPoints[i] = new Vector3f(curve.elementAt(i));
+			} else {
+				time[i] = 0;
+				akPoints[i] = new Vector3f(curve.elementAt(i));
+			}
+		}
+
+		return new NaturalSpline3(NaturalSpline3.BoundaryType.BT_FREE, curve.size() - 1, time, akPoints);
+	}
+
+	private TubeSurface createTube(VOIContour neurite) {
+
+		float[] time = new float[neurite.size()];
+		NaturalSpline3 m_pkSpline = smoothCurve(neurite, time);
+
+		Attributes kAttr = new Attributes();
+		kAttr.SetPChannels(3);
+		kAttr.SetNChannels(3);
+//		kAttr.SetTChannels(0,3);
+		kAttr.SetCChannels(0,4);
+
+		Vector2f kUVMin = new Vector2f(0.0f,0.0f);
+		Vector2f kUVMax = new Vector2f(1.0f,1.0f);
+		TubeSurface kTube = new TubeSurface(m_pkSpline, 1f, false,Vector3f.UNIT_Z,
+				neurite.size() - 1,8,kAttr,false,false,kUVMin,kUVMax);
+//		kTube.Local.SetTranslate( m_kTranslate );
+
+//		if ( kTube.VBuffer.GetAttributes().HasTCoord(0) )
+		{
+			for ( int i = 0; i < kTube.VBuffer.GetVertexQuantity(); i++ )
+			{
+				kTube.VBuffer.SetColor4( 0, i, ColorRGBA.WHITE );
+//				kTube.VBuffer.SetTCoord3( 0, i, 
+//						(kTube.VBuffer.GetPosition3fX(i)) * 1.0f/m_fX,
+//						(kTube.VBuffer.GetPosition3fY(i)) * 1.0f/m_fY,
+//						(kTube.VBuffer.GetPosition3fZ(i)) * 1.0f/m_fZ);
+
+			}
+		}
+
+
+		return kTube;
+	}
+	
+	private TriMesh createNeuriteSurface( VOIContour neurite, float radius )
+	{
+		Attributes kAttr = new Attributes();
+		kAttr.SetPChannels(3);
+		kAttr.SetNChannels(3);
+		kAttr.SetCChannels(0,4);
+		StandardMesh stdMesh = new StandardMesh(kAttr);
+
+		TriMesh[] cylinders = new TriMesh[neurite.size()-1];
+//		TriMesh[] cylinders = new TriMesh[1];
+		int vCount = 0;
+		int iCount = 0;
+		for ( int i = 0; i < cylinders.length; i++ )
+		{
+			Vector3f midPt = Vector3f.add(neurite.elementAt(i), neurite.elementAt(i+1));
+			midPt.scale(0.5f);
+			
+			Vector3f direction = Vector3f.sub( neurite.elementAt(i+1), neurite.elementAt(i) );
+			direction.normalize();
+			
+			Transformation xform = new Transformation();
+			Matrix3f rotation = new Matrix3f(false);
+			Vector3f axis = Vector3f.cross( Vector3f.UNIT_Z, direction );
+			float angle = Vector3f.angle( Vector3f.UNIT_Z, direction );
+			rotation.fromAxisAngle( axis, angle );
+			xform.SetRotate( rotation );
+			xform.SetTranslate(midPt);
+			
+			stdMesh.SetTransformation( xform );
+			
+			float dist = neurite.elementAt(i+1).distance( neurite.elementAt(i) );
+			cylinders[i] = stdMesh.Cylinder( 8, 8, radius, dist, true );			
+			vCount += cylinders[i].VBuffer.GetVertexQuantity();
+			iCount += cylinders[i].IBuffer.GetIndexQuantity();
+		}
+		
+		VertexBuffer vBuffer = new VertexBuffer( kAttr, vCount );
+		IndexBuffer iBuffer = new IndexBuffer(iCount);
+		
+		vCount = 0;
+		iCount = 0;
+		int[] offset = new int[cylinders.length];
+		for ( int i = 0; i < cylinders.length; i++ )
+		{
+			offset[i] = 0;
+			for ( int j = i; j > 0; j-- )
+			{
+				offset[i] += cylinders[j].VBuffer.GetVertexQuantity();
+			}
+		}
+		for ( int i = 0; i < cylinders.length; i++ )
+		{
+			for ( int j = 0; j < cylinders[i].VBuffer.GetVertexQuantity(); j++ )
+			{
+				vBuffer.SetVertex( vCount,  cylinders[i].VBuffer.GetVertex(j) );
+				vBuffer.SetNormal3( vCount,  cylinders[i].VBuffer.GetNormal3(j) );
+				vBuffer.SetColor4(0, vCount, 1, 0, 0, 1);
+				vCount++;
+			}
+			for ( int j = 0; j < cylinders[i].IBuffer.GetIndexQuantity(); j++ )
+			{
+				iBuffer.GetData()[iCount++] = cylinders[i].IBuffer.GetData()[j] + offset[i];
+			}
+		}
+		
+		return new TriMesh( vBuffer, iBuffer );
+	}
+
+
 	public void play4DVOIs(boolean bOn) {
 		m_iScreenCaptureCounter = 0;
 		annotationVOIsUpdate(0);
@@ -1079,6 +1304,18 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	
 	public void annotationVOIsUpdate( int value )
 	{
+		for ( int i = 0; i < neuriteSurfaces.length; i++ )
+		{
+			if ( neuriteSurfaces[i][0] != null )
+			{
+				neuriteSurfaces[i][0].SetDisplay(false);
+			}
+			if ( neuriteSurfaces[i][1] != null )
+			{
+				neuriteSurfaces[i][1].SetDisplay(false);
+			}
+		}
+		
 		for ( int i = 0; i < annotationSpheres.length; i++ )
 		{
 			annotationSpheres[i].SetDisplay(false);
@@ -1086,6 +1323,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			m_kVolumeImageA.GetImage().unregisterVOI( annotationVOIs[i] );
 			annotationVOIs[i].getCurves().clear();
 		}
+		m_kVolumeImageA.GetImage().unregisterVOI( neuriteVOIs[0] );
+		m_kVolumeImageA.GetImage().unregisterVOI( neuriteVOIs[1] );
 			
 		annotationSpheresIndex = value;
     	if ( annotationSpheresIndex >= annotationPositions.size() )
@@ -1098,6 +1337,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
     	}
 		if ( annotationSpheresIndex != -1 )
 		{
+			neurites[annotationSpheresIndex][0].update( ColorRGBA.WHITE );
+			neurites[annotationSpheresIndex][1].update( ColorRGBA.WHITE );
+			
+			neuriteVOIs[0].getCurves().clear();
+			neuriteVOIs[0].getCurves().add( neurites[annotationSpheresIndex][0] );
+			neuriteVOIs[1].getCurves().clear();
+			neuriteVOIs[1].getCurves().add( neurites[annotationSpheresIndex][1] );
+			
+			
 			int dimX = m_kVolumeImageA.GetImage().getExtents().length > 0 ? m_kVolumeImageA.GetImage().getExtents()[0] : 1;
 			int dimY = m_kVolumeImageA.GetImage().getExtents().length > 1 ? m_kVolumeImageA.GetImage().getExtents()[1] : 1;
 			int dimZ = m_kVolumeImageA.GetImage().getExtents().length > 2 ? m_kVolumeImageA.GetImage().getExtents()[2] : 1;
@@ -1137,13 +1385,25 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 						break;
 					}
 				}
-				
 			}
+			m_kVolumeImageA.GetImage().registerVOI( neuriteVOIs[0] );
+			m_kVolumeImageA.GetImage().registerVOI( neuriteVOIs[1] );
+
+			if ( neuriteSurfaces[annotationSpheresIndex][0] != null )
+			{
+				neuriteSurfaces[annotationSpheresIndex][0].SetDisplay(true);
+			}
+			if ( neuriteSurfaces[annotationSpheresIndex][1] != null )
+			{
+				neuriteSurfaces[annotationSpheresIndex][1].SetDisplay(true);
+			}
+
 			if (annotationAnimationPanel != null)
 			{
 				annotationAnimationPanel.setAnnimationSlider( annotationSpheresIndex );
 			}
 		}
+		
 		m_bSurfaceUpdate = true;
 	}
 
@@ -1167,6 +1427,20 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 					vText.GetScene().UpdateGS();
 				}
 			}
+			
+			VolumeVOI vCurve = neurites[i][0].getVolumeVOI();
+			if ( vCurve != null )
+			{
+				vCurve.GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+				vCurve.GetScene().UpdateGS();
+			}
+			vCurve = neurites[i][1].getVolumeVOI();
+			if ( vCurve != null )
+			{
+				vCurve.GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+				vCurve.GetScene().UpdateGS();
+			}
+			
 		}
 	}
 
