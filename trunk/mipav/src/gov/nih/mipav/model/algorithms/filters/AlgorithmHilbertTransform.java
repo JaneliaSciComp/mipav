@@ -22,6 +22,8 @@ public class AlgorithmHilbertTransform extends AlgorithmBase {
 	// Array of 2n doubles, representing complex numbers
 	// Real elements are stored in z[0, 2, ..., 2n-2] and
 	// imaginary elements are stored in z[1,3,...,2n-1]
+	// Note that there are 2 different definitions of Hilbert transform in which the results differ by a 
+	// multiplicative factor of -1.
 	private double z[];
 	
 	// Dimension of z, must be a power of 2
@@ -189,6 +191,9 @@ public class AlgorithmHilbertTransform extends AlgorithmBase {
 	    {
 	        fft_dif_rec(z, nh, nbranch);
 	        fft_dif_rec(z2, nh, nbranch);
+	        for (i = 0; i < 2*nh; i++) {
+		    	z[i + n] = z2[i];
+	        }
 	    }
 	    return;
 	}   /* fft_dif_rec() */
@@ -344,6 +349,9 @@ public class AlgorithmHilbertTransform extends AlgorithmBase {
 	    {
 	        ifft_dit_rec(z, nh, nbranch);
 	        ifft_dit_rec(z2, nh, nbranch);
+	        for (i = 0; i < 2*nh; i++) {
+		    	z[i+n] = z2[i];
+	        }
 	    }
 	    t = -(2.0 * Math.PI) / (double)n;
 	    a = Math.sin(0.5 * t);
