@@ -3,14 +3,12 @@ package gov.nih.mipav.model.algorithms;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import gov.nih.mipav.model.algorithms.filters.AlgorithmHilbertTransform;
+import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
 import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.view.MipavUtil;
 
 /**
@@ -239,6 +237,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     }
     
     private void mex_pb_parts_final_selected(double L[], double a[], double b[]) {
+    	int i;
     	// Border pixels
     	int border = 30;
     	// Mirror border
@@ -278,13 +277,36 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	double sigma_tg_filt_sm = 2.0;
     	ArrayList <double[][]> filters_small = new ArrayList<double[][]>();
     	texton_filters(filters_small, n_ori, sigma_tg_filt_sm);
+    	// Sigma for large tg filters
+    	double sigma_tg_filt_lg = 2.0 * Math.sqrt(2.0);
+    	ArrayList <double[][]> filters_large = new ArrayList<double[][]>();
+    	texton_filters(filters_large, n_ori, sigma_tg_filt_lg);
+    	ArrayList <double[][]> filters = new ArrayList<double[][]>();
+    	for (i = 0; i < filters_small.size(); i++) {
+    		filters.add(filters_small.get(i));
+    	}
+    	filters_small.clear();
+    	for (i = 0; i < filters_large.size(); i++) {
+    		filters.add(filters_large.get(i));
+    	}
+    	filters_large.clear();
+    	// Compute textons
+    	ArrayList<double[][]>textons = new ArrayList<double[][]>();
+    	int iterations = 10;
+    	double subsampling = 0.10;
+    	//int t_assign[] = textons_routine(gray, filters, textons, 64, iterations, subsampling);
     }
+    
+    /*private int[] textons_routine(double m[], ArrayList<double[][]> filters, ArrayList<double[][]> textons,
+    		int K, int max_iter, double subsampling) {
+        ArrayList<double[][]> responses = filter(m, filters);	
+    }*/
     
     private void compute_border_mirror_2D(double src[], double dst[], int borderX, int borderY, int xSrcSize, int ySrcSize) {
     	// Compute destination size
     	int xDstSize = xSrcSize + 2 * borderX;
     	int yDstSize = ySrcSize + 2 * borderY;
-    	// Compute step sizes in destinatio marix (for copying interior)
+    	// Compute step sizes in destination matrix (for copying interior)
     	int indInit = borderX * yDstSize + borderY;
     	int indStep = 2 * borderY;
     	int n;
@@ -508,18 +530,35 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
      */
     private void texton_filters(ArrayList <double[][]> filters, int n_ori, double sigma) {
     	// Allocate collection to hold filters
+    	int i;
     	ArrayList <double[][]> filters_even = new ArrayList <double[][]>();
     	ArrayList <double[][]> filters_odd = new ArrayList <double[][]>();
     	oe_filters_even(n_ori, sigma, filters_even);
     	oe_filters_odd(n_ori, sigma, filters_odd);
+    	for (i = 0; i < filters_even.size(); i++) {
+    		filters.add(filters_even.get(i));
+    	}
+    	filters_even.clear();
+    	for (i = 0; i < filters_odd.size(); i++) {
+    		filters.add(filters_odd.get(i));
+    	}
+    	filters_odd.clear();
+    	/* compute center surround filter */
+    	int support = (int)Math.ceil(3*sigma);
+    	double [][]f_cs = gaussian_cs_2D(sigma, sigma, 0, Math.sqrt(2.0), support, support);
+    	/* add center surround filter to collection */
+    	filters.add(f_cs);
+    	return;
     }
     
     private void oe_filters_even(int n_ori, double sigma, ArrayList <double[][]> filters_even) {
     	gaussian_filters(n_ori, sigma, 2, false, 3.0, filters_even);
+    	return;
     }
     
     private void oe_filters_odd(int n_ori, double sigma, ArrayList <double[][]> filters_odd) {
     	gaussian_filters(n_ori, sigma, 2, true, 3.0, filters_odd);
+    	return;
     }
     
     private void gaussian_filters(int n_ori, double sigma, int deriv, boolean hlbrt, double elongation,
@@ -527,6 +566,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	double oris[] = new double[n_ori];
     	standard_filter_orientations(n_ori, oris);
     	gaussian_filters(oris, sigma, deriv, hlbrt, elongation, filters);
+    	return;
     }
     
     private void standard_filter_orientations(int n_ori, double[] oris) {
@@ -539,6 +579,24 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	return;
     }
     
+    /**
+     * Oriented Gaussian derivative filters
+     * 
+     * Create a filter set consisting of rotated versions of the Gaussian
+     * derivative filter with the specified parameters.
+     * 
+     * Specify the standard deviation (sigma) along the longer principle axis.
+     * The standard deviation along the other principle axisw is sigma/r where
+     * r is the elongation ratio.
+     * 
+     * Each returned filter is an (s+1) x (s+1) matrix where s = 3 sigma.                       
+     * @param oris
+     * @param sigma
+     * @param deriv
+     * @param hlbrt
+     * @param elongation
+     * @param filters
+     */
     private void gaussian_filters(double[] oris, double sigma, int deriv, boolean hlbrt, double elongation,
         ArrayList <double[][]> filters) {
     	int n;
@@ -552,6 +610,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	    double f[][] = gaussian_2D(sigmaX, sigmaY, oris[n], deriv, hlbrt, support, support);	
     	    filters.add(f);
     	}
+    	return;
     }
     
     /**
@@ -576,8 +635,192 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	int support_y_rot = support_y_rotated(supportX, supportY, -ori);
     	// Compute 1D kernels
     	double mx[] = gaussian(sigmaX, 0, false, support_x_rot);
+    	double my[] = gaussian(sigmaY, deriv, hlbrt, support_y_rot);
+    	// Compute 2D kernel from product of 1D kernels
+    	m = new double[mx.length][my.length];
+    	for (int nx = 0; nx < mx.length; nx++) {
+    		for (int ny = 0; ny < my.length; ny++) {
+    			m[nx][ny] = mx[nx] * my[ny];
+    		}
+    	}
+    	// Rotate 2D kernel by orientation
+    	m = rotate_2D_crop(m, ori, 2*supportX + 1, 2*supportY + 1);
+    	// Make zero mean (if returning derivative)
+    	if (deriv > 0) {
+    		double sum = 0.0;
+    		for (int nx = 0; nx < m.length; nx++) {
+    			for (int ny = 0; ny < m[0].length; ny++) {
+    				sum += m[nx][ny];
+    			}
+    		}
+    		double mean = sum/(m.length * m[0].length);
+    		for (int nx = 0; nx < m.length; nx++) {
+    			for (int ny = 0; ny < m[0].length; ny++) {
+    				m[nx][ny] -= mean;
+    			}
+    		}
+    	} // if (deriv > 0)
+    	// Make unit L1 norm
+    	double sum = 0.0;
+    	for (int nx = 0; nx < m.length; nx++) {
+			for (int ny = 0; ny < m[0].length; ny++) {
+				sum += Math.abs(m[nx][ny]);
+			}
+		}
+    	for (int nx = 0; nx < m.length; nx++) {
+			for (int ny = 0; ny < m[0].length; ny++) {
+			    m[nx][ny] = m[nx][ny]/sum;	
+			}
+    	}
     	return m;
     }
+    
+    /**
+     * Gaussian center-surround kernel (2D).
+     * 
+     * Specify the standard deviation along each axis, the
+     * orientation in radians, and the support.
+     * 
+     * The center-surround kernel is the difference of a Gaussian with the
+     * specified standard deivation and one with a standard deviation scaled
+     * by the specified factor.
+     * 
+     * The kernel is normalized to have unit L1 norm and zero mean.
+     * @param sigmaX
+     * @param sigmaY
+     * @param ori
+     * @param scaleFactor
+     * @param supportX
+     * @param supportY
+     * @return
+     */
+    private double[][] gaussian_cs_2D(double sigmaX, double sigmaY, double ori, double scaleFactor,
+    		int supportX, int supportY) {
+    	// Compute standard deviation for center kernel
+    	double sigmaXC = sigmaX/scaleFactor;
+    	double sigmaYC = sigmaY/scaleFactor;
+    	// Compute center and surround kernels
+    	double m_center[][] = gaussian_2D(sigmaXC, sigmaYC, ori, 0, false, supportX, supportY);
+    	double m_surround[][] = gaussian_2D(sigmaX, sigmaY, ori, 0, false, supportX, supportY);
+    	// Compute center-surround kernel
+    	double m[][] = new double[m_center.length][m_center[0].length];
+    	int x;
+    	int y;
+    	for (x = 0; x < m.length; x++) {
+    		for (y = 0; y < m[0].length; y++) {
+    			m[x][y] = m_surround[x][y] - m_center[x][y];
+    		}
+    	}
+    	// Make zero mean and unit L1 norm
+    	double sum = 0.0;
+    	for (x = 0; x < m.length; x++) {
+    		for (y = 0; y < m[0].length; y++) {
+    			sum += m[x][y];
+    		}
+    	}
+    	double mean = sum/(m.length * m[0].length);
+    	for (x = 0; x < m.length; x++) {
+    		for (y = 0; y < m[0].length; y++) {
+    		    m[x][y] -= mean;	
+    		}
+        }
+    	sum = 0.0;
+    	for (x = 0; x < m.length; x++) {
+    		for (y = 0; y < m[0].length; y++) {
+    			sum += Math.abs(m[x][y]);
+    		}
+    	}
+    	for (x = 0; x < m.length; x++) {
+    		for (y = 0; y < m[0].length; y++) {
+    		    m[x][y] /= sum;	
+    		}
+    	}
+    	return m;
+    }
+    
+    /*
+     * Rotate and pad with zeros, but crop the result to the specified size.
+     */
+    private double[][] rotate_2D_crop(
+       double m[][], double ori, int size_x, int size_y)
+    {
+       /* compute rotation */
+       double m_rot[][] = new double[size_x][size_y];
+       compute_rotate_2D(m, m_rot, ori);
+       return m_rot;
+    }
+    
+    /*
+     * Compute rotated 2D matrix using bilinear interpolation.
+     */
+    private void compute_rotate_2D(
+       double[][]      m_src,       /* source matrix */
+       double[][]      m_dst,       /* destination matrix */
+       double ori)                /* orientation */
+    {
+       int size_x_src = m_src.length;
+       int size_y_src = m_src[0].length;
+       int size_x_dst = m_dst.length;
+       int size_y_dst = m_dst[0].length;
+       /* check that matrices are nonempty */
+       if ((size_x_src > 0) && (size_y_src > 0) &&
+           (size_x_dst > 0) && (size_y_dst > 0))
+       {
+          /* compute sin and cos of rotation angle */
+          final double cos_ori = Math.cos(ori);
+          final double sin_ori = Math.sin(ori);
+          /* compute location of origin in src */
+          final double origin_x_src = (size_x_src - 1.0)/ 2.0;
+          final double origin_y_src = (size_y_src - 1.0) / 2.0;
+          /* rotate */
+          double u = -((size_x_dst - 1.0) / 2.0);
+          int n = 0;
+          for (int dst_x = 0; dst_x < size_x_dst; dst_x++) {
+             double v = -((size_y_dst - 1.0) / 2.0);
+             for (int dst_y = 0; dst_y < size_y_dst; dst_y++) {
+                /* reverse rotate by orientation and shift by origin offset */
+                double x = u * cos_ori + v * sin_ori + origin_x_src;
+                double y = v * cos_ori - u * sin_ori + origin_y_src;
+                /* check that location is in first quadrant */
+                if ((x >= 0) && (y >= 0)) {
+                   /* compute integer bounds on location */
+                   int x0 = (int)Math.floor(x);
+                   int x1 = (int)Math.ceil(x);
+                   int y0 = (int)Math.floor(y);
+                   int y1 = (int)Math.ceil(y);
+                   /* check that location is within src matrix */
+                   if ((0 <= x0) && (x1 < size_x_src) &&
+                       (0 <= y0) && (y1 < size_y_src))
+                   {
+                      /* compute distances to bounds */
+                      double dist_x0 = x - x0;
+                      double dist_x1 = x1 - x;
+                      double dist_y0 = y - y0;
+                      double dist_y1 = y1 - y;
+                      /* grab matrix elements */
+                      final double m00 = m_src[x0][y0];
+                      final double m01 = m_src[x0][y1];
+                      final double m10 = m_src[x1][y0];
+                      final double m11 = m_src[x1][y1];
+                      /* interpolate in x-direction */
+                      final double t0 =
+                         (x0 != x1) ? (dist_x1 * m00 + dist_x0 * m10) : m00;
+                      final double t1 =
+                         (x0 != x1) ? (dist_x1 * m01 + dist_x0 * m11) : m01;
+                      /* interpolate in y-direction */
+                      m_dst[n/size_y_dst][n % size_y_dst] = (y0 != y1) ? (dist_y1 * t0 + dist_y0 * t1) : t0;
+                   }
+                }
+                /* increment coordinate */
+                n++;
+                v++;
+             }
+             u++;
+          }
+       }
+    }
+
+
     
     /*
      * Compute integer-valued supports for rotated 2D matrix.
@@ -690,16 +933,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     		// Grab desired submatrix after hilbert transform
     		int start = support_big - support;
     		int end = start + support + support;
-    		int paddedfsamples = MipavMath.findMinimumPowerOfTwo(m.length);
-       	    double paddedfy[] = new double[2 * paddedfsamples];
-       	    for (i = 0; i < m.length; i++) {
-       		    paddedfy[2*i] = m[i];
-       	    }
-       	    AlgorithmHilbertTransform ht = new AlgorithmHilbertTransform(paddedfy, paddedfsamples);
-       	    ht.run();
-       	    for (i = 0; i < m.length; i++) {
-       		    m[i] = paddedfy[2*i+1];
-       	    }
+    		m = hilbert(m);
        	    mtemp = new double[end - start + 1];
        	    for (i = start; i <= end; i++) {
        	    	mtemp[i-start] = m[i];
@@ -733,6 +967,53 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	}
     	return m;
     }
+    
+    private double[] hilbert(double[] m) {
+    	   /* get # steps along dimension */
+    	   double mImag[] = new double[m.length];
+    	   int n_steps = m.length;
+    	   int half_n_steps = n_steps/2;
+    	   /* compute fourier transform */
+    	   FFTUtility fft = new FFTUtility(m, mImag, 1, m.length, 1,
+    		-1, FFTUtility.FFT);
+    	   fft.setShowProgress(false);
+    	   fft.run();
+    	   fft.finalize();
+    	   fft = null;
+    	   /* compute step size along dimension */
+    	   int step_size = 1;
+    	   /* double positive frequencies   */
+    	   /* zero out negative frequencies */
+    	   /* leave dc component            */
+    	   boolean is_mult_two = (n_steps == (half_n_steps*2));
+    	   int pos_freq_bound_ind = (n_steps+1)/2;
+    	    int ind = 0;
+    	    /* double positive frequencies */
+    	    ind++;
+    	    for (int n_step = 1; n_step < pos_freq_bound_ind; n_step++)
+    	    {
+    	       m[ind] *= 2;
+    	       mImag[ind] *= 2;
+    	       ind++;
+    	    }
+    	    /* zero out negative frequencies */
+    	    ind += (is_mult_two ? step_size : 0);
+    	    for (int n_step = (half_n_steps+1); n_step < n_steps; n_step++)
+    	    {
+    	       m[ind] = 0;
+    	       mImag[ind] = 0;
+    	       ind++;
+    	    }
+    	   /* compute inverse fourier transform */
+    	    fft = new FFTUtility(m, mImag, 1, m.length, 1,
+					+1, FFTUtility.FFT);
+			fft.setShowProgress(false);
+			fft.run();
+			fft.finalize();
+			fft = null;
+    	   /* grab and return imaginary component */
+    	   return mImag;
+    	}
     
     
     
