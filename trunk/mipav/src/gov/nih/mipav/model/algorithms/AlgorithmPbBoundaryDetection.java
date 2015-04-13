@@ -143,6 +143,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
          int x;
          int y;
          boolean testPadReflect = false;
+         boolean testHilbertTransform = false;
          
          if (testPadReflect) {
         	 xDim = 10;
@@ -160,6 +161,36 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
         			 Preferences.debug(impad[y][x] + " ", Preferences.DEBUG_FILEIO);
         		 }
         		 Preferences.debug("\n");
+        	 }
+        	 setCompleted(false);
+        	 return;
+         }
+         
+         if (testHilbertTransform) {
+        	 int fsamples = 4;
+        	 double fy[] = new double[fsamples];
+        	 for (int i = 0; i < fsamples; i++) {
+        	     fy[i] = i + 1.0;	 
+        	 }
+        	 int paddedfsamples = MipavMath.findMinimumPowerOfTwo(fsamples);
+        	 double[] paddedfy = new double[2 * paddedfsamples];
+        	 for (int i = 0; i < fsamples; i++) {
+        		 paddedfy[2*i] = fy[i];
+        	 }
+        	 AlgorithmHilbertTransform ht = new AlgorithmHilbertTransform(paddedfy, paddedfsamples);
+        	 ht.run();
+        	 for (int i = 0; i < fsamples; i++) {
+        		 fy[i] = paddedfy[2*i+1];
+        	 }
+        	 double actualHilbertTransform[] = new double[fsamples];
+        	 actualHilbertTransform[0] = -1.0;
+        	 actualHilbertTransform[1] = 1.0;
+        	 actualHilbertTransform[2] = 1.0;
+        	 actualHilbertTransform[3] = -1.0;
+        	 double error;
+        	 for (int i = 0; i < fsamples; i++) {
+        	     error = actualHilbertTransform[i] - fy[i];
+        	     System.out.println("error["+i+"] = " + error);
         	 }
         	 setCompleted(false);
         	 return;
