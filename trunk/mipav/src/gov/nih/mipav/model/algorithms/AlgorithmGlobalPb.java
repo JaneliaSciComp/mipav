@@ -2,6 +2,8 @@ package gov.nih.mipav.model.algorithms;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
@@ -31,6 +33,15 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
 	private int yDim;
 	
 	private int sliceSize;
+	
+	// Maximum fraction of items in k-means clusterer
+	private double maxFraction = 1.0;
+	
+	// Minimum number of items for frac sample
+	private int minSample = 1;
+	
+	// Maximum # items (0 for unlimited)
+	private int maxItems = 0;
 	
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
@@ -238,6 +249,8 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     
     private void mex_pb_parts_final_selected(double L[], double a[], double b[]) {
     	int i;
+    	int x;
+    	int y;
     	// Border pixels
     	int border = 30;
     	// Mirror border
@@ -294,13 +307,336 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	ArrayList<double[][]>textons = new ArrayList<double[][]>();
     	int iterations = 10;
     	double subsampling = 0.10;
-    	//int t_assign[] = textons_routine(gray, filters, textons, 64, iterations, subsampling);
+    	double gray2D[][] = new double[dstXDim][dstYDim];
+    	for (x = 0; x < dstXDim; x++) {
+    		for (y = 0; y < dstYDim; y++) {
+    			gray2D[x][y] = gray[y + x * dstYDim];
+    		}
+    	}
+    	//int t_assign[] = textons_routine(gray2D, filters, textons, 64, iterations, subsampling);
     }
     
-    /*private int[] textons_routine(double m[], ArrayList<double[][]> filters, ArrayList<double[][]> textons,
+    /*private int[] textons_routine(double m[][], ArrayList<double[][]> filters, ArrayList<double[][]> textons,
     		int K, int max_iter, double subsampling) {
-        ArrayList<double[][]> responses = filter(m, filters);	
+    	int i;
+    	// Convolve image with filters
+    	// Return the convolution of the image with each of the filters so that
+    	// the result is the same size as the original image
+        ArrayList<double[][]> responses = new ArrayList<double[][]>();
+        double Cout[][];
+        boolean is_cropped = true;
+        boolean is_strict = false;
+        for (i = 0; i < filters.size(); i++) {
+        	Cout = compute_conv_2D(m, filters.get(i), is_cropped, is_strict);
+        	responses.add(Cout);
+        }
+        maxFraction = subsampling;
+        minSample = K;*/
+        /*
+         * Sample clusterer.
+         *
+         * This clusterer produces centroids by clustering a randomly selected subset
+         * of the items.  It then uses these centroids to compute cluster assignments
+         * for all of the items.
+         *
+         * Items are selected for inclusion in the subset to cluster with probablility
+         * proportional to their weight.
+         */
+        /*
+         * Constructor.
+         * Create a clusterer that operates on a fraction of the total items.
+         * However, if this fraction is less than the specified minimum sample 
+         * size, then the clusterer operates on the minimum sample size.
+         */
+        /*explicit sample_clusterer(
+           const centroid_clusterer<T>&, /* underlying clusterer to employ */
+           //double,                       /* fraction of items */
+           //unsigned long = 1             /* minimum sample size */
+        //);*/
+
+
+        // matrix_clusterer(K (desired number of clusters), max_iter (maximum number of iterations, 0 for 
+        //                  unlimited, clustering metric, default is L2 distance), 
+        // Cluster filter responses
+        //sample_clusterer< matrix<> >(
+                //kmeans::matrix_clusterer<>(K, max_iter, matrix_metrics<>::L2_metric()),
+                //subsampling,
+                //K
+             //)
+        //return cluster_filter_responses(responses, clusterer, textons);
+
+    //}
+    
+    /*int[] cluster_filter_responses(
+    		   final ArrayList<double[][]>                            responses,
+    		   final centroid_clusterer< matrix<> >&                clusterer,
+    		   ArrayList<double[][]> centroids)
+    		{
+    		   // create collection of vectors
+    		   list< matrix<> > vec_list;
+    		   for (int n = 0; n < responses._size; n++)
+    		      vec_list.add(responses._data[n]);
+    		   // cluster
+    		   array<unsigned long> assign = clusterer.cluster(vec_list, centroids);
+    		   // convert assignment array to assignment matrix
+    		   matrix<unsigned long> m_assign = matrix<unsigned long>::to_matrix(assign);
+    		   m_assign.reshape(responses._dims);
+    		   return m_assign;
+    		}*/
+    
+    /*
+     * Clustering.
+     * Return the cluster assignments and cluster centroids.
+     */
+    /*private int []cluster(
+       final ArrayList<double[][]> items,
+       ArrayList<double[][]> centroids) 
+    {
+    	int i;
+       // compute number of items to cluster
+       int n_items = items.size();
+       int samp_size = sample_size(n_items); 
+       // check if clustering the full set
+       if (samp_size == n_items) {
+          return kmeans_cluster(items, centroids);
+       } else {
+          // randomize item order
+    	   RandomNumberGen randomGen = new RandomNumberGen();
+    	   ArrayList<doubleIntegerItem> randomList = new ArrayList<doubleIntegerItem>();
+    	   for (i = 0; i < n_items; i++) {
+    		   randomList.add(new doubleIntegerItem(randomGen.genUniformRandomNum(0.0, 1.0), i));
+    	   }
+    	   Collections.sort(randomList, new doubleIntegerComparator());
+    	   int idx_map[] = new int[n_items];
+    	   for (i = 0; i < n_items; i++) {
+    	       idx_map[i] = randomList.get(i).getiN();   
+    	   }
+          array_list<T> items_array;
+          {
+             array_list<T> temp_items(items);
+             temp_items.subarray(idx_map, items_array);
+          }
+          // create subset of items to cluster
+          array_list<T> items_subset;
+          for (unsigned long n = 0; n < samp_size; n++)
+             items_subset.add(items_array.remove_head());
+          // cluster subset
+          array<unsigned long> assign_subset = kmeans_cluster(
+             items_subset, centroids
+          );
+          // compute assignments for remaining items
+          array<unsigned long> assign_array = kmeans_assign_cluster(
+             items_array, *centroids
+          );
+          // combine assignment arrays
+          array<unsigned long> assign(n_items);
+          for (unsigned long n = 0; n < samp_size; n++)
+             assign[idx_map[n]] = assign_subset[n];
+          for (unsigned long n = samp_size; n < n_items; n++)
+             assign[idx_map[n]] = assign_array[n - samp_size];
+          return assign;
+       }
     }*/
+    
+    private class doubleIntegerComparator implements Comparator<doubleIntegerItem> {
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @param o1 DOCUMENT ME!
+         * @param o2 DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int compare(final doubleIntegerItem o1, final doubleIntegerItem o2) {
+            final double a = o1.getrN();
+            final double b = o2.getrN();
+
+            if (a < b) {
+                return -1;
+            } else if (a > b) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+
+    }
+	
+	private class doubleIntegerItem {
+
+        /** DOCUMENT ME! */
+        private final double rN;
+
+        /** DOCUMENT ME! */
+        private final int iN;
+
+        /**
+         * Creates a new doubleIntegerItem object.
+         * 
+         * @param rN
+         * @param iN
+         */
+        public doubleIntegerItem(final double rN, final int iN) {
+            this.rN = rN;
+            this.iN = iN;
+        }
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public double getrN() {
+            return rN;
+        }
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int getiN() {
+            return iN;
+        }
+
+    }
+       
+       /*
+        * Compute size of the sample to cluster given the total number of items.
+        */
+        private int sample_size(int n_items) {
+          /* initialize sample size */
+          int samp_size = n_items;
+          /* enforce maximum items constraint */
+          if (maxItems > 0) {
+             if(maxItems < samp_size) { samp_size = maxItems; }
+          }
+          /* enforce maximum fractional constraint */
+          int n_frac = (int)Math.ceil(maxFraction * n_items);
+          if (n_frac < minSample) { n_frac = minSample; }
+          if (n_frac < samp_size) { samp_size = n_frac; }
+          return samp_size;
+       }
+
+
+
+    
+    /*
+     * Compute convolution (for 2D matrices).
+     */
+    private double[][] compute_conv_2D(
+       final double m02D[][],
+       final double m12D[][],
+       boolean is_cropped,
+       boolean is_strict)
+    {
+       /* get size of each matrix */
+       int size0_x = m02D.length;
+       int size0_y = m02D[0].length;
+       int size1_x = m12D.length;
+       int size1_y = m12D[0].length;
+       double m0[] = new double[size0_x * size0_y];
+       double m1[] = new double[size1_x * size1_y];
+       int x;
+       int y;
+       for (x = 0; x < size0_x; x++) {
+    	   for (y = 0; y < size0_y; y++) {
+    		   m0[y + x * size0_y] = m02D[x][y];
+    	   }
+       }
+       for (x = 0; x < size1_x; x++) {
+    	   for (y = 0; y < size1_y; y++) {
+    		   m1[y + x * size1_y] = m12D[x][y];
+    	   }
+       }
+       /* compute dimensions of resulting matrix and also     */ 
+       /* compute range of position within full result matrix */
+       int size_x = 0;
+       int size_y = 0;
+       int pos_start_x = 0;
+       int pos_start_y = 0;
+       if (!is_cropped) {
+          /* set dimensions for full result matrix (start position is zero) */
+          size_x = ((size0_x > 0) && (size1_x > 0)) ? (size0_x + size1_x - 1) : 0;
+          size_y = ((size0_y > 0) && (size1_y > 0)) ? (size0_y + size1_y - 1) : 0;
+       } else if (!is_strict) {
+          /* set dimensions for result matrix no larger than left input */
+          size_x = ((size0_x > 0) && (size1_x > 0)) ? (size0_x) : 0;
+          size_y = ((size0_y > 0) && (size1_y > 0)) ? (size0_y) : 0;
+          /* set start position for result matrix no larger than left input */
+          pos_start_x = size1_x/2;
+          pos_start_y = size1_y/2;
+       } else {
+          /* set dimensions for central portion of result matrix */
+          size_x =
+             ((size0_x >= size1_x) && (size1_x > 0)) ? (size0_x - size1_x + 1) : 0;
+          size_y =
+             ((size0_y >= size1_y) && (size1_y > 0)) ? (size0_y - size1_y + 1) : 0;
+          /* set start position for central portion of result matrix */
+          pos_start_x = (size1_x > 0) ? (size1_x - 1) : 0;
+          pos_start_y = (size1_y > 0) ? (size1_y - 1) : 0;
+       }
+       int pos_bound_y = pos_start_y + size_y;
+       /* initialize result */
+       double m2D[][] = new double[size_x][size_y];
+       double m[] = new double[size_x * size_y];
+       if (m.length == 0)
+          return null;
+       /* initialize position in result */
+       int pos_x = pos_start_x;
+       int pos_y = pos_start_y;
+       /* compute initial range of offset_x */
+       int offset_min_x =
+          ((pos_x + 1) > size0_x) ? (pos_x + 1 - size0_x) : 0;
+       int offset_max_x =
+          (pos_x < size1_x) ? pos_x : (size1_x - 1);
+       int ind0_start_x = (pos_x - offset_min_x) * size0_y;
+       int ind1_start_x = (offset_min_x) * size1_y;
+       for (int n = 0; n < m.length; n++) {
+          /* compute range of offset_y */
+          int offset_min_y =
+             ((pos_y + 1) > size0_y) ? (pos_y + 1 - size0_y) : 0;
+          int offset_max_y =
+             (pos_y < size1_y) ? pos_y : (size1_y - 1);
+          int offset_range_y = offset_max_y - offset_min_y;
+          /* initialize indices */
+          int ind0 = ind0_start_x + (pos_y - offset_min_y);
+          int ind1 = ind1_start_x + offset_min_y;
+          for (int o_x = offset_min_x; o_x <= offset_max_x; o_x++) {
+             for (int o_y = offset_min_y; o_y < offset_max_y; o_y++) {
+                /* update result value */
+                m[n] += m0[ind0] * m1[ind1];
+                /* update linear positions */
+                ind0--;
+                ind1++;
+             }
+             /* update last result value */
+             m[n] += m0[ind0] * m1[ind1];
+             /* update linear positions */
+             ind0 = ind0 + offset_range_y - size0_y;
+             ind1 = ind1 - offset_range_y + size1_y;
+          }
+          /* update position */
+          pos_y++;
+          if (pos_y == pos_bound_y) {
+             /* reset y position, increment x position */
+             pos_y = pos_start_y;
+             pos_x++;
+             /* update range of offset_x */
+             offset_min_x = ((pos_x + 1) > size0_x) ? (pos_x + 1 - size0_x) : 0;
+             offset_max_x = (pos_x < size1_x) ? pos_x : (size1_x - 1);
+             ind0_start_x = (pos_x - offset_min_x) * size0_y;
+             ind1_start_x = (offset_min_x) * size1_y;
+          }
+       }
+       for (x = 0; x < size_x; x++) {
+    	   for (y = 0; y < size_y; y++) {
+    		   m2D[x][y] = m[y + x * size_y];
+    	   }
+       }
+       return m2D;
+    }
     
     private void compute_border_mirror_2D(double src[], double dst[], int borderX, int borderY, int xSrcSize, int ySrcSize) {
     	// Compute destination size
