@@ -43,6 +43,9 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
 	// Maximum # items (0 for unlimited)
 	private int maxItems = 0;
 	
+	// Desired number of clusters
+	private int kmeansK = 64;
+	
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -313,10 +316,10 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     			gray2D[x][y] = gray[y + x * dstYDim];
     		}
     	}
-    	//int t_assign[] = textons_routine(gray2D, filters, textons, 64, iterations, subsampling);
+    	int t_assign[] = textons_routine(gray2D, filters, textons, 64, iterations, subsampling);
     }
     
-    /*private int[] textons_routine(double m[][], ArrayList<double[][]> filters, ArrayList<double[][]> textons,
+    private int[] textons_routine(double m[][], ArrayList<double[][]> filters, ArrayList<double[][]> textons,
     		int K, int max_iter, double subsampling) {
     	int i;
     	// Convolve image with filters
@@ -331,7 +334,9 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         	responses.add(Cout);
         }
         maxFraction = subsampling;
-        minSample = K;*/
+        minSample = K;
+        kmeansK = K;
+        return null;
         /*
          * Sample clusterer.
          *
@@ -365,7 +370,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
              //)
         //return cluster_filter_responses(responses, clusterer, textons);
 
-    //}
+    }
     
     /*int[] cluster_filter_responses(
     		   final ArrayList<double[][]>                            responses,
@@ -388,11 +393,13 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
      * Clustering.
      * Return the cluster assignments and cluster centroids.
      */
-    /*private int []cluster(
+    private int []cluster(
        final ArrayList<double[][]> items,
-       ArrayList<double[][]> centroids) 
+       ArrayList<metricCentroid> centroids) 
     {
     	int i;
+    	int elremoved;
+    	int j;
        // compute number of items to cluster
        int n_items = items.size();
        int samp_size = sample_size(n_items); 
@@ -408,35 +415,272 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	   }
     	   Collections.sort(randomList, new doubleIntegerComparator());
     	   int idx_map[] = new int[n_items];
+    	   int idx_map2[] = new int[n_items];
     	   for (i = 0; i < n_items; i++) {
-    	       idx_map[i] = randomList.get(i).getiN();   
+    	       idx_map[i] = randomList.get(i).getiN();
+    	       idx_map2[i] = idx_map[i];
     	   }
-          array_list<T> items_array;
-          {
-             array_list<T> temp_items(items);
-             temp_items.subarray(idx_map, items_array);
-          }
-          // create subset of items to cluster
-          array_list<T> items_subset;
-          for (unsigned long n = 0; n < samp_size; n++)
-             items_subset.add(items_array.remove_head());
+    	   ArrayList<double[][]>items_subset = new ArrayList<double[][]>();
+    	   for (i = 0; i < samp_size; i++) {
+    		   elremoved = idx_map2[i];
+    		   items_subset.add(items.remove(elremoved));
+    		   for (j = i+1; j < idx_map2.length; j++) {
+    			   if (idx_map2[j] > elremoved) {
+    				   idx_map2[j]--;
+    			   }
+    		   }
+    	   } // for (i = 0; i < samp_size; i++)
           // cluster subset
-          array<unsigned long> assign_subset = kmeans_cluster(
+          int[] assign_subset = kmeans_cluster(
              items_subset, centroids
           );
           // compute assignments for remaining items
-          array<unsigned long> assign_array = kmeans_assign_cluster(
-             items_array, *centroids
-          );
+          /*int[] assign_array = kmeans_assign_cluster(
+             items, centroids
+          );*/
           // combine assignment arrays
-          array<unsigned long> assign(n_items);
-          for (unsigned long n = 0; n < samp_size; n++)
+          int assign[] = new int[n_items];
+          for (int n = 0; n < samp_size; n++)
              assign[idx_map[n]] = assign_subset[n];
-          for (unsigned long n = samp_size; n < n_items; n++)
-             assign[idx_map[n]] = assign_array[n - samp_size];
+          /*for (int n = samp_size; n < n_items; n++)
+             assign[idx_map[n]] = assign_array[n - samp_size];*/
           return assign;
        }
-    }*/
+    }
+    
+    private int[] kmeans_cluster(ArrayList<double[][]>items, ArrayList<metricCentroid>centroids) {
+    	int i;
+    	int n_items = items.size();
+    	double weights[] = new double[n_items];
+    	for (i = 0; i < n_items; i++) {
+    	    weights[i] = 1.0;	
+    	}
+    	RandomNumberGen randomGen = new RandomNumberGen();
+ 	    ArrayList<doubleIntegerItem> randomList = new ArrayList<doubleIntegerItem>();
+ 	    for (i = 0; i < n_items; i++) {
+ 		    randomList.add(new doubleIntegerItem(randomGen.genUniformRandomNum(0.0, 1.0), i));
+ 	    }
+ 	    Collections.sort(randomList, new doubleIntegerComparator());
+ 	    int idx_map[] = new int[n_items];
+ 	    for (i = 0; i < n_items; i++) {
+	        idx_map[i] = randomList.get(i).getiN();
+	    }
+ 	    return kmeans_cluster(items, weights, idx_map, centroids);
+    }
+    
+    private int[] kmeans_cluster(ArrayList<double[][]>items, double[] weights, int[] idx_map, ArrayList<metricCentroid>centroids) {
+    	int i;
+    	int n_items = items.size();
+    	// Randomize item order using the specified random permutation
+    	ArrayList<double[][]>items_array = new ArrayList<double[][]>();
+    	double weights_array[] = new double[n_items];
+    	for (i = 0; i < n_items; i++) {
+    		items_array.add(items.get(idx_map[i]));
+    		weights_array[i] = weights[idx_map[i]];
+    	}
+    	// Compute maximum number of clusters to return 
+    	int K = (kmeansK < n_items) ? kmeansK : n_items;
+    	if ((n_items > 0) && (K == 0)) {
+    	      MipavUtil.displayError(
+    	         "K must be nonzero during K-means clustering of nonempty collection"
+    	      );
+    	      return null;
+    	   }
+    	   // Allocate collection of centroids
+    	   centroids.clear();
+    	   /* return now if there are no items to cluster */
+    	   if (n_items == 0)
+    	      return null;
+    	   // Initialize assignments (to undefined cluster # K)
+    	   // Initialize cluster membership for centroids
+    	   int assign[] = new int[n_items];
+    	   for (i = 0; i < n_items; i++) {
+    		   assign[i] = K;
+    	   }
+    	   ArrayList<double[][]> cluster_items = new ArrayList<double[][]>(K);
+    	   ArrayList <Double> cluster_weights = new ArrayList<Double>(K);
+    	   for (int n = 0; n < K; n++) {
+    	      cluster_items.set(n, items_array.get(n));
+    	      cluster_weights.set(n, weights_array[n]);
+    	   }
+    	   // Initialize centroids 
+    	   for (int n = 0; n < K; n++) {
+    		   centroids.add(new metricCentroid(cluster_items.get(n), cluster_weights.get(n)));
+    	   }
+    	   // Allocate arrays for distances
+    	   
+    	   ArrayList<ArrayList<Double> > distances = new ArrayList<ArrayList<Double>>(n_items);
+    	   dist_resizer(
+    	      0, n_items - 1, K, distances
+    	   );
+    	   // Initially mark the undefined cluster # K as changed
+    	   boolean[] has_changed = new boolean[K+1];
+    	   for (i = 0; i < K+1; i++) {
+    		   has_changed[i] = false;
+    	   }
+    	   has_changed[K] = true;
+    	   int[] changed_ids;
+    	   // Compute sizes of coarse problems
+    	   /*array<unsigned long> coarse_sizes =
+    	      metric_clusterer<T,V>::coarse_problem_sizes(n_items, K);
+    	   unsigned long n_problems = coarse_sizes.size();
+    	   // Solve coarse to fine clustering problems
+    	   unsigned long n_items_prev = 0;
+    	   for (unsigned long prob = 0; prob < n_problems; prob++) {
+    	      // Get problem size
+    	      unsigned long n_items_curr = coarse_sizes[prob];
+    	      // Compute distances between new items and unchanged clusters
+    	      {
+    	         array<bool> has_not_changed(K);
+    	         for (unsigned long n = 0; n < K; n++)
+    	            has_not_changed[n] = !(has_changed[n]);
+    	         array<unsigned long> unchanged_ids = 
+    	            basic_clusterer<T,V>::compute_changed_ids(has_not_changed);
+    	         typename metric_clusterer<T,V>::distance_updater dist_updater(
+    	            this->_metric,
+    	            n_items_prev,
+    	            n_items_curr - 1,
+    	            items_array,
+    	            *centroids,
+    	            unchanged_ids,
+    	            distances
+    	         );
+    	         dist_updater.run();
+    	      }
+    	      // Initialize any empty clusters with new items
+    	      for (unsigned long n = 0, next_item = n_items_prev;
+    	           ((n < K) && (next_item < n_items_curr)); n++)
+    	      {
+    	         if (cluster_items[n].is_empty()) {
+    	            // Add item to cluster
+    	               cluster_items[n].add(items_array[next_item]);
+    	               cluster_weights[n].add(weights_array[next_item]);
+    	            // Compute centroid
+    	            auto_ptr<T> cntrd = this->_metric.centroid(
+    	               cluster_items[n],
+    	               cluster_weights[n]
+    	            );
+    	            T& cntrd_old = centroids->replace(n, *cntrd);
+    	            cntrd.release();
+    	            delete &cntrd_old;
+    	            // Indicate that cluster has changed
+    	            has_changed[n] = true;
+    	            next_item++;
+    	         }
+    	      }
+    	      // Recompute changed ids to include any filled empty clusters
+    	      changed_ids = basic_clusterer<T,V>::compute_changed_ids(has_changed, K);
+    	      // Iteratively update assignments and centroids
+    	      for (unsigned long n_iter = 0; 
+    	           ((n_iter < _max_iterations) || (_max_iterations == 0));
+    	           n_iter++)
+    	      {
+    	         // Store old assignments
+    	         array<unsigned long> assign_old = assign.subarray(0, n_items_curr-1);
+    	         // Update distances
+    	         typename metric_clusterer<T,V>::distance_updater dist_updater(
+    	            this->_metric,
+    	            0,
+    	            n_items_curr - 1,
+    	            items_array,
+    	            *centroids,
+    	            changed_ids,
+    	            distances
+    	         );
+    	         dist_updater.run();
+    	         // Update assignments
+    	         typename metric_clusterer<T,V>::assignment_updater assign_updater(
+    	            0,
+    	            n_items_curr - 1,
+    	            K,
+    	            has_changed,
+    	            changed_ids,
+    	            distances,
+    	            assign
+    	         );
+    	         assign_updater.run();
+    	         // Compute which clusters have changed
+    	         for (unsigned long n = 0; n < K; n++)
+    	            has_changed[n] = false;
+    	         for (unsigned long n = 0; n < n_items_curr; n++) {
+    	            unsigned long assign_id     = assign[n];
+    	            unsigned long assign_id_old = assign_old[n];
+    	            if (assign_id != assign_id_old) {
+    	               has_changed[assign_id]     = true;
+    	               has_changed[assign_id_old] = true;
+    	            }
+    	         }
+    	         // Compute ids of changed clusters
+    	         changed_ids = basic_clusterer<T,V>::compute_changed_ids(
+    	            has_changed, K
+    	         );
+    	         // Finish if no clusters changed
+    	         unsigned long n_changed = changed_ids.size();
+    	         if (n_changed == 0)
+    	            break;
+    	         // Update cluster membership
+    	         for (unsigned long n = 0; n < K; n++) {
+    	            cluster_items[n].clear();
+    	            cluster_weights[n].clear();
+    	         }
+    	         for (unsigned long n = 0; n < n_items_curr; n++) {
+    	            unsigned long assign_id = assign[n];
+    	            cluster_items[assign_id].add(items_array[n]);
+    	            cluster_weights[assign_id].add(weights_array[n]);
+    	         }
+    	         // Update centroids
+    	         typename metric_clusterer<T,V>::centroid_updater cntrd_updater(
+    	            this->_metric,
+    	            0,
+    	            n_changed - 1,
+    	            changed_ids,
+    	            cluster_items,
+    	            cluster_weights,
+    	            centroids
+    	         );   
+    	         cntrd_updater.run();
+    	      }
+    	      // Update previous problem size
+    	      n_items_prev = n_items_curr;
+    	   }
+    	   // Drop empty clusters
+    	   array<unsigned long> remap(K, K);   // Init remap to invalid cluster # K
+    	   unsigned long n_clusters = 0;
+    	   for (unsigned long n = 0; n < K; n++) {
+    	      auto_ptr<T> cntrd(&(centroids->remove_head()));
+    	      if (!(cluster_items[n].is_empty())) {
+    	         remap[n] = n_clusters;
+    	         centroids->add(*cntrd);
+    	         cntrd.release();
+    	         n_clusters++;
+    	      }
+    	   }
+    	   // Retrieve original assignment order
+    	   array<unsigned long> assignments(n_items);
+    	   for (unsigned long n = 0; n < n_items; n++)
+    	      assignments[idx_map[n]] = remap[assign[n]];
+    	   return assignments;*/
+    	   return null;
+
+    }
+    
+    private void dist_resizer(int start, int end, int n_centroids, ArrayList<ArrayList<Double>>distances) {
+    	// Resize distances sequentially
+        for (int n = start; n <= end; n++)
+           distances.get(n).ensureCapacity(n_centroids);
+
+    }
+    
+    private class metricCentroid {
+    	private double[][] cluster_items;
+    	
+    	private double cluster_weights;
+    	
+    	public metricCentroid(double[][] cluster_items,double cluster_weights) {
+    		this.cluster_items = cluster_items;
+    		this.cluster_weights = cluster_weights;
+    	}
+    }
     
     private class doubleIntegerComparator implements Comparator<doubleIntegerItem> {
 
