@@ -12,6 +12,7 @@ import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 
 /**
  * Compute globalPb, the globalized probability of boundary of an image
@@ -156,7 +157,11 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         }
         
         // mPb
-        multiscalePb(inputImage);
+        int textons[] = new int[xDim * yDim];
+        double bg1[][][] = new double[8][xDim][yDim];
+        double bg2[][][] = new double[8][xDim][yDim];
+        double bg3[][][] = new double[8][xDim][yDim];
+        multiscalePb(bg1, bg2, bg3, textons, inputImage);
         
         setCompleted(true);
         return;
@@ -168,7 +173,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
      * Original MATLAB code by Pablo Arbelaez December, 2010
      * @param im
      */
-    private void multiscalePb(ModelImage im) {
+    private void multiscalePb(double [][][] bg1, double [][][] bg2, double[][][] bg3, int[] textons, ModelImage im) {
         double weights[] = new double[12];
         double buffer[];
         double red[] = new double[sliceSize];
@@ -244,22 +249,37 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         }
         
         // Get gradients
-        det_mPb(red, green, blue);
+        det_mPb(bg1, bg2, bg3, textons, red, green, blue);
     }
     
     /**
      * Compute image gradients.  Implementation by Michael Maire.
      * @param im
      */
-    private void det_mPb(double red[], double green[], double blue[]) {
+    private void det_mPb(double bg1[][][], double bg2[][][], double bg3[][][], int textons[], 
+    		double red[], double green[], double blue[]) {
         // Compute pb
-    	mex_pb_parts_final_selected(red, green, blue);
+    	mex_pb_parts_final_selected(bg1, bg2, bg3, textons, red, green, blue);
     }
     
-    private void mex_pb_parts_final_selected(double L[], double a[], double b[]) {
+    private void mex_pb_parts_final_selected(double bg1[][][], double bg2[][][], double bg3[][][],int textons[], 
+    		double L[], double a[], double b[]) {
     	int i;
     	int x;
     	int y;
+    	// Quantizing color channels
+    	// # bins for bg
+    	int numLBins = 25;
+    	// # bins for cg_a
+    	int numaBins = 25;
+    	// # bins for cg_b
+    	int numbBins = 25;
+    	// bg histogram smoothing sigma
+    	double bg_smooth_sigma = 0.1;
+    	double bg_smooth_kernel[] = gaussian(bg_smooth_sigma*numLBins, 0, false);
+    	// cg histogram smoothing sigma
+    	double cg_smooth_sigma = 0.05;
+    	double cga_smooth_kernel[] = gaussian(cg_smooth_sigma*numaBins, 0, false);
     	// Border pixels
     	int border = 30;
     	// Mirror border
@@ -279,13 +299,6 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	// Converting RGB to Lab
     	rgb_to_lab(L_border, a_border, b_border);
     	lab_normalize(L_border, a_border, b_border);
-    	// Quantizing color channels
-    	// # bins for bg
-    	int numLBins = 25;
-    	// # bins for cg_a
-    	int numaBins = 25;
-    	// # bins for cg_b
-    	int numbBins = 25;
     	int Lq[] = new int[L_border.length];
     	quantize_values(Lq, L_border, numLBins);
     	int aq[] = new int[a_border.length];
@@ -313,7 +326,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	}
     	filters_large.clear();
     	// Compute textons
-    	ArrayList<double[][]>textons = new ArrayList<double[][]>();
+    	ArrayList<double[][]>textonsAL = new ArrayList<double[][]>();
     	int iterations = 10;
     	double subsampling = 0.10;
     	double gray2D[][] = new double[dstXDim][dstYDim];
@@ -322,10 +335,419 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     			gray2D[x][y] = gray[y + x * dstYDim];
     		}
     	}
-    	int t_assign[][] = textons_routine(gray2D, filters, textons, 64, iterations, subsampling);
+    	int t_assign[] = textons_routine(gray2D, filters, textonsAL, 64, iterations, subsampling);
+    	int t_assign_trim[] = new int[xDim*yDim];
+    	compute_border_trim_2D(t_assign, t_assign_trim, border, border, xDim, yDim, dstYDim);
+    	// Return textons to globalPb
+    	for (x = 0; x < xDim; x++) {
+    		for (y = 0; y < yDim; y++) {
+    			textons[x + y * xDim] = t_assign_trim[y + x * yDim];
+    		}
+    	}
+    	compute_border_mirror_2D(t_assign_trim, t_assign, border, border, xDim, yDim);
+    	int count = 1;
+    	// Compute bg at each radius
+    	int n_bg = 3;
+    	int r_bg[] = new int[]{3, 5, 10};
+    	ArrayList<double[]> bgs;
+    	for (int rnum = 0; rnum < n_bg; rnum++) {
+    	    Preferences.debug("Computing bg for r = " + r_bg[rnum] + "\n", Preferences.DEBUG_ALGORITHM);
+    	    bgs = hist_gradient_2D(Lq, dstXDim, dstYDim, r_bg[rnum], n_ori, bg_smooth_kernel);
+    	    double bufm[] = new double[xDim * yDim];
+    	    // Return bg
+    	    if (rnum == 0) {
+	    	    for (int n = 0; n < n_ori; n++) {
+	    	    	compute_border_trim_2D(bgs.get(n),bufm, border, border, xDim, yDim, dstYDim);
+	    	    	for (x = 0; x < xDim; x++) {
+	    	    		for (y = 0; y < yDim; y++) {
+	    	    			bg1[n][x][y] = bufm[y + x * yDim];
+	    	    		}
+	    	    	}
+	    	    }
+    	    } // if (rnum == 0)
+    	    else if (rnum == 1) {
+    	    	for (int n = 0; n < n_ori; n++) {
+	    	    	compute_border_trim_2D(bgs.get(n),bufm, border, border, xDim, yDim, dstYDim);
+	    	    	for (x = 0; x < xDim; x++) {
+	    	    		for (y = 0; y < yDim; y++) {
+	    	    			bg2[n][x][y] = bufm[y + x * yDim];
+	    	    		}
+	    	    	}
+	    	    }	
+    	    } // else if (rnum == 1)
+    	    else if (rnum == 2) {
+    	    	for (int n = 0; n < n_ori; n++) {
+	    	    	compute_border_trim_2D(bgs.get(n),bufm, border, border, xDim, yDim, dstYDim);
+	    	    	for (x = 0; x < xDim; x++) {
+	    	    		for (y = 0; y < yDim; y++) {
+	    	    			bg3[n][x][y] = bufm[y + x * yDim];
+	    	    		}
+	    	    	}
+	    	    }		
+    	    } // else if (rnum == 2)
+    	} // for (int rnum = 0; rnum < n_bg; rnum++)
+    	// Compute cga at each radius
+    	int n_cg = 3;
+    	int r_cg[] = new int[]{5, 10, 20};
+    	ArrayList<double[]>cgs_a;
+    	for (int rnum = 0; rnum < n_cg; rnum++) {
+    		Preferences.debug("Computing cga for r = " + r_cg[rnum] + "\n", Preferences.DEBUG_ALGORITHM);
+    		cgs_a = hist_gradient_2D(aq, dstXDim, dstYDim, r_cg[rnum], n_ori, cga_smooth_kernel);
+    	} // for (int rnum = 0; rnum < n_cg; rnum++)
     }
     
-    private int[][] textons_routine(double m[][], ArrayList<double[][]> filters, ArrayList<double[][]> textons,
+    /*
+     * Compute the distance between histograms of label values in oriented
+     * half-dics of the specified radius centered at each location in the 2D
+     * matrix.  Return one distance matrix per orientation.
+     *
+     * Alternatively, instead of specifying label values at each point, the user
+     * may specify a histogram at each point, in which case the histogram for
+     * a half-disc is the sum of the histograms at points in that half-disc.
+     *
+     * The half-disc orientations are k*pi/n for k in [0,n) where n is the 
+     * number of orientation requested.
+     *
+     * The user may optionally specify a nonempty 1D smoothing kernel to 
+     * convolve with histograms prior to computing the distance between them.
+     *
+     * The user may also optionally specify a custom functor for computing the
+     * distance between histograms.
+     */
+    private ArrayList<double[]> hist_gradient_2D(
+       int[] labels,int labelsXDim, int labelsYDim,
+       int  r,
+       int n_ori,
+       double[] smoothing_kernel)
+    {
+       /* construct weight matrix for circular disc */
+       double weights[] = weight_matrix_disc(r);
+       int w_size_x = 2*r + 1;
+       int w_size_y = 2*r + 1;
+       /* compute oriented gradient histograms */
+       return hist_gradient_2D(
+          labels, labelsXDim, labelsYDim, weights, w_size_x, w_size_y, n_ori, smoothing_kernel
+       );
+    }
+    
+    /*
+     * Construct weight matrix for circular disc of the given radius.
+     */
+    private double[] weight_matrix_disc(int r) {
+       /* initialize matrix */
+       int size = 2*r + 1;
+       double weights[] = new double[size * size];
+       /* set values in disc to 1 */
+       int radius = r;
+       int r_sq = radius * radius;
+       int ind = 0;
+       for (int x = -radius; x <= radius; x++) {
+          int x_sq = x * x;
+          for (int y = -radius; y <= radius; y++) {
+             /* check if index is within disc */
+             int y_sq = y * y;
+             if ((x_sq + y_sq) <= r_sq)
+                weights[ind] = 1;
+             /* increment linear index */
+             ind++;
+          }
+       }
+       return weights;
+    }
+
+    
+    /*
+     * Compute the distance between histograms of label values in oriented
+     * half-regions centered at each location in the 2D matrix.  Return one
+     * distance matrix per orientation.
+     *
+     * The given 2D weight matrix (which must have odd dimensions) defines the
+     * half-regions.  Each label adds the weight at the corresponding position
+     * in this matrix to its histogram bin.
+     *
+     * If the user specifies a histogram at each point instead of a label, then 
+     * the histogram for a half-region is a weighted sum of histograms.
+     *
+     * The above version of hist_gradient_2D which specifies a radius r is 
+     * equivalent to calling this version with a (2*r+1) x (2*r+1) weight matrix
+     * in which elements within a distance r from the center have weight one and
+     * all other elements have weight zero.
+     */
+    private ArrayList<double[]> hist_gradient_2D(
+       int[] labels, int labelsXDim, int labelsYDim,
+       double[] weights, int w_size_x, int w_size_y,
+       int n_ori,
+       double[] smoothing_kernel)
+    {
+       int i;
+       /* allocate result gradient matrices */
+      ArrayList<double[]> gradients = new ArrayList<double[]>();
+       /* check that result is nontrivial */
+       if (n_ori == 0)
+          return gradients;
+       /* initialize result gradient matrices */
+       gradients.ensureCapacity(n_ori);
+       for (int n = 0; n < n_ori; n++) {
+          gradients.add(new double[labelsXDim * labelsYDim]);
+       }
+       /* check that result is nonempty */
+       if ((labelsXDim == 0) || (labelsYDim == 0))
+          return gradients;
+       /* allocate matrices to hold histograms of each slice */
+       ArrayList<double[]>slice_hist = new ArrayList<double[]>(); 
+       int maxLabels = -1;
+       for (i = 0; i < labels.length; i++) {
+    	   if (labels[i] > maxLabels) {
+    		   maxLabels = labels[i];
+    	   }
+       }
+       int hist_length = maxLabels + 1;
+       slice_hist.ensureCapacity(2*n_ori);
+       /* initialize slice histogram matrices */
+       for (i = 0; i < 2*n_ori; i++) {
+    	   slice_hist.add(new double[hist_length]);
+       }
+       int slice_histXDim = 1;
+       int slice_histYDim = hist_length;
+       /* build orientation slice lookup map */
+       int[] slice_map = orientation_slice_map(
+          w_size_x, w_size_y, n_ori
+       );
+       /* compute histograms and histogram differences at each location */
+       compute_hist_gradient_2D(
+          labels, labelsXDim, labelsYDim, weights, w_size_x, w_size_y, slice_map, smoothing_kernel,
+          slice_hist, slice_histXDim, slice_histYDim, gradients
+       );
+       return gradients;
+    }
+    
+    /*
+     * Construct orientation slice lookup map.
+     */
+    private int[] orientation_slice_map(
+       int size_x, int size_y, int n_ori)
+    {
+       /* initialize map */
+       int[] slice_map = new int[size_x * size_y];
+       /* compute orientation of each element from center */
+       int ind = 0;
+       double x = -size_x/2.0;
+       for (int n_x = 0; n_x < size_x; n_x++) {
+          double y = -size_y/2.0;
+          for (int n_y = 0; n_y < size_y; n_y++) {
+             /* compute orientation index */
+             double ori = Math.atan2(y, x) + Math.PI;
+             int idx = (int)Math.floor(ori / Math.PI * n_ori);
+             if (idx >= (2*n_ori))
+                idx = 2*n_ori - 1;
+             slice_map[ind] = idx;
+             /* increment position */
+             ind++;
+             y++;
+          }
+          /* increment x-coordinate */
+          x++;
+       }
+       return slice_map;
+    }
+
+
+    /*
+     * Compute histograms and histogram differences at each location.
+     */
+    private void compute_hist_gradient_2D(
+       int[] labels, int size0_x, int size0_y,
+       double[] weights, int size1_x, int size1_y,
+       int[] slice_map,
+       double[] smoothing_kernel,
+       ArrayList<double[]> slice_hist, /* hist per slice */
+       int slice_histXDim, int slice_histYDim,
+       ArrayList<double[]> gradients  /* matrix per ori */)
+    {
+       int i;
+       /* get number of orientations */
+       int n_ori = gradients.size();
+       /* set start position for gradient matrices */
+       int pos_start_x = size1_x/2;
+       int pos_start_y = size1_y/2;
+       int pos_bound_y = pos_start_y + size0_y;
+       /* initialize position in result */
+       int pos_x = pos_start_x;
+       int pos_y = pos_start_y;
+       /* compute initial range of offset_x */
+       int offset_min_x =
+          ((pos_x + 1) > size0_x) ? (pos_x + 1 - size0_x) : 0;
+       int offset_max_x =
+          (pos_x < size1_x) ? pos_x : (size1_x - 1);
+       int ind0_start_x = (pos_x - offset_min_x) * size0_y;
+       int ind1_start_x = (offset_min_x) * size1_y;
+       int size = labels.length;
+       /* determine whether to use smoothing kernel */
+       boolean use_smoothing = !(smoothing_kernel == null);
+       double temp_conv[] = new double[slice_histXDim * slice_histYDim];
+       int size_hist = slice_hist.get(0).length;
+       /* allocate half disc histograms */
+       double[] hist_left = new double[slice_histXDim * slice_histYDim];
+       double[] hist_right = new double[slice_histXDim * slice_histYDim];
+       for (int n = 0; n < size; n++) {
+          /* compute range of offset_y */
+          int offset_min_y =
+             ((pos_y + 1) > size0_y) ? (pos_y + 1 - size0_y) : 0;
+          int offset_max_y =
+             (pos_y < size1_y) ? pos_y : (size1_y - 1);
+          int offset_range_y = offset_max_y - offset_min_y;
+          /* initialize indices */
+          int ind0 = ind0_start_x + (pos_y - offset_min_y);
+          int ind1 = ind1_start_x + offset_min_y;
+          /* clear histograms */
+          for (int n_hist = 0; n_hist < 2*n_ori; n_hist++) {
+             double sl[] = slice_hist.get(n_hist);
+             for (i = 0; i < sl.length; i++) {
+            	 sl[i] = 0.0;
+             }
+          }
+          /* update histograms */
+          for (int o_x = offset_min_x; o_x <= offset_max_x; o_x++) {
+             for (int o_y = offset_min_y; o_y < offset_max_y; o_y++) {
+                /* update histogram value */
+            	double sl[] = slice_hist.get(slice_map[ind1]);
+            	sl[labels[ind0]] += weights[ind1];
+                /* update linear positions */
+                ind0--;
+                ind1++;
+             }
+             /* update last histogram value */
+             double sl[] = slice_hist.get(slice_map[ind1]);
+         	 sl[labels[ind0]] += weights[ind1];
+             /* update linear positions */
+             ind0 = ind0 + offset_range_y - size0_y;
+             ind1 = ind1 - offset_range_y + size1_y;
+          }
+          /* smooth bins */
+          if (use_smoothing) {
+             for (int o = 0; o < 2*n_ori; o++) {
+                double sh[] = slice_hist.get(o);
+                for (i = 0; i < temp_conv.length; i++) {
+                	temp_conv[i] = 0.0;
+                }
+                conv_in_place_1D(sh, smoothing_kernel, temp_conv);
+                for (int nh = 0; nh < size_hist; nh++)
+                   sh[nh] = temp_conv[nh];
+             }
+          }
+          /* L1 normalize bins */
+          for (int o = 0; o < 2*n_ori; o++) {
+        	 double sum_slice_hist = 0.0;
+        	 double sl[] = slice_hist.get(o);
+        	 for (i = 0; i < sl.length; i++) {
+        		 sum_slice_hist += sl[i];
+        	 }
+             if (sum_slice_hist != 0)
+            	for (i = 0; i < sl.length; i++) {
+                    sl[i] /= sum_slice_hist;
+            	}
+          }
+          /* compute circular gradients - initialize histograms */
+          for (i = 0; i < hist_left.length; i++) {
+        	  hist_left[i] = 0.0;
+          }
+          for (i = 0; i < hist_right.length; i++) {
+        	  hist_right[i] = 0.0;
+          }
+          for (int o = 0; o < n_ori; o++) {
+        	 double sl[] = slice_hist.get(o);
+        	 double sr[] = slice_hist.get(o+n_ori);
+        	 for (i = 0; i < hist_left.length; i++) {
+        		 hist_left[i] += sl[i];
+        	 }
+        	 for (i = 0; i < hist_right.length; i++) {
+        		 hist_right[i] += sr[i];
+        	 }
+          }
+          /* compute circular gradients - spin the disc */
+          for (int o = 0; o < n_ori; o++) {
+        	 double gr[] = gradients.get(o);
+             gr[n] = matrix_X2_distance(hist_left, hist_right);
+             double sl[] = slice_hist.get(o);
+        	 double sr[] = slice_hist.get(o+n_ori);
+        	 for (i = 0; i < hist_left.length; i++) {
+        		 hist_left[i] -= sl[i];
+        		 hist_left[i] += sr[i];
+        	 }
+             for (i = 0; i < hist_right.length; i++) {
+            	 hist_right[i] += sl[i];
+            	 hist_right[i] -= sr[i];
+             }
+          }
+          /* update position */
+          pos_y++;
+          if (pos_y == pos_bound_y) {
+             /* reset y position, increment x position */
+             pos_y = pos_start_y;
+             pos_x++;
+             /* update range of offset_x */
+             offset_min_x = ((pos_x + 1) > size0_x) ? (pos_x + 1 - size0_x) : 0;
+             offset_max_x = (pos_x < size1_x) ? pos_x : (size1_x - 1);
+             ind0_start_x = (pos_x - offset_min_x) * size0_y;
+             ind1_start_x = (offset_min_x) * size1_y;
+          }
+       }
+    }
+    
+    /*
+     * Chi-squared distance between matrices.
+     */
+    private double matrix_X2_distance(double m0[], double m1[]) {
+          double dist = 0.0;
+          for (int n = 0; n < m0.length; n++) {
+             double diff = m1[n] - m0[n];
+             double sum  = m1[n] + m0[n];
+             if (diff != 0.0)
+                dist += diff*diff / sum;
+          }
+          return dist/2.0;
+       }
+
+    
+    /*
+     * Compute convolution in place (for 1D matrices).
+     */
+    private void conv_in_place_1D(
+       double[] m0,
+       double[] m1,
+       double[] m)
+    {
+       /* get size of each matrix */
+       int size0 = m0.length;
+       int size1 = m1.length;
+       /* set dimensions for result matrix no larger than left input */
+       int size = ((size0 > 0) && (size1 > 0)) ? (size0) : 0;
+       /* set start position for result matrix no larger than left input */
+       int pos_start = size1/2;
+       /* initialize position in result */
+       int pos = pos_start;
+       for (int n = 0; n < size; n++) {
+          /* compute range of offset */
+          int offset_min = ((pos + 1) > size0) ? (pos + 1 - size0) : 0;
+          int offset_max = (pos < size1) ? pos : (size1 - 1);
+          /* multiply and add corresponing elements */
+          int ind0 = pos - offset_min;
+          int ind1 = offset_min;
+          while (ind1 <= offset_max) {
+             /* update result value */
+             m[n] += m0[ind0] * m1[ind1];
+             /* update linear positions */
+             ind0--;
+             ind1++;
+          }
+          /* update position */
+          pos++;
+       }
+    }
+
+
+    
+    private int[] textons_routine(double m[][], ArrayList<double[][]> filters, ArrayList<double[][]> textons,
     		int K, int max_iter, double subsampling) {
     	int i;
     	// Convolve image with filters
@@ -349,13 +771,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
             centroid.add(new metricCentroid(textons.get(i), 1.0));	
         }
         int[] assign = cluster(responses, centroid);
-        int assign2D[][] = new int[m.length][m[0].length];
-        for (int x = 0; x < m.length; x++) {
-        	for (int y = 0; y < m[0].length; y++) {
-        		assign2D[x][y] = assign[y + x * m[0].length];
-        	}
-        }
-        return assign2D;
+        return assign;
         //sample_clusterer< matrix<> >(
                 //kmeans::matrix_clusterer<>(K, max_iter, matrix_metrics<>::L2_metric()),
                 //subsampling,
@@ -1073,7 +1489,108 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
        return m2D;
     }
     
+    /*
+     * Compute border trimmed matrix.
+     */
+    private void compute_border_trim_2D(int src[], int dst[], int borderX, int borderY, int xDstSize, int yDstSize,
+    		int ySrcSize)
+    {
+       /* compute step sizes in source matrix */
+       int ind_init = borderX * ySrcSize + borderY;
+       int ind_step = 2*borderY;
+       /* trim border */
+       for (int n = 0, ind = ind_init, x = 0; x < xDstSize; x++) {
+          for (int y = 0; y < yDstSize; y++, n++, ind++)
+             dst[n] = src[ind];
+          ind += ind_step;
+       }
+    }
+    
+    /*
+     * Compute border trimmed matrix.
+     */
+    private void compute_border_trim_2D(double src[], double dst[], int borderX, int borderY, int xDstSize, int yDstSize,
+    		int ySrcSize)
+    {
+       /* compute step sizes in source matrix */
+       int ind_init = borderX * ySrcSize + borderY;
+       int ind_step = 2*borderY;
+       /* trim border */
+       for (int n = 0, ind = ind_init, x = 0; x < xDstSize; x++) {
+          for (int y = 0; y < yDstSize; y++, n++, ind++)
+             dst[n] = src[ind];
+          ind += ind_step;
+       }
+    }
+
+    
     private void compute_border_mirror_2D(double src[], double dst[], int borderX, int borderY, int xSrcSize, int ySrcSize) {
+    	// Compute destination size
+    	int xDstSize = xSrcSize + 2 * borderX;
+    	int yDstSize = ySrcSize + 2 * borderY;
+    	// Compute step sizes in destination matrix (for copying interior)
+    	int indInit = borderX * yDstSize + borderY;
+    	int indStep = 2 * borderY;
+    	int n;
+    	int ind;
+    	int x;
+    	int y;
+    	int indIntr;
+    	int indBdr;
+    	
+    	// Copy interior
+    	for (n = 0, ind = indInit, x = 0; x < xSrcSize; x++) {
+    		for (y = 0; y < ySrcSize; y++, n++, ind++) {
+    			dst[ind] = src[n];
+    		}
+    		ind += indStep;
+    	}
+    	
+    	// Mirror top
+    	indIntr = borderX * yDstSize;
+    	indBdr = indIntr + yDstSize;
+    	for (x = 0; x < borderX; x++) {
+    	    indBdr -= 2 * yDstSize;
+    	    for (y = 0; y < yDstSize; y++) {
+    	    	dst[indBdr++] = dst[indIntr++];
+    	    }
+    	}
+    	
+    	// Mirror bottom
+    	indBdr = (xSrcSize + borderX) * yDstSize;
+    	indIntr = indBdr + yDstSize;
+    	for (x = 0; x < borderX; x++) {
+    		indIntr -= 2*yDstSize;
+    		for (y = 0; y < yDstSize; y++) {
+    			dst[indBdr++] = dst[indIntr++];
+    		}
+    	}
+    	
+    	// Mirror left
+    	indBdr = 0;
+    	indIntr = 2 * borderY;
+    	for (x = 0; x < xDstSize; x++) {
+    		for (y = 0; y < borderY; y++) {
+    		    dst[indBdr++] = dst[--indIntr];	
+    		}
+    		indBdr += (yDstSize - borderY);
+    		indIntr += (yDstSize + borderY);
+    	}
+    	
+    	// Mirror right
+    	indBdr = yDstSize - borderY;
+    	indIntr = indBdr;
+    	for (x = 0; x < xDstSize; x++) {
+    		for (y = 0; y < borderY; y++) {
+    			dst[indBdr++] = dst[--indIntr];
+    		}
+    		indBdr += (yDstSize - borderY);
+    		indIntr += (yDstSize + borderY);
+    	}
+    	return;
+    }
+    
+    private void compute_border_mirror_2D(int src[], int dst[], int borderX, int borderY, int xSrcSize, int ySrcSize) {
     	// Compute destination size
     	int xDstSize = xSrcSize + 2 * borderX;
     	int yDstSize = ySrcSize + 2 * borderY;
@@ -1632,6 +2149,14 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	   double y1_mag = Math.abs(sx_sin_ori + sy_cos_ori);
     	   return (y0_mag > y1_mag) ? y0_mag : y1_mag;
     	}
+    
+    private double[] gaussian(
+    		   double sigma, int deriv, boolean hlbrt)
+    		{
+    		   int support = (int)Math.ceil(3*sigma);
+    		   return gaussian(sigma, deriv, hlbrt, support);
+    		}
+
     
     /**
      * Gaussian kernel (1D).
