@@ -1,3 +1,25 @@
+import gov.nih.mipav.model.algorithms.filters.AlgorithmMean;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmExtractSlices;
+import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
+import gov.nih.mipav.model.file.FileInfoBase.UnitType;
+import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
+import gov.nih.mipav.model.structures.VOIBaseVector;
+import gov.nih.mipav.model.structures.VOIContour;
+import gov.nih.mipav.model.structures.VOIPoint;
+import gov.nih.mipav.plugins.JDialogStandalonePlugin;
+import gov.nih.mipav.view.JFrameHistogram;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJComponentEditImage;
+import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.components.PanelManager;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -43,27 +65,6 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.WindowConstants;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmMean;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmExtractSlices;
-import gov.nih.mipav.model.file.FileIO;
-import gov.nih.mipav.model.file.FileUtility;
-import gov.nih.mipav.model.file.FileInfoBase.Unit;
-import gov.nih.mipav.model.file.FileInfoBase.UnitType;
-import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelLUT;
-import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.model.structures.VOIBase;
-import gov.nih.mipav.model.structures.VOIBaseVector;
-import gov.nih.mipav.model.structures.VOIContour;
-import gov.nih.mipav.model.structures.VOIPoint;
-import gov.nih.mipav.plugins.JDialogStandalonePlugin;
-import gov.nih.mipav.view.JFrameHistogram;
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewJComponentEditImage;
-import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.ViewUserInterface;
-import gov.nih.mipav.view.components.PanelManager;
 
 
 public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements MouseListener, MouseMotionListener,
@@ -2180,24 +2181,34 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 			}
 		};
 		File[] files = dir.listFiles(imFilter);
-		Comparator<File> fileComp = new Comparator<File>(){
+
+		Arrays.sort(files, new Comparator<File>() {
 
 			@Override
 			public int compare(File o1, File o2) {
-				String s1 = o1.getPath();
-				String s2 = o2.getPath();
-				if(s1.length() > s2.length())
-					return 1;
-				else if(s1.length() < s2.length())
-					return -1;
-				else{
-					return Integer.signum(s1.compareTo(s2));
+				String s1 = o1.getName();
+				String s2 = o2.getName();
+
+				String s1NoNum = s1.replaceAll("[0-9]", "");
+				String s2NoNum = s2.replaceAll("[0-9]", "");
+
+				int compare = s1NoNum.compareTo(s2NoNum);
+
+				if (compare == 0) {
+					// Without numbers, the two are the same
+					String s1Num = s1.replaceAll("[^0-9]", "");
+					String s2Num = s2.replaceAll("[^0-9]", "");
+					// Compare the left over numbers
+					int s1Int = Integer.valueOf(s1Num);
+					int s2Int = Integer.valueOf(s2Num);
+
+					return Integer.compare(s1Int, s2Int);
+				} else {
+					return compare;
 				}
 			}
-			
-		};
-		
-		Arrays.sort(files, fileComp);
+
+		});
 		
 		String dirStr = dir.toString();
 		if(!dirStr.endsWith(File.separator))

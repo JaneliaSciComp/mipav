@@ -20,6 +20,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Comparator;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -72,6 +74,7 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 	private JRadioButton axonRB;
 	
 	private JRadioButton customRB;
+
 	private JRadioButton densityRB;
 	
 	private boolean chooseIV;
@@ -100,8 +103,8 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 		StyleConstants.setFontFamily(blackText, "Serif");
 		StyleConstants.setFontSize(blackText, 12);
 		
-		String version = "1.5.0";
-		String lastUpdate = "3/26/15";
+		String version = "1.5.1";
+		String lastUpdate = "4/20/15";
 		
 		String message = "Initializing v " + version + "\n" +
 				"Last updated: " + lastUpdate + "\n" +
@@ -222,6 +225,36 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 				}
 			});
 			
+			// Sort list into correct order
+
+			Arrays.sort(list, new Comparator<File>() {
+
+				@Override
+				public int compare(File o1, File o2) {
+					String s1 = o1.getName();
+					String s2 = o2.getName();
+
+					String s1NoNum = s1.replaceAll("[0-9]", "");
+					String s2NoNum = s2.replaceAll("[0-9]", "");
+
+					int compare = s1NoNum.compareTo(s2NoNum);
+
+					if (compare == 0) {
+						// Without numbers, the two are the same
+						String s1Num = s1.replaceAll("[^0-9]", "");
+						String s2Num = s2.replaceAll("[^0-9]", "");
+						// Compare the left over numbers
+						int s1Int = Integer.valueOf(s1Num);
+						int s2Int = Integer.valueOf(s2Num);
+
+						return Integer.compare(s1Int, s2Int);
+					} else {
+						return compare;
+					}
+				}
+
+			});
+
 			String parentStr = parent.getAbsolutePath();
 			File csvFile = new File(parentStr + File.separator + "branch_density.csv");
 			try {
