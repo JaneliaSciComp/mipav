@@ -1,3 +1,9 @@
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.view.ViewJFrameImage;
+
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.event.WindowEvent;
@@ -8,8 +14,8 @@ import java.io.RandomAccessFile;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.TreeMap;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import javax.swing.JTextPane;
 import javax.swing.text.AttributeSet;
@@ -21,11 +27,6 @@ import javax.swing.text.StyleConstants;
 import quickhull3d.Point3d;
 import quickhull3d.QuickHull3D;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.file.FileIO;
-import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.TransMatrix;
-import gov.nih.mipav.view.ViewJFrameImage;
 
 /**
  * A sister plugin to the 3DSWCStats set of plugins. The dialog opens up
@@ -171,7 +172,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 			readSurfaceFile(swcFile);
 	
 			disconnected = false;
-	
+
+			// Attempt to make connections between all of the filaments
 			connections = makeConnections(swcCoordinates);
 	
 			for(int i=1;i<swcCoordinates.size();i++){
@@ -222,6 +224,9 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 				viewerOpen = true;
 			}
 			
+			// The output is a 2D array, with the last array being
+			// the vertex indicies so that it all fits in one output
+			// array
 			int[][] tempArray = calculateConvexHull(swcCoordinates, tips);
 			faceVerticies = new int[tempArray.length - 1][];
 			vertexInd = tempArray[tempArray.length - 1];
@@ -295,14 +300,12 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 					}
 					
 					if(branchDensity){
-						
+						// We aren't doing any sort of split point work
 						float hullVolume = convexHullVolumeNew(swcCoordinates, vertexInd, faceVerticies);
 						
 						ArrayList<String> messages = consolidateFilaments(swcCoordinates, connections, maxOrder);
 						float[] branchLengths = recalculateDistances(swcCoordinates, connections);
 						addToMessages(swcCoordinates, messages);
-						
-						//float hullVolume = convexHullVolume(swcCoordinates, connections);
 						
 						try{
 							String output = exportStatsToCSV(swcCoordinates, connections, swcFile, messages, branchLengths, -1.0f, hullVolume, maxOrder);
@@ -372,6 +375,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 						append("-----------------------------------------", blackText);
 					}else{
 	
+						// Need to use the split point provided to calculate stats
 						float[] splitLoc = null;
 						int filIndex = currentAxon;
 						
@@ -442,6 +446,9 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 							gcOrder = determineOrder(growthCone, gcConnections, axonIndex[0]);
 						}
 						
+						// The output is a 2D array, with the last array being
+						// the vertex indicies so that it all fits in one output
+						// array
 						int[][] tempArray = calculateConvexHull(growthCone, null);
 						int[][] gcFaceVerticies = new int[tempArray.length - 1][];
 						int[] gcVertexInd = tempArray[tempArray.length - 1];
@@ -454,80 +461,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 						ArrayList<String> gcMessages = consolidateFilaments(growthCone, gcConnections, gcOrder);
 						float[] gcLengths = recalculateDistances(growthCone, gcConnections);
 						addToMessages(growthCone, gcMessages);
-						
-						/*float[][] tipPts = new float[vertexInd.length][];
-						for(int i=0;i<vertexInd.length;i++){
-							int index = vertexInd[i];
-							ArrayList<float[]> fil = swcCoordinates.get(index);
-							float[] tail = fil.get(fil.size()-1);
-							tipPts[i] = tail;
-						}
-	
-						ArrayList<Integer> vertexList = new ArrayList<Integer>();
-						Hashtable<Integer, Integer> filMap = new Hashtable<Integer, Integer>();
-						
-						for(int i=0;i<growthCone.size();i++){
-							ArrayList<float[]> fil = growthCone.get(i);
-							float[] tail = fil.get(fil.size()-1);
-							for(int j=1;j<tipPts.length;j++){
-								//int ind = vertexInd[j];
-								float[] target = tipPts[j];
-								if(tail[0] == target[0] && tail[1] == target[1] && tail[2] == target[2]){
-									vertexList.add(i);
-									filMap.put(j, vertexList.size());
-									break;
-								}
-							}
-						}
-						
-						filMap.put(0, 0);
-						
-						//vertexList is list of points in growth cone that are in the hull
-						
-						int[] gcVertexInd = new int[vertexList.size()+1];
-						gcVertexInd[0] = 0; //Redundant 
-						for(int i=0;i<vertexList.size();i++){
-							gcVertexInd[i+1] = vertexList.get(i);
-						}
-						//fixing faceVerticies for the growth cone will be difficult
-						
-						ArrayList<int[]> faces = new ArrayList<int[]>();
-						for(int i=0;i<faceVerticies.length;i++){
-							int[] face = faceVerticies[i];
-							int[] outFace = new int[face.length];
-							System.arraycopy(face, 0, outFace, 0, face.length);
-							int numNull = 0;
-							int nullInd = -1;
-							for(int j=0;j<face.length;j++){
-								int vertex = face[j];
-								if(vertex == 0 || filMap.get(vertex) == null){
-									numNull++;
-									nullInd = j;
-								}else{
-									outFace[j] = filMap.get(vertex);
-								}
-							}
-							
-							if(numNull == 0){
-								faces.add(outFace);
-							}else if(numNull == 1){
-								outFace[nullInd] = 0;
-								faces.add(outFace);
-							}
-						}
-						
-						int[][] gcFaceVerticies = new int[faces.size()][];
-						for(int i=0;i<faces.size();i++){
-							gcFaceVerticies[i] = faces.get(i);
-						}
-						
-						//This doesn't seem to
-						//float gcHullVolumeN = convexHullVolumeNew(growthCone, gcVertexInd, gcFaceVerticies);
-						//System.out.println(gcHullVolumeN);
-						 
-						 */
-						
-						//float gcHullVolume = convexHullVolume(growthCone, gcConnections);
 						
 						PlugInAlgorithmSWCVolume alg = new PlugInAlgorithmSWCVolume(srcImage, growthCone);
 						alg.run();
@@ -584,42 +517,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	
 	public void setAxon(int axon){
 		currentAxon = axon;
-		
-		//This portion will not work because the viewer was not designed to
-		//display a convex hull for only a portion of the points
-		/*
-		if(!branchDensity){
-			int[] splitInd = new int[1];
-			float[] splitPt = findSplitDistance(splitInd);
-			ArrayList<ArrayList<float[]>> growthCone = filterGrowthCone(splitPt, splitInd[0], null);
-			
-			ArrayList<ArrayList<Integer>> gcConnections;
-			if(disconnected){
-				gcConnections = makeConnectionsTol(growthCone);
-			}else{
-				gcConnections = makeConnections(growthCone);
-			}
-			
-			//Generate the indicies of which filaments in
-			//swcCoordinates are tips (no forward connections)
-			ArrayList<Integer> tips = new ArrayList<Integer>();
-			for(int i=0;i<gcConnections.size();i++){
-				ArrayList<Integer> branches = gcConnections.get(i);
-				if(branches.size()==0){
-					tips.add(i);
-				}
-			}
-			
-			int[][] tempArray = calculateConvexHull(growthCone, tips);
-			faceVerticies = new int[tempArray.length - 1][];
-			vertexInd = tempArray[tempArray.length - 1];
-			for(int i=0;i<faceVerticies.length;i++){
-				faceVerticies[i] = tempArray[i];
-			}
-		}
-		*/
-		
-		
 	}
 	
 	public int getAxon(){
@@ -861,23 +758,22 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	}
 	
 	/**
-	 * Method used to add branches that are not part of the calculated convex hull. 
-	 * Currently a bit rudimentary. For each missing tip, check to see if creating
-	 * a new set of faces from each face would create a valid hull.
+	 * Method used to add branches that are not part of the calculated convex hull. Currently a bit rudimentary. For
+	 * each missing tip, check to see if creating a new set of faces from each face would create a valid hull.
 	 * 
-	 * Right now, this is achieved by checking to see if any new set of faces collides
-	 * with the neuron structure. 
+	 * Right now, this is achieved by checking to see if any new set of faces collides with the neuron structure.
 	 * 
-	 * Only the closest face that does not collide with the neuron structure is chosen
-	 * to make the new set of faces. This is probably not the best, but has shown to
-	 * work relatively well in many cases.
+	 * Only the closest face that does not collide with the neuron structure is chosen to make the new set of faces.
+	 * This is probably not the best, but has shown to work relatively well in many cases.
+	 * 
+	 * This is not very fool-proof, so this would be something to remove. Hard to verify the accuracy of the results.
 	 * 
 	 * @param swcCoordinates
 	 * @param tips
 	 * @param hull
 	 * @param verticies
-	 * @return a combo array of the hull face indicies as well as the vertex indicies. 
-	 * The last index in the array contains the verticies. 
+	 * @return a combo array of the hull face indicies as well as the vertex indicies. The last index in the array
+	 *         contains the verticies.
 	 */
 	
 	private int[][] addBranchesToHull(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<Integer> tips, int[][] hull, int[] verticies){
@@ -1131,6 +1027,15 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		return pts;
 	}
 	
+	/**
+	 * Calculates the convex hull using the QuickHull3D jar. Also recently included is the functionality to add every
+	 * single tip into the hull, but this has been hazardous and probably should not be done.
+	 * 
+	 * 
+	 * @param swcCoordinates
+	 * @param tips
+	 * @return
+	 */
 	private int[][] calculateConvexHull(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<Integer> tips){
 		
 		ArrayList<Point3d> ptList = new ArrayList<Point3d>();
@@ -1138,15 +1043,11 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		Point3d originPt3d = new Point3d(originPt[0], originPt[1], originPt[2]);
 		ptList.add(originPt3d);
 		
-		//for(int i : tips){
 		for(int i=0;i<swcCoordinates.size();i++){
 			ArrayList<float[]> fil = swcCoordinates.get(i);
 			float[] pt = fil.get(fil.size()-1);
 			Point3d pt3d = new Point3d(pt[0], pt[1], pt[2]);
 			
-			//Added this if statement too, need to remove
-			//if(i == currentAxon)
-			//	tipPt = pt3d; 
 			ptList.add(pt3d);
 		}
 		
@@ -1178,7 +1079,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 				}
 				lPt = ptList.get(cnt);
 			}
-			//temp[i] = tips.get(cnt-1);
 			temp[i] = cnt-1;
 			
 		}
@@ -1408,87 +1308,13 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	}
 
 	/**
-	 * Convex hull volume. Using the faces and some linear algebra, finds
-	 * the volume within the convex hull. 
 	 * 
-	 * @param swcCoordinates
-	 * @param connections
-	 * @return
-	 */
-	/*private float convexHullVolume(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<ArrayList<Integer>> connections){
-		
-		ArrayList<Point3d> ptList = new ArrayList<Point3d>();
-		
-		float[] origin = swcCoordinates.get(0).get(0);
-		ptList.add(new Point3d(origin[0], origin[1], origin[2]));
-		
-		
-		for(int i=0;i<swcCoordinates.size();i++){
-			ArrayList<float[]> fil = swcCoordinates.get(i);
-			float[] pt = fil.get(fil.size()-1);
-			ptList.add(new Point3d(pt[0], pt[1], pt[2]));
-		}	
-		
-		float volume = 0;
-		
-		Point3d[] pts = new Point3d[ptList.size()];
-		ptList.toArray(pts);
-		
-		QuickHull3D hull = new QuickHull3D(pts);
-		
-		//Centroid is used as common point to create a bunch
-		//of triangular pyramids from which we can find the
-		//volume of through some linear algebra
-		Point3d centroid = new Point3d();
-		
-		for(int i=0;i<pts.length;i++){
-			Point3d pt = pts[i];
-			centroid.add(pt);
-		}
-		
-		double num = pts.length;
-		centroid.x /= num;
-		centroid.y /= num;
-		centroid.z /= num;
-		
-		Point3d[] verticies = hull.getVertices();
-		int[][] faceVerticies = hull.getFaces();
-		
-		for(int i=0;i<faceVerticies.length;i++){
-			
-			
-			Point3d ptA = new Point3d(verticies[faceVerticies[i][0]]);
-			Point3d ptB = new Point3d(verticies[faceVerticies[i][1]]);
-			Point3d ptC = new Point3d(verticies[faceVerticies[i][2]]);
-			Point3d ptCentroid = new Point3d(centroid);
-			
-			ptB.sub(ptA);
-			ptC.sub(ptA);
-			ptCentroid.sub(ptA);
-			
-			//Generate three vectors. A and B describe the plane while
-			//C points to the centroid
-			Vector3f vecA = new Vector3f((float)ptB.x, (float)ptB.y, (float)ptB.z);
-			Vector3f vecB = new Vector3f((float)ptC.x, (float)ptC.y, (float)ptC.z);
-			Vector3f vecC = new Vector3f((float)ptCentroid.x, (float)ptCentroid.y, (float)ptCentroid.z);
-			Vector3f axb = Vector3f.cross(vecA, vecB);
-			
-			//Vector triple product can be used to determine the volume of a parallelohedran
-			volume += Math.abs(axb.dot(vecC));
-		}
-		
-		//To convert from volume of a parallelohedran to a triangular pyramid
-		volume /= 6.0f;
-		
-		return volume;
-	}*/
-
-	/**
+	 * Convex hull volume. Using the faces and some linear algebra, finds the volume within the convex hull. Each face
+	 * corresponds to a pyramid when connected to an arbitrary interior point (in this case, the centroid of all tip
+	 * points). The volume of all pyramids are added together.
 	 * 
-	 * Convex hull volume. Using the faces and some linear algebra, finds
-	 * the volume within the convex hull.
+	 * For unconsolidated filaments, not consolidated ones.
 	 * 
-	 * For unconsolidated filaments, not consolidated ones
 	 * @param swcCoordinates
 	 * @param vertexInd
 	 * @param faceVerticies
@@ -1789,8 +1615,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 	}
 
 	private void displayConvexHull(){
-		
-		//CHANGE THIS SO THAT IT RECALCULATES FOR GROWTH CONE
 		
 		for(int i=0;i<faceVerticies.length;i++){
 			for(int j=0;j<faceVerticies[i].length;j++){
@@ -2493,263 +2317,22 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		setCompleted(true);
 		notifyListeners(this);
 	}
+
 	public void windowOpened(WindowEvent e) {}
+
 	@Override
 	public void windowClosing(WindowEvent e) {}
+
 	@Override
 	public void windowIconified(WindowEvent e) {}
+
 	@Override
 	public void windowDeiconified(WindowEvent e) {}
+
 	@Override
 	public void windowActivated(WindowEvent e) {}
+
 	@Override
 	public void windowDeactivated(WindowEvent e) {}
 
-
-	/*private int[] calculateConvexHull(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<Integer> tips, int[][]faceVerticies, int[] vertexInd){
-		
-		ArrayList<Point3d> ptList = new ArrayList<Point3d>();
-		float[] originPt = swcCoordinates.get(0).get(0);
-		Point3d originPt3d = new Point3d(originPt[0], originPt[1], originPt[2]);
-		ptList.add(originPt3d);
-		
-		for(int i : tips){
-			ArrayList<float[]> fil = swcCoordinates.get(i);
-			float[] pt = fil.get(fil.size()-1);
-			Point3d pt3d = new Point3d(pt[0], pt[1], pt[2]);
-			
-			//Added this if statement too, need to remove
-			//if(i == currentAxon)
-			//	tipPt = pt3d; 
-			ptList.add(pt3d);
-		}
-		
-		Point3d[] pts = new Point3d[ptList.size()];
-		ptList.toArray(pts);
-		
-		QuickHull3D hull = new QuickHull3D(pts);
-		
-		Point3d[] verticies = hull.getVertices();
-		int[][] faceVerticiesA = hull.getFaces();
-		for(int i=0;i<faceVerticiesA.length;i++){
-			faceVerticies[i] = faceVerticiesA[i];
-		}
-		
-		int cnt = 0;
-		for(int i=1;i<verticies.length;i++){
-			Point3d vPt = verticies[i];
-			Point3d lPt = ptList.get(cnt);
-			while(vPt.x != lPt.x || vPt.y != lPt.y || vPt.z != lPt.z){
-				cnt++;
-				if(cnt >= ptList.size()){//Something messed up
-					System.out.println("Something is wrong with convex hull calculations");
-					break;
-				}
-				lPt = ptList.get(cnt);
-			}
-			vertexInd[i] = tips.get(cnt-1);
-		}
-		
-		//Here we have the basic hull, now need to augment it
-		
-		return new int[]{verticies.length, faceVerticiesA.length};
-	}*/
-	
-	/**
-	 * This code is meant to be used if the ability to add/remove points from the 
-	 * convex hull is ever implemented. Finds the face that the branch would extend
-	 * to in the skeletal frame. Could also improve to instead use the derivatives
-	 * gained from using splines.
-	 * 
-	 * originPt, vecA, and vecB describe the 3 points in the hull face.
-	 * headPt is the coordinate of the branch tip
-	 * vecC is the direction of the branch from the headPt
-	 * 
-	 * @param originPt
-	 * @param vecA
-	 * @param vecB
-	 * @param vecC
-	 * @param headPt
-	 * @return
-	 */
-	/*private float distanceVectorToPlane(Vector3f originPt, Vector3f vecA, Vector3f vecB, Vector3f vecC, Vector3f headPt){
-		
-		Vector3f a = Vector3f.sub(vecA, originPt);
-		Vector3f b = Vector3f.sub(vecB, originPt);
-		Vector3f pt = Vector3f.sub(headPt, originPt);
-		//Vector vecC is already relative since it contains direction information
-		
-		Vector3f d = Vector3f.cross(a, b);
-		float num = d.dot(pt);
-		float denom = d.dot(vecC);
-		
-		if(denom == 0){
-			return -Float.NEGATIVE_INFINITY;
-		}
-		
-		float magC = vecC.length();
-		float distance = num * magC / denom;
-		
-		if(distance < 0){
-			return -distance;
-		}else{
-			return Float.NEGATIVE_INFINITY;
-		}
-		
-	}*/
-
-	/*private float pyramidVolume(Vector3f top, Vector3f ptA, Vector3f ptB, Vector3f ptC){
-	
-	Vector3f vecA = Vector3f.sub(ptA, top);
-	Vector3f vecB = Vector3f.sub(ptB, top);
-	Vector3f vecC = Vector3f.sub(ptC, top);
-	Vector3f axb = Vector3f.cross(vecA, vecB);
-	
-	//Vector triple product can be used to determine the volume of a parallelohedran
-	float volume = Math.abs(axb.dot(vecC))/6.0f;
-	
-	return volume;
-}
-
-	private int[][] addBranchesToHull(ArrayList<ArrayList<float[]>> swcCoordinates, ArrayList<Integer> tips, int[][] hull, int[] verticies){
-	
-	ArrayList<Integer> missing = new ArrayList<Integer>(tips);
-	//Find which tips are not included in the hull
-	for(int i=0;i<verticies.length;i++){
-		if(missing.contains(verticies[i])){
-			missing.remove(new Integer(verticies[i]));
-		}
-	}
-	
-	//Convert hull and verticies to ArrayLists so that they can grow
-	ArrayList<int[]> hullList = new ArrayList<int[]>();
-	ArrayList<Integer> vertexList = new ArrayList<Integer>();
-	for(int i=0;i<hull.length;i++){
-		hullList.add(hull[i]);
-	}
-	for(int i=0;i<verticies.length;i++){
-		vertexList.add(verticies[i]);
-	}
-	
-	for(int i=0;i<missing.size();i++){
-		int tip = missing.get(i);
-		ArrayList<float[]> fil = swcCoordinates.get(tip);
-		Vector3f tipVec = new Vector3f(fil.get(fil.size()-1));
-		int con = (int)fil.get(0)[4];
-		ArrayList<float[]> conFil = swcCoordinates.get(con);
-		Vector3f conVec = new Vector3f(conFil.get(conFil.size()-1));
-		conVec = Vector3f.sub(tipVec, conVec);
-		float minDist = Float.MAX_VALUE;
-		int minInd = -1;
-		for(int j=0;j<hullList.size();j++){
-			int[] face = hullList.get(j);
-			ArrayList<float[]> originFil = swcCoordinates.get(vertexList.get(face[0]));
-			ArrayList<float[]> filA = swcCoordinates.get(vertexList.get(face[1]));
-			ArrayList<float[]> filB = swcCoordinates.get(vertexList.get(face[2]));
-			Vector3f originVec = new Vector3f(originFil.get(originFil.size()-1));
-			Vector3f vecA = new Vector3f(filA.get(filA.size()-1));
-			Vector3f vecB = new Vector3f(filB.get(filB.size()-1));
-			float dist = distanceVectorToPlaneNew(originVec, vecA, vecB, tipVec);
-			if(dist > 0 && dist < minDist){
-				minDist = dist;
-				minInd = j;
-			}
-		}
-		
-		if(minInd == -1){//Means a new plane cut the branch off,
-						//so all distances will be negative
-			minDist = Float.NEGATIVE_INFINITY;
-			for(int j=0;j<hullList.size();j++){
-				int[] face = hullList.get(j);
-				ArrayList<float[]> originFil = swcCoordinates.get(vertexList.get(face[0]));
-				ArrayList<float[]> filA = swcCoordinates.get(vertexList.get(face[1]));
-				ArrayList<float[]> filB = swcCoordinates.get(vertexList.get(face[2]));
-				Vector3f originVec = new Vector3f(originFil.get(originFil.size()-1));
-				Vector3f vecA = new Vector3f(filA.get(filA.size()-1));
-				Vector3f vecB = new Vector3f(filB.get(filB.size()-1));
-				float dist = distanceVectorToPlane(originVec, vecA, vecB, conVec, tipVec);
-				if(dist > minDist){
-					minDist = dist;
-					minInd = j;
-				}
-			}
-		}
-		
-		//Found face, need to break it up into 3 new faces
-		int[] face = hullList.get(minInd);
-		int vertexSize = vertexList.size();
-		vertexList.add(tip);
-		int[] newFace1 = new int[]{face[0], face[1], vertexSize};
-		int[] newFace2 = new int[]{face[0], face[2], vertexSize};
-		int[] newFace3 = new int[]{face[1], face[2], vertexSize};
-		hullList.remove(face);
-		hullList.add(newFace1);
-		hullList.add(newFace2);
-		hullList.add(newFace3);
-	}
-	
-	int[][] outArray = new int[hullList.size()+1][];
-	for(int i=0;i<hullList.size();i++){
-		outArray[i] = hullList.get(i);
-	}
-	int[] vertexArray = new int[vertexList.size()];
-	for(int i=0;i<vertexArray.length;i++){
-		vertexArray[i] = vertexList.get(i);
-	}
-	outArray[hullList.size()] = vertexArray;
-	
-	return outArray;
-	
-}
-
-private float[] findSplitDistance(int[] index){
-	float[] splitLoc = null;
-	int filIndex = currentAxon;
-	
-	//Find the location of the split point of the growth cone
-	ArrayList<float[]> piece = swcCoordinates.get(currentAxon);
-	float sDist = splitDist;
-	int ind = piece.size()-1;
-	while(sDist > 0){
-		float[] fa = piece.get(ind);
-		float[] fa2;
-		if(ind == 0){
-			int con = (int)fa[4];
-			if(con == -1){
-				return null;
-			}
-			piece = swcCoordinates.get(con);
-			filIndex = con;
-			ind = piece.size()-1;
-			fa2 = piece.get(ind);
-		}else{
-			fa2 = piece.get(ind - 1);
-			ind--;
-		}
-		float dist = 0;
-		for(int i=0;i<3;i++){
-			float d = fa[i] - fa2[i];
-			dist += d*d;
-		}
-		//Accumulate distances until you reach
-		//the provided value
-		dist = (float)Math.sqrt(dist);
-		if(sDist - dist > 0){
-			sDist -= dist;
-		}else{
-			//Choose whichever one is closer to the
-			//given distance
-			if(Math.abs(sDist) > Math.abs(sDist - dist)){
-				splitLoc = fa2;
-			}else{
-				splitLoc = fa;
-			}
-			break;
-		}
-	}
-	
-	index[0] = filIndex;
-	
-	return splitLoc;
-}*/
 }
