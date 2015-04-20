@@ -2,10 +2,8 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmThresholdDual;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmMean;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
-import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,63 +34,25 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 	
 	private int length;
 	
+	/**
+	 * The following three variables are used in the radius searching portion. They tweak how fast the cutoff point is
+	 * for an incomplete circle. Thus it is used to tweak for under/overshoot.
+	 */
+
 	private float sigma = 5f;
 	
 	private float sensitivity = 0.01f;
 	
 	private float radialThreshold = 0.80f;
 	
-	private float volume = 0f;
+	private float volume;
 	
 	/**
-	 * For running this class from a standalone plugin. Not
-	 * very useful
-	 * @param imPath
-	 * @param filPath
-	 */
-	public PlugInAlgorithmSWCVolume(String imPath, String filPath){
-		
-		super();
-		
-		FileIO io = new FileIO();
-		srcImage = io.readImage(imPath);
-		
-		extents = srcImage.getExtents();
-		width = extents[0];
-		height = extents[1];
-		depth = extents[2];
-		length = width*height*depth;
-		
-		ViewJFrameImage frame = new ViewJFrameImage(srcImage);
-		frame.setVisible(false);
-		
-		filFile = new File(filPath);
-		swcCoordinates = new ArrayList<ArrayList<float[]>>();
-	}
-	
-	/**
-	 * For running the this class as an algorithm. Not 
-	 * very useful
-	 * @param image
-	 * @param filPath
-	 */
-	public PlugInAlgorithmSWCVolume(ModelImage image, String filPath){
-		super(null, image);
-		
-		extents = srcImage.getExtents();
-		width = extents[0];
-		height = extents[1];
-		depth = extents[2];
-		length = width*height*depth;
-		
-		filFile = new File(filPath);
-		swcCoordinates = new ArrayList<ArrayList<float[]>>();
-	}
-	
-	/**
-	 * For embedding the algorithm within another that already
-	 * has the image open as well as the filaments processed.
-	 * The most useful. 
+	 * For embedding the algorithm within another that already has the image open as well as the filaments processed.
+	 * The most useful.
+	 * 
+	 * Calculates the volume of the filaments based on image intensity.
+	 * 
 	 * @param image
 	 * @param filaments
 	 */
@@ -104,6 +64,7 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 		height = extents[1];
 		depth = extents[2];
 		length = width*height*depth;
+		volume = 0f;
 		
 		swcCoordinates = filaments;
 	}
@@ -312,6 +273,9 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 		
 	}
 	
+	/**
+	 * Find the volume of the skeleton using the radii found in the previous methods.
+	 */
 	private void calcVolumeNew(){
 		
 		volume = 0;
@@ -321,6 +285,10 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 
 			for(int j=0;j<fil.size()-1;j++){
 				float[] pt0 = fil.get(j);
+
+				// Points are skipped if its radius would interfere with another
+				// point. This prevents double counting of the volume in many
+				// cases.
 				if(pt0[7] == -1.0f)
 					continue;
 

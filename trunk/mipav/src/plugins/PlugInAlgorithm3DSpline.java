@@ -14,9 +14,19 @@ public class PlugInAlgorithm3DSpline extends AlgorithmBase {
 	
 	private ArrayList<Vector3f> yBases;
 	
-	private static ArrayList<Vector3f> searchFieldBase;
+	private ArrayList<Vector3f> searchFieldBase;
 	
-	
+	/**
+	 * I pulled most of this code off the internet somewhere but now I'm not sure where the original source is.
+	 * 
+	 * Given a set of points in space (nodes), this algorithm will find the gradients at each node. This allows us to
+	 * find the radius at each node in a way that it will be normal to the direction of the curve.
+	 * 
+	 * 
+	 * @param nodes
+	 * @param xRes
+	 * @param yRes
+	 */
 	public PlugInAlgorithm3DSpline(ArrayList<Vector3f> nodes, float xRes, float yRes) {
 		super();
 		
@@ -119,6 +129,15 @@ public class PlugInAlgorithm3DSpline extends AlgorithmBase {
 		return yBases;
 	}
 	
+	/**
+	 * This method creates a search plane in the x-y coordinate system and then rotates it to the input gradient, given
+	 * by the three bases. This is part of the radius method to search for points around the node.
+	 * 
+	 * @param xBase
+	 * @param yBase
+	 * @param zBase
+	 * @return
+	 */
 	public ArrayList<Vector3f> rotatePlane(Vector3f xBase, Vector3f yBase, Vector3f zBase){
 		ArrayList<Vector3f> rotated = new ArrayList<Vector3f>();
 		for(Vector3f v : searchFieldBase){

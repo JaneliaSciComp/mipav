@@ -1,3 +1,6 @@
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.file.FileIO;
+
 import java.awt.Color;
 import java.io.File;
 import java.io.FileWriter;
@@ -15,9 +18,6 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
-
-import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.file.FileIO;
 
 /**
  * New plugin for Akanni Clarke of the Giniger Lab. Conceptually similar to the 
@@ -45,16 +45,6 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 	private boolean saveData;
 
 	private String imageFile;
-
-	/*public PlugInAlgorithm3DSWCStats(ArrayList<File> surfaces, String units, JTextPane textBox){
-		super();
-		surfaceFiles = surfaces;
-		resolutionUnit = units;
-		textArea = textBox;
-		saveData = true;
-
-		swcCoordinates = new ArrayList<ArrayList<float[]>>();
-	}*/
 
 	public PlugInAlgorithm3DSWCStats(String imFile, File surface, String units, JTextPane textBox){
 		super();
@@ -88,10 +78,10 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 
 			append("Reading " + surfaceFile.getName(), attr);
 			readSurfaceFile(surfaceFile);
-			//writeIndividualFilaments(f);
 
 			disconnected = false;
 
+			// Attempt to make connections between all of the filaments
 			ArrayList<ArrayList<Integer>> forward = makeConnections();
 
 			for(int i=1;i<swcCoordinates.size();i++){
@@ -103,7 +93,8 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				}
 			}
 			if(disconnected){
-				//Try version with tolerance
+				// Try version with tolerance because in some cases the
+				// filaments are not always end to end
 				forward = makeConnectionsTol();
 				//Test out one more time
 				for(int i=1;i<swcCoordinates.size();i++){
@@ -116,14 +107,15 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 				}
 			}
 
-			//float convexHullVolume = PlugInAlgorithm3DSWCViewer.convexHullVolume(swcCoordinates, forward, false);
-
 			calculateDistances();
 			int maxOrder;
 			if(axonUseLength)
 				maxOrder = determineOrder_useLength(forward);
 			else 
 				maxOrder = determineOrder(forward);
+
+			// Arrange all continuous branches of a single order into single
+			// filaments as oppossed to several connected branches
 			ArrayList<String> messages = consolidateFilaments(forward, maxOrder);
 			float[] branchLengths = recalculateDistances();
 			addToMessages(messages);
@@ -1070,45 +1062,5 @@ public class PlugInAlgorithm3DSWCStats extends AlgorithmBase {
 
 		return success;
 	}
-
-
-	/**
-	 * Test method to output each individual filament to its own SWC file.
-	 * Was used to figure out general ordering of filmanets in the Imaris
-	 * trace file. 
-	 */
-	/*
-	private void writeIndividualFilaments(File file) throws IOException{
-		String parent = file.getParent();
-		String name = file.getName();
-		name = name.substring(0, name.lastIndexOf("."));
-		String output = parent + File.separator + name + "_part_%d.swc";
-
-		for(int i=0;i<swcCoordinates.size();i++){
-			File outputFile = new File(String.format(output, i));
-
-			FileWriter fw = new FileWriter(outputFile);
-
-			int counter = 1;
-
-			ArrayList<float[]> fil = swcCoordinates.get(i);
-			float[] fa = fil.get(0);
-			float[] fo = new float[fa.length];
-			System.arraycopy(fa, 0, fo, 0, fa.length);
-			fo[4] = -1;
-
-			fw.append(formatSWCLine(counter, fo));
-
-			for(int j=1;j<fil.size();j++, counter++){
-				fa = fil.get(j);
-				System.arraycopy(fa, 0, fo, 0, fa.length);
-				fo[4] = counter;
-				fw.append(formatSWCLine(counter+1, fo));
-			}
-
-			fw.close();
-		}
-
-	}*/
 
 }
