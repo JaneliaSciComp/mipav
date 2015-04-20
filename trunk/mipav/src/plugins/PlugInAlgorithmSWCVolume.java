@@ -1,3 +1,12 @@
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmThresholdDual;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmMean;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
+import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJFrameImage;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -9,14 +18,6 @@ import java.util.Iterator;
 import java.util.PriorityQueue;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmThresholdDual;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmMean;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
-import gov.nih.mipav.model.file.FileIO;
-import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.ViewJFrameImage;
 
 
 public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
@@ -138,6 +139,8 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
         AlgorithmThresholdDual nThresh = new AlgorithmThresholdDual(probImage, threshold, 1, 1, true, false);
         nThresh.run();
        
+		float[] res = srcImage.getResolutions(0);
+
         for(int i=0;i<swcCoordinates.size();i++){
         
 			ArrayList<Vector3f> splinePts = new ArrayList<Vector3f>();
@@ -148,7 +151,8 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 			}
 			
 			//Use a spline to determine the gradient at a point
-			PlugInAlgorithm3DSpline spline = new PlugInAlgorithm3DSpline(splinePts);
+
+			PlugInAlgorithm3DSpline spline = new PlugInAlgorithm3DSpline(splinePts, res[0], res[1]);
 			spline.run();
 			
 			ArrayList<Vector3f> xBases = spline.getXBases();
