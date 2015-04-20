@@ -1085,7 +1085,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase{
 		
 		faceVerticies[faceVerticies.length-1] = temp;
 		
-		faceVerticies = addBranchesToHull(swcCoordinates, tips, faceVerticiesA, temp);
+		// faceVerticies = addBranchesToHull(swcCoordinates, tips, faceVerticiesA, temp);
 		
 		return faceVerticies;
 		
