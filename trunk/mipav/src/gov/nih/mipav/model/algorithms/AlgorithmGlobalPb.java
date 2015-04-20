@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
+import Jama.Matrix;
 import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.file.FileBase;
@@ -161,7 +162,16 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         double bg1[][][] = new double[8][xDim][yDim];
         double bg2[][][] = new double[8][xDim][yDim];
         double bg3[][][] = new double[8][xDim][yDim];
-        multiscalePb(bg1, bg2, bg3, textons, inputImage);
+        double cga1[][][] = new double[8][xDim][yDim];
+        double cga2[][][] = new double[8][xDim][yDim];
+        double cga3[][][] = new double[8][xDim][yDim];
+        double cgb1[][][] = new double[8][xDim][yDim];
+        double cgb2[][][] = new double[8][xDim][yDim];
+        double cgb3[][][] = new double[8][xDim][yDim];
+        double tg1[][][] = new double[8][xDim][yDim];
+        double tg2[][][] = new double[8][xDim][yDim];
+        double tg3[][][] = new double[8][xDim][yDim];
+        multiscalePb(bg1, bg2, bg3, cga1, cga2, cga3, cgb1, cgb2, cgb3, tg1, tg2, tg3, textons, inputImage);
         
         setCompleted(true);
         return;
@@ -173,7 +183,9 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
      * Original MATLAB code by Pablo Arbelaez December, 2010
      * @param im
      */
-    private void multiscalePb(double [][][] bg1, double [][][] bg2, double[][][] bg3, int[] textons, ModelImage im) {
+    private void multiscalePb(double [][][] bg1, double [][][] bg2, double[][][] bg3, double cga1[][][],
+    		double cga2[][][], double cga3[][][], double cgb1[][][], double cgb2[][][],
+    		double cgb3[][][], double tg1[][][], double tg2[][][], double tg3[][][], int[] textons, ModelImage im) {
         double weights[] = new double[12];
         double buffer[];
         double red[] = new double[sliceSize];
@@ -249,20 +261,163 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         }
         
         // Get gradients
-        det_mPb(bg1, bg2, bg3, textons, red, green, blue);
+        det_mPb(bg1, bg2, bg3, cga1, cga2, cga3, cgb1, cgb2, cgb3, tg1, tg2, tg3, textons, red, green, blue);
     }
     
     /**
      * Compute image gradients.  Implementation by Michael Maire.
      * @param im
      */
-    private void det_mPb(double bg1[][][], double bg2[][][], double bg3[][][], int textons[], 
+    private void det_mPb(double bg1[][][], double bg2[][][], double bg3[][][], double cga1[][][],
+    		double cga2[][][], double cga3[][][], double cgb1[][][],
+    		double cgb2[][][], double cgb3[][][], double tg1[][][], double tg2[][][],
+    		double tg3[][][], int textons[], 
     		double red[], double green[], double blue[]) {
+    	int i;
         // Compute pb
-    	mex_pb_parts_final_selected(bg1, bg2, bg3, textons, red, green, blue);
+    	mex_pb_parts_final_selected(bg1, bg2, bg3, cga1, cga2, cga3, cgb1, cgb3, cgb3, tg1, tg2, tg3, textons, red, green, blue);
+    	
+    	// Smooth cues
+    	double gtheta[] = new double[]{1.5708, 1.1781, 0.7854, 0.3927, 0.0, 2.7489, 2.3562, 1.9635};
+    	double radii[] = new double[]{3.0, 5.0, 10.0, 20.0};
+    	double filters[][][][][] = new double[radii.length][gtheta.length][][][];
+    	make_filters(filters, radii, gtheta);
+    	for (i = 0; i < 8; i++) {
+    		
+    	} // for (i = 0; i < 8;; i++)
     }
     
-    private void mex_pb_parts_final_selected(double bg1[][][], double bg2[][][], double bg3[][][],int textons[], 
+    private double[][] fitparab(double z[][], double ra, double rb, double theta, double filt[][][]) {
+    		// function [a,b,c] = fitparab(z,ra,rb,theta)
+    		//
+    		// Fit cylindrical parabolas to elliptical patches of z at each
+    		// pixel.  
+    		//
+    		// INPUT
+    		//	z	Values to fit.
+    		//	ra,rb	Radius of elliptical neighborhood, ra=major axis.
+    		//	theta	Orientation of fit (i.e. of minor axis).
+    		//
+    		// OUTPUT
+    		//	a,b,c	Coefficients of fit: a + bx + cx^2
+    		//
+
+
+    		// compute the interior quickly with convolutions
+    	    int x; 
+    	    int y;
+    	    double a[][];
+    	    double filt2D[][] = new double[filt.length][filt[0].length];
+    	    for (x = 0; x < filt.length; x++) {
+    	    	for (y = 0; y < filt[0].length; y++) {
+    	    		filt2D[x][y] = filt[x][y][0];
+    	    	}
+    	    }
+    	    boolean isCropped = true;
+    	    boolean isStrict = false;
+    	    a = compute_conv_2D(z, filt2D, isCropped, isStrict);
+    		//fix border with mex file
+    		//a = savgol_border(a, z, ra, rb, theta);
+    	    return a;
+    }
+    
+    private void make_filters(double filters[][][][][], double radii[], double gtheta[]) {
+    	int r;
+    	int t;
+    	double ra;
+    	double rb;
+    	double theta;
+    	double ira2;
+    	double irb2;
+    	int wr;
+    	int wd;
+    	double sint;
+    	double cost;
+    	double xx[];
+    	int u;
+    	int v;
+    	double ai;
+    	double bi;
+    	double A[][];
+    	double yy[][];
+    	int i;
+    	int j;
+    	Matrix matA;
+    	Matrix matyy;
+    	double prod[][];
+    	int d = 2;
+    	for (r = 0; r < radii.length; r++) {
+    	    for (t = 0; t < gtheta.length; t++) {
+    	        ra = radii[r];
+    	        rb = ra/4.0;
+    	        theta = gtheta[t];
+    	        
+    	        ra = Math.max(1.5, ra);
+    	    	rb = Math.max(1.5, rb);
+    	    	ira2 = 1.0/(ra*ra);
+    	    	irb2 = 1.0/(rb*rb);
+    	    	wr = (int)Math.floor(Math.max(ra,rb));
+    	    	wd = 2*wr+1;
+    	    	sint = Math.sin(theta);
+    	    	cost = Math.cos(theta);
+    	    	
+    	    	// 1. Compute linear filters for coefficients
+    	    	// (a) Compute inverse of least-squares problem matrix
+    	    	filters[r][t] = new double[wd][wd][d+1];
+    	    	xx = new double[2*d+1];
+    	    	for (u = -wr; u <= wr; u++) {
+    	    		for (v = -wr; v <= wr; v++) {
+    	    			// Distance along major axis
+    	    			ai = -u*sint + v*cost;
+    	    			// Distance along minor axis
+    	    			bi = u*cost + v*sint;
+    	    			if (ai*ai*ira2 + bi*bi*irb2 > 1) {
+    	    				continue;
+    	    			}
+    	    			xx[0] = xx[0] + 1;
+    	    			for (i = 1; i <= 2*d; i++) {
+    	    			    xx[i] = xx[i] + Math.pow(ai,i);	
+    	    			}
+    	    		}
+    	    	}
+    	    	A = new double[d+1][d+1];
+    	    	for (i = 0; i <= d; i++) {
+    	    		for (j = i; j <= i+d; j++) {
+    	    		    A[j-i][i] = xx[j];	
+    	    		}
+    	    	}
+    	    	matA = new Matrix(A);
+    	    	A = (matA.inverse()).getArray();
+    	    	matA = new Matrix(A);
+    	    	// (b) solve least-squares problem for delta function at each pixel
+    	    	for (u = -wr; u <= wr; u++) {
+    	    		for (v = -wr; v <= wr; v++) {
+    	    		    yy = new double[d+1][1];
+    	    		    // Distance along major axis
+    	    		    ai = -u*sint + v*cost;
+    	    		    // Distance along minor axis
+    	    		    bi = u*cost + v*sint;
+    	    		    if (ai*ai*ira2 + bi*bi*irb2 > 1) {
+    	    		    	continue;
+    	    		    }
+    			    	yy[0][0] = 1;
+    			    	for (i = 1; i <= d; i++) {
+    			    		yy[i][0] = Math.pow(ai,i); 
+    			    	}
+    			    	matyy = new Matrix(yy);
+    			    	prod = (matA.times(matyy)).getArray();
+    			    	for (i = 0; i < d+1; i++) {
+    			    		filters[r][t][v+wr][u+wr][i] = prod[i][0];
+    			    	}
+    	    		}
+    	    	}
+    	    } // for (t = 0; t < gtheta.length; t++)
+    	} // for (r = 0; r < radii.length; r++)
+    }
+    
+    private void mex_pb_parts_final_selected(double bg1[][][], double bg2[][][], double bg3[][][],double cga1[][][],
+    		double cga2[][][], double cga3[][][], double cgb1[][][], double cgb2[][][],
+    		double cgb3[][][], double tg1[][][], double tg2[][][], double tg3[][][], int textons[], 
     		double L[], double a[], double b[]) {
     	int i;
     	int x;
@@ -280,6 +435,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	// cg histogram smoothing sigma
     	double cg_smooth_sigma = 0.05;
     	double cga_smooth_kernel[] = gaussian(cg_smooth_sigma*numaBins, 0, false);
+    	double cgb_smooth_kernel[] = gaussian(cg_smooth_sigma*numbBins, 0, false);
     	// Border pixels
     	int border = 30;
     	// Mirror border
@@ -345,15 +501,14 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     		}
     	}
     	compute_border_mirror_2D(t_assign_trim, t_assign, border, border, xDim, yDim);
-    	int count = 1;
     	// Compute bg at each radius
     	int n_bg = 3;
     	int r_bg[] = new int[]{3, 5, 10};
     	ArrayList<double[]> bgs;
+    	double bufm[] = new double[xDim * yDim];
     	for (int rnum = 0; rnum < n_bg; rnum++) {
     	    Preferences.debug("Computing bg for r = " + r_bg[rnum] + "\n", Preferences.DEBUG_ALGORITHM);
     	    bgs = hist_gradient_2D(Lq, dstXDim, dstYDim, r_bg[rnum], n_ori, bg_smooth_kernel);
-    	    double bufm[] = new double[xDim * yDim];
     	    // Return bg
     	    if (rnum == 0) {
 	    	    for (int n = 0; n < n_ori; n++) {
@@ -393,7 +548,114 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	for (int rnum = 0; rnum < n_cg; rnum++) {
     		Preferences.debug("Computing cga for r = " + r_cg[rnum] + "\n", Preferences.DEBUG_ALGORITHM);
     		cgs_a = hist_gradient_2D(aq, dstXDim, dstYDim, r_cg[rnum], n_ori, cga_smooth_kernel);
+    		// Return cga
+    		if (rnum == 0) {
+	    	    for (int n = 0; n < n_ori; n++) {
+	    	    	compute_border_trim_2D(cgs_a.get(n),bufm, border, border, xDim, yDim, dstYDim);
+	    	    	for (x = 0; x < xDim; x++) {
+	    	    		for (y = 0; y < yDim; y++) {
+	    	    			cga1[n][x][y] = bufm[y + x * yDim];
+	    	    		}
+	    	    	}
+	    	    }
+    	    } // if (rnum == 0)
+    	    else if (rnum == 1) {
+    	    	for (int n = 0; n < n_ori; n++) {
+	    	    	compute_border_trim_2D(cgs_a.get(n),bufm, border, border, xDim, yDim, dstYDim);
+	    	    	for (x = 0; x < xDim; x++) {
+	    	    		for (y = 0; y < yDim; y++) {
+	    	    			cga2[n][x][y] = bufm[y + x * yDim];
+	    	    		}
+	    	    	}
+	    	    }	
+    	    } // else if (rnum == 1)
+    	    else if (rnum == 2) {
+    	    	for (int n = 0; n < n_ori; n++) {
+	    	    	compute_border_trim_2D(cgs_a.get(n),bufm, border, border, xDim, yDim, dstYDim);
+	    	    	for (x = 0; x < xDim; x++) {
+	    	    		for (y = 0; y < yDim; y++) {
+	    	    			cga3[n][x][y] = bufm[y + x * yDim];
+	    	    		}
+	    	    	}
+	    	    }		
+    	    } // else if (rnum == 2)
     	} // for (int rnum = 0; rnum < n_cg; rnum++)
+    	// Compute cgb at each radius
+    	ArrayList<double[]>cgs_b;
+    	for (int rnum = 0; rnum < n_cg; rnum++) {
+    		Preferences.debug("Computing cgb for r = " + r_cg[rnum] + "\n", Preferences.DEBUG_ALGORITHM);
+    		cgs_b = hist_gradient_2D(bq, dstXDim, dstYDim, r_cg[rnum], n_ori, cgb_smooth_kernel);
+    		// Return cgb
+    		if (rnum == 0) {
+	    	    for (int n = 0; n < n_ori; n++) {
+	    	    	compute_border_trim_2D(cgs_b.get(n),bufm, border, border, xDim, yDim, dstYDim);
+	    	    	for (x = 0; x < xDim; x++) {
+	    	    		for (y = 0; y < yDim; y++) {
+	    	    			cgb1[n][x][y] = bufm[y + x * yDim];
+	    	    		}
+	    	    	}
+	    	    }
+    	    } // if (rnum == 0)
+    	    else if (rnum == 1) {
+    	    	for (int n = 0; n < n_ori; n++) {
+	    	    	compute_border_trim_2D(cgs_b.get(n),bufm, border, border, xDim, yDim, dstYDim);
+	    	    	for (x = 0; x < xDim; x++) {
+	    	    		for (y = 0; y < yDim; y++) {
+	    	    			cgb2[n][x][y] = bufm[y + x * yDim];
+	    	    		}
+	    	    	}
+	    	    }	
+    	    } // else if (rnum == 1)
+    	    else if (rnum == 2) {
+    	    	for (int n = 0; n < n_ori; n++) {
+	    	    	compute_border_trim_2D(cgs_b.get(n),bufm, border, border, xDim, yDim, dstYDim);
+	    	    	for (x = 0; x < xDim; x++) {
+	    	    		for (y = 0; y < yDim; y++) {
+	    	    			cgb3[n][x][y] = bufm[y + x * yDim];
+	    	    		}
+	    	    	}
+	    	    }		
+    	    } // else if (rnum == 2)
+    	} // for (int rnum = 0; rnum < n_cg; rnum++)
+    	// Compute tg at each radius
+    	int n_tg = 3;
+    	int r_tg[] = new int[]{5, 10, 20};
+    	ArrayList<double[]>tgs;
+    	for (int rnum = 0; rnum < n_tg; rnum++) {
+    		Preferences.debug("Computing tg for r = " + r_tg[rnum] + "\n", Preferences.DEBUG_ALGORITHM);
+    		tgs = hist_gradient_2D(t_assign, dstXDim, dstYDim, r_tg[rnum], n_ori, null);
+    		// Return tg
+    		if (rnum == 0) {
+	    	    for (int n = 0; n < n_ori; n++) {
+	    	    	compute_border_trim_2D(tgs.get(n),bufm, border, border, xDim, yDim, dstYDim);
+	    	    	for (x = 0; x < xDim; x++) {
+	    	    		for (y = 0; y < yDim; y++) {
+	    	    			tg1[n][x][y] = bufm[y + x * yDim];
+	    	    		}
+	    	    	}
+	    	    }
+    	    } // if (rnum == 0)
+    	    else if (rnum == 1) {
+    	    	for (int n = 0; n < n_ori; n++) {
+	    	    	compute_border_trim_2D(tgs.get(n),bufm, border, border, xDim, yDim, dstYDim);
+	    	    	for (x = 0; x < xDim; x++) {
+	    	    		for (y = 0; y < yDim; y++) {
+	    	    			tg2[n][x][y] = bufm[y + x * yDim];
+	    	    		}
+	    	    	}
+	    	    }	
+    	    } // else if (rnum == 1)
+    	    else if (rnum == 2) {
+    	    	for (int n = 0; n < n_ori; n++) {
+	    	    	compute_border_trim_2D(tgs.get(n),bufm, border, border, xDim, yDim, dstYDim);
+	    	    	for (x = 0; x < xDim; x++) {
+	    	    		for (y = 0; y < yDim; y++) {
+	    	    			tg3[n][x][y] = bufm[y + x * yDim];
+	    	    		}
+	    	    	}
+	    	    }		
+    	    } // else if (rnum == 2)
+    	} // for (int rnum = 0; rnum < n_tg; rnum++)
     }
     
     /*
