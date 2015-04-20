@@ -5484,6 +5484,7 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
     	}
     	matA = new Matrix(A);
     	A = (matA.inverse()).getArray();
+    	matA = new Matrix(A);
     	// (b) solve least-squares problem for delta function at each pixel
     	for (u = -wr; u <= wr; u++) {
     		for (v = -wr; v <= wr; v++) {
@@ -5499,7 +5500,6 @@ public class AlgorithmPbBoundaryDetection extends AlgorithmBase {
 		    	for (i = 1; i <= d; i++) {
 		    		yy[i][0] = Math.pow(ai,i); 
 		    	}
-		    	matA = new Matrix(A);
 		    	matyy = new Matrix(yy);
 		    	prod = (matA.times(matyy)).getArray();
 		    	for (i = 0; i < d+1; i++) {
