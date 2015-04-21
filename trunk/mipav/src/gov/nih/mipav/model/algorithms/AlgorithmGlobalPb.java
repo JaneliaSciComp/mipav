@@ -67,8 +67,9 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
      * @param destImg
      * @param srcImg
      */
-    public AlgorithmGlobalPb(ModelImage destImg, ModelImage srcImg) {
+    public AlgorithmGlobalPb(ModelImage destImg, ModelImage srcImg, double rsz) {
     	super(destImg, srcImg);
+    	this.rsz = rsz;
     }
     
     /**
@@ -195,6 +196,19 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         int outi;
         int x;
         int y;
+        int i;
+        double l1;
+        double l2;
+        double l3;
+        double a1;
+        double a2;
+        double a3;
+        double b1;
+        double b2;
+        double b3;
+        double t1;
+        double t2;
+        double t3;
         if (im.isColorImage()) {
         	buffer = new double[4*sliceSize];
         	try {
@@ -262,7 +276,246 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         
         // Get gradients
         det_mPb(bg1, bg2, bg3, cga1, cga2, cga3, cgb1, cgb2, cgb3, tg1, tg2, tg3, textons, red, green, blue);
+        
+        // Smooth cues
+    	double gtheta[] = new double[]{1.5708, 1.1781, 0.7854, 0.3927, 0.0, 2.7489, 2.3562, 1.9635};
+    	double radii[] = new double[]{3.0, 5.0, 10.0, 20.0};
+    	double filters[][][][][] = new double[radii.length][gtheta.length][][][];
+    	make_filters(filters, radii, gtheta);
+    	for (i = 0; i < 8; i++) {
+    	    bg1[i] = fitparab(bg1[i], 3.0, 0.75, gtheta[i], filters[0][i]);	
+    	    bg2[i] = fitparab(bg2[i], 5.0, 1.25, gtheta[i], filters[1][i]);
+    	    bg3[i] = fitparab(bg3[i], 10.0, 2.5, gtheta[i], filters[2][i]);
+    	    
+    	    cga1[i] = fitparab(cga1[i], 5.0, 1.25, gtheta[i], filters[1][i]);
+    	    cga2[i] = fitparab(cga2[i], 10.0, 2.5, gtheta[i], filters[2][i]);
+    	    cga3[i] = fitparab(cga3[i], 20.0, 5.0, gtheta[i], filters[3][i]);
+    	    
+    	    cgb1[i] = fitparab(cgb1[i], 5.0, 1.25, gtheta[i], filters[1][i]);
+    	    cgb2[i] = fitparab(cgb2[i], 10.0, 2.5, gtheta[i], filters[2][i]);
+    	    cgb3[i] = fitparab(cgb3[i], 20.0, 5.0, gtheta[i], filters[3][i]);
+    	    
+    	    tg1[i] = fitparab(tg1[i], 5.0, 1.25, gtheta[i], filters[1][i]);
+    	    tg2[i] = fitparab(tg2[i], 10.0, 2.5, gtheta[i], filters[2][i]);
+    	    tg3[i] = fitparab(tg3[i], 20.0, 5.0, gtheta[i], filters[3][i]);
+    	} // for (i = 0; i < 8; i++)
+    	
+    	// Compute mPb at full scale
+    	double mPb_all[][][] = new double[8][xDim][yDim];
+    	for (i = 0; i < 8; i++) {
+    	    for (x = 0; x < xDim; x++) {
+    	    	for (y = 0; y < yDim; y++) {
+    	    		l1 = weights[0] * bg1[i][x][y];
+    	    		l2 = weights[1] * bg2[i][x][y];
+    	    		l3 = weights[2] * bg3[i][x][y];
+    	    		
+    	    		a1 = weights[3] * cga1[i][x][y];
+    	    		a2 = weights[4] * cga2[i][x][y];
+    	    		a3 = weights[5] * cga3[i][x][y];
+    	    		
+    	    		b1 = weights[6] * cgb1[i][x][y];
+    	    		b2 = weights[7] * cgb2[i][x][y];
+    	    		b3 = weights[8] * cgb3[i][x][y];
+    	    		
+    	    		t1 = weights[9] * tg1[i][x][y];
+    	    		t2 = weights[10] * tg2[i][x][y];
+    	    		t3 = weights[11] * tg3[i][x][y];
+    	    		
+    	    		mPb_all[i][x][y] = l1 + a1 + b1 + t1 + l2 + a2 + b2 + t2 + l3 + a3 + b3 + t3;
+    	    	}
+    	    }
+    	} // for (i = 0; i < 8; i++)
+    	
+    	// non-maximum suppression
+    	double mPb_nmax[] = nonmax_channels(mPb_all, Math.PI/8.0);
+    	for (i = 0; i < mPb_nmax.length; i++) {
+    		mPb_nmax[i] = Math.max(0.0, Math.min(1.0, 1.2 * mPb_nmax[i]));
+    	}
+    	
+    	// Compute mPb_nmax resized if necessary
     }
+    
+    // Given NxMxnum_ori oriented channels, compute oriented nonmax suppression
+    private double[] nonmax_channels(double pb[][][], double nonmax_ori_tol) {
+	    //if (nargin < 2), nonmax_ori_tol = pi/8; end
+	    int n_ori = pb.length;
+        double oris[] = new double[n_ori];
+        int n;
+        for (n = 0; n < n_ori; n++) {
+        	oris[n] = (n * Math.PI)/n_ori;
+        }
+        double pbmax[] = new double[xDim * yDim];
+        double maxAngle[] = new double[xDim * yDim];
+        int index;
+        int i;
+        int x;
+        int y;
+        for (x = 0; x < xDim; x++) {
+        	for (y = 0; y < yDim; y++) {
+        	    pbmax[x*yDim + y] = -Double.MAX_VALUE;
+        	    index = -1;
+        	    for (i = 0; i < n_ori; i++) {
+        	    	if (pb[i][x][y] > pbmax[x*yDim + y]) {
+        	    		pbmax[x*yDim + y] = pb[i][x][y];
+        	    		index = i;
+        	    	}
+        	    } // for (i = 0; i < n_ori; i++)
+        	    maxAngle[x*yDim + y] = oris[index];
+        	    if (pbmax[x*yDim + y] < 0.0) {
+        	    	pbmax[x*yDim + y] = 0.0;
+        	    }
+        	} // for (y = 0; y < yDim; y++)
+        } // for (x = 0; x < xDim; x++)
+        boolean allow_boundary = false;
+	    double nmax[] = nonmax_oriented_2D(pbmax, xDim, yDim, maxAngle, nonmax_ori_tol, allow_boundary);
+	    return nmax;
+    }
+    
+    /*
+     * Oriented non-max suppression (2D).
+     *
+     * Perform non-max suppression orthogonal to the specified orientation on
+     * the given 2D matrix using linear interpolation in a 3x3 neighborhood.
+     *
+     * A local maximum must be greater than the interpolated values of its 
+     * adjacent elements along the direction orthogonal to this orientation.
+     *
+     * Elements which have a neighbor on only one side of this direction are 
+     * only considered as candidates for a local maximum if the flag to allow 
+     * boundary candidates is set.
+     *
+     * The same orientation angle may be specified for all elements, or the 
+     * orientation may be specified for each matrix element.
+     *
+     * If an orientation is specified per element, then the elements themselves
+     * may optionally be treated as oriented vectors by specifying a value less 
+     * than pi/2 for the orientation tolerance.  In this case, neighboring 
+     * vectors are projected along a line in the local orientation direction and
+     * the lengths of the projections are used in determining local maxima.
+     * When projecting, the orientation tolerance is subtracted from the true
+     * angle between the vector and the line (with a result less than zero
+     * causing the length of the projection to be the length of the vector).
+     *
+     * Non-max elements are assigned a value of zero.
+     *
+     * NOTE: The original matrix must be nonnegative.
+     */
+
+    private double[] nonmax_oriented_2D(
+       final double m[], int size_x, int size_y, final double m_ori[], double o_tol, boolean allow_boundary)
+    {
+       
+       /* intialize result matrix */
+       double nmax[] = new double[size_x *  size_y];
+       /* perform oriented non-max suppression at each element */
+       int n = 0;
+       for (int x = 0; x < size_x; x++) {
+          for (int y = 0; y < size_y; y++) {
+             /* compute direction (in [0,pi)) along which to suppress */
+             double ori = m_ori[n];
+             double theta = ori + Math.PI/2.0;
+             theta -= Math.floor(theta/Math.PI) * Math.PI;
+             /* check nonnegativity */
+             double v = m[n];
+             if (v < 0) {
+                MipavUtil.displayError("matrix must be nonnegative in nonmax_orientd_2D");
+                return null;
+             }
+             /* initialize indices of values in local neighborhood */
+             int ind0a = 0, ind0b = 0, ind1a = 0, ind1b = 0;
+             /* initialize distance weighting */
+             double d = 0;
+             /* initialize boundary flags */
+             boolean valid0 = false, valid1 = false;
+             /* compute interpolation indicies */
+             if (theta == 0) {
+                valid0 = (x > 0); valid1 = (x < (size_x-1));
+                if (valid0) { ind0a = n-size_y; ind0b = ind0a; }
+                if (valid1) { ind1a = n+size_y; ind1b = ind1a; }
+             } else if (theta < Math.PI/4.0) {
+                d = Math.tan(theta);
+                valid0 = ((x > 0) && (y > 0));
+                valid1 = ((x < (size_x-1)) && (y < (size_y-1)));
+                if (valid0) { ind0a = n-size_y; ind0b = ind0a-1; }
+                if (valid1) { ind1a = n+size_y; ind1b = ind1a+1; }
+             } else if (theta < Math.PI/2.0) {
+                d = Math.tan(Math.PI/2.0 - theta);
+                valid0 = ((x > 0) && (y > 0));
+                valid1 = ((x < (size_x-1)) && (y < (size_y-1)));
+                if (valid0) { ind0a = n-1; ind0b = ind0a-size_y; }
+                if (valid1) { ind1a = n+1; ind1b = ind1a+size_y; }
+             } else if (theta == Math.PI/2.0) {
+                valid0 = (y > 0); valid1 = (y < (size_y-1));
+                if (valid0) { ind0a = n-1; ind0b = ind0a; }
+                if (valid1) { ind1a = n+1; ind1b = ind1a; }
+             } else if (theta < (3.0*Math.PI/4.0)) {
+                d = Math.tan(theta - Math.PI/2.0);
+                valid0 = ((x < (size_x-1)) && (y > 0));
+                valid1 = ((x > 0) && (y < (size_y-1)));
+                if (valid0) { ind0a = n-1; ind0b = ind0a+size_y; }
+                if (valid1) { ind1a = n+1; ind1b = ind1a-size_y; }
+             } else /* (theta < Math.PI) */ {
+                d = Math.tan(Math.PI - theta);
+                valid0 = ((x < (size_x-1)) && (y > 0));
+                valid1 = ((x > 0) && (y < (size_y-1)));
+                if (valid0) { ind0a = n+size_y; ind0b = ind0a-1; }
+                if (valid1) { ind1a = n-size_y; ind1b = ind1a+1; }
+             }
+             /* check boundary conditions */
+             if (allow_boundary || (valid0 && valid1)) {
+                /* initialize values in local neighborhood */
+                double v0a = 0,   v0b = 0,   v1a = 0,   v1b = 0;
+                /* initialize orientations in local neighborhood */
+                double ori0a = 0, ori0b = 0, ori1a = 0, ori1b = 0;
+                /* grab values and orientations */
+                if (valid0) {
+                   v0a = m[ind0a];
+                   v0b = m[ind0b];
+                   ori0a = m_ori[ind0a] - ori;
+                   ori0b = m_ori[ind0b] - ori;
+                }
+                if (valid1) {
+                   v1a = m[ind1a];
+                   v1b = m[ind1b];
+                   ori1a = m_ori[ind1a] - ori;
+                   ori1b = m_ori[ind1b] - ori;
+                }
+                /* place orientation difference in [0,pi/2) range */
+                ori0a -= Math.floor(ori0a/(2*Math.PI)) * (2*Math.PI);
+                ori0b -= Math.floor(ori0b/(2*Math.PI)) * (2*Math.PI);
+                ori1a -= Math.floor(ori1a/(2*Math.PI)) * (2*Math.PI);
+                ori1b -= Math.floor(ori1b/(2*Math.PI)) * (2*Math.PI);
+                if (ori0a >= Math.PI) { ori0a = 2*Math.PI - ori0a; }
+                if (ori0b >= Math.PI) { ori0b = 2*Math.PI - ori0b; }
+                if (ori1a >= Math.PI) { ori1a = 2*Math.PI - ori1a; }
+                if (ori1b >= Math.PI) { ori1b = 2*Math.PI - ori1b; }
+                if (ori0a >= Math.PI/2.0) { ori0a = Math.PI - ori0a; }
+                if (ori0b >= Math.PI/2.0) { ori0b = Math.PI - ori0b; }
+                if (ori1a >= Math.PI/2.0) { ori1a = Math.PI - ori1a; }
+                if (ori1b >= Math.PI/2.0) { ori1b = Math.PI - ori1b; }
+                /* correct orientation difference by tolerance */
+                ori0a = (ori0a <= o_tol) ? 0 : (ori0a - o_tol);
+                ori0b = (ori0b <= o_tol) ? 0 : (ori0b - o_tol);
+                ori1a = (ori1a <= o_tol) ? 0 : (ori1a - o_tol);
+                ori1b = (ori1b <= o_tol) ? 0 : (ori1b - o_tol);
+                /* interpolate */
+                double v0 =
+                   (1.0-d)*v0a*Math.cos(ori0a) + d*v0b*Math.cos(ori0b);
+                double v1 =
+                   (1.0-d)*v1a*Math.cos(ori1a) + d*v1b*Math.cos(ori1b);
+                /* suppress non-max */
+                if ((v > v0) && (v > v1))
+                   nmax[n] = v;
+             }
+             /* increment linear coordinate */
+             n++;
+          }
+       }
+       return nmax;
+    }
+
+
+
     
     /**
      * Compute image gradients.  Implementation by Michael Maire.
@@ -273,18 +526,8 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     		double cgb2[][][], double cgb3[][][], double tg1[][][], double tg2[][][],
     		double tg3[][][], int textons[], 
     		double red[], double green[], double blue[]) {
-    	int i;
         // Compute pb
     	mex_pb_parts_final_selected(bg1, bg2, bg3, cga1, cga2, cga3, cgb1, cgb3, cgb3, tg1, tg2, tg3, textons, red, green, blue);
-    	
-    	// Smooth cues
-    	double gtheta[] = new double[]{1.5708, 1.1781, 0.7854, 0.3927, 0.0, 2.7489, 2.3562, 1.9635};
-    	double radii[] = new double[]{3.0, 5.0, 10.0, 20.0};
-    	double filters[][][][][] = new double[radii.length][gtheta.length][][][];
-    	make_filters(filters, radii, gtheta);
-    	for (i = 0; i < 8; i++) {
-    		
-    	} // for (i = 0; i < 8;; i++)
     }
     
     private double[][] fitparab(double z[][], double ra, double rb, double theta, double filt[][][]) {
@@ -317,9 +560,87 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	    boolean isStrict = false;
     	    a = compute_conv_2D(z, filt2D, isCropped, isStrict);
     		//fix border with mex file
-    		//a = savgol_border(a, z, ra, rb, theta);
+    	    double aout[] = new double[a.length * a[0].length];
+    	    double ain[] = new double[a.length * a[0].length];
+    	    for (x = 0; x < a.length; x++) {
+    	    	for (y = 0; y < a[0].length; y++) {
+    	    		ain[x * a[0].length + y] = a[x][y];
+    	    	}
+    	    }
+    	    double zin[] = new double[z.length * z[0].length];
+    	    for (x = 0; x < z.length; x++) {
+    	    	for (y = 0; y < z[0].length; y++) {
+    	    		zin[x * z[0].length + y] = z[x][y];
+    	    	}
+    	    }
+    	    savgol(ain, zin, ra, rb, theta, a.length, a[0].length, aout);
+    	    for (x = 0; x < a.length; x++) {
+    	    	for (y = 0; y < a[0].length; y++) {
+    	    		a[x][y] = aout[x * a[0].length + y];
+    	    	}	
+    	    }
     	    return a;
     }
+    
+    private void  savgol(double a_in[], double z[], double ra, double rb, final double theta, 
+    		final int h, final int w, double[] a_out) {
+        
+        ra = Math.max(1.5, ra);
+        rb = Math.max(1.5, rb);
+        final double ira2 = 1 / Math.pow(ra, 2);
+        final double irb2 = 1 / Math.pow(rb, 2);
+        final int wr = (int) Math.floor(Math.max(ra, rb));
+        final double sint = Math.sin(theta);
+        final double cost = Math.cos(theta);
+        double d0, d1, d2, d3, d4, v0, v1, v2;
+        int xi, yi, x, y, cpi;
+        double di, ei, zi, di2, detA;
+        final double eps = Math.exp(-300);
+        
+        for (int cp = 0; cp<(w*h); cp++){
+            y = cp%h; x=cp/h;
+            if ((x>=wr) && (x<(w-wr)) && (y>=wr) && (y<(h-wr))){
+                a_out[cp] = a_in[cp];
+            }
+            else{
+                
+                d0=0; d1=0; d2=0; d3=0; d4=0;
+                v0=0; v1=0; v2=0;
+                for ( int u = -wr; u <= wr; u++ ){
+                    xi = x + u;
+                    if ((xi<0) || (xi>=w))
+                        continue;
+                    for ( int v = -wr; v <= wr; v++ ){
+                        yi = y + v;
+                        if ((yi<0) || (yi>=h))
+                            continue;
+                        di = -u*sint + v*cost;
+                        ei = u*cost + v*sint;
+                        if ( (di*di*ira2 + ei*ei*irb2) > 1)
+                            continue;
+                        cpi = yi+xi*h;
+                        zi = z[cpi];
+                        di2 = di*di;
+                        d0 = d0 + 1;
+                        d1 = d1 + di;
+                        d2 = d2 + di2;
+                        d3 = d3 + di*di2;
+                        d4 = d4 + di2*di2;
+                        v0 = v0 + zi;
+                        v1 = v1 + zi*di;
+                        v2 = v2 + zi*di2;
+                    }
+                }
+                
+                detA = -d2*d2*d2 + 2*d1*d2*d3 - d0*d3*d3 - d1*d1*d4 + d0*d2*d4;
+                if (detA>eps)
+                    a_out[cp] = ((-d3*d3+d2*d4)*v0 + (d2*d3-d1*d4)*v1 + (-d2*d2+d1*d3)*v2)/ detA;
+                
+            }
+        }
+        
+    }
+
     
     private void make_filters(double filters[][][][][], double radii[], double gtheta[]) {
     	int r;
