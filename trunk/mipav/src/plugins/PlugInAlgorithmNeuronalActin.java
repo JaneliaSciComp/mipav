@@ -5,7 +5,6 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.awt.Color;
 import java.io.BufferedReader;
@@ -82,17 +81,23 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 		try {
 			append("Opening image...", blackText);
 			srcImage = reader.readImage(imgFile);
-
-			extents = srcImage.getExtents();
-			width = extents[0];
-			height = extents[1];
-			depth = extents[2];
-			length = width * height * depth;
 		} catch (Exception e) {
 			e.printStackTrace();
 			append("Could not open image file", redText);
 			return;
 		}
+
+		extents = srcImage.getExtents();
+
+		if (extents.length != 3) {
+			append("This image is not a 3D image", redText);
+			return;
+		}
+
+		width = extents[0];
+		height = extents[1];
+		depth = extents[2];
+		length = width * height * depth;
 
 		try {
 			append("Reading swc...", blackText);
@@ -100,6 +105,11 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 		} catch (IOException e) {
 			e.printStackTrace();
 			append("Could not read the CSV file", redText);
+			return;
+		}
+
+		if (swcLines.size() < 3) {
+			append("Not enough points to calculate the spline", redText);
 			return;
 		}
 
@@ -130,8 +140,8 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 			AlgorithmThresholdDual nThresh = new AlgorithmThresholdDual(probImage, threshold, 1, 1, true, false);
 			nThresh.run();
 
-			ViewJFrameImage probFrame = new ViewJFrameImage(probImage);
-			probFrame.setVisible(true);
+			// ViewJFrameImage probFrame = new ViewJFrameImage(probImage);
+			// probFrame.setVisible(true);
 
 			ArrayList<float[]> results = new ArrayList<float[]>();
 
@@ -165,15 +175,14 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 				results.add(new float[] {center.X, center.Y, center.Z, distance, (float) sum});
 			}
 
-			ViewJFrameImage srcFrame = new ViewJFrameImage(cloneImage);
-			srcFrame.setVisible(true);
-			srcFrame.setPaintMask(totalMask);
+			// ViewJFrameImage srcFrame = new ViewJFrameImage(cloneImage);
+			// srcFrame.setVisible(true);
+			// srcFrame.setPaintMask(totalMask);
 
 			append("Writing results...", blackText);
 			writeResults(results);
 
 			append("Complete!", blackText);
-			append("-----------------------------------------", blackText);
 		} catch (IOException e) {
 			e.printStackTrace();
 			append("Could not write out results", redText);
@@ -374,16 +383,12 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 			e.printStackTrace();
 		}
 
-		// ArrayList<Integer> adjustPts = new ArrayList<Integer>();
-		// ArrayList<Integer> addPts = new ArrayList<Integer>();
-
 		HashSet<Integer> adjustPtsHash = new HashSet<Integer>();
 		HashSet<Integer> addPtsHash = new HashSet<Integer>();
 
 		for (int i = 0; i < length; i++) {
 			diff = Math.abs(buffer[i] - medBuffer[i]);
 			if (diff >= maxDiff) {
-				// adjustPts.add(i);
 				buffer[i] = medBuffer[i];
 				int x = i % width;
 				int y = (i % (width * height)) / width;
@@ -490,7 +495,7 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 			if (line.startsWith("#"))
 				continue;
 			String[] lineArray = line.split(" ");
-			if (lineArray.length > 0 && lineArray[1].equals("2")) {// Only care about axon
+			if (lineArray.length > 5 && lineArray[1].equals("2")) {// Only care about axon
 				float x = Float.valueOf(lineArray[2]);
 				float y = Float.valueOf(lineArray[3]);
 				float z = Float.valueOf(lineArray[4]);
@@ -520,7 +525,7 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 		fw.append("Image name," + srcImage.getImageFileName() + "\n");
 		fw.append("Filament name," + file.getName() + "\n");
 		fw.append("\n");
-		fw.append("X,Y,Z,Distance,Radial Actin Sum\n");
+		fw.append("X,Y,Z,Distance along axon,Radial actin sum\n");
 		for (int i = 0; i < results.size(); i++) {
 			float[] line = results.get(i);
 			for (int j = 0; j < line.length; j++) {

@@ -1,5 +1,6 @@
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
-import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 
@@ -32,7 +33,7 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
 
-public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin {
+public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implements AlgorithmInterface {
 
 	/**
 	 * 
@@ -87,6 +88,11 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin {
 		}
 	}
 
+	@Override
+	public void algorithmPerformed(AlgorithmBase algorithm) {
+		append("-----------------------------------------", blackText);
+	}
+
 	protected void callAlgorithm() {
 		String swcFile = swcField.getText();
 		String imgFile = imageField.getText();
@@ -102,10 +108,10 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin {
 		}
 
 		PlugInAlgorithmNeuronalActin alg = new PlugInAlgorithmNeuronalActin(imgFile, swcFile, textArea);
-
+		alg.addListener(this);
 		if (isRunInSeparateThread()) {
 			if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
-				MipavUtil.displayError("A thread is already running on this object");
+				append("A thread is already running on this object", redText);
 			}
 		} else {
 			alg.run();
