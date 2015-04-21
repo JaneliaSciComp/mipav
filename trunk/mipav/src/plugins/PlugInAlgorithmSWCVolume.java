@@ -190,7 +190,7 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 			int ind = x + y*width + z*width*height;
 			RadialElement re = new RadialElement(v, ind);
 			
-			if(ind > 0 && ind < length)
+			if (x > 0 && x < width && y > 0 && y < height && z > 0 && z < depth)
 				pq.add(re);
 		}
 		
@@ -597,13 +597,13 @@ public class PlugInAlgorithmSWCVolume extends AlgorithmBase {
 		return kMean;
 	}
 
-	private class RadialElement implements Comparable<RadialElement>{
+	private class RadialElement implements Comparable<RadialElement> {
 		
 		private float radius;
 		
 		private int ind;
 		
-		private RadialElement(Vector3f point, int index){
+		private RadialElement(Vector3f point, int index) {
 			radius = point.distance(new Vector3f());
 			ind = index;
 		}
