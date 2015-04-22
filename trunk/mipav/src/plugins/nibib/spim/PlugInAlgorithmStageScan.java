@@ -1,5 +1,6 @@
 package nibib.spim;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,8 +17,34 @@ public class PlugInAlgorithmStageScan extends AlgorithmBase {
 	
 	private final String AFileDirectory;
 	
-	public PlugInAlgorithmStageScan(final String AFileDirectory) {
+	private final String AFileDark2D;
+	
+	private final double ALeftShift;
+	
+	private File[] AImageAr;
+	
+    private final String BFileDirectory;
+	
+	private final String BFileDark2D;
+	
+	private final double BLeftShift;
+	
+	private File[] BImageAr;
+	
+	private File resultDirectory;
+	
+	public PlugInAlgorithmStageScan(final String AFileDirectory, final String AFileDark2D, final double ALeftShift,
+			File[] AImageAr, final String BFileDirectory, final String BFileDark2D, final double BLeftShift,
+			File[] BImageAr, File resultDirectory) {
 		this.AFileDirectory = AFileDirectory;
+		this.AFileDark2D = AFileDark2D;
+		this.ALeftShift = ALeftShift;
+		this.AImageAr = AImageAr;
+		this.BFileDirectory = BFileDirectory;
+		this.BFileDark2D = BFileDark2D;
+		this.BLeftShift = BLeftShift;
+		this.BImageAr = BImageAr;
+		this.resultDirectory = resultDirectory;
 		this.resultImageList = Collections.synchronizedCollection(new ArrayList<ModelImage>());
 		
 	}
