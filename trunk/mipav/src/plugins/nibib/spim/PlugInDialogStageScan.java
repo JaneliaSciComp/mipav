@@ -9,11 +9,17 @@ import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -58,6 +64,8 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
 
 	//private static final long serialVersionUID;
 	
+	final String initResultLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "Result" + File.separator;
+	
 	//~ Instance fields ------------------------------------------------------------------------------------------------
 
     private ModelImage resultImage = null;
@@ -75,6 +83,40 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
     private JTextField AFileDirectoryText;
     
     private String AFileDirectory;
+    
+    private JTextField AFileDark2DText;
+    
+    private String AFileDark2D;
+    
+    private JTextField ALeftShiftText;
+    
+    private double ALeftShift;
+    
+    private JTextField ARangeText;
+    
+    private File[] AImageAr;
+    
+    private JTextField BFileDirectoryText;
+    
+    private String BFileDirectory;
+    
+    private JTextField BFileDark2DText;
+    
+    private String BFileDark2D;
+    
+    private JTextField BLeftShiftText;
+    
+    private double BLeftShift;
+    
+    private JTextField BRangeText;
+    
+    private File[] BImageAr;
+    
+    private JTextField resultDirectoryText;
+    
+    private String resultDirectoryString;
+    
+    private File resultDirectory;
     
 //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -131,7 +173,8 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
 
         try {
             
-            stageScanAlgo = new PlugInAlgorithmStageScan(AFileDirectory);
+            stageScanAlgo = new PlugInAlgorithmStageScan(AFileDirectory, AFileDark2D, ALeftShift, AImageAr,
+            		BFileDirectory, BFileDark2D, BLeftShift, BImageAr, resultDirectory);
             
          // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -229,14 +272,74 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
         gbc.gridx = 0;
         gbc.gridy++;
         
+        AFileDark2DText = gui.buildFileField("A 2D dark image: ", " ", false, JFileChooser.FILES_ONLY);
+        mainPanel.add(AFileDark2DText.getParent(), gbc);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        
+        gbc.gridwidth = 1;
+        final JLabel ALeftShiftLabel = new JLabel("   A pixel left shift");
+        ALeftShiftLabel.setFont(serif12);
+        ALeftShiftLabel.setForeground(Color.black);
+        mainPanel.add(ALeftShiftLabel, gbc);
+        
+        gbc.gridx = 1;
+        ALeftShiftText = new JTextField(10);
+        ALeftShiftText.setText("4.0");
+        ALeftShiftText.setFont(serif12);
+        ALeftShiftText.setForeground(Color.black);
+        mainPanel.add(ALeftShiftText, gbc);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        
+        gbc.gridwidth = 2;
+        
+        ARangeText = gui.buildField("Range of A slices to use (ex. 20-115): ", " ");
+        mainPanel.add(ARangeText.getParent(), gbc);
+        gbc.gridy++;
+        
+        BFileDirectoryText = gui.buildFileField("B input directory: ", " ", false, JFileChooser.DIRECTORIES_ONLY);
+        mainPanel.add(BFileDirectoryText.getParent(), gbc);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        
+        BFileDark2DText = gui.buildFileField("B 2D dark image: ", " ", false, JFileChooser.FILES_ONLY);
+        mainPanel.add(BFileDark2DText.getParent(), gbc);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        
+        gbc.gridwidth = 1;
+        final JLabel BLeftShiftLabel = new JLabel("   B pixel left shift");
+        BLeftShiftLabel.setFont(serif12);
+        BLeftShiftLabel.setForeground(Color.black);
+        mainPanel.add(BLeftShiftLabel, gbc);
+        
+        gbc.gridx = 1;
+        BLeftShiftText = new JTextField(10);
+        BLeftShiftText.setText("4.0");
+        BLeftShiftText.setFont(serif12);
+        BLeftShiftText.setForeground(Color.black);
+        mainPanel.add(BLeftShiftText, gbc);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        
+        gbc.gridwidth = 2;
+        
+        BRangeText = gui.buildField("Range of B slices to use (ex. 20-115): ", " ");
+        mainPanel.add(BRangeText.getParent(), gbc);
+        gbc.gridy++;
+        
+        resultDirectoryText = gui.buildFileField("Result output location:", initResultLoc, false, JFileChooser.DIRECTORIES_ONLY);
+        mainPanel.add(resultDirectoryText.getParent(), gbc);
+        gbc.gridy++;
+        
         okCancelPanel = gui.buildOKCancelPanel();
         mainPanel.add(okCancelPanel, gbc);
         
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         
-        Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-        getContentPane().setMaximumSize(new Dimension(685, (int)dim.getHeight() - 120));
-        getContentPane().setPreferredSize(new Dimension(685, (int)dim.getHeight() - 120));
+        getContentPane().setMaximumSize(new Dimension(685, 400));
+        getContentPane().setPreferredSize(new Dimension(685, 400));
         
         pack();
         setVisible(true);
@@ -252,16 +355,239 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
      * @return
      */
 	private boolean setVariables() {
+		String tmpStr;
 		AFileDirectory = AFileDirectoryText.getText();
+		AFileDark2D = AFileDark2DText.getText();
+		
+		tmpStr = ALeftShiftText.getText();
+		ALeftShift = Double.valueOf(tmpStr).doubleValue();
+		if (ALeftShift < 0.0) {
+			MipavUtil.displayError("A left shift cannot be less than zero");
+			ALeftShiftText.requestFocus();
+			ALeftShiftText.selectAll();
+			return false;
+		}
+		
+		String ARange = ARangeText.getText();
+	    HashSet<Integer> includeARange = new HashSet<Integer>();
+	    if(ARange != null) {  
+	        String[] ranges = ARange.split("[,;]");
+	        for(int i=0; i<ranges.length; i++) {
+	            String[] subset = ranges[i].split("-");
+	            int lowerBound = -1, bound = -1;
+	            for(int j=0; j<subset.length; j++) {
+	                try {
+	                    bound = Integer.valueOf(subset[j].trim());
+	                    if(lowerBound == -1) {
+	                        lowerBound = bound;
+	                        includeARange.add(lowerBound);
+	                    } 
+	                } catch(NumberFormatException e) {
+	                    Preferences.debug("Invalid A range specified: "+bound, Preferences.DEBUG_ALGORITHM);
+	                }
+	            }
+	            
+	            for(int k=lowerBound+1; k<=bound; k++) {
+                    includeARange.add(k);
+                }
+	        }
+	    }
+	    
+	    
+	    if(includeARange.size() == 0) {
+	        includeARange = null;
+	    }
+	   
+	    if(!populateAFileLists(includeARange)) {
+	        return false;
+	    }
+	    
+	    BFileDirectory = BFileDirectoryText.getText();
+		BFileDark2D = BFileDark2DText.getText();
+		
+		tmpStr = BLeftShiftText.getText();
+		BLeftShift = Double.valueOf(tmpStr).doubleValue();
+		if (BLeftShift < 0.0) {
+			MipavUtil.displayError("B left shift cannot be less than zero");
+			BLeftShiftText.requestFocus();
+			BLeftShiftText.selectAll();
+			return false;
+		}
+		
+		String BRange = BRangeText.getText();
+	    HashSet<Integer> includeBRange = new HashSet<Integer>();
+	    if(BRange != null) {  
+	        String[] ranges = BRange.split("[,;]");
+	        for(int i=0; i<ranges.length; i++) {
+	            String[] subset = ranges[i].split("-");
+	            int lowerBound = -1, bound = -1;
+	            for(int j=0; j<subset.length; j++) {
+	                try {
+	                    bound = Integer.valueOf(subset[j].trim());
+	                    if(lowerBound == -1) {
+	                        lowerBound = bound;
+	                        includeBRange.add(lowerBound);
+	                    } 
+	                } catch(NumberFormatException e) {
+	                    Preferences.debug("Invalid B range specified: "+bound, Preferences.DEBUG_ALGORITHM);
+	                }
+	            }
+	           
+	            for(int k=lowerBound+1; k<=bound; k++) {
+                    includeBRange.add(k);
+                }
+	        }
+	    }
+	    
+	    
+	    if(includeBRange.size() == 0) {
+	        includeBRange = null;
+	    }
+	   
+	    if(!populateBFileLists(includeBRange)) {
+	        return false;
+	    }
+	    
+	    if (AImageAr.length != BImageAr.length) {
+	    	MipavUtil.displayError("Number of A slices = " + AImageAr.length + " does not equal number of B slices = " + BImageAr.length);
+	    	return false;
+	    }
+	    
+	    resultDirectoryString = resultDirectoryText.getText();
+    	if((resultDirectory = createDirectory(resultDirectoryString)) == null) {
+            return false;
+        }
 		return true;
 	}
+	
+	private boolean populateAFileLists(HashSet<Integer> includeRange) {
+        ArrayList<File> AImageList = new ArrayList<File>();
+        try {
+            File fA = new File(AFileDirectory);
+            for(File fTry : fA.listFiles()) {
+            	AImageList.add(fTry);
+            }
+        } catch(Exception e) {
+            MipavUtil.displayError("Invalid A directory");
+            return false;
+        }
+        
+        if(includeRange != null) {
+            int originalSize = AImageList.size();
+            for(int i=originalSize; i>0; i--) {
+                int index = getIndex(AImageList.get(i-1));
+                if(!includeRange.contains(index)) {
+                    AImageList.remove(i-1);
+                }
+            }
+        }
+        
+        
+        
+        FileCompare f = new FileCompare();
+        Collections.sort(AImageList, f);
+        
+        AImageAr = AImageList.toArray(new File[AImageList.size()]);
+          
+        return true;
+    }
+	
+	private boolean populateBFileLists(HashSet<Integer> includeRange) {
+        ArrayList<File> BImageList = new ArrayList<File>();
+        try {
+            File fB = new File(BFileDirectory);
+            for(File fTry : fB.listFiles()) {
+            	BImageList.add(fTry);
+            }
+        } catch(Exception e) {
+            MipavUtil.displayError("Invalid B directory");
+            return false;
+        }
+        
+        if(includeRange != null) {
+            int originalSize = BImageList.size();
+            for(int i=originalSize; i>0; i--) {
+                int index = getIndex(BImageList.get(i-1));
+                if(!includeRange.contains(index)) {
+                    BImageList.remove(i-1);
+                }
+            }
+        }
+        
+        
+        
+        FileCompare f = new FileCompare();
+        Collections.sort(BImageList, f);
+        
+        BImageAr = BImageList.toArray(new File[BImageList.size()]);
+          
+        return true;
+    }
+	
+	 private int getIndex(File file) {
+	        String name = file.getName();
+	        int upper = -1, lower = -1;
+	        boolean inRange = false;
+	        for(int i=name.length(); i > 0; i--) {
+	            if(Character.isDigit(name.charAt(i-1))) {
+	                if(!inRange) {
+	                    upper = i;
+	                    lower = i;
+	                    inRange = true;
+	                } else {
+	                    lower = i;
+	                }
+	            } else {
+	                inRange = false;
+	                if(upper != -1 && lower != -1) {
+	                    break;
+	                }
+	            }
+	        }
+	        
+	        try {
+	            return Integer.valueOf(name.substring(lower-1, upper)).intValue();
+	        } catch(Exception e) {
+	            return -1;
+	        }
+	    }
+
+
+	    private class FileCompare implements Comparator<File> {
+	        public int compare(File arg0, File arg1) {
+	            if(arg0.getName().length() != arg1.getName().length()) {
+	                return arg0.getName().length() - arg1.getName().length();
+	            }
+	            
+	            return arg0.getName().compareTo(arg1.getName());
+	        }
+	    }
+	    
+	    private File createDirectory(String location) {
+	        File f = null;
+	        try {
+	            f = new File(location);
+	            if(!f.exists()) {
+	                f.mkdirs();
+	            }
+	        } catch(Exception e) {
+	            MipavUtil.displayError("Error making directory "+location);
+	        }
+	        
+	        return f;
+	    }
     
     /**
      * Used in turning your plugin into a script
      */
     protected void setGUIFromParams() {
     	 AFileDirectory = scriptParameters.getParams().getString("AFileDirectory");
-    
+    	 AFileDark2D = scriptParameters.getParams().getString("AFileDark2D");
+         ALeftShift = scriptParameters.getParams().getDouble("A_LEFT_SHIFT");
+         BFileDirectory = scriptParameters.getParams().getString("BFileDirectory");
+    	 BFileDark2D = scriptParameters.getParams().getString("BFileDark2D");
+         BLeftShift = scriptParameters.getParams().getDouble("B_LEFT_SHIFT");
+         resultDirectoryString = scriptParameters.getParams().getString("resultDirectoryString");
     }
     
     /**
@@ -269,7 +595,12 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
      */
     protected void storeParamsFromGUI() throws ParserException {
     	scriptParameters.getParams().put(ParameterFactory.newParameter("AFileDirectory", AFileDirectory));
-    	
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("AFileDark2D", AFileDark2D));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("A_LEFT_SHIFT", ALeftShift));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("BFileDirectory", BFileDirectory));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("BFileDark2D", BFileDark2D));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("B_LEFT_SHIFT", BLeftShift));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("resultDirectoryString", resultDirectoryString));
     }
 
 }
