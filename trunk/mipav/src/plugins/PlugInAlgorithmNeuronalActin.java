@@ -59,6 +59,8 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 
 	private float radialThreshold = 0.80f;
 
+	private int actinChannel = 0; // Probably
+
 	public PlugInAlgorithmNeuronalActin(String imageFile, String swcFile, JTextPane txtArea) {
 		super();
 		imgFile = imageFile;
@@ -98,6 +100,20 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 		height = extents[1];
 		depth = extents[2];
 		length = width * height * depth;
+
+		if (srcImage.isColorImage()) {
+
+			short[] buffer = new short[length];
+			try {
+				srcImage.exportRGBData(actinChannel, 0, length, buffer);
+				srcImage = new ModelImage(ModelImage.SHORT, extents, srcImage.getImageName() + "_actin");
+				srcImage.importData(0, buffer, true);
+			} catch (IOException e) {
+				e.printStackTrace();
+				append("Could not extract actin channel from color image", redText);
+				return;
+			}
+		}
 
 		try {
 			append("Reading swc...", blackText);
@@ -195,6 +211,10 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 			return;
 		}
 
+	}
+
+	public void setActinChannel(int channel) {
+		actinChannel = channel;
 	}
 
 	private void append(String message, AttributeSet a) {

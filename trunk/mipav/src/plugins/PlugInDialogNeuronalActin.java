@@ -46,9 +46,13 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
 
 	private JTextPane textArea;
 
+	private JTextField actinField;
+
 	private final SimpleAttributeSet blackText;
 
 	private final SimpleAttributeSet redText;
+
+	private final String[] acceptedImTypes = new String[] {".ics"};
 
 	public PlugInDialogNeuronalActin() {
 		super();
@@ -109,6 +113,22 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
 
 		PlugInAlgorithmNeuronalActin alg = new PlugInAlgorithmNeuronalActin(imgFile, swcFile, textArea);
 		alg.addListener(this);
+		if (actinField.isEnabled()) {
+			int channel;
+			try {
+				channel = Integer.valueOf(actinField.getText());
+			} catch (NumberFormatException e) {
+				e.printStackTrace();
+				append("The input channel is not an integer", redText);
+				return;
+			}
+			if (channel >= 0 && channel < 4) {
+				alg.setActinChannel(channel);
+			} else {
+				append("The input channel is not between 0 and 3, inclusive", redText);
+				return;
+			}
+		}
 		if (isRunInSeparateThread()) {
 			if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
 				append("A thread is already running on this object", redText);
@@ -167,10 +187,14 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
 				if (index < 0)
 					return false;
 				String fileExt = name.substring(index);
-				if (fileExt.equalsIgnoreCase(".ics"))
-					return true;
-				else
-					return false;
+
+				for (int i = 0; i < acceptedImTypes.length; i++) {
+					if (fileExt.equalsIgnoreCase(acceptedImTypes[i])) {
+						return true;
+					}
+				}
+
+				return false;
 			}
 
 			@Override
@@ -229,6 +253,14 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
 		browseImage.setActionCommand("BrowseImage");
 		browseImage.addActionListener(this);
 
+		JLabel actinLabel = new JLabel("Actin Channel (0-3)");
+		actinLabel.setFont(serif12B);
+
+		actinField = new JTextField(3);
+		actinField.setFont(serif12);
+		actinField.setText("0");
+		actinField.setHorizontalAlignment(JTextField.RIGHT);
+
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.gridx = 0;
 		gbc.gridy = 0;
@@ -268,6 +300,15 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
 		gbc.gridwidth = 1;
 
 		mainPanel.add(browseImage, gbc);
+
+		gbc.gridx = 0;
+		gbc.gridy++;
+
+		mainPanel.add(actinLabel, gbc);
+
+		gbc.gridx = 1;
+		gbc.fill = GridBagConstraints.NONE;
+		mainPanel.add(actinField, gbc);
 
 		getContentPane().add(mainPanel);
 
