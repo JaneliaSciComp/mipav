@@ -601,6 +601,8 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
          BLeftShift = scriptParameters.getParams().getDouble("B_LEFT_SHIFT");
          resultDirectoryString = scriptParameters.getParams().getString("resultDirectoryString");
          concurrentNum = scriptParameters.getParams().getInt("concurrent_num");
+         populateAFileLists(null);
+         populateBFileLists(null);
     }
     
     /**
