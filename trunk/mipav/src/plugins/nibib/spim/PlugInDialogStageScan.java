@@ -118,6 +118,10 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
     
     private File resultDirectory;
     
+    private JTextField concurrentNumText;
+    
+    private int concurrentNum;
+    
 //~ Constructors ---------------------------------------------------------------------------------------------------
     
     /**
@@ -173,8 +177,8 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
 
         try {
             
-            stageScanAlgo = new PlugInAlgorithmStageScan(AFileDirectory, AFileDark2D, ALeftShift, AImageAr,
-            		BFileDirectory, BFileDark2D, BLeftShift, BImageAr, resultDirectory);
+            stageScanAlgo = new PlugInAlgorithmStageScan(AFileDark2D, ALeftShift, AImageAr,
+            		BFileDark2D, BLeftShift, BImageAr, resultDirectory, concurrentNum);
             
          // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -333,6 +337,11 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
         mainPanel.add(resultDirectoryText.getParent(), gbc);
         gbc.gridy++;
         
+        concurrentNumText = gui.buildIntegerField("Number of concurrent fusions: ", 
+                (Runtime.getRuntime().availableProcessors() - 2) > 1 ? Runtime.getRuntime().availableProcessors()-2 : 1);
+        mainPanel.add(concurrentNumText.getParent(), gbc);
+        gbc.gridy++;
+        
         okCancelPanel = gui.buildOKCancelPanel();
         mainPanel.add(okCancelPanel, gbc);
         
@@ -457,6 +466,9 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
     	if((resultDirectory = createDirectory(resultDirectoryString)) == null) {
             return false;
         }
+    	
+    	concurrentNum = Integer.valueOf(concurrentNumText.getText()).intValue();
+    	
 		return true;
 	}
 	
@@ -588,6 +600,7 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
     	 BFileDark2D = scriptParameters.getParams().getString("BFileDark2D");
          BLeftShift = scriptParameters.getParams().getDouble("B_LEFT_SHIFT");
          resultDirectoryString = scriptParameters.getParams().getString("resultDirectoryString");
+         concurrentNum = scriptParameters.getParams().getInt("concurrent_num");
     }
     
     /**
@@ -601,6 +614,7 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
     	scriptParameters.getParams().put(ParameterFactory.newParameter("BFileDark2D", BFileDark2D));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("B_LEFT_SHIFT", BLeftShift));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("resultDirectoryString", resultDirectoryString));
+    	 scriptParameters.getParams().put(ParameterFactory.newParameter("concurrent_num", concurrentNum));
     }
 
 }
