@@ -10,7 +10,6 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import nibib.spim.PlugInAlgorithmGenerateFusion.FusionAlg;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileUtility;
@@ -18,7 +17,6 @@ import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 
 
