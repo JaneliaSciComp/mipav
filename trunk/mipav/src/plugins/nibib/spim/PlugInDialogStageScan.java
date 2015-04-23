@@ -6,7 +6,6 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -69,9 +68,6 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
 	//~ Instance fields ------------------------------------------------------------------------------------------------
 
     private ModelImage resultImage = null;
-
-    /** This source image is typically set by the constructor */
-    private ModelImage image;
     
     /** This is your algorithm */
     private PlugInAlgorithmStageScan stageScanAlgo = null;
