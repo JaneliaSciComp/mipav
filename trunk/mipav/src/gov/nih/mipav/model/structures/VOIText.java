@@ -361,5 +361,14 @@ public class VOIText extends VOIBase {
     public boolean useMarker() {
     	return this.useMarker;
     }
+    
+    public void updateText()
+    {
+		setTextFont( new Font(getFontName(), getFontDescriptors(), getFontSize()) );
+    	if ( m_kVolumeVOI != null )
+    	{
+    		m_kVolumeVOI.updateText();
+    	}
+    }
        
 }
