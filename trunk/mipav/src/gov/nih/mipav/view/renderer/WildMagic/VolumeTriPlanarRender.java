@@ -40,6 +40,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.TreeMap;
 import java.util.Vector;
 
@@ -901,84 +902,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	private boolean[][] annotationDisplay;
 	private int annotationSpheresIndex = -1;
 	private VOI[] annotationVOIs;
-	private VOI[] neuriteVOIs;
-	private VOIContour[][] neurites;
-	private VolumeSurface[][] neuriteSurfaces;
-	private ColorRGBA[] annotationLabelColors;
+	private VOIVector[] neuriteVOIs;
+	private HashMap<String, Boolean> neuriteDisplay;
+//	private VOIContour[][] neurites;
+//	private VolumeSurface[][] neuriteSurfaces;
+	private ColorRGB[] annotationSpheresColors;
 	private JPanelAnnotationAnimation annotationAnimationPanel;
 	public void addAnimationVOIs(VOIVector vois, JPanelAnnotationAnimation annotationAnimationPanel)
 	{		
-		annotationPositions = vois;
-		this.annotationAnimationPanel = annotationAnimationPanel;
-		Attributes attributes = new Attributes();
-		attributes.SetPChannels(3);
-		attributes.SetNChannels(3);
-		attributes.SetCChannels(0,4);
-		StandardMesh std = new StandardMesh(attributes);
-
-		int dimX = m_kVolumeImageA.GetImage().getExtents().length > 0 ? m_kVolumeImageA.GetImage().getExtents()[0] : 1;
-		int dimY = m_kVolumeImageA.GetImage().getExtents().length > 1 ? m_kVolumeImageA.GetImage().getExtents()[1] : 1;
-		int dimZ = m_kVolumeImageA.GetImage().getExtents().length > 2 ? m_kVolumeImageA.GetImage().getExtents()[2] : 1;
-//		System.err.println( dimX + " " + dimY + " " + dimZ );
-		float scale = 0.05f * Math.min( dimX, Math.min( dimY, dimZ ) );
-		scale = Math.max( 3, scale );
-//		System.err.println( scale );
-		
-		Transformation xfrm = new Transformation();
-		xfrm.SetUniformScale( scale );
-		int maxCount = -1;
-		int maxIndex = -1;
-		for ( int i = 0; i < vois.size(); i++ )
-		{
-			if ( vois.elementAt(i).getCurves().size() > maxCount )
-			{
-				maxCount = vois.elementAt(i).getCurves().size();
-				maxIndex = i;
-			}
-		}
-
-		annotationSpheres = new VolumeSurface[maxCount];
-		annotationDisplay = new boolean[maxCount][2];
-		annotationVOIs = new VOI[maxCount];
-		annotationLabelColors = new ColorRGBA[maxCount];
-		for ( int i = 0; i < maxCount; i++ )
-		{
-			VOIText text = (VOIText) vois.elementAt(maxIndex).getCurves().elementAt(i);
-			Color c = text.getColor();
-
-			annotationVOIs[i] = new VOI( (short)i, text.getName(), VOI.ANNOTATION, 0 );
-			annotationVOIs[i].setColor(c);
-//			annotationVOIs[i].getCurves().add(text);
-//			m_kVolumeImageA.GetImage().registerVOI( annotationVOIs[i] );
-			
-			ColorRGBA colorRGBA = new ColorRGBA(c.getRed()/255f,c.getGreen()/255f,c.getBlue()/255f,1);
-			
-			if ( text.getText().contains("AL") )
-			{
-				colorRGBA = new ColorRGBA(1, 0, 0, 1);
-				xfrm.SetUniformScale( 3*scale/4f );
-			}
-			else
-			{
-				xfrm.SetUniformScale( scale );
-			}
-			
-//			System.err.println( text.getText() + " " + c );
-			std.SetTransformation( xfrm );
-			TriMesh sphere = std.Sphere(2);
-			updateSphere( sphere, 0, 0, 0, colorRGBA );
-			SurfaceState kSurface = new SurfaceState( sphere, text.getText() );	
-			annotationSpheres[i] = new VolumeSurface(m_kVolumeImageA,
-					m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ, kSurface, false, true);
-			annotationSpheres[i].SetDisplay(false);
-			m_kDisplayList.add(annotationSpheres[i]);	
-			annotationDisplay[i][0] = true;
-			annotationDisplay[i][1] = true;
-			
-
-			annotationLabelColors[i] = new ColorRGBA(1,1,1,1);
-		}
-
 		Vector3f origin = new Vector3f();
 		for ( int i = 0; i < vois.size(); i++ )
 		{
@@ -1013,88 +944,81 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			}
 		}
 		
-
-		int maxAxL = -1;
-		int maxAxR = -1;
-		for ( int i = 0; i < vois.size(); i++ )
-		{
-			int countAxL = 0;
-			int countAxR = 0;
-			for ( int j = 0; j < vois.elementAt(i).getCurves().size(); j++ )
-			{
-				VOIText text = (VOIText) vois.elementAt(i).getCurves().elementAt(j);
-				if ( text.getText().contains("AxL" ) )
-				{
-					countAxL++;
-				}
-				if ( text.getText().contains("AxR" ) )
-				{
-					countAxR++;
-				}
-			}
-			if ( countAxL > maxAxL )
-			{
-				maxAxL = countAxL;
-			}
-			if ( countAxR > maxAxR )
-			{
-				maxAxR = countAxR;
-			}
-		}
-		maxAxL++;
-		maxAxR++;
-		neuriteVOIs = new VOI[2];
-		neuriteVOIs[0] = new VOI( (short) maxCount, "AxL", VOI.POLYLINE, 0 );
-		neuriteVOIs[1] = new VOI( (short) (maxCount +1), "AxR", VOI.POLYLINE, 0 );
 		
-		neurites = new VOIContour[vois.size()][2];
-		neuriteSurfaces = new VolumeSurface[vois.size()][2];
+		
+		annotationPositions = vois;
+		this.annotationAnimationPanel = annotationAnimationPanel;
+		Attributes attributes = new Attributes();
+		attributes.SetPChannels(3);
+		attributes.SetNChannels(3);
+		attributes.SetCChannels(0,4);
+		StandardMesh std = new StandardMesh(attributes);
+
+		int dimX = m_kVolumeImageA.GetImage().getExtents().length > 0 ? m_kVolumeImageA.GetImage().getExtents()[0] : 1;
+		int dimY = m_kVolumeImageA.GetImage().getExtents().length > 1 ? m_kVolumeImageA.GetImage().getExtents()[1] : 1;
+		int dimZ = m_kVolumeImageA.GetImage().getExtents().length > 2 ? m_kVolumeImageA.GetImage().getExtents()[2] : 1;
+//		System.err.println( dimX + " " + dimY + " " + dimZ );
+		float scale = 0.05f * Math.min( dimX, Math.min( dimY, dimZ ) );
+		scale = Math.max( 3, scale );
+//		System.err.println( scale );
+		
+		Transformation xfrm = new Transformation();
+		xfrm.SetUniformScale( scale );
+		int maxCount = -1;
+		int maxIndex = -1;
 		for ( int i = 0; i < vois.size(); i++ )
 		{
-			neurites[i][0] = new VOIContour(false);
-			neurites[i][1] = new VOIContour(false);
-			for ( int j = 0; j < vois.elementAt(i).getCurves().size(); j++ )
+			if ( vois.elementAt(i).getCurves().size() > maxCount )
 			{
-				VOIText text = (VOIText) vois.elementAt(i).getCurves().elementAt(j);
-				if ( text.getText().equals("ALA") )
-				{
-					neurites[i][0].add(0, text.elementAt(0) );
-					neurites[i][1].add(0, text.elementAt(0) );
-				}
-				else if ( text.getText().contains( "AxL" ) )
-				{
-					int index = text.getText().indexOf("AxL");
-					index += 3;
-					index = Integer.valueOf( text.getText().substring(index) );
-					neurites[i][0].add( index, text.elementAt(0) );
-				}
-				else if ( text.getText().contains( "AxR" ) )
-				{
-					int index = text.getText().indexOf("AxR");
-					index += 3;
-					index = Integer.valueOf( text.getText().substring(index) );
-					neurites[i][1].add( index, text.elementAt(0) );
-				}
-			}
-
-			if ( neurites[i][0].size() > 1 )
-			{
-				SurfaceState kSurface = new SurfaceState( createNeuriteSurface(neurites[i][0], scale/3f), "AxL" );	
-				neuriteSurfaces[i][0] = new VolumeSurface(m_kVolumeImageA,
-						m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ, kSurface, false, true);
-				neuriteSurfaces[i][0].SetDisplay(false);
-				m_kDisplayList.add(neuriteSurfaces[i][0]);	
-			}
-
-			if ( neurites[i][1].size() > 1 )
-			{
-				SurfaceState kSurface = new SurfaceState( createNeuriteSurface(neurites[i][1], scale/3f), "AxR" );	
-				neuriteSurfaces[i][1] = new VolumeSurface(m_kVolumeImageA,
-						m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ, kSurface, false, true);
-				neuriteSurfaces[i][1].SetDisplay(false);
-				m_kDisplayList.add(neuriteSurfaces[i][1]);	
+				maxCount = vois.elementAt(i).getCurves().size();
+				maxIndex = i;
 			}
 		}
+
+		annotationSpheres = new VolumeSurface[maxCount];
+		annotationDisplay = new boolean[maxCount][2];
+		annotationVOIs = new VOI[maxCount];
+		annotationSpheresColors = new ColorRGB[maxCount];
+		for ( int i = 0; i < maxCount; i++ )
+		{
+			VOIText text = new VOIText( (VOIText)vois.elementAt(maxIndex).getCurves().elementAt(i) );
+			text.setUseMarker(false);
+			Color c = text.getColor();
+
+			annotationVOIs[i] = new VOI( (short)i, text.getName(), VOI.ANNOTATION, 0 );
+			annotationVOIs[i].setColor(c);
+			annotationVOIs[i].getCurves().add(text);
+			text.createVolumeVOI( m_kVolumeImageA, m_kTranslate );
+			m_kVolumeImageA.GetImage().registerVOI( annotationVOIs[i] );
+			
+			ColorRGBA colorRGBA = new ColorRGBA(c.getRed()/255f,c.getGreen()/255f,c.getBlue()/255f,1);
+			
+//			if ( text.getText().contains("AL") )
+//			{
+//				colorRGBA = new ColorRGBA(1, 0, 0, 1);
+//				xfrm.SetUniformScale( 3*scale/4f );
+//			}
+//			else
+//			{
+//				xfrm.SetUniformScale( scale );
+//			}
+			
+//			System.err.println( text.getText() + " " + c );
+			std.SetTransformation( xfrm );
+			TriMesh sphere = std.Sphere(2);
+			updateSphere( sphere, 0, 0, 0, colorRGBA );
+			SurfaceState kSurface = new SurfaceState( sphere, text.getText() );	
+			annotationSpheres[i] = new VolumeSurface(m_kVolumeImageA,
+					m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ, kSurface, false, true);
+			annotationSpheres[i].SetDisplay(false);
+			m_kDisplayList.add(annotationSpheres[i]);	
+			annotationDisplay[i][0] = true;
+			annotationDisplay[i][1] = true;
+			
+
+			annotationSpheresColors[i] = new ColorRGB(1,1,1);
+		}
+		
 		
 //		for ( int i = 0; i < m_kDisplayList.size(); i++ )
 //		{
@@ -1103,6 +1027,150 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		
 		annotationVOIsUpdate(maxIndex);
 	}  
+	
+	private boolean displayedNeurite( String neuriteName )
+	{
+		if ( neuriteVOIs == null )
+		{
+			return false;
+		}
+		for ( int i = 0; i < annotationPositions.size(); i++ )
+		{
+			if ( neuriteVOIs[i] == null )
+			{
+				return false;
+			}
+			else
+			{
+				for ( int j = 0; j < neuriteVOIs[i].size(); j++ )
+				{
+					VOI neurite = neuriteVOIs[i].elementAt(j);
+					if ( neurite.getName().equals(neuriteName) )
+					{
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}	
+	
+	private void updateNeurite( String neuriteName, String[] names )
+	{
+		if ( neuriteVOIs == null )
+		{
+			return;
+		}
+		for ( int i = 0; i < annotationPositions.size(); i++ )
+		{
+			if ( neuriteVOIs[i] == null )
+			{
+				return;
+			}
+			else
+			{
+				for ( int j = 0; j < neuriteVOIs[i].size(); j++ )
+				{
+					VOI neurite = neuriteVOIs[i].elementAt(j);
+					if ( neurite.getName().equals(neuriteName) )
+					{
+						VOIContour contour = (VOIContour) neurite.getCurves().elementAt(0);
+						updateContour( contour, annotationPositions.elementAt(i), names );
+						break;						
+					}
+				}
+				
+			}
+		}
+	}
+	
+	private void updateContour( VOIContour contour, VOI positions, String[] names )
+	{
+		contour.clear();
+		for ( int i = 0; i < names.length; i++ )
+		{
+			for ( int j = 0; j < positions.getCurves().size(); j++ )
+			{
+				VOIText text = (VOIText) positions.getCurves().elementAt(j);
+				if ( text.getText().equals( names[i] ) )
+				{
+					contour.add( text.elementAt(0) );
+					break;
+				}
+			}
+		}
+		contour.getVolumeVOI().setVOI(contour);
+	}
+
+	public void displayNeurite( String neuriteName, boolean display )
+	{
+		if ( neuriteDisplay == null )
+		{
+			return;
+		}
+		neuriteDisplay.put(neuriteName, display);
+		annotationVOIsUpdate(annotationSpheresIndex);
+	}
+	
+	public void addNeurite( String neuriteName, String[] names )
+	{
+		if ( displayedNeurite(neuriteName) )
+		{
+			updateNeurite(neuriteName, names);
+			return;
+		}
+		if ( neuriteVOIs == null )
+		{
+			neuriteVOIs = new VOIVector[annotationPositions.size()];
+			neuriteDisplay = new HashMap<String, Boolean>();
+		}
+		for ( int i = 0; i < annotationPositions.size(); i++ )
+		{
+			if ( neuriteVOIs[i] == null )
+			{
+				neuriteVOIs[i] = new VOIVector();
+			}
+			VOI neurite = new VOI( (short) 0, neuriteName, VOI.POLYLINE, 1.0f );
+			neuriteVOIs[i].add(neurite);
+			VOIContour contour = new VOIContour(false);
+			for ( int j = 0; j < names.length; j++ )
+			{
+				for ( int k = 0; k < annotationPositions.elementAt(i).getCurves().size(); k++ )
+				{
+					VOIText text = (VOIText) annotationPositions.elementAt(i).getCurves().elementAt(k);
+					if ( text.getText().equals( names[j] ) )
+					{
+						contour.add( text.elementAt(0) );
+						break;
+					}
+				}
+			}
+			neurite.getCurves().add(contour);
+			if ( contour.size() > 1 )
+			{
+				
+			}
+			contour.createVolumeVOI( m_kVolumeImageA, m_kTranslate );
+			contour.getVolumeVOI().SetDisplay(false);
+			m_kVolumeImageA.GetImage().registerVOI( neurite );
+		}
+				
+				
+
+//			if ( neurites[i][0].size() > 1 )
+//			{
+//				SurfaceState kSurface = new SurfaceState( createNeuriteSurface(neurites[i][0], scale/3f), "AxL" );	
+//				neuriteSurfaces[i][0] = new VolumeSurface(m_kVolumeImageA,
+//						m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ, kSurface, false, true);
+//				neuriteSurfaces[i][0].SetDisplay(false);
+//				m_kDisplayList.add(neuriteSurfaces[i][0]);	
+//			}
+//
+//			if ( neurites[i][1].size() > 1 )
+//			{
+//			}
+//		}
+	}
 
 	public void setAnnotationVOIColor( String name, ColorRGB color )
 	{
@@ -1111,6 +1179,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			if ( annotationSpheres[i].GetName().equals(name) )
 			{
 				annotationSpheres[i].SetColor(color, true );
+				annotationSpheresColors[i] = color;
 				annotationVOIsUpdate(annotationSpheresIndex);
 				break;
 			}
@@ -1130,6 +1199,59 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		}
 	}
 	
+	public void setAnnotationDiameter( String name, float diameter )
+	{
+		for ( int i = 0; i < annotationSpheres.length; i++ )
+		{
+			if ( annotationSpheres[i].GetName().equals(name) )
+			{
+				m_kDisplayList.remove(annotationSpheres[i]);
+
+				Attributes attributes = new Attributes();
+				attributes.SetPChannels(3);
+				attributes.SetNChannels(3);
+				attributes.SetCChannels(0,4);
+				StandardMesh std = new StandardMesh(attributes);
+
+				int dimX = m_kVolumeImageA.GetImage().getExtents().length > 0 ? m_kVolumeImageA.GetImage().getExtents()[0] : 1;
+				int dimY = m_kVolumeImageA.GetImage().getExtents().length > 1 ? m_kVolumeImageA.GetImage().getExtents()[1] : 1;
+				int dimZ = m_kVolumeImageA.GetImage().getExtents().length > 2 ? m_kVolumeImageA.GetImage().getExtents()[2] : 1;
+//				System.err.println( dimX + " " + dimY + " " + dimZ );
+				float scale = 0.05f * Math.min( dimX, Math.min( dimY, dimZ ) );
+				scale = Math.max( 3, scale );
+				
+				Transformation xfrm = new Transformation();
+				xfrm.SetUniformScale( diameter * scale );
+				std.SetTransformation( xfrm );
+				TriMesh sphere = std.Sphere(2);
+				
+					
+				ColorRGBA colorRGBA = new ColorRGBA(annotationSpheresColors[i].R,annotationSpheresColors[i].G,annotationSpheresColors[i].B,1);				
+				updateSphere( sphere, 0, 0, 0, colorRGBA );
+				
+				SurfaceState kSurface = new SurfaceState( sphere, name );	
+				annotationSpheres[i] = new VolumeSurface(m_kVolumeImageA,
+						m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ, kSurface, false, true);
+				annotationSpheres[i].SetDisplay(false);
+				m_kDisplayList.add(annotationSpheres[i]);	
+				annotationVOIsUpdate(annotationSpheresIndex);
+				break;
+			}
+		}
+	}
+	
+	public VOI getSelectedVOI( String name )
+	{
+		for ( int i = 0; i < annotationSpheres.length; i++ )
+		{
+			if ( annotationSpheres[i].GetName().equals(name) )
+			{
+				return annotationVOIs[i];
+			}
+		}
+		return null;
+	}
+	
 	public void setDisplayAnnotationLabel( String name, boolean display )
 	{
 		for ( int i = 0; i < annotationSpheres.length; i++ )
@@ -1137,19 +1259,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			if ( annotationSpheres[i].GetName().equals(name) )
 			{
 				annotationDisplay[i][1] = display;
-				annotationVOIsUpdate(annotationSpheresIndex);
-				break;
-			}
-		}
-	}
-
-	public void setAnnotationLabelColor( String name, ColorRGBA color )
-	{
-		for ( int i = 0; i < annotationSpheres.length; i++ )
-		{
-			if ( annotationSpheres[i].GetName().equals(name) )
-			{
-				annotationLabelColors[i] = color;
 				annotationVOIsUpdate(annotationSpheresIndex);
 				break;
 			}
@@ -1304,28 +1413,47 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	
 	public void annotationVOIsUpdate( int value )
 	{
-		for ( int i = 0; i < neuriteSurfaces.length; i++ )
-		{
-			if ( neuriteSurfaces[i][0] != null )
-			{
-				neuriteSurfaces[i][0].SetDisplay(false);
-			}
-			if ( neuriteSurfaces[i][1] != null )
-			{
-				neuriteSurfaces[i][1].SetDisplay(false);
-			}
-		}
+//		for ( int i = 0; i < neuriteSurfaces.length; i++ )
+//		{
+//			if ( neuriteSurfaces[i][0] != null )
+//			{
+//				neuriteSurfaces[i][0].SetDisplay(false);
+//			}
+//			if ( neuriteSurfaces[i][1] != null )
+//			{
+//				neuriteSurfaces[i][1].SetDisplay(false);
+//			}
+//		}
 		
 		for ( int i = 0; i < annotationSpheres.length; i++ )
 		{
 			annotationSpheres[i].SetDisplay(false);
 
-			m_kVolumeImageA.GetImage().unregisterVOI( annotationVOIs[i] );
-			annotationVOIs[i].getCurves().clear();
+//			m_kVolumeImageA.GetImage().unregisterVOI( annotationVOIs[i] );
+			annotationVOIs[i].getCurves().elementAt(0).getVolumeVOI().SetDisplay(false);
 		}
-		m_kVolumeImageA.GetImage().unregisterVOI( neuriteVOIs[0] );
-		m_kVolumeImageA.GetImage().unregisterVOI( neuriteVOIs[1] );
-			
+//		m_kVolumeImageA.GetImage().unregisterVOI( neuriteVOIs[0] );
+//		m_kVolumeImageA.GetImage().unregisterVOI( neuriteVOIs[1] );
+
+		if ( annotationSpheresIndex != -1 )
+		{
+			if ( neuriteVOIs != null )
+			{
+				if ( neuriteVOIs[annotationSpheresIndex] != null )
+				{
+					VOIVector currentNeuriteList = neuriteVOIs[annotationSpheresIndex];
+					for ( int i = 0; i < currentNeuriteList.size(); i++ )
+					{
+						VOI neuriteVOI = currentNeuriteList.elementAt(i);
+						for ( int j = 0; j < neuriteVOI.getCurves().size(); j++ )
+						{
+							neuriteVOI.getCurves().elementAt(j).getVolumeVOI().SetDisplay(false);
+						}
+					}
+				}
+			}
+		}
+
 		annotationSpheresIndex = value;
     	if ( annotationSpheresIndex >= annotationPositions.size() )
     	{
@@ -1337,13 +1465,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
     	}
 		if ( annotationSpheresIndex != -1 )
 		{
-			neurites[annotationSpheresIndex][0].update( ColorRGBA.WHITE );
-			neurites[annotationSpheresIndex][1].update( ColorRGBA.WHITE );
-			
-			neuriteVOIs[0].getCurves().clear();
-			neuriteVOIs[0].getCurves().add( neurites[annotationSpheresIndex][0] );
-			neuriteVOIs[1].getCurves().clear();
-			neuriteVOIs[1].getCurves().add( neurites[annotationSpheresIndex][1] );
+//			neurites[annotationSpheresIndex][0].update( ColorRGBA.WHITE );
+//			neurites[annotationSpheresIndex][1].update( ColorRGBA.WHITE );
+//			
+//			neuriteVOIs[0].getCurves().clear();
+//			neuriteVOIs[0].getCurves().add( neurites[annotationSpheresIndex][0] );
+//			neuriteVOIs[1].getCurves().clear();
+//			neuriteVOIs[1].getCurves().add( neurites[annotationSpheresIndex][1] );
 			
 			
 			int dimX = m_kVolumeImageA.GetImage().getExtents().length > 0 ? m_kVolumeImageA.GetImage().getExtents()[0] : 1;
@@ -1353,6 +1481,24 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 //			m_kVolumeImageA.GetImage().registerVOI(currentTime);
 //			System.err.println( currentTime.getCurves().size() );
 			
+
+			if ( neuriteVOIs != null )
+			{
+				if ( neuriteVOIs[annotationSpheresIndex] != null )
+				{
+					VOIVector currentNeuriteList = neuriteVOIs[annotationSpheresIndex];
+					for ( int i = 0; i < currentNeuriteList.size(); i++ )
+					{
+						VOI neuriteVOI = currentNeuriteList.elementAt(i);
+						String name = neuriteVOI.getName();
+						for ( int j = 0; j < neuriteVOI.getCurves().size(); j++ )
+						{
+							neuriteVOI.getCurves().elementAt(j).getVolumeVOI().SetDisplay(neuriteDisplay.get(name));
+						}
+					}
+				}
+			}
+
 			for ( int i = 0; i < currentTime.getCurves().size(); i++ )
 			{
 				VOIText text = (VOIText) currentTime.getCurves().elementAt(i);
@@ -1360,21 +1506,38 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				{
 					if ( annotationSpheres[j].GetName().equals(text.getText()) )
 					{
-						text.update(annotationLabelColors[j]);
+//						text.update(annotationLabelColors[j]);
 						Vector3f position = new Vector3f(text.elementAt(0));
 						if ( !position.equals( Vector3f.ZERO ) &&
 							 (position.X >= 0) && (position.X < dimX) && (position.Y >= 0) && (position.Y < dimY) && 
 							 (position.Z >= 0) && (position.Z < dimZ) )
 						{
-							annotationSpheres[j].SetTranslateVolumeCoords( position );
+//							if ( text.getText().equals("origin" ) )
+//							{
+//								annotationSpheres[j].SetTranslateVolumeCoords( position, true );
+//							}
+//							else
+//							{
+								annotationSpheres[j].SetTranslateVolumeCoords( position );
+//							}
 							annotationSpheres[j].SetDisplay(annotationDisplay[j][0]);
 //							System.err.println( annotationSpheres[j].GetName() );
 							
 							if ( annotationDisplay[j][1] )
 							{
-								annotationVOIs[i].getCurves().add(text);
-								m_kVolumeImageA.GetImage().registerVOI( annotationVOIs[i] );
-//								System.err.println( text.getText() + " " + (text.getVolumeVOI() == null) );
+								VOIText displayedText = (VOIText) annotationVOIs[j].getCurves().elementAt(0);
+								if ( displayedText.getVolumeVOI() != null )
+								{
+//									displayedText.getVolumeVOI().SetBillboardPosition( position );
+									displayedText.getVolumeVOI().SetBillboardPosition( text.elementAt(1) );
+
+//									if ( annotationSpheresIndex == 0 )
+//									{
+//										System.err.println( text.getText() + "   " + text.elementAt(0) + "     " + text.elementAt(1) );
+//									}
+									
+									annotationVOIs[j].getCurves().elementAt(0).getVolumeVOI().SetDisplay(annotationDisplay[j][1]);
+								}
 							}
 						}
 						else
@@ -1386,17 +1549,17 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 					}
 				}
 			}
-			m_kVolumeImageA.GetImage().registerVOI( neuriteVOIs[0] );
-			m_kVolumeImageA.GetImage().registerVOI( neuriteVOIs[1] );
-
-			if ( neuriteSurfaces[annotationSpheresIndex][0] != null )
-			{
-				neuriteSurfaces[annotationSpheresIndex][0].SetDisplay(true);
-			}
-			if ( neuriteSurfaces[annotationSpheresIndex][1] != null )
-			{
-				neuriteSurfaces[annotationSpheresIndex][1].SetDisplay(true);
-			}
+//			m_kVolumeImageA.GetImage().registerVOI( neuriteVOIs[0] );
+//			m_kVolumeImageA.GetImage().registerVOI( neuriteVOIs[1] );
+//
+//			if ( neuriteSurfaces[annotationSpheresIndex][0] != null )
+//			{
+//				neuriteSurfaces[annotationSpheresIndex][0].SetDisplay(true);
+//			}
+//			if ( neuriteSurfaces[annotationSpheresIndex][1] != null )
+//			{
+//				neuriteSurfaces[annotationSpheresIndex][1].SetDisplay(true);
+//			}
 
 			if (annotationAnimationPanel != null)
 			{
@@ -1414,6 +1577,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		{
 			return;
 		}
+		for ( int i = 0; i < annotationVOIs.length; i++ )
+		{
+			annotationVOIs[i].getCurves().elementAt(0).getVolumeVOI().GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+			annotationVOIs[i].getCurves().elementAt(0).getVolumeVOI().GetScene().UpdateGS();
+		}
+		
 		for ( int i = 0; i < annotationPositions.size(); i++ )
 		{
 			VOI currentTime = annotationPositions.elementAt( i );
@@ -1428,18 +1597,35 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				}
 			}
 			
-			VolumeVOI vCurve = neurites[i][0].getVolumeVOI();
-			if ( vCurve != null )
+			if ( neuriteVOIs != null )
 			{
-				vCurve.GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
-				vCurve.GetScene().UpdateGS();
+				if ( neuriteVOIs[i] != null )
+				{
+					VOIVector currentNeuriteList = neuriteVOIs[i];
+					for ( int j = 0; j < currentNeuriteList.size(); j++ )
+					{
+						VOI neuriteVOI = currentNeuriteList.elementAt(j);
+						for ( int k = 0; k < neuriteVOI.getCurves().size(); k++ )
+						{
+							neuriteVOI.getCurves().elementAt(k).getVolumeVOI().GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+							neuriteVOI.getCurves().elementAt(k).getVolumeVOI().GetScene().UpdateGS();
+						}
+					}
+				}
 			}
-			vCurve = neurites[i][1].getVolumeVOI();
-			if ( vCurve != null )
-			{
-				vCurve.GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
-				vCurve.GetScene().UpdateGS();
-			}
+
+//			VolumeVOI vCurve = neurites[i][0].getVolumeVOI();
+//			if ( vCurve != null )
+//			{
+//				vCurve.GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+//				vCurve.GetScene().UpdateGS();
+//			}
+//			vCurve = neurites[i][1].getVolumeVOI();
+//			if ( vCurve != null )
+//			{
+//				vCurve.GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+//				vCurve.GetScene().UpdateGS();
+//			}
 			
 		}
 	}

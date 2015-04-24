@@ -966,6 +966,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		VOIVector lattices = new VOIVector();
 		
 		// look for potential 10 pair:
+		float maxDist = -1;
 		int count = 0;
 		while ( (count == 0) && (tenMinDist > 0.5) )
 		{
@@ -975,6 +976,10 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 				for ( int j = i + 1; j < positions.size(); j++ )
 				{
 					float distance = positions.elementAt(i).distance( positions.elementAt(j) );
+					if ( distance > maxDist )
+					{
+						maxDist = distance;
+					}
 					if (  (distance > tenMinDist) && (distance < tenMaxDist) )
 					{
 						System.err.println( time + " " + i + " " + j + " " + distance );
@@ -990,6 +995,8 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 				tenMaxDist += 0.1;
 			}
 		}
+		System.err.println( time + " " + maxDist );
+		
 		System.err.println( time + " " + lattices.size() );
 		
 		System.err.println( "target " + !checkLattice( target, lattices ) );
@@ -999,6 +1006,8 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 //		lattices.add(target);
 //		VOIVector allLattices = checkPairs( lattices );
 		System.err.println( time + " " + lattices.size() );
+		System.err.println( time + " " + allLattices.size() );
+		System.err.println( "target " + !checkLattice( target, allLattices ) );
 		
 		
 		
@@ -1415,7 +1424,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		lattice.getCurves().add(right);
 		
 
-		for ( int i = 0; i < newPositions.size(); i++ )
+		for ( int i = newPositions.size() - 2; i >= 0; i-- )
 		{
 			for ( int j = i + 1; j < newPositions.size(); j++ )
 			{
@@ -1440,23 +1449,48 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		{
 			return false;
 		}
-		int sameCount = 0;
-		for ( int i = 0; i < left1.size(); i++ )
+//		int sameCount = 0;
+//		for ( int i = 0; i < left1.size(); i++ )
+//		{
+//			Vector3f l1 = left1.elementAt(i);
+//			Vector3f r1 = right1.elementAt(i);
+//			for ( int j = 0; j < left2.size(); j++ )
+//			{
+//				Vector3f l2 = left2.elementAt(j);
+//				Vector3f r2 = right2.elementAt(j);
+//				if ( (l1.equals(l2) && r1.equals(r2)) || (l1.equals(r2) && r1.equals(l2)) )
+//				{
+//					sameCount++;
+//					break;
+//				}
+//			}
+//		}
+//		return (sameCount == left1.size());
+		
+		boolean matches = true;
+		for ( int j = 0; j < left1.size(); j++ )
 		{
-			Vector3f l1 = left1.elementAt(i);
-			Vector3f r1 = right1.elementAt(i);
-			for ( int j = 0; j < left2.size(); j++ )
+			if ( !left1.elementAt(j).equals( left2.elementAt(j)) || !right1.elementAt(j).equals( right2.elementAt(j)) )
 			{
-				Vector3f l2 = left2.elementAt(j);
-				Vector3f r2 = right2.elementAt(j);
-				if ( (l1.equals(l2) && r1.equals(r2)) || (l1.equals(r2) && r1.equals(l2)) )
-				{
-					sameCount++;
-					break;
-				}
+				matches = false;
 			}
 		}
-		return (sameCount == left1.size());
+		if ( matches )
+		{
+			return true;
+		}
+		for ( int j = 0; j < left1.size(); j++ )
+		{
+			if ( !left1.elementAt(j).equals( right2.elementAt(j)) || !right1.elementAt(j).equals( left2.elementAt(j)) )
+			{
+				matches = false;
+			}
+		}
+		if ( matches )
+		{
+			return true;
+		}
+		return false;
 	}
 	
 	private boolean checkBend( int[] sequence, VOIContour left, VOIContour right )
@@ -1549,18 +1583,24 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			newPositions = null;
 			return;
 		}
-		int i = 0;
-//		for ( int i = 0; i < newPositions.size(); i++ )
-//		{
+		
+
+		for ( int i = newPositions.size() - 2; i >= 0; i-- )
+		{
 			for ( int j = i + 1; j < newPositions.size(); j++ )
 			{
+//		int i = 0;
+////		for ( int i = 0; i < newPositions.size(); i++ )
+////		{
+//			for ( int j = i + 1; j < newPositions.size(); j++ )
+//			{
 				float distance = newPositions.elementAt(i).distance( newPositions.elementAt(j) );
 				if (  (distance >= minPairDist) && (distance <= maxPairDist) )
 				{
 					addPair( i, j, newPositions, newLattice, lattices, count + 1 );
 				}
 			}
-//		}
+		}
 //		System.err.println( "no2 lattice " + left.size() + " " + positions.size() + " " + newPositions.size() + " " + count );
 	}
 
@@ -1988,7 +2028,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
     						text.setText( list[i] );
     						text.setColor( new Color(red, green, blue) );
     						text.add( new Vector3f( x, y, z ) );
-    						text.add( new Vector3f( x+1, y, z ) );
+    						text.add( new Vector3f( x, y, z ) );
     						text.setText(annotationName);
     						annotation.getCurves().add(text);
     						

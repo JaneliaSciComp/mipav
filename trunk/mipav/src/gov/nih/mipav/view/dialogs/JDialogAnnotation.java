@@ -88,6 +88,8 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
 
     /** DOCUMENT ME! */
     private JCheckBox useMarkerBox;
+    
+    private boolean textEditable = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -100,11 +102,15 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
      * @param  isRegistered  DOCUMENT ME!
      */
     public JDialogAnnotation(ModelImage image, VOI textVOI, int element, boolean isRegistered, boolean modal) {
+    	this(image, textVOI, element, isRegistered, modal, true);
+    }
+
+    public JDialogAnnotation(ModelImage image, VOI textVOI, int element, boolean isRegistered, boolean modal, boolean editText) {
         super(image.getParentFrame(), modal);
         this.activeImage = image;
         this.textVOI = textVOI;
         this.element = element;
-
+        this.textEditable = editText;
         if (textVOI == null) {
             return;
         }
@@ -195,6 +201,11 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         }
 
         pack();
+    }
+    
+    public VOIText getTextVOI()
+    {
+        return (VOIText) textVOI.getCurves().elementAt(element);
     }
 
     /**
@@ -341,7 +352,7 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         buttonPanel = this.buildButtons();
 
         nameField = new JTextField(25);
-        
+        nameField.setEditable( textEditable );
         namePanel.setBorder(buildTitledBorder("Name"));
 
         namePanel.add(nameField);
@@ -435,7 +446,7 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
      *
      * @return  boolean are the dialog's variables kosher
      */
-    private boolean setVariables() {
+    protected boolean setVariables() {
 
         try {
             VOIText vt = (VOIText) textVOI.getCurves().elementAt(element);
@@ -445,14 +456,12 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
             vt.setFontDescriptors(fontDescriptors);
             vt.setFontName((String) fontTypeBox.getSelectedItem());
             vt.setColor(colorButton.getForeground());
-            //textVOI.setColor(colorButton.getForeground());
             vt.setBackgroundColor(backgroundColorButton.getForeground());
 
             Preferences.setProperty(Preferences.PREF_VOI_TEXT_COLOR, MipavUtil.makeColorString(colorButton.getForeground()));
             Preferences.setProperty(Preferences.PREF_VOI_TEXT_BACKGROUND_COLOR, MipavUtil.makeColorString(backgroundColorButton.getForeground()));
             
             vt.setUseMarker(useMarkerBox.isSelected());
-
         } catch (Exception ex) {
             return false;
         }

@@ -1162,6 +1162,13 @@ public class VolumeSurface extends VolumeObject
 		m_kMesh.Local.SetTranslate( position );
 		m_kMesh.UpdateGS();
     }
+    
+    public void SetTranslateVolumeCoords( Vector3f position, boolean compute )
+    {
+    	position.mult( m_kVolumeScale ).scale( m_fVolumeDiv );	
+		m_kMesh.Local.SetTranslate( new Vector3f( position ) );
+		m_kMesh.UpdateGS();
+    }
 
     /**
      * Smooth mesh. The formula can be found in "The Visualization Toolkit" by Will Schoeder, Ken Martin, and Bill

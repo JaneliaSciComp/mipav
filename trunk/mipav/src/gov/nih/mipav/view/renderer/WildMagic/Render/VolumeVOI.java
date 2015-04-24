@@ -215,7 +215,7 @@ public class VolumeVOI extends VolumeObject
 				}
 			}
 		}
-
+		
 		m_kScene.UpdateGS();
 		m_kScene.UpdateRS();
 		kCuller.ComputeVisibleSet(m_kScene);              
@@ -417,6 +417,12 @@ public class VolumeVOI extends VolumeObject
 	{
 		return m_kBillboardPos;
 	}
+
+	
+	public void SetBillboardPosition( Vector3f volumePt )
+	{	
+		m_kBillboardPos.copy( volumePt ).mult(m_kVolumeScale);
+	}
 	
 	/**
 	 * Turns the ZBufferState compare mode on or off.
@@ -483,6 +489,11 @@ public class VolumeVOI extends VolumeObject
 		}
 	}
 
+	public void updateText()
+	{
+		renderAnnotationToTexture( (VOIText)m_kVOI );
+	}
+	
 	/**
 	 * Sets up the line annotations.
 	 * @param kStart
