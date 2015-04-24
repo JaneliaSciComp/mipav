@@ -335,6 +335,197 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	// Compute mPb_nmax resized if necessary
     }
     
+    
+    private double[][]imresize(double A[][], double scale) {
+    	int i;
+    	int j;
+    	int p;
+    	int cols[] = null;
+    	double u[][];
+    	double v[][];
+    	int x;
+    	int y;
+    	double XN;
+    	double C;
+    	double C31;
+    	double C32;
+    	double FI;
+    	if (scale >= 1) {
+    		MipavUtil.displayError("Routine only for scale factor < 1");
+    		return null;
+    	}
+    	int xDimA = A[0].length;
+    	int yDimA = A.length;
+    	// filter length in samples
+    	int xDimB = (int)Math.floor(scale * xDimA);
+    	int yDimB = (int)Math.floor(scale * yDimA);
+    	double B[][] = new double[yDimB][xDimB];
+    	// Create an antialiasing filter
+    	// NF = filter length in samples
+    	// Filter order = NF - 1
+    	int NF = 11;
+    	// N is half the length of the symmetric filter
+    	int N = (NF+1)/2;
+    	// Calculate cutoff frequencies
+    	// Normalized cutoff frequencies go from 0.0 to 0.5
+    	double FC1 = (0.5 * yDimB)/yDimA;
+    	double FC2 = (0.5 * xDimB)/xDimA;
+    	// IE0 is an even, odd indicator 
+    	int IE0 = NF % 2;
+    	// h1 and h2 will have the dimension 1 and dimension 2 impulse responses
+    	// These are symmmetric responses
+    	double h1[] = new double[N];
+    	double h2[] = new double[N];
+    	if (IE0 == 1) {
+    		h1[0] = 2.0 * FC1;
+    		h2[0] = 2.0 * FC2;
+    	}
+    	int I1 = IE0 + 1;
+    	for (i = I1; i <= N; i++) {
+    	    XN = i - 1;
+    	    if (IE0 == 0) {
+    	    	XN = XN + 0.5;
+    	    }
+    	    C = Math.PI * XN;
+    	    C31 = 2.0 * C * FC1;
+    	    C32 = 2.0 * C * FC2;
+    	    h1[i-1] = Math.sin(C31)/C;
+    	    h2[i-1] = Math.sin(C32)/C;
+    	} // for (i = I1; i <= N; i++)
+    	
+    	double W[] = new double[N];
+    	
+    	// Hamming window
+    	double alpha = 0.54;
+    	double beta = 1.0 - alpha;
+    	double FN = NF - 1.0;
+    	for (i = 1; i <= N; i++) {
+    	    FI = i - 1.0;
+    	    if (IE0 == 0) {
+    	    	FI = FI + 0.5;
+    	    }
+    	    W[i-1] = alpha + beta * Math.cos(2.0 * Math.PI * FI/FN);
+    	}
+    	for (i = 0; i < N; i++) {
+    		h1[i] = h1[i] * W[i];
+    		h2[i] = h2[i] * W[i];
+    	}
+    	double h2x[][] = new double[1][N];
+    	for (i = 0; i < N; i++) {
+    		h2x[0][i] = h2[i];
+    	}
+    	boolean isCropped = true;
+    	boolean isStrict = false;
+    	double ax[][] = compute_conv_2D(A, h2x, isCropped, isStrict);
+    	double h1y[][] = new double[N][1];
+    	for (i = 0; i < N; i++) {
+    		h1y[i][0] = h1[i];
+    	}
+    	double a[][] = compute_conv_2D(ax, h1y, isCropped, isStrict);
+    	double uu[] = new double[xDimB];
+    	for (i = 0; i < xDimB; i++) {
+    		uu[i] = i*(xDimA - 1.0)/(xDimB - 1.0);
+    	}
+    	double vv[] = new double[yDimB];
+    	for (i = 0; i < yDimB; i++) {
+    		vv[i] = i*(yDimA - 1.0)/(yDimB - 1.0);
+    	}
+    	
+    	// Interpolate in blocks
+    	int insize[] = new int[]{yDimB, xDimB};
+    	int blk[] = bestblk(insize, 100);
+    	int nblks[] = new int[2];
+    	nblks[0] = yDimB/blk[0];
+    	nblks[1] = xDimB/blk[1];
+    	int nrem[] = new int[2];
+    	nrem[0] = yDimB - nblks[0]*blk[0];
+    	nrem[1] = xDimB - nblks[1]*blk[1];
+    	int mblocks = nblks[0];
+    	int nblocks = nblks[1];
+    	int mb = blk[0];
+    	int nb = blk[1];
+    	int rows[] = new int[blk[0]];
+    	for (i = 0; i < blk[0]; i++) {
+    		rows[i] = i;
+    	}
+    	for (i = 0; i <= mblocks; i++) {
+    	    if (i == mblocks) {
+    	    	rows = null;
+    	    	rows = new int[nrem[0]];
+    	    	for (p = 0; p < nrem[0]; p++) {
+    	    		rows[p] = p;
+    	    	}
+    	    } // if (i == mblocks)
+    	    for (j = 0; j <= nblocks; j++) {
+    	        if (j == 0) {
+    	        	cols = new int[blk[1]];
+    	        	for (p = 0; p < blk[1]; p++) {
+    	        		cols[p] = p;
+    	        	}
+    	        } // if (j == 0)
+    	        else if (j == nblocks) {
+    	        	cols = new int[nrem[1]];
+    	        	for (p = 0; p < nrem[1]; p++) {
+    	        		cols[p] = p;
+    	        	}
+    	        } // else if (j == nblocks)
+    	        if ((rows.length != 0) && (cols.length != 0)) {
+    	            u = new double[rows.length][cols.length];
+    	            v = new double[rows.length][cols.length];
+    	            for (y = 0; y < rows.length; y++) {
+    	            	for (x = 0; x < cols.length; x++) {
+    	            		u[y][x] = uu[j*nb + cols[x]];
+    	            		v[y][x] = vv[i*mb + rows[y]];
+    	            	}
+    	            }
+    	            // Bicubic interpolation of points
+    	            for (y = 0; y < rows.length; y++) {
+    	            	for (x = 0; x < cols.length; x++) {
+    	            		//B[i*mb + rows[y]][j*nb + cols[x]] = interp2(a, u[y][x], v[y][x], 'cubic');
+    	            	}
+    	            }
+    	        } // if ((rows.length != 0) && (cols.length != 0))
+    	    } // for (j = 0; j <= nblocks; j++)
+    	} // for (i = 0; i <= mblocks; i++)
+    	return B;
+    }
+    
+    private int[] bestblk(int siz[], int k) {
+    	int i;
+    	// Define acceptableblock sizes
+    	int minm = (int)Math.floor(Math.min(Math.ceil(siz[0]/10.0), k/2.0));
+    	int m[] = new int[k - minm + 1];
+    	for (i = 0; i < m.length; i++) {
+    		m[i] = k - i;
+    	}
+    	int minn = (int)Math.floor(Math.min(Math.ceil(siz[1]/10.0), k/2.0));
+    	int n[] = new int[k - minn + 1];
+    	for (i = 0; i < n.length; i++) {
+    		n[i] = k - i;
+    	}
+    	// Choose the largest acceptable block that has the minimum padding
+    	int blk[] = new int[2];
+    	double mVal[] = new double[m.length];
+    	double minVal = Double.MAX_VALUE;
+    	for (i = 0; i < m.length; i++) {
+    		mVal[i] = Math.ceil(siz[0]/m[i])*m[i]-siz[0];
+    		if (mVal[i] < minVal) {
+    			minVal = mVal[i];
+    			blk[0] = m[i];
+    		}
+    	}
+    	double nVal[] = new double[n.length];
+        minVal = Double.MAX_VALUE;
+    	for (i = 0; i < n.length; i++) {
+    		nVal[i] = Math.ceil(siz[1]/n[i])*n[i]-siz[1];
+    		if (nVal[i] < minVal) {
+    			minVal = nVal[i];
+    			blk[1] = n[i];
+    		}
+    	}
+    	return blk;
+    }
+    
     // Given NxMxnum_ori oriented channels, compute oriented nonmax suppression
     private double[] nonmax_channels(double pb[][][], double nonmax_ori_tol) {
 	    //if (nargin < 2), nonmax_ori_tol = pi/8; end
