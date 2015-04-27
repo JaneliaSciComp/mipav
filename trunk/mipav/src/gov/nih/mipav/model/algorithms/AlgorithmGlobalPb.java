@@ -27,6 +27,8 @@ import gov.nih.mipav.view.Preferences;
 
 public class AlgorithmGlobalPb extends AlgorithmBase {
 	
+	private String outFile;
+	
 	// Resizing factor in (0, 1], to speed up eigenvector
 	private double rsz = 1.0;
 	
@@ -67,8 +69,9 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
      * @param destImg
      * @param srcImg
      */
-    public AlgorithmGlobalPb(ModelImage destImg, ModelImage srcImg, double rsz) {
+    public AlgorithmGlobalPb(ModelImage destImg, ModelImage srcImg, String outFile, double rsz) {
     	super(destImg, srcImg);
+    	this.outFile = outFile;
     	this.rsz = rsz;
     }
     
@@ -160,31 +163,119 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         
         // mPb
         int textons[] = new int[xDim * yDim];
-        double bg1[][][] = new double[8][xDim][yDim];
-        double bg2[][][] = new double[8][xDim][yDim];
-        double bg3[][][] = new double[8][xDim][yDim];
-        double cga1[][][] = new double[8][xDim][yDim];
-        double cga2[][][] = new double[8][xDim][yDim];
-        double cga3[][][] = new double[8][xDim][yDim];
-        double cgb1[][][] = new double[8][xDim][yDim];
-        double cgb2[][][] = new double[8][xDim][yDim];
-        double cgb3[][][] = new double[8][xDim][yDim];
-        double tg1[][][] = new double[8][xDim][yDim];
-        double tg2[][][] = new double[8][xDim][yDim];
-        double tg3[][][] = new double[8][xDim][yDim];
-        multiscalePb(bg1, bg2, bg3, cga1, cga2, cga3, cgb1, cgb2, cgb3, tg1, tg2, tg3, textons, inputImage);
+        double bg1[][][] = new double[8][yDim][xDim];
+        double bg2[][][] = new double[8][yDim][xDim];
+        double bg3[][][] = new double[8][yDim][xDim];
+        double cga1[][][] = new double[8][yDim][xDim];
+        double cga2[][][] = new double[8][yDim][xDim];
+        double cga3[][][] = new double[8][yDim][xDim];
+        double cgb1[][][] = new double[8][yDim][xDim];
+        double cgb2[][][] = new double[8][yDim][xDim];
+        double cgb3[][][] = new double[8][yDim][xDim];
+        double tg1[][][] = new double[8][yDim][xDim];
+        double tg2[][][] = new double[8][yDim][xDim];
+        double tg3[][][] = new double[8][yDim][xDim];
+        double mPb[][] = new double[yDim][xDim];
+        double mPb_rsz[][];
+        if (rsz < 1) {
+        	mPb_rsz = new double[(int)Math.floor(rsz * yDim)][(int)Math.floor(rsz * xDim)];
+        }
+        else {
+        	mPb_rsz = new double[yDim][xDim];
+        }
+        multiscalePb(mPb, mPb_rsz, bg1, bg2, bg3, cga1, cga2, cga3, cgb1, cgb2, cgb3, tg1, tg2, tg3, textons, inputImage);
         
+        String outFile2 = outFile + "_pbs.mat";
+        int nvec = 17;
+        spectralPb(mPb_rsz, srcImage.getExtents(), outFile2, nvec);
         setCompleted(true);
         return;
     }
     
     /**
+     * 
+     * Description: Global contour cue from local mPb.
+     * Computes Intervening Contour with BSE code by Charless Fowlkes:
+     * http://www.cs.berkeley.edu/~fowlkes/BSE/
+     * Pablo Arbelaez <arbelaez@eecs.berkeley.edu>
+     * December 2010
+     * @param mPb
+     * @param orig_sz
+     * @param outFile
+     * @param nvec
+     */
+    private void spectralPb(double mPb[][], int orig_sz[], String outFile, int nvec) {
+    	int x;
+    	int y;
+        int ty = mPb.length;
+        int tx = mPb[0].length;
+        double l[][][] = new double[2][][];
+        l[0] = new double[ty+1][tx];
+        for (y = 0; y < ty; y++) {
+        	for (x = 0; x < tx; x++) {
+        		l[0][y+1][x] = mPb[y][x];
+        	}
+        }
+        l[1] = new double[ty][tx+1];
+        for (y = 0; y < ty; y++) {
+        	for (x = 0; x < tx; x++) {
+        		l[1][y][x+1] = mPb[y][x];
+        	}
+        }
+        
+        // Build the pairwise affinity matrix
+        buildW(l[0], l[1]);
+    }
+    
+    private class PointIC {
+    	
+    	public PointIC() {
+    		
+    	}
+    	private int x,y;
+    	double sim;
+    }
+    
+    private void buildW(double H[][], double V[][]) {
+    	int x;
+    	int y;
+    	int dthresh = 5;
+    	double sigma = 0.1;
+    	// Copy edge info into lattice struct
+        int H_h = H.length;
+        int H_w = H[0].length;
+        double boundariesH[][] = new double[H_h][H_w];
+        for (y = 0; y < H_h; y++) {
+        	for (x = 0; x < H_w; x++) {
+        		boundariesH[y][x] = H[y][x];
+        	}
+        }
+        int V_h = V.length;
+        int V_w = V[0].length;
+        double boundariesV[][] = new double[V_h][V_w];
+        for (y = 0; y < V_h; y++) {
+        	for (x = 0; x < V_w; x++) {
+        		boundariesV[y][x] = V[y][x];
+        	}
+        }
+        ArrayList<PointIC[]> ic[][] = null;
+        
+        computeSupport(boundariesH, boundariesV, dthresh, 1.0, ic);
+    }
+    
+    private void computeSupport(final double boundariesH[][], final double boundariesV[][], final int wr, final double thresh,
+    		ArrayList<PointIC[]> support[][]) {
+    	
+    }
+    
+    /**
      * Compute local contour cues of an image
-     * gradinets by Michael Maire
-     * Original MATLAB code by Pablo Arbelaez December, 2010
+     * gradients by Michael Maire <mmaire@eecs.berkeley.edu>
+     * Original MATLAB code by Pablo Arbelaez <arbelaez@eecs.berkeley.edu> December, 2010
      * @param im
      */
-    private void multiscalePb(double [][][] bg1, double [][][] bg2, double[][][] bg3, double cga1[][][],
+    private void multiscalePb(double mPb_nmax[][], double mPb_nmax_rsz[][],
+    		double [][][] bg1, double [][][] bg2, double[][][] bg3, double cga1[][][],
     		double cga2[][][], double cga3[][][], double cgb1[][][], double cgb2[][][],
     		double cgb3[][][], double tg1[][][], double tg2[][][], double tg3[][][], int[] textons, ModelImage im) {
         double weights[] = new double[12];
@@ -301,38 +392,58 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	} // for (i = 0; i < 8; i++)
     	
     	// Compute mPb at full scale
-    	double mPb_all[][][] = new double[8][xDim][yDim];
+    	double mPb_all[][][] = new double[8][yDim][xDim];
     	for (i = 0; i < 8; i++) {
     	    for (x = 0; x < xDim; x++) {
     	    	for (y = 0; y < yDim; y++) {
-    	    		l1 = weights[0] * bg1[i][x][y];
-    	    		l2 = weights[1] * bg2[i][x][y];
-    	    		l3 = weights[2] * bg3[i][x][y];
+    	    		l1 = weights[0] * bg1[i][y][x];
+    	    		l2 = weights[1] * bg2[i][y][x];
+    	    		l3 = weights[2] * bg3[i][y][x];
     	    		
-    	    		a1 = weights[3] * cga1[i][x][y];
-    	    		a2 = weights[4] * cga2[i][x][y];
-    	    		a3 = weights[5] * cga3[i][x][y];
+    	    		a1 = weights[3] * cga1[i][y][x];
+    	    		a2 = weights[4] * cga2[i][y][x];
+    	    		a3 = weights[5] * cga3[i][y][x];
     	    		
-    	    		b1 = weights[6] * cgb1[i][x][y];
-    	    		b2 = weights[7] * cgb2[i][x][y];
-    	    		b3 = weights[8] * cgb3[i][x][y];
+    	    		b1 = weights[6] * cgb1[i][y][x];
+    	    		b2 = weights[7] * cgb2[i][y][x];
+    	    		b3 = weights[8] * cgb3[i][y][x];
     	    		
-    	    		t1 = weights[9] * tg1[i][x][y];
-    	    		t2 = weights[10] * tg2[i][x][y];
-    	    		t3 = weights[11] * tg3[i][x][y];
+    	    		t1 = weights[9] * tg1[i][y][x];
+    	    		t2 = weights[10] * tg2[i][y][x];
+    	    		t3 = weights[11] * tg3[i][y][x];
     	    		
-    	    		mPb_all[i][x][y] = l1 + a1 + b1 + t1 + l2 + a2 + b2 + t2 + l3 + a3 + b3 + t3;
+    	    		mPb_all[i][y][x] = l1 + a1 + b1 + t1 + l2 + a2 + b2 + t2 + l3 + a3 + b3 + t3;
     	    	}
     	    }
     	} // for (i = 0; i < 8; i++)
     	
     	// non-maximum suppression
-    	double mPb_nmax[] = nonmax_channels(mPb_all, Math.PI/8.0);
-    	for (i = 0; i < mPb_nmax.length; i++) {
-    		mPb_nmax[i] = Math.max(0.0, Math.min(1.0, 1.2 * mPb_nmax[i]));
+    	nonmax_channels(mPb_nmax, mPb_all, Math.PI/8.0);
+    	for (y = 0; y < mPb_nmax.length; y++) {
+    		for (x = 0; x < mPb_nmax[0].length; x++) {
+    		    mPb_nmax[y][x] = Math.max(0.0, Math.min(1.0, 1.2 * mPb_nmax[y][x]));
+    		}
     	}
     	
     	// Compute mPb_nmax resized if necessary
+    	double mPb_all_resized[][][] = new double[8][][];
+    	if (rsz < 1) {
+    		for (i = 0; i < 8; i++) {
+    		    mPb_all_resized[i] = imresize(mPb_all[i], rsz);
+    		}
+    	    nonmax_channels(mPb_nmax_rsz, mPb_all_resized, Math.PI/8.0);
+        	for (y = 0; y < mPb_nmax_rsz.length; y++) {
+        		for (x = 0; x < mPb_nmax_rsz[0].length; x++) {
+        		    mPb_nmax_rsz[y][x] = Math.max(0.0, Math.min(1.0, 1.2 * mPb_nmax_rsz[y][x]));
+        		}
+        	}
+    	} // if (rsz < 1)
+    	for (y = 0; y < yDim; y++) {
+    		for (x = 0; x < xDim; x++) {
+    			mPb_nmax_rsz[y][x] = mPb_nmax[y][x];	
+    		}
+    	}
+    	
     }
     
     
@@ -422,6 +533,16 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     		h1y[i][0] = h1[i];
     	}
     	double a[][] = compute_conv_2D(ax, h1y, isCropped, isStrict);
+    	double ain[] = new double[a.length * a[0].length];
+    	for (y = 0; y < a.length; y++) {
+    	    for (x = 0; x < a[0].length; x++) {
+    	    	ain[x + y*a[0].length] = a[y][x];
+    	    }
+    	}
+    	AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
+    	boolean doClip = true;
+    	int inExtents[] = new int[]{a[0].length, a.length};
+        CLag.setup2DCubicLagrangian(ain, inExtents, doClip);
     	double uu[] = new double[xDimB];
     	for (i = 0; i < xDimB; i++) {
     		uu[i] = i*(xDimA - 1.0)/(xDimB - 1.0);
@@ -478,9 +599,10 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	            		v[y][x] = vv[i*mb + rows[y]];
     	            	}
     	            }
-    	            // Bicubic interpolation of points
+    	            // Cubic Lagrangian interpolation of points instead of bicubic interpolation in original
     	            for (y = 0; y < rows.length; y++) {
     	            	for (x = 0; x < cols.length; x++) {
+    	            		B[i*mb + rows[y]][j*nb + cols[x]] = CLag.cubicLagrangian2D(u[y][x], v[y][x]);	
     	            		//B[i*mb + rows[y]][j*nb + cols[x]] = interp2(a, u[y][x], v[y][x], 'cubic');
     	            	}
     	            }
@@ -527,39 +649,41 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     }
     
     // Given NxMxnum_ori oriented channels, compute oriented nonmax suppression
-    private double[] nonmax_channels(double pb[][][], double nonmax_ori_tol) {
+    private void nonmax_channels(double nmax2D[][], double pb[][][], double nonmax_ori_tol) {
 	    //if (nargin < 2), nonmax_ori_tol = pi/8; end
+    	int y_size = nmax2D.length;
+    	int x_size = nmax2D[0].length;
 	    int n_ori = pb.length;
         double oris[] = new double[n_ori];
         int n;
         for (n = 0; n < n_ori; n++) {
         	oris[n] = (n * Math.PI)/n_ori;
         }
-        double pbmax[] = new double[xDim * yDim];
-        double maxAngle[] = new double[xDim * yDim];
+        double pbmax[] = new double[x_size * y_size];
+        double maxAngle[] = new double[x_size * y_size];
         int index;
         int i;
         int x;
         int y;
-        for (x = 0; x < xDim; x++) {
-        	for (y = 0; y < yDim; y++) {
-        	    pbmax[x*yDim + y] = -Double.MAX_VALUE;
+        for (x = 0; x < x_size; x++) {
+        	for (y = 0; y < y_size; y++) {
+        	    pbmax[x*y_size + y] = -Double.MAX_VALUE;
         	    index = -1;
         	    for (i = 0; i < n_ori; i++) {
-        	    	if (pb[i][x][y] > pbmax[x*yDim + y]) {
-        	    		pbmax[x*yDim + y] = pb[i][x][y];
+        	    	if (pb[i][y][x] > pbmax[x*y_size + y]) {
+        	    		pbmax[x*y_size + y] = pb[i][y][x];
         	    		index = i;
         	    	}
         	    } // for (i = 0; i < n_ori; i++)
-        	    maxAngle[x*yDim + y] = oris[index];
-        	    if (pbmax[x*yDim + y] < 0.0) {
-        	    	pbmax[x*yDim + y] = 0.0;
+        	    maxAngle[x*y_size + y] = oris[index];
+        	    if (pbmax[x*y_size + y] < 0.0) {
+        	    	pbmax[x*y_size + y] = 0.0;
         	    }
-        	} // for (y = 0; y < yDim; y++)
-        } // for (x = 0; x < xDim; x++)
+        	} // for (y = 0; y < y_size; y++)
+        } // for (x = 0; x < x_size; x++)
         boolean allow_boundary = false;
-	    double nmax[] = nonmax_oriented_2D(pbmax, xDim, yDim, maxAngle, nonmax_ori_tol, allow_boundary);
-	    return nmax;
+	    nonmax_oriented_2D(nmax2D, pbmax, maxAngle, nonmax_ori_tol, allow_boundary);
+	    return;
     }
     
     /*
@@ -592,16 +716,19 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
      * NOTE: The original matrix must be nonnegative.
      */
 
-    private double[] nonmax_oriented_2D(
-       final double m[], int size_x, int size_y, final double m_ori[], double o_tol, boolean allow_boundary)
+    private void nonmax_oriented_2D(double nmax2D[][],
+       final double m[], final double m_ori[], double o_tol, boolean allow_boundary)
     {
-       
+       int x;
+       int y;
+       int size_y = nmax2D.length;
+       int size_x = nmax2D[0].length;
        /* intialize result matrix */
        double nmax[] = new double[size_x *  size_y];
        /* perform oriented non-max suppression at each element */
        int n = 0;
-       for (int x = 0; x < size_x; x++) {
-          for (int y = 0; y < size_y; y++) {
+       for (x = 0; x < size_x; x++) {
+          for (y = 0; y < size_y; y++) {
              /* compute direction (in [0,pi)) along which to suppress */
              double ori = m_ori[n];
              double theta = ori + Math.PI/2.0;
@@ -610,7 +737,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
              double v = m[n];
              if (v < 0) {
                 MipavUtil.displayError("matrix must be nonnegative in nonmax_orientd_2D");
-                return null;
+                return;
              }
              /* initialize indices of values in local neighborhood */
              int ind0a = 0, ind0b = 0, ind1a = 0, ind1b = 0;
@@ -702,7 +829,12 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
              n++;
           }
        }
-       return nmax;
+       for (x = 0, n = 0; x < size_x; x++) {
+           for (y = 0; y < size_y; y++, n++) {
+        	   nmax2D[y][x] = nmax[n];
+           }
+       }
+       return;
     }
 
 
