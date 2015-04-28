@@ -90,7 +90,7 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
     
     private JTextField ARangeText;
     
-    private File[] AImageAr;
+    private File[][] AImageAr;
     
     private JTextField BFileDirectoryText;
     
@@ -106,7 +106,15 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
     
     private JTextField BRangeText;
     
-    private File[] BImageAr;
+    private File[][] BImageAr;
+    
+    private JTextField subDirectoryRangeText;
+    
+    private int subDirectoryLowerBound = 0;
+    
+    private File[] ASubDirectoryAr;
+    
+    private File[] BSubDirectoryAr;
     
     private JTextField resultDirectoryText;
     
@@ -117,6 +125,8 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
     private JTextField concurrentNumText;
     
     private int concurrentNum;
+    
+    private int subDirectoryNumber;
     
 //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -174,7 +184,7 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
         try {
             
             stageScanAlgo = new PlugInAlgorithmStageScan(AFileDark2D, ALeftShift, AImageAr,
-            		BFileDark2D, BLeftShift, BImageAr, resultDirectory, concurrentNum);
+            		BFileDark2D, BLeftShift, BImageAr, subDirectoryLowerBound, resultDirectory, concurrentNum);
             
          // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -329,6 +339,10 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
         mainPanel.add(BRangeText.getParent(), gbc);
         gbc.gridy++;
         
+        subDirectoryRangeText = gui.buildField("Range of SPIMA and SPIMB subDirectories to use (ex. 1-8): ", " ");
+        mainPanel.add(subDirectoryRangeText.getParent(), gbc);
+        gbc.gridy++;
+        
         resultDirectoryText = gui.buildFileField("Result output location:", initResultLoc, false, JFileChooser.DIRECTORIES_ONLY);
         mainPanel.add(resultDirectoryText.getParent(), gbc);
         gbc.gridy++;
@@ -343,8 +357,8 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
         
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         
-        getContentPane().setMaximumSize(new Dimension(685, 400));
-        getContentPane().setPreferredSize(new Dimension(685, 400));
+        getContentPane().setMaximumSize(new Dimension(700, 450));
+        getContentPane().setPreferredSize(new Dimension(700, 450));
         
         pack();
         setVisible(true);
@@ -364,6 +378,9 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
 		AFileDirectory = AFileDirectoryText.getText();
 		AFileDark2D = AFileDark2DText.getText();
 		
+		BFileDirectory = BFileDirectoryText.getText();
+		BFileDark2D = BFileDark2DText.getText();
+		
 		tmpStr = ALeftShiftText.getText();
 		ALeftShift = Double.valueOf(tmpStr).doubleValue();
 		if (ALeftShift < 0.0) {
@@ -372,6 +389,55 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
 			ALeftShiftText.selectAll();
 			return false;
 		}
+		
+		String subDirectoryRange = subDirectoryRangeText.getText();
+	    HashSet<Integer> includeSubDirectoryRange = new HashSet<Integer>();
+	    if(subDirectoryRange != null) {  
+	        String[] ranges = subDirectoryRange.split("[,;]");
+	        for(int i=0; i<ranges.length; i++) {
+	            String[] subset = ranges[i].split("-");
+	            subDirectoryLowerBound = -1;
+	            int bound = -1;
+	            for(int j=0; j<subset.length; j++) {
+	                try {
+	                    bound = Integer.valueOf(subset[j].trim());
+	                    if(subDirectoryLowerBound == -1) {
+	                        subDirectoryLowerBound = bound;
+	                        includeSubDirectoryRange.add(subDirectoryLowerBound);
+	                    } 
+	                } catch(NumberFormatException e) {
+	                    Preferences.debug("Invalid subDirectory range specified: "+bound, Preferences.DEBUG_ALGORITHM);
+	                }
+	            }
+	            
+	            for(int k=subDirectoryLowerBound+1; k<=bound; k++) {
+                    includeSubDirectoryRange.add(k);
+                }
+	        }
+	    }
+	    
+	    
+	    if(includeSubDirectoryRange.size() == 0) {
+	        includeSubDirectoryRange = null;
+	    }
+	   
+	    if(!populateASubDirectoryLists(includeSubDirectoryRange)) {
+	        return false;
+	    }
+	    
+	    if(!populateBSubDirectoryLists(includeSubDirectoryRange)) {
+	        return false;
+	    }
+	    
+	    if (ASubDirectoryAr.length != BSubDirectoryAr.length) {
+	    	MipavUtil.displayError("Number of A subDirectories = " + ASubDirectoryAr.length + 
+	    			" does not equal number of B subDirectories = " + BSubDirectoryAr.length);
+	    	return false;
+	    }
+	    
+	    subDirectoryNumber = ASubDirectoryAr.length;
+	    AImageAr = new File[subDirectoryNumber][];
+	    BImageAr = new File[subDirectoryNumber][];
 		
 		String ARange = ARangeText.getText();
 	    HashSet<Integer> includeARange = new HashSet<Integer>();
@@ -406,9 +472,6 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
 	    if(!populateAFileLists(includeARange)) {
 	        return false;
 	    }
-	    
-	    BFileDirectory = BFileDirectoryText.getText();
-		BFileDark2D = BFileDark2DText.getText();
 		
 		tmpStr = BLeftShiftText.getText();
 		BLeftShift = Double.valueOf(tmpStr).doubleValue();
@@ -468,12 +531,12 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
 		return true;
 	}
 	
-	private boolean populateAFileLists(HashSet<Integer> includeRange) {
-        ArrayList<File> AImageList = new ArrayList<File>();
+	private boolean populateASubDirectoryLists(HashSet<Integer> includeRange) {
+        ArrayList<File> ASubDirectoryList = new ArrayList<File>();
         try {
             File fA = new File(AFileDirectory);
             for(File fTry : fA.listFiles()) {
-            	AImageList.add(fTry);
+            	ASubDirectoryList.add(fTry);
             }
         } catch(Exception e) {
             MipavUtil.displayError("Invalid A directory");
@@ -481,11 +544,11 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
         }
         
         if(includeRange != null) {
-            int originalSize = AImageList.size();
+            int originalSize = ASubDirectoryList.size();
             for(int i=originalSize; i>0; i--) {
-                int index = getIndex(AImageList.get(i-1));
+                int index = getIndex(ASubDirectoryList.get(i-1));
                 if(!includeRange.contains(index)) {
-                    AImageList.remove(i-1);
+                    ASubDirectoryList.remove(i-1);
                 }
             }
         }
@@ -493,19 +556,19 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
         
         
         FileCompare f = new FileCompare();
-        Collections.sort(AImageList, f);
+        Collections.sort(ASubDirectoryList, f);
         
-        AImageAr = AImageList.toArray(new File[AImageList.size()]);
+        ASubDirectoryAr = ASubDirectoryList.toArray(new File[ASubDirectoryList.size()]);
           
         return true;
     }
 	
-	private boolean populateBFileLists(HashSet<Integer> includeRange) {
-        ArrayList<File> BImageList = new ArrayList<File>();
+	private boolean populateBSubDirectoryLists(HashSet<Integer> includeRange) {
+        ArrayList<File> BSubDirectoryList = new ArrayList<File>();
         try {
             File fB = new File(BFileDirectory);
             for(File fTry : fB.listFiles()) {
-            	BImageList.add(fTry);
+            	BSubDirectoryList.add(fTry);
             }
         } catch(Exception e) {
             MipavUtil.displayError("Invalid B directory");
@@ -513,11 +576,11 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
         }
         
         if(includeRange != null) {
-            int originalSize = BImageList.size();
+            int originalSize = BSubDirectoryList.size();
             for(int i=originalSize; i>0; i--) {
-                int index = getIndex(BImageList.get(i-1));
+                int index = getIndex(BSubDirectoryList.get(i-1));
                 if(!includeRange.contains(index)) {
-                    BImageList.remove(i-1);
+                    BSubDirectoryList.remove(i-1);
                 }
             }
         }
@@ -525,9 +588,75 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
         
         
         FileCompare f = new FileCompare();
-        Collections.sort(BImageList, f);
+        Collections.sort(BSubDirectoryList, f);
         
-        BImageAr = BImageList.toArray(new File[BImageList.size()]);
+        BSubDirectoryAr = BSubDirectoryList.toArray(new File[BSubDirectoryList.size()]);
+          
+        return true;
+    }
+	
+	private boolean populateAFileLists(HashSet<Integer> includeRange) {
+		for (int j = 0; j < subDirectoryNumber; j++) {
+	        ArrayList<File> AImageList = new ArrayList<File>();
+	        try {
+	            for(File fTry : ASubDirectoryAr[j].listFiles()) {
+	            	AImageList.add(fTry);
+	            }
+	        } catch(Exception e) {
+	            MipavUtil.displayError("Invalid A subDirectory");
+	            return false;
+	        }
+	        
+	        if(includeRange != null) {
+	            int originalSize = AImageList.size();
+	            for(int i=originalSize; i>0; i--) {
+	                int index = getIndex(AImageList.get(i-1));
+	                if(!includeRange.contains(index)) {
+	                    AImageList.remove(i-1);
+	                }
+	            }
+	        }
+	        
+	        
+	        
+	        FileCompare f = new FileCompare();
+	        Collections.sort(AImageList, f);
+	        
+	        AImageAr[j] = AImageList.toArray(new File[AImageList.size()]);
+		} // for (int j = 0; j < subDirectoryNumber; j++)
+          
+        return true;
+    }
+	
+	private boolean populateBFileLists(HashSet<Integer> includeRange) {
+		for (int j = 0; j < subDirectoryNumber; j++) {
+	        ArrayList<File> BImageList = new ArrayList<File>();
+	        try {
+	            for(File fTry : BSubDirectoryAr[j].listFiles()) {
+	            	BImageList.add(fTry);
+	            }
+	        } catch(Exception e) {
+	            MipavUtil.displayError("Invalid B subDirectory");
+	            return false;
+	        }
+	        
+	        if(includeRange != null) {
+	            int originalSize = BImageList.size();
+	            for(int i=originalSize; i>0; i--) {
+	                int index = getIndex(BImageList.get(i-1));
+	                if(!includeRange.contains(index)) {
+	                    BImageList.remove(i-1);
+	                }
+	            }
+	        }
+	        
+	        
+	        
+	        FileCompare f = new FileCompare();
+	        Collections.sort(BImageList, f);
+	        
+	        BImageAr[j] = BImageList.toArray(new File[BImageList.size()]);
+		} // for (int j = 0; j < subDirectoryNumber; j++)
           
         return true;
     }
@@ -595,8 +724,11 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
          BFileDirectory = scriptParameters.getParams().getString("BFileDirectory");
     	 BFileDark2D = scriptParameters.getParams().getString("BFileDark2D");
          BLeftShift = scriptParameters.getParams().getDouble("B_LEFT_SHIFT");
+         subDirectoryLowerBound = scriptParameters.getParams().getInt("SUB_DIRECTORY_LOWER_BOUND");
          resultDirectoryString = scriptParameters.getParams().getString("resultDirectoryString");
          concurrentNum = scriptParameters.getParams().getInt("concurrent_num");
+         populateASubDirectoryLists(null);
+         populateBSubDirectoryLists(null);
          populateAFileLists(null);
          populateBFileLists(null);
     }
@@ -611,8 +743,9 @@ public class PlugInDialogStageScan extends JDialogStandaloneScriptablePlugin imp
     	scriptParameters.getParams().put(ParameterFactory.newParameter("BFileDirectory", BFileDirectory));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("BFileDark2D", BFileDark2D));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("B_LEFT_SHIFT", BLeftShift));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("SUB_DIRECTORY_LOWER_BOUND", subDirectoryLowerBound));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("resultDirectoryString", resultDirectoryString));
-    	 scriptParameters.getParams().put(ParameterFactory.newParameter("concurrent_num", concurrentNum));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("concurrent_num", concurrentNum));
     }
 
 }
