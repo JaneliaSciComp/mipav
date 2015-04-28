@@ -227,13 +227,24 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         buildW(l[0], l[1]);
     }
     
+    private class DualLattice{
+    	public double H[][];
+    	public double V[][];
+    	public int width;
+    	public int height;
+    	
+    	public DualLattice() {
+    		
+    	}
+    }
+    
     private class PointIC {
     	
     	public PointIC() {
     		
     	}
-    	private int x,y;
-    	double sim;
+    	public int x,y;
+    	public double sim;
     }
     
     private void buildW(double H[][], double V[][]) {
@@ -242,30 +253,175 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	int dthresh = 5;
     	double sigma = 0.1;
     	// Copy edge info into lattice struct
+    	DualLattice boundaries = new DualLattice();
         int H_h = H.length;
         int H_w = H[0].length;
-        double boundariesH[][] = new double[H_h][H_w];
+        boundaries.H = new double[H_h][H_w];
         for (y = 0; y < H_h; y++) {
         	for (x = 0; x < H_w; x++) {
-        		boundariesH[y][x] = H[y][x];
+        		boundaries.H[y][x] = H[y][x];
         	}
         }
         int V_h = V.length;
         int V_w = V[0].length;
-        double boundariesV[][] = new double[V_h][V_w];
+        boundaries.V = new double[V_h][V_w];
         for (y = 0; y < V_h; y++) {
         	for (x = 0; x < V_w; x++) {
-        		boundariesV[y][x] = V[y][x];
+        		boundaries.V[y][x] = V[y][x];
         	}
         }
-        ArrayList<PointIC[]> ic[][] = null;
+        boundaries.width = boundaries.H.length;
+        boundaries.height = boundaries.V[0].length;
+        PointIC ic[][][] = null;
         
-        computeSupport(boundariesH, boundariesV, dthresh, 1.0, ic);
+        computeSupport(boundaries, dthresh, 1.0, ic);
     }
     
-    private void computeSupport(final double boundariesH[][], final double boundariesV[][], final int wr, final double thresh,
-    		ArrayList<PointIC[]> support[][]) {
+    /**
+     * Given a pb image and window radius, compute a support map for each
+     * pixel out to the given radius.
+     * @param boundaries
+     * @param wr
+     * @param thresh
+     * @param support
+     */
+    private void computeSupport(final DualLattice boundaries, final int wr, final double thresh,
+    		PointIC support[][][]) {
+    	int x;
+    	int y;
+        support = new PointIC[boundaries.width][boundaries.height][];
+        PointIC adj[] = null;
+        int count[] = new int[1];
+        for (x = 0; x < boundaries.width; x++) {
+        	for (y = 0; y < boundaries.height; y++) {
+        		interveningContour(boundaries, thresh, x, y, wr, adj, count);
+        	}
+        }
+    }
+    
+    /**
+     * Given a pb image, a pixel (x0, y0), and a pb threshold, compute the intervening-contour
+     * weight to all pixels inside a given box of radius "wr" subject to the threshold "thresh".
+     * pb is max-accumulated along bresenham lines.  The result is stored in scanline order as
+     * a list of points and thier pb value.
+     * @param boundaries
+     * @param thresh
+     * @param x0
+     * @param y0
+     * @param wr
+     * @param adj
+     * @param count
+     */
+    private void interveningContour(final DualLattice boundaries, final double thresh, final int x0, final int y0,
+    		final int wr, PointIC adj[], int count[]) {
+    	final int width = boundaries.width;
+    	final int height = boundaries.height;
     	
+    	// Make usre (x0,y0) is valid
+    	if (x0 < 0 || x0 >= width) {
+    		MipavUtil.displayError("x0 is invalid in interveningContour");
+    		return;
+    	}
+    	if (y0 < 0 || y0 >= height) {
+    		MipavUtil.displayError("y0 is invalid in interveningContour");
+    		return;
+    	}
+        // Make sure adj array is big enough
+    	adj = new PointIC[(2*wr+1)*(2*wr+1)];
+    	
+    	// Allocate space for lists of pixels; this operation is O(1) 
+    	// since the space need not be initialized
+    	PointIC scanLines[][] = new PointIC[2*wr+1][2*wr+1];
+    	
+    	// We need to keep track of the length of the scan lines
+    	int scanCount[] = new int[2*wr+1];
+    	
+    	// Scratch space for ic_walk() function
+    	PointIC scratch[] = new PointIC[4*wr+2];
+    	
+    	// The rectangle of interest, a square with edge of length
+    	// 2*wr+1 clipped to the image dimensions
+    	final int rxa = Math.max(0, x0-wr);
+    	final int rya = Math.max(0, y0-wr);
+    	final int rxb = Math.min(x0+wr, width-1);
+    	final int ryb = Math.min(y0+wr, height-1);
+    	
+    	// Walk around the boundary, collecting points in the scanline array.
+    	// First walk around the rectangle boundary clockwise for theta = [pi, 0]
+    	if (x0 > rxa) { // left
+    		if ((y0 > 0) && (y0 < ryb)) {
+    			ic_walk(boundaries, thresh, x0, y0, rxa, y0 - 1, rxa, y0,
+    					rxa, y0+1, wr, scratch, scanCount, scanLines);
+    		}
+    	} // if (x0 > rxa)
+    }
+    
+    /**
+     * Walk the bresenham line from (x0,y0) to (x2,y2) ignoring any points outside
+     * a circular window of radius wr.
+     * (x1,y1) and (x3,y3) should be on either side of (x2,y2)
+     * 
+     * For each line, stop if the max-accumulated pb is > thresh.
+     * 
+     * Append any points on the line (for which the line is the best approximant
+     * and distance from x0 is less than wr) to scanlines array.
+     * 
+     * points is preallocated scratch space.
+     * scanCount and scanLines store the results
+     * 
+     * @param boundaries
+     * @param thresh
+     * @param x0
+     * @param y0
+     * @param x1
+     * @param y1
+     * @param x2
+     * @param y2
+     * @param x3
+     * @param y3
+     * @param wr
+     * @param points
+     * @param scanCount
+     * @param scanLines
+     */
+    private void ic_walk(final DualLattice boundaries, final double thresh,
+    		final int x0, final int y0,
+    		final int x1, final int y1,
+    		final int x2, final int y2,
+    		final int x3, final int y3,
+    		final int wr,
+    		PointIC points[],
+    		int scanCount[],
+    		PointIC scanLines[][]) {
+        final int width = boundaries.width;
+        final int height = boundaries.height;
+        
+        // The predicate that uses long longs will overflow if the image
+        // is too long.
+        if (2*wr +1 >= 100) {
+        	MipavUtil.displayError("2*wr+1 >= 1000 in ic_walk");
+        	return;
+        }
+        
+        // Make sure points array is big enough
+        if (points.length < 4*wr+2) {
+        	MipavUtil.displayError("points.length < 4*wr+2 in ic_walk");
+        	return;
+        }
+        
+        // Make sure scan arrays are the right size
+        if (scanCount.length != 2*wr+1) {
+        	MipavUtil.displayError("scanCount.length != 2*wr+1 in ic_walk");
+        	return;
+        }
+        if (scanLines.length != 2*wr+1) {
+        	MipavUtil.displayError("scanLines.length != 2*wr+1 in ic_walk");
+        	return;
+        }
+        if (scanLines[0].length != 2*wr+1) {
+        	MipavUtil.displayError("scanLines[0].length != 2*wr+1 in ic_walk");
+        	return;	
+        }
     }
     
     /**
