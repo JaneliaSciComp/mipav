@@ -304,26 +304,26 @@ public class VolumeVOI extends VolumeObject
 	 * Sets the Color.
 	 * @param kColor
 	 */
-	public void setColor(ColorRGB kColor)
-	{
-		if ( m_kVOI.isActive() )
-		{
-			m_kColor.Copy(kColor);
-			for ( int i = 0; i < m_kVOILine.VBuffer.GetVertexQuantity(); i++ )
-			{
-				m_kVOILine.VBuffer.SetColor3(0, i, kColor );
-			}
-			m_kVOILine.Reload(true);
-			if ( m_kVOITicMarks != null )
-			{
-				for ( int i = 0; i < m_kVOITicMarks.VBuffer.GetVertexQuantity(); i++ )
-				{
-					m_kVOITicMarks.VBuffer.SetColor3(0, i, kColor );
-				}
-				m_kVOITicMarks.Reload(true);
-			}
-		}
-	}
+//	public void setColor(ColorRGB kColor)
+//	{
+//		if ( m_kVOI.isActive() )
+//		{
+//			m_kColor.Copy(kColor);
+//			for ( int i = 0; i < m_kVOILine.VBuffer.GetVertexQuantity(); i++ )
+//			{
+//				m_kVOILine.VBuffer.SetColor3(0, i, kColor );
+//			}
+//			m_kVOILine.Reload(true);
+//			if ( m_kVOITicMarks != null )
+//			{
+//				for ( int i = 0; i < m_kVOITicMarks.VBuffer.GetVertexQuantity(); i++ )
+//				{
+//					m_kVOITicMarks.VBuffer.SetColor3(0, i, kColor );
+//				}
+//				m_kVOITicMarks.Reload(true);
+//			}
+//		}
+//	}
 
 	/**
 	 * Sets the slice information for the shader.
