@@ -1,15 +1,19 @@
-import gov.nih.mipav.plugins.JDialogStandalonePlugin;
-
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoBase.UnitType;
-
+import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -19,7 +23,19 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.JTextPane;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.text.BadLocationException;
@@ -226,9 +242,26 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
                         // Without numbers, the two are the same
                         final String s1Num = s1.replaceAll("[^0-9]", "");
                         final String s2Num = s2.replaceAll("[^0-9]", "");
+						final String s1NumFinal;
+						final String s2NumFinal;
+
+						// Truncate so that you aren't growing too large
+						int length = String.valueOf(Integer.MAX_VALUE).length() - 1;
+						if (s1Num.length() > length) {
+							s1NumFinal = s1Num.substring(s1Num.length() - length);
+						} else {
+							s1NumFinal = s1Num;
+						}
+
+						if (s2Num.length() > length) {
+							s2NumFinal = s2Num.substring(s2Num.length() - length);
+						} else {
+							s2NumFinal = s2Num;
+						}
+
                         // Compare the left over numbers
-                        final int s1Int = Integer.valueOf(s1Num);
-                        final int s2Int = Integer.valueOf(s2Num);
+						final int s1Int = Integer.valueOf(s1NumFinal);
+						final int s2Int = Integer.valueOf(s2NumFinal);
 
                         return Integer.valueOf(s1Int).compareTo(Integer.valueOf(s2Int));
                     } else {

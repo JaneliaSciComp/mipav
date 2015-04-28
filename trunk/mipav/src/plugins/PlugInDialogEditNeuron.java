@@ -1,23 +1,68 @@
-import gov.nih.mipav.plugins.JDialogStandalonePlugin;
-
 import gov.nih.mipav.model.algorithms.filters.AlgorithmMean;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmExtractSlices;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoBase.UnitType;
 import gov.nih.mipav.model.file.FileUtility;
-import gov.nih.mipav.model.structures.*;
-
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
+import gov.nih.mipav.model.structures.VOIBaseVector;
+import gov.nih.mipav.model.structures.VOIContour;
+import gov.nih.mipav.model.structures.VOIPoint;
+import gov.nih.mipav.plugins.JDialogStandalonePlugin;
+import gov.nih.mipav.view.JFrameHistogram;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJComponentEditImage;
+import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.components.PanelManager;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.io.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridLayout;
+import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.FilenameFilter;
+import java.io.IOException;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.PriorityQueue;
 
-import javax.swing.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.WindowConstants;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
@@ -2171,11 +2216,28 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 
                 if (compare == 0) {
                     // Without numbers, the two are the same
-                    final String s1Num = s1.replaceAll("[^0-9]", "");
-                    final String s2Num = s2.replaceAll("[^0-9]", "");
+					String s1Num = s1.replaceAll("[^0-9]", "");
+					String s2Num = s2.replaceAll("[^0-9]", "");
+					final String s1NumFinal;
+					final String s2NumFinal;
+
+					// Truncate so that you aren't growing too large
+					int length = String.valueOf(Integer.MAX_VALUE).length() - 1;
+					if (s1Num.length() > length) {
+						s1NumFinal = s1Num.substring(s1Num.length() - length);
+					} else {
+						s1NumFinal = s1Num;
+					}
+
+					if (s2Num.length() > length) {
+						s2NumFinal = s2Num.substring(s2Num.length() - length);
+					} else {
+						s2NumFinal = s2Num;
+					}
+
                     // Compare the left over numbers
-                    final int s1Int = Integer.valueOf(s1Num);
-                    final int s2Int = Integer.valueOf(s2Num);
+					final int s1Int = Integer.valueOf(s1NumFinal);
+					final int s2Int = Integer.valueOf(s2NumFinal);
 
                     return Integer.valueOf(s1Int).compareTo(Integer.valueOf(s2Int));
                 } else {
