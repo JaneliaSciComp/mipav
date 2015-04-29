@@ -5,6 +5,7 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.awt.Color;
 import java.io.BufferedReader;
@@ -59,7 +60,7 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 
 	private float radialThreshold = 0.80f;
 
-	private int actinChannel = 0; // Probably
+	private int actinChannel = 1;
 
 	public PlugInAlgorithmNeuronalActin(String imageFile, String swcFile, JTextPane txtArea) {
 		super();
@@ -115,6 +116,9 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 			}
 		}
 
+		ViewJFrameImage srcFrame = new ViewJFrameImage(srcImage);
+		srcFrame.setVisible(true);
+
 		try {
 			append("Reading swc...", blackText);
 			readSWC();
@@ -156,8 +160,8 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 			AlgorithmThresholdDual nThresh = new AlgorithmThresholdDual(probImage, threshold, 1, 1, true, false);
 			nThresh.run();
 
-			// ViewJFrameImage probFrame = new ViewJFrameImage(probImage);
-			// probFrame.setVisible(true);
+			ViewJFrameImage probFrame = new ViewJFrameImage(probImage);
+			probFrame.setVisible(true);
 
 			ArrayList<float[]> results = new ArrayList<float[]>();
 

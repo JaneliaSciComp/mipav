@@ -122,10 +122,10 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
 				append("The input channel is not an integer", redText);
 				return;
 			}
-			if (channel >= 0 && channel < 4) {
+			if (channel >= 1 && channel < 4) {
 				alg.setActinChannel(channel);
 			} else {
-				append("The input channel is not between 0 and 3, inclusive", redText);
+				append("The input channel is not between 1 and 3, inclusive", redText);
 				return;
 			}
 		}
@@ -253,12 +253,12 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
 		browseImage.setActionCommand("BrowseImage");
 		browseImage.addActionListener(this);
 
-		JLabel actinLabel = new JLabel("Actin Channel (0-3)");
+		JLabel actinLabel = new JLabel("Actin Channel (1-3)");
 		actinLabel.setFont(serif12B);
 
 		actinField = new JTextField(3);
 		actinField.setFont(serif12);
-		actinField.setText("0");
+		actinField.setText("1");
 		actinField.setHorizontalAlignment(JTextField.RIGHT);
 
 		GridBagConstraints gbc = new GridBagConstraints();
