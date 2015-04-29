@@ -1,14 +1,20 @@
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.structures.ModelImage;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.file.FileUtility;
-import gov.nih.mipav.model.structures.ModelImage;
 
-
+/**
+ * Algorithm to quickly stitch together images based on where they are in relation to each other
+ * 
+ * @author wangvg
+ * 
+ */
 public class PlugInAlgorithmImageStitchingGUI extends AlgorithmBase {
 
 	private ArrayList<ModelImage> images;
@@ -30,6 +36,9 @@ public class PlugInAlgorithmImageStitchingGUI extends AlgorithmBase {
 	@Override
 	public void runAlgorithm() {
 
+		// Preview mode is for the image that is shown in the GUI during the
+		// stitching process, while the actual stitching of the 3D image is
+		// done in the else statement
 		if(images.get(0).getNDims() == 2)
 			preview2D();
 		else
@@ -41,6 +50,9 @@ public class PlugInAlgorithmImageStitchingGUI extends AlgorithmBase {
 		imName = name;
 	}
 	
+	/**
+	 * Stitches together the 3D images based on the input, used for saving the result image
+	 */
 	private void addImagesSlice(){
 			
 		int width = images.get(0).getWidth(0);
@@ -56,6 +68,9 @@ public class PlugInAlgorithmImageStitchingGUI extends AlgorithmBase {
 		int minShiftY = 0;
 		
 		absShift.add(new Vector3f());
+		// Because the first image is not relative to anything, the relative shift is always 0,0,0.
+		// You want to keep track of where the min and max coordinates are so that you know how large
+		// to make the final stitched image
 		for(int i=1;i<images.size();i++){
 			vecB = relShift.get(i);
 			shift = Vector3f.add(shift, vecB);
@@ -73,6 +88,7 @@ public class PlugInAlgorithmImageStitchingGUI extends AlgorithmBase {
 		int stitchWidth = maxShiftX - minShiftX + width;
 		int stitchHeight = maxShiftY - minShiftY + height;
 	
+		// All absolute shifts should be >=0.
 		for(int i=0;i<images.size();i++){
 			shift = absShift.get(i);
 			shift.X -= minShiftX;
@@ -103,6 +119,8 @@ public class PlugInAlgorithmImageStitchingGUI extends AlgorithmBase {
 		int[] imBufferB;
 		
 		try{
+			// Save off individual slices as a 3D image can be VERY big over the course of
+			// multiple stitchings.
 			for(int k=0;k<depth;k++){
 				
 				fireProgressStateChanged((int)(100*k/depth), null,
@@ -122,6 +140,8 @@ public class PlugInAlgorithmImageStitchingGUI extends AlgorithmBase {
 					absoluteShift = absShift.get(i-1);
 					imageB.exportData(k*length,length, imBufferB);
 					
+					// Absolute shift tells us exactly where this image lies in the
+					// final image so we can put the pixels all in the right place
 					x = (int) absoluteShift.X;
 					y = (int) absoluteShift.Y;
 					ptX = (int) shiftPt.X;
@@ -134,26 +154,23 @@ public class PlugInAlgorithmImageStitchingGUI extends AlgorithmBase {
 					offsetYb = Math.max(0, -ptY);
 					subheight = height - Math.abs(ptY);
 					
-					//System.out.println("Writing overlap region");
-					
+					// Writing overlap region
 					for(int n=0;n<subheight;n++){
 						row = (n + offsetYa)*width;
 						rowb = (n + offsetYb)*width;
 						stitchedRow = (n+offsetYa+y)*stitchWidth;
 						for(int m=0;m<subwidth;m++){
-		
+							// In the overlapping regions, simply use the maximum pixel
+							// intensity between the two images. This tends to bring
+							// smoother overlaps than something like mean/median
 							stitchedCol = x + offsetXa + m;
 							stitchBuffer[stitchedCol + stitchedRow] =
-									//imBufferA[m + offsetXa + row];
 									Math.max(imBufferA[m + offsetXa + row],
 											imBufferB[m + offsetXb + rowb]);
-							/*stitchBuffer[stitchedCol + stitchedRow] += 
-									weight * imBuffer[m + offsetXa + row];*/
 						}
 					}
 					
-					//System.out.println("Writing non-overlap regions");
-					
+					// Writing non-overlap regions
 					for(int j=0;j<length;j++){
 						nx = j%width;
 						ny = j/width;
@@ -169,7 +186,10 @@ public class PlugInAlgorithmImageStitchingGUI extends AlgorithmBase {
 						
 				}
 				
-				//System.out.println("Writing final image");
+				// Copy in image from the final image in the list
+				// Do all the same things as before, except the overlap
+				// region has already been resolved so you don't need
+				// to compute that again
 				absoluteShift = absShift.get(absShift.size()-1);
 				x = (int) absoluteShift.X;
 				y = (int) absoluteShift.Y;
@@ -190,12 +210,6 @@ public class PlugInAlgorithmImageStitchingGUI extends AlgorithmBase {
 						stitchBuffer[i] = 0;
 				}
 				
-				/*try{
-					Thread.sleep(500);
-				}catch(InterruptedException e){
-					
-				}*/
-				
 				destImage.importData(0, stitchBuffer, true);
 				destImage.saveImage(imDir + File.separator, imName + "_" + String.format("%02d", k), FileUtility.TIFF, false, false);
 				
@@ -208,6 +222,9 @@ public class PlugInAlgorithmImageStitchingGUI extends AlgorithmBase {
 		}
 	}
 	
+	/**
+	 * Same as the above method but works on 2D for the image that is shown during the GUI stitching process.
+	 */
 	private void preview2D(){
 		int width = images.get(0).getWidth(0);
 		int height = images.get(0).getHeight(0);
