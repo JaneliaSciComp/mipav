@@ -5,6 +5,7 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.awt.Color;
 import java.io.BufferedReader;
@@ -61,6 +62,10 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 
 	private int actinChannel = 1;
 
+	private float[] resolution;
+
+	private float[] origin;
+
 	public PlugInAlgorithmNeuronalActin(String imageFile, String swcFile, JTextPane txtArea) {
 		super();
 		imgFile = imageFile;
@@ -101,6 +106,9 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 		depth = extents[2];
 		length = width * height * depth;
 
+		resolution = srcImage.getResolutions(0);
+		origin = srcImage.getOrigin();
+
 		if (srcImage.isColorImage()) {
 
 			short[] buffer = new short[length];
@@ -130,10 +138,8 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 		}
 
 		try {
-			float[] res = srcImage.getResolutions(0);
-
 			append("Calculating axon spline...", blackText);
-			PlugInAlgorithm3DSpline spline = new PlugInAlgorithm3DSpline(swcLines, res[0], res[1]);
+			PlugInAlgorithm3DSpline spline = new PlugInAlgorithm3DSpline(swcLines, resolution[0], resolution[1]);
 			spline.run();
 
 			ArrayList<Vector3f> xBases = spline.getXBases();
@@ -156,8 +162,8 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 			AlgorithmThresholdDual nThresh = new AlgorithmThresholdDual(probImage, threshold, 1, 1, true, false);
 			nThresh.run();
 
-			// ViewJFrameImage probFrame = new ViewJFrameImage(probImage);
-			// probFrame.setVisible(true);
+			ViewJFrameImage probFrame = new ViewJFrameImage(probImage);
+			probFrame.setVisible(true);
 
 			ArrayList<float[]> results = new ArrayList<float[]>();
 
@@ -190,6 +196,10 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 
 				results.add(new float[] {center.X, center.Y, center.Z, distance, (float) sum});
 			}
+
+			ViewJFrameImage srcFrame = new ViewJFrameImage(srcImage);
+			srcFrame.getComponentImage().setPaintMask(totalMask);
+			srcFrame.setVisible(true);
 
 			append("Writing results...", blackText);
 			writeResults(results);
@@ -234,8 +244,6 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 	 */
 	private BitSet calcRadius(ModelImage image, Vector3f center, ArrayList<Vector3f> plane) {
 
-		float[] origin = srcImage.getOrigin();
-		float[] res = srcImage.getResolutions(0);
 		Vector3f orgVec = new Vector3f(origin[0], origin[1], origin[2]);
 		PriorityQueue<RadialElement> pq = new PriorityQueue<RadialElement>();
 
@@ -247,9 +255,9 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 			Vector3f vec = new Vector3f(v);
 			vec.sub(orgVec);
 			vec.add(center);
-			vec.X /= res[0];
-			vec.Y /= res[1];
-			vec.Z /= res[2];
+			vec.X /= resolution[0];
+			vec.Y /= resolution[1];
+			vec.Z /= resolution[2];
 			int x = Math.round(vec.X);
 			int y = Math.round(vec.Y);
 			int z = Math.round(vec.Z);
@@ -278,7 +286,7 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 
 		float cnt = 0;
 		float area = 0;
-		float cutoff = res[0];
+		float cutoff = resolution[0];
 
 		ArrayList<Integer> intList = new ArrayList<Integer>();
 
@@ -301,13 +309,13 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 			RadialElement next = queue.peek();
 			// Automatically allow points within the smallest
 			// resolution to be considered foreground
-			if (re.getIndex() < res[2]) {
+			if (re.getIndex() < resolution[2]) {
 				mask.set(re.getIndex());
 			}
 			if (next != null) {
 				if (next.getRadius() > cutoff) {
 
-					cutoff += res[0];
+					cutoff += resolution[0];
 					float fraction = cnt / area;
 					// Use a sigmoidal function as the moving threshold
 					float threshold = radialThreshold / (1 + (float) Math.exp(-area / sigma));
