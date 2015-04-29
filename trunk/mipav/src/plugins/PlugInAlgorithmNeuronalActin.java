@@ -116,9 +116,6 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 			}
 		}
 
-		ViewJFrameImage srcFrame = new ViewJFrameImage(srcImage);
-		srcFrame.setVisible(true);
-
 		try {
 			append("Reading swc...", blackText);
 			readSWC();
@@ -195,10 +192,6 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 				results.add(new float[] {center.X, center.Y, center.Z, distance, (float) sum});
 			}
 
-			// ViewJFrameImage srcFrame = new ViewJFrameImage(cloneImage);
-			// srcFrame.setVisible(true);
-			// srcFrame.setPaintMask(totalMask);
-
 			append("Writing results...", blackText);
 			writeResults(results);
 
@@ -232,6 +225,14 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 		textArea.setCaretPosition(doc.getLength());
 	}
 
+	/**
+	 * Calculates the radius at the given coordinate in the given plane which is normal to the filament.
+	 * 
+	 * @param image
+	 * @param coord
+	 * @param plane
+	 * @return
+	 */
 	private BitSet calcRadius(ModelImage image, Vector3f center, ArrayList<Vector3f> plane) {
 
 		float[] origin = srcImage.getOrigin();
@@ -331,6 +332,17 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 
 	}
 
+	/**
+	 * Method to generate a pixel probability map as part of the pre-processing. Basically the first step in entropy
+	 * maximization calculations, each pixel is given a probability based on how likely that pixel value is in THAT
+	 * image. Due to the nature of the image, background is usually a much higher probability than signal, resulting in
+	 * an image where darker pixels are more likely to be signal.
+	 * 
+	 * This has since been changed to output entropy: -p*ln(p) instead of just p.
+	 * 
+	 * @param image to transform to probability.
+	 * @return the transformed probability map
+	 */
 	private ModelImage probabilityMap(ModelImage image) {
 
 		int value;
@@ -536,16 +548,16 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 		String parent = file.getParent();
 		String name = file.getName();
 		int ind = name.lastIndexOf(".");
-		if(ind != -1){
+		if (ind != -1) {
 			name = name.substring(0, ind);
 		}
-		
+
 		name += "_actin.csv";
-		
+
 		String fileOut = parent + File.separator + name;
-		
+
 		FileWriter fw = new FileWriter(new File(fileOut));
-		
+
 		fw.append("Image name," + srcImage.getImageFileName() + "\n");
 		fw.append("Filament name," + file.getName() + "\n");
 		fw.append("\n");
@@ -557,7 +569,7 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 			}
 			fw.append("\n");
 		}
-		
+
 		fw.close();
 
 	}
