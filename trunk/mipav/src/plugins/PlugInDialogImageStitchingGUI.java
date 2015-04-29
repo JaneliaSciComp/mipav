@@ -1,3 +1,19 @@
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmMaximumIntensityProjection;
+import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
+import gov.nih.mipav.model.structures.VOIBaseVector;
+import gov.nih.mipav.model.structures.VOIVector;
+import gov.nih.mipav.plugins.JDialogStandalonePlugin;
+import gov.nih.mipav.view.CustomUIBuilder;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewUserInterface;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridBagConstraints;
@@ -25,22 +41,13 @@ import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmMaximumIntensityProjection;
-import gov.nih.mipav.model.file.FileIO;
-import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.model.structures.VOIBase;
-import gov.nih.mipav.model.structures.VOIBaseVector;
-import gov.nih.mipav.model.structures.VOIVector;
-import gov.nih.mipav.plugins.JDialogStandalonePlugin;
-import gov.nih.mipav.view.CustomUIBuilder;
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.ViewUserInterface;
 
+/**
+ * Provides a very rudimentary GUI to stitch a series of images together one by one
+ * 
+ * @author wangvg
+ * 
+ */
 public class PlugInDialogImageStitchingGUI extends JDialogStandalonePlugin implements AlgorithmInterface{
 
 	/**
@@ -114,7 +121,6 @@ public class PlugInDialogImageStitchingGUI extends JDialogStandalonePlugin imple
 			dirText.setText(fileChooser.getSelectedFile().toString());
         	Preferences.setImageDirectory(fileChooser.getSelectedFile());
 		}else if(command.equals("Cancel")){
-			
 			if (isExitRequired()) {
 	            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 	        } else {
@@ -129,10 +135,10 @@ public class PlugInDialogImageStitchingGUI extends JDialogStandalonePlugin imple
 				createViewUndo();
 				
 				if(counter > 1){
-					
+					// Remove the last image
 					ArrayList<ModelImage> shortened = new ArrayList<ModelImage>(mpImages);
 					shortened.remove(shortened.size()-1);
-					
+					// Recalculate the image and display it
 					PlugInAlgorithmImageStitchingGUI alg = new PlugInAlgorithmImageStitchingGUI(shortened, relShift);
 					alg.run();
 					stitchFrame = new ViewJFrameImage(alg.getDestImage());
@@ -141,10 +147,10 @@ public class PlugInDialogImageStitchingGUI extends JDialogStandalonePlugin imple
 					stitchFrame.setVisible(true);
 					stitchFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 				}
-				
 			}
 		}else if(command.equals("Redo")){
 			if(!undoer.isEmpty()){
+				// Add the undone image and translation back to recalculate the image
 				undoer.redo();
 				createViewRedo();
 				
@@ -228,6 +234,7 @@ public class PlugInDialogImageStitchingGUI extends JDialogStandalonePlugin imple
 		}else{
 			
 			ModelImage im = pairFrame.getComponentImage().getImageA();
+			// You need to have reference points to stitch together
 			VOIVector vec = im.getVOIs();
 			if(vec.size() == 0){
 				MipavUtil.displayError("No reference points have been added.");
@@ -238,6 +245,7 @@ public class PlugInDialogImageStitchingGUI extends JDialogStandalonePlugin imple
 			}
 			VOI voi = vec.get(0);
 			VOIBaseVector base = voi.getCurves();
+			// Should only be two points, otherwise something is wrong
 			if(base.size()==2){
 				
 				int width = images.get(counter).getWidth(0);
@@ -264,6 +272,8 @@ public class PlugInDialogImageStitchingGUI extends JDialogStandalonePlugin imple
 				
 				Vector3f shift = vec1.sub(vec2);
 				
+				// You can either use a registration algorithm to jiggle the stitching to get a
+				// better match, but you can just go with whatever the given translation is as well
 				if(disableBox.isSelected()){
 					relShift.add(shift);
 				}else{
@@ -300,9 +310,8 @@ public class PlugInDialogImageStitchingGUI extends JDialogStandalonePlugin imple
 				stitchSpot = stitchFrame.getLocation();
 				stitchFrame.close();
 			}
-			
-			
-			
+
+			// Stitch the image together based on the various translations provided
 			PlugInAlgorithmImageStitchingGUI alg = new PlugInAlgorithmImageStitchingGUI(mpImages, relShift);
 			alg.addListener(this);
 			if (isRunInSeparateThread()) {
@@ -329,6 +338,9 @@ public class PlugInDialogImageStitchingGUI extends JDialogStandalonePlugin imple
 		return alg.getResultImage().get(0);
 	}
 	
+	/**
+	 * Places two images side by side so that it is easier for the user to see both images at the same time.
+	 */
 	private void createView(){
 		
 		FileIO io = new FileIO();
@@ -394,6 +406,9 @@ public class PlugInDialogImageStitchingGUI extends JDialogStandalonePlugin imple
 		
 	}
 	
+	/**
+	 * Carries out the undo action and redisplays the correct images side by side as well as the stitched image
+	 */
 	private void createViewUndo(){
 		
 		if(pairFrame != null){
@@ -449,6 +464,9 @@ public class PlugInDialogImageStitchingGUI extends JDialogStandalonePlugin imple
 		
 	}
 	
+	/**
+	 * Carries out the redo action and displays the correct individual images and stitched image
+	 */
 	private void createViewRedo(){
 		
 		if(pairFrame != null){
@@ -510,6 +528,9 @@ public class PlugInDialogImageStitchingGUI extends JDialogStandalonePlugin imple
 		fileChooser.showOpenDialog(this);
 	}
 	
+	/**
+	 * Initial GUI that prompts user for the directory containing the images
+	 */
 	private void init(){
 		
 		setForeground(Color.black);
@@ -557,6 +578,9 @@ public class PlugInDialogImageStitchingGUI extends JDialogStandalonePlugin imple
         System.gc();
 	}
 	
+	/**
+	 * Actual GUI used for the stitching. Provides instructions and actionable buttons to get the stitching to work.
+	 */
 	private void initGUI(){
 		
 		getContentPane().removeAll();
@@ -712,15 +736,43 @@ public class PlugInDialogImageStitchingGUI extends JDialogStandalonePlugin imple
 		Comparator<File> fileComp = new Comparator<File>(){
 
 			@Override
-			public int compare(File o1, File o2) {
-				String s1 = o1.getPath();
-				String s2 = o2.getPath();
-				if(s1.length() > s2.length())
-					return 1;
-				else if(s1.length() < s2.length())
-					return -1;
-				else{
-					return Integer.signum(s1.compareTo(s2));
+			public int compare(final File o1, final File o2) {
+				final String s1 = o1.getName();
+				final String s2 = o2.getName();
+
+				final String s1NoNum = s1.replaceAll("[0-9]", "");
+				final String s2NoNum = s2.replaceAll("[0-9]", "");
+
+				final int compare = s1NoNum.compareTo(s2NoNum);
+
+				if (compare == 0) {
+					// Without numbers, the two are the same
+					final String s1Num = s1.replaceAll("[^0-9]", "");
+					final String s2Num = s2.replaceAll("[^0-9]", "");
+					final String s1NumFinal;
+					final String s2NumFinal;
+
+					// Truncate so that you aren't growing too large
+					int length = String.valueOf(Integer.MAX_VALUE).length() - 1;
+					if (s1Num.length() > length) {
+						s1NumFinal = s1Num.substring(s1Num.length() - length);
+					} else {
+						s1NumFinal = s1Num;
+					}
+
+					if (s2Num.length() > length) {
+						s2NumFinal = s2Num.substring(s2Num.length() - length);
+					} else {
+						s2NumFinal = s2Num;
+					}
+
+					// Compare the left over numbers
+					final int s1Int = Integer.valueOf(s1NumFinal);
+					final int s2Int = Integer.valueOf(s2NumFinal);
+
+					return Integer.valueOf(s1Int).compareTo(Integer.valueOf(s2Int));
+				} else {
+					return compare;
 				}
 			}
 			
@@ -748,6 +800,12 @@ public class PlugInDialogImageStitchingGUI extends JDialogStandalonePlugin imple
 		
 	}
 	
+	/**
+	 * Convenience class used to keep track of any actions so that they are easier to undo/redo
+	 * 
+	 * @author wangvg
+	 * 
+	 */
 	private class UndoContainer{
 		
 		private Stack<ModelImage> imageStack;
