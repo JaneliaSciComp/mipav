@@ -254,28 +254,198 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	double sigma = 0.1;
     	// Copy edge info into lattice struct
     	DualLattice boundaries = new DualLattice();
-        int H_h = H.length;
-        int H_w = H[0].length;
+        int H_h = H[0].length;
+        int H_w = H.length;
         boundaries.H = new double[H_h][H_w];
         for (y = 0; y < H_h; y++) {
         	for (x = 0; x < H_w; x++) {
-        		boundaries.H[y][x] = H[y][x];
+        		boundaries.H[y][x] = H[x][y];
         	}
         }
-        int V_h = V.length;
-        int V_w = V[0].length;
+        int V_h = V[0].length;
+        int V_w = V.length;
         boundaries.V = new double[V_h][V_w];
         for (y = 0; y < V_h; y++) {
         	for (x = 0; x < V_w; x++) {
-        		boundaries.V[y][x] = V[y][x];
+        		boundaries.V[y][x] = V[x][y];
         	}
         }
         boundaries.width = boundaries.H.length;
         boundaries.height = boundaries.V[0].length;
-        PointIC ic[][][] = null;
+        PointIC ic[][][] = new PointIC[boundaries.width][boundaries.height][];
         
         computeSupport(boundaries, dthresh, 1.0, ic);
+        SMatrix W[] = new SMatrix[1];
+        computeAffinities2(ic, sigma, dthresh, W);
+        if (W[0] == null) {
+        	MipavUtil.displayError("computeAffinities2 failed");
+        	return;
+        }
     }
+    
+    /**
+     * Compute similarities for the set of "true" pixels in region.
+     * affinity matrix is ordered in scanline order
+     * @param icmap
+     * @param sigma
+     * @param dthresh
+     * @param affinities
+     */
+    private void computeAffinities2(final PointIC icmap[][][], final double sigma, final double dthresh,
+    		SMatrix affinities[]) {
+    	int x;
+    	int y;
+        int width = icmap.length;
+        int height = icmap[0].length;
+        
+        // Build a scanline order index
+        int numPixels = 0;
+        int index[][] = new int[width][height];
+        for (y = 0; y < height; y++) {
+        	for (x = 0; x < width; x++) {
+        		index[x][y] = numPixels;
+        		numPixels++;
+        	}
+        }
+        
+        // Sparse matrix data
+        // Number of non-zero entries in each row
+        int nz[] = new int[numPixels];
+        // The values in each row
+        double vals[][] = new double[numPixels][];
+        // The column number for each value in the row
+        int col[][] = new int[numPixels][];
+        
+        int dthreshi = (int)Math.ceil(dthresh);
+        // Window diameter
+        int wd = 2*dthreshi+1;
+        PointIC connections[] = new PointIC[wd*wd];
+        
+        int row = 0;
+        for (x = 0; x < width; x++) {
+        	for (y = 0; y < height; y++) {
+        		// The row we are now working on
+        		row = index[x][y];
+        		// Connection count for row i
+        		nz[row] = 0;
+        		// Index into sparse supportMap
+        		int icIndex = 0;
+        		for (int u = -dthreshi; u <= dthreshi; u++) {
+        			int yy = y + u;
+        			for (int v = -dthreshi; v <= dthreshi; v++) {
+        				int xx = x + v;
+        				if (xx < 0 || xx >= width) {continue;}
+        				if (yy < 0 || yy >= height) {continue;}
+        				if (u*u+v*v > dthresh*dthresh) {continue;}
+        				
+        				// Increment our index into the support map
+        				while (icIndex < icmap[x][y].length && icmap[x][y][icIndex].y < yy) {
+        					icIndex++;
+        				}
+        				while (icIndex < icmap[x][y].length && icmap[x][y][icIndex].x < xx) {
+        					icIndex++;
+        				}
+        				
+        				// Connection strength
+        				double pss = 0.0;
+        				if ((u == 0) && (v == 0)) {
+        					pss = 1.0;
+        				}
+        				else {
+        					double icsim = 0.0;
+        					if (icIndex < icmap[x][y].length && icmap[x][y][icIndex].x == xx &&
+        							icmap[x][y][icIndex].y == yy) {
+        						icsim = icmap[x][y][icIndex].sim;
+        						icIndex++;
+        					}
+        					pss = C_IC_SS(1.0 - icsim);
+        				}
+        				
+        				connections[nz[row]].x = xx;
+        				connections[nz[row]].y = yy;
+        				connections[nz[row]].sim = pss;
+        			} // for (int v = -dthreshi; v <= dthreshi; v++)
+        		} // for (int u = -dthreshi; u <= dthreshi; u++)
+        		
+        		// Fill in entries of sparse matrix
+        		vals[row] = new double[nz[row]];
+        		col[row] = new int[nz[row]];
+        		
+        		for (int j = 0; j < nz[row]; j++) {
+        			double val = Math.exp(-(1.0 - connections[j].sim)/sigma);
+        			if ((val < 0) || (val > 1.0)) {
+        				MipavUtil.displayError("val out of range in computeAffinities2");
+        				return;
+        			}
+        			vals[row][j] = val;
+        			col[row][j] = index[connections[j].x][connections[j].y];
+        		}
+        	} // for (y = 0; y < height; y++)
+        } // for (x = 0; x < width; x++)
+        affinities[0] = new SMatrix(numPixels, nz, col, vals);
+        affinities[0].symmetrize();
+    }
+    
+    /**
+     * probability-of-same-segment logistic fits for color and grayscale
+     * optimized for dthresh = 20
+     * @param ic
+     * @return
+     */
+    private double C_IC_SS(double ic) {
+        double val = 1.8682;
+        val += (ic / 0.3130)*-1.3113;
+        final double post = 1.0/(1.0 + Math.exp(-val));
+        if (Double.isInfinite(post)) { return 0.0; }
+        if (post < 0.0) { return 0.0; }
+        if (post > 1.0) { return 1.0; }
+        return post;
+    }
+    
+    private class SMatrix {
+    	public int n;
+    	public int nz[];
+    	public int col[][];
+    	public double values[][];
+    	// Number of nonzero entries in sparse matrix
+    	public int nnz;
+    	
+    	public SMatrix(int n, int nz[], int col[][], double values[][]) {
+    		this.n = n;
+    		this.nz = nz;
+    		this.col = col;
+    		this.values = values;
+    		nnz = 0;
+    		for (int i = 0; i < n; i++) {
+    		    nnz += nz[i];	
+    		}
+    	}
+    	
+    	public void symmetrize()
+    	{
+    	  int tail[] = new int[n];  
+    	  for (int r = 0; r < n; r++) 
+    	  {
+    	    int offset = 0;
+    	    while ((offset < nz[r]) && (col[r][offset] < r+1))
+    	    {
+    	      offset++;
+    	    }
+    	    for (int i = offset; i < nz[r]; i++) 
+    	    {
+    	      int c = col[r][i];
+    	      assert( col[c][tail[c]] == r ); 
+    	      double v_rc = values[r][i];
+    	      double v_cr = values[c][tail[c]];
+    	      values[r][i] = 0.5*(v_rc+v_cr);
+    	      values[c][tail[c]] = 0.5*(v_rc+v_cr);
+    	      tail[c]++;
+    	    }
+    	  }  
+    	}
+
+    }
+
     
     /**
      * Given a pb image and window radius, compute a support map for each
@@ -289,12 +459,27 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     		PointIC support[][][]) {
     	int x;
     	int y;
-        support = new PointIC[boundaries.width][boundaries.height][];
-        PointIC adj[] = null;
+        //support = new PointIC[boundaries.width][boundaries.height][];
+        PointIC adj[] = new PointIC[(2*wr+1)*(2*wr+1)];
         int count[] = new int[1];
         for (x = 0; x < boundaries.width; x++) {
         	for (y = 0; y < boundaries.height; y++) {
         		interveningContour(boundaries, thresh, x, y, wr, adj, count);
+        		PointIC map[] = new PointIC[count[0]];
+        		for (int i = 0; i < count[0]; i++) {
+        			map[i] = adj[i];
+        			final int ix = map[i].x;
+        			final int iy = map[i].y;
+        			if ((ix < 0) || (ix >= boundaries.width)) {
+        				MipavUtil.displayError("ix out of range in computeSupport");
+        				return;
+        			}
+        			if ((iy < 0) || (iy >= boundaries.height)) {
+        				MipavUtil.displayError("iy out of range in computeSupport");
+        				return;
+        			}
+        		}
+        		support[x][y] = map;
         	}
         }
     }
@@ -327,7 +512,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     		return;
     	}
         // Make sure adj array is big enough
-    	adj = new PointIC[(2*wr+1)*(2*wr+1)];
+    	//adj = new PointIC[(2*wr+1)*(2*wr+1)];
     	
     	// Allocate space for lists of pixels; this operation is O(1) 
     	// since the space need not be initialized
@@ -353,7 +538,142 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     			ic_walk(boundaries, thresh, x0, y0, rxa, y0 - 1, rxa, y0,
     					rxa, y0+1, wr, scratch, scanCount, scanLines);
     		}
+    		for (int y = y0-1; y > rya; y--) {
+    			ic_walk(boundaries, thresh, x0, y0, rxa, y-1, rxa, y,
+    					rxa, y+1, wr, scratch, scanCount, scanLines);
+    		}
     	} // if (x0 > rxa)
+    	
+    	if (x0 > rxa+1 || y0 > rya+1 || ((x0 > rxa) && (y0 > rya))) { // top-left
+    		ic_walk(boundaries, thresh, x0, y0, rxa, rya+1, rxa, rya,
+    				rxa+1, rya, wr, scratch, scanCount, scanLines);
+    	}
+    	if (((x0 == rxa) && (y0 == rya+1))  || ((x0 == rxa+1) && (y0 == rya))) {
+    	    PointIC pnt = new PointIC();
+    	    pnt.x = rxa;
+    	    pnt.y = rya;
+    	    pnt.sim = 1.0;
+    	    final int yind = pnt.y - y0 + wr;
+    	    scanLines[yind][scanCount[yind]++] = pnt;
+    	}
+    	
+    	if (y0 > rya) { // top
+    		for (int x = rxa+1; x < rxb; x++) {
+    			ic_walk(boundaries, thresh, x0, y0, x-1, rya, x, rya, x+1,
+    					rya, wr, scratch, scanCount, scanLines);
+    		}
+    	}
+    	
+    	if ((y0 > rya+1) || (x0 < rxb-1) || ((y0 > rya) && (x0 < rxb))) { // top-right
+    		ic_walk(boundaries, thresh, x0, y0, rxb-1, rya, rxb, rya,
+    				rxb, rya+1, wr, scratch, scanCount, scanLines);
+    	}
+    	if (((x0 == rxb-1) && (y0 == rya)) || ((x0 == rxb) && (y0 == rya+1))) {
+    		PointIC pnt = new PointIC();
+    		pnt.x = rxb;
+    		pnt.y = rya;
+    		pnt.sim = 1.0;
+    		final int yind = pnt.y - y0 + wr;
+    		scanLines[yind][scanCount[yind]++] = pnt;
+    	}
+    	
+    	if (x0 < rxb) { // right
+    		for (int y = rya+1; y < y0; y++) {
+    			ic_walk(boundaries, thresh, x0, y0, rxb, y-1, rxb, y,
+    					rxb, y+1, wr, scratch, scanCount, scanLines);
+    		}
+    	}
+    	
+    	// Now counterclockwise for theta = (pi, 0)
+    	if (x0 > rxa) { // left
+    		for (int y = y0+1; y < ryb; y++) {
+    			ic_walk(boundaries, thresh, x0, y0, rxa, y-1, rxa, y,
+    					rxa, y+1, wr, scratch, scanCount, scanLines);
+    		}
+    	}
+    	
+    	if ((x0 > rxa+1) || (y0 < ryb-1) || ((x0 > rxa) && (y0 < ryb))) { // bottom-left
+    		ic_walk(boundaries, thresh, x0, y0, rxa, ryb-1, rxa, ryb,
+    				rxa+1, ryb, wr, scratch, scanCount, scanLines);
+    	}
+    	if (((x0 == rxa) && (y0 == ryb-1)) || ((x0 == rxa+1) && (y0 == ryb))) {
+    		PointIC pnt = new PointIC();
+    		pnt.x = rxa;
+    		pnt.y = ryb;
+    		pnt.sim = 1.0;
+    		final int yind = pnt.y - y0 + wr;
+    		scanLines[yind][scanCount[yind]++] = pnt;
+    	}
+    	if (y0 < ryb) { // bottom
+    		for (int x = rxa+1; x < rxb; x++) {
+    			ic_walk(boundaries, thresh, x0, y0, x-1, ryb, x, ryb, x+1,
+    					ryb, wr, scratch, scanCount, scanLines);
+    		}
+    	}
+    	
+    	if ((y0 < ryb-1) || (x0 < rxb-1) || ((y0 < ryb) && (x0 < rxb))) { // bottom-right
+    		ic_walk(boundaries, thresh, x0, y0, rxb-1, ryb, rxb, ryb,
+    				rxb, ryb-1, wr, scratch, scanCount, scanLines);
+    	}
+    	if (((x0 == rxb-1) && (y0 == ryb)) || ((x0 == rxb) && (y0 == ryb-1))) {
+    		PointIC pnt = new PointIC();
+    		pnt.x = rxb;
+    		pnt.y = ryb;
+    		pnt.sim = 1.0;
+    		final int yind = pnt.y - y0 + wr;
+    		scanLines[yind][scanCount[yind]++] = pnt;
+    	}
+    	
+    	if (x0 < rxb) { // right
+    		for (int y = ryb-1; y > y0; y--) {
+    			ic_walk(boundaries, thresh, x0, y0, rxb, y-1, rxb, y,
+    					rxb, y+1, wr, scratch, scanCount, scanLines);
+    		}
+    		if ((y0 > 0) && (y0 < ryb)) {
+    			ic_walk(boundaries, thresh, x0, y0, rxb, y0-1, rxb, y0,
+    					rxb, y0+1, wr, scratch, scanCount, scanLines);
+    		}
+    	}
+    	
+    	for (int y = 0; y < 2*wr+1; y++) {
+    		int len = scanCount[y];
+    		if (len < 0 || len > 2*wr+1) {
+    			MipavUtil.displayError("len out of boundes in interveningContour");
+    			return;
+    		}
+    		
+    		if (y + y0 - wr < 0) {
+    			if (len != 0) {
+    				MipavUtil.displayError("len != 0 as expected in interveningContour");
+    				return;
+    			}
+    		}
+    		
+    		// Check that pixels are in the right row
+    		for (int i = 0; i < len; i++) {
+    			if (scanLines[y][i].y != y+y0-wr) {
+    				MipavUtil.displayError("scanLines[y][i].y != y+y0-wr in interveningContour");
+    				return;
+    			}
+    		}
+    		
+    		// Check that pixels in each row are in increasing order
+    		for (int i = 0; i < len-1; i++) {
+    			if (scanLines[y][i].x >= scanLines[y][i+1].x) {
+    				MipavUtil.displayError("scanLines[y][i].x >= scanLines[y][i+1].x in interveningContour");
+    				return;
+    			}
+    		}
+    	} // for (int y = 0; y < 2*wr+1; y++)
+    	
+    	// Construct the adjacency list
+    	count[0] = 0;
+    	for (int y = 0; y < 2*wr+1; y++) {
+    		int len = scanCount[y];
+    		for (int i = 0; i < len; i++) {
+    			adj[count[0]++] = scanLines[y][i];    
+    		}
+    	}
     }
     
     /**
@@ -422,6 +742,294 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         	MipavUtil.displayError("scanLines[0].length != 2*wr+1 in ic_walk");
         	return;	
         }
+        
+        // Sanity check the points
+        if (x0 < 0 || x0 >= width) {
+        	MipavUtil.displayError("x0 out of range in ic_walk");
+        	return;
+        }
+        
+        if (y0 < 0 || y0 >= height) {
+        	MipavUtil.displayError("y0 out of range in ic_walk");
+        	return;
+        }
+        
+        if (x1 < 0 || x1 >= width) {
+        	MipavUtil.displayError("x1 out of range in ic_walk");
+        	return;
+        }
+        
+        if (y1 < 0 || y1 >= height) {
+        	MipavUtil.displayError("y1 out of range in ic_walk");
+        	return;
+        }
+        
+        if (x2 < 0 || x2 >= width) {
+        	MipavUtil.displayError("x2 out of range in ic_walk");
+        	return;
+        }
+        
+        if (y2 < 0 || y2 >= height) {
+        	MipavUtil.displayError("y2 out of range in ic_walk");
+        	return;
+        }
+        
+        if (x3 < 0 || x3 >= width) {
+        	MipavUtil.displayError("x3 out of range in ic_walk");
+        	return;
+        }
+        
+        if (y3 < 0 || y3 >= height) {
+        	MipavUtil.displayError("y3 out of range in ic_walk");
+        	return;
+        }
+        
+        // Make sure point are all distinct
+        if (x0 == x1 && y0 == y1) {
+        	MipavUtil.displayError("(x0,y0) is the same as (x1,y1) in ic_walk");
+        	return;
+        }
+        
+        if (x0 == x2 && y0 == y2) {
+        	MipavUtil.displayError("(x0,y0) is the same as (x2,y2) in ic_walk");
+        	return;
+        }
+        
+        if (x0 == x3 && y0 == y3) {
+        	MipavUtil.displayError("(x0,y0) is the same as (x3,y3) in ic_walk");
+        	return;
+        }
+        
+        if (x1 == x2 && y1 == y2) {
+        	MipavUtil.displayError("(x1,y1) is the same as (x2,y2) in ic_walk");
+        	return;
+        }
+        
+        if (x1 == x3 && y1 == y3) {
+        	MipavUtil.displayError("(x1,y1) is the same as (x3,y3) in ic_walk");
+        	return;
+        }
+        
+        if (x2 == x3 && y2 == y3) {
+        	MipavUtil.displayError("(x2,y2) is the same as (x3,y3) in ic_walk");
+        	return;
+        }
+        
+        // Constants used in testing whether this is the best path
+        final long dx1 = x1 - x0;
+        final long dy1 = y1 - y0;
+        final long dx2 = x2 - x0;
+        final long dy2 = y2 - y0;
+        final long dx3 = x3 - x0;
+        final long dy3 = y3 - y0;
+        final long dot11 = dx1 * dx1 + dy1 * dy1;
+        final long dot22 = dx2 * dx2 + dy2 * dy2;
+        final long dot33 = dx3 * dx3 + dy3 * dy3;
+        
+        // Compute dx, dy for the bresenham line
+        final int dx = x2 - x0;
+        final int dy = y2 - y0;
+        final int adx = Math.abs(dx);
+        final int ady = Math.abs(dy);
+        
+        // Figure out what octant we're in for the bresenham algorithm
+        // Octant i covers pi/4 * [i,i+1)
+        int octant = -1;
+        if (dx > 0 && dy > 0) { // Quadrant 0
+        	octant = (adx > ady) ? 0: 1;
+        }
+        else if (dx <= 0 && dy > 0) { // Quadrant 1
+        	octant = (adx < ady) ? 2: 3;
+        }
+        else if (dy <= 0 && dx < 0) { // Quadrant 2
+        	octant = (adx > ady) ? 4 : 5;
+        }
+        else if (dx >= 0 && dy < 0) { // Quadrant 3
+        	octant = (adx < ady) ? 6 : 7;
+        }
+        else {
+        	MipavUtil.displayError("Octant error in ic_walk");
+        	return;
+        }
+        
+        // t is our bresenham counter
+        int t = 0;
+        switch (octant) {
+        case 0: t = -adx; break;
+        case 1: t = -ady; break;
+        case 2: t = -ady; break;
+        case 3: t = -adx; break;
+        case 4: t = -adx; break;
+        case 5: t = -ady; break;
+        case 6: t = -ady; break;
+        case 7: t = -adx; break;
+        }
+        
+        // maxpb contains the max-accumulation of pb from (x0,y0) to (x,y)
+        // on the bresenham line.
+        double maxpb = 0.0;
+        
+        // (xi,yi) is our current location on the bresenham line
+        int xi = x0;
+        int yi = y0;
+        
+        // Accumulate points in the order we find them
+        int count = 0;
+        int oldx = xi;
+        int oldy = yi;
+        
+        // Walk the line
+        while (xi != x2 || yi != y2) {
+        	// Step one pixel on the bresenham line
+        	switch (octant) {
+        	case 0:
+        		xi++; t += (ady << 1);
+        		if (t > 0) {yi++; t -= (adx << 1); }
+        		break;
+        	case 1:
+        		yi++; t += (adx << 1);
+        		if (t > 0) {xi++; t -= (ady << 1); }
+        		break;
+        	case 2:
+        		yi++; t += (adx << 1);
+        		if (t > 0) {xi--; t -= (ady << 1); }
+        		break;
+        	case 3:
+        		xi--; t += (ady << 1);
+        		if (t > 0) {yi++; t -= (adx << 1); }
+        		break;
+        	case 4:
+        		xi--; t += (ady << 1);
+        		if (t > 0) {yi--; t -= (adx << 1); }
+        		break;
+        	case 5:
+        		yi--; t += (adx << 1);
+        		if (t > 0) {xi--; t -= (ady << 1); }
+        		break;
+        	case 6:
+        		yi--; t += (adx << 1);
+        		if (t > 0) {xi++; t -= (ady << 1); }
+        		break;
+        	case 7:
+        		xi++; t += (ady << 1);
+        		if (t > 0) {yi--; t-= (adx << 1); }
+        		break;
+        	}
+        	
+        	// Figure out if the bresenham line from (x0,y0) to (x2,y2) is the
+        	// best approximant we will see for the line from (x0,y0) to (xi,yi).
+        	// We need:
+        	//          T(i,2) < T(i,1) && T(i,2) <= T(i,3)
+        	// Where T(a,b) is the angle between the two lines (x0,y0) - (xa,ya)
+        	// and (x0,y0) - (xb,yb).
+        	// We can compute an exact integer predicate; let C be the square
+        	// of the cosine of T:
+        	//      C(i,2) > C(i,1) && C(i,2) >= C(i,3)
+        	// Use the identity:
+        	//      cos(t) = a.b/|a||b|
+        	// Square and cross-multiply to get rid of the divides and square
+        	// roots.
+        	// Note that we first check to see if T(i,2) == 0, in which case
+        	// the line is a perfect approximant.
+        	
+        	final long dxi = xi - x0;
+        	final long dyi = yi - y0;
+        	final long dotii = dxi * dxi + dyi * dyi;
+        	final long doti1 = dxi * dx1 + dyi * dy1;
+        	final long doti2 = dxi * dx2 + dyi * dy2;
+        	final long doti3 = dxi * dx3 + dyi * dy3;
+        	
+        	final boolean good = (doti2*doti2 == dotii*dot22) 
+        			|| (dot11*doti2*doti2 > dot22*doti1*doti1 && dot33*doti2*doti2 >= dot22*doti3*doti3);
+        	
+        	// Otherwise accumulate the pb value if we've crossed an edge
+        	double intersected = 0.0;
+        	if (oldx == xi) {
+        		if (yi > oldy) {
+        			intersected = boundaries.H[xi][yi];
+        		}
+        		else if (yi < oldy) {
+        			intersected = boundaries.H[oldx][oldy];
+        		}
+        	}
+        	else if (oldy == yi) {
+        		if (xi > oldx) {
+        			intersected = boundaries.V[xi][yi];
+        		}
+        		else if (xi < oldx) {
+        			intersected = boundaries.V[oldx][oldy];
+        		}
+        	}
+        	else {
+        		if ((xi > oldx) && (yi > oldy)) { // down to right
+        			intersected = Math.max(boundaries.H[oldx][yi], intersected);
+        			intersected = Math.max(boundaries.H[xi][yi], intersected);
+        			intersected = Math.max(boundaries.V[xi][oldy], intersected);
+        			intersected = Math.max(boundaries.V[xi][yi], intersected);
+        		}
+        		else if ((xi > oldx) && (yi < oldy)) { // up to right
+        			intersected = Math.max(boundaries.H[oldx][oldy], intersected);
+        			intersected = Math.max(boundaries.H[xi][oldy], intersected);
+        			intersected = Math.max(boundaries.V[xi][oldy], intersected);
+        			intersected = Math.max(boundaries.V[xi][yi], intersected);
+        		}
+        		else if ((xi < oldx) && (yi > oldy)) { // down to left
+        			intersected = Math.max(boundaries.H[oldx][yi], intersected);
+        			intersected = Math.max(boundaries.H[xi][yi], intersected);
+        			intersected = Math.max(boundaries.V[oldx][oldy], intersected);
+        			intersected = Math.max(boundaries.V[oldx][yi], intersected);
+        		}
+        		else if ((xi < oldx) && (yi < oldy)) { // up to left
+        			intersected = Math.max(boundaries.H[oldx][oldy], intersected);
+        			intersected = Math.max(boundaries.H[xi][oldy], intersected);
+        			intersected = Math.max(boundaries.V[oldx][oldy], intersected);
+        			intersected = Math.max(boundaries.V[oldx][yi], intersected);
+        		}
+        	}
+        	maxpb = Math.max(maxpb,  intersected);
+        	oldx = xi;
+        	oldy = yi;
+        	
+        	// If the approximation is not good, then skip this point
+        	if (!good) { continue; }
+        	
+        	// If the accumulated pb is too high, then stop
+        	if (maxpb > thresh) {
+        		break;
+        	}
+        	
+        	// Record this connection
+        	PointIC p = new PointIC();
+        	p.x = xi;
+        	p.y = yi;
+        	p.sim = 1.0 - maxpb;
+        	points[count] = p;
+        	count++;
+        }
+        
+        // Add our list of points to the scanLines; we have to reverse 
+        // the order in octants 2,3,4,5
+        switch (octant) {
+        case 0:
+        case 1:
+        case 6:
+        case 7:
+        	for (int i = 0; i < count; i++) {
+        		final int yind = points[i].y - y0 + wr;
+        		scanLines[yind][scanCount[yind]++] = points[i];
+        	}
+        	break;
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+        	for (int i = count - 1; i >= 0; i--) {
+        		final int yind = points[i].y - y0 + wr;
+        		scanLines[yind][scanCount[yind]++] = points[i];
+        	}
+        	break;
+        }
+        return;
     }
     
     /**
