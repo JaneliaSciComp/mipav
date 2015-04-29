@@ -889,7 +889,8 @@ public class VolumeSurface extends VolumeObject
         if ( m_bFirstRender )
         {
         	m_bFirstRender = false;
-        	//m_kLightShaderTransparent.LoadResources( kRenderer, m_kMesh );
+        	m_kLightShader.LoadResources( kRenderer, m_kMesh );
+        	m_kLightShaderTransparent.LoadResources( kRenderer, m_kMesh );
         }
         for ( int i = 0; i < m_kScene.GetQuantity(); i++ )
         {

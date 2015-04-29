@@ -38,7 +38,7 @@ public class SurfaceLightingEffect extends VolumeClipEffect
     
     private PixelShader m_kPPixelLighting;
     
-    private boolean m_bPerPixelLighting = false;
+    private boolean m_bPerPixelLighting = true;
     
     private Texture m_kVolumeTextureNew;
     
@@ -212,6 +212,7 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         Blend(m_fBlend);
         SetReverseFace(m_iReverseFace);
         ResetClip();
+        SetLight( "Light0Type", new float[]{1,0,0,0} );
         super.OnLoadPrograms ( iPass,  pkVProgram, pkPProgram, pkCProgram );
     }
     /**
@@ -276,6 +277,7 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         if ( pkCProgram.GetUC(kLightType) != null)
         {
             pkCProgram.GetUC(kLightType).SetDataSource(afType);
+//            System.err.println( kLightType + " " + afType[0] + " " + afType[1] + " " + afType[2] + " " + afType[3] );
         }
         
     }

@@ -903,6 +903,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	private int annotationSpheresIndex = -1;
 	private HashMap<String, VOI> annotationVOIs;
 	private HashMap<String, VOI[]> neuriteVOIs;
+	private HashMap<String, VolumeSurface[]> neuriteSurfaces;
 	private HashMap<String, Boolean> neuriteDisplay;
 	private HashMap<String, ColorRGB> annotationSpheresColors;
 	private JPanelAnnotationAnimation annotationAnimationPanel;
@@ -1047,11 +1048,31 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			return;
 		}
 
+
+		int dimX = m_kVolumeImageA.GetImage().getExtents().length > 0 ? m_kVolumeImageA.GetImage().getExtents()[0] : 1;
+		int dimY = m_kVolumeImageA.GetImage().getExtents().length > 1 ? m_kVolumeImageA.GetImage().getExtents()[1] : 1;
+		int dimZ = m_kVolumeImageA.GetImage().getExtents().length > 2 ? m_kVolumeImageA.GetImage().getExtents()[2] : 1;
+		float scale = 0.05f * Math.min( dimX, Math.min( dimY, dimZ ) );
+		scale = Math.max( 3, scale );
+		VolumeSurface[] surfaces = neuriteSurfaces.get(neuriteName);
 		for ( int i = 0; i < neurites.length; i++ )
 		{
 			VOIContour contour = (VOIContour) neurites[i].getCurves().elementAt(0);
 			updateContour( contour, annotationPositions.elementAt(i), names );
+			if ( surfaces != null )
+			{
+				m_kDisplayList.remove(surfaces[i]);	
+				if ( contour.size() > 1 )
+				{
+					SurfaceState kSurface = new SurfaceState( createNeuriteSurface(contour, scale/3f), "AxL" );	
+					surfaces[i] = new VolumeSurface(m_kVolumeImageA,
+							m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ, kSurface, false, true);
+					surfaces[i].SetDisplay(false);
+					m_kDisplayList.add(surfaces[i]);						
+				}
+			}
 		}
+		annotationVOIsUpdate(annotationSpheresIndex);
 	}
 	
 	private void updateContour( VOIContour contour, VOI positions, String[] names )
@@ -1087,10 +1108,16 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		if ( neuriteVOIs != null )
 		{
 			VOI[] neurites = neuriteVOIs.get( neuriteName );
+			VolumeSurface[] surfaces = neuriteSurfaces.get(neuriteName);
 			for ( int j = 0; j < neurites.length; j++ )
 			{
 				VolumeVOI voi = neurites[j].getCurves().elementAt(0).getVolumeVOI();
 				voi.update( new ColorRGBA(color.R, color.G, color.B, 1) );
+				
+				if ( surfaces[j] != null )
+				{
+					surfaces[j].SetColor(color, true );	
+				}
 				annotationVOIsUpdate(annotationSpheresIndex);			
 			}
 		}
@@ -1104,13 +1131,22 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			updateNeurite(neuriteName, names);
 			return;
 		}
+
+		int dimX = m_kVolumeImageA.GetImage().getExtents().length > 0 ? m_kVolumeImageA.GetImage().getExtents()[0] : 1;
+		int dimY = m_kVolumeImageA.GetImage().getExtents().length > 1 ? m_kVolumeImageA.GetImage().getExtents()[1] : 1;
+		int dimZ = m_kVolumeImageA.GetImage().getExtents().length > 2 ? m_kVolumeImageA.GetImage().getExtents()[2] : 1;
+		float scale = 0.05f * Math.min( dimX, Math.min( dimY, dimZ ) );
+		scale = Math.max( 3, scale );
+		
 		if ( neuriteVOIs == null )
 		{
 			neuriteVOIs = new HashMap<String, VOI[]>();
 			neuriteDisplay = new HashMap<String, Boolean>();
 			neuriteNames = new Vector<String>();
+			neuriteSurfaces = new HashMap<String, VolumeSurface[]>();
 		}
 		VOI[] neurite = new VOI[annotationPositions.size()];
+		VolumeSurface[] surfaces = new VolumeSurface[annotationPositions.size()];
 		for ( int i = 0; i < annotationPositions.size(); i++ )
 		{
 			neurite[i] = new VOI( (short) 0, neuriteName, VOI.POLYLINE, 1.0f );
@@ -1130,6 +1166,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			neurite[i].getCurves().add(contour);
 			if ( contour.size() > 1 )
 			{
+				SurfaceState kSurface = new SurfaceState( createNeuriteSurface(contour, scale/3f), neuriteName + i );	
+				surfaces[i] = new VolumeSurface(m_kVolumeImageA,
+						m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ, kSurface, false, true);
+				surfaces[i].SetDisplay(false);
+				m_kDisplayList.add(surfaces[i]);	
 				
 			}
 			contour.createVolumeVOI( m_kVolumeImageA, m_kTranslate );
@@ -1139,21 +1180,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		neuriteVOIs.put(neuriteName, neurite);
 		neuriteNames.add(neuriteName);
 		neuriteDisplay.put(neuriteName, false);
-				
-
-//			if ( neurites[i][0].size() > 1 )
-//			{
-//				SurfaceState kSurface = new SurfaceState( createNeuriteSurface(neurites[i][0], scale/3f), "AxL" );	
-//				neuriteSurfaces[i][0] = new VolumeSurface(m_kVolumeImageA,
-//						m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ, kSurface, false, true);
-//				neuriteSurfaces[i][0].SetDisplay(false);
-//				m_kDisplayList.add(neuriteSurfaces[i][0]);	
-//			}
-//
-//			if ( neurites[i][1].size() > 1 )
-//			{
-//			}
-//		}
+		neuriteSurfaces.put( neuriteName, surfaces );
 	}
 
 	public void setAnnotationVOIColor( String name, ColorRGB color )
@@ -1314,6 +1341,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			Matrix3f rotation = new Matrix3f(false);
 			Vector3f axis = Vector3f.cross( Vector3f.UNIT_Z, direction );
 			float angle = Vector3f.angle( Vector3f.UNIT_Z, direction );
+			axis.normalize();
 			rotation.fromAxisAngle( axis, angle );
 			xform.SetRotate( rotation );
 			xform.SetTranslate(midPt);
@@ -1412,9 +1440,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			for ( int i = 0; i < neuriteNames.size(); i++ )
 			{
 				VOI[] neurites = neuriteVOIs.get( neuriteNames.elementAt(i) );
+				VolumeSurface[] surfaces = neuriteSurfaces.get( neuriteNames.elementAt(i) );
 				for ( int j = 0; j < neurites.length; j++ )
 				{
 					neurites[j].getCurves().elementAt(0).getVolumeVOI().SetDisplay(false);
+					if ( surfaces[j] != null )
+					{
+						surfaces[j].SetDisplay(false);
+					}
 				}
 			}
 		}
@@ -1458,6 +1491,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 					if ( neurites[annotationSpheresIndex] != null )
 					{
 						neurites[annotationSpheresIndex].getCurves().elementAt(0).getVolumeVOI().SetDisplay(neuriteDisplay.get(neuriteNames.elementAt(i)));
+					}
+					VolumeSurface[] surfaces = neuriteSurfaces.get( neuriteNames.elementAt(i) );
+					if ( surfaces[annotationSpheresIndex] != null )
+					{
+						surfaces[annotationSpheresIndex].SetDisplay(neuriteDisplay.get(neuriteNames.elementAt(i)));
 					}
 				}
 			}
@@ -1538,10 +1576,16 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			for ( int i = 0; i < neuriteNames.size(); i++ )
 			{
 				VOI[] neurites = neuriteVOIs.get( neuriteNames.elementAt(i) );
+				VolumeSurface[] surfaces = neuriteSurfaces.get( neuriteNames.elementAt(i) );
 				for ( int j = 0; j < neurites.length; j++ )
 				{
 					neurites[j].getCurves().elementAt(0).getVolumeVOI().GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
 					neurites[j].getCurves().elementAt(0).getVolumeVOI().GetScene().UpdateGS();
+					if ( surfaces[j] != null )
+					{
+						surfaces[j].GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+						surfaces[j].GetScene().UpdateGS();
+					}
 				}
 			}
 		}

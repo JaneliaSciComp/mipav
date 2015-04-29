@@ -2,31 +2,22 @@ package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIText;
-import gov.nih.mipav.view.CustomUIBuilder;
+import gov.nih.mipav.view.CustomUIBuilder.UIParams;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJColorChooser;
 import gov.nih.mipav.view.ViewMenuBuilder;
-import gov.nih.mipav.view.CustomUIBuilder.UIParams;
-import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
-import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRenderBase;
-import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase.CancelListener;
-import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurface_WM.OkColorListener;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -35,8 +26,6 @@ import java.util.Arrays;
 import java.util.Vector;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -48,224 +37,56 @@ import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
-import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 
 
 public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeListener, ListSelectionListener, KeyListener, MouseListener {
 
-//    private JCheckBox[] checkboxList;
-//    private JButton[] colorButtonList;
-//    private JCheckBox[] labelCheckList;
-//    private JButton[] labelColorList;
-    private JSlider annimationSlider;
-    private JLabel timeLabel;
-    private VolumeTriPlanarRender parent;
+/**
+     * Pick up the selected color and call method to change the color.
+     */
+    class OkColorListener implements ActionListener {
 
-    /** Scroll pane. */
-    private JScrollPane scroller;
-    
-    public JPanelAnnotationAnimation( VolumeTriPlanarRender parent, int timeSteps, Vector<String> annotationNames )
-    {
-        super();
-        this.parent = parent;
-//        init( timeSteps, annotationNames );
-        init( annotationNames, timeSteps );
+        /** Color Button */
+        JButton button;
+        OkColorListener( ) {
+            super();
+        }
+
+        /**
+         * Creates a new OkColorListener object.
+         *
+         * @param  _button  DOCUMENT ME!
+         */
+        OkColorListener(JButton _button) {
+            super();
+            button = _button;
+        }
+
+        /**
+         * Get color from chooser and set button and color.
+         *
+         * @param  e  Event that triggered function.
+         */
+        public void actionPerformed(ActionEvent e) {
+            Color color = colorChooser.getColor();
+            setButtonColor(button, color);
+        }
     }
     
-//    private void init( int timeSteps, Vector<String> annotations )
-//    {
-//    	String[] names = new String[annotations.size()];
-//    	for ( int i = 0; i < annotations.size(); i++ )
-//    	{
-//    		names[i] = annotations.elementAt(i);
-//    	}
-//    	
-//        Arrays.sort( names );
-//    	int size = annotations.size();
-//    	JPanel annotationPanel = new JPanel();
-//    	JPanel labelsPanel = new JPanel();
-//    	annotationPanel.setLayout(new GridBagLayout());
-//    	annotationPanel.setForeground(Color.white);
-//    	annotationPanel.setBackground(Color.white);
-//    	
-//    	labelsPanel.setLayout(new GridBagLayout());
-//    	labelsPanel.setForeground(Color.white);
-//    	labelsPanel.setBackground(Color.white);
-//        
-//        checkboxList = new JCheckBox[size];
-//        colorButtonList = new JButton[size];
-//        labelCheckList = new JCheckBox[size];
-//        labelColorList = new JButton[size];
-//        
-//        GridBagConstraints gbc = new GridBagConstraints();
-//        gbc.gridx = 0;
-//        gbc.gridy = 0;
-////        gbc.gridwidth = 1;
-////        gbc.gridheight = 1;
-//
-//        for (int i = 0; i < size; i++) { // place nSlices of check options for user and give them a name
-//            checkboxList[i] = new JCheckBox( names[i], true );
-//            checkboxList[i].addActionListener(this);
-//            checkboxList[i].setBackground(Color.white);
-//            annotationPanel.add(checkboxList[i], gbc); gbc.gridx++;
-//
-//            colorButtonList[i] = new JButton();
-//            colorButtonList[i].addActionListener(this);
-//            colorButtonList[i].setMinimumSize(new Dimension(30, 30));
-//            colorButtonList[i].setMaximumSize(new Dimension(30, 30));
-//            colorButtonList[i].setPreferredSize(new Dimension(30, 30));
-//            annotationPanel.add(colorButtonList[i], gbc); gbc.gridx++;
-////            annotationPanel.add(new JLabel(" "), gbc); gbc.gridx++;
-//            
-//
-//            gbc.gridx = 0;
-//            labelCheckList[i] = new JCheckBox( "show label", true );
-//            labelCheckList[i].addActionListener(this);
-//            labelCheckList[i].setBackground(Color.white);
-//            labelsPanel.add(labelCheckList[i], gbc); gbc.gridx++;
-//            
-//            labelColorList[i] = new JButton();
-//            labelColorList[i].addActionListener(this);
-//            labelColorList[i].setMinimumSize(new Dimension(30, 30));
-//            labelColorList[i].setMaximumSize(new Dimension(30, 30));
-//            labelColorList[i].setPreferredSize(new Dimension(30, 30));
-//            labelsPanel.add(labelColorList[i], gbc); gbc.gridx++;
-////            labelsPanel.add(new JLabel(" "), gbc); gbc.gridx++;
-//            
-//            gbc.gridx = 0;
-//            gbc.gridy++;
-//        }
-//        JPanel annotationCheckPanel = new JPanel(new GridBagLayout());
-//
-//        // make check & uncheck buttons for the panel--place inside the above border
-//        JButton checkButton = new JButton("Select all");
-//        checkButton.setPreferredSize(new Dimension(95, 30));
-//        checkButton.setMinimumSize(new Dimension(95, 30));
-//        annotationCheckPanel.add(checkButton, gbc);
-//        checkButton.addActionListener(this);
-//        checkButton.setActionCommand("SelectAll");
-//
-//        gbc.gridx = 1;
-//        JButton unCheckButton = new JButton("Clear");
-//        unCheckButton.setPreferredSize(new Dimension(95, 30));
-//        unCheckButton.setMinimumSize(new Dimension(95, 30));
-//        unCheckButton.addActionListener(this);
-//        unCheckButton.setActionCommand("ClearAll");
-//        annotationCheckPanel.add(unCheckButton, gbc);
-//        
-//
-//        JPanel labelCheckPanel = new JPanel(new GridBagLayout());
-//        gbc = new GridBagConstraints();
-//
-//        gbc.gridx = 0;
-//        gbc.gridy = 0;
-//        gbc.gridwidth = 1;
-//        gbc.gridheight = 1;
-//
-//        // make check & uncheck buttons for the panel--place inside the above border
-//        checkButton = new JButton("Select all");
-//        checkButton.setPreferredSize(new Dimension(95, 30));
-//        checkButton.setMinimumSize(new Dimension(95, 30));
-//        labelCheckPanel.add(checkButton, gbc);
-//        checkButton.addActionListener(this);
-//        checkButton.setActionCommand("SelectAllLabels");
-//
-//        gbc.gridx = 1;
-//        unCheckButton = new JButton("Clear");
-//        unCheckButton.setPreferredSize(new Dimension(95, 30));
-//        unCheckButton.setMinimumSize(new Dimension(95, 30));
-//        unCheckButton.addActionListener(this);
-//        unCheckButton.setActionCommand("ClearAllLabels");
-//        labelCheckPanel.add(unCheckButton, gbc);
-//
-//
-//        JPanel annotationListPanel = new JPanel(new BorderLayout());
-//        annotationListPanel.add(annotationPanel, BorderLayout.NORTH);        
-//        annotationListPanel.add(annotationCheckPanel, BorderLayout.CENTER);
-//
-//        JPanel annotationLlabelPanel = new JPanel(new BorderLayout());
-//        annotationLlabelPanel.add(labelsPanel, BorderLayout.NORTH);        
-//        annotationLlabelPanel.add(labelCheckPanel, BorderLayout.CENTER);
-//        
-//        JPanel dualPanel = new JPanel( new GridLayout(1,2) );
-//        dualPanel.add(annotationListPanel);
-//        dualPanel.add(annotationLlabelPanel);        
-//        
-//
-//        JButton playButton = new JButton("Play");
-//        playButton.addActionListener(this);
-//        playButton.setActionCommand("Play");
-//        playButton.setFont(MipavUtil.font12B);
-//        playButton.setPreferredSize(MipavUtil.defaultButtonSize);
-//
-//        JButton stopButton = new JButton("Stop");
-//        stopButton.addActionListener(this);
-//        stopButton.setActionCommand("Stop");
-//        stopButton.setFont(MipavUtil.font12B);
-//        stopButton.setPreferredSize(MipavUtil.defaultButtonSize);
-//
-//        JButton recordButton = new JButton("Record");
-//        recordButton.addActionListener(this);
-//        recordButton.setActionCommand("Record");
-//        recordButton.setFont(MipavUtil.font12B);
-//        recordButton.setPreferredSize(MipavUtil.defaultButtonSize);
-//        
-//
-//        JLabel timeSlice = new JLabel("Time: ");
-//        timeLabel = new JLabel("0");
-//        annimationSlider = new JSlider(0, timeSteps-1, 0 );
-//        annimationSlider.setMajorTickSpacing(1);
-////        annimationSlider.setMinorTickSpacing(1);
-////        annimationSlider.setPaintTicks(true);
-//        annimationSlider.addChangeListener(this);
-////        annimationSlider.setPaintLabels(true);
-//        annimationSlider.setSnapToTicks(true);
-//        annimationSlider.setEnabled(true);
-//        
-//        
-//        GridBagConstraints kGBC = new GridBagConstraints();
-//        GridBagLayout kGrid = new GridBagLayout();
-//        kGBC.gridx = 0;
-//        kGBC.gridy = 0;
-//        
-//        JPanel kAnimatePanel = new JPanel(kGrid);
-//        kAnimatePanel.setBorder(buildTitledBorder("Animation"));
-//        kAnimatePanel.add( playButton, kGBC ); kGBC.gridx++;
-//        kAnimatePanel.add( stopButton, kGBC ); kGBC.gridx++;
-//        kAnimatePanel.add( recordButton, kGBC ); kGBC.gridx++;
-//        kGBC.gridx = 0;
-//        kGBC.gridy = 1;
-//        
-//        kAnimatePanel.add( timeSlice, kGBC ); kGBC.gridx++;
-//        kAnimatePanel.add( annimationSlider, kGBC ); kGBC.gridx++;
-//        kAnimatePanel.add( timeLabel, kGBC ); kGBC.gridx++;
-//                
-//        
-//        JPanel interfacePanel = new JPanel(new BorderLayout());        
-//        interfacePanel.add(dualPanel, BorderLayout.NORTH);
-//        interfacePanel.add(kAnimatePanel, BorderLayout.CENTER);
-//
-//
-//
-//        // make the list scroll if there are enough checkboxes
-//        scroller = new JScrollPane(interfacePanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-//                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-//        
-//        mainPanel = new JPanel(new BorderLayout());       
-//        mainPanel.add(scroller, BorderLayout.NORTH); 
-//        
-//        getContentPane().add(mainPanel);
-//        pack();
-//    }
+    private JSlider annimationSlider;
+    private JLabel timeLabel;
+
+    private VolumeTriPlanarRender parent;
     
+    /** Scroll pane. */
+    private JScrollPane scroller;
     
     private JTabbedPane neuriteTabbedPane;
     private JCheckBox displaySurface;
@@ -275,155 +96,14 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
     private JTextField diameter;
     private Vector<JCheckBox> displayNeurite;
     private Vector<JTextField> diameterNeurite;
-    private void init( Vector<String> annotations, int timeSteps ) {
-        // Scroll panel that hold the control panel layout in order to use JScrollPane
-        JPanel mainScrollPanel = new JPanel();
-        mainScrollPanel.setLayout(new BorderLayout());
-
-        scroller = new JScrollPane(mainScrollPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                   JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-
-        mainPanel = new JPanel(new BorderLayout());
-
-        JPanel surfacePanel = new JPanel();
-        displaySurface = new JCheckBox("display", true);
-        displaySurface.addActionListener(this);
-        displaySurface.setActionCommand("display");
-
-        JButton colorButton = new JButton("color");
-        colorButton.addActionListener(this);
-        colorButton.setActionCommand("color");
-
-        diameter = new JTextField("1.0");
-//        diameter.addFocusListener( this );
-        diameter.addKeyListener( this );
-
-        surfacePanel.add( new JLabel("Annotation: " ) );
-        surfacePanel.add(displaySurface);
-        surfacePanel.add(colorButton);
-        surfacePanel.add( new JLabel("set diameter (0.1-2.0): " ) );
-        surfacePanel.add(diameter);
-        
-
-
-        JPanel labelPanel = new JPanel();
-        displayLabel = new JCheckBox("display", true);
-        displayLabel.addActionListener(this);
-        displayLabel.setActionCommand("displayLabel");
-
-        JButton fontButton = new JButton("text options");
-        fontButton.addActionListener(this);
-        fontButton.setActionCommand("text");
-        
-        labelPanel.add( new JLabel("Label: " ) );
-        labelPanel.add(displayLabel);
-        labelPanel.add(fontButton);
-        
-        JPanel displayOptions = new JPanel(new BorderLayout());
-        displayOptions.add( surfacePanel, BorderLayout.NORTH );
-        displayOptions.add( labelPanel, BorderLayout.SOUTH );
-        
-        // list panel for surface filenames
-        surfaceList = new JList(new DefaultListModel());
-        surfaceList.addListSelectionListener(this);
-        surfaceList.addMouseListener( this );
-
-        JScrollPane kScrollPane = new JScrollPane(surfaceList);
-        JPanel scrollPanel = new JPanel();
-
-        scrollPanel.setLayout(new BorderLayout());
-        scrollPanel.add(kScrollPane);
-        scrollPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
-        JPanel listPanel = new JPanel();
-        listPanel.setLayout(new BorderLayout());
-        listPanel.add(scrollPanel, BorderLayout.CENTER);
-        listPanel.add(displayOptions, BorderLayout.SOUTH);
-        listPanel.setBorder(buildTitledBorder("Annotation list"));
-        
-        //////////////////////////////////////////////////////////////////
-
-        neuriteTabbedPane = new JTabbedPane(); 
-        
-        
-        /////////////////////////////////////////////////////////////////
-        JButton playButton = new JButton("Play");
-        playButton.addActionListener(this);
-        playButton.setActionCommand("Play");
-        playButton.setFont(MipavUtil.font12B);
-        playButton.setPreferredSize(MipavUtil.defaultButtonSize);
-
-        JButton stopButton = new JButton("Stop");
-        stopButton.addActionListener(this);
-        stopButton.setActionCommand("Stop");
-        stopButton.setFont(MipavUtil.font12B);
-        stopButton.setPreferredSize(MipavUtil.defaultButtonSize);
-
-        JButton recordButton = new JButton("Record");
-        recordButton.addActionListener(this);
-        recordButton.setActionCommand("Record");
-        recordButton.setFont(MipavUtil.font12B);
-        recordButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        
-
-        JLabel timeSlice = new JLabel("Time: ");
-        timeLabel = new JLabel("0");
-        annimationSlider = new JSlider(0, timeSteps-1, 0 );
-        annimationSlider.setMajorTickSpacing(1);
-//        annimationSlider.setMinorTickSpacing(1);
-//        annimationSlider.setPaintTicks(true);
-        annimationSlider.addChangeListener(this);
-//        annimationSlider.setPaintLabels(true);
-        annimationSlider.setSnapToTicks(true);
-        annimationSlider.setEnabled(true);
-        
-        
-        GridBagConstraints kGBC = new GridBagConstraints();
-        GridBagLayout kGrid = new GridBagLayout();
-        kGBC.gridx = 0;
-        kGBC.gridy = 0;
-        
-        JPanel kAnimatePanel = new JPanel(kGrid);
-        kAnimatePanel.setBorder(buildTitledBorder("Animation"));
-        kAnimatePanel.add( playButton, kGBC ); kGBC.gridx++;
-        kAnimatePanel.add( stopButton, kGBC ); kGBC.gridx++;
-        kAnimatePanel.add( recordButton, kGBC ); kGBC.gridx++;
-        kGBC.gridx = 0;
-        kGBC.gridy = 1;
-        
-        kAnimatePanel.add( timeSlice, kGBC ); kGBC.gridx++;
-        kAnimatePanel.add( annimationSlider, kGBC ); kGBC.gridx++;
-        kAnimatePanel.add( timeLabel, kGBC ); kGBC.gridx++;
-
-        mainScrollPanel.add(listPanel, BorderLayout.NORTH);
-        mainScrollPanel.add(neuriteTabbedPane, BorderLayout.CENTER);
-        mainScrollPanel.add(kAnimatePanel, BorderLayout.SOUTH);
-        mainPanel.add(scroller, BorderLayout.CENTER);
-        
-
-        String[] names = new String[annotations.size()];
-    	for ( int i = 0; i < annotations.size(); i++ )
-    	{
-    		names[i] = annotations.elementAt(i);
-    	}
-    	
-        Arrays.sort( names );
-        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-        for ( int i = 0; i < names.length; i++ )
-        {
-        	kList.add(i, names[i]);
-        }
-        
-        
-        
-        
-        
-        
-        getContentPane().add(mainPanel);
-        pack();
-    }
-    
     private String colorTrigger;
+    
+    public JPanelAnnotationAnimation( VolumeTriPlanarRender parent, int timeSteps, Vector<String> annotationNames )
+    {
+        super();
+        this.parent = parent;
+        init( annotationNames, timeSteps );
+    }
 
 	public void actionPerformed(ActionEvent e)
 	{
@@ -580,41 +260,162 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
 		}
 	}
 
-	private void displaySelected( boolean display )
-	{
-        int[] selected = surfaceList.getSelectedIndices();
-        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-		for ( int i = 0; i < selected.length; i++ )
-		{
-			parent.setDisplayAnnotation( (String)kList.elementAt( selected[i] ), display );
-		}
+	@Override
+	public void keyPressed(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
 	}
 	
-	private void setDiameter( float value )
-	{
-        int[] selected = surfaceList.getSelectedIndices();
-        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-		for ( int i = 0; i < selected.length; i++ )
+	@Override
+	public void keyReleased(KeyEvent e) {
+		if ( e.getKeyCode() == KeyEvent.VK_ENTER )
 		{
-			parent.setAnnotationDiameter( (String)kList.elementAt( selected[i] ), value );
-		}
+//			System.err.println( diameter.getText() );
+	        if ( !JDialogBase.testParameter(diameter.getText(), 0.1, 2.0))
+	        {
+	        	diameter.requestFocus();
+	        	diameter.selectAll();
+	        }
+	        else
+	        {
+	        	setDiameter( Float.valueOf( diameter.getText() ) );
+	        }
+		}		
 	}
 	
-	private void newList( )
-	{		
-        int[] selected = surfaceList.getSelectedIndices();
-        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-        String[] names = new String[selected.length];
-		for ( int i = 0; i < selected.length; i++ )
+	@Override
+	public void keyTyped(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		if ( e.isPopupTrigger() )
 		{
-			names[i] = (String)kList.elementAt( selected[i] );
+			createPopup(e);
 		}
+	}
 
-        int index = neuriteTabbedPane.getTabCount();
-        neuriteTabbedPane.addTab("Neurite Path" + (index + 1), makeNeuriteList(index, names));	
-        neuriteTabbedPane.setSelectedIndex(index);
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
 	}
 	
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		if ( e.isPopupTrigger() )
+		{
+			createPopup(e);
+		}
+	}
+	
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		if ( e.isPopupTrigger() )
+		{
+			createPopup(e);
+		}
+	}
+	
+	/**
+     * Resizing the control panel with ViewJFrameVolumeView's frame width and height.
+     *
+     * @param  panelWidth   width
+     * @param  frameHeight  height
+     */
+    public void resizePanel(int panelWidth, int frameHeight) {
+        scroller.setPreferredSize(new Dimension(panelWidth, frameHeight - 40));
+        scroller.setSize(new Dimension(panelWidth, frameHeight - 40));
+        scroller.revalidate();
+    }
+	
+    public void setAnnimationSlider( int value )
+	{
+        annimationSlider.removeChangeListener(this);
+        annimationSlider.setValue(value);
+        timeLabel.setText( String.valueOf(annimationSlider.getValue()));
+        annimationSlider.addChangeListener(this);
+	}
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase#setButtonColor(javax.swing.JButton, java.awt.Color)
+     */
+    public void setButtonColor(JButton _button, Color _color) {
+
+        super.setButtonColor(_button, _color);
+
+        if ( colorTrigger.equals("sphere") )
+        {
+        	int[] selected = surfaceList.getSelectedIndices();
+        	DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+        	for ( int i = 0; i < selected.length; i++ )
+        	{
+        		parent.setAnnotationVOIColor( (String)kList.elementAt( selected[i] ),
+        				new ColorRGB( _color.getRed()/255.0f, 
+        						_color.getGreen()/255.0f,
+        						_color.getBlue()/255.0f ) );
+        	}
+        }
+        else if ( colorTrigger.equals("neurite") )
+        {
+        	int index = neuriteTabbedPane.getSelectedIndex();
+        	if ( index == -1 )
+        	{
+        		return;
+        	}
+        	String neuriteName = neuriteTabbedPane.getTitleAt(index);
+        	parent.setNeuriteColor( neuriteName,
+        			new ColorRGB( _color.getRed()/255.0f, 
+        					_color.getGreen()/255.0f,
+        					_color.getBlue()/255.0f ) );
+        }
+    }
+    
+    @Override
+	public void stateChanged(ChangeEvent e) {
+        if (e.getSource() == annimationSlider)
+        {
+            parent.annotationVOIsUpdate( annimationSlider.getValue() );
+            timeLabel.setText( String.valueOf(annimationSlider.getValue()));
+        }
+	}
+
+	public void updateFonts( VOIText inputText )
+	{
+        int[] selected = surfaceList.getSelectedIndices();
+        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+		for ( int i = 0; i < selected.length; i++ )
+		{
+			VOI textVOI = parent.getSelectedVOI( (String)kList.elementAt( selected[i] ) );
+			VOIText text = (VOIText) textVOI.getCurves().elementAt(0);
+
+			if ( text != inputText )
+			{
+				text.setFontSize( inputText.getFontSize() );
+				text.setFontDescriptors( inputText.getFontDescriptors() );
+				text.setFontName( inputText.getFontName() );
+				text.setColor( inputText.getColor() );
+				text.setBackgroundColor( inputText.getBackgroundColor() );
+				text.setUseMarker( inputText.useMarker() );
+				text.updateText();
+			}
+		}
+	}
+	
+	@Override
+	public void valueChanged(ListSelectionEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
 	private void addList( )
 	{
         int[] selected = surfaceList.getSelectedIndices();
@@ -628,28 +429,185 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
         }
 	}
 
-	private void updateNeurites()
+	private void createPopup(MouseEvent e)
 	{
-		int index = neuriteTabbedPane.getSelectedIndex();
-		if ( index == -1 )
+		if ( e.getSource() == surfaceList )
 		{
-			return;
+			JPopupMenu popup = new JPopupMenu();
+			popup.add( ViewMenuBuilder.buildMenuItem(new UIParams("New List", "newlist", UIParams.INVALID_MNEMONIC, null, null), this, false) );
+			popup.add( ViewMenuBuilder.buildMenuItem(new UIParams("Add to List", "addlist", UIParams.INVALID_MNEMONIC, null, null), this, false) );
+			popup.show(surfaceList, e.getX(), e.getY());
 		}
-		JList list = neuriteList.elementAt(index);
-        DefaultListModel kList = (DefaultListModel)list.getModel();
-        String[] names = new String[ kList.size() ];
-        for ( int i = 0; i < kList.size(); i++ )
-        {
-        	names[i] = (String)kList.elementAt( i );
-//        	System.err.println( names[i] );
-        }
-
-		String neuriteName = neuriteTabbedPane.getTitleAt(index);
-		parent.addNeurite( neuriteName, names );
-
-		parent.displayNeurite( neuriteName, displayNeurite.elementAt(index).isSelected() );
 	}
-	
+
+	private void displaySelected( boolean display )
+	{
+        int[] selected = surfaceList.getSelectedIndices();
+        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+		for ( int i = 0; i < selected.length; i++ )
+		{
+			parent.setDisplayAnnotation( (String)kList.elementAt( selected[i] ), display );
+		}
+	}
+
+	private void displaySelectedLabel( boolean display )
+	{
+        int[] selected = surfaceList.getSelectedIndices();
+        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+		for ( int i = 0; i < selected.length; i++ )
+		{
+			parent.setDisplayAnnotationLabel( (String)kList.elementAt( selected[i] ), display );
+		}
+	}
+
+	private void init( Vector<String> annotations, int timeSteps ) {
+        // Scroll panel that hold the control panel layout in order to use JScrollPane
+        JPanel mainScrollPanel = new JPanel();
+        mainScrollPanel.setLayout(new BorderLayout());
+
+        scroller = new JScrollPane(mainScrollPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                   ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
+        mainPanel = new JPanel(new BorderLayout());
+
+        JPanel surfacePanel = new JPanel();
+        displaySurface = new JCheckBox("display", true);
+        displaySurface.addActionListener(this);
+        displaySurface.setActionCommand("display");
+
+        JButton colorButton = new JButton("color");
+        colorButton.addActionListener(this);
+        colorButton.setActionCommand("color");
+
+        diameter = new JTextField("1.0");
+//        diameter.addFocusListener( this );
+        diameter.addKeyListener( this );
+
+        surfacePanel.add( new JLabel("Annotation: " ) );
+        surfacePanel.add(displaySurface);
+        surfacePanel.add(colorButton);
+        surfacePanel.add( new JLabel("set diameter (0.1-2.0): " ) );
+        surfacePanel.add(diameter);
+        
+
+
+        JPanel labelPanel = new JPanel();
+        displayLabel = new JCheckBox("display", true);
+        displayLabel.addActionListener(this);
+        displayLabel.setActionCommand("displayLabel");
+
+        JButton fontButton = new JButton("text options");
+        fontButton.addActionListener(this);
+        fontButton.setActionCommand("text");
+        
+        labelPanel.add( new JLabel("Label: " ) );
+        labelPanel.add(displayLabel);
+        labelPanel.add(fontButton);
+        
+        JPanel displayOptions = new JPanel(new BorderLayout());
+        displayOptions.add( surfacePanel, BorderLayout.NORTH );
+        displayOptions.add( labelPanel, BorderLayout.SOUTH );
+        
+        // list panel for surface filenames
+        surfaceList = new JList(new DefaultListModel());
+        surfaceList.addListSelectionListener(this);
+        surfaceList.addMouseListener( this );
+
+        JScrollPane kScrollPane = new JScrollPane(surfaceList);
+        JPanel scrollPanel = new JPanel();
+
+        scrollPanel.setLayout(new BorderLayout());
+        scrollPanel.add(kScrollPane);
+        scrollPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+        JPanel listPanel = new JPanel();
+        listPanel.setLayout(new BorderLayout());
+        listPanel.add(scrollPanel, BorderLayout.CENTER);
+        listPanel.add(displayOptions, BorderLayout.SOUTH);
+        listPanel.setBorder(buildTitledBorder("Annotation list"));
+        
+        //////////////////////////////////////////////////////////////////
+
+        neuriteTabbedPane = new JTabbedPane(); 
+        
+        
+        /////////////////////////////////////////////////////////////////
+        JButton playButton = new JButton("Play");
+        playButton.addActionListener(this);
+        playButton.setActionCommand("Play");
+        playButton.setFont(MipavUtil.font12B);
+        playButton.setPreferredSize(MipavUtil.defaultButtonSize);
+
+        JButton stopButton = new JButton("Stop");
+        stopButton.addActionListener(this);
+        stopButton.setActionCommand("Stop");
+        stopButton.setFont(MipavUtil.font12B);
+        stopButton.setPreferredSize(MipavUtil.defaultButtonSize);
+
+        JButton recordButton = new JButton("Record");
+        recordButton.addActionListener(this);
+        recordButton.setActionCommand("Record");
+        recordButton.setFont(MipavUtil.font12B);
+        recordButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        
+
+        JLabel timeSlice = new JLabel("Time: ");
+        timeLabel = new JLabel("0");
+        annimationSlider = new JSlider(0, timeSteps-1, 0 );
+        annimationSlider.setMajorTickSpacing(1);
+//        annimationSlider.setMinorTickSpacing(1);
+//        annimationSlider.setPaintTicks(true);
+        annimationSlider.addChangeListener(this);
+//        annimationSlider.setPaintLabels(true);
+        annimationSlider.setSnapToTicks(true);
+        annimationSlider.setEnabled(true);
+        
+        
+        GridBagConstraints kGBC = new GridBagConstraints();
+        GridBagLayout kGrid = new GridBagLayout();
+        kGBC.gridx = 0;
+        kGBC.gridy = 0;
+        
+        JPanel kAnimatePanel = new JPanel(kGrid);
+        kAnimatePanel.setBorder(buildTitledBorder("Animation"));
+        kAnimatePanel.add( playButton, kGBC ); kGBC.gridx++;
+        kAnimatePanel.add( stopButton, kGBC ); kGBC.gridx++;
+        kAnimatePanel.add( recordButton, kGBC ); kGBC.gridx++;
+        kGBC.gridx = 0;
+        kGBC.gridy = 1;
+        
+        kAnimatePanel.add( timeSlice, kGBC ); kGBC.gridx++;
+        kAnimatePanel.add( annimationSlider, kGBC ); kGBC.gridx++;
+        kAnimatePanel.add( timeLabel, kGBC ); kGBC.gridx++;
+
+        mainScrollPanel.add(listPanel, BorderLayout.NORTH);
+        mainScrollPanel.add(neuriteTabbedPane, BorderLayout.CENTER);
+        mainScrollPanel.add(kAnimatePanel, BorderLayout.SOUTH);
+        mainPanel.add(scroller, BorderLayout.CENTER);
+        
+
+        String[] names = new String[annotations.size()];
+    	for ( int i = 0; i < annotations.size(); i++ )
+    	{
+    		names[i] = annotations.elementAt(i);
+    	}
+    	
+        Arrays.sort( names );
+        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+        for ( int i = 0; i < names.length; i++ )
+        {
+        	kList.add(i, names[i]);
+        }
+        
+        
+        
+        
+        
+        
+        getContentPane().add(mainPanel);
+        pack();
+    }
+
 	private JPanel makeNeuriteList( int index, String[] names )
 	{
 		if ( displayNeurite == null )
@@ -677,8 +635,8 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
         surfacePanel.add( new JLabel("Neurite: " ) );
         surfacePanel.add(displayNeurite.elementAt(index));
         surfacePanel.add(colorButton);
-        surfacePanel.add( new JLabel("set diameter (0.1-2.0): " ) );
-        surfacePanel.add(diameterNeurite.elementAt(index));
+//        surfacePanel.add( new JLabel("set diameter (0.1-2.0): " ) );
+//        surfacePanel.add(diameterNeurite.elementAt(index));
         
 
         JPanel displayOptions = new JPanel(new BorderLayout());
@@ -753,16 +711,31 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
         return listPanel;
 	}
 
-	private void displaySelectedLabel( boolean display )
+	private void newList( )
+	{		
+        int[] selected = surfaceList.getSelectedIndices();
+        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+        String[] names = new String[selected.length];
+		for ( int i = 0; i < selected.length; i++ )
+		{
+			names[i] = (String)kList.elementAt( selected[i] );
+		}
+
+        int index = neuriteTabbedPane.getTabCount();
+        neuriteTabbedPane.addTab("Neurite Path" + (index + 1), makeNeuriteList(index, names));	
+        neuriteTabbedPane.setSelectedIndex(index);
+	}
+
+	private void setDiameter( float value )
 	{
         int[] selected = surfaceList.getSelectedIndices();
         DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
 		for ( int i = 0; i < selected.length; i++ )
 		{
-			parent.setDisplayAnnotationLabel( (String)kList.elementAt( selected[i] ), display );
+			parent.setAnnotationDiameter( (String)kList.elementAt( selected[i] ), value );
 		}
 	}
-	
+
 	private void setSelectedFonts()
 	{
         int[] selected = surfaceList.getSelectedIndices();
@@ -778,204 +751,27 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
 		}
 		new JDialogVolumeAnnotation( parent.getImage(), text, 0, true, false, false, this);
 	}
-	
-	public void updateFonts( VOIText inputText )
+
+	private void updateNeurites()
 	{
-        int[] selected = surfaceList.getSelectedIndices();
-        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-		for ( int i = 0; i < selected.length; i++ )
+		int index = neuriteTabbedPane.getSelectedIndex();
+		if ( index == -1 )
 		{
-			VOI textVOI = parent.getSelectedVOI( (String)kList.elementAt( selected[i] ) );
-			VOIText text = (VOIText) textVOI.getCurves().elementAt(0);
-
-			if ( text != inputText )
-			{
-				text.setFontSize( inputText.getFontSize() );
-				text.setFontDescriptors( inputText.getFontDescriptors() );
-				text.setFontName( inputText.getFontName() );
-				text.setColor( inputText.getColor() );
-				text.setBackgroundColor( inputText.getBackgroundColor() );
-				text.setUseMarker( inputText.useMarker() );
-				text.updateText();
-			}
+			return;
 		}
-	}
-	
-    /**
-     * Resizing the control panel with ViewJFrameVolumeView's frame width and height.
-     *
-     * @param  panelWidth   width
-     * @param  frameHeight  height
-     */
-    public void resizePanel(int panelWidth, int frameHeight) {
-        scroller.setPreferredSize(new Dimension(panelWidth, frameHeight - 40));
-        scroller.setSize(new Dimension(panelWidth, frameHeight - 40));
-        scroller.revalidate();
-    }
-    
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase#setButtonColor(javax.swing.JButton, java.awt.Color)
-     */
-    public void setButtonColor(JButton _button, Color _color) {
-
-        super.setButtonColor(_button, _color);
-
-        if ( colorTrigger.equals("sphere") )
+		JList list = neuriteList.elementAt(index);
+        DefaultListModel kList = (DefaultListModel)list.getModel();
+        String[] names = new String[ kList.size() ];
+        for ( int i = 0; i < kList.size(); i++ )
         {
-        	int[] selected = surfaceList.getSelectedIndices();
-        	DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-        	for ( int i = 0; i < selected.length; i++ )
-        	{
-        		parent.setAnnotationVOIColor( (String)kList.elementAt( selected[i] ),
-        				new ColorRGB( _color.getRed()/255.0f, 
-        						_color.getGreen()/255.0f,
-        						_color.getBlue()/255.0f ) );
-        	}
-        }
-        else if ( colorTrigger.equals("neurite") )
-        {
-        	int index = neuriteTabbedPane.getSelectedIndex();
-        	if ( index == -1 )
-        	{
-        		return;
-        	}
-        	String neuriteName = neuriteTabbedPane.getTitleAt(index);
-        	parent.setNeuriteColor( neuriteName,
-        			new ColorRGB( _color.getRed()/255.0f, 
-        					_color.getGreen()/255.0f,
-        					_color.getBlue()/255.0f ) );
-        }
-    }
-    
-    /**
-     * Pick up the selected color and call method to change the color.
-     */
-    class OkColorListener implements ActionListener {
-
-        /** Color Button */
-        JButton button;
-        /**
-         * Creates a new OkColorListener object.
-         *
-         * @param  _button  DOCUMENT ME!
-         */
-        OkColorListener(JButton _button) {
-            super();
-            button = _button;
+        	names[i] = (String)kList.elementAt( i );
+//        	System.err.println( names[i] );
         }
 
-        OkColorListener( ) {
-            super();
-        }
+		String neuriteName = neuriteTabbedPane.getTitleAt(index);
+		parent.addNeurite( neuriteName, names );
 
-        /**
-         * Get color from chooser and set button and color.
-         *
-         * @param  e  Event that triggered function.
-         */
-        public void actionPerformed(ActionEvent e) {
-            Color color = colorChooser.getColor();
-            setButtonColor(button, color);
-        }
-    }
-
-	@Override
-	public void stateChanged(ChangeEvent e) {
-        if (e.getSource() == annimationSlider)
-        {
-            parent.annotationVOIsUpdate( annimationSlider.getValue() );
-            timeLabel.setText( String.valueOf(annimationSlider.getValue()));
-        }
-	}
-	
-	public void setAnnimationSlider( int value )
-	{
-        annimationSlider.removeChangeListener(this);
-        annimationSlider.setValue(value);
-        timeLabel.setText( String.valueOf(annimationSlider.getValue()));
-        annimationSlider.addChangeListener(this);
-	}
-
-	@Override
-	public void valueChanged(ListSelectionEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void keyTyped(KeyEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void keyPressed(KeyEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void keyReleased(KeyEvent e) {
-		if ( e.getKeyCode() == KeyEvent.VK_ENTER )
-		{
-//			System.err.println( diameter.getText() );
-	        if ( !JDialogBase.testParameter(diameter.getText(), 0.1, 2.0))
-	        {
-	        	diameter.requestFocus();
-	        	diameter.selectAll();
-	        }
-	        else
-	        {
-	        	setDiameter( Float.valueOf( diameter.getText() ) );
-	        }
-		}		
-	}
-
-	@Override
-	public void mouseClicked(MouseEvent e) {
-		if ( e.isPopupTrigger() )
-		{
-			createPopup(e);
-		}
-	}
-
-	@Override
-	public void mousePressed(MouseEvent e) {
-		if ( e.isPopupTrigger() )
-		{
-			createPopup(e);
-		}
-	}
-
-	@Override
-	public void mouseReleased(MouseEvent e) {
-		if ( e.isPopupTrigger() )
-		{
-			createPopup(e);
-		}
-	}
-
-	@Override
-	public void mouseEntered(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void mouseExited(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	private void createPopup(MouseEvent e)
-	{
-		if ( e.getSource() == surfaceList )
-		{
-			JPopupMenu popup = new JPopupMenu();
-			popup.add( ViewMenuBuilder.buildMenuItem(new UIParams("New List", "newlist", UIParams.INVALID_MNEMONIC, null, null), this, false) );
-			popup.add( ViewMenuBuilder.buildMenuItem(new UIParams("Add to List", "addlist", UIParams.INVALID_MNEMONIC, null, null), this, false) );
-			popup.show(surfaceList, e.getX(), e.getY());
-		}
+		parent.displayNeurite( neuriteName, displayNeurite.elementAt(index).isSelected() );
 	}
 
 }
