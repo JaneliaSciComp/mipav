@@ -207,6 +207,8 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     private void spectralPb(double mPb[][], int orig_sz[], String outFile, int nvec) {
     	int x;
     	int y;
+    	int i;
+    	int j;
         int ty = mPb.length;
         int tx = mPb[0].length;
         double l[][][] = new double[2][][];
@@ -224,7 +226,98 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         }
         
         // Build the pairwise affinity matrix
-        buildW(l[0], l[1]);
+        SMatrix W = buildW(l[0], l[1]);
+        // Pack sparse matrix
+        // Compute total number of nonzero entries
+        int nnz = 0;
+        for (i = 0; i < W.n; i++) {
+        	nnz += W.nz[i];
+        }
+        // col index
+        int J[] = new int[nnz];
+        // row index
+        int I[] = new int[nnz];
+        // Values
+        double val[] = new double[nnz];
+        int ct = 0;
+        for (int row = 0; row < W.n; row++) {
+        	for (i = 0; i < W.nz[row]; i++) {
+        		I[ct+i] = row;
+        		J[ct+i] = W.col[row][i];
+        		val[ct+i] = W.values[row][i];
+        	}
+        	ct = ct + W.nz[row];
+        }
+        W.dispose();
+        W = null;
+        int numElements = val.length;
+        // Remove zero values
+        boolean ignore[] = new boolean[numElements];
+        int numIgnored = 0;
+        for (i = 0; i < numElements; i++) {
+        	if (val[i] == 0.0) {
+        		ignore[i] = true;
+        		numIgnored++;
+        	}
+        }
+        // Accumulate the  values that have identical subscripts
+        for (i = 0; i < numElements; i++) {
+        	if (!ignore[i]) {
+        		for (j = i+1; j < numElements; j++) {
+        			if ((!ignore[j]) && (I[i] == I[j]) && (J[i] == J[j])) {
+        				val[i] = val[i] + val[j];
+        				ignore[j] = true;
+        				numIgnored++;
+        			}
+        		}
+        	}
+        }
+        int sparseElements = numElements - numIgnored;
+        int Isp[] = new int[sparseElements];
+        int Jsp[] = new int[sparseElements];
+        double valsp[] = new double[sparseElements];
+        int imax = -1;
+        int jmax = -1;
+        for (i = 0, j = 0; (i < numElements) && (!ignore[i]); i++) {
+            Isp[j] = I[i];
+            if (Isp[j] > imax) {
+            	imax = Isp[j];
+            }
+            Jsp[j] = J[i];
+            if (Jsp[j] > jmax) {
+            	jmax = Jsp[j];
+            }
+            valsp[j++] = val[i];
+        }
+        // [J, I, val] = buildW(l[0],l[1]);
+        //Wsp = sparse(J, I, val);
+        int wx = jmax + 1;
+        int wy = imax + 1;
+        int xvec[] = new int[wx];
+        for (i = 1; i <= wx; i++) {
+        	xvec[i-1] = i;
+        }
+        // For each Isp add up the values
+        // S is the sum of the columns of the full matrix W
+        // but there are wy columns and xvec is length wx.
+        // D = sparse(xvec, xvec, S, wx, wy) requires xvec and S
+        // to be the same length so we had better have wx = wy.
+        // All nonzero values of S are placed along the diagonal of 
+        // the sparse matrix D.
+        double S[] = new double[wy];
+        ignore = new boolean[sparseElements];
+        numIgnored = 0;
+        for (i = 0; (i < sparseElements) && (!ignore[i]); i++) {
+        	S[I[i]] = val[i];
+            for (j = i+1; (j < numElements) && (!ignore[j]); j++) {
+            	// In same column
+            	if (I[i] == I[j]) {
+            	    S[I[i]] += val[j];
+            	    ignore[j] = true;
+            	    numIgnored++;
+            	}
+            }
+        }
     }
     
     private class DualLattice{
@@ -247,7 +340,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	public double sim;
     }
     
-    private void buildW(double H[][], double V[][]) {
+    private SMatrix buildW(double H[][], double V[][]) {
     	int x;
     	int y;
     	int dthresh = 5;
@@ -279,7 +372,10 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         computeAffinities2(ic, sigma, dthresh, W);
         if (W[0] == null) {
         	MipavUtil.displayError("computeAffinities2 failed");
-        	return;
+        	return null;
+        }
+        else {
+        	return W[0];
         }
     }
     
@@ -442,6 +538,19 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	      tail[c]++;
     	    }
     	  }  
+    	}
+    	
+    	public void dispose() {
+    		int i;
+    		nz = null;
+    		for (i = 0; i < col.length; i++) {
+    			col[i] = null;
+    		}
+    		col = null;
+    		for (i = 0; i < values.length; i++) {
+    			values[i] = null;
+    		}
+    		values = null;
     	}
 
     }
