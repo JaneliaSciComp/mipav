@@ -5,7 +5,6 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.awt.Color;
 import java.io.BufferedReader;
@@ -162,8 +161,8 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 			AlgorithmThresholdDual nThresh = new AlgorithmThresholdDual(probImage, threshold, 1, 1, true, false);
 			nThresh.run();
 
-			ViewJFrameImage probFrame = new ViewJFrameImage(probImage);
-			probFrame.setVisible(true);
+			// ViewJFrameImage probFrame = new ViewJFrameImage(probImage);
+			// probFrame.setVisible(true);
 
 			ArrayList<float[]> results = new ArrayList<float[]>();
 
@@ -197,9 +196,9 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 				results.add(new float[] {center.X, center.Y, center.Z, distance, (float) sum});
 			}
 
-			ViewJFrameImage srcFrame = new ViewJFrameImage(srcImage);
-			srcFrame.getComponentImage().setPaintMask(totalMask);
-			srcFrame.setVisible(true);
+			// ViewJFrameImage srcFrame = new ViewJFrameImage(srcImage);
+			// srcFrame.getComponentImage().setPaintMask(totalMask);
+			// srcFrame.setVisible(true);
 
 			append("Writing results...", blackText);
 			writeResults(results);
