@@ -1066,6 +1066,11 @@ public class VolumeSurface extends VolumeObject
         }
     }
 
+    public ColorRGB GetColor( )
+    {
+        return new ColorRGB( m_kMaterial.Diffuse );
+    }
+
 
     /**
      * Sets the ModelImage to use as an alternative to the volume ModelImage for surface texturing.
