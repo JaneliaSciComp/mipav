@@ -55,9 +55,6 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
 
         /** Color Button */
         JButton button;
-        OkColorListener( ) {
-            super();
-        }
 
         /**
          * Creates a new OkColorListener object.
@@ -91,12 +88,16 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
     private JTabbedPane neuriteTabbedPane;
     private JCheckBox displaySurface;
     private JCheckBox displayLabel;
+    private JButton fontButton;
     private JList surfaceList;
     private Vector<JList> neuriteList;
-    private JTextField diameter;
+    private JTextField sphereDiameter;
     private Vector<JCheckBox> displayNeurite;
     private Vector<JTextField> diameterNeurite;
+    private Vector<JButton> neuriteColorButton;
     private String colorTrigger;
+    private JButton sphereColorButton;
+    private Color defaultButtonColor;
     
     public JPanelAnnotationAnimation( VolumeTriPlanarRender parent, int timeSteps, Vector<String> annotationNames )
     {
@@ -123,7 +124,7 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
 		else if ( command.equals( "color" ) )
 		{
 			colorTrigger = "sphere";
-			colorChooser = new ViewJColorChooser(new Frame(), "Pick color", new OkColorListener(),
+			colorChooser = new ViewJColorChooser(new Frame(), "Pick color", new OkColorListener(sphereColorButton),
 					new CancelListener());
 		}
 		else if ( command.equals( "displayLabel" ) )
@@ -241,6 +242,16 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
 //		        System.err.println( "delete " + name );
 	        }
 			updateNeurites();
+			if ( kList.size() == 0 )
+			{
+				String neuriteName = neuriteTabbedPane.getTitleAt(index);
+				MipavUtil.displayInfo( "Deleting List " + neuriteName );
+				neuriteTabbedPane.remove(index);
+				displayNeurite.remove(index);
+				diameterNeurite.remove(index);
+				neuriteList.remove(index);
+				neuriteColorButton.remove(index);
+			}
 		}
 		else if ( command.equals( "colorNeurite" ) )
 		{
@@ -251,7 +262,7 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
 			}
 
 			colorTrigger = "neurite";
-			colorChooser = new ViewJColorChooser(new Frame(), "Pick color", new OkColorListener(),
+			colorChooser = new ViewJColorChooser(new Frame(), "Pick color", new OkColorListener(neuriteColorButton.elementAt(index)),
 					new CancelListener());
 		}
 		else if ( command.contains( "displayNeurite" ) )
@@ -271,14 +282,14 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
 		if ( e.getKeyCode() == KeyEvent.VK_ENTER )
 		{
 //			System.err.println( diameter.getText() );
-	        if ( !JDialogBase.testParameter(diameter.getText(), 0.1, 2.0))
+	        if ( !JDialogBase.testParameter(sphereDiameter.getText(), 0.1, 2.0))
 	        {
-	        	diameter.requestFocus();
-	        	diameter.selectAll();
+	        	sphereDiameter.requestFocus();
+	        	sphereDiameter.selectAll();
 	        }
 	        else
 	        {
-	        	setDiameter( Float.valueOf( diameter.getText() ) );
+	        	setDiameter( Float.valueOf( sphereDiameter.getText() ) );
 	        }
 		}		
 	}
@@ -407,13 +418,52 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
 				text.setUseMarker( inputText.useMarker() );
 				text.updateText();
 			}
+			
+			if ( i == 0 )
+			{
+				fontButton.setBackground( inputText.getColor() );
+			}
 		}
 	}
 	
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
-		// TODO Auto-generated method stub
-		
+		if ( e.getSource() == surfaceList )
+		{
+	        int[] selected = surfaceList.getSelectedIndices();
+	        if ( selected != null )
+	        {
+	        	if ( selected.length > 0 )
+	        	{
+	                DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+	                boolean[] display = new boolean[1];
+	                Color[] color = new Color[1];
+	                float[] diameter = new float[1];
+	                boolean[] labelDisplay = new boolean[1];
+	                Color[] labelColor = new Color[1];
+	        		parent.getAnnotationInfo( (String)kList.elementAt( selected[0] ), display, color, diameter, labelDisplay, labelColor );
+	        		if ( color[0].equals(Color.white) )
+	        		{
+	        			sphereColorButton.setBackground(defaultButtonColor);
+	        		}
+	        		else
+	        		{
+	        			sphereColorButton.setBackground(color[0]);
+	        		}
+	        		displaySurface.setSelected(display[0]);
+	        		displayLabel.setSelected(labelDisplay[0]);
+	        		sphereDiameter.setText( String.valueOf(diameter[0]) );
+	        		if ( labelColor[0].equals(Color.white) )
+	        		{
+	        			fontButton.setBackground(defaultButtonColor);
+	        		}
+	        		else
+	        		{
+	        			fontButton.setBackground(labelColor[0]);
+	        		}
+	        	}
+	        }
+		}
 	}
 
 	private void addList( )
@@ -475,19 +525,20 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
         displaySurface.addActionListener(this);
         displaySurface.setActionCommand("display");
 
-        JButton colorButton = new JButton("color");
-        colorButton.addActionListener(this);
-        colorButton.setActionCommand("color");
+        sphereColorButton = new JButton("color");
+        sphereColorButton.addActionListener(this);
+        sphereColorButton.setActionCommand("color");
+        defaultButtonColor = sphereColorButton.getBackground();
 
-        diameter = new JTextField("1.0");
+        sphereDiameter = new JTextField("1.0");
 //        diameter.addFocusListener( this );
-        diameter.addKeyListener( this );
+        sphereDiameter.addKeyListener( this );
 
         surfacePanel.add( new JLabel("Annotation: " ) );
         surfacePanel.add(displaySurface);
-        surfacePanel.add(colorButton);
-        surfacePanel.add( new JLabel("set diameter (0.1-2.0): " ) );
-        surfacePanel.add(diameter);
+        surfacePanel.add(sphereColorButton);
+        surfacePanel.add( new JLabel("diameter (0.1-2.0): " ) );
+        surfacePanel.add(sphereDiameter);
         
 
 
@@ -496,7 +547,7 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
         displayLabel.addActionListener(this);
         displayLabel.setActionCommand("displayLabel");
 
-        JButton fontButton = new JButton("text options");
+        fontButton = new JButton("text options");
         fontButton.addActionListener(this);
         fontButton.setActionCommand("text");
         
@@ -608,24 +659,26 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
         pack();
     }
 
-	private JPanel makeNeuriteList( int index, String[] names )
+	private JPanel makeNeuriteList( String[] names )
 	{
 		if ( displayNeurite == null )
 		{
 			displayNeurite = new Vector<JCheckBox>();
 			diameterNeurite = new Vector<JTextField>();
 			neuriteList = new Vector<JList>();
+			neuriteColorButton = new Vector<JButton>();
 		}
 		
 		JPanel surfacePanel = new JPanel();
 		JCheckBox neuriteCheck = new JCheckBox("displayNeurite", false);
 		neuriteCheck.addActionListener(this);
-		neuriteCheck.setActionCommand("displayNeurite" + index);
+		neuriteCheck.setActionCommand("displayNeurite");
         displayNeurite.add( neuriteCheck );
 
         JButton colorButton = new JButton("color");
         colorButton.addActionListener(this);
         colorButton.setActionCommand("colorNeurite");
+        neuriteColorButton.add(colorButton);
 
         JTextField neuriteText = new JTextField("1.0");
         neuriteText.setEnabled(false);
@@ -633,7 +686,7 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
         diameterNeurite.add(neuriteText);
 
         surfacePanel.add( new JLabel("Neurite: " ) );
-        surfacePanel.add(displayNeurite.elementAt(index));
+        surfacePanel.add(neuriteCheck);
         surfacePanel.add(colorButton);
 //        surfacePanel.add( new JLabel("set diameter (0.1-2.0): " ) );
 //        surfacePanel.add(diameterNeurite.elementAt(index));
@@ -693,7 +746,7 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
         listOptions.add(delete, gbc);
 
         JPanel dualPanel = new JPanel( new GridLayout(1,2) );
-        dualPanel.add(neuriteList.elementAt(index));
+        dualPanel.add(list);
         dualPanel.add(listOptions);    
 
         JScrollPane kScrollPane = new JScrollPane(dualPanel);
@@ -711,6 +764,7 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
         return listPanel;
 	}
 
+	private int neuriteCount = 0;
 	private void newList( )
 	{		
         int[] selected = surfaceList.getSelectedIndices();
@@ -721,9 +775,9 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
 			names[i] = (String)kList.elementAt( selected[i] );
 		}
 
-        int index = neuriteTabbedPane.getTabCount();
-        neuriteTabbedPane.addTab("Neurite Path" + (index + 1), makeNeuriteList(index, names));	
-        neuriteTabbedPane.setSelectedIndex(index);
+        int index = neuriteCount++;
+        neuriteTabbedPane.addTab("Neurite Path" + (index + 1), makeNeuriteList(names));	
+        neuriteTabbedPane.setSelectedIndex( neuriteTabbedPane.getComponentCount() - 1);
 	}
 
 	private void setDiameter( float value )
@@ -769,7 +823,9 @@ public class JPanelAnnotationAnimation extends JInterfaceBase implements ChangeL
         }
 
 		String neuriteName = neuriteTabbedPane.getTitleAt(index);
-		parent.addNeurite( neuriteName, names );
+		Color color = neuriteColorButton.elementAt(index).getBackground();
+		ColorRGB colorRGB = new ColorRGB( color.getRed()/255f, color.getGreen()/255f, color.getBlue()/255f );
+		parent.addNeurite( neuriteName, names, colorRGB );
 
 		parent.displayNeurite( neuriteName, displayNeurite.elementAt(index).isSelected() );
 	}
