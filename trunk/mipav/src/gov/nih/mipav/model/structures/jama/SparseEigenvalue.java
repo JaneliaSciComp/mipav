@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.structures.jama;
 
 
+import java.text.DecimalFormat;
+
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
@@ -50,16 +52,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 public class SparseEigenvalue implements java.io.Serializable {
 	GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
-
-	// ~ Constructors
-    // ---------------------------------------------------------------------------------------------------
-
-    /**
-     * Creates a new SparseEigenvalue object.
-     */
-    public SparseEigenvalue() {}
-    
-    private int dsaupd_bounds;
+	
+	private ViewUserInterface UI = ViewUserInterface.getReference();
+	
+	DecimalFormat nf = new DecimalFormat("0.0000E0");
+	
+	private int dsaupd_bounds;
     private int dsaupd_ierr;
     private int dsaupd_ih;
     private int dsaupd_iq;
@@ -142,6 +140,38 @@ public class SparseEigenvalue implements java.io.Serializable {
     private int mcapps;
     private int mcgets;
     private int mceupd;
+    
+    private boolean dsaup2_cnorm;
+    private boolean dsaup2_getv0;
+    private boolean dsaup2_initv;
+    private boolean dsaup2_update;
+    private boolean dsaup2_ushift;
+    private int dsaup2_iter;
+    private int dsaup2_kplusp;
+    private int dsaup2_msglvl;
+    private int dsaup2_nconv;
+    private int dsaup2_nev0;
+    private int dsaup2_np0;
+    private double dsaup2_rnorm;
+    private double dsaup2_eps23;
+    
+    private boolean dgetv0_first;
+    private boolean dgetv0_inits = true;
+    private boolean dgetv0_orth;
+    private int dgetv0_iseed[] = new int[4];
+    private int dgetv0_iter;
+    private int dgetv0_msglvl;
+    private double dgetv0_rnorm0;
+
+	// ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Creates a new SparseEigenvalue object.
+     */
+    public SparseEigenvalue() {}
+    
+    
     
     //-----------------------------------------------------------------------
     //\BeginDoc
@@ -1027,192 +1057,218 @@ public class SparseEigenvalue implements java.io.Serializable {
                   ( int ido[], String bmat, int n, String which, int nev, int np[], double tol, double resid[], int mode, int iupd, 
                     int ishift, int mxiter, double v[][], int ldv, double h[][], int ldh, double ritz[], double bounds[], 
                     double q[][], int ldq, double workl[], int ipntr[], double workd[], int info[] ) {
-          /**c
-          c     %----------------------------------------------------%
-          c     | Include files for debugging and timing information |
-          c     %----------------------------------------------------%
-          c
-                include   'debug.h'
-                include   'stat.h'
-          c
-          c     %------------------%
-          c     | Scalar Arguments |
-          c     %------------------%
-          c
-                character  bmat*1, which*2
-                integer    ido, info, ishift, iupd, ldh, ldq, ldv, mxiter,
-               &           n, mode, nev, np
-                Double precision
-               &           tol
-          c
-          c     %-----------------%
-          c     | Array Arguments |
-          c     %-----------------%
-          c
-                integer    ipntr(3)
-                Double precision
-               &           bounds(nev+np), h(ldh,2), q(ldq,nev+np), resid(n), 
-               &           ritz(nev+np), v(ldv,nev+np), workd(3*n), 
-               &           workl(3*(nev+np))
-          c
-          c     %------------%
-          c     | Parameters |
-          c     %------------%
-          c
-                Double precision
-               &           one, zero
-                parameter (one = 1.0D+0, zero = 0.0D+0)
-          c
-          c     %---------------%
-          c     | Local Scalars |
-          c     %---------------%
-          c
-                character  wprime*2
-                logical    cnorm, getv0, initv, update, ushift
-                integer    ierr, iter, j, kplusp, msglvl, nconv, nevbef, nev0, 
-               &           np0, nptemp, nevd2, nevm2, kp(3) 
-                Double precision
-               &           rnorm, temp, eps23
-                save       cnorm, getv0, initv, update, ushift,
-               &           iter, kplusp, msglvl, nconv, nev0, np0,
-               &           rnorm, eps23
-          c
-          c     %----------------------%
-          c     | External Subroutines |
-          c     %----------------------%
-          c
-                external   dcopy, dgetv0, dsaitr, dscal, dsconv, dseigt, dsgets, 
-               &           dsapps, dsortr, dvout, ivout, second, dswap
-          c
-          c     %--------------------%
-          c     | External Functions |
-          c     %--------------------%
-          c
-                Double precision
-               &           ddot, dnrm2, dlamch
-                external   ddot, dnrm2, dlamch
-          c
-          c     %---------------------%
-          c     | Intrinsic Functions |
-          c     %---------------------%
-          c
-                intrinsic    min
-          c
-          c     %-----------------------%
-          c     | Executable Statements |
-          c     %-----------------------%
-          c
-                if (ido .eq. 0) then
-          c 
-          c        %-------------------------------%
-          c        | Initialize timing statistics  |
-          c        | & message level for debugging |
-          c        %-------------------------------%
-          c
-                   call second (t0)
-                   msglvl = msaup2
-          c
-          c        %---------------------------------%
-          c        | Set machine dependent constant. |
-          c        %---------------------------------%
-          c
-                   eps23 = dlamch('Epsilon-Machine')
-                   eps23 = eps23**(2.0D+0/3.0D+0)
-          c
-          c        %-------------------------------------%
-          c        | nev0 and np0 are integer variables  |
-          c        | hold the initial values of NEV & NP |
-          c        %-------------------------------------%
-          c
-                   nev0   = nev
-                   np0    = np
-          c
-          c        %-------------------------------------%
-          c        | kplusp is the bound on the largest  |
-          c        |        Lanczos factorization built. |
-          c        | nconv is the current number of      |
-          c        |        "converged" eigenvlues.      |
-          c        | iter is the counter on the current  |
-          c        |      iteration step.                |
-          c        %-------------------------------------%
-          c
-                   kplusp = nev0 + np0
-                   nconv  = 0
-                   iter   = 0
-          c 
-          c        %--------------------------------------------%
-          c        | Set flags for computing the first NEV steps |
-          c        | of the Lanczos factorization.              |
-          c        %--------------------------------------------%
-          c
-                   getv0    = .true.
-                   update   = .false.
-                   ushift   = .false.
-                   cnorm    = .false.
-          c
-                   if (info .ne. 0) then
-          c
-          c        %--------------------------------------------%
-          c        | User provides the initial residual vector. |
-          c        %--------------------------------------------%
-          c
-                      initv = .true.
-                      info  = 0
-                   else
-                      initv = .false.
-                   end if
-                end if
-          c 
-          c     %---------------------------------------------%
-          c     | Get a possibly random starting vector and   |
-          c     | force it into the range of the operator OP. |
-          c     %---------------------------------------------%
-          c
-             10 continue
-          c
-                if (getv0) then
-                   call dgetv0 (ido, bmat, 1, initv, n, 1, v, ldv, resid, rnorm,
-               &                ipntr, workd, info)
-          c
-                   if (ido .ne. 99) go to 9000
-          c
-                   if (rnorm .eq. zero) then
-          c
-          c           %-----------------------------------------%
-          c           | The initial vector is zero. Error exit. | 
-          c           %-----------------------------------------%
-          c
-                      info = -9
-                      go to 1200
-                   end if
-                   getv0 = .false.
-                   ido  = 0
-                end if
-          c 
-          c     %------------------------------------------------------------%
-          c     | Back from reverse communication: continue with update step |
-          c     %------------------------------------------------------------%
-          c
-                if (update) go to 20
-          c
-          c     %-------------------------------------------%
-          c     | Back from computing user specified shifts |
-          c     %-------------------------------------------%
-          c
-                if (ushift) go to 50
-          c
-          c     %-------------------------------------%
-          c     | Back from computing residual norm   |
-          c     | at the end of the current iteration |
-          c     %-------------------------------------%
-          c
-                if (cnorm)  go to 100
-          c 
-          c     %----------------------------------------------------------%
-          c     | Compute the first NEV steps of the Lanczos factorization |
-          c     %----------------------------------------------------------%
-          c
-                call dsaitr (ido, bmat, n, 0, nev0, mode, resid, rnorm, v, ldv, 
+          
+          //     %----------------------------------------------------%
+          //     | Include files for debugging and timing information |
+          //     %----------------------------------------------------%
+          
+          //     include   'debug.h'
+          //     include   'stat.h'
+          
+          //     %------------------%
+          //     | Scalar Arguments |
+          //     %------------------%
+          
+          //     character  bmat*1, which*2
+          //     integer    ido, info, ishift, iupd, ldh, ldq, ldv, mxiter,
+          //     &           n, mode, nev, np
+          //     Double precision
+          //     &           tol
+          
+          //     %-----------------%
+          //     | Array Arguments |
+          //     %-----------------%
+          
+          //      integer    ipntr(3)
+          //      Double precision
+          //     &           bounds(nev+np), h(ldh,2), q(ldq,nev+np), resid(n), 
+          //     &           ritz(nev+np), v(ldv,nev+np), workd(3*n), 
+          //     &           workl(3*(nev+np))
+          //
+          //     %------------%
+          //     | Parameters |
+          //     %------------%
+          
+                final double zero = 0.0;
+                final double one = 1.0;
+          
+          //     %---------------%
+          //     | Local Scalars |
+          //     %---------------%
+          
+                String  wprime;
+                int    ierr, j, nevbef, nptemp, nevd2, nevm2;
+                int kp[] = new int [3]; 
+                double temp;
+                boolean seg1;
+                boolean seg2;
+                boolean seg3;
+                boolean seg4;
+                boolean seg5;
+                boolean seg6;
+          
+          //     %----------------------%
+          //     | External Subroutines |
+          //     %----------------------%
+          //
+          //      external   dcopy, dgetv0, dsaitr, dscal, dsconv, dseigt, dsgets, 
+          //    &           dsapps, dsortr, dvout, ivout, second, dswap
+          
+          //     %--------------------%
+          //     | External Functions |
+          //     %--------------------%
+          
+          //      Double precision
+          //   &           ddot, dnrm2, dlamch
+          //      external   ddot, dnrm2, dlamch
+          
+          //     %---------------------%
+          //     | Intrinsic Functions |
+          //     %---------------------%
+          
+          //      intrinsic    min
+          
+          //     %-----------------------%
+          //     | Executable Statements |
+          //     %-----------------------%
+          //
+                if (ido[0] == 0) {
+           
+          //        %-------------------------------%
+          //        | Initialize timing statistics  |
+          //       | & message level for debugging |
+          //        %-------------------------------%
+          
+                   t0 = System.currentTimeMillis();
+                   dsaup2_msglvl = msaup2;
+          
+          //        %---------------------------------%
+          //        | Set machine dependent constant. |
+          //        %---------------------------------%
+          
+                   dsaup2_eps23 = ge.dlamch('E');
+                   dsaup2_eps23 = Math.pow(dsaup2_eps23,(2.0/3.0));
+          
+          //        %-------------------------------------%
+          //        | nev0 and np0 are integer variables  |
+          //        | hold the initial values of NEV & NP |
+          //        %-------------------------------------%
+          
+                   dsaup2_nev0   = nev;
+                   dsaup2_np0    = np[0];
+          
+          //        %-------------------------------------%
+          //        | kplusp is the bound on the largest  |
+          //        |        Lanczos factorization built. |
+          //        | nconv is the current number of      |
+          //        |        "converged" eigenvlues.      |
+          //        | iter is the counter on the current  |
+          //        |      iteration step.                |
+          //        %-------------------------------------%
+          
+                   dsaup2_kplusp = dsaup2_nev0 + dsaup2_np0;
+                   dsaup2_nconv  = 0;
+                   dsaup2_iter = 0;
+           
+          //        %--------------------------------------------%
+          //        | Set flags for computing the first NEV steps |
+          //        | of the Lanczos factorization.              |
+          //        %--------------------------------------------%
+          
+                   dsaup2_getv0 = true;
+                   dsaup2_update = false;
+                   dsaup2_ushift = false;
+                   dsaup2_cnorm = false;
+          
+                   if (info[0] != 0) {
+          
+          //        %--------------------------------------------%
+          //        | User provides the initial residual vector. |
+          //        %--------------------------------------------%
+          
+                      dsaup2_initv = true;
+                      info[0]  = 0;
+                   } // if (info[0] != 0)
+                   else {
+                      dsaup2_initv = false;
+                   }
+                } // if (ido[0] == 0)
+          
+          //     %---------------------------------------------%
+          //     | Get a possibly random starting vector and   |
+          //     | force it into the range of the operator OP. |
+          //     %---------------------------------------------%
+          
+          
+                 /*if (dsaup2_getv0) {
+                   dgetv0 (ido, bmat, 1, dsaup2_initv, n, 1, v, ldv, resid, dsaup2_rnorm,
+                               ipntr, workd, info);
+          
+                   if (ido[0] != 99) {
+                	   return;
+                   }
+          
+                   if (dsaup2_rnorm == zero) {
+          
+          //           %-----------------------------------------%
+          //           | The initial vector is zero. Error exit. | 
+          //           %-----------------------------------------%
+          
+                      info[0] = -9;
+                      ido[0] = 99;
+                      t1 = System.currentTimeMillis();
+                      tsaup2 = t1 - t0;
+                      return;
+                   } // if (dsaup2_rnorm == zero)
+                   dsaup2_getv0 = false;
+                   ido[0]  = 0;
+                } // if (dsaup2_getv0)
+           
+          //     %------------------------------------------------------------%
+          //     | Back from reverse communication: continue with update step |
+          //     %------------------------------------------------------------%
+          
+                seg1 = true;
+                seg4 = true;
+                seg5 = true;
+                seg6 = true;
+                 if (dsaup2_update) {
+                	seg1 = false;
+                	seg6 = false;
+                }
+                
+                if (seg1) {
+          
+          //     %-------------------------------------------%
+          //     | Back from computing user specified shifts |
+          //     %-------------------------------------------%
+          
+                seg2 = true;	
+                if (dsaup2_ushift) {
+                	seg2 = false;
+                	seg5 = false;
+                }
+                
+                if (seg2) {
+          
+          //     %-------------------------------------%
+          //     | Back from computing residual norm   |
+          //     | at the end of the current iteration |
+          //     %-------------------------------------%
+          
+                seg3 = true;
+                if (dsaup2_cnorm)  {
+                	seg3 = false;
+                	seg4 = false;
+                }
+                
+                if (seg3) {
+           
+          //     %----------------------------------------------------------%
+          //     | Compute the first NEV steps of the Lanczos factorization |
+          //     %----------------------------------------------------------%
+          //
+                call dsaitr (ido, bmat, n, 0, dsaup2_nev0, mode, resid, dsaup2_rnorm, v, ldv, 
                &             h, ldh, ipntr, workd, info)
           c 
           c     %---------------------------------------------------%
@@ -1231,10 +1287,13 @@ public class SparseEigenvalue implements java.io.Serializable {
           c        %-----------------------------------------------------%
           c
                    np   = info
-                   mxiter = iter
+                   mxiter = dsaup2_iter;
                    info = -9999
                    go to 1200
                 end if
+                } // if (seg3)
+                } // if (seg2)
+                } // if (seg1)
           c 
           c     %--------------------------------------------------------------%
           c     |                                                              |
@@ -1244,15 +1303,18 @@ public class SparseEigenvalue implements java.io.Serializable {
           c     |                                                              |
           c     %--------------------------------------------------------------%
           c 
-           1000 continue
+           loop1: while (true) {
+        	   if (seg4) {
+        		   if (seg5) {
+        			   if (seg6) {
           c
-                   iter = iter + 1
+                   dsaup2_iter = dsaup2_iter + 1;
           c
-                   if (msglvl .gt. 0) then
-                      call ivout (logfil, 1, iter, ndigit, 
+                   if (dsaup2_msglvl .gt. 0) then
+                      call ivout (logfil, 1, dsaup2_iter, ndigit, 
                &           '_saup2: **** Start of major iteration number ****')
                    end if
-                   if (msglvl .gt. 1) then
+                   if (dsaup2_msglvl .gt. 1) then
                       call ivout (logfil, 1, nev, ndigit, 
                &     '_saup2: The length of the current Lanczos factorization')
                       call ivout (logfil, 1, np, ndigit, 
@@ -1264,10 +1326,12 @@ public class SparseEigenvalue implements java.io.Serializable {
           c        %------------------------------------------------------------%
           c
                    ido = 0
+        			   } // if (seg6)
+        			   seg6 = true;
              20    continue
-                   update = .true.
+                   dsaup2_update = true;
           c
-                   call dsaitr (ido, bmat, n, nev, np, mode, resid, rnorm, v, 
+                   call dsaitr (ido, bmat, n, nev, np, mode, resid, dsaup2_rnorm, v, 
                &                ldv, h, ldh, ipntr, workd, info)
           c 
           c        %---------------------------------------------------%
@@ -1286,14 +1350,14 @@ public class SparseEigenvalue implements java.io.Serializable {
           c           %-----------------------------------------------------%
           c
                       np = info
-                      mxiter = iter
+                      mxiter = dsaup2_iter;
                       info = -9999
                       go to 1200
                    end if
-                   update = .false.
+                   dsaup2_update = false;
           c
-                   if (msglvl .gt. 1) then
-                      call dvout (logfil, 1, rnorm, ndigit, 
+                   if (dsaup2_msglvl .gt. 1) then
+                      call dvout (logfil, 1, dsaup2_rnorm, ndigit, 
                &           '_saup2: Current B-norm of residual for factorization')
                    end if
           c 
@@ -1302,7 +1366,7 @@ public class SparseEigenvalue implements java.io.Serializable {
           c        | of the current symmetric tridiagonal matrix.           |
           c        %--------------------------------------------------------%
           c
-                   call dseigt (rnorm, kplusp, h, ldh, ritz, bounds, workl, ierr)
+                   call dseigt (dsaup2_rnorm, dsaup2_kplusp, h, ldh, ritz, bounds, workl, ierr)
           c
                    if (ierr .ne. 0) then
                       info = -8
@@ -1314,8 +1378,8 @@ public class SparseEigenvalue implements java.io.Serializable {
           c        | bounds obtained from _seigt.                       |
           c        %----------------------------------------------------%
           c
-                   call dcopy(kplusp, ritz, 1, workl(kplusp+1), 1)
-                   call dcopy(kplusp, bounds, 1, workl(2*kplusp+1), 1)
+                   call dcopy(dsaup2_kplusp, ritz, 1, workl(dsaup2_kplusp+1), 1)
+                   call dcopy(dsaup2_kplusp, bounds, 1, workl(2*dsaup2_kplusp+1), 1)
           c
           c        %---------------------------------------------------%
           c        | Select the wanted Ritz values and their bounds    |
@@ -1327,8 +1391,8 @@ public class SparseEigenvalue implements java.io.Serializable {
           c        | * Shifts := RITZ(1:NP) := WORKL(1:NP)             |
           c        %---------------------------------------------------%
           c
-                   nev = nev0
-                   np = np0
+                   nev = dsaup2_nev0;
+                   np = dsaup2_np0;
                    call dsgets (ishift, which, nev, np, ritz, bounds, workl)
           c 
           c        %-------------------%
@@ -1336,17 +1400,17 @@ public class SparseEigenvalue implements java.io.Serializable {
           c        %-------------------%
           c
                    call dcopy (nev, bounds(np+1), 1, workl(np+1), 1)
-                   call dsconv (nev, ritz(np+1), workl(np+1), tol, nconv)
+                   call dsconv (nev, ritz(np+1), workl(np+1), tol, dsaup2_nconv)
           c
-                   if (msglvl .gt. 2) then
+                   if (dsaup2_msglvl .gt. 2) then
                       kp(1) = nev
                       kp(2) = np
-                      kp(3) = nconv
+                      kp(3) = dsaup2_nconv;
                       call ivout (logfil, 3, kp, ndigit,
                &                  '_saup2: NEV, NP, NCONV are')
-                      call dvout (logfil, kplusp, ritz, ndigit,
+                      call dvout (logfil, dsaup2_kplusp, ritz, ndigit,
                &           '_saup2: The eigenvalues of H')
-                      call dvout (logfil, kplusp, bounds, ndigit,
+                      call dvout (logfil, dsaup2_kplusp, bounds, ndigit,
                &          '_saup2: Ritz estimates of the current NCV Ritz values')
                    end if
           c
@@ -1368,8 +1432,8 @@ public class SparseEigenvalue implements java.io.Serializable {
                       end if
            30      continue
           c 
-                   if ( (nconv .ge. nev0) .or. 
-               &        (iter .gt. mxiter) .or.
+                   if ( (dsaup2_nconv .ge. dsaup2_nev0) .or. 
+               &        (dsaup2_iter .gt. mxiter) .or.
                &        (np .eq. 0) ) then
           c     
           c           %------------------------------------------------%
@@ -1392,14 +1456,14 @@ public class SparseEigenvalue implements java.io.Serializable {
           c              %-----------------------------------------------------%
           c
                          wprime = 'SA'
-                         call dsortr (wprime, .true., kplusp, ritz, bounds)
+                         call dsortr (wprime, .true., dsaup2_kplusp, ritz, bounds)
                          nevd2 = nev / 2
                          nevm2 = nev - nevd2 
                          if ( nev .gt. 1 ) then
                             call dswap ( min(nevd2,np), ritz(nevm2+1), 1,
-               &                 ritz( max(kplusp-nevd2+1,kplusp-np+1) ), 1)
+               &                 ritz( max(dsaup2_kplusp-nevd2+1,dsaup2_kplusp-np+1) ), 1)
                             call dswap ( min(nevd2,np), bounds(nevm2+1), 1,
-               &                 bounds( max(kplusp-nevd2+1,kplusp-np)+1 ), 1)
+               &                 bounds( max(dsaup2_kplusp-nevd2+1,dsaup2_kplusp-np)+1 ), 1)
                          end if
           c
                       else
@@ -1418,7 +1482,7 @@ public class SparseEigenvalue implements java.io.Serializable {
                          if (which .eq. 'LA') wprime = 'SA'
                          if (which .eq. 'SA') wprime = 'LA'
           c
-                         call dsortr (wprime, .true., kplusp, ritz, bounds)
+                         call dsortr (wprime, .true., dsaup2_kplusp, ritz, bounds)
           c
                       end if
           c
@@ -1427,8 +1491,8 @@ public class SparseEigenvalue implements java.io.Serializable {
           c           | by 1 / max(eps23,magnitude of the Ritz value).   |
           c           %--------------------------------------------------%
           c
-                      do 35 j = 1, nev0
-                         temp = max( eps23, abs(ritz(j)) )
+                      do 35 j = 1, dsaup2_nev0
+                         temp = max( dsaup2_eps23, abs(ritz(j)) )
                          bounds(j) = bounds(j)/temp
            35         continue
           c
@@ -1440,15 +1504,15 @@ public class SparseEigenvalue implements java.io.Serializable {
           c           %----------------------------------------------------%
           c
                       wprime = 'LA'
-                      call dsortr(wprime, .true., nev0, bounds, ritz)
+                      call dsortr(wprime, .true., dsaup2_nev0, bounds, ritz)
           c
           c           %----------------------------------------------%
           c           | Scale the Ritz estimate back to its original |
           c           | value.                                       |
           c           %----------------------------------------------%
           c
-                      do 40 j = 1, nev0
-                          temp = max( eps23, abs(ritz(j)) )
+                      do 40 j = 1, dsaup2_nev0
+                          temp = max( dsaup2_eps23, abs(ritz(j)) )
                           bounds(j) = bounds(j)*temp
            40         continue
           c
@@ -1468,7 +1532,7 @@ public class SparseEigenvalue implements java.io.Serializable {
           c              %------------------------------------------------%
           c
                          wprime = 'LA'
-                         call dsortr(wprime, .true., nconv, ritz, bounds)
+                         call dsortr(wprime, .true., dsaup2_nconv, ritz, bounds)
           c
                       else
           c
@@ -1479,7 +1543,7 @@ public class SparseEigenvalue implements java.io.Serializable {
           c              | ritz.                                        |
           c              %----------------------------------------------%
 
-                         call dsortr(which, .true., nconv, ritz, bounds)
+                         call dsortr(which, .true., dsaup2_nconv, ritz, bounds)
           c
                       end if
           c
@@ -1488,12 +1552,12 @@ public class SparseEigenvalue implements java.io.Serializable {
           c           |  rnorm to _seupd if needed               |
           c           %------------------------------------------%
           c
-                      h(1,1) = rnorm
+                      h(1,1) = dsaup2_rnorm;
           c
-                      if (msglvl .gt. 1) then
-                         call dvout (logfil, kplusp, ritz, ndigit,
+                      if (dsaup2_msglvl .gt. 1) then
+                         call dvout (logfil, dsaup2_kplusp, ritz, ndigit,
                &            '_saup2: Sorted Ritz values.')
-                         call dvout (logfil, kplusp, bounds, ndigit,
+                         call dvout (logfil, dsaup2_kplusp, bounds, ndigit,
                &            '_saup2: Sorted ritz estimates.')
                       end if
           c
@@ -1501,18 +1565,18 @@ public class SparseEigenvalue implements java.io.Serializable {
           c           | Max iterations have been exceeded. | 
           c           %------------------------------------%
           c
-                      if (iter .gt. mxiter .and. nconv .lt. nev) info = 1
+                      if (dsaup2_iter .gt. mxiter .and. dsaup2_nconv .lt. nev) info = 1
           c
           c           %---------------------%
           c           | No shifts to apply. | 
           c           %---------------------%
           c
-                      if (np .eq. 0 .and. nconv .lt. nev0) info = 2
+                      if (np .eq. 0 .and. dsaup2_nconv .lt. dsaup2_nev0) info = 2
           c
-                      np = nconv
+                      np = dsaup2_nconv;
                       go to 1100
           c
-                   else if (nconv .lt. nev .and. ishift .eq. 1) then
+                   else if (dsaup2_nconv .lt. nev .and. ishift .eq. 1) then
           c
           c           %---------------------------------------------------%
           c           | Do not have all the requested eigenvalues yet.    |
@@ -1521,13 +1585,13 @@ public class SparseEigenvalue implements java.io.Serializable {
           c           %---------------------------------------------------%
           c
                       nevbef = nev
-                      nev = nev + min (nconv, np/2)
-                      if (nev .eq. 1 .and. kplusp .ge. 6) then
-                         nev = kplusp / 2
-                      else if (nev .eq. 1 .and. kplusp .gt. 2) then
+                      nev = nev + min (dsaup2_nconv, np/2)
+                      if (nev .eq. 1 .and. dsaup2_kplusp .ge. 6) then
+                         nev = dsaup2_kplusp / 2
+                      else if (nev .eq. 1 .and. dsaup2_kplusp .gt. 2) then
                          nev = 2
                       end if
-                      np  = kplusp - nev
+                      np  = dsaup2_kplusp - nev
           c     
           c           %---------------------------------------%
           c           | If the size of NEV was just increased |
@@ -1540,10 +1604,10 @@ public class SparseEigenvalue implements java.io.Serializable {
           c
                    end if
           c
-                   if (msglvl .gt. 0) then
-                      call ivout (logfil, 1, nconv, ndigit,
+                   if (dsaup2_msglvl .gt. 0) then
+                      call ivout (logfil, 1, dsaup2_nconv, ndigit,
                &           '_saup2: no. of "converged" Ritz values at this iter.')
-                      if (msglvl .gt. 1) then
+                      if (dsaup2_msglvl .gt. 1) then
                          kp(1) = nev
                          kp(2) = np
                          call ivout (logfil, 2, kp, ndigit,
@@ -1564,11 +1628,12 @@ public class SparseEigenvalue implements java.io.Serializable {
           c           | NP locations of WORKL.                              |
           c           %-----------------------------------------------------%
           c
-                      ushift = .true.
+                      dsaup2_ushift = true;
                       ido = 3
                       go to 9000
                    end if
-          c
+        		   } // if (seg5)
+        		   seg5 = true;
              50    continue
           c
           c        %------------------------------------%
@@ -1577,7 +1642,7 @@ public class SparseEigenvalue implements java.io.Serializable {
           c        | in WORKL(1:*NP)                   |
           c        %------------------------------------%
           c
-                   ushift = .false.
+                   dsaup2_ushift = false;
           c 
           c 
           c        %---------------------------------------------------------%
@@ -1588,7 +1653,7 @@ public class SparseEigenvalue implements java.io.Serializable {
           c
                    if (ishift .eq. 0) call dcopy (np, workl, 1, ritz, 1)
           c
-                   if (msglvl .gt. 2) then
+                   if (dsaup2_msglvl .gt. 2) then
                       call ivout (logfil, 1, np, ndigit,
                &                  '_saup2: The number of shifts to apply ')
                       call dvout (logfil, np, workl, ndigit,
@@ -1616,7 +1681,7 @@ public class SparseEigenvalue implements java.io.Serializable {
           c        | the first step of the next call to dsaitr.  |
           c        %---------------------------------------------%
           c
-                   cnorm = .true.
+                   dsaup2_cnorm = true;
                    call second (t2)
                    if (bmat .eq. 'G') then
                       nbx = nbx + 1
@@ -1633,7 +1698,8 @@ public class SparseEigenvalue implements java.io.Serializable {
                    else if (bmat .eq. 'I') then
                       call dcopy (n, resid, 1, workd, 1)
                    end if
-          c 
+        	   } // if (seg4) 
+        	   seg4 = true;
             100    continue
           c 
           c        %----------------------------------%
@@ -1647,24 +1713,24 @@ public class SparseEigenvalue implements java.io.Serializable {
                    end if
           c 
                    if (bmat .eq. 'G') then         
-                      rnorm = ddot (n, resid, 1, workd, 1)
-                      rnorm = sqrt(abs(rnorm))
+                      dsaup2_rnorm = ddot (n, resid, 1, workd, 1)
+                      dsaup2_rnorm = sqrt(abs(dsaup2_rnorm));
                    else if (bmat .eq. 'I') then
-                      rnorm = dnrm2(n, resid, 1)
+                      dsaup2_rnorm = dnrm2(n, resid, 1);
                    end if
-                   cnorm = .false.
+                   dsaup2_cnorm = false;
             130    continue
           c
-                   if (msglvl .gt. 2) then
-                      call dvout (logfil, 1, rnorm, ndigit, 
+                   if (dsaup2_msglvl .gt. 2) then
+                      call dvout (logfil, 1, dsaup2_rnorm, ndigit, 
                &      '_saup2: B-norm of residual for NEV factorization')
                       call dvout (logfil, nev, h(1,2), ndigit,
                &           '_saup2: main diagonal of compressed H matrix')
                       call dvout (logfil, nev-1, h(2,1), ndigit,
                &           '_saup2: subdiagonal of compressed H matrix')
                    end if
-          c 
-                go to 1000
+           
+           } // loop1: while (true)
           c
           c     %---------------------------------------------------------------%
           c     |                                                               |
@@ -1674,8 +1740,8 @@ public class SparseEigenvalue implements java.io.Serializable {
           c 
            1100 continue
           c
-                mxiter = iter
-                nev = nconv
+                mxiter = dsaup2_iter;
+                nev = dsaup2_nconv;
           c 
            1200 continue
                 ido = 99
@@ -1695,7 +1761,445 @@ public class SparseEigenvalue implements java.io.Serializable {
           c     %---------------%
           c*/
                 }
-              
+                
+                
+        // -----------------------------------------------------------------------
+        // \BeginDoc
+        //
+        // \Name: dgetv0
+        //
+        // \Description: 
+        //  Generate a random initial residual vector for the Arnoldi process.
+        //  Force the residual vector to be in the range of the operator OP.  
+        
+        // \Usage:
+        //  call dgetv0
+        //     ( IDO, BMAT, ITRY, INITV, N, J, V, LDV, RESID, RNORM, 
+        //       IPNTR, WORKD, IERR )
+        
+        // \Arguments
+        //  IDO     Integer.  (INPUT/OUTPUT)
+        //          Reverse communication flag.  IDO must be zero on the first
+        //          call to dgetv0.
+        //          -------------------------------------------------------------
+        //          IDO =  0: first call to the reverse communication interface
+        //          IDO = -1: compute  Y = OP * X  where
+        //                    IPNTR[0] is the pointer into WORKD for X,
+        //                    IPNTR[1] is the pointer into WORKD for Y.
+        //                    This is for the initialization phase to force the
+        //                    starting vector into the range of OP.
+        //          IDO =  2: compute  Y = B * X  where
+        //                    IPNTR[0] is the pointer into WORKD for X,
+        //                    IPNTR[1] is the pointer into WORKD for Y.
+        //          IDO = 99: done
+        //          -------------------------------------------------------------
+        
+        //  BMAT   String  (INPUT)
+        //          BMAT specifies the type of the matrix B in the (generalized)
+        //          eigenvalue problem A*x = lambda*B*x.
+        //          B = 'I' -> standard eigenvalue problem A*x = lambda*x
+        //          B = 'G' -> generalized eigenvalue problem A*x = lambda*B*x
+        
+        //  ITRY    Integer.  (INPUT)
+        //          ITRY counts the number of times that dgetv0 is called.  
+        //          It should be set to 1 on the initial call to dgetv0.
+        
+        //  INITV   Logical variable.  (INPUT)
+        //          .TRUE.  => the initial residual vector is given in RESID.
+        //          .FALSE. => generate a random initial residual vector.
+        
+        //  N       Integer.  (INPUT)
+        //          Dimension of the problem.
+        
+        //  J       Integer.  (INPUT)
+        //          Index of the residual vector to be generated, with respect to
+        //          the Arnoldi process.  J > 1 in case of a "restart".
+        
+        //  V       Double precision N by J array.  (INPUT)
+        //          The first J-1 columns of V contain the current Arnoldi basis
+        //          if this is a "restart".
+        
+        //  LDV     Integer.  (INPUT)
+        //          Leading dimension of V exactly as declared in the calling 
+        //          program.
+        
+        //  RESID   Double precision array of length N.  (INPUT/OUTPUT)
+        //          Initial residual vector to be generated.  If RESID is 
+        //          provided, force RESID into the range of the operator OP.
+        
+        //  RNORM   Double precision scalar.  (OUTPUT)
+        //          B-norm of the generated residual.
+        
+        //  IPNTR   Integer array of length 3.  (OUTPUT)
+        
+        //  WORKD   Double precision work array of length 2*N.  (REVERSE COMMUNICATION).
+        //          On exit, WORK(1:N) = B*RESID to be used in SSAITR.
+        
+        //  IERR    Integer.  (OUTPUT)
+        //          =  0: Normal exit.
+        //          = -1: Cannot generate a nontrivial restarted residual vector
+        //                in the range of the operator OP.
+        //
+        // \EndDoc
+        
+        // -----------------------------------------------------------------------
+        //
+        // \BeginLib
+        //
+        // \Local variables:
+        //    xxxxxx  real
+        
+        // \References:
+        //  1. D.C. Sorensen, "Implicit Application of Polynomial Filters in
+        //     a k-Step Arnoldi Method", SIAM J. Matr. Anal. Apps., 13 (1992),
+        //     pp 357-385.
+        //  2. R.B. Lehoucq, "Analysis and Implementation of an Implicitly 
+        //     Restarted Arnoldi Iteration", Rice University Technical Report
+        //     TR95-13, Department of Computational and Applied Mathematics.
+        
+        // \Routines called:
+        //     second  ARPACK utility routine for timing.
+        //     dvout   ARPACK utility routine for vector output.
+        //     dlarnv  LAPACK routine for generating a random vector.
+        //     dgemv   Level 2 BLAS routine for matrix vector multiplication.
+        //     dcopy   Level 1 BLAS that copies one vector to another.
+        //     ddot    Level 1 BLAS that computes the scalar product of two vectors. 
+        //     dnrm2   Level 1 BLAS that computes the norm of a vector.
+        
+        // \Author
+        //     Danny Sorensen               Phuong Vu
+        //     Richard Lehoucq              CRPC / Rice University
+        //     Dept. of Computational &     Houston, Texas
+        //      Applied Mathematics
+        //     Rice University           
+        //     Houston, Texas            
+        
+        // \SCCS Information: @(#) 
+        // FILE: getv0.F   SID: 2.6   DATE OF SID: 8/27/96   RELEASE: 2
+        
+        // \EndLib
+        
+        // -----------------------------------------------------------------------
+        
+              private void dgetv0 
+                (int ido[], String bmat, int itry, boolean initv, int n, int j, double v[][], int ldv, double resid[], double rnorm[], 
+                  int ipntr[], double workd[], int ierr[] ) {
+         
+        //     %----------------------------------------------------%
+        //     | Include files for debugging and timing information |
+        //     %----------------------------------------------------%
+        
+        //     include   'debug.h'
+        //     include   'stat.h'
+        
+        //     %------------------%
+        //     | Scalar Arguments |
+        //     %------------------%
+        
+        //      character  bmat*1
+        //      logical    initv
+        //      integer    ido, ierr, itry, j, ldv, n
+        //      Double precision
+        //     &           rnorm
+        
+        //     %-----------------%
+        //     | Array Arguments |
+        //     %-----------------%
+        
+        //      integer    ipntr(3)
+        //      Double precision
+        //    &           resid(n), v(ldv,j), workd(2*n)
+        
+        //     %------------%
+        //     | Parameters |
+        //     %------------%
+        
+              final double zero = 0.0;
+              final double one = 1.0;
+        
+        //     %------------------------%
+        //     | Local Scalars & Arrays |
+        //     %------------------------%
+        
+              int    idist, jj, i;
+              boolean seg1;
+        
+        //     %----------------------%
+        //     | External Subroutines |
+        //     %----------------------%
+        
+        //     external   dlarnv, dvout, dcopy, dgemv, second
+        
+        //     %--------------------%
+        //     | External Functions |
+        //     %--------------------%
+        
+        //      Double precision
+        //     &           ddot, dnrm2
+        //      external   ddot, dnrm2
+        
+        //     %---------------------%
+        //     | Intrinsic Functions |
+        //     %---------------------%
+        
+        //     intrinsic    abs, sqrt
+        
+        //     %-----------------------%
+        //     | Executable Statements |
+        //     %-----------------------%
+        
+        
+        //     %-----------------------------------%
+        //     | Initialize the seed of the LAPACK |
+        //     | random number generator           |
+        //     %-----------------------------------%
+        
+              if (dgetv0_inits) {
+                  dgetv0_iseed[0] = 1;
+                  dgetv0_iseed[1] = 3;
+                  dgetv0_iseed[2] = 5;
+                  dgetv0_iseed[3] = 7;
+                  dgetv0_inits = false;
+              }
+        
+              if (ido[0] ==  0) {
+         
+        //        %-------------------------------%
+        //        | Initialize timing statistics  |
+        //        | & message level for debugging |
+        //        %-------------------------------%
+        
+            	 t0 = System.currentTimeMillis();
+                 dgetv0_msglvl = mgetv0;
+        
+                 ierr[0]   = 0;
+                 dgetv0_iter   = 0;
+                 dgetv0_first = false;
+                 dgetv0_orth = false;
+        
+        //        %-----------------------------------------------------%
+        //        | Possibly generate a random starting vector in RESID |
+        //        | Use a LAPACK random number generator used by the    |
+        //        | matrix generation routines.                         |
+        //        |    idist = 1: uniform (0,1)  distribution;          |
+        //        |    idist = 2: uniform (-1,1) distribution;          |
+        //        |    idist = 3: normal  (0,1)  distribution;          |
+        //        %-----------------------------------------------------%
+        
+                 if (!initv) {
+                    idist = 2;
+                    ge.dlarnv(idist, dgetv0_iseed, n, resid);
+                 }
+         
+        //        %----------------------------------------------------------%
+        //        | Force the starting vector into the range of OP to handle |
+        //        | the generalized problem when B is possibly (singular).   |
+        //        %----------------------------------------------------------%
+        
+                 t2 = System.currentTimeMillis();
+                 if (bmat.equalsIgnoreCase("G")) {
+                    nopx = nopx + 1;
+                    ipntr[0] = 1;
+                    ipntr[1] = n + 1;
+                    for (i = 0; i < n; i++) {
+                    	workd[i] = resid[i];
+                    }
+                    ido[0] = -1;
+                    return;
+                 } // if (bmat.equalsIgnoreCase("G"))
+              } // if (ido[0] ==  0)
+         
+        //     %-----------------------------------------%
+        //     | Back from computing OP*(initial-vector) |
+        //     %-----------------------------------------%
+        
+              seg1 = true;
+              loop1: while (true) {
+              loop2: while (true) {
+            	  if (seg1) {
+            	  loop3: while (true) {
+              if (dgetv0_first) {
+            	  break loop3;
+              }
+        
+        //     %-----------------------------------------------%
+        //     | Back from computing B*(orthogonalized-vector) |
+        //     %-----------------------------------------------%
+        
+              if (dgetv0_orth) {
+            	  break loop2;
+              }
+        
+              if (bmat.equalsIgnoreCase("G")) {
+            	  t3 = System.currentTimeMillis();
+                 tmvopx = tmvopx + (t3 - t2);
+              }
+         
+        //     %------------------------------------------------------%
+        //     | Starting vector is now in the range of OP; r = OP*r; |
+        //     | Compute B-norm of starting vector.                   |
+        //     %------------------------------------------------------%
+        
+              t3 = System.currentTimeMillis();
+              dgetv0_first = true;
+              if (bmat.equalsIgnoreCase("G")) {
+                 nbx = nbx + 1;
+                 for (i = 0; i < n; i++) {
+                	 resid[i] = workd[n+i];
+                 }
+                 ipntr[0] = n + 1;
+                 ipntr[1] = 1;
+                 ido[0] = 2;
+                 return;
+              } // if (bmat.equalsIgnoreCase("G"))
+              else if (bmat.equalsIgnoreCase("I")) {
+                 for (i = 0; i < n; i++) {
+                	 workd[i] = resid[i];
+                 }
+              }
+              break loop3;
+            	  } // loop3: while (true)
+        
+              if (bmat.equalsIgnoreCase("G")) {
+            	  t3 = System.currentTimeMillis();
+                 tmvbx = tmvbx + (t3 - t2);
+              } //  if (bmat.equalsIgnoreCase("G"))
+         
+              dgetv0_first = false;
+              if (bmat.equalsIgnoreCase("G")) {
+                  dgetv0_rnorm0 = ge.ddot (n, resid, 1, workd, 1);
+                  dgetv0_rnorm0 = Math.sqrt(Math.abs(dgetv0_rnorm0));
+              } // if (bmat.equalsIgnoreCase("G"))
+              else if (bmat.equalsIgnoreCase("I")) {
+                   dgetv0_rnorm0 = ge.dnrm2(n, resid, 1);
+              }
+              rnorm[0]  = dgetv0_rnorm0;
+        
+        //     %---------------------------------------------%
+        //     | Exit if this is the very first Arnoldi step |
+        //     %---------------------------------------------%
+        
+              if (j == 1) {
+            	  break loop1;
+              }
+         
+        //     %----------------------------------------------------------------
+        //     | Otherwise need to B-orthogonalize the starting vector against |
+        //     | the current Arnoldi basis using Gram-Schmidt with iter. ref.  |
+        //     | This is the case where an invariant subspace is encountered   |
+        //     | in the middle of the Arnoldi factorization.                   |
+        //     |                                                               |
+        //     |       s = V^{T}*B*r;   r = r - V*s;                           |
+        //     |                                                               |
+        //     | Stopping criteria used for iter. ref. is discussed in         |
+        //     | Parlett's book, page 107 and in Gragg & Reichel TOMS paper.   |
+        //     %---------------------------------------------------------------%
+        
+              dgetv0_orth = true;
+              } // if (seg1)
+              double buffer[] = new double[j-1];
+              for (i = 0; i < j-1; i++) {
+            	  buffer[i] = workd[n+i];
+              }
+              ge.dgemv('T', n, j-1, one, v, ldv, workd, 1, 
+                        zero, buffer, 1);
+              ge.dgemv ('N', n, j-1, -one, v, ldv, buffer, 1, 
+                         one, resid, 1);
+              for (i = 0; i < j-1; i++) {
+                  workd[n+i] = buffer[i];
+              }
+         
+        //     %----------------------------------------------------------%
+        //     | Compute the B-norm of the orthogonalized starting vector |
+        //     %----------------------------------------------------------%
+        
+              t2 = System.currentTimeMillis();
+              if (bmat.equalsIgnoreCase("G")) {
+                 nbx = nbx + 1;
+                 for (i = 0; i < n; i++) {
+                	 workd[n+i] = resid[i];
+                 }
+                 ipntr[0] = n + 1;
+                 ipntr[1] = 1;
+                 ido[0] = 2;
+                 return;
+              } // if (bmat.equalsIgnoreCase("G"))
+              else if (bmat.equalsIgnoreCase("I")) {
+            	 for (i = 0; i < n; i++) {
+            		 workd[i] = resid[i];
+            	 }
+              }
+              break loop2;
+              } // loop2: while (true)
+        
+              if (bmat.equalsIgnoreCase("G")) {
+            	 t3 = System.currentTimeMillis();
+                 tmvbx = tmvbx + (t3 - t2);
+              } // if (bmat.equalsIgnoreCase("G"))
+         
+              if (bmat.equalsIgnoreCase("G")) {
+                 rnorm[0] = ge.ddot(n, resid, 1, workd, 1);
+                 rnorm[0] = Math.sqrt(Math.abs(rnorm[0]));
+              } // if (bmat.equalsIgnoreCase("G"))
+              else if (bmat.equalsIgnoreCase("I")) {
+                 rnorm[0] = ge.dnrm2(n, resid, 1);
+              }
+        
+        //     %--------------------------------------%
+        //     | Check for further orthogonalization. |
+        //     %--------------------------------------%
+        
+              if (dgetv0_msglvl > 2) {
+            	  UI.setDataText("dgetv0: re-orthonalization ; dgetv0_rnorm0 is " + nf.format(dgetv0_rnorm0) + "\n");
+            	  UI.setDataText("dgetv0: re-orthonalization ; rnorm[0] is " + nf.format(rnorm[0]) + "\n");
+              } // if (dgetv0_msglvl > 2)
+        
+              if (rnorm[0] > 0.717*dgetv0_rnorm0) {
+            	  break loop1;
+              }
+         
+              dgetv0_iter = dgetv0_iter + 1;
+              if (dgetv0_iter <= 1) {
+        
+        //        %-----------------------------------%
+        //       | Perform iterative refinement step |
+        //        %-----------------------------------%
+        
+                 dgetv0_rnorm0 = rnorm[0];
+                 seg1 = false;
+                 continue loop1;
+              } // if (dgetv0_iter <= 1)
+              else {
+        
+        //        %------------------------------------%
+        //        | Iterative refinement step "failed" |
+        //        %------------------------------------%
+        
+                 for (jj = 0; jj < n; jj++) {
+                    resid[jj] = zero;
+                 }
+                 rnorm[0] = zero;
+                 ierr[0] = -1;
+              } // else
+              } // loop1: while (true)
+        
+              if (dgetv0_msglvl > 0) {
+            	 UI.setDataText("dgetv0: B-norm of initial / restarted starting vector rnorm[0] = " + nf.format(rnorm[0]) + "\n");
+              }
+              if (dgetv0_msglvl > 2) {
+            	  UI.setDataText("dgetv0: initial / restarted starting vector resid\n");
+            	  for (i = 0; i < n; i++) {
+            		  UI.setDataText("resid["+i+"] = " + nf.format(resid[i]) + "\n");
+            	  }
+              }
+              ido[0] = 99;
+         
+              t1 = System.currentTimeMillis();
+              tgetv0 = tgetv0 + (t1 - t0);
+   
+              return;
+              } // dgetv0
+
 
           
           //
