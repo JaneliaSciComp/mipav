@@ -162,6 +162,24 @@ public class SparseEigenvalue implements java.io.Serializable {
     private int dgetv0_iter;
     private int dgetv0_msglvl;
     private double dgetv0_rnorm0;
+    
+    private boolean dsaitr_orth1;
+    private boolean dsaitr_orth2;
+    private boolean dsaitr_rstart;
+    private boolean dsaitr_step3;
+    private boolean dsaitr_step4;
+    private boolean dsaitr_first = true;
+    private int dsaitr_ierr[] = new int[1];
+    private int dsaitr_ipj;
+    private int dsaitr_irj;
+    private int dsaitr_ivj;
+    private int dsaitr_iter;
+    private int dsaitr_itry;
+    private int dsaitr_j;
+    private int dsaitr_msglvl;
+    private double dsaitr_rnorm1;
+    private double dsaitr_safmin;
+    private double dsaitr_wnorm;
 
 	// ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -1761,6 +1779,1006 @@ public class SparseEigenvalue implements java.io.Serializable {
           c     %---------------%
           c*/
                 }
+                
+                
+        // -----------------------------------------------------------------------
+        // \BeginDoc
+        
+        // \Name: dsaitr
+        
+        // \Description: 
+        //  Reverse communication interface for applying NP additional steps to 
+        //  a K step symmetric Arnoldi factorization.
+        
+        //  Input:  OP*V_{k}  -  V_{k}*H = r_{k}*e_{k}^T
+        
+        //          with (V_{k}^T)*B*V_{k} = I, (V_{k}^T)*B*r_{k} = 0.
+        
+        //  Output: OP*V_{k+p}  -  V_{k+p}*H = r_{k+p}*e_{k+p}^T
+        
+        //          with (V_{k+p}^T)*B*V_{k+p} = I, (V_{k+p}^T)*B*r_{k+p} = 0.
+        
+        //  where OP and B are as in dsaupd.  The B-norm of r_{k+p} is also
+        //  computed and returned.
+        
+        // \Usage:
+        //  call dsaitr
+        //     ( IDO, BMAT, N, K, NP, MODE, RESID, RNORM, V, LDV, H, LDH, 
+        //       IPNTR, WORKD, INFO )
+        
+        // \Arguments
+        //  IDO     Integer.  (INPUT/OUTPUT)
+        //          Reverse communication flag.
+        //          -------------------------------------------------------------
+        //          IDO =  0: first call to the reverse communication interface
+        //          IDO = -1: compute  Y = OP * X  where
+        //                    IPNTR[0] is the pointer into WORK for X,
+        //                    IPNTR[1] is the pointer into WORK for Y.
+        //                    This is for the restart phase to force the new
+        //                    starting vector into the range of OP.
+        //          IDO =  1: compute  Y = OP * X  where
+        //                    IPNTR[0] is the pointer into WORK for X,
+        //                    IPNTR[1] is the pointer into WORK for Y,
+        //                    IPNTR[2] is the pointer into WORK for B * X.
+        //          IDO =  2: compute  Y = B * X  where
+        //                    IPNTR[0] is the pointer into WORK for X,
+        //                    IPNTR[1] is the pointer into WORK for Y.
+        //          IDO = 99: done
+        //          -------------------------------------------------------------
+        //          When the routine is used in the "shift-and-invert" mode, the
+        //          vector B * Q is already available and does not need to be
+        //          recomputed in forming OP * Q.
+        
+        //  BMAT    String.  (INPUT)
+        //          BMAT specifies the type of matrix B that defines the
+        //          semi-inner product for the operator OP.  See dsaupd.
+        //          B = 'I' -> standard eigenvalue problem A*x = lambda*x
+        //          B = 'G' -> generalized eigenvalue problem A*x = lambda*M*x
+        
+        //  N       Integer.  (INPUT)
+        //          Dimension of the eigenproblem.
+        
+        //  K       Integer.  (INPUT)
+        //          Current order of H and the number of columns of V.
+        
+        //  NP      Integer.  (INPUT)
+        //          Number of additional Arnoldi steps to take.
+        
+        //  MODE    Integer.  (INPUT)
+        //          Signifies which form for "OP". If MODE=2 then
+        //          a reduction in the number of B matrix vector multiplies
+        //          is possible since the B-norm of OP*x is equivalent to
+        //          the inv(B)-norm of A*x.
+        
+        //  RESID   Double precision array of length N.  (INPUT/OUTPUT)
+        //          On INPUT:  RESID contains the residual vector r_{k}.
+        //          On OUTPUT: RESID contains the residual vector r_{k+p}.
+        
+        //  RNORM   Double precision scalar.  (INPUT/OUTPUT)
+        //          On INPUT the B-norm of r_{k}.
+        //          On OUTPUT the B-norm of the updated residual r_{k+p}.
+        
+        //  V       Double precision N by K+NP array.  (INPUT/OUTPUT)
+        //          On INPUT:  V contains the Arnoldi vectors in the first K 
+        //          columns.
+        //          On OUTPUT: V contains the new NP Arnoldi vectors in the next
+        //          NP columns.  The first K columns are unchanged.
+        
+        //  LDV     Integer.  (INPUT)
+        //          Leading dimension of V exactly as declared in the calling 
+        //          program.
+        
+        //  H       Double precision (K+NP) by 2 array.  (INPUT/OUTPUT)
+        //          H is used to store the generated symmetric tridiagonal matrix
+        //          with the subdiagonal in the first column starting at H(2,1)
+        //          and the main diagonal in the second column.
+        
+        //  LDH     Integer.  (INPUT)
+        //          Leading dimension of H exactly as declared in the calling 
+        //          program.
+        
+        //  IPNTR   Integer array of length 3.  (OUTPUT)
+        //          Pointer to mark the starting locations in the WORK for 
+        //          vectors used by the Arnoldi iteration.
+        //          -------------------------------------------------------------
+        //          IPNTR[0]: pointer to the current operand vector X.
+        //          IPNTR[1]: pointer to the current result vector Y.
+        //          IPNTR[2]: pointer to the vector B * X when used in the 
+        //                    shift-and-invert mode.  X is the current operand.
+        //          -------------------------------------------------------------
+                  
+        //  WORKD   Double precision work array of length 3*N.  (REVERSE COMMUNICATION)
+        //          Distributed array to be used in the basic Arnoldi iteration
+        //          for reverse communication.  The calling program should not 
+        //          use WORKD as temporary workspace during the iteration !!!!!!
+        //          On INPUT, WORKD(1:N) = B*RESID where RESID is associated
+        //          with the K step Arnoldi factorization. Used to save some 
+        //          computation at the first step. 
+        //          On OUTPUT, WORKD(1:N) = B*RESID where RESID is associated
+        //          with the K+NP step Arnoldi factorization.
+        
+        //  INFO    Integer.  (OUTPUT)
+        //          = 0: Normal exit.
+        //          > 0: Size of an invariant subspace of OP is found that is
+        //               less than K + NP.
+        
+        // \EndDoc
+        
+        // -----------------------------------------------------------------------
+        
+        // \BeginLib
+        
+        // \Local variables:
+        //     xxxxxx  real
+        
+        // \Routines called:
+        //     dgetv0  ARPACK routine to generate the initial vector.
+        //     ivout   ARPACK utility routine that prints integers.
+        //     dmout   ARPACK utility routine that prints matrices.
+        //     dvout   ARPACK utility routine that prints vectors.
+        //     dlamch  LAPACK routine that determines machine constants.
+        //     dlascl  LAPACK routine for careful scaling of a matrix.
+        //     dgemv   Level 2 BLAS routine for matrix vector multiplication.
+        //     daxpy   Level 1 BLAS that computes a vector triad.
+        //     dscal   Level 1 BLAS that scales a vector.
+        //     dcopy   Level 1 BLAS that copies one vector to another .
+        //     Level 1 BLAS that computes the scalar product of two vectors. 
+        //     dnrm2   Level 1 BLAS that computes the norm of a vector.
+        
+        // \Author
+        //     Danny Sorensen               Phuong Vu
+        //     Richard Lehoucq              CRPC / Rice University
+        //     Dept. of Computational &     Houston, Texas
+        //     Applied Mathematics
+        //     Rice University           
+        //     Houston, Texas            
+         
+        // \Revision history:
+        //     xx/xx/93: Version ' 2.4'
+        
+        // \SCCS Information: @(#) 
+        //  FILE: saitr.F   SID: 2.6   DATE OF SID: 8/28/96   RELEASE: 2
+        
+        // \Remarks
+        //  The algorithm implemented is:
+        //  
+        //  restart = .false.
+        //  Given V_{k} = [v_{1}, ..., v_{k}], r_{k}; 
+        //  r_{k} contains the initial residual vector even for k = 0;
+        //  Also assume that rnorm = || B*r_{k} || and B*r_{k} are already 
+        //  computed by the calling program.
+        
+        //  betaj = rnorm ; p_{k+1} = B*r_{k} ;
+        //  For  j = k+1, ..., k+np  Do
+        //     1) if ( betaj < tol ) stop or restart depending on j.
+        //        if ( restart ) generate a new starting vector.
+        //     2) v_{j} = r(j-1)/betaj;  V_{j} = [V_{j-1}, v_{j}];  
+        //        p_{j} = p_{j}/betaj
+        //     3) r_{j} = OP*v_{j} where OP is defined as in dsaupd
+        //        For shift-invert mode p_{j} = B*v_{j} is already available.
+        //        wnorm = || OP*v_{j} ||
+        //     4) Compute the j-th step residual vector.
+        //        w_{j} =  V_{j}^T * B * OP * v_{j}
+        //        r_{j} =  OP*v_{j} - V_{j} * w_{j}
+        //        alphaj <- j-th component of w_{j}
+        //        rnorm = || r_{j} ||
+        //        betaj+1 = rnorm
+        //        If (rnorm > 0.717*wnorm) accept step and go back to 1)
+        //     5) Re-orthogonalization step:
+        //        s = V_{j}'*B*r_{j}
+        //        r_{j} = r_{j} - V_{j}*s;  rnorm1 = || r_{j} ||
+        //        alphaj = alphaj + s_{j};   
+        //     6) Iterative refinement step:
+        //        If (rnorm1 > 0.717*rnorm) then
+        //           rnorm = rnorm1
+        //           accept step and go back to 1)
+        //        Else
+        //           rnorm = rnorm1
+        //           If this is the first time in step 6), go to 5)
+        //           Else r_{j} lies in the span of V_{j} numerically.
+        //              Set r_{j} = 0 and rnorm = 0; go to 1)
+        //        EndIf 
+        //  End Do
+        
+        // \EndLib
+        
+        // -----------------------------------------------------------------------
+        
+             private void dsaitr
+                (int ido[], String bmat, int n, int k, int np, int mode, double resid[], double rnorm[], double v[][], 
+                		int ldv, double h[][], int ldh, int ipntr[], double workd[], int info[]) {
+        
+        //     %----------------------------------------------------%
+        //     | Include files for debugging and timing information |
+        //     %----------------------------------------------------%
+        
+        //      include   'debug.h'
+        //      include   'stat.h'
+        
+        //     %------------------%
+        //     | Scalar Arguments |
+        //     %------------------%
+        
+        //     character  bmat*1
+        //     integer    ido, info, k, ldh, ldv, n, mode, np
+        //     Double precision
+        //     &           rnorm
+        
+        //     %-----------------%
+        //     | Array Arguments |
+        //     %-----------------%
+        
+        //      integer    ipntr(3)
+        //      Double precision
+        //     &           h(ldh,2), resid(n), v(ldv,k+np), workd(3*n)
+        
+        //     %------------%
+        //     | Parameters |
+        //     %------------%
+        
+              final double zero = 0.0;
+              final double one = 1.0;
+             
+        
+        //     %---------------%
+        //     | Local Scalars |
+        //     %---------------%
+        
+              int    i = 0;
+              int jj, m;
+              int infol[] = new int[1];
+              double temp1;
+        
+        //     %-----------------------%
+        //     | Local Array Arguments | 
+        //     %-----------------------%
+        
+              double xtemp[] = new double[2];
+        
+        //     %----------------------%
+        //     | External Subroutines |
+        //     %----------------------%
+        
+        //      external   daxpy, dcopy, dscal, dgemv, dgetv0, dvout, dmout,
+        //     &           dlascl, ivout, second
+        
+        //     %--------------------%
+        //     | External Functions |
+        //     %--------------------%
+        
+        //      Double precision
+        //     &           ddot, dnrm2, dlamch
+        //      external   ddot, dnrm2, dlamch
+       
+        
+        //     %-----------------------%
+        //     | Executable Statements |
+        //     %-----------------------%
+        
+              if (dsaitr_first) {
+                 dsaitr_first = false;
+        
+        //        %--------------------------------%
+        //        | safmin = safe minimum is such  |
+        //        | that 1/sfmin does not overflow |
+        //        %--------------------------------%
+        
+                 dsaitr_safmin = ge.dlamch('S');
+              } // if (dsaitr_first)
+        
+              if (ido[0] == 0) {
+         
+        //        %-------------------------------%
+        //        | Initialize timing statistics  |
+        //        | & message level for debugging |
+        //        %-------------------------------%
+        
+            	 t0 = System.currentTimeMillis();
+                 dsaitr_msglvl = msaitr;
+         
+        //        %------------------------------%
+        //        | Initial call to this routine |
+        //        %------------------------------%
+        
+                 info[0]   = 0;
+                 dsaitr_step3  = false;
+                 dsaitr_step4  = false;
+                 dsaitr_rstart = false;
+                 dsaitr_orth1  = false;
+                 dsaitr_orth2  = false;
+         
+        //        %--------------------------------%
+        //        | Pointer to the current step of |
+        //        | the factorization to build     |
+        //        %--------------------------------%
+        
+                 dsaitr_j      = k + 1;
+        
+        //        %------------------------------------------%
+        //        | Pointers used for reverse communication  |
+        //        | when using WORKD.                        |
+        //        %------------------------------------------%
+        
+                 dsaitr_ipj    = 1;
+                 dsaitr_irj    = dsaitr_ipj   + n;
+                 dsaitr_ivj    = dsaitr_irj   + n;
+              } // if (ido[0] == 0)
+         
+        //     %-------------------------------------------------%
+        //     | When in reverse communication mode one of:      |
+        //     | STEP3, STEP4, ORTH1, ORTH2, RSTART              |
+        //     | will be .true.                                  |
+        //     | STEP3: return from computing OP*v_{j}.          |
+        //     | STEP4: return from computing B-norm of OP*v_{j} |
+        //     | ORTH1: return from computing B-norm of r_{j+1}  |
+        //     | ORTH2: return from computing B-norm of          |
+        //     |        correction to the residual vector.       |
+        //     | RSTART: return from OP computations needed by   |
+        //     |         dgetv0.                                 |
+        //     %-------------------------------------------------%
+        
+              boolean seg1 = true;
+              boolean seg2 = true;
+              boolean seg3 = true;
+              boolean seg4 = true;
+              boolean seg5 = true;
+              boolean seg6 = true;
+              boolean seg7 = true;
+              boolean seg8 = true;
+              boolean seg9 = true;
+              boolean seg10 = true;
+              boolean seg11 = true;
+              boolean seg12 = true;
+              boolean seg13 = true;
+              boolean seg14 = true;
+              if (dsaitr_step3)  {
+            	  seg4 = false;
+              }
+              else if (dsaitr_step4)  {
+            	  seg3 = false;
+              }
+              else if (dsaitr_orth1)  {
+                  seg2 = false;  
+              }
+              else if (dsaitr_orth2)  {
+            	  seg1 = false;
+              }
+              else if (dsaitr_rstart) {
+            	  seg5 = false;
+              }
+        
+        //     %------------------------------%
+        //     | Else this is the first step. |
+        //     %------------------------------%
+         
+        //     %--------------------------------------------------------------%
+        //     |                                                              |
+        //     |        A R N O L D I     I T E R A T I O N     L O O P       |
+        //     |                                                              |
+        //     | Note:  B*r_{j-1} is already in WORKD(1:N)=WORKD(IPJ:IPJ+N-1) |
+        //     %--------------------------------------------------------------%
+        
+         loop1: while (true) {
+                if (seg1) {
+                if (seg2) {
+                if (seg3) {
+                if (seg4) {
+                if (seg5) {
+                if (seg8) {
+                 if (dsaitr_msglvl > 2) {
+                	UI.setDataText("dsaitr: generating Arnoldi vector no. dsaitr_j = " + dsaitr_j + "\n");
+                	UI.setDataText("dsaitr: B-norm of the current residual rnorm[0] = " + nf.format(rnorm[0]) + "\n");
+                 } // if (dsaitr_msglvl > 2)
+         
+        //        %---------------------------------------------------------%
+        //        | Check for exact zero. Equivalent to determing whether a |
+        //        | j-step Arnoldi factorization is present.                |
+        //        %---------------------------------------------------------%
+        
+                 if (rnorm[0] > zero) {
+                	 seg6 = false;
+                	 seg7 = false;
+                 }
+                 if (seg6) {
+        
+        //           %---------------------------------------------------%
+        //           | Invariant subspace found, generate a new starting |
+        //           | vector which is orthogonal to the current Arnoldi |
+        //           | basis and continue the iteration.                 |
+        //           %---------------------------------------------------%
+        
+                    if (dsaitr_msglvl > 0) {
+                       UI.setDataText("saitr: ****** restart at step ****** dsaitr_j = "+ dsaitr_j + "\n");
+                    }
+         
+        //           %---------------------------------------------%
+        //           | ITRY is the loop variable that controls the |
+        //           | maximum amount of times that a restart is   |
+        //           | attempted. NRSTRT is used by stat.h         |
+        //           %---------------------------------------------%
+        
+                    nrstrt = nrstrt + 1;
+                    dsaitr_itry   = 1;
+                 } // if (seg8)
+                 seg8 = true;
+                    dsaitr_rstart = true;
+                    ido[0]    = 0;
+                 } // if (seg6)
+                 seg6 = true;
+                } // if (seg5)
+                seg5 = true;
+               if (seg7) {
+        
+        //           %--------------------------------------%
+        //           | If in reverse communication mode and |
+        //           | RSTART = .true. flow returns here.   |
+        //           %--------------------------------------%
+        
+                    dgetv0 (ido, bmat, dsaitr_itry, false, n, dsaitr_j, v, ldv, 
+                                resid, rnorm, ipntr, workd, dsaitr_ierr);
+                    if (ido[0] != 99) {
+                    	return;
+                    }
+                    if (dsaitr_ierr[0] < 0) {
+                       dsaitr_itry = dsaitr_itry + 1;
+                       if (dsaitr_itry <= 3) {
+                    	   seg8 = false;
+                    	   continue loop1;
+                       }
+        
+        //              %------------------------------------------------%
+        //              | Give up after several restart attempts.        |
+        //              | Set INFO to the size of the invariant subspace |
+        //              | which spans OP and exit.                       |
+        //              %------------------------------------------------%
+        
+                       info[0] = dsaitr_j - 1;
+                       t1 = System.currentTimeMillis();
+                       tsaitr = tsaitr + (t1 - t0);
+                       ido[0] = 99;
+                       return;
+                    } // if (dsaitr_ierr[0] < 0)
+               } // if (seg7)
+           seg7 = true;
+        
+        //        %---------------------------------------------------------%
+        //        | STEP 2:  v_{j} = r_{j-1}/rnorm and p_{j} = p_{j}/rnorm  |
+        //        | Note that p_{j} = B*r_{j-1}. In order to avoid overflow |
+        //        | when reciprocating a small RNORM, test against lower    |
+        //        | machine bound.                                          |
+        //        %---------------------------------------------------------%
+        
+	             for (m = 0; m < n; m++) {
+	        	     v[m][dsaitr_j-1] = resid[m];
+	             }
+                 if (rnorm[0] >= dsaitr_safmin) {
+                     temp1 = one / rnorm[0];
+                     for (m = 0; m < n; m++) {
+                    	 v[m][dsaitr_j-1] = temp1 * v[m][dsaitr_j-1];
+                     }
+                     for (m = 0; m < n; m++) {
+                    	 workd[dsaitr_ipj - 1 + m] = temp1 * workd[dsaitr_ipj - 1 + m];
+                     }
+                 }
+                 else {
+        
+        //            %-----------------------------------------%
+        //            | To scale both v_{j} and p_{j} carefully |
+        //            | use LAPACK routine SLASCL               |
+        //            %-----------------------------------------%
+        
+                     double A[][] = new double[n][1];
+                     for (m = 0; m < n; m++) {
+                    	 A[m][0] = v[m][dsaitr_j-1];
+                     }
+                     ge.dlascl('G', i, i, rnorm[0], one, n, 1, A, n, infol);
+                     for (m = 0; m < n; m++) {
+                    	 v[m][dsaitr_j-1] = A[m][0];
+                     }
+                     for (m = 0; m < n; m++) {
+                    	 A[m][0] = workd[dsaitr_ipj-1+m];
+                     }
+                     ge.dlascl('G', i, i, rnorm[0], one, n, 1, A, n, infol);
+                     for (m = 0; m < n; m++) {
+                    	 workd[dsaitr_ipj-1+m] = A[m][0];
+                     }
+                 }
+         
+        //        %------------------------------------------------------%
+        //        | STEP 3:  r_{j} = OP*v_{j}; Note that p_{j} = B*v_{j} |
+        //        | Note that this is not quite yet r_{j}. See STEP 4    |
+        //        %------------------------------------------------------%
+        
+                 dsaitr_step3 = true;
+                 nopx  = nopx + 1;
+                 t2 = System.currentTimeMillis();
+                 for (m = 0; m < n; m++) {
+                	 workd[dsaitr_ivj-1+m] = v[m][dsaitr_j-1];
+                 }
+                 ipntr[0] = dsaitr_ivj;
+                 ipntr[1] = dsaitr_irj;
+                 ipntr[2] = dsaitr_ipj;
+                 ido[0] = 1;
+         
+        //       %-----------------------------------%
+        //        | Exit in order to compute OP*v_{j} |
+        //        %-----------------------------------%
+         
+                 return;
+                } // if (seg4)
+                seg4 = true;
+         
+        //        %-----------------------------------%
+        //        | Back from reverse communication;  |
+        //        | WORKD(IRJ:IRJ+N-1) := OP*v_{j}.   |
+        //        %-----------------------------------%
+        
+                 t3 = System.currentTimeMillis();
+                 tmvopx = tmvopx + (t3 - t2);
+         
+                 dsaitr_step3 = false;
+        
+        //        %------------------------------------------%
+        //        | Put another copy of OP*v_{j} into RESID. |
+        //        %------------------------------------------%
+        
+                 for (m = 0; m < n; m++) {
+                	 resid[m] = workd[dsaitr_irj-1+m];
+                 }
+         
+        //        %-------------------------------------------%
+        //        | STEP 4:  Finish extending the symmetric   |
+        //        |          Arnoldi to length j. If MODE = 2 |
+        //        |          then B*OP = B*inv(B)*A = A and   |
+        //        |          we don't need to compute B*OP.   |
+        //        | NOTE: If MODE = 2 WORKD(IVJ:IVJ+N-1) is   |
+        //        | assumed to have A*v_{j}.                  |
+        //        %-------------------------------------------%
+        
+                 if (mode == 2) {
+                	 seg9 = false;
+                	 seg10 = false;
+                 }
+                 if (seg9) {
+                	 t2 = System.currentTimeMillis();
+                 if (bmat.equalsIgnoreCase("G")) {
+                    nbx = nbx + 1;
+                    dsaitr_step4 = true;
+                    ipntr[0] = dsaitr_irj;
+                    ipntr[1] = dsaitr_ipj;
+                    ido[0] = 2;
+         
+        //           %-------------------------------------%
+        //           | Exit in order to compute B*OP*v_{j} |
+        //           %-------------------------------------%
+         
+                    return;
+                 } // if (bmat.equalsIgnoreCase("G"))
+                 else if (bmat.equalsIgnoreCase("I")) {
+                	 for (m = 0; m < n; m++) {
+                		 workd[dsaitr_ipj-1+m] = resid[m];
+                	 }
+                 }
+                 } // if (seg9)
+                 seg9 = true;
+                } // if (seg3)
+                seg3 = true;
+           if (seg10) {
+         
+        //        %-----------------------------------%
+        //        | Back from reverse communication;  |
+        //        | WORKD(IPJ:IPJ+N-1) := B*OP*v_{j}. |
+        //        %-----------------------------------%
+        
+        	   if (bmat.equalsIgnoreCase("G")) {
+        		    t3 = System.currentTimeMillis();
+                    tmvbx = tmvbx + (t3 - t2);
+        	   }
+        
+                 dsaitr_step4 = false;
+           } // if (seg10)
+           seg10 = true;
+        
+        //        %-------------------------------------%
+        //        | The following is needed for STEP 5. |
+        //        | Compute the B-norm of OP*v_{j}.     |
+        //        %-------------------------------------%
+        
+                 if (mode == 2) {
+        
+        //           %----------------------------------%
+        //           | Note that the B-norm of OP*v_{j} |
+        //           | is the inv(B)-norm of A*v_{j}.   |
+        //           %----------------------------------%
+                    double buffer[] = new double[n];
+                    for (m = 0; m < n; m++) {
+                    	buffer[m] = workd[dsaitr_ivj-1+m];
+                    }
+                    dsaitr_wnorm = ge.ddot (n, resid, 1, buffer, 1);
+                    dsaitr_wnorm = Math.sqrt(Math.abs(dsaitr_wnorm));
+                 }
+                 else if (bmat.equalsIgnoreCase("G")) { 
+                	 double buffer[] = new double[n];
+                     for (m = 0; m < n; m++) {
+                     	buffer[m] = workd[dsaitr_ipj-1+m];
+                     }
+                    dsaitr_wnorm = ge.ddot (n, resid, 1, buffer, 1);
+                    dsaitr_wnorm = Math.sqrt(Math.abs(dsaitr_wnorm));
+                 }
+                 else if (bmat.equalsIgnoreCase("I")) {
+                    dsaitr_wnorm = ge.dnrm2(n, resid, 1);
+                 }
+        
+        //        %-----------------------------------------%
+        //        | Compute the j-th residual corresponding |
+        //        | to the j step factorization.            |
+        //        | Use Classical Gram Schmidt and compute: |
+        //        | w_{j} <-  V_{j}^T * B * OP * v_{j}      |
+        //        | r_{j} <-  OP*v_{j} - V_{j} * w_{j}      |
+        //        %-----------------------------------------%
+        
+        
+        //        %------------------------------------------%
+        //        | Compute the j Fourier coefficients w_{j} |
+        //        | WORKD(IPJ:IPJ+N-1) contains B*OP*v_{j}.  |
+        //        %------------------------------------------%
+        
+                 double buffer[] = new double[n];
+                 double buffer2[] = new double[dsaitr_j];
+                 if (mode != 2 ) {
+                	 for (m = 0; m < n; m++) {
+                		 buffer[m] = workd[dsaitr_ipj-1+m];
+                	 }
+                	 for (m = 0; m < dsaitr_j; m++) {
+                		 buffer2[m] = workd[dsaitr_irj-1+m];
+                	 }
+                    ge.dgemv('T', n, dsaitr_j, one, v, ldv, buffer, 1, zero, buffer2, 1);
+                    for (m = 0; m < dsaitr_j; m++) {
+                    	workd[dsaitr_irj-1+m] = buffer2[m];	
+                    }
+                 }
+                 else if (mode == 2) {
+                	 for (m = 0; m < n; m++) {
+                		 buffer[m] = workd[dsaitr_ivj-1+m];
+                	 }
+                	 for (m = 0; m < dsaitr_j; m++) {
+                		 buffer2[m] = workd[dsaitr_irj-1+m];
+                	 }
+                    ge.dgemv('T', n, dsaitr_j, one, v, ldv, buffer, 1, zero, buffer2, 1);
+                    for (m = 0; m < dsaitr_j; m++) {
+                    	workd[dsaitr_irj-1+m] = buffer2[m];	
+                    }
+                 }
+        
+        //        %--------------------------------------%
+        //        | Orthgonalize r_{j} against V_{j}.    |
+        //        | RESID contains OP*v_{j}. See STEP 3. | 
+        //        %--------------------------------------%
+                 for (m = 0; m < n; m++) {
+                	 buffer2[m] = workd[dsaitr_irj-1+m];
+                 }
+                 ge.dgemv('N', n, dsaitr_j, -one, v, ldv, buffer2, 1, one, resid, 1);
+        
+        //        %--------------------------------------%
+        //        | Extend H to have j rows and columns. |
+        //        %--------------------------------------%
+        
+                 h[dsaitr_j-1][1] = workd[dsaitr_irj + dsaitr_j - 2];
+                 if (dsaitr_j == 1  ||  dsaitr_rstart) {
+                    h[dsaitr_j-1][0] = zero;
+                 }
+                 else {
+                    h[dsaitr_j-1][0] = rnorm[0];
+                 }
+                 t4 = System.currentTimeMillis();
+         
+                 dsaitr_orth1 = true;
+                 dsaitr_iter  = 0;
+        
+                 t2 = System.currentTimeMillis();
+                 if (bmat.equalsIgnoreCase("G")) { 
+                    nbx = nbx + 1;
+                    for (m = 0; m < n; m++) {
+                    	workd[dsaitr_irj-1+m] = resid[m];
+                    }
+                    ipntr[0] = dsaitr_irj;
+                    ipntr[1] = dsaitr_ipj;
+                    ido[0] = 2;
+         
+        //           %----------------------------------%
+        //           | Exit in order to compute B*r_{j} |
+        //           %----------------------------------%
+       
+                    return;
+                 } // if (bmat.equalsIgnoreCase("G"))
+                 else if (bmat.equalsIgnoreCase("I")) {
+                	 for (m = 0; m < n; m++) {
+                     	workd[dsaitr_ipj-1+m] = resid[m];
+                     }
+                 }
+                } // if (seg2)
+                seg2 = true;
+               if (seg13) {
+         
+        //        %---------------------------------------------------%
+        //        | Back from reverse communication if ORTH1 = .true. |
+        //        | WORKD(IPJ:IPJ+N-1) := B*r_{j}.                    |
+        //        %---------------------------------------------------%
+        
+            	 if (bmat.equalsIgnoreCase("G")) { 
+            		t3 = System.currentTimeMillis();
+                    tmvbx = tmvbx + (t3 - t2);
+            	 }
+         
+                 dsaitr_orth1 = false;
+        
+        //        %------------------------------%
+        //        | Compute the B-norm of r_{j}. |
+        //        %------------------------------%
+        
+                 if (bmat.equalsIgnoreCase("G")) {
+                	double buffer[] = new double[n];
+                	for (m = 0; m < n; m++) {
+                		buffer[m] = workd[dsaitr_ipj-1+m];
+                	}
+                    rnorm[0] = ge.ddot (n, resid, 1, buffer, 1);
+                    rnorm[0] = Math.sqrt(Math.abs(rnorm[0]));
+                 } // if (bmat.equalsIgnoreCase("G"))
+                 else if (bmat.equalsIgnoreCase("I")) {
+                    rnorm[0] = ge.dnrm2(n, resid, 1);
+                 }
+        
+        //        %-----------------------------------------------------------%
+        //        | STEP 5: Re-orthogonalization / Iterative refinement phase |
+        //        | Maximum NITER_ITREF tries.                                |
+        //        |                                                           |
+        //        |          s      = V_{j}^T * B * r_{j}                     |
+        //        |          r_{j}  = r_{j} - V_{j}*s                         |
+        //        |          alphaj = alphaj + s_{j}                          |
+        //        |                                                           |
+        //        | The stopping criteria used for iterative refinement is    |
+        //        | discussed in Parlett's book SEP, page 107 and in Gragg &  |
+        //        | Reichel ACM TOMS paper; Algorithm 686, Dec. 1990.         |
+        //        | Determine if we need to correct the residual. The goal is |
+        //        | to enforce ||v(:,1:j)^T * r_{j}|| .le. eps * || r_{j} ||  |
+        //        %-----------------------------------------------------------%
+        
+                 if (rnorm[0] > 0.717*dsaitr_wnorm) {
+                	 seg11 = false;
+                	 seg12 = false;
+                 }
+               } // if (seg13)
+               seg13 = true;
+                 if (seg11) {
+                	 if (seg14) {
+                 nrorth = nrorth + 1;
+                	 } // if (seg14)
+                	 seg14 = true;
+         
+        //        %---------------------------------------------------%
+        //        | Enter the Iterative refinement phase. If further  |
+        //        | refinement is necessary, loop back here. The loop |
+        //        | variable is ITER. Perform a step of Classical     |
+        //        | Gram-Schmidt using all the Arnoldi vectors V_{j}  |
+        //        %---------------------------------------------------%
+        
+                 if (dsaitr_msglvl > 2) {
+                    xtemp[0] = dsaitr_wnorm;
+                    xtemp[1] = rnorm[0];
+                    UI.setDataText("dsaitr: re-orthonalization ; wnorm = " + nf.format(dsaitr_wnorm) +
+                    		" rnorm[0] = " + nf.format(rnorm[0]) + "\n");
+                    
+                 }
+        
+        //        %----------------------------------------------------%
+        //        | Compute V_{j}^T * B * r_{j}.                       |
+        //        | WORKD(IRJ:IRJ+J-1) = v(:,1:J)'*WORKD(IPJ:IPJ+N-1). |
+        //        %----------------------------------------------------%
+                 double buffer[] = new double[n];
+                 double buffer2[] = new double[dsaitr_j];
+                 for (m = 0; m < n; m++) {
+                	 buffer[m] = workd[dsaitr_ipj-1+m];
+                 }
+                 for (m = 0; m < dsaitr_j; m++) {
+                	 buffer2[m] = workd[dsaitr_irj-1+m];
+                 }
+                 ge.dgemv ('T', n, dsaitr_j, one, v, ldv, buffer, 1, zero, buffer2, 1);
+                 for (m = 0; m < dsaitr_j; m++) {
+                	 workd[dsaitr_irj-1+m] = buffer2[m];	 
+                 }
+        
+        //        %----------------------------------------------%
+        //        | Compute the correction to the residual:      |
+        //        | r_{j} = r_{j} - V_{j} * WORKD(IRJ:IRJ+J-1).  |
+        //        | The correction to H is v(:,1:J)*H(1:J,1:J) + |
+        //        | v(:,1:J)*WORKD(IRJ:IRJ+J-1)*e'_j, but only   |
+        //        | H(j,j) is updated.                           |
+        //        %----------------------------------------------%
+        
+                 ge.dgemv ('N', n, dsaitr_j, -one, v, ldv, buffer2, 1, one, resid, 1);
+        
+                 if (dsaitr_j == 1  ||  dsaitr_rstart) h[dsaitr_j-1][0] = zero;
+                 h[dsaitr_j-1][1] = h[dsaitr_j-1][1] + workd[dsaitr_irj + dsaitr_j - 2];
+        
+                 dsaitr_orth2 = true;
+                 t2 = System.currentTimeMillis();
+                 if (bmat.equalsIgnoreCase("G")) {
+                    nbx = nbx + 1;
+                    for (m = 0; m < n; m++) {
+                    	workd[dsaitr_irj-1+m] = resid[m];
+                    }
+                    ipntr[0] = dsaitr_irj;
+                    ipntr[1] = dsaitr_ipj;
+                    ido[0] = 2;
+         
+        //           %-----------------------------------%
+        //           | Exit in order to compute B*r_{j}. |
+        //           | r_{j} is the corrected residual.  |
+        //           %-----------------------------------%
+         
+                    return;
+                 } // if (bmat.equalsIgnoreCase("G"))
+                 else if (bmat.equalsIgnoreCase("I")) {
+                	for (m = 0; m < n; m++) {
+                		workd[dsaitr_ipj-1+m] = resid[m];
+                	}
+                 }
+                 } // if (seg11)
+                 seg11 = true;
+                } // if (seg1)
+                seg1 = true;
+           if (seg12) {
+        
+        //        %---------------------------------------------------%
+        //        | Back from reverse communication if ORTH2 = .true. |
+        //        %---------------------------------------------------%
+        
+        	   if (bmat.equalsIgnoreCase("G")) {
+        		    t3 = System.currentTimeMillis();
+                    tmvbx = tmvbx + (t3 - t2);
+        	   }
+        
+        //        %-----------------------------------------------------%
+        //        | Compute the B-norm of the corrected residual r_{j}. |
+        //        %-----------------------------------------------------%
+         
+        	     if (bmat.equalsIgnoreCase("G")) {
+        	    	 double buffer[] = new double[n];
+        	    	 for (m = 0; m < n; m++) {
+        	    		 buffer[m] = workd[dsaitr_ipj-1+m];
+        	    	 }
+                     dsaitr_rnorm1 = ge.ddot (n, resid, 1, buffer, 1);
+                     dsaitr_rnorm1 = Math.sqrt(Math.abs(dsaitr_rnorm1));
+        	     } // if (bmat.equalsIgnoreCase("G"))
+                 else if (bmat.equalsIgnoreCase("I")) {
+                     dsaitr_rnorm1 = ge.dnrm2(n, resid, 1);
+                 }
+        
+                 if (dsaitr_msglvl > 0 && dsaitr_iter > 0) {
+                	UI.setDataText("dsaitr: Iterative refinement for Arnoldi residual dsaitr_j = " + dsaitr_j + "\n");
+                    if (dsaitr_msglvl > 2) {
+                        xtemp[0] = rnorm[0];
+                        xtemp[1] = dsaitr_rnorm1;
+                        UI.setDataText("dsaitr: iterative refinement ; rnorm[0] = " + nf.format(rnorm[0]) +
+                        		" dsaitr_rnorm1 = " + nf.format(dsaitr_rnorm1) + "\n");
+                    }
+                 }
+         
+        //        %-----------------------------------------%
+        //        | Determine if we need to perform another |
+        //        | step of re-orthogonalization.           |
+        //        %-----------------------------------------%
+        
+                 if (dsaitr_rnorm1 > 0.717*rnorm[0]) {
+        
+        //           %--------------------------------%
+        //           | No need for further refinement |
+        //           %--------------------------------%
+        
+                    rnorm[0] = dsaitr_rnorm1;
+         
+                 }
+                 else {
+        
+        //           %-------------------------------------------%
+        //           | Another step of iterative refinement step |
+        //           | is required. NITREF is used by stat.h     |
+        //           %-------------------------------------------%
+        
+                    nitref = nitref + 1;
+                    rnorm[0]  = dsaitr_rnorm1;
+                    dsaitr_iter   = dsaitr_iter + 1;
+                    if (dsaitr_iter <= 1) {
+                    	seg2 = false;
+                    	seg13 = false;
+                    	seg14 = false;
+                    	continue loop1;
+                    }
+        
+        //           %-------------------------------------------------%
+        //           | Otherwise RESID is numerically in the span of V |
+        //           %-------------------------------------------------%
+        
+                    for (jj = 0; jj < n; jj++) {
+                       resid[jj] = zero;
+                    }
+                    rnorm[0] = zero;
+                 }
+        
+        //        %----------------------------------------------%
+        //        | Branch here directly if iterative refinement |
+        //        | wasn't necessary or after at most NITER_REF  |
+        //        | steps of iterative refinement.               |
+        //        %----------------------------------------------%
+        
+           } // if (seg12)
+           seg12 = true;
+         
+                 dsaitr_rstart = false;
+                 dsaitr_orth2  = false;
+         
+                 t5 = System.currentTimeMillis();
+                 titref = titref + (t5 - t4);
+         
+        //        %----------------------------------------------------------%
+        //        | Make sure the last off-diagonal element is non negative  |
+        //        | If not perform a similarity transformation on H(1:j,1:j) |
+        //        | and scale v(:,j) by -1.                                  |
+        //        %----------------------------------------------------------%
+        
+                 if (h[dsaitr_j-1][0] < zero) {
+                    h[dsaitr_j-1][0] = -h[dsaitr_j-1][0];
+                    if ( dsaitr_j < k+np) { 
+                       for (m = 0; m < n; m++) {
+                    	   v[m][dsaitr_j] = -one * v[m][dsaitr_j];
+                       }
+                    }
+                    else {
+                       for (m = 0; m < n; m++) {
+                    	   resid[m] = -one * resid[m];
+                       }
+                    }
+                 }
+         
+        //        %------------------------------------%
+        //        | STEP 6: Update  j = j+1;  Continue |
+        //        %------------------------------------%
+        
+                 dsaitr_j = dsaitr_j + 1;
+                 if (dsaitr_j > k+np) {
+                    t1 = System.currentTimeMillis();
+                    tsaitr = tsaitr + (t1 - t0);
+                    ido[0] = 99;
+        
+                    if (dsaitr_msglvl > 1) {
+                       UI.setDataText("dsaitr: main diagonal of matrix H of step K+NP.\n");
+                       for (m = 0; m < k+np; m++) {
+                    	   UI.setDataText("h["+m+"][1] = " + nf.format(h[m][1]) + "\n");
+                       }
+                       if (k+np > 1) {
+                    	   UI.setDataText("dsaitr: sub diagonal of matrix H of step K+NP.\n");
+                           for (m = 0; m < k+np-1; m++) {
+                        	   UI.setDataText("h["+(m+1)+"][0] = " + nf.format(h[m+1][0]) + "\n");
+                           }
+                       }
+                    }
+        
+                    return;
+                 }
+        
+        //        %--------------------------------------------------------%
+        //        | Loop back to extend the factorization by another step. |
+        //        %--------------------------------------------------------%
+        
+         } // loop1: while (true)
+         
+        //     %---------------------------------------------------------------%
+        //     |                                                               |
+        //     |  E N D     O F     M A I N     I T E R A T I O N     L O O P  |
+        //     |                                                               |
+        //     %---------------------------------------------------------------%
+        
+             } // dsaitr
                 
                 
         // -----------------------------------------------------------------------
