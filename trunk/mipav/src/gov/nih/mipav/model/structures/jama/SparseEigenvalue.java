@@ -152,7 +152,7 @@ public class SparseEigenvalue implements java.io.Serializable {
     private int dsaup2_nconv;
     private int dsaup2_nev0;
     private int dsaup2_np0;
-    private double dsaup2_rnorm;
+    private double dsaup2_rnorm[] = new double[1];
     private double dsaup2_eps23;
     
     private boolean dgetv0_first;
@@ -1118,6 +1118,7 @@ public class SparseEigenvalue implements java.io.Serializable {
                 int    ierr, j, nevbef, nptemp, nevd2, nevm2;
                 int kp[] = new int [3]; 
                 double temp;
+                int i;
                 boolean seg1;
                 boolean seg2;
                 boolean seg3;
@@ -1218,7 +1219,7 @@ public class SparseEigenvalue implements java.io.Serializable {
           //     %---------------------------------------------%
           
           
-                 /*if (dsaup2_getv0) {
+                 if (dsaup2_getv0) {
                    dgetv0 (ido, bmat, 1, dsaup2_initv, n, 1, v, ldv, resid, dsaup2_rnorm,
                                ipntr, workd, info);
           
@@ -1226,7 +1227,7 @@ public class SparseEigenvalue implements java.io.Serializable {
                 	   return;
                    }
           
-                   if (dsaup2_rnorm == zero) {
+                   if (dsaup2_rnorm[0] == zero) {
           
           //           %-----------------------------------------%
           //           | The initial vector is zero. Error exit. | 
@@ -1286,132 +1287,143 @@ public class SparseEigenvalue implements java.io.Serializable {
           //     | Compute the first NEV steps of the Lanczos factorization |
           //     %----------------------------------------------------------%
           //
-                call dsaitr (ido, bmat, n, 0, dsaup2_nev0, mode, resid, dsaup2_rnorm, v, ldv, 
-               &             h, ldh, ipntr, workd, info)
-          c 
-          c     %---------------------------------------------------%
-          c     | ido .ne. 99 implies use of reverse communication  |
-          c     | to compute operations involving OP and possibly B |
-          c     %---------------------------------------------------%
-          c
-                if (ido .ne. 99) go to 9000
-          c
-                if (info .gt. 0) then
-          c
-          c        %-----------------------------------------------------%
-          c        | dsaitr was unable to build an Lanczos factorization |
-          c        | of length NEV0. INFO is returned with the size of   |
-          c        | the factorization built. Exit main loop.            |
-          c        %-----------------------------------------------------%
-          c
-                   np   = info
+                dsaitr(ido, bmat, n, 0, dsaup2_nev0, mode, resid, dsaup2_rnorm, v, ldv, 
+                            h, ldh, ipntr, workd, info);
+           
+          //     %---------------------------------------------------%
+          //     | ido .ne. 99 implies use of reverse communication  |
+          //     | to compute operations involving OP and possibly B |
+          //     %---------------------------------------------------%
+          
+                if (ido[0] != 99) {
+                	return;
+                }
+          
+                if (info[0] > 0) {
+          
+          //        %-----------------------------------------------------%
+          //        | dsaitr was unable to build an Lanczos factorization |
+          //        | of length NEV0. INFO is returned with the size of   |
+          //        | the factorization built. Exit main loop.            |
+          //        %-----------------------------------------------------%
+          
+                   np[0]   = info[0];
                    mxiter = dsaup2_iter;
-                   info = -9999
-                   go to 1200
-                end if
+                   info[0] = -9999;
+                   ido[0] = 99;
+                   t1 = System.currentTimeMillis();
+                   tsaup2 = t1 - t0;
+                   return;
+                } // if (info[0] > 0)
                 } // if (seg3)
                 } // if (seg2)
                 } // if (seg1)
-          c 
-          c     %--------------------------------------------------------------%
-          c     |                                                              |
-          c     |           M A I N  LANCZOS  I T E R A T I O N  L O O P       |
-          c     |           Each iteration implicitly restarts the Lanczos     |
-          c     |           factorization in place.                            |
-          c     |                                                              |
-          c     %--------------------------------------------------------------%
-          c 
-           loop1: while (true) {
+           
+          //     %--------------------------------------------------------------%
+          //     |                                                              |
+          //     |           M A I N  LANCZOS  I T E R A T I O N  L O O P       |
+          //     |           Each iteration implicitly restarts the Lanczos     |
+          //     |           factorization in place.                            |
+          //     |                                                              |
+          //     %--------------------------------------------------------------%
+           
+           /*loop1: while (true) {
         	   if (seg4) {
         		   if (seg5) {
         			   if (seg6) {
-          c
+          
                    dsaup2_iter = dsaup2_iter + 1;
-          c
-                   if (dsaup2_msglvl .gt. 0) then
-                      call ivout (logfil, 1, dsaup2_iter, ndigit, 
-               &           '_saup2: **** Start of major iteration number ****')
-                   end if
-                   if (dsaup2_msglvl .gt. 1) then
-                      call ivout (logfil, 1, nev, ndigit, 
-               &     '_saup2: The length of the current Lanczos factorization')
-                      call ivout (logfil, 1, np, ndigit, 
-               &           '_saup2: Extend the Lanczos factorization by')
-                   end if
-          c 
-          c        %------------------------------------------------------------%
-          c        | Compute NP additional steps of the Lanczos factorization. |
-          c        %------------------------------------------------------------%
-          c
-                   ido = 0
+          
+                   if (dsaup2_msglvl > 0) {
+                	   UI.setDataText("dsaup2: **** Start of major iteration number **** dsaup2_iter = " + dsaup2_iter + "\n");
+                   }
+                   if (dsaup2_msglvl > 1) {
+                	  UI.setDataText("dsaup2: The length of the current Lanczos factorization nev = " + nev + "\n");
+                	  UI.setDataText("dsaup2: Extend the Lanczos factorization by " + np + "\n");
+                   }
+           
+          //        %------------------------------------------------------------%
+          //        | Compute NP additional steps of the Lanczos factorization. |
+          //        %------------------------------------------------------------%
+          
+                   ido[0] = 0;
         			   } // if (seg6)
         			   seg6 = true;
-             20    continue
                    dsaup2_update = true;
-          c
-                   call dsaitr (ido, bmat, n, nev, np, mode, resid, dsaup2_rnorm, v, 
-               &                ldv, h, ldh, ipntr, workd, info)
-          c 
-          c        %---------------------------------------------------%
-          c        | ido .ne. 99 implies use of reverse communication  |
-          c        | to compute operations involving OP and possibly B |
-          c        %---------------------------------------------------%
-          c
-                   if (ido .ne. 99) go to 9000
-          c
-                   if (info .gt. 0) then
-          c
-          c           %-----------------------------------------------------%
-          c           | dsaitr was unable to build an Lanczos factorization |
-          c           | of length NEV0+NP0. INFO is returned with the size  |  
-          c           | of the factorization built. Exit main loop.         |
-          c           %-----------------------------------------------------%
-          c
-                      np = info
+          
+                   dsaitr (ido, bmat, n, nev, np, mode, resid, dsaup2_rnorm, v, 
+                               ldv, h, ldh, ipntr, workd, info);
+           
+          //        %---------------------------------------------------%
+          //        | ido .ne. 99 implies use of reverse communication  |
+          //        | to compute operations involving OP and possibly B |
+          //        %---------------------------------------------------%
+          
+                   if (ido[0] != 99) {
+                	   return;
+                   }
+          
+                   if (info[0] > 0) {
+          
+          //           %-----------------------------------------------------%
+          //           | dsaitr was unable to build an Lanczos factorization |
+          //           | of length NEV0+NP0. INFO is returned with the size  |  
+          //           | of the factorization built. Exit main loop.         |
+          //           %-----------------------------------------------------%
+          
+                      np = info[0];
                       mxiter = dsaup2_iter;
-                      info = -9999
-                      go to 1200
-                   end if
+                      info[0] = -9999;
+                      ido[0] = 99;
+                      t1 = System.currentTimeMillis();
+                      tsaup2 = t1 - t0;
+                      return;
+                   } // if (info[0] > 0)
                    dsaup2_update = false;
-          c
-                   if (dsaup2_msglvl .gt. 1) then
-                      call dvout (logfil, 1, dsaup2_rnorm, ndigit, 
-               &           '_saup2: Current B-norm of residual for factorization')
-                   end if
-          c 
-          c        %--------------------------------------------------------%
-          c        | Compute the eigenvalues and corresponding error bounds |
-          c        | of the current symmetric tridiagonal matrix.           |
-          c        %--------------------------------------------------------%
-          c
-                   call dseigt (dsaup2_rnorm, dsaup2_kplusp, h, ldh, ritz, bounds, workl, ierr)
-          c
-                   if (ierr .ne. 0) then
-                      info = -8
-                      go to 1200
-                   end if
-          c
-          c        %----------------------------------------------------%
-          c        | Make a copy of eigenvalues and corresponding error |
-          c        | bounds obtained from _seigt.                       |
-          c        %----------------------------------------------------%
-          c
-                   call dcopy(dsaup2_kplusp, ritz, 1, workl(dsaup2_kplusp+1), 1)
-                   call dcopy(dsaup2_kplusp, bounds, 1, workl(2*dsaup2_kplusp+1), 1)
-          c
-          c        %---------------------------------------------------%
-          c        | Select the wanted Ritz values and their bounds    |
-          c        | to be used in the convergence test.               |
-          c        | The selection is based on the requested number of |
-          c        | eigenvalues instead of the current NEV and NP to  |
-          c        | prevent possible misconvergence.                  |
-          c        | * Wanted Ritz values := RITZ(NP+1:NEV+NP)         |
-          c        | * Shifts := RITZ(1:NP) := WORKL(1:NP)             |
-          c        %---------------------------------------------------%
-          c
+          
+                   if (dsaup2_msglvl > 1) {
+                	   UI.setDataText("dsaup2: Current B-norm of residual for factorization dsaup2_rnorm = " +
+                                     nf.format(dsaup2_rnorm) + "\n");
+                   }
+           
+          //        %--------------------------------------------------------%
+          //        | Compute the eigenvalues and corresponding error bounds |
+          //        | of the current symmetric tridiagonal matrix.           |
+          //        %--------------------------------------------------------%
+          
+                   dseigt (dsaup2_rnorm, dsaup2_kplusp, h, ldh, ritz, bounds, workl, ierr);
+          
+                   if (ierr != 0) {
+                      info[0] = -8;
+                      ido[0] = 99;
+                      t1 = System.currentTimeMillis();
+                      tsaup2 = t1 - t0;
+                      return;
+                   }
+          
+          //        %----------------------------------------------------%
+          //        | Make a copy of eigenvalues and corresponding error |
+          //        | bounds obtained from _seigt.                       |
+          //        %----------------------------------------------------%
+          
+                   for (i = 0; i < dsaup2_kplusp; i++) {
+                	   workl[dsaup2_kplusp + i] = ritz[i];
+                	   workl[2*dsaup2_kplusp + i] = bounds[i];
+                   }
+          
+          //        %---------------------------------------------------%
+          //        | Select the wanted Ritz values and their bounds    |
+          //        | to be used in the convergence test.               |
+          //        | The selection is based on the requested number of |
+          //        | eigenvalues instead of the current NEV and NP to  |
+          //        | prevent possible misconvergence.                  |
+          //        | * Wanted Ritz values := RITZ(NP+1:NEV+NP)         |
+          //        | * Shifts := RITZ(1:NP) := WORKL(1:NP)             |
+          //        %---------------------------------------------------%
+          //
                    nev = dsaup2_nev0;
                    np = dsaup2_np0;
-                   call dsgets (ishift, which, nev, np, ritz, bounds, workl)
+                   dsgets (ishift, which, nev, np, ritz, bounds, workl);
           c 
           c        %-------------------%
           c        | Convergence test. |
@@ -1779,6 +1791,1187 @@ public class SparseEigenvalue implements java.io.Serializable {
           c     %---------------%
           c*/
                 }
+                
+        // -----------------------------------------------------------------------
+        // \BeginDoc
+       
+        // \Name: dsgets
+        
+        // \Description: 
+        //  Given the eigenvalues of the symmetric tridiagonal matrix H,
+        //  computes the NP shifts AMU that are zeros of the polynomial of 
+        //  degree NP which filters out components of the unwanted eigenvectors 
+        //  corresponding to the AMU's based on some given criteria.
+        
+        //  NOTE: This is called even in the case of user specified shifts in 
+        //  order to sort the eigenvalues, and error bounds of H for later use.
+        
+        // \Usage:
+        //  call dsgets
+        //     ( ISHIFT, WHICH, KEV, NP, RITZ, BOUNDS, SHIFTS )
+        
+        // \Arguments
+        //  ISHIFT  Integer.  (INPUT)
+        //          Method for selecting the implicit shifts at each iteration.
+        //          ISHIFT = 0: user specified shifts
+        //          ISHIFT = 1: exact shift with respect to the matrix H.
+        
+        //  WHICH   Character*2.  (INPUT)
+        //          Shift selection criteria.
+        //          'LM' -> KEV eigenvalues of largest magnitude are retained.
+        //          'SM' -> KEV eigenvalues of smallest magnitude are retained.
+        //          'LA' -> KEV eigenvalues of largest value are retained.
+        //          'SA' -> KEV eigenvalues of smallest value are retained.
+        //          'BE' -> KEV eigenvalues, half from each end of the spectrum.
+        //                  If KEV is odd, compute one more from the high end.
+        
+        //  KEV      Integer.  (INPUT)
+        //          KEV+NP is the size of the matrix H.
+        
+        /*c  NP      Integer.  (INPUT)
+        c          Number of implicit shifts to be computed.
+        c
+        c  RITZ    Double precision array of length KEV+NP.  (INPUT/OUTPUT)
+        c          On INPUT, RITZ contains the eigenvalues of H.
+        c          On OUTPUT, RITZ are sorted so that the unwanted eigenvalues 
+        c          are in the first NP locations and the wanted part is in 
+        c          the last KEV locations.  When exact shifts are selected, the
+        c          unwanted part corresponds to the shifts to be applied.
+        c
+        c  BOUNDS  Double precision array of length KEV+NP.  (INPUT/OUTPUT)
+        c          Error bounds corresponding to the ordering in RITZ.
+        c
+        c  SHIFTS  Double precision array of length NP.  (INPUT/OUTPUT)
+        c          On INPUT:  contains the user specified shifts if ISHIFT = 0.
+        c          On OUTPUT: contains the shifts sorted into decreasing order 
+        c          of magnitude with respect to the Ritz estimates contained in
+        c          BOUNDS. If ISHIFT = 0, SHIFTS is not modified on exit.
+        c
+        c\EndDoc
+        c
+        c-----------------------------------------------------------------------
+        c
+        c\BeginLib
+        c
+        c\Local variables:
+        c     xxxxxx  real
+        c
+        c\Routines called:
+        c     dsortr  ARPACK utility sorting routine.
+        c     ivout   ARPACK utility routine that prints integers.
+        c     second  ARPACK utility routine for timing.
+        c     dvout   ARPACK utility routine that prints vectors.
+        c     dcopy   Level 1 BLAS that copies one vector to another.
+        c     dswap   Level 1 BLAS that swaps the contents of two vectors.
+        c
+        c\Author
+        c     Danny Sorensen               Phuong Vu
+        c     Richard Lehoucq              CRPC / Rice University
+        c     Dept. of Computational &     Houston, Texas
+        c     Applied Mathematics
+        c     Rice University           
+        c     Houston, Texas            
+        c
+        c\Revision history:
+        c     xx/xx/93: Version ' 2.1'
+        c
+        c\SCCS Information: @(#) 
+        c FILE: sgets.F   SID: 2.4   DATE OF SID: 4/19/96   RELEASE: 2
+        c
+        c\Remarks
+        c
+        c\EndLib
+        c
+        c-----------------------------------------------------------------------
+        c
+              subroutine dsgets ( ishift, which, kev, np, ritz, bounds, shifts )
+        c
+        c     %----------------------------------------------------%
+        c     | Include files for debugging and timing information |
+        c     %----------------------------------------------------%
+        c
+              include   'debug.h'
+              include   'stat.h'
+        c
+        c     %------------------%
+        c     | Scalar Arguments |
+        c     %------------------%
+        c
+              character*2 which
+              integer    ishift, kev, np
+        c
+        c     %-----------------%
+        c     | Array Arguments |
+        c     %-----------------%
+        c
+              Double precision
+             &           bounds(kev+np), ritz(kev+np), shifts(np)
+        c
+        c     %------------%
+        c     | Parameters |
+        c     %------------%
+        c
+              Double precision
+             &           one, zero
+              parameter (one = 1.0D+0, zero = 0.0D+0)
+        c
+        c     %---------------%
+        c     | Local Scalars |
+        c     %---------------%
+        c
+              integer    kevd2, msglvl
+        c
+        c     %----------------------%
+        c     | External Subroutines |
+        c     %----------------------%
+        c
+              external   dswap, dcopy, dsortr, second
+        c
+        c     %---------------------%
+        c     | Intrinsic Functions |
+        c     %---------------------%
+        c
+              intrinsic    max, min
+        c
+        c     %-----------------------%
+        c     | Executable Statements |
+        c     %-----------------------%
+        c 
+        c     %-------------------------------%
+        c     | Initialize timing statistics  |
+        c     | & message level for debugging |
+        c     %-------------------------------%
+        c
+              call second (t0)
+              msglvl = msgets
+        c 
+              if (which .eq. 'BE') then
+        c
+        c        %-----------------------------------------------------%
+        c        | Both ends of the spectrum are requested.            |
+        c        | Sort the eigenvalues into algebraically increasing  |
+        c        | order first then swap high end of the spectrum next |
+        c        | to low end in appropriate locations.                |
+        c        | NOTE: when np < floor(kev/2) be careful not to swap |
+        c        | overlapping locations.                              |
+        c        %-----------------------------------------------------%
+        c
+                 call dsortr ('LA', .true., kev+np, ritz, bounds)
+                 kevd2 = kev / 2 
+                 if ( kev .gt. 1 ) then
+                    call dswap ( min(kevd2,np), ritz, 1, 
+             &                   ritz( max(kevd2,np)+1 ), 1)
+                    call dswap ( min(kevd2,np), bounds, 1, 
+             &                   bounds( max(kevd2,np)+1 ), 1)
+                 end if
+        c
+              else
+        c
+        c        %----------------------------------------------------%
+        c        | LM, SM, LA, SA case.                               |
+        c        | Sort the eigenvalues of H into the desired order   |
+        c        | and apply the resulting order to BOUNDS.           |
+        c        | The eigenvalues are sorted so that the wanted part |
+        c        | are always in the last KEV locations.               |
+        c        %----------------------------------------------------%
+        c
+                 call dsortr (which, .true., kev+np, ritz, bounds)
+              end if
+        c
+              if (ishift .eq. 1 .and. np .gt. 0) then
+        c     
+        c        %-------------------------------------------------------%
+        c        | Sort the unwanted Ritz values used as shifts so that  |
+        c        | the ones with largest Ritz estimates are first.       |
+        c        | This will tend to minimize the effects of the         |
+        c        | forward instability of the iteration when the shifts  |
+        c        | are applied in subroutine dsapps.                     |
+        c        %-------------------------------------------------------%
+        c     
+                 call dsortr ('SM', .true., np, bounds, ritz)
+                 call dcopy (np, ritz, 1, shifts, 1)
+              end if
+        c 
+              call second (t1)
+              tsgets = tsgets + (t1 - t0)
+        c
+              if (msglvl .gt. 0) then
+                 call ivout (logfil, 1, kev, ndigit, '_sgets: KEV is')
+                 call ivout (logfil, 1, np, ndigit, '_sgets: NP is')
+                 call dvout (logfil, kev+np, ritz, ndigit,
+             &        '_sgets: Eigenvalues of current H matrix')
+                 call dvout (logfil, kev+np, bounds, ndigit, 
+             &        '_sgets: Associated Ritz estimates')
+              end if
+        c 
+              return
+        c
+        c     %---------------%
+        c     | End of dsgets |
+        c     %---------------%
+        c
+              end*/
+
+                
+        // -----------------------------------------------------------------------
+        // \BeginDoc
+        
+        // \Name: dseigt
+        
+        // \Description: 
+        //  Compute the eigenvalues of the current symmetric tridiagonal matrix
+        //  and the corresponding error bounds given the current residual norm.
+        
+        // \Usage:
+        //  call dseigt
+        //      ( RNORM, N, H, LDH, EIG, BOUNDS, WORKL, IERR )
+        
+        // \Arguments
+        //  RNORM   Double precision scalar.  (INPUT)
+        //          RNORM contains the residual norm corresponding to the current
+        //          symmetric tridiagonal matrix H.
+        
+        //  N       Integer.  (INPUT)
+        //          Size of the symmetric tridiagonal matrix H.
+        
+        //  H       Double precision N by 2 array.  (INPUT)
+        //          H contains the symmetric tridiagonal matrix with the 
+        //          subdiagonal in the first column starting at H(2,1) and the 
+        //          main diagonal in second column.
+        
+        //  LDH     Integer.  (INPUT)
+        //          Leading dimension of H exactly as declared in the calling 
+        //          program.
+        
+        //  EIG     Double precision array of length N.  (OUTPUT)
+        //          On output, EIG contains the N eigenvalues of H possibly 
+        //          unsorted.  The BOUNDS arrays are returned in the
+        //          same sorted order as EIG.
+        
+        //  BOUNDS  Double precision array of length N.  (OUTPUT)
+        //          On output, BOUNDS contains the error estimates corresponding
+        //          to the eigenvalues EIG.  This is equal to RNORM times the
+        //          last components of the eigenvectors corresponding to the
+        //          eigenvalues in EIG.
+        
+        //  WORKL   Double precision work array of length 3*N.  (WORKSPACE)
+        //          Private (replicated) array on each PE or array allocated on
+        //          the front end.
+        
+        //  IERR    Integer.  (OUTPUT)
+        //          Error exit flag from dstqrb.
+        
+        // \EndDoc
+        
+        // -----------------------------------------------------------------------
+        
+        // \BeginLib
+        
+        // \Local variables:
+        //     xxxxxx  real
+        
+        // \Routines called:
+        //     dstqrb  ARPACK routine that computes the eigenvalues and the
+        //             last components of the eigenvectors of a symmetric
+        //             and tridiagonal matrix.
+        //     second  ARPACK utility routine for timing.
+        //     dvout   ARPACK utility routine that prints vectors.
+        //     dcopy   Level 1 BLAS that copies one vector to another.
+        
+        // \Author
+        //     Danny Sorensen               Phuong Vu
+        //     Richard Lehoucq              CRPC / Rice University 
+        //     Dept. of Computational &     Houston, Texas 
+        //     Applied Mathematics
+        //     Rice University           
+        //     Houston, Texas            
+        
+        // \Revision history:
+        //     xx/xx/92: Version ' 2.4'
+        
+        // \SCCS Information: @(#) 
+        // FILE: seigt.F   SID: 2.4   DATE OF SID: 8/27/96   RELEASE: 2
+        
+        // \Remarks
+        //     None
+        
+        // \EndLib
+        
+        // -----------------------------------------------------------------------
+        
+              private void dseigt 
+                ( double rnorm, int n, double h[][], int ldh, double eig[], double bounds[], double workl[], int ierr[] ) {
+        
+        //     %----------------------------------------------------%
+        //     | Include files for debugging and timing information |
+        //     %----------------------------------------------------%
+        
+        //      include   'debug.h'
+        //      include   'stat.h'
+        
+        //     %------------------%
+        //     | Scalar Arguments |
+        //     %------------------%
+        
+        //      integer    ierr, ldh, n
+        //      Double precision
+        //     &           rnorm
+        
+        //     %-----------------%
+        //     | Array Arguments |
+        //     %-----------------%
+        
+        //      Double precision
+        //     &           eig(n), bounds(n), h(ldh,2), workl(3*n)
+        
+        //     %---------------%
+        //     | Local Scalars |
+        //     %---------------%
+        
+              int    i, k, msglvl;
+        
+        //     %----------------------%
+        //     | External Subroutines |
+        //     %----------------------%
+        
+        //      external   dcopy, dstqrb, dvout, second
+        
+        //     %-----------------------%
+        //     | Executable Statements |
+        //     %-----------------------%
+        
+        //     %-------------------------------%
+        //     | Initialize timing statistics  |
+        //     | & message level for debugging |
+        //     %-------------------------------% 
+        
+              t0 = System.currentTimeMillis();
+              msglvl = mseigt;
+        
+              if (msglvl > 0) {
+            	 UI.setDataText("dseigt: main diagonal of matrix H\n");
+            	 for (i = 0; i < n; i++) {
+            		 UI.setDataText("h["+i+"][1] = " + h[i][1] + "\n");
+            	 }
+                 if (n > 1) {
+                	 UI.setDataText("dseigt: sub diagonal of matrix H\n");
+                	 for (i = 0; i < n-1; i++) {
+                		 UI.setDataText("h["+(i+1)+"][0] = " + h[i+1][0] + "\n");
+                	 }
+                 } // if (n > 1)
+              } // if (msglvl > 0)
+        
+              for (i = 0; i < n; i++) {
+            	  eig[i] = h[i][1];
+              }
+              for (i = 0; i < n-1; i++) {
+            	  workl[i] = h[i+1][0];
+              }
+              double buffer[] = new double[Math.max(1, 2*n-2)];
+              dstqrb (n, eig, workl, bounds, buffer, ierr);
+              if (ierr[0] != 0) {
+            	  return;
+              }
+              if (msglvl > 1) {
+            	 UI.setDataText("dseigt: last row of the eigenvector matrix for H\n");
+            	 for (i = 0; i < n; i++) {
+            		 UI.setDataText("bounds["+i+"] = " + bounds[i] + "\n");
+            	 }
+              }
+        
+        //     %-----------------------------------------------%
+        //     | Finally determine the error bounds associated |
+        //     | with the n Ritz values of H.                  |
+        //     %-----------------------------------------------%
+        
+              for (k = 0; k < n; k++) {
+                 bounds[k] = rnorm*Math.abs(bounds[k]);
+              }
+         
+              t1 = System.currentTimeMillis();
+              tseigt = tseigt + (t1 - t0);
+        
+              return;
+              } // dseigt
+              
+              
+      // -----------------------------------------------------------------------
+      // \BeginDoc
+      
+      // \Name: dstqrb
+      
+      // \Description:
+      //  Computes all eigenvalues and the last component of the eigenvectors
+      //  of a symmetric tridiagonal matrix using the implicit QL or QR method.
+      
+      //  This is mostly a modification of the LAPACK routine dsteqr.
+      //  See Remarks.
+      
+      // \Usage:
+      //  call dstqrb
+      //     ( N, D, E, Z, WORK, INFO )
+      
+      // \Arguments
+      //  N       Integer.  (INPUT)
+      //          The number of rows and columns in the matrix.  N >= 0.
+      
+      //  D       Double precision array, dimension (N).  (INPUT/OUTPUT)
+      //          On entry, D contains the diagonal elements of the
+      //          tridiagonal matrix.
+      //          On exit, D contains the eigenvalues, in ascending order.
+      //          If an error exit is made, the eigenvalues are correct
+      //          for indices 1,2,...,INFO-1, but they are unordered and
+      //          may not be the smallest eigenvalues of the matrix.
+      
+      //  E       Double precision array, dimension (N-1).  (INPUT/OUTPUT)
+      //          On entry, E contains the subdiagonal elements of the
+      //          tridiagonal matrix in positions 1 through N-1.
+      //          On exit, E has been destroyed.
+      
+      //  z       Double precision array, dimension (N).  (OUTPUT)
+      //          On exit, Z contains the last row of the orthonormal 
+      //          eigenvector matrix of the symmetric tridiagonal matrix.  
+      //          If an error exit is made, Z contains the last row of the
+      //          eigenvector matrix associated with the stored eigenvalues.
+      
+      //  WORK    Double precision array, dimension (max(1,2*N-2)).  (WORKSPACE)
+      //          Workspace used in accumulating the transformation for 
+      //          computing the last components of the eigenvectors.
+      
+      //  INFO    Integer.  (OUTPUT)
+      //          = 0:  normal return.
+      //          < 0:  if INFO = -i, the i-th argument had an illegal value.
+      //          > 0:  if INFO = +i, the i-th eigenvalue has not converged
+      //                              after a total of  30*N  iterations.
+      
+      // \Remarks
+      //  1. None.
+      
+      // -----------------------------------------------------------------------
+      
+      // \BeginLib
+      
+      // \Local variables:
+      //     xxxxxx  real
+      
+      // \Routines called:
+      //     daxpy   Level 1 BLAS that computes a vector triad.
+      //     dcopy   Level 1 BLAS that copies one vector to another.
+      //     dswap   Level 1 BLAS that swaps the contents of two vectors.
+      //     lsame   LAPACK character comparison routine.
+      //     dlae2   LAPACK routine that computes the eigenvalues of a 2-by-2 
+      //             symmetric matrix.
+      //     dlaev2  LAPACK routine that eigendecomposition of a 2-by-2 symmetric 
+      //             matrix.
+      //     dlamch  LAPACK routine that determines machine constants.
+      //     dlanst  LAPACK routine that computes the norm of a matrix.
+      //     dlapy2  LAPACK routine to compute sqrt(x**2+y**2) carefully.
+      //     dlartg  LAPACK Givens rotation construction routine.
+      //     dlascl  LAPACK routine for careful scaling of a matrix.
+      //     dlaset  LAPACK matrix initialization routine.
+      //     dlasr   LAPACK routine that applies an orthogonal transformation to 
+      //             a matrix.
+      //     dlasrt  LAPACK sorting routine.
+      //     dsteqr  LAPACK routine that computes eigenvalues and eigenvectors
+      //             of a symmetric tridiagonal matrix.
+      //     xerbla  LAPACK error handler routine.
+      
+      // \Authors
+      //     Danny Sorensen               Phuong Vu
+      //     Richard Lehoucq              CRPC / Rice University
+      //     Dept. of Computational &     Houston, Texas
+      //     Applied Mathematics
+      //     Rice University           
+      //     Houston, Texas            
+      
+      // \SCCS Information: @(#) 
+      // FILE: stqrb.F   SID: 2.5   DATE OF SID: 8/27/96   RELEASE: 2
+      //
+      // \Remarks
+      //     1. Starting with version 2.5, this routine is a modified version
+      //        of LAPACK version 2.0 subroutine SSTEQR. No lines are deleted,
+      //        only commeted out and new lines inserted.
+      //        All lines commented out have "c$$$" at the beginning.
+      //        Note that the LAPACK version 1.0 subroutine SSTEQR contained
+      //        bugs. 
+      
+      // \EndLib
+      
+      // -----------------------------------------------------------------------
+      
+            private void dstqrb (int n, double d[], double e[], double z[], double work[], int info[] ) {
+      
+      //     %------------------%
+      //     | Scalar Arguments |
+      //     %------------------%
+      
+      //      integer    info, n
+      
+      //     %-----------------%
+      //     | Array Arguments |
+      //     %-----------------%
+      
+      //      Double precision
+      //     &           d( n ), e( n-1 ), z( n ), work( 2*n-2 )
+      
+      //     .. parameters ..
+            final double zero = 0.0;
+            final double one = 1.0;
+            final double two = 2.0;
+            final double three = 3.0;
+            final int maxit = 30;
+            
+      //     .. local scalars ..
+           int            i, icompz, ii, iscale, j, jtot, k, l, l1, lend,
+                              lendm1, lendp1, lendsv, lm1, lsv, m, mm, mm1,
+                              nm1, nmaxit; 
+           double c[] = new double[1];
+           double r[] = new double[1];
+           double rt1[] = new double[1];
+           double rt2[] = new double[1];
+           double s[] = new double[1];
+           double         anorm, b, eps, eps2, f, g, p,
+                          safmax, safmin, ssfmax, ssfmin, tst;
+           double vector1[];
+           double vector2[];
+           int ptr1;
+           double array1[][];
+           double val;
+     
+      //     .. external functions ..
+      //      logical            lsame
+      //      Double precision
+      //     &                   dlamch, dlanst, dlapy2
+      //      external           lsame, dlamch, dlanst, dlapy2
+    
+      //     .. external subroutines ..
+      //      external           dlae2, dlaev2, dlartg, dlascl, dlaset, dlasr,
+      //     &                   dlasrt, dswap, xerbla
+   
+      //     .. intrinsic functions ..
+      //      intrinsic          abs, max, sign, sqrt
+    
+      //     .. executable statements ..
+      
+      //     test the input parameters.
+      
+            info[0] = 0;
+      
+      //$$$      IF( LSAME( COMPZ, 'N' ) ) THEN
+      //$$$         ICOMPZ = 0
+      //$$$      ELSE IF( LSAME( COMPZ, 'V' ) ) THEN
+      //$$$         ICOMPZ = 1
+      //$$$      ELSE IF( LSAME( COMPZ, 'I' ) ) THEN
+      //$$$         ICOMPZ = 2
+      //$$$      ELSE
+      //$$$         ICOMPZ = -1
+      //$$$      END IF
+      //$$$      IF( ICOMPZ.LT.0 ) THEN
+      //$$$         INFO = -1
+      //$$$      ELSE IF( N.LT.0 ) THEN
+      //$$$         INFO = -2
+      //$$$      ELSE IF( ( LDZ.LT.1 ) .OR. ( ICOMPZ.GT.0 .AND. LDZ.LT.MAX( 1,
+      //$$$     $         N ) ) ) THEN
+      //$$$         INFO = -6
+      //$$$      END IF
+      //$$$      IF( INFO.NE.0 ) THEN
+      //$$$         CALL XERBLA( 'SSTEQR', -INFO )
+      //$$$         RETURN
+      //$$$      END IF
+      
+      //    *** New starting with version 2.5 ***
+      
+            icompz = 2;
+      //    *************************************
+      
+      //     quick return if possible
+      
+            if( n == 0 ) {
+              return;
+            }
+      
+            if( n == 1 ) {
+               if( icompz == 2 ) {
+            	   z[0] = one;
+               }
+               return;
+            }
+      
+      //     determine the unit roundoff and over/underflow thresholds.
+      
+            eps = ge.dlamch( 'E' );
+            eps2 = eps*eps;
+            safmin = ge.dlamch( 'S' );
+            safmax = one / safmin;
+            ssfmax = Math.sqrt( safmax ) / three;
+            ssfmin = Math.sqrt( safmin ) / eps2;
+      
+      //     compute the eigenvalues and eigenvectors of the tridiagonal
+      //     matrix.
+      
+      //$$      if( icompz.eq.2 )
+      //$$$     $   call dlaset( 'full', n, n, zero, one, z, ldz )
+      
+      //     *** New starting with version 2.5 ***
+      
+            if ( icompz == 2 ) {
+               for (j = 0; j < n-1; j++) {
+            	   z[j] = zero;
+               }
+               z[ n-1 ] = one;
+            }
+      //     *************************************
+      
+            nmaxit = n*maxit;
+            jtot = 0;
+      
+      //     determine where the matrix splits and choose ql or qr iteration
+      //     for each block, according to whether top or bottom diagonal
+      //     element is smaller.
+      
+            l1 = 1;
+            nm1 = n - 1;
+            primary: {
+            	// loop1:
+                do {
+                	 // loop2:
+                    do {
+                    	 // loop3:
+                        do {
+                        	if (l1 > n) {
+                                break primary;
+                            } // if (l1 > n)
+                        	if (l1 > 1) {
+                                e[l1 - 2] = 0.0;
+                            } // if (l1 > 1)
+                        	
+                        	set4: {
+                            	if (l1 <= nm1) {
+                            		for (m = l1; m <= nm1; m++) {
+                            			tst = Math.abs(e[m - 1]);
+                            			 if (tst == 0.0) {
+                                             break set4;
+                                         } // if (test == 0.0)
+                            			 if (tst <= (Math.sqrt(Math.abs(d[m - 1])) * Math.sqrt(Math.abs(d[m])) * eps)) {
+                                             e[m - 1] = 0.0;
+
+                                             break set4;
+                                         } // if (tst <= (Math.sqrt(Math.abs(d[m-1])) *
+                            		} // for (m = L1; m <= nm1; m++)
+                            	 } // if (l1 <= nm1)
+                                 m = n;
+                        	} // set4
+      
+				            l = l1;
+				            lsv = l;
+				            lend = m;
+				            lendsv = lend;
+				            l1 = m + 1;
+                        } // loop3
+                        while (lend == l);
+                        // Scale submatrix in rows and columns l-1 to lend-1.
+                        vector1 = new double[lend - l + 1];
+
+                        for (ptr1 = 0; ptr1 < (lend - l + 1); ptr1++) {
+                            vector1[ptr1] = d[ptr1 + l - 1];
+                        }
+
+                        vector2 = new double[lend - l];
+
+                        for (ptr1 = 0; ptr1 < (lend - l); ptr1++) {
+                            vector2[ptr1] = e[ptr1 + l - 1];
+                        }
+
+                        anorm = ge.dlanst('I', lend - l + 1, vector1, vector2);
+                        iscale = 0;
+                    } // loop2
+                    while (anorm == 0.0);
+                    if (anorm > ssfmax) {
+                        iscale = 1;
+                        array1 = new double[lend - l + 1][1];
+
+                        for (ptr1 = 0; ptr1 < (lend - l + 1); ptr1++) {
+                            array1[ptr1][0] = d[ptr1 + l - 1];
+                        }
+
+                        ge.dlascl('G', 0, 0, anorm, ssfmax, lend - l + 1, 1, array1, lend - l + 1, info);
+
+                        if (info[0] != 0) {
+                            UI.setDataText("dstqrb call to dlascl #1 had info[0] = " + info[0] + "\n");
+                        }
+
+                        for (ptr1 = 0; ptr1 < (lend - l + 1); ptr1++) {
+                            d[ptr1 + l - 1] = array1[ptr1][0];
+                        }
+
+                        array1 = new double[lend - l][1];
+
+                        for (ptr1 = 0; ptr1 < (lend - l); ptr1++) {
+                            array1[ptr1][0] = e[ptr1 + l - 1];
+                        }
+
+                        ge.dlascl('G', 0, 0, anorm, ssfmax, lend - l, 1, array1, lend - l, info);
+
+                        if (info[0] != 0) {
+                            UI.setDataText("dstqrb call to dlascl #2 had info[0] = " + info[0] + "\n");
+                        }
+
+                        for (ptr1 = 0; ptr1 < (lend - l); ptr1++) {
+                            e[ptr1 + l - 1] = array1[ptr1][0];
+                        }
+                    } // if (anorm > ssfmax)
+                    else if (anorm < ssfmin) {
+                        iscale = 2;
+                        array1 = new double[lend - l + 1][1];
+
+                        for (ptr1 = 0; ptr1 < (lend - l + 1); ptr1++) {
+                            array1[ptr1][0] = d[ptr1 + l - 1];
+                        }
+
+                        ge.dlascl('G', 0, 0, anorm, ssfmin, lend - l + 1, 1, array1, lend - l + 1, info);
+
+                        if (info[0] != 0) {
+                            UI.setDataText("dstqrb call to dlascl #3 had info[0] = " + info[0] + "\n");
+                        }
+
+                        for (ptr1 = 0; ptr1 < (lend - l + 1); ptr1++) {
+                            d[ptr1 + l - 1] = array1[ptr1][0];
+                        }
+
+                        array1 = new double[lend - l][1];
+
+                        for (ptr1 = 0; ptr1 < (lend - l); ptr1++) {
+                            array1[ptr1][0] = e[ptr1 + l - 1];
+                        }
+
+                        ge.dlascl('G', 0, 0, anorm, ssfmin, lend - l, 1, array1, lend - l, info);
+
+                        if (info[0] != 0) {
+                            UI.setDataText("dstqrb call to dlascl #4 had info[0] = " + info[0] + "\n");
+                        }
+
+                        for (ptr1 = 0; ptr1 < (lend - l); ptr1++) {
+                            e[ptr1 + l - 1] = array1[ptr1][0];
+                        }
+                    } // else if (anorm < ssfmin)
+                    // Choose between QL and QR iteration
+                    if (Math.abs(d[lend - 1]) < Math.abs(d[l - 1])) {
+                        lend = lsv;
+                        l = lendsv;
+                    } // if (Math.abs(d[lend-1]) < Math.abs(d[l-1]))
+                    
+                    set5: {
+      
+            if( lend > l ) {
+            	// QL iteration
+                // Look for small subdiagonal element
+                // loop6:
+                do {
+                	loop7: do {
+                		set8: {
+
+                		if (l != lend) {
+                			lendm1 = lend - 1;
+
+                            for (m = l; m <= lendm1; m++) {
+                                tst = e[m - 1] * e[m - 1];
+
+                                if (tst <= ( (eps2 * Math.abs(d[m - 1]) * Math.abs(d[m])) + safmin)) {
+                                    break set8;
+                                } // if (tst <= (eps2 * Math.abs(d[m-1]) *
+                            } // for (m = l; m <= lendm1; m++)
+                		} // if (l != lend) 
+      
+               m = lend;
+                	} // set8
+      
+                		 if (m < lend) {
+                             e[m - 1] = zero;
+                         } // if (m < lend)
+
+                         p = d[l - 1];
+              
+            		   if (m == l) {
+                           break loop7;
+                       } // if (m == l)
+      
+      //        if remaining matrix is 2-by-2, use dlae2 or dlaev2
+      //        to compute its eigensystem.
+      
+               if( m == l+1 ) {
+                  if( icompz > 0 ) {
+                	 ge.dlaev2(d[l - 1], e[l - 1], d[l], rt1, rt2, c, s);
+                     work[ l-1 ] = c[0];
+                     work[ n-2+l ] = s[0];
+      //$$$               call dlasr( 'r', 'v', 'b', n, 2, work( l ),
+      //$$$     $                     work( n-1+l ), z( 1, l ), ldz )
+      //
+      //              *** New starting with version 2.5 ***
+      //
+                     tst      = z[l];
+                     z[l] = c[0]*tst - s[0]*z[l-1];
+                     z[l-1]   = s[0]*tst + c[0]*z[l-1];
+      //              *************************************
+                  } // if (icompz > 0)
+                  else {
+                     ge.dlae2( d[l -1], e[l-1], d[l], rt1, rt2 );
+                  }
+                  d[l-1] = rt1[0];
+                  d[l] = rt2[0];
+                  e[l-1] = zero;
+                  l = l + 2;
+                		  if (l <= lend) {
+                              continue loop7;
+                          }
+                  break set5;
+               } // if( m == l+1 ) 
+      
+                  if (jtot == nmaxit) {
+                      break set5;
+                  } // if (jtot == nmaxit)
+               jtot = jtot + 1;
+      
+      //        form shift.
+     
+               g = ( d[l]-p ) / ( two*e[l-1] );
+               r[0] = ge.dlapy2( g, one );
+               if (g >= 0) {
+                   val = Math.abs(r[0]);
+               } else {
+                   val = -Math.abs(r[0]);
+               }
+
+               g = d[m - 1] - p + (e[l - 1] / (g + val));
+               s[0] = one;
+               c[0] = one;
+               p = zero;
+               
+               // Inner loop
+               mm1 = m - 1;
+               vector1 = new double[m - l];
+               vector2 = new double[m - l];
+
+               for (i = mm1; i >= l; i--) {
+                   f = s[0] * e[i - 1];
+                   b = c[0] * e[i - 1];
+                   ge.dlartg(g, f, c, s, r);
+
+                   if (i != (m - 1)) {
+                       e[i] = r[0];
+                   } // if (i != (m-1))
+
+                   g = d[i] - p;
+                   r[0] = ( (d[i - 1] - g) * s[0]) + (2.0 * c[0] * b);
+                   p = s[0] * r[0];
+                   d[i] = g + p;
+                   g = (c[0] * r[0]) - b;
+
+                   // If eigenvectors are desired, then save rotations
+                   if (icompz > 0) {
+                       vector1[i - l] = c[0];
+                       vector2[i - l] = -s[0];
+                   } // if (icompz > 0)
+               } // for (i = mm1; i >= l; i--)
+
+               // If eigenvectors are desired, then apply saved rotations.
+               if (icompz > 0) {
+                   mm = m - l + 1;
+                   array1 = new double[1][mm];
+                   
+                   for (ptr1 = 0; ptr1 < mm; ptr1++) {
+                	   array1[0][ptr1] = z[l-1+ptr1];
+                   }
+
+                   ge.dlasr('R', 'V', 'B', 1, mm, vector1, vector2, array1, 1);
+
+                   for (ptr1 = 0; ptr1 < mm; ptr1++) {
+                       z[l-1+ptr1] = array1[0][ptr1];
+                   }
+               } // if (icompz > 0)
+
+               d[l - 1] = d[l - 1] - p;
+               e[l - 1] = g;
+      
+                	} // loop7
+                    while (true);
+      
+      //        eigenvalue found.
+      
+               d[l-1] = p;
+      
+               l = l + 1;
+                } // loop6
+                while (l <= lend);
+            } // if (lend > l)
+            else {
+            	// QR iteration
+                // Look for small superdiagonal element
+                // loop9:
+                do {
+                	loop10: do {
+                		set11: {
+                		 if (l != lend) {
+                             lendp1 = lend + 1;
+
+                             for (m = l; m >= lendp1; m--) {
+                                 tst = e[m - 2] * e[m - 2];
+
+                                 if (tst <= ( (eps2 * Math.abs(d[m - 1]) * Math.abs(d[m - 2])) + safmin)) {
+                                     break set11;
+                                 } // if (tst <= (eps2 * Math.abs(d[m-1]) *
+                             } // for (m = l; m >= lendp1; m--)
+                         } // if (l != lend)
+                	
+               m = lend;
+                	} // set11
+                	if (m > lend) {
+                        e[m - 2] = 0.0;
+                    } // if (m > lend)
+
+                    p = d[l - 1];
+            		   if (m == l) {
+                           break loop10;
+                       } // if (m == l)
+      
+      //        if remaining matrix is 2-by-2, use dlae2 or dlaev2
+      //        to compute its eigensystem.
+      
+               if( m == l-1 ) {
+                  if( icompz > 0 ) {
+                     ge.dlaev2( d[l-2], e[ l-2], d[ l-1], rt1, rt2, c, s );
+      //$$$               work( m ) = c
+      //$$$               work( n-1+m ) = s
+      //$$$               call dlasr( 'r', 'v', 'f', n, 2, work( m ),
+      //$$$     $                     work( n-1+m ), z( 1, l-1 ), ldz )
+      
+      //               *** New starting with version 2.5 ***
+      
+                      tst      = z[l-1];
+                      z[l-1]   = c[0]*tst - s[0]*z[l-2];
+                      z[l-2] = s[0]*tst + c[0]*z[l-2];
+      //               ************************************* 
+                  } // if (icompz > 0)
+                  else {
+                     ge.dlae2( d[l-2], e[l-2], d[l-1], rt1, rt2 );
+                  }
+                  d[l-2] = rt1[0];
+                  d[l-1] = rt2[0];
+                  e[ l-2] = 0.0;
+                  l = l - 2;
+                		  if (l >= lend) {
+                              continue loop10;
+                          } // if (l >= lend)
+
+                          break set5;
+                  
+               } // if( m == l-1 )
+      
+               if( jtot == nmaxit ) {
+                   break set5;
+               }
+               jtot = jtot + 1;
+      
+      //        form shift.
+      
+               g = ( d[ l-2 ]-p ) / ( two*e[ l-2 ] );
+               r[0] = ge.dlapy2( g, one );
+               if (g >= 0.0) {
+                   val = Math.abs(r[0]);
+               } else {
+                   val = -Math.abs(r[0]);
+               }
+
+               g = d[m - 1] - p + (e[l - 2] / (g + val));
+
+               s[0] = one;
+               c[0] = one;
+               p = zero;
+               
+               // Inner loop
+               lm1 = l - 1;
+               vector1 = new double[l - m];
+               vector2 = new double[l - m];
+
+               for (i = m; i <= lm1; i++) {
+                   f = s[0] * e[i - 1];
+                   b = c[0] * e[i - 1];
+                   ge.dlartg(g, f, c, s, r);
+
+                   if (i != m) {
+                       e[i - 2] = r[0];
+                   } // if (i != m)
+
+                   g = d[i - 1] - p;
+                   r[0] = ( (d[i] - g) * s[0]) + (2.0 * c[0] * b);
+                   p = s[0] * r[0];
+                   d[i - 1] = g + p;
+                   g = (c[0] * r[0]) - b;
+
+                   // If eigenvalues are desired, then save rotations
+                   if (icompz > 0) {
+                       vector1[i - m] = c[0];
+                       vector2[i - m] = s[0];
+                   } // if (icompz > 0)
+               } // for (i = m; i <= lm1; i++)
+               
+            // If eigenvectors are desired, then apply saved rotations
+               if (icompz > 0) {
+                   mm = l - m + 1;
+                   array1 = new double[1][mm];
+
+                   for (ptr1 = 0; ptr1 < mm; ptr1++) {
+                       array1[0][ptr1] = z[m-1+ptr1];
+                   }
+
+                   ge.dlasr('R', 'V', 'F', 1, mm, vector1, vector2, array1, 1);
+
+                   for (ptr1 = 0; ptr1 < n; ptr1++) {
+                       z[m-1+ptr1] = array1[0][ptr1];
+                   }
+               } // if (icompz > 0)
+
+               d[l - 1] = d[l - 1] - p;
+               e[lm1 - 1] = g;
+      
+                	} // loop10
+                    while (true);
+      
+      //        eigenvalue found.
+      
+               d[ l-1 ] = p;
+               l = l - 1;
+                } // loop9
+                while (l >= lend);
+            } // else QR iteration
+                    } // set5
+         // Undo scaling if necessary
+            if (iscale == 1) {
+                array1 = new double[lendsv - lsv + 1][1];
+
+                for (ptr1 = 0; ptr1 < (lendsv - lsv + 1); ptr1++) {
+                    array1[ptr1][0] = d[ptr1 + lsv - 1];
+                }
+
+                ge.dlascl('G', 0, 0, ssfmax, anorm, lendsv - lsv + 1, 1, array1, lendsv - lsv + 1, info);
+
+                if (info[0] != 0) {
+                    UI.setDataText("dstqrb call to dlascl #5 had info[0] = " + info[0] + "\n");
+                }
+
+                for (ptr1 = 0; ptr1 < (lendsv - lsv + 1); ptr1++) {
+                    d[ptr1 + lsv - 1] = array1[ptr1][0];
+                }
+
+                array1 = new double[lendsv - lsv][1];
+
+                for (ptr1 = 0; ptr1 < (lendsv - lsv); ptr1++) {
+                    array1[ptr1][0] = e[ptr1 + lsv - 1];
+                }
+
+                ge.dlascl('G', 0, 0, ssfmax, anorm, lendsv - lsv, 1, array1, lendsv - lsv, info);
+
+                if (info[0] != 0) {
+                    UI.setDataText("dstqrb call to dlascl #6 had info[0] = " + info[0] + "\n");
+                }
+
+                for (ptr1 = 0; ptr1 < (lendsv - lsv); ptr1++) {
+                    e[ptr1 + lsv - 1] = array1[ptr1][0];
+                }
+            } // if (iscale == 1)
+            else if (iscale == 2) {
+                array1 = new double[lendsv - lsv + 1][1];
+
+                for (ptr1 = 0; ptr1 < (lendsv - lsv + 1); ptr1++) {
+                    array1[ptr1][0] = d[ptr1 + lsv - 1];
+                }
+
+                ge.dlascl('G', 0, 0, ssfmin, anorm, lendsv - lsv + 1, 1, array1, lendsv - lsv + 1, info);
+
+                if (info[0] != 0) {
+                    UI.setDataText("dstqrb call to dlascl #7 had info[0] = " + info[0] + "\n");
+                }
+
+                for (ptr1 = 0; ptr1 < (lendsv - lsv + 1); ptr1++) {
+                    d[ptr1 + lsv - 1] = array1[ptr1][0];
+                }
+
+                array1 = new double[lendsv - lsv][1];
+
+                for (ptr1 = 0; ptr1 < (lendsv - lsv); ptr1++) {
+                    array1[ptr1][0] = e[ptr1 + lsv - 1];
+                }
+
+                ge.dlascl('G', 0, 0, ssfmin, anorm, lendsv - lsv, 1, array1, lendsv - lsv, info);
+
+                if (info[0] != 0) {
+                    UI.setDataText("dstqrb call to dlascl #8 had info[0] = " + info[0] + "\n");
+                }
+
+                for (ptr1 = 0; ptr1 < (lendsv - lsv); ptr1++) {
+                    e[ptr1 + lsv - 1] = array1[ptr1][0];
+                }
+            } // else if (iscale == 2)
+
+            // Check for no convergence to an eigenvalue after a total of
+            // n*maxit iterations
+                } // loop1
+                while (jtot < nmaxit);
+                for (i = 0; i < (n - 1); i++) {
+
+                    if (e[i] != 0.0) {
+                        info[0] = info[0] + 1;
+                    }
+                } // for (i = 0; i < n-1; i++)
+
+                if (info[0] != 0) {
+                    UI.setDataText("dstqrb nonzero e produced info[0] = " + info[0] + "\n");
+                }
+
+                return;
+            } // primary
+             // Order eigenvalues and eigenvectors.
+                if (icompz == 0) {
+
+                    // Use quick sort
+                    ge.dlasrt('I', n, d, info);
+
+                    if (info[0] != 0) {
+                        UI.setDataText("dstqrb call to dlasrt produced info[0] = " + info[0] + "\n");
+                    }
+                } // if (icompz == 0)
+                else { // icompz != 0
+
+                    // Use selection sort to minimize swaps of eigenvectors
+                    for (ii = 2; ii <= n; ii++) {
+                        i = ii - 1;
+                        k = i;
+                        p = d[i - 1];
+
+                        for (j = ii; j <= n; j++) {
+
+                            if (d[j - 1] < p) {
+                                k = j;
+                                p = d[j - 1];
+                            } // if (d[j-1] < p)
+                        } // for (j == ii; j <= n; j++)
+
+                        if (k != i) {
+                            d[k - 1] = d[i - 1];
+                            d[i - 1] = p;
+
+                            p = z[k-1];
+                            z[k-1] = z[i-1];
+                            z[i-1] = p;
+                        } // if (k != i)
+                    } // for (ii = 2; ii <= n; ii++)
+                } // else icompz != 0
+
+                return;
+            
+              } // dstqrb
+      
+
+
                 
                 
         // -----------------------------------------------------------------------
