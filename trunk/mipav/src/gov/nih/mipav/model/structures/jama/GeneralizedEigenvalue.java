@@ -14890,7 +14890,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * 
      * @return double
      */
-    private double dlapy2(final double x, final double y) {
+    public double dlapy2(final double x, final double y) {
         double w;
         double xabs;
         double yabs;
