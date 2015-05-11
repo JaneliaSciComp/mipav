@@ -1125,6 +1125,8 @@ public class SparseEigenvalue implements java.io.Serializable {
                 boolean seg4;
                 boolean seg5;
                 boolean seg6;
+                double array1[];
+                double array2[];
           
           //     %----------------------%
           //     | External Subroutines |
@@ -1424,117 +1426,127 @@ public class SparseEigenvalue implements java.io.Serializable {
                    nev = dsaup2_nev0;
                    np = dsaup2_np0;
                    dsgets (ishift, which, nev, np, ritz, bounds, workl);
-          c 
-          c        %-------------------%
-          c        | Convergence test. |
-          c        %-------------------%
-          c
-                   call dcopy (nev, bounds(np+1), 1, workl(np+1), 1)
-                   call dsconv (nev, ritz(np+1), workl(np+1), tol, dsaup2_nconv)
-          c
-                   if (dsaup2_msglvl .gt. 2) then
-                      kp(1) = nev
-                      kp(2) = np
-                      kp(3) = dsaup2_nconv;
-                      call ivout (logfil, 3, kp, ndigit,
-               &                  '_saup2: NEV, NP, NCONV are')
-                      call dvout (logfil, dsaup2_kplusp, ritz, ndigit,
-               &           '_saup2: The eigenvalues of H')
-                      call dvout (logfil, dsaup2_kplusp, bounds, ndigit,
-               &          '_saup2: Ritz estimates of the current NCV Ritz values')
-                   end if
-          c
-          c        %---------------------------------------------------------%
-          c        | Count the number of unwanted Ritz values that have zero |
-          c        | Ritz estimates. If any Ritz estimates are equal to zero |
-          c        | then a leading block of H of order equal to at least    |
-          c        | the number of Ritz values with zero Ritz estimates has  |
-          c        | split off. None of these Ritz values may be removed by  |
-          c        | shifting. Decrease NP the number of shifts to apply. If |
-          c        | no shifts may be applied, then prepare to exit          |
-          c        %---------------------------------------------------------%
-          c
-                   nptemp = np
-                   do 30 j=1, nptemp
-                      if (bounds(j) .eq. zero) then
-                         np = np - 1
-                         nev = nev + 1
-                      end if
-           30      continue
-          c 
-                   if ( (dsaup2_nconv .ge. dsaup2_nev0) .or. 
-               &        (dsaup2_iter .gt. mxiter) .or.
-               &        (np .eq. 0) ) then
-          c     
-          c           %------------------------------------------------%
-          c           | Prepare to exit. Put the converged Ritz values |
-          c           | and corresponding bounds in RITZ(1:NCONV) and  |
-          c           | BOUNDS(1:NCONV) respectively. Then sort. Be    |
-          c           | careful when NCONV > NP since we don't want to |
-          c           | swap overlapping locations.                    |
-          c           %------------------------------------------------%
-          c
-                      if (which .eq. 'BE') then
-          c
-          c              %-----------------------------------------------------%
-          c              | Both ends of the spectrum are requested.            |
-          c              | Sort the eigenvalues into algebraically decreasing  |
-          c              | order first then swap low end of the spectrum next  |
-          c              | to high end in appropriate locations.               |
-          c              | NOTE: when np < floor(nev/2) be careful not to swap |
-          c              | overlapping locations.                              |
-          c              %-----------------------------------------------------%
-          c
-                         wprime = 'SA'
-                         call dsortr (wprime, .true., dsaup2_kplusp, ritz, bounds)
-                         nevd2 = nev / 2
-                         nevm2 = nev - nevd2 
-                         if ( nev .gt. 1 ) then
-                            call dswap ( min(nevd2,np), ritz(nevm2+1), 1,
-               &                 ritz( max(dsaup2_kplusp-nevd2+1,dsaup2_kplusp-np+1) ), 1)
-                            call dswap ( min(nevd2,np), bounds(nevm2+1), 1,
-               &                 bounds( max(dsaup2_kplusp-nevd2+1,dsaup2_kplusp-np)+1 ), 1)
-                         end if
-          c
-                      else
-          c
-          c              %--------------------------------------------------%
-          c              | LM, SM, LA, SA case.                             |
-          c              | Sort the eigenvalues of H into the an order that |
-          c              | is opposite to WHICH, and apply the resulting    |
-          c              | order to BOUNDS.  The eigenvalues are sorted so  |
-          c              | that the wanted part are always within the first |
-          c              | NEV locations.                                   |
-          c              %--------------------------------------------------%
-          c
-                         if (which .eq. 'LM') wprime = 'SM'
-                         if (which .eq. 'SM') wprime = 'LM'
-                         if (which .eq. 'LA') wprime = 'SA'
-                         if (which .eq. 'SA') wprime = 'LA'
-          c
-                         call dsortr (wprime, .true., dsaup2_kplusp, ritz, bounds)
-          c
-                      end if
-          c
-          c           %--------------------------------------------------%
-          c           | Scale the Ritz estimate of each Ritz value       |
-          c           | by 1 / max(eps23,magnitude of the Ritz value).   |
-          c           %--------------------------------------------------%
-          c
-                      do 35 j = 1, dsaup2_nev0
-                         temp = max( dsaup2_eps23, abs(ritz(j)) )
-                         bounds(j) = bounds(j)/temp
-           35         continue
-          c
-          c           %----------------------------------------------------%
-          c           | Sort the Ritz values according to the scaled Ritz  |
-          c           | esitmates.  This will push all the converged ones  |
-          c           | towards the front of ritzr, ritzi, bounds          |
-          c           | (in the case when NCONV < NEV.)                    |
-          c           %----------------------------------------------------%
-          c
-                      wprime = 'LA'
-                      call dsortr(wprime, .true., dsaup2_nev0, bounds, ritz)
+           
+          //        %-------------------%
+          //        | Convergence test. |
+          //        %-------------------%
+          //
+                   for (i = 0; i < nev; i++) {
+                	   workl[np+i] = bounds[np+i];
+                   }
+                   array1 = new double[nev];
+                   array2 = new double[nev];
+                   for (i = 0; i < nev; i++) {
+                	   array1[i] = ritz[np+i];
+                	   array2[i] = workl[np+i];
+                   }
+                   dsconv (nev, array1, array2, tol, dsaup2_nconv);
+          
+                   if (dsaup2_msglvl > 2) {
+                      UI.setDataText("In dsaup2 nev = " + nev + " np = " + np + " nconv[0] = " + nconv[0] + "\n");
+                      UI.setDataText("dsaup2: The eigenvalues of H: \n");
+                      for (i = 0; i < dsaup2_kplusp; i++) {
+                    	  UI.setDataText("ritz["+i+"] = " + nf.format(ritz[i]) + "\n");
+                      }
+                      UI.setDataText("dsaup2: Ritz estimates of the current NCV Ritz values: \n");
+                      for (i = 0; i < dsaup2_kplusp; i++) {
+                    	  UI.setDataText("bounds["+i+"] = " + nf.format(bounds[i]) + "\n");
+                      }
+                   } // if (dsaup2_msglvl > 2)
+          
+          //        %---------------------------------------------------------%
+          //        | Count the number of unwanted Ritz values that have zero |
+          //        | Ritz estimates. If any Ritz estimates are equal to zero |
+          //        | then a leading block of H of order equal to at least    |
+          //        | the number of Ritz values with zero Ritz estimates has  |
+          //        | split off. None of these Ritz values may be removed by  |
+          //        | shifting. Decrease NP the number of shifts to apply. If |
+          //        | no shifts may be applied, then prepare to exit          |
+          //        %---------------------------------------------------------%
+          
+                   nptemp = np;
+                   for (j=0; j < nptemp; j++) {
+                      if (bounds[j] == zero) {
+                         np = np - 1;
+                         nev = nev + 1;
+                      }
+                   } // for (j=0; j < nptemp; j++)
+           
+                   if ( (dsaup2_nconv >= dsaup2_nev0) || (dsaup2_iter > mxiter) ||(np == 0) ) {
+               
+          //           %------------------------------------------------%
+          //           | Prepare to exit. Put the converged Ritz values |
+          //           | and corresponding bounds in RITZ(1:NCONV) and  |
+          //           | BOUNDS(1:NCONV) respectively. Then sort. Be    |
+          //           | careful when NCONV > NP since we don't want to |
+          //           | swap overlapping locations.                    |
+          //           %------------------------------------------------%
+          
+                      if (which.equalsIgnoreCase("BE")) { 
+          
+          //              %-----------------------------------------------------%
+          //              | Both ends of the spectrum are requested.            |
+          //              | Sort the eigenvalues into algebraically decreasing  |
+          //              | order first then swap low end of the spectrum next  |
+          //              | to high end in appropriate locations.               |
+          //              | NOTE: when np < floor(nev/2) be careful not to swap |
+          //              | overlapping locations.                              |
+          //              %-----------------------------------------------------%
+          
+                         wprime = "SA";
+                         dsortr (wprime, true, dsaup2_kplusp, ritz, bounds);
+                         nevd2 = nev / 2;
+                         nevm2 = nev - nevd2; 
+                         if ( nev > 1 ) {
+                        	for (i = 0; i < Math.min(nevd2, np); i++) {
+                        		temp = ritz[nevm2+i];
+                        		ritz[nevm2+i] = ritz[Math.max(dsaup2_kplusp-nevd2, dsaup2_kplusp-np)+i];
+                        		ritz[Math.max(dsaup2_kplusp-nevd2, dsaup2_kplusp-np)+i] = temp;
+                        		temp = bounds[nevm2+i];
+                        		bounds[nevm2+i] = bounds[Math.max(dsaup2_kplusp-nevd2, dsaup2_kplusp-np)+i];
+                        		bounds[Math.max(dsaup2_kplusp-nevd2, dsaup2_kplusp-np)+i] = temp;
+                        	}
+                         } // if ( nev > 1 )
+                      } // if (which.equalsIgnoreCase("BE"))
+                       else {
+          
+          //              %--------------------------------------------------%
+          //              | LM, SM, LA, SA case.                             |
+          //              | Sort the eigenvalues of H into the an order that |
+          //              | is opposite to WHICH, and apply the resulting    |
+          //              | order to BOUNDS.  The eigenvalues are sorted so  |
+          //              | that the wanted part are always within the first |
+          //              | NEV locations.                                   |
+          //              %--------------------------------------------------%
+          
+                         if (which.equalsIgnoreCase("LM")) wprime = "SM";
+                         if (which.equalsIgnoreCase("SM")) wprime = "LM";
+                         if (which.equalsIgnoreCase("LA")) wprime = "SA";
+                         if (which.equalsIgnoreCase("SA")) wprime = "LA";
+          
+                         dsortr (wprime, true, dsaup2_kplusp, ritz, bounds);
+          
+                       }
+          
+          //           %--------------------------------------------------%
+          //           | Scale the Ritz estimate of each Ritz value       |
+          //           | by 1 / max(eps23,magnitude of the Ritz value).   |
+          //           %--------------------------------------------------%
+          
+                      for (j = 0; j < dsaup2_nev0; j++) {
+                         temp = Math.max( dsaup2_eps23, Math.abs(ritz[j]) );
+                         bounds[j] = bounds[j]/temp;
+                      }
+          
+          //           %----------------------------------------------------%
+          //           | Sort the Ritz values according to the scaled Ritz  |
+          //           | esitmates.  This will push all the converged ones  |
+          //           | towards the front of ritzr, ritzi, bounds          |
+          //           | (in the case when NCONV < NEV.)                    |
+          //           %----------------------------------------------------%
+          
+                      wprime = "LA";
+                      dsortr(wprime, true, dsaup2_nev0, bounds, ritz);
           c
           c           %----------------------------------------------%
           c           | Scale the Ritz estimate back to its original |
@@ -1605,8 +1617,8 @@ public class SparseEigenvalue implements java.io.Serializable {
           c
                       np = dsaup2_nconv;
                       go to 1100
-          c
-                   else if (dsaup2_nconv .lt. nev .and. ishift .eq. 1) then
+                       } // } // if ( (dsaup2_nconv >= dsaup2_nev0) || (dsaup2_iter > mxiter) ||(np == 0) )
+                   else if (dsaup2_nconv .lt. nev .and. ishift .eq. 1) {
           c
           c           %---------------------------------------------------%
           c           | Do not have all the requested eigenvalues yet.    |
@@ -1632,7 +1644,7 @@ public class SparseEigenvalue implements java.io.Serializable {
                &         call dsgets (ishift, which, nev, np, ritz, bounds,
                &              workl)
           c
-                   end if
+                   } // else if (dsaup2_nconv .lt. nev .and. ishift .eq. 1)
           c
                    if (dsaup2_msglvl .gt. 0) then
                       call ivout (logfil, 1, dsaup2_nconv, ndigit,
@@ -1783,14 +1795,143 @@ public class SparseEigenvalue implements java.io.Serializable {
                 call second (t1)
                 tsaup2 = t1 - t0
           c 
-           9000 continue
-                return
-          c
-          c     %---------------%
-          c     | End of dsaup2 |
-          c     %---------------%
-          c*/
-                }
+           9000 continue*/
+                return;
+                } // dsaup2
+                
+                
+        // -----------------------------------------------------------------------
+        // \BeginDoc
+        
+        // \Name: dsconv
+        
+        // \Description: 
+        //  Convergence testing for the symmetric Arnoldi eigenvalue routine.
+        
+        // \Usage:
+        //  call dsconv
+        //     ( N, RITZ, BOUNDS, TOL, NCONV )
+        
+        // \Arguments
+        //  N       Integer.  (INPUT)
+        //          Number of Ritz values to check for convergence.
+        
+        //  RITZ    Double precision array of length N.  (INPUT)
+        //          The Ritz values to be checked for convergence.
+        
+        //  BOUNDS  Double precision array of length N.  (INPUT)
+        //          Ritz estimates associated with the Ritz values in RITZ.
+        
+        //  TOL     Double precision scalar.  (INPUT)
+        //          Desired relative accuracy for a Ritz value to be considered
+        //          "converged".
+        
+        //  NCONV   Integer scalar.  (OUTPUT)
+        //          Number of "converged" Ritz values.
+        
+        // \EndDoc
+        
+        // -----------------------------------------------------------------------
+        
+        // \BeginLib
+        
+        // \Routines called:
+        //     second  ARPACK utility routine for timing.
+        //     dlamch  LAPACK routine that determines machine constants. 
+        
+        // \Author
+        //     Danny Sorensen               Phuong Vu
+        //     Richard Lehoucq              CRPC / Rice University 
+        //     Dept. of Computational &     Houston, Texas 
+        //     Applied Mathematics
+        //     Rice University           
+        //     Houston, Texas            
+        
+        // \SCCS Information: @(#) 
+        // FILE: sconv.F   SID: 2.4   DATE OF SID: 4/19/96   RELEASE: 2
+        
+        // \Remarks
+        //     1. Starting with version 2.4, this routine no longer uses the
+        //         Parlett strategy using the gap conditions. 
+        
+        // \EndLib
+        
+        // -----------------------------------------------------------------------
+        
+              private void dsconv (int n, double ritz[], double bounds[], double tol, int nconv[]) {
+        
+        //     %----------------------------------------------------%
+        //     | Include files for debugging and timing information |
+        //     %----------------------------------------------------%
+        
+        //      include   'debug.h'
+        //      include   'stat.h'
+        
+        //     %------------------%
+        //     | Scalar Arguments |
+        //     %------------------%
+        
+        //      integer    n, nconv
+        //      Double precision
+        //     &           tol
+        
+        //     %-----------------%
+        //     | Array Arguments |
+        //     %-----------------%
+        
+        //     Double precision
+        //     &           ritz(n), bounds(n)
+        
+        //     %---------------%
+        //     | Local Scalars |
+        //     %---------------%
+        
+              int    i;
+              double temp, eps23;
+        
+        //     %-------------------%
+        //     | External routines |
+        //     %-------------------%
+        
+        //      Double precision
+        //    &           dlamch
+        //      external   dlamch
+
+        //     %---------------------%
+        //     | Intrinsic Functions |
+        //     %---------------------%
+        
+        //      intrinsic    abs
+        
+        //     %-----------------------%
+        //     | Executable Statements |
+        //     %-----------------------%
+        
+              t0 = System.currentTimeMillis();
+        
+              eps23 = ge.dlamch('E'); 
+              eps23 = Math.pow(eps23,(2.0 / 3.0));
+        
+              nconv[0]  = 0;
+              for (i = 0; i < n; i++) {
+        
+        //        %-----------------------------------------------------%
+        //        | The i-th Ritz value is considered "converged"       |
+        //        | when: bounds(i) .le. TOL*max(eps23, abs(ritz(i)))   |
+        //        %-----------------------------------------------------%
+        
+                 temp = Math.max( eps23, Math.abs(ritz[i]) );
+                 if ( bounds[i] <= tol*temp ) {
+                    nconv[0] = nconv[0] + 1;
+                 }
+        
+              } // for (i = 0; i < n; i++)
+         
+              t1 = System.currentTimeMillis();
+              tsconv = tsconv + (t1 - t0);
+         
+              return;
+              } // dsconv
                 
         // -----------------------------------------------------------------------
         // \BeginDoc
@@ -1828,189 +1969,420 @@ public class SparseEigenvalue implements java.io.Serializable {
         //  KEV      Integer.  (INPUT)
         //          KEV+NP is the size of the matrix H.
         
-        /*c  NP      Integer.  (INPUT)
-        c          Number of implicit shifts to be computed.
-        c
-        c  RITZ    Double precision array of length KEV+NP.  (INPUT/OUTPUT)
-        c          On INPUT, RITZ contains the eigenvalues of H.
-        c          On OUTPUT, RITZ are sorted so that the unwanted eigenvalues 
-        c          are in the first NP locations and the wanted part is in 
-        c          the last KEV locations.  When exact shifts are selected, the
-        c          unwanted part corresponds to the shifts to be applied.
-        c
-        c  BOUNDS  Double precision array of length KEV+NP.  (INPUT/OUTPUT)
-        c          Error bounds corresponding to the ordering in RITZ.
-        c
-        c  SHIFTS  Double precision array of length NP.  (INPUT/OUTPUT)
-        c          On INPUT:  contains the user specified shifts if ISHIFT = 0.
-        c          On OUTPUT: contains the shifts sorted into decreasing order 
-        c          of magnitude with respect to the Ritz estimates contained in
-        c          BOUNDS. If ISHIFT = 0, SHIFTS is not modified on exit.
-        c
-        c\EndDoc
-        c
-        c-----------------------------------------------------------------------
-        c
-        c\BeginLib
-        c
-        c\Local variables:
-        c     xxxxxx  real
-        c
-        c\Routines called:
-        c     dsortr  ARPACK utility sorting routine.
-        c     ivout   ARPACK utility routine that prints integers.
-        c     second  ARPACK utility routine for timing.
-        c     dvout   ARPACK utility routine that prints vectors.
-        c     dcopy   Level 1 BLAS that copies one vector to another.
-        c     dswap   Level 1 BLAS that swaps the contents of two vectors.
-        c
-        c\Author
-        c     Danny Sorensen               Phuong Vu
-        c     Richard Lehoucq              CRPC / Rice University
-        c     Dept. of Computational &     Houston, Texas
-        c     Applied Mathematics
-        c     Rice University           
-        c     Houston, Texas            
-        c
-        c\Revision history:
-        c     xx/xx/93: Version ' 2.1'
-        c
-        c\SCCS Information: @(#) 
-        c FILE: sgets.F   SID: 2.4   DATE OF SID: 4/19/96   RELEASE: 2
-        c
-        c\Remarks
-        c
-        c\EndLib
-        c
-        c-----------------------------------------------------------------------
-        c
-              subroutine dsgets ( ishift, which, kev, np, ritz, bounds, shifts )
-        c
-        c     %----------------------------------------------------%
-        c     | Include files for debugging and timing information |
-        c     %----------------------------------------------------%
-        c
-              include   'debug.h'
-              include   'stat.h'
-        c
-        c     %------------------%
-        c     | Scalar Arguments |
-        c     %------------------%
-        c
-              character*2 which
-              integer    ishift, kev, np
-        c
-        c     %-----------------%
-        c     | Array Arguments |
-        c     %-----------------%
-        c
-              Double precision
-             &           bounds(kev+np), ritz(kev+np), shifts(np)
-        c
-        c     %------------%
-        c     | Parameters |
-        c     %------------%
-        c
-              Double precision
-             &           one, zero
-              parameter (one = 1.0D+0, zero = 0.0D+0)
-        c
-        c     %---------------%
-        c     | Local Scalars |
-        c     %---------------%
-        c
-              integer    kevd2, msglvl
-        c
-        c     %----------------------%
-        c     | External Subroutines |
-        c     %----------------------%
-        c
-              external   dswap, dcopy, dsortr, second
-        c
-        c     %---------------------%
-        c     | Intrinsic Functions |
-        c     %---------------------%
-        c
-              intrinsic    max, min
-        c
-        c     %-----------------------%
-        c     | Executable Statements |
-        c     %-----------------------%
-        c 
-        c     %-------------------------------%
-        c     | Initialize timing statistics  |
-        c     | & message level for debugging |
-        c     %-------------------------------%
-        c
-              call second (t0)
-              msglvl = msgets
-        c 
-              if (which .eq. 'BE') then
-        c
-        c        %-----------------------------------------------------%
-        c        | Both ends of the spectrum are requested.            |
-        c        | Sort the eigenvalues into algebraically increasing  |
-        c        | order first then swap high end of the spectrum next |
-        c        | to low end in appropriate locations.                |
-        c        | NOTE: when np < floor(kev/2) be careful not to swap |
-        c        | overlapping locations.                              |
-        c        %-----------------------------------------------------%
-        c
-                 call dsortr ('LA', .true., kev+np, ritz, bounds)
-                 kevd2 = kev / 2 
-                 if ( kev .gt. 1 ) then
-                    call dswap ( min(kevd2,np), ritz, 1, 
-             &                   ritz( max(kevd2,np)+1 ), 1)
-                    call dswap ( min(kevd2,np), bounds, 1, 
-             &                   bounds( max(kevd2,np)+1 ), 1)
-                 end if
-        c
-              else
-        c
-        c        %----------------------------------------------------%
-        c        | LM, SM, LA, SA case.                               |
-        c        | Sort the eigenvalues of H into the desired order   |
-        c        | and apply the resulting order to BOUNDS.           |
-        c        | The eigenvalues are sorted so that the wanted part |
-        c        | are always in the last KEV locations.               |
-        c        %----------------------------------------------------%
-        c
-                 call dsortr (which, .true., kev+np, ritz, bounds)
-              end if
-        c
-              if (ishift .eq. 1 .and. np .gt. 0) then
-        c     
-        c        %-------------------------------------------------------%
-        c        | Sort the unwanted Ritz values used as shifts so that  |
-        c        | the ones with largest Ritz estimates are first.       |
-        c        | This will tend to minimize the effects of the         |
-        c        | forward instability of the iteration when the shifts  |
-        c        | are applied in subroutine dsapps.                     |
-        c        %-------------------------------------------------------%
-        c     
-                 call dsortr ('SM', .true., np, bounds, ritz)
-                 call dcopy (np, ritz, 1, shifts, 1)
-              end if
-        c 
-              call second (t1)
-              tsgets = tsgets + (t1 - t0)
-        c
-              if (msglvl .gt. 0) then
-                 call ivout (logfil, 1, kev, ndigit, '_sgets: KEV is')
-                 call ivout (logfil, 1, np, ndigit, '_sgets: NP is')
-                 call dvout (logfil, kev+np, ritz, ndigit,
-             &        '_sgets: Eigenvalues of current H matrix')
-                 call dvout (logfil, kev+np, bounds, ndigit, 
-             &        '_sgets: Associated Ritz estimates')
-              end if
-        c 
-              return
-        c
-        c     %---------------%
-        c     | End of dsgets |
-        c     %---------------%
-        c
-              end*/
+        //  NP      Integer.  (INPUT)
+        //          Number of implicit shifts to be computed.
+        
+        //  RITZ    Double precision array of length KEV+NP.  (INPUT/OUTPUT)
+        //          On INPUT, RITZ contains the eigenvalues of H.
+        //          On OUTPUT, RITZ are sorted so that the unwanted eigenvalues 
+        //          are in the first NP locations and the wanted part is in 
+        //          the last KEV locations.  When exact shifts are selected, the
+        //          unwanted part corresponds to the shifts to be applied.
+        
+        //  BOUNDS  Double precision array of length KEV+NP.  (INPUT/OUTPUT)
+        //          Error bounds corresponding to the ordering in RITZ.
+        
+        //  SHIFTS  Double precision array of length NP.  (INPUT/OUTPUT)
+        //          On INPUT:  contains the user specified shifts if ISHIFT = 0.
+        //          On OUTPUT: contains the shifts sorted into decreasing order 
+        //          of magnitude with respect to the Ritz estimates contained in
+        //          BOUNDS. If ISHIFT = 0, SHIFTS is not modified on exit.
+        
+        // \EndDoc
+        
+        // -----------------------------------------------------------------------
+        
+        // \BeginLib
+        
+        // \Local variables:
+        //     xxxxxx  real
+        
+        // \Routines called:
+        //     dsortr  ARPACK utility sorting routine.
+        //     ivout   ARPACK utility routine that prints integers.
+        //     second  ARPACK utility routine for timing.
+        //     dvout   ARPACK utility routine that prints vectors.
+        //     dcopy   Level 1 BLAS that copies one vector to another.
+        //     dswap   Level 1 BLAS that swaps the contents of two vectors.
+        
+        // \Author
+        //     Danny Sorensen               Phuong Vu
+        //     Richard Lehoucq              CRPC / Rice University
+        //     Dept. of Computational &     Houston, Texas
+        //     Applied Mathematics
+        //     Rice University           
+        //     Houston, Texas            
+        
+        // \Revision history:
+        //     xx/xx/93: Version ' 2.1'
+        
+        // \SCCS Information: @(#) 
+        // FILE: sgets.F   SID: 2.4   DATE OF SID: 4/19/96   RELEASE: 2
+        
+        // \Remarks
+        
+        // \EndLib
+        
+        // -----------------------------------------------------------------------
+        
+              private void dsgets (int ishift, String which, int kev, int np, double ritz[], double bounds[], double shifts[] ) {
+        
+        //     %----------------------------------------------------%
+        //     | Include files for debugging and timing information |
+        //     %----------------------------------------------------%
+        
+        //      include   'debug.h'
+        //      include   'stat.h'
+        
+        //     %------------------%
+        //     | Scalar Arguments |
+        //     %------------------%
+        
+        //      character*2 which
+        //      integer    ishift, kev, np
+        
+        //     %-----------------%
+        //     | Array Arguments |
+        //     %-----------------%
+        
+        //      Double precision
+        //     &           bounds(kev+np), ritz(kev+np), shifts(np)
+        
+        //     %---------------%
+        //     | Local Scalars |
+        //     %---------------%
+        
+              int    kevd2, msglvl;
+              int i;
+              double temp;
+        
+        //     %----------------------%
+        //     | External Subroutines |
+        //     %----------------------%
+        
+        //      external   dswap, dcopy, dsortr, second
+        
+        //     %---------------------%
+        //     | Intrinsic Functions |
+        //     %---------------------%
+        
+        //      intrinsic    max, min
+        
+        //     %-----------------------%
+        //     | Executable Statements |
+        //     %-----------------------%
+         
+        //     %-------------------------------%
+        //     | Initialize timing statistics  |
+        //     | & message level for debugging |
+        //     %-------------------------------%
+        
+              t0 = System.currentTimeMillis();
+              msglvl = msgets;
+         
+              if (which.equalsIgnoreCase("BE")) {
+        
+        //        %-----------------------------------------------------%
+        //        | Both ends of the spectrum are requested.            |
+        //        | Sort the eigenvalues into algebraically increasing  |
+        //        | order first then swap high end of the spectrum next |
+        //        | to low end in appropriate locations.                |
+        //        | NOTE: when np < floor(kev/2) be careful not to swap |
+        //        | overlapping locations.                              |
+        //        %-----------------------------------------------------%
+        
+                 dsortr ("LA", true, kev+np, ritz, bounds);
+                 kevd2 = kev / 2; 
+                 if ( kev > 1 ) {
+                	for (i = 0; i < Math.min(kevd2, np); i++) {
+                		temp = ritz[i];
+                		ritz[i] = ritz[Math.max(kevd2,np)+i];
+                		ritz[Math.max(kevd2,np)+i] =  temp;
+                		temp = bounds[i];
+                		bounds[i] = bounds[Math.max(kevd2,np)+i];
+                		bounds[Math.max(kevd2,np)+i] =  temp;
+                	}
+                 } // if (kev > 1)
+        
+              } // if (which.equalsIgnoreCase("BE"))
+              else {
+        
+        //        %----------------------------------------------------%
+        //        | LM, SM, LA, SA case.                               |
+        //        | Sort the eigenvalues of H into the desired order   |
+        //        | and apply the resulting order to BOUNDS.           |
+        //        | The eigenvalues are sorted so that the wanted part |
+        //        | are always in the last KEV locations.               |
+        //        %----------------------------------------------------%
+        
+                 dsortr (which, true, kev+np, ritz, bounds);
+              }
+        
+              if (ishift == 1 && np > 0) {
+             
+        //        %-------------------------------------------------------%
+        //        | Sort the unwanted Ritz values used as shifts so that  |
+        //        | the ones with largest Ritz estimates are first.       |
+        //        | This will tend to minimize the effects of the         |
+        //        | forward instability of the iteration when the shifts  |
+        //        | are applied in subroutine dsapps.                     |
+        //        %-------------------------------------------------------%
+             
+                 dsortr ("SM", true, np, bounds, ritz);
+                 for (i = 0; i < np; i++) {
+                	 shifts[i] = ritz[i];
+                 }
+              } // if (ishift == 1 && np > 0)
+         
+              t1 = System.currentTimeMillis();
+              tsgets = tsgets + (t1 - t0);
+        
+              if (msglvl > 0) {
+            	 UI.setDataText("dsgets: kev = " + kev + "\n");
+            	 UI.setDataText("dsgets: np = " + np + "\n");
+            	 UI.setDataText("dsgets: Eigenvalues of current H matrix: \n");
+            	 for (i = 0; i < kev+np; i++) {
+            		 UI.setDataText("ritz["+i+"] = " + nf.format(ritz[i]) + "\n");
+            	 }
+                 UI.setDataText("dsgets: Associated Ritz estimates: \n");
+                 for (i = 0; i < kev+np ; i++) {
+                	 UI.setDataText("bounds["+i+"] = " + nf.format(bounds[i]) + "\n");
+                 }
+              } // if (msglvl > 0)
+        
+              return;
+              } // dsgets
+              
+      // -----------------------------------------------------------------------
+      // \BeginDoc
+      // 
+      // \Name: dsortr
+      
+      // \Description:
+      //  Sort the array X1 in the order specified by WHICH and optionally 
+      //  applies the permutation to the array X2.
+      
+      // \Usage:
+      //  call dsortr
+      //     ( WHICH, APPLY, N, X1, X2 )
+      
+      // \Arguments
+      //   Character*2.  (Input)
+      //          'LM' -> X1 is sorted into increasing order of magnitude.
+      //          'SM' -> X1 is sorted into decreasing order of magnitude.
+      //          'LA' -> X1 is sorted into increasing order of algebraic.
+      //          'SA' -> X1 is sorted into decreasing order of algebraic.
+      
+      //  APPLY   Logical.  (Input)
+      //          APPLY = .TRUE.  -> apply the sorted order to X2.
+      //          APPLY = .FALSE. -> do not apply the sorted order to X2.
+      
+      //  N       Integer.  (INPUT)
+      //          Size of the arrays.
+      
+      //  X1      Double precision array of length N.  (INPUT/OUTPUT)
+      //          The array to be sorted.
+      
+      //  X2      Double precision array of length N.  (INPUT/OUTPUT)
+      //          Only referenced if APPLY = .TRUE.
+      
+      // \EndDoc
+      
+      // -----------------------------------------------------------------------
+      
+      // \BeginLib
+      
+      // \Author
+      //     Danny Sorensen               Phuong Vu
+      //     Richard Lehoucq              CRPC / Rice University 
+      //     Dept. of Computational &     Houston, Texas 
+      //     Applied Mathematics
+      //     Rice University           
+      //     Houston, Texas            
+      
+      // \Revision history:
+      //     12/16/93: Version ' 2.1'.
+      //               Adapted from the sort routine in LANSO.
+      
+      // \SCCS Information: @(#) 
+      // FILE: sortr.F   SID: 2.3   DATE OF SID: 4/19/96   RELEASE: 2
+      
+      // \EndLib
+      
+      // -----------------------------------------------------------------------
+      
+            private void dsortr (String which, boolean apply, int n, double x1[], double x2[]) {
+      
+      //     %------------------%
+      //     | Scalar Arguments |
+      //     %------------------%
+      
+      //      character*2 which
+      //      logical    apply
+      //      integer    n
+      
+      //     %-----------------%
+      //     | Array Arguments |
+      //     %-----------------%
+      
+      //      Double precision
+      //     &           x1(0:n-1), x2(0:n-1)
+      
+      //     %---------------%
+      //     | Local Scalars |
+      //     %---------------%
+      
+            int    i, igap, j;
+            double temp;
+      
+      //     %-----------------------%
+      //     | Executable Statements |
+      //     %-----------------------%
+      
+            igap = n / 2;
+       
+            if (which.equalsIgnoreCase("SA")) {
+      
+      //        X1 is sorted into decreasing order of algebraic.
+      
+         while (true) {
+               if (igap == 0) {
+            	   return;
+               }
+            loop2: for (i = igap; i <= n-1; i++) {
+                  j = i-igap;
+            while (true) {
+      
+                  if (j < 0) {
+                	  continue loop2;
+                  }
+      
+                  if (x1[j-1] < x1[j+igap-1]) {
+                     temp = x1[j-1];
+                     x1[j-1] = x1[j+igap-1];
+                     x1[j+igap-1] = temp;
+                     if (apply) {
+                        temp = x2[j-1];
+                        x2[j-1] = x2[j+igap-1];
+                        x2[j+igap-1] = temp;
+                     } // if (apply)
+                  } // if (x1[j-1] < x1[j+igap-1])
+                  else {
+                     continue loop2;
+                  }
+                  j = j-igap;
+                  } // while (true) 
+               } // loop2: for (i = igap; i <= n-1; i++)
+               igap = igap / 2;
+         } // while (true)
+            } // if (which.equalsIgnoreCase("SA"))
+            else if (which.equalsIgnoreCase("SM")) { 
+      
+      //        X1 is sorted into decreasing order of magnitude.
+      
+         while (true) {
+               if (igap == 0) {
+            	   return;
+               }
+               loop5: for (i = igap; i <= n-1; i++) {
+                  j = i-igap;
+                  while(true) {
+      
+                  if (j < 0) {
+                	  continue loop5;
+                  }
+      
+                  if (Math.abs(x1[j-1]) < Math.abs(x1[j+igap-1])) {
+                     temp = x1[j-1];
+                     x1[j-1] = x1[j+igap-1];
+                     x1[j+igap-1] = temp;
+                     if (apply) {
+                        temp = x2[j-1];
+                        x2[j-1] = x2[j+igap-1];
+                        x2[j+igap-1] = temp;
+                     } // if (apply)
+                  } // if (Math.abs(x1[j-1]) < Math.abs(x1[j+igap-1]))
+                  else {
+                     continue loop5;
+                  }
+                  j = j-igap;
+               } // while(true)
+               } // loop5: for (i = igap; i <= n-1; i++) 
+               igap = igap / 2;
+         } // while (true);
+            } // else if (which.equalsIgnoreCase("SM"))
+            else if (which.equalsIgnoreCase("LA")) {
+      
+      //        X1 is sorted into increasing order of algebraic.
+      
+         while (true) {
+               if (igap == 0) {
+            	   return;
+               }
+               loop8: for (i = igap; i <= n-1; i++) {
+                  j = i-igap;
+                  while (true) {
+      
+                  if (j < 0) {
+                	  continue loop8;
+                  }
+                
+                  if (x1[j-1] > x1[j+igap-1]) {
+                     temp = x1[j-1];
+                     x1[j-1] = x1[j+igap-1];
+                     x1[j+igap-1] = temp;
+                     if (apply) {
+                        temp = x2[j-1];
+                        x2[j-1] = x2[j+igap-1];
+                        x2[j+igap-1] = temp;
+                     } // if (apply)
+                  } // if (x1[j-1] > x1[j+igap-1])
+                  else {
+                     continue loop8;
+                  }
+                  j = j-igap;
+               } // while (true)
+               } // loop8: for (i = igap; i <= n-1; i++)
+               igap = igap / 2;
+         } // while (true)
+            } // else if (which.equalsIgnoreCase("LA")) 
+            else if (which.equalsIgnoreCase("LM")) {
+      
+      //        X1 is sorted into increasing order of magnitude.
+      
+        while (true) {
+               if (igap == 0) {
+            	   return;
+               }
+               loop11: for(i = igap; i <= n-1; i++) {
+                  j = i-igap;
+               while (true) {
+      
+                  if (j < 0) {
+                	  continue loop11;
+                  }
+      
+                  if (Math.abs(x1[j-1]) > Math.abs(x1[j+igap-1])) {
+                     temp = x1[j-1];
+                     x1[j-1] = x1[j+igap-1];
+                     x1[j+igap-1] = temp;
+                     if (apply) {
+                        temp = x2[j-1];
+                        x2[j-1] = x2[j+igap-1];
+                        x2[j+igap-1] = temp;
+                     } // if (apply)
+                  } // if (Math.abs(x1[j-1]) > Math.abs(x1[j+igap-1]))
+                  else {
+                     continue loop11;
+                  }
+                  j = j-igap;
+                  } // while (true)
+               } // loop11: for(i = igap; i <= n-1; i++)
+               igap = igap / 2;
+        } // while (true)
+            } // else if (which.equalsIgnoreCase("LM"))
+            } // dsortr
+             
 
                 
         // -----------------------------------------------------------------------
