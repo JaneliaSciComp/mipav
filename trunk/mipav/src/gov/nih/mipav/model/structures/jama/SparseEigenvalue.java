@@ -72,7 +72,7 @@ public class SparseEigenvalue implements java.io.Serializable {
     private int dsaupd_nb;
     private int dsaupd_nev0;
     private int dsaupd_next;
-    private int dsaupd_np;
+    private int dsaupd_np[] = new int[1];
     private int dsaupd_ritz;
     
     // From stat.h
@@ -149,7 +149,7 @@ public class SparseEigenvalue implements java.io.Serializable {
     private int dsaup2_iter;
     private int dsaup2_kplusp;
     private int dsaup2_msglvl;
-    private int dsaup2_nconv;
+    private int dsaup2_nconv[] = new int[1];
     private int dsaup2_nev0;
     private int dsaup2_np0;
     private double dsaup2_rnorm[] = new double[1];
@@ -180,6 +180,9 @@ public class SparseEigenvalue implements java.io.Serializable {
     private double dsaitr_rnorm1;
     private double dsaitr_safmin;
     private double dsaitr_wnorm;
+    
+    private double dsapps_epsmch;
+    private boolean dsapps_first = true;
 
 	// ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -638,6 +641,7 @@ public class SparseEigenvalue implements java.io.Serializable {
     //     | Local Scalars |
     //     %---------------%
     //
+          int i;
           int  j;
     //
     //     %----------------------%
@@ -700,7 +704,7 @@ public class SparseEigenvalue implements java.io.Serializable {
     //        | extend the length NEV Lanczos factorization. |
     //        %----------------------------------------------%
     //
-             dsaupd_np     = ncv - nev;
+             dsaupd_np[0]     = ncv - nev;
     // 
              if (dsaupd_mxiter <= 0)  {
             	 dsaupd_ierr = -4;
@@ -759,7 +763,7 @@ public class SparseEigenvalue implements java.io.Serializable {
     //        | size of the invariant subspace desired.      |
     //        %----------------------------------------------%
     
-             dsaupd_np     = ncv - nev;
+             dsaupd_np[0]     = ncv - nev;
              dsaupd_nev0   = nev; 
      
     //        %-----------------------------%
@@ -802,12 +806,25 @@ public class SparseEigenvalue implements java.io.Serializable {
     //     | Carry out the Implicitly restarted Lanczos Iteration. |
     //     %-------------------------------------------------------%
     
-         /** dsaup2 
-            ( ido, bmat, n, which, dsaupd_nev0, dsaupd_np, tol, resid, dsaupd_mode, dsaupd_iupd,
-              dsaupd_ishift, dsaupd_mxiter, v, ldv, workl(dsaupd_ih), dsaupd_ldh, workl(dsaupd_ritz),
-              workl(dsaupd_bounds), workl(dsaupd_iq), dsaupd_ldq, workl(dsaupd_iw), ipntr, workd,
-              info );
-    c
+         //dsaup2 
+            //( ido, bmat, n, which, dsaupd_nev0, dsaupd_np, tol, resid, dsaupd_mode, dsaupd_iupd,
+              //dsaupd_ishift, dsaupd_mxiter, v, ldv, workl(dsaupd_ih), dsaupd_ldh, workl(dsaupd_ritz),
+              //workl(dsaupd_bounds), workl(dsaupd_iq), dsaupd_ldq, workl(dsaupd_iw), ipntr, workd,
+              //info );
+         double H[][] = new double[dsaupd_nev0+dsaupd_np[0]][2];
+         double ritz[] = new double[dsaupd_nev0+dsaupd_np[0]];
+         double bounds[] = new double[dsaupd_nev0+dsaupd_np[0]];
+         double Q[][] = new double[dsaupd_nev0+dsaupd_np[0]][dsaupd_nev0+dsaupd_np[0]];
+         double workl2[] = new double[3*(dsaupd_nev0+dsaupd_np[0])];
+         for (i = 0; i < 3*(dsaupd_nev0+dsaupd_np[0]); i++) {
+        	 workl2[i] = workl[dsaupd_iw-1+i];
+         }
+         dsaup2 
+         ( ido, bmat, n, which, dsaupd_nev0, dsaupd_np, tol, resid, dsaupd_mode, dsaupd_iupd,
+           dsaupd_ishift, dsaupd_mxiter, v, ldv, H, dsaupd_ldh, ritz,
+           bounds, Q, dsaupd_ldq, workl2, ipntr, workd,
+           info );
+    /*c
     c     %--------------------------------------------------%
     c     | ido .ne. 99 implies use of reverse communication |
     c     | to compute operations involving OP or shifts.    |
@@ -883,15 +900,10 @@ public class SparseEigenvalue implements java.io.Serializable {
           end if
     c 
      9000 continue
-    c 
-          return
-    c
-    c     %---------------%
-    c     | End of dsaupd |
-    c     %---------------%
-    c
-          end*/
-          }
+    c */
+          return;
+   
+          } // dsaupd
           
           // -----------------------------------------------------------------------
           // \BeginDoc
@@ -1108,15 +1120,14 @@ public class SparseEigenvalue implements java.io.Serializable {
           //     %------------%
           
                 final double zero = 0.0;
-                final double one = 1.0;
           
           //     %---------------%
           //     | Local Scalars |
           //     %---------------%
           
-                String  wprime;
-                int    ierr, j, nevbef, nptemp, nevd2, nevm2;
-                int kp[] = new int [3]; 
+                String  wprime = null;
+                int ierr[] = new int[1];
+                int    j, nevbef, nptemp, nevd2, nevm2;
                 double temp;
                 int i;
                 boolean seg1;
@@ -1188,7 +1199,7 @@ public class SparseEigenvalue implements java.io.Serializable {
           //        %-------------------------------------%
           
                    dsaup2_kplusp = dsaup2_nev0 + dsaup2_np0;
-                   dsaup2_nconv  = 0;
+                   dsaup2_nconv[0]  = 0;
                    dsaup2_iter = 0;
            
           //        %--------------------------------------------%
@@ -1329,7 +1340,7 @@ public class SparseEigenvalue implements java.io.Serializable {
           //     |                                                              |
           //     %--------------------------------------------------------------%
            
-           /*loop1: while (true) {
+           while (true) {
         	   if (seg4) {
         		   if (seg5) {
         			   if (seg6) {
@@ -1353,7 +1364,7 @@ public class SparseEigenvalue implements java.io.Serializable {
         			   seg6 = true;
                    dsaup2_update = true;
           
-                   dsaitr (ido, bmat, n, nev, np, mode, resid, dsaup2_rnorm, v, 
+                   dsaitr (ido, bmat, n, nev, np[0], mode, resid, dsaup2_rnorm, v, 
                                ldv, h, ldh, ipntr, workd, info);
            
           //        %---------------------------------------------------%
@@ -1373,7 +1384,7 @@ public class SparseEigenvalue implements java.io.Serializable {
           //           | of the factorization built. Exit main loop.         |
           //           %-----------------------------------------------------%
           
-                      np = info[0];
+                      np[0] = info[0];
                       mxiter = dsaup2_iter;
                       info[0] = -9999;
                       ido[0] = 99;
@@ -1393,9 +1404,9 @@ public class SparseEigenvalue implements java.io.Serializable {
           //        | of the current symmetric tridiagonal matrix.           |
           //        %--------------------------------------------------------%
           
-                   dseigt (dsaup2_rnorm, dsaup2_kplusp, h, ldh, ritz, bounds, workl, ierr);
+                   dseigt (dsaup2_rnorm[0], dsaup2_kplusp, h, ldh, ritz, bounds, workl, ierr);
           
-                   if (ierr != 0) {
+                   if (ierr[0] != 0) {
                       info[0] = -8;
                       ido[0] = 99;
                       t1 = System.currentTimeMillis();
@@ -1424,26 +1435,26 @@ public class SparseEigenvalue implements java.io.Serializable {
           //        %---------------------------------------------------%
           //
                    nev = dsaup2_nev0;
-                   np = dsaup2_np0;
-                   dsgets (ishift, which, nev, np, ritz, bounds, workl);
+                   np[0] = dsaup2_np0;
+                   dsgets (ishift, which, nev, np[0], ritz, bounds, workl);
            
           //        %-------------------%
           //        | Convergence test. |
           //        %-------------------%
           //
                    for (i = 0; i < nev; i++) {
-                	   workl[np+i] = bounds[np+i];
+                	   workl[np[0]+i] = bounds[np[0]+i];
                    }
                    array1 = new double[nev];
                    array2 = new double[nev];
                    for (i = 0; i < nev; i++) {
-                	   array1[i] = ritz[np+i];
-                	   array2[i] = workl[np+i];
+                	   array1[i] = ritz[np[0]+i];
+                	   array2[i] = workl[np[0]+i];
                    }
                    dsconv (nev, array1, array2, tol, dsaup2_nconv);
           
                    if (dsaup2_msglvl > 2) {
-                      UI.setDataText("In dsaup2 nev = " + nev + " np = " + np + " nconv[0] = " + nconv[0] + "\n");
+                      UI.setDataText("In dsaup2 nev = " + nev + " np[0] = " + np[0] + " dsaup2_nconv[0] = " + dsaup2_nconv[0] + "\n");
                       UI.setDataText("dsaup2: The eigenvalues of H: \n");
                       for (i = 0; i < dsaup2_kplusp; i++) {
                     	  UI.setDataText("ritz["+i+"] = " + nf.format(ritz[i]) + "\n");
@@ -1464,15 +1475,15 @@ public class SparseEigenvalue implements java.io.Serializable {
           //        | no shifts may be applied, then prepare to exit          |
           //        %---------------------------------------------------------%
           
-                   nptemp = np;
+                   nptemp = np[0];
                    for (j=0; j < nptemp; j++) {
                       if (bounds[j] == zero) {
-                         np = np - 1;
+                         np[0] = np[0] - 1;
                          nev = nev + 1;
                       }
                    } // for (j=0; j < nptemp; j++)
            
-                   if ( (dsaup2_nconv >= dsaup2_nev0) || (dsaup2_iter > mxiter) ||(np == 0) ) {
+                   if ( (dsaup2_nconv[0] >= dsaup2_nev0) || (dsaup2_iter > mxiter) ||(np[0] == 0) ) {
                
           //           %------------------------------------------------%
           //           | Prepare to exit. Put the converged Ritz values |
@@ -1498,13 +1509,13 @@ public class SparseEigenvalue implements java.io.Serializable {
                          nevd2 = nev / 2;
                          nevm2 = nev - nevd2; 
                          if ( nev > 1 ) {
-                        	for (i = 0; i < Math.min(nevd2, np); i++) {
+                        	for (i = 0; i < Math.min(nevd2, np[0]); i++) {
                         		temp = ritz[nevm2+i];
-                        		ritz[nevm2+i] = ritz[Math.max(dsaup2_kplusp-nevd2, dsaup2_kplusp-np)+i];
-                        		ritz[Math.max(dsaup2_kplusp-nevd2, dsaup2_kplusp-np)+i] = temp;
+                        		ritz[nevm2+i] = ritz[Math.max(dsaup2_kplusp-nevd2, dsaup2_kplusp-np[0])+i];
+                        		ritz[Math.max(dsaup2_kplusp-nevd2, dsaup2_kplusp-np[0])+i] = temp;
                         		temp = bounds[nevm2+i];
-                        		bounds[nevm2+i] = bounds[Math.max(dsaup2_kplusp-nevd2, dsaup2_kplusp-np)+i];
-                        		bounds[Math.max(dsaup2_kplusp-nevd2, dsaup2_kplusp-np)+i] = temp;
+                        		bounds[nevm2+i] = bounds[Math.max(dsaup2_kplusp-nevd2, dsaup2_kplusp-np[0])+i];
+                        		bounds[Math.max(dsaup2_kplusp-nevd2, dsaup2_kplusp-np[0])+i] = temp;
                         	}
                          } // if ( nev > 1 )
                       } // if (which.equalsIgnoreCase("BE"))
@@ -1547,257 +1558,819 @@ public class SparseEigenvalue implements java.io.Serializable {
           
                       wprime = "LA";
                       dsortr(wprime, true, dsaup2_nev0, bounds, ritz);
-          c
-          c           %----------------------------------------------%
-          c           | Scale the Ritz estimate back to its original |
-          c           | value.                                       |
-          c           %----------------------------------------------%
-          c
-                      do 40 j = 1, dsaup2_nev0
-                          temp = max( dsaup2_eps23, abs(ritz(j)) )
-                          bounds(j) = bounds(j)*temp
-           40         continue
-          c
-          c           %--------------------------------------------------%
-          c           | Sort the "converged" Ritz values again so that   |
-          c           | the "threshold" values and their associated Ritz |
-          c           | estimates appear at the appropriate position in  |
-          c           | ritz and bound.                                  |
-          c           %--------------------------------------------------%
-          c
-                      if (which .eq. 'BE') then
-          c
-          c              %------------------------------------------------%
-          c              | Sort the "converged" Ritz values in increasing |
-          c              | order.  The "threshold" values are in the      |
-          c              | middle.                                        |
-          c              %------------------------------------------------%
-          c
-                         wprime = 'LA'
-                         call dsortr(wprime, .true., dsaup2_nconv, ritz, bounds)
-          c
-                      else
-          c
-          c              %----------------------------------------------%
-          c              | In LM, SM, LA, SA case, sort the "converged" |
-          c              | Ritz values according to WHICH so that the   |
-          c              | "threshold" value appears at the front of    |
-          c              | ritz.                                        |
-          c              %----------------------------------------------%
+          
+          //           %----------------------------------------------%
+          //           | Scale the Ritz estimate back to its original |
+          //           | value.                                       |
+          //           %----------------------------------------------%
+          
+                      for (j = 0; j < dsaup2_nev0; j++) {
+                          temp = Math.max( dsaup2_eps23, Math.abs(ritz[j]) );
+                          bounds[j] = bounds[j]*temp;
+                      }
+          
+          //           %--------------------------------------------------%
+          //           | Sort the "converged" Ritz values again so that   |
+          //           | the "threshold" values and their associated Ritz |
+          //           | estimates appear at the appropriate position in  |
+          //           | ritz and bound.                                  |
+          //           %--------------------------------------------------%
+          
+                      if (which.equalsIgnoreCase("BE")) { 
+          
+          //              %------------------------------------------------%
+          //              | Sort the "converged" Ritz values in increasing |
+          //              | order.  The "threshold" values are in the      |
+          //              | middle.                                        |
+          //              %------------------------------------------------%
+          
+                         wprime = "LA";
+                         dsortr(wprime, true, dsaup2_nconv[0], ritz, bounds);
+                      } // if (which.equalsIgnoreCase("BE"))
+                      else {
+          
+          //              %----------------------------------------------%
+          //              | In LM, SM, LA, SA case, sort the "converged" |
+          //              | Ritz values according to WHICH so that the   |
+          //              | "threshold" value appears at the front of    |
+          //              | ritz.                                        |
+          //              %----------------------------------------------%
 
-                         call dsortr(which, .true., dsaup2_nconv, ritz, bounds)
-          c
-                      end if
-          c
-          c           %------------------------------------------%
-          c           |  Use h( 1,1 ) as storage to communicate  |
-          c           |  rnorm to _seupd if needed               |
-          c           %------------------------------------------%
-          c
-                      h(1,1) = dsaup2_rnorm;
-          c
-                      if (dsaup2_msglvl .gt. 1) then
-                         call dvout (logfil, dsaup2_kplusp, ritz, ndigit,
-               &            '_saup2: Sorted Ritz values.')
-                         call dvout (logfil, dsaup2_kplusp, bounds, ndigit,
-               &            '_saup2: Sorted ritz estimates.')
-                      end if
-          c
-          c           %------------------------------------%
-          c           | Max iterations have been exceeded. | 
-          c           %------------------------------------%
-          c
-                      if (dsaup2_iter .gt. mxiter .and. dsaup2_nconv .lt. nev) info = 1
-          c
-          c           %---------------------%
-          c           | No shifts to apply. | 
-          c           %---------------------%
-          c
-                      if (np .eq. 0 .and. dsaup2_nconv .lt. dsaup2_nev0) info = 2
-          c
-                      np = dsaup2_nconv;
-                      go to 1100
-                       } // } // if ( (dsaup2_nconv >= dsaup2_nev0) || (dsaup2_iter > mxiter) ||(np == 0) )
-                   else if (dsaup2_nconv .lt. nev .and. ishift .eq. 1) {
-          c
-          c           %---------------------------------------------------%
-          c           | Do not have all the requested eigenvalues yet.    |
-          c           | To prevent possible stagnation, adjust the number |
-          c           | of Ritz values and the shifts.                    |
-          c           %---------------------------------------------------%
-          c
-                      nevbef = nev
-                      nev = nev + min (dsaup2_nconv, np/2)
-                      if (nev .eq. 1 .and. dsaup2_kplusp .ge. 6) then
-                         nev = dsaup2_kplusp / 2
-                      else if (nev .eq. 1 .and. dsaup2_kplusp .gt. 2) then
-                         nev = 2
-                      end if
-                      np  = dsaup2_kplusp - nev
-          c     
-          c           %---------------------------------------%
-          c           | If the size of NEV was just increased |
-          c           | resort the eigenvalues.               |
-          c           %---------------------------------------%
-          c     
-                      if (nevbef .lt. nev) 
-               &         call dsgets (ishift, which, nev, np, ritz, bounds,
-               &              workl)
-          c
+                         dsortr(which, true, dsaup2_nconv[0], ritz, bounds);
+          
+                      }
+          
+          //           %------------------------------------------%
+          //           |  Use h( 1,1 ) as storage to communicate  |
+          //           |  rnorm to _seupd if needed               |
+          //           %------------------------------------------%
+          
+                      h[0][0] = dsaup2_rnorm[0];
+          
+                      if (dsaup2_msglvl > 1) {
+                    	 UI.setDataText("dsaup2: Sorted Ritz values: \n");
+                    	 for (i = 0; i < dsaup2_kplusp; i++) {
+                    		 UI.setDataText("ritz["+i+"] = " + nf.format(ritz[i]) + "\n");
+                    	 }
+                         UI.setDataText("dsaup2: Sorted ritz estimates: \n");
+                         for (i = 0; i < dsaup2_kplusp; i++) {
+                        	 UI.setDataText("bounds["+i+"] = " + nf.format(bounds[i]) + "\n");
+                         }
+                      }
+          
+          //           %------------------------------------%
+          //           | Max iterations have been exceeded. | 
+          //           %------------------------------------%
+          
+                      if (dsaup2_iter > mxiter && dsaup2_nconv[0] < nev) info[0] = 1;
+          
+          //           %---------------------%
+          //           | No shifts to apply. | 
+          //           %---------------------%
+          
+                      if (np[0] == 0 && dsaup2_nconv[0] < dsaup2_nev0) info[0] = 2;
+          
+                      np[0] = dsaup2_nconv[0];
+                      mxiter = dsaup2_iter;
+                      nev = dsaup2_nconv[0];
+                      ido[0] = 99;
+                      t1 = System.currentTimeMillis();
+                      tsaup2 = t1 - t0;
+                      return;
+                       } // } // if ( (dsaup2_nconv[0] >= dsaup2_nev0) || (dsaup2_iter > mxiter) ||(np == 0) )
+                   else if (dsaup2_nconv[0] < nev && ishift == 1) {
+          
+          //           %---------------------------------------------------%
+          //           | Do not have all the requested eigenvalues yet.    |
+          //           | To prevent possible stagnation, adjust the number |
+          //           | of Ritz values and the shifts.                    |
+          //           %---------------------------------------------------%
+          
+                      nevbef = nev;
+                      nev = nev + Math.min (dsaup2_nconv[0], np[0]/2);
+                      if (nev == 1 && dsaup2_kplusp >= 6) {
+                         nev = dsaup2_kplusp / 2;
+                      }
+                      else if (nev == 1 && dsaup2_kplusp > 2) {
+                         nev = 2;
+                      }
+                      np[0]  = dsaup2_kplusp - nev;
+               
+          //           %---------------------------------------%
+          //           | If the size of NEV was just increased |
+          //           | resort the eigenvalues.               |
+          //           %---------------------------------------%
+               
+                      if (nevbef < nev)  {
+                         dsgets (ishift, which, nev, np[0], ritz, bounds, workl);
+                      }
+          
                    } // else if (dsaup2_nconv .lt. nev .and. ishift .eq. 1)
-          c
-                   if (dsaup2_msglvl .gt. 0) then
-                      call ivout (logfil, 1, dsaup2_nconv, ndigit,
-               &           '_saup2: no. of "converged" Ritz values at this iter.')
-                      if (dsaup2_msglvl .gt. 1) then
-                         kp(1) = nev
-                         kp(2) = np
-                         call ivout (logfil, 2, kp, ndigit,
-               &              '_saup2: NEV and NP are')
-                         call dvout (logfil, nev, ritz(np+1), ndigit,
-               &              '_saup2: "wanted" Ritz values.')
-                         call dvout (logfil, nev, bounds(np+1), ndigit,
-               &              '_saup2: Ritz estimates of the "wanted" values ')
-                      end if
-                   end if
+          
+                   if (dsaup2_msglvl > 0) {
+                	  UI.setDataText("saup2: no. of \"converged\" Ritz values at this iter dsaup2_nconv = " + dsaup2_nconv + "\n");
+                      if (dsaup2_msglvl > 1) {
+                    	 UI.setDataText("In dsaup2 nev = " + nev + " np = " + np + "\n");
+                         UI.setDataText("dsaup2: \"wanted\" Ritz values: \n");
+                         for (i = 0; i < nev; i++) {
+                        	 UI.setDataText("ritz["+(np[0]+i)+"] = " + nf.format(ritz[np[0]+i]) + "\n");
+                         }
+                         UI.setDataText("dsaup2: Ritz estimates of the \"wanted\" values: \n");
+                         for (i = 0; i < nev; i++) {
+                        	 UI.setDataText("bounds["+(np[0]+i)+"] = " + nf.format(bounds[np[0]+i]) + "\n");
+                         }
+                      } // if (dsaup2_msglvl > 1)
+                   } // if (dsaup2_msglvl > 0)
 
-          c 
-                   if (ishift .eq. 0) then
-          c
-          c           %-----------------------------------------------------%
-          c           | User specified shifts: reverse communication to     |
-          c           | compute the shifts. They are returned in the first  |
-          c           | NP locations of WORKL.                              |
-          c           %-----------------------------------------------------%
-          c
+           
+                   if (ishift == 0) {
+          
+          //           %-----------------------------------------------------%
+          //           | User specified shifts: reverse communication to     |
+          //           | compute the shifts. They are returned in the first  |
+          //           | NP locations of WORKL.                              |
+          //           %-----------------------------------------------------%
+          
                       dsaup2_ushift = true;
-                      ido = 3
-                      go to 9000
-                   end if
+                      ido[0] = 3;
+                      return;
+                   } // if (ishift == 0)
         		   } // if (seg5)
         		   seg5 = true;
-             50    continue
-          c
-          c        %------------------------------------%
-          c        | Back from reverse communication;   |
-          c        | User specified shifts are returned |
-          c        | in WORKL(1:*NP)                   |
-          c        %------------------------------------%
-          c
+          
+          //        %------------------------------------%
+          //        | Back from reverse communication;   |
+          //        | User specified shifts are returned |
+          //        | in WORKL(1:*NP)                   |
+          //        %------------------------------------%
+          
                    dsaup2_ushift = false;
-          c 
-          c 
-          c        %---------------------------------------------------------%
-          c        | Move the NP shifts to the first NP locations of RITZ to |
-          c        | free up WORKL.  This is for the non-exact shift case;   |
-          c        | in the exact shift case, dsgets already handles this.   |
-          c        %---------------------------------------------------------%
-          c
-                   if (ishift .eq. 0) call dcopy (np, workl, 1, ritz, 1)
-          c
-                   if (dsaup2_msglvl .gt. 2) then
-                      call ivout (logfil, 1, np, ndigit,
-               &                  '_saup2: The number of shifts to apply ')
-                      call dvout (logfil, np, workl, ndigit,
-               &                  '_saup2: shifts selected')
-                      if (ishift .eq. 1) then
-                         call dvout (logfil, np, bounds, ndigit,
-               &                  '_saup2: corresponding Ritz estimates')
-                       end if
-                   end if
-          c 
-          c        %---------------------------------------------------------%
-          c        | Apply the NP0 implicit shifts by QR bulge chasing.      |
-          c        | Each shift is applied to the entire tridiagonal matrix. |
-          c        | The first 2*N locations of WORKD are used as workspace. |
-          c        | After dsapps is done, we have a Lanczos                 |
-          c        | factorization of length NEV.                            |
-          c        %---------------------------------------------------------%
-          c
-                   call dsapps (n, nev, np, ritz, v, ldv, h, ldh, resid, q, ldq,
-               &        workd)
-          c
-          c        %---------------------------------------------%
-          c        | Compute the B-norm of the updated residual. |
-          c        | Keep B*RESID in WORKD(1:N) to be used in    |
-          c        | the first step of the next call to dsaitr.  |
-          c        %---------------------------------------------%
-          c
+           
+           
+          //        %---------------------------------------------------------%
+          //        | Move the NP shifts to the first NP locations of RITZ to |
+          //        | free up WORKL.  This is for the non-exact shift case;   |
+          //        | in the exact shift case, dsgets already handles this.   |
+          //        %---------------------------------------------------------%
+          
+                   if (ishift == 0) {
+                	   for (i = 0; i < np[0]; i++) {
+                		   ritz[i] = workl[i];
+                	   }
+                   }
+          
+                   if (dsaup2_msglvl > 2) {
+                	  UI.setDataText("dsaup2: The number of shifts to apply np = " + np + "\n");
+                      UI.setDataText("dsaup2: shifts selected: \n");
+                      for (i = 0; i < np[0]; i++) {
+                    	  UI.setDataText("workl["+i+"] = " + nf.format(workl[i]) + "\n");
+                      }
+                      if (ishift == 1) {
+                    	 UI.setDataText("dsaup2: corresponding Ritz estimates:\n");
+                    	 for (i = 0; i < np[0]; i++) {
+                    		 UI.setDataText("bounds["+i+"] = " + nf.format(bounds[i]) + "\n");
+                    	 }
+                      } // if (ishift == 1)
+                   } // if (dsaup2_msglvl > 2)
+           
+          //        %---------------------------------------------------------%
+          //        | Apply the NP0 implicit shifts by QR bulge chasing.      |
+          //        | Each shift is applied to the entire tridiagonal matrix. |
+          //        | The first 2*N locations of WORKD are used as workspace. |
+          //        | After dsapps is done, we have a Lanczos                 |
+          //        | factorization of length NEV.                            |
+          //        %---------------------------------------------------------%
+          
+                   dsapps (n, nev, np[0], ritz, v, ldv, h, ldh, resid, q, ldq, workd);
+          
+          //        %---------------------------------------------%
+          //        | Compute the B-norm of the updated residual. |
+          //        | Keep B*RESID in WORKD(1:N) to be used in    |
+          //        | the first step of the next call to dsaitr.  |
+          //        %---------------------------------------------%
+          
                    dsaup2_cnorm = true;
-                   call second (t2)
-                   if (bmat .eq. 'G') then
-                      nbx = nbx + 1
-                      call dcopy (n, resid, 1, workd(n+1), 1)
-                      ipntr(1) = n + 1
-                      ipntr(2) = 1
-                      ido = 2
-          c 
-          c           %----------------------------------%
-          c           | Exit in order to compute B*RESID |
-          c           %----------------------------------%
-          c 
-                      go to 9000
-                   else if (bmat .eq. 'I') then
-                      call dcopy (n, resid, 1, workd, 1)
-                   end if
+                   t2 = System.currentTimeMillis();
+                   if (bmat.equalsIgnoreCase("G")) {
+                      nbx = nbx + 1;
+                      for (i = 0; i < n; i++) {
+                    	  workd[n+i] = resid[i];
+                      }
+                      ipntr[0] = n + 1;
+                      ipntr[1] = 1;
+                      ido[0] = 2;
+           
+          //           %----------------------------------%
+          //           | Exit in order to compute B*RESID |
+          //           %----------------------------------%
+           
+                      return;
+                   } // if (bmat.equalsIgnoreCase("G"))
+                   else if (bmat.equalsIgnoreCase("I")) {
+                	  for (i = 0; i < n; i++) {
+                		  workd[i] = resid[i];
+                	  }
+                   }
         	   } // if (seg4) 
         	   seg4 = true;
-            100    continue
-          c 
-          c        %----------------------------------%
-          c        | Back from reverse communication; |
-          c        | WORKD(1:N) := B*RESID            |
-          c        %----------------------------------%
-          c
-                   if (bmat .eq. 'G') then
-                      call second (t3)
-                      tmvbx = tmvbx + (t3 - t2)
-                   end if
-          c 
-                   if (bmat .eq. 'G') then         
-                      dsaup2_rnorm = ddot (n, resid, 1, workd, 1)
-                      dsaup2_rnorm = sqrt(abs(dsaup2_rnorm));
-                   else if (bmat .eq. 'I') then
-                      dsaup2_rnorm = dnrm2(n, resid, 1);
-                   end if
-                   dsaup2_cnorm = false;
-            130    continue
-          c
-                   if (dsaup2_msglvl .gt. 2) then
-                      call dvout (logfil, 1, dsaup2_rnorm, ndigit, 
-               &      '_saup2: B-norm of residual for NEV factorization')
-                      call dvout (logfil, nev, h(1,2), ndigit,
-               &           '_saup2: main diagonal of compressed H matrix')
-                      call dvout (logfil, nev-1, h(2,1), ndigit,
-               &           '_saup2: subdiagonal of compressed H matrix')
-                   end if
            
-           } // loop1: while (true)
-          c
-          c     %---------------------------------------------------------------%
-          c     |                                                               |
-          c     |  E N D     O F     M A I N     I T E R A T I O N     L O O P  |
-          c     |                                                               |
-          c     %---------------------------------------------------------------%
-          c 
-           1100 continue
-          c
-                mxiter = dsaup2_iter;
-                nev = dsaup2_nconv;
-          c 
-           1200 continue
-                ido = 99
-          c
-          c     %------------%
-          c     | Error exit |
-          c     %------------%
-          c
-                call second (t1)
-                tsaup2 = t1 - t0
-          c 
-           9000 continue*/
-                return;
+          //        %----------------------------------%
+          //        | Back from reverse communication; |
+          //        | WORKD(1:N) := B*RESID            |
+          //        %----------------------------------%
+          
+                   if (bmat.equalsIgnoreCase("G")) {
+                	  t3 = System.currentTimeMillis();
+                      tmvbx = tmvbx + (t3 - t2);
+                   }
+           
+                   if (bmat.equalsIgnoreCase("G")) {      
+                      dsaup2_rnorm[0] = ge.ddot (n, resid, 1, workd, 1);
+                      dsaup2_rnorm[0] = Math.sqrt(Math.abs(dsaup2_rnorm[0]));
+		           } // if (bmat.equalsIgnoreCase("G"))
+		           else if (bmat.equalsIgnoreCase("I")) {
+                      dsaup2_rnorm[0] = ge.dnrm2(n, resid, 1);
+		           }
+                   dsaup2_cnorm = false;
+        
+          
+                   if (dsaup2_msglvl > 2) {
+                	  UI.setDataText("dsaup2: B-norm of residual for NEV factorization dsaup2_rnorm[0] = " +
+                	                nf.format(dsaup2_rnorm[0]) + "\n");
+                      UI.setDataText("dsaup2: main diagonal of compressed H matrix: \n");
+                      for (i = 0; i < nev; i++) {
+                    	  UI.setDataText("h["+i+"][1] = " + nf.format(h[i][1]) + "\n");
+                      }
+                      UI.setDataText("dsaup2: subdiagonal of compressed H matrix: \n");
+                      for (i = 0; i < nev-1; i++) {
+                    	  UI.setDataText("h["+(i+1)+"][0] = " + nf.format(h[i+1][0]) + "\n");
+                      }
+                   } // if (dsaup2_msglvl > 2)
+           
+           } // while (true)
+          
+          
                 } // dsaup2
+                
+        // -----------------------------------------------------------------------
+        // \BeginDoc
+        
+        // \Name: dsapps
+        
+        // \Description:
+        //  Given the Arnoldi factorization
+        
+        //     A*V_{k} - V_{k}*H_{k} = r_{k+p}*e_{k+p}^T,
+        
+        //  apply NP shifts implicitly resulting in
+        
+        //     A*(V_{k}*Q) - (V_{k}*Q)*(Q^T* H_{k}*Q) = r_{k+p}*e_{k+p}^T * Q
+        
+        //  where Q is an orthogonal matrix of order KEV+NP. Q is the product of 
+        //  rotations resulting from the NP bulge chasing sweeps.  The updated Arnoldi 
+        //  factorization becomes:
+        
+        //     A*VNEW_{k} - VNEW_{k}*HNEW_{k} = rnew_{k}*e_{k}^T.
+        
+        // \Usage:
+        //  call dsapps
+        //     ( N, KEV, NP, SHIFT, V, LDV, H, LDH, RESID, Q, LDQ, WORKD )
+        
+        // \Arguments
+        //  N       Integer.  (INPUT)
+        //          Problem size, i.e. dimension of matrix A.
+        
+        //  KEV     Integer.  (INPUT)
+        //          INPUT: KEV+NP is the size of the input matrix H.
+        //          OUTPUT: KEV is the size of the updated matrix HNEW.
+        
+        //  NP      Integer.  (INPUT)
+        //          Number of implicit shifts to be applied.
+        
+        //  SHIFT   Double precision array of length NP.  (INPUT)
+        //          The shifts to be applied.
+        
+        //  V       Double precision N by (KEV+NP) array.  (INPUT/OUTPUT)
+        //          INPUT: V contains the current KEV+NP Arnoldi vectors.
+        //  VNEW = V(1:n,1:KEV); the updated Arnoldi vectors
+        //          are in the first KEV columns of V.
+        
+        //  LDV     Integer.  (INPUT)
+        //          Leading dimension of V exactly as declared in the calling
+        //          program.
+        
+        //  H       Double precision (KEV+NP) by 2 array.  (INPUT/OUTPUT)
+        //          INPUT: H contains the symmetric tridiagonal matrix of the
+        //          Arnoldi factorization with the subdiagonal in the 1st column
+        //          starting at H(2,1) and the main diagonal in the 2nd column.
+        //          OUTPUT: H contains the updated tridiagonal matrix in the 
+        //          KEV leading submatrix.
+        
+        //  LDH     Integer.  (INPUT)
+        //          Leading dimension of H exactly as declared in the calling
+        //          program.
+        
+        //  RESID   Double precision array of length (N).  (INPUT/OUTPUT)
+        //          INPUT: RESID contains the the residual vector r_{k+p}.
+        //          OUTPUT: RESID is the updated residual vector rnew_{k}.
+        
+        //  Q       Double precision KEV+NP by KEV+NP work array.  (WORKSPACE)
+        //          Work array used to accumulate the rotations during the bulge
+        //          chase sweep.
+        
+        //  LDQ     Integer.  (INPUT)
+        //          Leading dimension of Q exactly as declared in the calling
+        //          program.
+        
+        //  WORKD   Double precision work array of length 2*N.  (WORKSPACE)
+        //          Distributed array used in the application of the accumulated
+        //          orthogonal matrix Q.
+        
+        // \EndDoc
+        
+        // -----------------------------------------------------------------------
+        
+        // \BeginLib
+        
+        // \Local variables:
+        //     xxxxxx  real
+        
+        // \References:
+        //  1. D.C. Sorensen, "Implicit Application of Polynomial Filters in
+        //     a k-Step Arnoldi Method", SIAM J. Matr. Anal. Apps., 13 (1992),
+        //     pp 357-385.
+        //  2. R.B. Lehoucq, "Analysis and Implementation of an Implicitly 
+        //     Restarted Arnoldi Iteration", Rice University Technical Report
+        //     TR95-13, Department of Computational and Applied Mathematics.
+        
+        // \Routines called:
+        //     ivout   ARPACK utility routine that prints integers. 
+        //     second  ARPACK utility routine for timing.
+        //     dvout   ARPACK utility routine that prints vectors.
+        //     dlamch  LAPACK routine that determines machine constants.
+        //     dlartg  LAPACK Givens rotation construction routine.
+        //     dlacpy  LAPACK matrix copy routine.
+        //     dlaset  LAPACK matrix initialization routine.
+        //     dgemv   Level 2 BLAS routine for matrix vector multiplication.
+        //     daxpy   Level 1 BLAS that computes a vector triad.
+        //     dcopy   Level 1 BLAS that copies one vector to another.
+        //     dscal   Level 1 BLAS that scales a vector.
+        
+        // \Author
+        //     Danny Sorensen               Phuong Vu
+        //     Richard Lehoucq              CRPC / Rice University
+        //     Dept. of Computational &     Houston, Texas
+        //     Applied Mathematics
+        //     Rice University           
+        //     Houston, Texas            
+        
+        // \Revision history:
+        //     12/16/93: Version ' 2.1'
+        
+        // \SCCS Information: @(#) 
+        // FILE: sapps.F   SID: 2.5   DATE OF SID: 4/19/96   RELEASE: 2
+        
+        // \Remarks
+        //  1. In this version, each shift is applied to all the subblocks of
+        //     the tridiagonal matrix H and not just to the submatrix that it 
+        //     comes from. This routine assumes that the subdiagonal elements 
+        //     of H that are stored in h(1:kev+np,1) are nonegative upon input
+        //     and enforce this condition upon output. This version incorporates
+        //     deflation. See code for documentation.
+        
+        // \EndLib
+        
+        // -----------------------------------------------------------------------
+        
+              private void dsapps
+                (int n, int kev, int np, double shift[], double v[][], int ldv, 
+                		double h[][], int ldh, double resid[], double q[][], int ldq, double workd[] ) {
+        
+        //     %----------------------------------------------------%
+        //     | Include files for debugging and timing information |
+        //     %----------------------------------------------------%
+        
+        //      include   'debug.h'
+        //      include   'stat.h'
+        
+        //     %------------------%
+        //     | Scalar Arguments |
+        //     %------------------%
+        
+        //      integer    kev, ldh, ldq, ldv, n, np
+        
+        //     %-----------------%
+        //     | Array Arguments |
+        //     %-----------------%
+        
+        //      Double precision
+        //     &           h(ldh,2), q(ldq,kev+np), resid(n), shift(np), 
+        //     &           v(ldv,kev+np), workd(2*n)
+        
+        //     %------------%
+        //     | Parameters |
+        //     %------------%
+        //
+               final double zero = 0.0;
+               final double one = 1.0;
+        
+        //     %---------------%
+        //     | Local Scalars |
+        //     %---------------%
+        
+              int    i, istart, itop, j, jj, kplusp, msglvl;
+              int iend = 0;
+              int m;
+              int p;
+              double a1, a2, a3, a4, big, f, g;
+              double c[] = new double[1];
+              double r[] = new double[1];
+              double s[] = new double[1];
+              boolean seg1 = true;
+              double array1[];
+              double array2[];
+              double array2D[][];
+              double temp;
+        
+        
+        //     %----------------------%
+        //     | External Subroutines |
+        //     %----------------------%
+        
+        //      external   daxpy, dcopy, dscal, dlacpy, dlartg, dlaset, dvout, 
+        //     &           ivout, second, dgemv
+        
+        //     %--------------------%
+        //     | External Functions |
+        //     %--------------------%
+        
+        //      Double precision
+        //     &           dlamch
+        //      external   dlamch
+        
+        //     %----------------------%
+        //     | Intrinsics Functions |
+        //     %----------------------%
+        
+        //      intrinsic  abs
+        
+        //     %-----------------------%
+        //     | Executable Statements |
+        //     %-----------------------%
+        
+              if (dsapps_first) {
+                 dsapps_epsmch = ge.dlamch('E');
+                 dsapps_first = false;
+              }
+              itop = 1;
+        
+        //     %-------------------------------%
+        //     | Initialize timing statistics  |
+        //     | & message level for debugging |
+        //     %-------------------------------%
+        
+              t0 = System.currentTimeMillis();
+              msglvl = msapps;
+         
+              kplusp = kev + np; 
+         
+        //     %----------------------------------------------%
+        //     | Initialize Q to the identity matrix of order |
+        //     | kplusp used to accumulate the rotations.     |
+        //     %----------------------------------------------%
+        //
+              ge.dlaset ('A', kplusp, kplusp, zero, one, q, ldq);
+        
+        //     %----------------------------------------------%
+        //     | Quick return if there are no shifts to apply |
+        //     %----------------------------------------------%
+        
+              if (np == 0) {
+            	  return;
+              }
+         
+        //     %----------------------------------------------------------%
+        //     | Apply the np shifts implicitly. Apply each shift to the  |
+        //     | whole matrix and not just to the submatrix from which it |
+        //     | comes.                                                   |
+        //     %----------------------------------------------------------%
+        
+              loop1: for(jj = 1; jj <= np; jj++) {
+         
+                 istart = itop;
+        
+        //        %----------------------------------------------------------%
+        //        | Check for splitting and deflation. Currently we consider |
+        //        | an off-diagonal element h(i+1,1) negligible if           |
+        //        |         h(i+1,1) .le. epsmch*( |h(i,2)| + |h(i+1,2)| )   |
+        //        | for i=1:KEV+NP-1.                                        |
+        //        | If above condition tests true then we set h(i+1,1) = 0.  |
+        //        | Note that h(1:KEV+NP,1) are assumed to be non negative.  |
+        //        %----------------------------------------------------------%
+        
+            loop2: while (true) {
+        
+        //        %------------------------------------------------%
+        //        | The following loop exits early if we encounter |
+        //        | a negligible off diagonal element.             |
+        //        %------------------------------------------------%
+        
+                 loop3: for (i = istart; i <= kplusp-1; i++) {
+                    big   = Math.abs(h[i-1][1]) + Math.abs(h[i][1]);
+                    if (h[i][0] <= dsapps_epsmch*big) {
+                       if (msglvl > 0) {
+                    	  UI.setDataText("dsapps: deflation at row/column no. "  + i + "\n");
+                          UI.setDataText("dsapps: occurred before shift number " + jj + "\n");
+                          UI.setDataText("dsapps: the corresponding off diagonal element h["+i+"][0] = " +
+                                           nf.format(h[i][0]) + "\n");
+                       } // if (msglvl > 0)
+                       h[i][0] = zero;
+                       iend = i;
+                       seg1 = false;
+                    break loop3;
+                    } // if (h[i][0] <= dsapps_epsmch*big)
+                 } // loop3: for (i = istart; i <= kplusp-1; i++)
+                 if (seg1) {
+                     iend = kplusp;
+                 }
+                 seg1 = true;
+        
+                 if (istart < iend) {
+         
+        //           %--------------------------------------------------------%
+        //           | Construct the plane rotation G'(istart,istart+1,theta) |
+        //           | that attempts to drive h(istart+1,1) to zero.          |
+        //           %--------------------------------------------------------%
+        
+                     f = h[istart-1][1] - shift[jj-1];
+                     g = h[istart][0];
+                     ge.dlartg (f, g, c, s, r);
+         
+        //            %-------------------------------------------------------%
+        //            | Apply rotation to the left and right of H;            |
+        //            | H <- G' * H * G,  where G = G(istart,istart+1,theta). |
+        //            | This will create a "bulge".                           |
+        //            %-------------------------------------------------------%
+        
+                     a1 = c[0]*h[istart-1][1]   + s[0]*h[istart][0];
+                     a2 = c[0]*h[istart][0] + s[0]*h[istart][1];
+                     a4 = c[0]*h[istart][1] - s[0]*h[istart][0];
+                     a3 = c[0]*h[istart][0] - s[0]*h[istart-1][1];
+                     h[istart-1][1]   = c[0]*a1 + s[0]*a2;
+                     h[istart][1] = c[0]*a4 - s[0]*a3;
+                     h[istart][0] = c[0]*a3 + s[0]*a4;
+         
+        //            %----------------------------------------------------%
+        //            | Accumulate the rotation in the matrix Q;  Q <- Q*G |
+        //            %----------------------------------------------------%
+        
+                     for (j = 1; j <= Math.min(istart+jj,kplusp); j++) {
+                        a1            =   c[0]*q[j-1][istart-1] + s[0]*q[j-1][istart];
+                        q[j-1][istart] = - s[0]*q[j-1][istart-1] + c[0]*q[j-1][istart];
+                        q[j-1][istart-1]   = a1;
+                     }
+        
+        
+        //            %----------------------------------------------%
+        //            | The following loop chases the bulge created. |
+        //            | Note that the previous rotation may also be  |
+        //            | done within the following loop. But it is    |
+        //            | kept separate to make the distinction among  |
+        //            | the bulge chasing sweeps and the first plane |
+        //            | rotation designed to drive h(istart+1,1) to  |
+        //            | zero.                                        |
+        //            %----------------------------------------------%
+        
+                     for (i = istart+1; i <= iend-1; i++) {
+         
+        //               %----------------------------------------------%
+        //               | Construct the plane rotation G'(i,i+1,theta) |
+        //               | that zeros the i-th bulge that was created   |
+        //               | by G(i-1,i,theta). g represents the bulge.   |
+        //               %----------------------------------------------%
+        
+                        f = h[i-1][0];
+                        g = s[0]*h[i][0];
+        
+        //               %----------------------------------%
+        //               | Final update with G(i-1,i,theta) |
+        //               %----------------------------------%
+        
+                        h[i][0] = c[0]*h[i][0];
+                        ge.dlartg (f, g, c, s, r);
+        
+        //               %-------------------------------------------%
+        //               | The following ensures that h(1:iend-1,1), |
+        //               | the first iend-2 off diagonal of elements |
+        //               | H, remain non negative.                   |
+        //               %-------------------------------------------%
+        
+                        if (r[0] < zero) {
+                           r[0] = -r[0];
+                           c[0] = -c[0];
+                           s[0] = -s[0];
+                        }
+         
+        //               %--------------------------------------------%
+        //               | Apply rotation to the left and right of H; |
+        //               | H <- G * H * G',  where G = G(i,i+1,theta) |
+        //               %--------------------------------------------%
+        
+                        h[i-1][0] = r[0];
+         
+                        a1 = c[0]*h[i-1][1]   + s[0]*h[i][0];
+                        a2 = c[0]*h[i][0] + s[0]*h[i][1];
+                        a3 = c[0]*h[i][0] - s[0]*h[i-1][1];
+                        a4 = c[0]*h[i][1] - s[0]*h[i][0];
+         
+                        h[i-1][1]   = c[0]*a1 + s[0]*a2;
+                        h[i][1] = c[0]*a4 - s[0]*a3;
+                        h[i][0] = c[0]*a3 + s[0]*a4;
+         
+        //               %----------------------------------------------------%
+        //               | Accumulate the rotation in the matrix Q;  Q <- Q*G |
+        //               %----------------------------------------------------%
+        
+                        for (j = 1; j <= Math.min( j+jj, kplusp ); j++) {
+                           a1       =   c[0]*q[j-1][i-1] + s[0]*q[j-1][i];
+                           q[j-1][i] = - s[0]*q[j-1][i-1] + c[0]*q[j-1][i];
+                           q[j-1][i-1]   = a1;
+                        }
+        
+                     } // for (i = istart+1; i <= iend-1; i++)
+        
+                 } // if (istart < iend)
+        
+        //        %--------------------------%
+        //        | Update the block pointer |
+        //        %--------------------------%
+        
+                 istart = iend + 1;
+        
+        //        %------------------------------------------%
+        //        | Make sure that h(iend,1) is non-negative |
+        //        | If not then set h(iend,1) <-- -h(iend,1) |
+        //        | and negate the last column of Q.         |
+        //        | We have effectively carried out a        |
+        //        | similarity on transformation H           |
+        //        %------------------------------------------%
+        
+                 if (h[iend-1][0] < zero) {
+                     h[iend-1][0] = -h[iend-1][0];
+                     for (m = 0; m < kplusp; m++) {
+                    	 q[m][iend-1] = -one * q[m][iend-1];
+                     }
+                 }
+        
+        //        %--------------------------------------------------------%
+        //        | Apply the same shift to the next block if there is any |
+        //        %--------------------------------------------------------%
+        
+                 if (iend >= kplusp) {
+                	 break loop2;
+                 }
+            } // loop2: while (true)
+        
+        //        %-----------------------------------------------------%
+        //        | Check if we can increase the the start of the block |
+        //        %-----------------------------------------------------%
+        
+                 for (i = itop; i <= kplusp-1; i++) {
+                    if (h[i][0] > zero) {
+                    	continue loop1;
+                    }
+                    itop  = itop + 1;
+                 }
+        
+        //        %-----------------------------------%
+        //        | Finished applying the jj-th shift |
+        //        %-----------------------------------%
+        
+              } // loop1: for(jj = 1; jj <= np; jj++)
+        
+        //     %------------------------------------------%
+        //     | All shifts have been applied. Check for  |
+        //     | more possible deflation that might occur |
+        //     | after the last shift is applied.         |                               
+        //     %------------------------------------------%
+        
+              for (i = itop; i <= kplusp-1; i++) {
+                 big   = Math.abs(h[i-1][1]) + Math.abs(h[i][1]);
+                 if (h[i][0] <= dsapps_epsmch*big) {
+                    if (msglvl > 0) {
+                       UI.setDataText("dsapps: deflation at row/column no. " + i + "\n");
+                       UI.setDataText("dsapps: the corresponding off diagonal element h["+i+"][0] = " +
+                                nf.format(h[i][0]) + "\n");
+                    } // if (msglvl > 0)
+                    h[i][0] = zero;
+                 } // if (h[i][0] <= dsapps_epsmch*big)
+              } // for (i = itop; i <= kplusp-1; i++)
+        
+        //     %-------------------------------------------------%
+        //     | Compute the (kev+1)-st column of (V*Q) and      |
+        //     | temporarily store the result in WORKD(N+1:2*N). |
+        //     | This is not necessary if h(kev+1,1) = 0.         |
+        //     %-------------------------------------------------%
+        
+              if ( h[kev][0] > zero )  {
+            	 array1 = new double[kplusp];
+            	 for (m = 0; m < kplusp; m++) {
+            		 array1[m] = q[m][kev];
+            	 }
+            	 array2 = new double[n];
+            	 for (m = 0; m < n; m++) {
+            		 array2[m] = workd[n+m];
+            	 }
+                 ge.dgemv ('N', n, kplusp, one, v, ldv,
+                             array1, 1, zero, array2, 1);
+                 for (m = 0; m < n; m++) {
+                	 workd[n+m] = array2[m];
+                 }
+              } // if ( h[kev][0] > zero ) 
+         
+        //     %-------------------------------------------------------%
+        //     | Compute column 1 to kev of (V*Q) in backward order    |
+        //     | taking advantage that Q is an upper triangular matrix |    
+        //     | with lower bandwidth np.                              |
+        //     | Place results in v(:,kplusp-kev:kplusp) temporarily.  |
+        //     %-------------------------------------------------------%
+        
+              for (i = 1; i <= kev; i++) {
+            	 array1 = new double[kplusp-i+1];
+            	 for (m = 0; m < kplusp-i+1; m++) {
+            		 array1[m] = q[m][kev-i];
+            	 }
+                 ge.dgemv ('N', n, kplusp-i+1, one, v, ldv,
+                            array1, 1, zero, workd, 1);
+                 for (m = 0; m < n; m++) {
+                	 v[m][kplusp-i] = workd[m];
+                 }
+              } // for (i = 1; i <= kev; i++)
+        
+        //     %-------------------------------------------------%
+        //     |  Move v(:,kplusp-kev+1:kplusp) into v(:,1:kev). |
+        //     %-------------------------------------------------%
+        
+              array2D = new double[n][kev];
+              for (m = 0; m < n; m++) {
+            	  for (p = 0; p < kev; p++) {
+            		  array2D[m][p] = v[m][np+p];
+            	  }
+              }
+              ge.dlacpy ('A', n, kev, array2D, ldv, v, ldv);
+         
+        //     %--------------------------------------------%
+        //     | Copy the (kev+1)-st column of (V*Q) in the |
+        //     | appropriate place if h(kev+1,1) .ne. zero. |
+        //     %--------------------------------------------%
+        
+              if ( h[kev][0] > zero ) {
+            	  for (m = 0; m < n; m++) {
+            		  v[m][kev] = workd[n+m];
+            	  }
+              } // if ( h[kev][0] > zero )
+         
+        //     %-------------------------------------%
+        //     | Update the residual vector:         |
+        //     |    r <- sigmak*r + betak*v(:,kev+1) |
+        //     | where                               |
+        //     |    sigmak = (e_{kev+p}'*Q)*e_{kev}  |
+        //     |    betak = e_{kev+1}'*H*e_{kev}     |
+        //     %-------------------------------------%
+        
+              for (m = 0; m < n; m++) {
+            	  resid[m] = q[kplusp-1][kev-1] * resid[m];
+              }
+              if (h[kev][0] > zero) { 
+            	 temp = h[kev][0];
+            	 array1 = new double[n];
+            	 for (m = 0; m < n; m++) {
+            		 array1[m] = v[m][kev];
+            	 }
+                 ge.daxpy (n, temp, array1, 1, resid, 1);
+        
+              if (msglvl > 1) {
+            	 UI.setDataText("dsapps: sigmak of the updated residual vector q[kplusp-1][kev-1] = " +
+                                  nf.format(q[kplusp-1][kev-1]) + "\n");
+                 UI.setDataText("dsapps: betak of the updated residual vector h[kev][0] = " +
+                                  nf.format(h[kev][0]) + "\n");
+                 UI.setDataText("dsapps: updated main diagonal of H for next iteration: \n");
+                 for (m = 0; m < kev; m++) {
+                	 UI.setDataText("h["+m+"][1] = " + nf.format(h[m][1]) + "\n");
+                 }
+                 if (kev > 1) {
+                	UI.setDataText("dsapps: updated sub diagonal of H for next iteration: \n");
+                	for (m = 0; m < kev-1; m++) {
+                		UI.setDataText("h["+(m+1)+"][0] = " + nf.format(h[m+1][0]) + "\n");
+                	}
+                 } // if (kev > 1)
+              } // if (msglvl > 1) 
+              } // if (h[kev][0] > zero)
+        
+              t1 = System.currentTimeMillis();
+              tsapps = tsapps + (t1 - t0); 
+              return;
+              } // dsapps
                 
                 
         // -----------------------------------------------------------------------
