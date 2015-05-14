@@ -161,6 +161,473 @@ public class SparseEigenvalue implements java.io.Serializable {
      */
     public SparseEigenvalue() {}
     
+    private void dsdrv1() { 
+    
+    //     Simple program to illustrate the idea of reverse communication
+    //     in regular mode for a standard symmetric eigenvalue problem.
+    
+    //     We implement example one of ex-sym.doc in SRC directory
+    
+    // \Example-1
+    //     ... Suppose we want to solve A*x = lambda*x in regular mode,
+    //         where A is derived from the central difference discretization
+    //         of the 2-dimensional Laplacian on the unit square [0,1]x[0,1]
+    //         with zero Dirichlet boundary condition.
+    
+    //     ... OP = A  and  B = I.
+    
+    //     ... Assume "call av (n,x,y)" computes y = A*x.
+    
+    //     ... Use mode 1 of DSAUPD.
+    
+    // \BeginLib
+    
+    // \Routines called:
+    //     dsaupd  ARPACK reverse communication interface routine.
+    //     dseupd  ARPACK routine that returns Ritz values and (optionally)
+    //             Ritz vectors.
+    //     dnrm2   Level 1 BLAS that computes the norm of a vector.
+    //     daxpy   Level 1 BLAS that computes y <- alpha*x+y.
+    //     av      Matrix vector multiplication routine that computes A*x.
+    //     tv      Matrix vector multiplication routine that computes T*x, 
+    //             where T is a tridiagonal matrix.  It is used in routine
+    //             av.
+    
+    // \Author
+    //     Richard Lehoucq
+    //     Danny Sorensen
+    //     Chao Yang
+    //     Dept. of Computational &
+    //     Applied Mathematics
+    //     Rice University
+    //     Houston, Texas
+    
+    // \SCCS Information: @(#)
+    // FILE: sdrv1.F   SID: 2.4   DATE OF SID: 4/22/96   RELEASE: 2
+    
+    // \Remarks
+    //     1. None
+    
+    // \EndLib
+    
+    // -----------------------------------------------------------------------
+    
+    //     %-----------------------------%
+    //     | Define leading dimensions   |
+    //     | for all arrays.             |
+    //     | MAXN:   Maximum dimension   |
+    //     |         of the A allowed.   |
+    //     | MAXNEV: Maximum NEV allowed |
+    //     | MAXNCV: Maximum NCV allowed |
+    //     %-----------------------------%
+    //
+    	  final int maxn = 256;
+    	  final int maxnev = 10;
+    	  final int maxncv = 25;
+    	  final int ldv = maxn;
+    
+    //     %--------------%
+    //     | Local Arrays |
+    //     %--------------%
+    //
+         double v[][] = new double[ldv][maxncv];
+         double workl[] = new double[maxncv*(maxncv+8)];
+         double workd[] = new double[3*maxn];
+         double d[][] = new double[maxncv][2];
+         double resid[] = new double[maxn];
+         double ax[] = new double[maxn];
+         boolean select[] = new boolean[maxncv];
+         int iparam[] = new int[11];
+         int ipntr[] = new int[11];
+         double ds[] = new double[2 * maxncv];
+    
+    //     %---------------%
+    //     | Local Scalars |
+    //     %---------------%
+    
+          String bmat;
+          String which;
+          int ido[] = new int[1];
+          int info[] = new int[1];
+          int ierr[] = new int[1];
+          int nconv = 0;
+          int          n, nev, ncv, lworkl, i, j, 
+                       nx, maxitr, mode, ishfts;
+          boolean          rvec;
+          double tol;
+          // sigma not intialized in dsdrv1
+          double sigma = 0.0;
+          double v1[];
+          double v2[];
+          int index;
+    
+    //     %------------%
+    //     | Parameters |
+    //     %------------%
+    
+          final double zero = 0.0;
+      
+    //     %-----------------------------%
+    //     | BLAS & LAPACK routines used |
+    //     %-----------------------------%
+    
+    //      Double precision           
+    //     &                 dnrm2
+    //      external         dnrm2, daxpy
+    
+    //     %--------------------%
+    //     | Intrinsic function |
+    //     %--------------------%
+    
+    //      intrinsic        abs
+    
+    //     %-----------------------%
+    //     | Executable Statements |
+    //     %-----------------------%
+    
+    //     %----------------------------------------------------%
+    //     | The number NX is the number of interior points     |
+    //     | in the discretization of the 2-dimensional         |
+    //     | Laplacian on the unit square with zero Dirichlet   |
+    //     | boundary condition.  The number N(=NX*NX) is the   |
+    //     | dimension of the matrix.  A standard eigenvalue    |
+    //     | problem is solved (BMAT = 'I'). NEV is the number  |
+    //     | of eigenvalues to be approximated.  The user can   |
+    //     | modify NEV, NCV, WHICH to solve problems of        |
+    //     | different sizes, and to get different parts of the |
+    //     | spectrum.  However, The following conditions must  |
+    //     | be satisfied:                                      |
+    //     |                   N <= MAXN,                       | 
+    //     |                 NEV <= MAXNEV,                     |
+    //     |             NEV + 1 <= NCV <= MAXNCV               | 
+    //     %----------------------------------------------------% 
+    
+          nx = 10;
+          n = nx*nx;
+          nev =  4; 
+          ncv =  10; 
+          if ( n > maxn ) {
+             UI.setDataText("ERROR with DSDRV1: N is greater than MAXN");
+             return;
+          }
+          else if ( nev > maxnev ) {
+        	  UI.setDataText("ERROR with DSDRV1: NEV is greater than MAXNEV");
+              return;
+          }
+          else if ( ncv > maxncv ) {
+             UI.setDataText("ERROR with DSDRV1: NCV is greater than MAXNCV");
+             return;
+          }
+          bmat = "I";
+          which = "SM";
+    
+    //     %--------------------------------------------------%
+    //     | The work array WORKL is used in DSAUPD as        |
+    //     | workspace.  Its dimension LWORKL is set as       |
+    //     | illustrated below.  The parameter TOL determines |
+    //     | the stopping criterion.  If TOL<=0, machine      |
+    //     | precision is used.  The variable IDO is used for |
+    //     | reverse communication and is initially set to 0. |
+    //     | Setting INFO=0 indicates that a random vector is |
+    //     | generated in DSAUPD to start the Arnoldi         |
+    //     | iteration.                                       |
+    //     %--------------------------------------------------%
+    
+          lworkl = ncv*(ncv+8);
+          tol = zero; 
+          info[0] = 0;
+          ido[0] = 0;
+    
+    //     %---------------------------------------------------%
+    //     | This program uses exact shifts with respect to    |
+    //     | the current Hessenberg matrix (IPARAM(1) = 1).    |
+    //     | IPARAM(3) specifies the maximum number of Arnoldi |
+    //     | iterations allowed.  Mode 1 of DSAUPD is used     |
+    //     | (IPARAM(7) = 1).  All these options may be        |
+    //     | changed by the user. For details, see the         |
+    //     | documentation in DSAUPD.                          |
+    //     %---------------------------------------------------%
+    
+          ishfts = 1;
+          maxitr = 300;
+          mode   = 1;
+          
+          iparam[0] = ishfts; 
+          iparam[2] = maxitr; 
+          iparam[6] = mode; 
+    
+    //     %-------------------------------------------%
+    //     | M A I N   L O O P (Reverse communication) |
+    //     %-------------------------------------------%
+    
+          v1 = new double[nx];
+          v2 = new double[nx];
+          while (true) {
+    
+    //        %---------------------------------------------%
+    //        | Repeatedly call the routine DSAUPD and take | 
+    //        | actions indicated by parameter IDO until    |
+    //        | either convergence is indicated or maxitr   |
+    //        | has been exceeded.                          |
+    //        %---------------------------------------------%
+    
+             dsaupd ( ido, bmat, n, which, nev, tol, resid, ncv, v, ldv, iparam, ipntr, workd, workl,
+                          lworkl, info );
+    
+             if (ido[0] != -1 && ido[0] != 1) {
+            	 break;
+             }
+    
+    //           %--------------------------------------%
+    //           | Perform matrix vector multiplication |
+    //           |              y <--- OP*x             |
+    //           | The user should supply his/her own   |
+    //           | matrix vector multiplication routine |
+    //           | here that takes workd(ipntr(1)) as   |
+    //           | the input, and return the result to  |
+    //           | workd(ipntr(2)).                     |
+    //           %--------------------------------------%
+                 for (i = 0; i < nx; i++) {
+                	 v1[i] = workd[ipntr[0]-1+i];
+                 }
+                 av (nx, v1, v2);
+                 for (i = 0; i < nx; i++) {
+                	 workd[ipntr[1]-1+i] = v2[i];
+                 }
+    
+    //           %-----------------------------------------%
+    //           | L O O P   B A C K to call DSAUPD again. |
+    //           %-----------------------------------------%
+    
+    } // while (true)
+    
+    //     %----------------------------------------%
+    //     | Either we have convergence or there is |
+    //     | an error.                              |
+    //     %----------------------------------------%
+    
+          if ( info[0] < 0 ) {
+    
+    //        %--------------------------%
+    //        | Error message. Check the |
+    //        | documentation in DSAUPD. |
+    //        %--------------------------%
+    //
+             UI.setDataText("Error with dsaupd info[0] = " + info[0] + "\n");
+             return;
+          } // if (info[0] < 0)
+          else  { // info[0] >= 0
+    
+    //        %-------------------------------------------%
+    //        | No fatal errors occurred.                 |
+    //        | Post-Process using DSEUPD.                |
+    //        |                                           |
+    //        | Computed eigenvalues may be extracted.    |  
+    //        |                                           |
+    //        | Eigenvectors may also be computed now if  |
+    //        | desired.  (indicated by rvec = .true.)    | 
+    //        %-------------------------------------------%
+               
+             rvec = true;
+    
+             dseupd ( rvec, "A", select, ds, v, ldv, sigma, 
+                 bmat, n, which, nev, tol, resid, ncv, v, ldv, 
+                 iparam, ipntr, workd, workl, lworkl, ierr );
+             index = 0;
+             for (j = 0; j < 2; j++) {
+            	 for (i = 0; i < maxncv; i++) {
+            	     d[i][j] = ds[index++]; 
+            	 }
+             }
+
+    //        %----------------------------------------------%
+    //        | Eigenvalues are returned in the first column |
+    //        | of the two dimensional array D and the       |
+    //        | corresponding eigenvectors are returned in   |
+    //        | the first NEV columns of the two dimensional |
+    //        | array V if requested.  Otherwise, an         |
+    //        | orthogonal basis for the invariant subspace  |
+    //        | corresponding to the eigenvalues in D is     |
+    //        | returned in V.                               |
+    //        %----------------------------------------------%
+    
+             if ( ierr[0] != 0) {
+    //
+    //            %------------------------------------%
+    //            | Error condition:                   |
+    //            | Check the documentation of DSEUPD. |
+    //            %------------------------------------%
+                 UI.setDataText("Error with dseupd ierr[0] = " + ierr[0] + "\n");
+             } // if (ierr[0] != 0)
+             else { // ierr[0] == 0
+    
+                 nconv =  iparam[4];
+                 for (j = 0; j < nconv; j++) {
+    
+    //               %---------------------------%
+    //               | Compute the residual norm |
+    //               |                           |
+    //               |   ||  A*x - lambda*x ||   |
+    //               |                           |
+    //               | for the NCONV accurately  |
+    //               | computed eigenvalues and  |
+    //               | eigenvectors.  (iparam(5) |
+    //               | indicates how many are    |
+    //               | accurate to the requested |
+    //               | tolerance)                |
+    //               %---------------------------%
+    //
+                    for (i = 0; i < nx; i++) {
+                    	v1[i] = v[i][j];
+                    }
+                	av(nx, v1, ax);
+                	for (i = 0; i < n; i++) {
+                		ax[i] = ax[i] + (-d[j][0])*v[i][j];
+                	}
+                    d[j][1] = ge.dnrm2(n, ax, 1);
+                    d[j][1] = d[j][1] / Math.abs(d[j][0]);
+    
+                 } // for (j = 0; j < nconv; j++)
+    
+    //            %-------------------------------%
+    //            | Display computed residuals    |
+    //            %-------------------------------%
+                 UI.setDataText("Ritz values and relative residuals: \n");
+                 for (i = 0; i < nconv; i++) {
+                	 UI.setDataText("d["+i+"][0] = " + nf.format(d[i][0]) + " d["+i+"][1] = " + nf.format(d[i][1]) + "\n");
+                 }
+             } // else ierr[0] == 0
+    
+    //        %------------------------------------------%
+    //        | Print additional convergence information |
+    //        %------------------------------------------%
+    
+             if ( info[0] == 1) {
+            	UI.setDataText("Maximum number of iterations reached.\n");
+             }
+             else if ( info[0] == 3) {
+            	UI.setDataText("No shifts could be applied during implicit Arnoldi update, try increasing NCV.\n");
+             }     
+    
+             UI.setDataText("\n");
+             UI.setDataText("DSDRV1\n");
+             UI.setDataText("======\n");
+             UI.setDataText("\n");
+             UI.setDataText("Size of the matrix = " +  n + "\n");
+             UI.setDataText("The number of Ritz values requested = " +  nev + "\n");
+             UI.setDataText("The number of Arnoldi vectors generated ncv = " +  ncv + "\n");
+             UI.setDataText("What portion of the spectrum: " +  which + "\n");
+             UI.setDataText("The number of converged Ritz values = " +nconv + "\n");
+             UI.setDataText("The number of Implicit Arnoldi update iterations taken = " +  iparam[2] + "\n");
+             UI.setDataText("The number of OP*x = " +  iparam[8] + "\n");
+             UI.setDataText("The convergence criterion = " + tol + "\n");
+             UI.setDataText("\n");
+          } // else info[0] >= 0
+          return;
+    } // dsdrv1
+     
+    // ------------------------------------------------------------------
+    //     matrix vector subroutine
+    
+    //     The matrix used is the 2 dimensional discrete Laplacian on unit
+    //     square with zero Dirichlet boundary condition.
+    
+    //     Computes w <--- OP*v, where OP is the nx*nx by nx*nx block 
+    //     tridiagonal matrix
+    
+    //                  | T -I          | 
+    //                  |-I  T -I       |
+    //             OP = |   -I  T       |
+    //                  |        ...  -I|
+    //                  |           -I T|
+    
+    //     The subroutine TV is called to computed y<---T*x.
+    
+          private void av (int nx, double v[], double w[]) {
+          int           j, lo, n2, i;
+          double v1[];
+          double v2[];
+          //Double precision
+          //&                  v(nx*nx), w(nx*nx), 
+          final double one = 1.0;
+          double h2;
+    
+          tv(nx,v,w);
+          for (i = 0; i < nx; i++) {
+        	  w[i] = w[i] + (-one)*v[nx+i]; 
+          }
+    
+          v1 = new double[nx];
+          v2 = new double[nx];
+          for (j = 2; j <= nx-1; j++) {
+             lo = (j-1)*nx;
+             for (i = 0; i < nx; i++) {
+            	 v1[i] = v[lo+i];
+             }
+             tv(nx, v1, v2);
+             for (i = 0; i < nx; i++) {
+            	 w[lo+i] = v2[i];
+             }
+             for (i = 0; i < nx; i++) {
+            	 w[lo+i] = w[lo+i] + (-one)*v[lo-nx+i];
+             }
+             for (i = 0; i < nx; i++) {
+            	 w[lo+i] = w[lo+i] + (-one)*v[lo+nx+i];
+             }
+           } // for (j = 2; j <= nx-1; j++)
+    
+          lo = (nx-1)*nx;
+          for (i = 0; i < nx; i++) {
+         	 v1[i] = v[lo+i];
+          }
+          tv(nx, v1, v2);
+          for (i = 0; i < nx; i++) {
+         	 w[lo+i] = v2[i];
+          }
+          for (i = 0; i < nx; i++) {
+        	  w[lo+i] = w[lo+i] + (-one)*v[lo-nx+i];
+          }
+    
+    //     Scale the vector w by (1/h^2), where h is the mesh size
+    
+          n2 = nx*nx;
+          h2 = one / (double)((nx+1)*(nx+1));
+          for (i = 0; i < n2; i++) {
+        	 w[i] = w[i] * (one/h2);
+          }
+          return;
+          } // av
+        
+    
+    // -------------------------------------------------------------------
+          private void tv (int nx, double x[], double y[]) {
+    
+          int j ;
+          //Double precision
+          // &                  x(nx), y(nx),
+          double dd, dl, du;
+    
+          final double one = 1.0;
+    
+    //     Compute the matrix vector multiplication y<---T*x
+    //     where T is a nx by nx tridiagonal matrix with DD on the 
+    //     diagonal, DL on the subdiagonal, and DU on the superdiagonal.
+         
+    
+          dd  = 4.0;
+          dl  = -one; 
+          du  = -one;
+     
+          y[0] =  dd*x[0] + du*x[1];
+          for (j = 1; j <= nx-2; j++) {
+             y[j] = dl*x[j-1] + dd*x[j] + du*x[j+1]; 
+          }
+          y[nx-1] =  dl*x[nx-2] + dd*x[nx-1]; 
+          return;
+          } // tv
+
+
+    
     // \BeginDoc
     
     // \Name: dseupd
@@ -415,14 +882,15 @@ public class SparseEigenvalue implements java.io.Serializable {
     //    | Local Scalars |
     //     %---------------%
     
-          String type;
+          String type = null;
           int ierr[] = new int[1];
           int    bounds, ih, ihb, ihd, iq, iw, j, k, 
                     ldh, ldq, mode, msglvl, nconv, next, ritz,
                     irz, ibd, ktrord, leftptr, rghtptr, ism, ilg;
           double thres1 = 0.0;
           double thres2 = 0.0;
-          double bnorm2, rnorm, temp, tempbnd, eps23;
+          double bnorm2 = 0.0;
+          double rnorm, temp, tempbnd, eps23;
           boolean    reord;
           double v1[];
           double v2[];
@@ -430,12 +898,8 @@ public class SparseEigenvalue implements java.io.Serializable {
           int index;
           double work[];
           int i;
-    
-    //     %--------------%
-    //     | Local Arrays |
-    //     %--------------%
-    
-          double kv[] = new double[2];
+          double array2[][];
+          double dum[] = new double[1];
     
     //     %----------------------%
     //     | External Subroutines |
@@ -921,7 +1385,7 @@ public class SparseEigenvalue implements java.io.Serializable {
     //     | (and corresponding data) are returned in ascending order.        |
     //     %------------------------------------------------------------------%
     
-          /*if (type.equalsIgnoreCase("REGULR")) {
+          if (type.equalsIgnoreCase("REGULR")) {
     
     //        %---------------------------------------------------------%
     //        | Ascending sort of wanted Ritz values, vectors and error |
@@ -929,201 +1393,314 @@ public class SparseEigenvalue implements java.io.Serializable {
     //        %---------------------------------------------------------%
     
              if (rvec) {
-                call dsesrt ('LA', rvec , nconv, d, ncv, workl(iq), ldq)
+            	array = new double[ncv][nconv];
+            	index = 0;
+            	for (j = 0; j < nconv; j++) {
+            		for (i = 0; i < ncv; i++) {
+            			array[i][j] = workl[iq-1+index];
+            			index++;
+            		}
+            	}
+                dsesrt ("LA", rvec , nconv, d, ncv, array, ldq);
+                index = 0;
+            	for (j = 0; j < nconv; j++) {
+            		for (i = 0; i < ncv; i++) {
+            			workl[iq-1+index] = array[i][j];
+            			index++;
+            		}
+            	}
              }
              else {
-                call dcopy (ncv, workl(bounds), 1, workl(ihb), 1)
+            	for (i = 0; i < ncv; i++) {
+            		workl[ihb-1+i] = workl[bounds-1+i];
+            	}
              }
           } // if (type.equalsIgnoreCase("REGULR"))
           else { // !"REGULR"
-    c 
-    c        %-------------------------------------------------------------%
-    c        | *  Make a copy of all the Ritz values.                      |
-    c        | *  Transform the Ritz values back to the original system.   |
-    c        |    For TYPE = 'SHIFTI' the transformation is                |
-    c        |             lambda = 1/theta + sigma                        |
-    c        |    For TYPE = 'BUCKLE' the transformation is                |
-    c        |             lambda = sigma * theta / ( theta - 1 )          |
-    c        |    For TYPE = 'CAYLEY' the transformation is                |
-    c        |             lambda = sigma * (theta + 1) / (theta - 1 )     |
-    c        |    where the theta are the Ritz values returned by dsaupd.  |
-    c        | NOTES:                                                      |
-    c        | *The Ritz vectors are not affected by the transformation.   |
-    c        |  They are only reordered.                                   |
-    c        %-------------------------------------------------------------%
-    c
-             call dcopy (ncv, workl(ihd), 1, workl(iw), 1)
-             if (type .eq. 'SHIFTI') then 
-                do 40 k=1, ncv
-                   workl(ihd+k-1) = one / workl(ihd+k-1) + sigma
-      40        continue
-             else if (type .eq. 'BUCKLE') then
-                do 50 k=1, ncv
-                   workl(ihd+k-1) = sigma * workl(ihd+k-1) / 
-         &                          (workl(ihd+k-1) - one)
-      50        continue
-             else if (type .eq. 'CAYLEY') then
-                do 60 k=1, ncv
-                   workl(ihd+k-1) = sigma * (workl(ihd+k-1) + one) /
-         &                          (workl(ihd+k-1) - one)
-      60        continue
-             end if
-    c 
-    c        %-------------------------------------------------------------%
-    c        | *  Store the wanted NCONV lambda values into D.             |
-    c        | *  Sort the NCONV wanted lambda in WORKL(IHD:IHD+NCONV-1)   |
-    c        |    into ascending order and apply sort to the NCONV theta   |
-    c        |    values in the transformed system. We'll need this to     |
-    c        |    compute Ritz estimates in the original system.           |
-    c        | *  Finally sort the lambda's into ascending order and apply |
-    c        |    to Ritz vectors if wanted. Else just sort lambda's into  |
-    c        |    ascending order.                                         |
-    c        | NOTES:                                                      |
-    c        | *workl(iw:iw+ncv-1) contain the theta ordered so that they  |
-    c        |  match the ordering of the lambda. We'll use them again for |
-    c        |  Ritz vector purification.                                  |
-    c        %-------------------------------------------------------------%
-    c
-             call dcopy (nconv, workl(ihd), 1, d, 1)
-             call dsortr ('LA', .true., nconv, workl(ihd), workl(iw))
-             if (rvec) then
-                call dsesrt ('LA', rvec , nconv, d, ncv, workl(iq), ldq)
-             else
-                call dcopy (ncv, workl(bounds), 1, workl(ihb), 1)
-                call dscal (ncv, bnorm2/rnorm, workl(ihb), 1)
-                call dsortr ('LA', .true., nconv, d, workl(ihb))
-             end if
-    c
+     
+    //        %-------------------------------------------------------------%
+    //        | *  Make a copy of all the Ritz values.                      |
+    //        | *  Transform the Ritz values back to the original system.   |
+    //        |    For TYPE = 'SHIFTI' the transformation is                |
+    //        |             lambda = 1/theta + sigma                        |
+    //        |    For TYPE = 'BUCKLE' the transformation is                |
+    //        |             lambda = sigma * theta / ( theta - 1 )          |
+    //        |    For TYPE = 'CAYLEY' the transformation is                |
+    //        |             lambda = sigma * (theta + 1) / (theta - 1 )     |
+    //        |    where the theta are the Ritz values returned by dsaupd.  |
+    //        | NOTES:                                                      |
+    //        | *The Ritz vectors are not affected by the transformation.   |
+    //        |  They are only reordered.                                   |
+    //        %-------------------------------------------------------------%
+    
+             for (i = 0; i < ncv; i++) {
+            	 workl[iw-1+i] = workl[ihd-1+i];
+             }
+             if (type.equalsIgnoreCase("SHIFTI")) { 
+                for (k = 0; k < ncv; k++) {
+                   workl[ihd+k-1] = one / workl[ihd+k-1] + sigma;
+                }
+             } // if (type.equalsIgnoreCase("SHIFTI"))
+             else if (type.equalsIgnoreCase("BUCKLE")) {
+                for (k = 0; k < ncv; k++) {
+                   workl[ihd+k-1] = sigma * workl[ihd+k-1] / 
+                                   (workl[ihd+k-1] - one);
+                } // for (k = 0; k < ncv; k++)
+             } // else if (type.equalsIgnoreCase("BUCKLE"))
+             else if (type.equalsIgnoreCase("CAYLEY")) {
+                for (k = 0; k < ncv; k++) {
+                   workl[ihd+k-1] = sigma * (workl[ihd+k-1] + one) /
+                                   (workl[ihd+k-1] - one);
+                }
+             } // else if (type.equalsIgnoreCase("CAYLEY"))
+     
+    //        %-------------------------------------------------------------%
+    //        | *  Store the wanted NCONV lambda values into D.             |
+    //        | *  Sort the NCONV wanted lambda in WORKL(IHD:IHD+NCONV-1)   |
+    //        |    into ascending order and apply sort to the NCONV theta   |
+    //        |    values in the transformed system. We'll need this to     |
+    //        |    compute Ritz estimates in the original system.           |
+    //        | *  Finally sort the lambda's into ascending order and apply |
+    //        |    to Ritz vectors if wanted. Else just sort lambda's into  |
+    //        |    ascending order.                                         |
+    //        | NOTES:                                                      |
+    //        | *workl(iw:iw+ncv-1) contain the theta ordered so that they  |
+    //        |  match the ordering of the lambda. We'll use them again for |
+    //        |  Ritz vector purification.                                  |
+    //        %-------------------------------------------------------------%
+    
+             for (i = 0; i < nconv; i++) {
+            	 d[i] = workl[ihd-1+i];
+             }
+             v1 = new double[nconv];
+             v2 = new double[nconv];
+             for (i = 0; i < nconv; i++) {
+            	 v1[i] = workl[ihd-1+i];
+            	 v2[i] = workl[iw-1+i];
+             }
+             dsortr ("LA", true, nconv, v1, v2);
+             for (i = 0; i < nconv; i++) {
+            	 workl[ihd-1+i] = v1[i];
+            	 workl[iw-1+i] = v2[i];
+             }
+             if (rvec) {
+            	 array = new double[ncv][nconv];
+             	index = 0;
+             	for (j = 0; j < nconv; j++) {
+             		for (i = 0; i < ncv; i++) {
+             			array[i][j] = workl[iq-1+index];
+             			index++;
+             		}
+             	}
+                 dsesrt ("LA", rvec , nconv, d, ncv, array, ldq);
+                 index = 0;
+             	for (j = 0; j < nconv; j++) {
+             		for (i = 0; i < ncv; i++) {
+             			workl[iq-1+index] = array[i][j];
+             			index++;
+             		}
+             	}
+             }
+             else {
+            	 for (i = 0; i < ncv; i++) {
+            		 workl[ihb-1+i] = workl[bounds-1+i];
+            		 workl[ihb-1+i] = (bnorm2/rnorm)*workl[ihb-1+i];
+            	 }
+            	 v1 = new double[nconv];
+            	 for (i = 0; i < nconv; i++) {
+            		 v1[i] = workl[ihb-1+i];
+            	 }
+                dsortr ("LA", true, nconv, d, v1);
+                for (i = 0; i < nconv; i++) {
+                	workl[ihb-1+i] = v1[i];
+                }
+             }
+    
           } // else !"REGULR"
-    c 
-    c     %------------------------------------------------%
-    c     | Compute the Ritz vectors. Transform the wanted |
-    c     | eigenvectors of the symmetric tridiagonal H by |
-    c     | the Lanczos basis matrix V.                    |
-    c     %------------------------------------------------%
-    c
-          if (rvec .and. howmny .eq. 'A') then
-    c    
-    c        %----------------------------------------------------------%
-    c        | Compute the QR factorization of the matrix representing  |
-    c        | the wanted invariant subspace located in the first NCONV |
-    c        | columns of workl(iq,ldq).                                |
-    c        %----------------------------------------------------------%
-    c     
-             call dgeqr2 (ncv, nconv, workl(iq), ldq, workl(iw+ncv), 
-         &        workl(ihb), ierr)
-    c
-    c     
-    c        %--------------------------------------------------------%
-    c        | * Postmultiply V by Q.                                 |   
-    c        | * Copy the first NCONV columns of VQ into Z.           |
-    c        | The N by NCONV matrix Z is now a matrix representation |
-    c        | of the approximate invariant subspace associated with  |
-    c        | the Ritz values in workl(ihd).                         |
-    c        %--------------------------------------------------------%
-    c     
-             call dorm2r ('Right', 'Notranspose', n, ncv, nconv, workl(iq),
-         &        ldq, workl(iw+ncv), v, ldv, workd(n+1), ierr)
-             call dlacpy ('All', n, nconv, v, ldv, z, ldz)
-    c
-    c        %-----------------------------------------------------%
-    c        | In order to compute the Ritz estimates for the Ritz |
-    c        | values in both systems, need the last row of the    |
-    c        | eigenvector matrix. Remember, it's in factored form |
-    c        %-----------------------------------------------------%
-    c
-             do 65 j = 1, ncv-1
-                workl(ihb+j-1) = zero 
-      65     continue
-             workl(ihb+ncv-1) = one
-             call dorm2r ('Left', 'Transpose', ncv, 1, nconv, workl(iq),
-         &        ldq, workl(iw+ncv), workl(ihb), ncv, temp, ierr)
-    c
-          else if (rvec .and. howmny .eq. 'S') then
-    c
-    c     Not yet implemented. See remark 2 above.
-    c
-          end if
-    c
-          if (type .eq. 'REGULR' .and. rvec) then
-    c
-                do 70 j=1, ncv
-                   workl(ihb+j-1) = rnorm * abs( workl(ihb+j-1) )
-     70         continue
-    c
-          else if (type .ne. 'REGULR' .and. rvec) then
-    c
-    c        %-------------------------------------------------%
-    c        | *  Determine Ritz estimates of the theta.       |
-    c        |    If RVEC = .true. then compute Ritz estimates |
-    c        |               of the theta.                     |
-    c        |    If RVEC = .false. then copy Ritz estimates   |
-    c        |              as computed by dsaupd.             |
-    c        | *  Determine Ritz estimates of the lambda.      |
-    c        %-------------------------------------------------%
-    c
-             call dscal (ncv, bnorm2, workl(ihb), 1)
-             if (type .eq. 'SHIFTI') then 
-    c
-                do 80 k=1, ncv
-                   workl(ihb+k-1) = abs( workl(ihb+k-1) ) / workl(iw+k-1)**2
-     80         continue
-    c
-             else if (type .eq. 'BUCKLE') then
-    c
-                do 90 k=1, ncv
-                   workl(ihb+k-1) = sigma * abs( workl(ihb+k-1) ) / 
-         &                          ( workl(iw+k-1)-one )**2
-     90         continue
-    c
-             else if (type .eq. 'CAYLEY') then
-    c
-                do 100 k=1, ncv
-                   workl(ihb+k-1) = abs( workl(ihb+k-1) / 
-         &                          workl(iw+k-1)*(workl(iw+k-1)-one) )
-     100        continue
-    c
-             end if
-    c
-          end if
-    c
-          if (type .ne. 'REGULR' .and. msglvl .gt. 1) then
-             call dvout (logfil, nconv, d, ndigit,
-         &          '_seupd: Untransformed converged Ritz values')
-             call dvout (logfil, nconv, workl(ihb), ndigit, 
-         &     '_seupd: Ritz estimates of the untransformed Ritz values')
-          else if (msglvl .gt. 1) then
-             call dvout (logfil, nconv, d, ndigit,
-         &          '_seupd: Converged Ritz values')
-             call dvout (logfil, nconv, workl(ihb), ndigit, 
-         &     '_seupd: Associated Ritz estimates')
-          end if
-    c 
-    c     %-------------------------------------------------%
-    c     | Ritz vector purification step. Formally perform |
-    c     | one of inverse subspace iteration. Only used    |
-    c     | for MODE = 3,4,5. See reference 7               |
-    c     %-------------------------------------------------%
-    c
-          if (rvec .and. (type .eq. 'SHIFTI' .or. type .eq. 'CAYLEY')) then
-    c
-             do 110 k=0, nconv-1
-                workl(iw+k) = workl(iq+k*ldq+ncv-1) / workl(iw+k)
-     110     continue
-    c
-          else if (rvec .and. type .eq. 'BUCKLE') then
-    c
-             do 120 k=0, nconv-1
-                workl(iw+k) = workl(iq+k*ldq+ncv-1) / (workl(iw+k)-one)
-     120     continue
-    c
-          end if 
-    c
-          if (type .ne. 'REGULR')
-         &   call dger (n, nconv, one, resid, 1, workl(iw), 1, z, ldz)
-    c
-     9000 continue
-    c*/
+     
+    //     %------------------------------------------------%
+    //     | Compute the Ritz vectors. Transform the wanted |
+    //     | eigenvectors of the symmetric tridiagonal H by |
+    //     | the Lanczos basis matrix V.                    |
+    //     %------------------------------------------------%
+    //
+          if (rvec && howmny.equalsIgnoreCase("A")) {
+        
+    //        %----------------------------------------------------------%
+    //        | Compute the QR factorization of the matrix representing  |
+    //        | the wanted invariant subspace located in the first NCONV |
+    //        | columns of workl(iq,ldq).                                |
+    //        %----------------------------------------------------------%
+         
+        	 array = new double[ncv][nconv];
+           	index = 0;
+           	for (j = 0; j < nconv; j++) {
+           		for (i = 0; i < ncv; i++) {
+           			array[i][j] = workl[iq-1+index];
+           			index++;
+           		}
+           	}
+           	  v1 = new double[Math.min(ncv, nconv)];
+           	  v2 = new double[nconv];
+        	  ge.dgeqr2 (ncv, nconv, array, ldq, v1, v2, ierr);
+        	  index = 0;
+          	for (j = 0; j < nconv; j++) {
+          		for (i = 0; i < ncv; i++) {
+          			workl[iq-1+index] = array[i][j];
+          			index++;
+          		}
+          	}
+          	for (i = 0; i < Math.min(ncv, nconv); i++) {
+          		workl[iw+ncv-1+i] = v1[i];
+          	}
+    
+         
+    //        %--------------------------------------------------------%
+    //        | * Postmultiply V by Q.                                 |   
+    //        | * Copy the first NCONV columns of VQ into Z.           |
+    //        | The N by NCONV matrix Z is now a matrix representation |
+    //        | of the approximate invariant subspace associated with  |
+    //        | the Ritz values in workl(ihd).                         |
+    //        %--------------------------------------------------------%
+           	index = 0;
+           	for (j = 0; j < nconv; j++) {
+           		for (i = 0; i < ncv; i++) {
+           			array[i][j] = workl[iq-1+index];
+           			index++;
+           		}
+           	} 
+           	 v1 = new double[nconv];
+           	 for (i = 0; i < nconv; i++) {
+           		 v1[i] = workl[iw+ncv-1+i];
+           	 }
+           	 v2 = new double[n];
+             ge.dorm2r ('R', 'N', n, ncv, nconv, array,
+                 ldq, v1, v, ldv, v2, ierr);
+             ge.dlacpy ('A', n, nconv, v, ldv, z, ldz);
+    
+    //        %-----------------------------------------------------%
+    //        | In order to compute the Ritz estimates for the Ritz |
+    //        | values in both systems, need the last row of the    |
+    //        | eigenvector matrix. Remember, it's in factored form |
+    //        %-----------------------------------------------------%
+    
+             for (j = 0; j < ncv-1; j++) {
+                workl[ihb+j-1] = zero; 
+             }
+             workl[ihb+ncv-2] = one;
+             array2 = new double[ncv][1];
+             for (i = 0; i < ncv; i++) {
+            	 array2[i][0] = workl[ihb-1+i];
+             }
+             ge.dorm2r ('L', 'T', ncv, 1, nconv, array,
+                 ldq, v1, array2, ncv, dum, ierr);
+             for (i = 0; i < ncv; i++) {
+            	 workl[ihb-1+i] = array2[i][0];
+             }
+          } // if (rvec && howmny.equalsIgnoreCase("A"))
+          else if (rvec && howmny.equalsIgnoreCase("S")) {
+    
+    //     Not yet implemented. See remark 2 above.
+    
+          } //  else if (rvec && howmny.equalsIgnoreCase("S"))
+    
+          if (type.equalsIgnoreCase("REGULR") && rvec) {
+    
+                for (j=0; j < ncv; j++) {
+                   workl[ihb+j-1] = rnorm * Math.abs( workl[ihb+j-1] );
+                }
+    
+          } // if (type.equalsIgnoreCase("REGULR") && rvec)
+          else if (!type.equalsIgnoreCase("REGULR") && rvec) {
+    
+    //        %-------------------------------------------------%
+    //        | *  Determine Ritz estimates of the theta.       |
+    //        |    If RVEC = .true. then compute Ritz estimates |
+    //        |               of the theta.                     |
+    //        |    If RVEC = .false. then copy Ritz estimates   |
+    //        |              as computed by dsaupd.             |
+    //        | *  Determine Ritz estimates of the lambda.      |
+    //        %-------------------------------------------------%
+    //
+             for (i = 0; i < ncv; i++) {
+            	 workl[ihb-1+i] = bnorm2 * workl[ihb-1+i];
+             }
+             if (type.equalsIgnoreCase("SHIFTI")) { 
+    
+                for (k=0; k < ncv; k++) {
+                   workl[ihb+k-1] = Math.abs( workl[ihb+k-1] ) /( workl[iw+k-1] * workl[iw+k-1]);
+                }
+    
+             } // if (type.equalsIgnoreCase("SHIFTI"))
+             else if (type.equalsIgnoreCase("BUCKLE")) {
+    
+                for (k=0; k < ncv; k++) {
+                   temp = workl[iw+k-1] - one;
+                   workl[ihb+k-1] = sigma * Math.abs( workl[ihb+k-1] ) / (temp*temp);
+                }
+    
+             } //  else if (type.equalsIgnoreCase("BUCKLE"))
+             else if (type.equalsIgnoreCase("CAYLEY")) {
+    
+                for (k=0; k < ncv; k++) {
+                   workl[ihb+k-1] = Math.abs( workl[ihb+k-1] / 
+                                   workl[iw+k-1]*(workl[iw+k-1]-one) );
+                }
+    
+             } // else if (type.equalsIgnoreCase("CAYLEY"))
+    
+          } // else if (!type.equalsIgnoreCase("REGULR") && rvec)
+    
+          if (!type.equalsIgnoreCase("REGULR") && msglvl > 1) {
+        	 UI.setDataText("dseupd: Untransformed converged Ritz values: \n");
+        	 for (i = 0; i < nconv; i++) {
+        		 UI.setDataText("d["+i+"] = " + nf.format(d[i]) + "\n");
+        	 }
+             UI.setDataText("dseupd: Ritz estimates of the untransformed Ritz values: \n");
+             for (i = 0; i < nconv; i++) {
+            	 UI.setDataText("workl["+(ihb-1+i)+"] = " + nf.format(workl[ihb-1+i]) + "\n");
+             }
+          } // if (!type.equalsIgnoreCase("REGULR") && msglvl > 1)
+          else if (msglvl > 1) {
+        	 UI.setDataText("dseupd: Converged Ritz values: \n");
+        	 for (i = 0; i < nconv; i++) {
+        		 UI.setDataText("d["+i+"] = " + nf.format(d[i]) + "\n");
+        	 }
+             UI.setDataText("dseupd: Associated Ritz estimates: \n");
+             for (i = 0; i < nconv; i++) {
+            	 UI.setDataText("workl["+(ihb-1+i)+"] = " + nf.format(workl[ihb-1+i]) + "\n");
+             }
+          } // else if (msglvl > 1)
+     
+    //     %-------------------------------------------------%
+    //     | Ritz vector purification step. Formally perform |
+    //     | one of inverse subspace iteration. Only used    |
+    //     | for MODE = 3,4,5. See reference 7               |
+    //     %-------------------------------------------------%
+    
+          if (rvec && (type.equalsIgnoreCase("SHIFTI") || type.equalsIgnoreCase("CAYLEY"))) {
+    
+             for (k=0; k <= nconv-1; k++) {
+                workl[iw+k-1] = workl[iq+k*ldq+ncv-2] / workl[iw+k-1];
+             }
+    
+          } //  if (rvec && (type.equalsIgnoreCase("SHIFTI") || type.equalsIgnoreCase("CAYLEY")))
+          else if (rvec && type.equalsIgnoreCase("BUCKLE")) {
+    
+        	  for (k=0; k <= nconv-1; k++) {
+                workl[iw+k-1] = workl[iq+k*ldq+ncv-2] / (workl[iw+k-1]-one);
+        	  }
+    
+          } // else if (rvec && type.equalsIgnoreCase("BUCKLE")) 
+    
+          if (!type.equalsIgnoreCase("REGULR")) {
+        	v1 = new double[nconv];
+        	for (i = 0; i < nconv; i++) {
+        		v1[i] = workl[iw-1+i];
+        	}
+            ge.dger (n, nconv, one, resid, 1, v1, 1, z, ldz);
+          }
+    
           return;
           } // dseupd
           
@@ -1195,148 +1772,189 @@ public class SparseEigenvalue implements java.io.Serializable {
       // -----------------------------------------------------------------------
       
             private void dsesrt (String which, boolean apply, int n, double x[], int na, double a[][], int lda) {
-      /*c
-      c     %------------------%
-      c     | Scalar Arguments |
-      c     %------------------%
-      c
-            character*2 which
-            logical    apply
-            integer    lda, n, na
-      c
-      c     %-----------------%
-      c     | Array Arguments |
-      c     %-----------------%
-      c
-            Double precision
-           &           x(0:n-1), a(lda, 0:n-1)
-      c
-      c     %---------------%
-      c     | Local Scalars |
-      c     %---------------%
-      c
-            integer    i, igap, j
-            Double precision
-           &           temp
-      c
-      c     %----------------------%
-      c     | External Subroutines |
-      c     %----------------------%
-      c
-            external   dswap
-      c
-      c     %-----------------------%
-      c     | Executable Statements |
-      c     %-----------------------%
-      c
-            igap = n / 2
-      c 
-            if (which .eq. 'SA') then
-      c
-      c        X is sorted into decreasing order of algebraic.
-      c
-         10    continue
-               if (igap .eq. 0) go to 9000
-               do 30 i = igap, n-1
-                  j = i-igap
-         20       continue
-      c
-                  if (j.lt.0) go to 30
-      c
-                  if (x(j).lt.x(j+igap)) then
-                     temp = x(j)
-                     x(j) = x(j+igap)
-                     x(j+igap) = temp
-                     if (apply) call dswap( na, a(1, j), 1, a(1,j+igap), 1)
-                  else
-                     go to 30
-                  endif
-                  j = j-igap
-                  go to 20
-         30    continue
-               igap = igap / 2
-               go to 10
-      c
-            else if (which .eq. 'SM') then
-      c
-      c        X is sorted into decreasing order of magnitude.
-      c
-         40    continue
-               if (igap .eq. 0) go to 9000
-               do 60 i = igap, n-1
-                  j = i-igap
-         50       continue
-      c
-                  if (j.lt.0) go to 60
-      c
-                  if (abs(x(j)).lt.abs(x(j+igap))) then
-                     temp = x(j)
-                     x(j) = x(j+igap)
-                     x(j+igap) = temp
-                     if (apply) call dswap( na, a(1, j), 1, a(1,j+igap), 1)
-                  else
-                     go to 60
-                  endif
-                  j = j-igap
-                  go to 50
-         60    continue
-               igap = igap / 2
-               go to 40
-      c
-            else if (which .eq. 'LA') then
-      c
-      c        X is sorted into increasing order of algebraic.
-      c
-         70    continue
-               if (igap .eq. 0) go to 9000
-               do 90 i = igap, n-1
-                  j = i-igap
-         80       continue
-      c
-                  if (j.lt.0) go to 90
-      c           
-                  if (x(j).gt.x(j+igap)) then
-                     temp = x(j)
-                     x(j) = x(j+igap)
-                     x(j+igap) = temp
-                     if (apply) call dswap( na, a(1, j), 1, a(1,j+igap), 1)
-                  else
-                     go to 90
-                  endif
-                  j = j-igap
-                  go to 80
-         90    continue
-               igap = igap / 2
-               go to 70
-      c 
-            else if (which .eq. 'LM') then
-      c
-      c        X is sorted into increasing order of magnitude.
-      c
-        100    continue
-               if (igap .eq. 0) go to 9000
-               do 120 i = igap, n-1
-                  j = i-igap
-        110       continue
-      c
-                  if (j.lt.0) go to 120
-      c
-                  if (abs(x(j)).gt.abs(x(j+igap))) then
-                     temp = x(j)
-                     x(j) = x(j+igap)
-                     x(j+igap) = temp
-                     if (apply) call dswap( na, a(1, j), 1, a(1,j+igap), 1)
-                  else
-                     go to 120
-                  endif
-                  j = j-igap
-                  go to 110
-        120    continue
-               igap = igap / 2
-               go to 100
-            end if
-      c
-       9000 continue*/
+      
+      //     %------------------%
+      //     | Scalar Arguments |
+      //     %------------------%
+      
+      //      character*2 which
+      //      logical    apply
+      //      integer    lda, n, na
+      
+      //     %-----------------%
+      //     | Array Arguments |
+      //     %-----------------%
+      
+      //      Double precision
+      //     &           x(0:n-1), a(lda, 0:n-1)
+      
+      //     %---------------%
+      //     | Local Scalars |
+      //     %---------------%
+      
+            int    i, igap, j, k;
+            double temp;
+      
+      //     %----------------------%
+      //     | External Subroutines |
+      //     %----------------------%
+      
+      //      external   dswap
+      
+      //     %-----------------------%
+      //     | Executable Statements |
+      //     %-----------------------%
+      
+            igap = n / 2;
+       
+            if (which.equalsIgnoreCase("SA")) {
+      
+      //        X is sorted into decreasing order of algebraic.
+      
+               while (true) {
+               if (igap == 0) {
+            	   return;
+               }
+               loop1: for(i = igap; i <= n-1; i++) {
+                  j = i-igap;
+                  while (true) {
+      
+                  if (j < 0) {
+                	  continue loop1;
+                  }
+      
+                  if (x[j-1] < x[j+igap-1]) {
+                     temp = x[j-1];
+                     x[j-1] = x[j+igap-1];
+                     x[j+igap-1] = temp;
+                     if (apply) {
+                    	 for (k = 0; k < na; k++) {
+                    		 temp = a[k][j-1];
+                    		 a[k][j-1] = a[k][j+igap-1];
+                    		 a[k][j+igap-1] = temp;
+                    	 }
+                     }
+                  } //  if (x[j-1] < x[j+igap-1])
+                  else {
+                     continue loop1;
+                  }
+                  j = j-igap;
+                  } // while (true)
+               } // loop1: for(i = igap; i <= n-1; i++)
+               igap = igap / 2;
+               } // while (true)
+            } //  if (which.equalsIgnoreCase("SA"))
+            else if (which.equalsIgnoreCase("SM")) {
+      
+      //        X is sorted into decreasing order of magnitude.
+      
+               while (true) {
+               if (igap == 0) {
+            	   return;
+               }
+               loop2: for (i = igap; i <= n-1; i++) {
+                  j = i-igap;
+                  while (true) {
+      
+                  if (j < 0) {
+                	  continue loop2;
+                  }
+      
+                  if (Math.abs(x[j-1]) < Math.abs(x[j+igap-1])) {
+                     temp = x[j-1];
+                     x[j-1] = x[j+igap-1];
+                     x[j+igap-1] = temp;
+                     if (apply) {
+                    	 for (k = 0; k < na; k++) {
+                    		 temp = a[k][j-1];
+                    		 a[k][j-1] = a[k][j+igap-1];
+                    		 a[k][j+igap-1] = temp;
+                    	 }
+                     }
+                  } // if (Math.abs(x[j-1]) < Math.abs(x[j+igap-1]))
+                  else {
+                     continue loop2;
+                  }
+                  j = j-igap;
+                  } // while (true)
+               } // loop2: for (i = igap; i <= n-1; i++)
+               igap = igap / 2;
+               } // while (true)
+            } // else if (which.equalsIgnoreCase("SM"))
+            else if (which.equalsIgnoreCase("LA")) {
+      
+      //        X is sorted into increasing order of algebraic.
+      
+               while (true) {
+               if (igap == 0) {
+            	   return;
+               }
+               loop3: for (i = igap; i <= n-1; i++) {
+                  j = i-igap;
+                  while (true) {
+      
+                  if (j < 0) {
+                	  continue loop3;
+                  }
+                 
+                  if (x[j-1] > x[j+igap-1]) {
+                	  temp = x[j-1];
+                      x[j-1] = x[j+igap-1];
+                      x[j+igap-1] = temp;
+                      if (apply) {
+                     	 for (k = 0; k < na; k++) {
+                     		 temp = a[k][j-1];
+                     		 a[k][j-1] = a[k][j+igap-1];
+                     		 a[k][j+igap-1] = temp;
+                     	 }
+                      }  
+                  } // if (x[j-1] > x[j+igap-1])
+                  else {
+                     continue loop3;
+                  }
+                  j = j-igap;
+                  } // while (true)
+               } // loop3: for (i = igap; i <= n-1; i++)
+               igap = igap / 2;
+               } // while (true)
+            } // else if (which.equalsIgnoreCase("LA"))
+            else if (which.equalsIgnoreCase("LM")) { 
+      
+      //        X is sorted into increasing order of magnitude.
+      
+               while (true) {
+               if (igap == 0) {
+            	   return;
+               }
+               loop4: for (i = igap; i <= n-1; i++) {
+                  j = i-igap;
+                  while (true) {
+      
+                  if (j < 0) {
+                	  continue loop4;
+                  }
+      
+                  if (Math.abs(x[j-1]) > Math.abs(x[j+igap-1])) {
+                	  temp = x[j-1];
+                      x[j-1] = x[j+igap-1];
+                      x[j+igap-1] = temp;
+                      if (apply) {
+                     	 for (k = 0; k < na; k++) {
+                     		 temp = a[k][j-1];
+                     		 a[k][j-1] = a[k][j+igap-1];
+                     		 a[k][j+igap-1] = temp;
+                     	 }
+                      }     
+                  } // if (Math.abs(x[j-1]) > Math.abs(x[j+igap-1]))
+                  else {
+                     continue loop4;
+                  }
+                  j = j-igap;
+                  } // while (true)
+               } // loop4: for (i = igap; i <= n-1; i++)
+               igap = igap / 2;
+               } // while (true)
+            } // else if (which.equalsIgnoreCase("LM"))
             return;
             } // dsesrt
     
