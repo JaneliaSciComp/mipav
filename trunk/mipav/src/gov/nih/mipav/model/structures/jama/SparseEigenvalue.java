@@ -430,6 +430,8 @@ public class SparseEigenvalue implements java.io.Serializable {
                
              rvec = true;
     
+             // dsdrv1 has d(maxncv,2)
+             // dseupd has d(nev)
              dseupd ( rvec, "A", select, ds, v, ldv, sigma, 
                  bmat, n, which, nev, tol, resid, ncv, v, ldv, 
                  iparam, ipntr, workd, workl, lworkl, ierr );
@@ -625,8 +627,1104 @@ public class SparseEigenvalue implements java.io.Serializable {
           y[nx-1] =  dl*x[nx-2] + dd*x[nx-1]; 
           return;
           } // tv
+          
+      private void dsdrv2() { 
+      
+      //     Program to illustrate the idea of reverse communication
+      //     in shift and invert mode for a standard symmetric eigenvalue
+      //     problem.  The following program uses the two LAPACK subroutines 
+      //     dgttrf.f and dgttrs.f to factor and solve a tridiagonal system of 
+      //     equations.
+      
+      //     We implement example two of ex-sym.doc in DOCUMENTS directory
+      
+      // \Example-2
+      //     ... Suppose we want to solve A*x = lambda*x in shift-invert mode,
+      //         where A is derived from the central difference discretization
+      //         of the 1-dimensional Laplacian on [0,1]  with zero Dirichlet
+      //         boundary condition.
+      //     ... OP = (inv[A - sigma*I]) and  B = I.
+      //     ... Use mode 3 of DSAUPD.
+      
+      // \BeginLib
+      
+      // \Routines called:
+      //     dsaupd  ARPACK reverse communication interface routine.
+      //     dseupd  ARPACK routine that returns Ritz values and (optionally)
+      //             Ritz vectors.
+      //     dgttrf  LAPACK tridiagonal factorization routine.
+      //     dgttrs  LAPACK tridiagonal solve routine.
+      //     daxpy   daxpy   Level 1 BLAS that computes y <- alpha*x+y.
+      //     dnrm2   Level 1 BLAS that computes the norm of a vector.     
+      //     av2      Matrix vector multiplication routine that computes A*x.
+      
+      // \Author
+      //     Richard Lehoucq
+      //     Danny Sorensen
+      //     Chao Yang
+      //     Dept. of Computational &
+      //     Applied Mathematics
+      //     Rice University
+      //     Houston, Texas
+      
+      // \SCCS Information: @(#)
+      // FILE: sdrv2.F   SID: 2.4   DATE OF SID: 4/22/96   RELEASE: 2
+      
+      // \Remarks
+      //     1. None
+      
+      // \EndLib
+      // ----------------------------------------------------------------------
+      
+      //     %-----------------------------%
+      //     | Define leading dimensions   |
+      //     | for all arrays.             |
+      //     | MAXN:   Maximum dimension   |
+      //     |         of the A allowed.   |
+      //     | MAXNEV: Maximum NEV allowed |
+      //     | MAXNCV: Maximum NCV allowed |
+      //     %-----------------------------%
+      
+            final int maxn = 256;
+            final int maxnev = 10;
+            final int maxncv = 25;
+            final int ldv = maxn;
+      
+      //     %--------------%
+      //     | Local Arrays |
+      //     %--------------%
+      
+           double v[][] = new double[ldv][maxncv];
+           double workl[] = new double[maxncv*(maxncv+8)];
+           double workd[] = new double[3*maxn];
+           double d[][] = new double[maxncv][2];
+           double ds[] = new double[2 * maxncv];
+           double resid[] = new double[maxn];
+           double ad[] = new double[maxn];
+           double adl[] = new double[maxn];
+           double adu[] = new double[maxn];
+           double adu2[] = new double[maxn];
+           double ax[] = new double[maxn];
+           boolean select[] = new boolean[maxncv];
+           int iparam[] = new int[11];
+           int ipntr[] = new int[11];
+           int ipiv[] = new int[maxn];
+      
+      //     %---------------%
+      //     | Local Scalars |
+      //     %---------------%
+      
+            String bmat;
+            String which;
+            int ido[] = new int[1];
+            int info[] = new int[1];
+            int ierr[] = new int[1];
+            int nconv = 0;
+            int              n, nev, ncv, lworkl, i, j,
+                             maxitr, ishfts, mode;
+            boolean          rvec;
+            double sigma, tol, h2;
+            double array[][];
+            int index;
+            double v1[];
+      
+      //     %------------%
+      //     | Parameters |
+      //     %------------%
+      
+            final double zero = 0.0;
+            final double one = 1.0;
+            final double two = 2.0;
+      
+      //     %-----------------------------%
+      //     | BLAS & LAPACK routines used |
+      //     %-----------------------------%
+      
+      //      Double precision
+      //     &                 dnrm2
+      //      external         daxpy, dnrm2, dgttrf, dgttrs
+      
+      //     %--------------------%
+      //     | Intrinsic function |
+      //     %--------------------%
+      
+      //      intrinsic        abs
+      
+      //     %-----------------------%
+      //     | Executable Statements |
+      //     %-----------------------%
+      
+      //     %----------------------------------------------------%
+      //     | The number N is the dimension of the matrix.  A    |
+      //     | standard eigenvalue problem is solved (BMAT = 'I'. |
+      //     | NEV is the number of eigenvalues (closest to       |
+      //     | SIGMA) to be approximated.  Since the shift-invert |
+      //     | mode is used, WHICH is set to 'LM'.  The user can  |
+      //     | modify NEV, NCV, SIGMA to solve problems of        | 
+      //     | different sizes, and to get different parts of the |
+      //     | spectrum.  However, The following conditions must  |
+      //     | be satisfied:                                      |
+      //     |                   N <= MAXN,                       | 
+      //     |                 NEV <= MAXNEV,                     |
+      //     |             NEV + 1 <= NCV <= MAXNCV               | 
+      //     %----------------------------------------------------% 
+      
+            n = 100;
+            nev = 4;
+            ncv = 10;
+            if ( n > maxn ) {
+               UI.setDataText("ERROR with DSDRV2: N is greater than MAXN");
+               return;
+            }
+            else if ( nev > maxnev ) {
+               UI.setDataText("ERROR with DSDRV2: NEV is greater than MAXNEV");
+               return;
+            }
+            else if ( ncv > maxncv ) {
+               UI.setDataText("ERROR with DSDRV2: NCV is greater than MAXNCV");
+               return;
+            }
+      
+            bmat = "I";
+            which = "LM";
+            sigma = zero; 
+      
+      //     %--------------------------------------------------%
+      //     | The work array WORKL is used in DSAUPD as        |
+      //     | workspace.  Its dimension LWORKL is set as       |
+      //     | illustrated below.  The parameter TOL determines |
+      //     | the stopping criterion.  If TOL<=0, machine      |
+      //     | precision is used.  The variable IDO is used for |
+      //     | reverse communication and is initially set to 0. |
+      //     | Setting INFO=0 indicates that a random vector is |
+      //     | generated in DSAUPD to start the Arnoldi         |
+      //     | iteration.                                       |
+      //     %--------------------------------------------------%
+      
+            lworkl = ncv*(ncv+8);
+            tol = zero; 
+            ido[0] = 0;
+            info[0] = 0;
+      
+      //     %---------------------------------------------------%
+      //     | This program uses exact shifts with respect to    |
+      //     | the current Hessenberg matrix (IPARAM(1) = 1).    |
+      //     | IPARAM(3) specifies the maximum number of Arnoldi |
+      //     | iterations allowed.  Mode 3 of DSAUPD is used     |
+      //     | (IPARAM(7) = 3).  All these options may be        |
+      //     | changed by the user. For details, see the         |
+      //     | documentation in DSAUPD.                          |
+      //     %---------------------------------------------------%
+      
+            ishfts = 1;
+            maxitr = 300;
+            mode   = 3;
+      
+            iparam[0] = ishfts; 
+            iparam[2] = maxitr; 
+            iparam[6] = mode; 
+      
+      //     %-----------------------------------------------------%
+      //     | Call LAPACK routine to factor (A-SIGMA*I), where A  |
+      //     | is the 1-d Laplacian.                               | 
+      //     %-----------------------------------------------------%
+      
+            h2 = one / (double)((n+1)*(n+1));
+            for (j = 0; j < n; j++) {
+               ad[j] = two / h2 - sigma;
+               adl[j] = -one / h2;
+            } // for (j = 0; j < n; j++)
+            for (j = 0; j < n; j++) {
+            	adu[j] = adl[j];
+            }
+            dgttrf (n, adl, ad, adu, adu2, ipiv, ierr);
+            if (ierr[0] != 0) {
+               UI.setDataText("Error with dgttrg in dsdrv2");
+               return;
+            }
+      
+      //     %-------------------------------------------%
+      //     | M A I N   L O O P (Reverse communication) |
+      //     %-------------------------------------------%
+      
+      while (true) {
+      
+      //        %---------------------------------------------%
+      //        | Repeatedly call the routine DSAUPD and take |
+      //        | actions indicated by parameter IDO until    |
+      //        | either convergence is indicated or maxitr   |
+      //        | has been exceeded.                          |
+      //        %---------------------------------------------%
+      
+               dsaupd ( ido, bmat, n, which, nev, tol, resid,
+                            ncv, v, ldv, iparam, ipntr, workd, workl,
+                            lworkl, info );
+      
+               if (ido[0] != -1 && ido[0] != 1) {
+              	 break;
+               }
+      
+      //           %----------------------------------------%
+      //           | Perform y <-- OP*x = inv[A-sigma*I]*x. |
+      //           | The user only need the linear system   |
+      //           | solver here that takes workd(ipntr(1)) |
+      //           | as input, and returns the result to    |
+      //           | workd(ipntr(2)).                       |
+      //           %----------------------------------------%
+      
+                  for (i = 0; i < n; i++) {
+                	  workd[ipntr[1]-1+i] = workd[ipntr[0]-1+i];  
+                  }
+      
+                  array = new double[n][1];
+                  for (i = 0; i < n; i++) {
+                	  array[i][0] = workd[ipntr[1]-1+i];
+                  }
+                  dgttrs ('N', n, 1, adl, ad, adu, adu2, ipiv,
+                              array, n, ierr);
+                  for (i = 0; i < n; i++) {
+                	  workd[ipntr[1]-1+i] = array[i][0];
+                  }
+                  if (ierr[0] != 0) {
+                	 UI.setDataText("Error with dgttrs in DSDRV2");
+                	 return;
+                  }
+      
+      //           %-----------------------------------------%
+      //           | L O O P   B A C K to call DSAUPD again. |
+      //           %-----------------------------------------%
+      } // while (true)
+      
+      //     %----------------------------------------%
+      //     | Either we have convergence or there is |
+      //     | an error.                              |
+      //     %----------------------------------------%
+      
+            if ( info[0] < 0 ) {
+      
+      //        %----------------------------%
+      //        | Error message.  Check the  |
+      //        | documentation in DSAUPD    |
+      //        %----------------------------%
+      
+               UI.setDataText("Error with dsaupd, info[0] = " + info[0] + "\n");
+               return;
+            } // if (info[0] < 0)
+            else { // info[0] >= 0
+      
+      //        %-------------------------------------------%
+      //        | No fatal errors occurred.                 |
+      //        | Post-Process using DSEUPD.                |
+      //        |                                           |
+      //        | Computed eigenvalues may be extracted.    |
+      //        |                                           |
+      //        | Eigenvectors may also be computed now if  |
+      //        | desired.  (indicated by rvec = .true.)    |
+      //        %-------------------------------------------%
+      
+               rvec = true;
+      
+               dseupd ( rvec, "A", select, ds, v, ldv, sigma,
+                   bmat, n, which, nev, tol, resid, ncv, v, ldv,
+                  iparam, ipntr, workd, workl, lworkl, ierr );
+               index = 0;
+               for (j = 0; j < 2; j++) {
+              	 for (i = 0; i < maxncv; i++) {
+              	     d[i][j] = ds[index++]; 
+              	 }
+               }
+      
+      //        %----------------------------------------------%
+      //        | Eigenvalues are returned in the first column |
+      //        | of the two dimensional array D and the       |
+      //        | corresponding eigenvectors are returned in   |
+      //        | the first NEV columns of the two dimensional |
+      //        | array V if requested.  Otherwise, an         |
+      //        | orthogonal basis for the invariant subspace  |
+      //        | corresponding to the eigenvalues in D is     |
+      //        | returned in V.                               |
+      //        %----------------------------------------------%
 
+               if ( ierr[0] != 0 ) { 
+      
+      //           %------------------------------------%
+      //           | Error condition:                   |
+      //           | Check the documentation of DSEUPD. |
+      //           %------------------------------------%
+      
+                  UI.setDataText("Error with dseupd ierr[0] = " + ierr[0] + "\n");
+               } // if (ierr[0] != 0)
+               else { // ierr[0] == 0
+      
+                  nconv =  iparam[4];
+                  for (j=0; j < nconv; j++) {
+      
+      //              %---------------------------%
+      //              | Compute the residual norm |
+      //              |                           |
+      //              |   ||  A*x - lambda*x ||   |
+      //              |                           |
+      //              | for the NCONV accurately  |
+      //              | computed eigenvalues and  |
+      //              | eigenvectors.  (iparam(5) |
+      //              | indicates how many are    |
+      //              | accurate to the requested |
+      //              | tolerance)                |
+      //              %---------------------------%
+      
+                     v1 = new double[n];
+                     for (i = 0; i < n; i++) {
+                    	 v1[i] = v[i][j];
+                     }
+                	 av2(n, v1, ax);
+                	 for (i = 0; i < n; i++) {
+                		 ax[i] = ax[i] + (-d[j][0])*v[i][j];
+                	 }
+                     d[j][1] = ge.dnrm2(n, ax, 1);
+                     d[j][1] = d[j][1] / Math.abs(d[j][0]);
+      
+                  } // for (j=0; j < nconv; j++)
+      
+      //           %-------------------------------%
+      //           | Display computed residuals    |
+      //           %-------------------------------%
+                  UI.setDataText("Ritz values and relative residuals: \n");
+                  for (i = 0; i < nconv; i++) {
+                 	 UI.setDataText("d["+i+"][0] = " + nf.format(d[i][0]) + " d["+i+"][1] = " + nf.format(d[i][1]) + "\n");
+                  }
+               } // ierr[0] == 0
+      
+      //        %------------------------------------------%
+      //        | Print additional convergence information |
+      //        %------------------------------------------%
+               
+               if ( info[0] == 1) {
+               	UI.setDataText("Maximum number of iterations reached.\n");
+                }
+                else if ( info[0] == 3) {
+               	UI.setDataText("No shifts could be applied during implicit Arnoldi update, try increasing NCV.\n");
+                }     
+       
+                UI.setDataText("\n");
+                UI.setDataText("DSDRV2\n");
+                UI.setDataText("======\n");
+                UI.setDataText("\n");
+                UI.setDataText("Size of the matrix = " +  n + "\n");
+                UI.setDataText("The number of Ritz values requested = " +  nev + "\n");
+                UI.setDataText("The number of Arnoldi vectors generated ncv = " +  ncv + "\n");
+                UI.setDataText("What portion of the spectrum: " +  which + "\n");
+                UI.setDataText("The number of converged Ritz values = " +nconv + "\n");
+                UI.setDataText("The number of Implicit Arnoldi update iterations taken = " +  iparam[2] + "\n");
+                UI.setDataText("The number of OP*x = " +  iparam[8] + "\n");
+                UI.setDataText("The convergence criterion = " + tol + "\n");
+                UI.setDataText("\n");
+            } // info[0] >= 0
+            return;
+      } // dsdrv2
+      
+      //
+      // ------------------------------------------------------------------------
+      //     Matrix vector subroutine
+      //     where the matrix is the 1 dimensional discrete Laplacian on
+      //     the interval [0,1] with zero Dirichlet boundary condition.
+      
+            private void av2 (int n, double v[], double w[]) {
+            int           j;
+            //Double precision
+            // &                  v(n), w(n)
+            double h2;
+            final double one = 1.0;
+            final double two = 2.0;
 
+            w[0] =  two*v[0] - v[1];
+            for (j = 1; j < n-1; j++) {
+               w[j] = - v[j-1] + two*v[j] - v[j+1]; 
+            } // for (j = 1; j < n-1; j++)
+            j = n-1;
+            w[j] = - v[j-1] + two*v[j]; 
+      
+      //     Scale the vector w by (1 / h^2).
+      
+            h2 = one / (double)((n+1)*(n+1));
+            for (j = 0; j < n; j++) {
+            	w[j] = (one/h2) * w[j];
+            }
+            return;
+            } // av2
+
+    // \par Purpose:
+    	//  =============
+    	//
+    	// \verbatim
+    	//
+    	// DGTTRF computes an LU factorization of a real tridiagonal matrix A
+    	// using elimination with partial pivoting and row interchanges.
+    	//
+    	// The factorization has the form
+    	//    A = L * U
+    	// where L is a product of permutation and unit lower bidiagonal
+    	// matrices and U is upper triangular with nonzeros in only the main
+    	// diagonal and first two superdiagonals.
+    	// \endverbatim
+    	
+    	//  Arguments:
+    	//  ==========
+    	//
+    	// \param[in] N
+    	// \verbatim
+    	//          N is INTEGER
+    	//          The order of the matrix A.
+    	// \endverbatim
+    	
+    	// \param[in,out] DL
+    	// \verbatim
+    	//          DL is DOUBLE PRECISION array, dimension (N-1)
+    	//          On entry, DL must contain the (n-1) sub-diagonal elements of
+    	//          A.
+    	
+    	//          On exit, DL is overwritten by the (n-1) multipliers that
+    	//          define the matrix L from the LU factorization of A.
+    	// \endverbatim
+    	
+    	// \param[in,out] D
+    	// \verbatim
+    	//          D is DOUBLE PRECISION array, dimension (N)
+    	//          On entry, D must contain the diagonal elements of A.
+    	
+    	//          On exit, D is overwritten by the n diagonal elements of the
+    	//          upper triangular matrix U from the LU factorization of A.
+    	// \endverbatim
+    	
+    	// \param[in,out] DU
+    	// \verbatim
+    	//          DU is DOUBLE PRECISION array, dimension (N-1)
+    	//          On entry, DU must contain the (n-1) super-diagonal elements
+    	//          of A.
+    	
+    	//          On exit, DU is overwritten by the (n-1) elements of the first
+    	//          super-diagonal of U.
+    	// \endverbatim
+    	
+    	// \param[out] DU2
+    	// \verbatim
+    	//          DU2 is DOUBLE PRECISION array, dimension (N-2)
+    	//          On exit, DU2 is overwritten by the (n-2) elements of the
+    	//          second super-diagonal of U.
+    	// \endverbatim
+    	
+    	// \param[out] IPIV
+    	// \verbatim
+    	//          IPIV is INTEGER array, dimension (N)
+    	//          The pivot indices; for 1 <= i <= n, row i of the matrix was
+    	//          interchanged with row IPIV(i).  IPIV(i) will always be either
+    	//          i or i+1; IPIV(i) = i indicates a row interchange was not
+    	//          required.
+    	// \endverbatim
+    	
+    	// \param[out] INFO
+    	// \verbatim
+    	//          INFO is INTEGER
+    	//          = 0:  successful exit
+    	//          < 0:  if INFO = -k, the k-th argument had an illegal value
+    	//          > 0:  if INFO = k, U(k,k) is exactly zero. The factorization
+    	//                has been completed, but the factor U is exactly
+    	//                singular, and division by zero will occur if it is used
+    	//                to solve a system of equations.
+    	// \endverbatim
+    	
+    	//  Authors:
+    	//  ========
+    	
+    	// \author Univ. of Tennessee 
+    	// \author Univ. of California Berkeley 
+    	// \author Univ. of Colorado Denver 
+    	// \author NAG Ltd. 
+    	
+    	// \date September 2012
+    	
+    	// \ingroup doubleGTcomputational
+            
+    private void dgttrf(int N, double DL[], double D[], double DU[], double DU2[], int IPIV[], int INFO[] ) {
+    
+    //  -- LAPACK computational routine (version 3.4.2) --
+    //  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    //  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    //     September 2012
+    
+    //     .. Scalar Arguments ..
+    //      INTEGER            INFO, N
+    //     ..
+    //     .. Array Arguments ..
+    //      INTEGER            IPIV( * )
+    //      DOUBLE PRECISION   D( * ), DL( * ), DU( * ), DU2( * )
+    //     ..
+    
+    //  =====================================================================
+    
+    //     .. Parameters ..
+    	  final double ZERO = 0.0;
+    	  
+    //     ..
+    //     .. Local Scalars ..
+          int            I;
+          double   FACT, TEMP;
+    //     ..
+    //     .. Intrinsic Functions ..
+    //      INTRINSIC          ABS
+    //     ..
+    //     .. External Subroutines ..
+    //      EXTERNAL           XERBLA
+    //     ..
+    //    .. Executable Statements ..
+    
+          INFO[0] = 0;
+          if ( N < 0 ) {
+             INFO[0] = -1;
+             UI.setDataText("DGTTRF had N < 0 INFO[0] = -1\n");
+             return;
+          }
+    
+    //     Quick return if possible
+    
+          if ( N == 0 ) {
+              return;
+          }
+    
+    //     Initialize IPIV(i) = i and DU2(I) = 0
+    
+          for (I = 1; I <= N; I++) {
+             IPIV[ I-1] = I;
+          }
+          for (I = 1; I <= N - 2; I++) {
+             DU2[ I-1 ] = ZERO;
+          }
+    
+          for (I = 1; I <= N - 2; I++) {
+             if ( Math.abs( D[ I-1 ] ) >= Math.abs( DL[ I-1 ] ) ) {
+    
+    //           No row interchange required, eliminate DL(I)
+    
+                if ( D[ I-1 ] != ZERO ) {
+                   FACT = DL[ I-1 ] / D[ I-1];
+                   DL[ I-1 ] = FACT;
+                   D[ I ] = D[ I ] - FACT*DU[ I-1 ];
+                } //  if ( D[ I-1 ] != ZERO )
+             } // if ( Math.abs( D[ I-1 ] ) >= Math.abs( DL[ I-1 ] ) )
+             else {
+    
+    //           Interchange rows I and I+1, eliminate DL(I)
+    
+                FACT = D[ I-1 ] / DL[ I-1 ];
+                D[ I-1 ] = DL[ I-1 ];
+                DL[ I-1 ] = FACT;
+                TEMP = DU[ I-1 ];
+                DU[ I-1 ] = D[ I ];
+                D[ I ] = TEMP - FACT*D[ I ];
+                DU2[ I-1 ] = DU[ I];
+                DU[ I ] = -FACT*DU[ I ];
+                IPIV[ I -1] = I + 1;
+             } // else
+          } // for (I = 1; I <= N - 2; I++)
+          if ( N > 1 ) {
+             I = N - 1;
+             if ( Math.abs( D[ I-1 ] ) >= Math.abs( DL[ I-1 ] ) ) {
+                if ( D[ I-1 ] != ZERO ) {
+                   FACT = DL[ I-1] / D[ I-1];
+                   DL[ I-1 ] = FACT;
+                   D[ I ] = D[ I ] - FACT*DU[ I-1 ];
+                } // if ( D[ I-1 ] != ZERO )
+             } // if ( Math.abs( D[ I-1 ] ) >= Math.abs( DL[ I-1 ] ) )
+             else {
+                FACT = D[ I-1 ] / DL[ I-1 ];
+                D[ I-1 ] = DL[ I-1 ];
+                DL[ I-1 ] = FACT;
+                TEMP = DU[ I-1 ];
+                DU[ I-1 ] = D[ I ];
+                D[ I ] = TEMP - FACT*D[ I ];
+                IPIV[ I-1 ] = I + 1;
+             } // else
+          } // if (N > 1)
+    
+    //     Check for a zero on the diagonal of U.
+    
+        for (I = 1; I <= N; I++) {
+             if ( D[ I-1] == ZERO ) {
+                INFO[0] = I;
+                return;
+             } // if ( D[ I-1] == ZERO )
+        } // for (I = 1; I <= N; I++)
+       return;
+    } // dgttrf
+    
+    // \par Purpose:
+    	//  =============
+    	//
+    	// \verbatim
+    	//
+    	// DGTTRS solves one of the systems of equations
+    	//    A*X = B  or  A**T*X = B,
+    	// with a tridiagonal matrix A using the LU factorization computed
+    	// by DGTTRF.
+    	// \endverbatim
+    	//
+    	//  Arguments:
+    	//  ==========
+    	
+    	// \param[in] TRANS
+    	// \verbatim
+    	//          TRANS is CHARACTER*1
+    	//          Specifies the form of the system of equations.
+    	//          = 'N':  A * X = B  (No transpose)
+    	//          = 'T':  A**T* X = B  (Transpose)
+    	//          = 'C':  A**T* X = B  (Conjugate transpose = Transpose)
+    	// \endverbatim
+    	
+    	// \param[in] N
+    	// \verbatim
+    	//          N is INTEGER
+    	//          The order of the matrix A.
+    	// \endverbatim
+    	
+    	// \param[in] NRHS
+    	// \verbatim
+    	//          NRHS is INTEGER
+    	//          The number of right hand sides, i.e., the number of columns
+    	//          of the matrix B.  NRHS >= 0.
+    	// \endverbatim
+    	
+    	// \param[in] DL
+    	// \verbatim
+    	//          DL is DOUBLE PRECISION array, dimension (N-1)
+    	//          The (n-1) multipliers that define the matrix L from the
+    	//          LU factorization of A.
+    	// \endverbatim
+    	
+    	// \param[in] D
+    	// \verbatim
+    	//          D is DOUBLE PRECISION array, dimension (N)
+    	//          The n diagonal elements of the upper triangular matrix U from
+    	//          the LU factorization of A.
+    	// \endverbatim
+    	//
+    	// \param[in] DU
+    	// \verbatim
+    	//          DU is DOUBLE PRECISION array, dimension (N-1)
+    	//          The (n-1) elements of the first super-diagonal of U.
+    	// \endverbatim
+    	
+    	// \param[in] DU2
+    	// \verbatim
+    	//          DU2 is DOUBLE PRECISION array, dimension (N-2)
+    	//          The (n-2) elements of the second super-diagonal of U.
+    	// \endverbatim
+    	
+    	// \param[in] IPIV
+    	// \verbatim
+    	//          IPIV is INTEGER array, dimension (N)
+    	//          The pivot indices; for 1 <= i <= n, row i of the matrix was
+    	//          interchanged with row IPIV(i).  IPIV(i) will always be either
+    	//          i or i+1; IPIV(i) = i indicates a row interchange was not
+    	//          required.
+    	// \endverbatim
+    	
+    	// \param[in,out] B
+    	// \verbatim
+    	//          B is DOUBLE PRECISION array, dimension (LDB,NRHS)
+    	//          On entry, the matrix of right hand side vectors B.
+    	//          On exit, B is overwritten by the solution vectors X.
+    	// \endverbatim
+    	
+    	// \param[in] LDB
+    	// \verbatim
+    	//          LDB is INTEGER
+    	//          The leading dimension of the array B.  LDB >= max(1,N).
+    	// \endverbatim
+    	
+    	// \param[out] INFO
+    	// \verbatim
+    	//          INFO is INTEGER
+    	//          = 0:  successful exit
+    	//          < 0:  if INFO = -i, the i-th argument had an illegal value
+    	// \endverbatim
+    	
+    	//  Authors:
+    	//  ========
+    	
+    	// \author Univ. of Tennessee 
+    	// \author Univ. of California Berkeley 
+    	// \author Univ. of Colorado Denver 
+    	// \author NAG Ltd. 
+    	
+    	// \date September 2012
+    	
+    	// \ingroup doubleGTcomputational
+    
+	    //  =====================================================================
+	    private void dgttrs(char TRANS, int N, int NRHS, double DL[], double D[], double DU[], 
+	    		       double DU2[], int IPIV[], double B[][], int LDB, int INFO[] ) {
+	
+	//  -- LAPACK computational routine (version 3.4.2) --
+	//  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+	//  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+	//     September 2012
+	
+	//     .. Scalar Arguments ..
+    //   CHARACTER          TRANS
+	//    INTEGER            INFO, LDB, N, NRHS
+	//     ..
+	//     .. Array Arguments ..
+	//    INTEGER            IPIV( * )
+	//    DOUBLE PRECISION   B( LDB, * ), D( * ), DL( * ), DU( * ), DU2( * )
+	//     ..
+	
+	//  =====================================================================
+	
+	//     .. Local Scalars ..
+	    boolean            NOTRAN;
+	    int            ITRANS, J, JB, NB, I, K;
+	    double array[][];
+	//     ..
+	//     .. External Functions ..
+	//    INTEGER            ILAENV
+	//    EXTERNAL           ILAENV
+	//     ..
+	//     .. External Subroutines ..
+	//    EXTERNAL           DGTTS2, XERBLA
+	//     ..
+	//     .. Intrinsic Functions ..
+	//    INTRINSIC          MAX, MIN
+	//     ..
+	//     .. Executable Statements ..
+	
+	    INFO[0] = 0;
+	    NOTRAN = ( TRANS =='N' || TRANS == 'n' );
+	    if (!NOTRAN &&  !( TRANS == 'T' || TRANS ==
+	       't' ) && !( TRANS == 'C' || TRANS == 'c' ) ) {
+	       INFO[0] = -1;
+	    }
+	    else if ( N < 0 ) {
+	       INFO[0] = -2;
+	    }
+	    else if ( NRHS < 0 ) {
+	       INFO[0] = -3;
+	    }
+	    else if ( LDB < Math.max( N, 1 ) ) {
+	       INFO[0] = -10;
+	    }
+	    if ( INFO[0] != 0 ) {
+	       UI.setDataText("In dgttrs INFO[0] = " + INFO[0] + "\n");
+	       return;
+	    }
+	
+	//
+	    
+	    if ( N == 0 || NRHS == 0 ) {
+	       return;
+	    }
+	
+	//     Decode TRANS
+	
+	    if ( NOTRAN ) {
+	       ITRANS = 0;
+	    }
+	    else {
+	       ITRANS = 1;
+	    }
+	
+	//     Determine the number of right-hand sides to solve at a time.
+	
+	    if ( NRHS == 1 ) {
+	       NB = 1;
+	    }
+	    else {
+	    	char ch[] = new char[1];
+	    	ch[0] = TRANS;
+	    	String opts = new String(ch);
+	       NB = Math.max( 1, ge.ilaenv( 1, "DGTTRS", opts, N, NRHS, -1, -1 ) );
+	    }
+
+	    if ( NB >= NRHS ) {
+	       DGTTS2( ITRANS, N, NRHS, DL, D, DU, DU2, IPIV, B, LDB );
+	    }
+	    else {
+	       for (J = 1; J <= NRHS; J+= NB) {
+	          JB = Math.min( NRHS-J+1, NB );
+	          array = new double[Math.max(1, N)][JB];
+	          for (I = 0; I < Math.max(1, N); I++) {
+	        	  for (K = 0; K < JB; K++) {
+	        		  array[I][K] = B[I][J-1+K];
+	        	  }
+	          }
+	          DGTTS2( ITRANS, N, JB, DL, D, DU, DU2, IPIV, array,
+	                      Math.max(1, N) );
+	          for (I = 0; I < Math.max(1, N); I++) {
+	        	  for (K = 0; K < JB; K++) {
+	        		  B[I][J-1+K] = array[I][K];
+	        	  }
+	          }
+	       } 
+	    }
+	    return;
+	    } // dgttrs
+	
+	    
+    // \par Purpose:
+    	//  =============
+    	
+    	// \verbatim
+    	
+    	// DGTTS2 solves one of the systems of equations
+    	//    A*X = B  or  A**T*X = B,
+    	// with a tridiagonal matrix A using the LU factorization computed
+    	// by DGTTRF.
+    	// \endverbatim
+    	
+    	//  Arguments:
+    	//  ==========
+    	
+    	// \param[in] ITRANS
+    	// \verbatim
+    	//          ITRANS is INTEGER
+    	//          Specifies the form of the system of equations.
+    	//          = 0:  A * X = B  (No transpose)
+    	//          = 1:  A**T* X = B  (Transpose)
+    	//          = 2:  A**T* X = B  (Conjugate transpose = Transpose)
+    	// \endverbatim
+    	
+    	// \param[in] N
+    	// \verbatim
+    	//          N is INTEGER
+    	//          The order of the matrix A.
+    	// \endverbatim
+    	//
+    	// \param[in] NRHS
+    	// \verbatim
+    	//          NRHS is INTEGER
+    	//          The number of right hand sides, i.e., the number of columns
+    	//          of the matrix B.  NRHS >= 0.
+    	// \endverbatim
+    	
+    	// \param[in] DL
+    	// \verbatim
+    	//          DL is DOUBLE PRECISION array, dimension (N-1)
+    	//          The (n-1) multipliers that define the matrix L from the
+    	//          LU factorization of A.
+    	// \endverbatim
+    	
+    	// \param[in] D
+    	// \verbatim
+    	//          D is DOUBLE PRECISION array, dimension (N)
+    	//          The n diagonal elements of the upper triangular matrix U from
+    	//          the LU factorization of A.
+    	// \endverbatim
+    	
+    	// \param[in] DU
+    	// \verbatim
+    	//          DU is DOUBLE PRECISION array, dimension (N-1)
+    	//          The (n-1) elements of the first super-diagonal of U.
+    	// \endverbatim
+    	
+    	// \param[in] DU2
+    	// \verbatim
+    	//          DU2 is DOUBLE PRECISION array, dimension (N-2)
+    	//          The (n-2) elements of the second super-diagonal of U.
+    	// \endverbatim
+    	
+    	// \param[in] IPIV
+    	// \verbatim
+    	//          IPIV is INTEGER array, dimension (N)
+    	//          The pivot indices; for 1 <= i <= n, row i of the matrix was
+    	//          interchanged with row IPIV(i).  IPIV(i) will always be either
+    	//          i or i+1; IPIV(i) = i indicates a row interchange was not
+    	//          required.
+    	// \endverbatim
+    	
+    	// \param[in,out] B
+    	// \verbatim
+    	//          B is DOUBLE PRECISION array, dimension (LDB,NRHS)
+    	//          On entry, the matrix of right hand side vectors B.
+    	//          On exit, B is overwritten by the solution vectors X.
+    	// \endverbatim
+    	
+    	// \param[in] LDB
+    	// \verbatim
+    	//          LDB is INTEGER
+    	//          The leading dimension of the array B.  LDB >= max(1,N).
+    	// \endverbatim
+    	
+    	//  Authors:
+    	//  ========
+    	
+    	// \author Univ. of Tennessee 
+    	// \author Univ. of California Berkeley 
+    	// \author Univ. of Colorado Denver 
+    	// \author NAG Ltd. 
+    	
+    	// \date September 2012
+    	
+    	// \ingroup doubleGTcomputational
+    	
+    	//  =====================================================================
+    	      private void DGTTS2( int ITRANS, int N, int NRHS, double DL[], double D[], 
+    	    		               double DU[], double DU2[], int IPIV[], double B[][], int LDB ) {
+    	
+    	//  -- LAPACK computational routine (version 3.4.2) --
+    	//  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    	//  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    	//     September 2012
+    	
+    	//     .. Scalar Arguments ..
+    	//      INTEGER            ITRANS, LDB, N, NRHS
+    	//     ..
+    	//     .. Array Arguments ..
+    	//      INTEGER            IPIV( * )
+    	//      DOUBLE PRECISION   B( LDB, * ), D( * ), DL( * ), DU( * ), DU2( * )
+    	//     ..
+    	
+    	//  =====================================================================
+    	
+    	//     .. Local Scalars ..
+    	      int            I, IP, J;
+    	      double   TEMP;
+    	//     ..
+    	//     .. Executable Statements ..
+    	
+    	//     Quick return if possible
+    	
+    	      if ( N == 0 || NRHS == 0 ) {
+    	          return;
+    	      }
+    	
+    	      if ( ITRANS == 0 ) {
+    	
+    	//        Solve A*X = B using the LU factorization of A,
+    	//        overwriting each right hand side vector with its solution.
+    	
+    	         if ( NRHS <= 1 ) {
+    	            J = 1;
+    	            while (true) {
+    	
+    	//           Solve L*x = b.
+    	
+    	            for (I = 1; I <= N - 1; I++) {
+    	               IP = IPIV[ I-1 ];
+    	               TEMP = B[ I-IP+I][ J-1] - DL[ I-1]*B[ IP-1][ J-1 ];
+    	               B[ I-1][ J-1 ] = B[ IP-1][ J-1];
+    	               B[ I][ J-1 ] = TEMP;
+    	            } // for (I = 1; I <= N - 1; I++)
+    	
+    	//           Solve U*x = b.
+    	
+    	            B[ N-1][ J-1 ] = B[ N-1][ J-1 ] / D[ N-1 ];
+    	            if ( N > 1 ) {
+    	              B[ N-2][ J-1] = ( B[ N-2][ J-1 ]-DU[ N-2 ]*B[ N-1][ J-1 ] ) /
+    	                            D[ N-2 ];
+    	            } // if (N > 1)
+    	            for (I = N - 2; I >= 1; I--) {
+    	               B[ I-1][ J-1 ] = ( B[ I-1][ J-1 ]-DU[ I-1 ]*B[ I][ J -1]-DU2[ I-1 ]*
+    	                          B[ I+1][ J-1] ) / D[ I-1 ];
+    	            } // for (I = N - 2; I >= 1; I--)
+    	            if ( J < NRHS ) {
+    	               J = J + 1;
+    	            }
+    	            else {
+    	               return;
+    	            }
+    	            } // while (true)
+    	         } // if ( NRHS <= 1 )
+    	         else { // NRHS > 1
+    	            for (J = 1; J <= NRHS; J++) {
+    	
+    	//              Solve L*x = b.
+    	
+    	               for (I = 1; I <= N - 1; I++) {
+    	                  if ( IPIV[ I-1 ] == I ) {
+    	                     B[ I][ J-1 ] = B[ I][ J-1] - DL[ I-1 ]*B[ I-1][ J-1 ];
+    	                  }
+    	                  else {
+    	                     TEMP = B[ I-1][ J-1 ];
+    	                     B[ I-1][ J-1 ] = B[ I][ J-1 ];
+    	                     B[ I][ J-1] = TEMP - DL[ I-1 ]*B[ I-1][ J-1];
+    	                  }
+    	               } // for (I = 1; I <= N - 1; I++)
+    	
+    	//              Solve U*x = b.
+    	
+    	               B[ N-1][ J-1] = B[ N-1][ J-1 ] / D[ N-1 ];
+    	               if ( N > 1 ) {
+    	                 B[ N-2][ J-1 ] = ( B[ N-2][ J-1 ]-DU[ N-2 ]*B[ N-1][ J-1] ) /
+    	                               D[ N-2 ];
+    	               } // if (N > 1)
+    	               for (I = N - 2; I >= 1; I--) {
+    	                  B[ I-1][ J-1 ] = ( B[ I-1][ J-1 ]-DU[ I-1 ]*B[ I][ J-1 ]-DU2[ I-1 ]*
+    	                            B[ I+1][ J-1 ] ) / D[ I-1];
+    	               } // for (I = N - 2; I >= 1; I--)
+    	            } // for (J = 1; J <= NRHS; J++)
+    	         } // else NRHS > 1
+    	      } // if ( ITRANS == 0 )
+    	      else { // ITRANS != 0
+    	
+    	//        Solve A**T * X = B.
+    	
+    	         if ( NRHS <= 1 ) {
+    	
+    	//           Solve U**T*x = b.
+    	
+    	            J = 1;
+    	            while (true) {
+    	            B[ 0][ J-1] = B[0][ J-1] / D[ 0 ];
+    	            if ( N > 1 ) {
+    	               B[ 1][ J-1 ] = ( B[ 1][ J -1]-DU[ 0 ]*B[ 0][ J-1 ] ) / D[ 1 ];
+    	            } // if (N > 1)
+    	            for (I = 3; I <= N; I++) {
+    	               B[ I-1][ J-1 ] = ( B[ I-1][ J-1 ]-DU[ I-2 ]*B[ I-2][ J-1 ]-DU2[ I-3 ]*
+    	                           B[ I-3][ J-1 ] ) / D[ I-1 ];
+    	            } // for (I = 3; I <= N; I++) 
+    	
+    	//           Solve L**T*x = b.
+    	
+    	            for (I = N - 1; I >= 1; I--) {
+    	               IP = IPIV[ I-1];
+    	               TEMP = B[ I-1][ J-1] - DL[ I-1 ]*B[I][ J-1];
+    	               B[ I-1][ J-1 ] = B[ IP-1][ J-1 ];
+    	               B[ IP-1][ J -1] = TEMP;
+    	            } // for (I = N - 1; I >= 1; I--)
+    	            if ( J < NRHS ) {
+    	               J = J + 1;
+    	            }
+    	            else {
+    	               return;
+    	            }
+    	            } // while (true)
+    	         } // if (NRHS <= 1)
+    	         else { // NRHS > 1
+    	            for (J = 1; J <= NRHS; J++) {
+    	
+    	//              Solve U**T*x = b.
+    	
+    	               B[ 0][ J-1 ] = B[0][ J-1 ] / D[ 0 ];
+    	               if ( N > 1 ) {
+    	                  B[1][ J-1 ] = ( B[ 1][ J -1]-DU[ 0 ]*B[ 0][ J-1 ] ) / D[ 1 ];
+    	               } // if (N > 1)
+    	               for (I = 3; I <= N; I++) {
+    	                  B[ I-1][ J-1 ] = ( B[ I-1][ J-1 ]-DU[ I-2 ]*B[ I-2][ J-1 ]-
+    	                             DU2[ I-3 ]*B[ I-3][ J -1] ) / D[ I-1 ];
+    	               } // for (I = 3; I <= N; I++)
+    	                  for (I = N - 1; I >=  1; I--) {
+    	                  if ( IPIV[ I-1 ] == I ) {
+    	                     B[ I-1][ J -1] = B[ I-1][ J-1 ] - DL[ I-1 ]*B[ I][ J-1 ];
+    	                  }
+    	                  else {
+    	                     TEMP = B[ I][ J -1];
+    	                     B[ I][ J-1 ] = B[ I-1][ J-1 ] - DL[ I-1 ]*TEMP;
+    	                     B[ I-1][ J -1] = TEMP;
+    	                  }
+    	                  } // for (I = N - 1; I >=  1; I--)
+    	            } // for (J = 1; J <= NRHS; J++)
+    	         } // else NRHS > 1
+    	      } // else ITRANS != 0
+    	      return;
+    	      } // DGTTS2
     
     // \BeginDoc
     
