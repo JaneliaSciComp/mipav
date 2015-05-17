@@ -1051,6 +1051,1033 @@ public class SparseEigenvalue implements java.io.Serializable {
             }
             return;
             } // av2
+            
+        private void dsdrv3() {
+        
+        //     Program to illustrate the idea of reverse communication in
+        //     inverse mode for a generalized symmetric eigenvalue problem.
+        //     The following program uses the two LAPACK subroutines dgttrf.f 
+        //     and dgttrs.f to factor and solve a tridiagonal system of equations.
+        
+        //     We implement example three of ex-sym.doc in DOCUMENTS directory
+        
+        // \Example-3
+        //     ... Suppose we want to solve A*x = lambda*M*x in inverse mode,
+        //         where A and M are obtained by the finite element of the 
+        //         1-dimensional discrete Laplacian
+        //                             d^2u / dx^2
+        //         on the interval [0,1] with zero Dirichlet boundary condition
+        //         using piecewise linear elements.
+        
+        //     ... OP = inv[M]*A  and  B = M.
+        
+        //     ... Use mode 2 of DSAUPD.    
+        
+        // \BeginLib
+        
+        // \Routines called:
+        //     dsaupd  ARPACK reverse communication interface routine.
+        //     dseupd  ARPACK routine that returns Ritz values and (optionally)
+        //             Ritz vectors.
+        //     dgttrf  LAPACK tridiagonal factorization routine.
+        //     dgttrs  LAPACK tridiagonal solve routine.
+        //     daxpy   Level 1 BLAS that computes y <- alpha*x+y.
+        //     dscal   Level 1 BLAS that scales a vector by a scalar.
+        //     dcopy   Level 1 BLAS that copies one vector to another.
+        //     dnrm2   Level 1 BLAS that computes the norm of a vector.     
+        //     av3      Matrix vector multiplication routine that computes A*x.
+        //     mv3      Matrix vector multiplication routine that computes M*x.
+        
+        // \Author
+        //     Richard Lehoucq
+        //     Danny Sorensen
+        //     Chao Yang
+        //     Dept. of Computational &
+        //     Applied Mathematics
+        //     Rice University
+        //     Houston, Texas
+        
+        // \SCCS Information: @(#)
+        // FILE: sdrv3.F   SID: 2.4   DATE OF SID: 4/22/96   RELEASE: 2
+        
+        // \Remarks
+        //     1. None
+        
+        // \EndLib
+        // --------------------------------------------------------------------------
+        
+        //     %-----------------------------%
+        //     | Define leading dimensions   |
+        //     | for all arrays.             |
+        //     | MAXN:   Maximum dimension   |
+        //     |         of the A allowed.   |
+        //     | MAXNEV: Maximum NEV allowed |
+        //     | MAXNCV: Maximum NCV allowed |
+        //     %-----------------------------%
+        
+              final int maxn = 256;
+              final int maxnev = 10;
+              final int maxncv = 25;
+              final int ldv = maxn;
+        	 
+        //     %--------------%
+        //     | Local Arrays |
+        //     %--------------%
+              double v[][] = new double[ldv][maxncv];
+              double workl[] = new double[maxncv*(maxncv+8)];
+              double workd[] = new double[3*maxn];
+              double d[][] = new double[maxncv][2];
+              double ds[] = new double[2 * maxncv];
+              double resid[] = new double[maxn];
+              double ad[] = new double[maxn];
+              double adl[] = new double[maxn];
+              double adu[] = new double[maxn];
+              double adu2[] = new double[maxn];
+              double ax[] = new double[maxn];
+              double mx[] = new double[maxn];
+              boolean select[] = new boolean[maxncv];
+              int iparam[] = new int[11];
+              int ipntr[] = new int[11];
+              int ipiv[] = new int[maxn];
+              
+              //     %---------------%
+              //     | Local Scalars |
+              //     %---------------%
+              
+            String bmat;
+            String which;
+            int ido[] = new int[1];
+            int info[] = new int[1];
+            int ierr[] = new int[1];
+            int nconv = 0;
+            int              n, nev, ncv, lworkl, i, j,
+                             maxitr, ishfts, mode;
+            boolean          rvec;
+            double sigma = 0.0;
+            double tol, r1, r2, h;
+            double array[][];
+            int index;
+            double v1[];
+            double v2[];
+      
+      //     %------------%
+      //     | Parameters |
+      //     %------------%
+      
+            final double zero = 0.0;
+            final double one = 1.0;
+            final double four = 4.0;
+            final double six = 6.0;
+        
+        //     %-----------------------------%
+        //     | BLAS & LAPACK routines used |
+        //     %-----------------------------%
+        
+        //      Double precision
+        //     &                 dnrm2
+        //      external         daxpy, dcopy, dscal, dnrm2, dgttrf, dgttrs
+        
+        //     %--------------------%
+        //     | Intrinsic function |
+        //     %--------------------%
+        
+        //       intrinsic        abs
+        
+        //     %-----------------------%
+        //     | Executable statements |
+        //     %-----------------------%
+        
+        //     %----------------------------------------------------%
+        //     | The number N is the dimension of the matrix. A     |
+        //     | generalized eigenvalue problem is solved (BMAT =   |
+        //     | 'G'.) NEV is the number of eigenvalues to be       |
+        //     | approximated.  The user can modify NEV, NCV, WHICH |
+        //     | to solve problems of different sizes, and to get   |
+        //     | different parts of the spectrum.  However, The     |
+        //     | following conditions must be satisfied:            |
+        //     |                     N <= MAXN,                     | 
+        //     |                   NEV <= MAXNEV,                   |
+        //     |               NEV + 1 <= NCV <= MAXNCV             | 
+        //     %----------------------------------------------------%
+        
+              n = 100;
+              nev = 4;
+              ncv = 10;
+              if ( n > maxn ) {
+                 UI.setDataText("ERROR with DSDRV3: N is greater than MAXN \n");
+                 return;
+              }
+              else if ( nev > maxnev ) {
+                 UI.setDataText("ERROR with DSDRV3: NEV is greater than MAXNEV \n");
+                 return;
+              }
+              else if ( ncv > maxncv ) {
+                 UI.setDataText("ERROR with DSDRV3: NCV is greater than MAXNCV \n");
+                 return;
+              }
+              bmat = "G";
+              which = "LM";
+        
+        //     %--------------------------------------------------%
+        //     | The work array WORKL is used in DSAUPD as        |
+        //     | workspace.  Its dimension LWORKL is set as       |
+        //     | illustrated below.  The parameter TOL determines |
+        //     | the stopping criterion.  If TOL<=0, machine      |
+        //     | precision is used.  The variable IDO is used for |
+        //     | reverse communication and is initially set to 0. |
+        //     | Setting INFO=0 indicates that a random vector is |
+        //     | generated in DSAUPD to start the Arnoldi         |
+        //     | iteration.                                       |
+        //     %--------------------------------------------------%
+        
+              lworkl = ncv*(ncv+8);
+              tol = zero; 
+              ido[0] = 0;
+              info[0] = 0;
+        
+        //     %---------------------------------------------------%
+        //     | This program uses exact shifts with respect to    |
+        //     | the current Hessenberg matrix (IPARAM(1) = 1).    |
+        //     | IPARAM(3) specifies the maximum number of Arnoldi |
+        //     | iterations allowed.  Mode 2 of DSAUPD is used     |
+        //     | (IPARAM(7) = 2).  All these options may be        |
+        //     | changed by the user. For details, see the         |
+        //     | documentation in DSAUPD.                          |
+        //     %---------------------------------------------------%
+        
+              ishfts = 1;
+              maxitr = 300;
+              mode   = 2;
+        
+              iparam[0] = ishfts;
+              iparam[2] = maxitr; 
+              iparam[6] = mode;
+        
+        //     %------------------------------------------------%
+        //     | Call LAPACK routine to factor the mass matrix. |
+        //     | The mass matrix is the tridiagonal matrix      |
+        //     | arising from using piecewise linear finite     |
+        //     | elements on the interval [0, 1].               |
+        //     %------------------------------------------------%
+        
+              h = one / (double)(n+1);
+        
+              r1 = (four / six) * h; 
+              r2 = (one / six) * h;
+              for (j=0; j < n; j++) {
+                 ad[j] =  r1;
+                 adl[j] = r2;
+              } 
+              for (i = 0; i < n; i++) {
+            	  adu[i] = adl[i];
+              }
+              dgttrf (n, adl, ad, adu, adu2, ipiv, ierr);
+              if (ierr[0] != 0) { 
+                 UI.setDataText("Error with _gttrf in _SDRV3. \n");
+                 return;
+              }
+        
+        //     %-------------------------------------------%
+        //     | M A I N   L O O P (Reverse communication) |
+        //     %-------------------------------------------%
+        
+        while (true) {
+        
+        //        %---------------------------------------------%
+        //        | Repeatedly call the routine DSAUPD and take | 
+        //        | actions indicated by parameter IDO until    |
+        //        | either convergence is indicated or maxitr   |
+        //        | has been exceeded.                          |
+        //        %---------------------------------------------%
+        
+                 dsaupd ( ido, bmat, n, which, nev, tol, resid, 
+                          ncv, v, ldv, iparam, ipntr, workd, workl,
+                          lworkl, info );
+        
+                 if (ido[0] == -1 || ido[0] == 1) {
+        
+        //           %--------------------------------------%
+        //           | Perform  y <--- OP*x = inv[M]*A*x.   |
+        //           | The user should supply his/her own   |
+        //           | matrix vector multiplication (A*x)   |
+        //           | routine and a linear system solver   |
+        //           | here.  The matrix vector             |
+        //           | multiplication routine takes         |
+        //           | workd(ipntr(1)) as the input vector. | 
+        //           | The final result is returned to      |
+        //           | workd(ipntr(2)). The result of A*x   |
+        //           | overwrites workd(ipntr(1)).          |
+        //           %--------------------------------------%
+        
+                    v1 = new double[n];
+                    for (i = 0; i <n; i++) {
+                    	v1[i] = workd[ipntr[0]-1+i];
+                    }
+                    v2 = new double[n];
+                	av3 (n, v1, v2);
+                	for (i = 0; i < n; i++) {
+                		workd[ipntr[1]-1+i] = v2[i];
+                	}
+                	for (i = 0; i < n; i++) {
+                		workd[ipntr[0]-1+i] = workd[ipntr[1]-1+i];
+                	}
+                	array = new double[n][1];
+                	for (i = 0; i < n; i++) {
+                		array[i][0] = workd[ipntr[1]-1+i];
+                	}
+                    dgttrs ('N', n, 1, adl, ad, adu, adu2, ipiv, 
+                             array, n, ierr);
+                    for (i = 0; i < n; i++) {
+                		workd[ipntr[1]-1+i] = array[i][0];
+                	}
+                    if (ierr[0] != 0) { 
+                       UI.setDataText("Error with dgttrs in dsdrv3.\n");
+                       return;
+                    }
+        
+        //           %-----------------------------------------%
+        //           | L O O P   B A C K to call DSAUPD again. |
+        //           %-----------------------------------------%
+                 } // if (ido[0] == -1 || ido[0] == 1)
+                 else if (ido[0] == 2) {
+        
+        //           %-----------------------------------------%
+        //           |         Perform  y <--- M*x.            |
+        //           | Need the matrix vector multiplication   |
+        //           | routine here that takes workd(ipntr(1)) |
+        //           | as the input and returns the result to  |
+        //           | workd(ipntr(2)).                        |
+        //           %-----------------------------------------%
+        
+                	 v1 = new double[n];
+                     for (i = 0; i <n; i++) {
+                     	v1[i] = workd[ipntr[0]-1+i];
+                     }
+                     v2 = new double[n];
+                	 mv3 (n, v1, v2);
+                	 for (i = 0; i < n; i++) {
+                		workd[ipntr[1]-1+i] = v2[i];
+                	}
+        
+        //           %-----------------------------------------%
+        //           | L O O P   B A C K to call DSAUPD again. |
+        //           %-----------------------------------------%
+                 } // else if (ido[0] == 2)
+                 else {
+                	 break;
+                 }
+        } // while (true)
+        
+        
+        
+        //     %-----------------------------------------%
+        //     | Either we have convergence, or there is |
+        //     | an error.                               |
+        //     %-----------------------------------------%
+        
+              if ( info[0] < 0 ) {
+        
+        //        %--------------------------%
+        //        | Error message, check the |
+        //        | documentation in DSAUPD  |
+        //        %--------------------------%
+        
+                 UI.setDataText("Error with dsaupd info[0] = " + info[0] + "\n");
+              } // if (info[0] < 0)
+              else  { // info[0] >= 0
+        
+        //        %-------------------------------------------%
+        //        | No fatal errors occurred.                 |
+        //        | Post-Process using DSEUPD.                |
+        //        |                                           |
+        //        | Computed eigenvalues may be extracted.    |  
+        //        |                                           |
+        //        | Eigenvectors may also be computed now if  |
+        //        | desired.  (indicated by rvec = .true.)    | 
+        //        %-------------------------------------------%
+                   
+                 rvec = true;
+        
+                 dseupd ( rvec, "A", select, ds, v, ldv, sigma, 
+                     bmat, n, which, nev, tol, resid, ncv, v, ldv, 
+                     iparam, ipntr, workd, workl, lworkl, ierr );
+                 index = 0;
+                 for (j = 0; j < 2; j++) {
+                	 for (i = 0; i < maxncv; i++) {
+                	     d[i][j] = ds[index++]; 
+                	 }
+                 }
+        
+        //        %----------------------------------------------%
+        //        | Eigenvalues are returned in the first column |
+        //        | of the two dimensional array D and the       |
+        //        | corresponding eigenvectors are returned in   |
+        //        | the first NEV columns of the two dimensional |
+        //        | array V if requested.  Otherwise, an         |
+        //        | orthogonal basis for the invariant subspace  |
+        //        | corresponding to the eigenvalues in D is     |
+        //        | returned in V.                               |
+        //        %----------------------------------------------%
+        
+                 if (ierr[0] != 0) { 
+        
+        //           %------------------------------------%
+        //           | Error condition:                   |
+        //           | Check the documentation of DSEUPD. |
+        //           %------------------------------------%
+         
+                    UI.setDataText("Error with dseupd ierr[0] = " + ierr[0] + "\n");
+                 } // if (ierr[0] != 0)
+                 else  { // ierr[0] == 0
+        
+                    nconv =  iparam[4];
+                    for (j=0; j < nconv; j++) {
+        
+        //              %---------------------------%
+        //              | Compute the residual norm |
+        //              |                           |
+        //              |  ||  A*x - lambda*M*x ||  |
+        //              |                           |
+        //              | for the NCONV accurately  |
+        //              | computed eigenvalues and  |
+        //              | eigenvectors.  (iparam(5) |
+        //              | indicates how many are    |
+        //              | accurate to the requested |
+        //              | tolerance)                |
+        //              %---------------------------%
+        //
+                       v1 = new double[n];
+                       for (i = 0; i < n; i++) {
+                    	   v1[i] = v[i][j];
+                       }
+                       av3(n, v1, ax);
+                       mv3(n, v1, mx);
+                       for (i = 0; i < n; i++) {
+                    	   ax[i] = ax[i] + (-d[j][0])*mx[i];
+                       }
+                       d[j][1] = ge.dnrm2(n, ax, 1);
+                       d[j][1] = d[j][1] / Math.abs(d[j][0]);
+                    } // for (j = 0; j < nconv; j++);
+                    //            %-------------------------------%
+                    //           | Display computed residuals    |
+                    //           %-------------------------------%
+                                UI.setDataText("Ritz values and relative residuals: \n");
+                                for (i = 0; i < nconv; i++) {
+                               	 UI.setDataText("d["+i+"][0] = " + nf.format(d[i][0]) + " d["+i+"][1] = " + nf.format(d[i][1]) + "\n");
+                                }
+                 } // else ierr[0] == 0
+                 //        %------------------------------------------%
+                 //        | Print additional convergence information |
+                 //        %------------------------------------------%
+                          
+                          if ( info[0] == 1) {
+                          	UI.setDataText("Maximum number of iterations reached.\n");
+                           }
+                           else if ( info[0] == 3) {
+                          	UI.setDataText("No shifts could be applied during implicit Arnoldi update, try increasing NCV.\n");
+                           }     
+                  
+                           UI.setDataText("\n");
+                           UI.setDataText("DSDRV3\n");
+                           UI.setDataText("======\n");
+                           UI.setDataText("\n");
+                           UI.setDataText("Size of the matrix = " +  n + "\n");
+                           UI.setDataText("The number of Ritz values requested = " +  nev + "\n");
+                           UI.setDataText("The number of Arnoldi vectors generated ncv = " +  ncv + "\n");
+                           UI.setDataText("What portion of the spectrum: " +  which + "\n");
+                           UI.setDataText("The number of converged Ritz values = " +nconv + "\n");
+                           UI.setDataText("The number of Implicit Arnoldi update iterations taken = " +  iparam[2] + "\n");
+                           UI.setDataText("The number of OP*x = " +  iparam[8] + "\n");
+                           UI.setDataText("The convergence criterion = " + tol + "\n");
+                           UI.setDataText("\n");
+              } // else info[0] >= 0
+              return;
+        } // dsdrv3
+        
+        // ------------------------------------------------------------------------
+        //     Matrix vector subroutine
+        //     where the matrix is the 1 dimensional mass matrix
+        //     on the interval [0,1].
+        
+              private void mv3 (int n, double v[], double w[]) {
+              int           j;
+              //Double precision
+              //&                  v(n),w(n),
+              double h;
+              final double one = 1.0;
+              final double four = 4.0;
+              final double six = 6.0;
+              
+              w[0] = four*v[0] + v[1];
+              for  (j = 1; j < n-1; j++) {
+                 w[j] = v[j-1] + four*v[j] + v[j+1]; 
+              }
+              j = n-1;
+              w[j] = v[j-1] + four*v[j]; 
+        
+        //     Scale the vector w by h.
+        
+               h = one / ((double)(n+1)*six);
+               for (j = 0; j < n; j++) {
+            	   w[j] = h * w[j];
+               }
+              return;
+              } // mv3
+        
+        // --------------------------------------------------------------------
+        //     matrix vector subroutine
+        
+        //     The matrix used is the stiffness matrix obtained from the finite 
+        //     element discretization of the 1-dimensional discrete Laplacian
+        //     on the interval [0,1] with zero Dirichlet boundary condition using
+        //     piecewise linear elements.
+        
+              private void av3 (int n, double v[], double w[]) {
+              int           j;
+              //Double precision
+              //&                  v(n),w(n), two, one, h
+              double h;
+              final double one = 1.0;
+              final double two = 2.0;
+             
+              w[0] =  two*v[0] - v[1];
+              for (j = 1; j < n-1; j++) {
+                 w[j] = - v[j-1] + two*v[j] - v[j+1]; 
+              }
+              j = n-1;
+              w[j] = - v[j-1] + two*v[j]; 
+        
+              // Scale the vector w by (1 / h).
+        
+              h = one / (double)(n+1);
+              for (j = 0; j < n; j++) {
+            	  w[j] = (one/h) * w[j];
+              }
+              return;
+              } // av3
+              
+      private void dsdrv4() { 
+      
+      //     Program to illustrate the idea of reverse communication
+      //     in shift and invert mode for a generalized symmetric eigenvalue
+      //     problem.  The following program uses the two LAPACK subroutines 
+      //     dgttrf.f and dgttrs to factor and solve a tridiagonal system of 
+      //     equations.
+      
+      //     We implement example four of ex-sym.doc in DOCUMENTS directory
+      
+      // \Example-4
+      //     ... Suppose we want to solve A*x = lambda*M*x in inverse mode,
+      //         where A and M are obtained from the finite element discretrization
+      //         of the 1-dimensional discrete Laplacian
+      //                             d^2u / dx^2
+      //         on the interval [0,1] with zero Dirichlet boundary condition
+      //         using piecewise linear elements.
+      
+      //     ... OP = (inv[A - sigma*M])*M  and  B = M.
+      
+      //     ... Use mode 3 of DSAUPD.
+      
+      // \BeginLib
+      
+      // \Routines called:
+      //     dsaupd  ARPACK reverse communication interface routine.
+      //     dseupd  ARPACK routine that returns Ritz values and (optionally)
+      //             Ritz vectors.
+      //     dgttrf  LAPACK tridiagonal factorization routine.
+      //     dgttrs  LAPACK tridiagonal solve routine.
+      //     daxpy   Level 1 BLAS that computes y <- alpha*x+y.
+      //     dcopy   Level 1 BLAS that copies one vector to another.
+      //     dscal   Level 1 BLAS that scales a vector by a scalar.
+      //     dnrm2   Level 1 BLAS that computes the norm of a vector.
+      //     av4      Matrix vector multiplication routine that computes A*x.
+      //     mv4      Matrix vector multiplication routine that computes M*x.
+       
+      // \Author
+      //     Richard Lehoucq
+      //     Danny Sorensen
+      //     Chao Yang
+      //     Dept. of Computational &
+      //     Applied Mathematics
+      //     Rice University
+      //     Houston, Texas
+      
+      // \SCCS Information: @(#)
+      // FILE: sdrv4.F   SID: 2.4   DATE OF SID: 4/22/96   RELEASE: 2
+      
+      // \Remarks
+      //     1. None
+      
+      // \EndLib
+      // ----------------------------------------------------------------------     
+      
+      //     %-----------------------------%
+      //     | Define leading dimensions   |
+      //     | for all arrays.             |
+      //     | MAXN:   Maximum dimension   |
+      //     |         of the A allowed.   |
+      //     | MAXNEV: Maximum NEV allowed |
+      //     | MAXNCV: Maximum NCV allowed |
+      //     %-----------------------------%
+    	  
+    	  final int maxn = 256;
+          final int maxnev = 10;
+          final int maxncv = 25;
+          final int ldv = maxn;
+    	 
+    //     %--------------%
+    //     | Local Arrays |
+    //     %--------------%
+          double v[][] = new double[ldv][maxncv];
+          double workl[] = new double[maxncv*(maxncv+8)];
+          double workd[] = new double[3*maxn];
+          double d[][] = new double[maxncv][2];
+          double ds[] = new double[2 * maxncv];
+          double resid[] = new double[maxn];
+          double ad[] = new double[maxn];
+          double adl[] = new double[maxn];
+          double adu[] = new double[maxn];
+          double adu2[] = new double[maxn];
+          boolean select[] = new boolean[maxncv];
+          int iparam[] = new int[11];
+          int ipntr[] = new int[11];
+          int ipiv[] = new int[maxn];
+          
+          //     %---------------%
+          //     | Local Scalars |
+          //     %---------------%
+          
+        String bmat;
+        String which;
+        int ido[] = new int[1];
+        int info[] = new int[1];
+        int ierr[] = new int[1];
+        int nconv = 0;
+        int              n, nev, ncv, lworkl, i, j,
+                         maxitr, ishfts, mode;
+        boolean          rvec;
+        double sigma;
+        double tol, r1, r2, h;
+        double array[][];
+        int index;
+        double v1[];
+        double v2[];
+  
+  //     %------------%
+  //     | Parameters |
+  //     %------------%
+  
+        final double zero = 0.0;
+        final double one = 1.0;
+        final double two = 2.0;
+        final double four = 4.0;
+        final double six = 6.0;
+      
+      //     %-----------------------------%
+      //     | BLAS & LAPACK routines used |
+      //     %-----------------------------%
+      
+      //      Double precision
+      //     &                 dnrm2
+      //      external         daxpy, dcopy, dscal, dnrm2, dgttrf, dgttrs
+      
+      //     %--------------------%
+      //     | Intrinsic function |
+      //     %--------------------%
+      
+      //      intrinsic        abs
+      
+      //     %-----------------------%
+      //     | Executable statements |
+      //     %-----------------------%
+      
+      //     %----------------------------------------------------%
+      //     | The number N is the dimension of the matrix.  A    |
+      //     | generalized eigenvalue problem is solved (BMAT =   |
+      //     | 'G'.) NEV is the number of eigenvalues (closest to |
+      //     | the shift SIGMA) to be approximated.  Since the    |
+      //     | shift-invert mode is used, WHICH is set to 'LM'.   |
+      //     | The user can modify NEV, NCV, SIGMA to solve       |
+      //     | problems of different sizes, and to get different  |
+      //     | parts of the spectrum. However, The following      |
+      //     | conditions must be satisfied:                      |
+      //     |                   N <= MAXN,                       | 
+      //     |                 NEV <= MAXNEV,                     |
+      //     |             NEV + 1 <= NCV <= MAXNCV               | 
+      //     %----------------------------------------------------% 
+      
+            n = 100;
+            nev = 4;
+            ncv = 10;
+            if ( n > maxn ) {
+               UI.setDataText("ERROR with DSDRV4: N is greater than MAXN \n");
+               return;
+            }
+            else if ( nev > maxnev ) {
+               UI.setDataText("ERROR with DSDRV4: NEV is greater than MAXNEV \n");
+               return;
+            }
+            else if ( ncv > maxncv ) {
+               UI.setDataText("ERROR with DSDRV4: NCV is greater than MAXNCV \n");
+               return;
+            }
+            bmat = "G";
+            which = "LM";
+            sigma = zero; 
+      
+      //     %--------------------------------------------------%
+      //     | The work array WORKL is used in DSAUPD as        |
+      //     | workspace.  Its dimension LWORKL is set as       |
+      //     | illustrated below.  The parameter TOL determines |
+      //     | the stopping criterion.  If TOL<=0, machine      |
+      //     | precision is used.  The variable IDO is used for |
+      //     | reverse communication and is initially set to 0. |
+      //     | Setting INFO=0 indicates that a random vector is |
+      //     | generated in DSAUPD to start the Arnoldi         |
+      //     | iteration.                                       |
+      //     %--------------------------------------------------%
+      
+            lworkl = ncv*(ncv+8);
+            tol = zero; 
+            ido[0] = 0;
+            info[0] = 0;
+      
+      //     %---------------------------------------------------%
+      //     | This program uses exact shifts with respect to    |
+      //     | the current Hessenberg matrix (IPARAM(1) = 1).    |
+      //     | IPARAM(3) specifies the maximum number of Arnoldi |
+      //     | iterations allowed.  Mode 3 specified in the      |
+      //     | documentation of DSAUPD is used (IPARAM(7) = 3).  |
+      //     | All these options may be changed by the user.     |
+      //     | For details, see the documentation in DSAUPD.     |
+      //     %---------------------------------------------------%
+      
+            ishfts = 1;
+            maxitr = 300;
+            mode   = 3;
+      
+            iparam[0] = ishfts;
+            iparam[2] = maxitr; 
+            iparam[6] = mode ;
+      
+      //     %-------------------------------------------------------%
+      //     | Call LAPACK routine to factor the tridiagonal matrix  |
+      //     | (A-SIGMA*M).  The matrix A is the 1-d discrete        |
+      //     | Laplacian. The matrix M is the associated mass matrix |
+      //     | arising from using piecewise linear finite elements   |
+      //     | on the interval [0, 1].                               |
+      //     %-------------------------------------------------------%
+      
+            h = one / (double)(n+1);
+            r1 = (four / six) * h;
+            r2 = (one / six) * h;
+            for (j=0; j < n; j++) {
+               ad[j] = two/h - sigma * r1;
+               adl[j] = -one/h - sigma * r2;
+            }
+            for (j = 0; j < n; j++) {
+            	adu[j] = adl[j];
+            }
+            dgttrf (n, adl, ad, adu, adu2, ipiv, ierr);
+            if (ierr[0] != 0) {
+               UI.setDataText("Error with dgttrf in dsdrv4.\n");
+               return;
+            }
+      
+      //     %-------------------------------------------%
+      //     | M A I N   L O O P (Reverse communication) |
+      //     %-------------------------------------------%
+      
+      while (true) {
+      
+      //        %---------------------------------------------%
+      //        | Repeatedly call the routine DSAUPD and take |
+      //        | actions indicated by parameter IDO until    |
+      //        | either convergence is indicated or maxitr   |
+      //        | has been exceeded.                          |
+      //        %---------------------------------------------%
+      
+               dsaupd ( ido, bmat, n, which, nev, tol, resid,
+                        ncv, v, ldv, iparam, ipntr, workd, workl,
+                        lworkl, info );
+      
+               if (ido[0] == -1) {
+      
+      //           %--------------------------------------------%
+      //           | Perform  y <--- OP*x = inv[A-SIGMA*M]*M*x  |
+      //           | to force the starting vector into the      |
+      //           | range of OP.  The user should supply       |
+      //           | his/her own matrix vector multiplication   |
+      //           | routine and a linear system solver here.   |
+      //           | The matrix vector multiplication routine   |
+      //           | takes workd(ipntr(1)) as the input vector. |
+      //           | The final result is returned to            |
+      //           | workd(ipntr(2)).                           |
+      //           %--------------------------------------------%
+      
+                  v1 = new double[n];
+                  for (i = 0; i < n; i++) {
+                	  v1[i] = workd[ipntr[0]-1+i];
+                  }
+                  v2 = new double[n];
+            	  mv4 (n, v1, v2);
+            	  for (i = 0; i < n; i++) {
+            		  workd[ipntr[1]-1+i] = v2[i];
+            	  }
+      
+            	  array = new double[n][1];
+              	  for (i = 0; i < n; i++) {
+              		array[i][0] = workd[ipntr[1]-1+i];
+              	  }
+                  dgttrs ('N', n, 1, adl, ad, adu, adu2, ipiv, 
+                          array, n, ierr); 
+                  for (i = 0; i < n; i++) {
+              		workd[ipntr[1]-1+i] = array[i][0];
+              	  }
+                  if (ierr[0] != 0) { 
+                	 UI.setDataText("Error with dgttrs in dsdrv4\n");
+                	 return;
+                  }
+      //           %-----------------------------------------%
+      //           | L O O P   B A C K to call DSAUPD again. |
+      //           %-----------------------------------------%
+               } // if (ido[0] == -1)
+                  else if (ido[0] == 1) {
+      
+      //           %-----------------------------------------%
+      //           | Perform y <-- OP*x = inv[A-sigma*M]*M*x |
+      //           | M*x has been saved in workd(ipntr(3)).  |
+      //           | the user only needs the linear system   |
+      //           | solver here that takes workd(ipntr(3)   |
+      //           | as input, and returns the result to     |
+      //           | workd(ipntr(2)).                        | 
+      //           %-----------------------------------------%
+      
+                  for (i = 0; i < n; i++) {
+                	  workd[ipntr[1]-1+i] = workd[ipntr[2]-1+i];
+                  }
+                  array = new double[n][1];
+              	  for (i = 0; i < n; i++) {
+              		array[i][0] = workd[ipntr[1]-1+i];
+              	  }
+                  dgttrs ('N', n, 1, adl, ad, adu, adu2, ipiv, 
+                          array, n, ierr);
+                  for (i = 0; i < n; i++) {
+                		workd[ipntr[1]-1+i] = array[i][0];
+                  }
+                  if (ierr[0] != 0) { 
+                 	 UI.setDataText("Error with dgttrs in dsdrv4\n");
+                 	 return;
+                   }
+                  } // else if (ido[0] == 1)
+                  else if (ido[0] == 2) {
+      
+      //           %-----------------------------------------%
+      //           |          Perform  y <--- M*x            |
+      //           | Need the matrix vector multiplication   |
+      //           | routine here that takes workd(ipntr(1)) |
+      //           | as the input and returns the result to  |
+      //           | workd(ipntr(2)).                        |
+      //           %-----------------------------------------%
+      
+                  v1 = new double[n];
+                  for (i = 0; i <n; i++) {
+                    v1[i] = workd[ipntr[0]-1+i];
+                  }
+                  v2 = new double[n];
+                  mv4 (n, v1, v2);
+                  for (i = 0; i < n; i++) {
+              		workd[ipntr[1]-1+i] = v2[i];
+              	}
+      
+      //           %-----------------------------------------%
+      //           | L O O P   B A C K to call DSAUPD again. |
+      //           %-----------------------------------------%
+             } // else if (ido[0] == 2)
+                  else {
+                	  break;
+                  }
+      
+      } // while (true)
+      
+      //     %-----------------------------------------%
+      //     | Either we have convergence, or there is |
+      //     | an error.                               |
+      //     %-----------------------------------------%
+      
+            if ( info[0] < 0 ) {
+      
+      //        %--------------------------%
+      //        | Error message, check the |
+      //        | documentation in DSAUPD. |
+      //        %--------------------------%
+      
+               UI.setDataText("Error with dsaupd info[0] = " + info[0] + "\n");
+            } // if ( info[0] < 0 )
+            else { // info[0] >= 0
+      
+      //        %-------------------------------------------%
+      //        | No fatal errors occurred.                 |
+      //        | Post-Process using DSEUPD.                |
+      //        |                                           |
+      //        | Computed eigenvalues may be extracted.    |
+      //        |                                           |
+      //        | Eigenvectors may also be computed now if  |
+      //        | desired.  (indicated by rvec = .true.)    |
+      //        %-------------------------------------------%
+      //
+               rvec = true;
+      
+               dseupd ( rvec, "A", select, ds, v, ldv, sigma,
+                   bmat, n, which, nev, tol, resid, ncv, v, ldv, 
+                   iparam, ipntr, workd, workl, lworkl, ierr );
+               index = 0;
+               for (j = 0; j < 2; j++) {
+              	 for (i = 0; i < maxncv; i++) {
+              	     d[i][j] = ds[index++]; 
+              	 }
+               }
+      
+      //        %----------------------------------------------%
+      //        | Eigenvalues are returned in the first column |
+      //        | of the two dimensional array D and the       |
+      //        | corresponding eigenvectors are returned in   |
+      //        | the first NEV columns of the two dimensional |
+      //        | array V if requested.  Otherwise, an         |
+      //        | orthogonal basis for the invariant subspace  |
+      //        | corresponding to the eigenvalues in D is     |
+      //        | returned in V.                               |
+      //        %----------------------------------------------%
+      //
+               if ( ierr[0] != 0 ) { 
+            	   UI.setDataText("Error with dseupd ierr[0] = " + ierr[0] + "\n");
+               } // if (ierr[0] != 0)
+               else { // ierr[0] == 0
+      
+                  nconv =  iparam[4];
+                  for (j = 0; j < nconv; j++) {
+      
+      //              %---------------------------%
+      //              | Compute the residual norm |
+      //              |                           |
+      //              |   ||  A*x - lambda*x ||   |
+      //              |                           |
+      //              | for the NCONV accurately  |
+      //              | computed eigenvalues and  |
+      //              | eigenvectors.  (iparam(5) |
+      //              | indicates how many are    |
+      //              | accurate to the requested |
+      //              | tolerance)                |
+      //              %---------------------------%
+        
+                     v1 = new double[n];
+                     for (i = 0; i < n; i++) {
+                    	 v1[i] = v[i][j];
+                     }
+                	 av4(n, v1, workd);
+                	 v2 = new double[n];
+                     mv4(n, v1, v2);
+                     for (i = 0; i < n; i++) {
+                    	 workd[n+i] = v2[i];
+                     }
+                     for (i = 0; i < n; i++) {
+                    	 workd[i] = workd[i] + (-d[j][0])*workd[n+i];
+                     }
+                     d[j][1] =  ge.dnrm2(n, workd, 1);
+                     d[j][1] = d[j][1] / Math.abs(d[j][0]);
+                  } // for (j = 0; j < nconv; j++)
+                              UI.setDataText("Ritz values and relative residuals: \n");
+                              for (i = 0; i < nconv; i++) {
+                             	 UI.setDataText("d["+i+"][0] = " + nf.format(d[i][0]) + " d["+i+"][1] = " + nf.format(d[i][1]) + "\n");
+                              }
+               } // else ierr[0] == 0
+               //        %------------------------------------------%
+               //        | Print additional convergence information |
+               //        %------------------------------------------%
+                        
+                        if ( info[0] == 1) {
+                        	UI.setDataText("Maximum number of iterations reached.\n");
+                         }
+                         else if ( info[0] == 3) {
+                        	UI.setDataText("No shifts could be applied during implicit Arnoldi update, try increasing NCV.\n");
+                         }     
+                
+                         UI.setDataText("\n");
+                         UI.setDataText("DSDRV4\n");
+                         UI.setDataText("======\n");
+                         UI.setDataText("\n");
+                         UI.setDataText("Size of the matrix = " +  n + "\n");
+                         UI.setDataText("The number of Ritz values requested = " +  nev + "\n");
+                         UI.setDataText("The number of Arnoldi vectors generated ncv = " +  ncv + "\n");
+                         UI.setDataText("What portion of the spectrum: " +  which + "\n");
+                         UI.setDataText("The number of converged Ritz values = " +nconv + "\n");
+                         UI.setDataText("The number of Implicit Arnoldi update iterations taken = " +  iparam[2] + "\n");
+                         UI.setDataText("The number of OP*x = " +  iparam[8] + "\n");
+                         UI.setDataText("The convergence criterion = " + tol + "\n");
+                         UI.setDataText("\n");
+            } // else info[0] >= 0
+            return;
+      } // dsdr4
+      // ------------------------------------------------------------------------
+      //     matrix vector subroutine
+      //     The matrix used is the 1 dimensional mass matrix
+      //     on the interval [0,1].
+      
+            private void mv4 (int n, double v[], double w[]) {
+            int         j;
+            //Double precision
+            //&                v(n),w(n)
+            double h;
+            final double one = 1.0;
+            final double four = 4.0;
+            final double six = 6.0;
+            
+            w[0] =  four*v[0] + v[1];
+            for (j = 1; j < n-1; j++) {
+               w[j] = v[j-1] + four*v[j] + v[j+1]; 
+            }
+            j = n-1;
+            w[j] = v[j-1] + four*v[j]; 
+      
+      //     Scale the vector w by h.
+      
+            h = one / ( six*(double)(n+1));
+            for (j = 0; j < n; j++) {
+            	w[j] = h * w[j];
+            }
+            return;
+            } // mv4
+      // ------------------------------------------------------------------------
+      //     matrix vector subroutine
+      //     where the matrix is the finite element discretization of the 
+      //     1 dimensional discrete Laplacian on [0,1] with zero Dirichlet 
+      //     boundary condition using piecewise linear elements.
+      
+            private void av4 (int n, double v[], double w[]) {
+            int           j;
+            //Double precision
+            //&                  v(n), w(n)
+            double h;
+            final double one = 1.0;
+            final double two = 2.0;
+            
+            w[0] =  two*v[0] - v[1];
+            for (j = 1; j < n-1; j++) {
+               w[j] = - v[j-1] + two*v[j] - v[j+1]; 
+            }
+            j = n-1;
+            w[j] = - v[j-1] + two*v[j]; 
+      
+      //     Scale the vector w by (1/h)
+      
+            h = one / (double)(n+1);
+            for (j = 0; j < n; j++) {
+            	w[j] = (one/h) * w[j];
+            }
+            return;
+            } // av4
+
+
 
     // \par Purpose:
     	//  =============
