@@ -14246,7 +14246,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * 
      * @return double
      */
-    private double dlanhs(final char norm, final int n, final double[][] A, final int lda, final double[] work) {
+    public double dlanhs(final char norm, final int n, final double[][] A, final int lda, final double[] work) {
         int i;
         int j;
         final double[] scale = new double[1];
