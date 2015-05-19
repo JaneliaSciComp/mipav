@@ -3304,7 +3304,9 @@ public class SparseEigenvalue implements java.io.Serializable {
       final double one = 1.0;
       final double zero = 0.0;
 	  final int ntypes = 12;
-	  final int ntests = 7;
+	  //final int ntests = 7;
+	  // Test 6 is not present and tests 4 and 5 are not used
+	  final int ntests = 4;
 	  //     ..
 	  //     .. Local Scalars ..
 	  boolean            trfcon, zerot;
@@ -3317,8 +3319,9 @@ public class SparseEigenvalue implements java.io.Serializable {
 	  int ku[] = new int[1];
 	  int mode[] = new int[1];
 	  int info[] = new int[1];
+	  int nerrs;
 	  int            i, imat, in, irhs, itran, ix, izero, j,
-                     k, koff, lda, m, n, nerrs, nfail,
+                     k, koff, lda, m, n, nfail,
                      nimat, nrhs, nrun;
 	  int index;
 	  double anorm[] = new double[1];
@@ -3332,6 +3335,12 @@ public class SparseEigenvalue implements java.io.Serializable {
 	  double result[ ] = new double[ntests];
 	  double z[] = new double[ 3 ];
 	  double array[][];
+	  double v1[];
+	  double v2[];
+	  double v3[];
+	  double v4[];
+	  double v5[];
+	  double absSum;
 	  //     ..
 	  //     .. External Functions ..
 	  //       DOUBLE PRECISION   dasum, dget06, dlangt
@@ -3418,183 +3427,264 @@ public class SparseEigenvalue implements java.io.Serializable {
 	  
 	                  if (info[0] != 0 ) {
 	                	 if (nfail == 0 && nerrs == 0) {
-	                	     UI.setDataText("DGT: General tridaigonal\n");
-	                	     UI.setDataText("Matrix types (1-6 have specfied condition numbers):\n");
-	                	     UI.setDataText("1. Diagonal\n");
-	                	     UI.setDataText("2. Random, CNDNUM = 2\n");
-	                	     UI.setDataText("3. Random, CNDNUM = sqrt(0.1/EPS)\n");
-	                	     UI.setDataText("4. Random, CNDNUM = 0.1/EPS\n");
-	                	     UI.setDataText("5. Scaled near underflow\n");
-	                	     UI.setDataText("6. Scaled near overflow\n");
-	                	     UI.setDataText("7. Random, unspecified CNDNUM\n");
-	                	     UI.setDataText("8. First column zero\n");
-	                	     UI.setDataText("9. Last column zero\n");
-	                	     UI.setDataText("10. Last n/2 columns zero\n");
-	                	     UI.setDataText("11. Scaled near underflow\n");
-	                	     UI.setDataText("12. Scaled near overflow\n");
-	                	     UI.setDataText("Test ratios: \n");
-	                	     UI.setDataText("1. norm (L * U - A) / (N * norm(A) * EPS)\n");
-	                	     UI.setDataText("2. norm(B - A * X) / (norm(A) * norm(X) * EPS)\n");
-	                	     UI.setDataText("3. norm(X - XACT) / (norm(XACT) * CNDNUM * EPS)\n");
-	                	     UI.setDataText("4. norm(X - XACT) / (norm(XACT) * CNDNUM * EPS), refined\n");
-	                	     UI.setDataText("5. norm(X - XACT) / (norm(XACT) * (error bound))\n");
-	                	     UI.setDataText("6. (backward error) / EPS)\n");
-	                	     UI.setDataText("7. RCOND * CNDNUM - 1.0\n");
+	                	     printHeader();
 	                	 }
-	                	 nerrs = nerrs + 1;
+	                	 nerrs = nerrs+1;
 	                	 UI.setDataText("Error code from dlatms info[0] = " + info[0] + "\n");
 	                	 UI.setDataText("M = " + n + "\n");
 	                	 UI.setDataText("N = " + n + "\n");
 	                	 UI.setDataText("type = " + imat + "\n");
 	                     continue;
 	                  } // if (info[0] != 0)
-	                     izero = 0;
-	  276 *
-	  277                IF( n.GT.1 ) THEN
-	  278                   CALL dcopy( n-1, af( 4 ), 3, a, 1 )
-	  279                   CALL dcopy( n-1, af( 3 ), 3, a( n+m+1 ), 1 )
-	  280                END IF
-	  281                CALL dcopy( n, af( 2 ), 3, a( m+1 ), 1 )
+	                  izero = 0;
+	 
+	                  if ( n > 1 ) {
+	                	  for (i = 0; i < n-1; i++) {
+	                		  a[i] = af[3 + 3*i];
+	                	  }
+	                      for (i = 0; i < n-1; i++) {
+	                    	  a[n+m+i] = af[2 + 3*i];
+	                      }
+	                  }
+	                  for (i = 0; i < n; i++) {
+	                	  a[m+i] = af[1 + 3*i];
+	                  }
 	               } // if (imat <= 6)
-	  282          else { // imat > 6
-	  283 *
-	  284 *              Types 7-12:  generate tridiagonal matrices with
-	  285 *              unknown condition numbers.
-	  286 *
-	  287                IF( .NOT.zerot .OR. .NOT.dotype( 7 ) ) THEN
-	  288 *
-	  289 *                 Generate a matrix with elements from [-1,1].
-	  290 *
-	  291                   CALL dlarnv( 2, iseed, n+2*m, a )
-	  292                   IF( anorm.NE.one )
-	  293      $               CALL dscal( n+2*m, anorm, a, 1 )
-	  294                ELSE IF( izero.GT.0 ) THEN
-	  295 *
-	  296 *                 Reuse the last matrix by copying back the zeroed out
-	  297 *                 elements.
-	  298 *
-	  299                   IF( izero.EQ.1 ) THEN
-	  300                      a( n ) = z( 2 )
-	  301                      IF( n.GT.1 )
-	  302      $                  a( 1 ) = z( 3 )
-	  303                   ELSE IF( izero.EQ.n ) THEN
-	  304                      a( 3*n-2 ) = z( 1 )
-	  305                      a( 2*n-1 ) = z( 2 )
-	  306                   ELSE
-	  307                      a( 2*n-2+izero ) = z( 1 )
-	  308                      a( n-1+izero ) = z( 2 )
-	  309                      a( izero ) = z( 3 )
-	  310                   END IF
-	  311                END IF
-	  312 *
-	  313 *              If IMAT > 7, set one column of the matrix to 0.
-	  314 *
-	  315                IF( .NOT.zerot ) THEN
-	  316                   izero = 0
-	  317                ELSE IF( imat.EQ.8 ) THEN
-	  318                   izero = 1
-	  319                   z( 2 ) = a( n )
-	  320                   a( n ) = zero
-	  321                   IF( n.GT.1 ) THEN
-	  322                      z( 3 ) = a( 1 )
-	  323                      a( 1 ) = zero
-	  324                   END IF
-	  325                ELSE IF( imat.EQ.9 ) THEN
-	  326                   izero = n
-	  327                   z( 1 ) = a( 3*n-2 )
-	  328                   z( 2 ) = a( 2*n-1 )
-	  329                   a( 3*n-2 ) = zero
-	  330                   a( 2*n-1 ) = zero
-	  331                ELSE
-	  332                   izero = ( n+1 ) / 2
-	  333                   DO 20 i = izero, n - 1
-	  334                      a( 2*n-2+i ) = zero
-	  335                      a( n-1+i ) = zero
-	  336                      a( i ) = zero
-	  337    20             CONTINUE
-	  338                   a( 3*n-2 ) = zero
-	  339                   a( 2*n-1 ) = zero
-	  340                END IF
-	  341             } // else imat > 6
-	  342 *
-	  343 *+    TEST 1
-	  344 *           Factor A as L*U and compute the ratio
-	  345 *              norm(L*U - A) / (n * norm(A) * EPS )
-	  346 *
-	  347             CALL dcopy( n+2*m, a, 1, af, 1 )
-	  348             srnamt = 'DGTTRF'
-	  349             CALL dgttrf( n, af, af( m+1 ), af( n+m+1 ), af( n+2*m+1 ),
-	  350      $                   iwork, info )
-	  351 *
-	  352 *           Check error code from DGTTRF.
-	  353 *
-	  354             IF( info.NE.izero )
-	  355      $         CALL alaerh( path, 'DGTTRF', info, izero, ' ', n, n, 1,
-	  356      $                      1, -1, imat, nfail, nerrs, nout )
-	  357             trfcon = info.NE.0
-	  358 *
-	  359             CALL dgtt01( n, a, a( m+1 ), a( n+m+1 ), af, af( m+1 ),
-	  360      $                   af( n+m+1 ), af( n+2*m+1 ), iwork, work, lda,
-	  361      $                   rwork, result( 1 ) )
-	  362 *
-	  363 *           Print the test ratio if it is .GE. THRESH.
-	  364 *
-	  365             IF( result( 1 ).GE.thresh ) THEN
-	  366                IF( nfail.EQ.0 .AND. nerrs.EQ.0 )
-	  367      $            CALL alahd( nout, path )
-	  368                WRITE( nout, fmt = 9999 )n, imat, 1, result( 1 )
-	  369                nfail = nfail + 1
-	  370             END IF
-	  371             nrun = nrun + 1
-	  372 *
-	  373             DO 50 itran = 1, 2
-	  374                trans = transs( itran )
-	  375                IF( itran.EQ.1 ) THEN
-	  376                   norm = 'O'
-	  377                ELSE
-	  378                   norm = 'I'
-	  379                END IF
-	  380                anorm = dlangt( norm, n, a, a( m+1 ), a( n+m+1 ) )
-	  381 *
-	  382                IF( .NOT.trfcon ) THEN
-	  383 *
-	  384 *                 Use DGTTRS to solve for one column at a time of inv(A)
-	  385 *                 or inv(A^T), computing the maximum column sum as we
-	  386 *                 go.
-	  387 *
-	  388                   ainvnm = zero
-	  389                   DO 40 i = 1, n
-	  390                      DO 30 j = 1, n
-	  391                         x( j ) = zero
-	  392    30                CONTINUE
-	  393                      x( i ) = one
-	  394                      CALL dgttrs( trans, n, 1, af, af( m+1 ),
-	  395      $                            af( n+m+1 ), af( n+2*m+1 ), iwork, x,
-	  396      $                            lda, info )
-	  397                      ainvnm = max( ainvnm, dasum( n, x, 1 ) )
-	  398    40             CONTINUE
-	  399 *
-	  400 *                 Compute RCONDC = 1 / (norm(A) * norm(inv(A))
-	  401 *
-	  402                   IF( anorm.LE.zero .OR. ainvnm.LE.zero ) THEN
-	  403                      rcondc = one
-	  404                   ELSE
-	  405                      rcondc = ( one / anorm ) / ainvnm
-	  406                   END IF
-	  407                   IF( itran.EQ.1 ) THEN
-	  408                      rcondo = rcondc
-	  409                   ELSE
-	  410                      rcondi = rcondc
-	  411                   END IF
-	  412                ELSE
-	  413                   rcondc = zero
-	  414                END IF
-	  415 *
-	  416 *+    TEST 7
-	  417 *              Estimate the reciprocal of the condition number of the
-	  418 *              matrix.
-	  419 *
-	  420                srnamt = 'DGTCON'
+	               else { // imat > 6
+	  
+	  //              Types 7-12:  generate tridiagonal matrices with
+	  //              unknown condition numbers.
+	  
+	                  if (!zerot || !dotype[6] ) {
+	  
+	  //                 Generate a matrix with elements from [-1,1].
+	  
+	                     ge.dlarnv( 2, iseed, n+2*m, a );
+	                     if (anorm[0] != one ) {
+	                    	 for (i = 0; i < n+2*m; i++) {
+	                    		 a[i] = anorm[0] * a[i];
+	                    	 }
+	                     } // IF (anorm[0] != one)
+	                  } // if (!zerot || !dotype[6] )
+	                  else if ( izero > 0 ) {
+	  
+	  //                 Reuse the last matrix by copying back the zeroed out
+	  //                 elements.
+	  
+	                     if ( izero == 1 ) {
+	                        a[ n-1 ] = z[ 1 ];
+	                        if ( n > 1 ) {
+	                           a[ 0 ] = z[ 2 ];
+	                        }
+	                     } // if (izero == 1)
+	                     else if ( izero == n ) {
+	                        a[ 3*n-3 ] = z[ 0 ];
+	                        a[ 2*n-2 ] = z[ 1 ];
+	                     } // else if (izero == n)
+	                     else {
+	                        a[ 2*n-3+izero ] = z[ 0 ];
+	                        a[ n-2+izero ] = z[ 1 ];
+	                        a[ izero-1 ] = z[ 2 ];
+	                     } // else
+	                  }  // else if (izero > 0)    
+	  
+	  //              If IMAT > 7, set one column of the matrix to 0.
+	 
+	                  if ( !zerot ) {
+	                     izero = 0;
+	                  }
+	                  else if ( imat == 8 ) {
+	                     izero = 1;
+	                     z[ 1 ] = a[ n-1 ];
+	                     a[ n-1 ] = zero;
+	                     if ( n > 1 ) {
+	                        z[ 2 ] = a[ 0 ];
+	                        a[ 0 ] = zero;
+	                     } // if (n > 1)
+	                  } // else if (imat == 8)
+	                  else if ( imat == 9 ) {
+	                     izero = n;
+	                     z[ 0 ] = a[ 3*n-3 ];
+	                     z[ 1 ] = a[ 2*n-2 ];
+	                     a[ 3*n-3 ] = zero;
+	                     a[ 2*n-2 ] = zero;
+	                  } // else if (imat == 9)
+	                  else {
+	                     izero = ( n+1 ) / 2;
+	                     for (i = izero; i <= n - 1; i++) {
+	                        a[ 2*n-3+i ] = zero;
+	                        a[ n-2+i ] = zero;
+	                        a[ i-1 ] = zero;
+	                     } // for (i = izero; i <= n - 1; i++)
+	                     a[ 3*n-3 ] = zero;
+	                     a[ 2*n-2 ] = zero;
+	                  } // else 
+	               } // else imat > 6
+	  
+	  //    TEST 1
+	  //           Factor A as L*U and compute the ratio
+	  //              norm(L*U - A) / (n * norm(A) * EPS )
+	  
+	               for (i = 0; i < n+2*m; i++) {
+	            	   af[i] = a[i];
+	               }
+	               srnamc_srnamt = "DGTTRF";
+	               v1 = new double[n];
+	               for (i = 0; i < n; i++) {
+	            	   v1[i] = af[m+i];
+	               }
+	               v2 = new double[n-1];
+	               for (i = 0; i < n-1; i++) {
+	            	   v2[i] = af[n+m+i];
+	               }
+	               v3 = new double[n-2];
+	               dgttrf( n, af, v1, v2, v3,
+	                      iwork, info );
+	               for (i = 0; i < n; i++) {
+	            	   af[m+i] = v1[i];
+	               }
+	               for (i = 0; i < n-1; i++) {
+	            	   af[n+m+i] = v2[i];
+	               }
+	               for (i = 0; i < n-2; i++) {
+	            	   af[n+2*m+i] = v3[i];
+	               }
+	 
+	  //           Check error code from DGTTRF.
+	  
+	               if ( info[0] != izero ) {
+	            	     if (nfail == 0 && nerrs == 0) {
+	            	         printHeader();
+	            	     }
+	            	     nerrs = nerrs + 1;
+	            	     if (info[0] != izero && izero != 0) {
+	            	    	 UI.setDataText("dgttrf returned with info[0] = " + info[0] + " instead of " + izero + "\n");
+	            	    	 UI.setDataText("M = " + n + "\n");
+	            	    	 UI.setDataText("N = " + n + "\n");
+	            	    	 UI.setDataText("NB = -1\n");
+	            	    	 UI.setDataText("type = " + imat + "\n");
+	            	     }
+	            	     else {
+	            	    	 UI.setDataText("dgttrf returned with info[0] = " + info[0] + "\n");
+	            	    	 UI.setDataText("M = " + n + "\n");
+	            	    	 UI.setDataText("N = " + n + "\n");
+	            	    	 UI.setDataText("NB = -1\n");
+	            	    	 UI.setDataText("type = " + imat + "\n");	 
+	            	     }
+	               } // if (info[0] != izero)
+	               trfcon = info[0] != 0;
+	  
+	               v1 = new double[n];
+	               for (i = 0; i < n; i++) {
+	            	   v1[i] = a[m+i];   
+	               }
+	               v2 = new double[n-1];
+	               for (i = 0; i < n-1; i++) {
+	            	   v2[i] = a[n+m+i];
+	               }
+	               v3 = new double[n];
+	               for (i = 0; i < n; i++) {
+	            	   v3[i] = af[m+i];
+	               }
+	               v4 = new double[n-1];
+	               for (i = 0; i < n-1; i++) {
+	            	   v4[i] = af[n+m+i];
+	               }
+	               v5 = new double[n-2];
+	               for (i = 0; i < n-2; i++) {
+	            	   v5[i] = af[n+2*m+i];
+	               }
+	               dgtt01( n, a, v1, v2, af, v3,
+	                       v4, v5, iwork, work, lda,
+	                       rwork, result );
+	  
+	  //           Print the test ratio if it is .GE. THRESH.
+	 
+	               if ( result[0] >= thresh ) {
+	                  if ( nfail == 0 && nerrs == 0 ) {
+	                      printHeader();
+	                  }
+	                  UI.setDataText("N = " + n + "\n");
+	                  UI.setDataText("type = " + imat + "\n");
+	                  UI.setDataText("Test 1 gives result[0] = " + nf.format(result[0]) + "\n");
+	                  nfail = nfail + 1;
+	               } // if (result[0] >= thresh)
+	               nrun = nrun + 1;
+	  
+	               for ( itran = 1; itran <= 2; itran++) {
+	                  trans = transs[ itran-1];
+	                  if ( itran == 1 ) {
+	                     norm = 'O';
+	                  }
+	                  else {
+	                     norm = 'I';
+	                  }
+	                  v1 = new double[n];
+	                  for (i = 0; i < n; i++) {
+	                	  v1[i] = a[m+i];
+	                  }
+	                  v2 = new double[n-1];
+	                  for (i = 0; i < n-1; i++) {
+	                	  v2[i] = a[n+m+i];
+	                  }
+	                  anorm = dlangt( norm, n, a, v1, v2 );
+	  
+	                  if (!trfcon ) {
+	  
+	  //                 Use DGTTRS to solve for one column at a time of inv(A)
+	  //                 or inv(A^T), computing the maximum column sum as we
+	  //                 go.
+	  
+	                     ainvnm = zero;
+	                     v3 = new double[n-2];
+	                    for (i = 0; i < n; i++) {
+	                        for (j = 0; j < n; j++) {
+	                           x[ j ] = zero;
+	                        } // for (j = 0; j < n; j++)
+	                        x[ i ] = one;
+	                        for (k = 0; k < n; k++) {
+	                        	v1[k] = af[m+k];
+	                        }
+	                        for (k = 0; k < n-1; k++) {
+	                        	v2[k] = af[n+m+k];
+	                        }
+	                        for (k = 0; k < n-2; k++) {
+	                        	v3[k] = af[n+2*m+i];
+	                        } 
+	                        dgttrs( trans, n, 1, af, v1,
+	                                v2, v3, iwork, x,
+	                                lda, info );
+	                        absSum = 0.0;
+	                        for (k = 0; k < n; k++) {
+	                        	absSum += Math.abs(x[k]);
+	                        }
+	                        ainvnm = Math.max( ainvnm, absSum);
+	                    } // for (i = 0; i < n; i++)
+	  
+	  //                 Compute RCONDC = 1 / (norm(A) * norm(inv(A))
+	  
+	                     if ( anorm <= zero || ainvnm <= zero ) {
+	                        rcondc = one;
+	                     }
+	                     else {
+	                        rcondc = ( one / anorm ) / ainvnm;
+	                     }
+	                     if ( itran == 1 ) {
+	                        rcondo = rcondc;
+	                     }
+	                     else {
+	                        rcondi = rcondc;
+	                     }
+	                  } // if (!trfcon)
+	                  else {
+	                     rcondc = zero;
+	                  }
+	  
+	  //    TEST 7
+	  //              Estimate the reciprocal of the condition number of the
+	  //              matrix.
+	  
+	                  srnamc_srnamt = "DGTCON";
 	  421                CALL dgtcon( norm, n, af, af( m+1 ), af( n+m+1 ),
 	  422      $                      af( n+2*m+1 ), iwork, anorm, rcond, work,
 	  423      $                      iwork( n+1 ), info )
@@ -3617,13 +3707,14 @@ public class SparseEigenvalue implements java.io.Serializable {
 	  440                   nfail = nfail + 1
 	  441                END IF
 	  442                nrun = nrun + 1
-	  443    50       CONTINUE
-	  444 *
-	  445 *           Skip the remaining tests if the matrix is singular.
-	  446 *
-	  447             IF( trfcon )
-	  448      $         go to 100
-	  449 *
+	               } // for ( itran = 1; itran <= 2; itran++)
+	  
+	  //           Skip the remaining tests if the matrix is singular.
+	  
+	               if ( trfcon ) {
+	                  continue;
+	               }
+	  
 	  450             DO 90 irhs = 1, nns
 	  451                nrhs = nsval( irhs )
 	  452 *
@@ -3674,33 +3765,35 @@ public class SparseEigenvalue implements java.io.Serializable {
 	  497                   CALL dget04( n, nrhs, x, lda, xact, lda, rcondc,
 	  498      $                         result( 3 ) )
 	  499 *
-	  500 *+    TESTS 4, 5, and 6
-	  501 *                 Use iterative refinement to improve the solution.
-	  502 *
-	  503                   srnamt = 'DGTRFS'
-	  504                   CALL dgtrfs( trans, n, nrhs, a, a( m+1 ), a( n+m+1 ),
-	  505      $                         af, af( m+1 ), af( n+m+1 ),
-	  506      $                         af( n+2*m+1 ), iwork, b, lda, x, lda,
-	  507      $                         rwork, rwork( nrhs+1 ), work,
-	  508      $                         iwork( n+1 ), info )
-	  509 *
-	  510 *                 Check error code from DGTRFS.
-	  511 *
-	  512                   IF( info.NE.0 )
-	  513      $               CALL alaerh( path, 'DGTRFS', info, 0, trans, n, n,
-	  514      $                            -1, -1, nrhs, imat, nfail, nerrs,
-	  515      $                            nout )
-	  516 *
-	  517                   CALL dget04( n, nrhs, x, lda, xact, lda, rcondc,
-	  518      $                         result( 4 ) )
-	  519                   CALL dgtt05( trans, n, nrhs, a, a( m+1 ), a( n+m+1 ),
-	  520      $                         b, lda, x, lda, xact, lda, rwork,
-	  521      $                         rwork( nrhs+1 ), result( 5 ) )
-	  522 *
-	  523 *                 Print information about the tests that did not pass
-	  524 *                 the threshold.
-	  525 *
-	  526                   DO 70 k = 2, 6
+	  // *+    TESTS 4, 5, and 6
+	  // No test 6 is present
+	  // *                 Use iterative refinement to improve the solution.
+	  // *
+	  //                   srnamt = 'DGTRFS'
+	  //                   CALL dgtrfs( trans, n, nrhs, a, a( m+1 ), a( n+m+1 ),
+	  //      $                         af, af( m+1 ), af( n+m+1 ),
+	  //      $                         af( n+2*m+1 ), iwork, b, lda, x, lda,
+	  //      $                         rwork, rwork( nrhs+1 ), work,
+	  //      $                         iwork( n+1 ), info )
+	  // *
+	  // *                 Check error code from DGTRFS.
+	  // *
+	  //                   IF( info.NE.0 )
+	  //      $               CALL alaerh( path, 'DGTRFS', info, 0, trans, n, n,
+	  //      $                            -1, -1, nrhs, imat, nfail, nerrs,
+	  //      $                            nout )
+	  // *
+	  //                   CALL dget04( n, nrhs, x, lda, xact, lda, rcondc,
+	  //      $                         result( 4 ) )
+	  //                   CALL dgtt05( trans, n, nrhs, a, a( m+1 ), a( n+m+1 ),
+	  //      $                         b, lda, x, lda, xact, lda, rwork,
+	  //      $                         rwork( nrhs+1 ), result( 5 ) )
+	  // *
+	  //                 Print information about the tests that did not pass
+	  //                 the threshold.
+	  //
+	  //                   DO 70 k = 2, 6
+	                       for (k = 2; k <= 3; k++) {
 	  527                      IF( result( k ).GE.thresh ) THEN
 	  528                         IF( nfail.EQ.0 .AND. nerrs.EQ.0 )
 	  529      $                     CALL alahd( nout, path )
@@ -3709,7 +3802,8 @@ public class SparseEigenvalue implements java.io.Serializable {
 	  532                         nfail = nfail + 1
 	  533                      END IF
 	  534    70             CONTINUE
-	  535                   nrun = nrun + 5
+	  //                   nrun = nrun + 4;
+	                       nrun = nrun + 2;
 	  536    80          CONTINUE
 	  537    90       CONTINUE
 	  538 *
@@ -3729,7 +3823,633 @@ public class SparseEigenvalue implements java.io.Serializable {
 	       return;
 	  } // dchkgt
 	  
+      private void printHeader() {
+ 	     UI.setDataText("DGT: General tridaigonal\n");
+ 	     UI.setDataText("Matrix types (1-6 have specfied condition numbers):\n");
+ 	     UI.setDataText("1. Diagonal\n");
+ 	     UI.setDataText("2. Random, CNDNUM = 2\n");
+ 	     UI.setDataText("3. Random, CNDNUM = sqrt(0.1/EPS)\n");
+ 	     UI.setDataText("4. Random, CNDNUM = 0.1/EPS\n");
+ 	     UI.setDataText("5. Scaled near underflow\n");
+ 	     UI.setDataText("6. Scaled near overflow\n");
+ 	     UI.setDataText("7. Random, unspecified CNDNUM\n");
+ 	     UI.setDataText("8. First column zero\n");
+ 	     UI.setDataText("9. Last column zero\n");
+ 	     UI.setDataText("10. Last n/2 columns zero\n");
+ 	     UI.setDataText("11. Scaled near underflow\n");
+ 	     UI.setDataText("12. Scaled near overflow\n");
+ 	     UI.setDataText("Test ratios: \n");
+ 	     UI.setDataText("1. norm (L * U - A) / (N * norm(A) * EPS)\n");
+ 	     UI.setDataText("2. norm(B - A * X) / (norm(A) * norm(X) * EPS)\n");
+ 	     UI.setDataText("3. norm(X - XACT) / (norm(XACT) * CNDNUM * EPS)\n");
+ 	     //UI.setDataText("4. norm(X - XACT) / (norm(XACT) * CNDNUM * EPS), refined\n");
+ 	     //UI.setDataText("5. norm(X - XACT) / (norm(XACT) * (error bound))\n");
+ 	     //UI.setDataText("6. (backward error) / EPS)\n");
+ 	     UI.setDataText("7. RCOND * CNDNUM - 1.0\n");
+      }
+      
+      private void dgtcon(char norm, int n, double dl[], double d[], double du[], double du2[],
+    		              int ipiv[], double anorm, double rcond[],
+	                      double work[], int iwork[], int info[]) {
+	  /*00003 *
+	  00004 *  -- LAPACK routine (version 3.3.1) --
+	  00005 *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+	  00006 *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+	  00007 *  -- April 2011                                                      --
+	  00008 *
+	  00009 *     Modified to call DLACN2 in place of DLACON, 5 Feb 03, SJH.
+	  00010 *
+	  00011 *     .. Scalar Arguments ..
+	  00012       CHARACTER          NORM
+	  00013       INTEGER            INFO, N
+	  00014       DOUBLE PRECISION   ANORM, RCOND
+	  00015 *     ..
+	  00016 *     .. Array Arguments ..
+	  00017       INTEGER            IPIV( * ), IWORK( * )
+	  00018       DOUBLE PRECISION   D( * ), DL( * ), DU( * ), DU2( * ), WORK( * )
+	  00019 *     ..
+	  00020 *
+	  00021 *  Purpose
+	  00022 *  =======
+	  00023 *
+	  00024 *  DGTCON estimates the reciprocal of the condition number of a real
+	  00025 *  tridiagonal matrix A using the LU factorization as computed by
+	  00026 *  DGTTRF.
+	  00027 *
+	  00028 *  An estimate is obtained for norm(inv(A)), and the reciprocal of the
+	  00029 *  condition number is computed as RCOND = 1 / (ANORM * norm(inv(A))).
+	  00030 *
+	  00031 *  Arguments
+	  00032 *  =========
+	  00033 *
+	  00034 *  NORM    (input) CHARACTER*1
+	  00035 *          Specifies whether the 1-norm condition number or the
+	  00036 *          infinity-norm condition number is required:
+	  00037 *          = '1' or 'O':  1-norm;
+	  00038 *          = 'I':         Infinity-norm.
+	  00039 *
+	  00040 *  N       (input) INTEGER
+	  00041 *          The order of the matrix A.  N >= 0.
+	  00042 *
+	  00043 *  DL      (input) DOUBLE PRECISION array, dimension (N-1)
+	  00044 *          The (n-1) multipliers that define the matrix L from the
+	  00045 *          LU factorization of A as computed by DGTTRF.
+	  00046 *
+	  00047 *  D       (input) DOUBLE PRECISION array, dimension (N)
+	  00048 *          The n diagonal elements of the upper triangular matrix U from
+	  00049 *          the LU factorization of A.
+	  00050 *
+	  00051 *  DU      (input) DOUBLE PRECISION array, dimension (N-1)
+	  00052 *          The (n-1) elements of the first superdiagonal of U.
+	  00053 *
+	  00054 *  DU2     (input) DOUBLE PRECISION array, dimension (N-2)
+	  00055 *          The (n-2) elements of the second superdiagonal of U.
+	  00056 *
+	  00057 *  IPIV    (input) INTEGER array, dimension (N)
+	  00058 *          The pivot indices; for 1 <= i <= n, row i of the matrix was
+	  00059 *          interchanged with row IPIV(i).  IPIV(i) will always be either
+	  00060 *          i or i+1; IPIV(i) = i indicates a row interchange was not
+	  00061 *          required.
+	  00062 *
+	  00063 *  ANORM   (input) DOUBLE PRECISION
+	  00064 *          If NORM = '1' or 'O', the 1-norm of the original matrix A.
+	  00065 *          If NORM = 'I', the infinity-norm of the original matrix A.
+	  00066 *
+	  00067 *  RCOND   (output) DOUBLE PRECISION
+	  00068 *          The reciprocal of the condition number of the matrix A,
+	  00069 *          computed as RCOND = 1/(ANORM * AINVNM), where AINVNM is an
+	  00070 *          estimate of the 1-norm of inv(A) computed in this routine.
+	  00071 *
+	  00072 *  WORK    (workspace) DOUBLE PRECISION array, dimension (2*N)
+	  00073 *
+	  00074 *  IWORK   (workspace) INTEGER array, dimension (N)
+	  00075 *
+	  00076 *  INFO    (output) INTEGER
+	  00077 *          = 0:  successful exit
+	  00078 *          < 0:  if INFO = -i, the i-th argument had an illegal value
+	  00079 *
+	  00080 *  =====================================================================
+	  00081 *
+	  00082 *     .. Parameters ..
+	  00083       DOUBLE PRECISION   ONE, ZERO
+	  00084       PARAMETER          ( ONE = 1.0D+0, ZERO = 0.0D+0 )
+	  00085 *     ..
+	  00086 *     .. Local Scalars ..
+	  00087       LOGICAL            ONENRM
+	  00088       INTEGER            I, KASE, KASE1
+	  00089       DOUBLE PRECISION   AINVNM
+	  00090 *     ..
+	  00091 *     .. Local Arrays ..
+	  00092       INTEGER            ISAVE( 3 )
+	  00093 *     ..
+	  00094 *     .. External Functions ..
+	  00095       LOGICAL            LSAME
+	  00096       EXTERNAL           LSAME
+	  00097 *     ..
+	  00098 *     .. External Subroutines ..
+	  00099       EXTERNAL           DGTTRS, DLACN2, XERBLA
+	  00100 *     ..
+	  00101 *     .. Executable Statements ..
+	  00102 *
+	  00103 *     Test the input arguments.
+	  00104 *
+	  00105       INFO = 0
+	  00106       ONENRM = NORM.EQ.'1' .OR. LSAME( NORM, 'O' )
+	  00107       IF( .NOT.ONENRM .AND. .NOT.LSAME( NORM, 'I' ) ) THEN
+	  00108          INFO = -1
+	  00109       ELSE IF( N.LT.0 ) THEN
+	  00110          INFO = -2
+	  00111       ELSE IF( ANORM.LT.ZERO ) THEN
+	  00112          INFO = -8
+	  00113       END IF
+	  00114       IF( INFO.NE.0 ) THEN
+	  00115          CALL XERBLA( 'DGTCON', -INFO )
+	  00116          RETURN
+	  00117       END IF
+	  00118 *
+	  00119 *     Quick return if possible
+	  00120 *
+	  00121       RCOND = ZERO
+	  00122       IF( N.EQ.0 ) THEN
+	  00123          RCOND = ONE
+	  00124          RETURN
+	  00125       ELSE IF( ANORM.EQ.ZERO ) THEN
+	  00126          RETURN
+	  00127       END IF
+	  00128 *
+	  00129 *     Check that D(1:N) is non-zero.
+	  00130 *
+	  00131       DO 10 I = 1, N
+	  00132          IF( D( I ).EQ.ZERO )
+	  00133      $      RETURN
+	  00134    10 CONTINUE
+	  00135 *
+	  00136       AINVNM = ZERO
+	  00137       IF( ONENRM ) THEN
+	  00138          KASE1 = 1
+	  00139       ELSE
+	  00140          KASE1 = 2
+	  00141       END IF
+	  00142       KASE = 0
+	  00143    20 CONTINUE
+	  00144       CALL DLACN2( N, WORK( N+1 ), WORK, IWORK, AINVNM, KASE, ISAVE )
+	  00145       IF( KASE.NE.0 ) THEN
+	  00146          IF( KASE.EQ.KASE1 ) THEN
+	  00147 *
+	  00148 *           Multiply by inv(U)*inv(L).
+	  00149 *
+	  00150             CALL DGTTRS( 'No transpose', N, 1, DL, D, DU, DU2, IPIV,
+	  00151      $                   WORK, N, INFO )
+	  00152          ELSE
+	  00153 *
+	  00154 *           Multiply by inv(L**T)*inv(U**T).
+	  00155 *
+	  00156             CALL DGTTRS( 'Transpose', N, 1, DL, D, DU, DU2, IPIV, WORK,
+	  00157      $                   N, INFO )
+	  00158          END IF
+	  00159          GO TO 20
+	  00160       END IF
+	  00161 *
+	  00162 *     Compute the estimate of the reciprocal condition number.
+	  00163 *
+	  00164       IF( AINVNM.NE.ZERO )
+	  00165      $   RCOND = ( ONE / AINVNM ) / ANORM
+	  00166 **/
+	         return;
+      } // dgtcon
 
+
+    
+       // \par Purpose:
+	   //  =============
+	   
+	   // \verbatim
+	   
+	   // DGTT01 reconstructs a tridiagonal matrix A from its LU factorization
+	   // and computes the residual
+	   //    norm(L*U - A) / ( norm(A) * EPS ),
+	   // where EPS is the machine epsilon.
+	   // \endverbatim
+	  
+	   //  Arguments:
+	   //  ==========
+	  
+	   // \param[in] N
+	   // \verbatim
+	   //          N is INTEGTER
+	   //          The order of the matrix A.  N >= 0.
+	   // \endverbatim
+	   
+	   // \param[in] DL
+	   // \verbatim
+	   //          DL is DOUBLE PRECISION array, dimension (N-1)
+	   //          The (n-1) sub-diagonal elements of A.
+	   // \endverbatim
+	   
+	   // \param[in] D
+	   // \verbatim
+	   //          D is DOUBLE PRECISION array, dimension (N)
+	   //          The diagonal elements of A.
+	   // \endverbatim
+	   
+	   // \param[in] DU
+	   // \verbatim
+	   //          DU is DOUBLE PRECISION array, dimension (N-1)
+	   //          The (n-1) super-diagonal elements of A.
+	   // \endverbatim
+	   
+	   // \param[in] DLF
+	   // \verbatim
+	   //          DLF is DOUBLE PRECISION array, dimension (N-1)
+	   //          The (n-1) multipliers that define the matrix L from the
+	   //          LU factorization of A.
+	   // \endverbatim
+	   
+	   // \param[in] DF
+	   // \verbatim
+	   //          DF is DOUBLE PRECISION array, dimension (N)
+	   //          The n diagonal elements of the upper triangular matrix U from
+	   //          the LU factorization of A.
+	   // \endverbatim
+	   
+	   // \param[in] DUF
+	   // \verbatim
+	   //          DUF is DOUBLE PRECISION array, dimension (N-1)
+	   //          The (n-1) elements of the first super-diagonal of U.
+	   // \endverbatim
+	   
+	   // \param[in] DU2
+	   // \verbatim
+	   //          DU2 is DOUBLE PRECISION array, dimension (N-2)
+	   //          The (n-2) elements of the second super-diagonal of U.
+	   // \endverbatim
+	   
+	   // \param[in] IPIV
+	   // \verbatim
+	   //          IPIV is INTEGER array, dimension (N)
+	   //          The pivot indices; for 1 <= i <= n, row i of the matrix was
+	   //          interchanged with row IPIV(i).  IPIV(i) will always be either
+	   //          i or i+1; IPIV(i) = i indicates a row interchange was not
+	   //          required.
+	   // \endverbatim
+	   
+	  // \param[out] WORK
+	  // \verbatim
+	  //          WORK is DOUBLE PRECISION array, dimension (LDWORK,N)
+	  // \endverbatim
+	  
+	  // \param[in] LDWORK
+	  // \verbatim
+	  //          LDWORK is INTEGER
+	  //          The leading dimension of the array WORK.  LDWORK >= max(1,N).
+	  // \endverbatim
+	 
+	  // \param[out] RWORK
+	  // \verbatim
+	  //          RWORK is DOUBLE PRECISION array, dimension (N)
+	  // \endverbatim
+	  
+	  // \param[out] RESID
+	  // \verbatim
+	  //          RESID is DOUBLE PRECISION
+	  //          The scaled residual:  norm(L*U - A) / (norm(A) * EPS)
+	  // \endverbatim
+	  
+	  //  Authors:
+	  //  ========
+	  
+	  // \author Univ. of Tennessee 
+	  // \author Univ. of California Berkeley 
+	  // \author Univ. of Colorado Denver 
+	  // \author NAG Ltd. 
+	  
+	  // \date November 2011
+	  
+	  // \ingroup double_lin
+	  
+	  //  =====================================================================
+	         private void dgtt01( int n, double dl[], double d[], double du[], double dlf[], 
+	        		            double df[], double duf[], double du2[], int ipiv[], double work[][],
+	                           int ldwork, double rwork[], double resid[] ) {
+	  
+	  //  -- LAPACK test routine (version 3.4.0) --
+	  //  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+	  //  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+	  //     November 2011
+	  
+	  //     .. Scalar Arguments ..
+	  //       INTEGER            ldwork, n
+	  //       DOUBLE PRECISION   resid
+	  //     ..
+	  //     .. Array Arguments ..
+	  //       INTEGER            ipiv( * )
+	  //       DOUBLE PRECISION   d( * ), df( * ), dl( * ), dlf( * ), du( * ),
+	  //      $                   du2( * ), duf( * ), rwork( * ),
+	  //      $                   work( ldwork, * )
+	  //     ..
+	  
+	  //  =====================================================================
+	  
+	  //     .. Parameters ..
+	        	final double one = 1.0;
+	        	final double zero = 0.0;
+	  
+	  //     .. Local Scalars ..
+	         int            i, ip, j, lastj, k;
+	         double   anorm, eps, li, temp;
+	 
+	  //     .. External Functions ..
+	  //       DOUBLE PRECISION   dlamch, dlangt, dlanhs
+	  //       EXTERNAL           dlamch, dlangt, dlanhs
+	 
+	  //     .. Intrinsic Functions ..
+	  //       INTRINSIC          min
+	  
+	  //     .. External Subroutines ..
+	  //       EXTERNAL           daxpy, dswap
+	  
+	  //    .. Executable Statements ..
+	  
+	  //     Quick return if possible
+	  
+	         if ( n <= 0 ) {
+	            resid[0] = zero;
+	            return;
+	         }
+	  
+	         eps = ge.dlamch( 'E' );
+	  
+	  //     Copy the matrix U to WORK.
+	  
+	         for (j = 0; j < n; j++) {
+	            for (i = 0; i < n; i++) {
+	               work[ i][ j ] = zero;
+	            }
+	         }
+	         for (i = 1; i <= n; i++) {
+	            if ( i == 1 ) {
+	               work[ i-1][ i-1] = df[ i-1];
+	               if ( n >= 2 ) {
+	                  work[ i-1][ i] = duf[ i-1 ];
+	               }
+	               if ( n >= 3 ) {
+	                  work[ i-1][ i+1 ] = du2[ i-1 ];
+	               }
+	            } // if (i == 1)
+	            else if ( i == n ) {
+	               work[ i-1][ i-1 ] = df[ i-1 ];
+	            }
+	            else {
+	               work[ i-1][ i-1 ] = df[ i-1 ];
+	               work[ i-1][ i ] = duf[ i-1 ];
+	               if ( i < n-1 ) {
+	                  work[ i-1][ i+1 ] = du2[ i-1 ];
+	               }
+	            } // else
+	         } // for (i = 1; i <= n; i++)
+	  
+	  //     Multiply on the left by L.
+	  
+	         lastj = n;
+	         for (i = n - 1; i >= 1; i--) {
+	            li = dlf[ i-1 ];
+	            for (k = 0; k < lastj-i+1; k++) {
+	            	work[i][i-1+k] = work[i][i-1+k] + li*work[i-1][i-1+k];
+	            }
+	            ip = ipiv[ i-1 ];
+	            if ( ip == i ) {
+	               lastj = Math.min( i+2, n );
+	            }
+	            else {
+	            	for (k = 0; k < lastj-i+1; k++) {
+	            		temp = work[i-1][i-1+k];
+	            		work[i-1][i-1+k] = work[i][i-1+k];
+	            		work[i][i-1+k] = temp;
+	            	}
+	            }
+	         } // for (i = n - 1; i >= 1; i--)
+	  
+	  //     Subtract the matrix A.
+	 
+	         work[ 0][ 0 ] = work[ 0][ 0 ] - d[ 0 ];
+	         if ( n > 1 ) {
+	            work[ 0][ 1 ] = work[ 0][ 1 ] - du[ 0 ];
+	            work[ n-1][ n-2] = work[n-1][ n-2] - dl[ n-2];
+	            work[ n-1][ n-1] = work[ n-1][n-1] - d[ n-1];
+	            for (i = 1; i < n - 1; i++) {
+	               work[ i][ i-1 ] = work[ i][ i-1 ] - dl[ i-1 ];
+	               work[ i][ i ] = work[ i][ i ] - d[ i ];
+	               work[ i][ i+1 ] = work[ i][ i+1 ] - du[ i ];
+	            } // for (i = 1; i < n - 1; i++) 
+	         } // if (n > 1)
+	  
+	  //     Compute the 1-norm of the tridiagonal matrix A.
+	  
+	         anorm = dlangt( '1', n, dl, d, du );
+	  
+	  //    Compute the 1-norm of WORK, which is only guaranteed to be
+	  //     upper Hessenberg.
+	  
+	         resid[0] = ge.dlanhs( '1', n, work, ldwork, rwork );
+	  
+	  //     Compute norm(L*U - A) / (norm(A) * EPS)
+	  
+	         if ( anorm <= zero ) {
+	            if ( resid[0] != zero ) {
+	               resid[0] = one / eps;
+	            }
+	         }
+	         else {
+	            resid[0] = ( resid[0] / anorm ) / eps;
+	         }
+	  
+	         return;
+	      } // dgtt01
+	  
+       // \par Purpose:
+	   //  =============
+	   //
+	   // \verbatim
+	   
+	   // DLANGT  returns the value of the one norm,  or the Frobenius norm, or
+	   // the  infinity norm,  or the  element of  largest absolute value  of a
+	   // real tridiagonal matrix A.
+	   // \endverbatim
+	   
+	   // \return DLANGT
+	   // \verbatim
+	   
+	   //    DLANGT = ( max(abs(A(i,j))), NORM = 'M' or 'm'
+	   //             (
+	   //             ( norm1(A),         NORM = '1', 'O' or 'o'
+	   //             (
+	   //             ( normI(A),         NORM = 'I' or 'i'
+	   //             (
+	   //             ( normF(A),         NORM = 'F', 'f', 'E' or 'e'
+	   
+	   // where  norm1  denotes the  one norm of a matrix (maximum column sum),
+	   // normI  denotes the  infinity norm  of a matrix  (maximum row sum) and
+	   // normF  denotes the  Frobenius norm of a matrix (square root of sum of
+	   // squares).  Note that  max(abs(A(i,j)))  is not a consistent matrix norm.
+	   // \endverbatim
+	  
+	   //  Arguments:
+	   //  ==========
+	   
+	   // \param[in] NORM
+	   // \verbatim
+	   //          NORM is CHARACTER*1
+	   //          Specifies the value to be returned in DLANGT as described
+	   //          above.
+	   // \endverbatim
+	   
+	   // \param[in] N
+	   // \verbatim
+	   //          N is INTEGER
+	   //          The order of the matrix A.  N >= 0.  When N = 0, DLANGT is
+	   //          set to zero.
+	   // \endverbatim
+	   
+	   // \param[in] DL
+	   // \verbatim
+	   //          DL is DOUBLE PRECISION array, dimension (N-1)
+	   //          The (n-1) sub-diagonal elements of A.
+	   // \endverbatim
+	   
+	   // \param[in] D
+	   // \verbatim
+	   //          D is DOUBLE PRECISION array, dimension (N)
+	   //          The diagonal elements of A.
+	   // \endverbatim
+	   //
+	   // \param[in] DU
+	   // \verbatim
+	   //          DU is DOUBLE PRECISION array, dimension (N-1)
+	   //          The (n-1) super-diagonal elements of A.
+	   // \endverbatim
+	  
+	   //  Authors:
+	   //  ========
+	   
+	   // \author Univ. of Tennessee 
+	   // \author Univ. of California Berkeley 
+	   // \author Univ. of Colorado Denver 
+	  // \author NAG Ltd. 
+	  
+	  // \date September 2012
+	  
+	  // \ingroup doubleOTHERauxiliary
+	  
+	  //  =====================================================================
+	        private double dlangt(char norm, int n, double dl[], double d[], double du[] ) {
+	  
+	  //  -- LAPACK auxiliary routine (version 3.4.2) --
+	  //  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+	  //  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+	  //     September 2012
+	  
+	  //     .. Scalar Arguments ..
+	  //       CHARACTER          norm
+	  //       INTEGER            n
+	  //     ..
+	  //     .. Array Arguments ..
+	  //       DOUBLE PRECISION   d( * ), dl( * ), du( * )
+	  //     ..
+	  
+	  //  =====================================================================
+	  
+	  //     .. Parameters ..
+	         final double one = 1.0;
+	         final double zero = 0.0;
+	  
+	  //     .. Local Scalars ..
+	         int            i;
+	         double scale[] = new double[1];
+	         double sum[] = new double[1];
+	         double anorm = 0.0;
+	         double temp;
+	 
+	  //     .. External Functions ..
+	  //       LOGICAL            lsame, disnan
+	  //       EXTERNAL           lsame, disnan
+	  //     ..
+	  //     .. External Subroutines ..
+	  //       EXTERNAL           dlassq
+	  //     ..
+	  //     .. Intrinsic Functions ..
+	  //       INTRINSIC          abs, sqrt
+	  //     ..
+	  //     .. Executable Statements ..
+	  //
+	         if ( n <= 0 ) {
+	            anorm = zero;
+	         }
+	         else if ((norm == 'M') || (norm == 'm')) {
+	  
+	  //        Find max(abs(A(i,j))).
+	  
+	            anorm = Math.abs( d[ n-1 ] );
+	            for (i = 0; i <  n - 1; i++) {
+	               if ( anorm < Math.abs( dl[ i ] ) || Double.isNaN( Math.abs( dl[ i ] ) ) ) {
+	                   anorm = Math.abs(dl[i]);
+	               }
+	               if ( anorm < Math.abs( d[ i ] ) || Double.isNaN( Math.abs( d[ i ] ) ) ) {
+	                    anorm = Math.abs(d[i]);
+	               }
+	               if ( anorm < Math.abs( du[ i ] ) || Double.isNaN(Math.abs( du[ i ] ) ) ) { 
+	                    anorm = Math.abs(du[i]);
+	               }
+	            } // for (i = 0; i <  n - 1; i++) 
+	         } // else if ((norm == 'M') || (norm == 'm'))
+	         else if ((norm == 'O') || (norm == 'o') || (norm == '1' )) {
+	  
+	  //        Find norm1(A).
+	  
+	            if ( n == 1 ) {
+	               anorm = Math.abs( d[ 0 ] );
+	            }
+	            else {
+	               anorm = Math.abs( d[ 0 ] )+Math.abs( dl[ 0 ] );
+	               temp = Math.abs( d[ n-1 ] )+Math.abs( du[ n-2 ] ); 
+	               if ( anorm < temp || Double.isNaN( temp ) ) anorm = temp;
+	               for (i = 1; i < n - 1; i++) {
+	                  temp = Math.abs( d[ i ] )+Math.abs( dl[ i ] )+Math.abs( du[ i-1 ] );
+	                  if ( anorm < temp || Double.isNaN( temp ) ) anorm = temp;
+	               } // for (i = 1; i < n - 1; i++)
+	            } // else
+	         } // else if ((norm == 'O') || (norm == 'o') || (norm == '1' ))
+	         else if ((norm == 'I') || (norm == 'i')) {
+	 
+	  //        Find normI(A).
+	  
+	            if ( n == 1 ) {
+	               anorm = Math.abs( d[ 0 ] );
+	            }
+	            else {
+	               anorm = Math.abs( d[ 0 ] )+Math.abs( du[ 0 ] );
+	               temp = Math.abs( d[ n-1 ] )+Math.abs( dl[ n-2 ] );
+	               if ( anorm < temp || Double.isNaN( temp ) ) anorm = temp;
+	               for (i = 1; i < n - 1; i++) {
+	                  temp = Math.abs( d[ i ] )+Math.abs( du[ i ] )+Math.abs( dl[ i-1 ] );
+	                  if ( anorm < temp || Double.isNaN( temp ) ) anorm = temp;
+	               } // for (i = 1; i < n - 1; i++)
+	            } // else
+	         } // else if ((norm == 'I') || (norm == 'i'))
+	         else if ((norm == 'F') || (norm == 'f') || (norm == 'E') || (norm == 'e')) {
+	  
+	  //        Find normF(A).
+	  
+	            scale[0] = zero;
+	            sum[0] = one;
+	            ge.dlassq( n, d, 1, scale, sum );
+	            if ( n >1 ) {
+	               ge.dlassq( n-1, dl, 1, scale, sum );
+	               ge.dlassq( n-1, du, 1, scale, sum );
+	            }
+	            anorm = scale[0]*Math.sqrt( sum[0] );
+	         } // else if ((norm == 'F') || (norm == 'f') || (norm == 'E') || (norm == 'e'))
+	         return anorm;
+	        } // dlangt
 
 
     // \par Purpose:
