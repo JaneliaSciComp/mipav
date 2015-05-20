@@ -37,7 +37,7 @@ public class LatticeModel {
 	 * @param voiDir
 	 * @param image
 	 */
-	private static void saveAllVOIsTo(final String voiDir, final ModelImage image) {
+	public static void saveAllVOIsTo(final String voiDir, final ModelImage image) {
 		try {
 			final ViewVOIVector VOIs = image.getVOIs();
 
@@ -786,7 +786,7 @@ public class LatticeModel {
 	}
 
 	private ModelImage imageA;
-
+	private ModelImage gmImage;
 	private VOIVector latticeGrid;
 
 	private VOI lattice = null;
@@ -885,6 +885,7 @@ public class LatticeModel {
 	 */
 	public LatticeModel(final ModelImage imageA) {
 		this.imageA = imageA;
+		this.gmImage = null;
 	}
 
 	/**
@@ -895,6 +896,7 @@ public class LatticeModel {
 	 */
 	public LatticeModel(final ModelImage imageA, final VOI lattice) {
 		this.imageA = imageA;
+		this.gmImage = null;
 		this.lattice = lattice;
 
 		// Assume image is isotropic (square voxels).
@@ -920,6 +922,7 @@ public class LatticeModel {
 	 */
 	public LatticeModel(final ModelImage imageA, final VOI annotation, final boolean doAnnotation) {
 		this.imageA = imageA;
+		this.gmImage = null;
 		this.lattice = null;
 		this.setAnnotations(annotation);
 	}
@@ -1179,6 +1182,12 @@ public class LatticeModel {
 		pickedPoint = null;
 		showSelectedVOI = null;
 		showSelected = null;
+		
+		if ( gmImage != null )
+		{
+			gmImage.disposeLocal();
+			gmImage = null;
+		}
 	}
 
 	/**
@@ -1379,6 +1388,193 @@ public class LatticeModel {
 		}
 
 		createWormModel(imageA, samplingPlanes, ellipseBounds, wormDiameters, 2 * extent, displayResult);
+	}
+	
+	
+
+	private int testIntersections(boolean quickTest)
+	{
+		if ( !quickTest )
+		{
+			// modify markers based on volume segmentation:
+			markerVolumes = new int[left.size()][2];
+			markerIDs = new int[left.size()];
+			completedIDs = new boolean[left.size()];
+			currentID = new int[] {0};
+			// segment the left-right markers based on the lattice points:
+			if ( markerSegmentation != null )
+			{
+				markerSegmentation.disposeLocal(true);
+				markerSegmentation = null;
+			}
+			markerSegmentation = segmentMarkers(imageA, left, right, markerIDs, markerVolumes, false);
+			// save the updated lattice positions, including any volume estimation for the marker segmentat at that lattice
+			// point:
+			//		saveLatticePositions(imageA, null, null, left, right, markerVolumes, "_before");
+			for (int i = 0; i < completedIDs.length; i++) {
+				if (markerIDs[i] == 0) {
+					completedIDs[i] = true;
+				}
+			}
+		}
+
+		// The algorithm interpolates between the lattice points, creating two smooth curves from head to tail along
+		// the left and right-hand sides of the worm body. A third curve down the center-line of the worm body is
+		// also generated. Eventually, the center-line curve will be used to determine the number of sample points
+		// along the length of the straightened worm, and therefore the final length of the straightened worm volume.
+		generateCurves();
+
+		boxBounds = new Vector<Box3f>();
+		ellipseBounds = new Vector<Ellipsoid3f>();
+		final short sID = (short) (imageA.getVOIs().getUniqueID());
+		samplingPlanes = new VOI(sID, "samplingPlanes");
+		for (int i = 0; i < centerPositions.size(); i++) {
+			final Vector3f rkEye = centerPositions.elementAt(i);
+			final Vector3f rkRVector = rightVectors.elementAt(i);
+			final Vector3f rkUVector = upVectors.elementAt(i);
+
+			final Vector3f[] output = new Vector3f[4];
+			final Vector3f rightV = Vector3f.scale(extent, rkRVector);
+			final Vector3f upV = Vector3f.scale(extent, rkUVector);
+			output[0] = Vector3f.add(Vector3f.neg(rightV), Vector3f.neg(upV));
+			output[1] = Vector3f.add(rightV, Vector3f.neg(upV));
+			output[2] = Vector3f.add(rightV, upV);
+			output[3] = Vector3f.add(Vector3f.neg(rightV), upV);
+			for (int j = 0; j < 4; j++) {
+				output[j].add(rkEye);
+			}
+			final VOIContour kBox = new VOIContour(true);
+			for (int j = 0; j < 4; j++) {
+				kBox.addElement(output[j].X, output[j].Y, output[j].Z);
+			}
+			kBox.update(new ColorRGBA(0, 0, 1, 1));
+			{
+				samplingPlanes.importCurve(kBox);
+			}
+
+			final float curve = centerSpline.GetCurvature(allTimes[i]);
+			final float scale = curve;
+			final VOIContour ellipse = new VOIContour(true);
+			final Ellipsoid3f ellipsoid = makeEllipse(rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), scale, ellipse);
+			ellipseBounds.add(ellipsoid);
+
+			final Box3f box = new Box3f(ellipsoid.Center, ellipsoid.Axis, new float[] {extent, extent, 1});
+			boxBounds.add(box);
+		}
+
+		int diameter = 2 * extent;
+		final int[] resultExtents = new int[] {diameter, diameter, samplingPlanes.getCurves().size()};
+
+		String imageName = imageA.getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+		ModelImage model = new ModelImage(ModelStorageBase.FLOAT, imageA.getExtents(), imageName + "_model.xml");
+		JDialogBase.updateFileInfo(imageA, model);
+
+		ModelImage insideConflict = new ModelImage(ModelStorageBase.BOOLEAN, imageA.getExtents(), imageName + "_insideConflict.xml");
+		JDialogBase.updateFileInfo(imageA, insideConflict);
+
+
+		// 7. The set of ellipses from the head of the worm to the tail defines an approximate outer boundary of the
+		// worm in 3D.
+		// The centers of each ellipse are spaced one voxel apart along the center line curve of the worm, and each
+		// ellipse
+		// corresponds to a single output slice in the final straightened image. This step generates a model of the worm
+		// where each voxel that falls within one of the ellipses is labeled with the corresponding output slice value.
+		// Voxels where multiple ellipses intersect are labeled as conflict voxels. Once all ellipses have been
+		// evaluated,
+		// the conflict voxels are removed from the model.
+		final int dimX = imageA.getExtents().length > 0 ? imageA.getExtents()[0] : 1;
+		final int dimY = imageA.getExtents().length > 1 ? imageA.getExtents()[1] : 1;
+		final int dimZ = imageA.getExtents().length > 2 ? imageA.getExtents()[2] : 1;
+		for (int z = 0; z < dimZ; z++) {
+			for (int y = 0; y < dimY; y++) {
+				for (int x = 0; x < dimX; x++) {
+					model.set(x, y, z, 0);
+					insideConflict.set(x, y, z, false);
+				}
+			}
+		}
+
+		for (int i = 0; i < samplingPlanes.getCurves().size(); i++) {
+			VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i);
+			final Vector3f[] corners = new Vector3f[4];
+			for (int j = 0; j < 4; j++) {
+				corners[j] = kBox.elementAt(j);
+			}
+
+			float planeDist = -Float.MAX_VALUE;
+			if (i < (samplingPlanes.getCurves().size() - 1)) {
+				kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i + 1);
+				for (int j = 0; j < 4; j++) {
+					final float distance = corners[j].distance(kBox.elementAt(j));
+					if (distance > planeDist) {
+						planeDist = distance;
+					}
+				}
+			}
+
+			if (i < (samplingPlanes.getCurves().size() - 1)) {
+				planeDist *= 3;
+				kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i + 1);
+				final Vector3f[] steps = new Vector3f[4];
+				final Vector3f[] cornersSub = new Vector3f[4];
+				for (int j = 0; j < 4; j++) {
+					steps[j] = Vector3f.sub(kBox.elementAt(j), corners[j]);
+					steps[j].scale(1f / planeDist);
+					cornersSub[j] = new Vector3f(corners[j]);
+				}
+				for (int j = 0; j < planeDist; j++) {
+					initializeModelandConflicts(imageA, model, insideConflict, 0, i, resultExtents, cornersSub, ellipseBounds.elementAt(i),
+							1.5f * wormDiameters.elementAt(i), boxBounds.elementAt(i), i + 1);
+					for (int k = 0; k < 4; k++) {
+						cornersSub[k].add(steps[k]);
+					}
+				}
+			} else {
+				planeDist = 15;
+				kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i - 1);
+				final Vector3f[] steps = new Vector3f[4];
+				final Vector3f[] cornersSub = new Vector3f[4];
+				for (int j = 0; j < 4; j++) {
+					steps[j] = Vector3f.sub(corners[j], kBox.elementAt(j));
+					steps[j].scale(1f / planeDist);
+					// cornersSub[j] = Vector3f.add( corners[j], kBox.elementAt(j) ); cornersSub[j].scale(0.5f);
+					cornersSub[j] = new Vector3f(corners[j]);
+				}
+				for (int j = 0; j < planeDist; j++) {
+					initializeModelandConflicts(imageA, model, insideConflict, 0, i, resultExtents, cornersSub, ellipseBounds.elementAt(i),
+							1.5f * wormDiameters.elementAt(i), boxBounds.elementAt(i), i + 1);
+					for (int k = 0; k < 4; k++) {
+						cornersSub[k].add(steps[k]);
+					}
+				}
+			}
+		}
+
+		int count = 0;
+		for (int z = 0; z < dimZ; z++) {
+			for (int y = 0; y < dimY; y++) {
+				for (int x = 0; x < dimX; x++) {
+					if (insideConflict.getBoolean(x, y, z)) {
+						count++;
+					}
+				}
+			}
+		}
+		if ( markerSegmentation != null )
+		{
+			markerSegmentation.disposeLocal(true);
+			markerSegmentation = null;
+		}
+		
+		insideConflict.disposeLocal();
+		insideConflict = null;
+		model.disposeLocal();
+		model = null;
+		
+		return count;
 	}
 
 	/**
@@ -1776,6 +1972,12 @@ public class LatticeModel {
 		clear3DSelection();
 		clearAddLeftRightMarkers();
 		updateLattice(true);
+	}
+	
+	public int testIntersection( VOI lattice, boolean quickTest )
+	{
+		setLattice(lattice);
+		return testIntersections(quickTest);
 	}
 
 	/**
@@ -3898,7 +4100,10 @@ public class LatticeModel {
 		JDialogBase.updateFileInfo(image, markerSegmentation);
 
 		// Generate the gradient magnitude image:
-		ModelImage gmImage = VolumeImage.getGradientMagnitude(image, 0);
+		if ( gmImage == null )
+		{
+			gmImage = VolumeImage.getGradientMagnitude(image, 0);
+		}
 
 		// determine the maxiumum image value of the fluorescent markers at each lattice point:
 		float maxValue = -Float.MAX_VALUE;
@@ -4096,9 +4301,6 @@ public class LatticeModel {
 			markerSegmentation2.calcMinMax();
 			new ViewJFrameImage((ModelImage) markerSegmentation2.clone());
 		}
-
-		gmImage.disposeLocal();
-		gmImage = null;
 
 		return markerSegmentation;
 	}

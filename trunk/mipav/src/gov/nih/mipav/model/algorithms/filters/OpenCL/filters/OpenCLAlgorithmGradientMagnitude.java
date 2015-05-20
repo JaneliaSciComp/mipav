@@ -1043,9 +1043,9 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 		}
 		saveImage(output, time, true );
 
+		clReleaseMemObject(inputBuffer);
 		input = null;
 		output = null;
-		clReleaseMemObject(inputBuffer);
 	}
 
 	/**
