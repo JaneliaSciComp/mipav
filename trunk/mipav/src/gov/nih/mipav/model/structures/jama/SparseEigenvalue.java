@@ -49,6 +49,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 public class SparseEigenvalue implements java.io.Serializable {
 	GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
+	LinearEquations le = new LinearEquations();
 	
 	private ViewUserInterface UI = ViewUserInterface.getReference();
 	
@@ -3305,8 +3306,8 @@ public class SparseEigenvalue implements java.io.Serializable {
       final double zero = 0.0;
 	  final int ntypes = 12;
 	  //final int ntests = 7;
-	  // Test 6 is not present and tests 4 and 5 are not used
-	  final int ntests = 4;
+	  // Test 6 is not present
+	  final int ntests = 6;
 	  //     ..
 	  //     .. Local Scalars ..
 	  boolean            trfcon, zerot;
@@ -3320,27 +3321,34 @@ public class SparseEigenvalue implements java.io.Serializable {
 	  int mode[] = new int[1];
 	  int info[] = new int[1];
 	  int nerrs;
-	  int            i, imat, in, irhs, itran, ix, izero, j,
+	  int izero = 0;
+	  int            i, imat, in, irhs, itran, ix, j,
                      k, koff, lda, m, n, nfail,
                      nimat, nrhs, nrun;
 	  int index;
 	  double anorm[] = new double[1];
 	  double cond[] = new double[1];
-	  double   ainvnm, rcond, rcondc, rcondi, rcondo;
+	  double rcond[] = new double[1];
+	  double rcondi = 0.0;
+	  double rcondo = 0.0;
+	  double   ainvnm, rcondc;
 	  //     ..
 	  //     .. Local Arrays ..
 	  char transs[] = new char[]{'N','T','C'};
 	  int iseed[] = new int[4 ];
 	  int iseedy[] = new int[]{0,0,0,1};
-	  double result[ ] = new double[ntests];
+	  double result[ ] = new double[7];
 	  double z[] = new double[ 3 ];
 	  double array[][];
+	  double array2[][];
 	  double v1[];
 	  double v2[];
 	  double v3[];
 	  double v4[];
 	  double v5[];
 	  double absSum;
+	  int iwork2[];
+	  double res[] = new double[1];
 	  //     ..
 	  //     .. External Functions ..
 	  //       DOUBLE PRECISION   dasum, dget06, dlangt
@@ -3375,7 +3383,7 @@ public class SparseEigenvalue implements java.io.Serializable {
 	 
 	         infoc_infot = 0;
 	
-	         /*for (in = 1; in <= nn; in++) {
+	         for (in = 1; in <= nn; in++) {
 	 
 	  //        Do for each value of N in NVAL.
 	  
@@ -3594,9 +3602,16 @@ public class SparseEigenvalue implements java.io.Serializable {
 	               for (i = 0; i < n-2; i++) {
 	            	   v5[i] = af[n+2*m+i];
 	               }
+	               array = new double[n][n];
 	               dgtt01( n, a, v1, v2, af, v3,
-	                       v4, v5, iwork, work, lda,
+	                       v4, v5, iwork, array, lda,
 	                       rwork, result );
+	               index = 0;
+	               for (j = 0; j < n; j++) {
+	            	   for (i = 0; i < n; i++) {
+	            		   work[index++] = array[i][j];
+	            	   }
+	               }
 	  
 	  //           Print the test ratio if it is .GE. THRESH.
 	 
@@ -3627,7 +3642,7 @@ public class SparseEigenvalue implements java.io.Serializable {
 	                  for (i = 0; i < n-1; i++) {
 	                	  v2[i] = a[n+m+i];
 	                  }
-	                  anorm = dlangt( norm, n, a, v1, v2 );
+	                  anorm[0] = dlangt( norm, n, a, v1, v2 );
 	  
 	                  if (!trfcon ) {
 	  
@@ -3651,9 +3666,16 @@ public class SparseEigenvalue implements java.io.Serializable {
 	                        for (k = 0; k < n-2; k++) {
 	                        	v3[k] = af[n+2*m+i];
 	                        } 
+	                        array = new double[n][1];
+	                        for (j = 0; j < n; j++) {
+	                        	array[j][0] = x[j];
+	                        }
 	                        dgttrs( trans, n, 1, af, v1,
-	                                v2, v3, iwork, x,
+	                                v2, v3, iwork, array,
 	                                lda, info );
+	                        for (j = 0; j < n; j++) {
+	                        	x[j] = array[j][0];
+	                        }
 	                        absSum = 0.0;
 	                        for (k = 0; k < n; k++) {
 	                        	absSum += Math.abs(x[k]);
@@ -3663,11 +3685,11 @@ public class SparseEigenvalue implements java.io.Serializable {
 	  
 	  //                 Compute RCONDC = 1 / (norm(A) * norm(inv(A))
 	  
-	                     if ( anorm <= zero || ainvnm <= zero ) {
+	                     if ( anorm[0] <= zero || ainvnm <= zero ) {
 	                        rcondc = one;
 	                     }
 	                     else {
-	                        rcondc = ( one / anorm ) / ainvnm;
+	                        rcondc = ( one / anorm[0] ) / ainvnm;
 	                     }
 	                     if ( itran == 1 ) {
 	                        rcondo = rcondc;
@@ -3685,28 +3707,51 @@ public class SparseEigenvalue implements java.io.Serializable {
 	  //              matrix.
 	  
 	                  srnamc_srnamt = "DGTCON";
-	  421                CALL dgtcon( norm, n, af, af( m+1 ), af( n+m+1 ),
-	  422      $                      af( n+2*m+1 ), iwork, anorm, rcond, work,
-	  423      $                      iwork( n+1 ), info )
-	  424 *
-	  425 *              Check error code from DGTCON.
-	  426 *
-	  427                IF( info.NE.0 )
-	  428      $            CALL alaerh( path, 'DGTCON', info, 0, norm, n, n, -1,
-	  429      $                         -1, -1, imat, nfail, nerrs, nout )
-	  430 *
-	  431                result( 7 ) = dget06( rcond, rcondc )
-	  432 *
-	  433 *              Print the test ratio if it is .GE. THRESH.
-	  434 *
-	  435                IF( result( 7 ).GE.thresh ) THEN
-	  436                   IF( nfail.EQ.0 .AND. nerrs.EQ.0 )
-	  437      $               CALL alahd( nout, path )
-	  438                   WRITE( nout, fmt = 9997 )norm, n, imat, 7,
-	  439      $               result( 7 )
-	  440                   nfail = nfail + 1
-	  441                END IF
-	  442                nrun = nrun + 1
+	                  v1 = new double[n];
+	                  for (i = 0; i < n; i++) {
+	                	  v1[i] = af[m+i];
+	                  }
+	                  v2 = new double[n-1];
+	                  for (i = 0; i < n-1; i++) {
+	                	  v2[i] = af[n+m+i];
+	                  }
+	                  v3 = new double[n-1];
+	                  for (i = 0; i < n-2; i++) {
+	                	  v3[i] = af[n+2*m+i];
+	                  }
+	                  iwork2 = new int[n];
+	                  dgtcon( norm, n, af, v1, v2,
+	                          v3, iwork, anorm[0], rcond, work,
+	                          iwork2, info );
+	  
+	  //              Check error code from DGTCON.
+	  
+	                  if (info[0] != 0 ) {
+	                	  if (nfail == 0 && nerrs == 0) {
+		                	   printHeader();
+		                  }
+		                  nerrs = nerrs+1;
+		                  UI.setDataText("dgtcon had info[0] = " + info[0] + "\n");
+		                  UI.setDataText("NORM = " + norm + "\n");
+		                  UI.setDataText("N = " + m + "\n");
+		                  UI.setDataText("type = " + imat + "\n");
+	                  } // if (info[0] != 0)
+	  
+	                  result[ 6 ] = le.dget06( rcond[0], rcondc );
+	  
+	  //              Print the test ratio if it is .GE. THRESH.
+	  
+	                  if ( result[ 6 ] >= thresh ) {
+	                     if ( nfail == 0 && nerrs == 0 ) {
+	                    	 printHeader();
+	                     }
+	                     UI.setDataText("NORM = " + norm + "\n");
+	                     UI.setDataText("N = " + n + "\n");
+	                     UI.setDataText("type = " + imat + "\n");
+	                     UI.setDataText("Test 7 has result[6] = " + nf.format(result[6]) + "\n");
+	                     nfail = nfail + 1;
+	                  } // if ( result[ 6 ] >= thresh )
+	                  nrun = nrun + 1;
 	               } // for ( itran = 1; itran <= 2; itran++)
 	  
 	  //           Skip the remaining tests if the matrix is singular.
@@ -3715,54 +3760,150 @@ public class SparseEigenvalue implements java.io.Serializable {
 	                  continue;
 	               }
 	  
-	  450             DO 90 irhs = 1, nns
-	  451                nrhs = nsval( irhs )
-	  452 *
-	  453 *              Generate NRHS random solution vectors.
-	  454 *
-	  455                ix = 1
-	  456                DO 60 j = 1, nrhs
-	  457                   CALL dlarnv( 2, iseed, n, xact( ix ) )
-	  458                   ix = ix + lda
-	  459    60          CONTINUE
-	  460 *
-	  461                DO 80 itran = 1, 3
-	  462                   trans = transs( itran )
-	  463                   IF( itran.EQ.1 ) THEN
-	  464                      rcondc = rcondo
-	  465                   ELSE
-	  466                      rcondc = rcondi
-	  467                   END IF
-	  468 *
-	  469 *                 Set the right hand side.
-	  470 *
-	  471                   CALL dlagtm( trans, n, nrhs, one, a, a( m+1 ),
-	  472      $                         a( n+m+1 ), xact, lda, zero, b, lda )
-	  473 *
-	  474 *+    TEST 2
-	  475 *                 Solve op(A) * X = B and compute the residual.
-	  476 *
-	  477                   CALL dlacpy( 'Full', n, nrhs, b, lda, x, lda )
-	  478                   srnamt = 'DGTTRS'
-	  479                   CALL dgttrs( trans, n, nrhs, af, af( m+1 ),
-	  480      $                         af( n+m+1 ), af( n+2*m+1 ), iwork, x,
-	  481      $                         lda, info )
-	  482 *
-	  483 *                 Check error code from DGTTRS.
-	  484 *
-	  485                   IF( info.NE.0 )
-	  486      $               CALL alaerh( path, 'DGTTRS', info, 0, trans, n, n,
-	  487      $                            -1, -1, nrhs, imat, nfail, nerrs,
-	  488      $                            nout )
-	  489 *
-	  490                   CALL dlacpy( 'Full', n, nrhs, b, lda, work, lda )
-	  491                   CALL dgtt02( trans, n, nrhs, a, a( m+1 ), a( n+m+1 ),
-	  492      $                         x, lda, work, lda, result( 2 ) )
-	  493 *
-	  494 *+    TEST 3
-	  495 *                 Check solution from generated exact solution.
-	  496 *
-	  497                   CALL dget04( n, nrhs, x, lda, xact, lda, rcondc,
+	               for (irhs = 1; irhs <= nns; irhs++) {
+	                  nrhs = nsval[ irhs-1 ];
+	  
+	  //              Generate NRHS random solution vectors.
+	  
+	                  ix = 0;
+	                  v1 = new double[n];
+	                  for (j = 1; j <= nrhs; j++) {
+	                     ge.dlarnv( 2, iseed, n, v1);
+	                     for (i = 0; i < n; i++) {
+	                        xact[ix + i] = v1[i];
+	                     }
+	                     ix = ix + lda;
+	                  } // for (j = 1; j <= nrhs; j++)
+	  
+	                  for (itran = 1; itran <= 3; itran++) {
+	                     trans = transs[ itran-1 ];
+	                     if ( itran == 1 ) {
+	                        rcondc = rcondo;
+	                     }
+	                     else {
+	                        rcondc = rcondi;
+	                     }
+	  
+	  //                 Set the right hand side.
+	  
+	                     v1 = new double[n];
+	                     for (i = 0; i < n; i++) {
+	                    	 v1[i] = a[m+i];
+	                     }
+	                     v2 = new double[n-1];
+	                     for (i = 0; i < n-1; i++) {
+	                    	 v2[i] = a[n+m+i];
+	                     }
+	                     array = new double[n][nrhs];
+	                     array2 = new double[n][nrhs];
+	                     index = 0;
+	                     for (j = 0; j < nrhs; j++) {
+	                    	 for (i = 0; i < n; i++) {
+	                    		 array2[i][j] = xact[index++];
+	                    	 }
+	                     }
+	                     dlagtm( trans, n, nrhs, one, a, v1,
+	                             v2, array2, lda, zero, array, lda );
+	                     index = 0;
+		                 for (j = 0; j < nrhs; j++) {
+		                    for (i = 0; i < n; i++) {
+		                    	b[index++] = array[i][j];
+		                    }
+		                 }
+	  
+	  //    TEST 2
+	  //                 Solve op(A) * X = B and compute the residual.
+		                 array2 = new double[n][ nrhs]; 
+	                     ge.dlacpy( 'F', n, nrhs, array, lda, array2, lda );
+	                     index = 0;
+		                    for (j = 0; j < nrhs; j++) {
+		                    	for (i = 0; i < n; i++) {
+		                    	    x[index++] = array2[i][j];	
+		                    	}
+		                    }
+	                     srnamc_srnamt = "DGTTRS";
+	                     v1 = new double[n];
+	                     for (i = 0; i < n; i++) {
+	                    	 v1[i] = af[m+i];
+	                     }
+	                     v2 = new double[n-1];
+	                     for (i = 0; i < n-1; i++) {
+	                    	 v2[i] = af[n+m+i];
+	                     }
+	                     v3 = new double[n-2];
+	                     for (i = 0; i < n-2; i++) {
+	                    	 v3[i] = af[n+2*m+i];
+	                     }
+	                     array = new double[n][nrhs];
+	                     index = 0;
+	                     for (j = 0; j < nrhs; j++) {
+	                         for (i = 0; i < n; i++) {
+	                        	 array[i][j] = x[index++];
+	                         }
+	                     }
+	                     dgttrs( trans, n, nrhs, af, v1,
+	                             v2, v3, iwork, array,
+	                             lda, info );
+	                     index = 0;
+	                     for (j = 0; j < nrhs; j++) {
+	                         for (i = 0; i < n; i++) {
+	                        	 x[index++] = array[i][j];
+	                         }
+	                     }
+	  
+	  //                 Check error code from DGTTRS.
+	  
+	                    if ( info[0] != 0 ) {
+	                    	if (nfail == 0 && nerrs == 0) {
+		            	         printHeader();
+		            	     }
+		            	     nerrs = nerrs + 1;
+		            	     UI.setDataText("dgttrs returned with info[0] = " + info[0] + "\n");
+	            	    	 UI.setDataText("trans = " + trans + "\n");
+	            	    	 UI.setDataText("n = " + n + "\n");
+	            	    	 UI.setDataText("nrhs = " + nrhs + "\n");
+	            	    	 UI.setDataText("type = " + imat + "\n");	 
+	                    } // if (info[0] != 0)
+	  
+	                    array = new double[n][nrhs];
+	                    index = 0;
+	                    for (j = 0; j < nrhs; j++) {
+	                    	for (i = 0; i < n; i++) {
+	                    		array[i][j] = b[index++];
+	                    	}
+	                    }
+	                    array2 = new double[n][ nrhs]; 
+	                    ge.dlacpy( 'F', n, nrhs, array, lda, array2, lda );
+	                    
+	                   v1 = new double[n];
+	                   for (i = 0; i < n; i++) {
+	                	   v1[i] = a[m+i];
+	                   }
+	                   v2 = new double[n-1];
+	                   for (i = 0; i < n-1; i++) {
+	                	   v2[i] = a[n+m+i];
+	                   }
+	                   array = new double[n][nrhs];
+	                   index = 0;
+	                   for (j = 0; j < nrhs; j++) {
+	                    	for (i = 0; i < n; i++) {
+	                    		array[i][j] = x[index++];
+	                    	}
+	                    }
+	                   dgtt02( trans, n, nrhs, a, v1, v2,
+	                            array, lda, array2, lda, rwork, res);
+	                   index = 0;
+	                    for (j = 0; j < nrhs; j++) {
+	                    	for (i = 0; i < n; i++) {
+	                    	    work[index++] = array2[i][j];	
+	                    	}
+	                    }
+	                   result[1] = res[0];
+	  
+	  //    TEST 3
+	  //                 Check solution from generated exact solution.
+	  
+	                     /*CALL dget04( n, nrhs, x, lda, xact, lda, rcondc,
 	  498      $                         result( 3 ) )
 	  499 *
 	  // *+    TESTS 4, 5, and 6
@@ -3793,7 +3934,7 @@ public class SparseEigenvalue implements java.io.Serializable {
 	  //                 the threshold.
 	  //
 	  //                   DO 70 k = 2, 6
-	                       for (k = 2; k <= 3; k++) {
+	                       for (k = 2; k <= 5; k++) {
 	  527                      IF( result( k ).GE.thresh ) THEN
 	  528                         IF( nfail.EQ.0 .AND. nerrs.EQ.0 )
 	  529      $                     CALL alahd( nout, path )
@@ -3802,14 +3943,13 @@ public class SparseEigenvalue implements java.io.Serializable {
 	  532                         nfail = nfail + 1
 	  533                      END IF
 	  534    70             CONTINUE
-	  //                   nrun = nrun + 4;
-	                       nrun = nrun + 2;
-	  536    80          CONTINUE
-	  537    90       CONTINUE
-	  538 *
-	  539      } // for  (imat = 1; imat <= nimat; imat++)
+	                       nrun = nrun + 4;*/
+	                       } // for (itran = 1; itran <= 3; itran++)
+	                    } // for (irhs = 1; irhs <= nns; irhs++)
+	 
+	           } // for  (imat = 1; imat <= nimat; imat++)
 	         } // for (in = 1; in <= nn; in++)
-	  541 *
+	  /*541 *
 	  542 *     Print a summary of the results.
 	  543 *
 	  544       CALL alasum( path, nout, nfail, nrun, nerrs )
@@ -3822,6 +3962,151 @@ public class SparseEigenvalue implements java.io.Serializable {
 	  551      $      ', test(', i2, ') = ', g12.5 )*/
 	       return;
 	  } // dchkgt
+	  
+	  private void dgtt02(char TRANS, int N, int NRHS, double DL[], double D[], double DU[], 
+			                double X[][], int LDX, double B[][], int LDB,
+	                        double RWORK[], double RESID[] ) {
+	  
+	  //  -- LAPACK test routine (version 3.1) --
+	  //     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+	  //     November 2006
+	  
+	  //     .. Scalar Arguments ..
+	  //       CHARACTER          TRANS
+	  //       INTEGER            LDB, LDX, N, NRHS
+	  //       DOUBLE PRECISION   RESID
+	  //     ..
+	  //     .. Array Arguments ..
+	  //       DOUBLE PRECISION   B( LDB, * ), D( * ), DL( * ), DU( * ),
+	  //      $                   RWORK( * ), X( LDX, * )
+	  //     ..
+	 
+	  //  Purpose
+	  //  =======
+	  
+	  //  DGTT02 computes the residual for the solution to a tridiagonal
+	  //  system of equations:
+	  //     RESID = norm(B - op(A)*X) / (norm(A) * norm(X) * EPS),
+	  //  where EPS is the machine epsilon.
+	  
+	  //  Arguments
+	  //  =========
+	  
+	  //  TRANS   (input) CHARACTER
+	  //          Specifies the form of the residual.
+	  //          = 'N':  B - A * X  (No transpose)
+	  //          = 'T':  B - A'* X  (Transpose)
+	  //          = 'C':  B - A'* X  (Conjugate transpose = Transpose)
+	  
+	  //  N       (input) INTEGTER
+	  //          The order of the matrix A.  N >= 0.
+	  
+	  //  NRHS    (input) INTEGER
+	  //          The number of right hand sides, i.e., the number of columns
+	  //          of the matrices B and X.  NRHS >= 0.
+	  
+	  //  DL      (input) DOUBLE PRECISION array, dimension (N-1)
+	  //          The (n-1) sub-diagonal elements of A.
+	  
+	  //  D       (input) DOUBLE PRECISION array, dimension (N)
+	  //          The diagonal elements of A.
+	  
+	  //  DU      (input) DOUBLE PRECISION array, dimension (N-1)
+	  //          The (n-1) super-diagonal elements of A.
+	  
+	  //  X       (input) DOUBLE PRECISION array, dimension (LDX,NRHS)
+	  //          The computed solution vectors X.
+	  
+	  //  LDX     (input) INTEGER
+	  //          The leading dimension of the array X.  LDX >= max(1,N).
+	  
+	  //  B       (input/output) DOUBLE PRECISION array, dimension (LDB,NRHS)
+	  //          On entry, the right hand side vectors for the system of
+	  //          linear equations.
+	  //          On exit, B is overwritten with the difference B - op(A)*X.
+	  
+	  //  LDB     (input) INTEGER
+	  //          The leading dimension of the array B.  LDB >= max(1,N).
+	  
+	  //  RWORK   (workspace) DOUBLE PRECISION array, dimension (N)
+	  
+	  //  RESID   (output) DOUBLE PRECISION
+	  //          norm(B - op(A)*X) / (norm(A) * norm(X) * EPS)
+	  
+	  //  =====================================================================
+	  
+	  //     .. Parameters ..
+		     final double ONE = 1.0;
+		     final double ZERO = 0.0;
+	  
+	  //     .. Local Scalars ..
+	         int            I, J;
+	         double   ANORM, BNORM, EPS, XNORM;
+	  //     ..
+	  //     .. External Functions ..
+	  //       LOGICAL            LSAME
+	  //       DOUBLE PRECISION   DASUM, DLAMCH, DLANGT
+	  //       EXTERNAL           LSAME, DASUM, DLAMCH, DLANGT
+	  //     ..
+	  //     .. External Subroutines ..
+	  //       EXTERNAL           DLAGTM
+	  //     ..
+	  //     .. Intrinsic Functions ..
+	  //       INTRINSIC          MAX
+	  //     ..
+	  //     .. Executable Statements ..
+	  
+	  //     Quick exit if N = 0 or NRHS = 0
+	  
+	         RESID[0] = ZERO;
+	         if ( N <= 0 || NRHS == 0 ) {
+	            return;
+	         }
+	  
+	  //     Compute the maximum over the number of right hand sides of
+	  //        norm(B - op(A)*X) / ( norm(A) * norm(X) * EPS ).
+	  
+	         if ((TRANS == 'N') || (TRANS == 'n')) {
+	            ANORM = dlangt( '1', N, DL, D, DU );
+	         }
+	         else {
+	            ANORM = dlangt( 'I', N, DL, D, DU );
+	         }
+	  
+	  //     Exit with RESID = 1/EPS if ANORM = 0.
+	  
+	         EPS = ge.dlamch( 'E' );
+	         if ( ANORM <= ZERO ) {
+	            RESID[0] = ONE / EPS;
+	            return;
+	         }
+	  
+	  //     Compute B - op(A)*X.
+	  
+	         dlagtm( TRANS, N, NRHS, -ONE, DL, D, DU, X, LDX, ONE, B, LDB );
+	 
+	         for (J = 0; J < NRHS; J++) {
+	        	     BNORM = 0.0;
+	        	     for (I = 0; I < N; I++) {
+	        	    	 BNORM += Math.abs(B[I][J]);
+	        	     }
+	        	     XNORM = 0.0;
+	        	     for (I = 0; I < N; I++) {
+	        	    	 XNORM += Math.abs(X[I][J]);
+	        	     }
+	                 if ( XNORM <= ZERO ) {
+	                    RESID[0] = ONE / EPS;
+	                 }
+	                 else {
+	                    RESID[0] = Math.max( RESID[0], ( ( BNORM / ANORM ) / XNORM ) / EPS );
+	                 }
+	         } // for (J = 0; J < NRHS; J++)
+	  
+	         return;
+	  } // dgtt02
+	  
+
+
 	  
       private void printHeader() {
  	     UI.setDataText("DGT: General tridaigonal\n");
@@ -3848,173 +4133,444 @@ public class SparseEigenvalue implements java.io.Serializable {
  	     UI.setDataText("7. RCOND * CNDNUM - 1.0\n");
       }
       
-      private void dgtcon(char norm, int n, double dl[], double d[], double du[], double du2[],
-    		              int ipiv[], double anorm, double rcond[],
-	                      double work[], int iwork[], int info[]) {
-	  /*00003 *
-	  00004 *  -- LAPACK routine (version 3.3.1) --
-	  00005 *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
-	  00006 *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
-	  00007 *  -- April 2011                                                      --
-	  00008 *
-	  00009 *     Modified to call DLACN2 in place of DLACON, 5 Feb 03, SJH.
-	  00010 *
-	  00011 *     .. Scalar Arguments ..
-	  00012       CHARACTER          NORM
-	  00013       INTEGER            INFO, N
-	  00014       DOUBLE PRECISION   ANORM, RCOND
-	  00015 *     ..
-	  00016 *     .. Array Arguments ..
-	  00017       INTEGER            IPIV( * ), IWORK( * )
-	  00018       DOUBLE PRECISION   D( * ), DL( * ), DU( * ), DU2( * ), WORK( * )
-	  00019 *     ..
-	  00020 *
-	  00021 *  Purpose
-	  00022 *  =======
-	  00023 *
-	  00024 *  DGTCON estimates the reciprocal of the condition number of a real
-	  00025 *  tridiagonal matrix A using the LU factorization as computed by
-	  00026 *  DGTTRF.
-	  00027 *
-	  00028 *  An estimate is obtained for norm(inv(A)), and the reciprocal of the
-	  00029 *  condition number is computed as RCOND = 1 / (ANORM * norm(inv(A))).
-	  00030 *
-	  00031 *  Arguments
-	  00032 *  =========
-	  00033 *
-	  00034 *  NORM    (input) CHARACTER*1
-	  00035 *          Specifies whether the 1-norm condition number or the
-	  00036 *          infinity-norm condition number is required:
-	  00037 *          = '1' or 'O':  1-norm;
-	  00038 *          = 'I':         Infinity-norm.
-	  00039 *
-	  00040 *  N       (input) INTEGER
-	  00041 *          The order of the matrix A.  N >= 0.
-	  00042 *
-	  00043 *  DL      (input) DOUBLE PRECISION array, dimension (N-1)
-	  00044 *          The (n-1) multipliers that define the matrix L from the
-	  00045 *          LU factorization of A as computed by DGTTRF.
-	  00046 *
-	  00047 *  D       (input) DOUBLE PRECISION array, dimension (N)
-	  00048 *          The n diagonal elements of the upper triangular matrix U from
-	  00049 *          the LU factorization of A.
-	  00050 *
-	  00051 *  DU      (input) DOUBLE PRECISION array, dimension (N-1)
-	  00052 *          The (n-1) elements of the first superdiagonal of U.
-	  00053 *
-	  00054 *  DU2     (input) DOUBLE PRECISION array, dimension (N-2)
-	  00055 *          The (n-2) elements of the second superdiagonal of U.
-	  00056 *
-	  00057 *  IPIV    (input) INTEGER array, dimension (N)
-	  00058 *          The pivot indices; for 1 <= i <= n, row i of the matrix was
-	  00059 *          interchanged with row IPIV(i).  IPIV(i) will always be either
-	  00060 *          i or i+1; IPIV(i) = i indicates a row interchange was not
-	  00061 *          required.
-	  00062 *
-	  00063 *  ANORM   (input) DOUBLE PRECISION
-	  00064 *          If NORM = '1' or 'O', the 1-norm of the original matrix A.
-	  00065 *          If NORM = 'I', the infinity-norm of the original matrix A.
-	  00066 *
-	  00067 *  RCOND   (output) DOUBLE PRECISION
-	  00068 *          The reciprocal of the condition number of the matrix A,
-	  00069 *          computed as RCOND = 1/(ANORM * AINVNM), where AINVNM is an
-	  00070 *          estimate of the 1-norm of inv(A) computed in this routine.
-	  00071 *
-	  00072 *  WORK    (workspace) DOUBLE PRECISION array, dimension (2*N)
-	  00073 *
-	  00074 *  IWORK   (workspace) INTEGER array, dimension (N)
-	  00075 *
-	  00076 *  INFO    (output) INTEGER
-	  00077 *          = 0:  successful exit
-	  00078 *          < 0:  if INFO = -i, the i-th argument had an illegal value
-	  00079 *
-	  00080 *  =====================================================================
-	  00081 *
-	  00082 *     .. Parameters ..
-	  00083       DOUBLE PRECISION   ONE, ZERO
-	  00084       PARAMETER          ( ONE = 1.0D+0, ZERO = 0.0D+0 )
-	  00085 *     ..
-	  00086 *     .. Local Scalars ..
-	  00087       LOGICAL            ONENRM
-	  00088       INTEGER            I, KASE, KASE1
-	  00089       DOUBLE PRECISION   AINVNM
-	  00090 *     ..
-	  00091 *     .. Local Arrays ..
-	  00092       INTEGER            ISAVE( 3 )
-	  00093 *     ..
-	  00094 *     .. External Functions ..
-	  00095       LOGICAL            LSAME
-	  00096       EXTERNAL           LSAME
-	  00097 *     ..
-	  00098 *     .. External Subroutines ..
-	  00099       EXTERNAL           DGTTRS, DLACN2, XERBLA
-	  00100 *     ..
-	  00101 *     .. Executable Statements ..
-	  00102 *
-	  00103 *     Test the input arguments.
-	  00104 *
-	  00105       INFO = 0
-	  00106       ONENRM = NORM.EQ.'1' .OR. LSAME( NORM, 'O' )
-	  00107       IF( .NOT.ONENRM .AND. .NOT.LSAME( NORM, 'I' ) ) THEN
-	  00108          INFO = -1
-	  00109       ELSE IF( N.LT.0 ) THEN
-	  00110          INFO = -2
-	  00111       ELSE IF( ANORM.LT.ZERO ) THEN
-	  00112          INFO = -8
-	  00113       END IF
-	  00114       IF( INFO.NE.0 ) THEN
-	  00115          CALL XERBLA( 'DGTCON', -INFO )
-	  00116          RETURN
-	  00117       END IF
-	  00118 *
-	  00119 *     Quick return if possible
-	  00120 *
-	  00121       RCOND = ZERO
-	  00122       IF( N.EQ.0 ) THEN
-	  00123          RCOND = ONE
-	  00124          RETURN
-	  00125       ELSE IF( ANORM.EQ.ZERO ) THEN
-	  00126          RETURN
-	  00127       END IF
-	  00128 *
-	  00129 *     Check that D(1:N) is non-zero.
-	  00130 *
-	  00131       DO 10 I = 1, N
-	  00132          IF( D( I ).EQ.ZERO )
-	  00133      $      RETURN
-	  00134    10 CONTINUE
-	  00135 *
-	  00136       AINVNM = ZERO
-	  00137       IF( ONENRM ) THEN
-	  00138          KASE1 = 1
-	  00139       ELSE
-	  00140          KASE1 = 2
-	  00141       END IF
-	  00142       KASE = 0
-	  00143    20 CONTINUE
-	  00144       CALL DLACN2( N, WORK( N+1 ), WORK, IWORK, AINVNM, KASE, ISAVE )
-	  00145       IF( KASE.NE.0 ) THEN
-	  00146          IF( KASE.EQ.KASE1 ) THEN
-	  00147 *
-	  00148 *           Multiply by inv(U)*inv(L).
-	  00149 *
-	  00150             CALL DGTTRS( 'No transpose', N, 1, DL, D, DU, DU2, IPIV,
-	  00151      $                   WORK, N, INFO )
-	  00152          ELSE
-	  00153 *
-	  00154 *           Multiply by inv(L**T)*inv(U**T).
-	  00155 *
-	  00156             CALL DGTTRS( 'Transpose', N, 1, DL, D, DU, DU2, IPIV, WORK,
-	  00157      $                   N, INFO )
-	  00158          END IF
-	  00159          GO TO 20
-	  00160       END IF
-	  00161 *
-	  00162 *     Compute the estimate of the reciprocal condition number.
-	  00163 *
-	  00164       IF( AINVNM.NE.ZERO )
-	  00165      $   RCOND = ( ONE / AINVNM ) / ANORM
-	  00166 **/
+       // \par Purpose:
+	   //  =============
+	   
+	   // \verbatim
+	   
+	   // DLAGTM performs a matrix-vector product of the form
+	   
+	   //    B := alpha * A * X + beta * B
+	  
+	   // where A is a tridiagonal matrix of order N, B and X are N by NRHS
+	   // matrices, and alpha and beta are real scalars, each of which may be
+	   // 0., 1., or -1.
+	   // \endverbatim
+	  
+	   //  Arguments:
+	   //  ==========
+	  
+	   // \param[in] TRANS
+	   // \verbatim
+	   //          TRANS is CHARACTER*1
+	   //          Specifies the operation applied to A.
+	   //          = 'N':  No transpose, B := alpha * A * X + beta * B
+	   //          = 'T':  Transpose,    B := alpha * A'* X + beta * B
+	   //          = 'C':  Conjugate transpose = Transpose
+	   // \endverbatim
+	   
+	   // \param[in] N
+	   // \verbatim
+	   //          N is INTEGER
+	   //          The order of the matrix A.  N >= 0.
+	   // \endverbatim
+	   
+	   // \param[in] NRHS
+	   // \verbatim
+	   //          NRHS is INTEGER
+	   //          The number of right hand sides, i.e., the number of columns
+	   //          of the matrices X and B.
+	   // \endverbatim
+	   
+	   // \param[in] ALPHA
+	   // \verbatim
+	   //          ALPHA is DOUBLE PRECISION
+	   //          The scalar alpha.  ALPHA must be 0., 1., or -1.; otherwise,
+	   //          it is assumed to be 0.
+	   // \endverbatim
+	   
+	   // \param[in] DL
+	   // \verbatim
+	   //          DL is DOUBLE PRECISION array, dimension (N-1)
+	   //          The (n-1) sub-diagonal elements of T.
+	   // \endverbatim
+	   
+	   // \param[in] D
+	   // \verbatim
+	   //          D is DOUBLE PRECISION array, dimension (N)
+	   //          The diagonal elements of T.
+	   // \endverbatim
+	   
+	   // \param[in] DU
+	   // \verbatim
+	   //          DU is DOUBLE PRECISION array, dimension (N-1)
+	   //          The (n-1) super-diagonal elements of T.
+	   // \endverbatim
+	  
+	  // \param[in] X
+	  // \verbatim
+	  //          X is DOUBLE PRECISION array, dimension (LDX,NRHS)
+	  //          The N by NRHS matrix X.
+	  // \endverbatim
+	  
+	  // \param[in] LDX
+	  // \verbatim
+	  //          LDX is INTEGER
+	  //          The leading dimension of the array X.  LDX >= max(N,1).
+	  // \endverbatim
+	  //
+	  // \param[in] BETA
+	  // \verbatim
+	  //          BETA is DOUBLE PRECISION
+	  //          The scalar beta.  BETA must be 0., 1., or -1.; otherwise,
+	  //          it is assumed to be 1.
+	  // \endverbatim
+	  
+	  // \param[in,out] B
+	  // \verbatim
+	  //          B is DOUBLE PRECISION array, dimension (LDB,NRHS)
+	  //          On entry, the N by NRHS matrix B.
+	  //          On exit, B is overwritten by the matrix expression
+	  //          B := alpha * A * X + beta * B.
+	  // \endverbatim
+	  
+	  // \param[in] LDB
+	  // \verbatim
+	  //          LDB is INTEGER
+	  //          The leading dimension of the array B.  LDB >= max(N,1).
+	  // \endverbatim
+	  
+	  //  Authors:
+	  //  ========
+	  
+	  // \author Univ. of Tennessee 
+	  // \author Univ. of California Berkeley 
+	  // \author Univ. of Colorado Denver 
+	  // \author NAG Ltd. 
+	  
+	  // \date September 2012
+	  
+	  // \ingroup doubleOTHERauxiliary
+	  
+	  //  =====================================================================
+	         private void dlagtm( char trans, int n, int nrhs, double alpha, double dl[], 
+	        		              double d[], double du[], double x[][], int ldx, double beta,
+	                              double b[][], int ldb ) {
+	  
+	  //  -- LAPACK auxiliary routine (version 3.4.2) --
+	  //  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+	  //  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+	  //     September 2012
+	  
+	  //     .. Scalar Arguments ..
+	  //       CHARACTER          trans
+	  //       INTEGER            ldb, ldx, n, nrhs
+	  //       DOUBLE PRECISION   alpha, beta
+	  //     ..
+	  //     .. Array Arguments ..
+	  //       DOUBLE PRECISION   b( ldb, * ), d( * ), dl( * ), du( * ),
+	  //     $                   x( ldx, * )
+	  //     ..
+	  
+	  //  =====================================================================
+	  
+	  //     .. Parameters ..
+	         final double one = 1.0;
+	         final double zero = 0.0;
+	  //     ..
+	  //     .. Local Scalars ..
+	         int            i, j;
+	  //     ..
+	  //     .. External Functions ..
+	  //       LOGICAL            lsame
+	  //       EXTERNAL           lsame
+	  //     ..
+	  //     .. Executable Statements ..
+	  
+	        if ( n == 0 ) {
+	            return;
+	        }
+	  
+	  //     Multiply B by BETA if BETA.NE.1.
+	  
+	         if ( beta == zero ) {
+	            for( j = 0; j < nrhs; j++) {
+	               for (i = 0; i < n; i++) {
+	                  b[ i][ j ] = zero;
+	               }
+	            }
+	         } // if ( beta == zero )
+	         else if ( beta == -one ) {
+	            for (j = 0; j < nrhs; j++) {
+	               for (i = 0; i < n; i++) {
+	                  b[ i][ j ] = -b[ i][ j ];
+	               }
+	            }
+	         } // else if ( beta == -one )
+	  
+	         if ( alpha == one ) {
+	            if ((trans == 'N' ) || (trans == 'n')) {
+	  
+	  //           Compute B := B + A*X
+	  
+	               for (j = 0; j < nrhs; j++) {
+	                  if ( n == 1 ) {
+	                     b[ 0][ j] = b[ 0][ j ] + d[ 0 ]*x[ 0][ j ];
+	                  }
+	                  else {
+	                     b[ 0][ j ] = b[ 0][ j ] + d[ 0 ]*x[ 0][ j ] +
+	                                 du[ 0 ]*x[ 1][ j ];
+	                     b[ n-1][ j ] = b[ n-1][ j ] + dl[ n-2 ]*x[ n-2][ j ] +
+	                                 d[ n-1 ]*x[ n-1][ j ];
+	                     for (i = 1; i < n - 1; i++) {
+	                        b[ i][ j ] = b[ i][ j ] + dl[ i-1 ]*x[ i-1][ j ] +
+	                                    d[ i ]*x[ i][ j ] + du[ i ]*x[ i+1][ j];
+	                     }
+	                  }
+	               } // for (j = 0; j < nrhs; j++)
+	            } // if ((trans == 'N' ) || (trans == 'n'))
+	            else {
+	  
+	  //           Compute B := B + A**T*X
+	  
+	               for (j = 0; j < nrhs; j++) {
+	                  if ( n == 1 ) {
+	                     b[ 0][ j ] = b[ 0][ j ] + d[ 0 ]*x[0][ j ];
+	                  }
+	                  else {
+	                     b[ 0][ j ] = b[0][ j ] + d[ 0 ]*x[ 0][ j ] +
+	                                 dl[ 0 ]*x[ 1][ j ];
+	                     b[ n-1][ j ] = b[ n-1][ j ] + du[ n-2 ]*x[ n-2][ j ] +
+	                                 d[ n - 1]*x[ n-1][ j ];
+	                     for (i = 1; i < n - 1; i++) {
+	                        b[ i][ j ] = b[ i][ j ] + du[ i-1 ]*x[ i-1][ j ] +
+	                                     d[ i ]*x[ i][ j ] + dl[ i ]*x[ i+1][ j ];
+	                     } // for (i = 1; i < n - 1; i++)
+	                  }
+	               } // for (j = 0; j < nrhs; j++)
+	            } // else
+	         } // if ( alpha == one )
+	         else if ( alpha == -one ) {
+	            if (( trans == 'N' ) || (trans == 'n')) {
+	  
+	  //           Compute B := B - A*X
+	  
+	               for (j = 0; j < nrhs; j++) {
+	                  if ( n == 1 ) {
+	                     b[ 0][ j ] = b[ 0][ j ] - d[ 0 ]*x[ 0][ j ];
+	                  }
+	                  else {
+	                     b[ 0][ j ] = b[0][ j ] - d[ 0 ]*x[0][ j ] -
+	                                  du[ 0 ]*x[ 1][ j ];
+	                     b[ n-1][ j ] = b[ n-1][ j ] - dl[ n-2 ]*x[ n-2][ j ] -
+	                                    d[ n-1 ]*x[ n-1][ j ];
+	                     for ( i = 1; i < n - 1; i++) {
+	                        b[ i][ j ] = b[ i][ j ] - dl[ i-1 ]*x[ i-1][ j ] -
+	                                     d[ i ]*x[ i][ j ] - du[ i ]*x[ i+1][ j ];
+	                     } // for ( i = 1; i < n - 1; i++)
+	                  }
+	               } // for (j = 0; j < nrhs; j++)
+	            }
+	            else {
+	  
+	  //           Compute B := B - A**T*X
+	  
+	               for (j = 0; j < nrhs; j++) {
+	                  if ( n == 1 ) {
+	                     b[ 0][ j ] = b[ 0][ j ] - d[ 0 ]*x[ 0][ j ];
+	                  }
+	                  else {
+	                     b[ 0][ j ] = b[ 0][ j ] - d[ 0 ]*x[ 0][ j ] -
+	                                  dl[ 0 ]*x[ 1][ j ];
+	                     b[ n-1][ j ] = b[ n-1][ j ] - du[ n-2 ]*x[ n-2][ j ] -
+	                                    d[ n-1 ]*x[ n-1][ j ];
+	                     for ( i = 1; i < n - 1; i++) {
+	                        b[ i][ j ] = b[ i][ j ] - du[ i-1 ]*x[ i-1][ j ] -
+	                                     d[ i ]*x[ i][ j ] - dl[ i ]*x[ i+1][ j ];
+	                     }
+	                  }
+	               } // for (j = 0; j < nrhs; j++)
+	            }
+	         } // else if ( alpha == -one )
+	         return;
+	         } // dlagtm
+	  
+
+      
+      private void dgtcon(char NORM, int N, double DL[], double D[], double DU[], double DU2[],
+    		              int IPIV[], double ANORM, double RCOND[],
+	                      double WORK[], int IWORK[], int INFO[]) {
+	 
+	  //  -- LAPACK routine (version 3.3.1) --
+	  //  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+	  //  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+	  //  -- April 2011                                                      --
+	  //
+	  //     Modified to call DLACN2 in place of DLACON, 5 Feb 03, SJH.
+	  
+	  //     .. Scalar Arguments ..
+	  //       CHARACTER          NORM
+	  //       INTEGER            INFO, N
+	  //       DOUBLE PRECISION   ANORM, RCOND
+	  //     ..
+	  //     .. Array Arguments ..
+	  //       INTEGER            IPIV( * ), IWORK( * )
+	  //       DOUBLE PRECISION   D( * ), DL( * ), DU( * ), DU2( * ), WORK( * )
+	  //     ..
+	  
+	  //  Purpose
+	  //  =======
+	  //
+	  //  DGTCON estimates the reciprocal of the condition number of a real
+	  //  tridiagonal matrix A using the LU factorization as computed by
+	  //  DGTTRF.
+	 
+	  //  An estimate is obtained for norm(inv(A)), and the reciprocal of the
+	  //  condition number is computed as RCOND = 1 / (ANORM * norm(inv(A))).
+	  
+	  //  Arguments
+	  //  =========
+	 
+	  //  NORM    (input) CHARACTER*1
+	  //          Specifies whether the 1-norm condition number or the
+	  //          infinity-norm condition number is required:
+	  //          = '1' or 'O':  1-norm;
+	  //          = 'I':         Infinity-norm.
+	  
+	  //  N       (input) INTEGER
+	  //          The order of the matrix A.  N >= 0.
+	  
+	  //  DL      (input) DOUBLE PRECISION array, dimension (N-1)
+	  //          The (n-1) multipliers that define the matrix L from the
+	  //          LU factorization of A as computed by DGTTRF.
+	  
+	  //  D       (input) DOUBLE PRECISION array, dimension (N)
+	  //          The n diagonal elements of the upper triangular matrix U from
+	  //          the LU factorization of A.
+	  
+	  //  DU      (input) DOUBLE PRECISION array, dimension (N-1)
+	  //          The (n-1) elements of the first superdiagonal of U.
+	  
+	  //  DU2     (input) DOUBLE PRECISION array, dimension (N-2)
+	  //          The (n-2) elements of the second superdiagonal of U.
+	 
+	  //  IPIV    (input) INTEGER array, dimension (N)
+	  //          The pivot indices; for 1 <= i <= n, row i of the matrix was
+	  //          interchanged with row IPIV(i).  IPIV(i) will always be either
+	  //          i or i+1; IPIV(i) = i indicates a row interchange was not
+	  //          required.
+	  
+	  //  ANORM   (input) DOUBLE PRECISION
+	  //          If NORM = '1' or 'O', the 1-norm of the original matrix A.
+	  //          If NORM = 'I', the infinity-norm of the original matrix A.
+	  
+	  //  RCOND   (output) DOUBLE PRECISION
+	  //          The reciprocal of the condition number of the matrix A,
+	  //          computed as RCOND = 1/(ANORM * AINVNM), where AINVNM is an
+	  //          estimate of the 1-norm of inv(A) computed in this routine.
+	 
+	  //  WORK    (workspace) DOUBLE PRECISION array, dimension (2*N)
+	  
+	  //  IWORK   (workspace) INTEGER array, dimension (N)
+	  
+	  //  INFO    (output) INTEGER
+	  //          = 0:  successful exit
+	  //          < 0:  if INFO = -i, the i-th argument had an illegal value
+	 
+	  //  =====================================================================
+	  
+	  //     .. Parameters ..
+    	          final double ONE = 1.0;
+    	          final double ZERO = 0.0;
+	  //     ..
+	  //     .. Local Scalars ..
+	         boolean            ONENRM;
+	         int            I, KASE1;
+	         int KASE[] = new int[1];
+	         double AINVNM[] = new double[1];
+	         double array[][] = new double[N][1];
+	         double v1[] = new double[N];
+	  //     ..
+	  //     .. Local Arrays ..
+	         int ISAVE[] = new int[ 3 ];
+	  //     ..
+	  //     .. External Functions ..
+	  //       LOGICAL            LSAME
+	  //       EXTERNAL           LSAME
+	  //     ..
+	  //     .. External Subroutines ..
+	  //       EXTERNAL           DGTTRS, DLACN2, XERBLA
+	  //     ..
+	  //     .. Executable Statements ..
+	  
+	  //     Test the input arguments.
+	  
+	         INFO[0] = 0;
+	         ONENRM = NORM == '1' || NORM == 'O' || NORM == 'o';
+	         if (!ONENRM && !(( NORM == 'I' ) || (NORM == 'i'))) {
+	            INFO[0] = -1;
+	         }
+	         else if ( N < 0 ) {
+	            INFO[0] = -2;
+	         }
+	         else if ( ANORM < ZERO ) {
+	            INFO[0] = -8;
+	         }
+	         if ( INFO[0] != 0 ) {
+	            UI.setDataText("dgtcon has INFO[0] = " + INFO[0] + "\n" );
+	            return;
+	         }
+	 
+	  //     Quick return if possible
+	  
+	         RCOND[0] = ZERO;
+	         if ( N == 0 ) {
+	            RCOND[0] = ONE;
+	            return;
+	         }
+	         else if ( ANORM == ZERO ) {
+	            return;
+	         }
+	  
+	  //     Check that D(0:N-1) is non-zero.
+	  
+	         for (I = 0; I < N; I++) {
+	            if ( D[ I ] == ZERO ) {
+	               return;
+	            }
+	         }
+	  
+	  //     AINVNM = ZERO;
+	         if ( ONENRM ) {
+	          KASE1 = 1;
+	         }
+	         else {
+	            KASE1 = 2;
+	         }
+	         KASE[0] = 0;
+	         while (true) {
+	             le.dlacn2( N, v1, WORK, IWORK, AINVNM, KASE, ISAVE );
+	             for (I = 0; I < N; I++) {
+	            	   array[I][0] = WORK[I];
+	              }
+	             if( KASE[0]!= 0 ) {
+	                if ( KASE[0] == KASE1 ) {
+	  
+	  //           Multiply by inv(U)*inv(L).
+	               dgttrs( 'N', N, 1, DL, D, DU, DU2, IPIV,
+	                        array, N, INFO );
+	                } // if (KASE == KASE1
+	                else {
+	  
+	                    // Multiply by inv(L**T)*inv(U**T).
+	 
+	                    dgttrs( 'T', N, 1, DL, D, DU, DU2, IPIV, array,
+	                            N, INFO );
+	                } // else
+	                for (I = 0; I < N; I++) {
+	                	WORK[I] = array[I][0];
+	                }
+	             } // if (KASE != 0)
+	             else {
+	            	 break;
+	             }
+	         } // while (true)
+	  
+	  //     Compute the estimate of the reciprocal condition number.
+	  
+	         if ( AINVNM[0] != ZERO ) {
+	            RCOND[0] = ( ONE / AINVNM[0] ) / ANORM;
+	         }
 	         return;
       } // dgtcon
 
