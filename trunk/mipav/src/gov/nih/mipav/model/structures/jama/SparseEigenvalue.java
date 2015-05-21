@@ -2,6 +2,8 @@ package gov.nih.mipav.model.structures.jama;
 
 
 import java.text.DecimalFormat;
+
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 
 /** These sparse symmetric eigenvalue and eigenvector routines are ported from the FORTRAN ARPACK package.
@@ -150,12 +152,6 @@ public class SparseEigenvalue implements java.io.Serializable {
     
     private double dsapps_epsmch;
     private boolean dsapps_first = true;
-    
-    private boolean infoc_lerr;
-    private boolean infoc_ok;
-    private int infoc_infot;
-    private String srnamc_srnamt;
-
 	// ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -1276,7 +1272,7 @@ public class SparseEigenvalue implements java.io.Serializable {
               }
               dgttrf (n, adl, ad, adu, adu2, ipiv, ierr);
               if (ierr[0] != 0) { 
-                 UI.setDataText("Error with _gttrf in _SDRV3. \n");
+                 UI.setDataText("Error with dgttrf in DSDRV3. \n");
                  return;
               }
         
@@ -3159,6 +3155,65 @@ public class SparseEigenvalue implements java.io.Serializable {
             return;
             } // av6
             
+            /**
+             * This dchkgt_test routine is a port of a portion of the version 3.4.1 LAPACK test routine DCHKAA by Univ. of
+             * Tennessee, Univ. Of California Berkeley and NAG Ltd., April, 2012. and some values from the test data file
+             * dtest.in.
+             */
+            public void dchkgt_test() {
+
+                // Number of values of n
+                final int nn = 7;
+
+                // Values of n (column dimension)
+                // dtest.in uses 50 rather than 16
+                final int[] nval = new int[] {0, 1, 2, 3, 5, 10, 16};
+                
+                // Number of values of nsval
+                final int nns = 3;
+
+                // Values of nsval or nrhs (number of right hand sides)
+                final int[] nsval = new int[] {1, 2, 15};
+                // Largest entry in nsval
+                final int nsmax = 15;
+
+                // Threshold value of test ratio
+                // dchkaa has 20.0, dtest.in has 30.0
+                final double thresh = 20.0;
+
+                // The maximum allowable value for n
+                final int nmax = 132;
+
+                final int ntypes = 12                        ;
+                final boolean dotype[] = new boolean[ntypes];
+                final double A[] = new double[4*nmax];
+                final double AF[] = new double[4*nmax];
+                final double B[] = new double[nmax*nsmax];
+                final double X[] = new double[nmax*nsmax];
+                final double XACT[] = new double[nmax*nsmax];
+                final double work[] = new double[nmax * Math.max(3,nsmax)];
+                final double rwork[] = new double[Math.max(nmax,2*nsmax)];
+                final int iwork[] = new int[2*nmax];
+                
+                int i;
+                double eps;
+
+                for (i = 0; i < ntypes; i++) {
+                    dotype[i] = true;
+                }
+
+                // Output the machine dependent constants
+                eps = ge.dlamch('U');
+                Preferences.debug("Underflow threshold = " + eps + "\n");
+                eps = ge.dlamch('O');
+                Preferences.debug("Overflow threshold = " + eps + "\n");
+                eps = ge.dlamch('E');
+                Preferences.debug("Precision = " + eps + "\n");
+
+                dchkgt(dotype, nn, nval, nns, nsval, thresh, A, AF, B, X,
+                        XACT, work, rwork, iwork);
+            } // dchkgt_test
+            
        // \par Purpose:
 	   // =============
 	   
@@ -3305,9 +3360,8 @@ public class SparseEigenvalue implements java.io.Serializable {
       final double one = 1.0;
       final double zero = 0.0;
 	  final int ntypes = 12;
-	  //final int ntests = 7;
-	  // Test 6 is not present
-	  final int ntests = 6;
+	  final int ntests = 7;
+	  
 	  //     ..
 	  //     .. Local Scalars ..
 	  boolean            trfcon, zerot;
@@ -3337,18 +3391,20 @@ public class SparseEigenvalue implements java.io.Serializable {
 	  char transs[] = new char[]{'N','T','C'};
 	  int iseed[] = new int[4 ];
 	  int iseedy[] = new int[]{0,0,0,1};
-	  double result[ ] = new double[7];
+	  double result[ ] = new double[ntests];
 	  double z[] = new double[ 3 ];
 	  double array[][];
 	  double array2[][];
+	  double array3[][];
 	  double v1[];
 	  double v2[];
 	  double v3[];
 	  double v4[];
 	  double v5[];
+	  double v6[];
 	  double absSum;
 	  int iwork2[];
-	  double res[] = new double[1];
+	  double res[] = new double[2];
 	  //     ..
 	  //     .. External Functions ..
 	  //       DOUBLE PRECISION   dasum, dget06, dlangt
@@ -3380,8 +3436,6 @@ public class SparseEigenvalue implements java.io.Serializable {
 	         for (i = 0; i < 4; i++) {
 	            iseed[ i ] = iseedy[ i ];
 	         }
-	 
-	         infoc_infot = 0;
 	
 	         for (in = 1; in <= nn; in++) {
 	 
@@ -3414,7 +3468,6 @@ public class SparseEigenvalue implements java.io.Serializable {
 	  //              Types 1-6:  generate matrices of known condition number.
 	 
 	                  koff = Math.max( 2-ku[0], 3-Math.max( 1, n ) );
-	                  srnamc_srnamt = "DLATMS";
 	                  array = new double[3][n];
 	                  index = 0;
 	                  for (j = 0; j < n; j++) {
@@ -3536,16 +3589,15 @@ public class SparseEigenvalue implements java.io.Serializable {
 	               for (i = 0; i < n+2*m; i++) {
 	            	   af[i] = a[i];
 	               }
-	               srnamc_srnamt = "DGTTRF";
 	               v1 = new double[n];
 	               for (i = 0; i < n; i++) {
 	            	   v1[i] = af[m+i];
 	               }
-	               v2 = new double[n-1];
+	               v2 = new double[Math.max(0,n-1)];
 	               for (i = 0; i < n-1; i++) {
 	            	   v2[i] = af[n+m+i];
 	               }
-	               v3 = new double[n-2];
+	               v3 = new double[Math.max(0,n-2)];
 	               dgttrf( n, af, v1, v2, v3,
 	                      iwork, info );
 	               for (i = 0; i < n; i++) {
@@ -3567,16 +3619,12 @@ public class SparseEigenvalue implements java.io.Serializable {
 	            	     nerrs = nerrs + 1;
 	            	     if (info[0] != izero && izero != 0) {
 	            	    	 UI.setDataText("dgttrf returned with info[0] = " + info[0] + " instead of " + izero + "\n");
-	            	    	 UI.setDataText("M = " + n + "\n");
 	            	    	 UI.setDataText("N = " + n + "\n");
-	            	    	 UI.setDataText("NB = -1\n");
 	            	    	 UI.setDataText("type = " + imat + "\n");
 	            	     }
 	            	     else {
 	            	    	 UI.setDataText("dgttrf returned with info[0] = " + info[0] + "\n");
-	            	    	 UI.setDataText("M = " + n + "\n");
 	            	    	 UI.setDataText("N = " + n + "\n");
-	            	    	 UI.setDataText("NB = -1\n");
 	            	    	 UI.setDataText("type = " + imat + "\n");	 
 	            	     }
 	               } // if (info[0] != izero)
@@ -3586,7 +3634,7 @@ public class SparseEigenvalue implements java.io.Serializable {
 	               for (i = 0; i < n; i++) {
 	            	   v1[i] = a[m+i];   
 	               }
-	               v2 = new double[n-1];
+	               v2 = new double[Math.max(0,n-1)];
 	               for (i = 0; i < n-1; i++) {
 	            	   v2[i] = a[n+m+i];
 	               }
@@ -3594,11 +3642,11 @@ public class SparseEigenvalue implements java.io.Serializable {
 	               for (i = 0; i < n; i++) {
 	            	   v3[i] = af[m+i];
 	               }
-	               v4 = new double[n-1];
+	               v4 = new double[Math.max(0,n-1)];
 	               for (i = 0; i < n-1; i++) {
 	            	   v4[i] = af[n+m+i];
 	               }
-	               v5 = new double[n-2];
+	               v5 = new double[Math.max(0,n-2)];
 	               for (i = 0; i < n-2; i++) {
 	            	   v5[i] = af[n+2*m+i];
 	               }
@@ -3638,7 +3686,7 @@ public class SparseEigenvalue implements java.io.Serializable {
 	                  for (i = 0; i < n; i++) {
 	                	  v1[i] = a[m+i];
 	                  }
-	                  v2 = new double[n-1];
+	                  v2 = new double[Math.max(0,n-1)];
 	                  for (i = 0; i < n-1; i++) {
 	                	  v2[i] = a[n+m+i];
 	                  }
@@ -3651,7 +3699,7 @@ public class SparseEigenvalue implements java.io.Serializable {
 	  //                 go.
 	  
 	                     ainvnm = zero;
-	                     v3 = new double[n-2];
+	                     v3 = new double[Math.max(0,n-2)];
 	                    for (i = 0; i < n; i++) {
 	                        for (j = 0; j < n; j++) {
 	                           x[ j ] = zero;
@@ -3706,16 +3754,15 @@ public class SparseEigenvalue implements java.io.Serializable {
 	  //              Estimate the reciprocal of the condition number of the
 	  //              matrix.
 	  
-	                  srnamc_srnamt = "DGTCON";
 	                  v1 = new double[n];
 	                  for (i = 0; i < n; i++) {
 	                	  v1[i] = af[m+i];
 	                  }
-	                  v2 = new double[n-1];
+	                  v2 = new double[Math.max(0,n-1)];
 	                  for (i = 0; i < n-1; i++) {
 	                	  v2[i] = af[n+m+i];
 	                  }
-	                  v3 = new double[n-1];
+	                  v3 = new double[Math.max(0,n-1)];
 	                  for (i = 0; i < n-2; i++) {
 	                	  v3[i] = af[n+2*m+i];
 	                  }
@@ -3790,7 +3837,7 @@ public class SparseEigenvalue implements java.io.Serializable {
 	                     for (i = 0; i < n; i++) {
 	                    	 v1[i] = a[m+i];
 	                     }
-	                     v2 = new double[n-1];
+	                     v2 = new double[Math.max(0,n-1)];
 	                     for (i = 0; i < n-1; i++) {
 	                    	 v2[i] = a[n+m+i];
 	                     }
@@ -3821,16 +3868,15 @@ public class SparseEigenvalue implements java.io.Serializable {
 		                    	    x[index++] = array2[i][j];	
 		                    	}
 		                    }
-	                     srnamc_srnamt = "DGTTRS";
 	                     v1 = new double[n];
 	                     for (i = 0; i < n; i++) {
 	                    	 v1[i] = af[m+i];
 	                     }
-	                     v2 = new double[n-1];
+	                     v2 = new double[Math.max(0,n-1)];
 	                     for (i = 0; i < n-1; i++) {
 	                    	 v2[i] = af[n+m+i];
 	                     }
-	                     v3 = new double[n-2];
+	                     v3 = new double[Math.max(0,n-2)];
 	                     for (i = 0; i < n-2; i++) {
 	                    	 v3[i] = af[n+2*m+i];
 	                     }
@@ -3879,7 +3925,7 @@ public class SparseEigenvalue implements java.io.Serializable {
 	                   for (i = 0; i < n; i++) {
 	                	   v1[i] = a[m+i];
 	                   }
-	                   v2 = new double[n-1];
+	                   v2 = new double[Math.max(0,n-1)];
 	                   for (i = 0; i < n-1; i++) {
 	                	   v2[i] = a[n+m+i];
 	                   }
@@ -3902,66 +3948,953 @@ public class SparseEigenvalue implements java.io.Serializable {
 	  
 	  //    TEST 3
 	  //                 Check solution from generated exact solution.
+	                   index = 0;
+	                    for (j = 0; j < nrhs; j++) {
+	                    	for (i = 0; i < n; i++) {
+	                    		array2[i][j] = xact[index++];
+	                    	}
+	                     }
+	                     le.dget04( n, nrhs, array, lda, array2, lda, rcondc, res);
+	                     result[2] = res[0];
+	  //    TESTS 4, 5, and 6
+	  //                 Use iterative refinement to improve the solution.
+	  //
+	                     for (i = 0; i < n; i++) {
+	                    	 v1[i] = a[m+i];
+	                     }
+	                     for (i = 0; i < n-1; i++) {
+	                    	 v2[i] = a[n+m+i];
+	                     }
+	                     v3 = new double[n];
+	                     for (i = 0; i < n; i++) {
+	                    	 v3[i] = af[m+i];
+	                     }
+	                     v4 = new double[Math.max(0,n-1)];
+	                     for (i = 0; i < n-1; i++) {
+	                    	 v4[i] = af[n+m+i];
+	                     }
+	                     v5 = new double[Math.max(0,n-2)];
+	                     for (i = 0; i < n-2; i++) {
+	                    	 v5[i] = af[n+2*m+i];
+	                     }
+	                     index = 0;
+	                     for (j = 0; j < nrhs; j++) {
+	                    	 for (i = 0; i < n; i++) {
+	                    		 array[i][j] = b[index++];
+	                    	 }
+	                     }
+	                     index = 0;
+	                     for (j = 0; j < nrhs; j++) {
+	                    	 for (i = 0; i < n; i++) {
+	                    		 array2[i][j] = x[index++];
+	                    	 }
+	                     }
+	                     v6 = new double[nrhs];
+	                     iwork2 = new int[n];
+	                     dgtrfs( trans, n, nrhs, a, v1, v2,
+	                             af, v3, v4,
+	                             v5, iwork, array, lda, array2, lda,
+	                             rwork, v6, work,
+	                             iwork2, info );
+	                     index = 0;
+	                     for (j = 0; j < nrhs; j++) {
+	                    	 for (i = 0; i < n; i++) {
+	                    		 x[index++] = array2[i][j];
+	                    	 }
+	                     }
+	                     for (i = 0; i < nrhs; i++) {
+	                    	 rwork[nrhs + i] = v6[i];
+	                     }
+	                     for (i = 0; i < n; i++) {
+	                    	 iwork[n+i] = iwork2[i];
+	                     }
+	
+	  //                 Check error code from DGTRFS.
+	 
+	                     if ( info[0] != 0 ) {
+	                    	 if (nfail == 0 && nerrs == 0) {
+		            	         printHeader();
+		            	     }
+		            	     nerrs = nerrs + 1;
+		            	     UI.setDataText("dgtrfs returned with info[0] = " + info[0] + "\n");
+	            	    	 UI.setDataText("trans = " + trans + "\n");
+	            	    	 UI.setDataText("n = " + n + "\n");
+	            	    	 UI.setDataText("nrhs = " + nrhs + "\n");
+	            	    	 UI.setDataText("type = " + imat + "\n");	 
+	                     } // if ( info[0] != 0 ) 
 	  
-	                     /*CALL dget04( n, nrhs, x, lda, xact, lda, rcondc,
-	  498      $                         result( 3 ) )
-	  499 *
-	  // *+    TESTS 4, 5, and 6
-	  // No test 6 is present
-	  // *                 Use iterative refinement to improve the solution.
-	  // *
-	  //                   srnamt = 'DGTRFS'
-	  //                   CALL dgtrfs( trans, n, nrhs, a, a( m+1 ), a( n+m+1 ),
-	  //      $                         af, af( m+1 ), af( n+m+1 ),
-	  //      $                         af( n+2*m+1 ), iwork, b, lda, x, lda,
-	  //      $                         rwork, rwork( nrhs+1 ), work,
-	  //      $                         iwork( n+1 ), info )
-	  // *
-	  // *                 Check error code from DGTRFS.
-	  // *
-	  //                   IF( info.NE.0 )
-	  //      $               CALL alaerh( path, 'DGTRFS', info, 0, trans, n, n,
-	  //      $                            -1, -1, nrhs, imat, nfail, nerrs,
-	  //      $                            nout )
-	  // *
-	  //                   CALL dget04( n, nrhs, x, lda, xact, lda, rcondc,
-	  //      $                         result( 4 ) )
-	  //                   CALL dgtt05( trans, n, nrhs, a, a( m+1 ), a( n+m+1 ),
-	  //      $                         b, lda, x, lda, xact, lda, rwork,
-	  //      $                         rwork( nrhs+1 ), result( 5 ) )
-	  // *
+	                     
+	                     index = 0;
+	                     for (j = 0; j < nrhs; j++) {
+	                    	 for (i = 0; i < n; i++) {
+	                    		 array[i][j] = xact[index++];
+	                    	 }
+	                     }
+	                     le.dget04( n, nrhs, array2, lda, array, lda, rcondc,
+	                             res);
+	                     result[3] = res[0];
+	                     v1 = new double[n];
+	                     for (i = 0; i < n; i++) {
+	                    	 v1[i] = a[m+i];
+	                     }
+	                     v2 = new double[Math.max(0,n-1)];
+	                     for (i = 0; i < n-1; i++) {
+	                    	 v2[i] = a[n+m+i];
+	                     }
+	                     index = 0;
+	                     for (j = 0; j < nrhs; j++) {
+	                    	 for (i = 0; i < n; i++) {
+	                    		 array[i][j] = b[index++];
+	                    	 }
+	                     }
+	                     index = 0;
+	                     for (j = 0; j < nrhs; j++) {
+	                    	 for (i = 0; i < n; i++) {
+	                    		 array2[i][j] = x[index++];
+	                    	 }
+	                     }
+	                     array3 = new double[n][nrhs];
+	                     index = 0;
+	                     for (j = 0; j < nrhs; j++) {
+	                    	 for (i = 0; i < n; i++) {
+	                    		 array3[i][j] = xact[index++];
+	                    	 }
+	                     }
+	                     v3 = new double[nrhs];
+	                     for (i = 0; i < nrhs; i++) {
+	                    	 v3[i] = rwork[nrhs+i];
+	                     }
+	                     dgtt05( trans, n, nrhs, a, v1, v2,
+	                             array, lda, array2, lda, array3, lda, rwork,
+	                             v3, res );
+	                     result[4] = res[0];
+	                     result[5] = res[1];
+	 
 	  //                 Print information about the tests that did not pass
 	  //                 the threshold.
-	  //
-	  //                   DO 70 k = 2, 6
-	                       for (k = 2; k <= 5; k++) {
-	  527                      IF( result( k ).GE.thresh ) THEN
-	  528                         IF( nfail.EQ.0 .AND. nerrs.EQ.0 )
-	  529      $                     CALL alahd( nout, path )
-	  530                         WRITE( nout, fmt = 9998 )trans, n, nrhs, imat,
-	  531      $                     k, result( k )
-	  532                         nfail = nfail + 1
-	  533                      END IF
-	  534    70             CONTINUE
-	                       nrun = nrun + 4;*/
-	                       } // for (itran = 1; itran <= 3; itran++)
-	                    } // for (irhs = 1; irhs <= nns; irhs++)
+	  
+	                     for (k = 2; k <= 6; k++) {
+	                        if ( result[ k-1] >= thresh ) {
+	                           if ( nfail == 0 && nerrs == 0 ) {
+	                        	   printHeader();
+	                           }
+	                           UI.setDataText("trans = " + trans + "\n");
+	                           UI.setDataText("n = " + n + "\n");
+	                           UI.setDataText("nrhs = " + nrhs + "\n");
+	                           UI.setDataText("type = " + imat + "\n");
+	                           UI.setDataText("Test " + k + " has result["+(k-1)+"] = " + nf.format(result[k-1]) + "\n");
+	                           nfail = nfail + 1;
+	                        } // if ( result[ k-1] >= thresh )
+	                     } // for (k = 2; k <= 6; k++)
+	                     nrun = nrun + 5;
+	                  } // for (itran = 1; itran <= 3; itran++)
+	               } // for (irhs = 1; irhs <= nns; irhs++)
 	 
 	           } // for  (imat = 1; imat <= nimat; imat++)
 	         } // for (in = 1; in <= nn; in++)
-	  /*541 *
-	  542 *     Print a summary of the results.
-	  543 *
-	  544       CALL alasum( path, nout, nfail, nrun, nerrs )
-	  545 *
-	  546  9999 FORMAT( 12x, 'N =', i5, ',', 10x, ' type ', i2, ', test(', i2,
-	  547      $      ') = ', g12.5 )
-	  548  9998 FORMAT( ' TRANS=''', a1, ''', N =', i5, ', NRHS=', i3, ', type ',
-	  549      $      i2, ', test(', i2, ') = ', g12.5 )
-	  550  9997 FORMAT( ' NORM =''', a1, ''', N =', i5, ',', 10x, ' type ', i2,
-	  551      $      ', test(', i2, ') = ', g12.5 )*/
-	       return;
+	  
+	  //     Print a summary of the results.
+	         if (nfail > 0) {
+	             UI.setDataText("In dchkgt " + nfail + " out of " + nrun + " tests failed to pass the threshold\n");
+	         } else {
+	             UI.setDataText("In dchkgt all " + nrun + " tests run passed the threshold\n");
+	         }
+	         if (nerrs > 0) {
+	             UI.setDataText("In dchkgt " + nerrs + " errors occurred\n");
+	         }
+	         return;
 	  } // dchkgt
+	  
+	   // \par Purpose:
+	   //  =============
+	   
+	   // \verbatim
+	   
+	   // DGTT05 tests the error bounds from iterative refinement for the
+	   // computed solution to a system of equations A*X = B, where A is a
+	   // general tridiagonal matrix of order n and op(A) = A or A**T,
+	   // depending on TRANS.
+	   
+	   // RESLTS(1) = test of the error bound
+	   //           = norm(X - XACT) / ( norm(X) * FERR )
+	   
+	   // A large value is returned if this ratio is not less than one.
+	   
+	   // RESLTS(2) = residual from the iterative refinement routine
+	   //           = the maximum of BERR / ( NZ*EPS + (*) ), where
+	   //             (*) = NZ*UNFL / (min_i (abs(op(A))*abs(X) +abs(b))_i )
+	   //             and NZ = max. number of nonzeros in any row of A, plus 1
+	   // \endverbatim
+	   
+	   //  Arguments:
+	   //  ==========
+	   
+	   // \param[in] TRANS
+	   // \verbatim
+	   //          TRANS is CHARACTER*1
+	   //          Specifies the form of the system of equations.
+	   //          = 'N':  A * X = B     (No transpose)
+	   //          = 'T':  A**T * X = B  (Transpose)
+	   //          = 'C':  A**H * X = B  (Conjugate transpose = Transpose)
+	   // \endverbatim
+	   
+	   // \param[in] N
+	   // \verbatim
+	   //          N is INTEGER
+	   //          The number of rows of the matrices X and XACT.  N >= 0.
+	   // \endverbatim
+	   
+	   // \param[in] NRHS
+	   // \verbatim
+	   //          NRHS is INTEGER
+	   //          The number of columns of the matrices X and XACT.  NRHS >= 0.
+	   // \endverbatim
+	   
+	   // \param[in] DL
+	   // \verbatim
+	   //          DL is DOUBLE PRECISION array, dimension (N-1)
+	   //          The (n-1) sub-diagonal elements of A.
+	   // \endverbatim
+	   
+	   // \param[in] D
+	   // \verbatim
+	   //          D is DOUBLE PRECISION array, dimension (N)
+	   //          The diagonal elements of A.
+	   // \endverbatim
+	   
+	   // \param[in] DU
+	   // \verbatim
+	   //          DU is DOUBLE PRECISION array, dimension (N-1)
+	   //          The (n-1) super-diagonal elements of A.
+	   // \endverbatim
+	   
+	   // \param[in] B
+	   // \verbatim
+	   //          B is DOUBLE PRECISION array, dimension (LDB,NRHS)
+	   //          The right hand side vectors for the system of linear
+	   //          equations.
+	   // \endverbatim
+	   
+	   // \param[in] LDB
+	   // \verbatim
+	   //          LDB is INTEGER
+	   //          The leading dimension of the array B.  LDB >= max(1,N).
+	   // \endverbatim
+	  
+	  // \param[in] X
+	  // \verbatim
+	  //          X is DOUBLE PRECISION array, dimension (LDX,NRHS)
+	  //          The computed solution vectors.  Each vector is stored as a
+	  //          column of the matrix X.
+	  // \endverbatim
+	  
+	  // \param[in] LDX
+	  // \verbatim
+	  //          LDX is INTEGER
+	  //          The leading dimension of the array X.  LDX >= max(1,N).
+	  // \endverbatim
+	  
+	  // \param[in] XACT
+	  // \verbatim
+	  //          XACT is DOUBLE PRECISION array, dimension (LDX,NRHS)
+	  //          The exact solution vectors.  Each vector is stored as a
+	  //          column of the matrix XACT.
+	  // \endverbatim
+	  
+	  // \param[in] LDXACT
+	  // \verbatim
+	  //          LDXACT is INTEGER
+	  //          The leading dimension of the array XACT.  LDXACT >= max(1,N).
+	  // \endverbatim
+	  
+	  // \param[in] FERR
+	  // \verbatim
+	  //          FERR is DOUBLE PRECISION array, dimension (NRHS)
+	  //          The estimated forward error bounds for each solution vector
+	  //          X.  If XTRUE is the true solution, FERR bounds the magnitude
+	  //          of the largest entry in (X - XTRUE) divided by the magnitude
+	  //          of the largest entry in X.
+	  // \endverbatim
+	  
+	  // \param[in] BERR
+	  // \verbatim
+	  //          BERR is DOUBLE PRECISION array, dimension (NRHS)
+	  //          The componentwise relative backward error of each solution
+	  //          vector (i.e., the smallest relative change in any entry of A
+	  //          or B that makes X an exact solution).
+	  // \endverbatim
+	  
+	  // \param[out] RESLTS
+	  // \verbatim
+	  //          RESLTS is DOUBLE PRECISION array, dimension (2)
+	  //          The maximum over the NRHS solution vectors of the ratios:
+	  //          RESLTS(1) = norm(X - XACT) / ( norm(X) * FERR )
+	  //          RESLTS(2) = BERR / ( NZ*EPS + (*) )
+	  // \endverbatim
+	  
+	  //  Authors:
+	  //  ========
+	  
+	  // \author Univ. of Tennessee 
+	  // \author Univ. of California Berkeley 
+	  // \author Univ. of Colorado Denver 
+	  // \author NAG Ltd. 
+	  
+	  // \date November 2011
+	  
+	  // \ingroup double_lin
+	  
+	  //  =====================================================================
+	         private void dgtt05(char trans, int n, int nrhs, double dl[], double d[], double du[],
+	        		             double b[][], int ldb, double x[][], int ldx,
+	                             double xact[][], int ldxact, double ferr[], double berr[], double reslts[] ) {
+	  
+	  //  -- LAPACK test routine (version 3.4.0) --
+	  //  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+	  //  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+	  //     November 2011
+	  
+	  //     .. Scalar Arguments ..
+	  //       CHARACTER          trans
+	  //       INTEGER            ldb, ldx, ldxact, n, nrhs
+	  //     ..
+	  //     .. Array Arguments ..
+	  //       DOUBLE PRECISION   b( ldb, * ), berr( * ), d( * ), dl( * ),
+	  //      $                   du( * ), ferr( * ), reslts( * ), x( ldx, * ),
+	  //      $                   xact( ldxact, * )
+	  //     ..
+	  
+	  //  =====================================================================
+	  
+	  //     .. Parameters ..
+	         final double zero = 0.0;
+	         final double one = 1.0;
+	  //     ..
+	  //     .. Local Scalars ..
+	         boolean            notran;
+	         int            i, imax, j, k, nz;
+	         double   axbi, diff, eps, errbnd, ovfl, tmp, unfl, xnorm;
+	         double maxVal;
+	  //     ..
+	  //     .. External Functions ..
+	  //       LOGICAL            lsame
+	  //       INTEGER            idamax
+	  //       DOUBLE PRECISION   dlamch
+	  //       EXTERNAL           lsame, idamax, dlamch
+	  //     ..
+	  //     .. Intrinsic Functions ..
+	  //       INTRINSIC          abs, max, min
+	  //     ..
+	  //     .. Executable Statements ..
+	  
+	  //     Quick exit if N = 0 or NRHS = 0.
+	  
+	         if ( n <= 0 || nrhs <= 0 ) {
+	            reslts[ 0 ] = zero;
+	            reslts[ 1 ] = zero;
+	            return;
+	         }
+	  
+	         eps = ge.dlamch( 'E' );
+	         unfl = ge.dlamch( 'S' );
+	         ovfl = one / unfl;
+	         notran = (( trans == 'N' ) || (trans == 'n'));
+	         nz = 4;
+	  
+	  //     Test 1:  Compute the maximum of
+	  //        norm(X - XACT) / ( norm(X) * FERR )
+	  //     over all the vectors X and XACT using the infinity-norm.
+	  
+	         errbnd = zero;
+	         for (j = 0; j < nrhs; j++) {
+	        	   imax = -1;
+	        	   maxVal = -Double.MAX_VALUE;
+	        	   for (i = 0; i < n; i++) {
+	        		   if (x[i][j] > maxVal) {
+	        			   maxVal = x[i][j];
+	        			   imax = i;
+	        		   }
+	        	   }
+	            xnorm = Math.max( Math.abs( x[ imax][ j ] ), unfl );
+	            diff = zero;
+	            for (i = 0; i < n; i++) {
+	               diff = Math.max( diff, Math.abs( x[ i][ j ]-xact[ i][ j ] ) );
+	            }
+	  
+	            if ( xnorm > one ) {
+	            }
+	            else if ( diff <= ovfl*xnorm ) {
+	            }
+	            else {
+	               errbnd = one / eps;
+	               continue;
+	            }
+	  
+	            if ( diff / xnorm <= ferr[ j ] ) {
+	               errbnd = Math.max( errbnd, ( diff / xnorm ) / ferr[ j ] );
+	            }
+	            else {
+	               errbnd = one / eps;
+	            }
+	         } // for (j = 0; j < nrhs; j++)
+	         reslts[ 0 ] = errbnd;
+	  
+	  //     Test 2:  Compute the maximum of BERR / ( NZ*EPS + (*) ), where
+	  //     (*) = NZ*UNFL / (min_i (abs(op(A))*abs(X) +abs(b))_i )
+	  
+	         for (k = 0; k < nrhs; k++) {
+	            if ( notran ) {
+	               if ( n == 1 ) {
+	                  axbi = Math.abs( b[ 0][ k ] ) + Math.abs( d[ 0 ]*x[ 0][ k ] );
+	               } // if (n == 1)
+	               else { // n != 1
+	                  axbi = Math.abs( b[ 0][ k ] ) + Math.abs( d[ 0 ]*x[ 0][ k ] ) +
+	                         Math.abs( du[ 0 ]*x[1][ k ] );
+	                  for (i = 1; i < n - 1; i++) {
+	                     tmp = Math.abs( b[ i][ k ] ) + Math.abs( dl[ i-1 ]*x[ i-1][ k ] )
+	                           + Math.abs( d[ i ]*x[ i][ k ] ) +
+	                           Math.abs( du[ i ]*x[ i+1][ k ] );
+	                     axbi = Math.min( axbi, tmp );
+	                  } // for (i = 1; i < n - 1; i++)
+	                  tmp = Math.abs( b[ n-1][ k ] ) + Math.abs( dl[ n-2 ]*x[ n-2][ k ] ) +
+	                        Math.abs( d[ n-1 ]*x[ n-1][ k ] );
+	                  axbi = Math.min( axbi, tmp );
+	               } // else n != 1
+	            } // if (notran)
+	            else { // !notran
+	               if ( n == 1 ) {
+	                  axbi = Math.abs( b[ 0][ k ] ) + Math.abs( d[ 0 ]*x[ 0][ k ] );
+	               }
+	               else { // n != 1
+	                  axbi = Math.abs( b[0][ k ] ) + Math.abs( d[ 0 ]*x[ 0][ k ] ) +
+	                         Math.abs( dl[ 0 ]*x[ 1][ k ] );
+	                  for (i = 1; i < n - 1; i++) {
+	                     tmp = Math.abs( b[ i][ k ] ) + Math.abs( du[ i-1 ]*x[ i-1][ k ] )
+	                            + Math.abs( d[ i ]*x[ i][ k ] ) +
+	                            Math.abs( dl[ i ]*x[ i+1][ k ] );
+	                     axbi = Math.min( axbi, tmp );
+	                  } // for (i = 1; i < n - 1; i++)
+	                  tmp = Math.abs( b[ n-1][ k ] ) + Math.abs( du[ n-2 ]*x[ n-2][ k ] ) +
+	                        Math.abs( d[ n -1]*x[ n-1][ k ] );
+	                  axbi = Math.min( axbi, tmp );
+	               } // else n != 1
+	            } // else !notran
+	            tmp = berr[ k ] / ( nz*eps+nz*unfl / Math.max( axbi, nz*unfl ) );
+	            if ( k == 0) {
+	               reslts[ 1 ] = tmp;
+	            }
+	            else {
+	               reslts[ 1 ] = Math.max( reslts[ 1 ], tmp );
+	            }
+	         } // for (k = 0; k < nrhs; k++)
+	  
+	         return;
+	      } // dgtt05
+	  
+	   // \par Purpose:
+	   // =============
+	   
+	   // \verbatim
+	   
+	   // DGTRFS improves the computed solution to a system of linear
+	   //  equations when the coefficient matrix is tridiagonal, and provides
+	   // error bounds and backward error estimates for the solution.
+	   // \endverbatim
+	  
+	   //  Arguments:
+	   //  ==========
+	   
+	   // \param[in] TRANS
+	   // \verbatim
+	   //          TRANS is CHARACTER*1
+	   //          Specifies the form of the system of equations:
+	   //          = 'N':  A * X = B     (No transpose)
+	   //          = 'T':  A**T * X = B  (Transpose)
+	   //          = 'C':  A**H * X = B  (Conjugate transpose = Transpose)
+	   // \endverbatim
+	   
+	   // \param[in] N
+	   // \verbatim
+	   //          N is INTEGER
+	   //          The order of the matrix A.  N >= 0.
+	   // \endverbatim
+	  
+	   // \param[in] NRHS
+	   // \verbatim
+	   //          NRHS is INTEGER
+	   //          The number of right hand sides, i.e., the number of columns
+	   //          of the matrix B.  NRHS >= 0.
+	   // \endverbatim
+	   
+	   // \param[in] DL
+	   // \verbatim
+	   //          DL is DOUBLE PRECISION array, dimension (N-1)
+	   //          The (n-1) subdiagonal elements of A.
+	   // \endverbatim
+	   
+	   // \param[in] D
+	   // \verbatim
+	   //          D is DOUBLE PRECISION array, dimension (N)
+	   //          The diagonal elements of A.
+	   // \endverbatim
+	   
+	   // \param[in] DU
+	   // \verbatim
+	   //          DU is DOUBLE PRECISION array, dimension (N-1)
+	   //          The (n-1) superdiagonal elements of A.
+	   // \endverbatim
+	   
+	   // \param[in] DLF
+	   // \verbatim
+	   //          DLF is DOUBLE PRECISION array, dimension (N-1)
+	   //          The (n-1) multipliers that define the matrix L from the
+	   //          LU factorization of A as computed by DGTTRF.
+	   // \endverbatim
+	  
+	   // \param[in] DF
+	   // \verbatim
+	  //          DF is DOUBLE PRECISION array, dimension (N)
+	  //          The n diagonal elements of the upper triangular matrix U from
+	  //          the LU factorization of A.
+	  // \endverbatim
+	  
+	  // \param[in] DUF
+	  // \verbatim
+	  //          DUF is DOUBLE PRECISION array, dimension (N-1)
+	  //          The (n-1) elements of the first superdiagonal of U.
+	  // \endverbatim
+	 
+	  // \param[in] DU2
+	  // \verbatim
+	  //          DU2 is DOUBLE PRECISION array, dimension (N-2)
+	  //          The (n-2) elements of the second superdiagonal of U.
+	  // \endverbatim
+	  
+	  // \param[in] IPIV
+	  // \verbatim
+	  //          IPIV is INTEGER array, dimension (N)
+	  //         The pivot indices; for 1 <= i <= n, row i of the matrix was
+	  //          interchanged with row IPIV(i).  IPIV(i) will always be either
+	  //          i or i+1; IPIV(i) = i indicates a row interchange was not
+	  //          required.
+	  // \endverbatim
+	  
+	  // \param[in] B
+	  // \verbatim
+	  //          B is DOUBLE PRECISION array, dimension (LDB,NRHS)
+	  //          The right hand side matrix B.
+	  // \endverbatim
+	  
+	  // \param[in] LDB
+	  // \verbatim
+	  //          LDB is INTEGER
+	  //          The leading dimension of the array B.  LDB >= max(1,N).
+	  // \endverbatim
+	  
+	  // \param[in,out] X
+	  // \verbatim
+	  //          X is DOUBLE PRECISION array, dimension (LDX,NRHS)
+	  //          On entry, the solution matrix X, as computed by DGTTRS.
+	  //          On exit, the improved solution matrix X.
+	  // \endverbatim
+	  
+	  // \param[in] LDX
+	  // \verbatim
+	  //          LDX is INTEGER
+	  //          The leading dimension of the array X.  LDX >= max(1,N).
+	  // \endverbatim
+	  
+	  // \param[out] FERR
+	  // \verbatim
+	  //          FERR is DOUBLE PRECISION array, dimension (NRHS)
+	  //          The estimated forward error bound for each solution vector
+	  //          X(j) (the j-th column of the solution matrix X).
+	  //          If XTRUE is the true solution corresponding to X(j), FERR(j)
+	  //          is an estimated upper bound for the magnitude of the largest
+	  //          element in (X(j) - XTRUE) divided by the magnitude of the
+	  //          largest element in X(j).  The estimate is as reliable as
+	  //          the estimate for RCOND, and is almost always a slight
+	  //          overestimate of the true error.
+	  // \endverbatim
+	  
+	  // \param[out] BERR
+	  // \verbatim
+	  //          BERR is DOUBLE PRECISION array, dimension (NRHS)
+	  //          The componentwise relative backward error of each solution
+	  //          vector X(j) (i.e., the smallest relative change in
+	  //          any element of A or B that makes X(j) an exact solution).
+	  // \endverbatim
+	  
+	  // \param[out] WORK
+	  // \verbatim
+	  //          WORK is DOUBLE PRECISION array, dimension (3*N)
+	  // \endverbatim
+	  
+	  // \param[out] IWORK
+	  // \verbatim
+	  //          IWORK is INTEGER array, dimension (N)
+	  // \endverbatim
+	  
+	  // \param[out] INFO
+	  // \verbatim
+	  //          INFO is INTEGER
+	  //          = 0:  successful exit
+	  //          < 0:  if INFO = -i, the i-th argument had an illegal value
+	  // \endverbatim
+	  
+	  // \par Internal Parameters:
+	  //  =========================
+	  
+	  // \verbatim
+	  //  ITMAX is the maximum number of steps of iterative refinement.
+	  // \endverbatim
+	  
+	  //  Authors:
+	  //  ========
+	  
+	  // \author Univ. of Tennessee 
+	  // \author Univ. of California Berkeley 
+	  // \author Univ. of Colorado Denver 
+	  // \author NAG Ltd. 
+	  
+	  // \date September 2012
+	  
+	  // \ingroup doubleGTcomputational
+	 
+	  //  =====================================================================
+	         private void dgtrfs(char trans, int n, int nrhs, double dl[], double d[], double du[],
+	        		             double dlf[], double df[], double duf[], double du2[],
+	                             int ipiv[], double b[][], int ldb, double x[][], int ldx,
+	                             double ferr[], double berr[], double work[], int iwork[],
+	                             int info[] ) {
+	  
+	  //  -- LAPACK computational routine (version 3.4.2) --
+	  //  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+	  //  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+	  //     September 2012
+	  
+	  //     .. Scalar Arguments ..
+	  //        char          trans
+	  //       INTEGER            info, ldb, ldx, n, nrhs
+	  //     ..
+	  //     .. Array Arguments ..
+	  //       INTEGER            ipiv( * ), iwork( * )
+	  //       DOUBLE PRECISION   b( ldb, * ), berr( * ), d( * ), df( * ),
+	  //      $                   dl( * ), dlf( * ), du( * ), du2( * ), duf( * ),
+	  //      $                   ferr( * ), work( * ), x( ldx, * )
+	  //     ..
+	  
+	  //  =====================================================================
+	  
+	  //     .. Parameters ..
+	         final int itmax = 5;
+	         final double zero = 0.0;
+	         final double one = 1.0;
+	         final double two = 2.0;
+	         final double three = 3.0; 
+	  //     ..
+	  //     .. Local Scalars ..
+	         boolean            notran;
+	         char          transn, transt;
+	         int kase[] = new int[1];
+	         int            count, i, j, nz;
+	         double   eps, lstres, s, safe1, safe2, safmin;
+	  //     ..
+	  //     .. Local Arrays ..
+	         int isave[] = new int[ 3 ];
+	         double array[][];
+	         double array2[][];
+	         double v1[];
+	         double v2[];
+	         double v3[];
+	  //     ..
+	  //     .. External Subroutines ..
+	  //       EXTERNAL           daxpy, dcopy, dgttrs, dlacn2, dlagtm, xerbla
+	  //     ..
+	  //     .. Intrinsic Functions ..
+	  //       INTRINSIC          abs, max
+	  //     ..
+	  //     .. External Functions ..
+	  //       LOGICAL            lsame
+	  //       DOUBLE PRECISION   dlamch
+	  //       EXTERNAL           lsame, dlamch
+	  //     ..
+	  //     .. Executable Statements ..
+	  
+	  //     Test the input parameters.
+	  
+	         info[0] = 0;
+	         notran = ( (trans == 'N') || (trans == 'n') );
+	         if (!notran && !(( trans == 'T' ) || (trans == 't')) && !( (trans == 'C') || (trans == 'c'))) { 
+	            info[0] = -1;
+	         }
+	         else if ( n < 0 ) {
+	            info[0] = -2;
+	         }
+	         else if ( nrhs < 0 ) {
+	            info[0] = -3;
+	         }
+	         else if( ldb < Math.max( 1, n ) ) {
+	            info[0] = -13;
+	         }
+	         else if ( ldx < Math.max( 1, n ) ) {
+	            info[0] = -15;
+	         }
+	         if ( info[0] != 0 ) {
+	            UI.setDataText("dgtrfs has info[0] = " + info[0] + "\n");
+	            return;
+	         }
+	  
+	  //     Quick return if possible
+	  
+	         if ( n == 0 || nrhs == 0 ) {
+	            for (j = 0; j < nrhs; j++) {
+	               ferr[ j ] = zero;
+	               berr[ j ] = zero;
+	            }
+	            return;
+	         } // if ( n == 0 || nrhs == 0 )
+	  
+	         if ( notran ) {
+	            transn = 'N';
+	            transt = 'T';
+	         }
+	         else {
+	            transn = 'T';
+	            transt = 'N';
+	         }
+	  
+	  //     NZ = maximum number of nonzero elements in each row of A, plus 1
+	  
+	         nz = 4;
+	         eps = ge.dlamch( 'E' );
+	         safmin = ge.dlamch( 'S' );
+	         safe1 = nz*safmin;
+	         safe2 = safe1 / eps;
+	  
+	  //     Do for each right hand side
+	  
+	         for (j = 0; j < nrhs; j++) {
+	 
+	            count = 1;
+	            lstres = three;
+	            while (true) {
+	  
+	  //        Loop until stopping criterion is satisfied.
+	  
+	  //        Compute residual R = B - op(A) * X,
+	  //        where op(A) = A, A**T, or A**H, depending on TRANS.
+	  
+	               for (i = 0; i < n; i++) {
+	            	   work[n+i] = b[i][j];
+	               }
+	            array = new double[n][1];
+	            for (i = 0; i < n; i++) {
+	            	array[i][0] = x[i][j];
+	            }
+	            array2 = new double[n][1];
+	            for (i = 0; i < n; i++) {
+	            	array2[i][0] = work[n+i];
+	            }
+	            dlagtm( trans, n, 1, -one, dl, d, du, array, ldx, one,
+	                  array2, n );
+	            for (i = 0; i < n; i++) {
+	            	work[n+i] = array2[i][0];
+	            }
+	  
+	  //        Compute abs(op(A))*abs(x) + abs(b) for use in the backward
+	  //        error bound.
+	 
+	            if ( notran ) {
+	               if ( n == 1 ) {
+	                  work[ 0 ] = Math.abs( b[ 0][ j ] ) + Math.abs( d[ 0 ]*x[ 0][ j ] );
+	               }
+	               else { // n != 1
+	                  work[ 0 ] = Math.abs( b[ 0][ j ] ) + Math.abs( d[ 1 ]*x[ 0][ j ] ) +
+	                              Math.abs( du[ 0 ]*x[ 1][ j ] );
+	                  for ( i = 1; i < n - 1; i++) {
+	                     work[ i ] = Math.abs( b[ i][ j ] ) +
+	                                 Math.abs( dl[ i-1 ]*x[ i-1][ j ] ) +
+	                                 Math.abs( d[ i ]*x[ i][ j ] ) +
+	                                 Math.abs( du[ i ]*x[ i+1][ j ] );
+	                  } // for ( i = 1; i < n - 1; i++)
+	                  work[ n-1 ] = Math.abs( b[ n-1][ j ] ) +
+	                                Math.abs( dl[ n-2 ]*x[ n-2][ j ] ) +
+	                                Math.abs( d[ n-1 ]*x[ n-1][ j ] );
+	               } // else n != 1
+	            } // if (notran)
+	            else { // !notran
+	               if ( n == 1 ) {
+	                  work[ 0 ] = Math.abs( b[ 0][ j ] ) + Math.abs( d[ 0 ]*x[ 0][ j ] );
+	               } // if (n == 1)
+	               else { // n != 1
+	                  work[ 0 ] = Math.abs( b[ 0][ j ] ) + Math.abs( d[ 0 ]*x[ 0][ j ] ) +
+	                              Math.abs( dl[ 0 ]*x[ 1][ j ] );
+	                  for (i = 1; i < n - 1; i++) {
+	                     work[ i ] = Math.abs( b[ i][ j ] ) +
+	                                 Math.abs( du[ i-1 ]*x[ i-1][ j ] ) +
+	                                 Math.abs( d[ i ]*x[ i][ j ] ) +
+	                                 Math.abs( dl[ i ]*x[ i+1][ j ] );
+	                  } // for (i = 1; i < n - 1; i++)
+	                  work[ n-1 ] = Math.abs( b[ n-1][ j ] ) +
+	                                Math.abs( du[ n-2 ]*x[ n-2][ j ] ) +
+	                                Math.abs( d[ n-1 ]*x[ n-1][ j ] );
+	               } // else n != 1
+	            } // else !notran
+	  
+	  //        Compute componentwise relative backward error from formula
+	  
+	  //        max(i) ( abs(R(i)) / ( abs(op(A))*abs(X) + abs(B) )(i) )
+	  
+	  //        where abs(Z) is the componentwise absolute value of the matrix
+	  //        or vector Z.  If the i-th component of the denominator is less
+	  //        than SAFE2, then SAFE1 is added to the i-th components of the
+	  //        numerator and denominator before dividing.
+	  
+	            s = zero;
+	            for (i = 0; i < n; i++) {
+	               if ( work[ i ] > safe2 ) {
+	                  s = Math.max( s, Math.abs( work[ n+i ] ) / work[ i ] );
+	               }
+	               else {
+	                  s = Math.max( s, ( Math.abs( work[ n+i ] )+safe1 ) /
+	                      ( work[ i ]+safe1 ) );
+	               }
+	            } // for (i = 0; i < n; i++)
+	            berr[ j ] = s;
+	  
+	  //        Test stopping criterion. Continue iterating if
+	  //           1) The residual BERR(J) is larger than machine epsilon, and
+	  //           2) BERR(J) decreased by at least a factor of 2 during the
+	  //              last iteration, and
+	  //           3) At most ITMAX iterations tried.
+	 
+	            if ( berr[ j ] > eps && two*berr[ j ] <= lstres &&
+	                 count <= itmax ) {
+	  
+	  //           Update solution and try again.
+	               array = new double[n][1];
+	               for (i = 0; i < n; i++) {
+	            	   array[i][0] = work[n+i];
+	               }
+	               dgttrs( trans, n, 1, dlf, df, duf, du2, ipiv,
+	                       array, n, info );
+	               for (i = 0; i < n; i++) {
+	            	   work[n+i] = array[i][0];
+	               }
+	               for (i = 0; i < n; i++) {
+	            	   x[i][j] = x[i][j] + work[n+i];
+	               }
+	               lstres = berr[ j ];
+	               count = count + 1;
+	            } // if ( berr[ j ] > eps && two*berr[ j ] <= lstres &&
+	            else {
+	            	break;
+	            }
+	         } // while (true)
+	  
+	  //        Bound error from formula
+	  
+	  //        norm(X - XTRUE) / norm(X) .le. FERR =
+	  //        norm( abs(inv(op(A)))*
+	  //           ( abs(R) + NZ*EPS*( abs(op(A))*abs(X)+abs(B) ))) / norm(X)
+	  
+	  //        where
+	  //          norm(Z) is the magnitude of the largest component of Z
+	  //          inv(op(A)) is the inverse of op(A)
+	  //          abs(Z) is the componentwise absolute value of the matrix or
+	  //             vector Z
+	  //          NZ is the maximum number of nonzeros in any row of A, plus 1
+	  //          EPS is machine epsilon
+	  
+	  //        The i-th component of abs(R)+NZ*EPS*(abs(op(A))*abs(X)+abs(B))
+	  //        is incremented by SAFE1 if the i-th component of
+	  //        abs(op(A))*abs(X) + abs(B) is less than SAFE2.
+	  
+	  //        Use DLACN2 to estimate the infinity-norm of the matrix
+	  //           inv(op(A)) * diag(W),
+	  //        where W = abs(R) + NZ*EPS*( abs(op(A))*abs(X)+abs(B) )))
+	  
+	            for (i = 0; i < n; i++) {
+	               if ( work[ i ] > safe2 ) {
+	                  work[ i ] = Math.abs( work[ n+i ] ) + nz*eps*work[ i ];
+	               }
+	               else {
+	                  work[ i ] = Math.abs( work[ n+i ] ) + nz*eps*work[ i ] + safe1;
+	               }
+	            } // for (i = 0; i < n; i++)
+	  
+	            kase[0] = 0;
+	            while (true) {
+	            v1 = new double[n];
+	            v2 = new double[n];
+	            for (i = 0; i < n; i++) {
+	            	v2[i] = work[n+i];
+	            }
+	            v3 = new double[1];
+	            v3[0] = ferr[j];
+	            le.dlacn2( n, v1, v2, iwork, v3,
+	                    kase, isave );
+	            for (i = 0; i < n; i++) {
+	            	work[2*n+i] = v1[i];
+	            	work[n+i] = v2[i];
+	            }
+	            ferr[j] = v3[0];
+	            if ( kase[0] != 0 ) {
+	               if ( kase[0] == 1 ) {
+	  
+	  //              Multiply by diag(W)*inv(op(A)**T).
+	  
+	                   array = new double[n][1];
+	                   for (i = 0; i < n; i++) {
+	                	   array[i][0] = work[n+i];
+	                   }
+	            	   dgttrs( transt, n, 1, dlf, df, duf, du2, ipiv,
+	                          array, n, info );
+	            	   for (i = 0; i < n; i++) {
+	            		   work[n+i] = array[i][0];
+	            	   }
+	                   for (i = 0; i < n; i++) {
+	                      work[ n+i ] = work[ i ]*work[ n+i];
+	                   }
+	               } // if (kase[0] == 1)
+	               else { // kase[0] != 1
+	  
+	  //              Multiply by inv(op(A))*diag(W).
+	  
+	                  for (i = 0; i < n; i++) {
+	                     work[ n+i ] = work[ i ]*work[ n+i ];
+	                  }
+	                  array = new double[n][1];
+	                  for (i = 0; i < n; i++) {
+	                	  array[i][0] = work[n+i];
+	                  }
+	                  dgttrs( transn, n, 1, dlf, df, duf, du2, ipiv,
+	                          array, n, info );
+	                  for (i = 0; i < n; i++) {
+	                	  work[n+i] = array[i][0];
+	                  }
+	               } // else kase[0] != 1
+	            } // if (kase[0] != 0)
+	            else { // kase[0] == 0
+	            	break;
+	            }
+	        } // while (true)
+	               
+	  //        Normalize error.
+	 
+	            lstres = zero;
+	            for (i = 0; i < n; i++) {
+	               lstres = Math.max( lstres, Math.abs( x[ i][ j ] ) );
+	            }
+	            if ( lstres != zero ) {
+	                ferr[ j ] = ferr[ j ] / lstres;
+	            }
+	  
+	         } // for (j = 0; j < nrhs; j++)
+	  
+	         return;
+	     } // dgtrfs
 	  
 	  private void dgtt02(char TRANS, int N, int NRHS, double DL[], double D[], double DU[], 
 			                double X[][], int LDX, double B[][], int LDB,
@@ -4127,9 +5060,9 @@ public class SparseEigenvalue implements java.io.Serializable {
  	     UI.setDataText("1. norm (L * U - A) / (N * norm(A) * EPS)\n");
  	     UI.setDataText("2. norm(B - A * X) / (norm(A) * norm(X) * EPS)\n");
  	     UI.setDataText("3. norm(X - XACT) / (norm(XACT) * CNDNUM * EPS)\n");
- 	     //UI.setDataText("4. norm(X - XACT) / (norm(XACT) * CNDNUM * EPS), refined\n");
- 	     //UI.setDataText("5. norm(X - XACT) / (norm(XACT) * (error bound))\n");
- 	     //UI.setDataText("6. (backward error) / EPS)\n");
+ 	     UI.setDataText("4. norm(X - XACT) / (norm(XACT) * CNDNUM * EPS), refined\n");
+ 	     UI.setDataText("5. norm(X - XACT) / (norm(XACT) * (error bound))\n");
+ 	     UI.setDataText("6. (backward error) / EPS)\n");
  	     UI.setDataText("7. RCOND * CNDNUM - 1.0\n");
       }
       
