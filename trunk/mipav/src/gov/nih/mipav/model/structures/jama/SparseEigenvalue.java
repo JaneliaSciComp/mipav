@@ -160,6 +160,1174 @@ public class SparseEigenvalue implements java.io.Serializable {
      */
     public SparseEigenvalue() {}
     
+    public void dssimp() {
+
+//     This example program is intended to illustrate the 
+//     simplest case of using ARPACK in considerable detail.  
+//     This code may be used to understand basic usage of ARPACK
+//     and as a template for creating an interface to ARPACK.  
+   
+//     This code shows how to use ARPACK to find a few eigenvalues 
+//     (lambda) and corresponding eigenvectors (x) for the standard 
+//     eigenvalue problem:
+          
+//                        A*x = lambda*x
+ 
+//     where A is an n by n real symmetric matrix.
+
+//     The main points illustrated here are 
+
+//        1) How to declare sufficient memory to find NEV 
+//           eigenvalues of largest magnitude.  Other options
+//           are available.
+
+//        2) Illustration of the reverse communication interface 
+//           needed to utilize the top level ARPACK routine DSAUPD 
+//           that computes the quantities needed to construct
+//           the desired eigenvalues and eigenvectors(if requested).
+
+//        3) How to extract the desired eigenvalues and eigenvectors
+//           using the ARPACK routine DSEUPD.
+
+//     The only thing that must be supplied in order to use this
+//     routine on your problem is to change the array dimensions 
+//     appropriately, to specify WHICH eigenvalues you want to compute 
+//     and to supply a matrix-vector product
+
+//                         w <-  Av
+
+//     in place of the call to avsimp( ) below.
+
+//     Once usage of this routine is understood, you may wish to explore
+//     the other available options to improve convergence, to solve generalized
+//     problems, etc.  Look at the file ex-sym.doc in DOCUMENTS directory.
+//     This codes implements  
+
+// \Example-1
+//     ... Suppose we want to solve A*x = lambda*x in regular mode,
+//         where A is derived from the central difference discretization
+//         of the 2-dimensional Laplacian on the unit square with
+//         zero Dirichlet boundary condition.
+//     ... OP = A  and  B = I.
+//     ... Assume "call avsimp (n,x,y)" computes y = A*x
+//     ... Use mode 1 of DSAUPD.
+
+// \BeginLib
+
+// \Routines called:
+//     dsaupd  ARPACK reverse communication interface routine.
+//     dseupd  ARPACK routine that returns Ritz values and (optionally)
+//             Ritz vectors.
+//     dnrm2   Level 1 BLAS that computes the norm of a vector.
+//     daxpy   Level 1 BLAS that computes y <- alpha*x+y.
+
+// \Author
+//     Richard Lehoucq
+//     Danny Sorensen
+//     Chao Yang
+//     Dept. of Computational &
+//     Applied Mathematics
+//     Rice University
+//     Houston, Texas
+
+// \SCCS Information: @(#)
+// FILE: ssimp.F   SID: 2.5   DATE OF SID: 9/5/96   RELEASE: 2
+
+// \Remarks
+//     1. None
+
+// \EndLib
+
+// -----------------------------------------------------------------------
+
+//     %------------------------------------------------------%
+//     | Storage Declarations:                                |
+//     |                                                      |
+//     | The maximum dimensions for all arrays are            |
+//     | set here to accommodate a problem size of            |
+//     | N .le. MAXN                                          |
+//     |                                                      |
+//     | NEV is the number of eigenvalues requested.          |
+//     |     See specifications for ARPACK usage below.       |
+//     |                                                      |
+//     | NCV is the largest number of basis vectors that will |
+//     |     be used in the Implicitly Restarted Arnoldi      |
+//     |     Process.  Work per major iteration is            |
+//     |     proportional to N*NCV*NCV.                       |
+//     |                                                      |
+//     | You must set:                                        |
+//     |                                                      |
+//     | MAXN:   Maximum dimension of the A allowed.          |
+//     | MAXNEV: Maximum NEV allowed.                         |
+//     | MAXNCV: Maximum NCV allowed.                         |
+//     %------------------------------------------------------%
+
+    
+      final int maxn = 256;
+  	  final int maxnev = 10;
+  	  final int maxncv = 25;
+  	  final int ldv = maxn;
+  
+  //     %--------------%
+  //     | Local Arrays |
+  //     %--------------%
+  //
+       double v[][] = new double[ldv][maxncv];
+       double workl[] = new double[maxncv*(maxncv+8)];
+       double workd[] = new double[3*maxn];
+       double d[][] = new double[maxncv][2];
+       double resid[] = new double[maxn];
+       double ax[] = new double[maxn];
+       boolean select[] = new boolean[maxncv];
+       int iparam[] = new int[11];
+       int ipntr[] = new int[11];
+       double ds[] = new double[2 * maxncv];
+  
+  //     %---------------%
+  //     | Local Scalars |
+  //     %---------------%
+       
+       String bmat;
+       String which;
+       int ido[] = new int[1];
+       int info[] = new int[1];
+       int ierr[] = new int[1];
+       int nconv = 0;
+       int          n, nev, ncv, lworkl, i, j, 
+                    nx, maxitr, mode1, ishfts;
+       boolean          rvec;
+       double tol;
+       // sigma not intialized in dssimp
+       double sigma = 0.0;
+       double v1[];
+       double v2[];
+       int index;
+ 
+ //     %------------%
+ //     | Parameters |
+ //     %------------%
+ 
+       final double zero = 0.0;
+   
+ //     %-----------------------------%
+ //     | BLAS & LAPACK routines used |
+ //     %-----------------------------%
+ 
+ //      Double precision           
+ //     &                 dnrm2
+ //      external         dnrm2, daxpy
+ 
+ //     %--------------------%
+ //     | Intrinsic function |
+ //     %--------------------%
+ 
+ //      intrinsic        abs
+ 
+ //     %-----------------------%
+ //     | Executable Statements |
+ //     %-----------------------%
+    	
+//     %-------------------------------------------------%
+//     | The following include statement and assignments |
+//     | initiate trace output from the internal         |
+//     | actions of ARPACK.  See debug.doc in the        |
+//     | DOCUMENTS directory for usage.  Initially, the  |
+//     | most useful information will be a breakdown of  |
+//     | time spent in the various stages of computation |
+//     | given by setting msaupd = 1.                    |
+//     %-------------------------------------------------%
+
+    msgets = 0;
+    msaitr = 0; 
+    msapps = 0;
+    msaupd = 1;
+    msaup2 = 0;
+    mseigt = 0;
+    mseupd = 0;
+     
+//     %-------------------------------------------------%
+//     | The following sets dimensions for this problem. |
+//     %-------------------------------------------------%
+
+    nx = 10;
+    n = nx*nx;
+
+//     %-----------------------------------------------%
+//     |                                               | 
+//     | Specifications for ARPACK usage are set       | 
+//     | below:                                        |
+//     |                                               |
+//     |    1) NEV = 4  asks for 4 eigenvalues to be   |  
+//     |       computed.                               | 
+//     |                                               |
+//     |    2) NCV = 20 sets the length of the Arnoldi |
+//     |       factorization                           |
+//     |                                               |
+//     |    3) This is a standard problem              |
+//     |         (indicated by bmat  = 'I')            |
+//     |                                               |
+//     |    4) Ask for the NEV eigenvalues of          |
+//     |       largest magnitude                       |
+//     |         (indicated by which = 'LM')           |
+//     |       See documentation in DSAUPD for the     |
+//     |       other options SM, LA, SA, LI, SI.       | 
+//     |                                               |
+//     | Note: NEV and NCV must satisfy the following  |
+//     | conditions:                                   |
+//     |              NEV <= MAXNEV                    |
+//     |          NEV + 1 <= NCV <= MAXNCV             |
+//     %-----------------------------------------------%
+
+    nev   = 4;
+    ncv   = 20; 
+    bmat  = "I";
+    which = "LM";
+
+    if ( n > maxn ) {
+        UI.setDataText("ERROR with DSSIMP: N is greater than MAXN");
+        return;
+     }
+     else if ( nev > maxnev ) {
+   	  UI.setDataText("ERROR with DSSIMP: NEV is greater than MAXNEV");
+         return;
+     }
+     else if ( ncv > maxncv ) {
+        UI.setDataText("ERROR with DSSIMP: NCV is greater than MAXNCV");
+        return;
+     }
+
+//     %-----------------------------------------------------%
+//     |                                                     |
+//     | Specification of stopping rules and initial         |
+//     | conditions before calling DSAUPD                    |
+//     |                                                     |
+//     | TOL  determines the stopping criterion.             |
+//     |                                                     |
+//     |      Expect                                         |
+//     |           abs(lambdaC - lambdaT) < TOL*abs(lambdaC) |
+//     |               computed   true                       |
+//     |                                                     |
+//     |      If TOL .le. 0,  then TOL <- macheps            |
+//     |           (machine precision) is used.              |
+//     |                                                     |
+//     | IDO  is the REVERSE COMMUNICATION parameter         |
+//     |      used to specify actions to be taken on return  |
+//     |      from DSAUPD. (See usage below.)                |
+//     |                                                     |
+//     |      It MUST initially be set to 0 before the first |
+//     |      call to DSAUPD.                                | 
+//     |                                                     |
+//     | INFO on entry specifies starting vector information |
+//     |      and on return indicates error codes            |
+//     |                                                     |
+//     |      Initially, setting INFO=0 indicates that a     | 
+//     |      random starting vector is requested to         |
+//     |      start the ARNOLDI iteration.  Setting INFO to  |
+//     |      a nonzero value on the initial call is used    |
+//     |      if you want to specify your own starting       |
+//     |      vector (This vector must be placed in RESID.)  | 
+//     |                                                     |
+//     | The work array WORKL is used in DSAUPD as           | 
+//     | workspace.  Its dimension LWORKL is set as          |
+//     | illustrated below.                                  |
+//     |                                                     |
+//     %-----------------------------------------------------%
+
+    lworkl = ncv*(ncv+8);
+    tol = zero; 
+    info[0] = 0;
+    ido[0] = 0;
+
+//     %---------------------------------------------------%
+//     | Specification of Algorithm Mode:                  |
+//     |                                                   |
+//     | This program uses the exact shift strategy        |
+//     | (indicated by setting PARAM(1) = 1).              |
+//     | IPARAM(3) specifies the maximum number of Arnoldi |
+//     | iterations allowed.  Mode 1 of DSAUPD is used     |
+//     | (IPARAM(7) = 1). All these options can be changed |
+//     | by the user. For details see the documentation in |
+//     | DSAUPD.                                           |
+//     %---------------------------------------------------%
+
+    ishfts = 1;
+    maxitr = 300; 
+    mode1 = 1;
+
+    iparam[0] = ishfts;
+                
+    iparam[2] = maxitr;
+                  
+    iparam[6] = mode1;
+
+//     %------------------------------------------------%
+//     | M A I N   L O O P (Reverse communication loop) |
+//     %------------------------------------------------%
+
+    v1 = new double[nx];
+    v2 = new double[nx];   
+    while (true) {
+
+//        %---------------------------------------------%
+//        | Repeatedly call the routine DSAUPD and take | 
+//        | actions indicated by parameter IDO until    |
+//        | either convergence is indicated or maxitr   |
+//        | has been exceeded.                          |
+//        %---------------------------------------------%
+
+        dsaupd ( ido, bmat, n, which, nev, tol, resid, 
+                 ncv, v, ldv, iparam, ipntr, workd, workl,
+                 lworkl, info );
+
+		if (ido[0] != -1 && ido[0] != 1) {
+			 break;
+		}
+
+//           %--------------------------------------%
+//           | Perform matrix vector multiplication |
+//           |              y <--- OP*x             |
+//           | The user should supply his/her own   |
+//           | matrix vector multiplication routine |
+//           | here that takes workd(ipntr(1)) as   |
+//           | the input, and return the result to  |
+//           | workd(ipntr(2)).                     |
+//           %--------------------------------------%
+//
+        for (i = 0; i < nx; i++) {
+        	v1[i] = workd[ipntr[0]-1+i];
+        }
+		avsimp (nx, v1, v2);
+		for (i = 0; i < nx; i++) {
+			workd[ipntr[1]-1+i] = v2[i];
+		}
+
+//           %-----------------------------------------%
+//           | L O O P   B A C K to call DSAUPD again. |
+//           %-----------------------------------------%
+       } // while (true)
+
+//     %----------------------------------------%
+//     | Either we have convergence or there is |
+//     | an error.                              |
+//     %----------------------------------------%
+
+    if ( info[0] < 0 ) {
+
+//        %--------------------------%
+//        | Error message. Check the |
+//        | documentation in DSAUPD. |
+//        %--------------------------%
+
+       UI.setDataText("Error with _daupd, info[0] = " + info[0] + "\n");
+    } // if (info[0] < 0)
+    else { // info[0] >= 0
+
+//        %-------------------------------------------%
+//        | No fatal errors occurred.                 |
+//        | Post-Process using DSEUPD.                |
+//        |                                           |//c        | Computed eigenvalues may be extracted.    |  
+//        |                                           |
+//        | Eigenvectors may be also computed now if  |
+//        | desired.  (indicated by rvec = .true.)    | 
+//        |                                           |
+//        | The routine DSEUPD now called to do this  |
+//        | post processing (Other modes may require  |
+//        | more complicated post processing than     |
+//        | mode1.)                                   |
+//        |                                           |
+//        %-------------------------------------------%
+           
+        rvec = true;
+
+        dseupd ( rvec, "A", select, ds, v, ldv, sigma, 
+                bmat, n, which, nev, tol, resid, ncv, v, ldv, 
+                iparam, ipntr, workd, workl, lworkl, ierr );
+		index = 0;
+		for (j = 0; j < 2; j++) {
+			 for (i = 0; i < maxncv; i++) {
+			     d[i][j] = ds[index++]; 
+			 }
+		}
+
+//         %----------------------------------------------%
+//         | Eigenvalues are returned in the first column |
+//         | of the two dimensional array D and the       |
+//         | corresponding eigenvectors are returned in   |
+//         | the first NCONV (=IPARAM(5)) columns of the  |
+//         | two dimensional array V if requested.        |
+//         | Otherwise, an orthogonal basis for the       |
+//         | invariant subspace corresponding to the      |
+//         | eigenvalues in D is returned in V.           |
+//         %----------------------------------------------%
+
+        if ( ierr[0] != 0) {
+
+//            %------------------------------------%
+//            | Error condition:                   |
+//            | Check the documentation of DSEUPD. |
+//            %------------------------------------%
+
+           UI.setDataText("Error with dseupd, ierr[0] = " + ierr[0] + "\n");
+        } // if( ierr[0] != 0)
+        else { // ierr[0] == 0
+
+           nconv =  iparam[4];
+           v1 = new double[nx];
+           for (j = 0; j < nconv; j++) {
+
+//               %---------------------------%
+//               | Compute the residual norm |
+//               |                           |
+//               |   ||  A*x - lambda*x ||   |
+//               |                           |
+//               | for the NCONV accurately  |
+//               | computed eigenvalues and  |
+//               | eigenvectors.  (iparam(5) |
+//               | indicates how many are    |
+//               | accurate to the requested |
+//               | tolerance)                |
+//               %---------------------------%
+
+              for (i = 0; i < nx; i++) {
+            	  v1[i] = v[i][j];
+              }
+        	  avsimp(nx, v1, ax);
+        	  for (i = 0; i < n; i++) {
+        		  ax[i] = ax[i] + (-d[j][0])*v[i][j];
+        	  }
+              d[j][1] = ge.dnrm2(n, ax, 1);
+              d[j][1] = d[j][1] / Math.abs(d[j][0]);
+
+           } // for (j = 0; j < nconv; j++)
+           
+//         %-------------------------------%
+//         | Display computed residuals    |
+//         %-------------------------------%
+           UI.setDataText("Ritz values and relative residuals: \n");
+           for (i = 0; i < nconv; i++) {
+       	       UI.setDataText("d["+i+"][0] = " + nf.format(d[i][0]) + " d["+i+"][1] = " + nf.format(d[i][1]) + "\n");
+           }
+
+        } // else ierr[0] == 0
+        
+//      %------------------------------------------%
+  //        | Print additional convergence information |
+  //        %------------------------------------------%
+  
+           if ( info[0] == 1) {
+          	UI.setDataText("Maximum number of iterations reached.\n");
+           }
+           else if ( info[0] == 3) {
+          	UI.setDataText("No shifts could be applied during implicit Arnoldi update, try increasing NCV.\n");
+           }     
+  
+           UI.setDataText("\n");
+           UI.setDataText("DSSIMP\n");
+           UI.setDataText("======\n");
+           UI.setDataText("\n");
+           UI.setDataText("Size of the matrix = " +  n + "\n");
+           UI.setDataText("The number of Ritz values requested = " +  nev + "\n");
+           UI.setDataText("The number of Arnoldi vectors generated ncv = " +  ncv + "\n");
+           UI.setDataText("What portion of the spectrum: " +  which + "\n");
+           UI.setDataText("The number of converged Ritz values = " +nconv + "\n");
+           UI.setDataText("The number of Implicit Arnoldi update iterations taken = " +  iparam[2] + "\n");
+           UI.setDataText("The number of OP*x = " +  iparam[8] + "\n");
+           UI.setDataText("The convergence criterion = " + tol + "\n");
+           UI.setDataText("\n");
+    } // else info[0] >= 0
+
+     return;
+    } // dssimp
+    
+
+
+ // ------------------------------------------------------------------
+//      matrix vector subroutine
+
+//      The matrix used is the 2 dimensional discrete Laplacian on unit
+//      square with zero Dirichlet boundary condition.
+
+//      Computes w <--- OP*v, where OP is the nx*nx by nx*nx block 
+//      tridiagonal matrix
+
+//                   | T -I          | 
+//                   |-I  T -I       |
+//              OP = |   -I  T       |
+//                   |        ...  -I|
+//                   |           -I T|
+ //
+//      The subroutine tvsimp is called to computed y<---T*x.
+
+     private void avsimp (int nx, double v[], double w[]) {
+     int           i, j, lo, n2;
+     //Double precision
+     //&                  v(nx*nx), w(nx*nx)
+     final double one = 1.0;
+     final double h2;
+     double v1[] = new double[nx];
+     double v2[] = new double[nx];
+    
+     tvsimp(nx,v,w);
+     for (i = 0; i < nx; i++) {
+     	w[i] = w[i] + (-one)*v[nx+i];
+     }
+     for ( j =2; j <= nx-1; j++) {
+        lo = (j-1)*nx;
+        for (i = 0; i < nx; i++) {
+     	   v1[i] = v[lo+i];
+        }
+        tvsimp(nx, v1, v2);
+        for (i = 0; i < nx; i++) {
+     	   w[lo+i] = v2[i];
+        }
+        for (i = 0; i < nx; i++) {
+     	   w[lo+i] = w[lo+i] + (-one) * v[lo-nx+i];
+        }
+        for (i = 0; i < nx; i++) {
+     	   w[lo+i] = w[lo+i] + (-one) * v[lo+nx+i];
+        }
+     } // for ( j =2; j <= nx-1; j++)
+
+     lo = (nx-1)*nx;
+     for (i = 0; i < nx; i++) {
+  	   v1[i] = v[lo+i];
+     }
+     tvsimp(nx, v1, v2);
+     for (i = 0; i < nx; i++) {
+  	   w[lo+i] = v2[i];
+     }
+     for (i = 0; i < nx; i++) {
+     	w[lo+i] = w[lo+i] + (-one)*v[lo-nx+i];
+     }
+
+//      Scale the vector w by (1/h^2), where h is the mesh size
+
+     n2 = nx*nx;
+     h2 = one / (double)((nx+1)*(nx+1));
+     for (i = 0; i < n2; i++) {
+     	w[i] = (one/h2) * w[i];
+     }
+     return;
+     } // avsimp
+
+ // -------------------------------------------------------------------
+     private void tvsimp (int nx, double x[], double y[]) {
+
+     int           j; 
+     //Double precision
+     //&                  x(nx), y(nx),
+     final double one = 1.0;
+     final double four = 4.0;
+     double dd, dl, du;
+
+//      Compute the matrix vector multiplication y<---T*x
+//      where T is a nx by nx tridiagonal matrix with DD on the 
+//      diagonal, DL on the subdiagonal, and DU on the superdiagonal.
+      
+
+     dd  = four; 
+     dl  = -one; 
+     du  = -one;
+  
+     y[0] =  dd*x[0] + du*x[1];
+     for (j = 1; j < nx-1; j++) {
+        y[j] = dl*x[j-1] + dd*x[j] + du*x[j+1]; 
+     } // for (j = 1; j < nx - 1; j++)
+     y[nx-1] =  dl*x[nx-2] + dd*x[nx-1]; 
+     return;
+     } // tvsimp
+
+
+    
+    public void dsvd() {
+
+//     This example program is intended to illustrate the 
+//     the use of ARPACK to compute the Singular Value Decomposition.
+   
+//     This code shows how to use ARPACK to find a few of the
+//     largest singular values(sigma) and corresponding right singular 
+//     vectors (v) for the the matrix A by solving the symmetric problem:
+          
+//                        (A'*A)*v = sigma*v
+ 
+//     where A is an m by n real matrix.
+
+//     This code may be easily modified to estimate the 2-norm
+//     condition number  largest(sigma)/smallest(sigma) by setting
+//     which = 'BE' below.  This will ask for a few of the smallest
+//     and a few of the largest singular values simultaneously.
+//     The condition number could then be estimated by taking
+//     the ratio of the largest and smallest singular values.
+
+//     This formulation is appropriate when  m  .ge.  n.
+//     Reverse the roles of A and A' in the case that  m .le. n.
+
+//     The main points illustrated here are 
+
+//        1) How to declare sufficient memory to find NEV 
+//           largest singular values of A .  
+
+//        2) Illustration of the reverse communication interface 
+//           needed to utilize the top level ARPACK routine DSAUPD 
+//           that computes the quantities needed to construct
+//           the desired singular values and vectors(if requested).
+
+//        3) How to extract the desired singular values and vectors
+//           using the ARPACK routine DSEUPD.
+
+//        4) How to construct the left singular vectors U from the 
+//           right singular vectors V to obtain the decomposition
+
+//                        A*V = U*S
+
+//           where S = diag(sigma_1, sigma_2, ..., sigma_k).
+
+//     The only thing that must be supplied in order to use this
+//     routine on your problem is to change the array dimensions 
+//     appropriately, to specify WHICH singular values you want to 
+//     compute and to supply a the matrix-vector products 
+
+//                         w <-  Ax
+//                         y <-  A'w
+
+//     in place of the calls  to svdvd( ) and ATV( ) respectively below.  
+
+//     Further documentation is available in the header of DSAUPD
+//     which may be found in the SRC directory.
+
+//     This codes implements
+
+// \Example-1
+//     ... Suppose we want to solve A'A*v = sigma*v in regular mode,
+//         where A is derived from the simplest finite difference 
+//         discretization of the 2-dimensional kernel  K(s,t)dt  where
+
+//                 K(s,t) =  s(t-1)   if 0 .le. s .le. t .le. 1,
+//                           t(s-1)   if 0 .le. t .lt. s .le. 1. 
+
+//         See subroutines avsvd  and ATV for details.
+//     ... OP = A'*A  and  B = I.
+//     ... Assume "call avsvd (n,x,y)" computes y = A*x
+//     ... Assume "call atv (n,y,w)" computes w = A'*y
+//     ... Assume exact shifts are used
+//     ...
+
+// \BeginLib
+
+// \Routines called:
+//     dsaupd  ARPACK reverse communication interface routine.
+//     dseupd  ARPACK routine that returns Ritz values and (optionally)
+//             Ritz vectors.
+//     dnrm2   Level 1 BLAS that computes the norm of a vector.
+//     daxpy   Level 1 BLAS that computes y <- alpha*x+y.
+//     dscal   Level 1 BLAS thst computes x <- x*alpha.
+//     dcopy   Level 1 BLAS thst computes y <- x.
+
+// \Author
+//     Richard Lehoucq
+//     Danny Sorensen
+//     Chao Yang
+//     Dept. of Computational &
+//     Applied Mathematics
+//     Rice University
+//     Houston, Texas
+
+// \SCCS Information: @(#)
+// FILE: svd.F   SID: 2.3   DATE OF SID: 8/21/96   RELEASE: 2
+
+// \Remarks
+//     1. None
+
+// \EndLib
+
+// -----------------------------------------------------------------------
+//
+//     %------------------------------------------------------%
+//     | Storage Declarations:                                |
+//     |                                                      |
+//     | It is assumed that A is M by N with M .ge. N.        |
+//     |                                                      |
+//     | The maximum dimensions for all arrays are            |
+//     | set here to accommodate a problem size of            |
+//     | M .le. MAXM  and  N .le. MAXN                        |
+//     |                                                      |
+//     | The NEV right singular vectors will be computed in   |
+//     | the N by NCV array V.                                |
+//     |                                                      |
+//     | The NEV left singular vectors will be computed in    |
+//     | the M by NEV array U.                                |
+//     |                                                      |
+//     | NEV is the number of singular values requested.      |
+//     |     See specifications for ARPACK usage below.       |
+//     |                                                      |
+//     | NCV is the largest number of basis vectors that will |
+//     |     be used in the Implicitly Restarted Arnoldi      |
+//     |     Process.  Work per major iteration is            |
+//     |     proportional to N*NCV*NCV.                       |
+//     |                                                      |
+//     | You must set:                                        |
+//     |                                                      |
+//     | MAXM:   Maximum number of rows of the A allowed.     |
+//     | MAXN:   Maximum number of columns of the A allowed.  |
+//     | MAXNEV: Maximum NEV allowed                          |
+//     | MAXNCV: Maximum NCV allowed                          |
+//     %------------------------------------------------------%
+/*
+    integer          maxm, maxn, maxnev, maxncv, ldv, ldu
+    parameter       (maxm = 500, maxn=250, maxnev=10, maxncv=25, 
+   &                 ldu = maxm, ldv=maxn )
+c
+c     %--------------%
+c     | Local Arrays |
+c     %--------------%
+c
+    Double precision
+   &                 v(ldv,maxncv), u(ldu, maxnev), 
+   &                 workl(maxncv*(maxncv+8)), workd(3*maxn), 
+   &                 s(maxncv,2), resid(maxn), ax(maxm)
+    logical          select(maxncv)
+    integer          iparam(11), ipntr(11)
+c
+c     %---------------%
+c     | Local Scalars |
+c     %---------------%
+c
+    character        bmat*1, which*2
+    integer          ido, m, n, nev, ncv, lworkl, info, ierr,
+   &                 j, ishfts, maxitr, mode1, nconv
+    logical          rvec
+    Double precision      
+   &                 tol, sigma, temp
+c
+c     %------------%
+c     | Parameters |
+c     %------------%
+c
+    Double precision
+   &                 one, zero
+    parameter        (one = 1.0D+0, zero = 0.0D+0)
+c  
+c     %-----------------------------%
+c     | BLAS & LAPACK routines used |
+c     %-----------------------------%
+c
+    Double precision           
+   &                 dnrm2
+    external         dnrm2, daxpy, dcopy, dscal
+c
+c     %-----------------------%
+c     | Executable Statements |
+c     %-----------------------%
+c
+c     %-------------------------------------------------%
+c     | The following include statement and assignments |
+c     | initiate trace output from the internal         |
+c     | actions of ARPACK.  See debug.doc in the        |
+c     | DOCUMENTS directory for usage.  Initially, the  |
+c     | most useful information will be a breakdown of  |
+c     | time spent in the various stages of computation |
+c     | given by setting msaupd = 1.                    |
+c     %-------------------------------------------------%
+c
+    include 'debug.h'
+    ndigit = -3
+    logfil = 6
+    msgets = 0
+    msaitr = 0 
+    msapps = 0
+    msaupd = 1
+    msaup2 = 0
+    mseigt = 0
+    mseupd = 0
+c
+c     %-------------------------------------------------%
+c     | The following sets dimensions for this problem. |
+c     %-------------------------------------------------%
+c
+    m = 500
+    n = 100
+c
+c     %------------------------------------------------%
+c     | Specifications for ARPACK usage are set        | 
+c     | below:                                         |
+c     |                                                |
+c     |    1) NEV = 4 asks for 4 singular values to be |  
+c     |       computed.                                | 
+c     |                                                |
+c     |    2) NCV = 20 sets the length of the Arnoldi  |
+c     |       factorization                            |
+c     |                                                |
+c     |    3) This is a standard problem               |
+c     |         (indicated by bmat  = 'I')             |
+c     |                                                |
+c     |    4) Ask for the NEV singular values of       |
+c     |       largest magnitude                        |
+c     |         (indicated by which = 'LM')            |
+c     |       See documentation in DSAUPD for the      |
+c     |       other options SM, BE.                    | 
+c     |                                                |
+c     | Note: NEV and NCV must satisfy the following   |
+c     |       conditions:                              |
+c     |                 NEV <= MAXNEV,                 |
+c     |             NEV + 1 <= NCV <= MAXNCV           |
+c     %------------------------------------------------%
+c
+    nev   = 4
+    ncv   = 10 
+    bmat  = 'I'
+    which = 'LM'
+c
+    if ( n .gt. maxn ) then
+       print *, ' ERROR with _SVD: N is greater than MAXN '
+       go to 9000
+    else if ( m .gt. maxm ) then
+       print *, ' ERROR with _SVD: M is greater than MAXM '
+       go to 9000
+    else if ( nev .gt. maxnev ) then
+       print *, ' ERROR with _SVD: NEV is greater than MAXNEV '
+       go to 9000
+    else if ( ncv .gt. maxncv ) then
+       print *, ' ERROR with _SVD: NCV is greater than MAXNCV '
+       go to 9000
+    end if
+c
+c     %-----------------------------------------------------%
+c     | Specification of stopping rules and initial         |
+c     | conditions before calling DSAUPD                    |
+c     |                                                     |
+c     |           abs(sigmaC - sigmaT) < TOL*abs(sigmaC)    |
+c     |               computed   true                       |
+c     |                                                     |
+c     |      If TOL .le. 0,  then TOL <- macheps            |
+c     |              (machine precision) is used.           |
+c     |                                                     |
+c     | IDO  is the REVERSE COMMUNICATION parameter         |
+c     |      used to specify actions to be taken on return  |
+c     |      from DSAUPD. (See usage below.)                |
+c     |                                                     |
+c     |      It MUST initially be set to 0 before the first |
+c     |      call to DSAUPD.                                | 
+c     |                                                     |
+c     | INFO on entry specifies starting vector information |
+c     |      and on return indicates error codes            |
+c     |                                                     |
+c     |      Initially, setting INFO=0 indicates that a     | 
+c     |      random starting vector is requested to         |
+c     |      start the ARNOLDI iteration.  Setting INFO to  |
+c     |      a nonzero value on the initial call is used    |
+c     |      if you want to specify your own starting       |
+c     |      vector (This vector must be placed in RESID.)  | 
+c     |                                                     |
+c     | The work array WORKL is used in DSAUPD as           | 
+c     | workspace.  Its dimension LWORKL is set as          |
+c     | illustrated below.                                  |
+c     %-----------------------------------------------------%
+c
+    lworkl = ncv*(ncv+8)
+    tol = zero 
+    info = 0
+    ido = 0
+c
+c     %---------------------------------------------------%
+c     | Specification of Algorithm Mode:                  |
+c     |                                                   |
+c     | This program uses the exact shift strategy        |
+c     | (indicated by setting IPARAM(1) = 1.)             |
+c     | IPARAM(3) specifies the maximum number of Arnoldi |
+c     | iterations allowed.  Mode 1 of DSAUPD is used     |
+c     | (IPARAM(7) = 1). All these options can be changed |
+c     | by the user. For details see the documentation in |
+c     | DSAUPD.                                           |
+c     %---------------------------------------------------%
+c
+    ishfts = 1
+    maxitr = n
+    mode1 = 1
+c
+    iparam(1) = ishfts
+c                
+    iparam(3) = maxitr
+c                  
+    iparam(7) = mode1
+c
+c     %------------------------------------------------%
+c     | M A I N   L O O P (Reverse communication loop) |
+c     %------------------------------------------------%
+c
+10   continue
+c
+c        %---------------------------------------------%
+c        | Repeatedly call the routine DSAUPD and take | 
+c        | actions indicated by parameter IDO until    |
+c        | either convergence is indicated or maxitr   |
+c        | has been exceeded.                          |
+c        %---------------------------------------------%
+c
+       call dsaupd ( ido, bmat, n, which, nev, tol, resid, 
+   &                 ncv, v, ldv, iparam, ipntr, workd, workl,
+   &                 lworkl, info )
+c
+       if (ido .eq. -1 .or. ido .eq. 1) then
+c
+c           %---------------------------------------%
+c           | Perform matrix vector multiplications |
+c           |              w <--- A*x    (avsvd())  |
+c           |              y <--- A'*w      (atv()) |
+c           | The user should supply his/her own    |
+c           | matrix vector multiplication routines |
+c           | here that takes workd(ipntr(1)) as    |
+c           | the input, and returns the result in  |
+c           | workd(ipntr(2)).                      |
+c           %---------------------------------------%
+c
+          call avsvd (m, n, workd(ipntr(1)), ax) 
+          call atv (m, n, ax, workd(ipntr(2)))
+c
+c           %-----------------------------------------%
+c           | L O O P   B A C K to call DSAUPD again. |
+c           %-----------------------------------------%
+c
+          go to 10
+c
+       end if 
+c
+c     %----------------------------------------%
+c     | Either we have convergence or there is |
+c     | an error.                              |
+c     %----------------------------------------%
+c
+    if ( info .lt. 0 ) then
+c
+c        %--------------------------%
+c        | Error message. Check the |
+c        | documentation in DSAUPD. |
+c        %--------------------------%
+c
+       print *, ' '
+       print *, ' Error with _saupd, info = ', info
+       print *, ' Check documentation in _saupd '
+       print *, ' '
+c
+    else 
+c
+c        %--------------------------------------------%
+c        | No fatal errors occurred.                  |
+c        | Post-Process using DSEUPD.                 |
+c        |                                            |
+c        | Computed singular values may be extracted. |  
+c        |                                            |
+c        | Singular vectors may also be computed now  |
+c        | if desired.  (indicated by rvec = .true.)  | 
+c        |                                            |
+c        | The routine DSEUPD now called to do this   |
+c        | post processing                            | 
+c        %--------------------------------------------%
+c           
+       rvec = .true.
+c
+       call dseupd ( rvec, 'All', select, s, v, ldv, sigma, 
+   &        bmat, n, which, nev, tol, resid, ncv, v, ldv, 
+   &        iparam, ipntr, workd, workl, lworkl, ierr )
+c
+c        %-----------------------------------------------%
+c        | Singular values are returned in the first     |
+c        | column of the two dimensional array S         |
+c        | and the corresponding right singular vectors  | 
+c        | are returned in the first NEV columns of the  |
+c        | two dimensional array V as requested here.    |
+c        %-----------------------------------------------%
+c
+       if ( ierr .ne. 0) then
+c
+c           %------------------------------------%
+c           | Error condition:                   |
+c           | Check the documentation of DSEUPD. |
+c           %------------------------------------%
+c
+          print *, ' '
+          print *, ' Error with _seupd, info = ', ierr
+          print *, ' Check the documentation of _seupd. '
+          print *, ' '
+c
+       else
+c
+          nconv =  iparam(5)
+          do 20 j=1, nconv
+c
+             s(j,1) = sqrt(s(j,1))
+c
+c              %-----------------------------%
+c              | Compute the left singular   |
+c              | vectors from the formula    |
+c              |                             |
+c              |     u = Av/sigma            |
+c              |                             |
+c              | u should have norm 1 so     |
+c              | divide by norm(Av) instead. |
+c              %-----------------------------%
+c
+             call avsvd(m, n, v(1,j), ax)
+             call dcopy(m, ax, 1, u(1,j), 1)
+             temp = one/dnrm2(m, u(1,j), 1)
+             call dscal(m, temp, u(1,j), 1)
+c
+c              %---------------------------%
+c              |                           |
+c              | Compute the residual norm |
+c              |                           |
+c              |   ||  A*v - sigma*u ||    |
+c              |                           |
+c              | for the NCONV accurately  |
+c              | computed singular values  |
+c              | and vectors.  (iparam(5)  |
+c              | indicates how many are    |
+c              | accurate to the requested |
+c              | tolerance).               |
+c              | Store the result in 2nd   |
+c              | column of array S.        |
+c              %---------------------------%
+c
+             call daxpy(m, -s(j,1), u(1,j), 1, ax, 1)
+             s(j,2) = dnrm2(m, ax, 1)
+c
+20         continue
+c
+c           %-------------------------------%
+c           | Display computed residuals    |
+c           %-------------------------------%
+c
+          call dmout(6, nconv, 2, s, maxncv, -6,
+   &                'Singular values and direct residuals')
+       end if
+c
+c        %------------------------------------------%
+c        | Print additional convergence information |
+c        %------------------------------------------%
+c
+       if ( info .eq. 1) then
+          print *, ' '
+          print *, ' Maximum number of iterations reached.'
+          print *, ' '
+       else if ( info .eq. 3) then
+          print *, ' ' 
+          print *, ' No shifts could be applied during implicit
+   &                 Arnoldi update, try increasing NCV.'
+          print *, ' '
+       end if      
+c
+       print *, ' '
+       print *, ' _SVD '
+       print *, ' ==== '
+       print *, ' '
+       print *, ' Size of the matrix is ', n
+       print *, ' The number of Ritz values requested is ', nev
+       print *, ' The number of Arnoldi vectors generated',
+   &            ' (NCV) is ', ncv
+       print *, ' What portion of the spectrum: ', which
+       print *, ' The number of converged Ritz values is ', 
+   &              nconv 
+       print *, ' The number of Implicit Arnoldi update',
+   &            ' iterations taken is ', iparam(3)
+       print *, ' The number of OP*x is ', iparam(9)
+       print *, ' The convergence criterion is ', tol
+       print *, ' '
+c
+    end if*/
+    } // dsvd
+ 
+// ------------------------------------------------------------------
+//     matrix vector subroutines
+
+//     The matrix A is derived from the simplest finite difference 
+//     discretization of the integral operator 
+
+//                     f(s) = integral(K(s,t)x(t)dt).
+      
+//     Thus, the matrix A is a discretization of the 2-dimensional kernel 
+//     K(s,t)dt, where
+
+//                 K(s,t) =  s(t-1)   if 0 .le. s .le. t .le. 1,
+//                           t(s-1)   if 0 .le. t .lt. s .le. 1.
+
+//     Thus A is an m by n matrix with entries
+
+//                 A(i,j) = k*(si)*(tj - 1)  if i .le. j,
+//                          k*(tj)*(si - 1)  if i .gt. j
+
+//     where si = i/(m+1)  and  tj = j/(n+1)  and k = 1/(n+1).
+      
+// -------------------------------------------------------------------
+
+    private void avsvd (int m, int n, double x[], double w[]) {
+
+//     computes  w <- A*x
+
+    int          i, j;
+    //Double precision
+    //&                 x(n), w(m)
+    final double one = 1.0;
+    final double zero = 0.0;
+    double h, k, s, t;
+    
+    h = one / (double)(m+1);
+    k = one / (double)(n+1);
+    for (i = 0; i < m; i++) {
+       w[i] = zero;
+    }
+    t = zero;
+      
+    for (j = 1; j <= n; j++) {
+       t = t+k;
+       s = zero;
+       for (i = 1; i <= j; i++) {
+         s = s+h;
+         w[i-1] = w[i-1] + k*s*(t-one)*x[j-1];
+       } // for (i = 1; i <= j; i++)
+       for (i = j+1; i <= m; i++) {
+         s = s+h;
+         w[i-1] = w[i-1] + k*t*(s-one)*x[j-1]; 
+       } // for (i = j+1; i <= m; i++)
+    } // for (j = 1; j <= n; j++)     
+
+    return;
+    }
+
+//-------------------------------------------------------------------
+
+    private void atv (int m, int n, double w[], double y[]) {
+
+//     computes  y <- A'*w
+
+    int         i, j;
+    //Double precision
+    //&                w(m), y(n)
+    final double one = 0.0;
+    final double zero = 0.0;  
+    double h, k, s, t;
+    
+    h = one / (double)(m+1);
+    k = one / (double)(n+1);
+    for (i = 0; i < n; i++) {
+       y[i] = zero;
+    }
+    t = zero;
+
+    for (j = 1; j <= n; j++) {
+       t = t+k;
+       s = zero;
+       for (i = 1; i <= j; i++) {
+         s = s+h;
+         y[j-1] = y[j-1] + k*s*(t-one)*w[i-1];
+       } // for (i = 1; i <= j; i++)
+       for (i = j+1; i <= m; i++) {
+         s = s+h;
+         y[j-1] = y[j-1] + k*t*(s-one)*w[i-1];
+       } // for (i = j+1; i <= m; i++)
+    } // for (j = 1; j <= n; j++)
+
+    return;
+    } // atv
+    
     public void dsdrv1() { 
     
     //     Simple program to illustrate the idea of reverse communication
