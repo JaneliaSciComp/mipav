@@ -4310,8 +4310,8 @@ public class SparseEigenvalue implements java.io.Serializable {
 	        	   imax = -1;
 	        	   maxVal = -Double.MAX_VALUE;
 	        	   for (i = 0; i < n; i++) {
-	        		   if (x[i][j] > maxVal) {
-	        			   maxVal = x[i][j];
+	        		   if (Math.abs(x[i][j]) > maxVal) {
+	        			   maxVal = Math.abs(x[i][j]);
 	        			   imax = i;
 	        		   }
 	        	   }
