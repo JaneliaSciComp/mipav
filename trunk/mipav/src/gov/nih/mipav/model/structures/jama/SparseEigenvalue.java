@@ -3473,6 +3473,7 @@ public class SparseEigenvalue implements java.io.Serializable {
 	                  for (j = 0; j < n; j++) {
 	                	  for (i = 0; i < 3; i++) {
 	                		  array[i][j] = af[koff-1+index];
+	                		  index++;
 	                	  }
 	                  }
 	                  ge.dlatms( n, n, dist[0], iseed, type[0], rwork, mode[0], cond[0],
@@ -3481,6 +3482,7 @@ public class SparseEigenvalue implements java.io.Serializable {
 	                  for (j = 0; j < n; j++) {
 	                	  for (i = 0; i < 3; i++) {
 	                		  af[koff-1+index] = array[i][j];
+	                		  index++;
 	                	  }
 	                  }
 	  
