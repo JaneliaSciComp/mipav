@@ -3159,6 +3159,8 @@ public class SparseEigenvalue implements java.io.Serializable {
              * This dchkgt_test routine is a port of a portion of the version 3.4.1 LAPACK test routine DCHKAA by Univ. of
              * Tennessee, Univ. Of California Berkeley and NAG Ltd., April, 2012. and some values from the test data file
              * dtest.in.
+             * 
+             * Received message In dchkgt all 2694 tests run passed the threshold.
              */
             public void dchkgt_test() {
 
@@ -3494,7 +3496,6 @@ public class SparseEigenvalue implements java.io.Serializable {
 	                	 }
 	                	 nerrs = nerrs+1;
 	                	 UI.setDataText("Error code from dlatms info[0] = " + info[0] + "\n");
-	                	 UI.setDataText("M = " + n + "\n");
 	                	 UI.setDataText("N = " + n + "\n");
 	                	 UI.setDataText("type = " + imat + "\n");
 	                     continue;
@@ -3714,7 +3715,7 @@ public class SparseEigenvalue implements java.io.Serializable {
 	                        	v2[k] = af[n+m+k];
 	                        }
 	                        for (k = 0; k < n-2; k++) {
-	                        	v3[k] = af[n+2*m+i];
+	                        	v3[k] = af[n+2*m+k];
 	                        } 
 	                        array = new double[n][1];
 	                        for (j = 0; j < n; j++) {
