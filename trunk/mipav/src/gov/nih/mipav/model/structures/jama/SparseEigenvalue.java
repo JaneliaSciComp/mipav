@@ -610,7 +610,7 @@ public class SparseEigenvalue implements java.io.Serializable {
 
         } // else ierr[0] == 0
         
-//      %------------------------------------------%
+  //        %------------------------------------------%
   //        | Print additional convergence information |
   //        %------------------------------------------%
   
@@ -872,367 +872,393 @@ public class SparseEigenvalue implements java.io.Serializable {
 //     | MAXNEV: Maximum NEV allowed                          |
 //     | MAXNCV: Maximum NCV allowed                          |
 //     %------------------------------------------------------%
-/*
-    integer          maxm, maxn, maxnev, maxncv, ldv, ldu
-    parameter       (maxm = 500, maxn=250, maxnev=10, maxncv=25, 
-   &                 ldu = maxm, ldv=maxn )
-c
-c     %--------------%
-c     | Local Arrays |
-c     %--------------%
-c
-    Double precision
-   &                 v(ldv,maxncv), u(ldu, maxnev), 
-   &                 workl(maxncv*(maxncv+8)), workd(3*maxn), 
-   &                 s(maxncv,2), resid(maxn), ax(maxm)
-    logical          select(maxncv)
-    integer          iparam(11), ipntr(11)
-c
-c     %---------------%
-c     | Local Scalars |
-c     %---------------%
-c
-    character        bmat*1, which*2
-    integer          ido, m, n, nev, ncv, lworkl, info, ierr,
-   &                 j, ishfts, maxitr, mode1, nconv
-    logical          rvec
-    Double precision      
-   &                 tol, sigma, temp
-c
-c     %------------%
-c     | Parameters |
-c     %------------%
-c
-    Double precision
-   &                 one, zero
-    parameter        (one = 1.0D+0, zero = 0.0D+0)
-c  
-c     %-----------------------------%
-c     | BLAS & LAPACK routines used |
-c     %-----------------------------%
-c
-    Double precision           
-   &                 dnrm2
-    external         dnrm2, daxpy, dcopy, dscal
-c
-c     %-----------------------%
-c     | Executable Statements |
-c     %-----------------------%
-c
-c     %-------------------------------------------------%
-c     | The following include statement and assignments |
-c     | initiate trace output from the internal         |
-c     | actions of ARPACK.  See debug.doc in the        |
-c     | DOCUMENTS directory for usage.  Initially, the  |
-c     | most useful information will be a breakdown of  |
-c     | time spent in the various stages of computation |
-c     | given by setting msaupd = 1.                    |
-c     %-------------------------------------------------%
-c
-    include 'debug.h'
-    ndigit = -3
-    logfil = 6
-    msgets = 0
-    msaitr = 0 
-    msapps = 0
-    msaupd = 1
-    msaup2 = 0
-    mseigt = 0
-    mseupd = 0
-c
-c     %-------------------------------------------------%
-c     | The following sets dimensions for this problem. |
-c     %-------------------------------------------------%
-c
-    m = 500
-    n = 100
-c
-c     %------------------------------------------------%
-c     | Specifications for ARPACK usage are set        | 
-c     | below:                                         |
-c     |                                                |
-c     |    1) NEV = 4 asks for 4 singular values to be |  
-c     |       computed.                                | 
-c     |                                                |
-c     |    2) NCV = 20 sets the length of the Arnoldi  |
-c     |       factorization                            |
-c     |                                                |
-c     |    3) This is a standard problem               |
-c     |         (indicated by bmat  = 'I')             |
-c     |                                                |
-c     |    4) Ask for the NEV singular values of       |
-c     |       largest magnitude                        |
-c     |         (indicated by which = 'LM')            |
-c     |       See documentation in DSAUPD for the      |
-c     |       other options SM, BE.                    | 
-c     |                                                |
-c     | Note: NEV and NCV must satisfy the following   |
-c     |       conditions:                              |
-c     |                 NEV <= MAXNEV,                 |
-c     |             NEV + 1 <= NCV <= MAXNCV           |
-c     %------------------------------------------------%
-c
-    nev   = 4
-    ncv   = 10 
-    bmat  = 'I'
-    which = 'LM'
-c
-    if ( n .gt. maxn ) then
-       print *, ' ERROR with _SVD: N is greater than MAXN '
-       go to 9000
-    else if ( m .gt. maxm ) then
-       print *, ' ERROR with _SVD: M is greater than MAXM '
-       go to 9000
-    else if ( nev .gt. maxnev ) then
-       print *, ' ERROR with _SVD: NEV is greater than MAXNEV '
-       go to 9000
-    else if ( ncv .gt. maxncv ) then
-       print *, ' ERROR with _SVD: NCV is greater than MAXNCV '
-       go to 9000
-    end if
-c
-c     %-----------------------------------------------------%
-c     | Specification of stopping rules and initial         |
-c     | conditions before calling DSAUPD                    |
-c     |                                                     |
-c     |           abs(sigmaC - sigmaT) < TOL*abs(sigmaC)    |
-c     |               computed   true                       |
-c     |                                                     |
-c     |      If TOL .le. 0,  then TOL <- macheps            |
-c     |              (machine precision) is used.           |
-c     |                                                     |
-c     | IDO  is the REVERSE COMMUNICATION parameter         |
-c     |      used to specify actions to be taken on return  |
-c     |      from DSAUPD. (See usage below.)                |
-c     |                                                     |
-c     |      It MUST initially be set to 0 before the first |
-c     |      call to DSAUPD.                                | 
-c     |                                                     |
-c     | INFO on entry specifies starting vector information |
-c     |      and on return indicates error codes            |
-c     |                                                     |
-c     |      Initially, setting INFO=0 indicates that a     | 
-c     |      random starting vector is requested to         |
-c     |      start the ARNOLDI iteration.  Setting INFO to  |
-c     |      a nonzero value on the initial call is used    |
-c     |      if you want to specify your own starting       |
-c     |      vector (This vector must be placed in RESID.)  | 
-c     |                                                     |
-c     | The work array WORKL is used in DSAUPD as           | 
-c     | workspace.  Its dimension LWORKL is set as          |
-c     | illustrated below.                                  |
-c     %-----------------------------------------------------%
-c
-    lworkl = ncv*(ncv+8)
-    tol = zero 
-    info = 0
-    ido = 0
-c
-c     %---------------------------------------------------%
-c     | Specification of Algorithm Mode:                  |
-c     |                                                   |
-c     | This program uses the exact shift strategy        |
-c     | (indicated by setting IPARAM(1) = 1.)             |
-c     | IPARAM(3) specifies the maximum number of Arnoldi |
-c     | iterations allowed.  Mode 1 of DSAUPD is used     |
-c     | (IPARAM(7) = 1). All these options can be changed |
-c     | by the user. For details see the documentation in |
-c     | DSAUPD.                                           |
-c     %---------------------------------------------------%
-c
-    ishfts = 1
-    maxitr = n
-    mode1 = 1
-c
-    iparam(1) = ishfts
-c                
-    iparam(3) = maxitr
-c                  
-    iparam(7) = mode1
-c
-c     %------------------------------------------------%
-c     | M A I N   L O O P (Reverse communication loop) |
-c     %------------------------------------------------%
-c
-10   continue
-c
-c        %---------------------------------------------%
-c        | Repeatedly call the routine DSAUPD and take | 
-c        | actions indicated by parameter IDO until    |
-c        | either convergence is indicated or maxitr   |
-c        | has been exceeded.                          |
-c        %---------------------------------------------%
-c
-       call dsaupd ( ido, bmat, n, which, nev, tol, resid, 
-   &                 ncv, v, ldv, iparam, ipntr, workd, workl,
-   &                 lworkl, info )
-c
-       if (ido .eq. -1 .or. ido .eq. 1) then
-c
-c           %---------------------------------------%
-c           | Perform matrix vector multiplications |
-c           |              w <--- A*x    (avsvd())  |
-c           |              y <--- A'*w      (atv()) |
-c           | The user should supply his/her own    |
-c           | matrix vector multiplication routines |
-c           | here that takes workd(ipntr(1)) as    |
-c           | the input, and returns the result in  |
-c           | workd(ipntr(2)).                      |
-c           %---------------------------------------%
-c
-          call avsvd (m, n, workd(ipntr(1)), ax) 
-          call atv (m, n, ax, workd(ipntr(2)))
-c
-c           %-----------------------------------------%
-c           | L O O P   B A C K to call DSAUPD again. |
-c           %-----------------------------------------%
-c
-          go to 10
-c
-       end if 
-c
-c     %----------------------------------------%
-c     | Either we have convergence or there is |
-c     | an error.                              |
-c     %----------------------------------------%
-c
-    if ( info .lt. 0 ) then
-c
-c        %--------------------------%
-c        | Error message. Check the |
-c        | documentation in DSAUPD. |
-c        %--------------------------%
-c
-       print *, ' '
-       print *, ' Error with _saupd, info = ', info
-       print *, ' Check documentation in _saupd '
-       print *, ' '
-c
-    else 
-c
-c        %--------------------------------------------%
-c        | No fatal errors occurred.                  |
-c        | Post-Process using DSEUPD.                 |
-c        |                                            |
-c        | Computed singular values may be extracted. |  
-c        |                                            |
-c        | Singular vectors may also be computed now  |
-c        | if desired.  (indicated by rvec = .true.)  | 
-c        |                                            |
-c        | The routine DSEUPD now called to do this   |
-c        | post processing                            | 
-c        %--------------------------------------------%
-c           
-       rvec = .true.
-c
-       call dseupd ( rvec, 'All', select, s, v, ldv, sigma, 
-   &        bmat, n, which, nev, tol, resid, ncv, v, ldv, 
-   &        iparam, ipntr, workd, workl, lworkl, ierr )
-c
-c        %-----------------------------------------------%
-c        | Singular values are returned in the first     |
-c        | column of the two dimensional array S         |
-c        | and the corresponding right singular vectors  | 
-c        | are returned in the first NEV columns of the  |
-c        | two dimensional array V as requested here.    |
-c        %-----------------------------------------------%
-c
-       if ( ierr .ne. 0) then
-c
-c           %------------------------------------%
-c           | Error condition:                   |
-c           | Check the documentation of DSEUPD. |
-c           %------------------------------------%
-c
-          print *, ' '
-          print *, ' Error with _seupd, info = ', ierr
-          print *, ' Check the documentation of _seupd. '
-          print *, ' '
-c
-       else
-c
-          nconv =  iparam(5)
-          do 20 j=1, nconv
-c
-             s(j,1) = sqrt(s(j,1))
-c
-c              %-----------------------------%
-c              | Compute the left singular   |
-c              | vectors from the formula    |
-c              |                             |
-c              |     u = Av/sigma            |
-c              |                             |
-c              | u should have norm 1 so     |
-c              | divide by norm(Av) instead. |
-c              %-----------------------------%
-c
-             call avsvd(m, n, v(1,j), ax)
-             call dcopy(m, ax, 1, u(1,j), 1)
-             temp = one/dnrm2(m, u(1,j), 1)
-             call dscal(m, temp, u(1,j), 1)
-c
-c              %---------------------------%
-c              |                           |
-c              | Compute the residual norm |
-c              |                           |
-c              |   ||  A*v - sigma*u ||    |
-c              |                           |
-c              | for the NCONV accurately  |
-c              | computed singular values  |
-c              | and vectors.  (iparam(5)  |
-c              | indicates how many are    |
-c              | accurate to the requested |
-c              | tolerance).               |
-c              | Store the result in 2nd   |
-c              | column of array S.        |
-c              %---------------------------%
-c
-             call daxpy(m, -s(j,1), u(1,j), 1, ax, 1)
-             s(j,2) = dnrm2(m, ax, 1)
-c
-20         continue
-c
-c           %-------------------------------%
-c           | Display computed residuals    |
-c           %-------------------------------%
-c
-          call dmout(6, nconv, 2, s, maxncv, -6,
-   &                'Singular values and direct residuals')
-       end if
-c
-c        %------------------------------------------%
-c        | Print additional convergence information |
-c        %------------------------------------------%
-c
-       if ( info .eq. 1) then
-          print *, ' '
-          print *, ' Maximum number of iterations reached.'
-          print *, ' '
-       else if ( info .eq. 3) then
-          print *, ' ' 
-          print *, ' No shifts could be applied during implicit
-   &                 Arnoldi update, try increasing NCV.'
-          print *, ' '
-       end if      
-c
-       print *, ' '
-       print *, ' _SVD '
-       print *, ' ==== '
-       print *, ' '
-       print *, ' Size of the matrix is ', n
-       print *, ' The number of Ritz values requested is ', nev
-       print *, ' The number of Arnoldi vectors generated',
-   &            ' (NCV) is ', ncv
-       print *, ' What portion of the spectrum: ', which
-       print *, ' The number of converged Ritz values is ', 
-   &              nconv 
-       print *, ' The number of Implicit Arnoldi update',
-   &            ' iterations taken is ', iparam(3)
-       print *, ' The number of OP*x is ', iparam(9)
-       print *, ' The convergence criterion is ', tol
-       print *, ' '
-c
-    end if*/
+
+    final int maxm = 500;
+    final int maxn = 250;
+    final int maxnev = 10;
+    final int maxncv = 25;
+    final int ldu = maxm;
+    final int ldv = maxn;
+    
+//     %--------------%
+//     | Local Arrays |
+//     %--------------%
+
+    double v[][] = new double[ldv][maxncv];
+    double u[][] = new double[ldu][maxnev];
+    double workl[] = new double[maxncv*(maxncv+8)];
+    double workd[] = new double[3*maxn];
+    double s[][] = new double[maxncv][2];
+    double ds[] = new double[2*maxncv];
+    double resid[] = new double[maxn];
+    double ax[] = new double[maxm];
+    boolean select[] = new boolean[maxncv];
+    int iparam[] = new int[11];
+    int ipntr[] = new int[11];
+    double v1[];
+    
+//     %---------------%
+//     | Local Scalars |
+//     %---------------%
+
+    String bmat;
+    String which;
+    int ido[] = new int[1];
+    int info[] = new int[1];
+    int ierr[] = new int[1];
+    int nconv = 0;
+    int          m, n, nev, ncv, lworkl, index,
+                 i, j, ishfts, maxitr, mode1;
+    boolean          rvec;
+    // sigma not specified
+    double sigma = 0.0;      
+    double tol, temp;
+
+//     %------------%
+//     | Parameters |
+//     %------------%
+
+    final double one = 1.0;
+    final double zero = 0.0;
+    
+//     %-----------------------------%
+//     | BLAS & LAPACK routines used |
+//     %-----------------------------%
+
+    //Double precision           
+    //&                 dnrm2
+    //external         dnrm2, daxpy, dcopy, dscal
+
+//     %-----------------------%
+//     | Executable Statements |
+//     %-----------------------%
+
+//     %-------------------------------------------------%
+//     | The following include statement and assignments |
+//     | initiate trace output from the internal         |
+//     | actions of ARPACK.  See debug.doc in the        |
+//     | DOCUMENTS directory for usage.  Initially, the  |
+//     | most useful information will be a breakdown of  |
+//     | time spent in the various stages of computation |
+//     | given by setting msaupd = 1.                    |
+//     %-------------------------------------------------%
+
+    msgets = 0;
+    msaitr = 0; 
+    msapps = 0;
+    msaupd = 1;
+    msaup2 = 0;
+    mseigt = 0;
+    mseupd = 0;
+
+//     %-------------------------------------------------%
+//     | The following sets dimensions for this problem. |
+//     %-------------------------------------------------%
+
+    m = 500;
+    n = 100;
+
+//     %------------------------------------------------%
+//     | Specifications for ARPACK usage are set        | 
+//     | below:                                         |
+//     |                                                |
+//     |    1) NEV = 4 asks for 4 singular values to be |  
+//     |       computed.                                | 
+//     |                                                |
+//     |    2) NCV = 20 sets the length of the Arnoldi  |
+//     |       factorization                            |
+//     |                                                |
+//     |    3) This is a standard problem               |
+//     |         (indicated by bmat  = 'I')             |
+//     |                                                |
+//     |    4) Ask for the NEV singular values of       |
+//     |       largest magnitude                        |
+//     |         (indicated by which = 'LM')            |
+//     |       See documentation in DSAUPD for the      |
+//     |       other options SM, BE.                    | 
+//     |                                                |
+//     | Note: NEV and NCV must satisfy the following   |
+//     |       conditions:                              |
+//     |                 NEV <= MAXNEV,                 |
+//     |             NEV + 1 <= NCV <= MAXNCV           |
+//     %------------------------------------------------%
+
+    nev   = 4;
+    ncv   = 10; 
+    bmat  = "I";
+    which = "LM";
+
+    if ( n > maxn ) {
+       UI.setDataText("ERROR with DSVD: N is greater than MAXN\n");
+       return;
+    }
+    else if ( m > maxm ) {
+       UI.setDataText("ERROR with DSVD: M is greater than MAXM\n");
+       return;
+    }
+    else if ( nev > maxnev ) {
+       UI.setDataText("ERROR with DSVD: NEV is greater than MAXNEV\n");
+       return;
+    }
+    else if ( ncv > maxncv ) {
+       UI.setDataText("ERROR with DSVD: NCV is greater than MAXNCV\n");
+       return;
+    }
+
+//     %-----------------------------------------------------%
+//     | Specification of stopping rules and initial         |
+//     | conditions before calling DSAUPD                    |
+//     |                                                     |
+//     |           abs(sigmaC - sigmaT) < TOL*abs(sigmaC)    |
+//     |               computed   true                       |
+//     |                                                     |
+//     |      If TOL .le. 0,  then TOL <- macheps            |
+//     |              (machine precision) is used.           |
+//     |                                                     |
+//     | IDO  is the REVERSE COMMUNICATION parameter         |
+//     |      used to specify actions to be taken on return  |
+//     |      from DSAUPD. (See usage below.)                |
+//     |                                                     |
+//     |      It MUST initially be set to 0 before the first |
+//     |      call to DSAUPD.                                | 
+//     |                                                     |
+//     | INFO on entry specifies starting vector information |
+//     |      and on return indicates error codes            |
+//     |                                                     |
+//     |      Initially, setting INFO=0 indicates that a     | 
+//     |      random starting vector is requested to         |
+//     |      start the ARNOLDI iteration.  Setting INFO to  |
+//     |      a nonzero value on the initial call is used    |
+//     |      if you want to specify your own starting       |
+//     |      vector (This vector must be placed in RESID.)  | 
+//     |                                                     |
+//     | The work array WORKL is used in DSAUPD as           | 
+//     | workspace.  Its dimension LWORKL is set as          |
+//     | illustrated below.                                  |
+//     %-----------------------------------------------------%
+
+    lworkl = ncv*(ncv+8);
+    tol = zero; 
+    info[0] = 0;
+    ido[0] = 0;
+
+//     %---------------------------------------------------%
+//     | Specification of Algorithm Mode:                  |
+//     |                                                   |
+//     | This program uses the exact shift strategy        |
+//     | (indicated by setting IPARAM(1) = 1.)             |
+//     | IPARAM(3) specifies the maximum number of Arnoldi |
+//     | iterations allowed.  Mode 1 of DSAUPD is used     |
+//     | (IPARAM(7) = 1). All these options can be changed |
+//     | by the user. For details see the documentation in |
+//     | DSAUPD.                                           |
+//     %---------------------------------------------------%
+
+    ishfts = 1;
+    maxitr = n;
+    mode1 = 1;
+
+    iparam[0] = ishfts;
+                
+    iparam[2] = maxitr;
+                  
+    iparam[6] = mode1;
+
+//     %------------------------------------------------%
+//     | M A I N   L O O P (Reverse communication loop) |
+//     %------------------------------------------------%
+  
+    while (true) {
+
+//        %---------------------------------------------%
+//        | Repeatedly call the routine DSAUPD and take | 
+//        | actions indicated by parameter IDO until    |
+//        | either convergence is indicated or maxitr   |
+//        | has been exceeded.                          |
+//        %---------------------------------------------%
+
+       dsaupd ( ido, bmat, n, which, nev, tol, resid, 
+                ncv, v, ldv, iparam, ipntr, workd, workl,
+                lworkl, info );
+
+       if (ido[0] != -1 && ido[0] != 1) {
+			 break;
+		}
+
+//           %---------------------------------------%
+//           | Perform matrix vector multiplications |
+//           |              w <--- A*x    (avsvd())  |
+//           |              y <--- A'*w      (atv()) |
+//           | The user should supply his/her own    |
+//           | matrix vector multiplication routines |
+//           | here that takes workd(ipntr(1)) as    |
+//           | the input, and returns the result in  |
+//           | workd(ipntr(2)).                      |
+//           %---------------------------------------%
+          v1 = new double[n];
+          for (i = 0; i < n; i++) {
+        	  v1[i] = workd[ipntr[0]-1+i];
+          }
+          avsvd (m, n, v1, ax); 
+          atv (m, n, ax, v1);
+          for (i = 0; i < n; i++) {
+        	  workd[ipntr[1]-1+i]= v1[i];
+          }
+
+//           %-----------------------------------------%
+//           | L O O P   B A C K to call DSAUPD again. |
+//           %-----------------------------------------%
+    } // while (true) 
+
+//     %----------------------------------------%
+//     | Either we have convergence or there is |
+//     | an error.                              |
+//     %----------------------------------------%
+
+    if ( info[0] < 0 ) {
+
+//        %--------------------------%
+//        | Error message. Check the |
+//        | documentation in DSAUPD. |
+//        %--------------------------%
+
+       UI.setDataText("Error with dsaupd, info[0] = " + info[0] + "\n");
+    } // if (info[0] < 0)
+    else { // info[0] >= 0
+
+//        %--------------------------------------------%
+//        | No fatal errors occurred.                  |
+//        | Post-Process using DSEUPD.                 |
+//        |                                            |
+//        | Computed singular values may be extracted. |  
+//        |                                            |
+//        | Singular vectors may also be computed now  |
+//        | if desired.  (indicated by rvec = .true.)  | 
+//        |                                            |
+//        | The routine DSEUPD now called to do this   |
+//        | post processing                            | 
+//        %--------------------------------------------%
+//           
+       rvec = true;
+
+       dseupd ( rvec, "A", select, ds, v, ldv, sigma, 
+                bmat, n, which, nev, tol, resid, ncv, v, ldv, 
+               iparam, ipntr, workd, workl, lworkl, ierr );
+       index = 0;
+		for (j = 0; j < 2; j++) {
+			 for (i = 0; i < maxncv; i++) {
+			     s[i][j] = ds[index++]; 
+			 }
+		}
+
+//        %-----------------------------------------------%
+//        | Singular values are returned in the first     |
+//        | column of the two dimensional array S         |
+//        | and the corresponding right singular vectors  | 
+//        | are returned in the first NEV columns of the  |
+//        | two dimensional array V as requested here.    |
+//        %-----------------------------------------------%
+
+       if ( ierr[0] != 0) {
+
+//           %------------------------------------%
+//           | Error condition:                   |
+//           | Check the documentation of DSEUPD. |
+//           %------------------------------------%
+
+          UI.setDataText("Error with dseupd ierr[0] = " + ierr[0] + "\n");
+       } // if (ierr[0] != 0
+       else { // ierr[0] == 0
+
+          nconv =  iparam[4];
+          for (j = 0; j < nconv; j++) {
+
+             s[j][0] = Math.sqrt(s[j][0]);
+
+//              %-----------------------------%
+//              | Compute the left singular   |
+//              | vectors from the formula    |
+//              |                             |
+//              |     u = Av/sigma            |
+//              |                             |
+//              | u should have norm 1 so     |
+//              | divide by norm(Av) instead. |
+//              %-----------------------------%
+             v1 = new double[n];
+             for (i = 0; i < n; i++) {
+            	 v1[i] = v[i][j];
+             }
+              avsvd(m, n, v1, ax);
+              for (i = 0; i < m; i++) {
+            	  u[i][j] = ax[i];
+              }
+              v1 = new double[m];
+              for (i = 0; i < m; i++) {
+            	  v1[i] = u[i][j];
+              }
+             temp = one/ge.dnrm2(m, v1, 1);
+             for (i = 0; i < m; i++) {
+            	 u[i][j] = temp * u[i][j];
+             }
+
+//              %---------------------------%
+//              |                           |
+//              | Compute the residual norm |
+//              |                           |
+//              |   ||  A*v - sigma*u ||    |
+//              |                           |
+//              | for the NCONV accurately  |
+//              | computed singular values  |
+//              | and vectors.  (iparam(5)  |
+//              | indicates how many are    |
+//              | accurate to the requested |
+//              | tolerance).               |
+//              | Store the result in 2nd   |
+//              | column of array S.        |
+//              %---------------------------%
+//
+             for (i = 0; i < m; i++) {
+            	 ax[i] = ax[i] + (-s[j][0])*u[i][j];
+             }
+             s[j][1] = ge.dnrm2(m, ax, 1);
+          } // for (j = 0; j < nconv; j++)
+          
+          
+//        %-------------------------------%
+//        | Display computed residuals    |
+//        %-------------------------------%
+          UI.setDataText("Singular values and direct residuals: \n");
+          for (i = 0; i < nconv; i++) {
+      	       UI.setDataText("s["+i+"][0] = " + nf.format(s[i][0]) + " s["+i+"][1] = " + nf.format(s[i][1]) + "\n");
+          }
+    } // ierr[0] == 0
+    
+//        %------------------------------------------%
+//        | Print additional convergence information |
+//        %------------------------------------------%
+
+     if ( info[0] == 1) {
+    	UI.setDataText("Maximum number of iterations reached.\n");
+     }
+     else if ( info[0] == 3) {
+    	UI.setDataText("No shifts could be applied during implicit Arnoldi update, try increasing NCV.\n");
+     }     
+
+     UI.setDataText("\n");
+     UI.setDataText("DSVD\n");
+     UI.setDataText("======\n");
+     UI.setDataText("\n");
+     UI.setDataText("Size of the matrix = " +  n + "\n");
+     UI.setDataText("The number of Ritz values requested = " +  nev + "\n");
+     UI.setDataText("The number of Arnoldi vectors generated ncv = " +  ncv + "\n");
+     UI.setDataText("What portion of the spectrum: " +  which + "\n");
+     UI.setDataText("The number of converged Ritz values = " +nconv + "\n");
+     UI.setDataText("The number of Implicit Arnoldi update iterations taken = " +  iparam[2] + "\n");
+     UI.setDataText("The number of OP*x = " +  iparam[8] + "\n");
+     UI.setDataText("The convergence criterion = " + tol + "\n");
+     UI.setDataText("\n");
+
+    } // else info[0] >= 0
     } // dsvd
  
 // ------------------------------------------------------------------
