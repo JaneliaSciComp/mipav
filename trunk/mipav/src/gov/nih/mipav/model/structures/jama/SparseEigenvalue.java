@@ -464,8 +464,8 @@ public class SparseEigenvalue implements java.io.Serializable {
 //     | M A I N   L O O P (Reverse communication loop) |
 //     %------------------------------------------------%
 
-    v1 = new double[nx];
-    v2 = new double[nx];   
+    v1 = new double[nx*nx];
+    v2 = new double[nx*nx];   
     while (true) {
 
 //        %---------------------------------------------%
@@ -493,11 +493,11 @@ public class SparseEigenvalue implements java.io.Serializable {
 //           | workd(ipntr(2)).                     |
 //           %--------------------------------------%
 //
-        for (i = 0; i < nx; i++) {
+        for (i = 0; i < nx*nx; i++) {
         	v1[i] = workd[ipntr[0]-1+i];
         }
 		avsimp (nx, v1, v2);
-		for (i = 0; i < nx; i++) {
+		for (i = 0; i < nx*nx; i++) {
 			workd[ipntr[1]-1+i] = v2[i];
 		}
 
@@ -572,7 +572,7 @@ public class SparseEigenvalue implements java.io.Serializable {
         else { // ierr[0] == 0
 
            nconv =  iparam[4];
-           v1 = new double[nx];
+           v1 = new double[nx*nx];
            for (j = 0; j < nconv; j++) {
 
 //               %---------------------------%
@@ -588,7 +588,7 @@ public class SparseEigenvalue implements java.io.Serializable {
 //               | tolerance)                |
 //               %---------------------------%
 
-              for (i = 0; i < nx; i++) {
+              for (i = 0; i < nx*nx; i++) {
             	  v1[i] = v[i][j];
               }
         	  avsimp(nx, v1, ax);
@@ -1553,8 +1553,8 @@ public class SparseEigenvalue implements java.io.Serializable {
     //     | M A I N   L O O P (Reverse communication) |
     //     %-------------------------------------------%
     
-          v1 = new double[nx];
-          v2 = new double[nx];
+          v1 = new double[nx*nx];
+          v2 = new double[nx*nx];
           while (true) {
     
     //        %---------------------------------------------%
@@ -1580,11 +1580,11 @@ public class SparseEigenvalue implements java.io.Serializable {
     //           | the input, and return the result to  |
     //           | workd(ipntr(2)).                     |
     //           %--------------------------------------%
-                 for (i = 0; i < nx; i++) {
+                 for (i = 0; i < nx*nx; i++) {
                 	 v1[i] = workd[ipntr[0]-1+i];
                  }
                  av (nx, v1, v2);
-                 for (i = 0; i < nx; i++) {
+                 for (i = 0; i < nx*nx; i++) {
                 	 workd[ipntr[1]-1+i] = v2[i];
                  }
     
@@ -1672,7 +1672,7 @@ public class SparseEigenvalue implements java.io.Serializable {
     //               | tolerance)                |
     //               %---------------------------%
     //
-                    for (i = 0; i < nx; i++) {
+                    for (i = 0; i < nx*nx; i++) {
                     	v1[i] = v[i][j];
                     }
                 	av(nx, v1, ax);
@@ -8441,7 +8441,7 @@ public class SparseEigenvalue implements java.io.Serializable {
              index = 0;
              for (j = 0; j < ncv; j++) {
             	 for (i = 0; i < ldq; i++) {
-            		 work[iq-1+index] = array[i][j];
+            		 workl[iq-1+index] = array[i][j];
             		 index++;
             	 }
              }
@@ -9007,18 +9007,18 @@ public class SparseEigenvalue implements java.io.Serializable {
                 	  continue loop1;
                   }
       
-                  if (x[j-1] < x[j+igap-1]) {
-                     temp = x[j-1];
-                     x[j-1] = x[j+igap-1];
-                     x[j+igap-1] = temp;
+                  if (x[j] < x[j+igap]) {
+                     temp = x[j];
+                     x[j] = x[j+igap];
+                     x[j+igap] = temp;
                      if (apply) {
                     	 for (k = 0; k < na; k++) {
-                    		 temp = a[k][j-1];
-                    		 a[k][j-1] = a[k][j+igap-1];
-                    		 a[k][j+igap-1] = temp;
+                    		 temp = a[k][j];
+                    		 a[k][j] = a[k][j+igap];
+                    		 a[k][j+igap] = temp;
                     	 }
                      }
-                  } //  if (x[j-1] < x[j+igap-1])
+                  } //  if (x[j] < x[j+igap])
                   else {
                      continue loop1;
                   }
@@ -9044,18 +9044,18 @@ public class SparseEigenvalue implements java.io.Serializable {
                 	  continue loop2;
                   }
       
-                  if (Math.abs(x[j-1]) < Math.abs(x[j+igap-1])) {
-                     temp = x[j-1];
-                     x[j-1] = x[j+igap-1];
-                     x[j+igap-1] = temp;
+                  if (Math.abs(x[j]) < Math.abs(x[j+igap])) {
+                     temp = x[j];
+                     x[j] = x[j+igap];
+                     x[j+igap] = temp;
                      if (apply) {
                     	 for (k = 0; k < na; k++) {
-                    		 temp = a[k][j-1];
-                    		 a[k][j-1] = a[k][j+igap-1];
-                    		 a[k][j+igap-1] = temp;
+                    		 temp = a[k][j];
+                    		 a[k][j] = a[k][j+igap];
+                    		 a[k][j+igap] = temp;
                     	 }
                      }
-                  } // if (Math.abs(x[j-1]) < Math.abs(x[j+igap-1]))
+                  } // if (Math.abs(x[j]) < Math.abs(x[j+igap]))
                   else {
                      continue loop2;
                   }
@@ -9081,18 +9081,18 @@ public class SparseEigenvalue implements java.io.Serializable {
                 	  continue loop3;
                   }
                  
-                  if (x[j-1] > x[j+igap-1]) {
-                	  temp = x[j-1];
-                      x[j-1] = x[j+igap-1];
-                      x[j+igap-1] = temp;
+                  if (x[j] > x[j+igap]) {
+                	  temp = x[j];
+                      x[j] = x[j+igap];
+                      x[j+igap] = temp;
                       if (apply) {
                      	 for (k = 0; k < na; k++) {
-                     		 temp = a[k][j-1];
-                     		 a[k][j-1] = a[k][j+igap-1];
-                     		 a[k][j+igap-1] = temp;
+                     		 temp = a[k][j];
+                     		 a[k][j] = a[k][j+igap];
+                     		 a[k][j+igap] = temp;
                      	 }
                       }  
-                  } // if (x[j-1] > x[j+igap-1])
+                  } // if (x[j] > x[j+igap])
                   else {
                      continue loop3;
                   }
@@ -9118,18 +9118,18 @@ public class SparseEigenvalue implements java.io.Serializable {
                 	  continue loop4;
                   }
       
-                  if (Math.abs(x[j-1]) > Math.abs(x[j+igap-1])) {
-                	  temp = x[j-1];
-                      x[j-1] = x[j+igap-1];
-                      x[j+igap-1] = temp;
+                  if (Math.abs(x[j]) > Math.abs(x[j+igap])) {
+                	  temp = x[j];
+                      x[j] = x[j+igap];
+                      x[j+igap] = temp;
                       if (apply) {
                      	 for (k = 0; k < na; k++) {
-                     		 temp = a[k][j-1];
-                     		 a[k][j-1] = a[k][j+igap-1];
-                     		 a[k][j+igap-1] = temp;
+                     		 temp = a[k][j];
+                     		 a[k][j] = a[k][j+igap];
+                     		 a[k][j+igap] = temp;
                      	 }
                       }     
-                  } // if (Math.abs(x[j-1]) > Math.abs(x[j+igap-1]))
+                  } // if (Math.abs(x[j]) > Math.abs(x[j+igap]))
                   else {
                      continue loop4;
                   }
@@ -9742,11 +9742,11 @@ public class SparseEigenvalue implements java.io.Serializable {
              dsaupd_iw     = dsaupd_iq     + ncv*ncv;
              dsaupd_next   = dsaupd_iw     + 3*ncv;
     
-             ipntr[3] = dsaupd_next-1;
-             ipntr[4] = dsaupd_ih-1;
-             ipntr[5] = dsaupd_ritz-1;
-             ipntr[6] = dsaupd_bounds-1;
-             ipntr[10] = dsaupd_iw-1;
+             ipntr[3] = dsaupd_next;
+             ipntr[4] = dsaupd_ih;
+             ipntr[5] = dsaupd_ritz;
+             ipntr[6] = dsaupd_bounds;
+             ipntr[10] = dsaupd_iw;
           } // if (ido[0] == 0)
     
     //     %-------------------------------------------------------%
@@ -11774,16 +11774,16 @@ public class SparseEigenvalue implements java.io.Serializable {
                 	  continue loop2;
                   }
       
-                  if (x1[j-1] < x1[j+igap-1]) {
-                     temp = x1[j-1];
-                     x1[j-1] = x1[j+igap-1];
-                     x1[j+igap-1] = temp;
+                  if (x1[j] < x1[j+igap]) {
+                     temp = x1[j];
+                     x1[j] = x1[j+igap];
+                     x1[j+igap] = temp;
                      if (apply) {
-                        temp = x2[j-1];
-                        x2[j-1] = x2[j+igap-1];
-                        x2[j+igap-1] = temp;
+                        temp = x2[j];
+                        x2[j] = x2[j+igap];
+                        x2[j+igap] = temp;
                      } // if (apply)
-                  } // if (x1[j-1] < x1[j+igap-1])
+                  } // if (x1[j] < x1[j+igap])
                   else {
                      continue loop2;
                   }
@@ -11809,16 +11809,16 @@ public class SparseEigenvalue implements java.io.Serializable {
                 	  continue loop5;
                   }
       
-                  if (Math.abs(x1[j-1]) < Math.abs(x1[j+igap-1])) {
-                     temp = x1[j-1];
-                     x1[j-1] = x1[j+igap-1];
-                     x1[j+igap-1] = temp;
+                  if (Math.abs(x1[j]) < Math.abs(x1[j+igap])) {
+                     temp = x1[j];
+                     x1[j] = x1[j+igap];
+                     x1[j+igap] = temp;
                      if (apply) {
-                        temp = x2[j-1];
-                        x2[j-1] = x2[j+igap-1];
-                        x2[j+igap-1] = temp;
+                        temp = x2[j];
+                        x2[j] = x2[j+igap];
+                        x2[j+igap] = temp;
                      } // if (apply)
-                  } // if (Math.abs(x1[j-1]) < Math.abs(x1[j+igap-1]))
+                  } // if (Math.abs(x1[j]) < Math.abs(x1[j+igap]))
                   else {
                      continue loop5;
                   }
@@ -11844,16 +11844,16 @@ public class SparseEigenvalue implements java.io.Serializable {
                 	  continue loop8;
                   }
                 
-                  if (x1[j-1] > x1[j+igap-1]) {
-                     temp = x1[j-1];
-                     x1[j-1] = x1[j+igap-1];
-                     x1[j+igap-1] = temp;
+                  if (x1[j] > x1[j+igap]) {
+                     temp = x1[j];
+                     x1[j] = x1[j+igap];
+                     x1[j+igap] = temp;
                      if (apply) {
-                        temp = x2[j-1];
-                        x2[j-1] = x2[j+igap-1];
-                        x2[j+igap-1] = temp;
+                        temp = x2[j];
+                        x2[j] = x2[j+igap];
+                        x2[j+igap] = temp;
                      } // if (apply)
-                  } // if (x1[j-1] > x1[j+igap-1])
+                  } // if (x1[j] > x1[j+igap])
                   else {
                      continue loop8;
                   }
@@ -11879,16 +11879,16 @@ public class SparseEigenvalue implements java.io.Serializable {
                 	  continue loop11;
                   }
       
-                  if (Math.abs(x1[j-1]) > Math.abs(x1[j+igap-1])) {
-                     temp = x1[j-1];
-                     x1[j-1] = x1[j+igap-1];
-                     x1[j+igap-1] = temp;
+                  if (Math.abs(x1[j]) > Math.abs(x1[j+igap])) {
+                     temp = x1[j];
+                     x1[j] = x1[j+igap];
+                     x1[j+igap] = temp;
                      if (apply) {
-                        temp = x2[j-1];
-                        x2[j-1] = x2[j+igap-1];
-                        x2[j+igap-1] = temp;
+                        temp = x2[j];
+                        x2[j] = x2[j+igap];
+                        x2[j+igap] = temp;
                      } // if (apply)
-                  } // if (Math.abs(x1[j-1]) > Math.abs(x1[j+igap-1]))
+                  } // if (Math.abs(x1[j]) > Math.abs(x1[j+igap]))
                   else {
                      continue loop11;
                   }
@@ -13536,6 +13536,7 @@ public class SparseEigenvalue implements java.io.Serializable {
         //        | Orthgonalize r_{j} against V_{j}.    |
         //        | RESID contains OP*v_{j}. See STEP 3. | 
         //        %--------------------------------------%
+                 buffer2 = new double[n];
                  for (m = 0; m < n; m++) {
                 	 buffer2[m] = workd[dsaitr_irj-1+m];
                  }
