@@ -3598,6 +3598,8 @@ public class FileICS extends FileBase {
                     ((sign == null) || ((sign.compareTo("unsigned")) == 0))) {
                 dataType = ModelStorageBase.ARGB;
                 Preferences.debug("Data type is ARGB\n", Preferences.DEBUG_FILEIO);
+                // For 16 bit color integer accept signed data and assume all data is in the 0-32767 range where unsigned
+                // and signed are identical.
             } else if ((sizes[0] == 16) && (format.compareTo("integer") == 0)) {
                 dataType = ModelStorageBase.ARGB_USHORT;
                 Preferences.debug("Data type is ARGB_USHORT\n", Preferences.DEBUG_FILEIO);
