@@ -9590,6 +9590,7 @@ public class SparseEigenvalue implements java.io.Serializable {
     //
           int i;
           int  j;
+          int index;
     //
     //     %----------------------%
     //     | External Subroutines |
@@ -9771,6 +9772,19 @@ public class SparseEigenvalue implements java.io.Serializable {
            dsaupd_ishift, dsaupd_mxiter, v, ldv, H, dsaupd_ldh, ritz,
            bounds, Q, dsaupd_ldq, workl2, ipntr, workd,
            info );
+         index = 0;
+         for (j = 0; j < 2; j++) {
+        	 for (i = 0; i < dsaupd_nev0 + dsaupd_np[0]; i++) {
+        		 workl[dsaupd_ih-1+index] = H[i][j];
+        		 index++;
+        	 }
+         }
+         for (i = 0; i < dsaupd_nev0 + dsaupd_np[0]; i++) {
+        	 workl[dsaupd_ritz - 1 + i] = ritz[i];
+         }
+         for (i = 0; i < dsaupd_nev0 + dsaupd_np[0]; i++) {
+        	 workl[dsaupd_bounds - 1 + i] = bounds[i];
+         }
          for (i = 0; i < 3*(dsaupd_nev0+dsaupd_np[0]); i++) {
         	workl[dsaupd_iw-1+i] = workl2[i];
          }
