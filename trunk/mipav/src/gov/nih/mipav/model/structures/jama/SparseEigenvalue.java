@@ -10353,8 +10353,8 @@ public class SparseEigenvalue implements java.io.Serializable {
                    dsaup2_update = false;
           
                    if (dsaup2_msglvl > 1) {
-                	   UI.setDataText("dsaup2: Current B-norm of residual for factorization dsaup2_rnorm = " +
-                                     nf.format(dsaup2_rnorm) + "\n");
+                	   UI.setDataText("dsaup2: Current B-norm of residual for factorization dsaup2_rnorm[0] = " +
+                                     nf.format(dsaup2_rnorm[0]) + "\n");
                    }
            
           //        %--------------------------------------------------------%
@@ -14155,7 +14155,7 @@ public class SparseEigenvalue implements java.io.Serializable {
         //     | Compute B-norm of starting vector.                   |
         //     %------------------------------------------------------%
         
-              t3 = System.currentTimeMillis();
+              t2 = System.currentTimeMillis();
               dgetv0_first = true;
               if (bmat.equalsIgnoreCase("G")) {
                  nbx = nbx + 1;
@@ -14295,6 +14295,7 @@ public class SparseEigenvalue implements java.io.Serializable {
                  }
                  rnorm[0] = zero;
                  ierr[0] = -1;
+                 break loop1;
               } // else
               } // loop1: while (true)
         
