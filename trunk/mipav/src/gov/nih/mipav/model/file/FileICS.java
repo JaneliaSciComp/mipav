@@ -3598,8 +3598,7 @@ public class FileICS extends FileBase {
                     ((sign == null) || ((sign.compareTo("unsigned")) == 0))) {
                 dataType = ModelStorageBase.ARGB;
                 Preferences.debug("Data type is ARGB\n", Preferences.DEBUG_FILEIO);
-            } else if (((sizes[0] == 16) && ((format.compareTo("integer")) == 0)) &&
-                           ((sign == null) || ((sign.compareTo("unsigned")) == 0))) {
+            } else if ((sizes[0] == 16) && (format.compareTo("integer") == 0)) {
                 dataType = ModelStorageBase.ARGB_USHORT;
                 Preferences.debug("Data type is ARGB_USHORT\n", Preferences.DEBUG_FILEIO);
             } else if (((sizes[0] == 32) && ((format.compareTo("real")) == 0)) &&
