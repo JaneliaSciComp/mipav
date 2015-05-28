@@ -12728,7 +12728,7 @@ public class SparseEigenvalue implements java.io.Serializable {
 
                    ge.dlasr('R', 'V', 'F', 1, mm, vector1, vector2, array1, 1);
 
-                   for (ptr1 = 0; ptr1 < n; ptr1++) {
+                   for (ptr1 = 0; ptr1 < mm; ptr1++) {
                        z[m-1+ptr1] = array1[0][ptr1];
                    }
                } // if (icompz > 0)
