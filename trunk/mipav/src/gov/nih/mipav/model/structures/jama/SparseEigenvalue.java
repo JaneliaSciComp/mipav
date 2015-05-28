@@ -160,6 +160,322 @@ public class SparseEigenvalue implements java.io.Serializable {
      */
     public SparseEigenvalue() {}
     
+    public void simpleEigenvalueTest1 (){
+    	double A[][] = new double [3][3];
+    	A[0][0] = 7.0;
+    	A[0][1] = -2.0;
+    	A[0][2] = 0.0;
+    	A[1][0] = -2.0;
+    	A[1][1] = 6.0;
+    	A[1][2] = -2.0;
+    	A[2][0] = 0.0;
+    	A[2][1] = -2.0;
+    	A[2][2] = 5.0;
+    	int nev = 2;
+    	int ncv = 3;
+    	double d[] = new double[nev];
+    	double Z[][] = new double[3][nev];
+    	String which = "SM";
+    	double tol = 0.0;
+    	simpleEigenvalue(A, nev, which, tol, ncv, d, Z);
+    	return;
+    }
+    
+    /**
+     * Calculate requested eigenvalues and eigenvectors of a matrix
+     * @param A Symmetric real matrix for which eigenvalues and eigenvectors will be calculated
+     *        n = A.length = A[0].length
+     * @param nev Number of eigenvalues and accompanying eigenvectors to be calculated
+     * @param which WHICH must be one of "LM", "SM", "LA", "SA" or "BE"
+     *        largest and smallest magnitudes, largest and smallest amplitudes,
+     *        both ends of the spectrum
+     * @param tol determines the stopping criterion.                                                    
+     *       Expect                                         |
+     *                  abs(lambdaC - lambdaT) < tol*abs(lambdaC)
+     *                                 computed   true                                                      
+     *                  If tol .le. 0,  then tol <- macheps
+     *                  (machine precision) is used.
+     * @param ncv The largest number of basis vectors that will be used in the Implicitly Restarted 
+     *            Arnoldi Process.  Work per major iteration is proportional to n*ncv*ncv. 
+     *            As a rule of thumb, ncv >= 2 * nev is reasonable.
+     *            ncv must be >= nev+1 and ncv must be <= n.     
+     * @param d User supplied array of size nev will hold the calculated eigenvalues
+     * @param Z User supplied array of size [A.length][nev] to hold the calculated eigenvalues  
+     */
+    public void simpleEigenvalue(double A[][], int nev, String which, double tol, int ncv,
+    		double d[], double Z[][]) {
+       int n = A.length;
+       int ldv = n;
+       int ldz = n;
+       int lworkl = ncv*(ncv+8);
+       double v[][] = new double[ldv][ncv];
+       double workl[] = new double[lworkl];
+       double workd[] = new double[3*n];
+       double resid[] = new double[n];
+       boolean select[] = new boolean[ncv];
+       int iparam[] = new int[11];
+       int ipntr[] = new int[11];
+  
+  //     %---------------%
+  //     | Local Scalars |
+  //     %---------------%
+       
+       String bmat;
+       int ido[] = new int[1];
+       int info[] = new int[1];
+       int ierr[] = new int[1];
+       int nconv = 0;
+       int        i, j, 
+                    nx, maxitr, mode1, ishfts;
+       boolean          rvec;
+       // sigma not intialized in dssimp
+       double sigma = 0.0;
+       double v1[];
+       double v2[];
+       int index;
+ 
+ //     %------------%
+ //     | Parameters |
+ //     %------------%
+ 
+       final double zero = 0.0;
+       
+//     %-------------------------------------------------%
+//     | The following include statement and assignments |
+//     | initiate trace output from the internal         |
+//     | actions of ARPACK.  See debug.doc in the        |
+//     | DOCUMENTS directory for usage.  Initially, the  |
+//     | most useful information will be a breakdown of  |
+//     | time spent in the various stages of computation |
+//     | given by setting msaupd = 1.                    |
+//     %-------------------------------------------------%
+
+    msgets = 0;
+    msaitr = 0; 
+    msapps = 0;
+    msaupd = 1;
+    msaup2 = 0;
+    mseigt = 0;
+    mseupd = 0;
+
+// bmat = "I" indicates a standard problem    
+    bmat  = "I";
+
+    
+
+//     %-----------------------------------------------------%
+//     |                                                     |
+//     | Specification of stopping rules and initial         |
+//     | conditions before calling DSAUPD                    |
+//     |                                                     |
+//     | IDO  is the REVERSE COMMUNICATION parameter         |
+//     |      used to specify actions to be taken on return  |
+//     |      from DSAUPD. (See usage below.)                |
+//     |                                                     |
+//     |      It MUST initially be set to 0 before the first |
+//     |      call to DSAUPD.                                | 
+//     |                                                     |
+//     | INFO on entry specifies starting vector information |
+//     |      and on return indicates error codes            |
+//     |                                                     |
+//     |      Initially, setting INFO=0 indicates that a     | 
+//     |      random starting vector is requested to         |
+//     |      start the ARNOLDI iteration.  Setting INFO to  |
+//     |      a nonzero value on the initial call is used    |
+//     |      if you want to specify your own starting       |
+//     |      vector (This vector must be placed in RESID.)  | 
+//     |                                                     |
+//     | The work array WORKL is used in DSAUPD as           | 
+//     | workspace.  Its dimension LWORKL is set as          |
+//     | illustrated below.                                  |
+//     |                                                     |
+//     %-----------------------------------------------------%
+
+    info[0] = 0;
+    ido[0] = 0;
+
+//     %---------------------------------------------------%
+//     | Specification of Algorithm Mode:                  |
+//     |                                                   |
+//     | This program uses the exact shift strategy        |
+//     | (indicated by setting PARAM(1) = 1).              |
+//     | IPARAM(3) specifies the maximum number of Arnoldi |
+//     | iterations allowed.  Mode 1 of DSAUPD is used     |
+//     | (IPARAM(7) = 1). All these options can be changed |
+//     | by the user. For details see the documentation in |
+//     | DSAUPD.                                           |
+//     %---------------------------------------------------%
+
+    ishfts = 1;
+    maxitr = 300; 
+    mode1 = 1;
+
+    iparam[0] = ishfts;
+                
+    iparam[2] = maxitr;
+                  
+    iparam[6] = mode1;
+
+//     %------------------------------------------------%
+//     | M A I N   L O O P (Reverse communication loop) |
+//     %------------------------------------------------%
+
+    v1 = new double[n];
+    v2 = new double[n];   
+    while (true) {
+
+//        %---------------------------------------------%
+//        | Repeatedly call the routine DSAUPD and take | 
+//        | actions indicated by parameter IDO until    |
+//        | either convergence is indicated or maxitr   |
+//        | has been exceeded.                          |
+//        %---------------------------------------------%
+
+        dsaupd ( ido, bmat, n, which, nev, tol, resid, 
+                 ncv, v, ldv, iparam, ipntr, workd, workl,
+                 lworkl, info );
+
+		if (ido[0] != -1 && ido[0] != 1) {
+			 break;
+		}
+
+//           %--------------------------------------%
+//           | Perform matrix vector multiplication |
+//           |              y <--- OP*x             |
+//           | The user should supply his/her own   |
+//           | matrix vector multiplication routine |
+//           | here that takes workd(ipntr(1)) as   |
+//           | the input, and return the result to  |
+//           | workd(ipntr(2)).                     |
+//           %--------------------------------------%
+//
+        for (i = 0; i < n; i++) {
+        	v1[i] = workd[ipntr[0]-1+i];
+        }
+        matMult(n, A, v1, v2);
+		for (i = 0; i < n; i++) {
+			workd[ipntr[1]-1+i] = v2[i];
+		}
+
+//           %-----------------------------------------%
+//           | L O O P   B A C K to call DSAUPD again. |
+//           %-----------------------------------------%
+       } // while (true)
+
+//     %----------------------------------------%
+//     | Either we have convergence or there is |
+//     | an error.                              |
+//     %----------------------------------------%
+
+    if ( info[0] < 0 ) {
+
+//        %--------------------------%
+//        | Error message. Check the |
+//        | documentation in DSAUPD. |
+//        %--------------------------%
+
+       UI.setDataText("Error with dsaupd, info[0] = " + info[0] + "\n");
+    } // if (info[0] < 0)
+    else { // info[0] >= 0
+
+//        %-------------------------------------------%
+//        | No fatal errors occurred.                 |
+//        | Post-Process using DSEUPD.                |
+//        |                                           |//c        | Computed eigenvalues may be extracted.    |  
+//        |                                           |
+//        | Eigenvectors may be also computed now if  |
+//        | desired.  (indicated by rvec = .true.)    | 
+//        |                                           |
+//        | The routine DSEUPD now called to do this  |
+//        | post processing (Other modes may require  |
+//        | more complicated post processing than     |
+//        | mode1.)                                   |
+//        |                                           |
+//        %-------------------------------------------%
+           
+        rvec = true;
+
+        dseupd ( rvec, "A", select, d, Z, ldz, sigma, 
+                bmat, n, which, nev, tol, resid, ncv, v, ldv, 
+                iparam, ipntr, workd, workl, lworkl, ierr );
+		
+
+//         %----------------------------------------------%
+//         | Eigenvalues are returned in the first column |
+//         | of the two dimensional array D and the       |
+//         | corresponding eigenvectors are returned in   |
+//         | the first NCONV (=IPARAM(5)) columns of the  |
+//         | two dimensional array V if requested.        |
+//         | Otherwise, an orthogonal basis for the       |
+//         | invariant subspace corresponding to the      |
+//         | eigenvalues in D is returned in V.           |
+//         %----------------------------------------------%
+
+        if ( ierr[0] != 0) {
+
+//            %------------------------------------%
+//            | Error condition:                   |
+//            | Check the documentation of DSEUPD. |
+//            %------------------------------------%
+
+           UI.setDataText("Error with dseupd, ierr[0] = " + ierr[0] + "\n");
+        } // if( ierr[0] != 0)
+        else { // ierr[0] == 0
+
+        	nconv =  iparam[4];
+        	for (i = 0; i < nconv; i++) {
+        		UI.setDataText("Eigenvalue # " + (i+1) + " = " + nf.format(d[i]) + "\n");
+        		UI.setDataText("Eigenvector " + (i+1) + " = ");
+        		for (j = 0; j < n-1; j++) {
+        			UI.setDataText(nf.format(Z[j][i]) + "  ");
+        		}
+        		UI.setDataText(nf.format(Z[n-1][i]) + "\n");
+        	}
+
+        } // else ierr[0] == 0
+        
+  //        %------------------------------------------%
+  //        | Print additional convergence information |
+  //        %------------------------------------------%
+  
+           if ( info[0] == 1) {
+          	UI.setDataText("Maximum number of iterations reached.\n");
+           }
+           else if ( info[0] == 3) {
+          	UI.setDataText("No shifts could be applied during implicit Arnoldi update, try increasing NCV.\n");
+           }     
+  
+           UI.setDataText("\n");
+           UI.setDataText("simple Eigevalue\n");
+           UI.setDataText("======\n");
+           UI.setDataText("\n");
+           UI.setDataText("Size of the matrix = " +  n + "\n");
+           UI.setDataText("The number of Ritz values requested = " +  nev + "\n");
+           UI.setDataText("The number of Arnoldi vectors generated ncv = " +  ncv + "\n");
+           UI.setDataText("What portion of the spectrum: " +  which + "\n");
+           UI.setDataText("The number of converged Ritz values = " +nconv + "\n");
+           UI.setDataText("The number of Implicit Arnoldi update iterations taken = " +  iparam[2] + "\n");
+           UI.setDataText("The number of OP*x = " +  iparam[8] + "\n");
+           UI.setDataText("The convergence criterion = " + tol + "\n");
+           UI.setDataText("\n");
+    } // else info[0] >= 0
+
+     return;
+    }
+    
+    private void matMult(int n, double A[][], double x[], double y[]) {
+    	int i, j;
+    	for (i = 0; i < n; i++) {
+    		y[i] = 0.0;
+    	}
+    	for (i = 0; i < 3; i++) {
+    		for (j = 0; j < 3; j++) {
+    			y[i] = y[i] + A[i][j]*x[j];
+    		}
+    	}
+    	return;
+    }
+    
     public void dssimp() {
 
 //     This example program is intended to illustrate the 
@@ -11275,7 +11591,7 @@ public class SparseEigenvalue implements java.io.Serializable {
             		  array2D[m][p] = v[m][np+p];
             	  }
               }
-              ge.dlacpy ('A', n, kev, array2D, ldv, v, ldv);
+              ge.dlacpy ('A', n, kev, array2D, n, v, ldv);
          
         //     %--------------------------------------------%
         //     | Copy the (kev+1)-st column of (V*Q) in the |
@@ -13650,7 +13966,7 @@ public class SparseEigenvalue implements java.io.Serializable {
         //        %---------------------------------------------------%
         
                  if (dsaitr_msglvl > 2) {
-                    UI.setDataText("dsaitr: re-orthonalization ; wnorm = " + nf.format(dsaitr_wnorm) +
+                    UI.setDataText("dsaitr: re-orthogonalization ; wnorm = " + nf.format(dsaitr_wnorm) +
                     		" rnorm[0] = " + nf.format(rnorm[0]) + "\n");
                     
                  }
