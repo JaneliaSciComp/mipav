@@ -13125,12 +13125,6 @@ public class SparseEigenvalue implements java.io.Serializable {
               int infol[] = new int[1];
               double temp1;
         
-        //     %-----------------------%
-        //     | Local Array Arguments | 
-        //     %-----------------------%
-        
-              double xtemp[] = new double[2];
-        
         //     %----------------------%
         //     | External Subroutines |
         //     %----------------------%
@@ -13656,8 +13650,6 @@ public class SparseEigenvalue implements java.io.Serializable {
         //        %---------------------------------------------------%
         
                  if (dsaitr_msglvl > 2) {
-                    xtemp[0] = dsaitr_wnorm;
-                    xtemp[1] = rnorm[0];
                     UI.setDataText("dsaitr: re-orthonalization ; wnorm = " + nf.format(dsaitr_wnorm) +
                     		" rnorm[0] = " + nf.format(rnorm[0]) + "\n");
                     
@@ -13750,8 +13742,6 @@ public class SparseEigenvalue implements java.io.Serializable {
                  if (dsaitr_msglvl > 0 && dsaitr_iter > 0) {
                 	UI.setDataText("dsaitr: Iterative refinement for Arnoldi residual dsaitr_j = " + dsaitr_j + "\n");
                     if (dsaitr_msglvl > 2) {
-                        xtemp[0] = rnorm[0];
-                        xtemp[1] = dsaitr_rnorm1;
                         UI.setDataText("dsaitr: iterative refinement ; rnorm[0] = " + nf.format(rnorm[0]) +
                         		" dsaitr_rnorm1 = " + nf.format(dsaitr_rnorm1) + "\n");
                     }
