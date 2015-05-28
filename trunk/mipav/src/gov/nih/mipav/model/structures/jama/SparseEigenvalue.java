@@ -13550,10 +13550,6 @@ public class SparseEigenvalue implements java.io.Serializable {
         //        | Orthgonalize r_{j} against V_{j}.    |
         //        | RESID contains OP*v_{j}. See STEP 3. | 
         //        %--------------------------------------%
-                 buffer2 = new double[n];
-                 for (m = 0; m < n; m++) {
-                	 buffer2[m] = workd[dsaitr_irj-1+m];
-                 }
                  ge.dgemv('N', n, dsaitr_j, -one, v, ldv, buffer2, 1, one, resid, 1);
         
         //        %--------------------------------------%
