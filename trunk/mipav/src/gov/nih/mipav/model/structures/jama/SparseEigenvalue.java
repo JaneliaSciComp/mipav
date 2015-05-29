@@ -226,19 +226,12 @@ public class SparseEigenvalue implements java.io.Serializable {
        int ierr[] = new int[1];
        int nconv = 0;
        int        i, j, 
-                    nx, maxitr, mode1, ishfts;
+                    maxitr, mode1, ishfts;
        boolean          rvec;
        // sigma not intialized in dssimp
        double sigma = 0.0;
        double v1[];
        double v2[];
-       int index;
- 
- //     %------------%
- //     | Parameters |
- //     %------------%
- 
-       final double zero = 0.0;
        
 //     %-------------------------------------------------%
 //     | The following include statement and assignments |
@@ -468,8 +461,8 @@ public class SparseEigenvalue implements java.io.Serializable {
     	for (i = 0; i < n; i++) {
     		y[i] = 0.0;
     	}
-    	for (i = 0; i < 3; i++) {
-    		for (j = 0; j < 3; j++) {
+    	for (i = 0; i < n; i++) {
+    		for (j = 0; j < n; j++) {
     			y[i] = y[i] + A[i][j]*x[j];
     		}
     	}
