@@ -10075,12 +10075,12 @@ public class SparseEigenvalue implements java.io.Serializable {
               //dsaupd_ishift, dsaupd_mxiter, v, ldv, workl(dsaupd_ih), dsaupd_ldh, workl(dsaupd_ritz),
               //workl(dsaupd_bounds), workl(dsaupd_iq), dsaupd_ldq, workl(dsaupd_iw), ipntr, workd,
               //info );
-         double H[][] = new double[dsaupd_nev0+dsaupd_np[0]][2];
-         double ritz[] = new double[dsaupd_nev0+dsaupd_np[0]];
-         double bounds[] = new double[dsaupd_nev0+dsaupd_np[0]];
-         double Q[][] = new double[dsaupd_nev0+dsaupd_np[0]][dsaupd_nev0+dsaupd_np[0]];
-         double workl2[] = new double[3*(dsaupd_nev0+dsaupd_np[0])];
-         for (i = 0; i < 3*(dsaupd_nev0+dsaupd_np[0]); i++) {
+         double H[][] = new double[ncv][2];
+         double ritz[] = new double[ncv];
+         double bounds[] = new double[ncv];
+         double Q[][] = new double[ncv][ncv];
+         double workl2[] = new double[3*ncv];
+         for (i = 0; i < 3*ncv; i++) {
         	 workl2[i] = workl[dsaupd_iw-1+i];
          }
          dsaup2 
@@ -10090,18 +10090,18 @@ public class SparseEigenvalue implements java.io.Serializable {
            info );
          index = 0;
          for (j = 0; j < 2; j++) {
-        	 for (i = 0; i < dsaupd_nev0 + dsaupd_np[0]; i++) {
+        	 for (i = 0; i < ncv; i++) {
         		 workl[dsaupd_ih-1+index] = H[i][j];
         		 index++;
         	 }
          }
-         for (i = 0; i < dsaupd_nev0 + dsaupd_np[0]; i++) {
+         for (i = 0; i < ncv; i++) {
         	 workl[dsaupd_ritz - 1 + i] = ritz[i];
          }
-         for (i = 0; i < dsaupd_nev0 + dsaupd_np[0]; i++) {
+         for (i = 0; i < ncv; i++) {
         	 workl[dsaupd_bounds - 1 + i] = bounds[i];
          }
-         for (i = 0; i < 3*(dsaupd_nev0+dsaupd_np[0]); i++) {
+         for (i = 0; i < 3*ncv; i++) {
         	workl[dsaupd_iw-1+i] = workl2[i];
          }
     
