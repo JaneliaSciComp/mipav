@@ -13,7 +13,8 @@ import javax.swing.*;
 
 
 /**
- * Dialog to get user input signal 1 VOI, optional signal 2 VOI, background VOI, and number of NMR receivers needed for
+ * Dialog to get user input signal 1 VOI, optional signal 2 VOI, background VOI or signal to use fuzzy c means to  
+ * separate all pixels into signal and background and number of NMR receivers needed for
  * MRI image SNR calculation.
  */
 public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmInterface, ItemListener, WindowListener {
@@ -44,9 +45,6 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
     private JLabel labelReceiver;
 
     /** DOCUMENT ME! */
-    private int nBoundingVOIs;
-
-    /** DOCUMENT ME! */
     private int numReceivers = 1;
 
     /** DOCUMENT ME! */
@@ -72,6 +70,10 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
 
     /** DOCUMENT ME! */
     private ViewVOIVector VOIs;
+    
+    private JCheckBox automaticCheckBox;
+    
+    private boolean automatic = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -138,6 +140,10 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
                 //componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
                 //componentImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
             }
+        } else if (source == automaticCheckBox) {
+            signalButton.setEnabled(!automaticCheckBox.isSelected());
+            signal2Button.setEnabled(!automaticCheckBox.isSelected());
+            backgroundButton.setEnabled(!automaticCheckBox.isSelected());
         } else {
             super.actionPerformed(event);
         }
@@ -196,7 +202,7 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
             componentImage.getVOIHandler().setPresetHue(-1.0f);
 
             // Make algorithm
-            snrAlgo = new AlgorithmSingleMRIImageSNR(image, signalIndex, signal2Index, backgroundIndex, numReceivers);
+            snrAlgo = new AlgorithmSingleMRIImageSNR(image, automatic, signalIndex, signal2Index, backgroundIndex, numReceivers);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -289,6 +295,13 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
         gbc6.fill = GridBagConstraints.HORIZONTAL;
         gbc6.gridx = 0;
         gbc6.gridy = 0;
+        
+        automaticCheckBox = new JCheckBox("Separate all pixels into signal and background", false);
+        automaticCheckBox.setForeground(Color.black);
+        automaticCheckBox.setFont(serif12);
+        automaticCheckBox.addActionListener(this);
+        paramPanel.add(automaticCheckBox, gbc6);
+        gbc6.gridy++;
 
         labelReceiver = new JLabel("Number of NMR receivers ");
         labelReceiver.setForeground(Color.black);
@@ -323,7 +336,6 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
         float hue;
         VOIs = image.getVOIs();
         nVOIs = VOIs.size();
-        nBoundingVOIs = 0;
         signalIndex = -1;
         backgroundIndex = -1;
 
@@ -335,11 +347,17 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
         } else {
             numReceivers = Integer.valueOf(textReceiver.getText()).intValue();
         }
+        
+        automatic = automaticCheckBox.isSelected();
+        
+        if (automatic) {
+        	signal2Index = -1;
+        	return true;
+        }
 
         for (i = 0; i < nVOIs; i++) {
 
             if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) || (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
-                nBoundingVOIs++;
                 hsb = Color.RGBtoHSB(VOIs.VOIAt(i).getColor().getRed(), VOIs.VOIAt(i).getColor().getGreen(),
                                      VOIs.VOIAt(i).getColor().getBlue(), null);
                 hue = hsb[0];
