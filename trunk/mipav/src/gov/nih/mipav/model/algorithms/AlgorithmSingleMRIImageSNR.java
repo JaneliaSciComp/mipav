@@ -2,7 +2,7 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.structures.ModelImage;
-
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.*;
 
 import java.io.IOException;
@@ -162,6 +162,10 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
+	
+	// If true use fuzzy c means to separate all pixels into signal and background
+	// instead of using VOIs
+	private boolean automatic;
 
     /** The index of a rerquired noise background VOI. */
     private int backgroundIndex;
@@ -197,16 +201,17 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
      * Creates a new AlgorithmSingleMRIImageSNR object.
      * 
      * @param srcImg source image
+     * @param automatic If true, use fuzzy c means to separate all pixels into signal and background
      * @param signalIndex the index of the signal VOI
      * @param signal2Index the index of the signal2 VOI if >= 0
      * @param backgroundIndex the index of the background VOI
      * @param numReceivers the number of NMR receivers
      */
-    public AlgorithmSingleMRIImageSNR(ModelImage srcImg, int signalIndex, int signal2Index, int backgroundIndex,
+    public AlgorithmSingleMRIImageSNR(ModelImage srcImg, boolean automatic, int signalIndex, int signal2Index, int backgroundIndex,
             int numReceivers) {
 
         super(null, srcImg);
-
+        this.automatic = automatic;
         this.signalIndex = signalIndex;
         this.signal2Index = signal2Index;
         this.backgroundIndex = backgroundIndex;
@@ -256,8 +261,25 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
         double tol = 1.0E-3;
         boolean test = false;
         boolean validityTest = false;
-        
-        boolean testme= true;
+        AlgorithmFuzzyCMeans fcmAlgo;
+        int nClasses;
+        int nPyramid;
+        int oneJacobiIter;
+        int twoJacobiIter;
+        float q;
+        float oneSmooth;
+        float twoSmooth;
+        boolean outputGainField;
+        int segmentation;
+        boolean cropBackground;
+        float threshold;
+        int maxIter;
+        float endTolerance;
+        boolean wholeImage;
+        float[] centroids;
+        float min;
+        float max;
+        ModelImage[] fuzzyImage = null;
 //        if (testme) {
 //            AlgorithmMultiExponentialFitting mef = new AlgorithmMultiExponentialFitting();
 //            mef.selfTest();
@@ -364,20 +386,68 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
 
             return;
         }
-
+        
         mask = new short[imageLength];
+        
+        if (automatic) {
+        	nClasses = 2;
+            nPyramid = 4;
+            oneJacobiIter = 1;
+            twoJacobiIter = 2;
+            q = 2.0f;
+            oneSmooth = 2e4f;
+            twoSmooth = 2e5f;
+            outputGainField = false;
+            segmentation = AlgorithmFuzzyCMeans.HARD_ONLY;
+            cropBackground = false;
+            threshold = 0.0f;
+            maxIter = 200;
+            endTolerance = 0.01f;
+            wholeImage = true;	
+            fuzzyImage = new ModelImage[1];
+            fuzzyImage[0] = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(),
+                    srcImage.getImageName() + "_seg");
+            fcmAlgo = new AlgorithmFuzzyCMeans(fuzzyImage, srcImage, nClasses, nPyramid, oneJacobiIter, twoJacobiIter, q, oneSmooth,
+                    twoSmooth, outputGainField, segmentation, cropBackground, threshold, maxIter,
+                    endTolerance, wholeImage);
+			centroids = new float[2];
+			min = (float) srcImage.getMin();
+			max = (float) srcImage.getMax();
+			centroids[0] = min + ((max - min) / 3.0f);
+			centroids[1] = min + (2.0f * (max - min) / 3.0f);
+			fcmAlgo.setCentroids(centroids);
+			fcmAlgo.run();
+			fcmAlgo.finalize();
+			fcmAlgo = null;
+			backgroundIndex = 1;
+			signalIndex = 2;
 
-        for (i = 0; i < mask.length; i++) {
-            mask[i] = -1;
+	        try {
+	        	fuzzyImage[0].exportData(0, imageLength, mask);
+	        }
+	        catch(IOException e) {
+	            MipavUtil.displayError("IOException " + e + " on fuzzyImage[0].exportData(0, imageLength, mask");
+	            setCompleted(false);
+	            return;
+	        }
+			fuzzyImage[0].disposeLocal();
+			fuzzyImage[0] = null;
+			fuzzyImage = null;
         }
+        else {
 
-        mask = srcImage.generateVOIMask(mask, signalIndex);
+            for (i = 0; i < mask.length; i++) {
+                mask[i] = -1;
+            }
 
-        if (signal2Index >= 0) {
-            mask = srcImage.generateVOIMask(mask, signal2Index);
+	        mask = srcImage.generateVOIMask(mask, signalIndex);
+	
+	        if (signal2Index >= 0) {
+	            mask = srcImage.generateVOIMask(mask, signal2Index);
+	        }
+	
+	        mask = srcImage.generateVOIMask(mask, backgroundIndex);
         }
-
-        mask = srcImage.generateVOIMask(mask, backgroundIndex);
 
         backgroundVariance = 0.0;
 
