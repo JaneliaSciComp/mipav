@@ -239,6 +239,25 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
     private void init() {
         setForeground(Color.black);
         setTitle("MRI image SNR");
+        
+        JPanel automaticPanel = new JPanel(new GridBagLayout());
+        automaticPanel.setBorder(buildTitledBorder("Automatic selection"));
+        
+        GridBagConstraints gbc2 = new GridBagConstraints();
+        gbc2.gridwidth = 1;
+        gbc2.gridheight = 1;
+        gbc2.anchor = GridBagConstraints.WEST;
+        gbc2.weightx = 1;
+        gbc2.insets = new Insets(3, 3, 3, 3);
+        gbc2.fill = GridBagConstraints.HORIZONTAL;
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        
+        automaticCheckBox = new JCheckBox("Separate all pixels into signal and background", false);
+        automaticCheckBox.setForeground(Color.black);
+        automaticCheckBox.setFont(serif12);
+        automaticCheckBox.addActionListener(this);
+        automaticPanel.add(automaticCheckBox, gbc2);
 
         JPanel VOIPanel = new JPanel(new GridBagLayout());
         VOIPanel.setBorder(buildTitledBorder("Select VOIs"));
@@ -295,13 +314,6 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
         gbc6.fill = GridBagConstraints.HORIZONTAL;
         gbc6.gridx = 0;
         gbc6.gridy = 0;
-        
-        automaticCheckBox = new JCheckBox("Separate all pixels into signal and background", false);
-        automaticCheckBox.setForeground(Color.black);
-        automaticCheckBox.setFont(serif12);
-        automaticCheckBox.addActionListener(this);
-        paramPanel.add(automaticCheckBox, gbc6);
-        gbc6.gridy++;
 
         labelReceiver = new JLabel("Number of NMR receivers ");
         labelReceiver.setForeground(Color.black);
@@ -315,9 +327,26 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
         textReceiver.setEnabled(true);
         gbc6.gridx = 1;
         paramPanel.add(textReceiver, gbc6);
+        
+        JPanel mainPanel = new JPanel(new GridBagLayout());
+        mainPanel.setForeground(Color.black);
+        GridBagConstraints gbc = new GridBagConstraints();
+        
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(3, 3, 3, 3);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        mainPanel.add(automaticPanel, gbc);
+        gbc.gridy++;
+        mainPanel.add(VOIPanel, gbc);
+        gbc.gridy++;
+        mainPanel.add(paramPanel, gbc);
 
-        getContentPane().add(VOIPanel, BorderLayout.NORTH);
-        getContentPane().add(paramPanel, BorderLayout.CENTER);
+        getContentPane().add(mainPanel, BorderLayout.NORTH);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
 
         pack();
