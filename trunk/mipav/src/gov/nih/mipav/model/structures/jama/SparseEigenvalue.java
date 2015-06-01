@@ -178,6 +178,11 @@ public class SparseEigenvalue implements java.io.Serializable {
     	String which = "SM";
     	double tol = 0.0;
     	simpleEigenvalue(A, nev, which, tol, ncv, d, Z);
+    	// Answer are eigenvalues of 3, 6, and 9
+    	// EIgenvectors:
+    	// (1/3, 2/3, 2/3)
+    	// (-2/3, -1/3, -2/3)
+    	// (2/3,-2/3, 1/3)
     	return;
     }
     
@@ -342,7 +347,7 @@ public class SparseEigenvalue implements java.io.Serializable {
 //           | workd(ipntr(2)).                     |
 //           %--------------------------------------%
 //
-        for (i = 0; i < n; i++) {
+		for (i = 0; i < n; i++) {
         	v1[i] = workd[ipntr[0]-1+i];
         }
         matMult(n, A, v1, v2);
@@ -374,7 +379,7 @@ public class SparseEigenvalue implements java.io.Serializable {
 //        %-------------------------------------------%
 //        | No fatal errors occurred.                 |
 //        | Post-Process using DSEUPD.                |
-//        |                                           |//c        | Computed eigenvalues may be extracted.    |  
+//        |                                           |        | Computed eigenvalues may be extracted.    |  
 //        |                                           |
 //        | Eigenvectors may be also computed now if  |
 //        | desired.  (indicated by rvec = .true.)    | 
@@ -10073,6 +10078,26 @@ public class SparseEigenvalue implements java.io.Serializable {
          double bounds[] = new double[ncv];
          double Q[][] = new double[ncv][ncv];
          double workl2[] = new double[3*ncv];
+         index = 0;
+         for (j = 0; j < 2; j++) {
+        	 for (i = 0; i < ncv; i++) {
+        		 H[i][j] = workl[dsaupd_ih-1+index];
+        		 index++;
+        	 }
+         }
+         for (i = 0; i < ncv; i++) {
+        	 ritz[i] = workl[dsaupd_ritz - 1 + i];
+         }
+         for (i = 0; i < ncv; i++) {
+        	 bounds[i] = workl[dsaupd_bounds - 1 + i];
+         }
+         index = 0;
+         for (j = 0; j < ncv; j++) {
+        	 for (i = 0; i < ncv; i++) {
+        		 Q[i][j] = workl[dsaupd_iq-1+index];
+        		 index++;
+        	 }
+         }
          for (i = 0; i < 3*ncv; i++) {
         	 workl2[i] = workl[dsaupd_iw-1+i];
          }
@@ -10093,6 +10118,13 @@ public class SparseEigenvalue implements java.io.Serializable {
          }
          for (i = 0; i < ncv; i++) {
         	 workl[dsaupd_bounds - 1 + i] = bounds[i];
+         }
+         index = 0;
+         for (j = 0; j < ncv; j++) {
+        	 for (i = 0; i < ncv; i++) {
+        		 workl[dsaupd_iq-1+index] = Q[i][j];
+        		 index++;
+        	 }
          }
          for (i = 0; i < 3*ncv; i++) {
         	workl[dsaupd_iw-1+i] = workl2[i];
@@ -10719,6 +10751,10 @@ public class SparseEigenvalue implements java.io.Serializable {
                 	   array2[i] = workl[np[0]+i];
                    }
                    dsconv (nev, array1, array2, tol, dsaup2_nconv);
+                   for (i = 0; i < nev; i++) {
+                	   ritz[np[0]+i] = array1[i];
+                	   workl[np[0]+i] = array2[i];
+                   }
           
                    if (dsaup2_msglvl > 2) {
                       UI.setDataText("In dsaup2 nev = " + nev + " np[0] = " + np[0] + " dsaup2_nconv[0] = " + dsaup2_nconv[0] + "\n");
@@ -11615,6 +11651,7 @@ public class SparseEigenvalue implements java.io.Serializable {
             		 array1[m] = v[m][kev];
             	 }
                  ge.daxpy (n, temp, array1, 1, resid, 1);
+              } // if (h[kev][0] > zero)
         
               if (msglvl > 1) {
             	 UI.setDataText("dsapps: sigmak of the updated residual vector q[kplusp-1][kev-1] = " +
@@ -11632,7 +11669,6 @@ public class SparseEigenvalue implements java.io.Serializable {
                 	}
                  } // if (kev > 1)
               } // if (msglvl > 1) 
-              } // if (h[kev][0] > zero)
         
               t1 = System.currentTimeMillis();
               tsapps = tsapps + (t1 - t0); 
@@ -12381,6 +12417,9 @@ public class SparseEigenvalue implements java.io.Serializable {
               }
               double buffer[] = new double[Math.max(1, 2*n-2)];
               dstqrb (n, eig, workl, bounds, buffer, ierr);
+              for (i = 0; i < Math.max(1, 2*n-2); i++) {
+            	  workl[n+i] = buffer[i];
+              }
               if (ierr[0] != 0) {
             	  return;
               }
