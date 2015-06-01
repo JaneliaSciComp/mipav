@@ -67,10 +67,10 @@ public class SparseEigenvalue implements java.io.Serializable {
     private int dsaupd_ldh;
     private int dsaupd_ldq;
     private int dsaupd_msglvl;
-    private int dsaupd_mxiter;
+    private int dsaupd_mxiter[] = new int[1];
     private int dsaupd_mode;
     private int dsaupd_nb;
-    private int dsaupd_nev0;
+    private int dsaupd_nev0[] = new int[1];
     private int dsaupd_next;
     private int dsaupd_np[] = new int[1];
     private int dsaupd_ritz;
@@ -9937,7 +9937,7 @@ public class SparseEigenvalue implements java.io.Serializable {
     
              dsaupd_ierr   = 0;
              dsaupd_ishift = iparam[0];
-             dsaupd_mxiter = iparam[2];
+             dsaupd_mxiter[0] = iparam[2];
              dsaupd_nb     = iparam[3];
     
     //        %--------------------------------------------%
@@ -9968,7 +9968,7 @@ public class SparseEigenvalue implements java.io.Serializable {
     //
              dsaupd_np[0]     = ncv - nev;
     // 
-             if (dsaupd_mxiter <= 0)  {
+             if (dsaupd_mxiter[0] <= 0)  {
             	 dsaupd_ierr = -4;
              }
              if (!which.equalsIgnoreCase("LM") &&
@@ -10026,7 +10026,7 @@ public class SparseEigenvalue implements java.io.Serializable {
     //        %----------------------------------------------%
     
              dsaupd_np[0]     = ncv - nev;
-             dsaupd_nev0   = nev; 
+             dsaupd_nev0[0]   = nev; 
      
     //        %-----------------------------%
     //        | Zero out internal workspace |
@@ -10140,7 +10140,7 @@ public class SparseEigenvalue implements java.io.Serializable {
         	  return;
           }
      
-          iparam[2] = dsaupd_mxiter;
+          iparam[2] = dsaupd_mxiter[0];
           iparam[4] = dsaupd_np[0];
           iparam[8] = nopx;
           iparam[9] = nbx;
@@ -10157,7 +10157,7 @@ public class SparseEigenvalue implements java.io.Serializable {
           if (info[0] == 2) info[0] = 3;
     
           if (dsaupd_msglvl > 0) {
-        	 UI.setDataText("dsaupd: number of update iterations taken dsaupd_mxiter = " + dsaupd_mxiter + "\n");
+        	 UI.setDataText("dsaupd: number of update iterations taken dsaupd_mxiter[0] = " + dsaupd_mxiter[0] + "\n");
              UI.setDataText("dsaupd: number of \"converged\" Ritz values dsaupd_np[0] = " + dsaupd_np[0] + "\n");
              UI.setDataText("dsaupd: final ritz values: \n");
              for (i = 0; i < dsaupd_np[0]; i++) {
@@ -10182,7 +10182,7 @@ public class SparseEigenvalue implements java.io.Serializable {
              UI.setDataText("Version Number 2.4\n");
              UI.setDataText("Version Date 07/31/96\n");
              UI.setDataText("Summary of timing statistics with time in milliseconds: \n");
-        	 UI.setDataText("Total number update iterations = " + dsaupd_mxiter + "\n");
+        	 UI.setDataText("Total number update iterations = " + dsaupd_mxiter[0] + "\n");
         	 UI.setDataText("Total number of OP*x operations = " + nopx + "\n");
         	 UI.setDataText("Total number of B*x operations = " + nbx + "\n");
         	 UI.setDataText("Total number of reorthogonalization steps = " + nrorth + "\n");
@@ -10383,8 +10383,8 @@ public class SparseEigenvalue implements java.io.Serializable {
           // -----------------------------------------------------------------------
           
                 private void dsaup2
-                  ( int ido[], String bmat, int n, String which, int nev, int np[], double tol, double resid[], int mode, int iupd, 
-                    int ishift, int mxiter, double v[][], int ldv, double h[][], int ldh, double ritz[], double bounds[], 
+                  ( int ido[], String bmat, int n, String which, int nev[], int np[], double tol, double resid[], int mode, int iupd, 
+                    int ishift, int mxiter[], double v[][], int ldv, double h[][], int ldh, double ritz[], double bounds[], 
                     double q[][], int ldq, double workl[], int ipntr[], double workd[], int info[] ) {
           
           //     %----------------------------------------------------%
@@ -10485,7 +10485,7 @@ public class SparseEigenvalue implements java.io.Serializable {
           //        | hold the initial values of NEV & NP |
           //        %-------------------------------------%
           
-                   dsaup2_nev0   = nev;
+                   dsaup2_nev0   = nev[0];
                    dsaup2_np0    = np[0];
           
           //        %-------------------------------------%
@@ -10620,7 +10620,7 @@ public class SparseEigenvalue implements java.io.Serializable {
           //        %-----------------------------------------------------%
           
                    np[0]   = info[0];
-                   mxiter = dsaup2_iter;
+                   mxiter[0] = dsaup2_iter;
                    info[0] = -9999;
                    ido[0] = 99;
                    t1 = System.currentTimeMillis();
@@ -10650,7 +10650,7 @@ public class SparseEigenvalue implements java.io.Serializable {
                 	   UI.setDataText("dsaup2: **** Start of major iteration number **** dsaup2_iter = " + dsaup2_iter + "\n");
                    }
                    if (dsaup2_msglvl > 1) {
-                	  UI.setDataText("dsaup2: The length of the current Lanczos factorization nev = " + nev + "\n");
+                	  UI.setDataText("dsaup2: The length of the current Lanczos factorization nev[0] = " + nev[0] + "\n");
                 	  UI.setDataText("dsaup2: Extend the Lanczos factorization by " + np + "\n");
                    }
            
@@ -10663,7 +10663,7 @@ public class SparseEigenvalue implements java.io.Serializable {
         			   seg6 = true;
                    dsaup2_update = true;
           
-                   dsaitr (ido, bmat, n, nev, np[0], mode, resid, dsaup2_rnorm, v, 
+                   dsaitr (ido, bmat, n, nev[0], np[0], mode, resid, dsaup2_rnorm, v, 
                                ldv, h, ldh, ipntr, workd, info);
            
           //        %---------------------------------------------------%
@@ -10684,7 +10684,7 @@ public class SparseEigenvalue implements java.io.Serializable {
           //           %-----------------------------------------------------%
           
                       np[0] = info[0];
-                      mxiter = dsaup2_iter;
+                      mxiter[0] = dsaup2_iter;
                       info[0] = -9999;
                       ido[0] = 99;
                       t1 = System.currentTimeMillis();
@@ -10733,31 +10733,31 @@ public class SparseEigenvalue implements java.io.Serializable {
           //        | * Shifts := RITZ(1:NP) := WORKL(1:NP)             |
           //        %---------------------------------------------------%
           //
-                   nev = dsaup2_nev0;
+                   nev[0] = dsaup2_nev0;
                    np[0] = dsaup2_np0;
-                   dsgets (ishift, which, nev, np[0], ritz, bounds, workl);
+                   dsgets (ishift, which, nev[0], np[0], ritz, bounds, workl);
            
           //        %-------------------%
           //        | Convergence test. |
           //        %-------------------%
           //
-                   for (i = 0; i < nev; i++) {
+                   for (i = 0; i < nev[0]; i++) {
                 	   workl[np[0]+i] = bounds[np[0]+i];
                    }
-                   array1 = new double[nev];
-                   array2 = new double[nev];
-                   for (i = 0; i < nev; i++) {
+                   array1 = new double[nev[0]];
+                   array2 = new double[nev[0]];
+                   for (i = 0; i < nev[0]; i++) {
                 	   array1[i] = ritz[np[0]+i];
                 	   array2[i] = workl[np[0]+i];
                    }
-                   dsconv (nev, array1, array2, tol, dsaup2_nconv);
-                   for (i = 0; i < nev; i++) {
+                   dsconv (nev[0], array1, array2, tol, dsaup2_nconv);
+                   for (i = 0; i < nev[0]; i++) {
                 	   ritz[np[0]+i] = array1[i];
                 	   workl[np[0]+i] = array2[i];
                    }
           
                    if (dsaup2_msglvl > 2) {
-                      UI.setDataText("In dsaup2 nev = " + nev + " np[0] = " + np[0] + " dsaup2_nconv[0] = " + dsaup2_nconv[0] + "\n");
+                      UI.setDataText("In dsaup2 nev[0] = " + nev[0] + " np[0] = " + np[0] + " dsaup2_nconv[0] = " + dsaup2_nconv[0] + "\n");
                       UI.setDataText("dsaup2: The eigenvalues of H: \n");
                       for (i = 0; i < dsaup2_kplusp; i++) {
                     	  UI.setDataText("ritz["+i+"] = " + nf.format(ritz[i]) + "\n");
@@ -10782,11 +10782,11 @@ public class SparseEigenvalue implements java.io.Serializable {
                    for (j=0; j < nptemp; j++) {
                       if (bounds[j] == zero) {
                          np[0] = np[0] - 1;
-                         nev = nev + 1;
+                         nev[0] = nev[0] + 1;
                       }
                    } // for (j=0; j < nptemp; j++)
            
-                   if ( (dsaup2_nconv[0] >= dsaup2_nev0) || (dsaup2_iter > mxiter) ||(np[0] == 0) ) {
+                   if ( (dsaup2_nconv[0] >= dsaup2_nev0) || (dsaup2_iter > mxiter[0]) ||(np[0] == 0) ) {
                
           //           %------------------------------------------------%
           //           | Prepare to exit. Put the converged Ritz values |
@@ -10809,9 +10809,9 @@ public class SparseEigenvalue implements java.io.Serializable {
           
                          wprime = "SA";
                          dsortr (wprime, true, dsaup2_kplusp, ritz, bounds);
-                         nevd2 = nev / 2;
-                         nevm2 = nev - nevd2; 
-                         if ( nev > 1 ) {
+                         nevd2 = nev[0] / 2;
+                         nevm2 = nev[0] - nevd2; 
+                         if ( nev[0] > 1 ) {
                         	for (i = 0; i < Math.min(nevd2, np[0]); i++) {
                         		temp = ritz[nevm2+i];
                         		ritz[nevm2+i] = ritz[Math.max(dsaup2_kplusp-nevd2, dsaup2_kplusp-np[0])+i];
@@ -10820,7 +10820,7 @@ public class SparseEigenvalue implements java.io.Serializable {
                         		bounds[nevm2+i] = bounds[Math.max(dsaup2_kplusp-nevd2, dsaup2_kplusp-np[0])+i];
                         		bounds[Math.max(dsaup2_kplusp-nevd2, dsaup2_kplusp-np[0])+i] = temp;
                         	}
-                         } // if ( nev > 1 )
+                         } // if ( nev[0 > 1 )
                       } // if (which.equalsIgnoreCase("BE"))
                        else {
           
@@ -10925,7 +10925,7 @@ public class SparseEigenvalue implements java.io.Serializable {
           //           | Max iterations have been exceeded. | 
           //           %------------------------------------%
           
-                      if (dsaup2_iter > mxiter && dsaup2_nconv[0] < nev) info[0] = 1;
+                      if (dsaup2_iter > mxiter[0] && dsaup2_nconv[0] < nev[0]) info[0] = 1;
           
           //           %---------------------%
           //           | No shifts to apply. | 
@@ -10934,14 +10934,14 @@ public class SparseEigenvalue implements java.io.Serializable {
                       if (np[0] == 0 && dsaup2_nconv[0] < dsaup2_nev0) info[0] = 2;
           
                       np[0] = dsaup2_nconv[0];
-                      mxiter = dsaup2_iter;
-                      nev = dsaup2_nconv[0];
+                      mxiter[0] = dsaup2_iter;
+                      nev[0] = dsaup2_nconv[0];
                       ido[0] = 99;
                       t1 = System.currentTimeMillis();
                       tsaup2 = t1 - t0;
                       return;
                        } // } // if ( (dsaup2_nconv[0] >= dsaup2_nev0) || (dsaup2_iter > mxiter) ||(np == 0) )
-                   else if (dsaup2_nconv[0] < nev && ishift == 1) {
+                   else if (dsaup2_nconv[0] < nev[0] && ishift == 1) {
           
           //           %---------------------------------------------------%
           //           | Do not have all the requested eigenvalues yet.    |
@@ -10949,23 +10949,23 @@ public class SparseEigenvalue implements java.io.Serializable {
           //           | of Ritz values and the shifts.                    |
           //           %---------------------------------------------------%
           
-                      nevbef = nev;
-                      nev = nev + Math.min (dsaup2_nconv[0], np[0]/2);
-                      if (nev == 1 && dsaup2_kplusp >= 6) {
-                         nev = dsaup2_kplusp / 2;
+                      nevbef = nev[0];
+                      nev[0] = nev[0] + Math.min (dsaup2_nconv[0], np[0]/2);
+                      if (nev[0] == 1 && dsaup2_kplusp >= 6) {
+                         nev[0] = dsaup2_kplusp / 2;
                       }
-                      else if (nev == 1 && dsaup2_kplusp > 2) {
-                         nev = 2;
+                      else if (nev[0] == 1 && dsaup2_kplusp > 2) {
+                         nev[0] = 2;
                       }
-                      np[0]  = dsaup2_kplusp - nev;
+                      np[0]  = dsaup2_kplusp - nev[0];
                
           //           %---------------------------------------%
           //           | If the size of NEV was just increased |
           //           | resort the eigenvalues.               |
           //           %---------------------------------------%
                
-                      if (nevbef < nev)  {
-                         dsgets (ishift, which, nev, np[0], ritz, bounds, workl);
+                      if (nevbef < nev[0])  {
+                         dsgets (ishift, which, nev[0], np[0], ritz, bounds, workl);
                       }
           
                    } // else if (dsaup2_nconv .lt. nev .and. ishift .eq. 1)
@@ -10973,13 +10973,13 @@ public class SparseEigenvalue implements java.io.Serializable {
                    if (dsaup2_msglvl > 0) {
                 	  UI.setDataText("saup2: no. of \"converged\" Ritz values at this iter dsaup2_nconv = " + dsaup2_nconv + "\n");
                       if (dsaup2_msglvl > 1) {
-                    	 UI.setDataText("In dsaup2 nev = " + nev + " np = " + np + "\n");
+                    	 UI.setDataText("In dsaup2 nev[0] = " + nev[0] + " np[0] = " + np[0] + "\n");
                          UI.setDataText("dsaup2: \"wanted\" Ritz values: \n");
-                         for (i = 0; i < nev; i++) {
+                         for (i = 0; i < nev[0]; i++) {
                         	 UI.setDataText("ritz["+(np[0]+i)+"] = " + nf.format(ritz[np[0]+i]) + "\n");
                          }
                          UI.setDataText("dsaup2: Ritz estimates of the \"wanted\" values: \n");
-                         for (i = 0; i < nev; i++) {
+                         for (i = 0; i < nev[0]; i++) {
                         	 UI.setDataText("bounds["+(np[0]+i)+"] = " + nf.format(bounds[np[0]+i]) + "\n");
                          }
                       } // if (dsaup2_msglvl > 1)
@@ -11044,7 +11044,7 @@ public class SparseEigenvalue implements java.io.Serializable {
           //        | factorization of length NEV.                            |
           //        %---------------------------------------------------------%
           
-                   dsapps (n, nev, np[0], ritz, v, ldv, h, ldh, resid, q, ldq, workd);
+                   dsapps (n, nev[0], np[0], ritz, v, ldv, h, ldh, resid, q, ldq, workd);
           
           //        %---------------------------------------------%
           //        | Compute the B-norm of the updated residual. |
@@ -11101,11 +11101,11 @@ public class SparseEigenvalue implements java.io.Serializable {
                 	  UI.setDataText("dsaup2: B-norm of residual for NEV factorization dsaup2_rnorm[0] = " +
                 	                nf.format(dsaup2_rnorm[0]) + "\n");
                       UI.setDataText("dsaup2: main diagonal of compressed H matrix: \n");
-                      for (i = 0; i < nev; i++) {
+                      for (i = 0; i < nev[0]; i++) {
                     	  UI.setDataText("h["+i+"][1] = " + nf.format(h[i][1]) + "\n");
                       }
                       UI.setDataText("dsaup2: subdiagonal of compressed H matrix: \n");
-                      for (i = 0; i < nev-1; i++) {
+                      for (i = 0; i < nev[0]-1; i++) {
                     	  UI.setDataText("h["+(i+1)+"][0] = " + nf.format(h[i+1][0]) + "\n");
                       }
                    } // if (dsaup2_msglvl > 2)
