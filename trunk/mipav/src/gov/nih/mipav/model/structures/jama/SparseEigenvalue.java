@@ -179,10 +179,20 @@ public class SparseEigenvalue implements java.io.Serializable {
     	double tol = 0.0;
     	simpleEigenvalue(A, nev, which, tol, ncv, d, Z);
     	// Answer are eigenvalues of 3, 6, and 9
-    	// EIgenvectors:
+    	// Eigenvectors:
     	// (1/3, 2/3, 2/3)
     	// (-2/3, -1/3, -2/3)
     	// (2/3,-2/3, 1/3)
+    	// String which = "LA"  and which = "LM" give:
+    	// Eigenvalues of 6 and 9
+    	// Eigenvectors:
+    	// (2/3, 1/3, -2/3)
+    	// (-2/3, 2/3, -1/3)
+    	// String which = "SA" and which = "SM"  and which = "BE" give:
+    	// Eigenvalues of 3 and 6
+    	// Eigenvectors:
+    	// (-1/3, -2/3, -2/3)
+    	// (2/3, 1/3, -2/3)
     	return;
     }
     
@@ -10599,7 +10609,7 @@ public class SparseEigenvalue implements java.io.Serializable {
           //     | Compute the first NEV steps of the Lanczos factorization |
           //     %----------------------------------------------------------%
           //
-                dsaitr(ido, bmat, n, 0, dsaup2_nev0, mode, resid, dsaup2_rnorm, v, ldv, 
+                	dsaitr(ido, bmat, n, 0, dsaup2_nev0, mode, resid, dsaup2_rnorm, v, ldv, 
                             h, ldh, ipntr, workd, info);
            
           //     %---------------------------------------------------%
@@ -13569,6 +13579,7 @@ public class SparseEigenvalue implements java.io.Serializable {
               boolean seg12 = true;
               boolean seg13 = true;
               boolean seg14 = true;
+              boolean seg15 = true;
               if (dsaitr_step3)  {
             	  seg4 = false;
               }
@@ -13616,6 +13627,7 @@ public class SparseEigenvalue implements java.io.Serializable {
                  if (rnorm[0] > zero) {
                 	 seg6 = false;
                 	 seg7 = false;
+                	 seg15 = false;
                  }
                  if (seg6) {
         
@@ -13637,15 +13649,17 @@ public class SparseEigenvalue implements java.io.Serializable {
         
                     nrstrt = nrstrt + 1;
                     dsaitr_itry   = 1;
-                 } // if (seg8)
-                 seg8 = true;
-                    dsaitr_rstart = true;
-                    ido[0]    = 0;
                  } // if (seg6)
                  seg6 = true;
+                 } // if (seg8)
+                 seg8 = true;
+                 if (seg7) {
+                    dsaitr_rstart = true;
+                    ido[0]    = 0;
+                 } // if (seg7)
                 } // if (seg5)
                 seg5 = true;
-               if (seg7) {
+               if (seg15) {
         
         //           %--------------------------------------%
         //           | If in reverse communication mode and |
@@ -13676,8 +13690,8 @@ public class SparseEigenvalue implements java.io.Serializable {
                        ido[0] = 99;
                        return;
                     } // if (dsaitr_ierr[0] < 0)
-               } // if (seg7)
-           seg7 = true;
+               } // if (seg15)
+           seg15 = true;
         
         //        %---------------------------------------------------------%
         //        | STEP 2:  v_{j} = r_{j-1}/rnorm and p_{j} = p_{j}/rnorm  |
