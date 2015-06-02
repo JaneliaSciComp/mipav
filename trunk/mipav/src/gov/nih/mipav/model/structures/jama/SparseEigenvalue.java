@@ -1805,7 +1805,7 @@ public class SparseEigenvalue implements java.io.Serializable {
           int          n, nev, ncv, lworkl, i, j, 
                        nx, maxitr, mode, ishfts;
           boolean          rvec;
-          double tol[] = new double[]{};
+          double tol[] = new double[]{0.0};
           // sigma not intialized in dsdrv1
           double sigma = 0.0;
           double v1[];
