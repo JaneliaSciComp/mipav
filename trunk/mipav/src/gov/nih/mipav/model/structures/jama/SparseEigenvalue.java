@@ -55,7 +55,7 @@ public class SparseEigenvalue implements java.io.Serializable {
 	
 	private ViewUserInterface UI = ViewUserInterface.getReference();
 	
-	DecimalFormat nf = new DecimalFormat("0.0000E0");
+	DecimalFormat nf = new DecimalFormat("0.00000E0");
 	
 	private int dsaupd_bounds;
     private int dsaupd_ierr;
@@ -176,7 +176,7 @@ public class SparseEigenvalue implements java.io.Serializable {
     	double d[] = new double[nev];
     	double Z[][] = new double[3][nev];
     	String which = "SM";
-    	double tol = 0.0;
+    	double tol[] = new double[]{0.0};
     	simpleEigenvalue(A, nev, which, tol, ncv, d, Z);
     	// Answer are eigenvalues of 3, 6, and 9
     	// Eigenvectors:
@@ -217,7 +217,7 @@ public class SparseEigenvalue implements java.io.Serializable {
      * @param d User supplied array of size nev will hold the calculated eigenvalues
      * @param Z User supplied array of size [A.length][nev] to hold the calculated eigenvalues  
      */
-    public void simpleEigenvalue(double A[][], int nev, String which, double tol, int ncv,
+    public void simpleEigenvalue(double A[][], int nev, String which, double tol[], int ncv,
     		double d[], double Z[][]) {
        int n = A.length;
        int ldv = n;
@@ -404,7 +404,7 @@ public class SparseEigenvalue implements java.io.Serializable {
         rvec = true;
 
         dseupd ( rvec, "A", select, d, Z, ldz, sigma, 
-                bmat, n, which, nev, tol, resid, ncv, v, ldv, 
+                bmat, n, which, nev, tol[0], resid, ncv, v, ldv, 
                 iparam, ipntr, workd, workl, lworkl, ierr );
 		
 
@@ -464,7 +464,7 @@ public class SparseEigenvalue implements java.io.Serializable {
            UI.setDataText("The number of converged Ritz values = " +nconv + "\n");
            UI.setDataText("The number of Implicit Arnoldi update iterations taken = " +  iparam[2] + "\n");
            UI.setDataText("The number of OP*x = " +  iparam[8] + "\n");
-           UI.setDataText("The convergence criterion = " + tol + "\n");
+           UI.setDataText("The convergence criterion = " + tol[0] + "\n");
            UI.setDataText("\n");
     } // else info[0] >= 0
 
@@ -485,6 +485,48 @@ public class SparseEigenvalue implements java.io.Serializable {
     }
     
     public void dssimp() {
+    	
+// Test passes:
+// Provided values from running FORTRAN original:
+//    	Ritz values and relative residuals
+//    	   ----------------------------------
+//    	               Col   1       Col   2
+//    	    Row   1:    8.91167E+02   6.95597E-07
+//    	    Row   2:    9.19781E+02   3.30156E-07
+//    	    Row   3:    9.19781E+02   4.25717E-07
+//   	    Row   4:    9.48395E+02   3.20519E-07
+
+
+//    	    _SSIMP
+//    	    ======
+
+//    	    Size of the matrix is   100
+//    	    The number of Ritz values requested is   4
+//    	    The number of Arnoldi vectors generated (NCV) is   20
+//    	    What portion of the spectrum: LM
+//    	    The number of converged Ritz values is   4
+//    	    The number of Implicit Arnoldi update iterations taken is   5
+//    	    The number of OP*x is   78
+//    	    The convergence criterion is     5.96046E-08
+    	
+// Values from running Java port:
+//    	Ritz values and relative residuals: 
+//    		d[0][0] = 8.91167E2 d[0][1] = 9.02859E-16
+//    		d[1][0] = 9.19781E2 d[1][1] = 1.09065E-15
+//    		d[2][0] = 9.19781E2 d[2][1] = 2.34073E-15
+//    		d[3][0] = 9.48395E2 d[3][1] = 1.18950E-15
+
+//    		DSSIMP
+//    		======
+
+//    		Size of the matrix = 100
+//    		The number of Ritz values requested = 4
+//    		The number of Arnoldi vectors generated ncv = 20
+//    		What portion of the spectrum: LM
+//    		The number of converged Ritz values = 4
+//    		The number of Implicit Arnoldi update iterations taken = 8
+//    		The number of OP*x = 125
+//    		The convergence criterion = 1.1102230246251565E-16
 
 //     This example program is intended to illustrate the 
 //     simplest case of using ARPACK in considerable detail.  
@@ -620,18 +662,12 @@ public class SparseEigenvalue implements java.io.Serializable {
        int          n, nev, ncv, lworkl, i, j, 
                     nx, maxitr, mode1, ishfts;
        boolean          rvec;
-       double tol;
+       double tol[] = new double[]{0.0};
        // sigma not intialized in dssimp
        double sigma = 0.0;
        double v1[];
        double v2[];
        int index;
- 
- //     %------------%
- //     | Parameters |
- //     %------------%
- 
-       final double zero = 0.0;
    
  //     %-----------------------------%
  //     | BLAS & LAPACK routines used |
@@ -758,7 +794,6 @@ public class SparseEigenvalue implements java.io.Serializable {
 //     %-----------------------------------------------------%
 
     lworkl = ncv*(ncv+8);
-    tol = zero; 
     info[0] = 0;
     ido[0] = 0;
 
@@ -864,7 +899,7 @@ public class SparseEigenvalue implements java.io.Serializable {
         rvec = true;
 
         dseupd ( rvec, "A", select, ds, v, ldv, sigma, 
-                bmat, n, which, nev, tol, resid, ncv, v, ldv, 
+                bmat, n, which, nev, tol[0], resid, ncv, v, ldv, 
                 iparam, ipntr, workd, workl, lworkl, ierr );
 		index = 0;
 		for (j = 0; j < 2; j++) {
@@ -956,7 +991,7 @@ public class SparseEigenvalue implements java.io.Serializable {
            UI.setDataText("The number of converged Ritz values = " +nconv + "\n");
            UI.setDataText("The number of Implicit Arnoldi update iterations taken = " +  iparam[2] + "\n");
            UI.setDataText("The number of OP*x = " +  iparam[8] + "\n");
-           UI.setDataText("The convergence criterion = " + tol + "\n");
+           UI.setDataText("The convergence criterion = " + tol[0] + "\n");
            UI.setDataText("\n");
     } // else info[0] >= 0
 
@@ -1236,14 +1271,14 @@ public class SparseEigenvalue implements java.io.Serializable {
     boolean          rvec;
     // sigma not specified
     double sigma = 0.0;      
-    double tol, temp;
+    double tol[] = new double[]{0.0};
+    double temp;
 
 //     %------------%
 //     | Parameters |
 //     %------------%
 
     final double one = 1.0;
-    final double zero = 0.0;
     
 //     %-----------------------------%
 //     | BLAS & LAPACK routines used |
@@ -1361,8 +1396,7 @@ public class SparseEigenvalue implements java.io.Serializable {
 //     | illustrated below.                                  |
 //     %-----------------------------------------------------%
 
-    lworkl = ncv*(ncv+8);
-    tol = zero; 
+    lworkl = ncv*(ncv+8); 
     info[0] = 0;
     ido[0] = 0;
 
@@ -1466,7 +1500,7 @@ public class SparseEigenvalue implements java.io.Serializable {
        rvec = true;
 
        dseupd ( rvec, "A", select, ds, v, ldv, sigma, 
-                bmat, n, which, nev, tol, resid, ncv, v, ldv, 
+                bmat, n, which, nev, tol[0], resid, ncv, v, ldv, 
                iparam, ipntr, workd, workl, lworkl, ierr );
        index = 0;
 		for (j = 0; j < 2; j++) {
@@ -1579,7 +1613,7 @@ public class SparseEigenvalue implements java.io.Serializable {
      UI.setDataText("The number of converged Ritz values = " +nconv + "\n");
      UI.setDataText("The number of Implicit Arnoldi update iterations taken = " +  iparam[2] + "\n");
      UI.setDataText("The number of OP*x = " +  iparam[8] + "\n");
-     UI.setDataText("The convergence criterion = " + tol + "\n");
+     UI.setDataText("The convergence criterion = " + tol[0] + "\n");
      UI.setDataText("\n");
 
     } // else info[0] >= 0
@@ -1771,19 +1805,13 @@ public class SparseEigenvalue implements java.io.Serializable {
           int          n, nev, ncv, lworkl, i, j, 
                        nx, maxitr, mode, ishfts;
           boolean          rvec;
-          double tol;
+          double tol[] = new double[]{};
           // sigma not intialized in dsdrv1
           double sigma = 0.0;
           double v1[];
           double v2[];
           int index;
-    
-    //     %------------%
-    //     | Parameters |
-    //     %------------%
-    
-          final double zero = 0.0;
-      
+   
     //     %-----------------------------%
     //     | BLAS & LAPACK routines used |
     //     %-----------------------------%
@@ -1850,8 +1878,7 @@ public class SparseEigenvalue implements java.io.Serializable {
     //     | iteration.                                       |
     //     %--------------------------------------------------%
     
-          lworkl = ncv*(ncv+8);
-          tol = zero; 
+          lworkl = ncv*(ncv+8); 
           info[0] = 0;
           ido[0] = 0;
     
@@ -1950,7 +1977,7 @@ public class SparseEigenvalue implements java.io.Serializable {
              // dsdrv1 has d(maxncv,2)
              // dseupd has d(nev)
              dseupd ( rvec, "A", select, ds, v, ldv, sigma, 
-                 bmat, n, which, nev, tol, resid, ncv, v, ldv, 
+                 bmat, n, which, nev, tol[0], resid, ncv, v, ldv, 
                  iparam, ipntr, workd, workl, lworkl, ierr );
              index = 0;
              for (j = 0; j < 2; j++) {
@@ -2039,7 +2066,7 @@ public class SparseEigenvalue implements java.io.Serializable {
              UI.setDataText("The number of converged Ritz values = " +nconv + "\n");
              UI.setDataText("The number of Implicit Arnoldi update iterations taken = " +  iparam[2] + "\n");
              UI.setDataText("The number of OP*x = " +  iparam[8] + "\n");
-             UI.setDataText("The convergence criterion = " + tol + "\n");
+             UI.setDataText("The convergence criterion = " + tol[0] + "\n");
              UI.setDataText("\n");
           } // else info[0] >= 0
           return;
@@ -2240,7 +2267,8 @@ public class SparseEigenvalue implements java.io.Serializable {
             int              n, nev, ncv, lworkl, i, j,
                              maxitr, ishfts, mode;
             boolean          rvec;
-            double sigma, tol, h2;
+            double tol[] = new double[]{0.0};
+            double sigma, h2;
             double array[][];
             int index;
             double v1[];
@@ -2318,8 +2346,7 @@ public class SparseEigenvalue implements java.io.Serializable {
       //     | iteration.                                       |
       //     %--------------------------------------------------%
       
-            lworkl = ncv*(ncv+8);
-            tol = zero; 
+            lworkl = ncv*(ncv+8); 
             ido[0] = 0;
             info[0] = 0;
       
@@ -2442,7 +2469,7 @@ public class SparseEigenvalue implements java.io.Serializable {
                rvec = true;
       
                dseupd ( rvec, "A", select, ds, v, ldv, sigma,
-                   bmat, n, which, nev, tol, resid, ncv, v, ldv,
+                   bmat, n, which, nev, tol[0], resid, ncv, v, ldv,
                   iparam, ipntr, workd, workl, lworkl, ierr );
                index = 0;
                for (j = 0; j < 2; j++) {
@@ -2533,7 +2560,7 @@ public class SparseEigenvalue implements java.io.Serializable {
                 UI.setDataText("The number of converged Ritz values = " +nconv + "\n");
                 UI.setDataText("The number of Implicit Arnoldi update iterations taken = " +  iparam[2] + "\n");
                 UI.setDataText("The number of OP*x = " +  iparam[8] + "\n");
-                UI.setDataText("The convergence criterion = " + tol + "\n");
+                UI.setDataText("The convergence criterion = " + tol[0] + "\n");
                 UI.setDataText("\n");
             } // info[0] >= 0
             return;
@@ -2671,7 +2698,8 @@ public class SparseEigenvalue implements java.io.Serializable {
                              maxitr, ishfts, mode;
             boolean          rvec;
             double sigma = 0.0;
-            double tol, r1, r2, h;
+            double tol[] = new double[]{0.0};
+            double r1, r2, h;
             double array[][];
             int index;
             double v1[];
@@ -2681,7 +2709,6 @@ public class SparseEigenvalue implements java.io.Serializable {
       //     | Parameters |
       //     %------------%
       
-            final double zero = 0.0;
             final double one = 1.0;
             final double four = 4.0;
             final double six = 6.0;
@@ -2748,7 +2775,6 @@ public class SparseEigenvalue implements java.io.Serializable {
         //     %--------------------------------------------------%
         
               lworkl = ncv*(ncv+8);
-              tol = zero; 
               ido[0] = 0;
               info[0] = 0;
         
@@ -2916,7 +2942,7 @@ public class SparseEigenvalue implements java.io.Serializable {
                  rvec = true;
         
                  dseupd ( rvec, "A", select, ds, v, ldv, sigma, 
-                     bmat, n, which, nev, tol, resid, ncv, v, ldv, 
+                     bmat, n, which, nev, tol[0], resid, ncv, v, ldv, 
                      iparam, ipntr, workd, workl, lworkl, ierr );
                  index = 0;
                  for (j = 0; j < 2; j++) {
@@ -3005,7 +3031,7 @@ public class SparseEigenvalue implements java.io.Serializable {
                            UI.setDataText("The number of converged Ritz values = " +nconv + "\n");
                            UI.setDataText("The number of Implicit Arnoldi update iterations taken = " +  iparam[2] + "\n");
                            UI.setDataText("The number of OP*x = " +  iparam[8] + "\n");
-                           UI.setDataText("The convergence criterion = " + tol + "\n");
+                           UI.setDataText("The convergence criterion = " + tol[0] + "\n");
                            UI.setDataText("\n");
               } // else info[0] >= 0
               return;
@@ -3174,7 +3200,8 @@ public class SparseEigenvalue implements java.io.Serializable {
                          maxitr, ishfts, mode;
         boolean          rvec;
         double sigma;
-        double tol, r1, r2, h;
+        double tol[] = new double[]{0.0};
+        double r1, r2, h;
         double array[][];
         int index;
         double v1[];
@@ -3255,7 +3282,6 @@ public class SparseEigenvalue implements java.io.Serializable {
       //     %--------------------------------------------------%
       
             lworkl = ncv*(ncv+8);
-            tol = zero; 
             ido[0] = 0;
             info[0] = 0;
       
@@ -3446,7 +3472,7 @@ public class SparseEigenvalue implements java.io.Serializable {
                rvec = true;
       
                dseupd ( rvec, "A", select, ds, v, ldv, sigma,
-                   bmat, n, which, nev, tol, resid, ncv, v, ldv, 
+                   bmat, n, which, nev, tol[0], resid, ncv, v, ldv, 
                    iparam, ipntr, workd, workl, lworkl, ierr );
                index = 0;
                for (j = 0; j < 2; j++) {
@@ -3530,7 +3556,7 @@ public class SparseEigenvalue implements java.io.Serializable {
                          UI.setDataText("The number of converged Ritz values = " +nconv + "\n");
                          UI.setDataText("The number of Implicit Arnoldi update iterations taken = " +  iparam[2] + "\n");
                          UI.setDataText("The number of OP*x = " +  iparam[8] + "\n");
-                         UI.setDataText("The convergence criterion = " + tol + "\n");
+                         UI.setDataText("The convergence criterion = " + tol[0] + "\n");
                          UI.setDataText("\n");
             } // else info[0] >= 0
             return;
@@ -3700,7 +3726,8 @@ public class SparseEigenvalue implements java.io.Serializable {
                              maxitr, ishfts, mode;
             boolean          rvec;
             double sigma;
-            double tol, r1, r2, h;
+            double tol[] = new double[]{0.0};
+            double r1, r2, h;
             double array[][];
             int index;
             double v1[];
@@ -3710,7 +3737,6 @@ public class SparseEigenvalue implements java.io.Serializable {
       //     | Parameters |
       //     %------------%
       
-            final double zero = 0.0;
             final double one = 1.0;
             final double two = 2.0;
             final double four = 4.0;
@@ -3782,7 +3808,6 @@ public class SparseEigenvalue implements java.io.Serializable {
         //     %-----------------------------------------------------%
         
               lworkl = ncv*(ncv+8);
-              tol = zero; 
               ido[0] = 0;
               info[0] = 0;
         
@@ -3978,7 +4003,7 @@ public class SparseEigenvalue implements java.io.Serializable {
                  rvec = true;
         
                  dseupd ( rvec, "A", select, ds, v, ldv, sigma, 
-                     bmat, n, which, nev, tol, resid, ncv, v, ldv, 
+                     bmat, n, which, nev, tol[0], resid, ncv, v, ldv, 
                      iparam, ipntr, workd, workl, lworkl, ierr );
                  index = 0;
                  for (j = 0; j < 2; j++) {
@@ -4053,7 +4078,7 @@ public class SparseEigenvalue implements java.io.Serializable {
                            UI.setDataText("The number of converged Ritz values = " +nconv + "\n");
                            UI.setDataText("The number of Implicit Arnoldi update iterations taken = " +  iparam[2] + "\n");
                            UI.setDataText("The number of OP*x = " +  iparam[8] + "\n");
-                           UI.setDataText("The convergence criterion = " + tol + "\n");
+                           UI.setDataText("The convergence criterion = " + tol[0] + "\n");
                            UI.setDataText("\n");
               } // if (info[0] >= 0)
               return;
@@ -4229,7 +4254,8 @@ public class SparseEigenvalue implements java.io.Serializable {
                          maxitr, ishfts, mode;
         boolean          rvec;
         double sigma;
-        double tol, r1, r2, h;
+        double tol[] = new double[]{0.0};
+        double r1, r2, h;
         double array[][];
         int index;
         double v1[];
@@ -4239,7 +4265,6 @@ public class SparseEigenvalue implements java.io.Serializable {
   //     | Parameters |
   //     %------------%
   
-        final double zero = 0.0;
         final double one = 1.0;
         final double two = 2.0;
         final double four = 4.0;
@@ -4310,7 +4335,6 @@ public class SparseEigenvalue implements java.io.Serializable {
       //     %--------------------------------------------------%
       
             lworkl = ncv*(ncv+8);
-            tol = zero;
             ido[0] = 0;
             info[0] = 0;
       
@@ -4518,7 +4542,7 @@ public class SparseEigenvalue implements java.io.Serializable {
                rvec = true;
       
                dseupd ( rvec, "A", select, ds, v, ldv, sigma, 
-                   bmat, n, which, nev, tol, resid, ncv, v, ldv, 
+                   bmat, n, which, nev, tol[0], resid, ncv, v, ldv, 
                    iparam, ipntr, workd, workl, lworkl, ierr );
     		  index = 0;
               for (j = 0; j < 2; j++) {
@@ -8636,10 +8660,10 @@ public class SparseEigenvalue implements java.io.Serializable {
     //            | for the large end) are in the middle.          |
     //            %------------------------------------------------%
     
-                 ism = Math.max(nev,nconv) / 2;
+            	 ism = Math.max(nev,nconv) / 2;
                  ilg = ism + 1;
                  thres1 = workl[ism-1];
-                 thres2 = workl[ilg-1]; 
+                 thres2 = workl[ilg-1];
     
                  if (msglvl > 2) {
                 	UI.setDataText("dseupd: Threshold eigenvalues used for re-ordering: \n");
@@ -9874,7 +9898,7 @@ public class SparseEigenvalue implements java.io.Serializable {
     // -----------------------------------------------------------------------
     //
           private void dsaupd
-            (int ido[], String bmat, int n, String which, int nev, double tol, double resid[], int ncv, double v[][], int ldv, int iparam[], 
+            (int ido[], String bmat, int n, String which, int nev, double tol[], double resid[], int ncv, double v[][], int ldv, int iparam[], 
               int ipntr[], double workd[], double workl[], int lworkl, int info[] ) {
     //
     //     %----------------------------------------------------%
@@ -10024,8 +10048,8 @@ public class SparseEigenvalue implements java.io.Serializable {
              if (dsaupd_nb <= 0)  {
             	 dsaupd_nb = 1;
              }
-             if (tol <= zero)  {
-            	 tol = ge.dlamch('E');
+             if (tol[0] <= zero)  {
+            	 tol[0] = ge.dlamch('E');
              }
     
     //        %----------------------------------------------%
@@ -10393,7 +10417,7 @@ public class SparseEigenvalue implements java.io.Serializable {
           // -----------------------------------------------------------------------
           
                 private void dsaup2
-                  ( int ido[], String bmat, int n, String which, int nev[], int np[], double tol, double resid[], int mode, int iupd, 
+                  ( int ido[], String bmat, int n, String which, int nev[], int np[], double tol[], double resid[], int mode, int iupd, 
                     int ishift, int mxiter[], double v[][], int ldv, double h[][], int ldh, double ritz[], double bounds[], 
                     double q[][], int ldq, double workl[], int ipntr[], double workd[], int info[] ) {
           
@@ -10760,7 +10784,7 @@ public class SparseEigenvalue implements java.io.Serializable {
                 	   array1[i] = ritz[np[0]+i];
                 	   array2[i] = workl[np[0]+i];
                    }
-                   dsconv (nev[0], array1, array2, tol, dsaup2_nconv);
+                   dsconv (nev[0], array1, array2, tol[0], dsaup2_nconv);
                    for (i = 0; i < nev[0]; i++) {
                 	   ritz[np[0]+i] = array1[i];
                 	   workl[np[0]+i] = array2[i];
