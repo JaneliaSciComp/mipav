@@ -1187,13 +1187,21 @@ public abstract class JDialogBase extends JDialog
             int i;
         	fileInfoNIFTI = (FileInfoNIFTI)(image.getFileInfo()[0].clone());
             if (resultImage.getNDims() == 3) {
+            	int dataType= resultImage.getFileInfo()[0].getDataType();
             	for (i = 0; i < resultImage.getExtents()[2]; i++) {
             		resultImage.setFileInfo((FileInfoNIFTI)fileInfoNIFTI.clone(),i);
+            		resultImage.getFileInfo()[i].setMax(resultImage.getMax());
+                    resultImage.getFileInfo()[i].setMin(resultImage.getMin());
+                    resultImage.getFileInfo()[i].setDataType(dataType);
             	}
             }
             else if (resultImage.getNDims() == 4) {
+            	int dataType= resultImage.getFileInfo()[0].getDataType();
             	for (i = 0; i < resultImage.getExtents()[2]*resultImage.getExtents()[3]; i++) {
             		resultImage.setFileInfo((FileInfoNIFTI)fileInfoNIFTI.clone(),i);
+            		resultImage.getFileInfo()[i].setMax(resultImage.getMax());
+                    resultImage.getFileInfo()[i].setMin(resultImage.getMin());
+                    resultImage.getFileInfo()[i].setDataType(dataType);
             	}	
             }
             
