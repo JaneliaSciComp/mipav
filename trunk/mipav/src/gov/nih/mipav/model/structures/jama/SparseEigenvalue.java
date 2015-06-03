@@ -1685,7 +1685,7 @@ public class SparseEigenvalue implements java.io.Serializable {
     int         i, j;
     //Double precision
     //&                w(m), y(n)
-    final double one = 0.0;
+    final double one = 1.0;
     final double zero = 0.0;  
     double h, k, s, t;
     
