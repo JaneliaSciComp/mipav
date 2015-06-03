@@ -770,7 +770,7 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
         labelSignal.setFont(serif12);
 
         textSignal = new JTextField(5);
-        textSignal.setText("0.0");
+        textSignal.setText(Double.valueOf(image.getMin()).toString());
         textSignal.setFont(serif12);
 
         cropCheckbox = new JCheckBox("Background cropping");
