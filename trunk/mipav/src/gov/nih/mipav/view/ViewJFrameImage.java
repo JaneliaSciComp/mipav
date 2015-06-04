@@ -192,6 +192,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
     private JDialogAAMClassification prostateAAMClassification;
     private JDialogAAMplusSVM prostateML;
+    private boolean mouseIsPressed = false;
+    private boolean mouseIsDragged = false;
     
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -2938,9 +2940,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     @Override
     public synchronized void componentResized(final ComponentEvent event) {
         int width, height;
-        float bigger;
         final int minFrameWidth = 123; // /minimum frame width... function of java or windows? need to check w\ linux
         // build
+        
+        // remove the componentListener so this function will not be called twice
+        removeComponentListener(this);
 
         boolean imageSizeSmall = false;
         // check to see if the image width is SMALLER than the minimum frame width
@@ -2958,13 +2962,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
 
         // width and height calculated by size minus both insets
-        width = getSize().width - (getInsets().left + getInsets().right);
-        height = getSize().height - (getInsets().top + getInsets().bottom);
+        //width = getSize().width - (getInsets().left + getInsets().right);
+        //height = getSize().height - (getInsets().top + getInsets().bottom);
+        width = scrollPane.getSize().width;
+        height = scrollPane.getSize().height;
 
         width -= (scrollPane.getInsets().left + scrollPane.getInsets().right);
         height -= (scrollPane.getInsets().top + scrollPane.getInsets().bottom);
 
-        // System.err.println("current size: " + getSize());
+        //System.err.println("current size: " + getSize());
         // System.err.println("current insets: " + getInsets());
         // System.err.println("current scrollinsets: " + scrollPane.getInsets());
         // System.err.println("Current comp size: " + componentImage.getSize(null));
@@ -2972,20 +2978,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         // System.err.println("calculated width, height: " + width + " , " + height);
 
-        // determine the larger of width/height
-        // in order to find the zoom based the current window size (not necessarily the current zoom)
-        bigger = Math.max(width, height);
-        zoom = (int) Math.min( (bigger) / ( (imageA.getExtents()[0] * widthResFactor)), (bigger) / ( (imageA.getExtents()[1] * heightResFactor)));
+        zoom = Math.min(width/(imageA.getExtents()[0] * widthResFactor), height/(imageA.getExtents()[1] * heightResFactor));
 
         // check to see if we are dealing with a small sized image at the minimum frame width
         if (imageSizeSmall && (zoom > componentImage.getZoomX()) && (getSize().width <= minFrameWidth)) {
-
             // System.err.println("Doing nothing, returning\n\n\n");
             return;
         }
-
-        // remove the componentListener so this function will not be called twice
-        removeComponentListener(this);
 
         // System.err.println("Calculated zoom: " + zoom);
         // System.err.println("ComponentImage size (pre-adjustment): " + componentImage.getSize(null));
@@ -2993,7 +2992,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         // if the zoom is larger than the current zoom, set the current zoom to the calculated zoom
         if (zoom > componentImage.getZoomX()) {
             // System.err.println("Setting componentImage to calculated zoom");
-            componentImage.setZoom((int) zoom, (int) zoom); // ***************************
+            //componentImage.setZoom((int) zoom, (int) zoom); // ***************************
+        	componentImage.setZoom(zoom, zoom);
 
             updateImages(true);
 
@@ -3013,7 +3013,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // System.err.println("componentImage size now: " + componentImage.getSize(null));
 
         } else if ( (width < componentImage.getSize(null).width) && (height >= componentImage.getSize(null).height)) {
-            // System.err.println("Width is less than compImage.width, height is greater than compImage.height");
+            //System.err.println("Width is less than compImage.width, height is greater than compImage.height");
 
             height = componentImage.getSize(null).height + scrollPane.getHorizontalScrollBar().getHeight();
             width = componentImage.getSize(null).width + scrollPane.getVerticalScrollBar().getWidth();
@@ -3021,21 +3021,19 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             width = componentImage.getSize(null).width + scrollPane.getVerticalScrollBar().getWidth();
             height = componentImage.getSize(null).height + scrollPane.getHorizontalScrollBar().getHeight();
 
-            // System.err.println("Height is less than compImage.height, width is greater than compImage.width");
+            //System.err.println("Height is less than compImage.height, width is greater than compImage.width");
 
         } else if ( (width < componentImage.getSize(null).width) || (height < componentImage.getSize(null).height)) { // width
             // +=
             // fudgeFactor;
 
-            // System.err.println("either width is less than component width or height is less than component
-            // height...returning\n\n");
+            //System.err.println("either width is less than component width or height is less than component height...returning\n\n");
             addComponentListener(this);
 
             return;
         } else if ( (width > componentImage.getSize(null).width) || (height > componentImage.getSize(null).height)) {
 
-            // System.err.println("Width or height is greater than compImage width/height, setting to compImage width
-            // and height");
+            //System.err.println("Width or height is greater than compImage width/height, setting to compImage width and height");
 
             if (width > componentImage.getSize(null).width) {
                 width = componentImage.getSize(null).width;
@@ -3045,8 +3043,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 height = componentImage.getSize(null).height;
             }
         } else {
-            // System.err.println("apparently width and height are set okay (comparing to
-            // compeditimage)...returning\n\n");
+            //System.err.println("apparently width and height are set okay (comparing to compeditimage)...returning\n\n");
+            
 
             addComponentListener(this);
 
@@ -3058,19 +3056,21 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         width += scrollPane.getInsets().left + scrollPane.getInsets().right;
         height += scrollPane.getInsets().top + scrollPane.getInsets().bottom;
 
-        // System.err.println("Old scrollpane width, height: " + scrollPane.getSize());
+        //System.err.println("Old scrollpane width, height: " + scrollPane.getSize());
 
         if (scrollPane.getSize().width != width || scrollPane.getSize().height != height) {
             // System.err.println("New scrollpane width, height: " + width + " , " + height);
             scrollPane.setSize(width, height);
-            // System.err.println("Scrollpane after setting width, height: " + scrollPane.getSize());
+            //System.err.println("Scrollpane after setting width, height: " + scrollPane.getSize());
 
             // System.err.println("Frame insets are currently: " + getInsets());
 
             // System.err.println("setting frame size to: " + (scrollPane.getSize().width + getInsets().left +
             // getInsets().right) + " , " +
             // (scrollPane.getSize().height + getInsets().top + getInsets().bottom));
-            setSize(scrollPane.getSize().width + getInsets().left + getInsets().right, scrollPane.getSize().height + getInsets().top + getInsets().bottom);
+            setSize(scrollPane.getSize().width + getInsets().left + getInsets().right, scrollPane.getSize().height + getInsets().top +
+            		getInsets().bottom);
+            scrollPane.
 
             validate();
             setTitle();
@@ -3083,6 +3083,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         componentImage.restartCheckerboardAnimateThread();
 
         addComponentListener(this);
+        
     }
 
     /**
@@ -4034,7 +4035,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @param e DOCUMENT ME!
      */
     @Override
-    public void mouseDragged(final MouseEvent e) {}
+    public void mouseDragged(final MouseEvent e) {
+    }
 
     /**
      * DOCUMENT ME!
@@ -4050,7 +4052,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @param event DOCUMENT ME!
      */
     @Override
-    public void mouseExited(final MouseEvent event) {}
+    public void mouseExited(final MouseEvent event) {
+    }
 
     /**
      * DOCUMENT ME!
@@ -4066,7 +4069,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @param event DOCUMENT ME!
      */
     @Override
-    public void mousePressed(final MouseEvent event) {}
+    public void mousePressed(final MouseEvent event) {
+    }
 
     /**
      * DOCUMENT ME!
@@ -4074,7 +4078,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @param event DOCUMENT ME!
      */
     @Override
-    public void mouseReleased(final MouseEvent event) {}
+    public void mouseReleased(final MouseEvent event) {
+    	
+    }
 
     /**
      * ViewOpenFrameInterface function to create a new frame from a result image (jdialog produced)
