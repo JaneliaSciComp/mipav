@@ -3068,7 +3068,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // (scrollPane.getSize().height + getInsets().top + getInsets().bottom));
             setSize(scrollPane.getSize().width + getInsets().left + getInsets().right, scrollPane.getSize().height + getInsets().top +
             		getInsets().bottom);
-            scrollPane.
 
             validate();
             setTitle();
