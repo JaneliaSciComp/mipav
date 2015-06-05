@@ -1713,6 +1713,41 @@ public class SparseEigenvalue implements java.io.Serializable {
     } // atv
     
     public void dsdrv1() { 
+    // At http://docs.roguewave.com/imsl/fortran/7.0/math/docs/arpacksymmetric.htm:
+//    	Output
+//    	Number of eigenvalues requested, and declared accurate
+//   	 ------------------------------------------------------
+//    	        5        0
+//    	 Number of Matrix-Vector Products Recorded, EX-11
+//    	 ------------------------------------------------
+//    	        0
+//    	 Smallest Laplacian Eigenvalues
+//    	            1   19.61
+//    	            2   48.22
+//    	            3   48.22
+//    	            4   76.83
+//    	            5   93.33
+//    	All Ritz Values and Vectors have small residuals.
+
+// When I change the original nev = 4; to nev = 5; and run I have:
+//    	Ritz values and relative residuals: 
+//    		d[0][0] = 1.96054E1 d[0][1] = 2.82139E-14
+//    		d[1][0] = 4.82193E1 d[1][1] = 9.10478E-15
+//    		d[2][0] = 4.82193E1 d[2][1] = 1.14049E-14
+//    		d[3][0] = 7.68333E1 d[3][1] = 5.72781E-15
+//    		d[4][0] = 9.33264E1 d[4][1] = 8.30138E-15
+
+//    		DSDRV1
+//    		======
+
+//    		Size of the matrix = 100
+//    		The number of Ritz values requested = 5
+//    		The number of Arnoldi vectors generated ncv = 10
+//    		What portion of the spectrum: SM
+//    		The number of converged Ritz values = 5
+//    		The number of Implicit Arnoldi update iterations taken = 65
+//    		The number of OP*x = 235
+//    		The convergence criterion = 1.1102230246251565E-16
     
     //     Simple program to illustrate the idea of reverse communication
     //     in regular mode for a standard symmetric eigenvalue problem.
@@ -1849,7 +1884,8 @@ public class SparseEigenvalue implements java.io.Serializable {
     
           nx = 10;
           n = nx*nx;
-          nev =  4; 
+          // nev = 4;
+          nev =  5; 
           ncv =  10; 
           if ( n > maxn ) {
              UI.setDataText("ERROR with DSDRV1: N is greater than MAXN");
@@ -2173,6 +2209,36 @@ public class SparseEigenvalue implements java.io.Serializable {
           } // tv
           
       public void dsdrv2() { 
+      // At http://docs.roguewave.com/imsl/fortran/7.0/math/docs/arpacksymmetric.htm:  
+//    	  Output
+//    	  Number of Matrix-Vector Products Required, EX-2
+//    	  -----------------------------------------------
+//    	        24
+//    	  Largest Laplacian Eigenvalues Near Zero Shift
+//    	                    1     9.9
+//    	                    2    39.5
+//    	                    3    88.8
+//    	                    4   157.7
+//    	 All Ritz Values and Vectors have small residuals.
+    	 
+//    My run gave:
+//    	  Ritz values and relative residuals: 
+//    		  d[0][0] = 9.86881E0 d[0][1] = 6.79022E-13
+//    		  d[1][0] = 3.94657E1 d[1][1] = 2.42190E-13
+//    		  d[2][0] = 8.87620E1 d[2][1] = 1.14934E-13
+//    		  d[3][0] = 1.57710E2 d[3][1] = 1.80516E-13
+
+//    		  DSDRV2
+//    		  ======
+
+//    		  Size of the matrix = 100
+//    		  The number of Ritz values requested = 4
+//    		  The number of Arnoldi vectors generated ncv = 10
+//    		  What portion of the spectrum: LM
+//    		  The number of converged Ritz values = 4
+//    		  The number of Implicit Arnoldi update iterations taken = 5
+//    		  The number of OP*x = 27
+//    		  The convergence criterion = 1.1102230246251565E-16
       
       //     Program to illustrate the idea of reverse communication
       //     in shift and invert mode for a standard symmetric eigenvalue
