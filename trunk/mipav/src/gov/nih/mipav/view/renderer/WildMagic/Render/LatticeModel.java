@@ -2,6 +2,7 @@ package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 
 import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmGaussianBlur;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmLaplacian;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.*;
 
@@ -10,12 +11,17 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 
 import java.awt.Color;
+import java.awt.Frame;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.BitSet;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Random;
+import java.util.Set;
 import java.util.Vector;
 
 import javax.swing.JFileChooser;
@@ -104,23 +110,65 @@ public class LatticeModel {
 		}
 		System.err.println("segmentAll " + positions.size());
 
-		final int numAttempts = 1000;
+		final int numAttempts = 100;
 		final Random randomGen = new Random();
 		double minCost = Float.MAX_VALUE;
 		Vector3f[] potentialClusters = null;
 		for (int i = 0; i < numAttempts; i++) {
 			// generate random potential cluster centers:
-			final Vector<Integer> indexList = new Vector<Integer>();
-			while (indexList.size() < numClusters) {
-				final int index = (int) (randomGen.nextFloat() * (positions.size()));
-				if ( !indexList.contains(index)) {
-					indexList.add(index);
-				}
-			}
 			final Vector3f[] centers = new Vector3f[numClusters];
 			for (int j = 0; j < numClusters; j++) {
-				centers[j] = new Vector3f(positions.elementAt(indexList.elementAt(j)));
+				final int index = (int) (randomGen.nextFloat() * (positions.size()));
+				centers[j] = new Vector3f(positions.elementAt(index));
 			}
+			boolean allSeparate = false;
+			int count = 0;
+			int limit = 30;
+			while ( !allSeparate )
+			{
+				float minDist = Float.MAX_VALUE;
+				int minIndex = -1;
+				for (int j = 0; j < numClusters; j++) 
+				{
+					for ( int k = j+1; k < numClusters; k++ )
+					{
+						float dist = centers[j].distance(centers[k]);
+						if ( dist < minDist )
+						{
+							minDist = dist;
+							minIndex = j;
+						}
+					}
+				}
+				if ( (minDist < limit) && (minIndex != -1) )
+				{
+					final int index = (int) (randomGen.nextFloat() * (positions.size()));
+					centers[minIndex] = new Vector3f(positions.elementAt(index));
+//					System.err.println( minDist + " " + minIndex );
+				}		
+				else
+				{
+					allSeparate = true;
+				}
+				count++;
+				if ( count >= 1000 )
+				{
+					limit -= 2;
+					count = 0;
+				}
+			}
+//			System.err.println("Done centers");
+//			final Vector<Integer> indexList = new Vector<Integer>();
+//			while (indexList.size() < numClusters) {
+//				final int index = (int) (randomGen.nextFloat() * (positions.size()));
+//				if ( !indexList.contains(index)) {
+//					indexList.add(index);
+//				}
+//			}
+//			final Vector3f[] centers = new Vector3f[numClusters];
+//			for (int j = 0; j < numClusters; j++) {
+//				centers[j] = new Vector3f(positions.elementAt(indexList.elementAt(j)));
+//			}
 
 			boolean done = false;
 			while ( !done) {
@@ -195,6 +243,7 @@ public class LatticeModel {
 					listCenters = null;
 				}
 			}
+//			System.err.println( i );
 		}
 
 		for (int z = 0; z < dimZ; z++) {
@@ -209,11 +258,43 @@ public class LatticeModel {
 			}
 		}
 
+		Vector3f negCenter = new Vector3f(-1,-1,-1);
+		for ( int i = 0; i < potentialClusters.length; i++ )
+		{
+			if ( !potentialClusters[i].equals(negCenter) )
+			{
+				Vector3f newCenter = new Vector3f(potentialClusters[i]);
+				int count = 1;
+				for ( int j = i+1; j < potentialClusters.length; j++ )
+				{
+					if ( !potentialClusters[j].equals(negCenter) )
+					{
+						//				System.err.println( potentialClusters[i].distance(potentialClusters[j]) );
+						if ( potentialClusters[i].distance(potentialClusters[j]) < 15 )
+						{
+							newCenter.add(potentialClusters[j]);
+							potentialClusters[j].copy(negCenter);
+							count++;
+						}
+					}
+				}
+				if ( count > 1 )
+				{
+					newCenter.scale(1f/(float)count);
+					potentialClusters[i].copy(newCenter);
+				}
+			}
+		}
+		
+		
 		final short sID = (short) (image.getVOIs().getUniqueID());
 		final VOI clusters = new VOI(sID, "clusters", VOI.POINT, color);
 		for (int i = 0; i < potentialClusters.length; i++) {
 			// System.err.println( i + "     " + potentialClusters[i] );
-			clusters.importPoint(potentialClusters[i]);
+			if ( !potentialClusters[i].equals(negCenter) )
+			{
+				clusters.importPoint(potentialClusters[i]);
+			}
 		}
 		image.registerVOI(clusters);
 		System.err.println(minCost + " " + clusters.getCurves().size());
@@ -456,6 +537,7 @@ public class LatticeModel {
 			voiDir = image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + "segmentation" + File.separator;
 			result.setImageName(imageName + "_midLine.xml");
 			ModelImage.saveImage(result, imageName + "_midLine.xml", voiDir, false);
+			new ViewJFrameImage((ModelImage)result.clone());
 			result.disposeLocal();
 			result = null;
 		}
@@ -472,7 +554,7 @@ public class LatticeModel {
 		voiDir = image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + "segmentation" + File.separator + "seam_cells"
 				+ File.separator;
 		saveAllVOIsTo(voiDir, image);
-		// new ViewJFrameImage((ModelImage)image.clone());
+//		 new ViewJFrameImage((ModelImage)image.clone());
 	}
 
 	/**
@@ -646,7 +728,7 @@ public class LatticeModel {
 	 * @param sigma
 	 * @return
 	 */
-	private static ModelImage blur(final ModelImage image, final int sigma) {
+	public static ModelImage blur(final ModelImage image, final int sigma) {
 		String imageName = image.getImageName();
 		if (imageName.contains("_clone")) {
 			imageName = imageName.replaceAll("_clone", "");
@@ -666,6 +748,27 @@ public class LatticeModel {
 		blurAlgo.run();
 
 		return blurAlgo.getDestImage();
+	}
+	
+	public static ModelImage laplace(final ModelImage image, final int sigma )
+	{
+		String imageName = image.getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+		imageName = imageName + "_laplace";
+
+		final float[] sigmas = new float[] {sigma, sigma, sigma * getCorrectionFactor(image)};
+
+
+		OpenCLAlgorithmLaplacian laplacianAlgo;
+		final ModelImage resultImage = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), imageName);
+		JDialogBase.updateFileInfo(image, resultImage);
+		laplacianAlgo = new OpenCLAlgorithmLaplacian(resultImage, image, sigmas, true, true, false, 1.0f);
+
+		laplacianAlgo.setRunningInSeparateThread(false);
+		laplacianAlgo.run();
+		return laplacianAlgo.getDestImage();
 	}
 
 	/**
@@ -749,7 +852,7 @@ public class LatticeModel {
 	 * @param image
 	 * @return
 	 */
-	private static ModelImage segmentAll2(final ModelImage image) {
+	public static ModelImage segmentAll2(final ModelImage image) {
 		ModelImage blurs = blur(image, 3);
 		blurs.calcMinMax();
 		// new ViewJFrameImage(blurs);
@@ -784,9 +887,415 @@ public class LatticeModel {
 		resultImage.restoreVOIs(image.getVOIsCopy());
 		return resultImage;
 	}
+	
+	public static VOI segmentSeamCells( final ModelImage image, boolean displayColorSegmentation )
+	{
+		ModelImage colorSegmentation = null; 
+		if ( displayColorSegmentation )
+		{
+			String imageName = image.getImageName();
+			if (imageName.contains("_clone")) {
+				imageName = imageName.replaceAll("_clone", "");
+			}
+			if (imageName.contains("_laplace")) {
+				imageName = imageName.replaceAll("_laplace", "");
+			}
+			if (imageName.contains("_gblur")) {
+				imageName = imageName.replaceAll("_gblur", "");
+			}
+			
+			imageName = imageName + "_color";
+			colorSegmentation = new ModelImage(ModelStorageBase.ARGB_FLOAT, image.getExtents(), imageName);
+			JDialogBase.updateFileInfo(image, colorSegmentation); 
+		}
+		
+		ModelImage loG = LoG(image);
+		Vector2d[] histogram = estimateHistogram(loG, 0.0005f );
+		float cutoff = -1;
+		int cutoffIndex = -1;
+		for ( int i = 0; i < histogram.length; i++ )
+		{
+			if ( (i+1 < histogram.length) && (histogram[i].X <= 0.9995) && (histogram[i+1].X > 0.9995) )
+			{
+				cutoff = (float) histogram[i].Y;
+				cutoffIndex = i;
+			}
+		}
+		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+		BitSet visited = new BitSet(dimX*dimY*dimZ);
+
+		float edgeCutOff = cutoff;
+		if ( cutoffIndex > 0 )
+		{
+			edgeCutOff = (float)histogram[cutoffIndex-1].Y;
+		}
+		int[] annotationRunningCount = new int[]{0};
+		VOI annotations = segmentImage(loG, cutoff, visited, edgeCutOff, annotationRunningCount, colorSegmentation);
+		System.err.println( annotations.getCurves().size() );
+		if ( annotations.getCurves().size() < 20 )
+		{
+			cutoffIndex--;
+			cutoff = edgeCutOff;
+			if ( cutoffIndex > 0 )
+			{
+				edgeCutOff = (float)histogram[cutoffIndex-1].Y;
+			}
+			VOI annotationsNew = segmentImage(loG, cutoff, visited, edgeCutOff, annotationRunningCount, colorSegmentation);
+			if ( annotationsNew != null )
+			{
+				annotations.getCurves().addAll(annotationsNew.getCurves());
+			}
+			System.err.println( annotations.getCurves().size() );
+		}
+		if ( loG != null )
+		{
+			loG.disposeLocal();
+			loG = null;
+		}
+		if ( annotations.getCurves().size() >= 20 )
+		{
+			// done write out annotations to file.
+		}
+		if ( colorSegmentation != null )
+		{
+			colorSegmentation.calcMinMax();
+			colorSegmentation.registerVOI(annotations);
+			new ViewJFrameImage(colorSegmentation);
+		}
+		return annotations;
+	}
+	
+//	private static void subtract(ModelImage image1, ModelImage image2)
+//	{
+//		final int dimX = image1.getExtents().length > 0 ? image1.getExtents()[0] : 1;
+//		final int dimY = image1.getExtents().length > 1 ? image1.getExtents()[1] : 1;
+//		final int dimZ = image1.getExtents().length > 2 ? image1.getExtents()[2] : 1;
+//		for (int z = 0; z < dimZ; z++) {
+//			for (int y = 0; y < dimY; y++) {
+//				for (int x = 0; x < dimX; x++) {
+//					if ( image2.getFloat(x,y,z) != image2.getMin() )
+//					{
+//						image1.set(x,y,z, (float)image1.getMin());
+//						image2.set(x,y,z, (float)image2.getMin());
+//					}
+//				}
+//			}
+//		}
+//	}
+	
+	public static ModelImage LoG(final ModelImage image) {
+		ModelImage blur = blur(image, 3);
+		blur.calcMinMax();
+
+		ModelImage laplace = laplace(blur, 3);
+		
+		blur.disposeLocal();
+		blur = null;
+
+		return laplace;
+	}
+
+	public static VOI segmentImage( final ModelImage image, float cutOff, BitSet visited, float edgeCutOff, int[] annotationRunningCount, ModelImage colorSegmentation )
+	{
+		String imageName = image.getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+		if (imageName.contains("_laplace")) {
+			imageName = imageName.replaceAll("_laplace", "");
+		}
+		if (imageName.contains("_gblur")) {
+			imageName = imageName.replaceAll("_gblur", "");
+		}
+		imageName = imageName + "_segmentation";
+		ModelImage segmentationImage = new ModelImage(ModelStorageBase.INTEGER, image.getExtents(), imageName);
+		JDialogBase.updateFileInfo(image, segmentationImage);   
+
+		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;  	
+
+		Vector<Vector3f> edgeList = new Vector<Vector3f>();
+		Vector<Vector3f> seedList = new Vector<Vector3f>();
+		int count = 1;
+		Vector3f seed = new Vector3f();
+    	for ( int z = 0; z < dimZ; z++ )
+    	{
+    		for ( int y = 0; y < dimY; y++ )
+    		{
+    			for ( int x = 0; x < dimX; x++ )
+    			{
+    				if ( image.getFloat(x, y, z) > cutOff )
+    				{
+    					seed.set(x, y, z);
+    					seedList.add(seed);
+    					if ( fill( image, cutOff, segmentationImage, colorSegmentation, seedList, visited, count, edgeList) > 0 )
+    					{
+    						count++;
+    					}
+    				}
+    			}
+    		}
+    	}
+		segmentationImage.calcMinMax();
+
+		count = (int) segmentationImage.getMax();
+		Vector3f[] seamCells = new Vector3f[count];
+		Vector3f[] min = new Vector3f[count];
+		Vector3f[] max = new Vector3f[count];
+		int[] counts = new int[count];
+    	for ( int z = 0; z < dimZ; z++ )
+    	{
+    		for ( int y = 0; y < dimY; y++ )
+    		{
+    			for ( int x = 0; x < dimX; x++ )
+    			{
+    				int id = segmentationImage.getInt(x, y, z);
+    				if ( id > 0 )
+    				{
+    					id--;
+    					if ( seamCells[id] == null )
+    					{
+    						seamCells[id] = new Vector3f();
+    						min[id] = new Vector3f( Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE);
+    						max[id] = new Vector3f(-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE);
+    						counts[id] = 0;
+    					}
+    					seamCells[id].add(x,y,z);
+    					counts[id]++;
+    					min[id].X = Math.min(min[id].X, x);
+    					min[id].Y = Math.min(min[id].Y, y);
+    					min[id].Z = Math.min(min[id].Z, z);
+    					
+    					max[id].X = Math.max(max[id].X, x);
+    					max[id].Y = Math.max(max[id].Y, y);
+    					max[id].Z = Math.max(max[id].Z, z);
+    				}
+    			}
+    		}
+    	}
+    	
+    	VOI annotation = new VOI( (short)1, "SeamCells", VOI.ANNOTATION, 0 );
+    	for ( int i = 0; i < seamCells.length; i++ )
+    	{
+    		seamCells[i].scale( 1f/(float)counts[i]);
+    		
+    		VOIText text = new VOIText();
+    		text.setText( "A" + annotationRunningCount[0]++ );
+    		text.setColor( new Color(255, 255, 255) );
+    		text.add( seamCells[i] );
+    		text.add( seamCells[i] );
+    		text.setUseMarker(false);
+    		annotation.getCurves().add(text);
+    		
+    		System.err.println( text.getText() + " " + counts[i] + " " + (max[i].X - min[i].X) + " " + (max[i].Y - min[i].Y) + " " + (max[i].Z - min[i].Z));
+    	}
+    	
+    	
+		fill( image, edgeCutOff, segmentationImage, colorSegmentation, edgeList, visited, count, null);
+    	
+    	
+//    	colorSegmentation.registerVOI(annotation);
+////		System.err.println( count + " " + segmentationImage.getMin() + " " + segmentationImage.getMax() );
+//		new ViewJFrameImage(colorSegmentation);
+
+    	segmentationImage.disposeLocal();
+    	segmentationImage = null;
+    	
+    	return annotation;
+    	
+//    	segmentationImage.registerVOI(annotation);
+//		return segmentationImage;
+	}
+	
+
+    private static Vector2d[] estimateHistogram( final ModelImage image, float stepSize )
+    {    	
+		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;  	
+    	
+    	// Calculate the histogram:
+		int maxCount = 0;
+    	HashMap<Float, Integer> map = new HashMap<Float, Integer>();
+    	for ( int z = 0; z < dimZ; z++ )
+    	{
+    		for ( int y = 0; y < dimY; y++ )
+    		{
+    			for ( int x = 0; x < dimX; x++ )
+    			{
+    				float value = image.getFloat(x,y,z);
+    				int count = 0;
+    				if ( map.containsKey(value) )
+    				{
+    					count = map.get(value);
+    				}
+    				count++;
+    				map.put( value, count );
+    				if ( count > maxCount )
+    				{
+    					maxCount = count;
+    				}
+    			}
+    		}
+    	}
+    	int numSteps = (int) (0.05f/stepSize) + 1;
+    	Vector2d[] countValues = new Vector2d[numSteps];
+    	int step = 0;
+    	
+    	int totalCount = dimX * dimY * dimZ;
+    	int count_95P = (int) (0.95 * totalCount);
+    	int count_stepSize = (int)(stepSize*totalCount);
+    	// Sort the Histogram bins:
+    	Set<Float> keySet = map.keySet();
+    	Iterator<Float> keyIterator = keySet.iterator();
+    	float[] keyArray = new float[keySet.size()];
+    	int count = 0;
+    	while ( keyIterator.hasNext() )
+    	{
+    		float value = keyIterator.next();
+    		keyArray[count++] = value;
+    	}
+    	
+    	Arrays.sort(keyArray);
+    	int[] counts = new int[keyArray.length];
+    	int runningCount = 0;
+    	for ( int i = 0; i < counts.length; i++ )
+    	{
+    		counts[i] = map.get( keyArray[i] );
+    		runningCount += counts[i];
+
+    		while ( runningCount >= count_95P )
+    		{
+    			countValues[step++] = new Vector2d( (float)count_95P/(float)totalCount, keyArray[i] );
+    			count_95P += count_stepSize;
+    		}
+    	}
+//    	System.err.println( count_95P + " " + totalCount );
+//    	for ( int i = 0; i < countValues.length; i++ )
+//    	{
+//    		System.err.println( countValues[i].X + " " + countValues[i].Y );
+//    	}
+    	return countValues;
+    }
+    
+    private static ModelImage fillImage( final ModelImage image, float cutoff )
+    {
+		String imageName = image.getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+		if (imageName.contains("_laplace")) {
+			imageName = imageName.replaceAll("_laplace", "");
+		}
+		if (imageName.contains("_gblur")) {
+			imageName = imageName.replaceAll("_gblur", "");
+		}
+		imageName = imageName + "_5";
+
+		final ModelImage resultImage = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), imageName);
+		JDialogBase.updateFileInfo(image, resultImage);   
+		
+		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;  	
+
+    	double min = image.getMin();
+
+		for ( int z = 0; z < dimZ; z++ )
+		{
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					float value = image.getFloat(x,y,z);
+					if ( value >= cutoff )
+					{
+						resultImage.set(x,  y, z, value);
+					}
+					else
+					{
+						resultImage.set(x,  y, z, min);
+					}
+				}
+			}
+    	}
+    	return resultImage;
+    }
+    
+    
+// need edges
+	private static int fill(final ModelImage image, float cutOff, final ModelImage segmentation, final ModelImage colorSegmentation, 
+			final Vector<Vector3f> seedList, BitSet visited, final int id, final Vector<Vector3f> edgeList) {
+		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+
+		int count = 0;
+		while (seedList.size() > 0) {
+			final Vector3f seed = seedList.remove(0);
+
+			final int z = Math.round(seed.Z);
+			final int y = Math.round(seed.Y);
+			final int x = Math.round(seed.X);
+			int index = z*dimY*dimX + y*dimX + x;
+			if ( visited.get(index) )
+			{
+				continue;
+			}
+			visited.set(index);
+			segmentation.set(x,  y, z, id);
+
+			final Color color = new Color(Color.HSBtoRGB(id/25f, 1, 1));
+			if ( colorSegmentation != null )
+			{
+				colorSegmentation.setC(x, y, z, 0, 1);
+				colorSegmentation.setC(x, y, z, 1, color.getRed() / 255f);
+				colorSegmentation.setC(x, y, z, 2, color.getGreen() / 255f);
+				colorSegmentation.setC(x, y, z, 3, color.getBlue() / 255f);
+			}
+			count++;
+
+			for (int z1 = Math.max(0, z - 1); z1 <= Math.min(dimZ - 1, z + 1); z1++)
+			{
+				for (int y1 = Math.max(0, y - 1); y1 <= Math.min(dimY - 1, y + 1); y1++)
+				{
+					for (int x1 = Math.max(0, x - 1); x1 <= Math.min(dimX - 1, x + 1); x1++)
+					{
+						if ( ! ( (x == x1) && (y == y1) && (z == z1))) {
+							index = z1*dimY*dimX + y1*dimX + x1;
+							if ( !visited.get(index) )
+							{
+								float value = image.getFloat(x1, y1, z1);
+								if ( value > cutOff )
+								{
+									seedList.add( new Vector3f(x1,y1,z1) );
+								}
+								else if ( edgeList != null )
+								{
+									edgeList.add( new Vector3f(x1,y,z1) );
+								}
+							}
+						}
+					}
+				}
+			}							
+		}
+		return count;
+	}
+
+    
+    
+    
+    
+    
+    
+    
+    
 
 	private ModelImage imageA;
-	private ModelImage gmImage;
 	private VOIVector latticeGrid;
 
 	private VOI lattice = null;
@@ -885,7 +1394,6 @@ public class LatticeModel {
 	 */
 	public LatticeModel(final ModelImage imageA) {
 		this.imageA = imageA;
-		this.gmImage = null;
 	}
 
 	/**
@@ -896,7 +1404,6 @@ public class LatticeModel {
 	 */
 	public LatticeModel(final ModelImage imageA, final VOI lattice) {
 		this.imageA = imageA;
-		this.gmImage = null;
 		this.lattice = lattice;
 
 		// Assume image is isotropic (square voxels).
@@ -922,7 +1429,6 @@ public class LatticeModel {
 	 */
 	public LatticeModel(final ModelImage imageA, final VOI annotation, final boolean doAnnotation) {
 		this.imageA = imageA;
-		this.gmImage = null;
 		this.lattice = null;
 		this.setAnnotations(annotation);
 	}
@@ -1182,12 +1688,6 @@ public class LatticeModel {
 		pickedPoint = null;
 		showSelectedVOI = null;
 		showSelected = null;
-		
-		if ( gmImage != null )
-		{
-			gmImage.disposeLocal();
-			gmImage = null;
-		}
 	}
 
 	/**
@@ -1911,6 +2411,7 @@ public class LatticeModel {
 		minValue = (float) (0.25 * imageNoSeam.getMax());
 		maxValue = (float) (1.0 * imageNoSeam.getMax());
 		segmentAll2(imageA, imageNoSeam, minValue, maxValue, 10, .5f);
+		System.err.println("Done Segmentation");
 	}
 
 	/**
@@ -4100,10 +4601,7 @@ public class LatticeModel {
 		JDialogBase.updateFileInfo(image, markerSegmentation);
 
 		// Generate the gradient magnitude image:
-		if ( gmImage == null )
-		{
-			gmImage = VolumeImage.getGradientMagnitude(image, 0);
-		}
+		ModelImage gmImage = VolumeImage.getGradientMagnitude(image, 0);
 
 		// determine the maxiumum image value of the fluorescent markers at each lattice point:
 		float maxValue = -Float.MAX_VALUE;
@@ -4300,6 +4798,12 @@ public class LatticeModel {
 			System.err.println("segment all " + count);
 			markerSegmentation2.calcMinMax();
 			new ViewJFrameImage((ModelImage) markerSegmentation2.clone());
+		}
+		
+		if ( gmImage != null )
+		{
+			gmImage.disposeLocal();
+			gmImage = null;
 		}
 
 		return markerSegmentation;
