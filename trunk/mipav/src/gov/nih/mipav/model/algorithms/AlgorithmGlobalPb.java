@@ -209,6 +209,8 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	int y;
     	int i;
     	int j;
+    	int k;
+    	boolean found;
         int ty = mPb.length;
         int tx = mPb[0].length;
         double l[][][] = new double[2][][];
@@ -227,6 +229,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         
         // Build the pairwise affinity matrix
         SMatrix W = buildW(l[0], l[1]);
+        // From end of buildW
         // Pack sparse matrix
         // Compute total number of nonzero entries
         int nnz = 0;
@@ -250,6 +253,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         }
         W.dispose();
         W = null;
+        // Finished end of buildW
         int numElements = val.length;
         // Remove zero values
         boolean ignore[] = new boolean[numElements];
@@ -278,16 +282,18 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         double valsp[] = new double[sparseElements];
         int imax = -1;
         int jmax = -1;
-        for (i = 0, j = 0; (i < numElements) && (!ignore[i]); i++) {
-            Isp[j] = I[i];
-            if (Isp[j] > imax) {
-            	imax = Isp[j];
-            }
-            Jsp[j] = J[i];
-            if (Jsp[j] > jmax) {
-            	jmax = Jsp[j];
-            }
-            valsp[j++] = val[i];
+        for (i = 0, j = 0; i < numElements; i++) {
+        	if (!ignore[i]) {
+	            Isp[j] = I[i];
+	            if (Isp[j] > imax) {
+	            	imax = Isp[j];
+	            }
+	            Jsp[j] = J[i];
+	            if (Jsp[j] > jmax) {
+	            	jmax = Jsp[j];
+	            }
+	            valsp[j++] = val[i];
+        	}
         }
         // [J, I, val] = buildW(l[0],l[1]);
         //Wsp = sparse(J, I, val);
@@ -299,25 +305,72 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         }
         // For each Isp add up the values
         // S is the sum of the columns of the full matrix W
-        // but there are wy columns and xvec is length wx.
+        // but there are wx columns and xvec has length wx.
         // D = sparse(xvec, xvec, S, wx, wy) requires xvec and S
-        // to be the same length so we had better have wx = wy.
+        // to be the same length so we had better have length(S) = wx.
         // All nonzero values of S are placed along the diagonal of 
         // the sparse matrix D.
-        double S[] = new double[wy];
-        ignore = new boolean[sparseElements];
-        numIgnored = 0;
-        for (i = 0; (i < sparseElements) && (!ignore[i]); i++) {
-        	S[I[i]] = val[i];
-            for (j = i+1; (j < numElements) && (!ignore[j]); j++) {
-            	// In same column
-            	if (I[i] == I[j]) {
-            	    S[I[i]] += val[j];
-            	    ignore[j] = true;
-            	    numIgnored++;
-            	}
-            }
+        // To do D - W, D must be the same size as W so D must be Wy by Wx
+        double S[] = new double[wx];
+        for (i = 0; i < sparseElements; i++) {
+        	S[Jsp[i]] += valsp[i];
         }
+        numIgnored = 0;
+        ignore = new boolean[wx];
+        for (i = 0; i < wx; i++) {
+        	if (S[i] == 0) {
+        	    ignore[i] = true;
+        	    numIgnored++;
+        	}
+        }
+        int sparseElementsD = wx - numIgnored;
+        int IJDsp[] = new int[sparseElementsD];
+        double valspD[] = new double[sparseElementsD];
+        for (i = 0, j = 0; i < wx; i++) {
+        	if (!ignore[i]) {
+        		IJDsp[j] = i;
+        		valspD[j++] = S[i];
+        	}
+        }
+        // Find the sparse D - W
+        int sparseElementsDmW = sparseElements;
+        for (i = 0; i < sparseElements; i++) {
+        	if (Isp[i] == Jsp[i]) {
+        		found = false;
+        		for (j = 0; j < sparseElementsD && (!found); j++) {
+        			if (Isp[i] == IJDsp[j]) {
+        				found = true;
+        				sparseElementsDmW--;
+        			}
+        		}
+        	}
+        }
+        int IDmWsp[] = new int[sparseElementsDmW];
+        int JDmWsp[] = new int[sparseElementsDmW];
+        double valspDmW[] = new double[sparseElementsDmW];
+        for (i = 0, k = 0; i < sparseElements; i++) {
+        	if (Isp[i] == Jsp[i]) {
+        		found = false;
+        		for (j = 0; j < sparseElementsD && (!found); j++) {
+        			if (Isp[i] == IJDsp[j]) {
+        				found = true;
+        				IDmWsp[k] = Isp[i];
+        				JDmWsp[k] = Jsp[i];
+        				valspDmW[k++] = valspD[j] - valsp[i];
+        			}
+        		} // for (j = 0; j < sparseElementsD && (!found); j++)
+        		if (!found) {
+        			IDmWsp[k] = Isp[i];
+    				JDmWsp[k] = Jsp[i];
+    				valspDmW[k++] = -valsp[i];	
+        		}
+        	} // if (Isp[i] == Jsp[i])
+        	else {
+        		IDmWsp[k] = Isp[i];
+				JDmWsp[k] = Jsp[i];
+				valspDmW[k++] = -valsp[i];		
+        	}
+        } // for (i = 0, k = 0; i < sparseElements; i++)
     }
     
     private class DualLattice{
