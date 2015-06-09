@@ -400,60 +400,120 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 					}
 					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null); 
 					wormImageA.calcMinMax();
-					float minValue = (float) (0.1 * wormImageA.getMax());
-					float maxValue = (float) (1.0 * wormImageA.getMax());
-					ModelImage imageNoSeam = LatticeModel.segmentAll1(wormImageA, minValue, maxValue, 20, 1 );
-					minValue = (float) (0.1 * imageNoSeam.getMax());
-					maxValue = (float) (1.0 *  imageNoSeam.getMax());
-					LatticeModel.segmentAll2(wormImageA, imageNoSeam, minValue, maxValue, 10, 1 );
-					imageNoSeam.disposeLocal();
-					imageNoSeam = null;
-					//					float minValue = (float) (0.1 * wormImageA.getMax());
-					//					float maxValue = (float) (1.0 * wormImageA.getMax());
-					//					LatticeModel.segmentAll(wormImageA, minValue, maxValue, 20, 1, false );
-					//					wormImageA.calcMinMax();
-					//					minValue = (float) (0.25 * wormImageA.getMax());
-					//					maxValue = (float) (1.0 * wormImageA.getMax());
-					//					LatticeModel.segmentAll(wormImageA, minValue, maxValue, 10, 0.75f, true ); 
-				}
-			}
-		}
-		else
-		{
-			int fileCount = 0;
-			boolean fileExists = true;
-			while ( fileExists )
-			{    	
-				String fileName = baseFileNameText.getText() + "_" + fileCount + ".tif";
-				File voiFile = new File(baseFileDir + File.separator + fileName);
-				if ( voiFile.exists() )
-				{
-					//					System.err.println( fileName );
-					FileIO fileIO = new FileIO();
-					if(wormImageA != null) {
-						if ( (fileCount%10) == 0 )
-						{
-							wormImageA.disposeLocal(true);
-						}
-						else
-						{
-							wormImageA.disposeLocal();
-						}
-						wormImageA = null;
+////					float minValue = (float) (0.1 * wormImageA.getMax());
+////					float maxValue = (float) (1.0 * wormImageA.getMax());
+////					ModelImage imageNoSeam = LatticeModel.segmentAll1(wormImageA, minValue, maxValue, 20, 1 );
+////					new ViewJFrameImage(wormImageA);
+//					ModelImage temp = LatticeModel.blur(wormImageA, 5);
+//					temp.calcMinMax();
+//					float minValue = (float) (0.25 * temp.getMax());
+//					float maxValue = (float) (1.0 * temp.getMax());
+//					ModelImage imageNoSeam = LatticeModel.segmentAll1(temp, minValue, maxValue, 20, 1 );
+////					new ViewJFrameImage(imageNoSeam);
+//					new ViewJFrameImage(temp);
+//					
+//					minValue = (float) (0.1 * imageNoSeam.getMax());
+//					maxValue = (float) (1.0 *  imageNoSeam.getMax());
+//					ModelImage imageNoSeam2 = LatticeModel.segmentAll1(imageNoSeam, minValue, maxValue, 20, 1 );
+//					new ViewJFrameImage(imageNoSeam);
+//					
+//					
+//					LatticeModel.segmentAll2(wormImageA, imageNoSeam, minValue, maxValue, 10, 1 );
+////					imageNoSeam.disposeLocal();
+////					imageNoSeam = null;
+//					
+//					
+//					
+//					//					float minValue = (float) (0.1 * wormImageA.getMax());
+//					//					float maxValue = (float) (1.0 * wormImageA.getMax());
+//					//					LatticeModel.segmentAll(wormImageA, minValue, maxValue, 20, 1, false );
+//					//					wormImageA.calcMinMax();
+//					//					minValue = (float) (0.25 * wormImageA.getMax());
+//					//					maxValue = (float) (1.0 * wormImageA.getMax());
+//					//					LatticeModel.segmentAll(wormImageA, minValue, maxValue, 10, 0.75f, true ); 
+					
+					VOI testAnnotations = LatticeModel.segmentSeamCells( wormImageA, true );
+					
+//
+//
+					fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotation";            	    		
+					VOIVector annotations = new VOIVector();
+					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+					loadAllVOIsFrom(voiDir, true, annotations, false);
+					if ( annotations.size() <= 0 )
+					{
+						fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotations";            	    		
+						annotations = new VOIVector();
+						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+						loadAllVOIsFrom(voiDir, true, annotations, false);
 					}
-					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
-					wormImageA.calcMinMax();
-					float minValue = (float) (0.1 * wormImageA.getMax());
-					float maxValue = (float) (1.0 * wormImageA.getMax());
-					ModelImage imageNoSeam = LatticeModel.segmentAll1(wormImageA, minValue, maxValue, 20, 1 );
-					minValue = (float) (0.25 * imageNoSeam.getMax());
-					maxValue = (float) (1.0 *  imageNoSeam.getMax());
-					LatticeModel.segmentAll2(wormImageA, imageNoSeam, minValue, maxValue, 10, 1 );
-					fileCount++;
-				}
-				else
-				{
-					fileExists = false;
+					
+//					VOI testAnnotations = testImage.getVOIs().elementAt(0);
+					VOI knownAnnotations = annotations.elementAt(0);
+					int count = 0;
+					int totalCount = 0;
+					int[] matches = new int[testAnnotations.getCurves().size()];
+					for ( int j = 0; j < matches.length; j++ )
+					{
+						matches[j] = -1;
+					}
+					for ( int j = 0; j < knownAnnotations.getCurves().size(); j++ )
+					{
+						VOIText text1 = (VOIText) knownAnnotations.getCurves().elementAt(j);
+						if ( text1.getText().equals("origin") )
+						{
+							continue;
+						}
+						Vector3f pos1 = text1.elementAt(0);
+						float minDist = Float.MAX_VALUE;
+						int minIndex = -1;
+						for ( int k = 0; k < testAnnotations.getCurves().size(); k++ )
+						{
+							VOIText text2 = (VOIText) testAnnotations.getCurves().elementAt(k);
+							if ( text2.getText().equals("origin") )
+							{
+								continue;
+							}
+
+							Vector3f pos2 = text2.elementAt(0);
+							float dist = pos1.distance(pos2);
+							if ( dist < minDist )
+							{
+								minDist = dist;
+								minIndex = k;
+							}
+						}
+						if ( minDist < 10 )
+						{
+							count++;
+							if ( minIndex != -1 )
+							{
+								matches[minIndex] = j;
+							}
+						}
+//						System.err.println( minDist );
+//						float value = testImage.getFloatTriLinearBounds( pos.X, pos.Y, pos.Z );
+//						if ( value > min )
+//						{
+//							count++;
+//						}
+						totalCount++;
+					}
+					
+					System.err.println( baseFileNameText.getText() + "_" + includeRange.elementAt(i) + ".tif" + " Segmented " + count + " out of " + totalCount + " " + testAnnotations.getCurves().size() );
+//					for ( int j = 0; j < matches.length; j++ )
+//					{
+//						System.err.println( j + " -> " + matches[j] );
+//					}
+//					if ( testImage != null )
+//					{
+//						testImage.disposeLocal();
+//						testImage = null;
+//					}
+//					new ViewJFrameImage(testImage);
+//					wormImageA.unregisterAllVOIs();
+//					wormImageA.registerVOI(testAnnotations);
+//					new ViewJFrameImage(wormImageA);
 				}
 			}
 		}
@@ -3895,6 +3955,11 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		panel.setForeground(Color.black);
 
 		gbc.gridx = 0;
+		segmentSeamCells = gui.buildCheckBox("segment seam cells", false );
+//		panel.add(segmentSeamCells.getParent(), gbc);
+//		gbc.gridy++;
+		
+		gbc.gridx = 0;
 		buildLattice = gui.buildCheckBox("build lattice", false );
 		//		buildLattice.setEnabled(false);
 		panel.add(buildLattice.getParent(), gbc);
@@ -3914,11 +3979,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		gbc.gridx = 0;
 		generateTrainingData = gui.buildCheckBox("generate training data", false );
 		//		panel.add(generateTrainingData.getParent(), gbc);
-		//		gbc.gridy++;
-
-		gbc.gridx = 0;
-		segmentSeamCells = gui.buildCheckBox("segment seam cells", false );
-		//		panel.add(segmentSeamCells.getParent(), gbc);
 		//		gbc.gridy++;
 
 		gbc.gridx = 0;
