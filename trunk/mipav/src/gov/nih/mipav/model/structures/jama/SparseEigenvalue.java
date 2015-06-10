@@ -8437,7 +8437,7 @@ public class SparseEigenvalue implements java.io.Serializable {
     // \EndLib
     
     // -----------------------------------------------------------------------
-          private void dseupd (boolean rvec, String howmny, boolean select[], double d[], 
+          public void dseupd (boolean rvec, String howmny, boolean select[], double d[], 
         		               double z[][], int ldz, double sigma, String bmat,
                                int n, String which, int nev, double tol, double resid[],
                                int ncv,double v[][], int ldv, int iparam[], 
@@ -9963,7 +9963,7 @@ public class SparseEigenvalue implements java.io.Serializable {
     //
     // -----------------------------------------------------------------------
     //
-          private void dsaupd
+          public void dsaupd
             (int ido[], String bmat, int n, String which, int nev, double tol[], double resid[], int ncv, double v[][], int ldv, int iparam[], 
               int ipntr[], double workd[], double workl[], int lworkl, int info[] ) {
     //
