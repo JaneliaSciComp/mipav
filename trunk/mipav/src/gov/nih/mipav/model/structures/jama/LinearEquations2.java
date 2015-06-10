@@ -3898,7 +3898,7 @@ public class LinearEquations2 implements java.io.Serializable {
            = 0:  successful exit
            < 0:  if info[0] = -i, the i-th argument had an illegal value
      */
-    private void dgetrs(char trans, int n, int nrhs, double[][] A, int lda, int[] ipiv,
+    public void dgetrs(char trans, int n, int nrhs, double[][] A, int lda, int[] ipiv,
                         double[][] B, int ldb, int[] info) {
         boolean notran;
         
