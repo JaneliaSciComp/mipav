@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -12,8 +13,12 @@ import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
+import gov.nih.mipav.model.structures.jama.LinearEquations2;
+import gov.nih.mipav.model.structures.jama.SparseEigenvalue;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewUserInterface;
 
 /**
  * Compute globalPb, the globalized probability of boundary of an image
@@ -26,6 +31,10 @@ import gov.nih.mipav.view.Preferences;
  */
 
 public class AlgorithmGlobalPb extends AlgorithmBase {
+	
+	private ViewUserInterface UI = ViewUserInterface.getReference();
+	
+	DecimalFormat nf = new DecimalFormat("0.00000E0");
 	
 	private String outFile;
 	
@@ -211,6 +220,40 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	int j;
     	int k;
     	boolean found;
+    	int n;
+    	int nev;
+    	int ncv;
+    	String bmat;
+    	String which;
+    	int lworkl;
+    	double tol[] = new double[1];
+    	int ido[] = new int[1];
+        int info[] = new int[1];
+        int ishfts;
+        int maxitr;
+        int mode;
+        int iparam[] = new int[11];
+        SparseEigenvalue se = new SparseEigenvalue();
+        LinearEquations2 le2 = new LinearEquations2();
+        double resid[];
+        int ldv;
+        double v[][];
+        int ipntr[];
+        double workd[];
+        double workd2[][];
+        double workl[];
+        boolean rvec;
+        boolean select[];
+        double ds[];
+        double sigma;
+        int ierr[];
+        int index;
+        double d[][];
+        int nconv;
+        int ipiv[];
+        double EigVal[][];
+        double EigVect[][];
+        int ss;
         int ty = mPb.length;
         int tx = mPb[0].length;
         double l[][][] = new double[2][][];
@@ -371,6 +414,318 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
 				valspDmW[k++] = -valsp[i];		
         	}
         } // for (i = 0, k = 0; i < sparseElements; i++)
+        
+        // Use DSDRV4 for Generalized Eigenvalues
+        // Shift and invert mode
+        // A*x = lamda*M*x
+        // Op = inv(A - sigma*M)*M
+        // B = M
+        
+        // Dimension of matrix
+        n = Math.max(wx, wy);
+        // Number of eigenvalues to be approximated
+        nev = nvec;
+        // The length of the Lanczos factorization. This represents the
+        // maximum number of Lanczos vectors used.
+        // ncv >= nev + 1
+        // As a rule of thumb, ncv = 2 * nev is reasonable.
+        ncv = Math.min(Math.max(2 * nev, 20),n);
+        // Problem is generalized eigenvalue
+        bmat = "G";
+        // Calculate smallest magnitude eigenvalues
+        // This is done by using "LM" in mode 3
+        which = "LM";
+        // The work array workl is used in dsaupd as workspace.  
+        // Its dimension lworkl is set as illustrated below.
+        lworkl = ncv*(ncv+8);
+        // The parameter tol determines the stopping criterion.  
+        // If tol <=0, machine precision is used.
+        tol[0] = 0.0;
+        // The variable ido is used for reverse communication and is initially set to 0. 
+        ido[0] = 0;
+        // Setting info[0] =0 indicates that a random vector is
+        // generated in dsaupd to start the Arnoldi iteration.                                 
+        info[0] = 0;
+        
+        // This program uses exact shifts with respect to
+        // the current Hessenberg matrix (iparam[0] = 1).
+        ishfts = 1;
+        // iparam[2] specifies the maximum number of Arnoldi iterations allowed.
+        maxitr = 300;
+        // Mode 3 of dsaupd is used (iparam[6] = 3).
+        mode   = 3;
+  
+        iparam[0] = ishfts;
+        iparam[2] = maxitr; 
+        iparam[6] = mode;
+        resid = new double[n];
+        ldv = n;
+        v = new double[ldv][ncv];
+        ipntr = new int[11];
+        workd = new double[3*n];
+        workd2 = new double[n][3];
+        workl = new double[lworkl];
+        select = new boolean[ncv];
+        ds = new double[2 * ncv];
+        sigma = 0.0;
+        ierr = new int[1];
+        d = new double[ncv][2];
+        nconv = 0;
+        ipiv = new int[n];
+        double A[][] = new double[n][n];
+        for (k = 0; k < sparseElementsDmW; k++) {
+        	i = IDmWsp[k];
+        	j = JDmWsp[k];
+        	A[i][j] = valspDmW[k];
+        }
+        EigVal = new double[nvec][nvec];
+        EigVect = new double[n][nvec];
+        
+        // LU factor A - sigma B
+        // LU factor D - W
+        // dgetrf does not handle sparse matrices
+        // Replace with port of lucp which does handle sparse matrices
+        le2.dgetrf(n, n, A, n, ipiv, ierr);
+        if (ierr[0] != 0) { 
+           UI.setDataText("Error with dgetrf in spectralPb. \n");
+           return;
+        }
+        
+        //     %-------------------------------------------%
+        //     | M A I N   L O O P (Reverse communication) |
+        //     %-------------------------------------------%
+        
+        while (true) {
+        
+        //        %---------------------------------------------%
+        //        | Repeatedly call the routine dsaupd and take | 
+        //        | actions indicated by parameter ido until    |
+        //        | either convergence is indicated or maxitr   |
+        //        | has been exceeded.                          |
+        //        %---------------------------------------------%
+        
+                 se.dsaupd ( ido, bmat, n, which, nev, tol, resid, 
+                          ncv, v, ldv, iparam, ipntr, workd, workl,
+                          lworkl, info );
+                 index = 0;
+            	 for (j = 0; j < 3; j++) {
+            		 for (i = 0; i < n; i++) {
+            		     workd2[i][j] = workd[index++];	 
+            		 }
+            	 }
+                 
+                
+                 
+                 if (ido[0] == -1) {
+                 
+                 //           %--------------------------------------------%
+                 //           | Perform  y <--- OP*x = inv[A-SIGMA*M]*M*x  |
+                 //           | to force the starting vector into the      |
+                 //           | range of OP.  The user should supply       |
+                 //           | his/her own matrix vector multiplication   |
+                 //           | routine and a linear system solver here.   |
+                 //           | The matrix vector multiplication routine   |
+                 //           | takes workd(ipntr(1)) as the input vector. |
+                 //           | The final result is returned to            |
+                 //           | workd(ipntr(2)).                           |
+                 //          %--------------------------------------------%
+                 //
+                	 
+                	 for (i = 0; i < n; i++) {
+                		 workd2[i][1] = 0;
+                	 }
+                	 for (k = 0; k < sparseElementsD; k++) {
+                		 i = IJDsp[k];
+                		 workd2[i][1] += valspD[k]*workd2[i][0];
+                	 }
+                	 // use LU reordering permAsB
+                     //workd2(permAsB,1) = U \ (L \ (P * workd2[i][1]));
+                	 index = 0;
+                	 for (j = 0; j < 3; j++) {
+                		 for (i = 0; i < n; i++) {
+                		     workd[index++] = workd2[i][j];	 
+                		 }
+                	 }
+
+                 }
+                 else if (ido[0] == 1) {
+                 
+                 //           %-----------------------------------------%
+                 //           | Perform y <-- OP*x = inv[A-sigma*M]*M*x |
+                 //           | M*x has been saved in workd(ipntr(3)).  |
+                 //           | the user only needs the linear system   |
+                 //           | solver here that takes workd(ipntr(3)   |
+                 //           | as input, and returns the result to     |
+                 //           | workd(ipntr(2)).                        | 
+                 //           %-----------------------------------------%
+                 //
+                	 // use LU reordering permAsB
+                     //workd2(permAsB,1) = U \ (L \ (P * workd2[i][2]));
+                	 index = 0;
+                	 for (j = 0; j < 3; j++) {
+                		 for (i = 0; i < n; i++) {
+                		     workd[index++] = workd2[i][j];	 
+                		 }
+                	 }
+                 }
+                 else if (ido[0] == 2) {
+                 
+                 //           %-----------------------------------------%
+                 //           |          Perform  y <--- M*x            |
+                 //           | Need the matrix vector multiplication   |
+                 //           | routine here that takes workd(ipntr(1)) |
+                 //           | as the input and returns the result to  |
+                 //           | workd(ipntr(2)).                        |
+                 //           %-----------------------------------------%
+                	 for (i = 0; i < n; i++) {
+                		 workd2[i][1] = 0;
+                	 }
+                	 for (k = 0; k < sparseElementsD; k++) {
+                		 i = IJDsp[k];
+                		 workd2[i][1] += valspD[k]*workd2[i][0];
+                	 }
+                	 index = 0;
+                	 for (j = 0; j < 3; j++) {
+                		 for (i = 0; i < n; i++) {
+                		     workd[index++] = workd2[i][j];	 
+                		 }
+                	 }
+                 } // else if (ido[0] == 2)
+
+                 else {
+                	 break;
+                 }
+        } // while (true)
+        
+        
+        
+        //     %-----------------------------------------%
+        //     | Either we have convergence, or there is |
+        //     | an error.                               |
+        //     %-----------------------------------------%
+        
+              if ( info[0] < 0 ) {
+        
+        //        %--------------------------%
+        //        | Error message, check the |
+        //        | documentation in DSAUPD  |
+        //        %--------------------------%
+        
+                 UI.setDataText("Error in spectralPb with dsaupd info[0] = " + info[0] + "\n");
+                 return;
+              } // if (info[0] < 0)
+              else  { // info[0] >= 0
+        
+        //        %-------------------------------------------%
+        //        | No fatal errors occurred.                 |
+        //        | Post-Process using DSEUPD.                |
+        //        |                                           |
+        //        | Computed eigenvalues may be extracted.    |  
+        //        |                                           |
+        //        | Eigenvectors may also be computed now if  |
+        //        | desired.  (indicated by rvec = .true.)    | 
+        //        %-------------------------------------------%
+                   
+                 rvec = true;
+        
+                 se.dseupd ( rvec, "A", select, ds, v, ldv, sigma, 
+                     bmat, n, which, nev, tol[0], resid, ncv, v, ldv, 
+                     iparam, ipntr, workd, workl, lworkl, ierr );
+                 // eigenvalue and eigenvector reversals done here in eigs
+                 // and after eigs just leave out both reversals
+                 
+                 index = 0;
+                 for (j = 0; j < 2; j++) {
+                	 for (i = 0; i < ncv; i++) {
+                	     d[i][j] = ds[index++]; 
+                	 }
+                 }
+                 for (i = 0; i < nvec; i++) {
+                	 EigVal[i][i] = d[i][0];
+                 }
+                 for (i = 0; i < n; i++) {
+                	 for (j = 0; j < nvec; j++) {
+                		 EigVect[i][j] = v[i][j];
+                	 }
+                 }
+        
+        //        %----------------------------------------------%
+        //        | Eigenvalues are returned in the first column |
+        //        | of the two dimensional array D and the       |
+        //        | corresponding eigenvectors are returned in   |
+        //        | the first NEV columns of the two dimensional |
+        //        | array V if requested.  Otherwise, an         |
+        //        | orthogonal basis for the invariant subspace  |
+        //        | corresponding to the eigenvalues in D is     |
+        //        | returned in V.                               |
+        //        %----------------------------------------------%
+        
+                 if (ierr[0] != 0) { 
+        
+        //           %------------------------------------%
+        //           | Error condition:                   |
+        //           | Check the documentation of DSEUPD. |
+        //           %------------------------------------%
+         
+                    UI.setDataText("Error in spectralPb with dseupd ierr[0] = " + ierr[0] + "\n");
+                    if (ierr[0] == 2) {
+                        ss = 0;
+                        for (i = 0; i < ncv; i++) {
+                        	if (select[i]) {
+                        		ss++;
+                        	}
+                        }
+                        if (ss < nvec) {
+                        	UI.setDataText("The boolean array select was only set " + ss + " times instead of " + nvec + " times\n");
+                        }
+                    }
+                    else if (ierr[0] == 1) {
+                    	UI.setDataText("The Schur form could not be reordered\n");
+                    }
+                    else if (ierr[0] == -14) {
+                    	UI.setDataText("dsaupd did not find any eigenvalues to sufficient accuracy\n");
+                    }
+                 } // if (ierr[0] != 0)
+                 else  { // ierr[0] == 0
+        
+                    nconv =  iparam[4];
+                    
+                 } // else ierr[0] == 0
+                 //        %------------------------------------------%
+                 //        | Print additional convergence information |
+                 //        %------------------------------------------%
+                          
+                          if ( info[0] == 1) {
+                          	UI.setDataText("Maximum number of iterations reached.\n");
+                           }
+                           else if ( info[0] == 3) {
+                          	UI.setDataText("No shifts could be applied during implicit Arnoldi update, try increasing NCV.\n");
+                           }     
+                  
+                           Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+                           Preferences.debug("SparseEigenvalue\n", Preferences.DEBUG_ALGORITHM);
+                           Preferences.debug("======\n", Preferences.DEBUG_ALGORITHM);
+                           Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+                           Preferences.debug("Size of the matrix = " +  n + "\n", Preferences.DEBUG_ALGORITHM);
+                           Preferences.debug("The number of Ritz values requested = " +  nev + "\n", Preferences.DEBUG_ALGORITHM);
+                           Preferences.debug("The number of Arnoldi vectors generated ncv = " +  ncv + "\n", Preferences.DEBUG_ALGORITHM);
+                           Preferences.debug("What portion of the spectrum: " +  which + "\n", Preferences.DEBUG_ALGORITHM);
+                           Preferences.debug("The number of converged Ritz values = " +nconv + "\n", Preferences.DEBUG_ALGORITHM);
+                           Preferences.debug("The number of Implicit Arnoldi update iterations taken = " +  iparam[2] + "\n",
+                        		   Preferences.DEBUG_ALGORITHM);
+                           Preferences.debug("The number of OP*x = " +  iparam[8] + "\n", Preferences.DEBUG_ALGORITHM);
+                           Preferences.debug("The convergence criterion = " + tol[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                           Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+              } // else info[0] >= 0
+              if (ierr[0] != 0) {
+            	  return;
+              }
+              
+              // Reversal done in eigs just just leave out eigs reversal and this reversal
+              // EigVal(1:end) = EigVal(end:-1:1)
+              // EigVect(:, 1: end) = EigVect(:, end:-1:1)
+              
+          
     }
     
     private class DualLattice{
