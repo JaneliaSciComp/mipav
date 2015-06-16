@@ -966,63 +966,60 @@ public class LUSOL implements java.io.Serializable {
 	    }
 	    parmlu[15] = growth;
 
-	    /*!------------------------------------------------------------------
-	    ! Print statistics for the LU factors.
-	    !------------------------------------------------------------------
-	    ncp    = luparm(26)
-	    condU  = DUmax / max( DUmin, 1.0e-20_rp )
-	    dincr  = lenL + lenU - nelem
-	    dincr  = dincr * 100.0_rp / max( delem, one )
-	    avgmer = mersum
-	    avgmer = avgmer / dm
-	    nbump  = m - nUtri - nLtri
+	    // ------------------------------------------------------------------
+	    // Print statistics for the LU factors.
+	    // ------------------------------------------------------------------
+	    ncp    = luparm[25];
+	    condU  = DUmax[0] / Math.max( DUmin[0], 1.0e-20);
+	    dincr  = lenL[0] + lenU[0] - nelem;
+	    dincr  = dincr * 100.0 / Math.max( delem, one );
+	    avgmer = mersum[0];
+	    avgmer = avgmer / dm;
+	    nbump  = m - nUtri[0] - nLtri[0];
 
-	    if (nout > 0  .and.  lprint >= 10) then
-	       if ( TPP ) then
-	          write(nout, 1100) avgmer, lenL, lenL+lenU, ncp, dincr, &
-	                            nUtri, lenU, Ltol, Umax, Ugrwth,     &
-	                            nLtri, ndens1, Lmax
+	    if (nout > 0  &&  lprint >= 10) {
+	       if ( TPP ) {
+	          UI.setDataText("avgmer = " + nf.format(avgmer) + "\n");
+	          UI.setDataText("lenL[0] = " + lenL[0] + "\n");
+	          UI.setDataText("(lenL[0] + lenU[0]) = " + (lenL[0] + lenU[0]) + "\n");
+	          UI.setDataText("ncp = " + ncp + "\n");
+	          UI.setDataText("dincr = " + nf.format(dincr) + "\n");
+	          UI.setDataText("nUtri[0] = " + nUtri[0] + "\n");
+	          UI.setDataText("lenU[0] = " + lenU[0] + "\n");
+	          UI.setDataText("Ltol = " + nf.format(Ltol) + "\n");
+	          UI.setDataText("Umax[0] = " + nf.format(Umax[0]) + "\n");
+	          UI.setDataText("Ugrwth = " + nf.format(Ugrwth) + "\n");
+	          UI.setDataText("ndens1[0] = " + ndens1[0] + "\n");
+	          UI.setDataText("Lmax[0] = " + nf.format(Lmax[0]) + "\n");
+	       }
 
-	       else
-	          write(nout, 1120) kPiv(lPiv), avgmer,                  &
-	                            lenL, lenL+lenU, ncp, dincr,         &
-	                            nUtri, lenU, Ltol, Umax, Ugrwth,     &
-	                            nLtri, ndens1, Lmax, Akmax, Agrwth
-	       end if
+	       else {
+	          UI.setDataText("kPiv[lPiv] = " + kPiv[lPiv] + "\n");
+	          UI.setDataText("avgmer = " + nf.format(avgmer) + "\n");
+	          UI.setDataText("lenL[0] = " + lenL[0] + "\n");
+	          UI.setDataText("(lenL[0] + lenU[0]) = " + (lenL[0] + lenU[0]) + "\n");
+	          UI.setDataText("ncp = " + ncp + "\n");
+	          UI.setDataText("dincr = " + nf.format(dincr) + "\n");
+	          UI.setDataText("nUtri[0] = " + nUtri[0] + "\n");
+	          UI.setDataText("lenU[0] = " + lenU[0] + "\n");
+	          UI.setDataText("Ltol = " + nf.format(Ltol) + "\n");
+	          UI.setDataText("Umax[0] = " + nf.format(Umax[0]) + "\n");
+	          UI.setDataText("Ugrwth = " + nf.format(Ugrwth) + "\n");
+	          UI.setDataText("nLtri[0] = " + nLtri[0] + "\n");
+	          UI.setDataText("ndens1[0] = " + ndens1[0] + "\n");
+	          UI.setDataText("Lmax[0] = " + nf.format(Lmax[0]) + "\n");
+	          UI.setDataText("Akmax[0] = " + nf.format(Akmax[0]) + "\n");
+	          UI.setDataText("Agrwth = " + nf.format(Agrwth) + "\n");
+	       }
 
-	       write(nout, 1200) nbump, ndens2, DUmax, DUmin, condU
-	    end if
+	       UI.setDataText("nbump = " + nbump + "\n");
+	       UI.setDataText("ndens2 = " + ndens2 + "\n");
+	       UI.setDataText("DUmax[0] = " + nf.format(DUmax[0]) + "\n");
+	       UI.setDataText("DUmin[0] = " + nf.format(DUmin[0]) + "\n");
+	       UI.setDataText("condU = " + nf.format(condU) + "\n");
+	    } // if (nout > 0  &&  lprint >= 10)
 
-	    return
-
-	1000 format(' m', i12, ' ', a, 'n', i12, '  Elems', i9,    &
-	            '  Amax', es10.1, '  Density', f7.2)
-	1100 format(' Merit', f8.1, '  lenL', i9, '  L+U', i11,    &
-	            '  Cmpressns', i5, '  Incres', f8.2            &
-	      /     ' Utri', i9, '  lenU', i9, '  Ltol', es10.2,   &
-	            '  Umax', es10.1, '  Ugrwth', es8.1            &
-	      /     ' Ltri', i9, '  dense1', i7, '  Lmax', es10.2)
-	1120 format(' Mer', a2, f8.1, '  lenL', i9, '  L+U', i11,  &
-	            '  Cmpressns', i5, '  Incres', f8.2            &
-	      /     ' Utri', i9, '  lenU', i9, '  Ltol', es10.2,   &
-	            '  Umax', es10.1, '  Ugrwth', es8.1            &
-	      /     ' Ltri', i9, '  dense1', i7, '  Lmax', es10.2, &
-	            '  Akmax', es9.1, '  Agrwth', es8.1)
-	1200 format(' bump', i9, '  dense2', i7, '  DUmax', es9.1, &
-	            '  DUmin', es9.1, '  condU', es9.1)
-	1300 format(/ ' lu1fac  error...  entry  a(', i8, ')  has an illegal', &
-	              ' row or column index' &
-	            //' indc, indr =', 2i8)
-	1400 format(/ ' lu1fac  error...  entry  a(', i8, ')  has the same', &
-	              ' indices as an earlier entry' &
-	            //' indc, indr =', 2i8)
-	1700 format(/ ' lu1fac  error...  insufficient storage' &
-	            //' Increase  lena  from', i10, '  to at least', i10)
-	1800 format(/ ' lu1fac  error...  fatal bug', &
-	              '   (sorry --- this should never happen)')
-	1900 format(/ ' lu1fac  error...  TSP used but', &
-	              ' diagonal pivot could not be found')*/
-
+	    return;
 	  } // lu1fqac
 
     private void lu1or1( int m, int n, int nelem, int lena, double small,
@@ -1396,331 +1393,338 @@ return;
             int nUtri[] , int nLtri[], int ndens1[], int ndens2[], int nrank[],
             double Lmax[], double Umax[], double DUmax[], double DUmin[], double Akmax[]) {
 
-/*integer(ip),   intent(in)    :: m, n, nelem, lena, lenH
-integer(ip),   intent(inout) :: luparm(30)
-real(rp),      intent(inout) :: parmlu(30), a(lena), Amaxr(m), w(n), Ha(lenH)
-integer(ip),   intent(inout) :: indc(lena), indr(lena), p(m)    , q(n)    , &
-                           lenc(n)   , lenr(m)   , locc(n) , locr(m) , &
-                           iploc(n)  , iqloc(m)  , ipinv(m), iqinv(n), &
-                           Hj(lenH)  , Hk(lenH)
-integer(ip),   intent(out)   :: inform, lenL  , lenU  , minlen, mersum,     &
-                           nUtri , nLtri , ndens1, ndens2, nrank
-real(rp),      intent(out)   :: Lmax, Umax, DUmax, DUmin, Akmax
+//integer(ip),   intent(in)    :: m, n, nelem, lena, lenH
+//integer(ip),   intent(inout) :: luparm(30)
+//real(rp),      intent(inout) :: parmlu(30), a(lena), Amaxr(m), w(n), Ha(lenH)
+//integer(ip),   intent(inout) :: indc(lena), indr(lena), p(m)    , q(n)    , &
+//                           lenc(n)   , lenr(m)   , locc(n) , locr(m) , &
+//                           iploc(n)  , iqloc(m)  , ipinv(m), iqinv(n), &
+//                           Hj(lenH)  , Hk(lenH)
+//integer(ip),   intent(out)   :: inform, lenL  , lenU  , minlen, mersum,     &
+//                           nUtri , nLtri , ndens1, ndens2, nrank
+//real(rp),      intent(out)   :: Lmax, Umax, DUmax, DUmin, Akmax
 
-!------------------------------------------------------------------
-! lu1fad  is a driver for the numerical phase of lu1fac.
-! At each stage it computes a column of  L  and a row of  U,
-! using a Markowitz criterion to select the pivot element,
-! subject to a stability criterion that bounds the elements of  L.
-!
-! 00 Jan 1986  Version documented in LUSOL paper:
-!              Gill, Murray, Saunders and Wright (1987),
-!              Maintaining LU factors of a general sparse matrix,
-!              Linear algebra and its applications 88/89, 239-270.
-!
-! 02 Feb 1989  Following Suhl and Aittoniemi (1987), the largest
-!              element in each column is now kept at the start of
-!              the column, i.e. in position locc(j) of a and indc.
-!              This should speed up the Markowitz searches.
-!              To save time on highly triangular matrices, we wait
-!              until there are no further columns of length 1
-!              before setting and maintaining that property.
-!
-! 12 Apr 1989  ipinv and iqinv added (inverses of p and q)
-!              to save searching p and q for rows and columns
-!              altered in each elimination step.  (Used in lu1pq2)
-!
-! 19 Apr 1989  Code segmented to reduce its size.
-!              lu1gau does most of the Gaussian elimination work.
-!              lu1mar does just the Markowitz search.
-!              lu1mxc moves biggest elements to top of columns.
-!              lu1pen deals with pending fill-in in the row list.
-!              lu1pq2 updates the row and column permutations.
-!
-! 26 Apr 1989  maxtie replaced by maxcol, maxrow in the Markowitz
-!              search.  maxcol, maxrow change as density increases.
-!
-! 25 Oct 1993  keepLU implemented.
-!
-! 07 Feb 1994  Exit main loop early to finish off with a dense LU.
-!              densLU tells lu1fad whether to do it.
-! 21 Dec 1994  Bug fixed.  nrank was wrong after the call to lu1ful.
-! 12 Nov 1999  A parallel version of dcopy gave trouble in lu1ful
-!              during left-shift of dense matrix D within a(*).
-!              Fixed this unexpected problem here in lu1fad
-!              by making sure the first and second D don't overlap.
-!
-! 13 Sep 2000  TCP (Threshold Complete Pivoting) implemented.
-!              lu2max added
-!              (finds aijmax from biggest elems in each col).
-!              Utri, Ltri and Spars1 phases apply.
-!              No switch to Dense CP yet.  (Only TPP switches.)
-! 14 Sep 2000  imax needed to remember row containing aijmax.
-! 22 Sep 2000  For simplicity, lu1mxc always fixes
-!              all modified cols.
-!              (TPP spars2 used to fix just the first maxcol cols.)
-! 08 Nov 2000: Speed up search for aijmax.
-!              Don't need to search all columns if the elimination
-!              didn't alter the col containing the current aijmax.
-! 21 Nov 2000: lu1slk implemented for Utri phase with TCP
-!              to guard against deceptive triangular matrices.
-!              (Utri used to have aijtol >= 0.9999 to include
-!              slacks, but this allows other 1s to be accepted.)
-!              Utri now accepts slacks, but applies normal aijtol
-!              test to other pivots.
-! 28 Nov 2000: TCP with empty cols must call lu1mxc and lu2max
-!              with ( lq1, n, ... ), not just ( 1, n, ... ).
-! 23 Mar 2001: lu1fad bug with TCP.
-!              A col of length 1 might not be accepted as a pivot.
-!              Later it appears in a pivot row and temporarily
-!              has length 0 (when pivot row is removed
-!              but before the column is filled in).  If it is the
-!              last column in storage, the preceding col also thinks
-!              it is "last".  Trouble arises when the preceding col
-!              needs fill-in -- it overlaps the real "last" column.
-!              (Very rarely, same trouble might have happened if
-!              the drop tolerance caused columns to have length 0.)
-!
-!              Introduced ilast to record the last row in row file,
-!                         jlast to record the last col in col file.
-!              lu1rec returns ilast = indr(lrow + 1)
-!                          or jlast = indc(lcol + 1).
-!              (Should be an output parameter, but didn't want to
-!              alter lu1rec's parameter list.)
-!              lu1rec also treats empty rows or cols safely.
-!              (Doesn't eliminate them!)
-!
-! 26 Apr 2002: Heap routines added for TCP.
-!              lu2max no longer needed.
-!              imax, jmax used only for printing.
-! 01 May 2002: lu1DCP implemented (dense complete pivoting).
-!              Both TPP and TCP now switch to dense LU
-!              when density exceeds dens2.
-! 06 May 2002: In dense mode, store diag(U) in natural order.
-! 09 May 2002: lu1mCP implemented (Markowitz TCP via heap).
-! 11 Jun 2002: lu1mRP implemented (Markowitz TRP).
-! 28 Jun 2002: Fixed call to lu1mxr.
-! 14 Dec 2002: lu1mSP implemented (Markowitz TSP).
-! 15 Dec 2002: Both TPP and TSP can grab cols of length 1
-!              during Utri.
-! 19 Dec 2004: Hdelete(...) has new input argument Hlenin.
-! 26 Mar 2006: lu1fad returns nrank  = min( mrank, nrank )
-!              and ignores nsing from lu1ful
-!
-! 10 Jan 2010: First f90 version.
-! 03 Apr 2013: lu1mxr recoded to improve efficiency of TRP.
-!------------------------------------------------------------------
+// ------------------------------------------------------------------
+// lu1fad  is a driver for the numerical phase of lu1fac.
+// At each stage it computes a column of  L  and a row of  U,
+// using a Markowitz criterion to select the pivot element,
+// subject to a stability criterion that bounds the elements of  L.
+//
+// 00 Jan 1986  Version documented in LUSOL paper:
+//              Gill, Murray, Saunders and Wright (1987),
+//              Maintaining LU factors of a general sparse matrix,
+//              Linear algebra and its applications 88/89, 239-270.
 
-logical                :: Utri, Ltri, spars1, spars2, dense,       &
-                     densLU, keepLU, TCP, TPP, TRP, TSP
-real(rp)               :: abest, aijmax, aijtol, amax, &
-                     dens1, dens2, diag,          &
-                     Lij, Ltol, small, Uspace
-integer(ip), parameter :: i1 = 1
-real(rp),    parameter :: zero = 0.0,  one = 1.0
+// 02 Feb 1989  Following Suhl and Aittoniemi (1987), the largest
+//              element in each column is now kept at the start of
+//              the column, i.e. in position locc(j) of a and indc.
+//              This should speed up the Markowitz searches.
+//              To save time on highly triangular matrices, we wait
+//              until there are no further columns of length 1
+//              before setting and maintaining that property.
+
+// 12 Apr 1989  ipinv and iqinv added (inverses of p and q)
+//              to save searching p and q for rows and columns
+//              altered in each elimination step.  (Used in lu1pq2)
+
+// 19 Apr 1989  Code segmented to reduce its size.
+//              lu1gau does most of the Gaussian elimination work.
+//              lu1mar does just the Markowitz search.
+//              lu1mxc moves biggest elements to top of columns.
+//              lu1pen deals with pending fill-in in the row list.
+//              lu1pq2 updates the row and column permutations.
+
+// 26 Apr 1989  maxtie replaced by maxcol, maxrow in the Markowitz
+//              search.  maxcol, maxrow change as density increases.
+
+// 25 Oct 1993  keepLU implemented.
+
+// 07 Feb 1994  Exit main loop early to finish off with a dense LU.
+//              densLU tells lu1fad whether to do it.
+// 21 Dec 1994  Bug fixed.  nrank was wrong after the call to lu1ful.
+// 12 Nov 1999  A parallel version of dcopy gave trouble in lu1ful
+//              during left-shift of dense matrix D within a(*).
+//              Fixed this unexpected problem here in lu1fad
+//              by making sure the first and second D don't overlap.
+
+// 13 Sep 2000  TCP (Threshold Complete Pivoting) implemented.
+//              lu2max added
+//              (finds aijmax from biggest elems in each col).
+//              Utri, Ltri and Spars1 phases apply.
+//              No switch to Dense CP yet.  (Only TPP switches.)
+// 14 Sep 2000  imax needed to remember row containing aijmax.
+// 22 Sep 2000  For simplicity, lu1mxc always fixes
+//              all modified cols.
+//              (TPP spars2 used to fix just the first maxcol cols.)
+// 08 Nov 2000: Speed up search for aijmax.
+//              Don't need to search all columns if the elimination
+//              didn't alter the col containing the current aijmax.
+// 21 Nov 2000: lu1slk implemented for Utri phase with TCP
+//              to guard against deceptive triangular matrices.
+//              (Utri used to have aijtol >= 0.9999 to include
+//              slacks, but this allows other 1s to be accepted.)
+//              Utri now accepts slacks, but applies normal aijtol
+//              test to other pivots.
+// 28 Nov 2000: TCP with empty cols must call lu1mxc and lu2max
+//              with ( lq1, n, ... ), not just ( 1, n, ... ).
+// 23 Mar 2001: lu1fad bug with TCP.
+//              A col of length 1 might not be accepted as a pivot.
+//              Later it appears in a pivot row and temporarily
+//              has length 0 (when pivot row is removed
+//              but before the column is filled in).  If it is the
+//              last column in storage, the preceding col also thinks
+//              it is "last".  Trouble arises when the preceding col
+//              needs fill-in -- it overlaps the real "last" column.
+//              (Very rarely, same trouble might have happened if
+//              the drop tolerance caused columns to have length 0.)!
+    	
+//              Introduced ilast to record the last row in row file,
+//                         jlast to record the last col in col file.
+//              lu1rec returns ilast = indr(lrow + 1)
+//                          or jlast = indc(lcol + 1).
+//              (Should be an output parameter, but didn't want to
+//              alter lu1rec's parameter list.)
+//              lu1rec also treats empty rows or cols safely.
+//              (Doesn't eliminate them!)
+
+// 26 Apr 2002: Heap routines added for TCP.
+//              lu2max no longer needed.
+//              imax, jmax used only for printing.
+// 01 May 2002: lu1DCP implemented (dense complete pivoting).
+//              Both TPP and TCP now switch to dense LU
+//              when density exceeds dens2.
+// 06 May 2002: In dense mode, store diag(U) in natural order.
+// 09 May 2002: lu1mCP implemented (Markowitz TCP via heap).
+// 11 Jun 2002: lu1mRP implemented (Markowitz TRP).
+// 28 Jun 2002: Fixed call to lu1mxr.
+// 14 Dec 2002: lu1mSP implemented (Markowitz TSP).
+// 15 Dec 2002: Both TPP and TSP can grab cols of length 1
+//              during Utri.
+// 19 Dec 2004: Hdelete(...) has new input argument Hlenin.
+// 26 Mar 2006: lu1fad returns nrank  = min( mrank, nrank )
+//              and ignores nsing from lu1ful
+
+// 10 Jan 2010: First f90 version.
+// 03 Apr 2013: lu1mxr recoded to improve efficiency of TRP.
+// ------------------------------------------------------------------
+
+boolean Utri, Ltri, spars1, spars2, dense,
+        densLU, keepLU, TCP, TPP, TRP, TSP;
+double abest, aijmax, aijtol, amax, 
+       dens1, dens2, diag,
+       Lij, Ltol, small, Uspace;
+final int i1 = 1;
+final double zero = 0.0;
+final double one = 1.0;
 
 
-!------------------------------------------------------------------
-! Local variables
-!---------------
-!
-! lcol   is the length of the column file.  It points to the last
-!        nonzero in the column list.
-! lrow   is the analogous quantity for the row file.
-! lfile  is the file length (lcol or lrow) after the most recent
-!        compression of the column list or row list.
-! nrowd  and  ncold  are the number of rows and columns in the
-!        matrix defined by the pivot column and row.  They are the
-!        dimensions of the submatrix D being altered at this stage.
-! melim  and  nelim  are the number of rows and columns in the
-!        same matrix D, excluding the pivot column and row.
-! mleft  and  nleft  are the number of rows and columns
-!        still left to be factored.
-! nzchng is the increase in nonzeros in the matrix that remains
-!        to be factored after the current elimination
-!        (usually negative).
-! nzleft is the number of nonzeros still left to be factored.
-! nspare is the space we leave at the end of the last row or
-!        column whenever a row or column is being moved to the end
-!        of its file.  nspare = 1 or 2 might help reduce the
-!        number of file compressions when storage is tight.
-!
-! The row and column ordering permutes A into the form
-!
-!                        ------------------------
-!                         \                     |
-!                          \         U1         |
-!                           \                   |
-!                            --------------------
-!                            |\
-!                            | \
-!                            |  \
-!            P A Q   =       |   \
-!                            |    \
-!                            |     --------------
-!                            |     |            |
-!                            |     |            |
-!                            | L1  |     A2     |
-!                            |     |            |
-!                            |     |            |
-!                            --------------------
-!
-! where the block A2 is factored as  A2 = L2 U2.
-! The phases of the factorization are as follows.
-!
-! Utri   is true when U1 is being determined.
-!        Any column of length 1 is accepted immediately (if TPP).
-!
-! Ltri   is true when L1 is being determined.
-!        lu1mar exits as soon as an acceptable pivot is found
-!        in a row of length 1.
-!
-! spars1 is true while the density of the (modified) A2 is less
-!        than the parameter dens1 = parmlu(7) = 0.3 say.
-!        lu1mar searches maxcol columns and maxrow rows,
-!        where  maxcol = luparm(3),  maxrow = maxcol - 1.
-!        lu1mxc is used to keep the biggest element at the top
-!        of all remaining columns.
-!
-! spars2 is true while the density of the modified A2 is less
-!        than the parameter dens2 = parmlu(8) = 0.6 say.
-!        lu1mar searches maxcol columns and no rows.
-!        lu1mxc could fix up only the first maxcol cols (with TPP).
-!        22 Sep 2000:  For simplicity, lu1mxc fixes all modified cols.
-!
-! dense  is true once the density of A2 reaches dens2.
-!        lu1mar searches only 1 column (the shortest).
-!        lu1mxc could fix up only the first column (with TPP).
-!        22 Sep 2000:  For simplicity, lu1mxc fixes all modified cols.
-!------------------------------------------------------------------
+// ------------------------------------------------------------------
+// Local variables
+// ---------------
 
-integer(ip)       :: Hlen, Hlenin, hops, h,                &
-                i, ibest, ilast, imax,                &
-                j, jbest, jlast, jmax, lPiv,          &
-                k, kbest, kk, l, last, lc, lc1, lcol, &
-                lD, ldiagU, lenD, leni, lenj,         &
-                lfile, lfirst, lfree, limit,          &
-                ll, ll1, lpivc, lpivc1, lpivc2,       &
-                lpivr, lpivr1, lpivr2, lprint,        &
-                lq, lq1, lq2, lr, lr1,                &
-                lrow, ls, lsave, lu, lu1,             &
-                mark, maxcol, maxmn, maxrow, mbest,   &
-                melim, minfre, minmn, mleft,          &
-                mrank, ncold, nelim, nfill,           &
-                nfree, nleft, nout, nrowd, nrowu,     &
-                nsing, nspare, nzchng, nzleft
-integer(ip)       :: markc(n), markr(m)
-real(rp)          :: v
+// lcol   is the length of the column file.  It points to the last
+//        nonzero in the column list.
+// lrow   is the analogous quantity for the row file.
+// lfile  is the file length (lcol or lrow) after the most recent
+//        compression of the column list or row list.
+// nrowd  and  ncold  are the number of rows and columns in the
+//        matrix defined by the pivot column and row.  They are the
+//        dimensions of the submatrix D being altered at this stage.
+// melim  and  nelim  are the number of rows and columns in the
+//        same matrix D, excluding the pivot column and row.
+// mleft  and  nleft  are the number of rows and columns
+//        still left to be factored.
+// nzchng is the increase in nonzeros in the matrix that remains
+//        to be factored after the current elimination
+//        (usually negative).
+// nzleft is the number of nonzeros still left to be factored.
+// nspare is the space we leave at the end of the last row or
+//        column whenever a row or column is being moved to the end
+//        of its file.  nspare = 1 or 2 might help reduce the
+//        number of file compressions when storage is tight.
+//
+// The row and column ordering permutes A into the form
+//
+//                        ------------------------
+//                         \                     |
+//                          \         U1         |
+//                           \                   |
+//                            --------------------
+//                            |\
+//                            | \
+//                            |  \
+//            P A Q   =       |   \
+//                            |    \
+//                            |     --------------
+//                            |     |            |
+//                            |     |            |
+//                            | L1  |     A2     |
+//                            |     |            |
+//                            |     |            |
+//                            --------------------
 
-nout   = luparm(1)
-lprint = luparm(2)
-maxcol = luparm(3)
-lPiv   = luparm(6)
-keepLU = luparm(8) /= 0
+// where the block A2 is factored as  A2 = L2 U2.
+// The phases of the factorization are as follows.
 
-TPP    = lPiv == 0  ! Threshold Partial   Pivoting (normal).
-TRP    = lPiv == 1  ! Threshold Rook      Pivoting
-TCP    = lPiv == 2  ! Threshold Complete  Pivoting.
-TSP    = lPiv == 3  ! Threshold Symmetric Pivoting.
+// Utri   is true when U1 is being determined.
+//        Any column of length 1 is accepted immediately (if TPP).
 
-densLU = .false.
-maxrow = maxcol - 1
-ilast  = m                 ! Assume row m is last in the row file.
-jlast  = n                 ! Assume col n is last in the col file.
-lfile  = nelem
-lrow   = nelem
-lcol   = nelem
-minmn  = min( m, n )
-maxmn  = max( m, n )
-nzleft = nelem
-nspare = 1
+// Ltri   is true when L1 is being determined.
+//        lu1mar exits as soon as an acceptable pivot is found
+//        in a row of length 1.
 
-if ( keepLU ) then
-lu1    = lena   + 1
-else
-! Store only the diagonals of U in the top of memory.
-ldiagU = lena   - n
-lu1    = ldiagU + 1
-end if
+// spars1 is true while the density of the (modified) A2 is less
+//        than the parameter dens1 = parmlu(7) = 0.3 say.
+//        lu1mar searches maxcol columns and maxrow rows,
+//        where  maxcol = luparm(3),  maxrow = maxcol - 1.
+//        lu1mxc is used to keep the biggest element at the top
+//        of all remaining columns.
 
-Ltol   = parmlu(1)
-small  = parmlu(3)
-Uspace = parmlu(6)
-dens1  = parmlu(7)
-dens2  = parmlu(8)
-Utri   = .true.
-Ltri   = .false.
-spars1 = .false.
-spars2 = .false.
-dense  = .false.
+// spars2 is true while the density of the modified A2 is less
+//        than the parameter dens2 = parmlu(8) = 0.6 say.
+//        lu1mar searches maxcol columns and no rows.
+//        lu1mxc could fix up only the first maxcol cols (with TPP).
+//        22 Sep 2000:  For simplicity, lu1mxc fixes all modified cols.
 
-! Check parameters.
+// dense  is true once the density of A2 reaches dens2.
+//        lu1mar searches only 1 column (the shortest).
+//        lu1mxc could fix up only the first column (with TPP).
+//        22 Sep 2000:  For simplicity, lu1mxc fixes all modified cols.
+// ------------------------------------------------------------------
 
-Ltol   = max( Ltol, 1.0001_rp )
-dens1  = min( dens1, dens2 )
+int hops[] = new int[1];
+int Hlen, Hlenin, h,
+    i, ibest, ilast, imax,
+    j, jbest, jlast, jmax, lPiv,
+    k, kbest, kk, l, last, lc, lc1, lcol,
+    lD, ldiagU, lenD, leni, lenj,
+    lfile, lfirst, lfree, limit,
+    ll, ll1, lpivc, lpivc1, lpivc2,
+    lpivr, lpivr1, lpivr2, lprint,
+    lq, lq1, lq2, lr, lr1,
+    lrow, ls, lsave, lu, lu1,
+    mark, maxcol, maxmn, maxrow, mbest,
+    melim, minfre, minmn, mleft,
+    mrank, ncold, nelim, nfill,
+    nfree, nleft, nout, nrowd, nrowu,
+    nsing, nspare, nzchng, nzleft;
+int markc[] = new int[n];
+int markr[] = new int[m];
+double v;
 
-! Initialize output parameters.
-! lenL, lenU, minlen, mersum, nUtri, nLtri, ndens1, ndens2, nrank
-! are already initialized by lu1fac.
+nout   = luparm[0];
+lprint = luparm[1];
+maxcol = luparm[2];
+lPiv   = luparm[5];
+keepLU = luparm[7] != 0;
 
-Lmax   = zero
-Umax   = zero
-DUmax  = zero
-DUmin  = 1.0e+20_rp
-if (nelem == 0) Dumin = zero
-Akmax  = zero
-hops   = 0
+TPP    = lPiv == 0;  // Threshold Partial   Pivoting (normal).
+TRP    = lPiv == 1;  // Threshold Rook      Pivoting
+TCP    = lPiv == 2;  // Threshold Complete  Pivoting.
+TSP    = lPiv == 3;  // Threshold Symmetric Pivoting.
 
-! More initialization.
+densLU = false;
+maxrow = maxcol - 1;
+ilast  = m;                 // Assume row m is last in the row file.
+jlast  = n;                 // Assume col n is last in the col file.
+lfile  = nelem;
+lrow   = nelem;
+lcol   = nelem;
+minmn  = Math.min( m, n );
+maxmn  = Math.max( m, n );
+nzleft = nelem;
+nspare = 1;
 
-if (TPP .or. TSP) then ! Don't worry yet about lu1mxc.
-aijmax = zero
-aijtol = zero
-Hlen   = 1
+if ( keepLU ) {
+lu1    = lena   + 1;
+}
+else {
+// Store only the diagonals of U in the top of memory.
+ldiagU = lena   - n;
+lu1    = ldiagU + 1;
+}
 
-else ! TRP or TCP
-! Move biggest element to top of each column.
-! Set w(*) to mark slack columns (unit vectors).
+Ltol   = parmlu[0];
+small  = parmlu[2];
+Uspace = parmlu[5];
+dens1  = parmlu[6];
+dens2  = parmlu[7];
+Utri   = true;
+Ltri   = false;
+spars1 = false;
+spars2 = false;
+dense  = false;
 
-call lu1mxc( i1, n, q, a, indc, lenc, locc )
-call lu1slk( m, n, lena, q, iqloc, a, locc, w )
-end if
+// Check parameters.
 
-if (TRP) then
-! Find biggest element in each row.
+Ltol   = Math.max( Ltol, 1.0001);
+dens1  = Math.min( dens1, dens2 );
 
-mark = 0
-call lu1mxr( mark, i1, m, m, n, lena,               &
-           a, indc, lenc, locc, indr, lenr, locr, &
-           p, markc, markr, Amaxr )
-end if
+// Initialize output parameters.
+// lenL, lenU, minlen, mersum, nUtri, nLtri, ndens1, ndens2, nrank
+// are already initialized by lu1fac.
 
-if (TCP) then
-! Set Ha(1:Hlen) = biggest element in each column,
-! Hj(1:Hlen) = corresponding column indices.
+Lmax[0]   = zero;
+Umax[0]   = zero;
+DUmax[0]  = zero;
+DUmin[0]  = 1.0e+20;
+if (nelem == 0) {
+	DUmin[0] = zero;
+}
+Akmax[0]  = zero;
+hops[0]   = 0;
 
-Hlen  = 0
-do kk = 1, n
- Hlen     = Hlen + 1
- j        = q(kk)
- lc       = locc(j)
- Ha(Hlen) = abs( a(lc) )
- Hj(Hlen) = j
- Hk(j)    = Hlen
-end do
+// More initialization.
 
-! Build the heap, creating new Ha, Hj and setting Hk(1:Hlen).
+if (TPP || TSP) {
+	// Don't worry yet about lu1mxc.
+    aijmax = zero;
+    aijtol = zero;
+    Hlen   = 1;
+}
+else { // TRP or TCP
+    // Move biggest element to top of each column.
+    // Set w(*) to mark slack columns (unit vectors).
 
-call Hbuild( Ha, Hj, Hk, Hlen, Hlen, hops )
-end if
+    lu1mxc( i1, n, q, a, indc, lenc, locc );
+    lu1slk( m, n, lena, q, iqloc, a, locc, w );
+}
 
-!------------------------------------------------------------------
-! Start of main loop.
-!------------------------------------------------------------------
-mleft  = m + 1
-nleft  = n + 1
+if (TRP) {
+// Find biggest element in each row.
 
-do 800 nrowu = 1, minmn
+mark = 0;
+lu1mxr( mark, i1, m, m, n, lena,
+        a, indc, lenc, locc, indr, lenr, locr,
+           p, markc, markr, Amaxr );
+} // if (TRP)
+
+if (TCP) {
+// Set Ha(1:Hlen) = biggest element in each column,
+// Hj(1:Hlen) = corresponding column indices.
+
+Hlen  = 0;
+for (kk = 1; kk <= n; kk++) {
+ Hlen     = Hlen + 1;
+ j        = q[kk-1];
+ lc       = locc[j-1];
+ Ha[Hlen-1] = Math.abs( a[lc-1] );
+ Hj[Hlen-1] = j;
+ Hk[j-1]    = Hlen;
+} // for (kk = 1; kk <= n; kk++) 
+
+// Build the heap, creating new Ha, Hj and setting Hk(1:Hlen).
+
+Hbuild( Ha, Hj, Hk, Hlen, Hlen, hops );
+} // if (TCP)
+
+// ------------------------------------------------------------------
+//  Start of main loop.
+// ------------------------------------------------------------------
+mleft  = m + 1;
+nleft  = n + 1;
+
+/*do 800 nrowu = 1, minmn
 
 ! mktime = (nrowu / ntime) + 4
 ! eltime = (nrowu / ntime) + 9
@@ -2413,6 +2417,320 @@ go to 990
    '   i,jmax', 2i7, '   aijmax', es10.2)*/
 
 } // lu1fad
+    
+    private void lu1mxc(int k1, int k2, int q[], double a[], int indc[], int lenc[], int locc[]) {
+
+    //integer(ip),   intent(in)    :: k1, k2
+    //integer(ip),   intent(in)    :: q(k2), lenc(*), locc(*)
+    //integer(ip),   intent(inout) :: indc(*)
+    //real(rp),      intent(inout) :: a(*)
+
+    // ------------------------------------------------------------------
+    // lu1mxc  moves the largest element in each of columns q(k1:k2)
+    // to the top of its column.
+    // If k1 > k2, nothing happens.
+    //
+    // 06 May 2002: (and earlier)
+    //              All columns k1:k2 must have one or more elements.
+    // 07 May 2002: Allow for empty columns.  The heap routines need to
+    //              find 0.0 as the "largest element".
+    //
+    // 10 Jan 2010: First f90 version.
+    // 12 Dec 2011: Declare intent.
+    // ------------------------------------------------------------------
+
+    int i, j, k, l, lc, lc1, lc2, lenj;
+    double amax;
+    final double zero = 0.0;
+
+
+    for (k = k1; k <= k2; k++) {
+       j      = q[k-1];
+       lc1    = locc[j-1];
+       lenj   = lenc[j-1];
+
+       if (lenj == 0) {
+          a[lc1-1] = zero;
+       }
+       else {
+
+          // The next 10 lines are equivalent to
+          // l      = idamax( lenc(j), a(lc1), 1 )  +  lc1 - 1
+          // >>>>>>>>
+          lc2    = lc1 + lenc[j-1] - 1;
+          amax   = Math.abs( a[lc1-1] );
+          l      = lc1;
+
+          for (lc = lc1+1; lc <= lc2; lc++) {
+             if (amax < Math.abs( a[lc-1] )) {
+                amax   =  Math.abs( a[lc-1] );
+                l      =  lc;
+             }
+          } // for (lc = lc1+1; lc <= lc2; lc++)
+          // >>>>>>>>
+
+          if (l > lc1) {
+             amax      = a[l-1];
+             a[l-1]      = a[lc1-1];
+             a[lc1-1]    = amax;
+             i         = indc[l-1];
+             indc[l-1]   = indc[lc1-1];
+             indc[lc1-1] = i;
+          }
+       }
+    } // for (k = k1; k <= k2; k++)
+
+    } // lu1mxc
+    
+    private void lu1slk(int m, int n, int lena, int q[], int iqloc[], double a[], int locc[], double w[]) {
+
+    //integer(ip),   intent(in)    :: m, n, lena
+    //integer(ip),   intent(in)    :: q(n), iqloc(m), locc(n)
+    //real(rp),      intent(in)    :: a(lena)
+    //real(rp),      intent(out)   :: w(n)
+
+    // ------------------------------------------------------------------
+    // lu1slk  sets w(j) > 0 if column j is a unit vector.
+    //
+    // 21 Nov 2000: First version.  lu1fad needs it for TCP.
+    //              Note that w(*) is nominally an integer(ip) array,
+    //              but the only spare space is the double array w(*).
+    //
+    // 10 Jan 2010: First f90 version.
+    // 12 Dec 2011: Declare intent and local variables.
+    // ------------------------------------------------------------------
+
+    int j, lc1, lq, lq1, lq2;
+
+    for (j = 0; j < n; j++) {
+    	w[j] = 0.0;
+    }
+    lq1    = iqloc[0];
+    lq2    = n;
+    if (m > 1){
+    	lq2 = iqloc[1] - 1;
+    }
+
+    for (lq = lq1; lq <= lq2; lq++) {
+       j      = q[lq-1];
+       lc1    = locc[j-1];
+       if (Math.abs( a[lc1-1] ) == 1.0) {
+          w[j-1] = 1.0;
+       }
+    } // for (lq = lq1; lq <= lq2; lq++)
+
+    } // lu1slk
+
+    private void lu1mxr(int mark, int k1, int k2, int m, int n, int lena,
+            double a[], int indc[], int lenc[], int locc[], int indr[], int lenr[], int locr[],
+            int p[], int markc[], int markr[], double Amaxr[]) {
+
+//implicit       none
+//integer(ip),   intent(in)    :: mark, k1, k2, m, n, lena
+//integer(ip),   intent(in)    :: indc(lena), lenc(n), locc(n),       &
+//                           indr(lena), lenr(m), locr(m), p(k2)
+//integer(ip),   intent(inout) :: markc(n), markr(m)
+//real(rp),      intent(in)    :: a(lena)
+//real(rp),      intent(inout) :: Amaxr(m)
+
+// ------------------------------------------------------------------
+// lu1mxr  finds the largest element in each of rows i = p(k1:k2)
+// and stores it in each Amaxr(i).
+// The nonzeros are stored column-wise in (a,indc,lenc,locc)
+// and their structure is     row-wise in (  indr,lenr,locr).
+//
+// 11 Jun 2002: First version of lu1mxr.
+//              Allow for empty columns.
+// 10 Jan 2010: First f90 version.
+// 12 Dec 2011: Declare intent.
+// 03 Apr 2013: Recoded to improve efficiency.  Need new arrays
+//              markc(n), markr(m) and local array cols(n).
+//
+//              First call:  mark = 0, k1 = 1, k2 = m.
+//              Initialize all of markc(n), markr(m), Amaxr(m).
+//              Columns are searched only once.
+//              cols(n) is not used.
+//
+//              Later: mark := mark + 1 (greater than for previous call).
+//              Cols involved in rows p(k1:k2) are searched only once.
+//              cols(n) is local storage.
+//              markc(:), markr(:) are marked (= mark) in some places.
+//              For next call with new mark,
+//              all of markc, markr will initially appear unmarked.
+// ------------------------------------------------------------------
+
+int cols[] = new int[n];
+int i, j, k, lc, lc1, lc2, lr, lr1, lr2, ncol;
+final double zero = 0.0;
+
+if (mark == 0) {    // First call: Find Amaxr(1:m) for original A.
+for (i = 0; i < m; i++) {
+	markr[i] = 0;
+}
+for (i = 0; i < n; i++) {
+	markc[i] = 0;
+}
+for (i = 0; i < m; i++) {
+	Amaxr[i] = zero;
+}
+for (j = 1; j <= n; j++) {
+ lc1   = locc[j-1];
+ lc2   = lc1 + lenc[j-1] - 1;
+ for (lc = lc1; lc <= lc2; lc++) {
+    i  = indc[lc-1];
+    Amaxr[i-1] = Math.max( Amaxr[i-1], Math.abs(a[lc-1]) );
+ } // for (lc = lc1; lc <= lc2; lc++)
+} // for (j = 1; j <= m; j++)
+} // if (mark == 0)
+else {               // Later calls: Find Amaxr(i) for rows i = p(k1:k2).
+
+ncol = 0;
+for (k = k1; k <= k2; k++) {        // Search rows to find which cols are involved.
+ i        = p[k-1];
+ markr[i-1] = mark;   // Mark this row
+ Amaxr[i-1] = zero;
+ lr1   = locr[i-1];
+ lr2   = lr1 + lenr[i-1] - 1;
+ for (lr = lr1; lr <= lr2; lr++) {     // Mark all unmarked cols in this row.
+    j  = indr[lr-1];     // Build up a list of which ones they are.
+    if (markc[j-1] != mark) {
+        markc[j-1]  = mark;
+        ncol      = ncol + 1;
+        cols[ncol-1] = j;
+    } // if (markc[j-1] != mark)
+ } //  for (lr = lr1; lr <= lr2; lr++)
+} // for (k = k1; k <= k2; k++)
+
+for (k = 1; k <= ncol; k++) {       // Search involved columns.
+ j     = cols[k-1];
+ lc1   = locc[j-1];
+ lc2   = lc1 + lenc[j-1] - 1;
+ for (lc = lc1; lc <= lc2; lc++) {
+    i  = indc[lc-1];
+    if (markr[i-1] == mark) {
+        Amaxr[i-1]  = Math.max( Amaxr[i-1], Math.abs(a[lc-1]) );
+    }
+ } // for (lc = lc1; lc <= lc2; lc++)
+} // for (k = 1; k <= ncol; k++)
+} // else later calls
+
+    } // lu1mxr
+    
+    private void Hbuild(double Ha[], int Hj[], int Hk[], int N, int Nk, int hops[]) {
+
+    //integer(ip),   intent(in)    :: N, Nk
+    //integer(ip),   intent(out)   :: hops
+    //integer(ip),   intent(inout) :: Hj(N), Hk(Nk)
+    //real(rp),      intent(out)   :: Ha(N)
+
+    // ==================================================================
+    // Hbuild initializes the heap by inserting each element of Ha.
+    // Input:  Ha, Hj.
+    // Output: Ha, Hj, Hk, hops.
+    //
+    // 01 May 2002: Use k for new length of heap, not k-1 for old length.
+    // 05 May 2002: Use kk in call to stop loop variable k being altered.
+    //              (Actually Hinsert no longer alters that parameter.)
+    // 07 May 2002: ftnchek wants us to protect Nk, Ha(k), Hj(k) too.
+    // 07 May 2002: Current version of Hbuild.
+    // 12 Dec 2011: First f90 version.
+    // ==================================================================
+
+    int kk[] = new int[1];
+    int h[] = new int[1];
+    int jv, k, Nkk;
+    double v;
+
+    Nkk  = Nk;
+    hops[0] = 0;
+    for (k = 1; k <= N; k++) {
+       kk[0]    = k;
+       v     = Ha[k-1];
+       jv    = Hj[k-1];
+       Hinsert( Ha, Hj, Hk, kk, Nkk, v, jv, h );
+       hops[0]  = hops[0] + h[0];
+    } // for (k = 1; k <= N; k++)
+
+    } // Hbuild
+    
+    private void Hinsert(double Ha[], int Hj[], int Hk[], int N[], int Nk, double v, int jv, int hops[]) {
+
+    //integer(ip),   intent(in)    :: Nk, jv
+    //integer(ip),   intent(inout) :: N
+    //integer(ip),   intent(out)   :: hops
+    //integer(ip),   intent(inout) :: Hj(N), Hk(Nk)
+    //real(rp),      intent(in)    :: v
+    //real(rp),      intent(inout) :: Ha(N)
+
+    // ==================================================================
+    // Hinsert inserts (v,jv) into heap of length N-1
+    // to make heap of length N.
+    //
+    // 03 Apr 2002: First version of Hinsert.
+    // 01 May 2002: Require N to be final length, not old length.
+    //              Need Nk for length of Hk.
+    // 07 May 2002: Protect input parameters N, Nk.
+    // 07 May 2002: Current version of Hinsert.
+    // 12 Dec 2011: First f90 version.
+    // ==================================================================
+
+    int kk, Nkk, Nnew;
+
+    Nnew     = N[0];
+    Nkk      = Nk;
+    kk       = Nnew;
+    Ha[Nnew-1] =  v;
+    Hj[Nnew-1] = jv;
+    Hk[jv-1]   = Nnew;
+    Hup   ( Ha, Hj, Hk, Nnew, Nkk, kk, hops );
+
+    } // Hinsert
+    
+    private void Hup   (double Ha[], int Hj[], int Hk[], int N, int Nk, int kk, int hops[]) {
+
+    //integer(ip),   intent(in)    :: N, Nk, kk
+    //integer(ip),   intent(out)   :: hops
+    //integer(ip),   intent(inout) :: Hj(N), Hk(Nk)
+    //real(rp),      intent(inout) :: Ha(N)
+
+    // ==================================================================
+    // Hup updates heap by moving up tree from node k.
+    //
+    // 01 May 2002: Need Nk for length of Hk.
+    // 05 May 2002: Change input parameter k to kk to stop k being output.
+    // 05 May 2002: Current version of Hup.
+    // 13 Dec 2011: First f90 version.
+    // ==================================================================
+
+    int j, jv, k, k2;
+    double v;
+
+    k     = kk;
+    hops[0]  = 0;
+    v     = Ha[k-1];
+    jv    = Hj[k-1];
+
+    while (true) {
+       if (k <  2) {
+    	   break;
+       }
+       k2    = k/2;
+       if (v < Ha[k2-1]) {
+    	   break;
+       }
+       hops[0]  = hops[0] + 1;
+       Ha[k-1] = Ha[k2-1];
+       j     = Hj[k2-1];
+       Hj[k-1] =  j;
+       Hk[j-1] =  k;
+       k     = k2;
+    }
+
+    Ha[k-1]  =  v;
+    Hj[k-1]  = jv;
+    Hk[jv-1] =  k;
+
+    } // Hup
     
     private void lu6chk(int mode, int m, int n, double w[], int lena, int luparm[], double parmlu[],
             double a[], int indc[], int indr[], int p[], int q[], int lenc[], int lenr[], int locc[], int locr[], int inform[]) {
