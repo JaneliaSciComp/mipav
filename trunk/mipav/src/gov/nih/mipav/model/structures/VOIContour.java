@@ -145,8 +145,13 @@ public class VOIContour extends VOIBase {
 		int yDim = extents.length > 1 ? extents[1] : 1;
 		int zDim = extents.length > 2 ? extents[2] : 1;
 		BitSet mask = new BitSet(xDim*yDim*zDim); 
-		setMask( mask, xDim, yDim, false, VOI.ADDITIVE );     
-		return VOI.calcLargestDistance( mask, extents, res[0], res[1], res[2], xPts, yPts, zPts, kPos1, kPos2 );		
+		setMask( mask, xDim, yDim, false, VOI.ADDITIVE );
+		if (res.length >= 3) {
+		    return VOI.calcLargestDistance( mask, extents, res[0], res[1], res[2], xPts, yPts, zPts, kPos1, kPos2 );
+		}
+		else {
+			return VOI.calcLargestDistance( mask, extents, res[0], res[1], 1.0f, xPts, yPts, zPts, kPos1, kPos2 );	
+		}
 	}
 
 	/* (non-Javadoc)
