@@ -963,7 +963,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                 if (orientation == VOIBase.ZPLANE) {
                     stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
-                    stats.volume = stats.area * fileInfo.getResolutions()[2]; 
+                    if (fileInfo.getResolutions().length >= 3) {
+                        stats.volume = stats.area * fileInfo.getResolutions()[2]; 
+                    }
+                    else {
+                    	stats.volume = stats.area;
+                    }
                 }
                 else if (orientation == VOIBase.XPLANE) {
                 	stats.area = stats.nVox * (fileInfo.getResolutions()[1] * fileInfo.getResolutions()[2]);
@@ -1265,7 +1270,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                 if (orientation == VOIBase.ZPLANE) {
                     stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
-                    stats.volume = stats.area * fileInfo.getResolutions()[2]; 
+                    if (fileInfo.getResolutions().length >= 3) {
+                        stats.volume = stats.area * fileInfo.getResolutions()[2];
+                    }
+                    else {
+                    	stats.volume = stats.area;
+                    }
                 }
                 else if (orientation == VOIBase.XPLANE) {
                 	stats.area = stats.nVox * (fileInfo.getResolutions()[1] * fileInfo.getResolutions()[2]);
@@ -1983,7 +1993,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             { 
             	if (orientation == VOIBase.ZPLANE) {
                     stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
-                    stats.volume = stats.area * fileInfo.getResolutions()[2]; 
+                    if (fileInfo.getResolutions().length >= 3) {
+                        stats.volume = stats.area * fileInfo.getResolutions()[2]; 
+                    }
+                    else {
+                    	stats.volume = stats.area;
+                    }
                 }
                 else if (orientation == VOIBase.XPLANE) {
                 	stats.area = stats.nVox * (fileInfo.getResolutions()[1] * fileInfo.getResolutions()[2]);
@@ -2306,7 +2321,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             {    
             	if (orientation == VOIBase.ZPLANE) {
                     stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
-                    stats.volume = stats.area * fileInfo.getResolutions()[2]; 
+                    if (fileInfo.getResolutions().length >= 3) {
+                        stats.volume = stats.area * fileInfo.getResolutions()[2];
+                    }
+                    else {
+                    	stats.volume = stats.area;
+                    }
                 }
                 else if (orientation == VOIBase.XPLANE) {
                 	stats.area = stats.nVox * (fileInfo.getResolutions()[1] * fileInfo.getResolutions()[2]);
