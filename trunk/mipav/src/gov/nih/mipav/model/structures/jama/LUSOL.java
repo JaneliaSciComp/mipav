@@ -1593,9 +1593,12 @@ final double one = 1.0;
 // ------------------------------------------------------------------
 
 int hops[] = new int[1];
+int ibest[] = new int[1];
+int jbest[] = new int[1];
+int mbest[] = new int[1];
 int Hlen, Hlenin, h,
-    i, ibest, ilast, imax,
-    j, jbest, jlast, jmax, lPiv,
+    i, ilast, imax,
+    j, jlast, jmax, lPiv,
     k, kbest, kk, l, last, lc, lc1, lcol,
     lD, ldiagU, lenD, leni, lenj,
     lfile, lfirst, lfree, limit,
@@ -1603,7 +1606,7 @@ int Hlen, Hlenin, h,
     lpivr, lpivr1, lpivr2, lprint,
     lq, lq1, lq2, lr, lr1,
     lrow, ls, lsave, lu, lu1,
-    mark, maxcol, maxmn, maxrow, mbest,
+    mark, maxcol, maxmn, maxrow,
     melim, minfre, minmn, mleft,
     mrank, ncold, nelim, nfill,
     nfree, nleft, nout, nrowd, nrowu,
@@ -1611,6 +1614,8 @@ int Hlen, Hlenin, h,
 int markc[] = new int[n];
 int markr[] = new int[m];
 double v;
+boolean seg1 = true;
+boolean seg2 = true;
 
 nout   = luparm[0];
 lprint = luparm[1];
@@ -1724,196 +1729,209 @@ Hbuild( Ha, Hj, Hk, Hlen, Hlen, hops );
 mleft  = m + 1;
 nleft  = n + 1;
 
-/*do 800 nrowu = 1, minmn
+/*for (nrowu = 1; nrowu <= minmn; nrowu++) {
 
-! mktime = (nrowu / ntime) + 4
-! eltime = (nrowu / ntime) + 9
-mleft  = mleft - 1
-nleft  = nleft - 1
+// mktime = (nrowu / ntime) + 4
+// eltime = (nrowu / ntime) + 9
+mleft  = mleft - 1;
+nleft  = nleft - 1;
 
-! Bail out if there are no nonzero rows left.
+// Bail out if there are no nonzero rows left.
 
-if (iploc(1) > m) go to 900
+if (iploc[0] > m) {
+	break;
+}
+// For TCP, the largest Aij is at the top of the heap.
 
-! For TCP, the largest Aij is at the top of the heap.
+if ( TCP ) {
+ aijmax = Ha[0];      // Marvelously easy !
+ Akmax[0]  = Math.max( Akmax[0], aijmax );
+ aijtol = aijmax / Ltol;
+} // if (TCP)
 
-if ( TCP ) then
- aijmax = Ha(1)      ! Marvelously easy !
- Akmax  = max( Akmax, aijmax )
- aijtol = aijmax / Ltol
-end if
+// ===============================================================
+//  Find a suitable pivot element.
+// ===============================================================
 
-!===============================================================
-! Find a suitable pivot element.
-!===============================================================
+if ( Utri ) {
+ // ------------------------------------------------------------
+ // So far all columns have had length 1.
+ // We are still looking for the (backward) triangular part of A
+ // that forms the first rows and columns of U.
+ // ------------------------------------------------------------
 
-if ( Utri ) then
- !------------------------------------------------------------
- ! So far all columns have had length 1.
- ! We are still looking for the (backward) triangular part of A
- ! that forms the first rows and columns of U.
- !------------------------------------------------------------
+ lq1    = iqloc[0];
+ lq2    = n;
+ if (m   >   1) {
+	 lq2 = iqloc[1] - 1;
+ }
 
- lq1    = iqloc(1)
- lq2    = n
- if (m   >   1) lq2 = iqloc(2) - 1
+ if (lq1 <= lq2) {  // There are more cols of length 1.
+    if (TPP || TSP) {
+       jbest  = q[lq1-1];   // Grab the first one.
+    } // if (TPP || TSP)
+    else { // TRP or TCP     Scan all columns of length 1.
+       jbest  = 0;
 
- if (lq1 <= lq2) then  ! There are more cols of length 1.
-    if (TPP .or. TSP) then
-       jbest  = q(lq1)   ! Grab the first one.
+       for (lq = lq1; lq <= lq2; lq++) {
+          j      = q[lq-1];
+          if (w[j-1] > zero) { // Accept a slack
+             jbest  = j;
+             break;
+          } // if (w[j-1] > zero)
 
-    else ! TRP or TCP    ! Scan all columns of length 1.
-       jbest  = 0
+          lc     = locc[j-1];
+          amax   = Math.abs( a[lc-1] );
+          if (TRP) {
+             i      = indc[lc-1];
+             aijtol = Amaxr[i-1] / Ltol;
+          } // if (TRP)
 
-       do lq = lq1, lq2
-          j      = q(lq)
-          if (w(j) > zero) then ! Accept a slack
-             jbest  = j
-             go to 250
-          end if
+          if (amax >= aijtol) {
+             jbest  = j;
+             break;
+          } // if (amax >= aijtol)
+       } // for (lq = lq1; lq <= lq2; lq++)
+    } // else TRP or TCP
+    
+    if (jbest > 0) {
+       lc     = locc[jbest-1];
+       ibest  = indc[lc-1];
+       mbest  = 0;
+       seg1 = false;
+       seg2 = false;
+    } // if (jbest > 0)
+ } // if (lq1 <= lq2)
 
-          lc     = locc(j)
-          amax   = abs( a(lc) )
-          if (TRP) then
-             i      = indc(lc)
-             aijtol = Amaxr(i) / Ltol
-          end if
+ // This is the end of the U triangle.
+ // We will not return to this part of the code.
+ // TPP and TSP call lu1mxc for the first time
+ // (to move biggest element to top of each column).
 
-          if (amax >= aijtol) then
-             jbest  = j
-             go to 250
-          end if
-       end do
-    end if
+ if (seg1) {
+ if (lprint >= 50) {
+    UI.setDataText("Utri ended.  spars1 = true\n");
+ } // if (lprint >= 50)
+ Utri   = false;
+ Ltri   = true;
+ spars1 = true;
+ nUtri[0]  =  nrowu - 1;
+ if (TPP || TSP) {
+    lu1mxc( lq1, n, q, a, indc, lenc, locc );
+ } // if (TPP || TSP)
+ } // if (seg1)
+ seg1 = true;
+} // if (Utri)
 
-250          if (jbest > 0) then
-       lc     = locc(jbest)
-       ibest  = indc(lc)
-       mbest  = 0
-       go to 300
-    end if
- end if
+if (seg2) {
+if ( spars1 ) {
+ // ------------------------------------------------------------
+ // Perform a Markowitz search.
+ // Search cols of length 1, then rows of length 1,
+ // then   cols of length 2, then rows of length 2, etc.
+ // ------------------------------------------------------------
+ // if (TPP) then ! 12 Jun 2002: Next line disables lu1mCP below
+ if (TPP || TCP) {
+    lu1mar( m    , n     , lena  , maxmn,
+                 TCP  , aijtol, Ltol  , maxcol, maxrow,
+                 ibest, jbest , mbest ,
+                 a    , indc  , indr  , p     , q,
+                 lenc , lenr  , locc  , locr  , 
+                 iploc, iqloc );
+ } // if (TPP || TCP)
+ else if (TRP) {
+    lu1mRP( m    , n     , lena  , maxmn,
+              Ltol , maxcol, maxrow,
+              ibest, jbest , mbest ,
+              a    , indc  , indr  , p    , q,
+              lenc , lenr  , locc  , locr ,
+              iploc, iqloc , Amaxr );
 
- ! This is the end of the U triangle.
- ! We will not return to this part of the code.
- ! TPP and TSP call lu1mxc for the first time
- ! (to move biggest element to top of each column).
+    // else if (TCP) then ! Disabled by test above
+    // call lu1mCP( m    , n     , lena  , aijtol, &
+    //              ibest, jbest , mbest ,         &
+    //              a    , indc  , indr  ,         &
+    //              lenc , lenr  , locc  ,         &
+    //              Hlen , Ha    , Hj    )
+ } // else if (TRP)
+ else if (TSP) {
+    lu1mSP( m    , n     , lena  , maxmn,
+                 Ltol , maxcol,
+                 ibest, jbest , mbest ,
+                 a    , indc  , q    , locc , iqloc );
+    if (ibest[0] == 0) {
+    	return;
+    }
+ } // else if (TSP)
 
- if (lprint >= 50) then
-    write(nout, 1100) 'Utri ended.  spars1 = true'
- end if
- Utri   = .false.
- Ltri   = .true.
- spars1 = .true.
- nUtri  =  nrowu - 1
- if (TPP .or. TSP) then
-    call lu1mxc( lq1, n, q, a, indc, lenc, locc )
- end if
-end if
+ if ( Ltri ) {
 
-if ( spars1 ) then
- !------------------------------------------------------------
- ! Perform a Markowitz search.
- ! Search cols of length 1, then rows of length 1,
- ! then   cols of length 2, then rows of length 2, etc.
- !------------------------------------------------------------
- ! if (TPP) then ! 12 Jun 2002: Next line disables lu1mCP below
- if (TPP .or. TCP) then
-    call lu1mar( m    , n     , lena  , maxmn,          &
-                 TCP  , aijtol, Ltol  , maxcol, maxrow, &
-                 ibest, jbest , mbest ,                 &
-                 a    , indc  , indr  , p     , q,      &
-                 lenc , lenr  , locc  , locr  ,         &
-                 iploc, iqloc )
+    // So far all rows have had length 1.
+    // We are still looking for the (forward) triangle of A
+    // that forms the first rows and columns of L.
 
- else if (TRP) then
-    call lu1mRP( m    , n     , lena  , maxmn,  &
-              Ltol , maxcol, maxrow,            &
-              ibest, jbest , mbest ,            &
-              a    , indc  , indr  , p    , q,  &
-              lenc , lenr  , locc  , locr ,     &
-              iploc, iqloc , Amaxr )
+    if (mbest[0] > 0) {
+       Ltri   = false;
+       nLtri[0]  =  nrowu - 1 - nUtri[0];
+       if (lprint >= 50) {
+          UI.setDataText("Ltri ended.\n");
+       }
+    } // if (mbest[0] > 0)
+    } // if (Ltri)
+ else { // not Ltri   ! See if what's left is as dense as dens1.
 
-    ! else if (TCP) then ! Disabled by test above
-    ! call lu1mCP( m    , n     , lena  , aijtol, &
-    !              ibest, jbest , mbest ,         &
-    !              a    , indc  , indr  ,         &
-    !              lenc , lenr  , locc  ,         &
-    !              Hlen , Ha    , Hj    )
+    if (nzleft  >=  (dens1 * mleft) * nleft) {
+       spars1 = false;
+       spars2 = true;
+       ndens1[0] =  nleft;
+       maxrow =  0;
+       if (lprint >= 50) {
+          UI.setDataText("spars1 ended.  spars2 = true\n");
+       }
+    } //  if (nzleft  >=  (dens1 * mleft) * nleft)
+ } // else not Ltri
+} // if (spars1)
+else if ( spars2 || dense ) {
+ // ------------------------------------------------------------
+ // Perform a restricted Markowitz search,
+ // looking at only the first maxcol columns.  (maxrow = 0.)
+ // ------------------------------------------------------------
+// if (TPP) then ! 12 Jun 2002: Next line disables lu1mCP below
+ if (TPP || TCP) {
+    lu1mar( m    , n     , lena  , maxmn,
+                 TCP  , aijtol, Ltol  , maxcol, maxrow,
+                 ibest, jbest , mbest ,           
+                 a    , indc  , indr  , p     , q,   
+                 lenc , lenr  , locc  , locr  ,      
+                 iploc, iqloc );
+ } // if (TPP || TCP)
+ else if (TRP) {
+    lu1mRP( m    , n     , lena  , maxmn, 
+                 Ltol , maxcol, maxrow,        
+                 ibest, jbest , mbest ,          
+                 a    , indc  , indr  , p    , q,
+                 lenc , lenr  , locc  , locr ,   
+                 iploc, iqloc , Amaxr );
 
- else if (TSP) then
-    call lu1mSP( m    , n     , lena  , maxmn, &
-                 Ltol , maxcol, &
-                 ibest, jbest , mbest , &
-                 a    , indc  , q    , locc , iqloc )
-    if (ibest == 0) go to 990
- end if
+    // else if (TCP) then ! Disabled by test above
+    // call lu1mCP( m    , n     , lena  , aijtol, &
+    //              ibest, jbest , mbest ,         &
+    //              a    , indc  , indr  ,         &
+    //              lenc , lenr  , locc  ,         &
+    //              Hlen , Ha    , Hj    )
+ } // else if (TRP)
+ else if (TSP) {
+    lu1mSP( m    , n     , lena  , maxmn,
+                 Ltol , maxcol,               
+                 ibest, jbest , mbest ,       
+                 a    , indc  , q    , locc , iqloc );
+    if (ibest[0] == 0) {
+    	inform[0] = 9;
+    	return;
+    }
+ } // else if (TSP)
 
- if ( Ltri ) then
-
-    ! So far all rows have had length 1.
-    ! We are still looking for the (forward) triangle of A
-    ! that forms the first rows and columns of L.
-
-    if (mbest > 0) then
-       Ltri   = .false.
-       nLtri  =  nrowu - 1 - nUtri
-       if (lprint >= 50) then
-          write(nout, 1100) 'Ltri ended.'
-       end if
-    end if
-
- else    ! See if what's left is as dense as dens1.
-
-    if (nzleft  >=  (dens1 * mleft) * nleft) then
-       spars1 = .false.
-       spars2 = .true.
-       ndens1 =  nleft
-       maxrow =  0
-       if (lprint >= 50) then
-          write(nout, 1100) 'spars1 ended.  spars2 = true'
-       end if
-    end if
- end if
-
-else if ( spars2 .or. dense ) then
- !------------------------------------------------------------
- ! Perform a restricted Markowitz search,
- ! looking at only the first maxcol columns.  (maxrow = 0.)
- !------------------------------------------------------------
-! if (TPP) then ! 12 Jun 2002: Next line disables lu1mCP below
- if (TPP .or. TCP) then
-    call lu1mar( m    , n     , lena  , maxmn,          &
-                 TCP  , aijtol, Ltol  , maxcol, maxrow, &
-                 ibest, jbest , mbest ,                 &
-                 a    , indc  , indr  , p     , q,      &
-                 lenc , lenr  , locc  , locr  ,         &
-                 iploc, iqloc )
-
- else if (TRP) then
-    call lu1mRP( m    , n     , lena  , maxmn,     &
-                 Ltol , maxcol, maxrow,            &
-                 ibest, jbest , mbest ,            &
-                 a    , indc  , indr  , p    , q,  &
-                 lenc , lenr  , locc  , locr ,     &
-                 iploc, iqloc , Amaxr )
-
-    ! else if (TCP) then ! Disabled by test above
-    ! call lu1mCP( m    , n     , lena  , aijtol, &
-    !              ibest, jbest , mbest ,         &
-    !              a    , indc  , indr  ,         &
-    !              lenc , lenr  , locc  ,         &
-    !              Hlen , Ha    , Hj    )
-
- else if (TSP) then
-    call lu1mSP( m    , n     , lena  , maxmn, &
-                 Ltol , maxcol,                &
-                 ibest, jbest , mbest ,        &
-                 a    , indc  , q    , locc , iqloc )
-    if (ibest == 0) go to 985
- end if
-
- ! See if what's left is as dense as dens2.
+ // See if what's left is as dense as dens2.
 
  if ( spars2 ) then
     if (nzleft  >=  (dens2 * mleft) * nleft) then
@@ -1926,7 +1944,7 @@ else if ( spars2 .or. dense ) then
        end if
     end if
  end if
-end if
+} // else if ( spars2 || dense )
 
 !---------------------------------------------------------------
 ! See if we can finish quickly.
@@ -1959,6 +1977,8 @@ if ( dense  ) then
     go to 900
  end if
 end if
+} // if (seg2)
+seg2 = true;
 
 !===============================================================
 ! The best  aij  has been found.
@@ -2357,7 +2377,7 @@ end if
 if (jbest == jlast) then
  lcol = locc(jbest)
 end if
-800 end do
+} // for (nrowu = 1; nrowu <= minmn; nrowu++)
 
 !------------------------------------------------------------------
 ! End of main loop.
@@ -2417,6 +2437,728 @@ go to 990
    '   i,jmax', 2i7, '   aijmax', es10.2)*/
 
 } // lu1fad
+    
+    private void lu1mar(int m, int n, int lena, int maxmn,
+            boolean TCP, double aijtol,double Ltol, int maxcol, int maxrow,
+            int ibest[], int jbest[], int mbest[],
+            double a[], int indc[], int indr[], int p[], int q[],
+            int lenc[], int lenr[], int locc[], int locr[], int iploc[], int iqloc[]) {
+
+//integer(ip),   intent(in)    :: m, n, lena, maxmn, maxcol, maxrow
+//integer(ip),   intent(out)   :: ibest, jbest, mbest
+//logical,       intent(in)    :: TCP
+//real(rp),      intent(in)    :: aijtol, Ltol, a(lena)
+//integer(ip),   intent(in)    :: indc(lena), indr(lena), p(m)    , q(n)    , &
+//                           lenc(n)   , lenr(m)   , iploc(n), iqloc(m), &
+//                           locc(n)   , locr(m)
+
+// ------------------------------------------------------------------
+// lu1mar  uses a Markowitz criterion to select a pivot element
+// for the next stage of a sparse LU factorization,
+// subject to a Threshold Partial Pivoting stability criterion (TPP)
+// that bounds the elements of L.
+
+// 00 Jan 1986: Version documented in LUSOL paper:
+//              Gill, Murray, Saunders and Wright (1987),
+//              "Maintaining LU factors of a general sparse matrix",
+//              Linear algebra and its applications 88/89, 239-270.
+
+// 02 Feb 1989: Following Suhl and Aittoniemi (1987), the largest
+//              element in each column is now kept at the start of
+//              the column, i.e. in position locc(j) of a and indc.
+//              This should speed up the Markowitz searches.
+
+// 26 Apr 1989: Both columns and rows searched during spars1 phase.
+//              Only columns searched during spars2 phase.
+//              maxtie replaced by maxcol and maxrow.
+// 05 Nov 1993: Initializing  "mbest = m * n"  wasn't big enough when
+//              m = 10, n = 3, and last column had 7 nonzeros.
+// 09 Feb 1994: Realised that "mbest = maxmn * maxmn" might overflow.
+//              Changed to    "mbest = maxmn * 1000".
+// 27 Apr 2000: On large example from Todd Munson,
+//              that allowed  "if (mbest .le. nz1**2) go to 900"
+//              to exit before any pivot had been found.
+//              Introduced kbest = mbest / nz1.
+//              Most pivots can be rejected with no integer(ip) multiply.
+//              True merit is evaluated only if it's as good as the
+//              best so far (or better).  There should be no danger
+//              of integer(ip) overflow unless A is incredibly
+//              large and dense.
+
+// 10 Sep 2000  TCP, aijtol added for Threshold Complete Pivoting.
+
+// 10 Jan 2010: First f90 version.
+// 12 Dec 2011: Declare intent.
+// ------------------------------------------------------------------
+
+int i, j, kbest, lc, lc1, lc2, len1,
+    lp, lp1, lp2, lq, lq1, lq2, lr, lr1, lr2,
+    merit, ncol, nrow, nz, nz1;
+double abest, aij, amax, cmax, lbest;
+final double zero = 0.0;
+final double one = 1.0;
+final double gamma = 2.0;
+boolean seg1 = true;
+boolean seg2 = true;
+boolean seg3 = true;
+boolean seg4 = true;
+
+// gamma  is "gamma" in the tie-breaking rule TB4 in the LUSOL paper.
+
+// ------------------------------------------------------------------
+// Search cols of length nz = 1, then rows of length nz = 1,
+// then   cols of length nz = 2, then rows of length nz = 2, etc.
+// ------------------------------------------------------------------
+abest  = zero;
+lbest  = zero;
+ibest[0]  = 0;
+kbest  = maxmn + 1;
+mbest[0]  = -1;
+ncol   = 0;
+nrow   = 0;
+nz1    = 0;
+
+NZS: for (nz = 1; nz <= maxmn; nz++) {
+// nz1    = nz - 1
+// if (mbest .le. nz1**2) go to 900
+if (kbest <= nz1) {
+	break NZS;
+}
+if (ibest[0] >  0  ) {
+ if (ncol >= maxcol) {
+	 seg1 = false;
+	 seg2 = false;
+ }
+} // if (ibest[0] > 0)
+if (seg1) {
+if (nz    >  m  ) {
+	seg2 = false;
+}
+} // if (seg1)
+seg1 = true;
+if (seg2) {
+// ---------------------------------------------------------------
+// Search the set of columns of length  nz.
+// ---------------------------------------------------------------
+lq1    = iqloc[nz-1];
+lq2    = n;
+if (nz < m) lq2 = iqloc[nz] - 1;
+
+Cols:  for (lq = lq1; lq <= lq2; lq++) {
+ ncol   = ncol + 1;
+ j      = q[lq-1];
+ lc1    = locc[j-1];
+ lc2    = lc1 + nz1;
+ amax   = Math.abs( a[lc1-1] );
+
+ // Test all aijs in this column.
+ // amax is the largest element (the first in the column).
+ // cmax is the largest multiplier if aij becomes pivot.
+
+ if ( TCP ) {
+    if (amax < aijtol) {
+    	continue Cols; // Nothing in whole column
+    }
+ } // if (TCP)
+
+Colj: for (lc = lc1; lc <= lc2; lc++) {
+    i      = indc[lc-1];
+    len1   = lenr[i-1] - 1;
+    // merit  = nz1 * len1
+  // if (merit > mbest) cycle
+    if (len1  > kbest) continue Colj;
+
+    // aij  has a promising merit.
+    // Apply the stability test.
+    // We require  aij  to be sufficiently large compared to
+    // all other nonzeros in column  j.  This is equivalent
+    // to requiring cmax to be bounded by Ltol.
+
+    if (lc == lc1) {
+
+       // This is the maximum element, amax.
+       // Find the biggest element in the rest of the column
+       // and hence get cmax.  We know cmax .le. 1, but
+       // we still want it exactly in order to break ties.
+       // 27 Apr 2002: Settle for cmax = 1.
+
+       aij    = amax;
+       cmax   = one;
+
+       // cmax   = zero
+       // do 140 l = lc1 + 1, lc2
+       // cmax  = max( cmax, abs( a(l) ) )
+       // 140            continue
+       // cmax   = cmax / amax
+    } // if (lc == lc1)
+    else { // lc != lc1
+
+       // aij is not the biggest element, so cmax >= 1.
+       // Bail out if cmax will be too big.
+
+       aij    = Math.abs( a[lc-1] );
+       if ( TCP ) { // Absolute test for Complete Pivoting
+          if (aij      < aijtol) continue Colj;
+       } // if (TCP)
+       else { // TPP
+          if (aij*Ltol < amax  ) continue Colj;
+       } // else TPP
+       cmax   = amax / aij;
+    } // else lc != lc1
+
+    // aij  is big enough.  Its maximum multiplier is cmax.
+
+    merit  = nz1 * len1;
+    if (merit == mbest[0]) {
+
+       // Break ties.
+       // (Initializing mbest < 0 prevents getting here if
+       // nothing has been found yet.)
+       // In this version we minimize cmax
+       // but if it is already small we maximize the pivot.
+
+       if (lbest <= gamma  &&  cmax <= gamma) {
+          if (abest >= aij ) continue Colj;
+       }
+       else {
+          if (lbest <= cmax) continue Colj;
+       }
+    } // if (merit == mbest[0])
+
+    // aij  is the best pivot so far.
+
+    ibest[0]  = i;
+    jbest[0]  = j;
+    kbest  = len1;
+    mbest[0]  = merit;
+    abest  = aij;
+    lbest  = cmax;
+    if (nz == 1) break NZS;
+} // Colj: for (lc = lc1; lc <= lc2; lc++)
+
+ // Finished with that column.
+
+ if (ibest[0] > 0) {
+    if (ncol >= maxcol) break Cols;
+ }
+} // Cols:  for (lq = lq1; lq <= lq2; lq++)
+} // if (seg2)
+seg2 = true;
+
+// ---------------------------------------------------------------
+// Search the set of rows of length  nz.
+// ---------------------------------------------------------------
+// 200  if (mbest .le. nz*nz1) go to 900
+if (kbest <= nz    ) break NZS;
+if (ibest[0] > 0) {
+ if (nrow >= maxrow) {
+	 seg3 = false;
+	 seg4 = false;
+ } // if (nrow >= maxrow)
+} // if (ibest[0] > 0)
+if (seg3) {
+if (nz > n) {
+	seg4 = false;
+}
+} // if (seg3)
+seg3 = true;
+
+if (seg4) {
+lp1    = iploc[nz-1];
+lp2    = m;
+if (nz < n) lp2 = iploc[nz] - 1;
+
+Rows:  for (lp = lp1; lp <= lp2; lp++) {
+ nrow   = nrow + 1;
+ i      = p[lp-1];
+ lr1    = locr[i-1];
+ lr2    = lr1 + nz1;
+
+Rowi:     for (lr = lr1; lr <= lr2; lr++) {
+    j      = indr[lr-1];
+    len1   = lenc[j-1] - 1;
+    // merit  = nz1 * len1
+  // if (merit > mbest) cycle
+    if (len1  > kbest) continue Rowi;
+
+    // aij  has a promising merit.
+    // Find where  aij  is in column  j.
+
+    lc1    = locc[j-1];
+    lc2    = lc1 + len1;
+    amax   = Math.abs( a[lc1-1] );
+    for (lc = lc1; lc <= lc2; lc++) {
+       if (indc[lc-1] == i) break;
+    }
+
+    // Apply the same stability test as above.
+
+    aij    = Math.abs( a[lc-1] );
+    if ( TCP ) {   // Absolute test for Complete Pivoting
+       if (aij < aijtol) continue Rowi;
+    } // if (TCP)
+
+    if (lc == lc1) {
+
+       // This is the maximum element, amax.
+       // Find the biggest element in the rest of the column
+       // and hence get cmax.  We know cmax .le. 1, but
+       // we still want it exactly in order to break ties.
+       // 27 Apr 2002: Settle for cmax = 1.
+
+       cmax   = one;
+
+       // cmax   = zero
+       //     do 240 l = lc1 + 1, lc2
+       //        cmax  = max( cmax, abs( a(l) ) )
+       // 240 continue
+       // cmax   = cmax / amax
+    } // if (lc == lc1)
+    else { // lc != lc1
+
+       // aij is not the biggest element, so cmax .ge. 1.
+       // Bail out if cmax will be too big.
+
+       if ( TCP ) {
+          // relax
+       }
+       else {
+          if (aij*Ltol < amax) continue Rowi;
+       }
+       cmax   = amax / aij;
+    } // else lc != lc1
+
+    // aij  is big enough.  Its maximum multiplier is cmax.
+
+    merit  = nz1 * len1;
+    if (merit == mbest[0]) {
+
+       // Break ties as before.
+       // (Initializing mbest < 0 prevents getting here if
+       // nothing has been found yet.)
+
+       if (lbest <= gamma  &&  cmax <= gamma) {
+          if (abest >= aij ) continue Rowi;
+       }
+       else {
+          if (lbest <= cmax) continue Rowi;
+       }
+    } // if (merit == mbest[0])
+
+    // aij  is the best pivot so far.
+
+    ibest[0]  = i;
+    jbest[0]  = j;
+    kbest  = len1;
+    mbest[0]  = merit;
+    abest  = aij;
+    lbest  = cmax;
+    if (nz == 1) break NZS;
+} // Rowi:     for (lr = lr1; lr <= lr2; lr++)
+
+ // Finished with that row.
+
+ if (ibest[0] > 0) {
+    if (nrow >= maxrow) break Rows;
+ } // if (ibest[0] > 0)
+} // Rows:  for (lp = lp1; lp <= lp2; lp++)
+} // if (seg4)
+seg4 = true;
+
+// See if it's time to quit.
+
+if (ibest[0] > 0) {
+ if (nrow >= maxrow &&  ncol >= maxcol) break NZS;
+} // if (ibest[0] > 0)
+
+// Press on with next nz.
+
+nz1    = nz;
+if (ibest[0] > 0) kbest = mbest[0] / nz1;
+} // NZS: for (nz = 1; nz <= maxmn; nz++)
+
+} // lu1mar
+
+private void lu1mRP(int m, int n, int lena, int maxmn,
+        double Ltol, int maxcol, int maxrow,
+        int ibest[], int jbest[], int mbest[],
+        double a[], int indc[], int indr[], int p[], int q[],
+        int lenc[], int lenr[], int locc[], int locr[],
+        int iploc[], int iqloc[], double Amaxr[]) {
+
+//integer(ip),   intent(in)    :: m, n, lena, maxmn, maxcol, maxrow
+//integer(ip),   intent(out)   :: ibest, jbest, mbest
+//real(rp),      intent(in)    :: Ltol
+//integer(ip),   intent(in)    :: indc(lena), indr(lena), p(m)    , q(n)    , &
+//                       lenc(n)   , lenr(m)   , iploc(n), iqloc(m), &
+//                       locc(n)   , locr(m)
+//real(rp),      intent(in)    :: a(lena)   , Amaxr(m)
+
+// ------------------------------------------------------------------
+// lu1mRP  uses a Markowitz criterion to select a pivot element
+// for the next stage of a sparse LU factorization,
+// subject to a Threshold Rook Pivoting stability criterion (TRP)
+// that bounds the elements of L and U.
+
+// 11 Jun 2002: First version of lu1mRP derived from lu1mar.
+// 11 Jun 2002: Current version of lu1mRP.
+
+// 10 Jan 2010: First f90 version.
+// 12 Dec 2011: Declare intent.
+// ------------------------------------------------------------------
+
+int i, j, kbest, lc, lc1, lc2, len1,
+    lp, lp1, lp2, lq, lq1, lq2, lr, lr1, lr2,
+    merit, ncol, nrow, nz, nz1;
+double abest, aij, amax, atoli, atolj;
+final double zero = 0.0;
+boolean seg1 = true;
+boolean seg2 = true;
+boolean seg3 = true;
+boolean seg4 = true;
+
+// ------------------------------------------------------------------
+// Search cols of length nz = 1, then rows of length nz = 1,
+// then   cols of length nz = 2, then rows of length nz = 2, etc.
+// ------------------------------------------------------------------
+abest  = zero;
+ibest[0]  = 0;
+kbest  = maxmn + 1;
+mbest[0]  = -1;
+ncol   = 0;
+nrow   = 0;
+nz1    = 0;
+
+NZS: for(nz = 1; nz <= maxmn; nz++) {
+// nz1    = nz - 1
+// if (mbest .le. nz1**2) go to 900
+if (kbest <= nz1) break NZS;
+if (ibest[0] >  0  ) {
+if (ncol >= maxcol) {
+	seg1 = false;
+	seg2 = false;
+}
+} // if (ibest[0] > 0)
+if (seg1) {
+if (nz    >  m  ) {
+	seg2 = false;
+}
+} // if (seg1)
+seg1 = true;
+
+if (seg2) {
+// ---------------------------------------------------------------
+// Search the set of columns of length  nz.
+// ---------------------------------------------------------------
+lq1    = iqloc[nz-1];
+lq2    = n;
+if (nz < m) lq2 = iqloc[nz] - 1;
+
+Cols:  for (lq = lq1; lq <= lq2; lq++) {
+ncol   = ncol + 1;
+j      = q[lq-1];
+lc1    = locc[j-1];
+lc2    = lc1 + nz1;
+amax   = Math.abs( a[lc1-1] );
+atolj  = amax / Ltol;    // Min size of pivots in col j
+
+// Test all aijs in this column.
+
+Colj:  for (lc = lc1; lc <= lc2; lc++) {
+i      = indc[lc-1];
+len1   = lenr[i-1] - 1;
+// merit  = nz1 * len1
+// if (merit > mbest) cycle Colj
+if (len1  > kbest) continue Colj;
+
+// aij  has a promising merit.
+// Apply the Threshold Rook Pivoting stability test.
+// First we require aij to be sufficiently large
+// compared to other nonzeros in column j.
+// Then  we require aij to be sufficiently large
+// compared to other nonzeros in row    i.
+
+aij    = Math.abs( a[lc-1] );
+if (aij      < atolj   ) continue Colj;
+if (aij*Ltol < Amaxr[i-1]) continue Colj;
+
+// aij  is big enough.
+
+merit  = nz1 * len1;
+if (merit == mbest[0]) {
+
+   // Break ties.
+   // (Initializing mbest < 0 prevents getting here if
+   // nothing has been found yet.)
+
+   if (abest >= aij) continue Colj;
+} // if (merit == mbest[0])
+
+// aij  is the best pivot so far.
+
+ibest[0]  = i;
+jbest[0]  = j;
+kbest  = len1;
+mbest[0]  = merit;
+abest  = aij;
+if (nz == 1) break NZS;
+} // Colj:  for (lc = lc1; lc <= lc2; lc++)
+
+// Finished with that column.
+
+if (ibest[0] > 0) {
+if (ncol >= maxcol) break Cols;
+} // if (ibest[0] > 0)
+} // Cols:  for (lq = lq1; lq <= lq2; lq++)
+} // if (seg2)
+seg2 = true;
+
+// ---------------------------------------------------------------
+// Search the set of rows of length  nz.
+// ---------------------------------------------------------------
+// 200  if (mbest .le. nz*nz1) go to 900
+if (kbest <= nz    ) break NZS;
+if (ibest[0] > 0) {
+if (nrow >= maxrow) {
+	seg3 = false;
+	seg4 = false;
+}
+} // if (ibest[0] > 0)
+if (seg3) {
+if (nz > n) {
+	seg4 = false;
+}
+} // if (seg3)
+seg3 = true;
+
+if (seg4) {
+lp1    = iploc[nz-1];
+lp2    = m;
+if (nz < n) lp2 = iploc[nz] - 1;
+
+Rows:  for (lp = lp1; lp <= lp2; lp++) {
+nrow   = nrow + 1;
+i      = p[lp-1];
+lr1    = locr[i-1];
+lr2    = lr1 + nz1;
+atoli  = Amaxr[i-1] / Ltol;   // Min size of pivots in row i
+
+Rowi: for (lr = lr1; lr <= lr2; lr++) {
+j      = indr[lr-1];
+len1   = lenc[j-1] - 1;
+// merit  = nz1 * len1
+// if (merit > mbest) cycle
+if (len1  > kbest) continue Rowi;
+
+// aij  has a promising merit.
+// Find where  aij  is in column j.
+
+lc1    = locc[j-1];
+lc2    = lc1 + len1;
+amax   = Math.abs( a[lc1-1] );
+for (lc = lc1; lc <= lc2; lc++) {
+   if (indc[lc-1] == i) break;
+} // for (lc = lc1; lc <= lc2; lc++)
+
+// Apply the Threshold Rook Pivoting stability test.
+// First we require aij to be sufficiently large
+// compared to other nonzeros in row    i.
+// Then  we require aij to be sufficiently large
+// compared to other nonzeros in column j.
+
+aij    = Math.abs( a[lc-1] );
+if (aij      < atoli) continue Rowi;
+if (aij*Ltol < amax ) continue Rowi;
+
+// aij  is big enough.
+
+merit  = nz1 * len1;
+if (merit == mbest[0]) {
+
+   // Break ties as before.
+   // (Initializing mbest < 0 prevents getting here if
+   // nothing has been found yet.)
+
+   if (abest >= aij ) continue Rowi;
+} // if (merit == mbest[0])
+
+// aij  is the best pivot so far.
+
+ibest[0]  = i;
+jbest[0]  = j;
+kbest  = len1;
+mbest[0]  = merit;
+abest  = aij;
+if (nz == 1) break NZS;
+} // Rowi: for (lr = lr1; lr <= lr2; lr++)
+
+// Finished with that row.
+
+if (ibest[0] > 0) {
+if (nrow >= maxrow) break Rows;
+} // if (ibest[0] > 0)
+} // Rows:  for (lp = lp1; lp <= lp2; lp++)
+} // if (seg4)
+seg4 = true;
+
+// See if it's time to quit.
+
+if (ibest[0] > 0) {
+if (nrow >= maxrow  &&  ncol >= maxcol) break NZS;
+} // if (ibest[0] > 0)
+
+// Press on with next nz.
+
+nz1    = nz;
+if (ibest[0] > 0) kbest  = mbest[0] / nz1;
+} // NZS: for(nz = 1; nz <= maxmn; nz++)
+
+} // lu1mRP
+
+private void lu1mSP(int m, int n, int lena, int maxmn,
+        double Ltol , int maxcol,
+        int ibest[], int jbest[], int mbest[],
+        double a[], int indc[], int q[], int locc[], int iqloc[]) {
+
+//integer(ip),   intent(in)    :: m, n, lena, maxmn, maxcol
+//integer(ip),   intent(out)   :: ibest, jbest, mbest
+//real(rp),      intent(in)    :: Ltol, a(lena)
+//integer(ip),   intent(in)    :: indc(lena), q(n), iqloc(m), locc(n)
+
+// ------------------------------------------------------------------
+// lu1mSP  is intended for symmetric matrices that are either
+// definite or quasi-definite.
+// lu1mSP  uses a Markowitz criterion to select a pivot element for
+// the next stage of a sparse LU factorization of a symmetric matrix,
+// subject to a Threshold Symmetric Pivoting stability criterion
+// (TSP) restricted to diagonal elements to preserve symmetry.
+// This bounds the elements of L and U and should have rank-revealing
+// properties analogous to Threshold Rook Pivoting for unsymmetric
+// matrices.
+
+// 14 Dec 2002: First version of lu1mSP derived from lu1mRP.
+//              There is no safeguard to ensure that A is symmetric.
+// 14 Dec 2002: Current version of lu1mSP.
+
+// 10 Jan 2010: First f90 version.
+// 12 Dec 2011: Declare intent.
+// ------------------------------------------------------------------
+
+int i, j, kbest, lc, lc1, lc2,
+    lq, lq1, lq2, merit, ncol, nz, nz1;
+double abest, aij, amax, atolj;
+final double zero = 0.0;
+boolean seg1 = true;
+boolean seg2 = true;
+
+// ------------------------------------------------------------------
+// Search cols of length nz = 1, then cols of length nz = 2, etc.
+// ------------------------------------------------------------------
+abest  = zero;
+ibest[0]  = 0;
+kbest  = maxmn + 1;
+mbest[0]  = -1;
+ncol   = 0;
+nz1    = 0;
+
+NZS: for (nz = 1; nz <= maxmn; nz++) {
+// nz1    = nz - 1
+// if (mbest <= nz1**2) exit
+if (kbest <= nz1   ) break NZS;
+if (ibest[0] > 0) {
+if (ncol >= maxcol) {
+	seg1 = false;
+	seg2 = false;
+}
+} // if (ibest[0] > 0)
+if (seg1) {
+if (nz > m) {
+	seg2 = false;
+}
+} // if (seg1)
+seg1 = true;
+
+if (seg2) {
+// ---------------------------------------------------------------
+// Search the set of columns of length  nz.
+// ---------------------------------------------------------------
+lq1    = iqloc[nz-1];
+lq2    = n;
+if (nz < m) lq2 = iqloc[nz] - 1;
+
+Cols:  for (lq = lq1; lq <= lq2; lq++) {
+ncol   = ncol + 1;
+j      = q[lq-1];
+lc1    = locc[j-1];
+lc2    = lc1 + nz1;
+amax   = Math.abs( a[lc1-1] );
+atolj  = amax / Ltol;    // Min size of pivots in col j
+
+// Test all aijs in this column.
+// Ignore everything except the diagonal.
+
+Colj: for (lc = lc1; lc <= lc2; lc++) {
+i      = indc[lc-1];
+if (i != j) continue Colj;     // Skip off-diagonals.
+// merit  = nz1 * nz1
+// if (merit > mbest) cycle
+if (nz1   > kbest) continue Colj;
+
+// aij  has a promising merit.
+// Apply the Threshold Partial Pivoting stability test
+// (which is equivalent to Threshold Rook Pivoting for
+// symmetric matrices).
+// We require aij to be sufficiently large
+// compared to other nonzeros in column j.
+
+aij    = Math.abs( a[lc-1] );
+if (aij < atolj  ) continue Colj;
+
+// aij  is big enough.
+
+merit  = nz1 * nz1;
+if (merit == mbest[0]) {
+
+   // Break ties.
+   // (Initializing mbest < 0 prevents getting here if
+   // nothing has been found yet.)
+
+   if (abest >= aij) continue Colj;
+} // if (merit == mbest[0])
+
+// aij  is the best pivot so far.
+
+ibest[0]  = i;
+jbest[0]  = j;
+kbest  = nz1;
+mbest[0]  = merit;
+abest  = aij;
+if (nz == 1) break NZS;
+} // Colj: for (lc = lc1; lc <= lc2; lc++)
+
+// Finished with that column.
+
+if (ibest[0] > 0) {
+if (ncol >= maxcol) break Cols;
+} // if (ibest[0] > 0)
+} // Cols:  for (lq = lq1; lq <= lq2; lq++)
+} // if (seg2)
+seg2 = true;
+
+// See if it's time to quit.
+
+if (ibest[0] > 0) {
+if (ncol >= maxcol) break NZS;
+} // if (ibest[0] > 0)
+
+// Press on with next nz.
+
+nz1    = nz;
+if (ibest[0] > 0) kbest  = mbest[0] / nz1;
+} // NZS: for (nz = 1; nz <= maxmn; nz++)
+
+} // lu1mSP
+
     
     private void lu1mxc(int k1, int k2, int q[], double a[], int indc[], int lenc[], int locc[]) {
 
