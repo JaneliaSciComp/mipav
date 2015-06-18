@@ -1592,20 +1592,25 @@ final double one = 1.0;
 //        22 Sep 2000:  For simplicity, lu1mxc fixes all modified cols.
 // ------------------------------------------------------------------
 
+int h[] = new int[1];
+int Hlen[] = new int[1];
 int hops[] = new int[1];
 int ibest[] = new int[1];
+int ilast[] = new int[1];
 int jbest[] = new int[1];
+int lcol[] = new int[1];
+int lrow[] = new int[1];
 int mbest[] = new int[1];
-int Hlen, Hlenin, h,
-    i, ilast, imax,
+int Hlenin,
+    i, imax,
     j, jlast, jmax, lPiv,
-    k, kbest, kk, l, last, lc, lc1, lcol,
+    k, kbest, kk, l, last, lc, lc1,
     lD, ldiagU, lenD, leni, lenj,
     lfile, lfirst, lfree, limit,
     ll, ll1, lpivc, lpivc1, lpivc2,
     lpivr, lpivr1, lpivr2, lprint,
     lq, lq1, lq2, lr, lr1,
-    lrow, ls, lsave, lu, lu1,
+    ls, lsave, lu, lu1,
     mark, maxcol, maxmn, maxrow,
     melim, minfre, minmn, mleft,
     mrank, ncold, nelim, nfill,
@@ -1616,6 +1621,13 @@ int markr[] = new int[m];
 double v;
 boolean seg1 = true;
 boolean seg2 = true;
+boolean seg3 = true;
+boolean seg4 = true;
+double al[];
+int markl[];
+double au[];
+int ifill[];
+int jfill[];
 
 nout   = luparm[0];
 lprint = luparm[1];
@@ -1630,11 +1642,11 @@ TSP    = lPiv == 3;  // Threshold Symmetric Pivoting.
 
 densLU = false;
 maxrow = maxcol - 1;
-ilast  = m;                 // Assume row m is last in the row file.
+ilast[0]  = m;                 // Assume row m is last in the row file.
 jlast  = n;                 // Assume col n is last in the col file.
 lfile  = nelem;
-lrow   = nelem;
-lcol   = nelem;
+lrow[0]   = nelem;
+lcol[0]   = nelem;
 minmn  = Math.min( m, n );
 maxmn  = Math.max( m, n );
 nzleft = nelem;
@@ -1685,7 +1697,7 @@ if (TPP || TSP) {
 	// Don't worry yet about lu1mxc.
     aijmax = zero;
     aijtol = zero;
-    Hlen   = 1;
+    Hlen[0]   = 1;
 }
 else { // TRP or TCP
     // Move biggest element to top of each column.
@@ -1708,19 +1720,19 @@ if (TCP) {
 // Set Ha(1:Hlen) = biggest element in each column,
 // Hj(1:Hlen) = corresponding column indices.
 
-Hlen  = 0;
+Hlen[0]  = 0;
 for (kk = 1; kk <= n; kk++) {
- Hlen     = Hlen + 1;
+ Hlen[0]     = Hlen[0] + 1;
  j        = q[kk-1];
  lc       = locc[j-1];
- Ha[Hlen-1] = Math.abs( a[lc-1] );
- Hj[Hlen-1] = j;
- Hk[j-1]    = Hlen;
+ Ha[Hlen[0]-1] = Math.abs( a[lc-1] );
+ Hj[Hlen[0]-1] = j;
+ Hk[j-1]    = Hlen[0];
 } // for (kk = 1; kk <= n; kk++) 
 
 // Build the heap, creating new Ha, Hj and setting Hk(1:Hlen).
 
-Hbuild( Ha, Hj, Hk, Hlen, Hlen, hops );
+Hbuild( Ha, Hj, Hk, Hlen[0], Hlen[0], hops );
 } // if (TCP)
 
 // ------------------------------------------------------------------
@@ -1768,15 +1780,15 @@ if ( Utri ) {
 
  if (lq1 <= lq2) {  // There are more cols of length 1.
     if (TPP || TSP) {
-       jbest  = q[lq1-1];   // Grab the first one.
+       jbest[0]  = q[lq1-1];   // Grab the first one.
     } // if (TPP || TSP)
     else { // TRP or TCP     Scan all columns of length 1.
-       jbest  = 0;
+       jbest[0]  = 0;
 
        for (lq = lq1; lq <= lq2; lq++) {
           j      = q[lq-1];
           if (w[j-1] > zero) { // Accept a slack
-             jbest  = j;
+             jbest[0]  = j;
              break;
           } // if (w[j-1] > zero)
 
@@ -1788,19 +1800,19 @@ if ( Utri ) {
           } // if (TRP)
 
           if (amax >= aijtol) {
-             jbest  = j;
+             jbest[0]  = j;
              break;
           } // if (amax >= aijtol)
        } // for (lq = lq1; lq <= lq2; lq++)
     } // else TRP or TCP
     
-    if (jbest > 0) {
-       lc     = locc[jbest-1];
-       ibest  = indc[lc-1];
-       mbest  = 0;
+    if (jbest[0] > 0) {
+       lc     = locc[jbest[0]-1];
+       ibest[0]  = indc[lc-1];
+       mbest[0]  = 0;
        seg1 = false;
        seg2 = false;
-    } // if (jbest > 0)
+    } // if (jbest[0 > 0)
  } // if (lq1 <= lq2)
 
  // This is the end of the U triangle.
@@ -1933,357 +1945,429 @@ else if ( spars2 || dense ) {
 
  // See if what's left is as dense as dens2.
 
- if ( spars2 ) then
-    if (nzleft  >=  (dens2 * mleft) * nleft) then
-       spars2 = .false.
-       dense  = .true.
-       ndens2 =  nleft
-       maxcol =  1
-       if (lprint >= 50) then
-          write(nout, 1100) 'spars2 ended.  dense = true'
-       end if
-    end if
- end if
+ if ( spars2 ) {
+    if (nzleft  >=  (dens2 * mleft) * nleft) {
+       spars2 = false;
+       dense  = true;
+       ndens2[0] =  nleft;
+       maxcol =  1;
+       if (lprint >= 50) {
+          UI.setDataText("spars2 ended.  dense = true\n");
+       }
+    } // if (nzleft  >=  (dens2[0] * mleft) * nleft)
+ } // if (spars2)
 } // else if ( spars2 || dense )
 
-!---------------------------------------------------------------
-! See if we can finish quickly.
-!---------------------------------------------------------------
-if ( dense  ) then
- lenD   = mleft * nleft
- nfree  = lu1 - 1
+// ---------------------------------------------------------------
+// See if we can finish quickly.
+// ---------------------------------------------------------------
+if ( dense  ) {
+ lenD   = mleft * nleft;
+ nfree  = lu1 - 1;
 
- if (nfree >= 2 * lenD) then
+ if (nfree >= 2 * lenD) {
 
-    ! There is room to treat the remaining matrix as
-    ! a dense matrix D.
-    ! We may have to compress the column file first.
-    ! 12 Nov 1999: D used to be put at the
-    !              beginning of free storage (lD = lcol + 1).
-    !              Now put it at the end     (lD = lu1 - lenD)
-    !              so the left-shift in lu1ful will not
-    !              involve overlapping storage
-    !              (fatal with parallel dcopy).
+    // There is room to treat the remaining matrix as
+    // a dense matrix D.
+    // We may have to compress the column file first.
+    // 12 Nov 1999: D used to be put at the
+    //              beginning of free storage (lD = lcol + 1).
+    //              Now put it at the end     (lD = lu1 - lenD)
+    //              so the left-shift in lu1ful will not
+    //              involve overlapping storage
+    //              (fatal with parallel dcopy).
 
-    densLU = .true.
-    ndens2 = nleft
-    lD     = lu1 - lenD
-    if (lcol >= lD) then
-       call lu1rec( n, .true., luparm, lcol, lena, a, indc, lenc, locc )
-       lfile  = lcol
-       jlast  = indc(lcol + 1)
-    end if
+    densLU = true;
+    ndens2[0] = nleft;
+    lD     = lu1 - lenD;
+    if (lcol[0] >= lD) {
+       lu1rec( n, true, luparm, lcol, lena, a, indc, lenc, locc );
+       lfile  = lcol[0];
+       jlast  = indc[lcol[0]];
+    } // if (lcol[0] >= lD)
 
-    go to 900
- end if
-end if
+    break;
+ } // if (nfree >= 2 * lenD)
+} // if (dense)
 } // if (seg2)
 seg2 = true;
 
-!===============================================================
-! The best  aij  has been found.
-! The pivot row  ibest  and the pivot column  jbest
-! define a dense matrix  D  of size  nrowd x ncold.
-!===============================================================
-300    ncold  = lenr(ibest)
-nrowd  = lenc(jbest)
-melim  = nrowd  - 1
-nelim  = ncold  - 1
-mersum = mersum + mbest
-lenL   = lenL   + melim
-lenU   = lenU   + ncold
-if (lprint >= 50) then
- if (nrowu == 1) then
-    write(nout, 1100) 'lu1fad debug:'
- end if
- if ( TPP .or. TRP .or. TSP ) then
-    write(nout, 1200) nrowu, ibest, jbest, nrowd, ncold
- else ! TCP
-    jmax   = Hj(1)
-    imax   = indc(locc(jmax))
-    write(nout, 1200) nrowu, ibest, jbest, nrowd, ncold, &
-                      imax , jmax , aijmax
- end if
-end if
+// ===============================================================
+// The best  aij  has been found.
+// The pivot row  ibest  and the pivot column  jbest
+// define a dense matrix  D  of size  nrowd x ncold.
+// ===============================================================
+ncold  = lenr[ibest[0]-1];
+nrowd  = lenc[jbest[0]-1];
+melim  = nrowd  - 1;
+nelim  = ncold  - 1;
+mersum[0] = mersum[0] + mbest[0];
+lenL[0]   = lenL[0]   + melim;
+lenU[0]   = lenU[0]   + ncold;
+if (lprint >= 50) {
+ if (nrowu == 1) {
+    UI.setDataText("lu1fad debug:\n");
+ } // if (nrowu == 1)
+ if ( TPP || TRP || TSP ) {
+	UI.setDataText("nrowu = " + nrowu + "\n");
+	UI.setDataText("ibest[0] = " + ibest[0] + "\n");
+	UI.setDataText("jbest[0] = " + jbest[0] + "\n");
+	UI.setDataText("nrowd = " + nrowd + "\n");
+	UI.setDataText("ncold = " + ncold + "\n");
+ }
+ else { // TCP
+    jmax   = Hj[0];
+    imax   = indc[locc[jmax-1]-1];
+    UI.setDataText("nrowu = " + nrowu + "\n");
+	UI.setDataText("ibest[0] = " + ibest[0] + "\n");
+	UI.setDataText("jbest[0] = " + jbest[0] + "\n");
+	UI.setDataText("nrowd = " + nrowd + "\n");
+	UI.setDataText("ncold = " + ncold + "\n");
+	UI.setDataText("imax = " + imax + "\n");
+	UI.setDataText("jmax = " + jmax + "\n");
+	UI.setDataText("aijmax = " + nf.format(aijmax) + "\n");
+ } // else TCP
+} // if (lprint >= 50)
 
-!===============================================================
-! Allocate storage for the next column of  L  and next row of  U.
-! Initially the top of a, indc, indr are used as follows:
-!
-!            ncold       melim       ncold        melim
-!
-! a      |...........|...........|ujbest..ujn|li1......lim|
-!
-! indc   |...........|  lenr(i)  |  lenc(j)  |  markl(i)  |
-!
-! indr   |...........| iqloc(i)  |  jfill(j) |  ifill(i)  |
-!
-!       ^           ^             ^           ^            ^
-!       lfree   lsave             lu1         ll1          oldlu1
-!
-! Later the correct indices are inserted:
-!
-! indc   |           |           |           |i1........im|
-!
-! indr   |           |           |jbest....jn|ibest..ibest|
-!
-!===============================================================
-if ( keepLU ) then
- ! relax
-else
- ! Always point to the top spot.
- ! Only the current column of L and row of U will
- ! take up space, overwriting the previous ones.
- lu1    = ldiagU + 1
-end if
-ll1    = lu1   - melim
-lu1    = ll1   - ncold
-lsave  = lu1   - nrowd
-lfree  = lsave - ncold
+// ===============================================================
+// Allocate storage for the next column of  L  and next row of  U.
+// Initially the top of a, indc, indr are used as follows:
 
-! Make sure the column file has room.
-! Also force a compression if its length exceeds a certain limit.
+//            ncold       melim       ncold        melim
 
-limit  = int(Uspace*real(lfile))  +  m  +  n  +  1000
-minfre = ncold  + melim
-nfree  = lfree  - lcol
-if (nfree < minfre  .or.  lcol > limit) then
- call lu1rec( n, .true., luparm, lcol, lena, a, indc, lenc, locc )
- lfile  = lcol
- jlast  = indc(lcol + 1)
- nfree  = lfree - lcol
- if (nfree < minfre) go to 970
-end if
+// a      |...........|...........|ujbest..ujn|li1......lim|
 
-! Make sure the row file has room.
+// indc   |...........|  lenr(i)  |  lenc(j)  |  markl(i)  |
 
-minfre = melim + ncold
-nfree  = lfree - lrow
-if (nfree < minfre  .or.  lrow > limit) then
- call lu1rec( m, .false., luparm, lrow, lena, a, indr, lenr, locr )
- lfile  = lrow
- ilast  = indr(lrow + 1)
- nfree  = lfree - lrow
- if (nfree < minfre) go to 970
-end if
+// indr   |...........| iqloc(i)  |  jfill(j) |  ifill(i)  |
 
-!===============================================================
-! Move the pivot element to the front of its row
-! and to the top of its column.
-!===============================================================
-lpivr  = locr(ibest)
-lpivr1 = lpivr + 1
-lpivr2 = lpivr + nelim
+//       ^           ^             ^           ^            ^
+//       lfree   lsave             lu1         ll1          oldlu1
 
-do l = lpivr, lpivr2
- if (indr(l) == jbest) exit
-end do
+// Later the correct indices are inserted:
 
-indr(l)     = indr(lpivr)
-indr(lpivr) = jbest
+// indc   |           |           |           |i1........im|
 
-lpivc  = locc(jbest)
-lpivc1 = lpivc + 1
-lpivc2 = lpivc + melim
+// indr   |           |           |jbest....jn|ibest..ibest|
 
-do l = lpivc, lpivc2
- if (indc(l) == ibest) exit
-end do
+// ===============================================================
+if ( keepLU ) {
+ // relax
+}
+else {
+ // Always point to the top spot.
+ // Only the current column of L and row of U will
+ // take up space, overwriting the previous ones.
+ lu1    = ldiagU + 1;
+}
+ll1    = lu1   - melim;
+lu1    = ll1   - ncold;
+lsave  = lu1   - nrowd;
+lfree  = lsave - ncold;
 
-indc(l)     = indc(lpivc)
-indc(lpivc) = ibest
-abest       = a(l)
-a(l)        = a(lpivc)
-a(lpivc)    = abest
+// Make sure the column file has room.
+// Also force a compression if its length exceeds a certain limit.
 
-if ( keepLU ) then
- ! relax
-else
- ! Store just the diagonal of U, in natural order.
- !!!   a(ldiagU + nrowu) = abest ! This was in pivot order.
- a(ldiagU + jbest) = abest
-end if
+limit  = (int)(Uspace*(double)(lfile))  +  m  +  n  +  1000;
+minfre = ncold  + melim;
+nfree  = lfree  - lcol[0];
+if (nfree < minfre  ||  lcol[0] > limit) {
+ lu1rec( n, true, luparm, lcol, lena, a, indc, lenc, locc );
+ lfile  = lcol[0];
+ jlast  = indc[lcol[0]];
+ nfree  = lfree - lcol[0];
+ if (nfree < minfre) {
+	 inform[0] = 7;
+     minlen[0] = lena  +  lfile  +  2*(m + n);
+     return;
+ }
+} // if (nfree < minfre  ||  lcol[0] > limit)
 
-!==============================================================
-! Delete pivot col from heap.
-! Hk tells us where it is in the heap.
-!==============================================================
-if ( TCP ) then
- kbest  = Hk(jbest)
- Hlenin = Hlen
- call Hdelete( Ha, Hj, Hk, Hlenin, Hlen, n, kbest, h )
- hops   = hops + h
-end if
+// Make sure the row file has room.
 
-!===============================================================
-! Delete the pivot row from the column file
-! and store it as the next row of  U.
-! set  indr(lu) = 0     to initialize jfill ptrs on columns of D,
-! indc(lu) = lenj  to save the original column lengths.
-!===============================================================
-a(lu1)    = abest
-indr(lu1) = jbest
-indc(lu1) = nrowd
-lu        = lu1
+minfre = melim + ncold;
+nfree  = lfree - lrow[0];
+if (nfree < minfre  ||  lrow[0] > limit) {
+ lu1rec( m, false, luparm, lrow, lena, a, indr, lenr, locr );
+ lfile  = lrow[0];
+ ilast[0]  = indr[lrow];
+ nfree  = lfree - lrow[0];
+ if (nfree < minfre){
+	 inform[0] = 7;
+     minlen[0] = lena  +  lfile  +  2*(m + n);
+     return;
+ }
+} // if (nfree < minfre  ||  lrow[0 > limit)
 
-diag      = abs( abest )
-Umax      = max(  Umax, diag )
-DUmax     = max( DUmax, diag )
-DUmin     = min( DUmin, diag )
+// ===============================================================
+// Move the pivot element to the front of its row
+// and to the top of its column.
+// ===============================================================
+lpivr  = locr[ibest[0]-1];
+lpivr1 = lpivr + 1;
+lpivr2 = lpivr + nelim;
 
-do lr = lpivr1, lpivr2
- lu      = lu + 1
- j       = indr(lr)
- lenj    = lenc(j)
- lenc(j) = lenj - 1
- lc1     = locc(j)
- last    = lc1 + lenc(j)
+for (l = lpivr; l <= lpivr2; l++) {
+ if (indr[l-1] == jbest[0]) break;
+} // for (l = lpivr; l <= lpivr2; l++)
 
- do l = lc1, last
-    if (indc(l) == ibest) exit
- end do
+indr[l-1]     = indr[lpivr-1];
+indr[lpivr-1] = jbest[0];
 
- a(lu)      = a(l)
- indr(lu)   = 0
- indc(lu)   = lenj
- Umax       = max( Umax, abs( a(lu) ) )
- a(l)       = a(last)
- indc(l)    = indc(last)
- indc(last) = 0       ! Free entry
- !??? if (j == jlast) lcol = lcol - 1
-end do
+lpivc  = locc[jbest[0]-1];
+lpivc1 = lpivc + 1;
+lpivc2 = lpivc + melim;
 
-!===============================================================
-! Delete the pivot column from the row file
-! and store the nonzeros of the next column of  L.
-! Set  indc(ll) = 0      to initialize markl(*) markers,
-! indr(ll) = 0           to initialize ifill(*) row fill-in cntrs,
-! indc(ls) = leni        to save the original row lengths,
-! indr(ls) = iqloc(i)    to save parts of  iqloc(*),
-! iqloc(i) = lsave - ls  to point to the nonzeros of  L
-!          = -1, -2, -3, ... in mark(*).
-!===============================================================
-indc(lsave) = ncold
-if (melim == 0) go to 700
+for (l = lpivc; l <= lpivc2; l++) {
+ if (indc[l-1] == ibest[0]) break;
+} // for (l = lpivc; l <= lpivc2; l++) 
 
-ll     = ll1 - 1
-ls     = lsave
-abest  = one / abest
+indc[l-1]     = indc[lpivc-1];
+indc[lpivc-1] = ibest[0];
+abest       = a[l-1];
+a[l-1]        = a[lpivc-1];
+a[lpivc-1]    = abest;
 
-do lc = lpivc1, lpivc2
- ll       = ll + 1
- ls       = ls + 1
- i        = indc(lc)
- leni     = lenr(i)
- lenr(i)  = leni - 1
- lr1      = locr(i)
- last     = lr1 + lenr(i)
+if ( keepLU ) {
+ // relax
+}
+else {
+ // Store just the diagonal of U, in natural order.
+ //   a(ldiagU + nrowu) = abest ! This was in pivot order.
+ a[ldiagU + jbest[0]-1] = abest;
+}
 
- do l = lr1, last
-    if (indr(l) == jbest) exit
- end do
+// ==============================================================
+// Delete pivot col from heap.
+// Hk tells us where it is in the heap.
+// ==============================================================
+if ( TCP ) {
+ kbest  = Hk[jbest[0]-1];
+ Hlenin = Hlen[0];
+ Hdelete( Ha, Hj, Hk, Hlenin, Hlen, n, kbest, h );
+ hops[0]   = hops[0] + h[0];
+} // if (TCP)
 
- indr(l)    = indr(last)
- indr(last) = 0       ! Free entry
- !???  if (i == ilast) lrow = lrow - 1
+// ===============================================================
+// Delete the pivot row from the column file
+// and store it as the next row of  U.
+// set  indr(lu) = 0     to initialize jfill ptrs on columns of D,
+// indc(lu) = lenj  to save the original column lengths.
+// ===============================================================
+a[lu1-1]    = abest;
+indr[lu1-1] = jbest[0];
+indc[lu1-1] = nrowd;
+lu        = lu1;
 
- a(ll)      = - a(lc) * abest
- Lij        = abs( a(ll) )
- Lmax       = max( Lmax, Lij )
- !!!!! DEBUG
- ! if (Lij > Ltol) then
- ! write( *  ,*) ' Big Lij!!!', nrowu
- ! write(nout,*) ' Big Lij!!!', nrowu
- ! end if
+diag      = Math.abs( abest );
+Umax[0]      = Math.max(  Umax[0], diag );
+DUmax[0]     = Math.max( DUmax[0], diag );
+DUmin[0]     = Math.min( DUmin[0], diag );
 
- indc(ll)   = 0
- indr(ll)   = 0
- indc(ls)   = leni
- indr(ls)   = iqloc(i)
- iqloc(i)   = lsave - ls
-end do
+for (lr = lpivr1; lr <= lpivr2; lr++) {
+ lu      = lu + 1;
+ j       = indr[lr-1];
+ lenj    = lenc[j-1];
+ lenc[j-1] = lenj - 1;
+ lc1     = locc[j-1];
+ last    = lc1 + lenc[j-1];
 
-!===============================================================
-! Do the Gaussian elimination.
-! This involves adding a multiple of the pivot column
-! to all other columns in the pivot row.
-!
-! Sometimes more than one call to lu1gau is needed to allow
-! compression of the column file.
-! lfirst  says which column the elimination should start with.
-! minfre  is a bound on the storage needed for any one column.
-! lu      points to off-diagonals of u.
-! nfill   keeps track of pending fill-in in the row file.
-!===============================================================
-if (nelim == 0) go to 700
-lfirst = lpivr1
-minfre = mleft + nspare
-lu     = 1
-nfill  = 0
+ for (l = lc1; l <= last; l++) {
+    if (indc[l-1] == ibest[0]) break;
+ } // for (l = lc1; l <= last; l++)
 
-400    call lu1gau( m     , melim , ncold , nspare, small ,         &
-           lpivc1, lpivc2, lfirst, lpivr2, lfree , minfre, &
-           ilast , jlast , lrow  , lcol  , lu    , nfill , &
-           a     , indc  , indr  ,                         &
-           lenc  , lenr  , locc  , locr  ,                 &
-           iqloc , a(ll1), indc(ll1),                      &
-           a(lu1), indr(ll1), indr(lu1) )
+ a[lu-1]      = a[l-1];
+ indr[lu-1]   = 0;
+ indc[lu-1]   = lenj;
+ Umax[0]       = Math.max( Umax[0], Math.abs( a[lu-1] ) );
+ a[l-1]       = a[last-1];
+ indc[l-1]    = indc[last-1];
+ ind[last-1] = 0;       // Free entry
+ //??? if (j == jlast) lcol[0] = lcol[0] - 1
+} // for (lr = lpivr1; lr <= lpivr2; lr++)
 
-if (lfirst > 0) then
+// ===============================================================
+// Delete the pivot column from the row file
+// and store the nonzeros of the next column of  L.
+// Set  indc(ll) = 0      to initialize markl(*) markers,
+// indr(ll) = 0           to initialize ifill(*) row fill-in cntrs,
+// indc(ls) = leni        to save the original row lengths,
+// indr(ls) = iqloc(i)    to save parts of  iqloc(*),
+// iqloc(i) = lsave - ls  to point to the nonzeros of  L
+//          = -1, -2, -3, ... in mark(*).
+// ===============================================================
+indc[lsave-1] = ncold;
+if (melim == 0) {
+	seg3 = false;
+}
 
- ! The elimination was interrupted.
- ! Compress the column file and try again.
- ! lfirst, lu and nfill have appropriate new values.
+if (seg3) {
+ll     = ll1 - 1;
+ls     = lsave;
+abest  = one / abest;
 
- call lu1rec( n, .true., luparm, lcol, lena, a, indc, lenc, locc )
- lfile  = lcol
- jlast  = indc(lcol + 1)
- lpivc  = locc(jbest)
- lpivc1 = lpivc + 1
- lpivc2 = lpivc + melim
- nfree  = lfree - lcol
- if (nfree < minfre) go to 970
- go to 400
-end if
+for (lc = lpivc1; lc <= lpivc2; lc++) {
+ ll       = ll + 1;
+ ls       = ls + 1;
+ i        = indc[lc-1];
+ leni     = lenr[i-1];
+ lenr[i-1]  = leni - 1;
+ lr1      = locr[i-1];
+ last     = lr1 + lenr[i-1];
 
-!===============================================================
-! The column file has been fully updated.
-! Deal with any pending fill-in in the row file.
-!===============================================================
-if (nfill > 0) then
+ for (l = lr1; l <= last; l++) {
+    if (indr[l-1] == jbest[0]) break;
+ } // for (l = lr1; l <= last; l++)
 
- ! Compress the row file if necessary.
- ! lu1gau has set nfill to be the number of pending fill-ins
- ! plus the current length of any rows that need to be moved.
+ indr[l-1]    = indr[last-1];
+ indr[last-1] = 0;       // Free entry
+ //???  if (i == ilast) lrow = lrow - 1
 
- minfre = nfill
- nfree  = lfree - lrow
- if (nfree < minfre) then
-    call lu1rec( m, .false., luparm, lrow, lena, a, indr, lenr, locr )
-    lfile  = lrow
-    ilast  = indr(lrow + 1)
-    lpivr  = locr(ibest)
-    lpivr1 = lpivr + 1
-    lpivr2 = lpivr + nelim
-    nfree  = lfree - lrow
-    if (nfree < minfre) go to 970
- end if
+ a[ll-1]      = - a[lc-1] * abest;
+ Lij        = Math.abs( a[ll-1] );
+ Lmax[0]       = Math.max( Lmax[0], Lij );
+ //!!!! DEBUG
+ // if (Lij > Ltol) then
+ // write( *  ,*) ' Big Lij!!!', nrowu
+ // write(nout,*) ' Big Lij!!!', nrowu
+ // end if
 
- ! Move rows that have pending fill-in to end of the row file.
- ! Then insert the fill-in.
+ indc[ll-1]   = 0;
+ indr[ll-1]   = 0;
+ indc[ls-1]   = leni;
+ indr[ls-1]   = iqloc[i-1];
+ iqloc[i-1]   = lsave - ls;
+} // for (lc = lpivc1; lc <= lpivc2; lc++)
 
- call lu1pen( m     , melim , ncold , nspare, ilast, &
-              lpivc1, lpivc2, lpivr1, lpivr2, lrow , &
-              lenc  , lenr  , locc  , locr  ,        &
-              indc  , indr  , indr(ll1), indr(lu1) )
-end if
+// ===============================================================
+// Do the Gaussian elimination.
+// This involves adding a multiple of the pivot column
+// to all other columns in the pivot row.
+//
+// Sometimes more than one call to lu1gau is needed to allow
+// compression of the column file.
+// lfirst  says which column the elimination should start with.
+// minfre  is a bound on the storage needed for any one column.
+// lu      points to off-diagonals of u.
+// nfill   keeps track of pending fill-in in the row file.
+// ===============================================================
+if (nelim == 0) {
+	seg4 = false;
+}
+if (seg4) {
+lfirst = lpivr1;
+minfre = mleft + nspare;
+lu     = 1;
+nfill  = 0;
+
+while (true) {
+al = new double[melim];
+markl = new int[melim];
+au = new double[ncold];
+ifill = new int[melim];
+jfill = new int[ncold];
+for (i = 0; i < melim; i++) {
+	al[i] = a[ll1-1+i];
+	markl[i] = indc[ll1-1+i];
+	ifill[i] = indr[ll1-1+i];
+}
+for (i = 0; i < ncold; i++) {
+	au[i] = a[lu1-1+i];
+	jfill[i] = indr[lu1-1+i];
+}
+lu1gau( m     , melim , ncold , nspare, small ,
+           lpivc1, lpivc2, lfirst, lpivr2, lfree , minfre,
+           ilast , jlast , lrow  , lcol  , lu    , nfill ,
+           a     , indc  , indr  ,  
+           lenc  , lenr  , locc  , locr  , 
+           iqloc , al, markl,  
+           au, ifill, jfill);
+for (i = 0; i < melim; i++) {
+	indc[ll1-1+i] = markl[i];
+	indr[ll1-1+i] = ifill[i];
+}
+for (i = 0; i < ncold; i++) {
+	indr[lu1-1+i] = jfill[i];
+}
+
+if (lfirst > 0) {
+
+ // The elimination was interrupted.
+ // Compress the column file and try again.
+ // lfirst, lu and nfill have appropriate new values.
+
+ lu1rec( n, true, luparm, lcol, lena, a, indc, lenc, locc );
+ lfile  = lcol[0];
+ jlast  = indc[lcol[0]];
+ lpivc  = locc[jbest[0]-1];
+ lpivc1 = lpivc + 1;
+ lpivc2 = lpivc + melim;
+ nfree  = lfree - lcol[0];
+ if (nfree < minfre) {
+	 inform[0] = 7;
+     minlen[0] = lena  +  lfile  +  2*(m + n);
+     return;
+ }
+ continue;
+} // if (lfirst > 0)
+else {
+	break;
+}
+} // while (true)
+
+// ===============================================================
+// The column file has been fully updated.
+// Deal with any pending fill-in in the row file.
+// ===============================================================
+if (nfill > 0) {
+
+ // Compress the row file if necessary.
+ // lu1gau has set nfill to be the number of pending fill-ins
+ // plus the current length of any rows that need to be moved.
+
+ minfre = nfill;
+ nfree  = lfree - lrow[0];
+ if (nfree < minfre) {
+    lu1rec( m, false, luparm, lrow, lena, a, indr, lenr, locr );
+    lfile  = lrow[0];
+    ilast[0]  = indr[lrow[0]];
+    lpivr  = locr[ibest[0]-1];
+    lpivr1 = lpivr + 1;
+    lpivr2 = lpivr + nelim;
+    nfree  = lfree - lrow[0];
+    if (nfree < minfre) {
+    	inform[0] = 7;
+        minlen[0] = lena  +  lfile  +  2*(m + n);
+        return;
+    }
+ } // if (nfree < minfre)
+
+ // Move rows that have pending fill-in to end of the row file.
+ // Then insert the fill-in.
+ ifill = new int[melim];
+ jfill = new int[ncold];
+ for (i = 0; i < melim; i++) {
+	 ifill[i] = indr[ll1-1+i];
+ }
+ for (i = 0; i < ncold; i++) {
+	 jfill[i] =  indr[lu1-1+i];
+ }
+ lu1pen( m     , melim , ncold , nspare, ilast,
+              lpivc1, lpivc2, lpivr1, lpivr2, lrow ,
+              lenc  , lenr  , locc  , locr  , 
+              indc  , indr  , ifill, jfill);
+} // if (nfill > 0)
+} // if (seg4)
+seg4 = true;
+} // if (seg3)
+seg3 = true;
 
 !===============================================================
 ! Restore the saved values of  iqloc.
 ! Insert the correct indices for the col of L and the row of U.
 !===============================================================
-700    lenr(ibest) = 0
-lenc(jbest) = 0
+700    lenr(ibest[0]) = 0
+lenc(jbest[0]) = 0
 
 ll          = ll1 - 1
 ls          = lsave
@@ -2294,7 +2378,7 @@ do lc  = lpivc1, lpivc2
  i        = indc(lc)
  iqloc(i) = indr(ls)
  indc(ll) = i
- indr(ll) = ibest
+ indr(ll) = ibest[0]
 end do
 
 lu          = lu1 - 1
@@ -2329,7 +2413,7 @@ nzleft = nzleft + nzchng
 !              lu1mxc is called with             lu1+1.
 !===============================================================
 if (Utri .and. TPP) then
- ! Relax -- we're not keeping big elements at the top yet.
+ // Relax -- we're not keeping big elements at the top yet.
 
 else
  if (TRP  .and.  melim > 0) then
@@ -2350,7 +2434,7 @@ else
           k    = Hk(j)
           v    = abs( a(locc(j)) ) ! Biggest aij in column j
           call Hchange( Ha, Hj, Hk, Hlen, n, k, v, j, h )
-          hops = hops + h
+          hops[0] = hops[0] + h[0]
        end do
     end if
  end if
@@ -2360,22 +2444,22 @@ end if
 ! Negate lengths of pivot row and column so they will be
 ! eliminated during compressions.
 !===============================================================
-lenr(ibest) = - ncold
-lenc(jbest) = - nrowd
+lenr(ibest[0]) = - ncold
+lenc(jbest[0]) = - nrowd
 
 ! Test for fatal bug: row or column lists overwriting L and U.
 
-if (lrow > lsave) go to 980
-if (lcol > lsave) go to 980
+if (lrow[0] > lsave) go to 980
+if (lcol[0] > lsave) go to 980
 
 ! Reset the file lengths if pivot row or col was at the end.
 
-if (ibest == ilast) then
- lrow = locr(ibest)
+if (ibest[0] == ilast[0]) then
+ lrow[0] = locr(ibest[0])
 end if
 
-if (jbest == jlast) then
- lcol = locc(jbest)
+if (jbest[0] == jlast) then
+ lcol[0] = locc(jbest[0])
 end if
 } // for (nrowu = 1; nrowu <= minmn; nrowu++)
 
@@ -2388,10 +2472,10 @@ end if
 ! Move empty rows and cols to the end of p, q.
 ! Then finish with a dense LU if necessary.
 !------------------------------------------------------------------
-900 inform = 0
+900 inform[0] = 0
 call lu1pq3( m, lenr, p, ipinv, mrank )
 call lu1pq3( n, lenc, q, iqinv, nrank )
-nrank  = min( mrank, nrank )
+nrank[0]  = min( mrank, nrank[0] )
 
 if ( densLU ) then
 call lu1ful( m     , n    , lena , lenD , lu1 , TPP, &
@@ -2405,38 +2489,347 @@ call lu1ful( m     , n    , lena , lenD , lu1 , TPP, &
 !***     nrank  = minmn - nsing
 
 !***     26 Mar 2006: Previous line caused bug with m<n and nsing>0.
-! Don't mess with nrank any more.  Let end of lu1fac handle it.
+// Don't mess with nrank any more.  Let end of lu1fac handle it.
 end if
 
-minlen = lenL  +  lenU  +  2*(m + n)
+minlen[0] = lenL[0]  +  lenU[0]  +  2*(m + n)
 go to 990
 
 ! Not enough space free after a compress.
 ! Set  minlen  to an estimate of the necessary value of  lena.
 
-970 inform = 7
-minlen = lena  +  lfile  +  2*(m + n)
+970 inform[0] = 7
+minlen[0] = lena  +  lfile  +  2*(m + n)
 go to 990
 
 ! Fatal error.  This will never happen!
 ! (Famous last words.)
 
-980 inform = 8
+980 inform[0] = 8
 go to 990
 
 ! Fatal error with TSP.  Diagonal pivot not found.
 
-985 inform = 9
+985 inform[0] = 9
 
 ! Exit.
 
 990 return
 
 1100 format(/ 1x, a)
-1200 format(' nrowu', i7,     '   i,jbest', 2i7, '   nrowd,ncold', 2i6, &
+1200 format(' nrowu', i7,     '   i,jbest[0]', 2i7, '   nrowd,ncold', 2i6, &
    '   i,jmax', 2i7, '   aijmax', es10.2)*/
 
 } // lu1fad
+    
+    private void lu1gau(int m, int melim, int ncold, int nspare, double small,
+            int lpivc1, int lpivc2, int lfirst[], int lpivr2, int lfree, int minfre,
+            int ilast[], int jlast[], int lrow[], int lcol[], int lu[], int nfill[],
+            double a[], int indc[], int indr[],
+            int lenc[], int lenr[], int locc[], int locr[],
+            int mark[], double al[], int markl[],
+            double au[], int ifill[], int jfill[]) {
+
+//integer(ip),   intent(in)    :: m, melim, ncold, nspare,          &
+//                           lpivc1, lpivc2, lpivr2, lfree, minfre
+//integer(ip),   intent(inout) :: ilast, jlast, lfirst, lrow, lcol, lu, nfill
+//real(rp),      intent(in)    :: small
+//real(rp),      intent(in)    :: al(melim), au(ncold)
+//real(rp),      intent(inout) :: a(*)
+//integer(ip),   intent(in)    :: locr(*), mark(*)
+//integer(ip),   intent(inout) :: locc(*), indc(*), indr(*), lenc(*), lenr(*), &
+//                           markl(melim), ifill(melim), jfill(ncold)
+
+// ------------------------------------------------------------------
+// lu1gau does most of the work for each step of
+// Gaussian elimination.
+// A multiple of the pivot column is added to each other column j
+// in the pivot row.  The column list is fully updated.
+// The row list is updated if there is room, but some fill-ins may
+// remain, as indicated by ifill and jfill.
+
+// Input:
+// ilast    is the row    at the end of the row    list.
+// jlast    is the column at the end of the column list.
+// lfirst   is the first column to be processed.
+// lu + 1   is the corresponding element of U in au(*).
+// nfill    keeps track of pending fill-in.
+// a(*)     contains the nonzeros for each column j.
+// indc(*)  contains the row indices for each column j.
+// al(*)    contains the new column of L.  A multiple of it is
+//          used to modify each column.
+// mark(*)  has been set to -1, -2, -3, ... in the rows
+//          corresponding to nonzero 1, 2, 3, ... of the col of L.
+// au(*)    contains the new row of U.  Each nonzero gives the
+//          required multiple of the column of L.
+
+// Workspace:
+// markl(*) marks the nonzeros of L actually used.
+//          (A different mark, namely j, is used for each column.)
+
+// Output:
+// ilast     New last row    in the row    list.
+// jlast     New last column in the column list.
+// lfirst    = 0 if all columns were completed,
+//           > 0 otherwise.
+// lu        returns the position of the last nonzero of U
+//           actually used, in case we come back in again.
+// nfill     keeps track of the total extra space needed in the
+//           row file.
+// ifill(ll) counts pending fill-in for rows involved in the new
+//           column of L.
+// jfill(lu) marks the first pending fill-in stored in columns
+//           involved in the new row of U.
+
+// 16 Apr 1989: First version of lu1gau.
+// 23 Apr 1989: lfirst, lu, nfill are now input and output
+//              to allow re-entry if elimination is interrupted.
+// 23 Mar 2001: Introduced ilast, jlast.
+// 27 Mar 2001: Allow fill-in "in situ" if there is already room
+//              up to but NOT INCLUDING the end of the
+//              row or column file.
+//              Seems safe way to avoid overwriting empty rows/cols
+//              at the end.  (May not be needed though, now that we
+//              have ilast and jlast.)
+//
+// 10 Jan 2010: First f90 version.
+// 28 Feb 2010: Declare intent and local variables.
+// ------------------------------------------------------------------
+
+boolean atend;
+int i, j, k, l, l1, l2, last, lc, lc1, lc2,
+    leni, lenj, ll, lr, lr1, lrep,
+    ndone, ndrop, nfree;
+double aij, uj;
+boolean seg1 = true;
+boolean seg2 = true;
+boolean seg3 = true;
+boolean seg4 = true;
+boolean seg5 = true;
+boolean seg6 = true;
+boolean seg7 = true;
+
+for (lr = lfirst[0]; lr <= lpivr2; lr++) {
+j      = indr[lr-1];
+lenj   = lenc[j-1];
+nfree  = lfree - lcol[0];
+if (nfree < minfre) {
+	// Interruption.  We have to come back in after the
+	// column file is compressed.  Give lfirst a new value.
+	// lu and nfill will retain their current values.
+	lfirst[0] = lr;
+    return;
+}
+
+// ---------------------------------------------------------------
+// Inner loop to modify existing nonzeros in column  j.
+// The "do l = lc1, lc2" loop performs most of the arithmetic
+// involved in the whole LU factorization.
+// ndone  counts how many multipliers were used.
+// ndrop  counts how many modified nonzeros are negligibly small.
+// ---------------------------------------------------------------
+lu[0]     = lu[0] + 1;
+uj     = au[lu[0]-1];
+lc1    = locc[j-1];
+lc2    = lc1 + lenj - 1;
+atend  = j == jlast[0];
+ndone  = 0;
+if (lenj == 0) {
+	seg1 = false;
+}
+
+if (seg1) {
+ndrop  = 0;
+
+for (l = lc1; l <= lc2; l++) {
+ i        =   indc[l-1];
+ ll       = - mark[i-1];
+ if (ll > 0) {
+    ndone     = ndone + 1;
+    markl[ll-1] = j;
+    a[l-1]      = a[l-1]  +  al[ll-1] * uj;
+    if (Math.abs( a[l-1] ) <= small) {
+       ndrop  = ndrop + 1;
+    }
+ } // if (ll > 0)
+} // for (l = lc1; l <= lc2; l++)
+
+// ---------------------------------------------------------------
+// Remove any negligible modified nonzeros from both
+// the column file and the row file.
+// ---------------------------------------------------------------
+if (ndrop == 0) {
+	seg2 = false;
+}
+if (seg2) {
+k      = lc1;
+
+for (l = lc1; l <= lc2; l++) {
+ i        = indc[l-1];
+ if (Math.abs( a[l-1] ) > small) {
+    a[k-1]     = a[l-1];
+    indc[k-1]  = i;
+    k        = k + 1;
+    continue;
+ } // if (Math.abs( a[l-1] ) > small)
+
+ // Delete the nonzero from the row file.
+
+ lenj     = lenj    - 1;
+ lenr[i-1]  = lenr[i-1] - 1;
+ lr1      = locr[i-1];
+ last     = lr1 + lenr[i-1];
+
+ for (lrep = lr1; lrep <= last; lrep++) {
+    if (indr[lrep-1] == j) break;
+ } // for (lrep = lr1; lrep <= last; lrep++)
+
+ indr[lrep-1] = indr[last-1];
+ indr[last-1] = 0;
+ if (i == ilast[0]) lrow[0] = lrow[0] - 1;
+} // for (l = lc1; l <= lc2; l++)
+
+// Free the deleted elements from the column file.
+
+for (l = k; l <= lc2; l++) {
+ indc[l-1] = 0;
+} // for (l = k; l <= lc2; l++)
+if (atend) lcol[0] = k - 1;
+} // if (seg2)
+seg2 = true;
+} // if (seg1)
+seg1 = true;
+
+// ---------------------------------------------------------------
+// Deal with the fill-in in column j.
+// ---------------------------------------------------------------
+if (ndone == melim) {
+	seg3 = false;
+}
+
+if (seg3) {
+// See if column j already has room for the fill-in.
+
+if (atend) {
+	seg4 = false;
+}
+if (seg4) {
+last   = lc1  + lenj - 1;
+l1     = last + 1;
+l2     = last + (melim - ndone);
+// 27 Mar 2001: Be sure it's not at or past end of the col file.
+if (l2 >= lcol[0]) {
+	seg5 = false;
+}
+
+if (seg5) {
+for (l = l1; l <= l2; l++) {
+ if (indc[l-1] != 0) {
+	 seg6 = false;
+	 break;
+ }
+} // for (l = l1; l <= l2; l++)
+if (seg6) {
+    seg7 = false;
+} // if (seg6)
+seg6 = true;
+} // if (seg5)
+seg5 = true;
+
+if (seg7) {
+// We must move column j to the end of the column file.
+// First, leave some spare room at the end of the
+// current last column.
+
+for (l = lcol[0] + 1; l <= lcol[0] + nspare; l++) {
+ lcol[0]    = l;
+ indc[l-1] = 0;     // Spare space is free.
+} // for (l = lcol[0] + 1; l <= lcol[0] + nspare; l++)
+
+atend   = true;
+jlast[0]   = j;
+l1      = lc1;
+lc1     = lcol[0] + 1;
+locc[j-1] = lc1;
+
+for (l = l1; l <= last; l++) {
+ lcol[0]       = lcol[0] + 1;
+ a[lcol[0]-1]    = a[l-1];
+ indc[lcol[0]-1] = indc[l-1];
+ indc[l-1]    = 0;      // Free space.
+} // for (l = l1; l <= last; l++)
+} // if (seg7)
+seg7 = true;
+} // if (seg4)
+seg4 = true;
+
+// ---------------------------------------------------------------
+// Inner loop for the fill-in in column j.
+// This is usually not very expensive.
+// ---------------------------------------------------------------
+last   = lc1 + lenj - 1;
+ll     = 0;
+
+for (lc = lpivc1; lc <= lpivc2; lc++) {
+ ll         = ll + 1;
+ if (markl[ll-1] ==  j  ) continue;
+ aij        = al[ll-1]*uj;
+ if (Math.abs(aij) <= small) continue;
+ lenj       = lenj + 1;
+ last       = last + 1;
+ a[last-1]    = aij;
+ i          = indc[lc-1];
+ indc[last-1] = i;
+ leni       = lenr[i-1];
+
+ // Add 1 fill-in to row i if there is already room.
+ // 27 Mar 2001: Be sure it's not at or past the end
+ // of the row file.
+
+ l      = locr[i-1] + leni;
+ if (l < lrow[0] &&  indr[l-1] <= 0) {
+    indr[l-1] = j;
+    lenr[i-1] = leni + 1;
+ }
+ else {
+
+    // Row i does not have room for the fill-in.
+    // Increment ifill(ll) to count how often this has
+    // happened to row i.  Also, add m to the row index
+    // indc(last) in column j to mark it as a fill-in that is
+    // still pending.
+
+    // If this is the first pending fill-in for row i,
+    // nfill includes the current length of row i
+    // (since the whole row has to be moved later).
+
+    // If this is the first pending fill-in for column j,
+    // jfill(lu) records the current length of column j
+    // (to shorten the search for pending fill-ins later).
+
+    if (ifill[ll-1] == 0) nfill[0]     = nfill[0] + leni + nspare;
+    if (jfill[lu[0]-1] == 0) jfill[lu[0]-1] = lenj;
+    nfill[0]      = nfill[0]     + 1;
+    ifill[ll-1]  = ifill[ll-1] + 1;
+    indc[last-1] = m + i;
+ } // else
+} // for (lc = lpivc1; lc <= lpivc2; lc++)
+
+if ( atend ) lcol[0] = last;
+} // if (seg3)
+seg3 = true;
+
+// End loop for column  j.  Store its final length.
+
+lenc[j-1] = lenj;
+} // for (lr = lfirst[0; lr <= lpivr2; lr++)
+
+// Successful completion.
+
+lfirst[0] = 0;
+return;
+} // lu1gau
+
     
     private void lu1mar(int m, int n, int lena, int maxmn,
             boolean TCP, double aijtol,double Ltol, int maxcol, int maxrow,
@@ -3224,6 +3617,206 @@ if (ibest[0] > 0) kbest  = mbest[0] / nz1;
 
     } // lu1mxc
     
+    private void lu1pen(int m, int melim, int ncold, int nspare, int ilast[],
+            int lpivc1, int lpivc2, int lpivr1, int lpivr2, int lrow[],
+            int lenc[], int lenr[], int locc[], int locr[],
+            int indc[], int indr[], int ifill[], int jfill[]) {
+
+//integer(ip),   intent(in)    :: m, melim, ncold, nspare, &
+//                           lpivc1, lpivc2, lpivr1, lpivr2
+//integer(ip),   intent(inout) :: lrow
+//integer(ip),   intent(out)   :: ilast
+//integer(ip),   intent(inout) :: indc(*), indr(*), lenc(*), lenr(*)
+//integer(ip),   intent(in)    :: locc(*), ifill(melim), jfill(ncold)
+//integer(ip),   intent(inout) :: locr(*)
+
+// ------------------------------------------------------------------
+// lu1pen deals with pending fill-in in the row file.
+// ifill(ll) says if a row involved in the new column of L
+// has to be updated.  If positive, it is the total
+// length of the final updated row.
+// jfill(lu) says if a column involved in the new row of U
+// contains any pending fill-ins.  If positive, it points
+// to the first fill-in in the column that has yet to be
+// added to the row file.
+
+// 16 Apr 1989: First version of lu1pen.
+// 23 Mar 2001: ilast used and updated.
+
+// 10 Jan 2010: First f90 version.
+// 12 Dec 2011: Declare intent.
+// ------------------------------------------------------------------
+
+int i, j, l, last, lc, lc1, lc2, ll, lr, lr1, lr2, lu;
+
+ll     = 0;
+
+/*for (lc = lpivc1; lc <= lpivc2; lc++) {
+ll = ll + 1;
+if (ifill[ll-1] == 0) continue;
+
+// Another row has pending fill.
+! First, add some spare space at the end
+! of the current last row.
+
+do l = lrow + 1, lrow + nspare
+ lrow    = l
+ indr(l) = 0
+end do
+
+! Now move row i to the end of the row file.
+
+i       = indc(lc)
+ilast   = i
+lr1     = locr(i)
+lr2     = lr1 + lenr(i) - 1
+locr(i) = lrow + 1
+
+do lr = lr1, lr2
+ lrow       = lrow + 1
+ indr(lrow) = indr(lr)
+ indr(lr)   = 0
+end do
+
+lrow    = lrow + ifill(ll)
+} // for (lc = lpivc1; lc <= lpivc2; lc++)
+
+! Scan all columns of  D  and insert the pending fill-in
+! into the row file.
+
+lu     = 1
+
+do lr = lpivr1, lpivr2
+lu     = lu + 1
+if (jfill(lu) == 0) cycle
+j      = indr(lr)
+lc1    = locc(j) + jfill(lu) - 1
+lc2    = locc(j) + lenc(j)   - 1
+
+do lc = lc1, lc2
+ i      = indc(lc) - m
+ if (i > 0) then
+    indc(lc)   = i
+    last       = locr(i) + lenr(i)
+    indr(last) = j
+    lenr(i)    = lenr(i) + 1
+ end if
+end do
+end do*/
+
+} // lu1pen
+
+    
+    private void lu1rec(int n, boolean reals, int luparm[], int ltop[], int lena, double a[], int ind[],
+    		int lenc[], int locc[]) {
+
+    //logical,       intent(in)    :: reals
+    //integer(ip),   intent(in)    :: n, lena
+    //integer(ip),   intent(out)   :: ltop
+    //integer(ip),   intent(inout) :: luparm(30), ind(lena), lenc(n), locc(n)
+    //real(rp),      intent(inout) :: a(lena)
+
+    // ------------------------------------------------------------------
+    // lu1rec recovers space in the column or row lists.
+    // 00 Jun 1983: Original version of lu1rec followed John Reid's
+    //              compression routine in LA05.  It recovered space
+    //              in ind(*) and optionally a(*) by eliminating entries
+    //              with ind(l) = 0.
+    //              The elements of ind(*) could not be negative.
+    //              If len(i) was positive, entry i contained
+    //              that many elements, starting at  loc(i).
+    //              Otherwise, entry i was eliminated.
+    //
+    // 23 Mar 2001: Realised we could have len(i) = 0 in rare cases!
+    //              (Mostly during TCP when the pivot row contains
+    //              a column of length 1 that couldn't be a pivot.)
+    //              Revised storage scheme to
+    //                 keep        entries with       ind(l) >  0,
+    //                 squeeze out entries with -n <= ind(l) <= 0,
+    //              and to allow len(i) = 0.
+    //              Empty items are moved to the end of the compressed
+    //              ind(*) and/or a(*) arrays are given one empty space.
+    //              Items with len(i) < 0 are still eliminated.
+    //
+    // 27 Mar 2001: Decided to use only ind(l) > 0 and = 0 in lu1fad.
+    //              Still have to keep entries with len(i) = 0.
+    //
+    // On exit:
+    // ltop         is the length of useful entries in ind(*), a(*).
+    // ind(ltop+1)  is "i" such that len(i), loc(i) belong to the last
+    //              item in ind(*), a(*).
+    //
+    // 10 Jan 2010: First f90 version.
+    // 12 Dec 2011: Declare intent and local variables.
+    // ------------------------------------------------------------------
+
+    int i, ilast, k, klast, l, leni, lprint, nempty, nout;
+
+    nempty = 0;
+
+    for (i = 1; i <= n; i++) {
+       leni = lenc[i-1];
+       if (leni > 0) {
+          l       = locc[i-1] + leni - 1;
+          lenc[i-1] = ind[l-1];
+          ind[l-1]  = - (n + i);
+       } // if (leni > 0)
+       else if (leni == 0) {
+          nempty  = nempty + 1;
+       }
+    } // for (i = 1; i <= n; i++)
+
+    k      = 0;
+    klast  = 0;    // Previous k
+    ilast  = 0;    // Last entry moved.
+
+    for (l = 1; l <= ltop[0]; l++) {
+       i = ind[l-1];
+       if (i > 0) {
+          k      = k + 1;
+          ind[k-1] = i;
+          if (reals) a[k-1] = a[l-1];
+       } // if (i > 0)
+       else if (i < -n) {     // This is the end of entry  i.
+          i       = - (i + n);
+          ilast   = i;
+          k       = k + 1;
+          ind[k-1]  = lenc[i-1];
+          if (reals) a[k-1] = a[l-1];
+          locc[i-1] = klast + 1;
+          lenc[i-1] = k     - klast;
+          klast   = k;
+       } // else if (i < -n)
+    } // for (l = 1; l <= ltop[0]; l++)
+
+    // Move any empty items to the end, adding 1 free entry for each.
+
+    if (nempty > 0) {
+       for (i = 1; i <= n; i++) {
+          if (lenc[i-1] == 0) {
+             k       = k + 1;
+             locc[i-1] = k;
+             ind[k-1]  = 0;
+             ilast   = i;
+          } // if (lenc[i-1] == 0)
+       } // for (i = 1; i <= n; i++)
+    } // if (nempty > 0)
+
+    nout   = luparm[0];
+    lprint = luparm[1];
+    if (lprint >= 50) {
+    	UI.setDataText("lu1rec.  File compressed from " + ltop[0] + " to " + k + " " + reals + " nempty = " + nempty + "\n");
+    }
+    luparm[25] = luparm[25] + 1;  // ncp
+
+    // Return ilast in ind(ltop + 1).
+
+    ltop[0]        = k;
+    ind[ltop[0]] = ilast;
+    return;
+} //lu1rec
+
+    
     private void lu1slk(int m, int n, int lena, int q[], int iqloc[], double a[], int locc[], double w[]) {
 
     //integer(ip),   intent(in)    :: m, n, lena
@@ -3394,6 +3987,124 @@ for (k = 1; k <= ncol; k++) {       // Search involved columns.
     } // for (k = 1; k <= N; k++)
 
     } // Hbuild
+    
+    private void Hchange(double Ha[], int Hj[], int Hk[], int N, int Nk, int k, double v, int jv, int hops[] ) {
+
+    //integer(ip),   intent(in)    :: N, Nk, k, jv
+    //integer(ip),   intent(out)   :: hops
+    //integer(ip),   intent(inout) :: Hj(N), Hk(Nk)
+    //real(rp),      intent(in)    :: v
+    //real(rp),      intent(inout) :: Ha(N)
+
+    // ==================================================================
+    // Hchange changes Ha(k) to v in heap of length N.
+    //
+    // 01 May 2002: Need Nk for length of Hk.
+    // 07 May 2002: Protect input parameters N, Nk, k.
+    // 07 May 2002: Current version of Hchange.
+    // 12 Dec 2011: First f90 version.
+    // ==================================================================
+
+    int kx, Nx, Nkx;
+    double v1;
+
+    Nx     = N;
+    Nkx    = Nk;
+    kx     = k;
+    v1     = Ha[k-1];
+    Ha[k-1]  = v;
+    Hj[k-1]  = jv;
+    Hk[jv-1] = k;
+    if (v1 < v) {
+       Hup ( Ha, Hj, Hk, Nx, Nkx, kx, hops );
+    }
+    else {
+       Hdown ( Ha, Hj, Hk, Nx, Nkx, kx, hops );
+    }
+} // Hchange
+
+    
+    private void Hdelete(double Ha[], int Hj[], int Hk[], int Nin, int N[], int Nk, int k, int hops[]) {
+
+    //integer(ip),   intent(in)    :: Nin, Nk, k
+    //integer(ip),   intent(inout) :: N
+    //integer(ip),   intent(out)   :: hops
+    //integer(ip),   intent(inout) :: Hj(Nin), Hk(Nk)
+    //real(rp),      intent(inout) :: Ha(Nin)
+
+    // ==================================================================
+    // Hdelete deletes Ha(k) from heap of length N.
+    //
+    // 03 Apr 2002: Current version of Hdelete.
+    // 01 May 2002: Need Nk for length of Hk.
+    // 07 May 2002: Protect input parameters N, Nk, k.
+    // 19 Dec 2004: Nin is new input parameter for length of Hj, Ha.
+    // 19 Dec 2004: Current version of Hdelete.
+    // 12 Dec 2011: First f90 version.
+    // ==================================================================
+
+    int jv, kx, Nkx, Nx;
+    double v;
+
+    kx    = k;
+    Nkx   = Nk;
+    Nx    = N[0];
+    v     = Ha[N[0]-1];
+    jv    = Hj[N[0]-1];
+    N[0]     = N[0] - 1;
+    hops[0]  = 0;
+    if (k <= N[0]) {
+       Hchange( Ha, Hj, Hk, Nx, Nkx, kx, v, jv, hops );
+    }
+} // Hdelete
+    
+    private void Hdown (double Ha[], int Hj[], int Hk[], int N, int Nk, int kk, int hops[]) {
+
+    //integer(ip),   intent(in)    :: N, Nk, kk
+    //integer(ip),   intent(out)   :: hops
+    //integer(ip),   intent(inout) :: Hj(N), Hk(Nk)
+    //real(rp),      intent(inout) :: Ha(N)
+
+    // ==================================================================
+    // Hdown  updates heap by moving down tree from node k.
+    
+    // 01 May 2002: Need Nk for length of Hk.
+    // 05 May 2002: Change input paramter k to kk to stop k being output.
+    // 05 May 2002: Current version of Hdown.
+    // 12 Dec 2011: First f90 version.
+    // ==================================================================
+
+    int j, jj, jv, k, N2;
+    double v;
+
+    k     = kk;
+    hops[0]  = 0;
+    v     = Ha[k-1];
+    jv    = Hj[k-1];
+    N2    = N/2;
+
+    while (true) {
+       if (k > N2) break;
+       hops[0]   = hops[0] + 1;
+       j      = k+k;
+       if (j < N) {
+          if (Ha[j-1] < Ha[j]) j = j+1;
+       }
+       if (v >= Ha[j-1]) break;
+       Ha[k-1]  = Ha[j-1];
+       jj     = Hj[j-1];
+       Hj[k-1]  = jj;
+       Hk[jj-1] =  k;
+       k      =  j;
+    } // while (true)
+
+    Ha[k-1]  =  v;
+    Hj[k-1]  = jv;
+    Hk[jv-1] =  k;
+
+} // Hdown
+
+
     
     private void Hinsert(double Ha[], int Hj[], int Hk[], int N[], int Nk, double v, int jv, int hops[]) {
 
