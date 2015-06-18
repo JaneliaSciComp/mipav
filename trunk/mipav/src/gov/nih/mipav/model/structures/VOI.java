@@ -685,7 +685,12 @@ public class VOI extends ModelSerialCloneable {
 		}
 		Vector3f kPos1 = new Vector3f();
 		Vector3f kPos2 = new Vector3f();
-		return calcLargestDistance( mask, extents, res[0], res[1], res[2], xPts, yPts, zPts, kPos1, kPos2 );
+		if (res.length >= 3) {
+		    return calcLargestDistance( mask, extents, res[0], res[1], res[2], xPts, yPts, zPts, kPos1, kPos2 );
+		}
+		else {
+			return calcLargestDistance( mask, extents, res[0], res[1], 1.0f, xPts, yPts, zPts, kPos1, kPos2 );	
+		}
 	}
 
 	/**
