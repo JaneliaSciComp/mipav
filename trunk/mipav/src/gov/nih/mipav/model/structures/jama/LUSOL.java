@@ -1510,7 +1510,9 @@ return;
 
 boolean Utri, Ltri, spars1, spars2, dense,
         densLU, keepLU, TCP, TPP, TRP, TSP;
-double abest, aijmax, aijtol, amax, 
+double aijmax = 0.0;
+double aijtol = 0.0;
+double abest, amax, 
        dens1, dens2, diag,
        Lij, Ltol, small, Uspace;
 final int i1 = 1;
@@ -1598,24 +1600,35 @@ int hops[] = new int[1];
 int ibest[] = new int[1];
 int ilast[] = new int[1];
 int jbest[] = new int[1];
+int jlast[] = new int[1];
 int lcol[] = new int[1];
+int lD = 0;
+int ldiagU = 0;
+int lenD = 0;
+int lfirst[] = new int[1];
 int lrow[] = new int[1];
+int lu[] = new int[1];
+int mark = 0;
 int mbest[] = new int[1];
+int mrank[] = new int[1];
+int nfill[] = new int[1];
+int nsing[] = new int[1];
+int nzchng[] = new int[1];
 int Hlenin,
     i, imax,
-    j, jlast, jmax, lPiv,
+    j, jmax, lPiv,
     k, kbest, kk, l, last, lc, lc1,
-    lD, ldiagU, lenD, leni, lenj,
-    lfile, lfirst, lfree, limit,
+    leni, lenj,
+    lfile, lfree, limit,
     ll, ll1, lpivc, lpivc1, lpivc2,
     lpivr, lpivr1, lpivr2, lprint,
     lq, lq1, lq2, lr, lr1,
-    ls, lsave, lu, lu1,
-    mark, maxcol, maxmn, maxrow,
+    ls, lsave, lu1,
+    maxcol, maxmn, maxrow,
     melim, minfre, minmn, mleft,
-    mrank, ncold, nelim, nfill,
-    nfree, nleft, nout, nrowd, nrowu,
-    nsing, nspare, nzchng, nzleft;
+    ncold, nelim,
+    nfree, nleft, nrowd, nrowu,
+    nspare, nzleft;
 int markc[] = new int[n];
 int markr[] = new int[m];
 double v;
@@ -1628,8 +1641,10 @@ int markl[];
 double au[];
 int ifill[];
 int jfill[];
+int ind2[];
+int lenold[];
+double d[];
 
-nout   = luparm[0];
 lprint = luparm[1];
 maxcol = luparm[2];
 lPiv   = luparm[5];
@@ -1643,7 +1658,7 @@ TSP    = lPiv == 3;  // Threshold Symmetric Pivoting.
 densLU = false;
 maxrow = maxcol - 1;
 ilast[0]  = m;                 // Assume row m is last in the row file.
-jlast  = n;                 // Assume col n is last in the col file.
+jlast[0]  = n;                 // Assume col n is last in the col file.
 lfile  = nelem;
 lrow[0]   = nelem;
 lcol[0]   = nelem;
@@ -1741,7 +1756,7 @@ Hbuild( Ha, Hj, Hk, Hlen[0], Hlen[0], hops );
 mleft  = m + 1;
 nleft  = n + 1;
 
-/*for (nrowu = 1; nrowu <= minmn; nrowu++) {
+for (nrowu = 1; nrowu <= minmn; nrowu++) {
 
 // mktime = (nrowu / ntime) + 4
 // eltime = (nrowu / ntime) + 9
@@ -1983,7 +1998,7 @@ if ( dense  ) {
     if (lcol[0] >= lD) {
        lu1rec( n, true, luparm, lcol, lena, a, indc, lenc, locc );
        lfile  = lcol[0];
-       jlast  = indc[lcol[0]];
+       jlast[0]  = indc[lcol[0]];
     } // if (lcol[0] >= lD)
 
     break;
@@ -2074,9 +2089,11 @@ nfree  = lfree  - lcol[0];
 if (nfree < minfre  ||  lcol[0] > limit) {
  lu1rec( n, true, luparm, lcol, lena, a, indc, lenc, locc );
  lfile  = lcol[0];
- jlast  = indc[lcol[0]];
+ jlast[0]  = indc[lcol[0]];
  nfree  = lfree - lcol[0];
  if (nfree < minfre) {
+	 // Not enough space free after a compress.
+	 // Set  minlen  to an estimate of the necessary value of  lena.
 	 inform[0] = 7;
      minlen[0] = lena  +  lfile  +  2*(m + n);
      return;
@@ -2090,9 +2107,11 @@ nfree  = lfree - lrow[0];
 if (nfree < minfre  ||  lrow[0] > limit) {
  lu1rec( m, false, luparm, lrow, lena, a, indr, lenr, locr );
  lfile  = lrow[0];
- ilast[0]  = indr[lrow];
+ ilast[0]  = indr[lrow[0]];
  nfree  = lfree - lrow[0];
  if (nfree < minfre){
+	 // Not enough space free after a compress.
+	 // Set  minlen  to an estimate of the necessary value of  lena.
 	 inform[0] = 7;
      minlen[0] = lena  +  lfile  +  2*(m + n);
      return;
@@ -2157,7 +2176,7 @@ if ( TCP ) {
 a[lu1-1]    = abest;
 indr[lu1-1] = jbest[0];
 indc[lu1-1] = nrowd;
-lu        = lu1;
+lu [0]       = lu1;
 
 diag      = Math.abs( abest );
 Umax[0]      = Math.max(  Umax[0], diag );
@@ -2165,7 +2184,7 @@ DUmax[0]     = Math.max( DUmax[0], diag );
 DUmin[0]     = Math.min( DUmin[0], diag );
 
 for (lr = lpivr1; lr <= lpivr2; lr++) {
- lu      = lu + 1;
+ lu[0]      = lu[0] + 1;
  j       = indr[lr-1];
  lenj    = lenc[j-1];
  lenc[j-1] = lenj - 1;
@@ -2176,13 +2195,13 @@ for (lr = lpivr1; lr <= lpivr2; lr++) {
     if (indc[l-1] == ibest[0]) break;
  } // for (l = lc1; l <= last; l++)
 
- a[lu-1]      = a[l-1];
- indr[lu-1]   = 0;
- indc[lu-1]   = lenj;
- Umax[0]       = Math.max( Umax[0], Math.abs( a[lu-1] ) );
+ a[lu[0]-1]      = a[l-1];
+ indr[lu[0]-1]   = 0;
+ indc[lu[0]-1]   = lenj;
+ Umax[0]       = Math.max( Umax[0], Math.abs( a[lu[0]-1] ) );
  a[l-1]       = a[last-1];
  indc[l-1]    = indc[last-1];
- ind[last-1] = 0;       // Free entry
+ indc[last-1] = 0;       // Free entry
  //??? if (j == jlast) lcol[0] = lcol[0] - 1
 } // for (lr = lpivr1; lr <= lpivr2; lr++)
 
@@ -2255,10 +2274,10 @@ if (nelim == 0) {
 	seg4 = false;
 }
 if (seg4) {
-lfirst = lpivr1;
+lfirst[0] = lpivr1;
 minfre = mleft + nspare;
-lu     = 1;
-nfill  = 0;
+lu[0]     = 1;
+nfill[0]  = 0;
 
 while (true) {
 al = new double[melim];
@@ -2290,7 +2309,7 @@ for (i = 0; i < ncold; i++) {
 	indr[lu1-1+i] = jfill[i];
 }
 
-if (lfirst > 0) {
+if (lfirst[0] > 0) {
 
  // The elimination was interrupted.
  // Compress the column file and try again.
@@ -2298,18 +2317,20 @@ if (lfirst > 0) {
 
  lu1rec( n, true, luparm, lcol, lena, a, indc, lenc, locc );
  lfile  = lcol[0];
- jlast  = indc[lcol[0]];
+ jlast[0]  = indc[lcol[0]];
  lpivc  = locc[jbest[0]-1];
  lpivc1 = lpivc + 1;
  lpivc2 = lpivc + melim;
  nfree  = lfree - lcol[0];
  if (nfree < minfre) {
+	 // Not enough space free after a compress.
+	 // Set  minlen  to an estimate of the necessary value of  lena.
 	 inform[0] = 7;
      minlen[0] = lena  +  lfile  +  2*(m + n);
      return;
  }
  continue;
-} // if (lfirst > 0)
+} // if (lfirst[0 > 0)
 else {
 	break;
 }
@@ -2319,13 +2340,13 @@ else {
 // The column file has been fully updated.
 // Deal with any pending fill-in in the row file.
 // ===============================================================
-if (nfill > 0) {
+if (nfill[0] > 0) {
 
  // Compress the row file if necessary.
  // lu1gau has set nfill to be the number of pending fill-ins
  // plus the current length of any rows that need to be moved.
 
- minfre = nfill;
+ minfre = nfill[0];
  nfree  = lfree - lrow[0];
  if (nfree < minfre) {
     lu1rec( m, false, luparm, lrow, lena, a, indr, lenr, locr );
@@ -2336,6 +2357,8 @@ if (nfill > 0) {
     lpivr2 = lpivr + nelim;
     nfree  = lfree - lrow[0];
     if (nfree < minfre) {
+    	// Not enough space free after a compress.
+    	// Set  minlen  to an estimate of the necessary value of  lena.
     	inform[0] = 7;
         minlen[0] = lena  +  lfile  +  2*(m + n);
         return;
@@ -2352,175 +2375,815 @@ if (nfill > 0) {
  for (i = 0; i < ncold; i++) {
 	 jfill[i] =  indr[lu1-1+i];
  }
- lu1pen( m     , melim , ncold , nspare, ilast,
+ lu1pen(m, melim , ncold , nspare, ilast,
               lpivc1, lpivc2, lpivr1, lpivr2, lrow ,
               lenc  , lenr  , locc  , locr  , 
               indc  , indr  , ifill, jfill);
-} // if (nfill > 0)
+} // if (nfill[0] > 0)
 } // if (seg4)
 seg4 = true;
 } // if (seg3)
 seg3 = true;
 
-!===============================================================
-! Restore the saved values of  iqloc.
-! Insert the correct indices for the col of L and the row of U.
-!===============================================================
-700    lenr(ibest[0]) = 0
-lenc(jbest[0]) = 0
+// ===============================================================
+// Restore the saved values of  iqloc.
+// Insert the correct indices for the col of L and the row of U.
+// ===============================================================
+lenr[ibest[0]-1] = 0;
+lenc[jbest[0]-1] = 0;
 
-ll          = ll1 - 1
-ls          = lsave
+ll          = ll1 - 1;
+ls          = lsave;
 
-do lc  = lpivc1, lpivc2
- ll       = ll + 1
- ls       = ls + 1
- i        = indc(lc)
- iqloc(i) = indr(ls)
- indc(ll) = i
- indr(ll) = ibest[0]
-end do
+for (lc  = lpivc1; lc <= lpivc2; lc++) {
+ ll       = ll + 1;
+ ls       = ls + 1;
+ i        = indc[lc-1];
+ iqloc[i-1] = indr[ls-1];
+ indc[ll-1] = i;
+ indr[ll-1] = ibest[0];
+} // for (lc  = lpivc1; lc <= lpivc2; lc++)
 
-lu          = lu1 - 1
+lu[0]          = lu1 - 1;
 
-do lr  = lpivr, lpivr2
- lu       = lu + 1
- indr(lu) = indr(lr)
-end do
+for (lr  = lpivr; lr <= lpivr2; lr++) {
+ lu[0]       = lu[0] + 1;
+ indr[lu[0]-1] = indr[lr-1];
+} // for (lr  = lpivr; lr <= lpivr2; lr++)
 
-!===============================================================
-! Free the space occupied by the pivot row
-! and update the column permutation.
-! Then free the space occupied by the pivot column
-! and update the row permutation.
-!
-! nzchng is found in both calls to lu1pq2, but we use it only
-! after the second.
-!===============================================================
-call lu1pq2( ncold, nzchng, &
-           indr(lpivr), indc( lu1 ), lenc, iqloc, q, iqinv )
+// ===============================================================
+// Free the space occupied by the pivot row
+// and update the column permutation.
+// Then free the space occupied by the pivot column
+// and update the row permutation.
+//
+// nzchng is found in both calls to lu1pq2, but we use it only
+// after the second.
+// ===============================================================
+ind2 = new int[ncold];
+lenold = new int[ncold];
+for (i = 0; i < ncold; i++) {
+	ind2[i] = indr[lpivr-1+i];
+	lenold[i] = indc[lu1-1+i];
+}
+lu1pq2( ncold, nzchng,
+           ind2, lenold, lenc, iqloc, q, iqinv );
+for (i = 0; i < ncold; i++) {
+	indr[lpivr-1+i] = ind2[i];
+}
 
-call lu1pq2( nrowd, nzchng, &
-           indc(lpivc), indc(lsave), lenr, iploc, p, ipinv )
+ind2 = new int[nrowd];
+lenold = new int[nrowd];
+for (i = 0; i < nrowd; i++) {
+	ind2[i] = indc[lpivc-1+i];
+	lenold[i] = indc[lsave-1+i];
+}
+lu1pq2( nrowd, nzchng,
+           ind2, lenold, lenr, iploc, p, ipinv );
+for (i = 0; i < nrowd; i++) {
+	indc[lpivc-1+i] = ind2[i];
+}
 
-nzleft = nzleft + nzchng
+nzleft = nzleft + nzchng[0];
 
-!===============================================================
-! lu1mxr resets Amaxr(i) in each modified row i.
-! lu1mxc moves the largest aij to the top of each modified col j.
-! 28 Jun 2002: Note that cols of L have an implicit diag of 1.0,
-!              so lu1mxr is called with ll1, not ll1+1, whereas
-!              lu1mxc is called with             lu1+1.
-!===============================================================
-if (Utri .and. TPP) then
+// ===============================================================
+// lu1mxr resets Amaxr(i) in each modified row i.
+// lu1mxc moves the largest aij to the top of each modified col j.
+// 28 Jun 2002: Note that cols of L have an implicit diag of 1.0,
+//              so lu1mxr is called with ll1, not ll1+1, whereas
+//              lu1mxc is called with             lu1+1.
+// ===============================================================
+if (Utri && TPP) {
  // Relax -- we're not keeping big elements at the top yet.
+}
+else { // not (Utri && TPP)
+ if (TRP  &&  melim > 0) {
+    // Beware: The parts of p that we need are in indc(ll1:ll)
+    mark = mark + 1;
+    lu1mxr( mark, ll1, ll, m, n, lena, 
+                 a, indc, lenc, locc, indr, lenr, locr,
+                 indc, markc, markr, Amaxr );
+               // ^^^^  Here are the p(k1:k2) needed by lu1mxr.
+ } // if (TRP  &&  melim > 0)
 
-else
- if (TRP  .and.  melim > 0) then
-    ! Beware: The parts of p that we need are in indc(ll1:ll)
-    mark = mark + 1
-    call lu1mxr( mark, ll1, ll, m, n, lena,             &
-                 a, indc, lenc, locc, indr, lenr, locr, &
-                 indc, markc, markr, Amaxr )
-               ! ^^^^  Here are the p(k1:k2) needed by lu1mxr.
- end if
+ if (nelim > 0) {
+    lu1mxc( lu1+1, lu[0], indr, a, indc, lenc, locc );
 
- if (nelim > 0) then
-    call lu1mxc( lu1+1, lu, indr, a, indc, lenc, locc )
+    if (TCP) { // Update modified columns in heap
+       for (kk = lu1+1; kk <= lu[0]; kk++) {
+          j    = indr[kk-1];
+          k    = Hk[j-1];
+          v    = Math.abs( a[locc[j-1]-1] ); // Biggest aij in column j
+          Hchange( Ha, Hj, Hk, Hlen[0], n, k, v, j, h );
+          hops[0] = hops[0] + h[0];
+       } // for (kk = lu1+1; kk <= lu[0]; kk++)
+    } // if (TCP)
+ } // if (nelim > 0)
+} // else not (Utri && TPP)
 
-    if (TCP) then ! Update modified columns in heap
-       do kk = lu1+1, lu
-          j    = indr(kk)
-          k    = Hk(j)
-          v    = abs( a(locc(j)) ) ! Biggest aij in column j
-          call Hchange( Ha, Hj, Hk, Hlen, n, k, v, j, h )
-          hops[0] = hops[0] + h[0]
-       end do
-    end if
- end if
-end if
+// ===============================================================
+// Negate lengths of pivot row and column so they will be
+// eliminated during compressions.
+// ===============================================================
+lenr[ibest[0]-1] = - ncold;
+lenc[jbest[0]-1] = - nrowd;
 
-!===============================================================
-! Negate lengths of pivot row and column so they will be
-! eliminated during compressions.
-!===============================================================
-lenr(ibest[0]) = - ncold
-lenc(jbest[0]) = - nrowd
+// Test for fatal bug: row or column lists overwriting L and U.
 
-! Test for fatal bug: row or column lists overwriting L and U.
+if (lrow[0] > lsave) {
+	// Fatal error.  This will never happen!
+	// (Famous last words.)
 
-if (lrow[0] > lsave) go to 980
-if (lcol[0] > lsave) go to 980
+	inform[0] = 8;
+	return;
+}
+if (lcol[0] > lsave) {
+	// Fatal error.  This will never happen!
+	// (Famous last words.)
 
-! Reset the file lengths if pivot row or col was at the end.
+	inform[0] = 8;
+	return;	
+}
 
-if (ibest[0] == ilast[0]) then
- lrow[0] = locr(ibest[0])
-end if
+// Reset the file lengths if pivot row or col was at the end.
 
-if (jbest[0] == jlast) then
- lcol[0] = locc(jbest[0])
-end if
+if (ibest[0] == ilast[0]) {
+ lrow[0] = locr[ibest[0]-1];
+}
+
+if (jbest[0] == jlast[0]) {
+ lcol[0] = locc[jbest[0]-1];
+}
 } // for (nrowu = 1; nrowu <= minmn; nrowu++)
 
-!------------------------------------------------------------------
-! End of main loop.
-!------------------------------------------------------------------
+// ------------------------------------------------------------------
+// End of main loop.
+// ------------------------------------------------------------------
 
-!------------------------------------------------------------------
-! Normal exit.
-! Move empty rows and cols to the end of p, q.
-! Then finish with a dense LU if necessary.
-!------------------------------------------------------------------
-900 inform[0] = 0
-call lu1pq3( m, lenr, p, ipinv, mrank )
-call lu1pq3( n, lenc, q, iqinv, nrank )
-nrank[0]  = min( mrank, nrank[0] )
+// ------------------------------------------------------------------
+//  Normal exit.
+//  Move empty rows and cols to the end of p, q.
+//  Then finish with a dense LU if necessary.
+// ------------------------------------------------------------------
+inform[0] = 0;
+lu1pq3( m, lenr, p, ipinv, mrank );
+lu1pq3( n, lenc, q, iqinv, nrank );
+nrank[0]  = Math.min( mrank[0], nrank[0] );
 
-if ( densLU ) then
-call lu1ful( m     , n    , lena , lenD , lu1 , TPP, &
-           mleft , nleft, nrank, nrowu,            &
-           lenL  , lenU , nsing,                   &
-           keepLU, small,                          &
-           a     , a(lD), indc , indr , p   , q,   &
-           lenc  , lenr , locc , ipinv, locr )
-!***     21 Dec 1994: Bug in next line.
-!***     nrank  = nrank - nsing.  Changed to next line:
-!***     nrank  = minmn - nsing
+if ( densLU ) {
+	d = new double[lenD];
+lu1ful( m     , n    , lena , lenD , lu1 , TPP,
+           mleft , nleft, nrank[0], nrowu,
+           lenL  , lenU , nsing,
+           keepLU, small,
+           a, d , indc , indr , p   , q,
+           lenc  , lenr , locc , ipinv, locr );
+for (i = 0; i < lenD; i++) {
+	a[lD-1+i] = d[i];
+}
+//***     21 Dec 1994: Bug in next line.
+//***     nrank  = nrank - nsing.  Changed to next line:
+//***     nrank  = minmn - nsing
 
-!***     26 Mar 2006: Previous line caused bug with m<n and nsing>0.
+//***     26 Mar 2006: Previous line caused bug with m<n and nsing>0.
 // Don't mess with nrank any more.  Let end of lu1fac handle it.
-end if
+} // if (densLU)
 
-minlen[0] = lenL[0]  +  lenU[0]  +  2*(m + n)
-go to 990
-
-! Not enough space free after a compress.
-! Set  minlen  to an estimate of the necessary value of  lena.
-
-970 inform[0] = 7
-minlen[0] = lena  +  lfile  +  2*(m + n)
-go to 990
-
-! Fatal error.  This will never happen!
-! (Famous last words.)
-
-980 inform[0] = 8
-go to 990
-
-! Fatal error with TSP.  Diagonal pivot not found.
-
-985 inform[0] = 9
-
-! Exit.
-
-990 return
-
-1100 format(/ 1x, a)
-1200 format(' nrowu', i7,     '   i,jbest[0]', 2i7, '   nrowd,ncold', 2i6, &
-   '   i,jmax', 2i7, '   aijmax', es10.2)*/
-
+minlen[0] = lenL[0]  +  lenU[0]  +  2*(m + n);
+return;
 } // lu1fad
+    
+    private void lu1ful(int m, int n, int lena, int lenD , int lu1 , boolean TPP,
+            int mleft, int nleft, int nrank, int nrowu,
+            int lenL[], int lenU[], int nsing[],
+            boolean keepLU, double small,
+            double a[], double d[], int indc[], int indr[], int p[], int q[],
+            int lenc[], int lenr[], int locc[], int ipinv[], int ipvt[]) {
+
+//logical,       intent(in)    :: TPP, keepLU
+//integer(ip),   intent(in)    :: m, n, lena, lenD, lu1,   &
+//                           mleft, nleft, nrank, nrowu
+//integer(ip),   intent(inout) :: lenL, lenU
+//integer(ip),   intent(out)   :: nsing  ! not used outside
+//integer(ip),   intent(in)    :: locc(n)
+//integer(ip),   intent(inout) :: indc(lena), indr(lena), p(m), q(n), &
+//                           lenc(n)   , lenr(m)
+//integer(ip),   intent(out)   :: ipvt(m), ipinv(m)   ! workspace
+//real(rp),      intent(in)    :: small
+//real(rp),      intent(inout) :: a(lena)
+//real(rp),      intent(out)   :: d(lenD)
+
+// ------------------------------------------------------------------
+// lu1ful computes a dense (full) LU factorization of the
+// mleft by nleft matrix that remains to be factored at the
+// beginning of the nrowu-th pass through the main loop of lu1fad.
+
+// 02 May 1989: First version.
+// 05 Feb 1994: Column interchanges added to lu1DPP.
+// 08 Feb 1994: ipinv reconstructed, since lu1pq3 may alter p.
+
+// 10 Jan 2010: First f90 version.
+// 12 Dec 2011: Declare intent and local variables.
+// ------------------------------------------------------------------
+
+int i, ibest, ipbase, j, jbest, k, l, l1, l2,
+    la, lc, lc1, lc2, ld, ldbase, ldiagU,
+    lkk, lkn, ll, lq, lu, nrowd, ncold;
+double ai, aj;
+final double zero = 0.0;
+int q2[];
+double arr[][];
+int index;
+
+// ------------------------------------------------------------------
+// If lu1pq3 moved any empty rows, reset ipinv = inverse of p.
+// ------------------------------------------------------------------
+if (nrank < m) {
+for (l = 1; l <= m; l++) {
+ i        = p[l-1];
+ ipinv[i-1] = l;
+} // for (l = 1; l <= m; l++)
+} // if (nrank < m)
+
+// ------------------------------------------------------------------
+// Copy the remaining matrix into the dense matrix D.
+// ------------------------------------------------------------------
+for (i = 0; i < lenD; i++) {
+	d[i] = zero;
+}
+
+ipbase = nrowu - 1;
+ldbase = 1 - nrowu;
+
+for (lq = nrowu; lq <= n; lq++) {
+j      = q[lq-1];
+lc1    = locc[j-1];
+lc2    = lc1 + lenc[j-1] - 1;
+
+for  (lc = lc1; lc <= lc2; lc++) {
+ i      = indc[lc-1];
+ ld     = ldbase + ipinv[i-1];
+ d[ld-1]  = a[lc-1];
+} // for  (lc = lc1; lc <= lc2; lc++)
+
+ldbase = ldbase + mleft;
+} // for (lq = nrowu; lq <= n; lq++)
+
+// ------------------------------------------------------------------
+// Call our favorite dense LU factorizer.
+// ------------------------------------------------------------------
+arr = new double[mleft][nleft];
+index = 0;
+for (j = 0; j < nleft; j++) {
+	for (i = 0; i < mleft; i++) {
+		arr[i][j] = d[index++];
+	}
+}
+q2 = new int[nleft];
+for (i = 0; i < nleft; i++) {
+	q2[i] = q[nrowu-1+i];
+}
+if ( TPP ) {
+lu1DPP( arr, mleft, mleft, nleft, small, nsing, ipvt, q2);
+}
+else {
+lu1DCP( arr, mleft, mleft, nleft, small, nsing, ipvt, q2);
+}
+index = 0;
+for (j = 0; j < nleft; j++) {
+	for (i = 0; i < mleft; i++) {
+		d[index++] = arr[i][j];
+	}
+}
+for (i = 0; i < nleft; i++) {
+	q[nrowu-1+i] = q2[i];
+}
+
+// ------------------------------------------------------------------
+// Move D to the beginning of A,
+// and pack L and U at the top of a, indc, indr.
+// In the process, apply the row permutation to p.
+// lkk points to the diagonal of U.
+// ------------------------------------------------------------------
+for (i = 0; i < lenD; i++) {
+	a[i] = d[i];
+}
+
+ldiagU = lena - n;
+lkk    = 1;
+lkn    = lenD - mleft + 1;
+lu     = lu1;
+
+for (k  = 1; k <= Math.min( mleft, nleft ); k++) {
+l1 = ipbase + k;
+l2 = ipbase + ipvt[k-1];
+if (l1 != l2) {
+ i      = p[l1-1];
+ p[l1-1]  = p[l2-1];
+ p[l2-1]  = i;
+} // if (l1 != l2)
+ibest  = p[l1-1];
+jbest  = q[l1-1];
+
+if ( keepLU ) {
+ // ===========================================================
+ // Pack the next column of L.
+ // ===========================================================
+ la     = lkk;
+ ll     = lu;
+ nrowd  = 1;
+
+ for (i  = k + 1; i <= mleft; i++) {
+    la = la + 1;
+    ai = a[la-1];
+    if (Math.abs( ai ) > small) {
+       nrowd    = nrowd + 1;
+       ll       = ll    - 1;
+       a[ll-1]    = ai;
+       indc[ll-1] = p[ ipbase + i -1];
+       indr[ll-1] = ibest;
+    } // if (Math.abs( ai ) > small) 
+ } // for (i  = k + 1; i <= mleft; i++)
+
+ // ===========================================================
+ // Pack the next row of U.
+ // We go backwards through the row of D
+ // so the diagonal ends up at the front of the row of  U.
+ // Beware -- the diagonal may be zero.
+ // ===========================================================
+ la     = lkn + mleft;
+ lu     = ll;
+ ncold  = 0;
+
+ for (j = nleft; j >= k; j--) {
+    la     = la - mleft;
+    aj     = a[la-1];
+    if (Math.abs( aj ) > small ||  j == k) {
+       ncold    = ncold + 1;
+       lu       = lu    - 1;
+       a[lu-1]    = aj;
+       indr[lu-1] = q[ipbase + j-1];
+    } // if (Math.abs( aj ) > small ||  j == k)
+ } // for (j = nleft; j >= k; j--)
+
+ lenr[ibest-1] = - ncold;
+ lenc[jbest] = - nrowd;
+ lenL[0]        =   lenL[0] + nrowd - 1;
+ lenU[0]        =   lenU[0] + ncold;
+ lkn         =   lkn  + 1;
+} // if (keepLU)
+else {
+ // ===========================================================
+ // Store just the diagonal of U, in natural order.
+ // ===========================================================
+ a[ldiagU + jbest - 1] = a[lkk-1];
+}
+
+lkk    = lkk  + mleft + 1;
+} // for (k  = 1; k <= Math.min( mleft, nleft ); k++)
+
+} // lu1ful
+    
+    private void lu1DCP(double a[][], int lda, int m, int n, double small, int nsing[], int ipvt[], int q[]) {
+
+    //integer(ip),   intent(in)    :: lda, m, n
+    //integer(ip),   intent(out)   :: nsing   ! not used outside
+    //integer(ip),   intent(out)   :: ipvt(m)
+    //integer(ip),   intent(inout) :: q(n)
+    //real(rp),      intent(in)    :: small
+    //real(rp),      intent(inout) :: a(lda,n)
+
+    // ------------------------------------------------------------------
+    // lu1DCP factors a dense m x n matrix A by Gaussian elimination,
+    // using Complete Pivoting (row and column interchanges) for
+    // stability.
+    // This version also uses column interchanges if all elements in a
+    // pivot column are smaller than (or equal to) "small".  Such columns
+    // are changed to zero and permuted to the right-hand end.
+    
+    // As in LINPACK's dgefa, ipvt(*) keeps track of pivot rows.
+    // Rows of U are interchanged, but we don't have to physically
+    // permute rows of L.  In contrast, column interchanges are applied
+    // directly to the columns of both L and U, and to the column
+    // permutation vector q(*).
+    
+    // 01 May 2002: First dense Complete Pivoting, derived from lu1DPP.
+    // 07 May 2002: Another break needed at end of first loop.
+    // 26 Mar 2006: Cosmetic mods while looking for "nsing" bug when m<n.
+    //              nsing redefined (see below).
+    //              Changed to implicit none.
+    
+    // 10 Jan 2010: First f90 version.
+    // 12 Dec 2011: Declare intent and local variables.
+    // 03 Feb 2012: a(kp1:m,j) = t*a(kp1:m,k) + a(kp1:m,j)  needs the last :m
+    // ------------------------------------------------------------------
+    
+    // On entry:
+    // a       Array holding the matrix A to be factored.
+    // lda     The leading dimension of the array  a.
+    // m       The number of rows    in  A.
+    // n       The number of columns in  A.
+    // small   A drop tolerance.  Must be zero or positive.
+    
+    // On exit:
+    // a       An upper triangular matrix and the multipliers
+    //         that were used to obtain it.
+    //         The factorization can be written A = L*U, where
+    //         L is a product of permutation and unit lower
+    //         triangular matrices and U is upper triangular.
+    // nsing   Number of singularities detected.
+    
+    // 26 Mar 2006: nsing redefined to be more meaningful.
+    //              Users may define rankU = n - nsing and regard
+    //              U as upper-trapezoidal, with the first rankU columns
+    //              being triangular and the rest trapezoidal.
+    //              It would be better to return rankU, but we still
+    //              return nsing for compatibility (even though lu1fad
+    //              no longer uses it).
+    // ipvt    Records the pivot rows.
+    // q       A vector to which column interchanges are applied.
+    // ------------------------------------------------------------------
+
+  // integer(ip), external  :: idamax
+    double aijmax, ajmax, t;
+    int i, imax, j, jlast, jmax, jnew,
+        k, kp1, l, last, lencol, rankU;
+    final double zero = 0.0;
+    final double one = 1.0;
+    double vec[];
+
+    rankU  = 0;
+    lencol = m + 1;
+    last   = n;
+
+    // -----------------------------------------------------------------
+    // Start of elimination loop.
+    // -----------------------------------------------------------------
+    for (k = 1; k <= n; k++) {
+       kp1    = k + 1;
+       lencol = lencol - 1;
+
+       // Find the biggest aij in row imax and column jmax.
+
+       aijmax = zero;
+       imax   = k;
+       jmax   = k;
+       jlast  = last;
+
+       l2: for(j = k; j <= jlast; j++) {
+    	  while (true) {
+          vec = new double[m-k+1];
+          for (i = 0; i < m-k+1; i++) {
+        	  vec[i] = a[k-1+i][j-1];
+          }
+          l      = jdamax( lencol, vec, 1 ) + k - 1;
+          ajmax  = Math.abs(a[l-1][j-1]);
+
+          if (ajmax <= small) {
+             // ========================================================
+             // Do column interchange, changing old column to zero.
+             // Reduce "last" and try again with same j.
+             // ========================================================
+             jnew    = q[last-1];
+             q[last-1] = q[j-1];
+             q[j-1]    = jnew;
+
+             for (i = 1; i <= k - 1; i++) {
+                t         = a[i-1][last-1];
+                a[i-1][last-1] = a[i-1][j-1];
+                a[i-1][j-1]    = t;
+             } // for (i = 1; i <= k - 1; i++)
+
+             for (i = k; i <= m; i++) {
+                t         = a[i-1][last-1];
+                a[i-1][last-1] = zero;
+                a[i-1][j-1]    = t;
+             } // for (i = k; i <= m; i++)
+
+             last   = last - 1;
+             if (j <= last) {
+            	 continue; // repeat
+             }
+             else {
+                 break l2;
+             }
+    	  } // if (ajmax <= small)
+    	  else {
+    		  break;
+    	  }
+    	  } // while (true)
+
+          // Check if this column has biggest aij so far.
+
+          if (aijmax < ajmax) {
+             aijmax  =   ajmax;
+             imax    =   l;
+             jmax    =   j;
+          } // if (aijmax < ajmax)
+
+          if (j >= last) {
+        	  break;
+          }
+       } // for(j = k; j <= jlast; j++)
+
+       ipvt[k-1] = imax;
+
+       if (jmax != k) {   // Do column interchange (k and jmax).
+          jnew    = q[jmax-1];
+          q[jmax-1] = q[k-1];
+          q[k-1]    = jnew;
+
+          for (i = 1; i <= m; i++) {
+             t         = a[i-1][jmax-1];
+             a[i-1][jmax-1] = a[i-1][k-1];
+             a[i-1][k-1]    = t;
+          } // for (i = 1; i <= m; i++)
+       } // if (jmax != k)
+
+       if (k < m) {       // Do row interchange if necessary.
+          t         = a[imax-1][k-1];
+          if (imax != k) {
+             a[imax-1][k-1] = a[k-1][k-1];
+             a[k-1][k-1]    = t;
+          } // if (imax != k)
+
+          // ===========================================================
+          // Compute multipliers.
+          // Do row elimination with column indexing.
+          // ===========================================================
+          t      = - one / t;
+          // call dscal ( m-k, t, a(kp1,k), 1 )
+          for (i = kp1-1; i < m; i++) {
+        	  a[i][k-1] = t * a[i][k-1];
+          }
+
+          for (j = kp1; j <= last; j++) {
+             t         = a[imax-1][j-1];
+             if (imax != k) {
+                a[imax-1][j-1] = a[k-1][j-1];
+                a[k-1][j-1]    = t;
+             } // if (imax != k)
+             // call daxpy ( m-k, t, a(kp1,k), 1, a(kp1,j), 1 )
+             for (i = kp1-1; i < m; i++) {
+            	 a[i][j-1] = t * a[i][k-1] + a[i][j-1];
+             }
+          } // for (j = kp1; j <= last; j++) 
+       } // if (k < m)
+       else {
+          break;
+       }
+
+       if (k >= last) {
+    	   break;
+       }
+    } // for (k = 1; k <= n; k++)
+
+    // Set ipvt(*) for singular rows.
+
+    for (k = last + 1; k <= m; k++) {
+       ipvt[k-1] = k;
+    } // for (k = last + 1; k <= m; k++) 
+
+    nsing[0]  = n - rankU;
+
+} // lu1DCP
+
+
+    private void lu1DPP(double a[][], int lda, int m, int n, double small, int nsing[], int ipvt[], int q[]) {
+
+      //integer(ip),   intent(in)    :: lda, m, n
+      //integer(ip),   intent(out)   :: nsing   ! not used outside
+      //integer(ip),   intent(out)   :: ipvt(m)
+      //integer(ip),   intent(inout) :: q(n)
+      //real(rp),      intent(in)    :: small
+      //real(rp),      intent(inout) :: a(lda,n)
+
+      // ------------------------------------------------------------------
+      // lu1DPP factors a dense m x n matrix A by Gaussian elimination,
+      // using row interchanges for stability, as in dgefa from LINPACK.
+      // This version also uses column interchanges if all elements in a
+      // pivot column are smaller than (or equal to) "small".  Such columns
+      // are changed to zero and permuted to the right-hand end.
+      
+      // As in LINPACK, ipvt(*) keeps track of pivot rows.
+      // Rows of U are interchanged, but we don't have to physically
+      // permute rows of L.  In contrast, column interchanges are applied
+      // directly to the columns of both L and U, and to the column
+      // permutation vector q(*).
+      
+      // 02 May 1989: First version derived from dgefa
+      //              in LINPACK (version dated 08/14/78).
+      // 05 Feb 1994: Generalized to treat rectangular matrices
+      //              and use column interchanges when necessary.
+      //              ipvt is retained, but column permutations are applied
+      //              directly to q(*).
+      // 21 Dec 1994: Bug found via example from Steve Dirkse.
+      //              Loop 100 added to set ipvt(*) for singular rows.
+      // 26 Mar 2006: nsing redefined (see below).
+      //              Changed to implicit none.
+      
+      // 10 Jan 2010: First f90 version.  Need to do more f90-ing.
+      // 12 Dec 2011: Declare intent and local variables.
+      // 03 Feb 2012: a is intent(inout), not (out).
+      //              a(kp1:m,j) = t*a(kp1:m,k) + a(kp1:m,j)  needs the last :m
+      // ------------------------------------------------------------------
+      
+      // On entry:
+      
+      // a       Array holding the matrix A to be factored.
+      // lda     The leading dimension of the array  a.
+      // m       The number of rows    in  A.
+      // n       The number of columns in  A.
+      // small   A drop tolerance.  Must be zero or positive.
+      
+      // On exit:
+      
+      // a       An upper triangular matrix and the multipliers
+      //         which were used to obtain it.
+      //         The factorization can be written  A = L*U  where
+      // L       is a product of permutation and unit lower
+      //         triangular matrices and  U  is upper triangular.
+      // nsing   Number of singularities detected.
+      // 26 Mar 2006: nsing redefined to be more meaningful.
+      //              Users may define rankU = n - nsing and regard
+      //              U as upper-trapezoidal, with the first rankU columns
+      //              being triangular and the rest trapezoidal.
+      //              It would be better to return rankU, but we still
+      //              return nsing for compatibility (even though lu1fad
+      //              no longer uses it).
+      // ipvt    Records the pivot rows.
+      // q       A vector to which column interchanges are applied.
+      // ------------------------------------------------------------------
+
+    // integer(ip), external  :: idamax
+      int i, j, k, kp1, l, last, lencol, rankU;
+      double t;
+      final double zero = 0.0;
+      final double one = 1.0;
+      double vec[];
+
+      rankU  = 0;
+      k      = 1;
+      last   = n;
+
+      // ------------------------------------------------------------------
+      // Start of elimination loop.
+      // ------------------------------------------------------------------
+      while (true) {
+      kp1    = k + 1;
+      lencol = m - k + 1;
+
+      // Find l, the pivot row.
+      vec = new double[m - k + 1];
+      for (i = 0; i < m - k + 1; i++) {
+    	  vec[i] = a[i + k - 1][k-1];
+      }
+      l       = jdamax( lencol, vec, 1 ) + k - 1;
+      ipvt[k-1] = l;
+
+      if (Math.abs( a[l-1][k-1] ) <= small) {
+         // ==============================================================
+         // Do column interchange, changing old pivot column to zero.
+         // Reduce "last" and try again with same k.
+         // ==============================================================
+         j       = q[last-1];
+         q[last-1] = q[k-1];
+         q[k-1]    = j;
+
+         for (i = 1; i <= k - 1; i++) {
+            t         = a[i-1][last-1];
+            a[i-1][last-1] = a[i-1][k-1];
+            a[i-1][k-1]    = t;
+         } // for (i = 1; i <= k - 1; i++)
+
+         for (i = k; i <= m; i++) {
+            t         = a[i-1][last-1];
+            a[i-1][last-1] = zero;
+            a[i-1][k-1]    = t;
+         } // for (i = k; i <= m; i++)
+
+         last     = last - 1;
+         if (k <= last) {
+        	 continue;
+         }
+         else {
+        	 break;
+         }
+      } // if (Math.abs( a[l-1][k-1] ) <= small)
+      else { // Math.abs( a[l-1][k-1] ) > small
+         rankU  = rankU + 1;
+         if (k < m) {
+            // ===========================================================
+            // Do row interchange if necessary.
+            // ===========================================================
+            if (l != k) {
+               t      = a[l-1][k-1];
+               a[l-1][k-1] = a[k-1][k-1];
+               a[k-1][k-1] = t;
+            } // if (l != k)
+
+            // ===========================================================
+            // Compute multipliers.
+            // Do row elimination with column indexing.
+            // ===========================================================
+            t = - one / a[k-1][k-1];
+            // call dscal ( m-k, t, a(kp1,k), 1 )
+            for (i = kp1-1; i < m; i++) {
+            	a[i][k-1] = t * a[i][k-1];
+            }
+
+            for (j = kp1; j <= last; j++) {
+               t    = a[l-1][j-1];
+               if (l != k) {
+                  a[l-1][j-1] = a[k-1][j-1];
+                  a[k-1][j-1] = t;
+               } // if (l != k)
+               // call daxpy ( m-k, t, a(kp1,k), 1, a(kp1,j), 1 )
+               for (i = kp1-1; i < m; i++) {
+            	   a[i][j-1] = t * a[i][k-1] + a[i][j-1];
+               }
+            } // for (j = kp1; j <= last; j++)
+
+            k = k + 1;
+            if (k <= last) {
+            	continue;
+            }
+            else {
+            	break;
+            }
+         } // if (k < m)
+         else {
+        	 break;
+         }
+      } // Math.abs( a[l-1][k-1] ) > small
+      } // while (true)
+
+      // Set ipvt(*) for singular rows.
+
+      for (k = last + 1; k <= m; k++) {
+         ipvt[k-1] = k;
+      }
+
+      nsing[0]  = n - rankU;
+
+} // lu1DPP
+    
+    private int jdamax(int n, double x[], int incx) {
+    	//result(iAmax)
+    
+
+    //integer(ip), intent(in)    :: n
+    //integer,     intent(in)    :: incx   ! default integer size
+    //real(rp),    intent(in)    :: x(:)
+    int iAmax;
+
+    // ===========================================================================
+    // jdamax does the same as idamax in most cases.
+    // jdamax > 0 if x contains normal values.
+    // jdamax = 0 if n = 0.
+    // jdamax < 0 means x(-jdamax) contains the first NaN or Inf.
+    //
+    // 29 Jul 2003: First version of jdamax implemented for s5setx.
+    // 29 Jul 2003: Current version of jdamax
+    // 15 Mar 2008: First f90 version.
+    // ===========================================================================
+
+    //intrinsic           :: huge
+    int i, ix, kmax;
+    double dmax, xi;
+    final double realmax = Double.MAX_VALUE;
+    final double zero    = 0.0;
+
+    if (n < 1) {
+       iAmax = 0;
+       return iAmax;
+    } // if (n < 1)
+
+    dmax  = zero;
+    ix    = 1;
+    kmax  = 1;
+
+    for (i = 1; i <= n; i++) {
+       xi = Math.abs( x[ix-1] );
+       if (xi <= realmax)  {  // false if xi = Nan or Inf
+          if (dmax < xi) {
+             dmax   = xi;
+             kmax   = ix;
+          } // if (dmax < xi)
+       } // if (xi <= realmax)
+       else {
+          iAmax = -ix;
+          return iAmax;
+       }
+       ix = ix + incx;
+    } // for (i = 1; i <= n; i++)
+
+    iAmax = kmax;
+    return iAmax;
+    } // jdamax
+
+
+
     
     private void lu1gau(int m, int melim, int ncold, int nspare, double small,
             int lpivc1, int lpivc2, int lfirst[], int lpivr2, int lfree, int minfre,
@@ -3651,60 +4314,190 @@ int i, j, l, last, lc, lc1, lc2, ll, lr, lr1, lr2, lu;
 
 ll     = 0;
 
-/*for (lc = lpivc1; lc <= lpivc2; lc++) {
+for (lc = lpivc1; lc <= lpivc2; lc++) {
 ll = ll + 1;
 if (ifill[ll-1] == 0) continue;
 
 // Another row has pending fill.
-! First, add some spare space at the end
-! of the current last row.
+// First, add some spare space at the end
+// of the current last row.
 
-do l = lrow + 1, lrow + nspare
- lrow    = l
- indr(l) = 0
-end do
+for (l = lrow[0] + 1; l <= lrow[0] + nspare; l++) {
+ lrow[0]    = l;
+ indr[l-1] = 0;
+} // for (l = lrow[0] + 1; l <= lrow[0] + nspare; l++)
 
-! Now move row i to the end of the row file.
+// Now move row i to the end of the row file.
 
-i       = indc(lc)
-ilast   = i
-lr1     = locr(i)
-lr2     = lr1 + lenr(i) - 1
-locr(i) = lrow + 1
+i       = indc[lc-1];
+ilast[0]   = i;
+lr1     = locr[i-1];
+lr2     = lr1 + lenr[i-1] - 1;
+locr[i-1] = lrow[0] + 1;
 
-do lr = lr1, lr2
- lrow       = lrow + 1
- indr(lrow) = indr(lr)
- indr(lr)   = 0
-end do
+for (lr = lr1; lr <= lr2; lr++) {
+ lrow[0]       = lrow[0] + 1;
+ indr[lrow[0]-1] = indr[lr-1];
+ indr[lr-1]   = 0;
+} // for (lr = lr1; lr <= lr2; lr++)
 
-lrow    = lrow + ifill(ll)
+lrow[0]    = lrow[0] + ifill[ll-1];
 } // for (lc = lpivc1; lc <= lpivc2; lc++)
 
-! Scan all columns of  D  and insert the pending fill-in
-! into the row file.
+// Scan all columns of  D  and insert the pending fill-in
+// into the row file.
 
-lu     = 1
+lu     = 1;
 
-do lr = lpivr1, lpivr2
-lu     = lu + 1
-if (jfill(lu) == 0) cycle
-j      = indr(lr)
-lc1    = locc(j) + jfill(lu) - 1
-lc2    = locc(j) + lenc(j)   - 1
+for (lr = lpivr1; lr <= lpivr2; lr++) {
+lu     = lu + 1;
+if (jfill[lu-1] == 0) continue;
+j      = indr[lr-1];
+lc1    = locc[j-1] + jfill[lu-1] - 1;
+lc2    = locc[j-1] + lenc[j-1]   - 1;
 
-do lc = lc1, lc2
- i      = indc(lc) - m
- if (i > 0) then
-    indc(lc)   = i
-    last       = locr(i) + lenr(i)
-    indr(last) = j
-    lenr(i)    = lenr(i) + 1
- end if
-end do
-end do*/
+for (lc = lc1; lc <= lc2; lc++) {
+ i      = indc[lc-1] - m;
+ if (i > 0) {
+    indc[lc-1]   = i;
+    last       = locr[i-1] + lenr[i-1];
+    indr[last-1] = j;
+    lenr[i-1]    = lenr[i-1] + 1;
+ } // if (i > 0)
+} // for (lc = lc1; lc <= lc2; lc++)
+} // for (lr = lpivr1; lr <= lpivr2; lr++)
 
 } // lu1pen
+    
+    private void lu1pq2(int nzpiv, int nzchng[], int indr[], int lenold[], int lennew[], int iqloc[], int q[], int iqinv[]) {
+
+    //integer(ip),   intent(in)    :: nzpiv
+    //integer(ip),   intent(out)   :: nzchng
+    //integer(ip),   intent(in)    :: lenold(nzpiv), lennew(*)
+    //integer(ip),   intent(inout) :: indr(nzpiv), iqloc(*), q(*), iqinv(*)
+
+    // ===============================================================
+    // lu1pq2 frees the space occupied by the pivot row,
+    // and updates the column permutation q.
+    //
+    // Also used to free the pivot column and update the row perm p.
+    //
+    // nzpiv   (input)    is the length of the pivot row (or column).
+    // nzchng  (output)   is the net change in total nonzeros.
+    //
+    // 14 Apr 1989:  First version.
+    //
+    // 10 Jan 2010: First f90 version.
+    // 12 Dec 2011: Declare intent and local variables.
+    // ===============================================================
+
+    int j, jnew, l, lnew, lr, next, nz, nznew;
+
+    nzchng[0] = 0;
+
+    for (lr  = 1; lr <= nzpiv; lr++) {
+       j        = indr[lr-1];
+       indr[lr-1] = 0;
+       nz       = lenold[lr-1];
+       nznew    = lennew[j-1];
+
+       if (nz != nznew) {
+          l        = iqinv[j-1];
+          nzchng[0]   = nzchng[0] + (nznew - nz);
+
+          // l above is the position of column j in q  (so j = q(l)).
+
+          if (nz < nznew) {
+
+             // Column  j  has to move towards the end of  q.
+             while (true) {
+             next        = nz + 1;
+             lnew        = iqloc[next-1] - 1;
+             if (lnew != l) {
+                jnew        = q[lnew-1];
+                q[l-1]        = jnew;
+                iqinv[jnew-1] = l;
+             } // if (lnew != l)
+             l           = lnew;
+             iqloc[next-1] = lnew;
+             nz          = next;
+             if (nz < nznew) {
+            	 continue;
+             }
+             else {
+            	 break;
+             }
+             } // while (true)
+          } // if (nz < nznew)
+          else {
+
+             // Column  j  has to move towards the front of  q.
+             while (true) {
+             lnew        = iqloc[nz-1];
+             if (lnew != l) {
+                jnew        = q[lnew-1];
+                q[l-1]        = jnew;
+                iqinv[jnew-1] = l;
+         } // if (lnew != l)
+             l           = lnew;
+             iqloc[nz-1]   = lnew + 1;
+             nz          = nz   - 1;
+             if (nz > nznew) {
+            	 continue;
+             }
+             else {
+            	 break;
+             }
+             } // while (true)
+          } // else
+
+          q[lnew-1]  = j;
+          iqinv[j-1] = lnew;
+       } // if (nz != nznew)
+    } // for (lr  = 1; lr <= nzpiv; lr++)
+
+} // lu1pq2
+
+    private void lu1pq3(int n, int len[], int iperm[], int iw[], int nrank[]) {
+
+    //integer(ip),   intent(in)    :: n
+    //integer(ip),   intent(in)    :: len(n)
+    //integer(ip),   intent(inout) :: iperm(n)
+    //integer(ip),   intent(out)   :: iw(n)   ! workspace
+
+    // ------------------------------------------------------------------
+    // lu1pq3  looks at the permutation  iperm(*)  and moves any entries
+    // to the end whose corresponding length  len(*)  is zero.
+    
+    // 09 Feb 1994: Added work array iw(*) to improve efficiency.
+    
+    // 10 Jan 2010: First f90 version.
+    // 12 Dec 2011: Declare intent and local variables.
+    // ------------------------------------------------------------------
+
+    int i, k, nzero;
+
+    nrank[0]  = 0;
+    nzero  = 0;
+
+    for (k = 1; k <= n; k++) {
+       i = iperm[k-1];
+
+       if (len[i-1] == 0) {
+          nzero     = nzero + 1;
+          iw[nzero-1] = i;
+       }
+       else {
+          nrank[0]        = nrank[0] + 1;
+          iperm[nrank[0]-1] = i;
+       }
+    } // for (k = 1; k <= n; k++)
+
+    for (k = 1; k <= nzero; k++) {
+       iperm[nrank[0] + k-1] = iw[k-1];
+    }
+
+} // lu1pq3
 
     
     private void lu1rec(int n, boolean reals, int luparm[], int ltop[], int lena, double a[], int ind[],
@@ -3750,7 +4543,7 @@ end do*/
     // 12 Dec 2011: Declare intent and local variables.
     // ------------------------------------------------------------------
 
-    int i, ilast, k, klast, l, leni, lprint, nempty, nout;
+    int i, ilast, k, klast, l, leni, lprint, nempty;
 
     nempty = 0;
 
@@ -3802,7 +4595,6 @@ end do*/
        } // for (i = 1; i <= n; i++)
     } // if (nempty > 0)
 
-    nout   = luparm[0];
     lprint = luparm[1];
     if (lprint >= 50) {
     	UI.setDataText("lu1rec.  File compressed from " + ltop[0] + " to " + k + " " + reals + " nempty = " + nempty + "\n");
@@ -4188,251 +4980,251 @@ for (k = 1; k <= ncol; k++) {       // Search involved columns.
     private void lu6chk(int mode, int m, int n, double w[], int lena, int luparm[], double parmlu[],
             double a[], int indc[], int indr[], int p[], int q[], int lenc[], int lenr[], int locc[], int locr[], int inform[]) {
 
-/*integer(ip),   intent(in)    :: mode, m, n, lena
-integer(ip),   intent(inout) :: inform
-integer(ip),   intent(inout) :: luparm(30)
-integer(ip),   intent(in)    :: indc(lena), indr(lena), p(m), q(n), &
-                           lenc(n), lenr(m), locc(n), locr(m)
-real(rp),      intent(in)    :: a(lena)
-real(rp),      intent(inout) :: parmlu(30)
-real(rp),      intent(out)   :: w(n)
+//integer(ip),   intent(in)    :: mode, m, n, lena
+//integer(ip),   intent(inout) :: inform
+//integer(ip),   intent(inout) :: luparm(30)
+//integer(ip),   intent(in)    :: indc(lena), indr(lena), p(m), q(n), &
+//                           lenc(n), lenr(m), locc(n), locr(m)
+//real(rp),      intent(in)    :: a(lena)
+//real(rp),      intent(inout) :: parmlu(30)
+//real(rp),      intent(out)   :: w(n)
 
-!-----------------------------------------------------------------
-! lu6chk  looks at the LU factorization  A = L*U.
-!
-! If mode = 1, lu6chk is being called by lu1fac.
-! (Other modes not yet implemented.)
-! The important input parameters are
-!
-! lprint = luparm(2)
-! luparm(6) = 1 if TRP
-! keepLU = luparm(8)
-! Utol1  = parmlu(4)
-! Utol2  = parmlu(5)
-!
-! and the significant output parameters are
-!
-! inform = luparm(10)
-! nsing  = luparm(11)
-! jsing  = luparm(12)
-! jumin  = luparm(19)
-! Lmax   = parmlu(11)
-! Umax   = parmlu(12)
-! DUmax  = parmlu(13)
-! DUmin  = parmlu(14)
-! and      w(*).
-!
-! Lmax  and Umax  return the largest elements in L and U.
-! DUmax and DUmin return the largest and smallest diagonals of U
-! (excluding diagonals that are exactly zero).
-!
-! In general, w(j) is set to the maximum absolute element in
-! the j-th column of U.  However, if the corresponding diagonal
-! of U is small in absolute terms or relative to w(j)
-! (as judged by the parameters Utol1, Utol2 respectively),
-! then w(j) is changed to - w(j).
-!
-! Thus, if w(j) is not positive, the j-th column of A
-! appears to be dependent on the other columns of A.
-! The number of such columns, and the position of the last one,
-! are returned as nsing and jsing.
-!
-! Note that nrank is assumed to be set already, and is not altered.
-! Typically, nsing will satisfy      nrank + nsing = n,  but if
-! Utol1 and Utol2 are rather large,  nsing > n - nrank   may occur.
-!
-! If keepLU = 0,
-!              Lmax  and Umax  are already set by lu1fac.
-!              The diagonals of U are in the top of A.
-!              Only Utol1 is used in the singularity test to set w(*).
-!
-! inform = 0  if A appears to have full column rank (nsing = 0).
-! inform = 1  otherwise (nsing > 0).
-!
-! 00 Jul 1987: Early version.
-! 09 May 1988: f77 version.
-! 11 Mar 2001: Allow for keepLU = 0.
-! 17 Nov 2001: Briefer output for singular factors.
-! 05 May 2002: Comma needed in format 1100 (via Kenneth Holmstrom).
-! 06 May 2002: With keepLU = 0, diags of U are in natural order.
-!              They were not being extracted correctly.
-! 23 Apr 2004: TRP can judge singularity better by comparing
-!              all diagonals to DUmax.
-! 27 Jun 2004: (PEG) Allow write only if nout > 0 .
-! 13 Dec 2011: First f90 version.
-!------------------------------------------------------------------
+// -----------------------------------------------------------------
+// lu6chk  looks at the LU factorization  A = L*U.
 
-character(1)        :: mnkey
-logical             :: keepLU, TRP
-integer(ip)         :: i, j, jsing, jumin, k, l, l1, l2, ldiagU, lenL, &
-                  lprint, ndefic, nout, nrank, nsing
-real(rp)            :: aij, diag, DUmax, DUmin, Lmax, Umax, Utol1, Utol2
-real(rp), parameter :: zero = 0.0
+// If mode = 1, lu6chk is being called by lu1fac.
+// (Other modes not yet implemented.)
+// The important input parameters are
 
+// lprint = luparm(2)
+// luparm(6) = 1 if TRP
+// keepLU = luparm(8)
+// Utol1  = parmlu(4)
+// Utol2  = parmlu(5)
 
-nout   = luparm(1)
-lprint = luparm(2)
-TRP    = luparm(6) == 1  ! Threshold Rook Pivoting
-keepLU = luparm(8) /= 0
-nrank  = luparm(16)
-lenL   = luparm(23)
-Utol1  = parmlu(4)
-Utol2  = parmlu(5)
+// and the significant output parameters are
 
-inform = 0
-Lmax   = zero
-Umax   = zero
-nsing  = 0
-jsing  = 0
-jumin  = 0
-DUmax  = zero
-DUmin  = 1.0d+30
+// inform = luparm(10)
+// nsing  = luparm(11)
+// jsing  = luparm(12)
+// jumin  = luparm(19)
+// Lmax   = parmlu(11)
+// Umax   = parmlu(12)
+// DUmax  = parmlu(13)
+// DUmin  = parmlu(14)
+// and      w(*).
 
-w(1:n) = zero
+// Lmax  and Umax  return the largest elements in L and U.
+// DUmax and DUmin return the largest and smallest diagonals of U
+// (excluding diagonals that are exactly zero).
+
+// In general, w(j) is set to the maximum absolute element in
+// the j-th column of U.  However, if the corresponding diagonal
+// of U is small in absolute terms or relative to w(j)
+// (as judged by the parameters Utol1, Utol2 respectively),
+// then w(j) is changed to - w(j).
+
+// Thus, if w(j) is not positive, the j-th column of A
+// appears to be dependent on the other columns of A.
+// The number of such columns, and the position of the last one,
+// are returned as nsing and jsing.
+
+// Note that nrank is assumed to be set already, and is not altered.
+// Typically, nsing will satisfy      nrank + nsing = n,  but if
+// Utol1 and Utol2 are rather large,  nsing > n - nrank   may occur.
+
+// If keepLU = 0,
+//              Lmax  and Umax  are already set by lu1fac.
+//              The diagonals of U are in the top of A.
+//              Only Utol1 is used in the singularity test to set w(*).
+
+// inform = 0  if A appears to have full column rank (nsing = 0).
+// inform = 1  otherwise (nsing > 0).
+
+// 00 Jul 1987: Early version.
+// 09 May 1988: f77 version.
+// 11 Mar 2001: Allow for keepLU = 0.
+// 17 Nov 2001: Briefer output for singular factors.
+// 05 May 2002: Comma needed in format 1100 (via Kenneth Holmstrom).
+// 06 May 2002: With keepLU = 0, diags of U are in natural order.
+//              They were not being extracted correctly.
+// 23 Apr 2004: TRP can judge singularity better by comparing
+//              all diagonals to DUmax.
+// 27 Jun 2004: (PEG) Allow write only if nout > 0 .
+// 13 Dec 2011: First f90 version.
+// ------------------------------------------------------------------
+
+char mnkey;
+boolean keepLU, TRP;
+int i, j, jsing, jumin, k, l, l1, l2, ldiagU, lenL,
+                  lprint, ndefic, nrank, nsing;
+double aij, diag, DUmax, DUmin, Lmax, Umax, Utol1, Utol2;
+final double zero = 0.0;
 
 
-if (keepLU) then
-!--------------------------------------------------------------
-! Find  Lmax.
-!--------------------------------------------------------------
-do l = lena + 1 - lenL, lena
- Lmax  = max( Lmax, abs(a(l)) )
-end do
+lprint = luparm[1];
+TRP    = luparm[5] == 1;  // Threshold Rook Pivoting
+keepLU = luparm[7] != 0;
+nrank  = luparm[15];
+lenL   = luparm[22];
+Utol1  = parmlu[3];
+Utol2  = parmlu[4];
 
-!--------------------------------------------------------------
-! Find Umax and set w(j) = maximum element in j-th column of U.
-!--------------------------------------------------------------
-do k = 1, nrank
- i     = p(k)
- l1    = locr(i)
- l2    = l1 + lenr(i) - 1
-
- do l = l1, l2
-    j     = indr(l)
-    aij   = abs( a(l) )
-    w(j)  = max( w(j), aij )
-    Umax  = max( Umax, aij )
- end do
-end do
-
-parmlu(11) = Lmax
-parmlu(12) = Umax
-
-!--------------------------------------------------------------
-! Find DUmax and DUmin, the extreme diagonals of U.
-!--------------------------------------------------------------
-do k = 1, nrank
- j      = q(k)
- i      = p(k)
- l1     = locr(i)
- diag   = abs( a(l1) )
- DUmax  = max( DUmax, diag )
- if (DUmin > diag) then
-    DUmin  =   diag
-    jumin  =   j
- end if
-end do
-
-else
-!--------------------------------------------------------------
-! keepLU = 0.
-! Only diag(U) is stored.  Set w(*) accordingly.
-! Find DUmax and DUmin, the extreme diagonals of U.
-!--------------------------------------------------------------
-ldiagU = lena - n
-
-do k = 1, nrank
- j      = q(k)
-! diag   = abs( a(ldiagU + k) ) ! 06 May 2002: Diags
- diag   = abs( a(ldiagU + j) ) ! are in natural order
- w(j)   = diag
- DUmax  = max( DUmax, diag )
- if (DUmin > diag) then
-    DUmin  =   diag
-    jumin  =   j
- end if
-end do
-end if
+inform[0] = 0;
+Lmax   = zero;
+Umax   = zero;
+nsing  = 0;
+jsing  = 0;
+jumin  = 0;
+DUmax  = zero;
+DUmin  = 1.0E+30;
+for (i = 0; i < n; i++) {
+	w[i] = zero;
+}
 
 
-!--------------------------------------------------------------
-! Negate w(j) if the corresponding diagonal of U is
-! too small in absolute terms or relative to the other elements
-! in the same column of  U.
-!
-! 23 Apr 2004: TRP ensures that diags are NOT small relative to
-!              other elements in their own column.
-!              Much better, we can compare all diags to DUmax.
-!--------------------------------------------------------------
-if (mode == 1  .and.  TRP) then
-Utol1 = max( Utol1, Utol2*DUmax )
-end if
+if (keepLU) {
+// --------------------------------------------------------------
+// Find  Lmax.
+// --------------------------------------------------------------
+for (l = lena + 1 - lenL; l <= lena; l++) {
+ Lmax  = Math.max( Lmax, Math.abs(a[l-1]) );
+}
 
-if (keepLU) then
-do k = 1, n
- j     = q(k)
- if (k > nrank) then
-    diag   = zero
- else
-    i      = p(k)
-    l1     = locr(i)
-    diag   = abs( a(l1) )
- end if
+// --------------------------------------------------------------
+// Find Umax and set w(j) = maximum element in j-th column of U.
+// --------------------------------------------------------------
+for (k = 1; k <= nrank; k++) {
+ i     = p[k-1];
+ l1    = locr[i-1];
+ l2    = l1 + lenr[i-1] - 1;
 
- if (diag <= Utol1  .or.  diag <= Utol2*w(j)) then
-    nsing  =   nsing + 1
-    jsing  =   j
-    w(j)   = - w(j)
- end if
-end do
+ for (l = l1; l <= l2; l++) {
+    j     = indr[l-1];
+    aij   = Math.abs( a[l-1] );
+    w[j-1]  = Math.max( w[j-1], aij );
+    Umax  = Math.max( Umax, aij );
+ } // for (l = l1; l <= l2; l++) 
+} // for (k = 1; k <= nrank; k++)
 
-else ! keepLU = 0
+parmlu[11-1] = Lmax;
+parmlu[12-1] = Umax;
 
-do k = 1, n
- j      = q(k)
- diag   = w(j)
+// --------------------------------------------------------------
+// Find DUmax and DUmin, the extreme diagonals of U.
+// --------------------------------------------------------------
+for (k = 1; k <= nrank; k++) {
+ j      = q[k-1];
+ i      = p[k-1];
+ l1     = locr[i-1];
+ diag   = Math.abs( a[l1-1] );
+ DUmax  = Math.max( DUmax, diag );
+ if (DUmin > diag) {
+    DUmin  =   diag;
+    jumin  =   j;
+ } // if (DUmin > diag) 
+} // for (k = 1; k <= nrank; k++)
+} // if (keepLU)
+else { // !keepLU
+// --------------------------------------------------------------
+// keepLU = 0.
+// Only diag(U) is stored.  Set w(*) accordingly.
+// Find DUmax and DUmin, the extreme diagonals of U.
+// --------------------------------------------------------------
+ldiagU = lena - n;
 
- if (diag <= Utol1) then
-    nsing  =   nsing + 1
-    jsing  =   j
-    w(j)   = - w(j)
- end if
-end do
-end if
+for (k = 1; k <= nrank; k++) {
+ j      = q[k-1];
+// diag   = abs( a(ldiagU + k) ) ! 06 May 2002: Diags
+ diag   = Math.abs( a[ldiagU + j-1] ); // are in natural order
+ w[j-1]   = diag;
+ DUmax  = Math.max( DUmax, diag );
+ if (DUmin > diag) {
+    DUmin  =   diag;
+    jumin  =   j;
+ } // if (DUmin > diag)
+} // for (k = 1; k <= nrank; k++)
+} // else !keepLU
 
 
-!-----------------------------------------------------------------
-! Set output parameters.
-!-----------------------------------------------------------------
-if (jumin == 0) DUmin = zero
-luparm(11) = nsing
-luparm(12) = jsing
-luparm(19) = jumin
-parmlu(13) = DUmax
-parmlu(14) = DUmin
+// --------------------------------------------------------------
+// Negate w(j) if the corresponding diagonal of U is
+// too small in absolute terms or relative to the other elements
+// in the same column of  U.
 
-if (nsing > 0) then  ! The matrix has been judged singular.
-inform = 1
-ndefic = n - nrank
-if (nout > 0  .and.  lprint >= 0) then
- if (m > n) then
-    mnkey  = '>'
- else if (m == n) then
-    mnkey  = '='
- else
-    mnkey  = '<'
- end if
- write(nout, 1100) mnkey, nrank, ndefic, nsing
-end if
-end if
+// 23 Apr 2004: TRP ensures that diags are NOT small relative to
+//              other elements in their own column.
+//              Much better, we can compare all diags to DUmax.
+// --------------------------------------------------------------
+if (mode == 1 &&  TRP) {
+Utol1 = Math.max( Utol1, Utol2*DUmax );
+}
 
-! Exit.
+if (keepLU) {
+for (k = 1; k <= n; k++) {
+ j     = q[k-1];
+ if (k > nrank) {
+    diag   = zero;
+ }
+ else {
+    i      = p[k-1];
+    l1     = locr[i-1];
+    diag   = Math.abs( a[l1-1] );
+ }
 
-luparm(10) = inform
-return
+ if (diag <= Utol1 ||  diag <= Utol2*w[j-1]) {
+    nsing  =   nsing + 1;
+    jsing  =   j;
+    w[j-1]   = - w[j-1];
+ } // if (diag <= Utol1 ||  diag <= Utol2*w[j-1])
+} // for (k = 1; k <= n; k++)
+} // if (keepLU)
+else { // !keepLU
 
-1100 format(' Singular(m', a, 'n)', '  rank', i9, '  n-rank', i8, '  nsing', i9)*/
+for (k = 1; k <= n; k++) {
+ j      = q[k-1];
+ diag   = w[j-1];
 
+ if (diag <= Utol1) {
+    nsing  =   nsing + 1;
+    jsing  =   j;
+    w[j-1]   = - w[j-1];
+ } // if (diag <= Utol1)
+} // for (k = 1; k <= n; k++) 
+} // else !keepLU
+
+
+// -----------------------------------------------------------------
+// Set output parameters.
+// -----------------------------------------------------------------
+if (jumin == 0) DUmin = zero;
+luparm[10] = nsing;
+luparm[11] = jsing;
+luparm[18] = jumin;
+parmlu[12] = DUmax;
+parmlu[13] = DUmin;
+
+if (nsing > 0) {  // The matrix has been judged singular.
+inform[0] = 1;
+ndefic = n - nrank;
+if (lprint >= 0) {
+ if (m > n) {
+    mnkey  = '>';
+ }
+ else if (m == n) {
+    mnkey  = '=';
+ }
+ else {
+    mnkey  = '<';
+ }
+ UI.setDataText("Singular m " + mnkey + " n " + " rank = " + nrank + "n-rank = " + ndefic + " nsing = " + nsing + "\n");
+} // if (lprint >= 0)
+} // if (nsing > 0)
+
+// Exit.
+
+luparm[9] = inform[0];
+return;
 } // lu6chk
 
 
