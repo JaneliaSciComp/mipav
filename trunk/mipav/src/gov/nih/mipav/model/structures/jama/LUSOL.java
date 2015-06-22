@@ -5226,6 +5226,1562 @@ if (lprint >= 0) {
 luparm[9] = inform[0];
 return;
 } // lu6chk
+    
+    // *********************************************************************
+    // Original file: lusol8a.f
+    
+    // lu8rpc
+    
+    // Sparse LU update: Replace Column
+    // LUSOL's sparse implementation of the Bartels-Golub update.
+    
+    // 01 May 2002: Derived from LUSOL's original lu8a.f file.
+    // 01 May 2002: Current version of lusol8a.f.
+    // 15 Sep 2004: Test nout. gt. 0 to protect write statements.
+    // 13 Dec 2011: First f90 version.
+    // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private void lu8rpc(int mode1, int mode2, int m, int n, int jrep, double v[], double w[],
+                       int lena, int luparm[], double parmlu[],
+                       double a[], int indc[], int indr[], int p[], int q[],
+                       int lenc[], int lenr[], int locc[], int locr[],
+                       int inform[], double diag[], double vnorm[]) {
+
+//      integer(ip),   intent(in)    :: mode1, mode2, m, n, jrep, lena
+//      integer(ip),   intent(inout) :: luparm(30), &
+//                                      indc(lena), indr(lena), p(m), q(n), &
+//                                      lenc(n), lenr(m), locc(n), locr(m)
+//      integer(ip),   intent(out)   :: inform
+//      real(rp),      intent(inout) :: parmlu(30), a(lena), v(m), &
+//                                      w(n)  ! not used
+//      real(rp),      intent(out)   :: diag, vnorm
+
+      // ------------------------------------------------------------------
+      // lu8rpc  updates the LU factorization A = L*U when column jrep
+      // is replaced by some vector v = a(new).
+      
+      // lu8rpc  is an implementation of the Bartels-Golub update,
+      // designed for the case where A is rectangular and/or singular.
+      // L is a product of stabilized eliminations (m x m, nonsingular).
+      // P U Q is upper trapezoidal (m x n, rank nrank).
+      
+      // If  mode1 = 0,  the old column is taken to be zero
+      // (so it does not have to be removed from U).
+      
+      // If  mode1 = 1,  the old column need not have been zero.
+      
+      // If  mode2 = 0,  the new column is taken to be zero.
+      //                 v(*) is not used or altered.
+      
+      // If  mode2 = 1,  v(*) must contain the new column a(new).
+      // On exit,  v(*)  will satisfy L*v = a(new).
+      
+      // If  mode2 = 2,  v(*) must satisfy L*v = a(new).
+      
+      // The array w(*) is not used or altered.
+      
+      // On entry, all elements of locc are assumed to be zero.
+      // On a successful exit (inform /= 7), this will again be true.
+      
+      // On exit:
+      // inform = -1  if the rank of U decreased by 1.
+      // inform =  0  if the rank of U stayed the same.
+      // inform =  1  if the rank of U increased by 1.
+      // inform =  2  if the update seemed to be unstable
+      //              (diag much bigger than vnorm).
+      // inform =  7  if the update was not completed (lack of storage).
+      // inform =  8  if jrep is not between 1 and n.
+      
+      // -- Jan 1985: Original F66 version.
+      // -- Jul 1987: Modified to maintain U in trapezoidal form.
+      // 10 May 1988: First f77 version.
+      // 16 Oct 2000: Added test for instability (inform = 2).
+      // 13 Dec 2011: First f90 version.
+      // ------------------------------------------------------------------
+
+      boolean singlr;
+      int klast[] = new int[1];
+      int krep[] = new int[1];
+      int lenU[] = new int[1];
+      int lenL[] = new int[1];
+      int lrow[] = new int[1];
+      int iw, j1, jsing,
+          l1, lprint, nrank, nrank0;
+      double Utol1, Utol2;
+      final int i1 = 1;
+      final double zero = 0.0;
+
+      lprint = luparm[1];
+      nrank  = luparm[15];
+      lenL[0]   = luparm[22];
+      lenU[0]   = luparm[23];
+      lrow[0]   = luparm[24];
+      Utol1  = parmlu[3];
+      Utol2  = parmlu[4];
+      nrank0 = nrank;
+      diag[0]   = zero;
+      vnorm[0]  = zero;
+      if ((jrep < 1) || (jrep > n)) {
+    	  inform[0] = 8;
+	      if (lprint >= 0) {
+	    	  UI.setDataText("lu8rpc  error...  jrep  is out of range.\n");
+	    	  UI.setDataText("m = " + m + " n = " + n + " jrep = " + jrep + "\n");
+	      }
+
+	      // Exit.
+
+	      luparm[9] = inform[0];
+	      luparm[14] = luparm[14] + 1;
+	      luparm[15] = nrank;
+	      luparm[22] = lenL[0];
+	      luparm[23] = lenU[0];
+	      luparm[24] = lrow[0];
+	      return;
+      }
+
+      // ------------------------------------------------------------------
+      // If mode1 = 0, there are no elements to be removed from  U
+      // but we still have to set  krep  (using a backward loop).
+      // Otherwise, use lu7zap to remove column  jrep  from  U
+      // and set  krep  at the same time.
+      // ------------------------------------------------------------------
+      if (mode1 == 0) {
+         krep[0]   = n + 1;
+
+         do {
+         krep[0]   = krep[0] - 1;
+         } while (q[krep[0]-1] != jrep);
+      } // if (mode1 == 0)
+      else {
+         lu7zap( m, n, jrep, krep, lena, lenU, lrow, nrank,
+                 a, indr, p, q, lenr, locr );
+      }
+
+      // ------------------------------------------------------------------
+      // Insert a new column of u and find klast.
+      // ------------------------------------------------------------------
+
+      if (mode2 == 0) {
+         klast[0]  = 0;
+      }
+      else { // mode2 != 0
+         if (mode2 == 1) {
+
+            // Transform v = a(new) to satisfy  L*v = a(new).
+
+            lu6sol( i1, m, n, v, w, lena, luparm, parmlu,
+                    a, indc, indr, p, q,         
+                    lenc, lenr, locc, locr, inform );
+         } // if (mode2 == 1)
+
+         // Insert into U any nonzeros in the top of v.
+         // row p(klast) will contain the last nonzero in pivotal order.
+         // Note that klast will be in the range ( 0, nrank ).
+
+         lu7add( m, n, jrep, v, 
+                 lena, luparm, parmlu,
+                 lenL, lenU, lrow, nrank,
+                 a, indr, p, lenr, locr,
+                 inform, klast, vnorm );
+         if (inform[0] == 7) {
+        	 // Not enough storage.
+	         if (lprint >= 0) {
+	    	     UI.setDataText("lu8rpc  error...  Insufficient storage. lena = " + lena + "\n");
+	         }
+	         // Exit.
+		     luparm[9] = inform[0];
+		     luparm[14] = luparm[14] + 1;
+		     luparm[15] = nrank;
+		     luparm[22] = lenL[0];
+		     luparm[23] = lenU[0];
+		     luparm[24] = lrow[0];
+	    	 return;
+         } // if (inform[0] == 7)
+      } // else mode2 != 0
+
+      // ------------------------------------------------------------------
+      // In general, the new column causes U to look like this:
+      //
+      //                 krep        n                 krep  n
+      //
+      //                ....a.........          ..........a...
+      //                 .  a        .           .        a  .
+      //                  . a        .            .       a  .
+      //                   .a        .             .      a  .
+      //        P U Q =     a        .    or        .     a  .
+      //                    b.       .               .    a  .
+      //                    b .      .                .   a  .
+      //                    b  .     .                 .  a  .
+      //                    b   ......                  ..a...  nrank
+      //                    c                             c
+      //                    c                             c
+      //                    c                             c     m
+      //
+      //     klast points to the last nonzero "a" or "b".
+      //     klast = 0 means all "a" and "b" entries are zero.
+      // ------------------------------------------------------------------
+
+      if (mode2 == 0) {
+         if (krep[0] > nrank) {
+        	 if (nrank == nrank0) {
+             inform[0] =  0;
+        	 }
+	         else if (nrank < nrank0) {
+	             inform[0] = -1;
+	             if (nrank0 == n) {
+	                if (lprint >= 0) {
+	                	UI.setDataText("lu8rpc  warning.  Singularity after replacing column.\n");
+	                	UI.setDataText("jrep = " + jrep + " diag[0] = " + nf.format(diag[0]));
+	                } // if (lprint >= 0)
+	             } // if (nrank0 == n)
+	         }  // else if (nrank < nrank0)
+	         else {
+	             inform[0] =  1;
+             }
+        	 
+        	 // Exit.
+
+		     luparm[9] = inform[0];
+		     luparm[14] = luparm[14] + 1;
+		     luparm[15] = nrank;
+		     luparm[22] = lenL[0];
+		     luparm[23] = lenU[0];
+		     luparm[24] = lrow[0];
+	    	 return;
+         } // if (krep[0] > nrank)
+      } // if (mode2 == 0)
+      else if (nrank < m) {
+
+         // Eliminate any "c"s (in either case).
+         // Row nrank + 1 may end up containing one nonzero.
+
+         lu7elm( m, n, jrep, v, lena, luparm, parmlu,
+                 lenL, lenU[0], lrow, nrank, 
+                 a, indc, indr, p, q, lenr, locc, locr,
+                 inform, diag );
+         if (inform[0] == 7) {
+        	 // Not enough storage.
+	         if (lprint >= 0) {
+	    	     UI.setDataText("lu8rpc  error...  Insufficient storage. lena = " + lena + "\n");
+	         }
+	         // Exit.
+		     luparm[9] = inform[0];
+		     luparm[14] = luparm[14] + 1;
+		     luparm[15] = nrank;
+		     luparm[22] = lenL[0];
+		     luparm[23] = lenU[0];
+		     luparm[24] = lrow[0];
+	    	 return;
+         } // if (inform[0] == 7)
+
+         if (inform[0] == 1) {
+
+            // The nonzero is apparently significant.
+            // Increase nrank by 1 and make klast point to the bottom.
+
+            nrank = nrank + 1;
+            klast[0] = nrank;
+         } // if (inform[0] == 1)
+      } // else if (nrank < m)
+
+      if (nrank < n) {
+
+         // The column rank is low.
+         
+         // In the first case, we want the new column to end up in
+         // position nrank, so the trapezoidal columns will have a chance
+         // later on (in lu7rnk) to pivot in that position.
+         
+         // Otherwise the new column is not part of the triangle.  We
+         // swap it into position nrank so we can judge it for singularity.
+         // lu7rnk might choose some other trapezoidal column later.
+
+         if (krep[0] < nrank) {
+            klast[0]    = nrank;
+         }
+         else {
+            q[krep[0]-1] = q[nrank-1];
+            q[nrank-1] = jrep;
+            krep[0]     = nrank;
+         }
+      } // if (nrank < n)
+
+      // ------------------------------------------------------------------
+      // If krep < klast, there are some "b"s to eliminate:
+      //
+      //                  krep
+      //
+      //                ....a.........
+      //                 .  a        .
+      //                  . a        .
+      //                   .a        .
+      //        P U Q =     a        .  krep
+      //                    b.       .
+      //                    b .      .
+      //                    b  .     .
+      //                    b   ......  nrank
+      //
+      //     If krep == klast, there are no "b"s, but the last "a" still
+      //     has to be moved to the front of row krep (by lu7for).
+      // ------------------------------------------------------------------
+
+      /*if (krep[0] <= klast) {
+
+         // Perform a cyclic permutation on the current pivotal order,
+         // and eliminate the resulting row spike.  krep becomes klast.
+         // The final diagonal (if any) will be correctly positioned at
+         // the front of the new krep-th row.  nrank stays the same.
+
+         lu7cyc( krep, klast, p );
+         lu7cyc( krep, klast, q );
+
+         call lu7for( m, n, krep, klast,    &
+                      lena, luparm, parmlu, &
+                      lenL, lenU, lrow,     &
+                      a, indc, indr, p, q, lenr, locc, locr, &
+                      inform, diag )
+         if (inform[0] == 7) go to 970
+         krep[0]   = klast
+
+         ! Test for instability (diag much bigger than vnorm).
+
+         singlr = vnorm[0] < Utol2 * abs(diag[0])
+         if ( singlr ) go to 920
+      } // if (krep[0] <= klast)
+
+      !------------------------------------------------------------------
+      ! Test for singularity in column krep (where krep .le. nrank).
+      !------------------------------------------------------------------
+
+      diag[0]   = zero
+      iw     = p(krep[0])
+      singlr = lenr(iw) == 0
+
+      if (.not. singlr) then
+         l1     = locr(iw)
+         j1     = indr(l1)
+         singlr = j1 /= jrep
+
+         if (.not. singlr) then
+            diag[0]   = a(l1)
+            singlr = abs( diag[0] ) <= Utol1          .or. &
+                     abs( diag[0] ) <= Utol2 * vnorm[0]
+         end if
+      end if
+
+      if (singlr  .and.  krep[0] < nrank) then
+
+         ! Perform cyclic permutations to move column jrep to the end.
+         ! Move the corresponding row to position nrank
+         ! then eliminate the resulting row spike.
+
+         call lu7cyc( krep, nrank, p )
+         call lu7cyc( krep, n    , q )
+
+         call lu7for( m, n, krep, nrank,    &
+                      lena, luparm, parmlu, &
+                      lenL, lenU, lrow,     &
+                      a, indc, indr, p, q, lenr, locc, locr, &
+                      inform, diag )
+         if (inform[0] == 7) go to 970
+      end if
+
+      ! Find the best column to be in position nrank.
+      ! If singlr, it can't be the new column, jrep.
+      ! If nothing satisfactory exists, nrank will be decreased.
+
+      if (singlr  .or.  nrank < n) then
+         jsing  = 0
+         if ( singlr ) jsing = jrep
+
+         call lu7rnk( m, n, jsing, lena, parmlu,             &
+                      lenL, lenU, lrow, nrank,               &
+                      a, indc, indr, p, q, lenr, locc, locr, &
+                      inform, diag )
+      end if
+
+      !------------------------------------------------------------------
+      ! Set inform for exit.
+      !------------------------------------------------------------------
+  900 if (nrank == nrank0) then
+         inform[0] =  0
+      else if (nrank < nrank0) then
+         inform[0] = -1
+         if (nrank0 == n) then
+            if (nout > 0  .and.  lprint >= 0) write(nout, 1100) jrep, diag[0]
+         end if
+      else
+         inform[0] =  1
+      end if
+      go to 990
+
+      ! Instability.
+
+  920 inform[0] = 2
+      if (nout > 0  .and.  lprint >= 0) write(nout, 1200) jrep, diag[0]
+      go to 990
+
+      ! Not enough storage.
+
+  970 inform[0] = 7
+      if (nout > 0  .and.  lprint >= 0) write(nout, 1700) lena
+      go to 990
+
+      ! jrep  is out of range.
+
+  980 inform[0] = 8
+      if (nout > 0  .and.  lprint >= 0) write(nout, 1800) m, n, jrep
+
+      ! Exit.
+
+  990 luparm(10) = inform[0]
+      luparm(15) = luparm(15) + 1
+      luparm(16) = nrank
+      luparm(23) = lenL
+      luparm(24) = lenU[0]
+      luparm(25) = lrow[0]
+      return
+
+  1100 format(/ ' lu8rpc  warning.  Singularity after replacing column.', &
+                '    jrep =', i8, '    diag[0] =', es12.2 )
+  1200 format(/ ' lu8rpc  warning.  Instability after replacing column.', &
+                '    jrep =', i8, '    diag[0] =', es12.2 )
+  1700 format(/ ' lu8rpc  error...  Insufficient storage.', &
+                '    lena =', i8)
+  1800 format(/ ' lu8rpc  error...  jrep  is out of range.', &
+                '    m =', i8, '    n =', i8, '    jrep =', i8)*/
+
+} // lu8rpc
+
+    private void lu7zap(int m, int n, int jzap, int kzap[], int lena, int lenU[], int lrow[], int nrank,
+            double a[], int indr[], int p[], int q[], int lenr[], int locr[]) {
+
+//integer(ip),   intent(in)    :: m, n, jzap, lena, nrank, &
+//                           p(m)
+//integer(ip),   intent(inout) :: lenU, lrow, &
+//                           indr(lena), q(n), lenr(m), locr(m)
+//integer(ip),   intent(out)   :: kzap
+//real(rp),      intent(inout) :: a(lena)
+
+// ------------------------------------------------------------------
+// lu7zap  eliminates all nonzeros in column  jzap  of  U.
+// It also sets  kzap  to the position of  jzap  in pivotal order.
+// Thus, on exit we have  q(kzap) = jzap.
+
+// -- Jul 1987: nrank added.
+// 10 May 1988: First f77 version.
+// 13 Dec 2011: First f90 version.
+// ------------------------------------------------------------------
+
+int i, k, leni, l, lr1, lr2;
+boolean seg1 = true;
+
+for (k = 1; k <= nrank; k++) {
+i      = p[k-1];
+leni   = lenr[i-1];
+if (leni != 0) {
+lr1    = locr[i-1];
+lr2    = lr1 + leni - 1;
+for (l = lr1; l <= lr2; l++) {
+ if (indr[l-1] == jzap) break;
+} // for (l = lr1; l <= lr2; l++)
+if (l <= lr2) {
+
+// Delete the old element.
+
+a[l-1]      = a[lr2-1];
+indr[l-1]   = indr[lr2-1];
+indr[lr2-1] = 0;
+lenr[i-1]   = leni - 1;
+lenU[0]      = lenU[0] - 1;
+} // if (l <= lr2)
+} // if (leni != 0)
+
+// Stop if we know there are no more rows containing  jzap.
+
+kzap[0]   = k;
+if (q[k-1] == jzap) {
+	seg1 = false;
+	break;
+}
+} // for (k = 1; k <= nrank; k++) 
+
+if (seg1) {
+// nrank must be smaller than n because we haven't found kzap yet.
+
+for (k = nrank+1; k <= n; k++) {
+kzap[0]  = k;
+if (q[k-1] == jzap) break;
+} // for (k = nrank+1; k <= n; k++)
+} // if (seg1)
+
+// See if we zapped the last element in the file.
+
+if (lrow[0] > 0) {
+if (indr[lrow[0]-1] == 0) lrow[0] = lrow[0] - 1;
+} // if (lrow[0] > 0)
+
+} // lu7zap
+
+    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    // Original file:  lusol6a.f
+    
+    // lu6sol   lu6L     lu6Lt     lu6U     Lu6Ut   lu6LD    lu6chk
+    
+    // 26 Apr 2002: lu6 routines put into a separate file.
+    // 15 Dec 2002: lu6sol modularized via lu6L, lu6Lt, lu6U, lu6Ut.
+    //              lu6LD implemented to allow solves with LDL' or L|D|L'.
+    // 23 Apr 2004: lu6chk modified.  TRP can judge singularity better
+    //              by comparing all diagonals to DUmax.
+    // 27 Jun 2004: lu6chk.  Allow write only if nout > 0 .
+    // 13 Dec 2011: First f90 version.
+    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    private void lu6sol(int mode, int m, int n, double v[], double w[],
+                       int lena, int luparm[], double parmlu[],
+                       double a[], int indc[], int indr[], int p[], int q[],
+                       int lenc[], int lenr[], int locc[], int locr[],
+                       int inform[]) {
+
+      //integer(ip),   intent(in)    :: mode, m, n, lena
+      //integer(ip),   intent(inout) :: luparm(30)
+      //integer(ip),   intent(out)   :: inform
+      //integer(ip),   intent(in)    :: indc(lena), indr(lena), p(m), q(n),   &
+      //                                lenc(n), lenr(m), locc(n), locr(m)
+      //real(rp),      intent(in)    :: a(lena)
+      //real(rp),      intent(inout) :: parmlu(30), v(m), w(n)
+
+      // -----------------------------------------------------------------------
+      // lu6sol  uses the factorization  A = L U  as follows:
+      
+      // mode
+      //  1    v  solves   L v = v(input).   w  is not touched.
+      //  2    v  solves   L'v = v(input).   w  is not touched.
+      //  3    w  solves   U w = v.          v  is not altered.
+      //  4    v  solves   U'v = w.          w  is destroyed.
+      //  5    w  solves   A w = v.          v  is altered as in 1.
+      //  6    v  solves   A'v = w.          w  is destroyed.
+      
+      // If mode = 3,4,5,6, v and w must not be the same arrays.
+      
+      // If lu1fac has just been used to factorize a symmetric matrix A
+      // (which must be definite or quasi-definite), the factors A = L U
+      // may be regarded as A = LDL', where D = diag(U).  In such cases,
+      
+      // mode
+      //  7    v  solves   A v = L D L'v = v(input).   w  is not touched.
+      //  8    v  solves       L |D| L'v = v(input).   w  is not touched.
+      
+      // p(*), q(*)        hold row and column numbers in pivotal order.
+      // lenc(k)           is the length of the k-th column of initial L.
+      // lenr(i)           is the length of the i-th row of U.
+      // locc(*)           is not used.
+      // locr(i)           is the start  of the i-th row of U.
+      
+      // U is assumed to be in upper-trapezoidal form (nrank by n).
+      // The first entry for each row is the diagonal element
+      // (according to the permutations p, q).  It is stored at
+      // location locr(i) in a(*), indr(*).
+      
+      // On exit, inform = 0 except as follows.
+      // If mode = 3,4,5,6 and if U (and hence A) is singular, then
+      // inform = 1 if there is a nonzero residual in solving the system
+      // involving U.  parmlu(20) returns the norm of the residual.
+      //
+      // July 1987:   Early version.
+      // 09 May 1988: f77 version.
+      // 27 Apr 2000: Abolished the dreaded "computed go to".
+      //              But hard to change other "go to"s to "if then else".
+      // 15 Dec 2002: lu6L, lu6Lt, lu6U, lu6Ut added to modularize lu6sol.
+      // 13 Dec 2011: First f90 version.
+      // --------------------------------------------------------------------
+
+      final int i1 = 1;
+      final int i2 = 2;
+
+      if      (mode == 1) {             // Solve  L v(new) = v.
+         lu6L  ( inform, m, n, v,
+                 lena, luparm, parmlu, a, indc, indr, lenc );
+      }
+      else if (mode == 2) {            // Solve  L'v(new) = v.
+         lu6Lt ( inform, m, n, v, 
+                 lena, luparm, parmlu, a, indc, indr, lenc );
+      }
+      else if (mode == 3) {             // Solve  U w = v.
+         lu6U  ( inform, m, n, v, w,
+                 lena, luparm, parmlu, a, indr, p, q, lenr, locr );
+      }
+      else if (mode == 4) {             // Solve  U'v = w.
+         lu6Ut ( inform, m, n, v, w,
+                 lena, luparm, parmlu, a, indr, p, q, lenr, locr );
+      }
+      else if (mode == 5) {             // Solve  A w      = v
+                                        // via    L v(new) = v
+                                        // and    U w = v(new).
+         lu6L  ( inform, m, n, v,
+                 lena, luparm, parmlu, a, indc, indr, lenc );
+         lu6U  ( inform, m, n, v, w, 
+                 lena, luparm, parmlu, a, indr, p, q, lenr, locr );
+      }
+      else if (mode == 6) {             // Solve  A'v = w
+                                        // via    U'v = w
+                                        // and    L'v(new) = v.
+         lu6Ut ( inform, m, n, v, w,
+                 lena, luparm, parmlu, a, indr, p, q, lenr, locr );
+         lu6Lt ( inform, m, n, v,
+                 lena, luparm, parmlu, a, indc, indr, lenc );
+      }
+      else if (mode == 7) {             // Solve  LDv(bar) = v
+                                        // and    L'v(new) = v(bar).
+         lu6LD ( inform, i1, m, n, v,
+                 lena, luparm, parmlu, a, indc, indr, lenc, locr );
+         lu6Lt ( inform, m, n, v,
+                 lena, luparm, parmlu, a, indc, indr, lenc );
+      }
+      else if (mode == 8) {            // Solve  L|D|v(bar) = v
+                                       // and    L'v(new) = v(bar).
+         lu6LD ( inform, i2, m, n, v,
+                 lena, luparm, parmlu, a, indc, indr, lenc, locr );
+         lu6Lt ( inform, m, n, v,
+                 lena, luparm, parmlu, a, indc, indr, lenc );
+      }
+
+      } // lu6sol
+    
+    private void lu6L  (int inform[], int m, int n, double v[],
+            int lena, int luparm[], double parmlu[], double a[], int indc[], int indr[], int lenc[]) {
+
+//integer(ip),   intent(in)    :: m, n, lena
+//integer(ip),   intent(inout) :: luparm(30)
+//integer(ip),   intent(out)   :: inform
+//integer(ip),   intent(in)    :: indc(lena), indr(lena), lenc(n)
+//real(rp),      intent(in)    :: a(lena)
+//real(rp),      intent(inout) :: parmlu(30), v(m)
+
+// ------------------------------------------------------------------
+// lu6L   solves   L v = v(input).
+//
+// 15 Dec 2002: First version derived from lu6sol.
+// 15 Dec 2002: Current version.
+// 13 Dec 2011: First f90 version.
+// ------------------------------------------------------------------
+
+int i, ipiv, j, k, l, l1, ldummy, len, lenL, lenL0, numL, numL0;
+double small, vpiv;
+
+numL0  = luparm[19];
+lenL0  = luparm[20];
+lenL   = luparm[22];
+small  = parmlu[2];
+inform[0] = 0;
+l1     = lena + 1;
+
+for (k = 1; k <= numL0; k++) {
+len   = lenc[k-1];
+l     = l1;
+l1    = l1 - len;
+ipiv  = indr[l1-1];
+vpiv  = v[ipiv-1];
+
+if (Math.abs(vpiv) > small) {
+ // ***** This loop could be coded specially.
+ for (ldummy = 1; ldummy <= len; ldummy++) {
+    l    = l - 1;
+    j    = indc[l-1];
+    v[j-1] = v[j-1] + a[l-1]*vpiv;
+ } // for (ldummy = 1; ldummy <= len; ldummy++)
+} // if (Math.abs(vpiv) > small)
+} // for (k = 1; k <= numL0; k++)
+
+l      = lena - lenL0 + 1;
+numL   = lenL - lenL0;
+
+//***** This loop could be coded specially.
+
+for (ldummy = 1; ldummy <= numL; ldummy++) {
+l      = l - 1;
+i      = indr[l-1];
+if (Math.abs(v[i-1]) > small) {
+ j    = indc[l-1];
+ v[j-1] = v[j-1] + a[l-1]*v[i-1];
+} // if (Math.abs(v[i-1]) > small)
+} // for (ldummy = 1; ldummy <= numL; ldummy++)
+
+// Exit.
+
+luparm[9] = inform[0];
+
+    } // lu6L
+
+    private void lu6Lt (int inform[], int m, int n, double v[],
+            int lena, int luparm[], double parmlu[], double a[], int indc[], int indr[], int lenc[]) {
+
+//integer(ip),   intent(in)    :: m, n, lena
+//integer(ip),   intent(inout) :: luparm(30)
+//integer(ip),   intent(out)   :: inform
+//integer(ip),   intent(in)    :: indc(lena), indr(lena), lenc(n)
+//real(rp),      intent(in)    :: a(lena)
+//real(rp),      intent(inout) :: parmlu(30), v(m)
+
+// ------------------------------------------------------------------
+// lu6Lt  solves   L'v = v(input).
+
+// 15 Dec 2002: First version derived from lu6sol.
+// 15 Dec 2002: Current version.
+// 13 Dec 2011: First f90 version.
+// ------------------------------------------------------------------
+
+int i, ipiv, j, k, l, l1, l2, len, lenL, lenL0, numL0;
+double small, sum;
+final double zero = 0.0;
+
+numL0  = luparm[19];
+lenL0  = luparm[20];
+lenL   = luparm[22];
+small  = parmlu[2];
+inform[0] = 0;
+l1     = lena - lenL + 1;
+l2     = lena - lenL0;
+
+// ***** This loop could be coded specially.
+for (l = l1; l <= l2; l++) {
+j     = indc[l-1];
+if (Math.abs(v[j-1]) > small) {
+ i     = indr[l-1];
+ v[i-1]  = v[i-1] + a[l-1]*v[j-1];
+} // if (Math.abs(v[j-1]) > small)
+} // for (l = l1; l <= l2; l++) 
+
+for (k = numL0; k >= 1; k--) {
+len   = lenc[k-1];
+sum   = zero;
+l1    = l2 + 1;
+l2    = l2 + len;
+
+// ***** This loop could be coded specially.
+for (l = l1; l <= l2; l++) {
+ j     = indc[l-1];
+ sum   = sum + a[l-1]*v[j-1];
+} // for (l = l1; l <= l2; l++)
+
+ipiv    = indr[l1-1];
+v[ipiv-1] = v[ipiv-1] + sum;
+} // for (k = numL0; k >= 1; k--)
+
+// Exit.
+
+luparm[9] = inform[0];
+
+} // lu6Lt
+    
+    private void lu6U  (int inform[], int m, int n, double v[], double w[],
+            int lena, int luparm[], double parmlu[], double a[], int indr[], int p[], int q[], int lenr[], int locr[]) {
+
+//integer(ip),   intent(in)    :: m, n, lena
+//integer(ip),   intent(inout) :: luparm(30)
+//integer(ip),   intent(out)   :: inform
+//integer(ip),   intent(in)    :: indr(lena), p(m), q(n), lenr(m), locr(m)
+//real(rp),      intent(in)    :: a(lena)
+//real(rp),      intent(in)    :: v(m)
+//real(rp),      intent(inout) :: parmlu(30)
+//real(rp),      intent(out)   :: w(n)
+
+// ------------------------------------------------------------------
+// lu6U   solves   U w = v.          v  is not altered.
+//
+// 15 Dec 2002: First version derived from lu6sol.
+// 15 Dec 2002: Current version.
+// 13 Dec 2011: First f90 version.
+// ------------------------------------------------------------------
+
+int i, j, k, klast, l, l1, l2, l3, nrank, nrank1;
+double resid, small, t;
+final double zero = 0.0;
+
+nrank  = luparm[15];
+small  = parmlu[2];
+inform[0] = 0;
+nrank1 = nrank + 1;
+resid  = zero;
+
+// Find the first nonzero in v(1:nrank), counting backwards.
+
+for (klast = nrank; klast >= 1; klast--) {
+i     = p[klast-1];
+if (Math.abs(v[i-1]) > small) break;
+} // for (klast = nrank; klast >= 1; k--)
+
+for (k = klast + 1; k <= n; k++) {
+j    = q[k-1];
+w[j-1] = zero;
+} // for (k = klast + 1; k <= n; k++) 
+
+// Do the back-substitution, using rows 1:klast of U.
+
+for (k  = klast; k >= 1; k--) {
+i  = p[k-1];
+t  = v[i-1];
+l1 = locr[i-1];
+l2 = l1 + 1;
+l3 = l1 + lenr[i-1] - 1;
+
+// ***** This loop could be coded specially.
+for (l = l2; l <= l3; l++) {
+ j = indr[l-1];
+ t = t - a[l-1]*w[j-1];
+} // for (l = l2; l <= l3; l++)
+
+j  = q[k-1];
+if (Math.abs(t) <= small) {
+ w[j-1] = zero;
+}
+else {
+ w[j-1] = t/a[l1-1];
+}
+} // for (k  = klast; k >= 1; k--)
+
+// Compute residual for overdetermined systems.
+
+for (k = nrank1; k <= m; k++) {
+i     = p[k-1];
+resid = resid + Math.abs(v[i-1]);
+} // for (k = nrank1; k <= m; k++)
+
+// Exit.
+
+if (resid > zero) inform[0] = 1;
+luparm[9] = inform[0];
+parmlu[19] = resid;
+
+} // lu6U
+
+    private void lu6Ut (int inform[], int m, int n, double v[], double w[],
+            int lena, int luparm[], double parmlu[], double a[], int indr[], int p[], int q[], int lenr[], int locr[]) {
+
+//integer(ip),   intent(in)    :: m, n, lena
+//integer(ip),   intent(inout) :: luparm(30)
+//integer(ip),   intent(out)   :: inform
+//integer(ip),   intent(in)    :: indr(lena), p(m), q(n), lenr(m), locr(m)
+//real(rp),      intent(in)    :: a(lena)
+//real(rp),      intent(inout) :: parmlu(30), w(n)
+//real(rp),      intent(out)   :: v(m)
+
+// ------------------------------------------------------------------
+// lu6Ut  solves   U'v = w.          w  is destroyed.
+//
+// 15 Dec 2002: First version derived from lu6sol.
+// 15 Dec 2002: Current version.
+// 13 Dec 2011: First f90 version.
+// ------------------------------------------------------------------
+
+int i, j, k, l, l1, l2, nrank, nrank1;
+double resid, small, t;
+final double zero = 0.0;
+
+
+nrank  = luparm[15];
+small  = parmlu[2];
+inform[0] = 0;
+nrank1 = nrank + 1;
+resid  = zero;
+
+for (k = nrank1; k <= m; k++) {
+i     = p[k-1];
+v[i-1]  = zero;
+} // for (k = nrank1; k <= m; k++)
+
+// Do the forward-substitution, skipping columns of U(transpose)
+// when the associated element of w(*) is negligible.
+
+for (k = 1; k <= nrank; k++) {
+i      = p[k-1];
+j      = q[k-1];
+t      = w[j-1];
+if (Math.abs(t) <= small) {
+ v[i-1] = zero;
+ continue;
+} // if (Math.abs(t) <= small)
+
+l1     = locr[i-1];
+t      = t/a[l1-1];
+v[i-1]   = t;
+l2     = l1 + lenr[i-1] - 1;
+l1     = l1 + 1;
+
+//***** This loop could be coded specially.
+for (l = l1; l <= l2; l++) {
+ j    = indr[l-1];
+ w[j-1] = w[j-1] - t*a[l-1];
+} // for (l = l1; l <= l2; l++)
+} // for (k = 1; k <= nrank; k++)
+
+// Compute residual for overdetermined systems.
+
+for (k = nrank1; k <= n; k++) {
+j     = q[k-1];
+resid = resid + Math.abs(w[j-1]);
+} // for (k = nrank1; k <= n; k++)
+
+// Exit.
+
+if (resid > zero) inform[0] = 1;
+luparm[9] = inform[0];
+parmlu[19] = resid;
+
+} // lu6Ut
+    
+    private void lu6LD (int inform[], int mode, int m, int n, double v[],
+            int lena, int luparm[], double parmlu[], double a[], int indc[], int indr[], int lenc[], int locr[]) {
+
+//integer(ip),   intent(in)    :: mode, m, n, lena
+//integer(ip),   intent(inout) :: luparm(30)
+//integer(ip),   intent(out)   :: inform
+//integer(ip),   intent(in)    :: indc(lena), indr(lena), lenc(n), locr(m)
+//real(rp),      intent(in)    :: a(lena)
+//real(rp),      intent(inout) :: parmlu(30), v(m)
+
+// -------------------------------------------------------------------
+// lu6LD  assumes lu1fac has computed factors A = LU of a
+// symmetric definite or quasi-definite matrix A,
+// using Threshold Symmetric Pivoting (TSP),   luparm(6) = 3,
+// or    Threshold Diagonal  Pivoting (TDP),   luparm(6) = 4.
+// It also assumes that no updates have been performed.
+// In such cases,  U = D L', where D = diag(U).
+// lu6LDL returns v as follows:
+
+// mode
+// 1    v  solves   L D v = v(input).
+// 2    v  solves   L|D|v = v(input).
+
+// 15 Dec 2002: First version of lu6LD.
+// 15 Dec 2002: Current version.
+// 13 Dec 2011: First f90 version.
+// -----------------------------------------------------------------------
+
+// Solve L D v(new) = v  or  L|D|v(new) = v, depending on mode.
+// The code for L is the same as in lu6L,
+// but when a nonzero entry of v arises, we divide by
+// the corresponding entry of D or |D|.
+
+int ipiv, j, k, l, l1, ldummy, len, numL0;
+double diag, small, vpiv;
+
+
+numL0  = luparm[19];
+small  = parmlu[2];
+inform[0] = 0;
+l1     = lena + 1;
+
+for (k = 1; k <= numL0; k++) {
+len   = lenc[k-1];
+l     = l1;
+l1    = l1 - len;
+ipiv  = indr[l1-1];
+vpiv  = v[ipiv-1];
+
+if (Math.abs(vpiv) > small) {
+ // ***** This loop could be coded specially.
+ for (ldummy = 1; ldummy <= len; ldummy++) {
+    l    = l - 1;
+    j    = indc[l-1];
+    v[j-1] = v[j-1] + a[l-1]*vpiv;
+ } // for (ldummy = 1; ldummy <= len; ldummy++)
+
+ // Find diag = U(ipiv,ipiv) and divide by diag or |diag|.
+
+ l    = locr[ipiv-1];
+ diag = a[l-1];
+ if (mode == 2) diag = Math.abs(diag);
+ v[ipiv-1] = vpiv/diag;
+} // if (Math.abs(vpiv) > small)
+} // for (k = 1; k <= numL0; k++)
+
+} // lu6LD
+
+    private void lu7add(int m, int n, int jadd, double v[], int lena, int luparm[], double parmlu[],
+                       int lenL[], int lenU[], int lrow[], int nrank,
+                       double a[], int indr[], int p[], int lenr[], int locr[],
+                       int inform[], int klast[], double vnorm[]) {
+
+      //integer(ip),   intent(in)    :: m, n, jadd, lena, nrank, &
+      //                                p(m)
+      //integer(ip),   intent(inout) :: luparm(30), lenL, lenU, lrow, &
+      //                                indr(lena), lenr(m), locr(m)
+      //integer(ip),   intent(out)   :: inform, klast
+      //real(rp),      intent(inout) :: parmlu(30), a(lena), v(m)
+      //real(rp),      intent(out)   :: vnorm
+
+      // ------------------------------------------------------------------
+      // lu7add  inserts the first nrank elements of the vector v(*)
+      // as column jadd of U.  We assume that U does not yet have any
+      // entries in this column.
+      // Elements no larger than parmlu(3) are treated as zero.
+      // klast  will be set so that the last row to be affected
+      // (in pivotal order) is row p(klast).
+      
+      // 09 May 1988: First f77 version.
+      // 13 Dec 2011: First f90 version.
+      // ------------------------------------------------------------------
+
+      int i, j, k, leni, l, lr1, lr2, minfre, nfree;
+      double small;
+      final double zero = 0.0;
+      boolean seg1 = true;
+      boolean seg2 = true;
+      boolean seg3 = true;
+
+      small  = parmlu[2];
+      vnorm[0]  = zero;
+      klast[0]  = 0;
+
+      for (k = 1; k <= nrank; k++) {
+         i      = p[k-1];
+         if (Math.abs(v[i-1]) <= small) continue;
+         klast[0]  = k;
+         vnorm[0]  = vnorm[0] + Math.abs(v[i-1]);
+         leni   = lenr[i-1];
+
+         // Compress row file if necessary.
+
+         minfre = leni + 1;
+         nfree  = lena - lenL[0] - lrow[0];
+         if (nfree < minfre) {
+            lu1rec( m, true, luparm, lrow, lena, a, indr, lenr, locr );
+            nfree  = lena - lenL[0] - lrow[0];
+            if (nfree < minfre) {
+            	// Not enough storage
+            	inform[0] = 7;
+            	return;
+            }
+         }
+
+         // Move row i to the end of the row file,
+         // unless it is already there.
+         // No need to move if there is a gap already.
+
+         if (leni == 0) locr[i-1] = lrow[0] + 1;
+         lr1    = locr[i-1];
+         lr2    = lr1 + leni - 1;
+         if (lr2    ==   lrow[0]) {
+        	 seg1 = false;
+         }
+         if (seg1) {
+         if (indr[lr2] == 0) {
+        	 seg2 = false;
+        	 seg3 = false;
+         }
+         if (seg2) {
+         locr[i-1] = lrow[0] + 1;
+
+         for (l = lr1; l <= lr2; l++) {
+            lrow[0]       = lrow[0] + 1;
+            a[lrow[0]-1]    = a[l-1];
+            j          = indr[l-1];
+            indr[l-1]    = 0;
+            indr[lrow[0]-1] = j;
+         } // for (l = lr1; l <= lr2; l++)
+         } // if (seg2)
+         seg2 = true;
+         } // if (seg1)
+         seg1 = true;
+         if (seg3) {
+         lr2     = lrow[0];
+         lrow[0]    = lrow[0] + 1;
+         } // if (seg3)
+         seg3 = true;
+
+         // Add the element of  v.
+
+         lr2       = lr2 + 1;
+         a[lr2-1]    = v[i-1];
+         indr[lr2-1] = jadd;
+         lenr[i-1]   = leni + 1;
+         lenU[0]      = lenU[0] + 1;
+      } // for (k = 1; k <= nrank; k++);
+
+      // Normal exit.
+
+      inform[0] = 0;
+      return;
+} // lu7add
+
+    private void lu7elm(int m, int n, int jelm, double v[], int lena, int luparm[], double parmlu[],
+            int lenL[], int lenU, int lrow[], int nrank, 
+            double a[], int indc[], int indr[], int p[], int q[], int lenr[], int locc[], int locr[],
+            int inform[], double diag[]) {
+
+//integer(ip),   intent(in)    :: m, n, jelm, lena, nrank
+//integer(ip),   intent(in)    :: lenU, q(n)   ! not used
+//integer(ip),   intent(inout) :: luparm(30), lenL, lrow,       &
+//                           indc(lena), indr(lena), p(m), &
+//                           lenr(m), locc(n), locr(m)
+//integer(ip),   intent(out)   :: inform
+//real(rp),      intent(in)    :: v(m)
+//real(rp),      intent(inout) :: parmlu(30), a(lena)
+//real(rp),      intent(out)   :: diag
+
+// ------------------------------------------------------------------
+// lu7elm  eliminates the subdiagonal elements of a vector  v(*),
+// where  L*v = y  for some vector y.
+// If  jelm > 0,  y  has just become column  jelm  of the matrix  A.
+// lu7elm  should not be called unless  m  is greater than  nrank.
+
+// inform = 0 if y contained no subdiagonal nonzeros to eliminate.
+// inform = 1 if y contained at least one nontrivial subdiagonal.
+// inform = 7 if there is insufficient storage.
+
+// 09 May 1988: First f77 version.
+//              No longer calls lu7for at end.  lu8rpc, lu8mod do so.
+// 13 Dec 2011: First f90 version.
+// ------------------------------------------------------------------
+
+int lmax = 0;
+    	int i, imax, k, kmax, l, l1, l2,
+    minfre, nfree, nrank1;
+double small, vi, vmax;
+final double zero = 0.0;
+
+small  = parmlu[2];
+nrank1 = nrank + 1;
+diag[0]   = zero;
+
+// Compress row file if necessary.
+
+minfre = m - nrank;
+nfree  = lena - lenL[0] - lrow[0];
+if (nfree < minfre) {
+lu1rec( m, true, luparm, lrow, lena, a, indr, lenr, locr );
+nfree  = lena - lenL[0] - lrow[0];
+if (nfree < minfre) {
+	// Not enough storage.
+    inform[0] = 7;
+    return;
+} // if (nfree < minfre)
+} // if (nfree < minfre)
+
+// Pack the subdiagonals of  v  into  L,  and find the largest.
+
+vmax   = zero;
+kmax   = 0;
+l      = lena - lenL[0] + 1;
+
+for (k = nrank1; k <= m; k++) {
+i       = p[k-1];
+vi      = Math.abs(v[i-1]);
+if (vi <= small) continue;
+l       = l - 1;
+a[l-1]    = v[i-1];
+indc[l-1] = i;
+if (vmax >= vi ) continue;
+vmax    = vi;
+kmax    = k;
+lmax    = l;
+} // for (k = nrank1; k <= m; k++)
+
+if (kmax == 0) {
+	//  No elments to eliminate
+	inform[0] = 0;
+	return;
+}
+
+// ------------------------------------------------------------------
+// Remove  vmax  by overwriting it with the last packed  v(i).
+// Then set the multipliers in  L  for the other elements.
+// ------------------------------------------------------------------
+imax       = p[kmax-1];
+vmax       = a[lmax-1];
+a[lmax-1]    = a[l-1];
+indc[lmax-1] = indc[l-1];
+l1         = l + 1;
+l2         = lena - lenL[0];
+lenL[0]       = lenL[0] + (l2 - l);
+
+for (l = l1; l <= l2; l++) {
+a[l-1]    = - a[l-1] / vmax;
+indr[l-1] =   imax;
+} // for (l = l1; l <= l2; l++)
+
+// Move the row containing vmax to pivotal position nrank + 1.
+
+p[kmax-1] = p[nrank1-1];
+p[nrank1-1] = imax;
+diag[0]      = vmax;
+
+// ------------------------------------------------------------------
+// If jelm is positive, insert  vmax  into a new row of  U.
+// This is now the only subdiagonal element.
+// ------------------------------------------------------------------
+
+if (jelm > 0) {
+lrow[0]       = lrow[0] + 1;
+locr[imax-1] = lrow[0];
+lenr[imax-1] = 1;
+a[lrow[0]-1]    = vmax;
+indr[lrow[0]-1] = jelm;
+} // if (jelm > 0)
+
+inform[0] = 1;
+return;
+} // lu7elm
+    
+    private void lu7cyc(int kfirst, int klast, int p[]) {
+
+    //integer(ip),   intent(in)    :: kfirst, klast
+    //integer(ip),   intent(inout) :: p(klast)
+
+    // ------------------------------------------------------------------
+    // lu7cyc performs a cyclic permutation on the row or column ordering
+    // stored in p, moving entry kfirst down to klast.
+    // If kfirst .ge. klast, lu7cyc should not be called.
+    // Sometimes klast = 0 and nothing should happen.
+    
+    // 09 May 1988: First f77 version.
+    // 13 Dec 2011: First f90 version.
+    // ------------------------------------------------------------------
+
+    int ifirst, k;
+
+    if (kfirst < klast) {
+       ifirst = p[kfirst-1];
+
+       for (k = kfirst; k <= klast - 1; k++) {
+          p[k-1] = p[k];
+       }
+
+       p[klast-1] = ifirst;
+    } // if (kfirst < klast)
+
+} // lu7cyc
+    
+    private void lu7for(int m, int n, int kfirst, int klast, int lena, int luparm[], double parmlu[],
+            int lenL[], int lenU[], int lrow[],
+            double a[], int indc[], int indr[], int p[], int q[], int lenr[], int locc[], int locr[],
+            int inform[], double diag[]) {
+
+//integer(ip),   intent(in)    :: m, n, kfirst, klast, lena
+//integer(ip),   intent(in)    :: q(n)
+//integer(ip),   intent(inout) :: luparm(30), lenL, lenU, lrow
+//integer(ip),   intent(inout) :: indc(lena), indr(lena),     &
+//                           p(m), lenr(m), locc(n), locr(m)
+//integer(ip),   intent(out)   :: inform
+//real(rp),      intent(inout) :: parmlu(30), a(lena)
+//real(rp),      intent(out)   :: diag
+
+// ------------------------------------------------------------------
+// lu7for  (forward sweep) updates the LU factorization A = L*U
+// when row iw = p(klast) of U is eliminated by a forward
+// sweep of stabilized row operations, leaving p*U*q upper triangular.
+
+// The row permutation p is updated to preserve stability and/or
+// sparsity.  The column permutation q is not altered.
+
+// kfirst  is such that row p(kfirst) is the first row involved
+// in eliminating row  iw.  (Hence,  kfirst  marks the first nonzero
+// in row  iw  in pivotal order.)  If  kfirst  is unknown it may be
+// input as  1.
+
+// klast   is such that row p(klast) is the row being eliminated.
+// klast   is not altered.
+
+// lu7for  should be called only if  kfirst .le. klast.
+// If  kfirst = klast,  there are no nonzeros to eliminate, but the
+// diagonal element of row p(klast) may need to be moved to the
+// front of the row.
+
+// On entry,  locc(*)  must be zero.
+
+// On exit:
+// inform = 0  if row iw has a nonzero diagonal (could be small).
+// inform = 1  if row iw has no diagonal.
+// inform = 7  if there is not enough storage to finish the update.
+
+// On a successful exit (inform le 1),  locc(*)  will again be zero.
+
+//    Jan 1985: Final f66 version.
+// 09 May 1988: First f77 version.
+// 13 Dec 2011: First f90 version.
+// ------------------------------------------------------------------
+
+/*logical               :: swappd
+integer(ip)           :: iv, iw, j, jfirst, jlast, jv,        &
+                    k, kbegin, kstart, kstop,            &
+                    l, ldiag, lenv, lenw, lfirst, limit, &
+                    lv, lv1, lv2, lv3, lw, lw1, lw2,     &
+                    minfre, nfree
+real(rp)              :: amult, Ltol, Uspace, small, vj, wj
+real(rp),   parameter :: zero = 0.0
+
+
+Ltol   = parmlu(2)
+small  = parmlu(3)
+Uspace = parmlu(6)
+kbegin = kfirst
+swappd = .false.
+
+! We come back here from below if a row interchange is performed.
+
+100 iw     = p(klast)
+lenw   = lenr(iw)
+if (lenw   ==   0  ) go to 910
+lw1    = locr(iw)
+lw2    = lw1 + lenw - 1
+jfirst = q(kbegin)
+if (kbegin >= klast) go to 700
+
+! Make sure there is room at the end of the row file
+! in case row  iw  is moved there and fills in completely.
+
+minfre = n + 1
+nfree  = lena - lenL[0] - lrow[0]
+if (nfree < minfre) then
+call lu1rec( m, .true., luparm, lrow, lena, a, indr, lenr, locr )
+lw1    = locr(iw)
+lw2    = lw1 + lenw - 1
+nfree  = lena - lenL[0] - lrow[0]
+if (nfree < minfre) go to 970
+end if
+
+! Set markers on row iw.
+
+do l = lw1, lw2
+j       = indr(l)
+locc(j) = l
+end do
+
+!==================================================================
+! Main elimination loop.
+!==================================================================
+kstart = kbegin
+kstop  = min( klast, n )
+
+do k = kstart, kstop
+jfirst = q(k)
+lfirst = locc(jfirst)
+if (lfirst == 0) go to 490
+
+! Row  iw  has its first element in column  jfirst.
+
+wj     = a(lfirst)
+if (k == klast) go to 490
+
+!---------------------------------------------------------------
+! We are about to use the first element of row  iv
+! to eliminate the first element of row  iw.
+! However, we may wish to interchange the rows instead,
+! to preserve stability and/or sparsity.
+!---------------------------------------------------------------
+iv     = p(k)
+lenv   = lenr(iv)
+lv1    = locr(iv)
+vj     = zero
+if (lenv      ==   0   ) go to 150
+if (indr(lv1) /= jfirst) go to 150
+vj     = a(lv1)
+if (         swappd          ) go to 200
+if (Ltol * abs(wj) <  abs(vj)) go to 200
+if (Ltol * abs(vj) <  abs(wj)) go to 150
+if (          lenv <= lenw   ) go to 200
+
+!---------------------------------------------------------------
+! Interchange rows  iv  and  iw.
+!---------------------------------------------------------------
+150    p(klast) = iv
+p(k)     = iw
+kbegin   = k
+swappd   = .true.
+go to 600
+
+!---------------------------------------------------------------
+! Delete the eliminated element from row  iw
+! by overwriting it with the last element.
+!---------------------------------------------------------------
+200    a(lfirst)    = a(lw2)
+jlast        = indr(lw2)
+indr(lfirst) = jlast
+indr(lw2)    = 0
+locc(jlast)  = lfirst
+locc(jfirst) = 0
+lenw         = lenw - 1
+lenU[0]         = lenU[0] - 1
+if (lrow[0] == lw2) lrow[0] = lrow[0] - 1
+lw2          = lw2  - 1
+
+!---------------------------------------------------------------
+! Form the multiplier and store it in the  L  file.
+!---------------------------------------------------------------
+if (abs(wj) <= small) go to 490
+amult   = - wj/vj
+l       = lena - lenL[0]
+a(l)    = amult
+indr(l) = iv
+indc(l) = iw
+lenL[0]    = lenL[0] + 1
+
+!---------------------------------------------------------------
+! Add the appropriate multiple of row  iv  to row  iw.
+! We use two different inner loops.  The first one is for the
+! case where row  iw  is not at the end of storage.
+!---------------------------------------------------------------
+if (lenv == 1) go to 490
+lv2    = lv1 + 1
+lv3    = lv1 + lenv - 1
+if (lw2 == lrow[0]) go to 400
+
+!...............................................................
+! This inner loop will be interrupted only if
+! fill-in occurs enough to bump into the next row.
+!...............................................................
+do lv = lv2, lv3
+ jv = indr(lv)
+ lw = locc(jv)
+
+ if (lw > 0) then         ! No fill-in.
+    a(lw) = a(lw) + amult*a(lv)
+    if (abs(a(lw)) <= small) then  ! Delete small computed element.
+       a(lw)     = a(lw2)
+       j         = indr(lw2)
+       indr(lw)  = j
+       indr(lw2) = 0
+       locc(j)   = lw
+       locc(jv)  = 0
+       lenU[0]      = lenU[0] - 1
+       lenw      = lenw - 1
+       lw2       = lw2  - 1
+    end if
+
+ else    ! Row iw doesn't have an element in column jv yet
+         ! so there is a fill-in.
+    if (indr(lw2+1) /= 0) go to 360
+    lenU[0]      = lenU[0] + 1
+    lenw      = lenw + 1
+    lw2       = lw2  + 1
+    a(lw2)    = amult * a(lv)
+    indr(lw2) = jv
+    locc(jv)  = lw2
+ end if
+end do
+
+go to 490
+
+! Fill-in interrupted the previous loop.
+! Move row  iw  to the end of the row file.
+
+360    lv2      = lv
+locr(iw) = lrow[0] + 1
+
+do l = lw1, lw2
+ lrow[0]       = lrow[0] + 1
+ a(lrow[0])    = a(l)
+ j          = indr(l)
+ indr(l)    = 0
+ indr(lrow[0]) = j
+ locc(j)    = lrow[0]
+end do
+
+lw1    = locr(iw)
+lw2    = lrow[0]
+
+!...............................................................
+! Inner loop with row iw at the end of storage.
+!...............................................................
+400    do lv = lv2, lv3
+ jv     = indr(lv)
+ lw     = locc(jv)
+
+ if (lw > 0) then       ! No fill-in
+    a(lw) = a(lw) + amult*a(lv)
+    if (abs(a(lw)) <= small) then    ! Delete small computed element
+       a(lw)     = a(lw2)
+       j         = indr(lw2)
+       indr(lw)  = j
+       indr(lw2) = 0
+       locc(j)   = lw
+       locc(jv)  = 0
+       lenU[0]      = lenU[0] - 1
+       lenw      = lenw - 1
+       lw2       = lw2  - 1
+    end if
+
+ else           ! Row iw doesn't have an element in column jv yet
+                ! so there is a fill-in
+    lenU[0]      = lenU[0] + 1
+    lenw      = lenw + 1
+    lw2       = lw2  + 1
+    a(lw2)    = amult * a(lv)
+    indr(lw2) = jv
+    locc(jv)  = lw2
+ end if
+end do
+
+lrow[0]   = lw2
+
+! The  k-th  element of row  iw  has been processed.
+! Reset  swappd  before looking at the next element.
+
+490    swappd = .false.
+end do
+
+!=================================================================
+! End of main elimination loop.
+!==================================================================
+
+! Cancel markers on row  iw.
+
+600 lenr(iw) = lenw
+if (lenw == 0) go to 910
+do l = lw1, lw2
+j       = indr(l)
+locc(j) = 0
+end do
+
+! Move the diagonal element to the front of row iw.
+! At this stage, lenw > 0 and klast <= n.
+
+700 do l = lw1, lw2
+ldiag = l
+if (indr(l) == jfirst) go to 730  ! not exit !!!
+end do
+go to 910
+
+730 diag[0]        = a(ldiag)
+a(ldiag)    = a(lw1)
+a(lw1)      = diag[0]
+indr(ldiag) = indr(lw1)
+indr(lw1)   = jfirst
+
+! If an interchange is needed, repeat from the beginning with the
+! new row iw, knowing that the opposite interchange cannot occur.
+
+if (swappd) go to 100
+inform[0] = 0
+go to 950
+
+! Singular
+
+910 diag[0]   = zero
+inform[0] = 1
+
+! Force a compression if the file for U is much longer than the
+! no. of nonzeros in U (i.e. if lrow is much bigger than lenU).
+! This should prevent memory fragmentation when there is far more
+! memory than necessary (i.e. when lena is huge).
+
+950 limit  = int(Uspace*real(lenU[0])) + m + n + 1000
+if (lrow > limit) then
+call lu1rec( m, .true., luparm, lrow, lena, a, indr, lenr, locr )
+end if
+go to 990
+
+! Not enough storage.
+
+970 inform[0] = 7
+
+! Exit.
+
+990 return*/
+
+} // lu7for
+
 
 
 }
