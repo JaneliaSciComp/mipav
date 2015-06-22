@@ -216,7 +216,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.34";
+    private static final String pluginVersion = "0.35";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -2213,7 +2213,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      * Converts from DICOM/US date and time format (MM/DD/YYYY) or M/D/YYYY to ISO 8601 format (YYYY-MM-DDThh:mm:ss).
      * 
      * @param date A date string in the format MM/DD/YYYY or M/D/YYYY.
-     * @param time A time string in the format hh:mm:ss.fract.
+     * @param time A time string in the format hh:mm:ss.fract or hhmmss.fract.
      * @return An ISO 8601 formatted version of the given date and time (or the original string if not in the DICOM/US
      *         date format).
      */
@@ -2229,7 +2229,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         String isoTime = time.trim();
 
         final String datePattern = "^(\\d{1,2})[/-]*(\\d{1,2})[/-]*(\\d{4})$";
-        final String timePattern = "^(\\d{1,2}):(\\d{1,2}):(\\d{1,2})\\.\\d+$";
+        final String timePattern = "^(\\d{2})[:]?(\\d{2})[:]?(\\d{2})[.]?(\\d*)$";
 
         Pattern p = Pattern.compile(datePattern);
         Matcher m = p.matcher(isoDate);
@@ -2253,6 +2253,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             String hour = m.group(1);
             String min = m.group(2);
             String sec = m.group(3);
+            final String frac = m.group(4);
             // add leading zeroes, if necessary
             if (hour.length() == 1) {
                 hour = "0" + hour;
@@ -2264,6 +2265,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 sec = "0" + sec;
             }
             isoTime = hour + ":" + min + ":" + sec;
+            if (frac.length() > 0) {
+                isoTime += "." + frac;
+            }
         }
 
         if (isoTime.equals("")) {
@@ -3966,7 +3970,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
 
                 final File file = new File(filePath);
-                // System.out.println(file.getParent());
+                System.out.println(file);
                 srcImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultifile, null);
 
                 final int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
