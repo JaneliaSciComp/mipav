@@ -3,6 +3,7 @@ package gov.nih.mipav.model.structures.jama;
 
 import java.text.DecimalFormat;
 
+import gov.nih.mipav.model.algorithms.RandomNumberGen;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 
@@ -139,6 +140,60 @@ public class LUSOL implements java.io.Serializable {
 	private long ip_huge = Long.MAX_VALUE;
 	private double huge = Double.MAX_VALUE;
 	private double eps = 2.22044604925031308E-16;
+	
+	private double random() {
+	    double r, t1, t2;
+	    double sprsty = 0.4;
+	    double r1 = -100.0;
+	    double r2 = 100.0;
+	    RandomNumberGen rn = new RandomNumberGen();
+	    t1 = rn.genUniformRandomNum(0.0, 1.0);
+	    t2 = rn.genUniformRandomNum(0.0, 1.0);
+	    if (t2 > sprsty) {
+	    	r = r1 + (r2 - r1) * t1;
+	    }
+	    else {
+	    	r = 0.0;
+	    }
+	    return r;
+	}
+	
+	private void luinit( int m, int n, int nrowb, double B[][], int kb[],
+                         int lena, int luparm[], double parmlu[],
+                         int nelem[], double a[], int indc[], int indr[]) {
+
+		      //IMPLICIT           DOUBLE PRECISION(A-H,O-Z)
+		      //INTEGER            LUPARM(30), KB(N)
+		      //DOUBLE PRECISION   PARMLU(30), A(LENA), B(NROWB,N)
+		      //INTEGER*2          INDC(LENA), INDR(LENA)
+		int i, j;
+
+		      luparm[0] = 6;
+		      luparm[1] = 0;
+		      luparm[2] = 10;
+		      parmlu[0] = 10.0;
+		      parmlu[1] = 10.0;
+		      parmlu[2] = 1.0E-13;
+		      parmlu[3] = 1.0E-11;
+		      parmlu[4] = 1.0E-11;
+		      parmlu[5] = 3.0;
+		      nelem[0]     = 0;
+
+		      for (j = 1; j <= n; j++) {
+		         kb[j-1]   = j;
+		         for (i = 1; i <= m; i++) {
+			        if (B[i-1][j-1] != 0.0) {
+		               nelem[0] = nelem[0] + 1;
+		               a[nelem[0]-1] = B[i-1][j-1];
+			           indc[nelem[0]-1] = i;
+			           indr[nelem[0]-1] = j;
+			        } // if (B[i-1][j-1] != 0.0)
+		         } // for (i = 1; i <= m; i++)
+		      } // for (j = 1; j <= n; j++)
+		      return;
+
+	} // luinit
+
 	
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// File:       lusol.f90
@@ -5305,20 +5360,21 @@ return;
       int lenU[] = new int[1];
       int lenL[] = new int[1];
       int lrow[] = new int[1];
+      int nrank[] = new int[1];
       int iw, j1, jsing,
-          l1, lprint, nrank, nrank0;
+          l1, lprint, nrank0;
       double Utol1, Utol2;
       final int i1 = 1;
       final double zero = 0.0;
 
       lprint = luparm[1];
-      nrank  = luparm[15];
+      nrank[0]  = luparm[15];
       lenL[0]   = luparm[22];
       lenU[0]   = luparm[23];
       lrow[0]   = luparm[24];
       Utol1  = parmlu[3];
       Utol2  = parmlu[4];
-      nrank0 = nrank;
+      nrank0 = nrank[0];
       diag[0]   = zero;
       vnorm[0]  = zero;
       if ((jrep < 1) || (jrep > n)) {
@@ -5332,7 +5388,7 @@ return;
 
 	      luparm[9] = inform[0];
 	      luparm[14] = luparm[14] + 1;
-	      luparm[15] = nrank;
+	      luparm[15] = nrank[0];
 	      luparm[22] = lenL[0];
 	      luparm[23] = lenU[0];
 	      luparm[24] = lrow[0];
@@ -5353,7 +5409,7 @@ return;
          } while (q[krep[0]-1] != jrep);
       } // if (mode1 == 0)
       else {
-         lu7zap( m, n, jrep, krep, lena, lenU, lrow, nrank,
+         lu7zap( m, n, jrep, krep, lena, lenU, lrow, nrank[0],
                  a, indr, p, q, lenr, locr );
       }
 
@@ -5380,7 +5436,7 @@ return;
 
          lu7add( m, n, jrep, v, 
                  lena, luparm, parmlu,
-                 lenL, lenU, lrow, nrank,
+                 lenL, lenU, lrow, nrank[0],
                  a, indr, p, lenr, locr,
                  inform, klast, vnorm );
          if (inform[0] == 7) {
@@ -5391,7 +5447,7 @@ return;
 	         // Exit.
 		     luparm[9] = inform[0];
 		     luparm[14] = luparm[14] + 1;
-		     luparm[15] = nrank;
+		     luparm[15] = nrank[0];
 		     luparm[22] = lenL[0];
 		     luparm[23] = lenU[0];
 		     luparm[24] = lrow[0];
@@ -5422,11 +5478,11 @@ return;
       // ------------------------------------------------------------------
 
       if (mode2 == 0) {
-         if (krep[0] > nrank) {
-        	 if (nrank == nrank0) {
+         if (krep[0] > nrank[0]) {
+        	 if (nrank[0] == nrank0) {
              inform[0] =  0;
         	 }
-	         else if (nrank < nrank0) {
+	         else if (nrank[0] < nrank0) {
 	             inform[0] = -1;
 	             if (nrank0 == n) {
 	                if (lprint >= 0) {
@@ -5434,7 +5490,7 @@ return;
 	                	UI.setDataText("jrep = " + jrep + " diag[0] = " + nf.format(diag[0]));
 	                } // if (lprint >= 0)
 	             } // if (nrank0 == n)
-	         }  // else if (nrank < nrank0)
+	         }  // else if (nrank[0] < nrank0)
 	         else {
 	             inform[0] =  1;
              }
@@ -5443,20 +5499,20 @@ return;
 
 		     luparm[9] = inform[0];
 		     luparm[14] = luparm[14] + 1;
-		     luparm[15] = nrank;
+		     luparm[15] = nrank[0];
 		     luparm[22] = lenL[0];
 		     luparm[23] = lenU[0];
 		     luparm[24] = lrow[0];
 	    	 return;
-         } // if (krep[0] > nrank)
+         } // if (krep[0] > nrank[0)
       } // if (mode2 == 0)
-      else if (nrank < m) {
+      else if (nrank[0] < m) {
 
          // Eliminate any "c"s (in either case).
          // Row nrank + 1 may end up containing one nonzero.
 
          lu7elm( m, n, jrep, v, lena, luparm, parmlu,
-                 lenL, lenU[0], lrow, nrank, 
+                 lenL, lenU[0], lrow, nrank[0], 
                  a, indc, indr, p, q, lenr, locc, locr,
                  inform, diag );
          if (inform[0] == 7) {
@@ -5467,7 +5523,7 @@ return;
 	         // Exit.
 		     luparm[9] = inform[0];
 		     luparm[14] = luparm[14] + 1;
-		     luparm[15] = nrank;
+		     luparm[15] = nrank[0];
 		     luparm[22] = lenL[0];
 		     luparm[23] = lenU[0];
 		     luparm[24] = lrow[0];
@@ -5479,12 +5535,12 @@ return;
             // The nonzero is apparently significant.
             // Increase nrank by 1 and make klast point to the bottom.
 
-            nrank = nrank + 1;
-            klast[0] = nrank;
+            nrank[0] = nrank[0] + 1;
+            klast[0] = nrank[0];
          } // if (inform[0] == 1)
-      } // else if (nrank < m)
+      } // else if (nrank[0] < m)
 
-      if (nrank < n) {
+      if (nrank[0] < n) {
 
          // The column rank is low.
          
@@ -5496,15 +5552,15 @@ return;
          // swap it into position nrank so we can judge it for singularity.
          // lu7rnk might choose some other trapezoidal column later.
 
-         if (krep[0] < nrank) {
-            klast[0]    = nrank;
+         if (krep[0] < nrank[0]) {
+            klast[0]    = nrank[0];
          }
          else {
-            q[krep[0]-1] = q[nrank-1];
-            q[nrank-1] = jrep;
-            krep[0]     = nrank;
+            q[krep[0]-1] = q[nrank[0]-1];
+            q[nrank[0]-1] = jrep;
+            krep[0]     = nrank[0];
          }
-      } // if (nrank < n)
+      } // if (nrank[0] < n)
 
       // ------------------------------------------------------------------
       // If krep < klast, there are some "b"s to eliminate:
@@ -5525,132 +5581,141 @@ return;
       //     has to be moved to the front of row krep (by lu7for).
       // ------------------------------------------------------------------
 
-      /*if (krep[0] <= klast) {
+      if (krep[0] <= klast[0]) {
 
          // Perform a cyclic permutation on the current pivotal order,
          // and eliminate the resulting row spike.  krep becomes klast.
          // The final diagonal (if any) will be correctly positioned at
          // the front of the new krep-th row.  nrank stays the same.
 
-         lu7cyc( krep, klast, p );
-         lu7cyc( krep, klast, q );
+         lu7cyc( krep[0], klast[0], p );
+         lu7cyc( krep[0], klast[0], q );
 
-         call lu7for( m, n, krep, klast,    &
-                      lena, luparm, parmlu, &
-                      lenL, lenU, lrow,     &
-                      a, indc, indr, p, q, lenr, locc, locr, &
-                      inform, diag )
-         if (inform[0] == 7) go to 970
-         krep[0]   = klast
+         lu7for( m, n, krep[0], klast[0],
+                 lena, luparm, parmlu,
+                 lenL, lenU, lrow, 
+                 a, indc, indr, p, q, lenr, locc, locr,
+                 inform, diag );
+         if (inform[0] == 7) {
+        	 // Not enough storage.
+	         if (lprint >= 0) {
+	    	     UI.setDataText("lu8rpc  error...  Insufficient storage. lena = " + lena + "\n");
+	         }
+	         // Exit.
+		     luparm[9] = inform[0];
+		     luparm[14] = luparm[14] + 1;
+		     luparm[15] = nrank[0];
+		     luparm[22] = lenL[0];
+		     luparm[23] = lenU[0];
+		     luparm[24] = lrow[0];
+	    	 return;
+         }
+         krep[0]   = klast[0];
 
-         ! Test for instability (diag much bigger than vnorm).
+         // Test for instability (diag much bigger than vnorm).
 
-         singlr = vnorm[0] < Utol2 * abs(diag[0])
-         if ( singlr ) go to 920
-      } // if (krep[0] <= klast)
+         singlr = vnorm[0] < Utol2 * Math.abs(diag[0]);
+         if ( singlr ) {
+        	 // Instability.
+        	 inform[0] = 2;
+        	 if (lprint >= 0) {
+                 UI.setDataText("lu8rpc  warning.  Instability after replacing column.\n");
+        	     UI.setDataText("jrep = " + jrep + " diag[0] = " + nf.format(diag[0]) + "\n");
+        	 }
+        	 // Exit.
+		     luparm[9] = inform[0];
+		     luparm[14] = luparm[14] + 1;
+		     luparm[15] = nrank[0];
+		     luparm[22] = lenL[0];
+		     luparm[23] = lenU[0];
+		     luparm[24] = lrow[0];
+	    	 return;
+         } // if (singlr)
+      } // if (krep[0] <= klast[0)
 
-      !------------------------------------------------------------------
-      ! Test for singularity in column krep (where krep .le. nrank).
-      !------------------------------------------------------------------
+      // ------------------------------------------------------------------
+      // Test for singularity in column krep (where krep .le. nrank).
+      // ------------------------------------------------------------------
 
-      diag[0]   = zero
-      iw     = p(krep[0])
-      singlr = lenr(iw) == 0
+      diag[0]   = zero;
+      iw     = p[krep[0]-1];
+      singlr = lenr[iw-1] == 0;
 
-      if (.not. singlr) then
-         l1     = locr(iw)
-         j1     = indr(l1)
-         singlr = j1 /= jrep
+      if (!singlr) {
+         l1     = locr[iw-1];
+         j1     = indr[l1-1];
+         singlr = j1 != jrep;
 
-         if (.not. singlr) then
-            diag[0]   = a(l1)
-            singlr = abs( diag[0] ) <= Utol1          .or. &
-                     abs( diag[0] ) <= Utol2 * vnorm[0]
-         end if
-      end if
+         if (!singlr) {
+            diag[0]   = a[l1-1];
+            singlr = Math.abs( diag[0] ) <= Utol1 ||
+                     Math.abs( diag[0] ) <= Utol2 * vnorm[0];
+         } // if (!singlr)
+      } // if (!singlr)
 
-      if (singlr  .and.  krep[0] < nrank) then
+      if (singlr &&  krep[0] < nrank[0]) {
 
-         ! Perform cyclic permutations to move column jrep to the end.
-         ! Move the corresponding row to position nrank
-         ! then eliminate the resulting row spike.
+         // Perform cyclic permutations to move column jrep to the end.
+         // Move the corresponding row to position nrank
+         // then eliminate the resulting row spike.
 
-         call lu7cyc( krep, nrank, p )
-         call lu7cyc( krep, n    , q )
+         lu7cyc( krep[0], nrank[0], p );
+         lu7cyc( krep[0], n    , q );
 
-         call lu7for( m, n, krep, nrank,    &
-                      lena, luparm, parmlu, &
-                      lenL, lenU, lrow,     &
-                      a, indc, indr, p, q, lenr, locc, locr, &
-                      inform, diag )
-         if (inform[0] == 7) go to 970
-      end if
+         lu7for( m, n, krep[0], nrank[0],
+                 lena, luparm, parmlu,
+                 lenL, lenU, lrow,
+                 a, indc, indr, p, q, lenr, locc, locr,
+                 inform, diag );
+         if (inform[0] == 7) {
+        	// Not enough storage.
+	         if (lprint >= 0) {
+	    	     UI.setDataText("lu8rpc  error...  Insufficient storage. lena = " + lena + "\n");
+	         }
+	         // Exit.
+		     luparm[9] = inform[0];
+		     luparm[14] = luparm[14] + 1;
+		     luparm[15] = nrank[0];
+		     luparm[22] = lenL[0];
+		     luparm[23] = lenU[0];
+		     luparm[24] = lrow[0];
+	    	 return;	 
+         } // if (inform[0] == 7)
+      } // if (singlr &&  krep[0] < nrank[0])
 
-      ! Find the best column to be in position nrank.
-      ! If singlr, it can't be the new column, jrep.
-      ! If nothing satisfactory exists, nrank will be decreased.
+      // Find the best column to be in position nrank.
+      // If singlr, it can't be the new column, jrep.
+      // If nothing satisfactory exists, nrank will be decreased.
 
-      if (singlr  .or.  nrank < n) then
-         jsing  = 0
-         if ( singlr ) jsing = jrep
+      if (singlr ||  nrank[0] < n) {
+         jsing  = 0;
+         if ( singlr ) jsing = jrep;
 
-         call lu7rnk( m, n, jsing, lena, parmlu,             &
-                      lenL, lenU, lrow, nrank,               &
-                      a, indc, indr, p, q, lenr, locc, locr, &
-                      inform, diag )
-      end if
+         lu7rnk( m, n, jsing, lena, parmlu,
+                 lenL, lenU, lrow, nrank, 
+                 a, indc, indr, p, q, lenr, locc, locr,
+                 inform, diag );
+      } // if (singlr ||  nrank[0] < n)
 
-      !------------------------------------------------------------------
-      ! Set inform for exit.
-      !------------------------------------------------------------------
-  900 if (nrank == nrank0) then
-         inform[0] =  0
-      else if (nrank < nrank0) then
-         inform[0] = -1
-         if (nrank0 == n) then
-            if (nout > 0  .and.  lprint >= 0) write(nout, 1100) jrep, diag[0]
-         end if
-      else
-         inform[0] =  1
-      end if
-      go to 990
-
-      ! Instability.
-
-  920 inform[0] = 2
-      if (nout > 0  .and.  lprint >= 0) write(nout, 1200) jrep, diag[0]
-      go to 990
-
-      ! Not enough storage.
-
-  970 inform[0] = 7
-      if (nout > 0  .and.  lprint >= 0) write(nout, 1700) lena
-      go to 990
-
-      ! jrep  is out of range.
-
-  980 inform[0] = 8
-      if (nout > 0  .and.  lprint >= 0) write(nout, 1800) m, n, jrep
-
-      ! Exit.
-
-  990 luparm(10) = inform[0]
-      luparm(15) = luparm(15) + 1
-      luparm(16) = nrank
-      luparm(23) = lenL
-      luparm(24) = lenU[0]
-      luparm(25) = lrow[0]
-      return
-
-  1100 format(/ ' lu8rpc  warning.  Singularity after replacing column.', &
-                '    jrep =', i8, '    diag[0] =', es12.2 )
-  1200 format(/ ' lu8rpc  warning.  Instability after replacing column.', &
-                '    jrep =', i8, '    diag[0] =', es12.2 )
-  1700 format(/ ' lu8rpc  error...  Insufficient storage.', &
-                '    lena =', i8)
-  1800 format(/ ' lu8rpc  error...  jrep  is out of range.', &
-                '    m =', i8, '    n =', i8, '    jrep =', i8)*/
-
+      // ------------------------------------------------------------------
+      // Set inform for exit.
+      // ------------------------------------------------------------------
+      if (nrank[0] == nrank0) {
+         inform[0] =  0;
+      }
+      else if (nrank[0] < nrank0) {
+         inform[0] = -1;
+         if (nrank0 == n) {
+            if (lprint >= 0) {
+            	UI.setDataText("lu8rpc  warning.  Singularity after replacing column.\n");
+            	UI.setDataText("jrep = " + jrep + " diag[0] = " + nf.format(diag[0]) + "\n");
+            }
+         } // if (nrank0 == n)
+      } // else if (nrank[0] < nrank0)
+      else {
+         inform[0] =  1;
+      }
+      return;
 } // lu8rpc
 
     private void lu7zap(int m, int n, int jzap, int kzap[], int lena, int lenU[], int lrow[], int nrank,
@@ -6502,286 +6567,684 @@ return;
 // 13 Dec 2011: First f90 version.
 // ------------------------------------------------------------------
 
-/*logical               :: swappd
-integer(ip)           :: iv, iw, j, jfirst, jlast, jv,        &
-                    k, kbegin, kstart, kstop,            &
-                    l, ldiag, lenv, lenw, lfirst, limit, &
-                    lv, lv1, lv2, lv3, lw, lw1, lw2,     &
-                    minfre, nfree
-real(rp)              :: amult, Ltol, Uspace, small, vj, wj
-real(rp),   parameter :: zero = 0.0
+boolean swappd;
+int ldiag = 1;
+int iv, iw, j, jfirst, jlast, jv,
+    k, kbegin, kstart, kstop,
+    l, lenv, lenw, lfirst, limit,
+    lv, lv1, lv2, lv3, lw, lw1, lw2,
+    minfre, nfree;
+double amult, Ltol, Uspace, small, vj, wj;
+final double zero = 0.0;
+boolean seg1 = true;
+boolean seg2 = true;
+boolean seg3 = true;
+boolean seg4 = true;
 
+Ltol   = parmlu[1];
+small  = parmlu[2];
+Uspace = parmlu[5];
+kbegin = kfirst;
+swappd = false;
 
-Ltol   = parmlu(2)
-small  = parmlu(3)
-Uspace = parmlu(6)
-kbegin = kfirst
-swappd = .false.
+// We come back here from below if a row interchange is performed.
 
-! We come back here from below if a row interchange is performed.
+do {
+iw     = p[klast-1];
+lenw   = lenr[iw-1];
+if (lenw   ==   0  ) {
+	seg1 = false;
+	break;
+}
+lw1    = locr[iw-1];
+lw2    = lw1 + lenw - 1;
+jfirst = q[kbegin-1];
+if (kbegin >= klast) {
+	seg2 = false;
+}
+if (seg2) {
+// Make sure there is room at the end of the row file
+// in case row  iw  is moved there and fills in completely.
 
-100 iw     = p(klast)
-lenw   = lenr(iw)
-if (lenw   ==   0  ) go to 910
-lw1    = locr(iw)
-lw2    = lw1 + lenw - 1
-jfirst = q(kbegin)
-if (kbegin >= klast) go to 700
+minfre = n + 1;
+nfree  = lena - lenL[0] - lrow[0];
+if (nfree < minfre) {
+lu1rec( m, true, luparm, lrow, lena, a, indr, lenr, locr );
+lw1    = locr[iw-1];
+lw2    = lw1 + lenw - 1;
+nfree  = lena - lenL[0] - lrow[0];
+if (nfree < minfre) {
+	 // Not enough storage.
+     inform[0] = 7;
+     return;
+} // if (nfree < minfre)
+} // if (nfree < minfre)
 
-! Make sure there is room at the end of the row file
-! in case row  iw  is moved there and fills in completely.
+// Set markers on row iw.
 
-minfre = n + 1
-nfree  = lena - lenL[0] - lrow[0]
-if (nfree < minfre) then
-call lu1rec( m, .true., luparm, lrow, lena, a, indr, lenr, locr )
-lw1    = locr(iw)
-lw2    = lw1 + lenw - 1
-nfree  = lena - lenL[0] - lrow[0]
-if (nfree < minfre) go to 970
-end if
+for (l = lw1; l <= lw2; l++) {
+j       = indr[l-1];
+locc[j-1] = l;
+} // for (l = lw1; l <= lw2; l++)
 
-! Set markers on row iw.
+// ==================================================================
+// Main elimination loop.
+// ==================================================================
+kstart = kbegin;
+kstop  = Math.min( klast, n );
 
-do l = lw1, lw2
-j       = indr(l)
-locc(j) = l
-end do
+for (k = kstart; k <= kstop; k++) {
+jfirst = q[k-1];
+lfirst = locc[jfirst-1];
+if (lfirst == 0) {
+	swappd = false;
+	continue;
+}
 
-!==================================================================
-! Main elimination loop.
-!==================================================================
-kstart = kbegin
-kstop  = min( klast, n )
+// Row  iw  has its first element in column  jfirst.
 
-do k = kstart, kstop
-jfirst = q(k)
-lfirst = locc(jfirst)
-if (lfirst == 0) go to 490
+wj     = a[lfirst-1];
+if (k == klast) {
+	swappd = false;
+	continue;
+}
 
-! Row  iw  has its first element in column  jfirst.
+// ---------------------------------------------------------------
+// We are about to use the first element of row  iv
+// to eliminate the first element of row  iw.
+// However, we may wish to interchange the rows instead,
+// to preserve stability and/or sparsity.
+// ---------------------------------------------------------------
+iv     = p[k-1];
+lenv   = lenr[iv-1];
+lv1    = locr[iv-1];
+vj     = zero;
+if (lenv      !=   0   ) {
+	if (indr[lv1-1] == jfirst) {
+		vj     = a[lv1-1];
+		if (         swappd          ) {
+			seg3 = false;
+		}
+		else { // not swappd
+			if (Ltol * Math.abs(wj) <  Math.abs(vj)) {
+				seg3 = false;
+			}
+			else {
+				if (Ltol * Math.abs(vj) >=  Math.abs(wj)) {
+					if (          lenv <= lenw   ) {
+						seg3 = false;
+					}
+				}
+			}
+		}  // else not swappd
+	} // if (indr[lv1-1] == jfirst)
+} // if (lenv != 0)
 
-wj     = a(lfirst)
-if (k == klast) go to 490
+if (seg3) {
+// ---------------------------------------------------------------
+// Interchange rows  iv  and  iw.
+// ---------------------------------------------------------------
+p[klast-1] = iv;
+p[k-1]     = iw;
+kbegin   = k;
+swappd   = true;
+break;
+} // if (seg3)
+seg3 = true;
 
-!---------------------------------------------------------------
-! We are about to use the first element of row  iv
-! to eliminate the first element of row  iw.
-! However, we may wish to interchange the rows instead,
-! to preserve stability and/or sparsity.
-!---------------------------------------------------------------
-iv     = p(k)
-lenv   = lenr(iv)
-lv1    = locr(iv)
-vj     = zero
-if (lenv      ==   0   ) go to 150
-if (indr(lv1) /= jfirst) go to 150
-vj     = a(lv1)
-if (         swappd          ) go to 200
-if (Ltol * abs(wj) <  abs(vj)) go to 200
-if (Ltol * abs(vj) <  abs(wj)) go to 150
-if (          lenv <= lenw   ) go to 200
+// ---------------------------------------------------------------
+// Delete the eliminated element from row  iw
+// by overwriting it with the last element.
+// ---------------------------------------------------------------
+a[lfirst-1]    = a[lw2-1];
+jlast        = indr[lw2-1];
+indr[lfirst-1] = jlast;
+indr[lw2-1]    = 0;
+locc[jlast-1]  = lfirst;
+locc[jfirst-1] = 0;
+lenw         = lenw - 1;
+lenU[0]         = lenU[0] - 1;
+if (lrow[0] == lw2) lrow[0] = lrow[0] - 1;
+lw2          = lw2  - 1;
 
-!---------------------------------------------------------------
-! Interchange rows  iv  and  iw.
-!---------------------------------------------------------------
-150    p(klast) = iv
-p(k)     = iw
-kbegin   = k
-swappd   = .true.
-go to 600
+// ---------------------------------------------------------------
+// Form the multiplier and store it in the  L  file.
+// ---------------------------------------------------------------
+if (Math.abs(wj) <= small) {
+    swappd = false;
+    continue;
+}
+amult   = - wj/vj;
+l       = lena - lenL[0];
+a[l-1]    = amult;
+indr[l-1] = iv;
+indc[l-1] = iw;
+lenL[0]    = lenL[0] + 1;
 
-!---------------------------------------------------------------
-! Delete the eliminated element from row  iw
-! by overwriting it with the last element.
-!---------------------------------------------------------------
-200    a(lfirst)    = a(lw2)
-jlast        = indr(lw2)
-indr(lfirst) = jlast
-indr(lw2)    = 0
-locc(jlast)  = lfirst
-locc(jfirst) = 0
-lenw         = lenw - 1
-lenU[0]         = lenU[0] - 1
-if (lrow[0] == lw2) lrow[0] = lrow[0] - 1
-lw2          = lw2  - 1
+// ---------------------------------------------------------------
+// Add the appropriate multiple of row  iv  to row  iw.
+// We use two different inner loops.  The first one is for the
+// case where row  iw  is not at the end of storage.
+// ---------------------------------------------------------------
+if (lenv == 1) {
+	swappd = false;
+	continue;
+}
+lv2    = lv1 + 1;
+lv3    = lv1 + lenv - 1;
+if (lw2 == lrow[0]) {
+	seg4 = false;
+}
 
-!---------------------------------------------------------------
-! Form the multiplier and store it in the  L  file.
-!---------------------------------------------------------------
-if (abs(wj) <= small) go to 490
-amult   = - wj/vj
-l       = lena - lenL[0]
-a(l)    = amult
-indr(l) = iv
-indc(l) = iw
-lenL[0]    = lenL[0] + 1
+if (seg4) {
+// ...............................................................
+// This inner loop will be interrupted only if
+// fill-in occurs enough to bump into the next row.
+// ...............................................................
+for (lv = lv2; lv <= lv3; lv++) {
+ jv = indr[lv-1];
+ lw = locc[jv-1];
 
-!---------------------------------------------------------------
-! Add the appropriate multiple of row  iv  to row  iw.
-! We use two different inner loops.  The first one is for the
-! case where row  iw  is not at the end of storage.
-!---------------------------------------------------------------
-if (lenv == 1) go to 490
-lv2    = lv1 + 1
-lv3    = lv1 + lenv - 1
-if (lw2 == lrow[0]) go to 400
+ if (lw > 0) {         // No fill-in.
+    a[lw-1] = a[lw-1] + amult*a[lv-1];
+    if (Math.abs(a[lw-1]) <= small) {  // Delete small computed element.
+       a[lw-1]     = a[lw2-1];
+       j         = indr[lw2-1];
+       indr[lw-1]  = j;
+       indr[lw2-1] = 0;
+       locc[j-1]   = lw;
+       locc[jv-1]  = 0;
+       lenU[0]      = lenU[0] - 1;
+       lenw      = lenw - 1;
+       lw2       = lw2  - 1;
+    } // if (Math.abs(a[lw-1]) <= small)
+ } // if (lw > 0)
+ else  {  // Row iw doesn't have an element in column jv yet
+          // so there is a fill-in.
+    if (indr[lw2] != 0) break;
+    lenU[0]      = lenU[0] + 1;
+    lenw      = lenw + 1;
+    lw2       = lw2  + 1;
+    a[lw2-1]    = amult * a[lv-1];
+    indr[lw2-1] = jv;
+    locc[jv-1]  = lw2;
+ } // else lw <= 0
+} // for (lv = lv2; lv <= lv3; lv++)
+if (lv > lv3) {
+	swappd = false;
+	continue;
+}
 
-!...............................................................
-! This inner loop will be interrupted only if
-! fill-in occurs enough to bump into the next row.
-!...............................................................
-do lv = lv2, lv3
- jv = indr(lv)
- lw = locc(jv)
+// Fill-in interrupted the previous loop.
+// Move row  iw  to the end of the row file.
 
- if (lw > 0) then         ! No fill-in.
-    a(lw) = a(lw) + amult*a(lv)
-    if (abs(a(lw)) <= small) then  ! Delete small computed element.
-       a(lw)     = a(lw2)
-       j         = indr(lw2)
-       indr(lw)  = j
-       indr(lw2) = 0
-       locc(j)   = lw
-       locc(jv)  = 0
-       lenU[0]      = lenU[0] - 1
-       lenw      = lenw - 1
-       lw2       = lw2  - 1
-    end if
+lv2      = lv;
+locr[iw-1] = lrow[0] + 1;
 
- else    ! Row iw doesn't have an element in column jv yet
-         ! so there is a fill-in.
-    if (indr(lw2+1) /= 0) go to 360
-    lenU[0]      = lenU[0] + 1
-    lenw      = lenw + 1
-    lw2       = lw2  + 1
-    a(lw2)    = amult * a(lv)
-    indr(lw2) = jv
-    locc(jv)  = lw2
- end if
-end do
+for (l = lw1; l <= lw2; l++) {
+ lrow[0]       = lrow[0] + 1;
+ a[lrow[0]-1]    = a[l-1];
+ j          = indr[l-1];
+ indr[l-1]    = 0;
+ indr[lrow[0]-1] = j;
+ locc[j-1]    = lrow[0];
+} // for (l = lw1; l <= lw2; l++)
 
-go to 490
+lw1    = locr[iw-1];
+lw2    = lrow[0];
+} // if (seg4)
+seg4 = true;
 
-! Fill-in interrupted the previous loop.
-! Move row  iw  to the end of the row file.
+// ...............................................................
+// Inner loop with row iw at the end of storage.
+// ...............................................................
+for (lv = lv2; lv <= lv3; lv++) {
+ jv     = indr[lv-1];
+ lw     = locc[jv-1];
 
-360    lv2      = lv
-locr(iw) = lrow[0] + 1
+ if (lw > 0) {       // No fill-in
+    a[lw-1] = a[lw-1] + amult*a[lv-1];
+    if (Math.abs(a[lw-1]) <= small) {    // Delete small computed element
+       a[lw-1]     = a[lw2-1];
+       j         = indr[lw2-1];
+       indr[lw-1]  = j;
+       indr[lw2-1] = 0;
+       locc[j-1]   = lw;
+       locc[jv-1]  = 0;
+       lenU[0]      = lenU[0] - 1;
+       lenw      = lenw - 1;
+       lw2       = lw2  - 1;
+    } // if (Math.abs(a[lw-1]) <= small)
+ } // if (lw > 0)
+ else   {        // Row iw doesn't have an element in column jv yet
+                 // so there is a fill-in
+    lenU[0]      = lenU[0] + 1;
+    lenw      = lenw + 1;
+    lw2       = lw2  + 1;
+    a[lw2-1]    = amult * a[lv-1];
+    indr[lw2-1] = jv;
+    locc[jv-1]  = lw2;
+ } // else lw <= 0
+} // for (lv = lv2; lv <= lv3; lv++)
 
-do l = lw1, lw2
- lrow[0]       = lrow[0] + 1
- a(lrow[0])    = a(l)
- j          = indr(l)
- indr(l)    = 0
- indr(lrow[0]) = j
- locc(j)    = lrow[0]
-end do
+lrow[0]   = lw2;
 
-lw1    = locr(iw)
-lw2    = lrow[0]
+// The  k-th  element of row  iw  has been processed.
+// Reset  swappd  before looking at the next element.
 
-!...............................................................
-! Inner loop with row iw at the end of storage.
-!...............................................................
-400    do lv = lv2, lv3
- jv     = indr(lv)
- lw     = locc(jv)
+swappd = false;
+} // for (k = kstart; k <= kstop; k++)
 
- if (lw > 0) then       ! No fill-in
-    a(lw) = a(lw) + amult*a(lv)
-    if (abs(a(lw)) <= small) then    ! Delete small computed element
-       a(lw)     = a(lw2)
-       j         = indr(lw2)
-       indr(lw)  = j
-       indr(lw2) = 0
-       locc(j)   = lw
-       locc(jv)  = 0
-       lenU[0]      = lenU[0] - 1
-       lenw      = lenw - 1
-       lw2       = lw2  - 1
-    end if
+// =================================================================
+// End of main elimination loop.
+// ==================================================================
 
- else           ! Row iw doesn't have an element in column jv yet
-                ! so there is a fill-in
-    lenU[0]      = lenU[0] + 1
-    lenw      = lenw + 1
-    lw2       = lw2  + 1
-    a(lw2)    = amult * a(lv)
-    indr(lw2) = jv
-    locc(jv)  = lw2
- end if
-end do
+// Cancel markers on row  iw.
 
-lrow[0]   = lw2
+lenr[iw-1] = lenw;
+if (lenw == 0) {
+	seg1 = false;
+	break;
+}
+for (l = lw1; l <= lw2; l++) {
+j       = indr[l-1];
+locc[j-1] = 0;
+} // for (l = lw1; l <= lw2; l++)
+} // if (seg2)
+seg2 = true;
 
-! The  k-th  element of row  iw  has been processed.
-! Reset  swappd  before looking at the next element.
+// Move the diagonal element to the front of row iw.
+// At this stage, lenw > 0 and klast <= n.
 
-490    swappd = .false.
-end do
+for (l = lw1; l <= lw2; l++) {
+ldiag = l;
+if (indr[l-1] == jfirst) break;
+} // for (l = lw1; l <= lw2; l++)
+if (l > lw2) {
+	seg1 = false;
+	break;
+}
 
-!=================================================================
-! End of main elimination loop.
-!==================================================================
+diag[0]        = a[ldiag-1];
+a[ldiag-1]    = a[lw1-1];
+a[lw1-1]      = diag[0];
+indr[ldiag-1] = indr[lw1-1];
+indr[lw1-1]   = jfirst;
 
-! Cancel markers on row  iw.
+// If an interchange is needed, repeat from the beginning with the
+// new row iw, knowing that the opposite interchange cannot occur.
 
-600 lenr(iw) = lenw
-if (lenw == 0) go to 910
-do l = lw1, lw2
-j       = indr(l)
-locc(j) = 0
-end do
+} while (swappd);
+if (seg1) {
+inform[0] = 0;
+//Force a compression if the file for U is much longer than the
+//no. of nonzeros in U (i.e. if lrow is much bigger than lenU).
+//This should prevent memory fragmentation when there is far more
+//memory than necessary (i.e. when lena is huge).
 
-! Move the diagonal element to the front of row iw.
-! At this stage, lenw > 0 and klast <= n.
+limit  = (int)(Uspace*(double)(lenU[0])) + m + n + 1000;
+if (lrow[0] > limit) {
+lu1rec( m, true, luparm, lrow, lena, a, indr, lenr, locr );
+}
+return;
+} // if (seg1)
 
-700 do l = lw1, lw2
-ldiag = l
-if (indr(l) == jfirst) go to 730  ! not exit !!!
-end do
-go to 910
+// Singular
 
-730 diag[0]        = a(ldiag)
-a(ldiag)    = a(lw1)
-a(lw1)      = diag[0]
-indr(ldiag) = indr(lw1)
-indr(lw1)   = jfirst
+diag[0]   = zero;
+inform[0] = 1;
 
-! If an interchange is needed, repeat from the beginning with the
-! new row iw, knowing that the opposite interchange cannot occur.
+// Force a compression if the file for U is much longer than the
+// no. of nonzeros in U (i.e. if lrow is much bigger than lenU).
+// This should prevent memory fragmentation when there is far more
+// memory than necessary (i.e. when lena is huge).
 
-if (swappd) go to 100
-inform[0] = 0
-go to 950
-
-! Singular
-
-910 diag[0]   = zero
-inform[0] = 1
-
-! Force a compression if the file for U is much longer than the
-! no. of nonzeros in U (i.e. if lrow is much bigger than lenU).
-! This should prevent memory fragmentation when there is far more
-! memory than necessary (i.e. when lena is huge).
-
-950 limit  = int(Uspace*real(lenU[0])) + m + n + 1000
-if (lrow > limit) then
-call lu1rec( m, .true., luparm, lrow, lena, a, indr, lenr, locr )
-end if
-go to 990
-
-! Not enough storage.
-
-970 inform[0] = 7
-
-! Exit.
-
-990 return*/
-
+limit  = (int)(Uspace*(double)(lenU[0])) + m + n + 1000;
+if (lrow[0] > limit) {
+lu1rec( m, true, luparm, lrow, lena, a, indr, lenr, locr );
+}
+return;
 } // lu7for
 
+    private void lu7rnk(int m, int n, int jsing, int lena, double parmlu[],
+            int lenL[], int lenU[], int lrow[], int nrank[],
+            double a[], int indc[], int indr[], int p[], int q[], int lenr[], int locc[], int locr[],
+            int inform[], double diag[]) {
 
+//integer(ip),   intent(in)    :: m, n, jsing, lena,      &
+//                           p(m)
+//integer(ip),   intent(inout) :: lenL, lenU, lrow, nrank, &
+//                           indc(lena), indr(lena), q(n),        &
+//                           lenr(m), locc(n), locr(m)
+//integer(ip),   intent(out)   :: inform
+//real(rp),      intent(inout) :: parmlu(30)  ! not used
+//real(rp),      intent(inout) :: diag, a(lena)
+
+// ------------------------------------------------------------------
+// lu7rnk (check rank) assumes U is currently nrank by n
+// and determines if row nrank contains an acceptable pivot.
+// If not, the row is deleted and nrank is decreased by 1.
+
+// jsing is an input parameter (not altered).  If jsing is positive,
+// column jsing has already been judged dependent.  A substitute
+// (if any) must be some other column.
+
+// On exit,
+// inform = -1 if nrank decreases by 1
+//        =  0 if nrank stays the same
+//        =  1 if there's a fatal error.  (Currently we stop.)
+
+// -- Jul 1987: First version.
+// 09 May 1988: First f77 version.
+// 13 Dec 2011: First f90 version.
+// 01 Jan 2012: luparm not used.
+// ------------------------------------------------------------------
+
+int l1 = 1;
+int l2 = 1;
+int iw, jmax, kmax, l, lenw, lmax;
+double Umax, Utol1;
+final double zero = 0.0;
+
+Utol1    = parmlu[3];
+diag[0]     = zero;
+
+// Find Umax, the largest element in row nrank.
+
+iw       = p[nrank[0]-1];
+lenw     = lenr[iw-1];
+if (lenw != 0) {
+l1       = locr[iw-1];
+l2       = l1 + lenw - 1;
+Umax     = zero;
+lmax     = l1;
+
+for (l = l1; l <= l2; l++) {
+if (Umax < Math.abs(a[l-1])) {
+ Umax  = Math.abs(a[l-1]);
+ lmax  = l;
+} //if (Umax < Math.abs(a[l-1]))
+} // for (l = l1; l <= l2; l++)
+
+// Find which column that guy is in (in pivotal order).
+// Interchange him with column nrank, then move him to be
+// the new diagonal at the front of row nrank.
+
+diag[0]   = a[lmax-1];
+jmax   = indr[lmax-1];
+l      = 0;
+
+for (kmax = nrank[0]; kmax <= n; kmax++) {
+if (q[kmax-1] == jmax) {
+ l = kmax;   // l allows check below for fatal error
+ break;
+} // if (q[kmax-1] == jmax)
+} // for (kmax = nrank[0]; kmax <= n; kmax++)
+
+if (l == 0) {
+	// Fatal error
+	// 15 Dec 2011: Fatal error (should never happen!).
+	// This is a safeguard during work on the f90 version.
+
+    inform[0] = 1;
+	UI.setDataText("Fatal error in LUSOL lu7rnk.  Stopping now\n");
+	//stop
+    return;
+} // if (l == 0)
+
+q[kmax-1]    = q[nrank[0]-1];
+q[nrank[0]-1]   = jmax;
+a[lmax-1]    = a[l1-1];
+a[l1-1]      = diag[0];
+indr[lmax-1] = indr[l1-1];
+indr[l1-1]   = jmax;
+
+// See if the new diagonal is big enough.
+
+if ((Umax > Utol1) && (jmax != jsing)) {
+
+// ------------------------------------------------------------------
+// The rank stays the same.
+// ------------------------------------------------------------------
+inform[0] = 0;
+return;
+} // if ((Umax > Utol1) && (jmax != jsing))
+} // if (lenw != 0)
+
+// ------------------------------------------------------------------
+// The rank decreases by one.
+// ------------------------------------------------------------------
+inform[0] = -1;
+nrank[0]  = nrank[0] - 1;
+
+if (lenw > 0) {       // Delete row nrank from U.
+
+lenU[0]     = lenU[0] - lenw;
+lenr[iw-1] = 0;
+for (l = l1; l <= l2; l++) {
+ indr[l-1] = 0;
+} // for (l = l1; l <= l2; l++) 
+
+if (l2 == lrow[0]) {
+
+ // This row was at the end of the data structure.
+ // We have to reset lrow.
+ // Preceding rows might already have been deleted, so we
+ // have to be prepared to go all the way back to 1.
+
+ for (l = 1; l <= l2; l++) {
+    if (indr[lrow[0]-1] > 0) return;
+    lrow[0]  = lrow[0] - 1;
+ } // for (l = 1; l <= l2; l++)
+} // if (l2 == lrow[0])
+} // if (lenW > 0)
+return;
+} // lu7rnk
+
+    // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    //
+    //     File  lusol6b.f
+    //
+    //     lu6mul   lu6prt   lu6set
+    //
+    // 03 Mar 2004: lusol6b.f is essentially lu6b.for from VMS days.
+    //              integer*4 changed to integer  .
+    // 14 Jul 2011: lu6mul's v = L'*v fixed.
+    // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+          private void lu6mul(int mode, int m, int n, double v[], double w[],
+                             int lena, int luparm[], double parmlu[],
+                             double a[], int indc[], int indr[], int ip[], int iq[],
+                             int lenc[], int lenr[], int locc[], int locr[]) {
+
+          //implicit           double precision (a-h,o-z)
+          //integer            luparm(30)
+          //double precision   parmlu(30), a(lena), v(m), w(n)
+          //integer            indc(lena), indr(lena), ip(m), iq(n)
+          //integer            lenc(n), lenr(m)
+          //integer            locc(n), locr(m)
+
+    //     ------------------------------------------------------------------
+    //     lu6mul  uses the factorization   A = L*U   as follows...
+    
+    //     mode
+    //     ----
+    //      1    v  is changed to  L*v.             w  is not touched.
+    //      2    v  is changed to  L(t)*v.          w  is not touched.
+    //      3    v  is set to      U*w.             w  is not altered.
+    //      4    w  is set to      U(t)*v.          v  is not altered.
+    //      5    v  is set to      A*w.             w  is not altered.
+    //      6    w  is set to      A(t)*v.          v  is changed to  L(t)*v.
+    //
+    //     If  mode .ge. 3,  v  and  w  must not be the same arrays.
+    
+    //     lenc(*)  and  locc(*)  are not used.
+    
+    //     09 May 1988: First F77 version.
+    //     30 Jan 1996: Converted to lower case (finally!).
+    //     03 Mar 2004: Time to abolish the computed go to!!
+    //     ------------------------------------------------------------------
+          int i, j, k, klast, l, l1, l2, lenl, nrank;
+          double t;
+          final double zero = 0.0;
+
+          nrank  = luparm[15];
+          lenl   = luparm[22];
+          //!!! go to (100, 200, 300, 400, 300, 200), mode
+          //if (mode .eq. 1) go to 100
+          //if (mode .eq. 2) go to 200
+          //if (mode .eq. 3) go to 300
+          //if (mode .eq. 4) go to 400
+          //if (mode .eq. 5) go to 300
+          //if (mode .eq. 6) go to 200
+
+    //     ==================================================================
+    //     mode = 1 or 5.    Set  v = L*v.
+    //     ==================================================================
+      if (mode == 1) {
+          l1     = lena + 1 - lenl;
+          for (l = l1; l <= lena; l++) {
+             i     = indr[l-1];
+             if (v[i-1] != zero) {
+                j     = indc[l-1];
+                v[j-1]  = v[j-1] - a[l-1]*v[i-1];
+             } // if (v[i-1] != zero)
+          } // for (l = l1; l <= lena; l++)
+
+          return;
+      } // if (mode == 1)
+
+    //     ==================================================================
+    //     mode = 2 or 6.    Set  v = L(t)*v.
+    //     14 Jul 2011: We have to run forward thru the columns of L.
+    //                  The first column is at the end of memory.
+    //     ==================================================================
+      else if ((mode == 2) || (mode == 6)) {
+          l1 = lena + 1 - lenl;
+          for (l = lena; l >= l1; l--) {
+             j     = indc[l-1];
+             if (v[j-1] != zero) {
+                i     = indr[l-1];
+                v[i-1]  = v[i-1]  -  a[l-1] * v[j-1];
+             } // if (v[j-1] != zero) 
+          } // for (l = lena; l >= l1; l--) 
+
+          //if (mode .eq. 6) go to 400
+          if (mode == 2) {
+        	  return;
+          }
+          
+          // Find the last nonzero in  v(*).
+
+          for (klast = m; klast >= 1; klast--) {
+             i     = ip[klast-1];
+             if (v[i-1] != zero) break;
+          } // for (klast = m; klast >= 1; klast--)
+
+          klast  = Math.min( klast, nrank );
+
+          for (j = 1; j <= n; j++) {
+             w[j-1]  = zero;
+          } // for (j = 1; j <= n; j++)
+
+          for (k = 1; k <= klast; k++) {
+             i     = ip[k-1];
+             t     = v[i-1];
+             if (t == zero) continue;
+             l1    = locr[i-1];
+             l2    = l1 + lenr[i-1] - 1;
+
+             for (l = l1; l <= l2; l++) {
+                j     = indr[l-1];
+                w[j-1]  = w[j-1]  +  a[l-1] * t;
+             } // for (l = l1; l <= l2; l++)
+          } // for (k = 1; k <= klast; k++)
+          return;
+      } // if ((mode == 2) || (mode == 6))
+
+    //     ==================================================================
+    //     mode = 3 or 5.    set  v = U*w.
+    //     ==================================================================
+
+          // Find the last nonzero in  w(*).
+      else if ((mode == 3) || (mode == 5)) {
+          for (klast = n; klast >= 1; klast--) {
+             j     = iq[klast-1];
+             if (w[j-1] != zero) break;
+          } //  for (klast = n; klast >= 1; klast--)
+
+          klast  = Math.min( klast, nrank );
+          for (k = klast + 1; k <= m; k++) {
+             i     = ip[k-1];
+             v[i-1]  = zero;
+          } // for (k = klast + 1; k <= m; k++)
+
+          // Form U*w, using rows 1 to klast of U.
+
+          for (k = 1; k <= klast; k++) {
+             t     = zero;
+             i     = ip[k-1];
+             l1    = locr[i-1];
+             l2    = l1 + lenr[i-1] - 1;
+
+             for (l = l1; l <= l2; l++) {
+                j     = indr[l-1];
+                t     = t  +  a[l-1] * w[j-1];
+             } //  for (l = l1; l <= l2; l++)
+
+             v[i-1]  = t;
+          } // for (k = 1; k <= klast; k++)
+
+          //if (mode .eq. 5) go to 100
+          if (mode == 3) {
+              return;
+          }
+          
+          l1     = lena + 1 - lenl;
+          for (l = l1; l <= lena; l++) {
+             i     = indr[l-1];
+             if (v[i-1] != zero) {
+                j     = indc[l-1];
+                v[j-1]  = v[j-1] - a[l-1]*v[i-1];
+             } // if (v[i-1] != zero)
+          } // for (l = l1; l <= lena; l++)
+
+          return;
+      } // else if ((mode == 3) || (mode == 5))
+
+    //     ==================================================================
+    //     mode = 4.    set  w = U(transpose)*v.
+    //     ==================================================================
+      else if (mode == 4) {
+
+          // Find the last nonzero in  v(*).
+
+          for (klast = m; klast >= 1; klast--) {
+             i     = ip[klast-1];
+             if (v[i-1] != zero) break;
+          } // for (klast = m; klast >= 1; klast--)
+
+          klast  = Math.min( klast, nrank );
+
+          for (j = 1; j <= n; j++) {
+             w[j-1]  = zero;
+          } // for (j = 1; j <= n; j++)
+
+          for (k = 1; k <= klast; k++) {
+             i     = ip[k-1];
+             t     = v[i-1];
+             if (t == zero) continue;
+             l1    = locr[i-1];
+             l2    = l1 + lenr[i-1] - 1;
+
+             for (l = l1; l <= l2; l++) {
+                j     = indr[l-1];
+                w[j-1]  = w[j-1]  +  a[l-1] * t;
+             } // for (l = l1; l <= l2; l++)
+          } // for (k = 1; k <= klast; k++)
+          return;
+      } // else if (mode == 4)
+
+} // lu6mul
 
 }
