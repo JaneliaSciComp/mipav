@@ -4,7 +4,6 @@ package gov.nih.mipav.model.structures.jama;
 import java.text.DecimalFormat;
 
 import gov.nih.mipav.model.algorithms.RandomNumberGen;
-import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 
 /** LUSOL maintains LU factors of a square or rectangular sparse matrix.
@@ -135,11 +134,10 @@ public class LUSOL implements java.io.Serializable {
     private ViewUserInterface UI = ViewUserInterface.getReference();
 	
 	DecimalFormat nf = new DecimalFormat("0.00000E0");
-	private int ip = 8;
-	private int rp = 8;
-	private long ip_huge = Long.MAX_VALUE;
-	private double huge = Double.MAX_VALUE;
-	private double eps = 2.22044604925031308E-16;
+	
+	public LUSOL() {
+		
+	}
 	
 	private double random() {
 	    double r, t1, t2;
@@ -157,6 +155,247 @@ public class LUSOL implements java.io.Serializable {
 	    }
 	    return r;
 	}
+	
+	public void lutest_driver() {
+		final int mxm = 20;
+		final int mxn = 20;
+		final int lena = 1000;
+		final int nrowb = mxm;
+		final int ncolb = 2 * mxn;
+		double B[][] = new double[nrowb][ncolb];
+		double d[] = new double[mxn];
+		double x[] = new double[mxn];
+		double y[] = new double[mxm];
+		int kb[] = new int[mxn];
+		int luparm[] = new int[30];
+		double parmlu[] = new double[30];
+		double a[] = new double[lena];
+		double v[] = new double[mxm];
+		double w[] = new double[mxn];
+		int indc[] = new int[lena];
+		int indr[] = new int[lena];
+		int ip[] = new int[mxm];
+		int iq[] = new int[mxn];
+		int lenc[] = new int[mxn];
+		int lenr[] = new int[mxm];
+		int iploc[] = new int[mxm];
+		int iqloc[] = new int[mxn];
+		int locc[] = new int[mxn];
+		int locr[] = new int[mxm];
+		int ipinv[] = new int[mxm];
+		int iqinv[] = new int[mxn];
+		int inform[] = new int[1];
+		int mtest;
+		int m;
+		int n;
+		
+		//     ------------------------------------------------------------------
+		//     Test program for LUSOL.
+		
+		//     25 Sep 1987:  First version.
+		//     LUTEST is asked to do MTEST tests for each specified M and N.
+		//     ------------------------------------------------------------------
+
+		//     Initialize MTEST and the random number sequence.
+
+		      mtest  =  2;
+
+		//     Test square systems.
+
+		      m      = mxm;
+		      n      = mxn;
+
+		      lutest( m, n, nrowb, ncolb, mtest, inform,
+		              kb, B, d, v, w, x, y,
+		              lena, luparm, parmlu,
+		              a, indc, indr, ip, iq,
+		              lenc, lenr, locc, locr, iploc, iqloc,
+		              ipinv, iqinv);
+
+			 if (inform[0] > 2) {
+			      return;
+		      }
+
+		//     More rows than columns.
+
+		      m      = mxm;
+		      n      = mxn / 2;
+
+		      lutest( m, n, nrowb, ncolb, mtest, inform,
+		              kb, B, d, v, w, x, y,
+		              lena, luparm, parmlu,
+		              a, indc, indr, ip, iq,
+		              lenc, lenr, locc, locr, iploc, iqloc,
+		              ipinv, iqinv);
+
+		      if (inform[0] > 2) {
+			      return;
+		      }
+
+		//     More columns than rows.
+
+		      m      = mxm / 2;
+		      n      = mxn;
+
+		      lutest( m, n, nrowb, ncolb, mtest, inform,
+		              kb, B, d, v, w, x, y,
+		              lena, luparm, parmlu,
+		              a, indc, indr, ip, iq,
+		              lenc, lenr, locc, locr, iploc, iqloc,
+		              ipinv, iqinv);
+		      
+		     return;
+	} // lutest_driver
+	
+	private void lutest(int m, int n, int nrowb, int ncolb, int mtest, int inform[],
+		          int kb[], double B[][], double d[], double v[], double w[], double x[], double y[],
+		          int lena, int luparm[], double parmlu[],
+		          double a[], int indc[], int indr[], int ip[], int iq[],
+		          int lenc[], int lenr[], int locc[], int locr[], int iploc[], int iqloc[],
+		          int ipinv[], int iqinv[]) {
+
+		      //IMPLICIT		 DOUBLE PRECISION (A-H,O-Z)
+
+		      //INTEGER   	 KB(N)
+		      //DOUBLE PRECISION	 B(NROWB,NCOLB), D(N), X(N), Y(M)
+
+		      //INTEGER            LUPARM(30)
+		      //DOUBLE PRECISION   PARMLU(30), A(LENA), V(M), W(N)
+		      //INTEGER*2          INDC(LENA), INDR(LENA), IP(M), IQ(N)
+		      //INTEGER*2          LENC(N), LENR(M), IPLOC(M), IQLOC(N)
+		      //INTEGER            LOCC(N), LOCR(M)
+
+		//     ------------------------------------------------------------------
+		//     LUTEST is a test program for LUSOL.
+		
+		//     Jul 31 1987: Test LU1FAC, LU6MUL and LU8RPC.
+		//     Sep 25 1987: Test LU2FAC, LU6SOL also.
+		//     ------------------------------------------------------------------
+		      int nelem[] = new int[1];
+		      int i, j, jnew, jrep, ntest;
+		      double diag[] = new double[1];
+		      double emax[] = new double[1];
+		      double vnorm[] = new double[1];
+              double errmax;
+              double arr[][];
+		      errmax = 0.0;
+
+		      for (ntest = 1;  ntest <= mtest; ntest++) {
+
+		         UI.setDataText("lutest ntest = " + ntest + " m = " + m + " n = " + n + "\n");
+		    	 
+		         setmat( m, n, nrowb, B, d, v, w);
+		         arr = new double[nrowb][n];
+		         for (i = 0; i < nrowb; i++) {
+		        	 for (j = 0; j < n; j++) {
+		        		 arr[i][j] = B[i][j+n];
+		        	 }
+		         }
+		         setmat( m, n, nrowb, arr, d, v, w);
+		         for (i = 0; i < nrowb; i++) {
+		        	 for (j = 0; j < n; j++) {
+		        		 B[i][j+n] = arr[i][j];
+		        	 }
+		         }
+
+		//        ---------------------------------------------------------------
+		//        Test LU1FAC.
+		//        ---------------------------------------------------------------
+
+		         UI.setDataText("Testing lu1fac\n");
+
+		         luinit( m, n, nrowb, B, kb,
+		                 lena, luparm, parmlu,
+		                 nelem, a, indc, indr);
+
+		         lu1fac( m, n, nelem[0],
+		                 lena, luparm, parmlu,
+		                 a, indc, indr, ip, iq,
+		                 lenc, lenr, locc, locr,
+		                 iploc, iqloc, ipinv, iqinv, w, inform);
+
+		         if (inform[0] > 1) {
+		        	 UI.setDataText("Error in lu1fac inform[0] = " + inform[0] + "\n");
+		        	 return;
+		         }
+
+		         luchek( m, n, nrowb, B, kb, emax, v, w, x, y,
+		                 lena, luparm, parmlu,
+		                 a, indc, indr, ip, iq,
+		                 lenc, lenr, locc, locr);
+
+		         errmax = Math.max(errmax, emax[0]);
+
+		
+		//        ---------------------------------------------------------------
+		//        Replace columns of the LU one by one.
+		//        ---------------------------------------------------------------
+
+		        for (j = 1; j <= n; j++) {
+		            jrep = j;
+		            jnew  = 2*n + 1 - j;
+		            kb[jrep-1] = jnew;
+
+		            for (i = 1; i <= m; i++) {
+		               v[i-1] = B[i-1][jnew-1];
+		            } // for (i = 1; i <= m; i++)
+
+		            lu8rpc( 1, 1, m, n, jrep, v, w,
+		                    lena, luparm, parmlu,
+		                    a, indc, indr, ip, iq,
+		                    lenc, lenr, locc, locr,
+		                    inform, diag, vnorm);
+
+		            UI.setDataText("Column " + jrep + " replaced by column " + jnew + "\n");
+		            if (inform[0] > 2) {
+		            	UI.setDataText("Error in lu8rpc inform[0] = " + inform[0] + "\n");
+		            	return;
+		            }
+		            
+
+		            luchek( m, n, nrowb, B, kb, emax, v, w, x, y,
+		                    lena, luparm, parmlu,
+		                    a, indc, indr, ip, iq,
+		                    lenc, lenr, locc, locr);
+
+		            errmax = Math.max(errmax, emax[0]);
+		        } // for (j = 1; j <= n; j++)
+		      } // for (ntest = 1;  ntest <= mtest; ntest++)
+		      
+		      UI.setDataText("Maximum error after " + mtest + " tests = " + nf.format(errmax) + "\n");
+		      return;
+} // lutest
+
+	
+	private void setmat(int m, int n, int nrowb, double B[][], double d[], double v[], double w[]) {
+    //IMPLICIT		 DOUBLE PRECISION (A-H,O-Z)
+    //DOUBLE PRECISION   B(NROWB,N), D(N), V(M), W(N)
+
+//     SETMAT sets   B  =  D  +  vw'
+//     where D = diag(d) and d, v, w are random vectors.
+		int i, j;
+		double wj;
+
+    for (i = 0; i < m; i++) {
+       v[i] = random();
+    }
+
+    for (j = 0; j < n; j++) {
+    	d[j] = random();
+    	w[j] = random();
+    }
+    
+    for (j = 0; j < n; j++) {
+        wj = w[j];
+        for (i = 0; i < m; i++) {
+        	B[i][j] = v[i] * wj;
+        }
+        B[j][j] = B[j][j] + d[j];
+    }
+    
+    return;
+	} // setmat
+
 	
 	private void luinit( int m, int n, int nrowb, double B[][], int kb[],
                          int lena, int luparm[], double parmlu[],
@@ -193,6 +432,204 @@ public class LUSOL implements java.io.Serializable {
 		      return;
 
 	} // luinit
+	
+	private void luchek(int m, int n, int nrowb, double B[][], int kb[], double emax[], double v[], double w[], double x[], double y[],
+	                    int lena, int luparm[], double parmlu[],
+	                    double a[], int indc[], int indr[], int ip[], int iq[],
+                        int lenc[], int lenr[], int locc[], int locr[]) {
+
+		      //IMPLICIT           REAL*8(A-H,O-Z)
+
+		      //DOUBLE PRECISION   B(NROWB,*), X(N), Y(M)
+		      //INTEGER            KB(N)
+
+		      //INTEGER            LUPARM(30)
+		      //DOUBLE PRECISION   PARMLU(30), A(LENA)   , V(M) , W(N)
+		      //INTEGER*2          INDC(LENA), INDR(LENA), IP(M), IQ(N)
+		      //INTEGER*2          LENC(N)   , LENR(M)
+		      //,,,,,,,,,INTEGER            LOCC(N)   , LOCR(M)
+
+		//     ------------------------------------------------------------------
+		//     LUCHEK computes the matrix A = L*U column by column
+		//     and checks that it agrees with the relevant columns of B,
+		//     specified by KB.
+		
+		//     LUCHEK then computes A = L*U row by row and compares with B.
+		
+		//     This constitutes a test of  LU6MUL  (with all values of MODE).
+		//     ------------------------------------------------------------------
+
+		final double zero = 0.0;
+		final double one = 1.0;
+		int inform[] = new int[1];
+		int i, j, k, l, lenl, lenu, nrank;
+		double cmax, err, rmax, xmax, ymax;
+
+		nrank  = luparm[15];
+		cmax = zero;
+		rmax = zero;
+
+		//     ------------------------------------------------------------------
+		//     Check A = L*U by columns.
+		//     ------------------------------------------------------------------
+
+		  for (k = 1; k <= n; k++) {
+
+		//        Set  W = K-th unit vector.
+
+		         for (i = 0; i < n; i++) {
+		        	 w[i] = zero;
+		         }
+		         w[k-1]   = one;
+
+		//        Set  V  =  A * W  =  K-th column of A.
+		//        Find the maximum deviation from the corresponding column of B.
+
+		         lu6mul( 5, m, n, v, w,
+		                 lena, luparm, parmlu,
+		                 a, indc, indr, ip, iq, lenc, lenr, locc, locr);
+
+		         j    = kb[k-1];
+		         for (i = 1; i <= m; i++) {
+		            err  = Math.abs( B[i-1][j-1] - v[i-1]);
+		            cmax = Math.max(cmax, err);
+		         } // for (i = 1; i <= m; i++)
+		  } // for (k = 1; k <= n; k++)
+
+		//     ------------------------------------------------------------------
+		//     Check A = L*U by rows.
+		//     ------------------------------------------------------------------
+
+		  for (k = 1; k <= m; k++) {
+
+		//        Set  V = K-th unit vector.
+
+		         for (i = 0; i < m; i++) {
+		        	 v[i] = zero;
+		         }
+		         v[k-1] = one;
+
+		//        Set  W = A(transpose) * V  =  K-th row of A.
+		//        Find the maximum deviation from the corresponding row of B.
+
+		         lu6mul( 6, m, n, v, w,
+		                 lena, luparm, parmlu,
+		                 a, indc, indr, ip, iq, lenc, lenr, locc, locr);
+
+		         for (j = 1; j <= n; j++) {
+		            l     = kb[j-1];
+		            err   = Math.abs(B[k-1][l-1] - w[j-1]);
+		            rmax  = Math.max(rmax, err);
+		         } // for (j = 1; j <= n; j++)
+		  } // for (k = 1; k <= m; k++)
+
+		//     ------------------------------------------------------------------
+		//     Check solution of A*X = V.
+		//     ------------------------------------------------------------------
+
+		      x[0] = one;
+		      for (j = 2; j <= n; j++) {
+		         x[j-1]  = -x[j-2] / 2.0;
+		      } // for (j = 2; j <= n; j++)
+
+		      for (i = 0; i < m; i++) {
+		    	  v[i] = zero;
+		      }
+
+		      for (k = 1; k <= n; k++) {
+		         j     = kb[k-1];
+		         for (i = 1; i <= m; i++) {
+		        	 v[i-1] = v[i-1] + x[k-1] * B[i-1][j-1];
+		         }
+		      } // for (k = 1; k <= n; k++)
+
+		//     Save V in Y.
+		//     Solve  A*W = V = Y,
+		//     then compute the residual  Y - A*W.
+
+		      for (i = 0; i < m; i++) {
+		          y[i] = v[i];
+		      }
+
+		      lu6sol( 5, m, n, v, w,
+		              lena, luparm, parmlu,
+		              a, indc, indr, ip, iq,
+		              lenc, lenr, locc, locr, inform);
+
+		      for (k = 1; k <= n; k++) {
+		         j     = kb[k-1];
+		         for (i = 1; i <= m; i++) {
+		        	 y[i-1] = y[i-1] - w[k-1] * B[i-1][j-1];
+		         }
+		      } // for (k = 1; k <= n; k++)
+
+		      ymax = 0.0;
+		      for (i = 0; i < m; i++) {
+		    	  if (Math.abs(y[i]) > ymax) {
+		    		  ymax = Math.abs(y[i]);
+		    	  }
+		      }
+
+		//     ------------------------------------------------------------------
+		//     Check solution of A(t)*Y = W.
+		//     ------------------------------------------------------------------
+
+		      y[0] = one;
+		      for (i = 2; i <= m; i++) {
+		    	  y[i-1] = -y[i-2]/2.0;
+		      } // for (i = 2; i <= m; i++)
+
+		      for (k = 1; k <= n; k++) {
+		         j     = kb[k-1];
+		         w[k-1] = 0;
+		         for (i = 1; i <= m; i++) {
+		        	 w[k-1] = w[k-1] + B[i-1][j-1] * y[i-1];
+		         }
+		      } // for (k = 1; k <= n; k++)
+
+		//     Save W in X.
+		//     Solve  A(t)*V = W = X,
+		//     then compute the residual  X - A(t)*V.
+
+		      for (i = 0; i < n; i++) {
+		    	  x[i] = w[i];
+		      }
+
+		      lu6sol( 6, m, n, v, w,
+		              lena, luparm, parmlu,
+		              a, indc, indr, ip, iq,
+		              lenc, lenr, locc, locr, inform);
+
+		      for (k = 1; k <= n; k++) {
+		         j     = kb[k-1];
+		         for (i = 1; i <= m; i++) {
+		        	 x[k-1] = x[k-1] - B[i-1][j-1] * v[i-1];
+		         }
+		      } // for (k = 1; k <= n; k++)
+
+		      xmax = 0.0;
+		      for (i = 0; i < n; i++) {
+		    	  if (Math.abs(x[i]) > xmax) {
+		    		  xmax = Math.abs(x[i]);
+		    	  }
+		      }
+
+		//     Print maximum errors.
+
+		      emax[0] = Math.max(cmax, rmax);
+		      emax[0] = Math.max(emax[0], ymax);
+		      emax[0] = Math.max(emax[0], xmax);
+		      lenl = luparm[22];
+		      lenu = luparm[23];
+		      UI.setDataText("luchek rank = " + nrank + "\n");
+		      UI.setDataText("LenL = " + lenl + " LenU = " + lenu + "\n");
+		      UI.setDataText("A - L*U error = " + nf.format(cmax) + "\n");
+		      UI.setDataText("(A - L*U)transpose error = " + nf.format(rmax) + "\n");
+		      UI.setDataText("Ax = b error = " + nf.format(ymax) + "\n");
+		      UI.setDataText("Atranspose * y  = b error = " + nf.format(xmax) + "\n");
+		      return;
+	} // luchek
+
 
 	
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1044,6 +1481,7 @@ public class LUSOL implements java.io.Serializable {
 	          UI.setDataText("Ltol = " + nf.format(Ltol) + "\n");
 	          UI.setDataText("Umax[0] = " + nf.format(Umax[0]) + "\n");
 	          UI.setDataText("Ugrwth = " + nf.format(Ugrwth) + "\n");
+	          UI.setDataText("nLtri[0] = " + nLtri[0] + "\n");
 	          UI.setDataText("ndens1[0] = " + ndens1[0] + "\n");
 	          UI.setDataText("Lmax[0] = " + nf.format(Lmax[0]) + "\n");
 	       }
@@ -5556,6 +5994,12 @@ return;
             klast[0]    = nrank[0];
          }
          else {
+        	//if (krep[0] == 0) {
+        	//	System.err.println("krep[0] == 0");
+        	//}
+        	//if (nrank[0] == 0) {
+        	//    System.err.println("nrank[0] == 0");	
+        	//}
             q[krep[0]-1] = q[nrank[0]-1];
             q[nrank[0]-1] = jrep;
             krep[0]     = nrank[0];
