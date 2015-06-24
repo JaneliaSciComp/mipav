@@ -95,9 +95,16 @@ public class SurfaceLightingEffect extends VolumeClipEffect
             m_kPPixelLighting.SetImageName(3, "ColorMapNew", "gColorMapNew");
             m_kPPixelLighting.SetTexture(3, m_kVolumeLUTNew, "gColorMapNew" );
         }
-        m_kVShader.set(0, m_kVVertexLighting);
-        m_kPShader.set(0, m_kPVertexLighting);
-        
+        if ( m_bPerPixelLighting )
+        {
+            m_kVShader.set(0, m_kVPixelLighting);
+            m_kPShader.set(0, m_kPPixelLighting);
+        }
+        else
+        {
+        	m_kVShader.set(0, m_kVVertexLighting);
+        	m_kPShader.set(0, m_kPVertexLighting);
+        }
         m_kVolumeImage = kImageA;
     }
     /**
