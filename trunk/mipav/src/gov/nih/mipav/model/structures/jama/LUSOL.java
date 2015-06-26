@@ -2669,7 +2669,7 @@ if ( TCP ) {
 a[lu1-1]    = abest;
 indr[lu1-1] = jbest[0];
 indc[lu1-1] = nrowd;
-lu [0]       = lu1;
+lu[0]       = lu1;
 
 diag      = Math.abs( abest );
 Umax[0]      = Math.max(  Umax[0], diag );
@@ -3220,7 +3220,7 @@ if ( keepLU ) {
  } // for (j = nleft; j >= k; j--)
 
  lenr[ibest-1] = - ncold;
- lenc[jbest] = - nrowd;
+ lenc[jbest-1] = - nrowd;
  lenL[0]        =   lenL[0] + nrowd - 1;
  lenU[0]        =   lenU[0] + ncold;
  lkn         =   lkn  + 1;
