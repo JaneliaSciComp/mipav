@@ -5600,8 +5600,8 @@ for (k = 1; k <= nrank; k++) {
  } // for (l = l1; l <= l2; l++) 
 } // for (k = 1; k <= nrank; k++)
 
-parmlu[11-1] = Lmax;
-parmlu[12-1] = Umax;
+parmlu[10] = Lmax;
+parmlu[11] = Umax;
 
 // --------------------------------------------------------------
 // Find DUmax and DUmin, the extreme diagonals of U.
@@ -5710,7 +5710,7 @@ if (lprint >= 0) {
  else {
     mnkey  = '<';
  }
- UI.setDataText("Singular m " + mnkey + " n " + " rank = " + nrank + "n-rank = " + ndefic + " nsing = " + nsing + "\n");
+ UI.setDataText("Singular m " + mnkey + " n " + " rank = " + nrank + "n - rank = " + ndefic + " nsing = " + nsing + "\n");
 } // if (lprint >= 0)
 } // if (nsing > 0)
 
