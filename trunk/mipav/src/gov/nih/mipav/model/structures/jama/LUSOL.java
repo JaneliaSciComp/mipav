@@ -410,6 +410,7 @@ public class LUSOL implements java.io.Serializable {
 		      luparm[0] = 6;
 		      luparm[1] = 0;
 		      luparm[2] = 10;
+		      luparm[7] = 1;
 		      parmlu[0] = 10.0;
 		      parmlu[1] = 10.0;
 		      parmlu[2] = 1.0E-13;
@@ -1234,19 +1235,40 @@ public class LUSOL implements java.io.Serializable {
 		       locH   = lena2 + 1;     // Start of Ha, Hj, Hk in a, indc, indr
 		       lmaxr  = 1;             // Dummy
 		    }
-	
-		    double Ha[] = new double[lenH];
-		    int Hj[] = new int[lenH];
-		    int Hk[] = new int[lenH];
-		    double Amaxr[] = new double[m];
-		    for (i = 0; i < lenH; i++) {
-		    	Ha[i] = a[locH - 1 + i];
-		    	Hj[i] = indc[locH-1+i];
-		    	Hk[i] = indr[locH-1+i];
+		    // Ha, Hj, and Hk are only used in lu1fad if TCP.
+		    double Ha[];
+		    int Hj[];
+		    int Hk[];
+		    if (TCP) {
+			    Ha = new double[lenH];
+			    Hj = new int[lenH];
+			    Hk = new int[lenH];
+		    } // if (TCP)
+		    else {
+		       Ha = null;
+		       Hj = null;
+		       Hk = null;
 		    }
-		    for (i = 0; i < m; i++) {
-		    	Amaxr[i] = a[lmaxr-1+i];
+		    // Amaxr only used if TRP.
+		    double Amaxr[];
+		    if (TRP) {
+		    	Amaxr = new double[m];
 		    }
+		    else {
+		        Amaxr = null;	
+		    }
+		    if (TCP) {
+			    for (i = 0; i < lenH; i++) {
+			    	Ha[i] = a[locH - 1 + i];
+			    	Hj[i] = indc[locH-1+i];
+			    	Hk[i] = indr[locH-1+i];
+			    }
+		    } // if (TCP)
+		    if (TRP) {
+			    for (i = 0; i < m; i++) {
+			    	Amaxr[i] = a[lmaxr-1+i];
+			    }
+		    } // if (TRP)
 		    lu1fad( m, n, numnz[0] , lena2, luparm, parmlu,
 		                 a     , indc  , indr  , p     , q,
 		                 lenc  , lenr  , locc  , locr,
@@ -1255,14 +1277,18 @@ public class LUSOL implements java.io.Serializable {
 		                 inform, lenL  , lenU  , minlen, mersum,
 		                 nUtri , nLtri , ndens1, ndens2, nrank ,
 		                 Lmax  , Umax  , DUmax , DUmin , Akmax );
-		    for (i = 0; i < lenH; i++) {
-		    	a[locH - 1 + i] = Ha[i];
-		    	indc[locH-1+i] = Hj[i];
-		    	indr[locH-1+i] = Hk[i];
-		    }
-		    for (i = 0; i < m; i++) {
-		    	a[lmaxr-1+i] = Amaxr[i];
-		    }
+		    if (TCP) {
+			    for (i = 0; i < lenH; i++) {
+			    	a[locH - 1 + i] = Ha[i];
+			    	indc[locH-1+i] = Hj[i];
+			    	indr[locH-1+i] = Hk[i];
+			    }
+		    } // if (TCP)
+		    if (TRP) {
+			    for (i = 0; i < m; i++) {
+			    	a[lmaxr-1+i] = Amaxr[i];
+			    }
+		    } // if (TRP)
 	
 		    luparm[15] = nrank[0];
 		    luparm[22] = lenL[0];
