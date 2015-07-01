@@ -86,6 +86,10 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogSta
     
     /** coords of filament **/
     public ArrayList <ArrayList<float[]>> allFilamentCoords = new ArrayList <ArrayList<float[]>>();
+    
+    public ArrayList<float[]> swcFilamentCoords = new ArrayList<float[]>();
+    
+    public boolean haveSWC = false;
 
     /** resolutions **/
     public float[] resols;
@@ -563,7 +567,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogSta
 				 callAlgorithm();
 			 }
 		 }else if(command.equalsIgnoreCase("surfaceBrowse")) {
-
+             boolean success;
 			 JFileChooser chooser = new JFileChooser();
 		        if (currDir != null) {
 					chooser.setCurrentDirectory(new File(currDir));
@@ -577,11 +581,26 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogSta
 		        	if(!readSurfaceFile(surfaceFile)) {
 		        		
 		        		MipavUtil.displayError("Error parsing surface file");
-		        		allFilamentCoords = new ArrayList <ArrayList<float[]>>();
-		        		
+		        		if (haveSWC) {
+		        			swcFilamentCoords = new ArrayList<float[]>();
+		        		}
+		        		else {
+		        		    allFilamentCoords = new ArrayList <ArrayList<float[]>>();
+		        		}
+		        	} else if (haveSWC) {
+		        	    success = swcFilamentCoords.size() > 1;
+		        	    if (success == false) {
+		        	    	swcFilamentCoords = new ArrayList<float[]>();	
+		        	    } else {
+		        			createCityBlockImage();
+		        			surfaceFilePathTextField.setText(currDir);
+		        			swcCB.setSelected(false);
+		        			swcCB.setEnabled(false);
+		        		}
+		        	    
 		        	}else {
-
-		        		boolean success = determineIfProperlyConnected();
+                        
+		        		success = determineIfProperlyConnected();
 		        		if(success == false) {
 		        			allFilamentCoords = new ArrayList <ArrayList<float[]>>();
 		        			
@@ -635,6 +654,12 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogSta
 	public boolean readSurfaceFile(File surfaceFile) {
 		boolean success = true;
 		RandomAccessFile raFile = null;
+		String fileName = surfaceFile.getName();
+		int pos = fileName.lastIndexOf(".");
+	    haveSWC = false;
+		if ((pos >= 0) && (fileName.substring(pos+1).equalsIgnoreCase("SWC"))) {
+		    haveSWC = true;	
+		}
 		try {
 
 			raFile = new RandomAccessFile(surfaceFile, "r");
@@ -645,62 +670,81 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogSta
 			
 			String line;
 			
-			
-			while((line=raFile.readLine())!= null) {
-				line = line.trim();
-				if(line.startsWith("Translate1Dragger")) {
-					break;
-				}
-				if(line.contains("Coordinate3")) {
-					ArrayList<float[]> filamentCoords = new ArrayList<float[]>();
-					while(!((line=raFile.readLine()).endsWith("}"))) {
-						line = line.trim();
-						if(!line.equals("")) {
-							if(line.startsWith("point [")) {
-								line = line.substring(line.indexOf("point [") + 7, line.length()).trim();
-								if(line.equals("")) {
-									continue;
-								}
-							}
-							if(line.endsWith("]")) {
-								line = line.substring(0, line.indexOf("]")).trim();
-								if(line.equals("")) {
-									continue;
-								}
-							}
-							if(line.endsWith(",")) {
-								line = line.substring(0, line.indexOf(",")).trim();
-								if(line.equals("")) {
-									continue;
-								}
-							}
-							String[] splits = line.split("\\s+");
-							splits[0] = splits[0].trim();
-							splits[1] = splits[1].trim();
-							splits[2] = splits[2].trim();
-							float coord_x = new Float(splits[0]).floatValue();
-							float coord_y = new Float(splits[1]).floatValue();
-							float coord_z = new Float(splits[2]).floatValue();
-							
-							//we will get the coords in proper mipav space in the method, determineIfProperlyConnected
-							/*float x = coord_x/resols[0];
-							float y = coord_y/resols[1];
-							float z = coord_z/resols[2];*/
-							  
-							float[] coords = {coord_x,coord_y,coord_z,0};
-							
-							filamentCoords.add(coords);
-							//fw.append(coord_x + "\t" + coord_y + "\t" + coord_z + "\r\n");
-						}
+			if (haveSWC) {
+				while((line=raFile.readLine())!= null) {
+					line = line.trim();
+					if(!line.equals("")) {
+						String[] splits = line.split(" ");
+						splits[2] = splits[2].trim();
+						splits[3] = splits[3].trim();
+						splits[4] = splits[4].trim();
+						float coord_x = new Float(splits[2]).floatValue();
+						float coord_y = new Float(splits[3]).floatValue();
+						float coord_z = new Float(splits[4]).floatValue();
+						float[] coords = {coord_x,coord_y,coord_z,0};
+						
+						swcFilamentCoords.add(coords);
 					}
-					allFilamentCoords.add(filamentCoords);
 				}
-				
-				
-				
-				
-				
-			}
+			} // if (haveSWC)
+			
+			else { // iv file
+				while((line=raFile.readLine())!= null) {
+					line = line.trim();
+					if(line.startsWith("Translate1Dragger")) {
+						break;
+					}
+					if(line.contains("Coordinate3")) {
+						ArrayList<float[]> filamentCoords = new ArrayList<float[]>();
+						while(!((line=raFile.readLine()).endsWith("}"))) {
+							line = line.trim();
+							if(!line.equals("")) {
+								if(line.startsWith("point [")) {
+									line = line.substring(line.indexOf("point [") + 7, line.length()).trim();
+									if(line.equals("")) {
+										continue;
+									}
+								}
+								if(line.endsWith("]")) {
+									line = line.substring(0, line.indexOf("]")).trim();
+									if(line.equals("")) {
+										continue;
+									}
+								}
+								if(line.endsWith(",")) {
+									line = line.substring(0, line.indexOf(",")).trim();
+									if(line.equals("")) {
+										continue;
+									}
+								}
+								String[] splits = line.split("\\s+");
+								splits[0] = splits[0].trim();
+								splits[1] = splits[1].trim();
+								splits[2] = splits[2].trim();
+								float coord_x = new Float(splits[0]).floatValue();
+								float coord_y = new Float(splits[1]).floatValue();
+								float coord_z = new Float(splits[2]).floatValue();
+								
+								//we will get the coords in proper mipav space in the method, determineIfProperlyConnected
+								/*float x = coord_x/resols[0];
+								float y = coord_y/resols[1];
+								float z = coord_z/resols[2];*/
+								  
+								float[] coords = {coord_x,coord_y,coord_z,0};
+								
+								filamentCoords.add(coords);
+								//fw.append(coord_x + "\t" + coord_y + "\t" + coord_z + "\r\n");
+							}
+						}
+						allFilamentCoords.add(filamentCoords);
+					}
+					
+					
+					
+					
+					
+				}
+			} // else iv file
 			raFile.close();
 			//fw.close();
 			
@@ -927,8 +971,18 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogSta
 	 */
 	public void callAlgorithm() {
 		float samplingRate = Float.valueOf((String)surfaceFileSamplingCB.getSelectedItem()).floatValue();
-
-		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate,cityBlockImage,pointsFile,outputTextArea,flipXCB.isSelected(), flipYCB.isSelected(), flipZCB.isSelected(),greenThreshold,subsamplingDistance,rigRadio.isSelected(),doSWC,rvldRadio.isSelected(),numPointsString);
+        if (haveSWC) {
+        	alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,swcFilamentCoords,
+        			surfaceFile,samplingRate,cityBlockImage,pointsFile,outputTextArea,flipXCB.isSelected(),
+        			flipYCB.isSelected(), flipZCB.isSelected(),greenThreshold,subsamplingDistance,rigRadio.isSelected(),
+        			rvldRadio.isSelected(),numPointsString);	
+        }
+        else {
+		    alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,
+		    		surfaceFile,samplingRate,cityBlockImage,pointsFile,outputTextArea,flipXCB.isSelected(),
+		    		flipYCB.isSelected(), flipZCB.isSelected(),greenThreshold,subsamplingDistance,rigRadio.isSelected(),
+		    		doSWC,rvldRadio.isSelected(),numPointsString);
+        }
 		alg.addListener(this);
 		alg.setSearchTolerance(searchTolerance);
 		setCursor(new Cursor(Cursor.WAIT_CURSOR));
@@ -1048,25 +1102,37 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogSta
          
          ArrayList<int[]> zeroCoords = new ArrayList<int[]>();
 
-		 
-		 int allFilamentsSize = allFilamentCoords.size();
-		 int alSize;
-		 ArrayList<float[]> al;
-		 float[] coords;
-		 for(int i=0;i<allFilamentsSize;i++) {
-			 al = allFilamentCoords.get(i);
-			 alSize = al.size();
-			 for(int k=0;k<alSize;k++) {
-				 coords = al.get(k);
+         float[] coords;
+         if (haveSWC) {
+		     for (int k = 0; k < swcFilamentCoords.size(); k++) {
+		    	 coords = swcFilamentCoords.get(k);
 				 x1 = Math.round(coords[0]);
 				 y1 = Math.round(coords[1]);
 				 z1 = Math.round(coords[2]);
 				 int[] arr = {x1,y1,z1};
 		         zeroCoords.add(arr);
-		         cityBlockImage.set(x1,y1,z1,0);
-		         
-			 }
+		         cityBlockImage.set(x1,y1,z1,0);	 
+		     }
 		 }
+		 else { // iv
+			 int allFilamentsSize = allFilamentCoords.size();
+			 int alSize;
+			 ArrayList<float[]> al;
+			 for(int i=0;i<allFilamentsSize;i++) {
+				 al = allFilamentCoords.get(i);
+				 alSize = al.size();
+				 for(int k=0;k<alSize;k++) {
+					 coords = al.get(k);
+					 x1 = Math.round(coords[0]);
+					 y1 = Math.round(coords[1]);
+					 z1 = Math.round(coords[2]);
+					 int[] arr = {x1,y1,z1};
+			         zeroCoords.add(arr);
+			         cityBlockImage.set(x1,y1,z1,0);
+			         
+				 }
+			 }
+		 } // else iv
 
 		 
 		 ArrayList<int[]> oneCoords = new ArrayList<int[]>();
