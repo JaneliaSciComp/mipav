@@ -596,6 +596,11 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogSta
 		        			surfaceFilePathTextField.setText(currDir);
 		        			swcCB.setSelected(false);
 		        			swcCB.setEnabled(false);
+		        			greenValueRadiusThresholdTextField.setEnabled(false);
+		   				    subsamplingDistanceTextField.setEnabled(false);
+		   				    outputFilenameTextField.setEnabled(false);
+		   				    outputFilenameTextField_auto.setEnabled(false);
+		   				    outputFilenameTextField_regionGrow.setEnabled(false);
 		        		}
 		        	    
 		        	}else {
@@ -607,6 +612,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogSta
 		        		}else {
 		        			createCityBlockImage();
 		        			surfaceFilePathTextField.setText(currDir);
+		        			swcCB.setEnabled(true);
 		        		}
 		        	}
 		        	
