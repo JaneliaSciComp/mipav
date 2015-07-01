@@ -1059,7 +1059,7 @@ public class LUSOL implements java.io.Serializable {
 	        lprint, lPiv, lrow, ltopl,
 	        lu, nbump,
 	        ncp,
-	        nmove, nout,
+	        nmove,
 	        nsing, numl0;
 	    int lenL[] = new int[1];
 	    int lenU[] = new int[1];
@@ -1089,7 +1089,6 @@ public class LUSOL implements java.io.Serializable {
 
 	    // Grab relevant input parameters.
 
-	    nout   = luparm[0];
 	    lprint = luparm[1];
 	    lPiv   = luparm[5];
 	    keepLU = luparm[7] != 0;
@@ -1172,7 +1171,7 @@ public class LUSOL implements java.io.Serializable {
 		                 a   , indc , indr , lenc , lenr, 
 		                 Amax, numnz, lerr , inform );
 	
-		    if (nout > 0  &&  lprint >= 10) {
+		    if (lprint >= 10) {
 		       densty = 100.0 * delem / (dm * dn);
 		       UI.setDataText("m = " + m + " mnkey = " + mnkey + " n = " + n + "\n");
 		       UI.setDataText("nelem = " + nelem + " Amax[0] = " + nf.format(Amax[0]) + 
@@ -1495,7 +1494,7 @@ public class LUSOL implements java.io.Serializable {
 	    avgmer = avgmer / dm;
 	    nbump  = m - nUtri[0] - nLtri[0];
 
-	    if (nout > 0  &&  lprint >= 10) {
+	    if (lprint >= 10) {
 	       if ( TPP ) {
 	          UI.setDataText("avgmer = " + nf.format(avgmer) + "\n");
 	          UI.setDataText("lenL[0] = " + lenL[0] + "\n");
