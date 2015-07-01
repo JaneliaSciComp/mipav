@@ -105,14 +105,17 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     private TransMatrix lsMatrix;
 
     /** coords of filament * */
-    private final ArrayList<ArrayList<float[]>> allFilamentCoords;
+    private ArrayList<ArrayList<float[]>> allFilamentCoords;
 
     /** new coords of filment * */
-    private final ArrayList<ArrayList<float[]>> allFilamentCoords_newCoords;
+    private ArrayList<ArrayList<float[]>> allFilamentCoords_newCoords;
     
+    private ArrayList<float[]> swcFilamentCoords;
     
+    private ArrayList<float[]> swcFilamentCoords_newCoords;
     
-
+    private boolean haveSWC;
+    
     /** tolerances used * */
     private final double tolerance, toleranceSq;
 
@@ -239,6 +242,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         createGreyImage();
         this.pointsMap = pointsMap;
         resols = neuronImage.getResolutions(0);
+        haveSWC = false;
         this.allFilamentCoords = allFilamentCoords;
         allFilamentCoords_newCoords = new ArrayList<ArrayList<float[]>>();
         for (int i = 0; i < allFilamentCoords.size(); i++) {
@@ -279,6 +283,60 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 			//this.outputFilename_regionGrow = outputFilename_regionGrow;
 
 	    }
+		this.doRigidOnly = rigidOnly;
+		this.rvld = rvld;
+		
+		this.numPointsString = numPointsString;
+		if(numPointsString.equals(PlugInDialogDrosophilaStandardColumnRegistration._27POINTS) || numPointsString.equals(PlugInDialogDrosophilaStandardColumnRegistration._27APOINTS)) {
+			this.numPoints = 27;
+		}else if(numPointsString.equals(PlugInDialogDrosophilaStandardColumnRegistration._75POINTS) || numPointsString.equals(PlugInDialogDrosophilaStandardColumnRegistration._75APOINTS)) {
+			this.numPoints = 75;
+		}else {
+			this.numPoints = 147;
+		}
+		
+		
+
+    }
+    
+    public PlugInAlgorithmDrosophilaStandardColumnRegistration(final ModelImage neuronImage,
+            final TreeMap<Integer, float[]> pointsMap, final ArrayList<float[]> swcFilamentCoords,
+            final File oldSurfaceFile, final float samplingRate, final ModelImage cityBlockImage,
+            final File pointsFile, final JTextArea outputTextArea, final boolean flipX, final boolean flipY,
+            final boolean flipZ,float greenThreshold, float subsamplingDistance, boolean rigidOnly,boolean rvld, String numPointsString) {
+    	
+    	
+        this.neuronImage = neuronImage;
+        this.neuronImageExtents = neuronImage.getExtents();
+        dir = neuronImage.getImageDirectory();
+        // create neuron grey image
+        createGreyImage();
+        this.pointsMap = pointsMap;
+        resols = neuronImage.getResolutions(0);
+        haveSWC = true;
+        this.swcFilamentCoords = swcFilamentCoords;
+        swcFilamentCoords_newCoords = new ArrayList<float[]>();
+        int size = swcFilamentCoords.size();
+        for (int k = 0; k < size; k++) {
+        	swcFilamentCoords_newCoords.add(k, null);
+        }
+
+        final double sqrRtThree = Math.sqrt(3);
+
+        
+        tolerance = (sqrRtThree / 2) * ( ( (resols[0] / resols[0]) + (resols[1] / resols[0]) + (resols[2] / resols[0])) / 3);
+
+        toleranceSq = tolerance * tolerance;
+
+        this.oldSurfaceFile = oldSurfaceFile;
+        this.samplingRate = samplingRate;
+        this.cityBlockImage = cityBlockImage;
+        this.pointsFile = pointsFile;
+        this.outputTextArea = outputTextArea;
+        this.flipX = flipX;
+        this.flipY = flipY;
+        this.flipZ = flipZ;
+        this.doSWC = false;
 		this.doRigidOnly = rigidOnly;
 		this.rvld = rvld;
 		
@@ -5947,20 +6005,33 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         createFinalImage();
         
         //remove any null points from 
-        ArrayList<float[]> al;
-        int size = allFilamentCoords_newCoords.size();
-        for(int i=0;i<size;i++) {
-			 al = allFilamentCoords_newCoords.get(i);
-			 float[] coords;
-			 int size2 = al.size();
-			 for(int k=size2-1;k>=0;k--) {
-				 coords = al.get(k);
-				 if(coords == null) {
-					 System.out.println("removing " + k + " from " + i);
-					 al.remove(k);
-				 }
-			 }
+        if (haveSWC) {
+            int size = swcFilamentCoords_newCoords.size();
+            float coords[];
+            for (int k = size - 1; k >= 0; k--) {
+            	coords = swcFilamentCoords_newCoords.get(k);
+            	if (coords == null) {
+            		System.out.println("removing " + k);
+            		swcFilamentCoords_newCoords.remove(k);
+            	}
+            }
         }
+        else { // iv
+	        ArrayList<float[]> al;
+	        int size = allFilamentCoords_newCoords.size();
+	        for(int i=0;i<size;i++) {
+				 al = allFilamentCoords_newCoords.get(i);
+				 float[] coords;
+				 int size2 = al.size();
+				 for(int k=size2-1;k>=0;k--) {
+					 coords = al.get(k);
+					 if(coords == null) {
+						 System.out.println("removing " + k + " from " + i);
+						 al.remove(k);
+					 }
+				 }
+	        }
+        } // else iv
 			 
 			 
         System.gc();
@@ -6063,13 +6134,25 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		
 		//Determine bounding box in original coordinates
 		
-		for(ArrayList<float[]> a : allFilamentCoords){
-			for(float[] f : a){
+		if (haveSWC) {
+			for(float[] f : swcFilamentCoords){
 				for(int i=0;i<3;i++){
 					if(f[i] < minCoords[i])
 						minCoords[i] = f[i];
 					if(f[i] > maxCoords[i])
 						maxCoords[i] = f[i];
+				}
+			}	
+		}
+		else {
+			for(ArrayList<float[]> a : allFilamentCoords){
+				for(float[] f : a){
+					for(int i=0;i<3;i++){
+						if(f[i] < minCoords[i])
+							minCoords[i] = f[i];
+						if(f[i] > maxCoords[i])
+							maxCoords[i] = f[i];
+					}
 				}
 			}
 		}
@@ -6171,17 +6254,11 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 							tPt[2] < 0 || tPt[2] >= ext[2] - 0.5)
 						continue;
 					
-					if (cityBlockImage.getByte(Math.round(tPt[0]), Math.round(tPt[1]),Math.round(tPt[2])) != 100) {	
-	                    ArrayList<float[]> al;
-	                    ArrayList<float[]> al_new;
-	                    float[] coords;
-	                    final int allFilamentsSize = allFilamentCoords.size();
-	                    int alSize;
-	                    for (int i = 0; i < allFilamentsSize; i++) {
-	                        al = allFilamentCoords.get(i);
-	                        alSize = al.size();
-	                        for (int k = 0; k < alSize; k++) {
-	                            coords = al.get(k);
+					if (cityBlockImage.getByte(Math.round(tPt[0]), Math.round(tPt[1]),Math.round(tPt[2])) != 100) {
+						if (haveSWC) {
+							float[] coords;
+							for (int k = 0; k < swcFilamentCoords.size(); k++) {
+	                            coords = swcFilamentCoords.get(k);
 	                            float diffX = Math.abs(tPt[0] - coords[0]);
 	                            float diffY = Math.abs(tPt[1] - coords[1]);
 	                            float diffZ = Math.abs(tPt[2] - coords[2]);
@@ -6197,18 +6274,55 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	                            if (diffTotal < toleranceSq) {
 	                                final float[] nCoords = {x, y, z, diffTotal};
 	
-	                                al_new = allFilamentCoords_newCoords.get(i);
-	                                final float[] ft = al_new.get(k);
+	                                final float[] ft = swcFilamentCoords_newCoords.get(k);
 	                                if (ft == null || (ft != null && ft[3] > diffTotal)) {
-	                                    al_new.set(k, nCoords);
-	                                    System.out.println("Adjusting " + i + " " + k);
+	                                    swcFilamentCoords_newCoords.set(k, nCoords);
+	                                    System.out.println("Adjusting " + k);
 	                                }
 	
 	                                // coords[3] = 1;
 	                            }
-	                        }
-	
-	                    }
+	                        }	
+						}
+						else { // !SWC
+		                    ArrayList<float[]> al;
+		                    ArrayList<float[]> al_new;
+		                    float[] coords;
+		                    final int allFilamentsSize = allFilamentCoords.size();
+		                    int alSize;
+		                    for (int i = 0; i < allFilamentsSize; i++) {
+		                        al = allFilamentCoords.get(i);
+		                        alSize = al.size();
+		                        for (int k = 0; k < alSize; k++) {
+		                            coords = al.get(k);
+		                            float diffX = Math.abs(tPt[0] - coords[0]);
+		                            float diffY = Math.abs(tPt[1] - coords[1]);
+		                            float diffZ = Math.abs(tPt[2] - coords[2]);
+		                            
+		                            //5/30/2011
+		                           /* diffX = Math.abs(Math.round(tPt2[0]) - coords[0]);
+		                            diffY = Math.abs(Math.round(tPt2[1]) - coords[1]);
+		                            diffZ = Math.abs(Math.round(tPt2[2]) - coords[2]);*/
+		
+		
+		                            float diffTotal = (diffX * diffX) + (diffY * diffY) + (diffZ * diffZ);
+		
+		                            if (diffTotal < toleranceSq) {
+		                                final float[] nCoords = {x, y, z, diffTotal};
+		
+		                                al_new = allFilamentCoords_newCoords.get(i);
+		                                final float[] ft = al_new.get(k);
+		                                if (ft == null || (ft != null && ft[3] > diffTotal)) {
+		                                    al_new.set(k, nCoords);
+		                                    System.out.println("Adjusting " + i + " " + k);
+		                                }
+		
+		                                // coords[3] = 1;
+		                            }
+		                        }
+		
+		                    }
+						} // !SWC
 	                }
 				}
 			}
@@ -9024,7 +9138,65 @@ System.out.println(nPtsB);
                                        /* diffX = Math.abs(Math.round(tPt2[0]) - coords[0]);
                                         diffY = Math.abs(Math.round(tPt2[1]) - coords[1]);
                                         diffZ = Math.abs(Math.round(tPt2[2]) - coords[2]);*/
-                            if (cityBlockImage.getByte(Math.round(tPt2[0]), Math.round(tPt2[1]),Math.round(tPt2[2])) != 100) {	
+                            if (cityBlockImage.getByte(Math.round(tPt2[0]), Math.round(tPt2[1]),Math.round(tPt2[2])) != 100) {
+                            	if (haveSWC) {
+        							float[] coords;
+        							for (int k = 0; k < swcFilamentCoords.size(); k++) {
+        	                            coords = swcFilamentCoords.get(k);
+        	                            diffX = Math.abs(tPt2[0] - coords[0]);
+        	                            diffY = Math.abs(tPt2[1] - coords[1]);
+        	                            diffZ = Math.abs(tPt2[2] - coords[2]);
+        	
+        	
+        	                            diffTotal = (diffX * diffX) + (diffY * diffY) + (diffZ * diffZ);
+        	
+        	                            if (diffTotal < toleranceSq) {
+        	                                final float[] nCoords = {x, y, z, diffTotal};
+        	
+        	                                final float[] ft = swcFilamentCoords_newCoords.get(k);
+        	                                if (ft == null || (ft != null && ft[3] > diffTotal)) {
+        	                                    swcFilamentCoords_newCoords.set(k, nCoords);
+        	                                }
+        	
+        	                                // coords[3] = 1;
+        	                            }
+        	                        }	
+        						}
+        						else { // !SWC
+        		                    ArrayList<float[]> al;
+        		                    ArrayList<float[]> al_new;
+        		                    float[] coords;
+        		                    final int allFilamentsSize = allFilamentCoords.size();
+        		                    int alSize;
+        		                    for (int i = 0; i < allFilamentsSize; i++) {
+        		                        al = allFilamentCoords.get(i);
+        		                        alSize = al.size();
+        		                        for (int k = 0; k < alSize; k++) {
+        		                            coords = al.get(k);
+        		                            diffX = Math.abs(tPt2[0] - coords[0]);
+        		                            diffY = Math.abs(tPt2[1] - coords[1]);
+        		                            diffZ = Math.abs(tPt2[2] - coords[2]);
+        		                            
+        		                           
+        		
+        		
+        		                            diffTotal = (diffX * diffX) + (diffY * diffY) + (diffZ * diffZ);
+        		
+        		                            if (diffTotal < toleranceSq) {
+        		                                final float[] nCoords = {x, y, z, diffTotal};
+        		
+        		                                al_new = allFilamentCoords_newCoords.get(i);
+        		                                final float[] ft = al_new.get(k);
+        		                                if (ft == null || (ft != null && ft[3] > diffTotal)) {
+        		                                    al_new.set(k, nCoords);
+        		                                }
+        		
+        		                                // coords[3] = 1;
+        		                            }
+        		                        }
+        		
+        		                    }
+        						} // !SWC
                                 ArrayList<float[]> al;
                                 ArrayList<float[]> al_new;
                                 float[] coords;
