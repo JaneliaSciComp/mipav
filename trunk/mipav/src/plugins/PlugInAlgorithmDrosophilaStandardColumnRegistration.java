@@ -9197,36 +9197,6 @@ System.out.println(nPtsB);
         		
         		                    }
         						} // !SWC
-                                ArrayList<float[]> al;
-                                ArrayList<float[]> al_new;
-                                float[] coords;
-                                final int allFilamentsSize = allFilamentCoords.size();
-                                int alSize;
-                                for (int i = 0; i < allFilamentsSize; i++) {
-                                    al = allFilamentCoords.get(i);
-                                    alSize = al.size();
-                                    for (int k = 0; k < alSize; k++) {
-                                        coords = al.get(k);
-                                        diffX = Math.abs(tPt2[0] - coords[0]);
-                                        diffY = Math.abs(tPt2[1] - coords[1]);
-                                        diffZ = Math.abs(tPt2[2] - coords[2]);
-                                        
-                                        diffTotal = (diffX * diffX) + (diffY * diffY) + (diffZ * diffZ);
-
-                                        if (diffTotal < toleranceSq) {
-                                            final float[] nCoords = {x, y, z, diffTotal};
- 
-                                            al_new = allFilamentCoords_newCoords.get(i);
-                                            final float[] ft = al_new.get(k);
-                                            if (ft == null || (ft != null && ft[3] > diffTotal)) {
-                                                al_new.set(k, nCoords);
-                                            }
-
-                                            // coords[3] = 1;
-                                        }
-                                    }
-
-                                }
                             }
 
                         } else {
