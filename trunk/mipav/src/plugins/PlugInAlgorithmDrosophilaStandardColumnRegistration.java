@@ -6274,7 +6274,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	                            if (diffTotal < toleranceSq) {
 	                                final float[] nCoords = {x, y, z, diffTotal};
 	
-	                                final float[] ft = swcFilamentCoords.get(k);
+	                                final float[] ft = swcFilamentCoords_newCoords.get(k);
 	                                if (ft == null || (ft != null && ft[3] > diffTotal)) {
 	                                    swcFilamentCoords_newCoords.set(k, nCoords);
 	                                    System.out.println("Adjusting " + k);
