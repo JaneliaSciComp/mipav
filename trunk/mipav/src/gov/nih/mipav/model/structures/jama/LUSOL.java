@@ -6543,7 +6543,7 @@ resid  = zero;
 for (klast = nrank; klast >= 1; klast--) {
 i     = p[klast-1];
 if (Math.abs(v[i-1]) > small) break;
-} // for (klast = nrank; klast >= 1; k--)
+} // for (klast = nrank; klast >= 1; klast--)
 
 for (k = klast + 1; k <= n; k++) {
 j    = q[k-1];
