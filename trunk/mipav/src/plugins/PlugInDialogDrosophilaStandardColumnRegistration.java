@@ -592,6 +592,21 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogSta
 		        	    if (success == false) {
 		        	    	swcFilamentCoords = new ArrayList<float[]>();	
 		        	    } else {
+		        	    	//get the coords in proper mipav space!!!
+	        				 for(int k=0;k < swcFilamentCoords.size();k++) {
+	        					 float[] coords2 = swcFilamentCoords.get(k);
+	        					 
+	        					 float x = coords2[0]/resols[0];
+	        					 float y = coords2[1]/resols[1];
+	        					 float z = coords2[2]/resols[2];
+	        					 
+	        					 coords2[0] = x;
+	        					 coords2[1] = y;
+	        					 coords2[2] = z;
+	        					 
+	        					 swcFilamentCoords.set(k, coords2);	 
+	        				 }
+
 		        			createCityBlockImage();
 		        			surfaceFilePathTextField.setText(currDir);
 		        			swcCB.setSelected(false);
@@ -737,15 +752,12 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogSta
 								float z = coord_z/resols[2];*/
 								  
 								float[] coords = {coord_x,coord_y,coord_z,0};
-								
 								filamentCoords.add(coords);
 								//fw.append(coord_x + "\t" + coord_y + "\t" + coord_z + "\r\n");
 							}
 						}
 						allFilamentCoords.add(filamentCoords);
 					}
-					
-					
 					
 					
 					
@@ -1117,7 +1129,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogSta
 				 z1 = Math.round(coords[2]);
 				 int[] arr = {x1,y1,z1};
 		         zeroCoords.add(arr);
-		         cityBlockImage.set(x1,y1,z1,0);	 
+		         cityBlockImage.set(x1,y1,z1,0);
 		     }
 		 }
 		 else { // iv
@@ -1189,10 +1201,6 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogSta
 			}
 		 }
 		 
-		 
-		 
-		 
-		 
 
 		 for(int i=0;i<oneCoords.size();i++) {
 				int[] oneCoord = oneCoords.get(i);
@@ -1230,7 +1238,6 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogSta
 		 }
 
 		 cityBlockImage.calcMinMax();
-                                  
 	}
         
 		
