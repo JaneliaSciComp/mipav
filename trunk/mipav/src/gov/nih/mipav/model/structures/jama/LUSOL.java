@@ -188,6 +188,712 @@ public class LUSOL implements java.io.Serializable {
 		int mtest;
 		int m;
 		int n;
+		// Running the original FORTRAN with LUPARM(8) = 0 gave:
+//		------------------------------------------
+//		 LUTEST   1.      M =    20       N =    20
+//		 ------------------------------------------
+
+//		 LU1FAC...
+
+//		 LUCHEK.      Rank =    20           LenL =    37     LenU =    39
+//		   A - L*U   error =   1.1E+03      (A - L*U)(t) error =   1.1E+03
+//		   Ax = b    error =   2.6E+07       A(t)y = b   error =   2.7E+07
+
+//		 Column     1  replaced by column    40
+
+//		 LUCHEK.      Rank =    20           LenL =    37     LenU =    59
+//		   A - L*U   error =   1.6E+09      (A - L*U)(t) error =   1.6E+04
+//		   Ax = b    error =   1.8E+08       A(t)y = b   error =   1.9E+08
+//		 Fatal error in LUSOL lu7rnk.  Stopping now
+		
+		// Running the original FORTRAN with LUPARAM(8) = 1 gave:
+//		------------------------------------------
+//		 LUTEST   1.      M =    20       N =    20
+//		 ------------------------------------------
+
+//		 LU1FAC...
+
+//		 LUCHEK.      Rank =    20           LenL =   190     LenU =   210
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   5.9E-14       A(t)y = b   error =   0.0E+00
+
+//		 lu8rpc  warning.  Singularity after replacing column.    jrep =       1    diag =    0.00E+00
+
+//		 Column     1  replaced by column    40
+
+//		 LUCHEK.      Rank =    19           LenL =   209     LenU =   192
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   1.3E-13       A(t)y = b   error =   0.0E+00
+
+//		 Column     2  replaced by column    39
+
+//		 LUCHEK.      Rank =    18           LenL =   227     LenU =   190
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   4.5E-13
+//		   Ax = b    error =   2.2E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     3  replaced by column    38
+
+//		 LUCHEK.      Rank =    17           LenL =   243     LenU =   187
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     4  replaced by column    37
+
+//		 LUCHEK.      Rank =    16           LenL =   258     LenU =   182
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   2.2E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     5  replaced by column    36
+
+//.      Rank =    15           LenL =   272     LenU =   175
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     6  replaced by column    35
+
+//		 LUCHEK.      Rank =    14           LenL =   285     LenU =   166
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     7  replaced by column    34
+
+//		 LUCHEK.      Rank =    13           LenL =   297     LenU =   155
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   4.5E-13
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     8  replaced by column    33
+
+//		 LUCHEK.      Rank =    12           LenL =   308     LenU =   142
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     9  replaced by column    32
+
+//		 LUCHEK.      Rank =    11           LenL =   318     LenU =   127
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   2.1E-13       A(t)y = b   error =   0.0E+00
+
+//		 Column    10  replaced by column    31
+
+//		 LUCHEK.      Rank =    10           LenL =   327     LenU =   110
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   2.1E-13       A(t)y = b   error =   0.0E+00
+
+//		 Column    11  replaced by column    30
+
+//		 LUCHEK.      Rank =    11           LenL =   335     LenU =    93
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   2.2E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    12  replaced by column    29
+
+//		 LUCHEK.      Rank =    12           LenL =   342     LenU =    78
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    13  replaced by column    28
+
+//		 LUCHEK.      Rank =    13           LenL =   348     LenU =    65
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    14  replaced by column    27
+
+//		 LUCHEK.      Rank =    14           LenL =   353     LenU =    54
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   2.2E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    15  replaced by column    26
+
+//		 LUCHEK.      Rank =    15           LenL =   357     LenU =    45
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    16  replaced by column    25
+
+//		 LUCHEK.      Rank =    16           LenL =   360     LenU =    38
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    17  replaced by column    24
+
+//		 LUCHEK.      Rank =    17           LenL =   362     LenU =    33
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    18  replaced by column    23
+
+//		 LUCHEK.      Rank =    18           LenL =   363     LenU =    30
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   2.6E-13       A(t)y = b   error =   0.0E+00
+
+//		 Column    19  replaced by column    22
+
+//		 LUCHEK.      Rank =    19           LenL =   363     LenU =    29
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    20  replaced by column    21
+
+//		 LUCHEK.      Rank =    20           LenL =   381     LenU =    30
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   6.2E-15       A(t)y = b   error =   0.0E+00
+
+
+//		 ------------------------------------------
+//		 LUTEST   2.      M =    20       N =    20
+//		 ------------------------------------------
+
+//		 LU1FAC...
+
+//		 LUCHEK.      Rank =    20           LenL =   190     LenU =   210
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   5.9E-14       A(t)y = b   error =   0.0E+00
+
+//		 lu8rpc  warning.  Singularity after replacing column.    jrep =       1    diag =    0.00E+00
+
+//		 Column     1  replaced by column    40
+
+//		 LUCHEK.      Rank =    19           LenL =   209     LenU =   192
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   1.3E-13       A(t)y = b   error =   0.0E+00
+
+//		 Column     2  replaced by column    39
+
+//		 LUCHEK.      Rank =    18           LenL =   227     LenU =   190
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   4.5E-13
+//		   Ax = b    error =   2.2E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     3  replaced by column    38
+
+//		 LUCHEK.      Rank =    17           LenL =   243     LenU =   187
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     4  replaced by column    37
+
+//		 LUCHEK.      Rank =    16           LenL =   258     LenU =   182
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   2.2E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     5  replaced by column    36
+
+//		 LUCHEK.      Rank =    15           LenL =   272     LenU =   175
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     6  replaced by column    35
+
+//		 LUCHEK.      Rank =    14           LenL =   285     LenU =   166
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     7  replaced by column    34
+
+//		 LUCHEK.      Rank =    13           LenL =   297     LenU =   155
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   4.5E-13
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     8  replaced by column    33
+
+//		 LUCHEK.      Rank =    12           LenL =   308     LenU =   142
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     9  replaced by column    32
+
+//		 LUCHEK.      Rank =    11           LenL =   318     LenU =   127
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   2.1E-13       A(t)y = b   error =   0.0E+00
+
+//		 Column    10  replaced by column    31
+
+//		 LUCHEK.      Rank =    10           LenL =   327     LenU =   110
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   2.1E-13       A(t)y = b   error =   0.0E+00
+
+//		 Column    11  replaced by column    30
+
+//		 LUCHEK.      Rank =    11           LenL =   335     LenU =    93
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   2.2E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    12  replaced by column    29
+
+//		 LUCHEK.      Rank =    12           LenL =   342     LenU =    78
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    13  replaced by column    28
+
+//		 LUCHEK.      Rank =    13           LenL =   348     LenU =    65
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    14  replaced by column    27
+
+//		 LUCHEK.      Rank =    14           LenL =   353     LenU =    54
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   2.2E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    15  replaced by column    26
+
+//		 LUCHEK.      Rank =    15           LenL =   357     LenU =    45
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    16  replaced by column    25
+
+//		 LUCHEK.      Rank =    16           LenL =   360     LenU =    38
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    17  replaced by column    24
+
+//		 LUCHEK.      Rank =    17           LenL =   362     LenU =    33
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    18  replaced by column    23
+
+//		 LUCHEK.      Rank =    18           LenL =   363     LenU =    30
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   2.6E-13       A(t)y = b   error =   0.0E+00
+
+//		 Column    19  replaced by column    22
+
+//		 LUCHEK.      Rank =    19           LenL =   363     LenU =    29
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    20  replaced by column    21
+
+//		 LUCHEK.      Rank =    20           LenL =   381     LenU =    30
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   6.2E-15       A(t)y = b   error =   0.0E+00
+
+//		 --------------------------------------------------------
+//		 LUTEST.  Maximum error after   2  tests =   4.5E-13
+//		 --------------------------------------------------------
+
+
+//		 ------------------------------------------
+//		 LUTEST   1.      M =    20       N =    10
+//		 ------------------------------------------
+
+//		 LU1FAC...
+
+//		 LUCHEK.      Rank =    10           LenL =   145     LenU =    55
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   4.9E-13       A(t)y = b   error =   0.0E+00
+
+//		 lu8rpc  warning.  Singularity after replacing column.    jrep =       1    diag =    0.00E+00
+
+//		 Column     1  replaced by column    20
+
+//		 LUCHEK.      Rank =     9           LenL =   154     LenU =    47
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   1.3E-13       A(t)y = b   error =   0.0E+00
+
+//		 Column     2  replaced by column    19
+
+//		 LUCHEK.      Rank =     8           LenL =   162     LenU =    45
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   2.5E-13       A(t)y = b   error =   0.0E+00
+
+//		 Column     3  replaced by column    18
+
+//		 LUCHEK.      Rank =     7           LenL =   168     LenU =    42
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   2.3E-13       A(t)y = b   error =   0.0E+00
+
+//		 Column     4  replaced by column    17
+
+//		 LUCHEK.      Rank =     6           LenL =   173     LenU =    37
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   6.7E-15       A(t)y = b   error =   0.0E+00
+
+//		 Column     5  replaced by column    16
+
+//		 LUCHEK.      Rank =     5           LenL =   177     LenU =    30
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   6.7E-15       A(t)y = b   error =   0.0E+00
+
+//		 Column     6  replaced by column    15
+
+//		 LUCHEK.      Rank =     6           LenL =   180     LenU =    23
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   6.7E-15       A(t)y = b   error =   0.0E+00
+
+//		 Column     7  replaced by column    14
+
+//		 LUCHEK.      Rank =     7           LenL =   182     LenU =    18
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   6.7E-15       A(t)y = b   error =   0.0E+00
+
+//		 Column     8  replaced by column    13
+
+//		 LUCHEK.      Rank =     8           LenL =   183     LenU =    15
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   2.3E-13       A(t)y = b   error =   0.0E+00
+
+//		 Column     9  replaced by column    12
+
+//		 LUCHEK.      Rank =     9           LenL =   183     LenU =    14
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   6.7E-15       A(t)y = b   error =   0.0E+00
+
+//		 Column    10  replaced by column    11
+
+//		 LUCHEK.      Rank =    10           LenL =   191     LenU =    15
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   7.4E-15       A(t)y = b   error =   0.0E+00
+
+
+//		 ------------------------------------------
+//		 LUTEST   2.      M =    20       N =    10
+//		 ------------------------------------------
+
+//		 LU1FAC...
+
+//		 LUCHEK.      Rank =    10           LenL =   145     LenU =    55
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   4.9E-13       A(t)y = b   error =   0.0E+00
+
+//		 lu8rpc  warning.  Singularity after replacing column.    jrep =       1    diag =    0.00E+00
+
+//		 Column     1  replaced by column    20
+
+//		 LUCHEK.      Rank =     9           LenL =   154     LenU =    47
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   1.3E-13       A(t)y = b   error =   0.0E+00
+
+//		 Column     2  replaced by column    19
+
+//		 LUCHEK.      Rank =     8           LenL =   162     LenU =    45
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   2.5E-13       A(t)y = b   error =   0.0E+00
+
+//		 Column     3  replaced by column    18
+
+//		 LUCHEK.      Rank =     7           LenL =   168     LenU =    42
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   2.3E-13       A(t)y = b   error =   0.0E+00
+
+//		 Column     4  replaced by column    17
+
+//		 LUCHEK.      Rank =     6           LenL =   173     LenU =    37
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   6.7E-15       A(t)y = b   error =   0.0E+00
+
+//		 Column     5  replaced by column    16
+
+//		 LUCHEK.      Rank =     5           LenL =   177     LenU =    30
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   6.7E-15       A(t)y = b   error =   0.0E+00
+
+//		 Column     6  replaced by column    15
+
+//		 LUCHEK.      Rank =     6           LenL =   180     LenU =    23
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   6.7E-15       A(t)y = b   error =   0.0E+00
+
+//		 Column     7  replaced by column    14
+
+//		 LUCHEK.      Rank =     7           LenL =   182     LenU =    18
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   6.7E-15       A(t)y = b   error =   0.0E+00
+
+//		 Column     8  replaced by column    13
+
+//		 LUCHEK.      Rank =     8           LenL =   183     LenU =    15
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   2.3E-13       A(t)y = b   error =   0.0E+00
+
+//		 Column     9  replaced by column    12
+
+//		 LUCHEK.      Rank =     9           LenL =   183     LenU =    14
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   6.7E-15       A(t)y = b   error =   0.0E+00
+
+//		 Column    10  replaced by column    11
+
+//		 LUCHEK.      Rank =    10           LenL =   191     LenU =    15
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   7.4E-15       A(t)y = b   error =   0.0E+00
+
+//		 --------------------------------------------------------
+//		 LUTEST.  Maximum error after   2  tests =   4.9E-13
+//		 --------------------------------------------------------
+
+
+//		 ------------------------------------------
+//		 LUTEST   1.      M =    10       N =    20
+//		 ------------------------------------------
+
+//		 LU1FAC...
+//		 Singular(m<n)  rank       10  n-rank      10  nsing       10
+
+//		 LUCHEK.      Rank =    10           LenL =    24     LenU =    71
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   1.3E-13       A(t)y = b   error =   6.1E-05
+
+//		 Column     1  replaced by column    40
+
+//		 LUCHEK.      Rank =    10           LenL =    26     LenU =    54
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.4E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     2  replaced by column    39
+
+//		 LUCHEK.      Rank =     9           LenL =    28     LenU =    35
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.9E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     3  replaced by column    38
+
+//		 LUCHEK.      Rank =     8           LenL =    29     LenU =    33
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.3E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     4  replaced by column    37
+
+//		 LUCHEK.      Rank =     7           LenL =    30     LenU =    31
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.0E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     5  replaced by column    36
+
+//		 LUCHEK.      Rank =     6           LenL =    31     LenU =    29
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.0E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     6  replaced by column    35
+
+//		 LUCHEK.      Rank =     5           LenL =    32     LenU =    27
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.0E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     7  replaced by column    34
+
+//		 LUCHEK.      Rank =     4           LenL =    33     LenU =    25
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.0E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     8  replaced by column    33
+
+//		 LUCHEK.      Rank =     3           LenL =    34     LenU =    23
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.0E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     9  replaced by column    32
+
+//		 LUCHEK.      Rank =     2           LenL =    35     LenU =    21
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.0E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    10  replaced by column    31
+
+//		 LUCHEK.      Rank =     1           LenL =    35     LenU =    20
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.0E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    11  replaced by column    30
+
+//		 LUCHEK.      Rank =     2           LenL =    35     LenU =    20
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   2.7E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    12  replaced by column    29
+
+//		 LUCHEK.      Rank =     3           LenL =    35     LenU =    20
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   5.6E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    13  replaced by column    28
+
+//		 LUCHEK.      Rank =     4           LenL =    35     LenU =    20
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   4.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    14  replaced by column    27
+
+//		 LUCHEK.      Rank =     5           LenL =    35     LenU =    20
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   4.9E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    15  replaced by column    26
+
+//		 LUCHEK.      Rank =     6           LenL =    35     LenU =    20
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   4.5E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    16  replaced by column    25
+
+//		 LUCHEK.      Rank =     7           LenL =    35     LenU =    20
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   1.3E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    17  replaced by column    24
+
+//		 LUCHEK.      Rank =     8           LenL =    35     LenU =    20
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   4.6E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    18  replaced by column    23
+
+//		 LUCHEK.      Rank =     9           LenL =    35     LenU =    20
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    19  replaced by column    22
+
+//		 LUCHEK.      Rank =    10           LenL =    35     LenU =    20
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   1.2E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    20  replaced by column    21
+
+//		 LUCHEK.      Rank =    10           LenL =    44     LenU =    38
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   1.1E-13       A(t)y = b   error =   0.0E+00
+
+
+//		 ------------------------------------------
+//		 LUTEST   2.      M =    10       N =    20
+//		 ------------------------------------------
+
+//		 LU1FAC...
+//		 Singular(m<n)  rank       10  n-rank      10  nsing       10
+
+//		 LUCHEK.      Rank =    10           LenL =    24     LenU =    71
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   2.3E-13
+//		   Ax = b    error =   1.3E-13       A(t)y = b   error =   6.1E-05
+
+//		 Column     1  replaced by column    40
+
+//		 LUCHEK.      Rank =    10           LenL =    26     LenU =    54
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.4E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     2  replaced by column    39
+
+//		 LUCHEK.      Rank =     9           LenL =    28     LenU =    35
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.9E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     3  replaced by column    38
+
+//		 LUCHEK.      Rank =     8           LenL =    29     LenU =    33
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.3E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     4  replaced by column    37
+
+//		 LUCHEK.      Rank =     7           LenL =    30     LenU =    31
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.0E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     5  replaced by column    36
+
+//		 LUCHEK.      Rank =     6           LenL =    31     LenU =    29
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.0E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     6  replaced by column    35
+
+//		 LUCHEK.      Rank =     5           LenL =    32     LenU =    27
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.0E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     7  replaced by column    34
+
+//		 LUCHEK.      Rank =     4           LenL =    33     LenU =    25
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.0E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     8  replaced by column    33
+
+//		 LUCHEK.      Rank =     3           LenL =    34     LenU =    23
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.0E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column     9  replaced by column    32
+
+//		 LUCHEK.      Rank =     2           LenL =    35     LenU =    21
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.0E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    10  replaced by column    31
+
+//		 LUCHEK.      Rank =     1           LenL =    35     LenU =    20
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.0E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    11  replaced by column    30
+
+//		 LUCHEK.      Rank =     2           LenL =    35     LenU =    20
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   2.7E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    12  replaced by column    29
+
+//		 LUCHEK.      Rank =     3           LenL =    35     LenU =    20
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   5.6E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    13  replaced by column    28
+
+//		 LUCHEK.      Rank =     4           LenL =    35     LenU =    20
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   4.1E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    14  replaced by column    27
+
+//		 LUCHEK.      Rank =     5           LenL =    35     LenU =    20
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   4.9E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    15  replaced by column    26
+
+//		 LUCHEK.      Rank =     6           LenL =    35     LenU =    20
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   4.5E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    16  replaced by column    25
+
+//		 LUCHEK.      Rank =     7           LenL =    35     LenU =    20
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   1.3E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    17  replaced by column    24
+
+//		 LUCHEK.      Rank =     8           LenL =    35     LenU =    20
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   4.6E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    18  replaced by column    23
+
+//		 LUCHEK.      Rank =     9           LenL =    35     LenU =    20
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   3.1E-14       A(t)y = b   error =   0.0E+00
+//
+//		 Column    19  replaced by column    22
+
+//		 LUCHEK.      Rank =    10           LenL =    35     LenU =    20
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   1.2E-14       A(t)y = b   error =   0.0E+00
+
+//		 Column    20  replaced by column    21
+
+//		 LUCHEK.      Rank =    10           LenL =    44     LenU =    38
+//		   A - L*U   error =   0.0E+00      (A - L*U)(t) error =   0.0E+00
+//		   Ax = b    error =   1.1E-13       A(t)y = b   error =   0.0E+00
+
+//		 --------------------------------------------------------
+//		 LUTEST.  Maximum error after   2  tests =   6.1E-05
+//		 --------------------------------------------------------
+
 		
 		//     ------------------------------------------------------------------
 		//     Test program for LUSOL.
