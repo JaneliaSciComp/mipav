@@ -2860,11 +2860,6 @@ boolean seg1 = true;
 boolean seg2 = true;
 boolean seg3 = true;
 boolean seg4 = true;
-double al[];
-int markl[];
-double au[];
-int ifill[];
-int jfill[];
 int ind2[];
 int lenold[];
 double d[];
@@ -3504,34 +3499,14 @@ lu[0]     = 1;
 nfill[0]  = 0;
 
 while (true) {
-al = new double[melim];
-markl = new int[melim];
-au = new double[ncold];
-ifill = new int[melim];
-jfill = new int[ncold];
-for (i = 0; i < melim; i++) {
-	al[i] = a[ll1-1+i];
-	markl[i] = indc[ll1-1+i];
-	ifill[i] = indr[ll1-1+i];
-}
-for (i = 0; i < ncold; i++) {
-	au[i] = a[lu1-1+i];
-	jfill[i] = indr[lu1-1+i];
-}
+
 lu1gau( m     , melim , ncold , nspare, small ,
            lpivc1, lpivc2, lfirst, lpivr2, lfree , minfre,
            ilast , jlast , lrow  , lcol  , lu    , nfill ,
            a     , indc  , indr  ,  
            lenc  , lenr  , locc  , locr  , 
-           iqloc , al, markl,  
-           au, ifill, jfill);
-for (i = 0; i < melim; i++) {
-	indc[ll1-1+i] = markl[i];
-	indr[ll1-1+i] = ifill[i];
-}
-for (i = 0; i < ncold; i++) {
-	indr[lu1-1+i] = jfill[i];
-}
+           iqloc , ll1, lu1);
+
 
 if (lfirst[0] > 0) {
 
@@ -3591,18 +3566,11 @@ if (nfill[0] > 0) {
 
  // Move rows that have pending fill-in to end of the row file.
  // Then insert the fill-in.
- ifill = new int[melim];
- jfill = new int[ncold];
- for (i = 0; i < melim; i++) {
-	 ifill[i] = indr[ll1-1+i];
- }
- for (i = 0; i < ncold; i++) {
-	 jfill[i] =  indr[lu1-1+i];
- }
+ 
  lu1pen(m, melim , ncold , nspare, ilast,
               lpivc1, lpivc2, lpivr1, lpivr2, lrow ,
               lenc  , lenr  , locc  , locr  , 
-              indc  , indr  , ifill, jfill);
+              indc  , indr  , ll1, lu1);
 } // if (nfill[0] > 0)
 } // if (seg4)
 seg4 = true;
@@ -3755,16 +3723,13 @@ lu1pq3( n, lenc, q, iqinv, nrank );
 nrank[0]  = Math.min( mrank[0], nrank[0] );
 
 if ( densLU ) {
-	d = new double[lenD];
 lu1ful( m     , n    , lena , lenD , lu1 , TPP,
            mleft , nleft, nrank[0], nrowu,
            lenL  , lenU , nsing,
            keepLU, small,
-           a, d , indc , indr , p   , q,
+           a, lD , indc , indr , p   , q,
            lenc  , lenr , locc , ipinv, locr );
-for (i = 0; i < lenD; i++) {
-	a[lD-1+i] = d[i];
-}
+
 //***     21 Dec 1994: Bug in next line.
 //***     nrank  = nrank - nsing.  Changed to next line:
 //***     nrank  = minmn - nsing
@@ -3781,7 +3746,7 @@ return;
             int mleft, int nleft, int nrank, int nrowu,
             int lenL[], int lenU[], int nsing[],
             boolean keepLU, double small,
-            double a[], double d[], int indc[], int indr[], int p[], int q[],
+            double a[], int lDInput, int indc[], int indr[], int p[], int q[],
             int lenc[], int lenr[], int locc[], int ipinv[], int ipvt[]) {
 
 //logical,       intent(in)    :: TPP, keepLU
@@ -3833,7 +3798,7 @@ for (l = 1; l <= m; l++) {
 // Copy the remaining matrix into the dense matrix D.
 // ------------------------------------------------------------------
 for (i = 0; i < lenD; i++) {
-	d[i] = zero;
+	a[lDInput-1+i] = zero;
 }
 
 ipbase = nrowu - 1;
@@ -3847,7 +3812,7 @@ lc2    = lc1 + lenc[j-1] - 1;
 for  (lc = lc1; lc <= lc2; lc++) {
  i      = indc[lc-1];
  ld     = ldbase + ipinv[i-1];
- d[ld-1]  = a[lc-1];
+ a[lDInput+ld-2]  = a[lc-1];
 } // for  (lc = lc1; lc <= lc2; lc++)
 
 ldbase = ldbase + mleft;
@@ -3860,7 +3825,8 @@ arr = new double[mleft][nleft];
 index = 0;
 for (j = 0; j < nleft; j++) {
 	for (i = 0; i < mleft; i++) {
-		arr[i][j] = d[index++];
+		arr[i][j] = a[lDInput-1+index];
+		index++;
 	}
 }
 q2 = new int[nleft];
@@ -3876,7 +3842,8 @@ lu1DCP( arr, mleft, mleft, nleft, small, nsing, ipvt, q2);
 index = 0;
 for (j = 0; j < nleft; j++) {
 	for (i = 0; i < mleft; i++) {
-		d[index++] = arr[i][j];
+		a[lDInput-1+index] = arr[i][j];
+		index++;
 	}
 }
 for (i = 0; i < nleft; i++) {
@@ -3890,7 +3857,7 @@ for (i = 0; i < nleft; i++) {
 // lkk points to the diagonal of U.
 // ------------------------------------------------------------------
 for (i = 0; i < lenD; i++) {
-	a[i] = d[i];
+	a[i] = a[lDInput-1+i];
 }
 
 ldiagU = lena - n;
@@ -4414,11 +4381,11 @@ lkk    = lkk  + mleft + 1;
             int ilast[], int jlast[], int lrow[], int lcol[], int lu[], int nfill[],
             double a[], int indc[], int indr[],
             int lenc[], int lenr[], int locc[], int locr[],
-            int mark[], double al[], int markl[],
-            double au[], int ifill[], int jfill[]) {
+            int mark[], int ll1, int lu1) {
 
 //integer(ip),   intent(in)    :: m, melim, ncold, nspare,          &
 //                           lpivc1, lpivc2, lpivr2, lfree, minfre
+// In fact, ilast is never changed in lu1gau
 //integer(ip),   intent(inout) :: ilast, jlast, lfirst, lrow, lcol, lu, nfill
 //real(rp),      intent(in)    :: small
 //real(rp),      intent(in)    :: al(melim), au(ncold)
@@ -4516,7 +4483,7 @@ if (nfree < minfre) {
 // ndrop  counts how many modified nonzeros are negligibly small.
 // ---------------------------------------------------------------
 lu[0]     = lu[0] + 1;
-uj     = au[lu[0]-1];
+uj     = a[lu1 + lu[0]-2];
 lc1    = locc[j-1];
 lc2    = lc1 + lenj - 1;
 atend  = j == jlast[0];
@@ -4533,8 +4500,8 @@ for (l = lc1; l <= lc2; l++) {
  ll       = - mark[i-1];
  if (ll > 0) {
     ndone     = ndone + 1;
-    markl[ll-1] = j;
-    a[l-1]      = a[l-1]  +  al[ll-1] * uj;
+    indc[ll1 + ll-2] = j;
+    a[l-1]      = a[l-1]  +  a[ll1+ll-2] * uj;
     if (Math.abs( a[l-1] ) <= small) {
        ndrop  = ndrop + 1;
     }
@@ -4659,8 +4626,8 @@ ll     = 0;
 
 for (lc = lpivc1; lc <= lpivc2; lc++) {
  ll         = ll + 1;
- if (markl[ll-1] ==  j  ) continue;
- aij        = al[ll-1]*uj;
+ if (indc[ll1+ll-2] ==  j  ) continue;
+ aij        = a[ll1+ll-2]*uj;
  if (Math.abs(aij) <= small) continue;
  lenj       = lenj + 1;
  last       = last + 1;
@@ -4694,10 +4661,10 @@ for (lc = lpivc1; lc <= lpivc2; lc++) {
     // jfill(lu) records the current length of column j
     // (to shorten the search for pending fill-ins later).
 
-    if (ifill[ll-1] == 0) nfill[0]     = nfill[0] + leni + nspare;
-    if (jfill[lu[0]-1] == 0) jfill[lu[0]-1] = lenj;
+    if (indr[ll1+ll-2] == 0) nfill[0]     = nfill[0] + leni + nspare;
+    if (indr[lu1+lu[0]-2] == 0) indr[lu1+lu[0]-2] = lenj;
     nfill[0]      = nfill[0]     + 1;
-    ifill[ll-1]  = ifill[ll-1] + 1;
+    indr[ll1+ll-2]  = indr[ll1+ll-2] + 1;
     indc[last-1] = m + i;
  } // else
 } // for (lc = lpivc1; lc <= lpivc2; lc++)
@@ -5507,7 +5474,7 @@ if (ibest[0] > 0) kbest  = mbest[0] / nz1;
     private void lu1pen(int m, int melim, int ncold, int nspare, int ilast[],
             int lpivc1, int lpivc2, int lpivr1, int lpivr2, int lrow[],
             int lenc[], int lenr[], int locc[], int locr[],
-            int indc[], int indr[], int ifill[], int jfill[]) {
+            int indc[], int indr[], int ll1, int lu1) {
 
 //integer(ip),   intent(in)    :: m, melim, ncold, nspare, &
 //                           lpivc1, lpivc2, lpivr1, lpivr2
@@ -5540,7 +5507,7 @@ ll     = 0;
 
 for (lc = lpivc1; lc <= lpivc2; lc++) {
 ll = ll + 1;
-if (ifill[ll-1] == 0) continue;
+if (indr[ll1+ll-2] == 0) continue;
 
 // Another row has pending fill.
 // First, add some spare space at the end
@@ -5565,7 +5532,7 @@ for (lr = lr1; lr <= lr2; lr++) {
  indr[lr-1]   = 0;
 } // for (lr = lr1; lr <= lr2; lr++)
 
-lrow[0]    = lrow[0] + ifill[ll-1];
+lrow[0]    = lrow[0] + indr[ll1+ll-2];
 } // for (lc = lpivc1; lc <= lpivc2; lc++)
 
 // Scan all columns of  D  and insert the pending fill-in
@@ -5575,9 +5542,9 @@ lu     = 1;
 
 for (lr = lpivr1; lr <= lpivr2; lr++) {
 lu     = lu + 1;
-if (jfill[lu-1] == 0) continue;
+if (indr[lu1+lu-2] == 0) continue;
 j      = indr[lr-1];
-lc1    = locc[j-1] + jfill[lu-1] - 1;
+lc1    = locc[j-1] + indr[lu1+lu-2] - 1;
 lc2    = locc[j-1] + lenc[j-1]   - 1;
 
 for (lc = lc1; lc <= lc2; lc++) {
