@@ -6640,7 +6640,7 @@ return;
 		     luparm[23] = lenU[0];
 		     luparm[24] = lrow[0];
 	    	 return;
-         } // if (krep[0] > nrank[0)
+         } // if (krep[0] > nrank[0])
       } // if (mode2 == 0)
       else if (nrank[0] < m) {
 
@@ -6857,6 +6857,13 @@ return;
       else {
          inform[0] =  1;
       }
+      // Exit.
+	  luparm[9] = inform[0];
+	  luparm[14] = luparm[14] + 1;
+	  luparm[15] = nrank[0];
+	  luparm[22] = lenL[0];
+	  luparm[23] = lenU[0];
+	  luparm[24] = lrow[0];
       return;
 } // lu8rpc
 
