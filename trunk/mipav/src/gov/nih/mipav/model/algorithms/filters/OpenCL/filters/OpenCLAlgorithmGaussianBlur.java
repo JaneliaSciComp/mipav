@@ -689,6 +689,7 @@ public class OpenCLAlgorithmGaussianBlur extends OpenCLAlgorithmBase {
 		
 		clReleaseMemObject(inputBuffer);
 		clReleaseMemObject(outputBuffer);
+		clFinish(commandQueue);
 	}
 	
 	
