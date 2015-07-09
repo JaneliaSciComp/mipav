@@ -53,6 +53,10 @@ import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
+import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentation;
+import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentationKMeans;
+import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentationLoG;
+import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentationWindowing;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 
 import java.awt.BorderLayout;
@@ -76,7 +80,9 @@ import java.io.RandomAccessFile;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Random;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
@@ -88,6 +94,7 @@ import javax.swing.JTextField;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector2d;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Mathematics.Vector4f;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 
 public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin implements AlgorithmInterface {
@@ -105,8 +112,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 	private JPanel okCancelPanel;    
 	private String baseFileDir;
 	private Vector<Integer> includeRange;
-
-	private JTextField  nuclearFileNameText;
 
 	private JCheckBox latticeStraighten;
 	private JCheckBox buildLattice;
@@ -183,13 +188,18 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			{
 				clean();
 			}
-			if ( latticeStraighten.isSelected() )
+			if ( segmentSeamCells.isSelected() )
 			{
-				latticeStraighten();
+				segmentKMeans();
+//				seamCellInfo();
 			}
 			if ( buildLattice.isSelected() )
 			{
 				buildLattice();
+			}
+			if ( latticeStraighten.isSelected() )
+			{
+				latticeStraighten();
 			}
 			if ( calcStatistics.isSelected() )
 			{
@@ -206,10 +216,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			if ( generateTrainingData.isSelected() )
 			{
 				generateTrainingData();
-			}
-			if ( segmentSeamCells.isSelected() )
-			{
-				segmentKMeans();
 			}
 			if ( segmentAnnotations.isSelected() )
 			{
@@ -378,14 +384,14 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 	private void segmentKMeans()
 	{
 		if ( includeRange != null )
-		{
+		{			
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
 				String fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + ".tif";
 				File voiFile = new File(baseFileDir + File.separator + fileName);
 				if ( voiFile.exists() )
 				{
-					//					System.err.println( fileName );
+//					System.err.print( fileName + "   " );
 					FileIO fileIO = new FileIO();
 					if(wormImageA != null) {
 						if ( (i%10) == 0 )
@@ -400,124 +406,269 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 					}
 					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null); 
 					wormImageA.calcMinMax();
-////					float minValue = (float) (0.1 * wormImageA.getMax());
-////					float maxValue = (float) (1.0 * wormImageA.getMax());
-////					ModelImage imageNoSeam = LatticeModel.segmentAll1(wormImageA, minValue, maxValue, 20, 1 );
-////					new ViewJFrameImage(wormImageA);
-//					ModelImage temp = LatticeModel.blur(wormImageA, 5);
-//					temp.calcMinMax();
-//					float minValue = (float) (0.25 * temp.getMax());
-//					float maxValue = (float) (1.0 * temp.getMax());
-//					ModelImage imageNoSeam = LatticeModel.segmentAll1(temp, minValue, maxValue, 20, 1 );
-////					new ViewJFrameImage(imageNoSeam);
-//					new ViewJFrameImage(temp);
-//					
-//					minValue = (float) (0.1 * imageNoSeam.getMax());
-//					maxValue = (float) (1.0 *  imageNoSeam.getMax());
-//					ModelImage imageNoSeam2 = LatticeModel.segmentAll1(imageNoSeam, minValue, maxValue, 20, 1 );
-//					new ViewJFrameImage(imageNoSeam);
-//					
-//					
-//					LatticeModel.segmentAll2(wormImageA, imageNoSeam, minValue, maxValue, 10, 1 );
-////					imageNoSeam.disposeLocal();
-////					imageNoSeam = null;
-//					
-//					
-//					
-//					//					float minValue = (float) (0.1 * wormImageA.getMax());
-//					//					float maxValue = (float) (1.0 * wormImageA.getMax());
-//					//					LatticeModel.segmentAll(wormImageA, minValue, maxValue, 20, 1, false );
-//					//					wormImageA.calcMinMax();
-//					//					minValue = (float) (0.25 * wormImageA.getMax());
-//					//					maxValue = (float) (1.0 * wormImageA.getMax());
-//					//					LatticeModel.segmentAll(wormImageA, minValue, maxValue, 10, 0.75f, true ); 
-					
-					VOI testAnnotations = LatticeModel.segmentSeamCells( wormImageA, true );
-					
-//
-//
-					fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotation";            	    		
-					VOIVector annotations = new VOIVector();
-					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-					loadAllVOIsFrom(voiDir, true, annotations, false);
-					if ( annotations.size() <= 0 )
-					{
-						fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotations";            	    		
-						annotations = new VOIVector();
-						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-						loadAllVOIsFrom(voiDir, true, annotations, false);
+					String imageName = wormImageA.getImageName();
+					if (imageName.contains("_clone")) {
+						imageName = imageName.replaceAll("_clone", "");
+					}
+					if (imageName.contains("_laplace")) {
+						imageName = imageName.replaceAll("_laplace", "");
+					}
+					if (imageName.contains("_gblur")) {
+						imageName = imageName.replaceAll("_gblur", "");
 					}
 					
-//					VOI testAnnotations = testImage.getVOIs().elementAt(0);
-					VOI knownAnnotations = annotations.elementAt(0);
-					int count = 0;
-					int totalCount = 0;
-					int[] matches = new int[testAnnotations.getCurves().size()];
-					for ( int j = 0; j < matches.length; j++ )
-					{
-						matches[j] = -1;
-					}
-					for ( int j = 0; j < knownAnnotations.getCurves().size(); j++ )
-					{
-						VOIText text1 = (VOIText) knownAnnotations.getCurves().elementAt(j);
-						if ( text1.getText().equals("origin") )
-						{
-							continue;
-						}
-						Vector3f pos1 = text1.elementAt(0);
-						float minDist = Float.MAX_VALUE;
-						int minIndex = -1;
-						for ( int k = 0; k < testAnnotations.getCurves().size(); k++ )
-						{
-							VOIText text2 = (VOIText) testAnnotations.getCurves().elementAt(k);
-							if ( text2.getText().equals("origin") )
-							{
-								continue;
-							}
+//					fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotation";            	    		
+//					VOIVector annotations = new VOIVector();
+//					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+//					loadAllVOIsFrom(voiDir, true, annotations, false);
+//					if ( annotations.size() <= 0 )
+//					{
+//						fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotations";            	    		
+//						annotations = new VOIVector();
+//						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+//						loadAllVOIsFrom(voiDir, true, annotations, false);
+//					}					
+//					VOI knownAnnotations = annotations.elementAt(0);
+					
+					Vector<Vector3f> annotationskMeans = WormSegmentationKMeans.seamCellSegmentation(wormImageA);
+					
+					
+					Vector<Vector3f> dataPoints = new Vector<Vector3f>();
+					// calculate a robust histogram of the data values, used to find the left-right marker thresholds:
+					float[] max_LR = WormSegmentationWindowing.robustHistogram(wormImageA, dataPoints);						
+//					Vector<Vector3f> peaks = WormSegmentation.findMaxPeaks(wormImageA, max_LR[0]);
+////					System.err.println( peaks.size() );
+//					
+//					ModelImage visited = new ModelImage(ModelStorageBase.INTEGER, wormImageA.getExtents(), imageName + "_segmentation");
+//					JDialogBase.updateFileInfo(wormImageA, visited); 
+//					Vector3f min = new Vector3f( Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE );
+//					Vector3f max = new Vector3f(-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE );
+//					for ( int j = 0; j < peaks.size(); j++ )
+//					{
+//						Vector3f pos = peaks.elementAt(j);
+//						min.min(pos);
+//						max.max(pos);
+//						visited.set( Math.round(pos.X), Math.round(pos.Y), Math.round(pos.Z), wormImageA.getFloat( Math.round(pos.X), Math.round(pos.Y), Math.round(pos.Z)) );
+//					}
+//					visited.calcMinMax();
+//////					ModelImage temp = WormSegmentation.blur(visited, 1);
+//////					visited.disposeLocal();
+//////					visited = temp;		
+//////					visited.calcMinMax();			
+////					
+//					new ViewJFrameImage((ModelImage)visited.clone());
+//					Vector<Vector3f> centers = WormSegmentation.findCenters( visited, min, max );
+					
 
-							Vector3f pos2 = text2.elementAt(0);
-							float dist = pos1.distance(pos2);
-							if ( dist < minDist )
-							{
-								minDist = dist;
-								minIndex = k;
-							}
-						}
-						if ( minDist < 10 )
-						{
-							count++;
-							if ( minIndex != -1 )
-							{
-								matches[minIndex] = j;
-							}
-						}
-//						System.err.println( minDist );
-//						float value = testImage.getFloatTriLinearBounds( pos.X, pos.Y, pos.Z );
-//						if ( value > min )
-//						{
-//							count++;
-//						}
-						totalCount++;
-					}
 					
-					System.err.println( baseFileNameText.getText() + "_" + includeRange.elementAt(i) + ".tif" + " Segmented " + count + " out of " + totalCount + " " + testAnnotations.getCurves().size() );
-//					for ( int j = 0; j < matches.length; j++ )
+
+//					new ViewJFrameImage((ModelImage)wormImageA.clone());
+//					Vector3f min = new Vector3f( Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE );
+//					Vector3f max = new Vector3f(-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE );
+//					final int dimX = wormImageA.getExtents().length > 0 ? wormImageA.getExtents()[0] : 1;
+//					final int dimY = wormImageA.getExtents().length > 1 ? wormImageA.getExtents()[1] : 1;
+//					final int dimZ = wormImageA.getExtents().length > 2 ? wormImageA.getExtents()[2] : 1;
+//					for ( int z = 0; z < dimZ; z++ )
 //					{
-//						System.err.println( j + " -> " + matches[j] );
+//						for ( int y = 0; y < dimY; y++ )
+//						{
+//							for ( int x = 0; x < dimX; x++ )
+//							{
+//								if ( wormImageA.getFloat(x,y,z) > wormImageA.getMin() )
+//								{
+//									min.min( new Vector3f(x,y,z));
+//									max.max( new Vector3f(x,y,z));
+//								}
+//							}
+//						}
 //					}
-//					if ( testImage != null )
+//					Vector<Vector3f> centers = WormSegmentation.findCenters( wormImageA, min, max );
+					
+					
+
+//					Vector<Vector3f> centers = new Vector<Vector3f>();
+//					for ( int j = 0; j < knownAnnotations.getCurves().size(); j++ )
 //					{
-//						testImage.disposeLocal();
-//						testImage = null;
+//						VOIText text1 = (VOIText) knownAnnotations.getCurves().elementAt(j);
+//						if ( text1.getText().equals("origin") )
+//						{
+//							continue;
+//						}
+//						if ( !text1.getText().contains("L") && !text1.getText().contains("R") )
+//						{
+//							continue;
+//						}
+//						Vector3f pos1 = text1.elementAt(0);
+//						centers.add(new Vector3f(pos1));
 //					}
-//					new ViewJFrameImage(testImage);
-//					wormImageA.unregisterAllVOIs();
-//					wormImageA.registerVOI(testAnnotations);
-//					new ViewJFrameImage(wormImageA);
+//					System.err.print( centers.size() + " " );
+//					centers = WormSegmentation.findCenters( visited, centers );
+//					visited.disposeLocal();
+//					visited = null;
+//					
+//					System.err.println( centers.size() );
+//					ModelImage centerImage = new ModelImage(ModelStorageBase.INTEGER, wormImageA.getExtents(), imageName + "Centers");
+//					JDialogBase.updateFileInfo(wormImageA, centerImage); 
+//					for ( int j = 0; j < centers.size(); j++ )
+//					{
+//						Vector3f pos = centers.elementAt(j);
+//						centerImage.set( Math.round(pos.X), Math.round(pos.Y), Math.round(pos.Z), wormImageA.getMax() );
+//					}
+//					centerImage.calcMinMax();
+//					new ViewJFrameImage(centerImage);
+//					Vector<Vector3f> annotationsWindow = WormSegmentation.segmentImage(centerImage, (float)centerImage.getMax());
+//					System.err.print( annotationsWindow.size() );
+//					WormSegmentation.saveAnnotations(wormImageA, annotationsWindow, Color.yellow );
+//					new ViewJFrameImage((ModelImage)wormImageA.clone());
+					
+					Vector<Vector3f> annotationsWindow = WormSegmentationWindowing.seamCellSegmentation(wormImageA, max_LR[0], max_LR[1]);
+					Vector<Vector3f> annotationsLoG = WormSegmentationLoG.seamCellSegmentation(wormImageA);			
+//					System.err.print( annotationsWindow.size() + " " + annotationskMeans.size() + " "  + annotationsLoG.size() + "   " );
+					
+//
+//					VOI testAnnotations = null;
+//					ModelImage testSegMidLine = LatticeModel.segmentSeamCells( wormImageA, false );
+//					if ( testSegMidLine != null )
+//					{
+//						testAnnotations = testSegMidLine.getVOIsCopy().elementAt(0);
+//						if ( first )
+//						{				
+//							int dimX = testSegMidLine.getExtents().length > 0 ? testSegMidLine.getExtents()[0] : 1; // dimX
+//							int dimY = testSegMidLine.getExtents().length > 1 ? testSegMidLine.getExtents()[1] : 1; // dimY
+//							maximumProjectionImage = new ModelImage( testSegMidLine.getType(), new int[]{ dimX, dimY, mpSliceCount}, baseFileNameText.getText() + "_MP_Z.tif" );
+//							currentMP = 0;
+//							first = false;
+//						}
+//						calcMaximumProjectionZ( testSegMidLine );
+//					}
+//
+//					
+////					VOI testAnnotations = LatticeModel.segmentSeamCells( wormImageA, true );
+//					if ( testAnnotations == null )
+//						continue;
+//					
+//					int testAnnotationCount = testAnnotations.getCurves().size();
+					
+
+					Vector<Vector3f> seamCells = new Vector<Vector3f>();
+					Vector<Vector3f> tempSeamCells = new Vector<Vector3f>();
+					for ( int k = 0; k < annotationsWindow.size(); k++ )
+					{
+						tempSeamCells.add( new Vector3f(annotationsWindow.elementAt(k)) );
+					}
+					for ( int k = 0; k < annotationskMeans.size(); k++ )
+					{
+						tempSeamCells.add( new Vector3f(annotationskMeans.elementAt(k)) );
+					}
+					for ( int k = 0; k < annotationsLoG.size(); k++ )
+					{
+						tempSeamCells.add( new Vector3f(annotationsLoG.elementAt(k)) );						
+					}
+					int prevSize = tempSeamCells.size();
+					int newSize = WormSegmentation.reduceDuplicates(wormImageA, tempSeamCells, false);
+					while ( prevSize > newSize )
+					{
+						prevSize = newSize;
+						newSize = WormSegmentation.reduceDuplicates(wormImageA, tempSeamCells, false);
+					}
+
+					Vector3f negCenter = new Vector3f(-1,-1,-1);
+					for ( int j = 0; j < tempSeamCells.size(); j++ )
+					{
+						if ( !tempSeamCells.elementAt(j).equals(negCenter) )
+						{
+							seamCells.add(tempSeamCells.elementAt(j));
+						}
+					}
+					WormSegmentation.saveAnnotations(wormImageA, seamCells, Color.blue );
+					fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "seam_cells";  
+					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+					WormSegmentation.saveAllVOIsTo(voiDir, wormImageA);
+					
+					
+					
+					
+
+//					for ( int j = 0; j < knownAnnotations.getCurves().size(); j++ )
+//					{
+//						VOIText text1 = (VOIText) knownAnnotations.getCurves().elementAt(j);
+//						if ( text1.getText().equals("origin") )
+//						{
+//							continue;
+//						}
+//						if ( !text1.getText().contains("L") && !text1.getText().contains("R") )
+//						{
+//							continue;
+//						}
+//						Vector3f pos1 = text1.elementAt(0);
+//						float minW = Float.MAX_VALUE;
+//						float minKM = Float.MAX_VALUE;
+//						float minLOG = Float.MAX_VALUE;
+//						float minSeam = Float.MAX_VALUE;
+//						for ( int k = 0; k < annotationsWindow.size(); k++ )
+//						{
+//							float dist = pos1.distance(annotationsWindow.elementAt(k));
+//							if ( dist < minW )
+//							{
+//								minW = dist;
+//							}
+//						}
+//						for ( int k = 0; k < annotationskMeans.size(); k++ )
+//						{
+//							float dist = pos1.distance(annotationskMeans.elementAt(k));
+//							if ( dist < minKM )
+//							{
+//								minKM = dist;
+//							}
+//						}
+//						for ( int k = 0; k < annotationsLoG.size(); k++ )
+//						{
+//							float dist = pos1.distance(annotationsLoG.elementAt(k));
+//							if ( dist < minLOG )
+//							{
+//								minLOG = dist;
+//							}
+//						}
+//						for ( int k = 0; k < seamCells.size(); k++ )
+//						{
+//							float dist = pos1.distance(seamCells.elementAt(k));
+//							if ( dist < minSeam )
+//							{
+//								minSeam = dist;
+//							}
+//						}
+//						boolean found = false;
+//						if ( minSeam < 10 )
+//						{
+////							System.err.println( text1.getText() + " found in Seam" );
+//							found = true;
+//						}
+//						if ( !found )
+//						{
+//							System.err.print( "     " + text1.getText() + " NOT found   " );
+//							if ( minW < 10 )
+//							{
+//								System.err.print( text1.getText() + " found in Window " );
+////								found = true;
+//							}
+//							if ( minKM < 10 )
+//							{
+//								System.err.print( text1.getText() + " found in kMeans " );
+////								found = true;
+//							}
+//							if ( minLOG < 10 )
+//							{
+//								System.err.print( text1.getText() + " found in LOG " );
+////								found = true;
+//							}
+//						}
+//					}
+//					System.err.println("");
+					
 				}
 			}
 		}
-
+		
 		if(wormImageA != null) {
 			wormImageA.disposeLocal();
 			wormImageA = null;
@@ -525,7 +676,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 
 		System.err.println( "Done segmentation" );
 	}
-
+	
 
 	private void segmentAnnotations()
 	{
@@ -701,6 +852,233 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 
 		System.err.println( "Done annotationStats" );
 	}
+
+
+//	private void seamCellInfo()
+//	{
+//		if ( includeRange != null )
+//		{
+////			try {
+////				String fileNameStats = baseFileDir + File.separator + "SeamCell_RelativeIntensities";		
+////				File statsFile = new File(fileNameStats + ".csv");
+////				if ( statsFile.exists() )
+////				{
+////					statsFile.delete();
+////					statsFile = new File(fileNameStats + ".csv");
+////				}
+////				FileWriter L1StatsFW = new FileWriter(statsFile);
+////				BufferedWriter L1StatsBW = new BufferedWriter(L1StatsFW);
+////
+////				L1StatsBW.write( "time" + "," + "image min" + "," + "image max" + "," + 
+////				"1L" + "," + "1R" + "," + 
+////				"2L" + "," + "2R" + "," + 
+////				"3L" + "," + "3R" + "," + 
+////				"4L" + "," + "4R" + "," + 
+////				"5L" + "," + "5R" + "," + 
+////				"6L" + "," + "6R" + "," + 
+////				"7L" + "," + "7R" + "," + 
+////				"8L" + "," + "8R" + "," + 
+////				"9L" + "," + "9R" + "," +
+////				"10L" + "," + "10R" + "\n");
+//
+//				HashMap<String, Float> seamCellIntensities = new HashMap<String, Float>();
+//			for ( int i = 0; i < includeRange.size(); i++ )
+//			{
+//				String fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + ".tif";
+//				File voiFile = new File(baseFileDir + File.separator + fileName);
+//				if ( voiFile.exists() )
+//				{
+//					System.err.println( fileName );
+//					FileIO fileIO = new FileIO();
+//					if(wormImageA != null) 
+//					{
+//						wormImageA.disposeLocal();
+//						wormImageA = null;
+//					}
+//					ModelImage temp = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);
+//					wormImageA = LatticeModel.LoG(temp);  
+//					wormImageA.calcMinMax();
+//					temp.disposeLocal();
+//					temp = null;
+//					float[] targetValue = new float[]{(float) (wormImageA.getMax()/2f)};
+//					HashMap<Float, Integer> histogram = estimateHistogram(wormImageA, targetValue);
+//
+//					fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotations";            	    		
+//					VOIVector annotations = new VOIVector();
+//					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+//					loadAllVOIsFrom(voiDir, true, annotations, false);
+//					if ( annotations.size() <= 0 )
+//					{
+//						fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotation";            	    		
+//						annotations = new VOIVector();
+//						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+//						loadAllVOIsFrom(voiDir, true, annotations, false);
+//					}
+//					if ( annotations.size() > 0 )
+//					{
+//						String imageName = wormImageA.getImageName();
+//						if (imageName.contains("_clone")) {
+//							imageName = imageName.replaceAll("_clone", "");
+//						}
+//						if (imageName.contains("_laplace")) {
+//							imageName = imageName.replaceAll("_laplace", "");
+//						}
+//						if (imageName.contains("_gblur")) {
+//							imageName = imageName.replaceAll("_gblur", "");
+//						}
+//						imageName = imageName + "_segmentation";
+//						ModelImage segmentationImage = new ModelImage(ModelStorageBase.FLOAT, wormImageA.getExtents(), imageName);
+//						JDialogBase.updateFileInfo(wormImageA, segmentationImage);
+//						
+//						imageName = imageName + "_visited";
+//						ModelImage visited = new ModelImage(ModelStorageBase.INTEGER, wormImageA.getExtents(), imageName);
+//						JDialogBase.updateFileInfo(wormImageA, visited);   
+//						
+//						Vector<Vector3f> seedList = new Vector<Vector3f>();
+//						for ( int j = 0; j < annotations.elementAt(0).getCurves().size(); j++ )
+//						{
+//							VOIText text1 = (VOIText) annotations.elementAt(0).getCurves().elementAt(j);
+//							Vector3f pos1 = text1.elementAt(0);
+//							float value = wormImageA.getFloat( (int)pos1.X, (int)pos1.Y, (int)pos1.Z );
+//							seamCellIntensities.put( text1.getText(), value );
+//							if ( text1.getText().contains("L") || text1.getText().contains("R") )
+//							{
+//								seedList.add(pos1);
+//								int fillCount = LatticeModel.fill(wormImageA, targetValue[0], segmentationImage, null, seedList, visited, j, null);
+//								System.err.println( "     " + text1.getText() + "   " + fillCount );
+//								seedList.clear();
+//							}
+//						}
+////						segmentationImage.calcMinMax();
+////						new ViewJFrameImage(segmentationImage);
+//						segmentationImage.disposeLocal();
+//						segmentationImage = null;
+//						visited.disposeLocal();
+//						visited = null;
+//
+////						System.err.print( includeRange.elementAt(i) + "," + histogram.get((float)wormImageA.getMin())/(float)wormImageA.getDataSize() + "," + histogram.get((float)wormImageA.getMax())/(float)wormImageA.getDataSize() + "," ); 
+////						System.err.print( histogram.get(seamCellIntensities.get("1L"))/(float)wormImageA.getDataSize() + "," + histogram.get(seamCellIntensities.get("1R"))/(float)wormImageA.getDataSize() + ","  );  
+////						System.err.print( histogram.get(seamCellIntensities.get("2L"))/(float)wormImageA.getDataSize() + "," + histogram.get(seamCellIntensities.get("2R"))/(float)wormImageA.getDataSize() + ","  ); 
+////						System.err.print( histogram.get(seamCellIntensities.get("3L"))/(float)wormImageA.getDataSize() + "," + histogram.get(seamCellIntensities.get("3R"))/(float)wormImageA.getDataSize() + ","  ); 
+////						System.err.print( histogram.get(seamCellIntensities.get("4L"))/(float)wormImageA.getDataSize() + "," + histogram.get(seamCellIntensities.get("4R"))/(float)wormImageA.getDataSize() + ","  );  
+////						System.err.print( histogram.get(seamCellIntensities.get("5L"))/(float)wormImageA.getDataSize() + "," + histogram.get(seamCellIntensities.get("5R"))/(float)wormImageA.getDataSize() + ","  ); 
+////						System.err.print( histogram.get(seamCellIntensities.get("6L"))/(float)wormImageA.getDataSize() + "," + histogram.get(seamCellIntensities.get("6R"))/(float)wormImageA.getDataSize() + ","  );  
+////						System.err.print( histogram.get(seamCellIntensities.get("7L"))/(float)wormImageA.getDataSize() + "," + histogram.get(seamCellIntensities.get("7R"))/(float)wormImageA.getDataSize() + ","  ); 
+////						System.err.print( histogram.get(seamCellIntensities.get("8L"))/(float)wormImageA.getDataSize() + "," + histogram.get(seamCellIntensities.get("8R"))/(float)wormImageA.getDataSize() + ","  );  
+////						System.err.print( histogram.get(seamCellIntensities.get("9L"))/(float)wormImageA.getDataSize() + "," + histogram.get(seamCellIntensities.get("9R"))/(float)wormImageA.getDataSize() + ","  ); 
+////						System.err.print( histogram.get(seamCellIntensities.get("10L"))/(float)wormImageA.getDataSize() + "," + histogram.get(seamCellIntensities.get("10R"))/(float)wormImageA.getDataSize() + "\n");
+//
+//
+////						L1StatsBW.write( includeRange.elementAt(i) + "," + histogram.get((float)wormImageA.getMin())/(float)wormImageA.getDataSize() + "," + histogram.get((float)wormImageA.getMax())/(float)wormImageA.getDataSize() + "," + 
+////								histogram.get(seamCellIntensities.get("1L"))/(float)wormImageA.getDataSize() + "," + histogram.get(seamCellIntensities.get("1R"))/(float)wormImageA.getDataSize() + "," + 
+////								histogram.get(seamCellIntensities.get("2L"))/(float)wormImageA.getDataSize() + "," + histogram.get(seamCellIntensities.get("2R"))/(float)wormImageA.getDataSize() + "," + 
+////								histogram.get(seamCellIntensities.get("3L"))/(float)wormImageA.getDataSize() + "," + histogram.get(seamCellIntensities.get("3R"))/(float)wormImageA.getDataSize() + "," + 
+////								histogram.get(seamCellIntensities.get("4L"))/(float)wormImageA.getDataSize() + "," + histogram.get(seamCellIntensities.get("4R"))/(float)wormImageA.getDataSize() + "," + 
+////								histogram.get(seamCellIntensities.get("5L"))/(float)wormImageA.getDataSize() + "," + histogram.get(seamCellIntensities.get("5R"))/(float)wormImageA.getDataSize() + "," + 
+////								histogram.get(seamCellIntensities.get("6L"))/(float)wormImageA.getDataSize() + "," + histogram.get(seamCellIntensities.get("6R"))/(float)wormImageA.getDataSize() + "," + 
+////								histogram.get(seamCellIntensities.get("7L"))/(float)wormImageA.getDataSize() + "," + histogram.get(seamCellIntensities.get("7R"))/(float)wormImageA.getDataSize() + "," + 
+////								histogram.get(seamCellIntensities.get("8L"))/(float)wormImageA.getDataSize() + "," + histogram.get(seamCellIntensities.get("8R"))/(float)wormImageA.getDataSize() + "," + 
+////								histogram.get(seamCellIntensities.get("9L"))/(float)wormImageA.getDataSize() + "," + histogram.get(seamCellIntensities.get("9R"))/(float)wormImageA.getDataSize() + "," +
+////								histogram.get(seamCellIntensities.get("10L"))/(float)wormImageA.getDataSize() + "," + histogram.get(seamCellIntensities.get("10R"))/(float)wormImageA.getDataSize() + "\n");
+//
+////						L1StatsBW.write( includeRange.elementAt(i) + "," + (float)wormImageA.getMin()/(float)wormImageA.getMax() + "," + (float)wormImageA.getMax()/(float)wormImageA.getMax() + "," + 
+////								seamCellIntensities.get("1L")/(float)wormImageA.getMax() + "," + seamCellIntensities.get("1R")/(float)wormImageA.getMax() + "," + 
+////								seamCellIntensities.get("2L")/(float)wormImageA.getMax() + "," + seamCellIntensities.get("2R")/(float)wormImageA.getMax() + "," + 
+////								seamCellIntensities.get("3L")/(float)wormImageA.getMax() + "," + seamCellIntensities.get("3R")/(float)wormImageA.getMax() + "," + 
+////								seamCellIntensities.get("4L")/(float)wormImageA.getMax() + "," + seamCellIntensities.get("4R")/(float)wormImageA.getMax() + "," + 
+////								seamCellIntensities.get("5L")/(float)wormImageA.getMax() + "," + seamCellIntensities.get("5R")/(float)wormImageA.getMax() + "," + 
+////								seamCellIntensities.get("6L")/(float)wormImageA.getMax() + "," + seamCellIntensities.get("6R")/(float)wormImageA.getMax() + "," + 
+////								seamCellIntensities.get("7L")/(float)wormImageA.getMax() + "," + seamCellIntensities.get("7R")/(float)wormImageA.getMax() + "," + 
+////								seamCellIntensities.get("8L")/(float)wormImageA.getMax() + "," + seamCellIntensities.get("8R")/(float)wormImageA.getMax() + "," + 
+////								seamCellIntensities.get("9L")/(float)wormImageA.getMax() + "," + seamCellIntensities.get("9R")/(float)wormImageA.getMax() + "," +
+////								seamCellIntensities.get("10L")/(float)wormImageA.getMax() + "," + seamCellIntensities.get("10R")/(float)wormImageA.getMax() + "\n");
+//
+//						seamCellIntensities.clear();
+////						histogram.clear();
+////						histogram = null;
+//					}
+//				}
+//			}    				
+////			L1StatsBW.write( "\n" );
+////			L1StatsBW.close();
+////		} catch (IOException e) {
+////		}
+//		}
+//		if ( wormImageA != null )
+//		{
+//			wormImageA.disposeLocal();
+//			wormImageA = null;
+//		}
+//		System.err.println( "Done seam cell info" );
+//	}
+	
+	private static HashMap<Float, Integer> estimateHistogram( final ModelImage image, float[] targetValue )
+    {    	
+		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;  	
+    	
+    	// Calculate the histogram:
+		int maxCount = 0;
+    	HashMap<Float, Integer> map = new HashMap<Float, Integer>();
+    	for ( int z = 0; z < dimZ; z++ )
+    	{
+    		for ( int y = 0; y < dimY; y++ )
+    		{
+    			for ( int x = 0; x < dimX; x++ )
+    			{
+    				float value = image.getFloat(x,y,z);
+    				int count = 0;
+    				if ( map.containsKey(value) )
+    				{
+    					count = map.get(value);
+    				}
+    				count++;
+    				map.put( value, count );
+    				if ( count > maxCount )
+    				{
+    					maxCount = count;
+    				}
+    			}
+    		}
+    	}
+//    	System.err.println( map.get((float)image.getMin() ) + " " + map.get((float)image.getMax() ) );
+    	// Sort the Histogram bins:
+    	Set<Float> keySet = map.keySet();
+    	Iterator<Float> keyIterator = keySet.iterator();
+    	float[] keyArray = new float[keySet.size()];
+    	int count = 0;
+    	while ( keyIterator.hasNext() )
+    	{
+    		float value = keyIterator.next();
+    		keyArray[count++] = value;
+    	}
+    	
+    	Arrays.sort(keyArray);
+    	HashMap<Float, Integer> countValues = new HashMap<Float, Integer>();
+    	int runningCount = 0;
+    	float target = .995f * dimX*dimY*dimZ;
+    	boolean found = false;
+    	for ( int i = 0; i < keyArray.length; i++ )
+    	{
+    		count = map.get( keyArray[i] );
+    		runningCount += count;
+    		countValues.put( keyArray[i], runningCount );
+    		if ( (runningCount >= target) && !found )
+    		{
+    			found = true;
+    			targetValue[0] = keyArray[i];
+    		}
+    	}
+//    	System.err.println( count_95P + " " + totalCount );
+//    	for ( int i = 0; i < countValues.length; i++ )
+//    	{
+//    		System.err.println( countValues[i].X + " " + countValues[i].Y );
+//    	}
+    	map = null;
+    	keyArray = null;
+    	return countValues;
+    }
 
 
 	private void latticeStraighten()
@@ -916,27 +1294,37 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 					{
 						wormImageA.disposeLocal();
 					}
-					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
-
-					fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotation";            	    		
+					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  ;            	    		
 					VOIVector annotations = new VOIVector();
+
+					fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "seam_cells";
 					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
 					loadAllVOIsFrom(voiDir, true, annotations, false);
 					if ( annotations.size() <= 0 )
 					{
-						fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotations";            	    		
-						annotations = new VOIVector();
+						fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotation";
 						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
 						loadAllVOIsFrom(voiDir, true, annotations, false);
+						if ( annotations.size() <= 0 )
+						{
+							fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotations";            	    		
+							annotations = new VOIVector();
+							voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+							loadAllVOIsFrom(voiDir, true, annotations, false);
+						}
 					}
-					
-					
+
+					if ( annotations.size() == 0 )
+					{
+						continue;
+					}
 					
 					
 //					fileName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "statistics" + File.separator + "AnnotationInfo_before.csv";
 //					readLatticePositions( fileName, includeRange.elementAt(i), annotations );
 
-					if ( buildLattice( annotations.elementAt(0), includeRange.elementAt(i) ) )
+//					if ( buildLattice( annotations.elementAt(0), includeRange.elementAt(i) ) )
+					buildLattice( annotations.elementAt(0), includeRange.elementAt(i) );
 					{
 						if ( buildLattice2(includeRange.elementAt(i), false) )
 						{
@@ -948,10 +1336,10 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 //							buildLattice2(includeRange.elementAt(i), true);
 						}
 					}
-					else
-					{
-						System.err.println( "Failed to find a lattice for " + fileName );						
-					}
+//					else
+//					{
+//						System.err.println( "Failed to find a lattice for " + fileName );						
+//					}
 
 					count++;
 //					annotationStatsBefore.clear();
@@ -966,14 +1354,13 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			wormImageA.disposeLocal();
 			wormImageA = null;
 		}
+		System.err.println( "Done lattice building" );
 //		annotationStatsBefore = null;
 	}     
 
 	Vector<int[]> tenthPairs;
 	Vector<Vector3f> positions;
-	VOIContour leftTarget;
-	VOIContour rightTarget;
-	private boolean buildLattice( VOI annotations, int time )
+	private void buildLattice( VOI annotations, int time )
 	{
 		positions = new Vector<Vector3f>();
 		for ( int i = 0; i < annotations.getCurves().size(); i++ )
@@ -991,81 +1378,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 
 		// pair distance > 50 time step for 1-9 is in the range of 5-15 um
 		// pair distance > 50 time step for 10 is in the range of 1-5 um
-
-		leftTarget = new VOIContour(false);
-		rightTarget = new VOIContour(false);
-		VOI target = new VOI((short) 0, "lattice", 1, VOI.POLYLINE );
-		target.getCurves().add(leftTarget);
-		target.getCurves().add(rightTarget);
-		for ( int i = 10; i > 0; i-- )
-		{
-			for ( int j = 0; j < annotations.getCurves().size(); j++ )
-			{
-				VOIText text = (VOIText) annotations.getCurves().elementAt(j);
-				if ( text.getText().contains(i + "L") )
-				{
-					Vector3f pos = new Vector3f(text.elementAt(0));
-					pos.scale( VOILatticeManagerInterface.VoxelSize );
-					leftTarget.add( pos );
-					//					System.err.println( "Adding to left " + text.getText() );
-					break;
-				}					
-			}
-			for ( int j = 0; j < annotations.getCurves().size(); j++ )
-			{
-				VOIText text = (VOIText) annotations.getCurves().elementAt(j);			
-				if ( text.getText().contains(i + "R") )
-				{
-					Vector3f pos = new Vector3f(text.elementAt(0));
-					pos.scale( VOILatticeManagerInterface.VoxelSize );
-					rightTarget.add( pos );
-					//					System.err.println( "Adding to right " + text.getText() );
-					break;
-				}				
-			}
-		}
-		//		for ( int i = 0; i < leftTarget.size(); i++ )
-		//		{
-		//			System.err.println( leftTarget.elementAt(i).distance(rightTarget.elementAt(i) ) );
-		//		}
-		//		for ( int i = 0; i < leftTarget.size(); i++ )
-		//		{
-		//			if ( i < leftTarget.size() - 1 )
-		//			{
-		//				System.err.println( leftTarget.elementAt(i).distance(leftTarget.elementAt(i+1)) + " " + rightTarget.elementAt(i).distance(rightTarget.elementAt(i+1)) );
-		//			}
-		//		}
-		//		for ( int i = 0; i < leftTarget.size(); i++ )
-		//		{
-		//			if ( i < leftTarget.size() - 1 )
-		//			{
-		//				Vector3f v1 = Vector3f.sub(  rightTarget.elementAt(i),  leftTarget.elementAt(i) );
-		//				Vector3f v2 = Vector3f.sub(  rightTarget.elementAt(i+1),  leftTarget.elementAt(i+1) );
-		//				v1.normalize();
-		//				v2.normalize();
-		//				float angle = (float) (180 * v1.angle(v2) / Math.PI);
-		//				System.err.println( angle );
-		//			}
-		//		}
-		//		for ( int i = 0; i < leftTarget.size(); i++ )
-		//		{
-		//			if ( i < leftTarget.size() - 2 )
-		//			{
-		//				Vector3f vL1 = Vector3f.sub(  leftTarget.elementAt(i+1),  leftTarget.elementAt(i) );
-		//				Vector3f vL2 = Vector3f.sub(  leftTarget.elementAt(i+2),  leftTarget.elementAt(i+1) );
-		//				Vector3f vR1 = Vector3f.sub(  rightTarget.elementAt(i+1), rightTarget.elementAt(i) );
-		//				Vector3f vR2 = Vector3f.sub(  rightTarget.elementAt(i+2), rightTarget.elementAt(i+1) );
-		//				vL1.normalize();
-		//				vL2.normalize();
-		//				vR1.normalize();
-		//				vR2.normalize();
-		//				float angleL = (float) (180 * vL1.angle(vL2) / Math.PI);
-		//				float angleR = (float) (180 * vR1.angle(vR2) / Math.PI);
-		//				System.err.println( angleL + "  " + angleR );
-		//			}
-		//		}
-
-		VOIVector lattices = new VOIVector();
 
 		tenthPairs = new Vector<int[]>();
 		// look for potential 10 pair:
@@ -1087,9 +1399,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 					}
 					if (  (distance > tempMin) && (distance < tempMax) )
 					{
-						//						System.err.println( time + " " + i + " " + j + " " + distance );
 						tenthPairs.add( new int[]{i,j} );
-						//						addPair( i, j, positions, lattices );
 						count++;
 					}
 				}
@@ -1108,119 +1418,9 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 				if ( checkMidPoint( tenthPairs.elementAt(i), positions ) )
 				{
 					tenthPairs.remove(i);
-//					System.err.println( "        removing 10th pair" );
 				}
 			}
 		}
-		//		if ( tenthPairs.size() > 1 )
-		//		{
-		//			System.err.println( "        FAILED to removed extra 10th pairs" );
-		//		}
-		if ( tenthPairs.size() == 0 )
-		{
-			System.err.println( "        removed all 10th pairs" );
-		}
-
-		//		System.err.println( time + " number of 10th pairs found: " + tenthPairs.size() );
-		boolean found = false;
-		for ( int i = 0; i < tenthPairs.size(); i++ )
-		{
-			Vector3f p1 = positions.elementAt(tenthPairs.elementAt(i)[0]);
-			Vector3f p2 = positions.elementAt(tenthPairs.elementAt(i)[1]);
-			if ( p1.equals(leftTarget.firstElement()) && p2.equals(rightTarget.firstElement()) )
-			{
-				//				System.err.println( time + " 10 pair found " + tenthPairs.size() );
-				found = true;
-			}
-			if ( p2.equals(leftTarget.firstElement()) && p1.equals(rightTarget.firstElement()) )
-			{
-				//				System.err.println( time + " 10 pair found " + tenthPairs.size() );
-				found = true;
-			}
-		}
-
-		if ( true )
-		{
-			return found;
-		}
-
-		System.err.println( time + " " + maxDist );
-
-		System.err.println( time + " " + lattices.size() );
-
-		System.err.println( "target " + !checkLattice( target, lattices ) );
-
-		VOIVector allLattices = checkPairs( lattices );
-		System.err.println( "target " + !checkLattice( target, lattices ) );
-		//		lattices.add(target);
-		//		VOIVector allLattices = checkPairs( lattices );
-		System.err.println( time + " " + lattices.size() );
-		System.err.println( time + " " + allLattices.size() );
-		System.err.println( "target " + !checkLattice( target, allLattices ) );
-
-
-
-
-		for ( int i = 0; i < allLattices.size(); i++ )
-		{
-			VOI lattice = allLattices.elementAt(i);
-			VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
-			VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
-
-			boolean matches = (left.size() == leftTarget.size());
-			if ( left.size() == leftTarget.size() )
-			{
-				for ( int j = 0; j < left.size(); j++ )
-				{
-					if ( !left.elementAt(j).equals( leftTarget.elementAt(j)) || !right.elementAt(j).equals( rightTarget.elementAt(j)) )
-					{
-						matches = false;
-					}
-				}
-			}
-			if ( matches )
-			{
-				System.err.println( "Found target " + i );
-			}
-			matches = (left.size() == leftTarget.size());
-			if ( left.size() == leftTarget.size() )
-			{
-				for ( int j = 0; j < left.size(); j++ )
-				{
-					if ( !left.elementAt(j).equals( rightTarget.elementAt(j)) || !right.elementAt(j).equals( leftTarget.elementAt(j)) )
-					{
-						matches = false;
-					}
-				}
-			}
-			if ( matches )
-			{
-				System.err.println( "Found target " + i );
-			}
-		}
-
-
-		//		System.err.println( time + " 10 pair " + count );
-		//		
-		//
-		//		// look for potential pairs:
-		//		for ( int i = 0; i < positions.size(); i++ )
-		//		{
-		//			count = 0;
-		//			for ( int j = i + 1; j < positions.size(); j++ )
-		//			{
-		//				float distance = positions.elementAt(i).distance( positions.elementAt(j) );
-		//				if (  (distance >= 5) && (distance <= 15) )
-		//				{
-		////					System.err.println( time + " " + i + " " + j + " " + distance );
-		//					count++;
-		//				}
-		//			}
-		//			System.err.println( time + " " + i + " pair " + count );
-		//		}
-		//		System.err.println( "" );
-
-		return false;
 	}
 
 	private boolean buildLattice2( int time, boolean print )
@@ -1432,11 +1632,14 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 
 			
 			Vector<int[]> sequence = new Vector<int[]>();
-			sequencePairs( model, sequence, pairLists, tenthPair, positions.size(), total, sequenceList );
+			int targetLength = (positions.size() % 2) == 0 ? positions.size() : positions.size() -1;
+			targetLength = Math.max(0, targetLength);
+			targetLength = Math.min(20, targetLength);
+			sequencePairs( model, sequence, pairLists, tenthPair, targetLength, total, sequenceList );
 		}
-		removeDuplicates(sequenceList);
+//		removeDuplicates(sequenceList);
 
-		orderSequences( model, sequenceList, positions.size(), finalLatticeList );
+		orderSequences( model, sequenceList, finalLatticeList );
 
 //		System.err.println( finalLatticeList.size() );
 //		for ( int j = 0; j < finalLatticeList.size(); j++ )
@@ -1653,7 +1856,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 //		System.err.println( "  ==>  " + sequenceList.size() );
 	}
 	
-	private void orderSequences( LatticeModel model, Vector<Vector<int[]>> sequenceList, int count, Vector<Vector<int[]>> finalLatticeList )
+	private void orderSequences( LatticeModel model, Vector<Vector<int[]>> sequenceList, Vector<Vector<int[]>> finalLatticeList )
 	{
 		if ( sequenceList.size() <= 0 )
 		{
@@ -1671,7 +1874,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		}
 		Arrays.sort(angles);
 		
-		int bottom4th = Math.min( sequenceList.size(), Math.max( 50, sequenceList.size()/4 ) );
+		int bottom4th = Math.min( sequenceList.size(), Math.max( 50, Math.min( 300, sequenceList.size()/4 ) ) );
 		Vector2d[] minCount = new Vector2d[sequenceList.size()];
 		for ( int i = 0; i < bottom4th; i++ )
 		{
@@ -1772,26 +1975,26 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		newSequence.add(lastPair);
 		
 		boolean allFound = (count == newSequence.size() * 2);
-		for ( int i = 0; i < count; i++ )
-		{
-			int countI = 0;
-			for ( int j = 0; j < newSequence.size(); j++ )
-			{
-				int[] pair = newSequence.elementAt(j);
-				if ( pair[0] == i || pair[1] == i )
-				{
-					countI++;
-				}
-			}
-			if ( countI == 0 )
-			{
-				allFound = false;
-			}
-			if ( countI > 1 )
-			{
-				System.err.println( "Lattice ERROR" );
-			}
-		}
+//		for ( int i = 0; i < count; i++ )
+//		{
+//			int countI = 0;
+//			for ( int j = 0; j < newSequence.size(); j++ )
+//			{
+//				int[] pair = newSequence.elementAt(j);
+//				if ( pair[0] == i || pair[1] == i )
+//				{
+//					countI++;
+//				}
+//			}
+//			if ( countI == 0 )
+//			{
+//				allFound = false;
+//			}
+//			if ( countI > 1 )
+//			{
+//				System.err.println( "Lattice ERROR" );
+//			}
+//		}
 //		System.err.println( newSequence.size() * 2 + " " + count + " " + allFound + " " + total[0]);
 		if ( allFound )
 		{
@@ -3905,6 +4108,51 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 	}
 
 
+	private void calcMaximumProjectionZ( ModelImage image )
+	{
+		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+		AlgorithmMaximumIntensityProjection mipAlgo = null;
+		// Make algorithm
+		if (image.isColorImage()) {
+			mipAlgo = new AlgorithmMaximumIntensityProjection(image, 
+					0, dimZ -1, dimZ,
+					image.getMinR(), image.getMaxR(),
+					image.getMinG(), image.getMaxG(), 
+					image.getMinB(), image.getMaxB(),
+					true, false, 2);    
+		}
+		else {
+			mipAlgo = new AlgorithmMaximumIntensityProjection(image, 
+					0, dimZ -1, dimZ,
+					image.getMin(), image.getMax(),
+					true, false, 2 );
+		}
+		mipAlgo.setRunningInSeparateThread(false);
+		mipAlgo.run();
+
+		Vector<ModelImage> resultImages = ((AlgorithmMaximumIntensityProjection)mipAlgo).getResultImage();
+		if ( resultImages.size() > 0 )
+		{
+			ModelImage mp = resultImages.elementAt(0);
+			int dimX = maximumProjectionImage.getExtents().length > 0 ? maximumProjectionImage.getExtents()[0] : 1;
+			int dimY = maximumProjectionImage.getExtents().length > 1 ? maximumProjectionImage.getExtents()[1] : 1;
+
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					maximumProjectionImage.set(x,  y, currentMP, mp.getFloat(x, y, 0) );
+				}
+			}
+
+			currentMP++;
+			
+			mp.disposeLocal();
+		}
+		mipAlgo.finalize();
+	}
+
+
 	private void init()
 	{
 		setResizable(true);
@@ -3956,8 +4204,8 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 
 		gbc.gridx = 0;
 		segmentSeamCells = gui.buildCheckBox("segment seam cells", false );
-//		panel.add(segmentSeamCells.getParent(), gbc);
-//		gbc.gridy++;
+		panel.add(segmentSeamCells.getParent(), gbc);
+		gbc.gridy++;
 		
 		gbc.gridx = 0;
 		buildLattice = gui.buildCheckBox("build lattice", false );
