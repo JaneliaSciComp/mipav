@@ -4,6 +4,7 @@ package gov.nih.mipav.model.structures.jama;
 import java.text.DecimalFormat;
 
 import gov.nih.mipav.model.algorithms.RandomNumberGen;
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewUserInterface;
 
 /** LUSOL maintains LU factors of a square or rectangular sparse matrix.
@@ -1037,7 +1038,8 @@ public class LUSOL implements java.io.Serializable {
 		//        Replace columns of the LU one by one.
 		//        ---------------------------------------------------------------
 
-		        for (j = 1; j <= n; j++) {
+		         // Stop if nrank = 0
+		         for (j = 1; j <= n && luparm[15] != 0; j++) {
 		            jrep = j;
 		            jnew  = 2*n + 1 - j;
 		            kb[jrep-1] = jnew;
@@ -6692,12 +6694,6 @@ return;
             klast[0]    = nrank[0];
          }
          else {
-        	//if (krep[0] == 0) {
-        	//	System.err.println("krep[0] == 0");
-        	//}
-        	//if (nrank[0] == 0) {
-        	//    System.err.println("nrank[0] == 0");	
-        	//}
             q[krep[0]-1] = q[nrank[0]-1];
             q[nrank[0]-1] = jrep;
             krep[0]     = nrank[0];
