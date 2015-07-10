@@ -1038,8 +1038,22 @@ public class LUSOL implements java.io.Serializable {
 		//        Replace columns of the LU one by one.
 		//        ---------------------------------------------------------------
 
-		         // Stop if nrank = 0
-		         for (j = 1; j <= n && luparm[15] != 0; j++) {
+		         // Stop if nrank[0] <= 0
+		         // If nrank[0] = 0 lu8rpc crashes on q[krep[0]-1] = q[nrank[0]-1];
+		         // If you increase the size of arrays v, w, ip, iq, and lenr by 1
+		         // and increase their indices by 1, then lu8rpc no longer crashes on
+		         // nrank[0] = 0 but it then crashes on nrank[0] = -1
+		         // Running the original FORTRAN with LUPARM(8) = 1 and ISEED = 1 gives:
+		         // At entry to lu8rpc nrank =      -19
+
+		         // mode1 =        1 mode2 =        1 jrep =       20
+
+		         // At q(krep) = q(nrank) nrank =      -19
+                 // After q(nrank) = jrep:
+		         // q(nrank) =       20
+		         // so the FORTRAN 90 allows an nrank array index of -19 in q and still keeps
+		         // running, but this cannot be tolerated by Java.
+		         for (j = 1; j <= n && luparm[15] > 0; j++) {
 		            jrep = j;
 		            jnew  = 2*n + 1 - j;
 		            kb[jrep-1] = jnew;
