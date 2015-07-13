@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.structures.jama;
 
 
+import java.io.RandomAccessFile;
 import java.text.DecimalFormat;
 
 import gov.nih.mipav.model.algorithms.RandomNumberGen;
@@ -139,6 +140,417 @@ public class LUSOL implements java.io.Serializable {
 	public LUSOL() {
 		
 	}
+	
+	// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	// File        testflat.f90
+	//
+	//             testflat (main program)
+	//
+	// Contains    Aprod, dnormj, jdamax
+	//
+	// This program reads data (i, j, Aij) from a flat text file
+	// and solves a system Ax = b using LUSOL.
+	//
+	// 06 Apr 2002: First version of testlusol.f for SIAM Optimization 2002.
+	//              Michael Saunders, Dept of MS&E, Stanford University.
+	//              Derived from testma48.f.
+	//              Data is read in Harwell-Boeing format.
+	// 23 Apr 1998: Iterative refinement added.
+	// 20 Mar 2000: ||A|| = 1.  dnrmx (infinity norm) used everywhere.
+	//              All printed norms are absolute, not relative.
+	// 09 Mar 2013: Converted to f90.
+	// 10 Jun 2013: testflat derived from testlusol.f to debug lu1fac on
+	//              nick424.txt, a 424 x 424 example from Nick Sahinidis.
+	//              To compile and run:
+	//   gfortran -g -o flat90 snModulePrecision.f90 sn28lusol.f90 testflat.f90
+	//   ./runflat 90 toymat
+	//   ./runflat 90 nick424
+	// -----------------------------------------------------------------------
+
+	public void testflat() {
+
+	// use   hbdataModule
+	//  use   snModulePrecision,  only : ip, rp
+	//  use   sn28lusol,          only : lu1fac, lu6sol
+
+	//  implicit none
+
+	//  intrinsic                     :: cpu_time
+
+	  // Storage for data excluding the flat file
+
+	  final int maxm = 100000;
+	  final int maxn = 100000;
+		
+	  double rhsval[] = new double[maxm];
+	  double xexact[] = new double[maxn];
+
+	  // Storage for LUSOL
+
+	  final int lena  = 10000000;
+	  double parmlu[] = new double[30];
+	  double a[] = new double[lena];
+	  double w[] = new double[maxn];
+	  int luparm[] = new int[30];
+	  int indc[] = new int[lena];
+	  int indr[] = new int[lena];
+	  int lenc[] = new int[maxn];
+	  int lenr[] = new int[maxm];
+	  int p[] = new int[maxm];
+	  int q[] = new int[maxn];
+	  int iploc[] = new int[maxn];
+	  int iqloc[] = new int[maxm];
+	  int ipinv[] = new int[maxm];
+	  int iqinv[] = new int[maxn];
+	  int locc[] = new int[maxn];
+	  int locr[] = new int[maxm];
+
+	  // Local storage
+
+	  int inform[] = new int[1];
+	  int itn, iprint, k     , lenL  , lenU,
+	      m     , maxitn, mode  , 
+	      n     , nelem , nnzero, Scale , TPiv;
+	  // double bnorm;
+	  // double xenorm;
+	  double factol, dxnorm, enorm , rnorm , rnorm0,
+	         snorm , xnorm;
+	  
+	  long       time1 , time2 , timeF , timeR , timeS;
+	  int indc2[] = new int[lena];
+	  int indr2[] = new int[lena];  
+	  // Extra copy of A for refinement
+	  double A2[] = new double[lena];
+	  double rhs[] = new double[maxm];
+	  double r[] = new double[maxn];
+	  double x[] = new double[maxn];
+	  double dx[] = new double[maxn];
+	  final double zero = 0.0;
+	  final double one = 1.0;
+	  int fileChoice = 2;
+	  String fileDir;
+	  String fileName = null;
+	  RandomAccessFile raFile = null;
+	  String line;
+	  int i;
+	  int start;
+
+	  // ------------------------------------------------------------------
+	  // Define files
+	  // ------------------------------------------------------------------
+	  iprint = 20;
+
+	  fileDir = "C:/LUSOL/lusol-master/src/testlusolflat/";
+	  if (fileChoice == 1) {
+	      fileName = "toymat.txt";
+	  }
+	  else if (fileChoice == 2) {
+	      fileName = "cavity05.txt";
+	  }
+	  UI.setDataText("fileName = " + fileName + "\n");
+	
+	  Scale = 0;      // 0=Noscale  1=Scale
+	  factol = 2.0;    // > 1.0
+	  TPiv  = 0;     // 0=TPP      1=TRP      2=TCP
+	  UI.setDataText("Scale = " + Scale + "\n");
+	  UI.setDataText("factol = " + factol + "\n");
+	  if (TPiv == 0) {
+		  UI.setDataText("TPP Threshold Partial Pivoting\n");
+	  }
+	  else if (TPiv == 1) {
+		  UI.setDataText("TRP Threshold Rook Pivoting\n");  
+	  }
+	  else if (TPiv == 2) {
+		  UI.setDataText("TCP Threshold Complete Pivoting\n");
+	  }
+
+	  // ------------------------------------------------------------------
+	  // Read a matrix A from Probname.txt
+	  // as a set of triples (i, j, Aij).
+	  // A is loaded into the LUSOL input arrays (indc, indr, a).
+	  //------------------------------------------------------------------
+	  
+	  k = 0;
+	  try {
+
+			raFile = new RandomAccessFile(fileDir + fileName, "r");
+			while((line=raFile.readLine())!= null) {
+				line = line.trim();
+				if(!line.equals("")) {
+					k++;
+					if (k > lena) {
+						MipavUtil.displayError("Too many entries, more than lena");
+						raFile.close();
+						return;
+					}
+					// Read i, j, Aij
+					i = 0;
+					while (!Character.isWhitespace(line.charAt(i))) {
+						i++;
+					}
+					indc[k-1] = new Integer(line.substring(0,i)).intValue();
+					while (Character.isWhitespace(line.charAt(i))) {
+						i++;
+					}
+					start = i;
+					while (!Character.isWhitespace(line.charAt(i))) {
+						i++;
+					}
+					indr[k-1] = new Integer(line.substring(start, i)).intValue();
+					while (Character.isWhitespace(line.charAt(i))) {
+						i++;
+					}
+					a[k-1] = new Double(line.substring(i).trim()).doubleValue();
+				}
+			}
+			raFile.close();
+		}catch(Exception e) {
+			try {
+				if(raFile != null) {
+					raFile.close();
+				}
+			}catch(Exception ex) {
+				
+			}
+			e.printStackTrace();
+			return;
+		}
+
+        nnzero = k;
+	    m      = 0;
+	    n      = 0;
+
+	  for (k = 0; k < nnzero; k++) {
+	     m = Math.max(m, indc[k]);
+	     n = Math.max(n, indr[k]);
+	  }
+
+	  UI.setDataText("A rows = " + m + " A cols = " + n + " A nonzero = " + nnzero + "\n");
+	  
+	  for (k = 0; k < nnzero; k++) {
+	      A2[k] = a[k];    // Save a copy of A for refinement
+	      indc2[k] = indc[k];
+	      indr2[k] = indr[k];
+	  }
+
+	  // ------------------------------------------------------------------
+	  // Set xexact, then rhsval = A*xexact
+	  // (over-riding any known HB rhs and solution).
+	  // ------------------------------------------------------------------
+	  for (k = 0; k < n; k++) {
+	      xexact[k] = one;
+	  }
+	  
+	  for (k = 0; k < m; k++) {
+	      rhsval[k] = zero;
+	  }
+
+	  Aprod(m, n, nnzero, indc, indr, a, xexact, rhsval);
+
+	  //bnorm  = dnormj( m, rhsval, 1);
+
+	  // ------------------------------------------------------------------
+	  // Set parameters for LUSOL's lu1fac.
+	  // ------------------------------------------------------------------
+	  luparm[0] = iprint;     // File number for printed messages
+	  luparm[1] = 10;         // Print level. >= 0 to get singularity info.
+	                          //              >=10 to get more LU statistics.
+	                          //              >=50 to get info on each pivot.
+	  luparm[2] = 5;          // maxcol
+	  luparm[5] = TPiv;       // Threshold Pivoting: 0 = TPP, 1 = TRP, 2 = TCP
+	  luparm[7] = 1;          // keepLU
+	  parmlu[0] = factol;     // Ltol1:  max |Lij| during Factor
+	  parmlu[1] = factol;     // Ltol2:  max |Lij| during Update 
+	  parmlu[2] = 3.0e-13;    // small:  drop tolerance
+	  parmlu[3] = 3.7e-11;    // Utol1:  absolute tol for small Uii
+	  parmlu[4] = 3.7e-11;    // Utol2:  relative tol for small Uii
+	  parmlu[5] = 3.0;        // Uspace: 
+	  parmlu[6] = 0.3;        // dens1
+	  parmlu[7] = 0.5;        // dens2
+	  nelem     = nnzero;
+
+	  // ------------------------------------------------------------------
+	  // Factor  A = L U.
+	  // ------------------------------------------------------------------
+	  time1 = System.currentTimeMillis();
+	  lu1fac( m    , n    , nelem, lena , luparm, parmlu,
+	               a    , indc , indr , p    , q     , 
+	               lenc , lenr , locc , locr ,           
+	               iploc, iqloc, ipinv, iqinv, w     , inform );
+	  time2 = System.currentTimeMillis();
+	  timeF  = time2 - time1;
+
+	  lenL   = luparm[20];
+	  lenU   = luparm[21];
+	  UI.setDataText("L  nonz = " + lenL + " U nonz = " + lenU + " L+U = " + (lenL + lenU) + "\n");
+
+	  if (inform[0] > 1) {
+	     UI.setDataText("lu1fac error inform[0] = " + inform[0] + "\n");
+
+	     timeS  = 0L;
+	     UI.setDataText("Factor time = " + timeF + " Solve time = " + timeS + "\n");
+	     return;
+	  }
+
+	  // ------------------------------------------------------------------
+	  // SOLVE  A x = rhs.
+	  // ------------------------------------------------------------------
+	  for (k = 0; k < m; k++) {
+	      rhs[k] = rhsval[k];
+	  }
+	  mode   = 5;
+
+	  time1 = System.currentTimeMillis();
+	  lu6sol( mode, m, n, rhs, x, 
+	               lena, luparm, parmlu,
+	               a, indc, indr, p, q,
+	               lenc, lenr, locc, locr,
+	               inform );
+	  time2 = System.currentTimeMillis();
+	  timeS  = time2 - time1;
+
+	  UI.setDataText("Factor time = " + timeF + " Solve time = " + timeS + "\n");
+
+	  // ------------------------------------------------------------------
+	  //  Set r = b - Ax.
+	  // Find norms of r and error in x.
+	  // ------------------------------------------------------------------
+	  snorm  = zero;
+	  xnorm  = dnormj( n, x, 1 );
+	  //xenorm = dnormj( n, xexact, 1 );
+
+	  for (k = 0; k < m; k++) {
+	      r[k] = rhsval[k];
+	  }
+	  
+	  for (k = 0; k < n; k++) {
+	      w[k] = - x[k];
+	  }
+
+	  Aprod( m     , n     , nnzero,
+	              indc2 , indr2 , A2,
+	              w     , r     );
+
+	  rnorm  = dnormj( m, r, 1);
+	  for (k = 0; k < n; k++) {
+	      w[k] = x[k] - xexact[k];
+	  }
+	  enorm  = dnormj( n, w, 1 );
+
+	  UI.setDataText("snorm = " + nf.format(snorm) + " xnorm = " + nf.format(xnorm) + 
+	  " Residual = " + nf.format(rnorm) + " Error = " + nf.format(enorm) + "\n");
+
+	  // ------------------------------------------------------------------
+	  // Iterative refinement.
+	  // ------------------------------------------------------------------
+	  time1 = System.currentTimeMillis();
+	  UI.setDataText("Refine   dxnorm     rnorm     enorm\n");
+	  rnorm0 = 1.0e+30;
+	  maxitn = 10;
+
+	  for (itn = 1; itn <= maxitn; itn++) {
+	     // ---------------------------------------------------------------
+	     //  Solve A dx = r.
+	     // Set      x = x + dx.
+	     // ---------------------------------------------------------------
+	     lu6sol( mode, m, n, r, dx,
+	                  lena, luparm, parmlu,
+	                  a, indc, indr, p, q, 
+	                  lenc, lenr, locc, locr,
+	                  inform );
+	     for (k = 0; k < n; k++) {
+	         x[k] = x[k] + dx[k];
+	     }
+	     dxnorm = dnormj( n, dx, 1 );
+
+	     // ---------------------------------------------------------------
+	     // Set r = b - Ax.
+	     // Find max residual.
+	     // ---------------------------------------------------------------
+	     for (k = 0; k < m; k++) {
+	         r[k] = rhsval[k];
+	     }
+	     for (k = 0; k < n; k++) {
+	         w[k] = - x[k];
+	     }
+
+	     Aprod( m     , n     , nnzero,
+	                 indc2 , indr2 , A2,
+	                 w     , r      );
+
+	     rnorm  = dnormj( m, r, 1 );
+	     for (k = 0; k < n; k++) {
+	         w[k] = x[k] - xexact[k];
+	     }
+	     enorm  = dnormj( n, w, 1 );
+
+	     UI.setDataText(itn + " " + nf.format(dxnorm) + " " + nf.format(rnorm) + " " + nf.format(enorm) + "\n");
+
+	     if (rnorm >= 0.5 * rnorm0) {
+	    	 break;
+	     }
+	     rnorm0 = rnorm;
+	  } // for (itn = 1; itn <= maxitn; itn++)
+
+	  time2 = System.currentTimeMillis();
+	  timeR  = time2 - time1;
+	  UI.setDataText("Refine time = " + timeR + "\n");
+
+	  return;
+	} // testflat
+	
+	private void Aprod(int m, int n, int nnzero,
+            int indc[], int indr[], double a[],
+            double x[], double y[]) {
+
+//integer(ip), intent(in)    :: m, n, nnzero
+//integer(ip), intent(in)    :: indc(nnzero), indr(nnzero)
+//real(rp),    intent(in)    :: a(nnzero), x(n)
+//real(rp),    intent(inout) :: y(m)
+
+// Aprod computes y = y + A*x
+
+int i, j, k;
+
+for (k = 1; k <= nnzero; k++) {
+i    = indc[k-1];
+j    = indr[k-1];
+y[i-1] = y[i-1] + a[k-1]*x[j-1];
+}
+
+	} // Aprod
+	
+	private double dnormj(int n, double x[], int incx ) {
+
+    // integer(ip), intent(in)    :: n, incx
+    // real(rp),    intent(in)    :: x(:)
+
+    // ===========================================================================
+    // norminf returns the infinity-norm of the vector  x  in most cases.
+    // realmax is returned if x(*) contains any NaNs or Infs.
+    //
+    // 29 Jul 2003: First version of dnormj for use in s5setx.
+    // 15 Mar 2008: First f90 version.
+    // ===========================================================================
+    int kmax;
+    final double zero    = 0.0;
+    final double realmax = Double.MAX_VALUE;
+
+    kmax   = jdamax( n, x, incx );
+    if (kmax == 0) {
+       return zero;
+    }
+    else if (kmax > 0) {
+       return Math.abs( x[kmax-1] );
+    }
+    else {
+       return realmax;
+    }
+
+	} // dnormj
+
+
+
 	
 	private double random() {
 	    double r, t1, t2;
@@ -1897,7 +2309,7 @@ public class LUSOL implements java.io.Serializable {
 		       densty = 100.0 * delem / (dm * dn);
 		       UI.setDataText("m = " + m + " mnkey = " + mnkey + " n = " + n + "\n");
 		       UI.setDataText("nelem = " + nelem + " Amax[0] = " + nf.format(Amax[0]) + 
-		    		   "densty = " + nf.format(densty) + "\n");
+		    		   " densty = " + nf.format(densty) + "\n");
 		    }
 		    if (inform[0] != 0) {
 		    	inform[0] = 3;
@@ -2253,7 +2665,7 @@ public class LUSOL implements java.io.Serializable {
 	       }
 
 	       UI.setDataText("nbump = " + nbump + "\n");
-	       UI.setDataText("ndens2 = " + ndens2 + "\n");
+	       UI.setDataText("ndens2 = " + ndens2[0] + "\n");
 	       UI.setDataText("DUmax[0] = " + nf.format(DUmax[0]) + "\n");
 	       UI.setDataText("DUmin[0] = " + nf.format(DUmin[0]) + "\n");
 	       UI.setDataText("condU = " + nf.format(condU) + "\n");
@@ -2878,7 +3290,6 @@ boolean seg3 = true;
 boolean seg4 = true;
 int ind2[];
 int lenold[];
-double d[];
 
 lprint = luparm[1];
 maxcol = luparm[2];
@@ -4478,6 +4889,7 @@ boolean seg4 = true;
 boolean seg5 = true;
 boolean seg6 = true;
 boolean seg7 = true;
+int l_final;
 
 for (lr = lfirst[0]; lr <= lpivr2; lr++) {
 j      = indr[lr-1];
@@ -4611,7 +5023,8 @@ if (seg7) {
 // First, leave some spare room at the end of the
 // current last column.
 
-for (l = lcol[0] + 1; l <= lcol[0] + nspare; l++) {
+l_final = lcol[0] + nspare;
+for (l = lcol[0] + 1; l <= l_final; l++) {
  lcol[0]    = l;
  indc[l-1] = 0;     // Spare space is free.
 } // for (l = lcol[0] + 1; l <= lcol[0] + nspare; l++)
@@ -5517,7 +5930,7 @@ if (ibest[0] > 0) kbest  = mbest[0] / nz1;
 // 12 Dec 2011: Declare intent.
 // ------------------------------------------------------------------
 
-int i, j, l, last, lc, lc1, lc2, ll, lr, lr1, lr2, lu;
+int i, j, l, last, lc, lc1, lc2, ll, lr, lr1, lr2, lu, l_final;
 
 ll     = 0;
 
@@ -5529,10 +5942,11 @@ if (indr[ll1+ll-2] == 0) continue;
 // First, add some spare space at the end
 // of the current last row.
 
-for (l = lrow[0] + 1; l <= lrow[0] + nspare; l++) {
+l_final = lrow[0] + nspare;
+for (l = lrow[0] + 1; l <= l_final; l++) {
  lrow[0]    = l;
  indr[l-1] = 0;
-} // for (l = lrow[0] + 1; l <= lrow[0] + nspare; l++)
+} // for (l = lrow[0] + 1; l <= final_l; l++)
 
 // Now move row i to the end of the row file.
 
