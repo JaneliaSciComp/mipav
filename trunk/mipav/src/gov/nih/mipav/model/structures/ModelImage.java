@@ -964,7 +964,9 @@ public class ModelImage extends ModelStorageBase {
                 kReturn.fileInfo[i].setResolutions(resolutionsOut);
                 kReturn.fileInfo[i].setUnitsOfMeasure(unitsOfMeasureOut);
                 kReturn.fileInfo[i].setOrigin(startLocationsOut);
-                kReturn.fileInfo[i].setSliceThickness(resolutionsOut[2]);
+                if (resolutionsOut.length > 2) {
+                    kReturn.fileInfo[i].setSliceThickness(resolutionsOut[2]);
+                }
             }
         }
         try {
