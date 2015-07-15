@@ -7053,7 +7053,7 @@ return;
 	             if (nrank0 == n) {
 	                if (lprint >= 0) {
 	                	UI.setDataText("lu8rpc  warning.  Singularity after replacing column.\n");
-	                	UI.setDataText("jrep = " + jrep + " diag[0] = " + nf.format(diag[0]));
+	                	UI.setDataText("jrep = " + jrep + " diag[0] = " + nf.format(diag[0]) + "\n");
 	                } // if (lprint >= 0)
 	             } // if (nrank0 == n)
 	         }  // else if (nrank[0] < nrank0)
