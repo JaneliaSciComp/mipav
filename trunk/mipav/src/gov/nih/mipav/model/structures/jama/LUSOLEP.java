@@ -6811,7 +6811,7 @@ for (k = 1; k <= n; k++) {
  if (diag.le(Utol1)) {
     nsing  =   nsing + 1;
     jsing  =   j;
-    w[j-1]   = (w[j-1].negate());
+    w[j-1]   = w[j-1].negate();
  } // if (diag <= Utol1)
 } // for (k = 1; k <= n; k++) 
 } // else !keepLU
@@ -8680,7 +8680,7 @@ return;
           l1     = lena + 1 - lenl;
           for (l = l1; l <= lena; l++) {
              i     = indr[l-1];
-             if (v[i-1] != zero) {
+             if (v[i-1].ne(zero)) {
                 j     = indc[l-1];
                 v[j-1]  = v[j-1].subtract(a[l-1].multiply(v[i-1]));
              } // if (v[i-1] != zero)
@@ -8698,7 +8698,7 @@ return;
           l1 = lena + 1 - lenl;
           for (l = lena; l >= l1; l--) {
              j     = indc[l-1];
-             if (v[j-1] != zero) {
+             if (v[j-1].ne(zero)) {
                 i     = indr[l-1];
                 v[i-1]  = v[i-1].subtract(a[l-1].multiply(v[j-1]));
              } // if (v[j-1] != zero) 
@@ -8713,7 +8713,7 @@ return;
 
           for (klast = m; klast >= 1; klast--) {
              i     = ip[klast-1];
-             if (v[i-1] != zero) break;
+             if (v[i-1].ne(zero)) break;
           } // for (klast = m; klast >= 1; klast--)
 
           klast  = Math.min( klast, nrank );
@@ -8725,7 +8725,7 @@ return;
           for (k = 1; k <= klast; k++) {
              i     = ip[k-1];
              t     = v[i-1];
-             if (t == zero) continue;
+             if (t.equals(zero)) continue;
              l1    = locr[i-1];
              l2    = l1 + lenr[i-1] - 1;
 
@@ -8745,7 +8745,7 @@ return;
       else if ((mode == 3) || (mode == 5)) {
           for (klast = n; klast >= 1; klast--) {
              j     = iq[klast-1];
-             if (w[j-1] != zero) break;
+             if (w[j-1].ne(zero)) break;
           } //  for (klast = n; klast >= 1; klast--)
 
           klast  = Math.min( klast, nrank );
@@ -8778,7 +8778,7 @@ return;
           l1     = lena + 1 - lenl;
           for (l = l1; l <= lena; l++) {
              i     = indr[l-1];
-             if (v[i-1] != zero) {
+             if (v[i-1].ne(zero)) {
                 j     = indc[l-1];
                 v[j-1]  = v[j-1].subtract(a[l-1].multiply(v[i-1]));
              } // if (v[i-1] != zero)
@@ -8796,7 +8796,7 @@ return;
 
           for (klast = m; klast >= 1; klast--) {
              i     = ip[klast-1];
-             if (v[i-1] != zero) break;
+             if (v[i-1].ne(zero)) break;
           } // for (klast = m; klast >= 1; klast--)
 
           klast  = Math.min( klast, nrank );
@@ -8808,7 +8808,7 @@ return;
           for (k = 1; k <= klast; k++) {
              i     = ip[k-1];
              t     = v[i-1];
-             if (t == zero) continue;
+             if (t.equals(zero)) continue;
              l1    = locr[i-1];
              l2    = l1 + lenr[i-1] - 1;
 
