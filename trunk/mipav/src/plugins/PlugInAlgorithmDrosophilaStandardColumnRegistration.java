@@ -9416,7 +9416,12 @@ System.out.println(nPtsB);
         
         String txtName = standardizedFilamentFileName + ".txt";
         
-        standardizedFilamentFileName = standardizedFilamentFileName + ".iv";
+        if (doSWC) {
+        	standardizedFilamentFileName = standardizedFilamentFileName + ".swc";	
+        }
+        else {
+            standardizedFilamentFileName = standardizedFilamentFileName + ".iv";
+        }
         if(outputTextArea != null) {
         	outputTextArea.append("Saving new filament file as: \n");
             outputTextArea.append(filamentFileParentDir + File.separator + standardizedFilamentFileName + "\n");
@@ -9438,77 +9443,128 @@ System.out.println(nPtsB);
             
             String line;
 
-            while ( (line = raFile.readLine()) != null) {
-                line = line.trim();
+            if (doSWC) {
+            	int cInt;
+            	int aInt = 2;
+            	while ( (line = raFile.readLine()) != null) {
+	                line = line.trim();
+	                if (index < swcFilamentCoords_newCoords.size()) {
+	                	final float tPt3[] = new float[3];	
+	                	final float[] filCoord = swcFilamentCoords_newCoords.get(index);
+	                	 if (filCoord != null) {
+                             if (r7CenterPointFound) {
+                                 tPt3[0] = (filCoord[0] * finalImage.getResolutions(0)[0])
+                                         - r7_27Coord_transformed[0];
+                                 tPt3[1] = (filCoord[1] * finalImage.getResolutions(0)[1])
+                                         - r7_27Coord_transformed[1];
+                                 tPt3[2] = (filCoord[2] * finalImage.getResolutions(0)[2])
+                                         - r7_27Coord_transformed[2];
 
-                if (line.startsWith("point [")) {
-                    if (index < allFilamentCoords_newCoords.size()) {
+                             } else {
+                                 tPt3[0] = filCoord[0] * finalImage.getResolutions(0)[0];
+                                 tPt3[1] = filCoord[1] * finalImage.getResolutions(0)[1];
+                                 tPt3[2] = filCoord[2] * finalImage.getResolutions(0)[2];
+                             }
 
-                        final float tPt3[] = new float[3];
-
-                        final ArrayList<float[]> filCoords = allFilamentCoords_newCoords.get(index);
-                        bw.write("point [");
-                        bw.newLine();
-                        for (int k = 0; k < filCoords.size(); k++) {
-
-                            final float[] filCoord = filCoords.get(k);
-
-                            if (filCoord != null) {
-                                if (r7CenterPointFound) {
-                                    tPt3[0] = (filCoord[0] * finalImage.getResolutions(0)[0])
-                                            - r7_27Coord_transformed[0];
-                                    tPt3[1] = (filCoord[1] * finalImage.getResolutions(0)[1])
-                                            - r7_27Coord_transformed[1];
-                                    tPt3[2] = (filCoord[2] * finalImage.getResolutions(0)[2])
-                                            - r7_27Coord_transformed[2];
-
-                                } else {
-                                    tPt3[0] = filCoord[0] * finalImage.getResolutions(0)[0];
-                                    tPt3[1] = filCoord[1] * finalImage.getResolutions(0)[1];
-                                    tPt3[2] = filCoord[2] * finalImage.getResolutions(0)[2];
-                                }
-
-                                if (flipX) {
-                                    tPt3[0] = tPt3[0] * -1;
-                                }
-                                if (flipY) {
-                                    tPt3[1] = tPt3[1] * -1;
-                                }
-                                if (flipZ) {
-                                    tPt3[2] = tPt3[2] * -1;
-                                }
-
-                                bw.write(tPt3[0] + " " + tPt3[1] + " " + tPt3[2] + ",");
-                                bw.newLine();
-                                txtWriter.append(tPt3[0] + "\t" + tPt3[1] + "\t" + tPt3[2] + "\r\n");
-                            }else {
-                            	System.out.println("index is " + index);
-                            	System.out.println(k + " is null");
-                            	System.out.println();
-                            }
-
-                        }
-
-                        bw.write("]");
-                        bw.newLine();
-
-                        while ( ! (line = raFile.readLine()).endsWith("]")) {
-
-                        }
-                        raFile.readLine();
-                        index = index + 1;
-                    } else {
-                        bw.write(line);
-                        bw.newLine();
-                    }
-
-                } else {
-                    bw.write(line);
-                    bw.newLine();
-
-                }
-
-            }
+                             if (flipX) {
+                                 tPt3[0] = tPt3[0] * -1;
+                             }
+                             if (flipY) {
+                                 tPt3[1] = tPt3[1] * -1;
+                             }
+                             if (flipZ) {
+                                 tPt3[2] = tPt3[2] * -1;
+                             }
+                             
+                             if (index == 0) {
+                            	 cInt = -1;
+                             }
+                             else {
+                            	 cInt = index;
+                             }
+                             bw.write((index+1) + " " + aInt + " " + tPt3[0] + " " + tPt3[1] + " " + tPt3[2] + " 0.1 " + cInt);
+        					 bw.newLine();
+                         }else {
+                         	System.out.println(index + " is null");
+                         	System.out.println();
+                         }
+	                	 index++;
+	                }
+            	}
+            } // if (do
+            else { // iv
+	            while ( (line = raFile.readLine()) != null) {
+	                line = line.trim();
+	
+	                if (line.startsWith("point [")) {
+	                    if (index < allFilamentCoords_newCoords.size()) {
+	
+	                        final float tPt3[] = new float[3];
+	
+	                        final ArrayList<float[]> filCoords = allFilamentCoords_newCoords.get(index);
+	                        bw.write("point [");
+	                        bw.newLine();
+	                        for (int k = 0; k < filCoords.size(); k++) {
+	
+	                            final float[] filCoord = filCoords.get(k);
+	
+	                            if (filCoord != null) {
+	                                if (r7CenterPointFound) {
+	                                    tPt3[0] = (filCoord[0] * finalImage.getResolutions(0)[0])
+	                                            - r7_27Coord_transformed[0];
+	                                    tPt3[1] = (filCoord[1] * finalImage.getResolutions(0)[1])
+	                                            - r7_27Coord_transformed[1];
+	                                    tPt3[2] = (filCoord[2] * finalImage.getResolutions(0)[2])
+	                                            - r7_27Coord_transformed[2];
+	
+	                                } else {
+	                                    tPt3[0] = filCoord[0] * finalImage.getResolutions(0)[0];
+	                                    tPt3[1] = filCoord[1] * finalImage.getResolutions(0)[1];
+	                                    tPt3[2] = filCoord[2] * finalImage.getResolutions(0)[2];
+	                                }
+	
+	                                if (flipX) {
+	                                    tPt3[0] = tPt3[0] * -1;
+	                                }
+	                                if (flipY) {
+	                                    tPt3[1] = tPt3[1] * -1;
+	                                }
+	                                if (flipZ) {
+	                                    tPt3[2] = tPt3[2] * -1;
+	                                }
+	
+	                                bw.write(tPt3[0] + " " + tPt3[1] + " " + tPt3[2] + ",");
+	                                bw.newLine();
+	                                txtWriter.append(tPt3[0] + "\t" + tPt3[1] + "\t" + tPt3[2] + "\r\n");
+	                            }else {
+	                            	System.out.println("index is " + index);
+	                            	System.out.println(k + " is null");
+	                            	System.out.println();
+	                            }
+	
+	                        }
+	
+	                        bw.write("]");
+	                        bw.newLine();
+	
+	                        while ( ! (line = raFile.readLine()).endsWith("]")) {
+	
+	                        }
+	                        raFile.readLine();
+	                        index = index + 1;
+	                    } else {
+	                        bw.write(line);
+	                        bw.newLine();
+	                    }
+	
+	                } else {
+	                    bw.write(line);
+	                    bw.newLine();
+	
+	                }
+	
+	            }
+            } // else iv
             //System.out.println("R7: " + r7_27Coord_transformed[0] + " " + r7_27Coord_transformed[1] + " " + r7_27Coord_transformed[2]);
             raFile.close();
             bw.close();
