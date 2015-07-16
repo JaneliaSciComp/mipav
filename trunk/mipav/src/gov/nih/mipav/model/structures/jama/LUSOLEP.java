@@ -3,6 +3,7 @@ package gov.nih.mipav.model.structures.jama;
 
 import java.io.RandomAccessFile;
 import java.text.DecimalFormat;
+import java.util.Random;
 
 import gov.nih.mipav.model.algorithms.RandomNumberGen;
 import gov.nih.mipav.util.DoubleDouble;
@@ -135,6 +136,8 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVE
 
 public class LUSOLEP implements java.io.Serializable {
     private ViewUserInterface UI = ViewUserInterface.getReference();
+    long seed = 1234567L;
+	Random rn = new Random(seed);
 	
 	public LUSOLEP() {
 		
@@ -556,9 +559,8 @@ y[i-1] = y[i-1].add(a[k-1].multiply(x[j-1]));
 	    DoubleDouble sprsty = DoubleDouble.valueOf(0.4);
 	    DoubleDouble r1 = DoubleDouble.valueOf(-100.0);
 	    DoubleDouble r2 = DoubleDouble.valueOf(100.0);
-	    RandomNumberGen rn = new RandomNumberGen();
-	    t1 = DoubleDouble.valueOf(rn.genUniformRandomNum(0.0, 1.0));
-	    t2 = DoubleDouble.valueOf(rn.genUniformRandomNum(0.0, 1.0));
+	    t1 = DoubleDouble.valueOf(rn.nextDouble());
+	    t2 = DoubleDouble.valueOf(rn.nextDouble());
 	    if (t2.gt(sprsty)) {
 	    	r = r1.add((r2.subtract(r1)).multiply(t1));
 	    }
