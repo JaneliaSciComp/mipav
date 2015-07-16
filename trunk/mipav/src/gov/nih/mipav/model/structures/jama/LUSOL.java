@@ -3,6 +3,7 @@ package gov.nih.mipav.model.structures.jama;
 
 import java.io.RandomAccessFile;
 import java.text.DecimalFormat;
+import java.util.Random;
 
 import gov.nih.mipav.model.algorithms.RandomNumberGen;
 import gov.nih.mipav.view.MipavUtil;
@@ -136,6 +137,8 @@ public class LUSOL implements java.io.Serializable {
     private ViewUserInterface UI = ViewUserInterface.getReference();
 	
 	DecimalFormat nf = new DecimalFormat("0.00000E0");
+	long seed = 1234567L;
+	Random rn = new Random(seed);
 	
 	public LUSOL() {
 		
@@ -557,9 +560,8 @@ y[i-1] = y[i-1] + a[k-1]*x[j-1];
 	    double sprsty = 0.4;
 	    double r1 = -100.0;
 	    double r2 = 100.0;
-	    RandomNumberGen rn = new RandomNumberGen();
-	    t1 = rn.genUniformRandomNum(0.0, 1.0);
-	    t2 = rn.genUniformRandomNum(0.0, 1.0);
+	    t1 = rn.nextDouble();
+	    t2 = rn.nextDouble();
 	    if (t2 > sprsty) {
 	    	r = r1 + (r2 - r1) * t1;
 	    }
@@ -1402,14 +1404,13 @@ y[i-1] = y[i-1] + a[k-1]*x[j-1];
 		      for (ntest = 1;  ntest <= mtest; ntest++) {
 
 		         UI.setDataText("lutest ntest = " + ntest + " m = " + m + " n = " + n + "\n");
-		    	 
+		    	 for (i = 0; i < nrowb; i++) {
+		    		 for (j = 0; j < ncolb; j++) {
+		    			 B[i][j] = 0.0;
+		    		 }
+		    	 }
 		         setmat( m, n, nrowb, B, d, v, w);
 		         arr = new double[nrowb][n];
-		         for (i = 0; i < nrowb; i++) {
-		        	 for (j = 0; j < n; j++) {
-		        		 arr[i][j] = B[i][j+n];
-		        	 }
-		         }
 		         setmat( m, n, nrowb, arr, d, v, w);
 		         for (i = 0; i < nrowb; i++) {
 		        	 for (j = 0; j < n; j++) {
@@ -1599,6 +1600,8 @@ y[i-1] = y[i-1] + a[k-1]*x[j-1];
 		int inform[] = new int[1];
 		int i, j, k, l, lenl, lenu, nrank;
 		double cmax, err, rmax, xmax, ymax;
+		int xi;
+		double xorig[] = new double[n];
 
 		nrank  = luparm[15];
 		cmax = zero;
@@ -1728,6 +1731,7 @@ y[i-1] = y[i-1] + a[k-1]*x[j-1];
 
 		      for (i = 0; i < n; i++) {
 		    	  x[i] = w[i];
+		    	  xorig[i] = w[i];
 		      }
 
 		      lu6sol( 6, m, n, v, w,
@@ -1743,9 +1747,11 @@ y[i-1] = y[i-1] + a[k-1]*x[j-1];
 		      } // for (k = 1; k <= n; k++)
 
 		      xmax = 0.0;
+		      xi = -1;
 		      for (i = 0; i < n; i++) {
 		    	  if (Math.abs(x[i]) > xmax) {
 		    		  xmax = Math.abs(x[i]);
+		    		  xi = i;
 		    	  }
 		      }
 
@@ -1762,6 +1768,15 @@ y[i-1] = y[i-1] + a[k-1]*x[j-1];
 		      UI.setDataText("(A - L*U)transpose error = " + nf.format(rmax) + "\n");
 		      UI.setDataText("Ax = b error = " + nf.format(ymax) + "\n");
 		      UI.setDataText("Atranspose * y  = b error = " + nf.format(xmax) + "\n");
+		      //if (xmax >= 1.e0) {
+		    	  //UI.setDataText("Zero based index of xmax = " + xi + "\n");
+		    	  //UI.setDataText("xorig["+xi+"] = " + xorig[xi] + "\n");
+		    	  //UI.setDataText("Zero based j index = " + (kb[xi]-1) + "\n");
+		    	  //j = kb[xi] - 1;
+		    	  //for (i = 0; i < m; i++) {
+		    		 //UI.setDataText("B["+i+"]["+j+"] = " + B[i][j] + " v["+i+"] = " + v[i] + " B*v = " + (B[i][j]*v[i] + "\n"));
+		    	  //}
+		      //}
 		      return;
 	} // luchek
 
