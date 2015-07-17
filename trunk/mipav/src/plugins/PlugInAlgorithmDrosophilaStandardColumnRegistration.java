@@ -112,6 +112,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     
     private ArrayList<float[]> swcFilamentCoords;
     
+    private ArrayList<int[]> swcFilamentAInt;
+    
     private ArrayList<float[]> swcFilamentCoords_newCoords;
     
     private boolean haveSWC;
@@ -300,7 +302,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     }
     
     public PlugInAlgorithmDrosophilaStandardColumnRegistration(final ModelImage neuronImage,
-            final TreeMap<Integer, float[]> pointsMap, final ArrayList<float[]> swcFilamentCoords,
+            final TreeMap<Integer, float[]> pointsMap, final ArrayList<float[]> swcFilamentCoords, final ArrayList<int[]> swcFilamentAInt,
             final File oldSurfaceFile, final float samplingRate, final ModelImage cityBlockImage,
             final File pointsFile, final JTextArea outputTextArea, final boolean flipX, final boolean flipY,
             final boolean flipZ,float greenThreshold, float subsamplingDistance, boolean rigidOnly,boolean rvld, String numPointsString) {
@@ -315,6 +317,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         resols = neuronImage.getResolutions(0);
         haveSWC = true;
         this.swcFilamentCoords = swcFilamentCoords;
+        this.swcFilamentAInt = swcFilamentAInt;
         swcFilamentCoords_newCoords = new ArrayList<float[]>();
         int size = swcFilamentCoords.size();
         for (int k = 0; k < size; k++) {
@@ -9416,7 +9419,7 @@ System.out.println(nPtsB);
         
         String txtName = standardizedFilamentFileName + ".txt";
         
-        if (doSWC) {
+        if (haveSWC) {
         	standardizedFilamentFileName = standardizedFilamentFileName + ".swc";	
         }
         else {
@@ -9434,7 +9437,10 @@ System.out.println(nPtsB);
         
 
         try {
-            final RandomAccessFile raFile = new RandomAccessFile(oldSurfaceFile, "r");
+            RandomAccessFile raFile = null;
+        	if (!haveSWC) {
+                raFile = new RandomAccessFile(oldSurfaceFile, "r");
+        	}
             final File newSurfaceFile = new File(filamentFileParentDir + File.separator + standardizedFilamentFileName);
             final FileWriter fw = new FileWriter(newSurfaceFile);
             final BufferedWriter bw = new BufferedWriter(fw);
@@ -9443,54 +9449,53 @@ System.out.println(nPtsB);
             
             String line;
 
-            if (doSWC) {
+            if (haveSWC) {
             	int cInt;
-            	int aInt = 2;
-            	while ( (line = raFile.readLine()) != null) {
-	                line = line.trim();
-	                if (index < swcFilamentCoords_newCoords.size()) {
-	                	final float tPt3[] = new float[3];	
-	                	final float[] filCoord = swcFilamentCoords_newCoords.get(index);
-	                	 if (filCoord != null) {
-                             if (r7CenterPointFound) {
-                                 tPt3[0] = (filCoord[0] * finalImage.getResolutions(0)[0])
-                                         - r7_27Coord_transformed[0];
-                                 tPt3[1] = (filCoord[1] * finalImage.getResolutions(0)[1])
-                                         - r7_27Coord_transformed[1];
-                                 tPt3[2] = (filCoord[2] * finalImage.getResolutions(0)[2])
-                                         - r7_27Coord_transformed[2];
+            	int aInt[] = new int[1];
+            	int lineNum = 1;
+                for (index = 0; index < swcFilamentCoords_newCoords.size(); index++) {
+                	final float tPt3[] = new float[3];	
+                	final float[] filCoord = swcFilamentCoords_newCoords.get(index);
+                	 if (filCoord != null) {
+                		 aInt = swcFilamentAInt.get(index);
+                         if (r7CenterPointFound) {
+                             tPt3[0] = (filCoord[0] * finalImage.getResolutions(0)[0])
+                                     - r7_27Coord_transformed[0];
+                             tPt3[1] = (filCoord[1] * finalImage.getResolutions(0)[1])
+                                     - r7_27Coord_transformed[1];
+                             tPt3[2] = (filCoord[2] * finalImage.getResolutions(0)[2])
+                                     - r7_27Coord_transformed[2];
 
-                             } else {
-                                 tPt3[0] = filCoord[0] * finalImage.getResolutions(0)[0];
-                                 tPt3[1] = filCoord[1] * finalImage.getResolutions(0)[1];
-                                 tPt3[2] = filCoord[2] * finalImage.getResolutions(0)[2];
-                             }
-
-                             if (flipX) {
-                                 tPt3[0] = tPt3[0] * -1;
-                             }
-                             if (flipY) {
-                                 tPt3[1] = tPt3[1] * -1;
-                             }
-                             if (flipZ) {
-                                 tPt3[2] = tPt3[2] * -1;
-                             }
-                             
-                             if (index == 0) {
-                            	 cInt = -1;
-                             }
-                             else {
-                            	 cInt = index;
-                             }
-                             bw.write((index+1) + " " + aInt + " " + tPt3[0] + " " + tPt3[1] + " " + tPt3[2] + " 0.1 " + cInt);
-        					 bw.newLine();
-                         }else {
-                         	System.out.println(index + " is null");
-                         	System.out.println();
+                         } else {
+                             tPt3[0] = filCoord[0] * finalImage.getResolutions(0)[0];
+                             tPt3[1] = filCoord[1] * finalImage.getResolutions(0)[1];
+                             tPt3[2] = filCoord[2] * finalImage.getResolutions(0)[2];
                          }
-	                	 index++;
-	                }
-            	}
+
+                         if (flipX) {
+                             tPt3[0] = tPt3[0] * -1;
+                         }
+                         if (flipY) {
+                             tPt3[1] = tPt3[1] * -1;
+                         }
+                         if (flipZ) {
+                             tPt3[2] = tPt3[2] * -1;
+                         }
+                         
+                         if (lineNum == 1) {
+                        	 cInt = -1;
+                         }
+                         else {
+                        	 cInt = lineNum-1;
+                         }
+                         bw.write(lineNum + " " + aInt[0] + " " + tPt3[0] + " " + tPt3[1] + " " + tPt3[2] + " 0.1 " + cInt);
+                         lineNum++;
+    					 bw.newLine();
+                     }else {
+                     	System.out.println(index + " is null");
+                     	System.out.println();
+                     }
+                }
             } // if (do
             else { // iv
 	            while ( (line = raFile.readLine()) != null) {
@@ -9564,9 +9569,9 @@ System.out.println(nPtsB);
 	                }
 	
 	            }
+	            raFile.close();
             } // else iv
             //System.out.println("R7: " + r7_27Coord_transformed[0] + " " + r7_27Coord_transformed[1] + " " + r7_27Coord_transformed[2]);
-            raFile.close();
             bw.close();
             fw.close();
             txtWriter.close();
