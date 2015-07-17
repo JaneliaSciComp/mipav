@@ -89,6 +89,8 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogSta
     
     public ArrayList<float[]> swcFilamentCoords = new ArrayList<float[]>();
     
+    public ArrayList<int[]> swcFilamentAInt = new ArrayList<int[]>();
+    
     public boolean haveSWC = false;
 
     /** resolutions **/
@@ -583,6 +585,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogSta
 		        		MipavUtil.displayError("Error parsing surface file");
 		        		if (haveSWC) {
 		        			swcFilamentCoords = new ArrayList<float[]>();
+		        			swcFilamentAInt = new ArrayList<int[]>();
 		        		}
 		        		else {
 		        		    allFilamentCoords = new ArrayList <ArrayList<float[]>>();
@@ -590,7 +593,8 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogSta
 		        	} else if (haveSWC) {
 		        	    success = swcFilamentCoords.size() > 1;
 		        	    if (success == false) {
-		        	    	swcFilamentCoords = new ArrayList<float[]>();	
+		        	    	swcFilamentCoords = new ArrayList<float[]>();
+		        	    	swcFilamentAInt = new ArrayList<int[]>();
 		        	    } else {
 		        	    	//get the coords in proper mipav space!!!
 	        				 for(int k=0;k < swcFilamentCoords.size();k++) {
@@ -690,21 +694,26 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogSta
 			//FileWriter fw = new FileWriter(new File(di + File.separator + fi.substring(0, fi.indexOf(".")) + ".txt"));
 			
 			String line;
+			int aInt[];
 			
 			if (haveSWC) {
 				while((line=raFile.readLine())!= null) {
 					line = line.trim();
 					if(!line.equals("")) {
 						String[] splits = line.split(" ");
+						splits[1] = splits[1].trim();
 						splits[2] = splits[2].trim();
 						splits[3] = splits[3].trim();
 						splits[4] = splits[4].trim();
+						aInt = new int[1];
+						aInt[0] = new Integer(splits[1]).intValue();
 						float coord_x = new Float(splits[2]).floatValue();
 						float coord_y = new Float(splits[3]).floatValue();
 						float coord_z = new Float(splits[4]).floatValue();
 						float[] coords = {coord_x,coord_y,coord_z,0};
 						
 						swcFilamentCoords.add(coords);
+						swcFilamentAInt.add(aInt);
 					}
 				}
 			} // if (haveSWC)
@@ -990,7 +999,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogSta
 	public void callAlgorithm() {
 		float samplingRate = Float.valueOf((String)surfaceFileSamplingCB.getSelectedItem()).floatValue();
         if (haveSWC) {
-        	alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,swcFilamentCoords,
+        	alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,swcFilamentCoords, swcFilamentAInt,
         			surfaceFile,samplingRate,cityBlockImage,pointsFile,outputTextArea,flipXCB.isSelected(),
         			flipYCB.isSelected(), flipZCB.isSelected(),greenThreshold,subsamplingDistance,rigRadio.isSelected(),
         			rvldRadio.isSelected(),numPointsString);	
