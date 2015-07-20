@@ -5,7 +5,6 @@ import java.io.RandomAccessFile;
 import java.text.DecimalFormat;
 import java.util.Random;
 
-import gov.nih.mipav.model.algorithms.RandomNumberGen;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewUserInterface;
 
@@ -1319,7 +1318,8 @@ y[i-1] = y[i-1] + a[k-1]*x[j-1];
 
 		//     Initialize MTEST and the random number sequence.
 
-		      mtest  =  2;
+		      //mtest  =  2;
+		mtest = 1;
 
 		//     Test square systems.
 
@@ -1339,7 +1339,7 @@ y[i-1] = y[i-1] + a[k-1]*x[j-1];
 
 		//     More rows than columns.
 
-		      m      = mxm;
+		   /*   m      = mxm;
 		      n      = mxn / 2;
 
 		      lutest( m, n, nrowb, ncolb, mtest, inform,
@@ -1363,7 +1363,7 @@ y[i-1] = y[i-1] + a[k-1]*x[j-1];
 		              lena, luparm, parmlu,
 		              a, indc, indr, ip, iq,
 		              lenc, lenr, locc, locr, iploc, iqloc,
-		              ipinv, iqinv);
+		              ipinv, iqinv);*/
 		      
 		     return;
 	} // lutest_driver
@@ -1549,7 +1549,7 @@ y[i-1] = y[i-1] + a[k-1]*x[j-1];
 		      parmlu[0] = 10.0;
 		      parmlu[1] = 10.0;
 		      parmlu[2] = 1.0E-13;
-		      parmlu[3] = 1.0E-11;
+ 		      parmlu[3] = 1.0E-11;
 		      parmlu[4] = 1.0E-11;
 		      parmlu[5] = 3.0;
 		      nelem[0]     = 0;
@@ -1600,8 +1600,6 @@ y[i-1] = y[i-1] + a[k-1]*x[j-1];
 		int inform[] = new int[1];
 		int i, j, k, l, lenl, lenu, nrank;
 		double cmax, err, rmax, xmax, ymax;
-		int xi;
-		double xorig[] = new double[n];
 
 		nrank  = luparm[15];
 		cmax = zero;
@@ -1731,7 +1729,6 @@ y[i-1] = y[i-1] + a[k-1]*x[j-1];
 
 		      for (i = 0; i < n; i++) {
 		    	  x[i] = w[i];
-		    	  xorig[i] = w[i];
 		      }
 
 		      lu6sol( 6, m, n, v, w,
@@ -1747,11 +1744,9 @@ y[i-1] = y[i-1] + a[k-1]*x[j-1];
 		      } // for (k = 1; k <= n; k++)
 
 		      xmax = 0.0;
-		      xi = -1;
 		      for (i = 0; i < n; i++) {
 		    	  if (Math.abs(x[i]) > xmax) {
 		    		  xmax = Math.abs(x[i]);
-		    		  xi = i;
 		    	  }
 		      }
 
@@ -1768,15 +1763,6 @@ y[i-1] = y[i-1] + a[k-1]*x[j-1];
 		      UI.setDataText("(A - L*U)transpose error = " + nf.format(rmax) + "\n");
 		      UI.setDataText("Ax = b error = " + nf.format(ymax) + "\n");
 		      UI.setDataText("Atranspose * y  = b error = " + nf.format(xmax) + "\n");
-		      //if (xmax >= 1.e0) {
-		    	  //UI.setDataText("Zero based index of xmax = " + xi + "\n");
-		    	  //UI.setDataText("xorig["+xi+"] = " + xorig[xi] + "\n");
-		    	  //UI.setDataText("Zero based j index = " + (kb[xi]-1) + "\n");
-		    	  //j = kb[xi] - 1;
-		    	  //for (i = 0; i < m; i++) {
-		    		 //UI.setDataText("B["+i+"]["+j+"] = " + B[i][j] + " v["+i+"] = " + v[i] + " B*v = " + (B[i][j]*v[i] + "\n"));
-		    	  //}
-		      //}
 		      return;
 	} // luchek
 
