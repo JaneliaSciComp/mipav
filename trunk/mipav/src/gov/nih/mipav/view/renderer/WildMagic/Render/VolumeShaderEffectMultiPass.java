@@ -568,7 +568,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     	m_fSamples = fSample;    	
         m_iPasses = Math.max(1, (int)(fSample * ms_iMaxSamples));
         //System.err.println( "Samples " + m_iPasses );
-        SetRepeatQuantity(m_iPasses);
+//        SetRepeatQuantity(m_iPasses);
         Program pkCProgram = GetCProgram(0);
         SetVShader(0,m_pkVShader);
         /* The pixel shader defaults to CMP: */
@@ -580,7 +580,11 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         pkCProgram = GetCProgram(0);
         if ( pkCProgram != null && pkCProgram.GetUC("StepSize") != null )
         {
-            pkCProgram.GetUC("StepSize").GetData()[0] = m_fMaxLength/(float)m_iPasses;
+            pkCProgram.GetUC("StepSize").GetData()[0] = m_fMaxLength/(float)(m_iPasses + 1);
+        }
+        if ( pkCProgram != null && pkCProgram.GetUC("nPasses") != null )
+        {
+            pkCProgram.GetUC("nPasses").GetData()[0] = m_iPasses;
         }
         return m_iPasses;
     }
