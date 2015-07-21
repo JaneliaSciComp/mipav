@@ -114,6 +114,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     
     private ArrayList<int[]> swcFilamentAInt;
     
+    private ArrayList<int[]> swcFilamentCInt;
+    
     private ArrayList<float[]> swcFilamentCoords_newCoords;
     
     private boolean haveSWC;
@@ -303,7 +305,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     
     public PlugInAlgorithmDrosophilaStandardColumnRegistration(final ModelImage neuronImage,
             final TreeMap<Integer, float[]> pointsMap, final ArrayList<float[]> swcFilamentCoords, final ArrayList<int[]> swcFilamentAInt,
-            final File oldSurfaceFile, final float samplingRate, final ModelImage cityBlockImage,
+            final ArrayList<int[]> swcFilamentCInt, final File oldSurfaceFile, final float samplingRate, final ModelImage cityBlockImage,
             final File pointsFile, final JTextArea outputTextArea, final boolean flipX, final boolean flipY,
             final boolean flipZ,float greenThreshold, float subsamplingDistance, boolean rigidOnly,boolean rvld, String numPointsString) {
     	
@@ -318,6 +320,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         haveSWC = true;
         this.swcFilamentCoords = swcFilamentCoords;
         this.swcFilamentAInt = swcFilamentAInt;
+        this.swcFilamentCInt = swcFilamentCInt;
         swcFilamentCoords_newCoords = new ArrayList<float[]>();
         int size = swcFilamentCoords.size();
         for (int k = 0; k < size; k++) {
@@ -9450,9 +9453,55 @@ System.out.println(nPtsB);
             String line;
 
             if (haveSWC) {
-            	int cInt;
+            	int cInt[] = new int[1];
+            	int cIntTemp[] = new int[1];
             	int aInt[] = new int[1];
+            	boolean cIntChange;
+            	int currentLineNum = 1;
+            	// Use lastCInt as kludge around Java error
+            	// Inexplicably between the second and third for loop the last 
+            	// value in swcFilamentCInt would change from the correct value to -1.
+            	cInt = swcFilamentCInt.get(swcFilamentCInt.size() - 1);
+            	int lastCInt = cInt[0];
+            	int newLineNum[] = new int[swcFilamentCoords_newCoords.size()];
             	int lineNum = 1;
+            	for (index = 0; index < swcFilamentCoords_newCoords.size(); index++) {
+            		cInt = swcFilamentCInt.get(index);
+            		cIntChange = false;
+            		while ((cInt[0] != -1) && (swcFilamentCoords_newCoords.get(cInt[0]-1) == null)) {
+            	        cIntTemp = swcFilamentCInt.get(cInt[0]-1); 
+            	        if (cIntTemp[0] == -1) {
+            	        	break;
+            	        }
+            	        else {
+            	        	cInt = new int[1];
+            	        	cInt[0] = cIntTemp[0];
+            	        	cIntChange = true;
+            	        }
+            		}
+            		if (cIntChange) {
+            			swcFilamentCInt.set(index, cInt);
+            			if (index == swcFilamentCoords_newCoords.size()-1) {
+            				lastCInt = cInt[0];
+            			}
+            		}
+            		if (swcFilamentCoords_newCoords.get(index) != null) {
+            			newLineNum[index] = currentLineNum++;
+            		}
+            	}
+            	for (index = 0; index < swcFilamentCoords_newCoords.size(); index++) {
+            		if (swcFilamentCoords_newCoords.get(index) != null) {
+            			cIntTemp = swcFilamentCInt.get(index);
+            			if (cIntTemp[0] != -1) {
+            				cInt = new int[1];
+            				cInt[0] = newLineNum[cIntTemp[0]-1];
+            			    swcFilamentCInt.set(index, cInt);
+            			    if (index == swcFilamentCoords_newCoords.size()-1) {
+                				lastCInt = cInt[0];
+                			}
+            			}
+            		}
+            	}
                 for (index = 0; index < swcFilamentCoords_newCoords.size(); index++) {
                 	final float tPt3[] = new float[3];	
                 	final float[] filCoord = swcFilamentCoords_newCoords.get(index);
@@ -9483,14 +9532,18 @@ System.out.println(nPtsB);
                          }
                          
                          if (lineNum == 1) {
-                        	 cInt = -1;
+                        	 cInt[0] = -1;
+                         }
+                         else if (index == swcFilamentCoords_newCoords.size() - 1) {
+                        	 cInt[0] = lastCInt;
                          }
                          else {
-                        	 cInt = lineNum-1;
+                        	 cInt = swcFilamentCInt.get(index);
                          }
-                         bw.write(lineNum + " " + aInt[0] + " " + tPt3[0] + " " + tPt3[1] + " " + tPt3[2] + " 0.1 " + cInt);
+                         bw.write(lineNum + " " + aInt[0] + " " + tPt3[0] + " " + tPt3[1] + " " + tPt3[2] + " 0.1 " + cInt[0]);
                          lineNum++;
     					 bw.newLine();
+    					 txtWriter.append(tPt3[0] + "\t" + tPt3[1] + "\t" + tPt3[2] + "\r\n");
                      }else {
                      	System.out.println(index + " is null");
                      	System.out.println();
