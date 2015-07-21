@@ -31,11 +31,9 @@ import WildMagic.LibGraphics.Shaders.VertexShader;
 public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     implements StreamInterface
 {
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 5582294860617859374L;
-	/** View Mode MIP Constant: */
+    /**  */
+    private static final long serialVersionUID = 5580825290512790813L;
+    /** View Mode MIP Constant: */
     protected final static int MIP = 0;
     /** View Mode DRR Constant: */
     protected final static int DRR = 1;
@@ -102,7 +100,6 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
 
         m_iPasses = 1;
         super.SetPassQuantity(1);
-        super.SetRepeatQuantity(m_iPasses);
         m_fSamples = (m_kVolumeImageA.GetImage().getExtents()[2]*2.0f)/1000.0f;
 
 		for ( int i = 0; i < m_akLevWidget.length; i++ )
@@ -570,7 +567,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     	m_fSamples = fSample;    	
         m_iPasses = Math.max(1, (int)(fSample * ms_iMaxSamples));
         //System.err.println( "Samples " + m_iPasses );
-        SetRepeatQuantity(m_iPasses);
+//        SetRepeatQuantity(m_iPasses);
         Program pkCProgram = GetCProgram(0);
         SetVShader(0,m_pkVShader);
         /* The pixel shader defaults to CMP: */
@@ -582,7 +579,11 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         pkCProgram = GetCProgram(0);
         if ( pkCProgram != null && pkCProgram.GetUC("StepSize") != null )
         {
-            pkCProgram.GetUC("StepSize").GetData()[0] = m_fMaxLength/(float)m_iPasses;
+            pkCProgram.GetUC("StepSize").GetData()[0] = m_fMaxLength/(float)(m_iPasses + 1);
+        }
+        if ( pkCProgram != null && pkCProgram.GetUC("nPasses") != null )
+        {
+            pkCProgram.GetUC("nPasses").GetData()[0] = m_iPasses;
         }
         return m_iPasses;
     }
