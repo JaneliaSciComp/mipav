@@ -18,7 +18,11 @@ import WildMagic.LibGraphics.Shaders.VertexShader;
 public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiPass
     implements StreamInterface
 {       
-	private static final long serialVersionUID = -4552046274082477860L;
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5994032679159196840L;
 
 	private static String basicParameters = ""
 	    	+ "in vec4 outPos;" + "\n"
@@ -29,7 +33,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "uniform sampler3D bVolumeImageA; " + "\n"
     	+ "uniform vec4 BackgroundColor;" + "\n"
     	+ "uniform float StepSize;" + "\n"
-    	+ "uniform float nPasses;" + "\n"
+    	+ "uniform float iPass;" + "\n"
     	+ "" + "\n";
 	
 	private static String basicParametersB = ""
@@ -123,17 +127,14 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "vec3 start = varTexCoord.xyz;" + "\n"
     	+ "vec3 dir = back_position - start;" + "\n"
     	+ "dir = normalize(dir);" + "\n"
-    	+ "fragColor = vec4(0);" + "\n"
-    	+ "int count = int(nPasses);" + "\n"
-    	+ "for ( int p = count -1; p > 0; p-- ) {" + "\n"
-//    	+ "for ( int p = 1; p < nPasses; p++ ) {" + "\n"
-    	+ "   float fPos = p;" + "\n"
-    	+ "   vec3 position = start + fPos * StepSize * dir;" + "\n"
-    	+ "   vec3 dir2 = position - start;" + "\n"
-    	+ "   vec3 dir3 = back_position - start;" + "\n"
-    	+ "   if ( dot(dir2,dir2) > dot(dir3,dir3) ) {" + "\n"
-        + "       continue;" + "\n"
-    	+ "   }" + "\n";
+    	+ "float fPos = iPass;" + "\n"
+    	+ "vec3 position = start + fPos * StepSize * dir;" + "\n"
+    	+ "vec3 dir2 = position - start;" + "\n"
+    	+ "dir = back_position - start;" + "\n"
+    	+ "if ( dot(dir2,dir2) > dot(dir,dir) ) {" + "\n"
+    	+ "   discard;" + "\n"
+    	+ "   return;" + "\n"
+    	+ "}" + "\n";
 
     private static String colorParametersA = ""
     	+ "uniform vec3 ColorLUTOnA;" + "\n"
@@ -266,20 +267,14 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
         + "\n" + "}" + "\n";
 
     private static String calcColorA = ""
-   		+ "   vec4 colorA = calcColorA(position);" + "\n";
+   		+ "vec4 colorA = calcColorA(position);" + "\n";
     
     private static String calcColorB = ""
        	+ "vec4 colorB = calcColorB(position);" + "\n";
 
     private static String finalColorA = ""
-        + "   fragColor.rgb = (1 - colorA.a)*fragColor.rgb + colorA.a*colorA.rgb;" + "\n"
-//        + "   fragColor.rgb = (colorA.a)*fragColor.rgb + (1 - colorA.a)*colorA.rgb;" + "\n"
-        + "   fragColor.a   += colorA.a;" + "\n"
-//    	+ "   if ( fragColor.a >= 1 ) { " + "\n"
-//        + "      fragColor = clamp(fragColor, vec4(0), vec4(1));" + "\n"
-//    	+ "      break;" + "\n"
-//    	+ "    }" + "\n"
-    	+ "}" + "\n";
+    	+ "fragColor.rgb = colorA.rgb;" + "\n"
+    	+ "fragColor.a = colorA.a;" + "\n";
 
     private static String finalColorB = ""
     	+ "fragColor.rgb = colorB.rgb;" + "\n"
@@ -299,7 +294,6 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
         	;
     
     private static String mainEnd = ""
-            + "fragColor = clamp(fragColor, vec4(0), vec4(1));" + "\n"
             + "if ( fragColor == vec4(0) ) {" + "\n"
         	+ "   discard;" + "\n"
         	+ "}" + "\n"
@@ -1045,16 +1039,12 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     				GetCProgram(0).Reload(true);
     			}
     		}
-        	
-//        	System.err.println("START");
-//    		System.err.println( text );
-//        	System.err.println("END");
     		return text;
     	}
     	
-//    	System.err.println("START");
-//		System.err.println( text );
-//    	System.err.println("END");
+    	//System.err.println("START");
+		//System.err.println( text );
+    	//System.err.println("END");
     	return text;
     }
     
