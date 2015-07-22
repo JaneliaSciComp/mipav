@@ -969,7 +969,7 @@ public class FileSTK extends FileBase {
         int type;
         int count;
         int ecount;
-        long[] valueArray = new long[25000];
+        long[] valueArray = new long[100000];
         int value_offset;
         int nDirEntries;
         long numerator, denominator;
@@ -1882,11 +1882,11 @@ public class FileSTK extends FileBase {
                         throw new IOException("DATE_TIME has illegal type = " + type + "\n");
                     }
 
-                    if (count != 20) {
+                    if ((count < 20) || (count > 21)) {
                         throw new IOException("DATE_TIME has illegal count = " + count + "\n");
                     }
 
-                    dateTime = new byte[20];
+                    dateTime = new byte[count];
                     for (i1 = 0; i1 < count; i1++) {
                         dateTime[i1] = (byte) valueArray[i1];
                     }
