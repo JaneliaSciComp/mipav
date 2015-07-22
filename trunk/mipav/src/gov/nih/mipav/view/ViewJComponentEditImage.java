@@ -444,9 +444,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 	private boolean makingCheckerboard = false;
 	private int[] bandSpacing;
 	
-	
-	
-
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -2727,9 +2724,21 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             // int xS = getScaledX(mouseEvent.getX()); // zoomed x. Used as cursor int yS =
             // getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
         	getActiveImage().updateVOIs();
-            ((ViewJFrameImage) frame).updateFrame(getZoomMagnitudeX(mouseEvent.getButton() == MouseEvent.BUTTON3),
-                    getZoomMagnitudeY(mouseEvent.getButton() == MouseEvent.BUTTON3), xS, yS);
+        	float zoomMagX = getZoomMagnitudeX(mouseEvent.getButton() == MouseEvent.BUTTON3);
+        	float zoomMagY = getZoomMagnitudeY(mouseEvent.getButton() == MouseEvent.BUTTON3);
+            ((ViewJFrameImage) frame).updateFrame(zoomMagX, zoomMagY, xS, yS);
 
+            if ( MipavUtil.isEyeTrackingEnabled() ) {
+	            String imageTimeStamp = getImageTimeStamp();
+	            String zoom_parameter = "";
+	            if ( cursorMode == ViewJComponentBase.ZOOMING_IN ) {
+	            	zoom_parameter = " zoom in";
+	            } else if ( cursorMode == ViewJComponentBase.ZOOMING_OUT ){
+	            	zoom_parameter = " zoom out";
+	            }
+	        	MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Zoom, " + "Mouse pressed, " + zoom_parameter + ", " + zoomMagX + ", " +  xS + ", " + yS);  
+            }
+            
             if (mouseEvent.isShiftDown() == false) {
                 cursorMode = ViewJComponentBase.DEFAULT;
                 setCursor(MipavUtil.defaultCursor);
@@ -2861,10 +2870,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      */
     public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
     	
-    	
-    	
-    	
-    	
         final int wheelRotation = mouseWheelEvent.getWheelRotation();
 
         if (frame instanceof ViewJFrameImage) {
@@ -2873,9 +2878,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         	
         	if(isActiveFrame) {
         		
-        		
-        		
-        		
+        		int xCoord = mouseWheelEvent.getX();
+            	int yCoord = mouseWheelEvent.getY();
+            	
         		if (wheelRotation < 0) {
 
                     if (imageActive.getNDims() > 2) {
@@ -2892,11 +2897,20 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         }
 
                         ((ViewJFrameImage) frame).incSlice();
+                        
+                        if ( MipavUtil.isEyeTrackingEnabled() ) {
+                        	String imageTimeStamp = getImageTimeStamp();
+                        	MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Sliding 3D, " + "Mouse wheel rolling, " + " increase, " + 0 + ", " +  xCoord + ", " + yCoord);   
+                        }
+                        
                     } else {
-                    	int xCoord = mouseWheelEvent.getX();
-                    	int yCoord = mouseWheelEvent.getY();
                     	
                         ((ViewJFrameImage) frame).updateFrame(getZoomX() * 2.0f, getZoomY() * 2.0f, xCoord, yCoord);
+                        
+                        if ( MipavUtil.isEyeTrackingEnabled() ) {
+                        	String imageTimeStamp = getImageTimeStamp();
+                        	MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Zoom 2D, " + "Mouse wheel rolling, " + " zoom in, " + 0 + ", " +  xCoord + ", " + yCoord);      
+                        }
                     }
                 } else {
 
@@ -2914,11 +2928,19 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         }
 
                         ((ViewJFrameImage) frame).decSlice();
+                        
+                        if ( MipavUtil.isEyeTrackingEnabled() ) {
+                        	String imageTimeStamp = getImageTimeStamp();
+                        	MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Sliding 3D, " + "Mouse wheel rolling, " + " decrease, " + 0 + ", " +  xCoord + ", " + yCoord);   
+                        }
                     } else {
-                    	int xCoord = mouseWheelEvent.getX();
-                    	int yCoord = mouseWheelEvent.getY();
                     	
                         ((ViewJFrameImage) frame).updateFrame(getZoomX() / 2.0f, getZoomY() / 2.0f, xCoord, yCoord);
+                        
+                        if ( MipavUtil.isEyeTrackingEnabled() ) {
+                        	String imageTimeStamp = getImageTimeStamp();
+                        	MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Zoom 2D, " + "Mouse wheel rolling, " + " zoom out, " + 0 + ", " +  xCoord + ", " + yCoord);   
+                        }
                     }
                 }
         		
@@ -5721,9 +5743,14 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                     final float fY = yS / (float) yDim;
                     //System.out.println("xs is " + xS);
                     //System.out.println("ys is " + yS);
-                     m_kWinLevel.updateWinLevel(fX, fY, !winLevelSet, m_kPatientSlice.getActiveLookupTable(),
-                            imageActive);
+                     m_kWinLevel.updateWinLevel(fX, fY, !winLevelSet, m_kPatientSlice.getActiveLookupTable(), imageActive);
                     setCursor(MipavUtil.winLevelCursor);
+                    
+                    if ( MipavUtil.isEyeTrackingEnabled() ) {
+                    	String imageTimeStamp = getImageTimeStamp();
+                    	MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Win level, " + "Right mouse button, " + " alphaBlend, " + alphaBlend + ", " +  xS + ", " + yS);    
+                    }
+                    
                     if ( !winLevelSet) {
                         //setCursor(MipavUtil.winLevelCursor);
                         winLevelSet = true;
@@ -7209,5 +7236,22 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
     	Vector3f patientPt = new Vector3f();
     	MipavCoordinateSystems.fileToPatient( center, patientPt, imageA, orientation );
     	setSlice( (int) patientPt.Z );
+	}
+    
+    /**
+     * Get the system timestamp. 
+     * @return
+     */
+	private String getImageTimeStamp() {
+		SimpleDateFormat sdfDate = new SimpleDateFormat("HH:mm:ss:SSS");
+		Date now = new Date();
+		String strDate = sdfDate.format(now);
+		String imageName = getActiveImage().getImageName();
+		int sliceNumber = getSlice();
+		int[] landmarkPoints = ((ViewJFrameImage) frame).getFrameLandMarkPoints();
+
+		return (strDate + ", " + imageName + ", " + sliceNumber + ", "
+				+ landmarkPoints[0] + ", " + landmarkPoints[1] + ", "
+				+ landmarkPoints[2] + ", " + landmarkPoints[3] + ", ");
 	}
 }
