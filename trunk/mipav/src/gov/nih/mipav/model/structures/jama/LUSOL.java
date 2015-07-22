@@ -136,8 +136,9 @@ public class LUSOL implements java.io.Serializable {
     private ViewUserInterface UI = ViewUserInterface.getReference();
 	
 	DecimalFormat nf = new DecimalFormat("0.00000E0");
-	long seed = 1234567L;
-	Random rn = new Random(seed);
+	private long seed = 1234560L;
+	private Random rn = new Random(seed);
+	private boolean doubleCheck = true;
 	
 	public LUSOL() {
 		
@@ -1318,8 +1319,7 @@ y[i-1] = y[i-1] + a[k-1]*x[j-1];
 
 		//     Initialize MTEST and the random number sequence.
 
-		      //mtest  =  2;
-		mtest = 1;
+		      mtest  =  2;
 
 		//     Test square systems.
 
@@ -1339,7 +1339,7 @@ y[i-1] = y[i-1] + a[k-1]*x[j-1];
 
 		//     More rows than columns.
 
-		   /*   m      = mxm;
+		      m      = mxm;
 		      n      = mxn / 2;
 
 		      lutest( m, n, nrowb, ncolb, mtest, inform,
@@ -1363,7 +1363,7 @@ y[i-1] = y[i-1] + a[k-1]*x[j-1];
 		              lena, luparm, parmlu,
 		              a, indc, indr, ip, iq,
 		              lenc, lenr, locc, locr, iploc, iqloc,
-		              ipinv, iqinv);*/
+		              ipinv, iqinv);
 		      
 		     return;
 	} // lutest_driver
@@ -1686,6 +1686,115 @@ y[i-1] = y[i-1] + a[k-1]*x[j-1];
 		      for (i = 0; i < m; i++) {
 		          y[i] = v[i];
 		      }
+		      
+		      if ((m == n) && doubleCheck) {
+		    	  // Can only be used for A a square matrix
+		          LinearEquations2 le2 = new LinearEquations2();
+		          double A[][] = new double[n][n];
+		          for (k = 1; k <= n; k++) {
+		        	  j = kb[k-1];
+		        	  for (i= 1; i <= m; i++) {
+		        		  A[i-1][k-1] = B[i-1][j-1];
+		        	  }
+		          }
+		          double Bmat[][] = new double[n][1];
+		          for (i = 0; i < n; i++) {
+		        	  Bmat[i][0] = v[i];
+		          }
+		          // AF is an output argument and on exit
+		          // returns the factors L and U from the factorization A = P*L*U
+		          // of the original matrix A.
+		          double AF[][] = new double[n][n];
+		          // ipiv is an output argument and on exit
+		          // contains the pivot indices from the factorization A = P*L*U
+		          // of the original matrix A.
+		          int ipiv[] = new int[n];
+		          // equed always outputs 'N' for no equilibration
+		          char[] equed = new char[1];
+		          // r is not accessed
+		          double r[] = new double[n];
+		          // c is not accessed
+		          double c[] = new double[n];
+		          // Bmat is not modified
+		          // If info[0] = 0 or info[0] = n+1, the n-by-1 solution matrix X
+		          // to the original system of equations.
+		          double X[][] = new double[n][1];
+		          // The estimate of the reciprocal condition number of the matrix
+		          // A after equilibration (if done).  If rcond[0] is less than the
+		          // machine precision (in particular, if rcond[0] = 0), the matrix
+		          // is singular to working precision.  This condition is
+		          // indicated by a return code of info[0] > 0.
+		          double rcond[] = new double[1];
+		          // The estimated forward error bound for each solution vector
+		          // X(j) (the j-th column of the solution matrix X).
+		          // If XTRUE is the true solution corresponding to X(j), ferr[j]
+		          // is an estimated upper bound for the magnitude of the largest
+		          // element in (X(j) - XTRUE) divided by the magnitude of the
+		          // largest element in X(j).  The estimate is as reliable as
+		          // the estimate for rcond[0], and is almost always a slight
+		          // overestimate of the true error.
+		          double ferr[] = new double[1];
+		          // The componentwise relative backward error of each solution
+		          // vector X(j) (i.e., the smallest relative change in
+		          // any element of A or B that makes X(j) an exact solution).
+		          double berr[] = new double[1];
+		          // On exit, work[0] contains the reciprocal pivot growth
+		          // factor norm(A)/norm(U). The "max absolute element" norm is
+		          // used. If work[0] is much less than 1, then the stability
+		          // of the LU factorization of the (equilibrated) matrix A
+		          // could be poor. This also means that the solution X, condition
+		          // estimator rcond[0], and forward error bound ferr could be
+		          // unreliable. If factorization fails with 0<info[0]<=n, then
+		          // work[0] contains the reciprocal pivot growth factor for the
+		          // leading info[0] columns of A.
+		          double work[] = new double[4*n];
+		          int iwork[] = new int[n];
+		          //= 0:  successful exit
+		          //        < 0:  if info[0] = -i, the i-th argument had an illegal value
+		          //       > 0:  if info[0] = i, and i is
+		          //              <= n:  U[i-1][i-1] is exactly zero.  The factorization has
+		          //                     been completed, but the factor U is exactly
+		          //                     singular, so the solution and error bounds
+		          //                     could not be computed. rcond[0] = 0 is returned.
+		          //              = n+1: U is nonsingular, but rcond[0] is less than machine
+		          //                     precision, meaning that the matrix is singular
+		          //                     to working precision.  Nevertheless, the
+		          //                     solution and error bounds are computed because
+		          //                     there are a number of situations where the
+		          //                     computed solution can be more accurate than the
+		          //                     value of rcond[0] would suggest.
+		          int info[] = new int[1];
+		          le2.dgesvx('N', 'N', n, 1, A, n, AF, n, ipiv, equed, r, c, Bmat, n,
+		        		  X, n, rcond, ferr, berr, work, iwork, info);
+		          UI.setDataText("dgesvx solving A*W = V:\n");
+		          if (info[0] == 0) {
+		        	  UI.setDataText("Successful exit\n");
+		          }
+		          else if (info[0] <= n) {
+		        	  i = info[0] - 1;
+		        	  UI.setDataText("U["+i+"]["+i+"] is exactly zero\n");
+		        	  UI.setDataText("The factorization has been completed, but the factor U is exactly singular,\n");
+		        	  UI.setDataText("so the solution and error bounds could not be computed.  rcond[0] = 0 is returned\n");
+		          }
+		          else if (info[0] == n+1) {
+		        	  UI.setDataText("U is nonsingular, but rcond[0] is less than machine precision,\n");
+		        	  UI.setDataText("meaning that the matrix is singular to working precision.\n");
+		        	  UI.setDataText("Nevertheless, the solution and error bounds are computed because there are a\n");
+		        	  UI.setDataText("situations where the computed solution can be more accurate than the value of\n");
+		        	  UI.setDataText("rcond[0] would suggest\n");
+		          }
+		          UI.setDataText("The reciprocal condition number of the matrix A = " + nf.format(rcond[0]) + "\n");
+		          if ((info[0] == 0) || (info[0] == n+1)) {
+		        	  UI.setDataText("The estimated forward error bound for the solution vector x = " + nf.format(ferr[0]) + "\n");
+		        	  UI.setDataText("The relative backward error of the solution vector x = " + nf.format(berr[0]) + "\n");
+		          }
+		          UI.setDataText("Reciprocal pivot growth factor normA/normU = " + nf.format(work[0]) + "\n");
+		          if (work[0] < 1.0) {
+		              UI.setDataText("If much less than 1, the stability of the LU factorization could be poor\n");
+		              UI.setDataText("This also means that the solution X, condition estimator rcond[0], and\n");
+		              UI.setDataText("the forward error bound ferr[0] could be unreliable\n");
+		          }
+		      } // if ((m == n) && doubleCheck)
 
 		      lu6sol( 5, m, n, v, w,
 		              lena, luparm, parmlu,
