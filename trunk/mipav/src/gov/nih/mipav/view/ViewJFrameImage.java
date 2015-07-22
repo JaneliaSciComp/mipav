@@ -6167,4 +6167,35 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             ProvenanceRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
         }
     }
+    
+    /**
+     * Get the frame four corner landmark points. 
+     * @return landmark points 
+     * 		result[0] = startX; result[1] = startY;
+     * 	    result[2] = endX; result[3] = endY; 
+     */
+    public int[] getFrameLandMarkPoints() {
+    	int[] result = new int[4];
+    	
+    	Point frameLoc = getLocationOnScreen();
+    	
+    	int startLocationX = (int)frameLoc.getX() + getInsets().left;
+    	int startLocationY = (int)frameLoc.getY() + getInsets().top;
+    	
+        int width = getSize().width - (getInsets().left + getInsets().right);
+        int height = getSize().height - (getInsets().top + getInsets().bottom);
+
+        width -= (scrollPane.getInsets().left + scrollPane.getInsets().right);
+        height -= (scrollPane.getInsets().top + scrollPane.getInsets().bottom);
+        
+        startLocationX += scrollPane.getInsets().left;
+        startLocationY += scrollPane.getInsets().top;
+        
+        result[0] = startLocationX;
+        result[1] = startLocationY;
+        result[2] = startLocationX + width;
+        result[3] = startLocationY + height;
+        
+        return result;
+    }
 }

@@ -185,7 +185,12 @@ public class MipavUtil extends JComponent {
 
     /** DOCUMENT ME! */
     static HelpBroker helpBroker;
-
+    
+    private static boolean isEyeTrackingEnabled = false;
+    
+    /** eye tracking outstream writer .*/
+    private static BufferedWriter eyetrackingOutStream;
+    
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
 
@@ -1376,5 +1381,68 @@ public class MipavUtil extends JComponent {
          */
         public abstract void actionPerformed(ActionEvent ae);
     }
+    
+    /**
+     * Check eye tracking is enabled or not. 
+     * @return
+     */
+    public static final boolean isEyeTrackingEnabled() {
+    	return isEyeTrackingEnabled;
+    }
+    
+    /**
+     * When the plug-in eye tracker record button is clicked, it re-initial the eye tracker csv file recording stream.
+     * If the stop button is clicked, stop the current csv file recording stream.  
+     * @param enable   enable flag
+     * @param fileDir user selected csv file directory. 
+     */
+    public static final void setEyeTrackingEnabled(boolean enable, String fileDir) {
+    	isEyeTrackingEnabled = enable;
+    	if (enable) {
+    		initEyeTrackingLogfile(fileDir);
+    	} else {
+    		closeEyeTrackingLogfile();
+    	}
+    }
 
+    /**
+     * Initialize the file IO for eye tracking log file
+     */
+    private static void initEyeTrackingLogfile(String defaultDirectory) {
+    	try {
+	    	// System.err.println(defaultDirectory);
+	    	File file = new File(defaultDirectory);
+	    	if ( !file.exists() ) file.createNewFile();
+	        eyetrackingOutStream = new BufferedWriter(new FileWriter(file.getAbsoluteFile()));
+	        eyetrackingOutStream.write("Time, ActiveImage, ActiveSlice, frameMinX, frameMinY, frameMaxX, frameMaxY, Event, MouseEvent, Action, value, MouseCoordX, MouseCoordY\n");
+    	} catch ( IOException e ) {
+    		e.printStackTrace();
+    	}
+    }
+    
+    /**
+     * Record the eye tracking log message. 
+     * @param msg
+     */
+    public static final void writeEyeTrackingLog(String msg) {
+    	if (isEyeTrackingEnabled) {
+			try {
+				eyetrackingOutStream.write(msg + "\n");
+			} catch ( IOException e ) {
+				e.printStackTrace();
+			}
+    	}
+    }
+    
+    /**
+     * close the eye tracking log. 
+     */
+    private static void closeEyeTrackingLogfile() {
+    	try {
+    		eyetrackingOutStream.close();
+    	} catch ( IOException e ) {
+    		e.printStackTrace();
+    	}
+    }
+   
 }
