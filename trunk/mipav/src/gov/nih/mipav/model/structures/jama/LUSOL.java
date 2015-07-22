@@ -136,7 +136,7 @@ public class LUSOL implements java.io.Serializable {
     private ViewUserInterface UI = ViewUserInterface.getReference();
 	
 	DecimalFormat nf = new DecimalFormat("0.00000E0");
-	private long seed = 1234560L;
+	private long seed = 1234567L;
 	private Random rn = new Random(seed);
 	private boolean doubleCheck = true;
 	
