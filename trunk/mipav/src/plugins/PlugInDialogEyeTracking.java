@@ -68,7 +68,7 @@ public class PlugInDialogEyeTracking extends JDialogStandalonePlugin {
 	private void init() {
 
 		setForeground(Color.black);
-
+		setTitle("Mobile Eye Tracker");
 		final GridBagConstraints gbc = new GridBagConstraints();
 
 		gbc.gridx = 0;
@@ -78,8 +78,8 @@ public class PlugInDialogEyeTracking extends JDialogStandalonePlugin {
 		gbc.anchor = GridBagConstraints.EAST;
 
 		JPanel timePanel = new JPanel();
-		timePanel.setLayout(new GridLayout(2, 2));
-		timePanel.setBorder(buildTitledBorder("Eye Tracking"));
+		timePanel.setLayout(new GridLayout(3, 2));
+		timePanel.setBorder(buildTitledBorder("Recording"));
 
 		systemTimeLabel = new JLabel(getTimeStamp());
 
@@ -106,19 +106,25 @@ public class PlugInDialogEyeTracking extends JDialogStandalonePlugin {
 		buttonSavedCSVFile.setActionCommand("ChooseCSVfile");
 		buttonSavedCSVFile.setFont(serif12B);
 
-		gbc.gridx = 2;
+		gbc.gridx = 1;
 		timePanel.add(buttonSavedCSVFile, gbc);
 
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.add(buildButtons());
-
+		// Add Recording Start and Stop buttons. 
+		gbc.gridx = 0;
+		gbc.gridy = 2;
+		buildRecordButton();
+		buildStopButton();
+		timePanel.add(OKButton, gbc);
+		gbc.gridx = 1;
+		timePanel.add(cancelButton, gbc);
+		
+		
 		JPanel mainPanel = new JPanel(new BorderLayout());
 
 		mainPanel.add(timePanel);
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
 		getContentPane().add(mainPanel);
-		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
 		new Timer(100, new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -171,20 +177,6 @@ public class PlugInDialogEyeTracking extends JDialogStandalonePlugin {
 			return;
 		}
 	}
-	
-	/**
-	 * Builds button panel consisting of Record and Stop buttons.
-	 *
-	 * @return JPanel that has record and stop buttons
-	 */
-	protected JPanel buildButtons() {
-		JPanel buttonPanel = new JPanel();
-
-		buttonPanel.add(buildRecordButton());
-		buttonPanel.add(buildStopButton());
-
-		return buttonPanel;
-	}
 
 	/**
 	 * Builds the OK button. Sets it internally as well return the just-built
@@ -193,7 +185,7 @@ public class PlugInDialogEyeTracking extends JDialogStandalonePlugin {
 	 * @return JButton ok button
 	 */
 	protected JButton buildRecordButton() {
-		OKButton = new JButton("Record");
+		OKButton = new JButton("Start");
 		OKButton.addActionListener(this);
 		OKButton.setActionCommand("RecordCSV");
 		OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
