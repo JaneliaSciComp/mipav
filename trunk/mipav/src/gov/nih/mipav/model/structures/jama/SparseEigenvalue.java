@@ -487,27 +487,28 @@ public class SparseEigenvalue implements java.io.Serializable {
     public void dssimp() {
     	
 // Test passes:
-// Provided values from running FORTRAN original:
+// Values from running FORTRAN original:
 //    	Ritz values and relative residuals
-//    	   ----------------------------------
+//    	 ----------------------------------
 //    	               Col   1       Col   2
-//    	    Row   1:    8.91167E+02   6.95597E-07
-//    	    Row   2:    9.19781E+02   3.30156E-07
-//    	    Row   3:    9.19781E+02   4.25717E-07
-//   	    Row   4:    9.48395E+02   3.20519E-07
+//    	  Row   1:    8.91167D+02   1.16872D-15
+//    	  Row   2:    9.19781D+02   1.57393D-15
+//    	  Row   3:    9.19781D+02   2.14076D-15
+//    	  Row   4:    9.48395D+02   1.42151D-15
+    	  
+    	  
+//    	  _SSIMP 
+//    	  ====== 
+    	  
+//    	  Size of the matrix is          100
+//    	  The number of Ritz values requested is            4
+//    	  The number of Arnoldi vectors generated (NCV) is           20
+//    	  What portion of the spectrum: LM
+//    	  The number of converged Ritz values is            4
+//    	  The number of Implicit Arnoldi update iterations taken is            8
+//    	  The number of OP*x is          125
+//    	  The convergence criterion is    1.1102230246251565E-016
 
-
-//    	    _SSIMP
-//    	    ======
-
-//    	    Size of the matrix is   100
-//    	    The number of Ritz values requested is   4
-//    	    The number of Arnoldi vectors generated (NCV) is   20
-//    	    What portion of the spectrum: LM
-//    	    The number of converged Ritz values is   4
-//    	    The number of Implicit Arnoldi update iterations taken is   5
-//    	    The number of OP*x is   78
-//    	    The convergence criterion is     5.96046E-08
     	
 // Values from running Java port:
 //    	Ritz values and relative residuals: 
@@ -1099,6 +1100,46 @@ public class SparseEigenvalue implements java.io.Serializable {
 
     
     public void dsvd() {
+// Values from running FORTRAN original:
+//    	 Singular values and direct residuals
+//    	 ------------------------------------
+//    	               Col   1       Col   2
+//    	  Row   1:    4.10123D-02   9.69610D-18
+//    	  Row   2:    6.04881D-02   6.28624D-18
+//    	  Row   3:    1.17844D-01   1.09866D-16
+//    	  Row   4:    5.57234D-01   1.26958D-16
+    	  
+    	  
+//    	  _SVD 
+//    	  ==== 
+    	  
+//    	  Size of the matrix is          100
+//    	  The number of Ritz values requested is            4
+//    	  The number of Arnoldi vectors generated (NCV) is           10
+//    	  What portion of the spectrum: LM
+//    	  The number of converged Ritz values is            4
+//    	  The number of Implicit Arnoldi update iterations taken is            4
+//    	  The number of OP*x is           22
+//    	  The convergence criterion is    1.1102230246251565E-016
+    	
+// Values from running Java port:
+//    	Singular values and direct residuals: 
+//    		s[0][0] = 4.10123E-2 s[0][1] = 7.50635E-18
+//    		s[1][0] = 6.04881E-2 s[1][1] = 2.10185E-17
+//    		s[2][0] = 1.17844E-1 s[2][1] = 5.11551E-17
+//    		s[3][0] = 5.57234E-1 s[3][1] = 7.72810E-16
+
+//    		DSVD
+//    		======
+
+//    		Size of the matrix = 100
+//    		The number of Ritz values requested = 4
+//    		The number of Arnoldi vectors generated ncv = 10
+//    		What portion of the spectrum: LM
+//    		The number of converged Ritz values = 4
+//    		The number of Implicit Arnoldi update iterations taken = 4
+//    		The number of OP*x = 22
+//    		The convergence criterion = 1.1102230246251565E-16
 
 //     This example program is intended to illustrate the 
 //     the use of ARPACK to compute the Singular Value Decomposition.
@@ -1727,9 +1768,32 @@ public class SparseEigenvalue implements java.io.Serializable {
 //    	            3   48.22
 //    	            4   76.83
 //    	            5   93.33
-//    	All Ritz Values and Vectors have small residuals.
+
+   
+// From running FORTRAN original:
+//    	 Ritz values and relative residuals
+//    	 ----------------------------------
+//    	               Col   1       Col   2
+//    	  Row   1:    1.96054D+01   2.00732D-14
+//    	  Row   2:    4.82193D+01   7.24012D-15
+//    	  Row   3:    4.82193D+01   7.52582D-15
+//    	  Row   4:    7.68333D+01   5.27870D-15
+    	  
+    	  
+//    	  _SDRV1 
+//    	  ====== 
+    	  
+//    	  Size of the matrix is          100
+//    	  The number of Ritz values requested is            4
+//    	  The number of Arnoldi vectors generated (NCV) is           10
+//    	  What portion of the spectrum: SM
+//    	  The number of converged Ritz values is            4
+//    	  The number of Implicit Arnoldi update iterations taken is           30
+//    	  The number of OP*x is          153
+//    	  The convergence criterion is    1.1102230246251565E-016
 
 // When I change the original nev = 4; to nev = 5; and run I have:
+//    	All Ritz Values and Vectors have small residuals.
 //    	Ritz values and relative residuals: 
 //    		d[0][0] = 1.96054E1 d[0][1] = 2.82139E-14
 //    		d[1][0] = 4.82193E1 d[1][1] = 9.10478E-15
@@ -2219,8 +2283,31 @@ public class SparseEigenvalue implements java.io.Serializable {
 //    	                    2    39.5
 //    	                    3    88.8
 //    	                    4   157.7
-//    	 All Ritz Values and Vectors have small residuals.
-    	 
+    	  
+// Running the original FORTRAN gave:
+//    	  Ritz values and relative residuals
+//    	  ----------------------------------
+//    	                Col   1       Col   2
+//    	   Row   1:    9.86881D+00   6.27324D-13
+//    	   Row   2:    3.94657D+01   2.62012D-13
+//    	   Row   3:    8.87620D+01   1.29824D-13
+//    	   Row   4:    1.57710D+02   1.03253D-13
+    	   
+    	   
+//    	   _SDRV2 
+//    	   ====== 
+    	   
+//    	   Size of the matrix is          100
+//    	   The number of Ritz values requested is            4
+//    	   The number of Arnoldi vectors generated (NCV) is           10
+//    	   What portion of the spectrum: LM
+//    	   The number of converged Ritz values is            4
+//    	   The number of Implicit Arnoldi update iterations taken is            5
+//    	   The number of OP*x is           27
+//    	   The convergence criterion is    1.1102230246251565E-016	  
+    	  
+    	  
+//    	 All Ritz Values and Vectors have small residuals.    	 
 //    My run gave:
 //    	  Ritz values and relative residuals: 
 //    		  d[0][0] = 9.86881E0 d[0][1] = 6.79022E-13
@@ -2663,6 +2750,46 @@ public class SparseEigenvalue implements java.io.Serializable {
             } // av2
             
         public void dsdrv3() {
+        // Running FORTRAN gave:
+        //	Ritz values and relative residuals
+        //	 ----------------------------------
+        //	               Col   1       Col   2
+       // 	  Row   1:    1.21003D+05   9.03615D-17
+       // 	  Row   2:    1.21617D+05   2.76940D-16
+       // 	  Row   3:    1.22057D+05   2.74617D-16
+       // 	  Row   4:    1.22323D+05   1.12042D-16
+        	  
+        	  
+       //	  _SDRV3 
+       // 	  ====== 
+        	  
+       // 	  Size of the matrix is          100
+       // 	  The number of Ritz values requested is            4
+       // 	  The number of Arnoldi vectors generated (NCV) is           10
+       // 	  What portion of the spectrum: LM
+       // 	  The number of converged Ritz values is            4
+       // 	  The number of Implicit Arnoldi update iterations taken is           56
+       // 	  The number of OP*x is          304
+       // 	  The convergence criterion is    1.1102230246251565E-016
+        	
+       // Running Java gave:
+       // 	Ritz values and relative residuals: 
+       //	d[0][0] = 1.21003E5 d[0][1] = 2.99170E-16
+       //	d[1][0] = 1.21617E5 d[1][1] = 1.42103E-16
+       //	d[2][0] = 1.22057E5 d[2][1] = 1.12708E-16
+       //	d[3][0] = 1.22323E5 d[3][1] = 3.04680E-16
+
+       //	DSDRV3
+       //	======
+
+       //	Size of the matrix = 100
+       //	The number of Ritz values requested = 4
+       //	The number of Arnoldi vectors generated ncv = 10
+       // 	What portion of the spectrum: LM
+       //	The number of converged Ritz values = 4
+       //	The number of Implicit Arnoldi update iterations taken = 56
+       //	The number of OP*x = 304
+       //	The convergence criterion = 1.1102230246251565E-16
         
         //     Program to illustrate the idea of reverse communication in
         //     inverse mode for a generalized symmetric eigenvalue problem.
@@ -3165,7 +3292,47 @@ public class SparseEigenvalue implements java.io.Serializable {
               return;
               } // av3
               
-      public void dsdrv4() { 
+      public void dsdrv4() {
+      // Running FORTRAN gave:
+//    	  Ritz values and relative residuals
+//    	  ----------------------------------
+//    	                Col   1       Col   2
+//    	   Row   1:    9.87040D+00   5.12002D-14
+//    	   Row   2:    3.94912D+01   1.50394D-14
+//    	   Row   3:    8.88909D+01   6.89506D-15
+//    	   Row   4:    1.58117D+02   6.47958D-15
+    	   
+    	   
+//    	   _SDRV4 
+//    	   ====== 
+    	   
+//    	   Size of the matrix is          100
+//    	   The number of Ritz values requested is            4
+//    	   The number of Arnoldi vectors generated (NCV) is           10
+//    	   What portion of the spectrum: LM
+//    	   The number of converged Ritz values is            4
+//    	   The number of Implicit Arnoldi update iterations taken is            4
+//    	   The number of OP*x is           24
+//    	   The convergence criterion is    1.1102230246251565E-016
+    	  
+      // Running Java gave:
+//    	  Ritz values and relative residuals: 
+//		  d[0][0] = 9.87040E0 d[0][1] = 5.00608E-14
+//		  d[1][0] = 3.94912E1 d[1][1] = 2.13788E-14
+//		  d[2][0] = 8.88909E1 d[2][1] = 7.96537E-15
+//		  d[3][0] = 1.58117E2 d[3][1] = 9.47002E-15
+
+//		  DSDRV4
+//		  ======
+
+//		  Size of the matrix = 100
+//		  The number of Ritz values requested = 4
+//		  The number of Arnoldi vectors generated ncv = 10
+//		  What portion of the spectrum: LM
+//		  The number of converged Ritz values = 4
+//		  The number of Implicit Arnoldi update iterations taken = 4
+//		  The number of OP*x = 24
+//		  The convergence criterion = 1.1102230246251565E-16
       
       //     Program to illustrate the idea of reverse communication
       //     in shift and invert mode for a generalized symmetric eigenvalue
@@ -3686,7 +3853,47 @@ public class SparseEigenvalue implements java.io.Serializable {
             return;
             } // av4
 
-        public void dsdrv5() { 
+        public void dsdrv5() {
+        // Running the original FORTRAN gave:
+//        	 Ritz values and relative residuals
+//        	 ----------------------------------
+//        	               Col   1       Col   2
+//        	  Row   1:    9.87040D+00   6.05293D-14
+//        	  Row   2:    3.94912D+01   3.13129D-14
+//        	  Row   3:    8.88909D+01   2.25381D-14
+//        	  Row   4:    1.58117D+02   2.96018D-14
+        	  
+        	  
+//        	  _SDRV5 
+//        	  ====== 
+        	  
+//        	  Size of the matrix is         100
+//        	  The number of Ritz values requested is           4
+//        	  The number of Arnoldi vectors generated (NCV) is           10
+//        	  What portion of the spectrum: LM
+//        	  The number of converged Ritz values is            4
+//        	  The number of Implicit Arnoldi update iterations taken is           4
+//        	  The number of OP*x is           24
+//        	  The convergence criterion is    1.1102230246251565E-016
+        	
+        //  Running the Java gave:
+//        	Ritz values and relative residuals: 
+//    		d[0][0] = 9.87040E0 d[0][1] = 7.14257E-14
+//    		d[1][0] = 3.94912E1 d[1][1] = 3.83807E-14
+//    		d[2][0] = 8.88909E1 d[2][1] = 3.49951E-14
+//    		d[3][0] = 1.58117E2 d[3][1] = 4.06059E-14
+
+//    		DSDRV5
+//    		======
+
+//    		Size of the matrix = 100
+//    		The number of Ritz values requested = 4
+//    		The number of Arnoldi vectors generated ncv = 10
+//    		What portion of the spectrum: LM
+//    		The number of converged Ritz values = 4
+//    		The number of Implicit Arnoldi update iterations taken = 4
+//    		The number of OP*x = 24
+//    		The convergence criterion = 1.1102230246251565E-16
         
         //     Program to illustrate the idea of reverse communication
         //     in Buckling mode for a generalized symmetric eigenvalue
@@ -4212,6 +4419,46 @@ public class SparseEigenvalue implements java.io.Serializable {
               } // av5
 
       public void dsdrv6() { 
+      // Running the original FORTRAN gave:
+//    	  Ritz values and relative residuals
+//    	  ----------------------------------
+//    	                Col   1       Col   2
+//    	   Row   1:    8.88909D+01   1.29327D-13
+//    	   Row   2:    1.58117D+02   4.23220D-15
+//    	   Row   3:    2.47238D+02   5.12768D-15
+//    	   Row   4:    3.56338D+02   3.66649D-14
+    	   
+    	   
+//    	   _SDRV6 
+//    	   ====== 
+    	   
+//    	   Size of the matrix is         100
+//    	   The number of Ritz values requested is           4
+//    	   The number of Arnoldi vectors generated (NCV) is           20
+//    	   What portion of the spectrum: LM
+//    	   The number of converged Ritz values is            4
+//    	   The number of Implicit Arnoldi update iterations taken is           2
+//    	   The number of OP*x is           34
+//    	   The convergence criterion is    1.1102230246251565E-016
+    	  
+      // Running the Java gave:
+//    	  Ritz values and relative residuals: 
+//		  d[0][0] = 8.88909E1 d[0][1] = 1.03162E-13
+//		  d[1][0] = 1.58117E2 d[1][1] = 6.31679E-15
+//		  d[2][0] = 2.47238E2 d[2][1] = 1.83362E-14
+//		  d[3][0] = 3.56338E2 d[3][1] = 1.28592E-14
+
+//		  DSDRV6
+//		  ======
+
+//		  Size of the matrix = 100
+//		  The number of Ritz values requested = 4
+//		  The number of Arnoldi vectors generated ncv = 20
+//		  What portion of the spectrum: LM
+//		  The number of converged Ritz values = 4
+//		  The number of Implicit Arnoldi update iterations taken = 2
+//		  The number of OP*x = 34
+//		  The convergence criterion = 1.1102230246251565E-16
       
       //     Program to illustrate the idea of reverse communication
       //     in Cayley mode for a generalized symmetric eigenvalue 
@@ -4695,7 +4942,7 @@ public class SparseEigenvalue implements java.io.Serializable {
                          UI.setDataText("The number of converged Ritz values = " +nconv + "\n");
                          UI.setDataText("The number of Implicit Arnoldi update iterations taken = " +  iparam[2] + "\n");
                          UI.setDataText("The number of OP*x = " +  iparam[8] + "\n");
-                         UI.setDataText("The convergence criterion = " + tol + "\n");
+                         UI.setDataText("The convergence criterion = " + tol[0] + "\n");
                          UI.setDataText("\n");
             } // else info[0] >= 0
             return;
