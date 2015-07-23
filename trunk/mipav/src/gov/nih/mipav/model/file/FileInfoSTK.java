@@ -52,8 +52,9 @@ public class FileInfoSTK extends FileInfoBase {
         int planeNumber;
         JDialogText dialog = (JDialogText) dlog;
         displayPrimaryInfo(dialog, matrix);
-
+        
         if (imageDescription != null) {
+        	imageDescription = imageDescription.trim();
             dialog.append("\n\n                Other information\n\n");
             planeNumber = 1;
             j = 0;
