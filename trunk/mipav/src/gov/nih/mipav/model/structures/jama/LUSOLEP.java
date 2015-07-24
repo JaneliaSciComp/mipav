@@ -170,6 +170,115 @@ public class LUSOLEP implements java.io.Serializable {
 	// -----------------------------------------------------------------------
 
 	public void testflat() {
+		// The FORTRAN runs gave:
+//		 ip = 8     rp = 8
+//		 ----------------------------------------------------
+//		 Problem    C:/LUSOL/lusol-master/src/testlusolflat/toymat
+//		         0  Scale:  0=Noscale  1=Scale
+//		    2.0000  factol: Max Lij (> 1.0)
+//		         0  TPiv:   0=TPP      1=TRP      2=TCP
+
+
+//		 A rows         5    A cols         5    A nonz         9
+//		 L nonz         0    U nonz         9    L+U            9
+//		 Factor      0.00    Solve       0.00
+
+//		 snorm    0.0E+00    xnorm    1.0E+00
+//		 Residual 0.0E+00    Error    0.0E+00
+
+//		 Refine    dxnorm     rnorm     enorm
+//		      1   0.0E+00   0.0E+00   0.0E+00
+//		      2   0.0E+00   0.0E+00   0.0E+00
+//		 Refine      0.00
+	
+//		ip = 8     rp = 8
+//	 	----------------------------------------------------
+//		 Problem    C:/LUSOL/lusol-master/src/testlusolflat/cavity05
+//		         0  Scale:  0=Noscale  1=Scale
+//		    2.0000  factol: Max Lij (> 1.0)
+//		         0  TPiv:   0=TPP      1=TRP      2=TCP
+
+
+//		 A rows      1182    A cols      1182    A nonz     32632
+//		 L nonz     51529    U nonz     92570    L+U       144099
+//		 Factor      0.19    Solve       0.00
+
+//		 snorm    0.0E+00    xnorm    1.0E+00
+//		 Residual 1.6E-12    Error    1.3E-10
+
+//		 Refine    dxnorm     rnorm     enorm
+//		      1   5.8E-10   1.2E-12   5.5E-10
+//		      2   6.4E-10   1.2E-12   4.8E-10
+//		 Refine      0.00
+	
+	//  The Java runs gave:
+//		fileName = toymat.txt
+//		Scale = 0
+//		factol = 2.0
+//		TPP Threshold Partial Pivoting
+//		A rows = 5 A cols = 5 A nonzero = 9
+//		m = 5 mnkey = = n = 5
+//		nelem = 9 Amax[0] = 1.0 densty = 36.0
+//		avgmer = 0.0
+//		lenL[0] = 0
+//		(lenL[0] + lenU[0]) = 9
+//		ncp = 0
+//		dincr = 0.0
+//		nUtri[0] = 5
+//		lenU[0] = 9
+//		Ltol = 2.0
+//		Umax[0] = 1.0
+//		Ugrwth = 0.99999999999999999999
+//		nLtri[0] = 0
+//		ndens1[0] = 0
+//		Lmax[0] = 0.0
+//		nbump = 0
+//		ndens2 = 0
+//		DUmax[0] = 1.0
+//		DUmin[0] = 1.0
+//		condU = 1.0
+//		L  nonz = 0 U nonz = 9 L+U = 9
+//		Factor time = 3 Solve time = 0
+//		snorm = 0.0 xnorm = 1.0 Residual = 0.0 Error = 0.0
+//		Refine   dxnorm     rnorm     enorm
+//		1 0.0 0.0 0.0
+//		2 0.0 0.0 0.0
+//				Refine time = 1
+
+//		fileName = cavity05.txt
+//		Scale = 0
+//		factol = 2.0
+//		TPP Threshold Partial Pivoting
+//		A rows = 1182 A cols = 1182 A nonzero = 32632
+//		m = 1182 mnkey = = n = 1182
+//		nelem = 32632 Amax[0] = 8.5333333333331893300055526196956 densty = 2.3356552460626257941313727342741
+//		avgmer = 1206.0270727580372250423011844331
+//		lenL[0] = 51529
+//		(lenL[0] + lenU[0]) = 144099
+//		ncp = 3
+//		dincr = 341.58801176759009561166952684481
+//		nUtri[0] = 161
+//		lenU[0] = 92570
+//		Ltol = 2.0
+//		Umax[0] = 26.892777161278553966431675970864
+//		Ugrwth = 3.1514973235873837256838573742265
+//		nLtri[0] = 0
+//		ndens1[0] = 411
+//		Lmax[0] = 1.9999999999998671479373157929183
+//		nbump = 1021
+//		ndens2 = 341
+//		DUmax[0] = 11.853703407817156301032878215443
+//		DUmin[0] = 0.0011331355184573408668797301696353
+//		condU = 10460.975951009704817310377603005
+//		L  nonz = 51529 U nonz = 92570 L+U = 144099
+//		Factor time = 1332 Solve time = 27
+//		snorm = 0.0 xnorm = 1.0000000001455724363772940170006 
+//		Residual = 1.5509383557500895699183264406171E-12 Error = 1.4557243637729401700062220993589E-10
+//		Refine   dxnorm     rnorm     enorm
+//		1 6.1483381766901279552415550901879E-10 9.549862429960912177211140779751E-13 6.3440974129487413583543007401642E-10
+//		2 1.0103985309048363041530748609261E-9 1.4439079709581575579870606519328E-12 7.3451107667816790319930392373511E-10
+//				Refine time = 45
+
 
 	// use   hbdataModule
 	//  use   snModulePrecision,  only : ip, rp
@@ -229,7 +338,7 @@ public class LUSOLEP implements java.io.Serializable {
 	  DoubleDouble dx[] = new DoubleDouble[maxn];
 	  final DoubleDouble zero = DoubleDouble.valueOf(0.0);
 	  final DoubleDouble one = DoubleDouble.valueOf(1.0);
-	  int fileChoice = 2;
+	  int fileChoice = 1;
 	  String fileDir;
 	  String fileName = null;
 	  RandomAccessFile raFile = null;
