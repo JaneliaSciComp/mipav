@@ -171,6 +171,115 @@ public class LUSOL implements java.io.Serializable {
 	// -----------------------------------------------------------------------
 
 	public void testflat() {
+		
+	// The FORTRAN runs gave:
+//		 ip = 8     rp = 8
+//		 ----------------------------------------------------
+//		 Problem    C:/LUSOL/lusol-master/src/testlusolflat/toymat
+//		         0  Scale:  0=Noscale  1=Scale
+//		    2.0000  factol: Max Lij (> 1.0)
+//		         0  TPiv:   0=TPP      1=TRP      2=TCP
+
+
+//		 A rows         5    A cols         5    A nonz         9
+//		 L nonz         0    U nonz         9    L+U            9
+//		 Factor      0.00    Solve       0.00
+
+//		 snorm    0.0E+00    xnorm    1.0E+00
+//		 Residual 0.0E+00    Error    0.0E+00
+
+//		 Refine    dxnorm     rnorm     enorm
+//		      1   0.0E+00   0.0E+00   0.0E+00
+//		      2   0.0E+00   0.0E+00   0.0E+00
+//		 Refine      0.00
+	
+//		ip = 8     rp = 8
+//	 	----------------------------------------------------
+//		 Problem    C:/LUSOL/lusol-master/src/testlusolflat/cavity05
+//		         0  Scale:  0=Noscale  1=Scale
+//		    2.0000  factol: Max Lij (> 1.0)
+//		         0  TPiv:   0=TPP      1=TRP      2=TCP
+
+
+//		 A rows      1182    A cols      1182    A nonz     32632
+//		 L nonz     51529    U nonz     92570    L+U       144099
+//		 Factor      0.19    Solve       0.00
+
+//		 snorm    0.0E+00    xnorm    1.0E+00
+//		 Residual 1.6E-12    Error    1.3E-10
+
+//		 Refine    dxnorm     rnorm     enorm
+//		      1   5.8E-10   1.2E-12   5.5E-10
+//		      2   6.4E-10   1.2E-12   4.8E-10
+//		 Refine      0.00
+	
+	//  The Java runs gave:
+//		fileName = toymat.txt
+//		Scale = 0
+//		factol = 2.0
+//		TPP Threshold Partial Pivoting
+//		A rows = 5 A cols = 5 A nonzero = 9
+//		m = 5 mnkey = = n = 5
+//		nelem = 9 Amax[0] = 1.00000E0 densty = 3.60000E1
+//		avgmer = 0.00000E0
+//		lenL[0] = 0
+//		(lenL[0] + lenU[0]) = 9
+//		ncp = 0
+//		dincr = 0.00000E0
+//		nUtri[0] = 5
+//		lenU[0] = 9
+//		Ltol = 2.00000E0
+//		Umax[0] = 1.00000E0
+//		Ugrwth = 1.00000E0
+//		nLtri[0] = 0
+//		ndens1[0] = 0
+//		Lmax[0] = 0.00000E0
+//		nbump = 0
+//		ndens2 = 0
+//		DUmax[0] = 1.00000E0
+//		DUmin[0] = 1.00000E0
+//		condU = 1.00000E0
+//		L  nonz = 0 U nonz = 9 L+U = 9
+//		Factor time = 3 Solve time = 0
+//		snorm = 0.00000E0 xnorm = 1.00000E0 Residual = 0.00000E0 Error = 0.00000E0
+//		Refine   dxnorm     rnorm     enorm
+//		1 0.00000E0 0.00000E0 0.00000E0
+//		2 0.00000E0 0.00000E0 0.00000E0
+//		Refine time = 1
+		
+//		fileName = cavity05.txt
+//		Scale = 0
+//		factol = 2.0
+//		TPP Threshold Partial Pivoting
+//		A rows = 1182 A cols = 1182 A nonzero = 32632
+//		m = 1182 mnkey = = n = 1182
+//		nelem = 32632 Amax[0] = 8.53333E0 densty = 2.33566E0
+//		avgmer = 1.20603E3
+//		lenL[0] = 51529
+//		(lenL[0] + lenU[0]) = 144099
+//		ncp = 3
+//		dincr = 3.41588E2
+//		nUtri[0] = 161
+//		lenU[0] = 92570
+//		Ltol = 2.00000E0
+//		Umax[0] = 2.68928E1
+//		Ugrwth = 3.15150E0
+//		nLtri[0] = 0
+//		ndens1[0] = 411
+//		Lmax[0] = 2.00000E0
+//		nbump = 1021
+//		ndens2 = 341
+//		DUmax[0] = 1.18537E1
+//		DUmin[0] = 1.13314E-3
+//		condU = 1.04610E4
+//		L  nonz = 51529 U nonz = 92570 L+U = 144099
+//		Factor time = 321 Solve time = 5
+//		snorm = 0.00000E0 xnorm = 1.00000E0 Residual = 1.55920E-12 Error = 1.41688E-10
+//		Refine   dxnorm     rnorm     enorm
+//		1 7.82940E-10 9.79966E-13 7.68187E-10
+//		2 1.04665E-9 1.09848E-12 7.26515E-10
+//		Refine time = 10
+
 
 	// use   hbdataModule
 	//  use   snModulePrecision,  only : ip, rp
