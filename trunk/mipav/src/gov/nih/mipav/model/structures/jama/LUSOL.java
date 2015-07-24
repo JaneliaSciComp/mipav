@@ -212,6 +212,88 @@ public class LUSOL implements java.io.Serializable {
 //		      1   5.8E-10   1.2E-12   5.5E-10
 //		      2   6.4E-10   1.2E-12   4.8E-10
 //		 Refine      0.00
+		
+//		ip = 8     rp = 8
+//		 ----------------------------------------------------
+//		 Problem    C:/LUSOL/lusol-master/src/testlusolflat/toymat
+//		         0  Scale:  0=Noscale  1=Scale
+//		    2.0000  factol: Max Lij (> 1.0)
+//		         1  TPiv:   0=TPP      1=TRP      2=TCP
+
+
+//		 A rows         5    A cols         5    A nonz         9
+//		 L nonz         0    U nonz         9    L+U            9
+//		 Factor      0.00    Solve       0.00
+
+//		 snorm    0.0E+00    xnorm    1.0E+00
+//		 Residual 0.0E+00    Error    0.0E+00
+
+//		 Refine    dxnorm     rnorm     enorm
+//		      1   0.0E+00   0.0E+00   0.0E+00
+//		      2   0.0E+00   0.0E+00   0.0E+00
+//		 Refine      0.00
+		
+//		 ip = 8     rp = 8
+//		 ----------------------------------------------------
+//		 Problem    C:/LUSOL/lusol-master/src/testlusolflat/cavity05
+//		         0  Scale:  0=Noscale  1=Scale
+//		    2.0000  factol: Max Lij (> 1.0)
+//		         1  TPiv:   0=TPP      1=TRP      2=TCP
+
+
+//		 A rows      1182    A cols      1182    A nonz     32632
+//		 L nonz    130882    U nonz    134741    L+U       265623
+//		 Factor      2.39    Solve       0.00
+
+//		 snorm    0.0E+00    xnorm    1.0E+00
+//		 Residual 9.5E-12    Error    1.5E-08
+
+//		 Refine    dxnorm     rnorm     enorm
+//		      1   1.2E-08   5.0E-13   3.1E-09
+//		      2   1.5E-13   3.1E-13   3.1E-09
+//		 Refine      0.02
+		
+//		ip = 8     rp = 8
+//		 ----------------------------------------------------
+//		 Problem    C:/LUSOL/lusol-master/src/testlusolflat/toymat
+//		         0  Scale:  0=Noscale  1=Scale
+//		    2.0000  factol: Max Lij (> 1.0)
+//		         2  TPiv:   0=TPP      1=TRP      2=TCP
+
+
+//		 A rows         5    A cols         5    A nonz         9
+//		 L nonz         0    U nonz         9    L+U            9
+//		 Factor      0.00    Solve       0.00
+
+//		 snorm    0.0E+00    xnorm    1.0E+00
+//		 Residual 0.0E+00    Error    0.0E+00
+
+//		 Refine    dxnorm     rnorm     enorm
+//		      1   0.0E+00   0.0E+00   0.0E+00
+//		      2   0.0E+00   0.0E+00   0.0E+00
+//		 Refine      0.00
+		
+//		ip = 8     rp = 8
+//		 ----------------------------------------------------
+//		 Problem    C:/LUSOL/lusol-master/src/testlusolflat/cavity05
+//		         0  Scale:  0=Noscale  1=Scale
+//		    2.0000  factol: Max Lij (> 1.0)
+//		         2  TPiv:   0=TPP      1=TRP      2=TCP
+
+
+//		 A rows      1182    A cols      1182    A nonz     32632
+//		 L nonz    132159    U nonz    135993    L+U       268152
+//		 Factor      2.67    Solve       0.00
+
+//		 snorm    0.0E+00    xnorm    1.0E+00
+//		 Residual 1.9E-11    Error    1.2E-07
+
+//		 Refine    dxnorm     rnorm     enorm
+//		      1   1.2E-07   2.9E-13   8.6E-10
+//		      2   0.0E+00   2.9E-13   8.6E-10
+//		 Refine      0.00
+
+
 	
 	//  The Java runs gave:
 //		fileName = toymat.txt
@@ -247,6 +329,9 @@ public class LUSOL implements java.io.Serializable {
 //		2 0.00000E0 0.00000E0 0.00000E0
 //		Refine time = 1
 		
+
+
+		
 //		fileName = cavity05.txt
 //		Scale = 0
 //		factol = 2.0
@@ -279,6 +364,151 @@ public class LUSOL implements java.io.Serializable {
 //		1 7.82940E-10 9.79966E-13 7.68187E-10
 //		2 1.04665E-9 1.09848E-12 7.26515E-10
 //		Refine time = 10
+		
+//		fileName = toymat.txt
+//		Scale = 0
+//		factol = 2.0
+//		TRP Threshold Rook Pivoting
+//		A rows = 5 A cols = 5 A nonzero = 9
+//		m = 5 mnkey = = n = 5
+//		nelem = 9 Amax[0] = 1.00000E0 densty = 3.60000E1
+//		kPiv[lPiv] = RP
+//		avgmer = 0.00000E0
+//		lenL[0] = 0
+//		(lenL[0] + lenU[0]) = 9
+//		ncp = 0
+//		dincr = 0.00000E0
+//		nUtri[0] = 5
+//		lenU[0] = 9
+//		Ltol = 2.00000E0
+//		Umax[0] = 1.00000E0
+//		Ugrwth = 1.00000E0
+//		nLtri[0] = 0
+//		ndens1[0] = 0
+//		Lmax[0] = 0.00000E0
+//		Akmax[0] = 0.00000E0
+//		Agrwth = 0.00000E0
+//		nbump = 0
+//		ndens2 = 0
+//		DUmax[0] = 1.00000E0
+//		DUmin[0] = 1.00000E0
+//		condU = 1.00000E0
+//		L  nonz = 0 U nonz = 9 L+U = 9
+//		Factor time = 3 Solve time = 0
+//		snorm = 0.00000E0 xnorm = 1.00000E0 Residual = 0.00000E0 Error = 0.00000E0
+//		Refine   dxnorm     rnorm     enorm
+//		1 0.00000E0 0.00000E0 0.00000E0
+//		2 0.00000E0 0.00000E0 0.00000E0
+//		Refine time = 1
+		
+//		fileName = cavity05.txt
+//		Scale = 0
+//		factol = 2.0
+//		TRP Threshold Rook Pivoting
+//		A rows = 1182 A cols = 1182 A nonzero = 32632
+//		m = 1182 mnkey = = n = 1182
+//		nelem = 32632 Amax[0] = 8.53333E0 densty = 2.33566E0
+//		kPiv[lPiv] = RP
+//		avgmer = 3.33012E3
+//		lenL[0] = 130882
+//		(lenL[0] + lenU[0]) = 265623
+//		ncp = 6
+//		dincr = 7.13995E2
+//		nUtri[0] = 161
+//		lenU[0] = 134741
+//		Ltol = 2.00000E0
+//		Umax[0] = 8.53333E0
+//		Ugrwth = 1.00000E0
+//		nLtri[0] = 0
+//		ndens1[0] = 510
+//		Lmax[0] = 1.99519E0
+//		Akmax[0] = 0.00000E0
+//		Agrwth = 0.00000E0
+//		nbump = 1021
+//		ndens2 = 445
+//		DUmax[0] = 8.53333E0
+//		DUmin[0] = 1.14047E-3
+//		condU = 7.48229E3
+//		L  nonz = 130882 U nonz = 134741 L+U = 265623
+//		Factor time = 1065 Solve time = 9
+//		snorm = 0.00000E0 xnorm = 1.00000E0 Residual = 9.47925E-12 Error = 1.51042E-8
+//		Refine   dxnorm     rnorm     enorm
+//		1 1.19625E-8 5.00683E-13 3.14449E-9
+//		2 1.45983E-13 3.09735E-13 3.14449E-9
+//		Refine time = 10
+
+//		fileName = toymat.txt
+//		Scale = 0
+//		factol = 2.0
+//		TCP Threshold Complete Pivoting
+//		A rows = 5 A cols = 5 A nonzero = 9
+//		m = 5 mnkey = = n = 5
+//		nelem = 9 Amax[0] = 1.00000E0 densty = 3.60000E1
+//		kPiv[lPiv] = CP
+//		avgmer = 0.00000E0
+//		lenL[0] = 0
+//		(lenL[0] + lenU[0]) = 9
+//		ncp = 0
+//		dincr = 0.00000E0
+//		nUtri[0] = 5
+//		lenU[0] = 9
+//		Ltol = 2.00000E0
+//		Umax[0] = 1.00000E0
+//		Ugrwth = 1.00000E0
+//		nLtri[0] = 0
+//		ndens1[0] = 0
+//		Lmax[0] = 0.00000E0
+//		Akmax[0] = 1.00000E0
+//		Agrwth = 1.00000E0
+//		nbump = 0
+//		ndens2 = 0
+//		DUmax[0] = 1.00000E0
+//		DUmin[0] = 1.00000E0
+//		condU = 1.00000E0
+//		L  nonz = 0 U nonz = 9 L+U = 9
+//		Factor time = 9 Solve time = 0
+//		snorm = 0.00000E0 xnorm = 1.00000E0 Residual = 0.00000E0 Error = 0.00000E0
+//		Refine   dxnorm     rnorm     enorm
+//		1 0.00000E0 0.00000E0 0.00000E0
+//		2 0.00000E0 0.00000E0 0.00000E0
+//		Refine time = 1
+		
+//		fileName = cavity05.txt
+//		Scale = 0
+//		factol = 2.0
+//		TCP Threshold Complete Pivoting
+//		A rows = 1182 A cols = 1182 A nonzero = 32632
+//		m = 1182 mnkey = = n = 1182
+//		nelem = 32632 Amax[0] = 8.53333E0 densty = 2.33566E0
+//		kPiv[lPiv] = CP
+//		avgmer = 4.11292E3
+//		lenL[0] = 132159
+//		(lenL[0] + lenU[0]) = 268152
+//		ncp = 9
+//		dincr = 7.21746E2
+//		nUtri[0] = 161
+//		lenU[0] = 135993
+//		Ltol = 2.00000E0
+//		Umax[0] = 8.53333E0
+//		Ugrwth = 1.00000E0
+//		nLtri[0] = 0
+//		ndens1[0] = 547
+//		Lmax[0] = 5.09690E-1
+//		Akmax[0] = 8.53333E0
+//		Agrwth = 1.00000E0
+//		nbump = 1021
+//		ndens2 = 440
+//		DUmax[0] = 8.53333E0
+//		DUmin[0] = 1.14047E-3
+//		condU = 7.48229E3
+//		L  nonz = 132159 U nonz = 135993 L+U = 268152
+//		Factor time = 1081 Solve time = 9
+//		snorm = 0.00000E0 xnorm = 1.00000E0 Residual = 1.85128E-11 Error = 1.18321E-7
+//		Refine   dxnorm     rnorm     enorm
+//		1 1.17463E-7 2.91971E-13 8.64421E-10
+//		2 0.00000E0 2.91971E-13 8.64421E-10
+//		Refine time = 9
+
 
 
 	// use   hbdataModule
@@ -363,7 +593,7 @@ public class LUSOL implements java.io.Serializable {
 	
 	  Scale = 0;      // 0=Noscale  1=Scale
 	  factol = 2.0;    // > 1.0
-	  TPiv  = 0;     // 0=TPP      1=TRP      2=TCP
+	  TPiv  = 2;     // 0=TPP      1=TRP      2=TCP
 	  UI.setDataText("Scale = " + Scale + "\n");
 	  UI.setDataText("factol = " + factol + "\n");
 	  if (TPiv == 0) {
