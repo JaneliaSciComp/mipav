@@ -9268,5 +9268,134 @@ return;
       } // else if (mode == 4)
 
 } // lu6mul
+          
+//          !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+          private void lu6prt(int m, int n, double v[], double w[],
+                             int lena, int luparm[], double parmlu[],
+                             double a[], int indc[], int indr[], int ip[], int iq[],
+                             int lenc[], int lenr[], int locc[], int locr[] ) {
+
+//          implicit           double precision (a-h,o-z)
+//          integer            luparm(30)
+//          double precision   parmlu(30), a(lena), v(m), w(n)
+//          integer            indc(lena), indr(lena), ip(m), iq(n)
+//          integer            lenc(n), lenr(m)
+//          integer            locc(n), locr(m)
+
+//    !     ------------------------------------------------------------------
+//    !     lu6prt  prints details of the current LU factorization, and
+//    !     prints the matrix A = L*U row by row.  The amount of output
+//    !     is controlled by lprint = luparm(2).
+//    !
+//    !     If  lprint = 0,  nothing is printed.
+//    !     If  lprint = 1,  current LU statistics are printed.
+//    !     If  lprint = 2,  the leading 10 by 10 submatrix is printed.
+//    !     If  lprint = 3   or more, all rows are printed.
+//    !
+//    !     lenc(*), locc(*)  are not used.
+//    !
+//    !     09 May 1988: First F77 version.
+//    !     03 Mar 2004: Current version.
+//    !     ------------------------------------------------------------------
+
+          final double zero = 0.0;
+          final double one = 1.0;
+          int lprint, imax, jmax, lamin, nrank, lenl, lenu, lrow, ncp, mersum;
+          double amax, elmax, umax, dumin, avgmer, floatm, growth;
+          int i, j, k;
+
+          lprint = luparm[1];
+          imax   = m;
+          jmax   = n;
+          if (lprint <= 0) {
+        	  return;
+          }
+          if (lprint <= 2) {
+        	  imax = Math.min( imax, 10 );
+          }
+          if (lprint <= 2) {
+        	  jmax = Math.min( jmax, 10 );
+          }
+          UI.setDataText("m = " + m + " n = " + n + " lena = " + lena + "\n");
+
+//    !     --------------------------------
+//    !     Print LU statistics.
+//    !     --------------------------------
+          lamin  = luparm[12];
+          nrank  = luparm[15];
+          lenl   = luparm[22];
+          lenu   = luparm[23];
+          lrow   = luparm[24];
+          ncp    = luparm[25];
+          mersum = luparm[26];
+          amax   = parmlu[9];
+          elmax  = parmlu[10];
+          umax   = parmlu[11];
+          dumin  = parmlu[13];
+
+          avgmer = mersum;
+          floatm = m;
+          avgmer = avgmer / floatm;
+          growth = umax / (amax + 1.0e-20);
+          UI.setDataText("LU factorization statistics:\n");
+          UI.setDataText("lamin = " + lamin + " lrow = " + lrow + "\n");
+          UI.setDataText("ncp = " + ncp + " avgmer = " + nf.format(avgmer) + "\n");
+          UI.setDataText("lenl = " + lenl + " lenu = " + lenu + "  nrank = " + nrank + "\n");
+          UI.setDataText("elmax = " + nf.format(elmax) + " amax = " + nf.format(amax) + " umax = " + nf.format(umax) + "\n");
+          UI.setDataText("dumin = " + nf.format(dumin) + " growth = " + nf.format(growth) + "\n");
+          UI.setDataText("Row permutation ip:\n");
+          for (i = 0; i < imax; i++) {
+              if ((i != 0) && ((i % 10) == 0)) {
+            	  UI.setDataText("\n" + ip[i] + " ");
+              }
+              else {
+            	  UI.setDataText(ip[i] + " ");
+              }
+          }
+          UI.setDataText("\n");
+          UI.setDataText("Column permutation iq:\n");
+          for (j = 0; j < jmax; j++) {
+              if ((j != 0) && ((j % 10) == 0)) {
+            	  UI.setDataText("\n" + iq[j] + " ");
+              }
+              else {
+            	  UI.setDataText(iq[j] + " ");
+              }
+          }
+          UI.setDataText("\n");
+          if (lprint <= 1) {
+        	  return;
+          }
+
+//    !     -------------------------------------------------------
+//    !     lprint = 2 or more.    Print the first imax rows of  A.
+//    !     -------------------------------------------------------
+          for (i = 0; i < imax; i++) {
+             for (k = 0; k < m; k++) {
+                v[k] = zero;
+             } // for (k = 0; k < m; k++)
+             v[i]   = one;  // v = i-th unit vector
+
+             // Set  w = A(t)*v = U(t)*L(t)*v.
+
+             lu6mul( 6, m, n, v, w,
+                     lena, luparm, parmlu,
+                     a, indc, indr, ip, iq, lenc, lenr, locc, locr );
+
+             UI.setDataText("A row " + (i+1) + ":\n");
+             for (j = 0; j < jmax; j++) {
+                 if ((j != 0) && ((j % 10) == 0)) {
+               	  UI.setDataText("\n" + w[j] + " ");
+                 }
+                 else {
+               	  UI.setDataText(w[j] + " ");
+                 }
+             }
+             UI.setDataText("\n");
+          } // for (i = 0; i < imax; i++)
+          return;
+
+          } // lu6prt
 
 }
