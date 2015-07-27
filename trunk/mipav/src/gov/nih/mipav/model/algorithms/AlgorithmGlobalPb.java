@@ -16,6 +16,7 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.model.structures.jama.LinearEquations2;
 import gov.nih.mipav.model.structures.jama.SparseEigenvalue;
+import gov.nih.mipav.model.structures.jama.LUSOL;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
@@ -250,13 +251,38 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         int index;
         double d[][];
         int nconv;
-        int ipiv[];
         double EigVal[][];
         double EigVect[][];
         int ss;
         int ty = mPb.length;
         int tx = mPb[0].length;
         double l[][][] = new double[2][][];
+        int lena;
+        int nelem;
+        double a[];
+        int indr[];
+        int indc[];
+        int mL;
+        int nL;
+        int luparm[];
+        double epsilon;
+        double neweps;
+        double parmlu[];
+        double factol;
+        int p[];
+        int q[];
+        int lenc[];
+        int lenr[];
+        int locc[];
+        int locr[];
+        int iploc[];
+        int iqloc[];
+        int ipinv[];
+        int iqinv[];
+        double w[];
+        int inform[];
+        LUSOL lu;
+        
         l[0] = new double[ty+1][tx];
         for (y = 0; y < ty; y++) {
         	for (x = 0; x < tx; x++) {
@@ -340,6 +366,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         }
         // [J, I, val] = buildW(l[0],l[1]);
         //Wsp = sparse(J, I, val);
+        //buildW calls computeAffinites2 which calls symmetrize so should have wx = xy
         int wx = jmax + 1;
         int wy = imax + 1;
         int xvec[] = new int[wx];
@@ -376,7 +403,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         	}
         }
         // Find the sparse D - W
-        int sparseElementsDmW = sparseElements;
+        int sparseElementsDmW = sparseElements + sparseElementsD;
         for (i = 0; i < sparseElements; i++) {
         	if (Isp[i] == Jsp[i]) {
         		found = false;
@@ -384,22 +411,29 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         			if (Isp[i] == IJDsp[j]) {
         				found = true;
         				sparseElementsDmW--;
+        				if ((valspD[j] - valsp[i]) == 0.0) {
+        					sparseElementsDmW--;
+        				}
         			}
         		}
-        	}
-        }
+        	} // if (Isp[i] == Jsp[i])
+        } // for (i = 0; i < sparseElements; i++)
         int IDmWsp[] = new int[sparseElementsDmW];
         int JDmWsp[] = new int[sparseElementsDmW];
         double valspDmW[] = new double[sparseElementsDmW];
+        ignore = new boolean[sparseElementsD];
         for (i = 0, k = 0; i < sparseElements; i++) {
         	if (Isp[i] == Jsp[i]) {
         		found = false;
         		for (j = 0; j < sparseElementsD && (!found); j++) {
         			if (Isp[i] == IJDsp[j]) {
         				found = true;
-        				IDmWsp[k] = Isp[i];
-        				JDmWsp[k] = Jsp[i];
-        				valspDmW[k++] = valspD[j] - valsp[i];
+        				ignore[j] = true;
+        				if ((valspD[j] - valsp[i]) != 0) {
+        				    IDmWsp[k] = Isp[i];
+        				    JDmWsp[k] = Jsp[i];
+        				    valspDmW[k++] = valspD[j] - valsp[i];
+        				}
         			}
         		} // for (j = 0; j < sparseElementsD && (!found); j++)
         		if (!found) {
@@ -415,6 +449,104 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         	}
         } // for (i = 0, k = 0; i < sparseElements; i++)
         
+        for (i = 0; i < sparseElementsD; i++) {
+        	if (!ignore[i]) {
+        		IDmWsp[k] = IJDsp[i];
+        		JDmWsp[k] = IJDsp[i];
+        		valspDmW[k++] = valspD[i];
+        	}
+        }
+        
+        // LU factor A - sigma B
+        // LU factor D - W
+        // Do L * U = P * (D-W) * Q, where P is row permutation and Q is column permutation
+        // L, U, P, and Q have the same dimensions as (D-W).
+        // dgetrf does not handle sparse matrices
+        // Use lu1fac in LUSOL
+        // Go from 0 based row and column indices to 1 based row and column indices
+        nelem = sparseElementsDmW;
+        // Number of rows
+        mL = 0;
+        // Number of columns
+        nL = 0;
+        for (k = 0; k < sparseElementsDmW; k++) {
+        	if ((IDmWsp[k]+1) > mL) {
+        		mL = IDmWsp[k]+1;
+        	}
+        	if ((JDmWsp[k]+1) > nL) {
+        		nL = JDmWsp[k] + 1;
+        	}
+        }
+        lena = Math.max(2*nelem, Math.max(10*mL, 10*nL));
+        a = new double[lena];
+        // The row indices i must be in indc and
+        // the column indices j must be in indr.
+        indc = new int[lena];
+        indr = new int[lena];
+        for (k = 0; k < nelem; k++) {
+        	a[k] = valspDmW[k];
+        	indr[k] = JDmWsp[k]+1;
+        	indc[k] = IDmWsp[k]+1;
+        }
+        luparm = new int[30];
+        // lprint   Print level.               
+	    //                   <  0 suppresses output.
+	    //                   =  0 gives error messages.
+	    //                  >= 10 gives statistics about the LU factors.
+	    //                  >= 50 gives debug output from lu1fac
+	    //                        (the pivot row and column and the
+	    //                        no. of rows and columns involved at
+	    //                        each elimination step).
+        luparm[1] = 0;
+        // maxcol   lu1fac: maximum number of columns
+	    //                        searched allowed in a Markowitz-type
+	    //                        search for the next pivot element.
+	    //                        For some of the factorization, the
+	    //                        number of rows searched is
+	    //                        maxrow = maxcol - 1.
+        luparm[2] = 5;
+        luparm[5] = 0;       // Threshold Pivoting: 0 = TPP, 1 = TRP, 2 = TCP
+        // keepLU   lu1fac: keepLU = 1 means the numerical
+        	    //                        factors will be computed if possible.
+        	    //                        keepLU = 0 means L and U will be discarded
+        	    //                        but other information such as the row and
+        	    //                        column permutations will be returned.
+        	    //                        The latter option requires less storage.
+        luparm[7] = 1;
+        parmlu = new double[30];
+        factol = 2.0;    // > 1.0
+        parmlu[0] = factol;     // Ltol1:  max |Lij| during Factor
+	  	parmlu[1] = factol;     // Ltol2:  max |Lij| during Update 
+	    parmlu[2] = 3.0e-13;    // small:  drop tolerance
+	  	parmlu[3] = 3.7e-11;    // Utol1:  absolute tol for small Uii
+	  	parmlu[4] = 3.7e-11;    // Utol2:  relative tol for small Uii
+	  	parmlu[5] = 3.0;        // Uspace: 
+	  	parmlu[6] = 0.3;        // dens1
+	  	parmlu[7] = 0.5;        // dens2
+	  	p = new int[mL];
+	  	q = new int[nL];
+	  	lenc = new int[nL];
+	  	lenr = new int[mL];
+	  	locc = new int[nL];
+	  	locr = new int[mL];
+	  	iploc = new int[nL];
+	  	iqloc = new int[mL];
+	  	ipinv = new int[mL];
+	  	iqinv = new int[nL];
+	  	w = new double[nL];
+	  	inform = new int[1];
+	  	lu = new LUSOL();
+	  	
+	  	lu.lu1fac( mL    , nL    , nelem, lena , luparm, parmlu,
+	               a    , indc , indr , p    , q     , 
+	               lenc , lenr , locc , locr ,           
+	               iploc, iqloc, ipinv, iqinv, w     , inform );
+	  	
+	  	if (inform[0] > 1) {
+       	 UI.setDataText("Error in lu1fac inform[0] = " + inform[0] + "\n");
+       	 return;
+        }
+        
         // Use DSDRV4 for Generalized Eigenvalues
         // Shift and invert mode
         // A*x = lamda*M*x
@@ -422,7 +554,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         // B = M
         
         // Dimension of matrix
-        n = Math.max(wx, wy);
+        n = wx;
         // Number of eigenvalues to be approximated
         nev = nvec;
         // The length of the Lanczos factorization. This represents the
@@ -439,8 +571,25 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         // Its dimension lworkl is set as illustrated below.
         lworkl = ncv*(ncv+8);
         // The parameter tol determines the stopping criterion.  
-        // If tol <=0, machine precision is used.
-        tol[0] = 0.0;
+        // epsilon = D1MACH(4)
+        // Machine epsilon is the smallest positive epsilon such that
+        // (1.0 + epsilon) != 1.0.
+        // epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
+        // epsilon = 2.2204460e-16
+        // epsilon is called the largest relative spacing
+        epsilon = 1.0;
+        neweps = 1.0;
+
+        while (true) {
+
+            if (1.0 == (1.0 + neweps)) {
+                break;
+            } else {
+                epsilon = neweps;
+                neweps = neweps / 2.0;
+            }
+        } // while(true)
+        tol[0] = epsilon;
         // The variable ido is used for reverse communication and is initially set to 0. 
         ido[0] = 0;
         // Setting info[0] =0 indicates that a random vector is
@@ -451,7 +600,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         // the current Hessenberg matrix (iparam[0] = 1).
         ishfts = 1;
         // iparam[2] specifies the maximum number of Arnoldi iterations allowed.
-        maxitr = 300;
+        maxitr = Math.max(300, (int)Math.ceil(2.0*n/Math.max(ncv,1)));
         // Mode 3 of dsaupd is used (iparam[6] = 3).
         mode   = 3;
   
@@ -471,25 +620,11 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         ierr = new int[1];
         d = new double[ncv][2];
         nconv = 0;
-        ipiv = new int[n];
-        double A[][] = new double[n][n];
-        for (k = 0; k < sparseElementsDmW; k++) {
-        	i = IDmWsp[k];
-        	j = JDmWsp[k];
-        	A[i][j] = valspDmW[k];
-        }
+        
         EigVal = new double[nvec][nvec];
         EigVect = new double[n][nvec];
         
-        // LU factor A - sigma B
-        // LU factor D - W
-        // dgetrf does not handle sparse matrices
-        // Replace with port of lucp which does handle sparse matrices
-        le2.dgetrf(n, n, A, n, ipiv, ierr);
-        if (ierr[0] != 0) { 
-           UI.setDataText("Error with dgetrf in spectralPb. \n");
-           return;
-        }
+        
         
         //     %-------------------------------------------%
         //     | M A I N   L O O P (Reverse communication) |
@@ -536,7 +671,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
                 	 }
                 	 for (k = 0; k < sparseElementsD; k++) {
                 		 i = IJDsp[k];
-                		 workd2[i][1] += valspD[k]*workd2[i][0];
+                		 workd2[i][1] = valspD[k]*workd2[i][0];
                 	 }
                 	 // use LU reordering permAsB
                      //workd2(permAsB,1) = U \ (L \ (P * workd2[i][1]));
@@ -582,7 +717,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
                 	 }
                 	 for (k = 0; k < sparseElementsD; k++) {
                 		 i = IJDsp[k];
-                		 workd2[i][1] += valspD[k]*workd2[i][0];
+                		 workd2[i][1] = valspD[k]*workd2[i][0];
                 	 }
                 	 index = 0;
                 	 for (j = 0; j < 3; j++) {
