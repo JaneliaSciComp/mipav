@@ -7,16 +7,16 @@ import java.util.Collections;
 import java.util.Comparator;
 
 import Jama.Matrix;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmHilbertTransform;
 import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
-import gov.nih.mipav.model.structures.jama.LinearEquations2;
 import gov.nih.mipav.model.structures.jama.SparseEigenvalue;
 import gov.nih.mipav.model.structures.jama.LUSOL;
+import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
@@ -224,6 +224,9 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	int n;
     	int nev;
     	int ncv;
+    	int wx;
+    	//int wy;
+    	int xvec[];
     	String bmat;
     	String which;
     	int lworkl;
@@ -235,7 +238,6 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         int mode;
         int iparam[] = new int[11];
         SparseEigenvalue se = new SparseEigenvalue();
-        LinearEquations2 le2 = new LinearEquations2();
         double resid[];
         int ldv;
         double v[][];
@@ -251,7 +253,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         int index;
         double d[][];
         int nconv;
-        double EigVal[][];
+        double EigVal[];
         double EigVect[][];
         int ss;
         int ty = mPb.length;
@@ -282,6 +284,35 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         double w[];
         int inform[];
         LUSOL lu;
+        double P[][];
+        double PW[];
+        double wout[];
+        int tyo;
+        int txo;
+        double vect[][][];
+        int vv;
+        double evTranspose[][];
+        double evScale[][];
+        double minVect;
+        double maxVect;
+        double range;
+        boolean dohil;
+        int deriv;
+        int support;
+        int norient;
+        double dtheta;
+        int ch_per[];
+        double sPb[][][];
+        double vec[][];
+        double theta;
+        int hsz;
+        int sz;
+        double f[][];
+        double fim[][];
+        double array[];
+        int extents[];
+        int slsize;
+        int z;
         
         l[0] = new double[ty+1][tx];
         for (y = 0; y < ty; y++) {
@@ -367,20 +398,20 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         // [J, I, val] = buildW(l[0],l[1]);
         //Wsp = sparse(J, I, val);
         //buildW calls computeAffinites2 which calls symmetrize so should have wx = xy
-        int wx = jmax + 1;
-        int wy = imax + 1;
-        int xvec[] = new int[wx];
+        wx = jmax + 1;
+        //wy = imax + 1;
+        xvec = new int[wx];
         for (i = 1; i <= wx; i++) {
         	xvec[i-1] = i;
         }
         // For each Isp add up the values
         // S is the sum of the columns of the full matrix W
         // but there are wx columns and xvec has length wx.
-        // D = sparse(xvec, xvec, S, wx, wy) requires xvec and S
+        // D = sparse(xvec, xvec, S, wx, wx) requires xvec and S
         // to be the same length so we had better have length(S) = wx.
         // All nonzero values of S are placed along the diagonal of 
         // the sparse matrix D.
-        // To do D - W, D must be the same size as W so D must be Wy by Wx
+        // To do D - W, D must be the same size as W so D must be Wx by Wx
         double S[] = new double[wx];
         for (i = 0; i < sparseElements; i++) {
         	S[Jsp[i]] += valsp[i];
@@ -546,6 +577,10 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
        	 UI.setDataText("Error in lu1fac inform[0] = " + inform[0] + "\n");
        	 return;
         }
+	  	P = new double[mL][nL];
+	  	for (i = 0; i < mL; i++) {
+	  		P[i][p[i]-1] = 1.0;
+        }
         
         // Use DSDRV4 for Generalized Eigenvalues
         // Shift and invert mode
@@ -621,9 +656,10 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         d = new double[ncv][2];
         nconv = 0;
         
-        EigVal = new double[nvec][nvec];
+        EigVal = new double[nvec];
         EigVect = new double[n][nvec];
-        
+        PW = new double[n];
+        wout = new double[n];
         
         
         //     %-------------------------------------------%
@@ -672,9 +708,26 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
                 	 for (k = 0; k < sparseElementsD; k++) {
                 		 i = IJDsp[k];
                 		 workd2[i][1] = valspD[k]*workd2[i][0];
+                	 } 
+                     // workd2(Q,1) = U \ (L \ (P * workd2[i][1]));
+                	 // X = A \ B is the solution to A*X = B computed by Gaussian elimination.
+                	 // lu6L   solves   L v = v(input).
+                	 // lu6U   solves   U w = v.          v  is not altered.
+                	 for (i = 0; i < n; i++) {
+                		 PW[i] = 0.0;
+                		 for (j = 0; j < n; j++) {
+                		     PW[i] += P[i][j] * workd2[j][1];
+                		 }
                 	 }
-                	 // use LU reordering permAsB
-                     //workd2(permAsB,1) = U \ (L \ (P * workd2[i][1]));
+                	 // lu6L sets inform to 0 on entry.
+                	 lu.lu6L(inform, mL, nL, PW, lena, luparm, parmlu, a, indc, indr, lenc);
+                	 // lu6U sets inform to 0 on entry.
+                	 // lu6U sets inform to 1 in overdetermined systems with a residual > 0.
+                	 // The lu6U residual is put in parmlu[19].
+                	 lu.lu6U(inform, mL, nL, PW, wout, lena, luparm, parmlu, a, indr, p, q, lenr, locr);
+                	 for (i = 0; i < n; i++) {
+                		 workd2[q[i]-1][1] = wout[i];
+                	 }
                 	 index = 0;
                 	 for (j = 0; j < 3; j++) {
                 		 for (i = 0; i < n; i++) {
@@ -694,8 +747,25 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
                  //           | workd(ipntr(2)).                        | 
                  //           %-----------------------------------------%
                  //
-                	 // use LU reordering permAsB
-                     //workd2(permAsB,1) = U \ (L \ (P * workd2[i][2]));
+                     //workd2(Q,1) = U \ (L \ (P * workd2[i][2]));
+                	// X = A \ B is the solution to A*X = B computed by Gaussian elimination.
+                	 // lu6L   solves   L v = v(input).
+                	 // lu6U   solves   U w = v.          v  is not altered.
+                	 for (i = 0; i < n; i++) {
+                		 PW[i] = 0.0;
+                		 for (j = 0; j < n; j++) {
+                		     PW[i] += P[i][j] * workd2[j][2];
+                		 }
+                	 }
+                	 // lu6L sets inform to 0 on entry.
+                	 lu.lu6L(inform, mL, nL, PW, lena, luparm, parmlu, a, indc, indr, lenc);
+                	 // lu6U sets inform to 0 on entry.
+                	 // lu6U sets inform to 1 in overdetermined systems with a residual > 0.
+                	 // The lu6U residual is put in parmlu[19].
+                	 lu.lu6U(inform, mL, nL, PW, wout, lena, luparm, parmlu, a, indr, p, q, lenr, locr);
+                	 for (i = 0; i < n; i++) {
+                		 workd2[q[i]-1][1] = wout[i];
+                	 }
                 	 index = 0;
                 	 for (j = 0; j < 3; j++) {
                 		 for (i = 0; i < n; i++) {
@@ -776,7 +846,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
                 	 }
                  }
                  for (i = 0; i < nvec; i++) {
-                	 EigVal[i][i] = d[i][0];
+                	 EigVal[i] = d[i][0];
                  }
                  for (i = 0; i < n; i++) {
                 	 for (j = 0; j < nvec; j++) {
@@ -859,8 +929,594 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
               // Reversal done in eigs just just leave out eigs reversal and this reversal
               // EigVal(1:end) = EigVal(end:-1:1)
               // EigVect(:, 1: end) = EigVect(:, end:-1:1)
+              tyo = orig_sz[0];
+              txo = orig_sz[1];
+              vect = new double[tyo][txo][nvec];
+              if (n != (tx*ty)) {
+            	  MipavUtil.displayError("n != tx*ty as required for reshaping");
+              }
+
+              evTranspose = new double[ty][tx];
+              evScale = new double[tyo][txo];
+              index = 0;
+              for (vv = 1; vv < nvec; vv++) {
+                  for (j = 0 ; j < ty; j++) {
+                	  for ( i = 0; i < tx; i++) {
+                	      evTranspose[j][i] = EigVect[index++][vv];     
+                	      imresize(evTranspose, evScale);
+                	  }
+                  }
+                  minVect = Double.MAX_VALUE;
+                  maxVect = -Double.MAX_VALUE;
+                  // spectral Pb
+                  for (i = 0; i < tyo; i++) {
+                	  for (j = 0; j < txo; j++) {
+                		  vect[i][j][vv] = evScale[i][j];
+                		  if (vect[i][j][vv] < minVect) {
+                			  minVect = vect[i][j][vv];
+                		  }
+                		  if (vect[i][j][vv] > maxVect) {
+                			  maxVect = vect[i][j][vv];
+                		  }
+                	  }
+                  }
+                  range = maxVect - minVect;
+                  for (i = 0; i < tyo; i++) {
+                	  for (j = 0; j < txo; j++) {
+                          vect[i][j][vv] = (vect[i][j][vv] - minVect)/range;  
+                	  }
+                  }
+              } // for (vv = 1; vv < nvec; vv++)
               
-          
+              // OE parameters
+              dohil = false;
+              deriv = 1;
+              support = 3;
+              sigma = 1.0;
+              norient = 8;
+              dtheta = Math.PI/norient;
+              ch_per = new int[]{4,3,2,1,8,7,6,5};
+              vec = new double[tyo][txo];
+              // Calculate filter size, make sure it's odd
+         	  hsz = (int)Math.ceil(sigma * support);
+              sz = 2 * hsz + 1;
+              f = new double[sz][sz];
+              fim = new double[tyo][txo];
+              
+              sPb = new double[tyo][txo][norient];
+              for (vv = 0; vv < nvec; vv++) {
+                  if (EigVal[vv] > 0.0)	{
+                      for (i = 0; i < tyo; i++) {
+                    	  for (j = 0; j < txo; j++) {
+                    		  vec[i][j] = vect[i][j][vv]/Math.sqrt(EigVal[vv]);
+                    	  }
+                      } // for (i = 0; i < tyo; i++)
+                      for ( k = 1; k <= norient; k++) {
+                          theta = dtheta * k;  
+                          oeFilter(f, sigma, support, theta, deriv, dohil);
+                          fbRun(fim, f, vec);
+                          for (i = 0; i < tyo; i++) {
+                        	  for (j = 0; j < txo; j++) {
+                        		 fbRun(fim, f, vec);
+                        	     sPb[i][j][ch_per[k]-1] = sPb[i][j][ch_per[k]-1] + Math.abs(fim[i][j]);
+                        	  }
+                          } // for (i = 0; i < tyo; i++)
+                      } // for ( k = 1; k <= norient; k++)
+                  } // if (EigVal[vv] > 0.0)
+              } // for (vv = 0; vv < nvec; vv++)
+              
+              if ((outFile != null) && (outFile.length() > 0)) {
+            	  // save sPb to outFile
+            	  array = new double[tyo * txo * norient];
+            	  extents = new int[3];
+            	  extents[0] = txo;
+            	  extents[1] = tyo;
+            	  extents[2] = norient;
+            	  slsize = txo * tyo;
+            	  for (z = 0; z < norient; z++) {
+            	      for (y = 0; y < tyo; y++) {
+            	    	  for (x = 0; x < txo; x++) {
+            	    		  array[x + y * txo + z * slsize] = sPb[y][x][z];
+            	    	  }
+            	      }
+            	  }
+              }
+    }  // spectralPb
+    
+    private void fbRun(double fim[][], double fb[][], double im[][]) {
+        // Run a filterbank on an image with reflected boundary conditions
+    	
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// March 2003
+    	int maxsz;
+    	int r;
+    	double impad[][];
+    	double fimpad[][];
+    	int y;
+    	int x;
+    	maxsz = Math.max(fb.length, fb[0].length);
+    	
+    	// Pad the image
+    	r = (int)Math.floor(maxsz/2);
+    	impad = new double[im.length+2*r][im[0].length + 2*r];
+    	padReflect(impad, im, r);
+    	
+    	// Run the filterbank on the padded image, and crop the result back to the original image size
+    	fimpad = new double[impad.length][impad[0].length];
+    	if (fb.length < 50) {
+    	    conv2(impad,fb,fimpad);	
+    	}
+    	else {
+    	    fftconv2(fimpad, impad, fb);	
+    	}
+    	for (y = r; y < impad.length - r; y++) {
+    	    for (x = r; x < impad[0].length - r; x++) {
+    	    	fim[y-r][x-r] = fimpad[y][x];
+    	    }
+    	}
+    }
+    
+    private void conv2(double A[][], double B[][], double Cout[][]) {
+		double L[][];
+		double S[][];
+		int ml;
+		int nl;
+		int ms;
+		int ns;
+		int y;
+		int x;
+		int y2;
+		int x2;
+		double C[][];
+		double small;
+		int yoff;
+		int xoff;
+		if (A.length * A[0].length >= B.length * B[0].length) {
+			ml = A.length;
+			nl = A[0].length;
+			L = A;
+			ms = B.length;
+			ns = B[0].length;
+			S = B;
+		} else {
+			ml = B.length;
+			nl = B[0].length;
+			L = B;
+			ms = A.length;
+			ns = A[0].length;
+			S = A;
+		}
+		C = new double[ml + ms - 1][nl + ns - 1];
+		for (y = 0; y < ms; y++) {
+			for (x = 0; x < ns; x++) {
+				small = S[y][x];
+				if (small != 0.0) {
+					for (y2 = 0; y2 < ml; y2++) {
+						for (x2 = 0; x2 < nl; x2++) {
+							C[y + y2][x + x2] += L[y2][x2] * small;
+						}
+					}
+				}
+			}
+		}
+		yoff = (int) Math.floor(B.length / 2.0);
+		xoff = (int) Math.floor(B[0].length / 2.0);
+		for (y = 0; y < A.length; y++) {
+			for (x = 0; x < A[0].length; x++) {
+				Cout[y][x] = C[y + yoff][x + xoff];
+			}
+		}
+		return;
+	}
+    
+    private void fftconv2(double fim[][], double im[][], double f[][]) {
+    	double padf[][];
+    	int r;
+    	int y;
+    	int x;
+    	FFTUtility fft;
+    	int i;
+    	// Convolution using fft
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// March 2003
+    	
+    	// Wrap the filter around the origin and pad with zeros
+    	padf = new double[im.length][im[0].length];
+    	r = (int)Math.floor(f.length/2);
+    	for (y = r; y < f.length; y++) {
+    		for (x = r; x < f[0].length; x++) {
+    			padf[y-r][x-r] = f[y][x];
+    		}
+    	}
+    	for (y = r+1; y < f.length; y++) {
+    		for (x = 0; x < r; x++) {
+    			padf[y - r - 1][im[0].length - r + x] = f[y][x];
+    		}
+    	}
+    	for (y = 0; y < r; y++) {
+    		for (x = r+1; x < f[0].length; x++) {
+    			padf[im.length - r + y][x - r - 1] = f[y][x];
+    		}
+    	}
+    	for (y = 0; y < r; y++) {
+    		for (x = 0; x < r; x++) {
+    			padf[im.length - r + y][im[0].length - r + x] = f[y][x];
+    		}
+    	}
+    	
+    	// Magic
+    	double imFFT[] = new double[im.length * im[0].length];
+    	double imFFTImag[] = new double[im.length * im[0].length];
+    	double padfFFT[] = new double[im.length * im[0].length];
+    	double padfFFTImag[] = new double[im.length * im[0].length];
+    	double prod[] = new double[im.length * im[0].length];
+    	double prodImag[] = new double[im.length * im[0].length];
+    	for (y = 0; y < im.length; y++) {
+    		for (x = 0; x < im[0].length; x++) {
+    			imFFT[x + y * im[0].length] = im[y][x];
+    			padfFFT[x + y * im[0].length] = padf[y][x];
+    		}
+    	}
+    	fft = new FFTUtility(imFFT, imFFTImag, im.length, im[0].length, 1,
+				-1, FFTUtility.FFT);
+		fft.setShowProgress(false);
+		fft.run();
+		fft.finalize();
+		fft = null;
+		fft = new FFTUtility(imFFT, imFFTImag, 1, im.length, im[0].length,
+				-1, FFTUtility.FFT);
+		fft.setShowProgress(false);
+		fft.run();
+		fft.finalize();
+		fft = null;
+		
+		fft = new FFTUtility(padfFFT, padfFFTImag, im.length, im[0].length, 1,
+				-1, FFTUtility.FFT);
+		fft.setShowProgress(false);
+		fft.run();
+		fft.finalize();
+		fft = null;
+		fft = new FFTUtility(padfFFT, padfFFTImag, 1, im.length, im[0].length,
+				-1, FFTUtility.FFT);
+		fft.setShowProgress(false);
+		fft.run();
+		fft.finalize();
+		fft = null;
+		
+		for (i = 0; i < im.length * im[0].length; i++) {
+			prod[i] = imFFT[i]*padfFFT[i] - imFFTImag[i]*padfFFTImag[i];
+			prodImag[i] = imFFT[i]*padfFFTImag[i] + imFFTImag[i]*padfFFT[i];
+		}
+		// Inverse fft
+		fft = new FFTUtility(prod, prodImag, im.length, im[0].length, 1,
+				1, FFTUtility.FFT);
+		fft.setShowProgress(false);
+		fft.run();
+		fft.finalize();
+		fft = null;
+		fft = new FFTUtility(prod, prodImag, 1, im.length, im[0].length,
+				1, FFTUtility.FFT);
+		fft.setShowProgress(false);
+		fft.run();
+		fft.finalize();
+		fft = null;
+		for (y = 0; y < im.length; y++) {
+			for (x = 0; x < im[0].length; x++) {
+				fim[y][x] = prod[x + y * im[0].length];
+			}
+		}
+		return;
+    }
+    
+    private void padReflect(double impad[][], double im[][], int r) {
+    	// Pad an image with a border of size r, and reflect the image into the border
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// March 2003
+    	int x;
+    	int y;
+    	// Middle
+    	for (y = 0; y < yDim; y++) {
+    		for (x = 0; x < xDim; x++) {
+    			impad[y + r][x + r] = im[y][x];
+    		}
+    	}
+    	// Top
+    	for (y = 0; y < r; y++) {
+    		for (x = 0; x < xDim; x++) {
+    			impad[r - y - 1][x + r] = im[y][x];
+    		}
+    	}
+    	// Bottom
+    	for (y = yDim - r; y < yDim; y++) {
+    		for (x = 0; x < xDim; x++) {
+    			impad[2*yDim + r - y - 1][x + r] = im[y][x];
+    		}
+    	}
+    	// Left
+    	for (y = 0; y < yDim; y++) {
+    		for (x = 0; x < r; x++) {
+    			impad[y+r][r - x - 1] = im[y][x];
+    		}
+    	}
+    	// Right
+    	for (y = 0; y < yDim; y++) {
+    		for (x = xDim - r; x < xDim; x++) {
+    			impad[y+r][2*xDim + r - x - 1] = im[y][x];
+    		}
+    	}
+    	// Top-left
+    	for (y = 0; y < r; y++) {
+    		for (x = 0; x < r; x++) {
+    			impad[r - y - 1][r - x - 1] = im[y][x];
+    			
+    			
+    			
+ 
+    		}
+    	}
+    	// Top-right
+    	for (y = 0; y < r; y++) {
+    		for (x = xDim - r; x < xDim; x++) {
+    			impad[r - y - 1][2*xDim + r - x - 1] = im[y][x];
+    		}
+    	}
+    	// Bottom-left
+    	for (y = yDim - r; y < yDim; y++) {
+    		for (x = 0; x < r; x++) {
+    			impad[2*yDim + r - y - 1][r - x - 1] = im[y][x];
+    		}
+    	}
+    	// Bottom-right
+    	for (y = yDim - r; y < yDim; y++) {
+    		for (x = xDim - r; x < xDim; x++) {
+    			impad[2*yDim + r - y - 1][2*xDim + r - x - 1] = im[y][x];
+    		}
+    	}
+    }
+    
+    /**
+     * Compute unit L1- norm 2D filter.
+     * The filter is a Gaussian in the x direction
+     * The filter is a Gaussian derivative with optional Hilbert transform in the y direction.
+     * The filter is zero-meaned if deriv > 0.
+     * @param f output [sz][sz] square filter
+     * @param sigma
+     * @param support Make filter +/- this many sigma
+     * @param theta Orientation of x axis, in radians
+     * @param deriv Degree of y derivative, one of {0, 1, 2}.
+     * @param dohil Do Hilbert transform in y direction?
+     */
+    private void oeFilter(double f[][], double sigma, int support, double theta,
+    		int deriv, boolean dohil) {
+    	// Original MATLAB code David R. Martin <dmartin@eecs.berkeley.edu>
+    	// March 2003
+    	int hsz;
+    	int sz;
+    	int maxsamples;
+    	int maxrate;
+    	int frate;
+    	int rate;
+    	int samples;
+    	double r;
+    	double dom[];
+    	double stepSize;
+    	int i;
+    	double sx[][];
+    	double sy[][];
+    	int x;
+    	int y;
+    	int mx[][];
+    	int my[][];
+    	int membership[][];
+    	double su[][];
+    	double sv[][];
+    	double R;
+    	int fsamples;
+    	double fdom[];
+    	double gap;
+    	double fx[];
+    	double fy[];
+    	double denom;
+    	int xi[][];
+    	int yi[][];
+    	double fprecursor[][];
+    	int v;
+    	double fsum;
+    	double fmean;
+    	double fsumabs;
+    	int paddedfsamples;
+    	double paddedfy[];
+    	AlgorithmHilbertTransform ht;
+    
+    	if ((deriv < 0) || (deriv > 2)) {
+    		MipavUtil.displayError("deriv = " + deriv + "in oeFilter");
+    		return;
+    	}
+    	
+    	 // Calculate filter size, make sure it's odd
+    	 hsz = (int)Math.ceil(sigma * support);
+         sz = 2 * hsz + 1;
+         
+         // Sampling limits
+         // Max samples in each dimension
+         maxsamples = 1000;
+         // Maximum sampling rate
+         maxrate = 10;
+         // Over-sampling rate for function evaluation
+         frate = 10;
+         
+         // Calculate sampling rate and number of samples
+         rate = (int)Math.min(maxrate,  Math.max(1, Math.floor(maxsamples/sz)));
+         samples = sz * rate;
+         
+         // The 2D sampling grid
+         r = Math.floor(sz/2.0) + 0.5 * (1.0 - 1.0/rate);
+         dom = new double[samples];
+         dom[0] = -r;
+         dom[samples-1] = r;
+         stepSize = (2.0*r)/(samples - 1.0);
+         for (i = 1; i < samples-1; i++) {
+             dom[i] = -r + i * stepSize;	 
+         }
+         sx = new double[samples][samples];
+         sy = new double[samples][samples];
+         for (y = 0; y < samples; y++) {
+        	 for (x = 0; x < samples; x++) {
+        		 sx[y][x] = dom[x];
+        		 sy[y][x] = dom[y];
+        	 }
+         }
+         // Bin membership for 2D grid points
+         mx = new int[samples][samples];
+         my = new int[samples][samples];
+         for (y = 0; y < samples; y++) {
+        	 for (x = 0; x < samples; x++) {
+        		 mx[y][x] = (int)Math.round(sx[y][x]);
+        		 my[y][x] = (int)Math.round(sy[y][x]);
+        	 }
+         }
+         membership = new int[samples][samples];
+         for (y = 0; y < samples; y++) {
+        	 for (x = 0; x < samples; x++) {
+        	     membership[y][x] = (mx[y][x] + hsz + 1) + (my[y][x]+ hsz)*sz;	 
+        	 }
+         }
+         
+         // Rotate the 2D sampling grid by theta
+         
+         su = new double[samples][samples];
+         sv = new double[samples][samples];
+         for (y = 0; y < samples; y++) {
+        	 for (x = 0; x < samples; x++) {
+        		 su[y][x] = sx[y][x]*Math.sin(theta) + sy[y][x]*Math.cos(theta);
+        		 sv[y][x] = sx[y][x]*Math.cos(theta) - sy[y][x]*Math.sin(theta);
+        	 }
+         }
+         
+         // Evaluate the function separably on a finer grid
+         // Radius of domain, enlarged by > sqrt(2)
+         R = r * Math.sqrt(2.0) * 1.01;
+         // Number of samples
+         fsamples = (int)Math.ceil(R * rate * frate);
+         // Must be odd
+         fsamples = fsamples + ((fsamples+1)%2);
+         // Domain for function evaluation
+         fdom = new double[fsamples];
+         fdom[0] = -R;
+         fdom[fsamples-1] = R;
+         // Distance between samples
+         gap = (2.0*R)/(fsamples - 1.0);
+         for (i = 1; i < fsamples-1; i++) {
+             fdom[i] = -R + i * gap;	 
+         } 
+         
+         // The function is a Gaussian in the x direction
+         fx = new double[fsamples];
+         denom = 2.0*sigma*sigma;
+         for (i = 0; i < fsamples; i++) {
+        	 fx[i] = Math.exp(-fdom[i]*fdom[i]/denom);
+         }
+         // .. and a Gaussian derivative in the y direction
+         fy = new double[fsamples];
+         denom = 2.0*sigma*sigma;
+         for (i = 0; i < fsamples; i++) {
+        	 fy[i] = Math.exp(-fdom[i]*fdom[i]/denom);
+         }
+         switch (deriv) {
+         case 1:
+        	 denom = sigma*sigma;
+        	 for (i = 0; i < fsamples; i++) {
+        		 fy[i] = fy[i] * (-fdom[i]/denom);
+        	 }
+        	 break;
+         case 2:
+        	 denom = sigma *sigma;
+        	 for (i = 0; i < fsamples; i++) {
+        		 fy[i] = fy[i] *(fdom[i]*fdom[i]/denom - 1.0);
+        	 }
+         } // switch(deriv)
+         // an optional Hilbert transform
+         if (dohil) {
+        	 paddedfsamples = MipavMath.findMinimumPowerOfTwo(fsamples);
+        	 paddedfy = new double[2 * paddedfsamples];
+        	 for (i = 0; i < fsamples; i++) {
+        		 paddedfy[2*i] = fy[i];
+        	 }
+        	 ht = new AlgorithmHilbertTransform(paddedfy, paddedfsamples);
+        	 ht.run();
+        	 for (i = 0; i < fsamples; i++) {
+        		 fy[i] = paddedfy[2*i+1];
+        	 }
+         }
+         
+         // Evaluate the function with NN interpolation
+         xi = new int[samples][samples];
+         for (y = 0; y < samples; y++) {
+        	 for (x = 0; x < samples; x++) {
+        		 xi[y][x] =(int) Math.round(su[y][x]/gap) + (int)Math.floor(fsamples/2) + 1;
+        	 }
+         }
+         yi = new int[samples][samples];
+         for (y = 0; y < samples; y++) {
+        	 for (x = 0; x < samples; x++) {
+        		 yi[y][x] =(int) Math.round(sv[y][x]/gap) + (int)Math.floor(fsamples/2) + 1;
+        	 }
+         }
+         fprecursor = new double[samples][samples];
+         for (y = 0; y < samples; y++) {
+        	 for (x = 0; x < samples; x++) {
+        	     fprecursor[y][x] = fx[xi[y][x]-1] * fy[yi[y][x]-1]; 
+        	 }
+         }
+         // Accumulate the samples into each bin
+         for (y = 0; y < sz; y++) {
+        	 for (x = 0; x < sz; x++) {
+        	     f[y][x] = 0.0;	 
+        	 }
+         }
+         for (y = 0; y < samples; y++) {
+        	 for (x = 0; x < samples; x++) {
+        		 v = membership[y][x];
+        		 if (v < 1) {
+        			 continue;
+        		 }
+        		 if (v > sz*sz) {
+        			 continue;
+        		 }
+        		 f[(v-1)%sz][(v-1)/sz] += fprecursor[y][x];
+        	 }
+         }
+         
+         // Zero mean
+         if (deriv > 0) {
+	         fsum = 0.0;
+	         for (y = 0; y < sz; y++) {
+	        	 for (x = 0; x < sz; x++) {
+	        	     fsum += f[y][x];	 
+	        	 }
+	         }
+	         fmean = fsum/(sz*sz);
+	         for (y = 0; y < sz; y++) {
+	        	 for (x = 0; x < sz; x++) {
+	        		 f[y][x] -= fmean;
+	        	 }
+	         }
+         } // if (deriv > 0)
+         
+         // Unit L1-norm
+         fsumabs = 0.0;
+         for (y = 0; y < sz; y++) {
+        	 for (x = 0; x < sz; x++) {
+        		 fsumabs += Math.abs(f[y][x]);
+        	 }
+         }
+         if (fsumabs > 0.0) {
+        	 for (y = 0; y < sz; y++) {
+        		 for (x = 0; x < sz; x++) {
+        			 f[y][x] = f[y][x]/fsumabs;
+        		 }
+        	 }
+         }
     }
     
     private class DualLattice{
@@ -1047,17 +1703,17 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	public int col[][];
     	public double values[][];
     	// Number of nonzero entries in sparse matrix
-    	public int nnz;
+    	//public int nnz;
     	
     	public SMatrix(int n, int nz[], int col[][], double values[][]) {
     		this.n = n;
     		this.nz = nz;
     		this.col = col;
     		this.values = values;
-    		nnz = 0;
-    		for (int i = 0; i < n; i++) {
-    		    nnz += nz[i];	
-    		}
+    		//nnz = 0;
+    		//for (int i = 0; i < n; i++) {
+    		    //nnz += nz[i];	
+    		//}
     	}
     	
     	public void symmetrize()
@@ -2026,6 +2682,185 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	    } // for (j = 0; j <= nblocks; j++)
     	} // for (i = 0; i <= mblocks; i++)
     	return B;
+    }
+    
+    private  void imresize(double A[][], double B[][]) {
+    	int i;
+    	int j;
+    	int p;
+    	int cols[] = null;
+    	double u[][];
+    	double v[][];
+    	int x;
+    	int y;
+    	double XN;
+    	double C;
+    	double C31;
+    	double C32;
+    	double FI;
+    	
+    	int xDimA = A[0].length;
+    	int yDimA = A.length;
+    	// filter length in samples
+    	int xDimB = B[0].length;
+    	int yDimB = B.length;
+    	// Create an antialiasing filter if xDimB < xDimA and yDimB < yDimA.
+    	boolean antialias = false;
+    	if ((xDimB < xDimA) && (yDimB < yDimA)) {
+    		antialias = true;
+    	}
+    	double ain[];
+    	int inExtents[];
+    	if (antialias) {
+	    	// NF = filter length in samples
+	    	// Filter order = NF - 1
+	    	int NF = 11;
+	    	// N is half the length of the symmetric filter
+	    	int N = (NF+1)/2;
+	    	// Calculate cutoff frequencies
+	    	// Normalized cutoff frequencies go from 0.0 to 0.5
+	    	double FC1 = (0.5 * yDimB)/yDimA;
+	    	double FC2 = (0.5 * xDimB)/xDimA;
+	    	// IE0 is an even, odd indicator 
+	    	int IE0 = NF % 2;
+	    	// h1 and h2 will have the dimension 1 and dimension 2 impulse responses
+	    	// These are symmmetric responses
+	    	double h1[] = new double[N];
+	    	double h2[] = new double[N];
+	    	if (IE0 == 1) {
+	    		h1[0] = 2.0 * FC1;
+	    		h2[0] = 2.0 * FC2;
+	    	}
+	    	int I1 = IE0 + 1;
+	    	for (i = I1; i <= N; i++) {
+	    	    XN = i - 1;
+	    	    if (IE0 == 0) {
+	    	    	XN = XN + 0.5;
+	    	    }
+	    	    C = Math.PI * XN;
+	    	    C31 = 2.0 * C * FC1;
+	    	    C32 = 2.0 * C * FC2;
+	    	    h1[i-1] = Math.sin(C31)/C;
+	    	    h2[i-1] = Math.sin(C32)/C;
+	    	} // for (i = I1; i <= N; i++)
+	    	
+	    	double W[] = new double[N];
+	    	
+	    	// Hamming window
+	    	double alpha = 0.54;
+	    	double beta = 1.0 - alpha;
+	    	double FN = NF - 1.0;
+	    	for (i = 1; i <= N; i++) {
+	    	    FI = i - 1.0;
+	    	    if (IE0 == 0) {
+	    	    	FI = FI + 0.5;
+	    	    }
+	    	    W[i-1] = alpha + beta * Math.cos(2.0 * Math.PI * FI/FN);
+	    	}
+	    	for (i = 0; i < N; i++) {
+	    		h1[i] = h1[i] * W[i];
+	    		h2[i] = h2[i] * W[i];
+	    	}
+	    	double h2x[][] = new double[1][N];
+	    	for (i = 0; i < N; i++) {
+	    		h2x[0][i] = h2[i];
+	    	}
+	    	boolean isCropped = true;
+	    	boolean isStrict = false;
+	    	double ax[][] = compute_conv_2D(A, h2x, isCropped, isStrict);
+	    	double h1y[][] = new double[N][1];
+	    	for (i = 0; i < N; i++) {
+	    		h1y[i][0] = h1[i];
+	    	}
+	    	double a[][] = compute_conv_2D(ax, h1y, isCropped, isStrict);
+	    	ain = new double[a.length * a[0].length];
+	    	for (y = 0; y < a.length; y++) {
+	    	    for (x = 0; x < a[0].length; x++) {
+	    	    	ain[x + y*a[0].length] = a[y][x];
+	    	    }
+	    	}
+	    	inExtents = new int[]{a[0].length, a.length};
+    	} // if (antalias)
+    	else {
+    		ain = new double[A.length * A[0].length];
+    		for (y = 0; y < A.length; y++) {
+	    	    for (x = 0; x < A[0].length; x++) {
+	    	    	ain[x + y*A[0].length] = A[y][x];
+	    	    }
+	    	}
+    		inExtents = new int[]{A[0].length, A.length};
+    	}
+    	AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
+    	boolean doClip = true;
+    	
+        CLag.setup2DCubicLagrangian(ain, inExtents, doClip);
+    	double uu[] = new double[xDimB];
+    	for (i = 0; i < xDimB; i++) {
+    		uu[i] = i*(xDimA - 1.0)/(xDimB - 1.0);
+    	}
+    	double vv[] = new double[yDimB];
+    	for (i = 0; i < yDimB; i++) {
+    		vv[i] = i*(yDimA - 1.0)/(yDimB - 1.0);
+    	}
+    	
+    	// Interpolate in blocks
+    	int insize[] = new int[]{yDimB, xDimB};
+    	int blk[] = bestblk(insize, 100);
+    	int nblks[] = new int[2];
+    	nblks[0] = yDimB/blk[0];
+    	nblks[1] = xDimB/blk[1];
+    	int nrem[] = new int[2];
+    	nrem[0] = yDimB - nblks[0]*blk[0];
+    	nrem[1] = xDimB - nblks[1]*blk[1];
+    	int mblocks = nblks[0];
+    	int nblocks = nblks[1];
+    	int mb = blk[0];
+    	int nb = blk[1];
+    	int rows[] = new int[blk[0]];
+    	for (i = 0; i < blk[0]; i++) {
+    		rows[i] = i;
+    	}
+    	for (i = 0; i <= mblocks; i++) {
+    	    if (i == mblocks) {
+    	    	rows = null;
+    	    	rows = new int[nrem[0]];
+    	    	for (p = 0; p < nrem[0]; p++) {
+    	    		rows[p] = p;
+    	    	}
+    	    } // if (i == mblocks)
+    	    for (j = 0; j <= nblocks; j++) {
+    	        if (j == 0) {
+    	        	cols = new int[blk[1]];
+    	        	for (p = 0; p < blk[1]; p++) {
+    	        		cols[p] = p;
+    	        	}
+    	        } // if (j == 0)
+    	        else if (j == nblocks) {
+    	        	cols = new int[nrem[1]];
+    	        	for (p = 0; p < nrem[1]; p++) {
+    	        		cols[p] = p;
+    	        	}
+    	        } // else if (j == nblocks)
+    	        if ((rows.length != 0) && (cols.length != 0)) {
+    	            u = new double[rows.length][cols.length];
+    	            v = new double[rows.length][cols.length];
+    	            for (y = 0; y < rows.length; y++) {
+    	            	for (x = 0; x < cols.length; x++) {
+    	            		u[y][x] = uu[j*nb + cols[x]];
+    	            		v[y][x] = vv[i*mb + rows[y]];
+    	            	}
+    	            }
+    	            // Cubic Lagrangian interpolation of points instead of bicubic interpolation in original
+    	            for (y = 0; y < rows.length; y++) {
+    	            	for (x = 0; x < cols.length; x++) {
+    	            		B[i*mb + rows[y]][j*nb + cols[x]] = CLag.cubicLagrangian2D(u[y][x], v[y][x]);	
+    	            		//B[i*mb + rows[y]][j*nb + cols[x]] = interp2(a, u[y][x], v[y][x], 'cubic');
+    	            	}
+    	            }
+    	        } // if ((rows.length != 0) && (cols.length != 0))
+    	    } // for (j = 0; j <= nblocks; j++)
+    	} // for (i = 0; i <= mblocks; i++)
+    	return;
     }
     
     private int[] bestblk(int siz[], int k) {
