@@ -338,8 +338,9 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     private static String clipEnd = ""
     	+ "if ( bClipped == 1.0 ) {" + "\n"
     	//+ "   fragColor = vec4(0);" + "\n"
-    	+ "   discard;" + "\n"
-    	+ "   return;" + "\n"
+    	//    	+ "   discard;" + "\n"
+        //+ "   return;" + "\n"
+        + "   continue;" + "\n"
     	+ "}" + "\n";
     
     private static String clipAESetup = ""
