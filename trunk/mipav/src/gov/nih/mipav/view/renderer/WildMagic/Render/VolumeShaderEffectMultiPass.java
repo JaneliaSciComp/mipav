@@ -121,6 +121,10 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         if ( pkCProgram != null && pkCProgram.GetUC("Blend") != null )
         {
             pkCProgram.GetUC("Blend").GetData()[0] = fBlend;
+            if ( m_iWhichShader == DRR )
+            {
+                pkCProgram.GetUC("Blend").GetData()[0] = fBlend * m_kVolumeImageA.getDRRNorm();
+            }
         }
     }
 
@@ -135,15 +139,19 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
              return;
          }
          m_iWhichShader = CMP;         
-         for ( int i = 0; i < (int)m_kAlphaState.size(); i++)
-         {
-             m_kAlphaState.set(i, new AlphaState());
-             m_kAlphaState.get(i).BlendEnabled = true;
-             m_kAlphaState.get(i).SrcBlend = AlphaState.SrcBlendMode.SBF_SRC_ALPHA;
-             m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_ONE_MINUS_SRC_ALPHA;
-             m_kAlphaState.get(i).BlendEquation = AlphaState.BlendEquationMode.BE_ADD;
-         }
+//         for ( int i = 0; i < (int)m_kAlphaState.size(); i++)
+//         {
+//             m_kAlphaState.set(i, new AlphaState());
+//             m_kAlphaState.get(i).BlendEnabled = true;
+//             m_kAlphaState.get(i).SrcBlend = AlphaState.SrcBlendMode.SBF_SRC_ALPHA;
+//             m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_ONE_MINUS_SRC_ALPHA;
+//             m_kAlphaState.get(i).BlendEquation = AlphaState.BlendEquationMode.BE_ADD;
+//         }
          Program pkCProgram = GetCProgram(0);  
+         if ( pkCProgram != null && pkCProgram.GetUC("Blend") != null )
+         {
+        	 pkCProgram.GetUC("Blend").GetData()[0] = m_afBlendParam[0];
+         }
          if ( pkCProgram.GetUC("MIP") != null )
          {
              pkCProgram.GetUC("MIP").GetData()[0] = 0;
@@ -211,19 +219,28 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             return;
         }
         m_iWhichShader = DRR;
-        for (int i = 0; i < (int)m_kAlphaState.size(); i++)
-        {
-            m_kAlphaState.set(i, new AlphaState());
-            m_kAlphaState.get(i).BlendEnabled = true;
-            //m_kAlphaState.get(i).SrcBlend = AlphaState.SrcBlendMode.SBF_ONE;
-            m_kAlphaState.get(i).SrcBlend = AlphaState.SrcBlendMode.SBF_CONSTANT_ALPHA;
-            //m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_CONSTANT_ALPHA;
-            m_kAlphaState.get(i).ConstantColor = new ColorRGBA(1.0f,1.0f,1.0f,
-            		m_kVolumeImageA.getDRRNorm());
-            m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_ONE;
-            m_kAlphaState.get(i).BlendEquation = AlphaState.BlendEquationMode.BE_ADD;
-        }
+//        for (int i = 0; i < (int)m_kAlphaState.size(); i++)
+//        {
+//            m_kAlphaState.set(i, new AlphaState());
+//            m_kAlphaState.get(i).BlendEnabled = true;
+//            m_kAlphaState.get(i).SrcBlend = AlphaState.SrcBlendMode.SBF_SRC_ALPHA;
+//            m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_ONE_MINUS_SRC_ALPHA;
+//            m_kAlphaState.get(i).BlendEquation = AlphaState.BlendEquationMode.BE_ADD;
+//            m_kAlphaState.set(i, new AlphaState());
+//            m_kAlphaState.get(i).BlendEnabled = true;
+//            //m_kAlphaState.get(i).SrcBlend = AlphaState.SrcBlendMode.SBF_ONE;
+//            m_kAlphaState.get(i).SrcBlend = AlphaState.SrcBlendMode.SBF_CONSTANT_ALPHA;
+//            //m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_CONSTANT_ALPHA;
+//            m_kAlphaState.get(i).ConstantColor = new ColorRGBA(1.0f,1.0f,1.0f,
+//            		m_kVolumeImageA.getDRRNorm());
+//            m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_ONE;
+//            m_kAlphaState.get(i).BlendEquation = AlphaState.BlendEquationMode.BE_ADD;
+////        }
         Program kCProgram = GetCProgram(0);  
+        if ( kCProgram != null && kCProgram.GetUC("Blend") != null )
+        {
+        	kCProgram.GetUC("Blend").GetData()[0] = m_afBlendParam[0] * m_kVolumeImageA.getDRRNorm();
+        }
         if ( kCProgram.GetUC("MIP") != null )
         {
             kCProgram.GetUC("MIP").GetData()[0] = 0;
@@ -261,15 +278,24 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         }
         m_iWhichShader = MIP;
         
-        for (int i = 0; i < m_kAlphaState.size(); i++)
+//        for (int i = 0; i < m_kAlphaState.size(); i++)
+//        {
+//            m_kAlphaState.set(i, new AlphaState());
+//            m_kAlphaState.get(i).BlendEnabled = true;
+//            m_kAlphaState.get(i).SrcBlend = AlphaState.SrcBlendMode.SBF_SRC_ALPHA;
+//            m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_ONE_MINUS_SRC_ALPHA;
+//            m_kAlphaState.get(i).BlendEquation = AlphaState.BlendEquationMode.BE_ADD;
+////            m_kAlphaState.set(i, new AlphaState());
+////            m_kAlphaState.get(i).BlendEnabled = true;
+////            m_kAlphaState.get(i).SrcBlend = AlphaState.SrcBlendMode.SBF_ONE;
+////            m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_ONE;
+////            m_kAlphaState.get(i).BlendEquation = AlphaState.BlendEquationMode.BE_MAX;
+//        }
+        Program kCProgram = GetCProgram(0);     
+        if ( kCProgram != null && kCProgram.GetUC("Blend") != null )
         {
-            m_kAlphaState.set(i, new AlphaState());
-            m_kAlphaState.get(i).BlendEnabled = true;
-            m_kAlphaState.get(i).SrcBlend = AlphaState.SrcBlendMode.SBF_ONE;
-            m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_ONE;
-            m_kAlphaState.get(i).BlendEquation = AlphaState.BlendEquationMode.BE_MAX;
+        	kCProgram.GetUC("Blend").GetData()[0] = m_afBlendParam[0];
         }
-        Program kCProgram = GetCProgram(0);    
         if ( kCProgram.GetUC("MIP") != null )
         {
             kCProgram.GetUC("MIP").GetData()[0] = 1;
@@ -449,6 +475,10 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             m_kAlphaState.get(i).ConstantColor.Copy(kColor);
         }
         Program kCProgram = GetCProgram(0);    
+        if ( kCProgram != null && kCProgram.GetUC("Blend") != null )
+        {
+        	kCProgram.GetUC("Blend").GetData()[0] = m_afBlendParam[0];
+        }
         if ( kCProgram.GetUC("MIP") != null )
         {
             kCProgram.GetUC("MIP").GetData()[0] = 0;
@@ -599,15 +629,19 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             return;
         }
         m_iWhichShader = SUR;
-        for (int i = 0; i < (int)m_kAlphaState.size(); i++)
-        {
-            m_kAlphaState.set(i, new AlphaState());
-            m_kAlphaState.get(i).BlendEnabled = true;
-            m_kAlphaState.get(i).SrcBlend = AlphaState.SrcBlendMode.SBF_SRC_ALPHA;
-            m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_ONE_MINUS_SRC_ALPHA;
-            m_kAlphaState.get(i).BlendEquation = AlphaState.BlendEquationMode.BE_ADD;
-        }
+//        for (int i = 0; i < (int)m_kAlphaState.size(); i++)
+//        {
+//            m_kAlphaState.set(i, new AlphaState());
+//            m_kAlphaState.get(i).BlendEnabled = true;
+//            m_kAlphaState.get(i).SrcBlend = AlphaState.SrcBlendMode.SBF_SRC_ALPHA;
+//            m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_ONE_MINUS_SRC_ALPHA;
+//            m_kAlphaState.get(i).BlendEquation = AlphaState.BlendEquationMode.BE_ADD;
+//        }
         Program kCProgram = GetCProgram(0);    
+        if ( kCProgram != null && kCProgram.GetUC("Blend") != null )
+        {
+        	kCProgram.GetUC("Blend").GetData()[0] = m_afBlendParam[0];
+        }
         if ( kCProgram.GetUC("MIP") != null )
         {
             kCProgram.GetUC("MIP").GetData()[0] = 0;
@@ -647,15 +681,19 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         }
 
         m_iWhichShader = CMP_SUR;
-        for (int i = 0; i < (int)m_kAlphaState.size(); i++)
-        {
-            m_kAlphaState.set(i, new AlphaState());
-            m_kAlphaState.get(i).BlendEnabled = true;
-            m_kAlphaState.get(i).SrcBlend = AlphaState.SrcBlendMode.SBF_SRC_ALPHA;
-            m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_ONE_MINUS_SRC_ALPHA;
-            m_kAlphaState.get(i).BlendEquation = AlphaState.BlendEquationMode.BE_ADD;
-        }
+//        for (int i = 0; i < (int)m_kAlphaState.size(); i++)
+//        {
+//            m_kAlphaState.set(i, new AlphaState());
+//            m_kAlphaState.get(i).BlendEnabled = true;
+//            m_kAlphaState.get(i).SrcBlend = AlphaState.SrcBlendMode.SBF_SRC_ALPHA;
+//            m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_ONE_MINUS_SRC_ALPHA;
+//            m_kAlphaState.get(i).BlendEquation = AlphaState.BlendEquationMode.BE_ADD;
+//        }
         Program kCProgram = GetCProgram(0);    
+        if ( kCProgram != null && kCProgram.GetUC("Blend") != null )
+        {
+        	kCProgram.GetUC("Blend").GetData()[0] = m_afBlendParam[0];
+        }
         if ( kCProgram.GetUC("MIP") != null )
         {
             kCProgram.GetUC("MIP").GetData()[0] = 0;
@@ -775,12 +813,13 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     {
         m_kAlphaState.set(0, new AlphaState());
         m_kAlphaState.get(0).BlendEnabled = true;
-        for (int i = 1; i < (int)m_kAlphaState.size(); i++)
+        for (int i = 0; i < (int)m_kAlphaState.size(); i++)
         {
             m_kAlphaState.set(i, new AlphaState());
             m_kAlphaState.get(i).BlendEnabled = true;
             m_kAlphaState.get(i).SrcBlend = AlphaState.SrcBlendMode.SBF_SRC_ALPHA;
             m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_ONE_MINUS_SRC_ALPHA;
+            m_kAlphaState.get(i).BlendEquation = AlphaState.BlendEquationMode.BE_ADD;
         }
     }
 
