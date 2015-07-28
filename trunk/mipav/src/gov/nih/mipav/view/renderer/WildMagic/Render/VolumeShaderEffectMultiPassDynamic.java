@@ -249,8 +249,8 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
 
     private static String compositeMIP_DRR = ""
     	+ "color.rgb *= opacity;" + "\n";
-    private static String blendMIP_DRR = ""
-    	+ "color.rgb *= localBlend * opacity;" + "\n";
+//    private static String blendMIP_DRR = ""
+//    	+ "color.rgb *= localBlend * opacity;" + "\n";
 
     private static String calcColorAStart = ""
         	+ "vec4 calcColorA(vec3 position) {" + "\n"
@@ -273,30 +273,32 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
 
     private static String finalColorA = ""
         + "   fragColor.rgb = (1 - colorA.a)*fragColor.rgb + colorA.a*colorA.rgb;" + "\n"
-//        + "   fragColor.rgb = (colorA.a)*fragColor.rgb + (1 - colorA.a)*colorA.rgb;" + "\n"
         + "   fragColor.a   += colorA.a;" + "\n"
-//    	+ "   if ( fragColor.a >= 1 ) { " + "\n"
-//        + "      fragColor = clamp(fragColor, vec4(0), vec4(1));" + "\n"
-//    	+ "      break;" + "\n"
-//    	+ "    }" + "\n"
+    	+ "}" + "\n";
+
+    private static String finalColorA_MIP = ""
+        + "   fragColor.rgba = max(fragColor.rgba, colorA.rgba);" + "\n"
     	+ "}" + "\n";
 
     private static String finalColorB = ""
-    	+ "fragColor.rgb = colorB.rgb;" + "\n"
-    	+ "fragColor.a = colorB.a;" + "\n";
+        + "   fragColor.rgb = (1 - colorB.a)*fragColor.rgb + colorB.a*colorB.rgb;" + "\n"
+        + "   fragColor.a   += colorB.a;" + "\n"
+    	+ "}" + "\n";
+
+    private static String finalColorB_MIP = ""
+            + "   fragColor.rgba = max(fragColor.rgba, colorB.rgba);" + "\n"
+    	+ "}" + "\n";
 
     private static String finalColorAB = ""
-        	//+ "if ( (ABBlend != 1) && (colorA.r == 0) && (colorA.g == 0) && (colorA.b == 0) ) { " + "\n"
-        	//+ "   fragColor = colorB;" + "\n"
-        	//+ "}" + "\n"
-        	//+ "else if ( (ABBlend != 0) && (colorB.r == 0) && (colorB.g == 0) && (colorB.b == 0) ) { " + "\n"
-        	//+ "   fragColor = colorA;" + "\n"
-        	//+ "}" + "\n"
-        	//+ "else {" + "\n"
-        	+ "   fragColor.rgb = (ABBlend * colorA.rgb) + ((1 - ABBlend) * colorB.rgb);" + "\n"
-        	+ "   fragColor.a = (ABBlend * colorA.a) + ((1 - ABBlend) * colorB.a);" + "\n"
-        	//+ "}" + "\n"
-        	;
+            + "   vec4 temp = (ABBlend * colorA.rgba) + ((1 - ABBlend) * colorB.rgba);" + "\n"
+            + "   fragColor.rgb = (1 - temp.a)*fragColor.rgb + temp.a*temp.rgb;" + "\n"
+            + "   fragColor.a   += temp.a;" + "\n"
+        	+ "}" + "\n";
+    
+    private static String finalColorAB_MIP = ""
+            + "   vec4 temp = max(colorA.rgba, colorB.rgba);" + "\n"
+            + "   fragColor.rgba = max(fragColor.rgba, temp.rgba);" + "\n"
+        	+ "}" + "\n";
     
     private static String mainEnd = ""
             + "fragColor = clamp(fragColor, vec4(0), vec4(1));" + "\n"
@@ -579,12 +581,12 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     /**
      * Sets the blend factor shader parameter between imageA and imageB.
      * @param fBlend blend factor (range = 0-1).
+     */
     public void Blend(float fBlend)
     {       
     	super.Blend(fBlend);
         checkPixelProgram();
     }
-     */
 
     /**
      * Sets the blend factor shader parameter between imageA and imageB.
@@ -942,15 +944,36 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	
     	if ( useImageA() && !useImageB() )
     	{
-    		text += finalColorA;
+    		if ( m_iWhichShader == MIP )
+    		{
+    			text += finalColorA_MIP;
+    		}
+    		else
+    		{
+    			text += finalColorA;
+    		}
     	}
     	else if ( !useImageA() && useImageB() )
     	{
-    		text += finalColorB;
+    		if ( m_iWhichShader == MIP )
+    		{
+    			text += finalColorB_MIP;
+    		}
+    		else
+    		{
+    			text += finalColorB;
+    		}
     	}
     	else if ( useImageA() && useImageB() )
     	{
-    		text += finalColorAB;
+    		if ( m_iWhichShader == MIP )
+    		{
+    			text += finalColorAB_MIP;
+    		}
+    		else
+    		{
+    			text += finalColorAB;
+    		}
     	}
 
     	
@@ -1200,14 +1223,14 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	
     	//if ( m_afBlendParam[0] != 1.0 )
     	{
-    		if ( m_iWhichShader != MIP && m_iWhichShader != DRR )
+//    		if ( m_iWhichShader != MIP && m_iWhichShader != DRR )
     		{
     			text += blendComposite;
     		}
-    		else if ( m_iWhichShader == MIP || m_iWhichShader == DRR )
-    		{
-    			text += blendMIP_DRR;
-    		}
+//    		else if ( m_iWhichShader == MIP || m_iWhichShader == DRR )
+//    		{
+//    			text += blendMIP_DRR;
+//    		}
     	}
     	/*
     	else
@@ -1363,14 +1386,14 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	
     	//if ( m_afBlendParam[0] != 1.0 )
     	{
-    		if ( m_iWhichShader != MIP && m_iWhichShader != DRR )
+//    		if ( m_iWhichShader != MIP && m_iWhichShader != DRR )
     		{
     			text += blendComposite;
     		}
-    		else if ( m_iWhichShader == MIP || m_iWhichShader == DRR )
-    		{
-    			text += blendMIP_DRR;
-    		}
+//    		else if ( m_iWhichShader == MIP || m_iWhichShader == DRR )
+//    		{
+//    			text += blendMIP_DRR;
+//    		}
     	}
     	/*
     	else
