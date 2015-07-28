@@ -144,6 +144,45 @@ public class LUSOL implements java.io.Serializable {
 		
 	}
 	
+	/*private void simpleTest() {
+		  final int maxm = 100000;
+		  final int maxn = 100000;
+			
+		  double rhsval[] = new double[maxm];
+		  double xexact[] = new double[maxn];
+
+		  // Storage for LUSOL
+
+		  final int lena  = 10000000;
+		  double parmlu[] = new double[30];
+		  double a[] = new double[lena];
+		  double w[] = new double[maxn];
+		  int luparm[] = new int[30];
+		  int indc[] = new int[lena];
+		  int indr[] = new int[lena];
+		  int lenc[] = new int[maxn];
+		  int lenr[] = new int[maxm];
+		  int p[] = new int[maxm];
+		  int q[] = new int[maxn];
+		  int iploc[] = new int[maxn];
+		  int iqloc[] = new int[maxm];
+		  int ipinv[] = new int[maxm];
+		  int iqinv[] = new int[maxn];
+		  int locc[] = new int[maxn];
+		  int locr[] = new int[maxm];
+
+		  // Local storage
+
+		  int inform[] = new int[1];
+		  int itn, iprint, k     , lenL  , lenU,
+		      m     , maxitn, mode  , 
+		      n     , nelem , nnzero, Scale , TPiv;
+		  // double bnorm;
+		  // double xenorm;
+		  double factol, dxnorm, enorm , rnorm , rnorm0,
+		         snorm , xnorm;	
+	}*/
+	
 	// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	// File        testflat.f90
 	//
@@ -7935,7 +7974,7 @@ if (indr[lrow[0]-1] == 0) lrow[0] = lrow[0] - 1;
 
       } // lu6sol
     
-    private void lu6L  (int inform[], int m, int n, double v[],
+    public void lu6L  (int inform[], int m, int n, double v[],
             int lena, int luparm[], double parmlu[], double a[], int indc[], int indr[], int lenc[]) {
 
 //integer(ip),   intent(in)    :: m, n, lena
@@ -8061,7 +8100,7 @@ luparm[9] = inform[0];
 
 } // lu6Lt
     
-    private void lu6U  (int inform[], int m, int n, double v[], double w[],
+    public void lu6U  (int inform[], int m, int n, double v[], double w[],
             int lena, int luparm[], double parmlu[], double a[], int indr[], int p[], int q[], int lenr[], int locr[]) {
 
 //integer(ip),   intent(in)    :: m, n, lena
