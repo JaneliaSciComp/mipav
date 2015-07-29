@@ -4360,6 +4360,9 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	   // Allocate arrays for distances
     	   
     	   ArrayList<ArrayList<Double> > distances = new ArrayList<ArrayList<Double>>(n_items);
+    	   for (int n = 0; n < n_items; n++) {
+    		   distances.add(new ArrayList<Double>());
+    	   }
     	   dist_resizer(
     	      0, n_items - 1, K, distances
     	   );
@@ -4613,7 +4616,12 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
            /* update distance to changed clusters */
            for (int n_id = 0; n_id < n_changed; n_id++) {
               int id = changed_ids[n_id];
-              distance.set(id, metricDistance(item, centroids.get(id)));
+              if (distance.size() -1 >=  id) {
+                  distance.set(id, metricDistance(item, centroids.get(id)));
+              }
+              else {
+            	  distance.add(id, metricDistance(item, centroids.get(id)));
+              }
            }
         }
 	
