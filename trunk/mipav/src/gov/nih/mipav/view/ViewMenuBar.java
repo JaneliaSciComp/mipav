@@ -169,6 +169,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Canny", "CANNY", 0, null, false),
                         menuBuilder.buildMenuItem("Entropic", "ENTROPIC", 0, null, false),
                         menuBuilder.buildMenuItem("Brejl-Sonka 3D", "edge3D", 0, null, false),
+                        menuBuilder.buildMenuItem("Global Pb", "GLOBAL_PB", 0 , null, false),
                         menuBuilder.buildMenuItem("Pb boundary", "PB_BOUNDARY", 0, null, false),
                         menuBuilder.buildMenuItem("Phase congruency", "phasecongruency", 0, null, false),
                         menuBuilder.buildMenuItem("Zero X laplacian", null, 0, null, false),
@@ -1239,6 +1240,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("FFT", false);
             menuBuilder.setMenuItemEnabled("Canny", false);
             menuBuilder.setMenuItemEnabled("Pb boundary", false);
+            menuBuilder.setMenuItemEnabled("Global Pb", false);
             menuBuilder.setMenuItemEnabled("Harris corner detector", false);
             menuBuilder.setMenuItemEnabled("Harris Laplace", false);
             menuBuilder.setMenuItemEnabled("Scale saliency", false);
@@ -1363,6 +1365,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Spatial color compactness", false);
             menuBuilder.setMenuItemEnabled("Canny", false);
             menuBuilder.setMenuItemEnabled("Pb boundary", false);
+            menuBuilder.setMenuItemEnabled("Global Pb", false);
             menuBuilder.setMenuItemEnabled("Harris corner detector", false);
             menuBuilder.setMenuItemEnabled("Harris Laplace", false);
             menuBuilder.setMenuItemEnabled("Scale saliency", false);
