@@ -12,6 +12,7 @@ import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.jama.SparseEigenvalue;
@@ -37,6 +38,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
 	
 	DecimalFormat nf = new DecimalFormat("0.00000E0");
 	
+	// If not null or empty, automatic file saves occur with an outFile String base.
 	private String outFile;
 	
 	// Resizing factor in (0, 1], to speed up eigenvector
@@ -66,6 +68,12 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
 	
 	private int max_iterations;
 	
+	private ModelImage gPbOrientImage;
+	
+	private ModelImage gPbThinImage;
+	
+	private ModelImage textonImage;
+	
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -79,8 +87,12 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
      * @param destImg
      * @param srcImg
      */
-    public AlgorithmGlobalPb(ModelImage destImg, ModelImage srcImg, String outFile, double rsz) {
-    	super(destImg, srcImg);
+    public AlgorithmGlobalPb(ModelImage gPbOrientImage, ModelImage gPbThinImage, ModelImage textonImage, 
+    		ModelImage srcImg, String outFile, double rsz) {
+    	super(null, srcImg);
+    	this.gPbOrientImage = gPbOrientImage;
+    	this.gPbThinImage = gPbThinImage;
+    	this.textonImage = textonImage;
     	this.outFile = outFile;
     	this.rsz = rsz;
     }
@@ -96,6 +108,16 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
       	AlgorithmChangeType changeTypeAlgo;
       	FileInfoBase[] fileInfo;
       	double weights[] = new double[13];
+      	int i;
+      	double l1, l2, l3, a1, a2, a3, b1, b2, b3, t1, t2, t3, sc;
+      	int x, y, z;
+      	int pruningPix;
+      	boolean entireImage;
+      	AlgorithmMorphology2D algoMorph2D;
+      	ModelImage gPbThinByteImage;
+      	boolean err[] = new boolean[1];
+      	double array[];
+      	int extents[];
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -193,11 +215,207 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         else {
         	mPb_rsz = new double[yDim][xDim];
         }
-        multiscalePb(mPb, mPb_rsz, bg1, bg2, bg3, cga1, cga2, cga3, cgb1, cgb2, cgb3, tg1, tg2, tg3, textons, inputImage);
+        multiscalePb(mPb, mPb_rsz, bg1, bg2, bg3, cga1, cga2, cga3, cgb1, cgb2, cgb3, tg1, tg2, tg3, textons, inputImage, err);
+        if (err[0]) {
+        	setCompleted(false);
+        	return;
+        }
         
-        String outFile2 = outFile + "_pbs.mat";
+        String outFile2 = null;
+        if ((outFile != null) && (outFile.length() > 0)) {
+        	outFile2 = outFile + "_spb.xml";	
+        }
         int nvec = 17;
-        spectralPb(mPb_rsz, srcImage.getExtents(), outFile2, nvec);
+        double sPb[][][] = new double[8][yDim][xDim];
+        spectralPb(sPb, mPb_rsz, srcImage.getExtents(), outFile2, nvec, err);
+        if (err[0]) {
+        	setCompleted(false);
+        	return;
+        }
+        double gPb_orient[][][] = new double[8][yDim][xDim];
+        double gPb[][] = new double[yDim][xDim];
+        double gPb_thin[] = new double[sliceSize];
+        byte gPb_thin_byte[] = new byte[sliceSize];
+    	for (y = 0; y < yDim; y++) {
+    	    for (x = 0; x < xDim; x++) {
+    	    	gPb[y][x] = -Double.MAX_VALUE;
+    	    	for (i = 0; i < 8; i++) {
+        	    	l1 = weights[0] * bg1[i][y][x];
+        	    	l2 = weights[1] * bg2[i][y][x];
+        	    	l3 = weights[2] * bg3[i][y][x];
+        	    	
+        	    	a1 = weights[3] * cga1[i][y][x];
+        	    	a2 = weights[4] * cga2[i][y][x];
+        	    	a3 = weights[5] * cga3[i][y][x];
+        	    	
+        	    	b1 = weights[6] * cgb1[i][y][x];
+        	    	b2 = weights[7] * cgb2[i][y][x];
+        	    	b3 = weights[8] * cgb3[i][y][x];
+        	    	
+        	    	t1 = weights[9] * tg1[i][y][x];
+        	    	t2 = weights[10] * tg2[i][y][x];
+        	    	t3 = weights[11] * tg3[i][y][x];
+        	    	
+        	    	sc = weights[12] * sPb[i][y][x];
+        	    	gPb_orient[i][y][x] = l1 + a1 + b1 + t1 + l2 + a2 + b2 + t2 +
+        	    			              l3 + a3 + b3 + t3 + sc;
+        	    	if (gPb_orient[i][y][x] > gPb[y][x]) {
+        	    		gPb[y][x] = gPb_orient[i][y][x];
+        	    	}
+        	    } // for (i = 0; i < 8; i++)
+    	    	if (mPb[y][x] > 0.05) {
+    	    		gPb_thin[x + y * xDim] = gPb[y][x];
+    	    		gPb_thin_byte[x + y * xDim] = 1;
+    	    	}
+    	    	else {
+    	    		gPb_thin[x + y * xDim] = 0.0;
+    	    		gPb_thin_byte[x + y * xDim] = 0;
+    	    	}
+        	}
+        } // for (y = 0; y < yDim; y++)
+    	pruningPix = 0;
+        entireImage = true;
+        gPbThinByteImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(), "gPbThinByte");
+        try {
+        	gPbThinByteImage.importData(0, gPb_thin_byte, true);
+        }
+        catch (IOException e) {
+        	gPbThinByteImage.disposeLocal();
+        	gPbThinByteImage = null;
+        	MipavUtil.displayError("IOException " + e + " on gPbThinNyteImage.importData(0, gPb_thin_byte, true)");
+        	setCompleted(false);
+        	return;
+        }
+        algoMorph2D = new AlgorithmMorphology2D(gPbThinByteImage, 0, 0.0f, AlgorithmMorphology2D.SKELETONIZE, 0, 0,
+        		pruningPix, 0, entireImage);
+        algoMorph2D.run();
+        algoMorph2D.finalize();
+        
+        try {
+            gPbThinByteImage.exportData(0, sliceSize, gPb_thin_byte);
+        }
+        catch (IOException e) {
+        	gPbThinByteImage.disposeLocal();
+        	gPbThinImage = null;
+        	MipavUtil.displayError("IOException " + e + " on gPbThinByteImage.exportData(0, sliceSize, gPb_thin_byte)");
+        	setCompleted(false);
+        	return;	
+        }
+        
+        gPbThinByteImage.disposeLocal();
+        gPbThinByteImage = null;
+        for (i = 0; i < sliceSize; i++) {
+        	if (gPb_thin_byte[i] == 0) {
+        		gPb_thin[i] = 0.0;
+        	}
+        }
+        
+        //gPbThinImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), "gPbThin");
+    	try {
+        	gPbThinImage.importData(0, gPb_thin, true);
+        }
+        catch (IOException e) {
+        	gPbThinImage.disposeLocal();
+        	gPbThinImage = null;
+        	MipavUtil.displayError("IOException " + e + " on gPbThinImage.importData(0, gPb_thin, true)");
+        	setCompleted(false);
+        	return;
+        }
+    	
+    	array = new double[8 * sliceSize];
+        for (z = 0; z < 8; z++) {
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		array[x + y * xDim + z * sliceSize] = gPb_orient[z][y][x];
+            	}
+            }
+        }
+    	
+    	extents = new int[3];
+        extents[0] = xDim;
+        extents[1] = yDim;
+        extents[2] = 8;
+        
+        //gPbOrientImage = new ModelImage(ModelStorageBase.DOUBLE, extents, "gPbOrient");
+        try {
+        	gPbOrientImage.importData(0, array, true);
+        }
+        catch (IOException e) {
+        	gPbOrientImage.disposeLocal();
+        	gPbOrientImage = null;
+        	MipavUtil.displayError("IOException " + e + " on gPbOrientImage.importData(0, array, true)");
+        	setCompleted(false);
+        	return;	
+        }
+        
+        //textonImage = new ModelImage(ModelStorageBase.INTEGER, srcImage.getExtents(), "texton");
+        try {
+        	textonImage.importData(0, textons, true);
+        }
+        catch (IOException e) {
+        	textonImage.disposeLocal();
+        	textonImage = null;
+        	MipavUtil.displayError("IOException " + e + " on textonImage.importData(0, textons, true)");
+        	setCompleted(false);
+        	return;	
+        }
+        
+        if ((outFile != null) && (outFile.length() > 0)) {
+        	
+        	
+        	try {
+                gPbThinImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), outFile + "_gPb_thin.xml",
+                                   FileUtility.XML, true);
+            } catch (OutOfMemoryError error) {
+
+                if (gPbThinImage != null) {
+                    gPbThinImage.disposeLocal();
+                }
+
+                gPbThinImage = null;
+                MipavUtil.displayError("Error on gPbThinImage.saveImage");
+
+                setCompleted(false);
+
+                return;
+            }
+            
+            try {
+                gPbOrientImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), outFile + "_gPb_orient.xml",
+                                   FileUtility.XML, true);
+            } catch (OutOfMemoryError error) {
+
+                if (gPbOrientImage != null) {
+                    gPbOrientImage.disposeLocal();
+                }
+
+                gPbOrientImage = null;
+                MipavUtil.displayError("Error on gPbOrientImage.saveImage");
+
+                setCompleted(false);
+
+                return;
+            }
+            
+            try {
+                textonImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), outFile + "_texton.xml",
+                                   FileUtility.XML, true);
+            } catch (OutOfMemoryError error) {
+
+                if (textonImage != null) {
+                    textonImage.disposeLocal();
+                }
+
+                textonImage = null;
+                MipavUtil.displayError("Error on textonImage.saveImage");
+
+                setCompleted(false);
+
+                return;
+            }
+        	
+        } // if ((outFile != null) && (outFile.length() > 0))
+     
         setCompleted(true);
         return;
     }
@@ -209,12 +427,14 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
      * http://www.cs.berkeley.edu/~fowlkes/BSE/
      * Pablo Arbelaez <arbelaez@eecs.berkeley.edu>
      * December 2010
+     * @param sPb
      * @param mPb
      * @param orig_sz
      * @param outFile
      * @param nvec
+     * @param error
      */
-    private void spectralPb(double mPb[][], int orig_sz[], String outFile, int nvec) {
+    private void spectralPb(double sPb[][][], double mPb[][], int orig_sz[], String outFile, int nvec, boolean err[]) {
     	int x;
     	int y;
     	int i;
@@ -302,7 +522,6 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         int norient;
         double dtheta;
         int ch_per[];
-        double sPb[][][];
         double vec[][];
         double theta;
         int hsz;
@@ -313,6 +532,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         int extents[];
         int slsize;
         int z;
+        ModelImage spectralImage;
         
         l[0] = new double[ty+1][tx];
         for (y = 0; y < ty; y++) {
@@ -575,6 +795,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
 	  	
 	  	if (inform[0] > 1) {
        	 UI.setDataText("Error in lu1fac inform[0] = " + inform[0] + "\n");
+       	 err[0] = true;
        	 return;
         }
 	  	P = new double[mL][nL];
@@ -817,6 +1038,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         //        %--------------------------%
         
                  UI.setDataText("Error in spectralPb with dsaupd info[0] = " + info[0] + "\n");
+                 err[0] = true;
                  return;
               } // if (info[0] < 0)
               else  { // info[0] >= 0
@@ -923,14 +1145,15 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
                            Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
               } // else info[0] >= 0
               if (ierr[0] != 0) {
+            	  err[0] = true;
             	  return;
               }
               
               // Reversal done in eigs just just leave out eigs reversal and this reversal
               // EigVal(1:end) = EigVal(end:-1:1)
               // EigVect(:, 1: end) = EigVect(:, end:-1:1)
-              tyo = orig_sz[0];
-              txo = orig_sz[1];
+              txo = orig_sz[0];
+              tyo = orig_sz[1];
               vect = new double[tyo][txo][nvec];
               if (n != (tx*ty)) {
             	  MipavUtil.displayError("n != tx*ty as required for reshaping");
@@ -983,7 +1206,6 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
               f = new double[sz][sz];
               fim = new double[tyo][txo];
               
-              sPb = new double[tyo][txo][norient];
               for (vv = 0; vv < nvec; vv++) {
                   if (EigVal[vv] > 0.0)	{
                       for (i = 0; i < tyo; i++) {
@@ -998,7 +1220,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
                           for (i = 0; i < tyo; i++) {
                         	  for (j = 0; j < txo; j++) {
                         		 fbRun(fim, f, vec);
-                        	     sPb[i][j][ch_per[k]-1] = sPb[i][j][ch_per[k]-1] + Math.abs(fim[i][j]);
+                        	     sPb[ch_per[k]-1][i][j] = sPb[ch_per[k]-1][i][j] + Math.abs(fim[i][j]);
                         	  }
                           } // for (i = 0; i < tyo; i++)
                       } // for ( k = 1; k <= norient; k++)
@@ -1016,11 +1238,45 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
             	  for (z = 0; z < norient; z++) {
             	      for (y = 0; y < tyo; y++) {
             	    	  for (x = 0; x < txo; x++) {
-            	    		  array[x + y * txo + z * slsize] = sPb[y][x][z];
+            	    		  array[x + y * txo + z * slsize] = sPb[z][y][x];
             	    	  }
             	      }
             	  }
-              }
+            	  spectralImage = new ModelImage(ModelStorageBase.DOUBLE, extents, "spectral");
+            	  try {
+            		  spectralImage.importData(0, array, true);
+            	  }
+            	  catch (IOException e) {
+            		  if (spectralImage != null) {
+                          spectralImage.disposeLocal();
+                      }
+
+                      spectralImage = null;
+            		  MipavUtil.displayError("IOException " + e + " on spectralImage.importData(0, array, true)");
+            		  err[0] = true;
+            		  return;
+            	  }
+            	  try {
+                      spectralImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), outFile,
+                                         FileUtility.XML, true);
+                  } catch (OutOfMemoryError error) {
+
+                      if (spectralImage != null) {
+                          spectralImage.disposeLocal();
+                      }
+
+                      spectralImage = null;
+                      MipavUtil.displayError("Error on spectralImage.saveImage");
+
+                      err[0] = true;
+
+                      return;
+                  }
+            	  spectralImage.disposeLocal();
+                  spectralImage = null;
+              } // if ((outFile != null) && (outFile.length() > 0))
+             
+              return;
     }  // spectralPb
     
     private void fbRun(double fim[][], double fb[][], double im[][]) {
@@ -2349,7 +2605,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     private void multiscalePb(double mPb_nmax[][], double mPb_nmax_rsz[][],
     		double [][][] bg1, double [][][] bg2, double[][][] bg3, double cga1[][][],
     		double cga2[][][], double cga3[][][], double cgb1[][][], double cgb2[][][],
-    		double cgb3[][][], double tg1[][][], double tg2[][][], double tg3[][][], int[] textons, ModelImage im) {
+    		double cgb3[][][], double tg1[][][], double tg2[][][], double tg3[][][], int[] textons, ModelImage im, boolean err[]) {
         double weights[] = new double[12];
         double buffer[];
         double red[] = new double[sliceSize];
@@ -2378,7 +2634,9 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         	    im.exportData(0, 4* sliceSize, buffer);
         	}
         	catch (IOException e) {
-        	    e.printStackTrace();	
+        	    e.printStackTrace();
+        	    err[0] = true;
+        	    return;
         	}
         	im.disposeLocal();
         	im = null;
@@ -2410,7 +2668,9 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         	    im.exportData(0, sliceSize, buffer);
         	}
         	catch (IOException e) {
-        	    e.printStackTrace();	
+        	    e.printStackTrace();
+        	    err[0] = true;
+        	    return;
         	}
         	im.disposeLocal();
         	im = null;
