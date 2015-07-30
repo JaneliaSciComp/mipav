@@ -4325,7 +4325,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	ArrayList<double[][]>items_array = new ArrayList<double[][]>();
     	double weights_array[] = new double[n_items];
     	for (i = 0; i < n_items; i++) {
-    		items_array.add(items.get(idx_map[i]));
+    		items_array.add(items.get(idx_map[i]).clone());
     		weights_array[i] = weights[idx_map[i]];
     	}
     	// Compute maximum number of clusters to return 
@@ -4350,7 +4350,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	   double [][][] cluster_items = new double[K][][];
     	   double[] cluster_weights = new double[K];
     	   for (int n = 0; n < K; n++) {
-    	      cluster_items[n] = items_array.get(n);
+    	      cluster_items[n] = items_array.get(n).clone();
     	      cluster_weights[n] =  weights_array[n];
     	   }
     	   // Initialize centroids 
@@ -4402,7 +4402,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	      {
     	         if (cluster_items[n] == null) {
     	            // Add item to cluster
-    	               cluster_items[n] = items_array.get(next_item);
+    	               cluster_items[n] = items_array.get(next_item).clone();
     	               cluster_weights[n] = weights_array[next_item];
     	            // Compute centroid
     	            metricCentroid cntrd = new metricCentroid(
@@ -4416,14 +4416,16 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	            has_changed[n] = true;
     	            next_item++;
     	         }
-    	      }
+    	      } // for (int n = 0, next_item = n_items_prev;
     	      // Recompute changed ids to include any filled empty clusters
     	      changed_ids = compute_changed_ids(has_changed, K);
     	      // Iteratively update assignments and centroids
+    	      System.out.println("max_iterations = " + max_iterations);
     	      for (int n_iter = 0; 
     	           ((n_iter < max_iterations) || (max_iterations == 0));
     	           n_iter++)
     	      {
+    	    	  System.out.println("n_iter = " + n_iter);
     	         // Store old assignments
     	    	 int assign_old[] = new int[n_items_curr];
     	    	 for (i = 0; i < n_items_curr; i++) {
@@ -4478,7 +4480,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	         }
     	         for (int n = 0; n < n_items_curr; n++) {
     	            int assign_id = assign[n];
-    	            cluster_items[assign_id] = items_array.get(n);
+    	            cluster_items[assign_id] = items_array.get(n).clone();
     	            cluster_weights[assign_id] = weights_array[n];
     	         }
     	         // Update centroids
@@ -4491,7 +4493,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	            cluster_weights,
     	            centroids
     	         );   
-    	      }
+    	      } // for (int n_iter = 0;
     	      // Update previous problem size
     	      n_items_prev = n_items_curr;
     	   }
