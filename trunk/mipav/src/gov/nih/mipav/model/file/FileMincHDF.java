@@ -751,9 +751,18 @@ public class FileMincHDF extends FileBase {
                     if (is4D) {
                         data = imageData.read();
 
-                        if (fileInfo.getDataType() == ModelStorageBase.SHORT
-                                || fileInfo.getDataType() == ModelStorageBase.USHORT) {
+                        if (fileInfo.getDataType() == ModelStorageBase.SHORT) {
                             image.importData((fileInfo.getExtents()[2] * sliceSize *j), (short[])data, false);
+                        } else if (fileInfo.getDataType() == ModelStorageBase.USHORT) {
+                            	short[] shortData =  (short[])data;
+                            	byte lowByte;
+                            	byte highByte;
+                            	for (i = 0; i < fileInfo.getExtents()[2] * sliceSize; i++) {
+                                    highByte = (byte)(shortData[i] >>> 8);
+                                    lowByte = (byte)(shortData[i] & 0xff);
+                                    shortData[i] = (short) ( ( (highByte & 0xff) << 8) | (lowByte & 0xff));
+                            	}
+                            	image .importData((fileInfo.getExtents()[2] * sliceSize *j), shortData, false);
                         } else if (fileInfo.getDataType() == ModelStorageBase.INTEGER
                                 || fileInfo.getDataType() == ModelStorageBase.UINTEGER) {
                             image.importData((fileInfo.getExtents()[2] * sliceSize *j), (int[])data, false);
@@ -768,9 +777,18 @@ public class FileMincHDF extends FileBase {
                     } else {
                         start[0] = j;
                         data = imageData.read();
-                        if (fileInfo.getDataType() == ModelStorageBase.SHORT
-                                || fileInfo.getDataType() == ModelStorageBase.USHORT) {
-                            image.importData(j * sliceSize, (short[]) data, false);
+                        if (fileInfo.getDataType() == ModelStorageBase.SHORT) {
+                        	image.importData(j * sliceSize, (short[]) data, false);
+                        } else if (fileInfo.getDataType() == ModelStorageBase.USHORT) {
+                        	short[] shortData =  (short[])data;
+                        	byte lowByte;
+                        	byte highByte;
+                        	for (i = 0; i < sliceSize; i++) {
+                                highByte = (byte)(shortData[i] >>> 8);
+                                lowByte = (byte)(shortData[i] & 0xff);
+                                shortData[i] = (short) ( ( (highByte & 0xff) << 8) | (lowByte & 0xff));
+                        	}
+                        	image .importData(j * sliceSize, shortData, false);
                         } else if (fileInfo.getDataType() == ModelStorageBase.INTEGER
                                 || fileInfo.getDataType() == ModelStorageBase.UINTEGER) {
                             image.importData(j * sliceSize, (int[]) data, false);
