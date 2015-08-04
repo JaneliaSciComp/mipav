@@ -755,12 +755,10 @@ public class FileMincHDF extends FileBase {
                             image.importData((fileInfo.getExtents()[2] * sliceSize *j), (short[])data, false);
                         } else if (fileInfo.getDataType() == ModelStorageBase.USHORT) {
                             	short[] shortData =  (short[])data;
-                            	byte lowByte;
-                            	byte highByte;
+                            	// kludge needed to make USHORT work
+                            	short temp;
                             	for (i = 0; i < fileInfo.getExtents()[2] * sliceSize; i++) {
-                                    highByte = (byte)(shortData[i] >>> 8);
-                                    lowByte = (byte)(shortData[i] & 0xff);
-                                    shortData[i] = (short) ( ( (highByte & 0xff) << 8) | (lowByte & 0xff));
+                                    temp = shortData[i];
                             	}
                             	image .importData((fileInfo.getExtents()[2] * sliceSize *j), shortData, false);
                         } else if (fileInfo.getDataType() == ModelStorageBase.INTEGER
@@ -781,12 +779,10 @@ public class FileMincHDF extends FileBase {
                         	image.importData(j * sliceSize, (short[]) data, false);
                         } else if (fileInfo.getDataType() == ModelStorageBase.USHORT) {
                         	short[] shortData =  (short[])data;
-                        	byte lowByte;
-                        	byte highByte;
+                        	// kludge needed to make USHORT work
+                        	short temp;
                         	for (i = 0; i < sliceSize; i++) {
-                                highByte = (byte)(shortData[i] >>> 8);
-                                lowByte = (byte)(shortData[i] & 0xff);
-                                shortData[i] = (short) ( ( (highByte & 0xff) << 8) | (lowByte & 0xff));
+                        		temp = shortData[i];
                         	}
                         	image .importData(j * sliceSize, shortData, false);
                         } else if (fileInfo.getDataType() == ModelStorageBase.INTEGER
