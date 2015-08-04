@@ -1130,6 +1130,12 @@ public class FileIO {
                 extents = new int[3];
                 extents[2] = nImages;
             }
+
+            // check for miscalculation of the 4th dim and fall back to just 3D if necessary
+            if (extents[3] > 0 && (extents[2] * extents[3]) < nImages) {
+                extents = new int[3];
+                extents[2] = nImages;
+            }
         } else {
             extents = new int[2];
 
@@ -1849,6 +1855,12 @@ public class FileIO {
                 int dtiSliceCounter2 = 0;// Checks for incomplete DWI series and determines order of grads
                 int dtiSliceCounter3 = 0;// Checks for incomplete DWI series and determines order of grads
                 final ArrayList<Integer> IndexVolArrayList = new ArrayList<Integer>();
+
+                // System.err.println("grad[0] =\t" + generateGEID(savedFileInfos[0].getTagTable()));
+                // System.err.println("grad[1] =\t" + generateGEID(savedFileInfos[1].getTagTable()));
+                // System.err.println("bval[0] =\t" + (String) savedFileInfos[0].getTagTable().getValue("0043,1039"));
+                // System.err.println("bval[1] =\t" + (String) savedFileInfos[1].getTagTable().getValue("0043,1039"));
+
                 for (int i = 0; i < instanceNumsLength; i++) {
                     final String savedFileGradFirst = generateGEID(savedFileInfos[0].getTagTable());
                     final String savedFileGradSecond = generateGEID(savedFileInfos[1].getTagTable());
@@ -1856,6 +1868,10 @@ public class FileIO {
                     final String savedFilebvalFirst = (String) savedFileInfos[0].getTagTable().getValue("0043,1039");
                     final String savedFilebvalSecond = (String) savedFileInfos[1].getTagTable().getValue("0043,1039");
                     final String savedFilebvalI = (String) savedFileInfos[i].getTagTable().getValue("0043,1039");
+
+                    // System.err.println("grad[" + i + "] =\t" + savedFileGradI);
+                    // System.err.println("bval[" + i + "] =\t" + savedFilebvalI);
+
                     if (savedFileGradFirst.equals(savedFileGradI) && savedFilebvalFirst.equals(savedFilebvalI)) {
                         // Stores order of gradients
                         IndexVolArrayList.add(dtiSliceCounter, i);
