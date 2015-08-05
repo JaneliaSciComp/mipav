@@ -50,8 +50,6 @@ public class PlugInDialogFlattenCSVFile extends JDialogBase implements Algorithm
 	
 	private File outputFile;
 	
-	private ModelImage finalImage;
-	
 	private String currDir;
 	
 	
@@ -204,8 +202,6 @@ public class PlugInDialogFlattenCSVFile extends JDialogBase implements Algorithm
 				 callAlgorithm();
 			 }
 		 }else if(command.equalsIgnoreCase("cancel")){
-			 finalImage.disposeLocal();
-			 finalImage = null;
 			 
 			 dispose();
 		 }else {
