@@ -1132,7 +1132,7 @@ public class FileIO {
             }
 
             // check for miscalculation of the 4th dim and fall back to just 3D if necessary
-            if (extents[3] > 0 && (extents[2] * extents[3]) < nImages) {
+            if (extents.length > 3 && extents[3] > 0 && (extents[2] * extents[3]) < nImages) {
                 extents = new int[3];
                 extents[2] = nImages;
             }
