@@ -26,6 +26,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ScrollCorrector;
+import gov.nih.mipav.view.ViewImageFileFilter;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 
@@ -182,11 +183,16 @@ public class PlugInDialogFlattenCSVFile extends JDialogBase implements Algorithm
 	        }*/
 	        chooser.setDialogTitle("Choose CSV File");
 	        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+	        chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".csv",".CSV"}));
 	        int returnValue = chooser.showOpenDialog(this);
 	        if (returnValue == JFileChooser.APPROVE_OPTION) {
 	        	currDir = chooser.getSelectedFile().getAbsolutePath();
 	        	Preferences.setImageDirectory(new File(currDir));
 	        	String fileName = chooser.getSelectedFile().getName();
+	        	if(!fileName.toUpperCase().endsWith(".CSV")) {
+					MipavUtil.displayError("CSV files must end in .csv or .CSV");
+					return;
+				}
 	        	int index = fileName.lastIndexOf(".");
 	        	String outputFileName = fileName.substring(0, index) + "_flat.csv";
 	        	inputFile = new File(chooser.getCurrentDirectory() + File.separator + fileName);
