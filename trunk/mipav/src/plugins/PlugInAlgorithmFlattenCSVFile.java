@@ -1,20 +1,13 @@
-import java.io.BufferedWriter;
+
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
-import java.util.Stack;
 
 import javax.swing.JTextArea;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.file.FileInfoImageXML;
-import gov.nih.mipav.model.file.FileUtility;
-import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.view.MipavUtil;
 
 
