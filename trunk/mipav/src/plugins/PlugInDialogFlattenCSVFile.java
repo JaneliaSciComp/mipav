@@ -183,14 +183,14 @@ public class PlugInDialogFlattenCSVFile extends JDialogBase implements Algorithm
 	        }*/
 	        chooser.setDialogTitle("Choose CSV File");
 	        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-	        chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".csv",".CSV"}));
+	        chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".csv",".CSV",".txt",".TXT"}));
 	        int returnValue = chooser.showOpenDialog(this);
 	        if (returnValue == JFileChooser.APPROVE_OPTION) {
 	        	currDir = chooser.getSelectedFile().getAbsolutePath();
 	        	Preferences.setImageDirectory(new File(currDir));
 	        	String fileName = chooser.getSelectedFile().getName();
-	        	if(!fileName.toUpperCase().endsWith(".CSV")) {
-					MipavUtil.displayError("CSV files must end in .csv or .CSV");
+	        	if((!fileName.toUpperCase().endsWith(".CSV"))&& (!fileName.toUpperCase().endsWith(".TXT"))) {
+					MipavUtil.displayError("CSV files must end in .csv or .CSV or .txt or .TXT");
 					return;
 				}
 	        	int index = fileName.lastIndexOf(".");
