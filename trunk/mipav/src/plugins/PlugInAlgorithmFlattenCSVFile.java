@@ -296,7 +296,7 @@ public class PlugInAlgorithmFlattenCSVFile extends AlgorithmBase {
         	}
         	else {
         		try {
-    	        	raFile.writeBytes(flatFields[i][k] + "\n");
+    	        	raFile.writeBytes(flatFields[i][flatFieldNum-1] + "\n");
     	        }
     	        catch (IOException e) {
     	    		MipavUtil.displayError("IOException " + e + " raFile.writeBytes");
