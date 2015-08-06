@@ -42,12 +42,8 @@ public class PlugInAlgorithmFlattenCSVFile extends AlgorithmBase {
 		int i;
 		int fieldNum;
 		int commaNum;
-		String labels[];
-		int firstCommaIndex;
 		String field;
 		int j;
-		int commaIndex;
-		int nextCommaIndex;
 		int maxFieldNum[];
 		int k;
 		int m;
@@ -60,6 +56,8 @@ public class PlugInAlgorithmFlattenCSVFile extends AlgorithmBase {
 		boolean badSetLength = false;
 		int lineCommaNum;
 		boolean differentCommaNum = false;
+		boolean quotePresent = false;
+		int commaLocation[];
 		outputTextArea.append("Running Algorithm v1.0" + "\n");
         
         final long begTime = System.currentTimeMillis();
@@ -114,53 +112,74 @@ public class PlugInAlgorithmFlattenCSVFile extends AlgorithmBase {
         
         outputTextArea.append(lineNum + " lines read\n");
         outputTextArea.append(recordNum + " records read\n");
-        labels = lines.get(1).split(",");
-        fieldNum = labels.length;
+    	quotePresent = false;
+    	commaNum = 0;
+    	for (j = 0; j < lines.get(1).length(); j++) {
+    		if (lines.get(1).substring(j,j+1).equals("\"")) {
+    		    quotePresent = !quotePresent;	
+    		}
+    		if ((lines.get(1).substring(j, j+1).equals(",")) && (!quotePresent)) {
+    		    commaNum++;    	
+    		}
+    	} // for (j = 0; j < lines.get(i).length(); j++)
+    	fieldNum = commaNum+1;
         outputTextArea.append(fieldNum + " fields in original file\n");
-        commaNum = fieldNum-1;
         // Check that all lines have the same number of commas
         for (i = 0; i < lineNum; i++) {
         	lineCommaNum = 0;
+        	quotePresent = false;
         	for (j = 0; j < lines.get(i).length(); j++) {
-        		if (lines.get(i).substring(j, j+1).equals(","))  {
+        		if (lines.get(i).substring(j,j+1).equals("\"")) {
+        		    quotePresent = !quotePresent;	
+        		}
+        		if ((lines.get(i).substring(j, j+1).equals(",")) && (!quotePresent)) {
         		    lineCommaNum++;    	
         		}
         	} // for (j = 0; j < lines.get(i).length(); j++)
         	if (lineCommaNum != commaNum) {
-        		outputTextArea.append("Line " + i + " has " + lineCommaNum + " commas instead of the expected " + commaNum + "\n");
+        		outputTextArea.append("Line " + i + " has " + lineCommaNum +
+        				" nonembedded commas instead of the expected " + commaNum + "\n");
         		differentCommaNum = true;
         	}
         } // for (i = 0; i < lineNum; i++)
         if (!differentCommaNum) {
-            outputTextArea.append("Every line has " + commaNum + " commas as expected\n");	
+            outputTextArea.append("Every line has " + commaNum + " nonembedded commas as expected\n");	
         }
         else {
-        	outputTextArea.append("Cannot process because not the same number of commas in every line\n");
+        	outputTextArea.append("Cannot process because not the same number of nonembedded commas in every line\n");
         	setCompleted(false);
         	return;
         }
         fields = new String[lineNum][fieldNum];
+        commaLocation = new int[commaNum];
         for (i = 0; i < lineNum; i++) {
-        	firstCommaIndex = lines.get(i).indexOf(",");
-        	if (firstCommaIndex != 0) {
-        	    field = lines.get(i).substring(0,firstCommaIndex).trim();
+        	quotePresent = false;
+        	lineCommaNum = 0;
+        	for (j = 0; j < lines.get(i).length(); j++) {
+        		if (lines.get(i).substring(j,j+1).equals("\"")) {
+        		    quotePresent = !quotePresent;	
+        		}
+        		if ((lines.get(i).substring(j, j+1).equals(",")) && (!quotePresent)) {
+        			commaLocation[lineCommaNum++] = j; 	
+        		}
+        	}
+        	
+        	if (commaLocation[0] != 0) {
+        	    field = lines.get(i).substring(0,commaLocation[0]).trim();
         	    if (field.length() > 0) {
         	        fields[i][0] = field;	
         	    }
         	}
-        	commaIndex = firstCommaIndex;
         	for (j = 0; j < commaNum-1; j++) {
-        	    nextCommaIndex = lines.get(i).indexOf(",",commaIndex+1);
-        	    if (nextCommaIndex > commaIndex + 1) {
-        	    	field = lines.get(i).substring(commaIndex+1,nextCommaIndex).trim();
+        	    if (commaLocation[j+1] > commaLocation[j] + 1) {
+        	    	field = lines.get(i).substring(commaLocation[j]+1,commaLocation[j+1]).trim();
         	    	if (field.length() > 0) {
         	    	    fields[i][j+1] = field;	
         	    	}
-        	    } // if (nextCommaIndex > commaIndex + 1)
-        	    commaIndex = nextCommaIndex;
-        	} // for (j = 0; j < commaNum; j++)
-        	if (lines.get(i).length() > commaIndex + 1) {
-        		field = lines.get(i).substring(commaIndex+1).trim();
+        	    } // if (commaLocation[j+1] > commaLocation[j] + 1)
+        	} // for (j = 0; j < commaNum-1; j++)
+        	if (lines.get(i).length() > commaLocation[commaNum-1] + 1) {
+        		field = lines.get(i).substring(commaLocation[commaNum-1]+1).trim();
         		if (field.length() > 0) {
         			fields[i][commaNum] = field; 
         		}
