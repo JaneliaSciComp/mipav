@@ -149,7 +149,7 @@ public class PlugInDrosophilaStandardColumnRegistration implements PlugInGeneric
                     headless.setRvld(true);
                 }
 
-            } else if (varName.equalsIgnoreCase("-regsitration")) {
+            } else if (varName.equalsIgnoreCase("-registration")) {
 
                 if (value.equalsIgnoreCase("rigidTPS")) {
                     headless.setRigidOnly(false);
