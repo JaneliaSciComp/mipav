@@ -58,6 +58,8 @@ public class PlugInAlgorithmFlattenCSVFile extends AlgorithmBase {
 		String outputName;
 		boolean badWrite = false;
 		boolean badSetLength = false;
+		int lineCommaNum;
+		boolean differentCommaNum = false;
 		outputTextArea.append("Running Algorithm v1.0" + "\n");
         
         final long begTime = System.currentTimeMillis();
@@ -116,6 +118,27 @@ public class PlugInAlgorithmFlattenCSVFile extends AlgorithmBase {
         fieldNum = labels.length;
         outputTextArea.append(fieldNum + " fields in original file\n");
         commaNum = fieldNum-1;
+        // Check that all lines have the same number of commas
+        for (i = 0; i < lineNum; i++) {
+        	lineCommaNum = 0;
+        	for (j = 0; j < lines.get(i).length(); j++) {
+        		if (lines.get(i).substring(j, j+1).equals(","))  {
+        		    lineCommaNum++;    	
+        		}
+        	} // for (j = 0; j < lines.get(i).length(); j++)
+        	if (lineCommaNum != commaNum) {
+        		outputTextArea.append("Line " + i + " has " + lineCommaNum + " commas instead of the expected " + commaNum + "\n");
+        		differentCommaNum = true;
+        	}
+        } // for (i = 0; i < lineNum; i++)
+        if (!differentCommaNum) {
+            outputTextArea.append("Every line has " + commaNum + " commas as expected\n");	
+        }
+        else {
+        	outputTextArea.append("Cannot process because not the same number of commas in every line\n");
+        	setCompleted(false);
+        	return;
+        }
         fields = new String[lineNum][fieldNum];
         for (i = 0; i < lineNum; i++) {
         	firstCommaIndex = lines.get(i).indexOf(",");
@@ -160,7 +183,7 @@ public class PlugInAlgorithmFlattenCSVFile extends AlgorithmBase {
         	    for (j = recordStart.get(i); j < recordStart.get(i+1); j++) {
         	        for (k = 0; k < fieldNum; k++) {
         	        	if (fields[j][k] != null) {
-        	        	    presentFieldNum[k]++;	
+        	        	    presentFieldNum[k] = j - recordStart.get(i) + 1;	
         	        	}
         	        }
         	    } // for (j = recordStart.get(i); j < recordStart.get(i+1); j++) 
@@ -172,23 +195,23 @@ public class PlugInAlgorithmFlattenCSVFile extends AlgorithmBase {
         	} // if ((recordStart.get(i+1) - recordStart.get(i)) > 1) 
         } // for (i = 0; i < recordNum-1; i++)
         
-        if ((lineNum-1 - recordStart.get(recordNum-1)) > 1) {
+        if ((lineNum-1 - recordStart.get(recordNum-1)) > 0) {
         	for (k = 0; k < fieldNum; k++) {
     			presentFieldNum[k] = 0;
     		}
     	    for (j = recordStart.get(recordNum-1); j < lineNum; j++) {
     	        for (k = 0; k < fieldNum; k++) {
     	        	if (fields[j][k] != null) {
-    	        	    presentFieldNum[k]++;	
+    	        	    presentFieldNum[k] = j - recordStart.get(recordNum-1) + 1;	
     	        	}
     	        }
-    	    } // for (j = recordStart.get(i); j < recordStart.get(i+1); j++) 
+    	    } // for (j = recordStart.get(recrodNum-1); j < lineNum; j++) 
     	    for (k = 0; k < fieldNum; k++) {
     	    	if (presentFieldNum[k] > maxFieldNum[k]) {
     	    		maxFieldNum[k] = presentFieldNum[k];
     	    	}
     	    }	
-        } // if ((lineNum-1 - recordStart.get(recordNum-1)) > 1)
+        } // if ((lineNum-1 - recordStart.get(recordNum-1)) > 0)
         
         flatFieldNum = 0;
         for (k = 0; k < fieldNum; k++) {
@@ -214,22 +237,18 @@ public class PlugInAlgorithmFlattenCSVFile extends AlgorithmBase {
         
         for (i = 0; i < recordNum-1; i++) {
         	for (k = 0; k < fieldNum; k++) 	{
-        		m = 0;
                 for (j = recordStart.get(i); j < recordStart.get(i+1); j++) {
                 	if (fields[j][k] != null) {
-                        flatFields[i+2][flatFieldStart[k]+m] = fields[j][k];
-                        m++;
+                        flatFields[i+2][flatFieldStart[k]+j-recordStart.get(i)] = fields[j][k];
                 	}
                 } // for (j = recordStart.get(i); j < recordStart.get(i+1); j++)
         	} // for (k = 0; k < fieldNum; k++)
         } // for (i = 0; i < recordNum-1; i++)
         
         for (k = 0; k < fieldNum; k++) {
-            m = 0;
             for (j = recordStart.get(recordNum-1); j < lineNum; j++) {
             	if (fields[j][k] != null) {
-                    flatFields[i+2][flatFieldStart[k]+m] = fields[j][k];
-                    m++;
+                    flatFields[i+2][flatFieldStart[k]+j-recordStart.get(recordNum-1)] = fields[j][k];
             	}	
             } // for (j = recordStart.get(recordNum-1); j < lineNum; j++)
         } // for (k = 0; k < fieldNum; k++)
