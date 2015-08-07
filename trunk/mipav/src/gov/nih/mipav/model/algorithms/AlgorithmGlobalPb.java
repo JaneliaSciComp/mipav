@@ -899,7 +899,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         //        | either convergence is indicated or maxitr   |
         //        | has been exceeded.                          |
         //        %---------------------------------------------%
-        
+                 
                  se.dsaupd ( ido, bmat, n, which, nev, tol, resid, 
                           ncv, v, ldv, iparam, ipntr, workd, workl,
                           lworkl, info );
@@ -1928,6 +1928,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         				connections[nz[row]].x = xx;
         				connections[nz[row]].y = yy;
         				connections[nz[row]].sim = pss;
+        				nz[row]++;
         			} // for (int v = -dthreshi; v <= dthreshi; v++)
         		} // for (int u = -dthreshi; u <= dthreshi; u++)
         		
