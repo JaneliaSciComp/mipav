@@ -548,7 +548,11 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         }
         
         // Build the pairwise affinity matrix
-        SMatrix W = buildW(l[0], l[1]);
+        SMatrix W = buildW(l[0], l[1], err);
+        if (err[0]) {
+        	System.err.println("spectralPb call to buildW falied");
+        	return;
+        }
         // From end of buildW
         // Pack sparse matrix
         // Compute total number of nonzero entries
@@ -1795,7 +1799,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	public double sim;
     }
     
-    private SMatrix buildW(double H[][], double V[][]) {
+    private SMatrix buildW(double H[][], double V[][], boolean error[]) {
     	int x;
     	int y;
     	int dthresh = 5;
@@ -1822,11 +1826,16 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         boundaries.height = boundaries.V[0].length;
         PointIC ic[][][] = new PointIC[boundaries.width][boundaries.height][];
         
-        computeSupport(boundaries, dthresh, 1.0, ic);
+        computeSupport(boundaries, dthresh, 1.0, ic, error);
+        if (error[0]) {
+        	System.err.println("Error in buildW call to computeSupport");
+        	return null;
+        }
         SMatrix W[] = new SMatrix[1];
         computeAffinities2(ic, sigma, dthresh, W);
         if (W[0] == null) {
-        	MipavUtil.displayError("computeAffinities2 failed");
+        	System.err.println("computeAffinities2 call failed in buildW");
+        	error[0] = true;
         	return null;
         }
         else {
@@ -2020,7 +2029,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
      * @param support
      */
     private void computeSupport(final DualLattice boundaries, final int wr, final double thresh,
-    		PointIC support[][][]) {
+    		PointIC support[][][], boolean error[]) {
     	int x;
     	int y;
         //support = new PointIC[boundaries.width][boundaries.height][];
@@ -2028,18 +2037,24 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         int count[] = new int[1];
         for (x = 0; x < boundaries.width; x++) {
         	for (y = 0; y < boundaries.height; y++) {
-        		interveningContour(boundaries, thresh, x, y, wr, adj, count);
+        		interveningContour(boundaries, thresh, x, y, wr, adj, count, error);
+        		if (error[0]) {
+        			System.err.println("Error in computeSupport call to interveningContour for x = " + x + " y = " + y);
+        			return;
+        		}
         		PointIC map[] = new PointIC[count[0]];
         		for (int i = 0; i < count[0]; i++) {
         			map[i] = adj[i];
         			final int ix = map[i].x;
         			final int iy = map[i].y;
         			if ((ix < 0) || (ix >= boundaries.width)) {
-        				MipavUtil.displayError("ix out of range in computeSupport");
+        				System.err.println("ix out of range in computeSupport");
+        				error[0] = true;
         				return;
         			}
         			if ((iy < 0) || (iy >= boundaries.height)) {
-        				MipavUtil.displayError("iy out of range in computeSupport");
+        				System.err.println("iy out of range in computeSupport");
+        				error[0] = true;
         				return;
         			}
         		}
@@ -2062,17 +2077,19 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
      * @param count
      */
     private void interveningContour(final DualLattice boundaries, final double thresh, final int x0, final int y0,
-    		final int wr, PointIC adj[], int count[]) {
+    		final int wr, PointIC adj[], int count[], boolean error[]) {
     	final int width = boundaries.width;
     	final int height = boundaries.height;
     	
     	// Make usre (x0,y0) is valid
     	if (x0 < 0 || x0 >= width) {
-    		MipavUtil.displayError("x0 is invalid in interveningContour");
+    		System.err.println("x0 = " + x0 + " is invalid in interveningContour");
+    		error[0] = true;
     		return;
     	}
     	if (y0 < 0 || y0 >= height) {
-    		MipavUtil.displayError("y0 is invalid in interveningContour");
+    		MipavUtil.displayError("y0 = " + y0 + " is invalid in interveningContour");
+    		error[0] = true;
     		return;
     	}
         // Make sure adj array is big enough
@@ -2099,18 +2116,39 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	// First walk around the rectangle boundary clockwise for theta = [pi, 0]
     	if (x0 > rxa) { // left
     		if ((y0 > 0) && (y0 < ryb)) {
+    			// ic_walk #1
     			ic_walk(boundaries, thresh, x0, y0, rxa, y0 - 1, rxa, y0,
-    					rxa, y0+1, wr, scratch, scanCount, scanLines);
+    					rxa, y0+1, wr, scratch, scanCount, scanLines, error);
+    			if (error[0]) {
+    				System.err.println("Error on ic_walk #1 in interveningContour");
+    				System.err.println("x0 = " + x0 + " rxa = " + rxa);
+    				System.err.println("y0 = " + y0 + " ryb = " + ryb);
+    				return;
+    			}
     		}
     		for (int y = y0-1; y > rya; y--) {
+    			// ic_walk #2
     			ic_walk(boundaries, thresh, x0, y0, rxa, y-1, rxa, y,
-    					rxa, y+1, wr, scratch, scanCount, scanLines);
+    					rxa, y+1, wr, scratch, scanCount, scanLines, error);
+    			if (error[0]) {
+    				System.err.println("Error on ic_walk #2 in interveningContour");
+    				System.err.println("x0 = " + x0 + " rxa = " + rxa);
+    				System.err.println("y0 = " + y0 + " rya = " + rya);
+    				return;
+    			}
     		}
     	} // if (x0 > rxa)
     	
     	if (x0 > rxa+1 || y0 > rya+1 || ((x0 > rxa) && (y0 > rya))) { // top-left
+    		// ic_walk #3
     		ic_walk(boundaries, thresh, x0, y0, rxa, rya+1, rxa, rya,
-    				rxa+1, rya, wr, scratch, scanCount, scanLines);
+    				rxa+1, rya, wr, scratch, scanCount, scanLines, error);
+    		if (error[0]) {
+				System.err.println("Error on ic_walk #3 in interveningContour");
+				System.err.println("x0 = " + x0 + " rxa = " + rxa);
+				System.err.println("y0 = " + y0 + " rya = " + rya);
+				return;
+			}
     	}
     	if (((x0 == rxa) && (y0 == rya+1))  || ((x0 == rxa+1) && (y0 == rya))) {
     	    PointIC pnt = new PointIC();
@@ -2123,14 +2161,28 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	
     	if (y0 > rya) { // top
     		for (int x = rxa+1; x < rxb; x++) {
+    			// ic_walk #4
     			ic_walk(boundaries, thresh, x0, y0, x-1, rya, x, rya, x+1,
-    					rya, wr, scratch, scanCount, scanLines);
+    					rya, wr, scratch, scanCount, scanLines, error);
+    			if (error[0]) {
+    				System.err.println("Error on ic_walk #4 in interveningContour");
+    				System.err.println("x0 = " + x0 + " rxa = " + rxa + " rxb = " + rxb);
+    				System.err.println("y0 = " + y0 + " rya = " + rya);
+    				return;
+    			}
     		}
     	}
     	
     	if ((y0 > rya+1) || (x0 < rxb-1) || ((y0 > rya) && (x0 < rxb))) { // top-right
+    		// ic_walk #5
     		ic_walk(boundaries, thresh, x0, y0, rxb-1, rya, rxb, rya,
-    				rxb, rya+1, wr, scratch, scanCount, scanLines);
+    				rxb, rya+1, wr, scratch, scanCount, scanLines, error);
+    		if (error[0]) {
+				System.err.println("Error on ic_walk #5 in interveningContour");
+				System.err.println("x0 = " + x0 + " rxb = " + rxb);
+				System.err.println("y0 = " + y0 + " rya = " + rya);
+				return;
+			}
     	}
     	if (((x0 == rxb-1) && (y0 == rya)) || ((x0 == rxb) && (y0 == rya+1))) {
     		PointIC pnt = new PointIC();
@@ -2143,22 +2195,43 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	
     	if (x0 < rxb) { // right
     		for (int y = rya+1; y < y0; y++) {
+    			// ic_walk #6
     			ic_walk(boundaries, thresh, x0, y0, rxb, y-1, rxb, y,
-    					rxb, y+1, wr, scratch, scanCount, scanLines);
+    					rxb, y+1, wr, scratch, scanCount, scanLines, error);
+    			if (error[0]) {
+    				System.err.println("Error on ic_walk #6 in interveningContour");
+    				System.err.println("x0 = " + x0 + " rxb = " + rxb);
+    				System.err.println("y0 = " + y0 + " rya = " + rya);
+    				return;
+    			}
     		}
     	}
     	
     	// Now counterclockwise for theta = (pi, 0)
     	if (x0 > rxa) { // left
     		for (int y = y0+1; y < ryb; y++) {
+    			// ic_walk #7
     			ic_walk(boundaries, thresh, x0, y0, rxa, y-1, rxa, y,
-    					rxa, y+1, wr, scratch, scanCount, scanLines);
+    					rxa, y+1, wr, scratch, scanCount, scanLines, error);
+    			if (error[0]) {
+    				System.err.println("Error on ic_walk #7 in interveningContour");
+    				System.err.println("x0 = " + x0 + " rxa = " + rxa);
+    				System.err.println("y0 = " + y0 + " ryb = " + ryb);
+    				return;
+    			}
     		}
     	}
     	
     	if ((x0 > rxa+1) || (y0 < ryb-1) || ((x0 > rxa) && (y0 < ryb))) { // bottom-left
+    		// ic_walk #8
     		ic_walk(boundaries, thresh, x0, y0, rxa, ryb-1, rxa, ryb,
-    				rxa+1, ryb, wr, scratch, scanCount, scanLines);
+    				rxa+1, ryb, wr, scratch, scanCount, scanLines, error);
+    		if (error[0]) {
+				System.err.println("Error on ic_walk #8 in interveningContour");
+				System.err.println("x0 = " + x0 + " rxa = " + rxa);
+				System.err.println("y0 = " + y0 + " ryb = " + ryb);
+				return;
+			}
     	}
     	if (((x0 == rxa) && (y0 == ryb-1)) || ((x0 == rxa+1) && (y0 == ryb))) {
     		PointIC pnt = new PointIC();
@@ -2170,14 +2243,28 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	}
     	if (y0 < ryb) { // bottom
     		for (int x = rxa+1; x < rxb; x++) {
+    			// ic_walk #9
     			ic_walk(boundaries, thresh, x0, y0, x-1, ryb, x, ryb, x+1,
-    					ryb, wr, scratch, scanCount, scanLines);
+    					ryb, wr, scratch, scanCount, scanLines, error);
+    			if (error[0]) {
+    				System.err.println("Error on ic_walk #9 in interveningContour");
+    				System.err.println("x0 = " + x0 + " rxa = " + rxa + " rxb = " + rxb);
+    				System.err.println("y0 = " + y0 + " ryb = " + ryb);
+    				return;
+    			}
     		}
     	}
     	
     	if ((y0 < ryb-1) || (x0 < rxb-1) || ((y0 < ryb) && (x0 < rxb))) { // bottom-right
+    		// ic_walk #10
     		ic_walk(boundaries, thresh, x0, y0, rxb-1, ryb, rxb, ryb,
-    				rxb, ryb-1, wr, scratch, scanCount, scanLines);
+    				rxb, ryb-1, wr, scratch, scanCount, scanLines, error);
+    		if (error[0]) {
+				System.err.println("Error on ic_walk #10 in interveningContour");
+				System.err.println("x0 = " + x0 + " rxb = " + rxb);
+				System.err.println("y0 = " + y0 + " ryb = " + ryb);
+				return;
+			}
     	}
     	if (((x0 == rxb-1) && (y0 == ryb)) || ((x0 == rxb) && (y0 == ryb-1))) {
     		PointIC pnt = new PointIC();
@@ -2190,25 +2277,41 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	
     	if (x0 < rxb) { // right
     		for (int y = ryb-1; y > y0; y--) {
+    			// ic_walk #11
     			ic_walk(boundaries, thresh, x0, y0, rxb, y-1, rxb, y,
-    					rxb, y+1, wr, scratch, scanCount, scanLines);
+    					rxb, y+1, wr, scratch, scanCount, scanLines, error);
+    			if (error[0]) {
+    				System.err.println("Error on ic_walk #11 in interveningContour");
+    				System.err.println("x0 = " + x0 + " rxb = " + rxb);
+    				System.err.println("y0 = " + y0 + " ryb = " + ryb);
+    				return;
+    			}
     		}
     		if ((y0 > 0) && (y0 < ryb)) {
+    			// ic_walk #12
     			ic_walk(boundaries, thresh, x0, y0, rxb, y0-1, rxb, y0,
-    					rxb, y0+1, wr, scratch, scanCount, scanLines);
+    					rxb, y0+1, wr, scratch, scanCount, scanLines, error);
+    			if (error[0]) {
+    				System.err.println("Error on ic_walk #12 in interveningContour");
+    				System.err.println("x0 = " + x0 + " rxb = " + rxb);
+    				System.err.println("y0 = " + y0 + " ryb = " + ryb);
+    				return;
+    			}
     		}
     	}
     	
     	for (int y = 0; y < 2*wr+1; y++) {
     		int len = scanCount[y];
     		if (len < 0 || len > 2*wr+1) {
-    			MipavUtil.displayError("len out of boundes in interveningContour");
+    			System.err.println("len = " + len + " out of boundes in interveningContour");
+    			error[0] = true;
     			return;
     		}
     		
     		if (y + y0 - wr < 0) {
     			if (len != 0) {
-    				MipavUtil.displayError("len != 0 as expected in interveningContour");
+    				System.err.println("len != 0 as expected in interveningContour");
+    				error[0] = true;
     				return;
     			}
     		}
@@ -2216,7 +2319,8 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     		// Check that pixels are in the right row
     		for (int i = 0; i < len; i++) {
     			if (scanLines[y][i].y != y+y0-wr) {
-    				MipavUtil.displayError("scanLines[y][i].y != y+y0-wr in interveningContour");
+    				System.err.println("scanLines[y][i].y != y+y0-wr in interveningContour");
+    				error[0] = true;
     				return;
     			}
     		}
@@ -2224,7 +2328,8 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     		// Check that pixels in each row are in increasing order
     		for (int i = 0; i < len-1; i++) {
     			if (scanLines[y][i].x >= scanLines[y][i+1].x) {
-    				MipavUtil.displayError("scanLines[y][i].x >= scanLines[y][i+1].x in interveningContour");
+    				System.err.println("scanLines[y][i].x >= scanLines[y][i+1].x in interveningContour");
+    				error[0] = true;
     				return;
     			}
     		}
@@ -2276,106 +2381,125 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     		final int wr,
     		PointIC points[],
     		int scanCount[],
-    		PointIC scanLines[][]) {
+    		PointIC scanLines[][], boolean error[]) {
         final int width = boundaries.width;
         final int height = boundaries.height;
         
         // The predicate that uses long longs will overflow if the image
         // is too long.
         if (2*wr +1 >= 100) {
-        	MipavUtil.displayError("2*wr+1 >= 1000 in ic_walk");
+        	System.err.println("2*wr+1 >= 1000 in ic_walk");
+        	error[0] = true;
         	return;
         }
         
         // Make sure points array is big enough
         if (points.length < 4*wr+2) {
-        	MipavUtil.displayError("points.length < 4*wr+2 in ic_walk");
+        	System.err.println("points.length < 4*wr+2 in ic_walk");
+        	error[0] = true;
         	return;
         }
         
         // Make sure scan arrays are the right size
         if (scanCount.length != 2*wr+1) {
-        	MipavUtil.displayError("scanCount.length != 2*wr+1 in ic_walk");
+        	System.err.println("scanCount.length != 2*wr+1 in ic_walk");
+        	error[0] = true;
         	return;
         }
         if (scanLines.length != 2*wr+1) {
-        	MipavUtil.displayError("scanLines.length != 2*wr+1 in ic_walk");
+        	System.err.println("scanLines.length != 2*wr+1 in ic_walk");
+        	error[0] = true;
         	return;
         }
         if (scanLines[0].length != 2*wr+1) {
-        	MipavUtil.displayError("scanLines[0].length != 2*wr+1 in ic_walk");
+        	System.err.println("scanLines[0].length != 2*wr+1 in ic_walk");
+        	error[0] = true;
         	return;	
         }
         
         // Sanity check the points
         if (x0 < 0 || x0 >= width) {
-        	MipavUtil.displayError("x0 out of range in ic_walk");
+        	System.err.println("x0 out of range in ic_walk");
+        	error[0] = true;
         	return;
         }
         
         if (y0 < 0 || y0 >= height) {
-        	MipavUtil.displayError("y0 out of range in ic_walk");
+        	System.err.println("y0 out of range in ic_walk");
+        	error[0] = true;
         	return;
         }
         
         if (x1 < 0 || x1 >= width) {
-        	MipavUtil.displayError("x1 out of range in ic_walk");
+        	System.err.println("x1 out of range in ic_walk");
+        	error[0] = true;
         	return;
         }
         
         if (y1 < 0 || y1 >= height) {
-        	MipavUtil.displayError("y1 out of range in ic_walk");
+        	System.err.println("y1 out of range in ic_walk");
+        	error[0] = true;
         	return;
         }
         
         if (x2 < 0 || x2 >= width) {
-        	MipavUtil.displayError("x2 out of range in ic_walk");
+        	System.err.println("x2 out of range in ic_walk");
+        	error[0] = true;
         	return;
         }
         
         if (y2 < 0 || y2 >= height) {
-        	MipavUtil.displayError("y2 out of range in ic_walk");
+        	System.err.println("y2 out of range in ic_walk");
+        	error[0] = true;
         	return;
         }
         
         if (x3 < 0 || x3 >= width) {
-        	MipavUtil.displayError("x3 out of range in ic_walk");
+        	System.err.println("x3 out of range in ic_walk");
+        	error[0] = true;
         	return;
         }
         
         if (y3 < 0 || y3 >= height) {
-        	MipavUtil.displayError("y3 out of range in ic_walk");
+        	System.err.println("y3 out of range in ic_walk");
+        	error[0] = true;
         	return;
         }
         
         // Make sure point are all distinct
         if (x0 == x1 && y0 == y1) {
-        	MipavUtil.displayError("(x0,y0) is the same as (x1,y1) in ic_walk");
+        	System.err.println("(x0,y0) is the same as (x1,y1) in ic_walk");
+        	error[0] = true;
         	return;
         }
         
         if (x0 == x2 && y0 == y2) {
-        	MipavUtil.displayError("(x0,y0) is the same as (x2,y2) in ic_walk");
+        	System.err.println("(x0,y0) is the same as (x2,y2) in ic_walk");
+        	error[0] = true;
         	return;
         }
         
         if (x0 == x3 && y0 == y3) {
-        	MipavUtil.displayError("(x0,y0) is the same as (x3,y3) in ic_walk");
+        	System.err.println("(x0,y0) is the same as (x3,y3) in ic_walk");
+        	error[0] = true;
         	return;
         }
         
         if (x1 == x2 && y1 == y2) {
-        	MipavUtil.displayError("(x1,y1) is the same as (x2,y2) in ic_walk");
+        	System.err.println("(x1,y1) is the same as (x2,y2) in ic_walk");
+        	error[0] = true;
         	return;
         }
         
         if (x1 == x3 && y1 == y3) {
-        	MipavUtil.displayError("(x1,y1) is the same as (x3,y3) in ic_walk");
+        	System.err.println("(x1,y1) is the same as (x3,y3) in ic_walk");
+        	error[0] = true;
         	return;
         }
         
         if (x2 == x3 && y2 == y3) {
-        	MipavUtil.displayError("(x2,y2) is the same as (x3,y3) in ic_walk");
+        	System.err.println("(x2,y2) is the same as (x3,y3) in ic_walk");
+        	error[0] = true;
         	return;
         }
         
@@ -2399,7 +2523,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         // Figure out what octant we're in for the bresenham algorithm
         // Octant i covers pi/4 * [i,i+1)
         int octant = -1;
-        if (dx > 0 && dy > 0) { // Quadrant 0
+        if (dx > 0 && dy >= 0) { // Quadrant 0
         	octant = (adx > ady) ? 0: 1;
         }
         else if (dx <= 0 && dy > 0) { // Quadrant 1
@@ -2412,7 +2536,9 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         	octant = (adx < ady) ? 6 : 7;
         }
         else {
-        	MipavUtil.displayError("Octant error in ic_walk");
+        	System.err.println("Octant error in ic_walk");
+        	System.err.println("dx = " + dx + " dy = " + dy);
+        	error[0] = true;
         	return;
         }
         
