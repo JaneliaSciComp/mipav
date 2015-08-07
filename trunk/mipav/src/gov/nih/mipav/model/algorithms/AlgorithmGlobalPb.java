@@ -3637,7 +3637,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	}
     	filters_large.clear();
     	// Compute textons
-    	ArrayList<double[][]>textonsAL = new ArrayList<double[][]>();
+    	ArrayList<double[]>textonsAL = new ArrayList<double[]>();
     	int iterations = 10;
     	double subsampling = 0.10;
     	double gray2D[][] = new double[dstXDim][dstYDim];
@@ -4164,9 +4164,12 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
 
 
     
-    private int[] textons_routine(double m[][], ArrayList<double[][]> filters, ArrayList<double[][]> textons,
+    private int[] textons_routine(double m[][], ArrayList<double[][]> filters, ArrayList<double[]> textons,
     		int K, int max_iter, double subsampling) {
     	int i;
+    	int x;
+    	int y;
+    	double array[];
     	// Convolve image with filters
     	// Return the convolution of the image with each of the filters so that
     	// the result is the same size as the original image
@@ -4184,10 +4187,23 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         metric = L2_metric;
         max_iterations = max_iter;
         ArrayList<metricCentroid>centroid = new ArrayList<metricCentroid>();
+        // textons.size() == 0 here
         for (i = 0; i < textons.size(); i++) {
             centroid.add(new metricCentroid(textons.get(i), 1.0));	
         }
-        int[] assign = cluster(responses, centroid);
+        ArrayList<double[]> responses2 = new ArrayList<double[]>();
+        int xout = m.length;
+        int yout = m[0].length;
+        for (x = 0; x < xout; x++) {
+    		for (y = 0; y < yout; y++) {
+    			array = new double[responses.size()];
+    			for (i = 0; i < responses.size(); i++) {
+    				array[i] = responses.get(i)[x][y];
+    			}
+    			responses2.add(array);
+    		}
+    	}
+        int[] assign = cluster(responses2, centroid);
         return assign;
         //sample_clusterer< matrix<> >(
                 //kmeans::matrix_clusterer<>(K, max_iter, matrix_metrics<>::L2_metric()),
@@ -4201,7 +4217,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
      * Return the cluster assignments and cluster centroids.
      */
     private int []cluster(
-       final ArrayList<double[][]> items,
+       final ArrayList<double[]> items,
        ArrayList<metricCentroid> centroids) 
     {
     	int i;
@@ -4227,7 +4243,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	       idx_map[i] = randomList.get(i).getiN();
     	       idx_map2[i] = idx_map[i];
     	   }
-    	   ArrayList<double[][]>items_subset = new ArrayList<double[][]>();
+    	   ArrayList<double[]>items_subset = new ArrayList<double[]>();
     	   for (i = 0; i < samp_size; i++) {
     		   elremoved = idx_map2[i];
     		   items_subset.add(items.remove(elremoved));
@@ -4255,7 +4271,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
        }
     }
     
-    private int[] assign_cluster(ArrayList<double[][]>items, ArrayList<metricCentroid>centroids) {
+    private int[] assign_cluster(ArrayList<double[]>items, ArrayList<metricCentroid>centroids) {
     	   int n_items = items.size();
     	   int assignments[] = new int[n_items];
     	   if (n_items > 0) {
@@ -4266,7 +4282,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	   return assignments;
     }
     
-    private void cluster_assigner(int start, int end, ArrayList<double[][]>items, ArrayList<metricCentroid>centroids,
+    private void cluster_assigner(int start, int end, ArrayList<double[]>items, ArrayList<metricCentroid>centroids,
     		int assignments[]) {
     	for (int n = start; n <= end; n++)
             assignments[n] = kmeans_assign_cluster(items.get(n), centroids);
@@ -4279,7 +4295,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
      * Note that the centroid array must not be empty.
      */
     private int kmeans_assign_cluster(
-       double item[][], 
+       double item[], 
        ArrayList<metricCentroid>centroids) 
     {
        // Initialize id and distance
@@ -4298,7 +4314,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     }
 
     
-    private int[] kmeans_cluster(ArrayList<double[][]>items, ArrayList<metricCentroid>centroids) {
+    private int[] kmeans_cluster(ArrayList<double[]>items, ArrayList<metricCentroid>centroids) {
     	int i;
     	int n_items = items.size();
     	double weights[] = new double[n_items];
@@ -4318,11 +4334,11 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
  	    return kmeans_cluster(items, weights, idx_map, centroids);
     }
     
-    private int[] kmeans_cluster(ArrayList<double[][]>items, double[] weights, int[] idx_map, ArrayList<metricCentroid>centroids) {
+    private int[] kmeans_cluster(ArrayList<double[]>items, double[] weights, int[] idx_map, ArrayList<metricCentroid>centroids) {
     	int i;
-    	int n_items = items.size();
+    	int n_items = idx_map.length;
     	// Randomize item order using the specified random permutation
-    	ArrayList<double[][]>items_array = new ArrayList<double[][]>();
+    	ArrayList<double[]>items_array = new ArrayList<double[]>();
     	double weights_array[] = new double[n_items];
     	for (i = 0; i < n_items; i++) {
     		items_array.add(items.get(idx_map[i]).clone());
@@ -4347,7 +4363,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	   for (i = 0; i < n_items; i++) {
     		   assign[i] = K;
     	   }
-    	   double [][][] cluster_items = new double[K][][];
+    	   double [][] cluster_items = new double[K][];
     	   double[] cluster_weights = new double[K];
     	   for (int n = 0; n < K; n++) {
     	      cluster_items[n] = items_array.get(n).clone();
@@ -4368,7 +4384,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	   );
     	   // Initially mark the undefined cluster # K as changed
     	   boolean[] has_changed = new boolean[K+1];
-    	   for (i = 0; i < K+1; i++) {
+    	   for (i = 0; i < K; i++) {
     		   has_changed[i] = false;
     	   }
     	   has_changed[K] = true;
@@ -4420,12 +4436,10 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	      // Recompute changed ids to include any filled empty clusters
     	      changed_ids = compute_changed_ids(has_changed, K);
     	      // Iteratively update assignments and centroids
-    	      System.out.println("max_iterations = " + max_iterations);
     	      for (int n_iter = 0; 
     	           ((n_iter < max_iterations) || (max_iterations == 0));
     	           n_iter++)
     	      {
-    	    	  System.out.println("n_iter = " + n_iter);
     	         // Store old assignments
     	    	 int assign_old[] = new int[n_items_curr];
     	    	 for (i = 0; i < n_items_curr; i++) {
@@ -4472,9 +4486,6 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	            break;
     	         // Update cluster membership
     	         for (int n = 0; n < K; n++) {
-    	        	for (i = 0; i < cluster_items[n].length; i++) {
-    	        		cluster_items[n][i] = null;
-    	        	}
     	        	cluster_items[n] = null;
     	            cluster_weights[n] = 0.0;
     	         }
@@ -4519,7 +4530,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	   return assignments;
     }
     
-    private void centroid_updater(int metric, int start, int end, int changed_ids[], double cluster_items[][][],
+    private void centroid_updater(int metric, int start, int end, int changed_ids[], double cluster_items[][],
     		double cluster_weights[], ArrayList<metricCentroid>centroids) {
     	 // update centroids sequentially
         for (int n = start; n <= end; n++) {
@@ -4607,13 +4618,13 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
        return changed_ids;
     }
     
-    private void distance_updater(int metric, int start, int end, ArrayList<double[][]>items,
+    private void distance_updater(int metric, int start, int end, ArrayList<double[]>items,
     		ArrayList<metricCentroid>centroids, int[] changed_ids, ArrayList<ArrayList<Double> > distances) {
     	/* update distances sequentially */
         int n_changed = changed_ids.length;
         for (int n = start; n <= end; n++) {
            /* get item and distance array */
-           double[][] item      = items.get(n);
+           double[] item      = items.get(n);
            ArrayList<Double> distance = distances.get(n);
            /* update distance to changed clusters */
            for (int n_id = 0; n_id < n_changed; n_id++) {
@@ -4629,23 +4640,17 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
 	
     }
     
-    private double metricDistance(double[][] item, metricCentroid centroid) {
-        double cluster_item[][] = centroid.getCluster_items();	
+    private double metricDistance(double[] item, metricCentroid centroid) {
+        double cluster_item[] = centroid.getCluster_items();	
         if (item.length != cluster_item.length) {
         	MipavUtil.displayError("item.length = " + item.length + " != cluster_item.length = " + cluster_item.length);
-        	return Double.NaN;
-        }
-        if (item[0].length != cluster_item[0].length) {
-        	MipavUtil.displayError("item[0].length = " + item[0].length + " != cluster_item[0].length = " + cluster_item[0].length);
         	return Double.NaN;
         }
         double dist = 0.0;
         double diff;
         for (int x = 0; x < item.length; x++) {
-        	for (int y = 0; y < item[0].length; y++) {
-        	    diff = item[x][y] - cluster_item[x][y];
+        	    diff = item[x] - cluster_item[x];
         	    dist += diff * diff;
-        	}
         }
         return Math.sqrt(dist);
     }
@@ -4693,26 +4698,21 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     }
     
     private class metricCentroid {
-    	private double[][] cluster_items;
+    	private double[] cluster_items;
     	
     	private double cluster_weights;
     	
-    	public metricCentroid(double[][] cluster_items,double cluster_weights) {
+    	public metricCentroid(double[] cluster_items,double cluster_weights) {
     		this.cluster_items = cluster_items;
     		this.cluster_weights = cluster_weights;
     	}
     	
-    	public double[][] getCluster_items() {
+    	public double[] getCluster_items() {
     	    return cluster_items;		
     	}
     	
     	public void deleteClusterItems() {
-    	    if (cluster_items != null) {
-    	    	for (int i = 0; i < cluster_items.length; i++) {
-    	    		cluster_items[i] = null;
-    	    	}
-    	    	cluster_items = null;
-    	    }
+    	    cluster_items = null;
     	}
     }
     
