@@ -1853,6 +1853,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
      */
     private void computeAffinities2(final PointIC icmap[][][], final double sigma, final double dthresh,
     		SMatrix affinities[]) {
+    	int i;
     	int x;
     	int y;
         int width = icmap.length;
@@ -1880,6 +1881,9 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         // Window diameter
         int wd = 2*dthreshi+1;
         PointIC connections[] = new PointIC[wd*wd];
+        for (i = 0; i < wd*wd; i++) {
+        	connections[i] = new PointIC();
+        }
         
         int row = 0;
         for (x = 0; x < width; x++) {
