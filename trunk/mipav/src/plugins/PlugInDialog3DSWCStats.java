@@ -45,7 +45,7 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 
     private JTextField textField;
 
-    private JTextField imageField;
+    // private JTextField imageField;
 
     private JFileChooser fileChooser;
 
@@ -123,19 +123,19 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
             if (chooseIV) {
                 textField.setText(name);
             } else {
-                imageField.setText(name);
+                // imageField.setText(name);
             }
         } else if (command.equals("Browse")) {
             chooseIV = true;
             chooseDir();
-        } else if (command.equals("BrowseImage") && !densityRB.isSelected()) {
-            chooseIV = false;
-            chooseDir();
+            // } else if (command.equals("BrowseImage") && !densityRB.isSelected()) {
+            // chooseIV = false;
+            // chooseDir();
         } else if (command.equals("density")) {
-            imageField.setEditable(false);
+            // imageField.setEditable(false);
             splitField.setEditable(false);
         } else if (command.startsWith("notDensity")) {
-            imageField.setEditable(true);
+            // imageField.setEditable(true);
             splitField.setEditable(true);
         } else {
             super.actionPerformed(e);
@@ -303,20 +303,20 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
                 return;
             }
 
-            final String imageStr = imageField.getText();
-
-            if (imageStr.length() == 0) {
-                MipavUtil.displayError("Please input an image");
-                locked = false;
-                return;
-            }
-
-            final File imageFile = new File(imageStr);
-            if ( !imageFile.exists()) {
-                MipavUtil.displayError("This image does not exist");
-                locked = false;
-                return;
-            }
+            // final String imageStr = imageField.getText();
+            //
+            // if (imageStr.length() == 0) {
+            // MipavUtil.displayError("Please input an image");
+            // locked = false;
+            // return;
+            // }
+            //
+            // final File imageFile = new File(imageStr);
+            // if ( !imageFile.exists()) {
+            // MipavUtil.displayError("This image does not exist");
+            // locked = false;
+            // return;
+            // }
 
             float splitDist;
 
@@ -330,11 +330,15 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 
             // Open the viewer if the a custom axon is to be chosen
             if (customRB.isSelected()) {
-                alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, (String) resolutionUnits.getSelectedItem(), false, true);
+                // alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, (String)
+                // resolutionUnits.getSelectedItem(), false, true);
+                alg = new PlugInAlgorithm3DSWCViewer(file, textArea, (String) resolutionUnits.getSelectedItem(), false, true);
                 new PlugInDialog3DSWCViewer(textArea, (String) resolutionUnits.getSelectedItem(), alg);
             } else {
-                alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, (String) resolutionUnits.getSelectedItem(), axonRB.isSelected(),
-                        false);
+                // alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, (String)
+                // resolutionUnits.getSelectedItem(), axonRB.isSelected(),
+                // false);
+                alg = new PlugInAlgorithm3DSWCViewer(file, textArea, (String) resolutionUnits.getSelectedItem(), axonRB.isSelected(), false);
             }
 
             alg.setSplit(splitDist);
@@ -373,16 +377,16 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
         browseButton.setFont(serif12);
         browseButton.addActionListener(this);
 
-        final JLabel imLabel = new JLabel("Input Imaris image");
-        imLabel.setFont(serif12B);
-
-        imageField = new JTextField(30);
-        imageField.setFont(serif12);
-
-        final JButton browseImage = new JButton("Browse");
-        browseImage.setFont(serif12);
-        browseImage.setActionCommand("BrowseImage");
-        browseImage.addActionListener(this);
+        // final JLabel imLabel = new JLabel("Input Imaris image");
+        // imLabel.setFont(serif12B);
+        //
+        // imageField = new JTextField(30);
+        // imageField.setFont(serif12);
+        //
+        // final JButton browseImage = new JButton("Browse");
+        // browseImage.setFont(serif12);
+        // browseImage.setActionCommand("BrowseImage");
+        // browseImage.addActionListener(this);
 
         final JLabel splitLabel = new JLabel("Growth Cone Length");
         splitLabel.setFont(serif12B);
@@ -468,22 +472,22 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 
         mainPanel.add(browseButton, gbc);
 
-        gbc.gridx = 0;
-        gbc.gridy++;
-
-        mainPanel.add(imLabel, gbc);
-
-        gbc.gridy++;
-        gbc.weightx = 1;
-        gbc.gridwidth = 2;
-
-        mainPanel.add(imageField, gbc);
-
-        gbc.gridx = 2;
-        gbc.weightx = 0;
-        gbc.gridwidth = 1;
-
-        mainPanel.add(browseImage, gbc);
+        // gbc.gridx = 0;
+        // gbc.gridy++;
+        //
+        // mainPanel.add(imLabel, gbc);
+        //
+        // gbc.gridy++;
+        // gbc.weightx = 1;
+        // gbc.gridwidth = 2;
+        //
+        // mainPanel.add(imageField, gbc);
+        //
+        // gbc.gridx = 2;
+        // gbc.weightx = 0;
+        // gbc.gridwidth = 1;
+        //
+        // mainPanel.add(browseImage, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
@@ -576,32 +580,33 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 
         };
 
-        final FileFilter imFilter = new FileFilter() {
-            @Override
-            public boolean accept(final File pathname) {
-                if (pathname.isDirectory()) {
-                    return true;
-                }
-                final String name = pathname.getName();
-                final int index = name.lastIndexOf(".");
-                if (index < 0) {
-                    return false;
-                }
-                final String fileExt = name.substring(index);
-                if (fileExt.equalsIgnoreCase(".ics")) {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
+        // final FileFilter imFilter = new FileFilter() {
+        // @Override
+        // public boolean accept(final File pathname) {
+        // if (pathname.isDirectory()) {
+        // return true;
+        // }
+        // final String name = pathname.getName();
+        // final int index = name.lastIndexOf(".");
+        // if (index < 0) {
+        // return false;
+        // }
+        // final String fileExt = name.substring(index);
+        // if (fileExt.equalsIgnoreCase(".ics")) {
+        // return true;
+        // } else {
+        // return false;
+        // }
+        // }
+        //
+        // @Override
+        // public String getDescription() {
+        // return "Imaris Image (.ics)";
+        // }
+        // };
 
-            @Override
-            public String getDescription() {
-                return "Imaris Image (.ics)";
-            }
-        };
-
-        final FileFilter filter = chooseIV ? ivFilter : imFilter;
+        // final FileFilter filter = chooseIV ? ivFilter : imFilter;
+        final FileFilter filter = ivFilter;
 
         fileChooser = new JFileChooser(dirText);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
