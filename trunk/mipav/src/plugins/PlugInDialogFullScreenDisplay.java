@@ -2,10 +2,10 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
-
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ScrollCorrector;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import java.awt.*;
@@ -15,6 +15,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Enumeration;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -27,6 +28,12 @@ public class PlugInDialogFullScreenDisplay extends JDialogBase implements Algori
     private GridBagConstraints gbc;
 
     private JLabel fileLabel;
+    
+    private JLabel imageLabel;
+    
+    private JComboBox comboBoxImage;
+    
+    private ModelImage image = null;
 
     private JTextField filePathTextField;
 
@@ -66,6 +73,21 @@ public class PlugInDialogFullScreenDisplay extends JDialogBase implements Algori
         fileBrowseButton = new JButton("Browse");
         fileBrowseButton.addActionListener(this);
         fileBrowseButton.setActionCommand("FileBrowse");
+        
+        imageLabel = new JLabel("Image ");
+        comboBoxImage = new JComboBox();
+        comboBoxImage.setFont(serif12);
+        comboBoxImage.setBackground(Color.white);
+        
+        buildComboBoxImage();
+        Object selected = comboBoxImage.getSelectedItem();
+        if(selected != null) {
+            comboBoxImage.setSelectedItem(selected);
+            String selectedName = (String) comboBoxImage.getSelectedItem();
+            image = ViewUserInterface.getReference().getRegisteredImageByName(selectedName);
+        }
+        comboBoxImage.addActionListener(this);
+        comboBoxImage.setActionCommand("ImageBrowse");
 
         outputTextArea = new JTextArea();
         outputTextArea.setRows(15);
@@ -87,12 +109,22 @@ public class PlugInDialogFullScreenDisplay extends JDialogBase implements Algori
         mainPanel.add(filePathTextField, gbc);
         gbc.gridx = 2;
         mainPanel.add(fileBrowseButton, gbc);
+        
+        gbc.gridx = 0;
+        gbc.weightx = 0;
+        gbc.gridy = 1;
+        gbc.fill = GridBagConstraints.NONE;
+        mainPanel.add(imageLabel, gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        mainPanel.add(comboBoxImage, gbc);
 
         gbc.anchor = GridBagConstraints.CENTER;
         gbc.fill = GridBagConstraints.BOTH;
 
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         gbc.gridwidth = 3;
         mainPanel.add(scrollPane, gbc);
 
@@ -114,6 +146,23 @@ public class PlugInDialogFullScreenDisplay extends JDialogBase implements Algori
         setResizable(false);
 
     }
+    
+    /**
+     * Builds a list of images to operate on from the template image.
+     */
+    private void buildComboBoxImage() {
+        ViewUserInterface UI;
+
+        comboBoxImage.removeAllItems();
+
+        UI = ViewUserInterface.getReference();
+
+        Enumeration<String> names = UI.getRegisteredImageNames();
+        while (names.hasMoreElements()) {
+            String name = names.nextElement();
+            comboBoxImage.addItem(name);
+        }
+    }
 
     private void callAlgorithm() {
         Image cornerImage;
@@ -124,10 +173,11 @@ public class PlugInDialogFullScreenDisplay extends JDialogBase implements Algori
             e.printStackTrace();
             return;
         }
-
-        final FileIO fileIO = new FileIO();
-        final boolean multiFile = false;
-        final ModelImage image = fileIO.readImage(fileName, directory, multiFile, null);
+        if (image == null) {
+            final FileIO fileIO = new FileIO();
+            final boolean multiFile = false;
+            image = fileIO.readImage(fileName, directory, multiFile, null);
+        }
         final int xDim = image.getExtents()[0];
         final int yDim = image.getExtents()[1];
         final int length = xDim * yDim;
@@ -217,7 +267,22 @@ public class PlugInDialogFullScreenDisplay extends JDialogBase implements Algori
                 fileName = chooser.getSelectedFile().getName();
                 directory = chooser.getCurrentDirectory() + File.separator;
                 filePathTextField.setText(currDir);
+                if (image != null) {
+                	image.disposeLocal();
+                	image = null;
+                }
             }
+        } else if (command.equals("ImageBrowse")) {
+        	 Object selected = comboBoxImage.getSelectedItem();
+        	 if(selected != null) {
+                 comboBoxImage.setSelectedItem(selected);
+                 String selectedName = (String) comboBoxImage.getSelectedItem();
+                 if (image != null) {
+                	 image.disposeLocal();
+                	 image = null;
+                 }
+                 image = ViewUserInterface.getReference().getRegisteredImageByName(selectedName);
+             }
         } else if (command.equalsIgnoreCase("ok")) {
             if (setVariables()) {
                 callAlgorithm();
@@ -233,7 +298,7 @@ public class PlugInDialogFullScreenDisplay extends JDialogBase implements Algori
 
     private boolean setVariables() {
 
-        if (filePathTextField.getText().trim().equals("")) {
+        if ((image == null) && (filePathTextField.getText().trim().equals(""))) {
             MipavUtil.displayError("File is required");
             return false;
 
