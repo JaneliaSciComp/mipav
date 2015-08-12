@@ -1,9 +1,12 @@
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.WindowLevel;
 
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
@@ -11,7 +14,7 @@ import java.awt.image.BufferedImage;
 import javax.swing.JTextArea;
 
 
-public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements MouseWheelListener{
+public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements MouseWheelListener, MouseMotionListener {
     private final BufferedImage inputImage;
 
     private final Image cornerImage;
@@ -117,7 +120,8 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
         if (zDim > 1) {
         	frame.addMouseWheelListener(this);
             bufferData = new int[4 * length];
-        } // if (zDim > 1) 
+        } // if (zDim > 1)
+        frame.addMouseMotionListener(this);
         final GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         final GraphicsDevice gs = ge.getDefaultScreenDevice();
         gs.setFullScreenWindow(frame);
@@ -179,6 +183,42 @@ public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
         	inputImage.getRaster().setPixels(0, 0, inputWidth, inputHeight, bufferData);
         	frame.repaint();
         } // else if ((wheelRotation > 0) && (zOffset > 0))
+}
+
+public void mouseDragged(final MouseEvent mouseEvent) {
+    if ((mouseEvent.getModifiers() & InputEvent.BUTTON3_MASK) == 0)  {
+    	return;
+    }
+
+    int xS, yS;
+    final double widthRatio = (double) (frame.getWidth() - 160) / (double) inputWidth;
+    final double heightRatio = (double) (frame.getHeight() - 158) / (double) inputHeight;
+    if (widthRatio > heightRatio) {
+        // Can only expand by the heightRatio
+        final int expWidth = (int) Math.floor(inputWidth * heightRatio);
+        final int leftPadding = (frame.getWidth() - 160 - expWidth) / 2;
+        double zoomX = (double)expWidth/(double)inputWidth;
+        double zoomY = (double)(frame.getHeight() - 158)/(double)inputHeight;
+        xS = (int)((mouseEvent.getX() - (80 + leftPadding))/zoomX);
+        yS = (int)((mouseEvent.getY() - 79)/zoomY);
+        //g.drawImage(inputImage, 80 + leftPadding, 79, expWidth, getHeight() - 158, this);
+    } else {
+        // Can only expand by the widthRatio
+        final int expHeight = (int) Math.floor(inputHeight * widthRatio);
+        final int topPadding = (frame.getHeight() - 158 - expHeight) / 2;
+        double zoomX = (double)(frame.getWidth() - 160)/(double)inputWidth;
+        double zoomY = (double)expHeight/(double)inputHeight;
+        xS = (int)((mouseEvent.getX() - 80)/zoomX);
+        yS = (int)((mouseEvent.getY() - (79 + topPadding))/zoomY);
+        //g.drawImage(inputImage, 80, 79 + topPadding, getWidth() - 160, expHeight, this);
+    }
+    if ( (xS < 0) || (xS >= inputWidth) || (yS < 0) || (yS >= inputHeight)) {
+        return;
+    }
+}
+
+public void mouseMoved(final MouseEvent mouseEvent) {
+	
 }
 
 
