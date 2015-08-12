@@ -2032,6 +2032,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
      * @param wr
      * @param thresh
      * @param support
+     * @param error
      */
     private void computeSupport(final DualLattice boundaries, final int wr, final double thresh,
     		PointIC support[][][], boolean error[]) {
@@ -2080,6 +2081,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
      * @param wr
      * @param adj
      * @param count
+     * @param error
      */
     private void interveningContour(final DualLattice boundaries, final double thresh, final int x0, final int y0,
     		final int wr, PointIC adj[], int count[], boolean error[]) {
@@ -2377,6 +2379,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
      * @param points
      * @param scanCount
      * @param scanLines
+     * @param error
      */
     private void ic_walk(final DualLattice boundaries, final double thresh,
     		final int x0, final int y0,
@@ -2392,7 +2395,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         
         // The predicate that uses long longs will overflow if the image
         // is too long.
-        if (2*wr +1 >= 100) {
+        if (2*wr +1 >= 1000) {
         	System.err.println("2*wr+1 >= 1000 in ic_walk");
         	error[0] = true;
         	return;
