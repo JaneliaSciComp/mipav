@@ -165,6 +165,7 @@ public class PlugInDialogFullScreenDisplay extends JDialogBase implements Algori
     }
 
     private void callAlgorithm() {
+    	int z;
         Image cornerImage;
         try {
             cornerImage = MipavUtil.getIconImage("WhiteCircle.png");
@@ -181,37 +182,47 @@ public class PlugInDialogFullScreenDisplay extends JDialogBase implements Algori
         final int xDim = image.getExtents()[0];
         final int yDim = image.getExtents()[1];
         final int length = xDim * yDim;
+        int zDim = 1;
+        if (image.getNDims() > 2) {
+            zDim = image.getExtents()[2];	
+        }
+        int zOffset = zDim/2;
         BufferedImage inputImage = null;
         inputImage = new BufferedImage(xDim, yDim, BufferedImage.TYPE_INT_ARGB);
+        int imageData[][] = null;
         if (image.isColorImage()) {
-            final int[] imageData = new int[length * 4];
-            try {
-                image.exportData(0, length * 4, imageData);
-            } catch (final IOException e) {
-                MipavUtil.displayError("IOException " + e + " on image.exportData(0, length*4, imageData)");
-                return;
-            }
+            imageData = new int[zDim][length * 4];
+            for (z = 0; z < zDim; z++) {
+	            try {
+	                image.exportData(z * 4 * length, length * 4, imageData[z]);
+	            } catch (final IOException e) {
+	                MipavUtil.displayError("IOException " + e + " on image.exportData(z * 4 * length, length*4, imageData[z])");
+	                return;
+	            }
+            } // for (z = 0; z < zDim; z++)
             final int[] bufferData = new int[length * 4];
             for (int i = 0; i < length; i++) {
-                bufferData[i * 4 + 0] = imageData[i * 4 + 1];
-                bufferData[i * 4 + 1] = imageData[i * 4 + 2];
-                bufferData[i * 4 + 2] = imageData[i * 4 + 3];
+                bufferData[i * 4 + 0] = imageData[zOffset][i * 4 + 1];
+                bufferData[i * 4 + 1] = imageData[zOffset][i * 4 + 2];
+                bufferData[i * 4 + 2] = imageData[zOffset][i * 4 + 3];
                 bufferData[i * 4 + 3] = 255;
             }
             inputImage.getRaster().setPixels(0, 0, xDim, yDim, bufferData);
         } else {
-            final int[] imageData = new int[length];
-            try {
-                image.exportData(0, length, imageData);
-            } catch (final IOException e) {
-                MipavUtil.displayError("IOException " + e + " on image.exportData(0, length, imageData)");
-                return;
-            }
+            imageData = new int[zDim][length];
+            for (z = 0; z < zDim; z++) {
+	            try {
+	                image.exportData(z * length, length, imageData[z]);
+	            } catch (final IOException e) {
+	                MipavUtil.displayError("IOException " + e + " on image.exportData(z* length, length, imageData[z])");
+	                return;
+	            }
+            } // for (z = 0; z < zDim; z++)
             final int[] bufferData = new int[length * 4];
             for (int i = 0; i < length; i++) {
-                bufferData[i * 4 + 0] = imageData[i];
-                bufferData[i * 4 + 1] = imageData[i];
-                bufferData[i * 4 + 2] = imageData[i];
+                bufferData[i * 4 + 0] = imageData[zOffset][i];
+                bufferData[i * 4 + 1] = imageData[zOffset][i];
+                bufferData[i * 4 + 2] = imageData[zOffset][i];
                 bufferData[i * 4 + 3] = 255;
             }
             inputImage.getRaster().setPixels(0, 0, xDim, yDim, bufferData);
@@ -221,7 +232,7 @@ public class PlugInDialogFullScreenDisplay extends JDialogBase implements Algori
          * try { inputImage = ImageIO.read( new File(directory + fileName) ); } catch (IOException e) {
          * MipavUtil.displayError("IOException " + e + " on ImageIO.read( new File(directory + fileName)"); return; }
          */
-        alg = new PlugInAlgorithmFullScreenDisplay(inputImage, cornerImage, outputTextArea);
+        alg = new PlugInAlgorithmFullScreenDisplay(inputImage, cornerImage, imageData, zOffset, image.isColorImage(), outputTextArea);
 
         alg.addListener(this);
 
