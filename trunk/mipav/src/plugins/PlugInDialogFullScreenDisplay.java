@@ -232,7 +232,7 @@ public class PlugInDialogFullScreenDisplay extends JDialogBase implements Algori
          * try { inputImage = ImageIO.read( new File(directory + fileName) ); } catch (IOException e) {
          * MipavUtil.displayError("IOException " + e + " on ImageIO.read( new File(directory + fileName)"); return; }
          */
-        alg = new PlugInAlgorithmFullScreenDisplay(inputImage, cornerImage, imageData, zOffset, image.isColorImage(), outputTextArea);
+        alg = new PlugInAlgorithmFullScreenDisplay(image, inputImage, cornerImage, imageData, zOffset, outputTextArea);
 
         alg.addListener(this);
 
