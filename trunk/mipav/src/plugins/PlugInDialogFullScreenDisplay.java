@@ -11,10 +11,8 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.Enumeration;
 
 import javax.swing.*;
@@ -179,60 +177,12 @@ public class PlugInDialogFullScreenDisplay extends JDialogBase implements Algori
             final boolean multiFile = false;
             image = fileIO.readImage(fileName, directory, multiFile, null);
         }
-        final int xDim = image.getExtents()[0];
-        final int yDim = image.getExtents()[1];
-        final int length = xDim * yDim;
-        int zDim = 1;
-        if (image.getNDims() > 2) {
-            zDim = image.getExtents()[2];	
-        }
-        int zOffset = zDim/2;
-        BufferedImage inputImage = null;
-        inputImage = new BufferedImage(xDim, yDim, BufferedImage.TYPE_INT_ARGB);
-        int imageData[][] = null;
-        if (image.isColorImage()) {
-            imageData = new int[zDim][length * 4];
-            for (z = 0; z < zDim; z++) {
-	            try {
-	                image.exportData(z * 4 * length, length * 4, imageData[z]);
-	            } catch (final IOException e) {
-	                MipavUtil.displayError("IOException " + e + " on image.exportData(z * 4 * length, length*4, imageData[z])");
-	                return;
-	            }
-            } // for (z = 0; z < zDim; z++)
-            final int[] bufferData = new int[length * 4];
-            for (int i = 0; i < length; i++) {
-                bufferData[i * 4 + 0] = imageData[zOffset][i * 4 + 1];
-                bufferData[i * 4 + 1] = imageData[zOffset][i * 4 + 2];
-                bufferData[i * 4 + 2] = imageData[zOffset][i * 4 + 3];
-                bufferData[i * 4 + 3] = 255;
-            }
-            inputImage.getRaster().setPixels(0, 0, xDim, yDim, bufferData);
-        } else {
-            imageData = new int[zDim][length];
-            for (z = 0; z < zDim; z++) {
-	            try {
-	                image.exportData(z * length, length, imageData[z]);
-	            } catch (final IOException e) {
-	                MipavUtil.displayError("IOException " + e + " on image.exportData(z* length, length, imageData[z])");
-	                return;
-	            }
-            } // for (z = 0; z < zDim; z++)
-            final int[] bufferData = new int[length * 4];
-            for (int i = 0; i < length; i++) {
-                bufferData[i * 4 + 0] = imageData[zOffset][i];
-                bufferData[i * 4 + 1] = imageData[zOffset][i];
-                bufferData[i * 4 + 2] = imageData[zOffset][i];
-                bufferData[i * 4 + 3] = 255;
-            }
-            inputImage.getRaster().setPixels(0, 0, xDim, yDim, bufferData);
-
-        }
+        
         /*
          * try { inputImage = ImageIO.read( new File(directory + fileName) ); } catch (IOException e) {
          * MipavUtil.displayError("IOException " + e + " on ImageIO.read( new File(directory + fileName)"); return; }
          */
-        alg = new PlugInAlgorithmFullScreenDisplay(image, inputImage, cornerImage, imageData, zOffset, outputTextArea);
+        alg = new PlugInAlgorithmFullScreenDisplay(image, cornerImage, outputTextArea);
 
         alg.addListener(this);
 
