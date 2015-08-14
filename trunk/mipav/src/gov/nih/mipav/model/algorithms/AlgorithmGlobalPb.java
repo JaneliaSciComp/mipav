@@ -589,7 +589,9 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         	}
         }
         // Accumulate the  values that have identical subscripts
-        for (i = 0; i < numElements; i++) {
+        // All should be nonidentical so skip
+        // Too long to calculate in any event
+        /*for (i = 0; i < numElements; i++) {
         	if (!ignore[i]) {
         		for (j = i+1; j < numElements; j++) {
         			if ((!ignore[j]) && (I[i] == I[j]) && (J[i] == J[j])) {
@@ -599,7 +601,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         			}
         		}
         	}
-        }
+        }*/
         int sparseElements = numElements - numIgnored;
         int Isp[] = new int[sparseElements];
         int Jsp[] = new int[sparseElements];
