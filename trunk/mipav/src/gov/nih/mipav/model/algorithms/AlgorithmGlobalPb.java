@@ -567,6 +567,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         // Values
         double val[] = new double[nnz];
         int ct = 0;
+        // This matrix is already sparse
         for (int row = 0; row < W.n; row++) {
         	for (i = 0; i < W.nz[row]; i++) {
         		I[ct+i] = row;
@@ -579,47 +580,19 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         W = null;
         // Finished end of buildW
         int numElements = val.length;
-        // Remove zero values
-        boolean ignore[] = new boolean[numElements];
-        int numIgnored = 0;
-        for (i = 0; i < numElements; i++) {
-        	if (val[i] == 0.0) {
-        		ignore[i] = true;
-        		numIgnored++;
-        	}
-        }
-        // Accumulate the  values that have identical subscripts
-        // All should be nonidentical so skip
-        // Too long to calculate in any event
-        /*for (i = 0; i < numElements; i++) {
-        	if (!ignore[i]) {
-        		for (j = i+1; j < numElements; j++) {
-        			if ((!ignore[j]) && (I[i] == I[j]) && (J[i] == J[j])) {
-        				val[i] = val[i] + val[j];
-        				ignore[j] = true;
-        				numIgnored++;
-        			}
-        		}
-        	}
-        }*/
-        int sparseElements = numElements - numIgnored;
-        int Isp[] = new int[sparseElements];
-        int Jsp[] = new int[sparseElements];
-        double valsp[] = new double[sparseElements];
+       
         int imax = -1;
         int jmax = -1;
         for (i = 0, j = 0; i < numElements; i++) {
-        	if (!ignore[i]) {
-	            Isp[j] = I[i];
-	            if (Isp[j] > imax) {
-	            	imax = Isp[j];
-	            }
-	            Jsp[j] = J[i];
-	            if (Jsp[j] > jmax) {
-	            	jmax = Jsp[j];
-	            }
-	            valsp[j++] = val[i];
-        	}
+            I[j] = I[i];
+            if (I[j] > imax) {
+            	imax = I[j];
+            }
+            J[j] = J[i];
+            if (J[j] > jmax) {
+            	jmax = J[j];
+            }
+            val[j++] = val[i];
         }
         // [J, I, val] = buildW(l[0],l[1]);
         //Wsp = sparse(J, I, val);
@@ -639,11 +612,11 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         // the sparse matrix D.
         // To do D - W, D must be the same size as W so D must be Wx by Wx
         double S[] = new double[wx];
-        for (i = 0; i < sparseElements; i++) {
-        	S[Jsp[i]] += valsp[i];
+        for (i = 0; i < numElements; i++) {
+        	S[J[i]] += val[i];
         }
-        numIgnored = 0;
-        ignore = new boolean[wx];
+        int numIgnored = 0;
+        boolean ignore[] = new boolean[wx];
         for (i = 0; i < wx; i++) {
         	if (S[i] == 0) {
         	    ignore[i] = true;
@@ -660,15 +633,15 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         	}
         }
         // Find the sparse D - W
-        int sparseElementsDmW = sparseElements + sparseElementsD;
-        for (i = 0; i < sparseElements; i++) {
-        	if (Isp[i] == Jsp[i]) {
+        int sparseElementsDmW = numElements + sparseElementsD;
+        for (i = 0; i < numElements; i++) {
+        	if (I[i] == J[i]) {
         		found = false;
         		for (j = 0; j < sparseElementsD && (!found); j++) {
-        			if (Isp[i] == IJDsp[j]) {
+        			if (I[i] == IJDsp[j]) {
         				found = true;
         				sparseElementsDmW--;
-        				if ((valspD[j] - valsp[i]) == 0.0) {
+        				if ((valspD[j] - val[i]) == 0.0) {
         					sparseElementsDmW--;
         				}
         			}
@@ -679,30 +652,30 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         int JDmWsp[] = new int[sparseElementsDmW];
         double valspDmW[] = new double[sparseElementsDmW];
         ignore = new boolean[sparseElementsD];
-        for (i = 0, k = 0; i < sparseElements; i++) {
-        	if (Isp[i] == Jsp[i]) {
+        for (i = 0, k = 0; i < numElements; i++) {
+        	if (I[i] == J[i]) {
         		found = false;
         		for (j = 0; j < sparseElementsD && (!found); j++) {
-        			if (Isp[i] == IJDsp[j]) {
+        			if (I[i] == IJDsp[j]) {
         				found = true;
         				ignore[j] = true;
-        				if ((valspD[j] - valsp[i]) != 0) {
-        				    IDmWsp[k] = Isp[i];
-        				    JDmWsp[k] = Jsp[i];
-        				    valspDmW[k++] = valspD[j] - valsp[i];
+        				if ((valspD[j] - val[i]) != 0) {
+        				    IDmWsp[k] = I[i];
+        				    JDmWsp[k] = J[i];
+        				    valspDmW[k++] = valspD[j] - val[i];
         				}
         			}
         		} // for (j = 0; j < sparseElementsD && (!found); j++)
         		if (!found) {
-        			IDmWsp[k] = Isp[i];
-    				JDmWsp[k] = Jsp[i];
-    				valspDmW[k++] = -valsp[i];	
+        			IDmWsp[k] = I[i];
+    				JDmWsp[k] = J[i];
+    				valspDmW[k++] = -val[i];	
         		}
         	} // if (Isp[i] == Jsp[i])
         	else {
-        		IDmWsp[k] = Isp[i];
-				JDmWsp[k] = Jsp[i];
-				valspDmW[k++] = -valsp[i];		
+        		IDmWsp[k] = I[i];
+				JDmWsp[k] = J[i];
+				valspDmW[k++] = -val[i];		
         	}
         } // for (i = 0, k = 0; i < sparseElements; i++)
         
@@ -735,6 +708,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         	}
         }
         lena = Math.max(2*nelem, Math.max(10*mL, 10*nL));
+        //lena = 10*Math.max(2*nelem, Math.max(10*mL, 10*nL));
         a = new double[lena];
         // The row indices i must be in indc and
         // the column indices j must be in indr.
