@@ -1,17 +1,11 @@
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.PatientSlice;
 import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewJComponentBase;
-import gov.nih.mipav.view.ViewJComponentEditImage;
 import gov.nih.mipav.view.ViewJFrameBase;
-import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.WindowLevel;
 
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -21,24 +15,25 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 
 import javax.swing.JTextArea;
 
 
 public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements MouseWheelListener, MouseMotionListener {
-    private final BufferedImage inputImage;
+    private BufferedImage inputImage;
 
     private final Image cornerImage;
     
-    private int[][] imageData;
+    private double[][] imageData;
     
     private int zOffset;
     
     private boolean isColorImage;
     
-    private int inputWidth;
+    private int xDim;
     
-    private int inputHeight;
+    private int yDim;
     
     private int zDim;
     
@@ -52,9 +47,6 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
     
     /** User invokes window and level adjustment with right mouse drag in DEFAULT mode. */
     private boolean winLevelSet = false;
-    
-    /** PatientSlice contains all the Patient Coordinate system view-specific data for rendering this component:. */
-    protected PatientSlice m_kPatientSlice;
     
     /**
      * Member variables used to adjust the window and level (contrast and
@@ -91,34 +83,150 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
     private ModelLUT LUTa = null;
     
     private ModelRGB RGBa = null;
+    
+    private double remapConstA;
+    
+    private double imageMinA;
+    
+    private int lutWrite[][];
 
 
-    public PlugInAlgorithmFullScreenDisplay(ModelImage image, final BufferedImage inputImage, final Image cornerImage, 
-    		int imageData[][], int zOffset, final JTextArea outputTextArea) {
+    public PlugInAlgorithmFullScreenDisplay(ModelImage image, final Image cornerImage, 
+    		final JTextArea outputTextArea) {
     	super(null, image);
-        this.inputImage = inputImage;
         this.cornerImage = cornerImage;
-        this.imageData = imageData;
-        this.zOffset = zOffset;
         this.outputTextArea = outputTextArea;
-        this.isColorImage = image.isColorImage();
     }
 
     @Override
     public void runAlgorithm() {
+    	int i;
+    	int z;
+    	int heightA;
+    	double imageMaxA;
+    	double rangeA;
+    	int pix;
+ 	    int redMapped;
+        int greenMapped;
+        int blueMapped;
+        int RGBIndexBufferA[] = null;
+        int lutBufferRemapped[] = null;
         outputTextArea.append("Running Algorithm v1.0" + "\n");
 
         final long begTime = System.currentTimeMillis();
-        inputWidth = inputImage.getWidth();
-        inputHeight = inputImage.getHeight();
-        length = inputWidth * inputHeight;
-        zDim = imageData.length;
+        isColorImage = srcImage.isColorImage();
         if (isColorImage) {
         	RGBa = ViewJFrameBase.initRGB(srcImage);
+        	heightA = RGBa.getExtents()[1];
+        	RGBIndexBufferA = RGBa.exportIndexedRGB();
         }
         else {
             LUTa = ViewJFrameBase.initLUT(srcImage);
+            heightA = LUTa.getExtents()[1];
+            lutWrite = new int[3][256];
+            lutBufferRemapped = LUTa.exportIndexedLUT();
         }
+        if ((srcImage.getType() == ModelStorageBase.UBYTE) || (srcImage.getType() == ModelStorageBase.ARGB)) {
+            imageMinA = 0;
+            imageMaxA = 255;
+        } else if (srcImage.getType() == ModelStorageBase.BYTE) {
+            imageMinA = -128;
+            imageMaxA = 127;
+        } else {
+            imageMinA = srcImage.getMin();
+            imageMaxA = srcImage.getMax();
+        }
+
+        rangeA = imageMaxA - imageMinA;
+
+        if (rangeA == 0) {
+            rangeA = 1;
+        }
+
+        if ((heightA - 1) == 0) {
+            remapConstA = 1;
+        } else if (rangeA < 255) {
+            remapConstA = 1;
+        } else {
+            remapConstA = (heightA - 1) / rangeA;
+        }
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        length = xDim * yDim;
+        zDim = 1;
+        if (srcImage.getNDims() > 2) {
+            zDim = srcImage.getExtents()[2];	
+        }
+        int zOffset = zDim/2;
+        inputImage = new BufferedImage(xDim, yDim, BufferedImage.TYPE_INT_ARGB);
+        if (isColorImage) {
+            imageData = new double[zDim][length * 4];
+            for (z = 0; z < zDim; z++) {
+	            try {
+	                srcImage.exportData(z * 4 * length, length * 4, imageData[z]);
+	            } catch (final IOException e) {
+	                MipavUtil.displayError("IOException " + e + " on srcImage.exportData(z * 4 * length, length*4, imageData[z])");
+	                return;
+	            }
+            } // for (z = 0; z < zDim; z++)
+            bufferData = new int[length * 4];
+            for (i = 0; i < length; i++) {
+            	if (RGBa.getROn()) {
+    	        	pix = (int)((imageData[zOffset][i * 4 + 1] - imageMinA) * remapConstA + 0.5);
+    	            redMapped = (RGBIndexBufferA[pix] & 0x00ff0000) >> 16;
+    	        } else {
+    	            redMapped = 0;
+    	        }
+    	
+    	        if (RGBa.getGOn()) {
+    	        	pix = (int)((imageData[zOffset][i * 4 + 2] - imageMinA) * remapConstA + 0.5);
+    	            greenMapped = (RGBIndexBufferA[pix] & 0x0000ff00) >> 8;
+    	        } else {
+    	            greenMapped = 0;
+    	        }
+    	
+    	        if (RGBa.getBOn()) {
+    	        	pix = (int)((imageData[zOffset][i * 4 + 3] - imageMinA) * remapConstA + 0.5);
+    	            blueMapped = (RGBIndexBufferA[pix] & 0x000000ff);
+    	        } else {
+    	            blueMapped = 0;
+    	        }
+    	        bufferData[i * 4 + 0] = redMapped;
+    	        bufferData[i * 4 + 1] = greenMapped;
+    	        bufferData[i * 4 + 2] = blueMapped;
+    	        bufferData[i * 4 + 3] = 255;
+            }
+            inputImage.getRaster().setPixels(0, 0, xDim, yDim, bufferData);
+        } else {
+            imageData = new double[zDim][length];
+            for (z = 0; z < zDim; z++) {
+	            try {
+	                srcImage.exportData(z * length, length, imageData[z]);
+	            } catch (final IOException e) {
+	                MipavUtil.displayError("IOException " + e + " on srcImage.exportData(z* length, length, imageData[z])");
+	                return;
+	            }
+            } // for (z = 0; z < zDim; z++)
+            bufferData = new int[length * 4];
+            for (i = 0; i < lutBufferRemapped.length; i++) {
+                int value = lutBufferRemapped[i];
+
+                lutWrite[2][i] = (value & 0x000000ff); // blue
+                lutWrite[1][i] =  ((value & 0x0000ff00) >> 8); // green
+                lutWrite[0][i] =  ((value & 0x00ff0000) >> 16); // red
+            }
+        	for (i = 0; i < length; i++) {
+        		pix = (int)((imageData[zOffset][i] - imageMinA) * remapConstA + 0.5);
+        		bufferData[i * 4 + 0] = lutWrite[0][pix];
+                bufferData[i * 4 + 1] = lutWrite[1][pix];
+                bufferData[i * 4 + 2] = lutWrite[2][pix];
+                bufferData[i * 4 + 3] = 255;	
+        	}
+            inputImage.getRaster().setPixels(0, 0, xDim, yDim, bufferData);
+
+        }
+        zDim = imageData.length;
+        
 
         frame = new Frame("Test");
         frame.setUndecorated(true);
@@ -126,8 +234,8 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
             @Override
             public void paint(final Graphics g) {
                 super.paint(g);
-                final double widthRatio = (double) (getWidth() - 160) / (double) inputWidth;
-                final double heightRatio = (double) (getHeight() - 158) / (double) inputHeight;
+                final double widthRatio = (double) (getWidth() - 160) / (double) xDim;
+                final double heightRatio = (double) (getHeight() - 158) / (double) yDim;
                 final BufferedImage backgroundImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
                 final int screenLength = getWidth() * getHeight();
                 final int[] screenData = new int[screenLength * 4];
@@ -141,12 +249,12 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
                 g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
                 if (widthRatio > heightRatio) {
                     // Can only expand by the heightRatio
-                    final int expWidth = (int) Math.floor(inputWidth * heightRatio);
+                    final int expWidth = (int) Math.floor(xDim * heightRatio);
                     final int leftPadding = (getWidth() - 160 - expWidth) / 2;
                     g.drawImage(inputImage, 80 + leftPadding, 79, expWidth, getHeight() - 158, this);
                 } else {
                     // Can only expand by the widthRatio
-                    final int expHeight = (int) Math.floor(inputHeight * widthRatio);
+                    final int expHeight = (int) Math.floor(yDim * widthRatio);
                     final int topPadding = (getHeight() - 158 - expHeight) / 2;
                     g.drawImage(inputImage, 80, 79 + topPadding, getWidth() - 160, expHeight, this);
                 }
@@ -208,31 +316,37 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
     }
     
 public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
-	int i;
+	    int i;
+	    int pix;
+	    int redMapped;
+        int greenMapped;
+        int blueMapped;
+        int RGBIndexBufferA[];
+        int lutBufferRemapped[];
         final int wheelRotation = mouseWheelEvent.getWheelRotation();
         if ((wheelRotation < 0) && (zOffset < zDim - 1)) {
         	// Increment slice
         	zOffset++;
         	if (isColorImage) {
-        		int RGBIndexBufferA[] = RGBa.exportIndexedRGB();
-                int redMapped;
-                int greenMapped;
-                int blueMapped;
+        		RGBIndexBufferA = RGBa.exportIndexedRGB();
         	    for (i = 0; i < length; i++) {
         	        if (RGBa.getROn()) {
-        	            redMapped = (RGBIndexBufferA[imageData[zOffset][i * 4 + 1]] & 0x00ff0000) >> 16;
+        	        	pix = (int)((imageData[zOffset][i * 4 + 1] - imageMinA) * remapConstA + 0.5);
+        	            redMapped = (RGBIndexBufferA[pix] & 0x00ff0000) >> 16;
         	        } else {
         	            redMapped = 0;
         	        }
         	
         	        if (RGBa.getGOn()) {
-        	            greenMapped = (RGBIndexBufferA[imageData[zOffset][i * 4 + 2]] & 0x0000ff00) >> 8;
+        	        	pix = (int)((imageData[zOffset][i * 4 + 2] - imageMinA) * remapConstA + 0.5);
+        	            greenMapped = (RGBIndexBufferA[pix] & 0x0000ff00) >> 8;
         	        } else {
         	            greenMapped = 0;
         	        }
         	
         	        if (RGBa.getBOn()) {
-        	            blueMapped = (RGBIndexBufferA[imageData[zOffset][4 * i + 3]] & 0x000000ff);
+        	        	pix = (int)((imageData[zOffset][i * 4 + 3] - imageMinA) * remapConstA + 0.5);
+        	            blueMapped = (RGBIndexBufferA[pix] & 0x000000ff);
         	        } else {
         	            blueMapped = 0;
         	        }
@@ -243,8 +357,7 @@ public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
         	    } // for (i = 0; i < length; i++)
         	} // if (isColorImage)
         	else {
-        		int lutBufferRemapped[] = LUTa.exportIndexedLUT();
-            	int lutWrite[][] = new int[3][256];
+        		lutBufferRemapped = LUTa.exportIndexedLUT();
             	for (i = 0; i < lutBufferRemapped.length; i++) {
                     int value = lutBufferRemapped[i];
 
@@ -253,41 +366,42 @@ public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
                     lutWrite[0][i] =  ((value & 0x00ff0000) >> 16); // red
                 }
             	for (i = 0; i < length; i++) {
-            		bufferData[i * 4 + 0] = lutWrite[0][imageData[zOffset][i]];
-                    bufferData[i * 4 + 1] = lutWrite[1][imageData[zOffset][i]];
-                    bufferData[i * 4 + 2] = lutWrite[2][imageData[zOffset][i]];
+            		pix = (int)((imageData[zOffset][i] - imageMinA) * remapConstA + 0.5);
+            		bufferData[i * 4 + 0] = lutWrite[0][pix];
+                    bufferData[i * 4 + 1] = lutWrite[1][pix];
+                    bufferData[i * 4 + 2] = lutWrite[2][pix];
                     bufferData[i * 4 + 3] = 255;	
             	}
         	}
-        	inputImage.getRaster().setPixels(0, 0, inputWidth, inputHeight, bufferData);
+        	inputImage.getRaster().setPixels(0, 0, xDim, yDim, bufferData);
         	frame.repaint();
         } // if ((wheelRotation < 0) && (zOffset < zDim - 1))
         else if ((wheelRotation > 0) && (zOffset > 0)) {
         	// Decrement slice
         	zOffset--;
         	if (isColorImage) {
-        		int RGBIndexBufferA[] = RGBa.exportIndexedRGB();
-                int redMapped;
-                int greenMapped;
-                int blueMapped;
+        		RGBIndexBufferA = RGBa.exportIndexedRGB();
         	    for (i = 0; i < length; i++) {
-        	        if (RGBa.getROn()) {
-        	            redMapped = (RGBIndexBufferA[imageData[zOffset][i * 4 + 1]] & 0x00ff0000) >> 16;
-        	        } else {
-        	            redMapped = 0;
-        	        }
-        	
-        	        if (RGBa.getGOn()) {
-        	            greenMapped = (RGBIndexBufferA[imageData[zOffset][i * 4 + 2]] & 0x0000ff00) >> 8;
-        	        } else {
-        	            greenMapped = 0;
-        	        }
-        	
-        	        if (RGBa.getBOn()) {
-        	            blueMapped = (RGBIndexBufferA[imageData[zOffset][4 * i + 3]] & 0x000000ff);
-        	        } else {
-        	            blueMapped = 0;
-        	        }
+        	    	 if (RGBa.getROn()) {
+         	        	pix = (int)((imageData[zOffset][i * 4 + 1] - imageMinA) * remapConstA + 0.5);
+         	            redMapped = (RGBIndexBufferA[pix] & 0x00ff0000) >> 16;
+         	        } else {
+         	            redMapped = 0;
+         	        }
+         	
+         	        if (RGBa.getGOn()) {
+         	        	pix = (int)((imageData[zOffset][i * 4 + 2] - imageMinA) * remapConstA + 0.5);
+         	            greenMapped = (RGBIndexBufferA[pix] & 0x0000ff00) >> 8;
+         	        } else {
+         	            greenMapped = 0;
+         	        }
+         	
+         	        if (RGBa.getBOn()) {
+         	        	pix = (int)((imageData[zOffset][i * 4 + 3] - imageMinA) * remapConstA + 0.5);
+         	            blueMapped = (RGBIndexBufferA[pix] & 0x000000ff);
+         	        } else {
+         	            blueMapped = 0;
+         	        }
         	        bufferData[i * 4 + 0] = redMapped;
         	        bufferData[i * 4 + 1] = greenMapped;
         	        bufferData[i * 4 + 2] = blueMapped;
@@ -295,8 +409,7 @@ public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
         	    } // for (i = 0; i < length; i++)	
         	} // if (isColorImage)
         	else {
-        		int lutBufferRemapped[] = LUTa.exportIndexedLUT();
-            	int lutWrite[][] = new int[3][256];
+        		lutBufferRemapped = LUTa.exportIndexedLUT();
             	for (i = 0; i < lutBufferRemapped.length; i++) {
                     int value = lutBufferRemapped[i];
 
@@ -305,13 +418,14 @@ public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
                     lutWrite[0][i] =  ((value & 0x00ff0000) >> 16); // red
                 }
             	for (i = 0; i < length; i++) {
-            		bufferData[i * 4 + 0] = lutWrite[0][imageData[zOffset][i]];
-                    bufferData[i * 4 + 1] = lutWrite[1][imageData[zOffset][i]];
-                    bufferData[i * 4 + 2] = lutWrite[2][imageData[zOffset][i]];
+            		pix = (int)((imageData[zOffset][i] - imageMinA) * remapConstA + 0.5);
+            		bufferData[i * 4 + 0] = lutWrite[0][pix];
+                    bufferData[i * 4 + 1] = lutWrite[1][pix];
+                    bufferData[i * 4 + 2] = lutWrite[2][pix];
                     bufferData[i * 4 + 3] = 255;	
             	}
         	}
-        	inputImage.getRaster().setPixels(0, 0, inputWidth, inputHeight, bufferData);
+        	inputImage.getRaster().setPixels(0, 0, xDim, yDim, bufferData);
         	frame.repaint();
         } // else if ((wheelRotation > 0) && (zOffset > 0))
 }
@@ -323,28 +437,28 @@ public void mouseDragged(final MouseEvent mouseEvent) {
 
     int xS, yS;
     int i;
-    final double widthRatio = (double) (frame.getWidth() - 160) / (double) inputWidth;
-    final double heightRatio = (double) (frame.getHeight() - 158) / (double) inputHeight;
+    final double widthRatio = (double) (frame.getWidth() - 160) / (double) xDim;
+    final double heightRatio = (double) (frame.getHeight() - 158) / (double) yDim;
     if (widthRatio > heightRatio) {
         // Can only expand by the heightRatio
-        final int expWidth = (int) Math.floor(inputWidth * heightRatio);
+        final int expWidth = (int) Math.floor(xDim * heightRatio);
         final int leftPadding = (frame.getWidth() - 160 - expWidth) / 2;
-        double zoomX = (double)expWidth/(double)inputWidth;
-        double zoomY = (double)(frame.getHeight() - 158)/(double)inputHeight;
+        double zoomX = (double)expWidth/(double)xDim;
+        double zoomY = (double)(frame.getHeight() - 158)/(double)yDim;
         xS = (int)((mouseEvent.getX() - (80 + leftPadding))/zoomX);
         yS = (int)((mouseEvent.getY() - 79)/zoomY);
         //g.drawImage(inputImage, 80 + leftPadding, 79, expWidth, getHeight() - 158, this);
     } else {
         // Can only expand by the widthRatio
-        final int expHeight = (int) Math.floor(inputHeight * widthRatio);
+        final int expHeight = (int) Math.floor(yDim * widthRatio);
         final int topPadding = (frame.getHeight() - 158 - expHeight) / 2;
-        double zoomX = (double)(frame.getWidth() - 160)/(double)inputWidth;
-        double zoomY = (double)expHeight/(double)inputHeight;
+        double zoomX = (double)(frame.getWidth() - 160)/(double)xDim;
+        double zoomY = (double)expHeight/(double)yDim;
         xS = (int)((mouseEvent.getX() - 80)/zoomX);
         yS = (int)((mouseEvent.getY() - (79 + topPadding))/zoomY);
         //g.drawImage(inputImage, 80, 79 + topPadding, getWidth() - 160, expHeight, this);
     }
-    if ( (xS < 0) || (xS >= inputWidth) || (yS < 0) || (yS >= inputHeight)) {
+    if ( (xS < 0) || (xS >= xDim) || (yS < 0) || (yS >= yDim)) {
         return;
     }
     
@@ -353,9 +467,9 @@ public void mouseDragged(final MouseEvent mouseEvent) {
     // Dragging the mouse with the right mouse button pressed
     // increases the level when going from up to down.
     
-    final float fX = xS / (float) inputWidth;
-    final float fY = yS / (float) inputHeight;
-    
+    final float fX = xS / (float) xDim;
+    final float fY = yS / (float) yDim;
+    int pix;
     if (isColorImage) {
         updateWinLevel(fX, fY, !winLevelSet, RGBa, srcImage);
         int RGBIndexBufferA[] = RGBa.exportIndexedRGB();
@@ -363,20 +477,23 @@ public void mouseDragged(final MouseEvent mouseEvent) {
         int greenMapped;
         int blueMapped;
 	    for (i = 0; i < length; i++) {
-	        if (RGBa.getROn()) {
-	            redMapped = (RGBIndexBufferA[imageData[zOffset][i * 4 + 1]] & 0x00ff0000) >> 16;
+	    	if (RGBa.getROn()) {
+	        	pix = (int)((imageData[zOffset][i * 4 + 1] - imageMinA) * remapConstA + 0.5);
+	            redMapped = (RGBIndexBufferA[pix] & 0x00ff0000) >> 16;
 	        } else {
 	            redMapped = 0;
 	        }
 	
 	        if (RGBa.getGOn()) {
-	            greenMapped = (RGBIndexBufferA[imageData[zOffset][i * 4 + 2]] & 0x0000ff00) >> 8;
+	        	pix = (int)((imageData[zOffset][i * 4 + 2] - imageMinA) * remapConstA + 0.5);
+	            greenMapped = (RGBIndexBufferA[pix] & 0x0000ff00) >> 8;
 	        } else {
 	            greenMapped = 0;
 	        }
 	
 	        if (RGBa.getBOn()) {
-	            blueMapped = (RGBIndexBufferA[imageData[zOffset][4 * i + 3]] & 0x000000ff);
+	        	pix = (int)((imageData[zOffset][i * 4 + 3] - imageMinA) * remapConstA + 0.5);
+	            blueMapped = (RGBIndexBufferA[pix] & 0x000000ff);
 	        } else {
 	            blueMapped = 0;
 	        }
@@ -389,7 +506,6 @@ public void mouseDragged(final MouseEvent mouseEvent) {
     else {
     	updateWinLevel(fX, fY, !winLevelSet, LUTa, srcImage);
     	int lutBufferRemapped[] = LUTa.exportIndexedLUT();
-    	int lutWrite[][] = new int[3][256];
     	for (i = 0; i < lutBufferRemapped.length; i++) {
             int value = lutBufferRemapped[i];
 
@@ -398,13 +514,14 @@ public void mouseDragged(final MouseEvent mouseEvent) {
             lutWrite[0][i] =  ((value & 0x00ff0000) >> 16); // red
         }
     	for (i = 0; i < length; i++) {
-    		bufferData[i * 4 + 0] = lutWrite[0][imageData[zOffset][i]];
-            bufferData[i * 4 + 1] = lutWrite[1][imageData[zOffset][i]];
-            bufferData[i * 4 + 2] = lutWrite[2][imageData[zOffset][i]];
+    		pix = (int)((imageData[zOffset][i] - imageMinA) * remapConstA + 0.5);
+    		bufferData[i * 4 + 0] = lutWrite[0][pix];
+            bufferData[i * 4 + 1] = lutWrite[1][pix];
+            bufferData[i * 4 + 2] = lutWrite[2][pix];
             bufferData[i * 4 + 3] = 255;	
     	}
     }
-    inputImage.getRaster().setPixels(0, 0, inputWidth, inputHeight, bufferData);
+    inputImage.getRaster().setPixels(0, 0, xDim, yDim, bufferData);
 	frame.repaint();
     frame.setCursor(MipavUtil.winLevelCursor);
     
