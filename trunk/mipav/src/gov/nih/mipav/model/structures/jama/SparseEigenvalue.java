@@ -10499,6 +10499,9 @@ public class SparseEigenvalue implements java.io.Serializable {
     //     %------------------------------------%
     
           if (info[0] < 0) {
+        	  if (info[0] == -9999) {
+        		  UI.setDataText("dsaupd: size of the current Arnoldi factorization = " + iparam[4] + "\n");
+        	  }
         	  return;
           }
           if (info[0] == 2) info[0] = 3;
