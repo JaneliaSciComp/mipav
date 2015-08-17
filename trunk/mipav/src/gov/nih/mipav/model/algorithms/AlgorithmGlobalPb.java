@@ -707,8 +707,8 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         		nL = JDmWsp[k] + 1;
         	}
         }
-        lena = Math.max(2*nelem, Math.max(10*mL, 10*nL));
-        //lena = 10*Math.max(2*nelem, Math.max(10*mL, 10*nL));
+        // lena = Math.max(2*nelem, Math.max(10*mL, 10*nL));
+        lena = 10*Math.max(2*nelem, Math.max(10*mL, 10*nL));
         a = new double[lena];
         // The row indices i must be in indc and
         // the column indices j must be in indr.
@@ -2286,7 +2286,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
     	for (int y = 0; y < 2*wr+1; y++) {
     		int len = scanCount[y];
     		if (len < 0 || len > 2*wr+1) {
-    			System.err.println("len = " + len + " out of boundes in interveningContour");
+    			System.err.println("len = " + len + " out of bounds in interveningContour");
     			error[0] = true;
     			return;
     		}
@@ -2450,7 +2450,7 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         	return;
         }
         
-        // Make sure point are all distinct
+        // Make sure points are all distinct
         if (x0 == x1 && y0 == y1) {
         	System.err.println("(x0,y0) is the same as (x1,y1) in ic_walk");
         	error[0] = true;
