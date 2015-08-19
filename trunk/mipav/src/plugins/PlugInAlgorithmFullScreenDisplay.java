@@ -89,6 +89,30 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
     private double imageMinA;
     
     private int lutWrite[][];
+    
+    private int screenWidth;
+    
+    private int screenHeight;
+    
+    private int screenData[];
+    
+    private double widthRatio;
+    
+    private double heightRatio;
+    
+    private BufferedImage backgroundImage;
+    
+    private int expWidth;
+    
+    private int leftPadding;
+    
+    private int expHeight;
+    
+    private int topPadding;
+    
+    private double zoomX;
+    
+    private double zoomY;
 
 
     public PlugInAlgorithmFullScreenDisplay(ModelImage image, final Image cornerImage, 
@@ -230,44 +254,54 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
 
         frame = new Frame("Test");
         frame.setUndecorated(true);
+        screenWidth = Toolkit.getDefaultToolkit().getScreenSize().width;
+        screenHeight = Toolkit.getDefaultToolkit().getScreenSize().height;
+        widthRatio = (double) (screenWidth - 160) / (double) xDim;
+        heightRatio = (double) (screenHeight - 158) / (double) yDim;
+        backgroundImage = new BufferedImage(screenWidth, screenHeight, BufferedImage.TYPE_INT_ARGB);
+        final int screenLength = screenWidth * screenHeight;
+        screenData = new int[screenLength * 4];
+        for (i = 0; i < screenLength; i++) {
+            screenData[i * 4 + 0] = 0;
+            screenData[i * 4 + 1] = 0;
+            screenData[i * 4 + 2] = 0;
+            screenData[i * 4 + 3] = 255;
+        }
+        backgroundImage.getRaster().setPixels(0, 0, screenWidth, screenHeight, screenData);
+        if (widthRatio > heightRatio) {
+            // Can only expand by the heightRatio
+            expWidth = (int) Math.floor(xDim * heightRatio);
+            leftPadding = (screenWidth - 160 - expWidth) / 2;
+            zoomX = (double)expWidth/(double)xDim;
+            zoomY = (double)(screenHeight - 158)/(double)yDim;
+        }
+        else {
+        	// Can only expand by the widthRatio
+            expHeight = (int) Math.floor(yDim * widthRatio);
+            topPadding = (screenHeight - 158 - expHeight) / 2;
+            zoomX = (double)(screenWidth - 160)/(double)xDim;
+            zoomY = (double)expHeight/(double)yDim;
+        }
         frame.add(new Component() {
             @Override
             public void paint(final Graphics g) {
                 super.paint(g);
-                final double widthRatio = (double) (getWidth() - 160) / (double) xDim;
-                final double heightRatio = (double) (getHeight() - 158) / (double) yDim;
-                final BufferedImage backgroundImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-                final int screenLength = getWidth() * getHeight();
-                final int[] screenData = new int[screenLength * 4];
-                for (int i = 0; i < screenLength; i++) {
-                    screenData[i * 4 + 0] = 0;
-                    screenData[i * 4 + 1] = 0;
-                    screenData[i * 4 + 2] = 0;
-                    screenData[i * 4 + 3] = 255;
-                }
-                backgroundImage.getRaster().setPixels(0, 0, getWidth(), getHeight(), screenData);
-                g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+                g.drawImage(backgroundImage, 0, 0, screenWidth, screenHeight, this);
                 if (widthRatio > heightRatio) {
-                    // Can only expand by the heightRatio
-                    final int expWidth = (int) Math.floor(xDim * heightRatio);
-                    final int leftPadding = (getWidth() - 160 - expWidth) / 2;
-                    g.drawImage(inputImage, 80 + leftPadding, 79, expWidth, getHeight() - 158, this);
+                    g.drawImage(inputImage, 80 + leftPadding, 79, expWidth, screenHeight - 158, this);
                     if (cornerImage != null) {
                         g.drawImage(cornerImage, leftPadding, 0, 80, 79, this);
                         g.drawImage(cornerImage, 80 + leftPadding + expWidth, 0, 80, 79, this);
-                        g.drawImage(cornerImage, leftPadding, getHeight() - 79, 80, 79, this);
-                        g.drawImage(cornerImage, 80 + leftPadding + expWidth, getHeight() - 79, 80, 79, this);
+                        g.drawImage(cornerImage, leftPadding, screenHeight - 79, 80, 79, this);
+                        g.drawImage(cornerImage, 80 + leftPadding + expWidth, screenHeight - 79, 80, 79, this);
                     } // if (cornerImage != null)
                 } else {
-                    // Can only expand by the widthRatio
-                    final int expHeight = (int) Math.floor(yDim * widthRatio);
-                    final int topPadding = (getHeight() - 158 - expHeight) / 2;
-                    g.drawImage(inputImage, 80, 79 + topPadding, getWidth() - 160, expHeight, this);
+                    g.drawImage(inputImage, 80, 79 + topPadding, screenWidth - 160, expHeight, this);
                     if (cornerImage != null) {
                         g.drawImage(cornerImage, 0, topPadding, 80, 79, this);
-                        g.drawImage(cornerImage, getWidth() - 80, topPadding, 80, 79, this);
+                        g.drawImage(cornerImage, screenWidth - 80, topPadding, 80, 79, this);
                         g.drawImage(cornerImage, 0, 79 + topPadding + expHeight, 80, 79, this);
-                        g.drawImage(cornerImage, getWidth() - 80,79 + topPadding + expHeight, 80, 79, this);
+                        g.drawImage(cornerImage, screenWidth - 80,79 + topPadding + expHeight, 80, 79, this);
                     } // if (cornerImage != null)
                 }
             }
@@ -443,26 +477,14 @@ public void mouseDragged(final MouseEvent mouseEvent) {
 
     int xS, yS;
     int i;
-    final double widthRatio = (double) (frame.getWidth() - 160) / (double) xDim;
-    final double heightRatio = (double) (frame.getHeight() - 158) / (double) yDim;
     if (widthRatio > heightRatio) {
-        // Can only expand by the heightRatio
-        final int expWidth = (int) Math.floor(xDim * heightRatio);
-        final int leftPadding = (frame.getWidth() - 160 - expWidth) / 2;
-        double zoomX = (double)expWidth/(double)xDim;
-        double zoomY = (double)(frame.getHeight() - 158)/(double)yDim;
         xS = (int)((mouseEvent.getX() - (80 + leftPadding))/zoomX);
         yS = (int)((mouseEvent.getY() - 79)/zoomY);
-        //g.drawImage(inputImage, 80 + leftPadding, 79, expWidth, getHeight() - 158, this);
+        //g.drawImage(inputImage, 80 + leftPadding, 79, expWidth, screenHeight - 158, this);
     } else {
-        // Can only expand by the widthRatio
-        final int expHeight = (int) Math.floor(yDim * widthRatio);
-        final int topPadding = (frame.getHeight() - 158 - expHeight) / 2;
-        double zoomX = (double)(frame.getWidth() - 160)/(double)xDim;
-        double zoomY = (double)expHeight/(double)yDim;
         xS = (int)((mouseEvent.getX() - 80)/zoomX);
         yS = (int)((mouseEvent.getY() - (79 + topPadding))/zoomY);
-        //g.drawImage(inputImage, 80, 79 + topPadding, getWidth() - 160, expHeight, this);
+        //g.drawImage(inputImage, 80, 79 + topPadding, screenWidth - 160, expHeight, this);
     }
     if ( (xS < 0) || (xS >= xDim) || (yS < 0) || (yS >= yDim)) {
         return;
