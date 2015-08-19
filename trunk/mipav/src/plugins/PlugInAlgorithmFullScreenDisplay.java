@@ -113,6 +113,8 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
     private double zoomX;
     
     private double zoomY;
+    
+    private boolean haveDrawn = false;
 
 
     public PlugInAlgorithmFullScreenDisplay(ModelImage image, final Image cornerImage, 
@@ -286,24 +288,27 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
             @Override
             public void paint(final Graphics g) {
                 super.paint(g);
-                g.drawImage(backgroundImage, 0, 0, screenWidth, screenHeight, this);
+                if (!haveDrawn) {
+                    g.drawImage(backgroundImage, 0, 0, screenWidth, screenHeight, this);
+                }
                 if (widthRatio > heightRatio) {
                     g.drawImage(inputImage, 80 + leftPadding, 79, expWidth, screenHeight - 158, this);
-                    if (cornerImage != null) {
+                    if ((cornerImage != null) && (!haveDrawn)) {
                         g.drawImage(cornerImage, leftPadding, 0, 80, 79, this);
                         g.drawImage(cornerImage, 80 + leftPadding + expWidth, 0, 80, 79, this);
                         g.drawImage(cornerImage, leftPadding, screenHeight - 79, 80, 79, this);
                         g.drawImage(cornerImage, 80 + leftPadding + expWidth, screenHeight - 79, 80, 79, this);
-                    } // if (cornerImage != null)
+                    } // if ((cornerImage != null) && (!haveDrawn))
                 } else {
                     g.drawImage(inputImage, 80, 79 + topPadding, screenWidth - 160, expHeight, this);
-                    if (cornerImage != null) {
+                    if ((cornerImage != null) && (!haveDrawn)) {
                         g.drawImage(cornerImage, 0, topPadding, 80, 79, this);
                         g.drawImage(cornerImage, screenWidth - 80, topPadding, 80, 79, this);
                         g.drawImage(cornerImage, 0, 79 + topPadding + expHeight, 80, 79, this);
                         g.drawImage(cornerImage, screenWidth - 80,79 + topPadding + expHeight, 80, 79, this);
-                    } // if (cornerImage != null)
+                    } // if ((cornerImage != null) && (!haveDrawn))
                 }
+                haveDrawn = true;
             }
         });
         frame.addMouseListener(new MouseListener() {
@@ -364,9 +369,15 @@ public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
         int RGBIndexBufferA[];
         int lutBufferRemapped[];
         final int wheelRotation = mouseWheelEvent.getWheelRotation();
-        if ((wheelRotation < 0) && (zOffset < zDim - 1)) {
-        	// Increment slice
-        	zOffset++;
+        if (((wheelRotation < 0) && (zOffset < zDim - 1)) ||  ((wheelRotation > 0) && (zOffset > 0))) {
+        	if (wheelRotation < 0) {
+        	    // Increment slice
+        	    zOffset++;
+            }
+        	else {
+        		// Decrement slice
+            	zOffset--;
+        	}
         	if (isColorImage) {
         		RGBIndexBufferA = RGBa.exportIndexedRGB();
         	    for (i = 0; i < length; i++) {
@@ -414,60 +425,13 @@ public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
             	}
         	}
         	inputImage.getRaster().setPixels(0, 0, xDim, yDim, bufferData);
-        	frame.repaint();
-        } // if ((wheelRotation < 0) && (zOffset < zDim - 1))
-        else if ((wheelRotation > 0) && (zOffset > 0)) {
-        	// Decrement slice
-        	zOffset--;
-        	if (isColorImage) {
-        		RGBIndexBufferA = RGBa.exportIndexedRGB();
-        	    for (i = 0; i < length; i++) {
-        	    	 if (RGBa.getROn()) {
-         	        	pix = (int)((imageData[zOffset][i * 4 + 1] - imageMinA) * remapConstA + 0.5);
-         	            redMapped = (RGBIndexBufferA[pix] & 0x00ff0000) >> 16;
-         	        } else {
-         	            redMapped = 0;
-         	        }
-         	
-         	        if (RGBa.getGOn()) {
-         	        	pix = (int)((imageData[zOffset][i * 4 + 2] - imageMinA) * remapConstA + 0.5);
-         	            greenMapped = (RGBIndexBufferA[pix] & 0x0000ff00) >> 8;
-         	        } else {
-         	            greenMapped = 0;
-         	        }
-         	
-         	        if (RGBa.getBOn()) {
-         	        	pix = (int)((imageData[zOffset][i * 4 + 3] - imageMinA) * remapConstA + 0.5);
-         	            blueMapped = (RGBIndexBufferA[pix] & 0x000000ff);
-         	        } else {
-         	            blueMapped = 0;
-         	        }
-        	        bufferData[i * 4 + 0] = redMapped;
-        	        bufferData[i * 4 + 1] = greenMapped;
-        	        bufferData[i * 4 + 2] = blueMapped;
-        	        bufferData[i * 4 + 3] = 255;
-        	    } // for (i = 0; i < length; i++)	
-        	} // if (isColorImage)
-        	else {
-        		lutBufferRemapped = LUTa.exportIndexedLUT();
-            	for (i = 0; i < lutBufferRemapped.length; i++) {
-                    int value = lutBufferRemapped[i];
-
-                    lutWrite[2][i] = (value & 0x000000ff); // blue
-                    lutWrite[1][i] =  ((value & 0x0000ff00) >> 8); // green
-                    lutWrite[0][i] =  ((value & 0x00ff0000) >> 16); // red
-                }
-            	for (i = 0; i < length; i++) {
-            		pix = (int)((imageData[zOffset][i] - imageMinA) * remapConstA + 0.5);
-            		bufferData[i * 4 + 0] = lutWrite[0][pix];
-                    bufferData[i * 4 + 1] = lutWrite[1][pix];
-                    bufferData[i * 4 + 2] = lutWrite[2][pix];
-                    bufferData[i * 4 + 3] = 255;	
-            	}
+        	if (widthRatio > heightRatio) {
+        	    frame.repaint(80 + leftPadding, 79, expWidth, screenHeight - 158);
         	}
-        	inputImage.getRaster().setPixels(0, 0, xDim, yDim, bufferData);
-        	frame.repaint();
-        } // else if ((wheelRotation > 0) && (zOffset > 0))
+        	else {
+        		frame.repaint(80, 79 + topPadding, screenWidth - 160, expHeight);
+        	}
+        } // if (((wheelRotation < 0) && (zOffset < zDim - 1)) ||  ((wheelRotation > 0) && (zOffset > 0)))
 }
 
 public void mouseDragged(final MouseEvent mouseEvent) {
@@ -550,7 +514,12 @@ public void mouseDragged(final MouseEvent mouseEvent) {
     	}
     }
     inputImage.getRaster().setPixels(0, 0, xDim, yDim, bufferData);
-	frame.repaint();
+    if (widthRatio > heightRatio) {
+	    frame.repaint(80 + leftPadding, 79, expWidth, screenHeight - 158);
+	}
+	else {
+		frame.repaint(80, 79 + topPadding, screenWidth - 160, expHeight);
+	}
     frame.setCursor(MipavUtil.winLevelCursor);
     
     if ( !winLevelSet) {
