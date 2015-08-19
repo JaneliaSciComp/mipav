@@ -252,18 +252,24 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
                     final int expWidth = (int) Math.floor(xDim * heightRatio);
                     final int leftPadding = (getWidth() - 160 - expWidth) / 2;
                     g.drawImage(inputImage, 80 + leftPadding, 79, expWidth, getHeight() - 158, this);
+                    if (cornerImage != null) {
+                        g.drawImage(cornerImage, leftPadding, 0, 80, 79, this);
+                        g.drawImage(cornerImage, 80 + leftPadding + expWidth, 0, 80, 79, this);
+                        g.drawImage(cornerImage, leftPadding, getHeight() - 79, 80, 79, this);
+                        g.drawImage(cornerImage, 80 + leftPadding + expWidth, getHeight() - 79, 80, 79, this);
+                    } // if (cornerImage != null)
                 } else {
                     // Can only expand by the widthRatio
                     final int expHeight = (int) Math.floor(yDim * widthRatio);
                     final int topPadding = (getHeight() - 158 - expHeight) / 2;
                     g.drawImage(inputImage, 80, 79 + topPadding, getWidth() - 160, expHeight, this);
+                    if (cornerImage != null) {
+                        g.drawImage(cornerImage, 0, topPadding, 80, 79, this);
+                        g.drawImage(cornerImage, getWidth() - 80, topPadding, 80, 79, this);
+                        g.drawImage(cornerImage, 0, 79 + topPadding + expHeight, 80, 79, this);
+                        g.drawImage(cornerImage, getWidth() - 80,79 + topPadding + expHeight, 80, 79, this);
+                    } // if (cornerImage != null)
                 }
-                if (cornerImage != null) {
-                    g.drawImage(cornerImage, 0, 0, 80, 79, this);
-                    g.drawImage(cornerImage, getWidth() - 80, 0, 80, 79, this);
-                    g.drawImage(cornerImage, 0, getHeight() - 79, 80, 79, this);
-                    g.drawImage(cornerImage, getWidth() - 80, getHeight() - 70, 80, 79, this);
-                } // if (cornerImage != null)
             }
         });
         frame.addMouseListener(new MouseListener() {
