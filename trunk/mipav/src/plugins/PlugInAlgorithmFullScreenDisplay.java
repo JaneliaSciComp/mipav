@@ -290,23 +290,23 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
             public void paint(final Graphics g) {
                 super.paint(g);
                 if (!haveDrawn) {
-                    g.drawImage(backgroundImage, 0, 0, screenWidth, screenHeight, this);
+                    g.drawImage(backgroundImage, 0, 0, screenWidth, screenHeight, null);
                 }
                 if (widthRatio > heightRatio) {
-                    g.drawImage(inputImage, 80 + leftPadding, 79, expWidth, screenHeight - 158, this);
+                    g.drawImage(inputImage, 80 + leftPadding, 79, expWidth, screenHeight - 158, null);
                     if ((cornerImage != null) && (!haveDrawn)) {
-                        g.drawImage(cornerImage, leftPadding, 0, 80, 79, this);
-                        g.drawImage(cornerImage, 80 + leftPadding + expWidth, 0, 80, 79, this);
-                        g.drawImage(cornerImage, leftPadding, screenHeight - 79, 80, 79, this);
-                        g.drawImage(cornerImage, 80 + leftPadding + expWidth, screenHeight - 79, 80, 79, this);
+                        g.drawImage(cornerImage, leftPadding, 0, 80, 79, null);
+                        g.drawImage(cornerImage, 80 + leftPadding + expWidth, 0, 80, 79, null);
+                        g.drawImage(cornerImage, leftPadding, screenHeight - 79, 80, 79, null);
+                        g.drawImage(cornerImage, 80 + leftPadding + expWidth, screenHeight - 79, 80, 79, null);
                     } // if ((cornerImage != null) && (!haveDrawn))
                 } else {
-                    g.drawImage(inputImage, 80, 79 + topPadding, screenWidth - 160, expHeight, this);
+                    g.drawImage(inputImage, 80, 79 + topPadding, screenWidth - 160, expHeight, null);
                     if ((cornerImage != null) && (!haveDrawn)) {
-                        g.drawImage(cornerImage, 0, topPadding, 80, 79, this);
-                        g.drawImage(cornerImage, screenWidth - 80, topPadding, 80, 79, this);
-                        g.drawImage(cornerImage, 0, 79 + topPadding + expHeight, 80, 79, this);
-                        g.drawImage(cornerImage, screenWidth - 80,79 + topPadding + expHeight, 80, 79, this);
+                        g.drawImage(cornerImage, 0, topPadding, 80, 79, null);
+                        g.drawImage(cornerImage, screenWidth - 80, topPadding, 80, 79, null);
+                        g.drawImage(cornerImage, 0, 79 + topPadding + expHeight, 80, 79, null);
+                        g.drawImage(cornerImage, screenWidth - 80,79 + topPadding + expHeight, 80, 79, null);
                     } // if ((cornerImage != null) && (!haveDrawn))
                 }
                 haveDrawn = true;
