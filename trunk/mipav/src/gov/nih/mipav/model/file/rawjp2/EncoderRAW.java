@@ -1,11 +1,12 @@
 package gov.nih.mipav.model.file.rawjp2;
 
+import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.ViewJProgressBar;
 
-
 import java.util.*;
 import java.io.*;
+
 import javax.swing.*;
 
 import jj2000.j2k.*;
@@ -1487,13 +1488,17 @@ public class EncoderRAW implements Runnable {
  * Now see what happens.
  *
  */
-public void runAllSlices(int startSlice, int endSlice, boolean useModImage, ViewJProgressBar progressBar) {
+public void runAllSlices(int startSlice, int endSlice, boolean useModImage, ViewJProgressBar progressBar,FileWriteOptions options, int timeSlice) {
 	progressBar.updateValueImmed(10);
 //	ImgReaderRAWSlice slice;
 	ByteArrayOutputStream buff;
 	boolean is2D = false;
+	boolean is3D = false;
 	if(image.getNDims() == 2) {
 		is2D = true;
+	}
+	if(image.getNDims() == 3) {
+		is3D = true;
 	}
 	try {
 		 RAWJP2Header rawhd = new RAWJP2Header();	 
@@ -1502,13 +1507,17 @@ public void runAllSlices(int startSlice, int endSlice, boolean useModImage, View
 	 if (useModImage) { 
 		 float[] imgRes = image.getResolutions(0);
 		 int[] imgExtents = image.getExtents();
+		 int[] rawhdImgExtents = new int[imgExtents.length];
+		 for(int i=0;i<imgExtents.length;i++) {
+			 rawhdImgExtents[i] = imgExtents[i];
+		 }
 		 int imgType = image.getType();
 		 int imgModality = image.getImageModality();
 		 int imgOrientation = image.getImageOrientation();
 		 if(!is2D) {
-			 imgExtents[2] = endSlice-startSlice +1;
+			 rawhdImgExtents[2] = endSlice-startSlice +1;
 		 }
-		 rawhd.setImgExtents(imgExtents);
+		 rawhd.setImgExtents(rawhdImgExtents);
 		 rawhd.setImgType(imgType);
 		 rawhd.setImgResolution(imgRes);
 		 rawhd.setImgModality(imgModality);
@@ -1528,8 +1537,9 @@ public void runAllSlices(int startSlice, int endSlice, boolean useModImage, View
 		 }
 
 		 progressBar.updateValueImmed(30);
-		 ImgReaderRAWSlice slice = new ImgReaderRAWSlice(image,startSlice,false);
+		 
 		 if(is2D) {
+			 ImgReaderRAWSlice slice = new ImgReaderRAWSlice(image,startSlice,false);
 			 progressBar.updateValueImmed(40);
 			 buff = run1Slice(slice);
 			 rawhd.setIs2D(is2D);
@@ -1538,7 +1548,8 @@ public void runAllSlices(int startSlice, int endSlice, boolean useModImage, View
 			 progressBar.updateValueImmed(60);
 			 f.write(buff.toByteArray(),0,buff.size());
 			 progressBar.updateValueImmed(80);
-		 }else {
+		 }else if(is3D){
+			 ImgReaderRAWSlice slice = new ImgReaderRAWSlice(image,startSlice,false);
 			 for(int sliceIdx=startSlice;sliceIdx<=endSlice;sliceIdx++) {
 				 progressBar.updateValueImmed(30 + Math.round((float) sliceIdx / endSlice * 50));
 				 slice.setSliceIndex(sliceIdx,true);
@@ -1549,6 +1560,31 @@ public void runAllSlices(int startSlice, int endSlice, boolean useModImage, View
 	//			 JOptionPane.showMessageDialog(null, s, "File pointer position", JOptionPane.INFORMATION_MESSAGE);			 
 				 f.write(buff.toByteArray(),0,buff.size());
 			 }
+		 } else {
+			 int timeBegin = options.getBeginTime();
+			 int timeBeginParam = timeBegin + 1;
+			 int timeEnd = options.getEndTime();
+			 ImgReaderRAWSlice slice = new ImgReaderRAWSlice(image,startSlice,timeBeginParam,false);
+
+				 
+			 for(int sliceIdx=startSlice;sliceIdx<=endSlice;sliceIdx++) {
+				 progressBar.updateValueImmed(30 + Math.round((float) sliceIdx / endSlice * 50));
+				 int timeParam = timeSlice + 1;
+				 slice.setSliceIndex(sliceIdx,timeParam,true);
+				 buff = run1Slice(slice);
+				 rawhd.setSize(buff.size(),sliceIdx-startSlice);		 
+				 rawhd.writeRawJP2Header(f);
+	//			 String s = Integer.toString(f.getPos());
+	//			 JOptionPane.showMessageDialog(null, s, "File pointer position", JOptionPane.INFORMATION_MESSAGE);			 
+				 f.write(buff.toByteArray(),0,buff.size());
+			 }
+				 
+
+			 
+			 
+			 
+			 
+			 
 		 }
 		 f.flush();
 		 f.close();
@@ -1576,6 +1612,7 @@ public void runAllSlices(int startSlice, int endSlice, boolean useModImage, View
 
 	 }
 	} catch (IOException e) {
+		e.printStackTrace();
 		System.out.println("Error writing final compressed file!");
 		JOptionPane.showMessageDialog(null, "Error writing final compressed file!", "Error", JOptionPane.INFORMATION_MESSAGE);		
 	}

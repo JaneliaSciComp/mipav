@@ -146,6 +146,38 @@ public class ImgReaderRAWSlice extends ImgReader {
         this.useModImg = true;
 //        JOptionPane.showMessageDialog(null, "ImgReaderRAWSlice OK", "Info", JOptionPane.INFORMATION_MESSAGE);
     }
+    
+    public ImgReaderRAWSlice(ModelImage image, int si, int ti, boolean savingAsEncJP2){
+    	int[] imgExtents;
+		
+		this.image = image;
+		imgExtents = image.getExtents();
+		this.savingAsEncJP2 = savingAsEncJP2;
+		
+		this.w = imgExtents[0];
+		this.h = imgExtents[1];
+		//if(image.isColorImage()) {
+		//		this.w = this.w * 4;
+		//}
+//		this.numlice = imgExtents[2];
+		this.nc=1;
+        this.rb=16;
+        
+		//this.nc=3;//testing for color
+        //this.rb=8;//testing for color
+        
+        //this.offset = si * (rb>>3)* w * h;
+        this.offset = ti * si * w * h;
+        if(!isOrigSigned(0)){
+        	DC_OFFSET = 1 << (rb-1);
+        } else {
+        	DC_OFFSET = 0;
+        }
+        this.useModImg = true;
+//        JOptionPane.showMessageDialog(null, "ImgReaderRAWSlice OK", "Info", JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    
     /**
      * Closes the underlying RandomAccessFile from where the image data is
      * being read. No operations are possible after a call to this method.
@@ -422,6 +454,21 @@ public class ImgReaderRAWSlice extends ImgReader {
     	}
     	
     }
+    
+    
+    public void setSliceIndex(int si, int ti, boolean useModImg) throws IOException{
+    	if (useModImg) {
+            this.offset = ti * si * w * h;   
+            this.useModImg = true;
+    	} else {
+            this.offset = ti * si * (rb>>3)* w * h;
+            in = new RandomAccessFile(fName,"r");
+    	}
+    	
+    }
+    
+    
+    
     /**
      * Returns true if the data read was originally signed in the specified
      * component, false if not. This method returns always false since PGM
