@@ -2,16 +2,13 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
-//import gov.nih.mipav.view.dialogs.JDialogLoadLeica.*;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
-
 import java.text.DecimalFormat;
 
 import javax.swing.ButtonGroup;
@@ -26,6 +23,10 @@ import javax.swing.JTextField;
 
 //import pluginJP2.rawimg.BEByteArrayInputStream;
 //import pluginJP2.rawimg.ImgWriterRAW;
+
+
+
+
 
 import jj2000.j2k.encoder.Encoder;
 import jj2000.j2k.image.*;
@@ -591,7 +592,7 @@ public class FileJP2 extends FileBase implements ActionListener{
     }
 
     
-    public void writeImage(ModelImage image){
+    public void writeImage(ModelImage image, FileWriteOptions options) throws IOException{
 		
     	int[] imgExtents;
     	int imgType;
@@ -622,21 +623,138 @@ public class FileJP2 extends FileBase implements ActionListener{
 
         pl.put("file_format", "on");            
         // Get the dimension of image and number of slice
-        imgExtents = image.getExtents();    
+        imgExtents = image.getExtents();  
+        
+        boolean oneFile = true;
+        int begin = 0;
+        int end = 1;
+        
+        if (options.isMultiFile()) {
+            oneFile = false;
+        }
+        
+        
 
         if (imgType==ModelStorageBase.ARGB){        
-        	EncoderRAWColor encRAW = new EncoderRAWColor(pl,image);
+        	
         	if(image.getNDims() == 2) {
-        		encRAW.runAllSlices(0, 0,true, progressBar);//full mode: 0 -> imgExtents[2]-1  
+        		EncoderRAWColor encRAW = new EncoderRAWColor(pl,image);
+        		encRAW.runAllSlices(0, 0,true, progressBar,options,0);//full mode: 0 -> imgExtents[2]-1  
         	}else {
-        		encRAW.runAllSlices(0, imgExtents[2]-1,true, progressBar);//full mode: 0 -> imgExtents[2]-1  
+        		
+        		if(oneFile) {
+        			EncoderRAWColor encRAW = new EncoderRAWColor(pl,image);
+        			encRAW.runAllSlices(0, imgExtents[2]-1,true, progressBar,options,0);//full mode: 0 -> imgExtents[2]-1  
+        		}else {
+        			if(image.getNDims() == 3) {
+        				int sliceZeroPadding = String.valueOf(options.getEndSlice() + 1).length();
+        				String sliceZeroPaddingFormat = "%0" + sliceZeroPadding + "d";
+	       				for (int k = options.getBeginSlice(); k <= options.getEndSlice(); k++) {
+	             				 int jp2Index = outfile.lastIndexOf(".jp2");
+	             				 String prefix = outfile.substring(0, jp2Index);
+	
+	             				 String sliceString = String.format(sliceZeroPaddingFormat, Integer.valueOf(k+1)); 
+	
+	             				 String sliceOutfile = prefix +  "_" + sliceString + ".jp2";
+	
+	             				 pl.put("o", sliceOutfile);
+	             				 EncoderRAW encRAW = new EncoderRAW(pl,image);
+	             				 encRAW.runAllSlices(k, k,true, progressBar,options,0);
+	      
+	             			 }
+        				
+        			}else if(image.getNDims() == 4) {
+        				
+	        				int sliceZeroPadding = String.valueOf(options.getEndSlice() + 1).length();
+	            	        int timeZeroPadding = String.valueOf(options.getEndTime()).length();
+	            	        String sliceZeroPaddingFormat = "%0" + sliceZeroPadding + "d";
+	            	        String timeZeroPaddingFormat = "%0" + timeZeroPadding + "d";
+	            			for(int t = options.getBeginTime();t<=options.getEndTime(); t++) {
+	            				
+	            				for (int k = options.getBeginSlice(); k <= options.getEndSlice(); k++) {
+	               				 int jp2Index = outfile.lastIndexOf(".jp2");
+	               				 String prefix = outfile.substring(0, jp2Index);
+	               				 
+	               				 
+	               				String sliceString = String.format(sliceZeroPaddingFormat, Integer.valueOf(k+1)); 
+	             	            String timeString = String.format(timeZeroPaddingFormat, Integer.valueOf(t)); 
+	             	            
+	             	            String sliceOutfile = prefix + "_t" + timeString + "_" + sliceString + ".jp2";
+	
+	               				 int tParam = t+1;
+	               				 //String sliceOutfile = prefix + paddedIndex  + ".jp2";
+	               				 pl.put("o", sliceOutfile);
+	               				 EncoderRAWColor encRAW = new EncoderRAWColor(pl,image);
+	               				 encRAW.runAllSlices(k, k,true, progressBar,options,tParam);
+	        
+	               			 }
+	            		}
+        			}
+        			
+
+        		}
+        		
         	}
         } else {       	
-        	EncoderRAW encRAW = new EncoderRAW(pl,image);
+        	
         	if(image.getNDims() == 2) {
-        		encRAW.runAllSlices(0, 0,true, progressBar);
+        		EncoderRAW encRAW = new EncoderRAW(pl,image);
+        		encRAW.runAllSlices(0, 0,true, progressBar,options,0);
         	}else {
-        		encRAW.runAllSlices(0, imgExtents[2]-1,true, progressBar);
+        		if(oneFile) {
+        			EncoderRAW encRAW = new EncoderRAW(pl,image);
+        			encRAW.runAllSlices(0, imgExtents[2]-1,true, progressBar,options,0);
+        		}else {
+        			 
+        			if(image.getNDims() == 3) {
+        				int sliceZeroPadding = String.valueOf(options.getEndSlice() + 1).length();
+        				 String sliceZeroPaddingFormat = "%0" + sliceZeroPadding + "d";
+        				for (int k = options.getBeginSlice(); k <= options.getEndSlice(); k++) {
+              				 int jp2Index = outfile.lastIndexOf(".jp2");
+              				 String prefix = outfile.substring(0, jp2Index);
+
+              				 String sliceString = String.format(sliceZeroPaddingFormat, Integer.valueOf(k+1)); 
+
+              				 String sliceOutfile = prefix +  "_" + sliceString + ".jp2";
+
+              				 pl.put("o", sliceOutfile);
+              				 EncoderRAW encRAW = new EncoderRAW(pl,image);
+              				 encRAW.runAllSlices(k, k,true, progressBar,options,0);
+       
+              			 }
+        				
+        			}else if(image.getNDims() == 4) {
+        				int sliceZeroPadding = String.valueOf(options.getEndSlice() + 1).length();
+            	        int timeZeroPadding = String.valueOf(options.getEndTime()).length();
+            	        String sliceZeroPaddingFormat = "%0" + sliceZeroPadding + "d";
+            	        String timeZeroPaddingFormat = "%0" + timeZeroPadding + "d";
+            			for(int t = options.getBeginTime();t<=options.getEndTime(); t++) {
+            				
+            				for (int k = options.getBeginSlice(); k <= options.getEndSlice(); k++) {
+               				 int jp2Index = outfile.lastIndexOf(".jp2");
+               				 String prefix = outfile.substring(0, jp2Index);
+               				 
+               				 
+               				String sliceString = String.format(sliceZeroPaddingFormat, Integer.valueOf(k+1)); 
+             	            String timeString = String.format(timeZeroPaddingFormat, Integer.valueOf(t)); 
+             	            
+             	            String sliceOutfile = prefix + "_t" + timeString + "_" + sliceString + ".jp2";
+
+               				 int tParam = t+1;
+               				 //String sliceOutfile = prefix + paddedIndex  + ".jp2";
+               				 pl.put("o", sliceOutfile);
+               				 EncoderRAW encRAW = new EncoderRAW(pl,image);
+               				 encRAW.runAllSlices(k, k,true, progressBar,options,tParam);
+        
+               			 }
+            			}
+        			}
+        			
+        			
+        			
+        			
+        			
+        		}
         	}
         }
 	}

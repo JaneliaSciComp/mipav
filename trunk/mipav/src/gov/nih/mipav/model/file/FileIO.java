@@ -15658,34 +15658,98 @@ public class FileIO {
 
         final int beginSlice = options.getBeginSlice();
         final int endSlice = options.getEndSlice();
+        
+        final int beginTime = options.getBeginTime();
+        final int endTime = options.getEndTime();
+        
+        int sliceZeroPadding = String.valueOf(endSlice + 1).length();
+        int timeZeroPadding = String.valueOf(endTime).length();
+        String sliceZeroPaddingFormat = "%0" + sliceZeroPadding + "d";
+        String timeZeroPaddingFormat = "%0" + timeZeroPadding + "d";
 
-        for (int i = beginSlice; i <= endSlice; i++) {
-
-            Image im;
-
-            ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().createImg(i);
-
-            im = ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().getImage();
-
-            if ( (i < 9) && (endSlice != beginSlice)) {
-                name = options.getFileDirectory() + prefix + "00" + (i + 1) + fileSuffix;
-            } else if ( (i >= 9) && (i < 99) && (endSlice != beginSlice)) {
-                name = options.getFileDirectory() + prefix + "0" + (i + 1) + fileSuffix;
-            } else if (endSlice != beginSlice) {
-                name = options.getFileDirectory() + prefix + (i + 1) + fileSuffix;
-            } else {
-                name = options.getFileDirectory() + prefix + fileSuffix;
-            }
-
-            try {
-                Jimi.putImage(im, name);
-            } catch (final JimiException jimiException) {
-                Preferences.debug("JIMI write error: " + jimiException + "\n", Preferences.DEBUG_FILEIO);
-
-                jimiException.printStackTrace();
-
-                return false;
-            }
+        if(image.getNDims() <= 3) {
+        
+        
+	        for (int i = beginSlice; i <= endSlice; i++) {
+	
+	            Image im;
+	
+	            ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().createImg(i);
+	
+	            im = ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().getImage();
+	
+	            
+	            String sliceString = String.format(sliceZeroPaddingFormat, Integer.valueOf(i+1)); 
+	            
+	            
+	            name = options.getFileDirectory() + prefix + "_" + sliceString + fileSuffix;
+	            
+	            
+	            /*if ( (i < 9) && (endSlice != beginSlice)) {
+	                name = options.getFileDirectory() + prefix + "00" + (i + 1) + fileSuffix;
+	            } else if ( (i >= 9) && (i < 99) && (endSlice != beginSlice)) {
+	                name = options.getFileDirectory() + prefix + "0" + (i + 1) + fileSuffix;
+	            } else if (endSlice != beginSlice) {
+	                name = options.getFileDirectory() + prefix + (i + 1) + fileSuffix;
+	            } else {
+	                name = options.getFileDirectory() + prefix + fileSuffix;
+	            }*/
+	
+	            try {
+	                Jimi.putImage(im, name);
+	            } catch (final JimiException jimiException) {
+	                Preferences.debug("JIMI write error: " + jimiException + "\n", Preferences.DEBUG_FILEIO);
+	
+	                jimiException.printStackTrace();
+	
+	                return false;
+	            }
+	        }
+        }else {
+        	
+        	for(int t = beginTime; t <= endTime; t++) {
+        		
+        		for (int i = beginSlice; i <= endSlice; i++) {
+        			
+    	            Image im;
+    	
+    	            ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().createImg(t,i);
+    	
+    	            im = ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().getImage();
+    	
+    	            
+    	            String sliceString = String.format(sliceZeroPaddingFormat, Integer.valueOf(i+1)); 
+    	            String timeString = String.format(timeZeroPaddingFormat, Integer.valueOf(t)); 
+    	            
+    	            name = options.getFileDirectory() + prefix + "_t" + timeString + "_" + sliceString + fileSuffix;
+    	            
+    	            
+    	            /*if ( (i < 9) && (endSlice != beginSlice)) {
+    	                name = options.getFileDirectory() + prefix + "_t" + t + "_00" + (i + 1) + fileSuffix;
+    	            } else if ( (i >= 9) && (i < 99) && (endSlice != beginSlice)) {
+    	                name = options.getFileDirectory() + prefix + "_t" + t + "_0" + (i + 1) + fileSuffix;
+    	            } else if (endSlice != beginSlice) {
+    	                name = options.getFileDirectory() + prefix + "_t" + t + "_" + (i + 1) + fileSuffix;
+    	            } else {
+    	                name = options.getFileDirectory() + prefix + fileSuffix;
+    	            }*/
+    	
+    	            try {
+    	                Jimi.putImage(im, name);
+    	            } catch (final JimiException jimiException) {
+    	                Preferences.debug("JIMI write error: " + jimiException + "\n", Preferences.DEBUG_FILEIO);
+    	
+    	                jimiException.printStackTrace();
+    	
+    	                return false;
+    	            }
+    	        }
+        		
+        		
+        	}
+        	
+        	
+        	
         }
 
         ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().show(0, slice, null, null, true, -1);
@@ -16544,7 +16608,7 @@ public class FileIO {
             progressBar = new ViewJProgressBar(options.getFileName(), FileIO.FILE_WRITE + options.getFileName() + " ...", 0, 100, true, null, null, !quiet);
             imageFile = new FileJP2(options.getFileName(), options.getFileDirectory(), progressBar);
 
-            (imageFile).writeImage(image);
+            (imageFile).writeImage(image,options);
         } catch (final IOException error) {
 
             if ( !quiet) {
@@ -16559,7 +16623,7 @@ public class FileIO {
             }
 
             return false;
-        }
+        } 
         progressBar.setVisible(false);
         progressBar = null;
         return true;

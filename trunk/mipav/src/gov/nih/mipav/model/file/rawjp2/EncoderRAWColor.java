@@ -8,6 +8,7 @@ import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
+import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.ViewJProgressBar;
 import jj2000.j2k.JJ2KInfo;
@@ -1494,13 +1495,17 @@ public class EncoderRAWColor implements Runnable {
  * Now see what happens.
  *
  */
-public void runAllSlices(int startSlice, int endSlice, boolean useModImage, ViewJProgressBar progressBar) {
+public void runAllSlices(int startSlice, int endSlice, boolean useModImage, ViewJProgressBar progressBar, FileWriteOptions options, int timeSlice) {
 	progressBar.updateValueImmed(10);
 //	ImgReaderRAWSlice slice;
 	ByteArrayOutputStream buff;
 	boolean is2D = false;
+	boolean is3D = false;
 	if(image.getNDims() == 2) {
 		is2D = true;
+	}
+	if(image.getNDims() == 3) {
+		is3D = true;
 	}
 	try {
 		 RAWJP2Header rawhd = new RAWJP2Header();	 
@@ -1537,9 +1542,10 @@ public void runAllSlices(int startSlice, int endSlice, boolean useModImage, View
 
 
 		 progressBar.updateValueImmed(30);
-		 ImgReaderRAWColorSlice slice = new ImgReaderRAWColorSlice(image,startSlice,false);
+		
 //		 JOptionPane.showMessageDialog(null, "get here:ImgReaderRAWColorSlice" + Integer.toString(imgType), "Debug", JOptionPane.INFORMATION_MESSAGE);		
 		 if(is2D) {
+			 ImgReaderRAWColorSlice slice = new ImgReaderRAWColorSlice(image,startSlice,false);
 			 progressBar.updateValueImmed(40);
 			 buff = run1Slice(slice);
 			 rawhd.setIs2D(is2D);
@@ -1549,7 +1555,8 @@ public void runAllSlices(int startSlice, int endSlice, boolean useModImage, View
 			 f.write(buff.toByteArray(),0,buff.size());
 			 progressBar.updateValueImmed(80);
 			 
-		 }else {
+		 }else if(is3D){
+			 ImgReaderRAWColorSlice slice = new ImgReaderRAWColorSlice(image,startSlice,false);
 			 for(int sliceIdx=startSlice;sliceIdx<=endSlice;sliceIdx++) {
 				 progressBar.updateValueImmed(30 + Math.round((float) sliceIdx / endSlice * 50));
 				 slice.setSliceIndex(sliceIdx,true);
@@ -1567,6 +1574,25 @@ public void runAllSlices(int startSlice, int endSlice, boolean useModImage, View
 					// fSomeSlice.close();
 				 //}
 			 }
+		 } else {
+			 int timeBegin = options.getBeginTime();
+			 int timeBeginParam = timeBegin + 1;
+			 int timeEnd = options.getEndTime();
+			 ImgReaderRAWColorSlice slice = new ImgReaderRAWColorSlice(image,startSlice,timeBeginParam,false);
+			 
+			 for(int sliceIdx=startSlice;sliceIdx<=endSlice;sliceIdx++) {
+				 progressBar.updateValueImmed(30 + Math.round((float) sliceIdx / endSlice * 50));
+				 int timeParam = timeSlice + 1;
+				 slice.setSliceIndex(sliceIdx,timeParam,true);
+				 buff = run1Slice(slice);
+				 rawhd.setSize(buff.size(),sliceIdx-startSlice);		 
+				 rawhd.writeRawJP2Header(f);
+	//			 String s = Integer.toString(f.getPos());
+	//			 JOptionPane.showMessageDialog(null, s, "File pointer position", JOptionPane.INFORMATION_MESSAGE);			 
+				 f.write(buff.toByteArray(),0,buff.size());
+			 }
+			 
+			 
 		 }
 		 f.flush();
 		 f.close();

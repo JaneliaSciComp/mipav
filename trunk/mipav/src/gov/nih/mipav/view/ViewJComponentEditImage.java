@@ -5587,6 +5587,33 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         }
         return true;
     }
+    
+    
+    
+    
+    
+    
+    
+    /**
+     * Creates the Java image to be displayed from the model image. Makes it from the appropriate slice.
+     * 
+     * @param slice Slice of image to create java image from.
+     * 
+     * @return Flag indicating success or failure.
+     */
+    public boolean createImg(final int timeSlice, final int slice) {
+        m_kPatientSlice.updateSlice(slice);
+
+        if (m_kPatientSlice.showUsingOrientation(timeSlice, paintBuffer, null, true, false)) {
+            importImage(paintBuffer);
+        }
+        return true;
+    }
+    
+    
+    
+    
+    
 
     /**
      * DOCUMENT ME!

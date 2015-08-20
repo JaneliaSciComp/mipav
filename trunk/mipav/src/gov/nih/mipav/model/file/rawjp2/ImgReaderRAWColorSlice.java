@@ -51,6 +51,24 @@ public class ImgReaderRAWColorSlice extends ImgReaderRAWSlice {
         }
         this.useModImg = true;
 	}
+	
+	public ImgReaderRAWColorSlice(ModelImage image, int si, int ti, boolean savingAsEncJP2) {
+		super(image, si, savingAsEncJP2);
+//		int[] imgExtents;
+
+		this.nc=3;
+		
+        this.rb=8;
+        
+//        this.offset = si * (rb>>3)* w * h;
+        this.sliceOffset = ti * si * w * h * cFactor;
+        if(!isOrigSigned(0)){
+        	DC_OFFSET = 1 << (rb-1);
+        } else {
+        	DC_OFFSET = 0;
+        }
+        this.useModImg = true;
+	}
 
 	public void setSliceIndex(int si, boolean useModImg) throws IOException{
 		int cFactor=1;
@@ -62,6 +80,22 @@ public class ImgReaderRAWColorSlice extends ImgReaderRAWSlice {
 			this.useModImg = true;
 		} else {
 			this.sliceOffset = si * (rb>>3)* w * h;
+			in = new RandomAccessFile(fName,"r");
+		}
+
+	}
+	
+	
+	public void setSliceIndex(int si, int ti, boolean useModImg) throws IOException{
+		int cFactor=1;
+		if (useModImg) {
+			if (image.isColorImage()) {
+				cFactor = 4;
+			}
+			this.sliceOffset = ti * si * w * h *cFactor;   
+			this.useModImg = true;
+		} else {
+			this.sliceOffset = ti * si * (rb>>3)* w * h;
 			in = new RandomAccessFile(fName,"r");
 		}
 

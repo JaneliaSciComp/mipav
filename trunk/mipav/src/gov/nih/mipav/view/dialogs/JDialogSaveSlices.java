@@ -210,7 +210,10 @@ public class JDialogSaveSlices extends JDialogBase {
                               (options.getFileType() == FileUtility.MINC_HDF) ||
                               (options.getFileType() == FileUtility.DICOM) ||  //will only write 4D dicom in enhanced format 
                               (options.getFileType() == FileUtility.TIFF) ||
-                              (options.getFileType() == FileUtility.MINC)); // TIFF must be stored as a set of 3D volumes
+                              (options.getFileType() == FileUtility.MINC) || // TIFF must be stored as a set of 3D volumes
+                              (options.getFileType() == FileUtility.JP2) ||
+                              (options.getFileType() == FileUtility.JPEG) ||
+                              (options.getFileType() == FileUtility.PNG));
         if (tiffEnabled) {
             enforceDistinctVolumeWriting = true;
         }
