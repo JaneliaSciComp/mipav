@@ -284,6 +284,7 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
             zoomX = (double)(screenWidth - 160)/(double)xDim;
             zoomY = (double)expHeight/(double)yDim;
         }
+        frame.setBackground(Color.BLACK);
         frame.add(new Component() {
             @Override
             public void paint(final Graphics g) {
