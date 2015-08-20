@@ -805,7 +805,8 @@ public class AlgorithmGlobalPb extends AlgorithmBase {
         which = "LM";
         // The work array workl is used in dsaupd as workspace.  
         // Its dimension lworkl is set as illustrated below.
-        lworkl = ncv*(ncv+8);
+        lworkl = 100*ncv*(ncv+8);
+        //lworkl = ncv*(ncv+8);
         // The parameter tol determines the stopping criterion.  
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
