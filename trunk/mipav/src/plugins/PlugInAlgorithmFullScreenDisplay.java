@@ -17,6 +17,7 @@ import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
+import javax.swing.JFrame;
 import javax.swing.JTextArea;
 
 
@@ -41,7 +42,7 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
     
     private int length;
     
-    private Frame frame;
+    private JFrame frame;
 
     private final JTextArea outputTextArea;
     
@@ -113,8 +114,6 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
     private double zoomX;
     
     private double zoomY;
-    
-    private boolean haveDrawn = false;
 
 
     public PlugInAlgorithmFullScreenDisplay(ModelImage image, final Image cornerImage, 
@@ -254,7 +253,7 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
         zDim = imageData.length;
         
 
-        frame = new Frame("Test");
+        frame = new JFrame("Test");
         frame.setUndecorated(true);
         screenWidth = Toolkit.getDefaultToolkit().getScreenSize().width;
         screenHeight = Toolkit.getDefaultToolkit().getScreenSize().height;
@@ -289,27 +288,24 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
             @Override
             public void paint(final Graphics g) {
                 super.paint(g);
-                if (!haveDrawn) {
-                    g.drawImage(backgroundImage, 0, 0, screenWidth, screenHeight, null);
-                }
+                g.drawImage(backgroundImage, 0, 0, screenWidth, screenHeight, null);
                 if (widthRatio > heightRatio) {
                     g.drawImage(inputImage, 80 + leftPadding, 79, expWidth, screenHeight - 158, null);
-                    if ((cornerImage != null) && (!haveDrawn)) {
+                    if (cornerImage != null) {
                         g.drawImage(cornerImage, leftPadding, 0, 80, 79, null);
                         g.drawImage(cornerImage, 80 + leftPadding + expWidth, 0, 80, 79, null);
                         g.drawImage(cornerImage, leftPadding, screenHeight - 79, 80, 79, null);
                         g.drawImage(cornerImage, 80 + leftPadding + expWidth, screenHeight - 79, 80, 79, null);
-                    } // if ((cornerImage != null) && (!haveDrawn))
+                    } // if (cornerImage != null)
                 } else {
                     g.drawImage(inputImage, 80, 79 + topPadding, screenWidth - 160, expHeight, null);
-                    if ((cornerImage != null) && (!haveDrawn)) {
+                    if (cornerImage != null) {
                         g.drawImage(cornerImage, 0, topPadding, 80, 79, null);
                         g.drawImage(cornerImage, screenWidth - 80, topPadding, 80, 79, null);
                         g.drawImage(cornerImage, 0, 79 + topPadding + expHeight, 80, 79, null);
                         g.drawImage(cornerImage, screenWidth - 80,79 + topPadding + expHeight, 80, 79, null);
-                    } // if ((cornerImage != null) && (!haveDrawn))
+                    } // if (cornerImage != null)
                 }
-                haveDrawn = true;
             }
         });
         frame.addMouseListener(new MouseListener() {
