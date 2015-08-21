@@ -10,6 +10,8 @@ import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
+import gov.nih.mipav.model.structures.VOIBaseVector;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -17,6 +19,7 @@ import gov.nih.mipav.view.ViewJFrameImage;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.Vector;
 
 import javax.swing.JTextArea;
 
@@ -87,6 +90,7 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
         yDim = srcImage.getExtents()[1];
         length = xDim * yDim;
         zDim = srcImage.getExtents()[2];
+        ModelImage presentImage = srcImage;
         
         if ((downSampleXY < 1.0f) || (downSampleZ < 1.0f)) {
         	int interp = AlgorithmTransform.TRILINEAR;
@@ -102,7 +106,42 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
             int units[] = srcImage.getUnitsOfMeasure();
             final boolean doClip = true;
             final boolean doPad = false;
-            final boolean doVOI = false;
+            final boolean doVOI = cropImage;
+            if (cropImage) {
+            	// Propagate a single 2D slice VOI to all slices so it will not be removed by down sampling 
+                VOIVector VOIs = presentImage.getVOIs();
+	            if ((VOIs != null) && (VOIs.size() > 0)) {
+	            	VOI rectVOI = VOIs.get(0);
+	            	if (rectVOI != null) {
+	            		int xBounds[] = new int[2];
+	            		int yBounds[] = new int[2];
+	            		int zBounds[] = new int[2];
+	            	    rectVOI.getBounds(xBounds, yBounds, zBounds);
+	            	    VOIBaseVector curves = rectVOI.getCurves();
+	            	    VOIBase vBase = curves.get(0);
+	            	    int nPoints = vBase.size();
+	            	    float xArr[] = new float[nPoints];
+	            	    float yArr[] = new float[nPoints];
+	            	    float zArr[] = new float[nPoints];
+	            	    for (int i = 0; i < nPoints; i++) {
+	            	    	xArr[i] = vBase.get(i).X;
+	            	    	yArr[i] = vBase.get(i).Y;
+	            	    }
+	            	    for (int z = 0; z < zBounds[0]; z++) {
+	            	        for (int i = 0; i < nPoints; i++) {
+	            	            zArr[i] = z;	
+	            	        }
+	            	        rectVOI.importCurve(xArr, yArr, zArr);
+	            	    }
+	            	    for (int z = zBounds[1]+1; z < presentImage.getExtents()[2]; z++) {
+	            	        for (int i = 0; i < nPoints; i++) {
+	            	            zArr[i] = z;	
+	            	        }
+	            	        rectVOI.importCurve(xArr, yArr, zArr);
+	            	    }
+	            	}
+	            }
+            } // if (cropImage)
             final boolean doRotateCenter = false;
             final Vector3f center = new Vector3f();
             final float fillValue = 0.0f;
@@ -120,6 +159,7 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
             
             ModelImage downSampleImage = algoTrans.getTransformedImage();
             downSampleImage.calcMinMax();
+            presentImage = downSampleImage;
             algoTrans.disposeLocal();
             algoTrans = null;
             
@@ -156,7 +196,7 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
         } // if ((downSampleXY < 1.0f) || (downSampleZ < 1.0f))
         
         if (cropImage) {
-        	VOIVector VOIs = srcImage.getVOIs();
+        	VOIVector VOIs = presentImage.getVOIs();
             if (VOIs != null) {
             	VOI rectVOI = VOIs.get(0);
             	if (rectVOI != null) {
@@ -166,19 +206,19 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
             	    rectVOI.getBounds(xBounds, yBounds, zBounds);
             	    // Do not use zBounds
             	    zBounds[0] = 0;
-            	    zBounds[1] = srcImage.getExtents()[2] - 1;
+            	    zBounds[1] = presentImage.getExtents()[2] - 1;
             	    int cropExtents[] = new int[3];
             	    cropExtents[0] = xBounds[1] - xBounds[0] + 1;
             	    cropExtents[1] = yBounds[1] - yBounds[0] + 1;
-            	    cropExtents[2] = srcImage.getExtents()[2];
-            	    ModelImage cropImage = new ModelImage(srcImage.getDataType(), cropExtents, srcImage.getImageName() + "_crop");
+            	    cropExtents[2] = presentImage.getExtents()[2];
+            	    ModelImage croppedImage = new ModelImage(srcImage.getDataType(), cropExtents, srcImage.getImageName() + "_crop");
             	    // Extra space around VOI bounds in x and y dimensions
             	    int cushion = 0;
-            	    AlgorithmCrop cropAlgo = new AlgorithmCrop(cropImage, srcImage, cushion, xBounds, yBounds, zBounds);
+            	    AlgorithmCrop cropAlgo = new AlgorithmCrop(croppedImage, presentImage, cushion, xBounds, yBounds, zBounds);
             	    
             	    cropAlgo.run();
             	    try {
-    					new ViewJFrameImage(cropImage, null, new Dimension(610,
+    					new ViewJFrameImage(croppedImage, null, new Dimension(610,
     							200));
     				} catch (OutOfMemoryError error) {
     					MipavUtil
@@ -186,6 +226,7 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
     					setCompleted(false);
     					return;
     				}
+            	    presentImage = croppedImage;
             	    cropAlgo.finalize();
             	    cropAlgo = null;
             	}
@@ -219,7 +260,7 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
         	boolean transformVOIs = false;
         	int maxIterations = 2;
         	int numMinima = 6;
-        	AlgorithmRegOAR25D2 reg25 = new AlgorithmRegOAR25D2(srcImage, cost, DOF, interp, interp2, doAdjacent, refImageNum,
+        	AlgorithmRegOAR25D2 reg25 = new AlgorithmRegOAR25D2(presentImage, cost, DOF, interp, interp2, doAdjacent, refImageNum,
                     rotateBegin, rotateEnd, coarseRate, fineRate, doGraph, doSubsample,
                     transformVOIs, maxIterations, numMinima);
         	reg25.run();
@@ -236,7 +277,7 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
             float sigmaZ = 1.0f;
             boolean useCorrectionFactor = true;
             if (useCorrectionFactor) {
-                sigmaZ = sigmaZ * (srcImage.getFileInfo()[0].getResolution(0)/srcImage.getFileInfo()[0].getResolution(2));	
+                sigmaZ = sigmaZ * (presentImage.getFileInfo()[0].getResolution(0)/presentImage.getFileInfo()[0].getResolution(2));	
             } // if (useCorrectionFactor)
             float sigmaArray[] = new float[3];
             sigmaArray[0] = sigmaX;
@@ -246,7 +287,7 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
             float kValue = 15.0f;
             boolean entireImage = true;
             boolean image25D = false;
-            AlgorithmAnisotropicDiffusion anisotropicAlgo = new AlgorithmAnisotropicDiffusion(srcImage, sigmaArray, iterations,
+            AlgorithmAnisotropicDiffusion anisotropicAlgo = new AlgorithmAnisotropicDiffusion(presentImage, sigmaArray, iterations,
             		                kValue, entireImage, image25D);
             anisotropicAlgo.run();
             anisotropicAlgo.finalize();
