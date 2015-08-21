@@ -1,6 +1,7 @@
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmCostFunctions;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmAnisotropicDiffusion;
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR25D2;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmCrop;
 import gov.nih.mipav.model.file.FileIO;
@@ -48,13 +49,16 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
     private boolean cropImage;
     
     private boolean registerImage;
+    
+    private boolean anistropicDiffusion;
 
     private final JTextArea outputTextArea;
     
 
     public PlugInAlgorithmCellFiring(ModelImage image, boolean alreadyDisplayed, boolean displayInputImage, 
     		float downSampleXY, float downSampleZ, boolean displayDownSampleImage, 
-    		boolean saveDownSampleImage,  boolean cropImage, boolean registerImage, final JTextArea outputTextArea) {
+    		boolean saveDownSampleImage,  boolean cropImage, boolean registerImage, 
+    		boolean anistropicDiffusion, final JTextArea outputTextArea) {
     	super(null, image);
     	this.alreadyDisplayed = alreadyDisplayed;
     	this.displayInputImage = displayInputImage;
@@ -65,6 +69,7 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
     	this.cropImage = cropImage;
     	this.registerImage = registerImage;
         this.outputTextArea = outputTextArea;
+        this.anistropicDiffusion = anistropicDiffusion;
     }
 
     @Override
@@ -224,6 +229,29 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
             }
         	reg25 = null;
         } // if (registerImage)
+        
+        if (anistropicDiffusion) {
+            float sigmaX = 1.0f;
+            float sigmaY = 1.0f;
+            float sigmaZ = 1.0f;
+            boolean useCorrectionFactor = true;
+            if (useCorrectionFactor) {
+                sigmaZ = sigmaZ * (srcImage.getFileInfo()[0].getResolution(0)/srcImage.getFileInfo()[0].getResolution(2));	
+            } // if (useCorrectionFactor)
+            float sigmaArray[] = new float[3];
+            sigmaArray[0] = sigmaX;
+            sigmaArray[1] = sigmaY;
+            sigmaArray[2] = sigmaZ;
+            int iterations = 10;
+            float kValue = 15.0f;
+            boolean entireImage = true;
+            boolean image25D = false;
+            AlgorithmAnisotropicDiffusion anisotropicAlgo = new AlgorithmAnisotropicDiffusion(srcImage, sigmaArray, iterations,
+            		                kValue, entireImage, image25D);
+            anisotropicAlgo.run();
+            anisotropicAlgo.finalize();
+            anisotropicAlgo = null;
+        } // if (anistropicDiffusion)
         
 
         final long endTime = System.currentTimeMillis();
