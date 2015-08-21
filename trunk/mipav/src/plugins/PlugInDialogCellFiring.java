@@ -2,6 +2,8 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ScrollCorrector;
@@ -397,6 +399,22 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
         saveDownSampleImage = saveDownSampleCheckBox.isSelected();
         
         cropImage = cropImageCheckBox.isSelected();
+        if (cropImage) {
+        	VOIVector VOIs = image.getVOIs();
+        	if (VOIs == null) {
+        		MipavUtil.displayError("VOI vector is null");
+        		return false;
+        	}
+        	if (VOIs.size() == 0) {
+        		MipavUtil.displayError("VOI vector has size zero");
+        		return false;
+        	}
+        	VOI rectVOI = VOIs.get(0);
+        	if (rectVOI == null) {
+        		MipavUtil.displayError("No VOI is present");
+        		return false;
+        	}
+        }
         
         registerImage = registrationCheckBox.isSelected();
         
