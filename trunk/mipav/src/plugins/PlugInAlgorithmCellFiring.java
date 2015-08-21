@@ -11,6 +11,7 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJComponentEditImage;
 import gov.nih.mipav.view.ViewJFrameBase;
 import gov.nih.mipav.view.ViewJFrameImage;
 
@@ -117,6 +118,7 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
             algoTrans.run();
             
             ModelImage downSampleImage = algoTrans.getTransformedImage();
+            downSampleImage.calcMinMax();
             algoTrans.disposeLocal();
             algoTrans = null;
             
@@ -135,8 +137,18 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
 	            options.setOptionsSet(true);
 	            
 	            options.setFileDirectory(srcImage.getImageDirectory() + File.separator);
-                options.setFileName(srcImage.getImageFileName() + "_XY" + String.valueOf(downSampleXY) + "_Z" +
-	                                 String.valueOf(downSampleZ));
+	            int index = srcImage.getImageFileName().indexOf(".");
+	            String baseName;
+	            if (index > 0) {
+	                baseName = srcImage.getImageFileName().substring(0, index);	
+	            }
+	            else {
+	            	baseName = srcImage.getImageFileName();
+	            }
+	            options.setBeginSlice(0);
+                options.setEndSlice(downSampleImage.getExtents()[2] - 1);
+                options.setFileName(baseName + "_XY" + String.valueOf(downSampleXY) + "_Z" +
+	                                 String.valueOf(downSampleZ) + ".tif");
                 boolean allowScriptRecording = false;
                 io.writeImage(downSampleImage, options, false, allowScriptRecording);
             }
