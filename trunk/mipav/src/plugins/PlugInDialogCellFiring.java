@@ -78,6 +78,10 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
     private JCheckBox registrationCheckBox;
     
     private boolean registerImage;
+    
+    private JCheckBox anistropicCheckBox;
+    
+    private boolean anistropicDiffusion;
 
     public PlugInDialogCellFiring() {
 
@@ -149,6 +153,10 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
         registrationCheckBox = new JCheckBox("2.5D OAR registration", true);
         registrationCheckBox.setFont(serif12);
         registrationCheckBox.setForeground(Color.black);
+        
+        anistropicCheckBox = new JCheckBox("Anistropic diffusion", true);
+        anistropicCheckBox.setFont(serif12);
+        anistropicCheckBox.setForeground(Color.black);
 
         outputTextArea = new JTextArea();
         outputTextArea.setRows(15);
@@ -215,9 +223,13 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
         gbc.gridx = 0;
         gbc.gridy = 8;
         mainPanel.add(registrationCheckBox, gbc);
-
+        
         gbc.gridx = 0;
         gbc.gridy = 9;
+        mainPanel.add(anistropicCheckBox, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 10;
         gbc.gridwidth = 3;
         mainPanel.add(scrollPane, gbc);
 
@@ -266,7 +278,8 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
         
         
         alg = new PlugInAlgorithmCellFiring(image, alreadyDisplayed, displayInputImage, downSampleXY, 
-        		downSampleZ, displayDownSampleImage, saveDownSampleImage, cropImage, registerImage, outputTextArea);
+        		downSampleZ, displayDownSampleImage, saveDownSampleImage, cropImage, registerImage, 
+        		anistropicDiffusion, outputTextArea);
 
         alg.addListener(this);
 
@@ -386,6 +399,8 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
         cropImage = cropImageCheckBox.isSelected();
         
         registerImage = registrationCheckBox.isSelected();
+        
+        anistropicDiffusion = anistropicCheckBox.isSelected();
 
         return true;
     }
