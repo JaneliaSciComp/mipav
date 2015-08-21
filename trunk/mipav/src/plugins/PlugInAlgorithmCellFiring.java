@@ -1,32 +1,20 @@
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmCrop;
 import gov.nih.mipav.model.file.FileIO;
-import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelLUT;
-import gov.nih.mipav.model.structures.ModelRGB;
-import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewJComponentEditImage;
-import gov.nih.mipav.view.ViewJFrameBase;
 import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
-import javax.swing.JFrame;
 import javax.swing.JTextArea;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -54,13 +42,15 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
     private boolean displayDownSampleImage;
     
     private boolean saveDownSampleImage;
+    
+    private boolean cropImage;
 
     private final JTextArea outputTextArea;
     
 
     public PlugInAlgorithmCellFiring(ModelImage image, boolean alreadyDisplayed, boolean displayInputImage, 
     		float downSampleXY, float downSampleZ, boolean displayDownSampleImage, 
-    		boolean saveDownSampleImage, final JTextArea outputTextArea) {
+    		boolean saveDownSampleImage,  boolean cropImage, final JTextArea outputTextArea) {
     	super(null, image);
     	this.alreadyDisplayed = alreadyDisplayed;
     	this.displayInputImage = displayInputImage;
@@ -68,6 +58,7 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
     	this.downSampleZ = downSampleZ;
     	this.displayDownSampleImage = displayDownSampleImage;
     	this.saveDownSampleImage = saveDownSampleImage;
+    	this.cropImage = cropImage;
         this.outputTextArea = outputTextArea;
     }
 
@@ -151,8 +142,55 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
 	                                 String.valueOf(downSampleZ) + ".tif");
                 boolean allowScriptRecording = false;
                 io.writeImage(downSampleImage, options, false, allowScriptRecording);
-            }
+            } // if (saveDownSampleImage)
         } // if ((downSampleXY < 1.0f) || (downSampleZ < 1.0f))
+        
+        if (cropImage) {
+        	VOIVector VOIs = srcImage.getVOIs();
+            if (VOIs != null) {
+            	VOI rectVOI = VOIs.get(0);
+            	if (rectVOI != null) {
+            		int xBounds[] = new int[2];
+            		int yBounds[] = new int[2];
+            		int zBounds[] = new int[2];
+            	    rectVOI.getBounds(xBounds, yBounds, zBounds);
+            	    // Do not use zBounds
+            	    zBounds[0] = 0;
+            	    zBounds[1] = srcImage.getExtents()[2] - 1;
+            	    int cropExtents[] = new int[3];
+            	    cropExtents[0] = xBounds[1] - xBounds[0] + 1;
+            	    cropExtents[1] = yBounds[1] - yBounds[0] + 1;
+            	    cropExtents[2] = srcImage.getExtents()[2];
+            	    ModelImage cropImage = new ModelImage(srcImage.getDataType(), cropExtents, srcImage.getImageName() + "_crop");
+            	    // Extra space around VOI bounds in x and y dimensions
+            	    int cushion = 0;
+            	    AlgorithmCrop cropAlgo = new AlgorithmCrop(cropImage, srcImage, cushion, xBounds, yBounds, zBounds);
+            	    
+            	    cropAlgo.run();
+            	    try {
+    					new ViewJFrameImage(cropImage, null, new Dimension(610,
+    							200));
+    				} catch (OutOfMemoryError error) {
+    					MipavUtil
+    							.displayError("Out of memory: unable to open new crop image frame");
+    					setCompleted(false);
+    					return;
+    				}
+            	    cropAlgo.finalize();
+            	    cropAlgo = null;
+            	}
+            	else {
+            		MipavUtil.displayError("No VOI is present");
+            		setCompleted(false);
+            		return;
+            	}
+            } // if (VOIs != null)
+            else {
+            	MipavUtil.displayError("No VOI vector is present");
+            	setCompleted(false);
+            	return;
+            }
+        } // if (cropImage)
         
 
         final long endTime = System.currentTimeMillis();
