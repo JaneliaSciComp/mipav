@@ -154,7 +154,7 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
         registrationCheckBox.setFont(serif12);
         registrationCheckBox.setForeground(Color.black);
         
-        anistropicCheckBox = new JCheckBox("Anistropic diffusion", true);
+        anistropicCheckBox = new JCheckBox("Anisotropic diffusion", true);
         anistropicCheckBox.setFont(serif12);
         anistropicCheckBox.setForeground(Color.black);
 
