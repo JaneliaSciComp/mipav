@@ -1,5 +1,7 @@
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmCostFunctions;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
+import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR25D2;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmCrop;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileUtility;
@@ -44,13 +46,15 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
     private boolean saveDownSampleImage;
     
     private boolean cropImage;
+    
+    private boolean registerImage;
 
     private final JTextArea outputTextArea;
     
 
     public PlugInAlgorithmCellFiring(ModelImage image, boolean alreadyDisplayed, boolean displayInputImage, 
     		float downSampleXY, float downSampleZ, boolean displayDownSampleImage, 
-    		boolean saveDownSampleImage,  boolean cropImage, final JTextArea outputTextArea) {
+    		boolean saveDownSampleImage,  boolean cropImage, boolean registerImage, final JTextArea outputTextArea) {
     	super(null, image);
     	this.alreadyDisplayed = alreadyDisplayed;
     	this.displayInputImage = displayInputImage;
@@ -59,6 +63,7 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
     	this.displayDownSampleImage = displayDownSampleImage;
     	this.saveDownSampleImage = saveDownSampleImage;
     	this.cropImage = cropImage;
+    	this.registerImage = registerImage;
         this.outputTextArea = outputTextArea;
     }
 
@@ -191,6 +196,34 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
             	return;
             }
         } // if (cropImage)
+        
+        if (registerImage) {
+        	// Use first slice as reference
+        	boolean doAdjacent = false;
+        	int refImageNum = 0;
+        	int  cost = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED;
+        	int DOF = 3;
+        	int interp = AlgorithmTransform.BILINEAR;
+        	int interp2 = AlgorithmTransform.BILINEAR;
+        	float rotateBegin = -3.0f;
+        	float rotateEnd = 3.0f;
+        	float coarseRate = 3.0f;
+        	float fineRate = 2.0f;
+        	boolean doGraph = false;
+        	boolean doSubsample = true;
+        	boolean transformVOIs = false;
+        	int maxIterations = 2;
+        	int numMinima = 6;
+        	AlgorithmRegOAR25D2 reg25 = new AlgorithmRegOAR25D2(srcImage, cost, DOF, interp, interp2, doAdjacent, refImageNum,
+                    rotateBegin, rotateEnd, coarseRate, fineRate, doGraph, doSubsample,
+                    transformVOIs, maxIterations, numMinima);
+        	reg25.run();
+        	if (reg25 != null) {
+                reg25.disposeLocal();
+                reg25.finalize();
+            }
+        	reg25 = null;
+        } // if (registerImage)
         
 
         final long endTime = System.currentTimeMillis();
