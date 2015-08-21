@@ -70,6 +70,10 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
     private JCheckBox saveDownSampleCheckBox;
     
     private boolean saveDownSampleImage;
+    
+    private JCheckBox cropImageCheckBox;
+    
+    private boolean cropImage;
 
     public PlugInDialogCellFiring() {
 
@@ -133,6 +137,10 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
         saveDownSampleCheckBox = new JCheckBox("Save down sampled image", false);
         saveDownSampleCheckBox.setFont(serif12);
         saveDownSampleCheckBox.setForeground(Color.black);
+        
+        cropImageCheckBox = new JCheckBox("Crop image with rectangular VOI", false);
+        cropImageCheckBox.setFont(serif12);
+        cropImageCheckBox.setForeground(Color.black);
 
         outputTextArea = new JTextArea();
         outputTextArea.setRows(15);
@@ -191,9 +199,13 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
         gbc.gridx = 0;
         gbc.gridy = 6;
         mainPanel.add(saveDownSampleCheckBox, gbc);
-
+        
         gbc.gridx = 0;
         gbc.gridy = 7;
+        mainPanel.add(cropImageCheckBox, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 8;
         gbc.gridwidth = 3;
         mainPanel.add(scrollPane, gbc);
 
@@ -242,7 +254,7 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
         
         
         alg = new PlugInAlgorithmCellFiring(image, alreadyDisplayed, displayInputImage, downSampleXY, 
-        		downSampleZ, displayDownSampleImage, saveDownSampleImage, outputTextArea);
+        		downSampleZ, displayDownSampleImage, saveDownSampleImage, cropImage, outputTextArea);
 
         alg.addListener(this);
 
@@ -358,6 +370,8 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
         displayDownSampleImage = displayDownSampleCheckBox.isSelected();
         
         saveDownSampleImage = saveDownSampleCheckBox.isSelected();
+        
+        cropImage = cropImageCheckBox.isSelected();
 
         return true;
     }
