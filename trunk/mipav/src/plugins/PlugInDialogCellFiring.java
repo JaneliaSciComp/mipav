@@ -74,6 +74,10 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
     private JCheckBox cropImageCheckBox;
     
     private boolean cropImage;
+    
+    private JCheckBox registrationCheckBox;
+    
+    private boolean registerImage;
 
     public PlugInDialogCellFiring() {
 
@@ -141,6 +145,10 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
         cropImageCheckBox = new JCheckBox("Crop image with rectangular VOI", false);
         cropImageCheckBox.setFont(serif12);
         cropImageCheckBox.setForeground(Color.black);
+        
+        registrationCheckBox = new JCheckBox("2.5D OAR registration", true);
+        registrationCheckBox.setFont(serif12);
+        registrationCheckBox.setForeground(Color.black);
 
         outputTextArea = new JTextArea();
         outputTextArea.setRows(15);
@@ -203,9 +211,13 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
         gbc.gridx = 0;
         gbc.gridy = 7;
         mainPanel.add(cropImageCheckBox, gbc);
-
+        
         gbc.gridx = 0;
         gbc.gridy = 8;
+        mainPanel.add(registrationCheckBox, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 9;
         gbc.gridwidth = 3;
         mainPanel.add(scrollPane, gbc);
 
@@ -254,7 +266,7 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
         
         
         alg = new PlugInAlgorithmCellFiring(image, alreadyDisplayed, displayInputImage, downSampleXY, 
-        		downSampleZ, displayDownSampleImage, saveDownSampleImage, cropImage, outputTextArea);
+        		downSampleZ, displayDownSampleImage, saveDownSampleImage, cropImage, registerImage, outputTextArea);
 
         alg.addListener(this);
 
@@ -372,6 +384,8 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
         saveDownSampleImage = saveDownSampleCheckBox.isSelected();
         
         cropImage = cropImageCheckBox.isSelected();
+        
+        registerImage = registrationCheckBox.isSelected();
 
         return true;
     }
