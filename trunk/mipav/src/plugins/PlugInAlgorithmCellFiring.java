@@ -53,6 +53,8 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
     
     private boolean registerImage;
     
+    private int earliestSlices;
+    
     private boolean anistropicDiffusion;
 
     private final JTextArea outputTextArea;
@@ -61,7 +63,7 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
     public PlugInAlgorithmCellFiring(ModelImage image, boolean alreadyDisplayed, boolean displayInputImage, 
     		float downSampleXY, float downSampleZ, boolean displayDownSampleImage, 
     		boolean saveDownSampleImage,  boolean cropImage, boolean registerImage, 
-    		boolean anistropicDiffusion, final JTextArea outputTextArea) {
+    		int earliestSlices, boolean anistropicDiffusion, final JTextArea outputTextArea) {
     	super(null, image);
     	this.alreadyDisplayed = alreadyDisplayed;
     	this.displayInputImage = displayInputImage;
@@ -71,8 +73,9 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
     	this.saveDownSampleImage = saveDownSampleImage;
     	this.cropImage = cropImage;
     	this.registerImage = registerImage;
-        this.outputTextArea = outputTextArea;
+    	this.earliestSlices = earliestSlices;
         this.anistropicDiffusion = anistropicDiffusion;
+        this.outputTextArea = outputTextArea;
     }
 
     @Override
@@ -270,6 +273,65 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
             }
         	reg25 = null;
         } // if (registerImage)
+        
+        int presentXDim = presentImage.getExtents()[0];
+        int presentYDim = presentImage.getExtents()[1];
+        int presentArea = presentXDim * presentYDim;
+        int presentZDim = presentImage.getExtents()[2];
+        int presentVolume = presentArea * presentZDim;
+        float buffer[];
+        try {
+            buffer = new float[presentVolume];
+        }
+        catch (OutOfMemoryError e) {
+        	MipavUtil.displayError("Out of memory: unable to create float buffer = new float[presentVolume]");
+	        setCompleted(false);
+	        return;	
+        }
+        try {
+        	presentImage.exportData(0, presentVolume, buffer);
+        }
+        catch(IOException e) {
+        	MipavUtil.displayError("IOException " + e + " on presentImage.exportData(0, presentVolume, buffer");
+        	setCompleted(false);
+        	return;
+        }
+        
+        
+        float areaBuffer[];
+        try {
+        	areaBuffer = new float[presentArea];
+        }
+        catch (OutOfMemoryError e) {
+        	MipavUtil.displayError("Out of memory: unable to create float areaBuffer = new float[presentArea]");
+	        setCompleted(false);
+	        return;	
+        }
+        
+        for (int z = 0; z < earliestSlices; z++) {
+            for (int i = 0; i < presentArea; i++) {
+            	areaBuffer[i] += buffer[i + z * presentArea];
+            }
+        }
+        
+        for (int i = 0; i < presentArea; i++) {
+        	areaBuffer[i] = areaBuffer[i]/earliestSlices;
+        }
+        
+        for (int z = 0; z < presentZDim; z++) {
+        	for (int i = 0; i < presentArea; i++) {
+        	    buffer[i + z * presentArea] -= areaBuffer[i];	
+        	}
+        }
+        
+        try {
+        	presentImage.importData(0, buffer, true);
+        }
+        catch(IOException e) {
+        	MipavUtil.displayError("IOException " + e + " on presentImage.import(0, buffer, true");
+        	setCompleted(false);
+        	return;
+        }
         
         if (anistropicDiffusion) {
             float sigmaX = 1.0f;
