@@ -81,6 +81,10 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
     
     private boolean registerImage;
     
+    private JTextField earliestSlicesText;
+    
+    private int earliestSlices;
+    
     private JCheckBox anistropicCheckBox;
     
     private boolean anistropicDiffusion;
@@ -156,6 +160,12 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
         registrationCheckBox.setFont(serif12);
         registrationCheckBox.setForeground(Color.black);
         
+        JLabel earliestSlicesLabel = new JLabel("Earliest slices for subtraction average");
+        earliestSlicesText = new JTextField(15);
+        earliestSlicesText.setText("10");
+        earliestSlicesText.setFont(serif12);
+        earliestSlicesText.setForeground(Color.BLACK);
+        
         anistropicCheckBox = new JCheckBox("Anisotropic diffusion", true);
         anistropicCheckBox.setFont(serif12);
         anistropicCheckBox.setForeground(Color.black);
@@ -228,10 +238,16 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
         
         gbc.gridx = 0;
         gbc.gridy = 9;
+        mainPanel.add(earliestSlicesLabel, gbc);
+        gbc.gridx = 1;
+        mainPanel.add(earliestSlicesText, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 10;
         mainPanel.add(anistropicCheckBox, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 11;
         gbc.gridwidth = 3;
         mainPanel.add(scrollPane, gbc);
 
@@ -281,7 +297,7 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
         
         alg = new PlugInAlgorithmCellFiring(image, alreadyDisplayed, displayInputImage, downSampleXY, 
         		downSampleZ, displayDownSampleImage, saveDownSampleImage, cropImage, registerImage, 
-        		anistropicDiffusion, outputTextArea);
+        		earliestSlices, anistropicDiffusion, outputTextArea);
 
         alg.addListener(this);
 
@@ -417,6 +433,19 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
         }
         
         registerImage = registrationCheckBox.isSelected();
+        
+        int zDim = image.getExtents()[2];
+        int newZDim = Math.round(downSampleZ * zDim);
+        tmpStr = earliestSlicesText.getText();
+        if (testParameter(tmpStr, 1, newZDim)) {
+            earliestSlices = Integer.valueOf(tmpStr).intValue();
+        } else {
+            MipavUtil.displayError("earliestSlices must be between 1 and " + newZDim);
+            earliestSlicesText.requestFocus();
+            earliestSlicesText.selectAll();
+
+            return false;
+        }
         
         anistropicDiffusion = anistropicCheckBox.isSelected();
 
