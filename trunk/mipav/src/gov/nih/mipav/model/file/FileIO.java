@@ -3078,8 +3078,8 @@ public class FileIO {
                     break;
 
                 case FileUtility.DICOM:
+                	this.fileDir = fileDir;
                     if ( !multiFile) {
-                        this.fileDir = fileDir;
                         image = readDicom(fileName, new String[] {fileName.trim()}, false);
                     } else {
                         image = readDicom(fileName, FileUtility.getFileList(fileDir, fileName, quiet), true);
