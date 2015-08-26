@@ -2776,44 +2776,89 @@ public class FileIO {
                         return null;
                     }
 
-                    fileName = fileName.substring(0, index);
+                   
                     fileDir = tempDir;
-                    uncompressedName = fileDir + fileName;
-                    try {
-                        out = new FileOutputStream(uncompressedName);
-                    } catch (final IOException e) {
-                        MipavUtil.displayError("IOException on FileOutputStream for " + uncompressedName);
-                        return null;
-                    }
+                    
                     final byte[] buffer = new byte[256];
-
+                    
+                    ZipEntry ze = null;
                     try {
-                        while (zin.getNextEntry() != null) {
-                            while (true) {
+                    	ze = zin.getNextEntry();
+                    }
+                    catch (IOException e) {
+                    	MipavUtil.displayError("IOException " + e + " on ze = zin.getNextEntry()");
+                    	return null;
+                    }
 
-                                bytesRead = zin.read(buffer);
+                    while (ze != null) {
+                    	 fileName = ze.getName();
+                    	 uncompressedName = fileDir + fileName;
+                         try {
+                             out = new FileOutputStream(uncompressedName);
+                         } catch (final IOException e) {
+                             MipavUtil.displayError("IOException " + e + " on out = new FileOutputStream("+uncompressedName+")");
+                             return null;
+                         }
+                        while (true) {
 
-                                if (bytesRead == -1) {
-                                    break;
-                                }
-
-                                totalBytesRead += bytesRead;
-                                out.write(buffer, 0, bytesRead);
-
+                            try {
+                        	    bytesRead = zin.read(buffer);
                             }
-                        } // while (zin.getNextEntry() != null)
-                    } catch (final IOException e) {
-                        MipavUtil.displayError("IOException in loop reading entries");
-                        return null;
-                    }
+                            catch (IOException e) {
+                            	MipavUtil.displayError("IOException " + e + " on zin.read(buffer) for " + uncompressedName);
+                                return null;	
+                            }
 
+                            if (bytesRead == -1) {
+                                break;
+                            }
+
+                            totalBytesRead += bytesRead;
+                            try {
+                                out.write(buffer, 0, bytesRead);
+                            }
+                            catch (IOException e) {
+                            	MipavUtil.displayError("IOException " + e + " out.write(buffer, 0, bytesRead) for " + uncompressedName);
+                                return null;	
+                            }
+                            
+                        }
+                        try {
+                            out.flush();
+                        } catch (final IOException e) {
+                            MipavUtil.displayError("IOException " + e + " on out.flush() for " + uncompressedName);
+                            return null;
+                        }
+                        
+                        try {
+                            out.close();
+                        } catch (final IOException e) {
+                            MipavUtil.displayError("IOException " + e + " on out.close() for " + uncompressedName);
+                            return null;
+                        }
+                        
+                        try {
+                            ze = zin.getNextEntry();
+                        } catch (final IOException e) {
+                            MipavUtil.displayError("IOException " + e + " on ze = zin.getNextEntry() for " + uncompressedName);
+                            return null;
+                        }
+                    } // while (ze != null)
                     try {
-                        out.flush();
-                        out.close();
-                    } catch (final IOException e) {
-                        MipavUtil.displayError("IOException on out.close for " + uncompressedName);
-                        return null;
+                        zin.closeEntry();
                     }
+                    catch (IOException e) {
+                    	MipavUtil.displayError("IOException " + e + " on zin.closeEntry()");
+                    	return null;
+                    }
+                    try {
+                        zin.close();
+                    }
+                    catch (IOException e) {
+                    	MipavUtil.displayError("IOException " + e + " on zin.close()");
+                    	return null;
+                    }
+                    
                 } // if (unzip)
                 else if (gunzip) {
                     int totalBytesRead = 0;
