@@ -2859,6 +2859,13 @@ public class FileIO {
                     	return null;
                     }
                     
+                    try {
+                    	fis.close();
+                    }
+                    catch (IOException e) {
+                    	MipavUtil.displayError("IOException " + e + " on fis.close()");
+                    	return null;
+                    }
                 } // if (unzip)
                 else if (gunzip) {
                     int totalBytesRead = 0;
