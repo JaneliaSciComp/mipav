@@ -33,7 +33,7 @@ import gov.nih.mipav.view.ViewUserInterface;
  * 
  * With 12 gigabytes allocated to Eclipse, a 256 by 256 image gives an Out of Memory Java heap space error in
  * spectralPb at P = new double[mL][nL] after lu.lu1fac
- * With a  128 by 128 image dsaupd -> dsuap2 -> second dsaitr call: At
+ * With a  128 by 128 image dsaupd -> dsaup2 -> second dsaitr call: At
  * ge.dgemv('N', n, dsaitr_j, -one, V, ldv, buffer2, 1, one, resid, 1);
  * very large finite numbers generate infinities in resid.
  */
