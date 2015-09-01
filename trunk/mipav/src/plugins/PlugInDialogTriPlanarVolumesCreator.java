@@ -1041,7 +1041,7 @@ public class PlugInDialogTriPlanarVolumesCreator extends JDialogStandaloneScript
 	                System.exit(0);
 	                // ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 	            } else {
-	                return;
+	                dispose();
 	            }
 			}
        }
