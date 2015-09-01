@@ -1582,8 +1582,8 @@ public void runAllSlices(int startSlice, int endSlice, boolean useModImage, View
 			 
 			 for(int sliceIdx=startSlice;sliceIdx<=endSlice;sliceIdx++) {
 				 progressBar.updateValueImmed(30 + Math.round((float) sliceIdx / endSlice * 50));
-				 int timeParam = timeSlice + 1;
-				 slice.setSliceIndex(sliceIdx,timeParam,true);
+				 //int timeParam = timeSlice + 1;
+				 slice.setSliceIndex(sliceIdx,timeSlice,true);
 				 buff = run1Slice(slice);
 				 rawhd.setSize(buff.size(),sliceIdx-startSlice);		 
 				 rawhd.writeRawJP2Header(f);
