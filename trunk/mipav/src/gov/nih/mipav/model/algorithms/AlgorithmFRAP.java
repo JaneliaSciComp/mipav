@@ -178,6 +178,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
     /** Radius of bleach spot in um. */
     private float radius;
+    
+    /** Radius of nuclear membrane in um. */
+    private float nuclearRadius;
 
     /** DOCUMENT ME! */
     private boolean register;
@@ -221,11 +224,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
      * @param  paramVary           Calculate sum of square of errors for different parameter values and output the
      *                             minimum
      * @param  radius              radius of bleach spot in um.
+     * @param  nuclearRadius       radius of nuclear membrane in um
      * @param  diffusion           diffusion constant in um*um/sec
      */
     public AlgorithmFRAP(ModelImage srcImg, boolean useRed, boolean useGreen, boolean useBlue, int firstSliceNum,
                          int photoBleachedIndex, int wholeOrganIndex, int backgroundIndex, int model, boolean register,
-                         int cost, boolean createRegImage, boolean paramVary, float radius, float diffusion) {
+                         int cost, boolean createRegImage, boolean paramVary, float radius, float nuclearRadius, float diffusion) {
 
         super(null, srcImg);
 
@@ -242,6 +246,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
         this.createRegImage = createRegImage;
         this.paramVary = paramVary;
         this.radius = radius;
+        this.nuclearRadius = nuclearRadius;
         this.diffusion = diffusion;
     }
 
@@ -296,7 +301,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
         boolean doSecondFit = false;
         float[] tgValues;
         double refStamp;
-        double[] params;
+        double[] params = null;
         FitDoubleExponentialModel fdem = null;
         FitDoubleExponentialNoWholeModel fdemnw = null;
         FitPure1DModel fp1D = null;
@@ -1905,12 +1910,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
             initial_kon[25] = 1.0E7;
             initial_koff[25] = 1.0E-7;
 
-            // An estimate for the maximum of the real parts of the singularities
-            // of F. If unknown, set largestPole = 0.0
-            double largestPole = 0.0;
-
-            // numerical tolerance of approaching pole (default = 1.0e-9)
-            double tol = 1.0e-9;
+            
             FitFullModel lmod;
             FitWholeNL2solModel nonlinmod;
             FitWholeNLConModel nlinmod2;
@@ -1921,27 +1921,17 @@ public class AlgorithmFRAP extends AlgorithmBase {
             int kmin = 0;
             initial = new double[2];
 
-            double[] residuals;
-
-            // Must strip out value with time = 0 or inverseLaplace will blow up
-            // when taking logarithm of zero.
-            double[] tStripZero = new double[tValues.length - 1];
-            float[] pStripZero = new float[tValues.length - 1];
-
-            for (i = 0; i < (tValues.length - 1); i++) {
-                tStripZero[i] = tValues[i + 1];
-                pStripZero[i] = pIntensity[i + 1];
-            }
+            double[] residuals = null;
 
             for (k = 0; k < 26; k++) {
                 fireProgressStateChanged("Performing " + (k + 1) + " of 26 grid search runs");
                 fireProgressStateChanged(50 + k);
-                lmod = new FitFullModel(tStripZero, largestPole, tol, initial_kon[k], initial_koff[k]);
-                lmod.driver();
-                timeFunction = lmod.getTimeFunction();
+                lmod = new FitFullModel(tValues, initial_kon[k], initial_koff[k]);
+                //lmod.driver();
+                //timeFunction = lmod.getTimeFunction();
 
                 for (i = 0; i < timeFunction.length; i++) {
-                    fitR[i] = timeFunction[i] - pStripZero[i];
+                    fitR[i] = timeFunction[i] - pIntensity[i];
                     sses[k] = sses[k] + (fitR[i] * fitR[i]);
                 } // for (i = 0; i < timeFunction.length; i++)
 
@@ -1962,13 +1952,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
             xp[1] = initial[0];
             xp[2] = initial[1];
             int iv[] = new int[63]; // 61 + number of coefficients
-            int vLength = 94 + tStripZero.length*2 + 3*tStripZero.length + 2*(3*2+33)/2;
+            int vLength = 94 + tValues.length*2 + 3*tValues.length + 2*(3*2+33)/2;
         	double v[] = new double[vLength];
         	boolean useAnalyticJacobian = false;
-            nonlinmod = new FitWholeNL2solModel(tStripZero.length, tStripZero, pStripZero, xp,
-            		    iv, v, useAnalyticJacobian, largestPole, tol);
-            nonlinmod.driver();
-            nonlinmod.dumpResults();
+            //nonlinmod = new FitWholeNL2solModel(tValues.length, tValues, pIntensity, xp,
+            //		    iv, v, useAnalyticJacobian);
+            //nonlinmod.driver();
+            //nonlinmod.dumpResults();
             ViewUserInterface.getReference().setDataText("NL2sol nonlinear fit\n");
             ViewUserInterface.getReference().setDataText("kon = " + xp[1] + "\n");
             ViewUserInterface.getReference().setDataText("koff = " + xp[2] + "\n");
@@ -2002,22 +1992,22 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 pfValues[0][z] = photoBleachedIntensity[z];
             }
 
-            for (z = 0; z < (firstSliceNum + 1); z++) {
+            for (z = 0; z < firstSliceNum; z++) {
                 pfValues[1][z] = 0.0f;
             }
 
-            for (z = firstSliceNum + 1; z < zDim; z++) {
+            for (z = firstSliceNum; z < zDim; z++) {
             	// Residuals start at v of iv[50]
-                pfValues[1][z] = (float) (pStripZero[z - (firstSliceNum + 1)] + v[iv[50] + z - (firstSliceNum + 1)]);
+                pfValues[1][z] = (float) (pIntensity[z - firstSliceNum] + v[iv[50] + z - firstSliceNum]);
             }
 
             fireProgressStateChanged("Performing ELSUNC nonlinear fit");
             doSecondFit = true;
-            nlinmod2 = new FitWholeNLConModel(tStripZero.length, tStripZero, pStripZero, initial, largestPole, tol);
-            nlinmod2.driver();
-            nlinmod2.dumpResults();
-            residuals = nlinmod2.getResiduals();
-            params = nlinmod2.getParameters();
+            //nlinmod2 = new FitWholeNLConModel(tValues.length, tValues, pIntensity, initial);
+            //nlinmod2.driver();
+            //nlinmod2.dumpResults();
+            //residuals = nlinmod2.getResiduals();
+            //params = nlinmod2.getParameters();
             ViewUserInterface.getReference().setDataText("ELSUNC nonlinear fit\n");
             ViewUserInterface.getReference().setDataText("kon = " + params[0] + "\n");
             ViewUserInterface.getReference().setDataText("koff = " + params[1] + "\n");
@@ -2034,12 +2024,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 pfValues2[0][z] = photoBleachedIntensity[z];
             }
 
-            for (z = 0; z < (firstSliceNum + 1); z++) {
+            for (z = 0; z < firstSliceNum; z++) {
                 pfValues2[1][z] = 0.0f;
             }
 
-            for (z = firstSliceNum + 1; z < zDim; z++) {
-                pfValues2[1][z] = (float) (pStripZero[z - (firstSliceNum + 1)] + residuals[z - (firstSliceNum + 1)]);
+            for (z = firstSliceNum; z < zDim; z++) {
+                pfValues2[1][z] = (float) (pIntensity[z - firstSliceNum] + residuals[z - firstSliceNum]);
             }
 
             if (paramVary) {
@@ -2089,12 +2079,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     for (x = 0; x <= 200; x++) {
                         index = indexY + x;
                         kon = 0.02 * params[0] * Math.pow(2500.0, 0.005 * x);
-                        lmod = new FitFullModel(tStripZero, largestPole, tol, kon, koff);
-                        lmod.driver();
-                        timeFunction = lmod.getTimeFunction();
+                        lmod = new FitFullModel(tValues, kon, koff);
+                        //lmod.driver();
+                        //timeFunction = lmod.getTimeFunction();
 
                         for (i = 0; i < timeFunction.length; i++) {
-                            fitR[i] = timeFunction[i] - pStripZero[i];
+                            fitR[i] = timeFunction[i] - pIntensity[i];
                             sses[index] = sses[index] + (fitR[i] * fitR[i]);
                         } // for (i = 0; i < timeFunction.length; i++)
 
@@ -5072,7 +5062,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
-    class FitFullModel extends InverseLaplace {
+    class FitFullModel {
 
         /** DOCUMENT ME! */
         double koff;
@@ -5084,15 +5074,51 @@ public class AlgorithmFRAP extends AlgorithmBase {
          * Creates a new FitFullModel object.
          *
          * @param  time         DOCUMENT ME!
-         * @param  largestPole  DOCUMENT ME!
-         * @param  tol          DOCUMENT ME!
          * @param  kon          DOCUMENT ME!
          * @param  koff         DOCUMENT ME!
          */
-        public FitFullModel(double[] time, double largestPole, double tol, double kon, double koff) {
-            super(time, largestPole, tol);
-            this.kon = kon;
-            this.koff = koff;
+        public FitFullModel(double[] time, double kon, double koff) {
+            int k;
+            double U[] = new double[500];
+            double W[] = new double[500];
+            double w[] = new double[500];
+            double v[] = new double[500];
+            double V[] = new double[500];
+            double X[] = new double[500];
+            double avgJ0[] = new double[500];
+            double rj0[] = new double[499];
+            double rj1[] = new double[499];
+            double ry0[] = new double[499];
+            double ry1[] = new double[499];
+            double alpha;
+            Bessel modelBessel;
+            double initialOrder = 1.0;
+            int sequenceNumber = 1;
+            double[] cyr = new double[1];
+            double[] cyi = new double[1];
+            int[] nz = new int[1];
+            int[] errorFlag = new int[1];
+            double var;
+            // 1 is order of Bessel functions
+            // 499 is number of zeros
+            // rj0 contains the first 499 zeros of J1.
+            JYZO(1, 500, rj0, rj1, ry0, ry1);
+            for (k = 0; k < 500; k++) {
+            	if (k == 0) {
+            		alpha = 0.0;
+            		avgJ0[k] = 1.0;
+            	}
+            	else {
+	                alpha = rj0[k-1]/nuclearRadius;
+	                modelBessel = new Bessel(Bessel.BESSEL_J, alpha * radius, 0.0, initialOrder,
+	                        Bessel.UNSCALED_FUNCTION, sequenceNumber, cyr, cyi, nz, errorFlag);
+	                modelBessel.run();
+	                avgJ0[k] = 2.0 * cyr[0]/(alpha * radius);
+            	}
+            	var = diffusion * alpha * alpha + kon + koff;
+            	w[k] = 0.5 * var;
+            	v[k] = Math.sqrt(0.25 * var * var - koff * diffusion * alpha * alpha);
+            } // for (k = 0; k < 500; k++)
         }
 
         /**
@@ -6370,14 +6396,14 @@ public class AlgorithmFRAP extends AlgorithmBase {
         	double[] timeFunction;
         	int j;
         	
-        	lmod = new FitFullModel(xData, largestPole, tol, x[1], x[2]);
-            lmod.driver();
+        	lmod = new FitFullModel(xData, x[1], x[2]);
+            /*lmod.driver();
             timeFunction = lmod.getTimeFunction();
             // evaluate the residuals[j] = ymodel[j] - ySeries[j]
             for (j = 0; j < meqn; j++) {
                 r[j+1] = timeFunction[j] - yData[j];
                 // Preferences.debug("residuals["+ (j+1) + "] = " + r[j+1] + "\n", Preferences.DEBUG_ALGORITHM);
-            }
+            }*/
 
         }
         
@@ -6608,13 +6634,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 ctrl = ctrlMat[0];
 
                 if ((ctrl == -1) || (ctrl == 1)) {
-                    lmod = new FitFullModel(xData, largestPole, tol, a[0], a[1]);
-                    lmod.driver();
+                    lmod = new FitFullModel(xData, a[0], a[1]);
+                    /*lmod.driver();
                     timeFunction = lmod.getTimeFunction();
 
                     for (i = 0; i < timeFunction.length; i++) {
                         residuals[i] = timeFunction[i] - yData[i];
-                    }
+                    }*/
                 } // if ((ctrl == -1) || (ctrl == 1))
 
                 // Calculate the Jacobian numerically
@@ -7076,4 +7102,246 @@ public class AlgorithmFRAP extends AlgorithmBase {
             return function;
         }
     }
+    
+// Program MJYZO.FOR and called subroutines is code copyright by Shanjie Zhang
+// and Jianming Jin and originally supplied with Computaton of Special Functions
+//    PROGRAM MJYZO
+//
+//       ==========================================================
+//       Purpose: This program computes the zeros of Bessel 
+//                functions Jn(x), Yn(x), and their derivatives 
+//                using subroutine JYZO
+//       Input :  n --- Order of Bessel functions
+//                NT --- Number of zeros
+//       Output:  RJ0(m) --- m-th zero of Jn(x),  m=1,2,...,NT
+//                RJ1(m) --- m-th zero of Jn'(x), m=1,2,...,NT
+//                RY0(m) --- m-th zero of Yn(x),  m=1,2,...,NT
+//                RY1(m) --- m-th zero of Yn'(x), m=1,2,...,NT
+//       Example: n = 1, NT =5
+//
+//      Zeros of Bessel funcions Jn(x), Yn(x) and their derivatives
+//                                 ( n = 1 )
+//       m       jnm           j'nm          ynm           y'nm
+//      -----------------------------------------------------------
+//       1     3.8317060     1.8411838     2.1971413     3.6830229
+//       2     7.0155867     5.3314428     5.4296810     6.9415000
+//       3    10.1734681     8.5363164     8.5960059    10.1234047
+//       4    13.3236919    11.7060049    11.7491548    13.2857582
+//       5    16.4706301    14.8635886    14.8974421    16.4400580
+//       ==========================================================
+//
+//    IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+//    DIMENSION RJ0(101),RJ1(101),RY0(101),RY1(101)
+//    WRITE(*,*)'Please enter n and NT '
+//    READ(*,*)N,NT
+//    WRITE(*,*)
+//    CALL JYZO(N,NT,RJ0,RJ1,RY0,RY1)
+//    WRITE(*,30)
+//    WRITE(*,40)N
+//    WRITE(*,*)'  m       jnm           j''nm          ynm',
+// &            '           y''nm'
+//    WRITE(*,*)' ----------------------------------------',
+// &            '-------------------'
+//    DO 10 M=1,NT
+//10         WRITE(*,50)M,RJ0(M),RJ1(M),RY0(M),RY1(M)
+//30      FORMAT(2X,'Zeros of Bessel funcions Jn(x), Yn(x)',
+// &         ' and their derivatives')
+//40      FORMAT(30X,'( n =',I2,' )')
+//50      FORMAT(1X,I3,4F14.7)
+//    END
+
+
+    private void JYZO(int N,int NT, double RJ0[], double RJ1[],double RY0[], double RY1[]) {
+//
+//       ======================================================
+//       Purpose: Compute the zeros of Bessel functions Jn(x),
+//                Yn(x), and their derivatives
+//       Input :  n  --- Order of Bessel functions
+//                NT --- Number of zeros (roots)
+//       Output:  RJ0(L) --- L-th zero of Jn(x),  L=1,2,...,NT
+//                RJ1(L) --- L-th zero of Jn'(x), L=1,2,...,NT
+//                RY0(L) --- L-th zero of Yn(x),  L=1,2,...,NT
+//                RY1(L) --- L-th zero of Yn'(x), L=1,2,...,NT
+//       Routine called: JYNDD for computing Jn(x), Yn(x), and
+//                       their first and second derivatives
+//       ======================================================
+//
+//    IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+//    DIMENSION RJ0(NT),RJ1(NT),RY0(NT),RY1(NT)
+    	double X;
+    	double var;
+    	int L;
+    	double X0;
+    	double BJN[] = new double[1];
+    	double DJN[] = new double[1];
+    	double FJN[] = new double[1];
+    	double BYN[] = new double[1];
+    	double DYN[] = new double[1];
+    	double FYN[] = new double[1];
+    if (N <= 20) {
+       X=2.82141+1.15859*N;
+    }
+    else {
+       var = Math.pow(N, 0.33333);
+       X=N+1.85576*var+1.03315/var;
+    }
+    L=0;
+    do {
+	    X0=X;
+	    JYNDD(N,X,BJN,DJN,FJN,BYN,DYN,FYN);
+	    X=X-BJN[0]/DJN[0];
+	    if (Math.abs(X-X0) > 1.0E-9) {
+		    continue;
+	    }
+	    L=L+1;
+	    RJ0[L-1]=X;
+	    X=X+3.1416+(0.0972+0.0679*N-0.000354*N*N)/L;
+    } while (L < NT);
+    if (N <= 20) {
+       X=0.961587+1.07703*N;
+    }
+    else {
+    	var = Math.pow(N, 0.33333);
+       X=N+0.80861*var+0.07249/var;
+    }
+    if (N == 0) X=3.8317;
+    L=0;
+    do {
+        X0=X;
+        JYNDD(N,X,BJN,DJN,FJN,BYN,DYN,FYN);
+        X=X-DJN[0]/FJN[0];
+        if (Math.abs(X-X0) > 1.0E-9) {
+        	continue;
+        }
+        L=L+1;
+        RJ1[L-1]=X;
+        X=X+3.1416+(0.4955+0.0915*N-0.000435*N*N)/L;
+    } while (L < NT);
+    if (N <= 20) {
+       X=1.19477+1.08933*N;
+    }
+    else {
+       var = Math.pow(N, 0.33333);
+       X=N+0.93158*var+0.26035/var;
+    }          
+    L=0;
+    do {
+        X0=X;
+        JYNDD(N,X,BJN,DJN,FJN,BYN,DYN,FYN);
+        X=X-BYN[0]/DYN[0];
+        if (Math.abs(X-X0) > 1.0E-9) {
+        	continue;
+        }
+        L=L+1;
+        RY0[L-1]=X;
+        X=X+3.1416+(0.312+0.0852*N-0.000403*N*N)/L;
+    } while (L < NT);
+    if (N <= 20) {
+       X=2.67257+1.16099*N;
+    }
+    else {
+    	var = Math.pow(N, 0.33333); 
+        X=N+1.8211*var+0.94001/var;
+    }  
+    L=0;
+    do {
+        X0=X;
+        JYNDD(N,X,BJN,DJN,FJN,BYN,DYN,FYN);
+        X=X-DYN[0]/FYN[0];
+        if (Math.abs(X-X0) > 1.0E-9) {
+        	continue;
+        }
+        L=L+1;
+        RY1[L-1]=X;
+        X=X+3.1416+(0.197+0.0643*N-0.000286*N*N)/L;
+    } while (L < NT);
+    return;
+    } // JYZO
+
+
+    private void JYNDD(int N, double X, double BJN[], double DJN[], double FJN[], double BYN[],double DYN[], double FYN[]) {
+
+//       ===========================================================
+//       Purpose: Compute Bessel functions Jn(x) and Yn(x), and
+//                their first and second derivatives 
+//       Input:   x   ---  Argument of Jn(x) and Yn(x) ( x > 0 )
+//                n   ---  Order of Jn(x) and Yn(x)
+//       Output:  BJN ---  Jn(x)
+//                DJN ---  Jn'(x)
+//                FJN ---  Jn"(x)
+//                BYN ---  Yn(x)
+//                DYN ---  Yn'(x)
+//                FYN ---  Yn"(x)
+//       ===========================================================
+
+//    IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+//    DIMENSION BJ(102),BY(102)
+    	int NT;
+    	int MT;
+    	int M;
+    	double BS;
+    	double F0;
+    	double F1;
+    	double SU;
+    	int K;
+    	double F = 0.0;
+    	double BJ[] = new double[102];
+    	double BY[] = new double[102];
+    	double EC;
+    	double E0;
+    	double S1;
+    for (NT=1; NT <= 900; NT++) {
+       MT=(int)(0.5*Math.log10(6.28*NT)-NT*Math.log10(1.36*Math.abs(X)/NT));
+       if (MT > 20) {
+    	   break;
+       }
+    } // for (NT=1; NT <= 900; NT++)
+    M=NT;
+    BS=0.0;
+    F0=0.0;
+    F1=1.0E-35;
+    SU=0.0;
+    for (K=M; K >=0; K--) {
+       F=2.0*(K+1.0)*F1/X-F0;
+       if (K <= N+1) {
+    	   BJ[K]=F;
+       }
+       if (K == 2*(int)(K/2)) {
+          BS=BS+2.0*F;
+          if (K != 0) {
+        	  SU=SU+Math.pow(-1, K/2)*F/K;
+          }
+       } // if (K == 2*(int)(K/2))
+       F0=F1;
+       F1=F;
+    } // for (K=M; K >=0; K--)
+    for (K=0; K <= N+1; K++) {
+        BJ[K]=BJ[K]/(BS-F);
+    }
+    BJN[0]=BJ[N];
+    EC=0.5772156649015329;
+    E0=0.3183098861837907;
+    S1=2.0*E0*(Math.log(X/2.0)+EC)*BJ[0];
+    F0=S1-8.0*E0*SU/(BS-F);
+    F1=(BJ[1]*F0-2.0*E0/X)/BJ[0];
+    BY[0]=F0;
+    BY[1]=F1;
+    for (K=2; K <= N+1; K++) {
+       F=2.0*(K-1.0)*F1/X-F0;
+       BY[K]=F;
+       F0=F1;
+       F1=F;
+    } // for (K=2; K <= N+1; K++)
+    BYN[0]=BY[N];
+    DJN[0]=-BJ[N+1]+N*BJ[N]/X;
+    DYN[0]=-BY[N+1]+N*BY[N]/X;
+    FJN[0]=(N*N/(X*X)-1.0)*BJN[0]-DJN[0]/X;
+    FYN[0]=(N*N/(X*X)-1.0)*BYN[0]-DYN[0]/X;
+    return;
+    } // JYNDD
+
+
+
+
+
 }
