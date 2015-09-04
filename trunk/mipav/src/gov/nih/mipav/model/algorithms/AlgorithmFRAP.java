@@ -50,9 +50,9 @@ import de.jtem.numericalMethods.calculus.integration.RungeKuttaFehlbergIntegrato
  * 
  * <p>
  * The 2D circle case is implemented according to the full reaction-diffusion
- * system model equations found in Analysis of Binding Reactions by Fluorescence
- * Recovery by Brian L. Sprague, Robert L. Pego, Diana A. Stavreva, and James G.
- * McNally.
+ * system model equations found in Evidence of a Common Mode of Transcription
+ * Factor Interaction with Chromatin as Revealed by Improved Quantitative Fluorescence
+ * Recovery after Photobleaching by Florian Mueller, Paul Wach, and James McNally.
  * </p>
  * 
  * <p>
@@ -131,13 +131,9 @@ import de.jtem.numericalMethods.calculus.integration.RungeKuttaFehlbergIntegrato
  * </p>
  * 
  * <p>
- * For the 2D circle case: p is a complex Laplace variable average frap(p) =
- * 2*(Feq/p)*I1(qw)*K1(qw))*(1 + kon/(p + koff)) w is the spot radius in um.
- * q**2 = (p/Df)*(1 + kon/(p + koff)) Df is the diffusion constant in
- * micrometers squared per second I1 and K1 are modified Bessel functions of the
- * first and second kind. Feq = koff/(kon + koff) Ceq = kon/(kon + koff) frap(t)
- * is obtained by numerically taking the inverse Laplace transform of frap(p).
- * In the 2D circle case the user inputs the radius and diffusion constant and
+ * For the 2D circle case: Feq = koff/(kon + koff) Ceq = kon/(kon + koff)
+ * In the 2D circle case the user inputs the photbleached circle radius,
+ * the radius to the nuclear membrane, and diffusion constant and
  * nonlinear fitting is used to obtain kon and koff.
  * </p>
  * 
@@ -195,9 +191,10 @@ import de.jtem.numericalMethods.calculus.integration.RungeKuttaFehlbergIntegrato
  * </p>
  * 
  * <p>
- * References: 1.) Analysis of Binding Reactions by Fluorescence Recovery after
- * Photobleaching by Brian L. Sprague, Robert L. Pego, Diana A. Stavera, and
- * James G. McNally, Bipphysical Journal, Volume 86, June 2004, pp. 3473-3495.
+ * References: 1.) Evidence for a Common Mode of Transcription Factor Interaction with
+ * Chromatin as Revealed by Improved Quantitative Fluorescence Recovery after Photobleaching
+ * by Florian Mueller, Paul Wach, and James G. McNally, Biophysical Journal, 
+ * Volume 94, April 2008, pp. 3323-3339 and accompanying supplemental material.
  * </p>
  * 
  * <p>
@@ -288,7 +285,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 	private boolean useRed = false;
 
 	/** DOCUMENT ME! */
-	private boolean useTestData = true;
+	private boolean useTestData = false;
 
 	/** DOCUMENT ME! */
 	private int wholeOrganIndex;
@@ -2310,8 +2307,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
 				fireProgressStateChanged(50 + k);
 				fitFullModel(timeFunction, tValues, initial_kon[k],
 						initial_koff[k]);
-				// lmod.driver();
-				// timeFunction = lmod.getTimeFunction();
 
 				for (i = 0; i < timeFunction.length; i++) {
 					fitR[i] = timeFunction[i] - pIntensity[i];
@@ -2342,11 +2337,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					* (3 * 2 + 33) / 2;
 			double v[] = new double[vLength];
 			boolean useAnalyticJacobian = false;
-			// nonlinmod = new FitWholeNL2solModel(tValues.length, tValues,
-			// pIntensity, xp,
-			// iv, v, useAnalyticJacobian);
-			// nonlinmod.driver();
-			// nonlinmod.dumpResults();
+			nonlinmod = new FitWholeNL2solModel(tValues.length, tValues, pIntensity, xp,
+			             iv, v, useAnalyticJacobian);
+			nonlinmod.driver();
+			nonlinmod.dumpResults();
 			ViewUserInterface.getReference().setDataText(
 					"NL2sol nonlinear fit\n");
 			ViewUserInterface.getReference().setDataText(
@@ -2399,12 +2393,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
 			fireProgressStateChanged("Performing ELSUNC nonlinear fit");
 			doSecondFit = true;
-			// nlinmod2 = new FitWholeNLConModel(tValues.length, tValues,
-			// pIntensity, initial);
-			// nlinmod2.driver();
-			// nlinmod2.dumpResults();
-			// residuals = nlinmod2.getResiduals();
-			// params = nlinmod2.getParameters();
+			nlinmod2 = new FitWholeNLConModel(tValues.length, tValues, pIntensity, initial);
+			nlinmod2.driver();
+			nlinmod2.dumpResults();
+			residuals = nlinmod2.getResiduals();
+			params = nlinmod2.getParameters();
 			ViewUserInterface.getReference().setDataText(
 					"ELSUNC nonlinear fit\n");
 			ViewUserInterface.getReference().setDataText(
@@ -6056,6 +6049,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			}
 			for (k = 0; k < 500; k++) {
 				if (k == 0) {
+					// Article gives <J0(alphak* r)> = 1
+					// Since J0(0) = 1, must have alpha = 0 for k = 0.
 					alpha = 0.0;
 					avgJ0[k] = 1.0;
 				} else {
@@ -6081,8 +6076,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
 				Preferences.debug("Error status = " + errorStatus
 						+ " with absolute error = " + absError + "\n",
 						Preferences.DEBUG_ALGORITHM);
-				initialOrder = 0.0;
 				if (k > 0) {
+					initialOrder = 0.0;
 					modelBessel = new Bessel(Bessel.BESSEL_J, rj0[k-1],
 							0.0, initialOrder, Bessel.UNSCALED_FUNCTION,
 							sequenceNumber, cyr, cyi, nz, errorFlag);
@@ -6100,6 +6095,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			} // for (k = 0; k < 500; k++)
 			
 			for (t = 0; t < time.length; t++) {
+				timeFunction[t] = 0.0;
 				for (k = 0; k < 500; k++) {
 				    timeFunction[t] += ((U[k] + W[k]) * Math.exp(-(w[k]+v[k])*time[t]) 
 				    	+	(V[k]+X[k]) * Math.exp(-(w[k] - v[k])*time[t]))*avgJ0[k];	
@@ -7261,11 +7257,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		double x[];
 		private double xData[];
 		private float yData[];
-		/** DOCUMENT ME! */
-		double largestPole;
-
-		/** DOCUMENT ME! */
-		double tol;
 
 		/**
 		 * Creates a new FitWholeNL2solModel object.
@@ -7279,13 +7270,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		 *            DOCUMENT ME!
 		 * @param iv
 		 * @param v
-		 * @param useAnalyticJacobian
-		 * @param largestPole
-		 * @param tol
+		 * @param useAnalyticJacobian 
 		 */
 		public FitWholeNL2solModel(final int nPoints, final double[] xData,
 				final float[] yData, double[] x, int iv[], double v[],
-				boolean useAnalyticJacobian, double largestPole, double tol) {
+				boolean useAnalyticJacobian) {
 
 			// nPoints data points
 			// 2 coefficients
@@ -7302,8 +7291,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			this.v = v;
 			this.xData = xData;
 			this.yData = yData;
-			this.largestPole = largestPole;
-			this.tol = tol;
 		}
 
 		/**
@@ -7341,7 +7328,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			for (j = 0; j < meqn; j++) { 
 				r[j+1] = timeFunction[j] - yData[j];
 			    Preferences.debug("residuals["+ (j+1) + "] = " + r[j+1] + "\n", Preferences.DEBUG_ALGORITHM); 
-			    }
+			}
 		}
 
 		public void calcj(final int meqn, final int nvar, final double x[],
@@ -7510,11 +7497,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
 	class FitWholeNLConModel extends NLConstrainedEngine {
 		private double xData[];
 		private float yData[];
-		/** DOCUMENT ME! */
-		double largestPole;
-
-		/** DOCUMENT ME! */
-		double tol;
 
 		/**
 		 * Creates a new FitWholeNLConModel object.
@@ -7527,19 +7509,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		 *            DOCUMENT ME!
 		 * @param initial
 		 *            DOCUMENT ME!
-		 * @param largestPole
-		 *            DOCUMENT ME!
-		 * @param tol
-		 *            DOCUMENT ME!
 		 */
 		public FitWholeNLConModel(int nPoints, double[] xData, float[] yData,
-				double[] initial, double largestPole, double tol) {
+				double[] initial) {
 
 			super(nPoints, 2);
 			this.xData = xData;
 			this.yData = yData;
-			this.largestPole = largestPole;
-			this.tol = tol;
 
 			bounds = 2; // bounds = 0 means unconstrained
 
