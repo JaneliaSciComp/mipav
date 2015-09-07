@@ -7327,7 +7327,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			// evaluate the residuals[j] = ymodel[j] - ySeries[j] 
 			for (j = 0; j < meqn; j++) { 
 				r[j+1] = timeFunction[j] - yData[j];
-			    Preferences.debug("residuals["+ (j+1) + "] = " + r[j+1] + "\n", Preferences.DEBUG_ALGORITHM); 
+			    Preferences.debug("FitWholeNL2solModel residuals["+ (j+1) + "] = " + r[j+1] + "\n", Preferences.DEBUG_ALGORITHM); 
 			}
 		}
 
@@ -7584,6 +7584,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					
 					 for (i = 0; i < timeFunction.length; i++) {
 						 residuals[i]= timeFunction[i] - yData[i]; 
+						 Preferences.debug("FitWholeNLConModel residuals["+i+"] = " + residuals[i] + "\n", Preferences.DEBUG_ALGORITHM);
+						 Preferences.debug("timeFunction["+i+"] = " + timeFunction[i] + " yData["+i+"] = " + yData[i] + "\n",
+								 Preferences.DEBUG_ALGORITHM);
 						 }
 				} // if ((ctrl == -1) || (ctrl == 1))
 
