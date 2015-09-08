@@ -1536,13 +1536,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
 				}
 			}
 
-			if (model != CIRCLE_2D) {
 
-				for (z = 0; z < zDim; z++) {
-					photoBleachedIntensity[z] = photoBleachedIntensity[z]
-							/ pMax;
-				}
-			} // if (model != CIRCLE_2D)
+			for (z = 0; z < zDim; z++) {
+				photoBleachedIntensity[z] = photoBleachedIntensity[z]
+						/ pMax;
+			}
 		}
 
 		for (z = firstSliceNum; z < zDim; z++) {
@@ -6037,6 +6035,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			double lower = 0.0;
 			double upper = nuclearRadius;
 			double Feq = koff/(kon + koff);
+			double tmax;
 			// 1 is order of Bessel functions
 			// 10 is number of zeros
 			// rj0 contains the first 10 zeros of J1.
@@ -6094,13 +6093,21 @@ public class AlgorithmFRAP extends AlgorithmBase {
 				X[k] = V[k]*(kon/(-(w[k] - v[k]) + koff));
 			} // for (k = 0; k < 500; k++)
 			
+			tmax = -Double.MAX_VALUE;
 			for (t = 0; t < time.length; t++) {
 				timeFunction[t] = 0.0;
 				for (k = 0; k < 500; k++) {
 				    timeFunction[t] += ((U[k] + W[k]) * Math.exp(-(w[k]+v[k])*time[t]) 
 				    	+	(V[k]+X[k]) * Math.exp(-(w[k] - v[k])*time[t]))*avgJ0[k];	
 				} // for (k = 0; k < 500; k++)
+				if (timeFunction[t] > tmax) {
+					tmax = timeFunction[t];
+				}
 			} // for (t = 0; t < time.length; t++)
+			
+			for (t = 0; t < time.length; t++) {
+				timeFunction[t] = timeFunction[t]/tmax;
+			}
 		}
 
 		
