@@ -170,6 +170,11 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
+    public AlgorithmCostFunctions2D(ModelSimpleImage rImage, ModelSimpleImage iImage, int functionID, int nBins,
+                                    float smoothSize)
+    {
+    	this(rImage,iImage,functionID,nBins,smoothSize,true);
+    }
     /**
      * Creates a new AlgorithmCostFunctions2D object.
      *
@@ -180,7 +185,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
      * @param  smoothSize  DOCUMENT ME!
      */
     public AlgorithmCostFunctions2D(ModelSimpleImage rImage, ModelSimpleImage iImage, int functionID, int nBins,
-                                    float smoothSize) {
+                                    float smoothSize, boolean calcMinMax ) {
 
         costFunctID = functionID;
         refImage = rImage;
@@ -188,9 +193,11 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         this.nBins = nBins;
         this.smoothSize = smoothSize;
 
-        refImage.calcMinMax();
-        inputImage.calcMinMax();
-
+        if ( calcMinMax )
+        {
+        	refImage.calcMinMax();
+        	inputImage.calcMinMax();
+        }
 //        setNBins(nBins);
 
         xDim = inputImage.xDim;
@@ -2584,6 +2591,11 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
                 // done once - savings - one mult, sub and convert to int. per loop.
                 indexValue = (int) ((refImage.data[index] - refImage.min) * constant);
                 tmp = weight * (value - inputImage.min); // Added by Matt to handle image with neg values
+                if ( indexValue < 0 )
+                {
+                	System.err.println( refImage.data[index] + " " + refImage.min + " " + index + " " + ((refImage.data[index] - refImage.min) * constant));
+                	indexValue = 0;
+                }
                 numY[indexValue] += weight;
                 sumY[indexValue] += tmp;
                 sumY2[indexValue] += tmp * (value - inputImage.min);

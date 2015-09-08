@@ -17,6 +17,7 @@ import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
+import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 
@@ -26,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Vector;
+import java.util.concurrent.CountDownLatch;
 
 
 /**
@@ -123,31 +125,32 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
     private float[] bufferW;
 
     /** Number of passes that will be made in the coarse sampling and fine sampling. */
-    private int coarseNum, fineNum;
+    private final int coarseNum;
+    private final int fineNum;
 
     /** 1 for black and white, 4 for color. */
-    private int colorFactor;
+    private final int colorFactor;
 
     /** Choice of which cost function to use. */
-    private int costChoice;
+    private final int costChoice;
 
     /** DOCUMENT ME! */
-    private boolean doColor;
+    private final boolean doColor;
 
     /** Maximum degrees of freedom when running the optimization. */
-    private int DOF;
+    private final int DOF;
 
     /**
      * Produce 2 output graphs - 1 for rotation and 1 for 2 translations. Only can be used for DOF == 3 and register to
      * reference slice
      */
-    private boolean doGraph;
+    private final boolean doGraph;
 
     /** if true subsample. */
-    private boolean doSubsample;
+    private final boolean doSubsample;
 
     /** whether or not to use center of gravity for first translation. */
-    private boolean ignoreCOG = false;
+    private final boolean ignoreCOG = false;
 
     /** DOCUMENT ME! */
     private ModelImage imageWeightIso = null;
@@ -182,10 +185,10 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
     private ModelImage inputWeight;
 
     /** Interpolation method used in transformations. */
-    private int interp;
+    private final int interp;
 
     /** Interpolation method used in output. */
-    private int interp2;
+    private final int interp2;
 
     /** The voxel resolutions of the input image. */
     private float[] iResols;
@@ -203,16 +206,16 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
     private float level4Factor = 1.0f;
 
     /** DOCUMENT ME! */
-    private float maxDim = 256;
+    private final float maxDim;
 
     /**
      * Limits number of iterations in Powell optimization. maxIter in the call to Powell's will be an integer multiple
      * of baseNumIter
      */
-    private int maxIter, baseNumIter;
+    private final int baseNumIter;
 
     /** Number of minima from level 8 to test at level 4. */
-    private int numMinima;
+    private final int numMinima;
 
     /** DOCUMENT ME! */
     private ModelImage output_1;
@@ -253,7 +256,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
     private float[] rot = null;
 
     /** Coarse and fine sampling parameters. */
-    private float rotateBegin, rotateEnd, coarseRate, fineRate;
+    private final float rotateBegin, rotateEnd, coarseRate, fineRate;
 
     /** Simple version of an image slice of the input image. */
     private ModelSimpleImage simpleInput_1;
@@ -323,13 +326,13 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
     private float[][] trans = null;
 
     /** if true transform VOIs. */
-    private boolean transformVOIs;
+    private final boolean transformVOIs;
 
     /** DOCUMENT ME! */
     private boolean useOutsideReferenceSlice = false;
 
     /** Flag to determine if there are weighted images or not. */
-    private boolean weighted;
+    private final boolean weighted;
 
     /** DOCUMENT ME! */
     private ModelImage weightSliceImage = null;
@@ -376,14 +379,10 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         regToAdjImage = mode;
         refImageNo = refImageNum;
         costChoice = _costChoice;
-        DOF = _DOF;
+        DOF = (_DOF == 6) ? 7 : _DOF;
 
         if (DOF == 3) {
             rigidFlag = true;
-        }
-
-        if (DOF == 6) {
-            DOF = 7; // use 2 shears
         }
 
         answer = null;
@@ -404,11 +403,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         baseNumIter = _baseNumIter;
         numMinima = _numMinima;
 
-        maxDim = inputImage.getExtents()[0];
-
-        if (inputImage.getExtents()[1] > maxDim) {
-            maxDim = inputImage.getExtents()[1];
-        }
+        maxDim = Math.max( inputImage.getExtents()[0], inputImage.getExtents()[1]);
 
         sliceCosts = new double[inputImage.getExtents()[2]];
     }
@@ -458,15 +453,12 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         refImageNo = refImageNum;
         inputWeight = _inputWeight;
         costChoice = _costChoice;
-        DOF = _DOF;
+        DOF = (_DOF == 6) ? 7 : _DOF;
 
         if (DOF == 3) {
             rigidFlag = true;
         }
 
-        if (DOF == 6) {
-            DOF = 7; // use 2 shears
-        }
 
         answer = null;
 
@@ -486,11 +478,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         baseNumIter = _baseNumIter;
         numMinima = _numMinima;
 
-        maxDim = inputImage.getExtents()[0];
-
-        if (inputImage.getExtents()[1] > maxDim) {
-            maxDim = inputImage.getExtents()[1];
-        }
+        maxDim = Math.max( inputImage.getExtents()[0], inputImage.getExtents()[1]);
 
         sliceCosts = new double[inputImage.getExtents()[2]];
     }
@@ -508,7 +496,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
      *
      * @return  the center of mass as a 2D point
      */
-    public Vector2f calculateCenterOfMass2D(ModelSimpleImage image, ModelSimpleImage wgtImage, boolean isColor) {
+    public static Vector2f calculateCenterOfMass2D(ModelSimpleImage image, ModelSimpleImage wgtImage, boolean isColor) {
         int x, y, c;
         float diff;
 
@@ -884,6 +872,11 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
      * the input slice to the reference slice. The registered input slice data is imported into inputImage.
      */
     public void runAlgorithm() {
+    	if ( !regToAdjImage && !transformVOIs )
+    	{
+    		runAlgorithmTest();
+    		return;
+    	}
         int i, j;
         int iNumber;
         int rNumber;
@@ -2251,6 +2244,988 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         setCompleted(true);
     }
 
+    
+    
+
+    public void runAlgorithmTest() {
+        int iNumber;
+        boolean seriesUp;
+        int[] extents = new int[2];
+        float[] resols = new float[2];
+        float[] distance = new float[2];
+        AlgorithmTransform transform = null;
+        int[] extentsIso = null;
+        float[] resIso = null;
+        //double[][] OARmat;
+        VOIVector VOIs = null;
+        VOIVector VOI2s = null;
+        int nVOIs = 0;
+        VOI[] newVOI = null;
+        short[] id = null;
+        String[] name = null;
+        int[] curveType = null;
+        float[] presetHue = null;
+        float[] hsb = null;
+
+        if (inputImage.getNDims() != 3) {
+            MipavUtil.displayError("" + inputImage.getNDims() + "D registration not supported.");
+            disposeLocal();
+            notifyListeners(this);
+
+            return;
+        }
+
+        
+        Preferences.debug(getConstructionInfo(),Preferences.DEBUG_ALGORITHM);
+
+        fireProgressStateChanged("Registering images", "Beginning registration");
+
+
+        if (doGraph) {
+
+            if (DOF == 3) {
+                rot = new float[inputImage.getExtents()[2]];
+                rot[refImageNo] = 0.0f;
+            }
+
+            trans = new float[2][inputImage.getExtents()[2]];
+            trans[0][refImageNo] = 0.0f;
+            trans[1][refImageNo] = 0.0f;
+        } // if (doGraph)
+
+        if (transformVOIs) {
+            VOIs = inputImage.getVOIs();
+            nVOIs = VOIs.size();
+            newVOI = new VOI[nVOIs];
+            VOI2s = new VOIVector();
+            id = new short[nVOIs];
+            name = new String[nVOIs];
+            curveType = new int[nVOIs];
+            presetHue = new float[nVOIs];
+
+            for (int i = 0; i < nVOIs; i++) {
+                id[i] = VOIs.VOIAt(i).getID();
+                name[i] = VOIs.VOIAt(i).getName();
+                curveType[i] = VOIs.VOIAt(i).getCurveType();
+                hsb = Color.RGBtoHSB(VOIs.VOIAt(i).getColor().getRed(), VOIs.VOIAt(i).getColor().getGreen(),
+                                     VOIs.VOIAt(i).getColor().getBlue(), null);
+                presetHue[i] = hsb[0];
+            }
+        }
+
+        float minSample = Math.min(iResols[0], iResols[1]);
+
+        try {
+            extentsIso = new int[3];
+            resIso = new float[3];
+            buffer = new float[colorFactor * inputImage.getSliceSize()];
+        } catch (OutOfMemoryError e) {
+            System.gc();
+            MipavUtil.displayError("Out of memory in AlgorithmOAR25D creating extentsIso and resIso and buffer");
+            disposeLocal();
+            notifyListeners(this);
+
+            return;
+        }
+
+        for (int i = 0; i < 2; i++) {
+            extentsIso[i] = (int) Math.round(((inputImage.getExtents()[i] - 1) / (minSample / iResols[i])) + 1);
+            resIso[i] = minSample;
+        }
+
+        extentsIso[2] = inputImage.getExtents()[2];
+        resIso[2] = iResols[2];
+
+        if (weighted) {
+
+            try {
+                bufferIW = new float[inputWeight.getSliceSize()];
+            } catch (OutOfMemoryError e) {
+                System.gc();
+                MipavUtil.displayError("Out of memory in AlgorithmOAR25D creating bufferIW");
+                disposeLocal();
+                notifyListeners(this);
+
+                return;
+            }
+
+            try {
+                bufferW = new float[extentsIso[0] * extentsIso[1]];
+            } catch (OutOfMemoryError e) {
+                System.gc();
+                MipavUtil.displayError("Out of memory in AlgorithmOAR25D creating bufferW");
+                disposeLocal();
+                notifyListeners(this);
+
+                return;
+            }
+
+        } // if (weighted)
+
+        if (iResols[0] == iResols[1]) {
+            resample = false;
+
+            // must set extents & resolutions here
+            extents[0] = inputImage.getExtents()[0];
+            extents[1] = inputImage.getExtents()[1];
+            resols[0] = inputImage.getFileInfo()[0].getResolutions()[0];
+            resols[1] = inputImage.getFileInfo()[0].getResolutions()[1];
+        } else {
+            resample = true;
+
+            // 2.5D interpolation
+            fireProgressStateChanged("Interpolating input image to obtain equal x and y resolutions");
+            transform = new AlgorithmTransform(inputImage, new TransMatrix(3), interp, resIso[0], resIso[1],
+                                               extentsIso[0], extentsIso[1], false, true, false);
+            transform.run();
+
+            if (transform.isCompleted() == false) {
+                setCompleted(false);
+                finalize();
+                notifyListeners(this);
+
+                return;
+            }
+
+            isoImage = transform.getTransformedImage();
+
+            if (transform != null) {
+                transform.finalize();
+            }
+
+            // must set extents & resolutions here
+            extents[0] = isoImage.getExtents()[0];
+            extents[1] = isoImage.getExtents()[1];
+            resols[0] = isoImage.getFileInfo()[0].getResolutions()[0];
+            resols[1] = isoImage.getFileInfo()[0].getResolutions()[1];
+
+        } // res[0] != res[1]
+
+        final int[] iExtents = new int[]{inputImage.getExtents()[0], inputImage.getExtents()[1]};
+        final int sliceSize = iExtents[0] * iExtents[1];
+
+        // check if outside reference slice and resampling are both used
+        if (useOutsideReferenceSlice && resample) {
+            transform = new AlgorithmTransform(outsidePreReferenceSlice, new TransMatrix(3), interp, resIso[0],
+                                               resIso[1], extentsIso[0], extentsIso[1], false, true, false);
+            transform.run();
+
+            if (transform.isCompleted() == false) {
+                setCompleted(false);
+                finalize();
+                notifyListeners(this);
+
+                return;
+            }
+
+            outsideReferenceSlice = transform.getTransformedImage();
+
+            if (transform != null) {
+                transform.finalize();
+            }
+        } // if (useOutsideReferenceSlice && resample)
+        else if (useOutsideReferenceSlice) {
+            outsideReferenceSlice = outsidePreReferenceSlice;
+        }
+
+        simpleRef_1 = new ModelSimpleImage(extents, resols, doColor); // 2D simple image
+
+        if (weighted) {
+            inputw_1 = new ModelImage(ModelImage.FLOAT, iExtents, "slice2DW");
+            inputw_1.getFileInfo()[0].setResolutions(iResols);
+        }
+
+        int subMinFactor = 15000;
+
+        if (weighted) {
+
+            if (resample || (inputWeight.getFileInfo(0).getResolutions()[0] != iResols[0]) ||
+                    (inputWeight.getFileInfo(0).getResolutions()[1] != iResols[1])) {
+
+                // 2.5 interpolation
+                resampleW = true;
+                fireProgressStateChanged("Performing interpolation on input weight image");
+                transform = new AlgorithmTransform(inputWeight, new TransMatrix(3), interp, resIso[0], resIso[1],
+                                                   extentsIso[0], extentsIso[1], false, true, false);
+                transform.run();
+
+                if (transform.isCompleted() == false) {
+                    setCompleted(false);
+                    finalize();
+                    notifyListeners(this);
+
+                    return;
+                }
+
+                imageWeightIso = transform.getTransformedImage();
+
+                if (transform != null) {
+                    transform.finalize();
+                }
+
+                // build extents and resolutions from transformed weight image
+                extents[0] = imageWeightIso.getExtents()[0];
+                extents[1] = imageWeightIso.getExtents()[1];
+                resols[0] = imageWeightIso.getFileInfo()[0].getResolutions()[0];
+                resols[1] = imageWeightIso.getFileInfo()[0].getResolutions()[1];
+            } else {
+                resampleW = false;
+                extents[0] = inputWeight.getExtents()[0];
+                extents[1] = inputWeight.getExtents()[1];
+                resols[0] = inputWeight.getFileInfo()[0].getResolutions()[0];
+                resols[1] = inputWeight.getFileInfo()[0].getResolutions()[1];
+            }
+
+            simpleWeightR_1 = new ModelSimpleImage(extents, resols); // 2D simple image
+
+            if (DOF >= 3) {
+                distance[0] = extents[0] * resols[0];
+                distance[1] = extents[1] * resols[1];
+
+                if ((simpleWeightR_1.dataSize > subMinFactor) && doSubsample) {
+
+                    // dont need simpleWeightSub2 (only single slices)
+                    extents[0] /= 2;
+                    extents[1] /= 2;
+                    resols[0] = distance[0] / extents[0];
+                    resols[1] = distance[1] / extents[1];
+                    simpleWeightRSub2_1 = new ModelSimpleImage(extents, resols); // 2D simple image
+                } else {
+                    simpleWeightRSub2_1 = new ModelSimpleImage(extents, resols); // 2D simple image
+                    allowLevel2 = false;
+                    allowLevel4 = false;
+                    allowLevel8 = false;
+                    allowLevel16 = false;
+                }
+
+                if ((simpleWeightRSub2_1.dataSize > subMinFactor) && doSubsample) {
+                    extents[0] /= 2;
+                    extents[1] /= 2;
+                    resols[0] = distance[0] / extents[0];
+                    resols[1] = distance[1] / extents[1];
+                    simpleWeightRSub4_1 = new ModelSimpleImage(extents, resols); // 2D simple image
+                } else {
+                    simpleWeightRSub4_1 = new ModelSimpleImage(extents, resols); // 2D simple image
+                    allowLevel4 = false;
+                    allowLevel8 = false;
+                    allowLevel16 = false;
+                }
+
+                if ((simpleWeightRSub4_1.dataSize > subMinFactor) && doSubsample) {
+
+                    extents[0] = extents[0] / 2;
+                    extents[1] = extents[1] / 2;
+                    resols[0] = distance[0] / extents[0];
+                    resols[1] = distance[1] / extents[1];
+                    simpleWeightRSub8_1 = new ModelSimpleImage(extents, resols); // 2D simple image
+
+                    if (simpleWeightRSub8_1.dataSize > subMinFactor) {
+                        extents[0] = extents[0] / 2;
+                        extents[1] = extents[1] / 2;
+                        resols[0] = distance[0] / extents[0];
+                        resols[1] = distance[1] / extents[1];
+                        simpleWeightRSub16_1 = new ModelSimpleImage(extents, resols); // 2D simple image
+                    } else {
+                        allowLevel16 = false;
+                    }
+                } else {
+                    simpleWeightRSub8_1 = new ModelSimpleImage(extents, resols); // 2D simple image
+                    allowLevel8 = false;
+                    allowLevel16 = false;
+                }
+            } // if (DOF >= 3)
+        } // if (weighted)
+
+        if (DOF >= 3) {
+
+            if (doColor) {
+                subMinFactor *= 4;
+            }
+
+            extents[0] = simpleRef_1.xDim;
+            extents[1] = simpleRef_1.yDim;
+            resols[0] = simpleRef_1.xRes;
+            resols[1] = simpleRef_1.yRes;
+            distance[0] = extents[0] * resols[0];
+            distance[1] = extents[1] * resols[1];
+
+            if ((simpleRef_1.dataSize > subMinFactor) && allowLevel2 && doSubsample) {
+                extents[0] /= 2;
+                extents[1] /= 2;
+                resols[0] = distance[0] / extents[0];
+                resols[1] = distance[1] / extents[1];
+                simpleRefSub2_1 = new ModelSimpleImage(extents, resols, doColor); // 2D simple image
+
+                level1Factor = 2.0f;
+            } else {
+                simpleRefSub2_1 = new ModelSimpleImage(extents, resols, doColor); // 2D simple image
+                allowLevel2 = false;
+                allowLevel4 = false;
+                allowLevel8 = false;
+                allowLevel16 = false;
+            }
+
+            if ((simpleRefSub2_1.dataSize > subMinFactor) && allowLevel4 && doSubsample) {
+                extents[0] /= 2;
+                extents[1] /= 2;
+                resols[0] = distance[0] / extents[0];
+                resols[1] = distance[1] / extents[1];
+                simpleRefSub4_1 = new ModelSimpleImage(extents, resols, doColor); // 2D simple image
+                level2Factor = 2.0f;
+            } else {
+                simpleRefSub4_1 = new ModelSimpleImage(extents, resols, doColor); // 2D simple image
+                allowLevel4 = false;
+                allowLevel8 = false;
+                allowLevel16 = false;
+            }
+
+            if ((simpleRefSub4_1.dataSize > subMinFactor) && allowLevel8 && doSubsample) {
+                extents[0] /= 2;
+                extents[1] /= 2;
+                resols[0] = distance[0] / extents[0];
+                resols[1] = distance[1] / extents[1];
+                simpleRefSub8_1 = new ModelSimpleImage(extents, resols, doColor); // 2D simple image
+
+                level4Factor = 2.0f;
+
+                if ((simpleRefSub8_1.dataSize > subMinFactor) && allowLevel16) {
+                    level4Factor = 4.0f;
+                    extents[0] /= 2;
+                    extents[1] /= 2;
+                    resols[0] = distance[0] / extents[0];
+                    resols[1] = distance[1] / extents[1];
+                    simpleRefSub16_1 = new ModelSimpleImage(extents, resols, doColor); // 2D simple image
+                } else {
+                    allowLevel16 = false;
+                }
+            } else {
+                simpleRefSub8_1 = new ModelSimpleImage(extents, resols, doColor); // 2D simple image
+                allowLevel8 = false;
+                allowLevel16 = false;
+            }
+
+            Preferences.debug("Level 1 factor = " + level1Factor + "\n" + "Level 2 factor = " + level2Factor + "\n" +
+                              "Level 4 factor = " + level4Factor + "\n",Preferences.DEBUG_ALGORITHM);
+        } // if (DOF >= 3)
+
+        long time;
+
+        final int rNumber = refImageNo;
+
+        if ((refImageNo == (inputImage.getExtents()[2] - 1)) && !useOutsideReferenceSlice) {
+            iNumber = refImageNo - 1;
+            seriesUp = false;
+        } else if (useOutsideReferenceSlice) {
+            iNumber = 0;
+            seriesUp = true;
+        } else {
+            iNumber = refImageNo + 1;
+            seriesUp = true;
+        }
+
+        // get the reference slice from the image and then get the subsampled versions
+        try {
+
+            // if image was transformed, we use the isoImage not inputImage
+            if (useOutsideReferenceSlice) {
+                outsideReferenceSlice.exportData(0, simpleRef_1.data.length, simpleRef_1.data);
+            } else if (isoImage != null) {
+                isoImage.exportData(rNumber * simpleRef_1.data.length, simpleRef_1.data.length, simpleRef_1.data);
+            } else {
+                inputImage.exportData(rNumber * simpleRef_1.data.length, simpleRef_1.data.length, simpleRef_1.data);
+            }
+
+            if (DOF >= 3) {
+
+                // get subsample by 2'd slice (if allowLevel2)
+                // otherwise just copy the ref slice into simpleRefSub2_1
+                if (allowLevel2) {
+                    subSample2DimBy2(simpleRef_1, simpleRefSub2_1, doColor);
+                } else {
+                    copyFloatData(simpleRef_1, simpleRefSub2_1);
+                }
+
+                if (allowLevel4) {
+                    subSample2DimBy2(simpleRefSub2_1, simpleRefSub4_1, doColor);
+                } else {
+                    copyFloatData(simpleRefSub2_1, simpleRefSub4_1);
+                }
+
+                if (allowLevel8) {
+                    subSample2DimBy2(simpleRefSub4_1, simpleRefSub8_1, doColor);
+                } else {
+                    copyFloatData(simpleRefSub4_1, simpleRefSub8_1);
+                }
+
+                if (allowLevel16) {
+                    subSample2DimBy2(simpleRefSub8_1, simpleRefSub16_1, doColor);
+                }
+            } // if (DOF >= 3)
+
+            if (weighted && !useOutsideReferenceSlice) {
+
+                if (imageWeightIso != null) {
+                    imageWeightIso.exportData(rNumber * simpleWeightR_1.data.length, simpleWeightR_1.data.length,
+                                              simpleWeightR_1.data);
+                } else {
+                    inputWeight.exportData(rNumber * simpleWeightR_1.data.length, simpleWeightR_1.data.length,
+                                           simpleWeightR_1.data);
+                }
+
+                if (DOF >= 3) {
+
+                    // get subsample by 2'd slice (if allowLevel2)
+                    // otherwise just copy the ref slice into simpleRefSub2_1
+                    if (allowLevel2) {
+                        subSample2DimBy2(simpleWeightR_1, simpleWeightRSub2_1, false);
+                    } else {
+                        copyFloatData(simpleWeightR_1, simpleWeightRSub2_1);
+                    }
+
+                    if (allowLevel4) {
+                        subSample2DimBy2(simpleWeightRSub2_1, simpleWeightRSub4_1, false);
+                    } else {
+                        copyFloatData(simpleWeightRSub2_1, simpleWeightRSub4_1);
+                    }
+
+                    if (allowLevel8) {
+                        subSample2DimBy2(simpleWeightRSub4_1, simpleWeightRSub8_1, false);
+                    } else {
+                        copyFloatData(simpleWeightRSub4_1, simpleWeightRSub8_1);
+                    }
+
+                    if (allowLevel16) {
+                        subSample2DimBy2(simpleWeightRSub8_1, simpleWeightRSub16_1, false);
+                    }
+                } // if (DOF >= 3)
+            }
+
+        } catch (IOException ex) {
+            System.err.println("Caught IOException in RegOAR25D2");
+            ex.toString();
+        }
+
+        int endIndex = inputImage.getExtents()[2] - 1;
+
+        if (useOutsideReferenceSlice) {
+            endIndex++;
+        }
+
+        simpleRef_1.calcMinMax();
+        if (DOF >= 3) {
+            simpleRefSub2_1.calcMinMax();
+            simpleRefSub4_1.calcMinMax();
+            simpleRefSub8_1.calcMinMax();
+            if (allowLevel16) {
+                simpleRefSub16_1.calcMinMax();
+            }
+        } // if (DOF >= 3)
+        
+                
+        final CountDownLatch doneSignalx = new CountDownLatch(nthreads);
+        final float step2 = (endIndex+1) / nthreads;
+        for (int i = 0; i < nthreads; i++) {
+            final int start2 = (int) (step2 * i);
+            final int end2 = (i == (nthreads-1)) ? (endIndex+1) : (int) (step2 * (i + 1));
+            
+            final Runnable task = new Runnable() {
+                public void run() {
+                    registerSlice( rNumber, start2,end2, sliceSize, iExtents);
+                    doneSignalx.countDown();
+                }
+            };
+            ThreadUtil.mipavThreadPool.execute(task);
+        }
+        try {
+            doneSignalx.await();
+        } catch (final InterruptedException e) {
+            gov.nih.mipav.view.MipavUtil.displayError(e.getMessage());
+            return;
+        }
+
+		fireProgressStateChanged(100);
+
+        inputImage.calcMinMax();
+
+        if (transformVOIs) {
+            inputImage.setVOIs(VOIs);
+        }
+
+        setCompleted(true);
+    }
+
+    private void registerSlice( int rNumber, int startIndex, int endIndex, int sliceSize, int[] iExtents )
+    {
+    	int colorFactor = inputImage.isColorImage() ? 4 : 1;
+    	ModelImage input = null;
+    	ModelImage output = null;
+    	if (doColor) {
+    		input = new ModelImage(ModelImage.ARGB_FLOAT, iExtents, "slice2D");
+    	} else {
+    		input = new ModelImage(ModelImage.FLOAT, iExtents, "slice2D");
+    	}
+    	input.getFileInfo()[0].setResolutions(iResols);
+
+    	int subMinFactor = 15000;
+    	// still use simpleInput_1 (1 slice at a time)
+    	ModelSimpleImage simpleInput_1 = new ModelSimpleImage(simpleRef_1.extents, simpleRef_1.resolutions, doColor); // 2D simple image
+    	ModelSimpleImage simpleInputSub16_1 = null;
+    	ModelSimpleImage simpleInputSub2_1 = null;
+    	ModelSimpleImage simpleInputSub4_1 = null;
+    	ModelSimpleImage simpleInputSub8_1 = null;
+    	ModelSimpleImage simpleWeightI_1 = null;
+    	ModelSimpleImage simpleWeightISub16_1 = null;
+    	ModelSimpleImage simpleWeightISub2_1 = null;
+    	ModelSimpleImage simpleWeightISub4_1 = null;
+    	ModelSimpleImage simpleWeightISub8_1 = null;
+
+    	if (weighted) {
+
+    		simpleWeightI_1 = new ModelSimpleImage(simpleWeightR_1.extents, simpleWeightR_1.resolutions); // 2D simple image
+
+    		if (DOF >= 3) {
+    			if ((simpleWeightR_1.dataSize > subMinFactor) && doSubsample) {
+    				simpleWeightISub2_1 = new ModelSimpleImage(simpleWeightRSub2_1.extents, simpleWeightRSub2_1.resolutions); // 2D simple image
+    			} else {
+    				simpleWeightISub2_1 = new ModelSimpleImage(simpleWeightRSub2_1.extents, simpleWeightRSub2_1.resolutions); // 2D simple image
+    			}
+
+    			if ((simpleWeightRSub2_1.dataSize > subMinFactor) && doSubsample) {
+    				simpleWeightISub4_1 = new ModelSimpleImage(simpleWeightRSub4_1.extents, simpleWeightRSub4_1.resolutions); // 2D simple image
+    			} else {
+    				simpleWeightISub4_1 = new ModelSimpleImage(simpleWeightRSub4_1.extents, simpleWeightRSub4_1.resolutions); // 2D simple image
+    			}
+
+    			if ((simpleWeightRSub4_1.dataSize > subMinFactor) && doSubsample) {
+    				simpleWeightISub8_1 = new ModelSimpleImage(simpleWeightRSub8_1.extents, simpleWeightRSub8_1.resolutions); // 2D simple image
+
+    				if (simpleWeightRSub8_1.dataSize > subMinFactor) {
+    					simpleWeightISub16_1 = new ModelSimpleImage(simpleWeightRSub16_1.extents, simpleWeightRSub16_1.resolutions); // 2D simple image
+    				}
+    			} else {
+    				simpleWeightISub8_1 = new ModelSimpleImage(simpleWeightRSub8_1.extents, simpleWeightRSub8_1.resolutions); // 2D simple image
+    			}
+    		} // if (DOF >= 3)
+    	} // if (weighted)
+
+    	if (DOF >= 3) {
+
+    		if (doColor) {
+    			subMinFactor *= 4;
+    		}
+
+    		if ((simpleInput_1.dataSize > subMinFactor) && allowLevel2 && doSubsample) {
+    			simpleInputSub2_1 = new ModelSimpleImage(simpleRefSub2_1.extents, simpleRefSub2_1.resolutions, doColor); // 2D simple image
+    		} else {
+    			simpleInputSub2_1 = new ModelSimpleImage(simpleRefSub2_1.extents, simpleRefSub2_1.resolutions, doColor); // 2D simple image
+    		}
+
+    		if ((simpleInputSub2_1.dataSize > subMinFactor) && allowLevel4 && doSubsample) {
+    			simpleInputSub4_1 = new ModelSimpleImage(simpleRefSub4_1.extents, simpleRefSub4_1.resolutions, doColor); // 2D simple image
+    		} else {
+    			simpleInputSub4_1 = new ModelSimpleImage(simpleRefSub4_1.extents, simpleRefSub4_1.resolutions, doColor); // 2D simple image
+    		}
+
+    		if ((simpleInputSub4_1.dataSize > subMinFactor) && allowLevel8 && doSubsample) {
+    			simpleInputSub8_1 = new ModelSimpleImage(simpleRefSub8_1.extents, simpleRefSub8_1.resolutions, doColor); // 2D simple image
+
+    			if ((simpleInputSub8_1.dataSize > subMinFactor) && allowLevel16) {
+    				simpleInputSub16_1 = new ModelSimpleImage(simpleRefSub16_1.extents, simpleRefSub16_1.resolutions, doColor); // 2D simple image
+    			}
+    		} else {
+    			simpleInputSub8_1 = new ModelSimpleImage(simpleRefSub8_1.extents, simpleRefSub8_1.resolutions, doColor); // 2D simple image
+    		}
+
+    		//            Preferences.debug("Level 1 factor = " + level1Factor + "\n" + "Level 2 factor = " + level2Factor + "\n" +
+    		//                              "Level 4 factor = " + level4Factor + "\n",Preferences.DEBUG_ALGORITHM);
+    	} // if (DOF >= 3)
+
+
+
+
+    	VOIVector VOI2s = null;
+    	MatrixListItem answer = null;
+
+    	// System.err.println("end index is: " + endIndex);
+    	for (int m = startIndex; m < endIndex; m++) {
+    		if ( m == rNumber )
+    		{
+    			continue;
+    		}
+    		fireProgressStateChanged("Registering image " + m);
+
+    		fireProgressStateChanged(Math.min(99,(int) ((m-startIndex) / (float) (endIndex - startIndex - 1) * 100)));
+
+    		Preferences.debug(" ***********************Starting Image " + m + "  **************************\n",
+    				Preferences.DEBUG_ALGORITHM);
+    		Preferences.debug(" **************************************************************************\n\n",
+    				Preferences.DEBUG_ALGORITHM);
+
+    		try {
+
+    			if (isoImage != null) {
+    				isoImage.exportData(m * simpleInput_1.data.length, simpleInput_1.data.length,
+    						simpleInput_1.data);
+    			} else {
+    				inputImage.exportData(m * simpleInput_1.data.length, simpleInput_1.data.length,
+    						simpleInput_1.data);
+    			}
+
+    			if (DOF >= 3) {
+
+    				if (allowLevel2) {
+    					subSample2DimBy2(simpleInput_1, simpleInputSub2_1, doColor);
+    				} else {
+    					copyFloatData(simpleInput_1, simpleInputSub2_1);
+    				}
+
+    				if (allowLevel4) {
+    					subSample2DimBy2(simpleInputSub2_1, simpleInputSub4_1, doColor);
+    				} else {
+    					copyFloatData(simpleInputSub2_1, simpleInputSub4_1);
+    				}
+
+    				if (allowLevel8) {
+    					subSample2DimBy2(simpleInputSub4_1, simpleInputSub8_1, doColor);
+    				} else {
+    					copyFloatData(simpleInputSub4_1, simpleInputSub8_1);
+    				}
+
+    				if (allowLevel16) {
+    					subSample2DimBy2(simpleInputSub8_1, simpleInputSub16_1, doColor);
+    				}
+    			} // if (DOF >= 3)
+
+//    				simpleRef_1.calcMinMax();
+    			simpleInput_1.calcMinMax();
+
+    			if (DOF >= 3) {
+    				simpleInputSub2_1.calcMinMax();
+    				simpleInputSub4_1.calcMinMax();
+    				simpleInputSub8_1.calcMinMax();
+
+    				if (allowLevel16) {
+    					simpleInputSub16_1.calcMinMax();
+    				}
+    			} // if (DOF >= 3)
+
+    				if (weighted) {
+
+    					if (imageWeightIso != null) {
+    						imageWeightIso.exportData(rNumber * simpleWeightI_1.data.length, simpleWeightI_1.data.length,
+    								simpleWeightI_1.data);
+    					} else {
+    						inputWeight.exportData(rNumber * simpleWeightI_1.data.length, simpleWeightI_1.data.length,
+    								simpleWeightI_1.data);
+    					}
+
+    					if (DOF >= 3) {
+
+    						if (allowLevel2) {
+    							subSample2DimBy2(simpleWeightI_1, simpleWeightISub2_1, false);
+    						} else {
+    							copyFloatData(simpleWeightI_1, simpleWeightISub2_1);
+    						}
+
+    						if (allowLevel4) {
+    							subSample2DimBy2(simpleWeightISub2_1, simpleWeightISub4_1, false);
+    						} else {
+    							copyFloatData(simpleWeightISub2_1, simpleWeightISub4_1);
+    						}
+
+    						if (allowLevel8) {
+    							subSample2DimBy2(simpleWeightISub4_1, simpleWeightISub8_1, false);
+    						} else {
+    							copyFloatData(simpleWeightISub4_1, simpleWeightISub8_1);
+    						}
+
+    						if (allowLevel16) {
+    							subSample2DimBy2(simpleWeightISub8_1, simpleWeightISub16_1, false);
+    						}
+    					} // if (DOF >= 3)
+    				}
+    		} catch (IOException ex) {
+    			System.err.println("Caught IOException in RegOAR25D2");
+    			ex.toString();
+    			ex.printStackTrace();
+    		}
+
+    		long time = System.currentTimeMillis();
+
+    		if (DOF >= 3) {
+    			Preferences.debug(" Starting level 8 ************************************************\n",
+    					Preferences.DEBUG_ALGORITHM);
+
+    			Vector<MatrixListItem>[] minimas;
+
+    			if (allowLevel16) {
+    				minimas = levelEightMultiThread(simpleRefSub16_1, simpleInputSub16_1,
+    						DOF, rigidFlag, maxDim, baseNumIter, rotateBegin, rotateEnd, coarseRate, fineRate, coarseNum, fineNum,
+    			    		costChoice, doColor, ignoreCOG, weighted, allowLevel16, 
+    			    		simpleWeightRSub16_1, simpleWeightRSub8_1,
+    			    		simpleWeightISub16_1,  simpleWeightISub8_1 );
+    			} else {
+    				minimas = levelEightMultiThread(simpleRefSub8_1, simpleInputSub8_1,
+    						DOF, rigidFlag, maxDim, baseNumIter, rotateBegin, rotateEnd, coarseRate, fineRate, coarseNum, fineNum,
+    			    		costChoice, doColor, ignoreCOG, weighted, allowLevel16, 
+    			    		simpleWeightRSub16_1, simpleWeightRSub8_1,
+    			    		simpleWeightISub16_1,  simpleWeightISub8_1 );
+    			}
+
+    			time = System.currentTimeMillis() - time;
+    			Preferences.debug(" Level 8 min = " + ((float) time / 60000.0f) + "\n",Preferences.DEBUG_ALGORITHM);
+    			time = System.currentTimeMillis();
+
+    			if (threadStopped) {
+    				notifyListeners(this);
+    				finalize();
+
+    				return;
+    			}
+
+    			Preferences.debug(" Starting level 4 ************************************************\n",
+    					Preferences.DEBUG_ALGORITHM);
+
+    			Vector<MatrixListItem> minima = levelFourMultiThread(simpleRefSub4_1, simpleInputSub4_1, minimas[0], minimas[1], numMinima,
+    		            DOF, rigidFlag, maxDim, baseNumIter, rotateBegin, rotateEnd, coarseRate, fineRate, coarseNum, fineNum,
+    		    		costChoice, doColor, ignoreCOG, weighted, level4Factor, 
+    		    		simpleWeightRSub4_1, simpleWeightISub4_1);
+    			time = System.currentTimeMillis() - time;
+    			Preferences.debug(" Level 4  min = " + ((float) time / 60000.0f) + "\n",Preferences.DEBUG_ALGORITHM);
+    			time = System.currentTimeMillis();
+
+    			if (threadStopped) {
+    				notifyListeners(this);
+    				finalize();
+
+    				return;
+    			}
+
+    			Preferences.debug(" Starting level 2 ************************************************\n",Preferences.DEBUG_ALGORITHM);
+
+    			MatrixListItem item = levelTwoMultiThread(simpleRefSub2_1, simpleInputSub2_1, minima, numMinima,
+    		            DOF, rigidFlag, maxDim, baseNumIter, rotateBegin, rotateEnd, coarseRate, fineRate, coarseNum, fineNum,
+    		    		costChoice, doColor, ignoreCOG, weighted, level2Factor, 
+    		    		simpleWeightRSub2_1, simpleWeightISub2_1);
+    			time = System.currentTimeMillis() - time;
+    			Preferences.debug(" Level 2 min = " + ((float) time / 60000.0f) + "\n",Preferences.DEBUG_ALGORITHM);
+    			time = System.currentTimeMillis();
+
+    			if (threadStopped) {
+    				notifyListeners(this);
+    				finalize();
+
+    				return;
+    			}
+
+    			Preferences.debug(" Starting level 1 ************************************************\n",Preferences.DEBUG_ALGORITHM);
+    			answer = levelOneMultiThread(simpleRef_1, simpleInput_1, item, m,
+    		    		DOF, rigidFlag, maxDim, baseNumIter, rotateBegin, rotateEnd, coarseRate, fineRate, coarseNum, fineNum,
+    		    		costChoice, doColor, ignoreCOG, weighted, level1Factor, 
+    		    		simpleWeightR_1, simpleWeightI_1, sliceCosts);
+    		} // if (DOF >= 3)
+    		else {
+    			Preferences.debug(" Starting level 1 ************************************************\n",Preferences.DEBUG_ALGORITHM);
+    			answer = levelOne2DMultiThread(simpleRef_1, simpleInput_1, m,
+    		    		DOF, rigidFlag, maxDim, baseNumIter, rotateBegin, rotateEnd, coarseRate, fineRate, coarseNum, fineNum,
+    		    		costChoice, doColor, ignoreCOG, weighted, level1Factor, 
+    		    		simpleWeightR_1, simpleWeightI_1, sliceCosts);
+    		}
+
+    		time = System.currentTimeMillis() - time;
+    		Preferences.debug(" Level 1 min = " + ((float) time / 60000.0f) + "\n",Preferences.DEBUG_ALGORITHM);
+
+    		if (threadStopped) {
+    			notifyListeners(this);
+    			finalize();
+
+    			return;
+    		}
+
+
+    		if (doGraph) {
+
+    			if (DOF == 3) {
+    				rot[m] = (float) (answer.initial[0]);
+    			}
+
+    			//OARmat = answer.matrix.getMatrix();
+    			TransMatrixd tMatd = answer.matrixd;
+    			TransMatrix tMat = new TransMatrix(tMatd.getDim(), tMatd.getID(), tMatd.isNIFTI(), tMatd.isQform());
+    			for (int i = 0; i < tMatd.getDim(); i++) {
+    				for (int j = 0; j < tMatd.getDim(); j++) {
+    					tMat.set(i, j, tMatd.get(i, j));
+    				}
+    			}
+    			trans[0][m] = tMat.get(0, 2);
+    			trans[1][m] = tMat.get(1, 2);
+    		} // if (doGraph)
+
+    		answer.matrixd.Inverse();
+    		TransMatrixd tMatd = answer.matrixd;
+    		TransMatrix tMat = new TransMatrix(tMatd.getDim(), tMatd.getID(), tMatd.isNIFTI(), tMatd.isQform());
+    		for (int i = 0; i < tMatd.getDim(); i++) {
+    			for (int j = 0; j < tMatd.getDim(); j++) {
+    				tMat.set(i, j, tMatd.get(i, j));
+    			}
+    		}
+
+
+    		int index = m*colorFactor*sliceSize;
+    		input.setMin( Float.MAX_VALUE);
+    		input.setMax(-Float.MAX_VALUE);
+    		for ( int i = 0; i < input.getDataSize(); i++ )
+    		{
+    			float value = inputImage.getFloat( i + index );
+    			input.set(i, value);
+    			if ( value < input.getMin() )
+    			{
+    				input.setMin( value );
+    			}
+    			if ( value > input.getMax() )
+    			{
+    				input.setMax( value );
+    			}
+    		}
+
+    		if (transformVOIs) {
+                VOIVector VOIs = inputImage.getVOIs();
+                int nVOIs = VOIs.size();
+                if ( VOI2s == null )
+                {
+                	VOI2s = new VOIVector();
+                }
+    			VOI2s.removeAllElements();
+
+    			for (int i = 0; i < nVOIs; i++) {
+    				VOI newVOI = new VOI(VOIs.VOIAt(i));
+    				for ( int j = newVOI.getCurves().size() - 1; j >= 0; j-- )
+    				{
+    					if ( newVOI.getCurves().size() == 0 )
+    					{
+    						continue;
+    					}
+    					if ( !( (newVOI.getCurves().elementAt(j).getPlane() & VOIBase.ZPLANE) == VOIBase.ZPLANE && newVOI.getCurves().elementAt(j).slice(VOIBase.ZPLANE) == m ))
+    					{
+    						newVOI.getCurves().remove(j);
+    					}
+    					else
+    					{
+    						VOIs.VOIAt(i).getCurves().remove(j);
+    					}
+    				}
+    				VOI2s.addElement(newVOI);
+    			}
+
+    			input.setVOIs(VOI2s);
+    		} // if (transformVOIs)
+
+
+    		AlgorithmTransform transform = new AlgorithmTransform(input, tMat, interp2, iResols[0], iResols[1], iExtents[0],
+    				iExtents[1], transformVOIs, true, false);
+    		transform.run();
+
+    		output = transform.getTransformedImage();
+    		for ( int i = 0; i < output.getDataSize(); i++ )
+    		{
+    			inputImage.set(i + index, output.getFloat( i ));
+    		}
+
+    		if (transformVOIs) {
+                VOIVector VOIs = inputImage.getVOIs();
+                int nVOIs = VOIs.size();
+                
+    			VOI2s.removeAllElements();
+    			VOI2s = output.getVOIs();
+    			for (int i = 0; i < nVOIs; i++) {
+    				
+    				for ( int j = 0; j < VOI2s.VOIAt(i).getCurves().size(); j++ )
+    				{
+    					VOIs.VOIAt(i).getCurves().add(VOI2s.VOIAt(i).getCurves().elementAt(j));
+    				}
+    			}
+    		} // if (transformVOIs)
+
+    		if (output != null) {
+    			output.disposeLocal();
+    		}
+    		
+    		
+    		if (inputImage2 != null) {
+        		input.setMin( Float.MAX_VALUE);
+        		input.setMax(-Float.MAX_VALUE);
+        		for ( int i = 0; i < input.getDataSize(); i++ )
+        		{
+        			float value = inputImage2.getFloat( i + index );
+        			input.set(i, value);
+        			if ( value < input.getMin() )
+        			{
+        				input.setMin( value );
+        			}
+        			if ( value > input.getMax() )
+        			{
+        				input.setMax( value );
+        			}
+        		}
+    			transform = new AlgorithmTransform(input, tMat, interp2, iResols[0], iResols[1], iExtents[0],
+    					iExtents[1], false, true, false);
+    			transform.run();
+
+    			if (output != null) {
+    				output.disposeLocal();
+    			}
+
+    			output = transform.getTransformedImage();
+        		for ( int i = 0; i < output.getDataSize(); i++ )
+        		{
+        			inputImage2.set(i + index, output.getFloat( i ));
+        		}
+
+    			if (transform != null) {
+    				transform.finalize();
+    			}
+    		} // if (inputImage2 != null)
+
+    		if (inputImage3 != null) {
+
+        		input.setMin( Float.MAX_VALUE);
+        		input.setMax(-Float.MAX_VALUE);
+        		for ( int i = 0; i < input.getDataSize(); i++ )
+        		{
+        			float value = inputImage3.getFloat( i + index );
+        			input.set(i, value);
+        			if ( value < input.getMin() )
+        			{
+        				input.setMin( value );
+        			}
+        			if ( value > input.getMax() )
+        			{
+        				input.setMax( value );
+        			}
+        		}
+
+    			transform = new AlgorithmTransform(input, tMat, interp2, iResols[0], iResols[1], iExtents[0],
+    					iExtents[1], false, true, false);
+    			transform.run();
+
+    			if (output != null) {
+    				output.disposeLocal();
+    			}
+
+    			output = transform.getTransformedImage();
+        		for ( int i = 0; i < output.getDataSize(); i++ )
+        		{
+        			inputImage3.set(i + index, output.getFloat( i ));
+        		}
+    			if (transform != null) {
+    				transform.finalize();
+    			}
+    		} // if (inputImage3 != null)
+
+    	} // for (int m = 0; m < inputImage.getExtents()[2]-1; m++)
+    }
+
+    
     /**
      * inputImage2 is not used to determine the registration, but each slice of inputImage2 undergoes the same
      * transformation as inputImage. This is useful for color images where you wish the registration to be determined by
@@ -2315,7 +3290,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
      * @param  srcImage     DOCUMENT ME!
      * @param  resultImage  DOCUMENT ME!
      */
-    private void copyFloatData(ModelSimpleImage srcImage, ModelSimpleImage resultImage) {
+    private static void copyFloatData(ModelSimpleImage srcImage, ModelSimpleImage resultImage) {
 
         for (int i = 0; i < resultImage.data.length; i++) {
             resultImage.data[i] = srcImage.data[i];
@@ -2570,6 +3545,37 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
 
         return tols;
     }
+    
+
+    private static double[] getTolerance(int DOF, boolean rigidFlag, float maxDim) {
+        double[] tols = new double[DOF];
+
+        if (DOF == 2) {
+            tols[0] = tols[1] = 0.5; // translations
+        } else if ((DOF == 3) && (rigidFlag == true)) {
+            tols[0] = ((180. / Math.PI) / maxDim); // rotation
+            tols[1] = tols[2] = 0.5; // translations
+        } else if ((DOF == 3) && (rigidFlag == false)) {
+            tols[0] = 0.005; // global scaling
+            tols[1] = tols[2] = 0.5; // translations
+        } else if (DOF == 4) {
+            tols[0] = ((180. / Math.PI) / maxDim); // rotation tolerances
+            tols[1] = tols[2] = 0.5; // translation tolerance x and y
+            tols[3] = (1.0 / maxDim); // scaling tolerances global
+        } else if (DOF == 5) {
+            tols[0] = ((180. / Math.PI) / maxDim); // rotation tolerances
+            tols[1] = tols[2] = 0.5; // translation tolerance x and y
+            tols[3] = tols[4] = 0.005; // (1.0/maxDim); // scaling tolerance x
+        } else if (DOF == 7) {
+            tols[0] = ((180. / Math.PI) / maxDim); // rotation tolerances
+            tols[1] = tols[2] = 0.5; // translation tolerance x and y
+            tols[3] = tols[4] = 0.005; // (1.0/maxDim); // scaling tolerance x
+            tols[5] = (0.0001); // 1.0/maxDim); // skew tolerance
+            tols[6] = (0.0001); // 1.0/maxDim); // skew tolerance
+        }
+
+        return tols;
+    }
 
     /**
      * Performs a bilinear interpolation on points. Takes an initial point, a vector of values to set, and an array in
@@ -2583,6 +3589,39 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
      * @param  scale      <code>true</code> means set the scale in the vector.
      */
     private void interpolate(double x, double[] initial, double[][] tranforms, boolean scale) {
+        int ix0, ix1;
+
+        // convert to closest integer values to access proper parts of array
+        ix0 = (int) Math.floor(x);
+        ix1 = ix0 + 1;
+
+        // can't be bigger than 3
+        if ((ix0 == (coarseNum - 1))) {
+            ix1 = ix0;
+        }
+
+        if (scale) {
+
+            // x translation
+            initial[1] = ((x - ix0) * tranforms[ix1][1]) + ((1 - x + ix0) * tranforms[ix0][1]);
+
+            // y translation
+            initial[2] = ((x - ix0) * tranforms[ix1][2]) + ((1 - x + ix0) * tranforms[ix0][2]);
+
+            // scale
+            initial[3] = ((x - ix0) * tranforms[ix1][0]) + ((1 - x + ix0) * tranforms[ix0][0]);
+        } else {
+
+            // x translation
+            initial[1] = ((x - ix0) * tranforms[ix1][0]) + ((1 - x + ix0) * tranforms[ix0][0]);
+
+            // y translation
+            initial[2] = ((x - ix0) * tranforms[ix1][1]) + ((1 - x + ix0) * tranforms[ix0][1]);
+        }
+    }
+    
+
+    private static void interpolate(double x, double[] initial, double[][] tranforms, boolean scale, int coarseNum) {
         int ix0, ix1;
 
         // convert to closest integer values to access proper parts of array
@@ -2678,12 +3717,11 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         // images have been resampled to be isotropic (and have matching resolutions).
         // Optimizing over translations and global scaling. DOF = 3;
         AlgorithmPowellOptBase powell;
-        maxIter = baseNumIter;
         int nDims = 2;
         if (DOF > 3) {
             nDims = 3;
         }
-        powell = new AlgorithmPowellOpt2D(this, cog, nDims, cost, getTolerance(nDims), maxIter, false);
+        powell = new AlgorithmPowellOpt2D(this, cog, nDims, cost, getTolerance(nDims), baseNumIter, false);
 
         Vectornd[] initials = new Vectornd[coarseNum];
         
@@ -2810,8 +3848,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             powell.finalize();
         }
 
-        maxIter = baseNumIter;
-        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag);
+        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), baseNumIter, rigidFlag);
 
         MatrixListItem item;
         initials = new Vectornd[minima.size()];
@@ -2882,10 +3919,9 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         }
 
         int degree = (DOF < 4) ? DOF : 4;
-        maxIter = baseNumIter;
 
         AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree),
-                                                               maxIter, rigidFlag);
+        		baseNumIter, rigidFlag);
 
         for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
             item.cost = powell.measureCost(en.nextElement().initial);
@@ -3052,10 +4088,8 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
 
         degree = DOF;
 
-        maxIter = 4 * baseNumIter;
-
         AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, degree, cost,
-                getTolerance(degree), maxIter, rigidFlag);
+                getTolerance(degree), 4 * baseNumIter, rigidFlag);
         Vectornd[] initials = new Vectornd[1];
         initials[0] = new Vectornd(item.initial);
         powell.setPoints(initials);
@@ -3113,10 +4147,8 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
 
         degree = 2;
 
-        maxIter = 4 * baseNumIter;
-
         AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree),
-                                                               maxIter, rigidFlag);
+        		4 * baseNumIter, rigidFlag);
         Vectornd[] initials = new Vectornd[1];
         initials[0] = new Vectornd(initial);
 
@@ -3166,9 +4198,8 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         }
 
         int degree = (DOF < 4) ? DOF : 4;
-        maxIter = baseNumIter;
 
-        AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag);
+        AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), baseNumIter, rigidFlag);
 
         for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements();) {
             item.cost = powell.measureCost(en.nextElement().initial);
@@ -3180,8 +4211,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             powell.finalize();
         }
 
-        maxIter = baseNumIter;
-        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag);
+        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), baseNumIter, rigidFlag);
         Vectornd[] initials = new Vectornd[1];
         initials[0] = new Vectornd(minima.elementAt(0).initial);
         powell.setPoints(initials);
@@ -3202,8 +4232,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                 powell.finalize();
             }
 
-            maxIter = baseNumIter;
-            powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter,
+            powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), baseNumIter,
                                               rigidFlag);
             powell.setPoints(initials);
             powell.run();
@@ -3222,8 +4251,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                     powell.finalize();
                 }
 
-                maxIter = baseNumIter;
-                powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter,
+                powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), baseNumIter,
                                                   rigidFlag);
 
                 powell.setPoints(initials);
@@ -3243,4 +4271,580 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
 
         return item;
     }
+    
+    
+    
+    @SuppressWarnings("unchecked")
+	private static Vector<MatrixListItem>[] levelEightMultiThread(ModelSimpleImage ref, ModelSimpleImage input,
+    		int DOF, boolean rigidFlag, float maxDim, int baseNumIter, float rotateBegin, float rotateEnd, float coarseRate, float fineRate, int coarseNum, int fineNum,
+    		int costChoice, boolean doColor, boolean ignoreCOG, boolean weighted, boolean allowLevel16, 
+    		ModelSimpleImage simpleWeightRSub16_1, ModelSimpleImage simpleWeightRSub8_1,
+    		ModelSimpleImage simpleWeightISub16_1, ModelSimpleImage simpleWeightISub8_1) {
+
+    	boolean threadStopped = false;
+        double factor;
+        AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 32, 1, false);
+
+        if (weighted) {
+
+            if (allowLevel16) {
+                cost.setRefWgtImage(simpleWeightRSub16_1);
+                cost.setInputWgtImage(simpleWeightISub16_1);
+            } else {
+                cost.setRefWgtImage(simpleWeightRSub8_1);
+                cost.setInputWgtImage(simpleWeightISub8_1);
+            }
+        }
+
+        Vector2f cog;
+        Vector2f cogR;
+
+        if (allowLevel16) {
+            cog = calculateCenterOfMass2D(input, simpleWeightISub16_1, doColor);
+            cogR = calculateCenterOfMass2D(ref, simpleWeightRSub16_1, doColor);
+        } else {
+            cog = calculateCenterOfMass2D(input, simpleWeightISub8_1, doColor);
+            cogR = calculateCenterOfMass2D(ref, simpleWeightRSub8_1, doColor);
+        }
+
+        Preferences.debug("COG of Ref   = " + cogR + "\n",Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("COG of Input = " + cog + "\n",Preferences.DEBUG_ALGORITHM);
+
+        double diffX = (cog.X - cogR.X);
+        double diffY = (cog.Y - cogR.Y);
+
+        if (ignoreCOG) {
+            diffX = 0;
+            diffY = 0;
+            cog = cogR;
+        }
+
+        // Prepare data for call to getTolerance
+        // if all subsampling done =2*2*2=8 (if x-large img=4*2*2=16)
+        // There is no need to get separate resolutions for each direction since the
+        // images have been resampled to be isotropic (and have matching resolutions).
+        // Optimizing over translations and global scaling. DOF = 3;
+        AlgorithmPowellOptBase powell;
+        int nDims = 2;
+        if (DOF > 3) {
+            nDims = 3;
+        }
+        powell = new AlgorithmPowellOpt2D(null, cog, nDims, cost, getTolerance(nDims, rigidFlag, maxDim), baseNumIter, false);
+
+        Vectornd[] initials = new Vectornd[coarseNum];
+        
+        double[] initial = new double[7];
+        initial[0] = 0; // initial rotation
+        initial[1] = diffX; // initial translations
+        initial[2] = diffY;
+        initial[3] = initial[4] = 1; // initial scaling
+        initial[5] = initial[6] = 0; // initial skewing
+        for (int i = 0; (i < coarseNum) && !threadStopped; i++) {
+            initial[0] = rotateBegin + (i * coarseRate);
+            initials[i] = new Vectornd(initial, true);
+        }
+        powell.setPoints(initials);
+        powell.run();
+
+        double[][] transforms = new double[coarseNum][3];
+        for(int i = 0; i < coarseNum; i++){
+            transforms[i] = powell.getPoint(i);
+        }
+
+        if (threadStopped) {
+            return null;
+        }
+
+        MatrixListItem[] matrixList = new MatrixListItem[fineNum];
+
+        double[] costs = new double[fineNum];
+        int index = 0;
+
+        for (int i = 0; (i < fineNum) && !threadStopped; i++) {
+            initial[0] = rotateBegin + (i * fineRate);
+
+            // sets up translation and global scaling factors
+            factor = (rotateBegin - rotateBegin + (i * fineRate)) / coarseRate;
+            interpolate(factor, initial, transforms, (DOF > 3), coarseNum);
+            initial[4] = initial[3];
+            costs[index] = powell.measureCost(initial);
+            matrixList[i] = new MatrixListItem(costs[index++], powell.convertToMatrix(initial), initial);
+        }
+
+        if (threadStopped) {
+            return null;
+        }
+
+        Arrays.sort(costs);
+
+        double threshold = costs[0] + (0.2 * (costs[costs.length - 1] - costs[0]));
+
+        if (threshold > costs[(int) (0.2 * costs.length)]) {
+            threshold = costs[(int) (0.2 * costs.length)];
+        }
+
+        initials = new Vectornd[fineNum];
+        for (int i = 0; (i < fineNum) && !threadStopped; i++) {
+            if (matrixList[i].cost < threshold) {
+                initials[i] = new Vectornd(matrixList[i].initial);
+            }
+        }
+        powell.setPoints(initials);
+        powell.run();
+        for(int i = 0; i < fineNum; i++){
+            if (matrixList[i].cost < threshold) {
+                matrixList[i] = new MatrixListItem(powell.getCost(i), powell.getMatrix(i), powell.getPoint(i));
+            }
+        }
+
+        if (threadStopped) {
+            return null;
+        }
+
+        Vector<MatrixListItem> minima = new Vector<MatrixListItem>();
+        boolean possibleMinima[] = new boolean[fineNum];
+
+        for (int i = 0; i < fineNum; i++) {
+            possibleMinima[i] = true; // possible minimum
+
+            // as long as still possible minimum, check neighbors one degree off
+            for (int itest = -1; (itest <= 1) && possibleMinima[i]; itest += 2) {
+
+                if (((i + itest) >= 0) && ((i + itest) < fineNum)) {
+
+                    if (matrixList[i].cost > matrixList[i + itest].cost) {
+                        possibleMinima[i] = false;
+                    } // not a minimum if a neighbor has a lower cost
+                }
+            }
+        }
+        
+        boolean change = true;
+        while (change) {
+            change = false;
+            for (int i = 0; i < fineNum; i++) {
+                for (int itest = -1; (itest <= 1) && possibleMinima[i]; itest+=2) {
+                    if (((i + itest) >= 0) && ((i + itest) < fineNum)) {
+                        if ((matrixList[i].cost == matrixList[i + itest].cost) &&
+                                (!possibleMinima[i + itest])) {
+                            possibleMinima[i] = false;
+                            change = true;
+                        } // not a minimum if equal value neighbor is not a minimum
+                    }
+                }
+            }
+        }
+        
+        for (int i = 0; i < fineNum; i++) {
+            if (possibleMinima[i]) {
+                minima.add(matrixList[i]);
+            }
+        }
+
+        if (threadStopped) {
+            return null;
+        }
+
+        // Preferences.debug("Number of minima: " + minima.size() + "\n",Preferences.DEBUG_ALGORITHM);
+        Vector<MatrixListItem> optMinima = new Vector<MatrixListItem>();
+
+        // Now freely optimizes over rotation:
+        int count = 0;
+        int degree = (DOF < 4) ? DOF : 4;
+
+        if (powell != null) {
+            powell.finalize();
+        }
+
+        powell = new AlgorithmPowellOpt2D(null, cog, degree, cost, getTolerance(degree, rigidFlag, maxDim), baseNumIter, rigidFlag);
+
+        MatrixListItem item;
+        initials = new Vectornd[minima.size()];
+        index = 0;
+        for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
+            initials[index++] = new Vectornd(en.nextElement().initial, true);
+        }
+        powell.setPoints(initials);
+        powell.run();
+        for(int i = 0; i < minima.size(); i++){
+            item = new MatrixListItem(powell.getCost(i), powell.getMatrix(i), powell.getPoint(i));
+            optMinima.add(item);
+            count++;
+        }
+
+        if (threadStopped) {
+            return null;
+        }
+
+        cost.disposeLocal();
+        powell.disposeLocal();
+
+        return new Vector[] { minima, optMinima };
+    }
+    
+
+    private static Vector<MatrixListItem> levelFourMultiThread(ModelSimpleImage ref, ModelSimpleImage input, 
+            Vector<MatrixListItem> minima, Vector<MatrixListItem> optMinima, int numMinima,
+            int DOF, boolean rigidFlag, float maxDim, int baseNumIter, float rotateBegin, float rotateEnd, float coarseRate, float fineRate, int coarseNum, int fineNum,
+    		int costChoice, boolean doColor, boolean ignoreCOG, boolean weighted, float level4Factor, 
+    		ModelSimpleImage simpleWeightRSub4_1, ModelSimpleImage simpleWeightISub4_1) {
+
+    	boolean threadStopped = false;
+    	
+        AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 64, 1, false);
+
+        if (weighted) {
+            cost.setRefWgtImage(simpleWeightRSub4_1);
+            cost.setInputWgtImage(simpleWeightISub4_1);
+        }
+
+        Vector2f cog = calculateCenterOfMass2D(input, simpleWeightISub4_1, doColor);
+
+        // Preferences.debug("COG of input = " + cog + "\n",Preferences.DEBUG_ALGORITHM);
+        MatrixListItem item = null;
+
+        // fix translations based on image resolutions!
+        for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements();) {
+            item =  en.nextElement();
+            item.initial[1] *= level4Factor;
+            item.initial[2] *= level4Factor;
+        }
+
+        for (Enumeration<MatrixListItem> en = optMinima.elements(); en.hasMoreElements();) {
+            item = en.nextElement();
+            item.initial[1] *= level4Factor;
+            item.initial[2] *= level4Factor;
+        }
+
+        int degree = (DOF < 4) ? DOF : 4;
+
+        AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(null, cog, degree, cost, getTolerance(degree, rigidFlag, maxDim),
+        		baseNumIter, rigidFlag);
+
+        for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
+            item.cost = powell.measureCost(en.nextElement().initial);
+        }
+
+        if (threadStopped) {
+            return null;
+        }
+
+        for (Enumeration<MatrixListItem> en = optMinima.elements(); en.hasMoreElements() && !threadStopped;) {
+            item.cost = powell.measureCost(en.nextElement().initial);
+        }
+
+        if (threadStopped) {
+            return null;
+        }
+
+        Collections.sort(minima);
+        Collections.sort(optMinima);
+
+        Vector<MatrixListItem> newMinima = new Vector<MatrixListItem>();
+
+        // Old code:
+        // int total = (3 < minima.size()) ? 3 : minima.size();
+        // Now changed so that the number of minima to test at Level Four is a variable,
+        // passed in from JDialog.  It used to be set to "3".
+        int total = (numMinima < minima.size()) ? numMinima : minima.size();
+        Preferences.debug("Number of minima to test at levelFour: " + total + ".\n",Preferences.DEBUG_ALGORITHM);
+        powell.setMaxIterations(7);
+        Vectornd[] initials = new Vectornd[total*2];
+        for (int i = 0; (i < total) && !threadStopped; i++) {
+            initials[i] = new Vectornd(minima.elementAt(i).initial);
+            initials[i+total] = new Vectornd(optMinima.elementAt(i).initial);
+        }
+        powell.setPoints(initials);
+        powell.run();
+
+        if (threadStopped) {
+            return null;
+        }
+
+        for(int i = 0; i < 2*total; i++){
+            item = new MatrixListItem(powell.getCost(i), powell.getMatrix(i), powell.getPoint(i));
+            newMinima.add(item);
+        }
+
+        if (threadStopped) {
+            return null;
+        }
+
+        Collections.sort(newMinima);
+
+        double fineDelta = fineRate / 2.0;
+        double[] initial;
+        Vector<MatrixListItem> perturbList = new Vector<MatrixListItem>();
+
+        if(DOF > 3){
+            initials = new Vectornd[newMinima.size()*7];
+        }else{
+            initials = new Vectornd[newMinima.size()*3];
+        }
+        // Perturb rotation.  Add fine delta and optimize, then subtract fine delta and optimize.
+        int index = 0;
+        for (int j = 0; (j <= 2) && !threadStopped; j++) {
+
+            for (int i = 0; (i < 2*total) && !threadStopped; i++) {
+                initial = (double[]) newMinima.elementAt(i).initial.clone();
+
+                // Preferences.debug("Perturbing initial[0] by ",Preferences.DEBUG_ALGORITHM);
+                if (j == 0) { // Preferences.debug("No fineDelta added or subtracted\n",Preferences.DEBUG_ALGORITHM);
+                }
+
+                if (j == 1) {
+                    initial[0] += fineDelta;
+                    // Preferences.debug("adding " + fineDelta + "\n",Preferences.DEBUG_ALGORITHM);
+                }
+
+                if (j == 2) {
+                    initial[0] -= fineDelta;
+                    // Preferences.debug("subtracting " + fineDelta + "\n",Preferences.DEBUG_ALGORITHM);
+                }
+
+                // 1.) unchanged initial
+                // 2.) make initial variable old initial + fineDelta
+                // 3.) Make initial variable old initial - fineDelta
+                initials[index++] = new Vectornd(initial);
+            }
+        }
+
+        if (DOF > 3) {
+            float scaleDelta = 0.8f;
+            for (int j = 0; (j < 4) && !threadStopped; j++) {
+
+                for (int i = 0; (i < (2 * total)) && !threadStopped; i++) {
+                    initial = (double[]) newMinima.elementAt(i).initial.clone();
+
+                    if (j == 1) {
+                        scaleDelta = 0.9f;
+                    } else if (j == 2) {
+                        scaleDelta = 1.1f;
+                    } else if (j == 3) {
+                        scaleDelta = 1.2f;
+                    } 
+
+                    // Preferences.debug("Perturbing initial[3] by ",Preferences.DEBUG_ALGORITHM);
+                    initial[3] *= scaleDelta;
+
+                    // Preferences.debug("Multiplying by " + scaleDelta + "\n",Preferences.DEBUG_ALGORITHM);
+                    // make initial variable old initial * scaleDelta in each dimension
+                    initials[index++] = new Vectornd(initial);
+                }
+            }
+        }
+        powell.setPoints(initials);
+        powell.run();
+        
+        for(int i = 0; i < initials.length; i++){
+            item = new MatrixListItem(powell.getCost(i), powell.getMatrix(i), powell.getPoint(i));
+            perturbList.add(item);
+        }
+
+        if (threadStopped) {
+            return null;
+        }
+
+        if (threadStopped) {
+            return null;
+        }
+
+        Collections.sort(perturbList);
+        cost.disposeLocal();
+        powell.disposeLocal();
+
+        return perturbList;
+    }
+    
+
+    private static MatrixListItem levelTwoMultiThread(ModelSimpleImage ref, ModelSimpleImage input, Vector<MatrixListItem> minima, int numMinima,
+            int DOF, boolean rigidFlag, float maxDim, int baseNumIter, float rotateBegin, float rotateEnd, float coarseRate, float fineRate, int coarseNum, int fineNum,
+    		int costChoice, boolean doColor, boolean ignoreCOG, boolean weighted, float level2Factor, 
+    		ModelSimpleImage simpleWeightRSub2_1, ModelSimpleImage simpleWeightISub2_1) {
+    	boolean threadStopped = false;
+        AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 128, 1, false);
+
+        if (weighted) {
+            cost.setRefWgtImage(simpleWeightRSub2_1);
+            cost.setInputWgtImage(simpleWeightISub2_1);
+        }
+
+        Vector2f cog = calculateCenterOfMass2D(input, simpleWeightISub2_1, doColor);
+        MatrixListItem item = null;
+
+        for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements();) {
+            item = en.nextElement();
+            item.initial[1] *= level2Factor;
+            item.initial[2] *= level2Factor;
+        }
+
+        int degree = (DOF < 4) ? DOF : 4;
+
+        AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(null, cog, degree, cost, getTolerance(degree, rigidFlag, maxDim), baseNumIter, rigidFlag);
+
+        for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements();) {
+            item.cost = powell.measureCost(en.nextElement().initial);
+        }
+
+        Collections.sort(minima);
+
+        if (powell != null) {
+            powell.finalize();
+        }
+
+        powell = new AlgorithmPowellOpt2D(null, cog, degree, cost, getTolerance(degree, rigidFlag, maxDim), baseNumIter, rigidFlag);
+        Vectornd[] initials = new Vectornd[1];
+        initials[0] = new Vectornd(minima.elementAt(0).initial);
+        powell.setPoints(initials);
+
+        powell.run();
+
+        if (threadStopped) {
+            return null;
+        }
+
+        item = new MatrixListItem(powell.getCost(0), powell.getMatrix(0), powell.getPoint(0));
+        // Preferences.debug("Level 2, after " + degree + " DOF: " + item + "\n",Preferences.DEBUG_ALGORITHM);
+
+        if (DOF > 4) {
+            degree = 5;
+
+            if (powell != null) {
+                powell.finalize();
+            }
+            powell = new AlgorithmPowellOpt2D(null, cog, degree, cost, getTolerance(degree, rigidFlag, maxDim), baseNumIter,
+                                              rigidFlag);
+            powell.setPoints(initials);
+            powell.run();
+
+            if (threadStopped) {
+                return null;
+            }
+
+            item = new MatrixListItem(powell.getCost(0), powell.getMatrix(0), powell.getPoint(0));
+            // Preferences.debug("Level 2, after " + degree + " DOF: " + item + "\n",Preferences.DEBUG_ALGORITHM);
+
+            if (DOF > 5) {
+                degree = (DOF < 7) ? DOF : 7;
+
+                if (powell != null) {
+                    powell.finalize();
+                }
+                powell = new AlgorithmPowellOpt2D(null, cog, degree, cost, getTolerance(degree, rigidFlag, maxDim), baseNumIter,
+                                                  rigidFlag);
+
+                powell.setPoints(initials);
+                powell.run();
+
+                if (threadStopped) {
+                    return null;
+                }
+
+                item = new MatrixListItem(powell.getCost(0), powell.getMatrix(0), powell.getPoint(0));
+                // Preferences.debug("Level 2, after " + degree + " DOF: " + item + "\n",Preferences.DEBUG_ALGORITHM);
+            }
+        }
+
+        cost.disposeLocal();
+        powell.disposeLocal();
+
+        return item;
+    }
+    
+
+    private static MatrixListItem levelOneMultiThread(ModelSimpleImage ref, ModelSimpleImage input, MatrixListItem item, int frame,
+    		int DOF, boolean rigidFlag, float maxDim, int baseNumIter, float rotateBegin, float rotateEnd, float coarseRate, float fineRate, int coarseNum, int fineNum,
+    		int costChoice, boolean doColor, boolean ignoreCOG, boolean weighted, float level1Factor, 
+    		ModelSimpleImage simpleWeightR_1, ModelSimpleImage simpleWeightI_1, double[] sliceCosts )
+    {
+    	boolean threadStopped = false;
+        int degree;
+        AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 256, 1, false);
+
+        if (weighted) {
+            cost.setRefWgtImage(simpleWeightR_1);
+            cost.setInputWgtImage(simpleWeightI_1);
+        }
+
+        Vector2f cog = calculateCenterOfMass2D(input, simpleWeightI_1, doColor);
+
+        // initial[1] == diffX and initial[2] == diffY
+        item.initial[1] *= level1Factor;
+        item.initial[2] *= level1Factor;
+
+        degree = DOF;
+        AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(null, cog, degree, cost,
+                getTolerance(degree, rigidFlag, maxDim), 4 * baseNumIter, rigidFlag);
+        Vectornd[] initials = new Vectornd[1];
+        initials[0] = new Vectornd(item.initial);
+        powell.setPoints(initials);
+        powell.run();
+
+        if (threadStopped) {
+            return null;
+        }
+
+        MatrixListItem item2 = new MatrixListItem(powell.getCost(0), powell.getMatrix(0, input.xRes), powell.getPoint(0));
+        Preferences.debug("Best answer: \n" + item2 + "\n",Preferences.DEBUG_ALGORITHM);
+
+        sliceCosts[frame] = item2.getCost();
+
+        cost.disposeLocal();
+        powell.finalize();
+
+        return item2;
+    }
+    
+    
+    private static MatrixListItem levelOne2DMultiThread(ModelSimpleImage ref, ModelSimpleImage input, int frame,
+    		int DOF, boolean rigidFlag, float maxDim, int baseNumIter, float rotateBegin, float rotateEnd, float coarseRate, float fineRate, int coarseNum, int fineNum,
+    		int costChoice, boolean doColor, boolean ignoreCOG, boolean weighted, float level1Factor, 
+    		ModelSimpleImage simpleWeightR_1, ModelSimpleImage simpleWeightI_1, double[] sliceCosts) {
+    	boolean threadStopped = false;
+        int degree;
+        AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 256, 1, false);
+
+        if (weighted) {
+            cost.setRefWgtImage(simpleWeightR_1);
+            cost.setInputWgtImage(simpleWeightI_1);
+        }
+
+        Vector2f cog = calculateCenterOfMass2D(input, simpleWeightI_1, doColor);
+        Vector2f cogR = calculateCenterOfMass2D(ref, simpleWeightR_1, doColor);
+
+        Preferences.debug("COG of Ref   = " + cogR + "\n",Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("COG of Input = " + cog + "\n",Preferences.DEBUG_ALGORITHM);
+
+        double diffX = (cog.X - cogR.X);
+        double diffY = (cog.Y - cogR.Y);
+        double[] initial = new double[7];
+
+        initial[0] = 0; // initial rotation
+        initial[1] = diffX; // initial translations
+        initial[2] = diffY;
+        initial[3] = initial[4] = 1; // initial scaling
+        initial[5] = initial[6] = 0; // initial skewing
+
+        degree = 2;
+
+        AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(null, cog, degree, cost, getTolerance(degree, rigidFlag, maxDim),
+        		4 * baseNumIter, rigidFlag);
+        Vectornd[] initials = new Vectornd[1];
+        initials[0] = new Vectornd(initial);
+
+        powell.setPoints(initials);
+        powell.run();
+
+        if (threadStopped) {
+            return null;
+        }
+
+        MatrixListItem item2 = new MatrixListItem(powell.getCost(0), powell.getMatrix(0, input.xRes), powell.getPoint(0));
+        Preferences.debug("Best answer: \n" + item2 + "\n",Preferences.DEBUG_ALGORITHM);
+        cost.disposeLocal();
+        powell.finalize();
+
+        return item2;
+    }
+
 }
