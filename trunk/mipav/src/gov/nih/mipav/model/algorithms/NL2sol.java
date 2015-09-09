@@ -2008,7 +2008,7 @@ private boolean testMode = false;
 		  int d1;
 		  final int j = 33;
 		  int j1;
-		  int nf;
+		  int nf[] = new int[1];
 		  final int nfcall = 6;
 		  final int nfgcal = 7;
 		  final int r = 50;
@@ -2047,7 +2047,7 @@ private boolean testMode = false;
 	      
 		  if (do10) {
               do10 = false;
-		      nf = iv[nfcall];
+		      nf[0] = iv[nfcall];
               arr = new double[n+1];
               if (testMode) {
 		          calcrTest(n, p, x, nf, arr, uiparm, urparm);
@@ -2060,14 +2060,14 @@ private boolean testMode = false;
               }
 		      if ( strted ) {
 
-		        if ( nf <= 0 ) {
+		        if ( nf[0] <= 0 ) {
 		          iv[toobig] = 1;
 		        }
 
 		        do40 = true;
 
 		      } // if (strted)
-		      else if ( nf <= 0 ) {
+		      else if ( nf[0] <= 0 ) {
 		        iv[1] = 13;
 		        arr = new double[p+1];
 		        for (k = 1; k <= p; k++) {
@@ -2075,7 +2075,7 @@ private boolean testMode = false;
 		        }
 		        itsmry ( arr, iv, p, v, x );
 		        return;
-		      } // else if (nf <= 0)
+		      } // else if (nf[0] <= 0)
 		      else {
 		    	  do30 = true;
 		      }
@@ -2222,7 +2222,7 @@ private boolean testMode = false;
 		  int j1;
 		  int j1k;
 		  int k;
-		  int nf;
+		  int nf[] = new int[1];
 		  final int nfcall = 6;
 		  final int nfgcal = 7;
 		  final int r = 50;
@@ -2281,7 +2281,7 @@ private boolean testMode = false;
         while (true) {
 		  if (do10) {
           do10 = false;
-		  nf = iv[nfcall];
+		  nf[0] = iv[nfcall];
           arr = new double[n+1];
           if (testMode) {
 		      calcrTest ( n, p, x, nf, arr, uiparm, urparm);
@@ -2295,14 +2295,14 @@ private boolean testMode = false;
 
 		  if ( strted ) {
 
-		    if ( nf <= 0 ) {
+		    if ( nf[0] <= 0 ) {
 		      iv[toobig] = 1;
 		    }
 
 		    do80 = true;
 
 		  } // if (strted)
-		  else if ( nf <= 0 ) {
+		  else if ( nf[0] <= 0 ) {
 		    iv[1] = 13;
 		    arr = new double[p+1];
 		    for (m = 1; m <= p; m++) {
@@ -2331,7 +2331,7 @@ private boolean testMode = false;
 		    dk = dk + 1;
 
 		      x[k] = xk + h;
-		      nf = iv[nfgcal];
+		      nf[0] = iv[nfgcal];
 		      arr = new double[n+1];
 		      if (testMode) {
 		          calcrTest ( n, p, x, nf, arr, uiparm, urparm);
@@ -2343,7 +2343,7 @@ private boolean testMode = false;
 		    	  v[j1k+m-1] = arr[m];
 		      }
 
-		      if (nf <= 0) {
+		      if (nf[0] <= 0) {
 
 		      if ( hlim_nl2sno == 0.0 ) {
 		        hlim_nl2sno = hfac * epsilon;
@@ -2360,7 +2360,7 @@ private boolean testMode = false;
 		        itsmry ( arr, iv, p, v, x );
 		        return;
 		      } // if (Math.abs(h) < hlim_nl2sno)
-		      } // if (nf <= 0)
+		      } // if (nf[0] <= 0)
 
 		    x[k] = xk;
 
@@ -3761,10 +3761,10 @@ private boolean testMode = false;
 	//    functions for the given input value of the variables.
 	// uiparm, input, an integer user array
 	// urparm, input, a double user array
-	public abstract void calcr(int meqn, int nvar, double x[], int nf, double r[], 
+	public abstract void calcr(int meqn, int nvar, double x[], int nf[], double r[], 
 			                   int uiparm[], double urparm[]);
 	
-	private void calcrTest(int n, int p, double x[], int nfcall, double r[],
+	private void calcrTest(int n, int p, double x[], int nfcall[], double r[],
 			              int uiparm[], double urparm[]) {
 		/*****************************************************************************80
 		!
@@ -3969,7 +3969,7 @@ private boolean testMode = false;
 		    }
 
 		    if ( Math.min ( x[1], Math.min(x[2], x[3]) ) <= -expmax_calcrTest ) {
-		      nfcall = -1;
+		      nfcall[0] = -1;
 		      return;
 		    }
 
@@ -6139,7 +6139,7 @@ private boolean testMode = false;
 	  int m;
 	  String model[] = new String[7];
 	  int needhd = 39;
-	  int nf;
+	  int nf[] = new int[1];
 	  int nfcall = 6;
 	  int nfcov = 40;
 	  int ng;
@@ -6198,7 +6198,7 @@ private boolean testMode = false;
 	    }
 	  } // if (iv1 <= 2)
 
-	      nf = iv[nfcall] - Math.abs ( iv[nfcov] );
+	      nf[0] = iv[nfcall] - Math.abs ( iv[nfcov] );
 	      iv[prntit] = 0;
 	      reldf = 0.0;
 	      preldf = 0.0;
@@ -6214,7 +6214,7 @@ private boolean testMode = false;
 	      if ( ol <= 0 ) {
 	         iv[needhd] = 0;
 	         Preferences.debug("iv[niter] = iv["+niter+"] = " + iv[niter] + "\n", Preferences.DEBUG_ALGORITHM);
-	         Preferences.debug("nf = " + nf + "\n", Preferences.DEBUG_ALGORITHM);
+	         Preferences.debug("nf[0] = " + nf[0] + "\n", Preferences.DEBUG_ALGORITHM);
 	         Preferences.debug("v[f] = v["+f+"] = " + v[f] + "\n", Preferences.DEBUG_ALGORITHM);
 	         Preferences.debug("reldf = " + reldf + "\n", Preferences.DEBUG_ALGORITHM);
 	         Preferences.debug("preldf = " + preldf + "\n", Preferences.DEBUG_ALGORITHM);
@@ -6234,7 +6234,7 @@ private boolean testMode = false;
 		      }
 	
 		      Preferences.debug("iv[niter] = iv["+niter+"] = " + iv[niter] + "\n", Preferences.DEBUG_ALGORITHM);
-		      Preferences.debug("nf = " + nf + "\n", Preferences.DEBUG_ALGORITHM);
+		      Preferences.debug("nf[0] = " + nf[0] + "\n", Preferences.DEBUG_ALGORITHM);
 		      Preferences.debug("v[f] = v["+f+"] = " + v[f] + "\n", Preferences.DEBUG_ALGORITHM);
 		      Preferences.debug("reldf = " + reldf + "\n", Preferences.DEBUG_ALGORITHM);
 	          Preferences.debug("preldf = " + preldf + "\n", Preferences.DEBUG_ALGORITHM);
@@ -6322,7 +6322,7 @@ private boolean testMode = false;
 	      return;
 	    }
         Preferences.debug("it = 0\n", Preferences.DEBUG_ALGORITHM);
-	    Preferences.debug("nf = 1\n", Preferences.DEBUG_ALGORITHM);
+	    Preferences.debug("nf[0] = 1\n", Preferences.DEBUG_ALGORITHM);
 	    Preferences.debug("v[" + f + "] = " + v[f] + "\n", Preferences.DEBUG_ALGORITHM);
 	    return;
         } //loop1: while(true)
@@ -6351,11 +6351,11 @@ private boolean testMode = false;
 	           nreldf = 0.0;
 	         }
 
-	         nf = iv[nfcall] - iv[nfcov];
+	         nf[0] = iv[nfcall] - iv[nfcov];
 	         ng = iv[ngcall] - iv[ngcov];
 	         Preferences.debug("function v[f] = v["+f+"] = " + v[f] + "\n", Preferences.DEBUG_ALGORITHM);
 	         Preferences.debug("v[reldx] = v[" + reldx + "] = " + v[reldx] + "\n", Preferences.DEBUG_ALGORITHM);
-	         Preferences.debug("func evals nf = " + nf + "\n", Preferences.DEBUG_ALGORITHM);
+	         Preferences.debug("func evals nf[0] = " + nf[0] + "\n", Preferences.DEBUG_ALGORITHM);
 	         Preferences.debug("grad evals ng = " + ng + "\n", Preferences.DEBUG_ALGORITHM);
 	         Preferences.debug("preldf = " + preldf + "\n", Preferences.DEBUG_ALGORITHM);
 	         Preferences.debug("nreldf = " + nreldf + "\n", Preferences.DEBUG_ALGORITHM);
