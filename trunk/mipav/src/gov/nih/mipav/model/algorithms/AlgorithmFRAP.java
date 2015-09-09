@@ -2338,23 +2338,31 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			nonlinmod = new FitWholeNL2solModel(tValues.length, tValues, pIntensity, xp,
 			             iv, v, useAnalyticJacobian);
 			nonlinmod.driver();
-			nonlinmod.dumpResults();
 			ViewUserInterface.getReference().setDataText(
 					"NL2sol nonlinear fit\n");
 			ViewUserInterface.getReference().setDataText(
 					"kon = " + xp[1] + "\n");
 			ViewUserInterface.getReference().setDataText(
 					"koff = " + xp[2] + "\n");
+			ViewUserInterface.getReference().setDataText(
+					"Chi-squared = " + nonlinmod.getChiSquared() + "\n");
+			ViewUserInterface.getReference().setDataText(
+					"Iterations = " + nonlinmod.getIterations() + "\n");
 			dataString += "NL2sol nonlinear fit\n";
 			dataString += "kon = " + xp[1] + "\n";
 			dataString += "koff = " + xp[2] + "\n";
+			dataString += "Chi-squared = " + nonlinmod.getChiSquared() + "\n";
+			dataString += "Iterations = " + nonlinmod.getIterations() + "\n";
 			Preferences.debug("NL2sol nonlinear fit\n",
 					Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("kon = " + xp[1] + "\n",
 					Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("koff = " + xp[2] + "\n",
 					Preferences.DEBUG_ALGORITHM);
-
+			Preferences.debug("Chi-squared = " + nonlinmod.getChiSquared() + "\n",
+					Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Iterations = " + nonlinmod.getIterations() + "\n",
+					Preferences.DEBUG_ALGORITHM);
 			// Plot the intensity of the photobleached region with time
 			tfValues = new float[2][zDim];
 			pfValues = new float[2][zDim];
@@ -2393,7 +2401,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			doSecondFit = true;
 			nlinmod2 = new FitWholeNLConModel(tValues.length, tValues, pIntensity, initial);
 			nlinmod2.driver();
-			nlinmod2.dumpResults();
 			residuals = nlinmod2.getResiduals();
 			params = nlinmod2.getParameters();
 			ViewUserInterface.getReference().setDataText(
@@ -2402,14 +2409,24 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					"kon = " + params[0] + "\n");
 			ViewUserInterface.getReference().setDataText(
 					"koff = " + params[1] + "\n");
+			ViewUserInterface.getReference().setDataText(
+					"Chi-squared = " + nlinmod2.getChiSquared() + "\n");
+			ViewUserInterface.getReference().setDataText(
+					"Iterations = " + nlinmod2.getIterations() + "\n");
 			dataString += "ELSUNC nonlinear fit\n";
 			dataString += "kon = " + params[0] + "\n";
 			dataString += "koff = " + params[1] + "\n";
+			dataString += "Chi-squared = " + nlinmod2.getChiSquared() + "\n";
+			dataString += "Iterations = " + nlinmod2.getIterations() + "\n";
 			Preferences.debug("ELSUNC nonlinear fit\n",
 					Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("kon = " + params[0] + "\n",
 					Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("koff = " + params[1] + "\n",
+					Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Chi-squared = " + nlinmod2.getChiSquared() + "\n",
+					Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Iterations = " + nlinmod2.getIterations() + "\n",
 					Preferences.DEBUG_ALGORITHM);
 
 			pfValues2 = new float[2][zDim];
@@ -3243,7 +3260,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		colorArray[0] = Color.red;
 		colorArray[1] = Color.cyan;
 		photoBleachGraph = new ViewJFrameGraph(tfValues, pfValues,
-				"Photobleaching Recovery Curve", "Seconds", "Fluorescence",
+				"Photobleaching Recovery Curve NL2sol", "Seconds", "Fluorescence",
 				colorArray);
 		photoBleachGraph.setBounds(50, yStart, 500, 400);
 		photoBleachGraph.setVisible(true);
@@ -6084,13 +6101,15 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					var = (1.0/(koff*v[k]))*(Feq/(nuclearRadius*nuclearRadius*cyr[0]*cyr[0]))*numInt;
 					U[k] = -var*(-w[k] -v[k] + koff) * (w[k] - v[k]);
 					V[k] = var * (-w[k] + v[k] + koff) * (w[k] + v[k]);
+					W[k] = -var * (w[k] - v[k]) * kon;
+					X[k] = var * (w[k] + v[k]) * kon;
 				} // if (k > 0)
 				else { // k == 0
 				    U[0] = 0.0;
 				    V[0] = 2.0 * (Feq/(nuclearRadius * nuclearRadius)) * numInt;
+				    W[0] = 0.0;
+				    X[0] = V[0]*(kon/koff);
 				} // else k == 0
-				W[k] = U[k]*(kon/(-(w[k] + v[k]) + koff));
-				X[k] = V[k]*(kon/(-(w[k] - v[k]) + koff));
 			} // for (k = 0; k < 500; k++)
 			
 			tmax = -Double.MAX_VALUE;
@@ -6100,12 +6119,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
 				    timeFunction[t] += ((U[k] + W[k]) * Math.exp(-(w[k]+v[k])*time[t]) 
 				    	+	(V[k]+X[k]) * Math.exp(-(w[k] - v[k])*time[t]))*avgJ0[k];
 				} // for (k = 0; k < 500; k++)
-				if (Double.isNaN(timeFunction[t])) {
-					System.out.println("timeFunction["+t+"] is NaN");
-				}
-				if (Double.isInfinite(timeFunction[t])) {
-					System.out.println("timeFunction["+t+"] is Infinite");	
-				}
 				if (timeFunction[t] > tmax) {
 					tmax = timeFunction[t];
 				}
@@ -7335,11 +7348,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
 				final double urparm[]) {
 			double[] timeFunction = new double[xData.length];
 			int j;
-            if (x[2] < 0.0) {
+            if (x[2] <= 0.0) {
             	// koff is less than zero
             	// In fitFullModel this would result in v[k] > w[k] and 
             	// in Math.exp(-(w[k] - v[k])*time[t]) producing infinite numbers
             	// and finally in timeFunction[t] being NaN.
+            	nf[0] = -1;
+            	return;
             }
 			fitFullModel(timeFunction, xData, x[1], x[2]);
 			// evaluate the residuals[j] = ymodel[j] - ySeries[j] 
@@ -7542,11 +7557,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			// bounds = 2 means different lower and upper bounds
 			// for all parameters
 			// Constrain kon
-			bl[0] = 0.0;
+			bl[0] = 1.0E-15;
 			bu[0] = 1.0E20;
 
 			// Constrain koff
-			bl[1] = 0.0;
+			// Note that bl[1] = 1.0E-20 still resulted in koff = 0.0;
+			bl[1] = 1.0E-15;
 			bu[1] = 1.0E20;
 
 			gues[0] = initial[0];
@@ -7571,9 +7587,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					+ "\n", Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared())
 					+ "\n", Preferences.DEBUG_ALGORITHM);
-			Preferences.debug("a0 " + String.valueOf(a[0]) + "\n",
+			Preferences.debug("kon " + String.valueOf(a[0]) + "\n",
 					Preferences.DEBUG_ALGORITHM);
-			Preferences.debug("a1 " + String.valueOf(a[1]) + "\n",
+			Preferences.debug("koff " + String.valueOf(a[1]) + "\n",
 					Preferences.DEBUG_ALGORITHM);
 		}
 
