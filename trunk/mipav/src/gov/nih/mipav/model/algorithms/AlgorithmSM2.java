@@ -3140,7 +3140,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
 
         }
 
-        public void calcr(final int meqn, final int nvar, final double x[], final int nf, final double r[],
+        public void calcr(final int meqn, final int nvar, final double x[], int nf[], final double r[],
                 final int uiparm[], final double urparm[]) {
             double ktrans;
             double ve;
@@ -3254,7 +3254,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
 
         }
 
-        public void calcr(final int meqn, final int nvar, final double x[], final int nf, final double r[],
+        public void calcr(final int meqn, final int nvar, final double x[], int nf[], final double r[],
                 final int uiparm[], final double urparm[]) {
 
         }
