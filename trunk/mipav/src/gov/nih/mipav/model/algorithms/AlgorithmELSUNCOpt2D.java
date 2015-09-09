@@ -1216,7 +1216,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
     	//    functions for the given input value of the variables.
     	// uiparm, input, an integer user array
     	// urparm, input, a double user array
-        public void calcr(final int meqn, final int nvar, final double x[], final int nf, final double r[],
+        public void calcr(final int meqn, final int nvar, final double x[], int nf[], final double r[],
                 final int uiparm[], final double urparm[]) {
         	point[currentDim] = x[1];
         	double[]fullPoint = getFinal(point);
