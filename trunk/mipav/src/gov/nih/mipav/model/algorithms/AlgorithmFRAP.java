@@ -5262,7 +5262,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		}
 
 		public void calcr(final int meqn, final int nvar, final double x[],
-				final int nf, final double r[], final int uiparm[],
+				int nf[], final double r[], final int uiparm[],
 				final double urparm[]) {
 			double ymod;
 			int j;
@@ -6098,8 +6098,14 @@ public class AlgorithmFRAP extends AlgorithmBase {
 				timeFunction[t] = 0.0;
 				for (k = 0; k < 500; k++) {
 				    timeFunction[t] += ((U[k] + W[k]) * Math.exp(-(w[k]+v[k])*time[t]) 
-				    	+	(V[k]+X[k]) * Math.exp(-(w[k] - v[k])*time[t]))*avgJ0[k];	
+				    	+	(V[k]+X[k]) * Math.exp(-(w[k] - v[k])*time[t]))*avgJ0[k];
 				} // for (k = 0; k < 500; k++)
+				if (Double.isNaN(timeFunction[t])) {
+					System.out.println("timeFunction["+t+"] is NaN");
+				}
+				if (Double.isInfinite(timeFunction[t])) {
+					System.out.println("timeFunction["+t+"] is Infinite");	
+				}
 				if (timeFunction[t] > tmax) {
 					tmax = timeFunction[t];
 				}
@@ -6829,7 +6835,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		 * Fit to function - a1 + (1 - a1)*[1 - 1/sqrt(1 + 4*PI*a0*x)].
 		 */
 		public void calcr(final int meqn, final int nvar, final double x[],
-				final int nf, final double r[], final int uiparm[],
+				int nf[], final double r[], final int uiparm[],
 				final double urparm[]) {
 			int j;
 			double ymod;
@@ -7123,7 +7129,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		 * + (1 - a1)*(1 - exp(-ln(2)*t/a0)).
 		 */
 		public void calcr(final int meqn, final int nvar, final double x[],
-				final int nf, final double r[], final int uiparm[],
+				int nf[], final double r[], final int uiparm[],
 				final double urparm[]) {
 			int j;
 			double ymod;
@@ -7226,7 +7232,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		}
 
 		public void calcr(final int meqn, final int nvar, final double x[],
-				final int nf, final double r[], final int uiparm[],
+				int nf[], final double r[], final int uiparm[],
 				final double urparm[]) {
 			int j;
 			double ymod = 0;
@@ -7318,18 +7324,23 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					+ "\n", Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("Chi-squared: " + String.valueOf(2.0 * v[10])
 					+ "\n", Preferences.DEBUG_ALGORITHM);
-			Preferences.debug("a0 " + String.valueOf(x[1]) + "\n",
+			Preferences.debug("kon " + String.valueOf(x[1]) + "\n",
 					Preferences.DEBUG_ALGORITHM);
-			Preferences.debug("a1 " + String.valueOf(x[2]) + "\n",
+			Preferences.debug("koff " + String.valueOf(x[2]) + "\n",
 					Preferences.DEBUG_ALGORITHM);
 		}
 
 		public void calcr(final int meqn, final int nvar, final double x[],
-				final int nf, final double r[], final int uiparm[],
+				int nf[], final double r[], final int uiparm[],
 				final double urparm[]) {
 			double[] timeFunction = new double[xData.length];
 			int j;
-
+            if (x[2] < 0.0) {
+            	// koff is less than zero
+            	// In fitFullModel this would result in v[k] > w[k] and 
+            	// in Math.exp(-(w[k] - v[k])*time[t]) producing infinite numbers
+            	// and finally in timeFunction[t] being NaN.
+            }
 			fitFullModel(timeFunction, xData, x[1], x[2]);
 			// evaluate the residuals[j] = ymodel[j] - ySeries[j] 
 			for (j = 0; j < meqn; j++) { 
