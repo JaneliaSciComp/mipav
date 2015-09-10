@@ -304,7 +304,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
 
             if ((bandButton.isSelected()) && (!circleButton.isSelected()) && (!oneDButton.isSelected()) &&
                     (!singleExpButton.isSelected())) {
-            	wholeOrganButton.setText("Add required whole Button VOI");
+            	wholeOrganButton.setText("Add required whole nucleus VOI");
                 wholeOrganCheckBox.setSelected(true);
                 wholeOrganCheckBox.setEnabled(false);
                 labelRadius.setEnabled(false);
@@ -315,7 +315,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
                 textDiffusion.setEnabled(false);
             } else if ((!bandButton.isSelected()) && (circleButton.isSelected()) && (!oneDButton.isSelected()) &&
                            (!singleExpButton.isSelected())) {
-            	wholeOrganButton.setText("Add optional correction VOI");
+            	wholeOrganButton.setText("Add optional whole nucleus VOI");
             	wholeOrganButton.setEnabled(true);
                 wholeOrganCheckBox.setSelected(false);
                 wholeOrganCheckBox.setEnabled(false);
@@ -327,7 +327,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
                 textDiffusion.setEnabled(true);
             } else if ((!bandButton.isSelected()) && (!circleButton.isSelected()) && (oneDButton.isSelected()) &&
                            (!singleExpButton.isSelected())) {
-            	wholeOrganButton.setText("Add required whole Button VOI");
+            	wholeOrganButton.setText("Add optional whole nucleus VOI");
                 wholeOrganCheckBox.setEnabled(true);
                 labelRadius.setEnabled(false);
                 textRadius.setEnabled(false);
@@ -337,7 +337,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
                 textDiffusion.setEnabled(false);
             } else if ((!bandButton.isSelected()) && (!circleButton.isSelected()) && (!oneDButton.isSelected()) &&
                            (singleExpButton.isSelected())) {
-            	wholeOrganButton.setText("Add required whole Button VOI");
+            	wholeOrganButton.setText("Add optional whole nucleus VOI");
                 wholeOrganCheckBox.setEnabled(true);
                 labelRadius.setEnabled(false);
                 textRadius.setEnabled(false);
@@ -566,7 +566,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         //componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
         //componentImage.getVOIHandler().setPresetHue(0.0f); // red
 
-        wholeOrganButton = new JRadioButton("Add optional correction VOI", false);
+        wholeOrganButton = new JRadioButton("Add optional whole nucleus VOI", false);
         wholeOrganButton.setForeground(Color.green.darker());
         wholeOrganButton.setFont(serif12);
         wholeOrganButton.addActionListener(this);
@@ -937,12 +937,17 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
             wholeOrganCheckBox.setSelected(false);
             wholeOrganNormalize = false;
             wholeOrganButton.setEnabled(true);
-            wholeOrganButton.setText("Add optional correction VOI");
+            wholeOrganButton.setText("Add optional whole nucleus VOI");
         } else {
             wholeOrganCheckBox.setEnabled(false);
             wholeOrganCheckBox.setSelected(true);
             wholeOrganNormalize = true;
-            wholeOrganButton.setText("Add required whole organ VOI");
+            if (model == NARROW_BAND_2D) {
+                wholeOrganButton.setText("Add required whole whole nucleus VOI");
+            }
+            else {
+            	wholeOrganButton.setText("Add optional whole nucleus VOI");	
+            }
         }
 
         wholeOrganCheckBox.addItemListener(this);
