@@ -4168,6 +4168,10 @@ public abstract class NLConstrainedEngine {
     public double getChiSquared() {
         return 2.0 * phi;
     }
+    
+    public int getIterations() {
+    	return iters;
+    }
 
     /**
      * getParameters accessor to function parameters.
