@@ -1558,6 +1558,10 @@ private boolean testMode = false;
     public double getChiSquared() {
         return 2.0 * v[10];
     }
+    
+    public int getIterations() {
+    	return iv[31];
+    }
 
     
 	
