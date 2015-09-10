@@ -63,7 +63,8 @@ import de.jtem.numericalMethods.calculus.integration.RungeKuttaFehlbergIntegrato
  * wholeOrganIntensity[firstSliceNum]/wholeOrganIntensity[firstSliceNum - 1] is
  * required in this case. However, whole organ normalization is optional in the
  * pure 1D diffusion and single exponential cases and whole organ normalization
- * is never used in the 2D circle case. Curves can be placed in any slice. There
+ * is never used in the 2D circle case. In the 2D circle case the green VOI is a
+ * correction VOI rather than a whole organ VOI.  Curves can be placed in any slice. There
  * is no reason to propagate curves to more than 1 slice. When the algorithm
  * executes, the photobleached and whole organ VOIs will be propagated to the
  * other slices.
@@ -77,7 +78,8 @@ import de.jtem.numericalMethods.calculus.integration.RungeKuttaFehlbergIntegrato
  * should be contained within the whole organ VOI. The whole organ region will
  * have a greater average intensity than the photobleached region and the
  * background region will have a smaller average intensity than the
- * photobleached region.
+ * photobleached region.  In the 2D circle case the photobleached VOI and the green
+ * correction VOI have no overlap.
  * </p>
  * 
  * <p>
@@ -135,6 +137,12 @@ import de.jtem.numericalMethods.calculus.integration.RungeKuttaFehlbergIntegrato
  * In the 2D circle case the user inputs the photbleached circle radius,
  * the radius to the nuclear membrane, and diffusion constant and
  * nonlinear fitting is used to obtain kon and koff.
+ * Calculate the corrected FRAP curve using the formula
+ * FRAP(t) = (photobleach(t) - background)/(correction(t) - background)
+ * where correction(t) is an unbleached control region originally
+ * identical in fluorescence to the photobleached region and the
+ * background has no fluorescence.  The correction VOI is used to
+ * correct for observational photobleaching.
  * </p>
  * 
  * <p>
@@ -197,27 +205,34 @@ import de.jtem.numericalMethods.calculus.integration.RungeKuttaFehlbergIntegrato
  * Volume 94, April 2008, pp. 3323-3339 and accompanying supplemental material.
  * </p>
  * 
+ * <P>
+ * 2.) Randall H. Morse (ed.) Chromatin Remodeling: Methods and Protocols, Methods
+ * in Molecular Biology, vol. 833, Chapter 11, "Monitoring Dynamic Binding of Chromatin
+ * Proteins in Vivo by Fluorescence Recovery After PhotoBleaching", Florian Mueller,
+ * Tatiana S. Karpova, Davide Mazza, and James G. McNally.
+ * </p>
+ * 
  * <p>
- * 2.) Mobility Measurement By Analysis of Fluorescence Photobleaching Recovery
+ * 3.) Mobility Measurement By Analysis of Fluorescence Photobleaching Recovery
  * Kinetics by D. Axelrod, D.E. Koppel, J. Schlessinger, E. Elson, and W.W.
  * Webb, Biophysical Journal, Volume 16, 1976, pp. 1055-1069.
  * </p>
  * 
  * <p>
- * 3.) Monitoring the Dynamics and Mobility of Membrane Proteins Tagged with
+ * 4.) Monitoring the Dynamics and Mobility of Membrane Proteins Tagged with
  * Green Flurorescent Protein by J. Lippincott-Schwartz, J.F. Presley, K.J.M.
  * Zaal, K. Hirschberg, C.D. Miller, and J. Ellenberg, Methods in Cell Biology,
  * Volume 58, 1999, pp. 261-281.
  * </p>
  * 
  * <p>
- * 4.) Using FRAP and mathematical modeling to determine the in vivo kinetics of
+ * 5.) Using FRAP and mathematical modeling to determine the in vivo kinetics of
  * nuclear proteins by Gustavo Carrero, Darin McDonald, Ellen Crawford, Gerda de
  * Vries, and Michael J. Hendzel, Methods, Volume 29, 2003, pp. 14-28
  * </p>
  * 
  * <p>
- * 5.) Practical Kinetic Modeling of Large Scale Biological Systems by Robert D.
+ * 6.) Practical Kinetic Modeling of Large Scale Biological Systems by Robert D.
  * Phair at http://www.bioinformaticsservices.com/bis/resources/
  * cybertext/IBcont.html
  * </p>
@@ -372,7 +387,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
 	/**
 	 * starts the algorithm.
 	 */
-	@SuppressWarnings("unchecked")
 	public void runAlgorithm() {
 		int i, j, z;
 		int c = 0;
@@ -1433,115 +1447,135 @@ public class AlgorithmFRAP extends AlgorithmBase {
 				}
 			}
 		} // if (backgroundIndex >= 0)
-
-		if (wholeOrganIndex >= 0) {
-
-			if (firstSliceNum > 1) {
-				afterBeforeRatio = wholeOrganIntensity[firstSliceNum]
-						/ wholeOrganIntensity[firstSliceNum - 1];
-			} else {
-				afterBeforeRatio = 1;
-			}
-
-			ViewUserInterface.getReference().setDataText(
-					"The ratio of the whole organ region fluorescence after\n");
-			dataString += "The ratio of the whole organ region fluorescence after\n";
-			ViewUserInterface.getReference().setDataText(
-					"bleaching to before bleaching = "
-							+ nf.format(afterBeforeRatio) + "\n");
-			dataString += "bleaching to before bleaching = "
-					+ nf.format(afterBeforeRatio) + "\n";
-			Preferences.debug(
-					"The ratio of the whole organ region fluorescence after\n",
-					Preferences.DEBUG_ALGORITHM);
-			Preferences.debug("bleaching to before bleaching = "
-					+ afterBeforeRatio + "\n", Preferences.DEBUG_ALGORITHM);
-
-			// Correct the photobleached region for the total loss of
-			// fluorescence by dividing
-			// by the wholeOrganIntensity
-			for (z = 0; z < zDim; z++) {
-				photoBleachedIntensity[z] /= wholeOrganIntensity[z];
-			}
-		} // if (wholeOrganIndex >= 0)
-
-		// Even with low illumination during the recovery phase, there is
-		// expected to be
-		// fluorescence loss through photobleaching over the course of the
-		// recovery curve.
-		// Assume this loss is of the form exp(-lambda*time)
-		/*
-		 * if (wholeOrganIntensity[firstSliceNum] > wholeOrganIntensity[zDim -
-		 * 1]) { fireProgressStateChanged("Finding whole organ model"); // The
-		 * whole organ region is fit to a function of the form // a0*exp(a1*t),
-		 * // where a1 < 0.
-		 * 
-		 * // The exponential decay due to photobleaching does not depend on
-		 * absolute times. // It only depends on the bleaching during the
-		 * photography of each slice. // Hence for correction of the
-		 * photobleaching recovery make the time // proportional to the slice
-		 * number trValues = new double[zDim - firstSliceNum]; woIntensity = new
-		 * float[zDim - firstSliceNum]; for (i = 0; i < zDim - firstSliceNum;
-		 * i++) { trValues[i] = (double)i; woIntensity[i] =
-		 * wholeOrganIntensity[i + firstSliceNum]; }
-		 * 
-		 * initial = new double[2]; initial[0] =
-		 * wholeOrganIntensity[firstSliceNum]; initial[1] =
-		 * Math.log(wholeOrganIntensity[zDim - 1]/ wholeOrganIntensity[0])/(zDim
-		 * - firstSliceNum - 1); Preferences.debug("Whole organ initial[0] = " +
-		 * initial[0] + "\n", Preferences.DEBUG_ALGORITHM);
-		 * Preferences.debug("Whole organ initial[1] = " + initial[1] + "\n",
-		 * Preferences.DEBUG_ALGORITHM);
-		 * 
-		 * 
-		 * // Multiply the photobleached data by exp(-params[1]*t) to compensate
-		 * for // the photobleaching loss over the recovery curve
-		 * 
-		 * if (params[1] < 0.0) { for (z = firstSliceNum; z < zDim; z++) {
-		 * photoBleachedIntensity[z] = (float)(photoBleachedIntensity[z] *
-		 * Math.exp(-params[1]*(z-firstSliceNum))); } }
-		 * 
-		 * } // if (refIntensity[0] > refIntensity[zDim - 1]) else {
-		 * UI.setDataText("Whole organ VOI exponential correction could not be
-		 * used\n"); UI.setDataText("Did not find decrease in whole organ region
-		 * intensity\n"); Preferences.debug(
-		 * "Whole organ VOI exponential correction could not be used\n",
-		 * Preferences.DEBUG_ALGORITHM); Preferences.debug(
-		 * "Did not find decrease in whole organ region intensity\n",
-		 * Preferences.DEBUG_ALGORITHM); }
-		 */
-
-		// If whole organ normalization is used, divide photobleached intensity
-		// values by the photobleached VOI intensity just before bleaching so
-		// that pIntensity goes from some positive bottom value up to an
-		// asymptote
-		// of mf. If whole organ normalization is not used, normalize the
-		// photobleached intensity by the maximum of the postbleaching values.
+		
 		pIntensity = new float[zDim - firstSliceNum];
-
-		if (wholeOrganIndex >= 0) {
-			pNorm = photoBleachedIntensity[firstSliceNum - 1];
-
-			for (z = 0; z < zDim; z++) {
-				photoBleachedIntensity[z] = photoBleachedIntensity[z] / pNorm;
-			}
-		} // if (wholeOrganIndex >= 0)
-		else {
-			pMax = -Float.MAX_VALUE;
-
-			for (z = firstSliceNum; z < zDim; z++) {
-
-				if (photoBleachedIntensity[z] > pMax) {
-					pMax = photoBleachedIntensity[z];
+		
+		if (model == CIRCLE_2D) {
+		    if (wholeOrganIndex >= 0) {
+		    	// Apply the correction VOI
+		    	for (z = 0; z < zDim; z++) {
+		    		photoBleachedIntensity[z] = photoBleachedIntensity[z]/wholeOrganIntensity[z];
+		    	}
+		    } // if (wholeOrganIndex >= 0)
+		    // Calculate the average pre-bleach intensity
+	    	float preBleachedTotal = 0.0f;
+	    	for (z = 0; z < firstSliceNum; z++) {
+	    		preBleachedTotal += photoBleachedIntensity[z];
+	    	}
+	    	float preBleachedAverage = preBleachedTotal/firstSliceNum;
+	    	// Normalize the curve such that the pre-bleach intensity is 1.
+	    	for (z = 0; z < zDim; z++) {
+	    		photoBleachedIntensity[z] = photoBleachedIntensity[z]/preBleachedAverage;
+	    	}
+		} // if (model == CIRCLE_2D)
+		else { // model != CIRCLE_2D
+			if (wholeOrganIndex >= 0 ) {
+	
+				if (firstSliceNum > 1) {
+					afterBeforeRatio = wholeOrganIntensity[firstSliceNum]
+							/ wholeOrganIntensity[firstSliceNum - 1];
+				} else {
+					afterBeforeRatio = 1;
+				}
+	
+				ViewUserInterface.getReference().setDataText(
+						"The ratio of the whole organ region fluorescence after\n");
+				dataString += "The ratio of the whole organ region fluorescence after\n";
+				ViewUserInterface.getReference().setDataText(
+						"bleaching to before bleaching = "
+								+ nf.format(afterBeforeRatio) + "\n");
+				dataString += "bleaching to before bleaching = "
+						+ nf.format(afterBeforeRatio) + "\n";
+				Preferences.debug(
+						"The ratio of the whole organ region fluorescence after\n",
+						Preferences.DEBUG_ALGORITHM);
+				Preferences.debug("bleaching to before bleaching = "
+						+ afterBeforeRatio + "\n", Preferences.DEBUG_ALGORITHM);
+	
+				// Correct the photobleached region for the total loss of
+				// fluorescence by dividing
+				// by the wholeOrganIntensity
+				for (z = 0; z < zDim; z++) {
+					photoBleachedIntensity[z] /= wholeOrganIntensity[z];
+				}
+	
+			// Even with low illumination during the recovery phase, there is
+			// expected to be
+			// fluorescence loss through photobleaching over the course of the
+			// recovery curve.
+			// Assume this loss is of the form exp(-lambda*time)
+			/*
+			 * if (wholeOrganIntensity[firstSliceNum] > wholeOrganIntensity[zDim -
+			 * 1]) { fireProgressStateChanged("Finding whole organ model"); // The
+			 * whole organ region is fit to a function of the form // a0*exp(a1*t),
+			 * // where a1 < 0.
+			 * 
+			 * // The exponential decay due to photobleaching does not depend on
+			 * absolute times. // It only depends on the bleaching during the
+			 * photography of each slice. // Hence for correction of the
+			 * photobleaching recovery make the time // proportional to the slice
+			 * number trValues = new double[zDim - firstSliceNum]; woIntensity = new
+			 * float[zDim - firstSliceNum]; for (i = 0; i < zDim - firstSliceNum;
+			 * i++) { trValues[i] = (double)i; woIntensity[i] =
+			 * wholeOrganIntensity[i + firstSliceNum]; }
+			 * 
+			 * initial = new double[2]; initial[0] =
+			 * wholeOrganIntensity[firstSliceNum]; initial[1] =
+			 * Math.log(wholeOrganIntensity[zDim - 1]/ wholeOrganIntensity[0])/(zDim
+			 * - firstSliceNum - 1); Preferences.debug("Whole organ initial[0] = " +
+			 * initial[0] + "\n", Preferences.DEBUG_ALGORITHM);
+			 * Preferences.debug("Whole organ initial[1] = " + initial[1] + "\n",
+			 * Preferences.DEBUG_ALGORITHM);
+			 * 
+			 * 
+			 * // Multiply the photobleached data by exp(-params[1]*t) to compensate
+			 * for // the photobleaching loss over the recovery curve
+			 * 
+			 * if (params[1] < 0.0) { for (z = firstSliceNum; z < zDim; z++) {
+			 * photoBleachedIntensity[z] = (float)(photoBleachedIntensity[z] *
+			 * Math.exp(-params[1]*(z-firstSliceNum))); } }
+			 * 
+			 * } // if (refIntensity[0] > refIntensity[zDim - 1]) else {
+			 * UI.setDataText("Whole organ VOI exponential correction could not be
+			 * used\n"); UI.setDataText("Did not find decrease in whole organ region
+			 * intensity\n"); Preferences.debug(
+			 * "Whole organ VOI exponential correction could not be used\n",
+			 * Preferences.DEBUG_ALGORITHM); Preferences.debug(
+			 * "Did not find decrease in whole organ region intensity\n",
+			 * Preferences.DEBUG_ALGORITHM); }
+			 */
+	
+			// If whole organ normalization is used, divide photobleached intensity
+			// values by the photobleached VOI intensity just before bleaching so
+			// that pIntensity goes from some positive bottom value up to an
+			// asymptote
+			// of mf. If whole organ normalization is not used, normalize the
+			// photobleached intensity by the maximum of the postbleaching values.
+			
+	
+				pNorm = photoBleachedIntensity[firstSliceNum - 1];
+	
+				for (z = 0; z < zDim; z++) {
+					photoBleachedIntensity[z] = photoBleachedIntensity[z] / pNorm;
+				}
+			} // if (wholeOrganIndex >= 0)
+			else {
+				pMax = -Float.MAX_VALUE;
+	
+				for (z = firstSliceNum; z < zDim; z++) {
+	
+					if (photoBleachedIntensity[z] > pMax) {
+						pMax = photoBleachedIntensity[z];
+					}
+				}
+	
+	
+				for (z = 0; z < zDim; z++) {
+					photoBleachedIntensity[z] = photoBleachedIntensity[z]
+							/ pMax;
 				}
 			}
-
-
-			for (z = 0; z < zDim; z++) {
-				photoBleachedIntensity[z] = photoBleachedIntensity[z]
-						/ pMax;
-			}
-		}
+		} // else model != CIRCLE_2D
 
 		for (z = firstSliceNum; z < zDim; z++) {
 			pIntensity[z - firstSliceNum] = photoBleachedIntensity[z];
