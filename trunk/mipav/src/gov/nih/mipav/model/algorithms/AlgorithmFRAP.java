@@ -62,9 +62,8 @@ import de.jtem.numericalMethods.calculus.integration.RungeKuttaFehlbergIntegrato
  * case, since Fa/Fo, the afterBeforeRatio =
  * wholeOrganIntensity[firstSliceNum]/wholeOrganIntensity[firstSliceNum - 1] is
  * required in this case. However, whole organ normalization is optional in the
- * pure 1D diffusion and single exponential cases and whole organ normalization
- * is never used in the 2D circle case. In the 2D circle case the green VOI is a
- * correction VOI rather than a whole organ VOI.  Curves can be placed in any slice. There
+ * pure 1D diffusion, single exponential, and in the 2D circle case.  
+ * Curves can be placed in any slice. There
  * is no reason to propagate curves to more than 1 slice. When the algorithm
  * executes, the photobleached and whole organ VOIs will be propagated to the
  * other slices.
@@ -78,8 +77,7 @@ import de.jtem.numericalMethods.calculus.integration.RungeKuttaFehlbergIntegrato
  * should be contained within the whole organ VOI. The whole organ region will
  * have a greater average intensity than the photobleached region and the
  * background region will have a smaller average intensity than the
- * photobleached region.  In the 2D circle case the photobleached VOI and the green
- * correction VOI have no overlap.
+ * photobleached region.
  * </p>
  * 
  * <p>
@@ -137,11 +135,9 @@ import de.jtem.numericalMethods.calculus.integration.RungeKuttaFehlbergIntegrato
  * In the 2D circle case the user inputs the photbleached circle radius,
  * the radius to the nuclear membrane, and diffusion constant and
  * nonlinear fitting is used to obtain kon and koff.
- * Calculate the corrected FRAP curve using the formula
- * FRAP(t) = (photobleach(t) - background)/(correction(t) - background)
  * where correction(t) is an unbleached control region originally
  * identical in fluorescence to the photobleached region and the
- * background has no fluorescence.  The correction VOI is used to
+ * background has no fluorescence.  The whole organ VOI is used to
  * correct for observational photobleaching.
  * </p>
  * 
@@ -1452,9 +1448,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		
 		if (model == CIRCLE_2D) {
 		    if (wholeOrganIndex >= 0) {
-		    	// Apply the correction VOI
-		    	for (z = 0; z < zDim; z++) {
-		    		photoBleachedIntensity[z] = photoBleachedIntensity[z]/wholeOrganIntensity[z];
+		    	// Correct the pre-bleach phase
+		    	for (z = 0; z < firstSliceNum; z++) {
+		    		photoBleachedIntensity[z] *= wholeOrganIntensity[z]/wholeOrganIntensity[firstSliceNum-1];
+		    	}
+		    	// Correct the post-bleach phase
+		    	for (z = firstSliceNum; z < zDim; z++) {
+		    		photoBleachedIntensity[z] *= wholeOrganIntensity[z]/wholeOrganIntensity[firstSliceNum];
 		    	}
 		    } // if (wholeOrganIndex >= 0)
 		    // Calculate the average pre-bleach intensity
