@@ -4,17 +4,14 @@ import gov.nih.mipav.model.algorithms.registration.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
-
 import java.io.*;
-
 import java.text.*;
-
 import java.util.*;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import de.jtem.numericalMethods.calculus.function.RealFunctionOfOneVariable;
 import de.jtem.numericalMethods.calculus.integration.RungeKuttaFehlbergIntegrator;
 
@@ -59,10 +56,10 @@ import de.jtem.numericalMethods.calculus.integration.RungeKuttaFehlbergIntegrato
  * The code here assumes the presence of 1, 2 or 3 VOI regions. The
  * photobleached region is always required. The whole organ region is required
  * for whole organ normalization, which must always be used in the narrow band
- * case, since Fa/Fo, the afterBeforeRatio =
+ * case and the 2D circle case, since Fa/Fo, the afterBeforeRatio =
  * wholeOrganIntensity[firstSliceNum]/wholeOrganIntensity[firstSliceNum - 1] is
  * required in this case. However, whole organ normalization is optional in the
- * pure 1D diffusion, single exponential, and in the 2D circle case.  
+ * pure 1D diffusion and single exponential.  
  * Curves can be placed in any slice. There
  * is no reason to propagate curves to more than 1 slice. When the algorithm
  * executes, the photobleached and whole organ VOIs will be propagated to the
@@ -300,6 +297,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
 	/** DOCUMENT ME! */
 	private int wholeOrganIndex;
+	
+	private double theta;
+	
+	private double sigma;
 
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
@@ -390,6 +391,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		int c3 = 0;
 		int xDim, yDim, zDim, sliceSize;
 		float[] floatBuffer;
+		float[] preBleachBuffer;
+		float[] postBleachBuffer;
 
 		// black and white image created from selected color of color image
 		ModelImage bwImage = null;
@@ -464,6 +467,15 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		float pHalf;
 		double bottom;
 		double span;
+		float[] xpBounds = new float[2];
+		float[] ypBounds = new float[2];
+		float[] zpBounds = new float[2];
+		Vector3f photoBleachedCenter;
+		int photoCenterX;
+		int photoCenterY;
+		int measuredRadius;
+		int profileRadius;
+		int numberProfilePoints;
 		float[] xBounds = new float[2];
 		float[] yBounds = new float[2];
 		float[] zBounds = new float[2];
@@ -1231,10 +1243,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			newResY = resY;
 		}
 
-		VOIs.VOIAt(photoBleachedIndex).getBounds(xBounds, yBounds, zBounds);
-		photoBleachedWidthX = Math.abs(newResX * (xBounds[1] - xBounds[0]));
-		photoBleachedWidthY = Math.abs(newResY * (yBounds[1] - yBounds[0]));
+		VOIs.VOIAt(photoBleachedIndex).getBounds(xpBounds, ypBounds, zpBounds);
+		photoBleachedWidthX = Math.abs(newResX * (xpBounds[1] - xpBounds[0]));
+		photoBleachedWidthY = Math.abs(newResY * (ypBounds[1] - ypBounds[0]));
+		photoBleachedCenter = VOIs.VOIAt(photoBleachedIndex).getGeometricCenter();
 		photoBleachedWidth = Math.min(photoBleachedWidthX, photoBleachedWidthY);
+		photoCenterX = Math.round(photoBleachedCenter.X);
+		photoCenterY = Math.round(photoBleachedCenter.Y);
 		Preferences.debug("photobleached region width = " + photoBleachedWidth
 				+ " microns\n", Preferences.DEBUG_ALGORITHM);
 		ViewUserInterface.getReference().setDataText(
@@ -1447,16 +1462,21 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		pIntensity = new float[zDim - firstSliceNum];
 		
 		if (model == CIRCLE_2D) {
-		    if (wholeOrganIndex >= 0) {
-		    	// Correct the pre-bleach phase
-		    	for (z = 0; z < firstSliceNum; z++) {
-		    		photoBleachedIntensity[z] *= wholeOrganIntensity[z]/wholeOrganIntensity[firstSliceNum-1];
-		    	}
-		    	// Correct the post-bleach phase
-		    	for (z = firstSliceNum; z < zDim; z++) {
-		    		photoBleachedIntensity[z] *= wholeOrganIntensity[z]/wholeOrganIntensity[firstSliceNum];
-		    	}
-		    } // if (wholeOrganIndex >= 0)
+			
+			if (firstSliceNum > 1) {
+				afterBeforeRatio = wholeOrganIntensity[firstSliceNum]
+						/ wholeOrganIntensity[firstSliceNum - 1];
+			} else {
+				afterBeforeRatio = 1;
+			}
+	    	// Correct the pre-bleach phase
+	    	for (z = 0; z < firstSliceNum; z++) {
+	    		photoBleachedIntensity[z] *= wholeOrganIntensity[z]/wholeOrganIntensity[firstSliceNum-1];
+	    	}
+	    	// Correct the post-bleach phase
+	    	for (z = firstSliceNum; z < zDim; z++) {
+	    		photoBleachedIntensity[z] *= wholeOrganIntensity[z]/wholeOrganIntensity[firstSliceNum];
+	    	}
 		    // Calculate the average pre-bleach intensity
 	    	float preBleachedTotal = 0.0f;
 	    	for (z = 0; z < firstSliceNum; z++) {
@@ -1467,6 +1487,147 @@ public class AlgorithmFRAP extends AlgorithmBase {
 	    	for (z = 0; z < zDim; z++) {
 	    		photoBleachedIntensity[z] = photoBleachedIntensity[z]/preBleachedAverage;
 	    	}
+	    	
+	    	preBleachBuffer = new float[sliceSize];
+	    	try {
+				bwImage.exportData((firstSliceNum-1) * sliceSize, sliceSize,
+						preBleachBuffer);
+			} catch (IOException e) {
+				MipavUtil.displayError("IOException " + e
+						+ " on bwImage.exportData");
+				setCompleted(false);
+
+				return;
+			}
+	    	
+	    	postBleachBuffer = new float[sliceSize];
+	    	try {
+				bwImage.exportData(firstSliceNum * sliceSize, sliceSize,
+						postBleachBuffer);
+			} catch (IOException e) {
+				MipavUtil.displayError("IOException " + e
+						+ " on bwImage.exportData");
+				setCompleted(false);
+
+				return;
+			}
+	    	
+	  
+	    	if (backgroundIndex >= 0) {
+	    		for (i = 0; i < sliceSize; i++) {
+	    			preBleachBuffer[i] -= backgroundConstant;
+	    			postBleachBuffer[i] -= backgroundConstant;
+	    		}
+	    	} // if (backgroundIndex >= 0)
+	    	
+	    	
+	    	
+	    	// Ideally all 4 of the below distances should be the same
+	    	measuredRadius = Math.round(photoCenterX - xpBounds[0]);
+	    	measuredRadius = Math.round(Math.max(measuredRadius, xpBounds[1] - photoCenterX));
+	    	measuredRadius = Math.round(Math.max(measuredRadius, photoCenterY - ypBounds[0]));
+	    	measuredRadius = Math.round(Math.max(measuredRadius, ypBounds[1] - measuredRadius));
+	    	profileRadius = 2 * measuredRadius;
+	    	double profileSquared = profileRadius * profileRadius;
+	    	double distY;
+	    	double distX;
+	    	double distanceSquared;
+	    	double distance;
+	    	ArrayList<distanceIntensityItem> preList = new ArrayList<distanceIntensityItem>();
+	    	ArrayList<distanceIntensityItem> postList = new ArrayList<distanceIntensityItem>();
+	    	for (int y = photoCenterY - profileRadius; y <= photoCenterY + profileRadius; y++) {
+	    		distY = y - photoCenterY;
+	    		for (int x = photoCenterX - profileRadius; x <= photoCenterX + profileRadius; x++) {
+	    			distX = x - photoCenterX;
+	    			distanceSquared = distX * distX + distY * distY;
+	    			if (distanceSquared <= profileSquared) {
+	    				distance = Math.sqrt(distanceSquared);
+	    				preList.add(new distanceIntensityItem(distance, preBleachBuffer[x + xDim * y]));
+	    				postList.add(new distanceIntensityItem(distance, postBleachBuffer[x + xDim * y]));
+	    			}
+	    		}
+	    	}
+	    	Collections.sort(preList, new distanceIntensityComparator());
+	    	Collections.sort(postList, new distanceIntensityComparator());
+	    	int numberDistances = 1;
+	    	for (i = 1; i < preList.size(); i++) {
+	    	    if ((preList.get(i).getDistance() - preList.get(i-1).getDistance()) >= 1.0e-3) {
+	    	    	numberDistances++;
+	    	    }
+	    	}
+	    	double distances[] = new double[numberDistances];
+	    	double preIntensityAverage[] = new double[numberDistances];
+	    	double postIntensityAverage[] = new double[numberDistances];
+	    	distances[0] = preList.get(0).getDistance();
+	    	int index = 0;
+	    	int numberAveraged = 1;
+	    	double preTotal = preList.get(0).getIntensity();
+	    	double postTotal = postList.get(0).getIntensity();
+	    	for (i = 1; i < preList.size(); i++) {
+	    		if ((preList.get(i).getDistance() - preList.get(i-1).getDistance()) >= 1.0e-3) {
+	    		    preIntensityAverage[index] = preTotal/numberAveraged;
+	    		    postIntensityAverage[index++] = postTotal/numberAveraged;
+	    		    distances[index] = preList.get(i).getDistance();
+	    		    if (i < preList.size() - 1) {
+	    		    	numberAveraged = 1;
+	    		    	preTotal = preList.get(i).getIntensity();
+	    		    	postTotal = postList.get(i).getIntensity();
+	    		    }
+	    		    else {
+	    		    	preIntensityAverage[index] = preList.get(i).getIntensity();
+	    		    	postIntensityAverage[index] = postList.get(i).getIntensity();
+	    		    }
+	    		} // if ((preList.get(i).getDistance() - preList.get(i-1).getDistance()) >= 1.0e-3)
+	    		else {
+	    			numberAveraged++;
+	    			preTotal += preList.get(i).getIntensity();
+	    			postTotal += postList.get(i).getIntensity();
+	    			if (i == preList.size() - 1) {
+	    				preIntensityAverage[index] = preTotal/numberAveraged;
+	 	    		    postIntensityAverage[index] = postTotal/numberAveraged;	
+	    			}
+	    		}
+	    	} // for (i = 1; i < preList.size(); i++)
+	    	
+	    	for (i = 0; i < numberDistances; i++) {
+	    	    postIntensityAverage[i] = postIntensityAverage[i]/preIntensityAverage[i]; 
+	    	    // Convert to micrometers
+	    	    distances[i] *= newResX;
+	    	}
+	    	
+	    	double initfp[] = new double[2];
+	    	initfp[0] = 0.5; // theta
+	    	initfp[1] = 1.0; // sigma
+	    	FitIntensityProfile fip = new FitIntensityProfile(numberDistances, postIntensityAverage, distances, initfp);
+			fip.driver();
+			params = fip.getParameters();
+			theta = params[0];
+			sigma = params[1];
+			ViewUserInterface.getReference().setDataText(
+					"ELSUNC intensity profile fit\n");
+			ViewUserInterface.getReference().setDataText(
+					"theta = " + theta + "\n");
+			ViewUserInterface.getReference().setDataText(
+					"sigma= " + sigma + "\n");
+			ViewUserInterface.getReference().setDataText(
+					"Chi-squared = " + fip.getChiSquared() + "\n");
+			ViewUserInterface.getReference().setDataText(
+					"Iterations = " + fip.getIterations() + "\n");
+			dataString += "ELSUNC intensity profile fit\n";
+			dataString += "theta = " + theta + "\n";
+			dataString += "sigma = " + sigma + "\n";
+			dataString += "Chi-squared = " + fip.getChiSquared() + "\n";
+			dataString += "Iterations = " + fip.getIterations() + "\n";
+			Preferences.debug("ELSUNC intensity profile fit\n",
+					Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("kon = " + theta + "\n",
+					Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("koff = " + sigma + "\n",
+					Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Chi-squared = " + fip.getChiSquared() + "\n",
+					Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Iterations = " + fip.getIterations() + "\n",
+					Preferences.DEBUG_ALGORITHM);
 		} // if (model == CIRCLE_2D)
 		else { // model != CIRCLE_2D
 			if (wholeOrganIndex >= 0 ) {
@@ -7557,6 +7718,126 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		}
 
 	}
+	
+	/**
+	 * DOCUMENT ME!
+	 */
+	class FitIntensityProfile extends NLConstrainedEngine {
+		private double xData[];
+		private double yData[];
+
+		/**
+		 * Creates a new FitWholeNLConModel object.
+		 * 
+		 * @param nPoints
+		 *            DOCUMENT ME!
+		 * @param xData
+		 *            DOCUMENT ME!
+		 * @param yData
+		 *            DOCUMENT ME!
+		 * @param initial
+		 *            DOCUMENT ME!
+		 */
+		public FitIntensityProfile(int nPoints, double[] xData, double[] yData,
+				double[] initial) {
+
+			super(nPoints, 2);
+			this.xData = xData;
+			this.yData = yData;
+
+			bounds = 2; // bounds = 0 means unconstrained
+
+			// bounds = 1 means same lower and upper bounds for
+			// all parameters
+			// bounds = 2 means different lower and upper bounds
+			// for all parameters
+			// Constrain theta
+			bl[0] = 0.01;
+			bu[0] = 0.999;
+
+			// Constrain sigma
+			bl[1] = 1.0E-3;
+			bu[1] = 1.0E3;
+
+			gues[0] = initial[0];
+			gues[1] = initial[1];
+		}
+
+		/**
+		 * Starts the analysis.
+		 */
+		public void driver() {
+			super.driver();
+		}
+
+		/**
+		 * Display results of displaying exponential fitting parameters.
+		 */
+		public void dumpResults() {
+			Preferences
+					.debug(" ******* Fit Elsunc Intensity Profile ********* \n\n",
+							Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Number of iterations: " + String.valueOf(iters)
+					+ "\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared())
+					+ "\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("theta " + String.valueOf(a[0]) + "\n",
+					Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("sigma " + String.valueOf(a[1]) + "\n",
+					Preferences.DEBUG_ALGORITHM);
+		}
+
+		/**
+		 * Fit to function.
+		 * 
+		 * @param a
+		 *            The x value of the data point.
+		 * @param residuals
+		 *            The best guess parameter values.
+		 * @param covarMat
+		 *            The derivative values of y with respect to fitting
+		 *            parameters.
+		 */
+		public void fitToFunction(double[] a, double[] residuals,
+				double[][] covarMat) {
+			int ctrl;
+			int i;
+			double[] intensityFunction = new double[xData.length];
+			double diff;
+
+			try {
+				ctrl = ctrlMat[0];
+
+				if ((ctrl == -1) || (ctrl == 1)) {
+					
+					 for (i = 0; i < xData.length; i++) {
+						 if (xData[i] <= radius) {
+							 intensityFunction[i] = a[0];
+						 }
+						 else {
+							 diff = xData[i] - radius;
+							 intensityFunction[i] = 1.0 - (1.0 - a[0])*Math.exp(-diff*diff/(2.0*a[1]*a[1]));
+						 }
+						 residuals[i]= intensityFunction[i] - yData[i]; 
+						 Preferences.debug("FitIntensityProfile residuals["+i+"] = " + residuals[i] + "\n", Preferences.DEBUG_ALGORITHM);
+						 Preferences.debug("intensityFunction["+i+"] = " + intensityFunction[i] + " yData["+i+"] = " + yData[i] + "\n",
+								 Preferences.DEBUG_ALGORITHM);
+						 }
+				} // if ((ctrl == -1) || (ctrl == 1))
+
+				// Calculate the Jacobian numerically
+				else if (ctrl == 2) {
+					ctrlMat[0] = 0;
+				}
+			} catch (Exception e) {
+				Preferences.debug("function error: " + e.getMessage() + "\n",
+						Preferences.DEBUG_ALGORITHM);
+			}
+
+			return;
+		}
+
+	}
 
 	/**
 	 * DOCUMENT ME!
@@ -8181,6 +8462,67 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		}
 	}
 	
+class IntModelI0NuclearArea extends Integration2 {
+		
+		double alpha;
+		int k;
+
+		/**
+		 * Creates a new IntModel2 object.
+		 * 
+		 * @param lower
+		 *            DOCUMENT ME!
+		 * @param upper
+		 *            DOCUMENT ME!
+		 * @param routine
+		 *            DOCUMENT ME!
+		 * @param key
+		 *            DOCUMENT ME!
+		 * @param epsabs
+		 *            DOCUMENT ME!
+		 * @param epsrel
+		 *            DOCUMENT ME!
+		 * @param limit
+		 *            DOCUMENT ME!
+		 */
+		public IntModelI0NuclearArea(double lower, double upper, int routine, int key,
+				double epsabs, double epsrel, int limit) {
+			super(lower, upper, routine, key, epsabs, epsrel, limit);
+		}
+
+		/**
+		 * DOCUMENT ME!
+		 */
+		public void driver() {
+			super.driver();
+		}
+
+		/**
+		 * DOCUMENT ME!
+		 * 
+		 * @param x
+		 *            DOCUMENT ME!
+		 * 
+		 * @return DOCUMENT ME!
+		 */
+		public double intFunc(double x) {
+			double function;
+			double I0;
+			double diff;
+			if (x <= radius) {
+				I0 = theta;
+			}
+			else {
+				diff = x - radius;
+				I0 = 1.0 - (1.0 - theta)*Math.exp(-diff*diff/(2.0*sigma*sigma));
+			}
+			
+		    function = I0 * x;
+
+			return function;
+		}
+	}
+	
 	class IntModelBessel extends Integration2 {
 		
 		double alpha;
@@ -8236,11 +8578,14 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			int[] nz = new int[1];
 			int[] errorFlag = new int[1];
 			double I0;
-			modelBessel = new Bessel(Bessel.BESSEL_I, x,
-					0.0, initialOrder, Bessel.UNSCALED_FUNCTION,
-					sequenceNumber, cyr, cyi, nz, errorFlag);
-			modelBessel.run();
-			I0 = cyr[0];
+			double diff;
+			if (x <= radius) {
+				I0 = theta;
+			}
+			else {
+				diff = x - radius;
+				I0 = 1.0 - (1.0 - theta)*Math.exp(-diff*diff/(2.0*sigma*sigma));
+			}
 			if (k > 0) {
 				modelBessel = new Bessel(Bessel.BESSEL_J, alpha * x,
 						0.0, initialOrder, Bessel.UNSCALED_FUNCTION,
@@ -8687,5 +9032,69 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		FYN[0] = (N * N / (X * X) - 1.0) * BYN[0] - DYN[0] / X;
 		return;
 	} // JYNDD
+	
+	private class distanceIntensityComparator implements Comparator<distanceIntensityItem> {
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @param o1 DOCUMENT ME!
+         * @param o2 DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int compare(final distanceIntensityItem o1, final distanceIntensityItem o2) {
+            final double a = o1.getDistance();
+            final double b = o2.getDistance();
+
+            if (a < b) {
+                return -1;
+            } else if (a > b) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+
+    }
+	
+	private class distanceIntensityItem {
+
+        /** DOCUMENT ME! */
+        private final double distance;
+
+        /** DOCUMENT ME! */
+        private final float intensity;
+
+        /**
+         * Creates a new distanceIntensityItem object.
+         * 
+         * @param distance
+         * @param intensity
+         */
+        public distanceIntensityItem(final double distance, final float intensity) {
+            this.distance = distance;
+            this.intensity = intensity;
+        }
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public double getDistance() {
+            return distance;
+        }
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public float getIntensity() {
+            return intensity;
+        }
+
+    }
 
 }
