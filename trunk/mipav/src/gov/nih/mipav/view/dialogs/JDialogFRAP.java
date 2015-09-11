@@ -228,7 +228,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
     private int wholeOrganIndex = -1;
 
     /** DOCUMENT ME! */
-    private boolean wholeOrganNormalize = false;
+    private boolean wholeOrganNormalize = true;
 
     /** DOCUMENT ME! */
     private int xPos, yPos;
@@ -315,9 +315,9 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
                 textDiffusion.setEnabled(false);
             } else if ((!bandButton.isSelected()) && (circleButton.isSelected()) && (!oneDButton.isSelected()) &&
                            (!singleExpButton.isSelected())) {
-            	wholeOrganButton.setText("Add optional whole nucleus VOI");
+            	wholeOrganButton.setText("Add required whole nucleus VOI");
             	wholeOrganButton.setEnabled(true);
-                wholeOrganCheckBox.setSelected(false);
+                wholeOrganCheckBox.setSelected(true);
                 wholeOrganCheckBox.setEnabled(false);
                 labelRadius.setEnabled(true);
                 textRadius.setEnabled(true);
@@ -566,7 +566,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         //componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
         //componentImage.getVOIHandler().setPresetHue(0.0f); // red
 
-        wholeOrganButton = new JRadioButton("Add optional whole nucleus VOI", false);
+        wholeOrganButton = new JRadioButton("Add required whole nucleus VOI", false);
         wholeOrganButton.setForeground(Color.green.darker());
         wholeOrganButton.setFont(serif12);
         wholeOrganButton.addActionListener(this);
@@ -934,10 +934,10 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
 
         if (model == CIRCLE_2D) {
             wholeOrganCheckBox.setEnabled(false);
-            wholeOrganCheckBox.setSelected(false);
-            wholeOrganNormalize = false;
+            wholeOrganCheckBox.setSelected(true);
+            wholeOrganNormalize = true;
             wholeOrganButton.setEnabled(true);
-            wholeOrganButton.setText("Add optional whole nucleus VOI");
+            wholeOrganButton.setText("Add required whole nucleus VOI");
         } else {
             wholeOrganCheckBox.setEnabled(false);
             wholeOrganCheckBox.setSelected(true);
