@@ -140,11 +140,6 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
     private JLabel labelImage;
 
     /** DOCUMENT ME! */
-    private JLabel labelRadius;
-    
-    private JLabel labelNuclearRadius;
-
-    /** DOCUMENT ME! */
     private JLabel labelRef;
 
     /** DOCUMENT ME! */
@@ -178,11 +173,6 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
     private int photoBleachedIndex = -1;
 
     /** DOCUMENT ME! */
-    private float radius = 0.0f;
-    
-    private float nuclearRadius = 0.0f;
-
-    /** DOCUMENT ME! */
     private JRadioButton redButton;
 
 
@@ -197,11 +187,6 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
 
     /** DOCUMENT ME! */
     private JTextField textDiffusion;
-
-    /** DOCUMENT ME! */
-    private JTextField textRadius;
-    
-    private JTextField textNuclearRadius;
 
     /** DOCUMENT ME! */
     private boolean useBlue = false;
@@ -307,10 +292,6 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
             	wholeOrganButton.setText("Add required whole nucleus VOI");
                 wholeOrganCheckBox.setSelected(true);
                 wholeOrganCheckBox.setEnabled(false);
-                labelRadius.setEnabled(false);
-                textRadius.setEnabled(false);
-                labelNuclearRadius.setEnabled(false);
-                textNuclearRadius.setEnabled(false);
                 labelDiffusion.setEnabled(false);
                 textDiffusion.setEnabled(false);
             } else if ((!bandButton.isSelected()) && (circleButton.isSelected()) && (!oneDButton.isSelected()) &&
@@ -319,30 +300,18 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
             	wholeOrganButton.setEnabled(true);
                 wholeOrganCheckBox.setSelected(true);
                 wholeOrganCheckBox.setEnabled(false);
-                labelRadius.setEnabled(true);
-                textRadius.setEnabled(true);
-                labelNuclearRadius.setEnabled(true);
-                textNuclearRadius.setEnabled(true);
                 labelDiffusion.setEnabled(true);
                 textDiffusion.setEnabled(true);
             } else if ((!bandButton.isSelected()) && (!circleButton.isSelected()) && (oneDButton.isSelected()) &&
                            (!singleExpButton.isSelected())) {
             	wholeOrganButton.setText("Add optional whole nucleus VOI");
                 wholeOrganCheckBox.setEnabled(true);
-                labelRadius.setEnabled(false);
-                textRadius.setEnabled(false);
-                labelNuclearRadius.setEnabled(false);
-                textNuclearRadius.setEnabled(false);
                 labelDiffusion.setEnabled(false);
                 textDiffusion.setEnabled(false);
             } else if ((!bandButton.isSelected()) && (!circleButton.isSelected()) && (!oneDButton.isSelected()) &&
                            (singleExpButton.isSelected())) {
             	wholeOrganButton.setText("Add optional whole nucleus VOI");
                 wholeOrganCheckBox.setEnabled(true);
-                labelRadius.setEnabled(false);
-                textRadius.setEnabled(false);
-                labelNuclearRadius.setEnabled(false);
-                textNuclearRadius.setEnabled(false);
                 labelDiffusion.setEnabled(false);
                 textDiffusion.setEnabled(false);
             }
@@ -492,7 +461,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
             // Make algorithm
             frapAlgo = new AlgorithmFRAP(image, useRed, useGreen, useBlue, firstSliceNum, photoBleachedIndex,
                                          wholeOrganIndex, backgroundIndex, model, register, cost, createRegImage,
-                                         paramVary, radius, nuclearRadius, diffusion);
+                                         paramVary, diffusion);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -973,60 +942,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         gbc6.anchor = GridBagConstraints.WEST;
         gbc6.weightx = 1;
         gbc6.insets = new Insets(3, 3, 3, 3);
-        gbc6.fill = GridBagConstraints.HORIZONTAL;
-        gbc6.gridx = 0;
-        gbc6.gridy = 0;
-
-        labelRadius = new JLabel("Radius of bleach spot (um)");
-        labelRadius.setForeground(Color.black);
-        labelRadius.setFont(serif12);
-
-        if (model == CIRCLE_2D) {
-            labelRadius.setEnabled(true);
-        } else {
-            labelRadius.setEnabled(false);
-        }
-
-        paramPanel.add(labelRadius, gbc6);
-
-        textRadius = new JTextField(10);
-        textRadius.setText("0.0");
-        textRadius.setFont(serif12);
-
-        if (model == CIRCLE_2D) {
-            textRadius.setEnabled(true);
-        } else {
-            textRadius.setEnabled(false);
-        }
-
-        gbc6.gridx = 1;
-        paramPanel.add(textRadius, gbc6);
-        
-        labelNuclearRadius = new JLabel("Radius of nuclear membrane (um)");
-        labelNuclearRadius.setForeground(Color.black);
-        labelNuclearRadius.setFont(serif12);
-
-        if (model == CIRCLE_2D) {
-            labelNuclearRadius.setEnabled(true);
-        } else {
-            labelNuclearRadius.setEnabled(false);
-        }
-        gbc6.gridx = 0;
-        gbc6.gridy = 1;
-        paramPanel.add(labelNuclearRadius, gbc6);
-
-        textNuclearRadius = new JTextField(10);
-        textNuclearRadius.setText("0.0");
-        textNuclearRadius.setFont(serif12);
-
-        if (model == CIRCLE_2D) {
-            textNuclearRadius.setEnabled(true);
-        } else {
-            textNuclearRadius.setEnabled(false);
-        }
-
-        gbc6.gridx = 1;
-        paramPanel.add(textNuclearRadius, gbc6);
+        gbc6.fill = GridBagConstraints.HORIZONTAL; 
 
         labelDiffusion = new JLabel("Diffusion constant (um*um/sec)");
         labelDiffusion.setForeground(Color.black);
@@ -1039,7 +955,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         }
 
         gbc6.gridx = 0;
-        gbc6.gridy = 2;
+        gbc6.gridy = 0;
         paramPanel.add(labelDiffusion, gbc6);
 
         textDiffusion = new JTextField(10);
@@ -1232,27 +1148,6 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         }
 
         if (model == CIRCLE_2D) {
-            tmpStr = textRadius.getText();
-
-            if (testParameter(tmpStr, 0.0, 1.0E6)) {
-                radius = Float.valueOf(tmpStr).floatValue();
-            } else {
-                textRadius.requestFocus();
-                textRadius.selectAll();
-
-                return false;
-            }
-            
-            tmpStr = textNuclearRadius.getText();
-
-            if (testParameter(tmpStr, 1.001*radius, 1.0E6)) {
-                nuclearRadius = Float.valueOf(tmpStr).floatValue();
-            } else {
-                textNuclearRadius.requestFocus();
-                textNuclearRadius.selectAll();
-
-                return false;
-            }
 
             tmpStr = textDiffusion.getText();
 
