@@ -270,12 +270,15 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
 	/** DOCUMENT ME! */
 	private int photoBleachedIndex;
+	
+	/** Radius of uniform poriton of the initial bleach */
+	private double constantRadius;
 
 	/** Radius of bleach spot in um. */
-	private float radius;
+	private double radius;
 
 	/** Radius of nuclear membrane in um. */
-	private float nuclearRadius;
+	private double nuclearRadius;
 
 	/** DOCUMENT ME! */
 	private boolean register;
@@ -337,10 +340,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
 	 * @param paramVary
 	 *            Calculate sum of square of errors for different parameter
 	 *            values and output the minimum
-	 * @param radius
-	 *            radius of bleach spot in um.
-	 * @param nuclearRadius
-	 *            radius of nuclear membrane in um
 	 * @param diffusion
 	 *            diffusion constant in um*um/sec
 	 */
@@ -348,8 +347,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			boolean useBlue, int firstSliceNum, int photoBleachedIndex,
 			int wholeOrganIndex, int backgroundIndex, int model,
 			boolean register, int cost, boolean createRegImage,
-			boolean paramVary, float radius, float nuclearRadius,
-			float diffusion) {
+			boolean paramVary, float diffusion) {
 
 		super(null, srcImg);
 
@@ -365,8 +363,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		this.cost = cost;
 		this.createRegImage = createRegImage;
 		this.paramVary = paramVary;
-		this.radius = radius;
-		this.nuclearRadius = nuclearRadius;
 		this.diffusion = diffusion;
 	}
 
@@ -473,9 +469,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		Vector3f photoBleachedCenter;
 		int photoCenterX;
 		int photoCenterY;
-		int measuredRadius;
+		double measuredRadius;
 		int profileRadius;
-		int numberProfilePoints;
 		float[] xBounds = new float[2];
 		float[] yBounds = new float[2];
 		float[] zBounds = new float[2];
@@ -1469,6 +1464,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			} else {
 				afterBeforeRatio = 1;
 			}
+			Preferences.debug("afterBeforeRatio = " + afterBeforeRatio + "\n", Preferences.DEBUG_ALGORITHM);
 	    	// Correct the pre-bleach phase
 	    	for (z = 0; z < firstSliceNum; z++) {
 	    		photoBleachedIntensity[z] *= wholeOrganIntensity[z]/wholeOrganIntensity[firstSliceNum-1];
@@ -1522,12 +1518,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
 	    	
 	    	
 	    	
-	    	// Ideally all 4 of the below distances should be the same
-	    	measuredRadius = Math.round(photoCenterX - xpBounds[0]);
-	    	measuredRadius = Math.round(Math.max(measuredRadius, xpBounds[1] - photoCenterX));
-	    	measuredRadius = Math.round(Math.max(measuredRadius, photoCenterY - ypBounds[0]));
-	    	measuredRadius = Math.round(Math.max(measuredRadius, ypBounds[1] - measuredRadius));
-	    	profileRadius = 2 * measuredRadius;
+	    	measuredRadius = 0.25 * (xpBounds[1] -xpBounds[0] + ypBounds[1] - ypBounds[0]);
+	    	profileRadius = (int)Math.round(2.0 * measuredRadius);
+	    	radius = measuredRadius * newResX;
 	    	double profileSquared = profileRadius * profileRadius;
 	    	double distY;
 	    	double distX;
@@ -1595,16 +1588,19 @@ public class AlgorithmFRAP extends AlgorithmBase {
 	    	    distances[i] *= newResX;
 	    	}
 	    	
-	    	double initfp[] = new double[2];
-	    	initfp[0] = 0.5; // theta
-	    	initfp[1] = 1.0; // sigma
-	    	FitIntensityProfile fip = new FitIntensityProfile(numberDistances, postIntensityAverage, distances, initfp);
+	    	double initfp[] = new double[3];
+	    	initfp[0] = 0.5 * radius; // constantRadius, the radius of constant bleaching
+	    	initfp[0] = afterBeforeRatio; // theta
+	    	initfp[1] = radius; // sigma
+	    	FitIntensityProfile fip = new FitIntensityProfile(numberDistances, distances, postIntensityAverage, initfp);
 			fip.driver();
 			params = fip.getParameters();
-			theta = params[0];
-			sigma = params[1];
+			constantRadius = params[0];
+			theta = params[1];
+			sigma = params[2];
 			ViewUserInterface.getReference().setDataText(
 					"ELSUNC intensity profile fit\n");
+			ViewUserInterface.getReference().setDataText("constantRadius = " + constantRadius + "\n");
 			ViewUserInterface.getReference().setDataText(
 					"theta = " + theta + "\n");
 			ViewUserInterface.getReference().setDataText(
@@ -1614,20 +1610,131 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			ViewUserInterface.getReference().setDataText(
 					"Iterations = " + fip.getIterations() + "\n");
 			dataString += "ELSUNC intensity profile fit\n";
+			dataString += "constantRadius = " + constantRadius + "\n";
 			dataString += "theta = " + theta + "\n";
 			dataString += "sigma = " + sigma + "\n";
 			dataString += "Chi-squared = " + fip.getChiSquared() + "\n";
 			dataString += "Iterations = " + fip.getIterations() + "\n";
 			Preferences.debug("ELSUNC intensity profile fit\n",
 					Preferences.DEBUG_ALGORITHM);
-			Preferences.debug("kon = " + theta + "\n",
+			Preferences.debug("constantRadius = " + constantRadius + "\n",
 					Preferences.DEBUG_ALGORITHM);
-			Preferences.debug("koff = " + sigma + "\n",
+			Preferences.debug("theta = " + theta + "\n",
+					Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("sigma = " + sigma + "\n",
 					Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("Chi-squared = " + fip.getChiSquared() + "\n",
 					Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("Iterations = " + fip.getIterations() + "\n",
 					Preferences.DEBUG_ALGORITHM);
+			IntModelI0NuclearArea imod;
+			int routine = Integration2.DQAGE;
+			int key = 6;
+			double epsabs = 0.0;
+			double epsrel = 1.0E-3;
+			int limit = 100;
+			int errorStatus;
+			double absError;
+			int neval;
+			double lowRadius = 1.5 * radius;
+			double highRadius = 40.0 * radius;
+			double midRadius = 0.5 * (lowRadius + highRadius);
+			double lowInt;
+			double highInt;
+			double midInt;
+			double lowValue;
+			double midValue;
+			double highValue;
+			imod = new IntModelI0NuclearArea(0.0, lowRadius, routine, key, epsabs, epsrel, limit);
+			imod.driver();
+			lowInt = imod.getIntegral();
+			errorStatus = imod.getErrorStatus();
+			absError = imod.getAbserr();
+			neval = imod.getNeval();
+			Preferences.debug("Numerical Integral for I0NuclearArea lowRadius = " + lowInt + " after " + neval
+					+ " integrand evaluations\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Error status = " + errorStatus
+					+ " with absolute error = " + absError + "\n",
+					Preferences.DEBUG_ALGORITHM);
+			imod = new IntModelI0NuclearArea(0.0, highRadius, routine, key, epsabs, epsrel, limit);
+			imod.driver();
+			lowValue = 2.0 * lowInt/(lowRadius * lowRadius);
+			Preferences.debug("lowValue = " + lowValue + "\n", Preferences.DEBUG_ALGORITHM);
+			highInt = imod.getIntegral();
+			errorStatus = imod.getErrorStatus();
+			absError = imod.getAbserr();
+			neval = imod.getNeval();
+			Preferences.debug("Numerical Integral for I0NuclearArea highRadius = " + highInt + " after " + neval
+					+ " integrand evaluations\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Error status = " + errorStatus
+					+ " with absolute error = " + absError + "\n",
+					Preferences.DEBUG_ALGORITHM);
+			highValue = 2.0 * highInt/(highRadius * highRadius);
+			Preferences.debug("highValue = " + highValue + "\n", Preferences.DEBUG_ALGORITHM);
+			if (afterBeforeRatio > Math.max(lowValue, highValue)) {
+				MipavUtil.displayError("afterBeforeRatio is greater than initial lowValue and highValue");
+				ViewUserInterface.getReference().setDataText("afterBeforeRatio = " + afterBeforeRatio + "\n");
+				ViewUserInterface.getReference().setDataText("lowValue = " + lowValue + "\n");
+				ViewUserInterface.getReference().setDataText("highValue = " + highValue + "\n");
+				setCompleted(false);
+				return;
+			}
+			else if (afterBeforeRatio < Math.min(lowValue, highValue)) {
+				MipavUtil.displayError("afterBeforeRatio is less than initial lowValue and highValue");
+				ViewUserInterface.getReference().setDataText("afterBeforeRatio = " + afterBeforeRatio + "\n");
+				ViewUserInterface.getReference().setDataText("lowValue = " + lowValue + "\n");
+				ViewUserInterface.getReference().setDataText("highValue = " + highValue + "\n");
+				setCompleted(false);
+				return;	
+			}
+			imod = new IntModelI0NuclearArea(0.0, midRadius, routine, key, epsabs, epsrel, limit);
+			imod.driver();
+			midInt = imod.getIntegral();
+			errorStatus = imod.getErrorStatus();
+			absError = imod.getAbserr();
+			neval = imod.getNeval();
+			Preferences.debug("Numerical Integral for I0NuclearArea midRadius = " + highInt + " after " + neval
+					+ " integrand evaluations\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Error status = " + errorStatus
+					+ " with absolute error = " + absError + "\n",
+					Preferences.DEBUG_ALGORITHM);
+			midValue = 2.0 * midInt/(midRadius * midRadius);
+			Preferences.debug("midValue = " + midValue + "\n", Preferences.DEBUG_ALGORITHM);
+			int iterations = 0;
+			while (Math.abs(midValue - afterBeforeRatio) >= 1.0E-6) {
+				iterations++;
+				Preferences.debug("iterations = " + iterations + "\n", Preferences.DEBUG_ALGORITHM);
+				if ((((midValue - afterBeforeRatio) > 0.0) && ((highValue - afterBeforeRatio) < 0.0)) ||
+					(((midValue - afterBeforeRatio) < 0.0) && ((highValue - afterBeforeRatio) > 0.0))) {
+					lowRadius = midRadius;
+					lowValue = midValue;
+				}
+				else if ((((midValue - afterBeforeRatio) > 0.0) && ((lowValue - afterBeforeRatio) < 0.0)) ||
+						(((midValue - afterBeforeRatio) < 0.0) && ((lowValue - afterBeforeRatio) > 0.0))) {
+					highRadius = midRadius;
+					highValue = midValue;
+				}
+				else {
+					MipavUtil.displayError("Error in searching for nuclearRadius");
+					setCompleted(false);
+					return;
+				}
+				midRadius = 0.5 * (lowRadius * highRadius);
+				imod = new IntModelI0NuclearArea(0.0, midRadius, routine, key, epsabs, epsrel, limit);
+				imod.driver();
+				midInt = imod.getIntegral();
+				errorStatus = imod.getErrorStatus();
+				absError = imod.getAbserr();
+				neval = imod.getNeval();
+				Preferences.debug("Numerical Integral for I0NuclearArea midRadius = " + highInt + " after " + neval
+						+ " integrand evaluations\n", Preferences.DEBUG_ALGORITHM);
+				Preferences.debug("Error status = " + errorStatus
+						+ " with absolute error = " + absError + "\n",
+						Preferences.DEBUG_ALGORITHM);
+				midValue = 2.0 * midInt/(midRadius * midRadius);
+				Preferences.debug("midValue = " + midValue + "\n", Preferences.DEBUG_ALGORITHM);
+			} // while (Math.abs(midValue - afterBeforeRatio) >= 1.0E-6)
+			nuclearRadius = midRadius;
 		} // if (model == CIRCLE_2D)
 		else { // model != CIRCLE_2D
 			if (wholeOrganIndex >= 0 ) {
@@ -7741,7 +7848,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		public FitIntensityProfile(int nPoints, double[] xData, double[] yData,
 				double[] initial) {
 
-			super(nPoints, 2);
+			super(nPoints, 3);
 			this.xData = xData;
 			this.yData = yData;
 
@@ -7751,16 +7858,21 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			// all parameters
 			// bounds = 2 means different lower and upper bounds
 			// for all parameters
+			// Constrain constantRadius
+			bl[0] = 0.05 * radius;
+			bu[0] = 0.9 * radius;
+			
 			// Constrain theta
-			bl[0] = 0.01;
-			bu[0] = 0.999;
+			bl[1] = 0.01;
+			bu[1] = 0.999;
 
 			// Constrain sigma
-			bl[1] = 1.0E-3;
-			bu[1] = 1.0E3;
+			bl[2] = 0.05 * radius;
+			bu[2] = 20.0 * radius;
 
 			gues[0] = initial[0];
 			gues[1] = initial[1];
+			gues[2] = initial[2];
 		}
 
 		/**
@@ -7781,9 +7893,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					+ "\n", Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared())
 					+ "\n", Preferences.DEBUG_ALGORITHM);
-			Preferences.debug("theta " + String.valueOf(a[0]) + "\n",
+			Preferences.debug("constantRadius = " + a[0] + "\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("theta " + String.valueOf(a[1]) + "\n",
 					Preferences.DEBUG_ALGORITHM);
-			Preferences.debug("sigma " + String.valueOf(a[1]) + "\n",
+			Preferences.debug("sigma " + String.valueOf(a[2]) + "\n",
 					Preferences.DEBUG_ALGORITHM);
 		}
 
@@ -7802,7 +7915,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 				double[][] covarMat) {
 			int ctrl;
 			int i;
-			double[] intensityFunction = new double[xData.length];
+			double intensityFunction;
 			double diff;
 
 			try {
@@ -7811,16 +7924,16 @@ public class AlgorithmFRAP extends AlgorithmBase {
 				if ((ctrl == -1) || (ctrl == 1)) {
 					
 					 for (i = 0; i < xData.length; i++) {
-						 if (xData[i] <= radius) {
-							 intensityFunction[i] = a[0];
+						 if (xData[i] <= a[0]) {
+							 intensityFunction = a[1];
 						 }
 						 else {
-							 diff = xData[i] - radius;
-							 intensityFunction[i] = 1.0 - (1.0 - a[0])*Math.exp(-diff*diff/(2.0*a[1]*a[1]));
+							 diff = xData[i] - a[0];
+							 intensityFunction = 1.0 - (1.0 - a[1])*Math.exp(-diff*diff/(2.0*a[2]*a[2]));
 						 }
-						 residuals[i]= intensityFunction[i] - yData[i]; 
+						 residuals[i]= intensityFunction - yData[i]; 
 						 Preferences.debug("FitIntensityProfile residuals["+i+"] = " + residuals[i] + "\n", Preferences.DEBUG_ALGORITHM);
-						 Preferences.debug("intensityFunction["+i+"] = " + intensityFunction[i] + " yData["+i+"] = " + yData[i] + "\n",
+						 Preferences.debug("intensityFunction = " + intensityFunction + " yData["+i+"] = " + yData[i] + "\n",
 								 Preferences.DEBUG_ALGORITHM);
 						 }
 				} // if ((ctrl == -1) || (ctrl == 1))
@@ -8463,9 +8576,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
 	}
 	
 class IntModelI0NuclearArea extends Integration2 {
-		
-		double alpha;
-		int k;
 
 		/**
 		 * Creates a new IntModel2 object.
@@ -8509,11 +8619,11 @@ class IntModelI0NuclearArea extends Integration2 {
 			double function;
 			double I0;
 			double diff;
-			if (x <= radius) {
+			if (x <= constantRadius) {
 				I0 = theta;
 			}
 			else {
-				diff = x - radius;
+				diff = x - constantRadius;
 				I0 = 1.0 - (1.0 - theta)*Math.exp(-diff*diff/(2.0*sigma*sigma));
 			}
 			
