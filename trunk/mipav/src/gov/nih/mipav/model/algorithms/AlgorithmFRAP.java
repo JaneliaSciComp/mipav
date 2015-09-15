@@ -1604,7 +1604,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			ViewUserInterface.getReference().setDataText(
 					"theta = " + theta + "\n");
 			ViewUserInterface.getReference().setDataText(
-					"sigma= " + sigma + "\n");
+					"sigma = " + sigma + "\n");
 			ViewUserInterface.getReference().setDataText(
 					"Chi-squared = " + fip.getChiSquared() + "\n");
 			ViewUserInterface.getReference().setDataText(
@@ -1656,10 +1656,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			Preferences.debug("Error status = " + errorStatus
 					+ " with absolute error = " + absError + "\n",
 					Preferences.DEBUG_ALGORITHM);
-			imod = new IntModelI0NuclearArea(0.0, highRadius, routine, key, epsabs, epsrel, limit);
-			imod.driver();
 			lowValue = 2.0 * lowInt/(lowRadius * lowRadius);
 			Preferences.debug("lowValue = " + lowValue + "\n", Preferences.DEBUG_ALGORITHM);
+			imod = new IntModelI0NuclearArea(0.0, highRadius, routine, key, epsabs, epsrel, limit);
+			imod.driver();
 			highInt = imod.getIntegral();
 			errorStatus = imod.getErrorStatus();
 			absError = imod.getAbserr();
@@ -1719,14 +1719,14 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					setCompleted(false);
 					return;
 				}
-				midRadius = 0.5 * (lowRadius * highRadius);
+				midRadius = 0.5 * (lowRadius + highRadius);
 				imod = new IntModelI0NuclearArea(0.0, midRadius, routine, key, epsabs, epsrel, limit);
 				imod.driver();
 				midInt = imod.getIntegral();
 				errorStatus = imod.getErrorStatus();
 				absError = imod.getAbserr();
 				neval = imod.getNeval();
-				Preferences.debug("Numerical Integral for I0NuclearArea midRadius = " + highInt + " after " + neval
+				Preferences.debug("Numerical Integral for I0NuclearArea midRadius = " + midInt + " after " + neval
 						+ " integrand evaluations\n", Preferences.DEBUG_ALGORITHM);
 				Preferences.debug("Error status = " + errorStatus
 						+ " with absolute error = " + absError + "\n",
