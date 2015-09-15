@@ -4479,7 +4479,7 @@ Publisher: Philips Imaging DD 001
 (2001,xx0E) VERS="GDCM" VR="CS"   VM="1"	Keyword="Unknown"		Name="Unknown"
 (2001,xx0F) VERS="GDCM" VR="SS"   VM="1"	Keyword="Unknown"		Name="Unknown"
 (2001,xx10) VERS="GDCM" VR="CS"   VM="1"	Keyword="Cardiac Sync"		Name="Cardiac Sync"
-(2001,xx11) VERS="GDCM" VR="FL"   VM="1"	Keyword="Diffusion Echo Time"		Name="Diffusion Echo Time"
+(2001,xx11) VERS="GDCM" VR="CS"   VM="1"	Keyword="Diffusion Echo Time"		Name="Diffusion Echo Time"
 (2001,xx12) VERS="GDCM" VR="CS"   VM="1"	Keyword="Dynamic Series"		Name="Dynamic Series"
 (2001,xx13) VERS="GDCM" VR="SL"   VM="1"	Keyword="EPI Factor"		Name="EPI Factor"
 (2001,xx14) VERS="GDCM" VR="SL"   VM="1"	Keyword="Number of Echoes"		Name="Number of Echoes"
