@@ -35,8 +35,6 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
     
     private int zDim;
     
-    private int length;
-    
     private boolean alreadyDisplayed;
     
     private boolean displayInputImage;
@@ -91,7 +89,6 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
         
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
-        length = xDim * yDim;
         zDim = srcImage.getExtents()[2];
         ModelImage presentImage = srcImage;
         
