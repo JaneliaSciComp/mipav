@@ -305,7 +305,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
 	
 	private double sigma;
 	
-	private double rj0[] = new double[499];
+	private double alpha[] = new double[500];
+	private double avgJ0[] = new double[500];
+	private double RN2J02[] = new double[500];
 
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
@@ -1460,19 +1462,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		pIntensity = new float[zDim - firstSliceNum];
 		
 		if (model == CIRCLE_2D) {
-			// 1 is order of Bessel functions
-			// 10 is number of zeros
-			// rj0 contains the first 10 zeros of J1.
-			// JYZO is more accurate for the first 10 zeros of J1
-			// JYZO is accurate for 200th zero but not for 300th zero
-			// computeJ1 is simpler than JYZO and more accurate for zeros above 200.
-			double rj1[] = new double[10];
-			double ry0[] = new double[10];
-			double ry1[] = new double[10];
-			JYZO(1, 10, rj0, rj1, ry0, ry1);
-			for (k = 11; k <= 499; k++) {
-				rj0[k-1] = computeJ1(k);
-			}
 			
 			if (firstSliceNum > 1) {
 				afterBeforeRatio = wholeOrganIntensity[firstSliceNum]
@@ -1751,6 +1740,50 @@ public class AlgorithmFRAP extends AlgorithmBase {
 				Preferences.debug("midValue = " + midValue + "\n", Preferences.DEBUG_ALGORITHM);
 			} // while (Math.abs(midValue - afterBeforeRatio) >= 1.0E-6)
 			nuclearRadius = midRadius;
+			
+			// 1 is order of Bessel functions
+			// 10 is number of zeros
+			// rj0 contains the first 10 zeros of J1.
+			// JYZO is more accurate for the first 10 zeros of J1
+			// JYZO is accurate for 200th zero but not for 300th zero
+			// computeJ1 is simpler than JYZO and more accurate for zeros above 200.
+			double rj0[] = new double[499];
+			double rj1[] = new double[10];
+			double ry0[] = new double[10];
+			double ry1[] = new double[10];
+			Bessel modelBessel;
+			double initialOrder;
+			int sequenceNumber = 1;
+			double[] cyr = new double[1];
+			double[] cyi = new double[1];
+			int[] nz = new int[1];
+			int[] errorFlag = new int[1];
+			JYZO(1, 10, rj0, rj1, ry0, ry1);
+			for (k = 11; k <= 499; k++) {
+				rj0[k-1] = computeJ1(k);
+			}
+			for (k = 0; k < 500; k++) {
+				if (k == 0) {
+					// Article gives <J0(alphak* r)> = 1
+					// Since J0(0) = 1, must have alpha = 0 for k = 0.
+					alpha[k] = 0.0;
+					avgJ0[k] = 1.0;
+				} else {
+					alpha[k] = rj0[k - 1] / nuclearRadius;
+					initialOrder = 1.0;
+					modelBessel = new Bessel(Bessel.BESSEL_J, alpha[k] * radius,
+							0.0, initialOrder, Bessel.UNSCALED_FUNCTION,
+							sequenceNumber, cyr, cyi, nz, errorFlag);
+					modelBessel.run();
+					avgJ0[k] = 2.0 * cyr[0] / (alpha[k] * radius);
+					initialOrder = 0.0;
+					modelBessel = new Bessel(Bessel.BESSEL_J, rj0[k-1],
+							0.0, initialOrder, Bessel.UNSCALED_FUNCTION,
+							sequenceNumber, cyr, cyi, nz, errorFlag);
+					modelBessel.run();
+					RN2J02[k] = nuclearRadius*nuclearRadius*cyr[0]*cyr[0];
+				}
+			}
 		} // if (model == CIRCLE_2D)
 		else { // model != CIRCLE_2D
 			if (wholeOrganIndex >= 0 ) {
@@ -6341,16 +6374,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			double v[] = new double[500];
 			double V[] = new double[500];
 			double X[] = new double[500];
-			double avgJ0[] = new double[500];
-			
-			double alpha;
-			Bessel modelBessel;
-			double initialOrder;
-			int sequenceNumber = 1;
-			double[] cyr = new double[1];
-			double[] cyi = new double[1];
-			int[] nz = new int[1];
-			int[] errorFlag = new int[1];
 			double var;
 			IntModelBessel imod;
 			int routine = Integration2.DQAGE;
@@ -6368,24 +6391,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			double tmax;
 			
 			for (k = 0; k < 500; k++) {
-				if (k == 0) {
-					// Article gives <J0(alphak* r)> = 1
-					// Since J0(0) = 1, must have alpha = 0 for k = 0.
-					alpha = 0.0;
-					avgJ0[k] = 1.0;
-				} else {
-					alpha = rj0[k - 1] / nuclearRadius;
-					initialOrder = 1.0;
-					modelBessel = new Bessel(Bessel.BESSEL_J, alpha * radius,
-							0.0, initialOrder, Bessel.UNSCALED_FUNCTION,
-							sequenceNumber, cyr, cyi, nz, errorFlag);
-					modelBessel.run();
-					avgJ0[k] = 2.0 * cyr[0] / (alpha * radius);
-				}
-				var = diffusion * alpha * alpha + kon + koff;
+				var = diffusion * alpha[k] * alpha[k] + kon + koff;
 				w[k] = 0.5 * var;
-				v[k] = Math.sqrt(0.25 * var * var - koff * diffusion * alpha * alpha);
-				imod = new IntModelBessel(lower, upper, routine, key, epsabs, epsrel, limit, alpha, k);
+				v[k] = Math.sqrt(0.25 * var * var - koff * diffusion * alpha[k] * alpha[k]);
+				imod = new IntModelBessel(lower, upper, routine, key, epsabs, epsrel, limit, alpha[k], k);
 				imod.driver();
 				numInt = imod.getIntegral();
 				errorStatus = imod.getErrorStatus();
@@ -6397,12 +6406,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 						+ " with absolute error = " + absError + "\n",
 						Preferences.DEBUG_ALGORITHM);
 				if (k > 0) {
-					initialOrder = 0.0;
-					modelBessel = new Bessel(Bessel.BESSEL_J, rj0[k-1],
-							0.0, initialOrder, Bessel.UNSCALED_FUNCTION,
-							sequenceNumber, cyr, cyi, nz, errorFlag);
-					modelBessel.run();
-					var = (1.0/(koff*v[k]))*(Feq/(nuclearRadius*nuclearRadius*cyr[0]*cyr[0]))*numInt;
+					var = (1.0/(koff*v[k]))*(Feq/RN2J02[k])*numInt;
 					U[k] = -var*(-w[k] -v[k] + koff) * (w[k] - v[k]);
 					V[k] = var * (-w[k] + v[k] + koff) * (w[k] + v[k]);
 					W[k] = -var * (w[k] - v[k]) * kon;
