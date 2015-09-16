@@ -308,6 +308,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 	private double alpha[] = new double[500];
 	private double avgJ0[] = new double[500];
 	private double RN2J02[] = new double[500];
+	private double bessInt[] = new double[500];
 
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
@@ -1758,6 +1759,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			double[] cyi = new double[1];
 			int[] nz = new int[1];
 			int[] errorFlag = new int[1];
+			IntModelBessel bessMod;
+			routine = Integration2.DQAGE;
+			key = 6;
+			epsabs = 0.0;
+			epsrel = 1.0E-3;
+		    limit = 100;
+			
 			JYZO(1, 10, rj0, rj1, ry0, ry1);
 			for (k = 11; k <= 499; k++) {
 				rj0[k-1] = computeJ1(k);
@@ -1783,6 +1791,17 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					modelBessel.run();
 					RN2J02[k] = nuclearRadius*nuclearRadius*cyr[0]*cyr[0];
 				}
+				bessMod = new IntModelBessel(0.0, nuclearRadius, routine, key, epsabs, epsrel, limit, alpha[k], k);
+				bessMod.driver();
+				bessInt[k] = bessMod.getIntegral();
+				errorStatus = bessMod.getErrorStatus();
+				absError = bessMod.getAbserr();
+				neval = bessMod.getNeval();
+				Preferences.debug("Numerical Integral = " + bessInt[k] + " after " + neval
+						+ " integrand evaluations used for k = " + k + "\n", Preferences.DEBUG_ALGORITHM);
+				Preferences.debug("Error status = " + errorStatus
+						+ " with absolute error = " + absError + "\n",
+						Preferences.DEBUG_ALGORITHM);
 			}
 		} // if (model == CIRCLE_2D)
 		else { // model != CIRCLE_2D
@@ -6375,18 +6394,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			double V[] = new double[500];
 			double X[] = new double[500];
 			double var;
-			IntModelBessel imod;
-			int routine = Integration2.DQAGE;
-			int key = 6;
-			double epsabs = 0.0;
-			double epsrel = 1.0E-3;
-			int limit = 100;
-			double numInt;
-			int errorStatus;
-			double absError;
-			int neval;
-			double lower = 0.0;
-			double upper = nuclearRadius;
 			double Feq = koff/(kon + koff);
 			double tmax;
 			
@@ -6394,19 +6401,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
 				var = diffusion * alpha[k] * alpha[k] + kon + koff;
 				w[k] = 0.5 * var;
 				v[k] = Math.sqrt(0.25 * var * var - koff * diffusion * alpha[k] * alpha[k]);
-				imod = new IntModelBessel(lower, upper, routine, key, epsabs, epsrel, limit, alpha[k], k);
-				imod.driver();
-				numInt = imod.getIntegral();
-				errorStatus = imod.getErrorStatus();
-				absError = imod.getAbserr();
-				neval = imod.getNeval();
-				Preferences.debug("Numerical Integral = " + numInt + " after " + neval
-						+ " integrand evaluations used for k = " + k + "\n", Preferences.DEBUG_ALGORITHM);
-				Preferences.debug("Error status = " + errorStatus
-						+ " with absolute error = " + absError + "\n",
-						Preferences.DEBUG_ALGORITHM);
 				if (k > 0) {
-					var = (1.0/(koff*v[k]))*(Feq/RN2J02[k])*numInt;
+					var = (1.0/(koff*v[k]))*(Feq/RN2J02[k])*bessInt[k];
 					U[k] = -var*(-w[k] -v[k] + koff) * (w[k] - v[k]);
 					V[k] = var * (-w[k] + v[k] + koff) * (w[k] + v[k]);
 					W[k] = -var * (w[k] - v[k]) * kon;
@@ -6414,7 +6410,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 				} // if (k > 0)
 				else { // k == 0
 				    U[0] = 0.0;
-				    V[0] = 2.0 * (Feq/(nuclearRadius * nuclearRadius)) * numInt;
+				    V[0] = 2.0 * (Feq/(nuclearRadius * nuclearRadius)) * bessInt[k];
 				    W[0] = 0.0;
 				    X[0] = V[0]*(kon/koff);
 				} // else k == 0
@@ -6433,7 +6429,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			} // for (t = 0; t < time.length; t++)
 			
 			for (t = 0; t < time.length; t++) {
-				timeFunction[t] = timeFunction[t]/tmax;
+				//timeFunction[t] = timeFunction[t]/tmax;
 			}
 		}
 
