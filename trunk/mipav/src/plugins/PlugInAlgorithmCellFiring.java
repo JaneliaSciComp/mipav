@@ -55,7 +55,7 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
     
     private int earliestSlices;
     
-    private boolean anistropicDiffusion;
+    private boolean anisotropicDiffusion;
 
     private final JTextArea outputTextArea;
     
@@ -63,7 +63,7 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
     public PlugInAlgorithmCellFiring(ModelImage image, boolean alreadyDisplayed, boolean displayInputImage, 
     		float downSampleXY, float downSampleZ, boolean displayDownSampleImage, 
     		boolean saveDownSampleImage,  boolean cropImage, boolean registerImage, 
-    		int earliestSlices, boolean anistropicDiffusion, final JTextArea outputTextArea) {
+    		int earliestSlices, boolean anisotropicDiffusion, final JTextArea outputTextArea) {
     	super(null, image);
     	this.alreadyDisplayed = alreadyDisplayed;
     	this.displayInputImage = displayInputImage;
@@ -74,7 +74,7 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
     	this.cropImage = cropImage;
     	this.registerImage = registerImage;
     	this.earliestSlices = earliestSlices;
-        this.anistropicDiffusion = anistropicDiffusion;
+        this.anisotropicDiffusion = anisotropicDiffusion;
         this.outputTextArea = outputTextArea;
     }
 
@@ -333,7 +333,7 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
         	return;
         }
         
-        if (anistropicDiffusion) {
+        if (anisotropicDiffusion) {
             float sigmaX = 1.0f;
             float sigmaY = 1.0f;
             float sigmaZ = 1.0f;
@@ -354,7 +354,7 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
             anisotropicAlgo.run();
             anisotropicAlgo.finalize();
             anisotropicAlgo = null;
-        } // if (anistropicDiffusion)
+        } // if (anisotropicDiffusion)
         
 
         final long endTime = System.currentTimeMillis();
