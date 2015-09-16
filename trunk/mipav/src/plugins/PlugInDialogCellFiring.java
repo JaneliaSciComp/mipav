@@ -288,11 +288,6 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
     }
 
     private void callAlgorithm() {
-        if (image == null) {
-            final FileIO fileIO = new FileIO();
-            final boolean multiFile = false;
-            image = fileIO.readImage(fileName, directory, multiFile, null);
-        }
         
         
         alg = new PlugInAlgorithmCellFiring(image, alreadyDisplayed, displayInputImage, downSampleXY, 
@@ -347,6 +342,9 @@ public class PlugInDialogCellFiring extends JDialogBase implements AlgorithmInte
                 	image.disposeLocal();
                 	image = null;
                 }
+                final FileIO fileIO = new FileIO();
+                final boolean multiFile = false;
+                image = fileIO.readImage(fileName, directory, multiFile, null);
                 alreadyDisplayed = false;
                 displayInputCheckBox.setEnabled(true);
             }
