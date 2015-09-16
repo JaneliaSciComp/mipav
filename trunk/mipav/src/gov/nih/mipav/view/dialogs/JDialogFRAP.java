@@ -760,7 +760,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         slicePanel.setBorder(buildTitledBorder("Slice parameters"));
 
         if (firstSliceAfterBleach >= 0) {
-            labelFirstSlice = new JLabel("First slice after bleach = " + String.valueOf(firstSliceAfterBleach + 1));
+            labelFirstSlice = new JLabel("First slice after bleach = " + String.valueOf(firstSliceAfterBleach));
             labelFirstSlice.setForeground(Color.black);
             labelFirstSlice.setFont(serif12);
             labelFirstSlice.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -818,7 +818,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
             yPos = 1;
         } // if (bleachedROIShape >= 0)
 
-        labelRef = new JLabel("First slice after photobleaching (1-" + String.valueOf(image.getExtents()[2]) + ")");
+        labelRef = new JLabel("First slice after photobleaching (0-" + String.valueOf(image.getExtents()[2]-1) + ")");
         labelRef.setForeground(Color.black);
         labelRef.setFont(serif12);
         labelRef.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -827,9 +827,9 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         slicePanel.add(labelRef, gbc);
 
         if (firstSliceAfterBleach >= 0) {
-            firstSliceNumText = new JTextField(String.valueOf(firstSliceAfterBleach + 1), 3);
+            firstSliceNumText = new JTextField(String.valueOf(firstSliceAfterBleach), 3);
         } else {
-            firstSliceNumText = new JTextField(String.valueOf(4), 3);
+            firstSliceNumText = new JTextField(String.valueOf(3), 3);
         }
 
         gbc.gridx = 1;
@@ -1065,13 +1065,13 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         wholeOrganIndex = -1;
         backgroundIndex = -1;
 
-        if (!testParameter(firstSliceNumText.getText(), 1, image.getExtents()[2])) {
+        if (!testParameter(firstSliceNumText.getText(), 0, image.getExtents()[2]-1)) {
             firstSliceNumText.requestFocus();
             firstSliceNumText.selectAll();
 
             return false;
         } else {
-            firstSliceNum = Integer.valueOf(firstSliceNumText.getText()).intValue() - 1;
+            firstSliceNum = Integer.valueOf(firstSliceNumText.getText()).intValue();
         }
 
         if (bandButton.isSelected()) {
