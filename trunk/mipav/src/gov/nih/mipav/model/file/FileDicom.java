@@ -677,7 +677,7 @@ public class FileDicom extends FileDicomBase {
             try {
                 key = getNextTag(endianess);
 
-                // System.out.println(key);
+                // System.out.println("### readHeader -- " + key + "\t" + elementLength);
                 tagElementLength = elementLength;
             } catch (final ArrayIndexOutOfBoundsException aie) {
                 aie.printStackTrace();
@@ -855,7 +855,12 @@ public class FileDicom extends FileDicomBase {
                         vr = VR.OB;
                     }
                 } else if ( (vr == VR.UN || vr == VR.XX || vr == null) && DicomDictionary.containsTag(key)) {
-                    vr = DicomDictionary.getType(key);
+                    // TODO: some explicit dicom files have tags labeled UN in the file, but SQ in the dictionary. They
+                    // appear to be sequences with defined lengths, but no explicit VR for the tags inside, which caused
+                    // the reading to fail. Loading them as UN works around the problem for now.
+                    if ( ! (vr == VR.UN && DicomDictionary.getType(key) == VR.SQ)) {
+                        vr = DicomDictionary.getType(key);
+                    }
                 } else if (vr == null) {
                     vr = VR.UN;
                     Preferences.debug("Unknown vr for tag " + key, Preferences.DEBUG_FILEIO);
