@@ -304,6 +304,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
 	private double theta;
 	
 	private double sigma;
+	
+	private double rj0[] = new double[499];
 
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
@@ -484,6 +486,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		float newResY;
 		DecimalFormat nf;
 		String dataString = "";
+		int k;
 		boolean testBesselZero = false;
 
 		if (testBesselZero) {
@@ -1457,6 +1460,19 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		pIntensity = new float[zDim - firstSliceNum];
 		
 		if (model == CIRCLE_2D) {
+			// 1 is order of Bessel functions
+			// 10 is number of zeros
+			// rj0 contains the first 10 zeros of J1.
+			// JYZO is more accurate for the first 10 zeros of J1
+			// JYZO is accurate for 200th zero but not for 300th zero
+			// computeJ1 is simpler than JYZO and more accurate for zeros above 200.
+			double rj1[] = new double[10];
+			double ry0[] = new double[10];
+			double ry1[] = new double[10];
+			JYZO(1, 10, rj0, rj1, ry0, ry1);
+			for (k = 11; k <= 499; k++) {
+				rj0[k-1] = computeJ1(k);
+			}
 			
 			if (firstSliceNum > 1) {
 				afterBeforeRatio = wholeOrganIntensity[firstSliceNum]
@@ -1672,18 +1688,18 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			highValue = 2.0 * highInt/(highRadius * highRadius);
 			Preferences.debug("highValue = " + highValue + "\n", Preferences.DEBUG_ALGORITHM);
 			if (afterBeforeRatio > Math.max(lowValue, highValue)) {
-				MipavUtil.displayError("afterBeforeRatio is greater than initial lowValue and highValue");
 				ViewUserInterface.getReference().setDataText("afterBeforeRatio = " + afterBeforeRatio + "\n");
 				ViewUserInterface.getReference().setDataText("lowValue = " + lowValue + "\n");
 				ViewUserInterface.getReference().setDataText("highValue = " + highValue + "\n");
+				MipavUtil.displayError("afterBeforeRatio is greater than initial lowValue and highValue");
 				setCompleted(false);
 				return;
 			}
 			else if (afterBeforeRatio < Math.min(lowValue, highValue)) {
-				MipavUtil.displayError("afterBeforeRatio is less than initial lowValue and highValue");
 				ViewUserInterface.getReference().setDataText("afterBeforeRatio = " + afterBeforeRatio + "\n");
 				ViewUserInterface.getReference().setDataText("lowValue = " + lowValue + "\n");
 				ViewUserInterface.getReference().setDataText("highValue = " + highValue + "\n");
+				MipavUtil.displayError("afterBeforeRatio is less than initial lowValue and highValue");
 				setCompleted(false);
 				return;	
 			}
@@ -2188,7 +2204,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
 				int zmin = (int) Math.round(100 * params[0]);
 				int indexmin = (zmin * xydim) + (ymin * 201) + xmin;
 				int indexOriginal = indexmin;
-				int k;
 				boolean localFound;
 				errExtents[0] = 201;
 				errExtents[1] = 201;
@@ -2577,7 +2592,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			double[] initial_kon = new double[26];
 			double[] initial_koff = new double[26];
 			int count = 0;
-			int k;
 
 			for (i = 0; i < 5; i++) {
 
@@ -6328,10 +6342,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			double V[] = new double[500];
 			double X[] = new double[500];
 			double avgJ0[] = new double[500];
-			double rj0[] = new double[499];
-			double rj1[] = new double[10];
-			double ry0[] = new double[10];
-			double ry1[] = new double[10];
+			
 			double alpha;
 			Bessel modelBessel;
 			double initialOrder;
@@ -6355,16 +6366,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			double upper = nuclearRadius;
 			double Feq = koff/(kon + koff);
 			double tmax;
-			// 1 is order of Bessel functions
-			// 10 is number of zeros
-			// rj0 contains the first 10 zeros of J1.
-			// JYZO is more accurate for the first 10 zeros of J1
-			// JYZO is accurate for 200th zero but not for 300th zero
-			// computeJ1 is simpler than JYZO and more accurate for zeros above 200.
-			JYZO(1, 10, rj0, rj1, ry0, ry1);
-			for (k = 11; k <= 499; k++) {
-				rj0[k-1] = computeJ1(k);
-			}
+			
 			for (k = 0; k < 500; k++) {
 				if (k == 0) {
 					// Article gives <J0(alphak* r)> = 1
@@ -7650,8 +7652,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
 				final double urparm[]) {
 			double[] timeFunction = new double[xData.length];
 			int j;
-            if (x[2] <= 0.0) {
-            	// koff is less than zero
+            if ((x[1] <= 0.0) || (x[2] <= 0.0)) {
+            	// kon is <= 0.0 or koff is <= than 0
             	// In fitFullModel this would result in v[k] > w[k] and 
             	// in Math.exp(-(w[k] - v[k])*time[t]) producing infinite numbers
             	// and finally in timeFunction[t] being NaN.
