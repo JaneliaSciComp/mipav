@@ -1699,7 +1699,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			errorStatus = imod.getErrorStatus();
 			absError = imod.getAbserr();
 			neval = imod.getNeval();
-			Preferences.debug("Numerical Integral for I0NuclearArea midRadius = " + highInt + " after " + neval
+			Preferences.debug("Numerical Integral for I0NuclearArea midRadius = " + midInt + " after " + neval
 					+ " integrand evaluations\n", Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("Error status = " + errorStatus
 					+ " with absolute error = " + absError + "\n",
