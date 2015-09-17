@@ -104,22 +104,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 				directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
 				Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
 			}
-
-			if (fileName != null) {
-				VOIVector annotations = new VOIVector();
-				voiDir = new String(directory + fileName + File.separator);
-				loadAllVOIsFrom(voiDir, false, annotations, true);
-
-				if ( latticeModel != null )
-				{
-					saveVOIs("loadAnnotations");
-					latticeModel.setAnnotations( annotations.elementAt(0) );
-				}
-				else
-				{
-					latticeModel = new LatticeModel( m_kImageA, annotations.elementAt(0), true );
-				}
-			}
+			openAnnotations(directory, fileName);
 		} 
 		else if ( command.equals("SaveAnnotations") ) {
 			if ( latticeModel != null )
@@ -285,12 +270,70 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 
 	}
 
-	public void add3DMarker( VOI textVOI )
+	public int getCurrentIndex()
+	{
+		if ( latticeModel != null )
+		{
+			return latticeModel.getCurrentIndex();
+		}
+		return 0;
+	}
+	
+	public void addAnnotations()
+	{
+		mouse3D = true;
+		mouseSelection3D = false;
+		doAnnotations = true;
+	}
+
+	public void editAnnotations()
+	{
+		mouse3D = false;
+		mouseSelection3D = true;
+		doAnnotations = true;
+	}
+	
+	public void openAnnotations( String directory, String fileName )
+	{
+		if (fileName != null) {
+			VOIVector annotations = new VOIVector();
+			String voiDir = new String(directory + fileName + File.separator);
+			loadAllVOIsFrom(voiDir, false, annotations, true);
+
+			if ( latticeModel != null )
+			{
+				saveVOIs("loadAnnotations");
+				latticeModel.setAnnotations( annotations.elementAt(0) );
+			}
+			else
+			{
+				latticeModel = new LatticeModel( m_kImageA, annotations.elementAt(0), true );
+			}
+		}
+	}
+	
+	public void setAnnotations( VOIVector annotations )
+	{
+		if ( latticeModel != null )
+		{
+			saveVOIs("loadAnnotations");
+			latticeModel.setAnnotations( annotations.elementAt(0) );
+		}
+		else
+		{
+			latticeModel = new LatticeModel( m_kImageA, annotations.elementAt(0), true );
+		}		
+	}
+
+	public void add3DMarker( VOI textVOI, boolean doubleClick )
 	{
 		if ( doAnnotations )
 		{
-			textVOI.setActive(false);
-			new JDialogAnnotation(m_kImageA, textVOI, 0, true, true);
+			textVOI.setActive(!doubleClick);
+			if ( doubleClick )
+			{
+				new JDialogAnnotation(m_kImageA, textVOI, 0, true, true);
+			}
 			addAnnotation(textVOI);
 		}
 		else
@@ -320,16 +363,14 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		return mouseSelection3D;
 	}
 
-	public void modify3DMarker( Vector3f startPt, Vector3f endPt, Vector3f pt )
+	public boolean modify3DMarker( Vector3f startPt, Vector3f endPt, Vector3f pt, boolean rightMouse )
 	{
 		if ( doAnnotations )
 		{
-			modifyAnnotations(startPt, endPt, pt);
+			return modifyAnnotations(startPt, endPt, pt, rightMouse);
 		}
-		else
-		{
-			modifyLattice(startPt, endPt, pt);
-		}
+		modifyLattice(startPt, endPt, pt);
+		return false;
 	}
 	
 	public void deleteSelectedPoint()
@@ -354,6 +395,15 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 				saveVOIs("moveSelectedPoint");
 			}
 			latticeModel.moveSelectedPoint(direction, doAnnotations);
+		}
+	}
+	
+	public void setImage( ModelImage image )
+	{
+		m_kImageA = image;
+		if ( latticeModel != null )
+		{
+			latticeModel.setImage(image);
 		}
 	}
 
@@ -486,7 +536,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 	}
 
-	private void modifyAnnotations( Vector3f startPt, Vector3f endPt, Vector3f pt )
+	private boolean modifyAnnotations( Vector3f startPt, Vector3f endPt, Vector3f pt, boolean rightMouse )
 	{
 		if ( latticeModel != null )
 		{
@@ -495,8 +545,9 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 				movingPickedPoint = true;
 				saveVOIs("modifyAnnotations");
 			}
-			latticeModel.modifyAnnotation(startPt, endPt, pt);
+			return latticeModel.modifyAnnotation(startPt, endPt, pt, rightMouse);
 		}
+		return false;
 	}
 
 	private void setVoxelSize()

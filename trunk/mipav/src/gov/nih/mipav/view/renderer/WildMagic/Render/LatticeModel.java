@@ -7,6 +7,7 @@ import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 
@@ -1684,6 +1685,7 @@ public class LatticeModel {
 	private VOI growContours;
 
 	private VOI annotationVOIs;
+	private int highestIndex = -1;
 
 	private Vector3f wormOrigin = null;
 	private Vector3f transformedOrigin = new Vector3f();
@@ -1756,8 +1758,10 @@ public class LatticeModel {
 			imageA.registerVOI(annotationVOIs);
 		}
 		final VOIText text = (VOIText) textVOI.getCurves().firstElement().clone();
+		text.setColor(Color.blue);
 		final Color c = text.getColor();
 		text.update(new ColorRGBA(c.getRed() / 255.0f, c.getGreen() / 255.0f, c.getBlue() / 255.0f, 1f));
+		text.setUseMarker(false);
 		annotationVOIs.getCurves().add(text);
 		annotationVOIs.setColor(c);
 
@@ -1770,6 +1774,14 @@ public class LatticeModel {
 				// updateLattice(false);
 			}
 		}
+//		pickedPoint = annotationVOIs.getCurves().lastElement().elementAt(0);
+//		updateSelected();
+
+//		if ( text.getText().equalsIgnoreCase("Nose") ) {
+//			WormSegmentation.segmentNose(imageA, text.elementAt(0), true);
+//		}
+		
+		highestIndex++;
 	}
 
 	/**
@@ -1835,6 +1847,10 @@ public class LatticeModel {
 			imageA.unregisterVOI(showSelectedVOI);
 		}
 		final VOIVector vois = imageA.getVOIs();
+		if ( vois == null )
+		{
+			return;
+		}
 		for (int i = vois.size() - 1; i >= 0; i--) {
 			final VOI voi = vois.elementAt(i);
 			final String name = voi.getName();
@@ -2395,44 +2411,67 @@ public class LatticeModel {
 	 * @param endPt 3D end point of a ray intersecting the volume.
 	 * @param pt point along the ray with the maximum intensity value.
 	 */
-	public void modifyAnnotation(final Vector3f startPt, final Vector3f endPt, final Vector3f pt) {
-		if (annotationVOIs == null) {
-			return;
+	public boolean modifyAnnotation(final Vector3f startPt, final Vector3f endPt, final Vector3f pt, boolean rightMouse ) {
+		if ( annotationVOIs == null )
+		{
+			return false;
 		}
-		if (annotationVOIs.getCurves().size() == 0) {
-			return;
+		if ( annotationVOIs.getCurves().size() == 0 )
+		{
+			return false;
 		}
-		if (pickedPoint != null) {
-			final Vector3f diff = Vector3f.sub(pt, pickedPoint);
-			pickedPoint.copy(pt);
-			annotationVOIs.getCurves().elementAt(pickedAnnotation).elementAt(1).add(diff);
-			annotationVOIs.getCurves().elementAt(pickedAnnotation).update();
-		} else {
+//		System.err.println( "modifyAnnotation " + ( pickedPoint != null ) + " " + rightMouse );
+		if ( pickedPoint != null )
+		{
+			if ( rightMouse )
+			{
+				new JDialogAnnotation(imageA, annotationVOIs, pickedAnnotation, true, true);
+			}
+			else
+			{
+				final Vector3f diff = Vector3f.sub(pt, pickedPoint);
+				pickedPoint.copy(pt);
+				annotationVOIs.getCurves().elementAt(pickedAnnotation).elementAt(1).add(diff);
+				annotationVOIs.getCurves().elementAt(pickedAnnotation).update();
+			}
+		} 
+		else
+		{
 			pickedPoint = null;
 			pickedAnnotation = -1;
 			float minDist = Float.MAX_VALUE;
-			for (int i = 0; i < annotationVOIs.getCurves().size(); i++) {
+			for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ )
+			{
 				final Vector3f annotationPt = annotationVOIs.getCurves().elementAt(i).elementAt(0);
 				final float distance = pt.distance(annotationPt);
-				if (distance < minDist) {
+				if ( distance < minDist )
+				{
 					minDist = distance;
-					if (minDist <= 12) {
+					if ( minDist <= 12 )
+					{
 						pickedAnnotation = i;
 					}
 				}
 			}
 		}
-		if (pickedAnnotation != -1) {
+		if (pickedAnnotation != -1)
+		{
+			final VOIText text = (VOIText) annotationVOIs.getCurves().elementAt(pickedAnnotation);
+			if ( rightMouse )
+			{
+				new JDialogAnnotation(imageA, annotationVOIs, pickedAnnotation, true, true);
+				text.updateText();
+			}
 			pickedPoint = annotationVOIs.getCurves().elementAt(pickedAnnotation).elementAt(0);
 			updateSelected();
 
-			final VOIText text = (VOIText) annotationVOIs.getCurves().elementAt(pickedAnnotation);
-			if (text.getText().equalsIgnoreCase("nose") || text.getText().equalsIgnoreCase("origin")) {
+			if ( text.getText().equalsIgnoreCase("nose") || text.getText().equalsIgnoreCase("origin") )
+			{
 				wormOrigin.copy(pickedPoint);
 				// updateLattice(false);
 			}
 		}
-
+		return (pickedPoint != null);
 	}
 
 	/**
@@ -2735,17 +2774,28 @@ public class LatticeModel {
 			imageA.unregisterVOI(annotationVOIs);
 		}
 		annotationVOIs = newAnnotations;
-		if (pickedAnnotation != -1) {
+//		if (pickedAnnotation != -1) {
 			clear3DSelection();
-		}
-		clearAddLeftRightMarkers();
 
+			if (showSelected != null) {
+				for (int i = 0; i < showSelected.length; i++) {
+					showSelected[i].dispose();
+				}
+				showSelected = null;
+			}
+			showSelectedVOI = null;
+//		}
+		clearAddLeftRightMarkers();
+		
+		highestIndex = 0;
 		for (int i = 0; i < annotationVOIs.getCurves().size(); i++) {
 			final VOIText text = (VOIText) annotationVOIs.getCurves().elementAt(i);
+			text.setColor(Color.blue);
 			final Color c = text.getColor();
 			text.update(new ColorRGBA(c.getRed() / 255.0f, c.getGreen() / 255.0f, c.getBlue() / 255.0f, 1f));
 			text.elementAt(1).copy(text.elementAt(0));
-			text.elementAt(1).add(6, 0, 0);
+//			text.elementAt(1).add(6, 0, 0);
+			text.setUseMarker(false);
 
 			if (text.getText().equalsIgnoreCase("nose") || text.getText().equalsIgnoreCase("origin")) {
 				if (wormOrigin == null) {
@@ -2756,9 +2806,36 @@ public class LatticeModel {
 					// updateLattice(false);
 				}
 			}
+			else
+			{
+				int value = 0;
+				String name = new String(text.getText());
+				for ( int j = 0; j < name.length(); j++ )
+				{
+					if ( Character.isDigit(name.charAt(j)) )
+					{
+						value *= 10;
+						value += Integer.valueOf(name.substring(j,j+1));
+//						System.err.println( name + " " + value + " " + name.substring(j,j+1) + " " + Integer.valueOf(name.substring(j,j+1)));
+					}
+				}
+				highestIndex = Math.max( highestIndex, value );
+			}
+
+			highestIndex++;
 		}
 	}
+	
+	public int getCurrentIndex()
+	{
+		return highestIndex;
+	}
 
+	public void setImage(ModelImage image)
+	{
+		imageA = image;
+	}
+	
 	/**
 	 * Called when a new lattice is loaded from file, replaces the current lattice.
 	 * 
@@ -5701,8 +5778,9 @@ public class LatticeModel {
 				final short id = (short) imageA.getVOIs().getUniqueID();
 				showSelectedVOI = new VOI(id, "showSelected", VOI.POLYLINE, (float) Math.random());
 				imageA.registerVOI(showSelectedVOI);
+				showSelectedVOI.setColor(new Color(0, 255, 255));
 			}
-			if (showSelected == null) {
+			if ((showSelected == null) || (showSelectedVOI.getCurves().size() == 0)) {
 				showSelected = new VOIContour[3];
 				showSelected[0] = new VOIContour(true);
 				makeSelectionFrame(Vector3f.UNIT_X, Vector3f.UNIT_Y, pickedPoint, 4, showSelected[0]);
@@ -6098,4 +6176,5 @@ public class LatticeModel {
 		}
 	}
 
+	
 }

@@ -92,9 +92,6 @@ implements GLEventListener, ScreenCoordinateListener
 	/** Which dimension of the ModelImage to render. */
 	protected int m_iPlaneOrientation = 0;
 
-	/** Window-level interface. */
-	protected WindowLevel m_kWinLevel;
-
 	/** The image dimensions in x,y,z:. */
 	private int[] m_aiLocalImageExtents;
 
@@ -114,9 +111,6 @@ implements GLEventListener, ScreenCoordinateListener
 
 	/** Turns on drawing of the X,Y bars and the Axis labels:. */
 	private boolean m_bDrawXHairs = true;
-
-	/** Change the mouse cursor with the first mouseDrag event */
-	private boolean m_bFirstDrag = true;
 
 	/** True when the left mouse has been pressed, set to false when the left
 	 * mouse button is released. */
@@ -245,7 +239,6 @@ implements GLEventListener, ScreenCoordinateListener
 		m_iPlaneOrientation = iPlane;
 
 		setOrientation();
-		m_kWinLevel = new WindowLevel(); 
 	}
 
 
@@ -419,11 +412,6 @@ implements GLEventListener, ScreenCoordinateListener
 
 		m_akCLoc = null;
 		m_akCoords = null;
-
-		if ( m_kWinLevel != null ) {
-			m_kWinLevel.disposeLocal();
-			m_kWinLevel = null;
-		}
 
 		m_aiLocalImageExtents = null;
 
@@ -2100,7 +2088,7 @@ implements GLEventListener, ScreenCoordinateListener
 		 }
 
 		 m_kActiveLookupTable = m_kParent.getActiveLookupTable(m_kActiveImage);
-
+		 
 		 if ( m_kWinLevel.updateWinLevel( localPt.X, localPt.Y, m_bFirstDrag, m_kActiveLookupTable, m_kActiveImage ) )
 		 {
 			 if ( m_kActiveImage == m_kVolumeImageA.GetImage() )

@@ -1415,7 +1415,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     public void doVOI( String kCommand )
     {        
         boolean bDraw = isDrawCommand(kCommand);
-        m_kParent.enableBoth(!bDraw);
 
         if ( kCommand.equals(CustomUIBuilder.PARAM_LUT_QUICK.getActionCommand()) )
         {
@@ -1571,7 +1570,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 m_kVOIManagers.elementAt(i).doVOI( kCommand, bDraw );
                 iActive |= m_kVOIManagers.elementAt(i).isActive();
             }
-            m_kParent.PointerActive(iActive);
+            if ( m_kParent != null )
+            {
+            	m_kParent.PointerActive(iActive);
+            }
         }
     }
 
@@ -1626,6 +1628,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * @see gov.nih.mipav.view.VOIHandlerInterface#getActiveImage()
      */
     public ModelImage getActiveImage() {
+    	
+    	if ( m_kParent == null )
+    	{
+    		return m_kImageA;
+    	}
     	if ( m_kParent.getActiveImage() == null )
     	{
     		return m_kImageA;
@@ -2839,8 +2846,12 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     /**
      * Called from VOIManager. Causes the parent frame to redraw the ModelImage and VOIs.
      */
-    public void updateDisplay() {
-        m_kParent.setModified(); 
+    public void updateDisplay()
+    {
+    	if ( m_kParent != null )
+    	{
+    		m_kParent.setModified();
+    	}
     }
 
     /**
@@ -3376,7 +3387,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     		{
     			kVOIState.currentVOI = -1;
     		}        
-    		kVOIState.currentCenter.copy( m_kParent.getCenterPt() );
+    		if ( m_kParent != null )
+    		{
+    			kVOIState.currentCenter.copy( m_kParent.getCenterPt() );
+    		}
             return kVOIState;
     	} catch ( OutOfMemoryError e )
     	{
@@ -5880,7 +5894,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         {
             m_kCurrentVOIGroup = null;
         }        
-        m_kParent.setCenter( new Vector3f( kVOIState.currentCenter ) );
+        if ( m_kParent != null )
+        {
+        	m_kParent.setCenter( new Vector3f( kVOIState.currentCenter ) );
+        }
     }
 
     private void undoImage( )

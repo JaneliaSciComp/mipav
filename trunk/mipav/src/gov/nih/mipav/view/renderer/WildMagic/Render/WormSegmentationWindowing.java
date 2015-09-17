@@ -1,7 +1,9 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmVolumeSegmentation;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOIContour;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import java.awt.Color;
@@ -37,7 +39,9 @@ public class WormSegmentationWindowing extends WormSegmentation
 		
 		// find the left right markers based on the threshold values and clustering...
 		Vector<Vector3f> left_right_markers = findLeftRightMarkers(image, min, max, maxValue, (float)image.getMax());
-		fillMarkers( image,maxValue, left_right_markers );	
+//		System.err.println( "WormSegmentationWindowing " + maxValue + " " + image.getMax() + " " + left_right_markers.size() );
+//		fillMarkers( image,maxValue, left_right_markers );	
+//		System.err.println( "                          " + left_right_markers.size() );
 		
 		return left_right_markers;
 
@@ -50,6 +54,69 @@ public class WormSegmentationWindowing extends WormSegmentation
 //		String voiDir = image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + "seam_cells_WormSegmentationWindowing" + File.separator;
 //		WormSegmentation.saveAllVOIsTo(voiDir, image);
 	}
+	
+
+	public static void seamCellSegmentation( ModelImage image )
+	{		
+//    	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+//    	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+//    	int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1; 
+    	
+
+		String imageName = image.getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+		imageName = imageName + "_prob";
+		final ModelImage resultImage = new ModelImage(image.getType(), image.getExtents(), imageName);
+		JDialogBase.updateFileInfo(image, resultImage);
+		
+		OpenCLAlgorithmVolumeSegmentation segmentation = new OpenCLAlgorithmVolumeSegmentation(image, resultImage);
+		segmentation.runAlgorithm();
+		
+//		for ( int z = 0; z < dimZ; z++ )
+//		{
+//			for ( int y = 0; y < dimY; y++ )
+//			{
+//				for ( int x = 0; x < dimX; x++ )
+//				{
+//					int count = 0;
+//					double centerValue = image.getFloat(x,y,z);
+//					double sum = 0;
+//					for ( int sampleZ = -15; sampleZ <= 15; sampleZ++ )
+//					{
+//						for ( int sampleY = -15; sampleY <= 15; sampleY++ )
+//						{
+//							for ( int sampleX = -15; sampleX <= 15; sampleX++ )
+//							{
+//								int sX = sampleX + x;
+//								int sY = sampleY + y;
+//								int sZ = sampleZ + z;
+//								
+//								if ( (sX >= 0) && (sX < dimX) &&
+//									 (sY >= 0) && (sY < dimY) &&
+//									 (sZ >= 0) && (sZ < dimZ)    )
+//								{
+//									float value = image.getFloat(sX,sY,sZ);
+//									sum += value;
+//									count++;
+//								}
+//							}
+//						}
+//					}
+//					sum /= (double)count;
+//					sum /= centerValue;
+//					resultImage.set(x,  y, z, (float)sum);
+//				}
+//			}
+//			System.err.println( z + " " + dimZ );
+//		}
+		System.err.println( resultImage.getMin() + " " + resultImage.getMax() );
+		new ViewJFrameImage(resultImage);
+	}
+	
+	
+	
 	
     public static float[] robustHistogram(ModelImage image, Vector<Vector3f> dataPoints )
     {
@@ -167,21 +234,21 @@ public class WormSegmentationWindowing extends WormSegmentation
 
     private static Vector<Vector3f> findLeftRightMarkers(ModelImage image, Vector3f min, Vector3f max, float max_LR, float intensityMax)
     {
-    	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
-    	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
-    	int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;    
-		image.resetVOIs();
-    	float markerVal = max_LR;
-    	
-    	float pixelSize = 0.1625f;
-    	float markerDiameter = 3f;
+//    	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+//    	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+//    	int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;    
+//		image.resetVOIs();
+//    	float markerVal = max_LR;
+//    	
+//    	float pixelSize = 0.1625f;
+//    	float markerDiameter = 3f;
+//
+//    	int cubeSize = 5;
+//    	int cubeHalf = cubeSize/2;
 
-    	int cubeSize = 11;
-    	int cubeHalf = cubeSize/2;
-
-    	VOIContour centers = findMarkers(image, null, markerVal, intensityMax, cubeSize, 20, min, max);  	
-    	float minDist = Float.MAX_VALUE;
-    	int minI = -1, minJ = -1;
+    	VOIContour centers = findMarkers(image, null, max_LR, intensityMax, 15, 30, min, max);  	
+//    	float minDist = Float.MAX_VALUE;
+//    	int minI = -1, minJ = -1;
     	Vector<Vector3f> left_right_markers = new Vector<Vector3f>();
 		
     	for ( int i = 0; i < centers.size(); i++ )
@@ -189,16 +256,16 @@ public class WormSegmentationWindowing extends WormSegmentation
     		Vector3f seed = centers.elementAt(i); 
     		left_right_markers.add(new Vector3f(seed));
 //    		System.err.println( seed );
-    		for ( int j = i+1; j < centers.size(); j++ )
-    		{
-    			float distance = centers.elementAt(i).distance(centers.elementAt(j) );
-    			if ( distance < minDist );
-    			{
-    				minDist = distance;
-    				minI = i;
-    				minJ = j;
-    			}
-    		}
+//    		for ( int j = i+1; j < centers.size(); j++ )
+//    		{
+//    			float distance = centers.elementAt(i).distance(centers.elementAt(j) );
+//    			if ( distance < minDist );
+//    			{
+//    				minDist = distance;
+//    				minI = i;
+//    				minJ = j;
+//    			}
+//    		}
     	}
     	return left_right_markers;
     }

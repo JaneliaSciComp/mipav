@@ -43,6 +43,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.Cla
 import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphCurve;
 
 import java.awt.BorderLayout;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -168,9 +169,9 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	protected int m_iExtractLevel = 1;
 
 	/** sample rate when mouse is released. */
-	protected float fSample_mouseReleased;
+	protected float fSample_mouseReleased = 1;
 	/** sample rate when mouse is dragged. */
-	protected float fSample_mouseDragged;
+	protected float fSample_mouseDragged = 1;
 
 	protected boolean m_bPlay4D = false;
 	protected boolean m_bPlay4DVOIs = false;
@@ -1555,7 +1556,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	public void mouseDragged(MouseEvent e) {
 
 		if (!getSculptEnabled()) {
-			if (!e.isControlDown()) {
+			if (!e.isControlDown() && ((e.getModifiers() & InputEvent.BUTTON3_MASK) == 0)) {
 				super.mouseDragged(e);
 			} else if (e.isControlDown() && (m_kVolumeClip != null)
 					&& (m_kVolumeClip.DisplayArb())) {

@@ -5990,11 +5990,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     }
 
     @Override
-    public void enableBoth(final boolean bEnable) {
-        // radioImageBoth.setEnabled(bEnable);
-    }
-
-    @Override
     public Vector3f getCenterPt() {
         return new Vector3f(0, 0, componentImage.getSlice());
     }

@@ -19,7 +19,6 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 public interface VOIManagerInterfaceListener
 {
     public void create3DVOI( boolean bIntersection );
-    public void enableBoth( boolean bEnable );
     public ModelImage getActiveImage();
     public ModelLUT getActiveLUT();
     public ModelRGB getActiveRGB();
