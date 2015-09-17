@@ -1464,7 +1464,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		
 		if (model == CIRCLE_2D) {
 			
-			if (firstSliceNum > 1) {
+			if (firstSliceNum >= 1) {
 				afterBeforeRatio = wholeOrganIntensity[firstSliceNum]
 						/ wholeOrganIntensity[firstSliceNum - 1];
 			} else {
@@ -8694,7 +8694,7 @@ class IntModelI0NuclearArea extends Integration2 {
 				I0 = theta;
 			}
 			else {
-				diff = x - constantRadius ;
+				diff = x - constantRadius;
 				I0 = 1.0 - (1.0 - theta)*Math.exp(-diff*diff/(2.0*sigma*sigma));
 			}
 			if (k > 0) {
