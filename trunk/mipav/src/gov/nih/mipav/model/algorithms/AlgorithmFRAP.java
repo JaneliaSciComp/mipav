@@ -1638,7 +1638,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			int key = 6;
 			double epsabs = 0.0;
 			double epsrel = 1.0E-3;
-			int limit = 100;
+			int limit = 2000;
 			int errorStatus;
 			double absError;
 			int neval;
@@ -1764,7 +1764,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			key = 6;
 			epsabs = 0.0;
 			epsrel = 1.0E-3;
-		    limit = 100;
+		    limit = 2000;
 			
 			JYZO(1, 10, rj0, rj1, ry0, ry1);
 			for (k = 11; k <= 499; k++) {
@@ -6395,7 +6395,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			double X[] = new double[500];
 			double var;
 			double Feq = koff/(kon + koff);
-			double tmax;
 			
 			for (k = 0; k < 500; k++) {
 				w[k] = 0.5*(diffusion * alpha[k] * alpha[k] + kon + koff);
@@ -6415,21 +6414,14 @@ public class AlgorithmFRAP extends AlgorithmBase {
 				} // else k == 0
 			} // for (k = 0; k < 500; k++)
 			
-			tmax = -Double.MAX_VALUE;
 			for (t = 0; t < time.length; t++) {
 				timeFunction[t] = 0.0;
 				for (k = 0; k < 500; k++) {
 				    timeFunction[t] += ((U[k] + W[k]) * Math.exp(-(w[k]+v[k])*time[t]) 
 				    	+	(V[k]+X[k]) * Math.exp(-(w[k] - v[k])*time[t]))*avgJ0[k];
 				} // for (k = 0; k < 500; k++)
-				if (timeFunction[t] > tmax) {
-					tmax = timeFunction[t];
-				}
 			} // for (t = 0; t < time.length; t++)
 			
-			for (t = 0; t < time.length; t++) {
-				//timeFunction[t] = timeFunction[t]/tmax;
-			}
 		}
 
 		
