@@ -358,8 +358,6 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     protected GLOffscreenAutoDrawable sharedDrawable = null;
 
     protected VolumeTriPlanarRender sharedRenderer;
-    
-    protected AlgorithmInterface configuredListener = null;
 
     protected static boolean init = initClass();
 
@@ -393,11 +391,8 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         MipavInitGPU.InitGPU();
     }
 
-    public VolumeTriPlanarInterface(final ModelImage _imageA, final ModelImage _imageB) {
-    	this( _imageA, _imageB, null );
-    }
-    
-    public VolumeTriPlanarInterface(final ModelImage _imageA, final ModelImage _imageB, AlgorithmInterface algorithmListener) {
+    public VolumeTriPlanarInterface(final ModelImage _imageA, final ModelImage _imageB) 
+    {
         userInterface = ViewUserInterface.getReference();
         getContentPane().setLayout(new BorderLayout());
         addWindowListener(this);
@@ -446,11 +441,17 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         
 
         raycastRenderWM.setVisible(true);
-        raycastRenderWM.startAnimator(true);
-    	
-        this.configuredListener = algorithmListener;
+        raycastRenderWM.startAnimator(true);    	
     }
 
+
+	public void addConfiguredListener( AlgorithmInterface listener )
+	{
+		if ( raycastRenderWM != null )
+		{
+			raycastRenderWM.addConfiguredListener(listener);
+		}
+	}
     /*
      * (non-Javadoc)
      * 
@@ -1069,8 +1070,6 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         }
     }
 
-    public void enableBoth( boolean bEnable ) {}
-
     /**
      * Enable geodesic calculations and display.
      * 
@@ -1103,14 +1102,6 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         raycastRenderWM.eraseAllPaint();
     }
     
-    public void firstDisplay()
-    {
-    	if ( configuredListener != null )
-    	{
-    		configuredListener.algorithmPerformed( null );
-    	}
-    }
-
     public ModelImage getActiveImage()
     {
         return m_kVolumeImageA.GetImage();
@@ -1408,57 +1399,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
     }
     
-    public void clear3DSelection()
-    {
-    	if ( m_kVOIInterface != null )
-    	{
-    		m_kVOIInterface.clear3DSelection();
-    	}
-    }
     
-    public boolean is3DMouseEnabled()
-    {
-    	return m_kVOIInterface == null ? false : m_kVOIInterface.is3DMouseEnabled();
-    }
-    
-    public boolean is3DSelectionEnabled()
-    {
-    	return m_kVOIInterface == null ? false : m_kVOIInterface.is3DSelectionEnabled();
-    }
-        
-    public void modify3DMarker( Vector3f startPt, Vector3f endPt, Vector3f pt )
-    {
-    	if ( m_kVOIInterface != null )
-    	{
-    		m_kVOIInterface.modify3DMarker(startPt, endPt, pt);
-    	}    	
-    }
-    
-    public void add3DMarker( VOI textVOI )
-    {
-    	if ( m_kVOIInterface != null )
-    	{
-    		m_kVOIInterface.add3DMarker(textVOI);
-    	}    	
-    }
-    
-    public void deleteSelectedPoint( )
-    {
-    	if ( m_kVOIInterface != null )
-    	{
-    		m_kVOIInterface.deleteSelectedPoint( );
-    	}    	    	
-    }
-    
-    public void moveSelectedPoint( Vector3f direction )
-    {
-    	if ( m_kVOIInterface != null )
-    	{
-    		m_kVOIInterface.moveSelectedPoint( direction );
-    	}    	    	
-    }
-
-
     @Override
     public void maskToPaint()
     {
@@ -2707,6 +2648,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         }
         m_kVOIInterface.setVOITools( voiMenu, menuObj );
         menuBar.add(voiMenu);
+        raycastRenderWM.setVOILatticeManager( m_kVOIInterface );
     }
 
     private void LoadState() {

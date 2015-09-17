@@ -3495,12 +3495,6 @@ public class ViewJFrameRegistration extends ViewJFrameBase
     }
 
     @Override
-    public void enableBoth(boolean bEnable) {
-        // TODO Auto-generated method stub
-        
-    }
-
-    @Override
     public ModelImage getActiveImage() {
         if (componentImage != null) {
             return componentImage.getActiveImage();

@@ -17,6 +17,7 @@ import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
@@ -114,9 +115,18 @@ public abstract class WormSegmentation
 	
 	public static void saveAllVOIsTo(String voiDir, final ModelImage image)
 	{		
-		try {
-			final ViewVOIVector VOIs = image.getVOIs();
+		final ViewVOIVector VOIs = image.getVOIs();
+		if ( VOIs == null )
+		{
+			return;
+		}
 
+		final int nVOI = VOIs.size();
+		if ( nVOI <= 0 )
+		{
+			return;
+		}
+		try {
 			final File voiFileDir = new File(voiDir);
 
 			if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
@@ -129,8 +139,6 @@ public abstract class WormSegmentation
 			} else { // voiFileDir does not exist
 				voiFileDir.mkdir();
 			}
-
-			final int nVOI = VOIs.size();
 
 			for (int i = 0; i < nVOI; i++) {
 				if (VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION) {
@@ -481,7 +489,7 @@ public abstract class WormSegmentation
 //	}
 
 	// need edges
-	public static int fill(final ModelImage image, float cutOff, final Vector<Vector3f> seedList, ModelImage visited, final int id) {
+	public static int fill(final ModelImage image, float cutOffMin, float cutOffMax, final Vector<Vector3f> seedList, ModelImage visited, final int id) {
 		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
 		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
 		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
@@ -512,7 +520,7 @@ public abstract class WormSegmentation
 							if ( visited.getInt(index) == 0 )
 							{
 								float value = image.getFloat(x1, y1, z1);
-								if ( value >= cutOff )
+								if ( (value >= cutOffMin) && (value < cutOffMax) )
 								{
 									seedList.add( new Vector3f(x1,y1,z1) );
 								}
@@ -759,7 +767,7 @@ public abstract class WormSegmentation
 					{
 						seed.set(x, y, z);
 						seedList.add(seed);
-						int numFilled = fill( image, cutOff, seedList, segmentationImage, count);
+						int numFilled = fill( image, cutOff, cutOff+1, seedList, segmentationImage, count);
 						if ( numFilled > 0 )
 						{
 							count++;
@@ -867,6 +875,347 @@ public abstract class WormSegmentation
 		meanVariance /= (float)count;
 		return meanVariance;
 	}
+
+	public static ModelImage segmentNose(ModelImage image, Vector3f pt, boolean display)
+	{
+
+		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1; 
+
+    	int cubeHalf = 7/2;
+		int zStart = (int)Math.max(0, Math.min( dimZ -1, pt.Z - cubeHalf) );
+		int zEnd = (int)Math.max(0, Math.min( dimZ -1, pt.Z + cubeHalf) );
+		int yStart = (int)Math.max(0, Math.min( dimY -1, pt.Y - cubeHalf) );
+		int yEnd = (int)Math.max(0, Math.min( dimY -1, pt.Y + cubeHalf) );
+		int xStart = (int)Math.max(0, Math.min( dimX -1, pt.X - cubeHalf) );
+		int xEnd = (int)Math.max(0, Math.min( dimX -1, pt.X + cubeHalf) );
+		
+		float avg = 0;
+		int count = 0;
+		for ( int z = zStart; z <= zEnd; z++ )
+		{
+			for ( int y = yStart; y <= yEnd; y++ )
+			{
+				for ( int x = xStart; x <= xEnd; x++ )
+				{
+					float value = image.getFloat(x,y,z);
+					avg += value;
+					count++;
+				}
+			}    					
+		}
+		
+		avg /= (float)count;
+		
+		
+		
+		
+		String imageName = image.getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+		imageName = imageName + "_nose";
+		final ModelImage resultImage = new ModelImage(image.getType(), image.getExtents(), imageName);
+		JDialogBase.updateFileInfo(image, resultImage);
+
+		float value = image.getFloatTriLinearBounds( pt.X, pt.Y, pt.Z );
+		Vector<Vector3f> seedList = new Vector<Vector3f>();
+		seedList.add(pt);
+//		min = 1.5f*min;
+////		min = (float) Math.min( value - 1, 0.25 * (value + min/2f) );
+//		max = (float) Math.max( max + 1, 0.95 * (max + image.getMax()/2f) );
+
+		float max = 2 * (avg + value)/2f;
+		float min = 0.5f*(avg + value)/2f;
+		float minLimit = 1;
+		float maxLimit = max;
+		System.err.println( "SegmentNose " + image.getMin() + " " + image.getMax() + " " + avg + " " + value + " " + min + " " + max );
+		int numFilled = fill( image, min, max, seedList, resultImage, 1);
+		count = 0;
+		float prevMin = -1;
+		int prevFilled = -1;
+		while ( ((numFilled < 60000) || (numFilled > 100000)) && (count < 100))
+		{
+			count++;
+			System.err.println( "SegmentNose " + numFilled + " " + min + " " + max + " " + count );
+			if ( numFilled < 60000 )
+			{
+				maxLimit = min;
+			}
+			else if ( numFilled > 100000 )
+			{
+				minLimit = min;
+			}
+			if ( (prevFilled == numFilled) || (prevMin == min) )
+			{
+				max = 0.9f * max;
+				minLimit = 1;
+				maxLimit = max;
+			}
+			prevMin = min;
+			min = (minLimit + maxLimit)/2f;
+			resultImage.setAll(0.0f);
+			seedList.clear();
+			seedList.add(pt);
+			prevFilled = numFilled;
+			numFilled = fill( image, min, max, seedList, resultImage, 1);
+		}
+		resultImage.calcMinMax();
+		System.err.println( "SegmentNose " + numFilled + " " + min + " " + max + " " + value );
+		if ( display )
+		{
+			new ViewJFrameImage(resultImage);
+		}
+		return resultImage;
+	}
+
+	
+	
+	public static void outline( ModelImage image, ModelImage mp, int slice )
+	{
+		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1; 
+		
+		String imageName = image.getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+		imageName = imageName + "_Outline_MP_Z";
+		
+		ModelImage blur = blur(image, 5);
+		
+		BitSet inside = new BitSet(dimZ*dimY*dimX);
+		
+		for ( int z = 0; z < dimZ; z++ )
+		{
+			for ( int y = 0; y < dimY; y++ )
+			{
+				float startVal = blur.getFloat(0, y, z);
+				boolean fill = false;
+				for ( int x = 1; x < dimX; x++ )
+				{
+					float val = blur.getFloat(x, y, z);
+					if ( val > 1.5 * startVal )
+					{
+						fill = true;
+					}
+					else if ( fill )
+					{
+						break;
+					}
+					if ( fill )
+					{
+						inside.set(z*dimY*dimX + y*dimX + x);
+					}
+				}
+				startVal = blur.getFloat(dimX - 1, y, z);
+				fill = false;
+				for ( int x = dimX - 2; x >= 0; x-- )
+				{
+					float val = blur.getFloat(x, y, z);
+					if ( val > 1.5 * startVal )
+					{
+						fill = true;
+					}
+					else if ( fill )
+					{
+						break;
+					}
+					if ( inside.get(z*dimY*dimX + y*dimX + x) )
+					{
+						break;
+					}
+					if ( fill )
+					{
+						inside.set(z*dimY*dimX + y*dimX + x);
+					}
+				}
+			}
+		}
+		
+
+		for ( int z = 0; z < dimZ; z++ )
+		{
+			for ( int x = 0; x < dimX; x++ )
+			{
+				float startVal = blur.getFloat(x, 0, z);
+				boolean fill = false;
+				for ( int y = 1; y < dimY; y++ )
+				{
+					float val = blur.getFloat(x, y, z);
+					if ( val > 1.5 * startVal )
+					{
+						fill = true;
+					}
+					else if ( fill )
+					{
+						break;
+					}
+					if ( fill )
+					{
+						inside.set(z*dimY*dimX + y*dimX + x);
+					}
+				}
+				startVal = blur.getFloat(x, dimY - 1, z);
+				fill = false;
+				for ( int y = dimY - 2; y >= 0; y-- )
+				{
+					float val = blur.getFloat(x, y, z);
+					if ( val > 1.5 * startVal )
+					{
+						fill = true;
+					}
+					else if ( fill )
+					{
+						break;
+					}
+					if ( inside.get(z*dimY*dimX + y*dimX + x) )
+					{
+						break;
+					}
+					if ( fill )
+					{
+						inside.set(z*dimY*dimX + y*dimX + x);
+					}
+				}
+			}
+		}
+		
+
+
+		for ( int y = 0; y < dimY; y++ )
+		{
+			for ( int x = 0; x < dimX; x++ )
+			{
+				float startVal = blur.getFloat(x, y, 0);
+				boolean fill = false;
+				for ( int z = 1; z < dimZ; z++ )
+				{
+					float val = blur.getFloat(x, y, z);
+					if ( val > 1.5 * startVal )
+					{
+						fill = true;
+					}
+					else if ( fill )
+					{
+						break;
+					}
+					if ( fill )
+					{
+						inside.set(z*dimY*dimX + y*dimX + x);
+					}
+				}
+				startVal = blur.getFloat(x, y, dimZ - 1);
+				fill = false;
+				for ( int z = dimZ - 2; z >= 0; z-- )
+				{
+					float val = blur.getFloat(x, y, z);
+					if ( val > 1.5 * startVal )
+					{
+						fill = true;
+					}
+					else if ( fill )
+					{
+						break;
+					}
+					if ( inside.get(z*dimY*dimX + y*dimX + x) )
+					{
+						break;
+					}
+					if ( fill )
+					{
+						inside.set(z*dimY*dimX + y*dimX + x);
+					}
+				}
+			}
+		}
+		blur.disposeLocal();
+		blur = null;
+		System.err.println( inside.cardinality() + " " + (dimX*dimY*dimZ) );
+		for ( int y = 0; y < dimY; y++ )
+		{
+			for ( int x = 0; x < dimX; x++ )
+			{
+//				mp.set(x, y, slice, 0f);
+				for ( int z = 0; z < dimZ; z++ )
+				{
+					if ( inside.get(z*dimY*dimX + y*dimX + x) )
+					{
+						mp.set(x, y, z, 1f);
+//						mp.set(x, y, slice, 1f);
+//						break;
+					}
+				}
+			}
+		}
+	}
+	
+	
+
+	public static HashMap<Float, Integer> estimateHistogram( final ModelImage image, float targetPercent, float[] targetValue )
+    {    	
+		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;  	
+    	
+    	// Calculate the histogram:
+		int maxCount = 0;
+    	HashMap<Float, Integer> map = new HashMap<Float, Integer>();
+    	for ( int z = 0; z < dimZ; z++ )
+    	{
+    		for ( int y = 0; y < dimY; y++ )
+    		{
+    			for ( int x = 0; x < dimX; x++ )
+    			{
+    				float value = image.getFloat(x,y,z);
+    				int count = 0;
+    				if ( map.containsKey(value) )
+    				{
+    					count = map.get(value);
+    				}
+    				count++;
+    				map.put( value, count );
+    				if ( count > maxCount )
+    				{
+    					maxCount = count;
+    				}
+    			}
+    		}
+    	}
+//    	System.err.println( map.get((float)image.getMin() ) + " " + map.get((float)image.getMax() ) );
+    	// Sort the Histogram bins:
+    	Set<Float> keySet = map.keySet();
+    	Iterator<Float> keyIterator = keySet.iterator();
+    	float[] keyArray = new float[keySet.size()];
+    	int count = 0;
+    	while ( keyIterator.hasNext() )
+    	{
+    		float value = keyIterator.next();
+    		keyArray[count++] = value;
+    	}
+    	
+    	Arrays.sort(keyArray);
+    	HashMap<Float, Integer> countValues = new HashMap<Float, Integer>();
+    	int runningCount = 0;
+    	float target = targetPercent * dimX*dimY*dimZ;
+    	boolean found = false;
+    	for ( int i = 0; i < keyArray.length; i++ )
+    	{
+    		count = map.get( keyArray[i] );
+    		runningCount += count;
+    		countValues.put( keyArray[i], runningCount );
+    		if ( (runningCount >= target) && !found )
+    		{
+    			found = true;
+    			targetValue[0] = keyArray[i];
+    		}
+    	}
+    	map = null;
+    	keyArray = null;
+    	return countValues;
+    }
 
 
 }

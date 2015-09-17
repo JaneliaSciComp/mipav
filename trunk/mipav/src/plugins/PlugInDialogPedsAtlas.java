@@ -4892,18 +4892,6 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 
 
 	@Override
-	public void enableBoth(boolean bEnable) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-
-
-
-
-
-	@Override
 	public ModelImage getActiveImage() {
 		// TODO Auto-generated method stub
 		return activeImage;

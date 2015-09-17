@@ -113,7 +113,7 @@ public class WormSegmentationLoG extends WormSegmentation
 	}
 
 
-	private static Vector2d[] estimateHistogram( final ModelImage image, float stepSize )
+	public static Vector2d[] estimateHistogram( final ModelImage image, float stepSize )
 	{    	
 		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
 		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;

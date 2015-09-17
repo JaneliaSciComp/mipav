@@ -7,6 +7,7 @@ import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.WindowLevel;
 import gov.nih.mipav.view.input.spacenav.SpaceNavigatorController;
 import gov.nih.mipav.view.input.spacenav.SpaceNavigatorEvent;
 import gov.nih.mipav.view.input.spacenav.SpaceNavigatorListener;
@@ -151,6 +152,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     private static int zD = 1;
     /** holds the current value of the space navigator. normalized on a -100 to 100 scale for cross platform/calculating convenience */
     private static double tX, tY, tZ, rX, rY, rZ;
+
+
+	/** Window-level interface. */
+	protected WindowLevel m_kWinLevel;
+	/** Change the mouse cursor with the first mouseDrag event */
+	protected boolean m_bFirstDrag = true;
     
     private boolean useMouseTranslationCutoffs = true, useMouseRotationCutoffs = true;
     
@@ -191,6 +198,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     	} catch(Exception ex) {
     		ex.printStackTrace();
     	}
+		m_kWinLevel = new WindowLevel(); 
     }
     
     /**
@@ -314,6 +322,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
         
         SpaceNavigatorPoller.deRegisterListener(this);
 
+
+		if ( m_kWinLevel != null ) {
+			m_kWinLevel.disposeLocal();
+			m_kWinLevel = null;
+		}
 
         super.dispose();
     }

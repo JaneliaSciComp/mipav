@@ -1,12 +1,18 @@
 package gov.nih.mipav.view.renderer.WildMagic;
 
+import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.TransferFunction;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.CustomUIBuilder;
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewMenuBar;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelAnnotationAnimation;
@@ -18,6 +24,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageExtract;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageSurfaceMask;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Navigation.NavigationBehavior;
 import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphCurve;
 import gov.nih.mipav.util.MipavCoordinateSystems;
@@ -30,8 +37,13 @@ import WildMagic.LibGraphics.SceneGraph.Polyline;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -39,6 +51,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.TreeMap;
@@ -48,6 +61,7 @@ import javax.imageio.ImageIO;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
+import javax.swing.JToggleButton;
 import javax.swing.KeyStroke;
 
 import WildMagic.LibFoundation.Distance.DistanceVector3Segment3;
@@ -80,7 +94,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 
 	/** Parent user-interface and display frame. */
 	protected VolumeTriPlanarInterface m_kParent = null;
+	protected AlgorithmInterface configuredListener = null;
+	protected boolean rightMousePressed = false;
     protected boolean m_bFirstDisplay = true;
+    private VOILatticeManagerInterface m_kVOIInterface = null;
 	/**
 	 * Default Constructor.
 	 */
@@ -194,47 +211,93 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			m_bExtract = false;
 		}
 
-		if ( m_bFirstDisplay && (m_kShared != null) )
+		if ( m_bFirstDisplay && (configuredListener != null) )
 		{		
-			m_kParent.firstDisplay();
+    		configuredListener.algorithmPerformed( null );
 			m_bFirstDisplay = false;
 		}
 	}
 
+	public void addConfiguredListener( AlgorithmInterface listener )
+	{
+		configuredListener = listener;
+	}
+	
 	public void dispose(GLAutoDrawable kDrawable)
 	{
 		super.dispose(kDrawable);
 		m_kParent = null;
 	}
 
+	public void setVOILatticeManager( VOILatticeManagerInterface newVOIInterface )
+	{
+		m_kVOIInterface = newVOIInterface;
+	}
+	
+    public void clear3DSelection()
+    {
+    	if ( m_kVOIInterface != null )
+    	{
+    		m_kVOIInterface.clear3DSelection();
+    	}
+    }
+    
+	public boolean is3DSelectionEnabled()
+	{
+    	return (m_kVOIInterface == null) ? false : m_kVOIInterface.is3DSelectionEnabled();
+	}
+
+	public boolean is3DMouseEnabled()
+	{
+    	return m_kVOIInterface == null ? false : m_kVOIInterface.is3DMouseEnabled();
+	}
+	
+    public void deleteSelectedPoint( )
+    {
+		if ( m_kVOIInterface != null )
+    	{
+    		m_kVOIInterface.deleteSelectedPoint( );
+    	}    	    	
+    }
+    
+    public void moveSelectedPoint( Vector3f direction )
+    {
+		if ( m_kVOIInterface != null )
+    	{
+    		m_kVOIInterface.moveSelectedPoint( direction );
+    	}    	    	
+    }
+	
 	/**
 	 * Part of the KeyListener interface. Pressing 'b' toggles displaying the
 	 * proxy-geometry versus the ray-traced volume.
 	 * @param e the key event.
 	 */
-	public void keyPressed(KeyEvent e) {
-		if ( m_kParent.is3DSelectionEnabled() )
+	public void keyPressed( KeyEvent e )
+	{
+		if ( is3DSelectionEnabled() )
 		{
 			Transformation world = m_kVolumeRayCast.getMesh().World;
-			switch(e.getKeyCode()) {
+			switch( e.getKeyCode() )
+			{
 			case KeyEvent.VK_UP:
 				m_kVolumeRayCast.GetScene().UpdateGS();
-				m_kParent.moveSelectedPoint( world.InvertVector(m_spkCamera.GetUVector()) );
+				moveSelectedPoint( world.InvertVector(m_spkCamera.GetUVector()) );
 				break;
 			case KeyEvent.VK_DOWN:
 				m_kVolumeRayCast.GetScene().UpdateGS();
-				m_kParent.moveSelectedPoint( world.InvertVector(m_spkCamera.GetUVector()).neg() );
+				moveSelectedPoint( world.InvertVector(m_spkCamera.GetUVector()).neg() );
 				break;
 			case KeyEvent.VK_RIGHT:
 				m_kVolumeRayCast.GetScene().UpdateGS();
-				m_kParent.moveSelectedPoint( world.InvertVector(m_spkCamera.GetRVector()) );
+				moveSelectedPoint( world.InvertVector(m_spkCamera.GetRVector()) );
 				break;
 			case KeyEvent.VK_LEFT:
 				m_kVolumeRayCast.GetScene().UpdateGS();
-				m_kParent.moveSelectedPoint( world.InvertVector(m_spkCamera.GetRVector()).neg() );
+				moveSelectedPoint( world.InvertVector(m_spkCamera.GetRVector()).neg() );
 				break;
 			case KeyEvent.VK_DELETE:
-				m_kParent.deleteSelectedPoint( );
+				deleteSelectedPoint( );
 				break;
 			}
 	        // look for shortcuts now
@@ -244,9 +307,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 
 	        command = Preferences.getShortcutCommand(ks);
 
+	        if ( (m_kVOIInterface != null) && (command != null) )
+	        {
+	        	m_kVOIInterface.actionPerformed(new ActionEvent(ks, 0, command));
+	        }
 	        // Don't pass the VOI key-commands to the actionPerformed function, this
 	        // will be done by the VOIManager which will also get the KeyEvents.
-	        if ( command != null ) {
+	        if ( (m_kParent != null) && (command != null) )
+	        {
 	            m_kParent.actionPerformed(new ActionEvent(ks, 0, command));
 	        }
 			return;
@@ -260,17 +328,59 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		}
 		return;
 	}
+	
+//	public void mouseClicked(MouseEvent e) {
+//		super.mouseClicked(e);
+//		clickCount = e.getClickCount();
+//		if ( e.getClickCount() > 1 )
+//		{
+//			clear3DSelection();
+//			m_iXPick = e.getX();
+//			m_iYPick = e.getY();
+//			m_bPickPending = true;
+//		}
+//	}
 
 	public void mousePressed(MouseEvent e) {
 		super.mousePressed(e);
-		if (e.isControlDown() && (m_kParent.is3DMouseEnabled() || m_kParent.is3DSelectionEnabled())) {
-			m_kParent.clear3DSelection();
+		if (e.isControlDown() && (is3DMouseEnabled() || is3DSelectionEnabled())) {
+			rightMousePressed = ((e.getModifiers() & InputEvent.BUTTON3_MASK) != 0);
+			clear3DSelection();
 			m_iXPick = e.getX();
 			m_iYPick = e.getY();
 			m_bPickPending = true;
 		}
 	}
+	public void mouseReleased(MouseEvent e) {
+		super.mouseReleased(e);
+		rightMousePressed = false;
+		setDefaultCursor();
+	}
 
+    public void setDefaultCursor( )
+    {
+		if ( m_kParent != null )
+		{
+			m_kParent.setDefaultCursor();
+		}
+    }
+    
+    public boolean modify3DMarker( Vector3f startPt, Vector3f endPt, Vector3f pt, boolean rightMouse )
+    {
+    	if ( m_kVOIInterface != null )
+    	{
+    		return m_kVOIInterface.modify3DMarker(startPt, endPt, pt, rightMouse);
+    	}
+    	return false;
+    }
+    
+    public void add3DMarker( VOI textVOI, boolean doubleClick )
+    {
+    	if ( m_kVOIInterface != null )
+    	{
+    		m_kVOIInterface.add3DMarker(textVOI, doubleClick);
+    	}    	
+    }
 
 	/** Rotates the object with a virtual trackball:
 	 * @param e the MouseEvent
@@ -278,17 +388,133 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	@Override
 	public void mouseDragged(MouseEvent e)
 	{
-		super.mouseDragged(e);
+		if (!e.isControlDown() && ((e.getModifiers() & InputEvent.BUTTON3_MASK) != 0))
+		{
+			processRightMouseDrag(e);
+		}
+		else
+		{
+			super.mouseDragged(e);
+		}
 		if ( m_kParent != null ) {
 			m_kParent.setCameraParameters();
 			m_kParent.setObjectParameters();
 		}
-		if (e.isControlDown() && (m_kParent.is3DMouseEnabled() || m_kParent.is3DSelectionEnabled())) {
+		if (e.isControlDown() && (is3DMouseEnabled() || is3DSelectionEnabled())) {
 			m_iXPick = e.getX();
 			m_iYPick = e.getY();
 			m_bPickPending = true;
 		}
 	}
+
+	 /**
+	  * If the right mouse button is pressed and dragged. processRightMouseDrag
+	  * updates the HistoLUT window and level (contrast and brightness)
+	  *
+	  * @param  kEvent  the mouse event generated by a mouse drag
+	  */
+	 private void processRightMouseDrag(MouseEvent kEvent)
+	 {
+
+		 /* Get the coordinates of the mouse position in local coordinates: */
+		 float fX = Math.max(0, (float)kEvent.getX() / (float) GetWidth() );
+		 fX = Math.min(fX, 1 );
+		 float fY = Math.max(0, (float)kEvent.getY() / (float) GetHeight() );
+		 fY = Math.min(fY, 1 );
+		 setWindowLevel( fX,  fY, m_bFirstDrag );
+		 m_bFirstDrag = false;
+	 }
+	 
+	 private void setWindowLevel(float fX, float fY, boolean first )
+	 {
+		 // make the LUT panel the active panel.
+		 if ( m_kParent != null )
+		 {
+			 m_kParent.actionPerformed(new ActionEvent(this, 0, "HistoLUT"));
+		 }
+		 ModelStorageBase kActiveLookupTable = null;
+		 /* Get which image is active, either m_kImageA or m_kImageB: */
+		 ModelImage kActiveImage = null;
+		 
+		 if ( m_kParent != null )
+		 {
+			 kActiveImage = m_kParent.getHistoLUTActiveImage();
+			 if (kActiveImage == null) {
+				 kActiveImage = m_kParent.getHistoRGBActiveImage();
+			 }
+			 kActiveLookupTable = m_kParent.getActiveLookupTable(kActiveImage);
+		 }
+
+		 if ( kActiveImage == null )
+		 {
+			 kActiveImage = m_kVolumeImageA.GetImage();
+		 }
+		 if ( kActiveLookupTable == null )
+		 {
+			 if ( kActiveImage.isColorImage() )
+			 {
+				 kActiveLookupTable = m_kVolumeImageA.GetRGB();
+			 }
+			 else
+			 {
+				 kActiveLookupTable = m_kVolumeImageA.GetLUT();
+			 }
+		 }
+		 
+		 if ( m_kWinLevel.updateWinLevel( fX, fY, first, kActiveLookupTable, kActiveImage ) )
+		 {
+			 if ( kActiveImage == m_kVolumeImageA.GetImage() )
+			 {
+				 if ( m_kParent != null )
+				 {
+					 m_kParent.getLUTDialog().setLUTA(kActiveLookupTable);
+				 }
+				 else if ( kActiveImage.isColorImage() )
+				 {
+					 m_kVolumeImageA.SetRGBT((ModelRGB)kActiveLookupTable);
+				 }
+				 else
+				 {					 
+					 m_kVolumeImageA.UpdateImages((ModelLUT)kActiveLookupTable);
+				 }
+			 }
+			 else if ( (m_kVolumeImageB.GetImage() != null) && (kActiveImage == m_kVolumeImageB.GetImage()) )
+			 {
+				 if ( m_kParent != null )
+				 {
+					 m_kParent.getLUTDialog().setLUTB(kActiveLookupTable);
+				 }
+				 else if ( kActiveImage.isColorImage() )
+				 {
+					 m_kVolumeImageB.SetRGBT((ModelRGB)kActiveLookupTable);
+				 }
+				 else
+				 {
+					 m_kVolumeImageB.UpdateImages((ModelLUT)kActiveLookupTable);
+				 }
+			 }
+		 }
+		 if (first) {
+			 if ( m_kParent != null )
+			 {
+				 try {
+					 Image kImg = MipavUtil.getIconImage("qkwinlevel.gif");
+					 Cursor kWinLevelCursor = Toolkit.getDefaultToolkit().createCustomCursor(kImg, new Point(12, 12),
+							 "WinLevel");
+					 /* Set the cursor icon: */
+					 m_kParent.setCursor(kWinLevelCursor);
+				 } catch (FileNotFoundException error) { }
+			 }
+		 }
+	 }
+	 
+	 public void initLUT()
+	 {
+		 TransferFunction transferLine = m_kVolumeImageA.GetLUT().getTransferFunction();
+		 transferLine.importArrays( new float[]{0, 0, 0, (float)m_kVolumeImageA.GetImage().getMax()},
+				 new float[]{255, 255, 0, 0}, 4);
+		 m_kVolumeImageA.UpdateImages(m_kVolumeImageA.GetLUT());
+	 }
 
 	/**
 	 * Undo applying the sculpt region to the volume.
@@ -326,7 +552,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 					GetHeight(),kPos,kDir))
 			{				
 				m_bPickPending = false;
-				if ( m_kParent.is3DMouseEnabled() || m_kParent.is3DSelectionEnabled() )
+				if ( is3DMouseEnabled() || is3DSelectionEnabled() )
 				{
 					m_kPicker.Execute(m_kVolumeRayCast.GetScene(),kPos,kDir,0.0f,
 							Float.MAX_VALUE);
@@ -408,25 +634,31 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							}
 							
 							if ( maxValue != -Float.MAX_VALUE )
-							{														
-								if ( m_kParent.is3DSelectionEnabled() )
+							{					
+								boolean picked = false;
+								if ( is3DSelectionEnabled() )
 								{
-									m_kParent.modify3DMarker( firstIntersectionPoint, secondIntersectionPoint, maxPt );
+									picked = modify3DMarker( firstIntersectionPoint, secondIntersectionPoint, maxPt, rightMousePressed );
 								}
-								else
+								if ( !picked )
 								{
 									short id = (short) m_kVolumeImageA.GetImage().getVOIs().getUniqueID();
 									int colorID = 0;
 									VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
 									VOIText textVOI = new VOIText( );
 									textVOI.add( maxPt );
-									Transformation world = m_kVolumeRayCast.getMesh().World;
-									Vector3f dir = world.InvertVector(m_spkCamera.GetRVector());
-									dir.scale(5);
-									textVOI.add( Vector3f.add( dir, maxPt) );
-									textVOI.setText("origin");
+									textVOI.add( maxPt );
+//									Transformation world = m_kVolumeRayCast.getMesh().World;
+//									Vector3f dir = world.InvertVector(m_spkCamera.GetRVector());
+//									dir.scale(5);
+//									textVOI.add( Vector3f.add( dir, maxPt) );
+									textVOI.setText("A"+id);
+									if ( m_kVOIInterface != null )
+									{
+										textVOI.setText("A" + m_kVOIInterface.getCurrentIndex() );
+									}
 									newTextVOI.getCurves().add(textVOI);
-									m_kParent.add3DMarker( newTextVOI );
+									add3DMarker( newTextVOI, false );
 								}
 							}
 						}
@@ -536,7 +768,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		if ( bUpdateVOIs )
 		{
 			UpdateSceneRotation();
-			m_kParent.setModified();
+			if ( m_kParent != null )
+			{
+				m_kParent.setModified();
+			}
 		}
 	}
 
@@ -911,7 +1146,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	private HashMap<String, Boolean> annotationLabelsDisplay;
 	private String[] annotationNames;
 	private float sphereScale = 3;
-	public void addAnimationVOIs(VOIVector vois, JPanelAnnotationAnimation annotationAnimationPanel)
+	public void addAnimationVOIs( VOIVector vois, JPanelAnnotationAnimation annotationAnimationPanel )
 	{		
 		Vector3f origin = new Vector3f();
 		for ( int i = 0; i < vois.size(); i++ )
@@ -934,9 +1169,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			for ( int j = 0; j < vois.elementAt(i).getCurves().size(); j++ )
 			{
 				VOIText text = (VOIText) vois.elementAt(i).getCurves().elementAt(j);
-				text.setUseMarker(false);
+				text.setUseMarker( false );
 				Vector3f position = text.elementAt(0);
-				position.sub(origin);
+				position.sub( origin );
 				position.add( m_kVolumeImageA.GetImage().getExtents()[0]/2, m_kVolumeImageA.GetImage().getExtents()[1]/2, 0 );
 //				position.add( 4, 0, 0 );
 //				System.err.println( text.getText() + "      " + position );
