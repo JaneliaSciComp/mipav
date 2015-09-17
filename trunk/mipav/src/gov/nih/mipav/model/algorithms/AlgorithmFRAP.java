@@ -1785,7 +1785,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					modelBessel.run();
 					avgJ0[k] = 2.0 * cyr[0] / (alpha[k] * radius);
 					initialOrder = 0.0;
-					modelBessel = new Bessel(Bessel.BESSEL_J, rj0[k-1],
+					modelBessel = new Bessel(Bessel.BESSEL_J, rj0[k-1] ,
 							0.0, initialOrder, Bessel.UNSCALED_FUNCTION,
 							sequenceNumber, cyr, cyi, nz, errorFlag);
 					modelBessel.run();
@@ -6398,9 +6398,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			double tmax;
 			
 			for (k = 0; k < 500; k++) {
-				var = diffusion * alpha[k] * alpha[k] + kon + koff;
-				w[k] = 0.5 * var;
-				v[k] = Math.sqrt(0.25 * var * var - koff * diffusion * alpha[k] * alpha[k]);
+				w[k] = 0.5*(diffusion * alpha[k] * alpha[k] + kon + koff);
+				v[k] = Math.sqrt(w[k]*w[k] - koff * diffusion * alpha[k] * alpha[k]);
 				if (k > 0) {
 					var = (1.0/(koff*v[k]))*(Feq/RN2J02[k])*bessInt[k];
 					U[k] = -var*(-w[k] -v[k] + koff) * (w[k] - v[k]);
@@ -8691,11 +8690,11 @@ class IntModelI0NuclearArea extends Integration2 {
 			int[] errorFlag = new int[1];
 			double I0;
 			double diff;
-			if (x <= radius) {
+			if (x <= constantRadius) {
 				I0 = theta;
 			}
 			else {
-				diff = x - radius;
+				diff = x - constantRadius ;
 				I0 = 1.0 - (1.0 - theta)*Math.exp(-diff*diff/(2.0*sigma*sigma));
 			}
 			if (k > 0) {
