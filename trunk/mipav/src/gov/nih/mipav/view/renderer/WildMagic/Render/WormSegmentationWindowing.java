@@ -1,13 +1,8 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
-import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmVolumeSegmentation;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOIContour;
-import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.dialogs.JDialogBase;
 
-import java.awt.Color;
-import java.io.File;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashMap;
@@ -56,64 +51,64 @@ public class WormSegmentationWindowing extends WormSegmentation
 	}
 	
 
-	public static void seamCellSegmentation( ModelImage image )
-	{		
-//    	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
-//    	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
-//    	int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1; 
-    	
-
-		String imageName = image.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
-		imageName = imageName + "_prob";
-		final ModelImage resultImage = new ModelImage(image.getType(), image.getExtents(), imageName);
-		JDialogBase.updateFileInfo(image, resultImage);
-		
-		OpenCLAlgorithmVolumeSegmentation segmentation = new OpenCLAlgorithmVolumeSegmentation(image, resultImage);
-		segmentation.runAlgorithm();
-		
-//		for ( int z = 0; z < dimZ; z++ )
-//		{
-//			for ( int y = 0; y < dimY; y++ )
-//			{
-//				for ( int x = 0; x < dimX; x++ )
-//				{
-//					int count = 0;
-//					double centerValue = image.getFloat(x,y,z);
-//					double sum = 0;
-//					for ( int sampleZ = -15; sampleZ <= 15; sampleZ++ )
-//					{
-//						for ( int sampleY = -15; sampleY <= 15; sampleY++ )
-//						{
-//							for ( int sampleX = -15; sampleX <= 15; sampleX++ )
-//							{
-//								int sX = sampleX + x;
-//								int sY = sampleY + y;
-//								int sZ = sampleZ + z;
-//								
-//								if ( (sX >= 0) && (sX < dimX) &&
-//									 (sY >= 0) && (sY < dimY) &&
-//									 (sZ >= 0) && (sZ < dimZ)    )
-//								{
-//									float value = image.getFloat(sX,sY,sZ);
-//									sum += value;
-//									count++;
-//								}
-//							}
-//						}
-//					}
-//					sum /= (double)count;
-//					sum /= centerValue;
-//					resultImage.set(x,  y, z, (float)sum);
-//				}
-//			}
-//			System.err.println( z + " " + dimZ );
+//	public static void seamCellSegmentation( ModelImage image )
+//	{		
+////    	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+////    	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+////    	int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1; 
+//    	
+//
+//		String imageName = image.getImageName();
+//		if (imageName.contains("_clone")) {
+//			imageName = imageName.replaceAll("_clone", "");
 //		}
-		System.err.println( resultImage.getMin() + " " + resultImage.getMax() );
-		new ViewJFrameImage(resultImage);
-	}
+//		imageName = imageName + "_prob";
+//		final ModelImage resultImage = new ModelImage(image.getType(), image.getExtents(), imageName);
+//		JDialogBase.updateFileInfo(image, resultImage);
+//		
+//		OpenCLAlgorithmVolumeSegmentation segmentation = new OpenCLAlgorithmVolumeSegmentation(image, resultImage);
+//		segmentation.runAlgorithm();
+//		
+////		for ( int z = 0; z < dimZ; z++ )
+////		{
+////			for ( int y = 0; y < dimY; y++ )
+////			{
+////				for ( int x = 0; x < dimX; x++ )
+////				{
+////					int count = 0;
+////					double centerValue = image.getFloat(x,y,z);
+////					double sum = 0;
+////					for ( int sampleZ = -15; sampleZ <= 15; sampleZ++ )
+////					{
+////						for ( int sampleY = -15; sampleY <= 15; sampleY++ )
+////						{
+////							for ( int sampleX = -15; sampleX <= 15; sampleX++ )
+////							{
+////								int sX = sampleX + x;
+////								int sY = sampleY + y;
+////								int sZ = sampleZ + z;
+////								
+////								if ( (sX >= 0) && (sX < dimX) &&
+////									 (sY >= 0) && (sY < dimY) &&
+////									 (sZ >= 0) && (sZ < dimZ)    )
+////								{
+////									float value = image.getFloat(sX,sY,sZ);
+////									sum += value;
+////									count++;
+////								}
+////							}
+////						}
+////					}
+////					sum /= (double)count;
+////					sum /= centerValue;
+////					resultImage.set(x,  y, z, (float)sum);
+////				}
+////			}
+////			System.err.println( z + " " + dimZ );
+////		}
+//		System.err.println( resultImage.getMin() + " " + resultImage.getMax() );
+//		new ViewJFrameImage(resultImage);
+//	}
 	
 	
 	
