@@ -1629,10 +1629,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("sigma = " + sigma + "\n",
 					Preferences.DEBUG_ALGORITHM);
-			Preferences.debug("Chi-squared = " + fip.getChiSquared() + "\n",
-					Preferences.DEBUG_ALGORITHM);
-			Preferences.debug("Iterations = " + fip.getIterations() + "\n",
-					Preferences.DEBUG_ALGORITHM);
+			fip.dumpTestResults();
 			IntModelI0NuclearArea imod;
 			int routine = Integration2.DQAGE;
 			int key = 6;
@@ -2731,6 +2728,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("Iterations = " + nonlinmod.getIterations() + "\n",
 					Preferences.DEBUG_ALGORITHM);
+			int status = iv[1];
+            nonlinmod.statusMessageNL2sol(status, 2);
 			// Plot the intensity of the photobleached region with time
 			tfValues = new float[2][zDim];
 			pfValues = new float[2][zDim];
@@ -2796,6 +2795,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("Iterations = " + nlinmod2.getIterations() + "\n",
 					Preferences.DEBUG_ALGORITHM);
+			nlinmod2.dumpTestResults();
 
 			pfValues2 = new float[2][zDim];
 
@@ -7655,7 +7655,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			// evaluate the residuals[j] = ymodel[j] - ySeries[j] 
 			for (j = 0; j < meqn; j++) { 
 				r[j+1] = timeFunction[j] - yData[j];
-			    Preferences.debug("FitWholeNL2solModel residuals["+ (j+1) + "] = " + r[j+1] + "\n", Preferences.DEBUG_ALGORITHM); 
+			    //Preferences.debug("FitWholeNL2solModel residuals["+ (j+1) + "] = " + r[j+1] + "\n", Preferences.DEBUG_ALGORITHM); 
 			}
 		}
 
@@ -7925,9 +7925,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
 							 intensityFunction = 1.0 - (1.0 - a[1])*Math.exp(-diff*diff/(2.0*a[2]*a[2]));
 						 }
 						 residuals[i]= intensityFunction - yData[i]; 
-						 Preferences.debug("FitIntensityProfile residuals["+i+"] = " + residuals[i] + "\n", Preferences.DEBUG_ALGORITHM);
-						 Preferences.debug("intensityFunction = " + intensityFunction + " yData["+i+"] = " + yData[i] + "\n",
-								 Preferences.DEBUG_ALGORITHM);
+						 //Preferences.debug("FitIntensityProfile residuals["+i+"] = " + residuals[i] + "\n", Preferences.DEBUG_ALGORITHM);
+						 //Preferences.debug("intensityFunction = " + intensityFunction + " yData["+i+"] = " + yData[i] + "\n",
+								 //Preferences.DEBUG_ALGORITHM);
 						 }
 				} // if ((ctrl == -1) || (ctrl == 1))
 
@@ -8039,9 +8039,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					
 					 for (i = 0; i < timeFunction.length; i++) {
 						 residuals[i]= timeFunction[i] - yData[i]; 
-						 Preferences.debug("FitWholeNLConModel residuals["+i+"] = " + residuals[i] + "\n", Preferences.DEBUG_ALGORITHM);
-						 Preferences.debug("timeFunction["+i+"] = " + timeFunction[i] + " yData["+i+"] = " + yData[i] + "\n",
-								 Preferences.DEBUG_ALGORITHM);
+						 //Preferences.debug("FitWholeNLConModel residuals["+i+"] = " + residuals[i] + "\n", Preferences.DEBUG_ALGORITHM);
+						 //Preferences.debug("timeFunction["+i+"] = " + timeFunction[i] + " yData["+i+"] = " + yData[i] + "\n",
+								 //Preferences.DEBUG_ALGORITHM);
 						 }
 				} // if ((ctrl == -1) || (ctrl == 1))
 
