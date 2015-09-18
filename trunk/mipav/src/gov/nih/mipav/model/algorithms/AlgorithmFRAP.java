@@ -255,9 +255,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
 	/** DOCUMENT ME! */
 	private boolean createRegImage;
+	
+	private boolean findDiffusion;
 
 	/** Diffusion constant in um*um/sec. */
-	private float diffusion;
+	private double diffusion;
 
 	/** DOCUMENT ME! */
 	private int firstSliceNum;
@@ -305,6 +307,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
 	
 	private double sigma;
 	
+	private int numParam;
+
+	
 	private double alpha[] = new double[500];
 	private double avgJ0[] = new double[500];
 	private double RN2J02[] = new double[500];
@@ -347,12 +352,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
 	 *            values and output the minimum
 	 * @param diffusion
 	 *            diffusion constant in um*um/sec
+	 * @param findDiffusion
 	 */
 	public AlgorithmFRAP(ModelImage srcImg, boolean useRed, boolean useGreen,
 			boolean useBlue, int firstSliceNum, int photoBleachedIndex,
 			int wholeOrganIndex, int backgroundIndex, int model,
 			boolean register, int cost, boolean createRegImage,
-			boolean paramVary, float diffusion) {
+			boolean paramVary, double diffusion, boolean findDiffusion) {
 
 		super(null, srcImg);
 
@@ -369,6 +375,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		this.createRegImage = createRegImage;
 		this.paramVary = paramVary;
 		this.diffusion = diffusion;
+		this.findDiffusion = findDiffusion;
 	}
 
 	// ~ Methods
@@ -491,7 +498,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		String dataString = "";
 		int k;
 		boolean testBesselZero = false;
-
+		
 		if (testBesselZero) {
 			//testJYZO();
 			testComputeJ1();
@@ -2636,6 +2643,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			} // if (paramVary)
 		} // if (model == NARROW_BAND_2D)
 		else if (model == CIRCLE_2D) {
+			if (findDiffusion) {
+				numParam = 3;
+			}
+			else {
+				numParam = 2;
+			}
 			double[] kons = new double[] { -5.0, -2.5, 0.0, 2.5, 5.0 };
 			double[] koffs = new double[] { -5.0, -2.5, 0.0, 2.5, 5.0 };
 			double[] initial_kon = new double[26];
@@ -2652,6 +2665,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
 			initial_kon[25] = 1.0E7;
 			initial_koff[25] = 1.0E-7;
+			double initial_diffusion;
+			if (findDiffusion) {
+				initial_diffusion = 1.0;
+			}
+			else {
+				initial_diffusion = diffusion;
+			}
 
 			FitWholeNL2solModel nonlinmod;
 			FitWholeNLConModel nlinmod2;
@@ -2660,7 +2680,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			double[] sses = new double[26];
 			double minsses = Double.MAX_VALUE;
 			int kmin = 0;
-			initial = new double[2];
+			initial = new double[numParam];
 
 			double[] residuals = null;
 
@@ -2669,7 +2689,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 						+ " of 26 grid search runs");
 				fireProgressStateChanged(50 + k);
 				fitFullModel(timeFunction, tValues, initial_kon[k],
-						initial_koff[k]);
+						initial_koff[k], initial_diffusion);
 
 				for (i = 0; i < timeFunction.length; i++) {
 					fitR[i] = timeFunction[i] - pIntensity[i];
@@ -2684,6 +2704,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
 			initial[0] = initial_kon[kmin];
 			initial[1] = initial_koff[kmin];
+			if (numParam == 3) {
+			    initial[2] = initial_diffusion;
+			}
 			Preferences.debug("Best of 26 trials yields initial guesses of:\n",
 					Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("Best initial kon guess = " + initial[0] + "\n",
@@ -2692,12 +2715,15 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					Preferences.DEBUG_ALGORITHM);
 
 			fireProgressStateChanged("Performing NL2sol nonlinear fit");
-			double xp[] = new double[3];
+			double xp[] = new double[numParam+1];
 			xp[1] = initial[0];
 			xp[2] = initial[1];
-			int iv[] = new int[63]; // 61 + number of coefficients
-			int vLength = 94 + tValues.length * 2 + 3 * tValues.length + 2
-					* (3 * 2 + 33) / 2;
+			if (findDiffusion) {
+			    xp[3] = initial_diffusion;
+			}
+			int iv[] = new int[61 + numParam]; // 61 + number of coefficients
+			int vLength = 94 + tValues.length * numParam + 3 * tValues.length + numParam
+					* (3 * numParam + 33) / 2;
 			double v[] = new double[vLength];
 			boolean useAnalyticJacobian = false;
 			nonlinmod = new FitWholeNL2solModel(tValues.length, tValues, pIntensity, xp,
@@ -2709,6 +2735,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					"kon = " + xp[1] + "\n");
 			ViewUserInterface.getReference().setDataText(
 					"koff = " + xp[2] + "\n");
+			if (findDiffusion) {
+				ViewUserInterface.getReference().setDataText(
+						"diffusion = " + xp[3] + "\n");
+			}
 			ViewUserInterface.getReference().setDataText(
 					"Chi-squared = " + nonlinmod.getChiSquared() + "\n");
 			ViewUserInterface.getReference().setDataText(
@@ -2716,6 +2746,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			dataString += "NL2sol nonlinear fit\n";
 			dataString += "kon = " + xp[1] + "\n";
 			dataString += "koff = " + xp[2] + "\n";
+			if (findDiffusion) {
+			    dataString += "diffusion = " + xp[3] + "\n";
+			}
 			dataString += "Chi-squared = " + nonlinmod.getChiSquared() + "\n";
 			dataString += "Iterations = " + nonlinmod.getIterations() + "\n";
 			Preferences.debug("NL2sol nonlinear fit\n",
@@ -2724,12 +2757,16 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("koff = " + xp[2] + "\n",
 					Preferences.DEBUG_ALGORITHM);
+			if (findDiffusion) {
+				Preferences.debug("diffusion = " + xp[3] + "\n",
+						Preferences.DEBUG_ALGORITHM);
+			}
 			Preferences.debug("Chi-squared = " + nonlinmod.getChiSquared() + "\n",
 					Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("Iterations = " + nonlinmod.getIterations() + "\n",
 					Preferences.DEBUG_ALGORITHM);
 			int status = iv[1];
-            nonlinmod.statusMessageNL2sol(status, 2);
+            nonlinmod.statusMessageNL2sol(status, numParam);
 			// Plot the intensity of the photobleached region with time
 			tfValues = new float[2][zDim];
 			pfValues = new float[2][zDim];
@@ -2776,6 +2813,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					"kon = " + params[0] + "\n");
 			ViewUserInterface.getReference().setDataText(
 					"koff = " + params[1] + "\n");
+			if (findDiffusion) {
+				ViewUserInterface.getReference().setDataText(
+						"diffusion = " + params[2] + "\n");
+			}
 			ViewUserInterface.getReference().setDataText(
 					"Chi-squared = " + nlinmod2.getChiSquared() + "\n");
 			ViewUserInterface.getReference().setDataText(
@@ -2783,6 +2824,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			dataString += "ELSUNC nonlinear fit\n";
 			dataString += "kon = " + params[0] + "\n";
 			dataString += "koff = " + params[1] + "\n";
+			if (findDiffusion) {
+			    dataString += "diffusion = " + params[2] + "\n";
+			}
 			dataString += "Chi-squared = " + nlinmod2.getChiSquared() + "\n";
 			dataString += "Iterations = " + nlinmod2.getIterations() + "\n";
 			Preferences.debug("ELSUNC nonlinear fit\n",
@@ -2791,6 +2835,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("koff = " + params[1] + "\n",
 					Preferences.DEBUG_ALGORITHM);
+			if (findDiffusion) {
+			    Preferences.debug("diffusion = " + params[2] + "\n",
+					    Preferences.DEBUG_ALGORITHM);
+			}
 			Preferences.debug("Chi-squared = " + nlinmod2.getChiSquared() + "\n",
 					Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("Iterations = " + nlinmod2.getIterations() + "\n",
@@ -2860,7 +2908,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					for (x = 0; x <= 200; x++) {
 						index = indexY + x;
 						kon = 0.02 * params[0] * Math.pow(2500.0, 0.005 * x);
-						fitFullModel(timeFunction, tValues, kon, koff);
+						fitFullModel(timeFunction, tValues, kon, koff, initial_diffusion);
 						
 
 						for (i = 0; i < timeFunction.length; i++) {
@@ -6385,7 +6433,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 	}
 
 	
-		private void fitFullModel(double timeFunction[], double[] time, double kon, double koff) {
+		private void fitFullModel(double timeFunction[], double[] time, double kon, double koff, double diffusion) {
 			int k, t;
 			double U[] = new double[500];
 			double W[] = new double[500];
@@ -7598,15 +7646,15 @@ public class AlgorithmFRAP extends AlgorithmBase {
 				boolean useAnalyticJacobian) {
 
 			// nPoints data points
-			// 2 coefficients
-			// x[] is a length 3 initial guess at input and best estimate at
+			// numParam coefficients
+			// x[] is a length numParam+1 initial guess at input and best estimate at
 			// output
 			// data starts at x[1]
-			// iv[] has length 61 + number of coefficients = 63
-			// v[] has length at least 94 + n*p + 3*n + p*(3*p+33)/2
+			// iv[] has length 61 + numParam
+			// v[] has length at least 94 + n*numParam + 3*n + numParam*(3*numParam+33)/2
 			// uiparm, integer parameter array = null
 			// urparm, double parameter array = null
-			super(nPoints, 2, x, iv, v, useAnalyticJacobian, null, null);
+			super(nPoints, numParam, x, iv, v, useAnalyticJacobian, null, null);
 			this.x = x;
 			this.iv = iv;
 			this.v = v;
@@ -7636,6 +7684,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("koff " + String.valueOf(x[2]) + "\n",
 					Preferences.DEBUG_ALGORITHM);
+			if (numParam == 3) {
+				Preferences.debug("diffusion " + String.valueOf(x[3]) + "\n",
+						Preferences.DEBUG_ALGORITHM);	
+			}
 		}
 
 		public void calcr(final int meqn, final int nvar, final double x[],
@@ -7651,7 +7703,18 @@ public class AlgorithmFRAP extends AlgorithmBase {
             	nf[0] = -1;
             	return;
             }
-			fitFullModel(timeFunction, xData, x[1], x[2]);
+            if (numParam == 3) {
+            	if (x[3] < 0.0) {
+            		nf[0] = -1;
+            		return;
+            	}
+            }
+            if (numParam == 3) {
+			    fitFullModel(timeFunction, xData, x[1], x[2], x[3]);
+            }
+            else {
+            	fitFullModel(timeFunction, xData, x[1], x[2], diffusion);
+            }
 			// evaluate the residuals[j] = ymodel[j] - ySeries[j] 
 			for (j = 0; j < meqn; j++) { 
 				r[j+1] = timeFunction[j] - yData[j];
@@ -7967,7 +8030,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 		public FitWholeNLConModel(int nPoints, double[] xData, float[] yData,
 				double[] initial) {
 
-			super(nPoints, 2);
+			super(nPoints, numParam);
 			this.xData = xData;
 			this.yData = yData;
 
@@ -7985,9 +8048,18 @@ public class AlgorithmFRAP extends AlgorithmBase {
 			// Note that bl[1] = 1.0E-20 still resulted in koff = 0.0;
 			bl[1] = 1.0E-15;
 			bu[1] = 1.0E20;
+			
+			if (numParam == 3) {
+				// Constrain diffusion
+				bl[2] = 0.0;
+				bu[2] = 200.0;
+			}
 
 			gues[0] = initial[0];
 			gues[1] = initial[1];
+			if (numParam == 3) {
+			   gues[2] = initial[2];
+			}
 		}
 
 		/**
@@ -8012,6 +8084,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
 					Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("koff " + String.valueOf(a[1]) + "\n",
 					Preferences.DEBUG_ALGORITHM);
+			if (numParam == 3) {
+				Preferences.debug("diffusion " + String.valueOf(a[2]) + "\n",
+						Preferences.DEBUG_ALGORITHM);	
+			}
 		}
 
 		/**
@@ -8035,7 +8111,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
 				ctrl = ctrlMat[0];
 
 				if ((ctrl == -1) || (ctrl == 1)) {
-					fitFullModel(timeFunction,xData, a[0], a[1]);
+					if (numParam == 3) {
+					    fitFullModel(timeFunction,xData, a[0], a[1], a[2]);
+					}
+					else {
+						fitFullModel(timeFunction, xData, a[0], a[1], diffusion);
+					}
 					
 					 for (i = 0; i < timeFunction.length; i++) {
 						 residuals[i]= timeFunction[i] - yData[i]; 
