@@ -4,12 +4,10 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
 import java.util.*;
 
 import javax.swing.*;
@@ -97,7 +95,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
     private boolean createRegImage = false;
 
     /** DOCUMENT ME! */
-    private float diffusion = 0.0f;
+    private double diffusion = 0.0;
 
     /** DOCUMENT ME! */
     private FileInfoLSM fileInfo;
@@ -217,6 +215,10 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
 
     /** DOCUMENT ME! */
     private int xPos, yPos;
+    
+    private JCheckBox findDiffusionCheckBox;
+    
+    private boolean findDiffusion = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -294,6 +296,8 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
                 wholeOrganCheckBox.setEnabled(false);
                 labelDiffusion.setEnabled(false);
                 textDiffusion.setEnabled(false);
+                findDiffusionCheckBox.setSelected(false);
+                findDiffusionCheckBox.setEnabled(false);
             } else if ((!bandButton.isSelected()) && (circleButton.isSelected()) && (!oneDButton.isSelected()) &&
                            (!singleExpButton.isSelected())) {
             	wholeOrganButton.setText("Add required whole nucleus VOI");
@@ -302,19 +306,28 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
                 wholeOrganCheckBox.setEnabled(false);
                 labelDiffusion.setEnabled(true);
                 textDiffusion.setEnabled(true);
+                findDiffusionCheckBox.setEnabled(true);
+                findDiffusionCheckBox.setSelected(true);
             } else if ((!bandButton.isSelected()) && (!circleButton.isSelected()) && (oneDButton.isSelected()) &&
                            (!singleExpButton.isSelected())) {
             	wholeOrganButton.setText("Add optional whole nucleus VOI");
                 wholeOrganCheckBox.setEnabled(true);
                 labelDiffusion.setEnabled(false);
                 textDiffusion.setEnabled(false);
+                findDiffusionCheckBox.setSelected(false);
+                findDiffusionCheckBox.setEnabled(false);
             } else if ((!bandButton.isSelected()) && (!circleButton.isSelected()) && (!oneDButton.isSelected()) &&
                            (singleExpButton.isSelected())) {
             	wholeOrganButton.setText("Add optional whole nucleus VOI");
                 wholeOrganCheckBox.setEnabled(true);
                 labelDiffusion.setEnabled(false);
                 textDiffusion.setEnabled(false);
+                findDiffusionCheckBox.setSelected(false);
+                findDiffusionCheckBox.setEnabled(false);
             }
+        } else if (source == findDiffusionCheckBox) {
+        	textDiffusion.setEnabled(!findDiffusionCheckBox.isSelected());
+        	textDiffusion.setEnabled(!findDiffusionCheckBox.isSelected());
         } else {
             super.actionPerformed(event);
         }
@@ -461,7 +474,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
             // Make algorithm
             frapAlgo = new AlgorithmFRAP(image, useRed, useGreen, useBlue, firstSliceNum, photoBleachedIndex,
                                          wholeOrganIndex, backgroundIndex, model, register, cost, createRegImage,
-                                         paramVary, diffusion);
+                                         paramVary, diffusion, findDiffusion);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -943,6 +956,14 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         gbc6.weightx = 1;
         gbc6.insets = new Insets(3, 3, 3, 3);
         gbc6.fill = GridBagConstraints.HORIZONTAL; 
+        
+        findDiffusionCheckBox = new JCheckBox("Find diffusion constant", false);
+        findDiffusionCheckBox.setForeground(Color.black);
+        findDiffusionCheckBox.setFont(serif12);
+        findDiffusionCheckBox.addActionListener(this);
+        gbc6.gridx = 0;
+        gbc6.gridy = 0;
+        paramPanel.add(findDiffusionCheckBox, gbc6);
 
         labelDiffusion = new JLabel("Diffusion constant (um*um/sec)");
         labelDiffusion.setForeground(Color.black);
@@ -955,7 +976,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         }
 
         gbc6.gridx = 0;
-        gbc6.gridy = 0;
+        gbc6.gridy = 1;
         paramPanel.add(labelDiffusion, gbc6);
 
         textDiffusion = new JTextField(10);
@@ -1148,16 +1169,20 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         }
 
         if (model == CIRCLE_2D) {
+        	
+        	findDiffusion = findDiffusionCheckBox.isSelected();
 
-            tmpStr = textDiffusion.getText();
-
-            if (testParameter(tmpStr, 0.0, 1.0E30)) {
-                diffusion = Float.valueOf(tmpStr).floatValue();
-            } else {
-                textDiffusion.requestFocus();
-                textDiffusion.selectAll();
-
-                return false;
+            if (!findDiffusion) {
+	        	tmpStr = textDiffusion.getText();
+	
+	            if (testParameter(tmpStr, 0.0, 200.0)) {
+	                diffusion = Double.valueOf(tmpStr).doubleValue();
+	            } else {
+	                textDiffusion.requestFocus();
+	                textDiffusion.selectAll();
+	
+	                return false;
+	            }
             }
         } // if (model == CIRCLE_2D)
 
