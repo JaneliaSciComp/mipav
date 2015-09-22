@@ -1178,7 +1178,7 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
     					setCompleted(false);
     					return;
     				}
-            	    if ((downSampleXY < 1.0f) || (downSampleZ < 1.0f) && (!displayDownSampleImage)) {
+            	    if (((downSampleXY < 1.0f) || (downSampleZ < 1.0f)) && (!displayDownSampleImage)) {
             	    	presentImage.disposeLocal();
             	    	presentImage = null;
             	    }
