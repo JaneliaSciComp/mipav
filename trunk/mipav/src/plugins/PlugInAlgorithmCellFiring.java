@@ -115,42 +115,7 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
             final boolean clip = true;
             final boolean pad = false;
             final boolean transformVOI = cropImage;
-            if (cropImage) {
-            	// Propagate a single 2D slice VOI to all slices so it will not be removed by down sampling
-            	outputTextArea.append("Propagating 2D VOI to all slices" + "\n");
-                VOIVector VOIs = presentImage.getVOIs();
-	            if ((VOIs != null) && (VOIs.size() > 0)) {
-	            	VOI rectVOI = VOIs.get(0);
-	            	if (rectVOI != null) {
-	            		int xBounds[] = new int[2];
-	            		int yBounds[] = new int[2];
-	            		int zBounds[] = new int[2];
-	            	    rectVOI.getBounds(xBounds, yBounds, zBounds);
-	            	    VOIBaseVector curves = rectVOI.getCurves();
-	            	    VOIBase vBase = curves.get(0);
-	            	    int nPoints = vBase.size();
-	            	    float xArr[] = new float[nPoints];
-	            	    float yArr[] = new float[nPoints];
-	            	    float zArr[] = new float[nPoints];
-	            	    for (int i = 0; i < nPoints; i++) {
-	            	    	xArr[i] = vBase.get(i).X;
-	            	    	yArr[i] = vBase.get(i).Y;
-	            	    }
-	            	    for (int z = 0; z < zBounds[0]; z++) {
-	            	        for (int i = 0; i < nPoints; i++) {
-	            	            zArr[i] = z;	
-	            	        }
-	            	        rectVOI.importCurve(xArr, yArr, zArr);
-	            	    }
-	            	    for (int z = zBounds[1]+1; z < presentImage.getExtents()[2]; z++) {
-	            	        for (int i = 0; i < nPoints; i++) {
-	            	            zArr[i] = z;	
-	            	        }
-	            	        rectVOI.importCurve(xArr, yArr, zArr);
-	            	    }
-	            	}
-	            }
-            } // if (cropImage)
+            
             final boolean doCenter = false;
             final Vector3f center = new Vector3f();
             final float fillValue = 0.0f;
@@ -902,60 +867,61 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
 
                             return;
                         }
+                        
                         ModelImage maskImage;
-                        if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
+                        imgBuf = null;
+                        imgBuf = new short[iXdim * iYdim];
+                        if ((downSampleXY < 1.0f) && (transformVOI) && (srcImage.getVOIs().size() != 0)) {
                         	outputTextArea.append("Downsampling VOI" + "\n");
-                            int z;
-                            int X0pos, Y0pos, Z0pos;
-                    
+                            int X0pos, Y0pos;
+                            double temp1, temp2;
+                            int roundX, roundY;
                             int index2;
                             int indexC;
-                            sliceSize = iXdim * iYdim;
-                            final int length = sliceSize * iZdim;
+                            final int length = iXdim * iYdim;
                             int index2Size;
-                            VOIBaseVector curves = null;
+                            int inputExtents[] = new int[2];
+                            inputExtents[0] = iXdim;
+                            inputExtents[1] = iYdim;
+                            int outputExtents[] = new int[2];
+                            outputExtents[0] = oXdim;
+                            outputExtents[1] = oYdim;
 
-                            ModelImage tmpMask = null;
+                            ModelImage tmpMask;
                             VOIVector voiVector;
 
                             T00 = xfrmt.M00;
                             T01 = xfrmt.M01;
-                            T02 = xfrmt.M02;
-                            T03 = xfrmt.M03;
+                            T02 = xfrmt.M03;
                             T10 = xfrmt.M10;
                             T11 = xfrmt.M11;
-                            T12 = xfrmt.M12;
-                            T13 = xfrmt.M13;
-                            T20 = xfrmt.M20;
-                            T21 = xfrmt.M21;
-                            T22 = xfrmt.M22;
-                            T23 = xfrmt.M23;
+                            T12 = xfrmt.M13;
 
+                            // Move VOI to slice 0
                             voiVector = srcImage.getVOIs();
+                            VOI rectVOI = voiVector.get(0);
+                            VOIBaseVector curves = rectVOI.getCurves();
+    	            	    VOIBase vBase = curves.get(0);
+    	            	    int nPoints = vBase.size();
+    	            	    float xArr[] = new float[nPoints];
+    	            	    float yArr[] = new float[nPoints];
+    	            	    float zArr[] = new float[nPoints];
+    	            	    for (i = 0; i < nPoints; i++) {
+    	            	    	xArr[i] = vBase.get(i).X;
+    	            	    	yArr[i] = vBase.get(i).Y;
+    	            	    }
+	            	        for (i = 0; i < nPoints; i++) {
+	            	            zArr[i] = 0;	
+	            	        }
+	            	        rectVOI.importCurve(xArr, yArr, zArr);
 
-                            if (voiVector.size() == 0) {
-                                return;
-                            }
-
-                            indexC = 0;
-                            invXRes = 1 / iXres;
-                            invYRes = 1 / iYres;
-                            invZRes = 1 / iZres;
-
+                            indexC = -1;
                             try {
-                                maskImage = new ModelImage(ModelStorageBase.SHORT, srcImage.getExtents(), "Short Image");
-                                tmpMask = new ModelImage(ModelStorageBase.SHORT, downSampleImage.getExtents(), null);
+                                maskImage = new ModelImage(ModelStorageBase.SHORT, inputExtents, "Short Image");
+                                tmpMask = new ModelImage(ModelStorageBase.SHORT, outputExtents, null);
                             } catch (final OutOfMemoryError error) {
                                 throw error;
                             }
-                            for (z = 0; z < oZdim; z++) {
-                                for (j = 0; j < oYdim; j++) {
-                                    for (i = 0; i < oXdim; i++) {
-                                        tmpMask.set(i, j, z, fillValue);
-                                    }
-                                }
-                            }
-
                             for (index = 0; index < voiVector.size(); index++) {
                                 final VOI presentVOI = voiVector.elementAt(index);
                                 if (presentVOI.getCurveType() == VOI.CONTOUR) {
@@ -964,8 +930,8 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
                                 } else {
                                     index2Size = 1;
                                 }
-
                                 for (index2 = 0; index2 < index2Size; index2++) {
+                                    indexC++;
 
                                     maskImage.clearMask();
 
@@ -985,6 +951,7 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
 
                                     try {
                                         maskImage.exportData(0, length, imgBuf); // locks and releases lock
+
                                     } catch (final IOException error) {
                                         displayError("Algorithm VOI transform: Image(s) locked");
                                         setCompleted(false);
@@ -992,21 +959,21 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
                                         return;
                                     }
 
-                                    for (k = 0; (k < oZdim) && !threadStopped; k++) {
+                                    for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
                                         if (pad) {
-                                            kAdj = k - margins[2];
+                                            iAdj = i - margins[0];
                                         } else {
-                                            kAdj = k;
+                                            iAdj = i;
                                         }
 
-                                        kmm = kAdj * oZres;
-                                        k1 = (kmm * T02) + T03;
-                                        k2 = (kmm * T12) + T13;
-                                        k3 = (kmm * T22) + T23;
+                                        imm = iAdj * oXres;
+                                        temp1 = (imm * T00) + T02;
+                                        temp2 = (imm * T10) + T12;
 
                                         for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
+                                            // transform i,j
                                             if (pad) {
                                                 jAdj = j - margins[1];
                                             } else {
@@ -1014,78 +981,56 @@ public class PlugInAlgorithmCellFiring extends AlgorithmBase {
                                             }
 
                                             jmm = jAdj * oYres;
-                                            j1 = (jmm * T01) + k1;
-                                            j2 = (jmm * T11) + k2;
-                                            j3 = (jmm * T21) + k3;
+                                            value = fillValue; // if transformed out of bounds.
+                                            X = (temp1 + (jmm * T01)) / iXres;
+                                            roundX = (int) (X + 0.5);
 
-                                            for (i = 0; (i < oXdim) && !threadStopped; i++) {
+                                            if ( (X >= -0.5) && (X < iXdim)) {
+                                                Y = (temp2 + (jmm * T11)) / iYres;
+                                                roundY = (int) (Y + 0.5);
 
-                                                // transform i,j,k
-                                                if (pad) {
-                                                    iAdj = i - margins[0];
-                                                } else {
-                                                    iAdj = i;
-                                                }
+                                                if ( (Y >= -0.5) && (Y < iYdim)) {
+                                                    X0pos = Math.min(roundX, iXdim - 1);
+                                                    Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
+                                                    value = imgBuf[Y0pos + X0pos];
+                                                } // end if Y in bounds
+                                            } // end if X in bounds
 
-                                                imm = iAdj * oXres;
-                                                value = fillValue; // if voxel is transformed out of bounds
-                                                X = (j1 + (imm * T00)) * invXRes;
-
-                                                if ( (X >= -0.5) && (X < iXdim)) {
-                                                    Y = (j2 + (imm * T10)) * invYRes;
-
-                                                    if ( (Y >= -0.5) && (Y < iYdim)) {
-                                                        Z = (j3 + (imm * T20)) * invZRes;
-
-                                                        if ( (Z >= -0.5) && (Z < iZdim)) {
-                                                            X0pos = Math.min((int) (X + 0.5), iXdim - 1);
-                                                            Y0pos = Math.min((int) (Y + 0.5), iYdim - 1) * iXdim;
-                                                            Z0pos = Math.min((int) (Z + 0.5), iZdim - 1) * sliceSize;
-                                                            value = imgBuf[Z0pos + Y0pos + X0pos];
-                                                        } // end if Z in bounds
-                                                    } // end if Y in bounds
-                                                } // end if X in bounds
-
-                                                if (value != fillValue) {
-                                                    tmpMask.set(i, j, k, value);
-                                                }
-                                            } // end for i
+                                            tmpMask.set(i, j, value);
                                         } // end for j
-                                    } // end for k
+                                    } // end for i
 
                                     if (threadStopped) {
                                         return;
                                     }
 
                                     // ******* Make algorithm for VOI extraction.
-                                    if ( (curves != null) && (index2 == curves.size() - 1)) {
-                                        indexC++;
-                                        tmpMask.calcMinMax();
+                                    tmpMask.calcMinMax();
 
-                                        AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
+                                    AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
 
-                                        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
-                                        VOIExtAlgo.run();
-                                        VOIExtAlgo.finalize();
-                                        VOIExtAlgo = null;
-                                        downSampleImage.addVOIs(tmpMask.getVOIs());
-                                        tmpMask.resetVOIs();
-                                        for (z = 0; z < oZdim; z++) {
-                                            for (j = 0; j < oYdim; j++) {
-                                                for (i = 0; i < oXdim; i++) {
-                                                    tmpMask.set(i, j, z, fillValue);
-                                                }
-                                            }
+                                    VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
+                                    VOIExtAlgo.run();
+                                    VOIExtAlgo.finalize();
+                                    VOIExtAlgo = null;
+                                    
+                                    downSampleImage.addVOIs(tmpMask.getVOIs());
+                                    tmpMask.resetVOIs();
+                                    for (j = 0; j < oYdim; j++) {
+                                        for (i = 0; i < oXdim; i++) {
+                                            tmpMask.set(i, j, fillValue);
                                         }
                                     }
                                 } // for (index2 = 0; index2 < curves.size(); index2++)
                             } // for (index = 0; index < voiVector.size(); index++)
-                            maskImage.disposeLocal();
-                            maskImage = null;
                             tmpMask.disposeLocal();
                             tmpMask = null;
+                            maskImage.disposeLocal();
+                            maskImage = null;
                             imgBuf = null;
                         }
+                        
+                       
                     } 
                 } // if (DIM == 3)
             } // end of if (bufferFactor == 1)
