@@ -36,6 +36,7 @@ import gov.nih.mipav.view.ViewUserInterface;
  * With a  128 by 128 image dsaupd -> dsaup2 -> second dsaitr call: At
  * ge.dgemv('N', n, dsaitr_j, -one, V, ldv, buffer2, 1, one, resid, 1);
  * very large finite numbers generate infinities in resid.
+ * Scaling intensity values to be all less than one did not prevent this.
  */
 
 public class AlgorithmGlobalPb extends AlgorithmBase {
