@@ -81,12 +81,8 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			mouseSelection3D = voiMenuBuilder.isMenuItemSelected("Edit Annotations");
 			doAnnotations = true;
 		}
-		else if ( command.equals("OpenAnnotations") ) {
-			// get the voi directory
-			String fileName = null;
-			String directory = null;
-			String voiDir = null;
-
+		else if ( command.equals("OpenAnnotations") )
+		{
 			final JFileChooser chooser = new JFileChooser();
 
 			if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
@@ -100,11 +96,11 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			final int returnVal = chooser.showOpenDialog(m_kParent.getFrame());
 
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
-				fileName = chooser.getSelectedFile().getName();
-				directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+				String fileName = chooser.getSelectedFile().getName();
+				String directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
 				Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
+				openAnnotations(directory, fileName);
 			}
-			openAnnotations(directory, fileName);
 		} 
 		else if ( command.equals("SaveAnnotations") ) {
 			if ( latticeModel != null )
@@ -154,12 +150,8 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 				}
 			}
 		} 
-		else if ( command.equals("OpenLattice") ) {
-			// get the voi directory
-			String fileName = null;
-			String directory = null;
-			String voiDir = null;
-
+		else if ( command.equals("OpenLattice") )
+		{
 			final JFileChooser chooser = new JFileChooser();
 
 			if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
@@ -173,25 +165,10 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			final int returnVal = chooser.showOpenDialog(m_kParent.getFrame());
 
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
-				fileName = chooser.getSelectedFile().getName();
-				directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+				String fileName = chooser.getSelectedFile().getName();
+				String directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
 				Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
-			}
-
-			if (fileName != null) {
-				VOIVector lattice = new VOIVector();
-				voiDir = new String(directory + fileName + File.separator);
-				loadAllVOIsFrom(voiDir, false, lattice, false);
-
-				if ( latticeModel != null )
-				{
-					saveVOIs("loadLattice");
-					latticeModel.setLattice( lattice.elementAt(0) );
-				}
-				else
-				{
-					latticeModel = new LatticeModel( m_kImageA, lattice.elementAt(0) );
-				}
+				openLattice(directory, fileName);
 			}
 		} 
 		else if ( command.equals("AddLattice") ) {
@@ -278,13 +255,6 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 		return 0;
 	}
-	
-	public void addAnnotations()
-	{
-		mouse3D = true;
-		mouseSelection3D = false;
-		doAnnotations = true;
-	}
 
 	public void editAnnotations()
 	{
@@ -293,22 +263,58 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		doAnnotations = true;
 	}
 	
+	public void editLattice()
+	{
+		mouse3D = false;
+		mouseSelection3D = true;
+		if ( latticeModel != null )
+		{
+			latticeModel.clearAddLeftRightMarkers();
+		}
+		doAnnotations = false;
+	}
+	
+	public void openLattice( String directory, String fileName )
+	{
+		if (fileName != null)
+		{
+			VOIVector lattice = new VOIVector();
+			String voiDir = new String(directory + fileName + File.separator);
+			loadAllVOIsFrom(voiDir, false, lattice, false);
+			setLattice(lattice);
+		}
+	}
+	
+	public void saveLattice(String directory, String fileName)
+	{
+		if ( latticeModel != null )
+		{
+			latticeModel.saveLattice( directory, fileName );
+		}
+	}
+	
+	public void setLattice( VOIVector lattice )
+	{
+		if ( latticeModel != null )
+		{
+			saveVOIs("loadLattice");
+			latticeModel.setLattice( lattice.elementAt(0) );
+		}
+		else
+		{
+			latticeModel = new LatticeModel( m_kImageA, lattice.elementAt(0) );
+		}		
+	}
+	
 	public void openAnnotations( String directory, String fileName )
 	{
-		if (fileName != null) {
+		if (fileName != null)
+		{
 			VOIVector annotations = new VOIVector();
 			String voiDir = new String(directory + fileName + File.separator);
 			loadAllVOIsFrom(voiDir, false, annotations, true);
 
-			if ( latticeModel != null )
-			{
-				saveVOIs("loadAnnotations");
-				latticeModel.setAnnotations( annotations.elementAt(0) );
-			}
-			else
-			{
-				latticeModel = new LatticeModel( m_kImageA, annotations.elementAt(0), true );
-			}
+			setAnnotations(annotations);
 		}
 	}
 	
@@ -370,7 +376,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			return modifyAnnotations(startPt, endPt, pt, rightMouse);
 		}
 		modifyLattice(startPt, endPt, pt);
-		return false;
+		return true;
 	}
 	
 	public void deleteSelectedPoint()

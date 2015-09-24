@@ -421,7 +421,18 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		 fX = Math.min(fX, 1 );
 		 float fY = Math.max(0, (float)kEvent.getY() / (float) GetHeight() );
 		 fY = Math.min(fY, 1 );
-		 setWindowLevel( fX,  fY, m_bFirstDrag );
+
+		 float min = (float) m_kVolumeImageA.GetImage().getMin();
+		 float max = (float) m_kVolumeImageA.GetImage().getMax();
+		 TransferFunction kTransfer = new TransferFunction();
+		 kTransfer.removeAll();
+		 kTransfer.addPoint(min, 255);
+		 kTransfer.addPoint((min + fX * ((max - min) * 2.0f / 3.0f)), 255 * fY);
+		 kTransfer.addPoint((min + ((max - min) * 2.0f / 3.0f)), 255 * 0.333f);
+		 kTransfer.addPoint(max, 0);
+		 m_kVolumeImageA.UpdateImages(kTransfer, 0, null);		 
+		 
+//		 setWindowLevel( fX,  fY, m_bFirstDrag );
 		 m_bFirstDrag = false;
 	 }
 	 

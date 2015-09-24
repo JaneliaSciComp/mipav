@@ -129,6 +129,12 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 	private VolumeTriPlanarInterface triVolume;
 	private VOIVector annotationList;
 
+	public static final String autoSeamCellSegmentationOutput = new String("seam_cells");
+	public static final String editSeamCellOutput = new String("seam_cell_final");
+	public static final String autoLatticeGenerationOutput = new String("lattice_");
+	public static final String editLatticeOutput = new String("lattice_final");
+	public static final String editAnnotationOutput = new String("annotation_final");
+	
 	public PlugInDialogWormLatticeStraighten() {}
 
 	public PlugInDialogWormLatticeStraighten(boolean modal)
@@ -191,16 +197,16 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			if ( segmentSeamCells.isSelected() )
 			{
 //				segmentOutline();
-				segmentKMeans();
+				segmentSeamCells(includeRange, baseFileDir, baseFileNameText.getText() );
 //				seamCellInfo();
 			}
 			if ( buildLattice.isSelected() )
 			{
-				buildLattice();
+				buildLattice( includeRange,  baseFileDir, baseFileNameText.getText() );
 			}
 			if ( latticeStraighten.isSelected() )
 			{
-				latticeStraighten();
+				latticeStraighten( includeRange,  baseFileDir, baseFileNameText.getText() );
 			}
 			if ( calcStatistics.isSelected() )
 			{
@@ -382,32 +388,33 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 	}
 
 
-	private void segmentKMeans()
+	public static void segmentSeamCells( final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName )
 	{
+		ModelImage image = null; 
 		if ( includeRange != null )
 		{			
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
-				String fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + ".tif";
+				String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
 				File voiFile = new File(baseFileDir + File.separator + fileName);
 				if ( voiFile.exists() )
 				{
 //					System.err.print( fileName + "   " );
 					FileIO fileIO = new FileIO();
-					if(wormImageA != null) {
+					if(image != null) {
 						if ( (i%10) == 0 )
 						{
-							wormImageA.disposeLocal(true);
+							image.disposeLocal(true);
 						}
 						else
 						{
-							wormImageA.disposeLocal();
+							image.disposeLocal();
 						}
-						wormImageA = null;
+						image = null;
 					}
-					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null); 
-					wormImageA.calcMinMax();
-					String imageName = wormImageA.getImageName();
+					image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null); 
+					image.calcMinMax();
+					String imageName = image.getImageName();
 					if (imageName.contains("_clone")) {
 						imageName = imageName.replaceAll("_clone", "");
 					}
@@ -417,141 +424,16 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 					if (imageName.contains("_gblur")) {
 						imageName = imageName.replaceAll("_gblur", "");
 					}
-					
-//					fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotation";            	    		
-//					VOIVector annotations = new VOIVector();
-//					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-//					loadAllVOIsFrom(voiDir, true, annotations, false);
-//					if ( annotations.size() <= 0 )
-//					{
-//						fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotations";            	    		
-//						annotations = new VOIVector();
-//						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-//						loadAllVOIsFrom(voiDir, true, annotations, false);
-//					}					
-//					VOI knownAnnotations = annotations.elementAt(0);
-					
-					
-					
+								
+									
 					Vector<Vector3f> dataPoints = new Vector<Vector3f>();
 					// calculate a robust histogram of the data values, used to find the left-right marker thresholds:
-					float[] max_LR = WormSegmentationWindowing.robustHistogram(wormImageA, dataPoints);						
-//					Vector<Vector3f> peaks = WormSegmentation.findMaxPeaks(wormImageA, max_LR[0]);
-////					System.err.println( peaks.size() );
-//					
-//					ModelImage visited = new ModelImage(ModelStorageBase.INTEGER, wormImageA.getExtents(), imageName + "_segmentation");
-//					JDialogBase.updateFileInfo(wormImageA, visited); 
-//					Vector3f min = new Vector3f( Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE );
-//					Vector3f max = new Vector3f(-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE );
-//					for ( int j = 0; j < peaks.size(); j++ )
-//					{
-//						Vector3f pos = peaks.elementAt(j);
-//						min.min(pos);
-//						max.max(pos);
-//						visited.set( Math.round(pos.X), Math.round(pos.Y), Math.round(pos.Z), wormImageA.getFloat( Math.round(pos.X), Math.round(pos.Y), Math.round(pos.Z)) );
-//					}
-//					visited.calcMinMax();
-//////					ModelImage temp = WormSegmentation.blur(visited, 1);
-//////					visited.disposeLocal();
-//////					visited = temp;		
-//////					visited.calcMinMax();			
-////					
-//					new ViewJFrameImage((ModelImage)visited.clone());
-//					Vector<Vector3f> centers = WormSegmentation.findCenters( visited, min, max );
+					float[] max_LR = WormSegmentationWindowing.robustHistogram(image, dataPoints);						
 					
-
+					Vector<Vector3f> annotationskMeans = WormSegmentationKMeans.seamCellSegmentation(image);
+					Vector<Vector3f> annotationsWindow = WormSegmentationWindowing.seamCellSegmentation(image, max_LR[0], max_LR[1]);
+					Vector<Vector3f> annotationsLoG = WormSegmentationLoG.seamCellSegmentation(image);			
 					
-
-//					new ViewJFrameImage((ModelImage)wormImageA.clone());
-//					Vector3f min = new Vector3f( Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE );
-//					Vector3f max = new Vector3f(-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE );
-//					final int dimX = wormImageA.getExtents().length > 0 ? wormImageA.getExtents()[0] : 1;
-//					final int dimY = wormImageA.getExtents().length > 1 ? wormImageA.getExtents()[1] : 1;
-//					final int dimZ = wormImageA.getExtents().length > 2 ? wormImageA.getExtents()[2] : 1;
-//					for ( int z = 0; z < dimZ; z++ )
-//					{
-//						for ( int y = 0; y < dimY; y++ )
-//						{
-//							for ( int x = 0; x < dimX; x++ )
-//							{
-//								if ( wormImageA.getFloat(x,y,z) > wormImageA.getMin() )
-//								{
-//									min.min( new Vector3f(x,y,z));
-//									max.max( new Vector3f(x,y,z));
-//								}
-//							}
-//						}
-//					}
-//					Vector<Vector3f> centers = WormSegmentation.findCenters( wormImageA, min, max );
-					
-					
-
-//					Vector<Vector3f> centers = new Vector<Vector3f>();
-//					for ( int j = 0; j < knownAnnotations.getCurves().size(); j++ )
-//					{
-//						VOIText text1 = (VOIText) knownAnnotations.getCurves().elementAt(j);
-//						if ( text1.getText().equals("origin") )
-//						{
-//							continue;
-//						}
-//						if ( !text1.getText().contains("L") && !text1.getText().contains("R") )
-//						{
-//							continue;
-//						}
-//						Vector3f pos1 = text1.elementAt(0);
-//						centers.add(new Vector3f(pos1));
-//					}
-//					System.err.print( centers.size() + " " );
-//					centers = WormSegmentation.findCenters( visited, centers );
-//					visited.disposeLocal();
-//					visited = null;
-//					
-//					System.err.println( centers.size() );
-//					ModelImage centerImage = new ModelImage(ModelStorageBase.INTEGER, wormImageA.getExtents(), imageName + "Centers");
-//					JDialogBase.updateFileInfo(wormImageA, centerImage); 
-//					for ( int j = 0; j < centers.size(); j++ )
-//					{
-//						Vector3f pos = centers.elementAt(j);
-//						centerImage.set( Math.round(pos.X), Math.round(pos.Y), Math.round(pos.Z), wormImageA.getMax() );
-//					}
-//					centerImage.calcMinMax();
-//					new ViewJFrameImage(centerImage);
-//					Vector<Vector3f> annotationsWindow = WormSegmentation.segmentImage(centerImage, (float)centerImage.getMax());
-//					System.err.print( annotationsWindow.size() );
-//					WormSegmentation.saveAnnotations(wormImageA, annotationsWindow, Color.yellow );
-//					new ViewJFrameImage((ModelImage)wormImageA.clone());
-
-					Vector<Vector3f> annotationskMeans = WormSegmentationKMeans.seamCellSegmentation(wormImageA);
-					Vector<Vector3f> annotationsWindow = WormSegmentationWindowing.seamCellSegmentation(wormImageA, max_LR[0], max_LR[1]);
-//					WormSegmentationWindowing.seamCellSegmentation(wormImageA);
-					Vector<Vector3f> annotationsLoG = WormSegmentationLoG.seamCellSegmentation(wormImageA);			
-//					System.err.print( annotationsWindow.size() + " " + annotationskMeans.size() + " "  + annotationsLoG.size() + "   " );
-					
-//
-//					VOI testAnnotations = null;
-//					ModelImage testSegMidLine = LatticeModel.segmentSeamCells( wormImageA, false );
-//					if ( testSegMidLine != null )
-//					{
-//						testAnnotations = testSegMidLine.getVOIsCopy().elementAt(0);
-//						if ( first )
-//						{				
-//							int dimX = testSegMidLine.getExtents().length > 0 ? testSegMidLine.getExtents()[0] : 1; // dimX
-//							int dimY = testSegMidLine.getExtents().length > 1 ? testSegMidLine.getExtents()[1] : 1; // dimY
-//							maximumProjectionImage = new ModelImage( testSegMidLine.getType(), new int[]{ dimX, dimY, mpSliceCount}, baseFileNameText.getText() + "_MP_Z.tif" );
-//							currentMP = 0;
-//							first = false;
-//						}
-//						calcMaximumProjectionZ( testSegMidLine );
-//					}
-//
-//					
-////					VOI testAnnotations = LatticeModel.segmentSeamCells( wormImageA, true );
-//					if ( testAnnotations == null )
-//						continue;
-//					
-//					int testAnnotationCount = testAnnotations.getCurves().size();
-					
-
 					Vector<Vector3f> seamCells = new Vector<Vector3f>();
 					Vector<Vector3f> tempSeamCells = new Vector<Vector3f>();
 					for ( int k = 0; k < annotationsWindow.size(); k++ )
@@ -567,11 +449,11 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 						tempSeamCells.add( new Vector3f(annotationsLoG.elementAt(k)) );						
 					}
 					int prevSize = tempSeamCells.size();
-					int newSize = WormSegmentation.reduceDuplicates(wormImageA, tempSeamCells, false);
+					int newSize = WormSegmentation.reduceDuplicates(image, tempSeamCells, false);
 					while ( prevSize > newSize )
 					{
 						prevSize = newSize;
-						newSize = WormSegmentation.reduceDuplicates(wormImageA, tempSeamCells, false);
+						newSize = WormSegmentation.reduceDuplicates(image, tempSeamCells, false);
 					}
 
 					Vector3f negCenter = new Vector3f(-1,-1,-1);
@@ -582,98 +464,17 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 							seamCells.add(tempSeamCells.elementAt(j));
 						}
 					}
-					WormSegmentation.saveAnnotations(wormImageA, seamCells, Color.blue );
-					fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "seam_cells";  
+					WormSegmentation.saveAnnotations(image, seamCells, Color.blue );
+					fileName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + autoSeamCellSegmentationOutput;  
 					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-					WormSegmentation.saveAllVOIsTo(voiDir, wormImageA);
-					
-					
-					
-					
-
-//					for ( int j = 0; j < knownAnnotations.getCurves().size(); j++ )
-//					{
-//						VOIText text1 = (VOIText) knownAnnotations.getCurves().elementAt(j);
-//						if ( text1.getText().equals("origin") )
-//						{
-//							continue;
-//						}
-//						if ( !text1.getText().contains("L") && !text1.getText().contains("R") )
-//						{
-//							continue;
-//						}
-//						Vector3f pos1 = text1.elementAt(0);
-//						float minW = Float.MAX_VALUE;
-//						float minKM = Float.MAX_VALUE;
-//						float minLOG = Float.MAX_VALUE;
-//						float minSeam = Float.MAX_VALUE;
-//						for ( int k = 0; k < annotationsWindow.size(); k++ )
-//						{
-//							float dist = pos1.distance(annotationsWindow.elementAt(k));
-//							if ( dist < minW )
-//							{
-//								minW = dist;
-//							}
-//						}
-//						for ( int k = 0; k < annotationskMeans.size(); k++ )
-//						{
-//							float dist = pos1.distance(annotationskMeans.elementAt(k));
-//							if ( dist < minKM )
-//							{
-//								minKM = dist;
-//							}
-//						}
-//						for ( int k = 0; k < annotationsLoG.size(); k++ )
-//						{
-//							float dist = pos1.distance(annotationsLoG.elementAt(k));
-//							if ( dist < minLOG )
-//							{
-//								minLOG = dist;
-//							}
-//						}
-//						for ( int k = 0; k < seamCells.size(); k++ )
-//						{
-//							float dist = pos1.distance(seamCells.elementAt(k));
-//							if ( dist < minSeam )
-//							{
-//								minSeam = dist;
-//							}
-//						}
-//						boolean found = false;
-//						if ( minSeam < 10 )
-//						{
-////							System.err.println( text1.getText() + " found in Seam" );
-//							found = true;
-//						}
-//						if ( !found )
-//						{
-//							System.err.print( "     " + text1.getText() + " NOT found   " );
-//							if ( minW < 10 )
-//							{
-//								System.err.print( text1.getText() + " found in Window " );
-////								found = true;
-//							}
-//							if ( minKM < 10 )
-//							{
-//								System.err.print( text1.getText() + " found in kMeans " );
-////								found = true;
-//							}
-//							if ( minLOG < 10 )
-//							{
-//								System.err.print( text1.getText() + " found in LOG " );
-////								found = true;
-//							}
-//						}
-//					}
-//					System.err.println("");
-					
+					WormSegmentation.saveAllVOIsTo(voiDir, image);
 				}
 			}
 		}
 		
-		if(wormImageA != null) {
-			wormImageA.disposeLocal();
-			wormImageA = null;
+		if(image != null) {
+			image.disposeLocal();
+			image = null;
 		}
 
 		System.err.println( "Done segmentation" );
@@ -1014,55 +815,63 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 //		System.err.println( "Done seam cell info" );
 //	}
 	
-	private void latticeStraighten()
+	public static void latticeStraighten( final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName )
 	{
+		ModelImage image = null;
 		if ( includeRange != null )
 		{
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
 				//    	    		String fileName = baseFileDir + File.separator + baseFileNameText.getText() + "_" + includeRange.elementAt(i) + ".tif";
-				String fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + ".tif";
+				String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
 				File voiFile = new File(baseFileDir + File.separator + fileName);
 				if ( voiFile.exists() )
 				{
 					System.err.println( fileName );
 					FileIO fileIO = new FileIO();
-					if(wormImageA != null) {
+					if(image != null) {
 						if ( (i%10) == 0 )
 						{
-							wormImageA.disposeLocal(true);
+							image.disposeLocal(true);
 						}
 						else
 						{
-							wormImageA.disposeLocal();
+							image.disposeLocal();
 						}
-						wormImageA = null;
+						image = null;
 					}
-					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
+					image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
 
-					fileName = baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "lattice_1";
+					fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + editLatticeOutput;
 					VOIVector lattice = new VOIVector();
 					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-					loadAllVOIsFrom(wormImageA, voiDir, false, lattice, false);
+					loadAllVOIsFrom(image, voiDir, false, lattice, false);
+					if ( lattice.size() == 0 )
+					{
+						fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + autoLatticeGenerationOutput + "1";
+						lattice = new VOIVector();
+						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+						loadAllVOIsFrom(image, voiDir, false, lattice, false);						
+					}
 
 					if ( (lattice.elementAt(0) != null) && (lattice.elementAt(0).getCurves().size() == 2) )
 					{
-						LatticeModel model = new LatticeModel( wormImageA, lattice.elementAt(0) );
+						LatticeModel model = new LatticeModel( image, lattice.elementAt(0) );
 
-						fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotations";            	    		
+						fileName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + "annotations";            	    		
 						VOIVector annotations = new VOIVector();
 						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-						loadAllVOIsFrom(wormImageA, voiDir, true, annotations, false);
+						loadAllVOIsFrom(image, voiDir, true, annotations, false);
 						if ( annotations.size() > 0 )
 						{
 							model.setAnnotations( annotations.elementAt(0) );
 						}
 						else
 						{
-							fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotation";            	    		
+							fileName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + "annotation";            	    		
 							annotations = new VOIVector();
 							voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-							loadAllVOIsFrom(wormImageA, voiDir, true, annotations, false);
+							loadAllVOIsFrom(image, voiDir, true, annotations, false);
 							if ( annotations.size() > 0 )
 							{
 								model.setAnnotations( annotations.elementAt(0) );
@@ -1075,77 +884,11 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 				}    				
 			}
 		}
-		else
+
+		if ( image != null )
 		{
-			int fileCount = 0;
-			boolean fileExists = true;
-			while ( fileExists )
-			{    	    	
-				String fileName = baseFileNameText.getText() + "_" + fileCount + ".tif";
-				File voiFile = new File(baseFileDir + File.separator + fileName);
-				if ( voiFile.exists() )
-				{
-					System.err.println( fileName );
-					FileIO fileIO = new FileIO();
-					if(wormImageA != null) {
-						if ( (fileCount%10) == 0 )
-						{
-							wormImageA.disposeLocal(true);
-						}
-						else
-						{
-							wormImageA.disposeLocal();
-						}
-						wormImageA = null;
-					}
-					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
-
-					fileName = baseFileNameText.getText() + "_" + fileCount + File.separator + "lattice_1";
-					VOIVector lattice = new VOIVector();
-					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-					loadAllVOIsFrom(wormImageA, voiDir, false, lattice, false);
-
-					if ( (lattice.elementAt(0) != null) && (lattice.elementAt(0).getCurves().size() == 2) )
-					{
-						LatticeModel model = new LatticeModel( wormImageA, lattice.elementAt(0) );
-
-						fileName = baseFileNameText.getText() + "_" + fileCount + File.separator + "annotations";            	    		
-						VOIVector annotations = new VOIVector();
-						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-						loadAllVOIsFrom(wormImageA, voiDir, true, annotations, false);
-						if ( annotations.size() > 0 )
-						{
-							model.setAnnotations( annotations.elementAt(0) );
-						}
-						else
-						{
-							fileName = baseFileNameText.getText() + "_" + fileCount + File.separator + "annotation";            	    		
-							annotations = new VOIVector();
-							voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-							loadAllVOIsFrom(wormImageA, voiDir, true, annotations, false);
-							if ( annotations.size() > 0 )
-							{
-								model.setAnnotations( annotations.elementAt(0) );
-							}							
-						}
-
-						model.interpolateLattice( false );
-						model.dispose();
-						model = null;
-					}
-					fileCount++;
-				}    				
-				else
-				{
-					fileExists = false;
-				}
-			}
-		}
-
-		if ( wormImageA != null )
-		{
-			wormImageA.disposeLocal();
-			wormImageA = null;
+			image.disposeLocal();
+			image = null;
 		}
 	}
 
@@ -1210,103 +953,73 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		}
 	}     
 
-	private void buildLattice( )
+	public static void buildLattice( final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName )
 	{
-//		VOIVector annotationStatsBefore = new VOIVector();
+		ModelImage image = null;
 		if ( includeRange != null )
 		{
 			int count = 0;
 			int foundCount = 0;
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
-//				if ( includeRange.elementAt(i)%2 == 0 )
+				String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
+				FileIO fileIO = new FileIO();
+				if ( image != null )
 				{
-					String fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + ".tif";
-					FileIO fileIO = new FileIO();
-					if ( wormImageA != null )
-					{
-						wormImageA.disposeLocal();
-					}
-					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  ;            	    		
-					VOIVector annotations = new VOIVector();
-
-					fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "seam_cells_checked";
-					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-					loadAllVOIsFrom(wormImageA, voiDir, true, annotations, false);
-					if ( annotations.size() <= 0 )
-					{
-
-						fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "seam_cells";
-						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-						loadAllVOIsFrom(wormImageA, voiDir, true, annotations, false);
-						if ( annotations.size() <= 0 )
-						{
-
-							fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotation";
-							voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-							loadAllVOIsFrom(wormImageA, voiDir, true, annotations, false);
-							if ( annotations.size() <= 0 )
-							{
-								fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotations";            	    		
-								annotations = new VOIVector();
-								voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-								loadAllVOIsFrom(wormImageA, voiDir, true, annotations, false);
-							}
-						}
-					}
-					
-					if ( annotations.size() == 0 )
-					{
-						continue;
-					}
-					
-					
-//					fileName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "statistics" + File.separator + "AnnotationInfo_before.csv";
-//					readLatticePositions( fileName, includeRange.elementAt(i), annotations );
-
-//					if ( buildLattice( annotations.elementAt(0), includeRange.elementAt(i) ) )
-					buildLattice( annotations.elementAt(0), includeRange.elementAt(i) );
-					{
-						if ( buildLattice2(includeRange.elementAt(i), false) )
-						{
-							foundCount++;
-						}
-						else
-						{
-							System.err.println( "Failed to find a lattice for " + fileName );
-//							buildLattice2(includeRange.elementAt(i), true);
-						}
-					}
-//					else
-//					{
-//						System.err.println( "Failed to find a lattice for " + fileName );						
-//					}
-
-					count++;
-//					annotationStatsBefore.clear();
+					image.disposeLocal();
 				}
+				image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  ;            	    		
+				VOIVector annotations = new VOIVector();
+
+				fileName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + editSeamCellOutput;
+				String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+				loadAllVOIsFrom(image, voiDir, true, annotations, false);
+				if ( annotations.size() <= 0 )
+				{
+
+					fileName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + autoSeamCellSegmentationOutput;
+					voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+					loadAllVOIsFrom(image, voiDir, true, annotations, false);
+				}
+
+				if ( annotations.size() == 0 )
+				{
+					continue;
+				}
+
+				if ( buildLattice( image, annotations.elementAt(0), includeRange.elementAt(i), baseFileDir, baseFileName ) )
+				{
+					foundCount++;
+				}
+
+				count++;
 			}
 			System.err.println( "Tested " + count + " success " + foundCount + " success rate = " + 100 * (float)foundCount/(float)count +"%" );
 			MipavUtil.displayInfo( "Found lattices for " + foundCount + " out of " + count + " volumes tested (" + (int)(100 * (float)foundCount/(float)count) + "%)" );
 		}
 
-		if ( wormImageA != null )
+		if ( image != null )
 		{
-			wormImageA.disposeLocal();
-			wormImageA = null;
+			image.disposeLocal();
+			image = null;
 		}
 		System.err.println( "Done lattice building" );
-//		annotationStatsBefore = null;
+		
 	}     
 
-	Vector<int[]> tenthPairs;
-	Vector<Vector3f> positions;
-	private void buildLattice( VOI annotations, int time )
+	private static boolean buildLattice( ModelImage image, VOI annotations, int time, String baseFileDir, String baseFileName )
 	{
-		positions = new Vector<Vector3f>();
+		boolean print = false;
+		
+		/** Step (1) Attempt to find the tenth pair of seam cells in the lattice. 
+		 * The 10th pair is distinct in that it has the smallest between-cell distance */
+		Vector<int[]> tenthPairs = new Vector<int[]>();
+		Vector<Vector3f> positions = new Vector<Vector3f>();
 		for ( int i = 0; i < annotations.getCurves().size(); i++ )
 		{
 			VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+			// skip extra annotations (origin, nose)
+			// use annotations list?
 			if ( text.getText().equals("origin") )
 			{
 				continue;
@@ -1314,13 +1027,11 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			Vector3f pos = new Vector3f(text.elementAt(0));
 			pos.scale( VOILatticeManagerInterface.VoxelSize );
 			positions.add( pos );
-//			System.err.println( positions.size() + " " + text.getText() + " " + pos );
 		}
 
 		// pair distance > 50 time step for 1-9 is in the range of 5-15 um
 		// pair distance > 50 time step for 10 is in the range of 1-5 um
 
-		tenthPairs = new Vector<int[]>();
 		// look for potential 10 pair:
 		float maxDist = -1;
 		int count = 0;
@@ -1356,41 +1067,20 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		{
 			for ( int i = tenthPairs.size() - 1; i >=0; i-- )
 			{
-				if ( checkMidPoint( tenthPairs.elementAt(i), positions ) )
+				if ( midPointFail( tenthPairs.elementAt(i), positions ) )
 				{
 					tenthPairs.remove(i);
 				}
 			}
 		}
-	}
-
-	private boolean buildLattice2( int time, boolean print )
-	{
-		if ( print ) System.err.println( "DEBUG " + time );
-		if ( tenthPairs == null )
-		{
-			if ( print ) System.err.println( "   No tenth pair found" );
-			return false;
-		}
-//		Vector<int[]> correct = new Vector<int[]>();
-//		correct.add(new int[]{18,19});
-//		correct.add(new int[]{16,17});
-//		correct.add(new int[]{14,15});
-//		correct.add(new int[]{12,13});
-//		correct.add(new int[]{10,11});
-//		correct.add(new int[]{8,9});
-//		correct.add(new int[]{6,7});
-//		correct.add(new int[]{4,5});
-//		correct.add(new int[]{2,3});
-//		correct.add(new int[]{0,1});
-
-		LatticeModel model = new LatticeModel(wormImageA);
+		
+		LatticeModel model = new LatticeModel( image );
 		int[] total = new int[]{0};
 		Vector<Vector<int[]>> sequenceList = new Vector<Vector<int[]>>();
 
-//		boolean correctLatticeFound = false;
 		Vector<Vector<int[]>> finalLatticeList = new Vector<Vector<int[]>>();
 		
+		// Loop over all potential tenthPairs:
 		for ( int i = 0; i < tenthPairs.size(); i++ )
 		{
 			int[] tenthPair = tenthPairs.elementAt(i);
@@ -1409,7 +1099,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 							float distance = positions.elementAt(j).distance( positions.elementAt(k) );
 							if (  (distance >= minPairDist) && (distance <= maxPairDist) )
 							{
-								if ( !checkMidPoint(j,k, positions) )
+								if ( !midPointFail(j,k, positions) )
 								{
 									pairs[j][k] = 1;
 									pairCount++;
@@ -1432,111 +1122,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 
 //			checkPairAngles( pairs, positions );
 //			
-//			if ( print ) System.err.println( "   After checkPairAngles " + countPairs(pairs, tenthPair) );
-//
-//
-//			int[][] newPairs = new int[positions.size()][positions.size()];
-//			for ( int j = 0; j < pairs.length; j++ )
-//			{
-//				float minDist = Float.MAX_VALUE;
-//				int minIndex = -1;
-//				for ( int k = 0; k < pairs[j].length; k++ )
-//				{
-//					newPairs[j][k] = -1;
-//					if ( pairs[j][k] != -1 )
-//					{
-//						float dist = positions.elementAt(j).distance(positions.elementAt(k));
-//						if ( dist < minDist )
-//						{
-//							minDist = dist;
-//							minIndex = k;
-//						}
-//						//							pairLists.add( new int[]{j,k} );
-//					}
-//				}
-//				if ( minIndex != -1 )
-//				{
-//						newPairs[j][minIndex] = 1;
-//					//						pairLists.add( new int[]{j,minIndex} );
-//					pairs[j][minIndex] = -1;
-//					minIndex = -1;
-//					minDist = Float.MAX_VALUE;
-//				}
-//				for ( int k = 0; k < pairs[j].length; k++ )
-//				{
-//					if ( pairs[j][k] != -1 )
-//					{
-//						float dist = positions.elementAt(j).distance(positions.elementAt(k));
-//						if ( dist < minDist )
-//						{
-//							minDist = dist;
-//							minIndex = k;
-//						}
-//						//							pairLists.add( new int[]{j,k} );
-//					}
-//				}
-//				if ( minIndex != -1 )
-//				{
-//						newPairs[j][minIndex] = 1;
-//					//						pairLists.add( new int[]{j,minIndex} );
-//					pairs[j][minIndex] = -1;
-//					minIndex = -1;
-//					minDist = Float.MAX_VALUE;
-//				}
-////				for ( int k = 0; k < pairs[j].length; k++ )
-////				{
-////					if ( pairs[j][k] != -1 )
-////					{
-////						float dist = positions.elementAt(j).distance(positions.elementAt(k));
-////						if ( dist < minDist )
-////						{
-////							minDist = dist;
-////							minIndex = k;
-////						}
-////						//							pairLists.add( new int[]{j,k} );
-////					}
-////				}
-////				if ( minIndex != -1 )
-////				{
-////						newPairs[j][minIndex] = 1;
-////					//						pairLists.add( new int[]{j,minIndex} );
-////					pairs[j][minIndex] = -1;
-////					minIndex = -1;
-////					minDist = Float.MAX_VALUE;
-////				}
-//			}
-//
-//
-//			if ( print ) System.err.println( "   After min 3  " + countPairs(newPairs, tenthPair) );
-//
-//
-//			for ( int j = 0; j < newPairs.length; j++ )
-//			{
-//				for ( int k = j+1; k < newPairs[j].length; k++ )
-//				{
-//					if ( newPairs[j][k] != newPairs[k][j] )
-//					{
-//						newPairs[j][k] = -1;
-//						newPairs[k][j] = -1;
-//					}
-//				}
-//			}
-//			
-//			if ( print ) System.err.println( "   After matching pairs  " + countPairs(newPairs, tenthPair) );
-//
-//
-//			for ( int j = 0; j < newPairs.length; j++ )
-//			{
-////				for ( int k = 0; k < newPairs[j].length; k++ )
-//				for ( int k = j+1; k < newPairs[j].length; k++ )
-//				{
-//					if ( newPairs[j][k] != -1 )
-//					{
-//						pairLists.add( new int[]{j,k} );
-//					}
-//				}
-//			}
-			
 			for ( int j = 0; j < pairs.length; j++ )
 			{
 				for ( int k = j+1; k < pairs[j].length; k++ )
@@ -1549,13 +1134,14 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			}
 
 			pairLists.add( tenthPair );
-			//				pairs.add( new int[]{19,0} );
-			//				pairs.add( new int[]{19,10} );
-			//				pairs.add( new int[]{2,19} );
-			//				pairs.add( new int[]{7,19} );
-			//				pairs.add( new int[]{20,21} );
 
-//			int initialSize = pairLists.size();
+			// This step looks for seam cell pairs
+			// where one member of the pair is only in
+			// one potential pair. When that's the case
+			// the pair is essential to the list
+			// this step removes all other potential pairs
+			// that link to the non-singleton member of the
+			// essential pair:
 			int prevSize = pairLists.size();
 			if ( checkPairs( pairLists, positions.size() ) )
 			{
@@ -1565,50 +1151,21 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 					checkPairs( pairLists, positions.size() );
 				}
 			}
-			if ( checkPairs( pairLists, positions.size() ) )
-			{
-//				pairSet++;
-			}
-//			System.err.print( time + "  " + i + " (" + tenthPair[0] + " " + tenthPair[1] + ") " + initialSize + " -> " + pairLists.size() + "    " );
-
+			checkPairs( pairLists, positions.size() );
 			
 			Vector<int[]> sequence = new Vector<int[]>();
 			int targetLength = (positions.size() % 2) == 0 ? positions.size() : positions.size() -1;
 			targetLength = Math.max(0, targetLength);
 			targetLength = Math.min(20, targetLength);
-			sequencePairs( model, sequence, pairLists, tenthPair, targetLength, total, sequenceList );
+			sequencePairs( model, positions, sequence, pairLists, tenthPair, targetLength, total, sequenceList );
 		}
 //		removeDuplicates(sequenceList);
 
-		orderSequences( model, sequenceList, finalLatticeList );
-
-//		System.err.println( finalLatticeList.size() );
-//		for ( int j = 0; j < finalLatticeList.size(); j++ )
-//		{
-//			Vector<int[]> sequence = finalLatticeList.elementAt(j);
-//			boolean matches = true;
-//			for ( int k = 0; k < correct.size(); k++ )
-//			{
-//				int[] pairC = correct.elementAt(k);
-//				int[] pair = sequence.elementAt(k);
-//				if ( (pairC[0] != pair[0]) || (pairC[1] != pair[1]) )
-//				{
-//					matches = false;
-//					break;
-//				}
-//			}
-//			if ( matches )
-//			{
-//				correctLatticeFound = true;
-//				System.err.println( "Found correct sequence " + j );
-//				break;
-//			}
-//		}
-
+		orderSequences( model, positions, sequenceList, finalLatticeList );
 
 		for ( int j = 0; j < Math.min( 5, finalLatticeList.size()); j++ )
 		{
-			wormImageA.unregisterAllVOIs();
+			image.unregisterAllVOIs();
 			Vector<int[]> sequence = finalLatticeList.elementAt(j);
 			VOIContour left = new VOIContour(false);
 			VOIContour right = new VOIContour(false);
@@ -1620,7 +1177,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 				int[] pair = sequence.elementAt(k);
 				if ( print ) System.err.println( "   " + pair[0] + " " + pair[1] );
 
-				short id = (short) wormImageA.getVOIs().getUniqueID();
+				short id = (short) image.getVOIs().getUniqueID();
 				final VOI marker = new VOI(id, "pair_" + pair[0] + "_" + pair[1], VOI.POLYLINE, (float) Math.random());
 				final VOIContour mainAxis = new VOIContour(false);
 				Vector3f p1 = new Vector3f(positions.elementAt(pair[0])); p1.scale(1f/VOILatticeManagerInterface.VoxelSize);
@@ -1638,31 +1195,35 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 					marker.setColor(new Color(255, 255, 0));
 					mainAxis.update(new ColorRGBA(1, 1, 0, 1));
 				}
-				wormImageA.registerVOI(marker);
+				image.registerVOI(marker);
 				left.add(0, p1);
 				right.add(0, p2);
 			}				
-			wormImageA.registerVOI(lattice);
-			String fileName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + time + File.separator + "potential_lattice_" + j + File.separator;
+			image.registerVOI(lattice);
+			String fileName = baseFileDir + File.separator + baseFileName + "_"  + time + File.separator + autoLatticeGenerationOutput + j + File.separator;
 			File outputFileDir = new File(fileName);
 			if ( !outputFileDir.exists() )
 			{
 				outputFileDir.mkdir();
 			}
 
-			LatticeModel.saveAllVOIsTo(fileName, wormImageA);
+			LatticeModel.saveAllVOIsTo(fileName, image);
 		}
 		
 		model.dispose();
 		model = null;
-//		return correctLatticeFound;
 		return (finalLatticeList.size() > 0);
 	}
 	
-	private boolean countPairs( int[][] pairs, int[] tenthPair )
+	/**
+	 * Checks the table with seam-cells pairs to make sure all seam cells are included in at least one pair:
+	 * @param pairs
+	 * @param tenthPair
+	 * @return
+	 */
+	private static boolean countPairs( final int[][] pairs, final int[] tenthPair )
 	{
 		boolean allFound = true;
-		// if a positions only occurs in one pair, remove all other occurances of it's partner:
 		for ( int i = 0; i < pairs.length; i++ )
 		{
 			int count = 0;
@@ -1673,7 +1234,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 					count++;
 				}
 			}
-			if ( (i!= tenthPair[0]) && (i != tenthPair[1]) )
+			if ( (i != tenthPair[0]) && (i != tenthPair[1]) )
 			{
 				if ( count == 0 )
 				{
@@ -1684,49 +1245,60 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		return allFound;
 	}
 	
-	private float measureParallel( Vector<int[]> sequence )
-	{
-		float parallelAngles = 0;
-		for ( int i = 0; i < sequence.size()-1; i++ )
-		{
-			int[] pair1 = sequence.elementAt(i);
-			int[] pair2 = sequence.elementAt(i+1);
-			Vector3f vec1 = Vector3f.sub( positions.elementAt(pair2[0]), positions.elementAt(pair1[0]) );
-			Vector3f vec2 = Vector3f.sub( positions.elementAt(pair2[1]), positions.elementAt(pair1[1]) );
-			vec1.normalize();
-			vec2.normalize();
-			float angle1 = Math.abs(vec1.angle(vec2));
-			float angle2 = Math.abs(vec2.angle(vec1));
-			if ( angle1 < angle2 )
-			{
-				parallelAngles += angle1;
-			}
-			else
-			{
-				parallelAngles += angle2;
-			}
-//			parallelAngles += Math.abs(vec1.angle(vec2));
-		}
-		return parallelAngles;
-	}
+//	private float measureParallel( Vector<int[]> sequence )
+//	{
+//		float parallelAngles = 0;
+//		for ( int i = 0; i < sequence.size()-1; i++ )
+//		{
+//			int[] pair1 = sequence.elementAt(i);
+//			int[] pair2 = sequence.elementAt(i+1);
+//			Vector3f vec1 = Vector3f.sub( positions.elementAt(pair2[0]), positions.elementAt(pair1[0]) );
+//			Vector3f vec2 = Vector3f.sub( positions.elementAt(pair2[1]), positions.elementAt(pair1[1]) );
+//			vec1.normalize();
+//			vec2.normalize();
+//			float angle1 = Math.abs(vec1.angle(vec2));
+//			float angle2 = Math.abs(vec2.angle(vec1));
+//			if ( angle1 < angle2 )
+//			{
+//				parallelAngles += angle1;
+//			}
+//			else
+//			{
+//				parallelAngles += angle2;
+//			}
+////			parallelAngles += Math.abs(vec1.angle(vec2));
+//		}
+//		return parallelAngles;
+//	}
 	
-	private float measureBends( Vector<int[]> sequence )
+	/**
+	 * Measures the total amount of folding in the lattice.
+	 * @param positions
+	 * @param sequence
+	 * @return
+	 */
+	private static float measureBends( Vector<Vector3f> positions, Vector<int[]> sequence )
 	{
 		float bendAngles = 0;
 		for ( int i = 0; i < sequence.size()-2; i++ )
 		{
+			// Calculate the mid point of the first pair in the sequence:
 			int[] pair1 = sequence.elementAt(i);
 			Vector3f mid1 = Vector3f.add(positions.elementAt(pair1[0]), positions.elementAt(pair1[1]));
 			mid1.scale(0.5f);			
 
+			// Calculate the mid point of the second pair in the sequence:
 			int[] pair2 = sequence.elementAt(i+1);
 			Vector3f mid2 = Vector3f.add(positions.elementAt(pair2[0]), positions.elementAt(pair2[1]));
 			mid2.scale(0.5f);
 
+			// Calculate the mid point of the third pair in the sequence:
 			int[] pair3 = sequence.elementAt(i+2);
 			Vector3f mid3 = Vector3f.add(positions.elementAt(pair3[0]), positions.elementAt(pair3[1]));
 			mid3.scale(0.5f);
 			
+			// The bend is calculated as the angle change from midpoint1 to
+			// midpoint3 bending around midpoint 2.
 			Vector3f vec1 = Vector3f.sub( mid2, mid1 );
 			Vector3f vec2 = Vector3f.sub( mid3, mid2 );
 			vec1.normalize();
@@ -1741,12 +1313,12 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			{
 				bendAngles += angle2;
 			}
-//			parallelAngles += Math.abs(vec1.angle(vec2));
 		}
+		// total bend (folding) along the sequence
 		return bendAngles;
 	}
 	
-	private int measureIntersections( LatticeModel model, int index, Vector<int[]> sequence, boolean quickTest )
+	private static int measureIntersections( LatticeModel model, Vector<Vector3f> positions, int index, Vector<int[]> sequence, boolean quickTest )
 	{
 		VOIContour left = new VOIContour( false );
 		VOIContour right = new VOIContour( false );
@@ -1797,7 +1369,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 //		System.err.println( "  ==>  " + sequenceList.size() );
 	}
 	
-	private void orderSequences( LatticeModel model, Vector<Vector<int[]>> sequenceList, Vector<Vector<int[]>> finalLatticeList )
+	private static void orderSequences( LatticeModel model, Vector<Vector3f> positions, Vector<Vector<int[]>> sequenceList, Vector<Vector<int[]>> finalLatticeList )
 	{
 		if ( sequenceList.size() <= 0 )
 		{
@@ -1810,12 +1382,13 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		for ( int i = 0; i < sequenceList.size(); i++ )
 		{
 			Vector<int[]> sequence = sequenceList.elementAt(i);
-			angles[i] = new Vector2d(measureBends(sequence), i);
+			angles[i] = new Vector2d(measureBends(positions,sequence), i);
 			intersections[i] = -1;
 		}
 		Arrays.sort(angles);
-		
-		int bottom4th = Math.min( sequenceList.size(), Math.max( 50, Math.min( 300, sequenceList.size()/4 ) ) );
+
+		int bottom4th = Math.min( sequenceList.size(), Math.max( 50, sequenceList.size()/4 ) );
+//		int bottom4th = Math.min( sequenceList.size(), Math.max( 50, Math.min( 300, sequenceList.size()/4 ) ) );
 		Vector2d[] minCount = new Vector2d[sequenceList.size()];
 		for ( int i = 0; i < bottom4th; i++ )
 		{
@@ -1823,7 +1396,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			
 			Vector<int[]> sequence = sequenceList.elementAt(index);
 			
-			int intersection = measureIntersections(model, i, sequence, true);
+			int intersection = measureIntersections(model, positions, i, sequence, true);
 			if ( intersection < 250 )
 			{
 				intersections[index] = intersection;
@@ -1836,7 +1409,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			if ( intersections[i] != -1 )
 			{
 				Vector<int[]> sequence = sequenceList.elementAt(i);
-				int intersection = measureIntersections(model, i, sequence, false);
+				int intersection = measureIntersections(model, positions, i, sequence, false);
 				minCount[i] = new Vector2d(intersection,i);
 				longTest++;
 			}
@@ -1909,7 +1482,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 //		return matches;
 //	}
 	
-	private void sequencePairs( LatticeModel model, Vector<int[]> sequence, Vector<int[]> pairs, int[] lastPair, int count, int[] total, Vector<Vector<int[]>> sequenceList )
+	private static void sequencePairs( LatticeModel model, Vector<Vector3f> positions, Vector<int[]> sequence, Vector<int[]> pairs, int[] lastPair, int count, int[] total, Vector<Vector<int[]>> sequenceList )
 	{		
 		Vector<int[]> newSequence = new Vector<int[]>();
 		newSequence.addAll(sequence);
@@ -1939,11 +1512,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 //		System.err.println( newSequence.size() * 2 + " " + count + " " + allFound + " " + total[0]);
 		if ( allFound )
 		{
-//			if ( isCorrect(newSequence, count) )
-			{
-//				System.err.print("  FOUND CORRECT SEQ  ");
-//				System.err.println( measureIntersections( model, positions.size(), newSequence, false) );
-			}
 			float length = 0;
 			for ( int i = 0; i < newSequence.size(); i++ )
 			{
@@ -1995,7 +1563,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 				return;
 			}
 			
-			float bendSum = measureBends(newSequence);
+			float bendSum = measureBends(positions, newSequence);
 			if ( (bendSum < 6) || (bendSum > 12) )
 			{
 				return;
@@ -2090,7 +1658,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 
 						if ( (midDistance > 4) && (midDistance < 30) && (L00 > 4) && (L00 < 25) && (L11 > 4) && (L11 < 25))
 						{
-							sequencePairs( model, newSequence, newPairs, pair, count, total, sequenceList );
+							sequencePairs( model, positions, newSequence, newPairs, pair, count, total, sequenceList );
 						}
 					}
 				}
@@ -2108,7 +1676,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 
 						if ( (midDistance > 4) && (midDistance < 30) && (L01 > 4) && (L01 < 25) && (L10 > 4) && (L10 < 25) )
 						{
-							sequencePairs( model, newSequence, newPairs, new int[]{pair[1],pair[0]}, count, total, sequenceList );
+							sequencePairs( model, positions, newSequence, newPairs, new int[]{pair[1],pair[0]}, count, total, sequenceList );
 //							sequencePairs( newSequence, newPairs, pair, count, total, sequenceList );
 						}
 					}
@@ -2119,84 +1687,84 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 	}
 	
 	
-	private void sequencePairs2( Vector<int[]> pairs, int[] startingPair )
-	{
-		System.err.println("");
-		System.err.println( "PairSet = " + pairs.size() );
-		for ( int i = 0; i < pairs.size(); i++ )
-		{
-			int[] pair = pairs.elementAt(i);
-			System.err.println( pair[0] + " " + pair[1] );
-		}
-		
-		
-		float rad2Deg = (float) (180f / Math.PI);
-		int sequenceLength = Math.min(10, pairs.size() );
-
-		Vector<int[]> sequence = new Vector<int[]>();
-		sequence.add( startingPair );
-		pairs.remove(startingPair);
-
-		int[] lastPair = startingPair;
-		
-		while ( sequence.size() < sequenceLength )
-		{
-			float minAngle = Float.MAX_VALUE;
-			int minIndex = -1;
-			for ( int i = 0; i < pairs.size(); i++ )
-			{
-				int[] pair = pairs.elementAt(i);
-				Vector3f midPt = Vector3f.add(positions.elementAt(pair[0]), positions.elementAt(pair[1]));
-				midPt.scale(0.5f);
-				Vector3f midPtSequence = Vector3f.add(positions.elementAt(lastPair[0]), positions.elementAt(lastPair[1]));
-				midPtSequence.scale(0.5f);
-				float midDistance = midPt.distance(midPtSequence);
-
-				Vector3f edge00 = Vector3f.sub( positions.elementAt(pair[0]), positions.elementAt(lastPair[0]) );  edge00.normalize();
-				Vector3f edge11 = Vector3f.sub( positions.elementAt(pair[1]), positions.elementAt(lastPair[1]) );  edge11.normalize();
-				float angle1 = edge00.angle(edge11);
-
-				Vector3f edge01 = Vector3f.sub( positions.elementAt(pair[0]), positions.elementAt(lastPair[1]) );  edge01.normalize();
-				Vector3f edge10 = Vector3f.sub( positions.elementAt(pair[1]), positions.elementAt(lastPair[0]) );  edge10.normalize();
-				float angle2 = edge01.angle(edge10);
-
-
-				if ( (midDistance > 4) && (midDistance < 30) )
-				{
-					if ( angle1 < minAngle )
-					{
-						minAngle = angle1;
-						minIndex = i;
-					}
-					if ( angle2 < minAngle )
-					{
-						minAngle = angle2;
-						minIndex = i;
-					}
-					System.err.println( "   potential next pair " +  " (" + pair[0] + " " + pair[1] + ") " + midDistance + " " + angle1*rad2Deg + " " + angle2*rad2Deg );
-				}
-			}
-			if ( minIndex != -1 )
-			{
-				int[] pair = pairs.remove(minIndex);
-				System.err.println( "Added next pair " + minIndex + " (" + pair[0] + " " + pair[1] + ") " + minAngle*rad2Deg );
-				sequence.add( pair );
-				lastPair = pair;
-			}
-			else
-			{
-				break;
-			}
-		}
-
-		System.err.println("");
-		System.err.println( "Sequence = " + sequence.size() );
-		for ( int i = 0; i < sequence.size(); i++ )
-		{
-			int[] pair = sequence.elementAt(i);
-			System.err.println( pair[0] + " " + pair[1] );
-		}
-	}
+//	private void sequencePairs2( Vector<int[]> pairs, int[] startingPair )
+//	{
+//		System.err.println("");
+//		System.err.println( "PairSet = " + pairs.size() );
+//		for ( int i = 0; i < pairs.size(); i++ )
+//		{
+//			int[] pair = pairs.elementAt(i);
+//			System.err.println( pair[0] + " " + pair[1] );
+//		}
+//		
+//		
+//		float rad2Deg = (float) (180f / Math.PI);
+//		int sequenceLength = Math.min(10, pairs.size() );
+//
+//		Vector<int[]> sequence = new Vector<int[]>();
+//		sequence.add( startingPair );
+//		pairs.remove(startingPair);
+//
+//		int[] lastPair = startingPair;
+//		
+//		while ( sequence.size() < sequenceLength )
+//		{
+//			float minAngle = Float.MAX_VALUE;
+//			int minIndex = -1;
+//			for ( int i = 0; i < pairs.size(); i++ )
+//			{
+//				int[] pair = pairs.elementAt(i);
+//				Vector3f midPt = Vector3f.add(positions.elementAt(pair[0]), positions.elementAt(pair[1]));
+//				midPt.scale(0.5f);
+//				Vector3f midPtSequence = Vector3f.add(positions.elementAt(lastPair[0]), positions.elementAt(lastPair[1]));
+//				midPtSequence.scale(0.5f);
+//				float midDistance = midPt.distance(midPtSequence);
+//
+//				Vector3f edge00 = Vector3f.sub( positions.elementAt(pair[0]), positions.elementAt(lastPair[0]) );  edge00.normalize();
+//				Vector3f edge11 = Vector3f.sub( positions.elementAt(pair[1]), positions.elementAt(lastPair[1]) );  edge11.normalize();
+//				float angle1 = edge00.angle(edge11);
+//
+//				Vector3f edge01 = Vector3f.sub( positions.elementAt(pair[0]), positions.elementAt(lastPair[1]) );  edge01.normalize();
+//				Vector3f edge10 = Vector3f.sub( positions.elementAt(pair[1]), positions.elementAt(lastPair[0]) );  edge10.normalize();
+//				float angle2 = edge01.angle(edge10);
+//
+//
+//				if ( (midDistance > 4) && (midDistance < 30) )
+//				{
+//					if ( angle1 < minAngle )
+//					{
+//						minAngle = angle1;
+//						minIndex = i;
+//					}
+//					if ( angle2 < minAngle )
+//					{
+//						minAngle = angle2;
+//						minIndex = i;
+//					}
+//					System.err.println( "   potential next pair " +  " (" + pair[0] + " " + pair[1] + ") " + midDistance + " " + angle1*rad2Deg + " " + angle2*rad2Deg );
+//				}
+//			}
+//			if ( minIndex != -1 )
+//			{
+//				int[] pair = pairs.remove(minIndex);
+//				System.err.println( "Added next pair " + minIndex + " (" + pair[0] + " " + pair[1] + ") " + minAngle*rad2Deg );
+//				sequence.add( pair );
+//				lastPair = pair;
+//			}
+//			else
+//			{
+//				break;
+//			}
+//		}
+//
+//		System.err.println("");
+//		System.err.println( "Sequence = " + sequence.size() );
+//		for ( int i = 0; i < sequence.size(); i++ )
+//		{
+//			int[] pair = sequence.elementAt(i);
+//			System.err.println( pair[0] + " " + pair[1] );
+//		}
+//	}
 
 	private void checkPairAngles( int[][]pairs, Vector<Vector3f> positions )
 	{
@@ -2243,36 +1811,13 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		}
 	}
 	
-	private boolean checkPairs( Vector<int[]> pairs, int size )
+	/**
+	 * @param pairs  list of potential seam cell pairs
+	 * @param size   the total number of seam cells
+	 * @return
+	 */
+	private static boolean checkPairs( Vector<int[]> pairs, int size )
 	{
-		// check that a pair isn't a dead-end:
-		//		for ( int i = pairs.size()-1; i >= 0; i-- )
-		//		{
-		//			int[] pair = pairs.remove(i);
-		//			int found = 0;
-		//			int count = 0;
-		//			for ( int j = 0; j < size; j++ )
-		//			{
-		//				if ( (j != pair[0]) && (j != pair[1]) )
-		//				{
-		//					count++;
-		//					for ( int k = 0; k < pairs.size(); k++ )
-		//					{
-		//						int[] pair2 = pairs.elementAt(k);
-		//						if ( (j == pair2[0]) || (j == pair2[1]) )
-		//						{
-		//							found++;
-		//							break;
-		//						}
-		//					}
-		//				}
-		//			}
-		//			if ( found >= count )
-		//			{
-		//				pairs.add(pair);
-		//			}
-		//		}
-
 		boolean allFound = true;
 		// if a positions only occurs in one pair, remove all other occurances of it's partner:
 		int[] counts = new int[size];
@@ -2289,19 +1834,24 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			}
 			if ( counts[i] == 0 )
 			{
+				// seam cell is not in any pair:
 				allFound = false;
 			}
 		}
+		
+		// Create the essential pair list of seam cell pairs where one of the
+		// seam cells in the pair occurs in only one pair:
 		Vector<int[]> essentialPairs = new Vector<int[]>();
 		for ( int i = 0; i < size; i++ )
 		{
 			if ( counts[i] == 1 )
 			{
 				// found an essential pair:
-//				System.err.println( i );
-				for ( int j = pairs.size() - 1; j >=0; j-- )
+				for ( int j = pairs.size() - 1; j >= 0; j-- )
 				{
 					int[] pair = pairs.elementAt(j);
+					// remove essential pair from the pairs list and add
+					// to essential list:
 					if ( pair[0] == i || pair[1] == i )
 					{
 						essentialPairs.add(pairs.remove(j));
@@ -2309,64 +1859,107 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 				}				
 			}
 		}
+		
+		// When a seam cell is part of an essential pair both
+		// seam cells are limited to that pair only
+		// this removes pairs that contain the partner of the
+		// singleton seam cell:
 		for ( int i = 0; i < essentialPairs.size(); i++ )
 		{
+			// get the essential pair:
 			int[] essentialPair = essentialPairs.elementAt(i);
-			for ( int j = pairs.size() - 1; j >=0; j-- )
+			// look through remaining non-essential pairs:
+			for ( int j = pairs.size() - 1; j >= 0; j-- )
 			{
 				int[] pair = pairs.elementAt(j);
+				// if the non-essential pair contains the partner to the
+				// singleton of the essential pair remove it:
 				if ( pair[0] == essentialPair[0] || pair[1] == essentialPair[0] ||
-						pair[0] == essentialPair[1] || pair[1] == essentialPair[1] )
+					 pair[0] == essentialPair[1] || pair[1] == essentialPair[1] )
 				{
-//					System.err.println( "removing " + pair[0] + " " + pair[1] );
 					pairs.remove(j);
 				}
 			}				
 		}
 
+		// Add all essential pairs back in:
 		pairs.addAll( essentialPairs );
 		return allFound;
 	}
 
-	private boolean checkMidPoint( int[] pair, Vector<Vector3f> positions )
+	/**
+	 * Checks two seam cells to see if they form a potential pair.
+	 * The test looks at the mid point between the two seam cells
+	 * and if there is another seam cell that is closer to the mid point
+	 * than 1/2 the distances between the two seam cells the seam cells can
+	 * be ruled out as a potential pair.
+	 * @param pair
+	 * @param positions
+	 * @return
+	 */
+	private static boolean midPointFail( int[] pair, Vector<Vector3f> positions )
 	{
+		// Get the positions of the two seam cells:
 		Vector3f p1 = positions.elementAt(pair[0]);
 		Vector3f p2 = positions.elementAt(pair[1]);
+		// calculate the mid point:
 		Vector3f midPt = Vector3f.add(p1,p2);
 		midPt.scale(0.5f);
+		// calculate the distance between the two seam cells and divide by 2:
 		float distance = p1.distance(p2);
 		distance /= 2f;
+		// Loop through all seam cells:
 		for ( int i = 0; i < positions.size(); i++ )
 		{
 			if ( (i != pair[0]) && (i != pair[1]) )
 			{
 				if ( midPt.distance(positions.elementAt(i)) < distance )
 				{
+					// Fails to pass the mid-point test and 
+					// can be ruled out as a potential pair:
 					return true;
 				}
 			}
 		}
+		// MidPoint Test Pass:
 		return false;
 	}
 
-	private boolean checkMidPoint( int pair0, int pair1, Vector<Vector3f> positions )
+	/**
+	 * Checks two seam cells to see if they form a potential pair.
+	 * The test looks at the mid point between the two seam cells
+	 * and if there is another seam cell that is closer to the mid point
+	 * than 1/2 the distances between the two seam cells the seam cells can
+	 * be ruled out as a potential pair.
+	 * @param pair
+	 * @param positions
+	 * @return
+	 */
+	private static boolean midPointFail( int pair0, int pair1, Vector<Vector3f> positions )
 	{
+		// Get the positions of the two seam cells:
 		Vector3f p1 = positions.elementAt(pair0);
 		Vector3f p2 = positions.elementAt(pair1);
+		// calculate the mid point:
 		Vector3f midPt = Vector3f.add(p1,p2);
 		midPt.scale(0.5f);
+		// calculate the distance between the two seam cells and divide by 2:
 		float distance = p1.distance(p2);
 		distance /= 2f;
+		// Loop through all seam cells:
 		for ( int i = 0; i < positions.size(); i++ )
 		{
 			if ( (i != pair0) && (i != pair1) )
 			{
 				if ( midPt.distance(positions.elementAt(i)) < distance )
 				{
+					// Fails to pass the mid-point test and 
+					// can be ruled out as a potential pair:
 					return true;
 				}
 			}
 		}
+		// MidPoint Test Pass:
 		return false;
 	}
 
@@ -2501,10 +2094,10 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 	private int minSequenceDist = 4;
 	private int maxSequenceDist = 20;
 	private int sequenceDistDiff = 10;
-	private int minPairDist = 5;
-	private int maxPairDist = 15;
-	private final float tenMinDist = 1;
-	private final float tenMaxDist = 5;
+	private static final int minPairDist = 5;
+	private static final int maxPairDist = 15;
+	private static final float tenMinDist = 1;
+	private static final float tenMaxDist = 5;
 	private int sequenceTwist1 = 70;
 	private int sequenceTwist2 = 100;
 	private int sequenceBendMax = 170;
@@ -3473,57 +3066,28 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		{
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
-				String dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "output_images" + File.separator;
+				String dirName;
+//				dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "output_images" + File.separator;
+//				deleteDirectory(dirName);
+//				dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "segmentation" + File.separator;
+//				deleteDirectory(dirName);
+//				dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "straightened_lattice" + File.separator;
+//				deleteDirectory(dirName);
+//				dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "straightened_annotations" + File.separator;
+//				deleteDirectory(dirName);
+//				dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "statistics" + File.separator;
+//				deleteDirectory(dirName);
+				dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + autoSeamCellSegmentationOutput + File.separator;
 				deleteDirectory(dirName);
-				dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "segmentation" + File.separator;
-				deleteDirectory(dirName);
-				dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "straightened_lattice" + File.separator;
-				deleteDirectory(dirName);
-				dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "straightened_annotations" + File.separator;
-				deleteDirectory(dirName);
-				dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "statistics" + File.separator;
-				deleteDirectory(dirName);
-				dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "seam_cells" + File.separator;
-				deleteDirectory(dirName);
-				dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "seam_cells_checked" + File.separator;
-				deleteDirectory(dirName);
-				dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "potential_lattices" + File.separator;
+				dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + editSeamCellOutput + File.separator;
 				deleteDirectory(dirName);
 				for ( int j = 0; j < 15; j++ )
 				{
-					dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "potential_lattice_" + j + File.separator;
+					dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + autoLatticeGenerationOutput + j + File.separator;
 					deleteDirectory(dirName);
-					dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + "potential_lattices_" + j + File.separator;
-					deleteDirectory(dirName);
-
 				}
-			}
-		}
-		else
-		{
-			int fileCount = 0;
-			boolean fileExists = true;
-			while ( fileExists )
-			{    	    	
-				File voiFile = new File(baseFileDir + File.separator + baseFileNameText.getText() + "_"  + fileCount + File.separator);
-				if ( voiFile.exists() )
-				{
-					String dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + fileCount + File.separator + "output_images" + File.separator;
-					deleteDirectory(dirName);
-					dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + fileCount + File.separator + "segmentation" + File.separator;
-					deleteDirectory(dirName);
-					dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + fileCount + File.separator + "straightened_lattice" + File.separator;
-					deleteDirectory(dirName);
-					dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + fileCount + File.separator + "straightened_annotations" + File.separator;
-					deleteDirectory(dirName);
-					dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + fileCount + File.separator + "statistics" + File.separator;
-					deleteDirectory(dirName);
-					fileCount++;
-				}    				
-				else
-				{
-					fileExists = false;
-				}
+				dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + editLatticeOutput + File.separator;
+				deleteDirectory(dirName);
 			}
 		}
 	}     
