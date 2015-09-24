@@ -171,7 +171,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	/** sample rate when mouse is released. */
 	protected float fSample_mouseReleased = 1;
 	/** sample rate when mouse is dragged. */
-	protected float fSample_mouseDragged = 1;
+	protected float fSample_mouseDragged = .6f;
 
 	protected boolean m_bPlay4D = false;
 	protected boolean m_bPlay4DVOIs = false;

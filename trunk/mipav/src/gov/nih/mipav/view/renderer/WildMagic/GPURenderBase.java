@@ -177,27 +177,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     public GPURenderBase()
     {
         super("GPUVolumeRender",0,0,512,512, new ColorRGBA(0.0f,0.0f,0.0f,0.0f));
-    
-        try {
-
-        	String javaLibraryPath = System.getProperties().getProperty("java.library.path");
-            javaLibraryPath = javaLibraryPath.replace(';', '\n');
-            System.out.println("Path: "+javaLibraryPath);
-            
-    		if(SpaceNavigatorController.hasSpaceNavigator())  {
-    			//if(SpaceNavigatorPoller.getListeners().length == 0) {
-    				SpaceNavigatorPoller.registerListener(this);
-    			//}
-    			checkIfSpaceNavNeedsCalibration();
-    		}
-    	} catch (Error e) {
-    		e.printStackTrace();
-    		Preferences.debug("Unable to load space navigator libraries.  See console output for details.\n", Preferences.DEBUG_MINOR);
-//    		System.out.println("TEST");
-////    		e.printStackTrace();
-    	} catch(Exception ex) {
-    		ex.printStackTrace();
-    	}
 		m_kWinLevel = new WindowLevel(); 
     }
     
