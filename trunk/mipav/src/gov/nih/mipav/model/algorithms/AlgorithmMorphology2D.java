@@ -102,6 +102,8 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     public static final int CONNECTED12 = 3;
+    
+    public static final int CONNECTED80 = 4;
 
     /** DOCUMENT ME! */
     public static final int OUTER_EDGING = 0;
@@ -3598,6 +3600,14 @@ kernelLoop:
                 kernel.set(18);
                 kernel.set(22);
                 break;
+                
+            case CONNECTED80:
+            	kDim = 9;
+            	kernel = new BitSet(81);
+            	for (int i = 0; i < 81; i++) {
+            		kernel.set(i);
+            	}
+            	break;
 
             default:
         }
