@@ -179,7 +179,7 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
 
         try {
         	
-            resultImage     = new ModelImage(ModelStorageBase.BYTE, image.getExtents(), name);
+            resultImage     = new ModelImage(ModelStorageBase.USHORT, image.getExtents(), name);
             if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                 ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
             }
@@ -302,7 +302,7 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
         
         tmpStr = textSegmentNumber.getText();
 
-        if (testParameter(tmpStr, 2, 127)) {
+        if (testParameter(tmpStr, 2, 65535)) {
             segmentNumber = Integer.valueOf(tmpStr).intValue();
         } else {
             textSegmentNumber.requestFocus();
