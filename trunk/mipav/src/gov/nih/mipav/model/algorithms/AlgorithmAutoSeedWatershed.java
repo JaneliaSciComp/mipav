@@ -13,6 +13,8 @@ import java.awt.Dimension;
 import java.io.*;
 import java.util.*;
 
+import javax.vecmath.Point2f;
+
   /**
    * This is a port of the file AutoSeedWatershed.cpp which calls openCV written by Ravimal Bandara.  His web site is
    * titled Image Segmentation using Unsupervised Watershed Algorithm with an Over-segmentation Reduction Technique.
@@ -91,6 +93,9 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         presentSegmentNumber = 0;
         
         watershedSegment();
+        
+        setCompleted(true);
+        return;
     }
     
     private void watershedSegment() {
@@ -186,7 +191,7 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         histoAlgoA.run();
         int maxBin = histogram.getOtsuThreshold();
         double dif = grayImage.getMax() - grayImage.getMin();
-    	double factor = dif / histogram.getNDims();
+    	double factor = dif / histogram.getExtents()[0];
     	histoAlgoA.finalize();
     	histoAlgoA = null;
     	float thresVal = (float)((maxBin * factor) + grayImage.getMin());
@@ -237,7 +242,7 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         openAlgo2D.finalize();
         openAlgo2D = null;
         
-        distTransformed = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_distTransformed");
+        distTransformed = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), srcImage.getImageName() + "_distTransformed");
         // The input is an image with feature pixels with value 0 and non-feature pixels with nonzero values.
         // The function labels every non-feature pixel in the output image with a distance to the closest feature pixel.
         int pix, i;
@@ -327,10 +332,21 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         }
         
         // Normalize to go between 0.0 and 1.0
+        // Threshold the transformed image to obtain markers for the watershed
+        // if less than or equal to 0.1, set to 0
+        // Otherwise set to 255.0.
         for (pix = 0; pix  < sliceSize; pix++) {
         	distBuffer[pix] = distBuffer[pix]/distMax;
+        	if (distBuffer[pix] <= 0.1) {
+        		distBuffer[pix] = 0.0f;
+        	}
+        	else {
+        		distBuffer[pix] = 255.0f;
+        	}
         }
+        
 
+        // Thresholded distance transformation image
         try {
             distTransformed.importData(0, distBuffer, true);
         } catch (IOException error) {
@@ -339,6 +355,12 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
 
             return;
         } 
+        new ViewJFrameImage(distTransformed);
+        
+        // Calculate the contours of the markers
+        int compCount = 0;
+        Vector<Vector<Point2f>> contours = new Vector<Vector<Point2f>>();
+        Vector<int[]>hierarchy = new Vector<int[]>();
     }
 
     
