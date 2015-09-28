@@ -331,6 +331,7 @@ public class ViewMenuBar {
                 menuBuilder.buildMenuItem("Scale saliency", "SCALE_SALIENCY", 0, null, false),
                 menuBuilder.makeMenu("Segmentation", false, new JMenuItem[] {
                 		menuBuilder.buildMenuItem("Active contours without edges", "ActiveContours", 0, null, false),
+                		menuBuilder.buildMenuItem("Auto Seed Watershed","AutoSeedWatershed", 0, null, false),
                         menuBuilder.buildMenuItem("Evaluate VOI segmentation", "evalSeg", 0, null, false),
 
                         // menuBuilder.buildMenuItem("Extract object surface",
@@ -1302,6 +1303,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Reslice - isotropic voxels", false);
             menuBuilder.setMenuItemEnabled("Subtract VOI background", false);
             menuBuilder.setMenuItemEnabled("Single channel", false);
+            menuBuilder.setMenuItemEnabled("Auto Seed Watershed", false);
             menuBuilder.setMenuItemEnabled("Watershed", false);
             menuBuilder.setMenuItemEnabled("Histogram summary", false);
             menuBuilder.setMenuItemEnabled("Surface plotter", false);
@@ -1371,6 +1373,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Scale saliency", false);
             menuBuilder.setMenuItemEnabled("Entropic", false);
             menuBuilder.setMenuItemEnabled("ActiveContours", false);
+            menuBuilder.setMenuItemEnabled("Auto Seed Watershed", false);
             
             menuBuilder.setMenuItemEnabled("Thinning", false);
             menuBuilder.setMenuItemEnabled("Markov random field", false);
