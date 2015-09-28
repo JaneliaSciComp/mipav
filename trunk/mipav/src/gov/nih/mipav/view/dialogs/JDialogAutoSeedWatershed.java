@@ -50,7 +50,7 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
     public JDialogAutoSeedWatershed() { }
 
     /**
-     * Creates new dialog for entering parameters for Auto Seed Watershed detection.
+     * Creates new dialog for entering parameters for Auto Seed Watershed.
      *
      * @param  theParentFrame  Parent frame
      * @param  im              Source image
