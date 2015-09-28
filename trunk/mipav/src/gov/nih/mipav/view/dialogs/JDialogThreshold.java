@@ -656,7 +656,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
             	maxBin = histogram.getMaxEntropyThreshold();
             }
         	double dif = image.getMax() - image.getMin();
-        	double factor = dif / histogram.getNDims();
+        	double factor = dif / histogram.getExtents()[0];
         	
         	float thresVal = (float)((maxBin * factor) + image.getMin());
             
