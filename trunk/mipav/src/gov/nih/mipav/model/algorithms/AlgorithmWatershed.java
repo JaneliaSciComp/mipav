@@ -549,80 +549,88 @@ public class AlgorithmWatershed extends AlgorithmBase {
             pixE = pixC + 1;
             pixW = pixC - 1;
 
-            if (destImage.getShort(pixW) >= 0) {
+            if (pixW >= 0) {
+	            if (destImage.getShort(pixW) >= 0) {
+	
+	                if (destImage.getShort(pixC) >= 0) {
+	
+	                    if (destImage.getShort(pixC) != destImage.getShort(pixW)) {
+	                        destImage.setShort(pixC, WSHED);
+	                    }
+	                } else if (destImage.getShort(pixC) == MASK) { // West neighbor has to be basin
+	                    destImage.setShort(pixC, destImage.getShort(pixW));
+	                }
+	            } else {
+	
+	                if (destImage.getShort(pixW) == INITIAL) {
+	                    destImage.setShort(pixW, MASK);
+	                    hQueue.add(pixW, energyImage.getFloat(pixW));
+	                }
+	            }
+            } // if (pixW >= 0)
 
-                if (destImage.getShort(pixC) >= 0) {
-
-                    if (destImage.getShort(pixC) != destImage.getShort(pixW)) {
-                        destImage.setShort(pixC, WSHED);
-                    }
-                } else if (destImage.getShort(pixC) == MASK) { // West neighbor has to be basin
-                    destImage.setShort(pixC, destImage.getShort(pixW));
-                }
-            } else {
-
-                if (destImage.getShort(pixW) == INITIAL) {
-                    destImage.setShort(pixW, MASK);
-                    hQueue.add(pixW, energyImage.getFloat(pixW));
-                }
-            }
-
-            if (destImage.getShort(pixE) >= 0) {
-
-                if (destImage.getShort(pixC) >= 0) {
-
-                    if (destImage.getShort(pixC) != destImage.getShort(pixE)) {
-                        destImage.setShort(pixC, WSHED);
-                    }
-                } else if (destImage.getShort(pixC) == MASK) {
-                    destImage.setShort(pixC, destImage.getShort(pixE));
-                }
-            } else {
-
-                if (destImage.getShort(pixE) == INITIAL) {
-                    destImage.setShort(pixE, MASK);
-                    hQueue.add(pixE, energyImage.getFloat(pixE));
-                }
-            }
-
-
-            if (destImage.getShort(pixN) >= 0) {
-
-                if (destImage.getShort(pixC) >= 0) {
-
-                    if (destImage.getShort(pixC) != destImage.getShort(pixN)) {
-                        destImage.setShort(pixC, WSHED);
-                    }
-                } else if (destImage.getShort(pixC) == MASK) {
-                    destImage.setShort(pixC, destImage.getShort(pixN));
-                }
-            } else {
-
-                if (destImage.getShort(pixN) == INITIAL) {
-                    destImage.setShort(pixN, MASK);
-                    hQueue.add(pixN, energyImage.getFloat(pixN));
-                }
-            }
+            if (pixE < length) {
+	            if (destImage.getShort(pixE) >= 0) {
+	
+	                if (destImage.getShort(pixC) >= 0) {
+	
+	                    if (destImage.getShort(pixC) != destImage.getShort(pixE)) {
+	                        destImage.setShort(pixC, WSHED);
+	                    }
+	                } else if (destImage.getShort(pixC) == MASK) {
+	                    destImage.setShort(pixC, destImage.getShort(pixE));
+	                }
+	            } else {
+	
+	                if (destImage.getShort(pixE) == INITIAL) {
+	                    destImage.setShort(pixE, MASK);
+	                    hQueue.add(pixE, energyImage.getFloat(pixE));
+	                }
+	            }
+            } // if (pixE < length)
 
 
-            if (destImage.getShort(pixS) >= 0) {
+            if (pixN >= 0) {
+	            if (destImage.getShort(pixN) >= 0) {
+	
+	                if (destImage.getShort(pixC) >= 0) {
+	
+	                    if (destImage.getShort(pixC) != destImage.getShort(pixN)) {
+	                        destImage.setShort(pixC, WSHED);
+	                    }
+	                } else if (destImage.getShort(pixC) == MASK) {
+	                    destImage.setShort(pixC, destImage.getShort(pixN));
+	                }
+	            } else {
+	
+	                if (destImage.getShort(pixN) == INITIAL) {
+	                    destImage.setShort(pixN, MASK);
+	                    hQueue.add(pixN, energyImage.getFloat(pixN));
+	                }
+	            }
+            } // if (pixN >= 0)
 
-                if (destImage.getShort(pixC) >= 0) {
 
-                    if (destImage.getShort(pixC) != destImage.getShort(pixS)) {
-                        destImage.setShort(pixC, WSHED);
-                    }
-
-                } else if (destImage.getShort(pixC) == MASK) {
-                    destImage.setShort(pixC, destImage.getShort(pixS));
-                }
-            } else {
-
-                if (destImage.getShort(pixS) == INITIAL) {
-                    destImage.setShort(pixS, MASK);
-                    hQueue.add(pixS, energyImage.getFloat(pixS));
-                }
-            }
+            if (pixS < length) {
+	            if (destImage.getShort(pixS) >= 0) {
+	
+	                if (destImage.getShort(pixC) >= 0) {
+	
+	                    if (destImage.getShort(pixC) != destImage.getShort(pixS)) {
+	                        destImage.setShort(pixC, WSHED);
+	                    }
+	
+	                } else if (destImage.getShort(pixC) == MASK) {
+	                    destImage.setShort(pixC, destImage.getShort(pixS));
+	                }
+	            } else {
+	
+	                if (destImage.getShort(pixS) == INITIAL) {
+	                    destImage.setShort(pixS, MASK);
+	                    hQueue.add(pixS, energyImage.getFloat(pixS));
+	                }
+	            }
+            } // if (pixS < length)
 
             if (destImage.getShort(pixC) == MASK) {
 
