@@ -2040,6 +2040,9 @@ public class LatticeModel {
 			if (annotationVOIs == null) {
 				return null;
 			}
+			if (annotationVOIs.getCurves() == null) {
+				return null;
+			}
 			pickedAnnotation = -1;
 			float minDist = Float.MAX_VALUE;
 			for (int i = 0; i < annotationVOIs.getCurves().size(); i++) {
@@ -2416,6 +2419,10 @@ public class LatticeModel {
 		{
 			return false;
 		}
+		if ( annotationVOIs.getCurves() == null )
+		{
+			return false;
+		}
 		if ( annotationVOIs.getCurves().size() == 0 )
 		{
 			return false;
@@ -2774,20 +2781,22 @@ public class LatticeModel {
 			imageA.unregisterVOI(annotationVOIs);
 		}
 		annotationVOIs = newAnnotations;
-//		if (pickedAnnotation != -1) {
-			clear3DSelection();
+		clear3DSelection();
 
-			if (showSelected != null) {
-				for (int i = 0; i < showSelected.length; i++) {
-					showSelected[i].dispose();
-				}
-				showSelected = null;
+		if (showSelected != null) {
+			for (int i = 0; i < showSelected.length; i++) {
+				showSelected[i].dispose();
 			}
-			showSelectedVOI = null;
-//		}
-		clearAddLeftRightMarkers();
-		
+			showSelected = null;
+		}
+		showSelectedVOI = null;
+		clearAddLeftRightMarkers();		
 		highestIndex = 0;
+		
+		if ( annotationVOIs == null )
+		{
+			return;
+		}
 		for (int i = 0; i < annotationVOIs.getCurves().size(); i++) {
 			final VOIText text = (VOIText) annotationVOIs.getCurves().elementAt(i);
 			text.setColor(Color.blue);

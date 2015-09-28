@@ -744,6 +744,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 
 	protected void updateVOIs( VOIVector kVOIs )
 	{
+		if ( kVOIs == null )
+		{
+			return;
+		}
 		boolean bUpdateVOIs = false;
 		for ( int i = 0; i < m_kDisplayList.size(); i++ )
 		{

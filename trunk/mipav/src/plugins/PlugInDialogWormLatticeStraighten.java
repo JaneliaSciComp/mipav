@@ -27,6 +27,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmCostFunctions;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
+import gov.nih.mipav.model.algorithms.registration.AlgorithmConstrainedOAR3D;
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR3D;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmAddMargins;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmMaximumIntensityProjection;
@@ -34,6 +35,7 @@ import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelImageToImageJConversion;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
@@ -58,6 +60,9 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentationKMeans;
 import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentationLoG;
 import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentationWindowing;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
+
+import ij.ImagePlus;
+import ij.ImageStack;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -102,8 +107,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 	private static final long serialVersionUID = 2476025001402032629L;
 
 	/** This source image is typically set by the constructor */
-	private ModelImage wormImageA;    
-	private ModelImage prevImageA;     
+	private ModelImage wormImageA;     
 	private ModelImage maximumProjectionImage;
 	private int currentMP;
 	private JTextField  baseFileLocText;
@@ -214,11 +218,11 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			}
 			if ( registerImages.isSelected() )
 			{
-				registerImages();
+				registerImages( includeRange,  baseFileDir, baseFileNameText.getText() );
 			}
 			if ( calcMaxProjection.isSelected() )
 			{
-				calcMaxProjection();
+				calcMaxProjection( includeRange,  baseFileDir, baseFileNameText.getText() );
 			}
 			if ( generateTrainingData.isSelected() )
 			{
@@ -3107,311 +3111,190 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			fileDir.delete();
 		}
 	}
-
-	private void registerImages()
+	
+	public static void createMaximumProjectionAVI(final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName)
 	{
+		registerImages(includeRange, baseFileDir, baseFileName);
+		calcMaxProjection(includeRange, baseFileDir, baseFileName);		
+	}
 
-		long startTime = System.currentTimeMillis();
+	private static void registerImages(final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName)
+	{
+//		long startTime = System.currentTimeMillis();
+		ModelImage image = null, prevImage = null;
 		int[] maxExtents = new int[]{0,0,0};
 		if ( includeRange != null )
 		{
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
-				String fileName = baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + 
-						"output_images" + File.separator + baseFileNameText.getText() + "_" + includeRange.elementAt(i) + "_straight" + ".tif";
+				String fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
+						"output_images" + File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_straight" + ".xml";
 				File voiFile = new File(baseFileDir + File.separator + fileName);
 				if ( voiFile.exists() )
 				{
-					System.err.println( fileName );
+//					System.err.println( fileName );
 					FileIO fileIO = new FileIO();
-					if(wormImageA != null) {
+					if( image != null )
+					{
 						if ( (i%10) == 0 )
 						{
-							wormImageA.disposeLocal(true);
+							image.disposeLocal(true);
 						}
 						else
 						{
-							wormImageA.disposeLocal();
+							image.disposeLocal();
 						}
-						wormImageA = null;
+						image = null;
 					}
-					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
-					int dimX = wormImageA.getExtents().length > 0 ? wormImageA.getExtents()[0] : 0;  
-					int dimY = wormImageA.getExtents().length > 1 ? wormImageA.getExtents()[1] : 0;  
-					int dimZ = wormImageA.getExtents().length > 2 ? wormImageA.getExtents()[2] : 0;
+					image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
+					int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 0;  
+					int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 0;  
+					int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 0;
 					maxExtents[0] = Math.max(maxExtents[0], dimX);
 					maxExtents[1] = Math.max(maxExtents[1], dimY);
 					maxExtents[2] = Math.max(maxExtents[2], dimZ);
 				}    				
 			}
 
-			boolean first = true;
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
-				String fileName = baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + 
-						"output_images" + File.separator + baseFileNameText.getText() + "_" + includeRange.elementAt(i) + "_straight" + ".tif";
+				String fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
+						"output_images" + File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_straight" + ".xml";
 				File voiFile = new File(baseFileDir + File.separator + fileName);
 
-				File registrationDir = new File(baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + 
+				File registrationDir = new File(baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
 						"output_images");
 				if ( voiFile.exists() )
 				{
-					System.err.println( fileName );
+//					System.err.println( fileName );
 					FileIO fileIO = new FileIO();
-					if((wormImageA != null) && (wormImageA != prevImageA)) {
-						if ( (i%10) == 0 )
-						{
-							wormImageA.disposeLocal(true);
-						}
-						else
-						{
-							wormImageA.disposeLocal();
-						}
-						wormImageA = null;
-					}
-					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
+					image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
 
-					register( registrationDir, first, maxExtents );
-					if ( first )
+					ModelImage result = register( prevImage, image, registrationDir, maxExtents );
+					if ( result == null )
 					{
-						first = false;
+						prevImage = image;
 					}
+					else
+					{
+						if ( image != null )
+						{
+							image.disposeLocal();
+							image = null;
+						}
+						if ( prevImage != null )
+						{
+							prevImage.disposeLocal();
+							prevImage = null;
+						}
+						prevImage = result;
+					}
+					
 				}    				
 			}
 		}
-		else
+
+		if ( image != null )
 		{
-			int fileCount = 0;
-			boolean fileExists = true;
-			maxExtents = new int[]{0,0,0};
-			while ( fileExists )
-			{    	    	
-				String fileName = baseFileNameText.getText() + "_"  + fileCount + File.separator + 
-						"output_images" + File.separator + baseFileNameText.getText() + "_" + fileCount + "_straight" + ".tif";
-				File voiFile = new File(baseFileDir + File.separator + fileName);
-				if ( voiFile.exists() )
-				{
-					System.err.println( fileName );
-					FileIO fileIO = new FileIO();
-					if(wormImageA != null) {
-						if ( (fileCount%10) == 0 )
-						{
-							wormImageA.disposeLocal(true);
-						}
-						else
-						{
-							wormImageA.disposeLocal();
-						}
-						wormImageA = null;
-					}
-					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
-					int dimX = wormImageA.getExtents().length > 0 ? wormImageA.getExtents()[0] : 0;  
-					int dimY = wormImageA.getExtents().length > 1 ? wormImageA.getExtents()[1] : 0;  
-					int dimZ = wormImageA.getExtents().length > 2 ? wormImageA.getExtents()[2] : 0;
-					maxExtents[0] = Math.max(maxExtents[0], dimX);
-					maxExtents[1] = Math.max(maxExtents[1], dimY);
-					maxExtents[2] = Math.max(maxExtents[2], dimZ); 
-
-					fileCount++;
-				}    				
-				else
-				{
-					fileExists = false;
-				}
-			}
-
-			fileCount = 0;
-			fileExists = true;
-			boolean first = true;
-			while ( fileExists )
-			{    	    	
-				String fileName = baseFileNameText.getText() + "_"  + fileCount + File.separator + 
-						"output_images" + File.separator + baseFileNameText.getText() + "_" + fileCount + "_straight" + ".tif";
-				File voiFile = new File(baseFileDir + File.separator + fileName);
-
-				File registrationDir = new File(baseFileDir + File.separator + baseFileNameText.getText() + "_"  + fileCount + File.separator + 
-						"output_images");
-				if ( voiFile.exists() )
-				{
-					System.err.println( fileName );
-					FileIO fileIO = new FileIO();
-					if((wormImageA != null) && (wormImageA != prevImageA)) {
-						if ( (fileCount%10) == 0 )
-						{
-							wormImageA.disposeLocal(true);
-						}
-						else
-						{
-							wormImageA.disposeLocal();
-						}
-						wormImageA = null;
-					}
-					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
-
-					register( registrationDir, first, maxExtents );
-					if ( first )
-					{
-						first = false;
-					}
-
-					fileCount++;
-				}    				
-				else
-				{
-					fileExists = false;
-				}
-			}
+			image.disposeLocal();
+			image = null;
 		}
-
-		if(wormImageA != null) {
-			wormImageA.disposeLocal();
-			wormImageA = null;
-		}
-		if(prevImageA != null) {
-			prevImageA.disposeLocal();
-			prevImageA = null;
+		if ( prevImage != null )
+		{
+			prevImage.disposeLocal();
+			prevImage = null;
 		}
 
 
-		long now = System.currentTimeMillis();
-
-		double elapsedTime = (double) (now - startTime);
-
-		// if elasedTime is invalid, then set it to 0
-		if (elapsedTime <= 0) {
-			elapsedTime = (double) 0.0;
-		}
-
-		System.err.println( "Elapsed time = " + (elapsedTime / 1000.0) ); // return in seconds!!
+//		long now = System.currentTimeMillis();
+//
+//		double elapsedTime = (double) (now - startTime);
+//
+//		// if elasedTime is invalid, then set it to 0
+//		if (elapsedTime <= 0) {
+//			elapsedTime = (double) 0.0;
+//		}
+//
+//		System.err.println( "Elapsed time = " + (elapsedTime / 1000.0) ); // return in seconds!!
 	}
 
 
-	private void calcMaxProjection()
+	private static void calcMaxProjection(final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName)
 	{
+		ModelImage image = null, maximumProjectionImage = null;
+		int[] currentMPImage = new int[]{0};
 		if ( includeRange != null )
 		{
 			int mpSliceCount = 0;
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
-				String fileName = baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + 
-						"output_images" + File.separator + baseFileNameText.getText() + "_" + includeRange.elementAt(i) + "_straight_register" + ".tif";
+				String fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
+						"output_images" + File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_straight_register" + ".tif";
 				File voiFile = new File(baseFileDir + File.separator + fileName);
 				if ( voiFile.exists() )
 				{					
 					mpSliceCount++;
-				}    				
+				}
 			}
-
-			boolean first = true;
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
-				String fileName = baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + 
-						"output_images" + File.separator + baseFileNameText.getText() + "_" + includeRange.elementAt(i) + "_straight_register" + ".tif";
+				String fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
+						"output_images" + File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_straight_register" + ".tif";
 				File voiFile = new File(baseFileDir + File.separator + fileName);
 
+//				System.err.println( fileName );
 				if ( voiFile.exists() )
 				{
 					FileIO fileIO = new FileIO();
-					if((wormImageA != null) && (wormImageA != prevImageA)) {
+					if( image != null )
+					{
 						if ( (i%10) == 0 )
 						{
-							wormImageA.disposeLocal(true);
+							image.disposeLocal(true);
 						}
 						else
 						{
-							wormImageA.disposeLocal();
+							image.disposeLocal();
 						}
-						wormImageA = null;
+						image = null;
 					}
-					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
-
-					if ( first )
-					{				
-						int dimX = wormImageA.getExtents().length > 0 ? wormImageA.getExtents()[0] : 1; // dimX
-						int dimY = wormImageA.getExtents().length > 2 ? wormImageA.getExtents()[2] : 1; // use dimZ for y projection
-						maximumProjectionImage = new ModelImage( wormImageA.getType(), new int[]{ dimX, dimY, mpSliceCount}, baseFileNameText.getText() + "_MP_Y.tif" );
-						currentMP = 0;
-						first = false;
-					}
-					calcMaximumProjectionY( wormImageA );
-				}    				
-			}
-		}
-		else
-		{
-			int mpSliceCount = 0;
-			boolean fileExists = true;
-			while ( fileExists )
-			{    	    	
-				String fileName = baseFileNameText.getText() + "_"  + mpSliceCount + File.separator + 
-						"output_images" + File.separator + baseFileNameText.getText() + "_" + mpSliceCount + "_straight_register" + ".tif";
-				File voiFile = new File(baseFileDir + File.separator + fileName);
-				if ( voiFile.exists() )
-				{
-					mpSliceCount++;
-				}    				
-				else
-				{
-					fileExists = false;
-				}
-			}
-			int fileCount = 0;
-			fileExists = true;
-			boolean first = true;
-			while ( fileExists )
-			{    	    	
-				String fileName = baseFileNameText.getText() + "_"  + fileCount + File.separator + 
-						"output_images" + File.separator + baseFileNameText.getText() + "_" + fileCount + "_straight_register" + ".tif";
-				File voiFile = new File(baseFileDir + File.separator + fileName);
-
-				if ( voiFile.exists() )
-				{
-					FileIO fileIO = new FileIO();
-					if((wormImageA != null) && (wormImageA != prevImageA)) {
-						if ( (fileCount%10) == 0 )
-						{
-							wormImageA.disposeLocal(true);
-						}
-						else
-						{
-							wormImageA.disposeLocal();
-						}
-						wormImageA = null;
-					}
-					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
-
-					if ( first )
+					image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);
+					if ( maximumProjectionImage == null )
 					{
-						int dimX = wormImageA.getExtents().length > 0 ? wormImageA.getExtents()[0] : 1; // dimX
-						int dimY = wormImageA.getExtents().length > 2 ? wormImageA.getExtents()[2] : 1; // use dimZ for y projection
-						maximumProjectionImage = new ModelImage( wormImageA.getType(), new int[]{ dimX, dimY, mpSliceCount}, baseFileNameText.getText() + "_MP_Y.tif" );
-						currentMP = 0;
-						first = false;
+						int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1; // dimX
+						int dimY = image.getExtents().length > 2 ? image.getExtents()[2] : 1; // use dimZ for y projection
+						maximumProjectionImage = new ModelImage( image.getType(), new int[]{ dimX, dimY, mpSliceCount}, baseFileName + "_MP_Y.tif" );
+						currentMPImage[0] = 0;
 					}
-					calcMaximumProjectionY( wormImageA );
-
-					fileCount++;
+					calcMaximumProjectionY( image, maximumProjectionImage, currentMPImage );
 				}    				
-				else
-				{
-					fileExists = false;
-				}
 			}
 		}
-
-		if( wormImageA != null )
+		
+		if( image != null )
 		{
-			wormImageA.disposeLocal();
-			wormImageA = null;
+			image.disposeLocal();
+			image = null;
 		}
 
+//		String fileName = baseFileName + "_MP_Y.tif";
+//		File voiFile = new File(baseFileDir + File.separator + fileName);		
+//		FileIO fileIO = new FileIO();
+//		maximumProjectionImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);
+		
 		if ( maximumProjectionImage != null )
 		{
-			String fileName = baseFileDir + File.separator;
-			System.err.println( "Saving mp image to : " + fileName + " " + maximumProjectionImage.getImageName() + ".tif" );
-			ModelImage.saveImage( maximumProjectionImage, maximumProjectionImage.getImageName() + ".tif", fileName, false ); 
-			maximumProjectionImage.calcMinMax();
-			new ViewJFrameImage(maximumProjectionImage);
+//			String fileName = baseFileDir + File.separator;
+////			System.err.println( "Saving mp image to : " + fileName + " " + maximumProjectionImage.getImageName() + ".tif" );
+//			ModelImage.saveImage( maximumProjectionImage, maximumProjectionImage.getImageName() + ".tif", fileName, false ); 
+            final ImageStack is = ModelImageToImageJConversion.convert3D(maximumProjectionImage);
+            new ImagePlus("ImageJ:" + maximumProjectionImage.getImageName(), is).show();
+            new ij.ImageJ();
+            
+//			maximumProjectionImage.calcMinMax();
+//			new ViewJFrameImage(maximumProjectionImage);
+//			maximumProjectionImage.disposeLocal();
+//			maximumProjectionImage = null;
 		}
 	}
 
@@ -3439,7 +3322,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 				if ( voiFile.exists() )
 				{
 					FileIO fileIO = new FileIO();
-					if((wormImageA != null) && (wormImageA != prevImageA))
+					if ( wormImageA != null )
 					{
 						wormImageA.disposeLocal();
 						wormImageA = null;
@@ -3474,16 +3357,21 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 
 
 
-	private void register( File registrationDir, boolean first, int[] maxExtents )
+	private static ModelImage register( ModelImage prevImage, ModelImage image, final File registrationDir, final int[] maxExtents )
 	{
 		int[] marginX = new int[2];
 		int[] marginY = new int[2];
 		int[] marginZ = new int[2];
 
-		int dimX = wormImageA.getExtents().length > 0 ? wormImageA.getExtents()[0] : 0;  
-		int dimY = wormImageA.getExtents().length > 1 ? wormImageA.getExtents()[1] : 0;  
-		int dimZ = wormImageA.getExtents().length > 2 ? wormImageA.getExtents()[2] : 0;
+		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 0;  
+		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 0;  
+		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 0;
 
+		ModelImage regInput;
+		ModelImage regTo = prevImage;
+		ModelImage result = null;
+		ModelImage padResult = null;
+		AlgorithmAddMargins pad = null;
 		if ( dimX != maxExtents[0] || dimY != maxExtents[1] || dimZ != maxExtents[2] )
 		{
 			int diff = maxExtents[0] - dimX;
@@ -3499,86 +3387,58 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			marginZ[1] = diff;
 
 
-			ModelImage destImage = new ModelImage(wormImageA.getType(), maxExtents, wormImageA.getImageName() + "_pad" );
-			JDialogBase.updateFileInfo( wormImageA, destImage );
-			AlgorithmAddMargins pad = new AlgorithmAddMargins(wormImageA, destImage, marginX, marginY, marginZ );
+			padResult = new ModelImage( image.getType(), maxExtents, image.getImageName() + "_pad" );
+			JDialogBase.updateFileInfo( image, padResult );
+			pad = new AlgorithmAddMargins(image, padResult, marginX, marginY, marginZ );
 			pad.setRunningInSeparateThread(false);
 			pad.run();
-			if ( first )
-			{
-				saveTransformImage( registrationDir, destImage );
-				if(prevImageA != null) {
-					prevImageA.disposeLocal();
-					prevImageA = null;
-				}
-				prevImageA = destImage;
-				first = false;
-			}
-			else
-			{
-				AlgorithmRegOAR3D reg = new AlgorithmRegOAR3D(prevImageA, destImage,
-						AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED, 6, 0,
-						-10, 10, 5, 2, -10, 10, 5, 2, -15, 15, 7, 2, true, true, true, 
-						false, 2, 3);
-				reg.setRunningInSeparateThread(false);
-				reg.run();
-				ModelImage result = getTransformedImage( reg, prevImageA, destImage );
-				if ( result != null )
-				{
-					saveTransformImage( registrationDir, result );
-					if(prevImageA != null) {
-						prevImageA.disposeLocal();
-						prevImageA = null;
-					}
-					prevImageA = result;
-				}
-				reg.finalize();
-				reg = null;
+			regInput = padResult;
 
-				destImage.disposeLocal();
-				destImage = null;
-			}
 			pad.finalize();
 			pad = null;
 		}
 		else
 		{
-			if ( first )
-			{
-				saveTransformImage( registrationDir, wormImageA );
-				if(prevImageA != null) {
-					prevImageA.disposeLocal();
-					prevImageA = null;
-				}
-				prevImageA = wormImageA;
-				first = false;
-			}
-			else if ( prevImageA != null )
-			{
-				AlgorithmRegOAR3D reg = new AlgorithmRegOAR3D(prevImageA, wormImageA, 
-						AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED, 6, 0,
-						-10, 10, 5, 2, -10, 10, 5, 2, -15, 15, 7, 2, true, true, true, 
-						false, 2, 3);
-				reg.setRunningInSeparateThread(false);
-				reg.run();
-				ModelImage result = getTransformedImage( reg, prevImageA, wormImageA );
-				if ( result != null )
-				{
-					saveTransformImage( registrationDir, result );
-
-					if(prevImageA != null) {
-						prevImageA.disposeLocal();
-						prevImageA = null;
-					}
-					prevImageA = result;
-				}
-				reg.finalize();
-				reg = null;
-			}
+			regInput = image;
 		}
+		if ( regTo == null )
+		{
+			result = regInput;
+			saveTransformImage( registrationDir, result );
+		}
+		else
+		{
+//			AlgorithmConstrainedOAR3D reg = new AlgorithmConstrainedOAR3D( regTo, regInput, AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED, 6, 0,
+//                    -10, 20, -10, 20, -10, 20, 3, 3, 3, new float[][]{{-30,-30,-30},{30,30,30}},                     
+//                    true, true, false, true, 10, 10, 5);
+			AlgorithmConstrainedOAR3D reg = new AlgorithmConstrainedOAR3D( regTo, regInput, AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED, 6, 0,
+                    -10, 20, -10, 20, -10, 20, 3, 3, 3, new float[][]{{-30,-30,-30},{30,30,30}},                     
+                    true, false, true, false, 10, 10, 5);
+                    
+//			AlgorithmRegOAR3D reg = new AlgorithmRegOAR3D(regTo, regInput,
+//					AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED, 6, 0,
+//					-10, 10, 5, 2, -10, 10, 5, 2, -15, 15, 7, 2, 
+//					true, true, true, false, 2, 3);
+			reg.setRunningInSeparateThread(false);
+			reg.run();
+			result = getTransformedImage( reg, regTo, regInput );
+			if ( result != null )
+			{
+				saveTransformImage( registrationDir, result );
+			}
+			reg.finalize();
+			reg = null;
+		}
+		if ( (result != padResult) && (padResult != null) )
+		{
+			padResult.disposeLocal();
+			padResult = null;
+		}
+		
+		return result;
 	}
 
-	private ModelImage getTransformedImage( AlgorithmRegOAR3D reg3, ModelImage refImage, ModelImage matchImage )
+	private static ModelImage getTransformedImage( AlgorithmConstrainedOAR3D reg3, ModelImage refImage, ModelImage matchImage )
 	{
 
 		final int xdimA = refImage.getExtents()[0];
@@ -3624,7 +3484,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 
 
 
-	private void saveTransformImage( File dir, ModelImage image  ) 
+	private static void saveTransformImage( File dir, ModelImage image  ) 
 	{
 		String imageName = image.getImageName();
 		if ( imageName.contains("_pad") )
@@ -3643,8 +3503,9 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		ModelImage.saveImage( image, imageName + ".tif", voiDir, false ); 
 	}
 
-	private void calcMaximumProjectionY( ModelImage image )
+	private static void calcMaximumProjectionY( ModelImage image, ModelImage maximumProjectionImage, int[] zSlice )
 	{
+//		System.err.println( image.getExtents()[0] + " " + image.getExtents()[1] + " " + image.getExtents()[2] );
 		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
 		AlgorithmMaximumIntensityProjection mipAlgo = null;
 		// Make algorithm
@@ -3672,15 +3533,16 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			int dimX = maximumProjectionImage.getExtents().length > 0 ? maximumProjectionImage.getExtents()[0] : 1;
 			dimY = maximumProjectionImage.getExtents().length > 1 ? maximumProjectionImage.getExtents()[1] : 1;
 
+			
 			for ( int y = 0; y < dimY; y++ )
 			{
 				for ( int x = 0; x < dimX; x++ )
 				{
-					maximumProjectionImage.set(x,  y, currentMP, mp.getFloat(x, y, 0) );
+					maximumProjectionImage.set(x,  y, zSlice[0], mp.getFloat(x, y, 0) );
 				}
 			}
 
-			currentMP++;
+			zSlice[0]++;
 		}
 		mipAlgo.finalize();
 	}
