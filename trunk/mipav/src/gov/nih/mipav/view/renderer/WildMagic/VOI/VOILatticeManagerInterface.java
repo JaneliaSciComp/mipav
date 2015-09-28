@@ -320,15 +320,19 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 	
 	public void setAnnotations( VOIVector annotations )
 	{
-		if ( latticeModel != null )
+		VOI newAnnotationVOI = annotations.size() > 0 ? annotations.elementAt(0).getCurves() != null ? annotations.elementAt(0) : null : null;
+
+		boolean saveA = true;
+		if ( latticeModel == null )
+		{
+			latticeModel = new LatticeModel( m_kImageA );
+			saveA = false;
+		}
+		if ( saveA )
 		{
 			saveVOIs("loadAnnotations");
-			latticeModel.setAnnotations( annotations.elementAt(0) );
 		}
-		else
-		{
-			latticeModel = new LatticeModel( m_kImageA, annotations.elementAt(0), true );
-		}		
+		latticeModel.setAnnotations( newAnnotationVOI );
 	}
 
 	public void add3DMarker( VOI textVOI, boolean doubleClick )

@@ -132,6 +132,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					{
 						PlugInDialogWormLatticeStraighten.latticeStraighten( includeRange,  baseFileDir, baseFileNameText.getText() );
 					}
+					if ( calcMaxProjection.isSelected() )
+					{
+						PlugInDialogWormLatticeStraighten.createMaximumProjectionAVI( includeRange,  baseFileDir, baseFileNameText.getText() );
+					}
 					setVisible(false);
 				}
 				else if ( editEnabled )
@@ -259,13 +263,16 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		{
 			if ( annotations != null )
 			{
-				voiManager.setAnnotations(annotations);
-
-
-				for (int i = 0; i < annotations.elementAt(0).getCurves().size(); i++)
+				if ( annotations.size() > 0 )
 				{
-					final VOIText text = (VOIText) annotations.elementAt(0).getCurves().elementAt(i);
-					text.createVolumeVOI( volumeImage, volumeRenderer.getTranslate() );    			
+					voiManager.setAnnotations(annotations);
+
+
+					for (int i = 0; i < annotations.elementAt(0).getCurves().size(); i++)
+					{
+						final VOIText text = (VOIText) annotations.elementAt(0).getCurves().elementAt(i);
+						text.createVolumeVOI( volumeImage, volumeRenderer.getTranslate() );    			
+					}
 				}
 			}
 			voiManager.editAnnotations();
@@ -326,7 +333,6 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 					if ( annotations.size() == 0 )
 					{
-
 						fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.autoSeamCellSegmentationOutput;
 						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
 						PlugInDialogWormLatticeStraighten.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);

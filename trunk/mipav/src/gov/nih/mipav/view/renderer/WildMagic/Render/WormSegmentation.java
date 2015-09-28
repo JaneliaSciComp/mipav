@@ -129,7 +129,7 @@ public abstract class WormSegmentation
 		try {
 			final File voiFileDir = new File(voiDir);
 
-			if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+			if (voiFileDir.exists() && voiFileDir.isDirectory()) {
 				final String[] list = voiFileDir.list();
 				for (int i = 0; i < list.length; i++) {
 					final File lrFile = new File(voiDir + list[i]);
@@ -141,6 +141,10 @@ public abstract class WormSegmentation
 			}
 
 			for (int i = 0; i < nVOI; i++) {
+				if ( VOIs.VOIAt(i).getCurves().size() <= 0 )
+				{
+					continue;
+				}
 				if (VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION) {
 					final FileVOI fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", voiDir, image);
 					fileVOI.writeXML(VOIs.VOIAt(i), true, true);
