@@ -3,9 +3,12 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBtoGray;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.actions.ActionMaskToVOI;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
@@ -42,6 +45,10 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
 	private ModelImage thresholdImage;
 	
 	private ModelImage distTransformed;
+	
+	private float scaleX;
+	
+	private float scaleY;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -51,11 +58,16 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
      * @param  destImg  Image model where result image is to stored
      * @param  srcImg   Source image model
      * @param  segmentNumber
+     * @param  scaleX
+     * @param  scaleY
      */
-    public AlgorithmAutoSeedWatershed(ModelImage destImg, ModelImage srcImg, int segmentNumber) {
+    public AlgorithmAutoSeedWatershed(ModelImage destImg, ModelImage srcImg, int segmentNumber,
+    		float scaleX, float scaleY) {
 
         super(destImg, srcImg);
         this.segmentNumber = segmentNumber;
+        this.scaleX = scaleX;
+        this.scaleY = scaleY;
     }
 
     
@@ -355,12 +367,45 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
 
             return;
         } 
-        new ViewJFrameImage(distTransformed);
+        //new ViewJFrameImage(distTransformed);
         
         // Calculate the contours of the markers
-        int compCount = 0;
-        Vector<Vector<Point2f>> contours = new Vector<Vector<Point2f>>();
-        Vector<int[]>hierarchy = new Vector<int[]>();
+        AlgorithmMorphology2D idObjectsAlgo2D;
+        int method = AlgorithmMorphology2D.ID_OBJECTS;
+        
+        idObjectsAlgo2D = new AlgorithmMorphology2D(distTransformed, 0, 0, method, 0, 0, 0, 0, wholeImage);
+        idObjectsAlgo2D.setMinMax(1, Integer.MAX_VALUE);
+        idObjectsAlgo2D.run();
+        idObjectsAlgo2D.finalize();
+        idObjectsAlgo2D = null;
+    	
+    	distTransformed.calcMinMax();
+        final AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(distTransformed);
+
+        VOIExtractionAlgo.run();
+        VOIVector kVOIs = distTransformed.getVOIs();
+        for (i = 0; i < kVOIs.size(); i++ )
+        {
+            VOI kCurrentGroup = kVOIs.get(i);
+            kCurrentGroup.setAllActive(true);
+        }
+        //distTransformed.groupVOIs();
+        kVOIs = distTransformed.getVOIs();
+        //if (voiFieldName != null) {
+            //((VOI)kVOIs.get(0)).setName(voiFieldName);
+        //}
+        // MIPAV AlgorithmWatershed does not handle color
+        grayImage.setVOIs(kVOIs);
+        distTransformed.disposeLocal();
+        distTransformed = null;
+        ModelImage gmImage = null;
+        float sigmas[] = new float[2];
+        sigmas[0] = scaleX;
+        sigmas[1] = scaleY;
+        AlgorithmWatershed watershedAlgo = new AlgorithmWatershed(destImage, grayImage, gmImage, sigmas, null);
+        watershedAlgo.run();
+        watershedAlgo.finalize();
+        watershedAlgo = null;
     }
 
     
