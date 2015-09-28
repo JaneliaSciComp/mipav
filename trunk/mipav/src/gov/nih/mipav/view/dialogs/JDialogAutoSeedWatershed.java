@@ -7,7 +7,6 @@ import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
@@ -41,6 +40,14 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
 
     /** DOCUMENT ME! */
     private AlgorithmAutoSeedWatershed wsAlgo;
+    
+    JTextField textGaussX;
+    
+    JTextField textGaussY;
+    
+    float scaleX;
+    
+    float scaleY;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -185,7 +192,7 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
             }
 
             // Make algorithm
-            wsAlgo = new AlgorithmAutoSeedWatershed(resultImage, image, segmentNumber);
+            wsAlgo = new AlgorithmAutoSeedWatershed(resultImage, image, segmentNumber, scaleX, scaleY);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -235,6 +242,9 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
         segmentNumber = scriptParameters.getParams().getInt("segment_number");
+        scaleX = scriptParameters.getParams().getFloat("scaleX");
+        scaleY = scriptParameters.getParams().getFloat("scaleY");
+
     }
 
     /**
@@ -244,6 +254,8 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
         scriptParameters.storeInputImage(image);
         scriptParameters.storeOutputImageParams(resultImage, true);
         scriptParameters.getParams().put(ParameterFactory.newParameter("segment_number", segmentNumber));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("scaleX", scaleX));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("scaleY", scaleY));
     }
 
     /**
@@ -272,6 +284,56 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
         textSegmentNumber.setFont(serif12);
         gbc.gridx = 1;
         paramPanel.add(textSegmentNumber, gbc);
+        
+        JPanel scalePanel = new JPanel(new GridBagLayout());
+        scalePanel.setBorder(buildTitledBorder("Scale of the Gaussian"));
+        GridBagConstraints gbc2 = new GridBagConstraints();
+        JLabel labelGaussX = new JLabel("X Dimension (0.5 - 5.0)");
+        labelGaussX.setForeground(Color.black);
+        labelGaussX.setFont(serif12);
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        gbc2.fill = GridBagConstraints.HORIZONTAL;
+        gbc2.weightx = 1;
+        scalePanel.add(labelGaussX, gbc2);
+        textGaussX = new JTextField();
+        textGaussX.setText("1.0");
+        textGaussX.setFont(serif12);
+        gbc2.gridx = 1;
+        gbc2.gridy = 0;
+        gbc2.weightx = 1;
+        gbc2.gridheight = 1;
+        gbc2.gridwidth = 1;
+        gbc2.fill = GridBagConstraints.REMAINDER;
+        gbc2.anchor = GridBagConstraints.WEST;
+        gbc2.insets = new Insets(0, 5, 0, 5);
+        scalePanel.add(textGaussX, gbc2);
+        JLabel labelGaussY = new JLabel("Y Dimension (0.5 - 5.0)");
+        labelGaussY.setForeground(Color.black);
+        labelGaussY.setFont(serif12);
+        gbc2.gridx = 0;
+        gbc2.gridy = 1;
+        gbc2.fill = GridBagConstraints.HORIZONTAL;
+        gbc2.weightx = 1;
+        scalePanel.add(labelGaussY, gbc2);
+        textGaussY = new JTextField();
+        textGaussY.setText("1.0");
+        textGaussY.setFont(serif12);
+        gbc2.gridx = 1;
+        gbc2.gridy = 1;
+        gbc2.weightx = 1;
+        gbc2.gridheight = 1;
+        gbc2.gridwidth = 1;
+        gbc2.fill = GridBagConstraints.REMAINDER;
+        gbc2.anchor = GridBagConstraints.WEST;
+        gbc2.insets = new Insets(0, 5, 0, 5);
+        scalePanel.add(textGaussY, gbc2);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        scalePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        gbc.gridwidth = 2;
+        paramPanel.add(scalePanel, gbc);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -310,6 +372,29 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
 
             return false;
         }
+        
+        tmpStr = textGaussX.getText();
+
+        if (testParameter(tmpStr, 0.5, 5.0)) {
+            scaleX = Float.valueOf(tmpStr).floatValue();
+        } else {
+            textGaussX.requestFocus();
+            textGaussX.selectAll();
+
+            return false;
+        }
+
+        tmpStr = textGaussY.getText();
+
+        if (testParameter(tmpStr, 0.5, 5.0)) {
+            scaleY = Float.valueOf(tmpStr).floatValue();
+        } else {
+            textGaussY.requestFocus();
+            textGaussY.selectAll();
+
+            return false;
+        }
+
         return true;
 
     }
@@ -364,6 +449,8 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
         try {
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterInt("segment_number", 3));
+            table.put(new ParameterFloat("scaleX", 1.0f));
+            table.put(new ParameterFloat("scaleY", 1.0f));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
