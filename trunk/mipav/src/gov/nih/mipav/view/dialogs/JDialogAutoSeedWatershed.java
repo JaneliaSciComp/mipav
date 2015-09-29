@@ -33,10 +33,6 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
-    
-    private JTextField textSegmentNumber;
-    
-    private int segmentNumber;
 
     /** DOCUMENT ME! */
     private AlgorithmAutoSeedWatershed wsAlgo;
@@ -111,7 +107,7 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
             if ((wsAlgo.isCompleted() == true) && (resultImage != null)) {
                 // The algorithm has completed and produced a new image to be displayed.
 
-                updateFileInfo(image, resultImage);
+                //updateFileInfo(image, resultImage);
                 resultImage.clearMask();
 
                 try {
@@ -169,15 +165,6 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
 
     
     /**
-     * 
-     * @param segmentNumber
-     */
-    public void setSegmentNumber(int segmentNumber) {
-        this.segmentNumber = segmentNumber;
-    }
-
-    
-    /**
      * Once all the necessary variables are set, call the rule based contrast enhancement algorithm based on what type of image this is and
      * whether or not there is a separate destination image.
      */
@@ -186,13 +173,13 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
 
         try {
         	
-            resultImage     = new ModelImage(ModelStorageBase.USHORT, image.getExtents(), name);
+            resultImage     = new ModelImage(ModelStorageBase.SHORT, image.getExtents(), name);
             if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                 ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
             }
 
             // Make algorithm
-            wsAlgo = new AlgorithmAutoSeedWatershed(resultImage, image, segmentNumber, scaleX, scaleY);
+            wsAlgo = new AlgorithmAutoSeedWatershed(resultImage, image, scaleX, scaleY);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -241,7 +228,6 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        segmentNumber = scriptParameters.getParams().getInt("segment_number");
         scaleX = scriptParameters.getParams().getFloat("scaleX");
         scaleY = scriptParameters.getParams().getFloat("scaleY");
 
@@ -253,7 +239,6 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
         scriptParameters.storeOutputImageParams(resultImage, true);
-        scriptParameters.getParams().put(ParameterFactory.newParameter("segment_number", segmentNumber));
         scriptParameters.getParams().put(ParameterFactory.newParameter("scaleX", scaleX));
         scriptParameters.getParams().put(ParameterFactory.newParameter("scaleY", scaleY));
     }
@@ -272,19 +257,6 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
         JPanel paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setBorder(buildTitledBorder("Parameters"));
         
-        JLabel labelSegmentNumber = new JLabel("Segment Number");
-        labelSegmentNumber.setForeground(Color.black);
-        labelSegmentNumber.setFont(serif12);
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        paramPanel.add(labelSegmentNumber, gbc);
-
-        textSegmentNumber = new JTextField(10);
-        textSegmentNumber.setText("3");
-        textSegmentNumber.setFont(serif12);
-        gbc.gridx = 1;
-        paramPanel.add(textSegmentNumber, gbc);
-        
         JPanel scalePanel = new JPanel(new GridBagLayout());
         scalePanel.setBorder(buildTitledBorder("Scale of the Gaussian"));
         GridBagConstraints gbc2 = new GridBagConstraints();
@@ -295,8 +267,9 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
         gbc2.gridy = 0;
         gbc2.fill = GridBagConstraints.HORIZONTAL;
         gbc2.weightx = 1;
+        gbc2.anchor = GridBagConstraints.WEST;
         scalePanel.add(labelGaussX, gbc2);
-        textGaussX = new JTextField();
+        textGaussX = new JTextField(10);
         textGaussX.setText("1.0");
         textGaussX.setFont(serif12);
         gbc2.gridx = 1;
@@ -305,7 +278,6 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
         gbc2.gridheight = 1;
         gbc2.gridwidth = 1;
         gbc2.fill = GridBagConstraints.REMAINDER;
-        gbc2.anchor = GridBagConstraints.WEST;
         gbc2.insets = new Insets(0, 5, 0, 5);
         scalePanel.add(textGaussX, gbc2);
         JLabel labelGaussY = new JLabel("Y Dimension (0.5 - 5.0)");
@@ -315,8 +287,9 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
         gbc2.gridy = 1;
         gbc2.fill = GridBagConstraints.HORIZONTAL;
         gbc2.weightx = 1;
+        gbc2.anchor = GridBagConstraints.WEST;
         scalePanel.add(labelGaussY, gbc2);
-        textGaussY = new JTextField();
+        textGaussY = new JTextField(10);
         textGaussY.setText("1.0");
         textGaussY.setFont(serif12);
         gbc2.gridx = 1;
@@ -325,12 +298,11 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
         gbc2.gridheight = 1;
         gbc2.gridwidth = 1;
         gbc2.fill = GridBagConstraints.REMAINDER;
-        gbc2.anchor = GridBagConstraints.WEST;
         gbc2.insets = new Insets(0, 5, 0, 5);
         scalePanel.add(textGaussY, gbc2);
         
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 0;
         scalePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         gbc.gridwidth = 2;
         paramPanel.add(scalePanel, gbc);
@@ -361,17 +333,6 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
         System.gc();
 
         String tmpStr;
-        
-        tmpStr = textSegmentNumber.getText();
-
-        if (testParameter(tmpStr, 2, 65535)) {
-            segmentNumber = Integer.valueOf(tmpStr).intValue();
-        } else {
-            textSegmentNumber.requestFocus();
-            textSegmentNumber.selectAll();
-
-            return false;
-        }
         
         tmpStr = textGaussX.getText();
 
@@ -448,7 +409,6 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
         
         try {
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
-            table.put(new ParameterInt("segment_number", 3));
             table.put(new ParameterFloat("scaleX", 1.0f));
             table.put(new ParameterFloat("scaleY", 1.0f));
             } catch (final ParserException e) {
