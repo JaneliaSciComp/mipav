@@ -745,7 +745,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
 
         for (i = 0; i < length; i++) {
 
-            if (destImage.getShort(i) == BOUNDARY) {
+            if ((destImage.getShort(i) == BOUNDARY) || (destImage.getShort(i) == INITIAL)){
                 destImage.setShort(i, (short) 0);
             }
         }
