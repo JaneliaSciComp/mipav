@@ -1,22 +1,13 @@
 package gov.nih.mipav.model.algorithms;
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
-
-import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBtoGray;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.provenance.ProvenanceRecorder;
-import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.actions.ActionMaskToVOI;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
-import java.awt.Dimension;
+import java.awt.Color;
 import java.io.*;
-import java.util.*;
-
-import javax.vecmath.Point2f;
 
   /**
    * This is a port of the file AutoSeedWatershed.cpp which calls openCV written by Ravimal Bandara.  His web site is
@@ -38,8 +29,6 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
 	//~ Instance fields ------------------------------------------------------------------------------------------------
 	private int segmentNumber;
 	
-	private int presentSegmentNumber;
-	
 	private ModelImage grayImage;
 	
 	private ModelImage thresholdImage;
@@ -49,6 +38,8 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
 	private float scaleX;
 	
 	private float scaleY;
+	
+	private boolean error = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -57,15 +48,13 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
      *
      * @param  destImg  Image model where result image is to stored
      * @param  srcImg   Source image model
-     * @param  segmentNumber
      * @param  scaleX
      * @param  scaleY
      */
-    public AlgorithmAutoSeedWatershed(ModelImage destImg, ModelImage srcImg, int segmentNumber,
+    public AlgorithmAutoSeedWatershed(ModelImage destImg, ModelImage srcImg,
     		float scaleX, float scaleY) {
 
         super(destImg, srcImg);
-        this.segmentNumber = segmentNumber;
         this.scaleX = scaleX;
         this.scaleY = scaleY;
     }
@@ -101,12 +90,20 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         }
 
         fireProgressStateChanged("Watershed ...");
-
-        presentSegmentNumber = 0;
         
         watershedSegment();
+        if (error) {
+        	setCompleted(false);
+        	return;
+        }
         
-        setCompleted(true);
+        segmentNumber = (int)grayImage.getMax();
+        if (error) {
+        	setCompleted(false);
+        }
+        else {
+            setCompleted(true);
+        }
         return;
     }
     
@@ -274,7 +271,7 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         }
         catch(IOException e) {
         	displayError("IOException " + e + "on thresholdImage.exportData(0, sliceSize, imgBuffer)");
-        	setCompleted(false);
+        	error = true;
         	return;
         }
 
@@ -283,7 +280,7 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
             distBuffer = new float[sliceSize];
         } catch (OutOfMemoryError e) {
             displayError("distanceMap: Out of memory");
-            setCompleted(false);
+            error = true;
 
             return;
         }
@@ -361,9 +358,9 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         // Thresholded distance transformation image
         try {
             distTransformed.importData(0, distBuffer, true);
-        } catch (IOException error) {
-            displayError("IOException " + error + " on distTransformed.importData(0, distBuffer, true)");
-            setCompleted(false);
+        } catch (IOException e) {
+            displayError("IOException " + e + " on distTransformed.importData(0, distBuffer, true)");
+            error = true;
 
             return;
         } 
@@ -396,6 +393,7 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         //}
         // MIPAV AlgorithmWatershed does not handle color
         grayImage.setVOIs(kVOIs);
+        new ViewJFrameImage(grayImage);
         distTransformed.disposeLocal();
         distTransformed = null;
         ModelImage gmImage = null;
@@ -406,7 +404,141 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         watershedAlgo.run();
         watershedAlgo.finalize();
         watershedAlgo = null;
-    }
+        FileInfoBase fileInfo2[] = destImage.getFileInfo();
+        fileInfo2[0].setModality(grayImage.getFileInfo()[0].getModality());
+        fileInfo2[0].setFileDirectory(grayImage.getFileInfo()[0].getFileDirectory());
+        fileInfo2[0].setEndianess(grayImage.getFileInfo()[0].getEndianess());
+        fileInfo2[0].setUnitsOfMeasure(grayImage.getFileInfo()[0].getUnitsOfMeasure());
+        fileInfo2[0].setResolutions(grayImage.getFileInfo()[0].getResolutions());
+        fileInfo2[0].setExtents(destImage.getExtents());
+        fileInfo2[0].setMax(destImage.getMax());
+        fileInfo2[0].setMin(destImage.getMin());
+        fileInfo2[0].setImageOrientation(grayImage.getImageOrientation());
+        fileInfo2[0].setAxisOrientation(grayImage.getFileInfo()[0].getAxisOrientation());
+        fileInfo2[0].setOrigin(grayImage.getFileInfo()[0].getOrigin());
+        fileInfo2[0].setPixelPadValue(grayImage.getFileInfo()[0].getPixelPadValue());
+        fileInfo2[0].setPhotometric(grayImage.getFileInfo()[0].getPhotometric());
+    } // watershedSegment
+    
+    private void mergeSegments() {
+        if (srcImage.isColorImage()) {
+        	ModelImage colorImage;
+        	if ((srcImage.getFileInfo()[0].getDataType() == ModelStorageBase.ARGB_USHORT) ||
+        		(srcImage.getFileInfo()[0].getDataType() == ModelStorageBase.ARGB_FLOAT)) {
+        	    colorImage = new ModelImage(ModelStorageBase.ARGB, srcImage.getExtents(), "ColorImage");
+        	    boolean image25D = true;
+        	    AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(colorImage, srcImage, srcImage.getMin(),
+        	    		srcImage.getMax(), 0, 255, image25D);
+        	    changeTypeAlgo.run();
+          		changeTypeAlgo.finalize();
+          		changeTypeAlgo = null;
+          		FileInfoBase[] fileInfo = colorImage.getFileInfo();
+                fileInfo[0].setModality(srcImage.getFileInfo()[0].getModality());
+                fileInfo[0].setFileDirectory(srcImage.getFileInfo()[0].getFileDirectory());
+                fileInfo[0].setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
+                fileInfo[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
+                fileInfo[0].setExtents(colorImage.getExtents());
+                fileInfo[0].setMax(colorImage.getMax());
+                fileInfo[0].setMin(colorImage.getMin());
+                fileInfo[0].setImageOrientation(srcImage.getImageOrientation());
+                fileInfo[0].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation());
+                fileInfo[0].setOrigin(srcImage.getFileInfo()[0].getOrigin());
+        	} // if ((srcImage.getFileInfo()[0].getDataType() == ModelStorageBase.ARGB_USHORT) ||
+        	else {
+        		colorImage = srcImage;
+        	}
+        	// Hue, saturation, and brightness all go from 0.0 to 1.0
+        	int hueBins = 35;
+        	int saturationBins = 30;
+        	int hist[][][] = new int[segmentNumber][hueBins][saturationBins];
+        	float[] hsb = new float[3];
+        	float hue;
+        	float saturation;
+        	int i;
+        	int sliceSize = srcImage.getExtents()[0] * srcImage.getExtents()[1];
+        	short red[] = new short[sliceSize];
+        	short green[] = new short[sliceSize];
+        	short blue[] = new short[sliceSize];
+        	int segment[] = new int[sliceSize];
+        	int hBin;
+        	int sBin;
+        	int segmentTotal[] = new int[segmentNumber];
+        	int h;
+        	int s;
+        	double normalizedHist[][][] = new double[segmentNumber][hueBins][saturationBins];
+        	int c;
+        	int q;
+        	int numberHistogramBins = hueBins * saturationBins;
+        	try {
+        		colorImage.exportRGBData(1, 0, sliceSize, red);
+        	}
+        	catch (IOException e) {
+        	    MipavUtil.displayError("IOException " + e + " on colorImage.exportRGBData(1, 0, sliceSize, red)");
+        	    error = true;
+        	    return;
+        	}
+        	try {
+        		colorImage.exportRGBData(2, 0, sliceSize, green);
+        	}
+        	catch (IOException e) {
+        	    MipavUtil.displayError("IOException " + e + " on colorImage.exportRGBData(2, 0, sliceSize, green)");
+        	    error = true;
+        	    return;
+        	}
+        	try {
+        		colorImage.exportRGBData(3, 0, sliceSize, blue);
+        	}
+        	catch (IOException e) {
+        	    MipavUtil.displayError("IOException " + e + " on colorImage.exportRGBData(3, 0, sliceSize, blue)");
+        	    error = true;
+        	    return;
+        	}
+        	try {
+        		destImage.exportData(0, sliceSize, segment);
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOException " + e + " on destImage.exportData(0, sliceSize, segment)");
+        		error = true;
+        		return;
+        	}
+        	for (i = 0; i < sliceSize; i++) {
+        		hsb = Color.RGBtoHSB(red[i], green[i], blue[i], hsb);
+        		hue = hsb[0];
+        		saturation = hsb[1];
+        		hBin = (int)(hue * hueBins);
+        		if (hBin == hueBins) {
+        			hBin = hueBins - 1;
+        		}
+        		sBin = (int)(saturation * saturationBins);
+        		if (sBin == saturationBins) {
+        			sBin = saturationBins - 1;
+        		}
+        		if (segment[i] > 0) {
+        		    hist[segment[i]-1][hBin][sBin]++;
+        		    segmentTotal[segment[i]-1]++;
+        		}
+        	} // for (i = 0; i < sliceSize; i++)
+        	
+        	for (i = 0; i < segmentNumber; i++) {
+        		for (h = 0; h < hueBins; h++) {
+        		    for (s = 0; s < saturationBins; s++) {
+        		    	normalizedHist[i][h][s] = hist[i][h][s]/segmentTotal[i];
+        		    }
+        		}
+        	}
+        	
+        	// Calculate the similarity of the histograms of each pair of segments
+        	boolean merged[] = new boolean[segmentNumber];
+        	for (c = 0; c < segmentNumber; c++) {
+        		for (q = c+1; q < segmentNumber; q++) {
+        			// If the segment is not merged already
+        		    if (!merged[q]) {
+        		    	// Calculate the histogram similarity
+        		    }
+        		}
+        	}
+        } // if (srcImage.isColorImage())
+    } // mergeSegments
 
     
 
