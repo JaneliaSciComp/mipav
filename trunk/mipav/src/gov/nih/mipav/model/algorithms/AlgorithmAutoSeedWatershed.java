@@ -40,6 +40,8 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
 	private float scaleY;
 	
 	private boolean error = false;
+	
+	private ViewUserInterface UI = ViewUserInterface.getReference();
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -469,6 +471,44 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         	int c;
         	int q;
         	int numberHistogramBins = hueBins * saturationBins;
+        	double sumHue[] = new double[segmentNumber];
+        	double sumSaturation[] = new double[segmentNumber];
+        	double meanHue[] = new double[segmentNumber];
+        	double meanSaturation[] = new double[segmentNumber];
+        	double varianceHue[] = new double[segmentNumber];
+        	double varianceSaturation[] = new double[segmentNumber];
+        	double covarianceHueSaturation[] = new double[segmentNumber];
+        	double diffHue;
+        	double diffSaturation;
+        	double CHue;
+        	double CSat;
+        	double CHS;
+        	double a;
+        	double b;
+        	double d;
+        	double ainv;
+        	double binv;
+        	double dinv;
+        	double hueDiff;
+        	double saturationDiff;
+        	double dmu[] = new double[2];
+        	double d1;
+        	double C11;
+        	double C12;
+        	double C21;
+        	double C22;
+        	double det;
+        	double delta;
+        	double tracePlus;
+        	//double traceMinus;
+        	double C11Plus;
+        	double C12Plus;
+        	double C21Plus;
+        	double C22Plus;
+        	//double C11Minus;
+        	//double C12Minus;
+        	//double C21Minus;
+        	//double C22Minus;
         	try {
         		colorImage.exportRGBData(1, 0, sliceSize, red);
         	}
@@ -516,15 +556,30 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         		if (segment[i] > 0) {
         		    hist[segment[i]-1][hBin][sBin]++;
         		    segmentTotal[segment[i]-1]++;
+        		    sumHue[segment[i]-1] += hBin;
+        		    sumSaturation[segment[i]-1] += sBin;
         		}
         	} // for (i = 0; i < sliceSize; i++)
         	
         	for (i = 0; i < segmentNumber; i++) {
+        		meanHue[i] = sumHue[i]/segmentTotal[i];
+        		meanSaturation[i] = sumSaturation[i]/segmentTotal[i];
         		for (h = 0; h < hueBins; h++) {
         		    for (s = 0; s < saturationBins; s++) {
         		    	normalizedHist[i][h][s] = hist[i][h][s]/segmentTotal[i];
+        		    	diffHue = h - meanHue[i];
+        		    	diffSaturation = s - meanSaturation[i];
+        		    	varianceHue[i] += (diffHue * diffHue);
+        		    	varianceSaturation[i] += (diffSaturation * diffSaturation);
+        		    	covarianceHueSaturation[i] += (diffHue * diffSaturation);
         		    }
         		}
+        	}
+        	
+        	for (i = 0; i < segmentNumber; i++) {
+        		varianceHue[i] = varianceHue[i]/(segmentTotal[i] - 1);
+        		varianceSaturation[i] = varianceSaturation[i]/(segmentTotal[i] - 1);
+        		covarianceHueSaturation[i] = covarianceHueSaturation[i]/(segmentTotal[i] - 1);
         	}
         	
         	// Calculate the similarity of the histograms of each pair of segments
@@ -534,6 +589,67 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         			// If the segment is not merged already
         		    if (!merged[q]) {
         		    	// Calculate the histogram similarity
+        		    	// C = (cov(c) + cov(q))/2
+        		    	CHue = (varianceHue[c] + varianceHue[q])/2.0;
+        		    	CSat = (varianceSaturation[c] + varianceSaturation[q])/2.0;
+        		    	CHS = (covarianceHueSaturation[c] + covarianceHueSaturation[q])/2.0;
+        		    	// dmu = (mu1 - mu2)/chol(C)
+        		    	// Cholesky factorization of [CHue  CHS]
+        		    	//                           [CHS   CSat]
+        		    	// [a   0]  * [a  b] = [a*a          a*b]
+        		    	// [b   d]  * [0  d]   [a*b  (b*b + d*d)]
+        		    	
+        		    	// chol(C) = [a b]
+        		    	//           [0 d]
+        		    	a = Math.sqrt(CHue);
+        		    	b = CHS/a;
+        		    	d = Math.sqrt(CSat - b*b);
+        		    	// /chol(C) means multiply by inverse
+        		    	// inv (chol(C)) = [1/a    -b/(a*d)]
+        		    	//                 [0           1/d]
+        		    	ainv = 1.0/a;
+        		    	binv = -b/(a*d);
+        		    	dinv = 1.0/d;
+        		    	hueDiff = meanHue[c] - meanHue[q];
+        		    	saturationDiff = meanSaturation[c] - meanSaturation[q];
+        		    	dmu[0] = hueDiff * ainv;
+        		    	dmu[1] = hueDiff * binv + saturationDiff * dinv;
+        		    	// C1 * C2 is almost always not symmetric so the Cholesky
+        		    	// decomposition cannot be performed.
+        		    	// d = 0.125*dmu*dmu' + 0.5*log(det(C/chol(C1*C2)))
+        	            // Do
+        		    	// d = 0.125*dmu*dmu' + 0.5*log(abs(det(C/sqrtm(C1*C2))))
+        		    	d1 = 0.125*(dmu[0]*dmu[0] + dmu[1]*dmu[1]);
+        		    	C11 = varianceHue[c]*varianceHue[q] + covarianceHueSaturation[c]*covarianceHueSaturation[q];
+        		    	C12 = varianceHue[c]*covarianceHueSaturation[q] + covarianceHueSaturation[c]*varianceSaturation[q];
+                        C21 = covarianceHueSaturation[c]*varianceHue[q] + varianceSaturation[c]*covarianceHueSaturation[q];
+                        C22 = covarianceHueSaturation[c]*covarianceHueSaturation[q] + varianceSaturation[c]*varianceSaturation[q];
+                        det = C11 * C22 - C12 * C21;
+                        if (det < 0.0) {
+                            UI.setDataText("For segement numbers " + c + " and " + q + " the determinant is negative\n");
+                            continue;
+                        }
+                        delta = Math.sqrt(det);
+                        tracePlus = Math.sqrt(C11 + C22 + 2.0 * delta);
+                        C11Plus = (C11 + delta)/tracePlus;
+                        C12Plus = C12/tracePlus;
+                        C21Plus = C21/tracePlus;
+                        C22Plus = (C22 + delta)/tracePlus;
+                        //traceMinus = Math.sqrt(C11 + C22 - 2.0 * delta);
+                        //C11Minus = (C11 - delta)/traceMinus;
+                        //C12Minus = C12/traceMinus;
+                        //C21Minus = C21/traceMinus;
+                        //C22Minus = (C22 - delta)/traceMinus;
+                        // Both CPlus and CMinus are square roots, but CPlus agrees with P*sqrt(D)**(PInverse)
+                        // For A = [a b]
+                        //         [c d]
+                        // Ainverse = (1/(ad-bc)) * [d -b]
+                        //                          [-c a]
+                        det = C11Plus * C22Plus - C12Plus * C21Plus;
+                        C11 = C22Plus/det;
+                        C12 = -C12Plus/det;
+                        C21 = -C21Plus/det;
+                        C22 = C11Plus/det;
         		    }
         		}
         	}
