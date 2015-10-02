@@ -37,13 +37,17 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
     /** DOCUMENT ME! */
     private AlgorithmAutoSeedWatershed wsAlgo;
     
-    JTextField textGaussX;
+    private JTextField textGaussX;
     
-    JTextField textGaussY;
+    private JTextField textGaussY;
     
-    float scaleX;
+    private float scaleX;
     
-    float scaleY;
+    private float scaleY;
+    
+    private JCheckBox mergeCheckBox;
+    
+    private boolean mergeSimilar;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -179,7 +183,7 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
             }
 
             // Make algorithm
-            wsAlgo = new AlgorithmAutoSeedWatershed(resultImage, image, scaleX, scaleY);
+            wsAlgo = new AlgorithmAutoSeedWatershed(resultImage, image, scaleX, scaleY, mergeSimilar);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -230,6 +234,9 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
         image = scriptParameters.retrieveInputImage();
         scaleX = scriptParameters.getParams().getFloat("scaleX");
         scaleY = scriptParameters.getParams().getFloat("scaleY");
+        if (image.isColorImage()) {
+            mergeSimilar = scriptParameters.getParams().getBoolean("merge_similar");	
+        }
 
     }
 
@@ -241,6 +248,9 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
         scriptParameters.storeOutputImageParams(resultImage, true);
         scriptParameters.getParams().put(ParameterFactory.newParameter("scaleX", scaleX));
         scriptParameters.getParams().put(ParameterFactory.newParameter("scaleY", scaleY));
+        if (image.isColorImage()) {
+        	scriptParameters.getParams().put(ParameterFactory.newParameter("merge_similar", mergeSimilar));
+        }
     }
 
     /**
@@ -306,6 +316,14 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
         scalePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         gbc.gridwidth = 2;
         paramPanel.add(scalePanel, gbc);
+        if (image.isColorImage()) {
+            gbc.gridy = 1;
+            mergeCheckBox = new JCheckBox("Merge similar color regions together");
+            mergeCheckBox.setSelected(false);
+            mergeCheckBox.setForeground(Color.black);
+            mergeCheckBox.setFont(serif12);
+            paramPanel.add(mergeCheckBox, gbc);
+        }
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -354,6 +372,10 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
             textGaussY.selectAll();
 
             return false;
+        }
+        
+        if (image.isColorImage()) {
+        	mergeSimilar = mergeCheckBox.isSelected();
         }
 
         return true;
