@@ -18,6 +18,10 @@ import java.io.*;
    * Yes you can by creating a gray histogram instead of Hues Saturation histogram. But I am not sure about the accuracy
    * due to the grayscale histograms are less discriminative compared to the colour histogram.
    * His code is licensed under the Code Project Open License (CPOL).
+   * 
+   * The formula for the Bhattacharyya distance for multivariate gaussian distributions is taken from "The Divergence
+   * and Bhattacharyya Distance Measures in Signal Selection" by Thomas Kailath, IEEE Transactions on Communication
+   * Technology" Vol. COM-15, No. 1, February, 1967, pp. 52-60.
    * @author ilb
    *
    */
@@ -39,6 +43,8 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
 	
 	private float scaleY;
 	
+	private boolean mergeSimilar;
+	
 	private boolean error = false;
 	
 	private ViewUserInterface UI = ViewUserInterface.getReference();
@@ -52,13 +58,15 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
      * @param  srcImg   Source image model
      * @param  scaleX
      * @param  scaleY
+     * @param  mergeSimilar
      */
     public AlgorithmAutoSeedWatershed(ModelImage destImg, ModelImage srcImg,
-    		float scaleX, float scaleY) {
+    		float scaleX, float scaleY, boolean mergeSimilar) {
 
         super(destImg, srcImg);
         this.scaleX = scaleX;
         this.scaleY = scaleY;
+        this.mergeSimilar = mergeSimilar;
     }
 
     
@@ -99,13 +107,19 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         	return;
         }
         
-        segmentNumber = (int)grayImage.getMax();
-        if (error) {
-        	setCompleted(false);
+        if (mergeSimilar) {
+	        mergeSegments();
+	        if (error) {
+	        	setCompleted(false);
+	        }
+	        else {
+	            setCompleted(true);
+	        }
         }
         else {
-            setCompleted(true);
+        	setCompleted(true);
         }
+        
         return;
     }
     
@@ -379,6 +393,8 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         idObjectsAlgo2D = null;
     	
     	distTransformed.calcMinMax();
+    	int objectsID = (int)distTransformed.getMax();
+        UI.setDataText("Number of objects id = " + objectsID + "\n");
         final AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(distTransformed);
 
         VOIExtractionAlgo.run();
@@ -420,6 +436,8 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         fileInfo2[0].setOrigin(grayImage.getFileInfo()[0].getOrigin());
         fileInfo2[0].setPixelPadValue(grayImage.getFileInfo()[0].getPixelPadValue());
         fileInfo2[0].setPhotometric(grayImage.getFileInfo()[0].getPhotometric());
+        segmentNumber = (int)destImage.getMax();
+        UI.setDataText("Number of segments before merging = " + segmentNumber + "\n");
     } // watershedSegment
     
     private void mergeSegments() {
@@ -467,10 +485,8 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         	int segmentTotal[] = new int[segmentNumber];
         	int h;
         	int s;
-        	double normalizedHist[][][] = new double[segmentNumber][hueBins][saturationBins];
         	int c;
         	int q;
-        	int numberHistogramBins = hueBins * saturationBins;
         	double sumHue[] = new double[segmentNumber];
         	double sumSaturation[] = new double[segmentNumber];
         	double meanHue[] = new double[segmentNumber];
@@ -483,32 +499,17 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         	double CHue;
         	double CSat;
         	double CHS;
-        	double a;
-        	double b;
-        	double d;
-        	double ainv;
-        	double binv;
-        	double dinv;
         	double hueDiff;
         	double saturationDiff;
-        	double dmu[] = new double[2];
-        	double d1;
-        	double C11;
-        	double C12;
-        	double C21;
-        	double C22;
-        	double det;
-        	double delta;
-        	double tracePlus;
-        	//double traceMinus;
-        	double C11Plus;
-        	double C12Plus;
-        	double C21Plus;
-        	double C22Plus;
-        	//double C11Minus;
-        	//double C12Minus;
-        	//double C21Minus;
-        	//double C22Minus;
+        	double C11Inverse;
+        	double C12Inverse;
+        	double C21Inverse;
+        	double C22Inverse;
+        	double similarity;
+        	double B1;
+        	double detR;
+        	double detR1;
+        	double detR2;
         	try {
         		colorImage.exportRGBData(1, 0, sliceSize, red);
         	}
@@ -554,7 +555,7 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         			sBin = saturationBins - 1;
         		}
         		if (segment[i] > 0) {
-        		    hist[segment[i]-1][hBin][sBin]++;
+        			hist[segment[i]-1][hBin][sBin]++;
         		    segmentTotal[segment[i]-1]++;
         		    sumHue[segment[i]-1] += hBin;
         		    sumSaturation[segment[i]-1] += sBin;
@@ -566,12 +567,11 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         		meanSaturation[i] = sumSaturation[i]/segmentTotal[i];
         		for (h = 0; h < hueBins; h++) {
         		    for (s = 0; s < saturationBins; s++) {
-        		    	normalizedHist[i][h][s] = hist[i][h][s]/segmentTotal[i];
         		    	diffHue = h - meanHue[i];
         		    	diffSaturation = s - meanSaturation[i];
-        		    	varianceHue[i] += (diffHue * diffHue);
-        		    	varianceSaturation[i] += (diffSaturation * diffSaturation);
-        		    	covarianceHueSaturation[i] += (diffHue * diffSaturation);
+        		    	varianceHue[i] += (diffHue * diffHue) * hist[i][h][s];
+        		    	varianceSaturation[i] += (diffSaturation * diffSaturation) * hist[i][h][s];
+        		    	covarianceHueSaturation[i] += (diffHue * diffSaturation) * hist[i][h][s];
         		    }
         		}
         	}
@@ -588,70 +588,103 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         		for (q = c+1; q < segmentNumber; q++) {
         			// If the segment is not merged already
         		    if (!merged[q]) {
+        		    	// For multivariate gaussian distributions
+        		    	// if pi(x) = N(mi,Ri), where Ri are covariance matrices
+        		    	// B = (1/8)(m1 - m2)'RInverse(M1-m2) + (1/2)ln(detR/sqrt(detR1*detR2))
+        		    	// where 2R = R1 + R2
         		    	// Calculate the histogram similarity
         		    	// C = (cov(c) + cov(q))/2
         		    	CHue = (varianceHue[c] + varianceHue[q])/2.0;
         		    	CSat = (varianceSaturation[c] + varianceSaturation[q])/2.0;
         		    	CHS = (covarianceHueSaturation[c] + covarianceHueSaturation[q])/2.0;
-        		    	// dmu = (mu1 - mu2)/chol(C)
-        		    	// Cholesky factorization of [CHue  CHS]
-        		    	//                           [CHS   CSat]
-        		    	// [a   0]  * [a  b] = [a*a          a*b]
-        		    	// [b   d]  * [0  d]   [a*b  (b*b + d*d)]
-        		    	
-        		    	// chol(C) = [a b]
-        		    	//           [0 d]
-        		    	a = Math.sqrt(CHue);
-        		    	b = CHS/a;
-        		    	d = Math.sqrt(CSat - b*b);
-        		    	// /chol(C) means multiply by inverse
-        		    	// inv (chol(C)) = [1/a    -b/(a*d)]
-        		    	//                 [0           1/d]
-        		    	ainv = 1.0/a;
-        		    	binv = -b/(a*d);
-        		    	dinv = 1.0/d;
-        		    	hueDiff = meanHue[c] - meanHue[q];
-        		    	saturationDiff = meanSaturation[c] - meanSaturation[q];
-        		    	dmu[0] = hueDiff * ainv;
-        		    	dmu[1] = hueDiff * binv + saturationDiff * dinv;
-        		    	// C1 * C2 is almost always not symmetric so the Cholesky
-        		    	// decomposition cannot be performed.
-        		    	// d = 0.125*dmu*dmu' + 0.5*log(det(C/chol(C1*C2)))
-        	            // Do
-        		    	// d = 0.125*dmu*dmu' + 0.5*log(abs(det(C/sqrtm(C1*C2))))
-        		    	d1 = 0.125*(dmu[0]*dmu[0] + dmu[1]*dmu[1]);
-        		    	C11 = varianceHue[c]*varianceHue[q] + covarianceHueSaturation[c]*covarianceHueSaturation[q];
-        		    	C12 = varianceHue[c]*covarianceHueSaturation[q] + covarianceHueSaturation[c]*varianceSaturation[q];
-                        C21 = covarianceHueSaturation[c]*varianceHue[q] + varianceSaturation[c]*covarianceHueSaturation[q];
-                        C22 = covarianceHueSaturation[c]*covarianceHueSaturation[q] + varianceSaturation[c]*varianceSaturation[q];
-                        det = C11 * C22 - C12 * C21;
-                        if (det < 0.0) {
-                            UI.setDataText("For segement numbers " + c + " and " + q + " the determinant is negative\n");
-                            continue;
-                        }
-                        delta = Math.sqrt(det);
-                        tracePlus = Math.sqrt(C11 + C22 + 2.0 * delta);
-                        C11Plus = (C11 + delta)/tracePlus;
-                        C12Plus = C12/tracePlus;
-                        C21Plus = C21/tracePlus;
-                        C22Plus = (C22 + delta)/tracePlus;
-                        //traceMinus = Math.sqrt(C11 + C22 - 2.0 * delta);
-                        //C11Minus = (C11 - delta)/traceMinus;
-                        //C12Minus = C12/traceMinus;
-                        //C21Minus = C21/traceMinus;
-                        //C22Minus = (C22 - delta)/traceMinus;
-                        // Both CPlus and CMinus are square roots, but CPlus agrees with P*sqrt(D)**(PInverse)
-                        // For A = [a b]
+        		    	// C = [CHue  CHS]
+        		    	//     [CHS  CSat]
+        		    	// For A = [a b]
                         //         [c d]
                         // Ainverse = (1/(ad-bc)) * [d -b]
                         //                          [-c a]
-                        det = C11Plus * C22Plus - C12Plus * C21Plus;
-                        C11 = C22Plus/det;
-                        C12 = -C12Plus/det;
-                        C21 = -C21Plus/det;
-                        C22 = C11Plus/det;
+        		    	// Therefore, RInverse is given by:
+        		    	detR = CHue * CSat - CHS * CHS;
+        		    	C11Inverse = CSat/detR;
+        		    	C12Inverse = -CHS/detR;
+        		    	C21Inverse = -CHS/detR;
+        		    	C22Inverse = CHue/detR;
+        		    	hueDiff = meanHue[c] - meanHue[q];
+        		    	saturationDiff = meanSaturation[c] - meanSaturation[q];
+        		    	B1 = 0.125*(hueDiff*hueDiff*C11Inverse + hueDiff*saturationDiff*(C12Inverse + C21Inverse) +
+        		    			    saturationDiff*saturationDiff*C22Inverse);
+        		    	detR1 = varianceHue[c] * varianceSaturation[c] - covarianceHueSaturation[c] * covarianceHueSaturation[c];
+        		    	detR2 = varianceHue[q] * varianceSaturation[q] - covarianceHueSaturation[q] * covarianceHueSaturation[q];
+        		    	similarity = B1 + 0.5*Math.log(detR/Math.sqrt(detR1*detR2));
+                        Preferences.debug("Similarity = " + similarity + " for segments " + c + " and " + q + "\n", 
+                        		Preferences.DEBUG_ALGORITHM);
+                        if (similarity > 0.8) {
+                        	merged[q] = true;
+                        	// Reduce number of segments
+                        	for (i = 0; i < sliceSize; i++) {
+                        		if (segment[i] == q) {
+                        			segment[i] = c;
+                        		}
+                        	} // for (i = 0; i < sliceSize; i++)
+                        	segmentTotal[c] = segmentTotal[c] + segmentTotal[q];
+                        	sumHue[c] = sumHue[c] + sumHue[q];
+                        	sumSaturation[c] = sumSaturation[c] + sumSaturation[q];
+                        	for (h = 0; h < hueBins; h++) {
+                    		    for (s = 0; s < saturationBins; s++) {
+                    		    	hist[c][h][s] = hist[c][h][s] + hist[q][h][s];
+                    		    }
+                    		 }
+                        	meanHue[c] = sumHue[c]/segmentTotal[c];
+                    		meanSaturation[c] = sumSaturation[c]/segmentTotal[c];
+                    		varianceHue[c] = 0.0;
+                    		varianceSaturation[c] = 0.0;
+                    		covarianceHueSaturation[c] = 0.0;
+                    		for (h = 0; h < hueBins; h++) {
+                    		    for (s = 0; s < saturationBins; s++) {
+                    		    	diffHue = h - meanHue[c];
+                    		    	diffSaturation = s - meanSaturation[c];
+                    		    	varianceHue[c] += (diffHue * diffHue) * hist[c][h][s];
+                    		    	varianceSaturation[c] += (diffSaturation * diffSaturation) * hist[c][h][s];
+                    		    	covarianceHueSaturation[c] += (diffHue * diffSaturation) * hist[c][h][s];
+                    		    }
+                    		}
+                    		varianceHue[c] = varianceHue[c]/(segmentTotal[c] - 1);
+                    		varianceSaturation[c] = varianceSaturation[c]/(segmentTotal[c] - 1);
+                    		covarianceHueSaturation[c] = covarianceHueSaturation[c]/(segmentTotal[c] - 1);
+                    		for (i = q; i < segmentNumber-1; i++) {
+                    			segmentTotal[i] = segmentTotal[i+1];
+                    			sumHue[i] = sumHue[i+1];
+                    			sumSaturation[i] = sumSaturation[i+1];
+                    			for (h = 0; h < hueBins; h++) {
+                        		    for (s = 0; s < saturationBins; s++) {
+                        		    	hist[i][h][s] = hist[i+1][h][s];
+                        		    }
+                        		 }
+                    			meanHue[i] = meanHue[i+1];
+                    			meanSaturation[i] = meanSaturation[i+1];
+                    			varianceHue[i] = varianceHue[i+1];
+                    			varianceSaturation[i] = varianceSaturation[i+1];
+                    			covarianceHueSaturation[i] = covarianceHueSaturation[i+1];
+                    			merged[i] = merged[i+1];
+                    		} // for (i = q; i < segmentNumber-1; i++)
+                    		for (i = 0; i < sliceSize; i++) {
+                    			if (segment[i] > q) {
+                    				segment[i] = segment[i] -1;
+                    			}
+                    		}
+                        	segmentNumber--;
+                        }
         		    }
         		}
+        	}
+        	UI.setDataText("Number of segments after merging = " + segmentNumber + "\n");
+        	try {
+        	    destImage.importData(0, segment, true);
+        	}
+        	catch(IOException e) {
+        	    MipavUtil.displayError("IOException " + e + " on destImage.importData(0, segment, true)");
+        	    error = true;
+        	    return;
         	}
         } // if (srcImage.isColorImage())
     } // mergeSegments
