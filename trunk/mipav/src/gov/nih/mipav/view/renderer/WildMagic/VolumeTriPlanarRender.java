@@ -242,6 +242,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
     	}
     }
     
+    public boolean doAutomaticLabels()
+	{
+    	return (m_kVOIInterface == null) ? false : m_kVOIInterface.doAutomaticLabels();
+	}
+    
 	public boolean is3DSelectionEnabled()
 	{
     	return (m_kVOIInterface == null) ? false : m_kVOIInterface.is3DSelectionEnabled();
@@ -374,11 +379,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
     	return false;
     }
     
-    public void add3DMarker( VOI textVOI, boolean doubleClick )
+    public void add3DMarker( VOI textVOI, boolean automaticLabel )
     {
     	if ( m_kVOIInterface != null )
     	{
-    		m_kVOIInterface.add3DMarker(textVOI, doubleClick);
+    		m_kVOIInterface.add3DMarker(textVOI, automaticLabel);
     	}    	
     }
 
@@ -669,7 +674,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 										textVOI.setText("A" + m_kVOIInterface.getCurrentIndex() );
 									}
 									newTextVOI.getCurves().add(textVOI);
-									add3DMarker( newTextVOI, false );
+									add3DMarker( newTextVOI, doAutomaticLabels() );
 								}
 							}
 						}

@@ -148,6 +148,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					{
 						openLattice();
 					}
+					else if ( editAnnotations.isSelected() )
+					{
+						openAnnotations();
+					}
 					startButton.setText("back");
 					startButton.setActionCommand("back");
 					startButton.setEnabled(false);
@@ -158,7 +162,6 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					dialogGUI.getContentPane().add(gpuPanel, BorderLayout.CENTER );
 					if ( editLattice.isSelected() && latticeSelection )
 					{
-						System.err.println( "add lattice selection" );
 						buttonPanel.add( latticeSelectionPanel );
 					}
 					pack();
@@ -167,6 +170,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 		else if ( command.equals("next") )
 		{
+			voiManager.clear3DSelection();
 			save();
 			imageIndex++;
 
@@ -179,9 +183,14 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				openLattice();
 				latticeSelectionPanel.setVisible( latticeSelection );
 			}
+			else if ( editAnnotations.isSelected() )
+			{
+				openAnnotations();
+			}
 		}
 		else if ( command.equals("back") )
 		{
+			voiManager.clear3DSelection();
 			save();
 			imageIndex--;
 			if ( editSeamCells.isSelected() )
@@ -193,9 +202,14 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				openLattice();
 				latticeSelectionPanel.setVisible( latticeSelection );
 			}
+			else if ( editAnnotations.isSelected() )
+			{
+				openAnnotations();
+			}
 		}
 		else if (command.equals("close"))
 		{
+			voiManager.clear3DSelection();
 			if ( editEnabled )
 			{
 				save();
@@ -221,16 +235,22 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			{
 				editSeamCells.setEnabled(false);
 				editLattice.setEnabled(false);
+				editAnnotations.setEnabled(false);
 				none.setSelected(true);
 			}
 			else if ( !latticeStraighten.isSelected() && !buildLattice.isSelected() && !segmentSeamCells.isSelected() && !calcMaxProjection.isSelected() )
 			{
 				editSeamCells.setEnabled(true);
 				editLattice.setEnabled(true);
+				editAnnotations.setEnabled(true);
 			}
 		}
 		if ( latticeChoices != null )
 		{
+			if ( voiManager != null )
+			{
+				voiManager.clear3DSelection();
+			}
 			for ( int i = 0; i < latticeChoices.length; i++ )
 			{
 				if ( (source == latticeChoices[i]) && (latticeChoices[i].isSelected()) )
@@ -259,14 +279,13 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 		voiManager = new VOILatticeManagerInterface( null, volumeImage.GetImage(), null, 0, true, null );
 		volumeRenderer.setVOILatticeManager(voiManager);
-		if ( editSeamCells.isSelected() )
+		if ( editSeamCells.isSelected() || editAnnotations.isSelected() )
 		{
 			if ( annotations != null )
 			{
 				if ( annotations.size() > 0 )
 				{
 					voiManager.setAnnotations(annotations);
-
 
 					for (int i = 0; i < annotations.elementAt(0).getCurves().size(); i++)
 					{
@@ -275,7 +294,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					}
 				}
 			}
-			voiManager.editAnnotations();
+			voiManager.editAnnotations(editSeamCells.isSelected());
 		}
 		else if ( editLattice.isSelected() )
 		{
@@ -341,7 +360,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					{
 						voiManager.setImage(wormImage);
 						voiManager.setAnnotations(annotations);
-						voiManager.editAnnotations();
+						voiManager.editAnnotations(true);
 					}
 				}
 				if ( volumeImage == null )
@@ -367,6 +386,78 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			}
 		}
 	}
+
+	protected void openAnnotations()
+	{
+		if ( includeRange != null )
+		{			
+			if ( (imageIndex >= 0) && (imageIndex < includeRange.size()) )
+			{
+				String fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(imageIndex) + ".tif";
+				File voiFile = new File(baseFileDir + File.separator + fileName);
+				if ( voiFile.exists() )
+				{
+//					System.err.println( fileName );
+					gpuPanel.setBorder(JDialogBase.buildTitledBorder(fileName));
+					FileIO fileIO = new FileIO();
+					if(wormImage != null) {
+						wormImage.disposeLocal();
+						wormImage = null;
+					}
+					wormImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null); 
+					wormImage.calcMinMax();      
+
+					if ( annotations != null )
+					{
+						annotations.clear();
+						annotations = null;
+					}
+					if ( annotations == null )
+					{
+						annotations = new VOIVector();
+					}
+
+					fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.editAnnotationOutput;
+					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+					PlugInDialogWormLatticeStraighten.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
+
+					if ( annotations.size() == 0 )
+					{
+						fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.editAnnotationInput;
+						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+						PlugInDialogWormLatticeStraighten.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
+					}
+					if ( voiManager != null )
+					{
+						voiManager.setImage(wormImage);
+						voiManager.setAnnotations(annotations);
+						voiManager.editAnnotations(false);
+					}
+				}
+				if ( volumeImage == null )
+				{
+					volumeImage = new VolumeImage(false, wormImage, "", null, 0);
+				}
+				else
+				{
+					volumeImage.UpdateData(wormImage);
+				}
+				if ( volumeRenderer == null )
+				{
+					volumeRenderer = new VolumeTriPlanarRender(volumeImage);
+					volumeRenderer.addConfiguredListener(this);
+					gpuPanel.add(volumeRenderer.GetCanvas(), BorderLayout.CENTER);
+					gpuPanel.setVisible(true);
+					pack();				
+				}
+				else
+				{
+					volumeRenderer.initLUT();
+				}
+			}
+		}
+	}
+
 
 	protected void openLattice()
 	{
@@ -405,10 +496,12 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					}
 
 					latticeSelection = false;
+					latticeSelectionPanel.removeAll();
 					fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.editLatticeOutput;
 					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
 					PlugInDialogWormLatticeStraighten.loadAllVOIsFrom(wormImage, voiDir, true, potentialLattices[0], false);
 
+					int latticeIndex = -1;
 					if ( potentialLattices[0].size() == 0 )
 					{
 						for ( int i = 0; i < potentialLattices.length; i++ )
@@ -416,16 +509,29 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 							fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.autoLatticeGenerationOutput + i;
 							voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
 							PlugInDialogWormLatticeStraighten.loadAllVOIsFrom(wormImage, voiDir, true, potentialLattices[i], false);
+
+							if ( potentialLattices[i].size() != 0 )
+							{
+								latticeSelection = true;
+					        	latticeSelectionPanel.add(latticeChoices[i]);
+					        	if ( latticeIndex == -1 )
+					        	{
+					        		latticeIndex = i;
+					        	}
+							}
 						}
-						if ( potentialLattices[0].size() != 0 )
-						{
-							latticeSelection = true;
-						}
+					}
+					else
+					{
+						latticeIndex = 0;
 					}
 					if ( voiManager != null )
 					{
 						voiManager.setImage(wormImage);
-						voiManager.setLattice(potentialLattices[0]);
+						if ( latticeIndex != -1 )
+						{
+							voiManager.setLattice(potentialLattices[latticeIndex]);
+						}
 						voiManager.editLattice();
 					}
 				}
@@ -505,6 +611,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	
 	private JRadioButton editSeamCells;
 	private JRadioButton editLattice;
+	private JRadioButton editAnnotations;
 	private JRadioButton none;
 	
 	private JPanel makeEditPanel(GuiBuilder gui)
@@ -540,6 +647,13 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		gbc.gridy++;
 		
 		gbc.gridx = 0;
+		editAnnotations = gui.buildRadioButton("add annotations", false );
+		editAnnotations.addActionListener(this);
+		editAnnotations.setActionCommand("editAnnotations");
+		panel.add(editAnnotations.getParent(), gbc);
+		gbc.gridy++;
+		
+		gbc.gridx = 0;
 		none = gui.buildRadioButton("none", true );
 		none.addActionListener(this);
 		none.setActionCommand("none");
@@ -549,6 +663,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
         ButtonGroup group = new ButtonGroup();
         group.add(editSeamCells);
         group.add(editLattice);
+        group.add(editAnnotations);
         group.add(none);
 		
         ButtonGroup latticeGroup = new ButtonGroup();        
@@ -559,7 +674,6 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
         	latticeChoices[i] = gui.buildRadioButton("lattice_" + i, i==0 );
         	latticeChoices[i].addActionListener(this);
         	latticeGroup.add(latticeChoices[i]);
-        	latticeSelectionPanel.add(latticeChoices[i]);
         }
         
 		return panel;
@@ -662,6 +776,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		{
 			saveLattice();
 		}
+		else if ( editAnnotations.isSelected() )
+		{
+			saveAnnotations();
+		}
 	}
 
 	private void saveSeamCells()
@@ -676,6 +794,22 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 
 		String fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.editSeamCellOutput;  
+		String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+		WormSegmentation.saveAllVOIsTo(voiDir, wormImage);
+	}
+
+	private void saveAnnotations()
+	{
+		if ( wormImage == null )
+		{
+			return;
+		}
+		if ( imageIndex >= includeRange.size() )
+		{
+			return;
+		}
+
+		String fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.editAnnotationOutput;  
 		String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
 		WormSegmentation.saveAllVOIsTo(voiDir, wormImage);
 	}
@@ -733,7 +867,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 		imageIndex = 0;
 		
-		editEnabled = (editSeamCells.isSelected() || editLattice.isSelected());
+		editEnabled = (editSeamCells.isSelected() || editLattice.isSelected() || editAnnotations.isSelected());
 		batchProcess = (latticeStraighten.isSelected() || buildLattice.isSelected() || segmentSeamCells.isSelected() || calcMaxProjection.isSelected() );
 		return (includeRange != null);
 	}

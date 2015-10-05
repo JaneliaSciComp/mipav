@@ -82,7 +82,7 @@ public class WormSegmentationKMeans extends WormSegmentation
 //				}
 //			}
 //		}
-		WormSegmentation.reduceDuplicates(image, tempSeamCells, true);
+		WormSegmentation.reduceDuplicates(image, tempSeamCells, 5, 15, true);
 		
 		for ( int i = 0; i < tempSeamCells.size(); i++ )
 		{

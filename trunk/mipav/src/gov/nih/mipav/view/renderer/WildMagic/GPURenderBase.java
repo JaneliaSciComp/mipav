@@ -310,6 +310,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
         super.dispose();
     }
 
+	public void drawText( int x, int y, String message )
+	{
+        m_pkRenderer.Draw( x, y, ColorRGBA.WHITE, message );
+	}
+	
     /**
      * Returns the GLCanvas in the m_pkRenderer object.
      * @return OpenGLRenderer.GLCanvas

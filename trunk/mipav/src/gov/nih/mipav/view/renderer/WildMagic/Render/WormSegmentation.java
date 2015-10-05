@@ -178,8 +178,8 @@ public abstract class WormSegmentation
 
 		image.registerVOI(annotations);
 	}
-	
-	public static int reduceDuplicates( ModelImage image, Vector<Vector3f> tempSeamCells, boolean deleteSingletons )
+
+	public static int reduceDuplicates( ModelImage image, Vector<Vector3f> tempSeamCells, int shortDistance, int longDistance, boolean deleteSingletons )
 	{
 
 		Vector3f negCenter = new Vector3f(-1,-1,-1);
@@ -194,13 +194,13 @@ public abstract class WormSegmentation
 					if ( !tempSeamCells.elementAt(k).equals(negCenter) )
 					{
 						float distance = tempSeamCells.elementAt(j).distance(tempSeamCells.elementAt(k));
-						if ( distance < 3 )
+						if ( distance < shortDistance )
 						{
 							newCenter.add(tempSeamCells.elementAt(k));
 							tempSeamCells.elementAt(k).copy(negCenter);
 							count++;
 						}
-						else if ( distance < 10 )
+						else if ( distance < longDistance )
 						{
 							boolean merge = true;
 							Vector3f dir = Vector3f.sub( tempSeamCells.elementAt(k), tempSeamCells.elementAt(j) );
@@ -247,6 +247,54 @@ public abstract class WormSegmentation
 				count++;
 			}
 		}
+		return count;
+	}
+
+
+
+	public static int reduceDuplicates( ModelImage image, Vector<Vector3f> tempSeamCells )
+	{
+		Vector3f negCenter = new Vector3f(-1,-1,-1);
+		int count = 0;
+		for ( int i = 0; i < tempSeamCells.size(); i++ )
+		{
+			if ( !tempSeamCells.elementAt(i).equals(negCenter) )
+			{
+				count++;
+			}
+		}
+		while ( count > 22 )
+		{
+			int closestI = -1;
+			int closestJ = -1;
+			float minDistance = Float.MAX_VALUE;
+			for ( int i = 0; i < tempSeamCells.size(); i++ )
+			{
+				if ( tempSeamCells.elementAt(i).equals(negCenter) )
+					continue;
+				for ( int j = i+1; j < tempSeamCells.size(); j++ )
+				{
+					if ( tempSeamCells.elementAt(j).equals(negCenter) )
+						continue;
+
+					float distance = tempSeamCells.elementAt(i).distance(tempSeamCells.elementAt(j));
+					if ( distance < minDistance )
+					{
+						minDistance = distance;
+						closestI = i;
+						closestJ = j;
+					}
+				}
+			}
+			if ( (closestI != -1) && (closestJ != -1) )
+			{
+				tempSeamCells.elementAt(closestI).add(tempSeamCells.elementAt(closestJ));
+				tempSeamCells.elementAt(closestI).scale(0.5f);
+				tempSeamCells.elementAt(closestJ).copy(negCenter);
+				count--;
+			}
+		}
+		
 		return count;
 	}
 

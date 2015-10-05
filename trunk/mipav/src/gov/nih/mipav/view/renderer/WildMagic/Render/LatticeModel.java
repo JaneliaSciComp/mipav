@@ -1757,9 +1757,8 @@ public class LatticeModel {
 			annotationVOIs = new VOI((short) colorID, "annotationVOIs", VOI.ANNOTATION, -1.0f);
 			imageA.registerVOI(annotationVOIs);
 		}
-		final VOIText text = (VOIText) textVOI.getCurves().firstElement().clone();
-		text.setColor(Color.blue);
-		final Color c = text.getColor();
+		VOIText text = (VOIText) textVOI.getCurves().firstElement().clone();
+		Color c = text.getColor();
 		text.update(new ColorRGBA(c.getRed() / 255.0f, c.getGreen() / 255.0f, c.getBlue() / 255.0f, 1f));
 		text.setUseMarker(false);
 		annotationVOIs.getCurves().add(text);
@@ -1768,20 +1767,53 @@ public class LatticeModel {
 		if (text.getText().equalsIgnoreCase("nose") || text.getText().equalsIgnoreCase("origin")) {
 			if (wormOrigin == null) {
 				wormOrigin = new Vector3f(text.elementAt(0));
-				// updateLattice(true);
 			} else {
 				wormOrigin.copy(text.elementAt(0));
-				// updateLattice(false);
 			}
 		}
-//		pickedPoint = annotationVOIs.getCurves().lastElement().elementAt(0);
-//		updateSelected();
-
-//		if ( text.getText().equalsIgnoreCase("Nose") ) {
-//			WormSegmentation.segmentNose(imageA, text.elementAt(0), true);
-//		}
 		
 		highestIndex++;
+		colorAnnotations();
+	}
+	
+	private void colorAnnotations()
+	{
+		// count markers (not nose or origin)
+		// if < 20 -- all red
+		// if > 20 -- all yellow
+		// if == 20 or 22 -- all green
+
+		int count = 0;
+		for (int i = 0; i < annotationVOIs.getCurves().size(); i++)
+		{
+			VOIText text = (VOIText) annotationVOIs.getCurves().elementAt(i);
+			if ( !text.getText().equalsIgnoreCase("nose") && !text.getText().equalsIgnoreCase("origin"))
+			{
+				count++;
+			}
+		}
+		Color c = Color.yellow;
+		if ( (count == 20) || (count == 22) )
+		{
+			c = Color.green;
+		}
+		else if ( count > 22 )
+		{
+			c = Color.red;
+		}
+		
+
+		for (int i = 0; i < annotationVOIs.getCurves().size(); i++)
+		{
+			VOIText text = (VOIText) annotationVOIs.getCurves().elementAt(i);
+			if ( !text.getText().equalsIgnoreCase("nose") && !text.getText().equalsIgnoreCase("origin"))
+			{
+				text.setColor(c);
+				text.updateText();
+//				System.err.println( text.getText() + " " + c );
+			}
+		}
+		annotationVOIs.setColor(c);
 	}
 
 	/**
@@ -1883,7 +1915,8 @@ public class LatticeModel {
 	 * @param doAnnotation
 	 */
 	public void deleteSelectedPoint(final boolean doAnnotation) {
-		if (doAnnotation) {
+		if (doAnnotation)
+		{
 			if (pickedAnnotation != -1) {
 				final VOIText text = (VOIText) annotationVOIs.getCurves().remove(pickedAnnotation);
 				clear3DSelection();
@@ -1893,7 +1926,10 @@ public class LatticeModel {
 					// updateLattice(true);
 				}
 			}
-		} else if ( !doAnnotation) {
+			colorAnnotations();
+		}
+		else if ( !doAnnotation)
+		{
 			boolean deletedLeft = false;
 			boolean deletedRight = false;
 			if ( (rightMarker != null) && pickedPoint.equals(rightMarker.getCurves().elementAt(0).elementAt(0))) {
@@ -2474,6 +2510,10 @@ public class LatticeModel {
 
 			if ( text.getText().equalsIgnoreCase("nose") || text.getText().equalsIgnoreCase("origin") )
 			{
+				if ( wormOrigin == null )
+				{
+					wormOrigin = new Vector3f(pickedPoint);
+				}
 				wormOrigin.copy(pickedPoint);
 				// updateLattice(false);
 			}
@@ -2488,12 +2528,17 @@ public class LatticeModel {
 	 * @param endPt 3D end point of a ray intersecting the volume.
 	 * @param pt point along the ray with the maximum intensity value.
 	 */
-	public void modifyLattice(final Vector3f startPt, final Vector3f endPt, final Vector3f pt) {
+	public boolean modifyLattice(final Vector3f startPt, final Vector3f endPt, final Vector3f pt) {
 		if (pickedPoint != null) {
 			pickedPoint.copy(pt);
 			updateLattice(false);
-			return;
+			return true;
 		}
+		if ( lattice == null )
+		{
+			return false;
+		}
+		
 		pickedPoint = null;
 		int closestL = -1;
 		float minDistL = Float.MAX_VALUE;
@@ -2535,7 +2580,7 @@ public class LatticeModel {
 		}
 		if (pickedPoint != null) {
 			updateLattice(false);
-			return;
+			return true;
 		}
 		// look at the vector under the mouse and see which lattice point is closest...
 		final Segment3f mouseVector = new Segment3f(startPt, endPt);
@@ -2547,8 +2592,10 @@ public class LatticeModel {
 				minDist = distance;
 				pickedPoint = left.elementAt(i);
 			}
-			dist = new DistanceVector3Segment3(right.elementAt(i), mouseVector);
-			distance = dist.Get();
+		}
+		for ( int i = 0; i < right.size(); i++ ) {
+			DistanceVector3Segment3 dist = new DistanceVector3Segment3(right.elementAt(i), mouseVector);
+			float distance = dist.Get();
 			if (distance < minDist) {
 				minDist = distance;
 				pickedPoint = right.elementAt(i);
@@ -2556,10 +2603,10 @@ public class LatticeModel {
 		}
 		if ( (pickedPoint != null) && (minDist <= 12)) {
 			updateLattice(false);
-			return;
+			return true;
 		}
 
-		addInsertionPoint(startPt, endPt, pt);
+		return addInsertionPoint(startPt, endPt, pt);
 	}
 
 	/**
@@ -2711,8 +2758,26 @@ public class LatticeModel {
 	 * @param directory
 	 * @param fileName
 	 */
-	public void saveLattice(final String directory, final String fileName) {
-		if (fileName != null) {
+	public void saveLattice(final String directory, final String fileName)
+	{
+		if ( lattice == null )
+		{
+			return;
+		}
+		if ( lattice.getCurves() == null )
+		{
+			return;
+		}
+		if ( lattice.getCurves().size() != 2 )
+		{
+			return;
+		}
+		if ( left.size() != right.size() )
+		{
+			return;
+		}
+		if (fileName != null)
+		{
 			final String voiDir = new String(directory + fileName + File.separator);
 
 			clear3DSelection();
@@ -2791,7 +2856,7 @@ public class LatticeModel {
 		}
 		showSelectedVOI = null;
 		clearAddLeftRightMarkers();		
-		highestIndex = 0;
+		highestIndex = 1;
 		
 		if ( annotationVOIs == null )
 		{
@@ -2799,7 +2864,7 @@ public class LatticeModel {
 		}
 		for (int i = 0; i < annotationVOIs.getCurves().size(); i++) {
 			final VOIText text = (VOIText) annotationVOIs.getCurves().elementAt(i);
-			text.setColor(Color.blue);
+//			text.setColor(Color.blue);
 			final Color c = text.getColor();
 			text.update(new ColorRGBA(c.getRed() / 255.0f, c.getGreen() / 255.0f, c.getBlue() / 255.0f, 1f));
 			text.elementAt(1).copy(text.elementAt(0));
@@ -2833,6 +2898,7 @@ public class LatticeModel {
 
 			highestIndex++;
 		}
+		colorAnnotations();
 	}
 	
 	public int getCurrentIndex()
@@ -2855,6 +2921,10 @@ public class LatticeModel {
 			imageA.unregisterVOI(lattice);
 		}
 		this.lattice = newLattice;
+		if ( this.lattice == null )
+		{
+			return;
+		}
 
 		// Assume image is isotropic (square voxels).
 		if (lattice.getCurves().size() != 2) {
@@ -3030,7 +3100,7 @@ public class LatticeModel {
 	 * @param endPt
 	 * @param maxPt
 	 */
-	private void addInsertionPoint(final Vector3f startPt, final Vector3f endPt, final Vector3f maxPt) {
+	private boolean addInsertionPoint(final Vector3f startPt, final Vector3f endPt, final Vector3f maxPt) {
 		final Segment3f mouseVector = new Segment3f(startPt, endPt);
 		float minDistL = Float.MAX_VALUE;
 		int minIndexL = -1;
@@ -3052,7 +3122,7 @@ public class LatticeModel {
 		float minDistR = Float.MAX_VALUE;
 		int minIndexR = -1;
 		Vector3f newRight = null;
-		for (int i = 0; i < left.size() - 1; i++) {
+		for (int i = 0; i < right.size() - 1; i++) {
 			final Segment3f rightS = new Segment3f(right.elementAt(i), right.elementAt(i + 1));
 			final DistanceSegment3Segment3 dist = new DistanceSegment3Segment3(mouseVector, rightS);
 			final float distance = dist.Get();
@@ -3105,6 +3175,12 @@ public class LatticeModel {
 
 			updateLattice(true);
 		}
+		else
+		{
+			pickedPoint = null;
+			return false;
+		}
+		return true;
 	}
 
 	// private void fill( ModelImage image, ModelImage model, ModelImage markers, float intensityMin, Box3f box )
