@@ -45,6 +45,8 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
 	
 	private boolean mergeSimilar;
 	
+	private double maxDistance;
+	
 	private boolean error = false;
 	
 	private ViewUserInterface UI = ViewUserInterface.getReference();
@@ -59,14 +61,16 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
      * @param  scaleX
      * @param  scaleY
      * @param  mergeSimilar
+     * @param  maxDistance
      */
     public AlgorithmAutoSeedWatershed(ModelImage destImg, ModelImage srcImg,
-    		float scaleX, float scaleY, boolean mergeSimilar) {
+    		float scaleX, float scaleY, boolean mergeSimilar, double maxDistance) {
 
         super(destImg, srcImg);
         this.scaleX = scaleX;
         this.scaleY = scaleY;
         this.mergeSimilar = mergeSimilar;
+        this.maxDistance = maxDistance;
     }
 
     
@@ -626,6 +630,9 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         		    	// if pi(x) = N(mi,Ri), where Ri are covariance matrices
         		    	// B = (1/8)(m1 - m2)'RInverse(m1-m2) + (1/2)ln(detR/sqrt(detR1*detR2))
         		    	// where 2R = R1 + R2
+        		    	// The first term gives the class separability due to the difference
+        		    	// between class means, while the second term gives the class separability
+        		    	// due to the difference between class covariance matrices.
         		    	// Calculate the histogram similarity
         		    	// C = (cov(c) + cov(q))/2
         		    	CHue = (varianceHue[c] + varianceHue[q])/2.0;
@@ -652,7 +659,7 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         		    	similarity = B1 + 0.5*Math.log(detR/Math.sqrt(detR1*detR2));
                         Preferences.debug("Similarity = " + similarity + " for segments " + c + " and " + q + "\n", 
                         		Preferences.DEBUG_ALGORITHM);
-                        if (similarity > 0.8) {
+                        if (similarity <= maxDistance) {
                         	merged[q] = true;
                         	// Reduce number of segments
                         	for (i = 0; i < sliceSize; i++) {
