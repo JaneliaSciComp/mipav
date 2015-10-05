@@ -542,6 +542,7 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         		error = true;
         		return;
         	}
+        	
         	for (i = 0; i < sliceSize; i++) {
         		hsb = Color.RGBtoHSB(red[i], green[i], blue[i], hsb);
         		hue = hsb[0];
@@ -562,12 +563,45 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         		}
         	} // for (i = 0; i < sliceSize; i++)
         	
+        	// Remove segments of size 1 since variance divides by (segmentTotal[i] - 1)
+        	int numDeleted = 0;
+        	for (i = 0; i < segmentNumber; i++) {
+        		if (segmentTotal[i] <= 1) {
+        			for (q = 0; q < sliceSize; q++) {
+        				if (segment[q] == i+1) {
+        					segment[q] = 0;
+        				}
+        				else if (segment[q] > i+1) {
+        					segment[q] = segment[q] - 1;
+        				}
+        			}
+        			for (q = i; q  < segmentNumber-1; q++) {
+        			    segmentTotal[q] = segmentTotal[q+1];
+        			    sumHue[q] = sumHue[q+1];
+        			    sumSaturation[q] = sumSaturation[q+1];
+        			    for (h = 0; h < hueBins; h++) {
+                		    for (s = 0; s < saturationBins; s++) {
+                		        hist[q][h][s] = hist[q+1][h][s];	
+                		    }
+        			    }
+        			} // for (q = i; q  < segmentNumber-1; q++)
+        			segmentNumber--;
+        			numDeleted++;
+        		} // if (segmentTotal[i] <= 1)
+        	} // for (i = 0; i < segmentNumber; i++)
+        	if (numDeleted == 1) {
+        		UI.setDataText("One segment of size 1 deleted\n");
+        	}
+        	else if (numDeleted > 1) {
+        		UI.setDataText(numDeleted + " segments of size 1 deleted\n");
+        	}
+        	
         	for (i = 0; i < segmentNumber; i++) {
         		meanHue[i] = sumHue[i]/segmentTotal[i];
         		meanSaturation[i] = sumSaturation[i]/segmentTotal[i];
         		for (h = 0; h < hueBins; h++) {
+        			diffHue = h - meanHue[i];
         		    for (s = 0; s < saturationBins; s++) {
-        		    	diffHue = h - meanHue[i];
         		    	diffSaturation = s - meanSaturation[i];
         		    	varianceHue[i] += (diffHue * diffHue) * hist[i][h][s];
         		    	varianceSaturation[i] += (diffSaturation * diffSaturation) * hist[i][h][s];
@@ -590,7 +624,7 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         		    if (!merged[q]) {
         		    	// For multivariate gaussian distributions
         		    	// if pi(x) = N(mi,Ri), where Ri are covariance matrices
-        		    	// B = (1/8)(m1 - m2)'RInverse(M1-m2) + (1/2)ln(detR/sqrt(detR1*detR2))
+        		    	// B = (1/8)(m1 - m2)'RInverse(m1-m2) + (1/2)ln(detR/sqrt(detR1*detR2))
         		    	// where 2R = R1 + R2
         		    	// Calculate the histogram similarity
         		    	// C = (cov(c) + cov(q))/2
@@ -622,8 +656,11 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
                         	merged[q] = true;
                         	// Reduce number of segments
                         	for (i = 0; i < sliceSize; i++) {
-                        		if (segment[i] == q) {
-                        			segment[i] = c;
+                        		if (segment[i] == q+1) {
+                        			segment[i] = c+1;
+                        		}
+                        		else if (segment[i] > q+1) {
+                        			segment[i] = segment[i] - 1;
                         		}
                         	} // for (i = 0; i < sliceSize; i++)
                         	segmentTotal[c] = segmentTotal[c] + segmentTotal[q];
@@ -640,8 +677,8 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
                     		varianceSaturation[c] = 0.0;
                     		covarianceHueSaturation[c] = 0.0;
                     		for (h = 0; h < hueBins; h++) {
+                    			diffHue = h - meanHue[c];
                     		    for (s = 0; s < saturationBins; s++) {
-                    		    	diffHue = h - meanHue[c];
                     		    	diffSaturation = s - meanSaturation[c];
                     		    	varianceHue[c] += (diffHue * diffHue) * hist[c][h][s];
                     		    	varianceSaturation[c] += (diffSaturation * diffSaturation) * hist[c][h][s];
@@ -667,11 +704,6 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
                     			covarianceHueSaturation[i] = covarianceHueSaturation[i+1];
                     			merged[i] = merged[i+1];
                     		} // for (i = q; i < segmentNumber-1; i++)
-                    		for (i = 0; i < sliceSize; i++) {
-                    			if (segment[i] > q) {
-                    				segment[i] = segment[i] -1;
-                    			}
-                    		}
                         	segmentNumber--;
                         }
         		    }
