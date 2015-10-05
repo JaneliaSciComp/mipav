@@ -48,6 +48,12 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
     private JCheckBox mergeCheckBox;
     
     private boolean mergeSimilar;
+    
+    private JLabel distanceLabel;
+    
+    private JTextField distanceText;
+    
+    private double maxDistance;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -77,6 +83,7 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
+        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
@@ -87,6 +94,9 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
             //MipavUtil.showHelp("");
         } else if (command.equals("Cancel")) {
             dispose();
+        } else if (source.equals(mergeCheckBox)) {
+           distanceLabel.setEnabled(mergeCheckBox.isSelected());
+           distanceText.setEnabled(mergeCheckBox.isSelected());
         } else {
             super.actionPerformed(event);
         }
@@ -183,7 +193,7 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
             }
 
             // Make algorithm
-            wsAlgo = new AlgorithmAutoSeedWatershed(resultImage, image, scaleX, scaleY, mergeSimilar);
+            wsAlgo = new AlgorithmAutoSeedWatershed(resultImage, image, scaleX, scaleY, mergeSimilar, maxDistance);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -235,7 +245,8 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
         scaleX = scriptParameters.getParams().getFloat("scaleX");
         scaleY = scriptParameters.getParams().getFloat("scaleY");
         if (image.isColorImage()) {
-            mergeSimilar = scriptParameters.getParams().getBoolean("merge_similar");	
+            mergeSimilar = scriptParameters.getParams().getBoolean("merge_similar");
+            maxDistance = scriptParameters.getParams().getDouble("max_distance");
         }
 
     }
@@ -250,6 +261,7 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
         scriptParameters.getParams().put(ParameterFactory.newParameter("scaleY", scaleY));
         if (image.isColorImage()) {
         	scriptParameters.getParams().put(ParameterFactory.newParameter("merge_similar", mergeSimilar));
+        	scriptParameters.getParams().put(ParameterFactory.newParameter("max_distance", maxDistance));
         }
     }
 
@@ -322,7 +334,23 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
             mergeCheckBox.setSelected(false);
             mergeCheckBox.setForeground(Color.black);
             mergeCheckBox.setFont(serif12);
+            mergeCheckBox.addActionListener(this);
             paramPanel.add(mergeCheckBox, gbc);
+            
+            gbc.gridy = 2;
+            gbc.gridwidth = 1;
+            distanceLabel = new JLabel("Maximum Bhattachryya distance");
+            distanceLabel.setForeground(Color.black);
+            distanceLabel.setFont(serif12);
+            distanceLabel.setEnabled(false);
+            paramPanel.add(distanceLabel, gbc);
+            
+            distanceText = new JTextField(10);
+            distanceText.setText("0.1");
+            distanceText.setFont(serif12);
+            gbc.gridx = 1;
+            distanceText.setEnabled(false);
+            paramPanel.add(distanceText, gbc);
         }
 
         JPanel buttonPanel = new JPanel();
@@ -376,6 +404,17 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
         
         if (image.isColorImage()) {
         	mergeSimilar = mergeCheckBox.isSelected();
+        	if (mergeSimilar) {
+        		tmpStr = distanceText.getText();
+        		if (testParameter(tmpStr, 0.0, 100.0)) {
+        		    maxDistance = Double.valueOf(tmpStr).doubleValue();
+        		}
+        		else {
+        			distanceText.requestFocus();
+        			distanceText.selectAll();
+        			return false;
+        		}
+        	}
         }
 
         return true;
