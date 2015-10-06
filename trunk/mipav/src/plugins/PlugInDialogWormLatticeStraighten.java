@@ -994,15 +994,15 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 				{
 					continue;
 				}
-				Vector3f nose = null;
-				for ( int j = 0; j < seamCells.elementAt(0).getCurves().size(); j++ )
+				VOI nose = new VOI( (short)1, "nose", VOI.ANNOTATION, 1);
+				for ( int j = seamCells.elementAt(0).getCurves().size() - 1; j >=0; j-- )
 				{
 					VOIText text = (VOIText) seamCells.elementAt(0).getCurves().elementAt(j);
 					// skip extra annotations (origin, nose)
 					// use annotations list?
-					if ( text.getText().equalsIgnoreCase("nose") )
+					if ( text.getText().contains("nose") || text.getText().contains("Nose") )
 					{
-						nose = new Vector3f(text.elementAt(0));
+						nose.getCurves().add(seamCells.elementAt(0).getCurves().remove(j));
 					}
 				}
 
@@ -1026,11 +1026,10 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		
 	}     
 
-	private static boolean buildLattice( ModelImage image, VOI annotations, Vector3f nose, int time, String baseFileDir, String baseFileName )
+	private static boolean buildLattice( ModelImage image, VOI annotations, VOI nose, int time, String baseFileDir, String baseFileName )
 	{
 		long startTime = System.currentTimeMillis();
 		boolean print = false;
-		int noseCount = 1;
 		/** Step (1) Attempt to find the tenth pair of seam cells in the lattice. 
 		 * The 10th pair is distinct in that it has the smallest between-cell distance */
 		Vector<int[]> tenthPairs = new Vector<int[]>();
@@ -1040,33 +1039,26 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			VOIText text = (VOIText) annotations.getCurves().elementAt(i);
 			// skip extra annotations (origin, nose)
 			// use annotations list?
-			if ( text.getText().equalsIgnoreCase("nose") )
-			{
-				if ( nose == null )
-				{
-					nose = new Vector3f(text.elementAt(0));
-				}
-				else
-				{
-					nose.add( text.elementAt(0) );
-					noseCount++;
-				}
-			}
-			else if ( !text.getText().equalsIgnoreCase("origin") )
+			if ( !text.getText().equalsIgnoreCase("origin") )
 			{
 				Vector3f pos = new Vector3f(text.elementAt(0));
 				pos.scale( VOILatticeManagerInterface.VoxelSize );
 				positions.add( pos );
 			}
 		}
-		if ( noseCount > 1 )
-		{
-			nose.scale(1f/(float)noseCount);
-		}
+		Vector3f nosePt = null;
 		if ( nose != null )
 		{
-			nose.scale( VOILatticeManagerInterface.VoxelSize );
-			System.err.println( "buildLattice " + nose );
+			int numNoses = nose.getCurves().size();
+			for ( int i = 0; i < nose.getCurves().size(); i++ )
+			{
+				VOIText text = (VOIText)nose.getCurves().elementAt(i);
+				if ( text.getText().equalsIgnoreCase("nose") || text.getText().equalsIgnoreCase("nose1") )
+				{
+					nosePt = new Vector3f(text.elementAt(0));
+					nosePt.scale( VOILatticeManagerInterface.VoxelSize );
+				}
+			}
 		}
 
 		// pair distance > 50 time step for 1-9 is in the range of 5-15 um
@@ -1197,7 +1189,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			int targetLength = (positions.size() % 2) == 0 ? positions.size() : positions.size() -1;
 			targetLength = Math.max(0, targetLength);
 			targetLength = Math.min(20, targetLength);
-			sequencePairs( startTime, model, nose, positions, sequence, pairLists, tenthPair, targetLength, total, sequenceList );
+			sequencePairs( startTime, model, nosePt, positions, sequence, pairLists, tenthPair, targetLength, total, sequenceList );
 		}
 		System.err.println( "buildLattice time 1 = " + AlgorithmBase.computeElapsedTime(startTime) + " " + sequenceList.size() );
 		startTime = System.currentTimeMillis();
