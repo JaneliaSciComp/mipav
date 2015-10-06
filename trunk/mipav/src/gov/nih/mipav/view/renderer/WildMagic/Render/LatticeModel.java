@@ -1787,7 +1787,7 @@ public class LatticeModel {
 		for (int i = 0; i < annotationVOIs.getCurves().size(); i++)
 		{
 			VOIText text = (VOIText) annotationVOIs.getCurves().elementAt(i);
-			if ( !text.getText().equalsIgnoreCase("nose") && !text.getText().equalsIgnoreCase("origin"))
+			if ( !(text.getText().contains("nose") || text.getText().contains("Nose")) && !text.getText().equalsIgnoreCase("origin"))
 			{
 				count++;
 			}
@@ -1806,7 +1806,7 @@ public class LatticeModel {
 		for (int i = 0; i < annotationVOIs.getCurves().size(); i++)
 		{
 			VOIText text = (VOIText) annotationVOIs.getCurves().elementAt(i);
-			if ( !text.getText().equalsIgnoreCase("nose") && !text.getText().equalsIgnoreCase("origin"))
+			if ( !(text.getText().contains("nose") || text.getText().contains("Nose")) && !text.getText().equalsIgnoreCase("origin"))
 			{
 				text.setColor(c);
 				text.updateText();
@@ -2468,7 +2468,10 @@ public class LatticeModel {
 		{
 			if ( rightMouse )
 			{
+				final VOIText text = (VOIText) annotationVOIs.getCurves().elementAt(pickedAnnotation);
 				new JDialogAnnotation(imageA, annotationVOIs, pickedAnnotation, true, true);
+				text.updateText();
+				colorAnnotations();
 			}
 			else
 			{
@@ -2504,6 +2507,7 @@ public class LatticeModel {
 			{
 				new JDialogAnnotation(imageA, annotationVOIs, pickedAnnotation, true, true);
 				text.updateText();
+				colorAnnotations();
 			}
 			pickedPoint = annotationVOIs.getCurves().elementAt(pickedAnnotation).elementAt(0);
 			updateSelected();
