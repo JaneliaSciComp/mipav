@@ -27,15 +27,19 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransferFunction;
+import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
 import gov.nih.mipav.view.renderer.WildMagic.Render.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
@@ -52,8 +56,11 @@ import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Vector;
 
 import javax.swing.ButtonGroup;
@@ -66,6 +73,8 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 public class PlugInDialogVolumeRender extends JFrame implements ActionListener, AlgorithmInterface {
 
@@ -167,6 +176,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					pack();
 				}
 			}
+			else if ( createAnimation.isSelected() )
+			{
+				setVisible(false);
+				annotationAnimationFromSpreadSheet();
+			}
 		}
 		else if ( command.equals("next") )
 		{
@@ -208,10 +222,13 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			}
 		}
 		else if (command.equals("close"))
-		{
-			voiManager.clear3DSelection();
+		{			
 			if ( editEnabled )
 			{
+				if ( voiManager != null )
+				{
+					voiManager.clear3DSelection();
+				}
 				save();
 			}
 			setVisible(false);
@@ -225,6 +242,12 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			startButton.setEnabled( imageIndex > 0 );
 			nextButton.setEnabled( imageIndex < (includeRange.size() - 1));
 		}
+
+
+		baseFileNameText.setEnabled( !createAnimation.isSelected() );
+		rangeFusionText.setEnabled( !createAnimation.isSelected() );
+		
+		
 		latticeStraighten.setEnabled(none.isSelected());
 		buildLattice.setEnabled(none.isSelected());
 		segmentSeamCells.setEnabled(none.isSelected());
@@ -236,13 +259,15 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				editSeamCells.setEnabled(false);
 				editLattice.setEnabled(false);
 				editAnnotations.setEnabled(false);
+				createAnimation.setEnabled(false);
 				none.setSelected(true);
 			}
-			else if ( !latticeStraighten.isSelected() && !buildLattice.isSelected() && !segmentSeamCells.isSelected() && !calcMaxProjection.isSelected() )
+			else if ( !latticeStraighten.isSelected() && !buildLattice.isSelected() && !segmentSeamCells.isSelected() && !calcMaxProjection.isSelected())
 			{
 				editSeamCells.setEnabled(true);
 				editLattice.setEnabled(true);
 				editAnnotations.setEnabled(true);
+				createAnimation.setEnabled(true);
 			}
 		}
 		if ( latticeChoices != null )
@@ -266,7 +291,15 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	} 
 
 	public void algorithmPerformed(AlgorithmBase algorithm)
-	{        
+	{       
+		if ( createAnimation.isSelected() && (triVolume != null) )
+		{
+			triVolume.addVOIS( annotationList, annotationNames );
+			triVolume.displayAnnotationSpheres();
+			triVolume.display3DWindowOnly();
+			return;
+		}
+		
 		float min = (float) wormImage.getMin();
 		float max = (float) wormImage.getMax();
 		TransferFunction kTransfer = new TransferFunction();
@@ -612,6 +645,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private JRadioButton editSeamCells;
 	private JRadioButton editLattice;
 	private JRadioButton editAnnotations;
+	private JRadioButton createAnimation;
 	private JRadioButton none;
 	
 	private JPanel makeEditPanel(GuiBuilder gui)
@@ -654,6 +688,13 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		gbc.gridy++;
 		
 		gbc.gridx = 0;
+		createAnimation = gui.buildRadioButton("create annotation animation", false );
+		createAnimation.addActionListener(this);
+		createAnimation.setActionCommand("createAnimation");
+		panel.add(createAnimation.getParent(), gbc);
+		gbc.gridy++;
+		
+		gbc.gridx = 0;
 		none = gui.buildRadioButton("none", true );
 		none.addActionListener(this);
 		none.setActionCommand("none");
@@ -664,6 +705,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
         group.add(editSeamCells);
         group.add(editLattice);
         group.add(editAnnotations);
+        group.add(createAnimation);
         group.add(none);
 		
         ButtonGroup latticeGroup = new ButtonGroup();        
@@ -709,7 +751,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		inputsPanel.setBorder(JDialogBase.buildTitledBorder("Input Options"));
 		inputsPanel.setForeground(Color.black);
 
-		baseFileLocText = gui.buildFileField("Directory containing input images: ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
+		baseFileLocText = gui.buildFileField("Data directory: ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
 		inputsPanel.add(baseFileLocText.getParent(), gbc);
 		gbc.gridy++;
 
@@ -871,5 +913,241 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		batchProcess = (latticeStraighten.isSelected() || buildLattice.isSelected() || segmentSeamCells.isSelected() || calcMaxProjection.isSelected() );
 		return (includeRange != null);
 	}
+	
+
+	private VolumeTriPlanarInterface triVolume;
+	private VOIVector annotationList;
+	private Vector<String> annotationNames;
+	private void annotationAnimationFromSpreadSheet()
+	{
+		int[] extents = new int[3];
+		VOIVector tempList = new VOIVector();
+		Vector< int[] > timesList = new Vector< int[] >();
+		ViewJProgressBar progress = new  ViewJProgressBar( "Generating Animation", "", 0, 100, false);
+		progress.dispose();
+		progress = null;
+
+		String inputDirName = baseFileDir + File.separator;
+		//		System.err.println( inputDirName );
+		final File inputFileDir = new File(inputDirName);
+
+		Vector3f min = new Vector3f(  Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE );
+		Vector3f max = new Vector3f( -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE );
+		int timeCount, maxTimeCount = -1, minTimeCount = Integer.MAX_VALUE;
+		int maxIndex = -1;
+		int fileIndex = 0;
+		if (inputFileDir.exists() && inputFileDir.isDirectory()) {
+			String[] list = inputFileDir.list();
+			for ( int i = 0; i < list.length; i++ )
+			{
+				File annotationFile = new File( inputFileDir + File.separator + list[i] );
+				if ( annotationFile.isDirectory() )
+				{
+					continue;
+				}
+				if ( !list[i].endsWith(".csv") )
+				{
+					continue;
+				}
+				int index = list[i].indexOf(".");
+				String annotationName = new String(list[i]);
+				if ( index != -1 )
+				{
+					annotationName = annotationName.substring(0, index);
+				}
+				//        		System.err.println( annotationName );
+
+				int startTime = -1;
+				int endTime = -1;
+				timeCount = 0;
+				VOI annotation = new VOI( (short)i, annotationName, VOI.ANNOTATION, 0 );
+				Vector<Integer> times = new Vector<Integer>();
+				FileReader fr;
+				try {
+					int red = 255;
+					int green = 255;
+					int blue = 255;
+					fr = new FileReader(annotationFile);
+					BufferedReader br = new BufferedReader(fr);
+
+					String line = br.readLine();
+					line = br.readLine();
+					//    				System.err.println(line);
+					String[] parsed = line.split( "," );
+					if ( parsed.length > 0 )
+					{
+						if ( parsed[0].equals("color") )
+						{
+							red    = (parsed.length > 1) ? (parsed[1].length() > 0) ? Integer.valueOf( parsed[1] ) : 0 : 0; 
+							green  = (parsed.length > 2) ? (parsed[2].length() > 0) ? Integer.valueOf( parsed[2] ) : 0 : 0; 
+							blue   = (parsed.length > 3) ? (parsed[3].length() > 0) ? Integer.valueOf( parsed[3] ) : 0 : 0; 
+
+							line = br.readLine();
+						}
+					}
+					while ( line != null )
+					{
+						//        				System.err.println(line);
+						int time = -1;
+						float x = 0, y = 0, z = 0;
+						parsed = line.split( "," );
+						time = (parsed.length > 0) ? (parsed[0].length() > 0) ? Integer.valueOf( parsed[0] ) : -1 : -1; 
+						x    = (parsed.length > 1) ? (parsed[1].length() > 0) ? Float.valueOf( parsed[1] ) : 0 : 0; 
+						y    = (parsed.length > 2) ? (parsed[2].length() > 0) ? Float.valueOf( parsed[2] ) : 0 : 0; 
+						z    = (parsed.length > 3) ? (parsed[3].length() > 0) ? Float.valueOf( parsed[3] ) : 0 : 0; 
+
+						if ( time != -1 )
+						{
+							if ( startTime == -1 )
+							{
+								startTime = time;
+							}
+							endTime = time;
+						}
+						if ( (time != -1) && (z >= 0) && (parsed.length > 3) )
+						{
+							VOIText text = new VOIText();
+							text.setText( list[i] );
+							text.setColor( new Color(red, green, blue) );
+							text.add( new Vector3f( x, y, z ) );
+							text.add( new Vector3f( x, y, z ) );
+							text.setText(annotationName);
+							annotation.getCurves().add(text);
+
+							times.add( time );
+							timeCount++;
+
+							min.min( text.elementAt(0) );
+							max.max( text.elementAt(0) );
+
+							//    						if ( text.elementAt(0).Z < 0 )
+							//    						{
+							//    							System.err.println(list[i] );
+							//    						}
+						}
+						line = br.readLine();
+					}
+					br.close();
+					fr.close();
+
+					tempList.add(annotation);
+
+					int[] timesArray = new int[times.size()];
+					for ( int j = 0; j < times.size(); j++ )
+					{
+						timesArray[j] = times.elementAt(j);
+					}
+					timesList.add( timesArray );
+				} catch (FileNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				if ( timeCount < minTimeCount )
+				{
+					minTimeCount = timeCount;
+					maxIndex = fileIndex;
+				}
+				if ( timeCount > maxTimeCount )
+				{
+					maxTimeCount = timeCount;
+					maxIndex = fileIndex;
+				}
+				fileIndex++;
+			}
+		}
+
+		//        System.err.println( minTimeCount + " " + maxTimeCount + " " + (minTimeCount == maxTimeCount ) );
+
+		//        System.err.println( timesList.size() + " " + tempList.size() );
+		int[] times = timesList.elementAt( maxIndex );
+		VOI curve = tempList.elementAt( maxIndex );
+		//		for ( int j = 0; j < times.length; j++ )
+		//		{
+		//			System.err.println( curve.getName() + " " + times[j] );
+		//		}
+
+
+		annotationList = new VOIVector();
+		for ( int i = 0; i < times.length; i++ )
+		{
+			int timeStep = times[i];
+			VOI annotation = new VOI( (short)i, "time" + timeStep, VOI.ANNOTATION, 0 );
+
+			//			System.err.print( timeStep );
+			for ( int j = 0; j < timesList.size(); j++ )
+			{
+				int[] currentTimes = timesList.elementAt(j);
+				for ( int k = 0; k < currentTimes.length; k++ )
+				{
+					if ( timeStep == currentTimes[k] )
+					{
+						VOIText text = new VOIText(tempList.elementAt(j).getCurves().elementAt(k));
+
+						text.setText( ((VOIText)tempList.elementAt(j).getCurves().elementAt(k)).getText() );
+						text.setColor( ((VOIText)tempList.elementAt(j).getCurves().elementAt(k)).getColor() );
+						annotation.getCurves().add( text );
+
+						//        				System.err.print( " " + text.getText() );
+						break;
+					}
+				}
+			}
+			//			System.err.println( "" );  		
+
+
+			annotationList.add(annotation);
+		}
+		tempList = null;
+		timesList = null;
+
+
+		int maxCount = -1;
+		int maxCountIndex = -1;
+		for ( int i = 0; i < annotationList.size(); i++ )
+		{
+			if ( annotationList.elementAt(i).getCurves().size() > maxCount )
+			{
+				maxCount = annotationList.elementAt(i).getCurves().size();
+				maxCountIndex = i;
+			}
+		}
+		annotationNames = new Vector<String>();
+		for ( int i = 0; i < annotationList.elementAt(maxCountIndex).getCurves().size(); i++ )
+		{
+			VOIText text = (VOIText) annotationList.elementAt(maxCountIndex).getCurves().elementAt(i);
+			annotationNames.add( new String(text.getText()) );
+		}
+
+		//		System.err.println( min );
+		//		System.err.println( max );
+
+		extents[0] = (int)Math.max( 30, (max.X - min.X) + 10);
+		extents[1] = (int)Math.max( 30, (max.Y - min.Y) + 10);
+		extents[2] = (int)Math.max( 30, (max.Z - min.Z) + 10);
+
+		ModelImage animationImage = new ModelImage( ModelStorageBase.BOOLEAN, extents, "animationImage" );
+		String outputDirName = baseFileDir + File.separator + "animation" + File.separator;
+		final File outputFileDir = new File(outputDirName);
+
+		if (outputFileDir.exists() && outputFileDir.isDirectory()) {
+			String[] list = outputFileDir.list();
+			for ( int i = 0; i < list.length; i++ )
+			{
+				File lrFile = new File( outputFileDir + list[i] );
+				lrFile.delete();
+			}
+		} else if (outputFileDir.exists() && !outputFileDir.isDirectory()) { // voiFileDir.delete();
+		} else { // voiFileDir does not exist
+			outputFileDir.mkdir();
+		}
+
+		animationImage.setImageDirectory( outputDirName );		
+		triVolume = new VolumeTriPlanarInterface(animationImage, null);
+		triVolume.addConfiguredListener(this);
+	}
+
 
 }

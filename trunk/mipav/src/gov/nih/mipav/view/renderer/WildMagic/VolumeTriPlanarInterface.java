@@ -772,7 +772,16 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     
     public void display3DWindowOnly()
     {
+//    	mainPane.remove(rightPane);
+//    	mainPane.add(gpuPanel);
+    	rightPane.remove(triImagePanel);
     	rightPane.setDividerLocation( 1.0 );
+		setTitle("Untwisting C.elegans - lattice - 1.0");
+		try {
+			setIconImage(MipavUtil.getIconImage("divinci.gif"));
+		} catch (FileNotFoundException e) {
+			Preferences.debug("Failed to load default icon", Preferences.DEBUG_MINOR);
+		}
     }
     
     public void displayAnnotationSpheres()
@@ -802,6 +811,11 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     	
     	raycastRenderWM.addAnimationVOIs(vois, m_kAnnotationAnimationPanel);
     	prevHeight = 0;
+    	
+    	menuBar.setVisible(false);
+        panelToolbar.setVisible(false);
+        tabbedPane.remove(positionsPanel.getMainPanel());
+        tabbedPane.remove(m_kLightsPanel.getMainPanel());
     	resizePanel();
     }
         
