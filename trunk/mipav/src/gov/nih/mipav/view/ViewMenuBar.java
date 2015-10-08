@@ -342,9 +342,10 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Levelset", "Levelset", 0, null, false),
                         menuBuilder.buildMenuItem("Levelset diffusion", "LevelsetDiffusion", 0, null, false),
                         menuBuilder.buildMenuItem("Markov random field", "HMRF_EM", 0, null, false),
+                        menuBuilder.buildMenuItem("Power Watershed", "PowerWatershed", 0, null, false),
                         menuBuilder.buildMenuItem("Spatial color compactness", "SCD", 0, null, false),
                         menuBuilder.buildMenuItem("Texture segmentation", "TextureSegmentation", 0, null, false),
-
+                        
                         menuBuilder.makeMenu("Threshold", false, new JMenuItem[] {
                                 menuBuilder.buildMenuItem("Threshold using min/max", "threshMinMax", 0, null, false),
                                 menuBuilder.buildMenuItem("Theshold using standard deviation", "threshStdDev", 0, null,
@@ -1305,6 +1306,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Single channel", false);
             menuBuilder.setMenuItemEnabled("Auto Seed Watershed", false);
             menuBuilder.setMenuItemEnabled("Watershed", false);
+            menuBuilder.setMenuItemEnabled("Power Watershed", false);
             menuBuilder.setMenuItemEnabled("Histogram summary", false);
             menuBuilder.setMenuItemEnabled("Surface plotter", false);
             menuBuilder.setMenuItemEnabled("Evolve boundary 2D", false);
