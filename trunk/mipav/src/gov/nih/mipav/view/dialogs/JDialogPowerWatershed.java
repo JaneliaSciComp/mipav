@@ -94,6 +94,8 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
+    
+    private ViewJComponentEditImage componentImage;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -114,6 +116,8 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         super(theParentFrame, false);
         image = im;
         userInterface =  ViewUserInterface.getReference();
+        componentImage = ((ViewJFrameImage) theParentFrame).getComponentImage();
+        componentImage.getVOIHandler().newVOI(0.0f);
         init();
     }
 
@@ -203,6 +207,21 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
             if ((twoButton.isSelected() && pointNum < 2) || (multiButton.isSelected() && pointNum < 255)) {
         	    pointNum++;
         	    pointsButton.setText("Finished adding " + String.valueOf(pointNum) + " points");
+        	    if (pointNum == 2) {
+            		componentImage.getVOIHandler().newVOI(1.0f/3.0f);	
+            	}
+            	else if (pointNum == 3) {
+            		componentImage.getVOIHandler().newVOI(2.0f/3.0f);		
+            	}
+            	else if (pointNum == 4) {
+            		componentImage.getVOIHandler().newVOI(1.0f/6.0f);	
+            	}
+            	else if (pointNum == 5) {
+            		componentImage.getVOIHandler().newVOI(1.0f/2.0f);
+            	}
+            	else if (pointNum >= 6) {
+            		componentImage.getVOIHandler().newVOI(5.0f/6.0f);
+            	}
             }
             else {
             	pointsButton.setText("Cannot add any more points");
@@ -408,8 +427,8 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         gbc2.weightx = 1;
 
         int yPos2 = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc2.anchor = GridBagConstraints.WEST;
+        gbc2.fill = GridBagConstraints.HORIZONTAL;
 
         JPanel labelsPanel = new JPanel(new GridBagLayout());
         labelsPanel.setForeground(Color.black);
@@ -450,7 +469,7 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         pointsButton.setPreferredSize(MipavUtil.defaultButtonSize);
         pointsButton.setFont(serif12B);
         gbc2.gridy = yPos2++;
-        labelsPanel.add(pointsButton);
+        labelsPanel.add(pointsButton, gbc2);
         pointsButton.addActionListener(this);
         pointsButton.setActionCommand("Add");
         
