@@ -349,7 +349,7 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
             try {
 
                 // Make result image of unsigned type
-                resultImage = new ModelImage(ModelImage.USHORT, image.getExtents(), name);
+                resultImage = new ModelImage(ModelImage.UBYTE, image.getExtents(), name);
 
                 // Make algorithm
                 pwAlgo = new AlgorithmPowerWatershed(resultImage, image, algo, multi, index_seeds, index_labels, geod);
