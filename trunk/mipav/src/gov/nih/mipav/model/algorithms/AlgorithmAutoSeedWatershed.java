@@ -415,7 +415,9 @@ public class AlgorithmAutoSeedWatershed extends AlgorithmBase {
         //}
         // MIPAV AlgorithmWatershed does not handle color
         grayImage.setVOIs(kVOIs);
-        new ViewJFrameImage(grayImage);
+        if (srcImage.isColorImage()) {
+            new ViewJFrameImage(grayImage);
+        }
         distTransformed.disposeLocal();
         distTransformed = null;
         ModelImage gmImage = null;
