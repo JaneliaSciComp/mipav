@@ -498,6 +498,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		{			
 			if ( (imageIndex >= 0) && (imageIndex < includeRange.size()) )
 			{
+				int latticeSelectionCount = latticeSelectionPanel.getComponentCount();
 				String fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(imageIndex) + ".tif";
 				File voiFile = new File(baseFileDir + File.separator + fileName);
 				if ( voiFile.exists() )
@@ -564,6 +565,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						if ( latticeIndex != -1 )
 						{
 							voiManager.setLattice(potentialLattices[latticeIndex]);
+							latticeChoices[latticeIndex].setSelected(true);
 						}
 						voiManager.editLattice();
 					}
@@ -587,6 +589,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				else
 				{
 					volumeRenderer.initLUT();
+					validate();
 				}
 			}
 		}
