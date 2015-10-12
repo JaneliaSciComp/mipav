@@ -96,8 +96,11 @@ import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import WildMagic.LibFoundation.Containment.ContBox3f;
+import WildMagic.LibFoundation.Mathematics.Box3f;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector2d;
+import WildMagic.LibFoundation.Mathematics.Vector3d;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.Mathematics.Vector4f;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
@@ -979,8 +982,12 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 					image.disposeLocal();
 				}
 				image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);
+				System.err.println( fileName );
 				
 				VOIVector seamCells = new VOIVector();
+//				fileName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + editAnnotationInput;
+//				String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+//				loadAllVOIsFrom(image, voiDir, true, seamCells, false);
 				fileName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + editSeamCellOutput;
 				String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
 				loadAllVOIsFrom(image, voiDir, true, seamCells, false);
@@ -1004,8 +1011,11 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 					{
 						nose.getCurves().add(seamCells.elementAt(0).getCurves().remove(j));
 					}
+//					if ( text.getText().equalsIgnoreCase("origin") )
+//					{
+//						nose.getCurves().add(seamCells.elementAt(0).getCurves().remove(j));
+//					}
 				}
-
 				if ( buildLattice( image, seamCells.elementAt(0), nose, includeRange.elementAt(i), baseFileDir, baseFileName ) )
 				{
 					foundCount++;
@@ -1046,18 +1056,14 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 				positions.add( pos );
 			}
 		}
-		Vector3f nosePt = null;
+		Vector<Vector3f> nosePts = new Vector<Vector3f>();
 		if ( nose != null )
 		{
-			int numNoses = nose.getCurves().size();
 			for ( int i = 0; i < nose.getCurves().size(); i++ )
 			{
 				VOIText text = (VOIText)nose.getCurves().elementAt(i);
-				if ( text.getText().equalsIgnoreCase("nose") || text.getText().equalsIgnoreCase("nose1") )
-				{
-					nosePt = new Vector3f(text.elementAt(0));
-					nosePt.scale( VOILatticeManagerInterface.VoxelSize );
-				}
+				nosePts.add(new Vector3f(text.elementAt(0)));
+				nosePts.lastElement().scale( VOILatticeManagerInterface.VoxelSize );
 			}
 		}
 
@@ -1109,15 +1115,12 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		LatticeModel model = new LatticeModel( image );
 		int[] total = new int[]{0};
 		Vector<Vector<int[]>> sequenceList = new Vector<Vector<int[]>>();
-
-		Vector<Vector<int[]>> finalLatticeList = new Vector<Vector<int[]>>();
 		
 		// Loop over all potential tenthPairs:
 		for ( int i = 0; i < tenthPairs.size(); i++ )
 		{
 			int[] tenthPair = tenthPairs.elementAt(i);
 			int[][] pairs = new int[positions.size()][positions.size()];
-			int pairCount = 0;
 			for ( int j = 0; j < positions.size(); j++ )
 			{
 				int countJ = 0;
@@ -1134,7 +1137,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 								if ( !midPointFail(j,k, positions) )
 								{
 									pairs[j][k] = 1;
-									pairCount++;
 									countJ++;
 								}
 							}
@@ -1151,8 +1153,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			}
 			if ( print ) System.err.println( "   Initial Pairset " + countPairs(pairs, tenthPair) );
 			Vector<int[]> pairLists = new Vector<int[]>();
-
-//			checkPairAngles( pairs, positions );
 //			
 			for ( int j = 0; j < pairs.length; j++ )
 			{
@@ -1189,52 +1189,19 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			int targetLength = (positions.size() % 2) == 0 ? positions.size() : positions.size() -1;
 			targetLength = Math.max(0, targetLength);
 			targetLength = Math.min(20, targetLength);
-			sequencePairs( startTime, model, nosePt, positions, sequence, pairLists, tenthPair, targetLength, total, sequenceList );
+			sequencePairs( startTime, model, nosePts, positions, sequence, pairLists, tenthPair, targetLength, total, sequenceList );
 		}
-		System.err.println( "buildLattice time 1 = " + AlgorithmBase.computeElapsedTime(startTime) + " " + sequenceList.size() );
+//		System.err.println( "buildLattice time 1 = " + AlgorithmBase.computeElapsedTime(startTime) + " " + sequenceList.size() );
 		startTime = System.currentTimeMillis();
 		
-//		removeDuplicates(sequenceList);
-
-		orderSequences( startTime, model, positions, sequenceList, finalLatticeList );
-		System.err.println( "buildLattice time 2 = " + AlgorithmBase.computeElapsedTime(startTime) );
+		VOIVector finalLatticeList = new VOIVector();
+		orderSequences( startTime, image, model, nosePts, positions, sequenceList, finalLatticeList );
+//		System.err.println( "buildLattice time 2 = " + AlgorithmBase.computeElapsedTime(startTime) );
 
 		for ( int j = 0; j < Math.min( 5, finalLatticeList.size()); j++ )
 		{
 			image.unregisterAllVOIs();
-			Vector<int[]> sequence = finalLatticeList.elementAt(j);
-			VOIContour left = new VOIContour(false);
-			VOIContour right = new VOIContour(false);
-			VOI lattice = new VOI((short) 0, "lattice", 1, VOI.POLYLINE );
-			lattice.getCurves().add(left);
-			lattice.getCurves().add(right);
-			for ( int k = 0; k < sequence.size(); k++ )
-			{
-				int[] pair = sequence.elementAt(k);
-				if ( print ) System.err.println( "   " + pair[0] + " " + pair[1] );
-
-				short id = (short) image.getVOIs().getUniqueID();
-				final VOI marker = new VOI(id, "pair_" + pair[0] + "_" + pair[1], VOI.POLYLINE, (float) Math.random());
-				final VOIContour mainAxis = new VOIContour(false);
-				Vector3f p1 = new Vector3f(positions.elementAt(pair[0])); p1.scale(1f/VOILatticeManagerInterface.VoxelSize);
-				Vector3f p2 = new Vector3f(positions.elementAt(pair[1])); p2.scale(1f/VOILatticeManagerInterface.VoxelSize);
-				mainAxis.add(p1);
-				mainAxis.add(p2);
-				marker.getCurves().add(mainAxis);
-				if ( k == 0 )
-				{
-					marker.setColor(new Color(0, 255, 0));
-					mainAxis.update(new ColorRGBA(0, 1, 0, 1));
-				}
-				else
-				{
-					marker.setColor(new Color(255, 255, 0));
-					mainAxis.update(new ColorRGBA(1, 1, 0, 1));
-				}
-				image.registerVOI(marker);
-				left.add(0, p1);
-				right.add(0, p2);
-			}				
+			VOI lattice = finalLatticeList.elementAt(j);
 			image.registerVOI(lattice);
 			String fileName = baseFileDir + File.separator + baseFileName + "_"  + time + File.separator + autoLatticeGenerationOutput + j + File.separator;
 			File outputFileDir = new File(fileName);
@@ -1280,57 +1247,28 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		}
 		return allFound;
 	}
-	
-//	private float measureParallel( Vector<int[]> sequence )
-//	{
-//		float parallelAngles = 0;
-//		for ( int i = 0; i < sequence.size()-1; i++ )
-//		{
-//			int[] pair1 = sequence.elementAt(i);
-//			int[] pair2 = sequence.elementAt(i+1);
-//			Vector3f vec1 = Vector3f.sub( positions.elementAt(pair2[0]), positions.elementAt(pair1[0]) );
-//			Vector3f vec2 = Vector3f.sub( positions.elementAt(pair2[1]), positions.elementAt(pair1[1]) );
-//			vec1.normalize();
-//			vec2.normalize();
-//			float angle1 = Math.abs(vec1.angle(vec2));
-//			float angle2 = Math.abs(vec2.angle(vec1));
-//			if ( angle1 < angle2 )
-//			{
-//				parallelAngles += angle1;
-//			}
-//			else
-//			{
-//				parallelAngles += angle2;
-//			}
-////			parallelAngles += Math.abs(vec1.angle(vec2));
-//		}
-//		return parallelAngles;
-//	}
-	
+
 	/**
 	 * Measures the total amount of folding in the lattice.
 	 * @param positions
 	 * @param sequence
 	 * @return
 	 */
-	private static float measureBends( Vector<Vector3f> positions, Vector<int[]> sequence )
+	private static float measureCurvature( Vector<Vector3f> left, Vector<Vector3f> right )
 	{
 		float bendAngles = 0;
-		for ( int i = 0; i < sequence.size()-2; i++ )
+		for ( int i = 0; i < left.size()-2; i++ )
 		{
 			// Calculate the mid point of the first pair in the sequence:
-			int[] pair1 = sequence.elementAt(i);
-			Vector3f mid1 = Vector3f.add(positions.elementAt(pair1[0]), positions.elementAt(pair1[1]));
+			Vector3f mid1 = Vector3f.add(left.elementAt(i), right.elementAt(i));
 			mid1.scale(0.5f);			
 
 			// Calculate the mid point of the second pair in the sequence:
-			int[] pair2 = sequence.elementAt(i+1);
-			Vector3f mid2 = Vector3f.add(positions.elementAt(pair2[0]), positions.elementAt(pair2[1]));
+			Vector3f mid2 = Vector3f.add(left.elementAt(i+1), right.elementAt(i+1));
 			mid2.scale(0.5f);
 
 			// Calculate the mid point of the third pair in the sequence:
-			int[] pair3 = sequence.elementAt(i+2);
-			Vector3f mid3 = Vector3f.add(positions.elementAt(pair3[0]), positions.elementAt(pair3[1]));
+			Vector3f mid3 = Vector3f.add(left.elementAt(i+2), right.elementAt(i+2));
 			mid3.scale(0.5f);
 			
 			// The bend is calculated as the angle change from midpoint1 to
@@ -1354,7 +1292,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		return bendAngles;
 	}
 	
-	private static int measureIntersections( LatticeModel model, Vector<Vector3f> positions, int index, Vector<int[]> sequence, boolean quickTest )
+	private static VOI makeLattice( Vector<Vector3f> positions, Vector<Vector3f> nose, int index, Vector<int[]> sequence )
 	{
 		VOIContour left = new VOIContour( false );
 		VOIContour right = new VOIContour( false );
@@ -1364,138 +1302,373 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		for ( int i = 0; i < sequence.size(); i++ )
 		{
 			int[] pair = sequence.elementAt(i);
-			left.add(0, new Vector3f(positions.elementAt(pair[0])));
-			right.add(0, new Vector3f(positions.elementAt(pair[1])));
+			Vector3f p1 = new Vector3f(positions.elementAt(pair[0]));
+			Vector3f p2 = new Vector3f(positions.elementAt(pair[1]));
+			p1.scale(1f/VOILatticeManagerInterface.VoxelSize);
+			p2.scale(1f/VOILatticeManagerInterface.VoxelSize);
+			left.add(0, p1);
+			right.add(0, p2);
 		}
-		return model.testIntersection(lattice, quickTest);
-	}
-
-	private void removeDuplicates( Vector<Vector<int[]>> sequenceList )
-	{
-//		System.err.print( "removeDuplicates " + sequenceList.size() );
-		for ( int i = sequenceList.size()-1; i >= 0; i-- )
+		if ( nose != null )
 		{
-			Vector<int[]> sequence1 = sequenceList.elementAt(i);
-			boolean matchFound = false;
-			for ( int j = i-1; j >= 0; j-- )
+			if ( nose.size() == 1 )
 			{
-				Vector<int[]> sequence2 = sequenceList.elementAt(j);
-				boolean matches = true;
-				for ( int k = 0; k < Math.min(sequence1.size(), sequence2.size()); k++ )
-				{
-					int[] pair1 = sequence1.elementAt(k);
-					int[] pair2 = sequence2.elementAt(k);
-					if ( (pair1[0] != pair2[0]) || (pair1[1] != pair2[1]) )
-					{
-						matches = false;
-						break;
-					}
-				}
-				if ( matches )
-				{
-					matchFound = true;
-					break;
-				}
+				Vector3f nosePt = new Vector3f(nose.elementAt(0));
+				nosePt.scale(1f/VOILatticeManagerInterface.VoxelSize);
+				left.add(0, nosePt);
+				right.add(0, nosePt);
 			}
-			if ( matchFound )
+			else if ( nose.size() >= 2 )
 			{
-				sequenceList.remove(i);
+				Vector3f nosePt0 = new Vector3f(nose.elementAt(0));
+				nosePt0.scale(1f/VOILatticeManagerInterface.VoxelSize);
+				Vector3f nosePt1 = new Vector3f(nose.elementAt(1));
+				nosePt1.scale(1f/VOILatticeManagerInterface.VoxelSize);
+
+				float distanceL0 = left.elementAt(0).distance(nosePt0);
+				float distanceL1 = left.elementAt(0).distance(nosePt1);
+				if ( distanceL0 < distanceL1 )
+				{
+					left.add(0, nosePt0);
+					right.add(0, nosePt1);
+				}
+				else if ( distanceL0 > distanceL1 )
+				{
+					left.add(0, nosePt1);
+					right.add(0, nosePt0);					
+				}
+				else
+				{
+					float distanceR0 = right.elementAt(0).distance(nosePt0);
+					float distanceR1 = right.elementAt(0).distance(nosePt1);
+					if ( distanceR0 < distanceR1 )
+					{
+						right.add(0, nosePt0);
+						left.add(0, nosePt1);
+					}
+					else
+					{
+						right.add(0, nosePt1);			
+						left.add(0, nosePt0);		
+					}					
+				}
 			}
 		}
-//		System.err.println( "  ==>  " + sequenceList.size() );
+		return lattice;
 	}
 	
-	private static void orderSequences( long startTime, LatticeModel model, Vector<Vector3f> positions, Vector<Vector<int[]>> sequenceList, Vector<Vector<int[]>> finalLatticeList )
+	private static int intersectionCount( ModelImage image, Vector<Vector3f> left, Vector<Vector3f> right )
+	{
+		int intersectionCount = 0;
+		Box3f[] boxes = new Box3f[left.size()-1];
+		Vector<Vector3f> vertices = new Vector<Vector3f>();
+		for ( int i = 0; i < left.size()-1; i++ )
+		{
+			vertices.add( left.elementAt(i) );
+			vertices.add( right.elementAt(i) );
+			vertices.add( left.elementAt(i+1) );
+			vertices.add( right.elementAt(i+1) );
+			Vector3f mid0 = Vector3f.add( left.elementAt(i), right.elementAt(i) );
+			mid0.scale(0.5f);
+			Vector3f mid1 = Vector3f.add( left.elementAt(i+1), right.elementAt(i+1) );
+			mid1.scale(0.5f);
+			
+			Vector3f horizontal = Vector3f.sub( right.elementAt(i), left.elementAt(i) );
+			Vector3f length = Vector3f.sub( mid1, mid0 );
+			horizontal.normalize();
+			length.normalize();
+			Vector3f up = Vector3f.cross(horizontal, length);
+			up.normalize();
+			float width = left.elementAt(i).distance(right.elementAt(i) );
+			width /= 4f;
+			vertices.add( Vector3f.scaleAddS(width, up, left.elementAt(i)) );
+			vertices.add( Vector3f.scaleAddS(-width, up, left.elementAt(i)) );
+			vertices.add( Vector3f.scaleAddS(width, up, right.elementAt(i)) );
+			vertices.add( Vector3f.scaleAddS(-width, up, right.elementAt(i)) );
+
+			
+			horizontal = Vector3f.sub( right.elementAt(i+1), left.elementAt(i+1) );
+			horizontal.normalize();
+			up = Vector3f.cross(horizontal, length);
+			up.normalize();
+			width = left.elementAt(i+1).distance(right.elementAt(i+1) );
+			width /= 4f;
+			vertices.add( Vector3f.scaleAddS(width, up, left.elementAt(i+1)) );
+			vertices.add( Vector3f.scaleAddS(-width, up, left.elementAt(i+1)) );
+			vertices.add( Vector3f.scaleAddS(width, up, right.elementAt(i+1)) );
+			vertices.add( Vector3f.scaleAddS(-width, up, right.elementAt(i+1)) );
+			
+			boxes[i] = ContBox3f.ContOrientedBox( vertices.size(), vertices );
+			vertices.clear();
+		}
+		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 0;  
+		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 0;  
+		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 0;
+		Vector3f pt = new Vector3f();
+		for ( int z = 0; z < dimZ; z++ )
+		{
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					pt.set(x, y, z);
+					int overlapCount = 0;
+					for ( int b = 0; b < boxes.length; b++ )
+					{
+						if ( ContBox3f.InBox( pt, boxes[b]) )
+						{
+							overlapCount++;
+						}
+					}
+					if ( overlapCount > 1 )
+					{
+						intersectionCount++;
+					}
+				}
+			}
+		}
+		
+		
+		return intersectionCount;
+	}
+
+	private static void orderSequences( long startTime, ModelImage image, LatticeModel model, Vector<Vector3f> nose, Vector<Vector3f> positions, Vector<Vector<int[]>> sequenceList, VOIVector finalLatticeList )
 	{
 		if ( sequenceList.size() <= 0 )
 		{
-//			System.err.println("");
 			return;
 		}
-//		System.err.print( "  number of sequences = " + sequenceList.size() + "   " );
+		VOIVector lattices = new VOIVector();
+		for ( int i = 0; i < sequenceList.size(); i++ )
+		{
+			lattices.add( makeLattice( positions, nose, i, sequenceList.elementAt(i) ) );
+		}
+		
 		Vector2d[] angles = new Vector2d[sequenceList.size()];
 		int[] intersections = new int[sequenceList.size()];
 		for ( int i = 0; i < sequenceList.size(); i++ )
 		{
-			Vector<int[]> sequence = sequenceList.elementAt(i);
-			angles[i] = new Vector2d(measureBends(positions,sequence), i);
+			VOI lattice = lattices.elementAt(i);
+			angles[i] = new Vector2d(measureCurvature(lattice.getCurves().elementAt(0), lattice.getCurves().elementAt(1)), i);
 			intersections[i] = -1;
 		}
 		Arrays.sort(angles);
-
-		int bottom4th = Math.min( sequenceList.size(), Math.max( 50, sequenceList.size()/4 ) );
-//		int bottom4th = Math.min( sequenceList.size(), Math.max( 50, Math.min( 300, sequenceList.size()/4 ) ) );
-		Vector2d[] minCount = new Vector2d[sequenceList.size()];
-		for ( int i = 0; i < bottom4th; i++ )
-		{
-			int index = (int) angles[i].Y;
-			
-			Vector<int[]> sequence = sequenceList.elementAt(index);
-			
-			int intersection = measureIntersections(model, positions, i, sequence, true);
-			if ( intersection < 250 )
-			{
-				intersections[index] = intersection;
-			}
-			if ( AlgorithmBase.computeElapsedTime(startTime) > 600 )
-			{
-				startTime = System.currentTimeMillis();
-				break;
-			}
-		}
-		double elapsedTime = AlgorithmBase.computeElapsedTime(startTime);
+		Vector3d[] minCount = new Vector3d[sequenceList.size()];
+		
 		for ( int i = 0; i < sequenceList.size(); i++ )
 		{
-			minCount[i] = new Vector2d(-1,-1);
-			if ( (intersections[i] != -1) && (elapsedTime < 600) )
+			int index = (int) angles[i].Y;
+			VOI lattice = lattices.elementAt(index);
+			int intersection = Integer.MAX_VALUE;
+
+			double elapsedTime = AlgorithmBase.computeElapsedTime(startTime);
+			if ( elapsedTime < 600 )
 			{
-				Vector<int[]> sequence = sequenceList.elementAt(i);
-				int intersection = measureIntersections(model, positions, i, sequence, false);
-				minCount[i] = new Vector2d(intersection,i);
-				elapsedTime = AlgorithmBase.computeElapsedTime(startTime);
+				intersection = intersectionCount( image, lattice.getCurves().elementAt(0), lattice.getCurves().elementAt(1) );
+				minCount[i] = new Vector3d(Math.round(angles[i].X), intersection, index);
 			}
+			else
+			{
+				minCount[i] = new Vector3d( Double.MAX_VALUE, Double.MAX_VALUE, index);
+			}
+//			System.err.println( i + " " + Math.round(angles[i].X) + " " + intersection + " " + index );
 		}
 		Arrays.sort(minCount);
 		for ( int i = 0; i < minCount.length; i++ )
 		{
-			if ( minCount[i].Y != -1 )
+			if ( minCount[i].Z != -1 )
 			{
-				int minIndex = (int) minCount[i].Y;
-				finalLatticeList.add(sequenceList.elementAt(minIndex));
+				int minIndex = (int) minCount[i].Z;
+				finalLatticeList.add(lattices.elementAt(minIndex));
+				VOIContour left = (VOIContour) lattices.elementAt(minIndex).getCurves().elementAt(0);
+				VOIContour right = (VOIContour) lattices.elementAt(minIndex).getCurves().elementAt(1);
+				Vector3f mid0 = Vector3f.add(left.elementAt(0), right.elementAt(0)); mid0.scale(0.5f);
+				Vector3f mid1 = Vector3f.add(left.elementAt(1), right.elementAt(1)); mid1.scale(0.5f);
+//				System.err.println( i + " " + minIndex + " " + mid0.distance(mid1) );
 			}
 		}
 	}
 
-//	Vector<int[]> correctSequence = null;
-//	private boolean isCorrect( Vector<int[]> sequence, int count )
-//	{
-//		if ( correctSequence == null )
-//		{
-//			correctSequence = new Vector<int[]>();
-//			for ( int i = 0; i < count; i += 2 )
-//			{
-//				correctSequence.add( 0, new int[]{i, i+1} );
-//			}
-//		}
-//		if ( sequence.size() != correctSequence.size() )
-//		{
-//			return false;
-//		}
-//		boolean matches = true;
-//		for ( int i = 0; i < correctSequence.size(); i++ )
-//		{
-//			int[] pairC = correctSequence.elementAt(i);
-//			int[] pair = sequence.elementAt(i);
-//			if ( (pairC[0] != pair[0]) || (pairC[1] != pair[1]) )
-//			{
-//				matches = false;
-//				break;
-//			}
-//		}
-//		return matches;
-//	}
+	private static boolean testLattice( Vector<Vector3f> left, Vector<Vector3f> right, Vector<Vector3f> nose )
+	{
+		if ( (left.size() != right.size()) || (left.size() == 0) )
+		{
+			return false;
+		}
+
+		if ( nose != null )
+		{
+			Vector3f mid = Vector3f.add(left.lastElement(), right.lastElement());
+			mid.scale(0.5f);
+			
+			float distance = -1;
+			if ( nose.size() == 1 )
+			{
+				distance = mid.distance(nose.elementAt(0));
+			}
+			else if ( nose.size() >= 2 )
+			{
+				Vector3f midNose = Vector3f.add(nose.elementAt(0), nose.elementAt(1));
+				midNose.scale(0.5f);
+				distance = mid.distance(midNose);
+			}
+			if ( (distance != -1) && ((distance < noseP1MinDist) || (distance > noseP1MaxDist)) )
+			{
+//				System.err.println( distance );
+				return false;
+			}
+		}
+		
+		for ( int i = 0; i < left.size(); i++ )
+		{
+			Vector3f mid1 = Vector3f.add(left.elementAt(i), right.elementAt(i));
+			mid1.scale(0.5f);
+			// distance measures the witdh of the worm at this point in the lattice model:
+			float distance = left.elementAt(i).distance(right.elementAt(i));
+			distance /= 2;
+
+			// Check distance of sequential mid-points to make
+			// sure they are not closer together than the 'width' of the worm
+			// at this point:
+			for ( int j = i+1; j < left.size(); j++ )
+			{
+				Vector3f mid2 = Vector3f.add(left.elementAt(j), right.elementAt(j));
+				mid2.scale(0.5f);
+				
+				if ( mid1.distance(mid2) < distance)
+				{
+					return false;
+				}
+			}
+		}
+		
+		float length = 0;
+		// Check the sequence distances between midpoints
+		// the distance expected ranges vary based on the pair number:
+		for ( int i = 0; i < left.size() - 1; i++ )
+		{
+			Vector3f mid1 = Vector3f.add(left.elementAt(i), right.elementAt(i));     mid1.scale(0.5f);
+			Vector3f mid2 = Vector3f.add(left.elementAt(i+1), right.elementAt(i+1)); mid2.scale(0.5f);
+			float sequenceDistance = mid1.distance(mid2);
+			length += sequenceDistance;
+			if ( (i <= 3) && ((sequenceDistance < 5) || (sequenceDistance > 26)) )
+			{
+				return false;
+			}
+			if ( (i > 3) && (i <= 6) && ((sequenceDistance < 5) || (sequenceDistance > 16)) )
+			{
+				return false;
+			}
+			if ( (i == 7) && ((sequenceDistance < 10) || (sequenceDistance > 26)) )
+			{
+				return false;
+			}
+			if ( (i == 8) && ((sequenceDistance < 5) || (sequenceDistance > 16)) )
+			{
+				return false;
+			}
+		}
+		
+		// Check total length:
+		if ( (length < 100) || (length > 140) )
+		{
+			return false;
+		}		
+
+		// Check the 'width' of the pairs:
+		float maxWidth = -Float.MAX_VALUE;
+		int maxIndex = -1;
+		float minWidth = Float.MAX_VALUE;
+		int minIndex = -1;
+		int countFirst = 0;
+		int countSecond = 0;
+		float avgWidthFirst4 = 0;
+		float avgWidthLast5 = 0;
+		for ( int i = 0; i < left.size(); i++ )
+		{
+			float dist = left.elementAt(i).distance( right.elementAt(i) );
+			if ( i < 5 )
+			{
+				avgWidthLast5 += dist;
+				countSecond++;
+			}
+			else
+			{
+				avgWidthFirst4 += dist;	
+				countFirst++;
+			}
+			if ( dist > maxWidth )
+			{
+				maxWidth = dist;
+				maxIndex = i;
+			}			
+			if ( dist < minWidth )
+			{
+				minWidth = dist;
+				minIndex = i;
+			}				
+		}
+		avgWidthFirst4 /= (float)countFirst;
+		avgWidthLast5 /= (float)countSecond;
+		if ( (avgWidthFirst4 > avgWidthLast5) && (maxIndex >= 4) && (minIndex <= 4) )
+		{			
+			// Check the amount of 'bend' in the worm:
+			if ( nose != null )
+			{
+				if ( nose.size() == 1 )
+				{
+					Vector3f nosePt = new Vector3f(nose.elementAt(0));
+					left.add(nosePt);
+					right.add(nosePt);
+				}
+				else if ( nose.size() >= 2 )
+				{
+					Vector3f nosePt0 = new Vector3f(nose.elementAt(0));
+					Vector3f nosePt1 = new Vector3f(nose.elementAt(1));
+
+					float distanceL0 = left.elementAt(0).distance(nosePt0);
+					float distanceL1 = left.elementAt(0).distance(nosePt1);
+					if ( distanceL0 < distanceL1 )
+					{
+						left.add(nosePt0);
+						right.add(nosePt1);
+					}
+					else if ( distanceL0 > distanceL1 )
+					{
+						left.add(nosePt1);
+						right.add(nosePt0);					
+					}
+					else
+					{
+						float distanceR0 = right.elementAt(0).distance(nosePt0);
+						float distanceR1 = right.elementAt(0).distance(nosePt1);
+						if ( distanceR0 < distanceR1 )
+						{
+							right.add(nosePt0);
+							left.add(nosePt1);
+						}
+						else
+						{
+							right.add(nosePt1);			
+							left.add(nosePt0);		
+						}					
+					}
+				}
+			}
+			float bendSum = measureCurvature(left, right);
+			if ( (bendSum < 6) || (bendSum > 12) )
+			{
+				return false;
+			}
+			
+			return true;
+		}		
+		
+		return false;
+	}
 	
-	private static void sequencePairs( long startTime, LatticeModel model, Vector3f nose, Vector<Vector3f> positions, Vector<int[]> sequence, Vector<int[]> pairs, int[] lastPair, int count, int[] total, Vector<Vector<int[]>> sequenceList )
+	
+	private static void sequencePairs( long startTime, LatticeModel model, Vector<Vector3f> nose, Vector<Vector3f> positions, Vector<int[]> sequence, Vector<int[]> pairs, int[] lastPair, int count, int[] total, Vector<Vector<int[]>> sequenceList )
 	{		
 		Vector<int[]> newSequence = new Vector<int[]>();
 		newSequence.addAll(sequence);
@@ -1504,114 +1677,18 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		boolean allFound = (count == newSequence.size() * 2);
 		if ( allFound )
 		{
-			if ( nose != null )
-			{
-				Vector3f mid = Vector3f.add(positions.elementAt(lastPair[0]), positions.elementAt(lastPair[1]));
-				mid.scale(0.5f);
-				if ( (mid.distance(nose) < noseP1MinDist) || (mid.distance(nose) > noseP1MaxDist))
-				{
-					return;
-				}
-//				System.err.println( mid.distance(nose) );
-			}
-			
-			float length = 0;
-			for ( int i = 0; i < newSequence.size(); i++ )
-			{
-				int[] pair1 = newSequence.elementAt(i);
-				Vector3f mid1 = Vector3f.add(positions.elementAt(pair1[0]), positions.elementAt(pair1[1]));
-				mid1.scale(0.5f);
-				float distance = positions.elementAt(pair1[0]).distance(positions.elementAt(pair1[1]));
-				distance /= 2;
-				
-				for ( int j = i+1; j < sequence.size(); j++ )
-				{
-					int[] pair2 = newSequence.elementAt(j);
-					Vector3f mid2 = Vector3f.add(positions.elementAt(pair2[0]), positions.elementAt(pair2[1]));
-					mid2.scale(0.5f);
-					
-					if ( mid1.distance(mid2) < distance)
-					{
-						return;
-					}
-				}
-				if ( i < newSequence.size() - 1)
-				{
-					int[] pair2 = newSequence.elementAt(i+1);
-					Vector3f mid2 = Vector3f.add(positions.elementAt(pair2[0]), positions.elementAt(pair2[1]));
-					mid2.scale(0.5f);
-					float sequenceDistance = mid1.distance(mid2);
-					length += sequenceDistance;
-					if ( (i <= 3) && ((sequenceDistance < 5) || (sequenceDistance > 26)) )
-					{
-						return;
-					}
-					if ( (i > 3) && (i <= 6) && ((sequenceDistance < 5) || (sequenceDistance > 16)) )
-					{
-						return;
-					}
-					if ( (i == 7) && ((sequenceDistance < 10) || (sequenceDistance > 26)) )
-					{
-						return;
-					}
-					if ( (i == 8) && ((sequenceDistance < 5) || (sequenceDistance > 16)) )
-					{
-						return;
-					}
-				}
-			}
-			
-			if ( (length < 100) || (length > 140) )
-			{
-				return;
-			}
-			
-			float bendSum = measureBends(positions, newSequence);
-			if ( (bendSum < 6) || (bendSum > 12) )
-			{
-				return;
-			}
-
-			float maxWidth = -Float.MAX_VALUE;
-			int maxIndex = -1;
-			float minWidth = Float.MAX_VALUE;
-			int minIndex = -1;
-			int countFirst = 0;
-			int countSecond = 0;
-			float avgWidthFirst4 = 0;
-			float avgWidthLast5 = 0;
+			Vector<Vector3f> left = new Vector<Vector3f>();
+			Vector<Vector3f> right = new Vector<Vector3f>();
 			for ( int i = 0; i < newSequence.size(); i++ )
 			{
 				int[] pair = newSequence.elementAt(i);
-				float dist = positions.elementAt(pair[0]).distance( positions.elementAt(pair[1]) );
-				if ( i < 5 )
-				{
-					avgWidthLast5 += dist;
-					countSecond++;
-				}
-				else
-				{
-					avgWidthFirst4 += dist;	
-					countFirst++;
-				}
-				if ( dist > maxWidth )
-				{
-					maxWidth = dist;
-					maxIndex = i;
-				}			
-				if ( dist < minWidth )
-				{
-					minWidth = dist;
-					minIndex = i;
-				}				
+				left.add(positions.elementAt(pair[0]));
+				right.add(positions.elementAt(pair[1]));
 			}
-			avgWidthFirst4 /= (float)countFirst;
-			avgWidthLast5 /= (float)countSecond;
-			if ( (avgWidthFirst4 > avgWidthLast5) && (maxIndex >= 4) && (minIndex <= 4) )
+			if ( testLattice(left, right, nose) )
 			{
 				total[0]++;
-				sequenceList.add(newSequence);
-//				System.err.println( maxWidth + " " + minWidth + " " + ((maxWidth >= 9)  && (maxWidth <= 18)) + " " + ((minWidth >= 1)  && (minWidth <= 6)));
+				sequenceList.add(newSequence);				
 			}
 			return;
 		}
@@ -1619,7 +1696,13 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		{
 			return;
 		}
+		double elapsedTime = AlgorithmBase.computeElapsedTime(startTime);
+		if ( elapsedTime > 600 )
+		{
+			return;
+		}
 		
+		// Add a new 'rung' to the lattice:
 		Vector<int[]> newPairs = new Vector<int[]>();
 		newPairs.addAll(pairs);
 		newPairs.remove(lastPair);
@@ -1687,131 +1770,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			}
 		}
 
-	}
-	
-	
-//	private void sequencePairs2( Vector<int[]> pairs, int[] startingPair )
-//	{
-//		System.err.println("");
-//		System.err.println( "PairSet = " + pairs.size() );
-//		for ( int i = 0; i < pairs.size(); i++ )
-//		{
-//			int[] pair = pairs.elementAt(i);
-//			System.err.println( pair[0] + " " + pair[1] );
-//		}
-//		
-//		
-//		float rad2Deg = (float) (180f / Math.PI);
-//		int sequenceLength = Math.min(10, pairs.size() );
-//
-//		Vector<int[]> sequence = new Vector<int[]>();
-//		sequence.add( startingPair );
-//		pairs.remove(startingPair);
-//
-//		int[] lastPair = startingPair;
-//		
-//		while ( sequence.size() < sequenceLength )
-//		{
-//			float minAngle = Float.MAX_VALUE;
-//			int minIndex = -1;
-//			for ( int i = 0; i < pairs.size(); i++ )
-//			{
-//				int[] pair = pairs.elementAt(i);
-//				Vector3f midPt = Vector3f.add(positions.elementAt(pair[0]), positions.elementAt(pair[1]));
-//				midPt.scale(0.5f);
-//				Vector3f midPtSequence = Vector3f.add(positions.elementAt(lastPair[0]), positions.elementAt(lastPair[1]));
-//				midPtSequence.scale(0.5f);
-//				float midDistance = midPt.distance(midPtSequence);
-//
-//				Vector3f edge00 = Vector3f.sub( positions.elementAt(pair[0]), positions.elementAt(lastPair[0]) );  edge00.normalize();
-//				Vector3f edge11 = Vector3f.sub( positions.elementAt(pair[1]), positions.elementAt(lastPair[1]) );  edge11.normalize();
-//				float angle1 = edge00.angle(edge11);
-//
-//				Vector3f edge01 = Vector3f.sub( positions.elementAt(pair[0]), positions.elementAt(lastPair[1]) );  edge01.normalize();
-//				Vector3f edge10 = Vector3f.sub( positions.elementAt(pair[1]), positions.elementAt(lastPair[0]) );  edge10.normalize();
-//				float angle2 = edge01.angle(edge10);
-//
-//
-//				if ( (midDistance > 4) && (midDistance < 30) )
-//				{
-//					if ( angle1 < minAngle )
-//					{
-//						minAngle = angle1;
-//						minIndex = i;
-//					}
-//					if ( angle2 < minAngle )
-//					{
-//						minAngle = angle2;
-//						minIndex = i;
-//					}
-//					System.err.println( "   potential next pair " +  " (" + pair[0] + " " + pair[1] + ") " + midDistance + " " + angle1*rad2Deg + " " + angle2*rad2Deg );
-//				}
-//			}
-//			if ( minIndex != -1 )
-//			{
-//				int[] pair = pairs.remove(minIndex);
-//				System.err.println( "Added next pair " + minIndex + " (" + pair[0] + " " + pair[1] + ") " + minAngle*rad2Deg );
-//				sequence.add( pair );
-//				lastPair = pair;
-//			}
-//			else
-//			{
-//				break;
-//			}
-//		}
-//
-//		System.err.println("");
-//		System.err.println( "Sequence = " + sequence.size() );
-//		for ( int i = 0; i < sequence.size(); i++ )
-//		{
-//			int[] pair = sequence.elementAt(i);
-//			System.err.println( pair[0] + " " + pair[1] );
-//		}
-//	}
-
-	private void checkPairAngles( int[][]pairs, Vector<Vector3f> positions )
-	{
-		float angle60 = (float) (Math.PI / 3f);
-		float angle120 = 2f * angle60;
-		float rad2Deg = (float) (180f / Math.PI);
-		for ( int i = 0; i < pairs.length; i++ )
-		{
-			for ( int j = 0; j < pairs[i].length; j++ )
-			{
-				if ( pairs[i][j] != -1 )
-				{
-					Vector3f center = positions.elementAt(i);
-					Vector3f pair1 = positions.elementAt(j);
-					int count = 0;
-					boolean found90 = false;
-					for ( int k = 0; k < pairs[i].length; k++ )
-					{
-						if ( (k != j) && (pairs[i][k] != -1) )
-						{
-							Vector3f pair2 = positions.elementAt(k);
-							Vector3f vec1 = Vector3f.sub(pair1, center);
-							Vector3f vec2 = Vector3f.sub(pair2, center);
-							vec1.normalize();
-							vec2.normalize();
-							float angle = vec1.angle(vec2) * rad2Deg;
-							if ( (angle > 70) && (angle < 110) )
-							{
-								found90 = true;
-							}
-						}
-						if ( pairs[i][k] != -1 )
-						{
-							count++;
-						}
-					}
-					if ( !found90 && count > 2 )
-					{
-						pairs[i][j] = -1;
-						pairs[j][i] = -1;
-					}
-				}
-			}
-		}
 	}
 	
 	/**
@@ -1966,103 +1924,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		return false;
 	}
 
-	private VOIVector checkPairs( VOIVector lattices )
-	{
-		VOIVector allLattices = new VOIVector();
-		int count = 0;
-		for ( int i = lattices.size() - 1; i >= 0; i-- )
-		{
-			Vector<int[]> sequenceList = checkPairs( lattices.elementAt(i) );
-			if ( sequenceList == null )
-			{
-				lattices.remove(i);
-			}
-			else if ( sequenceList.size() == 0 )
-			{
-				lattices.remove(i);
-			}
-			else
-			{
-				//				addLattices( lattices.elementAt(i), sequenceList );
-				untwistLattice( lattices.elementAt(i) );
-				addAllSequences( allLattices, lattices.elementAt(i), sequenceList );
-				count += sequenceList.size();
-				//				System.err.println( i + " " + count );
-			}
-		}
-		System.err.println( count + " " + allLattices.size() );
-		return allLattices;
-	}
-
-	private Vector<int[]> checkPairs( VOI lattice )
-	{
-		VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
-		VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
-
-		int tenIndex = -1;
-		for ( int i = 0; i < left.size(); i++ )
-		{
-			Vector3f l1 = left.elementAt(i);
-			Vector3f r1 = right.elementAt(i);
-
-			float distance = l1.distance(r1);
-			if (  (distance > tenMinDist) && (distance < tenMaxDist) )
-			{
-				tenIndex = i;
-				//				System.err.println( tenIndex + " " + distance );
-			}
-		}
-
-		if ( tenIndex == -1 )
-		{
-			return null;
-		}
-
-		Vector<int[]> sequenceList = new Vector<int[]>();
-		int[] sequence = new int[10];
-		for ( int i = 0; i < sequence.length; i++ )
-		{
-			sequence[i] = -1;
-		}
-		sequence[0] = tenIndex;
-
-		Vector3f l1 = left.elementAt(tenIndex);
-		Vector3f r1 = right.elementAt(tenIndex);
-		for ( int i = 0; i < left.size(); i++ )
-		{			
-			if ( i == tenIndex )
-			{
-				continue;
-			}
-			Vector3f l2 = left.elementAt(i);
-			Vector3f r2 = right.elementAt(i);
-			float distL1L2 = l1.distance(l2);
-			float distR1R2 = r1.distance(r2);
-			float distL1R2 = l1.distance(r2);
-			float distR1L2 = r1.distance(l2);
-
-			Vector3f v1 = Vector3f.sub( l1, r1 );
-			v1.normalize();
-
-			Vector3f v2 = Vector3f.sub( l2, r2 );
-			v2.normalize();
-
-			Vector3f v3 = Vector3f.sub( r2, l2 );
-			v3.normalize();
-
-			float angle1 = (float) (180 * v1.angle(v2) / Math.PI);
-			float angle2 = (float) (180 * v1.angle(v3) / Math.PI);
-
-			if ( ((distL1L2 >= minSequenceDist) && (distL1L2 <= maxSequenceDist) && (distR1R2 >= minSequenceDist) && (distR1R2 <= maxSequenceDist) && (Math.abs( distL1L2 - distR1R2) <= sequenceDistDiff) && (angle1 <= sequenceTwist1))
-					||
-					((distL1R2 >= minSequenceDist) && (distL1R2 <= maxSequenceDist) && (distR1L2 >= minSequenceDist) && (distR1L2 <= maxSequenceDist) && (Math.abs( distL1R2 - distR1L2) <= sequenceDistDiff) && (angle2 <= sequenceTwist1)) )
-			{
-				addSequence( sequence, sequenceList, i, left, right );
-			}
-		}
-		return sequenceList;
-	}
-
 
 	private boolean equalSequence( int[] sequence1, int[] sequence2 )
 	{
@@ -2073,19 +1934,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		for ( int i = 0; i < sequence1.length; i++ )
 		{
 			if ( sequence1[i] != sequence2[i] )
-			{
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private boolean checkSequence(int[] sequence, Vector<int[]> sequenceList)
-	{		
-		for ( int i = 0; i < sequenceList.size(); i++ )
-		{
-			int[] testSequence = sequenceList.elementAt(i);
-			if ( equalSequence(sequence, testSequence) )
 			{
 				return false;
 			}
@@ -2106,232 +1954,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 	private int sequenceTwist1 = 70;
 	private int sequenceTwist2 = 100;
 	private int sequenceBendMax = 170;
-	private void addSequence( int[] sequence, Vector<int[]> sequenceList, int index, VOIContour left, VOIContour right )
-	{
-		int[] newSequence = new int[10];
-		for ( int i = 0; i < newSequence.length; i++ )
-		{
-			newSequence[i] = sequence[i];
-		}
-		int lastIndex = -1;
-		int count = 1;
-		for ( int i = 0; i < newSequence.length; i++ )
-		{
-			if ( newSequence[i] == -1 )
-			{
-				newSequence[i] = index;
-				lastIndex = i;
-				break;
-			}
-			count++;
-		}
-		if ( count == newSequence.length )
-		{
-			if ( checkBend( newSequence, left, right ) )
-			{
-				if ( checkSequence(newSequence, sequenceList) )
-				{
-					sequenceList.add(newSequence);
-				}
-			}
-			return;
-		}
-		if ( lastIndex == -1 )
-		{
-			return;
-		}
 
-		int twistMax = sequenceTwist1;
-		if ( lastIndex > 6 )
-		{
-			twistMax = sequenceTwist2;
-		}
-
-		Vector3f l1 = left.elementAt(lastIndex);
-		Vector3f r1 = right.elementAt(lastIndex);
-		for ( int i = 0; i < left.size(); i++ )
-		{		
-			boolean found = false;
-			for ( int j = 0; j < newSequence.length; j++ )
-			{
-				if ( i == newSequence[j] )
-				{
-					found = true;
-					break;
-				}
-			}
-			if ( found )
-			{
-				continue;
-			}
-			Vector3f l2 = left.elementAt(i);
-			Vector3f r2 = right.elementAt(i);
-			float distL1L2 = l1.distance(l2);
-			float distR1R2 = r1.distance(r2);
-			float distL1R2 = l1.distance(r2);
-			float distR1L2 = r1.distance(l2);
-
-			Vector3f v1 = Vector3f.sub( l1, r1 );
-			v1.normalize();
-
-			Vector3f v2 = Vector3f.sub( l2, r2 );
-			v2.normalize();
-
-			Vector3f v3 = Vector3f.sub( r2, l2 );
-			v3.normalize();
-
-			float angle1 = (float) (180 * v1.angle(v2) / Math.PI);
-			float angle2 = (float) (180 * v1.angle(v3) / Math.PI);
-
-			if ( ((distL1L2 >= minSequenceDist) && (distL1L2 <= maxSequenceDist) && (distR1R2 >= minSequenceDist) && (distR1R2 <= maxSequenceDist) && (Math.abs( distL1L2 - distR1R2) <= sequenceDistDiff) && (angle1 <= twistMax))
-					||
-					((distL1R2 >= minSequenceDist) && (distL1R2 <= maxSequenceDist) && (distR1L2 >= minSequenceDist) && (distR1L2 <= maxSequenceDist) && (Math.abs( distL1R2 - distR1L2) <= sequenceDistDiff) && (angle2 <= twistMax)) )
-			{
-				addSequence( newSequence, sequenceList, i, left, right );
-			}
-		}
-	}
-
-	private void untwistLattice( VOI lattice )
-	{
-		VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
-		VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
-		for ( int i = 0; i < left.size()-1; i++ )
-		{		
-			Vector3f l1 = left.elementAt(i);
-			Vector3f r1 = right.elementAt(i);
-			Vector3f l2 = left.elementAt(i+1);
-			Vector3f r2 = right.elementAt(i+1);
-
-			Vector3f v1 = Vector3f.sub( l1, r1 );
-			v1.normalize();
-
-			Vector3f v2 = Vector3f.sub( l2, r2 );
-			v2.normalize();
-
-			Vector3f v3 = Vector3f.sub( r2, l2 );
-			v3.normalize();
-
-			float angle1 = (float) (180 * v1.angle(v2) / Math.PI);
-			float angle2 = (float) (180 * v1.angle(v3) / Math.PI);
-
-			int twistMax = sequenceTwist1;
-			if ( i > 6 )
-			{
-				twistMax = sequenceTwist2;
-			}
-
-			if ( (angle1 > twistMax) && (angle2 <= twistMax) )
-			{
-				// untwist:
-				Vector3f temp = new Vector3f(l2);
-				l2.copy(r2);
-				r2.copy(temp);
-			}
-		}
-
-	}
-
-	private void addAllSequences( VOIVector allLattices, VOI lattice, Vector<int[]> sequenceList )
-	{
-		VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
-		VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
-		for ( int i = 0; i < sequenceList.size(); i++ )
-		{
-			VOIContour newLeft = new VOIContour( false );
-			VOIContour newRight = new VOIContour( false );
-			VOI newLattice = new VOI((short) allLattices.size(), "lattice", 1, VOI.POLYLINE );
-			newLattice.getCurves().add(newLeft);
-			newLattice.getCurves().add(newRight);
-			int[] sequence = sequenceList.elementAt(i);
-			for ( int j = 0; j < sequence.length; j++ )
-			{
-				newLeft.add( new Vector3f( left.elementAt( sequence[j] ) ) );
-				newRight.add( new Vector3f( right.elementAt( sequence[j] ) ) );
-			}
-
-			if ( !containsLattice( allLattices, newLattice ) )
-			{
-				allLattices.add(newLattice);
-			}
-		}
-	}
-
-	private boolean equalLattice( VOI lattice1, VOI lattice2 )
-	{
-		VOIContour left1 = (VOIContour) lattice1.getCurves().elementAt(0);
-		VOIContour right1 = (VOIContour) lattice1.getCurves().elementAt(1);
-
-		VOIContour left2 = (VOIContour) lattice2.getCurves().elementAt(0);
-		VOIContour right2 = (VOIContour) lattice2.getCurves().elementAt(1);
-
-		if ( (left1.size() != left2.size()) || (right1.size() != right2.size()) )
-		{
-			return false;
-		}
-		for ( int i = 0; i < left1.size(); i++ )
-		{
-			if ( !((left1.elementAt(i).equals( left2.elementAt(i)) && right1.elementAt(i).equals( right2.elementAt(i))) || 
-					(left1.elementAt(i).equals( right2.elementAt(i)) && right1.elementAt(i).equals( left2.elementAt(i)))     ))
-			{
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private boolean containsLattice( VOIVector lattices, VOI lattice )
-	{
-		for ( int i = 0; i < lattices.size(); i++ )
-		{
-			VOI testLattice = lattices.elementAt(i);
-			if ( equalLattice(lattice, testLattice) )
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private void addPair( int p1, int p2, Vector<Vector3f> positions, VOIVector lattices )
-	{
-		VOIContour left = new VOIContour( false );
-		VOIContour right = new VOIContour( false );
-		VOI lattice = new VOI((short) lattices.size(), "lattice", 1, VOI.POLYLINE );
-		Vector<Vector3f> newPositions = new Vector<Vector3f>();
-
-		for ( int i = 0; i < positions.size(); i++ )
-		{
-			if ( i == p1 )
-			{
-				left.add( new Vector3f(positions.elementAt(i) ) );
-			}
-			else if ( i == p2 )
-			{
-				right.add( new Vector3f(positions.elementAt(i) ) );
-			}
-			else
-			{
-				newPositions.add( new Vector3f(positions.elementAt(i) ) );
-			}
-		}
-
-		lattice.getCurves().add(left);
-		lattice.getCurves().add(right);
-
-
-		for ( int i = newPositions.size() - 2; i >= 0; i-- )
-		{
-			for ( int j = i + 1; j < newPositions.size(); j++ )
-			{
-				float distance = newPositions.elementAt(i).distance( newPositions.elementAt(j) );
-				if (  (distance >= minPairDist) && (distance <= maxPairDist) )
-				{
-					addPair( i, j, newPositions, lattice, lattices, 1 );
-				}
-			}
-		}
-	}
 
 	private boolean equalLatticePairSet( VOI lattice1, VOI lattice2 )
 	{
@@ -2345,23 +1968,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		{
 			return false;
 		}
-		//		int sameCount = 0;
-		//		for ( int i = 0; i < left1.size(); i++ )
-		//		{
-		//			Vector3f l1 = left1.elementAt(i);
-		//			Vector3f r1 = right1.elementAt(i);
-		//			for ( int j = 0; j < left2.size(); j++ )
-		//			{
-		//				Vector3f l2 = left2.elementAt(j);
-		//				Vector3f r2 = right2.elementAt(j);
-		//				if ( (l1.equals(l2) && r1.equals(r2)) || (l1.equals(r2) && r1.equals(l2)) )
-		//				{
-		//					sameCount++;
-		//					break;
-		//				}
-		//			}
-		//		}
-		//		return (sameCount == left1.size());
 
 		boolean matches = true;
 		for ( int j = 0; j < left1.size(); j++ )
@@ -2388,118 +1994,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		}
 		return false;
 	}
-
-	private boolean checkBend( int[] sequence, VOIContour left, VOIContour right )
-	{		
-		for ( int i = 0; i < sequence.length - 2; i++ )
-		{
-			Vector3f leftPt = left.elementAt(sequence[i]);
-			Vector3f rightPt = right.elementAt(sequence[i]);
-
-			Vector3f leftP1Pt = left.elementAt(sequence[i+1]);
-			Vector3f rightP1Pt = right.elementAt(sequence[i+1]);
-
-			Vector3f leftP2Pt = left.elementAt(sequence[i+2]);
-			Vector3f rightP2Pt = right.elementAt(sequence[i+2]);
-
-			Vector3f v1L = Vector3f.sub( leftP1Pt, leftPt );
-			Vector3f v2L = Vector3f.sub( leftP2Pt, leftP1Pt );
-
-			Vector3f v1R = Vector3f.sub( rightP1Pt, rightPt );
-			Vector3f v2R = Vector3f.sub( rightP2Pt, rightP1Pt );
-
-			v1L.normalize();
-			v2L.normalize();
-			v1R.normalize();
-			v2R.normalize();
-
-			float angleL = (float) (180 * v1L.angle(v2L) / Math.PI);
-			float angleR = (float) (180 * v1R.angle(v2R) / Math.PI);
-
-			if ( (angleL >= sequenceBendMax) || (angleR >= sequenceBendMax) )
-			{
-				return false;
-			}			
-		}
-		return true;
-	}
-
-	private boolean checkLattice(VOI lattice, VOIVector lattices)
-	{		
-		for ( int i = 0; i < lattices.size(); i++ )
-		{
-			VOI testLattice = lattices.elementAt(i);
-			if ( equalLatticePairSet(lattice, testLattice) )
-			{
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private void addPair( int p1, int p2, Vector<Vector3f> positions, VOI lattice, VOIVector lattices, int count )
-	{
-		VOI newLattice = new VOI(lattice);
-		VOIContour left = (VOIContour) newLattice.getCurves().elementAt(0);
-		VOIContour right = (VOIContour) newLattice.getCurves().elementAt(1);
-		Vector<Vector3f> newPositions = new Vector<Vector3f>();
-
-		for ( int i = 0; i < positions.size(); i++ )
-		{
-			if ( i == p1 )
-			{
-				left.add( new Vector3f(positions.elementAt(i) ) );
-			}
-			else if ( i == p2 )
-			{
-				right.add( new Vector3f(positions.elementAt(i) ) );
-			}
-			else
-			{
-				newPositions.add( new Vector3f(positions.elementAt(i) ) );
-			}
-		}
-
-
-		if ( newPositions.size() == 0 )
-		{
-			//			System.err.println( "yes lattice " + left.size() + " " + positions.size() + " " + newPositions.size() + " " + count );
-			if ( checkLattice( newLattice, lattices ) )
-			{
-				lattices.add(newLattice);
-			}
-			return;
-		}
-
-		if ( count >= 10 )
-		{
-			//			System.err.println( "no1 lattice " + left.size() + " " + positions.size() + " " + newPositions.size() + " " + count );
-			newLattice.dispose();
-			newLattice = null;
-			newPositions = null;
-			return;
-		}
-
-
-		for ( int i = newPositions.size() - 2; i >= 0; i-- )
-		{
-			for ( int j = i + 1; j < newPositions.size(); j++ )
-			{
-				//		int i = 0;
-				////		for ( int i = 0; i < newPositions.size(); i++ )
-				////		{
-				//			for ( int j = i + 1; j < newPositions.size(); j++ )
-				//			{
-				float distance = newPositions.elementAt(i).distance( newPositions.elementAt(j) );
-				if (  (distance >= minPairDist) && (distance <= maxPairDist) )
-				{
-					addPair( i, j, newPositions, newLattice, lattices, count + 1 );
-				}
-			}
-		}
-		//		System.err.println( "no2 lattice " + left.size() + " " + positions.size() + " " + newPositions.size() + " " + count );
-	}
-
 
 	private void flipLattices()
 	{
@@ -2651,115 +2145,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 
 	private void generateAnnotationAnimation()
 	{
-		//		int[] extents = new int[3];
-		//		annotationList = new VOIVector();
-		//		ViewJProgressBar progress = new  ViewJProgressBar( "Generating Animation", "", 0, 100, false);
-		//		if ( includeRange != null )
-		//		{
-		//			progress.setVisible(true);
-		//			for ( int i = 0; i < includeRange.size(); i++ )
-		//			{
-		//				String fileName = baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + 
-		//						"output_images" + File.separator + baseFileNameText.getText() + "_" + includeRange.elementAt(i) + "_straight_register" + ".tif";
-		////				String fileName = baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + 
-		////						"output_images" + File.separator + baseFileNameText.getText() + "_" + includeRange.elementAt(i) + "_straight" + ".tif";
-		////				String fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + ".tif";
-		//				File voiFile = new File(baseFileDir + File.separator + fileName);
-		//				if ( voiFile.exists() )
-		//				{
-		//					progress.updateValue((int) (100 * (float)i/(float)includeRange.size()));
-		//					System.err.println( fileName );
-		//					FileIO fileIO = new FileIO();
-		//					fileIO.setSuppressProgressBar(true);
-		//					if(wormImageA != null) {
-		//						if ( (i%10) == 0 )
-		//						{
-		//							wormImageA.disposeLocal(true);
-		//						}
-		//						else
-		//						{
-		//							wormImageA.disposeLocal();
-		//						}
-		//						wormImageA = null;
-		//					}
-		//					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
-		//					extents[0] = Math.max(extents[0], wormImageA.getExtents()[0] );
-		//					extents[1] = Math.max(extents[1], wormImageA.getExtents()[1] );
-		//					extents[2] = Math.max(extents[2], wormImageA.getExtents()[2] );
-		//
-		//					fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "straightened_annotations"; 
-		////					fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotations";            	    		
-		//					VOIVector annotations = new VOIVector();
-		//					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-		//					loadAllVOIsFrom(voiDir, true, annotations, false);
-		//					if ( annotations.size() == 0 )
-		//					{
-		//						fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "straightened_annotation";   
-		////						fileName = baseFileNameText.getText() + "_" + includeRange.elementAt(i) + File.separator + "annotation";            	    		
-		//						annotations = new VOIVector();
-		//						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-		//						loadAllVOIsFrom(voiDir, true, annotations, false);
-		//					}
-		//					if ( annotations.size() > 0 )
-		//					{
-		//						annotationList.add( annotations.elementAt(0) );
-		//					}
-		//				}
-		//			}
-		//			progress.setVisible(false);
-		//		}
-		//		else
-		//		{
-		//			int fileCount = 0;
-		//			boolean fileExists = true;
-		//			while ( fileExists )
-		//			{    	    	
-		//				String fileName = baseFileNameText.getText() + "_"  + fileCount + File.separator + 
-		//						"output_images" + File.separator + baseFileNameText.getText() + "_" + fileCount + "_straight_register" + ".tif";
-		////				String fileName = baseFileNameText.getText() + "_" + fileCount + ".tif";
-		//				File voiFile = new File(baseFileDir + File.separator + fileName);
-		//				if ( voiFile.exists() )
-		//				{
-		//					System.err.println( fileName );
-		//					FileIO fileIO = new FileIO();
-		//					fileIO.setSuppressProgressBar(true);
-		//					if(wormImageA != null) {
-		//						wormImageA.disposeLocal();
-		//						wormImageA = null;
-		//					}
-		//					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
-		//					extents[0] = Math.max(extents[0], wormImageA.getExtents()[0] );
-		//					extents[1] = Math.max(extents[1], wormImageA.getExtents()[1] );
-		//					extents[2] = Math.max(extents[2], wormImageA.getExtents()[2] );
-		//
-		//					fileName = baseFileNameText.getText() + "_" + fileCount + File.separator + "straightened_annotations";          
-		////					fileName = baseFileNameText.getText() + "_" + fileCount + File.separator + "annotations";            	    		
-		//					VOIVector annotations = new VOIVector();
-		//					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-		//					loadAllVOIsFrom(voiDir, true, annotations, false);
-		//					if ( annotations.size() == 0 )
-		//					{
-		//						fileName = baseFileNameText.getText() + "_" + fileCount + File.separator + "straightened_annotation";    
-		////						fileName = baseFileNameText.getText() + "_" + fileCount + File.separator + "annotation";            	    		
-		//						annotations = new VOIVector();
-		//						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-		//						loadAllVOIsFrom(voiDir, true, annotations, false);
-		//					}
-		//					if ( annotations.size() > 0 )
-		//					{
-		//						annotationList.add( annotations.elementAt(0) );
-		//					}
-		//					fileCount++;
-		//				}    				
-		//				else
-		//				{
-		//					fileExists = false;
-		//				}
-		//			}
-		//		}
-		//		progress.dispose();
-		//		progress = null;
-
 		calcStatistics( false );
 		int[] extents = new int[3];
 		Vector3f min = new Vector3f(  Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE );
@@ -2824,7 +2209,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 
 		triVolume = new VolumeTriPlanarInterface(animationImage, null);
 		triVolume.addConfiguredListener(this);
-		//		triVolume = new VolumeTriPlanarInterface(wormImageA, null, this);
 
 		if(wormImageA != null) {
 			wormImageA.disposeLocal();
