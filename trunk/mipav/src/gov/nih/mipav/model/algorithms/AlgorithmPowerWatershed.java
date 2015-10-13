@@ -42,6 +42,11 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
     
     private static byte RBT_Black = 0;
     private static byte RBT_Red =  1;
+    
+    private double epsilon = 0.000001;
+    private int MAX_DEGREE = 3000;
+    private int SIZE_MAX_PLATEAU = 1000000;
+
 
     
 
@@ -60,6 +65,8 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
     
     // Geodesic reconstruction
     private boolean geod;
+    
+    private boolean produceProbaImage = true;
     
     private boolean error = false;
     
@@ -119,10 +126,12 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
         int edges[][];
         int weights[];
         int max_weight;
+        int max_weight_PW[] = new int[1];
         boolean quicksort = false;
         int size_seeds = index_seeds.size();
         ModelImage colorImage = null;
         ModelImage grayImage = null;
+        ModelImage probaImage = null;
         int nblabels;
         if (srcImage.getNDims() == 2) {
         	zDim = 1;
@@ -255,9 +264,836 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
             	return;
             }	
         } // else if (algo == Prim)
+        else if (algo == PW_qis2) {
+        	if (produceProbaImage) {
+                probaImage = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), srcImage.getImageName() + "_proba");
+        	}
+            weights = new int[M];
+            int normal_weights[];
+            max_weight_PW[0] = 255;
+            if (srcImage.isColorImage()) {
+            	normal_weights = color_standard_weights_PW(colorImage, weights, edges, index_seeds, size_seeds,
+            			max_weight_PW, quicksort);
+            	if (error) {
+            		setCompleted(false);
+            		return;
+            	}
+            } // if (srcImage.isColorImage())
+            else {
+            	normal_weights = grey_weights_PW(grayImage, edges, index_seeds, size_seeds, weights, quicksort);
+            	if (error) {
+            		setCompleted(false);
+            		return;
+            	}
+            }
+            if (geod) {
+            	PowerWatershed_q2(edges, weights, weights, max_weight_PW[0], index_seeds, index_labels, size_seeds, xDim, yDim, zDim,
+            			nblabels, quicksort, probaImage);
+            }
+            else {
+            	PowerWatershed_q2(edges, weights, normal_weights, max_weight_PW[0], index_seeds, index_labels, size_seeds, xDim, yDim, zDim,
+            			nblabels, quicksort, probaImage);	
+            }
+        } // else if (algo == PW_qis2)
+        if (error) {
+        	setCompleted(false);
+        	return;
+        }
         setCompleted(true);
         return;
     } // runAlgorithm
+    
+    private void PowerWatershed_q2(int edges[][],              /*array of node indexes composing edges */
+			   int weights[],        /* reconstructed weights */
+			   int normal_weights[], /* original weights */
+			   int max_weight,            /* maximum weight value */
+			   Vector<Integer> seeds,                /* array of seeded nodes indexes */
+			   Vector<Short> labels,          /* label values on the seeded nodes */
+			   int size_seeds,            /* nb of seeded nodes */ 
+			   int rs,                    /* row size */
+			   int cs,                    /* col size */
+			   int ds,                    /* depth size */
+			   int nb_labels,             /* number of different labels */
+			   boolean quicksort,            /* true : bucket sort used; false : stochastic sort o(n log n) */
+			   ModelImage img_proba) /* output image of potential/proba map x minimizing Epq*/
+/*==================================================================================================================*/
+/*returns the result x of the energy minimization : min_x lim_p_inf sum_e_of_E w_{ij}^p |x_i-x_j|^2 */
+{  
+int i, j, k, x, y, e1, e2, re1,re2, p, xr;
+int N = rs * cs * ds;                /* number of vertices */   
+int M = ds*rs*(cs-1)+ds*(rs-1)*cs+(ds-1)*cs*rs;    /* number of edges*/ 
+double val;
+int argmax;
+int nb_vertices, e_max, Ne_max, nb_edges, Nnb_edges;
+int nb_neighbor_edges = 6;
+if(ds>1) nb_neighbor_edges = 12;
+boolean success = false;
+boolean different_seeds;
+int wmax;
+Lifo LIFO;
+Lifo LCP;
+boolean indic_E[]; 
+boolean indic_P[]; 
+int indic_VP[];
+int Rnk[]; 
+int Fth[];
+int local_seeds[];
+int LCVP[];
+int Es[];
+int NEs[];
+
+LIFO = CreeLifoVide(M);
+if (LIFO == null) { MipavUtil.displayError("LIFO CreeLifoVide failed in memory_allocation_PW"); error = true; return;}
+
+LCP = CreeLifoVide(M);
+if (LCP == null) { MipavUtil.displayError("LCP CreeLifoVide failed in memory_allocation_PW"); error = true; return; }
+
+indic_E = new boolean[M];
+if (indic_E == null) { MipavUtil.displayError("indic_E creation failed in memory_allocation_PW"); error = true; return;}
+indic_P = new boolean[M];
+if (indic_P == null) { MipavUtil.displayError("indic_P creation failed in memory_allocation_PW"); error = true; return;}
+indic_VP = new int[N];
+if (indic_VP == null) { MipavUtil.displayError("indic_VP creation failed in memory_allocation_PW"); error = true; return;}
+Rnk = new int[N];
+if (Rnk == null) { MipavUtil.displayError("Rnk creation failed in memory_allocation_PW"); error = true; return;}
+Fth = new int[N];
+if (Fth == null) { MipavUtil.displayError("Fth creation failed in memory_allocation_PW"); error = true; return;}
+
+local_seeds = new int[N];
+if (local_seeds == null) { MipavUtil.displayError("local_seeds creation failed in memory_allocation_PW"); error = true; return;}
+
+LCVP = new int[N]; // vertices of a plateau. 
+if (LCVP == null) { MipavUtil.displayError("LCVP creation failed in memory_allocation_PW"); error = true; return;}
+
+Es = new int[M];
+if (Es == null) { MipavUtil.displayError("Es cration failed in memory_allocation_PW"); error = true; return;}
+
+NEs = new int[M]; 
+if (NEs == null) { MipavUtil.displayError("NEs creation failed in memory_allocation_PW"); error = true; return;}
+
+
+float proba[][] = new float[nb_labels-1][N];
+for (i = 0; i < nb_labels-1; i++) {
+	for (j = 0; j < N; j++) {
+		proba[i][j] = -1;
+	}
+}
+
+int edgesLCP[][] = new int[2][M];
+
+for (i=0;i<size_seeds;i++)
+for (j=0;j<nb_labels-1;j++)
+{
+if (labels.get(i)==j+1)
+proba[j][seeds.get(i)] = 1;
+else proba[j][seeds.get(i)] = 0;
+}
+
+for(k=0;k<N;k++) Fth[k]=k;
+
+float local_labels[][] = new float[nb_labels-1][N];
+
+
+int sorted_weights[] = new int[M];
+
+for(k=0;k<M;k++) 
+{ 
+sorted_weights[k]=weights[k]; 
+Es[k]=k;
+}
+if (quicksort == true)
+BucketSort(sorted_weights, Es, M, max_weight+1);
+else 
+TriRapideStochastique_dec(sorted_weights,Es, 0,M-1); 
+int cpt_aretes = 0;
+int Ncpt_aretes = 0;
+
+/* beginning of main loop */   
+while (cpt_aretes < M)
+{
+do 
+{
+e_max=Es[cpt_aretes];
+cpt_aretes=cpt_aretes+1;
+if(cpt_aretes==M) break;
+}while(indic_E[e_max]==true);
+
+if(cpt_aretes==M) break;
+
+//1. Computing the edges of the plateau LCP linked to the edge e_max
+LifoPush(LIFO, e_max);
+indic_P[e_max]=true;
+indic_E[e_max]=true;
+LifoPush(LCP, e_max);
+nb_vertices=0;
+nb_edges = 0;
+wmax = weights[e_max];
+
+// 2. putting the edges and vertices of the plateau into arrays 
+while (! LifoVide(LIFO))
+{
+x = LifoPop(LIFO);
+e1 = edges[0][x]; e2 = edges[1][x];
+re1 = element_find(e1, Fth );
+re2 = element_find(e2, Fth );
+if (proba[0][re1]<0 || proba[0][re2]<0) 
+ {
+   if (indic_VP[e1]==0) 
+	{
+	  LCVP[nb_vertices]=e1;
+	  nb_vertices++;
+	  indic_VP[e1]=1;
+	}
+   if (indic_VP[e2]==0) 
+	{
+	  LCVP[nb_vertices]=e2;
+	  nb_vertices++;
+	  indic_VP[e2]=1;
+	}
+   edgesLCP[0][ nb_edges] = e1;
+   edgesLCP[1][ nb_edges] = e2;
+   NEs[nb_edges]=x;
+ 
+   nb_edges ++;
+ }
+
+for (k = 1; k <= nb_neighbor_edges; k++) 
+ {
+   if (ds>1)
+	y = neighbor_edge_3D(e1, e2, x, k, rs, cs, ds);
+     else y = neighbor_edge(x, k, rs, cs, ds);
+   if (y != -1)
+	if ((indic_P[y]==false) && (weights[y] == wmax))
+	  {
+	    indic_P[y]=true;
+	    LifoPush(LIFO, y);
+	    LifoPush(LCP, y);
+	    indic_E[y]= true;
+	  } 
+ }
+}
+for (j=0;j<nb_vertices;j++)
+indic_VP[LCVP[j]]=0;
+for (j=0;j<LCP.getSp();j++) 
+indic_P[LCP.getPts(j)]=false;
+
+// 3. If e_max belongs to a plateau
+if (nb_edges > 0)
+{
+// 4. Evaluate if there are differents seeds on the plateau
+p=0;  
+different_seeds = false;
+
+for (i=0;i<nb_labels-1;i++)
+ { 
+   val = -0.5;
+   for (j=0;j<nb_vertices;j++)
+	{
+	  
+	  x = LCVP[j];
+	  xr = element_find(x, Fth);
+	  if(Math.abs(proba[i][xr]-val)>epsilon && proba[i][xr]>=0 ) 
+	    {
+	      p++; val = proba[i][xr]; 
+	    }
+	}
+   if (p>=2) 
+	{
+	  different_seeds = true;
+	  break;
+	}
+   else p=0;
+ }
+
+if (different_seeds == true)
+ {
+   // 5. Sort the edges of the plateau according to their normal weight
+   for(k=0;k<nb_edges;k++)
+	sorted_weights[k]=normal_weights[NEs[k]]; 
+		
+ 
+   
+   if (quicksort == true)
+	BucketSort(sorted_weights, NEs, nb_edges , max_weight+1);
+   else 
+	TriRapideStochastique_dec(sorted_weights,NEs, 0,nb_edges-1); 
+
+
+   // Merge nodes for edges of real max weight
+   nb_vertices=0;
+   Nnb_edges = 0;
+   for(Ncpt_aretes = 0; Ncpt_aretes< nb_edges; Ncpt_aretes++)
+	{
+	  Ne_max=NEs[Ncpt_aretes];
+	  e1 = edges[0][ Ne_max];
+	  e2 = edges[1][ Ne_max];
+	  if (normal_weights[Ne_max] != wmax)
+	    merge_node (e1, e2,  Rnk, Fth, proba, nb_labels);
+	  else 
+	    {
+	      re1 = element_find(e1, Fth );
+	      re2 = element_find(e2, Fth );
+	      if ((re1 !=re2)&&((proba[0][re1]<0 || proba[0][re2]<0)))
+		{
+		  if (indic_VP[re1]==0) 
+		    {
+		      LCVP[nb_vertices]=re1;
+		      nb_vertices++;
+		      indic_VP[re1]=1;
+		    }
+		  if (indic_VP[re2]==0) 
+		    {
+		      LCVP[nb_vertices]=re2;
+		      nb_vertices++;
+		      indic_VP[re2]=1;
+		    }
+		  edgesLCP[0][ Nnb_edges] = re1;
+		  edgesLCP[1][ Nnb_edges] = re2;
+		  Nnb_edges ++;
+		}
+	    }
+	}
+   for (i=0;i<nb_labels-1;i++)
+	{ 
+	  k=0;
+	  for (j=0;j<nb_vertices;j++)
+	    {
+	      xr = LCVP[j];
+	      if (proba[i][xr]>=0)
+		{
+		  local_labels[i][k] = proba[i][xr];
+		  local_seeds[k] = xr;
+		  k++;
+		}
+	    }
+	}
+	      
+   // 6. Execute Random Walker on plateaus
+
+   if(nb_vertices<SIZE_MAX_PLATEAU)
+	success = RandomWalker(edgesLCP, Nnb_edges, LCVP, indic_VP, nb_vertices, local_seeds, local_labels, k, nb_labels, proba);
+   if ((nb_vertices>=SIZE_MAX_PLATEAU)||(success==false))
+	{ 
+	  Preferences.debug("Plateau of a big size ( " + nb_vertices + " vertices, " + Nnb_edges + " edges) the RW is not performed on it\n",
+			  Preferences.DEBUG_ALGORITHM);
+	  for (j=0;j<Nnb_edges;j++)
+	    {
+	      e1 = edgesLCP[0][j];
+	      e2 = edgesLCP[1][j];
+	      merge_node (e1, e2,  Rnk, Fth, proba, nb_labels);
+	    }
+	}
+ 
+   for (j=0;j<nb_vertices;j++)
+	indic_VP[LCVP[j]]=0;
+ }
+else // if different seeds = false 
+ // 7. Merge nodes for edges of max weight
+ {
+   for (j=0;j<nb_edges;j++)
+	{
+	  e1 = edgesLCP[0][j];
+	  e2 = edgesLCP[1][j];
+	  merge_node (e1, e2,  Rnk, Fth, proba, nb_labels);
+	}
+ }
+}
+LifoFlush(LCP);
+} // end main loop
+
+//building the final proba map (find the root vertex of each tree)
+for (i=0; i<N; i++) 
+{
+j=i;
+xr = i;
+while(Fth[i] != i)
+{ 
+i = xr;
+xr = Fth[i];
+}
+for(k=0; k< nb_labels-1;k++) proba[k][j] =proba[k][i];
+i=j;
+}
+
+//writing results
+
+short Temp[] = new short[N];
+short Temp2[] = null;
+if (produceProbaImage) {
+	Temp2 = new short[N];
+}
+
+double maxi;
+for (j = 0; j < N; j++)
+{
+maxi=0; argmax = 0; val =1;
+for(k=0; k< nb_labels-1;k++)
+{
+if(proba[k][j]> maxi) 
+  { 
+    maxi = proba[k][j] ;
+    argmax = k;
+  }
+val = val - proba[k][j];
+
+}  
+if (val>maxi) argmax = k;
+Temp[j] = (short)(((argmax)*255)/(nb_labels-1));
+}
+try {
+	destImage.importData(0, Temp, true);
+}
+catch(IOException e) {
+	MipavUtil.displayError("IOException " + e + "on destImage.importData(0, Temp, true)");
+	error = true;
+	return;
+}
+
+if (produceProbaImage) {
+for (j = 0; j < N; j++)
+Temp2[j] = (short)(255-255*proba[0][j]); 
+try {
+	img_proba.importData(0, Temp2, true);
+}
+catch(IOException e) {
+	MipavUtil.displayError("IOException " + e + " on img_proba.importData(0, Temp2, true");
+	error = true;
+	return;
+}
+}   
+
+// free memory 
+LifoTermine(LCP);
+LifoTermine(LIFO);
+
+for (i=0;i<2;i++) 
+edges[i] = null; 
+edges = null;
+
+for (i=0;i<2;i++) 
+edgesLCP[i] = null; 
+edgesLCP = null;
+
+Rnk = null;
+local_seeds = null;
+for (i=0; i<nb_labels-1; i++) 
+local_labels[i] = null;
+local_labels = null;
+
+LCVP =null;
+Es = null;
+NEs = null;
+indic_E = null;
+indic_VP = null;
+indic_P = null;
+Fth = null;
+for (i=0; i<nb_labels-1; i++)  
+		proba[i] = null;
+proba = null;
+sorted_weights = null;
+
+return;
+}
+    
+    private boolean RandomWalker(int index_edges[][],          /* list of edges */
+  		  int M,                      /* number of edges */
+  		  int index[],                /* list of vertices */
+  		  int indic_vertex[],         /* boolean array of vertices */
+  		  int N,                      /* number of vertices */  
+  		  int index_seeds[],           /* list of nodes that are seeded*/
+  		  float boundary_values[][], /* associated values for seeds (labels)*/
+  		  int numb_boundary,          /* number of seeded nodes */
+  		  int nb_labels,              /* number of possible different labels values */
+  		  float proba[][])          /* output : solution to the Dirichlet problem */
+  /*===========================================================================================*/
+  /*
+  Function RandomWalker computes the solution to the Dirichlet problem (RW potential function) 
+  on a general graph represented by an edge list, given boundary conditions (seeds, etc.) 
+  */
+  {
+    int i, j, k, l, v1, v2; 
+    boolean seeded_vertex[] = new boolean[N];
+    int indic_sparse[] = new int[N];
+    int nb_same_edges[] = new int[M];
+    
+    // Indexing the edges, and the seeds 
+    for (i=0;i<N; i++)
+      indic_vertex[index[i]] = i;
+    
+      for (j=0;j<M; j++)
+        {
+  	v1 = indic_vertex[index_edges[0][j]];
+  	v2 = indic_vertex[index_edges[1][j]];
+  	if(v1<v2)
+  	  {
+  	    for (i=0;i<2; i++)
+  	    {
+  	      index_edges[i][j] = indic_vertex[index_edges[i][j]]; 
+  	      indic_sparse[index_edges[i][j]]++;
+  	    }
+  	  }
+  	else   
+  	  {
+  	    index_edges[1][j] = v1 ;
+  	    index_edges[0][j] = v2 ;
+  	    indic_sparse[index_edges[0][j]]++;
+  	    indic_sparse[index_edges[1][j]]++;
+  	  }
+        }
+    /*  TriEdges (index_edges, M,   nb_same_edges);
+
+    for (i=0;i<numb_boundary;i++)
+      {
+        index_seeds[i] = indic_vertex[index_seeds[i]]; 
+        seeded_vertex[index_seeds[i]]= true;
+      }
+    
+    cs *A2 ,*A, *B2, *B;
+    //The system to solve is A x = -B X2 
+
+    // building matrix A : laplacian for unseeded nodes
+    A2 = cs_spalloc (N-numb_boundary, N-numb_boundary, M*2+N, 1, 1); 
+    if (fill_A(A2, N, M, numb_boundary, index_edges, seeded_vertex, indic_sparse, nb_same_edges)==true) 
+      {
+        // A = compressed-column form of A2 
+        A = cs_compress (A2) ; 
+        cs_spfree (A2) ;          
+        
+        // building boundary matrix B     
+        B2 = cs_spalloc (N-numb_boundary, numb_boundary, 2*M+N,1 ,1 ); 
+        fill_B(B2, N, M, numb_boundary,   index_edges, seeded_vertex, indic_sparse , nb_same_edges);
+        B = cs_compress (B2) ;  
+        cs_spfree (B2) ;
+        
+        // building the right hand side of the system
+        cs* X = cs_spalloc (numb_boundary, 1, numb_boundary, 1, 1); 
+        cs* X2 ;
+        int rnz, cpt;
+        cs* b_tmp;
+        double *b =(double *) malloc ((N-numb_boundary)*sizeof (double)) ;
+        for(l=0;l<nb_labels-1;l++)
+  	{
+  	  // building vector X 
+  	  rnz=0;
+  	  for (i=0;i<numb_boundary;i++)
+  	    {
+  	      X->x[rnz] = boundary_values[l][i];
+  	      X->p[rnz] = 0; 
+  	      X->i[rnz] = i;
+  	      rnz++;
+  	    }
+  	  X->nz = rnz;  
+  	  X->m = numb_boundary;
+  	  X->n = 1 ;
+  	  
+  	  X2 = cs_compress (X) ;   
+  	  b_tmp = cs_multiply (B, X2) ;
+  	  
+  	  for(i=0;i<N-numb_boundary;i++)
+  	    b[i] = 0;	  
+
+  	  for(i=0;i<b_tmp->nzmax;i++)
+  	    b[b_tmp->i[i]] = -b_tmp->x[i];
+  	  
+  	  //solve Ax=b by LU decomposition, order = 1
+  	  cs_lusol (1, A, b, 1e-7) ; 
+  	  
+  	  cpt=0;
+  	  for(k=0;k<N;k++)
+  	    if (seeded_vertex[k]== false)
+  	      {
+  		proba[l][index[k]]=(DBL_TYPE)b[cpt];
+  		cpt++;
+  	      }
+
+  	  //Enforce boundaries exactly
+  	  for(k=0;k<numb_boundary;k++) 
+  	    proba[l][index[index_seeds[k]]]=(DBL_TYPE)boundary_values[l][k];
+  	  cs_spfree (X2) ;
+  	  cs_spfree (b_tmp) ;
+  	}
+       
+        free(seeded_vertex);
+        free(indic_sparse);
+        free(nb_same_edges);
+        cs_spfree (X) ;
+        cs_spfree (A) ;
+        cs_spfree (B) ;
+        free(b);
+        return true;
+      }
+   
+    free(seeded_vertex);
+    free(indic_sparse);
+    free(nb_same_edges);*/
+    return false;
+  }
+
+    
+    private void merge_node (int e1,            /* index of node 1 */
+   		 int e2,            /* index of node 2 */
+   		 int Rnk[],         /* array needed for union-find efficiency */
+   		 int Fth[],          /* array for storing roots of merged nodes trees */
+   		 float proba[][], /* array for storing the result x */
+   		 int nb_labels)     /* nb of labels */
+   /*===================================================================================*/
+   /* update the result, Rnk and Fth arrays when 2 nodes are merged */
+   {
+     int k,re1, re2;
+     re1 = element_find(e1, Fth );
+     re2 = element_find(e2, Fth );
+    
+     if ((re1 != re2) && (!(proba[0][re1]>=0 && proba[0][re2]>=0))) 
+       {
+         element_link(re1,re2, Rnk, Fth);
+         if (proba[0][re2]>=0 && proba[0][re1]<0) 
+   	for(k=0;k<nb_labels-1;k++)
+   	  proba[k][re1]= proba[k][re2];
+         else if (proba[0][re1]>=0 && proba[0][re2]<0)
+   	for(k=0;k<nb_labels-1;k++)
+   	  proba[k][re2]= proba[k][re1];
+       }
+   }
+
+    
+    private void TriRapideStochastique_dec (int A[], int I[], int p, int r)
+    /* =============================================================== */
+    /* 
+      trie les valeurs du tableau A de l'indice p (compris) a l'indice r (compris) 
+      par ordre decroissant 
+    */
+    {
+      int q; 
+      if (p < r)
+      {
+        q = PartitionStochastique_dec(A, I, p, r);
+        TriRapideStochastique_dec (A, I, p, q) ;
+        TriRapideStochastique_dec (A, I, q+1, r) ;
+      }
+    } /* TriRapideStochastique() */
+    
+    private int PartitionStochastique_dec (int A[], int I[], int p, int r)
+    /* =============================================================== */
+    /*
+      partitionne les elements de A entre l'indice p (compris) et l'indice r (compris)
+      en deux groupes : ceux <= A[q] et les autres, avec q tire au hasard dans [p,r].
+    */
+    {
+      int t;
+      int t1;
+      int q;
+
+
+      RandomNumberGen randomGen = new RandomNumberGen();
+      int rand = randomGen.genUniformRandomNum(0, 32767);
+      q = p + (rand % (r - p + 1));
+      t = A[p];         /* echange A[p] et A[q] */
+      A[p] = A[q]; 
+      A[q] = t;
+      
+      t1 = I[p];         /* echange I[p] et I[q] */
+      I[p] = I[q]; 
+      I[q] = t1;
+
+      return Partitionner_dec(A, I, p, r);
+    } /* PartitionStochastique_dec() */
+    
+    private int Partitionner_dec(int A[], int I[], int p, int r)
+    /* =============================================================== */
+    /*
+      partitionne les elements de A entre l'indice p (compris) et l'indice r (compris)
+      en deux groupes : ceux <= A[p] et les autres.
+    */
+    {
+      int  t;
+      int t1;
+      int x = A[p];
+      int i = p - 1;
+      int j = r + 1;
+      while (true)
+      {
+        do j--; while (A[j] < x);
+        do i++; while (A[i] > x);
+        if (i < j) 
+          { 
+    	t = A[i];
+    	A[i] = A[j];
+    	A[j] = t; 
+    	t1 = I[i];
+    	I[i] = I[j];
+    	I[j] = t1; 
+          }
+        else return j;
+      } /* while (true) */   
+    } /* Partitionner_dec() */
+
+
+
+    
+    
+
+
+    
+    private int[] grey_weights_PW(ModelImage image, /*IN : image name */  
+			   int edges[][],      /*IN: array of node indexes composing edges */
+			   Vector<Integer> seeds,       /*IN: array of seeded nodes indexes */
+			   int size_seeds,    /*IN : nb of seeded nodes */
+			   int weights[], /*OUT : array to store the reconstructed weights on the edges */
+			   boolean quicksort)    /*IN : true : bucket sort used; false : stochastic sort o(n log n) */
+/* ======================================================================================================== */
+/* Computes weights inversely proportionnal to the image gradient for grey level (pgm) images 
+Returns the normal weights and computes the reconstructed weights in the array weights */
+
+{
+    	
+    	int i,M, xDim, yDim, zDim;
+        xDim = image.getExtents()[0];
+        yDim = image.getExtents()[1];
+        zDim = 1;
+        if (image.getNDims() > 2) {
+     	   zDim = image.getExtents()[2];
+        }
+        int imgLength = xDim * yDim * zDim;
+        short img[] = new short[imgLength];
+        
+        try {
+     	   image.exportData(0, imgLength, img);
+        }
+        catch (IOException e) {
+     	   MipavUtil.displayError("IOException " + e + " on image.exportData(0, imgLength, img)");
+     	   error = true;
+     	   return null;
+        }
+       
+        M = zDim*xDim*(yDim-1)+zDim*(xDim-1)*yDim+(zDim-1)*yDim*xDim;  // number of edges
+        
+int normal_weights[] = new int[M];
+int j,k,n;
+int seeds_function[] = new int[M];
+int numvoisins = 4;
+if (zDim>1) numvoisins = 6;
+for (i=0;i<M;i++)
+ normal_weights[i]=  255-Math.abs(img[edges[0][i]]-img[edges[1][i]]);
+
+for (j=0;j<size_seeds;j++)
+ for (k=1;k<=numvoisins; k++)
+   {
+	n = neighbor_node_edge(seeds.get(j), k, xDim, yDim, zDim);
+	if (n != -1)
+	  seeds_function[n]= normal_weights[n];
+   } 
+gageodilate_union_find(seeds_function, normal_weights, weights, edges, xDim, yDim, zDim, 255, quicksort);
+
+seeds_function = null;
+img = null;
+return normal_weights;
+}
+
+    
+    private int[] color_standard_weights_PW(ModelImage image , /* IN : image name */
+		      int weights[], /* OUT : array to store the values of weights on the edges */
+		      int edges[][],       /* IN : array of node indexes composing edges */ 
+		      Vector<Integer> seeds,        /* IN : array of seeded nodes indexes */
+		      int size_seeds,     /* IN : nb of seeded nodes */
+		      int maxi[],         /* OUT : the maximum weight value */
+		      boolean quicksort)     /* IN : true : bucket sort used; false : stochastic sort */
+/* ================================================================================================================= */
+/* Computes weights inversely proportional to the image gradient for 2D color (ppm) images 
+Returns the normal weights and computes the reconstructed weights in the array weights */
+{
+maxi[0] = 0;
+int i,M, xDim, yDim, zDim;
+
+xDim = image.getExtents()[0];
+yDim = image.getExtents()[1];
+if (image.getNDims() == 2) {
+	zDim = 1;
+}
+else {
+	zDim = image.getExtents()[2];
+}
+
+int wr, wg, wb;
+int imgLength = xDim * yDim;
+if (image.getNDims() > 2) {
+	imgLength *= zDim;
+}
+
+short img_r[] = new short[imgLength];
+short img_g[] = new short[imgLength];
+short img_b[] = new short[imgLength];
+
+try {
+	image.exportRGBData(1, 0, imgLength, img_r);
+}
+catch (IOException e) {
+    MipavUtil.displayError("IOException " + e + " on image.exportRGBData(1, 0, imgLength, img_r)");
+    error = true;
+    return null;
+}
+try {
+	image.exportRGBData(2, 0, imgLength, img_g);
+}
+catch (IOException e) {
+    MipavUtil.displayError("IOException " + e + " on image.exportRGBData(2, 0, imgLength, img_g)");
+    error = true;
+    return null;
+}
+try {
+	image.exportRGBData(3, 0, imgLength, img_b);
+}
+catch (IOException e) {
+    MipavUtil.displayError("IOException " + e + " on image.exportRGBData(3, 0, imgLength, img_b)");
+    error = true;
+    return null;
+}
+
+
+M = zDim*xDim*(yDim-1)+zDim*(xDim-1)*yDim+(zDim-1)*yDim*xDim;
+int normal_weights[] = new int[M];
+for (i=0;i<M;i++)
+{
+  wr = Math.abs(img_r[edges[0][i]]-img_r[edges[1][i]]) ;
+  wg = Math.abs(img_g[edges[0][i]]-img_g[edges[1][i]]) ;
+  wb = Math.abs(img_b[edges[0][i]]-img_b[edges[1][i]]) ;
+  //weights[i] = wr*wr+wg*wg+wb*wb;
+  //if (weights[i]> maxi) (maxi) = weights[i];
+  
+  weights[i] = 255-wr;
+  if (255-wg < weights[i]) weights[i] = 255-wg; 
+  if (255-wb < weights[i]) weights[i] = 255-wb;
+  maxi[0] = 255;
+}
+
+//for (i=0;i<M;i++)
+//  normal_weights[i]=*maxi-weights[i];
+
+for (i=0;i<M;i++)
+normal_weights[i]=weights[i]; 
+
+int j,k,n;
+
+int seeds_function[] = new int[M];
+int numvoisins = 4;
+if (zDim>1) numvoisins = 6;
+
+for (j=0;j<size_seeds;j++)
+for (k=1;k<=numvoisins; k++)
+{
+n = neighbor_node_edge(seeds.get(j), k, xDim, yDim, zDim);
+if (n != -1)
+seeds_function[n]=normal_weights[n];
+} 
+gageodilate_union_find(seeds_function, normal_weights, weights, edges, xDim, yDim, zDim, maxi[0], quicksort);
+seeds_function = null;
+
+img_r = null;
+img_g = null;
+img_b = null;
+
+return normal_weights;
+}
+
     
     private void MSF_Prim(int edges[][],       /* array of node indexes composing edges */ 
 			  int weights[], /* weights values on the edges */
@@ -384,30 +1220,27 @@ return;
    {
      RbtElt c;
      RbtElt d;
-     d = null;
 
-   //#ifdef DEBUGDELETE
-     //fprintf(stderr,"RbtDeleteAux \n");
-   //#endif
+     Preferences.debug("RbtDeleteAux \n", Preferences.DEBUG_ALGORITHM);
 
      if ((z.getLeft() == T.getNil()) || (z.getRight() == T.getNil()))
        {   d = z;
-         //  fprintf(stderr,"d=z \n");
+         Preferences.debug("d=z \n", Preferences.DEBUG_ALGORITHM);
    }
      else 
        {
-       //d = RbtSuccessor(T, z);
-       // fprintf(stderr,"d=succ \n");
+       d = RbtSuccessor(T, z);
+       Preferences.debug("d=succ \n", Preferences.DEBUG_ALGORITHM);
        }
      if (d.getLeft() != T.getNil())
        {
          c = d.getLeft();
-         //     printf("1 : c = %ld \n", c->auxdata);
+         Preferences.debug("1 : c = " + c.getAuxdata() + "\n");
        }
      else 
        {
        c = d.getRight();
-       //   printf("2 : d = %ld, c = %ld \n",d->auxdata, c->auxdata);
+       Preferences.debug("2 : d = " + d.getAuxdata()+ " c = " + c.getAuxdata() + "\n", Preferences.DEBUG_ALGORITHM);
        }
      c.setParent(d.getParent());      /* no test for NIL with sentinel */
 
@@ -426,94 +1259,323 @@ return;
        z.setKey(d.getKey());
        z.setAuxdata(d.getAuxdata());
      }
-     //if (d.getColor() == RBT_Black)
-       //RbtDeleteFixup(T, c);     /* c is now "Double-Black" */
+     if (d.getColor() == RBT_Black)
+       RbtDeleteFixup(T, c);     /* c is now "Double-Black" */
 
-   //#ifdef DEBUGDELETE
-   //fprintf(stderr,"Fin RbtDeleteAux\n");
-   //#endif
+   Preferences.debug("Finish RbtDeleteAux\n", Preferences.DEBUG_ALGORITHM);
 
      return d;
    } /* RbtDeleteAux() */
+   
+   private void RbtDeleteFixup(
+		   Rbt T, RbtElt x)
+		 /* ==================================== */
+		 {
+		   RbtElt s;
+
+		 Preferences.debug("RbtDeleteFixup \n", Preferences.DEBUG_ALGORITHM);
+		 Preferences.debug("RbtDeleteFixup " + x.getAuxdata() + " " + x.getKey() + "\n", Preferences.DEBUG_ALGORITHM);
+		   while ((x != T.getRoot()) && (x.getColor() == RBT_Black))
+		   {
+		     if (x == x.getParent().getLeft())
+		     {
+		       s = x.getParent().getRight();               /* Get x's sibling */
+		       if (s.getColor() == RBT_Red)
+		       {
+		         s.setColor(RBT_Black);              /* Case I */
+		         x.getParent().setColor(RBT_Red);
+		         LeftRotate(T, x.getParent());
+		         s = x.getParent().getRight();
+		       }
+		       if ((s.getLeft().getColor() == RBT_Black) && (s.getRight().getColor() == RBT_Black))
+		       {
+		         s.setColor(RBT_Red);                /* Case II */
+		         x = x.getParent();
+		       }              
+		       else 
+		       {
+		         if (s.getRight().getColor() == RBT_Black)
+		 	{
+		           s.getLeft().setColor(RBT_Black);      /* Case III */
+		           s.setColor(RBT_Red);                        
+		           RightRotate(T,s);
+		           s = x.getParent().getRight();
+		         }
+		         s.setColor(x.getParent().getColor());   /* Case IV */
+		         x.getParent().setColor(RBT_Black);
+		         s.getRight().setColor(RBT_Black);
+		         LeftRotate(T, x.getParent());                   
+		         x = T.getRoot();
+		       }
+		     }
+		     else
+		     {            /* Same as "then" with right and left swapped */
+		       s = x.getParent().getLeft();               /* Get x's sibling */
+		       if (s.getColor() == RBT_Red)
+		       {
+		         s.setColor(RBT_Black);              /* Case I */
+		         x.getParent().setColor(RBT_Red);
+		         RightRotate(T, x.getParent());
+		         s = x.getParent().getLeft();
+		       }
+		       if ((s.getRight().getColor() == RBT_Black) && (s.getLeft().getColor() == RBT_Black))
+		       {
+		         s.setColor(RBT_Red);                /* Case II */
+		         x = x.getParent();
+		       }              
+		       else 
+		       {
+		         if (s.getLeft().getColor() == RBT_Black)
+		 	{
+		           s.getRight().setColor(RBT_Black);     /* Case III */
+		           s.setColor(RBT_Red);                        
+		           LeftRotate(T,s);
+		           s = x.getParent().getLeft();
+		         }
+		         s.setColor(x.getParent().getColor());   /* Case IV */
+		         x.getParent().setColor(RBT_Black);
+		         s.getLeft().setColor(RBT_Black);
+		         RightRotate(T, x.getParent());                   
+		         x = T.getRoot();
+		       }
+		     }
+		   } /* while */
+		   x.setColor(RBT_Black);
+
+		 Preferences.debug("Finished RbtDeleteFixup\n", Preferences.DEBUG_ALGORITHM);
+
+		 } /* RbtDeleteFixup() */
+   
+   static void LeftRotate(
+		   Rbt T, RbtElt x)
+		 /* ==================================== */
+		 {
+		   RbtElt y;
+
+		   y = x.getRight();                    /* assume right(x) != NIL */
+		   x.setRight(y.getLeft());              /* move y's child over */
+		   if (y.getLeft() != T.getNil())
+		     y.getLeft().setParent(x);
+		   y.setParent(x.getParent());           /* move y up to x's position */
+		   if (x.getParent() == T.getNil())
+		     T.setRoot(y);
+		   else 
+		   {
+		     if (x == x.getParent().getLeft())
+		       x.getParent().setLeft(y);
+		     else x.getParent().setRight(y);
+		   }
+		   y.setLeft(x);                     /* move x down */
+		   x.setParent(y);
+		 } /* LeftRotate() */
+
+		 /* ==================================== */
+		 static void RightRotate(
+		   Rbt T, RbtElt x)
+		 /* ==================================== */
+		 {
+		   RbtElt y;
+
+		   y = x.getLeft();              /* assume left(x) != NIL */
+		   x.setLeft(y.getRight());
+		   if (y.getRight() != T.getNil())
+		     y.getRight().setParent(x);
+		   y.setParent(x.getParent());
+		   if (x.getParent() == T.getNil())
+		     T.setRoot(y);
+		   else 
+		   {
+		     if (x == x.getParent().getRight())
+		        x.getParent().setRight(y);
+		     else x.getParent().setLeft(y);
+		   }
+		   y.setRight(x);
+		   x.setParent(y);
+		 } /* RightRotate() */
+
+
+   
+   /* ==================================== */
+   private RbtElt RbtSuccessor(
+     Rbt T, RbtElt x)
+   /* ==================================== */
+   {
+     RbtElt y;
+     if (x.getRight() != T.getNil()) return RbtMinimum(T, x.getRight());
+     y = x.getParent();
+     while ((y != T.getNil()) && (x == y.getRight()))
+     {
+       x = y;
+       y = y.getParent();
+     }
+     return y;
+   } /* RbtSuccessor() */
+   
+   private RbtElt RbtMinimum(
+		   Rbt T, RbtElt x)
+		 /* ==================================== */
+		 {
+		   while (x.getLeft() != T.getNil()) x = x.getLeft();
+		   return x;
+		 } /* RbtMinimum() */
+
+
 
 
     
-    RbtElt RbtInsert(
+    private RbtElt RbtInsert(
     		  Rbt T, double k, int d)
     		/* ==================================== */
     		{
     		  RbtElt x;
     		  RbtElt xc; /* pour retourner le pointeur sur l'element alloue */
-    		  xc = null;
     		  RbtElt uncle;
 
-    		//#ifdef DEBUGINSERT
-    		//printf("RbtInsert: data = %ld ; key = %lg\n", d, k);
-    		//#endif
+    		Preferences.debug("RbtInsert: data = " + d + " key = " + k + "\n");
 
-    		  //xc = x = RbtInsertAux(T, k, d);          /* allocation et insertion simple */
-    		  //x->color = RBT_Red;
+    		  xc = x = RbtInsertAux(T, k, d);          /* allocation et insertion simple */
+    		  x.setColor(RBT_Red);
 
     		  /* re-equilibrage de l'arbre */
-    		 // while ((x != (*T)->root) && (x->parent->color == RBT_Red))
-    		  //{
-    		  //  if (x->parent == x->parent->parent->left)
-    		   // {
-    		    //  uncle = x->parent->parent->right;
-    		     // if (uncle->color == RBT_Red)
-    		     // {
-    		      //  x->parent->color = RBT_Black;                    /* Case I */
-    		      //  uncle->color = RBT_Black;
-    		      //  x->parent->parent->color = RBT_Red;
-    		      // x = x->parent->parent;
-    		     // }
-    		     // else 
-    		     // {
-    		      //  if (x == x->parent->right)
-    		      //  {
-    		       //   x = x->parent;                             /* Case II */
-    		       //   LeftRotate((*T),x);
-    		       // }
-    		       // x->parent->color = RBT_Black;                    /* Case III */
-    		       // x->parent->parent->color = RBT_Red;
-    		       // RightRotate((*T), x->parent->parent);
-    		      //}
-    		   // }
-    		   // else /* same as "then" with "right" and "left" swapped */
-    		   // {
-    		     // uncle = x->parent->parent->left;
-    		    //  if (uncle->color == RBT_Red)
-    		     // {
-    		     //   x->parent->color = RBT_Black;                     /* Case I */
-    		      //  uncle->color = RBT_Black;
-    		      //  x->parent->parent->color = RBT_Red;
-    		      //  x = x->parent->parent;
-    		     // }
-    		     // else 
-    		     // {
-    		     //  if (x == x->parent->left)
-    		      //  {
-    		      //    x = x->parent;                             /* Case II */
-    		      //    RightRotate((*T),x);
-    		      //  }
-    		      //  x->parent->color = RBT_Black;                    /* Case III */
-    		      //  x->parent->parent->color = RBT_Red;
-    		      //  LeftRotate((*T), x->parent->parent);
-    		    //  }
-    		   // }
-    		 // } /* while */
-    		//  (*T)->root->color = RBT_Black;
+    		 while ((x != T.getRoot()) && (x.getParent().getColor() == RBT_Red))
+    		  {
+    		    if (x.getParent() == x.getParent().getParent().getLeft())
+    		    {
+    		      uncle = x.getParent().getParent().getRight();
+    		      if (uncle.getColor() == RBT_Red)
+    		      {
+    		        x.getParent().setColor(RBT_Black);                    /* Case I */
+    		        uncle.setColor(RBT_Black);
+    		        x.getParent().getParent().setColor(RBT_Red);
+    		       x = x.getParent().getParent();
+    		      }
+    		      else 
+    		      {
+    		        if (x == x.getParent().getRight())
+    		        {
+    		          x = x.getParent();                             /* Case II */
+    		          LeftRotate(T,x);
+    		        }
+    		        x.getParent().setColor(RBT_Black);                    /* Case III */
+    		        x.getParent().getParent().setColor(RBT_Red);
+    		        RightRotate(T, x.getParent().getParent());
+    		      }
+    		    }
+    		    else /* same as "then" with "right" and "left" swapped */
+    		    {
+    		      uncle = x.getParent().getParent().getLeft();
+    		      if (uncle.getColor() == RBT_Red)
+    		      {
+    		        x.getParent().setColor(RBT_Black);                     /* Case I */
+    		        uncle.setColor(RBT_Black);
+    		        x.getParent().getParent().setColor(RBT_Red);
+    		        x = x.getParent().getParent();
+    		      }
+    		      else 
+    		      {
+    		       if (x == x.getParent().getLeft())
+    		        {
+    		          x = x.getParent();                             /* Case II */
+    		          RightRotate(T,x);
+    		        }
+    		        x.getParent().setColor(RBT_Black);                    /* Case III */
+    		        x.getParent().getParent().setColor(RBT_Red);
+    		        LeftRotate(T, x.getParent().getParent());
+    		      }
+    		    }
+    		  } /* while */
+    		 T.getRoot().setColor(RBT_Black);
 
-    		//#ifdef DEBUGINSERT
-    		//printf("FIN RbtInsert xc->data = %ld ; xc->key = %lg\n", xc->auxdata, xc->key);
-    		//#endif
+    		Preferences.debug("Finished RbtInsert xc.getAuxdata() + " + xc.getAuxdata() + " xc.getKey() = " + xc.getKey() + "\n",
+    				Preferences.DEBUG_ALGORITHM);
 
-    		//#ifdef PARANO
-    		//  if (xc->auxdata != d) printf("BUG RbtInsert xc->auxdata = %ld ; d = %ld\n", xc->auxdata, d);
-    		//#endif
+    		  if (xc.getAuxdata() != d) 
+    			  Preferences.debug("BUG RbtInsert xc.getAuxdata() = " + xc.getAuxdata() + " d = " + d + "\n",
+    					  Preferences.DEBUG_ALGORITHM);
 
     		  return xc;                      /* modif mc: retourne xc plutot que x (sinon: BUG) */
     		} /* RbtInsert() */
+    
+    private RbtElt RbtInsertAux(  /* allocation et insertion simple */
+    		  Rbt T, double k, int d)
+    		/* ==================================== */
+    		{
+    		  RbtElt z;
+
+    		Preferences.debug("RbtInsertAux\n", Preferences.DEBUG_ALGORITHM);
+
+    		  if (T.getLibre() == null) RbtReAlloc(T);
+    		  T.setUtil(T.getUtil()+1);
+    		  if (T.getUtil() > T.getMaxutil()) T.setMaxutil(T.getUtil());
+    		  z = T.getLibre();
+    		  T.setLibre(T.getLibre().getRight());
+    		  z.setKey(k);
+    		  z.setAuxdata(d);
+    		  z.setLeft(T.getNil());
+    		  z.setRight(T.getNil());
+    		  RbtInsertSimple(T, z);
+
+    		Preferences.debug("Finished RbtInsertAux\n", Preferences.DEBUG_ALGORITHM);
+
+    		  return z;
+    		} /* RbtInsertAux() */
+    
+    
+    void RbtInsertSimple(
+    		  Rbt T, RbtElt z)
+    		/* ==================================== */
+    		{
+    		  RbtElt x;
+    		  RbtElt y;
+
+    		Preferences.debug("RbtInsertSimple  \n", Preferences.DEBUG_ALGORITHM);
+    		Preferences.debug("z = " + z + " z.getKey()  = " + z.getKey() + "\n", Preferences.DEBUG_ALGORITHM);
+
+    		  y = T.getNil();
+    		  x = T.getRoot();
+    		  while (x != T.getNil())
+    		  {
+    		    y = x;
+    		    if (z.getKey() < x.getKey()) x = x.getLeft(); else x = x.getRight();
+    		  }
+    		  z.setParent(y);
+    		  if (y == T.getNil())
+    		    T.setRoot(z);
+    		  else
+    		    if (z.getKey() < y.getKey()) y.setLeft(z); else y.setRight(z);
+
+    		Preferences.debug("Finished RbtInsertSimple\n", Preferences.DEBUG_ALGORITHM);
+
+    		} /* RbtInsertSimple() */
+
+    
+    private void RbtReAlloc(Rbt A)
+    /* ==================================== */
+    {
+      int taillemax;
+      Rbt T, Tmp;
+
+    //#ifdef VERBOSE
+      //printf("RbtReAlloc: ancienne taille %ld nouvelle taille %ld\n", (*A)->max, 2 * (*A)->max);
+    //#endif
+      taillemax = 2 * A.getMax();  /* alloue le double de l'ancienne taille */ 
+      T = CreeRbtVide(taillemax);
+      RbtTransRec(T, A, A.getRoot());
+      Tmp = A;
+      A = T;
+      Tmp = null;
+    } /* RbtReAlloc() */
+
+    private void RbtTransRec(
+    		  Rbt T, Rbt A, RbtElt x)
+    		/* ==================================== */
+    		{
+    		  if (x == A.getNil()) return;
+    		  RbtInsert(T, x.getKey(), x.getAuxdata());
+    		  RbtTransRec(T, A, x.getLeft());
+    		  RbtTransRec(T, A, x.getRight());
+    		} /* RbtTransRec() */
+
 
 
     
@@ -1627,6 +2689,10 @@ Bucket = null;
 		  this.max = max;
 	  }
 	  
+	  public int getMax() {
+		  return max;
+	  }
+	  
 	  public void setUtil(int util) {
 		  this.util = util;
 	  }
@@ -1637,6 +2703,10 @@ Bucket = null;
 	  
 	  public void setMaxutil(int maxutil) {
 		  this.maxutil = maxutil;
+	  }
+	  
+	  public int getMaxutil() {
+		  return maxutil;
 	  }
 	  
 	  public void setRoot(RbtElt root) {
