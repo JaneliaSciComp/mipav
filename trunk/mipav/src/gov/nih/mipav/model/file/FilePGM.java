@@ -106,18 +106,18 @@ public class FilePGM extends FileBase {
 	        	    	currentValue++;
 	        	    	haveXDim = true;
 	        	    	Preferences.debug("xDim = " + xDim + "\n", Preferences.DEBUG_FILEIO);
-	        	    }
-	        	    if ((!haveYDim) && (currentValue < numValues)) {
-	        	    	yDim = Integer.parseInt(values[currentValue]);
-	        	    	currentValue++;
-	        	    	haveYDim = true;
-	        	    	Preferences.debug("yDim = " + yDim + "\n", Preferences.DEBUG_FILEIO);
-	        	    }
-	        	    if ((!haveZDim) && (currentValue < numValues)) {
-	        	    	zDim = Integer.parseInt(values[currentValue]);
-	        	    	currentValue++;
-	        	    	haveZDim = true;
-	        	    	Preferences.debug("zDim = " + zDim + "\n", Preferences.DEBUG_FILEIO);
+	        	    	if ((!haveYDim) && (currentValue < numValues)) {
+		        	    	yDim = Integer.parseInt(values[currentValue]);
+		        	    	currentValue++;
+		        	    	haveYDim = true;
+		        	    	Preferences.debug("yDim = " + yDim + "\n", Preferences.DEBUG_FILEIO);
+		        	    	if ((!haveZDim) && (currentValue < numValues)) {
+			        	    	zDim = Integer.parseInt(values[currentValue]);
+			        	    	currentValue++;
+			        	    	haveZDim = true;
+			        	    	Preferences.debug("zDim = " + zDim + "\n", Preferences.DEBUG_FILEIO);
+			        	    }
+		        	    }
 	        	    }
 	        	    if ((!haveMaxValue) && (currentValue < numValues)) {
 	        	    	maxValue = Integer.parseInt(values[currentValue]);
