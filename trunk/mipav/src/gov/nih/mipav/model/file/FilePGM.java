@@ -41,7 +41,7 @@ public class FilePGM extends FileBase {
     
     public ModelImage readImage() throws IOException {
         int i;
-        int[] extents = new int[2];
+        int[] extents;
         String lineString;
         int ASCII_FORMAT = 1;
         int BINARY_FORMAT = 2;
@@ -50,11 +50,13 @@ public class FilePGM extends FileBase {
         boolean haveMagicNumber = false;
         boolean haveXDim = false;
         boolean haveYDim = false;
+        boolean haveZDim = false;
         boolean haveMaxValue = false;
         int numValues = 0;
         int currentValue = 0;
         int xDim = 0;
         int yDim = 0;
+        int zDim = 0;
         int length;
         int maxValue = 255;
         int imageType = ModelStorageBase.UBYTE;
@@ -111,6 +113,12 @@ public class FilePGM extends FileBase {
 	        	    	haveYDim = true;
 	        	    	Preferences.debug("yDim = " + yDim + "\n", Preferences.DEBUG_FILEIO);
 	        	    }
+	        	    if ((!haveZDim) && (currentValue < numValues)) {
+	        	    	zDim = Integer.parseInt(values[currentValue]);
+	        	    	currentValue++;
+	        	    	haveZDim = true;
+	        	    	Preferences.debug("zDim = " + zDim + "\n", Preferences.DEBUG_FILEIO);
+	        	    }
 	        	    if ((!haveMaxValue) && (currentValue < numValues)) {
 	        	    	maxValue = Integer.parseInt(values[currentValue]);
 	        	    	currentValue++;
@@ -120,10 +128,22 @@ public class FilePGM extends FileBase {
             	} // if (values != null)
             } // if (lineString != null)
         } // while (!haveMaxValue)
-        extents[0] = xDim;
-        extents[1] = yDim;
+        if (!haveZDim) {
+            extents = new int[2];
+            extents[0] = xDim;
+            extents[1] = yDim;
+        }
+        else {
+        	extents = new int[3];
+        	extents[0] = xDim;
+            extents[1] = yDim;
+            extents[2] = zDim;
+        }
         fileInfo.setExtents(extents);
         length = xDim * yDim;
+        if (haveZDim) {
+        	length = length * zDim;
+        }
         if (maxValue <= 255) {
         	imageType = ModelStorageBase.UBYTE;
         	if (raFile.getFilePointer() + length > raFile.length()) {
