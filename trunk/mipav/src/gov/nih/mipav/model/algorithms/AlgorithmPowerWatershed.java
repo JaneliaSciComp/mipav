@@ -1,11 +1,8 @@
 package gov.nih.mipav.model.algorithms;
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
-import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
@@ -22,6 +19,8 @@ Porting performed by William Gandler.
 This "powerwatershed" package provides implementation of several segmentation algorithms on 2D or 3D images.
 The 3 algorithms are:
 1.) Maximum Spanning Forest computed by Kruskal algorithm.
+    // Cannot use PowerWatershed because it calls RandomWalker which uses CSparse.
+    // CSparse requires a GNU Lesser General Public License which can only be used with binary libraries.
 2.) Powerwatersheds (p=infinite, q= 2) : Maximum Spanning Forest computed by Kruskal algorithm and
     Random walker on plateaus.
 3.) Maximum Spanning Forest computed by Prim algorithm using red and black trees.
@@ -44,7 +43,6 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
     private static byte RBT_Red =  1;
     
     private double epsilon = 0.000001;
-    private int MAX_DEGREE = 3000;
     private int SIZE_MAX_PLATEAU = 1000000;
 
 
@@ -54,7 +52,7 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
     private int algo;
     
     // If true, multi-labels segmentation, else 2-labels segmentation
-    private boolean multi;
+    //private boolean multi;
     
     // The index in the image array of the seed
     private Vector<Integer> index_seeds;
@@ -81,19 +79,17 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
      *
      * @param  destImg  Image model where result image is to stored
      * @param  srcImg   Source image model
-     * @param  algo Kruskal, PW_qis2, or Prim
-     * @param  multi If true multi-labels, else two-labels
+     * @param  algo Kruskal, or Prim
      * @param  index_seeds The index in the image array of the seed
      * @param  index_labels For 2-labels 1 for white foreground and 2 for black background
      *                      For multi-labels values from 1 to n with n <= 255 for segmentation in n labels
      * @param  geod  Geodesic reconstruction
      */
-    public AlgorithmPowerWatershed(ModelImage destImg, ModelImage srcImg, int algo, boolean multi,
+    public AlgorithmPowerWatershed(ModelImage destImg, ModelImage srcImg, int algo,
     		Vector<Integer> index_seeds, Vector<Short> index_labels, boolean geod) {
 
         super(destImg, srcImg);
         this.algo = algo;
-        this.multi = multi;
         this.index_seeds = index_seeds;
         this.index_labels = index_labels;
         this.geod = geod;
@@ -121,7 +117,6 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
         int M; // Number of edges
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
-        String imageName = srcImage.getImageName();
         int zDim;
         int edges[][];
         int weights[];
@@ -349,27 +344,14 @@ LCP = CreeLifoVide(M);
 if (LCP == null) { MipavUtil.displayError("LCP CreeLifoVide failed in memory_allocation_PW"); error = true; return; }
 
 indic_E = new boolean[M];
-if (indic_E == null) { MipavUtil.displayError("indic_E creation failed in memory_allocation_PW"); error = true; return;}
 indic_P = new boolean[M];
-if (indic_P == null) { MipavUtil.displayError("indic_P creation failed in memory_allocation_PW"); error = true; return;}
 indic_VP = new int[N];
-if (indic_VP == null) { MipavUtil.displayError("indic_VP creation failed in memory_allocation_PW"); error = true; return;}
 Rnk = new int[N];
-if (Rnk == null) { MipavUtil.displayError("Rnk creation failed in memory_allocation_PW"); error = true; return;}
 Fth = new int[N];
-if (Fth == null) { MipavUtil.displayError("Fth creation failed in memory_allocation_PW"); error = true; return;}
-
 local_seeds = new int[N];
-if (local_seeds == null) { MipavUtil.displayError("local_seeds creation failed in memory_allocation_PW"); error = true; return;}
-
 LCVP = new int[N]; // vertices of a plateau. 
-if (LCVP == null) { MipavUtil.displayError("LCVP creation failed in memory_allocation_PW"); error = true; return;}
-
 Es = new int[M];
-if (Es == null) { MipavUtil.displayError("Es cration failed in memory_allocation_PW"); error = true; return;}
-
 NEs = new int[M]; 
-if (NEs == null) { MipavUtil.displayError("NEs creation failed in memory_allocation_PW"); error = true; return;}
 
 
 float proba[][] = new float[nb_labels-1][N];
@@ -711,7 +693,8 @@ return;
   on a general graph represented by an edge list, given boundary conditions (seeds, etc.) 
   */
   {
-    int i, j, k, l, v1, v2; 
+    int i, j, v1, v2; 
+    // int k, l;
     boolean seeded_vertex[] = new boolean[N];
     int indic_sparse[] = new int[N];
     int nb_same_edges[] = new int[M];
@@ -740,7 +723,7 @@ return;
   	    indic_sparse[index_edges[1][j]]++;
   	  }
         }
-    /*  TriEdges (index_edges, M,   nb_same_edges);
+      TriEdges (index_edges, M,   nb_same_edges);
 
     for (i=0;i<numb_boundary;i++)
       {
@@ -748,7 +731,11 @@ return;
         seeded_vertex[index_seeds[i]]= true;
       }
     
-    cs *A2 ,*A, *B2, *B;
+    /* CSparse by Timothy A. Davis requires a GNU Lesser General Public License
+     * This could only be distributed as libraries in a binary format 
+     */
+    /*cs *A2 ,*A, *B2, *B;
+    
     //The system to solve is A x = -B X2 
 
     // building matrix A : laplacian for unseeded nodes
@@ -828,6 +815,112 @@ return;
     free(nb_same_edges);*/
     return false;
   }
+    
+   private void TriEdges(int index_edges[][],   /* array of vertices composing edges */
+  	      int M,               /* nb of edges */
+  	      int nb_same_edges[]) /* indicator of same edges presence  */
+  /*======================================================================*/
+  // sort the array of vertices composing edges by ascending node index
+  // and fill an indicator of same edges presence
+  {
+    int i, j, k;
+    TriRapideStochastique(  index_edges[0],  index_edges[1], 0, M-1);
+    i=0;
+    while(i<M)
+      {
+        j = i;
+        while((i<M-1)&&(index_edges[0][i]==index_edges[0][i+1])) i++;
+        int Alength = index_edges[1].length - j;
+        int A[] = new int[Alength];
+        for (k = 0; k < Alength; k++) {
+        	A[k] = index_edges[1][j+k];
+        }
+        int Ilength = index_edges[0].length - j;
+        int I[] = new int[Ilength];
+        for (k = 0; k < Ilength; k++) {
+        	I[k] = index_edges[0][j+k];
+        }
+        if (i!=j) TriRapideStochastique(A, I, 0, i-j);
+        i++;
+      }
+    for(i=0;i<M;i++)
+      {
+        j = 0;
+        while((i+j<M-1)&&( index_edges[0][i+j]== index_edges[0][i+j+1] && index_edges[1][i+j]== index_edges[1][i+j+1])) j++;
+        nb_same_edges[i] =j;
+      }
+    
+  }
+
+   private void TriRapideStochastique (int A[], int I[], int p, int r)
+   /* =============================================================== */
+   /* 
+     trie les valeurs du tableau A de l'indice p (compris) a l'indice r (compris) 
+     par ordre croissant 
+   */
+   {
+     int q; 
+     if (p < r)
+     {
+       q = PartitionStochastique(A, I, p, r);
+       TriRapideStochastique (A, I, p, q) ;
+       TriRapideStochastique (A, I, q+1, r) ;
+     }
+   } /* TriRapideStochastique() */
+   
+   private int PartitionStochastique (int A[], int I[], int p, int r)
+   /* =============================================================== */
+   /*
+     partitionne les elements de A entre l'indice p (compris) et l'indice r (compris)
+     en deux groupes : ceux <= A[q] et les autres, avec q tire au hasard dans [p,r].
+   */
+   {
+     int t;
+     int t1;
+     int q;
+
+     RandomNumberGen randomGen = new RandomNumberGen();
+     int rand = randomGen.genUniformRandomNum(0, 32767);
+     q = p + (rand % (r - p + 1));
+     t = A[p];         /* echange A[p] et A[q] */
+     A[p] = A[q]; 
+     A[q] = t;
+     
+     t1 = I[p];         /* echange I[p] et I[q] */
+     I[p] = I[q]; 
+     I[q] = t1;
+
+     return Partitionner(A, I, p, r);
+   } /* PartitionStochastique() */
+
+   private int Partitionner(int A[], int I[], int p, int r)
+   /* =============================================================== */
+   /*
+     partitionne les elements de A entre l'indice p (compris) et l'indice r (compris)
+     en deux groupes : ceux <= A[p] et les autres.
+   */
+   {
+     int  t;
+     int t1;
+     int x = A[p];
+     int i = p - 1;
+     int j = r + 1;
+     while (true)
+     {
+       do j--; while (A[j] > x);
+       do i++; while (A[i] < x);
+       if (i < j) 
+         { 
+   	t = A[i];
+   	A[i] = A[j];
+   	A[j] = t; 
+   	t1 = I[i];
+   	I[i] = I[j];
+   	I[j] = t1; 
+         }
+       else return j;
+     } /* while (true) */   
+   } /* Partitionner() */
 
     
     private void merge_node (int e1,            /* index of node 1 */
@@ -1553,7 +1646,7 @@ return;
     /* ==================================== */
     {
       int taillemax;
-      Rbt T, Tmp;
+      Rbt T;
 
     //#ifdef VERBOSE
       //printf("RbtReAlloc: ancienne taille %ld nouvelle taille %ld\n", (*A)->max, 2 * (*A)->max);
@@ -1561,9 +1654,7 @@ return;
       taillemax = 2 * A.getMax();  /* alloue le double de l'ancienne taille */ 
       T = CreeRbtVide(taillemax);
       RbtTransRec(T, A, A.getRoot());
-      Tmp = A;
       A = T;
-      Tmp = null;
     } /* RbtReAlloc() */
 
     private void RbtTransRec(
@@ -2771,7 +2862,6 @@ Bucket = null;
 	{
 	  Indics = new short[Size];
 	}
-
 
     
 }
