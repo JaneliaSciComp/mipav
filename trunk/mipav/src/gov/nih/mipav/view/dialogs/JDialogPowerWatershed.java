@@ -40,9 +40,6 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
     //~ Instance fields ------------------------------------------------------------------------------------------------
 	
 	private int algo;
-	
-	// If true, multi-labels segmentation, else 2-labels segmentation
-    private boolean multi;
     
     // The index in the image array of the seed
     private Vector<Integer> index_seeds = new Vector<Integer>();
@@ -133,7 +130,6 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         scriptParameters.storeOutputImageParams(resultImage, true);
         
         scriptParameters.getParams().put(ParameterFactory.newParameter("algorithm", algo));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("multiple", multi));
         scriptParameters.getParams().put(ParameterFactory.newParameter("geodesic", geod));
     }
 
@@ -146,7 +142,6 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         parentFrame = image.getParentFrame();
         
         algo = scriptParameters.getParams().getInt("algorithm");
-        multi = scriptParameters.getParams().getBoolean("multiple");
         geod = scriptParameters.getParams().getBoolean("goedesic");
     }
 
@@ -314,13 +309,6 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
     	this.algo = algo;
     }
     
-    /**
-     * 
-     * @param multi
-     */
-    public void setMulti(boolean multi) {
-    	this.multi = multi;
-    }
     
     /**
      * 
@@ -352,7 +340,7 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
                 resultImage = new ModelImage(ModelImage.UBYTE, image.getExtents(), name);
 
                 // Make algorithm
-                pwAlgo = new AlgorithmPowerWatershed(resultImage, image, algo, multi, index_seeds, index_labels, geod);
+                pwAlgo = new AlgorithmPowerWatershed(resultImage, image, algo, index_seeds, index_labels, geod);
 
             } catch (OutOfMemoryError x) {
                 MipavUtil.displayError("Dialog power watershed: unable to allocate enough memory");
@@ -411,11 +399,11 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         gbc.gridy = yPos++;
         algoPanel.add(KruskalButton, gbc);
 
-        PowerButton = new JRadioButton("Power Watershed, q = 2", false);
-        PowerButton.setFont(serif12);
-        algoGroup.add(PowerButton);
-        gbc.gridy = yPos++;
-        algoPanel.add(PowerButton, gbc);
+        //PowerButton = new JRadioButton("Power Watershed, q = 2", false);
+        //PowerButton.setFont(serif12);
+        //algoGroup.add(PowerButton);
+        //gbc.gridy = yPos++;
+        //algoPanel.add(PowerButton, gbc);
 
         PrimButton = new JRadioButton("Prim", false);
         PrimButton.setFont(serif12);
@@ -511,13 +499,11 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
 
         if (KruskalButton.isSelected()) {
             algo = Kruskal;
-        } else if (PowerButton.isSelected()) {
-            algo = PW_qis2;
+        //} else if (PowerButton.isSelected()) {
+            //algo = PW_qis2;
         } else if (PrimButton.isSelected()) {
             algo = Prim;
         }
-        
-        multi = multiButton.isSelected();
         
         geod = geodesicCheckBox.isSelected();
         
@@ -587,7 +573,6 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         try {
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterInt("algorithm", Kruskal));
-            table.put(new ParameterBoolean("multiple", true));
             table.put(new ParameterBoolean("geodesic", true));
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
