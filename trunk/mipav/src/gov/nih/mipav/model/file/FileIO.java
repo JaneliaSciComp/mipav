@@ -3210,6 +3210,10 @@ public class FileIO {
                 case FileUtility.PGM:
                     image = readPGM(fileName, fileDir);
                     break;
+                    
+                case FileUtility.PPM:
+                    image = readPPM(fileName, fileDir);
+                    break;
 
                 case FileUtility.MAGNETOM_VISION_MULTIFILE:
                     image = readMagnetomVisionMulti(fileName, fileDir);
@@ -3375,7 +3379,7 @@ public class FileIO {
         } else {
             final boolean zerofunused[] = new boolean[1];
             fileType = FileUtility.getFileType(fileName, fileDir, false, quiet, zerofunused); // set the fileType
-
+           
             if (fileType == FileUtility.ERROR) {
                 return fileType;
             }
@@ -11700,6 +11704,60 @@ public class FileIO {
 
         try {
             imageFile = new FilePGM(fileName, fileDir);
+            createProgressBar(imageFile, fileName, FileIO.FILE_READ);
+            image = imageFile.readImage();
+        } catch (final IOException error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        } catch (final OutOfMemoryError error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        }
+
+        return image;
+
+    }
+    
+    /**
+     * Reads a PPM file by calling the read method of the file.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
+     */
+    private ModelImage readPPM(final String fileName, final String fileDir) {
+        ModelImage image = null;
+        FilePPM imageFile;
+
+        try {
+            imageFile = new FilePPM(fileName, fileDir);
             createProgressBar(imageFile, fileName, FileIO.FILE_READ);
             image = imageFile.readImage();
         } catch (final IOException error) {
