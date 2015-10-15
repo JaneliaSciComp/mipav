@@ -29,7 +29,7 @@ public class FilePGM extends FileBase {
     private ViewJProgressBar progressBar;
     
     /**
-     * FileMedVision - MedVision reader/writer constructor.
+     * File Portable Greymap Utilities reader/writer constructor.
      *
      * @param  fName  file name
      * @param  fDir   file directory
