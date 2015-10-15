@@ -4,7 +4,6 @@ package gov.nih.mipav.model.file;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
 import java.io.*;
 import java.util.Vector;
 
@@ -27,7 +26,7 @@ public class FilePPM extends FileBase {
     private ModelImage image;
 
     /** DOCUMENT ME! */
-    private ViewJProgressBar progressBar;
+   // private ViewJProgressBar progressBar;
     
     /**
      * File Portable Pixmap Utilities reader/writer constructor.
@@ -65,7 +64,6 @@ public class FilePPM extends FileBase {
         int valuesRead;
         short sbuf[] = null;
         int ibuf[] = null;
-        long lbuf[] = null;
         long preReadPosition = 0;
         int nonWhiteBytesRead = 0;
 
