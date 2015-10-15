@@ -1651,9 +1651,12 @@ return;
     //#ifdef VERBOSE
       //printf("RbtReAlloc: ancienne taille %ld nouvelle taille %ld\n", (*A)->max, 2 * (*A)->max);
     //#endif
+      Preferences.debug("RbtReAlloc A.getMax() = " + A.getMax() + "\n", Preferences.DEBUG_ALGORITHM);
       taillemax = 2 * A.getMax();  /* alloue le double de l'ancienne taille */ 
       T = CreeRbtVide(taillemax);
+      Preferences.debug("RbtTransRec in RbtReAlloc\n", Preferences.DEBUG_ALGORITHM);
       RbtTransRec(T, A, A.getRoot());
+      Preferences.debug("Finished RbtTransRec in RbtReAlloc\n", Preferences.DEBUG_ALGORITHM);
       A = T;
     } /* RbtReAlloc() */
 
@@ -2701,8 +2704,14 @@ Bucket = null;
 		  T.setRoot(nil);
 
 		  /* chaine les elements libres a l'aide du pointeur right */
-		  for (i = 1; i < taillemax; i++) 
+		  for (i = 1; i < taillemax; i++) {
+			  if (T.getEltsLength() < i+2) {
+				  for (int j = T.getEltsLength(); j <= i+1; j++) {
+				      T.setElts(j, new RbtElt());
+				  }
+			  }
 			  T.getElts(i).setRight(T.getElts(i+1));
+		  }
 		  T.getElts(taillemax).setRight(null);
 		  T.setLibre(T.getElts(1));
 
@@ -2771,10 +2780,10 @@ Bucket = null;
 	  int max;             /* taille max du rbt (en nombre de points) */
 	  int util;            /* nombre de points courant dans le rbt */
 	  int maxutil;         /* nombre de points utilises max (au cours du temps) */
-	  RbtElt root;        /* racine de l'arbre */
-	  RbtElt nil;         /* sentinelle et element dont l'adresse joue le role de NIL */
-	  RbtElt libre;       /* pile des cellules libres */
-	  RbtElt elts[] = new RbtElt[1];      /* tableau des elements physiques */
+	  RbtElt root = new RbtElt();        /* racine de l'arbre */
+	  RbtElt nil = new RbtElt();         /* sentinelle et element dont l'adresse joue le role de NIL */
+	  RbtElt libre = new RbtElt();       /* pile des cellules libres */
+	  RbtElt elts[] = new RbtElt[]{new RbtElt()};      /* tableau des elements physiques */
 	  
 	  public void setMax(int max) {
 		  this.max = max;
@@ -2843,6 +2852,10 @@ Bucket = null;
 	  
 	  public RbtElt getElts(int index) {
           return elts[index];  
+	  }
+	  
+	  public int getEltsLength() {
+		  return elts.length;  
 	  }
 	  
 	  public void RbtTermine() {
