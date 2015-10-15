@@ -14,6 +14,7 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.IOException;
 import java.util.*;
 
 import javax.swing.*;
@@ -69,6 +70,8 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
     
     private JButton pointsButton;
     
+    private JButton maskButton;
+    
     private short pointNum = 1;
     
     private boolean haveOne = false;
@@ -93,6 +96,14 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
     private ViewUserInterface userInterface;
     
     private ViewJComponentEditImage componentImage;
+    
+    private JComboBox imageComboBox;
+    
+    private String maskName;
+    
+    private ModelImage maskImage;
+    
+    private ViewUserInterface UI = ViewUserInterface.getReference();
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -222,10 +233,85 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
             	pointsButton.setText("Cannot add any more points");
             	pointsButton.setEnabled(false);
             }
-        } else { // else if (source == thresholdCheckbox)
+        } else if (command.equals("Mask")) {
+        	int i, j;
+        	int firstLabel = -1;
+        	// maskImage is same size as image
+        	int xDim = maskImage.getExtents()[0];
+        	int yDim = maskImage.getExtents()[1];
+        	int length = xDim * yDim;
+        	int zDim = 1;
+        	if (maskImage.getNDims() > 2) {
+        		zDim = maskImage.getExtents()[2];
+        		length = length * zDim;
+        	}
+        	short buffer[] = new short[length];
+        	try {
+        		maskImage.exportData(0, length, buffer);
+        	}
+        	catch(IOException e) {
+        		MipavUtil.displayError("IOException " + e + " on maskImage.exportData(0, length, buffer)");
+        		return;
+        	}
+        	short minValue = (short)maskImage.getMin();
+        	short maxValue = (short)maskImage.getMax();
+        	if (twoButton.isSelected()) {
+        	    for (i = 0; i < length; i++) {
+        	        if (buffer[i] == maxValue) { 
+        	        	index_seeds.add(i);
+                		index_labels.add((short)1);
+                		haveOne = true;
+        	        }
+        	    }
+        	    for (i = 0; i < length; i++) {
+        	        if (buffer[i] == minValue) { 
+        	        	index_seeds.add(i);
+                		index_labels.add((short)2);
+                		haveTwo = true;
+        	        }
+        	    }
+        	}
+        	else { // multiButton.isSelected()
+        		for (j = 1; j <= maxValue; j++) {
+        			for (i = 0; i < length; i++) {
+        				if (buffer[i] == j) {
+        					index_seeds.add(i);
+        					index_labels.add((short)j);
+        					if (!haveOne) {
+        						haveOne = true;
+        						firstLabel = j;
+        					}
+        					else if (haveOne && (!haveTwo) && (j != firstLabel)) {
+        						haveTwo = true;
+        					}
+        				}
+        			}
+        		}
+        	}
+        	maskButton.setEnabled(false);
+        } else {
             super.actionPerformed(event);
         }
         
+    }
+    
+    /**
+     * itemStateChanged.
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void itemStateChanged(ItemEvent event) {
+        Object source = event.getSource();
+
+         if (source == imageComboBox) {
+            maskName = (String) imageComboBox.getSelectedItem();
+
+            if (maskName != null) {
+                maskImage = UI.getRegisteredImageByName(maskName);
+            }
+        }
+
+
     }
 
     // ************************************************************************
@@ -421,6 +507,12 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         JPanel labelsPanel = new JPanel(new GridBagLayout());
         labelsPanel.setForeground(Color.black);
         labelsPanel.setBorder(buildTitledBorder("Labels"));
+        
+        JLabel headLabel = new JLabel("Add points or load mask image");
+        headLabel.setForeground(Color.black);
+        headLabel.setFont(serif12);
+        gbc2.gridy = yPos2++;
+        labelsPanel.add(headLabel, gbc2);
 
         labelsGroup = new ButtonGroup();
         twoButton = new JRadioButton("Two labels", false);
@@ -429,13 +521,13 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         gbc2.gridy = yPos2++;
         labelsPanel.add(twoButton, gbc2);
         
-        JLabel oneLabel = new JLabel("1 for white foreground");
+        JLabel oneLabel = new JLabel("VOI 1 or maskImage maxValue for white foreground");
         oneLabel.setForeground(Color.black);
         oneLabel.setFont(serif12);
         gbc2.gridy = yPos2++;
         labelsPanel.add(oneLabel,gbc2);
         
-        JLabel twoLabel = new JLabel("2 for black background");
+        JLabel twoLabel = new JLabel("VOI 2 or maskImage minValue for black background");
         twoLabel.setForeground(Color.black);
         twoLabel.setFont(serif12);
         gbc2.gridy = yPos2++;
@@ -460,6 +552,30 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         labelsPanel.add(pointsButton, gbc2);
         pointsButton.addActionListener(this);
         pointsButton.setActionCommand("Add");
+        
+        JLabel labelImage2 = new JLabel("Mask image: ");
+        labelImage2.setForeground(Color.black);
+        labelImage2.setFont(serif12);
+        gbc2.gridy = yPos2++;
+        labelsPanel.add(labelImage2, gbc2);
+        imageComboBox = buildComboBox(image);
+        imageComboBox.addItemListener(this);
+        gbc2.gridx = 1;
+        labelsPanel.add(imageComboBox, gbc2);
+
+        maskName = (String) imageComboBox.getSelectedItem();
+        if (maskName != null) {
+            maskImage = UI.getRegisteredImageByName(maskName);
+        }
+        
+        maskButton = new JButton("Use mask image to generate seeds");
+        maskButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        maskButton.setFont(serif12B);
+        gbc2.gridx = 0;
+        gbc2.gridy = yPos2++;
+        labelsPanel.add(maskButton, gbc2);
+        maskButton.addActionListener(this);
+        maskButton.setActionCommand("Mask");
         
         geodesicCheckBox = new JCheckBox("Geodesic reconstruction", true);
         geodesicCheckBox.setFont(serif12);
@@ -631,5 +747,55 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
      */
     public boolean isActionComplete() {
         return isComplete();
+    }
+    
+    /**
+     * Builds a list of images. Returns combobox. List must be all color or all black and white.
+     *
+     * @param   image  DOCUMENT ME!
+     *
+     * @return  Newly created combo box.
+     */
+    private JComboBox buildComboBox(ModelImage image) {
+        ViewUserInterface UI;
+        ModelImage nextImage;
+        boolean doAdd;
+        int i;
+
+        JComboBox comboBox = new JComboBox();
+        comboBox.setFont(serif12);
+        comboBox.setBackground(Color.white);
+
+        UI = ViewUserInterface.getReference();
+
+        Enumeration<String> names = UI.getRegisteredImageNames();
+
+        while (names.hasMoreElements()) {
+            String name = names.nextElement();
+
+            if (!name.equals(image.getImageName())) {
+                nextImage = UI.getRegisteredImageByName(name);
+
+                if (UI.getFrameContainingImage(nextImage) != null) {
+
+                    if ((!nextImage.isColorImage()) && (nextImage.getNDims() == image.getNDims())) {
+                        doAdd = true;
+
+                        for (i = 0; i < image.getNDims(); i++) {
+
+                            if (image.getExtents()[i] != nextImage.getExtents()[i]) {
+                                doAdd = false;
+                            }
+                        }
+
+                        if (doAdd) {
+                            comboBox.addItem(name);
+                        }
+                    }
+                }
+            }
+        }
+
+        return comboBox;
     }
 }
