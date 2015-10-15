@@ -283,6 +283,9 @@ public class FileUtility {
     /** Portable Gray Map extension .pgm */
     public static final int PGM = 80;
     
+    /** Portable Pixmap Utilities */
+    public static final int PPM = 81;
+    
     
 
     private static final String[] fileTypeStr = {"error", "undefined", "afni", "analyze", "analyze multifile", "avi",
@@ -293,7 +296,7 @@ public class FileUtility {
             "nrrd multifile", "osm", "pcx", "pic", "pict", "png", "psd", "qt", "raw", "raw multifile", "spm", "stk", "surface xml",
             "tga", "tiff", "tiff multifile", "tmg", "voi file", "xbm", "xml", "xml multifile", "xpm", "parrec", "parrec multifile",
             "spar", "surfaceref xml", "minc hdf", "liff", "bfloat", "siemens text", "zvi", "jp2", "mat", "v", "MetaImage", "trk",
-            "czi", "pgm"};
+            "czi", "pgm", "ppm"};
 
     
 
