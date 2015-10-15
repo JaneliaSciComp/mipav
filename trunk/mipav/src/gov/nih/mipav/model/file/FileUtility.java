@@ -283,7 +283,7 @@ public class FileUtility {
     /** Portable Gray Map extension .pgm */
     public static final int PGM = 80;
     
-    /** Portable Pixmap Utilities */
+    /** Portable Pixmap Utilities .ppm*/
     public static final int PPM = 81;
     
     
