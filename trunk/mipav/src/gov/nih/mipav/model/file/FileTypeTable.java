@@ -310,6 +310,10 @@ public class FileTypeTable {
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.PGM, new FileTypeInfo("PGM", ".pgm"));
         FileTypeTable.FILE_EXT_TABLE.put(".pgm", FileUtility.PGM);
         FileTypeTable.FILE_EXT_TABLE.put(".PGM", FileUtility.PGM);
+        
+        FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.PPM, new FileTypeInfo("PPM", ".ppm"));
+        FileTypeTable.FILE_EXT_TABLE.put(".ppm", FileUtility.PPM);
+        FileTypeTable.FILE_EXT_TABLE.put(".PPM", FileUtility.PPM);
     }
 
     /**
