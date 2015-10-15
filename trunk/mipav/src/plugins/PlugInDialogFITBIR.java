@@ -216,7 +216,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.35";
+    private static final String pluginVersion = "0.37";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -3861,7 +3861,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             // not a directory, so write out the file contents to disk from the zip and remember the
                             // first non-raw file name we find
                             if (fileName.equals("")) {
-                                if ( !entry.getName().endsWith(".raw")) {
+                                if ( !entry.getName().endsWith(".raw") && !entry.getName().equalsIgnoreCase(".METADATA")) {
                                     fileName = entry.getName();
                                 }
                             }
@@ -3933,7 +3933,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             // not a directory, so write out the file contents to disk from the zip and remember the
                             // first non-raw file name we find
                             if (fileName.equals("")) {
-                                if ( !entry.getName().endsWith(".raw")) {
+                                if ( !entry.getName().endsWith(".raw") && !entry.getName().equalsIgnoreCase(".METADATA")) {
                                     fileName = entry.getName();
                                 }
                             }
@@ -3972,6 +3972,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 final File file = new File(filePath);
                 System.out.println(file);
                 srcImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultifile, null);
+
+                if (srcImage == null) {
+                    MipavUtil.displayError("Unable to open image file specified: " + imageFile);
+                    validFile = false;
+                    return null;
+                }
 
                 final int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
 
@@ -4013,7 +4019,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 e.printStackTrace();
                 validFile = false;
             } catch (final NullPointerException e) {
-                MipavUtil.displayError("The system cannot find the file specified: " + imageFile);
+                MipavUtil.displayError("Unable to open image file specified: " + imageFile);
                 e.printStackTrace();
                 validFile = false;
             } catch (final Exception e) {
