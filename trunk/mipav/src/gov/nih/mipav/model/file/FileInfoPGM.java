@@ -18,7 +18,7 @@ public class FileInfoPGM extends FileInfoBase {
      *
      * @param  name       the file name
      * @param  directory  the file directory
-     * @param  format     the file format (MedVision)
+     * @param  format     the file format (Portable Greymap Utilities)
      */
     public FileInfoPGM(String name, String directory, int format) {
         super(name, directory, format);
