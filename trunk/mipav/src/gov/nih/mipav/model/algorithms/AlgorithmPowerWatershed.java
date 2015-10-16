@@ -44,8 +44,10 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
     
     private double epsilon = 0.000001;
     private int SIZE_MAX_PLATEAU = 1000000;
+    
+    private boolean testRbtInteractive= false;
 
-
+    private boolean testRbtRandom = false;
     
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -109,11 +111,131 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
         
         super.finalize();
     }
+    
+    private void rbtInteractiveTest() {
+    	Rbt T = CreeRbtVide(1);
+    	  String r;;
+    	  double p;
+    	  RbtElt x;
+          Scanner input = new Scanner(System.in);
+    	  do
+    	  {
+    		  System.out.println("Commands qUIT, PuSH, PoP, pRINT, TESTeMPTY");
+    		  System.out.println("sEARCH MiNIMUM MaXIMUM SUcCESSOR dELETE");
+    		  r = input.nextLine();
+    		  if (r.equalsIgnoreCase("u")) {
+    			  System.out.println("Double value: ");
+    			  p = input.nextDouble();
+    			  RbtInsert(T, p, 0);
+    		  }
+    		  else if (r.equalsIgnoreCase("d")) {
+    			  System.out.println("Double value: ");
+    			  p = input.nextDouble(); 
+    			  x = RbtSearch(T, p);
+    		      if (x != T.getNil()) RbtDelete(T, x);
+    		      else System.out.println("Not found");
+    		  }
+    		  else if (r.equalsIgnoreCase("s")) {
+    			  System.out.println("Double value: ");
+    			  p = input.nextDouble(); 
+    			  x = RbtSearch(T, p);
+    		      System.out.println("Found: x != T.getNil() = " + (x != T.getNil()));
+    		      break;
+    		  }
+    		  else if (r.equalsIgnoreCase("i")) {
+    			  x = RbtMinimum(T, T.getRoot());
+    		      System.out.println("minimum: x.getKey() = " + x.getKey());
+    		  }
+    		  else if (r.equalsIgnoreCase("a")) {
+    		      x = RbtMaximum(T, T.getRoot());
+    	          System.out.println("maximum: x.getKey() = " + x.getKey());
+    		  }
+    		  else if (r.equalsIgnoreCase("c")) {
+    			  System.out.println("Double value: ");
+    			  p = input.nextDouble(); 
+    			  x = RbtSearch(T, p);
+    		      System.out.println("Found: x != T.getNil() = " + (x != T.getNil()));
+    		      if (x != T.getNil())
+    			{
+    		          x = RbtSuccessor(T, x);
+    		          if (x != T.getNil()) System.out.println("succ: x.getKey() = " + x.getKey());
+    			}
+
+    		  }
+    		  else if (r.equalsIgnoreCase("o")) {
+    			  if (RbtVide(T)) 
+    		          System.out.println("Empty");
+    		        else
+    		          RbtPopMin(T); 
+    		        break;
+
+    		  }
+    		  else if (r.equalsIgnoreCase("p")) {
+    			  RbtPrint(T);
+    		  }
+    		  else if (r.equalsIgnoreCase("e")) {
+    			  System.out.println("Empty = " + RbtVide(T));  
+    		  }
+    	  } while (!r.equalsIgnoreCase("q"));
+    	  RbtTermine(T);
+          input.close();
+	
+    }
+    
+    private void rbtRandomTest() {
+    	  Rbt T = CreeRbtVide(1);
+    	  int n = 0, d;
+    	  RandomNumberGen randomGen = new RandomNumberGen();
+    	  int rand;
+    	  Scanner input = new Scanner(System.in);
+    	  String r;   
+    	  do
+    	  {
+    		System.out.println("Press q to quit any other key to continue");
+    		 r = input.nextLine();
+    		 if (r.equalsIgnoreCase("q")) {
+    			 break;
+    		 }
+    		rand = randomGen.genUniformRandomNum(0, 32767);
+    	    if ((rand % 2) == 1)
+    	    {
+    	       d = randomGen.genUniformRandomNum(0, 32767);
+    	       RbtInsert(T, (double)d, d);
+    	       n++;
+    	       System.out.println("I insert d = " + d + " n = " + n);
+    	    }
+    	    else
+    	    {
+    	      if (RbtVide(T)) 
+    	        System.out.println("Empty");
+    	      else
+    	      {
+    	        d = RbtPopMin(T); 
+    	        n--;
+    	        System.out.println("I withdraw d = " + d + " n = " + n);
+    	      }
+    	    }
+    	  } while (true);
+    	  RbtTermine(T);
+    	  input.close();
+
+    }
 
     /**
      * Starts the program.
      */
     public void runAlgorithm() {
+    	if (testRbtInteractive) {
+    		rbtInteractiveTest();
+    		setCompleted(false);
+    		return;
+    	}
+    	
+    	if (testRbtRandom) {
+    		rbtRandomTest();
+    		setCompleted(false);
+    		return;
+    	}
         int M; // Number of edges
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
@@ -1282,7 +1404,7 @@ catch(IOException e) {
 
 Indics = null;
 G = null;
-L.RbtTermine();
+RbtTermine(L);
 for (i=0;i<2;i++) 
 	edges[i] = null; 
 edges = null;
@@ -1579,7 +1701,7 @@ return;
     		  } /* while */
     		 T.getRoot().setColor(RBT_Black);
 
-    		Preferences.debug("Finished RbtInsert xc.getAuxdata() + " + xc.getAuxdata() + " xc.getKey() = " + xc.getKey() + "\n",
+    		Preferences.debug("Finished RbtInsert xc.getAuxdata() = " + xc.getAuxdata() + " xc.getKey() = " + xc.getKey() + "\n",
     				Preferences.DEBUG_ALGORITHM);
 
     		  if (xc.getAuxdata() != d) 
@@ -1657,7 +1779,14 @@ return;
       Preferences.debug("RbtTransRec in RbtReAlloc\n", Preferences.DEBUG_ALGORITHM);
       RbtTransRec(T, A, A.getRoot());
       Preferences.debug("Finished RbtTransRec in RbtReAlloc\n", Preferences.DEBUG_ALGORITHM);
-      A = T;
+      //A = T;
+      A.setMax(T.getMax());
+      A.setUtil(T.getUtil());
+      A.setMaxutil(T.getMaxutil());
+      A.setRoot(T.getRoot());
+      A.setNil(T.getNil());
+      A.setLibre(T.getLibre());
+      A.setElts(T.getElts());
     } /* RbtReAlloc() */
 
     private void RbtTransRec(
@@ -1670,8 +1799,69 @@ return;
     		  RbtTransRec(T, A, x.getRight());
     		} /* RbtTransRec() */
 
+    private RbtElt RbtSearch(
+    		  Rbt T, double k)
+    		/* ==================================== */
+    		{
+    		  RbtElt x = T.getRoot();
+    		  while ((x != T.getNil()) && (k != x.getKey()))
+    		    if (k < x.getKey()) x = x.getLeft(); else x = x.getRight();
+    		  return x;
+    		} /* RbtSearch() */
 
+    private void RbtDelete(
+    		  Rbt T, RbtElt z)
+    		/* ==================================== */
+    		{
 
+    		  Preferences.debug("RbtDelete z.getAuxdata() = " + z.getAuxdata() +  "\n", Preferences.DEBUG_ALGORITHM);
+
+    		  z = RbtDeleteAux(T, z);
+    		 
+    		  z.setRight(T.getLibre());
+    		  T.setLibre(z);
+    		  T.setUtil(T.getUtil() - 1);
+
+    		  Preferences.debug("Finished RbtDelete\n", Preferences.DEBUG_ALGORITHM);
+
+    		} /* RbtDelete() */
+    
+    private RbtElt RbtMaximum(
+    		  Rbt T, RbtElt x)
+    		/* ==================================== */
+    		{
+    		  while (x.getRight() != T.getNil()) x = x.getRight();
+    		  return x;
+    		} /* RbtMaximum() */
+
+    // vide means empty
+    private boolean RbtVide(
+    		  Rbt T)
+    		/* ==================================== */
+    		{
+    		  return (T.getUtil() == 0);
+    		} /* RbtVide() */
+    
+    private void RbtPrint(
+    		  Rbt T)
+    		/* ==================================== */
+    		{
+    		  RbtPrintRec(T, T.getRoot(), 0);
+    		} /* RbtPrint() */
+
+    private void RbtPrintRec(
+    		  Rbt T, RbtElt x, int niv)
+    		/* ==================================== */
+    		{
+    		  int i;
+    		  if (x == T.getNil()) return;
+    		  RbtPrintRec(T, x.getLeft(), niv+1);
+    		  for (i = 0; i < niv; i++) System.out.print("    ");
+    		  System.out.print("x.getKey() = " + x.getKey() + " x.getAuxdata() = " + x.getAuxdata());
+    		  if (x.getColor() == RBT_Red) System.out.print(" color = r"); else System.out.print(" color = b");
+    		  System.out.print(")\n");
+    		  RbtPrintRec(T, x.getRight(), niv+1);
+    		} /* RbtPrintRec() */
     
     private void MSF_Kruskal(int edges[][],       /* array of node indexes composing edges */ 
 		     int weights[], /* weights values on the edges */
@@ -2669,6 +2859,7 @@ Bucket = null;
     			  for (i = 0; i < tmpPts.length; i++) {
     				  Pts[i] = tmpPts[i];
     			  }
+    			  
     			  tmpPts = null;
     		  } // if (index > Pts.length-1)
     		  Pts[index] = value;
@@ -2690,7 +2881,10 @@ Bucket = null;
 		  int i;
 		  Rbt T = new Rbt();
 		  /* le tableau Elts du Rbt peut stocker taillemax+1 elements, dont 1 pour nil */
+		  // Table of Elts Rbt can store taillemax+1 elements, including 1 for nil
 		  /* l'element 0 du tableau est reserve pour representer nil */
+		  // The element of the array 0 is reserved to represent nil
+		  T.setElts(taillemax,  new RbtElt());
 		 
 		  T.setMax(taillemax);
 		  T.setUtil(0);
@@ -2704,12 +2898,9 @@ Bucket = null;
 		  T.setRoot(nil);
 
 		  /* chaine les elements libres a l'aide du pointeur right */
+		  // free chain elements to using the right pointer
 		  for (i = 1; i < taillemax; i++) {
-			  if (T.getEltsLength() < i+2) {
-				  for (int j = T.getEltsLength(); j <= i+1; j++) {
-				      T.setElts(j, new RbtElt());
-				  }
-			  }
+			  
 			  T.getElts(i).setRight(T.getElts(i+1));
 		  }
 		  T.getElts(taillemax).setRight(null);
@@ -2780,9 +2971,9 @@ Bucket = null;
 	  int max;             /* taille max du rbt (en nombre de points) */
 	  int util;            /* nombre de points courant dans le rbt */
 	  int maxutil;         /* nombre de points utilises max (au cours du temps) */
-	  RbtElt root = new RbtElt();        /* racine de l'arbre */
-	  RbtElt nil = new RbtElt();         /* sentinelle et element dont l'adresse joue le role de NIL */
-	  RbtElt libre = new RbtElt();       /* pile des cellules libres */
+	  RbtElt root;        /* racine de l'arbre */
+	  RbtElt nil;         /* sentinelle et element dont l'adresse joue le role de NIL */
+	  RbtElt libre;       /* pile des cellules libres */
 	  RbtElt elts[] = new RbtElt[]{new RbtElt()};      /* tableau des elements physiques */
 	  
 	  public void setMax(int max) {
@@ -2845,6 +3036,9 @@ Bucket = null;
 			  for (i = 0; i < tmpelts.length; i++) {
 				  elts[i] = tmpelts[i];
 			  }
+			  for (i = 0; i < index; i++) {
+				  elts[i] = new RbtElt();
+			  }
 			  tmpelts = null;
 		  } // if (index > elts.length-1)
 		  elts[index] = value;	  
@@ -2854,21 +3048,34 @@ Bucket = null;
           return elts[index];  
 	  }
 	  
+	  public void setElts(RbtElt elts[]) {
+		  this.elts = elts;
+	  }
+	  
+	  public RbtElt[] getElts() {
+		  return elts;
+	  }
+	  
 	  public int getEltsLength() {
 		  return elts.length;  
 	  }
 	  
-	  public void RbtTermine() {
+	}
+	
+	public void RbtTermine(Rbt T) {
 		  int i;
-	      for (i = 0; i < elts.length; i++) {
-	    	  elts[i] = null;
-	      }
-	      elts = null;
-	      root = null;
-	      nil = null;
-	      libre = null;
+		  RbtElt elts[] = T.getElts();
+		  if (elts != null) {
+		      for (i = 0; i < elts.length; i++) {
+		    	  elts[i] = null;
+		      }
+		      elts = null;
+		  }
+	      T.setRoot(null);
+	      T.setNil(null);
+	      T.setLibre(null);
+	      T = null;
 	  }
-	} 
 	
 	private void IndicsInit(int Size)
 	/* ==================================== */
