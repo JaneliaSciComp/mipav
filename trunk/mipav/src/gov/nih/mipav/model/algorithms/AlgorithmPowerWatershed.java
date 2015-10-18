@@ -140,7 +140,6 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
     			  p = input.nextDouble(); 
     			  x = RbtSearch(T, p);
     		      System.out.println("Found: x != T.getNil() = " + (x != T.getNil()));
-    		      break;
     		  }
     		  else if (r.equalsIgnoreCase("i")) {
     			  x = RbtMinimum(T, T.getRoot());
@@ -167,8 +166,6 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
     		          System.out.println("Empty");
     		        else
     		          RbtPopMin(T); 
-    		        break;
-
     		  }
     		  else if (r.equalsIgnoreCase("p")) {
     			  RbtPrint(T);
