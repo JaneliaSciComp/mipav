@@ -51,6 +51,8 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
     
     private boolean testIndic = false;
     
+    private boolean testLifo = false;
+    
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
     private int algo;
@@ -234,6 +236,36 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
          Indics = null;
 
     }
+    
+    private void lifoTest() {
+    	Lifo L = CreeLifoVide(3);
+    	  LifoPrint(L);
+    	  if (LifoVide(L)) System.out.println("Lifo empty YES\n");
+    	  LifoPush(L,1);
+    	  LifoPrint(L);
+    	  if (!LifoVide(L)) System.out.println("Lifo empty NO\n");
+    	  LifoPush(L,2);
+    	  LifoPrint(L);
+    	  LifoPush(L,3);
+    	  LifoPrint(L);
+    	  System.out.println("LifoPop(L) = " + LifoPop(L) + " , 3 expected");
+    	  LifoPrint(L);
+    	  LifoPush(L,4);
+    	  LifoPrint(L);
+    	  System.out.println("LifoPop(L) = " + LifoPop(L) + " , 4 expected");
+    	  LifoPrint(L);
+    	  System.out.println("LifoPop(L) = " + LifoPop(L) + " , 2 expected");
+    	  LifoPrint(L);
+    	  System.out.println("LifoPop(L) = " + LifoPop(L) + " , 1 expected");
+    	  LifoPrint(L);
+    	  if (LifoVide(L)) System.out.println("Lifo empty YES");
+    	  System.out.println("Full release now expected on lifo");
+    	  LifoPush(L,3);
+    	  LifoPush(L,3);
+    	  LifoPush(L,3);
+    	  LifoPush(L,3);  
+
+    }
 
     /**
      * Starts the program.
@@ -252,6 +284,11 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
     	}
     	if (testIndic) {
     		indicTest();
+    		setCompleted(false);
+    		return;
+    	}
+    	if (testLifo) {
+    		lifoTest();
     		setCompleted(false);
     		return;
     	}
@@ -2801,7 +2838,7 @@ Bucket = null;
     {
       if (L.getSp() > L.getMax() - 1)
       {
-        System.err.println("error Lifo pleine\n");
+        System.err.println("error Lifo full\n");
         System.exit(1);
       }
       L.setPts(L.getSp(),V);
@@ -2821,7 +2858,7 @@ Bucket = null;
     		{
     		  if (L.getSp() == 0)
     		  {
-    		    System.err.println("erreur Lifo vide");
+    		    System.err.println("error Lifo empty");
     		    System.exit(1);
     		  }
     		  L.setSp(L.getSp()-1);
@@ -2842,6 +2879,19 @@ Bucket = null;
     		{
     		  L.setSp(0);
     		}
+    
+    private void LifoPrint(Lifo L)
+    /* ==================================== */
+    {
+      int i;
+      if (LifoVide(L)) {System.out.println("[]"); return;}
+      System.out.print("[ ");
+      for (i = 0; i < L.getSp(); i++)
+        System.out.print(" L.getPts(i) = " + L.getPts(i));
+      
+      System.out.println("]");
+    }
+
 
 
 
