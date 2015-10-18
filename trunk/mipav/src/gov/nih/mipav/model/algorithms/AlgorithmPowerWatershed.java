@@ -49,6 +49,8 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
 
     private boolean testRbtRandom = false;
     
+    private boolean testIndic = false;
+    
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
     private int algo;
@@ -217,6 +219,21 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
     	  input.close();
 
     }
+    
+    private void indicTest() {
+    	IndicsInit(3);
+    	  Set(0, 0);   if (IsSet(0, 0)) System.out.println("test1 ok");
+    	System.out.println("Indics[0] = " + Indics[0]);
+    	  Set(0, 1);   if (IsSet(0, 1)) System.out.println("test2 ok");
+    	System.out.println("Indics[0] = " + Indics[0]);
+    	  UnSet(0, 1); if (!IsSet(0, 1)) System.out.println("test3 ok");
+         System.out.println("Indics[0] = " + Indics[0]);
+    	               if (IsSet(0, 0)) System.out.println("test4 ok");
+    	  UnSetAll(0); if (!IsSet(0, 0)) System.out.println("test5 ok");
+    	 System.out.println("Indics[0] = " + Indics[0]);
+         Indics = null;
+
+    }
 
     /**
      * Starts the program.
@@ -230,6 +247,11 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
     	
     	if (testRbtRandom) {
     		rbtRandomTest();
+    		setCompleted(false);
+    		return;
+    	}
+    	if (testIndic) {
+    		indicTest();
     		setCompleted(false);
     		return;
     	}
@@ -1335,7 +1357,7 @@ L = CreeRbtVide(M);
 i=0;
 int sizeL = 0;
 for(u = 0; u < M; u ++)
-  Indics[u] |= (1 << 0);
+  Set(u, 0);
   
 for (u=0;u<M;u++)
   {
@@ -1344,11 +1366,11 @@ for (u=0;u<M;u++)
 	  for (x=1;x<=numvoisins;x++)
 	    {
 	      y = neighbor_node_edge(seeds.get(i), x, rs, cs, ds);
-	      if ((y != -1) && ((Indics[y] & (1 << 1)) == 0))
+	      if ((y != -1) && (!IsSet(y, 1)))
 		{ 
 		  RbtInsert(L, (double)(255-weights[y]), y);
 		  sizeL++;
-		  Indics[y] |= (1 << 1);
+		  Set(y,1);
 		}
 	    }
 	  i++;
@@ -1369,7 +1391,7 @@ while(sizeL != 0)
 	  for(i = 1; i <= numvoisins; i++)
 	    {
 	      v = neighbor_node_edge(x,i,rs,cs, ds);
-	      if ((v != -1) && ((Indics[v] & (1 << 1)) == 0))
+	      if ((v != -1) && (!IsSet(v, 1)))
 		{
 		  x_1 = edges[0][v];
 		  y_1 = edges[1][v];
@@ -1377,12 +1399,12 @@ while(sizeL != 0)
 		    {
 		      RbtInsert(L, (double)(255-weights[v]), v);
 		      sizeL++;
-		      Indics[v] |= (1 << 1);
+		      Set(v, 1);
 		    }	  
 		}
 	    }
 	}
-    Indics[u] &= ~(1 << 1);
+    UnSet(u, 1);
   }
 
 short F[] = new short[N];
@@ -1404,7 +1426,7 @@ G = null;
 RbtTermine(L);
 for (i=0;i<2;i++) 
 	edges[i] = null; 
-edges = null;
+edges = null;     
 return;
 }
     
@@ -3080,5 +3102,22 @@ Bucket = null;
 	  Indics = new short[Size];
 	}
 
+	private void Set(int x, int INDIC) {
+		Indics[x]|=(1<<INDIC);
+	}
+	
+	private void UnSet(int x,int INDIC) {
+		Indics[x]&=~(1<<INDIC);
+	}
+	
+	private boolean IsSet(int x, int INDIC) {
+		boolean set;
+		set = ((Indics[x]&(1<<INDIC))	!= 0);
+		return set;
+	}
+	
+	private void UnSetAll(int x)    {
+		Indics[x]=0;
+	}
     
 }
