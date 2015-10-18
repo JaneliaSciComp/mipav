@@ -234,6 +234,10 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
             	pointsButton.setEnabled(false);
             }
         } else if (command.equals("Mask")) {
+        	if (maskImage == null) {
+        		MipavUtil.displayError("No mask image has been found");
+        		return;
+        	}
         	int i, j;
         	int firstLabel = -1;
         	// maskImage is same size as image
