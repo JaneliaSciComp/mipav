@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmGaussianBlur;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -31,7 +32,7 @@ import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
-public abstract class WormSegmentation
+public abstract class WormSegmentation extends AlgorithmBase
 {
 	public WormSegmentation() {}
 
@@ -1269,5 +1270,21 @@ public abstract class WormSegmentation
     	return countValues;
     }
 
+
+	protected Vector<Vector3f> results;
+	public Vector<Vector3f> getResults()
+	{
+		return results;
+	}
+	
+	protected String outputDir;
+	public void setOutputDir( String dir )
+	{
+		outputDir = new String(dir);
+	}
+	public String getOutputDir()
+	{
+		return outputDir;
+	}
 
 }

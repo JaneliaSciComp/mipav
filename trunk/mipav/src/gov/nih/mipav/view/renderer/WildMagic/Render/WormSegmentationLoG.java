@@ -819,6 +819,12 @@ public class WormSegmentationLoG extends WormSegmentation
 
 	}
 
+	@Override
+	public void runAlgorithm() {
+		// TODO Auto-generated method stub
+		
+	}
+
 
 
 

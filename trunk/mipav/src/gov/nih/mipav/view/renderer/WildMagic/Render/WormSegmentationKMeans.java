@@ -96,4 +96,10 @@ public class WormSegmentationKMeans extends WormSegmentation
 		temp = null;
 		return seamCells;
 	}
+
+	@Override
+	public void runAlgorithm() {
+		results = WormSegmentationKMeans.seamCellSegmentation(srcImage);
+		System.err.println( outputDir + " " + results.size() );
+	}
 }

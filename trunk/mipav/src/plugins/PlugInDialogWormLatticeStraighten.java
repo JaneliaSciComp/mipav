@@ -94,6 +94,7 @@ import java.util.Vector;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 
 import WildMagic.LibFoundation.Containment.ContBox3f;
@@ -205,16 +206,16 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			if ( segmentSeamCells.isSelected() )
 			{
 //				segmentOutline();
-				segmentSeamCells(includeRange, baseFileDir, baseFileNameText.getText() );
+				segmentSeamCells( null, includeRange, baseFileDir, baseFileNameText.getText() );
 //				seamCellInfo();
 			}
 			if ( buildLattice.isSelected() )
 			{
-				buildLattice( includeRange,  baseFileDir, baseFileNameText.getText() );
+				buildLattice( null, includeRange,  baseFileDir, baseFileNameText.getText() );
 			}
 			if ( latticeStraighten.isSelected() )
 			{
-				latticeStraighten( includeRange,  baseFileDir, baseFileNameText.getText() );
+				latticeStraighten( null, includeRange,  baseFileDir, baseFileNameText.getText() );
 			}
 			if ( calcStatistics.isSelected() )
 			{
@@ -222,11 +223,11 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			}
 			if ( registerImages.isSelected() )
 			{
-				registerImages( includeRange,  baseFileDir, baseFileNameText.getText() );
+				registerImages( null, includeRange,  baseFileDir, baseFileNameText.getText() );
 			}
 			if ( calcMaxProjection.isSelected() )
 			{
-				calcMaxProjection( includeRange,  baseFileDir, baseFileNameText.getText() );
+				calcMaxProjection( null, includeRange,  baseFileDir, baseFileNameText.getText() );
 			}
 			if ( generateTrainingData.isSelected() )
 			{
@@ -396,18 +397,21 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 	}
 
 
-	public static void segmentSeamCells( final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName )
+	public static void segmentSeamCells( JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName )
 	{
 		ModelImage image = null; 
 		if ( includeRange != null )
-		{			
+		{
+			int numSteps = 6;
+			int step = 0;
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
 				String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
 				File voiFile = new File(baseFileDir + File.separator + fileName);
 				if ( voiFile.exists() )
 				{
-//					System.err.print( fileName + "   " );
+					step = 1;
+					System.err.print( fileName + "   " );
 					FileIO fileIO = new FileIO();
 					if(image != null) {
 						if ( (i%10) == 0 )
@@ -432,15 +436,41 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 					if (imageName.contains("_gblur")) {
 						imageName = imageName.replaceAll("_gblur", "");
 					}
-								
-									
+					if ( batchProgress != null )
+					{
+						batchProgress.setValue((int)(100 * (float)(i*numSteps + step++)/(float)(numSteps*includeRange.size())));
+						batchProgress.update(batchProgress.getGraphics());
+					}
+
 					Vector<Vector3f> dataPoints = new Vector<Vector3f>();
 					// calculate a robust histogram of the data values, used to find the left-right marker thresholds:
-					float[] max_LR = WormSegmentationWindowing.robustHistogram(image, dataPoints);						
+					float[] max_LR = WormSegmentationWindowing.robustHistogram(image, dataPoints);	
+					if ( batchProgress != null )
+					{
+						batchProgress.setValue((int)(100 * (float)(i*numSteps + step++)/(float)(numSteps*includeRange.size())));
+						batchProgress.update(batchProgress.getGraphics());
+					}
 					
 					Vector<Vector3f> annotationskMeans = WormSegmentationKMeans.seamCellSegmentation(image);
+					if ( batchProgress != null )
+					{
+						batchProgress.setValue((int)(100 * (float)(i*numSteps + step++)/(float)(numSteps*includeRange.size())));
+						batchProgress.update(batchProgress.getGraphics());
+					}
+					
 					Vector<Vector3f> annotationsWindow = WormSegmentationWindowing.seamCellSegmentation(image, max_LR[0], max_LR[1]);
-					Vector<Vector3f> annotationsLoG = WormSegmentationLoG.seamCellSegmentation(image);			
+					if ( batchProgress != null )
+					{
+						batchProgress.setValue((int)(100 * (float)(i*numSteps + step++)/(float)(numSteps*includeRange.size())));
+						batchProgress.update(batchProgress.getGraphics());
+					}
+					
+					Vector<Vector3f> annotationsLoG = WormSegmentationLoG.seamCellSegmentation(image);	
+					if ( batchProgress != null )
+					{
+						batchProgress.setValue((int)(100 * (float)(i*numSteps + step++)/(float)(numSteps*includeRange.size())));
+						batchProgress.update(batchProgress.getGraphics());
+					}
 					
 					Vector<Vector3f> seamCells = new Vector<Vector3f>();
 					Vector<Vector3f> tempSeamCells = new Vector<Vector3f>();
@@ -466,6 +496,11 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 					if ( newSize > 22 )
 					{
 						newSize = WormSegmentation.reduceDuplicates(image, tempSeamCells);
+					}
+					if ( batchProgress != null )
+					{
+						batchProgress.setValue((int)(100 * (float)(i*numSteps + step++)/(float)(numSteps*includeRange.size())));
+						batchProgress.update(batchProgress.getGraphics());
 					}
 
 					Vector3f negCenter = new Vector3f(-1,-1,-1);
@@ -827,7 +862,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 //		System.err.println( "Done seam cell info" );
 //	}
 	
-	public static void latticeStraighten( final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName )
+	public static void latticeStraighten( JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName )
 	{
 		ModelImage image = null;
 		if ( includeRange != null )
@@ -893,7 +928,12 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 						model.dispose();
 						model = null;
 					}
-				}    				
+				}
+				if ( batchProgress != null )
+				{
+					batchProgress.setValue((int)(100 * (float)(i+1)/(float)includeRange.size()));
+					batchProgress.update(batchProgress.getGraphics());
+				}
 			}
 		}
 
@@ -966,7 +1006,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		}
 	}     
 
-	public static void buildLattice( final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName )
+	public static void buildLattice( JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName )
 	{
 		ModelImage image = null;
 		if ( includeRange != null )
@@ -975,6 +1015,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			int foundCount = 0;
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
+				int step = 1;
 				String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
 				FileIO fileIO = new FileIO();
 				if ( image != null )
@@ -1016,7 +1057,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 //						nose.getCurves().add(seamCells.elementAt(0).getCurves().remove(j));
 //					}
 				}
-				if ( buildLattice( image, seamCells.elementAt(0), nose, includeRange.elementAt(i), baseFileDir, baseFileName ) )
+				if ( buildLattice( batchProgress, i, includeRange.size(), image, seamCells.elementAt(0), nose, includeRange.elementAt(i), baseFileDir, baseFileName ) )
 				{
 					foundCount++;
 				}
@@ -1036,8 +1077,10 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		
 	}     
 
-	private static boolean buildLattice( ModelImage image, VOI annotations, VOI nose, int time, String baseFileDir, String baseFileName )
+	private static boolean buildLattice( JProgressBar batchProgress, int imageCount, int numImages, ModelImage image, VOI annotations, VOI nose, int time, String baseFileDir, String baseFileName )
 	{
+		int numSteps = 3;
+		int step = 1;
 		long startTime = System.currentTimeMillis();
 		boolean print = false;
 		/** Step (1) Attempt to find the tenth pair of seam cells in the lattice. 
@@ -1110,6 +1153,11 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 					tenthPairs.remove(i);
 				}
 			}
+		}
+		if ( batchProgress != null )
+		{
+			batchProgress.setValue((int)(100 * (float)(imageCount*numSteps + step++)/(float)(numSteps*numImages)));
+			batchProgress.update(batchProgress.getGraphics());
 		}
 		
 		LatticeModel model = new LatticeModel( image );
@@ -1191,6 +1239,11 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			targetLength = Math.min(20, targetLength);
 			sequencePairs( startTime, model, nosePts, positions, sequence, pairLists, tenthPair, targetLength, total, sequenceList );
 		}
+		if ( batchProgress != null )
+		{
+			batchProgress.setValue((int)(100 * (float)(imageCount*numSteps + step++)/(float)(numSteps*numImages)));
+			batchProgress.update(batchProgress.getGraphics());
+		}
 //		System.err.println( "buildLattice time 1 = " + AlgorithmBase.computeElapsedTime(startTime) + " " + sequenceList.size() );
 		startTime = System.currentTimeMillis();
 		
@@ -1198,6 +1251,11 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		orderSequences( startTime, image, model, nosePts, positions, sequenceList, finalLatticeList );
 //		System.err.println( "buildLattice time 2 = " + AlgorithmBase.computeElapsedTime(startTime) );
 
+		if ( batchProgress != null )
+		{
+			batchProgress.setValue((int)(100 * (float)(imageCount*numSteps + step++)/(float)(numSteps*numImages)));
+			batchProgress.update(batchProgress.getGraphics());
+		}
 		for ( int j = 0; j < Math.min( 5, finalLatticeList.size()); j++ )
 		{
 			image.unregisterAllVOIs();
@@ -2497,13 +2555,13 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		}
 	}
 	
-	public static void createMaximumProjectionAVI(final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName)
+	public static void createMaximumProjectionAVI( JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName)
 	{
-		registerImages(includeRange, baseFileDir, baseFileName);
-		calcMaxProjection(includeRange, baseFileDir, baseFileName);		
+		registerImages(batchProgress, includeRange, baseFileDir, baseFileName);
+		calcMaxProjection(batchProgress, includeRange, baseFileDir, baseFileName);		
 	}
 
-	private static void registerImages(final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName)
+	private static void registerImages( JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName)
 	{
 //		long startTime = System.currentTimeMillis();
 		ModelImage image = null, prevImage = null;
@@ -2517,20 +2575,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 				File voiFile = new File(baseFileDir + File.separator + fileName);
 				if ( voiFile.exists() )
 				{
-//					System.err.println( fileName );
 					FileIO fileIO = new FileIO();
-					if( image != null )
-					{
-						if ( (i%10) == 0 )
-						{
-							image.disposeLocal(true);
-						}
-						else
-						{
-							image.disposeLocal();
-						}
-						image = null;
-					}
 					image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
 					int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 0;  
 					int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 0;  
@@ -2538,7 +2583,12 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 					maxExtents[0] = Math.max(maxExtents[0], dimX);
 					maxExtents[1] = Math.max(maxExtents[1], dimY);
 					maxExtents[2] = Math.max(maxExtents[2], dimZ);
-				}    				
+					if ( image != null )
+					{
+						image.disposeLocal();
+						image = null;
+					}
+				}
 			}
 
 			for ( int i = 0; i < includeRange.size(); i++ )
@@ -2574,8 +2624,13 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 						}
 						prevImage = result;
 					}
-					
-				}    				
+				}
+
+				if ( batchProgress != null )
+				{
+					batchProgress.setValue((int)(100 * (float)(i+1)/(float)includeRange.size()));
+					batchProgress.update(batchProgress.getGraphics());
+				}
 			}
 		}
 
@@ -2604,82 +2659,88 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 	}
 
 
-	private static void calcMaxProjection(final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName)
+	private static void calcMaxProjection(JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName)
 	{
 		ModelImage image = null, maximumProjectionImage = null;
-//		int[] currentMPImage = new int[]{0};
-//		if ( includeRange != null )
-//		{
-//			int mpSliceCount = 0;
-//			for ( int i = 0; i < includeRange.size(); i++ )
-//			{
-//				String fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
-//						"output_images" + File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_straight_register" + ".tif";
-//				File voiFile = new File(baseFileDir + File.separator + fileName);
-//				if ( voiFile.exists() )
-//				{					
-//					mpSliceCount++;
-//				}
-//			}
-//			for ( int i = 0; i < includeRange.size(); i++ )
-//			{
-//				String fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
-//						"output_images" + File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_straight_register" + ".tif";
-//				File voiFile = new File(baseFileDir + File.separator + fileName);
-//
-////				System.err.println( fileName );
-//				if ( voiFile.exists() )
-//				{
-//					FileIO fileIO = new FileIO();
-//					if( image != null )
-//					{
-//						if ( (i%10) == 0 )
-//						{
-//							image.disposeLocal(true);
-//						}
-//						else
-//						{
-//							image.disposeLocal();
-//						}
-//						image = null;
-//					}
-//					image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);
-//					if ( maximumProjectionImage == null )
-//					{
-//						int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1; // dimX
-//						int dimY = image.getExtents().length > 2 ? image.getExtents()[2] : 1; // use dimZ for y projection
-//						maximumProjectionImage = new ModelImage( image.getType(), new int[]{ dimX, dimY, mpSliceCount}, baseFileName + "_MP_Y.tif" );
-//						currentMPImage[0] = 0;
-//					}
-//					calcMaximumProjectionY( image, maximumProjectionImage, currentMPImage );
-//				}    				
-//			}
-//		}
-//		
-//		if( image != null )
-//		{
-//			image.disposeLocal();
-//			image = null;
-//		}
+		int[] currentMPImage = new int[]{0};
+		if ( includeRange != null )
+		{
+			int mpSliceCount = 0;
+			for ( int i = 0; i < includeRange.size(); i++ )
+			{
+				String fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
+						"output_images" + File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_straight_register" + ".tif";
+				File voiFile = new File(baseFileDir + File.separator + fileName);
+				if ( voiFile.exists() )
+				{					
+					mpSliceCount++;
+				}
+			}
+			for ( int i = 0; i < includeRange.size(); i++ )
+			{
+				String fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
+						"output_images" + File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_straight_register" + ".tif";
+				File voiFile = new File(baseFileDir + File.separator + fileName);
 
-		String fileName = baseFileName + "_MP_Y.tif";
-		File voiFile = new File(baseFileDir + File.separator + fileName);		
-		FileIO fileIO = new FileIO();
-		maximumProjectionImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);
+//				System.err.println( fileName );
+				if ( voiFile.exists() )
+				{
+					FileIO fileIO = new FileIO();
+					if( image != null )
+					{
+						if ( (i%10) == 0 )
+						{
+							image.disposeLocal(true);
+						}
+						else
+						{
+							image.disposeLocal();
+						}
+						image = null;
+					}
+					image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);
+					if ( maximumProjectionImage == null )
+					{
+						int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1; // dimX
+						int dimY = image.getExtents().length > 2 ? image.getExtents()[2] : 1; // use dimZ for y projection
+						maximumProjectionImage = new ModelImage( image.getType(), new int[]{ dimX, dimY, mpSliceCount}, baseFileName + "_MP_Y.tif" );
+						currentMPImage[0] = 0;
+					}
+					calcMaximumProjectionY( image, maximumProjectionImage, currentMPImage );
+				}
+				if ( batchProgress != null )
+				{
+					batchProgress.setValue((int)(100 * (float)(i+1)/(float)includeRange.size()));
+					batchProgress.update(batchProgress.getGraphics());
+				}
+			}
+		}
+		
+		if ( image != null )
+		{
+			image.disposeLocal();
+			image = null;
+		}
+
+//		String fileName = baseFileName + "_MP_Y.tif";
+//		File voiFile = new File(baseFileDir + File.separator + fileName);		
+//		FileIO fileIO = new FileIO();
+//		maximumProjectionImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);
 		
 		if ( maximumProjectionImage != null )
 		{
-			fileName = baseFileDir + File.separator;
+//			fileName = baseFileDir + File.separator;
 ////			System.err.println( "Saving mp image to : " + fileName + " " + maximumProjectionImage.getImageName() + ".tif" );
-			ModelImage.saveImage( maximumProjectionImage, maximumProjectionImage.getImageName() + ".avi", fileName, false ); 
-//            final ImageStack is = ModelImageToImageJConversion.convert3D(maximumProjectionImage);
-//            new ImagePlus("ImageJ:" + maximumProjectionImage.getImageName(), is).show();
-//            new ij.ImageJ();
+//			ModelImage.saveImage( maximumProjectionImage, maximumProjectionImage.getImageName() + ".avi", fileName, false ); 
+			
+            final ImageStack is = ModelImageToImageJConversion.convert3D(maximumProjectionImage);
+            new ImagePlus("ImageJ:" + maximumProjectionImage.getImageName(), is).show();
+            new ij.ImageJ();
             
 //			maximumProjectionImage.calcMinMax();
 //			new ViewJFrameImage(maximumProjectionImage);
-			maximumProjectionImage.disposeLocal();
-			maximumProjectionImage = null;
+//			maximumProjectionImage.disposeLocal();
+//			maximumProjectionImage = null;
 		}
 	}
 

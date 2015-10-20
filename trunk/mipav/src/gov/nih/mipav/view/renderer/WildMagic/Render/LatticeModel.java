@@ -1783,6 +1783,11 @@ public class LatticeModel {
 		// if > 20 -- all yellow
 		// if == 20 or 22 -- all green
 
+		if ( annotationVOIs == null )
+		{
+			return;
+		}
+		
 		int count = 0;
 		for (int i = 0; i < annotationVOIs.getCurves().size(); i++)
 		{
@@ -2927,6 +2932,7 @@ public class LatticeModel {
 		this.lattice = newLattice;
 		if ( this.lattice == null )
 		{
+			clearCurves(true);
 			return;
 		}
 
@@ -3279,8 +3285,8 @@ public class LatticeModel {
 	/**
 	 * Resets the natural spline curves when the lattice changes.
 	 */
-	private void clearCurves() {
-
+	private void clearCurves( boolean clearGrid )
+	{
 		if (center != null) {
 			center.dispose();
 			center = null;
@@ -3329,6 +3335,15 @@ public class LatticeModel {
 			imageA.unregisterVOI(displayContours);
 			displayContours.dispose();
 			displayContours = null;
+		}
+		if ( clearGrid )
+		{
+			if (latticeGrid != null) {
+				for (int i = latticeGrid.size() - 1; i >= 0; i--) {
+					final VOI marker = latticeGrid.remove(i);
+					imageA.unregisterVOI(marker);
+				}
+			} 
 		}
 	}
 
@@ -3853,7 +3868,7 @@ public class LatticeModel {
 	 * Generates the set of natural spline curves to fit the current lattice.
 	 */
 	private void generateCurves() {
-		clearCurves();
+		clearCurves(false);
 		short sID;
 
 		// 1. The center line of the worm is calculated from the midpoint between the left and right points of the
@@ -3902,6 +3917,7 @@ public class LatticeModel {
 		length = centerSpline.GetLength(0, 1);
 		allTimes = new float[(int) (Math.ceil(length)) + 1];
 		extent = -1;
+		float minDiameter = Float.MAX_VALUE;
 		for (int i = 0; i <= length; i++) {
 			final float t = centerSpline.GetTime(i);
 			centerPositions.add(centerSpline.GetPosition(t));
@@ -3920,6 +3936,10 @@ public class LatticeModel {
 			if (diameter > extent) {
 				extent = (int) Math.ceil(diameter);
 			}
+			if ( (diameter > 0) && (diameter < minDiameter) )
+			{
+				minDiameter = diameter;
+			}
 			wormDiameters.add(diameter);
 			rightVectors.add(rightDir);
 
@@ -3928,6 +3948,13 @@ public class LatticeModel {
 			upVectors.add(upDir);
 		}
 		extent += 10;
+		for ( int i = 0; i < wormDiameters.size(); i++ )
+		{
+			if ( wormDiameters.elementAt(i) < minDiameter )
+			{
+				wormDiameters.set(i, minDiameter);
+			}
+		}
 
 		// 6. Once the sample planes are defined, the worm cross-section within each plane needs to be determined.
 		// Without a model of the worm cross-section the sample planes will overlap in areas where the worm folds
@@ -4020,14 +4047,14 @@ public class LatticeModel {
 					final Vector3f start = new Vector3f(ellipse.elementAt(j));
 					final Vector3f pt = ellipse.elementAt(j);
 					Vector3f diff = Vector3f.sub(pt, centerPositions.elementAt(i));
-					diff.normalize();
+					float length = diff.normalize();
 
 					pt.copy(centerPositions.elementAt(i));
 					int x = Math.round(pt.X);
 					int y = Math.round(pt.Y);
 					int z = Math.round(pt.Z);
 					float currentValue = model.getFloat(x, y, z);
-					while ( ( (currentValue != 0) && Math.abs(currentValue - value) <= SampleLimit)) {
+					while ( ( (length != 0) && (currentValue != 0) && Math.abs(currentValue - value) <= SampleLimit)) {
 						pt.add(diff);
 						x = Math.round(pt.X);
 						y = Math.round(pt.Y);
@@ -4050,8 +4077,8 @@ public class LatticeModel {
 							currentValue = model.getFloat(x, y, z);
 							if ( ( (currentValue != 0) && Math.abs(currentValue - value) <= SampleLimit)) {
 								diff = Vector3f.sub(start, pt);
-								diff.normalize();
-								while ( !pt.isEqual(start) && (distPt < distStart)) {
+								length = diff.normalize();
+								while ( (length != 0) && !pt.isEqual(start) && (distPt < distStart)) {
 									pt.add(diff);
 									x = Math.round(pt.X);
 									y = Math.round(pt.Y);
@@ -4605,7 +4632,11 @@ public class LatticeModel {
 		final int dimY = markerImage.getExtents().length > 1 ? markerImage.getExtents()[1] : 1;
 		final int dimZ = markerImage.getExtents().length > 2 ? markerImage.getExtents()[2] : 1;
 
-		dir.normalize();
+		float length = dir.normalize();
+		if ( length == 0 )
+		{
+			return;
+		}
 		final Vector3f temp = new Vector3f(pt);
 		temp.add(dir);
 		int x = Math.round(temp.X);
@@ -5120,7 +5151,7 @@ public class LatticeModel {
 					minOverall = dist;
 				}
 			}
-			for (int j = 0; j < right.size(); j++) {
+			for (int j = 1; j < right.size(); j++) {
 				final float dist = tempL.distance(right.elementAt(j));
 				if (dist < minOverall) {
 					minOverall = dist;
@@ -5135,7 +5166,7 @@ public class LatticeModel {
 					minOverall = dist;
 				}
 			}
-			for (int j = 0; j < left.size(); j++) {
+			for (int j = 1; j < left.size(); j++) {
 				final float dist = tempR.distance(left.elementAt(j));
 				if (dist < minOverall) {
 					minOverall = dist;
@@ -5855,6 +5886,7 @@ public class LatticeModel {
 			showSelected = null;
 		}
 		showSelectedVOI = null;
+		colorAnnotations();
 		updateLattice(true);
 	}
 
