@@ -56,7 +56,7 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
     
     private JRadioButton KruskalButton;
     
-    private JRadioButton PowerButton;
+    //private JRadioButton PowerButton;
     
     private JRadioButton PrimButton;
     
@@ -97,13 +97,15 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
     
     private ViewJComponentEditImage componentImage;
     
-    private JComboBox imageComboBox;
+    private JComboBox<String> imageComboBox;
     
     private String maskName;
     
     private ModelImage maskImage;
     
     private ViewUserInterface UI = ViewUserInterface.getReference();
+    
+    private ArrayList<labelIndexItem> pointList = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -189,6 +191,9 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         	int yDim = image.getExtents()[1];
         	int sliceSize = xDim * yDim;
         	voiVector = image.getVOIs();
+        	if (pointList == null) {
+        		pointList = new ArrayList<labelIndexItem>();
+        	}
             for (i = presentvoiIndex; i < voiVector.size(); i++) {
             	presentVOI = image.getVOIs().VOIAt(i);
                 if (presentVOI.getCurveType() == VOI.POINT) {
@@ -198,8 +203,7 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
                 		y = Math.round(tmppt[j].Y);
                 		z = Math.round(tmppt[j].Z);
                 		index = x + y * xDim + z * sliceSize;
-                		index_seeds.add(index);
-                		index_labels.add(pointNum);
+                		pointList.add(new labelIndexItem(pointNum, index));
                 		if (pointNum == 1) {
                 			haveOne = true;
                 		}
@@ -238,7 +242,7 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         		MipavUtil.displayError("No mask image has been found");
         		return;
         	}
-        	int i, j;
+        	int i;
         	int firstLabel = -1;
         	// maskImage is same size as image
         	int xDim = maskImage.getExtents()[0];
@@ -261,14 +265,12 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         	short maxValue = (short)maskImage.getMax();
         	if (twoButton.isSelected()) {
         	    for (i = 0; i < length; i++) {
-        	        if (buffer[i] == maxValue) { 
+        	        if (buffer[i] == minValue) { 
         	        	index_seeds.add(i);
                 		index_labels.add((short)1);
                 		haveOne = true;
         	        }
-        	    }
-        	    for (i = 0; i < length; i++) {
-        	        if (buffer[i] == minValue) { 
+        	        else if (buffer[i] == maxValue) { 
         	        	index_seeds.add(i);
                 		index_labels.add((short)2);
                 		haveTwo = true;
@@ -276,21 +278,19 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         	    }
         	}
         	else { // multiButton.isSelected()
-        		for (j = 1; j <= maxValue; j++) {
-        			for (i = 0; i < length; i++) {
-        				if (buffer[i] == j) {
-        					index_seeds.add(i);
-        					index_labels.add((short)j);
-        					if (!haveOne) {
-        						haveOne = true;
-        						firstLabel = j;
-        					}
-        					else if (haveOne && (!haveTwo) && (j != firstLabel)) {
-        						haveTwo = true;
-        					}
-        				}
-        			}
-        		}
+    			for (i = 0; i < length; i++) {
+    				if (buffer[i] != 0) {
+    					index_seeds.add(i);
+    					index_labels.add((short)buffer[i]);
+    					if (!haveOne) {
+    						haveOne = true;
+    						firstLabel = buffer[i];
+    					}
+    					else if (haveOne && (!haveTwo) && (buffer[i] != firstLabel)) {
+    						haveTwo = true;
+    					}
+    				}
+    			}
         	}
         	maskButton.setEnabled(false);
         } else {
@@ -525,17 +525,23 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         gbc2.gridy = yPos2++;
         labelsPanel.add(twoButton, gbc2);
         
-        JLabel oneLabel = new JLabel("VOI 1 or maskImage maxValue for white foreground");
+        JLabel oneLabel = new JLabel("VOI 1 or maskImage minValue for black background seeds");
         oneLabel.setForeground(Color.black);
         oneLabel.setFont(serif12);
         gbc2.gridy = yPos2++;
         labelsPanel.add(oneLabel,gbc2);
         
-        JLabel twoLabel = new JLabel("VOI 2 or maskImage minValue for black background");
+        JLabel twoLabel = new JLabel("VOI 2 or maskImage maxValue for white foreground seeds");
         twoLabel.setForeground(Color.black);
         twoLabel.setFont(serif12);
         gbc2.gridy = yPos2++;
         labelsPanel.add(twoLabel,gbc2);
+        
+        JLabel grayLabel = new JLabel("Intermediate mask values do not contribute to two level seeds");
+        grayLabel.setForeground(Color.black);
+        grayLabel.setFont(serif12);
+        gbc2.gridy = yPos2++;
+        labelsPanel.add(grayLabel,gbc2);
 
         multiButton = new JRadioButton("Multiple labels", true);
         multiButton.setFont(serif12);
@@ -616,6 +622,7 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
+    	int i;
 
         if (KruskalButton.isSelected()) {
             algo = Kruskal;
@@ -635,6 +642,15 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         	MipavUtil.displayError("No 2 point is present");
         	return false;
         }
+        
+        if (pointList != null) {
+        	Collections.sort(pointList, new labelIndexComparator());
+        	for (i = 0; i < pointList.size(); i++) {
+        		index_labels.add(pointList.get(i).getLabel());
+        		index_seeds.add(pointList.get(i).getIndex());
+        	}
+        	pointList.clear();
+        } // if (pointList != null)
 
         return true;
     }
@@ -760,13 +776,13 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
      *
      * @return  Newly created combo box.
      */
-    private JComboBox buildComboBox(ModelImage image) {
+    private JComboBox<String> buildComboBox(ModelImage image) {
         ViewUserInterface UI;
         ModelImage nextImage;
         boolean doAdd;
         int i;
 
-        JComboBox comboBox = new JComboBox();
+        JComboBox<String> comboBox = new JComboBox<String>();
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
 
@@ -802,4 +818,68 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
 
         return comboBox;
     }
+    
+    private class labelIndexItem {
+
+        /** DOCUMENT ME! */
+        private final short label;
+
+        /** DOCUMENT ME! */
+        private final int index;
+
+        /**
+         * Creates a new labelIndexItem object.
+         * 
+         * @param label
+         * @param index
+         */
+        public labelIndexItem(final short label, final int index) {
+            this.label = label;
+            this.index = index;
+        }
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public short getLabel() {
+            return label;
+        }
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int getIndex() {
+            return index;
+        }
+    }
+        
+    private class labelIndexComparator implements Comparator<labelIndexItem> {
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @param o1 DOCUMENT ME!
+         * @param o2 DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int compare(final labelIndexItem o1, final labelIndexItem o2) {
+            final int a = o1.getIndex();
+            final int b = o2.getIndex();
+
+            if (a < b) {
+                return -1;
+            } else if (a > b) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+
+    }
+
 }
