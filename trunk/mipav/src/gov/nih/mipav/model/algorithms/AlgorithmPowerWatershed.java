@@ -117,6 +117,7 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
     }
     
     private void rbtInteractiveTest() {
+    	// Works the sames as test in original C code.
     	Rbt T = CreeRbtVide(1);
     	  String r;;
     	  double p;
@@ -305,6 +306,7 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
         ModelImage colorImage = null;
         ModelImage grayImage = null;
         ModelImage probaImage = null;
+        int i;
         int nblabels;
         if (srcImage.getNDims() == 2) {
         	zDim = 1;
@@ -330,7 +332,12 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
         
         M = zDim * xDim * (yDim - 1) + zDim * (xDim - 1) * yDim + (zDim - 1) * xDim * yDim;
         edges = new int[2][M];
-        nblabels = index_labels.get(index_labels.size()-1);
+        nblabels = index_labels.get(0);
+        for (i = 1; i < index_labels.size(); i++) {
+            if (index_labels.get(i) > nblabels)	{
+            	nblabels = index_labels.get(i); 
+            }
+        }
         
         compute_edges(edges, xDim, yDim, zDim);
         
@@ -1386,6 +1393,7 @@ int numvoisins = 6;
 short G[] = new short[N];
 for (i=0;i<size_seeds;i++)
   G[seeds.get(i)] = labels.get(i);
+  
          
 Rbt L;                           
 
@@ -1411,6 +1419,9 @@ for (u=0;u<M;u++)
 		}
 	    }
 	  i++;
+	  if (i == size_seeds) {
+		  break;
+	  }
 	}
   }
 
@@ -1686,7 +1697,9 @@ return;
 		   Rbt T, RbtElt x)
 		 /* ==================================== */
 		 {
-		   while (x.getLeft() != T.getNil()) x = x.getLeft();
+		   while (x.getLeft() != T.getNil()) {
+			   x = x.getLeft();
+		   }
 		   return x;
 		 } /* RbtMinimum() */
 
@@ -1836,13 +1849,7 @@ return;
       RbtTransRec(T, A, A.getRoot());
       Preferences.debug("Finished RbtTransRec in RbtReAlloc\n", Preferences.DEBUG_ALGORITHM);
       //A = T;
-      A.setMax(T.getMax());
-      A.setUtil(T.getUtil());
-      A.setMaxutil(T.getMaxutil());
-      A.setRoot(T.getRoot());
-      A.setNil(T.getNil());
-      A.setLibre(T.getLibre());
-      A.setElts(T.getElts());
+      RbtCopy(A,T);
     } /* RbtReAlloc() */
 
     private void RbtTransRec(
@@ -3035,6 +3042,16 @@ Bucket = null;
 		  return parent;
 	  }
 	} 
+  
+    private void RbtCopy(Rbt dest, Rbt src) {
+    	dest.setMax(src.getMax());
+    	dest.setUtil(src.getUtil());
+    	dest.setMaxutil(src.getMaxutil());
+    	dest.setRoot(src.getRoot());
+    	dest.setNil(src.getNil());
+    	dest.setLibre(src.getLibre());
+    	dest.setElts(src.getElts());
+    }
 
 	class Rbt {
 	  int max;             /* taille max du rbt (en nombre de points) */
