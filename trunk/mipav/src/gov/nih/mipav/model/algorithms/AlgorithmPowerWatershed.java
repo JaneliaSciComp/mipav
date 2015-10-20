@@ -4,6 +4,7 @@ package gov.nih.mipav.model.algorithms;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.jama.LUSOL;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
@@ -879,7 +880,7 @@ return;
   */
   {
     int i, j, v1, v2; 
-    // int k, l;
+    int k, l;
     boolean seeded_vertex[] = new boolean[N];
     int indic_sparse[] = new int[N];
     int nb_same_edges[] = new int[M];
@@ -915,6 +916,109 @@ return;
         index_seeds[i] = indic_vertex[index_seeds[i]]; 
         seeded_vertex[index_seeds[i]]= true;
       }
+    
+    // Use LUSOL
+    // a for value, indc for row index, indr for column index, nelem for number of elements, m for number of rows,
+    // n for number of columns
+    //The system to solve is A x = -B X2 
+
+    // building matrix A : laplacian for unseeded nodes
+    double A_a[] = new double[2*M+N];
+    int A_indc[] =  new int[2*M+N];
+    int A_indr[] = new int[2*M+N];
+    int A_nelem[] = new int[1];
+    int A_m[] = new int[1];
+    int A_n[] = new int[1];
+    
+    if (fill_A(A_a, A_indc, A_indr, A_nelem, A_m, A_n, N, M, numb_boundary, index_edges, seeded_vertex,
+    		indic_sparse, nb_same_edges) == true) 
+    {
+    	// building boundary matrix B   
+    	double B_a[] = new double[2*M+N];
+        int B_indc[] =  new int[2*M+N];
+        int B_indr[] = new int[2*M+N];
+        int B_nelem[] = new int[1];
+        int B_m[] = new int[1];
+        int B_n[] = new int[1];
+        fill_B(B_a, B_indc, B_indr, B_nelem, B_m, B_n, N, M, numb_boundary,   
+        		index_edges, seeded_vertex, indic_sparse , nb_same_edges);
+        
+       // building the right hand side of the system
+        double X[] = new double[numb_boundary];
+        double b[] = new double[N-numb_boundary];
+        for(l=0;l<nb_labels-1;l++)
+  	{
+  	  // building vector X 
+  	  int rnz=0;
+  	  for (i=0;i<numb_boundary;i++)
+  	    {
+  	      X[rnz++] = boundary_values[l][i];
+  	    }
+  	  
+  	  
+  	  // B * X
+  	  for (i = 0; i < B_nelem[0]; i++) {
+  	      b[B_indc[i]] -= B_a[i]*X[B_indr[i]];	 
+  	  }
+  	  
+  	int m      = 0;
+    int n      = 0;
+
+  for (k = 0; k < A_nelem[0]; k++) {
+     m = Math.max(m, A_indc[k]);
+     n = Math.max(n, A_indr[k]);
+  }
+  int lena = Math.max(2*A_nelem[0], Math.max(10*m, 10*n));
+  int luparm[] = new int[30];
+  double parmlu[] = new double[30];
+  double factol = 2.0;    // > 1.0
+  int TPiv  = 0;     // 0=TPP      1=TRP      2=TCP
+  int iprint = 20;
+  final int maxm = 100000;
+  final int maxn = 100000;
+  int lenc[] = new int[maxn];
+  int lenr[] = new int[maxm];
+  int p[] = new int[maxm];
+  int q[] = new int[maxn];
+  int iploc[] = new int[maxn];
+  int iqloc[] = new int[maxm];
+  int ipinv[] = new int[maxm];
+  int iqinv[] = new int[maxn];
+  int locc[] = new int[maxn];
+  int locr[] = new int[maxm];
+  double w[] = new double[maxn];
+  int inform[] = new int[1];
+  LUSOL lu = new LUSOL();
+  	  
+  	// ------------------------------------------------------------------
+  		  // Set parameters for LUSOL's lu1fac.
+  		  // ------------------------------------------------------------------
+  		  luparm[0] = iprint;     // File number for printed messages
+  		  luparm[1] = 10;         // Print level. >= 0 to get singularity info.
+  		                          //              >=10 to get more LU statistics.
+  		                          //              >=50 to get info on each pivot.
+  		  luparm[2] = 5;          // maxcol
+  		  luparm[5] = TPiv;       // Threshold Pivoting: 0 = TPP, 1 = TRP, 2 = TCP
+  		  luparm[7] = 1;          // keepLU
+  		  parmlu[0] = factol;     // Ltol1:  max |Lij| during Factor
+  		  parmlu[1] = factol;     // Ltol2:  max |Lij| during Update 
+  		  parmlu[2] = 3.0e-13;    // small:  drop tolerance
+  		  parmlu[3] = 3.7e-11;    // Utol1:  absolute tol for small Uii
+  		  parmlu[4] = 3.7e-11;    // Utol2:  relative tol for small Uii
+  		  parmlu[5] = 3.0;        // Uspace: 
+  		  parmlu[6] = 0.3;        // dens1
+  		  parmlu[7] = 0.5;        // dens2
+
+  		  // ------------------------------------------------------------------
+  		  // Factor  A = L U.
+  		  // ------------------------------------------------------------------
+  	
+  		  lu.lu1fac( m    , n    , A_nelem[0], lena , luparm, parmlu,
+  		               A_a    , A_indc , A_indr , p    , q     , 
+  		               lenc , lenr , locc , locr ,           
+  		               iploc, iqloc, ipinv, iqinv, w     , inform );
+  	} // for(l=0;l<nb_labels-1;l++)
+    } // if (fill_A
     
     /* CSparse by Timothy A. Davis requires a GNU Lesser General Public License
      * This could only be distributed as libraries in a binary format 
@@ -1000,6 +1104,120 @@ return;
     free(nb_same_edges);*/
     return false;
   }
+    
+   private boolean fill_A(double A_a[],                 /* matrix A values to fill */
+		    int A_indc[], /* matrix A row values to fill */
+		    int A_indr[], /* matrix A column values to fill */
+		    int A_nelem[], /* matrix A number of entries */
+		    int A_m[], /* matrix A number of rows */
+		    int A_n[], /* matrix A number of columns */
+    	    int N,                  /* nb of nodes */
+    	    int M,                  /* nb of edges */
+    	    int numb_boundary,      /* nb of seeds */
+    	    int index_edges[][],      /* array of node index composing edges */
+    	    boolean seeded_vertex[],   /* index of seeded nodes */
+    	    int indic_sparse[],     /* array of index separating seeded and unseeded nodes */
+    	    int nb_same_edges[])    /* indicator of same edges presence */
+    /*===============================*/
+     // building matrix A (laplacian for unseeded nodes)
+    {
+      int k;
+      int rnz = 0;
+
+      // fill the diagonal
+      for (k=0;k<N; k++)
+        if (seeded_vertex[k]==false)
+          {
+    	  A_a[rnz] = indic_sparse[k]; //value
+    	  A_indc[rnz] = rnz ; //position 1
+    	  A_indr[rnz] = rnz ; //position 2
+    	  rnz ++;
+          }
+
+       int rnzs = 0;
+       int rnzu = 0;
+
+      for (k=0;k<N; k++)
+        if (seeded_vertex[k]==true)
+          {
+    	indic_sparse[k]=rnzs;
+    	rnzs++;
+          }
+        else 
+          {
+    	indic_sparse[k]=rnzu;
+    	rnzu++;
+          }
+
+      for (k=0;k<M; k++)
+        {
+          if ((seeded_vertex[index_edges[0][k]] == false)&&(seeded_vertex[index_edges[1][k]] == false))
+    	{
+    	  A_a[rnz] =  - nb_same_edges[k]-1;
+    	  A_indc[rnz] =  indic_sparse[index_edges[0][k]];
+    	  A_indr[rnz] =  indic_sparse[index_edges[1][k]];
+    	  rnz ++;
+    	  A_a[rnz] =  - nb_same_edges[k]-1;
+    	  A_indr[rnz] =  indic_sparse[index_edges[0][k]];
+    	  A_indc[rnz] =  indic_sparse[index_edges[1][k]];
+    	  rnz ++;
+    	  k = k + nb_same_edges[k];
+    	}
+        }
+      A_nelem[0] = rnz ;
+      A_m[0] = N-numb_boundary;
+      A_n[0] = N-numb_boundary;
+      return true;
+     
+    }
+   
+   private void fill_B(double B_a[],                 /* matrix B values to fill */
+		    int B_indc[], /* matrix B row values to fill */
+		    int B_indr[], /* matrix B column values to fill */
+		    int B_nelem[], /* matrix B number of entries */
+		    int B_m[], /* matrix B number of rows */
+		    int B_n[], /* matrix B number of columns */
+		    int N,                /* nb of nodes */
+		    int M,                /* nb of edges */
+		    int numb_boundary,    /* nb of seeds */
+		    int  index_edges[][],    /* array of node index composing edges */
+		    boolean seeded_vertex[], /* index of seeded nodes */
+		    int indic_sparse[],   /* array of index separating seeded and unseeded nodes */
+		    int nb_same_edges[])  /* indicator of same edges presence */
+	/*=======================================================================================*/
+	// building matrix B (laplacian for seeded nodes)
+	{
+	  int k;
+	  int rnz; 
+
+	  rnz = 0;
+	  for (k=0;k<M; k++)
+	    {
+	      if (seeded_vertex[index_edges[0][k]] == true)
+		{
+		  B_a[rnz] = - nb_same_edges[k]-1;
+		  B_indr[rnz] = indic_sparse[index_edges[0][k]];
+		  B_indc[rnz] = indic_sparse[index_edges[1][k]];
+		  rnz++;
+		  k=k+ nb_same_edges[k];
+		}
+	      else if(seeded_vertex[index_edges[1][k]] == true)
+		{
+		  B_a[rnz] =  - nb_same_edges[k]-1;;
+		  B_indr[rnz] = indic_sparse[index_edges[1][k]];
+		  B_indc[rnz] = indic_sparse[index_edges[0][k]];
+		  rnz++;
+		  k=k+ nb_same_edges[k];
+		}
+	    }
+	 
+	  B_nelem[0] = rnz ;
+	  B_m[0] = N- numb_boundary;
+	  B_n[0] = numb_boundary ;
+	  
+	}
+
+
     
    private void TriEdges(int index_edges[][],   /* array of vertices composing edges */
   	      int M,               /* nb of edges */
