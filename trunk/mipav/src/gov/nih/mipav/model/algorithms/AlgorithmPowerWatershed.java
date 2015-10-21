@@ -77,7 +77,9 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
     
     private int MAX;
     
-    private short Indics[] = null;       /* en global pour etre efficace 
+    private short Indics[] = null;       /* en global pour etre efficace */
+    
+    RandomNumberGen randomGen = new RandomNumberGen();
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -188,7 +190,6 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
     private void rbtRandomTest() {
     	  Rbt T = CreeRbtVide(1);
     	  int n = 0, d;
-    	  RandomNumberGen randomGen = new RandomNumberGen();
     	  int rand;
     	  Scanner input = new Scanner(System.in);
     	  String r;   
@@ -740,6 +741,9 @@ if (different_seeds == true)
 
    if(nb_vertices<SIZE_MAX_PLATEAU)
 	success = RandomWalker(edgesLCP, Nnb_edges, LCVP, indic_VP, nb_vertices, local_seeds, local_labels, k, nb_labels, proba);
+    if (error) {
+    	return;
+    }
    if ((nb_vertices>=SIZE_MAX_PLATEAU)||(success==false))
 	{ 
 	  Preferences.debug("Plateau of a big size ( " + nb_vertices + " vertices, " + Nnb_edges + " edges) the RW is not performed on it\n",
@@ -933,6 +937,52 @@ return;
     if (fill_A(A_a, A_indc, A_indr, A_nelem, A_m, A_n, N, M, numb_boundary, index_edges, seeded_vertex,
     		indic_sparse, nb_same_edges) == true) 
     {
+    	
+    	
+      int lena = Math.max(2*A_nelem[0], Math.max(10*A_m[0], 10*A_n[0]));
+      int luparm[] = new int[30];
+      double parmlu[] = new double[30];
+      double factol = 2.0;    // > 1.0
+      int TPiv  = 0;     // 0=TPP      1=TRP      2=TCP
+      int iprint = 20;
+      final int maxm = 100000;
+      final int maxn = 100000;
+      int lenc[] = new int[maxn];
+      int lenr[] = new int[maxm];
+      int p[] = new int[maxm];
+      int q[] = new int[maxn];
+      int iploc[] = new int[maxn];
+      int iqloc[] = new int[maxm];
+      int ipinv[] = new int[maxm];
+      int iqinv[] = new int[maxn];
+      int locc[] = new int[maxn];
+      int locr[] = new int[maxm];
+      double w[] = new double[maxn];
+      int inform[] = new int[1];
+      LUSOL lu = new LUSOL();
+      double x[] = new double[A_m[0]];
+      double X[] = new double[numb_boundary];
+      double b[] = new double[N-numb_boundary];
+      	  
+      	// ------------------------------------------------------------------
+      		  // Set parameters for LUSOL's lu1fac.
+      		  // ------------------------------------------------------------------
+      		  luparm[0] = iprint;     // File number for printed messages
+      		  luparm[1] = 10;         // Print level. >= 0 to get singularity info.
+      		                          //              >=10 to get more LU statistics.
+      		                          //              >=50 to get info on each pivot.
+      		  luparm[2] = 5;          // maxcol
+      		  luparm[5] = TPiv;       // Threshold Pivoting: 0 = TPP, 1 = TRP, 2 = TCP
+      		  luparm[7] = 1;          // keepLU
+      		  parmlu[0] = factol;     // Ltol1:  max |Lij| during Factor
+      		  parmlu[1] = factol;     // Ltol2:  max |Lij| during Update 
+      		  parmlu[2] = 3.0e-13;    // small:  drop tolerance
+      		  parmlu[3] = 3.7e-11;    // Utol1:  absolute tol for small Uii
+      		  parmlu[4] = 3.7e-11;    // Utol2:  relative tol for small Uii
+      		  parmlu[5] = 3.0;        // Uspace: 
+      		  parmlu[6] = 0.3;        // dens1
+      		  parmlu[7] = 0.5;        // dens2
+
     	// building boundary matrix B   
     	double B_a[] = new double[2*M+N];
         int B_indc[] =  new int[2*M+N];
@@ -944,8 +994,6 @@ return;
         		index_edges, seeded_vertex, indic_sparse , nb_same_edges);
         
        // building the right hand side of the system
-        double X[] = new double[numb_boundary];
-        double b[] = new double[N-numb_boundary];
         for(l=0;l<nb_labels-1;l++)
   	{
   	  // building vector X 
@@ -961,63 +1009,43 @@ return;
   	      b[B_indc[i]] -= B_a[i]*X[B_indr[i]];	 
   	  }
   	  
-  	int m      = 0;
-    int n      = 0;
-
-  for (k = 0; k < A_nelem[0]; k++) {
-     m = Math.max(m, A_indc[k]);
-     n = Math.max(n, A_indr[k]);
-  }
-  int lena = Math.max(2*A_nelem[0], Math.max(10*m, 10*n));
-  int luparm[] = new int[30];
-  double parmlu[] = new double[30];
-  double factol = 2.0;    // > 1.0
-  int TPiv  = 0;     // 0=TPP      1=TRP      2=TCP
-  int iprint = 20;
-  final int maxm = 100000;
-  final int maxn = 100000;
-  int lenc[] = new int[maxn];
-  int lenr[] = new int[maxm];
-  int p[] = new int[maxm];
-  int q[] = new int[maxn];
-  int iploc[] = new int[maxn];
-  int iqloc[] = new int[maxm];
-  int ipinv[] = new int[maxm];
-  int iqinv[] = new int[maxn];
-  int locc[] = new int[maxn];
-  int locr[] = new int[maxm];
-  double w[] = new double[maxn];
-  int inform[] = new int[1];
-  LUSOL lu = new LUSOL();
-  	  
-  	// ------------------------------------------------------------------
-  		  // Set parameters for LUSOL's lu1fac.
-  		  // ------------------------------------------------------------------
-  		  luparm[0] = iprint;     // File number for printed messages
-  		  luparm[1] = 10;         // Print level. >= 0 to get singularity info.
-  		                          //              >=10 to get more LU statistics.
-  		                          //              >=50 to get info on each pivot.
-  		  luparm[2] = 5;          // maxcol
-  		  luparm[5] = TPiv;       // Threshold Pivoting: 0 = TPP, 1 = TRP, 2 = TCP
-  		  luparm[7] = 1;          // keepLU
-  		  parmlu[0] = factol;     // Ltol1:  max |Lij| during Factor
-  		  parmlu[1] = factol;     // Ltol2:  max |Lij| during Update 
-  		  parmlu[2] = 3.0e-13;    // small:  drop tolerance
-  		  parmlu[3] = 3.7e-11;    // Utol1:  absolute tol for small Uii
-  		  parmlu[4] = 3.7e-11;    // Utol2:  relative tol for small Uii
-  		  parmlu[5] = 3.0;        // Uspace: 
-  		  parmlu[6] = 0.3;        // dens1
-  		  parmlu[7] = 0.5;        // dens2
-
+  	
   		  // ------------------------------------------------------------------
   		  // Factor  A = L U.
   		  // ------------------------------------------------------------------
   	
-  		  lu.lu1fac( m    , n    , A_nelem[0], lena , luparm, parmlu,
+  		  lu.lu1fac( A_m[0]    , A_n[0]    , A_nelem[0], lena , luparm, parmlu,
   		               A_a    , A_indc , A_indr , p    , q     , 
   		               lenc , lenr , locc , locr ,           
   		               iploc, iqloc, ipinv, iqinv, w     , inform );
+  		if (inform[0] > 1) {
+  		     MipavUtil.displayError("lu1fac error inform[0] = " + inform[0] + "\n");
+  		     error = true;
+  		     return false;
+  		  }
+  		  
+  		int mode   = 5;
+  	// SOLVE  A x = b.
+
+  		lu.lu6sol( mode, A_m[0], A_n[0], b, x, 
+  	               lena, luparm, parmlu,
+  	               A_a, A_indc, A_indr, p, q,
+  	               lenc, lenr, locc, locr,
+  	               inform );
+  		
+  		int cpt=0;
+    	  for(k=0;k<N;k++)
+    	    if (seeded_vertex[k]== false)
+    	      {
+    		proba[l][index[k]]= (float)b[cpt];
+    		cpt++;
+    	      }
+
+    	  //Enforce boundaries exactly
+    	  for(k=0;k<numb_boundary;k++) 
+    	    proba[l][index[index_seeds[k]]]= boundary_values[l][k];
   	} // for(l=0;l<nb_labels-1;l++)
+        return false;
     } // if (fill_A
     
     /* CSparse by Timothy A. Davis requires a GNU Lesser General Public License
@@ -1282,7 +1310,6 @@ return;
      int t1;
      int q;
 
-     RandomNumberGen randomGen = new RandomNumberGen();
      int rand = randomGen.genUniformRandomNum(0, 32767);
      q = p + (rand % (r - p + 1));
      t = A[p];         /* echange A[p] et A[q] */
@@ -1380,7 +1407,6 @@ return;
       int q;
 
 
-      RandomNumberGen randomGen = new RandomNumberGen();
       int rand = randomGen.genUniformRandomNum(0, 32767);
       q = p + (rand % (r - p + 1));
       t = A[p];         /* echange A[p] et A[q] */
@@ -1430,7 +1456,7 @@ return;
 
 
     
-    private int[] grey_weights_PW(ModelImage image, /*IN : image name */  
+    private int[] grey_weights_PW(ModelImage image, /*IN : image */  
 			   int edges[][],      /*IN: array of node indexes composing edges */
 			   Vector<Integer> seeds,       /*IN: array of seeded nodes indexes */
 			   int size_seeds,    /*IN : nb of seeded nodes */
@@ -1486,7 +1512,7 @@ return normal_weights;
 }
 
     
-    private int[] color_standard_weights_PW(ModelImage image , /* IN : image name */
+    private int[] color_standard_weights_PW(ModelImage image , /* IN : image */
 		      int weights[], /* OUT : array to store the values of weights on the edges */
 		      int edges[][],       /* IN : array of node indexes composing edges */ 
 		      Vector<Integer> seeds,        /* IN : array of seeded nodes indexes */
@@ -2966,7 +2992,7 @@ else O[p] = MAX;
      int t1;
      int q;
 
-     RandomNumberGen randomGen = new RandomNumberGen();
+     
      int rand = randomGen.genUniformRandomNum(0, 32767);
      q = p + (rand % (r - p + 1));
      t = A[p];         /* echange A[p] et A[q] */
