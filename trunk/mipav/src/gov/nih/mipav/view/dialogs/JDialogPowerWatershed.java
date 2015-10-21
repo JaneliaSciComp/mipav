@@ -56,7 +56,7 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
     
     private JRadioButton KruskalButton;
     
-    //private JRadioButton PowerButton;
+    private JRadioButton PowerButton;
     
     private JRadioButton PrimButton;
     
@@ -489,11 +489,11 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         gbc.gridy = yPos++;
         algoPanel.add(KruskalButton, gbc);
 
-        //PowerButton = new JRadioButton("Power Watershed, q = 2", false);
-        //PowerButton.setFont(serif12);
-        //algoGroup.add(PowerButton);
-        //gbc.gridy = yPos++;
-        //algoPanel.add(PowerButton, gbc);
+        PowerButton = new JRadioButton("Power Watershed, q = 2", false);
+        PowerButton.setFont(serif12);
+        algoGroup.add(PowerButton);
+        gbc.gridy = yPos++;
+        algoPanel.add(PowerButton, gbc);
 
         PrimButton = new JRadioButton("Prim", false);
         PrimButton.setFont(serif12);
@@ -626,8 +626,8 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
 
         if (KruskalButton.isSelected()) {
             algo = Kruskal;
-        //} else if (PowerButton.isSelected()) {
-            //algo = PW_qis2;
+        } else if (PowerButton.isSelected()) {
+            algo = PW_qis2;
         } else if (PrimButton.isSelected()) {
             algo = Prim;
         }
