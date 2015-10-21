@@ -927,9 +927,13 @@ return;
     //The system to solve is A x = -B X2 
 
     // building matrix A : laplacian for unseeded nodes
-    double A_a[] = new double[2*M+N];
-    int A_indc[] =  new int[2*M+N];
-    int A_indr[] = new int[2*M+N];
+    int lena = 1000000;
+    //double A_a[] = new double[2*M+N];
+    //int A_indc[] =  new int[2*M+N];
+    //int A_indr[] = new int[2*M+N];
+    double A_a[] = new double[lena];
+    int A_indc[] = new int[lena];
+    int A_indr[] = new int[lena];
     int A_nelem[] = new int[1];
     int A_m[] = new int[1];
     int A_n[] = new int[1];
@@ -938,8 +942,7 @@ return;
     		indic_sparse, nb_same_edges) == true) 
     {
     	
-    	
-      int lena = Math.max(2*A_nelem[0], Math.max(10*A_m[0], 10*A_n[0]));
+      //int lena = Math.max(2*A_nelem[0], Math.max(10*A_m[0], Math.max(10*A_n[0], 10000)));
       int luparm[] = new int[30];
       double parmlu[] = new double[30];
       double factol = 2.0;    // > 1.0
@@ -982,6 +985,20 @@ return;
       		  parmlu[5] = 3.0;        // Uspace: 
       		  parmlu[6] = 0.3;        // dens1
       		  parmlu[7] = 0.5;        // dens2
+      		  
+      		 // ------------------------------------------------------------------
+      		  // Factor  A = L U.
+      		  // ------------------------------------------------------------------
+      	
+      		  lu.lu1fac( A_m[0]    , A_n[0]    , A_nelem[0], lena , luparm, parmlu,
+      		               A_a    , A_indc , A_indr , p    , q     , 
+      		               lenc , lenr , locc , locr ,           
+      		               iploc, iqloc, ipinv, iqinv, w     , inform );
+      		if (inform[0] > 1) {
+      		     MipavUtil.displayError("lu1fac error inform[0] = " + inform[0] + "\n");
+      		     error = true;
+      		     return false;
+      		  }
 
     	// building boundary matrix B   
     	double B_a[] = new double[2*M+N];
@@ -1005,24 +1022,15 @@ return;
   	  
   	  
   	  // B * X
+  	  for (i = 0; i < b.length; i++) {
+  		  b[i] = 0.0;
+  	  }
   	  for (i = 0; i < B_nelem[0]; i++) {
-  	      b[B_indc[i]] -= B_a[i]*X[B_indr[i]];	 
+  	      b[B_indc[i]-1] -= B_a[i]*X[B_indr[i]-1];	 
   	  }
   	  
   	
-  		  // ------------------------------------------------------------------
-  		  // Factor  A = L U.
-  		  // ------------------------------------------------------------------
-  	
-  		  lu.lu1fac( A_m[0]    , A_n[0]    , A_nelem[0], lena , luparm, parmlu,
-  		               A_a    , A_indc , A_indr , p    , q     , 
-  		               lenc , lenr , locc , locr ,           
-  		               iploc, iqloc, ipinv, iqinv, w     , inform );
-  		if (inform[0] > 1) {
-  		     MipavUtil.displayError("lu1fac error inform[0] = " + inform[0] + "\n");
-  		     error = true;
-  		     return false;
-  		  }
+  		 
   		  
   		int mode   = 5;
   	// SOLVE  A x = b.
@@ -1157,8 +1165,8 @@ return;
         if (seeded_vertex[k]==false)
           {
     	  A_a[rnz] = indic_sparse[k]; //value
-    	  A_indc[rnz] = rnz ; //position 1
-    	  A_indr[rnz] = rnz ; //position 2
+    	  A_indc[rnz] = rnz+1 ; //position 1
+    	  A_indr[rnz] = rnz+1 ; //position 2
     	  rnz ++;
           }
 
@@ -1182,12 +1190,12 @@ return;
           if ((seeded_vertex[index_edges[0][k]] == false)&&(seeded_vertex[index_edges[1][k]] == false))
     	{
     	  A_a[rnz] =  - nb_same_edges[k]-1;
-    	  A_indc[rnz] =  indic_sparse[index_edges[0][k]];
-    	  A_indr[rnz] =  indic_sparse[index_edges[1][k]];
+    	  A_indc[rnz] =  indic_sparse[index_edges[0][k]]+1;
+    	  A_indr[rnz] =  indic_sparse[index_edges[1][k]]+1;
     	  rnz ++;
     	  A_a[rnz] =  - nb_same_edges[k]-1;
-    	  A_indr[rnz] =  indic_sparse[index_edges[0][k]];
-    	  A_indc[rnz] =  indic_sparse[index_edges[1][k]];
+    	  A_indr[rnz] =  indic_sparse[index_edges[0][k]]+1;
+    	  A_indc[rnz] =  indic_sparse[index_edges[1][k]]+1;
     	  rnz ++;
     	  k = k + nb_same_edges[k];
     	}
@@ -1224,16 +1232,16 @@ return;
 	      if (seeded_vertex[index_edges[0][k]] == true)
 		{
 		  B_a[rnz] = - nb_same_edges[k]-1;
-		  B_indr[rnz] = indic_sparse[index_edges[0][k]];
-		  B_indc[rnz] = indic_sparse[index_edges[1][k]];
+		  B_indr[rnz] = indic_sparse[index_edges[0][k]]+1;
+		  B_indc[rnz] = indic_sparse[index_edges[1][k]]+1;
 		  rnz++;
 		  k=k+ nb_same_edges[k];
 		}
 	      else if(seeded_vertex[index_edges[1][k]] == true)
 		{
 		  B_a[rnz] =  - nb_same_edges[k]-1;;
-		  B_indr[rnz] = indic_sparse[index_edges[1][k]];
-		  B_indc[rnz] = indic_sparse[index_edges[0][k]];
+		  B_indr[rnz] = indic_sparse[index_edges[1][k]]+1;
+		  B_indc[rnz] = indic_sparse[index_edges[0][k]]+1;
 		  rnz++;
 		  k=k+ nb_same_edges[k];
 		}
