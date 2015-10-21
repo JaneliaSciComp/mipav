@@ -143,6 +143,9 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 	public static final String editLatticeOutput = new String("lattice_final");
 	public static final String editAnnotationInput = new String("annotation");
 	public static final String editAnnotationOutput = new String("annotation_final");
+	public static final String outputImages = new String("output_images");
+	public static final String straightenedLattice = new String("straightened_lattice");
+	public static final String straightenedAnnotations = new String("straightened_annotations");
 	
 	public PlugInDialogWormLatticeStraighten() {}
 
@@ -404,6 +407,8 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		{
 			int numSteps = 6;
 			int step = 0;
+			int foundCount = 0;
+			int count = 0;
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
 				String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
@@ -411,7 +416,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 				if ( voiFile.exists() )
 				{
 					step = 1;
-					System.err.print( fileName + "   " );
+//					System.err.print( fileName + "   " );
 					FileIO fileIO = new FileIO();
 					if(image != null) {
 						if ( (i%10) == 0 )
@@ -511,20 +516,25 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 							seamCells.add(tempSeamCells.elementAt(j));
 						}
 					}
+					if ( seamCells.size() > 0 )
+					{
+						foundCount++;
+					}
+					count++;
 					WormSegmentation.saveAnnotations(image, seamCells, Color.blue );
 					fileName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + autoSeamCellSegmentationOutput;  
 					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
 					WormSegmentation.saveAllVOIsTo(voiDir, image);
 				}
 			}
+			MipavUtil.displayInfo( "Finished seam cell segmentation. Segmented " + foundCount + " out of " + count + " volumes tested (" + (int)(100 * (float)foundCount/(float)count) + "%)" );
 		}
 		
-		if(image != null) {
+		if ( image != null )
+		{
 			image.disposeLocal();
 			image = null;
 		}
-
-		System.err.println( "Done segmentation" );
 	}
 	
 
@@ -892,20 +902,24 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 					fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + editLatticeOutput;
 					VOIVector lattice = new VOIVector();
 					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-					loadAllVOIsFrom(image, voiDir, false, lattice, false);
+					loadAllVOIsFrom(image, voiDir, true, lattice, false);
 					if ( lattice.size() == 0 )
 					{
 						fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + autoLatticeGenerationOutput + "1";
 						lattice = new VOIVector();
 						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-						loadAllVOIsFrom(image, voiDir, false, lattice, false);						
+						loadAllVOIsFrom(image, voiDir, true, lattice, false);						
+					}
+					if ( lattice.size() == 0 )
+					{
+						continue;
 					}
 
 					if ( (lattice.elementAt(0) != null) && (lattice.elementAt(0).getCurves().size() == 2) )
 					{
 						LatticeModel model = new LatticeModel( image, lattice.elementAt(0) );
 
-						fileName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + "annotations";            	    		
+						fileName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + editAnnotationOutput;            	    		
 						VOIVector annotations = new VOIVector();
 						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
 						loadAllVOIsFrom(image, voiDir, true, annotations, false);
@@ -915,7 +929,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 						}
 						else
 						{
-							fileName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + "annotation";            	    		
+							fileName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + editAnnotationInput;            	    		
 							annotations = new VOIVector();
 							voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
 							loadAllVOIsFrom(image, voiDir, true, annotations, false);
@@ -942,6 +956,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			image.disposeLocal();
 			image = null;
 		}
+		MipavUtil.displayInfo( "Lattice straightening complete." );
 	}
 
 
@@ -2729,9 +2744,9 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 		
 		if ( maximumProjectionImage != null )
 		{
-//			fileName = baseFileDir + File.separator;
-////			System.err.println( "Saving mp image to : " + fileName + " " + maximumProjectionImage.getImageName() + ".tif" );
-//			ModelImage.saveImage( maximumProjectionImage, maximumProjectionImage.getImageName() + ".avi", fileName, false ); 
+			String fileName = baseFileDir + File.separator;
+//			System.err.println( "Saving mp image to : " + fileName + " " + maximumProjectionImage.getImageName() + ".tif" );
+			ModelImage.saveImage( maximumProjectionImage, maximumProjectionImage.getImageName() + ".tif", fileName, false ); 
 			
             final ImageStack is = ModelImageToImageJConversion.convert3D(maximumProjectionImage);
             new ImagePlus("ImageJ:" + maximumProjectionImage.getImageName(), is).show();
