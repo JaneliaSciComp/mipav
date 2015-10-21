@@ -433,11 +433,13 @@ public class VolumeImage implements Serializable {
 		final int iYBound = kImage.getExtents()[1];
 		final int iZBound = kImage.getExtents()[2];
 		int iSize = iXBound * iYBound * iZBound;
-		if ( (kGraphicsImage == null) || (kGraphicsImage.GetData().length != (iSize * 4)) )
+		boolean release = false;
+		if ( kGraphicsImage.GetData().length != (iSize * 4) )
 		{
-			return initVolumeData(kImage, iTimeSlice, kVolumeTexture, kImageName, bSwap, bRescale );
+			byte[] aucData = new byte[iSize*4];
+			kGraphicsImage.SetData(aucData, iXBound, iYBound, iZBound);
+			release = true;
 		}
-		
 
 		byte[] aucData = null;
 		if (kImage.isColorImage()) {
@@ -463,8 +465,14 @@ public class VolumeImage implements Serializable {
 			try {
 				kImage.exportDataUseMask(iTimeSlice * iSize, iSize, bRescale, aucData);
 				byte[] aucData2 = kGraphicsImage.GetData();
+//				for (int i = 0; i < iSize; i++) {
+//					aucData2[i * 4 + 0] = aucData[i];
+//				}
 				for (int i = 0; i < iSize; i++) {
 					aucData2[i * 4 + 0] = aucData[i];
+					aucData2[i * 4 + 1] = aucData[i];
+					aucData2[i * 4 + 2] = aucData[i];
+					aucData2[i * 4 + 3] = 1;
 				}
 			} catch (final IOException e) {
 				e.printStackTrace();
@@ -472,7 +480,14 @@ public class VolumeImage implements Serializable {
 
 		}
 		if (kVolumeTexture != null) {
-			kVolumeTexture.Reload(true);
+			if ( release )
+			{
+				kVolumeTexture.Remove();
+			}
+			else
+			{
+				kVolumeTexture.Reload(true);
+			}
 		}
 		return kGraphicsImage;
 	}

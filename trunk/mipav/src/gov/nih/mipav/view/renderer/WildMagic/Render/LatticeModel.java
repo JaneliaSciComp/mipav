@@ -2504,6 +2504,24 @@ public class LatticeModel {
 					}
 				}
 			}
+			if ( pickedAnnotation == -1 )
+			{
+				// look at the vector under the mouse and see which lattice point is closest...
+				final Segment3f mouseVector = new Segment3f(startPt, endPt);
+				for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ )
+				{
+					DistanceVector3Segment3 dist = new DistanceVector3Segment3(annotationVOIs.getCurves().elementAt(i).elementAt(0), mouseVector);
+					float distance = dist.Get();
+					if ( distance < minDist )
+					{
+						minDist = distance;
+						if ( minDist <= 12 )
+						{
+							pickedAnnotation = i;
+						}
+					}
+				}
+			}
 		}
 		if (pickedAnnotation != -1)
 		{
