@@ -7863,7 +7863,7 @@ if (indr[lrow[0]-1] == 0) lrow[0] = lrow[0] - 1;
     // 13 Dec 2011: First f90 version.
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    private void lu6sol(int mode, int m, int n, double v[], double w[],
+    public void lu6sol(int mode, int m, int n, double v[], double w[],
                        int lena, int luparm[], double parmlu[],
                        double a[], int indc[], int indr[], int p[], int q[],
                        int lenc[], int lenr[], int locc[], int locr[],
