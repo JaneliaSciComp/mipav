@@ -988,6 +988,8 @@ return;
       		  
       		 // ------------------------------------------------------------------
       		  // Factor  A = L U.
+      		  // U is stored by rows at the start of A_a, A_indr
+      		  // L is stored by cols at the end of A_a, A_indc
       		  // ------------------------------------------------------------------
       	
       		  lu.lu1fac( A_m[0]    , A_n[0]    , A_nelem[0], lena , luparm, parmlu,
@@ -1034,6 +1036,8 @@ return;
   		  
   		int mode   = 5;
   	// SOLVE  A x = b.
+    // via    L b(new) = b
+    // and    U x = b(new).
 
   		lu.lu6sol( mode, A_m[0], A_n[0], b, x, 
   	               lena, luparm, parmlu,
@@ -1053,7 +1057,7 @@ return;
     	  for(k=0;k<numb_boundary;k++) 
     	    proba[l][index[index_seeds[k]]]= boundary_values[l][k];
   	} // for(l=0;l<nb_labels-1;l++)
-        return false;
+        return true;
     } // if (fill_A
     
     /* CSparse by Timothy A. Davis requires a GNU Lesser General Public License
