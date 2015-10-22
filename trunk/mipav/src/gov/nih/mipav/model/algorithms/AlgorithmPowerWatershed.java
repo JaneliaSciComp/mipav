@@ -20,8 +20,6 @@ Porting performed by William Gandler.
 This "powerwatershed" package provides implementation of several segmentation algorithms on 2D or 3D images.
 The 3 algorithms are:
 1.) Maximum Spanning Forest computed by Kruskal algorithm.
-    // Cannot use PowerWatershed because it calls RandomWalker which uses CSparse.
-    // CSparse requires a GNU Lesser General Public License which can only be used with binary libraries.
 2.) Powerwatersheds (p=infinite, q= 2) : Maximum Spanning Forest computed by Kruskal algorithm and
     Random walker on plateaus.
 3.) Maximum Spanning Forest computed by Prim algorithm using red and black trees.
@@ -921,7 +919,9 @@ return;
         seeded_vertex[index_seeds[i]]= true;
       }
     
-    // Use LUSOL
+    // Original code used CSparse by Timothy A. Davis that requires a GNU Lesser General Public License
+    // which can only be distributed as libraries in a binary format 
+    // Therefore, use LUSOL instead of CSparse
     // a for value, indc for row index, indr for column index, nelem for number of elements, m for number of rows,
     // n for number of columns
     //The system to solve is A x = -B X2 
@@ -1060,88 +1060,6 @@ return;
         return true;
     } // if (fill_A
     
-    /* CSparse by Timothy A. Davis requires a GNU Lesser General Public License
-     * This could only be distributed as libraries in a binary format 
-     */
-    /*cs *A2 ,*A, *B2, *B;
-    
-    //The system to solve is A x = -B X2 
-
-    // building matrix A : laplacian for unseeded nodes
-    A2 = cs_spalloc (N-numb_boundary, N-numb_boundary, M*2+N, 1, 1); 
-    if (fill_A(A2, N, M, numb_boundary, index_edges, seeded_vertex, indic_sparse, nb_same_edges)==true) 
-      {
-        // A = compressed-column form of A2 
-        A = cs_compress (A2) ; 
-        cs_spfree (A2) ;          
-        
-        // building boundary matrix B     
-        B2 = cs_spalloc (N-numb_boundary, numb_boundary, 2*M+N,1 ,1 ); 
-        fill_B(B2, N, M, numb_boundary,   index_edges, seeded_vertex, indic_sparse , nb_same_edges);
-        B = cs_compress (B2) ;  
-        cs_spfree (B2) ;
-        
-        // building the right hand side of the system
-        cs* X = cs_spalloc (numb_boundary, 1, numb_boundary, 1, 1); 
-        cs* X2 ;
-        int rnz, cpt;
-        cs* b_tmp;
-        double *b =(double *) malloc ((N-numb_boundary)*sizeof (double)) ;
-        for(l=0;l<nb_labels-1;l++)
-  	{
-  	  // building vector X 
-  	  rnz=0;
-  	  for (i=0;i<numb_boundary;i++)
-  	    {
-  	      X->x[rnz] = boundary_values[l][i];
-  	      X->p[rnz] = 0; 
-  	      X->i[rnz] = i;
-  	      rnz++;
-  	    }
-  	  X->nz = rnz;  
-  	  X->m = numb_boundary;
-  	  X->n = 1 ;
-  	  
-  	  X2 = cs_compress (X) ;   
-  	  b_tmp = cs_multiply (B, X2) ;
-  	  
-  	  for(i=0;i<N-numb_boundary;i++)
-  	    b[i] = 0;	  
-
-  	  for(i=0;i<b_tmp->nzmax;i++)
-  	    b[b_tmp->i[i]] = -b_tmp->x[i];
-  	  
-  	  //solve Ax=b by LU decomposition, order = 1
-  	  cs_lusol (1, A, b, 1e-7) ; 
-  	  
-  	  cpt=0;
-  	  for(k=0;k<N;k++)
-  	    if (seeded_vertex[k]== false)
-  	      {
-  		proba[l][index[k]]=(DBL_TYPE)b[cpt];
-  		cpt++;
-  	      }
-
-  	  //Enforce boundaries exactly
-  	  for(k=0;k<numb_boundary;k++) 
-  	    proba[l][index[index_seeds[k]]]=(DBL_TYPE)boundary_values[l][k];
-  	  cs_spfree (X2) ;
-  	  cs_spfree (b_tmp) ;
-  	}
-       
-        free(seeded_vertex);
-        free(indic_sparse);
-        free(nb_same_edges);
-        cs_spfree (X) ;
-        cs_spfree (A) ;
-        cs_spfree (B) ;
-        free(b);
-        return true;
-      }
-   
-    free(seeded_vertex);
-    free(indic_sparse);
-    free(nb_same_edges);*/
     return false;
   }
     
