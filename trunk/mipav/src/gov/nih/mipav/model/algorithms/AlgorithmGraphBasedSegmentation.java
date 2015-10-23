@@ -223,7 +223,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
 	    		comp = u.find(index);
 	    		destRed[index] = red[comp];
 	    		destGreen[index] = green[comp];
-	    		destBlue[index] = blue[index];
+	    		destBlue[index] = blue[comp];
 	    	}
 	    }
 	    
@@ -294,7 +294,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
       for (int i = 0; i < num_edges; i++) {
         edge pedge = edges.get(i);
         
-        // components conected by this edge
+        // components connected by this edge
         int a = u.find(pedge.geta());
         int b = u.find(pedge.getb());
         if (a != b) {
