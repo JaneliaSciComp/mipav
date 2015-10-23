@@ -475,6 +475,14 @@ public class AlgorithmPowerWatershed extends AlgorithmBase {
             			nblabels, quicksort, probaImage);	
             }
         } // else if (algo == PW_qis2)
+        if (srcImage.isColorImage() && (srcImage != colorImage)) {
+        	colorImage.disposeLocal();
+        	colorImage = null;
+        }
+        else if ((!srcImage.isColorImage()) && (srcImage != grayImage)) {
+        	grayImage.disposeLocal();
+        	grayImage = null;
+        }
         if (error) {
         	setCompleted(false);
         	return;
