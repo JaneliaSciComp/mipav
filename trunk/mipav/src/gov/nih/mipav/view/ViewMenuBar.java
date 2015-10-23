@@ -339,6 +339,7 @@ public class ViewMenuBar {
                         menuBuilder.makeMenu("Fuzzy C-means", false, new JMenuItem[] {
                                 menuBuilder.buildMenuItem("Multispectral", null, 0, null, false),
                                 menuBuilder.buildMenuItem("Single channel", null, 0, null, false),}),
+                        menuBuilder.buildMenuItem("Graph Based", "GraphBasedSeg", 0, null, false),
                         menuBuilder.buildMenuItem("Levelset", "Levelset", 0, null, false),
                         menuBuilder.buildMenuItem("Levelset diffusion", "LevelsetDiffusion", 0, null, false),
                         menuBuilder.buildMenuItem("Markov random field", "HMRF_EM", 0, null, false),
@@ -1332,6 +1333,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Ellipse to circle", false);
             menuBuilder.setMenuItemEnabled("Nearly circle to circle", false);
             menuBuilder.setMenuItemEnabled("Hough transform", false);
+            menuBuilder.setMenuItemEnabled("Graph Based", false);
             if (ModelImage.isColorImage(type)) {
                 menuBuilder.setMenuItemEnabled("Convert 4D to RGB", false);
             }
@@ -1383,6 +1385,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("BRISK", false);
             menuBuilder.setMenuItemEnabled("Texture analysis", false);
             menuBuilder.setMenuItemEnabled("Texture segmentation", false);
+            menuBuilder.setMenuItemEnabled("Graph Based", false);
         } else if (numberOfDimensions == 2) {
             menuBuilder.setMenuItemEnabled("Align patient position", false);
             menuBuilder.setMenuItemEnabled("Draw 3D rectangle VOI", false);
@@ -1512,6 +1515,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Color edge", false);
             menuBuilder.setMenuItemEnabled("Color saturation", false);
             menuBuilder.setMenuItemEnabled("Spatial color compactness", false);
+            menuBuilder.setMenuItemEnabled("Graph Based", false);
 
             if (numberOfDimensions == 2) {
                 menuBuilder.setMenuItemEnabled("Principal component", false);
