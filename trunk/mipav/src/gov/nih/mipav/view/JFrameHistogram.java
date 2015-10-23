@@ -369,7 +369,20 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
         }
         return -1;
 	}
-
+	
+	public void setImages(ModelImage imA, ModelImage imB, ModelStorageBase _LUTa, ModelStorageBase _LUTb)
+	{
+		imageA = imA;
+		imageB = imB;
+		LUTa = _LUTa;
+		LUTb = _LUTb;
+		dualImage = (imageA != null) && (imageB != null);
+		imageA.addImageDisplayListener( this );
+		if ( imageB != null )
+		{
+			imageB.addImageDisplayListener( this );
+		}
+	}
 	/**
 	 * Creates the user interface for LUT changes. The entieFlag indicates if the entire image
 	 * is to be used in the histogram calculation and LUT change, or if only the VOI regions are to
@@ -380,6 +393,11 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 	 * when false create the interface for display in another outside frame or panel.
 	 */
 	public void histogramLUT(boolean entireFlag, boolean separateFrame) 
+	{
+		histogramLUT(entireFlag, separateFrame, false);
+	}
+	
+	public void histogramLUT(boolean entireFlag, boolean separateFrame, boolean simple) 
 	{
 		// Create in a stand-alone window:
 		if ( separateFrame )
@@ -401,7 +419,7 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 			// create file menu:
 			buildMenu(containingFrame);
 
-			containingPanel = createPanel();
+			createPanel(simple);
 			containingFrame.getContentPane().add( containingPanel );
 
 			containingFrame.setLocation(200, 200);
@@ -413,7 +431,7 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 		}
 		else
 		{
-			containingPanel = createPanel();
+			createPanel(simple);
 		}
 	}
 	
@@ -961,6 +979,37 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 			panel.add(panelA);
 		}
 		return panel;
+	}
+
+	protected void createPanel(boolean simple)
+	{
+		if ( containingPanel == null )
+		{
+			containingPanel = new JPanel();
+		}
+		else
+		{
+			containingPanel.removeAll();
+		}
+
+		panelA = new JPanelHistogram(this, imageA, LUTa, wholeImage, simple);
+
+		if ( dualImage )
+		{
+			panelB = new JPanelHistogram(this, imageB, LUTb, wholeImage, simple);
+			tabbedPane = new JTabbedPane();
+			tabbedPane.addTab("ImageA", null, panelA);
+			tabbedPane.addTab("ImageB", null, panelB);
+			tabbedPane.setFont(MipavUtil.font12B);
+			tabbedPane.setSelectedIndex(0);
+			tabbedPane.addChangeListener(this);
+
+			containingPanel.add(tabbedPane);
+		}
+		else
+		{
+			containingPanel.add(panelA);
+		}
 	}
 
 

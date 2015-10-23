@@ -226,12 +226,7 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 	 */
 	public JPanelHistogram(JFrameHistogram _panelParent, ModelImage _image, ModelStorageBase _LUT, boolean _wholeImage) 
 	{
-		super(new BorderLayout());
-		this.image = _image;
-		this.LUT = _LUT;
-		this.wholeImage = _wholeImage;
-		this.panelParent = _panelParent;
-		buildPanel();
+		this(_panelParent, _image, _LUT, _wholeImage, false);
 	}
 
 	/**
@@ -245,6 +240,30 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 		this(null, _image, _LUT, _wholeImage);
 	}
 
+
+	/**
+	 * Creates the JPanelHistogram, with the JFrameHistogram as the containing class.
+	 * @param _panelParent parent class.
+	 * @param _image input image.
+	 * @param _LUT input LUT (ModelLUT or ModelRGB).
+	 * @param _wholeImage, when true apply the LUT to the entire image, when false apply to VOI regions only.
+	 */
+	public JPanelHistogram(JFrameHistogram _panelParent, ModelImage _image, ModelStorageBase _LUT, boolean _wholeImage, boolean _simpleLUT) 
+	{
+		super(new BorderLayout());
+		this.image = _image;
+		this.LUT = _LUT;
+		this.wholeImage = _wholeImage;
+		this.panelParent = _panelParent;
+		if ( _simpleLUT )
+		{
+			buildSimplePanel();
+		}
+		else
+		{
+			buildPanel();
+		}
+	}
 
 	/* (non-Javadoc)
 	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
@@ -1529,6 +1548,34 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 		add( buildToolBar(image), BorderLayout.NORTH);
 		add( panel, BorderLayout.CENTER);
 	}
+	
+	protected void buildSimplePanel()
+	{
+		JPanel panel = new JPanel(new BorderLayout());
+		
+		JPanel controlPanel = buildControlPanel(image, isLUT1Based(LUT));
+
+		histogram = calcHistogram(image, wholeImage, 1);
+		if ( image.isColorImage() )
+		{
+			histogramG = calcHistogram(image, wholeImage, 2);
+			histogramB = calcHistogram(image, wholeImage, 3);
+		}
+		histoPanel = new ViewJPanelHistoLUT(this, image, LUT, histogram);
+		panel.add(histoPanel, BorderLayout.CENTER);
+
+		if ( !image.isColorImage() )
+		{
+			JPanel panelMouse = buildMousePanel(image.getMax() - image.getMin());
+		}
+		if ( image.isColorImage() )
+		{
+        	histoPanel.getHistoLUTComponent().setMode(ViewJComponentHLUTBase.ALL);
+		}
+
+		add( buildSimpleToolBar(image), BorderLayout.NORTH);
+		add( panel, BorderLayout.CENTER);
+	}
 
 	/**
 	 * Builds the toolbars.
@@ -1577,6 +1624,48 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 
 			fullPanel.add(topPanel, BorderLayout.NORTH);
 			fullPanel.add(toolBarThreshold, BorderLayout.SOUTH);
+		}
+
+
+		return fullPanel;
+	}
+	
+	protected JPanel buildSimpleToolBar( ModelImage image )
+	{
+		ViewToolBarBuilder toolBarObj = new ViewToolBarBuilder(this);
+		JPanel fullPanel = new JPanel(new BorderLayout());
+
+		if ( image.isColorImage() )
+		{
+			JToolBar toolBar = toolBarObj.buildRGBToolBar();
+
+			if (image.getNDims() == 3) {
+				voxelVolumeLabel = new JLabel("Threshold volume(red):");
+			} else {
+				voxelVolumeLabel = new JLabel("Threshold area(red):");
+			}
+			voxelVolumeLabel.setFont(MipavUtil.font12);
+			toolBar.add(voxelVolumeLabel);
+
+			fullPanel.add(toolBar, BorderLayout.NORTH);
+		}
+		else
+		{
+			JToolBar toolBarTop = toolBarObj.buildLUTToolBarTop();
+			toolBarBottom = toolBarObj.buildLUTToolBarBottom();
+			toolBarThreshold = toolBarObj.buildLUTThresholdToolBar();
+
+			if (image.getNDims() == 3) {
+				voxelVolumeLabel = new JLabel("Threshold volume(red):");
+			} else {
+				voxelVolumeLabel = new JLabel("Threshold area(red):");
+			}
+			voxelVolumeLabel.setFont(MipavUtil.font12);
+			toolBarThreshold.add(voxelVolumeLabel);
+
+			JPanel topPanel = new JPanel(new BorderLayout());
+			topPanel.add(toolBarTop, BorderLayout.NORTH);
+			fullPanel.add(topPanel, BorderLayout.NORTH);
 		}
 
 

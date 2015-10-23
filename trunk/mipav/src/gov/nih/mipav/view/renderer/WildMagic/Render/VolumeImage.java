@@ -1303,7 +1303,11 @@ public class VolumeImage implements Serializable {
 	 * @param bCopytoCPU when true the data is copied from the GPU GraphicsImage into the ModelImage
 	 */
 	public void UpdateData(final ModelImage kImage) {
-		m_kImage = kImage;
+		if ( m_kImage != kImage )
+		{
+			m_kImage = kImage;
+			InitScale();
+		}
 		m_kVolume[m_iTimeSlice] = resetVolumeData(m_kImage, m_iTimeSlice, m_kVolume[m_iTimeSlice], m_kVolumeTarget, m_kImage
 				.getImageName(), true, false);
 	}
