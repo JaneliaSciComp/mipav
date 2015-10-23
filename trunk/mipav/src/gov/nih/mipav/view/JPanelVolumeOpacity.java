@@ -202,12 +202,17 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 	 */
 	public JPanelVolumeOpacity(ModelImage _imgA, ModelImage _imgB, ModelImage _imageAGM, ModelImage _imageBGM)
 	{
+		this(_imgA, _imgB, null, null, false );
+	}
+	
+	public JPanelVolumeOpacity(ModelImage _imgA, ModelImage _imgB, ModelImage _imageAGM, ModelImage _imageBGM, boolean _simpleDisplay)
+	{
 		imageA = _imgA;
 		imageB = _imgB;
 		gradMagRescale_A = _imageAGM;
 		gradMagRescale_B = _imageBGM;
 		
-		initialize();
+		initialize(_simpleDisplay);
 	}
 
 	/**
@@ -1353,11 +1358,20 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 		return histogram;
 	}
 
+	public void setImages(ModelImage _imgA, ModelImage _imgB, ModelImage _imageAGM, ModelImage _imageBGM, boolean _simpleDisplay)
+	{
+		imageA = _imgA;
+		imageB = _imgB;
+		gradMagRescale_A = _imageAGM;
+		gradMagRescale_B = _imageBGM;
+		initialize(_simpleDisplay);
+	}
+	
 	/**
 	 * Sets up the GUI (panels, buttons, etc) and displays it on the screen. Change the layout of the volume opacity
 	 * change diagram.
 	 */
-	private void initialize()
+	private void initialize(boolean simpleDisplay)
 	{
 		if (mainPanel != null) {
 			mainPanel.removeAll();
@@ -1424,33 +1438,65 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 		if (imageB != null) {
 			buildPanelB();
 		}
+		
+		if ( !simpleDisplay )
+		{
+			JPanel blendPanel = buildBlendPanel();
 
-		JPanel blendPanel = buildBlendPanel();
+			GridBagLayout gbLayout = new GridBagLayout();
+			GridBagConstraints gbConstraints = new GridBagConstraints();
+			JPanel subPanel = new JPanel(gbLayout);
+			subPanel.setLayout(gbLayout);
 
-		GridBagLayout gbLayout = new GridBagLayout();
-		GridBagConstraints gbConstraints = new GridBagConstraints();
-		JPanel subPanel = new JPanel(gbLayout);
-		subPanel.setLayout(gbLayout);
+			gbConstraints.weightx = 1;
+			gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+			gbConstraints.anchor = GridBagConstraints.NORTH;
+			subPanel.add(toolbarPanel, gbConstraints);
 
-		gbConstraints.weightx = 1;
-		gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-		gbConstraints.anchor = GridBagConstraints.NORTH;
-		subPanel.add(toolbarPanel, gbConstraints);
+			gbConstraints.gridy = 1;
+			gbConstraints.fill = GridBagConstraints.BOTH;
+			subPanel.add(tabbedPane, gbConstraints);
 
-		gbConstraints.gridy = 1;
-		gbConstraints.fill = GridBagConstraints.BOTH;
-		subPanel.add(tabbedPane, gbConstraints);
+			gbConstraints.gridy = 2;
+			gbConstraints.weighty = 1;
+			gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+			subPanel.add(blendPanel, gbConstraints);
 
-		gbConstraints.gridy = 2;
-		gbConstraints.weighty = 1;
-		gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-		subPanel.add(blendPanel, gbConstraints);
+			JScrollPane scrollPaneA = new JScrollPane(subPanel);
+			scrollPaneA.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+			mainPanel.setLayout(new GridLayout(1, 1));
+			mainPanel.add(scrollPaneA);
+		}
+		else
+		{
 
-		JScrollPane scrollPaneA = new JScrollPane(subPanel);
-		scrollPaneA.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+			mainPanel.setLayout(new GridLayout(1, 1));
+			JPanel blendPanel = buildBlendPanel();
 
-		mainPanel.setLayout(new GridLayout(1, 1));
-		mainPanel.add(scrollPaneA);
+			GridBagLayout gbLayout = new GridBagLayout();
+			GridBagConstraints gbConstraints = new GridBagConstraints();
+//			JPanel subPanel = new JPanel(gbLayout);
+//			subPanel.setLayout(gbLayout);
+
+			gbConstraints.weightx = 1;
+			gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+			gbConstraints.anchor = GridBagConstraints.NORTH;
+//			subPanel.add(toolbarPanel, gbConstraints);
+
+			gbConstraints.gridy = 1;
+			gbConstraints.fill = GridBagConstraints.BOTH;
+			if ( imageB != null )
+			{
+//				subPanel.add(tabbedPane, gbConstraints);
+				mainPanel.add(tabbedPane);
+			}
+			else
+			{
+//				subPanel.add(panelOpacityA, gbConstraints);
+				mainPanel.add(panelOpacityA);
+			}
+		}
+		mainPanel.validate();
 	}
 
 	/**

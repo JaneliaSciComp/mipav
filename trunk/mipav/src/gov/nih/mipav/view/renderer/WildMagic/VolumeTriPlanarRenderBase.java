@@ -171,7 +171,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	/** sample rate when mouse is released. */
 	protected float fSample_mouseReleased = 1;
 	/** sample rate when mouse is dragged. */
-	protected float fSample_mouseDragged = .6f;
+	protected float fSample_mouseDragged = .5f;
 
 	protected boolean m_bPlay4D = false;
 	protected boolean m_bPlay4DVOIs = false;
@@ -1404,6 +1404,13 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		InitializeCameraMotion(.05f, 0.1f);
 		UpdateCameraZoomSpeed(.05f);
 		InitializeObjectMotion(m_spkScene);
+	}
+	
+	public void init()
+	{
+		m_bInit = false;
+		m_kDeleteList.addAll(m_kDisplayList);
+		m_kDisplayList.clear();
 	}
 
 	/**

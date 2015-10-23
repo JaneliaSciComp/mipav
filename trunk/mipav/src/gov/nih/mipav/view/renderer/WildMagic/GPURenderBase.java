@@ -694,6 +694,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     {
         m_bVisible = bVisible;
     }
+    
+    public boolean isVisible()
+    {
+        return m_bVisible;
+    }
 	 
 	 public void startAnimator(boolean bRunFast)
 	 {
