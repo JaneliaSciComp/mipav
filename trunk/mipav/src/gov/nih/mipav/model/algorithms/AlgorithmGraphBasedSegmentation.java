@@ -11,9 +11,14 @@ import java.util.*;
 public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
 	
 	/**
+	 * The C++ source code for the port was  downloaded from Pedro F. Felzenswalb's web page 
+	 * Graph Based Image Segmentation at http://cs.brown.edu/~pff/segment/
+	 * 
 	 * This code is ported with the permission of Pedro F. Felzenszwalb
 	 * Reference: Pedro F. Felzenszwalb and Daniel P. Huttenlocher, 
 	 * International Journal of Computer Vision, 59(2), September, 2004.
+	 * 
+	 * Port performed by William Gandler.
 	 * 
 	 * This program takes a color image and produces a segmentation
 	 * with a random color assigned to each region
