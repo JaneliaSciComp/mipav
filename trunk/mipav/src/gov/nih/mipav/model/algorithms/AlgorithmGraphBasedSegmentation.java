@@ -95,7 +95,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
         
         fireProgressStateChanged("Graph Based Segmentation ...");
         
-        float[] sigmas = new float[32];
+        float[] sigmas = new float[2];
 		sigmas[0] = sigma;
 		sigmas[1] = sigma;
 		
@@ -189,7 +189,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
 		smooth_b = null;
 		
 		// Segment
-		u = segment_graph(sliceSize, num, edges, k);
+		u = segment_graph(sliceSize, num, edges, k);                                                                                                      
 		
 		// post process small components
 	    for (i = 0; i < num; i++) {
