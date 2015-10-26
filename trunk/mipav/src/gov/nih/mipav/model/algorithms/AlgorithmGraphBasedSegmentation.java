@@ -103,6 +103,9 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
         gaussianImage.setType(ModelStorageBase.ARGB_FLOAT);
         gaussianImage.reallocate(ModelStorageBase.ARGB_FLOAT);
 		gaussianAlgo = new AlgorithmGaussianBlur(gaussianImage, srcImage, sigmas, entireImage, image25D);
+		gaussianAlgo.setRed(true);
+		gaussianAlgo.setGreen(true);
+		gaussianAlgo.setBlue(true);
 
 		gaussianAlgo.run();
 		
