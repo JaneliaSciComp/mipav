@@ -1,19 +1,20 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.AlgorithmPowerWatershed;
 import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterBoolean;
-import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
-import gov.nih.mipav.model.scripting.parameters.ParameterImage;
-import gov.nih.mipav.model.scripting.parameters.ParameterInt;
-import gov.nih.mipav.model.scripting.parameters.ParameterTable;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.scripting.parameters.*;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIVector;
+
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
 import java.io.IOException;
 import java.util.*;
 
@@ -25,59 +26,60 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 /**
  * DOCUMENT ME!
  */
-public class JDialogPowerWatershed extends JDialogScriptableBase 
-	implements AlgorithmInterface, ActionDiscovery{
+public class JDialogPowerWatershed extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
     private static int Kruskal = 1;
-    
+
     private static int PW_qis2 = 2;
-    
+
     private static int Prim = 3;
 
     /** Use serialVersionUID for interoperability. */
-    //private static final long serialVersionUID;
+    // private static final long serialVersionUID;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
-	
-	private int algo;
-    
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
+
+    private int algo;
+
     // The index in the image array of the seed
-    private Vector<Integer> index_seeds = new Vector<Integer>();
-    
+    private final Vector<Integer> index_seeds = new Vector<Integer>();
+
     // For 2-labels 1 for white foreground and 2 for black background
     // For multi-labels values from 1 to n with n <= 255 for segmentation in n labels
-    private Vector<Short> index_labels = new Vector<Short>();
-    
+    private final Vector<Short> index_labels = new Vector<Short>();
+
     // Geodesic reconstruction
     private boolean geod;
-    
+
     private ButtonGroup algoGroup;
-    
+
     private JRadioButton KruskalButton;
-    
+
     private JRadioButton PowerButton;
-    
+
     private JRadioButton PrimButton;
-    
+
     private ButtonGroup labelsGroup;
-    
+
     private JRadioButton twoButton;
-    
+
     private JRadioButton multiButton;
-    
+
     private JCheckBox geodesicCheckBox;
-    
+
     private JButton pointsButton;
-    
+
     private JButton maskButton;
-    
+
     private short pointNum = 1;
-    
+
     private boolean haveOne = false;
-    
+
     private boolean haveTwo = false;
-    
+
     private int presentvoiIndex = 0;
 
     /** DOCUMENT ME! */
@@ -94,54 +96,55 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-    
+
     private ViewJComponentEditImage componentImage;
-    
-    private JComboBox<String> imageComboBox;
-    
+
+    private JComboBox imageComboBox;
+
     private String maskName;
-    
+
     private ModelImage maskImage;
-    
-    private ViewUserInterface UI = ViewUserInterface.getReference();
-    
+
+    private final ViewUserInterface UI = ViewUserInterface.getReference();
+
     private ArrayList<labelIndexItem> pointList = null;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Empty constructor needed for dynamic instantiation (used during scripting).
      */
-    public JDialogPowerWatershed() { }
+    public JDialogPowerWatershed() {}
 
     // or if the source image is to be replaced
 
     /**
      * Creates new dialog for entering parameters for Power watershed.
-     *
-     * @param  theParentFrame  Parent frame
-     * @param  im              Source image
+     * 
+     * @param theParentFrame Parent frame
+     * @param im Source image
      */
-    public JDialogPowerWatershed(Frame theParentFrame, ModelImage im) {
+    public JDialogPowerWatershed(final Frame theParentFrame, final ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface =  ViewUserInterface.getReference();
+        userInterface = ViewUserInterface.getReference();
         componentImage = ((ViewJFrameImage) theParentFrame).getComponentImage();
         componentImage.getVOIHandler().newVOI(0.0f);
         init();
     }
 
-   
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
-    
     /**
      * {@inheritDoc}
      */
+    @Override
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
         scriptParameters.storeOutputImageParams(resultImage, true);
-        
+
         scriptParameters.getParams().put(ParameterFactory.newParameter("algorithm", algo));
         scriptParameters.getParams().put(ParameterFactory.newParameter("geodesic", geod));
     }
@@ -149,11 +152,12 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
     /**
      * {@inheritDoc}
      */
+    @Override
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
-        
+
         algo = scriptParameters.getParams().getInt("algorithm");
         geod = scriptParameters.getParams().getBoolean("goedesic");
     }
@@ -161,17 +165,19 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
     /**
      * Store the result image in the script runner's image table now that the action execution is finished.
      */
+    @Override
     protected void doPostAlgorithmActions() {
         AlgorithmParameters.storeImageInRunner(getResultImage());
     }
 
     /**
      * actionPerformed - Closes dialog box when the OK button is pressed and calls the algorithm.
-     *
-     * @param  event  event that triggers function
+     * 
+     * @param event event that triggers function
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
+    @Override
+    public void actionPerformed(final ActionEvent event) {
+        final String command = event.getActionCommand();
 
         if (command.equals("OK")) {
 
@@ -180,134 +186,126 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
             }
         } else if (command.equals("Cancel")) {
             dispose();
-        } if (command.equals("Add")) {
+        }
+        if (command.equals("Add")) {
             int i, j;
             int x, y, z;
-        	VOIVector voiVector;
-        	VOI presentVOI;
-        	Vector3f[] tmppt = null;
-        	int index;
-        	int xDim = image.getExtents()[0];
-        	int yDim = image.getExtents()[1];
-        	int sliceSize = xDim * yDim;
-        	voiVector = image.getVOIs();
-        	if (pointList == null) {
-        		pointList = new ArrayList<labelIndexItem>();
-        	}
+            VOIVector voiVector;
+            VOI presentVOI;
+            Vector3f[] tmppt = null;
+            int index;
+            final int xDim = image.getExtents()[0];
+            final int yDim = image.getExtents()[1];
+            final int sliceSize = xDim * yDim;
+            voiVector = image.getVOIs();
+            if (pointList == null) {
+                pointList = new ArrayList<labelIndexItem>();
+            }
             for (i = presentvoiIndex; i < voiVector.size(); i++) {
-            	presentVOI = image.getVOIs().VOIAt(i);
+                presentVOI = image.getVOIs().VOIAt(i);
                 if (presentVOI.getCurveType() == VOI.POINT) {
-                	tmppt = presentVOI.exportAllPoints();
-                	for (j = 0; j < tmppt.length; j++) {
-                		x = Math.round(tmppt[j].X);
-                		y = Math.round(tmppt[j].Y);
-                		z = Math.round(tmppt[j].Z);
-                		index = x + y * xDim + z * sliceSize;
-                		pointList.add(new labelIndexItem(pointNum, index));
-                		if (pointNum == 1) {
-                			haveOne = true;
-                		}
-                		else if (pointNum == 2) {
-                			haveTwo = true;
-                		}
-                	}
-                }	
+                    tmppt = presentVOI.exportAllPoints();
+                    for (j = 0; j < tmppt.length; j++) {
+                        x = Math.round(tmppt[j].X);
+                        y = Math.round(tmppt[j].Y);
+                        z = Math.round(tmppt[j].Z);
+                        index = x + y * xDim + z * sliceSize;
+                        pointList.add(new labelIndexItem(pointNum, index));
+                        if (pointNum == 1) {
+                            haveOne = true;
+                        } else if (pointNum == 2) {
+                            haveTwo = true;
+                        }
+                    }
+                }
             }
             presentvoiIndex = voiVector.size();
-            if ((twoButton.isSelected() && pointNum < 2) || (multiButton.isSelected() && pointNum < 255)) {
-        	    pointNum++;
-        	    pointsButton.setText("Finished adding " + String.valueOf(pointNum) + " points");
-        	    if (pointNum == 2) {
-            		componentImage.getVOIHandler().newVOI(1.0f/3.0f);	
-            	}
-            	else if (pointNum == 3) {
-            		componentImage.getVOIHandler().newVOI(2.0f/3.0f);		
-            	}
-            	else if (pointNum == 4) {
-            		componentImage.getVOIHandler().newVOI(1.0f/6.0f);	
-            	}
-            	else if (pointNum == 5) {
-            		componentImage.getVOIHandler().newVOI(1.0f/2.0f);
-            	}
-            	else if (pointNum >= 6) {
-            		componentImage.getVOIHandler().newVOI(5.0f/6.0f);
-            	}
-            }
-            else {
-            	pointsButton.setText("Cannot add any more points");
-            	pointsButton.setEnabled(false);
+            if ( (twoButton.isSelected() && pointNum < 2) || (multiButton.isSelected() && pointNum < 255)) {
+                pointNum++;
+                pointsButton.setText("Finished adding " + String.valueOf(pointNum) + " points");
+                if (pointNum == 2) {
+                    componentImage.getVOIHandler().newVOI(1.0f / 3.0f);
+                } else if (pointNum == 3) {
+                    componentImage.getVOIHandler().newVOI(2.0f / 3.0f);
+                } else if (pointNum == 4) {
+                    componentImage.getVOIHandler().newVOI(1.0f / 6.0f);
+                } else if (pointNum == 5) {
+                    componentImage.getVOIHandler().newVOI(1.0f / 2.0f);
+                } else if (pointNum >= 6) {
+                    componentImage.getVOIHandler().newVOI(5.0f / 6.0f);
+                }
+            } else {
+                pointsButton.setText("Cannot add any more points");
+                pointsButton.setEnabled(false);
             }
         } else if (command.equals("Mask")) {
-        	if (maskImage == null) {
-        		MipavUtil.displayError("No mask image has been found");
-        		return;
-        	}
-        	int i;
-        	int firstLabel = -1;
-        	// maskImage is same size as image
-        	int xDim = maskImage.getExtents()[0];
-        	int yDim = maskImage.getExtents()[1];
-        	int length = xDim * yDim;
-        	int zDim = 1;
-        	if (maskImage.getNDims() > 2) {
-        		zDim = maskImage.getExtents()[2];
-        		length = length * zDim;
-        	}
-        	short buffer[] = new short[length];
-        	try {
-        		maskImage.exportData(0, length, buffer);
-        	}
-        	catch(IOException e) {
-        		MipavUtil.displayError("IOException " + e + " on maskImage.exportData(0, length, buffer)");
-        		return;
-        	}
-        	short minValue = (short)maskImage.getMin();
-        	short maxValue = (short)maskImage.getMax();
-        	if (twoButton.isSelected()) {
-        	    for (i = 0; i < length; i++) {
-        	        if (buffer[i] == minValue) { 
-        	        	index_seeds.add(i);
-                		index_labels.add((short)1);
-                		haveOne = true;
-        	        }
-        	        else if (buffer[i] == maxValue) { 
-        	        	index_seeds.add(i);
-                		index_labels.add((short)2);
-                		haveTwo = true;
-        	        }
-        	    }
-        	}
-        	else { // multiButton.isSelected()
-    			for (i = 0; i < length; i++) {
-    				if (buffer[i] != 0) {
-    					index_seeds.add(i);
-    					index_labels.add((short)buffer[i]);
-    					if (!haveOne) {
-    						haveOne = true;
-    						firstLabel = buffer[i];
-    					}
-    					else if (haveOne && (!haveTwo) && (buffer[i] != firstLabel)) {
-    						haveTwo = true;
-    					}
-    				}
-    			}
-        	}
-        	maskButton.setEnabled(false);
+            if (maskImage == null) {
+                MipavUtil.displayError("No mask image has been found");
+                return;
+            }
+            int i;
+            int firstLabel = -1;
+            // maskImage is same size as image
+            final int xDim = maskImage.getExtents()[0];
+            final int yDim = maskImage.getExtents()[1];
+            int length = xDim * yDim;
+            int zDim = 1;
+            if (maskImage.getNDims() > 2) {
+                zDim = maskImage.getExtents()[2];
+                length = length * zDim;
+            }
+            final short buffer[] = new short[length];
+            try {
+                maskImage.exportData(0, length, buffer);
+            } catch (final IOException e) {
+                MipavUtil.displayError("IOException " + e + " on maskImage.exportData(0, length, buffer)");
+                return;
+            }
+            final short minValue = (short) maskImage.getMin();
+            final short maxValue = (short) maskImage.getMax();
+            if (twoButton.isSelected()) {
+                for (i = 0; i < length; i++) {
+                    if (buffer[i] == minValue) {
+                        index_seeds.add(i);
+                        index_labels.add((short) 1);
+                        haveOne = true;
+                    } else if (buffer[i] == maxValue) {
+                        index_seeds.add(i);
+                        index_labels.add((short) 2);
+                        haveTwo = true;
+                    }
+                }
+            } else { // multiButton.isSelected()
+                for (i = 0; i < length; i++) {
+                    if (buffer[i] != 0) {
+                        index_seeds.add(i);
+                        index_labels.add(buffer[i]);
+                        if ( !haveOne) {
+                            haveOne = true;
+                            firstLabel = buffer[i];
+                        } else if (haveOne && ( !haveTwo) && (buffer[i] != firstLabel)) {
+                            haveTwo = true;
+                        }
+                    }
+                }
+            }
+            maskButton.setEnabled(false);
         } else {
             super.actionPerformed(event);
         }
-        
+
     }
-    
+
     /**
      * itemStateChanged.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
+    @Override
+    public void itemStateChanged(final ItemEvent event) {
+        final Object source = event.getSource();
 
-         if (source == imageComboBox) {
+        if (source == imageComboBox) {
             maskName = (String) imageComboBox.getSelectedItem();
 
             if (maskName != null) {
@@ -315,35 +313,35 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
             }
         }
 
-
     }
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************
     // ************************************************************************
-    
+
     /**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithm when it
      * has completed or failed to to complete, so that the dialog can display the result image and/or clean up.
-     *
-     * @param  algorithm  Algorithm that caused the event.
+     * 
+     * @param algorithm Algorithm that caused the event.
      */
-    public void algorithmPerformed(AlgorithmBase algorithm) {
+    @Override
+    public void algorithmPerformed(final AlgorithmBase algorithm) {
 
         if (algorithm instanceof AlgorithmPowerWatershed) {
             System.err.println("finished algorithm");
             image.clearMask();
 
-            if ((pwAlgo.isCompleted() == true) && (resultImage != null)) {
+            if ( (pwAlgo.isCompleted() == true) && (resultImage != null)) {
 
                 // The algorithm has completed and produced a new image to be displayed.
                 updateFileInfo(image, resultImage);
                 resultImage.clearMask();
 
                 try {
-                	
+
                     new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
 
@@ -353,13 +351,13 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registed to the userinterface.
-                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
+                final Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
                     ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
 
-                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                    if ( ((Frame) (imageFrames.elementAt(i))) != parentFrame) {
                         userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
                     }
                 }
@@ -380,80 +378,75 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         dispose();
     }
 
-    
-
     /**
      * Accessor that returns the image.
-     *
-     * @return  the result image
+     * 
+     * @return the result image
      */
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-   /**
-    * 
-    * @param algo
-    */
-    public void setAlgo(int algo) {
-    	this.algo = algo;
+
+    /**
+     * 
+     * @param algo
+     */
+    public void setAlgo(final int algo) {
+        this.algo = algo;
     }
-    
-    
+
     /**
      * 
      * @param geod
      */
-    public void setGeod(boolean geod) {
-    	this.geod = geod;
+    public void setGeod(final boolean geod) {
+        this.geod = geod;
     }
-    
+
     /**
      * DOCUMENT ME!
      */
+    @Override
     public void callAlgorithm() {
 
-    	String name;
-    	if (algo == Kruskal) {
+        String name;
+        if (algo == Kruskal) {
             name = makeImageName(image.getImageName(), "_Kruskal");
-    	}
-    	else if (algo == PW_qis2) {
-    		name = makeImageName(image.getImageName(), "_PowerWatershed");	
-    	}
-    	else {
-    		name = makeImageName(image.getImageName(), "_Prim");		
-    	}
+        } else if (algo == PW_qis2) {
+            name = makeImageName(image.getImageName(), "_PowerWatershed");
+        } else {
+            name = makeImageName(image.getImageName(), "_Prim");
+        }
 
-            try {
+        try {
 
-                // Make result image of unsigned type
-                resultImage = new ModelImage(ModelImage.UBYTE, image.getExtents(), name);
+            // Make result image of unsigned type
+            resultImage = new ModelImage(ModelImage.UBYTE, image.getExtents(), name);
 
-                // Make algorithm
-                pwAlgo = new AlgorithmPowerWatershed(resultImage, image, algo, index_seeds, index_labels, geod);
+            // Make algorithm
+            pwAlgo = new AlgorithmPowerWatershed(resultImage, image, algo, index_seeds, index_labels, geod);
 
-            } catch (OutOfMemoryError x) {
-                MipavUtil.displayError("Dialog power watershed: unable to allocate enough memory");
+        } catch (final OutOfMemoryError x) {
+            MipavUtil.displayError("Dialog power watershed: unable to allocate enough memory");
 
-                if (resultImage != null) {
-                    resultImage.disposeLocal(); // Clean up memory of result image
-                    resultImage = null;
-                }
-
-                return;
+            if (resultImage != null) {
+                resultImage.disposeLocal(); // Clean up memory of result image
+                resultImage = null;
             }
-        
 
-        //       This is very important. Adding this object as a listener allows the algorithm to
+            return;
+        }
+
+        // This is very important. Adding this object as a listener allows the algorithm to
         // notify this object when it has completed of failed. See algorithm performed event.
         // This is made possible by implementing AlgorithmedPerformed interface
         pwAlgo.addListener(this);
 
-        //      Hide dialog
+        // Hide dialog
         setVisible(false);
         createProgressBar(image.getImageName(), pwAlgo);
 
-        //       Start the thread as a low priority because we wish to still have user interface work fast
+        // Start the thread as a low priority because we wish to still have user interface work fast
         if (isRunInSeparateThread()) {
 
             if (pwAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
@@ -464,22 +457,20 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         }
     }
 
-    
-
     /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
         setTitle("Power Watershed");
 
-        GridBagConstraints gbc = new GridBagConstraints();
+        final GridBagConstraints gbc = new GridBagConstraints();
         gbc.weightx = 1;
 
         int yPos = 0;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JPanel algoPanel = new JPanel(new GridBagLayout());
+        final JPanel algoPanel = new JPanel(new GridBagLayout());
         algoPanel.setBorder(buildTitledBorder("Algorithms"));
 
         algoGroup = new ButtonGroup();
@@ -500,19 +491,19 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         algoGroup.add(PrimButton);
         gbc.gridy = yPos++;
         algoPanel.add(PrimButton, gbc);
-        
-        GridBagConstraints gbc2 = new GridBagConstraints();
+
+        final GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.weightx = 1;
 
         int yPos2 = 0;
         gbc2.anchor = GridBagConstraints.WEST;
         gbc2.fill = GridBagConstraints.HORIZONTAL;
 
-        JPanel labelsPanel = new JPanel(new GridBagLayout());
+        final JPanel labelsPanel = new JPanel(new GridBagLayout());
         labelsPanel.setForeground(Color.black);
         labelsPanel.setBorder(buildTitledBorder("Labels"));
-        
-        JLabel headLabel = new JLabel("Add points or load mask image");
+
+        final JLabel headLabel = new JLabel("Add points or load mask image");
         headLabel.setForeground(Color.black);
         headLabel.setFont(serif12);
         gbc2.gridy = yPos2++;
@@ -524,37 +515,37 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         labelsGroup.add(twoButton);
         gbc2.gridy = yPos2++;
         labelsPanel.add(twoButton, gbc2);
-        
-        JLabel oneLabel = new JLabel("VOI 1 or maskImage minValue for black background seeds");
+
+        final JLabel oneLabel = new JLabel("VOI 1 or maskImage minValue for black background seeds");
         oneLabel.setForeground(Color.black);
         oneLabel.setFont(serif12);
         gbc2.gridy = yPos2++;
-        labelsPanel.add(oneLabel,gbc2);
-        
-        JLabel twoLabel = new JLabel("VOI 2 or maskImage maxValue for white foreground seeds");
+        labelsPanel.add(oneLabel, gbc2);
+
+        final JLabel twoLabel = new JLabel("VOI 2 or maskImage maxValue for white foreground seeds");
         twoLabel.setForeground(Color.black);
         twoLabel.setFont(serif12);
         gbc2.gridy = yPos2++;
-        labelsPanel.add(twoLabel,gbc2);
-        
-        JLabel grayLabel = new JLabel("Intermediate mask values do not contribute to two level seeds");
+        labelsPanel.add(twoLabel, gbc2);
+
+        final JLabel grayLabel = new JLabel("Intermediate mask values do not contribute to two level seeds");
         grayLabel.setForeground(Color.black);
         grayLabel.setFont(serif12);
         gbc2.gridy = yPos2++;
-        labelsPanel.add(grayLabel,gbc2);
+        labelsPanel.add(grayLabel, gbc2);
 
         multiButton = new JRadioButton("Multiple labels", true);
         multiButton.setFont(serif12);
         labelsGroup.add(multiButton);
         gbc2.gridy = yPos2++;
         labelsPanel.add(multiButton, gbc2);
-        
-        JLabel valuesLabel = new JLabel("Values from 1 to n");
+
+        final JLabel valuesLabel = new JLabel("Values from 1 to n");
         valuesLabel.setForeground(Color.black);
         valuesLabel.setFont(serif12);
         gbc2.gridy = yPos2++;
         labelsPanel.add(valuesLabel, gbc2);
-        
+
         pointsButton = new JButton("Finished adding 1 points");
         pointsButton.setPreferredSize(MipavUtil.defaultButtonSize);
         pointsButton.setFont(serif12B);
@@ -562,8 +553,8 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         labelsPanel.add(pointsButton, gbc2);
         pointsButton.addActionListener(this);
         pointsButton.setActionCommand("Add");
-        
-        JLabel labelImage2 = new JLabel("Mask image: ");
+
+        final JLabel labelImage2 = new JLabel("Mask image: ");
         labelImage2.setForeground(Color.black);
         labelImage2.setFont(serif12);
         gbc2.gridy = yPos2++;
@@ -577,7 +568,7 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         if (maskName != null) {
             maskImage = UI.getRegisteredImageByName(maskName);
         }
-        
+
         maskButton = new JButton("Use mask image to generate seeds");
         maskButton.setPreferredSize(MipavUtil.defaultButtonSize);
         maskButton.setFont(serif12B);
@@ -586,12 +577,12 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         labelsPanel.add(maskButton, gbc2);
         maskButton.addActionListener(this);
         maskButton.setActionCommand("Mask");
-        
+
         geodesicCheckBox = new JCheckBox("Geodesic reconstruction", true);
         geodesicCheckBox.setFont(serif12);
         geodesicCheckBox.setForeground(Color.black);
 
-        JPanel mainPanel = new JPanel(new GridBagLayout());
+        final JPanel mainPanel = new JPanel(new GridBagLayout());
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
@@ -602,7 +593,7 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         mainPanel.add(geodesicCheckBox, gbc);
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        JPanel buttonPanel = new JPanel();
+        final JPanel buttonPanel = new JPanel();
         buildOKButton();
         buttonPanel.add(OKButton);
         buildCancelButton();
@@ -618,11 +609,11 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
 
     /**
      * Use the GUI results to set up the variables needed to run the algorithm.
-     *
-     * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
+     * 
+     * @return <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
-    	int i;
+        int i;
 
         if (KruskalButton.isSelected()) {
             algo = Kruskal;
@@ -631,67 +622,71 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
         } else if (PrimButton.isSelected()) {
             algo = Prim;
         }
-        
+
         geod = geodesicCheckBox.isSelected();
-        
-        if (!haveOne) {
-        	MipavUtil.displayError("No 1 point is present");
-        	return false;
+
+        if ( !haveOne) {
+            MipavUtil.displayError("No 1 point is present");
+            return false;
+        } else if ( !haveTwo) {
+            MipavUtil.displayError("No 2 point is present");
+            return false;
         }
-        else if (!haveTwo) {
-        	MipavUtil.displayError("No 2 point is present");
-        	return false;
-        }
-        
+
         if (pointList != null) {
-        	Collections.sort(pointList, new labelIndexComparator());
-        	for (i = 0; i < pointList.size(); i++) {
-        		index_labels.add(pointList.get(i).getLabel());
-        		index_seeds.add(pointList.get(i).getIndex());
-        	}
-        	pointList.clear();
+            Collections.sort(pointList, new labelIndexComparator());
+            for (i = 0; i < pointList.size(); i++) {
+                index_labels.add(pointList.get(i).getLabel());
+                index_seeds.add(pointList.get(i).getIndex());
+            }
+            pointList.clear();
         } // if (pointList != null)
 
         return true;
     }
-    
+
     /**
      * Return meta-information about this discoverable action for categorization and labeling purposes.
      * 
      * @return Metadata for this action.
      */
+    @Override
     public ActionMetadata getActionMetadata() {
         return new MipavActionMetadata() {
+            @Override
             public String getCategory() {
                 return new String("Algorithms.Segmentation");
             }
 
+            @Override
             public String getDescription() {
-                return new String("Performs retrospective segmentation." +
-                		"Note that in the algo field, " +
-                		"1 == Maximum Spanning Forest computed by Kruskal algorithm," +
-                		"2 == Powerwatersheds(p=infinite, q=2): Maximum Spanning Forest Computed by " +
-                		"Kruskal algorithm and Random walker on plateaus, and" +
-                		"3 == Maximum Spanning Forest computed by Prim algorithm using Red and black trees.");
+                return new String("Performs retrospective segmentation." + "Note that in the algo field, "
+                        + "1 == Maximum Spanning Forest computed by Kruskal algorithm,"
+                        + "2 == Powerwatersheds(p=infinite, q=2): Maximum Spanning Forest Computed by "
+                        + "Kruskal algorithm and Random walker on plateaus, and"
+                        + "3 == Maximum Spanning Forest computed by Prim algorithm using Red and black trees.");
             }
 
+            @Override
             public String getDescriptionLong() {
-            	return new String("Performs retrospective segmentation." +
-                		"Note that in the algo field, " +
-                		"1 == Maximum Spanning Forest computed by Kruskal algorithm," +
-                		"2 == Powerwatersheds(p=infinite, q=2): Maximum Spanning Forest Computed by " +
-                		"Kruskal algorithm and Random walker on plateaus, and" +
-                		"3 == Maximum Spanning Forest computed by Prim algorithm using Red and black trees.");  
+                return new String("Performs retrospective segmentation." + "Note that in the algo field, "
+                        + "1 == Maximum Spanning Forest computed by Kruskal algorithm,"
+                        + "2 == Powerwatersheds(p=infinite, q=2): Maximum Spanning Forest Computed by "
+                        + "Kruskal algorithm and Random walker on plateaus, and"
+                        + "3 == Maximum Spanning Forest computed by Prim algorithm using Red and black trees.");
             }
 
+            @Override
             public String getShortLabel() {
                 return new String("PowerWatershed");
             }
 
+            @Override
             public String getLabel() {
                 return new String("Power Watershed");
             }
 
+            @Override
             public String getName() {
                 return new String("Power Watershed");
             }
@@ -704,8 +699,9 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
      * 
      * @return A parameter table listing the inputs of this algorithm.
      */
+    @Override
     public ParameterTable createInputParameters() {
-        final ParameterTable table = new ParameterTable();       
+        final ParameterTable table = new ParameterTable();
         try {
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterInt("algorithm", Kruskal));
@@ -724,9 +720,10 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
      * 
      * @return A parameter table listing the outputs of this algorithm.
      */
+    @Override
     public ParameterTable createOutputParameters() {
         final ParameterTable table = new ParameterTable();
-        
+
         try {
             table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
         } catch (final ParserException e) {
@@ -744,9 +741,10 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
      * @param imageParamName The output image parameter label for which to get the image name.
      * @return The image name of the requested output image parameter label.
      */
+    @Override
     public String getOutputImageName(final String imageParamName) {
         if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
-        	if (getResultImage() != null) {
+            if (getResultImage() != null) {
                 // algo produced a new result image
                 return getResultImage().getImageName();
             } else {
@@ -765,40 +763,41 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
      * 
      * @return True, if the action is complete. False, if the action failed or is still running.
      */
+    @Override
     public boolean isActionComplete() {
         return isComplete();
     }
-    
+
     /**
      * Builds a list of images. Returns combobox. List must be all color or all black and white.
-     *
-     * @param   image  DOCUMENT ME!
-     *
-     * @return  Newly created combo box.
+     * 
+     * @param image DOCUMENT ME!
+     * 
+     * @return Newly created combo box.
      */
-    private JComboBox<String> buildComboBox(ModelImage image) {
+    private JComboBox buildComboBox(final ModelImage image) {
         ViewUserInterface UI;
         ModelImage nextImage;
         boolean doAdd;
         int i;
 
-        JComboBox<String> comboBox = new JComboBox<String>();
+        final JComboBox comboBox = new JComboBox();
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
 
         UI = ViewUserInterface.getReference();
 
-        Enumeration<String> names = UI.getRegisteredImageNames();
+        final Enumeration<String> names = UI.getRegisteredImageNames();
 
         while (names.hasMoreElements()) {
-            String name = names.nextElement();
+            final String name = names.nextElement();
 
-            if (!name.equals(image.getImageName())) {
+            if ( !name.equals(image.getImageName())) {
                 nextImage = UI.getRegisteredImageByName(name);
 
                 if (UI.getFrameContainingImage(nextImage) != null) {
 
-                    if ((!nextImage.isColorImage()) && (nextImage.getNDims() == image.getNDims())) {
+                    if ( ( !nextImage.isColorImage()) && (nextImage.getNDims() == image.getNDims())) {
                         doAdd = true;
 
                         for (i = 0; i < image.getNDims(); i++) {
@@ -818,7 +817,7 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
 
         return comboBox;
     }
-    
+
     private class labelIndexItem {
 
         /** DOCUMENT ME! */
@@ -856,7 +855,7 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
             return index;
         }
     }
-        
+
     private class labelIndexComparator implements Comparator<labelIndexItem> {
 
         /**
@@ -867,6 +866,7 @@ public class JDialogPowerWatershed extends JDialogScriptableBase
          * 
          * @return DOCUMENT ME!
          */
+        @Override
         public int compare(final labelIndexItem o1, final labelIndexItem o2) {
             final int a = o1.getIndex();
             final int b = o2.getIndex();
