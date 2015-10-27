@@ -10547,7 +10547,7 @@ public class Bessel {
         double cscl;
         double crsc;
         double fn;
-        int init;
+        int init[] = new int[1];
         final double[] phir = new double[1];
         final double[] phii = new double[1];
         final double[] zeta1r = new double[1];
@@ -10599,7 +10599,7 @@ public class Bessel {
 
         // Check for underflow and overflow on first member
         fn = Math.max(fnu, 1.0);
-        init = 0;
+        init[0] = 0;
         zunik(zr, zi, fn, 1, 1, init, phir, phii, zeta1r, zeta1i, zeta2r, zeta2i, sumr, sumi, cwrkr, cwrki);
 
         if (kode != 1) {
@@ -10643,7 +10643,7 @@ public class Bessel {
 
                 for (i = 1; i <= nn; i++) {
                     fn = fnu + nd - i;
-                    init = 0;
+                    init[0] = 0;
                     zunik(zr, zi, fn, 1, 0, init, phir, phii, zeta1r, zeta1i, zeta2r, zeta2i, sumr, sumi, cwrkr, cwrki);
 
                     if (kode != 1) {
@@ -11234,7 +11234,7 @@ public class Bessel {
      * @param cwrki double[]
      */
     private void zunik(final double zrr, final double zri, final double fnu, final int ikflg, final int ipmtr,
-            int init, final double[] phir, final double[] phii, final double[] zeta1r, final double[] zeta1i,
+            int init[], final double[] phir, final double[] phii, final double[] zeta1r, final double[] zeta1i,
             final double[] zeta2r, final double[] zeta2i, final double[] sumr, final double[] sumi,
             final double[] cwrkr, final double[] cwrki) {
         final double[] con = new double[] {3.98942280401432678E-01, 1.25331413731550025};
@@ -11294,7 +11294,7 @@ public class Bessel {
         double crfni;
         int i;
 
-        if (init == 0) {
+        if (init[0] == 0) {
 
             // initialize all variables
             rfn = 1.0 / fnu;
@@ -11377,7 +11377,7 @@ public class Bessel {
                 k = 15;
             } // group
 
-            init = k;
+            init[0] = k;
         } // if (init == 0)
 
         if (ikflg != 2) {
@@ -11386,7 +11386,7 @@ public class Bessel {
             sr = 0.0;
             si = 0.0;
 
-            for (i = 1; i <= init; i++) {
+            for (i = 1; i <= init[0]; i++) {
                 sr = sr + cwrkr[i - 1];
                 si = si + cwrki[i - 1];
             } // for (i = 1; i <= init; i++)
@@ -11404,7 +11404,7 @@ public class Bessel {
         si = 0.0;
         tr[0] = 1.0;
 
-        for (i = 1; i <= init; i++) {
+        for (i = 1; i <= init[0]; i++) {
             sr = sr + (tr[0] * cwrkr[i - 1]);
             si = si + (tr[0] * cwrki[i - 1]);
             tr[0] = -tr[0];
@@ -11486,7 +11486,7 @@ public class Bessel {
         double cki;
         int ib;
         int ipard;
-        int initd = 0;
+        int initd[] = new int[1];
         final double[] phidr = new double[1];
         final double[] phidi = new double[1];
         final double[] zet1dr = new double[1];
@@ -11535,6 +11535,7 @@ public class Bessel {
         int k;
         int m;
         int p;
+        int tempInit[] = new int[1];
 
         kdflg = 1;
         nz[0] = 0;
@@ -11570,8 +11571,10 @@ public class Bessel {
                 j = 3 - j;
                 fn = fnu + i - 1.0;
                 init[j - 1] = 0;
-                zunik(zrr, zri, fn, 2, 0, init[j - 1], phirj, phiij, zeta1rj, zeta1ij, zeta2rj, zeta2ij, sumrj, sumij,
+                tempInit[0] = init[j-1];
+                zunik(zrr, zri, fn, 2, 0, tempInit, phirj, phiij, zeta1rj, zeta1ij, zeta2rj, zeta2ij, sumrj, sumij,
                         cwrkrj, cwrkij);
+                init[j-1] = tempInit[0];
                 phir[j - 1] = phirj[0];
                 phii[j - 1] = phiij[0];
                 zeta1r[j - 1] = zeta1rj[0];
@@ -11730,7 +11733,7 @@ public class Bessel {
                 ipard = 0;
             } // if (mr != 0)
 
-            initd = 0;
+            initd[0] = 0;
             zunik(zrr, zri, fn, 2, ipard, initd, phidr, phidi, zet1dr, zet1di, zet2dr, zet2di, sumdr, sumdi, cwrkr3,
                     cwrki3);
 
@@ -11902,7 +11905,7 @@ public class Bessel {
                 while (true) {
 
                     if (seg6) {
-                        initd = init[j - 1];
+                        initd[0] = init[j - 1];
                         phidr[0] = phir[j - 1];
                         phidi[0] = phii[j - 1];
                         zet1dr[0] = zeta1r[j - 1];
@@ -11927,7 +11930,7 @@ public class Bessel {
                         continue;
                     } // if ((kk == ib) || (kk == ic))
 
-                    initd = 0;
+                    initd[0] = 0;
 
                     break;
                 } // while (true)
@@ -13009,7 +13012,7 @@ public class Bessel {
         double gnu;
         double fnn;
         double gnn;
-        int init;
+        int init[] = new int[1];
         double czr;
         double czi;
         double znr = 0.0;
@@ -13076,7 +13079,7 @@ public class Bessel {
         // parts of zeta1, zeta2, and zb. No attempt is made to get the sign
         // of the imaginary part correct
         if (iform != 2) {
-            init = 0;
+            init[0] = 0;
             zunik(zrr, zri, gnu, ikflg, 1, init, phir, phii, zeta1r, zeta1i, zeta2r, zeta2i, sumr, sumi, cwrkr, cwrki);
             czr = -zeta1r[0] + zeta2r[0];
             czi = -zeta1i[0] + zeta2i[0];
@@ -13203,7 +13206,7 @@ public class Bessel {
                 gnu = fnu + nn - 1.0;
 
                 if (iform != 2) {
-                    init = 0;
+                    init[0] = 0;
                     zunik(zrr, zri, gnu, ikflg, 1, init, phir, phii, zeta1r, zeta1i, zeta2r, zeta2i, sumr, sumi, cwrkr,
                             cwrki);
                     czr = -zeta1r[0] + zeta2r[0];
