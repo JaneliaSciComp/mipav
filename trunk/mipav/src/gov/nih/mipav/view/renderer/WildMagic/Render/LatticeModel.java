@@ -2506,12 +2506,14 @@ public class LatticeModel {
 			}
 			if ( pickedAnnotation == -1 )
 			{
+				minDist = Float.MAX_VALUE;
 				// look at the vector under the mouse and see which lattice point is closest...
 				final Segment3f mouseVector = new Segment3f(startPt, endPt);
 				for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ )
 				{
 					DistanceVector3Segment3 dist = new DistanceVector3Segment3(annotationVOIs.getCurves().elementAt(i).elementAt(0), mouseVector);
 					float distance = dist.Get();
+//					System.err.println( i + " " + distance );
 					if ( distance < minDist )
 					{
 						minDist = distance;
@@ -2873,6 +2875,7 @@ public class LatticeModel {
 			imageA.unregisterVOI(annotationVOIs);
 		}
 		annotationVOIs = newAnnotations;
+		annotationVOIs.setName("annotationVOIs");
 		clear3DSelection();
 
 		if (showSelected != null) {
@@ -3184,7 +3187,7 @@ public class LatticeModel {
 
 				updateLattice(true);
 			}
-		} else if (minIndexL != -1) {
+		} else if ((minIndexL != -1) && ((minIndexL + 1) < right.size())) {
 			// System.err.println( "Add to left " + (minIndexL+1) );
 			left.add(minIndexL + 1, newLeft);
 			pickedPoint = left.elementAt(minIndexL + 1);
@@ -3193,7 +3196,7 @@ public class LatticeModel {
 			right.add(minIndexL + 1, newRight);
 
 			updateLattice(true);
-		} else if (minIndexR != -1) {
+		} else if (minIndexR != -1 && ((minIndexR + 1) < left.size())) {
 			// System.err.println( "Add to right " + (minIndexR+1) );
 			right.add(minIndexR + 1, newRight);
 			pickedPoint = right.elementAt(minIndexR + 1);

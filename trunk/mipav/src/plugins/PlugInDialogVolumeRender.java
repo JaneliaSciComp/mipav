@@ -43,10 +43,8 @@ import gov.nih.mipav.view.ViewImageUpdateInterface;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.renderer.ViewJComponentVolOpacityBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
-import gov.nih.mipav.view.renderer.WildMagic.Render.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentation;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
@@ -73,7 +71,6 @@ import java.util.Vector;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -81,51 +78,83 @@ import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 public class PlugInDialogVolumeRender extends JFrame implements ActionListener, AlgorithmInterface, PropertyChangeListener, ViewImageUpdateInterface {
 
-	private JButton startButton;
-	private JButton closeButton;
-	private JButton backButton;
-	private JButton nextButton;
-	private JButton doneButton;
-	private JButton newLatticeButton;
-	private JTextField  baseFileLocText;
-	private JTextField  baseFileNameText;
-	private JTextField rangeFusionText;
-	private String baseFileName;
-	private String baseFileDir;
-	private Vector<Integer> includeRange;
-	private ModelImage wormImage;
-	private JPanel gpuPanel;
-	private VolumeTriPlanarRender volumeRenderer;
-	private VolumeImage volumeImage;
-	private VOILatticeManagerInterface voiManager;
-	private VOIVector annotations;
-	private VOIVector[] potentialLattices;
-	private int imageIndex = 0;
-	private JDialogStandalonePlugin dialogGUI;
-	private JPanel inputsPanel;
-	private JPanel buttonPanel;
-	private JPanel latticeSelectionPanel;
-	private JPanel algorithmsPanel;
-	private JPanel editPanel;
-	private JPanel choicePanel;
-	private boolean editEnabled = false;
-	private boolean batchProcess = false;
-	private JRadioButton[] latticeChoices;
 	public static final int EditNONE = 0;
 	public static final int EditSeamCells = 1;
 	public static final int EditLattice = 2;
 	public static final int EditAnnotations = 3;
 	public static final int ReviewResults = 4;
+	
+	private JPanel algorithmsPanel;
+	private VOIVector annotationList;
+	private Vector<String> annotationNames;
+	private VOIVector annotations;
+	private JButton backButton;
+	private String baseFileDir;
+	private JTextField  baseFileLocText;
+	private String baseFileName;
+	private JTextField  baseFileNameText;
+	private JProgressBar batchProgress;
+	private JRadioButton buildLattice;
+	private JPanel buttonPanel;
+	private JRadioButton calcMaxProjection;
+	private JPanel choicePanel;
+	private JButton closeButton;
+	private JRadioButton createAnimation;
+	private JDialogStandalonePlugin dialogGUI;
+	private JButton doneButton;
+	private JRadioButton editAnnotations;
+	private JRadioButton editLattice;
 	private int editMode = EditNONE;
-	private PlugInDialogVolumeRender parent;
+	private JPanel editPanel;
+	private JRadioButton editSeamCells;
+	private JPanel gpuPanel;
+	private int imageIndex = 0;
+	private Vector<Integer> includeRange;
+	private JPanel inputsPanel;
 	private boolean integratedDisplay = true;
+	private JRadioButton[] latticeChoices;
+	private JPanel latticeSelectionPanel;
+	private JRadioButton latticeStraighten;
+	private JFrameHistogram lutHistogramPanel;
+
+	private JPanel lutPanel;
+
+	private JButton newLatticeButton; 
+
+	private JButton nextButton;
+	
+	private JPanel opacityPanel;
+	
+	private PlugInDialogVolumeRender parent;
+	
+	private VOIVector[] potentialLattices;
+	private JTextField rangeFusionText;
+	
+	private JRadioButton reviewResults;
+	
+	private JRadioButton segmentSeamCells;
+	
+	private JButton startButton;
+
+	private JTabbedPane tabbedPane;
+
+
+	private VolumeTriPlanarInterface triVolume;
+
+	private VOILatticeManagerInterface voiManager;
+
+	private JPanelVolumeOpacity volOpacityPanel;
+	private VolumeImage volumeImage;
+	private Container volumePanel;
+	private VolumeTriPlanarRender volumeRenderer;
+	private ModelImage wormImage;
+	
+	
 	public PlugInDialogVolumeRender()
 	{
 		this.editMode = EditNONE;
@@ -144,7 +173,6 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		init(editMode);
 		setVisible(true);
 	}
-
 	/**
 	 * Closes dialog box when the OK button is pressed and calls the algorithm.
 	 *
@@ -159,25 +187,30 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			setVariables();
 			if (command.equals("start"))
 			{
+				startButton.setEnabled(false);
 				if ( segmentSeamCells.isSelected() )
 				{
 					PlugInDialogWormLatticeStraighten.segmentSeamCells( batchProgress, includeRange, baseFileDir, baseFileNameText.getText() );
 					segmentSeamCells.setSelected(false);
 					editSeamCells.setSelected(true);
+					startButton.setEnabled(true);
 				}
 				else if ( buildLattice.isSelected() )
 				{
 					PlugInDialogWormLatticeStraighten.buildLattice( batchProgress, includeRange, baseFileDir, baseFileNameText.getText());
 					editLattice.setSelected(true);
+					startButton.setEnabled(true);
 				}
 				else if ( latticeStraighten.isSelected() )
 				{
 					PlugInDialogWormLatticeStraighten.latticeStraighten( batchProgress, includeRange,  baseFileDir, baseFileNameText.getText() );
 					reviewResults.setSelected(true);
+					startButton.setEnabled(true);
 				}
 				else if ( calcMaxProjection.isSelected() )
 				{
 					PlugInDialogWormLatticeStraighten.createMaximumProjectionAVI( batchProgress, includeRange,  baseFileDir, baseFileNameText.getText() );
+					startButton.setEnabled(true);
 				}
 				else if ( editSeamCells.isSelected() )
 				{
@@ -240,7 +273,6 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					this.setVisible(false);
 					annotationAnimationFromSpreadSheet();
 				}
-				startButton.setEnabled(false);
 			}
 
 			baseFileNameText.setEnabled( !createAnimation.isSelected() );
@@ -355,8 +387,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			setVisible(false);
 			dispose();
 		}
-	} 
-
+	}
 	public void algorithmPerformed(AlgorithmBase algorithm)
 	{       
 		if ( (annotationList != null) && (annotationNames != null) && (triVolume != null) )
@@ -377,7 +408,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		kTransfer.addPoint(max, 0);
 		volumeRenderer.getVolumeImage().UpdateImages(kTransfer, 0, null);
 
-		System.err.println( "algorithmPerformed" );
+//		System.err.println( "algorithmPerformed" );
 		voiManager = new VOILatticeManagerInterface( null, volumeImage.GetImage(), null, 0, true, null );
 		volumeRenderer.setVOILatticeManager(voiManager);
 		if ( (editMode == EditSeamCells) || (editMode == EditAnnotations) )
@@ -420,7 +451,50 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		volumeRenderer.setABBlend(.8f);
 //		volumeRenderer.initLUT();
 	}
-	
+	public void dispose()
+	{
+		if ( annotationList != null )
+		{
+			annotationList.clear();
+			annotationList = null;
+		}
+		if ( annotationNames != null )
+		{
+			annotationNames.clear();
+			annotations = null;
+		}
+		if ( includeRange != null )
+		{
+			includeRange.clear();
+			includeRange = null;
+		}
+		if ( triVolume != null )
+		{
+			triVolume.disposeLocal(false);
+			triVolume = null;
+		}
+		if ( volumeImage != null )
+		{
+			volumeImage.dispose();
+			volumeImage = null;
+		}
+		if ( voiManager != null )
+		{
+			voiManager.disposeLocal(false);
+			voiManager = null;
+		}
+		if ( volumeRenderer != null )
+		{
+			volumeRenderer.dispose();
+			volumeRenderer = null;
+		}
+		if ( wormImage != null )
+		{
+			wormImage.disposeLocal();
+			wormImage = null;
+		}
+		
+	}
 	public void enableNext( int mode )
 	{
 		if ( volumeRenderer != null )
@@ -461,39 +535,100 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		volumePanel.setVisible(false);
 		tabbedPane.setVisible(false);
 		startButton.setEnabled(true);
+		if ( latticeSelectionPanel != null )
+		{
+			latticeSelectionPanel.setVisible(false);
+		}
 		pack();
 	}
-	
-	private JPanelVolumeOpacity volOpacityPanel;
-	private JFrameHistogram lutHistogramPanel;
-	
-	private void updateHistoLUTPanels()
-	{
-		if ( volOpacityPanel == null )
+
+	@Override
+	public void propertyChange(PropertyChangeEvent event) {
+		String propertyName = event.getPropertyName();
+		if ( propertyName.equals("Opacity") )
 		{
-			volOpacityPanel = new JPanelVolumeOpacity(volumeImage.GetImage(), null, volumeImage.GetGradientMagnitudeImage(), null, true);
-			volOpacityPanel.addPropertyChangeListener(this);
-			opacityPanel.add( volOpacityPanel.getMainPanel() );
+			final TransferFunction kTransfer = volOpacityPanel.getCompA().getOpacityTransferFunction();
+			volumeImage.UpdateImages(kTransfer, 0, null);
 		}
-		else
-		{
-			volOpacityPanel.setImages( volumeImage.GetImage(), null, volumeImage.GetGradientMagnitudeImage(), null, true );
-			opacityPanel.validate();
-		}
-		if ( lutHistogramPanel == null )
-		{
-			lutHistogramPanel = new JFrameHistogram(this, volumeImage.GetImage(), null, volumeImage.getLUT(), null);
-			lutHistogramPanel.histogramLUT(true, false, true);
-			lutPanel.add(lutHistogramPanel.getContainingPanel());
-		}
-		else
-		{
-			lutHistogramPanel.setImages(volumeImage.GetImage(), null, volumeImage.getLUT(), null);
-			lutHistogramPanel.histogramLUT(true, false, true);
-		}
-		volumeImage.GetImage().addImageDisplayListener(this);
+	}
+
+	@Override
+	public void setSlice(int slice) {
+		// TODO Auto-generated method stub
+		
 	}
 	
+	@Override
+	public void setTimeSlice(int tSlice) {
+		// TODO Auto-generated method stub
+		
+	}
+	@Override
+	public boolean updateImageExtents() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	@Override
+	public boolean updateImages() {
+		if ( volumeImage != null )
+		{
+			volumeImage.UpdateImages(volumeImage.GetLUT());
+		}
+		return false;
+	}
+	@Override
+	public boolean updateImages(boolean flag) {
+		if ( volumeImage != null )
+		{
+			volumeImage.UpdateImages(volumeImage.GetLUT());
+		}
+		return false;
+	}
+	@Override
+	public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean flag, int interpMode) {
+		if ( volumeImage != null )
+		{
+			volumeImage.UpdateImages(LUTa);
+		}
+		return false;
+	}
+
+	protected void openAnnotations()
+	{
+		if ( includeRange != null )
+		{			
+			if ( (imageIndex >= 0) && (imageIndex < includeRange.size()) )
+			{
+				String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + ".tif";
+				File voiFile = new File(baseFileDir + File.separator + fileName);
+				if ( openImages( voiFile, fileName ) )
+				{
+					if ( annotations != null )
+					{
+						annotations.clear();
+						annotations = null;
+					}
+					annotations = new VOIVector();
+					fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.editAnnotationOutput;
+					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+					PlugInDialogWormLatticeStraighten.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
+
+					if ( annotations.size() == 0 )
+					{
+						fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.editAnnotationInput;
+						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+						PlugInDialogWormLatticeStraighten.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
+					}
+					if ( voiManager != null )
+					{
+						voiManager.setAnnotations(annotations);
+						voiManager.editAnnotations(false);
+					}
+				}
+			}
+		}
+	}
+
 	protected boolean openImages( File imageFile, String fileName )
 	{
 		if ( imageFile.exists() )
@@ -549,81 +684,6 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 		return false;
 	}
-	
-	protected void openSeamCells()
-	{
-		if ( includeRange != null )
-		{			
-			if ( (imageIndex >= 0) && (imageIndex < includeRange.size()) )
-			{
-				String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + ".tif";
-				File voiFile = new File(baseFileDir + File.separator + fileName);
-				if ( openImages( voiFile, fileName ) )
-				{
-					if ( annotations != null )
-					{
-						annotations.clear();
-						annotations = null;
-					}
-					annotations = new VOIVector();
-
-					fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.editSeamCellOutput;
-					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-					PlugInDialogWormLatticeStraighten.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
-
-					if ( annotations.size() == 0 )
-					{
-						fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.autoSeamCellSegmentationOutput;
-						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-						PlugInDialogWormLatticeStraighten.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
-					}
-
-					if ( voiManager != null )
-					{
-						voiManager.setAnnotations(annotations);
-						voiManager.editAnnotations(true);
-					}
-				}
-			}
-		}
-	}
-
-	protected void openAnnotations()
-	{
-		if ( includeRange != null )
-		{			
-			if ( (imageIndex >= 0) && (imageIndex < includeRange.size()) )
-			{
-				String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + ".tif";
-				File voiFile = new File(baseFileDir + File.separator + fileName);
-				if ( openImages( voiFile, fileName ) )
-				{
-					if ( annotations != null )
-					{
-						annotations.clear();
-						annotations = null;
-					}
-					annotations = new VOIVector();
-					fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.editAnnotationOutput;
-					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-					PlugInDialogWormLatticeStraighten.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
-
-					if ( annotations.size() == 0 )
-					{
-						fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.editAnnotationInput;
-						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-						PlugInDialogWormLatticeStraighten.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
-					}
-					if ( voiManager != null )
-					{
-						voiManager.setAnnotations(annotations);
-						voiManager.editAnnotations(false);
-					}
-				}
-			}
-		}
-	}
-
 
 	protected void openLattice()
 	{
@@ -696,6 +756,44 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 	}
 
+	protected void openSeamCells()
+	{
+		if ( includeRange != null )
+		{			
+			if ( (imageIndex >= 0) && (imageIndex < includeRange.size()) )
+			{
+				String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + ".tif";
+				File voiFile = new File(baseFileDir + File.separator + fileName);
+				if ( openImages( voiFile, fileName ) )
+				{
+					if ( annotations != null )
+					{
+						annotations.clear();
+						annotations = null;
+					}
+					annotations = new VOIVector();
+
+					fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.editSeamCellOutput;
+					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+					PlugInDialogWormLatticeStraighten.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
+
+					if ( annotations.size() == 0 )
+					{
+						fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.autoSeamCellSegmentationOutput;
+						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+						PlugInDialogWormLatticeStraighten.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
+					}
+
+					if ( voiManager != null )
+					{
+						voiManager.setAnnotations(annotations);
+						voiManager.editAnnotations(true);
+					}
+				}
+			}
+		}
+	}
+
 	protected void openStraightened()
 	{
 		if ( includeRange != null )
@@ -718,506 +816,6 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 	}
 
-	private JRadioButton latticeStraighten;
-	private JRadioButton buildLattice;
-	private JRadioButton segmentSeamCells;
-	private JRadioButton calcMaxProjection;
-	private JProgressBar batchProgress;
-	private JPanel makeAlgorithmsPanel(GuiBuilder gui, ButtonGroup group)
-	{
-		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.gridwidth = 1;
-		gbc.gridheight = 1;
-		gbc.anchor = GridBagConstraints.NORTHWEST;
-		gbc.weightx = 1;
-//		gbc.insets = new Insets(3, 3, 3, 3);
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		JPanel panel = new JPanel(new GridBagLayout());
-		panel.setBorder(JDialogBase.buildTitledBorder("Batch Algorithms"));
-		panel.setForeground(Color.black);
-
-		gbc.gridx = 0;
-		segmentSeamCells = gui.buildRadioButton("1). segment seam cells", true );
-		segmentSeamCells.addActionListener(this);
-		panel.add(segmentSeamCells.getParent(), gbc);
-		gbc.gridy++;
-
-		gbc.gridx = 0;
-		buildLattice = gui.buildRadioButton("3). generate lattices", false );
-		buildLattice.addActionListener(this);
-		panel.add(buildLattice.getParent(), gbc);
-		gbc.gridy++;
-
-		gbc.gridx = 0;
-		latticeStraighten = gui.buildRadioButton("6). straighten", false );
-		latticeStraighten.addActionListener(this);
-		panel.add(latticeStraighten.getParent(), gbc);
-		gbc.gridy++;
-
-		gbc.gridx = 0;
-		calcMaxProjection = gui.buildRadioButton("generate maximum intensity projection animation", false );
-		calcMaxProjection.addActionListener(this);
-		panel.add(calcMaxProjection.getParent(), gbc);
-		gbc.gridy++;
-
-		gbc.gridx = 0;
-		batchProgress = new JProgressBar(0,100);
-		panel.add(batchProgress, gbc);
-
-		group.add(segmentSeamCells);
-		group.add(buildLattice);
-		group.add(latticeStraighten);
-		group.add(calcMaxProjection);
-		
-		return panel;
-	}
-
-	private JRadioButton editSeamCells;
-	private JRadioButton editLattice;
-	private JRadioButton editAnnotations;
-	private JRadioButton createAnimation;
-	private JRadioButton reviewResults;
-
-	private JPanel makeEditPanel(GuiBuilder gui, ButtonGroup group)
-	{
-		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.gridwidth = 1;
-		gbc.gridheight = 1;
-		gbc.anchor = GridBagConstraints.NORTHWEST;
-		gbc.weightx = 1;
-//		gbc.insets = new Insets(3, 3, 3, 3);
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		JPanel panel = new JPanel(new GridBagLayout());
-		panel.setBorder(JDialogBase.buildTitledBorder("Build / Edit"));
-		panel.setForeground(Color.black);
-
-		gbc.gridx = 0;
-		editSeamCells = gui.buildRadioButton("2). edit seam cells", false );
-		editSeamCells.addActionListener(this);
-		editSeamCells.setActionCommand("editSeamCells");
-		panel.add(editSeamCells.getParent(), gbc);
-		gbc.gridy++;
-
-		gbc.gridx = 0;
-		editLattice = gui.buildRadioButton("4). edit lattice", false );
-		editLattice.addActionListener(this);
-		editLattice.setActionCommand("editLattice");
-		panel.add(editLattice.getParent(), gbc);
-		gbc.gridy++;
-
-		gbc.gridx = 0;
-		editAnnotations = gui.buildRadioButton("5). add annotations", false );
-		editAnnotations.addActionListener(this);
-		editAnnotations.setActionCommand("editAnnotations");
-		panel.add(editAnnotations.getParent(), gbc);
-		gbc.gridy++;
-
-		gbc.gridx = 0;
-		reviewResults = gui.buildRadioButton("7). review straightened results", false );
-		reviewResults.addActionListener(this);
-		reviewResults.setActionCommand("reviewResults");
-		panel.add(reviewResults.getParent(), gbc);
-		gbc.gridy++;
-
-		gbc.gridx = 0;
-		createAnimation = gui.buildRadioButton("create annotation animation", false );
-		createAnimation.addActionListener(this);
-		createAnimation.setActionCommand("createAnimation");
-		panel.add(createAnimation.getParent(), gbc);
-		gbc.gridy++;
-
-		group.add(editSeamCells);
-		group.add(editLattice);
-		group.add(editAnnotations);
-		group.add(createAnimation);
-		group.add(reviewResults);
-
-		return panel;
-	}
-
-	private void init()
-	{
-		MipavInitGPU.InitGPU();
-
-		setResizable(true);
-		setForeground(Color.black);
-		setTitle("Untwisting C.elegans - lattice - 1.0");
-		try {
-			setIconImage(MipavUtil.getIconImage("divinci.gif"));
-		} catch (FileNotFoundException e) {
-			Preferences.debug("Failed to load default icon", Preferences.DEBUG_MINOR);
-		}
-
-		dialogGUI = new JDialogStandalonePlugin();
-		GuiBuilder gui = new GuiBuilder(dialogGUI);
-
-		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.gridwidth = 1;
-		gbc.gridheight = 1;
-		gbc.anchor = GridBagConstraints.WEST;
-		gbc.weightx = 1;
-		gbc.insets = new Insets(3, 3, 3, 3);
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-
-		inputsPanel = new JPanel(new GridBagLayout());
-		inputsPanel.setBorder(JDialogBase.buildTitledBorder("Input Options"));
-		inputsPanel.setForeground(Color.black);
-
-		baseFileLocText = gui.buildFileField("Data directory: ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
-		inputsPanel.add(baseFileLocText.getParent(), gbc);
-		gbc.gridy++;
-
-		baseFileNameText = gui.buildField("Base images name: ", "Decon");
-		inputsPanel.add(baseFileNameText.getParent(), gbc);
-		gbc.gridy++;
-
-		rangeFusionText = gui.buildField("Range of images to segment (ex. 3-7, 12, 18-21, etc.): ", " ");
-		inputsPanel.add(rangeFusionText.getParent(), gbc);
-		gbc.gridy++;
-
-		buttonPanel = new JPanel();
-		startButton = gui.buildButton("start");
-		startButton.addActionListener(this);
-		buttonPanel.add( startButton );
-		closeButton = gui.buildButton("close");
-		closeButton.addActionListener(this);
-		buttonPanel.add( closeButton );
-		buttonPanel.add(new JPanel());
-		//		panel.add(buttonPanel, gbc);
-
-		ButtonGroup group = new ButtonGroup();
-		algorithmsPanel = makeAlgorithmsPanel(gui, group);
-		editPanel = makeEditPanel(gui, group);
-
-		choicePanel = new JPanel( new GridLayout(1,2) );
-		choicePanel.add(algorithmsPanel);
-		choicePanel.add(editPanel);
-
-		dialogGUI.getContentPane().add(inputsPanel, BorderLayout.NORTH);
-		dialogGUI.getContentPane().add(choicePanel, BorderLayout.CENTER);
-		dialogGUI.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-
-		getContentPane().add(dialogGUI.getContentPane(), BorderLayout.CENTER);
-
-
-		setLocation(0, 0);
-		pack();
-		setResizable(true);
-
-		segmentSeamCells.setSelected(true);
-	}
-	
-	private JPanel lutPanel;
-	private JPanel opacityPanel;
-	private JTabbedPane tabbedPane;
-	private Container volumePanel;
-	private void init(boolean integrated)
-	{
-		if ( !integrated )
-		{
-			init();
-			return;
-		}
-		MipavInitGPU.InitGPU();
-
-		setResizable(true);
-		setForeground(Color.black);
-		setTitle("Untwisting C.elegans - lattice - 1.0");
-		try {
-			setIconImage(MipavUtil.getIconImage("divinci.gif"));
-		} catch (FileNotFoundException e) {
-			Preferences.debug("Failed to load default icon", Preferences.DEBUG_MINOR);
-		}
-
-		dialogGUI = new JDialogStandalonePlugin();
-		GuiBuilder gui = new GuiBuilder(dialogGUI);
-
-		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.gridwidth = 1;
-		gbc.gridheight = 1;
-		gbc.anchor = GridBagConstraints.WEST;
-		gbc.weightx = 1;
-		gbc.insets = new Insets(3, 3, 3, 3);
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-
-		inputsPanel = new JPanel(new GridBagLayout());
-		inputsPanel.setBorder(JDialogBase.buildTitledBorder("Input Options"));
-		inputsPanel.setForeground(Color.black);
-
-		baseFileLocText = gui.buildFileField("Data directory: ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
-		inputsPanel.add(baseFileLocText.getParent(), gbc);
-		gbc.gridy++;
-
-		baseFileNameText = gui.buildField("Base images name: ", "Decon");
-		inputsPanel.add(baseFileNameText.getParent(), gbc);
-		gbc.gridy++;
-
-		rangeFusionText = gui.buildField("Range of images to segment (ex. 3-7, 12, 18-21, etc.): ", " ");
-		inputsPanel.add(rangeFusionText.getParent(), gbc);
-		gbc.gridy++;
-
-		buttonPanel = new JPanel();
-		startButton = gui.buildButton("start");
-		startButton.addActionListener(this);
-		buttonPanel.add( startButton );
-		closeButton = gui.buildButton("close");
-		closeButton.addActionListener(this);
-		buttonPanel.add( closeButton );
-		buttonPanel.add(new JPanel());
-
-		ButtonGroup group = new ButtonGroup();
-		algorithmsPanel = makeAlgorithmsPanel(gui, group);
-		editPanel = makeEditPanel(gui, group);
-
-		choicePanel = new JPanel( new GridLayout(1,2) );
-		choicePanel.add(algorithmsPanel);
-		choicePanel.add(editPanel);
-
-		dialogGUI.getContentPane().add(inputsPanel, BorderLayout.NORTH);
-		dialogGUI.getContentPane().add(choicePanel, BorderLayout.CENTER);
-		dialogGUI.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-
-//		getContentPane().add(dialogGUI.getContentPane(), BorderLayout.CENTER);
-
-		lutPanel = new JPanel();
-		opacityPanel = new JPanel();
-		tabbedPane = new JTabbedPane();
-		tabbedPane.addTab("LUT", null, lutPanel);
-		tabbedPane.addTab("Opacity", null, opacityPanel);
-		tabbedPane.setVisible(false);
-		
-		JPanel leftPanel = new JPanel(new BorderLayout());
-		leftPanel.add( dialogGUI.getContentPane(), BorderLayout.NORTH );
-		leftPanel.add( tabbedPane, BorderLayout.SOUTH );
-		
-		volumePanel = initGPUPanel(EditNONE);
-		volumePanel.setVisible(false);
-		JPanel integratedPanel = new JPanel( new BorderLayout() );
-		integratedPanel.add( leftPanel, BorderLayout.WEST );
-		integratedPanel.add( volumePanel, BorderLayout.EAST );
-		getContentPane().add(integratedPanel, BorderLayout.CENTER);
-
-
-        
-        
-		setLocation(0, 0);
-		pack();
-		setResizable(true);
-
-		segmentSeamCells.setSelected(true);
-	}
-
-	private void init( int editMode )
-	{
-		MipavInitGPU.InitGPU();
-
-		setResizable(true);
-		setForeground(Color.black);
-		setTitle("Untwisting C.elegans");
-		try {
-			setIconImage(MipavUtil.getIconImage("divinci.gif"));
-		} catch (FileNotFoundException e) {
-			Preferences.debug("Failed to load default icon", Preferences.DEBUG_MINOR);
-		}
-		
-		getContentPane().add(initGPUPanel(editMode), BorderLayout.CENTER);
-
-		pack();
-		setResizable(true);
-
-	}
-
-	private Container initGPUPanel( int editMode )
-	{
-		MipavInitGPU.InitGPU();
-
-		dialogGUI = new JDialogStandalonePlugin();
-		GuiBuilder gui = new GuiBuilder(dialogGUI);
-
-		buttonPanel = new JPanel();
-		backButton = gui.buildButton("back");
-		backButton.addActionListener(this);
-		backButton.setActionCommand("back");
-		backButton.setVisible(true);
-		backButton.setEnabled(false);
-		buttonPanel.add( backButton );
-
-		nextButton = gui.buildButton("next");
-		nextButton.addActionListener(this);
-		nextButton.setActionCommand("next");
-		nextButton.setVisible(true);
-		nextButton.setEnabled(true);
-		buttonPanel.add( nextButton );
-
-		doneButton = gui.buildButton("done");
-		doneButton.addActionListener(this);
-		doneButton.setActionCommand("done");
-		doneButton.setVisible(true);
-		doneButton.setEnabled(true);
-		buttonPanel.add( doneButton );
-
-		ButtonGroup latticeGroup = new ButtonGroup();
-		latticeSelectionPanel = new JPanel();
-		latticeChoices = new JRadioButton[5];
-		for ( int i = 0; i < latticeChoices.length; i++ )
-		{
-			latticeChoices[i] = gui.buildRadioButton("lattice_" + i, i==0 );
-			latticeChoices[i].addActionListener(this);
-			latticeGroup.add(latticeChoices[i]);
-		}
-		newLatticeButton = gui.buildButton("new lattice");
-		newLatticeButton.addActionListener(this);
-		newLatticeButton.setActionCommand("newLattice");
-		newLatticeButton.setVisible(true);
-		newLatticeButton.setEnabled(true);
-
-		latticeSelectionPanel.add(newLatticeButton);
-		buttonPanel.add( latticeSelectionPanel );
-		latticeSelectionPanel.setVisible(false);
-
-
-		gpuPanel = new JPanel(new BorderLayout());
-		final int imagePanelWidth = (int) (Toolkit.getDefaultToolkit().getScreenSize().width * 0.5f);
-		final int imagePanelHeight = (int) (Toolkit.getDefaultToolkit().getScreenSize().height * 0.5f);
-
-		gpuPanel.setPreferredSize(new Dimension(imagePanelWidth, imagePanelHeight));
-		gpuPanel.setMinimumSize(new Dimension(250, 250));
-		gpuPanel.setBorder(JDialogBase.buildTitledBorder("Volume Display"));
-
-
-		dialogGUI.getContentPane().add(gpuPanel, BorderLayout.CENTER);
-		dialogGUI.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-
-//		getContentPane().add(dialogGUI.getContentPane(), BorderLayout.CENTER);
-//
-//		pack();
-//		setResizable(true);
-		return dialogGUI.getContentPane();
-	}
-
-	private void save()
-	{
-		if ( editMode == EditSeamCells )
-		{
-			saveSeamCells();
-		}
-		else if ( editMode == EditLattice )
-		{
-			saveLattice();
-		}
-		else if ( editMode == EditAnnotations )
-		{
-			saveAnnotations();
-		}
-	}
-
-	private void saveSeamCells()
-	{
-		if ( wormImage == null )
-		{
-			return;
-		}
-		if ( imageIndex >= includeRange.size() )
-		{
-			return;
-		}
-
-		String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.editSeamCellOutput;  
-		String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-		WormSegmentation.saveAllVOIsTo(voiDir, wormImage);
-	}
-
-	private void saveAnnotations()
-	{
-		if ( wormImage == null )
-		{
-			return;
-		}
-		if ( imageIndex >= includeRange.size() )
-		{
-			return;
-		}
-
-		String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.editAnnotationOutput;  
-		String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-		WormSegmentation.saveAllVOIsTo(voiDir, wormImage);
-	}
-
-	private void saveLattice()
-	{
-		if ( wormImage == null )
-		{
-			return;
-		}
-		if ( imageIndex >= includeRange.size() )
-		{
-			return;
-		}
-		voiManager.saveLattice( baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(imageIndex) + File.separator, 
-				PlugInDialogWormLatticeStraighten.editLatticeOutput );
-	}
-
-	private boolean setVariables()
-	{	    
-		baseFileName = baseFileNameText.getText();
-		baseFileDir = baseFileLocText.getText();
-		includeRange = new Vector<Integer>();
-		String rangeFusion = rangeFusionText.getText();
-		if( rangeFusion != null )
-		{  
-			String[] ranges = rangeFusion.split("[,;]");
-			for( int i = 0; i < ranges.length; i++ )
-			{
-				String[] subset = ranges[i].split("-");
-				int lowerBound = -1, bound = -1;
-				for( int j = 0; j < subset.length; j++ )
-				{
-					try {
-						bound = Integer.valueOf(subset[j].trim());
-						if( lowerBound == -1 )
-						{
-							lowerBound = bound;
-							includeRange.add(lowerBound);
-						} 
-					} catch(NumberFormatException e) {
-						Preferences.debug("Invalid range specified: "+bound, Preferences.DEBUG_ALGORITHM);
-					}
-				}
-
-				for( int k = lowerBound + 1; k <= bound; k++ )
-				{
-					includeRange.add(k);
-				}
-			}
-		}
-
-		if( includeRange.size() == 0 ) 
-		{
-			includeRange = null;
-		}
-		imageIndex = 0;
-
-		return (includeRange != null);
-	}
-
-
-	private VolumeTriPlanarInterface triVolume;
-	private VOIVector annotationList;
-	private Vector<String> annotationNames;
 	private void annotationAnimationFromSpreadSheet()
 	{
 		int[] extents = new int[3];
@@ -1449,59 +1047,510 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		triVolume.addConfiguredListener(this);
 	}
 
-	@Override
-	public void propertyChange(PropertyChangeEvent event) {
-		String propertyName = event.getPropertyName();
-		if ( propertyName.equals("Opacity") )
-		{
-			final TransferFunction kTransfer = volOpacityPanel.getCompA().getOpacityTransferFunction();
-			volumeImage.UpdateImages(kTransfer, 0, null);
+	private void init()
+	{
+		MipavInitGPU.InitGPU();
+
+		setResizable(true);
+		setForeground(Color.black);
+		setTitle("Untwisting C.elegans - lattice - 1.0");
+		try {
+			setIconImage(MipavUtil.getIconImage("divinci.gif"));
+		} catch (FileNotFoundException e) {
+			Preferences.debug("Failed to load default icon", Preferences.DEBUG_MINOR);
 		}
+
+		dialogGUI = new JDialogStandalonePlugin();
+		GuiBuilder gui = new GuiBuilder(dialogGUI);
+
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridwidth = 1;
+		gbc.gridheight = 1;
+		gbc.anchor = GridBagConstraints.WEST;
+		gbc.weightx = 1;
+		gbc.insets = new Insets(3, 3, 3, 3);
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+
+		inputsPanel = new JPanel(new GridBagLayout());
+		inputsPanel.setBorder(JDialogBase.buildTitledBorder("Input Options"));
+		inputsPanel.setForeground(Color.black);
+
+		baseFileLocText = gui.buildFileField("Data directory: ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
+		inputsPanel.add(baseFileLocText.getParent(), gbc);
+		gbc.gridy++;
+
+		baseFileNameText = gui.buildField("Base images name: ", "Decon");
+		inputsPanel.add(baseFileNameText.getParent(), gbc);
+		gbc.gridy++;
+
+		rangeFusionText = gui.buildField("Range of images to segment (ex. 3-7, 12, 18-21, etc.): ", " ");
+		inputsPanel.add(rangeFusionText.getParent(), gbc);
+		gbc.gridy++;
+
+		buttonPanel = new JPanel();
+		startButton = gui.buildButton("start");
+		startButton.addActionListener(this);
+		buttonPanel.add( startButton );
+		closeButton = gui.buildButton("close");
+		closeButton.addActionListener(this);
+		buttonPanel.add( closeButton );
+		buttonPanel.add(new JPanel());
+		//		panel.add(buttonPanel, gbc);
+
+		ButtonGroup group = new ButtonGroup();
+		algorithmsPanel = makeAlgorithmsPanel(gui, group);
+		editPanel = makeEditPanel(gui, group);
+
+		choicePanel = new JPanel( new GridLayout(1,2) );
+		choicePanel.add(algorithmsPanel);
+		choicePanel.add(editPanel);
+
+		dialogGUI.getContentPane().add(inputsPanel, BorderLayout.NORTH);
+		dialogGUI.getContentPane().add(choicePanel, BorderLayout.CENTER);
+		dialogGUI.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+
+		getContentPane().add(dialogGUI.getContentPane(), BorderLayout.CENTER);
+
+
+		setLocation(0, 0);
+		pack();
+		setResizable(true);
+
+		segmentSeamCells.setSelected(true);
 	}
 
-	@Override
-	public void setSlice(int slice) {
-		// TODO Auto-generated method stub
+
+	private void init(boolean integrated)
+	{
+		if ( !integrated )
+		{
+			init();
+			return;
+		}
+		MipavInitGPU.InitGPU();
+
+		setResizable(true);
+		setForeground(Color.black);
+		setTitle("Untwisting C.elegans - lattice - 1.0");
+		try {
+			setIconImage(MipavUtil.getIconImage("divinci.gif"));
+		} catch (FileNotFoundException e) {
+			Preferences.debug("Failed to load default icon", Preferences.DEBUG_MINOR);
+		}
+
+		dialogGUI = new JDialogStandalonePlugin();
+		GuiBuilder gui = new GuiBuilder(dialogGUI);
+
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridwidth = 1;
+		gbc.gridheight = 1;
+		gbc.anchor = GridBagConstraints.WEST;
+		gbc.weightx = 1;
+		gbc.insets = new Insets(3, 3, 3, 3);
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+
+		inputsPanel = new JPanel(new GridBagLayout());
+		inputsPanel.setBorder(JDialogBase.buildTitledBorder("Input Options"));
+		inputsPanel.setForeground(Color.black);
+
+		baseFileLocText = gui.buildFileField("Data directory: ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
+		inputsPanel.add(baseFileLocText.getParent(), gbc);
+		gbc.gridy++;
+
+		baseFileNameText = gui.buildField("Base images name: ", "Decon");
+		inputsPanel.add(baseFileNameText.getParent(), gbc);
+		gbc.gridy++;
+
+		rangeFusionText = gui.buildField("Range of images to segment (ex. 3-7, 12, 18-21, etc.): ", " ");
+		inputsPanel.add(rangeFusionText.getParent(), gbc);
+		gbc.gridy++;
+
+		buttonPanel = new JPanel();
+		startButton = gui.buildButton("start");
+		startButton.addActionListener(this);
+		buttonPanel.add( startButton );
+		closeButton = gui.buildButton("close");
+		closeButton.addActionListener(this);
+		buttonPanel.add( closeButton );
+		buttonPanel.add(new JPanel());
+
+		ButtonGroup group = new ButtonGroup();
+		algorithmsPanel = makeAlgorithmsPanel(gui, group);
+		editPanel = makeEditPanel(gui, group);
+
+		choicePanel = new JPanel( new GridLayout(1,2) );
+		choicePanel.add(algorithmsPanel);
+		choicePanel.add(editPanel);
+
+		dialogGUI.getContentPane().add(inputsPanel, BorderLayout.NORTH);
+		dialogGUI.getContentPane().add(choicePanel, BorderLayout.CENTER);
+		dialogGUI.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+
+//		getContentPane().add(dialogGUI.getContentPane(), BorderLayout.CENTER);
+
+		lutPanel = new JPanel();
+		opacityPanel = new JPanel();
+		tabbedPane = new JTabbedPane();
+		tabbedPane.addTab("LUT", null, lutPanel);
+		tabbedPane.addTab("Opacity", null, opacityPanel);
+		tabbedPane.setVisible(false);
 		
-	}
-
-	@Override
-	public void setTimeSlice(int tSlice) {
-		// TODO Auto-generated method stub
+		JPanel leftPanel = new JPanel(new BorderLayout());
+		leftPanel.add( dialogGUI.getContentPane(), BorderLayout.NORTH );
+		leftPanel.add( tabbedPane, BorderLayout.SOUTH );
 		
-	}
+		volumePanel = initGPUPanel(EditNONE);
+		volumePanel.setVisible(false);
+		JPanel integratedPanel = new JPanel( new BorderLayout() );
+		integratedPanel.add( leftPanel, BorderLayout.WEST );
+		integratedPanel.add( volumePanel, BorderLayout.EAST );
+		getContentPane().add(integratedPanel, BorderLayout.CENTER);
 
-	@Override
-	public boolean updateImageExtents() {
-		// TODO Auto-generated method stub
-		return false;
-	}
 
-	@Override
-	public boolean updateImages() {
-		if ( volumeImage != null )
-		{
-			volumeImage.UpdateImages(volumeImage.GetLUT());
+        
+        
+		setLocation(0, 0);
+		pack();
+		setResizable(true);
+
+		segmentSeamCells.setSelected(true);
+	}
+	private void init( int editMode )
+	{
+		MipavInitGPU.InitGPU();
+
+		setResizable(true);
+		setForeground(Color.black);
+		setTitle("Untwisting C.elegans");
+		try {
+			setIconImage(MipavUtil.getIconImage("divinci.gif"));
+		} catch (FileNotFoundException e) {
+			Preferences.debug("Failed to load default icon", Preferences.DEBUG_MINOR);
 		}
-		return false;
+		
+		getContentPane().add(initGPUPanel(editMode), BorderLayout.CENTER);
+
+		pack();
+		setResizable(true);
+
+	}
+	private Container initGPUPanel( int editMode )
+	{
+		MipavInitGPU.InitGPU();
+
+		dialogGUI = new JDialogStandalonePlugin();
+		GuiBuilder gui = new GuiBuilder(dialogGUI);
+
+		buttonPanel = new JPanel();
+		backButton = gui.buildButton("back");
+		backButton.addActionListener(this);
+		backButton.setActionCommand("back");
+		backButton.setVisible(true);
+		backButton.setEnabled(false);
+		buttonPanel.add( backButton );
+
+		nextButton = gui.buildButton("next");
+		nextButton.addActionListener(this);
+		nextButton.setActionCommand("next");
+		nextButton.setVisible(true);
+		nextButton.setEnabled(true);
+		buttonPanel.add( nextButton );
+
+		doneButton = gui.buildButton("done");
+		doneButton.addActionListener(this);
+		doneButton.setActionCommand("done");
+		doneButton.setVisible(true);
+		doneButton.setEnabled(true);
+		buttonPanel.add( doneButton );
+
+		ButtonGroup latticeGroup = new ButtonGroup();
+		latticeSelectionPanel = new JPanel();
+		latticeChoices = new JRadioButton[5];
+		for ( int i = 0; i < latticeChoices.length; i++ )
+		{
+			latticeChoices[i] = gui.buildRadioButton("lattice_" + i, i==0 );
+			latticeChoices[i].addActionListener(this);
+			latticeGroup.add(latticeChoices[i]);
+		}
+		newLatticeButton = gui.buildButton("new lattice");
+		newLatticeButton.addActionListener(this);
+		newLatticeButton.setActionCommand("newLattice");
+		newLatticeButton.setVisible(true);
+		newLatticeButton.setEnabled(true);
+
+		latticeSelectionPanel.add(newLatticeButton);
+		buttonPanel.add( latticeSelectionPanel );
+		latticeSelectionPanel.setVisible(false);
+
+
+		gpuPanel = new JPanel(new BorderLayout());
+		final int imagePanelWidth = (int) (Toolkit.getDefaultToolkit().getScreenSize().width * 0.5f);
+		final int imagePanelHeight = (int) (Toolkit.getDefaultToolkit().getScreenSize().height * 0.5f);
+
+		gpuPanel.setPreferredSize(new Dimension(imagePanelWidth, imagePanelHeight));
+		gpuPanel.setMinimumSize(new Dimension(250, 250));
+		gpuPanel.setBorder(JDialogBase.buildTitledBorder("Volume Display"));
+
+
+		dialogGUI.getContentPane().add(gpuPanel, BorderLayout.CENTER);
+		dialogGUI.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+
+//		getContentPane().add(dialogGUI.getContentPane(), BorderLayout.CENTER);
+//
+//		pack();
+//		setResizable(true);
+		return dialogGUI.getContentPane();
+	}
+	private JPanel makeAlgorithmsPanel(GuiBuilder gui, ButtonGroup group)
+	{
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridwidth = 1;
+		gbc.gridheight = 1;
+		gbc.anchor = GridBagConstraints.NORTHWEST;
+		gbc.weightx = 1;
+//		gbc.insets = new Insets(3, 3, 3, 3);
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		JPanel panel = new JPanel(new GridBagLayout());
+		panel.setBorder(JDialogBase.buildTitledBorder("Batch Algorithms"));
+		panel.setForeground(Color.black);
+
+		gbc.gridx = 0;
+		segmentSeamCells = gui.buildRadioButton("1). segment seam cells", true );
+		segmentSeamCells.addActionListener(this);
+		panel.add(segmentSeamCells.getParent(), gbc);
+		gbc.gridy++;
+
+		gbc.gridx = 0;
+		buildLattice = gui.buildRadioButton("3). generate lattices", false );
+		buildLattice.addActionListener(this);
+		panel.add(buildLattice.getParent(), gbc);
+		gbc.gridy++;
+
+		gbc.gridx = 0;
+		latticeStraighten = gui.buildRadioButton("6). straighten", false );
+		latticeStraighten.addActionListener(this);
+		panel.add(latticeStraighten.getParent(), gbc);
+		gbc.gridy++;
+
+		gbc.gridx = 0;
+		calcMaxProjection = gui.buildRadioButton("generate maximum intensity projection animation", false );
+		calcMaxProjection.addActionListener(this);
+		panel.add(calcMaxProjection.getParent(), gbc);
+		gbc.gridy++;
+
+		gbc.gridx = 0;
+		batchProgress = new JProgressBar(0,100);
+		panel.add(batchProgress, gbc);
+
+		group.add(segmentSeamCells);
+		group.add(buildLattice);
+		group.add(latticeStraighten);
+		group.add(calcMaxProjection);
+		
+		return panel;
 	}
 
-	@Override
-	public boolean updateImages(boolean flag) {
-		if ( volumeImage != null )
-		{
-			volumeImage.UpdateImages(volumeImage.GetLUT());
-		}
-		return false;
+	private JPanel makeEditPanel(GuiBuilder gui, ButtonGroup group)
+	{
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridwidth = 1;
+		gbc.gridheight = 1;
+		gbc.anchor = GridBagConstraints.NORTHWEST;
+		gbc.weightx = 1;
+//		gbc.insets = new Insets(3, 3, 3, 3);
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		JPanel panel = new JPanel(new GridBagLayout());
+		panel.setBorder(JDialogBase.buildTitledBorder("Build / Edit"));
+		panel.setForeground(Color.black);
+
+		gbc.gridx = 0;
+		editSeamCells = gui.buildRadioButton("2). edit seam cells", false );
+		editSeamCells.addActionListener(this);
+		editSeamCells.setActionCommand("editSeamCells");
+		panel.add(editSeamCells.getParent(), gbc);
+		gbc.gridy++;
+
+		gbc.gridx = 0;
+		editLattice = gui.buildRadioButton("4). edit lattice", false );
+		editLattice.addActionListener(this);
+		editLattice.setActionCommand("editLattice");
+		panel.add(editLattice.getParent(), gbc);
+		gbc.gridy++;
+
+		gbc.gridx = 0;
+		editAnnotations = gui.buildRadioButton("5). add annotations", false );
+		editAnnotations.addActionListener(this);
+		editAnnotations.setActionCommand("editAnnotations");
+		panel.add(editAnnotations.getParent(), gbc);
+		gbc.gridy++;
+
+		gbc.gridx = 0;
+		reviewResults = gui.buildRadioButton("7). review straightened results", false );
+		reviewResults.addActionListener(this);
+		reviewResults.setActionCommand("reviewResults");
+		panel.add(reviewResults.getParent(), gbc);
+		gbc.gridy++;
+
+		gbc.gridx = 0;
+		createAnimation = gui.buildRadioButton("create annotation animation", false );
+		createAnimation.addActionListener(this);
+		createAnimation.setActionCommand("createAnimation");
+		panel.add(createAnimation.getParent(), gbc);
+		gbc.gridy++;
+
+		group.add(editSeamCells);
+		group.add(editLattice);
+		group.add(editAnnotations);
+		group.add(createAnimation);
+		group.add(reviewResults);
+
+		return panel;
 	}
 
-	@Override
-	public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean flag, int interpMode) {
-		if ( volumeImage != null )
+	private void save()
+	{
+		if ( editMode == EditSeamCells )
 		{
-			volumeImage.UpdateImages(LUTa);
+			saveSeamCells();
 		}
-		return false;
+		else if ( editMode == EditLattice )
+		{
+			saveLattice();
+		}
+		else if ( editMode == EditAnnotations )
+		{
+			saveAnnotations();
+		}
+	}
+
+	private void saveAnnotations()
+	{
+		if ( wormImage == null )
+		{
+			return;
+		}
+		if ( imageIndex >= includeRange.size() )
+		{
+			return;
+		}
+
+		String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.editAnnotationOutput;  
+		String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+		WormSegmentation.saveAllVOIsTo(voiDir, wormImage);
+	}
+
+	private void saveLattice()
+	{
+		if ( wormImage == null )
+		{
+			return;
+		}
+		if ( imageIndex >= includeRange.size() )
+		{
+			return;
+		}
+		voiManager.saveLattice( baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(imageIndex) + File.separator, 
+				PlugInDialogWormLatticeStraighten.editLatticeOutput );
+	}
+
+	private void saveSeamCells()
+	{
+		if ( wormImage == null )
+		{
+			return;
+		}
+		if ( imageIndex >= includeRange.size() )
+		{
+			return;
+		}
+
+		String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.editSeamCellOutput;  
+		String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
+		WormSegmentation.saveAllVOIsTo(voiDir, wormImage);
+	}
+
+	private boolean setVariables()
+	{	    
+		baseFileName = baseFileNameText.getText();
+		baseFileDir = baseFileLocText.getText();
+		includeRange = new Vector<Integer>();
+		String rangeFusion = rangeFusionText.getText();
+		if( rangeFusion != null )
+		{  
+			String[] ranges = rangeFusion.split("[,;]");
+			for( int i = 0; i < ranges.length; i++ )
+			{
+				String[] subset = ranges[i].split("-");
+				int lowerBound = -1, bound = -1;
+				for( int j = 0; j < subset.length; j++ )
+				{
+					try {
+						bound = Integer.valueOf(subset[j].trim());
+						if( lowerBound == -1 )
+						{
+							lowerBound = bound;
+							includeRange.add(lowerBound);
+						} 
+					} catch(NumberFormatException e) {
+						Preferences.debug("Invalid range specified: "+bound, Preferences.DEBUG_ALGORITHM);
+					}
+				}
+
+				for( int k = lowerBound + 1; k <= bound; k++ )
+				{
+					includeRange.add(k);
+				}
+			}
+		}
+
+		if( includeRange.size() == 0 ) 
+		{
+			includeRange = null;
+		}
+		imageIndex = 0;
+
+		return (includeRange != null);
+	}
+
+	private void updateHistoLUTPanels()
+	{
+		if ( volOpacityPanel == null )
+		{
+			volOpacityPanel = new JPanelVolumeOpacity(volumeImage.GetImage(), null, volumeImage.GetGradientMagnitudeImage(), null, true);
+			volOpacityPanel.addPropertyChangeListener(this);
+			opacityPanel.add( volOpacityPanel.getMainPanel() );
+		}
+		else
+		{
+			volOpacityPanel.setImages( volumeImage.GetImage(), null, volumeImage.GetGradientMagnitudeImage(), null, true );
+			opacityPanel.validate();
+		}
+		if ( lutHistogramPanel == null )
+		{
+			lutHistogramPanel = new JFrameHistogram(this, volumeImage.GetImage(), null, volumeImage.getLUT(), null);
+			lutHistogramPanel.histogramLUT(true, false, true);
+			lutPanel.add(lutHistogramPanel.getContainingPanel());
+		}
+		else
+		{
+			lutHistogramPanel.setImages(volumeImage.GetImage(), null, volumeImage.getLUT(), null);
+			lutHistogramPanel.histogramLUT(true, false, true);
+		}
+		volumeImage.GetImage().addImageDisplayListener(this);
 	}
 
 
