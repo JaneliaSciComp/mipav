@@ -522,6 +522,10 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 					}
 					count++;
 					WormSegmentation.saveAnnotations(image, seamCells, Color.blue );
+					final File voiFileDir = new File(baseFileDir + File.separator +  baseFileName + "_" + includeRange.elementAt(i) + File.separator);
+					if ( !voiFileDir.exists()) {
+						voiFileDir.mkdir();
+					}
 					fileName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + autoSeamCellSegmentationOutput;  
 					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
 					WormSegmentation.saveAllVOIsTo(voiDir, image);
