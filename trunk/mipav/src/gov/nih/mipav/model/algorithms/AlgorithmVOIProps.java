@@ -4185,7 +4185,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         Vector3f scaledPt;
 
         if ((srcImage.getFileInfo(0).getOrigin()[0] != 0) || (srcImage.getFileInfo(0).getOrigin()[1] != 0) ||
-                (srcImage.getFileInfo(0).getOrigin()[2] != 0)) {
+               ((srcImage.getNDims() > 2) && (srcImage.getFileInfo(0).getOrigin()[2] != 0))) {
 
             scaledPt = new Vector3f();
 
