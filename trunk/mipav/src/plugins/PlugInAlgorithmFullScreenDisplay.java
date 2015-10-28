@@ -15,10 +15,16 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+
 import java.io.IOException;
 
 import javax.swing.JFrame;
 import javax.swing.JTextArea;
+
+import javax.swing.*;
+import javax.swing.event.*;
 
 
 public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements MouseWheelListener, MouseMotionListener {
@@ -310,11 +316,7 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
         });
         frame.addMouseListener(new MouseListener() {
             @Override
-            public void mouseClicked(final MouseEvent e) {
-            	if (e.getButton() == MouseEvent.BUTTON1) {
-                    System.exit(0);
-            	}
-            }
+            public void mouseClicked(final MouseEvent e) {}
 
             @Override
             public void mousePressed(final MouseEvent e) {}
@@ -336,6 +338,18 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
 
             @Override
             public void mouseExited(final MouseEvent e) {}
+        });
+        frame.addKeyListener(new KeyListener() {
+        	public void keyPressed(KeyEvent e) {
+        	    int key = e.getKeyCode();
+        	    if(key == KeyEvent.VK_ESCAPE){
+        	    	frame.dispose();
+        	    }
+        	}
+
+        	public void keyReleased(KeyEvent e) {}
+
+        	public void keyTyped(KeyEvent e) {}
         });
         bufferData = new int[4 * length];
         if (zDim > 1) {
@@ -888,5 +902,6 @@ private void updateWinLevelGray( ModelLUT kLUT, ModelImage kImage,
     /* Update the HistoLUT and the renderers: */
     kLUT.getTransferFunction().importArrays( afXWin, afYWin, 4 );
 }
+
 
 }
