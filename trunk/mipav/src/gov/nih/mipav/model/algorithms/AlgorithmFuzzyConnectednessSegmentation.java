@@ -21,11 +21,20 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
 	 */
 	
 	//~ Static fields/initializers -------------------------------------------------------------------------------------
-	private static int ABSOLUTE_FUZZY_CONNECTEDNESS = 1;
-	@SuppressWarnings("unused")
-	private static int ITERATIVE_RELATIVE_FUZZY_CONNECTEDNESS = 2;
+	public static final int BOTH_FUZZY_HARD = 0;
+
+    /** DOCUMENT ME! */
+    public static final int FUZZY_ONLY = 1;
+
+    /** DOCUMENT ME! */
+    public static final int HARD_ONLY = 2;
 	
     //~ Instance fields ------------------------------------------------------------------------------------------------
+    /** Fuzzy images require 1 image with double values Hard images 1 image with class numbers. */
+    private ModelImage[] destImage;
+
+    /** DOCUMENT ME! */
+    private int destNum = 0; // number of the destination image
 	private int L1Distance; // L1 distance of neighborhood, L1Distance = 1 in segmentation example
 	
 	private double distanceDecline; // distance decline factor, distanceDecline = 0.1 in segmentation example
@@ -50,10 +59,11 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
 
 	
 	
-    public AlgorithmFuzzyConnectednessSegmentation(ModelImage destImg, ModelImage srcImg, 
+    public AlgorithmFuzzyConnectednessSegmentation(ModelImage[] destImg, ModelImage srcImg, 
 			int algorithm, int L1Distance, double distanceDecline,
 			double gradientWeight, Vector<Integer> index_seeds, Vector<Short> index_labels) {
-		super(destImg, srcImg);
+		super(null, srcImg);
+		this.destImage = destImg;
 		this.algorithm = algorithm;
 		this.L1Distance = L1Distance;
 		this.distanceDecline = distanceDecline;
@@ -147,7 +157,7 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
         	}
         }
         
-        if (algorithm == ABSOLUTE_FUZZY_CONNECTEDNESS) {
+        if ((algorithm == BOTH_FUZZY_HARD) || (algorithm == FUZZY_ONLY)) {
         	FC = afc(index_seeds, index_labels, index1, index2, affinity);
         	FCmin = Double.MAX_VALUE;
             FCmax = -Double.MAX_VALUE;
@@ -170,7 +180,7 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
             }
             
             try {
-            	destImage.importData(0, FC, true);
+            	destImage[destNum++].importData(0, FC, true);
             }
             catch (IOException e) {
             	MipavUtil.displayError("IOException " + e + " on destImage.importData(0, FC, true)");
@@ -178,10 +188,10 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
             	return;
             }
         }
-        else { // ITERATIVE_RELATIVE_FUZZY_CONNECTEDNESS
+        if ((algorithm == BOTH_FUZZY_HARD) || (algorithm == HARD_ONLY)) {
         	Sout = irfc(index_seeds, index_labels, index1, index2, affinity);
         	try {
-            	destImage.importData(0, Sout, true);
+            	destImage[destNum].importData(0, Sout, true);
             }
             catch (IOException e) {
             	MipavUtil.displayError("IOException " + e + " on destImage.importData(0, Sout, true)");
@@ -215,7 +225,7 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
         }
         
         while(!index_seeds.isEmpty()) {
-        	// Pick strongest fc kin index_seeds
+        	// Pick strongest fc in index_seeds
             fc = FC[index_seeds.get(0)];
             for (i = 1; i < index_seeds.size(); i++) {
             	if (FC[index_seeds.get(i)] > fc) {
