@@ -339,6 +339,7 @@ public class ViewMenuBar {
                         menuBuilder.makeMenu("Fuzzy C-means", false, new JMenuItem[] {
                                 menuBuilder.buildMenuItem("Multispectral", null, 0, null, false),
                                 menuBuilder.buildMenuItem("Single channel", null, 0, null, false),}),
+                        menuBuilder.buildMenuItem("Fuzzy Connectedness", "FuzzyConnectedness", 0, null, false),
                         menuBuilder.buildMenuItem("Graph Based", "GraphBasedSeg", 0, null, false),
                         menuBuilder.buildMenuItem("Levelset", "Levelset", 0, null, false),
                         menuBuilder.buildMenuItem("Levelset diffusion", "LevelsetDiffusion", 0, null, false),
@@ -1308,6 +1309,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Auto Seed Watershed", false);
             menuBuilder.setMenuItemEnabled("Watershed", false);
             menuBuilder.setMenuItemEnabled("Power Watershed", false);
+            menuBuilder.setMenuItemEnabled("Fuzzy Connectedness", false);
             menuBuilder.setMenuItemEnabled("Histogram summary", false);
             menuBuilder.setMenuItemEnabled("Surface plotter", false);
             menuBuilder.setMenuItemEnabled("Evolve boundary 2D", false);
@@ -1372,6 +1374,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Canny", false);
             menuBuilder.setMenuItemEnabled("Pb boundary", false);
             //menuBuilder.setMenuItemEnabled("Global Pb", false);
+            menuBuilder.setMenuItemEnabled("Fuzzy Connectedness", false);
             menuBuilder.setMenuItemEnabled("Harris corner detector", false);
             menuBuilder.setMenuItemEnabled("Harris Laplace", false);
             menuBuilder.setMenuItemEnabled("Scale saliency", false);
@@ -1508,6 +1511,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Box counting", false);
             menuBuilder.setMenuItemEnabled("Convergence field", false);
             menuBuilder.setMenuItemEnabled("Texture segmentation", false);
+            menuBuilder.setMenuItemEnabled("Fuzzy Connectedness", false);
         } else {
             menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
             menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
