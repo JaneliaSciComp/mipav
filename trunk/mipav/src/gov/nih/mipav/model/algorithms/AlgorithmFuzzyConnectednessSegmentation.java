@@ -40,7 +40,7 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
     // In example coat = 1, hand = 1, leg = 1, sky = 2, grass = 3
     private Vector<Short> index_labels;
     
-    private int method;
+    private int algorithm;
     
     private int sliceSize;
     
@@ -49,11 +49,12 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
 	
-	public AlgorithmFuzzyConnectednessSegmentation(ModelImage destImg, ModelImage srcImg, 
-			int method, int L1Distance, double distanceDecline,
+	
+    public AlgorithmFuzzyConnectednessSegmentation(ModelImage destImg, ModelImage srcImg, 
+			int algorithm, int L1Distance, double distanceDecline,
 			double gradientWeight, Vector<Integer> index_seeds, Vector<Short> index_labels) {
 		super(destImg, srcImg);
-		this.method = method;
+		this.algorithm = algorithm;
 		this.L1Distance = L1Distance;
 		this.distanceDecline = distanceDecline;
 		this.gradientWeight = gradientWeight;
@@ -146,7 +147,7 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
         	}
         }
         
-        if (method == ABSOLUTE_FUZZY_CONNECTEDNESS) {
+        if (algorithm == ABSOLUTE_FUZZY_CONNECTEDNESS) {
         	FC = afc(index_seeds, index_labels, index1, index2, affinity);
         	FCmin = Double.MAX_VALUE;
             FCmax = -Double.MAX_VALUE;
