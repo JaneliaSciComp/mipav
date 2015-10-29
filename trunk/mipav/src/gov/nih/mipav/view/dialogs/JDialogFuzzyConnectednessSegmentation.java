@@ -417,7 +417,7 @@ public class JDialogFuzzyConnectednessSegmentation extends JDialogScriptableBase
         int presentNumber = 0;
 
         // Calculate the number of result images.
-        resultNumber = 0;
+        resultNumber = 1;
 
         if (algo == BOTH_FUZZY_HARD) {
             resultNumber++; // segmented image
@@ -583,7 +583,7 @@ public class JDialogFuzzyConnectednessSegmentation extends JDialogScriptableBase
 
         JLabel L1DistanceLabel = new JLabel("L1 Distance of neighborhood ");
         L1DistanceLabel.setFont(serif12);
-        L1DistanceText.setForeground(Color.black);
+        L1DistanceLabel.setForeground(Color.black);
         
         L1DistanceText = new JTextField(10);
         L1DistanceText.setText("1");
