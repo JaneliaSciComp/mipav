@@ -22,6 +22,7 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
 	
 	//~ Static fields/initializers -------------------------------------------------------------------------------------
 	private static int ABSOLUTE_FUZZY_CONNECTEDNESS = 1;
+	@SuppressWarnings("unused")
 	private static int ITERATIVE_RELATIVE_FUZZY_CONNECTEDNESS = 2;
 	
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -42,7 +43,7 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
     private int method;
     
     private int sliceSize;
-    private boolean error = false;
+    
     private ViewUserInterface UI = ViewUserInterface.getReference();
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
@@ -260,7 +261,8 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
     	
     }
     
-    private short[] irfc(Vector<Integer> index_seeds, Vector<Short>index_labels, Vector<Integer>index1,
+    @SuppressWarnings("unchecked")
+	private short[] irfc(Vector<Integer> index_seeds, Vector<Short>index_labels, Vector<Integer>index1,
     		Vector<Integer>index2, Vector<Double>affinity) {
     	// Iterative Relative Fuzzy Connectedness (kIRMOFC) according to Ciesielski et al 2007
     	// Sout is segmented into same classes as index_labels
@@ -268,6 +270,7 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
     	int n;
     	int i;
     	int j;
+    	int k;
     	short Sout[] = new short[sliceSize];
     	Vector<Integer> index_seeds_i = new Vector<Integer>();
     	Vector<Short> index_labels_i = new Vector<Short>();
@@ -278,6 +281,7 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
     	Vector<Integer>index1s = new Vector<Integer>();
     	Vector<Integer>index2s = new Vector<Integer>();
     	Vector<Double>affinitys = new Vector<Double>();
+    	Vector<Integer>idx = new Vector<Integer>();
     	int count;
     	double FCw[];
     	
@@ -318,8 +322,33 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
     	    affinitys = (Vector<Double>)affinity.clone();
     	    count = 0;
     	    while (true) {
-    	        FCw = afc(index_seeds_W, index_labels_W, index1s, index2s, affinitys);	
+    	        FCw = afc(index_seeds_W, index_labels_W, index1s, index2s, affinitys);
+    	        idx.clear();
+    	        for (j = 0; j < sliceSize; j++) {
+    	            if ((Fi[j] == 0) && (FCs[j] > FCw[j])) {
+    	            	idx.add(j);
+    	            }
+     	        } // for (j = 0; j < sliceSize; j++)
+    	        if (idx.isEmpty()) {
+	            	break;
+	            }
+    	        for (j = 0; j < idx.size(); j++) {
+    	        	Fi[idx.get(j)] = 1;
+    	        	for (k = 0; k < index1s.size(); k++) {
+    	        		if ((index1s.get(k) == idx.get(j)) || (index2s.get(k) == idx.get(j))) {
+    	        			affinitys.set(k, new Double(0.0)); // no affinity for W inside fs
+    	        		}
+    	        	}
+    	        } // for (j = 0; j < idx.size(); j++)
+    	        count++;
     	    } // while (true)
+    	    UI.setDataText("Iterations = " + count + "\n");
+    	    
+    	    for (j = 0; j < sliceSize; j++) {
+    	    	if (Fi[j]  == 1) {
+    	    	    Sout[j] = (short)i; // Write class in output image
+    	    	}
+    	    }
     	} // for (i = 1; i <= n; i++)
     	
     	return Sout;
