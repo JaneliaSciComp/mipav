@@ -160,7 +160,7 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
         }
         
         if ((algorithm == BOTH_FUZZY_HARD) || (algorithm == FUZZY_ONLY)) {
-        	FC = afc(index_seeds, index_labels, index1, index2, affinity);
+        	FC = afc(index_seeds, index1, index2, affinity);
         	FCmin = Double.MAX_VALUE;
             FCmax = -Double.MAX_VALUE;
             for (i = 0; i < sliceSize; i++) {
@@ -207,7 +207,7 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
         return;
     }
     
-    private double[] afc(Vector<Integer> index_seeds_original, Vector<Short>index_labels, Vector<Integer>index1,
+    private double[] afc(Vector<Integer> index_seeds_original, Vector<Integer>index1,
     		Vector<Integer>index2, Vector<Double>affinity) {
     	// Absolute Fuzzy Connectedness (kFOEMS) according to Saha and Udupa 2001
         // Dijkstra version
@@ -215,12 +215,9 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
     	int i;
     	double FC[] = new double[sliceSize];
     	double fc;
-    	Vector<Integer>pick = new Vector<Integer>();
-    	int j;
-    	double maxK;
-    	boolean havePick;
-    	int k;
     	double f[] = new double[sliceSize];
+    	double maxAffinity[] = new double[sliceSize];
+    	boolean pick[] = new boolean[sliceSize];
     	// Must preserve original index_seeds for irfc
     	@SuppressWarnings("unchecked")
 		Vector<Integer>index_seeds = (Vector<Integer>)index_seeds_original.clone();
@@ -238,31 +235,32 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
             	} 
             } // for (i = 1; i < index_seeds.size(); i++)
             // Find all of the same fc and remove from index_seeds
-            pick.clear();
+            for (i = 0; i < sliceSize; i++) {
+            	pick[i] = false;
+            }
             for (i = index_seeds.size()-1; i >= 0; i--) {
             	if (fc == FC[index_seeds.get(i)]) {
-            		pick.add(index_seeds.get(i));
+            		pick[index_seeds.get(i)] = true;;
             		index_seeds.remove(i);
             	}
             }
             
             // Propagate affinity one layer
             // Compute fc for adjacent pixels
-            j = 0;
-            for (i = 0; i < sliceSize && j < index1.size(); i++) {
-            	maxK = -Double.MAX_VALUE;
-            	while ((j < index1.size()) && (index1.get(j) == i)) {
-            		havePick = false;
-            		for (k = 0; k < pick.size() && (!havePick); k++) {
-            			if (pick.get(k) == index2.get(j)) {
-            				havePick = true;
-            		        maxK = Math.max(affinity.get(j), maxK);
-            			}
-            		} // for (k = 0; k < pick.size(); k++)
-            		j++;
-            	} // while ((j < index1.size()) && (index1.get(j) == i))
-            	f[i] = Math.min(fc, maxK);
-            } // for (i = 0; i < sliceSize && j < index1.size(); i++)
+            for (i = 0; i < sliceSize; i++) {
+            	maxAffinity[i] = 0.0;
+            }
+            for (i = 0; i < index1.size(); i++) {
+            	if ((pick[index1.get(i)]) && (FC[index2.get(i)] < fc)) {
+            		if (affinity.get(i) > maxAffinity[index2.get(i)]) {
+            			maxAffinity[index2.get(i)] = affinity.get(i);
+            		}
+            	}
+            }
+            for (i = 0; i < sliceSize; i++) {
+                f[i] = Math.min(fc, maxAffinity[i]);
+            }
+            
             // Find those with real change
             // Update FC
             // Push all updated pixel indices
@@ -289,9 +287,7 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
     	int k;
     	short Sout[] = new short[sliceSize];
     	Vector<Integer> index_seeds_i = new Vector<Integer>();
-    	Vector<Short> index_labels_i = new Vector<Short>();
     	Vector<Integer> index_seeds_W = new Vector<Integer>();
-    	Vector<Short> index_labels_W = new Vector<Short>();
     	short Fi[] = new short[sliceSize];
     	double FCs[];
     	Vector<Integer>index1s = new Vector<Integer>();
@@ -311,16 +307,12 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
     	for (i = 1; i <= n; i++) {
     	    UI.setDataText("Class " + i + "\n");
     	    index_seeds_i.clear();
-    	    index_labels_i.clear();
     	    index_seeds_W.clear();
-    	    index_labels_W.clear();
     	    for (j = 0; j < index_labels.size(); j++) {
     	    	if (index_labels.get(j) == i) {
-    	    		index_labels_i.add(index_labels.get(j));
     	    		index_seeds_i.add(index_seeds.get(j));
     	    	}
     	    	else {
-    	    		index_labels_W.add(index_labels.get(j));
     	    		index_seeds_W.add(index_seeds.get(j));
     	    	}
     	    } // for (j = 0; j < index_labels.size(); j++)
@@ -329,7 +321,7 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
     	    	Fi[j] = 0;
     	    }
     	    
-    	    FCs = afc(index_seeds_i, index_labels_i, index1, index2, affinity);
+    	    FCs = afc(index_seeds_i, index1, index2, affinity);
     	    index1s.clear();
     	    index2s.clear();
     	    affinitys.clear();
@@ -338,7 +330,7 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
     	    affinitys = (Vector<Double>)affinity.clone();
     	    count = 0;
     	    while (true) {
-    	        FCw = afc(index_seeds_W, index_labels_W, index1s, index2s, affinitys);
+    	        FCw = afc(index_seeds_W, index1s, index2s, affinitys);
     	        idx.clear();
     	        for (j = 0; j < sliceSize; j++) {
     	            if ((Fi[j] == 0) && (FCs[j] > FCw[j])) {
