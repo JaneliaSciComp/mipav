@@ -382,7 +382,7 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
         
         tmpStr = textGaussX.getText();
 
-        if (testParameter(tmpStr, 0.5, 5.0)) {
+        if (testParameter(tmpStr, 0.01, 5.0)) {
             scaleX = Float.valueOf(tmpStr).floatValue();
         } else {
             textGaussX.requestFocus();
@@ -393,7 +393,7 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
 
         tmpStr = textGaussY.getText();
 
-        if (testParameter(tmpStr, 0.5, 5.0)) {
+        if (testParameter(tmpStr, 0.01, 5.0)) {
             scaleY = Float.valueOf(tmpStr).floatValue();
         } else {
             textGaussY.requestFocus();
