@@ -113,7 +113,7 @@ public class AlgorithmFuzzyConnectednessSegmentation extends AlgorithmBase {
         double b;
         short Sout[] = null;
         
-        fireProgressStateChanged("Graph Based Segmentation ...");
+        fireProgressStateChanged("Fuzzy Connectedness Segmentation ...");
         
         // Read image and scale to [0,1]
         try {
