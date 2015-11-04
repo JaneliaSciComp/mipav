@@ -573,7 +573,6 @@ public class JDialogFuzzyConnectednessSegmentation extends JDialogScriptableBase
         }
 
         maskButton = new JButton("Use mask image to generate seeds");
-        maskButton.setPreferredSize(MipavUtil.defaultButtonSize);
         maskButton.setFont(serif12B);
         gbc2.gridx = 0;
         gbc2.gridy = yPos2++;
@@ -612,11 +611,12 @@ public class JDialogFuzzyConnectednessSegmentation extends JDialogScriptableBase
         
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = 1;
+        gbc.gridwidth = 2;
         mainPanel.add(algoPanel, gbc);
         gbc.gridy = 1;
         mainPanel.add(labelsPanel, gbc);
         gbc.gridy = 2;
+        gbc.gridwidth = 1;
         mainPanel.add(L1DistanceLabel, gbc);
         gbc.gridx = 1;
         mainPanel.add(L1DistanceText, gbc);
