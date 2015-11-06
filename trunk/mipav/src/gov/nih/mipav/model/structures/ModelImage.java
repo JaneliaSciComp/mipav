@@ -2553,8 +2553,9 @@ public class ModelImage extends ModelStorageBase {
                 if (this == imgS) {
                     ((gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM) frameList.elementAt(i))
                             .setRGBTA(RGBT);
-                }
-                
+                }                
+            } else {
+            	frameList.elementAt(i).updateImages();
             }
         }
     }
