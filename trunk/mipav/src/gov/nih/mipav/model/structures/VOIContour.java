@@ -2285,10 +2285,25 @@ public class VOIContour extends VOIBase {
 
 		Vector<Vector3f> kMaskPositions = getAllContourPoints();
 		int nPts = kMaskPositions.size();
+		int nDims = kImage.getNDims();
+		int zDim;
+		if (nDims > 2) {
+			zDim = kImage.getExtents()[2];
+		}
+		else {
+			zDim = 1;
+		}
 		
-		float xRes = kImage.getResolutions(0).length > 0 ? kImage.getResolutions(0)[0] : 1;
-		float yRes = kImage.getResolutions(0).length > 1 ? kImage.getResolutions(0)[1] : 1;
-		float zRes = kImage.getResolutions(0).length > 2 ? kImage.getResolutions(0)[2] : 1;
+		float xRes[] = new float[zDim];
+		float yRes[] = new float[zDim];
+		float zRes[] = new float[zDim];
+		
+		int z;
+		for (z = 0; z < zDim; z++) {
+		    xRes[z] = kImage.getResolutions(z).length > 0 ? kImage.getResolutions(z)[0] : 1;
+		    yRes[z] = kImage.getResolutions(z).length > 1 ? kImage.getResolutions(z)[1] : 1;
+		    zRes[z] = kImage.getResolutions(z).length > 2 ? kImage.getResolutions(z)[2] : 1;
+		}
 		
 		
 		double m10 = 0.0;
@@ -2303,11 +2318,12 @@ public class VOIContour extends VOIBase {
 		{
 			for ( int i = 0; i < nPts; i++ )
 			{
+				z = (int)Math.round(kMaskPositions.elementAt(i).Z);
 				if ( (m_iPlane&ZPLANE) == ZPLANE )
 				{
 					//if (xUnits == yUnits) {
-						m10 += kMaskPositions.elementAt(i).X * xRes;
-						m01 += kMaskPositions.elementAt(i).Y * yRes;
+						m10 += kMaskPositions.elementAt(i).X * xRes[z];
+						m01 += kMaskPositions.elementAt(i).Y * yRes[z];
 					//} else {
 					//	m10 += m_kMaskPositions.elementAt(i).X;
 					//	m01 += m_kMaskPositions.elementAt(i).Y;
@@ -2316,8 +2332,8 @@ public class VOIContour extends VOIBase {
 				else if ( (m_iPlane&XPLANE) == XPLANE )
 				{
 					//if (yUnits == zUnits) {
-						m10 += kMaskPositions.elementAt(i).Y * yRes;
-						m01 += kMaskPositions.elementAt(i).Z * zRes;
+						m10 += kMaskPositions.elementAt(i).Y * yRes[z];
+						m01 += kMaskPositions.elementAt(i).Z * zRes[z];
 					//} else {
 					//	m10 += m_kMaskPositions.elementAt(i).Y;
 					//	m01 += m_kMaskPositions.elementAt(i).Z;
@@ -2326,8 +2342,8 @@ public class VOIContour extends VOIBase {
 				else if ( (m_iPlane&YPLANE) == YPLANE )
 				{
 					//if (xUnits == zUnits) {
-						m10 += kMaskPositions.elementAt(i).X * xRes;
-						m01 += kMaskPositions.elementAt(i).Z * zRes;
+						m10 += kMaskPositions.elementAt(i).X * xRes[z];
+						m01 += kMaskPositions.elementAt(i).Z * zRes[z];
 					//} else {
 					//	m10 += m_kMaskPositions.elementAt(i).X;
 					//	m01 += m_kMaskPositions.elementAt(i).Z;
@@ -2346,11 +2362,12 @@ public class VOIContour extends VOIBase {
 
 			for ( int i = 0; i < nPts; i++ )
 			{
+				z = (int)Math.round(kMaskPositions.elementAt(i).Z);
 				if ( (m_iPlane&ZPLANE) == ZPLANE )
 				{
 					//if (xUnits == yUnits) {
-						xdiff = (kMaskPositions.elementAt(i).X * xRes) - m10;
-						ydiff = (kMaskPositions.elementAt(i).Y * yRes) - m01;
+						xdiff = (kMaskPositions.elementAt(i).X * xRes[z]) - m10;
+						ydiff = (kMaskPositions.elementAt(i).Y * yRes[z]) - m01;
 					//} else {
 					//	xdiff = m_kMaskPositions.elementAt(i).X - m10;
 					//	ydiff = m_kMaskPositions.elementAt(i).Y - m01;
@@ -2359,8 +2376,8 @@ public class VOIContour extends VOIBase {
 				else if ( (m_iPlane&XPLANE) == XPLANE )
 				{
 					//if (yUnits == zUnits) {
-						xdiff = (kMaskPositions.elementAt(i).Y * yRes) - m10;
-						ydiff = (kMaskPositions.elementAt(i).Z * zRes) - m01;
+						xdiff = (kMaskPositions.elementAt(i).Y * yRes[z]) - m10;
+						ydiff = (kMaskPositions.elementAt(i).Z * zRes[z]) - m01;
 					//} else {
 					//	xdiff = m_kMaskPositions.elementAt(i).Y - m10;
 					//	ydiff = m_kMaskPositions.elementAt(i).Z - m01;
@@ -2369,8 +2386,8 @@ public class VOIContour extends VOIBase {
 				else if ( (m_iPlane&YPLANE) == YPLANE )
 				{
 					//if (xUnits == zUnits) {
-						xdiff = (kMaskPositions.elementAt(i).X * xRes) - m10;
-						ydiff = (kMaskPositions.elementAt(i).Z * zRes) - m01;
+						xdiff = (kMaskPositions.elementAt(i).X * xRes[z]) - m10;
+						ydiff = (kMaskPositions.elementAt(i).Z * zRes[z]) - m01;
 					//} else {
 					//	xdiff = m_kMaskPositions.elementAt(i).X - m10;
 					//	ydiff = m_kMaskPositions.elementAt(i).Z - m01;
@@ -2399,19 +2416,20 @@ public class VOIContour extends VOIBase {
 			if ( (m_iPlane&ZPLANE) == ZPLANE )
 			{
 				//if (xUnits == yUnits) {
-					normFactor = Math.sqrt(xRes * yRes * nPts / areaEllipse);
+				    z = (int)Math.round(kMaskPositions.elementAt(0).Z);
+					normFactor = Math.sqrt(xRes[z] * yRes[z] * nPts / areaEllipse);
 				//}			
 			}
 			else if ( (m_iPlane&XPLANE) == XPLANE )
 			{
 				//if (yUnits == zUnits) {
-					normFactor = Math.sqrt(yRes * zRes * nPts / areaEllipse);
+					normFactor = Math.sqrt(yRes[0] * zRes[0] * nPts / areaEllipse);
 				//} 				
 			}
 			else if ( (m_iPlane&YPLANE) == YPLANE )
 			{
 				//if (xUnits == zUnits) {
-					normFactor = Math.sqrt(xRes * zRes * nPts / areaEllipse);
+					normFactor = Math.sqrt(xRes[0] * zRes[0] * nPts / areaEllipse);
 				//}				
 			}
 
@@ -2436,8 +2454,9 @@ public class VOIContour extends VOIBase {
         Vector<Vector3f> kLPSPoints = new Vector<Vector3f>();
         for ( int i = 0; i < size(); i++ )
         {
+        	z = (int)Math.round(elementAt(i).Z);
             Vector3f kLPS = new Vector3f(elementAt(i));
-            kLPS.scale( xRes, yRes, zRes );
+            kLPS.scale( xRes[z], yRes[z], zRes[z] );
             kLPSPoints.add( kLPS );
         }
 
