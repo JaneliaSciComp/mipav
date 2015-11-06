@@ -1144,8 +1144,8 @@ public class ViewMenuBar {
                                         		{
                                 		menuBuilder.buildRadioButtonMenuItem("Add Annotations", "AddAnnotations", false, new ButtonGroup() ),
                                 		menuBuilder.buildRadioButtonMenuItem("Edit Annotations", "EditAnnotations", false),
-                                		menuBuilder.buildMenuItem("Open Annotations", "OpenAnnotations", 0, null, false),
-                                		menuBuilder.buildMenuItem("Save Annotations", "SaveAnnotations", 0, null, false)
+                                		menuBuilder.buildMenuItem("Open Annotations", "OpenAnnotations", 0, null, false)/*,
+                                		menuBuilder.buildMenuItem("Save Annotations", "SaveAnnotations", 0, null, false)*/
                                         		}
                                 ),
                                 menuBuilder.makeMenu("Worm Neurite", true,
@@ -1165,12 +1165,10 @@ public class ViewMenuBar {
                                                         false),
                                         menuBuilder.buildCheckBoxMenuItem("Show Model", "ShowModel", false),
                                         menuBuilder.buildCheckBoxMenuItem("Show Expanded Model", "ShowExpandedModel", false),
-//                                        menuBuilder.buildMenuItem("Segment Worm", "SegmentWorm", 0, null,
-//                                            	false),
                                         menuBuilder.buildMenuItem("Straighten", "StraightenLattice", 0, null,
                                                 false),
-                                        menuBuilder.buildMenuItem("Default Voxel Size", "voxelSize", 0, null,
-                                        		false)
+                                                menuBuilder.buildMenuItem("Default Voxel Size", "voxelSize", 0, null, false),
+                                                menuBuilder.buildMenuItem("Animate Straightening", "animateStraightening", 0, null, false)
                                         		}
                                 ),
                                 ViewMenuBar.separator,

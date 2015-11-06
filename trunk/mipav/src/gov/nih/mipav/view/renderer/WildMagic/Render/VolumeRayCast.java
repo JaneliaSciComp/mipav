@@ -300,6 +300,43 @@ public class VolumeRayCast extends VolumeObject
     	m_fVolumeMult = (2.0f*maxBox);
     }
     
+    public void reCreateScene( VolumeImage image )
+    {
+        m_kVolumeImageA = image;
+        m_kVolumeImageB = null;
+        
+        if ( m_kMesh != null )
+        {
+            m_kScene.GetChild(0).Local.SetTranslate( Vector3f.ZERO );  
+        	m_kScene.DetachChild(m_kMesh);
+            m_kScene.UpdateGS();
+        }
+
+    	int iDimX = m_kVolumeImageA.GetImage().getExtents()[0];
+    	int iDimY = m_kVolumeImageA.GetImage().getExtents()[1];
+    	int iDimZ = m_kVolumeImageA.GetImage().getExtents()[2];
+        reCreateBox(iDimX, iDimY, iDimZ);
+        m_kScene.AttachChild( m_kMesh );
+        
+        m_kScene.UpdateGS();
+        m_kTranslate = new Vector3f( m_kScene.WorldBound.GetCenter() );
+        m_kTranslate.neg();
+        m_kScene.GetChild(0).Local.SetTranslate( m_kTranslate );               
+
+        float[] afResolutions = m_kVolumeImageA.GetImage().getResolutions(0);
+        m_kResolutions = new Vector3f( afResolutions[0], afResolutions[1], afResolutions[2] );
+		float xBox = (iDimX - 1) * afResolutions[0];
+		float yBox = (iDimY - 1) * afResolutions[1];
+		float zBox = (iDimZ - 1) * afResolutions[2];
+		float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+        
+		m_kVolumeScale = new Vector3f ( 2f * afResolutions[0], 2f * afResolutions[1], 2f * afResolutions[2] );
+		m_kLocalScale = new Vector3f ( 1f/(2f * afResolutions[0]), 1f/(2f * afResolutions[1]), 1f/(2f * afResolutions[2]) );
+    	m_kVolumeTrans = new Vector3f(0, 0, 0);
+    	m_fVolumeDiv = 1f/(2.0f*maxBox);
+    	m_fVolumeMult = (2.0f*maxBox);
+    }
+    
     /** delete local memory. */
     public void dispose(Renderer kRenderer)
     {
@@ -696,6 +733,66 @@ public class VolumeRayCast extends VolumeObject
         m_kMaterial.Shininess = 128f;
         m_kMesh.AttachGlobalState(m_kMaterial);
         m_kMesh.UpdateMS(true);
+        return m_kMesh;
+    }
+
+    private TriMesh reCreateBox (int iXBound, int iYBound, int iZBound)
+    {
+    	if ( m_kMesh == null )
+    	{
+    		return Box(iXBound, iYBound, iZBound );
+    	}
+
+        float fMaxX = (iXBound - 1) * m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[0];
+        float fMaxY = (iYBound - 1) * m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[1];
+        float fMaxZ = (iZBound - 1) * m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[2];
+
+        m_fMax = fMaxX;
+        if (fMaxY > m_fMax) {
+            m_fMax = fMaxY;
+        }
+        if (fMaxZ > m_fMax) {
+            m_fMax = fMaxZ;
+        }
+        m_fX = fMaxX/m_fMax;
+        m_fY = fMaxY/m_fMax;
+        m_fZ = fMaxZ/m_fMax;
+
+        VertexBuffer pkVB = m_kMesh.VBuffer;
+//        IndexBuffer pkIB = m_kMesh.IBuffer;
+
+        // generate geometry
+        frontBottomLeft = new Vector3f(0f,0f,0f);
+        frontBottomRight = new Vector3f(m_fX,0f,0f);
+        frontTopRight = new Vector3f(m_fX,m_fY,0f);        
+        frontTopLeft = new Vector3f(0f,m_fY,0f);
+
+        backBottomLeft = new Vector3f(0f,0f,m_fZ);
+        backBottomRight = new Vector3f(m_fX,0f,m_fZ);
+        backTopRight = new Vector3f(m_fX,m_fY,m_fZ);
+        backTopLeft = new Vector3f(0f,m_fY,m_fZ);
+
+        cornerPoints[frontBottomLeftIndex] = frontBottomLeft;
+        cornerPoints[frontBottomRightIndex] = frontBottomRight;
+        cornerPoints[frontTopRightIndex] = frontTopRight;
+        cornerPoints[frontTopLeftIndex] = frontTopLeft;
+        cornerPoints[backBottomLeftIndex] = backBottomLeft;
+        cornerPoints[backBottomRightIndex] = backBottomRight;
+        cornerPoints[backTopRightIndex] = backTopRight;
+        cornerPoints[backTopLeftIndex] = backTopLeft;
+        
+        centerBox = new Vector3f();
+        for ( int i = 0; i < cornerPoints.length; i++ )
+        {
+        	centerBox.add(cornerPoints[i]);
+        }
+        centerBox.scale(1f/(cornerPoints.length));
+
+        fillBox( pkVB );
+//        fillBox( pkIB );
+
+        m_kMesh.UpdateMS(true);
+        m_kMesh.Reload(true);
         return m_kMesh;
     }
 

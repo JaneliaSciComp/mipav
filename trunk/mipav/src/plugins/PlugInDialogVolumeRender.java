@@ -81,8 +81,17 @@ import javax.swing.JTextField;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
+/**
+ * Implements the user-interface for the semi-automatic straightening of the worm.
+ * Provides batch-process algorithms for segmenting the seam cells and building lattices.
+ * Provides the framework for enabling the user to step through the selected image volumes
+ * and view/edit results from the automatic processes.
+ * Provides framework for animating the annotations after untwisting.
+ */
 public class PlugInDialogVolumeRender extends JFrame implements ActionListener, AlgorithmInterface, PropertyChangeListener, ViewImageUpdateInterface {
 
+	private static final long serialVersionUID = -9056581285643263551L;
+	
 	public static final int EditNONE = 0;
 	public static final int EditSeamCells = 1;
 	public static final int EditLattice = 2;
@@ -173,11 +182,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		init(editMode);
 		setVisible(true);
 	}
-	/**
-	 * Closes dialog box when the OK button is pressed and calls the algorithm.
-	 *
-	 * @param  event  Event that triggers function.
-	 */
+	
 	public void actionPerformed(ActionEvent event)
 	{
 		String command = event.getActionCommand();
@@ -190,30 +195,35 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				startButton.setEnabled(false);
 				if ( segmentSeamCells.isSelected() )
 				{
-					PlugInDialogWormLatticeStraighten.segmentSeamCells( batchProgress, includeRange, baseFileDir, baseFileNameText.getText() );
+					// Batch Automatic Seam Cell Segmentation:
+					PlugInAlgorithmWormUntwisting.segmentSeamCells( batchProgress, includeRange, baseFileDir, baseFileNameText.getText() );
 					segmentSeamCells.setSelected(false);
 					editSeamCells.setSelected(true);
 					startButton.setEnabled(true);
 				}
 				else if ( buildLattice.isSelected() )
 				{
-					PlugInDialogWormLatticeStraighten.buildLattice( batchProgress, includeRange, baseFileDir, baseFileNameText.getText());
+					// Batch Automatic Lattice-Building
+					PlugInAlgorithmWormUntwisting.buildLattice( batchProgress, includeRange, baseFileDir, baseFileNameText.getText());
 					editLattice.setSelected(true);
 					startButton.setEnabled(true);
 				}
 				else if ( latticeStraighten.isSelected() )
 				{
-					PlugInDialogWormLatticeStraighten.latticeStraighten( batchProgress, includeRange,  baseFileDir, baseFileNameText.getText() );
+					// Batch Untwisting:
+					PlugInAlgorithmWormUntwisting.latticeStraighten( batchProgress, includeRange,  baseFileDir, baseFileNameText.getText() );
 					reviewResults.setSelected(true);
 					startButton.setEnabled(true);
 				}
 				else if ( calcMaxProjection.isSelected() )
 				{
-					PlugInDialogWormLatticeStraighten.createMaximumProjectionAVI( batchProgress, includeRange,  baseFileDir, baseFileNameText.getText() );
+					// Batch Registration/MP calculation:
+					PlugInAlgorithmWormUntwisting.createMaximumProjectionAVI( batchProgress, includeRange,  baseFileDir, baseFileNameText.getText() );
 					startButton.setEnabled(true);
 				}
 				else if ( editSeamCells.isSelected() )
 				{
+					// Start seam cell editing:
 					if ( !integratedDisplay )
 					{
 						PlugInDialogVolumeRender editor = new PlugInDialogVolumeRender( this, PlugInDialogVolumeRender.EditSeamCells, includeRange, imageIndex, baseFileDir, baseFileNameText.getText() );
@@ -228,6 +238,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				}
 				else if ( editLattice.isSelected() )
 				{
+					// start lattice editing:
 					if ( !integratedDisplay )
 					{
 						PlugInDialogVolumeRender editor = new PlugInDialogVolumeRender( this, PlugInDialogVolumeRender.EditLattice, includeRange, imageIndex, baseFileDir, baseFileNameText.getText() );
@@ -242,6 +253,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				}
 				else if ( editAnnotations.isSelected() )
 				{
+					// start annotation editing:
 					if ( !integratedDisplay )
 					{
 						PlugInDialogVolumeRender editor = new PlugInDialogVolumeRender( this, PlugInDialogVolumeRender.EditAnnotations, includeRange, imageIndex, baseFileDir, baseFileNameText.getText() );
@@ -256,6 +268,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				}
 				else if ( reviewResults.isSelected() )
 				{
+					// start viewing untwisted results:
 					if ( !integratedDisplay )
 					{
 						PlugInDialogVolumeRender editor = new PlugInDialogVolumeRender( this, PlugInDialogVolumeRender.ReviewResults, includeRange, imageIndex, baseFileDir, baseFileNameText.getText() );
@@ -270,6 +283,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				}
 				else if ( createAnimation.isSelected() )
 				{
+					// Launch the animation tool
 					this.setVisible(false);
 					annotationAnimationFromSpreadSheet();
 				}
@@ -280,6 +294,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 		else
 		{
+			// Edit mode, next and back open the next or previous image in the
+			// sequence to edit and opens the associated VOIs.
 			if ( command.equals("next") )
 			{
 				voiManager.clear3DSelection();
@@ -325,6 +341,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					openStraightened();
 				}
 			}
+			// Closes the editing:
 			else if (command.equals("done"))
 			{			
 				if ( voiManager != null )
@@ -343,6 +360,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					enableNext(editMode);
 				}
 			}
+			// Enables user to generate a new lattice (when none of the automatic ones match well)
 			else if (command.equals("newLattice") )
 			{
 				if ( voiManager != null )
@@ -388,6 +406,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			dispose();
 		}
 	}
+	
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.model.algorithms.AlgorithmInterface#algorithmPerformed(gov.nih.mipav.model.algorithms.AlgorithmBase)
+	 */
 	public void algorithmPerformed(AlgorithmBase algorithm)
 	{       
 		if ( (annotationList != null) && (annotationNames != null) && (triVolume != null) )
@@ -451,6 +473,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		volumeRenderer.setABBlend(.8f);
 //		volumeRenderer.initLUT();
 	}
+	
 	public void dispose()
 	{
 		if ( annotationList != null )
@@ -492,9 +515,14 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		{
 			wormImage.disposeLocal();
 			wormImage = null;
-		}
-		
+		}		
 	}
+	
+	/**
+	 * Called when the user is done viewing the volumes and editing the seam cells, lattice, or annotations.
+	 * The next step in the straightening process is automatically enabled and selected.
+	 * @param mode
+	 */
 	public void enableNext( int mode )
 	{
 		if ( volumeRenderer != null )
@@ -542,7 +570,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		pack();
 	}
 
-	@Override
+	/* (non-Javadoc)
+	 * @see java.beans.PropertyChangeListener#propertyChange(java.beans.PropertyChangeEvent)
+	 */
 	public void propertyChange(PropertyChangeEvent event) {
 		String propertyName = event.getPropertyName();
 		if ( propertyName.equals("Opacity") )
@@ -553,19 +583,12 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	}
 
 	@Override
-	public void setSlice(int slice) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void setSlice(int slice) {}
 	
 	@Override
-	public void setTimeSlice(int tSlice) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void setTimeSlice(int tSlice) {}
 	@Override
 	public boolean updateImageExtents() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 	@Override
@@ -576,7 +599,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 		return false;
 	}
-	@Override
+	
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.view.ViewImageUpdateInterface#updateImages(boolean)
+	 */
 	public boolean updateImages(boolean flag) {
 		if ( volumeImage != null )
 		{
@@ -584,7 +610,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 		return false;
 	}
-	@Override
+	
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.view.ViewImageUpdateInterface#updateImages(gov.nih.mipav.model.structures.ModelLUT, gov.nih.mipav.model.structures.ModelLUT, boolean, int)
+	 */
 	public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean flag, int interpMode) {
 		if ( volumeImage != null )
 		{
@@ -593,6 +622,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		return false;
 	}
 
+	/**
+	 * Opens the current image and annotation VOIs for viewing/editing.
+	 */
 	protected void openAnnotations()
 	{
 		if ( includeRange != null )
@@ -609,15 +641,15 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						annotations = null;
 					}
 					annotations = new VOIVector();
-					fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.editAnnotationOutput;
+					fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInAlgorithmWormUntwisting.editAnnotationOutput;
 					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-					PlugInDialogWormLatticeStraighten.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
+					PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
 
 					if ( annotations.size() == 0 )
 					{
-						fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.editAnnotationInput;
+						fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInAlgorithmWormUntwisting.editAnnotationInput;
 						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-						PlugInDialogWormLatticeStraighten.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
+						PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
 					}
 					if ( voiManager != null )
 					{
@@ -629,6 +661,13 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 	}
 
+	/**
+	 * Opens the current image for viewing. If this is the fist image the volume renderer is created and initialized.
+	 * Updates the volume renderer and the histogram / LUT and opacity panels with the new image.
+	 * @param imageFile image FIle to open
+	 * @param fileName file name
+	 * @return true if the file exists.
+	 */
 	protected boolean openImages( File imageFile, String fileName )
 	{
 		if ( imageFile.exists() )
@@ -643,6 +682,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			wormImage = fileIO.readImage(fileName, imageFile.getParent() + File.separator, false, null); 
 			wormImage.calcMinMax();      
 			
+			boolean updateRenderer = false;
 			if ( voiManager != null )
 			{
 				voiManager.setImage(wormImage);
@@ -654,6 +694,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			}
 			else
 			{
+				updateRenderer = (wormImage.getDataSize() != volumeImage.GetImage().getDataSize());
 				volumeImage.UpdateData(wormImage);
 				updateHistoLUTPanels();
 			}
@@ -669,6 +710,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			}
 			else
 			{
+				if ( updateRenderer )
+				{
+					volumeRenderer.resetAxis();
+					volumeRenderer.reCreateScene(volumeImage);
+				}
 				if ( !volumeRenderer.isVisible() )
 				{
 					volumeRenderer.setVisible(true);
@@ -685,6 +731,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		return false;
 	}
 
+	/**
+	 * Opens the current image and lattice for viewing/editing.
+	 */
 	protected void openLattice()
 	{
 		if ( includeRange != null )
@@ -713,18 +762,18 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 					latticeSelectionPanel.removeAll();
 					latticeSelectionPanel.setVisible(false);
-					fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.editLatticeOutput;
+					fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInAlgorithmWormUntwisting.editLatticeOutput;
 					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-					PlugInDialogWormLatticeStraighten.loadAllVOIsFrom(wormImage, voiDir, true, potentialLattices[0], false);
+					PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, voiDir, true, potentialLattices[0], false);
 
 					int latticeIndex = -1;
 					if ( potentialLattices[0].size() == 0 )
 					{
 						for ( int i = 0; i < potentialLattices.length; i++ )
 						{
-							fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.autoLatticeGenerationOutput + i;
+							fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInAlgorithmWormUntwisting.autoLatticeGenerationOutput + (i+1);
 							voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-							PlugInDialogWormLatticeStraighten.loadAllVOIsFrom(wormImage, voiDir, true, potentialLattices[i], false);
+							PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, voiDir, true, potentialLattices[i], false);
 
 							if ( potentialLattices[i].size() != 0 )
 							{
@@ -756,6 +805,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 	}
 
+	/**
+	 *  Opens the current image and seam cells for viewing/editing.
+	 */
 	protected void openSeamCells()
 	{
 		if ( includeRange != null )
@@ -773,15 +825,15 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					}
 					annotations = new VOIVector();
 
-					fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.editSeamCellOutput;
+					fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInAlgorithmWormUntwisting.editSeamCellOutput;
 					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-					PlugInDialogWormLatticeStraighten.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
+					PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
 
 					if ( annotations.size() == 0 )
 					{
-						fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.autoSeamCellSegmentationOutput;
+						fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInAlgorithmWormUntwisting.autoSeamCellSegmentationOutput;
 						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-						PlugInDialogWormLatticeStraighten.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
+						PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
 					}
 
 					if ( voiManager != null )
@@ -794,6 +846,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 	}
 
+	/**
+	 * Opens the current volume for viewing including the straightened annotations and lattice.
+	 */
 	protected void openStraightened()
 	{
 		if ( includeRange != null )
@@ -802,20 +857,27 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			{
 				String imageName = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_straight.tif";
 				String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
-				File voiFile = new File(baseFileDir + File.separator + subDirName + PlugInDialogWormLatticeStraighten.outputImages + File.separator + imageName);
+				File voiFile = new File(baseFileDir + File.separator + subDirName + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
 				if ( openImages( voiFile, imageName ) )
 				{
+					if ( volumeRenderer != null )
+					{
+						volumeRenderer.resetAxisX();
+					}
 					VOIVector results = new VOIVector();
-					String voiDir = new String( baseFileDir + File.separator + subDirName + PlugInDialogWormLatticeStraighten.straightenedAnnotations + File.separator );
-					PlugInDialogWormLatticeStraighten.loadAllVOIsFrom(wormImage, voiDir, true, results, true);
+					String voiDir = new String( baseFileDir + File.separator + subDirName + PlugInAlgorithmWormUntwisting.straightenedAnnotations + File.separator );
+					PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, voiDir, true, results, true);
 					
-					voiDir = new String( baseFileDir + File.separator + subDirName + PlugInDialogWormLatticeStraighten.straightenedLattice + File.separator );
-					PlugInDialogWormLatticeStraighten.loadAllVOIsFrom(wormImage, voiDir, true, results, true);
+					voiDir = new String( baseFileDir + File.separator + subDirName + PlugInAlgorithmWormUntwisting.straightenedLattice + File.separator );
+					PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, voiDir, true, results, true);
 				}
 			}
 		}
 	}
 
+	/**
+	 * Displays the annotation animation visualization framework.
+	 */
 	private void annotationAnimationFromSpreadSheet()
 	{
 		int[] extents = new int[3];
@@ -1047,6 +1109,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		triVolume.addConfiguredListener(this);
 	}
 
+	/**
+	 * Initializes the panels for a non-integrated display. 
+	 */
 	private void init()
 	{
 		MipavInitGPU.InitGPU();
@@ -1122,6 +1187,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	}
 
 
+	/**
+	 * User-interface initialization. If the UI is integrated all panels are displayed in one window.
+	 * Otherwise the UI is divided into volume display and separate UI panels.
+	 * @param integrated
+	 */
 	private void init(boolean integrated)
 	{
 		if ( !integrated )
@@ -1209,9 +1279,6 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		integratedPanel.add( leftPanel, BorderLayout.WEST );
 		integratedPanel.add( volumePanel, BorderLayout.EAST );
 		getContentPane().add(integratedPanel, BorderLayout.CENTER);
-
-
-        
         
 		setLocation(0, 0);
 		pack();
@@ -1219,6 +1286,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 		segmentSeamCells.setSelected(true);
 	}
+	
+	/**
+	 * Initializes volume rendering with the GPU.
+	 * @param editMode
+	 */
 	private void init( int editMode )
 	{
 		MipavInitGPU.InitGPU();
@@ -1238,6 +1310,13 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		setResizable(true);
 
 	}
+	
+	/**
+	 * Sets up the GPU volume display panel, with the 'back' and 'next' buttons for
+	 * going through the images and editing the seam cells or lattices.
+	 * @param editMode when the edit mode is for editing lattices up to 5 lattice options are shown to the user.
+	 * @return
+	 */
 	private Container initGPUPanel( int editMode )
 	{
 		MipavInitGPU.InitGPU();
@@ -1272,7 +1351,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		latticeChoices = new JRadioButton[5];
 		for ( int i = 0; i < latticeChoices.length; i++ )
 		{
-			latticeChoices[i] = gui.buildRadioButton("lattice_" + i, i==0 );
+			latticeChoices[i] = gui.buildRadioButton("lattice_" + (i+1), i==0 );
 			latticeChoices[i].addActionListener(this);
 			latticeGroup.add(latticeChoices[i]);
 		}
@@ -1295,16 +1374,19 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		gpuPanel.setMinimumSize(new Dimension(250, 250));
 		gpuPanel.setBorder(JDialogBase.buildTitledBorder("Volume Display"));
 
-
 		dialogGUI.getContentPane().add(gpuPanel, BorderLayout.CENTER);
 		dialogGUI.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
-//		getContentPane().add(dialogGUI.getContentPane(), BorderLayout.CENTER);
-//
-//		pack();
-//		setResizable(true);
 		return dialogGUI.getContentPane();
 	}
+	
+	/**
+	 * Builds the algorithms panel for automatic seam-cell detection, automatic lattice building, straightening, etc.
+	 * Sets up the buttons and return the panel.
+	 * @param gui
+	 * @param group
+	 * @return the user-interface panel.
+	 */
 	private JPanel makeAlgorithmsPanel(GuiBuilder gui, ButtonGroup group)
 	{
 		GridBagConstraints gbc = new GridBagConstraints();
@@ -1359,6 +1441,12 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		return panel;
 	}
 
+	/**
+	 * Generates the panel for editing seam cells, lattices, annotations, inspecting the straightened image results, etc.
+	 * @param gui
+	 * @param group
+	 * @return user-interface panel.
+	 */
 	private JPanel makeEditPanel(GuiBuilder gui, ButtonGroup group)
 	{
 		GridBagConstraints gbc = new GridBagConstraints();
@@ -1421,6 +1509,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		return panel;
 	}
 
+	/**
+	 * Saves seam cells, lattice, or annotations based on the current edit mode.
+	 */
 	private void save()
 	{
 		if ( editMode == EditSeamCells )
@@ -1437,6 +1528,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 	}
 
+	/**
+	 * Saves the annotations to the default edited file for the current image.
+	 */
 	private void saveAnnotations()
 	{
 		if ( wormImage == null )
@@ -1448,11 +1542,14 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			return;
 		}
 
-		String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.editAnnotationOutput;  
+		String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInAlgorithmWormUntwisting.editAnnotationOutput;  
 		String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
 		WormSegmentation.saveAllVOIsTo(voiDir, wormImage);
 	}
 
+	/**
+	 * Saves the lattice to the default edited file for the current image.
+	 */
 	private void saveLattice()
 	{
 		if ( wormImage == null )
@@ -1464,9 +1561,12 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			return;
 		}
 		voiManager.saveLattice( baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(imageIndex) + File.separator, 
-				PlugInDialogWormLatticeStraighten.editLatticeOutput );
+				PlugInAlgorithmWormUntwisting.editLatticeOutput );
 	}
 
+	/**
+	 * Saves the seam cells to the default edited file for the current image.
+	 */
 	private void saveSeamCells()
 	{
 		if ( wormImage == null )
@@ -1478,11 +1578,15 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			return;
 		}
 
-		String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInDialogWormLatticeStraighten.editSeamCellOutput;  
+		String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInAlgorithmWormUntwisting.editSeamCellOutput;  
 		String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
 		WormSegmentation.saveAllVOIsTo(voiDir, wormImage);
 	}
 
+	/**
+	 * Sets the include range list of file IDs when the user presses 'start'.
+	 * @return true if there are files in the list to process.
+	 */
 	private boolean setVariables()
 	{	    
 		baseFileName = baseFileNameText.getText();
@@ -1526,6 +1630,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		return (includeRange != null);
 	}
 
+	/**
+	 * Creates or updates the histogram / LUT panel and opacity panels when a new image is loaded.
+	 */
 	private void updateHistoLUTPanels()
 	{
 		if ( volOpacityPanel == null )
