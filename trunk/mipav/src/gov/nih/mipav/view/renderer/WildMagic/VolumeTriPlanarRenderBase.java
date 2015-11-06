@@ -2974,6 +2974,35 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	}
 
 	/**
+	 * Called by the init() function. Creates and initialized the scene-graph.
+	 */
+	public void reCreateScene(VolumeImage image) {
+		m_bDisplay = false;
+		m_kVolumeImageA = image;
+		m_kVolumeRayCast.reCreateScene(image);
+
+		m_kTranslate = m_kVolumeRayCast.GetTranslate();
+
+		m_fX = m_kVolumeImageA.GetScaleX();
+		m_fY = m_kVolumeImageA.GetScaleY();
+		m_fZ = m_kVolumeImageA.GetScaleZ();
+		m_fMax = Math.max(m_fX, Math.max(m_fY, m_fZ));
+
+		// initial update of objects
+		m_spkScene.UpdateGS();
+		m_spkScene.UpdateRS();
+
+		// initial culling of scene
+		m_kCuller.SetCamera(m_spkCamera);
+		m_kCuller.ComputeVisibleSet(m_spkScene);
+
+		InitializeCameraMotion(.05f, 0.1f);
+		UpdateCameraZoomSpeed(.05f);
+		InitializeObjectMotion(m_spkScene);
+		m_bDisplay = true;
+	}
+
+	/**
 	 * Calculates the rotation for the arbitrary clip plane.
 	 * 
 	 * @param bEnable

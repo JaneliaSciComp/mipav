@@ -1,38 +1,194 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmLaplacian;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.model.structures.VOIContour;
-import gov.nih.mipav.model.structures.VOIText;
-import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import java.awt.Color;
-import java.io.File;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.Vector;
 
-import WildMagic.LibFoundation.Containment.ContBox3f;
-import WildMagic.LibFoundation.Mathematics.Box3f;
 import WildMagic.LibFoundation.Mathematics.Vector2d;
-import WildMagic.LibFoundation.Mathematics.Vector3d;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.Mathematics.Vector4f;
-import WildMagic.LibGraphics.SceneGraph.BoxBV;
 
 public class WormSegmentationLoG extends WormSegmentation
 {
-	public WormSegmentationLoG() {}
+	public static Vector2d[] estimateHistogram( final ModelImage image, float stepSize )
+	{    	
+		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;  	
+
+		// Calculate the histogram:
+		int maxCount = 0;
+		HashMap<Float, Integer> map = new HashMap<Float, Integer>();
+		for ( int z = 0; z < dimZ; z++ )
+		{
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					float value = image.getFloat(x,y,z);
+					int count = 0;
+					if ( map.containsKey(value) )
+					{
+						count = map.get(value);
+					}
+					count++;
+					map.put( value, count );
+					if ( count > maxCount )
+					{
+						maxCount = count;
+					}
+				}
+			}
+		}
+		int numSteps = (int) (Math.ceil(0.02f/stepSize)) + 1;
+		Vector2d[] countValues = new Vector2d[numSteps];
+		int step = 0;
+
+		int totalCount = dimX * dimY * dimZ;
+		int count_98P = (int) (0.98 * totalCount);
+		int count_stepSize = (int)(stepSize*totalCount);
+		// Sort the Histogram bins:
+		Set<Float> keySet = map.keySet();
+		Iterator<Float> keyIterator = keySet.iterator();
+		float[] keyArray = new float[keySet.size()];
+		int count = 0;
+		while ( keyIterator.hasNext() )
+		{
+			float value = keyIterator.next();
+			keyArray[count++] = value;
+		}
+
+		Arrays.sort(keyArray);
+		int[] counts = new int[keyArray.length];
+		int runningCount = 0;
+		for ( int i = 0; i < counts.length; i++ )
+		{
+			counts[i] = map.get( keyArray[i] );
+			runningCount += counts[i];
+
+			while ( runningCount >= count_98P )
+			{
+				countValues[step++] = new Vector2d( (float)count_98P/(float)totalCount, keyArray[i] );
+				count_98P += count_stepSize;
+			}
+		}
+		//    	System.err.println( count_95P + " " + totalCount );
+		//    	for ( int i = 0; i < countValues.length; i++ )
+		//    	{
+		//    		System.err.println( countValues[i].X + " " + countValues[i].Y );
+		//    	}
+		keyArray = null;
+		return countValues;
+	}
+
+	// need edges
+	public static int fill(final ModelImage image, float cutOff, final ModelImage segmentation, final ModelImage colorSegmentation, 
+			final Vector<Vector3f> seedList, ModelImage visited, final int id, final Vector<Vector4f> edgeList) {
+		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+
+		int count = 0;
+		while (seedList.size() > 0) {
+			final Vector3f seed = seedList.remove(0);
+
+			final int z = Math.round(seed.Z);
+			final int y = Math.round(seed.Y);
+			final int x = Math.round(seed.X);
+			int index = z*dimY*dimX + y*dimX + x;
+			if ( visited.getInt(index) != 0 )
+			{
+				continue;
+			}
+			visited.set(index, id);
+			segmentation.set(x,  y, z, id);//image.getFloat(x,y,z));
+
+			final Color color = new Color(Color.HSBtoRGB(id/25f, 1, 1));
+			if ( colorSegmentation != null )
+			{
+				colorSegmentation.setC(x, y, z, 0, 1);
+				colorSegmentation.setC(x, y, z, 1, color.getRed() / 255f);
+				colorSegmentation.setC(x, y, z, 2, color.getGreen() / 255f);
+				colorSegmentation.setC(x, y, z, 3, color.getBlue() / 255f);
+			}
+			count++;
+
+			for (int z1 = Math.max(0, z - 1); z1 <= Math.min(dimZ - 1, z + 1); z1++)
+			{
+				for (int y1 = Math.max(0, y - 1); y1 <= Math.min(dimY - 1, y + 1); y1++)
+				{
+					for (int x1 = Math.max(0, x - 1); x1 <= Math.min(dimX - 1, x + 1); x1++)
+					{
+						if ( ! ( (x == x1) && (y == y1) && (z == z1))) {
+							index = z1*dimY*dimX + y1*dimX + x1;
+							if ( visited.getInt(index) == 0 )
+							{
+								float value = image.getFloat(x1, y1, z1);
+								if ( value > cutOff )
+								{
+									seedList.add( new Vector3f(x1,y1,z1) );
+								}
+								else if ( edgeList != null )
+								{
+									edgeList.add( new Vector4f(x1,y,z1, id) );
+								}
+							}
+						}
+					}
+				}
+			}							
+		}
+		return count;
+	}
+
+
+	public static ModelImage laplace(final ModelImage image, final int sigma )
+	{
+		String imageName = image.getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+		imageName = imageName + "_laplace";
+
+		final float[] sigmas = new float[] {sigma, sigma, sigma * getCorrectionFactor(image)};
+
+
+		OpenCLAlgorithmLaplacian laplacianAlgo;
+		final ModelImage resultImage = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), imageName);
+		JDialogBase.updateFileInfo(image, resultImage);
+		laplacianAlgo = new OpenCLAlgorithmLaplacian(resultImage, image, sigmas, true, true, false, 1.0f);
+
+		laplacianAlgo.setRunningInSeparateThread(false);
+		laplacianAlgo.run();
+		return laplacianAlgo.getDestImage();
+	}
+
+
+	public static ModelImage LoG(final ModelImage image) {
+		ModelImage blur = blur(image, 3);
+		blur.calcMinMax();
+
+		ModelImage laplace = laplace(blur, 3);
+		
+		blur.disposeLocal();
+		blur = null;
+
+		return laplace;
+	}
 
 	public static Vector<Vector3f> seamCellSegmentation( ModelImage image )
 	{
 
-		ModelImage loG = LatticeModel.LoG(image);
+		ModelImage loG = LoG(image);
 		loG.calcMinMax();
 		Vector2d[] histogram = estimateHistogram(loG, 0.0005f );
 		float cutoff = -1;
@@ -112,79 +268,6 @@ public class WormSegmentationLoG extends WormSegmentation
 		return annotations;
 	}
 
-
-	public static Vector2d[] estimateHistogram( final ModelImage image, float stepSize )
-	{    	
-		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
-		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
-		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;  	
-
-		// Calculate the histogram:
-		int maxCount = 0;
-		HashMap<Float, Integer> map = new HashMap<Float, Integer>();
-		for ( int z = 0; z < dimZ; z++ )
-		{
-			for ( int y = 0; y < dimY; y++ )
-			{
-				for ( int x = 0; x < dimX; x++ )
-				{
-					float value = image.getFloat(x,y,z);
-					int count = 0;
-					if ( map.containsKey(value) )
-					{
-						count = map.get(value);
-					}
-					count++;
-					map.put( value, count );
-					if ( count > maxCount )
-					{
-						maxCount = count;
-					}
-				}
-			}
-		}
-		int numSteps = (int) (Math.ceil(0.02f/stepSize)) + 1;
-		Vector2d[] countValues = new Vector2d[numSteps];
-		int step = 0;
-
-		int totalCount = dimX * dimY * dimZ;
-		int count_98P = (int) (0.98 * totalCount);
-		int count_stepSize = (int)(stepSize*totalCount);
-		// Sort the Histogram bins:
-		Set<Float> keySet = map.keySet();
-		Iterator<Float> keyIterator = keySet.iterator();
-		float[] keyArray = new float[keySet.size()];
-		int count = 0;
-		while ( keyIterator.hasNext() )
-		{
-			float value = keyIterator.next();
-			keyArray[count++] = value;
-		}
-
-		Arrays.sort(keyArray);
-		int[] counts = new int[keyArray.length];
-		int runningCount = 0;
-		for ( int i = 0; i < counts.length; i++ )
-		{
-			counts[i] = map.get( keyArray[i] );
-			runningCount += counts[i];
-
-			while ( runningCount >= count_98P )
-			{
-				countValues[step++] = new Vector2d( (float)count_98P/(float)totalCount, keyArray[i] );
-				count_98P += count_stepSize;
-			}
-		}
-		//    	System.err.println( count_95P + " " + totalCount );
-		//    	for ( int i = 0; i < countValues.length; i++ )
-		//    	{
-		//    		System.err.println( countValues[i].X + " " + countValues[i].Y );
-		//    	}
-		keyArray = null;
-		return countValues;
-	}
-
-
 	public static Vector<Vector3f> segmentFirst10SeamCells( final ModelImage loG, Vector2d[] histogram, int[] cutoffIndex,
 			int currentAnnotations, int annotationLimit, ModelImage visited, 
 			ModelImage colorSegmentation, ModelImage segmentation )
@@ -221,6 +304,13 @@ public class WormSegmentationLoG extends WormSegmentation
 
 		return annotations;
 			}
+
+
+
+
+
+
+
 
 	public static VOI segmentImage( final ModelImage image, float cutOff, ModelImage visited, float edgeCutOff, Vector<Vector3f> annotations, ModelImage colorSegmentation, ModelImage seamCellSegmentation )
 	{
@@ -372,7 +462,7 @@ public class WormSegmentationLoG extends WormSegmentation
 		{
 			if ( seamCells[i] != null )
 			{
-				seamCells[i].scale( 1f/(float)counts[i]);    			
+				seamCells[i].scale( 1f/counts[i]);    			
 			}
 		}
 		//    	for ( int i = 0; i < seamCells.length; i++ )
@@ -508,73 +598,6 @@ public class WormSegmentationLoG extends WormSegmentation
 		//    	segmentationImage.registerVOI(annotation);
 		//		return segmentationImage;
 	}
-
-	// need edges
-	public static int fill(final ModelImage image, float cutOff, final ModelImage segmentation, final ModelImage colorSegmentation, 
-			final Vector<Vector3f> seedList, ModelImage visited, final int id, final Vector<Vector4f> edgeList) {
-		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
-		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
-		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
-
-		int count = 0;
-		while (seedList.size() > 0) {
-			final Vector3f seed = seedList.remove(0);
-
-			final int z = Math.round(seed.Z);
-			final int y = Math.round(seed.Y);
-			final int x = Math.round(seed.X);
-			int index = z*dimY*dimX + y*dimX + x;
-			if ( visited.getInt(index) != 0 )
-			{
-				continue;
-			}
-			visited.set(index, id);
-			segmentation.set(x,  y, z, id);//image.getFloat(x,y,z));
-
-			final Color color = new Color(Color.HSBtoRGB(id/25f, 1, 1));
-			if ( colorSegmentation != null )
-			{
-				colorSegmentation.setC(x, y, z, 0, 1);
-				colorSegmentation.setC(x, y, z, 1, color.getRed() / 255f);
-				colorSegmentation.setC(x, y, z, 2, color.getGreen() / 255f);
-				colorSegmentation.setC(x, y, z, 3, color.getBlue() / 255f);
-			}
-			count++;
-
-			for (int z1 = Math.max(0, z - 1); z1 <= Math.min(dimZ - 1, z + 1); z1++)
-			{
-				for (int y1 = Math.max(0, y - 1); y1 <= Math.min(dimY - 1, y + 1); y1++)
-				{
-					for (int x1 = Math.max(0, x - 1); x1 <= Math.min(dimX - 1, x + 1); x1++)
-					{
-						if ( ! ( (x == x1) && (y == y1) && (z == z1))) {
-							index = z1*dimY*dimX + y1*dimX + x1;
-							if ( visited.getInt(index) == 0 )
-							{
-								float value = image.getFloat(x1, y1, z1);
-								if ( value > cutOff )
-								{
-									seedList.add( new Vector3f(x1,y1,z1) );
-								}
-								else if ( edgeList != null )
-								{
-									edgeList.add( new Vector4f(x1,y,z1, id) );
-								}
-							}
-						}
-					}
-				}
-			}							
-		}
-		return count;
-	}
-
-
-
-
-
-
-
 
 	public static void segmentMidLine( final ModelImage image, Vector2d[] histogram, 
 			int[] cutOffIndex,
@@ -718,7 +741,7 @@ public class WormSegmentationLoG extends WormSegmentation
 			{
 				if ( seamCells[i] != null )
 				{
-					seamCells[i].scale( 1f/(float)counts[i]);    			
+					seamCells[i].scale( 1f/counts[i]);    			
 				}
 			}
 
@@ -819,13 +842,8 @@ public class WormSegmentationLoG extends WormSegmentation
 
 	}
 
-	@Override
-	public void runAlgorithm() {
-		// TODO Auto-generated method stub
-		
-	}
 
-
+	public WormSegmentationLoG() {}
 
 
 }

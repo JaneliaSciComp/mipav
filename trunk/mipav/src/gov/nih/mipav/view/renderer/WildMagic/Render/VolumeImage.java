@@ -728,7 +728,12 @@ public class VolumeImage implements Serializable {
 		m_kColorMap = null;
 		m_kColorMapTarget.dispose();
 		m_kColorMapTarget = null;
-
+		
+		if ( m_kImageGM != null )
+		{
+			m_kImageGM.disposeLocal();
+			m_kImageGM = null;
+		}
 		for (final GraphicsImage element : m_kVolumeGM) {
 			element.dispose();
 		}

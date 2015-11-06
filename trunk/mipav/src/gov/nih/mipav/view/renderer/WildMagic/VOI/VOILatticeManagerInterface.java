@@ -203,14 +203,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			{
 				latticeModel.showModel( );
 			}
-		} 
-		else if ( command.equals("SegmentWorm") ) { 
-			if ( latticeModel == null )
-			{
-				latticeModel = new LatticeModel( m_kImageA );
-			}
-			latticeModel.segmentWorm( );
-		} 
+		}
 		else if ( command.equals("StraightenLattice") ) {
 			if ( latticeModel != null )
 			{
@@ -242,6 +235,10 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 				defaultVoxelSize.requestFocus();
 			}
 		} 
+		else if ( command.equals("animateStraightening") )
+		{
+			System.err.println("Starting Worm Straightening Animation");
+		}
 		else {
 			super.actionPerformed(event);
 		}

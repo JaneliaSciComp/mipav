@@ -524,14 +524,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		 }
 	 }
 	 
-	 public void initLUT()
-	 {
-		 TransferFunction transferLine = m_kVolumeImageA.GetLUT().getTransferFunction();
-		 transferLine.importArrays( new float[]{0, 0, 0, (float)m_kVolumeImageA.GetImage().getMax()},
-				 new float[]{255, 255, 0, 0}, 4);
-		 m_kVolumeImageA.UpdateImages(m_kVolumeImageA.GetLUT());
-	 }
-
+	 
 	/**
 	 * Undo applying the sculpt region to the volume.
 	 */
