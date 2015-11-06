@@ -695,7 +695,7 @@ public class JDialogVOIStats extends JDialogScriptableBase
                 VOI tempVOI = ((AlgorithmVOIProps)algorithm).getVOIList().get(i);
                 properties = algoVOI.getVOIProperties(tempVOI);
                 String pSetDesc = tempVOI.getName();
-                String name, valueType, specificName;
+                String name, valueType, specificName, specificRedName, specificGreenName, specificBlueName;
                 Object value;
                 SimpleDateFormat dFormat = new SimpleDateFormat("yyyy-MM-dd");
                 SimpleDateFormat tFormat = new SimpleDateFormat("HH:mm:ss");
@@ -758,9 +758,12 @@ public class JDialogVOIStats extends JDialogScriptableBase
                                 (name.equals("Coefficient of skewness")) || (name.equals("Coefficient of kurtosis")) ||
                                 (name.equals("Median Intensity")) || (name.equals("Mode Intensity")) ||
                                 (name.equals("Mode Count"))) {
-                            	Preferences.data("  "+name+"\tRed\t\t= "+properties.getVOIStatistic(specificName+"Red").toString()+"\n"); 
-                            	Preferences.data("  "+name+"\tGreen\t\t= "+properties.getVOIStatistic(specificName+"Green").toString()+"\n");
-                            	Preferences.data("  "+name+"\tBlue\t\t= "+properties.getVOIStatistic(specificName+"Blue").toString()+"\n");  
+                            	specificRedName = extendName(name+"Red", tempVOI, curve, processType);
+                            	specificGreenName = extendName(name+"Green", tempVOI, curve, processType);
+                            	specificBlueName = extendName(name+"Blue", tempVOI, curve, processType);
+                            	Preferences.data("  "+name+"\tRed\t\t= "+properties.getVOIStatistic(specificRedName).toString()+"\n"); 
+                            	Preferences.data("  "+name+"\tGreen\t\t= "+properties.getVOIStatistic(specificGreenName).toString()+"\n");
+                            	Preferences.data("  "+name+"\tBlue\t\t= "+properties.getVOIStatistic(specificBlueName).toString()+"\n");  
                             }
                             else {
                             	Preferences.data("  "+name+"\t\t= "+properties.getVOIStatistic(specificName).toString()+"\n");    
