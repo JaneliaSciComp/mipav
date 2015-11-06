@@ -996,7 +996,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             // If user selects perimeterDescription or circularityDescription:
             if ( statsList[ indexOf( perimeterDescription ) ] || statsList[ indexOf( circularityDescription)])
             {               
-                stats.perimeter = contour.getLengthPtToPt(srcImage.getFileInfo(0).getResolutions());   
+                stats.perimeter = contour.getLengthPtToPt(fileInfo.getResolutions());   
                 statProperty.setProperty(VOIStatisticList.perimeterDescription + end, nf.format(stats.perimeter));       
             }
             
@@ -1142,12 +1142,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             if ( statsList[ indexOf( geometricCenterDescription ) ] )
             {               
                 Vector3f gCenter = contour.getGeometricCenter();
-                gCenter.X *= srcImage.getFileInfo(0).getResolutions()[0];
-                gCenter.Y *= srcImage.getFileInfo(0).getResolutions()[1];
+                gCenter.X *= fileInfo.getResolutions()[0];
+                gCenter.Y *= fileInfo.getResolutions()[1];
                 String unitStr = unit2DStr + "\tZ";
 
                 if (srcImage.getNDims() > 2) {
-                    gCenter.Z *= srcImage.getFileInfo(0).getResolutions()[2];
+                    gCenter.Z *= fileInfo.getResolutions()[2];
                     unitStr = unit3DStr;
                 }
 
@@ -1303,7 +1303,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             // If user selects perimeterDescription or circularityDescription:
             if ( statsList[ indexOf( perimeterDescription ) ] || (statsList[ indexOf( circularityDescription)]) )
             {               
-                stats.perimeter = contour.getLengthPtToPt(srcImage.getFileInfo(0).getResolutions());   
+                stats.perimeter = contour.getLengthPtToPt(fileInfo.getResolutions());   
                 statProperty.setProperty(VOIStatisticList.perimeterDescription + end, nf.format(stats.perimeter));       
             }
             
@@ -1501,12 +1501,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             if ( statsList[ indexOf( geometricCenterDescription ) ] )
             {               
                 Vector3f gCenter = contour.getGeometricCenter();
-                gCenter.X *= srcImage.getFileInfo(0).getResolutions()[0];
-                gCenter.Y *= srcImage.getFileInfo(0).getResolutions()[1];
+                gCenter.X *= fileInfo.getResolutions()[0];
+                gCenter.Y *= fileInfo.getResolutions()[1];
                 String unitStr = unit2DStr + "\tZ";
 
                 if (srcImage.getNDims() > 2) {
-                    gCenter.Z *= srcImage.getFileInfo(0).getResolutions()[2];
+                    gCenter.Z *= fileInfo.getResolutions()[2];
                     unitStr = unit3DStr;
                 }
 
@@ -1962,6 +1962,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         {
             ContourStats stats = new ContourStats();
             int orientation = kVOI.getCurves().get(0).getPlane();
+            int z;
 
             int xDim = srcImage.getExtents().length > 0 ? srcImage.getExtents()[0] : 1;
             int yDim = srcImage.getExtents().length > 1 ? srcImage.getExtents()[1] : 1;
@@ -2028,8 +2029,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             {           
                 stats.perimeter = 0;
                 for ( int i = 0; i < kVOI.getCurves().size(); i++ )
-                {                   
-                    stats.perimeter += kVOI.getCurves().elementAt(i).getLengthPtToPt(srcImage.getFileInfo(0).getResolutions());
+                {
+                	if (orientation == VOIBase.ZPLANE) {
+                	    z = (int)Math.round(kVOI.getCurves().elementAt(i).elementAt(0).Z);
+                	}
+                	else {
+                		z = zDim/2;
+                	}
+                    stats.perimeter += kVOI.getCurves().elementAt(i).getLengthPtToPt(srcImage.getFileInfo(z).getResolutions());
                 }
                 statProperty.setProperty(VOIStatisticList.perimeterDescription, nf.format(stats.perimeter));  
             }
@@ -2213,10 +2220,16 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 {
                     Vector3f kPos1 = new Vector3f();
                     Vector3f kPos2 = new Vector3f();
+                    if (orientation == VOIBase.ZPLANE) {
+                	    z = (int)Math.round(kVOI.getCurves().elementAt(i).elementAt(0).Z);
+                	}
+                	else {
+                		z = zDim/2;
+                	}
                     if ( i == 0 )
                     {
                         stats.largestContourDistance = ((VOIContour) (kVOI.getCurves().elementAt(i))).calcLargestSliceDistance(srcImage.getExtents(),
-                                fileInfo.getResolutions(), kPos1, kPos2);
+                                srcImage.getFileInfo(z).getResolutions(), kPos1, kPos2);
 
 
                         // Uncomment the following to at the VOILine to the image:
@@ -2231,7 +2244,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     {
                         stats.largestContourDistance = Math.max( stats.largestContourDistance, 
                                 ((VOIContour) (kVOI.getCurves().elementAt(i))).calcLargestSliceDistance( srcImage.getExtents(),
-                                        fileInfo.getResolutions(), kPos1, kPos2));
+                                        srcImage.getFileInfo(z).getResolutions(), kPos1, kPos2));
 
                         // Uncomment the following to at the VOILine to the image:
                         //VOILine kLine = new VOILine();
@@ -2284,6 +2297,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         {
             ContourStats stats = new ContourStats();
             int orientation = kVOI.getCurves().get(0).getPlane();
+            int z;
 
             int xDim = srcImage.getExtents().length > 0 ? srcImage.getExtents()[0] : 1;
             int yDim = srcImage.getExtents().length > 1 ? srcImage.getExtents()[1] : 1;
@@ -2356,8 +2370,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             {           
                 stats.perimeter = 0;
                 for ( int i = 0; i < kVOI.getCurves().size(); i++ )
-                {                   
-                    stats.perimeter += kVOI.getCurves().elementAt(i).getLengthPtToPt(srcImage.getFileInfo(0).getResolutions());
+                { 
+                	if (orientation == VOIBase.ZPLANE) {
+                	    z = (int)Math.round(kVOI.getCurves().elementAt(i).elementAt(0).Z);
+                	}
+                	else {
+                		z = zDim/2;
+                	}
+                    stats.perimeter += kVOI.getCurves().elementAt(i).getLengthPtToPt(srcImage.getFileInfo(z).getResolutions());
                 }
                 statProperty.setProperty(VOIStatisticList.perimeterDescription, nf.format(stats.perimeter));  
             }
@@ -2593,10 +2613,16 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 {
                     Vector3f kPos1 = new Vector3f();
                     Vector3f kPos2 = new Vector3f();
+                    if (orientation == VOIBase.ZPLANE) {
+                	    z = (int)Math.round(kVOI.getCurves().elementAt(i).elementAt(0).Z);
+                	}
+                	else {
+                		z = zDim/2;
+                	}
                     if ( i == 0 )
                     {
                         stats.largestContourDistance = ((VOIContour) (kVOI.getCurves().elementAt(i))).calcLargestSliceDistance(srcImage.getExtents(),
-                                fileInfo.getResolutions(), kPos1, kPos2);
+                                srcImage.getFileInfo()[z].getResolutions(), kPos1, kPos2);
 
 
                         // Uncomment the following to at the VOILine to the image:
@@ -2611,7 +2637,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     {
                         stats.largestContourDistance = Math.max( stats.largestContourDistance, 
                                 ((VOIContour) (kVOI.getCurves().elementAt(i))).calcLargestSliceDistance( srcImage.getExtents(),
-                                        fileInfo.getResolutions(), kPos1, kPos2));
+                                        srcImage.getFileInfo()[z].getResolutions(), kPos1, kPos2));
 
                         // Uncomment the following to at the VOILine to the image:
                         //VOILine kLine = new VOILine();
