@@ -687,6 +687,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             float ignoreMaxG = 0.0f;
             float ignoreMinB = 0.0f;
             float ignoreMaxB = 0.0f;
+            int z;
 
             VOIStatisticalProperties statProperty = getVOIProperties(calcSelectedVOI);
 
@@ -750,6 +751,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     {
                         continue;
                     }
+                    fileInfo = srcImage.getFileInfo()[sortedZ];
                     ContourStats[] stats = new ContourStats[sortedContoursZ[sortedZ].size()];
                     for (int q = 0; q < sortedContoursZ[sortedZ].size(); q++) {
                         if (srcImage.isColorImage()) {
@@ -776,6 +778,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         }
                     }
                 }
+                fileInfo = srcImage.getFileInfo()[zDim/2];
                 Vector<VOIBase>[] sortedContoursX = calcSelectedVOI.getSortedCurves( VOIBase.XPLANE, xDim );
                 for ( int sortedX = 0; sortedX < sortedContoursX.length; sortedX++ )
                 {
@@ -861,6 +864,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 ContourStats[] stats = new ContourStats[contours.size()];
                 for (int q = 0; q < contours.size(); q++) {
                 	int orientation = contours.get(q).getPlane();
+                	if (orientation == VOIBase.ZPLANE) {
+                		z = (int)Math.round(contours.get(q).elementAt(0).Z);
+                	}
+                	else {
+                		z = zDim/2;
+                	}
+                	fileInfo = srcImage.getFileInfo()[z];
                     if (srcImage.isColorImage()) {
                         stats[q] = calcStatsPerContourRGB( fileInfo, contours.elementAt(q), orientation,
                                 unit2DStr, unit3DStr, ignoreMinR, ignoreMaxR, 
