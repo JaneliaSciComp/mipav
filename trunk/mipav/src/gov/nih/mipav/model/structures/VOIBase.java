@@ -1450,12 +1450,12 @@ public abstract class VOIBase extends Vector<Vector3f> {
             {
                 kStep.copy(kEnd);
             }
-    
-            double subDistance = MipavMath.distance( kStep, kStart, kImage.getResolutions(0) );          
-
+            
             int indexZ = Math.min(Math.round(kStep.Z), zD - 1);
             int indexY = Math.min(Math.round(kStep.Y), yD - 1);
             int indexX = Math.min(Math.round(kStep.X), xD - 1);
+    
+            double subDistance = MipavMath.distance( kStep, kStart, kImage.getResolutions(indexZ) );          
             
             int index = (indexZ * yD * xD) + (indexY * xD) + indexX;
 
