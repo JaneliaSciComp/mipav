@@ -33,6 +33,7 @@ import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelImageToImageJConversion;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
@@ -40,6 +41,7 @@ import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.dialogs.JDialogRGBtoGrays;
 import gov.nih.mipav.view.renderer.WildMagic.Render.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentation;
 import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentationKMeans;
@@ -227,6 +229,7 @@ public class PlugInAlgorithmWormUntwisting
 						image = null;
 					}
 					image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);
+					image.calcMinMax();
 					if ( maximumProjectionImage == null )
 					{
 						int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1; // dimX
@@ -611,6 +614,19 @@ public class PlugInAlgorithmWormUntwisting
 						batchProgress.setValue((int)(100 * (float)(i*numSteps + step++)/(numSteps*includeRange.size())));
 						batchProgress.update(batchProgress.getGraphics());
 					}
+					if ( image.isColorImage() )
+					{
+						// Extract the green channel for segmentation:
+						System.err.println("extracting green channel");
+						ModelImage green = extractGreen(image);
+						if ( green != null )
+						{
+							String name = image.getImageName();
+							image.disposeLocal();
+							image = green;
+							image.setImageName(name);
+						}
+					}
 
 					Vector<Vector3f> dataPoints = new Vector<Vector3f>();
 					// calculate a robust histogram of the data values, used to find the left-right marker thresholds:
@@ -976,7 +992,18 @@ public class PlugInAlgorithmWormUntwisting
 			{
 				for ( int x = 0; x < dimX; x++ )
 				{
-					maximumProjectionImage.set(x,  y, zSlice[0], mp.getFloat(x, y, 0) );
+					if ( image.isColorImage() )
+					{
+						int index = zSlice[0]*dimX*dimY + y * dimX + x;
+						for ( int c = 0; c < 4; c++ )
+						{
+							maximumProjectionImage.set(index * 4 + c, mp.getC(index, c) );
+						}
+					}
+					else
+					{
+						maximumProjectionImage.set(x, y, zSlice[0], mp.get(x, y, 0) );
+					}
 				}
 			}
 
@@ -1919,6 +1946,39 @@ public class PlugInAlgorithmWormUntwisting
 		}		
 		
 		return false;
+	}
+	
+	private static ModelImage extractGreen(ModelImage image)
+	{
+		ModelImage resultImageG = null;
+        if (image.getType() == ModelStorageBase.ARGB) {
+            resultImageG = new ModelImage(ModelImage.UBYTE, image.getExtents(), "GrayG");
+        } else if (image.getType() == ModelStorageBase.ARGB_USHORT) {
+            resultImageG = new ModelImage(ModelImage.USHORT, image.getExtents(), "GrayG");
+        } else if (image.getType() == ModelStorageBase.ARGB_FLOAT) {
+            resultImageG = new ModelImage(ModelImage.FLOAT, image.getExtents(), "GrayG");
+        }
+        if ( resultImageG == null )
+        {
+        	return null;
+        }
+		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 0;  
+		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 0;  
+		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 0;
+        for ( int z = 0; z < dimZ; z++ )
+        {
+        	for ( int y = 0; y < dimY; y++ )
+        	{
+        		for ( int x = 0; x < dimX; x++ )
+        		{
+        			int index = z * dimX*dimY + y * dimX + x;
+        			resultImageG.set( index, image.getC(index, 2) );
+        		}
+        	}
+        }
+        resultImageG.calcMinMax();
+        JDialogBase.updateFileInfo(image, resultImageG);
+        return resultImageG;
 	}
 
 

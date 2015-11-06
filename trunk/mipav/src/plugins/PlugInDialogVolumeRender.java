@@ -28,6 +28,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransferFunction;
 import gov.nih.mipav.model.structures.VOI;
@@ -595,7 +596,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	public boolean updateImages() {
 		if ( volumeImage != null )
 		{
-			volumeImage.UpdateImages(volumeImage.GetLUT());
+			volumeImage.UpdateImages(volumeImage.getLUT());
+			if ( (volumeRenderer != null) && (volumeImage.getLUT() instanceof ModelRGB) )
+			{
+				volumeRenderer.setRGBTA( (ModelRGB)volumeImage.getLUT() );
+			}
 		}
 		return false;
 	}
@@ -606,7 +611,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	public boolean updateImages(boolean flag) {
 		if ( volumeImage != null )
 		{
-			volumeImage.UpdateImages(volumeImage.GetLUT());
+			volumeImage.UpdateImages(volumeImage.getLUT());
+			if ( (volumeRenderer != null) && (volumeImage.getLUT() instanceof ModelRGB) )
+			{
+				volumeRenderer.setRGBTA( (ModelRGB)volumeImage.getLUT() );
+			}
 		}
 		return false;
 	}

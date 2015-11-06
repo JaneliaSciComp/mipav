@@ -1330,6 +1330,23 @@ public class VolumeImage implements Serializable {
 	}
 
 	/**
+	 * Update the LUT for the ModelImage.
+	 * 
+	 * @param kLUT new LUT for ModelImage.
+	 */
+	public void UpdateImages(final ModelStorageBase kLUT) {
+		if ( (kLUT != null) && (kLUT instanceof ModelLUT)) {
+			VolumeImage.UpdateImages(m_kColorMapTarget, m_kColorMap, (ModelLUT)kLUT);
+			m_kLUT = (ModelLUT)kLUT;
+		}
+		if ( (kLUT != null) && (kLUT instanceof ModelRGB)) {
+			ModelLUT.exportIndexedLUTMin((ModelRGB)kLUT, m_kColorMap.GetData());
+			m_kColorMapTarget.Reload(true);
+			m_kRGBT = (ModelRGB)kLUT;
+		}
+	}
+
+	/**
 	 * Update the transfer function for the image iImage.
 	 * 
 	 * @param kTransfer the new opacity transfer function
