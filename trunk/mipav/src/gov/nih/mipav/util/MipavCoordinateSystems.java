@@ -208,7 +208,7 @@ public class MipavCoordinateSystems {
         if ( (kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
                 || (kImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
 
-            final float[] afResolutions = kImage.getResolutions(0);
+            final float[] afResolutions = kImage.getResolutions((int)Math.round(kInput.Z));
 
             final TransMatrix dicomMatrix = (kImage).getMatrix(); // Gets composite matrix
 
@@ -223,7 +223,7 @@ public class MipavCoordinateSystems {
             final boolean[] axisFlip = new boolean[] {false, false, false};
             MipavCoordinateSystems.toLPS(kImage, axisOrder, axisFlip);
 
-            final float[] afRes = kImage.getResolutions(0);
+            final float[] afRes = kImage.getResolutions((int)Math.round(kInput.Z));
             final float[] filePoint = new float[3];
             filePoint[0] = kInput.X;
             filePoint[1] = kInput.Y;
