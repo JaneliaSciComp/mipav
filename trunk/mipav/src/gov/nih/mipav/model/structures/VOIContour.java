@@ -2318,7 +2318,7 @@ public class VOIContour extends VOIBase {
 		{
 			for ( int i = 0; i < nPts; i++ )
 			{
-				z = (int)Math.round(kMaskPositions.elementAt(i).Z);
+				z = Math.min(zDim-1,Math.max(0,(int)Math.round(kMaskPositions.elementAt(i).Z)));
 				if ( (m_iPlane&ZPLANE) == ZPLANE )
 				{
 					//if (xUnits == yUnits) {
@@ -2362,7 +2362,7 @@ public class VOIContour extends VOIBase {
 
 			for ( int i = 0; i < nPts; i++ )
 			{
-				z = (int)Math.round(kMaskPositions.elementAt(i).Z);
+				z = Math.min(zDim-1,Math.max(0,(int)Math.round(kMaskPositions.elementAt(i).Z)));
 				if ( (m_iPlane&ZPLANE) == ZPLANE )
 				{
 					//if (xUnits == yUnits) {
@@ -2416,7 +2416,7 @@ public class VOIContour extends VOIBase {
 			if ( (m_iPlane&ZPLANE) == ZPLANE )
 			{
 				//if (xUnits == yUnits) {
-				    z = (int)Math.round(kMaskPositions.elementAt(0).Z);
+				z = Math.min(zDim-1,Math.max(0,(int)Math.round(kMaskPositions.elementAt(0).Z)));
 					normFactor = Math.sqrt(xRes[z] * yRes[z] * nPts / areaEllipse);
 				//}			
 			}
@@ -2454,7 +2454,7 @@ public class VOIContour extends VOIBase {
         Vector<Vector3f> kLPSPoints = new Vector<Vector3f>();
         for ( int i = 0; i < size(); i++ )
         {
-        	z = (int)Math.round(elementAt(i).Z);
+        	z = Math.min(zDim-1,Math.max(0,(int)Math.round(elementAt(i).Z)));
             Vector3f kLPS = new Vector3f(elementAt(i));
             kLPS.scale( xRes[z], yRes[z], zRes[z] );
             kLPSPoints.add( kLPS );
