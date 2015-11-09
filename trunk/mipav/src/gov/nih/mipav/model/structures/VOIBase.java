@@ -1821,6 +1821,24 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
         return totalLength;
     }
+    
+    /**
+     * Returns the total length of this contour, based on the input resolutions.
+     * @param resolutions.
+     * @return total length of this contour, scaled by the resolutions.
+     */
+    public double getLengthPtToPt(float[][] resolutions) {
+        double totalLength = 0;
+        for (int i = 0; i < size()-1; i++) {
+            totalLength += MipavMath.distance(get(i), get(i+1), resolutions);
+        }
+
+        if (closed == true) {
+            totalLength += MipavMath.distance(lastElement(), firstElement(), resolutions);
+        }
+
+        return totalLength;
+    }
 
     /**
      * Returns the length of this contour between the two positions along the contour.
