@@ -5415,8 +5415,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         {
                             VOIBase kVOI3D = kCurves.get(k);
                             offscreenGraphics2d.setColor( kVOI.getColor() );
+                            int z = (int)Math.round(kVOI3D.elementAt(0).Z);
                             voiManager.draw( kVOI3D, 
-                                        imageA.getResolutions(0), 
+                                        imageA.getResolutions(z), 
                                         imageA.getUnitsOfMeasure(), slice, 
                                         offscreenGraphics2d, (orientation == FileInfoBase.UNKNOWN_ORIENT) );
                         }
@@ -5437,8 +5438,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         for ( int k = 0; k < kCurves.size(); k++ )
                         {
                             VOIBase kVOI3D = kCurves.get(k);
+                            int z = (int)Math.round(kVOI3D.elementAt(0).Z);
                             voiManager.draw( kVOI3D, 
-                                        imageB.getResolutions(0), 
+                                        imageB.getResolutions(z), 
                                         imageB.getUnitsOfMeasure(), slice, 
                                         offscreenGraphics2d, (orientation == FileInfoBase.UNKNOWN_ORIENT) );
                         }
