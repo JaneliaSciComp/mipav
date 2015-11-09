@@ -955,6 +955,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             contour.setActive(true);
             
             Vector3f kMinMax = new Vector3f();
+            int nDims = srcImage.getNDims();
+            int zDim = 1;
+            if (nDims > 2) {
+            	zDim = srcImage.getExtents()[2];
+            }
+            float resolutions[][] = new float[zDim][];
+            for (int z = 0; z < zDim; z++) {
+            	resolutions[z] = srcImage.getResolutions(z);
+            }
             
            
             stats.values = contour.calcIntensity( srcImage, kMinMax, ignoreMin, ignoreMax, rangeFlag );
@@ -996,7 +1005,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             // If user selects perimeterDescription or circularityDescription:
             if ( statsList[ indexOf( perimeterDescription ) ] || statsList[ indexOf( circularityDescription)])
             {               
-                stats.perimeter = contour.getLengthPtToPt(fileInfo.getResolutions());   
+                stats.perimeter = contour.getLengthPtToPt(resolutions);   
                 statProperty.setProperty(VOIStatisticList.perimeterDescription + end, nf.format(stats.perimeter));       
             }
             
@@ -1261,6 +1270,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             ColorRGB kMin = new ColorRGB();
             ColorRGB kMax = new ColorRGB();
             ColorRGB kSum = new ColorRGB();
+            int nDims = srcImage.getNDims();
+            int zDim = 1;
+            if (nDims > 2) {
+            	zDim = srcImage.getExtents()[2];
+            }
+            float resolutions[][] = new float[zDim][];
+            for (int z = 0; z < zDim; z++) {
+            	resolutions[z] = srcImage.getResolutions(z);
+            }
             
             stats.valuesRGB = contour.calcRGBIntensity( srcImage, kMin, kMax, kSum,
                     ignoreMinR, ignoreMaxR, ignoreMinG, ignoreMaxG, ignoreMinB, ignoreMaxB, rangeFlag );
@@ -1303,7 +1321,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             // If user selects perimeterDescription or circularityDescription:
             if ( statsList[ indexOf( perimeterDescription ) ] || (statsList[ indexOf( circularityDescription)]) )
             {               
-                stats.perimeter = contour.getLengthPtToPt(fileInfo.getResolutions());   
+                stats.perimeter = contour.getLengthPtToPt(resolutions);   
                 statProperty.setProperty(VOIStatisticList.perimeterDescription + end, nf.format(stats.perimeter));       
             }
             
@@ -1967,6 +1985,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             int xDim = srcImage.getExtents().length > 0 ? srcImage.getExtents()[0] : 1;
             int yDim = srcImage.getExtents().length > 1 ? srcImage.getExtents()[1] : 1;
             int zDim = srcImage.getExtents().length > 2 ? srcImage.getExtents()[2] : 1;
+      
+            float resolutions[][] = new float[zDim][];
+            for (z = 0; z < zDim; z++) {
+            	resolutions[z] = srcImage.getResolutions(z);
+            }
             
             BitSet mask = new BitSet( xDim * yDim * zDim );
             kVOI.createBinaryMask3D(mask, xDim, yDim, false, false);
@@ -2030,13 +2053,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 stats.perimeter = 0;
                 for ( int i = 0; i < kVOI.getCurves().size(); i++ )
                 {
-                	if (orientation == VOIBase.ZPLANE) {
-                	    z = (int)Math.round(kVOI.getCurves().elementAt(i).elementAt(0).Z);
-                	}
-                	else {
-                		z = zDim/2;
-                	}
-                    stats.perimeter += kVOI.getCurves().elementAt(i).getLengthPtToPt(srcImage.getFileInfo(z).getResolutions());
+                    stats.perimeter += kVOI.getCurves().elementAt(i).getLengthPtToPt(resolutions);
                 }
                 statProperty.setProperty(VOIStatisticList.perimeterDescription, nf.format(stats.perimeter));  
             }
@@ -2303,6 +2320,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             int yDim = srcImage.getExtents().length > 1 ? srcImage.getExtents()[1] : 1;
             int zDim = srcImage.getExtents().length > 2 ? srcImage.getExtents()[2] : 1;
             
+            float resolutions[][] = new float[zDim][];
+            for (z = 0; z < zDim; z++) {
+            	resolutions[z] = srcImage.getResolutions(z);
+            }
+            
+            
             BitSet mask = new BitSet( xDim * yDim * zDim );
             kVOI.createBinaryMask3D(mask, xDim, yDim, false, false);
             
@@ -2371,13 +2394,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 stats.perimeter = 0;
                 for ( int i = 0; i < kVOI.getCurves().size(); i++ )
                 { 
-                	if (orientation == VOIBase.ZPLANE) {
-                	    z = (int)Math.round(kVOI.getCurves().elementAt(i).elementAt(0).Z);
-                	}
-                	else {
-                		z = zDim/2;
-                	}
-                    stats.perimeter += kVOI.getCurves().elementAt(i).getLengthPtToPt(srcImage.getFileInfo(z).getResolutions());
+                    stats.perimeter += kVOI.getCurves().elementAt(i).getLengthPtToPt(resolutions);
                 }
                 statProperty.setProperty(VOIStatisticList.perimeterDescription, nf.format(stats.perimeter));  
             }
