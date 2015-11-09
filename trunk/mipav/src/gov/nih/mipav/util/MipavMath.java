@@ -200,12 +200,14 @@ public class MipavMath {
      * @return  returns the distance
      */
     public static final double distance(final Vector3f pt1, final Vector3f pt2, final float[][] res) {
-        float xRes1 = res[(int)Math.round(pt1.Z)].length > 0 ? res[(int)Math.round(pt1.Z)][0] : 1;
-        float yRes1 = res[(int)Math.round(pt1.Z)].length > 1 ? res[(int)Math.round(pt1.Z)][1] : 1;
-        float zRes1 = res[(int)Math.round(pt1.Z)].length > 2 ? res[(int)Math.round(pt1.Z)][2] : 1;
-        float xRes2 = res[(int)Math.round(pt2.Z)].length > 0 ? res[(int)Math.round(pt2.Z)][0] : 1;
-        float yRes2 = res[(int)Math.round(pt2.Z)].length > 1 ? res[(int)Math.round(pt2.Z)][1] : 1;
-        float zRes2 = res[(int)Math.round(pt2.Z)].length > 2 ? res[(int)Math.round(pt2.Z)][2] : 1;
+    	int z1 = Math.min(res.length-1, Math.max(0, (int)Math.round(pt1.Z)));
+    	int z2 = Math.min(res.length-1, Math.max(0, (int)Math.round(pt2.Z)));
+        float xRes1 = res[z1].length > 0 ? res[z1][0] : 1;
+        float yRes1 = res[z1].length > 1 ? res[z1][1] : 1;
+        float zRes1 = res[z1].length > 2 ? res[z1][2] : 1;
+        float xRes2 = res[z2].length > 0 ? res[z2][0] : 1;
+        float yRes2 = res[z2].length > 1 ? res[z2][1] : 1;
+        float zRes2 = res[z2].length > 2 ? res[z2][2] : 1;
         float xRes = (xRes1 + xRes2)/2.0f;
         float yRes = (yRes1 + yRes2)/2.0f;
         float zRes = (zRes1 + zRes2)/2.0f;
