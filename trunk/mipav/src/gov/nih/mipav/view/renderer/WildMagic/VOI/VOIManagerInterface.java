@@ -2710,8 +2710,16 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         ViewJFrameGraph lineGraph;
 
         ModelImage kImage = getActiveImage();
+        int nDims = kImage.getNDims();
+        int zDim = 1;
+        if (nDims > 2) {
+        	zDim = kImage.getExtents()[2];
+        }
+        float resolutions[][] = new float[zDim][];
+        for (int z = 0; z < zDim; z++) {
+        	resolutions[z] = kImage.getResolutions(z);
+        }
         int[] unitsOfMeasure = kImage.getUnitsOfMeasure();
-        float[] resolutions = kImage.getResolutions(0);
 
         double length = kVOI.getLengthPtToPt(resolutions);
         DecimalFormat dec = new DecimalFormat("0.##");
