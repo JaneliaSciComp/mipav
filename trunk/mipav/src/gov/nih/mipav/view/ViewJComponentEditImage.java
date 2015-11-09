@@ -5405,6 +5405,11 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         if ( imageA.getVOIs() != null )
         {
             ViewVOIVector VOIs = imageA.getVOIs();
+            int zDim = 1;
+            int nDims = imageA.getNDims();
+            if (nDims > 2) {
+            	zDim = imageA.getExtents()[2];
+            }
             if (VOIs != null && voiManager != null) {
                 int nVOI = VOIs.size();
                 for (int i = nVOI - 1; i >= 0; i--) {    
@@ -5415,7 +5420,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         {
                             VOIBase kVOI3D = kCurves.get(k);
                             offscreenGraphics2d.setColor( kVOI.getColor() );
-                            int z = (int)Math.round(kVOI3D.elementAt(0).Z);
+                            int z = Math.min(zDim-1,Math.max(0,(int)Math.round(kVOI3D.elementAt(0).Z)));
                             voiManager.draw( kVOI3D, 
                                         imageA.getResolutions(z), 
                                         imageA.getUnitsOfMeasure(), slice, 
@@ -5428,6 +5433,11 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         if ( (imageB != null) && (imageB.getVOIs() != null) )
         {
             ViewVOIVector VOIs = imageB.getVOIs();
+            int zDim = 1;
+            int nDims = imageB.getNDims();
+            if (nDims > 2) {
+            	zDim = imageB.getExtents()[2];
+            }
             if (VOIs != null && voiManager != null) {
                 int nVOI = VOIs.size();
 
@@ -5438,7 +5448,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         for ( int k = 0; k < kCurves.size(); k++ )
                         {
                             VOIBase kVOI3D = kCurves.get(k);
-                            int z = (int)Math.round(kVOI3D.elementAt(0).Z);
+                            int z = Math.min(zDim-1,Math.max(0, (int)Math.round(kVOI3D.elementAt(0).Z)));
                             voiManager.draw( kVOI3D, 
                                         imageB.getResolutions(z), 
                                         imageB.getUnitsOfMeasure(), slice, 
