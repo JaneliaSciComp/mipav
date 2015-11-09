@@ -197,6 +197,7 @@ public class AlgorithmRegBSpline3D extends AlgorithmRegBSpline {
         int iLimitSrcX = iXdim - 1;
         int iLimitSrcY = iYdim - 1;
         int iLimitSrcZ = iZdim - 1;
+        VOI currentVOI;
 
         ModelImage tmpMask = null;
         VOIVector voiVector;
@@ -206,6 +207,7 @@ public class AlgorithmRegBSpline3D extends AlgorithmRegBSpline {
         if (voiVector.size() == 0) {
             return;
         }
+        int numDestVOIs[] = new int[voiVector.size()];
 
         indexC = 0;
 
@@ -365,6 +367,27 @@ public class AlgorithmRegBSpline3D extends AlgorithmRegBSpline {
 			        }
 		        }
         	} // for (index2 = 0; index2 < curves.size(); index2++)
+        	numDestVOIs[index] = destImage.getVOIs().size();
+        	if (index == 0) {
+        		for (i = 0; i < numDestVOIs[0]; i++) {
+        			currentVOI = destImage.getVOIs().get(i);
+        			currentVOI.setAllActive(true);
+        		}
+        		destImage.groupVOIs();
+        		numDestVOIs[index] = destImage.getVOIs().size();
+        	}
+        	else {
+        	    for (i = 0; i < numDestVOIs[index-1]; i++) {
+        	    	currentVOI = destImage.getVOIs().get(i);
+        	    	currentVOI.setAllActive(false);
+        	    }
+        	    for (i = numDestVOIs[index-1]; i < numDestVOIs[index]; i++) {
+        	    	currentVOI = destImage.getVOIs().get(i);
+        	    	currentVOI.setAllActive(true);
+        	    }
+        	    destImage.groupVOIs();
+        	    numDestVOIs[index] = destImage.getVOIs().size();
+        	}
         } // for (index = 0; index < voiVector.size(); index++)
         maskImage.disposeLocal();
         maskImage = null;
