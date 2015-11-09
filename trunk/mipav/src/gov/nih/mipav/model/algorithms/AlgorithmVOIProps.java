@@ -865,7 +865,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 for (int q = 0; q < contours.size(); q++) {
                 	int orientation = contours.get(q).getPlane();
                 	if (orientation == VOIBase.ZPLANE) {
-                		z = (int)Math.round(contours.get(q).elementAt(0).Z);
+                		z = Math.min(zDim-1,Math.max(0,(int)Math.round(contours.get(q).elementAt(0).Z)));
                 	}
                 	else {
                 		z = zDim/2;
@@ -1044,7 +1044,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             
             if (statsList[indexOf(numberOfIndentationsHullDescription)]) {
-                int sliceNum = Math.round(contour.elementAt(0).Z);
+                int sliceNum = Math.min(zDim-1,Math.max(0,Math.round(contour.elementAt(0).Z)));
                 stats.numberOfIndentationsHull = contour.findVOIIndentations2D(srcImage, sliceNum, null, false); 
                 statProperty.setProperty(VOIStatisticList.numberOfIndentationsHullDescription + end, nf.format(stats.numberOfIndentationsHull));
             }
@@ -1363,7 +1363,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             
             if (statsList[indexOf(numberOfIndentationsHullDescription)]) {
-                int sliceNum = Math.round(contour.elementAt(0).Z);
+                int sliceNum = Math.min(zDim-1,Math.max(0,Math.round(contour.elementAt(0).Z)));
                 stats.numberOfIndentationsHull = contour.findVOIIndentations2D(srcImage, sliceNum, null, false); 
                 statProperty.setProperty(VOIStatisticList.numberOfIndentationsHullDescription + end, nf.format(stats.numberOfIndentationsHull));
             }
@@ -2126,7 +2126,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             {           
                 stats.numberOfIndentationsHull = 0;
                 for ( int i = 0; i < kVOI.getCurves().size(); i++ )
-                {   int sliceNum = Math.round(kVOI.getCurves().elementAt(i).elementAt(0).Z);                
+                {   int sliceNum = Math.min(zDim-1,Math.max(0, Math.round(kVOI.getCurves().elementAt(i).elementAt(0).Z)));                
                     stats.numberOfIndentationsHull += kVOI.getCurves().elementAt(i).findVOIIndentations2D(srcImage, sliceNum, null, false);
                 }
                 statProperty.setProperty(VOIStatisticList.numberOfIndentationsHullDescription, nf.format(stats.numberOfIndentationsHull));  
@@ -2238,7 +2238,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     Vector3f kPos1 = new Vector3f();
                     Vector3f kPos2 = new Vector3f();
                     if (orientation == VOIBase.ZPLANE) {
-                	    z = (int)Math.round(kVOI.getCurves().elementAt(i).elementAt(0).Z);
+                	    z = Math.min(zDim-1, Math.max(0,(int)Math.round(kVOI.getCurves().elementAt(i).elementAt(0).Z)));
                 	}
                 	else {
                 		z = zDim/2;
@@ -2472,7 +2472,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             {           
                 stats.numberOfIndentationsHull = 0;
                 for ( int i = 0; i < kVOI.getCurves().size(); i++ )
-                {   int sliceNum = Math.round(kVOI.getCurves().elementAt(i).elementAt(0).Z);                
+                {   int sliceNum = Math.min(zDim-1,Math.max(0,Math.round(kVOI.getCurves().elementAt(i).elementAt(0).Z)));                
                     stats.numberOfIndentationsHull += kVOI.getCurves().elementAt(i).findVOIIndentations2D(srcImage, sliceNum, null, false);
                 }
                 statProperty.setProperty(VOIStatisticList.numberOfIndentationsHullDescription, nf.format(stats.numberOfIndentationsHull));  
@@ -2631,7 +2631,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     Vector3f kPos1 = new Vector3f();
                     Vector3f kPos2 = new Vector3f();
                     if (orientation == VOIBase.ZPLANE) {
-                	    z = (int)Math.round(kVOI.getCurves().elementAt(i).elementAt(0).Z);
+                	    z = Math.min(zDim-1,Math.max(0,(int)Math.round(kVOI.getCurves().elementAt(i).elementAt(0).Z)));
                 	}
                 	else {
                 		z = zDim/2;
