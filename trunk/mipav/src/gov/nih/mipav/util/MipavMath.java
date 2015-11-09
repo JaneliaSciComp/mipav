@@ -190,6 +190,30 @@ public class MipavMath {
                 ((pt2.Y - pt1.Y) * (pt2.Y - pt1.Y) * (yRes * yRes)) +
                 ((pt2.Z - pt1.Z) * (pt2.Z - pt1.Z) * (zRes * zRes)) );
     }
+    
+    /**
+     * Calculates the 3D euclidian distance between two points.
+     *
+     * @param   pt1  first point
+     * @param   pt2  second point
+     *
+     * @return  returns the distance
+     */
+    public static final double distance(final Vector3f pt1, final Vector3f pt2, final float[][] res) {
+        float xRes1 = res[(int)Math.round(pt1.Z)].length > 0 ? res[(int)Math.round(pt1.Z)][0] : 1;
+        float yRes1 = res[(int)Math.round(pt1.Z)].length > 1 ? res[(int)Math.round(pt1.Z)][1] : 1;
+        float zRes1 = res[(int)Math.round(pt1.Z)].length > 2 ? res[(int)Math.round(pt1.Z)][2] : 1;
+        float xRes2 = res[(int)Math.round(pt2.Z)].length > 0 ? res[(int)Math.round(pt2.Z)][0] : 1;
+        float yRes2 = res[(int)Math.round(pt2.Z)].length > 1 ? res[(int)Math.round(pt2.Z)][1] : 1;
+        float zRes2 = res[(int)Math.round(pt2.Z)].length > 2 ? res[(int)Math.round(pt2.Z)][2] : 1;
+        float xRes = (xRes1 + xRes2)/2.0f;
+        float yRes = (yRes1 + yRes2)/2.0f;
+        float zRes = (zRes1 + zRes2)/2.0f;
+        return Math.sqrt(
+                ((pt2.X - pt1.X) * (pt2.X - pt1.X) * (xRes * xRes)) +
+                ((pt2.Y - pt1.Y) * (pt2.Y - pt1.Y) * (yRes * yRes)) +
+                ((pt2.Z - pt1.Z) * (pt2.Z - pt1.Z) * (zRes * zRes)) );
+    }
 
     /**
      * Calculate the minimum power of two which is greater or equal to the number.
