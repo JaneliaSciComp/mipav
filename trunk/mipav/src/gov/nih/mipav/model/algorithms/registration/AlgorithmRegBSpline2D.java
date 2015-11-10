@@ -207,12 +207,14 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
         int[] sizeObjects;
         int maxSize;
         int maxObject;
+        VOI currentVOI;
         
         voiVector = image.getVOIs();
         
         if (voiVector.size() == 0) {
             return;
         }
+        int numDestVOIs[] = new int[voiVector.size()];
 
         indexC = -1;
         int iNumSamplesTrgX = destImage.getExtents()[0];
@@ -359,7 +361,29 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
 	        		}
 	        	}
         	} // for (index2 = 0; index2 < curves.size(); index2++)
+        	numDestVOIs[index] = destImage.getVOIs().size();
+        	System.out.println("destImage.getVOIs().size() = " + destImage.getVOIs().size());
+        	if (index == 0) {
+        		for (i = 0; i < numDestVOIs[0]; i++) {
+        			currentVOI = destImage.getVOIs().get(i);
+        			currentVOI.setAllActive(true);
+        		}        	}
+        	else {
+        	    for (i = 0; i < numDestVOIs[index-1]; i++) {
+        	    	currentVOI = destImage.getVOIs().get(i);
+        	    	currentVOI.setAllActive(false);
+        	    }
+        	    for (i = numDestVOIs[index-1]; i < numDestVOIs[index]; i++) {
+        	    	currentVOI = destImage.getVOIs().get(i);
+        	    	currentVOI.setAllActive(true);
+        	    }
+        	}
+        	destImage.groupVOIs();
+    		numDestVOIs[index] = destImage.getVOIs().size();
+    		destImage.getVOIs().get(index).setName(image.getVOIs().get(index).getName());
+     	    destImage.getVOIs().get(index).setColor(image.getVOIs().get(index).getColor());
         } // for (index = 0; index < voiVector.size(); index++)
+        System.out.println("Final destImage.getVOIs().size() = " + destImage.getVOIs().size());
         tmpMask.disposeLocal();
         tmpMask = null;
         maskImage.disposeLocal();
