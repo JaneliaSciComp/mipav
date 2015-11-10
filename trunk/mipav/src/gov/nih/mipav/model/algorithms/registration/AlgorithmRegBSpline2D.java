@@ -362,7 +362,6 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
 	        	}
         	} // for (index2 = 0; index2 < curves.size(); index2++)
         	numDestVOIs[index] = destImage.getVOIs().size();
-        	System.out.println("destImage.getVOIs().size() = " + destImage.getVOIs().size());
         	if (index == 0) {
         		for (i = 0; i < numDestVOIs[0]; i++) {
         			currentVOI = destImage.getVOIs().get(i);
@@ -383,7 +382,6 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
     		destImage.getVOIs().get(index).setName(image.getVOIs().get(index).getName());
      	    destImage.getVOIs().get(index).setColor(image.getVOIs().get(index).getColor());
         } // for (index = 0; index < voiVector.size(); index++)
-        System.out.println("Final destImage.getVOIs().size() = " + destImage.getVOIs().size());
         tmpMask.disposeLocal();
         tmpMask = null;
         maskImage.disposeLocal();
