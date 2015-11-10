@@ -373,8 +373,6 @@ public class AlgorithmRegBSpline3D extends AlgorithmRegBSpline {
         			currentVOI = destImage.getVOIs().get(i);
         			currentVOI.setAllActive(true);
         		}
-        		destImage.groupVOIs();
-        		numDestVOIs[index] = destImage.getVOIs().size();
         	}
         	else {
         	    for (i = 0; i < numDestVOIs[index-1]; i++) {
@@ -385,9 +383,11 @@ public class AlgorithmRegBSpline3D extends AlgorithmRegBSpline {
         	    	currentVOI = destImage.getVOIs().get(i);
         	    	currentVOI.setAllActive(true);
         	    }
-        	    destImage.groupVOIs();
-        	    numDestVOIs[index] = destImage.getVOIs().size();
         	}
+        	destImage.groupVOIs();
+    	    numDestVOIs[index] = destImage.getVOIs().size();
+    	    destImage.getVOIs().get(index).setName(image.getVOIs().get(index).getName());
+    	    destImage.getVOIs().get(index).setColor(image.getVOIs().get(index).getColor());
         } // for (index = 0; index < voiVector.size(); index++)
         maskImage.disposeLocal();
         maskImage = null;
