@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic;
 
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
@@ -14,10 +15,12 @@ import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.CustomUIBuilder;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewMenuBar;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelAnnotationAnimation;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 import gov.nih.mipav.view.renderer.WildMagic.Navigation.NavigationBehavior;
+import gov.nih.mipav.view.renderer.WildMagic.Render.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageCrop;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageExtract;
@@ -216,6 +219,587 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
     		configuredListener.algorithmPerformed( null );
 			m_bFirstDisplay = false;
 		}
+		if ( wormAnimationStep() != -1 )
+		{
+			// setup:
+			if (  firstWormAnimation == true )
+			{
+				String imageName = m_kVolumeImageA.GetImage().getImageName();
+				if (imageName.contains("_clone")) {
+					imageName = imageName.replaceAll("_clone", "");
+				}
+				String voiDir = m_kVolumeImageA.GetImage().getImageDirectory() + imageName + File.separator + "animation" + File.separator + "seam_cell" + File.separator;
+				VOIVector results = new VOIVector();
+				LatticeModel.loadAllVOIsFrom( m_kVolumeImageA.GetImage(), voiDir, true, results, true);				
+				
+				m_kYRotate.fromAxisAngle(Vector3f.UNIT_Y_NEG, (float)Math.PI/180.0f);
+				if ( results.size() > 0 )
+				{
+					annotations = results.elementAt(0);
+					addCount = 2 * 360/(annotations.getCurves().size());
+					for ( int i = 0; i < annotations.getCurves().size(); i++ )
+					{
+						annotations.getCurves().elementAt(i).createVolumeVOI( m_kVolumeImageA, m_kTranslate );
+						annotations.getCurves().elementAt(i).getVolumeVOI().SetDisplay(false);
+						if ( annotations.getCurves().elementAt(i) instanceof VOIText )
+						{
+							VOIText text = (VOIText)annotations.getCurves().elementAt(i);
+							if ( text.getText().equalsIgnoreCase("nose") )
+							{
+								nose = new Vector3f(text.elementAt(0));
+							}
+						}
+					}
+				}
+				
+				allSeamCellsAdded = 0;
+				firstWormAnimation = false;
+			}
+			// rotate:
+			if ( rotate )
+			{
+				Matrix3f kRotate = m_spkScene.Local.GetRotate();
+				kRotate.mult(m_kYRotate);
+				m_spkScene.Local.SetRotate(kRotate);
+				m_spkScene.UpdateGS();
+				m_kCuller.ComputeVisibleSet(m_spkScene);
+				for (int i = 0; i < m_kDisplayList.size(); i++)
+				{
+					m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+				}
+			}
+			
+			// add seam cells:
+			if ( !seamCellsDone && (animationStep > animationStart) )
+			{
+				int add = animationStep - animationStart;
+				if ( (add % addCount) == 0 )
+				{
+					for ( int i = 0; i < annotations.getCurves().size(); i++ )
+					{
+						if ( !annotations.getCurves().elementAt(i).getVolumeVOI().GetDisplay() )
+						{
+							annotations.getCurves().elementAt(i).getVolumeVOI().SetDisplay(true);
+							allSeamCellsAdded++;
+							if ( allSeamCellsAdded == annotations.getCurves().size() )
+							{
+								animationStart = animationStep + 180;
+								allPairsAdded = 0;
+								seamCellsDone = true;
+							}
+							break;
+						}
+					}					
+				}
+			}
+			else if ( seamCellsDone && !pairsDone && (animationStep == animationStart))
+			{
+				String imageName = m_kVolumeImageA.GetImage().getImageName();
+				if (imageName.contains("_clone")) {
+					imageName = imageName.replaceAll("_clone", "");
+				}
+				String voiDir = m_kVolumeImageA.GetImage().getImageDirectory() + imageName + File.separator + "animation" + File.separator + "pairs" + File.separator;
+				VOIVector results = new VOIVector();
+				LatticeModel.loadAllVOIsFrom( m_kVolumeImageA.GetImage(), voiDir, true, results, true);
+
+				if ( results.size() > 0 )
+				{
+					pairs = results.elementAt(0);
+					for ( int i = 0; i < pairs.getCurves().size(); i++ )
+					{
+						pairs.getCurves().elementAt(i).createVolumeVOI( m_kVolumeImageA, m_kTranslate );
+						pairs.getCurves().elementAt(i).getVolumeVOI().SetDisplay(false);
+					}
+					addCount = 360/(pairs.getCurves().size());
+				}
+				allPairsAdded = 0;
+			}
+			// add pairs:
+			else if ( seamCellsDone && !pairsDone && (animationStep > animationStart) )
+			{
+				int add = animationStep - animationStart;
+				if ( (add % addCount) == 0 )
+				{
+					for ( int i = 0; i < pairs.getCurves().size(); i++ )
+					{
+						if ( !pairs.getCurves().elementAt(i).getVolumeVOI().GetDisplay() )
+						{
+							pairs.getCurves().elementAt(i).getVolumeVOI().SetDisplay(true);
+							allPairsAdded++;
+							if ( allPairsAdded == pairs.getCurves().size() )
+							{
+								animationStart = animationStep + 180;
+								pairsDone = true;
+							}
+							break;
+						}
+					}					
+				}
+			}
+			else if ( seamCellsDone && pairsDone && !latticeDone && (animationStep == animationStart) && (lattice == null) )
+			{
+				m_kVolumeImageA.GetImage().unregisterAllVOIs();
+				
+				String imageName = m_kVolumeImageA.GetImage().getImageName();
+				if (imageName.contains("_clone")) {
+					imageName = imageName.replaceAll("_clone", "");
+				}
+				String voiDir = m_kVolumeImageA.GetImage().getImageDirectory() + imageName + File.separator + "animation" + File.separator + "lattice" + File.separator;
+				VOIVector results = new VOIVector();
+				LatticeModel.loadAllVOIsFrom( m_kVolumeImageA.GetImage(), voiDir, true, results, false);				
+				
+				if ( results.size() > 0 )
+				{
+					lattice = results.elementAt(0);
+				}
+				else
+				{
+					short id = (short) m_kVolumeImageA.GetImage().getVOIs().getUniqueID();
+					lattice = new VOI(id, "lattice", VOI.POLYLINE, (float) Math.random());
+	
+					VOIContour left = new VOIContour(false);
+					VOIContour right = new VOIContour(false);
+					lattice.getCurves().add(left);
+					lattice.getCurves().add(right);
+					if ( nose != null )
+					{
+						left.add(nose);
+						right.add(nose);
+					}
+					for ( int i = 0; i < pairs.getCurves().size(); i++ )
+					{
+						lattice.getCurves().elementAt(0).add(pairs.getCurves().elementAt(i).elementAt(0));
+						lattice.getCurves().elementAt(1).add(pairs.getCurves().elementAt(i).elementAt(1));						
+					}				
+				}
+			}
+			else if ( !latticeDone && (lattice != null) && (animationStep > animationStart) )
+			{
+				int add = animationStep - animationStart;
+				if ( (add % addCount) == 0 )
+				{
+					if ( m_kVolumeImageA.GetImage().getVOIs().size() == 0 )
+					{
+						short id = (short) m_kVolumeImageA.GetImage().getVOIs().getUniqueID();
+						VOI temp = new VOI(id, "lattice", VOI.POLYLINE, (float) Math.random());		
+						VOIContour left = new VOIContour(false);
+						VOIContour right = new VOIContour(false);
+						left.update( new ColorRGBA(0, 0, 1, 1 ) );
+						right.update( new ColorRGBA(0, 0, 1, 1 ) );
+						temp.getCurves().add(left);
+						temp.getCurves().add(right);
+						temp.setColor( Color.blue );
+						m_kVolumeImageA.GetImage().registerVOI(temp);
+					}
+					else
+					{
+						VOI temp = m_kVolumeImageA.GetImage().getVOIs().elementAt(0);
+						int index = temp.getCurves().elementAt(0).size();
+
+						if ( index < lattice.getCurves().elementAt(0).size() )
+						{
+							temp.getCurves().elementAt(0).add( lattice.getCurves().elementAt(0).elementAt(index) );
+							temp.getCurves().elementAt(1).add( lattice.getCurves().elementAt(1).elementAt(index) );
+							temp.getCurves().elementAt(0).update();
+							temp.getCurves().elementAt(1).update();
+
+
+							short id = (short) m_kVolumeImageA.GetImage().getVOIs().getUniqueID();
+							VOI pair = new VOI(id, "pair_" + (index+1), VOI.POLYLINE, (float) Math.random());		
+							VOIContour rung = new VOIContour(false);
+							rung.add( temp.getCurves().elementAt(0).lastElement() );
+							rung.add( temp.getCurves().elementAt(1).lastElement() );
+							rung.update( new ColorRGBA(1, 1, 0, 1 ) );
+							pair.getCurves().add(rung);
+							pair.setColor( Color.yellow );
+							m_kVolumeImageA.GetImage().registerVOI(pair);
+						}
+						else
+						{
+							latticeDone = true;
+							animationStart = animationStep + 360;
+						}
+					}
+				}
+			}
+			else if ( latticeDone && (animationStep == animationStart) && (leftCurve == null) )
+			{
+				String imageName = m_kVolumeImageA.GetImage().getImageName();
+				if (imageName.contains("_clone")) {
+					imageName = imageName.replaceAll("_clone", "");
+				}
+				String voiDir = m_kVolumeImageA.GetImage().getImageDirectory() + imageName + File.separator + "animation" + File.separator + "leftLine" + File.separator;
+				VOIVector results = new VOIVector();
+				LatticeModel.loadAllVOIsFrom( m_kVolumeImageA.GetImage(), voiDir, true, results, false);
+				if ( results.size() > 0 )
+				{
+					leftCurve = results.elementAt(0);
+					leftCurveAnimate = new VOI(leftCurve);
+					leftCurveAnimate.getCurves().elementAt(0).setClosed(false);
+					leftCurveAnimate.getCurves().elementAt(0).removeAllElements();
+					leftCurveAnimate.getCurves().elementAt(0).add( leftCurve.getCurves().elementAt(0).remove(0) );
+					m_kVolumeImageA.GetImage().registerVOI(leftCurveAnimate);						
+				}
+
+
+				voiDir = m_kVolumeImageA.GetImage().getImageDirectory() + imageName + File.separator + "animation" + File.separator + "rightLine" + File.separator;
+				results = new VOIVector();
+				LatticeModel.loadAllVOIsFrom( m_kVolumeImageA.GetImage(), voiDir, true, results, false);
+				if ( results.size() > 0 )
+				{
+					rightCurve = results.elementAt(0);
+					rightCurveAnimate = new VOI(rightCurve);
+					rightCurveAnimate.getCurves().elementAt(0).setClosed(false);
+					rightCurveAnimate.getCurves().elementAt(0).removeAllElements();
+					rightCurveAnimate.getCurves().elementAt(0).add( rightCurve.getCurves().elementAt(0).remove(0) );
+					m_kVolumeImageA.GetImage().registerVOI(rightCurveAnimate);				
+				}
+
+				voiDir = m_kVolumeImageA.GetImage().getImageDirectory() + imageName + File.separator + "animation" + File.separator + "centerLine" + File.separator;
+				results = new VOIVector();
+				LatticeModel.loadAllVOIsFrom( m_kVolumeImageA.GetImage(), voiDir, true, results, false);
+				if ( results.size() > 0 )
+				{
+					centerCurve = results.elementAt(0);
+					centerCurveAnimate = new VOI(centerCurve);
+					centerCurveAnimate.getCurves().elementAt(0).setClosed(false);
+					centerCurveAnimate.getCurves().elementAt(0).removeAllElements();
+					centerCurveAnimate.getCurves().elementAt(0).add( centerCurve.getCurves().elementAt(0).remove(0) );
+					m_kVolumeImageA.GetImage().registerVOI(centerCurveAnimate);		
+				}
+			}
+			else if ( !curvesDone && (leftCurve != null) && (rightCurve != null) && (centerCurve != null) )
+			{
+				int add = animationStep - animationStart;
+				{
+					if ( leftCurve.getCurves().elementAt(0).size() > 0 )
+					{
+						leftCurveAnimate.getCurves().elementAt(0).add( leftCurve.getCurves().elementAt(0).remove(0) );
+						rightCurveAnimate.getCurves().elementAt(0).add( rightCurve.getCurves().elementAt(0).remove(0) );
+						centerCurveAnimate.getCurves().elementAt(0).add( centerCurve.getCurves().elementAt(0).remove(0) );	
+						leftCurveAnimate.getCurves().elementAt(0).update();
+						rightCurveAnimate.getCurves().elementAt(0).update();
+						centerCurveAnimate.getCurves().elementAt(0).update();						
+					}
+					else
+					{
+						curvesDone = true;
+						animationStart = animationStep + 180;
+					}
+				}				
+			}
+			else if ( curvesDone && (animationStep == animationStart) && (wormContours == null) )
+			{
+				String imageName = m_kVolumeImageA.GetImage().getImageName();
+				if (imageName.contains("_clone")) {
+					imageName = imageName.replaceAll("_clone", "");
+				}
+				String voiDir = m_kVolumeImageA.GetImage().getImageDirectory() + imageName + File.separator + "animation" + File.separator + "wormContours" + File.separator;
+				VOIVector results = new VOIVector();
+				LatticeModel.loadAllVOIsFrom( m_kVolumeImageA.GetImage(), voiDir, true, results, false);
+				if ( results.size() > 0 )
+				{
+					wormContours = results.elementAt(0);
+					wormContoursAnimate = new VOI(wormContours);
+					wormContoursAnimate.getCurves().removeAllElements();
+					wormContoursAnimate.getCurves().add( wormContours.getCurves().remove(0) );
+					m_kVolumeImageA.GetImage().registerVOI(wormContoursAnimate);
+					wormContoursStatic = new VOI(wormContoursAnimate);
+					m_kVolumeImageA.GetImage().registerVOI(wormContoursStatic);
+				}
+				else
+				{
+					contoursDone = true;
+					animationStart = animationStep + 10;
+					animationStop = animationStart;
+				}
+			}
+			else if ( !contoursDone && (wormContours != null) && (animationStep > animationStart) )
+			{
+				int add = animationStep - animationStart;
+//				if ( (add % 2) == 0 )
+				{
+					if ( wormContours.getCurves().size() > 0 )
+					{
+						wormContoursAnimate.getCurves().add( wormContours.getCurves().remove(0) );
+						if ( wormContoursAnimate.getCurves().size() > 15 )
+						{
+							VOIContour temp = (VOIContour)wormContoursAnimate.getCurves().remove(0);
+							if ( (add % 30) == 0 )
+							{
+								wormContoursStatic.getCurves().add(temp);
+							}
+						}
+					}
+					else if ( wormContoursAnimate.getCurves().size() > 0 )
+					{
+						VOIContour temp = (VOIContour)wormContoursAnimate.getCurves().remove(0);
+						if ( wormContoursAnimate.getCurves().size() == 0 )
+						{
+							wormContoursStatic.getCurves().add(temp);
+						}
+					}
+					else
+					{
+						contoursDone = true;
+						animationStart = animationStep + 180;
+					}
+				}				
+			}
+			else if ( contoursDone && !growDone && (animationStep >= animationStart) )
+			{
+				if ( masks == null )
+				{
+					String imageName = m_kVolumeImageA.GetImage().getImageName();
+					if (imageName.contains("_clone")) {
+						imageName = imageName.replaceAll("_clone", "");
+					}
+
+					String dir = m_kVolumeImageA.GetImage().getImageDirectory() + imageName + File.separator + "output_images" + File.separator + "masks" + File.separator;
+					String fileName = imageName + "_0_insideMask.xml";
+					FileIO fileIO = new FileIO();
+					masks = fileIO.readImage(fileName, dir, true, null); 
+					masks.calcMinMax();
+					//				new ViewJFrameImage(masks);
+					int numVolumes = masks.getExtents().length > 3 ? masks.getExtents()[3] : 1;
+					addCount = (int) (360/(1.5*numVolumes));
+
+					m_kVolumeImageA.GetImage().unregisterAllVOIs();
+					m_kVolumeImageA.GetImage().registerVOI(wormContoursStatic);
+					model = new LatticeModel( m_kVolumeImageA.GetImage() );
+					model.setLattice( lattice );
+					modelExtents = model.getExtent();
+				}
+				if ( modelData == null )
+				{
+					String imageName = m_kVolumeImageA.GetImage().getImageName();
+					if (imageName.contains("_clone")) {
+						imageName = imageName.replaceAll("_clone", "");
+					}
+
+					String dir = m_kVolumeImageA.GetImage().getImageDirectory() + imageName + File.separator + "output_images" + File.separator;
+					String fileName = imageName + "_model.xml";
+					FileIO fileIO = new FileIO();
+					modelData = fileIO.readImage(fileName, dir, false, null); 
+					modelData.calcMinMax();						
+				}
+//				else
+				{
+					int add = animationStep - animationStart;
+					Vector3f pos = new Vector3f();
+					Vector3f imagePos = new Vector3f();
+					int numVolumes = masks.getExtents().length > 3 ? masks.getExtents()[3] : 1;
+					if ( (add % addCount) == 0 && (timeStep < numVolumes) )
+					{
+						int dimX = masks.getExtents().length > 0 ? masks.getExtents()[0] : 0;
+						int dimY = masks.getExtents().length > 1 ? masks.getExtents()[1] : 0;
+						int dimZ = masks.getExtents().length > 2 ? masks.getExtents()[2] : 0;
+						double max = m_kVolumeImageA.GetImage().getMax();
+						double min = m_kVolumeImageA.GetImage().getMin();
+						for ( int z = 0; z < dimZ; z++ )
+						{
+							for ( int y = 0; y < dimY; y++ )
+							{
+								for ( int x = 0; x < dimX; x++ )
+								{
+									int modelIndex = modelData.getInt(x, y, z);
+									if ( modelIndex != 0 )
+									{
+										pos.copy( centerCurveAnimate.getCurves().elementAt(0).elementAt( modelIndex - 1 ) );
+										imagePos.set(x,y,z);
+										float dist = imagePos.distance(pos);
+										if ( (masks.getFloat(x, y, z, timeStep) > 0) && (dist < modelExtents) )
+										{
+											m_kVolumeImageA.GetImage().set(x, y, z, Math.max( (max/25f), m_kVolumeImageA.GetImage().getFloat(x, y, z) ) );
+										}
+										else if ( timeStep == (numVolumes - 1) )
+										{
+											m_kVolumeImageA.GetImage().set(x, y, z, min );
+										}
+									}
+								}
+							}
+						}
+						m_kVolumeImageA.UpdateData(m_kVolumeImageA.GetImage());
+						timeStep++;
+						if ( timeStep == (numVolumes) )
+						{
+							growDone = true;
+							animationStart = animationStep + 180;
+							masks.disposeLocal();
+							masks = null;
+						}
+					}
+				}				
+			}
+			else if ( growDone && !extractDone && (animationStep == animationStart) )
+			{
+//				rotate = false;
+				sliceContoursStatic = model.getSamplingPlanes(false);
+				sliceContours = model.getSamplingPlanes(true);
+				System.err.println( 2 * (model.getExtent()+10) );
+				
+				final short sID = (short) (m_kVolumeImageA.GetImage().getVOIs().getUniqueID());
+				sliceContoursAnimate = new VOI(sID, "samplingPlanes");
+				m_kVolumeImageA.GetImage().registerVOI(sliceContoursAnimate);
+				wormContoursStatic.getCurves().remove(0);
+				wormContoursStatic.getCurves().remove(0);
+			}
+			else if ( growDone && !extractDone && (animationStep > animationStart) && (sliceContours != null) && (model != null) )
+			{
+				int add = animationStep - animationStart;
+				if ( (wormContoursStatic.getCurves().size()) > 0 && ((add % 30) == 0) )
+				{
+					wormContoursStatic.getCurves().remove(0);
+				}
+							
+				VOIContour box = null;
+				if ( sliceContours.getCurves().size() > 0 )
+				{
+					sliceContoursAnimate.getCurves().add( sliceContours.getCurves().remove(0) );
+					if ( sliceContoursAnimate.getCurves().size() > 1 )
+					{
+						box = (VOIContour)sliceContoursAnimate.getCurves().remove(0);
+					}
+				}
+				else if ( sliceContoursAnimate.getCurves().size() > 0 )
+				{
+					box = (VOIContour)sliceContoursAnimate.getCurves().remove(0);
+				}
+				else
+				{
+					extractDone = true;
+					animationStart = animationStep + 30;
+					animationStop = animationStart;
+					modelData.disposeLocal();
+					modelData = null;
+					wormContoursStatic.getCurves().removeAllElements();
+				}	
+				if ( box != null )
+				{
+					model.removeDiagonal( m_kVolumeImageA.GetImage(), modelData, sliceContoursStatic, new int[]{2*modelExtents,2*modelExtents}, extractSlice++ );
+					m_kVolumeImageA.UpdateData(m_kVolumeImageA.GetImage());
+				}
+			}
+
+			/*
+			if ( !displayStraight && (animationStep == animationStart) )
+			{
+				rotate = false;
+				setClipPlane(5, 0, true);
+			}
+			if ( !displayStraight && (animationStep > animationStart) )
+			{
+				int add = animationStep - animationStart;
+				System.err.println( add );
+				setClipPlane(5, add, true);
+				if ( add == m_kVolumeImageA.GetImage().getExtents()[2] )
+				{
+					animationStart = animationStep + 360;
+					animationStop = animationStart;
+					rotate = true;
+
+					m_kYRotate.fromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/180.0f);
+					displayStraight = true;
+					setClipPlane(5, add, false);
+					displayClipPlane(5, false, new ColorRGB(0,0,1) );
+				}
+			}
+			*/
+			
+			/*
+			if ( !displaySlice && (animationStep == animationStart) )
+			{
+				rotate = false;
+				displayVolumeRaycast(false);
+				displayVolumeSlices(true);
+				showBoundingBox(0, true);
+				showBoundingBox(1, false);
+				showBoundingBox(2, false);
+				showSlice(0, true);
+				showSlice(1, false);
+				showSlice(2, false);
+				setBoundingBoxColor(0, new ColorRGB(0,0,1));
+				setOrthographicProjection();
+				m_kNewCenter.Z = 0;
+				m_bUpdateCenterOnDisplay = true;
+			}
+			if ( !displaySlice && (animationStep > animationStart) )
+			{
+				int add = animationStep - animationStart;
+				System.err.println( add );
+				m_kNewCenter.Z = add;
+				m_bUpdateCenterOnDisplay = true;
+				if ( add == m_kVolumeImageA.GetImage().getExtents()[2] )
+				{
+					animationStart = animationStep + 1;
+					animationStop = animationStart;
+					displaySlice = true;
+				}
+			}
+			*/
+			
+			if ( wormAnimationStep() == 2 )
+			{
+				if ( screenShots == null )
+				{
+					screenShots = new Vector<BufferedImage>();
+				}
+				screenShots.add(m_pkRenderer.Screenshot());
+				if ( seamCellsDone && !seamCellsSaved )
+				{
+					writeData("seamCells");
+					seamCellsSaved = true;
+					screenShots.clear();
+				}
+				if ( pairsDone && !pairsSaved )
+				{
+					writeData("pairs");
+					pairsSaved = true;
+					screenShots.clear();
+				}
+				if ( latticeDone && !latticeSaved )
+				{
+					writeData("lattice");
+					latticeSaved = true;
+					screenShots.clear();
+				}
+				if ( curvesDone && !curvesSaved )
+				{
+					writeData("curves");
+					curvesSaved = true;
+					screenShots.clear();
+				}
+				if ( contoursDone && !contoursSaved )
+				{
+					writeData("contours");
+					contoursSaved = true;
+					screenShots.clear();
+				}
+				if ( growDone && !growSaved )
+				{
+					writeData("grow");
+					growSaved = true;
+					screenShots.clear();
+				}
+				if ( extractDone && !extractSaved )
+				{
+					writeData("extract");
+					extractSaved = true;
+					screenShots.clear();
+				}
+			}
+			
+			// end animation:
+			animationStep++;
+			if ( (animationStep == animationStop) && (animationStart == animationStop) )
+			{
+				System.err.println(animationStep);
+				animationStep = 0;
+				setWormAnimationStep(-1);
+				System.err.println("DONE");
+			}
+		}
 	}
 
 	public void addConfiguredListener( AlgorithmInterface listener )
@@ -255,6 +839,113 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	public boolean is3DMouseEnabled()
 	{
     	return m_kVOIInterface == null ? false : m_kVOIInterface.is3DMouseEnabled();
+	}
+	
+	private boolean firstWormAnimation = true;
+	private LatticeModel model;
+	private int modelExtents = -1;
+	private boolean rotate = true;
+	private int animationStep = 0;
+	private int animationStart = 0;
+	private int animationStop = Integer.MAX_VALUE;
+	private int allSeamCellsAdded = 0;
+	private int allPairsAdded = 0;
+	private int addCount = 0;
+	private VOI annotations;
+	private VOI pairs;
+	private VOI lattice;
+	private boolean latticeDone = false, latticeSaved = false;
+	private boolean seamCellsDone = false, seamCellsSaved = false;
+	private boolean pairsDone = false, pairsSaved = false;
+	private boolean curvesDone = false, curvesSaved = false;
+	private boolean contoursDone = false, contoursSaved = false;
+	private boolean growDone = false, growSaved = false;
+	private boolean extractDone = false, extractSaved = false;
+	private boolean displayStraight = false;
+	private boolean displaySlice = false;
+	private Vector3f sliceCenter;
+	private int extractSlice = 0;
+	private VOI leftCurve, rightCurve, centerCurve, wormContours, sliceContours;
+	private VOI leftCurveAnimate, rightCurveAnimate, centerCurveAnimate, wormContoursAnimate, wormContoursStatic, sliceContoursAnimate, sliceContoursStatic;
+	private Vector3f nose;
+	private ModelImage masks;
+	private ModelImage modelData;
+	private ModelImage straightImage;
+	private Vector<BufferedImage> screenShots;
+	private int timeStep = 0;
+	
+	public int wormAnimationStep()
+	{
+    	return m_kVOIInterface == null ? -1 : m_kVOIInterface.getAnimationStep();
+	}
+	public void setWormAnimationStep( int value )
+	{
+    	if ( m_kVOIInterface != null )
+    	{
+    		m_kVOIInterface.setAnimationStep(value);
+    	}
+	}
+	
+	private void writeData( String fileName )
+	{
+
+		String imageName = m_kVolumeImageA.GetImage().getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+		String directory = m_kVolumeImageA.GetImage().getImageDirectory() + imageName + File.separator;
+		//			if ( rotate )
+		//			{
+		//				directory = directory + "WormAnimationStraight" + File.separator;
+		//			}
+		//			else
+		//			{
+		//				directory = directory + "WormAnimationSlice" + File.separator;
+		//			}
+		directory = directory + "WormAnimation" + File.separator;
+		File dir = new File( directory );
+		if ( !dir.exists() )
+		{
+			dir.mkdir();
+		}
+
+		System.err.println( "writeData " + screenShots.size() );
+		int length = Math.min( 500, screenShots.size() );
+		BufferedImage bImage = screenShots.elementAt(0);
+		ModelImage movieImage = new ModelImage( ModelStorageBase.ARGB, new int[]{bImage.getWidth(), bImage.getHeight(), length}, fileName );
+
+		for ( int z = 0; z < length; z++ )
+		{
+			bImage = screenShots.elementAt(z);
+			for ( int y = 0; y < bImage.getHeight(); y++ )
+			{
+				for ( int x = 0; x < bImage.getWidth(); x++ )
+				{
+					int index = z * bImage.getWidth()*bImage.getHeight() + y * bImage.getWidth() + x;
+					int iARGB = bImage.getRGB( x, y );				
+					movieImage.set( index * 4 + 0, (byte)((iARGB & 0xff000000) >> 32) );
+					movieImage.set( index * 4 + 1, (byte)((iARGB & 0x00ff0000) >> 16) );
+					movieImage.set( index * 4 + 2, (byte)((iARGB & 0x0000ff00) >> 8) );
+					movieImage.set( index * 4 + 3, (byte)((iARGB & 0x000000ff)) );
+				}
+			}
+		}
+		movieImage.setImageName(fileName);
+		ModelImage.saveImage(movieImage, movieImage.getImageName() + ".xml", directory, false);
+		movieImage.disposeLocal();
+
+		for ( int z = 0; z < length; z++ )
+		{
+			screenShots.remove(0);
+		}
+		if ( screenShots.size() > 0 )
+		{
+			writeData( fileName + "_" + length );
+		}
+		else
+		{
+			screenShots.clear();
+		}
 	}
 	
     public void deleteSelectedPoint( )

@@ -1792,6 +1792,12 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 				deleteDirectory(dirName);
 				dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + PlugInAlgorithmWormUntwisting.autoSeamCellSegmentationOutput + File.separator;
 				deleteDirectory(dirName);
+				dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + PlugInAlgorithmWormUntwisting.autoSeamCellSegmentationOutput + "W" + File.separator;
+				deleteDirectory(dirName);
+				dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + PlugInAlgorithmWormUntwisting.autoSeamCellSegmentationOutput + "K" + File.separator;
+				deleteDirectory(dirName);
+				dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + PlugInAlgorithmWormUntwisting.autoSeamCellSegmentationOutput + "LoG" + File.separator;
+				deleteDirectory(dirName);
 				dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + PlugInAlgorithmWormUntwisting.editSeamCellOutput + File.separator;
 				deleteDirectory(dirName);
 				dirName = baseFileDir + File.separator + baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + File.separator + PlugInAlgorithmWormUntwisting.editAnnotationOutput + File.separator;

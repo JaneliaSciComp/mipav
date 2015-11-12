@@ -10,8 +10,6 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.Vector;
 
-import WildMagic.LibFoundation.Containment.ContBox3f;
-import WildMagic.LibFoundation.Mathematics.Box3f;
 import WildMagic.LibFoundation.Mathematics.Vector3d;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
@@ -100,27 +98,29 @@ public class WormSegmentationWindowing extends WormSegmentation
     		}
     	}
     	
-
-    	for ( int z = 0; z < dimZ; z++ )
+    	if ( dataPoints != null )
     	{
-    		for ( int y = 0; y < dimY; y++ )
+    		for ( int z = 0; z < dimZ; z++ )
     		{
-    			for ( int x = 0; x < dimX; x++ )
+    			for ( int y = 0; y < dimY; y++ )
     			{
-    				float value = image.getFloat(x,y,z);
-    				if ( value < min_2P )
+    				for ( int x = 0; x < dimX; x++ )
     				{
-    					value = min_2P;
+    					float value = image.getFloat(x,y,z);
+    					if ( value < min_2P )
+    					{
+    						value = min_2P;
+    					}
+    					else if ( value > max_LR )
+    					{
+    						value = max_LR;    					
+    					}
+    					if ( value >= (.90f*max_LR) )
+    					{
+    						dataPoints.add( new Vector3f( x, y, z ) );
+    					}
+    					//    				image.set(x,y,z,value);
     				}
-    				else if ( value > max_LR )
-    				{
-    					value = max_LR;    					
-    				}
-    				if ( value >= (.90f*max_LR) )
-    				{
-    					dataPoints.add( new Vector3f( x, y, z ) );
-    				}
-//    				image.set(x,y,z,value);
     			}
     		}
     	}
@@ -136,268 +136,21 @@ public class WormSegmentationWindowing extends WormSegmentation
     	Vector3f min = new Vector3f(dimX, dimY, dimZ);		
     	Vector3f max = new Vector3f(0,0,0);
     	
-//		Vector<Vector3f> dataPoints = new Vector<Vector3f>();
-		// calculate a robust histogram of the data values, used to find the left-right marker thresholds:
-//		float[] max_LR = robustHistogram(image, dataPoints);
-//		System.err.println( max_LR[0] + " " + max_LR[1] + "  " + image.getMin() + " " + image.getMax() );
-		
 		// find the left right markers based on the threshold values and clustering...
 		Vector<Vector3f> left_right_markers = findLeftRightMarkers(image, min, max, maxValue, (float)image.getMax());
-//		System.err.println( "WormSegmentationWindowing " + maxValue + " " + image.getMax() + " " + left_right_markers.size() );
-//		fillMarkers( image,maxValue, left_right_markers );	
-//		System.err.println( "                          " + left_right_markers.size() );
-		
 		return left_right_markers;
-
-//		image.unregisterAllVOIs();
-//		WormSegmentation.saveAnnotations(image, left_right_markers, new Color(0, 0, 255));
-//		String imageName = image.getImageName();
-//		if (imageName.contains("_clone")) {
-//			imageName = imageName.replaceAll("_clone", "");
-//		}
-//		String voiDir = image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + "seam_cells_WormSegmentationWindowing" + File.separator;
-//		WormSegmentation.saveAllVOIsTo(voiDir, image);
 	}
-	
-
-//	public static void seamCellSegmentation( ModelImage image )
-//	{		
-////    	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
-////    	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
-////    	int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1; 
-//    	
-//
-//		String imageName = image.getImageName();
-//		if (imageName.contains("_clone")) {
-//			imageName = imageName.replaceAll("_clone", "");
-//		}
-//		imageName = imageName + "_prob";
-//		final ModelImage resultImage = new ModelImage(image.getType(), image.getExtents(), imageName);
-//		JDialogBase.updateFileInfo(image, resultImage);
-//		
-//		OpenCLAlgorithmVolumeSegmentation segmentation = new OpenCLAlgorithmVolumeSegmentation(image, resultImage);
-//		segmentation.runAlgorithm();
-//		
-////		for ( int z = 0; z < dimZ; z++ )
-////		{
-////			for ( int y = 0; y < dimY; y++ )
-////			{
-////				for ( int x = 0; x < dimX; x++ )
-////				{
-////					int count = 0;
-////					double centerValue = image.getFloat(x,y,z);
-////					double sum = 0;
-////					for ( int sampleZ = -15; sampleZ <= 15; sampleZ++ )
-////					{
-////						for ( int sampleY = -15; sampleY <= 15; sampleY++ )
-////						{
-////							for ( int sampleX = -15; sampleX <= 15; sampleX++ )
-////							{
-////								int sX = sampleX + x;
-////								int sY = sampleY + y;
-////								int sZ = sampleZ + z;
-////								
-////								if ( (sX >= 0) && (sX < dimX) &&
-////									 (sY >= 0) && (sY < dimY) &&
-////									 (sZ >= 0) && (sZ < dimZ)    )
-////								{
-////									float value = image.getFloat(sX,sY,sZ);
-////									sum += value;
-////									count++;
-////								}
-////							}
-////						}
-////					}
-////					sum /= (double)count;
-////					sum /= centerValue;
-////					resultImage.set(x,  y, z, (float)sum);
-////				}
-////			}
-////			System.err.println( z + " " + dimZ );
-////		}
-//		System.err.println( resultImage.getMin() + " " + resultImage.getMax() );
-//		new ViewJFrameImage(resultImage);
-//	}
-	
-	
-	
-	
-    private static void fill( ModelImage image, float intensityMin, Vector<Vector3f> seedList, BitSet visited, BitSet mask, Vector<Vector3f> maskPoints )
-    {
-    	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
-    	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
-    	int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
-    	
-//    	int radiusMax = 110;
-//    	int radiusMin = 90;
-//    	Vector3f min = new Vector3f(dimX, dimY, dimZ);
-//    	Vector3f max = new Vector3f(0,0,0);
-//		getBoundsDistance( min, max, centerBound, radiusMax, radiusMin );
-    	while ( seedList.size() > 0 )
-    	{
-    		Vector3f seed = seedList.remove(0);
-
-    		boolean edgeFound = false;
-    		int step = 1;
-    		for ( int z = (int) (seed.Z-step); z <= seed.Z+step; z++ )
-    		{
-    			for ( int y = (int) (seed.Y-step); y <= seed.Y+step; y++ )
-    			{
-    				for ( int x = (int) (seed.X-step); x <= seed.X+step; x++ )
-    				{
-    					if ( (x >= 0) && (x < dimX) && (y >= 0) && (y < dimY) && (z >= 0) && (z < dimZ) )
-    					{
-    						if ( x != seed.X || y != seed.Y || z != seed.Z )
-    						{
-								float value = image.getFloat(x, y, z);
-								if ( value < intensityMin )
-								{
-									edgeFound = true;
-								}
-    						}
-    					}
-    				}
-    			}
-    		}
-
-			for ( int z = (int) (seed.Z-1); z <= seed.Z+1; z++ )
-			{
-				for ( int y = (int) (seed.Y-1); y <= seed.Y+1; y++ )
-				{
-					for ( int x = (int) (seed.X-1); x <= seed.X+1; x++ )
-					{
-						if ( (x >= 0) && (x < dimX) && (y >= 0) && (y < dimY) && (z >= 0) && (z < dimZ) )
-						{
-							if ( x != seed.X || y != seed.Y || z != seed.Z )
-							{
-								int index = (z * dimX * dimY + y * dimX + x);
-
-								if ( !visited.get(index) )
-								{
-									visited.set(index);
-//									if ( (x >= min.X) && (x <= max.X) && (y >= min.Y) && (y <= max.Y) && (z >= min.Z) && (z <= max.Z) )
-									{
-										if ( !edgeFound )
-										{
-//											if ( distance( centerBound, x, y, z ) < radiusMax )
-											{
-												float value = image.getFloat(x, y, z);
-												if ( value >= intensityMin )
-												{
-													mask.set(index);
-													maskPoints.add( new Vector3f(x, y, z) );
-													seedList.add( new Vector3f(x, y, z) );
-												}
-											}
-										}
-									}
-    							}
-    						}
-    					}
-    				}
-    			}
-    		}
-    	}
-    }	
-    
-    
-    
-
-    private static void fillMarkers( ModelImage image, float intensityMin, Vector<Vector3f> left_right_markers )
-    {
-    	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
-    	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
-    	int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;    
-    	
-    	if ( left_right_markers == null )
-    	{
-    		return;
-    	}
-    	int length = dimX * dimY * dimZ;
-//    	headMask = new BitSet(length);
-//    	leftRightMask = new BitSet(length);
-//    	System.err.println( "   fillMarkers " + left_right_markers.size() );
-    	for ( int i = left_right_markers.size() - 1; i >=0; i-- )
-    	{
-    		BitSet visited = new BitSet(length);
-    		BitSet mask = new BitSet(length);
-    		VOIContour maskPoints = new VOIContour(false);
-
-    		Vector<Vector3f> seedList = new Vector<Vector3f>();
-    		Vector3f seed = left_right_markers.elementAt(i);    		
-    		int index = (int) (seed.Z * dimX * dimY + seed.Y * dimX + seed.X);	
-    		visited.set(index);
-    		maskPoints.add(seed);
-    		seedList.add(seed);
-    		
-        	fill( image, intensityMin, seedList, visited, mask, maskPoints );
-            Box3f kBox = ContBox3f.ContOrientedBox(maskPoints.size(), maskPoints);
-//            System.err.println( "Seed " + i + " " + kBox.Extent[0] + " " + kBox.Extent[1] + " " + kBox.Extent[2] );
-            boolean lr_found = true;
-            boolean head_found = false;
-            for ( int j = 0; j < kBox.Extent.length; j++ )
-            {
-            	if ( (kBox.Extent[j] > 30) )
-            	{
-            		left_right_markers.remove(i);
-            		lr_found = false;
-            		head_found = true;
-            		break;
-            	}
-            }
-        	if ( lr_found && (kBox.Extent[0] < 5) && (kBox.Extent[1] < 5) && (kBox.Extent[2] < 5) )
-        	{
-        		left_right_markers.remove(i);
-        		lr_found = false;
-        	}
-//            if (lr_found)
-//            {
-////            	TriMesh mesh = createMesh( image, mask );
-//            	leftRightMask.or(mask);
-//            }
-//            else if ( head_found )
-//            {
-//				headMasks.add(mask);
-//				headMaskPoints.add(maskPoints);
-//            }
-    	}    	
-//    	System.err.println( "   fillMarkers " + left_right_markers.size() );
-    }
 
     private static Vector<Vector3f> findLeftRightMarkers(ModelImage image, Vector3f min, Vector3f max, float max_LR, float intensityMax)
     {
-//    	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
-//    	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
-//    	int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;    
-//		image.resetVOIs();
-//    	float markerVal = max_LR;
-//    	
-//    	float pixelSize = 0.1625f;
-//    	float markerDiameter = 3f;
-//
-//    	int cubeSize = 5;
-//    	int cubeHalf = cubeSize/2;
 
-    	VOIContour centers = findMarkers(image, null, max_LR, intensityMax, 15, 30, min, max);  	
-//    	float minDist = Float.MAX_VALUE;
-//    	int minI = -1, minJ = -1;
+    	VOIContour centers = findMarkers(image, null, max_LR, intensityMax, 15, 30, min, max); 
     	Vector<Vector3f> left_right_markers = new Vector<Vector3f>();
 		
     	for ( int i = 0; i < centers.size(); i++ )
     	{
     		Vector3f seed = centers.elementAt(i); 
     		left_right_markers.add(new Vector3f(seed));
-//    		System.err.println( seed );
-//    		for ( int j = i+1; j < centers.size(); j++ )
-//    		{
-//    			float distance = centers.elementAt(i).distance(centers.elementAt(j) );
-//    			if ( distance < minDist );
-//    			{
-//    				minDist = distance;
-//    				minI = i;
-//    				minJ = j;
-//    			}
-//    		}
     	}
     	return left_right_markers;
     }
@@ -405,11 +158,7 @@ public class WormSegmentationWindowing extends WormSegmentation
     private static VOIContour findMarkers( ModelImage image, BitSet leftRightMask, float intensityMin, float intensityMax, int diameter, int maxDiameter, Vector3f min, Vector3f max )
     {
     	int cubeSize = diameter;
-    	int cubeHalf = cubeSize/2;
-    	int cubeThird = cubeSize/3;
-    	
-//    	System.err.println( cubeSize + " " + cubeHalf + " " + cubeThird );
-    	
+    	int cubeHalf = cubeSize/2;    	
     	
     	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
     	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
@@ -478,10 +227,6 @@ public class WormSegmentationWindowing extends WormSegmentation
     			    		}
     					}
     					
-//    					if ( testMidLine(centerP) )
-//    					{
-//    						continue;
-//    					}
     					int count = 0;
     					double meanIntensity = 0;
     					for ( int z2 = z - cubeHalf; z2 < (z+cubeHalf); z2++ )
@@ -511,51 +256,18 @@ public class WormSegmentationWindowing extends WormSegmentation
     					meanIntensity /= count;
 
     					if ( solid && meanIntensity >= intensityMin )
-//        					if ( meanIntensity >= 0.95*intensityMin )
     					{
-//    						count = 0;
-//    						double meanVariance = 0;
-//        					for ( int z2 = z - cubeHalf; z2 < (z+cubeHalf); z2++ )
-//        					{
-//        						for ( int y2 = y - cubeHalf; y2 < (y+cubeHalf); y2++ )
-//        						{
-//        							for ( int x2 = x - cubeHalf; x2 < (x+cubeHalf); x2++ )
-//    								{
-//    									if ( (x2 < dimX) && (y2 < dimY) && (z2 < dimZ) )
-//    									{
-//    										testP.set(x2,y2,z2);
-//    										if ( centerP.distance(testP) <= cubeHalf )
-//    										{
-//    											value = image.getFloat(x2,y2,z2);
-//    											meanVariance += ((value - meanIntensity) * (value - meanIntensity));
-//    											count++;
-//    										}
-//    									}
-//    								}
-//    							}    					
-//    						}
-//    						meanVariance /= count;
-//    						minVar = Math.min( minVar, meanVariance);
-//    						maxVar = Math.max( maxVar, meanVariance);
-//    						cubeIntensities.add(new Vector2d( meanIntensity, meanVariance) );
-
     						Vector3f center = new Vector3f( x, y, z );
     						cubeCenters.add(center);
     					}
     				}
     			}
     		}
-    	}
-    	
-//    	System.err.println( "minimum variance = " + minVar + "   maximum variance = " + maxVar );
-//    	double varCutoff = minVar + 0.03 * (maxVar - minVar);
-//    	System.err.println( "Number centers = " + cubeCenters.size() );
-    	
+    	}    	
 
     	Vector<VOIContour> clusterList = makeClusters( cubeCenters, cubeSize, maxDiameter );
     	
     	VOIContour centerPoints = new VOIContour(false);
-//    	System.err.println( "Clusters = " + clusterList.size() );
     	while ( clusterList.size() > 0 )
     	{
     		int maxSize = -1;
@@ -621,9 +333,6 @@ public class WormSegmentationWindowing extends WormSegmentation
     			}
     		}
     	}
-
-//    	cubeIntensities.clear();
-//    	cubeIntensities = null;
     	cubeCenters.clear();
     	cubeCenters = null;
     	return centerPoints;

@@ -504,4 +504,92 @@ public class VolumeClip extends VolumeObject
         m_akPolyline[CLIP_EYE_INV].UpdateRS();
     }
 
+    public void reCreateScene ( VolumeImage kImageA, Vector3f kTranslate, float fX, float fY, float fZ )
+    {
+    	m_kVolumeImageA = kImageA;
+    	m_kTranslate.copy(kTranslate);
+    	m_fX = fX;
+    	m_fY = fY;
+    	m_fZ = fZ;  
+    	
+        reCreateClipPlanes();
+        m_kScene.UpdateGS();
+        m_kScene.UpdateRS();
+    }
+    
+    private void reCreateClipPlanes()
+    {
+        // neg x clipping:
+        m_akPolyline[0].VBuffer.SetPosition3( 0, 0, 0, 0 ) ;
+        m_akPolyline[0].VBuffer.SetPosition3( 1, 0, 0, m_fZ ) ;
+        m_akPolyline[0].VBuffer.SetPosition3( 2, 0, m_fY, m_fZ ) ;
+        m_akPolyline[0].VBuffer.SetPosition3( 3, 0, m_fY, 0 ) ;
+
+        // pos x clipping:
+        m_akPolyline[1].VBuffer.SetPosition3( 0, m_fX, 0, m_fZ ) ;
+        m_akPolyline[1].VBuffer.SetPosition3( 1, m_fX, 0, 0 ) ;
+        m_akPolyline[1].VBuffer.SetPosition3( 2, m_fX, m_fY, 0 ) ;
+        m_akPolyline[1].VBuffer.SetPosition3( 3, m_fX, m_fY, m_fZ ) ;
+
+        // neg y clipping:
+        m_akPolyline[2].VBuffer.SetPosition3( 0, m_fX, 0, m_fZ ) ;
+        m_akPolyline[2].VBuffer.SetPosition3( 1, 0, 0, m_fZ ) ;
+        m_akPolyline[2].VBuffer.SetPosition3( 2, 0, 0, 0 ) ;
+        m_akPolyline[2].VBuffer.SetPosition3( 3, m_fX, 0, 0 ) ;
+        
+        // pos y clipping:
+        m_akPolyline[3].VBuffer.SetPosition3( 0, m_fX, m_fY, 0 ) ;
+        m_akPolyline[3].VBuffer.SetPosition3( 1, 0, m_fY, 0 ) ;
+        m_akPolyline[3].VBuffer.SetPosition3( 2, 0, m_fY, m_fZ ) ;
+        m_akPolyline[3].VBuffer.SetPosition3( 3, m_fX, m_fY, m_fZ ) ;
+
+        // neg z clipping:
+        m_akPolyline[4].VBuffer.SetPosition3( 0, m_fX, 0, 0 ) ;
+        m_akPolyline[4].VBuffer.SetPosition3( 1, 0, 0, 0 ) ;
+        m_akPolyline[4].VBuffer.SetPosition3( 2, 0, m_fY, 0 ) ;
+        m_akPolyline[4].VBuffer.SetPosition3( 3, m_fX, m_fY, 0 ) ;
+
+        // pos z clipping:
+        m_akPolyline[5].VBuffer.SetPosition3( 0, 0, 0, m_fZ ) ;
+        m_akPolyline[5].VBuffer.SetPosition3( 1, m_fX, 0, m_fZ ) ;
+        m_akPolyline[5].VBuffer.SetPosition3( 2, m_fX, m_fY, m_fZ ) ;
+        m_akPolyline[5].VBuffer.SetPosition3( 3, 0, m_fY, m_fZ ) ;
+
+        for ( int i = 0; i < 6; i++ )
+        {
+            m_akPolyline[i].Local.SetTranslate(m_kTranslate);
+            m_akPolyline[i].Reload(true);
+        }
+
+        m_fMax = Math.max( m_fX, Math.max( m_fY, m_fZ ) );
+
+        m_akPolyline[CLIP_A].VBuffer.SetPosition3( 0, 0f, 0, 0 ) ;
+        m_akPolyline[CLIP_A].VBuffer.SetPosition3( 1, 0f, 0, m_fMax ) ;
+        m_akPolyline[CLIP_A].VBuffer.SetPosition3( 2, 0f, m_fMax, m_fMax ) ;
+        m_akPolyline[CLIP_A].VBuffer.SetPosition3( 3, 0f, m_fMax, 0 ) ;
+        m_akPolyline[CLIP_A].Local.SetTranslate(m_kTranslate);
+        m_akPolyline[CLIP_A].Reload(true);   
+//        m_akPolyline[CLIP_A].UpdateGS();
+//        m_akPolyline[CLIP_A].UpdateRS();
+
+        // eye clipping:
+        m_akPolyline[CLIP_EYE].VBuffer.SetPosition3( 0, 0f, 0f, 0 ) ;
+        m_akPolyline[CLIP_EYE].VBuffer.SetPosition3( 1, m_fX, 0f, 0 ) ;
+        m_akPolyline[CLIP_EYE].VBuffer.SetPosition3( 2, m_fX, m_fY, 0 ) ;
+        m_akPolyline[CLIP_EYE].VBuffer.SetPosition3( 3, 0f, m_fY, 0 ) ;
+        m_akPolyline[CLIP_EYE].Local.SetTranslate(m_kTranslate);
+        m_akPolyline[CLIP_EYE].Reload(true);        
+//        m_akPolyline[CLIP_EYE].UpdateGS();
+//        m_akPolyline[CLIP_EYE].UpdateRS();
+
+        m_akPolyline[CLIP_EYE_INV].VBuffer.SetPosition3( 0, 0f, 0f, m_fZ ) ;
+        m_akPolyline[CLIP_EYE_INV].VBuffer.SetPosition3( 1, m_fX, 0f, m_fZ ) ;
+        m_akPolyline[CLIP_EYE_INV].VBuffer.SetPosition3( 2, m_fX, m_fY, m_fZ ) ;
+        m_akPolyline[CLIP_EYE_INV].VBuffer.SetPosition3( 3, 0f, m_fY, m_fZ ) ;
+        m_akPolyline[CLIP_EYE_INV].Local.SetTranslate(m_kTranslate);
+        m_akPolyline[CLIP_EYE_INV].Reload(true);
+//        m_akPolyline[CLIP_EYE_INV].UpdateGS();
+//        m_akPolyline[CLIP_EYE_INV].UpdateRS();
+    }
+
 }

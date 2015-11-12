@@ -150,7 +150,7 @@ public class LatticeModel {
 
 	private final int DiameterBuffer = 0;
 
-	private final int SampleLimit = 5;
+	private static final int SampleLimit = 5;
 
 	private final float minRange = .025f;
 
@@ -743,10 +743,46 @@ public class LatticeModel {
 			final Box3f box = new Box3f(ellipsoid.Center, ellipsoid.Axis, new float[] {extent, extent, 1});
 			boxBounds.add(box);
 		}
-
 		createWormModel(imageA, samplingPlanes, ellipseBounds, wormDiameters, 2 * extent, displayResult);
 	}
 
+	public VOI getSamplingPlanes( boolean scale )
+	{
+		final short sID = (short) (imageA.getVOIs().getUniqueID());
+		VOI samplingPlanes = new VOI(sID, "samplingPlanes");
+		int localExtent = scale ? extent + 10 : extent;
+		for (int i = 0; i < centerPositions.size(); i++) {
+			final Vector3f rkEye = centerPositions.elementAt(i);
+			final Vector3f rkRVector = rightVectors.elementAt(i);
+			final Vector3f rkUVector = upVectors.elementAt(i);
+
+			final Vector3f[] output = new Vector3f[4];
+			final Vector3f rightV = Vector3f.scale(localExtent, rkRVector);
+			final Vector3f upV = Vector3f.scale(localExtent, rkUVector);
+			output[0] = Vector3f.add(Vector3f.neg(rightV), Vector3f.neg(upV));
+			output[1] = Vector3f.add(rightV, Vector3f.neg(upV));
+			output[2] = Vector3f.add(rightV, upV);
+			output[3] = Vector3f.add(Vector3f.neg(rightV), upV);
+			for (int j = 0; j < 4; j++) {
+				output[j].add(rkEye);
+			}
+			final VOIContour kBox = new VOIContour(true);
+			for (int j = 0; j < 4; j++) {
+				kBox.addElement(output[j].X, output[j].Y, output[j].Z);
+			}
+			kBox.update(new ColorRGBA(0, 0, 1, 1));
+			{
+				samplingPlanes.importCurve(kBox);
+			}
+		}
+		return samplingPlanes;
+	}
+	
+	public int getExtent()
+	{
+		return extent;
+	}
+	
 	/**
 	 * Enables the user to move an annotation point with the mouse.
 	 * 
@@ -1299,6 +1335,11 @@ public class LatticeModel {
 				imageA.notifyImageDisplayListeners();
 			}
 		}
+//		if ( samplingPlanes != null )
+//		{
+//			imageA.unregisterAllVOIs();
+//			imageA.registerVOI(samplingPlanes);
+//		}
 	}
 
 	/**
@@ -1866,7 +1907,25 @@ public class LatticeModel {
 		// extends
 		// outward until it reaches the edge of the sample plane, capturing as much data as possible.
 		int growStep = 0;
-		while ( (growStep < 25) && ( !checkAnnotations(model) || (growStep < 20))) {
+		while ( (growStep < 25) && ( !checkAnnotations(model) || (growStep < 20)))
+		{
+//			for (int z = 0; z < dimZ; z++) {
+//				for (int y = 0; y < dimY; y++) {
+//					for (int x = 0; x < dimX; x++) {
+//						if (model.getFloat(x, y, z) != 0) {
+//							inside.set(x, y, z, 1);
+//						}
+//						else
+//						{
+//							inside.set(x, y, z, 0);
+//						}
+//					}
+//				}
+//			}
+//			inside.setImageName( imageName + "_" + growStep + "_insideMask.xml" );
+//			saveImage(imageName, inside, false, "masks");
+			
+			
 			growEdges(model, markerSegmentation, sliceIDs, growStep++);
 		}
 		if ( !checkAnnotations(model)) {
@@ -1900,7 +1959,9 @@ public class LatticeModel {
 				}
 			}
 		}
+		inside.setImageName( imageName + "_" + growStep + "_insideMask.xml" );
 		saveImage(imageName, inside, false);
+		saveImage(imageName, model, false);
 		straighten(imageA, resultExtents, imageName, model, true, displayResult, true);
 
 		markerSegmentation.disposeLocal();
@@ -2225,28 +2286,111 @@ public class LatticeModel {
 			makeEllipse2D(rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), scale, ellipse);
 			displayContours.getCurves().add(ellipse);
 		}
-
 		sID = (short) (imageA.getVOIs().getUniqueID());
 		centerLine = new VOI(sID, "center line");
 		centerLine.getCurves().add(centerPositions);
 		centerLine.setColor(Color.red);
 		centerPositions.update(new ColorRGBA(1, 0, 0, 1));
-		// centerPositions.setVolumeDisplayRange(minRange);
-
+		
 		sID++;
 		leftLine = new VOI(sID, "left line");
 		leftLine.getCurves().add(leftPositions);
 		leftLine.setColor(Color.magenta);
 		leftPositions.update(new ColorRGBA(1, 0, 1, 1));
-		// leftPositions.setVolumeDisplayRange(minRange);
 
 		sID++;
 		rightLine = new VOI(sID, "right line");
 		rightLine.getCurves().add(rightPositions);
 		rightLine.setColor(Color.green);
 		rightPositions.update(new ColorRGBA(0, 1, 0, 1));
-		// rightPositions.setVolumeDisplayRange(minRange);
+		
+		if ( leftBackup != null )
+		{
+			// Saving contours:
+			VOIVector temp = imageA.getVOIsCopy();
 
+			// save ellipse worm contours:
+			sID = (short) (imageA.getVOIs().getUniqueID());
+			VOI displayContoursAll = new VOI(sID, "wormContours");
+			for (int i = 0; i < centerPositions.size(); i++) {
+				final Vector3f rkEye = centerPositions.elementAt(i);
+				final Vector3f rkRVector = rightVectors.elementAt(i);
+				final Vector3f rkUVector = upVectors.elementAt(i);
+
+				final float curve = centerSpline.GetCurvature(allTimes[i]);
+				final float scale = curve;
+				final VOIContour ellipse = new VOIContour(true);
+				ellipse.setVolumeDisplayRange(minRange);
+				makeEllipse2D(rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), scale, ellipse);
+				displayContoursAll.getCurves().add(ellipse);
+			}
+			imageA.unregisterAllVOIs();
+			imageA.registerVOI(displayContoursAll);
+			String imageName = imageA.getImageName();
+			if (imageName.contains("_clone")) {
+				imageName = imageName.replaceAll("_clone", "");
+			}
+			String voiDir = imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + "wormContours" + File.separator;
+			saveAllVOIsTo(voiDir, imageA);
+
+			// save center curve:
+			imageA.unregisterAllVOIs();
+			imageA.registerVOI(centerLine);
+			voiDir = imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + "centerLine" + File.separator;
+			saveAllVOIsTo(voiDir, imageA);
+
+			// save left curve:
+			imageA.unregisterAllVOIs();
+			imageA.registerVOI(leftLine);
+			voiDir = imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + "leftLine" + File.separator;
+			saveAllVOIsTo(voiDir, imageA);
+
+			// save right curve:
+			imageA.unregisterAllVOIs();
+			imageA.registerVOI(rightLine);
+			voiDir = imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + "rightLine" + File.separator;
+			saveAllVOIsTo(voiDir, imageA);
+
+
+			// save lattice edges:
+			sID++;
+			VOI latticeTemp = new VOI(sID, "lattice");
+			latticeTemp.getCurves().add(leftBackup);
+			latticeTemp.getCurves().add(rightBackup);
+			latticeTemp.setColor(Color.blue);
+			leftBackup.update(new ColorRGBA(0, 0, 1, 1));
+			rightBackup.update(new ColorRGBA(0, 0, 1, 1));
+			imageA.unregisterAllVOIs();
+			imageA.registerVOI(latticeTemp);
+			voiDir = imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + "lattice" + File.separator;
+			saveAllVOIsTo(voiDir, imageA);
+
+
+			// save pairs:
+			sID++;
+			final VOI marker = new VOI(sID, "pairs", VOI.POLYLINE, (float) Math.random());
+			for (int j = 0; j < leftBackup.size(); j++) {
+				final VOIContour mainAxis = new VOIContour(false);
+				mainAxis.add(leftBackup.elementAt(j));
+				mainAxis.add(rightBackup.elementAt(j));
+				marker.getCurves().add(mainAxis);
+				marker.setColor(new Color(255, 255, 0));
+				mainAxis.update(new ColorRGBA(1, 1, 0, 1));
+				if (j == 0) {
+					marker.setColor(new Color(0, 255, 0));
+					mainAxis.update(new ColorRGBA(0, 1, 0, 1));
+				}
+			}
+			imageA.unregisterAllVOIs();
+			imageA.registerVOI(marker);
+			voiDir = imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + "pairs" + File.separator;
+			saveAllVOIsTo(voiDir, imageA);
+
+			// restore VOIs:
+			imageA.unregisterAllVOIs();
+			imageA.restoreVOIs(temp);
+		}
+		
 		imageA.registerVOI(leftLine);
 		imageA.registerVOI(rightLine);
 		imageA.registerVOI(centerLine);
@@ -3158,6 +3302,10 @@ public class LatticeModel {
 	 * @param saveAsTif
 	 */
 	private void saveImage(final String imageName, final ModelImage image, final boolean saveAsTif) {
+		saveImage(imageName, image, saveAsTif, null);
+	}
+	
+	private void saveImage(final String imageName, final ModelImage image, final boolean saveAsTif, String dir) {
 		String voiDir = image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator;
 		File voiFileDir = new File(voiDir);
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
@@ -3166,6 +3314,10 @@ public class LatticeModel {
 			voiFileDir.mkdir();
 		}
 		voiDir = image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + "output_images" + File.separator;
+		if ( dir != null )
+		{
+			voiDir = voiDir + dir + File.separator;
+		}
 		voiFileDir = new File(voiDir);
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) {} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {} else { // voiFileDir
 			// does
@@ -4478,6 +4630,281 @@ public class LatticeModel {
 			System.err.println("writeDiagonal " + xSlopeY + " " + ySlopeY + " " + zSlopeY);
 		}
 	}
+	
+	
+	public void removeDiagonal( ModelImage image, ModelImage model, VOI samplingPlanes, int[] extents, int index )
+	{
+		VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(index);
+		final Vector3f[] corners = new Vector3f[4];
+		for (int j = 0; j < 4; j++) {
+			corners[j] = kBox.elementAt(j);
+		}
+		float planeDist = -Float.MAX_VALUE;
+		if (index < (samplingPlanes.getCurves().size() - 1)) {
+			kBox = (VOIContour) samplingPlanes.getCurves().elementAt(index + 1);
+			for (int j = 0; j < 4; j++) {
+				final float distance = corners[j].distance(kBox.elementAt(j));
+				if (distance > planeDist) {
+					planeDist = distance;
+				}
+			}
+		}
+		if (index < (samplingPlanes.getCurves().size() - 1)) {
+			planeDist *= 3;
+			kBox = (VOIContour) samplingPlanes.getCurves().elementAt(index + 1);
+			final Vector3f[] steps = new Vector3f[4];
+			final Vector3f[] cornersSub = new Vector3f[4];
+			for (int j = 0; j < 4; j++) {
+				steps[j] = Vector3f.sub(kBox.elementAt(j), corners[j]);
+				steps[j].scale(1f / planeDist);
+				cornersSub[j] = new Vector3f(corners[j]);
+			}
+			for (int j = 0; j < planeDist; j++) {
+				removeDiagonal(image, model, 0, index, extents, cornersSub);
+				for (int k = 0; k < 4; k++) {
+					cornersSub[k].add(steps[k]);
+				}
+			}
+		} else {
+			planeDist = 15;
+			kBox = (VOIContour) samplingPlanes.getCurves().elementAt(index - 1);
+			final Vector3f[] steps = new Vector3f[4];
+			final Vector3f[] cornersSub = new Vector3f[4];
+			for (int j = 0; j < 4; j++) {
+				steps[j] = Vector3f.sub(corners[j], kBox.elementAt(j));
+				steps[j].scale(1f / planeDist);
+				// cornersSub[j] = Vector3f.add( corners[j], kBox.elementAt(j) ); cornersSub[j].scale(0.5f);
+				cornersSub[j] = new Vector3f(corners[j]);
+			}
+			for (int j = 0; j < planeDist; j++) {
+				removeDiagonal(image, model, 0, index, extents, cornersSub);
+				for (int k = 0; k < 4; k++) {
+					cornersSub[k].add(steps[k]);
+				}
+			}
+		}			
+	}
 
 	
+	/**
+	 * @param image
+	 * @param model
+	 * @param tSlice
+	 * @param slice
+	 * @param extents
+	 * @param verts
+	 * @param values
+	 */
+	private void removeDiagonal( ModelImage image, ModelImage model, int tSlice, int slice, int[] extents, Vector3f[] verts)
+	{
+		final int iBound = extents[0];
+		final int jBound = extents[1];
+		final int[] dimExtents = image.getExtents();
+
+		/*
+		 * Get the loop multiplication factors for indexing into the 1D array with 3 index variables: based on the
+		 * coordinate-systems: transformation:
+		 */
+		final int iFactor = 1;
+		final int jFactor = dimExtents[0];
+		final int kFactor = dimExtents[0] * dimExtents[1];
+		final int tFactor = dimExtents[0] * dimExtents[1] * dimExtents[2];
+
+		int buffFactor = 1;
+
+		if ( (image.getType() == ModelStorageBase.ARGB) || (image.getType() == ModelStorageBase.ARGB_USHORT)
+				|| (image.getType() == ModelStorageBase.ARGB_FLOAT)) {
+			buffFactor = 4;
+		}
+
+		final Vector3f center = new Vector3f();
+		for (int i = 0; i < verts.length; i++) {
+			center.add(verts[i]);
+		}
+		center.scale(1f / verts.length);
+
+		/* Calculate the slopes for traversing the data in x,y,z: */
+		float xSlopeX = verts[1].X - verts[0].X;
+		float ySlopeX = verts[1].Y - verts[0].Y;
+		float zSlopeX = verts[1].Z - verts[0].Z;
+
+		float xSlopeY = verts[3].X - verts[0].X;
+		float ySlopeY = verts[3].Y - verts[0].Y;
+		float zSlopeY = verts[3].Z - verts[0].Z;
+
+		float x0 = verts[0].X;
+		float y0 = verts[0].Y;
+		float z0 = verts[0].Z;
+
+		xSlopeX /= (iBound);
+		ySlopeX /= (iBound);
+		zSlopeX /= (iBound);
+
+		xSlopeY /= (jBound);
+		ySlopeY /= (jBound);
+		zSlopeY /= (jBound);
+
+		/* loop over the 2D image (values) we're writing into */
+		float x = x0;
+		float y = y0;
+		float z = z0;
+
+//		int count = 0;
+//		int setCount = 0;
+//		Vector3f start = new Vector3f(x0,y0,z0);
+		for (int j = 0; j < jBound; j++) {
+
+			/* Initialize the first diagonal point(x,y,z): */
+			x = x0;
+			y = y0;
+			z = z0;
+
+			for (int i = 0; i < iBound; i++) {
+				final int iIndex = Math.round(x);
+				final int jIndex = Math.round(y);
+				final int kIndex = Math.round(z);
+
+				/* calculate the ModelImage space index: */
+				final int index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
+
+				// Bounds checking:
+				if ( ( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
+						|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > image.getSize()))) {
+
+					// do nothing
+				} else {
+//					count++;
+					float currentValue = (slice + 1);
+					if (model != null) {
+						currentValue = model.getFloat(iIndex, jIndex, kIndex);
+					}
+					if (Math.abs(currentValue - (slice + 1)) <= (2*SampleLimit)) {
+						/* if color: */
+						if (buffFactor == 4) {
+							image.setC(iIndex, jIndex, kIndex, 0, image.getMinA());
+							image.setC(iIndex, jIndex, kIndex, 1, image.getMinR());
+							image.setC(iIndex, jIndex, kIndex, 2, image.getMinG());
+							image.setC(iIndex, jIndex, kIndex, 3, image.getMinB());
+						}
+						/* not color: */
+						else {
+							for ( int zT = kIndex - 2; zT <= kIndex + 2; zT++ )
+							{
+								for ( int yT = jIndex - 2; yT <= jIndex + 2; yT++ )
+								{
+									for ( int xT = iIndex - 2; xT <= iIndex + 2; xT++ )
+									{
+										if ( ((xT < 0) || (xT >= dimExtents[0])) || ((yT < 0) || (yT >= dimExtents[1])) || ((zT < 0) || (zT >= dimExtents[2])) ) {
+										} else {
+											image.set(xT, yT, zT, image.getMin() );
+//											setCount++;
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				/*
+				 * Inner loop: Move to the next diagonal point along the x-direction of the plane, using the xSlopeX,
+				 * ySlopeX and zSlopeX values:
+				 */
+				x = x + xSlopeX;
+				y = y + ySlopeX;
+				z = z + zSlopeX;
+			}
+
+			/*
+			 * Outer loop: Move to the next diagonal point along the y-direction of the plane, using the xSlopeY,
+			 * ySlopeY and zSlopeY values:
+			 */
+			x0 = x0 + xSlopeY;
+			y0 = y0 + ySlopeY;
+			z0 = z0 + zSlopeY;
+		}
+//		Vector3f end = new Vector3f(x0,y0,z0);
+//		System.err.println( slice + " " + start.distance(end) + " " + setCount + " " + count );
+	}
+
+	
+	/**
+	 * @param image the ModelImage for registering loaded VOIs.
+	 * @param voiDir the directory to load voi's from.
+	 * @param quietMode if true indicates that warnings should not be displayed.
+	 * @param resultVector the result VOI Vector containing the loaded VOIs.
+	 * @param registerVOIs when true the VOIs are registered in the input image.
+	 */
+	public static void loadAllVOIsFrom(ModelImage image, final String voiDir, boolean quietMode, VOIVector resultVector, boolean registerVOIs) {
+
+		int i, j;
+		VOI[] VOIs;
+		FileVOI fileVOI;
+
+		try {
+
+			// if voiDir does not exist, then return
+			// if voiDir exists, then get list of voi's from directory (*.voi)
+			final File voiFileDir = new File(voiDir);
+			final Vector<String> filenames = new Vector<String>();
+			final Vector<Boolean> isLabel = new Vector<Boolean>();
+
+			if (voiFileDir.exists() && voiFileDir.isDirectory()) {
+
+				// get list of files
+				final File[] files = voiFileDir.listFiles();
+
+				for (final File element : files) {
+
+					if (element.getName().endsWith(".voi") || element.getName().endsWith(".xml")) {
+						filenames.add(element.getName());
+						isLabel.add(false);
+					} else if (element.getName().endsWith(".lbl")) {
+						filenames.add(element.getName());
+						isLabel.add(true);
+					}
+				}
+			} else { // voiFileDir either doesn't exist, or isn't a directory
+
+				if ( !quietMode) {
+					MipavUtil.displayError("No VOIs are found in directory: " + voiDir);
+				}
+
+				return;
+			}
+
+			// open each voi array, then register voi array to this image
+			for (i = 0; i < filenames.size(); i++) {
+
+				fileVOI = new FileVOI( (filenames.elementAt(i)), voiDir, image);
+
+				VOIs = fileVOI.readVOI(isLabel.get(i));
+
+				for (j = 0; j < VOIs.length; j++) {
+
+                    if ( registerVOIs )
+                    {   	
+                    	image.registerVOI(VOIs[j]);
+                    }
+					if ( resultVector != null )
+					{
+						resultVector.add(VOIs[j]);
+					}
+				}
+			}
+            // when everything's done, notify the image listeners
+            if ( registerVOIs )
+            {   	
+            	image.notifyImageDisplayListeners();
+            }
+
+		} catch (final Exception error) {
+
+			if ( !quietMode) {
+				MipavUtil.displayError("Error loading all VOIs from " + voiDir + ": " + error);
+			}
+		}
+
+	}
+	
+
 }

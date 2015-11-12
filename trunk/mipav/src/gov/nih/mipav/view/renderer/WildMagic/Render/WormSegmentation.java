@@ -898,7 +898,7 @@ public abstract class WormSegmentation
 					final File lrFile = new File(voiDir + list[i]);
 					lrFile.delete();
 				}
-			} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+			} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { 
 			} else { // voiFileDir does not exist
 				voiFileDir.mkdir();
 			}
@@ -938,7 +938,7 @@ public abstract class WormSegmentation
     		text.setUseMarker(false);
     		annotations.getCurves().add(text);
     	}
-
+    	annotations.setColor(color);
 		image.registerVOI(annotations);
 	}
 
