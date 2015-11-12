@@ -5770,6 +5770,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         double T00, T01, T02, T10, T11, T12;
         ModelImage tmpMask;
         VOIVector voiVector;
+        VOI currentVOI;
 
         final int mod = Math.max(1, oXdim / 50);
 
@@ -5785,6 +5786,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         if (voiVector.size() == 0) {
             return;
         }
+        int numDestVOIs[] = new int[voiVector.size()];
 
         indexC = -1;
         try {
@@ -5896,6 +5898,27 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
                 }
             } // for (index2 = 0; index2 < curves.size(); index2++)
+            numDestVOIs[index] = destImage.getVOIs().size();
+        	if (index == 0) {
+        		for (i = 0; i < numDestVOIs[0]; i++) {
+        			currentVOI = destImage.getVOIs().get(i);
+        			currentVOI.setAllActive(true);
+        		}
+        	}
+        	else {
+        	    for (i = 0; i < numDestVOIs[index-1]; i++) {
+        	    	currentVOI = destImage.getVOIs().get(i);
+        	    	currentVOI.setAllActive(false);
+        	    }
+        	    for (i = numDestVOIs[index-1]; i < numDestVOIs[index]; i++) {
+        	    	currentVOI = destImage.getVOIs().get(i);
+        	    	currentVOI.setAllActive(true);
+        	    }
+        	}
+        	destImage.groupVOIs();
+    	    numDestVOIs[index] = destImage.getVOIs().size();
+    	    destImage.getVOIs().get(index).setName(image.getVOIs().get(index).getName());
+    	    destImage.getVOIs().get(index).setColor(image.getVOIs().get(index).getColor());
         } // for (index = 0; index < voiVector.size(); index++)
         tmpMask.disposeLocal();
         tmpMask = null;
@@ -6154,6 +6177,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         final int length = sliceSize * iZdim;
         int index2Size;
         VOIBaseVector curves = null;
+        VOI currentVOI;
 
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         ModelImage tmpMask = null;
@@ -6177,6 +6201,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         if (voiVector.size() == 0) {
             return;
         }
+        int numDestVOIs[] = new int[voiVector.size()];
 
         indexC = 0;
         final float invXRes = 1 / iXres;
@@ -6320,6 +6345,27 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
                 }
             } // for (index2 = 0; index2 < curves.size(); index2++)
+            numDestVOIs[index] = destImage.getVOIs().size();
+        	if (index == 0) {
+        		for (i = 0; i < numDestVOIs[0]; i++) {
+        			currentVOI = destImage.getVOIs().get(i);
+        			currentVOI.setAllActive(true);
+        		}
+        	}
+        	else {
+        	    for (i = 0; i < numDestVOIs[index-1]; i++) {
+        	    	currentVOI = destImage.getVOIs().get(i);
+        	    	currentVOI.setAllActive(false);
+        	    }
+        	    for (i = numDestVOIs[index-1]; i < numDestVOIs[index]; i++) {
+        	    	currentVOI = destImage.getVOIs().get(i);
+        	    	currentVOI.setAllActive(true);
+        	    }
+        	}
+        	destImage.groupVOIs();
+    	    numDestVOIs[index] = destImage.getVOIs().size();
+    	    destImage.getVOIs().get(index).setName(image.getVOIs().get(index).getName());
+    	    destImage.getVOIs().get(index).setColor(image.getVOIs().get(index).getColor());
         } // for (index = 0; index < voiVector.size(); index++)
         maskImage.disposeLocal();
         maskImage = null;
@@ -6358,6 +6404,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         final int length = sliceSize * iZdim;
         int index2Size;
         VOIBaseVector curves = null;
+        VOI currentVOI;
 
         if (fillValue > 255.0f) {
             byteFillValue = 255.0f;
@@ -6391,6 +6438,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         if (voiVector.size() == 0) {
             return;
         }
+        int numDestVOIs[] = new int[voiVector.size()];
 
         indexC = 0;
         final float invXRes = 1 / iXres;
@@ -6539,6 +6587,27 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
                 }
             } // for (index2 = 0; index2 < curves.size(); index2++)
+            numDestVOIs[index] = destImage.getVOIs().size();
+        	if (index == 0) {
+        		for (i = 0; i < numDestVOIs[0]; i++) {
+        			currentVOI = destImage.getVOIs().get(i);
+        			currentVOI.setAllActive(true);
+        		}
+        	}
+        	else {
+        	    for (i = 0; i < numDestVOIs[index-1]; i++) {
+        	    	currentVOI = destImage.getVOIs().get(i);
+        	    	currentVOI.setAllActive(false);
+        	    }
+        	    for (i = numDestVOIs[index-1]; i < numDestVOIs[index]; i++) {
+        	    	currentVOI = destImage.getVOIs().get(i);
+        	    	currentVOI.setAllActive(true);
+        	    }
+        	}
+        	destImage.groupVOIs();
+    	    numDestVOIs[index] = destImage.getVOIs().size();
+    	    destImage.getVOIs().get(index).setName(image.getVOIs().get(index).getName());
+    	    destImage.getVOIs().get(index).setColor(image.getVOIs().get(index).getColor());
         } // for (index = 0; index < voiVector.size(); index++)
         maskImage.disposeLocal();
         maskImage = null;
