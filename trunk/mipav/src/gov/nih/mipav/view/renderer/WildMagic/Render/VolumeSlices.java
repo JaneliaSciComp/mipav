@@ -685,4 +685,46 @@ public class VolumeSlices extends VolumeObject
             //m_akPlanes[i].IBuffer.SetShared(true);
         }
     }
+    
+    public void reCreateScene( VolumeImage kImageA, Vector3f kTranslate, float fX, float fY, float fZ )
+    {
+    	m_kVolumeImageA = kImageA;
+    	m_kTranslate.copy(kTranslate);
+    	m_fX = fX;
+    	m_fY = fY;
+    	m_fZ = fZ;  
+    	for ( int i = 0; i < 3; i++ )
+    	{
+    		m_akPlanes[i].Local.SetTranslate(m_kTranslate);
+    	}
+    	reCreateBoundingBox();
+    }
+
+    private void reCreateBoundingBox()
+    {
+    	float fX = m_fX * .5f;
+    	float fY = m_fY * .5f;
+    	float fZ = m_fZ * .5f;
+
+    	m_akBoundingBox[0].VBuffer.SetPosition3( 0, fX, 0, 0 ) ;
+    	m_akBoundingBox[0].VBuffer.SetPosition3( 1, fX, 0, m_fZ ) ;
+    	m_akBoundingBox[0].VBuffer.SetPosition3( 2, fX, m_fY, m_fZ ) ;
+    	m_akBoundingBox[0].VBuffer.SetPosition3( 3, fX, m_fY, 0 ) ;
+
+    	m_akBoundingBox[1].VBuffer.SetPosition3( 0, m_fX, fY, m_fZ ) ;
+    	m_akBoundingBox[1].VBuffer.SetPosition3( 1, 0, fY, m_fZ ) ;
+    	m_akBoundingBox[1].VBuffer.SetPosition3( 2, 0, fY, 0 ) ;
+    	m_akBoundingBox[1].VBuffer.SetPosition3( 3, m_fX, fY, 0 ) ;
+
+    	m_akBoundingBox[2].VBuffer.SetPosition3( 0, m_fX, 0, fZ ) ;
+    	m_akBoundingBox[2].VBuffer.SetPosition3( 1, 0, 0, fZ ) ;
+    	m_akBoundingBox[2].VBuffer.SetPosition3( 2, 0, m_fY, fZ ) ;
+    	m_akBoundingBox[2].VBuffer.SetPosition3( 3, m_fX, m_fY, fZ ) ;
+    	
+    	for ( int i = 0; i < 3; i++ )
+    	{
+    		m_akBoundingBox[i].Local.SetTranslate(m_kTranslate);
+    		m_akBoundingBox[i].Reload(true);
+    	}
+    }
 }

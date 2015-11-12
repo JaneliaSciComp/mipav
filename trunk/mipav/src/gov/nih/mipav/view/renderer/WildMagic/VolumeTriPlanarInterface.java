@@ -2412,9 +2412,15 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
      * @see gov.nih.mipav.view.ViewJFrameBase#windowClosing(java.awt.event.WindowEvent)
      */
     public void windowClosing(final WindowEvent event) {
-        close();
-        disposeLocal(true);
-        dispose();
+        if ( ViewUserInterface.getReference() != null && !ViewUserInterface.getReference().isAppFrameVisible()
+                && ViewUserInterface.getReference().isPlugInFrameVisible() )
+        {
+            System.exit(0);
+        } else {
+            close();
+            disposeLocal(true);
+            dispose();
+        }
     }
 
     /**

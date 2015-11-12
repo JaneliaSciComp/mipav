@@ -2052,6 +2052,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	 *            slider in JPanelClip).
 	 */
 	public void setClipPlane(int iWhich, float fValue, boolean bEnable) {
+//		System.err.println(iWhich + " " + fValue);
 		int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
 		if (iWhich < 2) {
 			fValue /= (aiExtents[0] - 1);
@@ -2063,7 +2064,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		if (m_kVolumeClip != null) {
 			m_kVolumeClip.setClipPlane(iWhich, fValue);
 		}
-
+		
 		float[] data = new float[4];
 		data[0] = fValue;
 		if (m_kVolumeRayCast != null) {
@@ -2987,6 +2988,12 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		m_fY = m_kVolumeImageA.GetScaleY();
 		m_fZ = m_kVolumeImageA.GetScaleZ();
 		m_fMax = Math.max(m_fX, Math.max(m_fY, m_fZ));
+		
+
+		m_kSlices.reCreateScene(m_kVolumeImageA, m_kTranslate, m_fX, m_fY, m_fZ);
+		m_kVolumeClip.reCreateScene(m_kVolumeImageA, m_kTranslate, m_fX, m_fY, m_fZ);
+//		m_kVolumeBox.reCreateScene(m_kVolumeImageA, m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ);
+//		m_kVolumeCube.reCreateScene(m_kVolumeImageA, m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ);
 
 		// initial update of objects
 		m_spkScene.UpdateGS();

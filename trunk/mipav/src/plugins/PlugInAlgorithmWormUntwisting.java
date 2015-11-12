@@ -40,12 +40,10 @@ import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.dialogs.JDialogRGBtoGrays;
 import gov.nih.mipav.view.renderer.WildMagic.Render.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentation;
-import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentationKMeans;
-import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentationLoG;
 import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentationWindowing;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 import ij.ImagePlus;
@@ -253,27 +251,23 @@ public class PlugInAlgorithmWormUntwisting
 			image = null;
 		}
 
-//		String fileName = baseFileName + "_MP_Y.tif";
-//		File voiFile = new File(baseFileDir + File.separator + fileName);		
-//		FileIO fileIO = new FileIO();
-//		maximumProjectionImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);
-		
 		// Write the image stack to file:
 		if ( maximumProjectionImage != null )
 		{
 			String fileName = baseFileDir + File.separator;
 //			System.err.println( "Saving mp image to : " + fileName + " " + maximumProjectionImage.getImageName() + ".tif" );
 			ModelImage.saveImage( maximumProjectionImage, maximumProjectionImage.getImageName() + ".tif", fileName, false ); 
+
+			maximumProjectionImage.calcMinMax();
+//			new ViewJFrameImage(maximumProjectionImage);
 			
 			// Launch ImageJ for viewing:
             final ImageStack is = ModelImageToImageJConversion.convert3D(maximumProjectionImage);
             new ImagePlus("ImageJ:" + maximumProjectionImage.getImageName(), is).show();
             new ij.ImageJ();
             
-//			maximumProjectionImage.calcMinMax();
-//			new ViewJFrameImage(maximumProjectionImage);
-//			maximumProjectionImage.disposeLocal();
-//			maximumProjectionImage = null;
+			maximumProjectionImage.disposeLocal();
+			maximumProjectionImage = null;
 		}
 	}
 
@@ -390,6 +384,7 @@ public class PlugInAlgorithmWormUntwisting
 		}
 		MipavUtil.displayInfo( "Lattice straightening complete." );
 	}
+	
 	/**
 	 * @param image the ModelImage for registering loaded VOIs.
 	 * @param voiDir the directory to load voi's from.
@@ -584,7 +579,6 @@ public class PlugInAlgorithmWormUntwisting
 				if ( voiFile.exists() )
 				{
 					step = 1;
-//					System.err.print( fileName + "   " );
 					FileIO fileIO = new FileIO();
 					if(image != null) {
 						if ( (i%10) == 0 )
@@ -628,16 +622,9 @@ public class PlugInAlgorithmWormUntwisting
 						}
 					}
 
-					Vector<Vector3f> dataPoints = new Vector<Vector3f>();
+//					Vector<Vector3f> dataPoints = new Vector<Vector3f>();
 					// calculate a robust histogram of the data values, used to find the left-right marker thresholds:
-					float[] max_LR = WormSegmentationWindowing.robustHistogram(image, dataPoints);	
-					if ( batchProgress != null )
-					{
-						batchProgress.setValue((int)(100 * (float)(i*numSteps + step++)/(numSteps*includeRange.size())));
-						batchProgress.update(batchProgress.getGraphics());
-					}
-					// Calculate the K-Means segmentation:
-					Vector<Vector3f> annotationskMeans = WormSegmentationKMeans.seamCellSegmentation(image);
+					float[] max_LR = WormSegmentationWindowing.robustHistogram(image, null);	
 					if ( batchProgress != null )
 					{
 						batchProgress.setValue((int)(100 * (float)(i*numSteps + step++)/(numSteps*includeRange.size())));
@@ -651,14 +638,7 @@ public class PlugInAlgorithmWormUntwisting
 						batchProgress.setValue((int)(100 * (float)(i*numSteps + step++)/(numSteps*includeRange.size())));
 						batchProgress.update(batchProgress.getGraphics());
 					}
-					
-					// Calculate the Laplacian of Gaussian segmentation:
-					Vector<Vector3f> annotationsLoG = WormSegmentationLoG.seamCellSegmentation(image);	
-					if ( batchProgress != null )
-					{
-						batchProgress.setValue((int)(100 * (float)(i*numSteps + step++)/(numSteps*includeRange.size())));
-						batchProgress.update(batchProgress.getGraphics());
-					}
+					image.unregisterAllVOIs();
 					
 					Vector<Vector3f> seamCells = new Vector<Vector3f>();
 					Vector<Vector3f> tempSeamCells = new Vector<Vector3f>();
@@ -666,24 +646,19 @@ public class PlugInAlgorithmWormUntwisting
 					{
 						tempSeamCells.add( new Vector3f(annotationsWindow.elementAt(k)) );
 					}
-					for ( int k = 0; k < annotationskMeans.size(); k++ )
-					{
-						tempSeamCells.add( new Vector3f(annotationskMeans.elementAt(k)) );
-					}
-					for ( int k = 0; k < annotationsLoG.size(); k++ )
-					{
-						tempSeamCells.add( new Vector3f(annotationsLoG.elementAt(k)) );						
-					}
 					int prevSize = tempSeamCells.size();
-					int newSize = WormSegmentation.reduceDuplicates(image, tempSeamCells, 5, 15, false);
-					while ( (prevSize > newSize) && (newSize > 22) )
+					if ( prevSize > 22 )
 					{
-						prevSize = newSize;
-						newSize = WormSegmentation.reduceDuplicates(image, tempSeamCells, 5, 15, false);
-					}
-					if ( newSize > 22 )
-					{
-						newSize = WormSegmentation.reduceDuplicates(image, tempSeamCells);
+						int newSize = WormSegmentation.reduceDuplicates(image, tempSeamCells, 5, 15, false);
+						while ( (prevSize > newSize) && (newSize > 22) )
+						{
+							prevSize = newSize;
+							newSize = WormSegmentation.reduceDuplicates(image, tempSeamCells, 5, 15, false);
+						}
+						if ( newSize > 22 )
+						{
+							newSize = WormSegmentation.reduceDuplicates(image, tempSeamCells);
+						}
 					}
 					if ( batchProgress != null )
 					{
@@ -705,13 +680,14 @@ public class PlugInAlgorithmWormUntwisting
 					}
 					count++;
 					WormSegmentation.saveAnnotations(image, seamCells, Color.blue );
-					final File voiFileDir = new File(baseFileDir + File.separator +  baseFileName + "_" + includeRange.elementAt(i) + File.separator);
+					File voiFileDir = new File(baseFileDir + File.separator +  baseFileName + "_" + includeRange.elementAt(i) + File.separator);
 					if ( !voiFileDir.exists()) {
 						voiFileDir.mkdir();
 					}
 					fileName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + autoSeamCellSegmentationOutput;  
 					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
 					WormSegmentation.saveAllVOIsTo(voiDir, image);
+					image.unregisterAllVOIs();
 				}
 			}
 			MipavUtil.displayInfo( "Finished seam cell segmentation. Segmented " + foundCount + " out of " + count + " volumes tested (" + (int)(100 * (float)foundCount/count) + "%)" );
@@ -804,7 +780,7 @@ public class PlugInAlgorithmWormUntwisting
 		}
 
 		// Given a set of potential tenth pairs, remove any that fail the mid-point test:
-		System.err.println( tenthPairs.size() + " " + tempMin + " " + tempMax );
+//		System.err.println( tenthPairs.size() + " " + tempMin + " " + tempMax );
 		if ( tenthPairs.size() > 1 )
 		{
 			for ( int i = tenthPairs.size() - 1; i >= 0; i-- )
@@ -994,15 +970,15 @@ public class PlugInAlgorithmWormUntwisting
 				{
 					if ( image.isColorImage() )
 					{
-						int index = zSlice[0]*dimX*dimY + y * dimX + x;
+						int index = y*dimX + x;
 						for ( int c = 0; c < 4; c++ )
 						{
-							maximumProjectionImage.set(index * 4 + c, mp.getC(index, c) );
+							maximumProjectionImage.setC(x, y, zSlice[0], c, mp.getC( index, c ));
 						}
 					}
 					else
 					{
-						maximumProjectionImage.set(x, y, zSlice[0], mp.get(x, y, 0) );
+						maximumProjectionImage.set(x, y, zSlice[0], mp.get(x, y) );
 					}
 				}
 			}

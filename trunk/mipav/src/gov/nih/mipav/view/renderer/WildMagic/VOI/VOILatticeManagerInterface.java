@@ -238,11 +238,28 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		else if ( command.equals("animateStraightening") )
 		{
 			System.err.println("Starting Worm Straightening Animation");
+			animationStep = 1;
+		}
+		else if ( command.equals("recordStraightening") )
+		{
+			System.err.println("Starting Worm Straightening Recording");
+			animationStep = 2;
 		}
 		else {
 			super.actionPerformed(event);
 		}
 
+	}
+	
+	private int animationStep = -1;
+	public int getAnimationStep()
+	{
+		return animationStep;
+	}
+	
+	public void setAnimationStep(int i)
+	{
+		animationStep = -1;
 	}
 
 	public int getCurrentIndex()

@@ -42,6 +42,7 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewImageUpdateInterface;
 import gov.nih.mipav.view.ViewJProgressBar;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
@@ -61,6 +62,8 @@ import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
@@ -89,7 +92,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  * and view/edit results from the automatic processes.
  * Provides framework for animating the annotations after untwisting.
  */
-public class PlugInDialogVolumeRender extends JFrame implements ActionListener, AlgorithmInterface, PropertyChangeListener, ViewImageUpdateInterface {
+public class PlugInDialogVolumeRender extends JFrame implements ActionListener, AlgorithmInterface, PropertyChangeListener, ViewImageUpdateInterface, WindowListener {
 
 	private static final long serialVersionUID = -9056581285643263551L;
 	
@@ -170,6 +173,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		this.editMode = EditNONE;
 		init(true);
 		setVisible(true);
+        addWindowListener(this);
 	}
 
 	public PlugInDialogVolumeRender( PlugInDialogVolumeRender parent, int mode, Vector<Integer> range, int index, String baseFileDir, String baseFileName )
@@ -404,7 +408,13 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		if (command.equals("close"))
 		{			
 			setVisible(false);
-			dispose();
+	        if ( ViewUserInterface.getReference() != null && !ViewUserInterface.getReference().isAppFrameVisible()
+	                && ViewUserInterface.getReference().isPlugInFrameVisible() )
+	        {
+                System.exit(0);
+            } else {
+                dispose();
+            }
 		}
 	}
 	
@@ -477,6 +487,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	
 	public void dispose()
 	{
+		super.dispose();
 		if ( annotationList != null )
 		{
 			annotationList.clear();
@@ -630,6 +641,35 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 		return false;
 	}
+	
+    @Override
+	public void windowActivated(WindowEvent e) {}
+
+	@Override
+	public void windowClosed(WindowEvent e) {}
+
+	public void windowClosing(final WindowEvent event)
+    {
+        if ( ViewUserInterface.getReference() != null && !ViewUserInterface.getReference().isAppFrameVisible()
+                && ViewUserInterface.getReference().isPlugInFrameVisible() )
+        {
+            System.exit(0);
+        } else {
+            dispose();
+        }
+    }
+
+	@Override
+	public void windowDeactivated(WindowEvent e) {}
+	
+	@Override
+	public void windowDeiconified(WindowEvent e) {}
+
+	@Override
+	public void windowIconified(WindowEvent e) {}
+
+	@Override
+	public void windowOpened(WindowEvent e) {}
 
 	/**
 	 * Opens the current image and annotation VOIs for viewing/editing.
@@ -669,6 +709,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			}
 		}
 	}
+
 
 	/**
 	 * Opens the current image for viewing. If this is the fist image the volume renderer is created and initialized.
@@ -739,7 +780,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 		return false;
 	}
-
+	
 	/**
 	 * Opens the current image and lattice for viewing/editing.
 	 */
@@ -813,7 +854,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			}
 		}
 	}
-
+	
 	/**
 	 *  Opens the current image and seam cells for viewing/editing.
 	 */
@@ -839,13 +880,12 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
 
 					if ( annotations.size() == 0 )
-					{
+					{						
 						fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInAlgorithmWormUntwisting.autoSeamCellSegmentationOutput;
 						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
 						PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
 					}
-
-					if ( voiManager != null )
+					if ( (annotations.size() > 0) && (voiManager != null) )
 					{
 						voiManager.setAnnotations(annotations);
 						voiManager.editAnnotations(true);
@@ -854,7 +894,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			}
 		}
 	}
-
+	
 	/**
 	 * Opens the current volume for viewing including the straightened annotations and lattice.
 	 */
@@ -1195,7 +1235,6 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		segmentSeamCells.setSelected(true);
 	}
 
-
 	/**
 	 * User-interface initialization. If the UI is integrated all panels are displayed in one window.
 	 * Otherwise the UI is divided into volume display and separate UI panels.
@@ -1295,7 +1334,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 		segmentSeamCells.setSelected(true);
 	}
-	
+
 	/**
 	 * Initializes volume rendering with the GPU.
 	 * @param editMode
@@ -1319,7 +1358,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		setResizable(true);
 
 	}
-	
+
 	/**
 	 * Sets up the GPU volume display panel, with the 'back' and 'next' buttons for
 	 * going through the images and editing the seam cells or lattices.
@@ -1388,7 +1427,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 		return dialogGUI.getContentPane();
 	}
-	
+
 	/**
 	 * Builds the algorithms panel for automatic seam-cell detection, automatic lattice building, straightening, etc.
 	 * Sets up the buttons and return the panel.

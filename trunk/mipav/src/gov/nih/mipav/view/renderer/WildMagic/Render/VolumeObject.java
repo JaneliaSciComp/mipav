@@ -451,6 +451,8 @@ public abstract class VolumeObject
     	MipavCoordinateSystems.fileToScanner( kPt, kScanner, m_kVolumeImageA.GetImage() );
     	kPt.copy(kScanner);
     }
+    
+//    public abstract void reCreateScene( VolumeImage kImageA, Vector3f kTranslate, float fX, float fY, float fZ );
         
     protected void scale( VertexBuffer kVertexBuffer )
     {
