@@ -1399,6 +1399,14 @@ so for M even the value of BJ(M+1) will be used, but the value of BJ(M+1) has no
 		return s;
 	}
 	
+	public DoubleDouble mod(DoubleDouble x) {
+		DoubleDouble div = this.divide(x);
+		DoubleDouble rdiv = DoubleDouble.valueOf(div.intValue());
+		DoubleDouble mul = rdiv.multiply(x);
+		DoubleDouble ans = this.subtract(mul);
+		return ans;
+	}
+	
 	/**
 	 * 
 	 * @param x the DoubleDouble exponent
