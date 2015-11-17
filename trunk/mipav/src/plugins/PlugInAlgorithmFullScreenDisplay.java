@@ -282,7 +282,8 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
             zoomX = (double)expWidth/(double)xDim;
             zoomY = (double)(screenHeight - 158)/(double)yDim;
             // Print center of upper left icon
-            System.out.println("x = " + (40 + leftPadding/2) + " , y = " + 39);
+            System.out.println("Upper left icon center x = " + (40 + leftPadding/2) + " , y = " + 39);
+            System.out.println("Lower right icon center x = " + (120 + 3*leftPadding/2 + expWidth) + " , y = " + (screenHeight - 40));
         }
         else {
         	// Can only expand by the widthRatio
@@ -291,7 +292,8 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
             zoomX = (double)(screenWidth - 160)/(double)xDim;
             zoomY = (double)expHeight/(double)yDim;
             // Print center of upper left icon
-            System.out.println("x = " + 40 + " , y = " + (39 + topPadding));
+            System.out.println("Upper left icon center x = " + 40 + " , y = " + (39 + topPadding));
+            System.out.println("Lower right icon center x = " + (screenWidth - 40) + ", y = " + (118 + topPadding + expHeight));
         }
         frame.setBackground(Color.BLACK);
         frame.add(new Component() {
