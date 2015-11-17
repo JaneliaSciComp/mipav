@@ -6,6 +6,7 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameBase;
+import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -17,11 +18,9 @@ import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-
 import java.io.IOException;
-
-import javax.swing.JFrame;
-import javax.swing.JTextArea;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -120,6 +119,14 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
     private double zoomX;
     
     private double zoomY;
+   
+    private int xMinRef;
+    
+    private int yMinRef;
+    
+    private int xMaxRef;
+    
+    private int yMaxRef;
 
 
     public PlugInAlgorithmFullScreenDisplay(ModelImage image, final Image cornerImage, 
@@ -282,8 +289,12 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
             zoomX = (double)expWidth/(double)xDim;
             zoomY = (double)(screenHeight - 158)/(double)yDim;
             // Print center of upper left icon
-            System.out.println("Upper left icon center x = " + (40 + leftPadding/2) + " , y = " + 39);
-            System.out.println("Lower right icon center x = " + (120 + 3*leftPadding/2 + expWidth) + " , y = " + (screenHeight - 40));
+            // System.out.println("Upper left icon center x = " + (40 + leftPadding/2) + " , y = " + 39);
+            xMinRef = (40 + leftPadding/2);
+            yMinRef = 39;
+            // System.out.println("Lower right icon center x = " + (120 + 3*leftPadding/2 + expWidth) + " , y = " + (screenHeight - 40));
+            xMaxRef = (120 + 3*leftPadding/2 + expWidth);
+            yMaxRef = (screenHeight - 40);
         }
         else {
         	// Can only expand by the widthRatio
@@ -292,8 +303,12 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
             zoomX = (double)(screenWidth - 160)/(double)xDim;
             zoomY = (double)expHeight/(double)yDim;
             // Print center of upper left icon
-            System.out.println("Upper left icon center x = " + 40 + " , y = " + (39 + topPadding));
-            System.out.println("Lower right icon center x = " + (screenWidth - 40) + ", y = " + (118 + topPadding + expHeight));
+            // System.out.println("Upper left icon center x = " + 40 + " , y = " + (39 + topPadding));
+            xMinRef = 40;
+            yMinRef = (39 + topPadding);
+            // System.out.println("Lower right icon center x = " + (screenWidth - 40) + ", y = " + (118 + topPadding + expHeight));
+            xMaxRef = (screenWidth - 40);
+            xMinRef = (118 + topPadding + expHeight);
         }
         frame.setBackground(Color.BLACK);
         frame.add(new Component() {
@@ -349,6 +364,7 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
         	public void keyPressed(KeyEvent e) {
         	    int key = e.getKeyCode();
         	    if(key == KeyEvent.VK_ESCAPE){
+        	    	MipavUtil.setEyeTrackingEnabled(false, null);
         	    	frame.dispose();
         	    }
         	}
@@ -386,6 +402,10 @@ public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
         int RGBIndexBufferA[];
         int lutBufferRemapped[];
         final int wheelRotation = mouseWheelEvent.getWheelRotation();
+        int xCoord = mouseWheelEvent.getX();
+    	int yCoord = mouseWheelEvent.getY();
+    	
+        
         if (((wheelRotation < 0) && (zOffset < zDim - 1)) ||  ((wheelRotation > 0) && (zOffset > 0))) {
         	if (wheelRotation < 0) {
         	    // Increment slice
@@ -448,6 +468,12 @@ public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
         	else {
         		frame.repaint(80, 79 + topPadding, screenWidth - 160, expHeight);
         	}
+        	
+	    	if ( MipavUtil.isEyeTrackingEnabled() ) {
+	          String imageTimeStamp = getImageTimeStamp();
+	          MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Sliding 3D, " + "Mouse wheel rolling, " + " increase, " + 0 + ", " +  (xCoord-xMinRef) + ", " + (yCoord-yMinRef));   
+	        }
+              
         } // if (((wheelRotation < 0) && (zOffset < zDim - 1)) ||  ((wheelRotation > 0) && (zOffset > 0)))
 }
 
@@ -538,6 +564,12 @@ public void mouseDragged(final MouseEvent mouseEvent) {
 		frame.repaint(80, 79 + topPadding, screenWidth - 160, expHeight);
 	}
     frame.setCursor(MipavUtil.winLevelCursor);
+    
+    if ( MipavUtil.isEyeTrackingEnabled() ) {
+    	String imageTimeStamp = getImageTimeStamp();
+    	MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Win level, " + "Right mouse button, " + " alphaBlend, " + old_fLevel + ", " +  (mouseEvent.getX()-xMinRef) + ", " + (mouseEvent.getY()-yMinRef));    
+    }
+    
     
     if ( !winLevelSet) {
         //setCursor(MipavUtil.winLevelCursor);
@@ -907,6 +939,28 @@ private void updateWinLevelGray( ModelLUT kLUT, ModelImage kImage,
 {
     /* Update the HistoLUT and the renderers: */
     kLUT.getTransferFunction().importArrays( afXWin, afYWin, 4 );
+}
+
+
+/**
+ * Get the system timestamp. 
+ * @return
+ */
+private String getImageTimeStamp() {
+	SimpleDateFormat sdfDate = new SimpleDateFormat("HH:mm:ss.SSSZ");
+	Date now = new Date();
+	String strDate = sdfDate.format(now);
+	int index = strDate.lastIndexOf('-');
+	String timeString = strDate.substring(0, index);
+	// System.err.println(timeString);
+	String imageName = srcImage.getImageName();
+	int sliceNumber = zOffset + 1;
+    // int[] landmarkPoints = ((ViewJFrameImage) frame).getFrameLandMarkPoints();
+
+	return (timeString + ", " + imageName + ", " + sliceNumber + ", "
+			+ xMinRef + ", " + yMinRef + ", "
+			+ xMaxRef + ", " + yMaxRef + ", ");
+	
 }
 
 
