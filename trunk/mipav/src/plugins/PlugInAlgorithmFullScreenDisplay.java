@@ -281,6 +281,8 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
             leftPadding = (screenWidth - 160 - expWidth) / 2;
             zoomX = (double)expWidth/(double)xDim;
             zoomY = (double)(screenHeight - 158)/(double)yDim;
+            // Print center of upper left icon
+            System.out.println("x = " + (40 + leftPadding/2) + " , y = " + 39);
         }
         else {
         	// Can only expand by the widthRatio
@@ -288,6 +290,8 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
             topPadding = (screenHeight - 158 - expHeight) / 2;
             zoomX = (double)(screenWidth - 160)/(double)xDim;
             zoomY = (double)expHeight/(double)yDim;
+            // Print center of upper left icon
+            System.out.println("x = " + 40 + " , y = " + (39 + topPadding));
         }
         frame.setBackground(Color.BLACK);
         frame.add(new Component() {
@@ -298,10 +302,10 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
                 if (widthRatio > heightRatio) {
                     g.drawImage(inputImage, 80 + leftPadding, 79, expWidth, screenHeight - 158, null);
                     if (cornerImage != null) {
-                        g.drawImage(cornerImage, leftPadding, 0, 80, 79, null);
-                        g.drawImage(cornerImage, 80 + leftPadding + expWidth, 0, 80, 79, null);
-                        g.drawImage(cornerImage, leftPadding, screenHeight - 79, 80, 79, null);
-                        g.drawImage(cornerImage, 80 + leftPadding + expWidth, screenHeight - 79, 80, 79, null);
+                        g.drawImage(cornerImage, leftPadding/2, 0, 80, 79, null);
+                        g.drawImage(cornerImage, 80 + 3*leftPadding/2 + expWidth, 0, 80, 79, null);
+                        g.drawImage(cornerImage, leftPadding/2, screenHeight - 79, 80, 79, null);
+                        g.drawImage(cornerImage, 80 + 3*leftPadding/2 + expWidth, screenHeight - 79, 80, 79, null);
                     } // if (cornerImage != null)
                 } else {
                     g.drawImage(inputImage, 80, 79 + topPadding, screenWidth - 160, expHeight, null);
