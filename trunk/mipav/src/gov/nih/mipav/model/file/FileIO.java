@@ -2776,37 +2776,34 @@ public class FileIO {
                         return null;
                     }
 
-                   
                     fileDir = tempDir;
-                    
+
                     final byte[] buffer = new byte[256];
-                    
+
                     ZipEntry ze = null;
                     try {
-                    	ze = zin.getNextEntry();
-                    }
-                    catch (IOException e) {
-                    	MipavUtil.displayError("IOException " + e + " on ze = zin.getNextEntry()");
-                    	return null;
+                        ze = zin.getNextEntry();
+                    } catch (final IOException e) {
+                        MipavUtil.displayError("IOException " + e + " on ze = zin.getNextEntry()");
+                        return null;
                     }
 
                     while (ze != null) {
-                    	 fileName = ze.getName();
-                    	 uncompressedName = fileDir + fileName;
-                         try {
-                             out = new FileOutputStream(uncompressedName);
-                         } catch (final IOException e) {
-                             MipavUtil.displayError("IOException " + e + " on out = new FileOutputStream("+uncompressedName+")");
-                             return null;
-                         }
+                        fileName = ze.getName();
+                        uncompressedName = fileDir + fileName;
+                        try {
+                            out = new FileOutputStream(uncompressedName);
+                        } catch (final IOException e) {
+                            MipavUtil.displayError("IOException " + e + " on out = new FileOutputStream(" + uncompressedName + ")");
+                            return null;
+                        }
                         while (true) {
 
                             try {
-                        	    bytesRead = zin.read(buffer);
-                            }
-                            catch (IOException e) {
-                            	MipavUtil.displayError("IOException " + e + " on zin.read(buffer) for " + uncompressedName);
-                                return null;	
+                                bytesRead = zin.read(buffer);
+                            } catch (final IOException e) {
+                                MipavUtil.displayError("IOException " + e + " on zin.read(buffer) for " + uncompressedName);
+                                return null;
                             }
 
                             if (bytesRead == -1) {
@@ -2816,12 +2813,11 @@ public class FileIO {
                             totalBytesRead += bytesRead;
                             try {
                                 out.write(buffer, 0, bytesRead);
+                            } catch (final IOException e) {
+                                MipavUtil.displayError("IOException " + e + " out.write(buffer, 0, bytesRead) for " + uncompressedName);
+                                return null;
                             }
-                            catch (IOException e) {
-                            	MipavUtil.displayError("IOException " + e + " out.write(buffer, 0, bytesRead) for " + uncompressedName);
-                                return null;	
-                            }
-                            
+
                         }
                         try {
                             out.flush();
@@ -2829,14 +2825,14 @@ public class FileIO {
                             MipavUtil.displayError("IOException " + e + " on out.flush() for " + uncompressedName);
                             return null;
                         }
-                        
+
                         try {
                             out.close();
                         } catch (final IOException e) {
                             MipavUtil.displayError("IOException " + e + " on out.close() for " + uncompressedName);
                             return null;
                         }
-                        
+
                         try {
                             ze = zin.getNextEntry();
                         } catch (final IOException e) {
@@ -2846,25 +2842,22 @@ public class FileIO {
                     } // while (ze != null)
                     try {
                         zin.closeEntry();
-                    }
-                    catch (IOException e) {
-                    	MipavUtil.displayError("IOException " + e + " on zin.closeEntry()");
-                    	return null;
+                    } catch (final IOException e) {
+                        MipavUtil.displayError("IOException " + e + " on zin.closeEntry()");
+                        return null;
                     }
                     try {
                         zin.close();
+                    } catch (final IOException e) {
+                        MipavUtil.displayError("IOException " + e + " on zin.close()");
+                        return null;
                     }
-                    catch (IOException e) {
-                    	MipavUtil.displayError("IOException " + e + " on zin.close()");
-                    	return null;
-                    }
-                    
+
                     try {
-                    	fis.close();
-                    }
-                    catch (IOException e) {
-                    	MipavUtil.displayError("IOException " + e + " on fis.close()");
-                    	return null;
+                        fis.close();
+                    } catch (final IOException e) {
+                        MipavUtil.displayError("IOException " + e + " on fis.close()");
+                        return null;
                     }
                 } // if (unzip)
                 else if (gunzip) {
@@ -3130,7 +3123,7 @@ public class FileIO {
                     break;
 
                 case FileUtility.DICOM:
-                	this.fileDir = fileDir;
+                    this.fileDir = fileDir;
                     if ( !multiFile) {
                         image = readDicom(fileName, new String[] {fileName.trim()}, false);
                     } else {
@@ -3210,7 +3203,7 @@ public class FileIO {
                 case FileUtility.PGM:
                     image = readPGM(fileName, fileDir);
                     break;
-                    
+
                 case FileUtility.PPM:
                     image = readPPM(fileName, fileDir);
                     break;
@@ -3379,7 +3372,7 @@ public class FileIO {
         } else {
             final boolean zerofunused[] = new boolean[1];
             fileType = FileUtility.getFileType(fileName, fileDir, false, quiet, zerofunused); // set the fileType
-           
+
             if (fileType == FileUtility.ERROR) {
                 return fileType;
             }
@@ -11743,7 +11736,7 @@ public class FileIO {
         return image;
 
     }
-    
+
     /**
      * Reads a PPM file by calling the read method of the file.
      * 
@@ -13068,15 +13061,18 @@ public class FileIO {
         FileTiff imageFile;
 
         try {
+            // final long start = System.currentTimeMillis();
             imageFile = new FileTiff(fileName, fileDir);
             imageFile.setTIFFOrientation(doTIFFOrientation);
             imageFile.setSuppressProgressBar(suppressProgressBar);
             if ( !suppressProgressBar) {
-                createProgressBar(imageFile, fileName, FileIO.FILE_READ);
+                // TODO: removed progress bar because it was causing huge slowdowns on some files. needs to have
+                // possible threading issue fixed.
+                // createProgressBar(imageFile, fileName, FileIO.FILE_READ);
             }
             image = imageFile.readImage(false, one);
             LUT = imageFile.getModelLUT();
-
+            // System.err.println("read (sec): " + ( (System.currentTimeMillis() - start) / 1000));
         } catch (final IOException error) {
 
             if (image != null) {
@@ -13144,12 +13140,15 @@ public class FileIO {
 
             if (nFiles == 1) { // The multiFile flag is true but there is only one image in the
                 // directory with the prefix name so read and return image as a single file.
+
+                // final long start = System.currentTimeMillis();
                 imageFile.setTIFFOrientation(doTIFFOrientation);
                 imageFile.setSuppressProgressBar(suppressProgressBar);
                 image = imageFile.readImage(false, false);
                 LUT = imageFile.getModelLUT();
                 imageFile.finalize();
                 imageFile = null;
+                // System.err.println("read (sec): " + ( (System.currentTimeMillis() - start) / 1000));
 
                 return image;
             } else {
@@ -15768,98 +15767,85 @@ public class FileIO {
 
         final int beginSlice = options.getBeginSlice();
         final int endSlice = options.getEndSlice();
-        
+
         final int beginTime = options.getBeginTime();
         final int endTime = options.getEndTime();
-        
-        int sliceZeroPadding = String.valueOf(endSlice + 1).length();
-        int timeZeroPadding = String.valueOf(endTime).length();
-        String sliceZeroPaddingFormat = "%0" + sliceZeroPadding + "d";
-        String timeZeroPaddingFormat = "%0" + timeZeroPadding + "d";
 
-        if(image.getNDims() <= 3) {
-        
-        
-	        for (int i = beginSlice; i <= endSlice; i++) {
-	
-	            Image im;
-	
-	            ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().createImg(i);
-	
-	            im = ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().getImage();
-	
-	            
-	            String sliceString = String.format(sliceZeroPaddingFormat, Integer.valueOf(i+1)); 
-	            
-	            
-	            name = options.getFileDirectory() + prefix + "_" + sliceString + fileSuffix;
-	            
-	            
-	            /*if ( (i < 9) && (endSlice != beginSlice)) {
-	                name = options.getFileDirectory() + prefix + "00" + (i + 1) + fileSuffix;
-	            } else if ( (i >= 9) && (i < 99) && (endSlice != beginSlice)) {
-	                name = options.getFileDirectory() + prefix + "0" + (i + 1) + fileSuffix;
-	            } else if (endSlice != beginSlice) {
-	                name = options.getFileDirectory() + prefix + (i + 1) + fileSuffix;
-	            } else {
-	                name = options.getFileDirectory() + prefix + fileSuffix;
-	            }*/
-	
-	            try {
-	                Jimi.putImage(im, name);
-	            } catch (final JimiException jimiException) {
-	                Preferences.debug("JIMI write error: " + jimiException + "\n", Preferences.DEBUG_FILEIO);
-	
-	                jimiException.printStackTrace();
-	
-	                return false;
-	            }
-	        }
-        }else {
-        	
-        	for(int t = beginTime; t <= endTime; t++) {
-        		
-        		for (int i = beginSlice; i <= endSlice; i++) {
-        			
-    	            Image im;
-    	
-    	            ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().createImg(t,i);
-    	
-    	            im = ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().getImage();
-    	
-    	            
-    	            String sliceString = String.format(sliceZeroPaddingFormat, Integer.valueOf(i+1)); 
-    	            String timeString = String.format(timeZeroPaddingFormat, Integer.valueOf(t)); 
-    	            
-    	            name = options.getFileDirectory() + prefix + "_t" + timeString + "_" + sliceString + fileSuffix;
-    	            
-    	            
-    	            /*if ( (i < 9) && (endSlice != beginSlice)) {
-    	                name = options.getFileDirectory() + prefix + "_t" + t + "_00" + (i + 1) + fileSuffix;
-    	            } else if ( (i >= 9) && (i < 99) && (endSlice != beginSlice)) {
-    	                name = options.getFileDirectory() + prefix + "_t" + t + "_0" + (i + 1) + fileSuffix;
-    	            } else if (endSlice != beginSlice) {
-    	                name = options.getFileDirectory() + prefix + "_t" + t + "_" + (i + 1) + fileSuffix;
-    	            } else {
-    	                name = options.getFileDirectory() + prefix + fileSuffix;
-    	            }*/
-    	
-    	            try {
-    	                Jimi.putImage(im, name);
-    	            } catch (final JimiException jimiException) {
-    	                Preferences.debug("JIMI write error: " + jimiException + "\n", Preferences.DEBUG_FILEIO);
-    	
-    	                jimiException.printStackTrace();
-    	
-    	                return false;
-    	            }
-    	        }
-        		
-        		
-        	}
-        	
-        	
-        	
+        final int sliceZeroPadding = String.valueOf(endSlice + 1).length();
+        final int timeZeroPadding = String.valueOf(endTime).length();
+        final String sliceZeroPaddingFormat = "%0" + sliceZeroPadding + "d";
+        final String timeZeroPaddingFormat = "%0" + timeZeroPadding + "d";
+
+        if (image.getNDims() <= 3) {
+
+            for (int i = beginSlice; i <= endSlice; i++) {
+
+                Image im;
+
+                ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().createImg(i);
+
+                im = ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().getImage();
+
+                final String sliceString = String.format(sliceZeroPaddingFormat, Integer.valueOf(i + 1));
+
+                name = options.getFileDirectory() + prefix + "_" + sliceString + fileSuffix;
+
+                /*
+                 * if ( (i < 9) && (endSlice != beginSlice)) { name = options.getFileDirectory() + prefix + "00" + (i +
+                 * 1) + fileSuffix; } else if ( (i >= 9) && (i < 99) && (endSlice != beginSlice)) { name =
+                 * options.getFileDirectory() + prefix + "0" + (i + 1) + fileSuffix; } else if (endSlice != beginSlice)
+                 * { name = options.getFileDirectory() + prefix + (i + 1) + fileSuffix; } else { name =
+                 * options.getFileDirectory() + prefix + fileSuffix; }
+                 */
+
+                try {
+                    Jimi.putImage(im, name);
+                } catch (final JimiException jimiException) {
+                    Preferences.debug("JIMI write error: " + jimiException + "\n", Preferences.DEBUG_FILEIO);
+
+                    jimiException.printStackTrace();
+
+                    return false;
+                }
+            }
+        } else {
+
+            for (int t = beginTime; t <= endTime; t++) {
+
+                for (int i = beginSlice; i <= endSlice; i++) {
+
+                    Image im;
+
+                    ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().createImg(t, i);
+
+                    im = ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().getImage();
+
+                    final String sliceString = String.format(sliceZeroPaddingFormat, Integer.valueOf(i + 1));
+                    final String timeString = String.format(timeZeroPaddingFormat, Integer.valueOf(t));
+
+                    name = options.getFileDirectory() + prefix + "_t" + timeString + "_" + sliceString + fileSuffix;
+
+                    /*
+                     * if ( (i < 9) && (endSlice != beginSlice)) { name = options.getFileDirectory() + prefix + "_t" + t
+                     * + "_00" + (i + 1) + fileSuffix; } else if ( (i >= 9) && (i < 99) && (endSlice != beginSlice)) {
+                     * name = options.getFileDirectory() + prefix + "_t" + t + "_0" + (i + 1) + fileSuffix; } else if
+                     * (endSlice != beginSlice) { name = options.getFileDirectory() + prefix + "_t" + t + "_" + (i + 1)
+                     * + fileSuffix; } else { name = options.getFileDirectory() + prefix + fileSuffix; }
+                     */
+
+                    try {
+                        Jimi.putImage(im, name);
+                    } catch (final JimiException jimiException) {
+                        Preferences.debug("JIMI write error: " + jimiException + "\n", Preferences.DEBUG_FILEIO);
+
+                        jimiException.printStackTrace();
+
+                        return false;
+                    }
+                }
+
+            }
+
         }
 
         ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().show(0, slice, null, null, true, -1);
@@ -16718,7 +16704,7 @@ public class FileIO {
             progressBar = new ViewJProgressBar(options.getFileName(), FileIO.FILE_WRITE + options.getFileName() + " ...", 0, 100, true, null, null, !quiet);
             imageFile = new FileJP2(options.getFileName(), options.getFileDirectory(), progressBar);
 
-            (imageFile).writeImage(image,options);
+            (imageFile).writeImage(image, options);
         } catch (final IOException error) {
 
             if ( !quiet) {
@@ -16733,7 +16719,7 @@ public class FileIO {
             }
 
             return false;
-        } 
+        }
         progressBar.setVisible(false);
         progressBar = null;
         return true;
