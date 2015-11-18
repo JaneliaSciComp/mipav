@@ -153,22 +153,11 @@ public class VolumeImage implements Serializable {
 	 * @param iProgress progress bar increment
 	 */
 	public VolumeImage(boolean bClone, final ModelImage kImage, final String kPostfix, final ViewJProgressBar kProgress, final int iProgress) {
-		m_kPostfix = new String(kPostfix);
+		this( bClone, kImage, kPostfix, kProgress, iProgress, true );
+	}
 
-		// See if the render files directory exists for this image, if not create it.
-//		String kImageName = ModelImage.makeImageName(kImage.getFileInfo(0).getFileName(), "");
-//		try {
-//			m_kDir = kImage.getFileInfo()[0].getFileDirectory().concat(kImageName + "_RenderFiles" + File.separator);
-//		} catch ( NullPointerException e )
-//		{
-//			m_kDir = new String(kImageName + "_RenderFiles" + File.separator);
-//		}
-//		final File kDir = new File(m_kDir);
-//		if ( !kDir.exists()) {
-//			try {
-//				kDir.mkdir();
-//			} catch (final SecurityException e) {}
-//		}
+	public VolumeImage(boolean bClone, final ModelImage kImage, final String kPostfix, final ViewJProgressBar kProgress, final int iProgress, boolean initGradientMagnitude) {
+		m_kPostfix = new String(kPostfix);
 		// clone the input image, in the future this might be a reference.
 		if ( bClone )
 		{
@@ -179,7 +168,7 @@ public class VolumeImage implements Serializable {
 			m_kImage = kImage;
 		}
 		// Initialize the Texture maps.
-		init(kProgress, iProgress);
+		init(kProgress, iProgress, initGradientMagnitude);
 	}
 
 	/**
@@ -565,8 +554,8 @@ public class VolumeImage implements Serializable {
 		} 
 		else
 		{
-			aucDataGM = new byte[iSize];
 			try {
+				aucDataGM = new byte[iSize];
 				kImageGM.exportDataUseMask(0, iSize, false, aucDataGM);
 				byte[] aucData2 = new byte[iSize*4];
 				for (int i = 0; i < iSize; i++) {
@@ -587,6 +576,8 @@ public class VolumeImage implements Serializable {
 				}
 			} catch (final IOException e) {
 				e.printStackTrace();
+			} catch ( java.lang.OutOfMemoryError e ) {
+				return null;
 			}
 			aucDataGM = null;
 		}
@@ -734,8 +725,10 @@ public class VolumeImage implements Serializable {
 			m_kImageGM.disposeLocal();
 			m_kImageGM = null;
 		}
+		
 		for (final GraphicsImage element : m_kVolumeGM) {
-			element.dispose();
+			if ( element != null )
+				element.dispose();
 		}
 		m_kVolumeGM = null;
 		m_kVolumeGMTarget.dispose();
@@ -1225,28 +1218,39 @@ public class VolumeImage implements Serializable {
 		int end = m_kImage.getNDims() > 3 ? m_iTimeSteps : 1;
 		if ( !m_bGMInit )
 		{
-//			System.err.println( "SetGradientMagnitude " + 0 );
-			m_kImageGM = getGradientMagnitude( m_kImage, 0 );
-			m_kVolumeGM[0] = createGM_Laplace(m_kImageGM, null, m_kVolumeGM[0], 0, true);
-			m_akGradientMagMinMax[0] = new Vector2f( (float)m_kImageGM.getMin(), (float)m_kImageGM.getMax() );	
-			m_kVolumeGMTarget.SetImage(m_kVolumeGM[0]);
-			m_kVolumeGMTarget.Reload(true);
-			m_bGMInit = true;
-			
 			try { 
+				//			System.err.println( "SetGradientMagnitude " + 0 );
+				m_kImageGM = getGradientMagnitude( m_kImage, 0 );
+				if ( m_kImageGM != null )
+				{
+					m_kVolumeGM[0] = createGM_Laplace(m_kImageGM, null, m_kVolumeGM[0], 0, true);
+					if ( m_kVolumeGM[0] != null )
+					{
+						m_akGradientMagMinMax[0] = new Vector2f( (float)m_kImageGM.getMin(), (float)m_kImageGM.getMax() );	
+						m_kVolumeGMTarget.SetImage(m_kVolumeGM[0]);
+						m_kVolumeGMTarget.Reload(true);
+						m_bGMInit = true;
+					}
+				}
 				for (int i = 1; i < m_iTimeSteps; i++)
 				{
-//					System.err.println( "SetGradientMagnitude " + i );
+					//					System.err.println( "SetGradientMagnitude " + i );
 					ModelImage gmImage = getGradientMagnitude( m_kImage, i );
-					m_kVolumeGM[i] = createGM_Laplace(gmImage, null, m_kVolumeGM[i], i, true);
-					m_akGradientMagMinMax[i] = new Vector2f( (float)gmImage.getMin(), (float)gmImage.getMax() );	
-					gmImage.disposeLocal();
-					end = i + 1;
+					if ( gmImage != null )
+					{
+						m_kVolumeGM[i] = createGM_Laplace(gmImage, null, m_kVolumeGM[i], i, true);
+						if ( m_kVolumeGM[i] != null )
+						{
+							m_akGradientMagMinMax[i] = new Vector2f( (float)gmImage.getMin(), (float)gmImage.getMax() );	
+							gmImage.disposeLocal();
+							end = i + 1;
+						}
+					}
 				} 
 			} catch ( java.lang.OutOfMemoryError e ) {}
 		}
 
-		if ( bComputeLaplace )
+		if ( m_bGMInit && bComputeLaplace && (m_kImageGM != null))
 		{
 			GenerateHistogram(m_kVolume, m_kVolumeGM, kPostfix, start, end );
 		}
@@ -1838,7 +1842,7 @@ public class VolumeImage implements Serializable {
 	 * @param kProgress progress bar
 	 * @param iProgress progress bar increment
 	 */
-	private void init(final ViewJProgressBar kProgress, final int iProgress) {
+	private void init(final ViewJProgressBar kProgress, final int iProgress, boolean initGradientMagnitude) {
 		// Create LUTS for the ModelImage:
 		initLUT();
 		// Initialize Texture Maps:
@@ -1850,9 +1854,10 @@ public class VolumeImage implements Serializable {
 		{
 			initImagesColor();
 		}
-
-		SetGradientMagnitude(null, true, m_kPostfix); 
-		
+		if ( initGradientMagnitude )
+		{
+			SetGradientMagnitude(null, true, m_kPostfix);
+		}
 		if (kProgress != null) {
 			kProgress.updateValueImmed(kProgress.getValue() + iProgress);
 		}
@@ -2211,7 +2216,7 @@ public class VolumeImage implements Serializable {
 			final String kImageName = (String) in.readObject();
 			m_kPostfix = (String) in.readObject();
 			m_kImage = ReadFromDisk(kImageName, m_kDir);
-			init(null, 0);
+			init(null, 0, true);
 		}
 	}
 

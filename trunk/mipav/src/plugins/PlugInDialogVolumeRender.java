@@ -200,30 +200,50 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				startButton.setEnabled(false);
 				if ( segmentSeamCells.isSelected() )
 				{
+					try {
 					// Batch Automatic Seam Cell Segmentation:
 					PlugInAlgorithmWormUntwisting.segmentSeamCells( batchProgress, includeRange, baseFileDir, baseFileNameText.getText() );
+					} catch ( java.lang.OutOfMemoryError e ) {
+						MipavUtil.displayError( "Error: Not enough memory. Unable to finish seam cell segmentation." );
+						return;
+					}
 					segmentSeamCells.setSelected(false);
 					editSeamCells.setSelected(true);
 					startButton.setEnabled(true);
 				}
 				else if ( buildLattice.isSelected() )
 				{
+					try {
 					// Batch Automatic Lattice-Building
 					PlugInAlgorithmWormUntwisting.buildLattice( batchProgress, includeRange, baseFileDir, baseFileNameText.getText());
+					} catch ( java.lang.OutOfMemoryError e ) {
+						MipavUtil.displayError( "Error: Not enough memory. Unable to finish automatic lattice-building." );
+						return;
+					}
 					editLattice.setSelected(true);
 					startButton.setEnabled(true);
 				}
 				else if ( latticeStraighten.isSelected() )
 				{
+					try {
 					// Batch Untwisting:
 					PlugInAlgorithmWormUntwisting.latticeStraighten( batchProgress, includeRange,  baseFileDir, baseFileNameText.getText() );
+					} catch ( java.lang.OutOfMemoryError e ) {
+						MipavUtil.displayError( "Error: Not enough memory. Unable to finish straightening." );
+						return;
+					}
 					reviewResults.setSelected(true);
 					startButton.setEnabled(true);
 				}
 				else if ( calcMaxProjection.isSelected() )
 				{
+					try {
 					// Batch Registration/MP calculation:
 					PlugInAlgorithmWormUntwisting.createMaximumProjectionAVI( batchProgress, includeRange,  baseFileDir, baseFileNameText.getText() );
+					} catch ( java.lang.OutOfMemoryError e ) {
+						MipavUtil.displayError( "Error: Not enough memory. Unable to finish maximum-projection calculation." );
+						return;
+					}
 					startButton.setEnabled(true);
 				}
 				else if ( editSeamCells.isSelected() )
@@ -739,7 +759,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			}
 			if ( volumeImage == null )
 			{
-				volumeImage = new VolumeImage(false, wormImage, "", null, 0);
+				volumeImage = new VolumeImage(false, wormImage, "", null, 0, false);
 				updateHistoLUTPanels();
 			}
 			else
@@ -1685,13 +1705,15 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	{
 		if ( volOpacityPanel == null )
 		{
-			volOpacityPanel = new JPanelVolumeOpacity(volumeImage.GetImage(), null, volumeImage.GetGradientMagnitudeImage(), null, true);
+//			volOpacityPanel = new JPanelVolumeOpacity(volumeImage.GetImage(), null, volumeImage.GetGradientMagnitudeImage(), null, true);
+			volOpacityPanel = new JPanelVolumeOpacity(volumeImage.GetImage(), null, null, null, true);
 			volOpacityPanel.addPropertyChangeListener(this);
 			opacityPanel.add( volOpacityPanel.getMainPanel() );
 		}
 		else
 		{
-			volOpacityPanel.setImages( volumeImage.GetImage(), null, volumeImage.GetGradientMagnitudeImage(), null, true );
+//			volOpacityPanel.setImages( volumeImage.GetImage(), null, volumeImage.GetGradientMagnitudeImage(), null, true );
+			volOpacityPanel.setImages( volumeImage.GetImage(), null, null, null, true );
 			opacityPanel.validate();
 		}
 		if ( lutHistogramPanel == null )

@@ -690,6 +690,11 @@ public class PlugInAlgorithmWormUntwisting
 					image.unregisterAllVOIs();
 				}
 			}
+			if ( batchProgress != null )
+			{
+				batchProgress.setValue(100);
+				batchProgress.update(batchProgress.getGraphics());
+			}
 			MipavUtil.displayInfo( "Finished seam cell segmentation. Segmented " + foundCount + " out of " + count + " volumes tested (" + (int)(100 * (float)foundCount/count) + "%)" );
 		}
 		
