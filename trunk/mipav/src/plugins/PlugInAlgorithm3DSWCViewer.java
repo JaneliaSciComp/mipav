@@ -77,6 +77,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
     private int[] vertexInd;
 
     private float splitDist;
+    
+    private boolean haveSplitDist = false;
 
     public PlugInAlgorithm3DSWCViewer(/* String imFile, */final File file, final JTextPane text, final String resUnit, final boolean useLength,
             final boolean showView) {
@@ -458,6 +460,70 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
                         final ArrayList<String> gcMessages = consolidateFilaments(growthCone, gcConnections, gcOrder);
                         final float[] gcLengths = recalculateDistances(growthCone, gcConnections);
                         addToMessages(growthCone, gcMessages);
+                        
+                        // Need to use the split point provided to calculate stats
+                        float[] splitLocMax = null;
+                        int filIndexMax = currentAxon;
+                        
+                        // Find the location of the split point of the maximum growth cone
+                        piece = swcCoordinates.get(currentAxon);
+                        ind = piece.size() - 1;
+                        int lastCon = 0;
+                        while (true) {
+                            final float[] fa = piece.get(ind);
+                            if (ind == 0) {
+                            	
+                                final int con = (int) fa[4];
+                                if (con == -1) {
+                                   filIndexMax = lastCon; 
+                                   splitLocMax = fa;
+                                   break;
+                                }
+                                lastCon = con;
+                                piece = swcCoordinates.get(con);
+                                ind = piece.size() - 1;
+                            } else {
+                                ind--;
+                            }
+                        }
+                        
+                        // axonIndexMax contains the currentAxon value in the
+                        // new set of filaments in the growth cone
+                        final int[] axonIndexMax = new int[1];
+                        final ArrayList<ArrayList<float[]>> growthConeMax = filterGrowthCone(splitLocMax, filIndexMax, axonIndexMax);
+
+                        // Redo all the preprocessing steps for the growth
+                        // cone to prevent any weird issues arising
+                        ArrayList<ArrayList<Integer>> gcConnectionsMax;
+                        if (disconnected) {
+                            gcConnectionsMax = makeConnectionsTol(growthConeMax);
+                        } else {
+                            gcConnectionsMax = makeConnections(growthConeMax);
+                        }
+
+                        calculateDistances(growthConeMax);
+                        int gcOrderMax;
+                        if (axonUseLength) {
+                            gcOrderMax = determineOrder_useLength(growthConeMax, gcConnectionsMax, axonIndexMax[0]);
+                        } else {
+                            gcOrderMax = determineOrder(growthConeMax, gcConnectionsMax, axonIndexMax[0]);
+                        }
+
+                        // The output is a 2D array, with the last array being
+                        // the vertex indicies so that it all fits in one output
+                        // array
+                        final int[][] tempArrayMax = calculateConvexHull(growthConeMax, null);
+                        final int[][] gcFaceVerticiesMax = new int[tempArrayMax.length - 1][];
+                        final int[] gcVertexIndMax = tempArrayMax[tempArrayMax.length - 1];
+                        for (int i = 0; i < gcFaceVerticiesMax.length; i++) {
+                            gcFaceVerticiesMax[i] = tempArrayMax[i];
+                        }
+
+                        final float gcHullVolumeMax = convexHullVolumeNew(growthConeMax, gcVertexIndMax, gcFaceVerticiesMax);
+
+                        final ArrayList<String> gcMessagesMax = consolidateFilaments(growthConeMax, gcConnectionsMax, gcOrderMax);
+                        final float[] gcLengthsMax = recalculateDistances(growthConeMax, gcConnectionsMax);
+                        addToMessages(growthConeMax, gcMessagesMax);
 
                         // PlugInAlgorithmSWCVolume alg = new PlugInAlgorithmSWCVolume(srcImage, growthCone);
                         // alg.run();
@@ -477,7 +543,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
                                                                                                                               * (
                                                                                                                               * )
                                                                                                                               * ,
-                                                                                                                              */gcHullVolume, gcOrder);
+                                                                                                                              */gcHullVolume, gcOrder,
+                                      growthConeMax, gcConnectionsMax, gcMessagesMax, gcLengthsMax, gcHullVolumeMax, gcOrderMax);
                             append("Exported stats to CSV -> " + output, blackText);
                         } catch (final IOException e) {
                             append("Could not export stats to CSV for " + swcFile.getName(), redText);
@@ -516,6 +583,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 
     public void setSplit(final float dist) {
         splitDist = dist;
+        haveSplitDist = true;
     }
 
     public void setAxon(final int axon) {
@@ -1657,9 +1725,11 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 
         return Math.abs(dist);
     }
-
-    private String exportStatsToCSV(final ArrayList<ArrayList<float[]>> swcCoordinates, final ArrayList<ArrayList<Integer>> connections, final File file,
-            final ArrayList<String> messages, final float[] branchLengths, /* float neuronVolume, */final float hullVolume, final int maxOrder)
+    
+    private String exportStatsToCSV(final ArrayList<ArrayList<float[]>> swcCoordinates, final ArrayList<ArrayList<Integer>> connections,
+    		final File file,
+            final ArrayList<String> messages, final float[] branchLengths, /* float neuronVolume, */final float hullVolume, 
+            final int maxOrder)
             throws IOException {
         final String parent = file.getParent();
         String name = file.getName();
@@ -1728,6 +1798,97 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
             }
             sb.append("\n");
             fw.append(sb.toString());
+            //System.out.println(sb.toString());
+        }
+
+        fw.close();
+
+        return output;
+    }
+
+    private String exportStatsToCSV(final ArrayList<ArrayList<float[]>> swcCoordinates, final ArrayList<ArrayList<Integer>> connections,
+    		final File file,
+            final ArrayList<String> messages, final float[] branchLengths, /* float neuronVolume, */final float hullVolume, 
+            final int maxOrder,
+            final ArrayList<ArrayList<float[]>> swcCoordinatesMax, final ArrayList<ArrayList<Integer>> connectionsMax,
+            final ArrayList<String> messagesMax, final float[] branchLengthsMax, /* float neuronVolume, */final float hullVolumeMax,
+            final int maxOrderMax)
+            throws IOException {
+        final String parent = file.getParent();
+        String name = file.getName();
+        name = name.substring(0, name.lastIndexOf("."));
+        final String output = parent + File.separator + name + "_stats.csv";
+        final File outputFile = new File(output);
+
+        final FileWriter fw = new FileWriter(outputFile);
+
+        fw.append("Units," + resolutionUnit + "\n");
+
+        // Write the new branch info here
+
+        writeBranchInformation(swcCoordinatesMax, connectionsMax, fw, /* neuronVolume, */hullVolumeMax, maxOrderMax);
+
+        /*
+         * String branchInfo = ""; branchInfo += "Total branch length," + String.valueOf(branchLengths[0]) + "\n";
+         * branchInfo += "Minus axon," + String.valueOf(branchLengths[1]) + "\n\n";
+         * 
+         * fw.append(branchInfo);
+         */
+
+        final String header = "Branch Number,Branch Order,Branch Length,Length along parent \n";
+
+        fw.append(header);
+
+        int mLength = messages.size();
+        int mMaxLength = messagesMax.size();
+        int mDiff = mMaxLength - mLength;
+        int index = 0;
+        for (final String s : messagesMax) {
+            final StringBuilder sb = new StringBuilder(30);
+            final String[] rows = s.split("\n");
+            int rowNum = 1;
+
+            // Write branch number (or axon);
+            final String branch = rows[rowNum].replace("#", "").trim();
+            final String[] branchSplit = branch.split(" ");
+            if (branchSplit.length == 1) {
+                sb.append("Axon");
+                sb.append(",");
+                sb.append("0"); // Write axon
+                rowNum++;
+            } else {
+                sb.append(branchSplit[1]);
+                sb.append(",");
+                rowNum++;
+                // Write branch order
+                final String order = rows[rowNum].replace("#", "").trim();
+                final String[] orderSplit = order.split(" ");
+                sb.append(orderSplit[2]);
+                rowNum++;
+            }
+            sb.append(",");
+
+            // Write length
+            final String length = rows[rowNum].replace("#", "").trim();
+            final String[] lengthSplit = length.split(" ");
+            sb.append(lengthSplit[2]);
+            sb.append(",");
+            rowNum++;
+
+            // Write length along parent
+            if (branchSplit.length == 1) {
+                sb.append("Axon");
+            } else {
+                final String along = rows[rowNum].replace("#", "").trim();
+                final String[] alongSplit = along.split(" ");
+                sb.append(alongSplit[alongSplit.length - 2]);
+            }
+            sb.append("\n");
+            index++;
+            if (index == (mDiff+1)) {
+            	sb.append("\n");
+            }
+            fw.append(sb.toString());
         }
 
         fw.close();
@@ -1747,7 +1908,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
     private ArrayList<ArrayList<float[]>> filterGrowthCone(final float[] splitPt, final int filIndex, final int[] axonIndex) {
         final ArrayList<ArrayList<float[]>> growthCone = new ArrayList<ArrayList<float[]>>();
         final ArrayDeque<Integer> indexStack = new ArrayDeque<Integer>();
-
         ArrayList<float[]> fil = swcCoordinates.get(filIndex);
         ArrayList<float[]> addFil = new ArrayList<float[]>();
         boolean add = false;
@@ -2228,7 +2388,13 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
         // fw.append("Neuron volume," + neuronVolume + "\n");
         // }
 
-        fw.append("Convex hull volume," + hullVolume + "\n\n");
+        if (haveSplitDist) {
+        	fw.append("Convex hull volume," + hullVolume + "," + "," + "Growth cone length input\n");
+        	fw.append("," + "," + "," + String.valueOf(splitDist) + "\n");
+        }
+        else {
+            fw.append("Convex hull volume," + hullVolume + "\n\n");
+        }
         fw.append("Branch lengths\n");
         fw.append("Total Branches," + String.valueOf(allBranches) + "\n");
         fw.append("Higher order," + String.valueOf(higherOrder) + "\n\n");
