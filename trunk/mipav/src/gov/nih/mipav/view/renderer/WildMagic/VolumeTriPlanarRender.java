@@ -219,9 +219,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
     		configuredListener.algorithmPerformed( null );
 			m_bFirstDisplay = false;
 		}
-		if ( wormAnimationStep() != -1 )
+//		if ( wormAnimationStep() != -1 )
 		{
 			// setup:
+			/*
 			if (  firstWormAnimation == true )
 			{
 				String imageName = m_kVolumeImageA.GetImage().getImageName();
@@ -236,7 +237,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				if ( results.size() > 0 )
 				{
 					annotations = results.elementAt(0);
-					addCount = 2 * 360/(annotations.getCurves().size());
+					addCount = 360/(annotations.getCurves().size());
 					for ( int i = 0; i < annotations.getCurves().size(); i++ )
 					{
 						annotations.getCurves().elementAt(i).createVolumeVOI( m_kVolumeImageA, m_kTranslate );
@@ -283,7 +284,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							allSeamCellsAdded++;
 							if ( allSeamCellsAdded == annotations.getCurves().size() )
 							{
-								animationStart = animationStep + 180;
+								animationStart = animationStep + 60;
 								allPairsAdded = 0;
 								seamCellsDone = true;
 							}
@@ -294,6 +295,24 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			}
 			else if ( seamCellsDone && !pairsDone && (animationStep == animationStart))
 			{
+				// hide all but 'nose'
+				for ( int i = 0; i < annotations.getCurves().size(); i++ )
+				{
+					if ( annotations.getCurves().elementAt(i) instanceof VOIText )
+					{
+						VOIText text = (VOIText)annotations.getCurves().elementAt(i);
+						if ( text.getText().equalsIgnoreCase("nose") )
+						{
+							nose = new Vector3f(text.elementAt(0));
+						}
+						else
+						{
+							annotations.getCurves().elementAt(i).getVolumeVOI().SetDisplay(false);							
+						}
+					}
+				}
+				
+				
 				String imageName = m_kVolumeImageA.GetImage().getImageName();
 				if (imageName.contains("_clone")) {
 					imageName = imageName.replaceAll("_clone", "");
@@ -328,7 +347,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							allPairsAdded++;
 							if ( allPairsAdded == pairs.getCurves().size() )
 							{
-								animationStart = animationStep + 180;
+								animationStart = animationStep + 60;
 								pairsDone = true;
 							}
 							break;
@@ -417,7 +436,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 						else
 						{
 							latticeDone = true;
-							animationStart = animationStep + 360;
+							animationStart = animationStep + 60;
 						}
 					}
 				}
@@ -470,23 +489,26 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			}
 			else if ( !curvesDone && (leftCurve != null) && (rightCurve != null) && (centerCurve != null) )
 			{
-				int add = animationStep - animationStart;
+				if ( leftCurve.getCurves().elementAt(0).size() > 0 )
 				{
+					leftCurveAnimate.getCurves().elementAt(0).add( leftCurve.getCurves().elementAt(0).remove(0) );
+					rightCurveAnimate.getCurves().elementAt(0).add( rightCurve.getCurves().elementAt(0).remove(0) );
+					centerCurveAnimate.getCurves().elementAt(0).add( centerCurve.getCurves().elementAt(0).remove(0) );
 					if ( leftCurve.getCurves().elementAt(0).size() > 0 )
 					{
 						leftCurveAnimate.getCurves().elementAt(0).add( leftCurve.getCurves().elementAt(0).remove(0) );
 						rightCurveAnimate.getCurves().elementAt(0).add( rightCurve.getCurves().elementAt(0).remove(0) );
 						centerCurveAnimate.getCurves().elementAt(0).add( centerCurve.getCurves().elementAt(0).remove(0) );	
-						leftCurveAnimate.getCurves().elementAt(0).update();
-						rightCurveAnimate.getCurves().elementAt(0).update();
-						centerCurveAnimate.getCurves().elementAt(0).update();						
 					}
-					else
-					{
-						curvesDone = true;
-						animationStart = animationStep + 180;
-					}
-				}				
+					leftCurveAnimate.getCurves().elementAt(0).update();
+					rightCurveAnimate.getCurves().elementAt(0).update();
+					centerCurveAnimate.getCurves().elementAt(0).update();						
+				}
+				else
+				{
+					curvesDone = true;
+					animationStart = animationStep + 60;
+				}		
 			}
 			else if ( curvesDone && (animationStep == animationStart) && (wormContours == null) )
 			{
@@ -500,6 +522,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				if ( results.size() > 0 )
 				{
 					wormContours = results.elementAt(0);
+					for ( int i = wormContours.getCurves().size() - 1; i <= 0; i -= 2 )
+					{
+						wormContours.getCurves().remove(i);
+					}
 					wormContoursAnimate = new VOI(wormContours);
 					wormContoursAnimate.getCurves().removeAllElements();
 					wormContoursAnimate.getCurves().add( wormContours.getCurves().remove(0) );
@@ -542,7 +568,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 					else
 					{
 						contoursDone = true;
-						animationStart = animationStep + 180;
+						animationStart = animationStep + 60;
 					}
 				}				
 			}
@@ -625,7 +651,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 						if ( timeStep == (numVolumes) )
 						{
 							growDone = true;
-							animationStart = animationStep + 180;
+							animationStart = animationStep + 60;
 							masks.disposeLocal();
 							masks = null;
 						}
@@ -637,7 +663,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 //				rotate = false;
 				sliceContoursStatic = model.getSamplingPlanes(false);
 				sliceContours = model.getSamplingPlanes(true);
-				System.err.println( 2 * (model.getExtent()+10) );
+//				System.err.println( 2 * (model.getExtent()+10) );
 				
 				final short sID = (short) (m_kVolumeImageA.GetImage().getVOIs().getUniqueID());
 				sliceContoursAnimate = new VOI(sID, "samplingPlanes");
@@ -681,7 +707,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 					m_kVolumeImageA.UpdateData(m_kVolumeImageA.GetImage());
 				}
 			}
-
+*/
 			/*
 			if ( !displayStraight && (animationStep == animationStart) )
 			{
@@ -738,6 +764,40 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				}
 			}
 			*/
+			/*
+			if ( animationStep >= animationStart )
+			{
+				if ( firstWormAnimation == true )
+				{
+					firstWormAnimation = false;
+					m_kXRotate.fromAxisAngle(Vector3f.UNIT_X, (float)Math.PI/2f);
+					Matrix3f kRotate = m_spkScene.Local.GetRotate();
+					kRotate.mult(m_kXRotate);
+					m_spkScene.Local.SetRotate(kRotate);
+					m_spkScene.UpdateGS();
+					m_kCuller.ComputeVisibleSet(m_spkScene);
+					for (int i = 0; i < m_kDisplayList.size(); i++)
+					{
+						m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+					}
+					m_kXRotate.fromAxisAngle(Vector3f.UNIT_X, (float)Math.PI/180.0f);
+				}
+				Matrix3f kRotate = m_spkScene.Local.GetRotate();
+				kRotate.mult(m_kXRotate);
+				m_spkScene.Local.SetRotate(kRotate);
+				m_spkScene.UpdateGS();
+				m_kCuller.ComputeVisibleSet(m_spkScene);
+				for (int i = 0; i < m_kDisplayList.size(); i++)
+				{
+					m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+				}
+				if ( animationStep == 360 )
+				{
+					straightRotateDone = true;
+					animationStart = animationStep + 1;
+					animationStop = animationStart;
+				}
+			}
 			
 			if ( wormAnimationStep() == 2 )
 			{
@@ -788,6 +848,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 					extractSaved = true;
 					screenShots.clear();
 				}
+				if ( straightRotateDone && !straightRotateSaved )
+				{
+					writeData("straightRotate");
+					straightRotateSaved = true;
+					screenShots.clear();
+				}
 			}
 			
 			// end animation:
@@ -799,6 +865,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				setWormAnimationStep(-1);
 				System.err.println("DONE");
 			}
+			*/
 		}
 	}
 
@@ -840,7 +907,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	{
     	return m_kVOIInterface == null ? false : m_kVOIInterface.is3DMouseEnabled();
 	}
-	
+	/*
 	private boolean firstWormAnimation = true;
 	private LatticeModel model;
 	private int modelExtents = -1;
@@ -863,6 +930,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	private boolean extractDone = false, extractSaved = false;
 	private boolean displayStraight = false;
 	private boolean displaySlice = false;
+	private boolean straightRotateDone = false, straightRotateSaved = false;
 	private Vector3f sliceCenter;
 	private int extractSlice = 0;
 	private VOI leftCurve, rightCurve, centerCurve, wormContours, sliceContours;
@@ -878,6 +946,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	{
     	return m_kVOIInterface == null ? -1 : m_kVOIInterface.getAnimationStep();
 	}
+	
 	public void setWormAnimationStep( int value )
 	{
     	if ( m_kVOIInterface != null )
@@ -888,7 +957,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	
 	private void writeData( String fileName )
 	{
-
 		String imageName = m_kVolumeImageA.GetImage().getImageName();
 		if (imageName.contains("_clone")) {
 			imageName = imageName.replaceAll("_clone", "");
@@ -947,7 +1015,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			screenShots.clear();
 		}
 	}
-	
+	*/
     public void deleteSelectedPoint( )
     {
 		if ( m_kVOIInterface != null )

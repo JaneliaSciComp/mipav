@@ -906,8 +906,12 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 				return;
 			}
 		}
-				
-		float[] input = new float[ elementCount ];
+		float[] input = null;
+		try {
+			input = new float[ elementCount ];
+		} catch ( java.lang.OutOfMemoryError e ) {
+			return;
+		}
 		try {
 			if ( this.entireImage )
 			{

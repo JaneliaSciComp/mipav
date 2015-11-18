@@ -1169,7 +1169,7 @@ public class ViewMenuBar {
                                                 false),
                                                 menuBuilder.buildMenuItem("Default Voxel Size", "voxelSize", 0, null, false) /*,
                                                 menuBuilder.buildMenuItem("Animate Straightening", "animateStraightening", 0, null, false),
-                                                menuBuilder.buildMenuItem("Record Straightening", "recordStraightening", 0, null, false) */
+                                                menuBuilder.buildMenuItem("Record Straightening", "recordStraightening", 0, null, false)*/
                                         		}
                                 ),
                                 ViewMenuBar.separator,
