@@ -1826,7 +1826,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 
         // Write the new branch info here
 
-        writeBranchInformation(swcCoordinatesMax, connectionsMax, fw, /* neuronVolume, */hullVolumeMax, maxOrderMax);
+        writeBranchInformation(swcCoordinates, connections, fw, /* neuronVolume, */hullVolume, maxOrder,
+        		swcCoordinatesMax, connectionsMax,/* neuronVolume, */hullVolumeMax, maxOrderMax);
 
         /*
          * String branchInfo = ""; branchInfo += "Total branch length," + String.valueOf(branchLengths[0]) + "\n";
@@ -2388,18 +2389,155 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
         // fw.append("Neuron volume," + neuronVolume + "\n");
         // }
 
-        if (haveSplitDist) {
-        	fw.append("Convex hull volume," + hullVolume + "," + "," + "Growth cone length input\n");
-        	fw.append("," + "," + "," + String.valueOf(splitDist) + "\n");
-        }
-        else {
-            fw.append("Convex hull volume," + hullVolume + "\n\n");
-        }
+        fw.append("Convex hull volume," + hullVolume + "\n\n");
         fw.append("Branch lengths\n");
         fw.append("Total Branches," + String.valueOf(allBranches) + "\n");
         fw.append("Higher order," + String.valueOf(higherOrder) + "\n\n");
 
         for (int i = 1; i < maxOrder; i++) {
+            fw.append("Order " + String.valueOf(i) + "," + String.valueOf(lengths[i]) + "\n");
+        }
+
+        fw.append("\n");
+
+    }
+    
+    private void writeBranchInformation(final ArrayList<ArrayList<float[]>> swcCoordinates, final ArrayList<ArrayList<Integer>> connections,
+            final FileWriter fw, /* float neuronVolume, */final float hullVolume, final int maxOrder,
+            final ArrayList<ArrayList<float[]>> swcCoordinatesMax, final ArrayList<ArrayList<Integer>> connectionsMax,
+             /* float neuronVolume, */final float hullVolumeMax, final int maxOrderMax) throws IOException {
+
+        final float[] lengths = new float[maxOrderMax];
+        for (int i = 0; i < lengths.length; i++) {
+            lengths[i] = 0.0F;
+        }
+        
+        int primaryNumberEntire = 0;
+        float primaryTotalEntire = 0.0f;
+        float primaryAverageEntire;
+        int secondaryNumberEntire = 0;
+        float secondaryTotalEntire = 0.0f;
+        float secondaryAverageEntire = 0.0f;
+        int tertiaryNumberEntire = 0;
+        float tertiaryTotalEntire = 0.0f;
+        float tertiaryAverageEntire = 0.0f;
+        int quartenaryNumberEntire = 0;
+        float quartenaryTotalEntire = 0.0f;
+        float quartenaryAverageEntire = 0.0f;
+        int quinaryNumberEntire = 0;
+        float quinaryTotalEntire = 0.0f;
+        float quinaryAverageEntire = 0.0f;
+        int branchNumberEntire = 0;
+        float branchTotalEntire = 0.0f;
+        float branchAverageEntire = 0.0f;
+        int higherNumberEntire = 0;
+        float higherTotalEntire = 0.0f;
+        float higherAverageEntire = 0.0f;
+
+        for (int i = 1; i < swcCoordinatesMax.size(); i++) {
+            final ArrayList<float[]> fil = swcCoordinatesMax.get(i);
+            final float filLength = fil.get(fil.size() - 1)[3];
+            final int order = (int) fil.get(0)[5]-1;
+            lengths[order] += filLength;
+            if (order == 1) {
+            	primaryNumberEntire++;
+            	primaryTotalEntire += filLength;
+            }
+            else if (order == 2) {
+            	secondaryNumberEntire++;
+            	secondaryTotalEntire += filLength;
+            }
+            else if (order == 3) {
+            	tertiaryNumberEntire++;
+            	tertiaryTotalEntire += filLength;
+            }
+            else if (order == 4) {
+            	quartenaryNumberEntire++;
+            	quartenaryTotalEntire += filLength;
+            }
+            else if (order == 5) {
+            	quinaryNumberEntire++;
+            	quinaryTotalEntire += filLength;
+            }
+            branchNumberEntire++;
+            branchTotalEntire += filLength;
+            if (order != 1) {
+            	higherNumberEntire++;
+            	higherTotalEntire += filLength;
+            }
+        }
+        primaryAverageEntire = primaryTotalEntire/primaryNumberEntire;
+        if (maxOrderMax-1 >= 2) {
+        	secondaryAverageEntire = secondaryTotalEntire/secondaryNumberEntire;
+        }
+        if (maxOrderMax-1 >= 3) {
+        	tertiaryAverageEntire = tertiaryTotalEntire/tertiaryNumberEntire;
+        }
+        if (maxOrderMax-1 >= 4) {
+        	quartenaryAverageEntire = quartenaryTotalEntire/quartenaryNumberEntire;
+        }
+        if (maxOrderMax-1 >= 5) {
+        	quinaryAverageEntire = quinaryTotalEntire/quinaryNumberEntire;
+        }
+        branchAverageEntire = branchTotalEntire/branchNumberEntire;
+        if (maxOrderMax-1 >= 2) {
+        	higherAverageEntire = higherTotalEntire/higherNumberEntire;
+        }
+
+        // if(neuronVolume >= 0){
+        // fw.append("\nVolumes\n");
+        // fw.append("Neuron volume," + neuronVolume + "\n");
+        // }
+    	fw.append("Convex hull volume," + hullVolumeMax + "," + "," + "Growth cone length input,," + "For entire axon," +
+        "Primary number," + "Primary average length," + "Primary total length");
+    	if (maxOrderMax-1 >= 2) {
+    		fw.append("," + "Secondary number," + "Secondary average length," + "Secondary total length");
+    	}
+    	if (maxOrderMax-1 >= 3) {
+    		fw.append("," + "Tertiary number," + "Tertiary average length," + "Tertiary total length");
+    	}
+    	if (maxOrderMax-1 >= 4) {
+    		fw.append("," + "Quartenary number," + "Quartenary average length," + "Quartenary total length");
+    	}
+    	if (maxOrderMax-1 >= 5) {
+    		fw.append("," + "Quinary number," + "Quinary average length," + "Quinary total length");
+    	}
+    	fw.append("," + "Branch number," + "Branch average length," + "Branch total length");
+    	if (maxOrderMax >= 2) {
+    		fw.append("," + "High order number," + "High order average length," + "High order total length");	
+    	}
+        fw.append("\n");
+    	fw.append("," + "," + "," + String.valueOf(splitDist) + "," + ","  + "," + String.valueOf(primaryNumberEntire)
+    			+ "," + String.valueOf(primaryAverageEntire) + "," + String.valueOf(primaryTotalEntire));
+    	if (maxOrderMax-1 >= 2) {
+    		fw.append("," +  String.valueOf(secondaryNumberEntire)
+    			+ "," + String.valueOf(secondaryAverageEntire) + "," + String.valueOf(secondaryTotalEntire));
+    	}
+    	if (maxOrderMax-1 >= 3) {
+    		fw.append("," +  String.valueOf(tertiaryNumberEntire)
+    			+ "," + String.valueOf(tertiaryAverageEntire) + "," + String.valueOf(tertiaryTotalEntire));
+    	}
+    	if (maxOrderMax-1 >= 4) {
+    		fw.append("," +  String.valueOf(quartenaryNumberEntire)
+    			+ "," + String.valueOf(quartenaryAverageEntire) + "," + String.valueOf(quartenaryTotalEntire));
+    	}
+    	if (maxOrderMax-1 >= 5) {
+    		fw.append("," +  String.valueOf(quinaryNumberEntire)
+    			+ "," + String.valueOf(quinaryAverageEntire) + "," + String.valueOf(quinaryTotalEntire));
+    	}
+    	fw.append("," +  String.valueOf(branchNumberEntire)
+    			+ "," + String.valueOf(branchAverageEntire) + "," + String.valueOf(branchTotalEntire));
+    	if (maxOrderMax-1 >= 2) {
+    		fw.append("," +  String.valueOf(higherNumberEntire)
+    			+ "," + String.valueOf(higherAverageEntire) + "," + String.valueOf(higherTotalEntire));
+    	}
+    	fw.append("\n");
+        
+        fw.append("Branch lengths\n");
+        fw.append("Total Branches," + String.valueOf(branchTotalEntire) + "\n");
+        fw.append("Higher order," + String.valueOf(higherTotalEntire) + "\n\n");
+
+        for (int i = 1; i < maxOrderMax; i++) {
             fw.append("Order " + String.valueOf(i) + "," + String.valueOf(lengths[i]) + "\n");
         }
 
