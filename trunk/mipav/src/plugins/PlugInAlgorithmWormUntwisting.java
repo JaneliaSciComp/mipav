@@ -336,6 +336,7 @@ public class PlugInAlgorithmWormUntwisting
 					}
 					if ( lattice.size() == 0 )
 					{
+//						System.err.println( "no lattice" );
 						continue;
 					}
 					// Load user-specified annotations, they are included in the straightening process:

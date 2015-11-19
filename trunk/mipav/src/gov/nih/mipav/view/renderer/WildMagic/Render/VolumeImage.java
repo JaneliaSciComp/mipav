@@ -3,6 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 import static java.lang.System.nanoTime;
 import static java.lang.System.out;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmGradientMagnitudeSep;
 import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmGradientMagnitude;
 import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmVolumeNormals;
 import gov.nih.mipav.model.file.*;
@@ -1792,12 +1793,19 @@ public class VolumeImage implements Serializable {
 		int dimY = kImage.getExtents().length > 1 ? kImage.getExtents()[1] : 1;
 		int dimZ = kImage.getExtents().length > 2 ? kImage.getExtents()[2] : 1;
 		ModelImage outputImage = new ModelImage( kImage.getDataType(), new int[]{dimX,dimY,dimZ}, "temp" );
-		OpenCLAlgorithmGradientMagnitude gradientMagAlgo = new OpenCLAlgorithmGradientMagnitude(outputImage, kImage, sigmas,
-				true, true, false);
+		AlgorithmGradientMagnitudeSep gradientMagAlgo = new AlgorithmGradientMagnitudeSep( kImage, sigmas, true, false );
+//		OpenCLAlgorithmGradientMagnitude gradientMagAlgo = new OpenCLAlgorithmGradientMagnitude(outputImage, kImage, sigmas,
+//				true, true, false);
 		gradientMagAlgo.setRed(true);
 		gradientMagAlgo.setGreen(true);
 		gradientMagAlgo.setBlue(true);
-		gradientMagAlgo.gradientMagnitudeSep3D( i );
+		gradientMagAlgo.setRunningInSeparateThread(false);
+		gradientMagAlgo.run();
+		float[] resultBuffer = gradientMagAlgo.getResultBuffer();
+		try {
+			outputImage.importData(0, resultBuffer, true);
+		} catch (IOException e) {}
+//		gradientMagAlgo.gradientMagnitudeSep3D( i );
 		gradientMagAlgo.finalize();
 		gradientMagAlgo = null;
 		return outputImage;

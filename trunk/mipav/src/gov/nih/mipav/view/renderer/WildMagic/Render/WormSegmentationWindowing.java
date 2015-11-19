@@ -137,25 +137,17 @@ public class WormSegmentationWindowing extends WormSegmentation
     	Vector3f max = new Vector3f(0,0,0);
     	
 		// find the left right markers based on the threshold values and clustering...
-		Vector<Vector3f> left_right_markers = findLeftRightMarkers(image, min, max, maxValue, (float)image.getMax());
-		return left_right_markers;
-	}
-
-    private static Vector<Vector3f> findLeftRightMarkers(ModelImage image, Vector3f min, Vector3f max, float max_LR, float intensityMax)
-    {
-
-    	VOIContour centers = findMarkers(image, null, max_LR, intensityMax, 15, 30, min, max); 
-    	Vector<Vector3f> left_right_markers = new Vector<Vector3f>();
-		
+    	Vector<Vector3f> segmentation = new Vector<Vector3f>();
+    	Vector<Vector3d> centers = findMarkers(image, null, maxValue, (float)image.getMax(), 15, 30, min, max);
     	for ( int i = 0; i < centers.size(); i++ )
     	{
-    		Vector3f seed = centers.elementAt(i); 
-    		left_right_markers.add(new Vector3f(seed));
+    		Vector3d center = centers.elementAt(i);
+    		segmentation.add( new Vector3f( (float)center.X, (float)center.Y, (float)center.Z ) );
     	}
-    	return left_right_markers;
-    }
+    	return segmentation;
+	}
     
-    private static VOIContour findMarkers( ModelImage image, BitSet leftRightMask, float intensityMin, float intensityMax, int diameter, int maxDiameter, Vector3f min, Vector3f max )
+    private static Vector<Vector3d> findMarkers( ModelImage image, BitSet leftRightMask, float intensityMin, float intensityMax, int diameter, int maxDiameter, Vector3f min, Vector3f max )
     {
     	int cubeSize = diameter;
     	int cubeHalf = cubeSize/2;    	
@@ -199,8 +191,8 @@ public class WormSegmentationWindowing extends WormSegmentation
 //    	Vector<Vector2d> cubeIntensities = new Vector<Vector2d>();
     	Vector<Vector3f> cubeCenters = new Vector<Vector3f>();
     	
-    	double minVar = Double.MAX_VALUE;
-    	double maxVar = -Double.MAX_VALUE;
+//    	double minVar = Double.MAX_VALUE;
+//    	double maxVar = -Double.MAX_VALUE;
     	
     	Vector3f centerP = new Vector3f();
     	Vector3f testP = new Vector3f();
@@ -265,80 +257,81 @@ public class WormSegmentationWindowing extends WormSegmentation
     		}
     	}    	
 
-    	Vector<VOIContour> clusterList = makeClusters( cubeCenters, cubeSize, maxDiameter );
-    	
-    	VOIContour centerPoints = new VOIContour(false);
-    	while ( clusterList.size() > 0 )
-    	{
-    		int maxSize = -1;
-    		int maxIndex = -1;
-    		for ( int i = 0; i < clusterList.size(); i++ )
-    		{
-    			VOIContour cluster = clusterList.elementAt(i);
-    			if ( cluster.size() > maxSize )
-    			{
-    				maxSize = cluster.size();
-    				maxIndex = i;
-    			}
-    		}
-    		if ( maxIndex >= 0 && maxIndex < clusterList.size() )
-    		{
-    			VOIContour cluster = clusterList.elementAt(maxIndex);
-//    			System.err.println( "   cluster = " + cluster.size() );
-    			Vector3f center = new Vector3f();
-    			for ( int j = 0; j < cluster.size(); j++ )
-    			{
-    				center.add( cluster.elementAt(j) );
-    			}
-    			center.scale( 1f/cluster.size() );
-    			centerPoints.add(center);
-    			clusterList.remove(maxIndex);
-    		}
-    	}
+    	Vector<Vector3d> clusterCenters = makeClusters( cubeCenters, cubeSize, maxDiameter );
+//    	Vector<VOIContour> clusterList = makeClusters( cubeCenters, cubeSize, maxDiameter );
+//    	
+//    	VOIContour centerPoints = new VOIContour(false);
+//    	while ( clusterList.size() > 0 )
+//    	{
+//    		int maxSize = -1;
+//    		int maxIndex = -1;
+//    		for ( int i = 0; i < clusterList.size(); i++ )
+//    		{
+//    			VOIContour cluster = clusterList.elementAt(i);
+//    			if ( cluster.size() > maxSize )
+//    			{
+//    				maxSize = cluster.size();
+//    				maxIndex = i;
+//    			}
+//    		}
+//    		if ( maxIndex >= 0 && maxIndex < clusterList.size() )
+//    		{
+//    			VOIContour cluster = clusterList.elementAt(maxIndex);
+////    			System.err.println( "   cluster = " + cluster.size() );
+//    			Vector3f center = new Vector3f();
+//    			for ( int j = 0; j < cluster.size(); j++ )
+//    			{
+//    				center.add( cluster.elementAt(j) );
+//    			}
+//    			center.scale( 1f/cluster.size() );
+//    			centerPoints.add(center);
+//    			clusterList.remove(maxIndex);
+//    		}
+//    	}
     	
     	if ( diameter != maxDiameter )
     	{
-    		for ( int i = centerPoints.size() - 1; i >= 0; i-- )
+    		for ( int i = clusterCenters.size() - 1; i >= 0; i-- )
     		{
     			for ( int j = i-1; j >= 0; j-- )
     			{
-    				if ( centerPoints.elementAt(i).distance( centerPoints.elementAt(j) ) < maxDiameter )
+    				if ( clusterCenters.elementAt(i).distance( clusterCenters.elementAt(j) ) < maxDiameter )
     				{
-    					if ( mergePoints( image, intensityMin, centerPoints.elementAt(i), centerPoints.elementAt(j) ) )
+    					if ( mergePoints( image, intensityMin, clusterCenters.elementAt(i), clusterCenters.elementAt(j) ) )
     					{
     						//    					System.err.println( "Merging points" );
-    						Vector3f pt = centerPoints.remove(i);
-    						centerPoints.elementAt(j).add(pt);
-    						centerPoints.elementAt(j).scale(0.5f);    			
+    						Vector3d pt = clusterCenters.remove(i);
+    						clusterCenters.elementAt(j).add(pt);
+    						clusterCenters.elementAt(j).scale(0.5f);    			
     						break;
     					}
     				}
     			}
     		}
     	}
-    	for ( int i = 0; i < centerPoints.size(); i++ )
+    	for ( int i = 0; i < clusterCenters.size(); i++ )
     	{
-    		centerPoints.elementAt(i).X = Math.round(centerPoints.elementAt(i).X);
-    		centerPoints.elementAt(i).Y = Math.round(centerPoints.elementAt(i).Y);
-    		centerPoints.elementAt(i).Z = Math.round(centerPoints.elementAt(i).Z);
+    		clusterCenters.elementAt(i).X = Math.round(clusterCenters.elementAt(i).X);
+    		clusterCenters.elementAt(i).Y = Math.round(clusterCenters.elementAt(i).Y);
+    		clusterCenters.elementAt(i).Z = Math.round(clusterCenters.elementAt(i).Z);
     	}
-    	for ( int i = centerPoints.size()-1; i >= 0; i-- )
+    	for ( int i = clusterCenters.size()-1; i >= 0; i-- )
     	{
     		for ( int j = i-1; j >= 0; j-- )
     		{
-    			if ( centerPoints.elementAt(i).isEqual( centerPoints.elementAt(j) ) )
+    			if ( clusterCenters.elementAt(i).isEqual( clusterCenters.elementAt(j) ) )
     			{
-    				centerPoints.remove(i);
+    				clusterCenters.remove(i);
     				break;
     			}
     		}
     	}
     	cubeCenters.clear();
     	cubeCenters = null;
-    	return centerPoints;
+    	return clusterCenters;
     }
     
-    private static Vector<VOIContour> makeClusters( Vector<Vector3f> cubeCenters, int diameter, int maxDiameter )
+    private static Vector<Vector3d> makeClusters( Vector<Vector3f> cubeCenters, int diameter, int maxDiameter )
     {
 
     	Vector<VOIContour> clusterList = new Vector<VOIContour>();
@@ -384,21 +377,29 @@ public class WormSegmentationWindowing extends WormSegmentation
     			}
     		}
     	}	
-    	clusterSum.clear();
-    	clusterSum = null;
-    	return clusterList;    	
+    	for ( int i = 0; i < clusterList.size(); i++ )
+    	{
+    		VOIContour cluster = clusterList.elementAt(i);
+    		Vector3d sum = clusterSum.elementAt(i);
+			double scale = 1.0/cluster.size();
+			Vector3d avg = new Vector3d( (sum.X * scale), (sum.Y * scale), (sum.Z * scale) );
+			sum.copy( avg );
+    	}
+    	clusterList.clear();
+    	clusterList = null;
+    	return clusterSum;    	
     }
     
-    private static boolean mergePoints( ModelImage image, float intensityMin, Vector3f p1, Vector3f p2 )
+    private static boolean mergePoints( ModelImage image, float intensityMin, Vector3d p1, Vector3d p2 )
     {    	
-    	Vector3f dir = Vector3f.sub( p2, p1 );
+    	Vector3d dir = Vector3d.sub( p2, p1 );
     	dir.normalize();
-    	float steps = p1.distance(p2);
-    	Vector3f start = new Vector3f(p1);
+    	double steps = p1.distance(p2);
+    	Vector3d start = new Vector3d(p1);
     	for ( int i = 0; i < steps; i++ )
     	{
     		start.add(dir);
-    		if ( image.getFloatTriLinearBounds( start.X, start.Y, start.Z ) < (.95*intensityMin) )
+    		if ( image.getFloatTriLinearBounds( (float)start.X, (float)start.Y, (float)start.Z ) < (.95*intensityMin) )
     		{
     			return false;
     		}
