@@ -9030,7 +9030,7 @@ public class Bessel {
 
                                                 if (Math.abs(zr) < aa) {
                                                     er = er / av;
-                                                } // if (Math.abs(zr) < zz)
+                                                } // if (Math.abs(zr) < aa)
                                             } // if (zr > 0.0)
                                             else { // zr <= 0.0
 
