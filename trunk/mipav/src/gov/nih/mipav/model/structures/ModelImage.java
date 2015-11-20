@@ -1976,6 +1976,7 @@ public class ModelImage extends ModelStorageBase {
      * @param y Absolute y value in slice.
      * @param z Absolute z value in slice.
      * @param scannerCoord the point transformed into the scanner's (DICOM) coordinate system.
+     * @deprecated see MipavCoordinateSystems.fileToScanner
      */
     public void getScannerCoordLPS(final int x, final int y, final int z, final float[] scannerCoord) {
 
@@ -2087,8 +2088,8 @@ public class ModelImage extends ModelStorageBase {
      * @param y Absolute y value in slice.
      * @param z Absolute z value in slice.
      * @param scannerCoord the point transformed into the scanner's (DICOM) coordinate system.
+     * @deprecated see MipavCoordinateSystems.fileToScanner
      */
-
     public void getScannerCoordRAS(final int x, final int y, final int z, final float[] scannerCoord) {
 
         if ( !matrixHolder.containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
