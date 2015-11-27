@@ -6256,6 +6256,10 @@ public class BesselEP {
         final DoubleDouble[] wr1 = new DoubleDouble[1];
         final DoubleDouble[] wi1 = new DoubleDouble[1];
         int j;
+        
+        for (i = 0; i < 5; i++) {
+        	er[i] = DoubleDouble.valueOf(0.0);
+        }
 
         /**
          * SET PARAMETERS RELATED TO MACHINE CONSTANTS. TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18. ELIM IS
@@ -11632,6 +11636,15 @@ public class BesselEP {
         int m;
         int p;
         int tempInit[] = new int[1];
+        
+        for (i = 0; i < 16; i++) {
+        	cwrkrj[i] = DoubleDouble.valueOf(0.0);
+        	cwrkij[i] = DoubleDouble.valueOf(0.0);
+        	cwrkrm[i] = DoubleDouble.valueOf(0.0);
+        	cwrkim[i] = DoubleDouble.valueOf(0.0);
+        	cwrkr3[i] = DoubleDouble.valueOf(0.0);
+        	cwrki3[i] = DoubleDouble.valueOf(0.0);
+        }
 
         kdflg = 1;
         nz[0] = 0;
