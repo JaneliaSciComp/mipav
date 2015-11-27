@@ -333,9 +333,9 @@ public class BesselEP {
             return;
         }
 
-        if ( (BesselType != Bessel.BESSEL_H) && (BesselType != Bessel.BESSEL_I) && (BesselType != Bessel.BESSEL_J)
-                && (BesselType != Bessel.BESSEL_K) && (BesselType != Bessel.BESSEL_Y) && (BesselType != Bessel.AIRY_AI)
-                && (BesselType != Bessel.AIRY_BI)) {
+        if ( (BesselType != BesselEP.BESSEL_H) && (BesselType != BesselEP.BESSEL_I) && (BesselType != BesselEP.BESSEL_J)
+                && (BesselType != BesselEP.BESSEL_K) && (BesselType != BesselEP.BESSEL_Y) && (BesselType != BesselEP.AIRY_AI)
+                && (BesselType != BesselEP.AIRY_BI)) {
             MipavUtil
                     .displayError("Bessel type must be Airy Ai, Airy BI, BESSEL_H, BESSEL_I, BESSEL_J, BESSEL_K, or BESSEL_Y");
             errorFlag[0] = 1;
@@ -343,7 +343,7 @@ public class BesselEP {
             return;
         }
 
-        if ( (BesselType != Bessel.AIRY_AI) && (BesselType != Bessel.AIRY_BI)) {
+        if ( (BesselType != BesselEP.AIRY_AI) && (BesselType != BesselEP.AIRY_BI)) {
 
             if (initialOrder < 0) {
                 MipavUtil.displayError("initialOrder must be >= 0.0");
@@ -353,7 +353,7 @@ public class BesselEP {
             }
         }
 
-        if ( (BesselType == Bessel.AIRY_AI) || (BesselType == Bessel.AIRY_BI)) {
+        if ( (BesselType == BesselEP.AIRY_AI) || (BesselType == BesselEP.AIRY_BI)) {
 
             if ( (derivativeOrder < 0) || (derivativeOrder > 1)) {
                 MipavUtil.displayError("Derivative order can only be 0 or 1");
@@ -363,7 +363,7 @@ public class BesselEP {
             }
         }
 
-        if ( (scalingOption != Bessel.UNSCALED_FUNCTION) && (scalingOption != Bessel.SCALED_FUNCTION)) {
+        if ( (scalingOption != BesselEP.UNSCALED_FUNCTION) && (scalingOption != BesselEP.SCALED_FUNCTION)) {
             MipavUtil.displayError("scalingOption must be UNSCALED_FUNCTION or " + "SCALED_FUNCTION");
             errorFlag[0] = 1;
 
@@ -405,7 +405,7 @@ public class BesselEP {
             return;
         }
 
-        if (BesselType != Bessel.AIRY_BI) {
+        if (BesselType != BesselEP.AIRY_BI) {
 
             if (nz == null) {
                 MipavUtil.displayError("Array nz must not be null");
@@ -417,7 +417,7 @@ public class BesselEP {
 
         errorFlag[0] = 0;
 
-        if (BesselType != Bessel.AIRY_BI) {
+        if (BesselType != BesselEP.AIRY_BI) {
             nz[0] = 0;
         }
 
