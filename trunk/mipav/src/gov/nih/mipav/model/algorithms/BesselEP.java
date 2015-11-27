@@ -136,8 +136,7 @@ public class BesselEP {
     /**
 	 * The smallest representable relative difference between two {link @ DoubleDouble} values
 	 */
-	//private DoubleDouble epsilon = 1.23259516440783e-32;  /* = 2^-106 */
-    private DoubleDouble epsilon;
+	private DoubleDouble epsilon = DoubleDouble.valueOf(1.23259516440783e-32);  /* = 2^-106 */
 	
 
     /**
@@ -172,7 +171,8 @@ public class BesselEP {
     private boolean overflowTest = false;
 
     /** D1MACH(5) = log10(2). = log10(e) * loge(2.0)*/
-    private DoubleDouble r1m5 = DoubleDouble.valueOf(0.4342944819032518276511289).multiply((DoubleDouble.valueOf(2.0)).log());
+    //private DoubleDouble r1m5 = DoubleDouble.valueOf(0.4342944819032518276511289).multiply((DoubleDouble.valueOf(2.0)).log());
+    private DoubleDouble r1m5 = DoubleDouble.valueOf(0.30102999566398118760076720571112);
 
     /** DOCUMENT ME! */
     private DoubleDouble rl;
@@ -188,7 +188,9 @@ public class BesselEP {
 
     /** 2**-1022 = D1MACH(1). */
     //private DoubleDouble tiny = Math.pow(2, -1022);
-    private DoubleDouble tiny = (DoubleDouble.valueOf(2.0)).pow(DoubleDouble.valueOf(-1022.0));
+    //private DoubleDouble tiny = (DoubleDouble.valueOf(2.0)).pow(DoubleDouble.valueOf(-1022.0));
+    private DoubleDouble tiny = DoubleDouble.valueOf(2.2250738585072014E-308);
+    
 
     /** DOCUMENT ME! */
     private DoubleDouble tol;
@@ -203,15 +205,15 @@ public class BesselEP {
     // ---------------------------------------------------------------------------------------------------
 
     /**
-     * Creates a new Bessel object.
+     * Creates a new BesselEP object.
      * 
      * @param BesselType DOCUMENT ME!
      * @param overflowTest DOCUMENT ME!
      */
     public BesselEP(final int BesselType, final boolean overflowTest) {
-        doTest = true;
         this.BesselType = BesselType;
         this.overflowTest = overflowTest;
+        doTest = true;
     }
 
     /**
@@ -1324,7 +1326,6 @@ public class BesselEP {
         int iflag;
         DoubleDouble sfac;
         int mr;
-        DoubleDouble neweps;
 
         ierr[0] = 0;
         nz[0] = 0;
@@ -1340,24 +1341,12 @@ public class BesselEP {
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
-        // epsilon = 2**(1 - DoubleDoubleDigits) = 2**(1 - 53) = 2**(-52)
-        // epsilon = 2.2204460e-16
         // epsilon is called the largest relative spacing
-        epsilon = DoubleDouble.valueOf(1.0);
-        neweps = DoubleDouble.valueOf(1.0);
-
-        while (true) {
-
-            if ((DoubleDouble.valueOf(1.0)).equals((DoubleDouble.valueOf(1.0)).add(neweps))) {
-                break;
-            } else {
-                epsilon = (DoubleDouble)neweps.clone();
-                neweps = neweps.divide(DoubleDouble.valueOf(2.0));
-            }
-        } // while(true)
+        epsilon = DoubleDouble.valueOf(1.23259516440783e-32);  /* = 2^-106 */
 
         tol = epsilon.max(DoubleDouble.valueOf(1.0E-18));
-        tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        //tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        tiny = DoubleDouble.valueOf(2.2250738585072014E-308);
         fid = DoubleDouble.valueOf(id);
 
         if (az.le(DoubleDouble.valueOf(1.0))) {
@@ -1519,7 +1508,7 @@ public class BesselEP {
         emax = 1024;
 
         // r1m5 = log10(2), which is D1MACH(5)
-        r1m5 = DoubleDouble.valueOf(0.4342944819032518276511289).multiply((DoubleDouble.valueOf(2.0)).log());
+        r1m5 = DoubleDouble.valueOf(0.30102999566398118760076720571112);
         k = Math.min(Math.abs(emin), Math.abs(emax));
         elim = (DoubleDouble.valueOf(2.303)).multiply( ((DoubleDouble.valueOf(k)).multiply(r1m5)).subtract(DoubleDouble.valueOf(3.0)));
 
@@ -2040,7 +2029,6 @@ public class BesselEP {
          * ORDER BY D. E. AMOS, ACM C TRANS. MATH. SOFTWARE, VOL. 12, NO. 3, SEPTEMBER 1986,C PP 265-273.
          */
         int nn;
-        DoubleDouble neweps;
         int k;
         int k1;
         DoubleDouble aa;
@@ -2086,22 +2074,9 @@ public class BesselEP {
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
-        // epsilon = 2**(1 - DoubleDoubleDigits) = 2**(1 - 53) = 2**(-52)
-        // epsilon = 2.224460e-16
         // epsilon is called the largest relative spacing
-        epsilon = DoubleDouble.valueOf(1.0);
-        neweps = DoubleDouble.valueOf(1.0);
-
-        while (true) {
-
-            if ((DoubleDouble.valueOf(1.0)).equals((DoubleDouble.valueOf(1.0)).add(neweps))) {
-                break;
-            } else {
-                epsilon = (DoubleDouble)neweps.clone();
-                neweps = neweps.divide(DoubleDouble.valueOf(2.0));
-            }
-        }
-
+        epsilon = DoubleDouble.valueOf(1.23259516440783e-32);  /* = 2^-106 */
+        
         tol = epsilon.max(DoubleDouble.valueOf(1.0e-18));
 
         // emin, the smallest exponent E for DoubleDouble precision, is I1MACH(15)
@@ -2111,7 +2086,8 @@ public class BesselEP {
         // Double.MIN_VALUE = 2**(-1074) is the smallest denormalized number,
         // which preseerves only a portion of the fraction's precision.
         emin = -1021;
-        tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        //tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        tiny = DoubleDouble.valueOf(2.2250738585072014E-308);
 
         // emax, the largest exponent E for DoubleDouble precision, is I1MACH(16)
         // D1MACH(2) = 2**(emax)*(1 - 2**(-DoubleDoubleDigits)) = 2**1024*(1 - 2**-53)
@@ -2119,7 +2095,7 @@ public class BesselEP {
         emax = 1024;
 
         // r1m5 = log10(2), which is D1MACH(5)
-        r1m5 = DoubleDouble.valueOf(0.4342944819032518276511289).multiply((DoubleDouble.valueOf(2.0)).log());
+        r1m5 = DoubleDouble.valueOf(0.30102999566398118760076720571112);
         k = Math.min(Math.abs(emin), Math.abs(emax));
         elim = (DoubleDouble.valueOf(2.303)).multiply( ((DoubleDouble.valueOf(k)).multiply(r1m5)).subtract(DoubleDouble.valueOf(3.0)));
 
@@ -2376,7 +2352,6 @@ public class BesselEP {
          * MAGNITUDE OF THE LARGER COMPONENT. IN THESE EXTREME CASES, C THE PRINCIPAL PHASE ANGLE IS ON THE ORDER OF +P,
          * -P, PI/2-P,C OR -PI/2+P.
          */
-        DoubleDouble neweps;
         int k;
         int k1;
         DoubleDouble aa;
@@ -2408,22 +2383,9 @@ public class BesselEP {
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
-        // epsilon = 2**(1 - DoubleDoubleDigits) = 2**(1 - 53) = 2**(-52)
-        // epsilon = 2.224460e-16
         // epsilon is called the largest relative spacing
-        epsilon = DoubleDouble.valueOf(1.0);
-        neweps = DoubleDouble.valueOf(1.0);
-
-        while (true) {
-
-            if ((DoubleDouble.valueOf(1.0)).equals((DoubleDouble.valueOf(1.0)).add(neweps))) {
-                break;
-            } else {
-                epsilon = (DoubleDouble)neweps.clone();
-                neweps = neweps.divide(DoubleDouble.valueOf(2.0));
-            }
-        }
-
+        epsilon = DoubleDouble.valueOf(1.23259516440783e-32);  /* = 2^-106 */
+        
         tol = epsilon.max(DoubleDouble.valueOf(1.0e-18));
 
         // emin, the smallest exponent E for DoubleDouble precision, is I1MACH(15)
@@ -2433,7 +2395,8 @@ public class BesselEP {
         // Double.MIN_VALUE = 2**(-1074) is the smallest denormalized number,
         // which preseerves only a portion of the fraction's precision.
         emin = -1021;
-        tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        //tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        tiny = DoubleDouble.valueOf(2.2250738585072014E-308);
 
         // emax, the largest exponent E for DoubleDouble precision, is I1MACH(16)
         // D1MACH(2) = 2**(emax)*(1 - 2**(-DoubleDoubleDigits)) = 2**1024*(1 - 2**-53)
@@ -2441,7 +2404,7 @@ public class BesselEP {
         emax = 1024;
 
         // r1m5 = log10(2), which is D1MACH(5)
-        r1m5 = DoubleDouble.valueOf(0.4342944819032518276511289).multiply((DoubleDouble.valueOf(2.0)).log());
+        r1m5 = DoubleDouble.valueOf(0.30102999566398118760076720571112);
         k = Math.min(Math.abs(emin), Math.abs(emax));
         elim = (DoubleDouble.valueOf(2.303)).multiply( ((DoubleDouble.valueOf(k)).multiply(r1m5)).subtract(DoubleDouble.valueOf(3.0)));
 
@@ -2635,7 +2598,6 @@ public class BesselEP {
          * BESSEL FUNCTIONS OF A COMPLEX C ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, ACM C TRANS. MATH. SOFTWARE,
          * VOL. 12, NO. 3, SEPTEMBER 1986, C PP 265-273.
          */
-        DoubleDouble neweps;
         int k;
         int k1;
         DoubleDouble aa;
@@ -2671,21 +2633,8 @@ public class BesselEP {
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
-        // epsilon = 2**(1 - DoubleDoubleDigits) = 2**(1 - 53) = 2**(-52)
-        // epsilon = 2.224460e-16
         // epsilon is called the largest relative spacing
-        epsilon = DoubleDouble.valueOf(1.0);
-        neweps = DoubleDouble.valueOf(1.0);
-
-        while (true) {
-
-            if ((DoubleDouble.valueOf(1.0)).equals((DoubleDouble.valueOf(1.0)).add(neweps))) {
-                break;
-            } else {
-                epsilon = (DoubleDouble)neweps.clone();
-                neweps = neweps.divide(DoubleDouble.valueOf(2.0));
-            }
-        }
+        epsilon = DoubleDouble.valueOf(1.23259516440783e-32);  /* = 2^-106 */
 
         tol = epsilon.max(DoubleDouble.valueOf(1.0e-18));
 
@@ -2696,7 +2645,8 @@ public class BesselEP {
         // Double.MIN_VALUE = 2**(-1074) is the smallest denormalized number,
         // which preseerves only a portion of the fraction's precision.
         emin = -1021;
-        tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        //tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        tiny = DoubleDouble.valueOf(2.2250738585072014E-308);
 
         // emax, the largest exponent E for DoubleDouble precision, is I1MACH(16)
         // D1MACH(2) = 2**(emax)*(1 - 2**(-DoubleDoubleDigits)) = 2**1024*(1 - 2**-53)
@@ -2704,7 +2654,7 @@ public class BesselEP {
         emax = 1024;
 
         // r1m5 = log10(2), which is D1MACH(5)
-        r1m5 =  DoubleDouble.valueOf(0.4342944819032518276511289).multiply((DoubleDouble.valueOf(2.0)).log());
+        r1m5 = DoubleDouble.valueOf(0.30102999566398118760076720571112);
         k = Math.min(Math.abs(emin), Math.abs(emax));
         elim = (DoubleDouble.valueOf(2.303)).multiply( ((DoubleDouble.valueOf(k)).multiply(r1m5)).subtract(DoubleDouble.valueOf(3.0)));
 
@@ -2896,7 +2846,6 @@ public class BesselEP {
          * BY D. E. AMOS, ACM C TRANS. MATH. SOFTWARE, VOL. 12, NO. 3, SEPTEMBER 1986, C PP 265-273.
          */
         int nn;
-        DoubleDouble neweps;
         int k;
         int k1;
         DoubleDouble aa;
@@ -2923,21 +2872,8 @@ public class BesselEP {
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
-        // epsilon = 2**(1 - DoubleDoubleDigits) = 2**(1 - 53) = 2**(-52)
-        // epsilon = 2.224460e-16
         // epsilon is called the largest relative spacing
-        epsilon = DoubleDouble.valueOf(1.0);
-        neweps = DoubleDouble.valueOf(1.0);
-
-        while (true) {
-
-            if ((DoubleDouble.valueOf(1.0)).equals((DoubleDouble.valueOf(1.0)).add(neweps))) {
-                break;
-            } else {
-                epsilon = (DoubleDouble)neweps.clone();
-                neweps = neweps.divide(DoubleDouble.valueOf(2.0));
-            }
-        }
+        epsilon = DoubleDouble.valueOf(1.23259516440783e-32);  /* = 2^-106 */
 
         tol = epsilon.max(DoubleDouble.valueOf(1.0e-18));
 
@@ -2948,7 +2884,8 @@ public class BesselEP {
         // Double.MIN_VALUE = 2**(-1074) is the smallest denormalized number,
         // which preseerves only a portion of the fraction's precision.
         emin = -1021;
-        tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        //tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        tiny = DoubleDouble.valueOf(2.2250738585072014E-308);
 
         // emax, the largest exponent E for DoubleDouble precision, is I1MACH(16)
         // D1MACH(2) = 2**(emax)*(1 - 2**(-DoubleDoubleDigits)) = 2**1024*(1 - 2**-53)
@@ -2956,7 +2893,7 @@ public class BesselEP {
         emax = 1024;
 
         // r1m5 = log10(2), which is D1MACH(5)
-        r1m5 = DoubleDouble.valueOf(0.4342944819032518276511289).multiply((DoubleDouble.valueOf(2.0)).log());
+        r1m5 = DoubleDouble.valueOf(0.30102999566398118760076720571112);
         k = Math.min(Math.abs(emin), Math.abs(emax));
         elim = (DoubleDouble.valueOf(2.303)).multiply( ((DoubleDouble.valueOf(k)).multiply(r1m5)).subtract(DoubleDouble.valueOf(3.0)));
 
@@ -3429,7 +3366,6 @@ public class BesselEP {
         DoubleDouble zui;
         DoubleDouble cspnr;
         DoubleDouble cspni;
-        DoubleDouble neweps;
         int k;
 
         zzr = (DoubleDouble)zr.clone();
@@ -3508,21 +3444,8 @@ public class BesselEP {
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
-        // epsilon = 2**(1 - DoubleDoubleDigits) = 2**(1 - 53) = 2**(-52)
-        // epsilon = 2.224460e-16
         // epsilon is called the largest relative spacing
-        epsilon = DoubleDouble.valueOf(1.0);
-        neweps = DoubleDouble.valueOf(1.0);
-
-        while (true) {
-
-            if ((DoubleDouble.valueOf(1.0)).equals((DoubleDouble.valueOf(1.0)).add(neweps))) {
-                break;
-            } else {
-                epsilon = (DoubleDouble)neweps.clone();
-                neweps = neweps.divide(DoubleDouble.valueOf(2.0));
-            }
-        }
+        epsilon = DoubleDouble.valueOf(1.23259516440783e-32);  /* = 2^-106 */
 
         tol = epsilon.max(DoubleDouble.valueOf(1.0e-18));
 
@@ -3533,7 +3456,8 @@ public class BesselEP {
         // Double.MIN_VALUE = 2**(-1074) is the smallest denormalized number,
         // which preseerves only a portion of the fraction's precision.
         emin = -1021;
-        tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        //tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        tiny = DoubleDouble.valueOf(2.2250738585072014E-308);
 
         // emax, the largest exponent E for DoubleDouble precision, is I1MACH(16)
         // D1MACH(2) = 2**(emax)*(1 - 2**(-DoubleDoubleDigits)) = 2**1024*(1 - 2**-53)
@@ -3541,7 +3465,7 @@ public class BesselEP {
         emax = 1024;
 
         // r1m5 = log10(2), which is D1MACH(5)
-        r1m5 = DoubleDouble.valueOf(0.4342944819032518276511289).multiply((DoubleDouble.valueOf(2.0)).log());
+        r1m5 = DoubleDouble.valueOf(0.30102999566398118760076720571112);
         k = Math.min(Math.abs(emin), Math.abs(emax));
 
         // elim is the approximate under- and overflow limit
@@ -3713,7 +3637,6 @@ public class BesselEP {
         DoubleDouble aa;
         DoubleDouble bb;
         DoubleDouble atol;
-        DoubleDouble neweps;
 
         ierr[0] = 0;
         nz[0] = 0;
@@ -3773,21 +3696,8 @@ public class BesselEP {
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
-        // epsilon = 2**(1 - DoubleDoubleDigits) = 2**(1 - 53) = 2**(-52)
-        // epsilon = 2.224460e-16
         // epsilon is called the largest relative spacing
-        epsilon = DoubleDouble.valueOf(1.0);
-        neweps = DoubleDouble.valueOf(1.0);
-
-        while (true) {
-
-            if ((DoubleDouble.valueOf(1.0)).equals((DoubleDouble.valueOf(1.0)).add(neweps))) {
-                break;
-            } else {
-                epsilon = (DoubleDouble)neweps.clone();
-                neweps = neweps.divide(DoubleDouble.valueOf(2.0));
-            }
-        }
+        epsilon = DoubleDouble.valueOf(1.23259516440783e-32);  /* = 2^-106 */
 
         tol = epsilon.max(DoubleDouble.valueOf(1.0e-18));
 
@@ -3798,7 +3708,8 @@ public class BesselEP {
         // Double.MIN_VALUE = 2**(-1074) is the smallest denormalized number,
         // which preseerves only a portion of the fraction's precision.
         emin = -1021;
-        tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        //tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        tiny = DoubleDouble.valueOf(2.2250738585072014E-308);
 
         // emax, the largest exponent E for DoubleDouble precision, is I1MACH(16)
         // D1MACH(2) = 2**(emax)*(1 - 2**(-DoubleDoubleDigits)) = 2**1024*(1 - 2**-53)
@@ -3806,7 +3717,7 @@ public class BesselEP {
         emax = 1024;
 
         // r1m5 = log10(2), which is D1MACH(5)
-        r1m5 = DoubleDouble.valueOf(0.4342944819032518276511289).multiply((DoubleDouble.valueOf(2.0)).log());
+        r1m5 = DoubleDouble.valueOf(0.30102999566398118760076720571112);
         k = Math.min(Math.abs(emin), Math.abs(emax));
 
         // elim is the approximate under- and overflow limit
@@ -4157,7 +4068,6 @@ public class BesselEP {
         DoubleDouble ztai;
         DoubleDouble eaa;
         DoubleDouble cc;
-        DoubleDouble neweps;
         DoubleDouble dig;
         DoubleDouble bb;
         final DoubleDouble[] csqr = new DoubleDouble[1];
@@ -4187,21 +4097,8 @@ public class BesselEP {
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
-        // epsilon = 2**(1 - DoubleDoubleDigits) = 2**(1 - 53) = 2**(-52)
-        // epsilon = 2.224460e-16
         // epsilon is called the largest relative spacing
-        epsilon = DoubleDouble.valueOf(1.0);
-        neweps = DoubleDouble.valueOf(1.0);
-
-        while (true) {
-
-            if ((DoubleDouble.valueOf(1.0)) == ((DoubleDouble.valueOf(1.0)).add(neweps))) {
-                break;
-            } else {
-                epsilon = (DoubleDouble)neweps.clone();
-                neweps = neweps.divide(DoubleDouble.valueOf(2.0));
-            }
-        }
+        epsilon = DoubleDouble.valueOf(1.23259516440783e-32);  /* = 2^-106 */
 
         tol = epsilon.max(DoubleDouble.valueOf(1.0e-18));
         fid = DoubleDouble.valueOf(id);
@@ -4335,7 +4232,8 @@ public class BesselEP {
         // Double.MIN_VALUE = 2**(-1074) is the smallest denormalized number,
         // which preseerves only a portion of the fraction's precision.
         emin = -1021;
-        tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        //tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        tiny = DoubleDouble.valueOf(2.2250738585072014E-308);
 
         // emax, the largest exponent E for DoubleDouble precision, is I1MACH(16)
         // D1MACH(2) = 2**(emax)*(1 - 2**(-DoubleDoubleDigits)) = 2**1024*(1 - 2**-53)
@@ -4343,7 +4241,7 @@ public class BesselEP {
         emax = 1024;
 
         // r1m5 = log10(2), which is D1MACH(5)
-        r1m5 = DoubleDouble.valueOf(0.4342944819032518276511289).multiply((DoubleDouble.valueOf(2.0)).log());
+        r1m5 = DoubleDouble.valueOf(0.30102999566398118760076720571112);
         k = Math.min(Math.abs(emin), Math.abs(emax));
         elim = (DoubleDouble.valueOf(2.303)).multiply( ((DoubleDouble.valueOf(k)).multiply(r1m5)).subtract(DoubleDouble.valueOf(3.0)));
 
@@ -6270,7 +6168,6 @@ public class BesselEP {
         final DoubleDouble[] wi = new DoubleDouble[20];
         final int[] keps = new int[20];
         final int[] kdo = new int[20];
-        DoubleDouble neweps;
         int k;
         int k1;
         DoubleDouble aa;
@@ -6370,21 +6267,8 @@ public class BesselEP {
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
-        // epsilon = 2**(1 - DoubleDoubleDigits) = 2**(1 - 53) = 2**(-52)
-        // epsilon = 2.224460e-16
         // epsilon is called the largest relative spacing
-        epsilon = DoubleDouble.valueOf(1.0);
-        neweps = DoubleDouble.valueOf(1.0);
-
-        while (true) {
-
-            if ((DoubleDouble.valueOf(1.0)).equals((DoubleDouble.valueOf(1.0)).add(neweps))) {
-                break;
-            } else {
-                epsilon = (DoubleDouble)neweps.clone();
-                neweps = neweps.divide(DoubleDouble.valueOf(2.0));
-            }
-        }
+        epsilon = DoubleDouble.valueOf(1.23259516440783e-32);  /* = 2^-106 */
 
         tol = epsilon.max(DoubleDouble.valueOf(1.0e-18));
 
@@ -6395,7 +6279,8 @@ public class BesselEP {
         // Double.MIN_VALUE = 2**(-1074) is the smallest denormalized number,
         // which preseerves only a portion of the fraction's precision.
         emin = -1021;
-        tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        //tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        tiny = DoubleDouble.valueOf(2.2250738585072014E-308);
 
         // emax, the largest exponent E for DoubleDouble precision, is I1MACH(16)
         // D1MACH(2) = 2**(emax)*(1 - 2**(-DoubleDoubleDigits)) = 2**1024*(1 - 2**-53)
@@ -6403,7 +6288,7 @@ public class BesselEP {
         emax = 1024;
 
         // r1m5 = log10(2), which is D1MACH(5)
-        r1m5 = DoubleDouble.valueOf(0.4342944819032518276511289).multiply((DoubleDouble.valueOf(2.0)).log());
+        r1m5 = DoubleDouble.valueOf(0.30102999566398118760076720571112);
         k = Math.min(Math.abs(emin), Math.abs(emax));
         elim = (DoubleDouble.valueOf(2.303)).multiply( ((DoubleDouble.valueOf(k)).multiply(r1m5)).subtract(DoubleDouble.valueOf(3.0)));
 
@@ -6887,7 +6772,6 @@ public class BesselEP {
         final DoubleDouble[] yi = new DoubleDouble[20];
         final int[] keps = new int[20];
         final int[] kdo = new int[20];
-        DoubleDouble neweps;
         int k;
         int k1;
         DoubleDouble aa;
@@ -6950,21 +6834,8 @@ public class BesselEP {
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
-        // epsilon = 2**(1 - DoubleDoubleDigits) = 2**(1 - 53) = 2**(-52)
-        // epsilon = 2.224460e-16
         // epsilon is called the largest relative spacing
-        epsilon = DoubleDouble.valueOf(1.0);
-        neweps = DoubleDouble.valueOf(1.0);
-
-        while (true) {
-
-            if ((DoubleDouble.valueOf(1.0)).equals((DoubleDouble.valueOf(1.0)).add(neweps))) {
-                break;
-            } else {
-                epsilon = (DoubleDouble)neweps.clone();
-                neweps = neweps.divide(DoubleDouble.valueOf(2.0));
-            }
-        }
+        epsilon = DoubleDouble.valueOf(1.23259516440783e-32);  /* = 2^-106 */
 
         tol = epsilon.max(DoubleDouble.valueOf(1.0e-18));
 
@@ -6975,7 +6846,8 @@ public class BesselEP {
         // Double.MIN_VALUE = 2**(-1074) is the smallest denormalized number,
         // which preserves only a portion of the fraction's precision.
         emin = -1021;
-        tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        //tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        tiny = DoubleDouble.valueOf(2.2250738585072014E-308);
 
         // emax, the largest exponent E for DoubleDouble precision, is I1MACH(16)
         // D1MACH(2) = 2**(emax)*(1 - 2**(-DoubleDoubleDigits)) = 2**1024*(1 - 2**-53)
@@ -6983,7 +6855,7 @@ public class BesselEP {
         emax = 1024;
 
         // r1m5 = log10(2), which is D1MACH(5)
-        r1m5 =  DoubleDouble.valueOf(0.4342944819032518276511289).multiply((DoubleDouble.valueOf(2.0)).log());
+        r1m5 = DoubleDouble.valueOf(0.30102999566398118760076720571112);
         k = Math.min(Math.abs(emin), Math.abs(emax));
         elim = (DoubleDouble.valueOf(2.303)).multiply( ((DoubleDouble.valueOf(k)).multiply(r1m5)).subtract(DoubleDouble.valueOf(3.0)));
 
@@ -7378,7 +7250,6 @@ public class BesselEP {
          * PROLOGUE INSTRUCTIONS.
          */
         // default is mqc = 1
-        DoubleDouble neweps;
         int k;
         int k1;
         DoubleDouble aa;
@@ -7454,21 +7325,8 @@ public class BesselEP {
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
-        // epsilon = 2**(1 - DoubleDoubleDigits) = 2**(1 - 53) = 2**(-52)
-        // epsilon = 2.224460e-16
         // epsilon is called the largest relative spacing
-        epsilon = DoubleDouble.valueOf(1.0);
-        neweps = DoubleDouble.valueOf(1.0);
-
-        while (true) {
-
-            if ((DoubleDouble.valueOf(1.0)).equals((DoubleDouble.valueOf(1.0)).add(neweps))) {
-                break;
-            } else {
-                epsilon = (DoubleDouble)neweps.clone();
-                neweps = neweps.divide(DoubleDouble.valueOf(2.0));
-            }
-        }
+        epsilon = DoubleDouble.valueOf(1.23259516440783e-32);  /* = 2^-106 */
 
         tol = epsilon.max(DoubleDouble.valueOf(1.0e-18));
 
@@ -7479,7 +7337,8 @@ public class BesselEP {
         // Double.MIN_VALUE = 2**(-1074) is the smallest denormalized number,
         // which preseerves only a portion of the fraction's precision.
         emin = -1021;
-        tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        //tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        tiny = DoubleDouble.valueOf(2.2250738585072014E-308);
 
         // emax, the largest exponent E for DoubleDouble precision, is I1MACH(16)
         // D1MACH(2) = 2**(emax)*(1 - 2**(-DoubleDoubleDigits)) = 2**1024*(1 - 2**-53)
@@ -7487,7 +7346,7 @@ public class BesselEP {
         emax = 1024;
 
         // r1m5 = log10(2), which is D1MACH(5)
-        r1m5 = DoubleDouble.valueOf(0.4342944819032518276511289).multiply((DoubleDouble.valueOf(2.0)).log());
+        r1m5 = DoubleDouble.valueOf(0.30102999566398118760076720571112);
         k = Math.min(Math.abs(emin), Math.abs(emax));
         elim = (DoubleDouble.valueOf(2.303)).multiply( ((DoubleDouble.valueOf(k)).multiply(r1m5)).subtract(DoubleDouble.valueOf(3.0)));
 
@@ -7936,7 +7795,6 @@ public class BesselEP {
         final DoubleDouble[] chi = new DoubleDouble[20];
         final int[] keps = new int[20];
         final int[] kdo = new int[20];
-        DoubleDouble neweps;
         int k;
         int k1;
         DoubleDouble aa;
@@ -8003,21 +7861,8 @@ public class BesselEP {
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
-        // epsilon = 2**(1 - DoubleDoubleDigits) = 2**(1 - 53) = 2**(-52)
-        // epsilon = 2.224460e-16
         // epsilon is called the largest relative spacing
-        epsilon = DoubleDouble.valueOf(1.0);
-        neweps = DoubleDouble.valueOf(1.0);
-
-        while (true) {
-
-            if ((DoubleDouble.valueOf(1.0)).equals((DoubleDouble.valueOf(1.0)).add(neweps))) {
-                break;
-            } else {
-                epsilon = (DoubleDouble)neweps.clone();
-                neweps = neweps.divide(DoubleDouble.valueOf(2.0));
-            }
-        }
+        epsilon = DoubleDouble.valueOf(1.23259516440783e-32);  /* = 2^-106 */
 
         tol = epsilon.max(DoubleDouble.valueOf(1.0e-18));
 
@@ -8028,7 +7873,8 @@ public class BesselEP {
         // Double.MIN_VALUE = 2**(-1074) is the smallest denormalized number,
         // which preseerves only a portion of the fraction's precision.
         emin = -1021;
-        tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        //tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        tiny = DoubleDouble.valueOf(2.2250738585072014E-308);
 
         // emax, the largest exponent E for DoubleDouble precision, is I1MACH(16)
         // D1MACH(2) = 2**(emax)*(1 - 2**(-DoubleDoubleDigits)) = 2**1024*(1 - 2**-53)
@@ -8036,7 +7882,7 @@ public class BesselEP {
         emax = 1024;
 
         // r1m5 = log10(2), which is D1MACH(5)
-        r1m5 = DoubleDouble.valueOf(0.4342944819032518276511289).multiply((DoubleDouble.valueOf(2.0)).log());
+        r1m5 = DoubleDouble.valueOf(0.30102999566398118760076720571112);
         k = Math.min(Math.abs(emin), Math.abs(emax));
         elim = (DoubleDouble.valueOf(2.303)).multiply( ((DoubleDouble.valueOf(k)).multiply(r1m5)).subtract(DoubleDouble.valueOf(3.0)));
 
@@ -8324,7 +8170,6 @@ public class BesselEP {
          * Z*EXP(-3*PI*I/2) = Z*I C C THE PARAMETER MQC CAN HAVE VALUES 1 (THE DEFAULT) FOR A FASTER,C LESS DEFINITIVE
          * TEST OR 2 FOR A SLOWER, MORE DEFINITIVE TEST.
          */
-        DoubleDouble neweps;
         int k;
         int k1;
         DoubleDouble aa;
@@ -8418,21 +8263,8 @@ public class BesselEP {
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
-        // epsilon = 2**(1 - DoubleDoubleDigits) = 2**(1 - 53) = 2**(-52)
-        // epsilon = 2.224460e-16
         // epsilon is called the largest relative spacing
-        epsilon = DoubleDouble.valueOf(1.0);
-        neweps = DoubleDouble.valueOf(1.0);
-
-        while (true) {
-
-            if ((DoubleDouble.valueOf(1.0)).equals((DoubleDouble.valueOf(1.0)).add(neweps))) {
-                break;
-            } else {
-                epsilon = (DoubleDouble)neweps.clone();
-                neweps = neweps.divide(DoubleDouble.valueOf(2.0));
-            }
-        }
+        epsilon = DoubleDouble.valueOf(1.23259516440783e-32);  /* = 2^-106 */
 
         tol = epsilon.max(DoubleDouble.valueOf(1.0e-18));
 
@@ -8443,7 +8275,8 @@ public class BesselEP {
         // Double.MIN_VALUE = 2**(-1074) is the smallest denormalized number,
         // which preseerves only a portion of the fraction's precision.
         emin = -1021;
-        tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        //tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        tiny = DoubleDouble.valueOf(2.2250738585072014E-308);
 
         // emax, the largest exponent E for DoubleDouble precision, is I1MACH(16)
         // D1MACH(2) = 2**(emax)*(1 - 2**(-DoubleDoubleDigits)) = 2**1024*(1 - 2**-53)
@@ -8451,7 +8284,7 @@ public class BesselEP {
         emax = 1024;
 
         // r1m5 = log10(2), which is D1MACH(5)
-        r1m5 = DoubleDouble.valueOf(0.4342944819032518276511289).multiply((DoubleDouble.valueOf(2.0)).log());
+        r1m5 = DoubleDouble.valueOf(0.30102999566398118760076720571112);
         k = Math.min(Math.abs(emin), Math.abs(emax));
         elim = (DoubleDouble.valueOf(2.303)).multiply( ((DoubleDouble.valueOf(k)).multiply(r1m5)).subtract(DoubleDouble.valueOf(3.0)));
 
@@ -8839,7 +8672,6 @@ public class BesselEP {
          * FUNCTIONS OF KINDS 1 AND 2. C C THE PARAMETER MQC CAN HAVE VALUES 1 (THE DEFAULT) FOR A FASTER,C LESS
          * DEFINITIVE TEST OR 2 FOR A SLOWER, MORE DEFINITIVE TEST.
          */
-        DoubleDouble neweps;
         int k;
         int k1;
         DoubleDouble aa;
@@ -8905,21 +8737,8 @@ public class BesselEP {
         // epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
         // (1.0 + epsilon) != 1.0.
-        // epsilon = 2**(1 - DoubleDoubleDigits) = 2**(1 - 53) = 2**(-52)
-        // epsilon = 2.224460e-16
         // epsilon is called the largest relative spacing
-        epsilon = DoubleDouble.valueOf(1.0);
-        neweps = DoubleDouble.valueOf(1.0);
-
-        while (true) {
-
-            if ((DoubleDouble.valueOf(1.0)).equals((DoubleDouble.valueOf(1.0)).add(neweps))) {
-                break;
-            } else {
-                epsilon = (DoubleDouble)neweps.clone();
-                neweps = neweps.divide(DoubleDouble.valueOf(2.0));
-            }
-        }
+        epsilon = DoubleDouble.valueOf(1.23259516440783e-32);  /* = 2^-106 */
 
         tol = epsilon.max(DoubleDouble.valueOf(1.0e-18));
 
@@ -8930,7 +8749,8 @@ public class BesselEP {
         // Double.MIN_VALUE = 2**(-1074) is the smallest denormalized number,
         // which preseerves only a portion of the fraction's precision.
         emin = -1021;
-        tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        //tiny = (DoubleDouble.valueOf(2.0)).pow(-1022.0);
+        tiny = DoubleDouble.valueOf(2.2250738585072014E-308);
 
         // emax, the largest exponent E for DoubleDouble precision, is I1MACH(16)
         // D1MACH(2) = 2**(emax)*(1 - 2**(-DoubleDoubleDigits)) = 2**1024*(1 - 2**-53)
@@ -8938,7 +8758,7 @@ public class BesselEP {
         emax = 1024;
 
         // r1m5 = log10(2), which is D1MACH(5)
-        r1m5 = DoubleDouble.valueOf(0.4342944819032518276511289).multiply((DoubleDouble.valueOf(2.0)).log());
+        r1m5 = DoubleDouble.valueOf(0.30102999566398118760076720571112);
         k = Math.min(Math.abs(emin), Math.abs(emax));
         elim = (DoubleDouble.valueOf(2.303)).multiply( ((DoubleDouble.valueOf(k)).multiply(r1m5)).subtract(DoubleDouble.valueOf(3.0)));
 
