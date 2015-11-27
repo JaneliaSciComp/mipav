@@ -677,7 +677,7 @@ public class BesselEP {
      */
     private void runTest() {
 
-        if (BesselType == Bessel.BESSEL_H) {
+        if (BesselType == BesselEP.BESSEL_H) {
 
             if (overflowTest) {
                 zqcbh(2);
@@ -685,7 +685,7 @@ public class BesselEP {
                 zqcbh(1);
             }
         } // if (BesselType == BESSEL_H)
-        else if (BesselType == Bessel.BESSEL_I) {
+        else if (BesselType == BesselEP.BESSEL_I) {
 
             if (overflowTest) {
                 zqcbi(2);
@@ -693,7 +693,7 @@ public class BesselEP {
                 zqcbi(1);
             }
         } // else if (BesselType == BESSEL_I);
-        else if (BesselType == Bessel.BESSEL_J) {
+        else if (BesselType == BesselEP.BESSEL_J) {
 
             if (overflowTest) {
                 zqcbj(2);
@@ -701,7 +701,7 @@ public class BesselEP {
                 zqcbj(1);
             }
         } // else if (BesselType == BESSEL_J);
-        else if (BesselType == Bessel.BESSEL_K) {
+        else if (BesselType == BesselEP.BESSEL_K) {
 
             if (overflowTest) {
                 zqcbk(2);
@@ -709,7 +709,7 @@ public class BesselEP {
                 zqcbk(1);
             }
         } // else if (BesselType == BESSEL_K)
-        else if (BesselType == Bessel.BESSEL_Y) {
+        else if (BesselType == BesselEP.BESSEL_Y) {
 
             if (overflowTest) {
                 zqcby(2);
@@ -717,7 +717,7 @@ public class BesselEP {
                 zqcby(1);
             }
         } // else if (BesselType == BESSEL_Y)
-        else if ( (BesselType == Bessel.AIRY_AI) || (BesselType == Bessel.AIRY_BI)) {
+        else if ( (BesselType == BesselEP.AIRY_AI) || (BesselType == BesselEP.AIRY_BI)) {
 
             if (overflowTest) {
                 zqcai(2);
