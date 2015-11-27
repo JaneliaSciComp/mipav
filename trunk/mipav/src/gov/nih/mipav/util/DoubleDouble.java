@@ -643,18 +643,25 @@ public strictfp class DoubleDouble
 			x = x.negate();
 			invert = true;
 		}
-		DoubleDouble s = (DoubleDouble.valueOf(1.0)).add(x);
+		int intX = x.intValue();
+		DoubleDouble baseVal = DoubleDouble.valueOf(1.0);
+		for (int i = 1; i <= intX; i++) {
+			baseVal = baseVal.multiply(E);
+		}
+		DoubleDouble fractionX = x.subtract(DoubleDouble.valueOf(intX));
+		DoubleDouble s = (DoubleDouble.valueOf(1.0)).add(fractionX);
 		DoubleDouble sOld = (DoubleDouble)s.clone();
-		DoubleDouble t = new DoubleDouble(x);
+		DoubleDouble t = new DoubleDouble(fractionX);
 		double n = 1.0;
 		
 		do {
 			n += 1.0;
 			t = t.divide(DoubleDouble.valueOf(n));
-			t = t.multiply(x);
+			t = t.multiply(fractionX);
 			sOld = s;
 			s = s.add(t);
 		} while (s.ne(sOld));
+		s = s.multiply(baseVal);
 		if (invert) {
 			s = s.reciprocal();
 		}
