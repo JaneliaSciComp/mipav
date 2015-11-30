@@ -638,17 +638,24 @@ public strictfp class DoubleDouble
 			return NaN;
 		}
 		DoubleDouble x = this;
-		if (x.lt(DoubleDouble.valueOf(0.0))) {
-			// Much greater precision if all numbers in the series have the same sign.
-			x = x.negate();
-			invert = true;
-		}
 		int intX = x.intValue();
 		DoubleDouble baseVal = DoubleDouble.valueOf(1.0);
-		for (int i = 1; i <= intX; i++) {
-			baseVal = baseVal.multiply(E);
+		if (intX >= 1) {
+			for (int i = 1; i <= intX; i++) {
+				baseVal = baseVal.multiply(E);
+			}
+		}
+		else if (intX <= -1) {
+			for (int i = 1; i <= Math.abs(intX); i++) {
+				baseVal = baseVal.divide(E);
+			}
 		}
 		DoubleDouble fractionX = x.subtract(DoubleDouble.valueOf(intX));
+		if (x.lt(DoubleDouble.valueOf(0.0))) {
+			// Much greater precision if all numbers in the series have the same sign.
+			fractionX = fractionX.negate();
+			invert = true;
+		}
 		DoubleDouble s = (DoubleDouble.valueOf(1.0)).add(fractionX);
 		DoubleDouble sOld = (DoubleDouble)s.clone();
 		DoubleDouble t = new DoubleDouble(fractionX);
@@ -661,10 +668,10 @@ public strictfp class DoubleDouble
 			sOld = s;
 			s = s.add(t);
 		} while (s.ne(sOld));
-		s = s.multiply(baseVal);
 		if (invert) {
 			s = s.reciprocal();
 		}
+		s = s.multiply(baseVal);
 		return s;
 		
 	}
