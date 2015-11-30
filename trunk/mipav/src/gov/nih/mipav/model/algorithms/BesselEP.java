@@ -2106,7 +2106,7 @@ public class BesselEP {
         // with the radix point after the first non-zero digit. In base two,
         // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
-        // Therefore, the mantissa effectively has 53 bits of resolution.
+        // In DoubleDouble, the mantissa effectively has 106 bits of resolution.
         DoubleDoubleDigits = 106;
         k1 = DoubleDoubleDigits - 1;
         aa = r1m5.multiply(DoubleDouble.valueOf(k1));
@@ -2415,7 +2415,7 @@ public class BesselEP {
         // with the radix point after the first non-zero digit. In base two,
         // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
-        // Therefore, the mantissa effectively has 53 bits of resolution.
+        // In DoubleDouble, the mantissa effectively has 106 bits of resolution.
         DoubleDoubleDigits = 106;
         k1 = DoubleDoubleDigits - 1;
         aa = r1m5.multiply(DoubleDouble.valueOf(k1));
@@ -2665,7 +2665,7 @@ public class BesselEP {
         // with the radix point after the first non-zero digit. In base two,
         // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
-        // Therefore, the mantissa effectively has 53 bits of resolution.
+        // In DoubleDouble, the mantissa effectively has 106 bits of resolution.
         DoubleDoubleDigits = 106;
         k1 = DoubleDoubleDigits - 1;
         aa = r1m5.multiply(DoubleDouble.valueOf(k1));
@@ -2904,7 +2904,7 @@ public class BesselEP {
         // with the radix point after the first non-zero digit. In base two,
         // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
-        // Therefore, the mantissa effectively has 53 bits of resolution.
+        // In DoubleDouble, the mantissa effectively has 106 bits of resolution.
         DoubleDoubleDigits = 106;
         k1 = DoubleDoubleDigits - 1;
         aa = r1m5.multiply(DoubleDouble.valueOf(k1));
@@ -4252,7 +4252,7 @@ public class BesselEP {
         // with the radix point after the first non-zero digit. In base two,
         // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
-        // Therefore, the mantissa effectively has 53 bits of resolution.
+        // In DoubleDouble, the mantissa effectively has 106 bits of resolution.
         DoubleDoubleDigits = 106;
         k1 = DoubleDoubleDigits - 1;
         aa = r1m5.multiply(DoubleDouble.valueOf(k1));
@@ -6303,7 +6303,7 @@ public class BesselEP {
         // with the radix point after the first non-zero digit. In base two,
         // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
-        // Therefore, the mantissa effectively has 53 bits of resolution.
+        // In DoubleDouble, the mantissa effectively has 106 bits of resolution.
         DoubleDoubleDigits = 106;
         k1 = DoubleDoubleDigits - 1;
         aa = r1m5.multiply(DoubleDouble.valueOf(k1));
@@ -6609,7 +6609,7 @@ public class BesselEP {
                                 conci = (DoubleDouble)con2i.clone();
                                 condr = (DoubleDouble)con1r.clone();
                                 condi = (DoubleDouble)con1i.clone();
-
+                                
                                 if (kode == 2) {
                                     aa = zwr.abs();
                                     zwr = ((cir.multiply(zrr)).subtract(cii.multiply(zri))).subtract(aa);
@@ -6870,7 +6870,7 @@ public class BesselEP {
         // with the radix point after the first non-zero digit. In base two,
         // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
-        // Therefore, the mantissa effectively has 53 bits of resolution.
+        // In DoubleDouble, the mantissa effectively has 106 bits of resolution.
         DoubleDoubleDigits = 106;
         k1 = DoubleDoubleDigits - 1;
         aa = r1m5.multiply(DoubleDouble.valueOf(k1));
@@ -7361,7 +7361,7 @@ public class BesselEP {
         // with the radix point after the first non-zero digit. In base two,
         // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
-        // Therefore, the mantissa effectively has 53 bits of resolution.
+        // In DoubleDouble, the mantissa effectively has 106 bits of resolution.
         DoubleDoubleDigits = 106;
         k1 = DoubleDoubleDigits - 1;
         aa = r1m5.multiply(DoubleDouble.valueOf(k1));
@@ -7897,7 +7897,7 @@ public class BesselEP {
         // with the radix point after the first non-zero digit. In base two,
         // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
-        // Therefore, the mantissa effectively has 53 bits of resolution.
+        // In DoubleDouble, the mantissa effectively has 106 bits of resolution.
         DoubleDoubleDigits = 106;
         k1 = DoubleDoubleDigits - 1;
         aa = r1m5.multiply(DoubleDouble.valueOf(k1));
@@ -8299,7 +8299,7 @@ public class BesselEP {
         // with the radix point after the first non-zero digit. In base two,
         // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
-        // Therefore, the mantissa effectively has 53 bits of resolution.
+        // In DoubleDouble, the mantissa effectively has 106 bits of resolution.
         DoubleDoubleDigits = 106;
         k1 = DoubleDoubleDigits - 1;
         aa = r1m5.multiply(DoubleDouble.valueOf(k1));
@@ -8773,7 +8773,7 @@ public class BesselEP {
         // with the radix point after the first non-zero digit. In base two,
         // the only possible non-zero digit is 1. Thus, a leading digit of 1
         // can always be assumed and need not be explicitly represented.
-        // Therefore, the mantissa effectively has 53 bits of resolution.
+        // In DoubleDouble, the mantissa effectively has 106 bits of resolution.
         DoubleDoubleDigits = 106;
         k1 = DoubleDoubleDigits - 1;
         aa = r1m5.multiply(DoubleDouble.valueOf(k1));
