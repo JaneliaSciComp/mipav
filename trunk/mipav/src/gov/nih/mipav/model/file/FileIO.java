@@ -2363,6 +2363,7 @@ public class FileIO {
                 case FileUtility.BRUKER:
                 case FileUtility.LSM:
                 case FileUtility.LSM_MULTIFILE:
+                case FileUtility.SVS:
                 case FileUtility.STK:
                 case FileUtility.QT:
                 case FileUtility.RAW:
@@ -3050,6 +3051,10 @@ public class FileIO {
                 case FileUtility.LSM_MULTIFILE:
                     image = readLSMMulti(fileName, fileDir);
                     break;
+                    
+                case FileUtility.SVS:
+                	image = readSVS(fileName, fileDir, one);
+                	break;
 
                 case FileUtility.STK:
                     image = readSTK(fileName, fileDir, one);
@@ -13327,6 +13332,73 @@ public class FileIO {
 
                 return null;
             }
+        }
+
+        imageFile.finalize();
+        imageFile = null;
+        return image;
+    }
+    
+    /**
+     * Reads a SVS file by calling the read method of the file.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
+     */
+    private ModelImage readSVS(final String fileName, final String fileDir, final boolean one) {
+        ModelImage image = null;
+        FileSVS imageFile;
+
+        try {
+            // final long start = System.currentTimeMillis();
+            imageFile = new FileSVS(fileName, fileDir);
+            //imageFile.setTIFFOrientation(doTIFFOrientation);
+            imageFile.setSuppressProgressBar(suppressProgressBar);
+            if ( !suppressProgressBar) {
+                // TODO: removed progress bar because it was causing huge slowdowns on some files. needs to have
+                // possible threading issue fixed.
+                // createProgressBar(imageFile, fileName, FileIO.FILE_READ);
+            }
+            image = imageFile.readImage(false, one);
+            LUT = imageFile.getModelLUT();
+            // System.err.println("read (sec): " + ( (System.currentTimeMillis() - start) / 1000));
+        } catch (final IOException error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        } catch (final OutOfMemoryError error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
         }
 
         imageFile.finalize();
