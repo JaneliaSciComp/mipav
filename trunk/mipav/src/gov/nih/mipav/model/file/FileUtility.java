@@ -286,6 +286,9 @@ public class FileUtility {
     /** Portable Pixmap Utilities .ppm*/
     public static final int PPM = 81;
     
+    /** Aperio TIFF based .svs */
+    public static final int SVS = 82;
+    
     
 
     private static final String[] fileTypeStr = {"error", "undefined", "afni", "analyze", "analyze multifile", "avi",
@@ -296,7 +299,7 @@ public class FileUtility {
             "nrrd multifile", "osm", "pcx", "pic", "pict", "png", "psd", "qt", "raw", "raw multifile", "spm", "stk", "surface xml",
             "tga", "tiff", "tiff multifile", "tmg", "voi file", "xbm", "xml", "xml multifile", "xpm", "parrec", "parrec multifile",
             "spar", "surfaceref xml", "minc hdf", "liff", "bfloat", "siemens text", "zvi", "jp2", "mat", "v", "MetaImage", "trk",
-            "czi", "pgm", "ppm"};
+            "czi", "pgm", "ppm", "svs"};
 
     
 
