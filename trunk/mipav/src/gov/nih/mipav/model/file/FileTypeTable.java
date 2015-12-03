@@ -230,6 +230,10 @@ public class FileTypeTable {
         FileTypeTable.FILE_EXT_TABLE.put(".STK", FileUtility.STK);
 
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.SURFACE_XML, new FileTypeInfo("Surface XML", ""));
+        
+        FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.SVS, new FileTypeInfo("SVS", ".svs"));
+        FileTypeTable.FILE_EXT_TABLE.put(".svs", FileUtility.SVS);
+        FileTypeTable.FILE_EXT_TABLE.put(".SVS", FileUtility.SVS);
 
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.TGA, new FileTypeInfo("TGA", ".tga"));
 
