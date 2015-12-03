@@ -7185,6 +7185,7 @@ public class FileSVS extends FileBase {
 
                     } else if (valueArray[0] == 5) {
                         lzwCompression = true;
+                        jpegCompression = false;
 
                         if (debuggingFileIO) {
                             Preferences.debug("FileTiff.openIFD: compression = LZW\n ", Preferences.DEBUG_FILEIO);
@@ -7193,6 +7194,7 @@ public class FileSVS extends FileBase {
                         throw new IOException("Deprecated JPEG compression is not implemented");
                     } else if (valueArray[0] == 7) {
                         jpegCompression = true;
+                        lzwCompression = false;
 
                         if (debuggingFileIO) {
                             Preferences.debug("FileTiff.openIFD: compression = jpeg\n", Preferences.DEBUG_FILEIO);
@@ -15586,7 +15588,7 @@ public class FileSVS extends FileBase {
                 // System.err.println("Starting with x = " + x + " and y = " + y);
                 raFile.seek(tileOffsets[ (slice * tilesPerSlice) + a]);
                 nBytes = tileByteCounts[ (slice * tilesPerSlice) + a];
-
+                
                 switch (fileInfo.getDataType()) {
 
                     case ModelStorageBase.BOOLEAN:
@@ -16551,6 +16553,7 @@ public class FileSVS extends FileBase {
                         break;
 
                     case ModelStorageBase.ARGB:
+                    	
                         if (isCMYK) {
                             if (chunky == true) {
 
