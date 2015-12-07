@@ -1058,7 +1058,7 @@ public class FileSVS extends FileBase {
         if (tableStream != null) {
             try {
                 tableStream.close();
-            } catch (final IOException ex) {}
+            } catch (final Exception ex) {}
             tableStream = null;
         }
 
@@ -1199,6 +1199,8 @@ public class FileSVS extends FileBase {
             while ( (moreIFDs) && ( !foundTag43314)) { // Find number of images!!
                 raFile.seek(IFDoffsets[imageSlice]);
                 moreIFDs = openIFD(fileInfo);
+                // Only read first largest image of pyramid
+                moreIFDs = false;
             }
 
             if (foundTag43314) {
@@ -1305,6 +1307,11 @@ public class FileSVS extends FileBase {
                 imgExtents = new int[2];
                 imgExtents[0] = xDim;
                 imgExtents[1] = yDim;
+                /*MipavUtil.displayError("imgExtents[0] = " + imgExtents[0]);
+                MipavUtil.displayError("imgExtents[1] = " + imgExtents[1]);
+                if (ModelImage.isColorImage(fileInfo.getDataType())) {
+                MipavUtil.displayError("sliceSize = " + (4 * ((long)imgExtents[0]) * ((long)imgExtents[1])));
+                }*/
             }
 
             fileInfo.setExtents(imgExtents);
@@ -2721,7 +2728,7 @@ public class FileSVS extends FileBase {
             try {
                 intis = new JPEGInputStream(is);
             } catch (final IOException e) {
-                MipavUtil.displayError("IOException on initis = new JPEGInputStream(is)");
+                MipavUtil.displayError("IOException " + e + " on initis = new JPEGInputStream(is)");
                 return -1;
             }
         } // else
@@ -7218,6 +7225,16 @@ public class FileSVS extends FileBase {
                         if (debuggingFileIO) {
                             Preferences
                                     .debug("FileTiff.openIFD: compression = ThunderScan\n", Preferences.DEBUG_FILEIO);
+                        }
+                    } else if (valueArray[0] == 33003) {
+                    	jpegCompression = true;
+                    	if (debuggingFileIO) {
+                            Preferences.debug("FileTiff.openIFD: compression = jpeg 2000 YCbCr\n", Preferences.DEBUG_FILEIO);
+                        }	
+                    } else if (valueArray[0] == 33005) {
+                    	jpegCompression = true;
+                    	if (debuggingFileIO) {
+                            Preferences.debug("FileTiff.openIFD: compression = jpeg 2000 RGB\n", Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == 34676) {
                         SGILogCompression = true;
