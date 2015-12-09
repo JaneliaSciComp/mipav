@@ -800,6 +800,8 @@ public class FileSVS extends FileBase {
     private boolean haveMultiSpectraImage = false;
 
     private boolean jpegCompression = false;
+    
+    private boolean jpeg2000Compression = false;
 
     private byte jpegTables[] = null;
 
@@ -1211,7 +1213,7 @@ public class FileSVS extends FileBase {
             Preferences.debug("Just past init IFD read", Preferences.DEBUG_FILEIO);
 
             if (haveTileWidth && ( !lzwCompression) && ( !zlibCompression) && ( !fax3Compression)
-                    && ( !fax4Compression) && ( !modHuffmanCompression) && ( !jpegCompression)
+                    && ( !fax4Compression) && ( !modHuffmanCompression) && ( !jpegCompression) && (!jpeg2000Compression)
                     && ( !ThunderScanCompression) && ( !SGILogCompression) && ( !SGILog24Compression) && ( !packBit)
                     && haveTileOffsets) {
                 if (chunky) {
@@ -1223,7 +1225,7 @@ public class FileSVS extends FileBase {
                 // System.err.println("DoTile: tilesPerSlice: " + tilesPerSlice + " imageSlice: " + imageSlice);
             } // if (haveTileWidth && (!lzwCompression) && (!zlibCompression)&& (!fax3Compression) && (!fax4Compression)
             else if (haveTileWidth || lzwCompression || zlibCompression || fax3Compression || fax4Compression
-                    || modHuffmanCompression || jpegCompression || ThunderScanCompression || SGILogCompression
+                    || modHuffmanCompression || jpegCompression || jpeg2000Compression || ThunderScanCompression || SGILogCompression
                     || SGILog24Compression) {
                 // set the tile width to the xDim for use in LZW Decoder or zlib deflater or fax decompression
                 if ( !haveTileWidth) {
@@ -1367,7 +1369,7 @@ public class FileSVS extends FileBase {
             } // else foundTag43314
 
             if (haveTileWidth && ( !lzwCompression) && ( !zlibCompression) && ( !fax3Compression)
-                    && ( !fax4Compression) && ( !modHuffmanCompression) && ( !jpegCompression)
+                    && ( !fax4Compression) && ( !modHuffmanCompression) && ( !jpegCompression) && (!jpeg2000Compression)
                     && ( !ThunderScanCompression) && ( !SGILogCompression) && ( !SGILog24Compression)
                     && haveTileOffsets) {
                 imageSlice = tilesPerImage / tilesPerSlice;
@@ -1461,7 +1463,7 @@ public class FileSVS extends FileBase {
                     try {
 
                         if (haveTileWidth || lzwCompression || zlibCompression || fax3Compression || fax4Compression
-                                || modHuffmanCompression || jpegCompression || ThunderScanCompression
+                                || modHuffmanCompression || jpegCompression || jpeg2000Compression || ThunderScanCompression
                                 || SGILogCompression || SGILog24Compression) {
                             readTileBuffer(i, sliceBufferFloat);
                         } else {
@@ -7227,12 +7229,13 @@ public class FileSVS extends FileBase {
                                     .debug("FileTiff.openIFD: compression = ThunderScan\n", Preferences.DEBUG_FILEIO);
                         }
                     } else if (valueArray[0] == 33003) {
-                    	jpegCompression = true;
+                    	jpeg2000Compression = true;
+                    	isYCbCr = true;
                     	if (debuggingFileIO) {
                             Preferences.debug("FileTiff.openIFD: compression = jpeg 2000 YCbCr\n", Preferences.DEBUG_FILEIO);
                         }	
                     } else if (valueArray[0] == 33005) {
-                    	jpegCompression = true;
+                    	jpeg2000Compression = true;
                     	if (debuggingFileIO) {
                             Preferences.debug("FileTiff.openIFD: compression = jpeg 2000 RGB\n", Preferences.DEBUG_FILEIO);
                         }
@@ -16651,7 +16654,7 @@ public class FileSVS extends FileBase {
                                 }
                             } // if (chunky == true)
                         } // if (isCMYK)
-                        else if (isYCbCr && ( !jpegCompression)) {
+                        else if (isYCbCr && ( !jpegCompression) && (!jpeg2000Compression)) {
                             if (chunky == true) {
 
                                 if (byteBuffer == null) {
@@ -16812,7 +16815,7 @@ public class FileSVS extends FileBase {
                                 x = xTile * tileWidth;
                                 y = yTile * tileLength;
                             } // if (chunky == true)
-                        } // if (isYCbCr && (!jpegCompression))
+                        } // if (isYCbCr && (!jpegCompression) && (!jpeg2000Compression)
                         else if ( (chunky == true) && (packBit == true) && (samplesPerPixel == 3)) {
                             if (byteBuffer == null) {
                                 byteBuffer = new byte[tileMaxByteCount];
@@ -17070,7 +17073,7 @@ public class FileSVS extends FileBase {
 
                                 if (byteBuffer == null) {
 
-                                    if (lzwCompression || zlibCompression || jpegCompression || SGILogCompression
+                                    if (lzwCompression || zlibCompression || jpegCompression || jpeg2000Compression || SGILogCompression
                                             || SGILog24Compression) {
                                         byteBuffer = new byte[tileMaxByteCount];
                                     } else {
@@ -17089,7 +17092,7 @@ public class FileSVS extends FileBase {
                                 progressLength = imageSlice * xDim * yDim;
                                 mod = progressLength / 100;
 
-                                if (lzwCompression || zlibCompression || jpegCompression || SGILogCompression
+                                if (lzwCompression || zlibCompression || jpegCompression || jpeg2000Compression || SGILogCompression
                                         || SGILog24Compression) {
 
                                     // System.err.println("Read " + nBytes + " from raFile");
@@ -17110,6 +17113,12 @@ public class FileSVS extends FileBase {
                                         }
                                         rowsToDo = Math.min(tileLength, yDim - y);
                                         resultLength = jpegDecompresser(decomp, data, rowsToDo);
+                                    } else if (jpeg2000Compression) {
+                                        data = new byte[nBytes];
+                                        for (j = 0; j < nBytes; j++) {
+                                            data[j] = byteBuffer[j];
+                                        }
+                                        
                                     } else if (zlibCompression) {
                                         try {
                                             resultLength = zlibDecompresser.inflate(decomp);
@@ -17933,7 +17942,7 @@ public class FileSVS extends FileBase {
             }
         } // for (i = 0; i < tilesPerSlice; i++)
 
-        if (isYCbCr && ( !jpegCompression)) {
+        if (isYCbCr && ( !jpegCompression) && (!jpeg2000Compression)) {
             YCbCrtoRGB(buffer, YBuffer, CbInBuffer, CrInBuffer);
         }
 
