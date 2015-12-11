@@ -230,6 +230,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					PlugInAlgorithmWormUntwisting.latticeStraighten( batchProgress, includeRange,  baseFileDir, baseFileNameText.getText() );
 					} catch ( java.lang.OutOfMemoryError e ) {
 						MipavUtil.displayError( "Error: Not enough memory. Unable to finish straightening." );
+						e.printStackTrace();
 						return;
 					}
 					reviewResults.setSelected(true);
