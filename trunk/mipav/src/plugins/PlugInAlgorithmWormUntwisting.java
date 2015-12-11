@@ -296,6 +296,7 @@ public class PlugInAlgorithmWormUntwisting
 	public static void latticeStraighten( JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName )
 	{
 		ModelImage image = null;
+		ModelImage maskImage = null;
 		if ( includeRange != null )
 		{
 			for ( int i = 0; i < includeRange.size(); i++ )
@@ -320,6 +321,19 @@ public class PlugInAlgorithmWormUntwisting
 						image = null;
 					}
 					image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
+					
+
+					fileName = baseFileName + "_" + includeRange.elementAt(i) + "_mask_image.tif";
+					voiFile = new File(baseFileDir + File.separator + fileName);
+					if ( voiFile.exists() )
+					{
+						if ( maskImage != null )
+						{
+							maskImage.disposeLocal();
+							maskImage = null;
+						}
+						maskImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
+					}
 
 					// load the user-edited lattice if it exists:
 					fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + editLatticeOutput;
@@ -365,6 +379,7 @@ public class PlugInAlgorithmWormUntwisting
 							}							
 						}
 						// interpolate the lattice and untwist the worm, saving the output images and straightened lattice + annotations:
+						model.setMaskImage(maskImage);
 						model.interpolateLattice( false );
 						model.dispose();
 						model = null;

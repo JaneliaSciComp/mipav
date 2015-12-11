@@ -166,8 +166,8 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			}
 			if ( segmentSeamCells.isSelected() )
 			{
-//				segmentOutline();
-				PlugInAlgorithmWormUntwisting.segmentSeamCells( null, includeRange, baseFileDir, baseFileNameText.getText() );
+				segmentOutline();
+//				PlugInAlgorithmWormUntwisting.segmentSeamCells( null, includeRange, baseFileDir, baseFileNameText.getText() );
 //				seamCellInfo();
 			}
 			if ( buildLattice.isSelected() )
@@ -3578,15 +3578,24 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 						wormImageA.disposeLocal();
 						wormImageA = null;
 					}
-					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);
-					if ( currentMP == 0 )
+					if ( maximumProjectionImage != null )
 					{
-						int dimX = wormImageA.getExtents().length > 0 ? wormImageA.getExtents()[0] : 1;
-						int dimY = wormImageA.getExtents().length > 1 ? wormImageA.getExtents()[1] : 1;
-						int dimZ = wormImageA.getExtents().length > 2 ? wormImageA.getExtents()[2] : 1;
-						maximumProjectionImage = new ModelImage( wormImageA.getType(), new int[]{ dimX, dimY, dimZ}, baseFileNameText.getText() + "Outlines_MP_Z.tif" );
+						maximumProjectionImage.disposeLocal();
+						maximumProjectionImage = null;
 					}
+					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);
+					maximumProjectionImage = new ModelImage( wormImageA.getType(), wormImageA.getExtents(), baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + "_surface.tif" );
+					JDialogBase.updateFileInfo(wormImageA, maximumProjectionImage);
+						
 					WormSegmentation.outline( wormImageA, maximumProjectionImage, currentMP++ );
+					if ( maximumProjectionImage != null )
+					{
+						fileName = baseFileDir + File.separator;
+						System.err.println( "Saving mp image to : " + fileName + " " + maximumProjectionImage.getImageName() + ".tif" );
+						ModelImage.saveImage( maximumProjectionImage, maximumProjectionImage.getImageName() + ".tif", fileName, false ); 
+						maximumProjectionImage.calcMinMax();
+						new ViewJFrameImage((ModelImage) maximumProjectionImage.clone());
+					}
 				}    				
 			}
 		}
@@ -3596,14 +3605,6 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			wormImageA = null;
 		}
 
-		if ( maximumProjectionImage != null )
-		{
-			String fileName = baseFileDir + File.separator;
-			System.err.println( "Saving mp image to : " + fileName + " " + maximumProjectionImage.getImageName() + ".tif" );
-			ModelImage.saveImage( maximumProjectionImage, maximumProjectionImage.getImageName() + ".tif", fileName, false ); 
-			maximumProjectionImage.calcMinMax();
-			new ViewJFrameImage(maximumProjectionImage);
-		}
 	}
 
     /**

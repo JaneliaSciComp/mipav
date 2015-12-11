@@ -84,6 +84,7 @@ public class LatticeModel {
 
 
 	private ModelImage imageA;
+	private ModelImage maskImage = null;
 	private VOIVector latticeGrid;
 
 	private VOI lattice = null;
@@ -690,7 +691,14 @@ public class LatticeModel {
 		completedIDs = new boolean[left.size()];
 		currentID = new int[] {0};
 		// segment the left-right markers based on the lattice points:
-		markerSegmentation = segmentMarkers(imageA, left, right, markerIDs, markerVolumes, false);
+		if ( maskImage == null )
+		{
+			markerSegmentation = segmentMarkers(imageA, left, right, markerIDs, markerVolumes, false);
+		}
+		else
+		{
+			markerSegmentation = segmentMarkersSimple(imageA, left, right, markerIDs, markerVolumes);
+		}
 		// save the updated lattice positions, including any volume estimation for the marker segmentat at that lattice
 		// point:
 		saveLatticePositions(imageA, null, null, left, right, markerVolumes, "_before");
@@ -1291,6 +1299,11 @@ public class LatticeModel {
 		updateLattice(true);
 	}
 	
+	public void setMaskImage( ModelImage image )
+	{
+		maskImage = image;
+	}
+	
 	/**
 	 * Sets the currently selected point (lattice or annotation).
 	 * 
@@ -1659,9 +1672,6 @@ public class LatticeModel {
 		ModelImage insideConflict = new ModelImage(ModelStorageBase.BOOLEAN, imageA.getExtents(), imageName + "_insideConflict.xml");
 		JDialogBase.updateFileInfo(imageA, insideConflict);
 
-		ModelImage inside = new ModelImage(ModelStorageBase.INTEGER, imageA.getExtents(), imageName + "_insideMask.xml");
-		JDialogBase.updateFileInfo(imageA, inside);
-
 		// 7. The set of ellipses from the head of the worm to the tail defines an approximate outer boundary of the
 		// worm in 3D.
 		// The centers of each ellipse are spaced one voxel apart along the center line curve of the worm, and each
@@ -1748,7 +1758,7 @@ public class LatticeModel {
 				}
 			}
 		}
-		insideConflict.disposeLocal();
+		insideConflict.disposeLocal(true);
 		insideConflict = null;
 
 		// Save the marker segmentation image:
@@ -1907,6 +1917,8 @@ public class LatticeModel {
 		// extends
 		// outward until it reaches the edge of the sample plane, capturing as much data as possible.
 		int growStep = 0;
+		int max = (int) (resultExtents[0] / 3);
+		System.err.println( max );
 		while ( (growStep < 25) && ( !checkAnnotations(model) || (growStep < 20)))
 		{
 //			for (int z = 0; z < dimZ; z++) {
@@ -1926,8 +1938,14 @@ public class LatticeModel {
 //			saveImage(imageName, inside, false, "masks");
 			
 			
-			growEdges(model, markerSegmentation, sliceIDs, growStep++);
+			growEdges(maskImage, model, markerSegmentation, sliceIDs, growStep++);
+			
+			
 		}
+		markerSegmentation.disposeLocal();
+		markerSegmentation = null;
+
+		System.err.println("    generateMasks " + growStep );
 		if ( !checkAnnotations(model)) {
 			System.err.println("    generateMasks " + growStep + " " + false);
 		}
@@ -1949,6 +1967,9 @@ public class LatticeModel {
 			contour.setVolumeDisplayRange(minRange);
 		}
 
+
+		ModelImage inside = new ModelImage(ModelStorageBase.INTEGER, imageA.getExtents(), imageName + "_insideMask.xml");
+		JDialogBase.updateFileInfo(imageA, inside);
 		// Call the straightening step:
 		for (int z = 0; z < dimZ; z++) {
 			for (int y = 0; y < dimY; y++) {
@@ -1961,15 +1982,13 @@ public class LatticeModel {
 		}
 		inside.setImageName( imageName + "_" + growStep + "_insideMask.xml" );
 		saveImage(imageName, inside, false);
-		saveImage(imageName, model, false);
-		straighten(imageA, resultExtents, imageName, model, true, displayResult, true);
-
-		markerSegmentation.disposeLocal();
-		markerSegmentation = null;
-
 		inside.disposeLocal();
 		inside = null;
 
+		saveImage(imageName, model, false);
+		straighten(imageA, resultExtents, imageName, model, true, displayResult, true);
+//		straighten(imageA, resultExtents, imageName, model, false, displayResult, true);
+		
 		model.disposeLocal();
 		model = null;
 	}
@@ -2405,7 +2424,7 @@ public class LatticeModel {
 	 * @param sliceIDs
 	 * @param step
 	 */
-	private void growEdges(final ModelImage model, final ModelImage markers, final float[] sliceIDs, final int step) {
+	private void growEdges(final ModelImage mask, final ModelImage model, final ModelImage markers, final float[] sliceIDs, final int step) {
 		final int dimX = model.getExtents().length > 0 ? model.getExtents()[0] : 1;
 		final int dimY = model.getExtents().length > 1 ? model.getExtents()[1] : 1;
 		final int dimZ = model.getExtents().length > 2 ? model.getExtents()[2] : 1;
@@ -2491,6 +2510,7 @@ public class LatticeModel {
 			final int value = i + 1;
 			final VOIContour ellipse = (VOIContour) growContours.getCurves().elementAt(i);
 			interpolateContour(ellipse);
+						
 			for (int j = 0; j < ellipse.size(); j++) {
 				final Vector3f pt = ellipse.elementAt(j);
 				final Vector3f diff = Vector3f.sub(pt, centerPositions.elementAt(i));
@@ -2516,6 +2536,14 @@ public class LatticeModel {
 								if ( (markerValue != 0) && (markerValue != sliceIDs[i])) {
 									extend = false;
 									break;
+								}
+							}
+							if ( maskImage != null )
+							{
+								final float maskValue = maskImage.getFloat(x1, y1, z1);
+								if ( maskValue != 0 )
+								{
+									extend = false;
 								}
 							}
 						}
@@ -3805,6 +3833,43 @@ public class LatticeModel {
 		return markerSegmentation;
 	}
 
+
+	private ModelImage segmentMarkersSimple(final ModelImage image, final VOIContour left, final VOIContour right, final int[] markerIDs,
+			final int[][] markerVolumes)
+	{
+		String imageName = image.getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+		final ModelImage markerSegmentation = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), imageName + "_markers.xml");
+		JDialogBase.updateFileInfo(image, markerSegmentation);
+
+		for (int i = 0; i < left.size(); i++)
+		{
+			markerIDs[i] = i + 1;
+			
+			Vector3f temp = right.elementAt(i);
+			int x = Math.round(temp.X);
+			int y = Math.round(temp.Y);
+			int z = Math.round(temp.Z);
+			markerSegmentation.set( x, y, z, markerIDs[i] );
+
+			temp = left.elementAt(i);
+			x = Math.round(temp.X);
+			y = Math.round(temp.Y);
+			z = Math.round(temp.Z);
+			markerSegmentation.set( x, y, z, markerIDs[i] );
+			
+			markerVolumes[i][0] = 1;
+			markerVolumes[i][1] = 1;
+		}
+
+		return markerSegmentation;
+	}
+
+	
+	
+	
 	/**
 	 * Generates the Natural Spline for the lattice center-line curve. Sets the time values for each point on the curve.
 	 * 
@@ -4142,7 +4207,15 @@ public class LatticeModel {
 
 			final int[] markerIDs = new int[leftSide.size()];
 			final int[][] markerVolumes = new int[leftSide.size()][2];
-			ModelImage straightMarkers = segmentMarkers(resultImage, leftSide, rightSide, markerIDs, markerVolumes, false);
+			ModelImage straightMarkers;
+			if ( maskImage == null )
+			{
+				straightMarkers = segmentMarkers(resultImage, leftSide, rightSide, markerIDs, markerVolumes, false);
+			}
+			else
+			{
+				straightMarkers = segmentMarkersSimple(resultImage, leftSide, rightSide, markerIDs, markerVolumes);
+			}
 			saveLatticePositions(imageA, model, originToStraight, leftSide, rightSide, markerVolumes, "_after");
 
 			saveImage(baseName, straightMarkers, true);
