@@ -585,7 +585,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
      * 
      * @return the center of mass as a 3D point
      */
-    public static Vector3f calculateCenterOfMass3D(final ModelSimpleImage image, final ModelSimpleImage wgtImage,
+    public static synchronized Vector3f calculateCenterOfMass3D(final ModelSimpleImage image, final ModelSimpleImage wgtImage,
             final boolean isColor) {
         int x, y, z, c;
         final int sliceSize = image.xDim * image.yDim;
@@ -1788,7 +1788,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
      * 
      * @return Subsampled image.
      */
-    public static ModelSimpleImage subsampleBy2(final ModelSimpleImage srcImage, final boolean isColor) {
+    public static synchronized ModelSimpleImage subsampleBy2(final ModelSimpleImage srcImage, final boolean isColor) {
         return srcImage.subsample3dBy2(isColor);
     }
 
@@ -1800,7 +1800,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
      * 
      * @return Subsampled image.
      */
-    public static ModelSimpleImage subsampleBy2XY(final ModelSimpleImage srcImage, final boolean isColor) {
+    public static synchronized ModelSimpleImage subsampleBy2XY(final ModelSimpleImage srcImage, final boolean isColor) {
         return srcImage.subsample3dBy2XY(isColor);
     }
 
