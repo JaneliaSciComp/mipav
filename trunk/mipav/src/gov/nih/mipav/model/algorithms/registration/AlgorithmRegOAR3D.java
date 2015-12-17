@@ -1086,6 +1086,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             }
 
             blur.setRunningInSeparateThread(runningInSeparateThread);
+            blur.setDoMultiThread(doMultiThread);
             blur.run();
 
             if (blur.isCompleted() == false) {
@@ -1123,6 +1124,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             }
 
             blur2.setRunningInSeparateThread(runningInSeparateThread);
+            blur2.setDoMultiThread(doMultiThread);
             blur2.run();
 
             if (blur2.isCompleted() == false) {
