@@ -57,6 +57,8 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
 
     /** Standard deviations of the gaussian used to calculate the kernels. */
     private float[] sigmas;
+    
+    private boolean doMultiThread = this.isMultiThreadingEnabled();
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -186,6 +188,14 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
      */
     public void setRed(boolean flag) {
         red = flag;
+    }
+    
+    /**
+     * 
+     * @param doMultiThread
+     */
+    public void setDoMultiThread(boolean doMultiThread) {
+    	this.doMultiThread = doMultiThread;
     }
 
     /**
@@ -608,7 +618,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
         progressModulus = totalLength / 100;
         fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");
 
-        if(this.multiThreadingEnabled){
+        if(doMultiThread){
 			final CountDownLatch doneSignal = new CountDownLatch(nthreads);
 			final float step = nImages / nthreads;
 			for (int j = 0; j < nthreads; j++) {
@@ -692,7 +702,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
         fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");
 
         if (color == true) {
-        	if(multiThreadingEnabled){
+        	if(doMultiThread){
 				final CountDownLatch doneSignal = new CountDownLatch(nthreads);
 				final int step = (int)(length / (4*nthreads))*4;
 				for (int j = 0; j < nthreads; j++) {
@@ -718,7 +728,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
         		convolve3DRGB(0, length, buffer, 0);
         	}
         } else {
-			if (this.multiThreadingEnabled) {
+			if (doMultiThread) {
 				final CountDownLatch doneSignal = new CountDownLatch(nthreads);
 				final float step = ((float) length) / nthreads;
 				for (int j = 0; j < nthreads; j++) {
@@ -964,7 +974,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
             index = t * length;
 
             if (color == true) {
-            	if(multiThreadingEnabled){
+            	if(doMultiThread){
     				final CountDownLatch doneSignal = new CountDownLatch(nthreads);
     				final int step = (int)(length / (4*nthreads))*4;
     				for (int j = 0; j < nthreads; j++) {
@@ -992,7 +1002,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase implements AlgorithmInt
             	}
             
             } else {
-    			if (this.multiThreadingEnabled) {
+    			if (doMultiThread) {
     				final CountDownLatch doneSignal = new CountDownLatch(nthreads);
     				final float step = ((float) length) / nthreads;
     				for (int j = 0; j < nthreads; j++) {
