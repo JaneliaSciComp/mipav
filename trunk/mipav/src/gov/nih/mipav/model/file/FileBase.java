@@ -398,6 +398,36 @@ public abstract class FileBase {
             }
         }
     }
+    
+    /**
+     * Converts byte data to double data.
+     * 
+     * @param buffer Array of byte data.
+     * @param index Index into array data.
+     * @param bigEndian <code>true</code> indicates big endian byte order, <code>false</code> indicates little
+     *            endian.
+     * 
+     * @return Float value extracted from byte array.
+     */
+    public final double getBufferDouble(final byte[] buffer, final int index, final boolean bigEndian) {
+    	long tmpLong;
+
+        if (bigEndian) {
+            tmpLong = ( ( (buffer[index] & 0xffL) << 56)
+                    | ( (buffer[index+1] & 0xffL) << 48) | ( (buffer[index+2] & 0xffL) << 40)
+                    | ( (buffer[index+3] & 0xffL) << 32) | ( (buffer[index+4] & 0xffL) << 24)
+                    | ( (buffer[index+5] & 0xffL) << 16) | ( (buffer[index+6] & 0xffL) << 8) | (buffer[index+7] & 0xffL));
+
+            return (Double.longBitsToDouble(tmpLong));
+        } else {
+            tmpLong = ( ( (buffer[index+7] & 0xffL) << 56)
+                    | ( (buffer[index+6] & 0xffL) << 48) | ( (buffer[index+5] & 0xffL) << 40)
+                    | ( (buffer[index+4] & 0xffL) << 32) | ( (buffer[index+3] & 0xffL) << 24)
+                    | ( (buffer[index+2] & 0xffL) << 16) | ( (buffer[index+1] & 0xffL) << 8) | (buffer[index] & 0xffL));
+
+            return (Double.longBitsToDouble(tmpLong));
+        } 	
+    }
 
     /**
      * Converts byte data to float data.
