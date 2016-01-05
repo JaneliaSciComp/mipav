@@ -157,9 +157,9 @@ public class AlgorithmTransform extends AlgorithmBase {
     private int iZdim, iTdim;
 
     /** DOCUMENT ME! */
-    private static float iXres, iYres;
+    private float iXres, iYres;
 
-    private static float iZres;
+    private float iZres;
 
     /** DOCUMENT ME! */
     private final int[] oUnits;
