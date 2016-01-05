@@ -1141,61 +1141,8 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         }
 
         // Resample blurred image of reference image into isotropic voxels
-        if (resampleRef && interp == AlgorithmTransform.TRILINEAR) {
-        	TransMatrix xfrm = new TransMatrix(4);
-        	final int units[] = new int[3];
-            units[0] = FileInfoBase.UNKNOWN_MEASURE;
-            units[1] = FileInfoBase.UNKNOWN_MEASURE;
-            units[2] = FileInfoBase.UNKNOWN_MEASURE;
-            boolean doPad = false;
-            final double fillValue = 0.0;
-            int[]  margins = null;
-            if (doPad) {
-                margins = getImageMargins(blurredRef, xfrm, resRefIso[0], resRefIso[1],  resRefIso[2]);  
-                extentsRefIso[0] = extentsRefIso[0] + margins[0] + margins[3];
-                extentsRefIso[1] = extentsRefIso[1] + margins[1] + margins[4];
-                extentsRefIso[2] = extentsRefIso[2] + margins[2] + margins[5];
-            }
-            int iXdim = blurredRef.getExtents()[0];
-            int iYdim = blurredRef.getExtents()[1];
-            int iZdim = blurredRef.getExtents()[2];
-            float iXres = blurredRef.getFileInfo()[0].getResolutions()[0];
-            float iYres = blurredRef.getFileInfo()[0].getResolutions()[1];
-            float iZres = blurredRef.getFileInfo()[0].getResolutions()[2];
-            TransMatrix transMatrix = xfrm.clone();
-            TransMatrix xfrmInverse = matrixtoInverseArray(transMatrix);
-            int imgLength = blurredRef.getExtents()[0] * blurredRef.getExtents()[1] * blurredRef.getExtents()[2];
-            Vector<TransMatrix> originalVector = blurredRef.getMatrixHolder().getMatrices();
-            double [] imgBuf = new double[imgLength];
-            try {
-                blurredRef.exportData(0, imgLength, imgBuf);
-            }
-            catch (IOException e) {
-            	e.printStackTrace();
-            }
-            final String name = blurredRef.getImageName() + "_Iso";
-            int type = blurredRef.getType();
-            ModelImage imageRefIso = new ModelImage(type, extentsRefIso, name);
-            updateFileInfo(blurredRef, imageRefIso, resRefIso, units, transMatrix);
-            if ( (blurredRef != refImage) && (blurredRef != null)) {
-                blurredRef.disposeLocal();
-            } else {
-                blurredRef = null;
-            }
-            transformTrilinear(imageRefIso, imgBuf, xfrmInverse, iXdim, iYdim, iZdim,
-            		iXres, iYres, iZres, extentsRefIso[0], extentsRefIso[1], extentsRefIso[2], resRefIso[0], resRefIso[1], resRefIso[2],
-            		doPad, margins, fillValue);
-             // copy the src image's matrices into the destination image
-            imageRefIso.getMatrixHolder().replaceMatrices(originalVector);
-             
-            // add the new transform matrix to the destination image
-            transMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
-            imageRefIso.getMatrixHolder().addMatrix(transMatrix);
-            
-            simpleRef = new ModelSimpleImage(imageRefIso.getExtents(), imageRefIso.getFileInfo(0).getResolutions(),
-                    imageRefIso);
-        }
-        else if (resampleRef && interp != AlgorithmTransform.TRILINEAR) {
+        
+        if (resampleRef) {
             transform = new AlgorithmTransform(blurredRef, new TransMatrix(4), interp, resRefIso[0], resRefIso[1],
                     resRefIso[2], extentsRefIso[0], extentsRefIso[1], extentsRefIso[2], false, true, false);
             transform.setRunningInSeparateThread(runningInSeparateThread);
@@ -1293,62 +1240,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         }
 
         System.gc();
-        if (resampleInput && interp == AlgorithmTransform.TRILINEAR) {
-        	TransMatrix xfrm = new TransMatrix(4);
-        	final int units[] = new int[3];
-            units[0] = FileInfoBase.UNKNOWN_MEASURE;
-            units[1] = FileInfoBase.UNKNOWN_MEASURE;
-            units[2] = FileInfoBase.UNKNOWN_MEASURE;
-            boolean doPad = false;
-            final double fillValue = 0.0;
-            int[]  margins = null;
-            if (doPad) {
-                margins = getImageMargins(blurredInput, xfrm, resInputIso[0], resInputIso[1],  resInputIso[2]);  
-                extentsInputIso[0] = extentsInputIso[0] + margins[0] + margins[3];
-                extentsInputIso[1] = extentsInputIso[1] + margins[1] + margins[4];
-                extentsInputIso[2] = extentsInputIso[2] + margins[2] + margins[5];
-            }
-            int iXdim = blurredInput.getExtents()[0];
-            int iYdim = blurredInput.getExtents()[1];
-            int iZdim = blurredInput.getExtents()[2];
-            float iXres = blurredInput.getFileInfo()[0].getResolutions()[0];
-            float iYres = blurredInput.getFileInfo()[0].getResolutions()[1];
-            float iZres = blurredInput.getFileInfo()[0].getResolutions()[2];
-            TransMatrix transMatrix = xfrm.clone();
-            TransMatrix xfrmInverse = matrixtoInverseArray(transMatrix);
-            int imgLength = blurredInput.getExtents()[0] * blurredInput.getExtents()[1] * blurredInput.getExtents()[2];
-            Vector<TransMatrix> originalVector = blurredInput.getMatrixHolder().getMatrices();
-            double [] imgBuf = new double[imgLength];
-            try {
-                blurredInput.exportData(0, imgLength, imgBuf);
-            }
-            catch (IOException e) {
-            	e.printStackTrace();
-            }
-            final String name = blurredInput.getImageName() + "_Iso";
-            int type = blurredInput.getType();
-            ModelImage imageInputIso = new ModelImage(type, extentsInputIso, name);
-            updateFileInfo(blurredInput, imageInputIso, resInputIso, units, transMatrix);
-            if ( (blurredInput != inputImage) && (blurredInput != null)) {
-                blurredInput.disposeLocal();
-            } else {
-                blurredInput = null;
-            }
-            transformTrilinear(imageInputIso, imgBuf, xfrmInverse, iXdim, iYdim, iZdim,
-            		iXres, iYres, iZres, extentsInputIso[0], extentsInputIso[1], extentsInputIso[2],
-            		resInputIso[0], resInputIso[1], resInputIso[2],
-            		doPad, margins, fillValue);
-             // copy the src image's matrices into the destination image
-            imageInputIso.getMatrixHolder().replaceMatrices(originalVector);
-             
-            // add the new transform matrix to the destination image
-            transMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
-            imageInputIso.getMatrixHolder().addMatrix(transMatrix);
-            
-            simpleInput = new ModelSimpleImage(imageInputIso.getExtents(), imageInputIso.getFileInfo(0).getResolutions(),
-                    imageInputIso);
-        }
-        else if (resampleInput && interp != AlgorithmTransform.TRILINEAR) {
+        if (resampleInput) {
             transform2 = new AlgorithmTransform(blurredInput, new TransMatrix(4), interp, resInputIso[0],
                     resInputIso[1], resInputIso[2], extentsInputIso[0], extentsInputIso[1], extentsInputIso[2], false,
                     true, false);
