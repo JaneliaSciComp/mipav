@@ -3,16 +3,12 @@ package gov.nih.mipav.model.algorithms.registration;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
-import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.file.FileInfoDicom;
-import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.WildMagic.Render.ImageRegistrationGPU;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
