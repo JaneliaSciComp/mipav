@@ -83,15 +83,15 @@ public class LatticeModel {
 	} // end saveAllVOIsTo()
 
 
-	private ModelImage imageA;
-	private ModelImage maskImage = null;
+	protected ModelImage imageA;
+	protected ModelImage maskImage = null;
 	private VOIVector latticeGrid;
 
-	private VOI lattice = null;
+	protected VOI lattice = null;
 
-	private VOIContour left;
+	protected VOIContour left;
 
-	private VOIContour right;
+	protected VOIContour right;
 
 	private VOIContour center;
 
@@ -99,23 +99,23 @@ public class LatticeModel {
 
 	private VOIContour rightBackup;
 
-	private float[] afTimeC;
+	protected float[] afTimeC;
 
-	private float[] allTimes;
+	protected float[] allTimes;
 
-	private NaturalSpline3 centerSpline;
+	protected NaturalSpline3 centerSpline;
 
-	private NaturalSpline3 leftSpline;
+	protected NaturalSpline3 leftSpline;
 
-	private NaturalSpline3 rightSpline;
+	protected NaturalSpline3 rightSpline;
 
-	private VOIContour centerPositions;
+	protected VOIContour centerPositions;
 
-	private VOIContour leftPositions;
+	protected VOIContour leftPositions;
 
-	private VOIContour rightPositions;
+	protected VOIContour rightPositions;
 
-	private float length;
+	protected float length;
 
 	private VOI leftLine;
 
@@ -123,23 +123,23 @@ public class LatticeModel {
 
 	private VOI centerLine;
 
-	private Vector<Float> wormDiameters;
+	protected Vector<Float> wormDiameters;
 
-	private Vector<Vector3f> rightVectors;
+	protected Vector<Vector3f> rightVectors;
 
-	private Vector<Vector3f> upVectors;
+	protected Vector<Vector3f> upVectors;
 
-	private int extent = -1;
+	protected int extent = -1;
 
-	private Vector<Box3f> boxBounds;
+	protected Vector<Box3f> boxBounds;
 
-	private Vector<Ellipsoid3f> ellipseBounds;
+	protected Vector<Ellipsoid3f> ellipseBounds;
 
-	private VOI samplingPlanes;
+	protected VOI samplingPlanes;
 
 	private VOI displayContours;
 
-	private VOI displayInterpolatedContours;
+	protected VOI displayInterpolatedContours;
 
 	private Vector3f pickedPoint = null;
 
@@ -151,21 +151,21 @@ public class LatticeModel {
 
 	private final int DiameterBuffer = 0;
 
-	private static final int SampleLimit = 5;
+	protected static final int SampleLimit = 5;
 
-	private final float minRange = .025f;
+	protected final float minRange = .025f;
 
 	private VOI leftMarker;
 
 	private VOI rightMarker;
 
-	private VOI growContours;
+	protected VOI growContours;
 
 	private VOI annotationVOIs;
 	private int highestIndex = -1;
 
-	private Vector3f wormOrigin = null;
-	private Vector3f transformedOrigin = new Vector3f();
+	protected Vector3f wormOrigin = null;
+	protected Vector3f transformedOrigin = new Vector3f();
 
 	private ModelImage markerSegmentation;
 
@@ -742,10 +742,10 @@ public class LatticeModel {
 				samplingPlanes.importCurve(kBox);
 			}
 
-			final float curve = centerSpline.GetCurvature(allTimes[i]);
-			final float scale = curve;
+//			final float curve = centerSpline.GetCurvature(allTimes[i]);
+//			final float scale = curve;
 			final VOIContour ellipse = new VOIContour(true);
-			final Ellipsoid3f ellipsoid = makeEllipse(rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), scale, ellipse);
+			final Ellipsoid3f ellipsoid = makeEllipse(rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), wormDiameters.elementAt(i)/2f, ellipse);
 			ellipseBounds.add(ellipsoid);
 
 			final Box3f box = new Box3f(ellipsoid.Center, ellipsoid.Axis, new float[] {extent, extent, 1});
@@ -1473,6 +1473,10 @@ public class LatticeModel {
 	 * @return
 	 */
 	private boolean checkAnnotations(final ModelImage model) {
+		return checkAnnotations(model, false);
+	}
+	
+	protected boolean checkAnnotations(final ModelImage model, final boolean print) {
 		boolean outsideFound = false;
 		for (int i = 0; i < left.size(); i++) {
 			Vector3f position = left.elementAt(i);
@@ -1512,8 +1516,10 @@ public class LatticeModel {
 			final int y = Math.round(position.Y);
 			final int z = Math.round(position.Z);
 			final float value = model.getFloat(x, y, z);
-			// float value = model.getFloatTriLinearBounds( position.X, position.Y, position.Z );
-			// System.err.println( text.getText() + " " + position + "  " + value );
+			if ( print )
+			{
+				System.err.println( text.getText() + " " + position + "  " + value );
+			}
 			if (value == 0) {
 				outsideFound = true;
 			}
@@ -2192,7 +2198,7 @@ public class LatticeModel {
 	/**
 	 * Generates the set of natural spline curves to fit the current lattice.
 	 */
-	private void generateCurves() {
+	protected void generateCurves() {
 		clearCurves(false);
 		short sID;
 
@@ -2712,7 +2718,7 @@ public class LatticeModel {
 	 * 
 	 * @param contour
 	 */
-	private void interpolateContour(final VOIContour contour) {
+	protected void interpolateContour(final VOIContour contour) {
 		int index = 0;
 		while (index < contour.size()) {
 			final Vector3f p1 = contour.elementAt(index);
@@ -2753,11 +2759,11 @@ public class LatticeModel {
 	 * @param up
 	 * @param center
 	 * @param diameterA
-	 * @param scale
+	 * @param diameterB
 	 * @param ellipse
 	 * @return
 	 */
-	private Ellipsoid3f makeEllipse(final Vector3f right, final Vector3f up, final Vector3f center, final float diameterA, final float scale,
+	protected Ellipsoid3f makeEllipse(final Vector3f right, final Vector3f up, final Vector3f center, final float diameterA, final float diameterB,
 			final VOIContour ellipse) {
 		final int numPts = 32;
 		final double[] adCos = new double[32];
@@ -2766,7 +2772,6 @@ public class LatticeModel {
 			adCos[i] = Math.cos(Math.PI * 2.0 * i / numPts);
 			adSin[i] = Math.sin(Math.PI * 2.0 * i / numPts);
 		}
-		final float diameterB = diameterA / 2f;// + (1-scale) * diameterA/4f;
 		for (int i = 0; i < numPts; i++) {
 			final Vector3f pos1 = Vector3f.scale((float) (diameterA * adCos[i]), right);
 			final Vector3f pos2 = Vector3f.scale((float) (diameterB * adSin[i]), up);
@@ -2789,7 +2794,7 @@ public class LatticeModel {
 	 * @param scale
 	 * @param ellipse
 	 */
-	private void makeEllipse2D(final Vector3f right, final Vector3f up, final Vector3f center, final float diameterA, final float scale,
+	protected void makeEllipse2D(final Vector3f right, final Vector3f up, final Vector3f center, final float diameterA, final float scale,
 			final VOIContour ellipse) {
 		final int numPts = 32;
 		final float diameterB = diameterA / 2f;// + (1-scale) * diameterA/4f;
@@ -3085,7 +3090,7 @@ public class LatticeModel {
 	 * @param text
 	 * @return
 	 */
-	private Vector3f originToStraight(final ModelImage model, final ModelImage originToStraight, final Vector3f pt, final String text) {
+	protected Vector3f originToStraight(final ModelImage model, final ModelImage originToStraight, final Vector3f pt, final String text) {
 		final int x = Math.round(pt.X);
 		final int y = Math.round(pt.Y);
 		final int z = Math.round(pt.Z);
@@ -3125,7 +3130,7 @@ public class LatticeModel {
 					return pts;
 				}
 			} else {
-				System.err.println(imageA.getImageName() + " originToStraight " + text + " " + pt);
+//				System.err.println(imageA.getImageName() + " originToStraight " + text + " " + pt);
 			}
 		}
 
@@ -3253,7 +3258,7 @@ public class LatticeModel {
 	 * @param postFix
 	 * @return
 	 */
-	private VOI saveAnnotationStatistics(final ModelImage image, final ModelImage model, final ModelImage originToStraight, final int[] outputDim,
+	protected VOI saveAnnotationStatistics(final ModelImage image, final ModelImage model, final ModelImage originToStraight, final int[] outputDim,
 			final String postFix) {
 		if (annotationVOIs == null) {
 			return null;
@@ -3329,7 +3334,7 @@ public class LatticeModel {
 	 * @param image
 	 * @param saveAsTif
 	 */
-	private void saveImage(final String imageName, final ModelImage image, final boolean saveAsTif) {
+	protected void saveImage(final String imageName, final ModelImage image, final boolean saveAsTif) {
 		saveImage(imageName, image, saveAsTif, null);
 	}
 	
@@ -3457,7 +3462,7 @@ public class LatticeModel {
 	 * @param rightPairs
 	 * @param postFix
 	 */
-	private void saveLatticeStatistics(final ModelImage image, final float length, final VOIContour left, final VOIContour right, final float[] leftPairs,
+	protected void saveLatticeStatistics(final ModelImage image, final float length, final VOIContour left, final VOIContour right, final float[] leftPairs,
 			final float[] rightPairs, final String postFix) {
 		String imageName = image.getImageName();
 		if (imageName.contains("_clone")) {
@@ -3508,7 +3513,7 @@ public class LatticeModel {
 		}
 	}
 
-	private void saveNeuriteData( ModelImage wormImage, ModelImage resultImage, ModelImage model, ModelImage originToStraight, String baseName )
+	protected void saveNeuriteData( ModelImage wormImage, ModelImage resultImage, ModelImage model, ModelImage originToStraight, String baseName )
 	{
 		if ( neuriteData == null )
 		{
@@ -4251,7 +4256,7 @@ public class LatticeModel {
 	 * @param model
 	 * @param originToStraight
 	 */
-	private void testOriginToStraight(final ModelImage model, final ModelImage originToStraight) {
+	protected void testOriginToStraight(final ModelImage model, final ModelImage originToStraight) {
 		final int dimX = model.getExtents().length > 0 ? model.getExtents()[0] : 1;
 		final int dimY = model.getExtents().length > 1 ? model.getExtents()[1] : 1;
 		final int dimZ = model.getExtents().length > 2 ? model.getExtents()[2] : 1;
@@ -4517,7 +4522,7 @@ public class LatticeModel {
 	 * @param sampleDistance
 	 * @param sampleDistanceP
 	 */
-	private void writeDiagonal(final ModelImage image, final ModelImage model, final ModelImage originToStraight, final int tSlice, final int slice,
+	protected void writeDiagonal(final ModelImage image, final ModelImage model, final ModelImage originToStraight, final int tSlice, final int slice,
 			final int[] extents, final Vector3f[] verts, final float[] values, final float[] dataOrigin, final float[] sampleDistance,
 			final float[] sampleDistanceP) {
 		final int iBound = extents[0];
