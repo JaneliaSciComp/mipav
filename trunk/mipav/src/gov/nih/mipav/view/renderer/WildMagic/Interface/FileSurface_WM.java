@@ -844,6 +844,65 @@ public class FileSurface_WM {
         return Integer.valueOf(token.nextToken()).intValue();
     }
 
+    public static void save(String kName, TriMesh kMesh, ModelImage image, boolean transform ) throws IOException
+    {
+        int iXDim = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+        int iYDim = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+        int iZDim = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+
+        float fXRes = image.getExtents().length > 0 ? image.getFileInfo()[0].getResolutions()[0] : 1;
+        float fYRes = image.getExtents().length > 1 ? image.getFileInfo()[0].getResolutions()[1] : 1;
+        float fZRes = image.getExtents().length > 2 ? image.getFileInfo()[0].getResolutions()[2] : 1;
+
+        float[] box = new float[]{ (iXDim - 1) * fXRes, (iYDim - 1) * fYRes, (iZDim - 1) * fZRes};
+
+        /* Read the direction vector from the MipavCoordinateSystems class: */
+        final int[] direction = MipavCoordinateSystems.getModelDirections(image);
+        final float[] startLocation = image.getFileInfo(0).getOrigin();
+
+        TransMatrix dicomMatrix = null;
+        TransMatrix inverseDicomMatrix = null;
+        if (image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
+
+            // Get the DICOM transform that describes the transformation from
+            // axial to this image orientation
+        	dicomMatrix = new TransMatrix(image.getMatrix());
+            inverseDicomMatrix = new TransMatrix(image.getMatrix());
+            inverseDicomMatrix.Inverse();
+        }
+        
+        if ( transform )
+        {
+        	for ( int i = 0; i < kMesh.VBuffer.GetVertexQuantity(); i++ )
+        	{
+        		Vector3f kV = kMesh.VBuffer.GetPosition3(i);
+
+        		if (dicomMatrix != null) {
+
+        			// Change the voxel coordinate into millimeters
+        			coord[0] = kV.X * fXRes;
+        			coord[1] = kV.Y * fYRes;
+        			coord[2] = kV.Z * fZRes;
+
+        			// Convert the point to axial millimeter DICOM space
+        			dicomMatrix.transform(coord, tCoord);
+
+        			// Add in the DICOM origin
+        			tCoord[0] = tCoord[0] + startLocation[0];
+        			tCoord[1] = tCoord[1] + startLocation[1];
+        			tCoord[2] = tCoord[2] + startLocation[2];
+        			kV = new Vector3f(tCoord[0], tCoord[1], tCoord[2]);
+        		} else {
+        			kV.X = (kV.X * fXRes * direction[0]) + startLocation[0];
+        			kV.Y = (kV.Y * fYRes * direction[1]) + startLocation[1];
+        			kV.Z = (kV.Z * fZRes * direction[2]) + startLocation[2];
+        		}
+        		kMesh.VBuffer.SetPosition3(i, kV);
+        	}
+        }
+        
+        save(kName, kMesh, 0, kMesh.VBuffer, true, direction, startLocation, box, inverseDicomMatrix);
+    }
     
     /**
      * Save a TriMesh to disk

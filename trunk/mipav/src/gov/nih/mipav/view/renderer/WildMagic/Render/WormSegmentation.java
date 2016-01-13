@@ -10,6 +10,7 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewVOIVector;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.FileSurface_WM;
 
 import java.awt.Color;
 import java.io.File;
@@ -21,9 +22,13 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.Vector;
 
+import WildMagic.LibFoundation.Intersection.IntrSphere3Sphere3f;
+import WildMagic.LibFoundation.Mathematics.Sphere3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
+import WildMagic.LibGraphics.SceneGraph.Transformation;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
@@ -171,6 +176,7 @@ public abstract class WormSegmentation
     	HashMap<Float, Integer> countValues = new HashMap<Float, Integer>();
     	int runningCount = 0;
     	float target = percentage * dimX*dimY*dimZ;
+    	float total = dimX*dimY*dimZ;
     	boolean found = false;
     	for ( int i = 0; i < keyArray.length; i++ )
     	{
@@ -191,6 +197,7 @@ public abstract class WormSegmentation
     				targetValues[1] = keyArray[i];
     			}
     		}
+//    		System.err.println( i + " " + keyArray[i] + " " + runningCount/total );
     	}
 //    	System.err.println( count_95P + " " + totalCount );
 //    	for ( int i = 0; i < countValues.length; i++ )
@@ -575,7 +582,7 @@ public abstract class WormSegmentation
 	
 	
 
-	public static void outline( ModelImage image, ModelImage mp, int slice )
+	public static void outline( String directory, ModelImage image, ModelImage mp, int slice )
 	{
 		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
 		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
@@ -736,8 +743,6 @@ public abstract class WormSegmentation
 				}
 			}
 		}
-		blur.disposeLocal();
-		blur = null;
 		insideX.and(insideY);
 		insideX.and(insideZ);
 		
@@ -777,345 +782,672 @@ public abstract class WormSegmentation
 				maxIndex = i;
 			}
 		}
-		
+//		
 		
 		if ( maxIndex != -1 )
 		{
-			BitSet largest = components.elementAt(maxIndex);
+			BitSet largest = components.elementAt(maxIndex);			
 			blur = blur(image, 3);
 
+//			Vector<Vector3f> surfacePoints = new Vector<Vector3f>();
 
-			insideX.clear();
-			insideY.clear();
-			insideZ.clear();
+			float[] targetP = new float[2];
+			estimateHistogram( image, targetP, .85f );
+			System.err.println( targetP[0] + " " + targetP[1] );
+			float targetValue = targetP[0];
+			int newCount = 0;
 			for ( int z = 0; z < dimZ; z++ )
 			{
 				for ( int y = 0; y < dimY; y++ )
 				{
-					boolean markInside = false;
 					for ( int x = 0; x < dimX - 5; x++ )
 					{
-						int index1 = z * dimX*dimY + y * dimX + x;
-						int index2 = z * dimX*dimY + y * dimX + x + 1;
-						int index3 = z * dimX*dimY + y * dimX + x + 2;
-						int index4 = z * dimX*dimY + y * dimX + x + 3;
-						int index5 = z * dimX*dimY + y * dimX + x + 4;
-						if ( largest.get(index1) && largest.get(index2) && largest.get(index3) && largest.get(index4) && largest.get(index5) )
+						float value = blur.getFloat(x, y, z);
+						int index = z*dimX*dimY + y*dimX + x;
+						if ( (value > targetValue) && largest.get(index) )
 						{
-							float val1 = blur.getFloat(x, y, z);
-							float val2 = blur.getFloat(x+1, y, z);
-							float val3 = blur.getFloat(x+2, y, z);
-							float val4 = blur.getFloat(x+3, y, z);
-							float val5 = blur.getFloat(x+4, y, z);
-							if ( (val2 > val1) && (val3 > val2) && (val3 > val4) && (val4 > val5) )
-							{
-								// found a 'peak'
-								mp.set(x, y, z, 1f);
-								markInside = !markInside;
-							}
-						}
-						if ( markInside )
-						{
-							insideX.set(index1);
+							mp.set(x,y,z,1);
+							newCount++;
+							break;
 						}
 					}
-					markInside = false;
 					for ( int x = dimX - 5; x >= 0; x-- )
 					{
-						int index1 = z * dimX*dimY + y * dimX + x;
-						int index2 = z * dimX*dimY + y * dimX + x + 1;
-						int index3 = z * dimX*dimY + y * dimX + x + 2;
-						int index4 = z * dimX*dimY + y * dimX + x + 3;
-						int index5 = z * dimX*dimY + y * dimX + x + 4;
-						if ( largest.get(index1) && largest.get(index2) && largest.get(index3) && largest.get(index4) && largest.get(index5) )
+						float value = blur.getFloat(x, y, z);
+						int index = z*dimX*dimY + y*dimX + x;
+						if ( (value > targetValue) && largest.get(index) )
 						{
-							float val1 = blur.getFloat(x, y, z);
-							float val2 = blur.getFloat(x+1, y, z);
-							float val3 = blur.getFloat(x+2, y, z);
-							float val4 = blur.getFloat(x+3, y, z);
-							float val5 = blur.getFloat(x+4, y, z);
-							if ( (val2 > val1) && (val3 > val2) && (val3 > val4) && (val4 > val5) )
-							{
-								// found a 'peak'
-								mp.set(x, y, z, 1f);
-								markInside = !markInside;
-							}
-						}
-						if ( markInside && insideX.get(index1) )
-						{
-							insideX.set(index1);
-						}
-						else
-						{
-							insideX.clear(index1);
+							mp.set(x,y,z,1);
+							newCount++;
+							break;
 						}
 					}
 				}
 				for ( int x = 0; x < dimX; x++ )
 				{
-					boolean markInside = false;
 					for ( int y = 0; y < dimY - 5; y++ )
 					{
-						int index1 = z * dimX*dimY + y * dimX + x;
-						int index2 = z * dimX*dimY + (y+1) * dimX + x;
-						int index3 = z * dimX*dimY + (y+2) * dimX + x;
-						int index4 = z * dimX*dimY + (y+3) * dimX + x;
-						int index5 = z * dimX*dimY + (y+4) * dimX + x;
-						if ( largest.get(index1) && largest.get(index2) && largest.get(index3) && largest.get(index4) && largest.get(index5) )
+						float value = blur.getFloat(x, y, z);
+						int index = z*dimX*dimY + y*dimX + x;
+						if ( (value > targetValue) && largest.get(index) )
 						{
-							float val1 = blur.getFloat(x, y, z);
-							float val2 = blur.getFloat(x, y+1, z);
-							float val3 = blur.getFloat(x, y+2, z);
-							float val4 = blur.getFloat(x, y+3, z);
-							float val5 = blur.getFloat(x, y+4, z);
-							if ( (val2 > val1) && (val3 > val2) && (val3 > val4) && (val4 > val5) )
-							{
-								// found a 'peak'
-								mp.set(x, y, z, 1f);
-								markInside = !markInside;
-							}
-						}
-						if ( markInside )
-						{
-							insideY.set(index1);
+							mp.set(x,y,z,1);
+							newCount++;
+							break;
 						}
 					}
-					markInside = false;
 					for ( int y = dimY - 5; y >= 0; y-- )
 					{
-						int index1 = z * dimX*dimY + y * dimX + x;
-						int index2 = z * dimX*dimY + (y+1) * dimX + x;
-						int index3 = z * dimX*dimY + (y+2) * dimX + x;
-						int index4 = z * dimX*dimY + (y+3) * dimX + x;
-						int index5 = z * dimX*dimY + (y+4) * dimX + x;
-						if ( largest.get(index1) && largest.get(index2) && largest.get(index3) && largest.get(index4) && largest.get(index5) )
+						float value = blur.getFloat(x, y, z);
+						int index = z*dimX*dimY + y*dimX + x;
+						if ( (value > targetValue) && largest.get(index) )
 						{
-							float val1 = blur.getFloat(x, y, z);
-							float val2 = blur.getFloat(x, y+1, z);
-							float val3 = blur.getFloat(x, y+2, z);
-							float val4 = blur.getFloat(x, y+3, z);
-							float val5 = blur.getFloat(x, y+4, z);
-							if ( (val2 > val1) && (val3 > val2) && (val3 > val4) && (val4 > val5) )
-							{
-								// found a 'peak'
-								mp.set(x, y, z, 1f);
-								markInside = !markInside;
-							}
-						}
-						if ( markInside && insideY.get(index1) )
-						{
-							insideY.set(index1);
-						}
-						else
-						{
-							insideY.clear(index1);
+							mp.set(x,y,z,1);
+							newCount++;
+							break;
 						}
 					}
 				}
 			}
-			for ( int y = 0; y < dimY; y++ )
+			for ( int x = 0; x < dimX; x++ )
 			{
-				for ( int x = 0; x < dimX; x++ )
+				for ( int y = 0; y < dimY; y++ )
 				{
-					boolean markInside = false;
-					for ( int z = 0; z < dimZ -5; z++ )
+					for ( int z = 0; z < dimZ - 5; z++ )
 					{
-						int index1 = z * dimX*dimY + y * dimX + x;
-						int index2 = (z+1) * dimX*dimY + y * dimX + x;
-						int index3 = (z+2) * dimX*dimY + y * dimX + x;
-						int index4 = (z+3) * dimX*dimY + y * dimX + x;
-						int index5 = (z+4) * dimX*dimY + y * dimX + x;
-						if ( largest.get(index1) && largest.get(index2) && largest.get(index3) && largest.get(index4) && largest.get(index5) )
+						float value = blur.getFloat(x, y, z);
+						int index = z*dimX*dimY + y*dimX + x;
+						if ( (value > targetValue) && largest.get(index) )
 						{
-							float val1 = blur.getFloat(x, y, z);
-							float val2 = blur.getFloat(x, y, z+1);
-							float val3 = blur.getFloat(x, y, z+2);
-							float val4 = blur.getFloat(x, y, z+3);
-							float val5 = blur.getFloat(x, y, z+4);
-							if ( (val2 > val1) && (val3 > val2) && (val3 > val4) && (val4 > val5) )
-							{
-								// found a 'peak'
-								mp.set(x, y, z, 1f);
-								markInside = !markInside;
-							}
-						}
-						if ( markInside )
-						{
-							insideZ.set(index1);
+							mp.set(x,y,z,1);
+							newCount++;
+							break;
 						}
 					}
-					markInside = false;
-					for ( int z = dimZ -5; z >= 0; z-- )
+					for ( int z = dimZ - 5; z >= 0; z-- )
 					{
-						int index1 = z * dimX*dimY + y * dimX + x;
-						int index2 = (z+1) * dimX*dimY + y * dimX + x;
-						int index3 = (z+2) * dimX*dimY + y * dimX + x;
-						int index4 = (z+3) * dimX*dimY + y * dimX + x;
-						int index5 = (z+4) * dimX*dimY + y * dimX + x;
-						if ( largest.get(index1) && largest.get(index2) && largest.get(index3) && largest.get(index4) && largest.get(index5) )
+						float value = blur.getFloat(x, y, z);
+						int index = z*dimX*dimY + y*dimX + x;
+						if ( (value > targetValue) && largest.get(index) )
 						{
-							float val1 = blur.getFloat(x, y, z);
-							float val2 = blur.getFloat(x, y, z+1);
-							float val3 = blur.getFloat(x, y, z+2);
-							float val4 = blur.getFloat(x, y, z+3);
-							float val5 = blur.getFloat(x, y, z+4);
-							if ( (val2 > val1) && (val3 > val2) && (val3 > val4) && (val4 > val5) )
-							{
-								// found a 'peak'
-								mp.set(x, y, z, 1f);
-								markInside = !markInside;
-							}
-						}
-						if ( markInside && insideZ.get(index1) )
-						{
-							insideZ.set(index1);
-						}
-						else
-						{
-							insideZ.clear(index1);
+							mp.set(x,y,z,1);
+							newCount++;
+							break;
 						}
 					}
 				}
 			}
-			
-			
-//			Vector<Vector3f> loosePts = new Vector<Vector3f>();
-//			for ( int i = 0; i < points.size(); i++ )
-//			{
-//				Vector3f pt = points.elementAt(i);
-//			}
-			
-			
-
-			Vector<Vector3f> neighbors = new Vector<Vector3f>();
-			
-			int newCount = 0;
-			for ( int z = 5; z < dimZ-5; z++ )
-			{
-				for ( int y = 5; y < dimY-5; y++ )
-				{
-					for ( int x = 5; x < dimX-5; x++ )
-					{
-						if ( mp.getFloat(x, y, z) == 1 )
-						{
-							neighbors.clear();
-							for ( int z1 = Math.max(0, z - 5); z1 <= Math.min(z + 5, dimZ - 1); z1++ )
-							{
-								for ( int y1 = Math.max(0, y - 5); y1 <= Math.min(y + 5, dimY - 1); y1++ )
-								{
-									for ( int x1 = Math.max(0, x - 5); x1 <= Math.min(x + 5, dimX - 1); x1++ )
-									{
-										if ( (x1 != x) && (y1 != y) && (z1 != z) && mp.getFloat(x1, y1, z1) == 1 )
-										{
-											neighbors.add( new Vector3f(x1,y1,z1) );
-										}
-									}
-								}
-							}
-							Vector3f pt = new Vector3f(x,y,z);
-							float minDist = Float.MAX_VALUE;
-							int minIndex = -1;
-							for ( int i = 0; i < neighbors.size(); i++ )
-							{
-								float distance = neighbors.elementAt(i).distance(pt);
-								if ( distance < minDist )
-								{
-									minDist = distance;
-									minIndex = i;
-								}
-							}
-							if ( minIndex != -1 )
-							{
-								Vector3f closest1 = new Vector3f();
-								closest1.copy( neighbors.remove(minIndex) );
-								
-								if ( closest1.distance(pt) > 1 )
-								{
-									Vector3f start = new Vector3f(pt);
-									Vector3f dir = Vector3f.sub( closest1, pt );
-									float length = dir.normalize();
-									for ( int i = 0; i <= length; i++ )
-									{
-										start.add(dir);
-										if ( mp.getFloat( Math.round(start.X), Math.round(start.Y), Math.round(start.Z) ) != 1 )
-										{
-											mp.set( Math.round(start.X), Math.round(start.Y), Math.round(start.Z), 1);
-											newCount++;
-										}
-									}
-								}
-							}
-							minDist = Float.MAX_VALUE;
-							minIndex = -1;
-							for ( int i = 0; i < neighbors.size(); i++ )
-							{
-								float distance = neighbors.elementAt(i).distance(pt);
-								if ( distance < minDist )
-								{
-									minDist = distance;
-									minIndex = i;
-								}
-							}
-							if ( minIndex != -1 )
-							{
-								Vector3f closest2 = new Vector3f();
-								closest2.copy( neighbors.remove(minIndex) );
-								if ( closest2.distance(pt) > 1 )
-								{
-									Vector3f start = new Vector3f(pt);
-									Vector3f dir = Vector3f.sub( closest2, pt );
-									float length = dir.normalize();
-									for ( int i = 0; i <= length; i++ )
-									{
-										start.add(dir);
-										if ( mp.getFloat( Math.round(start.X), Math.round(start.Y), Math.round(start.Z) ) != 1 )
-										{
-											mp.set( Math.round(start.X), Math.round(start.Y), Math.round(start.Z), 1);
-											newCount++;
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-			System.err.println( newCount );
-			
-
-//			Vector<Vector3f> points = new Vector<Vector3f>();
+				
+			System.err.println(newCount);
+//			mp.calcMinMax();
+//			new ViewJFrameImage((ModelImage)mp.clone());
+//			
+//			newCount = 0;
+//
 //			for ( int z = 0; z < dimZ; z++ )
 //			{
 //				for ( int y = 0; y < dimY; y++ )
 //				{
+//					int upCount = 0;
+//					int downCount = 0;
+//					int sameCount = 0;
+//					float previousValue = -1;
 //					for ( int x = 0; x < dimX - 5; x++ )
+//					{
+//						float value = blur.getFloat(x, y, z);
+//						int index = z * dimX*dimY + y * dimX + x;						
+//						if ( !largest.get(index) )
+//						{
+//							upCount = 0;
+//							downCount = 0;
+//							sameCount = 0;
+//							previousValue = -1;
+//							continue;
+//						}
+//						if ( previousValue == -1 )
+//						{
+//							previousValue = value;
+//							continue;
+//						}
+//						if ( value > previousValue )
+//						{
+//							if ( (downCount != 0) || (sameCount != 0) )
+//							{
+//								upCount = 0;
+//								downCount = 0;
+//								sameCount = 0;								
+//							}
+//							upCount++;
+//						}
+//						if ( value == previousValue )
+//						{
+//							if ( upCount < 2 )
+//							{
+//								upCount = 0;
+//								downCount = 0;
+//								sameCount = 0;									
+//							}
+//							else
+//							{
+//								sameCount++;
+//							}
+//						}
+//						if ( value < previousValue )
+//						{
+//							if ( upCount < 2 )
+//							{
+//								upCount = 0;
+//								downCount = 0;
+//								sameCount = 0;									
+//							}
+//							else
+//							{
+//								downCount++;
+//							}
+//						}
+//						if ( (upCount >= 2) && (downCount >= 2) && (sameCount < 4) )
+//						{
+//							// found a 'peak'
+//							if ( mp.getFloat((int)(x - (downCount + Math.floor(sameCount/2f))), y, z) == 0 )
+//							{
+//								newCount++;
+//							}
+//							mp.set((int)(x - (downCount + Math.floor(sameCount/2f))), y, z, 1f);
+//							surfacePoints.add( new Vector3f(x,y,z) );
+//							upCount = 0;
+//							downCount = 0;
+//							sameCount = 0;		
+//						}
+//						previousValue = value;
+//					}
+//					upCount = 0;
+//					downCount = 0;
+//					sameCount = 0;
+//					previousValue = -1;
+//					for ( int x = dimX - 5; x >= 0; x-- )
+//					{
+//						float value = blur.getFloat(x, y, z);
+//						int index = z * dimX*dimY + y * dimX + x;
+//						if ( !largest.get(index) )
+//						{
+//							upCount = 0;
+//							downCount = 0;
+//							sameCount = 0;
+//							previousValue = -1;
+//							continue;
+//						}
+//						if ( previousValue == -1 )
+//						{
+//							previousValue = value;
+//							continue;
+//						}
+//						if ( value > previousValue )
+//						{
+//							if ( (downCount != 0) || (sameCount != 0) )
+//							{
+//								upCount = 0;
+//								downCount = 0;
+//								sameCount = 0;								
+//							}
+//							upCount++;
+//						}
+//						if ( value == previousValue )
+//						{
+//							if ( upCount < 2 )
+//							{
+//								upCount = 0;
+//								downCount = 0;
+//								sameCount = 0;									
+//							}
+//							else
+//							{
+//								sameCount++;
+//							}
+//						}
+//						if ( value < previousValue )
+//						{
+//							if ( upCount < 2 )
+//							{
+//								upCount = 0;
+//								downCount = 0;
+//								sameCount = 0;									
+//							}
+//							else
+//							{
+//								downCount++;
+//							}
+//						}
+//						if ( (upCount >= 2) && (downCount >= 2) && (sameCount < 4) )
+//						{
+//							// found a 'peak'
+//							if ( mp.getFloat((int)(x + (downCount + Math.ceil(sameCount/2f))), y, z) == 0 )
+//							{
+//								newCount++;
+//							}
+//							mp.set((int)(x + (downCount + Math.ceil(sameCount/2f))), y, z, 1f);
+//							surfacePoints.add( new Vector3f(x,y,z) );
+//							upCount = 0;
+//							downCount = 0;
+//							sameCount = 0;		
+//						}
+//						previousValue = value;
+//					}
+//				}
+//				
+//
+//				for ( int x = 0; x < dimX; x++ )
+//				{
+//					int upCount = 0;
+//					int downCount = 0;
+//					int sameCount = 0;
+//					float previousValue = -1;
+//					for ( int y = 0; y < dimY - 5; y++ )
+//					{
+//						float value = blur.getFloat(x, y, z);
+//						int index = z * dimX*dimY + y * dimX + x;
+//						if ( !largest.get(index) )
+//						{
+//							upCount = 0;
+//							downCount = 0;
+//							sameCount = 0;
+//							previousValue = -1;
+//							continue;
+//						}
+//						if ( previousValue == -1 )
+//						{
+//							previousValue = value;
+//							continue;
+//						}
+//						if ( value > previousValue )
+//						{
+//							if ( (downCount != 0) || (sameCount != 0) )
+//							{
+//								upCount = 0;
+//								downCount = 0;
+//								sameCount = 0;								
+//							}
+//							upCount++;
+//						}
+//						if ( value == previousValue )
+//						{
+//							if ( upCount < 2 )
+//							{
+//								upCount = 0;
+//								downCount = 0;
+//								sameCount = 0;									
+//							}
+//							else
+//							{
+//								sameCount++;
+//							}
+//						}
+//						if ( value < previousValue )
+//						{
+//							if ( upCount < 2 )
+//							{
+//								upCount = 0;
+//								downCount = 0;
+//								sameCount = 0;									
+//							}
+//							else
+//							{
+//								downCount++;
+//							}
+//						}
+//						if ( (upCount >= 2) && (downCount >= 2) && (sameCount < 4) )
+//						{
+//							// found a 'peak'
+//							if ( mp.getFloat(x, (int)(y - (downCount + Math.floor(sameCount/2f))), z) == 0 )
+//							{
+//								newCount++;
+//							}
+//							mp.set(x, (int)(y - (downCount + Math.floor(sameCount/2f))), z, 1f);
+//							surfacePoints.add( new Vector3f(x,y,z) );
+//							upCount = 0;
+//							downCount = 0;
+//							sameCount = 0;		
+//						}
+//						previousValue = value;
+//					}
+//					upCount = 0;
+//					downCount = 0;
+//					sameCount = 0;
+//					previousValue = -1;
+//					for ( int y = dimY - 5; y >= 0; y-- )
+//					{
+//						float value = blur.getFloat(x, y, z);
+//						int index = z * dimX*dimY + y * dimX + x;
+//						if ( !largest.get(index) )
+//						{
+//							upCount = 0;
+//							downCount = 0;
+//							sameCount = 0;
+//							previousValue = -1;
+//							continue;
+//						}
+//						if ( previousValue == -1 )
+//						{
+//							previousValue = value;
+//							continue;
+//						}
+//						if ( value > previousValue )
+//						{
+//							if ( (downCount != 0) || (sameCount != 0) )
+//							{
+//								upCount = 0;
+//								downCount = 0;
+//								sameCount = 0;								
+//							}
+//							upCount++;
+//						}
+//						if ( value == previousValue )
+//						{
+//							if ( upCount < 2 )
+//							{
+//								upCount = 0;
+//								downCount = 0;
+//								sameCount = 0;									
+//							}
+//							else
+//							{
+//								sameCount++;
+//							}
+//						}
+//						if ( value < previousValue )
+//						{
+//							if ( upCount < 2 )
+//							{
+//								upCount = 0;
+//								downCount = 0;
+//								sameCount = 0;									
+//							}
+//							else
+//							{
+//								downCount++;
+//							}
+//						}
+//						if ( (upCount >= 2) && (downCount >= 2) && (sameCount < 4) )
+//						{
+//							// found a 'peak'
+//							if ( mp.getFloat(x, (int)(y + (downCount + Math.ceil(sameCount/2f))), z) == 0 )
+//							{
+//								newCount++;
+//							}
+//							mp.set(x, (int)(y + (downCount + Math.ceil(sameCount/2f))), z, 1f);
+//							surfacePoints.add( new Vector3f(x,y,z) );
+//							upCount = 0;
+//							downCount = 0;
+//							sameCount = 0;		
+//						}
+//						previousValue = value;
+//					}
+//				}
+//			}
+//			for ( int x = 0; x < dimX; x++ )
+//			{
+//				for ( int y = 0; y < dimY; y++ )
+//				{
+//					int upCount = 0;
+//					int downCount = 0;
+//					int sameCount = 0;
+//					float previousValue = -1;
+//					for ( int z = 0; z < dimZ - 5; z++ )
+//					{
+//						float value = blur.getFloat(x, y, z);
+//						int index = z * dimX*dimY + y * dimX + x;
+//						if ( !largest.get(index) )
+//						{
+//							upCount = 0;
+//							downCount = 0;
+//							sameCount = 0;
+//							previousValue = -1;
+//							continue;
+//						}
+//						if ( previousValue == -1 )
+//						{
+//							previousValue = value;
+//							continue;
+//						}
+//						if ( value > previousValue )
+//						{
+//							if ( (downCount != 0) || (sameCount != 0) )
+//							{
+//								upCount = 0;
+//								downCount = 0;
+//								sameCount = 0;								
+//							}
+//							upCount++;
+//						}
+//						if ( value == previousValue )
+//						{
+//							if ( upCount < 2 )
+//							{
+//								upCount = 0;
+//								downCount = 0;
+//								sameCount = 0;									
+//							}
+//							else
+//							{
+//								sameCount++;
+//							}
+//						}
+//						if ( value < previousValue )
+//						{
+//							if ( upCount < 2 )
+//							{
+//								upCount = 0;
+//								downCount = 0;
+//								sameCount = 0;									
+//							}
+//							else
+//							{
+//								downCount++;
+//							}
+//						}
+//						if ( (upCount >= 2) && (downCount >= 2) && (sameCount < 4) )
+//						{
+//							// found a 'peak'
+//							if ( mp.getFloat(x, y, (int)(z - (downCount + Math.floor(sameCount/2f)))) == 0 )
+//							{
+//								newCount++;
+//							}
+//							mp.set(x, y, (int)(z - (downCount + Math.floor(sameCount/2f))), 1f);
+//							surfacePoints.add( new Vector3f(x,y,z) );
+//							upCount = 0;
+//							downCount = 0;
+//							sameCount = 0;		
+//						}
+//						previousValue = value;
+//					}
+//					upCount = 0;
+//					downCount = 0;
+//					sameCount = 0;
+//					previousValue = -1;
+//					for ( int z = dimZ - 5; z >= 0; z-- )
+//					{
+//						float value = blur.getFloat(x, y, z);
+//						int index = z * dimX*dimY + y * dimX + x;
+//						if ( !largest.get(index) )
+//						{
+//							upCount = 0;
+//							downCount = 0;
+//							sameCount = 0;
+//							previousValue = -1;
+//							continue;
+//						}
+//						if ( previousValue == -1 )
+//						{
+//							previousValue = value;
+//							continue;
+//						}
+//						if ( value > previousValue )
+//						{
+//							if ( (downCount != 0) || (sameCount != 0) )
+//							{
+//								upCount = 0;
+//								downCount = 0;
+//								sameCount = 0;								
+//							}
+//							upCount++;
+//						}
+//						if ( value == previousValue )
+//						{
+//							if ( upCount < 2 )
+//							{
+//								upCount = 0;
+//								downCount = 0;
+//								sameCount = 0;									
+//							}
+//							else
+//							{
+//								sameCount++;
+//							}
+//						}
+//						if ( value < previousValue )
+//						{
+//							if ( upCount < 2 )
+//							{
+//								upCount = 0;
+//								downCount = 0;
+//								sameCount = 0;									
+//							}
+//							else
+//							{
+//								downCount++;
+//							}
+//						}
+//						if ( (upCount >= 2) && (downCount >= 2) && (sameCount < 4) )
+//						{
+//							// found a 'peak'
+//							if ( mp.getFloat(x, y, (int)(z + (downCount + Math.ceil(sameCount/2f)))) == 0 )
+//							{
+//								newCount++;
+//							}
+//							mp.set(x, y, (int)(z + (downCount + Math.ceil(sameCount/2f))), 1f);
+//							surfacePoints.add( new Vector3f(x,y,z) );
+//							upCount = 0;
+//							downCount = 0;
+//							sameCount = 0;		
+//						}
+//						previousValue = value;
+//					}
+//				}
+//			}
+//				
+//			System.err.println(newCount);
+			
+			
+			
+			
+			
+//			Vector<Vector3f> neighbors = new Vector<Vector3f>();
+//			
+//			newCount = 0;
+//			for ( int z = 5; z < dimZ-5; z++ )
+//			{
+//				for ( int y = 5; y < dimY-5; y++ )
+//				{
+//					for ( int x = 5; x < dimX-5; x++ )
 //					{
 //						if ( mp.getFloat(x, y, z) == 1 )
 //						{
-//							points.add( new Vector3f(x,y,z) );
+//							neighbors.clear();
+//							for ( int z1 = Math.max(0, z - 5); z1 <= Math.min(z + 5, dimZ - 1); z1++ )
+//							{
+//								for ( int y1 = Math.max(0, y - 5); y1 <= Math.min(y + 5, dimY - 1); y1++ )
+//								{
+//									for ( int x1 = Math.max(0, x - 5); x1 <= Math.min(x + 5, dimX - 1); x1++ )
+//									{
+//										if ( (x1 != x) && (y1 != y) && (z1 != z) && mp.getFloat(x1, y1, z1) == 1 )
+//										{
+//											neighbors.add( new Vector3f(x1,y1,z1) );
+//										}
+//									}
+//								}
+//							}
+//							Vector3f pt = new Vector3f(x,y,z);
+//							float minDist = Float.MAX_VALUE;
+//							int minIndex = -1;
+//							for ( int i = 0; i < neighbors.size(); i++ )
+//							{
+//								float distance = neighbors.elementAt(i).distance(pt);
+//								if ( (distance > 1) && (distance < minDist) )
+//								{
+//									minDist = distance;
+//									minIndex = i;
+//								}
+//							}
+//							if ( minIndex != -1 )
+//							{
+//								Vector3f closest1 = new Vector3f();
+//								closest1.copy( neighbors.remove(minIndex) );
+//								
+//								if ( closest1.distance(pt) > 1 )
+//								{
+//									Vector3f start = new Vector3f(pt);
+//									Vector3f dir = Vector3f.sub( closest1, pt );
+//									float length = dir.normalize();
+//									for ( int i = 0; i <= length; i++ )
+//									{
+//										start.add(dir);
+//										if ( mp.getFloat( Math.round(start.X), Math.round(start.Y), Math.round(start.Z) ) != 1 )
+//										{
+//											mp.set( Math.round(start.X), Math.round(start.Y), Math.round(start.Z), 1);
+//											surfacePoints.add( new Vector3f( Math.round(start.X), Math.round(start.Y), Math.round(start.Z)) );
+//											newCount++;
+//										}
+//									}
+//								}
+//							}
+//							minDist = Float.MAX_VALUE;
+//							minIndex = -1;
+//							for ( int i = 0; i < neighbors.size(); i++ )
+//							{
+//								float distance = neighbors.elementAt(i).distance(pt);
+//								if ( (distance > 1) && (distance < minDist) )
+//								{
+//									minDist = distance;
+//									minIndex = i;
+//								}
+//							}
+//							if ( minIndex != -1 )
+//							{
+//								Vector3f closest2 = new Vector3f();
+//								closest2.copy( neighbors.remove(minIndex) );
+//								if ( closest2.distance(pt) > 1 )
+//								{
+//									Vector3f start = new Vector3f(pt);
+//									Vector3f dir = Vector3f.sub( closest2, pt );
+//									float length = dir.normalize();
+//									for ( int i = 0; i <= length; i++ )
+//									{
+//										start.add(dir);
+//										if ( mp.getFloat( Math.round(start.X), Math.round(start.Y), Math.round(start.Z) ) != 1 )
+//										{
+//											mp.set( Math.round(start.X), Math.round(start.Y), Math.round(start.Z), 1);
+//											surfacePoints.add( new Vector3f( Math.round(start.X), Math.round(start.Y), Math.round(start.Z)) );
+//											newCount++;
+//										}
+//									}
+//								}
+//							}
 //						}
 //					}
 //				}
 //			}
+//			System.err.println( newCount );
+			
 //			
-//			for ( int i = 0; i < points.size(); i++ )
-//			{
-//				Vector3f start = points.elementAt(i);
-//
-//				for ( int z1 = (int) Math.max(0, start.Z - 1); z1 <= Math.min( start.Z + 1, dimZ - 1); z1++ )
-//				{
-//					for ( int y1 = (int) Math.max(0, start.Y - 1); y1 <= Math.min( start.Y + 1, dimY - 1); y1++ )
-//					{
-//						for ( int x1 = (int) Math.max(0, start.X - 1); x1 <= Math.min(start.X + 1, dimX - 1); x1++ )
-//						{
-//							mp.set( x1, y1, z1, 1);							
-//						}
-//					}
-//				}
-//			}
-
+			
+			
+			
+			
+			
+			
+//			newCount = 0;
 //			insideX.and(insideY);
 //			insideX.and(insideZ);
+//			Vector<Vector3f> seeds = new Vector<Vector3f>();
 //			for ( int z = 0; z < dimZ; z++ )
 //			{
 //				for ( int y = 0; y < dimY; y++ )
@@ -1124,12 +1456,70 @@ public abstract class WormSegmentation
 //					{
 //						if ( insideX.get(z*dimY*dimX + y*dimX + x) )
 //						{
-//							mp.set(x, y, z, 1f);
+//							newCount++;
+//							seeds.add( new Vector3f(x, y, z) );
 //						}
 //					}
 //				}
 //			}
-
+//			System.err.println( newCount );
+//			if ( seeds.size() > 0 )
+//			{
+//				Vector<Sphere3f> surfaces = new Vector<Sphere3f>();
+//				Sphere3f maxS = findMaxSphere( seeds, surfacePoints, surfaces );
+//				while ( (maxS != null) && (seeds.size() > 0) )
+//				{
+//					surfaces.add(maxS);
+//					
+//
+//					for ( int i = seeds.size() - 1; i >= 0; i-- )
+//					{
+//						for ( int j = 0; j < surfaces.size(); j++ )
+//						{
+//							if ( Sphere3f.InSphere( seeds.elementAt(i), surfaces.elementAt(j) ) )
+//							{
+//								seeds.remove(i);
+//								break;
+//							}
+//						}
+//					}
+//					
+//					if ( seeds.size() == 0 )
+//					{
+//						break;
+//					}
+//					maxS = findMaxSphere( seeds, surfacePoints, surfaces );
+//				}
+//				
+//				if ( surfaces.size() > 0 )
+//				{
+//					try {
+//						File surfaceFile = new File(directory + JDialogBase.makeImageName( image.getImageName(), "_surface_mesh.xml"));
+//						if ( surfaceFile.exists() )
+//						{
+//							if ( !surfaceFile.delete() )
+//							{
+//								System.err.println( "Unable to delete " + directory + JDialogBase.makeImageName( image.getImageName(), "_surface_mesh.xml") );
+//							}
+//						}
+//						surfaceFile = new File(directory + JDialogBase.makeImageName( image.getImageName(), "_surface_mesh.sur"));
+//						if ( surfaceFile.exists() )
+//						{
+//							if ( !surfaceFile.delete() )
+//							{
+//								System.err.println( "Unable to delete " + directory + JDialogBase.makeImageName( image.getImageName(), "_surface_mesh.sur") );
+//							}
+//						}
+//						TriMesh sphereSurface = mergeSpheres( surfaces );
+//						
+//						FileSurface_WM.save( directory + JDialogBase.makeImageName( image.getImageName(), "_surface_mesh.xml"), sphereSurface, image, true );
+//					} catch (IOException e) {
+//						e.printStackTrace();
+//					}
+//				}
+//			}
+			
+			
 //			Vector<Vector3f> points = new Vector<Vector3f>();
 //			Vector3f center = new Vector3f();
 //			int count = 0;
@@ -1225,13 +1615,186 @@ public abstract class WormSegmentation
 //					}
 //				}
 //			}
+
+//			for ( int z = 0; z < dimZ; z++ )
+//			{
+//				for ( int y = 0; y < dimY; y++ )
+//				{
+//					for ( int x = 0; x < dimX - 5; x++ )
+//					{
+//						int index = z * dimX*dimY + y * dimX + x;
+//						if ( largest.get(index) )
+//						{
+//							mp.set(x, y, z,1);
+//						}
+//						else
+//						{
+//							mp.set(x,y,z,0);
+//						}
+//					}
+//				}
+//			}
+
+			System.err.println( "Saving mp image to : " + directory + mp.getImageName() + ".tif" );
+			ModelImage.saveImage( mp, mp.getImageName() + ".tif", directory, false ); 
+			mp.calcMinMax();
+			new ViewJFrameImage((ModelImage) mp.clone());
 		}
-		else
+//		else
+//		{
+//			System.err.println( "FAILED Segmentation" );
+//		}
+	}
+	
+	private static Sphere3f findMaxSphere(Vector<Vector3f> seeds, Vector<Vector3f> surfacePoints, Vector<Sphere3f> surfaces)
+	{
+		int minDimeter = 10;
+		int maxIndex = -1;
+		float maxDiameter = minDimeter;
+		Vector<Sphere3f> spheres = new Vector<Sphere3f>();
+		
+		for ( int i = 0; i < seeds.size(); i++ )
 		{
-			System.err.println( "FAILED Segmentation" );
+			boolean found = false;
+			for ( int j = 0; j < surfaces.size(); j++ )
+			{
+				if ( Sphere3f.InSphere( seeds.elementAt(i), surfaces.elementAt(j) ) )
+				{
+					found = true;
+					break;
+				}
+			}
+			if ( !found )
+			{
+				Sphere3f sphere = new Sphere3f( seeds.elementAt(i), .5f );
+				while ( testSphere(sphere, surfacePoints, surfaces) )
+				{
+					float diameter = growSphere(sphere);
+					if ( diameter > maxDiameter )
+					{
+						maxDiameter = diameter;
+						maxIndex = i;
+					}
+				}
+				spheres.add(sphere);
+			}
 		}
+		if ( maxIndex != -1 )
+		{
+			return spheres.elementAt(maxIndex);
+		}
+		return null;
+	}
+	
+	private static boolean testSphere( Sphere3f sphere, Vector<Vector3f> surfacePoints, Vector<Sphere3f> spheres )
+	{
+		Vector<Vector3f> contactPoints = new Vector<Vector3f>();
+		for ( int i = 0; i < surfacePoints.size(); i++ )
+		{
+			if ( Sphere3f.InSphere(surfacePoints.elementAt(i), sphere) )
+			{
+				contactPoints.add(surfacePoints.elementAt(i) );
+			}
+		}
+		for ( int i = 0; i < spheres.size(); i++ )
+		{
+			IntrSphere3Sphere3f intersect = new IntrSphere3Sphere3f(sphere, spheres.elementAt(i) );
+			if ( intersect.Find() )
+			{
+				contactPoints.add( intersect.GetCenter() );
+			}
+		}
+		if ( contactPoints.size() == 0 )
+		{
+			return true;
+		}
+		Vector3f averageDir = new Vector3f();
+		for ( int i = 0; i < contactPoints.size(); i++ )
+		{
+			Vector3f dir = Vector3f.sub( sphere.Center, contactPoints.elementAt(i) );
+			dir.normalize();
+			averageDir.add(dir);
+		}
+		averageDir.scale(1f/(float)contactPoints.size() );
+		if ( averageDir.isEqual( Vector3f.ZERO ) )
+		{
+			return false;
+		}
+		sphere.Center.add(averageDir);
+		for ( int i = 0; i < surfacePoints.size(); i++ )
+		{
+			if ( Sphere3f.InSphere(surfacePoints.elementAt(i), sphere) )
+			{
+				return false;
+			}
+		}
+		for ( int i = 0; i < spheres.size(); i++ )
+		{
+			IntrSphere3Sphere3f intersect = new IntrSphere3Sphere3f(sphere, spheres.elementAt(i) );
+			if ( intersect.Find() )
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	private static float growSphere( Sphere3f sphere )
+	{
+		sphere.Radius += .5;
+		return sphere.Radius;
 	}
 
+	private static TriMesh mergeSpheres( Vector<Sphere3f> spheres )
+	{
+		Attributes attributes = new Attributes();
+		attributes.SetPChannels(3);
+		attributes.SetNChannels(3);
+		attributes.SetCChannels(0,4);
+		StandardMesh std = new StandardMesh(attributes);
+		
+		int numVertices = 0;
+		int numTris = 0;
+		Vector<TriMesh> sphereSurfaces = new Vector<TriMesh>();
+		for ( int i = 0; i < spheres.size(); i++ )
+		{
+			Sphere3f sphere = spheres.elementAt(i);
+			System.err.println( sphere.Center + " " + sphere.Radius );
+			Transformation xfrm = new Transformation();
+			xfrm.SetUniformScale( sphere.Radius );
+			xfrm.SetTranslate( sphere.Center );
+			std.SetTransformation( xfrm );
+			TriMesh sphereSurface = std.Sphere(2);
+			
+			sphereSurfaces.add(sphereSurface);
+			numVertices += sphereSurface.VBuffer.GetVertexQuantity();
+			numTris += sphereSurface.IBuffer.GetIndexQuantity();
+		}
+		VertexBuffer vertexBuffer = new VertexBuffer(attributes, numVertices);
+		int vertexCount = 0;
+		IndexBuffer indexBuffer = new IndexBuffer(numTris);
+		int indexCount = 0;
+		int offSet = 0;
+		for ( int i = 0; i < sphereSurfaces.size(); i++ )
+		{
+			TriMesh sphereSurface = sphereSurfaces.elementAt(i);
+			for ( int j = 0; j < sphereSurface.VBuffer.GetVertexQuantity(); j++ )
+			{
+				vertexBuffer.SetPosition3( vertexCount, sphereSurface.VBuffer.GetPosition3(j) );
+				vertexBuffer.SetNormal3( vertexCount, sphereSurface.VBuffer.GetNormal3(j) );
+				vertexBuffer.SetColor4( 0, vertexCount, 0, 0, 1, 1 );
+				vertexCount++;
+			}
+			for ( int j = 0; j < sphereSurface.IBuffer.GetIndexQuantity(); j++ )
+			{
+				indexBuffer.GetData()[indexCount++] = sphereSurface.IBuffer.GetData()[j] + offSet;
+			}
+			offSet += sphereSurface.VBuffer.GetVertexQuantity();
+		}
+		return new TriMesh(vertexBuffer, indexBuffer);
+	}
+	
+	
 	private static void fillMask( BitSet inside, BitSet visited, BitSet connected, Vector<Vector3f> seeds, int dimX, int dimY, int dimZ )
 	{
 		while ( seeds.size() > 0 )
