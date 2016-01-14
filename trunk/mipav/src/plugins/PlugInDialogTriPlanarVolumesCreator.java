@@ -303,7 +303,7 @@ public class PlugInDialogTriPlanarVolumesCreator extends JDialogStandaloneScript
     	System.out.println("Determining axes orientations...");
     	for (int i = 0; i <=2; i++) {
             or[i] = srcImage.getFileInfo()[0].getAxisOrientation()[i];
-            if(or[i] == FileInfoBase.UNKNOWN_ORIENT) {
+            if(or[i] == FileInfoBase.ORI_UNKNOWN_TYPE) {
             	MipavUtil.displayError("One or more axis orientations is of unknown type");
             	return;
             }
