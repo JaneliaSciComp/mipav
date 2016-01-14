@@ -1092,7 +1092,7 @@ public class PlugInDialogTriPlanarVolumesCreator extends JDialogStandaloneScript
 		         return;
 			}
 		}else {
-			saveAsJP2Radio.setSelected(true);
+			saveAsJPEGRadio.setSelected(true);
 		}
 
 		
