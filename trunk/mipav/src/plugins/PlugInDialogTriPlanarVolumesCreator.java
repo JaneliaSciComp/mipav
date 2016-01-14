@@ -186,12 +186,12 @@ public class PlugInDialogTriPlanarVolumesCreator extends JDialogStandaloneScript
          gbc.gridx = 0;
          mainPanel.add(outputFormatLabel, gbc);
          gbc.anchor = GridBagConstraints.WEST;
-         gbc.gridx = 1;
-         mainPanel.add(saveAsJP2Radio, gbc);
-         /*gbc.gridy = 4;
+         //gbc.gridx = 1;
+         //mainPanel.add(saveAsJP2Radio, gbc);
+         gbc.gridy = 4;
          gbc.gridx = 1;
          mainPanel.add(saveAsJPEGRadio, gbc);
-         gbc.gridy = 5;
+         /*gbc.gridy = 5;
          gbc.gridx = 1;
          mainPanel.add(saveAsPNGRadio, gbc);*/
          
@@ -1080,15 +1080,15 @@ public class PlugInDialogTriPlanarVolumesCreator extends JDialogStandaloneScript
 		String oFormat = scriptParameters.getParams().getString("output_format");
 		
 		if(oFormat != null && !oFormat.trim().equals("")) {
-			if(oFormat.trim().equalsIgnoreCase("jp2")) {
-				saveAsJP2Radio.setSelected(true);
-			}//else if(oFormat.trim().equalsIgnoreCase("png")) {
+			//if(oFormat.trim().equalsIgnoreCase("jp2")) {
+				//saveAsJP2Radio.setSelected(true);
+			//}//else if(oFormat.trim().equalsIgnoreCase("png")) {
 				//saveAsPNGRadio.setSelected(true);
-			//}else if(oFormat.trim().equalsIgnoreCase("jpg") || oFormat.trim().equalsIgnoreCase("jpeg")){
-				//saveAsJPEGRadio.setSelected(true);
-			//}
-		     else {
-				 MipavUtil.displayError("Invalid output format type...must be jp2");
+			if(oFormat.trim().equalsIgnoreCase("jpg") || oFormat.trim().equalsIgnoreCase("jpeg")){
+				saveAsJPEGRadio.setSelected(true);
+			}
+		    else {
+				 MipavUtil.displayError("Invalid output format type...must be jpg or jpeg");
 		         return;
 			}
 		}else {
