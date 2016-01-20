@@ -87,7 +87,7 @@ public class PlugInDialogTriPlanarVolumesCreator extends JDialogStandaloneScript
     private FileInfoBase fileInfo;
     private FileInfoNIFTI   fileInfoNIFTI;
     
-    private AlgorithmTransform algoTrans;
+    private AlgorithmTransform algoTrans,algoResample;
     
     private int orientationIndex = 0;
     
@@ -207,7 +207,11 @@ public class PlugInDialogTriPlanarVolumesCreator extends JDialogStandaloneScript
          getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
          setResizable(false);
          pack();
-         setVisible(true);
+         if(ViewUserInterface.getReference().isAppFrameVisible()) {
+        	 setVisible(true);
+         }
+         
+         
     	
     }
     
@@ -360,23 +364,34 @@ public class PlugInDialogTriPlanarVolumesCreator extends JDialogStandaloneScript
         }
     	
         
-        algoTrans = new AlgorithmTransform(srcImage, xfrm, interp, oXres, oYres, oZres, iDims[0], iDims[1], iDims[2], units,
+        algoResample = new AlgorithmTransform(srcImage, xfrm, interp, oXres, oYres, oZres, iDims[0], iDims[1], iDims[2], units,
                 doVOI, doClip, doPad, doRotateCenter, center);
-        algoTrans.setFillValue(fillValue);
-        algoTrans.setUpdateOriginFlag(doUpdateOrigin);
-        algoTrans.setUseScannerAnatomical(isSATransform);
+        algoResample.setFillValue(fillValue);
+        algoResample.setUpdateOriginFlag(doUpdateOrigin);
+        algoResample.setUseScannerAnatomical(isSATransform);
         
-        algoTrans.run();
+        algoResample.run();
         
 		
-        transformedImage = 	algoTrans.getTransformedImage();
+        transformedImage = 	algoResample.getTransformedImage();
         transformedImage.calcMinMax();
+        
+        if (algoResample != null) {
+        	algoResample.finalize();
+        	algoResample = null;
+        }
+        
         
 
     	
     	//for each orientation, call th reorientation algorithm to create new volum
         System.out.println("Calling algorithm to reorient image for each orienation ...");
     	for(orientationIndex=0;orientationIndex<3;orientationIndex++) {
+    		if (algoTrans != null) {
+	        	algoTrans.finalize();
+	        	algoTrans = null;
+	        }
+    		
     		//set up the newOr array
     		if(orientationIndex == 0) {
     			//lets do coronal first
@@ -728,6 +743,8 @@ public class PlugInDialogTriPlanarVolumesCreator extends JDialogStandaloneScript
             resultImage = algoTrans.getTransformedImage();
 			if (algorithm.isCompleted() == true && resultImage != null) {
 				
+				
+				
 				if(orientationIndex == 0) {
 					insertScriptLine();
 				}
@@ -1036,7 +1053,13 @@ public class PlugInDialogTriPlanarVolumesCreator extends JDialogStandaloneScript
 		        if(launchedFromGUI) {
 		        	srcImage.disposeLocal();
 		        }
+		        
+		        if (algoTrans != null) {
+		        	algoTrans.finalize();
+		        	algoTrans = null;
+		        }
 				System.out.println("plugin complete");
+				this.setComplete(true); 
 				if (isExitRequired()) {
 	                System.exit(0);
 	                // ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
@@ -1045,6 +1068,9 @@ public class PlugInDialogTriPlanarVolumesCreator extends JDialogStandaloneScript
 	            }
 			}
        }
+		
+		
+		
 
 	}
 
