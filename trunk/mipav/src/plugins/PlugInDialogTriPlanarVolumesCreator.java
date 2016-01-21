@@ -51,7 +51,7 @@ public class PlugInDialogTriPlanarVolumesCreator extends JDialogStandaloneScript
     private JPanel mainPanel, OKCancelPanel;
     
     /** src image * */
-    private ModelImage srcImage, transformedImage, resultImage;
+    private ModelImage srcImage;
     
     /** output directory * */
     private String outputDir;
@@ -84,26 +84,28 @@ public class PlugInDialogTriPlanarVolumesCreator extends JDialogStandaloneScript
     private ButtonGroup optionsGroup;
     
     /** src image file info **/
-    private FileInfoBase fileInfo;
-    private FileInfoNIFTI   fileInfoNIFTI;
+   /* private FileInfoBase fileInfo;
+    private FileInfoNIFTI   fileInfoNIFTI;*/
     
-    private AlgorithmTransform algoTrans,algoResample;
+   /* private AlgorithmTransform algoTrans,algoResample;
     
-    private int orientationIndex = 0;
+    private int orientationIndex = 0;*/
     
-    boolean launchedFromGUI = false;
+    private boolean launchedFromGUI = false;
+    
+    private PlugInAlgorithmTriPlanarVolumesCreator alg;
 
     
    
 	////////////////////////////////////////////
-    private     int[]       or = new int[3];
+   /* private     int[]       or = new int[3];
     private     int[]       newOr = new int[3];
     private     int[]       coronalNewOr = {FileInfoBase.ORI_R2L_TYPE,FileInfoBase.ORI_S2I_TYPE,FileInfoBase.ORI_A2P_TYPE};
     private     int[]       axialNewOr = {FileInfoBase.ORI_R2L_TYPE,FileInfoBase.ORI_A2P_TYPE,FileInfoBase.ORI_I2S_TYPE};
     private     int[]       sagittalNewOr = {FileInfoBase.ORI_A2P_TYPE,FileInfoBase.ORI_S2I_TYPE,FileInfoBase.ORI_R2L_TYPE};
     
     private     int[]       axisOrder = new int[3];
-    private     boolean[]   axisFlip = new boolean[3];
+    private     boolean[]   axisFlip = new boolean[3];*/
 	
 	
     public PlugInDialogTriPlanarVolumesCreator(boolean modal) {
@@ -301,6 +303,46 @@ public class PlugInDialogTriPlanarVolumesCreator extends JDialogStandaloneScript
     
     
     protected void callAlgorithm() {
+    	alg = new PlugInAlgorithmTriPlanarVolumesCreator(srcImage,outputDir,outputNamePrefix,launchedFromGUI);
+    	alg.addListener(this);
+    	
+    	if (isRunInSeparateThread()) {
+
+			// Start the thread as a low priority because we wish to still
+			// have user interface work fast.
+			if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
+				MipavUtil.displayError("A thread is already running on this object");
+			}
+		} else {
+			alg.run();
+		}
+    	
+    }
+    
+    
+    
+    public void algorithmPerformed(AlgorithmBase algorithm) {
+    	if(alg.isCompleted()) {
+    		insertScriptLine();
+    		
+    		alg.finalize();
+    		alg = null;
+    		
+    		
+    		System.out.println("plugin complete");
+    		this.setComplete(true); 
+    		if (isExitRequired()) {
+                System.exit(0);
+                // ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+            } else {
+                dispose();
+            }
+    		
+    	}
+    }
+    
+    
+    /*protected void callAlgorithmOLD() {
     	System.out.println("TriPlanarVolumesCreator...");
     	
     	//get axis orientations...if any are unknown, exit and display error
@@ -726,7 +768,7 @@ public class PlugInDialogTriPlanarVolumesCreator extends JDialogStandaloneScript
     	}//end for each orientation
 	
     	transformedImage.disposeLocal();
-    }
+    }*/
     
     
     
@@ -735,8 +777,8 @@ public class PlugInDialogTriPlanarVolumesCreator extends JDialogStandaloneScript
     
     
 	
-	@Override
-	public void algorithmPerformed(AlgorithmBase algorithm) {
+	
+	/*public void algorithmPerformedOLD(AlgorithmBase algorithm) {
 		if ( algorithm instanceof AlgorithmTransform) {
         	TransMatrix newMatrix = null;
         	TransMatrix newMatrix2 = null;
@@ -1030,14 +1072,14 @@ public class PlugInDialogTriPlanarVolumesCreator extends JDialogStandaloneScript
 				fileIO.writeImage(resultImage, opts,true,false);
 				System.out.println("image saved to " + opts.getFileDirectory());
 				
-                /*try {
+                try {
 					new ViewJFrameImage(resultImage, null, new Dimension(610, 200) );
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     JOptionPane.showMessageDialog(null, 
                                                 "Out of memory: unable to open new frame",
                                                 "Error", JOptionPane.ERROR_MESSAGE);
-                }*/
+                }
 
 				resultImage.disposeLocal();
 				resultImage = null;
@@ -1072,7 +1114,7 @@ public class PlugInDialogTriPlanarVolumesCreator extends JDialogStandaloneScript
 		
 		
 
-	}
+	}*/
 
 
 
