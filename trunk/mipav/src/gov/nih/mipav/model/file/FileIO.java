@@ -2325,7 +2325,7 @@ public class FileIO {
 
         }
 
-        final int fileType = readFileType(niftiCompressed, multiFile, fileName);
+        final int fileType = readFileType(niftiCompressed, multiFile, fileName,fileDir);
         FileBase readSrc = null;
         FileInfoBase fileInfo = null;
         boolean success = false;
@@ -2984,7 +2984,7 @@ public class FileIO {
 
         }
 
-        final int fileType = readFileType(niftiCompressed, multiFile, fileName);
+        final int fileType = readFileType(niftiCompressed, multiFile, fileName,fileDir);
 
         try {
 
@@ -3357,7 +3357,7 @@ public class FileIO {
         return image;
     }
 
-    private int readFileType(final boolean niftiCompressed, final boolean multiFile, final String fileName) {
+    private int readFileType(final boolean niftiCompressed, final boolean multiFile, final String fileName, final String fDir) {
         int fileType = FileUtility.UNDEFINED;
         int userDefinedFileType = 0;
         String userDefinedSuffix = null;
@@ -3366,7 +3366,7 @@ public class FileIO {
             fileType = FileUtility.NIFTI;
         } else {
             final boolean zerofunused[] = new boolean[1];
-            fileType = FileUtility.getFileType(fileName, fileDir, false, quiet, zerofunused); // set the fileType
+            fileType = FileUtility.getFileType(fileName, fDir, false, quiet, zerofunused); // set the fileType
 
             if (fileType == FileUtility.ERROR) {
                 return fileType;
