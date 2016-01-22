@@ -1,10 +1,14 @@
 package gov.nih.mipav.model.scripting;
 
 
-import gov.nih.mipav.model.scripting.actions.*;
-import gov.nih.mipav.model.scripting.parameters.*;
+import gov.nih.mipav.model.scripting.actions.ActionBase;
+import gov.nih.mipav.model.scripting.actions.ActionExit;
+import gov.nih.mipav.model.scripting.actions.ActionOpenVOI;
+import gov.nih.mipav.model.scripting.parameters.Parameter;
+import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.AlgorithmParameters;
 
 import java.util.Vector;
@@ -63,8 +67,7 @@ public class Parser {
      * @param scriptFile The full path to the script file on disk which should be parsed.
      * 
      * @return An array of the image parameter labels (e.g., input_image_1 or reference_image) used in <code>
-     *          scriptFile</code>
-     *         in the same order as getImageVarsUsedInScript().
+     *          scriptFile</code> in the same order as getImageVarsUsedInScript().
      * 
      * @throws ParserException If a problem is encountered while parsing the script.
      */
@@ -135,15 +138,14 @@ public class Parser {
             imageVars[i] = imageVarList.elementAt(i);
         }
 
-        Preferences.debug("parser:\tFound " + numImages + " unique images used in script " + scriptFile + "\n",
-                Preferences.DEBUG_SCRIPTING);
+        Preferences.debug("parser:\tFound " + numImages + " unique images used in script " + scriptFile + "\n", Preferences.DEBUG_SCRIPTING);
 
         return imageVars;
     }
 
     /**
-     * Returns the number of VOIs which will be opened for a given image (<code>imageVarName</code>) when a
-     * particular script is run.
+     * Returns the number of VOIs which will be opened for a given image (<code>imageVarName</code>) when a particular
+     * script is run.
      * 
      * @param scriptFile The full path to the script file on disk which should be parsed.
      * @param imageVarName The image placeholder variable (e.g. $image1) for which to count required VOIs.
@@ -152,8 +154,7 @@ public class Parser {
      * 
      * @throws ParserException If a problem is encountered while parsing the script.
      */
-    public static final int getNumberOfVOIsRequiredForImageVar(final String scriptFile, final String imageVarName)
-            throws ParserException {
+    public static final int getNumberOfVOIsRequiredForImageVar(final String scriptFile, final String imageVarName) throws ParserException {
         int numVOIs = 0;
         final ParserEngine parser = new ParserEngine(scriptFile, true);
 
@@ -171,8 +172,8 @@ public class Parser {
             }
         }
 
-        Preferences.debug("parser:\tFound " + numVOIs + " unique VOIs used in script " + scriptFile
-                + "attached to image " + imageVarName + "\n", Preferences.DEBUG_SCRIPTING);
+        Preferences.debug("parser:\tFound " + numVOIs + " unique VOIs used in script " + scriptFile + "attached to image " + imageVarName + "\n",
+                Preferences.DEBUG_SCRIPTING);
 
         return numVOIs;
     }
@@ -204,20 +205,16 @@ public class Parser {
             if (parsedLine != null) {
                 Preferences.debug("parser:\t\t" + parsedLine.convertToString() + "\n", Preferences.DEBUG_SCRIPTING);
 
-                final ScriptableActionInterface scriptAction = ScriptableActionLoader.getScriptableAction(parsedLine
-                        .getAction());
+                final ScriptableActionInterface scriptAction = ScriptableActionLoader.getScriptableAction(parsedLine.getAction());
 
-                Preferences.debug("parser:\tRunning action:\t" + scriptAction.getClass().getName() + "\n",
-                        Preferences.DEBUG_SCRIPTING);
+                Preferences.debug("parser:\tRunning action:\t" + scriptAction.getClass().getName() + "\n", Preferences.DEBUG_SCRIPTING);
 
                 try {
                     scriptAction.scriptRun(parsedLine.getParameterTable());
                 } catch (final Exception e) {
-                    final String message = "\n\n" + e.getClass().getName()
-                            + "\n\n(see console or debugging window output for details)";
+                    final String message = "\n\n" + e.getClass().getName() + "\n\n(see console or debugging window output for details)";
 
-                    final ParserException exception = new ParserException(scriptFile, parser.getCurrentLineNumber(),
-                            message);
+                    final ParserException exception = new ParserException(scriptFile, parser.getCurrentLineNumber(), message);
                     exception.initCause(e);
                     throw exception;
                 }
@@ -239,8 +236,7 @@ public class Parser {
      * @return The image placeholder variable for the image the VOI will be loaded into.
      */
     private static String getVOIParentImage(final ParsedActionLine parsedLine) {
-        return parsedLine.getParameterTable().getImageParameter(AlgorithmParameters.getInputImageLabel(1))
-                .getValueString();
+        return parsedLine.getParameterTable().getImageParameter(AlgorithmParameters.getInputImageLabel(1)).getValueString();
     }
 
     /**
